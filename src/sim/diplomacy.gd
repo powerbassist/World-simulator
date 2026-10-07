@@ -682,7 +682,7 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 	# Through the same clamped accumulator a law, a censure, a reshuffle and a
 	# dissolution already write. No new opinion channel and no new ISSUE_KEYS
 	# entry -- that call belongs to V1.3d, and a new issue would reopen the
-	# whole BLOC_SALIENCE_BASE measurement. See ROADMAP.md.
+	# whole BLOC_SALIENCE_BASE measurement. See ROADMAP.md (retired 2026-10-05 -- the tier docs carry the build order now).
 	var offsets: Dictionary = action.effects.get("bloc_offset", {})
 	for bloc in offsets:
 		ns.bloc_offset[bloc] = clampf(

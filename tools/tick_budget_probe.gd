@@ -31,6 +31,7 @@ const Media = preload("res://src/sim/media.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Statute = preload("res://src/sim/statute.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Defence = preload("res://src/sim/defence.gd")
@@ -131,6 +132,10 @@ func _tick(state, loader, year: int, month: int) -> void:
 		state.append_history(entry))
 	_time("Discipline", func() -> void: Discipline.tick_month(state, loader))
 	_time("Legislature", func() -> void: Legislature.tick_month(state, loader))
+	# V4.2, main.gd's order -- the PR-47 blindness class on the month
+	# instrument, repeated and closed: the statute book's month ran unmeasured
+	# while the header still claimed the exact order.
+	_time("Statute", func() -> void: Statute.tick_month(state, loader))
 	_time("Dissolution", func() -> void: Dissolution.tick_month(state))
 	_time("Diplomacy", func() -> void: Diplomacy.tick_month(state, loader))
 	_time("Defence", func() -> void: Defence.tick_month(state))

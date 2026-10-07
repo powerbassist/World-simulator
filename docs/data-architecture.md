@@ -32,29 +32,29 @@ Static data is **read once at startup and never mutated**. When the simulation r
 data/
 ├── nations/           one file per nation — FRA.json, DEU.json, …
 ├── parties/           one file per nation's party system
-├── people/            one file per nation — every named individual ([[ROADMAP|U6b]])
-├── laws/              law templates, grouped by theme ([[ROADMAP|S7]])
-├── political-systems/ institutional templates ([[ROADMAP|V1.2b]])
-├── scenarios/         authored starting states ([[ROADMAP|V1.2e]])
-├── diplomatic-actions/ the player's foreign-policy verbs ([[ROADMAP|V1.3a]])
-├── companies/         fictional firms, playable nations only ([[ROADMAP|V1.4a]])
-├── company-actions/   the player's verbs pointed at a firm ([[ROADMAP|V1.4a]])
-├── outlets/           the press, playable nations only ([[ROADMAP|V1.5d]])
-├── investment-actions/ sector programmes ([[ROADMAP|V1.6e]])
-├── project-actions/   infrastructure projects ([[ROADMAP|V1.6f]])
-├── campaign-actions/  the run-up's efforts ([[ROADMAP|V1.7a]])
-├── pledges/           binding promises ([[ROADMAP|V1.7b]])
-├── events/            occasions, choices and deadlines ([[ROADMAP|V1.8]])
-├── regions/           one file per nation — regions and the cities under them ([[ROADMAP|V2.2a]])
+├── people/            one file per nation — every named individual (U6b)
+├── laws/              law templates, grouped by theme (S7)
+├── political-systems/ institutional templates (V1.2b)
+├── scenarios/         authored starting states (V1.2e)
+├── diplomatic-actions/ the player's foreign-policy verbs (V1.3a)
+├── companies/         fictional firms, playable nations only (V1.4a)
+├── company-actions/   the player's verbs pointed at a firm (V1.4a)
+├── outlets/           the press, playable nations only (V1.5d)
+├── investment-actions/ sector programmes (V1.6e)
+├── project-actions/   infrastructure projects (V1.6f)
+├── campaign-actions/  the run-up's efforts (V1.7a)
+├── pledges/           binding promises (V1.7b)
+├── events/            occasions, choices and deadlines (V1.8)
+├── regions/           one file per nation — regions and the cities under them (V2.2a)
 ├── geo/               europe.geojson — borders from Natural Earth
-│                      regions.geojson — NUTS regions from GISCO ([[ROADMAP|V2.2a]])
-└── eu_parliament.json     EU membership, EP seats, EP election schedule ([[ROADMAP|S6]])
+│                      regions.geojson — NUTS regions from GISCO (V2.2a)
+└── eu_parliament.json     EU membership, EP seats, EP election schedule (S6)
 ```
 
 > [!note] `policy_defaults.json` existed from S4 to V1.1d and is gone
 > Starting tax rates and spending split were one file shared by every nation,
 > because only the player's nation had a budget at MVP. Its own `_note` said
-> that was temporary; [[ROADMAP|V1.2a]], the session that made a second nation
+> that was temporary; V1.2a, the session that made a second nation
 > playable, was where it came due. Each nation's `fiscal` block now carries its
 > own `tax_rates_pct`, `spending_pct_gdp` and `other_spending_pct_gdp` — see the
 > schema below. See [[economy-model]] for the sourcing.
@@ -73,13 +73,13 @@ The cost is losing the inspector's type checking. That is bought back by the val
 
 ### Nation schema
 
-As implemented at [[ROADMAP|S1]]. Fields owned by later sessions — leader (S2),
+As implemented at S1. Fields owned by later sessions — leader (S2),
 `system` (V1) — are added by the session whose model reads them, not stubbed in ahead
 of time.
 
 > [!note] `voter_blocs` was pencilled in here for S5 and still has not happened
 > S5 read the field and decided it was not content. The trigger written down at
-> the time was "a second playable nation" — that trigger fired at [[ROADMAP|V1.2a]],
+> the time was "a second playable nation" — that trigger fired at V1.2a,
 > and the call was re-examined, not skipped: bloc weights stayed in
 > `src/sim/opinion_constants.gd` as one global table. There is still no source
 > for per-nation salience, and a `tools/balance_probe.gd` run comparing France
@@ -172,14 +172,14 @@ Three sectors, not four — no open dataset splits energy out of industry. If S4
 economy model wants an energy lever, it splits industry as a hand-tuned constant at
 that point, against a concrete model rather than a placeholder.
 
-`neighbours` joined at [[ROADMAP|V1.3a]] and is in that same authored-but-real
+`neighbours` joined at V1.3a and is in that same authored-but-real
 class: which nations share a land border is a fact, not a tuning number, and it
 is one of only two inputs the relations derivation has. Required and possibly
 empty — GBR's list is empty and that is correct, so an absent key would be
 indistinguishable from a nation that borders nobody. Only roster members are
 listed; `data_loader.gd` fails at startup if a border is not mutual, because the
 symmetric pair key would otherwise rest on an asymmetric input. It gained a
-second reader at [[ROADMAP|V1.3b]] -- the trade weight's border bonus -- which is
+second reader at V1.3b -- the trade weight's border bonus -- which is
 also why it is copied onto `NationState` rather than looked up through the loader:
 `Economy.tick_month()` has no loader argument and twenty-eight call sites that
 would all have had to grow one. See [[diplomacy-model]] and [[trade-model]].
@@ -191,7 +191,7 @@ for this purpose; see [[data-sources]] for the specifics. They do not refresh on
 re-import.
 
 `tax_rates_pct`, `spending_pct_gdp` and `other_spending_pct_gdp` joined the same
-object at [[ROADMAP|V1.2a]], replacing the one shared `policy_defaults.json`
+object at V1.2a, replacing the one shared `policy_defaults.json`
 above. Same class again: France's own numbers are the unchanged anchor, VAT on
 the other nine is each one's own sourced statutory rate, income and corporate
 are France's scaled by OECD Revenue Statistics tax-to-GDP shares (headline
@@ -213,7 +213,7 @@ begins exactly on its own erosion reference.
 > touched by `tools/import_data.py`. Full argument, every date's source, and
 > what each real electoral system reduces to is [[electoral-systems]].
 >
-> `legislative` and `eu` arrived at [[ROADMAP|S6]]; `formation` and `executive`
+> `legislative` and `eu` arrived at S6; `formation` and `executive`
 > at [[v1|V1.1a]], which also split the old flat `government.election` into
 > `government.legislative.election`. **`executive` is optional and present only
 > where the head of government is elected separately from the assembly** — of
@@ -222,7 +222,7 @@ begins exactly on its own erosion reference.
 > `formation.method` being dispatched rather than branched on, is
 > [[government-model]].
 >
-> `system`, `head_of_state` and `term_limit` arrived at [[ROADMAP|V1.2b]].
+> `system`, `head_of_state` and `term_limit` arrived at V1.2b.
 > `system` names a `data/political-systems/*.json` file, which constrains —
 > not defaults — `formation.method`/`formation.censure`/
 > `legislative.dissolution.rule` to the set that template allows.
@@ -231,7 +231,7 @@ begins exactly on its own erosion reference.
 > already uses. `term_limit` is `0` unless the nation's template permits one —
 > only France's does. Full argument: [[political-systems]].
 >
-> `government.amendment.rule` arrived at [[ROADMAP|V1.2c]], constrained the
+> `government.amendment.rule` arrived at V1.2c, constrained the
 > same way by the template's own `allowed_amendment_rules` — a sixth
 > dispatch-on-a-data-string field, not a new pattern. Unlike every field
 > above, it is not fixed for the run: a constitutional amendment can rewrite
@@ -318,14 +318,14 @@ at import time. It checks:
 
 - Required fields present, correct type.
 - Numeric fields within sane ranges — no negative populations, no debt ratios of 40,000.
-- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists, every `system` names a real file in `data/political-systems/` ([[ROADMAP|V1.2b]]), every constitutional amendment's `effects.institutional` is legal under every template named in its own `systems` list ([[ROADMAP|V1.2c]], [[amendment-model]]), and every scenario names a *playable* nation, real parties, and real voter blocs ([[ROADMAP|V1.2e]], [[scenario-model]]).
+- Referential integrity — every `geo_id` resolves to a feature in `europe.geojson`, every party's nation exists, every `system` names a real file in `data/political-systems/` (V1.2b), every constitutional amendment's `effects.institutional` is legal under every template named in its own `systems` list (V1.2c, [[amendment-model]]), and every scenario names a *playable* nation, real parties, and real voter blocs (V1.2e, [[scenario-model]]).
 - **What a scenario produces, not what it declares.** A scenario's `seat_share` is a partial override merged over the party file's own shares, so the fragment is not required to sum to anything — the check is that the *merged roster* still sums to 1.0, the same invariant `data/parties/*.json` is held to. It is the one check in the loader that passes every per-file test and fails only cross-file, which is why scenario validation is split between `scenario.gd` (range and shape) and `data_loader.gd` (everything needing the nation's roster).
 - Domain invariants — party seat shares per nation sum to 100%, sector shares sum to 1.0.
 - **Coherence of a SET, which no per-entry check can see.** `data/project-actions/`
   refuses two entries defining one project and an `abandon` naming a project nothing
   starts; `data/events/` refuses two events with the same subject AND the same gate,
   because two crises that can only ever fire in the same months are one event authored
-  twice and the second fires only where the first did not ([[ROADMAP|V1.8]],
+  twice and the second fires only where the first did not (V1.8,
   [[events-model]]).
 
 It runs unconditionally at startup and fails loudly with the offending file and field. This is the cheapest bug-catching in the project: content errors are the most common kind of error in a data-driven game, and they are trivially detectable.
@@ -334,7 +334,7 @@ It runs unconditionally at startup and fails loudly with the offending file and 
 
 ### Shape
 
-A single `GameState` object holding plain data, built at new-game time by copying starting values out of the static data. Built in [[ROADMAP|S4]], the first session that had anything to mutate.
+A single `GameState` object holding plain data, built at new-game time by copying starting values out of the static data. Built in S4, the first session that had anything to mutate.
 
 ```
 GameState                        src/core/game_state.gd
@@ -342,10 +342,10 @@ GameState                        src/core/game_state.gd
 ├── year, month                  mirrored from the Clock each monthly tick
 ├── player_nation_id
 ├── nations{}                    String id -> NationState
-├── relations{}                  sorted pair key -> float in 0-100 ([[ROADMAP|V1.3a]])
-├── agreements{}                 sorted pair key -> the agreed terms ([[ROADMAP|V1.3b]])
+├── relations{}                  sorted pair key -> float in 0-100 (V1.3a)
+├── agreements{}                 sorted pair key -> the agreed terms (V1.3b)
 ├── history[]                    dated monthly snapshots, for charts
-├── recent_effects[]             what the last few commands moved ([[ROADMAP|U4]])
+├── recent_effects[]             what the last few commands moved (U4)
 └── errors[]                     problems found while building the state
 
 NationState                      src/core/nation_state.gd
@@ -357,35 +357,35 @@ NationState                      src/core/nation_state.gd
 │              the starting deficit the opinion model measures against
 ├── opinion    bloc_approval{}, overall_approval_pct, issue_salience{}
 ├── identity   eu_member, neighbours[] -- static facts copied from Nation, read
-│              by the trade weight ([[ROADMAP|V1.3b]])
+│              by the trade weight (V1.3b)
 ├── impulses   demand_impulse, potential_shift, external_impulse,
-│              trade_baseline_by_partner{} ([[ROADMAP|V1.3b]], replacing a scalar)
+│              trade_baseline_by_partner{} (V1.3b, replacing a scalar)
 ├── elections  assembly_seats, term_months, months_in_term, next_election_year/
 │              _month, next_ep_election_year/_month, terms_served,
 │              incumbent_party_id, seats_by_party{}, last_election{},
-│              last_ep_election{}, in_government   ([[ROADMAP|S6]])
+│              last_ep_election{}, in_government   (S6)
 ├── government formation_method, censure_rule, coalition_party_ids[],
 │              coalition_seats, coalition_position{}, pm_party_id/_name,
 │              is_cohabitation, is_minority, force_cooldown_months,
-│              censure_barred_party_ids[], governments_fallen ([[ROADMAP|V1.1a]])
+│              censure_barred_party_ids[], governments_fallen (V1.1a)
 ├── discipline party_discipline{}  String party id -> live discipline
-│                                  ([[ROADMAP|V1.1b]], [[discipline-model]])
+│                                  (V1.1b, [[discipline-model]])
 ├── dissolution dissolution_rule, _lockout_months, _notice_months,
 │               _lockout_remaining, dissolution_pending, dissolutions_called,
-│               last_dissolution{}   ([[ROADMAP|V1.1c]], [[dissolution-model]])
+│               last_dissolution{}   (V1.1c, [[dissolution-model]])
 ├── cabinet    cabinet{}, cabinet_effectiveness{}, cabinet_entitlement{},
 │              reshuffles_called, resignations_count, last_resignation{}
-│                                  ([[ROADMAP|V1.1d]], [[cabinet-model]])
+│                                  (V1.1d, [[cabinet-model]])
 ├── legislature law_* accumulators, passed_law_ids{}, law_cooldown_months{},
-│              last_law_result{}   ([[ROADMAP|S7]])
+│              last_law_result{}   (S7)
 ├── political system_id, head_of_state_*, lose_condition, term_limit
-│              ([[ROADMAP|V1.2b]], [[political-systems]]) -- system_id,
+│              (V1.2b, [[political-systems]]) -- system_id,
 │              lose_condition and head_of_state_* become mutable at runtime
-│              from [[ROADMAP|V1.2d]] on, a system transition being the first
+│              from V1.2d on, a system transition being the first
 │              thing that writes them ([[transition-model]])
 ├── amendment  amendment_rule -- mutable at runtime, unlike its V1.2b
-│              siblings above   ([[ROADMAP|V1.2c]], [[amendment-model]])
-└── transition permits_system_change   ([[ROADMAP|V1.2d]], [[transition-model]])
+│              siblings above   (V1.2c, [[amendment-model]])
+└── transition permits_system_change   (V1.2d, [[transition-model]])
 ```
 
 Later sessions add their own fields the same way the nation schema is grown — S6 election state, V1.1a's government, V1.1b's discipline, V1.1c's dissolution, V1.1d's cabinet. The clock stays authoritative for the date; folding it in is S9's call, when save/load needs one place to read it from.
@@ -401,7 +401,7 @@ Systems in `src/sim/` read and write `GameState`. Nothing else does. The UI read
 Live state is serialised to a JSON save file. The whole `GameState` object, written in one go, read in one go.
 
 > [!warning] `to_dict()` hands out the LIVE dictionaries, not copies
-> Found at [[ROADMAP|V1.4a]], in a test that had to be rewritten around it.
+> Found at V1.4a, in a test that had to be rewritten around it.
 > `GameState.to_dict()` and `NationState.to_dict()` build a fresh **outer**
 > dictionary and put the live inner ones straight into it, and `from_dict()`
 > assigns them straight back out — its own header says it expects freshly parsed
@@ -416,18 +416,18 @@ Live state is serialised to a JSON save file. The whole `GameState` object, writ
 
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
 
-**It is at 9, and no migration has ever been written.** Version 1 → 2 at [[ROADMAP|V1.1a]], because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at [[ROADMAP|V1.1b]], because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at [[ROADMAP|V1.1c]], for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at [[ROADMAP|V1.1d]], for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at [[ROADMAP|V1.2b]], for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at [[ROADMAP|V1.2c]], for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Version 7 → 8 at [[ROADMAP|V1.2d]], for [[transition-model|`permits_system_change`]] — and the point where `system_id`/`lose_condition`/head-of-state stop being fixed for the whole run, a system transition being the first thing in this model that writes any of them after new-game. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
+**It is at 9, and no migration has ever been written.** Version 1 → 2 at V1.1a, because government formation split the executive's term from the assembly's and added the coalition fields. Version 2 → 3 at V1.1b, because [[discipline-model|party discipline]] became live state and a save without a `party_discipline` table would score every coalition bonus and every censure vote against the authored figure rather than the eroded one. Version 3 → 4 at V1.1c, for [[dissolution-model|dissolution]]'s six new fields. Version 4 → 5 at V1.1d, for [[cabinet-model|cabinet]]'s six. Version 5 → 6 at V1.2b, for [[political-systems|the political-system fields]] (`system_id`, head-of-state, `lose_condition`, `term_limit`). Version 6 → 7 at V1.2c, for [[amendment-model|`amendment_rule`]] — mutable at runtime, unlike its V1.2b siblings, since an amendment may entrench its own threshold. Version 7 → 8 at V1.2d, for [[transition-model|`permits_system_change`]] — and the point where `system_id`/`lose_condition`/head-of-state stop being fixed for the whole run, a system transition being the first thing in this model that writes any of them after new-game. Every bump is refused outright rather than restored with a field silently missing — a half-understood political state is worse than a clear refusal, and `tests/test_save_load.gd` names each superseded version as a case of its own because those are the versions an actual player has on disk.
 
-> [!note] [[ROADMAP|V1.2e]] added a runtime-readable field and did **not** bump
+> [!note] V1.2e added a runtime-readable field and did **not** bump
 > `GameState.scenario_id` is the first addition since V1.2b to stop at 8. The
 > rule this list follows is not "a new field bumps" but "a missing field would
 > be read as something *wrong*" — and a version-8 save has no `scenario_id`
 > because it was a standard start, which is exactly what `""` means. The
 > scenario's effects ride in the ordinary fields either way, since a scenario
-> applies once at new-game and mutates nothing after. Same call [[ROADMAP|V1.2a]]
+> applies once at new-game and mutates nothing after. Same call V1.2a
 > made and held. See [[scenario-model]].
 
-Version 8 → 9 at [[ROADMAP|V1.3a]], and it is the clearest illustration of that
+Version 8 → 9 at V1.3a, and it is the clearest illustration of that
 same rule cutting the other way. `GameState.relations` is the first live state
 that is neither per-nation nor global; a version-8 save carries no `relations`
 key, every pair then resolves to `0.0`, and `0.0` is the **worst possible**
@@ -439,7 +439,7 @@ accumulated approval offset a played game had earned. `tests/test_save_load.gd`
 checks the premise directly rather than asserting it in prose. See
 [[diplomacy-model]].
 
-**9 -> 10 at [[ROADMAP|V1.3b]]**, and the interesting part is which of three
+**9 -> 10 at V1.3b**, and the interesting part is which of three
 candidate fields earned it -- all three were checked in `tests/test_save_load.gd`
 rather than argued. `agreements` did **not**: an absent register reads as `{}`,
 which is exactly right for a version-9 save, and that is `scenario_id`'s case

@@ -8,7 +8,7 @@ tags:
 
 # Inflation Model
 
-Inflation, as built at [[ROADMAP|V1.6b]] — the second session of the V1.6 block. A
+Inflation, as built at V1.6b — the second session of the V1.6 block. A
 per-nation price level as a stock, driven by the unemployment gap, charging two
 prices. Every formula, every constant, and the argument for why three of the five
 constants were never swept.
@@ -392,4 +392,4 @@ It now reads *"Inflation 1.8%, +0.08 since the start"* under an unemployment rat
 
 ---
 
-Related: [[index]] · [[economy-model]] · [[cycle-model]] · [[opinion-model]] · [[unrest-model]] · [[decision-log]] · [[ROADMAP]] · [[v1]]
+Related: [[index]] · [[economy-model]] · [[cycle-model]] · [[opinion-model]] · [[unrest-model]] · [[decision-log]] · [[v1]]

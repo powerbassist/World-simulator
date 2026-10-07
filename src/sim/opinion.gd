@@ -212,6 +212,24 @@ static func issue_satisfaction(ns) -> Dictionary:
 		sat["tax_%s" % key] = _scaled(
 			-d_rate, float(K.TAX_SCALE_PP_BY_KEY.get(key, K.TAX_SCALE_PP))
 		)
+	# V4.2 T4. A COMPOSED key prices here, off the params register, at the
+	# SHARED TAX_SCALE_PP -- and never at a TAX_SCALE_PP_BY_KEY entry: the
+	# table's fits were per key against the reachable spans of taxes the model
+	# authored, so a per-key override for a player-proposed key is authored
+	# constants' privilege and is not built (the recorded bound, not an
+	# omission to fix later). The start reads 0.0 by construction -- the
+	# zero-reference rule; the tax did not exist at new-game. THE BOUND WORTH
+	# NAMING: no bloc's authored salience table carries a row for a key that
+	# did not exist when it was written, so this satisfaction reaches approval
+	# through the economy the tax moves -- the demand impulse, then jobs and
+	# growth -- and not through a weight of its own. docs/tax-model.md's
+	# sixth-key section records both halves.
+	for key in ns.custom_taxes:
+		var d_custom: float = (
+			float(ns.tax_rates_pct.get(key, 0.0))
+			- float(ns.start_tax_rates_pct.get(key, 0.0))
+		)
+		sat["tax_%s" % key] = _scaled(-d_custom, float(K.TAX_SCALE_PP))
 
 	for key in C.SPENDING_KEYS:
 		var d_spend: float = (

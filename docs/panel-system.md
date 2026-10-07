@@ -17,7 +17,7 @@ with a measurement.** Sections 1–6 are V2.1a's and stand; section 7 is rewritt
 by the measurement that answered it, sections 8–12 are V2.1b's, and sections
 13–17 are V2.1c's.
 
-Related: [[ROADMAP]] · [[v2]] · [[engine-decision]]
+Related: [[v2]] · [[engine-decision]]
 
 ## 1. Why a system rather than another round of fixes
 
@@ -47,7 +47,7 @@ three of them still in, which is why every assertion in
 `trends.gd` and `ui_theme.gd`'s shape. All nineteen panels already
 `extends PanelContainer`, so a hierarchy would buy nothing: the dirty sweep is
 duck-typed on `has_method("mark_dirty")` and finds them without one, and
-[[ROADMAP|AGENTS.md]] lists abstract base classes among the things this project
+AGENTS.md lists abstract base classes among the things this project
 does without. Migration is therefore a call-site substitution rather than a
 re-parenting, which is what makes V2.1b mechanical.
 

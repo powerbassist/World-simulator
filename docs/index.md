@@ -9,12 +9,11 @@ tags:
 Design vault for a single-player geopolitics and nation-management game. You rule a real nation: pass laws, manage parties, set the budget, fight elections, change the political system, negotiate with other nations, and contend with private companies.
 
 > [!note] Vault root
-> Open **the project root** as the Obsidian vault, not `docs/`. `ROADMAP.md` lives at the root, and links to it only resolve from there.
+> Open **the project root** as the Obsidian vault, not `docs/` — the vault config (`.obsidian/`) lives at the root.
 
 ## Start here
 
 - [[scope]] — what the game is, what gets built, what does not
-- [[ROADMAP]] — session-by-session build order
 - [[mvp]] — the smallest version that is actually a game
 
 ## Decisions

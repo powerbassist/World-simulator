@@ -1,7 +1,11 @@
 extends PanelContainer
 
-## The budget screen. Eight levers, the books as they stand, the books as
-## proposed, and a two-year projection of both.
+## The budget screen. Five spending levers, the books as they stand, the
+## books as proposed, and a two-year projection of both. V4.2 T5 moved the
+## tax levers out: tax comes out of the Budget panel into its own surface --
+## the Tax Code window (X), which carries the rates, the brackets and the
+## born keys, on the cluster grammar that a surface is the domain of its
+## decision. This panel keeps the spending side of the same books.
 ##
 ## Reads simulation state and never writes it. The single exception is the
 ## Commit button, which sends player intent back as one explicit command —
@@ -9,50 +13,26 @@ extends PanelContainer
 ## See engine-decision.md Rule 2.
 ##
 ## The control tree is built in code rather than authored as a .tscn: it is a
-## generated grid of eight identical rows, which a scene file would describe
+## generated grid of identical rows, which a scene file would describe
 ## worse and more verbosely than the loop below.
 
 const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const CycleK = preload("res://src/sim/cycle_constants.gd")
-const Tax = preload("res://src/sim/tax.gd")
-const TaxK = preload("res://src/sim/tax_constants.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 const PROJECTION_MONTHS := 24
 
-## V1.6d. The brackets lever, keyed apart from the ten rate-and-spending keys because
-## it is not one of them: it sets no rate, has no base share and collects nothing.
-## Budget.commit() takes it as a third top-level key on `pending` for the same reason.
-const PROGRESSIVITY_KEY := "tax_progressivity"
-
 const LEVER_LABELS := {
-	"income": "Income tax",
-	"corporate": "Corporate tax",
-	"vat": "VAT",
-	"capital_gains": "Capital gains tax",
-	"wealth": "Wealth tax",
-	PROGRESSIVITY_KEY: "Income brackets",
 	"health": "Health",
 	"education": "Education",
 	"defence": "Defence",
 	"pensions": "Pensions",
 	"infrastructure": "Infrastructure",
 }
-## V1.6d: `wealth` is 3.0 and not 70, and the number is not authored here -- it reads
-## economy_constants.WEALTH_RATE_MAX_PCT, so the model bound and the control cannot
-## drift apart, and tests/test_tax.gd asserts the identity. A point of wealth rate is
-## eight points of income tax in revenue, because that base is a stock; a slider running
-## to 70 would be a slider whose top four fifths is a joke.
 const LEVER_MAX := {
-	"income": 70.0,
-	"corporate": 70.0,
-	"vat": 40.0,
-	"capital_gains": 60.0,
-	"wealth": C.WEALTH_RATE_MAX_PCT,
-	PROGRESSIVITY_KEY: TaxK.PROGRESSIVITY_MAX,
 	"health": 30.0,
 	"education": 30.0,
 	"defence": 30.0,
@@ -140,10 +120,11 @@ const FIGURE_ROWS := [
 	["energy", "  of which energy"],
 	["deficit", "Deficit"],
 	["debt", "Debt"],
-	# V1.6d. NOT a budget figure, and it is on this panel anyway because this is where
-	# the three instruments that move it live -- brackets, the capital-gains rate and
-	# the wealth rate. It is the one consequence of a distributional budget no other
-	# line here can show: docs/unrest-model.md's grievance reads it, and until V1.6d
+	# V1.6d. NOT a budget figure, and it is on this panel anyway because the
+	# instruments that move it are money levers -- the brackets, the
+	# capital-gains rate and the wealth rate now live on the Tax Code window
+	# (V4.2 T5), and this is the line that shows what they did to the
+	# distribution. docs/unrest-model.md's grievance reads it, and until V1.6d
 	# nothing the player did moved it at all.
 	#
 	# NEVER SILENT, which is the dependency ratio's and the credit rating's rule
@@ -165,7 +146,13 @@ signal committed(before: Dictionary, pending: Dictionary)
 
 var _state
 var _loader
-var _pending := {"tax_rates_pct": {}, "spending_pct_gdp": {}}
+## V4.2 ultra pass 2. The Tax Code window, wired by main.gd beside the other
+## panel-to-panel references: its uncommitted edits ride this panel's proposed
+## column and 24-month projection (see _refresh()). A sibling reference, not
+## state -- the load path rebinds each panel's own setup() and leaves this
+## alone. Null until wired; every read guards it.
+var tax_panel = null
+var _pending := {"spending_pct_gdp": {}}
 ## The lever keys the player has actually moved. PER KEY rather than one boolean:
 ## a boolean latches -- nudge one slider, close the window without committing, and
 ## every OTHER lever stopped tracking live state for the rest of the run, which is
@@ -226,7 +213,7 @@ func _build_levers() -> Control:
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	PanelKit.line(box, "Levers (tax rates %, spending % of GDP)", PanelKit.Tone.PLAIN)
+	PanelKit.line(box, "Levers (spending % of GDP — the tax rates live on the Tax Code window, X)", PanelKit.Tone.PLAIN)
 
 	var grid := GridContainer.new()
 	grid.columns = 3
@@ -242,10 +229,10 @@ func _build_levers() -> Control:
 		var slider := HSlider.new()
 		slider.min_value = 0.0
 		slider.max_value = float(LEVER_MAX[key])
-		# A tenth of a point is the right grain for a lever running to seventy and much
-		# too coarse for one running to three: at 0.1 the wealth slider offers thirty
-		# positions in total and Switzerland's real rate lands between two of them.
-		slider.step = 0.01 if key == "wealth" or key == PROGRESSIVITY_KEY else 0.1
+		# A tenth of a point everywhere: the spending levers all run to
+		# thirty, where one decimal prints three hundred distinct positions.
+		# (The fine-grained rows moved to the Tax Code window with the rates.)
+		slider.step = 0.1
 		slider.custom_minimum_size.x = 220
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.value_changed.connect(_on_lever_changed.bind(key))
@@ -319,13 +306,9 @@ func hide_close_button() -> void:
 
 
 func _lever_keys() -> Array:
+	# The five spending keys only, since V4.2 T5: the tax side (five rates,
+	# the brackets lever, the born keys) lives on the Tax Code window now.
 	var keys: Array = []
-	keys.append_array(C.TAX_KEYS)
-	# Directly after the five rates and before the spending lines, because it is a
-	# property OF the income tax rather than a sixth tax -- the panel reads in the order
-	# docs/tiers/v1.md section 6 states the target in, "five taxes, plus brackets within
-	# income".
-	keys.append(PROGRESSIVITY_KEY)
 	keys.append_array(C.SPENDING_KEYS)
 	return keys
 
@@ -347,9 +330,7 @@ func _on_revert() -> void:
 	if ns == null:
 		return
 	_pending = {
-		"tax_rates_pct": ns.tax_rates_pct.duplicate(true),
 		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(true),
-		PROGRESSIVITY_KEY: ns.tax_progressivity,
 	}
 	for key in _lever_keys():
 		var slider: HSlider = _sliders[key]
@@ -372,22 +353,13 @@ func _on_commit() -> void:
 
 
 func _on_lever_changed(value: float, key: String) -> void:
-	if key == PROGRESSIVITY_KEY:
-		_pending[PROGRESSIVITY_KEY] = value
-	elif C.TAX_KEYS.has(key):
-		_pending["tax_rates_pct"][key] = value
-	else:
-		_pending["spending_pct_gdp"][key] = value
+	_pending["spending_pct_gdp"][key] = value
 	# This lever is now the player's; mark_dirty() must stop re-syncing THIS one.
 	_edited_keys[key] = true
 	_dirty = true
 
 
 func _pending_value(key: String) -> float:
-	if key == PROGRESSIVITY_KEY:
-		return float(_pending.get(PROGRESSIVITY_KEY, TaxK.PROGRESSIVITY_BASE))
-	if C.TAX_KEYS.has(key):
-		return float(_pending["tax_rates_pct"].get(key, 0.0))
 	return float(_pending["spending_pct_gdp"].get(key, 0.0))
 
 
@@ -430,28 +402,14 @@ func _resync_untouched() -> void:
 	for key in _lever_keys():
 		if _edited_keys.has(key):
 			continue
-		var live: float = 0.0
-		if key == PROGRESSIVITY_KEY:
-			live = float(ns.tax_progressivity)
-			_pending[PROGRESSIVITY_KEY] = live
-		elif C.TAX_KEYS.has(key):
-			live = float(ns.tax_rates_pct.get(key, 0.0))
-			_pending["tax_rates_pct"][key] = live
-		else:
-			live = float(ns.spending_pct_gdp.get(key, 0.0))
-			_pending["spending_pct_gdp"][key] = live
+		var live: float = float(ns.spending_pct_gdp.get(key, 0.0))
+		_pending["spending_pct_gdp"][key] = live
 		var slider: HSlider = _sliders[key]
 		slider.set_block_signals(true)
 		slider.value = live
 		slider.set_block_signals(false)
 
 
-## One decimal and a percent sign is right for a rate running to seventy and wrong for
-## both levers V1.6d added: the wealth lever's whole span is three points, so one
-## decimal prints thirty distinct values across it and the second decimal is where the
-## choice lives, and the bracket index is not a percentage of anything at all. V1.6b's
-## own screenshot bug -- a format copied from the neighbouring row -- one session on,
-## avoided rather than repeated.
 ## Two decimals, chosen against the reachable range rather than copied from the row
 ## above: tax_constants.GINI_POLICY_MAX_PT bounds the whole policy offset at 8.60 points,
 ## but the grain a player moves it in is a bracket notch, which is hundredths. One
@@ -463,12 +421,7 @@ func _gini_text(snap: Dictionary) -> String:
 
 
 func _lever_text(key: String) -> String:
-	var value := _pending_value(key)
-	if key == PROGRESSIVITY_KEY:
-		return "%.2f" % value
-	if key == "wealth":
-		return "%.2f%%" % value
-	return "%.1f%%" % value
+	return "%.1f%%" % _pending_value(key)
 
 
 func _refresh() -> void:
@@ -483,10 +436,27 @@ func _refresh() -> void:
 	# nothing. preview() recomputes the books on a deep copy, so the "now" column is
 	# the live position without this panel writing a byte of sim state, which rule 2
 	# forbids. Found by tests/test_budget_panel.gd, not by looking.
+	#
+	# THE TAX MERGE, the ultra pass-2 finding: V4.2 T5 moved the tax levers off
+	# this panel and its _pending lost them with it, so an uncommitted Tax Code
+	# draft left proposed == now on Revenue/Deficit and both projections
+	# tax-identical -- the one surface that promises "this is what will happen"
+	# silently asserting no change. The edited keys merge into a copy of the
+	# spending pending; Budget.commit()'s per-key splice makes absent keys
+	# harmless, so an empty tax pending is exactly the pre-fix behaviour.
+	var pending := _pending.duplicate(true)
+	if tax_panel != null:
+		var tax_pending: Dictionary = tax_panel.pending_tax()
+		if tax_pending.has("tax_rates_pct"):
+			var rates: Dictionary = pending.get("tax_rates_pct", {})
+			rates.merge(tax_pending["tax_rates_pct"])
+			pending["tax_rates_pct"] = rates
+		if tax_pending.has("tax_progressivity"):
+			pending["tax_progressivity"] = tax_pending["tax_progressivity"]
 	var now := Budget.preview(_state, {})
-	var proposed := Budget.preview(_state, _pending)
+	var proposed := Budget.preview(_state, pending)
 	var now_path := Budget.project(_state, {}, PROJECTION_MONTHS, _loader)
-	var proposed_path := Budget.project(_state, _pending, PROJECTION_MONTHS, _loader)
+	var proposed_path := Budget.project(_state, pending, PROJECTION_MONTHS, _loader)
 
 	_set_figure("revenue", _pct_and_eur(now, "total_revenue_pct_gdp"), _pct_and_eur(proposed, "total_revenue_pct_gdp"))
 	_set_figure("tariffs", _tariff_text(now), _tariff_text(proposed))

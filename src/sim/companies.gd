@@ -994,9 +994,10 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			price = -held_before * _value_of(ns, loader, company_id)
 			entry["state_share"] = 0.0
 
-	# A CAPITAL TRANSACTION IS A BALANCE-SHEET SWAP, not income, and this is the one
-	# place in the project that writes the debt stock outside Budget.tick_month().
-	# Three things follow for free and none of them needed building: the interest on
+	# A CAPITAL TRANSACTION IS A BALANCE-SHEET SWAP, not income, and this is one of
+	# the TWO one-off capital writers outside Budget.tick_month() -- this and
+	# statute.gd's poll purchases since V4.2. Three things follow for free and none
+	# of them needed building: the interest on
 	# it is priced by Budget.recompute() at DEBT_REAL_RATE_PCT, the level is read by
 	# the bloc's own `debt_to_gdp_pct` rule, and it has been serialised since the MVP.
 	#

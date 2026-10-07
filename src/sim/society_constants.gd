@@ -122,9 +122,10 @@ const QUALITY_MAX := 30.0
 ## `regulation_burden`'s shape exactly, so it adds no accumulator and no machine.
 ##
 ## SYMMETRIC, and the sign is the whole of anti-corruption. This is V1.4b's
-## deregulation argument transferred verbatim: there is no repeal verb in this
-## project and a `once` law never returns, so a [0, MAX] clamp would make corruption
-## a permanent monotone charge -- docs/defence-model.md's named failure -- and an
+## deregulation argument, updated at V4.2 when the repeal verb landed: repeal removes
+## whole acts rather than nudging a stance back, so a [0, MAX] clamp would still make
+## corruption a permanent monotone charge -- docs/defence-model.md's named failure --
+## and an
 ## anti-corruption law would be INERT at corruption 0, which breaks V1.3f's own
 ## property that no law on the list does nothing. Negative corruption is a
 ## cleaner-than-baseline administration, and it raises delivery above 1.0 rather

@@ -8,7 +8,7 @@ tags:
 # The Geographic Register
 
 What a region is, what a city is, why the level differs by nation, and the one
-constant this session measures. Built at [[ROADMAP|V2.2a]]; [[tiers/v2|V2]] section 2.
+constant this session measures. Built at V2.2a; [[tiers/v2|V2]] section 2.
 
 > [!important] A register, not a machine
 > At V2.2a nothing in `src/sim/` read a region: a region carried no GDP, no
@@ -125,7 +125,7 @@ for two nations only — FRA **0.0330** and ESP **0.0460**.
 
 ## 4. Britain, and the half the tier row got wrong
 
-[[ROADMAP]]'s V2 preamble records that `nama_10r_2gdp` carries zero `UK` geo codes,
+The ROADMAP's V2 preamble records that `nama_10r_2gdp` carries zero `UK` geo codes,
 that Eurostat dropped UK regions after withdrawal, and that *"Britain therefore needs a
 second source or an authored register"*. Half of that is right and the wrong half is
 the one that mattered.
@@ -382,4 +382,4 @@ with Northern Ireland.
 ---
 
 Related: [[tiers/v2]] · [[companies-model]] · [[data-sources]] · [[data-architecture]]
-· [[fictionalization]] · [[ROADMAP]]
+· [[fictionalization]]

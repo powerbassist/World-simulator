@@ -8,7 +8,7 @@ tags:
 
 # Scenario Model
 
-Built at [[ROADMAP|V1.2e]]. [docs/tiers/v1.md](tiers/v1.md) §2's last item, and
+Built at V1.2e. [docs/tiers/v1.md](tiers/v1.md) §2's last item, and
 the one that closes V1.2: **start scenarios** — a nation plus an authored
 starting state.
 
@@ -227,6 +227,6 @@ mark the games that differ from the baseline.
 
 ---
 
-Related: [[ROADMAP]] · [[v1]] · [[declined]] · [[amendment-model]] ·
+Related: [[v1]] · [[declined]] · [[amendment-model]] ·
 [[transition-model]] · [[political-systems]] · [[opinion-model]] ·
 [[data-architecture]]

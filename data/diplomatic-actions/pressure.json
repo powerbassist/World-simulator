@@ -1,5 +1,5 @@
 {
-  "_note": "The negative half of V1.3a's verb set. Tariffs and sanctions are V1.3c, not here -- what this file holds is rhetorical pressure, which needs no trade model behind it. See ROADMAP.md.",
+  "_note": "The negative half of V1.3a's verb set. Tariffs and sanctions are V1.3c, not here -- what this file holds is rhetorical pressure, which needs no trade model behind it. See ROADMAP.md (retired 2026-10-05 -- the tier docs carry the build order now).",
   "actions": [
     {
       "id": "public_condemnation",

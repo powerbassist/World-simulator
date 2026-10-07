@@ -144,6 +144,46 @@ var systems: Array[String] = []
 ## ns.permits_system_change -- see docs/transition-model.md.
 var changes_system: bool = false
 
+## V4.2. The law id this bill REMOVES on passage -- a repeal is a law like
+## any other in HOW it arrives: proposed, voted, failable. But a PURE repeal
+## records no ledger entry of its own -- its subtraction runs BEFORE the
+## snapshot at the top of apply(), and its negation is not re-recorded -- so
+## the book has no path back through the repealer: the act returns by being
+## re-proposed and re-passed after its cooldown, a new passage with new
+## realized deltas. That promise is load-bearing for a ONCE law too, and the
+## ultra pass-2 made it true rather than merely documented: a carried repeal
+## clears the once gate (passed_law_ids, in _subtract_ledger), so the act is
+## re-proposable -- the once flag's purpose survives because only a carried
+## repeal clears it. Authored content never sets it; the composition machine
+## does, so the field is "" on every data/laws/*.json entry and the loader
+## need not know it exists. apply() subtracts the target's REALIZED ledger
+## through apply_effects() -- the one applier, negated.
+var repeals: String = ""
+
+## V4.2. True for a runtime-built law -- the composition machine's output.
+## from_dict() never reads it, so authored content cannot claim it: a
+## data/laws/ entry is a law, not a composition.
+var composed: bool = false
+
+## V4.2. Who authored this law: "authored" (data/laws/, the loader's default)
+## or "player" (the composition machine's birth). Assembly bills are authored
+## laws by construction -- the backbench tables the loader's own content --
+## so they keep "authored"; their provenance rides ns.assembly_bills and
+## ns.held_bills instead. No panel reads the field yet; it exists for the
+## statute panel's future provenance reads.
+var origin: String = "authored"
+
+## V4.2 T4. The params of a tax key this bill BIRTHS -- {key, name,
+## base_share, erosion, ref_pct}: the register entry's four fields plus `key`
+## itself, which names what to register (the register is keyed by it and does
+## not store it a second time). Empty on every authored law (from_dict()
+## never reads it, so data/laws/ cannot claim a birth); the composition
+## machine fills it, and Legislature.apply() reads it at passage to register
+## the key BEFORE the rate moves -- one writer, one registration site.
+## `ref_pct` is the birth rate, the key's erosion reference for as long as
+## the key exists.
+var new_tax: Dictionary = {}
+
 ## V1.1e. HOW FAR THIS LAW REACHES INTO THE MACHINERY OF THE STATE, in [0, 1]: the
 ## largest fraction of any substantive effect clamp it uses. Computed once at load,
 ## because it is a property of the law and of the model's own bounds and neither
@@ -246,6 +286,79 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 	law.reach = _reach_of(law.effects)
 
 	return law
+
+
+## V4.2. The save form of a composed law, and the inverse of
+## composed_from_dict(): everything JSON-safe, no Law references, no content
+## arrays. ns.custom_laws holds THESE and never a live Law, on the same
+## round-trip-through-JSON discipline as every other register.
+func to_save_dict() -> Dictionary:
+	return {
+		"id": id,
+		"name": law_name,
+		"theme": theme,
+		"summary": summary,
+		"position": position.duplicate(),
+		"majority": majority,
+		"cooldown_months": cooldown_months,
+		"once": once,
+		"effects": effects.duplicate(true),
+		"new_tax": new_tax.duplicate(true),
+		"repeals": repeals,
+		"composed": composed,
+		"origin": origin,
+	}
+
+
+## The save-rebuild factory for composed laws -- from_dict()'s counterpart
+## for entries that were validated at BIRTH (statute.gd's draft()) and are
+## trusted from the save the way the ledger's payload is. It takes no
+## validation arrays because it runs none: the machine never composed what
+## the loader would refuse, and re-running the authored schema against a
+## played save would let a content edit retroactively break a statute.
+## `reach` is recomputed, not stored -- a property of the effects and the
+## model's bounds, and the court reads it on every composed bill's passage.
+static func composed_from_dict(d: Dictionary):
+	var law := new()
+	law.id = String(d.get("id", ""))
+	law.law_name = String(d.get("name", ""))
+	law.theme = String(d.get("theme", ""))
+	law.summary = String(d.get("summary", ""))
+	var pos: Dictionary = d.get("position", {})
+	if typeof(pos) == TYPE_DICTIONARY:
+		law.position = {"economic": float(pos.get("economic", 0.0)), "social": float(pos.get("social", 0.0))}
+	law.majority = String(d.get("majority", "simple"))
+	law.cooldown_months = int(d.get("cooldown_months", 0))
+	law.once = bool(d.get("once", false))
+	var fx = d.get("effects", {})
+	if typeof(fx) == TYPE_DICTIONARY:
+		law.effects = fx.duplicate(true)
+	# V4.2 T4. A birth's params ride the save dict -- trusted like the
+	# effects, validated at birth by the machine's draft gate, never
+	# re-validated here (composed_from_dict's own contract).
+	var nt = d.get("new_tax", {})
+	if typeof(nt) == TYPE_DICTIONARY:
+		law.new_tax = nt.duplicate(true)
+	law.constitutional = false
+	law.repeals = String(d.get("repeals", ""))
+	law.composed = bool(d.get("composed", true))
+	law.origin = String(d.get("origin", "player"))
+	law.changes_system = false
+	law.reach = _reach_of(law.effects)
+	return law
+
+
+## Every composed law on a nation's register, rebuilt -- the ONE rebuild,
+## shared by legislature.gd's legality scan and statute.custom_laws(), so the
+## two readers cannot drift. Lives here rather than in either caller because
+## statute.gd preloads legislature.gd (the repeal gate) and the reverse
+## preload would be a cycle: the scan reaches the register through the core
+## factory instead.
+static func composed_register(ns) -> Array:
+	var out: Array = []
+	for law_id in ns.custom_laws:
+		out.append(composed_from_dict(ns.custom_laws[law_id]))
+	return out
 
 
 ## The largest fraction of any clamp `effects` uses -- see `reach` above for the two
@@ -550,13 +663,15 @@ static func extract_shared_effects(raw: Dictionary, owner_id: String, filename: 
 ## private field". The channel needed no new shape to carry a second register.
 ##
 ## Both values are SIGNED. Anti-corruption is the negative direction on one
-## accumulator and a migration tightening the negative direction on the other, not
-## repeal verbs: V1.4b's argument for deregulation transferred whole, plus one V1.4b
-## did not need -- a one-directional level would make an anti-corruption law INERT on
-## a clean state, and V1.3f's own property is that nothing on the law list does
-## nothing. For migration the sign carries a second load: ageing is a charge no verb
-## in this game can otherwise close, so an opening direction is what makes the
-## dependency ratio admissible at all rather than a permanent monotone ratchet.
+## accumulator and a migration tightening the negative direction on the other,
+## and that is still true now the repeal verb exists (V4.2): repeal removes
+## whole acts rather than moving a stance partway, so the sign still does work
+## a repeal cannot. A one-directional level would also make an anti-corruption
+## law INERT on a clean state, and V1.3f's own property is that nothing on the
+## law list does nothing. For migration the sign carries a second load: ageing
+## is a charge no verb in this game can otherwise close, so an opening
+## direction is what makes the dependency ratio admissible at all rather than
+## a permanent monotone ratchet.
 ##
 ## V1.5c WIDENED IT BY ONE KEY AGAIN, which is the second piece of evidence for V1.5a's
 ## claim and a better one than the first: a channel that carries a second register might
@@ -632,12 +747,15 @@ static func _extract_society(raw, law_id: String, filename: String, errors: Arra
 ## construction, and the register is what it reads rather than what it moves.
 ##
 ## The burden is SIGNED. Deregulation is the negative direction on the same
-## accumulator, not a repeal verb: there is no repeal in this project and a `once`
-## law never returns, so a burden that could only ever rise would be a permanent
-## monotone charge -- the failure docs/defence-model.md names, where a clamp stops
-## being a guard rail and becomes the number. A signed burden also costs no new
-## precondition field, and legislature_constants.PRECONDITION_FIELDS has no sector
-## parameter and should not grow one.
+## accumulator, and that is still true now the repeal verb exists (V4.2): repeal
+## removes a whole act or nothing -- it never moves a burden partway -- so easing a
+## sector stays the signed channel's job. V1.4b's original reason (no repeal
+## existed, so a one-way burden would be a permanent monotone charge, the failure
+## docs/defence-model.md names where a clamp stops being a guard rail and becomes
+## the number) is a historical record, and the symmetric clamp also keeps a
+## deregulation non-inert on a clean state (V1.3f's property). A signed burden
+## costs no new precondition field, and legislature_constants.PRECONDITION_FIELDS
+## has no sector parameter and should not grow one.
 static func _extract_company(raw, law_id: String, filename: String, errors: Array[String], sector_keys: Array) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY:
 		errors.append("%s: %s effects.company must be an object" % [filename, law_id])

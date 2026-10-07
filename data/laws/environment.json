@@ -1,0 +1,331 @@
+{
+  "_note": "V4.2 T7. A new SHELF, not a new theme: the loader directory-scans and keys every law on its own `theme`, so this file exists only to keep the climate and energy statutes together for the reader. Its laws carry themes from THEME_KEYS like every other file's -- levy-shaped ones are tax, plant-facing ones business, and the spend-and-target ones social, where the Society cluster already holds climate (V2.1c's own call). Nothing under src/ knows this file exists, which is the point.",
+  "laws": [
+    {
+      "id": "coal_phase_out_act",
+      "name": "Coal Phase-Out Act",
+      "theme": "business",
+      "summary": "Close the last coal-fired plant by a fixed date, with a fund for the towns that live off it.",
+      "position": {
+        "economic": -0.35,
+        "social": -0.5
+      },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "company": { "sector": "industry", "burden": 0.3 },
+        "bloc_offset": { "urban": 0.12, "students": 0.1, "workers": -0.12, "rural": -0.08, "business": -0.15 }
+      }
+    },
+    {
+      "id": "renewables_capacity_act",
+      "name": "Renewables Capacity Act",
+      "theme": "social",
+      "summary": "A binding auction calendar for wind and solar, and the grid capacity to carry what it signs.",
+      "position": {
+        "economic": -0.4,
+        "social": -0.55
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.4 },
+        "bloc_offset": { "urban": 0.1, "students": 0.08, "rural": 0.05, "business": 0.04 }
+      }
+    },
+    {
+      "id": "nuclear_lifetime_extension_act",
+      "name": "Nuclear Lifetime Extension Act",
+      "theme": "social",
+      "summary": "Relicense the existing reactors for another decade of baseload.",
+      "position": {
+        "economic": 0.4,
+        "social": 0.2
+      },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "potential_growth_pct": 0.04,
+        "bloc_offset": { "business": 0.12, "rural": 0.06, "urban": -0.05, "students": -0.08 }
+      }
+    },
+    {
+      "id": "nuclear_phase_out_act",
+      "name": "Nuclear Phase-Out Act",
+      "theme": "social",
+      "summary": "Close the reactors on a published timetable, and replace every megawatt they were carrying.",
+      "position": {
+        "economic": -0.2,
+        "social": -0.45
+      },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.25 },
+        "potential_growth_pct": -0.04,
+        "bloc_offset": { "students": 0.1, "urban": 0.06, "business": -0.12, "rural": -0.04 }
+      }
+    },
+    {
+      "id": "home_insulation_programme",
+      "name": "Home Insulation Programme",
+      "theme": "social",
+      "summary": "Pay for the loft, wall and window retrofits of a million draughty homes.",
+      "position": {
+        "economic": -0.35,
+        "social": -0.2
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.35 },
+        "bloc_offset": { "urban": 0.1, "rural": 0.08, "workers": 0.05, "pensioners": 0.08 }
+      }
+    },
+        {
+      "id": "combustion_engine_ban_act",
+      "name": "Combustion Engine (Sales Ban) Act",
+      "theme": "business",
+      "summary": "No new petrol or diesel car sold after a fixed date, whatever the showrooms have in stock.",
+      "position": {
+        "economic": -0.3,
+        "social": -0.5
+      },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "company": { "sector": "industry", "burden": 0.35 },
+        "bloc_offset": { "urban": 0.12, "students": 0.1, "rural": -0.22, "business": -0.14, "workers": -0.08 }
+      }
+    },
+    {
+      "id": "air_passenger_levy",
+      "name": "Air Passenger Levy",
+      "theme": "tax",
+      "summary": "A per-passenger charge on flights, rising with the distance flown.",
+      "position": {
+        "economic": -0.1,
+        "social": -0.45
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.3,
+        "bloc_offset": { "urban": 0.06, "students": 0.05, "rural": -0.12, "business": -0.1, "pensioners": -0.04 }
+      }
+    },
+    {
+      "id": "sustainable_fisheries_act",
+      "name": "Sustainable Fisheries Act",
+      "theme": "business",
+      "summary": "Quotas cut to what the stocks can bear, and monitoring equipment on every licensed boat.",
+      "position": {
+        "economic": -0.2,
+        "social": -0.4
+      },
+      "majority": "simple",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "company": { "sector": "agriculture", "burden": 0.3 },
+        "bloc_offset": { "rural": -0.18, "urban": 0.08, "students": 0.06, "business": -0.06 }
+      }
+    },
+    {
+      "id": "nature_restoration_fund",
+      "name": "Nature Restoration Fund",
+      "theme": "social",
+      "summary": "Rewet the peat, replant the forests, fence the river margins.",
+      "position": {
+        "economic": -0.25,
+        "social": -0.5
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.25 },
+        "bloc_offset": { "urban": 0.08, "students": 0.1, "rural": -0.1 }
+      }
+    },
+    {
+      "id": "plastic_packaging_levy",
+      "name": "Plastic Packaging Levy",
+      "theme": "tax",
+      "summary": "A charge on packaging made from virgin plastic, tonne by tonne.",
+      "position": {
+        "economic": -0.15,
+        "social": -0.35
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.2,
+        "bloc_offset": { "urban": 0.08, "students": 0.06, "business": -0.08, "rural": -0.04 }
+      }
+    },
+    {
+      "id": "emissions_trading_expansion",
+      "name": "Emissions Trading Expansion",
+      "theme": "tax",
+      "summary": "Bring buildings and transport into the carbon market, and their emissions into the price.",
+      "position": {
+        "economic": -0.2,
+        "social": -0.4
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.4,
+        "bloc_offset": { "business": -0.12, "urban": 0.08, "rural": -0.1, "workers": -0.05 }
+      }
+    },
+    {
+      "id": "grid_modernisation_act",
+      "name": "Grid Modernisation Act",
+      "theme": "social",
+      "summary": "New pylons, storage and smart meters for a grid built for another century's load.",
+      "position": {
+        "economic": -0.15,
+        "social": -0.1
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.45 },
+        "potential_growth_pct": 0.04,
+        "bloc_offset": { "business": 0.1, "workers": 0.05, "urban": 0.04, "rural": -0.06 }
+      }
+    },
+    {
+      "id": "sewage_enforcement_act",
+      "name": "Sewage Enforcement Act",
+      "theme": "business",
+      "summary": "Monitoring on every storm overflow, and fines that arrive automatically when it spills.",
+      "position": {
+        "economic": -0.3,
+        "social": -0.3
+      },
+      "majority": "simple",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "company": { "sector": "services", "burden": 0.3 },
+        "bloc_offset": { "urban": 0.1, "students": 0.08, "rural": 0.05, "business": -0.14 }
+      }
+    },
+    {
+      "id": "persistent_chemicals_act",
+      "name": "Persistent Chemicals (Restriction) Act",
+      "theme": "business",
+      "summary": "Phase out the forever chemicals used in non-stick coatings and waterproofing.",
+      "position": {
+        "economic": -0.35,
+        "social": -0.3
+      },
+      "majority": "simple",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "company": { "sector": "industry", "burden": 0.25 },
+        "bloc_offset": { "urban": 0.08, "students": 0.07, "rural": -0.05, "business": -0.12 }
+      }
+    },
+    {
+      "id": "climate_adaptation_fund",
+      "name": "Climate Adaptation Fund",
+      "theme": "social",
+      "summary": "Sea defences, reservoirs and cooling centres for the weather already arriving.",
+      "position": {
+        "economic": -0.2,
+        "social": -0.15
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.3 },
+        "bloc_offset": { "urban": 0.08, "rural": 0.06, "pensioners": 0.05 }
+      }
+    },
+    {
+      "id": "low_emission_zones_act",
+      "name": "Low-Emission Zones Act",
+      "theme": "tax",
+      "summary": "Charge or bar the oldest vehicles from the city centres.",
+      "position": {
+        "economic": -0.1,
+        "social": -0.35
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.15,
+        "bloc_offset": { "urban": 0.12, "students": 0.08, "rural": -0.2, "workers": -0.08 }
+      }
+    },
+    {
+      "id": "agroecology_payments_act",
+      "name": "Agroecology Payments Act",
+      "theme": "social",
+      "summary": "Pay the farmer for hedges, cover crops and soil carbon instead of for tonnage.",
+      "position": {
+        "economic": -0.3,
+        "social": -0.35
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.2 },
+        "bloc_offset": { "rural": 0.18, "urban": 0.05, "students": 0.04, "business": -0.04 }
+      }
+    },
+    {
+      "id": "carbon_border_adjustment",
+      "name": "Carbon Border Adjustment",
+      "theme": "tax",
+      "summary": "A charge at the border on the carbon embedded in imported goods.",
+      "position": {
+        "economic": -0.1,
+        "social": -0.3
+      },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.35,
+        "bloc_offset": { "business": -0.06, "workers": 0.05, "urban": 0.06, "students": 0.04, "rural": -0.04 }
+      }
+    }
+  ]
+}

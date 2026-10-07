@@ -90,7 +90,7 @@ scenarios can reach is too narrow — that a scenario cannot be authored hard
 enough or gentle enough. That is an empirical finding, not a preference, and
 nothing weaker counts.
 
-> [!note] Measured at [[ROADMAP|V1.2e]], and it did not fire
+> [!note] Measured at V1.2e, and it did not fire
 > The falsifier above was run rather than left standing, by
 > `tools/scenario_probe.gd`, before any scenario content was finalised. Across
 > the three playable nations the authorable envelope spans a **~40-point
@@ -148,7 +148,7 @@ fourth playable nation could still show.
 
 ## LimboAI for nation AI foreign policy
 
-**Declined at the [[ROADMAP|V1.3 decomposition]]**, when the plugin was
+**Declined at the V1.3 decomposition**, when the plugin was
 installed and evaluated for [[v1|V1.3e]] rather than dismissed unexamined.
 LimboAI is behavior trees and hierarchical state machines for Godot 4, and it
 is on disk at `addons/limboai/` (v1.8.0).

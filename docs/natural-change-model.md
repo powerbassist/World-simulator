@@ -6,7 +6,7 @@ places *and* places now grow and shrink on their own biology, and the national
 total stays the measured figure it has always been.
 
 Related: [[migration-model]] · [[demography-model]] · [[region-economy-model]] ·
-[[geography-model]] · [[tiers/v2]] · [[data-sources]] · [[ROADMAP]]
+[[geography-model]] · [[tiers/v2]] · [[data-sources]]
 
 ## 1. What changed
 

@@ -8,7 +8,7 @@ tags:
 
 # Foreign Policy Model
 
-Why a nation the player does not govern answers one way rather than another — and, since [[ROADMAP|V1.3f]], why it acts at all. Built at [[ROADMAP|V1.3e]] and [[ROADMAP|V1.3f]], the fifth and sixth sessions of the V1.3 block.
+Why a nation the player does not govern answers one way rather than another — and, since V1.3f, why it acts at all. Built at V1.3e and V1.3f, the fifth and sixth sessions of the V1.3 block.
 
 Files: `src/sim/foreign_policy.gd` (the rules) · `src/sim/foreign_policy_constants.gd` (the numbers) · `tools/foreign_policy_probe.gd` (the measurement) · `tests/test_foreign_policy.gd` (the invariants) · `src/sim/diplomacy.gd`'s `_tick_agenda()` (V1.3f's scheduler).
 
@@ -34,7 +34,7 @@ V1.3a, V1.3b, V1.3c and V1.3d each shipped a **declared stopgap** — a determin
 | **d** | `Bloc.support(DEU, proposal)` identical before and after mutation | parse — `support()` grew a `state` parameter |
 
 > [!note] The ROADMAP row was wrong three ways, and this session corrected it
-> The row read *"Replaces every stopgap rule **b–d** shipped"* — undercounting by one, because [[diplomacy-model|V1.3a's no-reaction]] is the **first** of four rather than a precursor to three. The split trigger was *"if its own plan-time count comes back above V1.3a's"*, which V1.3b (~33), V1.3c (~30) and V1.3d (~39) all cleared without splitting; a test that fires four times for four non-splits is not a test, and the real one is [[ROADMAP|U5b's]] machine count. And the tier table had no V1.3e row — the **sixth** instance of the missing-row failure V1.3b recorded, not the fifth.
+> The row read *"Replaces every stopgap rule **b–d** shipped"* — undercounting by one, because [[diplomacy-model|V1.3a's no-reaction]] is the **first** of four rather than a precursor to three. The split trigger was *"if its own plan-time count comes back above V1.3a's"*, which V1.3b (~33), V1.3c (~30) and V1.3d (~39) all cleared without splitting; a test that fires four times for four non-splits is not a test, and the real one is U5b's machine count. And the tier table had no V1.3e row — the **sixth** instance of the missing-row failure V1.3b recorded, not the fifth.
 
 ## The split, and why it went the way it did
 
@@ -55,7 +55,7 @@ raw(A→B) = DEPENDENCE × w(A→B)/EVEN_SHARE
 stake(A→B) = raw(A→B) / Σ_C raw(A→C)
 ```
 
-**Normalised per viewer**, and that is what stops the model reading GBR as a nation that cares about nobody. Britain is in no EU pair, borders nothing in the roster and rests at 45 with all nine, so every *absolute* term it has sits at the floor. Normalised, the question becomes **who matters to Britain** rather than **how much Britain cares**, and only the first has an answer for every nation. Every threshold in the model is then expressed against `EVEN_SHARE` (1/9), the anchor [[ROADMAP|U5c's]] trade ramp already uses.
+**Normalised per viewer**, and that is what stops the model reading GBR as a nation that cares about nobody. Britain is in no EU pair, borders nothing in the roster and rests at 45 with all nine, so every *absolute* term it has sits at the floor. Normalised, the question becomes **who matters to Britain** rather than **how much Britain cares**, and only the first has an answer for every nation. Every threshold in the model is then expressed against `EVEN_SHARE` (1/9), the anchor U5c's trade ramp already uses.
 
 **The history term reads displacement, not level**, and that is not a detail. The relations *level* is already inside `w(A→B)` — [[trade-model|V1.3b measured it there]] — so reading it again would be the *two numbers for one intensity* redundancy [[coercion-model|the coercion probe cut]] between severity and an authored tariff rate. What is **not** in the trade weight is that somebody acted.
 
@@ -163,7 +163,7 @@ One signed rule, applied to every nation X outside the acting pair, both halves 
 - X's pair with the **actor** moves *with* the sign of the act
 - X's pair with the **target** moves *against* it
 
-So sanctioning Germany costs France standing with everyone who trades with Germany and wins Germany sympathy from exactly those nations. **A sanctioned nation acquiring sympathisers** is the most legible thing an interest model can produce, and [[ROADMAP|U5c's relations map layer]] is already the readout for it.
+So sanctioning Germany costs France standing with everyone who trades with Germany and wins Germany sympathy from exactly those nations. **A sanctioned nation acquiring sympathisers** is the most legible thing an interest model can produce, and U5c's relations map layer is already the readout for it.
 
 V1.3a parked this on the grounds that third-party effects need an alliance model. That was right at the time and is not now: stake already carries EU co-membership and the shared border, so the channel exists **without an alliance in it**. Alliances at V1.3g make it stronger, not possible.
 
@@ -355,7 +355,7 @@ Captured from a worktree at the V1.3e commit **before** any code changed, becaus
 
 **That the agenda moves relations hard and the harness barely notices is a property rather than luck, and it is V1.3b's design showing up two sessions later.** Relations move the normalised trade *mix*; the mix reaches a nation's economy only through partners' deviations from their own baselines, and no balance regime perturbs a partner. So a member's economy cannot feel the agenda at all — which is exactly what twenty bit-identical FRA and DEU runs say.
 
-GBR is the exception for the reason [[bloc-model|V1.3d]] built and [[ROADMAP|V1.3e's re-run]] first fired: it is the nation the council's `common_external_tariff` is aimed at, and `appraise()`'s external term reads the trade weights the agenda now moves. A vote shifting by a month is the whole effect.
+GBR is the exception for the reason [[bloc-model|V1.3d]] built and V1.3e's re-run first fired: it is the nation the council's `common_external_tariff` is aimed at, and `appraise()`'s external term reads the trade weights the agenda now moves. A vote shifting by a month is the whole effect.
 
 `tests/test_balance.gd`'s three S10 assertions all still pass, and they are what the property rests on.
 
@@ -398,4 +398,4 @@ That is a property rather than a coincidence, and it is what **no grievance ledg
 
 ---
 
-Related: [[ROADMAP]] · [[diplomacy-model]] · [[trade-model]] · [[coercion-model]] · [[bloc-model]] · [[economy-model]]
+Related: [[diplomacy-model]] · [[trade-model]] · [[coercion-model]] · [[bloc-model]] · [[economy-model]]

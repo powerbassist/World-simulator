@@ -8,7 +8,7 @@ tags:
 
 # Defence Model
 
-Military capability, deployments, defensive pacts, and the obligation that bills you at home. Built at [[ROADMAP|V1.3g]], the seventh and last session of the V1.3 block.
+Military capability, deployments, defensive pacts, and the obligation that bills you at home. Built at V1.3g, the seventh and last session of the V1.3 block.
 
 Files: `src/sim/defence.gd` (the rules) · `src/sim/defence_constants.gd` (the numbers) · `data/diplomatic-actions/defence.json` (the content) · `GameState.pacts` and `GameState.deployments` (the registers) · `tools/defence_probe.gd` (the measurement).
 

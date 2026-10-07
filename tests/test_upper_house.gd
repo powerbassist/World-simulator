@@ -247,8 +247,14 @@ func _test_a_held_bill_is_in_flight() -> void:
 		_fail("a held bill set its `once` flag")
 	if ns.law_cooldown_months.has(law.id):
 		_fail("a held bill was put on cooldown -- it has not been beaten")
-	if int(ns.held_bills.get(law.id, 0)) != CK.UPPER_HOLD_MONTHS:
+	# The ultra pass-2 shape: {"months", "origin"} -- and the origin is
+	# "player", because the override price the release charges is the
+	# GOVERNMENT's insistence priced, and this hold is the government's.
+	var held: Dictionary = ns.held_bills.get(law.id, {})
+	if int(held.get("months", 0)) != CK.UPPER_HOLD_MONTHS:
 		_fail("the hold was not %d months" % CK.UPPER_HOLD_MONTHS)
+	if String(held.get("origin", "")) != "player":
+		_fail("propose()'s hold must carry origin \"player\" -- the release prices it, the assembly's holds release free")
 	for open_law in Legislature.available(ns, _loader.laws):
 		if open_law.id == law.id:
 			_fail("a held bill is still proposable -- the player could restart the clock")

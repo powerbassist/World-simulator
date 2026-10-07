@@ -233,7 +233,7 @@ this game has no cantons — and that is a named reduction of the same class as
 
 ## 8. What Germany does not get
 
-The [[ROADMAP]]'s decomposition argued that referendums join this session because *"a
+The ROADMAP's decomposition argued that referendums join this session because *"a
 referendum exists precisely because a supermajority is sometimes unreachable, and this
 block measured exactly that for Germany"*. True in the abstract, and **it does not
 resolve for the nation it was named about**: Art. 79 provides no referendum at any stage
@@ -290,4 +290,4 @@ question it was asked.
 
 Related: [[index]] · [[amendment-model]] · [[electoral-systems]] · [[election-model]] ·
 [[political-systems]] · [[campaign-model]] · [[pledge-model]] · [[legislature-model]] ·
-[[v1]] · [[ROADMAP]]
+[[v1]]

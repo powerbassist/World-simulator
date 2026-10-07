@@ -8,7 +8,7 @@ tags:
 
 # Upper House Model
 
-The second chamber, as built in [[ROADMAP|V1.1e]] — the last session of the V1 tier.
+The second chamber, as built in V1.1e — the last session of the V1 tier.
 Where its composition comes from, what its refusal does, and the two constants that
 survived measurement.
 
@@ -269,4 +269,4 @@ Britain's appointed peers have no term at all.
 ---
 
 Related: [[index]] · [[legislature-model]] · [[government-model]] · [[judiciary-model]] ·
-[[amendment-model]] · [[referendum-model]] · [[electoral-systems]] · [[ROADMAP]]
+[[amendment-model]] · [[referendum-model]] · [[electoral-systems]]

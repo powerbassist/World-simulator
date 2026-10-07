@@ -13,7 +13,14 @@ extends RefCounted
 ## docs/legislature-model.md.
 
 const LK = preload("res://src/sim/legislature_constants.gd")
+# V4.2. The yield ceiling lives here (a constants leaf -- no cycle: statute.gd
+# preloads this file, and this file preloads only its constants and leaves).
+const StatuteK = preload("res://src/sim/statute_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
+## V4.2. The composed-law factory: the legality scan reads ns.custom_laws
+## through Law.composed_register() because statute.gd preloads THIS file (the
+## repeal gate), so the reverse preload would be a cycle.
+const Law = preload("res://src/core/law.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Government = preload("res://src/sim/government.gd")
 const GK = preload("res://src/sim/government_constants.gd")
@@ -61,11 +68,32 @@ static func init_nation(ns) -> void:
 	ns.regulation_burden = {}
 	ns.passed_law_ids = {}
 	ns.law_cooldown_months = {}
+	ns.law_ledger = {}
+	# V4.2 T2. The composition registers, the same rule: whatever WRITES a
+	# field resets it, and both are written in statute.gd. V4.2 T4 adds the
+	# params register beside them -- written in THIS file's apply() birth
+	# step, so it resets here with its fellow registers and not in
+	# statute.gd's own init (there is none; the tick is stateless).
+	ns.draft_bills = {}
+	ns.custom_laws = {}
+	ns.custom_taxes = {}
+	# V4.2 T5. The paid-poll register, the same rule: its only writer is
+	# statute.buy_poll(), so it resets beside the registers that writer's
+	# machine owns and not in any file that merely reads it.
+	ns.poll_purchases = {}
+	# V4.2 T6. The assembly-bill in-tray, the draft_bills rule beside which it
+	# sits: whatever WRITES a field resets it, and the writers are statute.gd's
+	# generation and division (this file reads the register in available()'s
+	# in-flight guard and writes nothing to it).
+	ns.assembly_bills = {}
 	ns.last_law_result = {}
 	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
 	# `regulation_burden` above give the reason. A held bill is written by propose()
-	# in this file and released by tick_month() in this file, so it is reset here and
-	# not in Chambers.init_nation(), which owns the chamber and not the in-tray.
+	# in this file and -- V4.2 T6's ultra review -- by statute.gd's assembly division
+	# parking a suspensive refusal, and it is released by tick_month() in this file
+	# either way, so it is reset here -- and also in Chambers.init_nation(), which has reset
+	# it since V1.1e; two cheap idempotences over one register, and the comment
+	# that claimed otherwise was the ultra pass-12 fleet's stale-record find.
 	ns.held_bills = {}
 
 
@@ -156,18 +184,35 @@ static func _settle_referendum(state, ns, loader, verdict: Dictionary) -> void:
 ## whole first term. So the release charges UPPER_OVERRIDE_OFFSET through
 ## Government.penalise_blocs(), which is Article 49.3's own accumulator. Charged HERE
 ## rather than at the refusal because that is when the government has actually
-## insisted.
+## insisted -- and ONLY for a bill the government proposed: the origin each entry
+## carries since the ultra pass-2 shape is the charge's gate, and a private
+## member's bill the chamber held releases free, because nobody insisted on it
+## and a price nobody incurred is a levy, not a price.
 static func _tick_held_bills(state, ns, loader) -> void:
 	var due: Array = []
 	for law_id in ns.held_bills:
-		var remaining: int = int(ns.held_bills[law_id]) - 1
+		var entry: Dictionary = ns.held_bills[law_id]
+		var remaining: int = int(entry.get("months", 0)) - 1
 		if remaining <= 0:
 			due.append(law_id)
 		else:
-			ns.held_bills[law_id] = remaining
+			entry["months"] = remaining
 	for law_id in due:
+		# The origin is read BEFORE the erase -- it is the charge's gate below.
+		var origin: String = String(ns.held_bills[law_id].get("origin", "player"))
 		ns.held_bills.erase(law_id)
 		var law = _law_by_id(loader, String(law_id))
+		if law == null:
+			# A composed law is not in loader.laws -- the register it lives on
+			# is ns.custom_laws, rebuilt through the core factory (the same
+			# lookup _subtract_ledger runs). Without this half, a held COMPOSED
+			# bill was erased here and silently destroyed: no effects, no
+			# result, the ultra pass-2 pin in test_statute_assembly.gd holds
+			# the behavior either way.
+			for composed in Law.composed_register(ns):
+				if String(composed.id) == law_id:
+					law = composed
+					break
 		if law == null:
 			continue
 		var released := {
@@ -175,7 +220,37 @@ static func _tick_held_bills(state, ns, loader) -> void:
 			"majority": law.majority, "yes_seats": 0, "no_seats": 0,
 			"abstain_seats": 0, "seats_total": ns.assembly_seats,
 			"party_votes": {}, "party_support": {}, "party_rebels": {},
+			# The hold card named the chamber by its own name twelve months
+			# ago; the release card says the same thing the same way.
+			"upper_chamber": ns.upper_chamber_name,
 		}
+		# THE MOOT RELEASE, the ultra pass-4 finding: a REPEAL can release after
+		# its TARGET is already gone. Two repeal drafts of one target both compose
+		# (repeal_target_legal gates on the live ledger, and the repeal side has
+		# no one-in-flight gate), and available()'s consumed-repeal filter runs
+		# only on the propose path -- a bill parked in the hold is not re-scanned
+		# -- so the second repeal can carry and subtract while the first sits out
+		# its hold. Releasing then must subtract NOTHING and charge NOTHING: the
+		# subtraction would find an empty book, and recording this as force with
+		# the override price would be a release lying about a bill that changed
+		# nothing. The record keeps passed/released -- the hold did run out -- and
+		# gains the flag that says why the subtraction did not follow. Deliberately
+		# no assembly marker either: nothing came into force, so there is no
+		# coming-into-force event for a card to announce.
+		#
+		# The moot branch short-circuits only the SUBTRACTION and only for a PURE
+		# repeal (the ultra pass-13 finding): a MIXED bill -- channels beside a
+		# `repeals` target -- must still land its own channels and face the court
+		# below, exactly as apply() would, because apply() is every path on which
+		# a bill takes effect and a blanket skip here would make the same carried
+		# bill evaporate or take effect depending on which path delivered it.
+		# _subtract_ledger()'s empty-book return is the quiet no-op the pure
+		# case needs, so the flag below is the only special-casing a mixed
+		# release carries.
+		if law.repeals != "" and ledger_of(ns, law.repeals).is_empty() and law.effects.is_empty():
+			released["target_already_gone"] = true
+			ns.last_law_result = released
+			continue
 		# NEGATED: penalise_blocs() ADDS its argument, and UPPER_OVERRIDE_OFFSET is
 		# authored as a positive magnitude -- the same convention every sibling
 		# constant breaks by carrying its own sign (FALLEN -0.12, FORCE -0.08,
@@ -183,16 +258,36 @@ static func _tick_held_bills(state, ns, loader) -> void:
 		# until the V2.8 review, an override RAISED every bloc's approval, which is
 		# the opposite of the price tools/upper_house_probe.gd table U4 measured --
 		# that sweep ran _run_with_offset(loader, -offset), so the calibration this
-		# constant carries has always been a cost.
-		Government.penalise_blocs(ns, -ChambersK.UPPER_OVERRIDE_OFFSET)
-		released["override_offset"] = -ChambersK.UPPER_OVERRIDE_OFFSET
+		# constant carries has always been a cost. Gated on the origin since the
+		# ultra pass 2: an assembly bill's release charges nothing.
+		if origin != "assembly":
+			Government.penalise_blocs(ns, -ChambersK.UPPER_OVERRIDE_OFFSET)
+			released["override_offset"] = -ChambersK.UPPER_OVERRIDE_OFFSET
+		else:
+			# The ultra pass-3 finding: the release was silent everywhere but
+			# the Legislature panel's own record -- the card gate in main.gd
+			# reads the assembly marker and the DIVISION'S OWN MONTH off
+			# ns.last_law_result, and the release carried neither. The stamp
+			# is the RELEASE month (the coming-into-force event's own), the
+			# same key the division writes, so the same per-month memory that
+			# keeps a quiet month from re-announcing a division keeps it from
+			# re-announcing a release.
+			released["assembly_bill"] = true
+			released["assembly_division_month"] = int(state.year) * 12 + int(state.month)
 		_review_and_apply(state, ns, law, loader, released)
 		ns.last_law_result = released
 
 
 ## THE COURT'S GATE, and it is the LAST stage of the pipeline rather than a second
-## applier. Called from propose(), from _force() and from the release above -- every
-## path on which a bill takes effect without the country having voted on it.
+## applier. Called from propose()'s ORDINARY route (a bill that divided and is
+## taking effect), from _force(), from the release above, and -- V4.2 T6's ultra
+## review -- from statute.gd's assembly division through the public delegate
+## below. The old header scoped this to "bills taking effect without the country
+## having voted on it", and that scope was false: a DIVIDED bill is not thereby
+## exempt from review -- propose()'s ordinary route has court-reviewed every
+## carried bill since V1.1e -- and the assembly's division is the ordinary
+## legislative procedure, not a stage beyond it. What the court does not see is
+## the one landing the third refusal below records: a law the COUNTRY ratified.
 ##
 ## DELIBERATELY NOT INSIDE apply_effects(). That function has had two callers since
 ## V1.8 and the second is an EVENT CHOICE, which is docs/tiers/v1.md section 1's
@@ -223,6 +318,17 @@ static func _review_and_apply(state, ns, law, loader, result: Dictionary) -> voi
 			ns.law_cooldown_months[law.id] = law.cooldown_months
 		return
 	apply(state, ns, law, loader)
+
+
+## The assembly division's way in -- the underscore above marks this file's own
+## internals, and statute.gd is another file. A carried PMB has divided, which
+## is what the court REVIEWS (propose()'s ordinary route is the precedent), so
+## the delegation is one line and the review is the same gate every other
+## divided bill faces. The block/hold half of the pipeline stays in
+## statute.gd's _divide, because which chamber verdict applies is the caller's
+## own read.
+static func review_and_apply_after_division(state, ns, law, loader, result: Dictionary) -> void:
+	_review_and_apply(state, ns, law, loader, result)
 
 
 ## The second chamber's division. A PURE FUNCTION of state, like resolve_vote()
@@ -299,6 +405,38 @@ static func available(ns, all_laws: Array) -> Array:
 			continue
 		if ns.law_cooldown_months.has(law.id):
 			continue
+		# V4.2 ultra pass 2. A repeal whose target has no ledger entry is not
+		# proposable: repeal_target_legal() gates it at composition, so a target
+		# gone from the book means the repeal was ALREADY carried -- re-offering
+		# it would pass a carried no-op (quiet since the pass-4 finding made the
+		# empty-ledger subtraction a no-op, but a button that repeals nothing is
+		# still the half-removed act class). Kills both the after-cooldown no-op
+		# and the propose-path half of the two-repeals-of-one-target case -- the
+		# held window's half is the moot release's, in _tick_held_bills; the
+		# window self-heals the other way too, since a re-passed target re-opens
+		# its own repealer here.
+		if law.repeals != "" and not ns.law_ledger.has(law.repeals):
+			continue
+		# THE YIELD-CAP OFFER GATE, the ultra pass-17 finding: a birth act is
+		# repeatable by design (once:false, no passage cooldown), but the
+		# revenue model prices at most NEW_TAX_YIELD_CEILING / base of a born
+		# key -- the same cap the tax panel's slider has carried since the
+		# pass-14 round. A re-passage whose pending product would exceed the
+		# cap changes nothing the model can price, so the act is not offered:
+		# the _already_in_force shape ("a button that changes nothing is not
+		# offered"), which also stops the direct propose route, whose legality
+		# scan is this very list. The yield gate in Budget.commit() stays as
+		# the backstop for routes that bypass this filter.
+		var birth: Dictionary = law.new_tax
+		var birth_key := String(birth.get("key", ""))
+		if not birth.is_empty() and ns.custom_taxes.has(birth_key):
+			# The birth's per-passage DELTA rides the effects (statute.gd's
+			# compose merges it into tax_rates_pct); new_tax carries only the
+			# registration params.
+			var base: float = maxf(float(ns.custom_taxes[birth_key].get("base_share", 0.0)), 0.01)
+			var pending_rate: float = float(ns.tax_rates_pct.get(birth_key, 0.0)) 				+ float(law.effects.get("tax_rates_pct", {}).get(birth_key, 0.0))
+			if base * pending_rate > StatuteK.NEW_TAX_YIELD_CEILING:
+				continue
 		if law.constitutional and not law.systems.has(ns.system_id):
 			continue
 		if law.changes_system and not ns.permits_system_change:
@@ -316,9 +454,24 @@ static func available(ns, all_laws: Array) -> Array:
 		# twice would let the player restart the clock they are waiting out.
 		if ns.held_bills.has(law.id):
 			continue
+		# V4.2 T6. A bill the assembly's own backbench has tabled is IN FLIGHT on
+		# exactly the held_bills grounds: the player proposing the same law inside
+		# the endorsement window would divide it twice and apply the effects twice,
+		# which is the double-application guard this scan exists to keep.
+		if _in_assembly_tray(ns, law.id):
+			continue
 		if _preconditions_met(ns, law):
 			out.append(law)
 	return out
+
+
+## Whether the assembly's own backbench has this law tabled -- available()'s
+## in-flight guard reads it and nothing else does.
+static func _in_assembly_tray(ns, law_id: String) -> bool:
+	for entry in ns.assembly_bills.values():
+		if String(entry.get("law_id", "")) == law_id:
+			return true
+	return false
 
 
 ## An electoral-reform Act that names the method the nation already uses changes
@@ -442,7 +595,20 @@ static func vote_of(s: float) -> String:
 ## to false, unlike apply()'s loader, because false is the behaviour every existing
 ## caller already has -- a default that means "the way it has always worked" hides
 ## nothing, where a default that means "skip a step" hides everything.
-static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dictionary:
+##
+## `support_bonus` is V4.2 T6's, and it is a DEFAULTED parameter on purpose: the
+## signature owns about twenty-five call sites and the plan forbade changing
+## their shape. The alternative the plan named first -- statute.gd resolving the
+## division through a wrapper -- would have re-mirrored this loop and the
+## majority match below verbatim, the >10-line duplication the plan's own
+## constraint names as the review-finding class. A defaulted parameter keeps
+## every existing call source-identical and gives the ONE caller that wants the
+## endorsement (statute.gd's division on a private member's bill) a per-party
+## additive that moves the PARTY's line without moving `own` -- the members'
+## spatial view is theirs, so a line dragged onto a bill the backbench does not
+## back can shed seats through the rebellion split that already prices exactly
+## that strain. Re-clamped here because support() clamps before the add.
+static func resolve_vote(ns, party_list: Array, law, referendum := false, support_bonus := 0.0) -> Dictionary:
 	var yes_seats := 0
 	var no_seats := 0
 	var abstain_seats := 0
@@ -452,6 +618,8 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dic
 
 	for party in party_list:
 		var s: float = support(ns, party, law)
+		if support_bonus != 0.0:
+			s = clampf(s + support_bonus, -1.0, 1.0)
 		var own: float = spatial_support(ns, party, law)
 		party_support[party.id] = s
 
@@ -540,16 +708,310 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false) -> Dic
 ## the same mechanism, so double-counting is structurally impossible. Every
 ## other channel is one clamped accumulator, read by an existing formula.
 ##
+## V4.2. Two additions, both of them the statute book and neither a new
+## applier:
+##
+##   - A REPEAL subtracts first. A law with `repeals` set removes the target's
+##     REALIZED ledger through apply_effects() -- the negated channels, budget
+##     levers routed through Budget.commit() so the erosion curve and the
+##     demand impulse fire exactly as any budget change would -- then erases
+##     the target's entry and writes the target's own cooldown (a repealed act
+##     sits out its cooldown before it can be re-proposed). It happens at the
+##     TOP of apply(), not in propose()'s passed branch, because apply() is
+##     every path on which a bill takes effect -- the referendum settle and
+##     the upper-house release included -- and a repeal that only worked on
+##     one of them would be three machines.
+##
+##   - The LEDGER is recorded after. The before/after diff around
+##     apply_effects() is what makes the record REALIZED rather than authored:
+##     every accumulator clamps (and the two budget channels floor at zero --
+##     _budget_removal below), and a repeal that subtracted authored deltas
+##     against a bound that was binding at passage would drift the register on
+##     every repeal. Only apply() records -- an event choice calls
+##     apply_effects() directly and records nothing, because an event is not a
+##     statute and has no repeal verb.
+##
 ## `loader` is required, not defaulted -- a system transition needs
 ## loader.political_systems (to re-read lose_condition off the new template)
 ## and loader.parties (to derive an elected head of state's holder). A
 ## defaulted param would let a transition silently half-apply, the failure
 ## mode this project refuses throughout. See docs/transition-model.md.
 static func apply(state, ns, law, loader) -> void:
+	if law.repeals != "":
+		_subtract_ledger(state, ns, loader, law.repeals)
+	# V4.2 T4. A BIRTH registers its params BEFORE the rate moves, and this is
+	# the ONE registration site: the rate's own application runs through
+	# apply_effects() -> Budget.commit(), which refuses a pending rate whose
+	# key has no params behind it -- so a birth that applied its rate first
+	# would be refused by its own applier. One writer, one registration site.
+	if not law.new_tax.is_empty():
+		_register_new_tax(ns, law)
+	var before := _effect_snapshot(ns, law.effects)
 	apply_effects(state, ns, law.effects, loader)
-
+	_record_ledger(state, ns, law, before, _effect_snapshot(ns, law.effects))
 	if law.once:
 		ns.passed_law_ids[law.id] = true
+
+
+## The channels this law's passage actually moved, keyed as the ledger stores
+## them. Only fields the law's own effects NAME are read -- a snapshot that
+## walked every register would record another writer's movement as this law's.
+static func _effect_snapshot(ns, effects: Dictionary) -> Dictionary:
+	var snap := {}
+	for key in effects.get("tax_rates_pct", {}):
+		# "tax|%s" is split on "|" in _record_ledger to recover the sub-key, so
+		# a key containing "|" would corrupt the record -- statute.draft()'s
+		# new-tax charset gate (the pipe gate) is what keeps every key that
+		# reaches here split-safe.
+		snap["tax|%s" % key] = float(ns.tax_rates_pct.get(key, 0.0))
+	for key in effects.get("spending_pct_gdp", {}):
+		snap["spend|%s" % key] = float(ns.spending_pct_gdp.get(key, 0.0))
+	if effects.has("structural_unemployment_pct"):
+		snap["struct"] = ns.law_structural_offset_pct
+	if effects.has("potential_growth_pct"):
+		snap["pot"] = ns.law_potential_target_pct
+	if effects.has("other_revenue_pct_gdp"):
+		snap["orev"] = ns.law_other_revenue_pct_gdp
+	for bloc in effects.get("bloc_offset", {}):
+		snap["bloc|%s" % bloc] = float(ns.bloc_offset.get(bloc, 0.0))
+	if effects.has("company"):
+		var sector: String = String(effects["company"].get("sector", ""))
+		snap["burden|%s" % sector] = float(ns.regulation_burden.get(sector, 0.0))
+	for term in effects.get("society", {}):
+		snap["soc|%s" % term] = _society_field(ns, term)
+	return snap
+
+
+static func _society_field(ns, term: String) -> float:
+	match term:
+		"corruption": return ns.corruption
+		"migration": return ns.migration_stance
+		"settlement": return ns.settlement_stance
+		"press_freedom": return ns.press_freedom
+		"judicial_independence": return ns.judicial_independence
+	return 0.0
+
+
+static func _record_ledger(state, ns, law, before: Dictionary, after: Dictionary) -> void:
+	var channels := {}
+	for snap_key: String in after:
+		if not before.has(snap_key):
+			continue
+		var delta: float = float(after[snap_key]) - float(before[snap_key])
+		if delta == 0.0:
+			# EXACT zero, not is_zero_approx: the criterion is "the law moved
+			# nothing", and is_zero_approx's 1e-5 ABSOLUTE floor would drop a
+			# real sub-1e-5 realized delta -- unrecorded, the channel is
+			# un-negatable at repeal and the act permanently un-repealable.
+			# The V4.7 lesson's third appearance (industry.gd's 9.8e-6 drain;
+			# statute.gd's own exact-zero erasure one file over), named here so
+			# the next tolerance question finds the ruling with it.
+			continue
+		var parts := snap_key.split("|")
+		match parts[0]:
+			"tax": _ledger_add(channels, "tax_rates_pct", parts[1], delta)
+			"spend": _ledger_add(channels, "spending_pct_gdp", parts[1], delta)
+			"struct": _ledger_add(channels, "structural_unemployment_pct", "", delta)
+			"pot": _ledger_add(channels, "potential_growth_pct", "", delta)
+			"orev": _ledger_add(channels, "other_revenue_pct_gdp", "", delta)
+			"bloc": _ledger_add(channels, "bloc_offset", parts[1], delta)
+			"burden": _ledger_add(channels, "company", parts[1], delta)
+			"soc": _ledger_add(channels, "society", parts[1], delta)
+	if channels.is_empty():
+		return
+	var entry: Dictionary = ns.law_ledger.get(law.id, {"channels": {}, "months": []})
+	_ledger_merge(entry["channels"], channels)
+	entry["months"].append(int(state.year) * 12 + int(state.month))
+	ns.law_ledger[law.id] = entry
+
+
+## One channel of one law's ledger, summed across passages: {"tax_rates_pct":
+## {"income": 10.0}, "bloc_offset": {"business": -0.3}, "company": {"sector":
+## delta}, "society": {"term": delta}} -- dict channels key by their sub-key,
+## scalar channels (the three law_* accumulators) key by "".
+static func _ledger_add(channels: Dictionary, channel: String, sub_key: String, delta: float) -> void:
+	if not channels.has(channel):
+		channels[channel] = {}
+	var slot: Dictionary = channels[channel]
+	slot[sub_key] = float(slot.get(sub_key, 0.0)) + delta
+
+
+## Merge one passage's realized channels into the law's accumulated entry --
+## a non-once law passed twice is ONE act repealed once, so the second
+## passage ADDS to the same sub-keys rather than opening a second entry.
+static func _ledger_merge(into: Dictionary, from: Dictionary) -> void:
+	for channel in from:
+		if channel == "structural_unemployment_pct" or channel == "potential_growth_pct" \
+				or channel == "other_revenue_pct_gdp":
+			var slot: Dictionary = from[channel]
+			_ledger_add(into, channel, "", float(slot.get("", 0.0)))
+		else:
+			var keyed: Dictionary = from[channel]
+			for sub_key in keyed:
+				_ledger_add(into, channel, sub_key, float(keyed[sub_key]))
+
+
+## V4.2 T4. The ONE writer of ns.custom_taxes: a birth's params move onto the
+## register in the shape the revenue lines and the save round-trip read --
+## {name, base_share, erosion, ref_pct}. The Law's carrier holds `key` too
+## (it names what to register); the ENTRY does not store it, because the
+## register is keyed by it and a copy inside would be a second answer. The
+## guard's remaining job is the UNNAMED key, refused loudly -- a birth with no
+## key cannot be registered. An ALREADY-REGISTERED key is a QUIET no-op (the
+## ultra pass-4 finding): composed birth laws are once:false by design
+## (statute.gd's _compose), so a second passage of the same act is ordinary
+## play -- the existing params entry wins (an overwrite would silently
+## re-price a tax already on the books) and the rate re-adds through
+## apply_effects() like any repeatable tax law. Typed field by field, the
+## exact shape from_dict() rebuilds, so a live register and a loaded one
+## cannot differ in shape.
+static func _register_new_tax(ns, law) -> void:
+	var key := String(law.new_tax.get("key", ""))
+	if key == "":
+		push_error("legislature: birth of tax key '%s' refused -- unnamed" % key)
+		return
+	if ns.custom_taxes.has(key):
+		return
+	ns.custom_taxes[key] = {
+		"name": String(law.new_tax.get("name", "")),
+		"base_share": float(law.new_tax.get("base_share", 0.0)),
+		"erosion": float(law.new_tax.get("erosion", 0.0)),
+		"ref_pct": float(law.new_tax.get("ref_pct", 0.0)),
+	}
+
+
+## The ledger entry's realized channels for one law, {} when none --
+## repeal validation's first gate and Statute.draft()'s frozen preview
+## source; a statute panel reads it when one exists.
+static func ledger_of(ns, law_id: String) -> Dictionary:
+	var entry: Dictionary = ns.law_ledger.get(law_id, {})
+	return entry.get("channels", {})
+
+
+## Whether `law_id` may be targeted by a repeal bill: the book must record it,
+## and the target must not SET anything. That is not only the constitutional
+## case -- the ordinary-reform route (law.gd's ORDINARY_INSTITUTIONAL_KEYS) lets
+## a NON-constitutional law carry effects.institutional (the electoral-reform
+## Acts: election_system / election_threshold_pct), and the setting has no
+## inverse delta, so a repeal could subtract only the bloc price and leave the
+## electoral system in force -- a half-removed act. Restoring an electoral
+## system is a NEW reform act, not a repeal, so the gate refuses the channel,
+## not the flag. A system transition proper is undone by AMENDMENT, not by
+## repeal; that is what docs/amendment-model.md is for. A target the loader
+## does not know is a custom law (T2's composed register); composed laws are
+## never constitutional and never authored with an institutional channel, so
+## the lookup's null reads legal.
+static func repeal_target_legal(ns, loader, law_id: String) -> bool:
+	if not ns.law_ledger.has(law_id):
+		return false
+	var target = _law_by_id(loader, law_id)
+	if target == null:
+		return true
+	return not target.constitutional and not target.effects.has("institutional")
+
+
+## A repeal's subtraction. The negated channels go back through
+## apply_effects() -- the one applier, so budget levers route through
+## Budget.commit() and every clamp re-fires symmetrically -- then the entry is
+## erased and the target's own cooldown written.
+##
+## THE FIRST-ORDER BOUND, stated where it can bite: the subtraction clamps
+## like any write, so a register already pushed past a bound by OTHER writers
+## absorbs part of the removal (a law that contributed -0.10 against a
+## register driven to +1.0 by everything else removes nothing). The two
+## budget channels have no clamp and take their own floor instead -- a
+## removal lands what the register holds, and no more (`_budget_removal`
+## below). That is the declared bound of realized-delta bookkeeping --
+## docs/legislature-model.md records it -- and not a patchable defect: the
+## true counterfactual register is not recoverable once other writers have
+## moved in between, and inventing one would be the second answer the
+## project refuses.
+static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
+	var channels: Dictionary = ledger_of(ns, law_id)
+	if channels.is_empty():
+		# QUIET, not loud. Two overlapping repeal windows are ordinary: the
+		# propose path filters a consumed repealer (available()'s ledger gate)
+		# but the held window cannot re-run that filter, so a release can arrive
+		# with its target already subtracted -- the moot release in
+		# _tick_held_bills marks that case and stops before here, and any other
+		# route reaching an empty book is the same shape. A second subtraction
+		# finding nothing to subtract is a no-op, not a defect: the first repeal
+		# already took the book back to zero.
+		return
+	var negated := {}
+	if channels.has("tax_rates_pct"):
+		var rates := {}
+		for key in channels["tax_rates_pct"]:
+			rates[key] = _budget_removal(ns.tax_rates_pct, key, float(channels["tax_rates_pct"][key]))
+		negated["tax_rates_pct"] = rates
+	if channels.has("spending_pct_gdp"):
+		var spending := {}
+		for key in channels["spending_pct_gdp"]:
+			spending[key] = _budget_removal(ns.spending_pct_gdp, key, float(channels["spending_pct_gdp"][key]))
+		negated["spending_pct_gdp"] = spending
+	for scalar in ["structural_unemployment_pct", "potential_growth_pct", "other_revenue_pct_gdp"]:
+		if channels.has(scalar):
+			negated[scalar] = -float(channels[scalar].get("", 0.0))
+	if channels.has("bloc_offset"):
+		var blocs := {}
+		for bloc in channels["bloc_offset"]:
+			blocs[bloc] = -float(channels["bloc_offset"][bloc])
+		negated["bloc_offset"] = blocs
+	if channels.has("company"):
+		# The ledger keys the burden channel by sector; apply_effects() reads
+		# {"sector": ..., "burden": ...}. A law may only ever name one sector
+		# (law.gd's schema), so the entry has one key.
+		var sector: String = String(channels["company"].keys()[0])
+		negated["company"] = {"sector": sector, "burden": -float(channels["company"][sector])}
+	if channels.has("society"):
+		var terms := {}
+		for term in channels["society"]:
+			terms[term] = -float(channels["society"][term])
+		negated["society"] = terms
+	apply_effects(state, ns, negated, loader)
+	ns.law_ledger.erase(law_id)
+	# One lookup, one writer: the cooldown comes off the target law wherever it
+	# lives. A composed law is not in loader.laws -- the lookup's null reads
+	# legal in repeal_target_legal() above for exactly that reason -- so the
+	# target is found a second time in the composed register, whose entries all
+	# carry DRAFT_COOLDOWN_MONTHS. Without this half, a repealed composition
+	# wrote no cooldown at all and available() re-offered it immediately: the
+	# apply() header's own rule ("a repealed act sits out its cooldown before
+	# it can be re-proposed") failed for the one class of law this block
+	# introduced.
+	var target = _law_by_id(loader, law_id)
+	if target == null:
+		for composed in Law.composed_register(ns):
+			if String(composed.id) == law_id:
+				target = composed
+				break
+	if target != null and target.cooldown_months > 0:
+		ns.law_cooldown_months[law_id] = target.cooldown_months
+	# THE ONCE RETURN, the ultra pass-2 finding: a once-law's flag was the one
+	# writer of passed_law_ids and nothing erased it, so a carried repeal
+	# removed the act for ever while the docs promise "the act returns by being
+	# re-proposed and re-passed after its cooldown". A carried repeal clears the
+	# gate -- the act returns by re-passage exactly as documented -- and the
+	# once flag's purpose (no re-passing without a fight) survives, because only
+	# a CARRIED REPEAL clears it. Composed laws are pinned once:false at birth,
+	# so this is the authored class only.
+	if target != null and target.once:
+		ns.passed_law_ids.erase(law_id)
+
+
+## THE BUDGET FLOOR, the ultra pass-8 finding: the two budget channels have no
+## clamp -- commit() writes them verbatim and every UI writer floors its slider
+## at 0.0 -- so a repeal's negation must never land a NEGATIVE rate, a state
+## the birth gate's own words refuse ("a negative birth rate is not a rate")
+## and the revenue model turns into an unpriced payout. The formula floors the
+## RESULTING RATE at zero through both directions: a raise-removal lands what
+## the register holds (current 0, recorded +5 -> 0 removal), and a
+## cut-restoration passes whole (recorded -5, current 20 -> +5, back to 25).
+## Budget.commit() carries the matching landed-rate floor for its other
+## callers; the accumulators keep their clamps and need none of this.
+static func _budget_removal(register: Dictionary, key: String, recorded: float) -> float:
+	var current: float = float(register.get(key, 0.0))
+	return maxf(-recorded, -current)
 
 
 ## THE CHANNEL DISPATCH, EXTRACTED AT V1.8 SO AN EVENT CHOICE REACHES IT TOO.
@@ -618,9 +1080,10 @@ static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 	# the split is about the APPROVAL PATH and not about the mechanism.
 	#
 	# Accumulates and is SIGNED, so a deregulation law is the negative direction on
-	# the same register rather than a repeal verb this project does not have. One
-	# clamp, on the accumulated value -- the two channels companies.gd reads it
-	# through carry their own.
+	# the same register -- still true now the repeal verb exists (V4.2): repeal
+	# removes whole acts or nothing, it never moves a register partway, so easing a
+	# sector stays the signed channel's job. One clamp, on the accumulated value --
+	# the two channels companies.gd reads it through carry their own.
 	if effects.has("company"):
 		var sector: String = String(effects["company"]["sector"])
 		var burden: float = float(effects["company"]["burden"])
@@ -808,7 +1271,12 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	# referendum routes below because a cooldown is not something Article 49.3
 	# overrides -- 49.3 bypasses the assembly, not the clock.
 	var legal := false
-	for open_law in available(ns, loader.laws):
+	# V4.2 T2. The scan reads the authored list PLUS the composed register --
+	# a custom law is a law like any other, and a scan that could not find
+	# one would refuse the player's own bill as unavailable, which is both a
+	# wrong verdict and the loss of the double-application guard this scan
+	# exists to keep (an unfound law is an unchecked law).
+	for open_law in available(ns, loader.laws + Law.composed_register(ns)):
 		if open_law.id == law.id:
 			legal = true
 			break
@@ -893,10 +1361,13 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 					ns.law_cooldown_months[law.id] = law.cooldown_months
 			else:
 				# HELD, not defeated: no cooldown, because the bill has not been beaten
-				# and is still in flight. tick_month() passes it when the hold runs out.
+				# and is still in flight. tick_month() passes it when the hold runs
+				# out. The origin rides the entry (the ultra pass-2 shape): "player"
+				# is what makes the release charge the override price -- the
+				# government's own insistence is the thing being priced.
 				result["held_by_upper"] = true
 				result["held_months"] = ChambersK.UPPER_HOLD_MONTHS
-				ns.held_bills[law.id] = ChambersK.UPPER_HOLD_MONTHS
+				ns.held_bills[law.id] = {"months": ChambersK.UPPER_HOLD_MONTHS, "origin": "player"}
 			Discipline.penalise_rebellions(ns, result["party_rebels"], _by_id(party_list))
 			ns.last_law_result = result
 			return result

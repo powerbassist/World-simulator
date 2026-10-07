@@ -204,6 +204,207 @@
         "society": { "judicial_independence": 3.0 },
         "bloc_offset": { "urban": 0.15, "students": 0.2, "business": 0.1, "rural": -0.1, "workers": -0.05 }
       }
+    },
+    {
+      "id": "regional_list_voting_act",
+      "name": "Regional List Voting Act",
+      "theme": "institutional",
+      "summary": "Elect the assembly by regional proportional lists with a five per cent threshold.",
+      "position": { "economic": -0.05, "social": -0.2 },
+      "majority": "absolute",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "election_system": "pr_dhondt",
+          "election_threshold_pct": 5.0
+        },
+        "bloc_offset": { "urban": 0.1, "students": 0.08, "rural": 0.04, "business": -0.04 }
+      }
+    },
+    {
+      "id": "mixed_member_voting_act",
+      "name": "Mixed-Member Voting Act",
+      "theme": "institutional",
+      "summary": "Half the seats single-member, half from regional lists, so each area keeps a name and the votes still count.",
+      "position": { "economic": -0.05, "social": -0.15 },
+      "majority": "absolute",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "election_system": "parallel",
+          "election_threshold_pct": 0.0
+        },
+        "bloc_offset": { "urban": 0.08, "students": 0.06, "rural": 0.05, "business": -0.04 }
+      }
+    },
+    {
+      "id": "first_past_the_post_act",
+      "name": "First-Past-The-Post Act",
+      "theme": "institutional",
+      "summary": "Single-member constituencies decided on one round, so the largest party can govern alone.",
+      "position": { "economic": 0.1, "social": 0.35 },
+      "majority": "absolute",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "institutional": {
+          "election_system": "fptp",
+          "election_threshold_pct": 0.0
+        },
+        "bloc_offset": { "rural": 0.1, "business": 0.08, "students": -0.1, "urban": -0.08 }
+      }
+    },
+    {
+      "id": "threshold_lowering_act",
+      "name": "Lower Thresholds Act",
+      "theme": "institutional",
+      "summary": "Cut the proportional threshold from five per cent to three, so the small parties keep their seats.",
+      "position": { "economic": -0.05, "social": -0.3 },
+      "majority": "absolute",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "institutional": { "election_threshold_pct": 3.0 },
+        "bloc_offset": { "students": 0.1, "urban": 0.06 }
+      }
+    },
+    {
+      "id": "citizens_initiative_act",
+      "name": "Citizens' Initiative Act",
+      "theme": "institutional",
+      "summary": "A petition of a million voters forces a binding referendum on any law the assembly has passed.",
+      "position": { "economic": 0.0, "social": -0.4 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "bloc_offset": { "urban": 0.1, "students": 0.12, "rural": -0.05, "pensioners": -0.04, "business": -0.04 }
+      }
+    },
+    {
+      "id": "assembly_reduction_act",
+      "name": "Assembly Reduction Act",
+      "theme": "institutional",
+      "summary": "Cut the chamber by a fifth: fewer seats, less pay, a smaller staff bill.",
+      "position": { "economic": 0.3, "social": 0.1 },
+      "majority": "two_thirds",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "other_revenue_pct_gdp": 0.05,
+        "bloc_offset": { "rural": -0.08, "urban": 0.05, "students": 0.04, "business": 0.05 }
+      }
+    },
+    {
+      "id": "civil_service_reform_act",
+      "name": "Civil Service Reform Act",
+      "theme": "institutional",
+      "summary": "Open every senior post to outside competition, on fixed terms.",
+      "position": { "economic": 0.35, "social": -0.05 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "potential_growth_pct": 0.05,
+        "bloc_offset": { "urban": 0.06, "business": 0.08, "workers": -0.05 }
+      }
+    },
+    {
+      "id": "ownership_register_act",
+      "name": "Beneficial Ownership Register",
+      "theme": "institutional",
+      "summary": "A public register naming the person behind every company and every trust.",
+      "position": { "economic": -0.1, "social": -0.35 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "society": { "corruption": -0.3 },
+        "bloc_offset": { "urban": 0.1, "students": 0.06, "business": -0.1 }
+      }
+    },
+    {
+      "id": "whistleblower_protection_act",
+      "name": "Whistleblower Protection Act",
+      "theme": "institutional",
+      "summary": "Protected disclosure channels, and the dismissal burden reversed onto the employer.",
+      "position": { "economic": -0.1, "social": -0.4 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "society": { "press_freedom": 0.2 },
+        "bloc_offset": { "urban": 0.08, "students": 0.06, "business": -0.08 }
+      }
+    },
+    {
+      "id": "freedom_of_information_act",
+      "name": "Freedom of Information Act",
+      "theme": "institutional",
+      "summary": "A statutory right to ask for the government's documents, and actually receive them.",
+      "position": { "economic": -0.05, "social": -0.4 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "society": { "corruption": -0.2, "press_freedom": 0.2 },
+        "bloc_offset": { "urban": 0.1, "students": 0.08, "business": -0.05 }
+      }
+    },
+    {
+      "id": "electoral_commission_act",
+      "name": "Electoral Commission Act",
+      "theme": "institutional",
+      "summary": "Independent boundary reviews and campaign-finance enforcement, under one commission.",
+      "position": { "economic": -0.05, "social": -0.3 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "bloc_offset": { "urban": 0.08, "students": 0.08, "business": -0.08, "rural": -0.04 }
+      }
+    },
+    {
+      "id": "euro_preparation_act",
+      "name": "Euro Preparation Act",
+      "theme": "institutional",
+      "summary": "Set a target date and a convergence plan for adopting the single currency.",
+      "position": { "economic": -0.1, "social": -0.5 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "bloc_offset": { "urban": 0.08, "students": 0.06, "business": 0.06, "rural": -0.1, "pensioners": -0.05 }
+      }
+    },
+    {
+      "id": "bench_expansion_act",
+      "name": "Bench Expansion Act",
+      "theme": "institutional",
+      "summary": "Enlarge the constitutional court, and let the government name the new seats.",
+      "position": { "economic": -0.15, "social": -0.15 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "society": { "judicial_independence": -3.0 },
+        "bloc_offset": { "rural": 0.05, "urban": -0.1, "students": -0.15, "business": -0.05 }
+      }
     }
   ]
 }

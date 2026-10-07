@@ -8,7 +8,7 @@ tags:
 
 # Demography Model
 
-Ageing and migration, as built at [[ROADMAP|V1.5b]] — the second session of the V1.5
+Ageing and migration, as built at V1.5b — the second session of the V1.5
 block. An age structure that drifts at a **measured** rate, the dependency ratio that
 falls out of it, the denominator that ratio puts under [[society-model|V1.5a]]'s
 quality stock, and migration as the one verb able to close what ageing opens.
@@ -20,7 +20,7 @@ trade is noted.
 
 ## 1. The row's central premise was wrong, and the dataset was already half-downloaded
 
-[[ROADMAP]]'s decomposition defers (b) partly on this: ten authored age structures
+The ROADMAP's decomposition defers (b) partly on this: ten authored age structures
 with **no dataset behind them** would be [[foreign-policy-model|the clustered
 `coalition_position` finding]] a block later. `tools/import_data.py` imported six World
 Bank indicators and none of them was an age structure, so the claim looked right.
@@ -429,4 +429,4 @@ that §2 did not cut.
 ---
 
 Related: [[index]] · [[society-model]] · [[companies-model]] · [[economy-model]] ·
-[[opinion-model]] · [[legislature-model]] · [[data-sources]] · [[v1]] · [[ROADMAP]]
+[[opinion-model]] · [[legislature-model]] · [[data-sources]] · [[v1]]

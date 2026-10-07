@@ -17,13 +17,13 @@ not model. The vote-share formula those seats are allocated against is
 
 ## Why this is data, not one hardcoded rule
 
-[[ROADMAP|S6]]'s original scope line — "seat allocation and the result screen
+S6's original scope line — "seat allocation and the result screen
 are bookkeeping" — assumed one term length and one allocation rule for every
 nation. Given the instruction to match each nation's real system and add
 European Parliament elections, that stopped being true partway through planning:
-ten real systems is a schema decision of the same class [[ROADMAP|S1]] made for
+ten real systems is a schema decision of the same class S1 made for
 the nation file itself, because every later session that touches the assembly —
-[[ROADMAP|S7]] laws, [[v1|V1.1]] coalitions, [[v1|V1.2]] political systems —
+S7 laws, [[v1|V1.1]] coalitions, [[v1|V1.2]] political systems —
 reads whatever shape gets committed here. That is recorded on the roadmap
 itself, not just in this file.
 
@@ -80,7 +80,7 @@ France's next **presidential** election — the one that decides whether the
 player keeps their office — is May 2027, so the first playable term is **16
 months**, not a full 60. That is realistic; the player did not just win an
 election, they took over an existing presidency partway through. It also gets
-the [[ROADMAP|S6]] checkpoint playtest to a result screen in about a minute and
+the S6 checkpoint playtest to a result screen in about a minute and
 a half of wall clock at speed 3.
 
 > [!note] Corrected in V1.1a: this said 41 months
@@ -128,7 +128,7 @@ plus a dispatch on the `system` string.
 
 ### The honest caveat
 
-The MVP has **no constituency geography** — the map is [[ROADMAP|S8]], and it
+The MVP has **no constituency geography** — the map is S8, and it
 holds national borders only. `fptp` and `two_round` cannot be simulated seat by
 seat, because there are no seats, only a national vote share. Every single-member
 system in this table is therefore a **national-level reduction**:
@@ -218,4 +218,4 @@ costs one data file and zero new mechanics, because it reuses every piece of
 ---
 
 Related: [[index]] · [[election-model]] · [[referendum-model]] · [[data-architecture]] ·
-[[opinion-model]] · [[ROADMAP]]
+[[opinion-model]]

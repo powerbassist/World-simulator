@@ -8,7 +8,7 @@ tags:
 
 # Media Model
 
-Outlets, framing and press freedom, as built at [[ROADMAP|V1.5d]] — the fourth and last
+Outlets, framing and press freedom, as built at V1.5d — the fourth and last
 session of the V1.5 block. A register of newspapers, a per-bloc salience gain derived
 from where each one stands relative to the government, and a press-freedom dial that
 charges its price in a quantity the project already had.
@@ -62,7 +62,7 @@ decomposition. §8 does not shrink and gains no early instance; it gains a cross
 Cross-referenced into §5 **and** §8, because leaving it in one row is how the row got
 stale twenty-six times.
 
-**[[ROADMAP|V1.8]] BUILT IT AND THE DEFERRAL WAS VINDICATED ON BOTH HALVES**, which is
+**V1.8 BUILT IT AND THE DEFERRAL WAS VINDICATED ON BOTH HALVES**, which is
 worth recording here rather than only in §8 because this section is what made the call.
 A scandal arrived with the framing channel already built, so a revelation had somewhere to
 land — and the schema it is the first instance of **could not have been written here**:
@@ -462,4 +462,4 @@ that could carry a mechanism, so an `editor_person_id` would be a label, not a l
 ---
 
 Related: [[index]] · [[opinion-model]] · [[unrest-model]] · [[society-model]] ·
-[[demography-model]] · [[legislature-model]] · [[people-model]] · [[v1]] · [[ROADMAP]]
+[[demography-model]] · [[legislature-model]] · [[people-model]] · [[v1]]

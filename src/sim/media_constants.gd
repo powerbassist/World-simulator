@@ -150,8 +150,9 @@ const MAX_POSITION_DISTANCE := 2.8284271247461903
 ## The clamp on the accumulated press_freedom stance, symmetric.
 ##
 ## SIGNED BOTH WAYS, for the reason society_constants.CORRUPTION_MAX gives and one it
-## did not need: there is no repeal verb in this project and a `once` law never returns,
-## so [0, MAX] would be the permanent monotone charge docs/defence-model.md names -- and
+## did not need: a stance moves partway while repeal (V4.2) removes whole acts rather
+## than nudging one back, so [0, MAX] would still be the permanent monotone charge
+## docs/defence-model.md names -- and
 ## a press-liberalisation law would be INERT on a nation that has never censored,
 ## breaking docs/foreign-policy-model.md's property that nothing on the law list does
 ## nothing.

@@ -8,7 +8,7 @@ tags:
 # A Place For What Happens
 
 The contract by which a national quantity acquires a place. Built at
-[[ROADMAP|V2.6b1]]; [[tiers/v2|V2]] section 6. It reads
+V2.6b1; [[tiers/v2|V2]] section 6. It reads
 [[migration-model|V2.6a]]'s two live share registers and
 [[region-economy-model|V2.5]]'s regional quantities, and it is the schema
 [[tiers/v2|section 9]]'s sited disasters will read.
@@ -32,7 +32,7 @@ there**. `--site` is the one new screenshot flag.
 
 ## 2. THE ROW'S CENTRAL CLAIM IS FALSE, AND THE PROJECT HAD NO WAY TO ASK
 
-[[ROADMAP]]'s V2.6b row says both its halves *"decide **where** by reading V2.6a's
+The ROADMAP's V2.6b row says both its halves *"decide **where** by reading V2.6a's
 live shares"*. Measured before any code was written, that is wrong: the site is chosen
 by **static content**, and the live shares are third-order behind it.
 
@@ -412,4 +412,4 @@ axis V2.6 split (a), (b) and (c) on in the first place.
 ---
 
 Related: [[tiers/v2]] · [[migration-model]] · [[unrest-model]] · [[campaign-model]] ·
-[[region-economy-model]] · [[geography-model]] · [[decision-log]] · [[ROADMAP]]
+[[region-economy-model]] · [[geography-model]] · [[decision-log]]

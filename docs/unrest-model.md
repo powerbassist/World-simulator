@@ -8,7 +8,7 @@ tags:
 
 # Unrest Model
 
-Unions, protests and strikes, as built at [[ROADMAP|V1.5c]] — the third session of the
+Unions, protests and strikes, as built at V1.5c — the third session of the
 V1.5 block and **the block's one true acting agent**. A grievance stock built out of two
 rows of the electorate, an inequality statistic nothing the player does can move, and a
 deterministic agent that walks out when the country has had enough.
@@ -21,7 +21,7 @@ is noted.
 ## 1. The session where two rules that were pulling apart finally agree
 
 [[diplomacy-model|V1.3a]]'s rule was that live state ships **with a verb** or it decays
-into a number nobody reads. [[ROADMAP]]'s decomposition inverted it for this block —
+into a number nobody reads. The V1.5 decomposition inverted it for this block —
 *every session ships a statistic and the price it charges* — because §5's nine bullets
 contain at most two player verbs and both belong to (d).
 
@@ -208,7 +208,8 @@ deficit — so the player could buy industrial peace only by opening `public_fin
 unrest would be the **permanent monotone charge** [[defence-model]] names.
 
 Signed both ways: an imposed settlement — a service minimum, a pay freeze — is the
-negative direction on the same accumulator, not a repeal verb. It is not
+negative direction on the same accumulator — still true now the repeal verb exists
+(V4.2): repeal removes whole acts or nothing, it never moves a stance partway. It is not
 strictly dominated, because its **authored `bloc_offset` is immediate and positive**
 (business, pensioners, rural and urban all resent the people who can strike) against a
 grievance cost that is slow. Fast in, slow out, in the other direction.
@@ -263,7 +264,7 @@ reach for a fifth refusal by symmetry, and **symmetry is not the test**.
 ### Content
 
 `labour.json`'s four laws each gained a settlement term, which is the block's **third
-booked retro-fit** — [[ROADMAP]] booked the corruption line to (a) and the migration line
+booked retro-fit** —  booked the corruption line to (a) and the migration line
 to (b), and this is the same sentence one session on. Before it, the model was perverse:
 `minimum_wage_rise` and `working_time_reduction` both *raised* unrest through
 `structural_unemployment_pct` while `labour_market_flexibilisation` *lowered* it, so
@@ -281,7 +282,7 @@ from a menu.
 
 **`>=` only, asserted over the whole law list.** `available()` only ever *opens* laws, so
 a `>=` precondition is a lever unrest hands the player — while a `<=` one would take a
-lever away, making unrest an uncontestable gate on player action. [[ROADMAP]]'s call 4
+lever away, making unrest an uncontestable gate on player action. 's call 4
 says two of those is one machine claimed twice, and [[v1]] §1's judiciary is the other.
 
 ### The `ISSUE_KEYS` question is answered NO, and the reason is prior to V1.3d's four tests
@@ -590,7 +591,7 @@ reads `GameState.unrest_acts` back.
 
 ## 14. The grievance acquired a place, and one of its two prices refused it
 
-[[ROADMAP|V2.6b1]] sited the demonstration. The model is [[siting-model]]; what
+V2.6b1 sited the demonstration. The model is [[siting-model]]; what
 changed *here* is one multiplication and one deletion.
 
 **The output price is sited.** `act_impulse()` is multiplied by the site's output per
@@ -626,7 +627,7 @@ The act record gained four display keys and `SAVE_VERSION` stayed at 29.
 ---
 
 Related: [[index]] · [[siting-model]] · [[society-model]] · [[demography-model]] · [[opinion-model]] ·
-[[economy-model]] · [[legislature-model]] · [[companies-model]] · [[v1]] · [[ROADMAP]]
+[[economy-model]] · [[legislature-model]] · [[companies-model]] · [[v1]]
 
 ## V3.0 — the relief, and the threshold that had to follow
 

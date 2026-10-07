@@ -20,6 +20,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --failing --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open politics
@@ -74,6 +77,7 @@ const IndustryK = preload("res://src/sim/industry_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Statute = preload("res://src/sim/statute.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
@@ -256,6 +260,32 @@ var _bid := false
 ## the brass cluster mark are what the frame is there to prove.
 var _failing := false
 
+## V4.2 close-out. The tax panel reads live state -- the authored five plus the
+## brackets lever are on a new game's register -- so unlike every staging flag
+## on this list it stages NOTHING and only opens the window; the frame's claim
+## is the rate-as-number rows, which is the panel's whole reason for existing.
+var _tax := false
+
+## V4.2 close-out. A draft the machine has parked renders NOWHERE on the law
+## panel -- ns.draft_bills reaches the UI only through the briefing popup ("In
+## drafting: N months" is the one place a draft's months_left is on screen) --
+## so this drafts through Statute.draft() itself, opens the legislature window,
+## and shows the briefing over the parked draft through main.gd's own handler
+## body. NOT ticked afterwards: the countdown is the frame's claim, and a
+## ticked draft is a composed one.
+var _compose := false
+
+## V4.2 close-out. The assembly's in-tray is empty on a new game -- the lobby
+## draw is 0.02/month AND needs a burdened sector, the backbench draw 0.08 --
+## so an unflagged capture photographs the empty early-return this panel's
+## _endorse_refusal comment calls the reachable-refusal frame. Stages ONE lobby
+## bill the machine's own way, on the --bid discipline: the burden through the
+## ONE applier (never ticked), then the lobby body's own selectors into the
+## very _table_bill() call _lobby() makes -- only the Cycle hazard draw is
+## skipped, which is staging state rather than luck. NOT ticked: with
+## PMB_MONTHS_TO_VOTE at 1, a ticked bill is a divided one and the row is gone.
+var _pmb := false
+
 ## V1.5a, and the eighth time. A new game's quality stock sits EXACTLY on its own
 ## reference for all ten nations -- that is the property the whole session rests on --
 ## so the overview's two service lines are deliberately silent on frame 1 and a capture
@@ -429,6 +459,12 @@ func _init() -> void:
 			_bid = true
 		elif args[i] == "--failing":
 			_failing = true
+		elif args[i] == "--tax":
+			_tax = true
+		elif args[i] == "--compose":
+			_compose = true
+		elif args[i] == "--pmb":
+			_pmb = true
 		elif args[i] == "--corrupt":
 			_corrupt = true
 		elif args[i] == "--migrate":
@@ -635,6 +671,12 @@ func _apply_view() -> void:
 		_open_a_bid()
 	if _failing:
 		_fail_a_major()
+	if _tax:
+		_open_the_tax_code()
+	if _compose:
+		_draft_a_bill()
+	if _pmb:
+		_lobby_a_bill()
 	if _corrupt:
 		_corrupt_the_state()
 	if _migrate:
@@ -1317,6 +1359,124 @@ func _fail_a_major() -> void:
 	entry["courted"] = 0.0
 	entry["board_chair"] = ""
 	entry["rescue_months_left"] = IndustryK.RESCUE_WINDOW_MONTHS
+
+
+## V4.2 close-out, for --tax. No state to stage -- _open_the_partition()'s
+## shape: the register is the content and the frame is the check that the
+## panel builds its rows off it.
+func _open_the_tax_code() -> void:
+	_main._windows.open("tax")
+	# open() silently no-ops on an unregistered id -- B14's own guard, which the
+	# generic --open path carries and a direct open() call must carry too.
+	if not _main._windows.is_open("tax"):
+		push_error("screenshot: --tax could not open the tax window")
+	else:
+		print("--tax: the tax window is open (%d rate rows)" % _main._tax_panel._sliders.size())
+
+
+## V4.2 close-out, for --compose. The draft goes through Statute.draft()
+## itself -- the machine validates, prices and parks it, so a refusal here is
+## a spec bug and is made unmissable rather than photographed over -- and the
+## briefing opens over the parked draft through main.gd's own handler body,
+## the exact two lines the tax panel's compose flow runs (the briefing is
+## main-owned; this is its one open_for_draft caller in the game). The
+## legislature window is open behind it because the briefing is the only
+## surface a parked draft renders on and the frame should carry the chamber
+## the bill is parked FOR. NOT ticked: months_left positive is the claim.
+func _draft_a_bill() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	# A moderate two-channel bill: an income rise buys a health rise. Sized
+	# well under the drafting ceiling (0.675 of 6.0, so 3 months parked) and
+	# priced across four blocs, which is what the briefing's price section
+	# exists to show; the position is a centrist one so the bill itself makes
+	# no statement the channels have not already made.
+	var spec := {
+		"name": "The Health and Work Act",
+		"position": {"economic": 0.2, "social": 0.0},
+		"channels": {
+			"tax_rates_pct": {"income": 3.0},
+			"spending_pct_gdp": {"health": 0.3},
+		},
+	}
+	var result: Dictionary = Statute.draft(state, ns, loader, spec)
+	if not bool(result.get("ok", false)):
+		printerr("--compose: the draft was refused: %s" % String(result.get("refusal", "")))
+		return
+
+	_main._windows.open("legislature")
+	_main._briefing.open_for_draft(
+		ns.draft_bills[String(result["draft_id"])], String(result["draft_id"]), state, loader)
+	_main._briefing.show()
+	print("--compose: %s parked, size %.3f, %d months left, briefing visible: %s" % [
+		String(result["draft_id"]), float(result["size"]), int(result["months"]),
+		_main._briefing.visible])
+
+
+## V4.2 close-out, for --pmb. The chiefs' lobby bill, every write a write the
+## machine makes -- the same discipline test_industry's forced mechanics use:
+##
+## The lobby only fires above the burden floor, so the burden stands first --
+## through the ONE applier, --regulate's own move, and the clock never moves,
+## so the staged month is the frame's month and the pair (burden 0.4, easing
+## law in the pool) is a state the machine reaches on an ordinary Tuesday.
+func _lobby_a_bill() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	if state == null or loader == null:
+		return
+	var ns = state.player()
+
+	var burden = null
+	for law in loader.laws:
+		if String(law.id) == "workplace_safety_act":
+			burden = law
+	if burden == null:
+		printerr("--pmb: workplace_safety_act did not load")
+		return
+	Legislature.apply(state, ns, burden, loader)
+
+	# _lobby()'s own body, minus only the hazard draw: the sector, then that
+	# sector's biggest major, then the easing law the candidate pool holds,
+	# into the same _table_bill() call _lobby() makes with the chief signed
+	# on. The month is the machine's own absolute-month index, so the sponsor
+	# draw inside the easing-law pick keys the same Cycle hash a real table
+	# would.
+	var sector: String = Statute._burdened_sector(ns)
+	if sector == "":
+		printerr("--pmb: no sector stands above the lobby floor after the burden")
+		return
+	var firm = Statute._biggest_major(ns, loader, sector)
+	if firm == null:
+		printerr("--pmb: %s has no %s major with a chief to sign the ask" % [ns.id, sector])
+		return
+	var month: int = Statute._abs_month(state)
+	var law = Statute._burden_easing_law(ns, loader, sector, month)
+	if law == null:
+		# The machine's own fall-through: a fired lobby with no easing law to
+		# name tables a plain backbench bill -- the same row the panel draws,
+		# minus the backer line.
+		Statute._table_bill(ns, loader, month)
+	else:
+		Statute._table_bill(ns, loader, month, String(firm.id), String(firm.chief_id), law)
+	# Both staging paths converge here, and the WINDOW opens after the stage
+	# (the compose stage's order): the panel's ASSEMBLY BILLS section is the
+	# frame's subject, and a window opened before its state existed would
+	# refresh empty and only the next dirty-mark would fill it.
+	_main._windows.open("legislature")
+	# The row's own three reads, printed the way the panel will resolve them:
+	# a chief the loader cannot name would fall back to "the chief" on the
+	# frame, and that is a console fact before it is a pixel one.
+	var entry: Dictionary = ns.assembly_bills.values()[ns.assembly_bills.size() - 1]
+	print("--pmb: %s tabled, %d months left, backer %s (%s), chief %s" % [
+		String(entry["law_id"]), int(entry["months_left"]),
+		loader.firm_name(ns.id, String(entry["backer_firm"])),
+		String(entry["backer_firm"]),
+		loader.person_name(String(entry["backer_chief"]))])
 
 
 ## The one firm lookup the two stages above need, and deliberately not a

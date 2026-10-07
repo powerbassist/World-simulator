@@ -67,6 +67,22 @@ Thumbs.db
 # Obsidian editor UI state -- churns every session, no design content
 .obsidian/workspace.json
 
+# The vault exception, stated (the ultra pass-7 finding): the repo ROOT is the
+# documentation vault -- AGENTS.md's own opening instruction; the [[ROADMAP]]
+# links do not resolve from anywhere else -- so .obsidian/ is COMMITTED, plugin
+# bundles whole, so a fresh clone's documentation vault opens working. It is
+# the dialogue_manager exception's documentation twin: a surface, not game
+# code -- src/ reads nothing in it, which is also why tools/check_names.sh
+# skips the tree. Plugin updates show as standing dirt, committed deliberately
+# like project.godot's.
+# EXCEPT the Local REST API plugin's data.json: it carries the Local REST API
+# key -- per-machine, minted on first Obsidian load; the docker mcp secret
+# store holds the working copy's value. A fresh clone regenerates it with its
+# own key on first load, which is the correct per-machine behaviour. The local
+# file stays on disk; the plugin needs it and the vault connection keeps
+# working.
+.obsidian/plugins/obsidian-local-rest-api/data.json
+
 # Per-machine agent state, like .mcp.json above -- plans and scratch belonging to
 # whichever assistant is driving, not to this game.
 .zcode/
@@ -88,3 +104,19 @@ tools/_apply_corrections.py
 tools/_merge_traits.py
 tools/fetch_photos.py
 tools/portraits_photo_sources.json
+
+# The review fleet's working dir (file snapshots, diffs, comment fetches the
+# ultra's lenses leave mid-pass). Gitignored so a running pass never drowns
+# git status -- and EMPTIED at every block closeout, same rule as the
+# .superpowers/sdd scratch: working space, not storage. The * catches the
+# per-PR suffix a pass appends (.review-tmp48/ and friends).
+.review-tmp*
+.review_tmp*
+.review-tmp*.gd
+.review_tmp*.gd
+# The audit fleet's root-level fetch scratch (PR comment dumps), plus the
+# Windows `nul` redirect artifact its subshells keep minting.
+pr4*.md
+pr4*.json
+pr4*.txt
+nul

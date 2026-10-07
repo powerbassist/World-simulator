@@ -27,6 +27,7 @@ const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Events = preload("res://src/sim/events.gd")
+const Statute = preload("res://src/sim/statute.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
@@ -404,12 +405,27 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		# before V1.3f. _check_projection_matches_under_defence_and_companies() displaces
 		# both so the mirror's completeness is exercised rather than assumed.
 		Defence.tick_month(state)
+		# The ultra pass-10 finding: the mirror copies project()'s ORDER, and
+		# project() moved Statute before Companies -- a division's
+		# company-channel burden is priced by the same month's Companies/
+		# Industry passes, so both legs must write it before they run.
+		Statute.tick_month(state, _loader)
 		Companies.tick_month(state, _loader)
 		# V4.7b. The autonomy machine, in project()'s slot between Companies and
 		# Migration -- a failure, rescue or break-up inside the projected window
 		# writes failed/share, and a mirror that skipped it would agree with the
 		# projection only while no firm ever acted.
 		Industry.tick_month(state, _loader)
+		# The ultra pass-1 projection finding, PR 47 finding 1's class a third
+		# time: project() has ticked the assembly's own life and this mirror
+		# never did, so the 1e-9 agreement below held only while the backbench
+		# never legislated. The PMB hazard is Cycle-keyed over the absolute
+		# month like Events' -- which this loop already runs for exactly that
+		# reason -- so both legs see the same bills and the same divisions, and
+		# a carried division applies through Budget.commit() into the very
+		# revenue and spending keys the comparison walks. PMB_MONTHS_TO_VOTE is
+		# 1, so any bill staged inside a 24-month window divides inside it too:
+		# the checks above exercise this line rather than assuming it inert.
 		# V2.8 review. Five more that project() has ticked and this mirror never did.
 		# Four are inert from an undisplaced start, which is why the 1e-9 agreement
 		# held by accident yet again -- but Events is NOT structurally inert: its

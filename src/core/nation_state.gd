@@ -112,12 +112,13 @@ var start_spending_pct_gdp := {}
 ## tax_constants.PROGRESSIVITY_MIN/MAX, initialised for all ten from
 ## tax_constants.PROGRESSIVITY_BASE.
 ##
-## `spending_pct_gdp` AND `tax_rates_pct`'s SHAPE AND NOT A SIXTH TAX KEY, which is
-## what docs/tiers/v1.md section 6 asks for by name: brackets WITHIN income rather
-## than as further keys, so the distributional lever exists without a fourth revenue
-## channel. It is not a rate, it has no base share and it collects nothing; what it
-## does is move the income tax's erosion and the inequality index, which is
-## src/sim/tax.gd's whole surface.
+## V1.6d refused a sixth tax key here -- brackets WITHIN income, not further
+## keys -- and that refusal was right for what V1.6d was asked to build. V4.2
+## overturned it for a different door: the COMPOSITION machine may propose a
+## new key with its own base, erosion and rate (a carbon tax, a windfall
+## levy), the tax-model wealth-tax precedent being that a new key brings its
+## own base. `tax_progressivity` keeps its own meaning untouched: it is still
+## the bracket lever WITHIN income, not a key.
 ##
 ## BOTH FIELDS EARN THE SAVE BUMP AND FOR THE SAME REASON, unlike most pairs on this
 ## file's list: an absent `tax_progressivity` reads 0.0, which is not a neutral default
@@ -668,6 +669,109 @@ var passed_law_ids := {}
 ## down every tick. Set on a failed vote; absent once it reaches zero.
 var law_cooldown_months := {}
 
+## V4.2. The per-law effect ledger: law id -> {"channels": {…}, "months": [int]}.
+## `channels` records what each passage of that law ACTUALLY moved, taken as a
+## before/after diff around apply_effects() -- realized deltas, not authored
+## ones, because every accumulator clamps and a repeal must subtract what the
+## law moved or the register drifts on every repeal against a bound that was
+## binding at passage. A non-once law passed twice merges into the one entry:
+## the statute book is per-act, not per-passage.
+##
+## EARNS THE BUMP (V4.2's six-register gate), and it is `region_gdp_eur_bn`'s
+## case: absent it reads empty, which is the TRUTH about every pre-38 save --
+## laws passed before the ledger have no record, cannot be repealed, and no
+## re-derivation is attempted (reconstructing a past law's realized deltas
+## from current state is a second answer to a question only the passage could
+## answer). Declared first-order: if later writers displaced a law's
+## contribution, repeal subtracts what the law moved at its own passage, not a
+## re-derived counterfactual -- recorded in docs/legislature-model.md.
+var law_ledger := {}
+
+## V4.2 T2. The composition machine's in-tray: draft id -> the parked spec
+## ({name, position, channels, new_tax, repeals, negated, size, price,
+## months_left}). Written by Statute.draft() and counted down by
+## Statute.tick_month(), and by nothing else. Entries are NEVER erased --
+## the id scheme reads .size(), so a deleted entry could hand a later draft
+## an id some earlier law already carries; the in-tray read
+## (Statute.drafts()) filters on months_left instead, and the record of what
+## was drafted is the panel's history for free.
+##
+## Serialised under the bump game_state.gd's SAVE_VERSION comment already
+## argues (T1's six-register gate named this register), so this is not the
+## bump's argument again -- only what ABSENCE means HERE: a save taken
+## mid-draft that lost draft_bills would lose a bill the player was drafting,
+## which is not the truth about that save. Absence still READS empty with no
+## error, the law_ledger contract.
+var draft_bills := {}
+
+## V4.2 T2. The composed statute book: law id -> Law.to_save_dict(). Written
+## when a parked draft's countdown reaches 0 (Statute.tick_month()) and by
+## nothing else; read back as Law objects wherever the authored list is
+## scanned (legislature.gd's legality scan, the law panel), so a composed law
+## is proposed, voted, failed and repealed like any other. Holds the save
+## form and never a live Law, on the round-trips-through-JSON discipline
+## every register here keeps.
+##
+## Serialised under the same T1 gate -- absent, acts the player put on the
+## book are gone from it, and the accumulators they move would read as
+## unauthored drift. Absence reads empty, no error.
+var custom_laws := {}
+
+## V4.2 T4. The params of the tax keys the composition machine has BORN:
+## key -> {"name", "base_share", "erosion", "ref_pct"}. The rate lives in
+## `tax_rates_pct` like any tax's; this register is what makes the key YIELD
+## -- `base_share` prices the line, `erosion` is the key's own coefficient on
+## the shared curve, and `ref_pct` is the rate the key was BORN at, which is
+## its erosion reference: the zero-reference rule's own answer, since the tax
+## did not exist at new-game and `start_tax_rates_pct` has no entry for it,
+## so the one authored "rate this tax is normally levied at" (tax-model §2's
+## definition) is the one its creating bill set.
+##
+## EARNS ITS PLACE ON THE 38 BUMP game_state.gd's comment already argues:
+## absent, the rate survives in tax_rates_pct while the yield stops -- a
+## silent half-tax. Absence READS empty with no error, the law_ledger
+## contract. ONE WRITER: Legislature.apply()'s registration step, which runs
+## BEFORE the passage's effects so commit() sees a keyed tax and not a
+## pending rate with nothing behind it. Repeal of the creating bill removes
+## the RATE and deliberately leaves the entry: the tax exists at rate 0, the
+## way an authored tax nobody charges does.
+var custom_taxes := {}
+
+## V4.2 T5. The polls the player has PAID for: bill key -> kind ->
+## {"month": absolute month, "cost": EUR bn}. Written by Statute.buy_poll()
+## and by nothing else in src/sim/ -- this register remembers MONEY, not
+## display; the surfaces (the briefing's poll buttons, the law panel's
+## forecast band) read it directly, and the single-writer pin is scanned in
+## tests/test_statute_surfaces.gd. One commission per bill per kind, once and
+## for good: the bought poll is a published figure the display must never
+## re-roll (poll_noise.gd's rule, priced this time).
+##
+## Serialised under the 38 bump game_state.gd's comment already argues (the
+## six-register gate names this register): absent, a reload un-buys the
+## fixed-forecast read and a second commission would charge twice for one
+## number. Absence READS empty with no error -- which is the truth about every
+## save that never commissioned a poll, and it is what "none bought" means.
+var poll_purchases := {}
+
+## V4.2 T6. The assembly-bill in-tray: bill id -> {"law_id", "months_left",
+## "backer_firm", "backer_chief", "endorse_bonus"}. The private members' bills
+## and chief-backed lobbying in flight -- tabled by Statute.tick_month()'s
+## hazards, endorsed (once, by the player) through Statute.endorse(), and
+## erased at the division, which writes the result into `last_law_result`
+## under its assembly marker. Entries do NOT park after resolution, unlike
+## draft_bills: the in-tray is bills in flight and the result's record is the
+## last_law_result marker plus the cards, while the id scheme stays
+## collision-free anyway (it mirrors T2's append-only size() idiom, and the
+## absolute month in the id only ever increases within a run, so a size()
+## reused in a later month still cannot repeat an earlier id).
+##
+## Serialised under the 38 bump game_state.gd's comment already argues -- the
+## six-register gate names this register: absent, an announced bill the
+## assembly will vote on vanishes without a division, the held_bills
+## free-escape case. Absence READS empty with no error, the law_ledger
+## contract.
+var assembly_bills := {}
+
 ## The most recent law vote, for the law screen to read after proposing. Empty
 ## until the first one resolves. Same shape as Elections.resolve()'s result.
 var last_law_result := {}
@@ -770,8 +874,9 @@ var deployment_opinion_load: float = 0.0
 ## V4.7a's own change is recoverable: the register went sparse, and an absent
 ## body entry reads its authored share (share_of_company's fallback), which is
 ## the truth about a firm no verb ever touched; majors missing from a pre-7a
-## save are repaired by _seed_missing_majors at the first tick. Therefore
-## SAVE_VERSION remains 37. (The owner/failed keys named here in V4.7a's
+## save are repaired by _seed_missing_majors at the first tick. SAVE_VERSION
+## remained 37 through V4.7; the statute book's six registers are what 38
+## carries. (The owner/failed keys named here in V4.7a's
 ## first draft are V4.7b's SHIPPED fields -- the autonomy machine and its
 ## verbs write them; absent, every one reads its default -- the per-field
 ## argument is industry.gd's header, and tests/test_save_load.gd's
@@ -1559,8 +1664,12 @@ var upper_amendment: String = ""
 ## but only at an election, which for France is up to five years away.
 var upper_share: Dictionary = {}
 
-## Bills the second chamber has refused and not killed: law id -> months remaining.
+## Bills the second chamber has refused and not killed: law id -> {"months":
+## months remaining, "origin": "player"|"assembly"} -- the ultra pass-2 shape.
 ## Counted down by Legislature.tick_month(), which every harness already calls.
+## The origin is the release price's gate: the override charge is the
+## GOVERNMENT's insistence priced, so a held private member's bill (the
+## assembly's own writer in statute.gd) releases free.
 ##
 ## EARNS THE BUMP, and it is `referendum_pending`'s case at V1.7c and
 ## `event_pending`'s at V1.8: absent, the register reads empty and a bill the Senate
@@ -1749,6 +1858,24 @@ func duplicate_state():
 	s.bloc_offset = bloc_offset.duplicate(true)
 	s.passed_law_ids = passed_law_ids.duplicate(true)
 	s.law_cooldown_months = law_cooldown_months.duplicate(true)
+	s.law_ledger = law_ledger.duplicate(true)
+	# V4.2 T2. Deep, for the ledger's reason: a projection ticking a shared
+	# in-tray would count the player's drafts down twice. The Law-shaped
+	# dictionaries in custom_laws are plain data, so duplicate(true) is the
+	# whole of the copy. V4.2 T4 adds custom_taxes to the same rule -- a
+	# projection committing a rate against a SHARED params register would
+	# re-price the real books (V2.5's dropped region register, in the other
+	# direction).
+	s.draft_bills = draft_bills.duplicate(true)
+	s.custom_laws = custom_laws.duplicate(true)
+	s.custom_taxes = custom_taxes.duplicate(true)
+	# V4.2 T5. Deep, the custom_taxes reason one line up: a projection buying a
+	# poll against a SHARED register would spend the player's money twice.
+	s.poll_purchases = poll_purchases.duplicate(true)
+	# V4.2 T6. Deep, for the draft_bills reason: a projection ticking a shared
+	# in-tray would count the player's assembly bills down and divide them
+	# inside a forecast.
+	s.assembly_bills = assembly_bills.duplicate(true)
 	s.last_law_result = last_law_result.duplicate(true)
 
 	s.diplo_cooldown_months = diplo_cooldown_months.duplicate(true)
@@ -1994,6 +2121,12 @@ func to_dict() -> Dictionary:
 		"bloc_offset": bloc_offset,
 		"passed_law_ids": passed_law_ids,
 		"law_cooldown_months": law_cooldown_months,
+		"law_ledger": law_ledger,
+		"draft_bills": draft_bills,
+		"custom_laws": custom_laws,
+		"custom_taxes": custom_taxes,
+		"poll_purchases": poll_purchases,
+		"assembly_bills": assembly_bills,
 		"last_law_result": last_law_result,
 
 		"diplo_cooldown_months": diplo_cooldown_months,
@@ -2454,7 +2587,17 @@ static func from_dict(d: Dictionary):
 		s.upper_share[party_id] = float(d["upper_share"][party_id])
 	s.held_bills = {}
 	for law_id in d.get("held_bills", {}):
-		s.held_bills[law_id] = int(d["held_bills"][law_id])
+		# The ultra pass-2 shape is {"months": int, "origin": str}; an int
+		# payload (the pre-fix shape, never shipped -- 38 is unreleased) wraps
+		# as a player hold rather than crash int() on a Dictionary.
+		var held_entry: Variant = d["held_bills"][law_id]
+		if typeof(held_entry) == TYPE_DICTIONARY:
+			s.held_bills[law_id] = {
+				"months": int(held_entry.get("months", 0)),
+				"origin": String(held_entry.get("origin", "player")),
+			}
+		else:
+			s.held_bills[law_id] = {"months": int(held_entry), "origin": "player"}
 	s.judicial_review = String(d.get("judicial_review", ""))
 	s.judicial_independence = float(d.get("judicial_independence", 0.0))
 	s.start_judicial_independence = float(d.get("start_judicial_independence", 0.0))
@@ -2464,6 +2607,83 @@ static func from_dict(d: Dictionary):
 	s.deployment_opinion_load = float(d.get("deployment_opinion_load", 0.0))
 	s.passed_law_ids = d.get("passed_law_ids", {})
 	s.law_cooldown_months = d.get("law_cooldown_months", {})
+	# V4.2. Rebuild-style, per the from_dict aliasing defect V4.6's own
+	# serialisation task found and fixed: the ledger arrives as plain JSON and
+	# is copied wholesale -- its channel deltas are floats and its months are
+	# ints, and sharing the payload's dictionaries would alias the save
+	# against the live register.
+	s.law_ledger = {}
+	var raw_ledger: Dictionary = d.get("law_ledger", {})
+	for law_id in raw_ledger:
+		var entry: Dictionary = raw_ledger[law_id]
+		s.law_ledger[String(law_id)] = {
+			"channels": Dictionary(entry.get("channels", {})).duplicate(true),
+			"months": Array(entry.get("months", [])).duplicate(true),
+		}
+	# V4.2 T2. Rebuild-style, the ledger's rule: the payloads arrive as JSON
+	# and are copied wholesale -- sharing them would alias the save against
+	# the live registers. months_left is int-cast because the countdown
+	# compares and decrements it and JSON hands every number back as a float
+	# when it can; the Law-shaped dictionaries in custom_laws are trusted
+	# like the ledger trusts its channels, and re-cast nowhere -- the fields
+	# are read through typed reads in the factories and the panels.
+	s.draft_bills = {}
+	var raw_drafts: Dictionary = d.get("draft_bills", {})
+	for draft_id in raw_drafts:
+		var copy: Dictionary = Dictionary(raw_drafts[draft_id]).duplicate(true)
+		copy["size"] = float(copy.get("size", 0.0))
+		copy["months_left"] = int(copy.get("months_left", 0))
+		s.draft_bills[String(draft_id)] = copy
+	s.custom_laws = {}
+	var raw_custom: Dictionary = d.get("custom_laws", {})
+	for law_id in raw_custom:
+		s.custom_laws[String(law_id)] = Dictionary(raw_custom[law_id]).duplicate(true)
+	# V4.2 T4. Rebuild-style, the ledger's rule: fresh dictionaries, typed
+	# reads -- the four params are three floats and a name, and a payload key
+	# that is not one of them has no business in a register the revenue lines
+	# iterate.
+	s.custom_taxes = {}
+	var raw_taxes: Dictionary = d.get("custom_taxes", {})
+	for tax_key in raw_taxes:
+		var params: Dictionary = raw_taxes[tax_key]
+		s.custom_taxes[String(tax_key)] = {
+			"name": String(params.get("name", "")),
+			"base_share": float(params.get("base_share", 0.0)),
+			"erosion": float(params.get("erosion", 0.0)),
+			"ref_pct": float(params.get("ref_pct", 0.0)),
+		}
+	# V4.2 T5. Rebuild-style, the ledger's rule: fresh dictionaries, typed
+	# reads -- month and cost are the two fields the register keeps, and a
+	# payload key that is neither has no business in a record of money spent.
+	s.poll_purchases = {}
+	var raw_polls: Dictionary = d.get("poll_purchases", {})
+	for poll_bill in raw_polls:
+		var kinds: Dictionary = raw_polls[poll_bill]
+		var entry: Dictionary = {}
+		for kind in kinds:
+			var rec: Dictionary = kinds[kind]
+			entry[String(kind)] = {
+				"month": int(rec.get("month", 0)),
+				"cost": float(rec.get("cost", 0.0)),
+			}
+		s.poll_purchases[String(poll_bill)] = entry
+	# V4.2 T6. Rebuild-style, the ledger's rule: fresh dictionaries, typed
+	# reads -- the five fields are two ids, a countdown, and a bonus the
+	# division re-clamps around, and a payload key that is none of them has no
+	# business in an in-tray the tick iterates. months_left is int-cast for
+	# the draft_bills reason: JSON hands every number back as a float when it
+	# can, and the countdown compares and decrements it.
+	s.assembly_bills = {}
+	var raw_bills: Dictionary = d.get("assembly_bills", {})
+	for bill_id in raw_bills:
+		var bill: Dictionary = raw_bills[bill_id]
+		s.assembly_bills[String(bill_id)] = {
+			"law_id": String(bill.get("law_id", "")),
+			"months_left": int(bill.get("months_left", 0)),
+			"backer_firm": String(bill.get("backer_firm", "")),
+			"backer_chief": String(bill.get("backer_chief", "")),
+			"endorse_bonus": float(bill.get("endorse_bonus", 0.0)),
+		}
 	s.last_law_result = d.get("last_law_result", {})
 
 	return s

@@ -8,7 +8,7 @@ tags:
 
 # Cycle Model
 
-The business cycle, as built at [[ROADMAP|V1.6a]] — the first session of the V1.6
+The business cycle, as built at V1.6a — the first session of the V1.6
 block. Every formula, every constant, and the argument for why the two constants
 are *measured and fitted* rather than swept.
 
@@ -361,4 +361,4 @@ comparing where the wave happened to be, not whether it was going anywhere.
 
 ---
 
-Related: [[index]] · [[economy-model]] · [[trade-model]] · [[unrest-model]] · [[decision-log]] · [[ROADMAP]] · [[v1]]
+Related: [[index]] · [[economy-model]] · [[trade-model]] · [[unrest-model]] · [[decision-log]] · [[v1]]

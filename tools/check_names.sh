@@ -22,6 +22,12 @@ hits=0
 while IFS= read -r f; do
   case "$f" in
     tools/banned_names.txt|tools/check_names.sh) continue ;;
+    # V4.2's ultra pass-1: the committed Obsidian vault's third-party plugin
+    # bundles (excalidraw's main.js alone) trip real-name hits in minified JS
+    # nobody authored. The vault is editor config, not game content -- the
+    # same reason addons/ is editor-side -- and the fictionalization rule
+    # guards content.
+    .obsidian/*) continue ;;
     # V3.7 Phase B3: the portrait reference attribution is the ONE committed
     # file where real names must appear -- the Commons photo licences for the
     # img2img references require crediting the source works. The

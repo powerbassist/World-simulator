@@ -21,6 +21,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Statute = preload("res://src/sim/statute.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
@@ -63,6 +64,10 @@ const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
+## V4.2 T5. The Tax Code window (the budget panel's tax levers moved there)
+## and the bill briefing both surfaces open over a bill.
+const TaxPanel = preload("res://src/ui/tax_panel.gd")
+const Briefing = preload("res://src/ui/briefing.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
@@ -133,6 +138,8 @@ var _term_card_id := ""
 var _overview_panel
 var _economy_panel
 var _budget_panel
+var _tax_panel
+var _briefing
 var _polling_panel
 var _election_panel
 var _law_panel
@@ -301,6 +308,57 @@ func _ready() -> void:
 		_update_top_bar()
 	)
 
+	# V4.2 T5. The tax levers' new home, in the Economy cluster beside Budget:
+	# the cluster grammar (panel-system.md §16) puts a surface where its
+	# decision lives, and a tax rate is a budget-domain decision -- but a
+	# separate DOMAIN from spending, which is why it is its own window and
+	# not a row. KEY_X was the one letter left. The commit is Budget.commit()
+	# -- the same verb the budget panel sends -- so the demand impulse, the
+	# erosion curve and the books have one entry point however many windows
+	# move a rate.
+	_tax_panel = TaxPanel.new()
+	_windows.register("tax", "Tax Code", _tax_panel, KEY_X, ICONS + "coins.svg")
+	_tax_panel.setup(_state, _loader)
+	_tax_panel.hide_close_button()
+	# V4.2 ultra pass 2: the budget panel's proposed column and 24-month
+	# projection price the Tax Code window's uncommitted edits (the panels are
+	# siblings; this is a reference, not state, and the load path's setup()
+	# sweep leaves it alone).
+	_budget_panel.tax_panel = _tax_panel
+	_tax_panel.committed.connect(func(before, pending):
+		_queue_effect("Tax code change", before)
+		_hud.message_stack.push("Tax code committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
+		_update_top_bar()
+	)
+	# A finished draft opens the briefing on itself: the price it was quoted
+	# and the drafting months are what the press just bought.
+	_tax_panel.brief_requested_draft.connect(func(entry, draft_id):
+		_briefing.open_for_draft(entry, draft_id, _state, _loader)
+		_briefing.show()
+	)
+
+	# V4.2 T5. The bill briefing, over every bill the player can put to the
+	# assembly. Not a window in the registry: it is not a surface the player
+	# navigates to, it is what opens when a bill is asked for -- the summit's
+	# shape, one verb earlier in the same day. The division routes back
+	# through law_panel.run_proposal() so the propose path, its card and its
+	# U4 baseline stay in one place whichever surface pressed the button.
+	# (The law panel's own brief_requested lands beside its proposed handler
+	# below -- the panel does not exist yet at this point in _ready().)
+	_briefing = Briefing.new()
+	_add_centered(_briefing)
+	_briefing.hide()
+	_briefing.propose_requested.connect(func(law):
+		_briefing.hide()
+		_law_panel.run_proposal(law)
+	)
+	_briefing.polled.connect(func(before, label):
+		_queue_effect(String(label), before)
+		# The forecast the purchase sharpens is the law panel's read.
+		_law_panel.mark_dirty()
+		_update_top_bar()
+	)
+
 	_government_panel = GovernmentPanel.new()
 	_windows.register("politics", "Politics", _government_panel, KEY_G, ICONS + "cog.svg")
 	_government_panel.setup(_state, _loader)
@@ -324,6 +382,13 @@ func _ready() -> void:
 	_windows.register("legislature", "Legislature", _law_panel, KEY_L, ICONS + "scales.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
+	# V4.2 T5. Propose opens the briefing; the division comes back through
+	# run_proposal() from the briefing's own verb, so the path below is still
+	# the one propose path in the game.
+	_law_panel.brief_requested.connect(func(law):
+		_briefing.open_for_law(law, _state, _loader)
+		_briefing.show()
+	)
 	_law_panel.proposed.connect(func(before, law_name, result):
 		_queue_effect(String(law_name), before)
 		var body: String
@@ -699,6 +764,10 @@ func _build_action_bar() -> void:
 	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
 		_entry("economy", "Economy"),
 		_entry("budget", "Budget"),
+		# V4.2 T5. Beside Budget, its own window rather than rows on it: the
+		# tier moved tax out of the Budget panel, and the cluster grammar puts
+		# the surface where its decision lives.
+		_entry("tax", "Tax Code"),
 		# V1.4a. One line, exactly as this function's own comment has now correctly
 		# predicted for four sessions running.
 		_entry("companies", "Companies"),
@@ -1230,6 +1299,27 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# everything else in this handler: state settles top to bottom, elections
 	# read it last.
 	Legislature.tick_month(_state, _loader)
+	# The ultra pass-4 finding: a held bill releasing writes ns.last_law_result
+	# above, and the assembly's own tick below overwrites the same register
+	# when a private member's bill divides the SAME month -- the release card
+	# was then permanently unreachable, its only announcement surface read
+	# after both writers. Capture the release before it can be swallowed and
+	# hand it to the announcer beside the division; empty unless a release
+	# actually fired (assembly_bill + released are the machine's own two keys
+	# for it).
+	var assembly_release: Dictionary = {}
+	var release_ns = _state.player()
+	if release_ns != null:
+		var release_result: Dictionary = release_ns.last_law_result
+		if bool(release_result.get("assembly_bill", false)) \
+				and bool(release_result.get("released", false)):
+			assembly_release = release_result.duplicate(true)
+	# V4.2 T6. The assembly's own life -- private members' bills and the
+	# chiefs' lobbying -- ticks AFTER the legislature, so a bill failing its
+	# division writes its authored cooldown AFTER this month's countdown pass
+	# has run and keeps its full length (the V2.8 ordering, one machine down).
+	Statute.tick_month(_state, _loader)
+	_announce_assembly_events(assembly_release)
 	Dissolution.tick_month(_state)
 
 	# Relations drift and diplomatic cooldowns, alongside the other cooldown
@@ -1496,6 +1586,127 @@ func _announce_industry_events() -> void:
 		var card_id: String = _hud.message_stack.push("Firm in difficulty", failure_body)
 		_failure_cards[company_id] = card_id
 		_industry_card_firms[card_id] = company_id
+
+## V4.2 T6: the assembly's own events, as cards -- _announce_industry_events's
+## idiom whole. The announced-state memory is main-side (the sim stays free of
+## the card stack); dismissal never answers (an unendorsed bill still divides);
+## and a tabling card is TAKEN AWAY when its bill resolves, its replacement
+## being the division card and not a stale offer to endorse a bill the house
+## has already settled.
+var _announced_assembly_bills := {}
+var _assembly_cards := {}         # bill_id -> its LIVE tabling card
+var _assembly_result_month := -1  # absolute month whose division card was pushed
+var _assembly_release_month := -1  # absolute month whose release card was pushed
+
+func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
+	var ns = _state.player()
+	if ns == null:
+		return
+	var live_ids := {}
+	for bill_id in ns.assembly_bills.keys():
+		live_ids[bill_id] = true
+	for announced_id in _announced_assembly_bills.keys():
+		if not live_ids.has(announced_id):
+			_announced_assembly_bills.erase(announced_id)
+	for bill_id in _assembly_cards.keys():
+		if not live_ids.has(bill_id):
+			_hud.message_stack.dismiss(String(_assembly_cards[bill_id]))
+			_assembly_cards.erase(bill_id)
+	for bill_id in ns.assembly_bills.keys():
+		var entry: Dictionary = ns.assembly_bills[bill_id]
+		var body := _assembly_bill_body(entry)
+		if _announced_assembly_bills.has(bill_id):
+			if _assembly_cards.has(bill_id):
+				_hud.message_stack.set_body(String(_assembly_cards[bill_id]), body)
+			continue
+		_announced_assembly_bills[bill_id] = true
+		var backed := String(entry.get("backer_firm", "")) != ""
+		var card_id: String = _hud.message_stack.push(
+			"A chief before the assembly" if backed else "Private member's bill", body)
+		_assembly_cards[bill_id] = card_id
+	# The release card, handed in from _on_month_elapsed. The capture there is
+	# what lets a COLLISION month -- a PMB dividing the same tick an
+	# assembly-origin hold releases -- push both cards: the register read
+	# below holds only the last writer. The release keeps its OWN memory slot
+	# because both results of a collision carry the same
+	# assembly_division_month stamp; one shared var would swallow the second
+	# card of the pair exactly as the shared register did.
+	if not assembly_release.is_empty() \
+			and int(assembly_release.get("assembly_division_month", -1)) != _assembly_release_month:
+		_assembly_release_month = int(assembly_release.get("assembly_division_month", -1))
+		_hud.message_stack.push("The assembly divides", _assembly_result_body(assembly_release))
+	# The division card. The assembly_bill marker on ns.last_law_result says
+	# the last division was the assembly's; the memory keys the DIVISION'S OWN
+	# MONTH -- the assembly_division_month stamp the machine writes into the
+	# result -- and not the current month, which is what made a quiet month
+	# whose tick merely found the old result still on the register re-announce
+	# it every month until a new law event overwrote it. The released flag is
+	# excluded since the pass-4 capture: a release that stayed on the register
+	# (a month where the assembly's tick divided nothing) arrives through the
+	# parameter above, and firing here too would push the same card twice.
+	# The in-tray keeps no history, so the stamp is the one per-division fact
+	# left once the entry is erased.
+	var result: Dictionary = ns.last_law_result
+	if bool(result.get("assembly_bill", false)) \
+			and not bool(result.get("released", false)) \
+			and int(result.get("assembly_division_month", -1)) != _assembly_result_month:
+		_assembly_result_month = int(result.get("assembly_division_month", -1))
+		_hud.message_stack.push("The assembly divides", _assembly_result_body(result))
+
+func _assembly_bill_body(entry: Dictionary) -> String:
+	var law_name := _law_title(String(entry.get("law_id", "")))
+	var months := int(entry.get("months_left", 0))
+	var firm_id := String(entry.get("backer_firm", ""))
+	# The endorsement transition inside the bill's life -- the card must not
+	# keep offering a stand the sim now refuses (the panel drops its button
+	# for the same reason).
+	if float(entry.get("endorse_bonus", 0.0)) > 0.0:
+		return "%s reaches the floor in %d month%s. The president's stand is on the record -- endorsed." % [
+			law_name, months, "" if months == 1 else "s"]
+	if firm_id != "":
+		var chief := _loader.person_name(String(entry.get("backer_chief", "")))
+		return "%s's chief %s backs %s. The assembly divides in %d month%s; whether the president stands behind it is the president's to take." % [
+			_loader.firm_name(_state.player_nation_id, firm_id),
+			chief if chief != "" else "the chief", law_name, months, "" if months == 1 else "s"]
+	return "%s reaches the floor in %d month%s. Endorse it, or let the backbench stand alone." % [
+		law_name, months, "" if months == 1 else "s"]
+
+func _assembly_result_body(result: Dictionary) -> String:
+	var law_name := _law_title(String(result.get("law_id", "")))
+	# A COURT STRIKE outranks every other wording, and it is checked FIRST
+	# (law_panel's own order) because it fires on BOTH paths that reach this
+	# builder: a release the court stopped still carries released/assembly_bill,
+	# and a struck division still carries its tally. "Comes into force" and
+	# "defeated, N ayes" against a bill the court stopped are both the card
+	# contradicting the state it announces; the court sentence prints alone.
+	if bool(result.get("struck_down", false)):
+		return "The court has struck %s down." % law_name
+	# A SUSPENSIVE REFUSAL IS A HOLD, not a defeat (law_panel's own reading --
+	# one word for different things is the readout bug this project keeps
+	# finding), and a blocked one was beaten somewhere the lower-house tally
+	# below does not show. Both wordings come off the outcome keys the result
+	# actually carries; only the bare false reads "defeated".
+	if bool(result.get("held_by_upper", false)):
+		return "The assembly carried %s and the %s has suspended it — it comes into force in %d months." % [
+			law_name, String(result.get("upper_chamber", "second chamber")), int(result.get("held_months", 0))]
+	if bool(result.get("blocked_by_upper", false)):
+		return "The assembly carried %s and the %s has blocked it." % [
+			law_name, String(result.get("upper_chamber", "second chamber"))]
+	# The held bill's release: the coming-into-force event, not a division --
+	# the release result carries no seat tally, and printing zeroes beside
+	# "carried" would contradict its own numbers.
+	if bool(result.get("released", false)):
+		return "The %s's hold has run out — %s comes into force." % [
+			String(result.get("upper_chamber", "second chamber")), law_name]
+	return "The assembly has %s %s, %d ayes to %d noes." % [
+		"carried" if bool(result.get("passed", false)) else "defeated",
+		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
+
+func _law_title(law_id: String) -> String:
+	for law in _loader.laws:
+		if law.id == law_id:
+			return String(law.law_name)
+	return law_id
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
 ## deployment is a command the player just issued and does not need a card telling
@@ -2014,6 +2225,25 @@ func _on_load_requested(slot: String) -> void:
 	_bid_cards.clear()
 	_failure_cards.clear()
 	_industry_card_firms.clear()
+	# The assembly's four beside them, the same rule: bill ids collide only
+	# within a run, so those two maps belong to the discarded game. The two
+	# month memories are NOT simply reset to -1 (the ultra pass-7 finding):
+	# the stamp exists so a quiet month cannot re-announce a division already
+	# on the register, and the load boundary must honour it, not reset it --
+	# the first month elapsed after a save+load otherwise re-announced the
+	# loaded division (or release) as news. Each slot takes the loaded stamp
+	# for ITS OWN shape of result and -1 otherwise: a stale memory inherited
+	# from the discarded game could swallow a real card whose stamp it
+	# happened to match.
+	_announced_assembly_bills.clear()
+	_assembly_cards.clear()
+	var loaded_ns = _state.player()
+	var loaded_result: Dictionary = loaded_ns.last_law_result
+	var carries_bill := bool(loaded_result.get("assembly_bill", false))
+	var released_load := bool(loaded_result.get("released", false))
+	var loaded_stamp := int(loaded_result.get("assembly_division_month", -1))
+	_assembly_result_month = loaded_stamp if carries_bill and not released_load else -1
+	_assembly_release_month = loaded_stamp if carries_bill and released_load else -1
 	_clock.year = _state.year
 	_clock.month = _state.month
 	_clock.day = int(result["day"])
@@ -2026,6 +2256,11 @@ func _on_load_requested(slot: String) -> void:
 	# review found below -- setup(), not refresh(), because the reference itself
 	# is what has to be replaced.
 	_map_flows.setup(_map_view, _clock, _loader, _state)
+
+	# The bill briefing is not in the registry, so the setup() sweep below never
+	# reaches it -- open across a load it kept the discarded GameState, and its
+	# poll verb wrote the dead run's books (the V2.8 five-panel drift class).
+	_briefing.detach()
 
 	# EVERY REGISTERED PANEL, off the registry rather than a hand-written list.
 	# A panel stores `state` in its own setup(), so one omitted here keeps a

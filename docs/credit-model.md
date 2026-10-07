@@ -8,7 +8,7 @@ tags:
 
 # Credit Model
 
-The bond market, as built at [[ROADMAP|V1.6c]] — the third session of the V1.6 block.
+The bond market, as built at V1.6c — the third session of the V1.6 block.
 The rate a nation borrows at as a spread over a constant that has been flat since the
 MVP, plus the credit rating that reads it. Every formula, every constant, and the
 argument for why two of the four terms the row asked for do not exist.
@@ -414,4 +414,4 @@ reads *"Rated A. Borrowing at 2.00 %, +0.00 on the anchor"* in plain text, and u
 
 ---
 
-Related: [[index]] · [[economy-model]] · [[cycle-model]] · [[inflation-model]] · [[companies-model]] · [[bloc-model]] · [[unrest-model]] · [[decision-log]] · [[ROADMAP]] · [[v1]]
+Related: [[index]] · [[economy-model]] · [[cycle-model]] · [[inflation-model]] · [[companies-model]] · [[bloc-model]] · [[unrest-model]] · [[decision-log]] · [[v1]]

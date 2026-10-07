@@ -110,6 +110,217 @@
         "society": { "settlement": -0.40 },
         "bloc_offset": { "business": 0.30, "pensioners": 0.15, "rural": 0.20, "urban": 0.10, "workers": -0.25, "students": -0.15 }
       }
+    },
+    {
+      "id": "pension_uplift_act",
+      "name": "State Pension Uplift Act",
+      "theme": "social",
+      "summary": "Raise the state pension every year in line with earnings rather than prices.",
+      "position": { "economic": -0.45, "social": 0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "pensions": 0.6 },
+        "bloc_offset": { "pensioners": 0.18, "workers": -0.05, "business": -0.04 }
+      }
+    },
+    {
+      "id": "student_grants_act",
+      "name": "Student Maintenance Grants Act",
+      "theme": "social",
+      "summary": "Restore means-tested maintenance grants for students from poorer households.",
+      "position": { "economic": -0.4, "social": -0.3 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "education": 0.25 },
+        "bloc_offset": { "students": 0.22, "urban": 0.06, "pensioners": -0.05 }
+      }
+    },
+    {
+      "id": "tuition_fees_abolition_act",
+      "name": "Tuition Fee Abolition Act",
+      "theme": "social",
+      "summary": "Abolish undergraduate tuition fees, funded from general taxation for good.",
+      "position": { "economic": -0.55, "social": -0.35 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "education": 0.5 },
+        "bloc_offset": { "students": 0.3, "urban": 0.1, "rural": -0.05, "pensioners": -0.08 }
+      }
+    },
+    {
+      "id": "rural_transport_fund",
+      "name": "Rural Transport Fund",
+      "theme": "social",
+      "summary": "Subsidised bus and rail services for the villages the network abandoned.",
+      "position": { "economic": -0.2, "social": 0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.3 },
+        "bloc_offset": { "rural": 0.2, "urban": -0.04 }
+      }
+    },
+    {
+      "id": "digital_inclusion_programme",
+      "name": "Digital Inclusion Programme",
+      "theme": "social",
+      "summary": "Broadband for the last ten per cent, and skills for those the economy left offline.",
+      "position": { "economic": -0.15, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.25 },
+        "bloc_offset": { "rural": 0.15, "urban": 0.05, "pensioners": 0.06 }
+      }
+    },
+    {
+      "id": "social_care_cap_act",
+      "name": "Social Care Cost Cap",
+      "theme": "social",
+      "summary": "Cap what anyone pays over a lifetime for social care, with the state carrying the rest.",
+      "position": { "economic": -0.35, "social": 0.0 },
+      "majority": "absolute",
+      "cooldown_months": 0,
+      "once": true,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "health": 0.45 },
+        "bloc_offset": { "pensioners": 0.2, "workers": 0.05, "business": -0.05 }
+      }
+    },
+    {
+      "id": "civic_integration_act",
+      "name": "Civic Integration Act",
+      "theme": "social",
+      "summary": "A mandatory language and civics course, with a test at the end, for every new arrival.",
+      "position": { "economic": 0.1, "social": 0.5 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "society": { "migration": -0.2 },
+        "bloc_offset": { "rural": 0.15, "urban": -0.08, "students": -0.05 }
+      }
+    },
+    {
+      "id": "refugee_quota_act",
+      "name": "Refugee Quota Act",
+      "theme": "social",
+      "summary": "An annual quota accepted under a shared European scheme, funded by the centre.",
+      "position": { "economic": -0.1, "social": -0.6 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "society": { "migration": 0.25 },
+        "bloc_offset": { "urban": 0.12, "students": 0.1, "rural": -0.2, "workers": -0.05 }
+      }
+    },
+    {
+      "id": "online_harms_act",
+      "name": "Online Harms Act",
+      "theme": "social",
+      "summary": "A duty of care on the platforms, enforced by a regulator with fines it can actually levy.",
+      "position": { "economic": 0.1, "social": 0.55 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "society": { "press_freedom": -0.2 },
+        "bloc_offset": { "pensioners": 0.12, "rural": 0.08, "students": -0.12, "urban": -0.06 }
+      }
+    },
+    {
+      "id": "national_heritage_fund",
+      "name": "National Heritage Fund",
+      "theme": "social",
+      "summary": "Public money for the churches, canals and theatres no market will keep standing.",
+      "position": { "economic": 0.1, "social": 0.35 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "infrastructure": 0.2 },
+        "bloc_offset": { "rural": 0.15, "pensioners": 0.12, "urban": 0.04, "students": -0.05 }
+      }
+    },
+    {
+      "id": "homelessness_duty_act",
+      "name": "Homelessness Reduction Duty",
+      "theme": "social",
+      "summary": "A statutory duty on every council to rehouse, with the services to actually do it.",
+      "position": { "economic": -0.4, "social": -0.2 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "health": 0.2 },
+        "bloc_offset": { "urban": 0.18, "students": 0.06, "rural": -0.04 }
+      }
+    },
+    {
+      "id": "rent_stabilisation_act",
+      "name": "Rent Stabilisation (Emergency) Act",
+      "theme": "social",
+      "summary": "Freeze rents in the capitals while the housing shortage lasts, and not a month longer.",
+      "position": { "economic": -0.6, "social": -0.2 },
+      "majority": "simple",
+      "cooldown_months": 36,
+      "once": false,
+      "preconditions": [
+        { "field": "unrest_pct", "op": ">=", "value": 35.0 }
+      ],
+      "effects": {
+        "bloc_offset": { "urban": 0.2, "students": 0.12, "business": -0.15, "rural": -0.05 }
+      }
+    },
+    {
+      "id": "universal_school_meals",
+      "name": "Universal School Meals Act",
+      "theme": "social",
+      "summary": "A free hot lunch for every pupil, the means test abolished.",
+      "position": { "economic": -0.35, "social": -0.1 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "education": 0.2 },
+        "bloc_offset": { "workers": 0.12, "students": 0.1, "rural": 0.05, "business": -0.04 }
+      }
+    },
+    {
+      "id": "womens_sport_fund",
+      "name": "Women's Sport Fund",
+      "theme": "social",
+      "summary": "Public funding for women's facilities, coaches and leagues, ring-fenced for a decade.",
+      "position": { "economic": -0.2, "social": -0.45 },
+      "majority": "simple",
+      "cooldown_months": 24,
+      "once": false,
+      "preconditions": [],
+      "effects": {
+        "spending_pct_gdp": { "education": 0.15 },
+        "bloc_offset": { "urban": 0.1, "students": 0.12, "rural": -0.04, "pensioners": -0.04 }
+      }
     }
   ]
 }

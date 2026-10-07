@@ -84,6 +84,38 @@ tests=(
   # Registered at authoring time per the pass-5 fleet's find: the silent
   # class is why this file exists.
   tests/test_industry_surfaces.gd
+  # V4.2: the per-law effect ledger -- realized deltas (the clamp speaks for
+  # itself), per-act accumulation, repeal subtracting through the ONE applier,
+  # the refusals (constitutional, unrecorded), event silence, round-trip.
+  tests/test_statute_ledger.gd
+  # V4.2 T2: the composition machine -- the draft refusals, the budget
+  # arithmetic and the derived price, countdown-to-composition, the legality
+  # scan finding composed laws, the repeal draft (negated preview, NOT in
+  # effects), determinism, round-trip + absence, and the price table's bloc
+  # vocabulary pinned against BLOC_KEYS.
+  tests/test_statute_compose.gd
+  # V4.2 T4: custom tax keys through the params register -- birth writes rate
+  # AND params (apply registers before the rate moves, or commit would refuse
+  # its own applier), the zero-reference rule, the ONE erosion curve, opinion
+  # at the shared scale, the authored five bit-identical, commit's custom
+  # plumbing, one key one birth, repeal keeps the params, round-trip.
+  tests/test_statute_tax.gd
+  # V4.2 T5: the tax panel, the bill briefing and the two paid polls, pinned
+  # through the real main.tscn -- every leg here can fail silently (a rate
+  # row off a hand-written list, a quoted-not-landed price, an uncharged or
+  # re-rollable poll, a forecast that never firms), and the single-writer pin
+  # on poll_purchases is a source scan no sim-side test can see.
+  tests/test_statute_surfaces.gd
+  # V4.2 T6: the assembly's own life -- the idle hazard band, a bill dividing
+  # with no player action, the endorsement moving its division and charging
+  # once, the chief-backed lobby naming a real law and a real chief, the
+  # in-flight guard, determinism, the has_budget gate, round-trip. Registered
+  # at authoring time per the pass-5 fleet's find.
+  tests/test_statute_assembly.gd
+  # V4.2 T7: the grown book's content shape -- counts, theme and per-bloc sign
+  # coverage, spread bands -- re-derived from the JSON beside tools/law_lint.py,
+  # because a check only a shell invocation can reach is one the suite never runs.
+  tests/test_law_content.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd

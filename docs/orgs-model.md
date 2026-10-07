@@ -10,7 +10,7 @@ tags:
 
 The supranational organisations: membership as data, one register per council,
 one composition rule for the channels several orgs share, and accession and
-withdrawal as multi-year domestic fights. Built at [[ROADMAP|V3.2]],
+withdrawal as multi-year domestic fights. Built at V3.2,
 generalising what [[bloc-model]] was — the V1.3d machine, hardcoded to the one
 EU object — which this doc replaces as the machine's model. bloc-model.md
 stands as the one-org record; every number in it that survived the
@@ -229,4 +229,4 @@ proposal per player-choice):
   V1.3d put it -- uncarryable by the player is the point of a council.
 
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
-[[referendum-model]] · [[ROADMAP]]
+[[referendum-model]]

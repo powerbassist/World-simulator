@@ -24,7 +24,7 @@ Binary lands at `%LOCALAPPDATA%\Microsoft\WinGet\Links\godot.exe` and is on `PAT
 `project.godot` pins `config/features` to `4.7`. Bump that line deliberately when the engine moves, and re-run the tests before committing the bump.
 
 > [!note] Why 4.7 and not the 4.3 S0 started on
-> [[ROADMAP|Session S0]] scaffolded against 4.3. The MCP editor bridge of the day (mkdevkit/godot-mcp, since replaced) required 4.4+, which forced the upgrade. S1's tests passed unchanged on 4.7.1 against a fresh `.godot` cache, so nothing was owed for the jump.
+> Session S0 scaffolded against 4.3. The MCP editor bridge of the day (mkdevkit/godot-mcp, since replaced) required 4.4+, which forced the upgrade. S1's tests passed unchanged on 4.7.1 against a fresh `.godot` cache, so nothing was owed for the jump.
 
 ## Godot MCP
 
@@ -266,4 +266,4 @@ The rule: if a server is missing something, **replace** it with the one that has
 
 ---
 
-Related: [[index]] · [[engine-decision]] · [[ROADMAP]]
+Related: [[index]] · [[engine-decision]]

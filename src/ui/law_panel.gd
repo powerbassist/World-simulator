@@ -27,6 +27,13 @@ const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
+## V4.2. The composed register reaches the list through statute.custom_laws()
+## -- the same read the sim's legality scan makes, so the panel can never
+## show a book the sim would refuse or hide one it would accept.
+const Statute = preload("res://src/sim/statute.gd")
+## V4.2 T5. The poll kinds are the constants file's vocabulary -- the same
+## words buy_poll() records and the briefing's buttons send.
+const StatuteK = preload("res://src/sim/statute_constants.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -39,6 +46,13 @@ const FORECAST_UNCERTAIN_BAND := 0.15
 ## month has actually elapsed against it, which a failed vote changes nothing
 ## to distinguish -- an entry that shows "nothing moved" is still correct.
 signal proposed(before: Dictionary, law_name: String, result: Dictionary)
+## V4.2 T5. Propose now OPENS THE BRIEFING rather than dividing on the press:
+## a bill briefing the player can read -- channels, landed price, the polls
+## they can commission -- before the division is what the whole popup exists
+## for, and the division itself is the briefing's verb (main.gd routes its
+## propose_requested back into run_proposal() below). One propose path, one
+## card path; this signal only asks for the popup.
+signal brief_requested(law)
 
 var _state
 var _loader
@@ -50,6 +64,15 @@ var _close_button: Button
 
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
+
+## V4.2 T6 review, round 2. An Endorse the sim refused, verbatim from the
+## machine -- the companies panel's _last_refusal idiom exactly: SET on a
+## refusal and CLEARED on a success inside the handler, NEVER in _refresh()
+## (the same refresh that must display a refusal is the one that would erase
+## it), and displayed above the section's empty early-return -- the one
+## reachable refusal IS the empty-in-tray frame, a stale press at a bill the
+## assembly divided between the click and the refresh.
+var _endorse_refusal := ""
 
 
 func _ready() -> void:
@@ -142,8 +165,20 @@ func _refresh() -> void:
 	for law_id in ns.held_bills:
 		_list.add_child(_build_held_bill(ns, String(law_id)))
 
+	# V4.2 T6 review. The assembly's own in-tray -- private members' bills and
+	# chiefs' bills the machine tabled, which the proposable list below cannot
+	# show (a tabled law is by definition not in available()) and whose one
+	# answerable verb is the president's stand. The companies panel's
+	# autonomy sections are the house idiom for verbs on machine-generated
+	# state; everything here is off the in-tray register, no hand-written list.
+	# The refusal is NOT cleared here: refresh displays it, the handler owns
+	# its lifetime (see _endorse_refusal).
+	_build_assembly_section(ns)
+
 	var party_list: Array = _loader.parties.get(ns.id, [])
-	var available: Array = Legislature.available(ns, _loader.laws)
+	# V4.2. Authored laws plus the composed register -- the same concat the
+	# legality scan runs, so a draft the player finished is on this list.
+	var available: Array = Legislature.available(ns, _loader.laws + Statute.custom_laws(ns))
 	if available.is_empty():
 		PanelKit.line(_list, "No law is currently proposable.", PanelKit.Tone.PLAIN)
 		return
@@ -176,6 +211,13 @@ func _build_result_summary(result: Dictionary) -> Control:
 		verdict = "BLOCKED BY THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
 	elif result.get("struck_down", false):
 		verdict = "STRUCK DOWN"
+	# THE MOOT RELEASE (the ultra pass-6 finding), and it is the same one-word-
+	# per-outcome rule as the four above: a repeal releasing from its hold into
+	# an empty book did not come into force over anybody -- its target was
+	# already gone, nothing followed, and no override price was charged. The
+	# released branch below is the release that DID apply.
+	elif result.get("target_already_gone", false):
+		verdict = "MOOT — its target was already gone from the book."
 	elif result.get("released", false):
 		verdict = "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
 	PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN)
@@ -206,6 +248,21 @@ func _build_result_summary(result: Dictionary) -> Control:
 		box.add_child(_build_censure_summary(result.get("censure", {})))
 		return box
 
+	# And a moot release had no division either -- the verdict line above already
+	# says why nothing followed, and a tally here would read a chamber that never
+	# sat against a bill that came to nothing.
+	if result.get("target_already_gone", false):
+		return box
+
+	# A HOLD'S RELEASE had no division either (the ultra pass-7 finding): the
+	# bill was carried once, BEFORE the second chamber suspended it, and the
+	# release applies over that chamber without the assembly re-sitting -- so
+	# the tally below read "Yes 0 · No 0 · Abstain 0, of 577 seats" against a
+	# chamber that never sat. The card main.gd builds refuses the same tally
+	# for the same reason.
+	if result.get("released", false):
+		return box
+
 	var tally := Label.new()
 	tally.text = "Yes %d · No %d · Abstain %d, of %d seats" % [
 		result["yes_seats"], result["no_seats"], result["abstain_seats"], result["seats_total"]
@@ -227,8 +284,14 @@ func _build_result_summary(result: Dictionary) -> Control:
 			# months" in the held block directly below it, which is two numbers for one fact
 			# on one screen. This box is a record of a division that has already happened and
 			# never counts down; the block below is the live one.
-			held.text = "It is held for %d months, and overriding them costs %.2f with every bloc." % [
-				int(result.get("held_months", 0)), ChambersK.UPPER_OVERRIDE_OFFSET]
+			# Same branch as the held list below: an assembly division's hold
+			# releases free, so only a government bill's record promises the
+			# override price.
+			if bool(result.get("assembly_bill", false)):
+				held.text = "It is held for %d months, and then comes into force." % int(result.get("held_months", 0))
+			else:
+				held.text = "It is held for %d months, and overriding them costs %.2f with every bloc." % [
+					int(result.get("held_months", 0)), ChambersK.UPPER_OVERRIDE_OFFSET]
 			held.autowrap_mode = TextServer.AUTOWRAP_WORD
 			box.add_child(held)
 
@@ -457,14 +520,20 @@ func _build_pending_referendum(ns) -> Control:
 	return box
 
 
-## The blur is unchanged: a party whose |support| falls inside
-## FORECAST_UNCERTAIN_BAND lands in "undecided" rather than a firm column.
+## The blur is unchanged: a party whose |support| falls inside the band lands
+## in "undecided" rather than a firm column. The band is not a constant here
+## any more -- V4.2 T5's commissioned assembly poll buys it down to
+## legislature_constants.ABSTAIN_BAND for THAT bill, and `forecast_band()`
+## reads the purchase register. STATIC, and the briefing calls this same walk:
+## the forecast is one computation and two windows, the same one-source rule
+## PanelKit's ledgers keep for figures -- a second effects-walk in briefing.gd
+## is exactly the drift this project keeps paying to find.
 ##
 ## Rebel seats are counted into the column they will actually vote in, not left
 ## inside their party's block. They are not a second kind of uncertainty -- the
 ## split is deterministic and the government panel already publishes it per
 ## party, so hiding it here would make the forecast lie in one direction only.
-func _forecast_text(ns, party_list: Array, law) -> String:
+static func forecast_text(ns, party_list: Array, law, band: float) -> String:
 	var yes := 0
 	var no := 0
 	var undecided := 0
@@ -480,16 +549,16 @@ func _forecast_text(ns, party_list: Array, law) -> String:
 			broke = Discipline.rebel_seats(ns, party, s, own)
 		rebels += broke
 
-		if s > FORECAST_UNCERTAIN_BAND:
+		if s > band:
 			yes += seats - broke
-		elif s < -FORECAST_UNCERTAIN_BAND:
+		elif s < -band:
 			no += seats - broke
 		else:
 			undecided += seats - broke
 
-		if own > FORECAST_UNCERTAIN_BAND:
+		if own > band:
 			yes += broke
-		elif own < -FORECAST_UNCERTAIN_BAND:
+		elif own < -band:
 			no += broke
 		else:
 			undecided += broke
@@ -498,6 +567,21 @@ func _forecast_text(ns, party_list: Array, law) -> String:
 	if rebels > 0:
 		text += "  (%d expected to break ranks)" % rebels
 	return text
+
+
+func _forecast_text(ns, party_list: Array, law) -> String:
+	return forecast_text(ns, party_list, law, forecast_band(ns, law.id))
+
+
+## The band THIS bill's forecast is blurred by: the ordinary uncertainty, or
+## the assembly poll's ABSTAIN_BAND where one was bought -- the whole point of
+## the purchase is that the whip count firms up, and only for the bill that
+## was polled. Reads the purchase register HERE, in src/ui/ where it belongs:
+## src/sim/ never reads it (statute.buy_poll is its one sim touch).
+static func forecast_band(ns, bill_key: String) -> float:
+	if ns.poll_purchases.get(bill_key, {}).has(StatuteK.POLL_KIND_ASSEMBLY):
+		return LK.ABSTAIN_BAND
+	return FORECAST_UNCERTAIN_BAND
 
 
 ## What the second chamber and the court will do to a bill that carries the Assembly.
@@ -543,13 +627,108 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	PanelKit.line(box, "%s — held by the %s" % [
 		law.law_name if law != null else law_id, ns.upper_chamber_name], PanelKit.Tone.PLAIN)
 
-	var months: int = int(ns.held_bills.get(law_id, 0))
-	PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc." % [
-		"one month" if months == 1 else "%d months" % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
+	# The ultra pass-2 shape: the entry carries {"months", "origin"}.
+	var months: int = int(ns.held_bills.get(law_id, {}).get("months", 0))
+	# The override clause is the GOVERNMENT's insistence priced -- an assembly
+	# hold releases free (legislature.gd's origin gate charges nothing nobody
+	# incurred), so its sentence promises no cost. The ultra pass-3 finding:
+	# the clause rode unconditioned, promising a price the assembly class
+	# never pays.
+	if String(ns.held_bills.get(law_id, {}).get("origin", "player")) == "assembly":
+		PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s." % [
+			"one month" if months == 1 else "%d months" % months], PanelKit.Tone.PLAIN)
+	else:
+		PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc." % [
+			"one month" if months == 1 else "%d months" % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
 	return box
 
 
+## The ASSEMBLY BILLS section: the header, then one compact row per bill in
+## the machine's in-tray -- the law's name off the loader, the backer line
+## when a chief lobbied the bill in, the months to the division, and Endorse
+## wherever the president has not yet stood. One endorsement per bill is the
+## sim's rule, so a taken stand REPLACES the verb with its record rather
+## than leaving a live button whose only possible future is a refusal (the
+## companies panel's spent-verb shape).
+func _build_assembly_section(ns) -> void:
+	# Above the empty early-return on purpose: the one reachable refusal is a
+	# stale press at a bill the assembly divided between the click and the
+	# refresh -- precisely the frame that arrives here with nothing left to
+	# list. A refusal the empty-in-tray frame swallowed would be a press that
+	# did nothing and said so nowhere.
+	if _endorse_refusal != "":
+		PanelKit.line(_list, _endorse_refusal)
+	if ns.assembly_bills.is_empty():
+		return
+	PanelKit.heading(_list, "ASSEMBLY BILLS")
+	for bill_id in ns.assembly_bills:
+		var entry: Dictionary = ns.assembly_bills[bill_id]
+		var law = _find_law(String(entry.get("law_id", "")))
+		var months := int(entry.get("months_left", 0))
+		var box := VBoxContainer.new()
+		box.add_theme_constant_override("separation", 2)
+		PanelKit.line(box, "%s — before the assembly, divides in %d %s." % [
+			law.law_name if law != null else String(entry.get("law_id", "")),
+			months, "month" if months == 1 else "months"], PanelKit.Tone.PLAIN)
+		var firm_id := String(entry.get("backer_firm", ""))
+		if firm_id != "":
+			# The B3 person_name idiom: the chief resolves through the loader
+			# like every other named person -- a missing name reads as a role,
+			# never as a raw id or an empty space.
+			var chief: String = _loader.person_name(String(entry.get("backer_chief", "")))
+			PanelKit.line(box, "%s's chief %s backs this bill." % [
+				_loader.firm_name(ns.id, firm_id),
+				chief if chief != "" else "the chief"], PanelKit.Tone.PLAIN)
+		if float(entry.get("endorse_bonus", 0.0)) != 0.0:
+			PanelKit.line(box, "Endorsed — the president's stand is on the record.", PanelKit.Tone.PLAIN)
+		else:
+			box.add_child(_build_endorse_button(String(bill_id)))
+		_list.add_child(box)
+
+
+func _build_endorse_button(bill_id: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	# The tooltip names the trade off the constants' own vocabulary, so the
+	# button cannot drift from what the machine actually charges.
+	var price_bits := PackedStringArray()
+	for bloc in StatuteK.PMB_ENDORSE_PRICE:
+		price_bits.append("%s %+.2f" % [String(bloc).capitalize(), float(StatuteK.PMB_ENDORSE_PRICE[bloc])])
+	var endorse_btn := Button.new()
+	endorse_btn.text = "Endorse"
+	endorse_btn.tooltip_text = (
+		"Stand behind the bill publicly: %+.2f on every party's support line at its division, "
+		+ "priced now as executive activism (%s). One stand per bill."
+	) % [StatuteK.PMB_ENDORSE_SUPPORT, ", ".join(price_bits)]
+	endorse_btn.pressed.connect(_on_endorse.bind(bill_id))
+	_offer(endorse_btn)
+	row.add_child(endorse_btn)
+	return row
+
+
+## The player's stand. The sim owns every rule -- the bonus onto the in-tray
+## entry, the price through the ONE applier, the one-per-bill refusal -- and
+## this panel sends the command and marks itself dirty; the refresh then
+## shows the record where the button was.
+func _on_endorse(bill_id: String) -> void:
+	var result: Dictionary = Statute.endorse(_state, _state.player(), _loader, bill_id)
+	_endorse_refusal = "" if bool(result.get("ok", false)) \
+		else String(result.get("refusal", "The assembly refused the stand."))
+	_dirty = true
+
+
+## V4.2 T5. The press opens the briefing; the division happens from the
+## briefing's own verb, routed back into run_proposal() below. A bill the
+## player can read before the vote -- and commission a poll on before it --
+## is the whole of what the briefing is for.
 func _on_propose(law) -> void:
+	brief_requested.emit(law)
+
+
+## The division itself. Public because the briefing's verb lands here through
+## main.gd -- one propose path (this body), one card path (the `proposed`
+## handler in main.gd), whichever surface pressed the button.
+func run_proposal(law) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result := Legislature.propose(_state, _loader, law)
 	proposed.emit(before, law.law_name, result)
@@ -582,6 +761,14 @@ func _find_law(law_id: String):
 	for law in _loader.laws:
 		if law.id == law_id:
 			return law
+	# V4.2 ultra pass 2: a composed law lives on the register, not the loader --
+	# the briefing's _repeal_line idiom. Without the fallback every held bill,
+	# referendum and result summary for a composed law printed the raw
+	# draft_NNNN id on the panel that lists the laws.
+	if _state != null and _state.player() != null:
+		for law in Statute.custom_laws(_state.player()):
+			if String(law.id) == law_id:
+				return law
 	return null
 
 
@@ -597,6 +784,9 @@ func _offer(button: Button) -> void:
 ## Every verb here is rebuilt on each refresh, so this is the first enabled one in
 ## build order. A referendum in flight is built first and its "Call it off" is
 ## therefore the verb while one is running, which is right: while the country has
-## been asked, that is the only decision the assembly's list cannot offer.
+## been asked, that is the only decision the assembly's list cannot offer. An
+## assembly bill awaiting its endorsement builds next -- with no referendum in
+## flight, the Endorse button is the verb, which is also right: its window is
+## PMB_MONTHS_TO_VOTE, the shortest clock on the page.
 func primary_action() -> Control:
 	return _primary

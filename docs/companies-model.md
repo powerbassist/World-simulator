@@ -14,8 +14,7 @@ argument. §1–9 are V1.4a, §10–19 V1.4b, §20–29 V1.4c; §30 is V2.2a's c
 §31–38 are V4.7's two-tier register and autonomy machine.
 
 Related: [[economy-model]] · [[people-model]] · [[coercion-model]] ·
-[[defence-model]] · [[data-architecture]] · [[fictionalization]] · [[v1]] ·
-[[ROADMAP]]
+[[defence-model]] · [[data-architecture]] · [[fictionalization]] · [[v1]]
 
 ## 1. The first content class that fronts nothing
 
@@ -376,7 +375,7 @@ taken on. Both are built — §10 and §20 below.
 > session and not a constant. See §28.
 
 **Bond markets.** Moved to [[v1]] §6, where the yield they write belongs — see
-[[ROADMAP]] for the argument.
+ for the argument.
 
 ---
 
@@ -500,17 +499,22 @@ and the third is the one that matters:
 
 ## 14. Deregulation is a direction, not an undo
 
-There is no repeal verb in this project and a `once` law never returns. So the
-clamp is **symmetric**: a deregulation law carries a negative burden on the same
-accumulator.
+**Recorded at V1.4b; the record overturned in part at V4.2.** The rule then read
+"there is no repeal verb in this project and a `once` law never returns", and the
+symmetric clamp followed from it. V4.2 built the repeal verb whole — the per-law
+effect ledger and `Legislature._subtract_ledger` — so a `once` law now returns when
+a carried repeal clears its gate. The SIGNED burden survives on its own reasons,
+which repeal does not replace: easing a sector PARTWAY is ordinary legislation,
+while repeal removes a whole act or nothing. The clamp stays **symmetric**.
 
 An asymmetric `[0, MAX]` would have been a **permanent monotone charge** —
 [[defence-model]]'s named failure mode, where a clamp stops being a guard rail and
-becomes the number — and it would have made a repeal law *inert at burden 0*,
-breaking [[foreign-policy-model|V1.3f]]'s inert-act property on the law list. It
-would also have needed a new whitelisted `PRECONDITION_FIELDS` entry carrying a
-sector parameter that list has never had. The signed burden costs none of that, and
-deregulation pays honestly in `bloc_offset` instead of being free.
+becomes the number — and, in V1.4b's no-repeal world, would have made a
+deregulation law *inert at burden 0*, breaking [[foreign-policy-model|V1.3f]]'s
+inert-act property on the law list. It would also have needed a new whitelisted
+`PRECONDITION_FIELDS` entry carrying a sector parameter that list has never had.
+The signed burden costs none of that, and deregulation pays honestly in
+`bloc_offset` instead of being free.
 
 ## 15. The anti-double-count is a load error, not a convention
 
@@ -861,7 +865,7 @@ compensation *for* — [[v1]] §6 owns both. What nationalising costs is then a 
 rather than a flow**: the whole purchase lands on `debt_to_gdp_pct` at once, and
 privatising is the only lever in the game that moves a stock back down.
 
-> [!note] [[ROADMAP|V1.6c]] discharged the obligation, and on a RATE
+> [!note] V1.6c discharged the obligation, and on a RATE
 > [[cycle-model|V1.6a]] arrived with the cycle and discharged nothing: a dividend
 > expressed as a share of GDP is not procyclical by construction, because the cycle
 > moves numerator and denominator together. **A rate is the one quantity in this
@@ -1250,9 +1254,17 @@ gate. The pin lives in `tests/test_companies_tiers.gd` beside the round-trip.
 
 ## 37. The declared stopgaps and the open calls
 
-- **The executive kind carries no meter and no wants** — a firm's chief is a
-  face until [[v4.2]]'s lobbying gives a firm's interest a lever. Sunset
-  pinned in `tests/test_people.gd`.
+- **The executive kind carries no meter and no wants** — and the deferral
+  this bullet declared is RESOLVED: [[v4.2]] built the lever, and the lever
+  is an ACT, not a meter. A chief's interest reaches the statute book
+  through `statute.gd`'s chief-backed assembly bill — the sector's biggest
+  major signs the ask as `backer_chief`, the assembly divides, and the
+  endorsement window is the player's answer — priced at
+  `LOBBY_HAZARD_MONTHLY` 0.02 against `LOBBY_BURDEN_FLOOR` 0.1 (see
+  [[legislature-model]], V4.2 T6). `tests/test_people.gd` still pins the
+  exemption, and it stands accurately: a meter would price a chief's
+  grievance every tick against wants the person does not have, while the
+  act fires only when a sector's burden is worth a bill.
 - **The relocation discount is nearly inert**: the nearest-region target makes
   the distance discount a near-constant ×0.85–0.98; the constants comment's
   Lisbon–Warsaw is unreachable by construction. Recorded, band holds.
@@ -1284,4 +1296,4 @@ state without a tick — the sections read the register directly.
 
 Related: [[index]] · [[legislature-model]] · [[economy-model]] · [[opinion-model]] ·
 [[coercion-model]] · [[defence-model]] · [[bloc-model]] · [[geography-model]] ·
-[[v1]] · [[ROADMAP]]
+[[v1]]

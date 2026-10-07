@@ -24,6 +24,13 @@ extends RefCounted
 ## Displayed figures land within this many points of the truth, uniformly.
 const NOISE_MAX_PCT := 3.0
 
+## V4.2 T5. The margin of a COMMISSIONED poll -- one the government paid to
+## have done properly. The same hash as the ordinary read (the same pollster's
+## error keeps its sign), measured at a third of the band: paying narrows the
+## number the player already had, it does not draw a new one. display-side
+## only, like everything in this file -- the sim never learns a poll exists.
+const PRECISE_MAX_PCT := 1.0
+
 const _U32 := 0xFFFFFFFF
 
 
@@ -36,6 +43,16 @@ static func poll_id(year: int, month: int) -> int:
 ## about. Clamped to the 0-100 the reader expects of an approval figure.
 static func displayed(id: int, key: String, true_value: float) -> float:
 	return clampf(true_value + offset(id, key), 0.0, 100.0)
+
+
+## V4.2 T5. The same poll at the commissioned margin -- the read the briefing
+## shows once the bill's poll has been bought. Additive on purpose:
+## `displayed()` above is untouched, and the existing readers (polling panel,
+## overview, trends) keep their band. Shares `_unit()` with `offset()`, so for
+## one (id, key) the precise figure always sits inside the ordinary one's
+## error bar -- a sharper instrument over the same fieldwork, not a second one.
+static func displayed_precise(id: int, key: String, true_value: float) -> float:
+	return clampf(true_value + (_unit(id, key) * 2.0 - 1.0) * PRECISE_MAX_PCT, 0.0, 100.0)
 
 
 ## The error this poll happens to carry, in points. Uniform on

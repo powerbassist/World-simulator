@@ -66,7 +66,7 @@ all now refer to the **player's** term: the executive's where one exists, the
 legislature's otherwise. Only an **executive** election can set
 `in_government` false.
 
-**Since [[ROADMAP|V1.2b]]**, *why* it goes false is named rather than inferred
+**Since V1.2b**, *why* it goes false is named rather than inferred
 from `has_executive`: `ns.lose_condition` (`executive_election_defeat` for
 France, `party_not_largest` for the other nine, `never` for CHE's collegial
 executive) and a separate `ns.term_limit` check, which ends the run without
@@ -189,7 +189,7 @@ allocates to **162 / 115 / 104 / 92 / 52 / 52** on 577 seats, and **no two
 parties reach 289** — so every majority government is at least three parties,
 and a minority government falls only if the left and right opposition vote
 together. That is the real French dynamic, and it emerges from data authored in
-[[ROADMAP|S2]] for entirely different reasons.
+S2 for entirely different reasons.
 `tests/test_government.gd` asserts the no-two-party property directly, so a
 future roster edit cannot quietly remove it.
 
@@ -456,5 +456,4 @@ already there rather than in a tick of its own.
 
 Related: [[index]] · [[election-model]] · [[electoral-systems]] ·
 [[legislature-model]] · [[discipline-model]] · [[dissolution-model]] ·
-[[cabinet-model]] · [[opinion-model]] · [[data-architecture]] · [[v1]] ·
-[[ROADMAP]]
+[[cabinet-model]] · [[opinion-model]] · [[data-architecture]] · [[v1]]

@@ -7,7 +7,7 @@ tags:
 
 # Decision Log
 
-Corrections made *during* a session that changed what the [[ROADMAP]] said before
+Corrections made *during* a session that changed what the  said before
 it. Kept out of the roadmap itself so that document stays forward-looking, and
 kept at all because the pattern is the useful part: it shows which kinds of
 estimate this project gets wrong, and in which direction.
@@ -100,7 +100,7 @@ re-host, a modal layer that stays for four panels, seven keybinds retargeted plu
 three added, focus order, and a new shell test. Eleven surfaces behind one line
 in the roadmap table.
 
-Same tell [[ROADMAP|the roadmap's own effort note]] already names for S7: the
+Same tell the roadmap's own effort note already names for S7: the
 estimate counted the thing the session is named after and not the wiring around
 it. This is the second time the same pattern has produced a wrong effort call —
 worth watching for at every future plan-first session, not just re-deriving from
@@ -211,7 +211,7 @@ two files, one new test file plus four edited, two new balance-probe regimes,
 and eight documentation edits. **Corrected to Plan first Yes, High → Medium** —
 the third correction on this roadmap's own accounting, and the second one
 caught by the receiving session reading the row cold rather than the one that
-wrote it, which is the pattern [[ROADMAP|the roadmap's own handoff section]]
+wrote it, which is the pattern the roadmap's own handoff section
 now names directly.
 
 **The structural finding: a scheduled election is worth roughly +65 seats no
@@ -235,7 +235,7 @@ French roster gives the top two parties roughly 355 seats between them,
 destroying [[government-model|the no-two-parties-reach-289 property]] that
 makes every French majority government a three-party coalition and that
 `tests/test_government.gd` asserts directly. The roster would need
-re-authoring to fix this without breaking that, which is [[ROADMAP|S2]]
+re-authoring to fix this without breaking that, which is S2
 content work, not a V1.1 session's.
 
 **The gamble was measured before it was built, and it did not need
@@ -316,7 +316,7 @@ the planning docs against Geopolitical Simulator's 2025/2026 store-page feature
 list found four things absent from every doc in the repo: military, tourism, the
 leader's personal wealth, and difficulty settings. A fifth question came with
 them — whether three economic sectors is enough — and a sixth was already open in
-[[ROADMAP]]: what follows V1.1d.
+: what follows V1.1d.
 
 The premise the pass worked from, and did not treat the store page as
 overriding: **this project's differentiator is not feature parity.** It is fewer
@@ -407,7 +407,7 @@ entry names what would reopen it, because a decision with no route back is a
 prohibition.
 
 **Next block: V1.2a, a second playable nation** — the breadth move, confirmed
-with the user, replacing the open question this document's own [[ROADMAP]] entry
+with the user, replacing the open question this document's own  entry
 had parked. What made it the cheapest option is that the content already exists
 for ten nations and `GameState.new_game()` is already parameterised on
 `player_id`; the only hardcoded player nation under `src/` is one const in
@@ -661,7 +661,7 @@ that is *correct*, not silently wrong. Full account: [[scenario-model]].
 
 ## V1.3 — decomposed before any code, and four calls made while decomposing
 
-Not a build session and not a correction to one: [[ROADMAP]] carried V1.3 as a
+Not a build session and not a correction to one:  carried V1.3 as a
 single table row — relations, diplomatic actions, trade agreements, tariffs,
 sanctions, an EU-shaped bloc, nation AI foreign policy, defence — and a row is
 not a session. Logged here for the same reason the **Scope alignment** entry
@@ -1392,4 +1392,22 @@ itself, if one is ever wanted, is a manual review pass in the shape of the
 
 ---
 
-Related: [[index]] · [[ROADMAP]]
+## ROADMAP retired — the tier docs are the build order (2026-10-05)
+
+ROADMAP.md sat at the vault root as the session-by-session build order since
+S0, and by V4 it was neither of the things its header promised: not
+forward-looking (its queue rows were V2-era; the tier docs in docs/tiers/
+superseded them) and not short (3,500 lines). Deleted 2026-10-05. The scope
+record is [[scope]] plus the tier docs; the per-block records are the model
+notes and the AGENTS.md session rows.
+
+The 298 `[[ROADMAP|session]]` citations across the vault became their plain
+session labels rather than dead links: they cited roadmap ROWS as history
+("built at V1.5b"), and each row's substance lives in the model note that
+cites it. Prose mentions of roadmap rows in model docs and code comments
+stay — they are historical statements about what the plan said at the time,
+not links.
+
+---
+
+Related: [[index]] · [[v4]]

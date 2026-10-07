@@ -8,7 +8,7 @@ tags:
 
 # Coercion Model
 
-Tariffs and sanctions: what they collect, what they destroy, who answers, and what it costs at home. Built at [[ROADMAP|V1.3c]], the third session of the V1.3 block.
+Tariffs and sanctions: what they collect, what they destroy, who answers, and what it costs at home. Built at V1.3c, the third session of the V1.3 block.
 
 Files: `src/sim/coercion.gd` (the rules) · `src/sim/coercion_constants.gd` (the numbers) · `data/diplomatic-actions/measures.json` (the content) · `GameState.measures` (the register) · `tools/coercion_probe.gd` (the measurement).
 
@@ -120,7 +120,7 @@ The anchor is the panel the line sits on: `economy_constants.TAX_BASE_SHARE` mak
 
 ## 4. Domestic blowback
 
-**Imposing** pays through `bloc_offset`, the channel a law, a censure, a reshuffle, a dissolution and a diplomatic action already write. No new `ISSUE_KEYS` entry — that call was [[ROADMAP|V1.3d's]], and it went the other way: six new `BLOC_SALIENCE_BASE` rows were authored, for reasons that are about the bloc rather than about coercion. See [[bloc-model]].
+**Imposing** pays through `bloc_offset`, the channel a law, a censure, a reshuffle, a dissolution and a diplomatic action already write. No new `ISSUE_KEYS` entry — that call was V1.3d's, and it went the other way: six new `BLOC_SALIENCE_BASE` rows were authored, for reasons that are about the bloc rather than about coercion. See [[bloc-model]].
 
 **Receiving** pays through `opinion.gd`'s existing terms: `sat["growth"]` reads `growth − trend` and `sat["jobs"]` reads `start_unemployment − unemployment`. No `bloc_offset_target` channel was invented. **Whether that path is legible was the session's named escalation trigger**, and it is the one question the plan flagged as most likely to fail.
 
@@ -239,7 +239,7 @@ No field earns a bump. `tests/test_save_load.gd` asserts all three *and* asserts
 
 ## Deliberately absent
 
-- ~~**No EU tariff competence.** A bloc that sets external tariffs collectively is [[ROADMAP|V1.3d's]], and reaching into it here would build the bloc badly.~~ Built at V1.3d: a `common_external_tariff` proposal writes this register for every (member, non-member) ordered pair through `Relations.directed_key()`, the **same key** a player's own tariff uses — so nothing in `src/sim/coercion.gd` or `src/sim/trade.gd` needed a line changed to read it. See [[bloc-model]].
+- ~~**No EU tariff competence.** A bloc that sets external tariffs collectively is V1.3d's, and reaching into it here would build the bloc badly.~~ Built at V1.3d: a `common_external_tariff` proposal writes this register for every (member, non-member) ordered pair through `Relations.directed_key()`, the **same key** a player's own tariff uses — so nothing in `src/sim/coercion.gd` or `src/sim/trade.gd` needed a line changed to read it. See [[bloc-model]].
 - **No third-party effects.** Sanctioning Germany does not move `DEU|ITA` or Austria's economy. V1.3e's, and `tests/test_coercion.gd` pins it.
 - ~~**No new `ISSUE_KEYS` entry**, unchanged from V1.3a and V1.3b.~~ Still true of V1.3c, and V1.3d answered the deferred question **yes**: `europe` is the twelfth. The reason it could not be another `bloc_offset` writer is that `bloc_offset` never reaches `issue_salience`. See [[bloc-model]].
 - **A scenario cannot author a measure in force.** [[scenario-model|The three axes]] are unchanged, stated so it is a decision rather than an assumption.
@@ -247,4 +247,4 @@ No field earns a bump. `tests/test_save_load.gd` asserts all three *and* asserts
 
 ---
 
-Related: [[ROADMAP]] · [[trade-model]] · [[diplomacy-model]] · [[economy-model]] · [[opinion-model]] · [[data-architecture]]
+Related: [[trade-model]] · [[diplomacy-model]] · [[economy-model]] · [[opinion-model]] · [[data-architecture]]

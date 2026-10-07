@@ -8,7 +8,7 @@ tags:
 
 # Economy Model
 
-The MVP economy and budget, as built in [[ROADMAP|S4]]. Every formula, every
+The MVP economy and budget, as built in S4. Every formula, every
 constant, and the argument for why nothing runs away.
 
 This is a **game model**, not a macroeconomic forecast. It is judged on whether
@@ -37,7 +37,7 @@ The UI shows the derived EUR figure alongside.
 
 ### Three sectors, not four
 
-Agriculture, industry, services — the three the data has. [[ROADMAP|S4]]'s scope
+Agriculture, industry, services — the three the data has. S4's scope
 line originally said four, splitting energy out of industry; that was written
 before [[data-sources]] established no open dataset provides the split. No MVP
 mechanic distinguishes energy from industry — energy mix is [[someday]] tier — so
@@ -302,7 +302,7 @@ exceeds trend growth, so a zero primary balance still walks the debt ratio upwar
 and stabilising it requires a small primary surplus. That is the entire fiscal
 pressure of the MVP, and it comes from one constant being larger than another.
 
-> [!note] Since [[ROADMAP|V1.6c]] it is the ANCHOR rather than the rate
+> [!note] Since V1.6c it is the ANCHOR rather than the rate
 > The rate `Budget.recompute()` reads is `Credit.yield_pct(ns)`, and the constant is
 > what that is a spread *over*. It keeps every word of its job above: the spread is
 > a deviation against the nation's own start, so it reads **exactly 0.0** at new game
@@ -351,7 +351,7 @@ and each month `demand_impulse *= IMPULSE_DECAY`.
 `LEVEL_FACTOR` converts "the GDP level effect I want" into "the annualised
 impulse that produces it once decayed to nothing" — the geometric sum
 `Σ impulse₀ × decay^n / 12`. Stating the multipliers as multipliers keeps
-[[ROADMAP|S10]]'s balance pass legible; without it, the tunables would be
+S10's balance pass legible; without it, the tunables would be
 opaque products.
 
 > [!note] `IMPULSE_MAX` was ±50 %/yr until S10
@@ -510,7 +510,7 @@ every field of every nation every month. **That** is the evidence.
 ## Where the constants live
 
 `src/sim/economy_constants.gd`, all of them, as typed GDScript `const`s. One
-file, so [[ROADMAP|S10]]'s balance pass has one place to edit and
+file, so S10's balance pass has one place to edit and
 `economy.gd` and `budget.gd` cannot drift apart.
 
 They are deliberately **not** in `data/`. [[engine-decision|Rule 1]] puts
@@ -519,7 +519,7 @@ These are model parameters: there is exactly one set, forever, and moving them t
 JSON would buy a loader and a validator in exchange for nothing.
 
 The one thing that *is* content is starting tax rates and spending split, and it
-lives in `data/nations/*.json`'s `fiscal` block, per nation, since [[ROADMAP|V1.2a]].
+lives in `data/nations/*.json`'s `fiscal` block, per nation, since V1.2a.
 It was a single shared `policy_defaults.json` from S4 through V1.1d, on the
 stated grounds that only France had a budget at MVP; V1.2a made a second nation
 playable and that grounds ran out. See [[data-architecture]] for the schema and
@@ -527,4 +527,4 @@ the sourcing behind the other nine nations' numbers.
 
 ---
 
-Related: [[index]] · [[data-architecture]] · [[engine-decision]] · [[mvp]] · [[ROADMAP]] · [[mechanics-economy]]
+Related: [[index]] · [[data-architecture]] · [[engine-decision]] · [[mvp]] · [[mechanics-economy]]
