@@ -547,14 +547,6 @@ func _weighted_offset(effects: Dictionary) -> float:
 	return total
 
 
-## How much of the bloc_offset clamp the worst reachable career may use. Not a value
-## solved against another value -- it is the statement that a guard rail has to stay a
-## guard rail, which docs/defence-model.md measured for the deployment bill and V1.4a
-## for the subsidy bill. At 0.60 the model keeps two fifths of the register free for the
-## laws, referendums and campaigns that also write it.
-const ACCUMULATION_CEILING := 0.60
-
-
 # --- E4: cadence and the desk, swept over the V4.4 dial -----------------------------
 
 ## THE BANDS WERE DECLARED BEFORE THIS SWEEP RAN -- the plan's clause, restated in

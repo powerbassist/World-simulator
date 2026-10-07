@@ -236,6 +236,10 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
     else:
         seen_ids[ev_id] = fname
 
+    for key in ev:
+        if key not in KNOWN_KEYS:
+            rep.fail("%s: '%s' is not a recognised event field" % (where, key))
+
     for field in ("name", "summary"):
         if not isinstance(ev.get(field), str) or not ev.get(field):
             rep.fail("%s: %s: missing or empty '%s'" % (where, ev_id, field))
@@ -356,8 +360,11 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
     # pure-hazard crisis about nobody is a shape the content owns, and two such
     # events are separated by id, body, likelihood, once-ness and the hash.
     if ev.get("subject_office") or preconds:
-        rows = sorted("%s%s%s" % (p.get("field"), p.get("op"), p.get("value")) for p in preconds
-                      if isinstance(p, dict))
+        # The value float-formats and only numeric conds enter the key, the loader's
+        # own shape (law.gd extract_preconditions stores `float(value)` and `continue`s
+        # the rest) -- raw JSON `10` and `10.0` are one gate there and one here too.
+        rows = sorted("%s%s%s" % (p.get("field"), p.get("op"), float(p.get("value"))) for p in preconds
+                      if isinstance(p, dict) and is_number(p.get("value")))
         gate = "%s|%s" % (ev.get("subject_office", ""), ",".join(rows))
         if gate in gates:
             rep.fail("%s: %s: has the same subject and the same gate as '%s' -- two events that can only ever fire in the same months are one event authored twice" % (
