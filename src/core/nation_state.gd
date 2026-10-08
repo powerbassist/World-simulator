@@ -495,7 +495,7 @@ var last_referendum_result: Dictionary = {}
 ##
 ## Written by Events.announce(), Events.tick_month() and Events.answer(), and by nothing
 ## else. V4.4: this replaced `event_pending` -- the desk is a QUEUE now (severity-
-## ordered, bounded by events_constants.QUEUE_MAX), because at a hundred-and-twenty
+## ordered, bounded by events_constants.QUEUE_MAX), because at a hundred-and-two
 ## events one slot is a draw the world considered and withdrew for no reason the
 ## content can see. Each entry is the V1.8 register's own shape (event_id,
 ## event_name, months_left, interrupt, plus region_id/region_name when sited) grown
@@ -2431,17 +2431,9 @@ static func from_dict(d: Dictionary):
 	# `diplo_months_to_act` at U6a.
 	s.referendum_mode = d.get("referendum_mode", "")
 	s.referendum_pending = d.get("referendum_pending", {})
-	# V1.8. THREE OF THESE FOUR EARN THE BUMP TO 26 AND THEY FAIL THE RULE THREE
-	# DIFFERENT WAYS, which is why tests/test_save_load.gd asserts them apart rather
-	# than together. An absent `event_pending` DELETES a crisis the country is already
-	# facing -- a free escape from the one thing this session made un-escapable, which
-	# is `referendum_pending` at V1.7c and `campaign_started` one commit before it. An
-	# absent `event_fired` lets a resolved `once` event happen a second time, so the
-	# player pays its price twice for something already settled. And an absent
-	# `event_quiet_months` reads 0, which means *may fire now* -- U6a's
-	# `diplo_months_to_act`, whose absent value fired nine acts in one month. Only
-	# `event_history` earns nothing: it is a display record, and it is serialised anyway
-	# so the ledger the panel is built around survives a reload.
+	# V1.8's bump to 26 was earned here on absent-key failures (a deleted live
+	# crisis, a replayed `once`, a quiet read as may-fire-now); the canonical V4.4
+	# argument for the seven-register rewrite is game_state.gd's SAVE_VERSION block.
 	s.event_queue.clear()
 	for row in d.get("event_queue", []):
 		if typeof(row) == TYPE_DICTIONARY:

@@ -675,7 +675,8 @@ func _stage_hook(state, hook: String, month_index: int) -> void:
 			# ledger stamps at APPLY time and the machine first reads at M+1.
 			ns.law_ledger["probe_law"] = {"months": [month_index - 1]}
 		"law_repealed":
-			ns.repealed_at["probe_law"] = month_index
+			# The emitter's pure one-month lag -- stamped last month, like law_passed.
+			ns.repealed_at["probe_law"] = month_index - 1
 		"member_bill_passed":
 			ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month_index}
 		"minister_resigned":

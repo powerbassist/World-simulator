@@ -11,7 +11,7 @@ extends RefCounted
 ## THE DESK IS A QUEUE NOW, AND THE QUIET MOVED DOWN A LEVEL
 ## ============================================================================
 ## V1.8 argued ONE pending slot was what "the matter on your desk" meant, and at
-## nine events that held. At a hundred and twenty it does not: a draw skipped for
+## nine events that held. At a hundred and two it does not: a draw skipped for
 ## want of a slot is an occasion the world considered and withdrew for no reason
 ## the content can see. ns.event_queue holds up to QUEUE_MAX entries ordered
 ## severity-descending then arrival; each entry carries its own countdown and
@@ -362,8 +362,13 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 		"law_repealed":
 			# V4.4's stamp: the ledger ERASE is silent in the V4.2 machine, so
 			# the repeal's month is written beside it (one line, one writer).
+			# PURE ONE-MONTH LAG, law_passed's shape above: the stamp lands at
+			# APPLY time and the player's Propose/Force repeals apply at COMMAND
+			# time, which this machine first reads at M+1 -- so a same-month read
+			# could never fire for them. The same-month leg is dropped for the
+			# sibling's reason: with both legs an in-tick repeal fires twice.
 			for law_id in ns.repealed_at:
-				if int(ns.repealed_at[law_id]) == month_index:
+				if int(ns.repealed_at[law_id]) == month_index - 1:
 					return true
 			return false
 		"member_bill_passed":

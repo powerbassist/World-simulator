@@ -1208,10 +1208,11 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# layer writes can be read in the SAME month rather than a month late: Inflation's
 	# slot and Orgs' rule, both stated at their own calls below.
 	#
-	# NO SIM MODULE READS THE COMMODITY STATE -- its readers are the UI surfaces
-	# (Task 4's Commodities panel and the two map layers), which read AFTER the
-	# tick -- so the slot is pinned rather than forced by a live SIM reader. Said
-	# out loud because that is exactly when an order rots: the pin in
+	# Since V4.4 the register HAS a live sim reader: the events machine's
+	# commodity_price_high hook reads `ns.commodity_state` inside Events.tick_month,
+	# which runs AFTER this slot -- so the same-month read this slot exists for now
+	# has its consumer, and the order is load-bearing where V4.6 could only pin it.
+	# Said out loud because that is exactly when an order rots: the pin in
 	# tests/test_commodities.gd is what stops a later task placing it by
 	# convenience.
 	Commodities.tick_month(_state, _loader)

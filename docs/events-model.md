@@ -620,7 +620,8 @@ copied in at announcement, so this is the one row on that list needing no lookup
 
 ## 11. What is deliberately not here
 
-- **No AI chooser.** Events fire for the player alone.
+- **No AI chooser** *(V1.8–V4.3; closed at V4.4 — see §5's closure note)*. Events fired
+  for the player alone; the other 28 nations answer through the same chooser now.
 - **No map layer.** The nine never have one, so a fifth `LAYERS` entry would read exactly
   0.0 for nine of ten forever — U6c's own argument.
 - **No corruption-scaled hazard.** Designed and cut: one tuned constant buying a coupling a

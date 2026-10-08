@@ -1221,9 +1221,16 @@ func _test_hooks_fire_on_staged_registers() -> void:
 		_fail("law_passed fired on the command month itself -- with the lag leg that would double-fire an in-tick passage")
 	ns.law_ledger.erase("probe_law")
 
-	ns.repealed_at["some_law"] = month
+	# law_repealed carries law_passed's lag, pinned BOTH directions the same way:
+	# the stamp lands at APPLY time and the player's Propose/Force repeals at
+	# command time, so last month's stamp is the readable window and THIS month's
+	# is not.
+	ns.repealed_at["some_law"] = month - 1
 	if not Events._hook_fired(state, ns, _loader, "law_repealed", month):
-		_fail("law_repealed did not read the repeal stamp")
+		_fail("law_repealed did not read last month's repeal stamp -- the lag is the emitter's whole window")
+	ns.repealed_at["some_law"] = month
+	if Events._hook_fired(state, ns, _loader, "law_repealed", month):
+		_fail("law_repealed fired on the command month itself -- with the lag leg that would double-fire an in-tick repeal")
 	ns.repealed_at.clear()
 
 	ns.last_resignation = {"portfolio": "health", "party_id": "x", "year": int(state.year), "month": int(state.month) - 1}

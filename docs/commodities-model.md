@@ -51,8 +51,9 @@ commented at the field declaration in `src/core/nation_state.gd`):
 - `value_added_eur_bn` — ONE scalar per nation, not per good: the month's
   output valued at the live price, in EUR bn. This is the CHANGE the block
   models (the step-0 verdict: levels are not reproducible from recipes, deltas
-  are). No SIM module reads it; its readers are the UI surfaces — the
-  Commodities panel and the two map layers (§5).
+  are). The register's one sim reader since V4.4 is the events machine's
+  `commodity_price_high` hook, which reads `price` — this scalar's own readers
+  are the UI surfaces: the Commodities panel and the two map layers (§5).
 
 Serialised whole on SAVE_VERSION 37 (V4.6's bump) with a per-entry rebuild
 in `from_dict` — the aliasing-safe pattern; see §6.
