@@ -57,7 +57,7 @@ ON_ACTIONS = [
     "takeover_bid", "firm_failed", "commodity_price_high", "accession_won",
 ]
 # events_constants bounds
-LIKELIHOOD_MIN, LIKELIHOOD_MAX = 0.005, 0.50
+LIKELIHOOD_MIN, LIKELIHOOD_MAX = 0.002, 0.50
 RESPOND_MONTHS_MIN, RESPOND_MONTHS_MAX = 1, 15
 WEIGHT_MIN, WEIGHT_MAX = 0.2, 5.0
 SEVERITY_MIN, SEVERITY_MAX = 1, 3

@@ -37,7 +37,16 @@ const EVENT_COOLDOWN_MONTHS := 9
 ## loads its own consequence -- V1.3f's property that nothing on the law list does
 ## nothing -- and the ceiling because at 1.0 the "semi-random" half of §8's own sentence
 ## disappears and the model is precondition-only, which is bullet 1 without bullet 2.
-const LIKELIHOOD_MIN := 0.005
+##
+## 0.005 -> 0.002 at V4.4 T9b: the V1.8 floor was calibrated when the book had NINE
+## events and per-event player visibility was the point -- each event often enough that
+## the one player would meet it. A 94-event book structurally cannot keep that promise
+## (the E4 sweep's own arithmetic: the [6, 18] cadence band over nine pulsing categories
+## needs per-event hazards below 0.005), so the floor's meaning moved down a level with
+## the book: a deep book's floor is WORLD-visibility, and 0.002 over 29 nations x 168
+## months still loads every event's consequence several times per run somewhere in the
+## world. The zero-refusal reason above is untouched and unchanged.
+const LIKELIHOOD_MIN := 0.002
 const LIKELIHOOD_MAX := 0.50
 
 ## Bounds on an event's authored deadline, in months.
