@@ -185,23 +185,72 @@ reaches for; a precondition on one opens a *problem*. Recorded rather than copie
 
 ## 5. The machine
 
+> **REWRITTEN AT THE RULE AT V4.4** (the events-at-scale block). The one-slot form
+> below is kept as the V1.8 record; what it argued held at nine events and died with
+> the slot at a hundred and two — the tier doc's own sentence. The V4.4 machine:
+
 ```
-Events.tick_month(state, loader):
-  ns = state.player()                      # player only: the nine have no decider
-  count the quiet period down
-  if pending:
-      months_left -= 1
-      if months_left <= 0:  apply the DEFAULT choice, record, clear, open the quiet period
-      return                               # ONE slot
-  if quiet: return
-  the first event, in content order, that is off cooldown, whose preconditions hold,
-  and whose hazard draws this month -> announce
+Events.tick_month(state, loader):          # every nation now, player AND the 28
+  quiet down (per CATEGORY, sparse) + cooldown release
+  player: expire entries whose months_left hit zero (each on its own default)
+  armed chains due this month -> deliver first (a consequence outranks a draw)
+  hooks: for each ON_ACTIONS with a live emitter read this month
+      -> one hook event per happening (likelihood = spawn chance, gates still apply)
+  standing hazard: group the month's draws by category
+      -> one WEIGHTED winner per pulsing category (Cycle.unit over the roster)
+      -> player: land on the desk (severity-ordered, QUEUE_MAX 4, dedup by id)
+      -> AI nation: resolve IN THE SAME TICK through the situational chooser
 ```
 
-**One pending slot**, `referendum_pending`'s rule and `GameState.bloc["pending"]`'s shape
-one block on. The register IS the rule: one is not a bound, it is what *the matter on your
-desk* means — and the message column holds six cards, so an event buried under the next
-one is not an occasion.
+**The desk replaced the slot**, severity-ordered and bounded at `QUEUE_MAX` 4 (the
+message column holds six cards — the old ceiling argument, one size up). `answer()`
+answers a NAMED entry; `choose()` remains the head-answering read the cards kept. The
+quiet moved DOWN a level: a resolution quiets its own CATEGORY for
+`CATEGORY_QUIET_MONTHS` 3 — one resolution in fiscal silencing scandal forever was
+the global quiet's defect at nine categories. The per-event cooldown V1.8 designed
+and cut came back: the cut's argument ("the slot already bounds it") died with the
+slot.
+
+**The register's third shape** (obligation-not-opened, below) is unchanged; what
+changed is that several obligations can stand at once, each carrying its own clock.
+`event_pending` became `event_queue` — SAVE_VERSION 39, argued per register in
+`game_state.gd`'s documentation block.
+
+**`once`, cooldowns and the category quiet are marked at DELIVERY** — V1.8 marked
+`once` at announcement for the player, and the V4.4 machine first kept that shape,
+which the review caught binding NOTHING for the 28 AI nations (they resolve without
+ever announcing). Delivery is the one write site every nation passes through; the
+staging primitive `announce()` stays state-pure so the sited sweep can drive it 48
+times without accumulating anything. The V1.8 reason survives the move intact: the
+mark exists the moment the occasion is in front of somebody, not when they answer it.
+
+**The weighted draw is a second pure function**: `Cycle.unit` over (nation,
+category, roster-sorted-ids, month) against cumulative authored weights — same
+inputs, same winner, no stored draw (the absence pins stand). The roster salt keeps
+two categories' streams apart; authored `weight` is content (bounds [0.2, 5.0]),
+and `LIKELIHOOD_MIN` moved 0.005 → 0.002 at integration: the V1.8 floor was
+calibrated when the book had nine events and per-event PLAYER visibility was the
+point — at 102 events the floor's job is WORLD visibility (0.002 × 29 nations × 168
+months ≈ 10 firings somewhere per run), and the [6, 18]/term cadence band is
+arithmetically unreachable above it (measured: all-94-events-at-0.005 gives 22/term;
+the ×0.2 proportional rescale lands 12.0/term, dead interior).
+
+**Hooks are the block's "the game watches you" change**: an event fires BECAUSE a
+law passed (`ns.law_ledger`'s own months list), a repeal landed (the V4.4
+`ns.repealed_at` stamp beside the ledger's silent erase), a private member's bill
+divided (`assembly_division_month`), a minister resigned (`ns.last_resignation`,
+one-month lag — Cabinet ticks after Events), a takeover bid stood or a firm failed
+(two industry stamps on the register the machine already writes), a commodity price
+sits ≥ 1.25× base (a LEVEL read — the register keeps no history), or an accession
+flipped (the `ns.last_accession` stamp inside `_flip_membership`). One vocabulary,
+closed at `events_constants.ON_ACTIONS`, refused loudly at load; `election_lost` is
+refused WITH ITS REASON (a lost election ends the game — nothing could answer the
+event).
+
+**Chains**: a choice carrying `arms {event_id, delay_months}` schedules the
+follow-up at an absolute due month; due entries deliver FIRST (a consequence
+outranks a draw), through the same gates, and the loader refuses unknown targets
+and cycles at load. The machine V4.1 refused, built once, here.
 
 **The register is a third shape, and the handoff offered two.** A **deferred command**
 ([[calendar-model|U6a]]) is something the player scheduled and can cancel for free; a
@@ -228,10 +277,31 @@ files where `tests/test_referendum.gd` checks two.
 **Player only.** `Bloc._tick_council()` already gates on `state.player_nation_id` because
 the council's proposal waits for the player's vote and nobody else's; this is the second
 place in `src/sim/` to read the player id rather than `has_budget`, for the same reason.
-There is no AI chooser, which is [[defence-model]]'s honest limitation recorded a **sixth**
-time and pinned by a test rather than left as an absence.
+> **CLOSED AT V4.4.** The paragraph above is the V1.8 record, kept because the
+> reasoning is still the reasoning — the player needs a decider, and the council
+> example still holds for that. What changed: the OTHER 28 nations now have one too.
+> A minimal situational chooser (`Events._choose`) scores each choice against the
+> nation's own position — size-weighted bloc response, a fiscal term above a
+> deficit floor, a corruption term, an unrest term — and resolves the occasion
+> IN THE SAME TICK through the one applier. Deterministic (two identical states
+> answer identically, test-pinned), never defaulted (an AI nation that says
+> nothing is an occasion that never happened), and its queue is structurally
+> empty because it has no desk. The sixth recorded instance is this one, and
+> the record ends here.
 
 ## 6. The tables, and E1b is where the session turned
+
+> **V4.4'S OWN TABLES LIVE IN `tools/events_probe.gd`'s E4–E7** (driving the real
+> machine): E4 cadence/overfull swept over `CATEGORY_QUIET_MONTHS` [1..6] and the
+> `QUEUE_MAX` bound; E5 arrival share per category (≤ 30 % band — E1b's finding
+> one level up, no category a monoculture); E6 every `ON_ACTIONS` hook witnessed
+> landing a likelihood-1.0 fixture; E7 the chooser over a term (≥ 10 nations
+> answering, zero defaults, non-constant choice distributions). The verdicts at
+> integration: 12.0 answered/term dead interior, all nine categories 2.7–18.9 %,
+> 8/8 hooks, 28/28 nations. `tools/event_lint.py` (law_lint's pattern) carries
+> E1b's per-choice arithmetic as a standing content gate — mean within ±0.008 of
+> zero, business-strict-worst ≤ 30 % — which FAILED the five pre-band carried
+> choices on first run, exactly as an instrument should.
 
 `tools/events_probe.gd`. **E0 runs before a single threshold is authored**, which is
 V1.7c's R0/R6 correction applied to CONTENT rather than to a constant.
@@ -368,6 +438,17 @@ Final: **0 dominated alternatives, 0 toothless defaults.**
 
 ## 7. The content — six events, eighteen choices
 
+> **V4.4: six → 102 events, 307 choices, nine category files** (scandals 16,
+> personal 10, fiscal 13, unrest 11, industrial 14, european 10, foreign 10,
+> commodity 8, disaster 10 — the four legacy crises and two climate events moved
+> in verbatim, `crises.json` and `climate.json` retired). The table below is the
+> V1.8 record; the E1b paragraph beneath it is the one that GREW TEETH: the
+> ±0.008 mean and the business-worst ≤ 30 % share are now `tools/event_lint.py`,
+> a standing content gate that failed the five pre-band carried choices on first
+> run and passes at 0. Eight of the 102 carry `on_action` hooks (§5), one carries
+> a chain (`audit_finding.bury_it` arms `deficit_ceiling_vote` at 6 months), and
+> the likelihood book is ×0.2-proportional under the moved floor (§5).
+
 Three pure-hazard (`data/events/scandals.json`) and three preconditioned
 (`data/events/crises.json`).
 
@@ -393,6 +474,17 @@ carrying every crisis.
 
 ## 8. `SAVE_VERSION` 25 → 26, on three fields of four
 
+> **V4.4 bumps 38 → 39 on SIX registers, argued apart in
+> `src/core/game_state.gd`'s documentation block**: `event_queue` (the slot
+> became the desk — a dropped queue is the V1.8 free escape times four),
+> `event_category_quiet` and `event_cooldowns` (sparse until-registers whose
+> absent value means *may draw now*, the `event_quiet_months` case one level
+> down), `event_armed` (a chain the player paid for must not evaporate),
+> `event_hook_fired` (the hooks' reload-safety stamp — NOT RNG state; the
+> pure-function absence pins below survive and stay red), and the two stamps
+> other machines write (`repealed_at`, `last_accession`). The table below is
+> the V1.8 record for the fields that became the queue.
+
 They fail the rule by **three different failures**, so `tests/test_save_load.gd` asserts
 them apart — the pattern V1.5c set and V1.6b extended, because a combined check lets any
 one of them be quietly wrong while the other two carry it.
@@ -411,6 +503,24 @@ accumulator the test turns red and has to come and say why. It is also what make
 reloaded on the month a crisis arrived receive **the same crisis**.
 
 ## 9. The re-run is a re-baseline, and 30 of 43 keep every figure
+
+> **V4.4's own re-baseline (2026-10-07, both sides from worktrees, 51 regimes):
+> 0 identical, 24 outcome-sequence flips of 51 — 20 of them HELD→LOST at the
+> 2032 second election, ONE-DIRECTIONAL, and the prediction's 1–4 was a
+> magnitude miss written before E4's cadence landed.** The mechanism is the
+> declared default-drain channel and nothing else: the queue-era idle president
+> answers ~12 occasions a term against the slot-era ~4, the unanswered share of
+> them defaults, and the defaults' small negative mean accumulates to
+> hands_off −2.0 approval by 2032 — flipping every second election that sat
+> inside that margin. Invariants 50/50 both sides; zero stray lines after the
+> last `invariants: OK` on either side (V1.7c's check); every regime's first
+> divergence at the 2027 row, the AI nations acting in year one as predicted.
+> **Recorded as the block's OPEN AUTHOR CALL, not tuned**: whether silence
+> should cost a governing president the second election THIS often is a design
+> question (the honest levers: the defaults' authored means,
+> `CATEGORY_QUIET_MONTHS`, or accepting the bound) — the numbers frame it
+> precisely in [reports/v44-rerun-prediction.md](../reports/v44-rerun-prediction.md)'s
+> verdict block. The V1.8 record follows.
 
 Predicted in advance, and E0c named the movers before the run. **All 43 shared regimes
 differ** — every regime fires the three hazard-only events, which have no precondition to
