@@ -2296,6 +2296,12 @@ func _on_load_requested(slot: String) -> void:
 	# happened to match.
 	_announced_assembly_bills.clear()
 	_assembly_cards.clear()
+	# The V4.4 desk's three ride the same rule -- a stale unseen id would hold
+	# the clock past the load and a discarded game's decision card would route
+	# Events.answer against the loaded state (the decision pause beside the
+	# load's own pause below is the third).
+	_event_cards.clear()
+	_unseen_events.clear()
 	var loaded_ns = _state.player()
 	var loaded_result: Dictionary = loaded_ns.last_law_result
 	var carries_bill := bool(loaded_result.get("assembly_bill", false))
@@ -2307,6 +2313,10 @@ func _on_load_requested(slot: String) -> void:
 	_clock.month = _state.month
 	_clock.day = int(result["day"])
 	_clock.paused = true
+	# The discarded game's decision pause dies here, not just its clock: the
+	# loaded game's interrupt enforcement re-raises a pause if the save carries
+	# one, so the flag must not survive as a second holder of it.
+	_paused_for_decision = false
 
 	_map_view.setup(_loader, _state)
 	_minimap.setup(_map_view, _loader, _state)

@@ -12,24 +12,11 @@ extends RefCounted
 ## number is one strength written twice -- and it does not fire, because none of the
 ## three is derivable from the others.
 ##
-## The one dial is EVENT_COOLDOWN_MONTHS, and it is tuned rather than bounded for a
-## reason nothing in the content can supply: how often the world interrupts you is a
-## property of the GAME, not of any one event.
-
-## How long after an event resolves before any other may fire.
-##
-## THE SESSION'S ONLY TUNED CONSTANT. Selected by tools/events_probe.gd table E1
-## against a band fixed before the sweep -- between 2 and 6 events over a five-year
-## term in the median reachable regime. Two-sided by construction, so V1.5c's
-## correction applies (the midpoint governs, not an edge) and V1.5b's diagnostic is
-## checked (a value at the endpoint of the swept grid is a suspect, not a result).
-##
-## The band's two halves are two different failures. Under 2 a term the machine is
-## decorative -- §8's own falsifier, "the loop legible but inert", arriving from the
-## other side. Over 6 the message column, which holds six cards and drops the oldest,
-## starts burying an event under the next one, and an occasion the player never read is
-## not an occasion.
-const EVENT_COOLDOWN_MONTHS := 9
+## The V1.8 dial was EVENT_COOLDOWN_MONTHS -- tuned because how often the world
+## interrupts you is a property of the GAME, not of any one event -- and it died with
+## the one-slot machine it tuned: V4.4's CATEGORY_QUIET_MONTHS below is its successor,
+## the same GAME-level question swept against the queue-era cadence band (E4's
+## clauses, declared in docs/events-model.md before the sweep).
 
 ## Bounds on an event's authored monthly hazard, once its preconditions hold.
 ##
@@ -151,8 +138,9 @@ const ARMS_DELAY_MAX_MONTHS := 18
 
 ## The on_action hooks whose emitters are LIVE in src/sim/events.gd. An event naming
 ## anything else is a load error, and a name added to this list without its emitter is
-## a test failure (tests/test_events.gd sweeps the vocabulary against the machine) --
-## the closed-vocabulary discipline of SUBJECT_OFFICES, applied to the thing that
+## a test failure (tests/test_events.gd's `_test_the_hook_vocabulary_is_swept` reads
+## this list against `_hook_fired`'s match arms, BOTH directions) -- the
+## closed-vocabulary discipline of SUBJECT_OFFICES, applied to the thing that
 ## would otherwise be a stringly-typed hook id.
 ##
 ## REFUSED: `election_lost`. A lost election ends the game to the menu

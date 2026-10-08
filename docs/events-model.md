@@ -203,7 +203,9 @@ Events.tick_month(state, loader):          # every nation now, player AND the 28
 ```
 
 **The desk replaced the slot**, severity-ordered and bounded at `QUEUE_MAX` 4 (the
-message column holds six cards — the old ceiling argument, one size up). `answer()`
+message column holds six cards — the old ceiling argument, one size up) — the bound
+lives at DELIVERY, where all three doors pass, and a chain that finds the desk full
+waits a month while a hook or a draw skips (next happening, next month). `answer()`
 answers a NAMED entry; `choose()` remains the head-answering read the cards kept. The
 quiet moved DOWN a level: a resolution quiets its own CATEGORY for
 `CATEGORY_QUIET_MONTHS` 3 — one resolution in fiscal silencing scandal forever was
@@ -259,10 +261,16 @@ abandoned at a price. An event is neither: it is an **obligation the player did 
 and cannot decline**, which is [[defence-model|V1.3g]]'s alliance obligation and V1.7c's
 `referendum_pending`.
 
-**`once` is marked at ANNOUNCEMENT**, which is the one place this differs from
-`passed_law_ids`. An event has happened the moment it arrives; the choice is the response
-to it, not the event. Marking at resolution would also let a save reloaded mid-crisis see
-the same revelation announced twice.
+> **V1.8 RECORD, CLOSED AT V4.4.** The paragraph below survives unedited because
+> the reasoning is the reasoning; the SITE moved. The marks are made at DELIVERY
+> now -- the corrected rule the V4.4 paragraph above states -- because at
+> announcement they bound nothing for the 28 AI nations, which resolve without
+> ever announcing.
+>
+> **`once` is marked at ANNOUNCEMENT**, which is the one place this differs from
+> `passed_law_ids`. An event has happened the moment it arrives; the choice is the response
+> to it, not the event. Marking at resolution would also let a save reloaded mid-crisis see
+> the same revelation announced twice.
 
 **`events.gd` is not a leaf, and that is deliberate.** It preloads `legislature.gd`. The
 leaf alternative — returning the resolved choice as data for somebody else to apply, which
@@ -301,7 +309,12 @@ place in `src/sim/` to read the player id rather than `has_budget`, for the same
 > 8/8 hooks, 28/28 nations. `tools/event_lint.py` (law_lint's pattern) carries
 > E1b's per-choice arithmetic as a standing content gate — mean within ±0.008 of
 > zero, business-strict-worst ≤ 30 % — which FAILED the five pre-band carried
-> choices on first run, exactly as an instrument should.
+> choices on first run, exactly as an instrument should. The machine's cost,
+> measured at integration: the events tick runs ~14–17 ms/month over the full
+> book (102 events × 29 nations), the projection path carries its events share
+> at +~0.5 s per 2×24-month projection, and the scale probe PASSES at 4.68 s
+> mean against its 7.0 s band. The hazard-memo idea (PR-46 finding 6's
+> projection-work shape) is recorded beside that work rather than built.
 
 `tools/events_probe.gd`. **E0 runs before a single threshold is authored**, which is
 V1.7c's R0/R6 correction applied to CONTENT rather than to a constant.
@@ -474,7 +487,7 @@ carrying every crisis.
 
 ## 8. `SAVE_VERSION` 25 → 26, on three fields of four
 
-> **V4.4 bumps 38 → 39 on SIX registers, argued apart in
+> **V4.4 bumps 38 → 39 on SEVEN registers, argued apart in
 > `src/core/game_state.gd`'s documentation block**: `event_queue` (the slot
 > became the desk — a dropped queue is the V1.8 free escape times four),
 > `event_category_quiet` and `event_cooldowns` (sparse until-registers whose

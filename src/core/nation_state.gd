@@ -1853,6 +1853,12 @@ func duplicate_state():
 	s.event_cooldowns = event_cooldowns.duplicate(true)
 	s.event_armed = event_armed.duplicate(true)
 	s.event_hook_fired = event_hook_fired.duplicate(true)
+	# The two hook stamps ride the family: both are serialised, and a copy that
+	# dropped them made a projection forget a repeal or an accession the world
+	# still remembers -- the empty-at-staging hole test_state_copy.gd now stages
+	# against.
+	s.repealed_at = repealed_at.duplicate(true)
+	s.last_accession = last_accession.duplicate(true)
 	s.event_history = event_history.duplicate(true)
 	s.permits_system_change = permits_system_change
 

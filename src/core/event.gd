@@ -131,10 +131,11 @@ var severity: int = 1
 ## chance the hooked happening spawns the occasion. The preconditions still gate it.
 var on_action: String = ""
 
-## V4.4. Months after ITS OWN resolution before this event may draw again. The V1.8
-## cut of this field rested on the one-slot argument, which the queue retired; 0 is
-## the V1.8 behaviour and the default, because the category quiet already bounds
-## cross-firing.
+## V4.4. Months after DELIVERY before this event may draw again -- the machine
+## writes `month_index + cooldown_months` in Events._deliver(), the one door every
+## nation passes, which is the `once` mark's own anchor. The V1.8 cut of this field
+## rested on the one-slot argument, which the queue retired; 0 is the V1.8 behaviour
+## and the default, because the category quiet already bounds cross-firing.
 var cooldown_months: int = 0
 
 ## Array of {"id", "label", "summary", "effects", "is_default"} plus the V4.4

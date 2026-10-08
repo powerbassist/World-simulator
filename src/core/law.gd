@@ -206,8 +206,9 @@ var new_tax: Dictionary = {}
 ##
 ## Budget levers are out, and that is this file's own rule rather than a new claim:
 ## docs/legislature-model.md says a law with a genuine budget effect IS a budget
-## change, routed through the same Budget.commit() the budget screen uses, and the
-## size of a tax rate is Parliament's business and nobody else's.
+## change, routed through apply_effects() into Budget.apply_pending -- the writer
+## the budget screen's own commit() lands on -- and the size of a tax rate is
+## Parliament's business and nobody else's.
 ##
 ## `bloc_offset` is out, and the FIRST VERSION OF THIS FUNCTION INCLUDED IT. Measured
 ## over all thirty-eight authored laws it dominated every other channel, because it is

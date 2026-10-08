@@ -543,7 +543,7 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## apart. Registers land with their writers task by task; the version moves
 ## once, here, so every task's saves are mutually readable.
 ##
-## V4.4 bumps this to 39 on SIX registers, argued apart in
+## V4.4 bumps this to 39 on SEVEN registers, argued apart in
 ## tests/test_save_load.gd the same way:
 ##   * `ns.event_queue` -- the slot became the desk. `event_pending`'s case one
 ##     level up: absent, crises the country is facing vanish, and now SEVERAL

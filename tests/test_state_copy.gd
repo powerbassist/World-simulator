@@ -82,6 +82,14 @@ func _init() -> void:
 	state.deployments[Relations.directed_key("FRA", "ITA")] = {
 		"kind": "chosen", "since_year": state.year, "since_month": state.month,
 	}
+	# The V4.4 hook stamps, the same hole one register over: both are empty at
+	# staging on every nation, so duplicate_state() dropping them ENTIRELY was
+	# invisible to the walker below (0 entries equals 0 entries -- the ultra
+	# pass-1 finding). Staged on every nation because the check runs per nation:
+	# one staged nation would leave twenty-eight vacuous passes behind it.
+	for id in state.nations:
+		state.nations[id].repealed_at["copy_probe_law"] = 1234
+		state.nations[id].last_accession = {"org": "copy_probe_org", "month_index": 1234}
 
 	var copy = state.duplicate_state()
 

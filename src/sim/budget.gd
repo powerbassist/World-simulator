@@ -337,13 +337,14 @@ static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary, custom
 ## shock, a budget left alone is not. The revenue delta is computed by running
 ## revenue_lines() at the old and new rates, so the erosion curve is respected
 ## automatically and the two can never drift apart.
-## The player's command verb, player-scoped by construction: the budget screen,
-## the tax panel, a repeal's negation and an event choice all land here when --
-## and only when -- the nation they belong to is the one the player governs.
-## The nation-scoped writer below is the machine half; V4.4's chooser made the
-## first caller whose ns is NOT state.player() (the other twenty-eight answer
-## their own crises), and routing that through here rewrote the player's budget
-## with another government's answer.
+## The player's command verb, player-scoped by construction: the budget screen
+## and the tax panel land here when -- and only when -- the nation they belong
+## to is the one the player governs. A repeal's negation and an event choice do
+## NOT pass through (both route apply_effects() into the nation-scoped
+## apply_pending below); V4.4's chooser made the first caller whose ns is NOT
+## state.player() (the other twenty-eight answer their own crises), and routing
+## that through here rewrote the player's budget with another government's
+## answer.
 static func commit(state, pending: Dictionary) -> void:
 	var ns = state.player()
 	if ns == null:
@@ -551,8 +552,9 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# Events hazard the loop already includes, so the projection sees
 		# exactly the divisions the next twenty-four months deliver rather
 		# than an average of them. And a carried bill applies through the ONE
-		# applier, whose budget levers route through Budget.commit() into the
-		# very revenue and spending keys the snapshot prints -- a projection
+		# applier, whose budget levers route through apply_effects() into
+		# Budget.apply_pending -- the very revenue and spending keys the
+		# snapshot prints -- a projection
 		# that held the assembly frozen would show a country whose parliament
 		# never legislates. The countdown side of the same machine (law
 		# cooldowns, suspensive holds, referendums) stays in

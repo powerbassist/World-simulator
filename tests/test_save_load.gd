@@ -1635,8 +1635,10 @@ func _check_event_fields(loader) -> void:
 
 	# (3) `event_fired` earns it by a DIFFERENT failure, unchanged from V1.8:
 	# absent, a resolved `once` event happens a second time and the player pays
-	# its price twice for something already settled. `passed_law_ids`' case, and
-	# the reason `once` is marked at ANNOUNCEMENT.
+	# its price twice for something already settled. `passed_law_ids`' case,
+	# marked at DELIVERY since the move the staging comment above records --
+	# which is why the mark is staged by hand rather than bought as announce's
+	# side effect.
 	var no_fired: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
 	(no_fired["nations"]["FRA"] as Dictionary).erase("event_fired")
 	var dropped_fired = GameState.from_dict(no_fired)

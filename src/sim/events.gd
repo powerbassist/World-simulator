@@ -76,9 +76,10 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 ## Runs for every nation so the register shape is uniform and duplicate_state()
 ## has nothing conditional to copy -- Unrest.init_nation()'s call and reason.
-## The two typed arrays clear rather than take a fresh `[]`: an untyped empty
-## literal assigned through an untyped reference fails the Array[Dictionary]
-## property's type check at runtime (from_dict's rebuild idiom, one block over).
+## The three typed arrays (queue, armed, history) clear rather than take a
+## fresh `[]`: an untyped empty literal assigned through an untyped reference
+## fails the Array[Dictionary] property's type check at runtime (from_dict's
+## rebuild idiom, one block over).
 static func init_nation(ns) -> void:
 	ns.event_queue.clear()
 	ns.event_fired = {}
@@ -165,14 +166,20 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 	for armed in ns.event_armed.duplicate():
 		if int(armed.get("due_index", 0)) > month_index:
 			continue
-		ns.event_armed.erase(armed)
 		var ev = event_by_id(loader, String(armed.get("event_id", "")))
 		# A consequence whose target already fired (once) or is cooling down dies
 		# silently: the chain owed the player a follow-up, not a specific one --
 		# and an armed entry pointing at content this build no longer defines is
 		# the V1.8 clear-an-entry-whose-content-has-gone case, one register over.
-		if ev != null and _gates_pass(ns, ev, month_index) and _cooldown_ok(ns, ev, month_index):
-			_deliver(state, ns, loader, ev, month_index, is_player)
+		if ev == null or not _gates_pass(ns, ev, month_index) or not _cooldown_ok(ns, ev, month_index):
+			ns.event_armed.erase(armed)
+			continue
+		# The armed entry is erased ONLY on a delivered consequence: a door that
+		# finds the desk full returns false and the chain waits a month, due
+		# again -- erasing before the delivery attempt was losing the chain the
+		# player paid for on a full-desk month.
+		if _deliver(state, ns, loader, ev, month_index, is_player):
+			ns.event_armed.erase(armed)
 
 	for hook in K.ON_ACTIONS:
 		if int(ns.event_hook_fired.get(hook, -1)) == month_index:
@@ -192,6 +199,9 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 			# argument at hook scale. A second law_passed event waits for the
 			# next passage -- which the ledger will stamp, and the hook will
 			# see, because it fires again next month the register says so.
+			# A full desk (the return ignored above) skips FINALLY, like the
+			# hazard door: the happening is stamped, and the next happening
+			# re-fires the hook -- a hook is not banked against the desk.
 			break
 
 	# The standing hazard: group the month's draws by category, then one weighted
@@ -216,10 +226,14 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 	categories.sort()
 	for category in categories:
 		if is_player and ns.event_queue.size() >= K.QUEUE_MAX:
-			# A draw that does not fit is skipped, not banked: the hazard is a
-			# function of the month, so next month is a fresh draw rather than a
-			# backlog -- the V1.8 argument for why content order could decide
-			# same-month collisions, restated where the queue made it matter.
+			# Kept as the loop's CHEAP EARLY-OUT: the authoritative bound lives
+			# in _deliver, where the chain and hook doors pass too -- this break
+			# only spares the draw and the weighted pick when the desk is
+			# already full. A draw that does not fit is skipped, not banked: the
+			# hazard is a function of the month, so next month is a fresh draw
+			# rather than a backlog -- the V1.8 argument for why content order
+			# could decide same-month collisions, restated where the queue made
+			# it matter.
 			break
 		var winner = _weighted_pick(ns, fired_by_category[category], month_index)
 		if winner != null:
@@ -321,18 +335,28 @@ static func _cooldown_ok(ns, ev, month_index: int) -> bool:
 
 ## Whether the happening a hook names occurred, for THIS nation, this month. One
 ## function per vocabulary entry, and events_constants.ON_ACTIONS' comment is the
-## contract: a name on that list without a branch here is a test failure, not a
-## silent never-firing hook.
+## contract: a name on that list without a branch here fails tests/test_events.gd's
+## `_test_the_hook_vocabulary_is_swept` (which reads both directions) rather than
+## shipping as a silent never-firing hook.
 static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bool:
 	match hook:
 		"law_passed":
-			# The ledger appends the absolute month at each PASSAGE, so "a law
-			# took effect this month" is the register's own question. Assembly
-			# bills pass through the same apply, which is why member_bill_passed
-			# below is a DISTINCT hook reading the division stamp instead.
+			# PURE ONE-MONTH LAG, minister_resigned's shape below: the ledger
+			# stamps at APPLY time, and the player's Propose/Force routes apply
+			# at COMMAND time (month M), which this machine first reads at M+1
+			# -- so a same-month read could never fire for them (measured: the
+			# hook stayed false at M+1 and fired only at M). The lag fires EVERY
+			# passage exactly once, one month after it lands -- and that is why
+			# the same-month leg is dropped rather than kept beside it: with
+			# both legs, an in-tick passage (held-bill release, referendum
+			# settlement) fires twice, at M on the == leg and at M+1 on the lag.
+			# In-tick passages are covered too, one month late, which a
+			# consequence event wants anyway. Assembly bills are a DISTINCT hook
+			# (member_bill_passed below) reading the division stamp, which
+			# Cabinet-side ordering does not delay.
 			for law_id in ns.law_ledger:
 				var months: Array = ns.law_ledger[law_id].get("months", [])
-				if not months.is_empty() and int(months[months.size() - 1]) == month_index:
+				if not months.is_empty() and int(months[months.size() - 1]) == month_index - 1:
 					return true
 			return false
 		"law_repealed":
@@ -406,7 +430,24 @@ static func _base_price_of(loader, good_id: String) -> float:
 ## the test sweep and the screenshot harness drive repeatedly, and a sweep calling
 ## it forty-eight times must not accumulate cooldown state: state belongs to
 ## delivery, not to staging.
-static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -> void:
+##
+## Returns whether the occasion LANDED -- true for an AI resolution, a player
+## announce, and the dedupe skip (the event's presence is already on the desk,
+## which is delivery in the only sense left); false only when the desk is full.
+## Every door reads the false: the armed chain WAITS a month (the entry survives,
+## due again), the hook and the hazard skip finitely (next happening, next month).
+static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -> bool:
+	# THE BOUND LIVES HERE, at the one function every delivery door passes: the
+	# chain, hook and hazard doors all deliver through here, so one gate is
+	# every door's -- gating any single caller loop let the other two push the
+	# desk past QUEUE_MAX (reproduced at six: chain + hook on a full desk).
+	# BEFORE the marks, deliberately: a full-desk month writes NOTHING -- no
+	# once mark, no cooldown, no quiet -- or a waiting once-flagged chain would
+	# come back next month and die at its own gates, marked for an occasion
+	# nobody ever saw. The false sends the caller to its own wait-or-skip
+	# semantics; nothing is banked.
+	if is_player and ns.event_queue.size() >= K.QUEUE_MAX:
+		return false
 	# Written BEFORE the desk's dedupe skip rather than after it: a skipped
 	# duplicate arrives with the same month_index, and every write below is a
 	# function of that month, so the second write is the first write.
@@ -426,14 +467,15 @@ static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -
 		# month -- they mean "put this in front of me", not "run the desk".
 		for entry in ns.event_queue:
 			if String(entry.get("event_id", "")) == ev.id:
-				return
+				return true
 		announce(
 			ns, ev, month_index,
 			region_names(ns, loader)
 		)
-		return
+		return true
 	var choice := _choose(ns, ev)
 	_resolve(state, ns, loader, ev, choice, false, {})
+	return true
 
 
 ## The region a sited event strikes: floor(unit(hash(nation|event|site), month) x n).

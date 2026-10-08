@@ -622,14 +622,15 @@ func _table_e5_categories() -> void:
 
 # --- E6: the hook vocabulary, witnessed at runtime -----------------------------------
 
-## The no-name-without-a-branch pin has a source-level twin in tests/test_events.gd;
-## this table is its runtime witness. For each hook in events_constants.ON_ACTIONS,
-## stage the exact register its emitter reads (copied from Events._hook_fired's own
-## match arms -- when the machine moves an emitter, this staging moves with it) and
-## assert an on_action-bearing fixture lands on the desk for a stub loader at
-## likelihood 1.0. Today's content carries NO on_action event, so this is the
-## vocabulary firing on fixtures -- deliberately: the machinery must be proven
-## before the content task hangs real events on it.
+## The no-name-without-a-branch pin has a source-level twin in tests/test_events.gd's
+## `_test_the_hook_vocabulary_is_swept`; this table is its runtime witness. For each
+## hook in events_constants.ON_ACTIONS, stage the exact register its emitter reads
+## (copied from Events._hook_fired's own match arms -- when the machine moves an
+## emitter, this staging moves with it) and assert an on_action-bearing fixture lands
+## on the desk for a stub loader at likelihood 1.0. The shipped book carries EIGHT
+## on_action events beside these fixtures; the fixtures remain the sweep because the
+## shipped hooks fire on live register writes this probe does not stage, so the hand
+## staging is what witnesses every name on every run.
 class _StubLoader:
 	var events: Array = []
 	var commodity_goods: Dictionary = {}
@@ -669,7 +670,10 @@ func _stage_hook(state, hook: String, month_index: int) -> void:
 	var ns = state.player()
 	match hook:
 		"law_passed":
-			ns.law_ledger["probe_law"] = {"months": [month_index]}
+			# The readable window is LAST month's passage -- the emitter's pure
+			# one-month lag, the minister_resigned shape one arm down: the
+			# ledger stamps at APPLY time and the machine first reads at M+1.
+			ns.law_ledger["probe_law"] = {"months": [month_index - 1]}
 		"law_repealed":
 			ns.repealed_at["probe_law"] = month_index
 		"member_bill_passed":
@@ -693,9 +697,9 @@ func _stage_hook(state, hook: String, month_index: int) -> void:
 
 func _table_e6_hooks() -> void:
 	print("\n=== E6  HOOK RATES: every name in ON_ACTIONS, staged onto its register ===")
-	print("No shipped event carries on_action yet, so each row is a fixture at")
-	print("likelihood 1.0 on a stub loader -- the machinery firing before the content")
-	print("task hangs real events on it.\n")
+	print("Eight shipped events carry on_action beside these fixtures; each row is")
+	print("still a fixture at likelihood 1.0 on a stub loader, because the shipped")
+	print("hooks fire on live register writes this probe does not stage.\n")
 	var passed := 0
 	for hook in EventsK.ON_ACTIONS:
 		var ev = _hook_fixture(hook)

@@ -425,8 +425,8 @@ static func available(ns, all_laws: Array) -> Array:
 		# cap changes nothing the model can price, so the act is not offered:
 		# the _already_in_force shape ("a button that changes nothing is not
 		# offered"), which also stops the direct propose route, whose legality
-		# scan is this very list. The yield gate in Budget.commit() stays as
-		# the backstop for routes that bypass this filter.
+		# scan is this very list. The yield gate in Budget.apply_pending stays
+		# as the backstop for routes that bypass this filter.
 		var birth: Dictionary = law.new_tax
 		var birth_key := String(birth.get("key", ""))
 		if not birth.is_empty() and ns.custom_taxes.has(birth_key):
@@ -703,17 +703,18 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 
 
 ## Apply a passed law's effects onto ns. Budget-lever effects are routed through
-## Budget.commit() so the demand impulse, the erosion curve and the opinion
-## issue all fire exactly as they would for a player-driven budget change --
-## the same mechanism, so double-counting is structurally impossible. Every
-## other channel is one clamped accumulator, read by an existing formula.
+## apply_effects() into Budget.apply_pending so the demand impulse, the erosion
+## curve and the opinion issue all fire exactly as they would for a
+## player-driven budget change -- the same mechanism, so double-counting is
+## structurally impossible. Every other channel is one clamped accumulator, read
+## by an existing formula.
 ##
 ## V4.2. Two additions, both of them the statute book and neither a new
 ## applier:
 ##
 ##   - A REPEAL subtracts first. A law with `repeals` set removes the target's
 ##     REALIZED ledger through apply_effects() -- the negated channels, budget
-##     levers routed through Budget.commit() so the erosion curve and the
+##     levers routed into Budget.apply_pending so the erosion curve and the
 ##     demand impulse fire exactly as any budget change would -- then erases
 ##     the target's entry and writes the target's own cooldown (a repealed act
 ##     sits out its cooldown before it can be re-proposed). It happens at the
@@ -741,7 +742,7 @@ static func apply(state, ns, law, loader) -> void:
 		_subtract_ledger(state, ns, loader, law.repeals)
 	# V4.2 T4. A BIRTH registers its params BEFORE the rate moves, and this is
 	# the ONE registration site: the rate's own application runs through
-	# apply_effects() -> Budget.commit(), which refuses a pending rate whose
+	# apply_effects() -> Budget.apply_pending, which refuses a pending rate whose
 	# key has no params behind it -- so a birth that applied its rate first
 	# would be refused by its own applier. One writer, one registration site.
 	if not law.new_tax.is_empty():
@@ -911,9 +912,9 @@ static func repeal_target_legal(ns, loader, law_id: String) -> bool:
 
 
 ## A repeal's subtraction. The negated channels go back through
-## apply_effects() -- the one applier, so budget levers route through
-## Budget.commit() and every clamp re-fires symmetrically -- then the entry is
-## erased and the target's own cooldown written.
+## apply_effects() -- the one applier, whose budget levers reach
+## Budget.apply_pending and every clamp re-fires symmetrically -- then the entry
+## is erased and the target's own cooldown written.
 ##
 ## THE FIRST-ORDER BOUND, stated where it can bite: the subtraction clamps
 ## like any write, so a register already pushed past a bound by OTHER writers

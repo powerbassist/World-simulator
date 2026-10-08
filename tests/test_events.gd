@@ -130,6 +130,7 @@ func _init() -> void:
 	_test_chains_arm_and_land()
 	_test_the_per_event_cooldown_binds()
 	_test_the_chooser_situates()
+	_test_the_hook_vocabulary_is_swept()
 	_test_the_interrupt_flag()
 	_test_sited_schema_loads()
 	_test_the_site_draw_is_pure()
@@ -910,9 +911,9 @@ func _test_once_is_marked_at_delivery() -> void:
 	if not ai_ns.event_queue.is_empty():
 		_fail("an AI delivery queued an entry, and the AI has no desk")
 	# And delivery writes the per-event cooldown -- the other half of the same
-	# move. A fixture rather than content, because no shipped event carries a
-	# cooldown today, and this pin is what keeps the write where every delivery
-	# passes.
+	# move. A fixture rather than content: the anchor must hold for ANY event,
+	# content or fixture alike, and this pin is what keeps the write where every
+	# delivery passes.
 	var cd = _make_event("cooldown_fixture", false)
 	cd.cooldown_months = 4
 	var cd_state = _new_state()
@@ -1091,16 +1092,74 @@ func _test_the_hash_is_not_copied() -> void:
 
 # --- V4.4: the queue, the weighted draw, the hooks, the chains ---------------------
 
-## The desk is BOUNDED. A draw that does not fit is skipped, not banked -- next month
-## is a fresh draw because the hazard is a function of the month -- and the bound is
-## what keeps the message column's six cards able to hold one arrival card per entry.
+## The desk is BOUNDED, at EVERY delivery door. A draw that does not fit is
+## skipped, not banked -- next month is a fresh draw because the hazard is a
+## function of the month -- and the bound is what keeps the message column's six
+## cards able to hold one arrival card per entry.
 func _test_the_desk_is_bounded() -> void:
 	if K.QUEUE_MAX < 2:
 		_fail("QUEUE_MAX is %d -- the bound check below cannot mean anything" % K.QUEUE_MAX)
-	# The bound is enforced at the tick's delivery door, not in the raw announce the
-	# site sweep drives -- pinned at source, the leaf-property way.
+	# The bound is enforced in _deliver, where ALL THREE doors pass (the
+	# review's find: the chain and hook doors delivered unconditionally and
+	# reached six) -- pinned at source, the leaf-property way.
 	if not _code("res://src/sim/events.gd").contains(">= K.QUEUE_MAX"):
-		_fail("the tick no longer gates delivery on QUEUE_MAX -- the desk is unbounded")
+		_fail("delivery no longer gates on QUEUE_MAX -- the desk is unbounded")
+
+	# The REAL doors, driven against a FULL desk staged with raw announces (the
+	# site sweep's own way -- announce is the unbounded staging primitive by
+	# design, which is exactly why the gate cannot live in it).
+	var state = _new_state()
+	var ns = state.player()
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	var filler = _make_event("desk_filler", false)
+	for _i in range(K.QUEUE_MAX):
+		Events.announce(ns, filler, month, Events.region_names(ns, _loader))
+	if ns.event_queue.size() != K.QUEUE_MAX:
+		_fail("staging a full desk left %d entries, expected %d -- the staging itself is broken" % [ns.event_queue.size(), K.QUEUE_MAX])
+		return
+
+	# The chain door, through the REAL tick (the survive-and-retry lives in the
+	# tick's armed loop, not in _deliver, so that is the door under test): an
+	# armed entry due NOW finds the desk full and WAITS -- a consequence the
+	# player paid for must not evaporate on a busy month. The stub carries only
+	# the fixture, so nothing else can land and the count stays legible.
+	var chain = _make_event("desk_chain_fixture", false)
+	var stub := _StubLoader.new()
+	stub.events = [chain]
+	ns.event_armed.append({"event_id": chain.id, "due_index": month, "source_id": filler.id})
+	Events._tick_nation(state, ns, stub, month, true)
+	if ns.event_queue.size() > K.QUEUE_MAX:
+		_fail("a chain delivery on a full desk grew the desk to %d" % ns.event_queue.size())
+	if ns.event_armed.size() != 1:
+		_fail("the armed chain did not survive a full-desk month -- a paid-for consequence died at the bound")
+		ns.event_armed.clear()
+		return
+
+	# The hook door, fired as the hook loop fires it while the desk is STILL
+	# full: a delivery returns false and lands nothing -- the skip is final
+	# (the next happening re-fires the hook), the hazard door's own semantics.
+	var hook = _make_event("desk_hook_fixture", false)
+	hook.on_action = "law_passed"
+	ns.law_ledger["probe_law"] = {"months": [month]}
+	var landed: bool = Events._deliver(state, ns, stub, hook, month, true)
+	if landed:
+		_fail("a hook delivery on a full desk claimed to land")
+	if ns.event_queue.size() > K.QUEUE_MAX:
+		_fail("a hook delivery on a full desk grew the desk past QUEUE_MAX")
+	ns.law_ledger.erase("probe_law")
+
+	# And the wait is a WAIT, not a death: a month later, with room on the desk,
+	# the same chain lands and its entry is spent.
+	ns.event_queue.clear()
+	state.month += 1
+	if int(state.month) > 12:
+		state.month = 1
+		state.year += 1
+	Events.tick_month(state, stub)
+	if not Events.is_pending(ns) or Events.pending_event_id(ns) != chain.id:
+		_fail("the chain that waited out a full desk never landed once the desk had room")
+	if not ns.event_armed.is_empty():
+		_fail("a delivered chain left its armed entry behind")
 
 
 ## The same occasion twice is one occasion: a draw landing while the desk still holds
@@ -1149,6 +1208,18 @@ func _test_hooks_fire_on_staged_registers() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var month := Events._absolute_month(int(state.year), int(state.month))
+
+	# law_passed is a PURE ONE-MONTH LAG, pinned BOTH directions in one wave:
+	# the ledger stamps at APPLY time and the player's routes apply at command
+	# time (month M), which this machine first reads at M+1 -- so last month's
+	# passage is the readable window and THIS month's is not (yet).
+	ns.law_ledger["probe_law"] = {"months": [month - 1]}
+	if not Events._hook_fired(state, ns, _loader, "law_passed", month):
+		_fail("law_passed did not read last month's passage -- the lag is the emitter's whole window")
+	ns.law_ledger["probe_law"] = {"months": [month]}
+	if Events._hook_fired(state, ns, _loader, "law_passed", month):
+		_fail("law_passed fired on the command month itself -- with the lag leg that would double-fire an in-tick passage")
+	ns.law_ledger.erase("probe_law")
 
 	ns.repealed_at["some_law"] = month
 	if not Events._hook_fired(state, ns, _loader, "law_repealed", month):
@@ -1252,3 +1323,37 @@ func _test_the_chooser_situates() -> void:
 		ids.append(String(c["id"]))
 	if not ids.has(String(balanced.get("id", ""))) or not ids.has(String(indebted.get("id", ""))):
 		_fail("the chooser invented a choice not on the event")
+
+
+## THE VOCABULARY SWEEP THE COMMENTS PROMISE. `ON_ACTIONS` is a closed vocabulary
+## and `_hook_fired`'s match is its machine, and the two must name exactly the
+## same set -- in BOTH directions, the house rule: a vocabulary name without a
+## match arm is a content promise the machine silently never keeps (an event
+## could load on it and fire nothing, forever), and a match arm outside the
+## vocabulary is a live emitter no event can legally name (the loader would
+## refuse the content, so the branch is dead code wearing a contract's clothes).
+## Read at source, `_test_the_hash_is_not_copied`'s way: running the hooks can
+## only witness the arms that fire THIS month, never the one that went missing.
+func _test_the_hook_vocabulary_is_swept() -> void:
+	var arms := {}
+	var in_fn := false
+	for line in _source("res://src/sim/events.gd").split(NEWLINE):
+		if line.begins_with("static func _hook_fired"):
+			in_fn = true
+			continue
+		if not in_fn:
+			continue
+		if line.begins_with("func ") or (line.begins_with("static func ") and not line.contains("_hook_fired")):
+			break
+		var stripped := line.strip_edges()
+		if stripped.begins_with("\"") and stripped.ends_with("\":"):
+			arms[stripped.substr(1, stripped.length() - 3)] = true
+	if arms.is_empty():
+		_fail("could not extract any match arm from _hook_fired -- the extraction is broken, not the machine")
+		return
+	for hook in K.ON_ACTIONS:
+		if not arms.has(hook):
+			_fail("ON_ACTIONS names '%s' and _hook_fired has no branch for it -- a hook that can load and never fire" % hook)
+	for hook in arms.keys():
+		if not K.ON_ACTIONS.has(hook):
+			_fail("_hook_fired matches '%s', which is not in ON_ACTIONS -- a live emitter no event may name" % hook)
