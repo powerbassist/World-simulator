@@ -1,0 +1,521 @@
+{
+  "_note": "Sixty goods clear through world markets at prices the register clamps at seventy-five per cent either way, and the occasions here are the mornings the bill arrives. Nothing in this file causes a shortage -- the register carries flows, not stocks -- these are the politics of one that already happened at the wharf. The two hook events ride commodity_price_high, which is a LEVEL read over every good at once, so their prose names no good: whichever import spiked, the card has to be true of it. Their likelihoods sit above the hazard band on purpose -- the dispatch's call -- because the hook only draws in the months the register says something is already expensive, and their cooldowns keep the answer from machine-gunning the desk.",
+  "events": [
+    {
+      "id": "com_gas_squeeze",
+      "name": "The winter bill",
+      "summary": "Wholesale gas is at the price the utilities warn about in papers nobody reads, storage is exactly where the operators said it would be, and the bill is still landing on every doorstep by February. The tariff is the policy now, whoever it belongs to.",
+      "likelihood": 0.02,
+      "category": "commodity",
+      "severity": 2,
+      "weight": 1.5,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "freeze_the_tariff",
+          "label": "Freeze the household tariff",
+          "summary": "The utility eats the spread and the state lends it the difference at a rate the next government inherits. The pensioners' bills hold and the debt office adds a line it did not have.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.15
+            },
+            "bloc_offset": {
+              "pensioners": 0.026,
+              "urban": 0.016,
+              "workers": 0.008,
+              "business": -0.036,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "let_it_move",
+          "label": "Let the tariff move",
+          "summary": "The price does what prices do and the state sends pensioners a cheque in March, when the coldest bills are already paid. The market calls it discipline and the kitchen tables call it February.",
+          "effects": {
+            "spending_pct_gdp": {
+              "pensions": 0.1
+            },
+            "bloc_offset": {
+              "business": 0.03,
+              "urban": -0.022,
+              "workers": -0.02,
+              "pensioners": 0.012,
+              "students": -0.006
+            }
+          }
+        },
+        {
+          "id": "be_understanding",
+          "label": "Ask the utilities to be understanding",
+          "summary": "They are understanding for one quarter, with interest. The bill arrives whole in April, with the operator's apology attached.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "pensioners": -0.026,
+              "urban": -0.02,
+              "workers": -0.01,
+              "business": 0.03,
+              "rural": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "com_wheat_failure",
+      "name": "The harvest that failed over there",
+      "summary": "The bread wheat failed two markets away -- weather, then logistics, then export bans, in the order they always arrive. The millers have covered a quarter of the gap and the bakers have done their own arithmetic about March.",
+      "likelihood": 0.02,
+      "category": "commodity",
+      "severity": 1,
+      "weight": 1.2,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "carry_the_millers",
+          "label": "Carry the millers' bill",
+          "summary": "The state stands between the world price and the flour price for the season, and the co-ops plant on the strength of it. The treasury owns a subsidy with a harvest's name on it, which is a habit that outlives harvests.",
+          "effects": {
+            "company": {
+              "sector": "agriculture",
+              "burden": 0.04
+            },
+            "bloc_offset": {
+              "rural": 0.03,
+              "workers": 0.012,
+              "urban": -0.022,
+              "business": -0.016,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "pay_world_price",
+          "label": "Pay the world price and pass it on",
+          "summary": "Flour costs what flour costs and the baker's sign explains it daily. The farm gate does well out of somebody else's drought, which the town reads as a tax with wheat on it.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.034,
+              "business": 0.012,
+              "urban": -0.03,
+              "workers": -0.018,
+              "students": -0.006
+            }
+          }
+        },
+        {
+          "id": "wait_southern",
+          "label": "Wait for the southern harvest",
+          "summary": "It is eleven weeks out and the bakers' arithmetic says four. The price does the talking until then, and it is not using words.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": -0.02,
+              "urban": -0.026,
+              "workers": -0.016,
+              "business": 0.022,
+              "pensioners": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "com_minerals_squeeze",
+      "name": "The minerals letter",
+      "summary": "The producer of most of the world's battery minerals has moved two of them to a licence list in the same week, and the plant the car factories answer to has nine weeks of the old price left. The letter calls it industrial policy; the order books call it what it is.",
+      "likelihood": 0.015,
+      "category": "commodity",
+      "severity": 2,
+      "weight": 1.2,
+      "cooldown_months": 14,
+      "respond_months": 5,
+      "once": false,
+      "choices": [
+        {
+          "id": "pool_the_orders",
+          "label": "Pool the orders with the other buyers",
+          "summary": "Six buyers signing one contract is a monopsony until the producer reads it as one, which they do within the month. The price softens by a fifth and the relationship learns that it is a hostage too.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.02
+            },
+            "bloc_offset": {
+              "business": 0.03,
+              "workers": 0.012,
+              "urban": 0.012,
+              "rural": -0.022,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "underwrite_the_plant",
+          "label": "Underwrite the plant's input bill",
+          "summary": "The difference between the contract price and the spot price is paid from the infrastructure line for as long as the letter says. The factories keep their shifts and the ministry keeps a chart of what loyalty costs.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.05
+            },
+            "spending_pct_gdp": {
+              "infrastructure": 0.1
+            },
+            "bloc_offset": {
+              "workers": 0.02,
+              "urban": 0.016,
+              "rural": -0.022,
+              "students": -0.008,
+              "business": -0.018
+            }
+          }
+        },
+        {
+          "id": "let_contracts_reroll",
+          "label": "Let the contracts reprice",
+          "summary": "The spot market reprices and the car factories reprice with it, quarterly. The mines are no closer and the transition plan loses a season it does not get back.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.02,
+              "business": -0.024,
+              "urban": -0.012,
+              "rural": 0.022,
+              "pensioners": 0.012
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "com_fertilizer_shortage",
+      "name": "The spread that did not",
+      "summary": "The fertiliser plant is down for want of the gas it runs on, the import order is queued behind two bigger ones, and the co-op says the dressing window is six weeks. The farms will carry whatever the government decides; the question is whether the town shares it.",
+      "likelihood": 0.018,
+      "category": "commodity",
+      "severity": 2,
+      "weight": 1.2,
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "buy_the_queue",
+          "label": "Buy the cargo out of turn",
+          "summary": "A season's dressing at this spring's price, paid against the farm credit line the state stands behind. The co-op plants on time and the treasury owns a hedging story it will still be telling in five years.",
+          "effects": {
+            "company": {
+              "sector": "agriculture",
+              "burden": 0.04
+            },
+            "bloc_offset": {
+              "rural": 0.036,
+              "urban": -0.016,
+              "workers": -0.012,
+              "students": -0.004,
+              "pensioners": 0.002
+            }
+          }
+        },
+        {
+          "id": "ration_by_holding",
+          "label": "Ration by holding",
+          "summary": "The co-op allocates by holding size, which the big farms call collectivism and the small ones call the first fair spring in years. The yields carry the argument in September, one way or the other.",
+          "effects": {
+            "company": {
+              "sector": "agriculture",
+              "burden": 0.02
+            },
+            "bloc_offset": {
+              "rural": 0.014,
+              "workers": -0.01,
+              "business": -0.02,
+              "urban": 0.012,
+              "students": 0.006
+            }
+          }
+        },
+        {
+          "id": "market_rations",
+          "label": "Let the market do the rationing",
+          "summary": "It does, by price. The dressing goes to whoever can carry a spring on margins, and the smallholdings go to whoever can carry an autumn.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": -0.036,
+              "business": 0.022,
+              "urban": 0.014,
+              "workers": -0.008,
+              "pensioners": 0.012
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "com_tanker_lane",
+      "name": "The strait",
+      "summary": "The lane that carries a third of the country's crude has closed for an inspection season nobody had scheduled, and the tankers are queueing at the anchorage in two directions. The strategic reserve is a flow and not a tank, which the operator now explains with a chart.",
+      "likelihood": 0.012,
+      "category": "commodity",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 14,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "pay_the_long_way",
+          "label": "Pay the long way round",
+          "summary": "Fourteen extra days at sea on every barrel, on the freight bill the refineries pass through by August. The pumps hold, the hauliers hold, and the fare is in everything that moves.",
+          "effects": {
+            "company": {
+              "sector": "services",
+              "burden": 0.03
+            },
+            "bloc_offset": {
+              "business": 0.026,
+              "workers": 0.012,
+              "urban": -0.022,
+              "rural": -0.012,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "open_the_terminals",
+          "label": "Open the strategic terminals to the spot market",
+          "summary": "The berths the navy keeps for the navy open to whoever pays the dues. The queue shortens by the weekend and the base commander's letter arrives after the decision, as letters do.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.02
+            },
+            "bloc_offset": {
+              "business": 0.03,
+              "urban": 0.012,
+              "rural": -0.022,
+              "students": -0.008,
+              "pensioners": -0.004
+            }
+          }
+        },
+        {
+          "id": "let_the_queue_clear",
+          "label": "Let the queue clear",
+          "summary": "Inspection seasons end. The price peaks where the queues are longest and the blame settles where the terminals are, which is here.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.016,
+              "urban": -0.02,
+              "business": -0.012,
+              "rural": 0.022,
+              "pensioners": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "com_copper_strike",
+      "name": "The mine that stopped",
+      "summary": "The copper belt's oldest mine has been out three weeks and the smelters on this side of the trade are running on named tonnes and good manners. Wire is a quarter of everything the grid builds, a figure the grid operator now mentions in every schedule.",
+      "likelihood": 0.012,
+      "category": "commodity",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 14,
+      "respond_months": 5,
+      "once": false,
+      "choices": [
+        {
+          "id": "buy_the_year_forward",
+          "label": "Buy the year forward",
+          "summary": "A year of wire at a price that hurts once instead of monthly. The smelters keep their bookings and the treasury keeps a contract it will be congratulated for and never thanked for.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.03
+            },
+            "bloc_offset": {
+              "business": 0.026,
+              "workers": 0.01,
+              "urban": -0.016,
+              "students": -0.01,
+              "rural": -0.008
+            }
+          }
+        },
+        {
+          "id": "stretch_the_grid",
+          "label": "Stretch the grid programme",
+          "summary": "The interconnect slips a year and the build season absorbs what the mine does not deliver. The commissioning dates move in one paragraph and are noticed by nobody but the contractors, who bid accordingly.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": -0.1
+            },
+            "bloc_offset": {
+              "business": 0.02,
+              "rural": -0.016,
+              "workers": -0.012,
+              "urban": 0.012,
+              "students": 0.004
+            }
+          }
+        },
+        {
+          "id": "bid_at_the_spot",
+          "label": "Bid at the spot and complain",
+          "summary": "Everyone bids, the price answers, and the programme pays it because stopping is dearer. The strike fund in the producer country receives, in effect, a small levy on your electricity meter.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.014,
+              "workers": -0.012,
+              "urban": -0.022,
+              "rural": 0.024,
+              "pensioners": 0.016
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "com_price_high_desk",
+      "name": "The price is the policy now",
+      "summary": "Something the country imports is standing thirty per cent over its price of a year ago, and the question on the desk is the one every government answers badly: absorb it, pass it through, or find somebody to blame. The world price does not care which. The kitchen tables keep a record.",
+      "on_action": "commodity_price_high",
+      "likelihood": 0.45,
+      "category": "commodity",
+      "severity": 2,
+      "cooldown_months": 8,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "absorb_it",
+          "label": "Absorb it in the budget",
+          "summary": "The spread is paid from the infrastructure line until the world price remembers its manners. The bills hold, the debt holds the difference, and nobody thanks a subsidy for not happening.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.1
+            },
+            "bloc_offset": {
+              "pensioners": 0.026,
+              "workers": 0.012,
+              "urban": 0.012,
+              "business": -0.032,
+              "students": -0.006
+            }
+          }
+        },
+        {
+          "id": "pass_it_through",
+          "label": "Let it pass through",
+          "summary": "The price reaches the shelf in one hop, which is at least honest. The exporters and the farms like the world as it is; the pensioners price it weekly.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.024,
+              "business": 0.03,
+              "pensioners": -0.022,
+              "urban": -0.024,
+              "workers": -0.016,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "inquiry_into_margins",
+          "label": "Announce an inquiry into the margins",
+          "summary": "There is always a middleman and one of them is in your coalition. The inquiry reports after the price has settled, into margins that have moved on.",
+          "default": true,
+          "effects": {
+            "society": {
+              "corruption": -0.02
+            },
+            "bloc_offset": {
+              "urban": -0.014,
+              "workers": -0.016,
+              "business": -0.014,
+              "pensioners": 0.022,
+              "rural": 0.012
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "com_industry_bills",
+      "name": "The factories' input bill",
+      "summary": "The federation has done the quarter's arithmetic on input prices and arrived with it: the mills are buying at margins that close in eight weeks. It would like the state to decide which industries eat the difference, the market having declined to.",
+      "on_action": "commodity_price_high",
+      "likelihood": 0.4,
+      "category": "commodity",
+      "severity": 2,
+      "cooldown_months": 10,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "protect_the_makers",
+          "label": "Protect the manufacturers",
+          "summary": "The input bill is shared out to the consumer sectors and the farms, where the votes are thinner. The mills keep their shifts and the grocery line learns what a subsidy tastes like from the inside.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.05
+            },
+            "bloc_offset": {
+              "workers": 0.026,
+              "rural": -0.016,
+              "urban": 0.012,
+              "business": -0.022,
+              "students": -0.006
+            }
+          }
+        },
+        {
+          "id": "free_the_channel",
+          "label": "Free the import channel",
+          "summary": "The duties on the inputs come off and the customs line gives up the revenue, which was the point. The mills buy at the world price and the farms meet the world's mills.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.02
+            },
+            "other_revenue_pct_gdp": -0.1,
+            "bloc_offset": {
+              "business": 0.03,
+              "workers": -0.014,
+              "rural": -0.022,
+              "urban": 0.014,
+              "students": 0.004
+            }
+          }
+        },
+        {
+          "id": "let_margins_close",
+          "label": "Let the margins close",
+          "summary": "The weak close, the strong buy their orders back cheaper in the spring, and the federation's next visit is about the closures. The region reads it in the wage figures first.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.026,
+              "business": -0.012,
+              "urban": -0.012,
+              "rural": 0.022,
+              "pensioners": 0.014
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

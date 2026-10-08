@@ -1,0 +1,902 @@
+{
+  "_note": "The fiscal category is the government's own arithmetic coming back with questions -- the auction that tails, the rating letter, the supplementary, the hole where a levy used to be. None of it is weather and none of it is a scandal: it is what the books do when a state borrows in public.",
+  "events": [
+    {
+      "id": "bond_yield_wobble",
+      "name": "The auction tails",
+      "summary": "The monthly bond auction tails and the ten-year closes forty points up. Nothing about the country has changed since Tuesday except what the desk thinks of it.",
+      "likelihood": 0.012,
+      "category": "fiscal",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 2,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "debt_to_gdp_pct",
+          "op": ">=",
+          "value": 85.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "settle_the_desk",
+          "label": "Signal the consolidation",
+          "summary": "An evening interview about discipline, and a line of works held back the same week. The desk reads resolve; the sites read a government that budgets by ticker.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": -0.2
+            },
+            "bloc_offset": {
+              "business": 0.045,
+              "rural": 0.022,
+              "urban": -0.03,
+              "workers": -0.02,
+              "pensioners": 0.013
+            }
+          }
+        },
+        {
+          "id": "talk_it_down",
+          "label": "Call it noise",
+          "summary": "The minister calls the move noise and goes to dinner. Sometimes it is; the tape decides, not the interview.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.028,
+              "students": -0.022,
+              "workers": -0.012,
+              "business": -0.018,
+              "rural": 0.01,
+              "pensioners": 0.014
+            }
+          }
+        },
+        {
+          "id": "tax_the_gains",
+          "label": "Go after the funds",
+          "summary": "A levy on the funds' financing gains, announced at the briefing. The base is small, the message is large, and the desk now prices a government that taxes its own lenders mid-auction.",
+          "effects": {
+            "tax_rates_pct": {
+              "income": 0.5
+            },
+            "bloc_offset": {
+              "business": -0.05,
+              "urban": 0.012,
+              "students": 0.01,
+              "workers": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "ratings_letter",
+      "name": "The outlook goes negative",
+      "summary": "A rating agency moves the outlook to negative and publishes the arithmetic behind it. The arithmetic is the government's own, which is the uncomfortable part.",
+      "likelihood": 0.01,
+      "category": "fiscal",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 24,
+      "respond_months": 3,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "debt_to_gdp_pct",
+          "op": ">=",
+          "value": 100.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "announce_consolidation",
+          "label": "Publish a consolidation plan",
+          "summary": "A medium-term plan, built on the letter's own numbers. Health and the schools carry the first instalment, and the agency's next sentence writes itself.",
+          "effects": {
+            "spending_pct_gdp": {
+              "health": -0.15,
+              "education": -0.1
+            },
+            "bloc_offset": {
+              "business": 0.04,
+              "rural": 0.018,
+              "workers": -0.015,
+              "urban": -0.012
+            }
+          }
+        },
+        {
+          "id": "dispute_the_note",
+          "label": "Dispute the methodology",
+          "summary": "The rebuttal runs to nine pages and says the agency misread the pension assumption. It may even be right; the meeting it asked for is declined, which is the part everybody reads.",
+          "effects": {
+            "bloc_offset": {
+              "urban": 0.02,
+              "students": 0.016,
+              "workers": 0.01,
+              "business": -0.032,
+              "rural": 0.014,
+              "pensioners": -0.025
+            }
+          }
+        },
+        {
+          "id": "file_it",
+          "label": "File the letter",
+          "summary": "The letter goes in the drawer with the others. The rating holds for now, and the premium over the better-run names stays where it has drifted.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.018,
+              "urban": -0.014,
+              "students": -0.01,
+              "business": -0.012,
+              "pensioners": 0.014,
+              "rural": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "supplementary_budget_demand",
+      "name": "The supplementary",
+      "summary": "Three ministries have filed for a supplementary: the hospital overruns are real, the deployment ran long, and the numbers only add up if at least one of them is refused.",
+      "likelihood": 0.015,
+      "category": "fiscal",
+      "severity": 1,
+      "weight": 2.0,
+      "cooldown_months": 10,
+      "respond_months": 4,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">=",
+          "value": 3.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "grant_the_health_line",
+          "label": "Grant the hospitals",
+          "summary": "The hospitals are paid in full and the other two are told to come back in the spring. The deficit takes the difference and the two ministers take the memory.",
+          "effects": {
+            "spending_pct_gdp": {
+              "health": 0.3
+            },
+            "bloc_offset": {
+              "pensioners": 0.02,
+              "workers": 0.012,
+              "students": -0.008,
+              "rural": -0.018,
+              "urban": -0.036
+            }
+          }
+        },
+        {
+          "id": "hold_all_three",
+          "label": "Refuse all three",
+          "summary": "Come back with the spring estimates. It is what the books say, and it reads as what the government wanted to say anyway.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.016,
+              "urban": -0.012,
+              "students": -0.008,
+              "business": 0.014,
+              "pensioners": -0.01,
+              "rural": 0.008
+            }
+          }
+        },
+        {
+          "id": "split_the_difference",
+          "label": "Split the difference",
+          "summary": "Half now, half against next year's envelope, with the finance committee saying so out loud. Nobody is paid in full and the committee discovers a taste for it.",
+          "effects": {
+            "spending_pct_gdp": {
+              "health": 0.12
+            },
+            "bloc_offset": {
+              "workers": 0.01,
+              "pensioners": 0.008,
+              "urban": 0.002,
+              "rural": -0.012,
+              "business": -0.012,
+              "students": -0.031
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tax_revolt_petition",
+      "name": "The petition",
+      "summary": "A petition against the levy has passed a million names, organised by people who have organised nothing before, and the postal copies are still arriving by the sack.",
+      "likelihood": 0.014,
+      "category": "fiscal",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 18,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "cap_the_levy",
+          "label": "Cap the rate",
+          "summary": "The rate is capped for the year and the letter says relief. The revolt declares victory and disbands, which is what victories like this do.",
+          "effects": {
+            "tax_rates_pct": {
+              "vat": -0.5
+            },
+            "bloc_offset": {
+              "workers": 0.012,
+              "rural": 0.02,
+              "business": 0.012,
+              "students": 0.006,
+              "urban": -0.012,
+              "pensioners": -0.03
+            }
+          }
+        },
+        {
+          "id": "refer_it",
+          "label": "Refer it to the committee",
+          "summary": "The petition is referred to the finance committee, which is where petitions go to be counted again in the spring.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.014,
+              "students": -0.01,
+              "workers": -0.008,
+              "business": 0.01,
+              "rural": 0.006,
+              "pensioners": 0.004
+            }
+          }
+        },
+        {
+          "id": "defend_the_levy",
+          "label": "Defend the levy",
+          "summary": "The rate stands and the morning interview explains what it pays for. The names stay collected either way, and the petition now has a date of its own.",
+          "effects": {
+            "bloc_offset": {
+              "business": -0.03,
+              "urban": -0.02,
+              "workers": 0.012,
+              "rural": -0.008,
+              "pensioners": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "audit_finding",
+      "name": "The auditor's autumn",
+      "summary": "The audit court's autumn report finds a guarantee the ministry kept off its own books, sized at a year of the defence budget, and asks -- in the passive voice -- who knew.",
+      "likelihood": 0.012,
+      "category": "fiscal",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 18,
+      "respond_months": 5,
+      "once": false,
+      "choices": [
+        {
+          "id": "publish_everything",
+          "label": "Table it and refer them",
+          "summary": "The finding is tabled in full and the officials named are referred. The court is a friend no government enjoys having, and it has one more this morning.",
+          "effects": {
+            "society": {
+              "corruption": -0.08
+            },
+            "bloc_offset": {
+              "urban": 0.024,
+              "students": 0.018,
+              "workers": 0.008,
+              "business": -0.02,
+              "pensioners": -0.023
+            }
+          }
+        },
+        {
+          "id": "bury_it",
+          "label": "Hold it as a working paper",
+          "summary": "The finding stays a working paper and the guarantee stays a line item. Buried holes do not stay buried; they come back the only way holes can, as a vote.",
+          "effects": {
+            "society": {
+              "corruption": 0.06
+            },
+            "bloc_offset": {
+              "urban": -0.022,
+              "students": -0.018,
+              "workers": -0.008,
+              "business": 0.02,
+              "pensioners": 0.021
+            }
+          },
+          "arms": {
+            "event_id": "deficit_ceiling_vote",
+            "delay_months": 6
+          }
+        },
+        {
+          "id": "implement_quietly",
+          "label": "Wind it down quietly",
+          "summary": "The guarantee is wound down on the ministry's own timetable and the report is answered in a covering letter. The honest middle, and it satisfies nobody who read the annexes.",
+          "default": true,
+          "effects": {
+            "society": {
+              "corruption": -0.03
+            },
+            "bloc_offset": {
+              "urban": -0.01,
+              "students": -0.008,
+              "business": 0.008,
+              "pensioners": 0.006,
+              "rural": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pension_fund_gap",
+      "name": "The fund's own actuary",
+      "summary": "The fund's actuary has put a number on the hole and the number has a comma in it. The review was commissioned by the last government, which is the only reason anybody is reading it.",
+      "likelihood": 0.01,
+      "category": "fiscal",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 0,
+      "respond_months": 6,
+      "once": true,
+      "preconditions": [
+        {
+          "field": "growth_annual_pct",
+          "op": "<=",
+          "value": 1.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "top_up_the_fund",
+          "label": "Wire the difference",
+          "summary": "The budget wires the difference and the pension is safe to the next review. The line becomes structural the way lines do, and business reads a payroll tax arriving by increments.",
+          "effects": {
+            "spending_pct_gdp": {
+              "pensions": 0.4
+            },
+            "bloc_offset": {
+              "pensioners": 0.02,
+              "workers": 0.012,
+              "business": -0.022,
+              "urban": -0.008,
+              "rural": -0.03,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "raise_the_contribution",
+          "label": "Raise the contribution",
+          "summary": "A point on the contribution from both sides, and the fund's horizon lengthens to the decade after next. Payroll finds out on the next payslip, which is the point of a payslip.",
+          "effects": {
+            "tax_rates_pct": {
+              "income": 0.5
+            },
+            "bloc_offset": {
+              "workers": -0.02,
+              "business": -0.018,
+              "pensioners": 0.036,
+              "urban": -0.006
+            }
+          }
+        },
+        {
+          "id": "note_and_defer",
+          "label": "Note it and defer",
+          "summary": "The number goes into the annexes with a commitment to revisit it after the next review. The hole does not grow today, which is the sentence the release leads with.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "pensioners": -0.018,
+              "workers": -0.01,
+              "urban": -0.006,
+              "business": 0.012,
+              "rural": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "local_authority_insolvency",
+      "name": "The city stops paying",
+      "summary": "The third city has missed a payroll and its mayor is on every channel saying the word bankruptcy without quite saying it. The law has no procedure for this, which is now everybody's problem.",
+      "likelihood": 0.008,
+      "category": "fiscal",
+      "severity": 3,
+      "weight": 0.5,
+      "cooldown_months": 24,
+      "respond_months": 4,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unemployment_pct",
+          "op": ">=",
+          "value": 8.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "stand_behind_the_city",
+          "label": "Stand behind the city",
+          "summary": "The state wires the payroll and takes the city's accounts into its own hands while it does. Every other city draws the correct conclusion about who its creditor is.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.25
+            },
+            "bloc_offset": {
+              "workers": 0.018,
+              "urban": 0.024,
+              "rural": -0.012,
+              "business": -0.012,
+              "pensioners": -0.026
+            }
+          }
+        },
+        {
+          "id": "let_it_restructure",
+          "label": "Let it restructure",
+          "summary": "The creditors queue like creditors and the schools pay late. The precedent belongs to whichever city files second.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.022,
+              "workers": -0.016,
+              "students": -0.01,
+              "rural": -0.008,
+              "business": 0.014,
+              "pensioners": 0.006
+            }
+          }
+        },
+        {
+          "id": "impose_an_oversight_board",
+          "label": "Impose an oversight board",
+          "summary": "A state board takes the city's signature away until the accounts clear. The books are saved from the council and the council's voters are saved from the ballot.",
+          "effects": {
+            "society": {
+              "corruption": -0.05
+            },
+            "bloc_offset": {
+              "business": 0.02,
+              "rural": 0.012,
+              "urban": -0.02,
+              "pensioners": 0.012,
+              "workers": -0.011
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "spending_freeze_demand",
+      "name": "The freeze letter",
+      "summary": "The central bank's governor and the treasury's permanent secretary have co-signed a letter asking for a two-year freeze on ministry budgets. It leaked faster than it was delivered.",
+      "likelihood": 0.014,
+      "category": "fiscal",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">=",
+          "value": 4.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "order_the_freeze",
+          "label": "Order the freeze",
+          "summary": "The freeze is ordered and the letters go out the same week. Every minister becomes an allocator of somebody else's disappointment, and the queues form by autumn.",
+          "effects": {
+            "spending_pct_gdp": {
+              "health": -0.2,
+              "education": -0.15,
+              "infrastructure": -0.15
+            },
+            "bloc_offset": {
+              "business": 0.04,
+              "rural": 0.016,
+              "urban": -0.018,
+              "workers": -0.016,
+              "pensioners": 0.006
+            }
+          }
+        },
+        {
+          "id": "freeze_the_hiring_only",
+          "label": "Freeze the hiring only",
+          "summary": "Posts that fall vacant stay vacant and nobody is dismissed. It is a freeze the service can taste but not photograph.",
+          "effects": {
+            "spending_pct_gdp": {
+              "education": -0.08
+            },
+            "bloc_offset": {
+              "students": -0.014,
+              "urban": -0.01,
+              "business": 0.012,
+              "rural": 0.006,
+              "pensioners": 0.003
+            }
+          }
+        },
+        {
+          "id": "refuse_in_public",
+          "label": "Refuse in public",
+          "summary": "The letter is answered in public and the government's own numbers are printed beside it. The governor goes back to speeches and the deficit goes back up.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.02,
+              "rural": -0.012,
+              "pensioners": 0.012,
+              "workers": 0.008,
+              "urban": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "deficit_ceiling_vote",
+      "name": "The ceiling",
+      "summary": "The finance committee has written a ceiling into the budget's own language and scheduled the vote. The leader of the largest party has counted the room and does not like the count.",
+      "subject_office": "largest_party_leader",
+      "likelihood": 0.011,
+      "category": "fiscal",
+      "severity": 2,
+      "weight": 2.0,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">=",
+          "value": 6.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "whip_the_vote",
+          "label": "Whip the vote",
+          "summary": "Every favour the majority holds is spent in one afternoon and the ceiling passes by four. The leader keeps the job and the majority keeps the receipt.",
+          "effects": {
+            "bloc_offset": {
+              "business": 0.03,
+              "rural": 0.014,
+              "workers": -0.014,
+              "urban": -0.012,
+              "pensioners": 0.005
+            }
+          }
+        },
+        {
+          "id": "let_it_bind",
+          "label": "Let the ceiling bind",
+          "summary": "The ceiling binds, and the government spends a year discovering which of its promises were rhetorical.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.016,
+              "workers": -0.014,
+              "students": -0.01,
+              "rural": -0.006,
+              "business": 0.016,
+              "pensioners": 0.008
+            }
+          }
+        },
+        {
+          "id": "load_it_with_taxes",
+          "label": "Load it with taxes",
+          "summary": "The ceiling passes amended, with the revenue side filled in by the assembly. The deficit target is met and the tax return explains how.",
+          "effects": {
+            "tax_rates_pct": {
+              "income": 0.5
+            },
+            "bloc_offset": {
+              "workers": -0.014,
+              "urban": -0.012,
+              "business": -0.008,
+              "pensioners": 0.028
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "treasury_cash_crunch",
+      "name": "The treasury's Tuesday",
+      "summary": "The treasury does not have the week's cash, the payroll file clears on Wednesday, and the officials who know have stopped using the word timing.",
+      "likelihood": 0.008,
+      "category": "fiscal",
+      "severity": 2,
+      "weight": 0.5,
+      "cooldown_months": 24,
+      "respond_months": 1,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "debt_to_gdp_pct",
+          "op": ">=",
+          "value": 120.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "issue_short_paper",
+          "label": "Issue short paper",
+          "summary": "Sixty-day paper goes out at whatever the desk asks, and the desk is asking. The markets lend at the price of markets, and the premium is in every prospectus by Friday.",
+          "effects": {
+            "other_revenue_pct_gdp": -0.2,
+            "bloc_offset": {
+              "business": 0.02,
+              "pensioners": 0.012,
+              "rural": 0.008,
+              "workers": -0.01,
+              "urban": -0.019
+            }
+          }
+        },
+        {
+          "id": "slow_the_payments",
+          "label": "Slow the supplier payments",
+          "summary": "Suppliers are paid on the sixtieth day and told it is a systems migration. The payroll clears on time, which is the whole of the policy.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.024,
+              "rural": -0.012,
+              "urban": -0.01,
+              "workers": 0.008,
+              "pensioners": 0.012
+            }
+          }
+        },
+        {
+          "id": "spend_the_investment_budget",
+          "label": "Sweep the works budget",
+          "summary": "The works budget's unspent third is swept into the current account. The cash crisis ends on Wednesday and the projects notice by summer.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": -0.2
+            },
+            "bloc_offset": {
+              "business": 0.014,
+              "urban": -0.016,
+              "students": -0.012,
+              "rural": -0.01,
+              "workers": 0.011
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "repealed_levy_hole",
+      "name": "What the levy paid for",
+      "summary": "The assembly's repeal took the levy with it, and the levy was quietly paying for the thing everybody in the debate said they supported. The line is empty now, and nobody voted it empty on purpose.",
+      "likelihood": 0.015,
+      "category": "fiscal",
+      "severity": 1,
+      "weight": 1.0,
+      "on_action": "law_repealed",
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "rebuild_the_levy",
+          "label": "Rebuild the levy",
+          "summary": "A new levy, narrower and differently named, goes back to the assembly. The repeal's majority gets to vote twice in one year on the same money.",
+          "effects": {
+            "tax_rates_pct": {
+              "income": 0.4
+            },
+            "bloc_offset": {
+              "business": -0.022,
+              "urban": -0.014,
+              "workers": 0.01,
+              "rural": -0.008,
+              "pensioners": 0.01
+            }
+          }
+        },
+        {
+          "id": "cut_the_line_instead",
+          "label": "Cut the line instead",
+          "summary": "The thing the levy paid for is cut by the size of the hole and the books balance to the decimal. The users of the thing read the amendment carefully; almost nobody else does.",
+          "effects": {
+            "spending_pct_gdp": {
+              "education": -0.15
+            },
+            "bloc_offset": {
+              "workers": -0.014,
+              "students": -0.022,
+              "urban": -0.012,
+              "rural": -0.01,
+              "business": 0.012
+            }
+          }
+        },
+        {
+          "id": "absorb_the_hole",
+          "label": "Absorb the hole",
+          "summary": "The hole is absorbed and the contingency reserve is thinner by exactly that much. Nothing is cut, nothing is raised, and the next surprise arrives with less behind it.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.012,
+              "rural": -0.01,
+              "urban": -0.008,
+              "workers": -0.006,
+              "pensioners": 0.01,
+              "students": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "debt_interest_crossing",
+      "name": "The interest bill",
+      "summary": "Debt service has passed the defence budget in the ordinary tables, without an announcement, the way water rises. The state's largest creditor is now every bondholder at once.",
+      "likelihood": 0.01,
+      "category": "fiscal",
+      "severity": 1,
+      "weight": 0.5,
+      "cooldown_months": 0,
+      "respond_months": 6,
+      "once": true,
+      "preconditions": [
+        {
+          "field": "debt_to_gdp_pct",
+          "op": ">=",
+          "value": 105.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "refinance_long",
+          "label": "Refinance long",
+          "summary": "The stock is refinanced long at today's rates and the bill is paid by the 2040s instead of the calendar. The markets call it prudent and charge for the length.",
+          "effects": {
+            "other_revenue_pct_gdp": -0.25,
+            "bloc_offset": {
+              "business": 0.016,
+              "pensioners": -0.005,
+              "rural": 0.008,
+              "urban": -0.01
+            }
+          }
+        },
+        {
+          "id": "cut_to_the_ceiling",
+          "label": "Hold the line at defence",
+          "summary": "A ministry is cut by the size of the increase and the total is held. The service reads the table the same week everybody else does.",
+          "effects": {
+            "spending_pct_gdp": {
+              "defence": -0.2
+            },
+            "bloc_offset": {
+              "rural": -0.014,
+              "business": 0.014,
+              "urban": -0.008,
+              "workers": -0.008,
+              "pensioners": 0.017
+            }
+          }
+        },
+        {
+          "id": "let_it_grow",
+          "label": "Let the bill grow",
+          "summary": "The bill is paid and the tables are printed next year with a thinner line where the difference was.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.012,
+              "workers": -0.01,
+              "rural": -0.008,
+              "students": -0.006,
+              "pensioners": -0.004,
+              "business": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "emergency_budget_demand",
+      "name": "The books are called in",
+      "summary": "The deficit has passed the point where the Commission writes letters and the markets stop reading them. You are expected to say what you will do about it, in public, this quarter.",
+      "likelihood": 0.2,
+      "category": "fiscal",
+      "severity": 2,
+      "cooldown_months": 6,
+      "respond_months": 3,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">=",
+          "value": 5.5
+        }
+      ],
+      "choices": [
+        {
+          "id": "cut",
+          "label": "Cut by decree",
+          "summary": "Three lines down, no vote taken. The books improve and the people who use those services notice which government did it.",
+          "effects": {
+            "spending_pct_gdp": {
+              "health": -0.25,
+              "education": -0.15,
+              "infrastructure": -0.15
+            },
+            "bloc_offset": {
+              "business": 0.045,
+              "rural": 0.022,
+              "pensioners": -0.022,
+              "workers": -0.014,
+              "students": -0.022,
+              "urban": -0.011
+            }
+          }
+        },
+        {
+          "id": "raise",
+          "label": "Raise the rate instead",
+          "summary": "Consumption carries it. Quieter than a spending cut and it lands on everybody.",
+          "effects": {
+            "tax_rates_pct": {
+              "vat": 2.0
+            },
+            "bloc_offset": {
+              "business": 0.039,
+              "workers": -0.017,
+              "pensioners": -0.014,
+              "rural": -0.008
+            }
+          }
+        },
+        {
+          "id": "refuse",
+          "label": "Say the books are fine",
+          "summary": "They are not, and the people who lend to you can read.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.05,
+              "rural": -0.028,
+              "pensioners": -0.017,
+              "workers": 0.017,
+              "students": 0.014,
+              "urban": 0.011
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

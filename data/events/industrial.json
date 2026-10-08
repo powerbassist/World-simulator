@@ -1,0 +1,927 @@
+{
+  "_note": "The industrial category is the register arriving in the government's post -- the plant that closes, the bid at the gate, the letter with an ultimatum in it. The country's payroll writes these, and the two hooks fire when the firm machine has already acted on it: a bid lands, a champion dies.",
+  "events": [
+    {
+      "id": "plant_closure",
+      "name": "The closure letter",
+      "summary": "The group's head office has announced the closure of the country's oldest motor works, in a release timed for Friday evening, with warm thanks to the workforce.",
+      "likelihood": 0.014,
+      "category": "industrial",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 14,
+      "respond_months": 4,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "growth_annual_pct",
+          "op": "<=",
+          "value": 0.5
+        }
+      ],
+      "choices": [
+        {
+          "id": "buy_the_plant",
+          "label": "Take the works",
+          "summary": "The state takes the works and the order book at the group's asking price. The payroll survives and the accountancy profession acquires a decade of work.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.25
+            },
+            "company": {
+              "sector": "industry",
+              "burden": -0.03
+            },
+            "bloc_offset": {
+              "workers": 0.022,
+              "urban": 0.01,
+              "business": -0.028,
+              "rural": 0.004,
+              "pensioners": -0.024
+            }
+          }
+        },
+        {
+          "id": "retrain_the_town",
+          "label": "Retrain the town",
+          "summary": "A training campus, a transition fund and a minister's photograph at the ribbon. It is the honest answer to the wrong decade.",
+          "effects": {
+            "spending_pct_gdp": {
+              "education": 0.2
+            },
+            "bloc_offset": {
+              "workers": 0.01,
+              "students": 0.016,
+              "urban": 0.008,
+              "business": -0.01,
+              "rural": -0.006,
+              "pensioners": -0.015
+            }
+          }
+        },
+        {
+          "id": "regret_and_review",
+          "label": "Regret and announce a task force",
+          "summary": "The closure proceeds and a task force is announced, with a remit and no budget. The town reads the remit, and the town knows what a remit is worth.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.022,
+              "urban": -0.012,
+              "rural": -0.008,
+              "business": 0.014,
+              "pensioners": 0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "plant_accident",
+      "name": "The night shift",
+      "summary": "A vessel failed at the chemical works after dark and the toll is four dead. The plant is a crime scene now, and the town is already asking what the inquiry will cost before it asks what it will find.",
+      "likelihood": 0.012,
+      "category": "industrial",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 18,
+      "respond_months": 2,
+      "once": false,
+      "choices": [
+        {
+          "id": "inquiry_and_rules",
+          "label": "Order an inquiry and rewrite the rules",
+          "summary": "A public inquiry with the power to name, and the inspection regime rewritten before it reports. The federation calls it precaution; the town calls it Tuesday.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.05
+            },
+            "bloc_offset": {
+              "workers": 0.014,
+              "urban": 0.01,
+              "business": -0.026,
+              "rural": -0.006,
+              "pensioners": -0.01
+            }
+          }
+        },
+        {
+          "id": "the_families_first",
+          "label": "Put the families first",
+          "summary": "The compensation fund is opened before the cameras ask and the state fronts it. The inquiry happens later, on the company's schedule.",
+          "effects": {
+            "spending_pct_gdp": {
+              "health": 0.15
+            },
+            "bloc_offset": {
+              "workers": 0.01,
+              "urban": 0.008,
+              "pensioners": 0.008,
+              "rural": -0.008,
+              "business": -0.006,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "leave_it_to_the_courts",
+          "label": "Leave it to the courts",
+          "summary": "The law takes its course at the law's speed and the insurers answer the town. The question of who knew becomes the question of what can be proven.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.012,
+              "urban": -0.01,
+              "rural": -0.006,
+              "business": 0.01,
+              "pensioners": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "state_aid_complaint",
+      "name": "The complaint",
+      "summary": "A rival government has filed a state-aid complaint against the battery plant's package, and the file reads like an indictment of the incentive regime every capital is running.",
+      "likelihood": 0.016,
+      "category": "industrial",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 5,
+      "once": false,
+      "choices": [
+        {
+          "id": "fight_the_case",
+          "label": "Fight the case",
+          "summary": "The case is fought on the principle that everybody does it. The Commission enjoys principle, and the case takes two years either way.",
+          "effects": {
+            "bloc_offset": {
+              "business": 0.016,
+              "workers": 0.01,
+              "urban": 0.006,
+              "rural": -0.004,
+              "students": -0.006
+            }
+          }
+        },
+        {
+          "id": "claw_back_the_aid",
+          "label": "Claw back the aid",
+          "summary": "The aid is clawed back and the plant's owner discovers the relocation clause nobody had read aloud. The letter is answered with a receipt.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.03
+            },
+            "bloc_offset": {
+              "business": -0.024,
+              "workers": -0.012,
+              "urban": -0.006,
+              "rural": -0.004
+            }
+          }
+        },
+        {
+          "id": "settle_quietly",
+          "label": "Settle quietly",
+          "summary": "The package is amended in negotiation and nothing is admitted. The plant stays, the terms thicken, and the precedent is filed where precedents wait.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.008,
+              "business": -0.004,
+              "urban": -0.004,
+              "rural": -0.002,
+              "pensioners": 0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "dumping_allegation",
+      "name": "The dumping file",
+      "summary": "The steel importers' association has assembled a dumping file four hundred pages long and the federation has read all of it aloud. The prices in it are real; so is the shelf price at home.",
+      "likelihood": 0.015,
+      "category": "industrial",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "impose_the_duties",
+          "label": "Impose the duties",
+          "summary": "Provisional duties go on within the month and the works' order book breathes. The tariff is paid at the building site, which is the whole of the argument against it.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.04
+            },
+            "bloc_offset": {
+              "workers": 0.012,
+              "business": 0.014,
+              "urban": -0.014,
+              "rural": -0.006,
+              "students": -0.027
+            }
+          }
+        },
+        {
+          "id": "refer_to_the_union",
+          "label": "Refer it to the Commission",
+          "summary": "The file goes to the Commission, which is where files go to be read slowly. The works hang on for the two years the instrument takes.",
+          "effects": {
+            "bloc_offset": {
+              "business": 0.008,
+              "workers": -0.004,
+              "urban": -0.005,
+              "rural": 0.002,
+              "students": 0.011
+            }
+          }
+        },
+        {
+          "id": "shelve_the_file",
+          "label": "Shelve the file",
+          "summary": "The file is shelved for study and the imports keep arriving at those prices. The federation now owns a warehouse of evidence and no case.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.008,
+              "workers": -0.014,
+              "rural": -0.006,
+              "urban": -0.004,
+              "pensioners": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "energy_price_shock",
+      "name": "The industrial tariff",
+      "summary": "The wholesale price has tripled since the autumn and the industrial federation has published the shutdown list of what stops when contracts roll over. The country's largest employer is on it.",
+      "likelihood": 0.012,
+      "category": "industrial",
+      "severity": 2,
+      "weight": 2.0,
+      "cooldown_months": 16,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "cap_the_industrial_tariff",
+          "label": "Cap the industrial tariff",
+          "summary": "The tariff is capped for industry until spring and the gap is wired from the budget. Households read the word industry carefully and find themselves absent from it.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.25
+            },
+            "company": {
+              "sector": "industry",
+              "burden": -0.05
+            },
+            "bloc_offset": {
+              "business": 0.024,
+              "workers": 0.012,
+              "urban": -0.014,
+              "rural": -0.012,
+              "pensioners": -0.01
+            }
+          }
+        },
+        {
+          "id": "share_the_shock",
+          "label": "Share the shock",
+          "summary": "The surcharge is socialised across every meter and the federation withdraws the shutdown list. The bill arrives itemised, which is the only honest way to be unpopular.",
+          "effects": {
+            "bloc_offset": {
+              "business": 0.022,
+              "urban": -0.013,
+              "workers": -0.01,
+              "rural": -0.011,
+              "pensioners": -0.007,
+              "students": -0.003
+            }
+          }
+        },
+        {
+          "id": "let_the_price_clear",
+          "label": "Let the price clear",
+          "summary": "The price does what prices do and the shutdown list becomes a schedule. The market calls it discipline, from inside a heated office.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.015,
+              "workers": -0.012,
+              "urban": -0.005,
+              "rural": -0.005,
+              "pensioners": -0.005
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "flagship_overrun",
+      "name": "The overrun",
+      "summary": "The flagship battery plant is two years late and forty percent over, and the letter asking for the second tranche describes both facts as features of the sector. The ribbon date has stopped being quoted.",
+      "likelihood": 0.016,
+      "category": "industrial",
+      "severity": 1,
+      "weight": 0.5,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "pay_the_tranche",
+          "label": "Wire the tranche",
+          "summary": "The tranche is wired with the conditions everyone will later describe as having been attached. The plant is the flagship until it opens, and possibly after.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.3
+            },
+            "bloc_offset": {
+              "business": 0.018,
+              "workers": 0.01,
+              "urban": 0.006,
+              "rural": -0.008,
+              "pensioners": -0.019
+            }
+          }
+        },
+        {
+          "id": "descope_the_plant",
+          "label": "Descope the plant",
+          "summary": "The build is cut back to what the first tranches bought and the opening is redefined as a phase. Half a flagship is still an address.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.1
+            },
+            "bloc_offset": {
+              "business": -0.004,
+              "workers": -0.005,
+              "urban": 0.004,
+              "rural": 0.002,
+              "students": 0.013
+            }
+          }
+        },
+        {
+          "id": "freeze_the_review",
+          "label": "Freeze it pending review",
+          "summary": "The second tranche is frozen pending a review, and the review reports after the constructor's solvency hearing. The site keeps its cranes and its weeds.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.012,
+              "workers": -0.016,
+              "urban": -0.006,
+              "rural": -0.002,
+              "pensioners": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "carmaker_ultimatum",
+      "name": "The ultimatum",
+      "summary": "The carmaker's board has set its terms in writing: public money for the conversion, or the next platform is built where they hold the pen. The letter is polite in four languages.",
+      "likelihood": 0.011,
+      "category": "industrial",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 0,
+      "respond_months": 4,
+      "once": true,
+      "choices": [
+        {
+          "id": "underwrite_the_conversion",
+          "label": "Underwrite the conversion",
+          "summary": "The money is found and the clauses are the best that can be had against that board. The plants convert, and the country owns a share of a car park in exchange.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.25
+            },
+            "company": {
+              "sector": "industry",
+              "burden": -0.04
+            },
+            "bloc_offset": {
+              "business": 0.02,
+              "workers": 0.016,
+              "urban": 0.006,
+              "rural": -0.008,
+              "pensioners": -0.028
+            }
+          }
+        },
+        {
+          "id": "refuse_the_terms",
+          "label": "Refuse the terms",
+          "summary": "The answer is no, in writing, with a reminder that the plants sit inside a customs union. The next platform is announced from abroad and the works run out their decade.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.016,
+              "workers": -0.022,
+              "urban": -0.006,
+              "rural": -0.004,
+              "students": -0.002,
+              "pensioners": 0.022
+            }
+          }
+        },
+        {
+          "id": "take_the_plants",
+          "label": "Take the plants",
+          "summary": "The conversion is done by the state on the state's own site, and the board's letter is answered by the expropriation file. The payroll holds; the tribunals are booked for a decade.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.35
+            },
+            "bloc_offset": {
+              "workers": 0.02,
+              "business": -0.04,
+              "rural": 0.006,
+              "urban": 0.008,
+              "pensioners": -0.017
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "dock_dispute",
+      "name": "The employer's lockout",
+      "summary": "The port operators have locked out the crane crews in a dispute about the automation clause and the evening shifts sit dark. The fruit is still moving; the containers are not.",
+      "likelihood": 0.014,
+      "category": "industrial",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 10,
+      "respond_months": 3,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unemployment_pct",
+          "op": ">=",
+          "value": 6.5
+        }
+      ],
+      "choices": [
+        {
+          "id": "send_in_the_mediator",
+          "label": "Send in the mediator",
+          "summary": "A mediator with a railway background is sent in and both sides are given the weekend to accept the format. It has worked before, which is the entire argument for it.",
+          "effects": {
+            "society": {
+              "settlement": 0.06
+            },
+            "bloc_offset": {
+              "workers": 0.012,
+              "rural": -0.008,
+              "urban": 0.004,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "back_the_operators",
+          "label": "Back the operators",
+          "summary": "The operators' reading of the contracts is upheld and the crews return to the new roster. The port runs, and the federation owes the government a memory.",
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.022,
+              "business": 0.024,
+              "urban": 0.006,
+              "rural": 0.004,
+              "students": 0.006
+            }
+          }
+        },
+        {
+          "id": "let_them_stare",
+          "label": "Let them stare",
+          "summary": "Neither side moves and the calendar does the negotiating. The peak season is in eight weeks and everyone has read the same calendar.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.014,
+              "business": -0.006,
+              "urban": -0.004,
+              "rural": -0.002,
+              "students": 0.004,
+              "pensioners": 0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "chip_shortage",
+      "name": "The allocation",
+      "summary": "The chip allocation is down to weeks and the car lines are first on the stop list, in an order nobody admits to writing. The electronics federation has offered to help draft it, twice.",
+      "likelihood": 0.013,
+      "category": "industrial",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "allocate_by_decree",
+          "label": "Allocate by decree",
+          "summary": "The allocation is drafted in the ministry and the champions are served first. The order books are protected and every firm not on the list has read the list.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.05
+            },
+            "bloc_offset": {
+              "business": 0.024,
+              "workers": 0.008,
+              "urban": -0.008,
+              "rural": -0.006,
+              "students": -0.008
+            }
+          }
+        },
+        {
+          "id": "buy_the_line",
+          "label": "Buy the line",
+          "summary": "A packaging line is bought and built inside the year on the army engineers' timetable. It covers a tenth of the gap and makes the point at scale.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.2
+            },
+            "bloc_offset": {
+              "business": 0.012,
+              "workers": 0.006,
+              "urban": 0.004,
+              "rural": -0.004,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "queue_like_everyone",
+          "label": "Queue like everybody else",
+          "summary": "The state queues with the rest and says so. The stoppages arrive on the suppliers' order instead of the ministry's.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.01,
+              "workers": -0.016,
+              "urban": -0.006,
+              "rural": -0.004,
+              "pensioners": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "steel_crisis",
+      "name": "The last furnace",
+      "summary": "The works' owners have given the last blast furnace a date and the date is in the spring. An industry is not a factory; the difference is what arrives when the furnace goes cold.",
+      "likelihood": 0.009,
+      "category": "industrial",
+      "severity": 3,
+      "weight": 0.5,
+      "cooldown_months": 24,
+      "respond_months": 6,
+      "once": true,
+      "preconditions": [
+        {
+          "field": "growth_annual_pct",
+          "op": "<=",
+          "value": -0.5
+        }
+      ],
+      "choices": [
+        {
+          "id": "take_the_works",
+          "label": "Take the works",
+          "summary": "The works are taken into public ownership at a price the courts will spend years refining. The furnace stays lit and the treasury inherits a loss with a skyline in it.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.35
+            },
+            "bloc_offset": {
+              "workers": 0.022,
+              "business": -0.045,
+              "rural": 0.006,
+              "urban": 0.01,
+              "pensioners": -0.018
+            }
+          }
+        },
+        {
+          "id": "wall_of_tariffs",
+          "label": "Build the tariff wall",
+          "summary": "A tariff wall goes up around the sector and the works get two years of protected prices to restructure in. The building trade pays for the two years and says so at every site hut.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.05
+            },
+            "bloc_offset": {
+              "workers": 0.016,
+              "business": 0.02,
+              "urban": -0.02,
+              "rural": -0.008,
+              "students": -0.008
+            }
+          }
+        },
+        {
+          "id": "managed_decline",
+          "label": "Manage the decline",
+          "summary": "The state funds the pensions, regrades the site and calls it a transition. It is the honest plan, and the town will be honest about it for forty years.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.024,
+              "urban": -0.012,
+              "rural": -0.01,
+              "business": -0.006,
+              "pensioners": 0.013
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "takeover_furore",
+      "name": "The bid at the gate",
+      "summary": "The bid for the country's last domestic engineering champion has landed from abroad and the assembly has discovered the word referral. The bidder's advisers call the row theatrical, which it is, and effective, which it also is.",
+      "likelihood": 0.018,
+      "category": "industrial",
+      "severity": 1,
+      "weight": 1.0,
+      "on_action": "takeover_bid",
+      "cooldown_months": 10,
+      "respond_months": 2,
+      "once": false,
+      "choices": [
+        {
+          "id": "block_the_bid",
+          "label": "Block the bid",
+          "summary": "The bid is blocked on grounds the ministry drafts overnight. The champion stays domestic, the bidder's lawyers stay busy, and the markets price a review into every premium.",
+          "effects": {
+            "bloc_offset": {
+              "business": -0.03,
+              "workers": 0.014,
+              "urban": 0.01,
+              "rural": 0.006,
+              "pensioners": -0.014
+            }
+          }
+        },
+        {
+          "id": "wave_it_through",
+          "label": "Wave it through",
+          "summary": "The bid passes with undertakings about jobs and boards, both of which expire. The premium is paid, the advisers are paid, and the town waits to learn which undertakings had lawyers.",
+          "effects": {
+            "bloc_offset": {
+              "business": 0.024,
+              "workers": -0.01,
+              "urban": -0.008,
+              "rural": -0.006,
+              "students": 0.004,
+              "pensioners": 0.009
+            }
+          }
+        },
+        {
+          "id": "refer_and_delay",
+          "label": "Refer and delay",
+          "summary": "The bid is referred to a review with no deadline, which delays it at a price nobody has set. Both boards hate the answer, which is how the desk likes its answers.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.008,
+              "workers": -0.012,
+              "urban": -0.004,
+              "rural": -0.002,
+              "students": 0.004,
+              "pensioners": 0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "fallen_champion",
+      "name": "The receivers",
+      "summary": "The receivers went into the champion at dawn and the group's name is on the business pages in the past tense. Fifty years of supplier invoices are now a queue, and the queue starts at the town's payroll.",
+      "likelihood": 0.015,
+      "category": "industrial",
+      "severity": 2,
+      "weight": 1.0,
+      "on_action": "firm_failed",
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "take_it_public",
+          "label": "Take the plants public",
+          "summary": "The operating plants are lifted out of the estate and into a public vehicle before the scrap men arrive. The name dies; the machines do not, and the treasury owns the difference.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.3
+            },
+            "bloc_offset": {
+              "workers": 0.02,
+              "business": -0.038,
+              "urban": 0.008,
+              "rural": 0.004,
+              "pensioners": -0.016
+            }
+          }
+        },
+        {
+          "id": "rescue_the_plants",
+          "label": "Rescue the plants, not the firm",
+          "summary": "The plants are kept running by order and sold as going concerns; the group's debts stay the estate's problem. The suppliers learn the difference between a firm and its factories.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.15
+            },
+            "bloc_offset": {
+              "workers": 0.012,
+              "business": -0.005,
+              "urban": 0.004,
+              "rural": -0.007,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "let_it_liquidate",
+          "label": "Let it liquidate",
+          "summary": "The estate is wound up in the ordinary order and the sites go to whoever bids. The wage claims stand in the queue by statute, and the statute is older than the group.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.022,
+              "urban": -0.01,
+              "rural": -0.008,
+              "business": -0.004,
+              "pensioners": 0.01,
+              "students": 0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "sector_shock",
+      "name": "Industry asks for terms",
+      "summary": "With unemployment where it is, the industrial federation has come with two proposals and a warning about which plants close if it gets neither.",
+      "likelihood": 0.06,
+      "category": "industrial",
+      "severity": 2,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unemployment_pct",
+          "op": ">=",
+          "value": 7.5
+        }
+      ],
+      "choices": [
+        {
+          "id": "deregulate",
+          "label": "Lift the sector's burden",
+          "summary": "The rules come off industry. What was protecting somebody stops protecting them.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.15
+            },
+            "bloc_offset": {
+              "business": 0.056,
+              "rural": 0.017,
+              "workers": -0.017,
+              "urban": -0.022,
+              "students": -0.014
+            }
+          }
+        },
+        {
+          "id": "protect",
+          "label": "Underwrite the plants",
+          "summary": "Conditions attached and money behind them. Industry keeps the payroll and loses the freedom.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.12
+            },
+            "spending_pct_gdp": {
+              "infrastructure": 0.3
+            },
+            "bloc_offset": {
+              "workers": 0.022,
+              "rural": 0.022,
+              "urban": 0.006,
+              "students": -0.011,
+              "business": -0.073
+            }
+          }
+        },
+        {
+          "id": "let_it_go",
+          "label": "Let the market decide",
+          "summary": "It decides.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.022,
+              "rural": -0.022,
+              "urban": -0.014,
+              "business": 0.034,
+              "pensioners": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "blackout_night",
+      "name": "The grid fails",
+      "summary": "A winter peak has taken three regions dark, hospitals are on generators, and the operator says the interconnects cannot hold another evening like it. This is the one crisis that does not wait a quarter: the clock stops until you have said what kind of state you are governing.",
+      "interrupt": true,
+      "likelihood": 0.04,
+      "category": "industrial",
+      "severity": 3,
+      "cooldown_months": 24,
+      "respond_months": 1,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "debt_to_gdp_pct",
+          "op": ">=",
+          "value": 95.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "ration",
+          "label": "Order rolling cuts",
+          "summary": "Share the dark evenly. Industry carries its share, the hospitals keep their light, and everybody remembers the evening the state rationed electricity.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.06,
+              "workers": -0.006,
+              "rural": -0.01,
+              "urban": -0.006,
+              "pensioners": 0.014
+            }
+          }
+        },
+        {
+          "id": "emergency_fuel",
+          "label": "Buy fuel on the spot market",
+          "summary": "Whatever the price is, it is cheaper than the dark. The debt takes it, and the markets read the wire as fast as the cities read the light.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.35
+            },
+            "bloc_offset": {
+              "business": 0.03,
+              "workers": 0.007,
+              "urban": 0.007,
+              "pensioners": 0.003
+            }
+          }
+        },
+        {
+          "id": "blame_abroad",
+          "label": "Blame the imports",
+          "summary": "The interconnects failed and they failed from the other side of the border. True enough to say; your neighbours will hear it exactly that way.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.02,
+              "students": 0.015,
+              "business": -0.03
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
