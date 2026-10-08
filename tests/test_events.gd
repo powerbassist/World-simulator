@@ -63,7 +63,8 @@ const HAZARD_ONLY := "procurement_scandal"
 const GATED := "emergency_budget_demand"
 const ONCE_ONLY := "broadcast_charter"
 
-## The two climate events' ids. V3.5f: data/events/climate.json carries BOTH now, so
+## The two climate events' ids. V3.5f: the disaster file carries BOTH (V4.4 moved
+## them there from the retired climate.json), so
 ## the sweep below runs the LOADER's events -- a lost `"sited": true`, a renamed id or
 ## a missing file fails there as missing content instead of passing on fixtures. The
 ## schema tests above still build their own through _make_event(), because a schema

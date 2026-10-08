@@ -2487,7 +2487,7 @@ func _load_events(events_dir: String) -> void:
 			# somebody wrote twice -- "two scandals about the prime minister with
 			# identical gates" -- but the empty join below made every event with no
 			# subject office and no precondition collide with the first such event
-			# loaded, and data/events/climate.json's river_flood against
+			# loaded, and the old climate.json's river_flood against
 			# broadcast_charter was the first false positive: a pure-hazard crisis
 			# about nobody is a shape the content owns (the scandals' own argument,
 			# one file over), and two such events are separated by id, body,
