@@ -926,6 +926,25 @@ func _wire_hud() -> void:
 		_windows.mark_all_dirty()
 	)
 
+	# The unseen set's second door. An X on a decision card -- and the MAX_CARDS
+	# eviction, which dismisses through the same signal -- used to strand the
+	# event's id in _unseen_events: only an ANSWER erased it, so the arrival
+	# pause could outlive every answer and hold the clock over an empty set. The
+	# invariant, stated once across all its doors: AN ID LEAVES _unseen_events
+	# WHEN IT LEAVES THE DESK OR ITS CARD IS DISMISSED. An id already taken off
+	# the maps (the answer path above dismisses its own card after erasing)
+	# falls through as "": both erases are no-ops and the resume is idempotent,
+	# so this re-entry is harmless by construction.
+	_hud.message_stack.card_dismissed.connect(func(id: String):
+		var event_id := String(_event_cards.get(id, ""))
+		_event_cards.erase(id)
+		_unseen_events.erase(event_id)
+		if _paused_for_decision and _unseen_events.is_empty():
+			_paused_for_decision = false
+			_clock.paused = false
+			_hud.clock_cluster.refresh(_clock)
+	)
+
 	# U5c. The legend proposes a layer, the map view holds it, and the legend is
 	# then told what it now shows -- one direction, so the two cannot disagree
 	# about which layer is up.
@@ -1964,6 +1983,12 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 	for event_id in desk_before.keys():
 		if after.has(event_id):
 			continue
+		# The unseen set's first door, and the invariant's desk half: an id that
+		# has left the desk is not unseen, whether it left by the machine's own
+		# default (_tick_countdowns answered it a moment ago), the player's card
+		# answer or a Dispatches answer -- an erase missed only on the expiry
+		# used to strand the id and hold the clock past every later answer.
+		_unseen_events.erase(event_id)
 		var record := {}
 		for row in ns.event_history:
 			if String(row.get("event_id", "")) == event_id:
@@ -2034,6 +2059,16 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
 		var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions, art)
 		_event_cards[card_id] = event_id
+
+	# The unseen set's third door re-check: the pause is re-judged AFTER the
+	# arrivals, not beside the departure erase above -- a same-month
+	# resolve-and-replace (one default fires, another crisis lands) must not
+	# resume past the fresh arrival. The same three lines the card-answer path
+	# runs.
+	if _paused_for_decision and _unseen_events.is_empty():
+		_paused_for_decision = false
+		_clock.paused = false
+		_hud.clock_cluster.refresh(_clock)
 
 
 ## The decision card's body: the event's summary line, then the deadline -- the
@@ -2338,9 +2373,10 @@ func _on_load_requested(slot: String) -> void:
 	# again. Until the V2.8 review this WAS a hand-written list, and it had drifted
 	# by five: city, energy, events, region and summit. The events panel is the one
 	# that made it more than a stale readout -- events_panel.gd calls
-	# Events.choose(_state, ...), so answering a crisis after a load wrote the
-	# decision into the discarded state and the real event defaulted at its
-	# deadline. mark_all_dirty()'s own comment predicted exactly this, about
+	# Events.answer(_state, _loader, ev.id, ...), so answering a crisis after a
+	# load wrote the decision into the discarded state and the real event
+	# defaulted at its deadline. mark_all_dirty()'s own comment predicted exactly
+	# this, about
 	# exactly this kind of list, which is why the fix is the same one: derive it,
 	# so the omission is structurally impossible rather than remembered.
 	for panel in _windows.panels():

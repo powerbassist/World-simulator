@@ -52,6 +52,7 @@ func _run() -> void:
 		return
 
 	_check_decision_arrival_stops_the_clock()
+	_check_departed_and_dismissed_events_leave_the_unseen_set()
 	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
 	_check_defeat_can_be_dismissed()
@@ -94,7 +95,7 @@ func _check_decision_arrival_stops_the_clock() -> void:
 		return
 
 	# Task 6: the card itself answers, and the clock resumes. Pressed through the
-	# real button, so the whole chain is exercised -- card_action, Events.choose,
+	# real button, so the whole chain is exercised -- card_action, Events.answer,
 	# the unpause rule's single writer.
 	var stack = _main._hud.message_stack
 	var action_buttons: Array = []
@@ -111,6 +112,85 @@ func _check_decision_arrival_stops_the_clock() -> void:
 		return
 	if clock.paused:
 		_fail("the decision was answered and the clock is still stopped")
+
+
+## V4.4 wave 3 (the unseen-set ghost): an id must leave _unseen_events when it
+## leaves the desk or its card is dismissed. Three doors used to strand it --
+## an expiry's "Decided for you" push touched nothing, card_dismissed was
+## connected to nothing, and a stranded id meant the arrival pause could never
+## lift (the resume gate needs the set empty) -- the clock paused over nothing.
+## Driven through the real wiring: the arrival check's staging, then the
+## machine's own countdown tick for the expiry door, then the card's real X
+## for the dismissal door.
+func _check_departed_and_dismissed_events_leave_the_unseen_set() -> void:
+	var Events := load("res://src/sim/events.gd")
+	var clock: Node = _main.get_node("Clock")
+	var ns = _main._state.player()
+	var ev = null
+	for candidate in _main._loader.events:
+		if not bool(candidate.interrupt):
+			ev = candidate
+			break
+	if ev == null:
+		_fail("no non-interrupt event in the loader to stage the doors with")
+		return
+
+	# Door 1, the desk: stage the arrival, fire the default through the machine's
+	# own countdown tick (the expiry a sleeping player suffers), then run the
+	# month handler with the id on the BEFORE-desk and off the now one.
+	Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
+		Events.region_names(ns, _main._loader))
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	if not _main._unseen_events.has(String(ev.id)):
+		_fail("the staged arrival never armed its unseen mark")
+		return
+	for entry in ns.event_queue:
+		if String(entry.get("event_id", "")) == String(ev.id):
+			entry["months_left"] = 1
+	Events._tick_countdowns(_main._state, ns, _main._loader,
+		Events._absolute_month(int(_main._state.year), int(_main._state.month)))
+	_main._card_events(_main._state.year, _main._state.month, {String(ev.id): true}, {})
+	if _main._unseen_events.has(String(ev.id)):
+		_fail("an expired event's id stayed in _unseen_events -- the ghost")
+		return
+	if _main._paused_for_decision or clock.paused:
+		_fail("the desk emptied and the clock stayed paused over nothing")
+
+	# Door 2, the X: the card's dismissal must take the unseen mark with it and
+	# resume the clock by the same rule. Pressed through the real button, so a
+	# missing connect fails here -- and so does the MAX_CARDS eviction, which
+	# dismisses through the same signal.
+	Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
+		Events.region_names(ns, _main._loader))
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	if not clock.paused or not _main._unseen_events.has(String(ev.id)):
+		_fail("the second staged arrival did not re-arm the pause")
+		return
+	var stack = _main._hud.message_stack
+	var x_button: Button = null
+	for card in stack.get_children():
+		var has_actions := false
+		var card_x: Button = null
+		for b in card.find_children("*", "Button", true, false):
+			if b.text == "X":
+				card_x = b
+			else:
+				has_actions = true
+		# LAST match, not first: door 1's stale decision card is still in the
+		# stack carrying action buttons of its own (an unanswered arrival card
+		# survives its own default -- the answer path no-ops against an empty
+		# desk), and push() appends, so the newest card is the last child.
+		if has_actions and card_x != null:
+			x_button = card_x
+	if x_button == null:
+		_fail("the decision card rendered no X to dismiss it with")
+		return
+	x_button.pressed.emit()
+	if _main._unseen_events.has(String(ev.id)):
+		_fail("a dismissed card left its event's id in _unseen_events")
+		return
+	if _main._paused_for_decision or clock.paused:
+		_fail("the last unseen card was dismissed and the clock is still stopped")
 
 
 ## V2.9 (from the playtest): nothing anywhere said what is being played for. A

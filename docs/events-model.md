@@ -454,7 +454,8 @@ Final: **0 dominated alternatives, 0 toothless defaults.**
 > **V4.4: six → 102 events, 307 choices, nine category files** (scandals 16,
 > personal 10, fiscal 13, unrest 11, industrial 14, european 10, foreign 10,
 > commodity 8, disaster 10 — the four legacy crises and two climate events moved
-> in verbatim, `crises.json` and `climate.json` retired). The table below is the
+> in and re-tuned (every likelihood ×0.2, five carried choices re-authored to
+> the band), `crises.json` and `climate.json` retired). The table below is the
 > V1.8 record; the E1b paragraph beneath it is the one that GREW TEETH: the
 > ±0.008 mean and the business-worst ≤ 30 % share are now `tools/event_lint.py`,
 > a standing content gate that failed the five pre-band carried choices on first
