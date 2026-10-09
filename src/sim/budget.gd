@@ -34,7 +34,7 @@ const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Energy = preload("res://src/sim/energy.gd")
 ## V4.2 T4, for CUSTOM_TAX_MULT_DEMAND alone: a composed key reads the shared
-## demand default in commit()'s level_effect loop, where the authored five read
+## demand default in apply_pending()'s level_effect loop, where the authored five read
 ## their MULT_TAX rows. Constants only, so the dependency stops at the values.
 const StatuteK = preload("res://src/sim/statute_constants.gd")
 ## The ultra pass-1 projection finding, PR 46 finding 6 / PR 47 finding 1 a third

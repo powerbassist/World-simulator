@@ -1011,7 +1011,7 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 ## RESULTING RATE at zero through both directions: a raise-removal lands what
 ## the register holds (current 0, recorded +5 -> 0 removal), and a
 ## cut-restoration passes whole (recorded -5, current 20 -> +5, back to 25).
-## Budget.commit() carries the matching landed-rate floor for its other
+## Budget.apply_pending() carries the matching landed-rate floor for its other
 ## callers; the accumulators keep their clamps and need none of this.
 static func _budget_removal(register: Dictionary, key: String, recorded: float) -> float:
 	var current: float = float(register.get(key, 0.0))

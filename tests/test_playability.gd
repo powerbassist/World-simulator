@@ -53,6 +53,7 @@ func _run() -> void:
 
 	_check_decision_arrival_stops_the_clock()
 	_check_departed_and_dismissed_events_leave_the_unseen_set()
+	_check_event_cards_follow_their_event()
 	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
 	_check_defeat_can_be_dismissed()
@@ -156,6 +157,14 @@ func _check_departed_and_dismissed_events_leave_the_unseen_set() -> void:
 	if _main._paused_for_decision or clock.paused:
 		_fail("the desk emptied and the clock stayed paused over nothing")
 
+	# The same default must also dismiss the event's arrival card -- the two
+	# are linked by _event_cards (card id -> event id) and a card whose event
+	# has left the desk carries dead buttons that no-op against an empty desk.
+	for card_id in _main._event_cards:
+		if String(_main._event_cards[card_id]) == String(ev.id):
+			_fail("the defaulted event's arrival card is still in _event_cards")
+			return
+
 	# Door 2, the X: the card's dismissal must take the unseen mark with it and
 	# resume the clock by the same rule. Pressed through the real button, so a
 	# missing connect fails here -- and so does the MAX_CARDS eviction, which
@@ -176,10 +185,12 @@ func _check_departed_and_dismissed_events_leave_the_unseen_set() -> void:
 				card_x = b
 			else:
 				has_actions = true
-		# LAST match, not first: door 1's stale decision card is still in the
-		# stack carrying action buttons of its own (an unanswered arrival card
-		# survives its own default -- the answer path no-ops against an empty
-		# desk), and push() appends, so the newest card is the last child.
+		# LAST match, not first: door 1's default pushes a "Decided for you" card
+		# (no actions) and this second arrival pushes a fresh decision card, and
+		# push() appends -- so the newest action-carrying card is the last child.
+		# The defaulted event's OWN arrival card no longer lingers here: V4.4 wave
+		# 4 dismisses it at the departure door (_dismiss_event_cards), so this
+		# loop is choosing among live cards, not routing around a stale one.
 		if has_actions and card_x != null:
 			x_button = card_x
 	if x_button == null:
@@ -191,6 +202,81 @@ func _check_departed_and_dismissed_events_leave_the_unseen_set() -> void:
 		return
 	if _main._paused_for_decision or clock.paused:
 		_fail("the last unseen card was dismissed and the clock is still stopped")
+
+
+## V4.4 wave 4: a card linked to an event (_event_cards) must go when that event
+## leaves the desk, whether the player answered it through Dispatches or the
+## machine defaulted it from under them. Two doors used to leave the card behind;
+## a stale card's buttons called Events.answer on an id off the desk, got {} from
+## a missing entry, and silently did nothing. Driven through the real panel's
+## _on_choose for the answer door, and the machine's countdown + month handler
+## for the default door.
+func _check_event_cards_follow_their_event() -> void:
+	var Events := load("res://src/sim/events.gd")
+	var ns = _main._state.player()
+	var stack = _main._hud.message_stack
+	# Sweep the desk of entries prior tests left pending, so each pin stages on a
+	# clean slate -- an id in the queue twice confuses the arrival loop and the
+	# answer() search (duplicate events are not the test's subject).
+	ns.event_queue.clear()
+
+	var ev = null
+	for candidate in _main._loader.events:
+		if not bool(candidate.interrupt):
+			ev = candidate
+			break
+	if ev == null:
+		_fail("no non-interrupt event in the loader to stage the card doors with")
+		return
+
+	# Pin (1), the Dispatches answer path. Stage the arrival, then answer it
+	# through the panel's own _on_choose -- the path Dispatches buttons and
+	# main.gd's `acted` handler ride. The handler now calls _dismiss_event_cards
+	# for ids no longer on the desk.
+	Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
+		Events.region_names(ns, _main._loader))
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	var card_ids_before: Array = []
+	for card_id in _main._event_cards:
+		if String(_main._event_cards[card_id]) == String(ev.id):
+			card_ids_before.append(card_id)
+	if card_ids_before.is_empty():
+		_fail("pin 1: the staged arrival left no card for its event")
+		return
+	_main._events_panel._on_choose(ev, ev.choices[0])
+	for card_id in card_ids_before:
+		if _main._event_cards.has(card_id):
+			_fail("pin 1: the Dispatches answer left its card in _event_cards")
+			return
+		if stack._cards.has(card_id):
+			_fail("pin 1: the Dispatches answer left its card in the message stack")
+			return
+
+	# Pin (2), the machine's default/expiry door. Stage a fresh arrival, force
+	# the desk entry to expire through the countdown tick, run the month handler
+	# with the id on the BEFORE-desk and off the now one. The "Decided for you"
+	# card that the departure loop pushes may remain -- it carries no actions.
+	ns.event_queue.clear()
+	Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
+		Events.region_names(ns, _main._loader))
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	var default_card_ids: Array = []
+	for card_id in _main._event_cards:
+		if String(_main._event_cards[card_id]) == String(ev.id):
+			default_card_ids.append(card_id)
+	if default_card_ids.is_empty():
+		_fail("pin 2: the staged arrival left no card for its event")
+		return
+	for entry in ns.event_queue:
+		if String(entry.get("event_id", "")) == String(ev.id):
+			entry["months_left"] = 1
+	Events._tick_countdowns(_main._state, ns, _main._loader,
+		Events._absolute_month(int(_main._state.year), int(_main._state.month)))
+	_main._card_events(_main._state.year, _main._state.month, {String(ev.id): true}, {})
+	for card_id in default_card_ids:
+		if _main._event_cards.has(card_id) or stack._cards.has(card_id):
+			_fail("pin 2: the defaulted event's arrival card survived its own default")
+			return
 
 
 ## V2.9 (from the playtest): nothing anywhere said what is being played for. A

@@ -197,7 +197,7 @@ func _check_the_zero_rate_erosion_bites() -> void:
 			_fail("%s's invented %s tax is still linear: %.4f at %.2f points against %.4f at %.2f -- the zero-rate erosion branch is not biting" % [nation_id, key, one, rate, two, rate * 2.0])
 
 
-## One formula, one place. Budget.commit() needs the factor for a schedule that is not on
+## One formula, one place. apply_pending() needs the factor for a schedule that is not on
 ## the state yet, and the first version of this session inlined the expression there --
 ## two writers of one formula, which is exactly the discipline `share`, `state_share`,
 ## `regulation_burden` and `gini_index` are each held to a level up.

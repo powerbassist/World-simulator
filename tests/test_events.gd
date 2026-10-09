@@ -132,6 +132,7 @@ func _init() -> void:
 	_test_the_chooser_situates()
 	_test_the_hook_vocabulary_is_swept()
 	_test_the_interrupt_flag()
+	_test_tick_order_pin()
 	_test_sited_schema_loads()
 	_test_the_site_draw_is_pure()
 	_test_sited_register_carries_place()
@@ -427,6 +428,45 @@ func _test_the_climate_content() -> void:
 		if Legislature.preconditions_met(ns, ev.preconditions) != expected_open:
 			_fail("France's gate for '%s' reads %s at the 2026 baseline -- wrong half of the split" % [ev.id, not expected_open])
 
+
+## Five hooks read registers written earlier in the SAME tick: four compare
+## emitter stamps against `== month_index` (member_bill_passed, takeover_bid,
+## firm_failed, accession_won) and commodity_price_high is a level read on
+## `ns.commodity_state`. They fire only because Events.tick_month runs AFTER
+## Commodities, Orgs, Statute and Industry in `_on_month_elapsed`; the pin in
+## test_commodities.gd holds only Economy < Commodities < Opinion, so this is
+## the pin for the Events end. The balance probe mirrors the order and is held
+## to it too.
+func _test_tick_order_pin() -> void:
+	_check_events_order_in("res://src/ui/main.gd", "main.gd")
+	_check_events_order_in("res://tools/balance_probe.gd", "balance_probe.gd")
+
+
+func _check_events_order_in(path: String, label: String) -> void:
+	var src := FileAccess.get_file_as_string(path)
+	if src.is_empty():
+		_fail("could not read %s" % path)
+		return
+	var commodities := src.find("Commodities.tick_month(")
+	var orgs := src.find("Orgs.tick_month(")
+	var statute := src.find("Statute.tick_month(")
+	var industry := src.find("Industry.tick_month(")
+	var events_pos := src.find("Events.tick_month(")
+	if events_pos == -1:
+		_fail("%s is missing Events.tick_month(" % label)
+		return
+	if commodities == -1 or orgs == -1 or statute == -1 or industry == -1:
+		_fail("%s missing a tick call Events reads after (Commodities %d, Orgs %d, Statute %d, Industry %d)" % [
+			label, commodities, orgs, statute, industry])
+		return
+	if not (commodities < events_pos):
+		_fail("%s: Events.tick_month (%d) must be after Commodities.tick_month (%d) — the commodity_price_high hook reads commodity_state" % [label, events_pos, commodities])
+	if not (orgs < events_pos):
+		_fail("%s: Events.tick_month (%d) must be after Orgs.tick_month (%d) — the accession_won hook reads ns.last_accession" % [label, events_pos, orgs])
+	if not (statute < events_pos):
+		_fail("%s: Events.tick_month (%d) must be after Statute.tick_month (%d) — the member_bill_passed hook reads the assembly_division_month stamp" % [label, events_pos, statute])
+	if not (industry < events_pos):
+		_fail("%s: Events.tick_month (%d) must be after Industry.tick_month (%d) — the takeover_bid and firm_failed hooks read industry registers" % [label, events_pos, industry])
 
 func _finish() -> void:
 	if _failures.is_empty():

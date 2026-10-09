@@ -18,15 +18,15 @@ Found during the version-close ultra's eight-pass review of PR #48, refuted as
 *not this PR's defect* or *not yet reachable* — recorded here so the refutation
 is not the last anyone hears of them.
 
-### Negative pending rates through `Budget.commit()` (general case)
+### Negative pending rates through `Budget.apply_pending()` (general case)
 
-`Budget.commit()` floors every pending write at zero and refuses unknown
+`Budget.apply_pending()` floors every pending write at zero and refuses unknown
 keys, but beyond that trusts its callers; the repeal path floors its negation
 at the register (`Legislature._budget_removal`). What remains open is
 the general case: any *future* sim caller — the general compose window above
 all — could send a negative pending rate, and the pre-existing corporate route
 has the same shape today. **Trigger:** the general compose window shipping, or
-any new `commit()` caller. **Fix shape:** a commit-side refusal (or floor) on
+any new `apply_pending()` caller. **Fix shape:** an apply_pending-side refusal (or floor) on
 negative pending values closes the whole class at the one writer.
 
 ### The calendar cannot book composed laws

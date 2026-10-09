@@ -457,7 +457,7 @@ here the bill authors it.
 `tax_rates_pct` like any tax's; the register is what makes the key **yield**. One
 writer: `Legislature.apply()` registers the params **before** the passage's effects
 run, because the rate itself moves through the one applier's ordinary
-`tax_rates_pct` channel into `Budget.commit()` — and commit refuses a pending rate
+`tax_rates_pct` channel into `Budget.apply_pending()` — and apply_pending refuses a pending rate
 whose key has nothing behind it (the silent half-tax refused at the source, not at
 reload). The composed law carries the params on a `new_tax` field of its own so the
 registration survives a save round trip.
@@ -485,7 +485,7 @@ to price. THE CEILING IS BIRTH AND LIFE, not birth alone (the ultra pass-6 findi
 found live): a born key's rate could be cranked past the product afterwards — the tax
 panel's slider topped at `NEW_TAX_RATE_MAX` whatever the base — so the slider is
 MATCHED TO ITS BASE (`min(NEW_TAX_RATE_MAX, ceiling / base)`, a low-base birth keeping
-its full range) and `Budget.commit()` REFUSES a pending custom rate whose base × rate
+its full range) and `Budget.apply_pending()` REFUSES a pending custom rate whose base × rate
 would clear the ceiling — loudly, per key, and not clamped, the birth gate's own
 refusal-not-clamp shape carried to the one writer every rate change routes through.
 And the birth names its key non-blank: the register carries the name the
@@ -509,7 +509,7 @@ what its table names, and a birth's rate rides in effects without a price row.
 ### The lifecycle
 
 Repeal of the creating bill subtracts the rate through the ledger and
-`Budget.commit()` — the T1 gap where commit dropped any pending key outside the
+`Budget.apply_pending()` — the T1 gap where apply_pending dropped any pending key outside the
 authored five is closed — and leaves the params entry in place: the tax exists at
 rate 0, the way an authored tax nobody charges does. One rate-0 custom tax yields
 exactly 0.0 by construction. `tests/test_statute_tax.gd` pins the whole of this;

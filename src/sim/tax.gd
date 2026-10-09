@@ -68,7 +68,7 @@ static func progressivity_base_factor(ns) -> float:
 
 
 ## The same factor for a schedule that is not the one on the state yet, which is what
-## Budget.commit() needs to price a PENDING bracket change against the current one.
+## apply_pending() needs to price a PENDING bracket change against the current one.
 ##
 ## Split out rather than inlined at that call site, and the split is the point: two
 ## copies of this expression is one formula with two writers, which is exactly the

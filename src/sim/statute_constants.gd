@@ -53,7 +53,7 @@ const NEW_TAX_RATE_MAX := 100.0
 ## the revenue model has ever been asked to price. A product above it is a
 ## quantity the model has no shape for, exactly as an over-ceiling base is.
 const NEW_TAX_YIELD_CEILING := 12.0
-## The demand-impulse multiplier a custom key reads in Budget.commit()'s
+## The demand-impulse multiplier a custom key reads in apply_pending()'s
 ## level_effect loop, where the authored five read their MULT_TAX rows. The
 ## lowest of the five (wealth's 0.25): per-key demand multipliers are authored
 ## constants' privilege exactly as the opinion scales are, and the shared

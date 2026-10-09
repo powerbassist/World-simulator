@@ -627,6 +627,7 @@ func _ready() -> void:
 			for unseen_id in _unseen_events.keys().duplicate():
 				if not still_on.has(unseen_id):
 					_unseen_events.erase(unseen_id)
+					_dismiss_event_cards(unseen_id)
 		if _paused_for_decision and _unseen_events.is_empty():
 			_paused_for_decision = false
 			_clock.paused = false
@@ -1231,9 +1232,11 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# commodity_price_high hook reads `ns.commodity_state` inside Events.tick_month,
 	# which runs AFTER this slot -- so the same-month read this slot exists for now
 	# has its consumer, and the order is load-bearing where V4.6 could only pin it.
-	# Said out loud because that is exactly when an order rots: the pin in
-	# tests/test_commodities.gd is what stops a later task placing it by
-	# convenience.
+	# Said out loud because that is exactly when an order rots: tests/test_events.gd's
+	# `_test_tick_order_pin` is what stops a later task placing Events before these
+	# four modules by convenience -- its five hooks read registers Commodities,
+	# Orgs, Statute and Industry wrote this same tick (the pin in
+	# tests/test_commodities.gd holds only Economy < Commodities < Opinion).
 	Commodities.tick_month(_state, _loader)
 	Budget.tick_month(_state)
 	# Between Budget and Opinion, and both halves of that are load-bearing. AFTER
@@ -1986,8 +1989,11 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		# The unseen set's first door, and the invariant's desk half: an id that
 		# has left the desk is not unseen, whether it left by the machine's own
 		# default (_tick_countdowns answered it a moment ago), the player's card
-		# answer or a Dispatches answer -- an erase missed only on the expiry
-		# used to strand the id and hold the clock past every later answer.
+		# answer or a Dispatches answer -- and its arrival card goes with it.
+		# An erase of _unseen_events missed here used to strand the id and hold
+		# the clock past every later answer; a missing card purge left decision
+		# buttons with no event to answer.
+		_dismiss_event_cards(event_id)
 		_unseen_events.erase(event_id)
 		var record := {}
 		for row in ns.event_history:
@@ -2069,6 +2075,19 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		_paused_for_decision = false
 		_clock.paused = false
 		_hud.clock_cluster.refresh(_clock)
+
+
+## Dismiss every message-stack card keyed to an event that has left the desk.
+## Finds card ids in _event_cards mapping to `event_id`, dismisses each, and
+## iterates a copy of the keys because `dismiss()` emits `card_dismissed` whose
+## handler erases from _event_cards -- re-entry is harmless; the handler also
+## erases from _unseen_events, which is a no-op when the caller already erased it.
+func _dismiss_event_cards(event_id: String) -> void:
+	if _hud == null or _hud.message_stack == null:
+		return
+	for card_id in _event_cards.keys().duplicate():
+		if String(_event_cards.get(card_id, "")) == event_id:
+			_hud.message_stack.dismiss(card_id)
 
 
 ## The decision card's body: the event's summary line, then the deadline -- the

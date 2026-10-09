@@ -220,7 +220,7 @@ into a formula that already exists — nothing here is a new equation.
 
 | Channel | Field | Read by | Why |
 |---|---|---|---|
-| Budget levers | *(none — routed through `Budget.commit()`)* | `budget.gd:commit()` | A law that moves a tax rate or spending line **is** a budget change. Routing it through the same command the budget screen uses gets the demand impulse, the erosion curve and the matching opinion issue for free, and makes double-counting structurally impossible — a law cannot move a lever *and* carry its own separate demand-impulse term, because there is only one path a lever change can take. |
+| Budget levers | *(none — routed through `Budget.apply_pending()`)* | `budget.gd:apply_pending()` | A law that moves a tax rate or spending line **is** a budget change. Routing it through the same nation-scoped writer the budget screen uses gets the demand impulse, the erosion curve and the matching opinion issue for free, and makes double-counting structurally impossible — a law cannot move a lever *and* carry its own separate demand-impulse term, because there is only one path a lever change can take. |
 | Labour | `law_structural_offset_pct` | `economy.gd:_update_unemployment()`, added alongside the existing income-tax wedge, inside the same clamp | Flows into unemployment, then into the `jobs` issue, then into approval — with no new opinion plumbing, the same way [[economy-model]]'s own structural-unemployment term already does. |
 | Long-run growth | `law_potential_target_pct` | `economy.gd:_update_potential_shift()`, added into `target` before the lag | Inherits the five-year time constant and the ±1.0 %/yr hard clamp that is [[economy-model|the model's whole stability argument]] — this is the only term that feeds back into trend, so a law cannot bypass the one guard rail that matters. |
 | Off-budget revenue | `law_other_revenue_pct_gdp` | `budget.gd:recompute()`, added to `other_revenue_pct_gdp` | For levies with no slider — a carbon levy, a lobbying-registration fee — the same "authored residual" slot `other_revenue_pct_gdp` already fills for social contributions and local taxes. |
@@ -363,7 +363,7 @@ subtraction and the ledger record, because `apply()` is *every* path on which
 a bill takes effect: the division, the referendum settle, the upper-house
 release. `_subtract_ledger()` negates the target's **live** ledger and pushes
 it back through `apply_effects()` — the one applier, so budget levers route
-through `Budget.commit()` and the erosion curve and demand impulse fire exactly
+through `Budget.apply_pending()` and the erosion curve and demand impulse fire exactly
 as any budget change would — then erases the entry and writes the target's own
 cooldown, so a repealed act sits out its cooldown before it can be re-proposed.
 
