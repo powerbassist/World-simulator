@@ -103,6 +103,13 @@ session's job even where the answer is *not here*.
 
 ## 3. An event is nine fields, and what it does NOT carry is the design
 
+> **V1.8 RECORD — REWRITTEN AT THE RULE AT V4.4 (the field list and the "no category,
+> no cooldown" paragraph below describe the V1.8 event, not the shipped one).** V4.4's
+> event also carries `category`, `weight`, `severity`, `on_action` and
+> `cooldown_months`, and a choice carries `arms` (`src/core/event.gd` is the
+> authority). The reasoning below for why V1.8 left them out stands as history; §5 and
+> §7 hold the machine and the book that replaced it.
+
 `data/events/*.json`, a **global flat list** on `data/pledges/`' shape — the SEVENTH
 directory to take `data/diplomatic-actions/`'s form and the last content type the V1 tier
 adds.
@@ -222,8 +229,9 @@ changed is that several obligations can stand at once, each carrying its own clo
 `once` at announcement for the player, and the V4.4 machine first kept that shape,
 which the review caught binding NOTHING for the 28 AI nations (they resolve without
 ever announcing). Delivery is the one write site every nation passes through; the
-staging primitive `announce()` stays state-pure so the sited sweep can drive it 48
-times without accumulating anything. The V1.8 reason survives the move intact: the
+staging primitive `announce()` writes the queue and nothing else (the mark registers
+stay unwritten), so the sited sweep can drive it 48 times without stamping a single
+`once`, cooldown or quiet. The V1.8 reason survives the move intact: the
 mark exists the moment the occasion is in front of somebody, not when they answer it.
 
 **The weighted draw is a second pure function**: `Cycle.unit` over (nation,
@@ -597,7 +605,8 @@ ignore and pay for is the whole of *forces a response under time pressure*, and 
 removes the choice by removing the option of not making it. Pending block at the top, the
 **ledger** below it.
 
-**One diary row**, `FIXED_EVENT`, and `src/sim/calendar.gd` still preloads nothing —
+**One diary row per desk entry** (V4.4: the desk is a queue, so one `FIXED_EVENT` row
+for each), and `src/sim/calendar.gd` still preloads nothing —
 V1.6f's and V1.7c's reason a third time. The register carries the event's own **name**,
 copied in at announcement, so this is the one row on that list needing no lookup at all.
 

@@ -673,7 +673,8 @@ func _ready() -> void:
 		if ns != null and not ns.in_government:
 			get_tree().change_scene_to_file(MENU_SCENE)
 			return
-		_clock.paused = false
+		if not _decision_holds_clock():
+			_clock.paused = false
 		# V4.1. A won election that started a new term left the choice open,
 		# and the dismissal must not quietly resume past it. A no-op when
 		# there is nothing to choose.
@@ -2075,11 +2076,21 @@ func _resume_if_decision_settled() -> void:
 	if not _paused_for_decision or not _unseen_events.is_empty():
 		return
 	_paused_for_decision = false
-	var ns = _state.player() if _state != null else null
-	if _paused_for_programme or (ns != null and Events.interrupt_pending(ns)):
+	if _paused_for_programme or _decision_holds_clock():
 		return
 	_clock.paused = false
 	_hud.clock_cluster.refresh(_clock)
+
+
+## Whether an event still owns the clock: an unseen arrival, or an interrupt on the
+## desk. The programme pause and the election dismissal consult this before they
+## release the clock, so choosing a programme cannot run time out from under a
+## question nobody has answered.
+func _decision_holds_clock() -> bool:
+	if _paused_for_decision and not _unseen_events.is_empty():
+		return true
+	var ns = _state.player() if _state != null else null
+	return ns != null and Events.interrupt_pending(ns)
 
 
 ## Dismiss every message-stack card keyed to an event that has left the desk.
@@ -2375,8 +2386,12 @@ func _on_load_requested(slot: String) -> void:
 	_clock.paused = true
 	# The discarded game's decision pause dies here, not just its clock: the
 	# loaded game's interrupt enforcement re-raises a pause if the save carries
-	# one, so the flag must not survive as a second holder of it.
+	# one, so the flag must not survive as a second holder of it. The programme
+	# pause dies with it: _enforce_term_start_programme() below re-raises it only
+	# if the loaded game is at a term start, and a stale true would otherwise
+	# block every later auto-resume (_resume_if_decision_settled reads it).
 	_paused_for_decision = false
+	_paused_for_programme = false
 
 	_map_view.setup(_loader, _state)
 	_minimap.setup(_map_view, _loader, _state)
@@ -2571,8 +2586,9 @@ func _on_programme_chosen(entry_id: String) -> void:
 		_programme_card_id = ""
 	if _paused_for_programme:
 		_paused_for_programme = false
-		_clock.paused = false
-		_hud.clock_cluster.refresh(_clock)
+		if not _decision_holds_clock():
+			_clock.paused = false
+			_hud.clock_cluster.refresh(_clock)
 	_update_top_bar()
 	_windows.mark_all_dirty()
 

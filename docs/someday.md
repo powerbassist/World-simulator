@@ -64,6 +64,34 @@ handled). A dev-log nicety, listed here so the silence is recorded rather than
 discovered. **Trigger:** never on its own; fold into any future held-bills
 work.
 
+## Carried from V4.4's convergence loop (2026-10-11)
+
+Found by the light-review passes on PR #49, verified real, unreachable with the
+shipped 102-event book — recorded so the refusal is not the last anyone hears.
+
+### Two armed chains can deliver one target twice in a tick
+
+The loader refuses a chain whose target is a hook event (the hook door would
+re-deliver it), but not two choices arming the SAME target: for an AI nation the
+armed loop has no per-event dedupe and `_deliver` resolves immediately, so a
+non-`once`, cooldown-0 target applies its effects twice. The book carries exactly
+one `arms` today. **Trigger:** a second `arms` entry in `data/events/`. **Fix
+shape:** a loader rule refusing two sources onto one target without `once` or a
+cooldown, in the same place as the hook-target refusal.
+
+### A choice whose every effect is 0.0 loads
+
+`event.gd`'s "costs nothing" refusal fires only when a choice carries NO keys;
+`{"bloc_offset": {"workers": 0.0}}` passes the loader, `tools/event_lint.py` and
+`tests/test_event_content.gd`, and can be the default the desk auto-applies. The
+lint and the loader also disagree both ways (the lint refuses `{}` where the
+loader accepts it; the lint accepts society/company values the loader refuses —
+burden 0.0 or past `REGULATION_BURDEN_MAX`, society 0.0, company beside
+`structural_unemployment_pct`). **Trigger:** the first authored event past the
+current 102, or any lint-clean book that fails to load. **Fix shape:** one
+zero-effect rule at the loader, and the lint's society/company checks lifted to
+the loader's own.
+
 ## Carried from earlier blocks (pointers, not duplicates)
 
 - **The 25 generated nations' majors are generator-owned** — hand-curating

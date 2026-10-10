@@ -127,7 +127,7 @@ var severity: int = 1
 ## V4.4. One of events_constants.ON_ACTIONS, or "" for the standing monthly hazard.
 ## A hook event fires BECAUSE something happened -- its emitter is read inside
 ## Events.tick_month off registers the machines already write (or the two V4.4 stamps,
-## named in events_constants.ON_ACTIONS' comment) -- and its `likelihood` is the
+## `repealed_at` and `last_accession`, documented in nation_state.gd) -- and its `likelihood` is the
 ## chance the hooked happening spawns the occasion. The preconditions still gate it.
 var on_action: String = ""
 

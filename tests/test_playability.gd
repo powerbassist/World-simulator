@@ -129,6 +129,26 @@ func _check_interrupt_card_x_keeps_the_clock() -> void:
 			_main._hud.message_stack.dismiss(card_id)
 			if not clock.paused:
 				_fail("X dismissal released programme-owned clock")
+	# The programme's own release (choosing the term's programme) must not run the
+	# clock out from under an unanswered event: _decision_holds_clock() is the guard
+	# _on_programme_chosen and the election dismissal both consult. Staged directly
+	# as the state those doors read -- an unseen arrival, the programme flag up.
+	ns.event_queue.clear()
+	_main._event_cards.clear()
+	_main._unseen_events.clear()
+	_main._paused_for_decision = true
+	_main._unseen_events["pin_unseen_event"] = true
+	if not _main._decision_holds_clock():
+		_fail("an unseen arrival under the decision pause did not hold the clock")
+	_main._unseen_events.clear()
+	_main._paused_for_decision = false
+	if _main._decision_holds_clock():
+		_fail("nothing unseen and nothing interrupting still held the clock")
+	Events.announce(ns, interrupt_ev, month, regions)
+	if not _main._decision_holds_clock():
+		_fail("an interrupt event on the desk did not hold the clock")
+	ns.event_queue.clear()
+
 	_main._state.player().event_queue.clear()
 	# Dismiss only the cards this check pushed: clear() would also take the boot's
 	# "YOUR TERM" opening card, which a later check reads.

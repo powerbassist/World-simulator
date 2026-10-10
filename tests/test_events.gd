@@ -823,8 +823,8 @@ func _test_one_pending_slot() -> void:
 	# (procurement 1, emergency_budget 2), so the fiscal crisis is on top.
 	if Events.pending_event_id(ns) != GATED:
 		_fail("the head of the desk is %s, not the more severe %s" % [Events.pending_event_id(ns), GATED])
-	# And the desk is bounded: a draw past QUEUE_MAX does not land. Driven through
-	# _deliver's dedupe too, which is the tick's own gate.
+	# Only the ordering premise is checked here; the bound is driven in
+	# _test_the_desk_is_bounded and the same-id dedupe in _test_the_desk_does_not_double_hold.
 	if K.QUEUE_MAX < 2:
 		_fail("QUEUE_MAX is %d -- the ordering check above cannot mean anything" % K.QUEUE_MAX)
 
@@ -1251,11 +1251,26 @@ func _test_the_desk_is_bounded() -> void:
 ## its event adds nothing, because two entries with one id would answer twice through
 ## two cards -- the deadline charging double.
 func _test_the_desk_does_not_double_hold() -> void:
-	# _source, not _code: the sentence pinned IS the skip's why-comment, inside the
-	# function that does it -- _code strips every comment line and could never see it.
-	var src := _source("res://src/sim/events.gd")
-	if not src.contains("The same occasion twice is not two occasions"):
-		_fail("_deliver lost its already-on-the-desk skip -- the deadline can charge double")
+	# Driven, not grepped: a comment-sentence pin stays green when the skip is
+	# deleted and the comment survives. The fixture is delivered twice on a desk
+	# with room; the second delivery must add nothing.
+	var state = _new_state()
+	var ns = state.player()
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	var ev = _make_event("double_hold_fixture", false)
+	var stub := _StubLoader.new()
+	stub.events = [ev]
+	ns.event_queue.clear()
+	if not Events._deliver(state, ns, stub, ev, month, true):
+		_fail("the first delivery onto an empty desk did not land")
+	if not Events._deliver(state, ns, stub, ev, month, true):
+		_fail("the repeat delivery of an event already on the desk returned false -- the skip reports success")
+	var held := 0
+	for entry in ns.event_queue:
+		if String(entry.get("event_id", "")) == ev.id:
+			held += 1
+	if held != 1:
+		_fail("the desk holds %d entries for one event -- the deadline can charge double" % held)
 
 
 ## The weighted pick inside a pulsing category is a pure function of (nation,

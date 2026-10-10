@@ -510,8 +510,9 @@ static func region_names(ns, loader) -> Dictionary:
 ## clear an entry whose content has gone without needing to name it.
 ##
 ## THE REGISTERS ARE NOT WRITTEN HERE. The `once` mark, the per-event cooldown and
-## the category quiet are made at DELIVERY -- _deliver(), the tick's door -- and
-## not at announcement and not at resolution, which is the one place that differs
+## the category quiet are first stamped at DELIVERY -- _deliver(), the tick's door --
+## and not at announcement (a resolution later RE-ARMS the category quiet, see
+## _resolve), which is the one place that differs
 ## from Legislature.apply()'s `passed_law_ids`: an event HAS HAPPENED the moment it
 ## is delivered, and marking at resolution would mean a save reloaded mid-crisis
 ## could see the same revelation announced twice. Delivery is also what makes the
@@ -592,8 +593,8 @@ static func answer(state, loader, event_id: String, choice_id: String) -> Dictio
 
 
 ## The AI's desk is the same tick it announced in: score every choice against the
-## nation's own position and take the best. Minimal by events-model §11's own
-## sketch -- approval-seeking on the size-weighted bloc response, a fiscal term
+## nation's own position and take the best. Minimal by events-model §5's closure
+## note -- approval-seeking on the size-weighted bloc response, a fiscal term
 ## that prefers balance when the deficit is high, a cleanliness term when
 ## corruption is high, a concession term when unrest is high -- and the terms
 ## TRADE, which is the point: a deficit-running government in unrest prefers the
