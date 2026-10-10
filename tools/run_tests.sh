@@ -113,9 +113,14 @@ tests=(
   # at authoring time per the pass-5 fleet's find.
   tests/test_statute_assembly.gd
   # V4.2 T7: the grown book's content shape -- counts, theme and per-bloc sign
-  # coverage, spread bands -- re-derived from the JSON beside tools/law_lint.py,
-  # because a check only a shell invocation can reach is one the suite never runs.
+  # coverage, spread bands -- re-derived from JSON beside tools/law_lint.py.
   tests/test_law_content.gd
+  # V4.4: re-derive event_lint.py's E1b per-choice mean and business-worst bands;
+  # shell-only lint rules otherwise never run in the agent suite.
+  tests/test_event_content.gd
+  # V4.4: a chain may not arm a hook event (the hook door would re-deliver it the
+  # same tick) -- refused at load, negative case on a fixture.
+  tests/test_event_chain_loader.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd

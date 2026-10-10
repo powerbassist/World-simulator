@@ -256,7 +256,7 @@ func _check_two_full_terms_without_softlock() -> void:
 ##
 ## V3.0 RE-CONTRACTED, and the change is the fatigue term's own finding: time in
 ## office is now its own drag (the S5 deferral), and at the shipped rate the
-## do-nothing president no longer WINS the 2031 re-election at all — the run
+## do-nothing president no longer WINS the 2032 re-election at all — the run
 ## ends in a lost vote at month 76, before the 2037 term-out. That is the
 ## playtest's F6 ask working as designed (idle must not be locally optimal), so
 ## the pinned property is no longer "terms out at exactly two elections" but
@@ -817,7 +817,7 @@ func _check_a_nuclear_run_stays_off_every_clamp() -> void:
 func _check_a_gas_run_stays_off_every_clamp() -> void:
 	# stop_on_loss false, and V4.4 is why: the unanswered desk is a steady
 	# approval drain by design (six-plus categories pulsing, the queue holding
-	# four), and the MANAGED regime now loses the 2031 verdict -- at month 67 of
+	# four), and the MANAGED regime now loses the 2032 verdict -- at month 76 of
 	# a channel check whose whole premise is fourteen years of cadence. The vote
 	# is test_two_full_terms' subject; this check watches the energy channel.
 	var run := _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, -1, "order_gas_ccgt", 6, 30, false)

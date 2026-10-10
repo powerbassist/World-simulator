@@ -206,7 +206,7 @@ Events.tick_month(state, loader):          # every nation now, player AND the 28
 message column holds six cards — the old ceiling argument, one size up) — the bound
 lives at DELIVERY, where all three doors pass, and a chain that finds the desk full
 waits a month while a hook or a draw skips (next happening, next month). `answer()`
-answers a NAMED entry; `choose()` remains the head-answering read the cards kept. The
+answers a NAMED entry; `choose()` remains the head-answering read kept for harnesses. The
 quiet moved DOWN a level: a resolution quiets its own CATEGORY for
 `CATEGORY_QUIET_MONTHS` 3 — one resolution in fiscal silencing scandal forever was
 the global quiet's defect at nine categories. The per-event cooldown V1.8 designed

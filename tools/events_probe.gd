@@ -243,8 +243,11 @@ func _commit(state, delta: Dictionary) -> void:
 	Budget.commit(state, pending)
 
 
-## src/ui/main.gd's order. Elections included and the run stops when the player leaves
-## office -- see this file's header.
+## A DELIBERATELY REDUCED tick, not src/ui/main.gd's order. It omits Energy,
+## Commodities, Programme, Calendar, Statute, Industry, Migration, Events and
+## Characters -- E0/E2/E3 measure a world without them, which is the point, and
+## Events is driven separately by _tick_events() below. Elections ARE included and
+## the run stops when the player leaves office -- see this file's header.
 func _step(state, months_in: int) -> void:
 	var year: int = START_YEAR + int(months_in / 12)
 	var month: int = (months_in % 12) + 1

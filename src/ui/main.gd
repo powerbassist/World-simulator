@@ -628,10 +628,7 @@ func _ready() -> void:
 				if not still_on.has(unseen_id):
 					_unseen_events.erase(unseen_id)
 					_dismiss_event_cards(unseen_id)
-		if _paused_for_decision and _unseen_events.is_empty():
-			_paused_for_decision = false
-			_clock.paused = false
-			_hud.clock_cluster.refresh(_clock)
+		_resume_if_decision_settled()
 		_windows.mark_all_dirty()
 	)
 
@@ -919,10 +916,7 @@ func _wire_hud() -> void:
 		_event_cards.erase(id)
 		_unseen_events.erase(event_id)
 		_hud.message_stack.dismiss(id)
-		if _paused_for_decision and _unseen_events.is_empty():
-			_paused_for_decision = false
-			_clock.paused = false
-			_hud.clock_cluster.refresh(_clock)
+		_resume_if_decision_settled()
 		_update_top_bar()
 		_windows.mark_all_dirty()
 	)
@@ -940,10 +934,7 @@ func _wire_hud() -> void:
 		var event_id := String(_event_cards.get(id, ""))
 		_event_cards.erase(id)
 		_unseen_events.erase(event_id)
-		if _paused_for_decision and _unseen_events.is_empty():
-			_paused_for_decision = false
-			_clock.paused = false
-			_hud.clock_cluster.refresh(_clock)
+		_resume_if_decision_settled()
 	)
 
 	# U5c. The legend proposes a layer, the map view holds it, and the legend is
@@ -2071,10 +2062,24 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 	# resolve-and-replace (one default fires, another crisis lands) must not
 	# resume past the fresh arrival. The same three lines the card-answer path
 	# runs.
-	if _paused_for_decision and _unseen_events.is_empty():
-		_paused_for_decision = false
-		_clock.paused = false
-		_hud.clock_cluster.refresh(_clock)
+	_resume_if_decision_settled()
+
+
+## The one resume rule for the arrival pause, shared by all four doors (panel
+## answer, card answer, card dismissal, the post-arrival re-check). Clearing the
+## unseen set ends THIS pause, not every pause: an interrupt-flagged event still
+## on the desk (its card's X must not release a clock the flag holds "until
+## answered") and an unchosen term-start programme each own the clock
+## independently, so the arrival flag drops but the clock stays down.
+func _resume_if_decision_settled() -> void:
+	if not _paused_for_decision or not _unseen_events.is_empty():
+		return
+	_paused_for_decision = false
+	var ns = _state.player() if _state != null else null
+	if _paused_for_programme or (ns != null and Events.interrupt_pending(ns)):
+		return
+	_clock.paused = false
+	_hud.clock_cluster.refresh(_clock)
 
 
 ## Dismiss every message-stack card keyed to an event that has left the desk.

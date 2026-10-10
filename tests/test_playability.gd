@@ -51,9 +51,18 @@ func _run() -> void:
 		_fail("main.tscn did not produce a running game")
 		return
 
+	# The boot may leave the clock held by the term-start programme; these checks
+	# drive bare arrivals, so release every independent owner once, up front. Each
+	# check still stages and asserts its own pause.
+	_main._paused_for_programme = false
+	_main._paused_for_decision = false
+	_main._state.player().event_queue.clear()
+	_main.get_node("Clock").paused = false
+
 	_check_decision_arrival_stops_the_clock()
 	_check_departed_and_dismissed_events_leave_the_unseen_set()
 	_check_event_cards_follow_their_event()
+	_check_interrupt_card_x_keeps_the_clock()
 	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
 	_check_defeat_can_be_dismissed()
@@ -62,6 +71,74 @@ func _run() -> void:
 	_check_no_counted_nation_copy()
 	_check_top_bar_budget_balance_label()
 	_check_top_bar_election_clamp()
+
+
+## X dismissal must not release independent interrupt or programme clock owner.
+func _check_interrupt_card_x_keeps_the_clock() -> void:
+	var Events := load("res://src/sim/events.gd")
+	var ns = _main._state.player()
+	var clock: Node = _main.get_node("Clock")
+	var month: int = Events._absolute_month(int(_main._state.year), int(_main._state.month))
+	var regions: Dictionary = Events.region_names(ns, _main._loader)
+	var interrupt_ev = Events.event_by_id(_main._loader, "blackout_night")
+	if interrupt_ev == null or not bool(interrupt_ev.interrupt):
+		_fail("blackout_night missing or not interrupt")
+		return
+	ns.event_queue.clear()
+	_main._unseen_events.clear()
+	_main._event_cards.clear()
+	_main._paused_for_decision = false
+	_main._paused_for_programme = false
+	clock.paused = false
+	Events.announce(ns, interrupt_ev, month, regions)
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	var card_id := ""
+	for id in _main._event_cards:
+		if String(_main._event_cards[id]) == String(interrupt_ev.id):
+			card_id = String(id)
+	if card_id == "":
+		_fail("interrupt arrival did not create linked card")
+	else:
+		_main._hud.message_stack.dismiss(card_id)
+		if not clock.paused or ns.event_queue.is_empty():
+			_fail("X dismissal released clock or removed interrupt still on desk")
+
+	ns.event_queue.clear()
+	_main._unseen_events.clear()
+	_main._event_cards.clear()
+	_main._paused_for_decision = false
+	_main._paused_for_programme = true
+	clock.paused = false
+	var ordinary_ev = null
+	for candidate in _main._loader.events:
+		if not bool(candidate.interrupt):
+			ordinary_ev = candidate
+			break
+	if ordinary_ev == null:
+		_fail("no non-interrupt event for programme clock pin")
+	else:
+		Events.announce(ns, ordinary_ev, month, regions)
+		_main._card_events(_main._state.year, _main._state.month, {}, {})
+		card_id = ""
+		for id in _main._event_cards:
+			if String(_main._event_cards[id]) == String(ordinary_ev.id):
+				card_id = String(id)
+		if card_id == "":
+			_fail("non-interrupt arrival did not create linked card")
+		else:
+			_main._hud.message_stack.dismiss(card_id)
+			if not clock.paused:
+				_fail("X dismissal released programme-owned clock")
+	_main._state.player().event_queue.clear()
+	# Dismiss only the cards this check pushed: clear() would also take the boot's
+	# "YOUR TERM" opening card, which a later check reads.
+	for leftover in _main._event_cards.keys().duplicate():
+		_main._hud.message_stack.dismiss(leftover)
+	_main._event_cards.clear()
+	_main._unseen_events.clear()
+	_main._paused_for_decision = false
+	_main._paused_for_programme = false
+	clock.paused = false
 
 
 ## V2.9 (from the playtest, F4): "3 months to answer" at speed 3 is thirteen

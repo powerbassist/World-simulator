@@ -113,13 +113,6 @@ static func pending_event_name(ns) -> String:
 	return String(head_entry(ns).get("event_name", ""))
 
 
-## Months left before the default answers on the HEAD entry. Calendar's diary row
-## and the countdown surfaces read per-entry values now; this stays for the cards
-## and any caller that means "the thing in front of the player".
-static func months_left(ns) -> int:
-	return int(head_entry(ns).get("months_left", 0))
-
-
 ## Whether ANY entry on the desk carries the interrupt flag. V2.4b's contract --
 ## an event nobody could reasonably ignore pauses the clock -- becomes an any-read
 ## rather than the-one-read, which is the whole of what the queue changes about it.
@@ -567,9 +560,9 @@ static func _order_queue(ns) -> void:
 
 # --- The verbs ---------------------------------------------------------------------
 
-## The player answers the HEAD of the desk. V1.8's signature, kept for the card
-## path and every harness that answers "the thing in front of me"; answering a
-## specific entry is answer() below.
+## The player answers the HEAD of the desk. V1.8's signature, kept for harnesses,
+## tests and tools that answer "the thing in front of me" -- the cards answer by
+## id through answer() now; answering a specific entry is answer() below.
 static func choose(state, loader, choice_id: String) -> Dictionary:
 	var ns = state.player()
 	if ns == null or not is_pending(ns):

@@ -986,16 +986,40 @@ func _test_once_is_marked_at_delivery() -> void:
 ## a scandal on the desk is the scandal category's whole say this month -- the other
 ## eight go on talking. Both halves are the pin: quieted holds, un-quieted may.
 func _test_the_quiet_period_holds() -> void:
+	# A likelihood-1.0 fixture on a stub loader, because the shipped book draws
+	# nothing at the epoch month: a loop over the real loader asserted "nothing
+	# landed" whether or not the gate existed. The control leg below is what
+	# makes the quieted leg mean something -- same fixture, same month, no quiet.
+	var fixture = _make_event("quiet_fixture", false)
+	fixture.likelihood = 1.0
+	var other = _make_event("quiet_other_category", false)
+	other.likelihood = 1.0
+	other.category = "fiscal"
+	var stub := _StubLoader.new()
+	stub.events = [fixture, other]
+
+	var control = _new_state()
+	Events.tick_month(control, stub)
+	if _count_in_category(control.player(), fixture.category) == 0:
+		_fail("the likelihood-1.0 fixture did not land with no quiet -- the quiet leg below proves nothing")
+		return
+
 	var state = _new_state()
 	var ns = state.player()
-	var ev = _event(HAZARD_ONLY)
-	ns.event_category_quiet[ev.category] = K.CATEGORY_QUIET_MONTHS
-	for _i in range(K.CATEGORY_QUIET_MONTHS - 1):
-		Events.tick_month(state, _loader)
-		for entry in ns.event_queue:
-			if String(entry.get("category", "")) == ev.category:
-				_fail("an event fired inside its category's quiet period")
-				return
+	ns.event_category_quiet[fixture.category] = K.CATEGORY_QUIET_MONTHS
+	Events.tick_month(state, stub)
+	if _count_in_category(ns, fixture.category) != 0:
+		_fail("an event fired inside its category's quiet period")
+	if _count_in_category(ns, other.category) == 0:
+		_fail("a quiet scandal category silenced a different category -- the quiet is per-category")
+
+
+func _count_in_category(ns, category: String) -> int:
+	var n := 0
+	for entry in ns.event_queue:
+		if String(entry.get("category", "")) == category:
+			n += 1
+	return n
 
 
 # --- The surfaces ------------------------------------------------------------------
@@ -1197,7 +1221,11 @@ func _test_the_desk_is_bounded() -> void:
 	# (the next happening re-fires the hook), the hazard door's own semantics.
 	var hook = _make_event("desk_hook_fixture", false)
 	hook.on_action = "law_passed"
-	ns.law_ledger["probe_law"] = {"months": [month]}
+	ns.law_ledger["probe_law"] = {"months": [month - 1]}
+	# Drive the delivery door directly after staging the hook register; this is
+	# not the hook loop in _tick_nation().
+	if not Events._hook_fired(state, ns, stub, hook.on_action, month):
+		_fail("the full-desk hook-door fixture did not fire its staged law_passed hook")
 	var landed: bool = Events._deliver(state, ns, stub, hook, month, true)
 	if landed:
 		_fail("a hook delivery on a full desk claimed to land")
@@ -1310,6 +1338,38 @@ func _test_hooks_fire_on_staged_registers() -> void:
 	if Events._hook_fired(state, ns, _loader, "law_repealed", month):
 		_fail("law_repealed fired on a three-month-old stamp -- the emitters are month reads, not memories")
 
+	# The three register-backed hooks that need external machinery were omitted
+	# from the first sweep. A real commodity good makes the price resolver live.
+	var good: Dictionary = _loader.commodity_goods.get("iron_ore", {})
+	if good.is_empty() or float(good.get("base_price", 0.0)) <= 0.0:
+		_fail("hook staging needs loader commodity iron_ore with positive base_price")
+		return
+	var fake_company: Dictionary = {}
+	ns.companies["fake_firm"] = fake_company
+	fake_company["bid_month"] = month
+	if not Events._hook_fired(state, ns, _loader, "takeover_bid", month):
+		_fail("takeover_bid did not read a bid_month == month")
+	fake_company["bid_month"] = month - 1
+	if Events._hook_fired(state, ns, _loader, "takeover_bid", month):
+		_fail("takeover_bid fired on a stale month's bid")
+	fake_company.erase("bid_month")
+	fake_company["failed_month"] = month
+	if not Events._hook_fired(state, ns, _loader, "firm_failed", month):
+		_fail("firm_failed did not read a failed_month == month")
+	fake_company["failed_month"] = month - 1
+	if Events._hook_fired(state, ns, _loader, "firm_failed", month):
+		_fail("firm_failed fired on a stale month's failure")
+	ns.companies.erase("fake_firm")
+
+	var base_price: float = float(good.get("base_price", 0.0))
+	ns.commodity_state = {"price": {"iron_ore": base_price * K.HOOK_PRICE_RATIO * 1.1}}
+	if not Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+		_fail("commodity_price_high did not read a price above HOOK_PRICE_RATIO")
+	ns.commodity_state = {"price": {"iron_ore": base_price * 1.1}}
+	if Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+		_fail("commodity_price_high fired below HOOK_PRICE_RATIO")
+	ns.commodity_state = {}
+
 
 ## A choice that ARMS a follow-up schedules it: due at its delay, ahead of the
 ## calendar's draws, through the same gates. The chain is the machine V4.1 refused,
@@ -1387,6 +1447,8 @@ func _test_the_chooser_situates() -> void:
 		ids.append(String(c["id"]))
 	if not ids.has(String(balanced.get("id", ""))) or not ids.has(String(indebted.get("id", ""))):
 		_fail("the chooser invented a choice not on the event")
+	if String(balanced.get("id", "")) == String(indebted.get("id", "")):
+		_fail("a balanced and a deficit-running government answered '%s' identically -- the chooser does not situate" % String(balanced.get("id", "")))
 
 
 ## THE VOCABULARY SWEEP THE COMMENTS PROMISE. `ON_ACTIONS` is a closed vocabulary
