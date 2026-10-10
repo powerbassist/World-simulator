@@ -347,7 +347,9 @@ is a decoration.
 
 ### E1 + E1b — the two-part selector, because the band it was designed with was one-sided
 
-`EVENT_COOLDOWN_MONTHS` is the session's **only** tuned constant.
+`EVENT_COOLDOWN_MONTHS` was the V1.8 session's **only** tuned constant. V4.4 deleted it
+with the single slot it governed; its dial is now `CATEGORY_QUIET_MONTHS`, swept in §6.
+The record below is V1.8's, kept because the E1b clause it found still binds.
 
 Clause (i), cadence, between 2 and 6 events per five-year term in the median reachable
 regime, **passed every candidate from 3 to 20**. That is the one-sided-band failure

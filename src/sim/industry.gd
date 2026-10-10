@@ -23,7 +23,8 @@ extends RefCounted
 ## `subsidy_shadow`, `subsidy_lapsed_month` (the failure hazard's memory of a
 ## withdrawn subsidy), `board_chair` (the seat dies with the firm at the
 ## failure commit) and `courted` (the courtship dies with it too -- the same
-## commit clears the standing x5 hazard). B2's VERB CHANNEL is the second
+## commit clears the standing x5 hazard), plus V4.4's `failed_month` and
+## `bid_month` (the events hooks' month stamps). B2's VERB CHANNEL is the second
 ## writer of the keys it answers: companies.gd's execute() clears/converts
 ## bids (block/allow), writes `owner` and `board_chair` (appoint_board,
 ## break_up), resets `subsidy_lapsed_month` when support is re-authored (the

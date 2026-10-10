@@ -436,37 +436,54 @@ func _test_the_climate_content() -> void:
 ## Commodities, Orgs, Statute and Industry in `_on_month_elapsed`; the pin in
 ## test_commodities.gd holds only Economy < Commodities < Opinion, so this is
 ## the pin for the Events end. The balance probe mirrors the order and is held
-## to it too.
+## to it too, as are Budget.project() and test_budget's mirror of it -- those
+## two never tick Commodities (the projection prices no goods), so they are held
+## to the three predecessors they do run.
+const _EVENTS_READS_AFTER := {
+	"Commodities": "the commodity_price_high hook reads commodity_state",
+	"Orgs": "the accession_won hook reads ns.last_accession",
+	"Statute": "the member_bill_passed hook reads the assembly_division_month stamp",
+	"Industry": "the takeover_bid and firm_failed hooks read industry registers",
+}
+
 func _test_tick_order_pin() -> void:
-	_check_events_order_in("res://src/ui/main.gd", "main.gd")
-	_check_events_order_in("res://tools/balance_probe.gd", "balance_probe.gd")
+	var all_four := ["Commodities", "Orgs", "Statute", "Industry"]
+	_check_events_order_in("res://src/ui/main.gd", all_four)
+	_check_events_order_in("res://tools/balance_probe.gd", all_four)
+	_check_events_order_in("res://src/sim/budget.gd", ["Orgs", "Statute", "Industry"])
+	_check_events_order_in("res://tests/test_budget.gd", ["Orgs", "Statute", "Industry"])
 
 
-func _check_events_order_in(path: String, label: String) -> void:
+## Line of the first CALL `<module>.tick_month(` -- comment lines skipped, since
+## budget.gd's own comments name Orgs.tick_month() above the loop.
+func _first_call_line(lines: PackedStringArray, module: String) -> int:
+	var needle := module + ".tick_month("
+	for i in lines.size():
+		var code := lines[i].strip_edges()
+		if code.begins_with("#"):
+			continue
+		if code.begins_with(needle):
+			return i
+	return -1
+
+
+func _check_events_order_in(path: String, predecessors: Array) -> void:
 	var src := FileAccess.get_file_as_string(path)
 	if src.is_empty():
 		_fail("could not read %s" % path)
 		return
-	var commodities := src.find("Commodities.tick_month(")
-	var orgs := src.find("Orgs.tick_month(")
-	var statute := src.find("Statute.tick_month(")
-	var industry := src.find("Industry.tick_month(")
-	var events_pos := src.find("Events.tick_month(")
-	if events_pos == -1:
-		_fail("%s is missing Events.tick_month(" % label)
+	var lines := src.split("\n")
+	var events_at := _first_call_line(lines, "Events")
+	if events_at == -1:
+		_fail("%s is missing Events.tick_month(" % path)
 		return
-	if commodities == -1 or orgs == -1 or statute == -1 or industry == -1:
-		_fail("%s missing a tick call Events reads after (Commodities %d, Orgs %d, Statute %d, Industry %d)" % [
-			label, commodities, orgs, statute, industry])
-		return
-	if not (commodities < events_pos):
-		_fail("%s: Events.tick_month (%d) must be after Commodities.tick_month (%d) — the commodity_price_high hook reads commodity_state" % [label, events_pos, commodities])
-	if not (orgs < events_pos):
-		_fail("%s: Events.tick_month (%d) must be after Orgs.tick_month (%d) — the accession_won hook reads ns.last_accession" % [label, events_pos, orgs])
-	if not (statute < events_pos):
-		_fail("%s: Events.tick_month (%d) must be after Statute.tick_month (%d) — the member_bill_passed hook reads the assembly_division_month stamp" % [label, events_pos, statute])
-	if not (industry < events_pos):
-		_fail("%s: Events.tick_month (%d) must be after Industry.tick_month (%d) — the takeover_bid and firm_failed hooks read industry registers" % [label, events_pos, industry])
+	for module: String in predecessors:
+		var at := _first_call_line(lines, module)
+		if at == -1:
+			_fail("%s is missing %s.tick_month( -- Events reads after it" % [path, module])
+		elif at > events_at:
+			_fail("%s: Events.tick_month (line %d) must be after %s.tick_month (line %d) -- %s" % [
+				path, events_at + 1, module, at + 1, _EVENTS_READS_AFTER[module]])
 
 func _finish() -> void:
 	if _failures.is_empty():
