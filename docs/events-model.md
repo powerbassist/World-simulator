@@ -236,8 +236,9 @@ mark exists the moment the occasion is in front of somebody, not when they answe
 
 **The weighted draw is a second pure function**: `Cycle.unit` over (nation,
 category, roster-sorted-ids, month) against cumulative authored weights — same
-inputs, same winner, no stored draw (the absence pins stand). The roster salt keeps
-two categories' streams apart; authored `weight` is content (bounds [0.2, 5.0]),
+inputs, same winner, no stored draw (the absence pins stand). The roster salt re-keys
+the stream whenever the eligible set changes (the category was already in the key);
+authored `weight` is content (bounds [0.2, 5.0]),
 and `LIKELIHOOD_MIN` moved 0.005 → 0.002 at integration: the V1.8 floor was
 calibrated when the book had nine events and per-event PLAYER visibility was the
 point — at 102 events the floor's job is WORLD visibility (0.002 × 29 nations × 168
@@ -457,7 +458,11 @@ Two further corrections to the test itself:
   real choice, because a settlement is **bought**; `regulation_burden` has been signed by
   design since V1.4b.
 
-Final: **0 dominated alternatives, 0 toothless defaults.**
+Final: **0 dominated alternatives, 0 toothless defaults** — the V1.8 six-event book's
+record. The 102-event book measures differently on the same instrument (35 dominated
+non-default pairs, 4 toothless defaults, 2026-10-11): E2/E3 declare their bands but do
+not fail the run, and re-tuning grown content to the V1.8 standard is an author call,
+recorded in [[someday]].
 
 ## 7. The content — six events, eighteen choices
 

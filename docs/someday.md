@@ -92,6 +92,30 @@ current 102, or any lint-clean book that fails to load. **Fix shape:** one
 zero-effect rule at the loader, and the lint's society/company checks lifted to
 the loader's own.
 
+### The desk-diff cannot see a same-tick expiry-and-re-delivery
+
+`_card_events` diffs the desk by event id between BEFORE and AFTER the tick: an id
+still present after skips the "Decided for you" departure card, an id already present
+before skips the arrival card and the unseen mark. An event that expires AND is
+re-delivered in the same tick gets neither. Latent: every hook event and the book's one
+chain target carries `cooldown_months` above its `respond_months` and the cooldown is
+stamped at delivery, so no shipped content can re-deliver a just-expired entry. The
+chain and hook doors also do not check the category quiet that gates the hazard door.
+**Trigger:** the first authored cooldown-0 hook event or chain target (legal per the
+loader today). **Fix shape:** key the diff on the entry (delivery month), not the id,
+or gate the chain/hook doors on a just-resolved-this-tick register.
+
+### The probe's E2/E3 bands are declared but cannot fail the run
+
+`events_probe.gd`'s E2 (legibility) and E3 (dominance — its own comment says "THE KILL
+SWITCH FOR THE CONTENT") print tables and never call `_band_failed`, so the exit
+contract ignores them. On the shipped 102-event book E3 measures 35 dominated
+non-default pairs and 4 toothless defaults against the V1.8 six-event book's recorded
+0 and 0 (events-model §6 now carries both numbers). **Trigger:** the author call on
+re-tuning grown content to the V1.8 standard — wiring the bands before that call would
+make the probe permanently red. **Fix shape:** wire `_band_failed` into E2/E3 at
+whatever thresholds the author accepts, or retire the kill-switch claim.
+
 ## Carried from earlier blocks (pointers, not duplicates)
 
 - **The 25 generated nations' majors are generator-owned** — hand-curating

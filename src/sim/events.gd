@@ -290,9 +290,9 @@ static func _month_of(month_index: int) -> int:
 ## category, sorted eligible roster, month) walked against the cumulative authored
 ## weights -- a pure function like the hazard, so a reload mid-month picks the
 ## same winner. The key carries the SORTED roster of eligible ids, not the
-## category alone: two categories drawing in one month would otherwise walk ONE
-## hash stream and their winners would move together, and a roster that changes as
-## gates open and close is what breaks month-to-month streakiness -- with no
+## category alone (the category is in the key too): what the roster adds is a
+## RE-KEY whenever the eligible set changes as gates open and close, so a
+## category's winners do not ride one stream through a changing book -- with no
 ## stored draw anywhere, which is the pin test_save_load.gd holds.
 static func _weighted_pick(ns, fired: Array, month_index: int):
 	var total := 0.0
@@ -707,8 +707,8 @@ static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool,
 	# every record before V3.5 carried, and a missing figure is an em dash, never "".
 	if region_name != "":
 		record["region_name"] = region_name
-	# A DISPLAY RECORD AND NOT A MEMORY. Nothing in src/sim/ reads this back beyond
-	# the hook dedupe's own month stamps, and tests/test_events.gd asserts the
+	# A DISPLAY RECORD AND NOT A MEMORY. Nothing in src/sim/ reads this back, and
+	# tests/test_events.gd asserts the
 	# ledger property by reading every file in the directory -- V1.3e's *no grievance
 	# ledger* property and V1.3f's own `foreign_acts` check, in the one session most
 	# likely to be tempted to build the ledger literally. What an event remembers

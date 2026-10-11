@@ -681,7 +681,9 @@ func _stage_hook(state, hook: String, month_index: int) -> void:
 			# The emitter's pure one-month lag -- stamped last month, like law_passed.
 			ns.repealed_at["probe_law"] = month_index - 1
 		"member_bill_passed":
-			ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month_index}
+			# passed=true: the hook means PASSED (the pass-9 fix) -- every division
+			# stamps the bill and its month, a defeated or held bill included.
+			ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month_index, "passed": true}
 		"minister_resigned":
 			# The readable window is LAST month's resignation -- the emitters' own
 			# one-month lag -- so the stamp is the absolute month before this one.
