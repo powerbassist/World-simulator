@@ -1343,9 +1343,17 @@ func _test_hooks_fire_on_staged_registers() -> void:
 		_fail("accession_won did not read the accession stamp")
 	ns.last_accession = {}
 
-	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month}
+	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month, "passed": true}
 	if not Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
 		_fail("member_bill_passed did not read the assembly division stamp")
+	# A bill the house defeated, the upper chamber blocked, or the upper chamber
+	# HELD carries the same stamps with passed=false -- none of them is a bill passed.
+	for shape in [{}, {"blocked_by_upper": true}, {"held_by_upper": true}]:
+		var lost: Dictionary = {"assembly_bill": true, "assembly_division_month": month, "passed": false}
+		lost.merge(shape)
+		ns.last_law_result = lost
+		if Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+			_fail("member_bill_passed fired for a division that did not pass (%s)" % [shape])
 	ns.last_law_result = {}
 
 	# And a stale stamp fires nothing: the emitters are month reads, not edges.

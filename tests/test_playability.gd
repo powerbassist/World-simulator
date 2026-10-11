@@ -147,6 +147,12 @@ func _check_interrupt_card_x_keeps_the_clock() -> void:
 	Events.announce(ns, interrupt_ev, month, regions)
 	if not _main._decision_holds_clock():
 		_fail("an interrupt event on the desk did not hold the clock")
+	# And the pause menu's own close path honours the hold: Resume over a save
+	# loaded through the menu must not restore a snapshot that predates it.
+	_main._open_pause_menu()
+	_main._close_pause_menu()
+	if not clock.paused:
+		_fail("closing the pause menu released a clock an interrupt on the desk holds")
 	ns.event_queue.clear()
 
 	_main._state.player().event_queue.clear()

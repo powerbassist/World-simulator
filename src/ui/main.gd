@@ -1016,7 +1016,10 @@ func _open_pause_menu() -> void:
 func _close_pause_menu() -> void:
 	_set_pause_menu_visible(false)
 	_settings_panel.hide()
-	_clock.paused = _paused_before_menu
+	# The snapshot was taken at menu-open; a save loaded THROUGH the menu since
+	# then may have re-raised an interrupt or a term-start hold the snapshot never
+	# saw, so Resume can restore a running clock but never one past a hold.
+	_clock.paused = _paused_before_menu or _paused_for_programme or _decision_holds_clock()
 	_update_top_bar()
 
 

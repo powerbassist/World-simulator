@@ -365,8 +365,14 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 					return true
 			return false
 		"member_bill_passed":
+			# `passed` is part of the name: every division stamps assembly_bill and
+			# its month, a defeated, blocked or HELD bill included (a held bill's
+			# division carries passed=false; its release writes a fresh passed=true
+			# result), so the stamp alone fired this hook for a bill the house had
+			# just killed.
 			var result: Dictionary = ns.last_law_result
 			return bool(result.get("assembly_bill", false)) \
+				and bool(result.get("passed", false)) \
 				and int(result.get("assembly_division_month", -1)) == month_index
 		"minister_resigned":
 			# Cabinet writes the stamp AFTER this machine's slot in the month
