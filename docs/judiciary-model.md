@@ -99,8 +99,9 @@ precisely for laws with no number the budget produces. **A court does not rule o
 popularity.**
 
 **Budget levers are out** on this file's own rule rather than a new claim: a law with a
-genuine budget effect *is* a budget change, routed through the same `Budget.commit()` the
-budget screen uses, and the size of a tax rate is Parliament's business.
+genuine budget effect *is* a budget change, routed through the same nation-scoped
+`Budget.apply_pending()` writer the budget screen's own `commit()` lands on, and the size
+of a tax rate is Parliament's business.
 
 **`effects.institutional` is out** for two reasons that agree, so neither is doing the
 other's work: it sets an absolute value with no magnitude to take a fraction of, **and a
