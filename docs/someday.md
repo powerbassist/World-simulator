@@ -133,13 +133,29 @@ size-weighted SUM, with the `CHOOSER_*` weights re-swept by `events_probe` E7.
 
 `project()` calls `Events.tick_month(sim, loader)` for all 29 nations per projected
 month; only the player's desk is read back. Measured 2026-10-12: **362 ms for 24
-months x 29 nations**, two projection passes per budget-panel refresh, so ~0.7 s
+months x 29 nations** (328 ms once the hazard loop tests the hash before the
+precondition scan; the rest is hooks and the AI chooser), two projection passes per budget-panel refresh, so ~0.7 s
 added to the panel's recorded ~4.5 s. Not dropped because the AI nations' events move
 their partners' figures, which reach the player's forecast through trade, and
 `tests/test_budget.gd` pins the projection against the real run to 1e-9. **Trigger:**
 the budget panel's projection-cost work (PR-46's finding 6). **Fix shape:** a
 player-only `Events` tick for the projection, with the mirror in `test_budget.gd`
 re-derived and the partner effect measured first.
+
+### The AI nations' unrest and deficit registers never tick
+
+`Unrest.tick_month` skips nations without `has_budget` and `Budget.tick_month`
+recomputes only the player, so for the AI nations `unrest_pct` stays at its start
+value (0.0) and `deficit_pct_gdp` moves only when an event's own fiscal effect
+recomputes it. Consequences for the events machine: the chooser's unrest term
+(`CHOOSER_UNREST_FLOOR`) cannot fire for them, unrest-gated events never open for
+them, and deficit-gated ones read starting data — so an AI nation's event frequency
+and choices are set by its authored start rather than by anything it did. The
+"deficit-running government in unrest prefers the concession" behaviour is therefore
+a player-and-budgeted-nations property. **Trigger:** AI nations getting a budget
+tick (a later AI-economy block) — the chooser then reads live figures with no edit.
+**Fix shape:** none in the events machine; state the bound where the chooser is
+described.
 
 ### Same-month category collisions favour the early alphabet
 

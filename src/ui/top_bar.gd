@@ -170,13 +170,11 @@ func _spacer() -> Control:
 ## by severity. The names are events_constants' own register (1 minor, 2 major,
 ## 3 critical), not new copy.
 func _desk_tooltip(worst: int, by_severity: Dictionary) -> String:
-	if worst >= 3:
-		return "Severity 3 — critical on the desk"
 	var parts: Array[String] = []
-	for severity in [2, 1]:
+	for severity in [3, 2, 1]:
 		var count := int(by_severity.get(severity, 0))
 		if count > 0:
-			parts.append("%d %s" % [count, "major" if severity == 2 else "minor"])
+			parts.append("%d %s" % [count, ["minor", "major", "critical"][severity - 1]])
 	return " · ".join(parts) if not parts.is_empty() else "On the desk."
 
 

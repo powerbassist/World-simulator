@@ -159,9 +159,16 @@ func _check_interrupt_card_x_keeps_the_clock() -> void:
 	# And the pause menu's own close path honours the hold: Resume over a save
 	# loaded through the menu must not restore a snapshot that predates it.
 	_main._open_pause_menu()
+	_main._note_holds_for_pause_menu()
 	_main._close_pause_menu()
 	if not clock.paused:
-		_fail("closing the pause menu released a clock an interrupt on the desk holds")
+		_fail("closing the pause menu released a clock an interrupt on the desk holds after a load")
+	# And without a load the snapshot rules: a player who unpaused by hand keeps it.
+	clock.paused = false
+	_main._open_pause_menu()
+	_main._close_pause_menu()
+	if clock.paused:
+		_fail("the pause menu's Resume re-paused a clock the player had running")
 	ns.event_queue.clear()
 
 	_main._state.player().event_queue.clear()

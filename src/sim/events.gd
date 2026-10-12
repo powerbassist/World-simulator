@@ -144,6 +144,12 @@ static func pending_event(ns, loader):
 ## already decided), then armed chains (a consequence arrives before the calendar
 ## gets a say), then hooks (the world's happenings), then the hazard draws.
 static func tick_month(state, loader) -> void:
+	# A state with no player has no desk to deliver to, and the player/AI split
+	# below keys on the player's id: without this every nation of a hand-built
+	# fixture would read as AI and resolve its events on the spot (V1.8 returned
+	# on a null player here).
+	if state.player() == null:
+		return
 	var month_index := _absolute_month(int(state.year), int(state.month))
 	for nation_id in state.nations:
 		var ns = state.nations[nation_id]
@@ -204,13 +210,18 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 	for ev in loader.events:
 		if ev.on_action != "":
 			continue
-		if not _gates_pass(ns, ev, month_index):
-			continue
-		if not _cooldown_ok(ns, ev, month_index):
-			continue
+		# Cheapest test first: the hash and two dictionary reads reject nearly every
+		# event every month, so the precondition scan only runs for the few that
+		# drew. All four tests are pure and independent, so the order moves cost
+		# and not results -- and the 29-nation tick sits inside Budget.project()'s
+		# 24-month loop, where that cost is paid twice per budget-panel refresh.
 		if int(ns.event_category_quiet.get(ev.category, 0)) > 0:
 			continue
 		if not hazard_passes(ns.id, ev.id, _year_of(month_index), _month_of(month_index), float(ev.likelihood)):
+			continue
+		if not _cooldown_ok(ns, ev, month_index):
+			continue
+		if not _gates_pass(ns, ev, month_index):
 			continue
 		if not fired_by_category.has(ev.category):
 			fired_by_category[ev.category] = []

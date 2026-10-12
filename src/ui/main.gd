@@ -1016,10 +1016,10 @@ func _open_pause_menu() -> void:
 func _close_pause_menu() -> void:
 	_set_pause_menu_visible(false)
 	_settings_panel.hide()
-	# The snapshot was taken at menu-open; a save loaded THROUGH the menu since
-	# then may have re-raised an interrupt or a term-start hold the snapshot never
-	# saw, so Resume can restore a running clock but never one past a hold.
-	_clock.paused = _paused_before_menu or _paused_for_programme or _decision_holds_clock()
+	# Resume restores the clock the player had; a save loaded THROUGH the menu
+	# folds its re-raised holds into the snapshot (_note_holds_for_pause_menu),
+	# so a player who unpaused by hand over a pending interrupt keeps that choice.
+	_clock.paused = _paused_before_menu
 	_update_top_bar()
 
 
@@ -2093,6 +2093,15 @@ func _resume_if_decision_settled() -> void:
 	_hud.clock_cluster.refresh(_clock)
 
 
+## A load through the pause menu re-raises its holds AFTER the menu took its
+## "was the clock running" snapshot, and closing the menu would restore that stale
+## snapshot over them. Folding the holds in here -- the one place that knows a
+## load just happened -- keeps _close_pause_menu a plain restore.
+func _note_holds_for_pause_menu() -> void:
+	if _paused_for_programme or _decision_holds_clock():
+		_paused_before_menu = true
+
+
 ## Whether an event still owns the clock: an unseen arrival, or an interrupt on the
 ## desk. The programme pause and the election dismissal consult this before they
 ## release the clock, so choosing a programme cannot run time out from under a
@@ -2459,6 +2468,7 @@ func _on_load_requested(slot: String) -> void:
 	# V4.1. A save made at an unchosen term start is still one: the same
 	# reload-re-raise reasoning _enforce_interrupt() carries, one register over.
 	_enforce_term_start_programme()
+	_note_holds_for_pause_menu()
 
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()
@@ -2486,6 +2496,11 @@ func _enforce_interrupt() -> void:
 	if not Events.interrupt_pending(ns):
 		return
 	_clock.paused = true
+	# The interrupt pause IS a decision pause: raising the flag here (the load
+	# path and a month's re-pause both reach this) is what lets the answer's
+	# _resume_if_decision_settled() release it; without it a re-raised interrupt
+	# stayed paused after being answered.
+	_paused_for_decision = true
 	if _events_panel != null:
 		_windows.open("events")
 	_hud.clock_cluster.refresh(_clock)

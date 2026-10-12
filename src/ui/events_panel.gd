@@ -212,7 +212,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	PanelKit.line(_body, title, PanelKit.Tone.PLAIN)
 
 	var tag := Label.new()
-	tag.text = "%s — severity %d/%d" % [ev.category, int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
+	tag.text = "%s — severity %d/%d" % [String(ev.category).capitalize(), int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
 	tag.theme_type_variation = UiTheme.MICRO
 	_body.add_child(tag)
 
