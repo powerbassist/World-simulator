@@ -116,6 +116,40 @@ re-tuning grown content to the V1.8 standard — wiring the bands before that ca
 make the probe permanently red. **Fix shape:** wire `_band_failed` into E2/E3 at
 whatever thresholds the author accepts, or retire the kill-switch claim.
 
+### The AI chooser's bloc term averages over the NAMED blocs only
+
+`_score_choice` divides the size-weighted bloc offset by the weight of the blocs a
+choice names, so `rural -0.08` scores -0.08 while `-0.05` on all six blocs scores
+-0.05, though by electorate share the second costs four times more. Measured on the
+book (python, bloc term alone, 307 choices, 197 of them naming fewer than six blocs):
+the argmax differs in **1 of 102 events**, so the AI's picks are nearly unmoved.
+Changing the divisor to the total `BLOC_SIZE` shrinks the term's scale against the
+fiscal, cleanliness and unrest terms, so it re-tunes the `CHOOSER_*` weights and
+moves 28 nations' trajectories. **Trigger:** a tuning pass on the chooser, or an
+authored event where narrow-versus-broad is the whole decision. **Fix shape:** the
+size-weighted SUM, with the `CHOOSER_*` weights re-swept by `events_probe` E7.
+
+### `Budget.project()` ticks every nation's events
+
+`project()` calls `Events.tick_month(sim, loader)` for all 29 nations per projected
+month; only the player's desk is read back. Measured 2026-10-12: **362 ms for 24
+months x 29 nations**, two projection passes per budget-panel refresh, so ~0.7 s
+added to the panel's recorded ~4.5 s. Not dropped because the AI nations' events move
+their partners' figures, which reach the player's forecast through trade, and
+`tests/test_budget.gd` pins the projection against the real run to 1e-9. **Trigger:**
+the budget panel's projection-cost work (PR-46's finding 6). **Fix shape:** a
+player-only `Events` tick for the projection, with the mirror in `test_budget.gd`
+re-derived and the partner effect measured first.
+
+### Same-month category collisions favour the early alphabet
+
+The pulsing categories deliver in sorted-name order and the loop stops at a full
+desk, so on a nearly-full desk `disaster` beats `unrest` every time. A fixed bias,
+swept into E5's spread (all <= 18.9 % against 30) rather than introduced after it.
+**Trigger:** a category whose measured share runs below its authored weight, or
+QUEUE_MAX shrinking. **Fix shape:** rotate the order by the month or choose among the
+pulsing categories by their authored weight.
+
 ## Carried from earlier blocks (pointers, not duplicates)
 
 - **The 25 generated nations' majors are generator-owned** — hand-curating

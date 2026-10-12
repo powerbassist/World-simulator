@@ -224,9 +224,10 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 			# only spares the draw and the weighted pick when the desk is
 			# already full. A draw that does not fit is skipped, not banked: the
 			# hazard is a function of the month, so next month is a fresh draw
-			# rather than a backlog -- the V1.8 argument for why content order
-			# could decide same-month collisions, restated where the queue made
-			# it matter.
+			# rather than a backlog. WHICH category loses a same-month collision
+			# is the sorted-name order above, not content order: alphabetically
+			# later categories lose first, a fixed bias only a nearly-full desk
+			# exposes (recorded in docs/someday.md; E5's spread was swept with it).
 			break
 		var winner = _weighted_pick(ns, fired_by_category[category], month_index)
 		if winner != null:
@@ -553,16 +554,23 @@ static func announce(ns, ev, month_index: int, region_by_id: Dictionary) -> void
 	_order_queue(ns)
 
 
-## Worst first, and within one severity in arrival order. In place on a small
-## array: the desk is bounded by QUEUE_MAX so this is a sort of at most four.
+## Worst first, and within one severity in arrival order. A hand insertion sort
+## and not sort_custom: Godot documents sort_custom as UNSTABLE, so equal
+## severities were ordered only by the accident that a four-entry array takes the
+## engine's insertion path -- and which entry is head_entry() depends on it. The
+## desk is bounded by QUEUE_MAX, so the quadratic walk costs nothing.
 static func _order_queue(ns) -> void:
 	if ns.event_queue.size() < 2:
 		return
-	ns.event_queue.sort_custom(func(a, b) -> bool:
-		if int(a.get("severity", 1)) != int(b.get("severity", 1)):
-			return int(a.get("severity", 1)) > int(b.get("severity", 1))
-		return false
-	)
+	var ordered: Array = []
+	for entry in ns.event_queue:
+		var at := ordered.size()
+		while at > 0 and int(ordered[at - 1].get("severity", 1)) < int(entry.get("severity", 1)):
+			at -= 1
+		ordered.insert(at, entry)
+	ns.event_queue.clear()
+	for entry in ordered:
+		ns.event_queue.append(entry)
 
 
 # --- The verbs ---------------------------------------------------------------------

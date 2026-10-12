@@ -2438,16 +2438,19 @@ static func from_dict(d: Dictionary):
 	for row in d.get("event_queue", []):
 		if typeof(row) == TYPE_DICTIONARY:
 			s.event_queue.append(row)
-	s.event_fired = d.get("event_fired", {})
-	s.event_category_quiet = d.get("event_category_quiet", {})
-	s.event_cooldowns = d.get("event_cooldowns", {})
+	# Registers are copied, not aliased: two states built from one payload (the
+	# commodity register's from_dict aliasing hazard) would otherwise share them,
+	# and a tick on one would stamp the other's cooldowns and quiet.
+	s.event_fired = d.get("event_fired", {}).duplicate(true)
+	s.event_category_quiet = d.get("event_category_quiet", {}).duplicate(true)
+	s.event_cooldowns = d.get("event_cooldowns", {}).duplicate(true)
 	s.event_armed.clear()
 	for row in d.get("event_armed", []):
 		if typeof(row) == TYPE_DICTIONARY:
 			s.event_armed.append(row)
-	s.event_hook_fired = d.get("event_hook_fired", {})
-	s.repealed_at = d.get("repealed_at", {})
-	s.last_accession = d.get("last_accession", {})
+	s.event_hook_fired = d.get("event_hook_fired", {}).duplicate(true)
+	s.repealed_at = d.get("repealed_at", {}).duplicate(true)
+	s.last_accession = d.get("last_accession", {}).duplicate(true)
 	s.event_history.clear()
 	for row in d.get("event_history", []):
 		if typeof(row) == TYPE_DICTIONARY:

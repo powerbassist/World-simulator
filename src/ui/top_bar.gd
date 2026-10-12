@@ -123,6 +123,17 @@ func _build_figure(key: String, title: String, tip := "") -> Control:
 	return box
 
 
+## The desk figure's caption and value are two hover targets for one reading, so
+## the live tooltip goes on both -- _build_figure gives the caption a static tip,
+## and left alone it would keep saying nothing about severity while the number
+## beside it named the worst one.
+func _set_desk_tip(text: String) -> void:
+	var value: Control = _figure_values["desk"]
+	value.tooltip_text = text
+	var caption: Control = value.get_parent().get_child(0)
+	caption.tooltip_text = text
+
+
 ## V4.1. The chosen programme's name and its nearest-deadline entry's progress,
 ## as a fifth figure -- the deadline the strip already carries one of (the vote)
 ## now has the thing that is supposed to land before it. Hidden while nothing
@@ -224,7 +235,7 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		# Em dash, not "0 pending": the state is "nothing pending" and a confident
 		# zero here would be V1.6d's lie in the strip's own handwriting.
 		_figure_values["desk"].text = "— clear"
-		_figure_values["desk"].tooltip_text = "Nothing awaits an answer."
+		_set_desk_tip("Nothing awaits an answer.")
 	else:
 		var worst := 0
 		var by_severity := {}
@@ -233,7 +244,7 @@ func refresh(state, _clock: Node, loader = null) -> void:
 			worst = maxi(worst, severity)
 			by_severity[severity] = int(by_severity.get(severity, 0)) + 1
 		_figure_values["desk"].text = "%d pending" % desk.size()
-		_figure_values["desk"].tooltip_text = _desk_tooltip(worst, by_severity)
+		_set_desk_tip(_desk_tooltip(worst, by_severity))
 
 	# V4.1. Derived off the same read the Agenda window draws -- the panel and
 	# the strip cannot print two answers to one progress question.

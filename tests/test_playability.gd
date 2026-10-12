@@ -102,6 +102,15 @@ func _check_interrupt_card_x_keeps_the_clock() -> void:
 		_main._hud.message_stack.dismiss(card_id)
 		if not clock.paused or ns.event_queue.is_empty():
 			_fail("X dismissal released clock or removed interrupt still on desk")
+		# And the ANSWER must still let the clock go: the X dropped the card, not
+		# the interrupt, so the arrival flag has to survive it or no later answer
+		# has a pause left to release (pass 12's find).
+		var answered: Dictionary = Events.answer(_main._state, _main._loader, String(interrupt_ev.id), String(interrupt_ev.choices[0]["id"]))
+		if answered.is_empty():
+			_fail("could not answer the interrupt after its card was dismissed")
+		_main._resume_if_decision_settled()
+		if clock.paused:
+			_fail("answering an interrupt whose card was X-closed left the clock paused")
 
 	ns.event_queue.clear()
 	_main._unseen_events.clear()

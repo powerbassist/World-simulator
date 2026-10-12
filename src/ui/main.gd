@@ -2074,13 +2074,21 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 ## unseen set ends THIS pause, not every pause: an interrupt-flagged event still
 ## on the desk (its card's X must not release a clock the flag holds "until
 ## answered") and an unchosen term-start programme each own the clock
-## independently, so the arrival flag drops but the clock stays down.
+## independently, so the clock stays down. The two differ in who releases it:
+## the programme's own choice does (_on_programme_chosen), so the arrival flag
+## drops; an interrupt has no release of its own but the answer, so the flag
+## STAYS up and the answer's call to this function is what lets the clock go --
+## dropping it on an X would strand the clock after the later Dispatches answer.
 func _resume_if_decision_settled() -> void:
 	if not _paused_for_decision or not _unseen_events.is_empty():
 		return
-	_paused_for_decision = false
-	if _paused_for_programme or _decision_holds_clock():
+	if _paused_for_programme:
+		_paused_for_decision = false
 		return
+	var ns = _state.player() if _state != null else null
+	if ns != null and Events.interrupt_pending(ns):
+		return
+	_paused_for_decision = false
 	_clock.paused = false
 	_hud.clock_cluster.refresh(_clock)
 
