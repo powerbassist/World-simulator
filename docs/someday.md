@@ -157,6 +157,30 @@ tick (a later AI-economy block) — the chooser then reads live figures with no 
 **Fix shape:** none in the events machine; state the bound where the chooser is
 described.
 
+### The projection prices no goods, and `law_passed` has no consumer
+
+`Budget.project()` ticks Events but not Commodities, so the `commodity_price_high` hook
+reads a frozen price vector inside the forecast: if prices sit at or above 1.25x base
+when the panel opens the hook looks true in every projected month, and a shortage that
+develops in the window never appears. `test_budget`'s 1e-9 projection-equals-reality
+check cannot see it because its mirror omits Commodities too. **Trigger:** the budget
+panel's projection work, or a commodity event that moves the deficit. **Fix shape:**
+tick Commodities in `project()` and in the mirror together.
+
+The `law_passed` hook reads `ns.law_ledger`, which records only laws that moved a
+ledgered register by a non-zero amount and ignores the institutional channel, so a
+constitutional amendment or electoral-reform Act never stamps a month; and no shipped
+event uses `law_passed` (7 of 8 vocabulary entries have a consumer). **Trigger:** the
+first authored `law_passed` event. **Fix shape:** stamp passage in `Legislature.apply`
+itself rather than reading it back off the ledger.
+
+### Flavour text that assumes the Union
+
+`river_flood` mentions "the Union's solidarity fund" and reads oddly for a non-member
+player; it is not gated (a flood is a flood) and the copy would need a membership-aware
+variant. **Trigger:** the first non-EU playthrough note. **Fix shape:** drop the clause
+or split the summary.
+
 ### Same-month category collisions favour the early alphabet
 
 The pulsing categories deliver in sorted-name order and the loop stops at a full

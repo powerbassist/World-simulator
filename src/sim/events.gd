@@ -464,26 +464,27 @@ static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -
 	# semantics; nothing is banked.
 	if is_player and ns.event_queue.size() >= K.QUEUE_MAX:
 		return false
-	# Written BEFORE the desk's dedupe skip rather than after it: a skipped
-	# duplicate arrives with the same month_index, and every write below is a
-	# function of that month, so the second write is the first write.
+	# The same occasion twice is not two occasions: a draw landing while the
+	# desk still holds its event (a long deadline outliving the category
+	# quiet) adds nothing -- the entry already on the desk IS the event's
+	# presence. Skipped rather than merged: two entries with one id would
+	# answer twice through two cards, which is the deadline charging double.
+	# Checked HERE and not inside announce() so announce stays the raw
+	# primitive the test sweep and the screenshot harness drive month by
+	# month -- they mean "put this in front of me", not "run the desk". BEFORE
+	# the marks: a duplicate that arrives in a LATER month than the first
+	# delivery would otherwise re-stamp the cooldown and the category quiet for
+	# an occasion the player was never shown a second time.
+	if is_player:
+		for entry in ns.event_queue:
+			if String(entry.get("event_id", "")) == ev.id:
+				return true
 	ns.event_category_quiet[ev.category] = K.CATEGORY_QUIET_MONTHS
 	if ev.cooldown_months > 0:
 		ns.event_cooldowns[ev.id] = month_index + int(ev.cooldown_months)
 	if ev.once:
 		ns.event_fired[ev.id] = true
 	if is_player:
-		# The same occasion twice is not two occasions: a draw landing while the
-		# desk still holds its event (a long deadline outliving the category
-		# quiet) adds nothing -- the entry already on the desk IS the event's
-		# presence. Skipped rather than merged: two entries with one id would
-		# answer twice through two cards, which is the deadline charging double.
-		# Checked HERE and not inside announce() so announce stays the raw
-		# primitive the test sweep and the screenshot harness drive month by
-		# month -- they mean "put this in front of me", not "run the desk".
-		for entry in ns.event_queue:
-			if String(entry.get("event_id", "")) == ev.id:
-				return true
 		announce(
 			ns, ev, month_index,
 			region_names(ns, loader)

@@ -143,6 +143,13 @@
     },
     {
       "id": "state_aid_complaint",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The complaint",
       "summary": "A rival government has filed a state-aid complaint against the battery plant's package, and the file reads like an indictment of the incentive regime every capital is running.",
       "likelihood": 0.0032,
@@ -203,6 +210,13 @@
     },
     {
       "id": "dumping_allegation",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The dumping file",
       "summary": "The steel importers' association has assembled a dumping file four hundred pages long and the federation has read all of it aloud. The prices in it are real; so is the shelf price at home.",
       "likelihood": 0.003,

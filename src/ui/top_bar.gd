@@ -169,7 +169,7 @@ func _spacer() -> Control:
 ## line a president must not have to decode -- and any other desk reads as a count
 ## by severity. The names are events_constants' own register (1 minor, 2 major,
 ## 3 critical), not new copy.
-func _desk_tooltip(worst: int, by_severity: Dictionary) -> String:
+func _desk_tooltip(by_severity: Dictionary) -> String:
 	var parts: Array[String] = []
 	for severity in [3, 2, 1]:
 		var count := int(by_severity.get(severity, 0))
@@ -235,14 +235,12 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		_figure_values["desk"].text = "— clear"
 		_set_desk_tip("Nothing awaits an answer.")
 	else:
-		var worst := 0
 		var by_severity := {}
 		for entry in desk:
 			var severity := int(entry.get("severity", 1))
-			worst = maxi(worst, severity)
 			by_severity[severity] = int(by_severity.get(severity, 0)) + 1
 		_figure_values["desk"].text = "%d pending" % desk.size()
-		_set_desk_tip(_desk_tooltip(worst, by_severity))
+		_set_desk_tip(_desk_tooltip(by_severity))
 
 	# V4.1. Derived off the same read the Agenda window draws -- the panel and
 	# the strip cannot print two answers to one progress question.

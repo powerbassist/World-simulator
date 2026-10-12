@@ -139,6 +139,7 @@ func _init() -> void:
 	_test_a_non_sited_register_gains_no_keys()
 	_test_the_climate_content()
 	_test_every_nation_can_be_sited()
+	_test_the_union_book_needs_membership()
 	_finish()
 
 
@@ -497,6 +498,38 @@ func _finish() -> void:
 
 func _fail(msg: String) -> void:
 	_failures.append(msg)
+
+
+## The Union's letters are addressed to members. GBR and CHE are playable and sit
+## outside the Union, and an ungated Commission letter dealt a non-member player
+## "the vote is this month" over a treaty they never signed (the pass-14 find).
+## `eu_member` is a live 0/1 read off ns.orgs, so this pins both directions: the
+## gate closes for a nation with no `eu` org and opens again on accession.
+func _test_the_union_book_needs_membership() -> void:
+	var gated := ["eu_infringement_notice", "eu_quota_fight", "eu_summit_ambush",
+		"eu_eastern_partner_row", "eu_rule_of_law_clause", "eu_farm_rules_fight",
+		"eu_border_checks_row", "eu_eurozone_plea", "eu_backbench_bill",
+		"for_neighbour_checks", "state_aid_complaint", "dumping_allegation"]
+	var state = _new_state()
+	var ns = state.player()
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	var saved_orgs: Array = ns.orgs.duplicate()
+	for id in gated:
+		var ev = _event(id)
+		if ev == null:
+			_fail("the membership-gated fixture '%s' is not in the book" % id)
+			continue
+		ns.orgs = []
+		if Events._gates_pass(ns, ev, month):
+			_fail("%s passed its gates for a nation outside the Union" % id)
+		ns.orgs = ["eu"]
+		var passes := Events._gates_pass(ns, ev, month)
+		# A gate that also names a figure (growth, deficit) may fail on the
+		# figure; the membership leg must be the ONLY thing between a member and
+		# an ungated event, so the ungated ones are asserted open.
+		if ev.preconditions.size() == 1 and not passes:
+			_fail("%s is closed to an EU member -- the membership gate is the only gate it names" % id)
+	ns.orgs = saved_orgs
 
 
 func _new_state():

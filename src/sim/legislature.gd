@@ -528,6 +528,7 @@ static func read_field(ns, field: String) -> float:
 		"terms_served": return float(ns.terms_served)
 		"unrest_pct": return ns.unrest_pct
 		"co2e_per_capita_t": return ns.co2e_per_capita_t
+		"eu_member": return 1.0 if ns.orgs.has("eu") else 0.0
 		# V1.5c added the unrest_pct entry and legislature_constants.PRECONDITION_FIELDS in
 		# two separate edits, and the suite caught the gap between them: the whitelist
 		# admits a field and this match decides what it means, so THE LIST EXISTS TWICE

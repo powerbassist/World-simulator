@@ -10,10 +10,16 @@ const BLOC_SIZE := {
 const MEAN_BAND := 0.008
 const BUSINESS_WORST_MAX := 0.30
 
+const EventsK = preload("res://src/sim/events_constants.gd")
+const LegislatureK = preload("res://src/sim/legislature_constants.gd")
+const EconomyK = preload("res://src/sim/economy_constants.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
+
 var _failures: Array[String] = []
 
 
 func _init() -> void:
+	_check_lint_vocabulary()
 	var entries: Array = []
 	var dir := DirAccess.open("res://data/events")
 	if dir == null:
@@ -55,6 +61,45 @@ func _init() -> void:
 		_fail("negative control mutation did not violate either event-content band")
 
 	_finish()
+
+
+## tools/event_lint.py restates the closed vocabularies by hand ("two
+## implementations of one schema"), and a restated list nothing compares drifts
+## the day the source list grows -- `eu_member` was added to the loader's
+## precondition list and the lint would have refused every gated event. Each
+## list is read out of the python file's text and held equal to its source.
+func _check_lint_vocabulary() -> void:
+	var text := FileAccess.get_file_as_string("res://tools/event_lint.py")
+	if text.is_empty():
+		_fail("tools/event_lint.py unreadable")
+		return
+	var pairs := {
+		"CATEGORIES": EventsK.CATEGORIES,
+		"ON_ACTIONS": EventsK.ON_ACTIONS,
+		"PRECONDITION_FIELDS": LegislatureK.PRECONDITION_FIELDS,
+		"PRECONDITION_OPS": LegislatureK.PRECONDITION_OPS,
+		"TAX_KEYS": EconomyK.TAX_KEYS,
+		"SPENDING_KEYS": EconomyK.SPENDING_KEYS,
+		"BLOC_KEYS": OpinionK.BLOC_KEYS,
+	}
+	for name in pairs:
+		var start := text.find("\n%s = [" % name)
+		if start < 0:
+			_fail("event_lint.py no longer defines %s as a list literal" % name)
+			continue
+		var body := text.substr(start, text.find("]", start) - start)
+		var found: Array[String] = []
+		var rx := RegEx.new()
+		rx.compile("\"([a-z_0-9<>=]+)\"")
+		for m in rx.search_all(body):
+			found.append(m.get_string(1))
+		var want: Array[String] = []
+		for item in pairs[name]:
+			want.append(String(item))
+		found.sort()
+		want.sort()
+		if found != want:
+			_fail("event_lint.py %s %s differs from its source list %s" % [name, found, want])
 
 
 func _band_failures(entries: Array) -> Array[String]:

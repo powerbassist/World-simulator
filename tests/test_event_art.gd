@@ -45,6 +45,7 @@ func _init() -> void:
 	_check_plates_on_disk()
 	_check_no_orphans()
 	_check_one_reader()
+	_check_plates_reach_a_surface()
 	_check_assignment_is_stable()
 
 	if _failures.is_empty():
@@ -165,6 +166,41 @@ func _check_one_reader() -> void:
 		var content := FileAccess.get_file_as_string(UI_DIR.path_join(f))
 		if content.contains("assets/event_art"):
 			_fail("%s names the plate directory itself -- plates go through src/ui/event_art.gd, or the assignment rule has a second owner" % f)
+
+
+## The plate has to REACH a surface. Missing art is silent by design, so deleting
+## the call that draws it leaves every other check here green and the cards plain
+## -- the silent-UI-failure class AGENTS.md asks a test for. Pinned at source:
+## both surfaces that show a plate call the helper, and the card stack still turns
+## a texture it is handed into a drawn TextureRect. And tools/event_art.gd's own
+## table, the post-pass's name check, is held equal to the vocabulary it mirrors
+## (its header used to claim a pin this file did not carry).
+func _check_plates_reach_a_surface() -> void:
+	for path in ["res://src/ui/events_panel.gd", "res://src/ui/main.gd"]:
+		if not FileAccess.get_file_as_string(path).contains("EventArt.plate_texture("):
+			_fail("%s no longer asks EventArt for a plate -- the desk or the arrival card draws none" % path)
+	var stack := FileAccess.get_file_as_string("res://src/ui/message_stack.gd")
+	if not stack.contains("art: Texture2D") or not stack.contains("TextureRect"):
+		_fail("message_stack.gd push() no longer turns its art argument into a TextureRect")
+
+	var tool := FileAccess.get_file_as_string("res://tools/event_art.gd")
+	var start := tool.find("const CATEGORIES := [")
+	if start < 0:
+		_fail("tools/event_art.gd no longer defines CATEGORIES as a list literal")
+		return
+	var body := tool.substr(start, tool.find("]", start) - start)
+	var rx := RegEx.new()
+	rx.compile("\"([a-z_]+)\"")
+	var found: Array[String] = []
+	for m in rx.search_all(body):
+		found.append(m.get_string(1))
+	var want: Array[String] = []
+	for category in EventsK.CATEGORIES:
+		want.append(String(category))
+	found.sort()
+	want.sort()
+	if found != want:
+		_fail("tools/event_art.gd CATEGORIES %s differs from events_constants %s" % [found, want])
 
 
 func _check_assignment_is_stable() -> void:

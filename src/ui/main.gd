@@ -2391,6 +2391,11 @@ func _on_load_requested(slot: String) -> void:
 	# the clock past the load and a discarded game's decision card would route
 	# Events.answer against the loaded state (the decision pause beside the
 	# load's own pause below is the third).
+	# The discarded game's decision cards leave the STACK too: clearing only the
+	# map left their answer buttons on screen, looking live and doing nothing
+	# (card_action finds no event for the id and returns silently).
+	for stale_card in _event_cards.keys().duplicate():
+		_hud.message_stack.dismiss(stale_card)
 	_event_cards.clear()
 	_unseen_events.clear()
 	var loaded_ns = _state.player()

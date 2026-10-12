@@ -3,6 +3,13 @@
   "events": [
     {
       "id": "eu_infringement_notice",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The letter from the Commission",
       "summary": "A directive the country signed was transposed late and then badly, and the Commission has opened the file it opens before it takes a government to court. The fix is a bill nobody will thank you for; the fine is a meter that starts the day the court rules.",
       "likelihood": 0.004,
@@ -67,6 +74,13 @@
     },
     {
       "id": "eu_quota_fight",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The quota night",
       "summary": "The Council is in its second morning over a share of something that swims, and the delegation wants instructions before the afternoon session. The fleet is at the quay, the scientists are at the door, and both have the arithmetic on their side.",
       "likelihood": 0.003,
@@ -145,6 +159,11 @@
       "once": false,
       "preconditions": [
         {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        },
+        {
           "field": "growth_annual_pct",
           "op": "<=",
           "value": 0.5
@@ -198,6 +217,13 @@
     },
     {
       "id": "eu_eastern_partner_row",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The eastern partner",
       "summary": "The Union's other engine has decided the migration pact is a budget question and that your agreement to it is optional. Their minister says so in your language, in your press, the day before the call.",
       "likelihood": 0.003,
@@ -258,6 +284,13 @@
     },
     {
       "id": "eu_rule_of_law_clause",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The condition they added",
       "summary": "The fund's renewal came back from the Parliament with a rule-of-law clause welded to every payment. Your courts pass; the members who wrote the clause have read your last two judicial appointments and would like the next two read to them.",
       "likelihood": 0.0024,
@@ -322,6 +355,13 @@
     },
     {
       "id": "eu_farm_rules_fight",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The crop-spray file",
       "summary": "The Commission's proposal withdraws the ingredient a quarter of the orchards spray against, and the farm unions have parked tractors in three capitals to say so. The science is on one side, the photographs are on the other, and the vote is this month.",
       "likelihood": 0.003,
@@ -385,6 +425,13 @@
     },
     {
       "id": "eu_border_checks_row",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The crossing that takes an hour",
       "summary": "The member upstream has put patrols back on a border the treaties emptied, and the evening news has found the queue. Their minister calls the checks technical, in their ninth month, and your hauliers have stopped finding it funny.",
       "likelihood": 0.003,
@@ -455,6 +502,11 @@
       "respond_months": 5,
       "once": false,
       "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        },
         {
           "field": "deficit_pct_gdp",
           "op": ">=",
@@ -575,6 +627,13 @@
     },
     {
       "id": "eu_backbench_bill",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The bill that met the treaty",
       "summary": "The assembly passed a backbench bill on Friday and the Commission's letter arrived on Monday: the measure the house liked collides with something the country signed. The court can be asked and the assembly can be defied, and both are now yours.",
       "on_action": "member_bill_passed",

@@ -96,7 +96,7 @@ SOCIETY_TERMS = ["corruption", "migration", "settlement", "press_freedom",
 PRECONDITION_FIELDS = [
     "debt_to_gdp_pct", "unemployment_pct", "deficit_pct_gdp",
     "overall_approval_pct", "growth_annual_pct", "terms_served",
-    "unrest_pct", "co2e_per_capita_t",
+    "unrest_pct", "co2e_per_capita_t", "eu_member",
 ]
 PRECONDITION_OPS = ["<", "<=", ">", ">=", "=="]
 EVENT_PRECONDITION_REFUSED = ["overall_approval_pct"]
@@ -359,6 +359,8 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
     # list; only an event that NAMES a subject or a GATE can collide -- a
     # pure-hazard crisis about nobody is a shape the content owns, and two such
     # events are separated by id, body, likelihood, once-ness and the hash.
+    # Membership is a scope, not a trigger (the loader skips `eu_member` here too).
+    preconds = [p for p in preconds if not (isinstance(p, dict) and p.get("field") == "eu_member")]
     if ev.get("subject_office") or preconds:
         # The value float-formats and only numeric conds enter the key, the loader's
         # own shape (law.gd extract_preconditions stores `float(value)` and `continue`s

@@ -120,6 +120,13 @@
     },
     {
       "id": "for_neighbour_checks",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
       "name": "The queue at the crossing",
       "summary": "The partner has put patrols back on a border your side has not staffed since the treaties, and the town that lives on day-trippers has lost a season in a fortnight. Their minister calls it technical; your shopkeepers have stopped using the word.",
       "likelihood": 0.003,

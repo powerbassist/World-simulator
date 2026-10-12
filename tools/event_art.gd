@@ -35,7 +35,9 @@ const OUT_DIR := "res://assets/event_art"
 
 ## The plate table, mirrored for name-checking -- tools/event_art_generate.py
 ## owns the prompts, src/ui/event_art.gd owns the display read, and
-## tests/test_event_art.gd pins the three lists equal. A category added to the
+## tests/test_event_art.gd pins the generator's list to the display helper's and
+## this table's CATEGORIES to events_constants (BANDS and VARIANTS are mirrored by
+## eye -- the post-pass dies loudly on a stale one). A category added to the
 ## generator without this table dies here at the post-pass, loudly.
 const CATEGORIES := ["scandal", "fiscal", "unrest", "personal", "european",
                      "foreign", "industrial", "commodity", "disaster"]

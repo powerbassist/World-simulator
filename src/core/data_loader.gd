@@ -2481,6 +2481,11 @@ func _load_events(events_dir: String) -> void:
 
 			var fields: Array[String] = []
 			for cond in ev.preconditions:
+				# Membership is a SCOPE and not a trigger: every Commission letter
+				# carries `eu_member == 1`, and counting it would make two
+				# otherwise-ungated EU events "one event authored twice".
+				if cond["field"] == "eu_member":
+					continue
 				fields.append("%s%s%s" % [cond["field"], cond["op"], str(cond["value"])])
 			fields.sort()
 			# V3.5f: A GATE IS WHAT AN EVENT NAMES. This check's target is the gate
@@ -2495,7 +2500,7 @@ func _load_events(events_dir: String) -> void:
 			# deciding only which of two same-month draws goes first --
 			# src/sim/events.gd's own comment. The check keeps its full strength for
 			# every event that names a subject or a gate.
-			if ev.has_subject() or not ev.preconditions.is_empty():
+			if ev.has_subject() or not fields.is_empty():
 				var gate := "%s|%s" % [ev.subject_office, ",".join(fields)]
 				if gates.has(gate):
 					errors.append("%s: '%s' has the same subject and the same gate as '%s' -- two events that can only ever fire in the same months are one event authored twice, and the second fires only where the first did not" % [
