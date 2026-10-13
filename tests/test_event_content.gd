@@ -143,19 +143,22 @@ func _band_failures(entries: Array) -> Array[String]:
 			if offset.is_empty():
 				continue
 			var mean := 0.0
-			var worst_bloc := ""
-			var worst_value := INF
+			# STRICT: business's offset must sit below EVERY other named bloc's.
+			# A running minimum credited a tie to whichever bloc iterated first,
+			# so equal hurt to business and workers counted by dictionary order.
+			# tools/event_lint.py carries the identical rule.
+			var business_strictly_worst := offset.has("business")
 			for bloc in offset:
 				var value := float(offset[bloc])
 				if OpinionK.BLOC_SIZE.has(bloc):
 					mean += float(OpinionK.BLOC_SIZE[bloc]) * value
-				if value < worst_value:
-					worst_value = value
-					worst_bloc = String(bloc)
+				if String(bloc) != "business" and offset.has("business") \
+						and float(offset["business"]) >= value:
+					business_strictly_worst = false
 			if absf(mean) > MEAN_BAND:
 				failures.append("%s: %s.%s size-weighted mean %+.4f outside +-%.3f"
 						% [fname, event_id, choice_id, mean, MEAN_BAND])
-			if worst_bloc == "business":
+			if business_strictly_worst:
 				business_worst += 1
 			choice_total += 1
 	if choice_total > 0:

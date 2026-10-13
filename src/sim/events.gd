@@ -72,6 +72,7 @@ const K = preload("res://src/sim/events_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const OrgsK = preload("res://src/sim/orgs_constants.gd")
 
 
 ## Runs for every nation so the register shape is uniform and duplicate_state()
@@ -119,6 +120,15 @@ static func pending_event_name(ns) -> String:
 static func interrupt_pending(ns) -> bool:
 	for entry in ns.event_queue:
 		if bool(entry.get("interrupt", false)):
+			return true
+	return false
+
+
+## Whether the player's desk already holds this event. One reader for the hazard
+## pool's skip and _deliver's dedupe, so the two cannot disagree about "present".
+static func _on_desk(ns, event_id: String) -> bool:
+	for entry in ns.event_queue:
+		if String(entry.get("event_id", "")) == event_id:
 			return true
 	return false
 
@@ -216,6 +226,12 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 		# and not results -- and the 29-nation tick sits inside Budget.project()'s
 		# 24-month loop, where that cost is paid twice per budget-panel refresh.
 		if int(ns.event_category_quiet.get(ev.category, 0)) > 0:
+			continue
+		# An event already on the PLAYER's desk cannot be delivered again (_deliver
+		# drops the duplicate), but if it entered the pool it could still win its
+		# category's single weighted slot and crowd out a sibling that would have
+		# landed. AI nations have no desk, so the skip is the player's alone.
+		if is_player and _on_desk(ns, ev.id):
 			continue
 		if not hazard_passes(ns.id, ev.id, _year_of(month_index), _month_of(month_index), float(ev.likelihood)):
 			continue
@@ -426,7 +442,7 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 			# a card about the wrong institution -- so the org is tested HERE, at
 			# the emitter, rather than widening the hook vocabulary with a
 			# parameter nothing else needs.
-			return String(ns.last_accession.get("org", "")) == "eu" \
+			return String(ns.last_accession.get("org", "")) == OrgsK.UNION_ORG_ID \
 				and int(ns.last_accession.get("month_index", -1)) == month_index
 	return false
 
@@ -483,10 +499,8 @@ static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -
 	# the marks: a duplicate that arrives in a LATER month than the first
 	# delivery would otherwise re-stamp the cooldown and the category quiet for
 	# an occasion the player was never shown a second time.
-	if is_player:
-		for entry in ns.event_queue:
-			if String(entry.get("event_id", "")) == ev.id:
-				return true
+	if is_player and _on_desk(ns, ev.id):
+		return true
 	ns.event_category_quiet[ev.category] = K.CATEGORY_QUIET_MONTHS
 	if ev.cooldown_months > 0:
 		ns.event_cooldowns[ev.id] = month_index + int(ev.cooldown_months)
@@ -658,9 +672,11 @@ static func _score_choice(ns, choice: Dictionary) -> float:
 	if weight_sum > 0.0:
 		score += weighted / weight_sum
 
-	# Fiscal: revenue-raising and spending-cutting effects improve the balance by
-	# exactly what they say, so the term is one number from two channels and the
-	# sign is the register's own (a shortfall is POSITIVE -- E0's finding).
+	# Fiscal: a sign-and-size heuristic, not an accounting identity. A tax delta is
+	# points of a RATE and a spending delta is a share of GDP, so the two are in
+	# different units and the sum below is only a rough "does this push the balance
+	# the right way, and how hard" score. The sign is the register's own (a
+	# shortfall is POSITIVE -- E0's finding): revenue-raising adds, spending subtracts.
 	if float(ns.deficit_pct_gdp) > K.CHOOSER_DEFICIT_FLOOR:
 		var balance_delta := 0.0
 		for tax_key in effects.get("tax_rates_pct", {}):

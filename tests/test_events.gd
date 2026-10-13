@@ -125,6 +125,7 @@ func _init() -> void:
 	_test_the_hash_is_not_copied()
 	_test_the_desk_is_bounded()
 	_test_the_desk_does_not_double_hold()
+	_test_a_desk_resident_does_not_crowd_out_a_sibling()
 	_test_the_weighted_pick_is_pure_and_weighted()
 	_test_hooks_fire_on_staged_registers()
 	_test_chains_arm_and_land()
@@ -1304,6 +1305,38 @@ func _test_the_desk_does_not_double_hold() -> void:
 			held += 1
 	if held != 1:
 		_fail("the desk holds %d entries for one event -- the deadline can charge double" % held)
+
+
+## An event already on the player's desk must not enter its category's draw pool: it
+## could win the category's single weighted slot, be dropped at _deliver's dedupe, and
+## leave a sibling that would have landed undelivered. Two same-category likelihood-1.0
+## fixtures, one held on the desk; the other must land. Run in BOTH assignments because
+## the weighted pick is a pure function of the pool, so whichever fixture it favours
+## is the one the mutated (unskipped) pool would hand the slot to -- one of the two legs
+## is the crowded-out case whatever the hash says.
+func _test_a_desk_resident_does_not_crowd_out_a_sibling() -> void:
+	var first = _make_event("crowd_first", false)
+	first.likelihood = 1.0
+	var second = _make_event("crowd_second", false)
+	second.likelihood = 1.0
+	var stub := _StubLoader.new()
+	stub.events = [first, second]
+	for pair in [[first, second], [second, first]]:
+		var resident = pair[0]
+		var sibling = pair[1]
+		var state = _new_state()
+		var ns = state.player()
+		var month := Events._absolute_month(int(state.year), int(state.month))
+		ns.event_queue.clear()
+		Events.announce(ns, resident, month, {})
+		Events.tick_month(state, stub)
+		var held := {}
+		for entry in ns.event_queue:
+			held[String(entry.get("event_id", ""))] = true
+		if not held.has(sibling.id):
+			_fail("'%s' sat on the desk and crowded out its same-category sibling '%s' from the draw" % [resident.id, sibling.id])
+		if not held.has(resident.id):
+			_fail("the resident '%s' left the desk inside its own deadline" % resident.id)
 
 
 ## The weighted pick inside a pulsing category is a pure function of (nation,

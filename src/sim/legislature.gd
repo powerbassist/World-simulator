@@ -13,6 +13,7 @@ extends RefCounted
 ## docs/legislature-model.md.
 
 const LK = preload("res://src/sim/legislature_constants.gd")
+const OrgsK = preload("res://src/sim/orgs_constants.gd")
 # V4.2. The yield ceiling lives here (a constants leaf -- no cycle: statute.gd
 # preloads this file, and this file preloads only its constants and leaves).
 const StatuteK = preload("res://src/sim/statute_constants.gd")
@@ -528,7 +529,7 @@ static func read_field(ns, field: String) -> float:
 		"terms_served": return float(ns.terms_served)
 		"unrest_pct": return ns.unrest_pct
 		"co2e_per_capita_t": return ns.co2e_per_capita_t
-		"eu_member": return 1.0 if ns.orgs.has("eu") else 0.0
+		"eu_member": return 1.0 if ns.orgs.has(OrgsK.UNION_ORG_ID) else 0.0
 		# V1.5c added the unrest_pct entry and legislature_constants.PRECONDITION_FIELDS in
 		# two separate edits, and the suite caught the gap between them: the whitelist
 		# admits a field and this match decides what it means, so THE LIST EXISTS TWICE

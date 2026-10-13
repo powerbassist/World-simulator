@@ -455,8 +455,14 @@ def main() -> int:
             if not isinstance(off, dict) or not off:
                 continue
             choice_total += 1
-            worst = min(off, key=lambda b: float(off[b]))
-            if worst == "business":
+            # STRICT: business's offset must sit below EVERY other named bloc's.
+            # min() credited a tie at the minimum to whichever bloc iterated
+            # first, so a choice that hurt business and workers equally counted
+            # (or not) by dict order. tests/test_event_content.gd's _band_failures
+            # carries the identical rule.
+            if "business" in off and all(
+                float(off["business"]) < float(v) for b, v in off.items() if b != "business"
+            ):
                 worst_count += 1
                 per_event_worst.setdefault(ev.get("id", "<no id>"), []).append(str(choice.get("id", "")))
     share = worst_count / choice_total if choice_total else 0.0

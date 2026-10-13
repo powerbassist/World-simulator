@@ -65,6 +65,7 @@ extends RefCounted
 ## than assumed.
 
 const K = preload("res://src/sim/programme_constants.gd")
+const OrgsK = preload("res://src/sim/orgs_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 
 
@@ -371,7 +372,7 @@ static func _read_field(ns, field: String) -> float:
 		"terms_served": return float(ns.terms_served)
 		"unrest_pct": return ns.unrest_pct
 		"co2e_per_capita_t": return ns.co2e_per_capita_t
-		"eu_member": return 1.0 if ns.orgs.has("eu") else 0.0
+		"eu_member": return 1.0 if ns.orgs.has(OrgsK.UNION_ORG_ID) else 0.0
 		_:
 			push_error("programme: unknown field '%s'" % field)
 			return 0.0

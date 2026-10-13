@@ -579,6 +579,8 @@ func _test_preloads_are_a_short_list() -> void:
 	var allowed := [
 		"res://src/sim/programme_constants.gd",
 		"res://src/sim/legislature.gd",
+		# A constants leaf: the Union's content id, which the eu_member reader spells.
+		"res://src/sim/orgs_constants.gd",
 	]
 	for line in text.split("\n"):
 		var trimmed := String(line).strip_edges()
