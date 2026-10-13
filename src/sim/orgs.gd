@@ -796,7 +796,8 @@ static func _flip_membership(state, loader, ns, fight) -> void:
 			ns.orgs.sort()
 		# V4.4: the accession_won hook's stamp. The finished fight is deleted from
 		# state.accessions the same tick this runs, so nothing else records WHEN a
-		# nation joined -- events.gd's emitter reads this and nothing else does.
+		# nation joined -- events.gd's emitter reads this and nothing else does, and
+		# it fires only for the Union ("eu"), though the stamp is written for every org.
 		ns.last_accession = {"org": org_id, "month_index": int(state.year) * 12 + int(state.month)}
 		# The joiner's weight: the org's authored `accession_seats`, written as
 		# LIVE seat state. The content table is the authored START and lists no

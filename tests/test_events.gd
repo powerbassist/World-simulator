@@ -1374,6 +1374,11 @@ func _test_hooks_fire_on_staged_registers() -> void:
 	ns.last_accession = {"org": "eu", "month_index": month}
 	if not Events._hook_fired(state, ns, _loader, "accession_won", month):
 		_fail("accession_won did not read the accession stamp")
+	# The stamp is written for every org; the hook is the UNION's. NATO joining the
+	# same month must not fire it (and burn eu_accession_bills' `once` mark).
+	ns.last_accession = {"org": "nato", "month_index": month}
+	if Events._hook_fired(state, ns, _loader, "accession_won", month):
+		_fail("accession_won fired for a NATO accession -- the hook is the Union's")
 	ns.last_accession = {}
 
 	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month, "passed": true}
@@ -1440,13 +1445,24 @@ func _test_chains_arm_and_land() -> void:
 	# chooser test's staging, or the consequence dies silently at its own door.
 	ns.deficit_pct_gdp = 6.0
 	var chosen: Dictionary = {}
+	# The choice lives in the SHARED loader's book: the mutation is undone on EVERY
+	# exit path below, or each later test in this file runs on content the shipped
+	# book does not have (an `arms` key the real procurement_scandal never carried).
+	var had_arms := false
+	var old_arms: Variant = null
 	for c in source.choices:
 		if not bool(c["is_default"]):
+			had_arms = c.has("arms")
+			old_arms = c.get("arms")
 			c["arms"] = {"event_id": target.id, "delay_months": 2}
 			chosen = c
 			break
 	_announce(state, source)
 	Events.answer(state, _loader, source.id, String(chosen.get("id", "")))
+	if had_arms:
+		chosen["arms"] = old_arms
+	else:
+		chosen.erase("arms")
 	if ns.event_armed.size() != 1:
 		_fail("answering an arming choice left %d armed chains, expected 1" % ns.event_armed.size())
 		return

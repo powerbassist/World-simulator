@@ -252,8 +252,9 @@ law passed (`ns.law_ledger`'s own months list), a repeal landed (the V4.4
 divided (`assembly_division_month`), a minister resigned (`ns.last_resignation`,
 one-month lag — Cabinet ticks after Events), a takeover bid stood or a firm failed
 (two industry stamps on the register the machine already writes), a commodity price
-sits ≥ 1.25× base (a LEVEL read — the register keeps no history), or an accession
-flipped (the `ns.last_accession` stamp inside `_flip_membership`). One vocabulary,
+sits ≥ 1.25× base (a LEVEL read — the register keeps no history), or the Union's
+accession flipped (the `ns.last_accession` stamp inside `_flip_membership` is
+written for every org; `accession_won` fires only when its `org` is `eu`). One vocabulary,
 closed at `events_constants.ON_ACTIONS`, refused loudly at load; `election_lost` is
 refused WITH ITS REASON (a lost election ends the game — nothing could answer the
 event).

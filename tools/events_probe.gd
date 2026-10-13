@@ -698,7 +698,7 @@ func _stage_hook(state, hook: String, month_index: int) -> void:
 			# base of 100 clears it from inside the +-75% price clamp.
 			ns.commodity_state["price"] = {"probe_good": 130.0}
 		"accession_won":
-			ns.last_accession = {"month_index": month_index}
+			ns.last_accession = {"org": "eu", "month_index": month_index}
 
 
 func _table_e6_hooks() -> void:

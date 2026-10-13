@@ -419,7 +419,15 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 					return true
 			return false
 		"accession_won":
-			return int(ns.last_accession.get("month_index", -1)) == month_index
+			# The UNION's accession. The stamp is org-generic (`_flip_membership`
+			# writes it for NATO, the eurozone, Schengen and the climate accord
+			# too), but the hook's only consumer is the Commission-and-treaty
+			# card, and a `once` event that burns its mark on a NATO accession is
+			# a card about the wrong institution -- so the org is tested HERE, at
+			# the emitter, rather than widening the hook vocabulary with a
+			# parameter nothing else needs.
+			return String(ns.last_accession.get("org", "")) == "eu" \
+				and int(ns.last_accession.get("month_index", -1)) == month_index
 	return false
 
 

@@ -117,12 +117,12 @@ var category: String = ""
 ## V4.4. Draw weight inside the category, in [WEIGHT_MIN, WEIGHT_MAX]. Content, not
 ## a machine number: it decides only RELATIVE to the other events drawing this month,
 ## which is why its bounds are wide and its default is neutral.
-var weight: float = 1.0
+var weight: float = K.WEIGHT_DEFAULT
 
 ## V4.4. 1..3 -- minor / major / critical. Orders the pending queue; V4.8's message
 ## settings and auto-pause will key on it. Authored because it is a fact about the
 ## event's weight in the world, not derivable from its effects.
-var severity: int = 1
+var severity: int = K.SEVERITY_DEFAULT
 
 ## V4.4. One of events_constants.ON_ACTIONS, or "" for the standing monthly hazard.
 ## A hook event fires BECAUSE something happened -- its emitter is read inside

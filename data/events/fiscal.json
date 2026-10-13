@@ -829,7 +829,7 @@
     {
       "id": "emergency_budget_demand",
       "name": "The books are called in",
-      "summary": "The deficit has passed the point where the Commission writes letters and the markets stop reading them. You are expected to say what you will do about it, in public, this quarter.",
+      "summary": "The deficit has passed the point where reassurances are believed and the markets stop reading them. You are expected to say what you will do about it, in public, this quarter.",
       "likelihood": 0.04,
       "category": "fiscal",
       "severity": 2,

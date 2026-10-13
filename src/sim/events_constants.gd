@@ -143,6 +143,10 @@ const ARMS_DELAY_MAX_MONTHS := 18
 ## closed-vocabulary discipline of SUBJECT_OFFICES, applied to the thing that
 ## would otherwise be a stringly-typed hook id.
 ##
+## `accession_won` is the UNION's accession specifically: the stamp it reads
+## (`ns.last_accession`) is written for every org, and the emitter fires only when
+## its `org` is "eu". A hook for another org's accession would be a second name here.
+##
 ## REFUSED: `election_lost`. A lost election ends the game to the menu
 ## (src/ui/main.gd's defeat dismissal) and Elections skips nations out of government,
 ## so an election_lost event could never be answered -- it would arrive on a desk the
