@@ -2554,8 +2554,11 @@ func _put_a_sited_crisis_on_the_desk() -> void:
 		# The register only gains region_id on a sited announce, so the key is the
 		# honest marker -- checking the event content here would be a second opinion
 		# about what sited means.
-		if Events.is_pending(ns) and Events.head_entry(ns).has("region_id"):
-			return
+		# ANY entry: the desk is severity-ordered, so a sited flood can sit behind
+		# a more severe head and the head alone would miss it.
+		for entry in ns.event_queue:
+			if entry.has("region_id"):
+				return
 	printerr("--climate: no sited event drew inside %d months" % horizon)
 
 

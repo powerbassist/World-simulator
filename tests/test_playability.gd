@@ -63,6 +63,8 @@ func _run() -> void:
 	_check_departed_and_dismissed_events_leave_the_unseen_set()
 	_check_event_cards_follow_their_event()
 	_check_interrupt_card_x_keeps_the_clock()
+	_check_programme_then_interrupt_releases_the_clock()
+	_check_eviction_spares_decision_cards()
 	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
 	_check_defeat_can_be_dismissed()
@@ -181,6 +183,92 @@ func _check_interrupt_card_x_keeps_the_clock() -> void:
 	_main._paused_for_decision = false
 	_main._paused_for_programme = false
 	clock.paused = false
+
+
+## Pass 16: a term-start programme AND an interrupt both pending. The programme's
+## choice leaves the interrupt holding the clock; answering the interrupt must then
+## release it. With the programme branch tested first, the first resume dropped the
+## arrival flag, and the later answer's resume returned at its first line -- the
+## clock stayed down for ever. Staged as the state the doors read, then driven
+## through the same Events.answer / _resume_if_decision_settled calls the answer
+## paths make.
+func _check_programme_then_interrupt_releases_the_clock() -> void:
+	var Events := load("res://src/sim/events.gd")
+	var ns = _main._state.player()
+	var clock: Node = _main.get_node("Clock")
+	var month: int = Events._absolute_month(int(_main._state.year), int(_main._state.month))
+	var regions: Dictionary = Events.region_names(ns, _main._loader)
+	var interrupt_ev = Events.event_by_id(_main._loader, "blackout_night")
+	if interrupt_ev == null or not bool(interrupt_ev.interrupt):
+		_fail("blackout_night missing or not interrupt")
+		return
+	ns.event_queue.clear()
+	_main._unseen_events.clear()
+	_main._event_cards.clear()
+	Events.announce(ns, interrupt_ev, month, regions)
+	_main._paused_for_programme = true
+	_main._paused_for_decision = true
+	clock.paused = true
+	_main._resume_if_decision_settled()
+	if not _main._paused_for_decision:
+		_fail("the resume dropped the arrival flag while an interrupt was still pending")
+	if not clock.paused:
+		_fail("the resume released the clock over a pending interrupt and an open programme")
+	# _on_programme_chosen's exit state: the programme flag down, the clock kept down
+	# by the interrupt (its _decision_holds_clock guard).
+	_main._paused_for_programme = false
+	if not clock.paused:
+		_fail("staging error: the clock should still be paused by the interrupt")
+	var answered: Dictionary = Events.answer(_main._state, _main._loader, String(interrupt_ev.id), String(interrupt_ev.choices[0]["id"]))
+	if answered.is_empty():
+		_fail("could not answer the interrupt after the programme was chosen")
+	_main._resume_if_decision_settled()
+	if clock.paused:
+		_fail("answering the interrupt after the programme choice left the clock paused")
+
+	ns.event_queue.clear()
+	_main._unseen_events.clear()
+	_main._event_cards.clear()
+	_main._paused_for_decision = false
+	_main._paused_for_programme = false
+	clock.paused = false
+
+
+## Pass 16: the MAX_CARDS eviction is not the player dismissing a decision. A
+## paused player who triggers a crowd of plain cards (budget, tax, law results)
+## must not lose the decision card -- main.gd reads every card_dismissed as "the
+## card is gone" and would restart the clock over the unanswered crisis. Run on a
+## FRESH stack so the boot's "YOUR TERM" card, which a later check reads, is not
+## consumed by the eviction.
+func _check_eviction_spares_decision_cards() -> void:
+	var stack = load("res://src/ui/message_stack.gd").new()
+	root.add_child(stack)  # in the tree: _ready() must have run
+	var dismissed: Array[String] = []
+	stack.card_dismissed.connect(func(id: String): dismissed.append(id))
+	var decision: String = stack.push("A decision", "body", [{"label": "Yes"}, {"label": "No"}])
+	var plain: Array[String] = []
+	for i in range(stack.MAX_CARDS):
+		plain.append(stack.push("plain %d" % i, "body"))
+	if stack.card_count() != stack.MAX_CARDS:
+		_fail("the stack holds %d cards, expected MAX_CARDS" % stack.card_count())
+	if dismissed.has(decision) or not stack._cards.has(decision):
+		_fail("the MAX_CARDS eviction took the decision card (a card carrying answer buttons)")
+	if dismissed.size() != 1 or dismissed[0] != plain[0]:
+		_fail("the eviction should have taken exactly the oldest plain card, took %s" % [dismissed])
+	if not stack._cards.has(plain[1]):
+		_fail("a newer plain card was evicted instead of the oldest")
+	# Answer buttons on every card: nothing to spare, so the oldest of all goes.
+	var all_actions = load("res://src/ui/message_stack.gd").new()
+	root.add_child(all_actions)
+	var first: String = all_actions.push("d0", "body", [{"label": "Yes"}])
+	for i in range(all_actions.MAX_CARDS):
+		all_actions.push("d%d" % (i + 1), "body", [{"label": "Yes"}])
+	if all_actions._cards.has(first):
+		_fail("with every card carrying buttons the oldest should be the fallback eviction")
+	if all_actions.card_count() != all_actions.MAX_CARDS:
+		_fail("the all-decisions stack exceeded MAX_CARDS")
+	stack.queue_free()
+	all_actions.queue_free()
 
 
 ## V2.9 (from the playtest, F4): "3 months to answer" at speed 3 is thirteen

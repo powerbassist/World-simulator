@@ -922,10 +922,13 @@ func _wire_hud() -> void:
 		_windows.mark_all_dirty()
 	)
 
-	# The unseen set's second door. An X on a decision card -- and the MAX_CARDS
-	# eviction, which dismisses through the same signal -- used to strand the
+	# The unseen set's second door. An X on a decision card used to strand the
 	# event's id in _unseen_events: only an ANSWER erased it, so the arrival
 	# pause could outlive every answer and hold the clock over an empty set. The
+	# MAX_CARDS eviction is NOT a door: it spares cards carrying answer buttons
+	# (message_stack's _eviction_victim), so a crowd of plain cards cannot
+	# "dismiss" a decision and restart the clock over it -- it reaches this
+	# handler only for a plain card, whose id maps to no event. The
 	# invariant, stated once across all its doors: AN ID LEAVES _unseen_events
 	# WHEN IT LEAVES THE DESK OR ITS CARD IS DISMISSED. An id already taken off
 	# the maps (the answer path above dismisses its own card after erasing)
@@ -1978,6 +1981,7 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 	var after := {}
 	for entry in ns.event_queue:
 		after[String(entry.get("event_id", ""))] = true
+	var defaulted_names: Array[String] = []
 	for event_id in desk_before.keys():
 		if after.has(event_id):
 			continue
@@ -2012,11 +2016,16 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 				named, String(record.get("choice_label", "")),
 			],
 		)
-		# The delta is queued HERE and not at the choice, because this is the one
-		# case where the player made no decision -- U4's baseline still belongs
-		# against it, or a budget that moved by default moves for no reason the
-		# ledger names.
-		_queue_effect(String(record.get("event_name", "")), before)
+		defaulted_names.append(String(record.get("event_name", "")))
+
+	# The delta is queued HERE and not at the choice, because this is the one case
+	# where the player made no decision -- U4's baseline still belongs against it,
+	# or a budget that moved by default moves for no reason the ledger names. ONE
+	# entry for the whole tick: every departure shares the same pre-tick snapshot,
+	# so a queue entry per default would each claim the joint movement of all of
+	# them (the cards stay one per event -- only the ledger line is merged).
+	if not defaulted_names.is_empty():
+		_queue_effect("; ".join(defaulted_names), before)
 
 	# What ARRIVED: ids on the desk now that were not before. Each gets its own
 	# decision card, answering its own row.
@@ -2079,14 +2088,18 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 ## drops; an interrupt has no release of its own but the answer, so the flag
 ## STAYS up and the answer's call to this function is what lets the clock go --
 ## dropping it on an X would strand the clock after the later Dispatches answer.
+## ORDER MATTERS (pass 16): the interrupt test comes BEFORE the programme's. With
+## both pending, the programme branch used to drop the flag first; the programme's
+## choice then left the interrupt held with no flag, and answering the interrupt
+## found nothing to release. Interrupt pending keeps the flag whatever else holds.
 func _resume_if_decision_settled() -> void:
 	if not _paused_for_decision or not _unseen_events.is_empty():
 		return
-	if _paused_for_programme:
-		_paused_for_decision = false
-		return
 	var ns = _state.player() if _state != null else null
 	if ns != null and Events.interrupt_pending(ns):
+		return
+	if _paused_for_programme:
+		_paused_for_decision = false
 		return
 	_paused_for_decision = false
 	_clock.paused = false

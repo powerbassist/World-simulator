@@ -28,11 +28,17 @@ const CARD_WIDTH := 232
 
 ## Past this many the column would run into the portrait card at 1080p. The
 ## oldest is dropped rather than the newest refused: a message the player has
-## not read yet is worth more than one that has been sitting there.
+## not read yet is worth more than one that has been sitting there. Pass 16: the
+## oldest card WITHOUT answer buttons goes first -- a decision card is a question
+## the world is waiting on, and evicting one is not the player dismissing it (the
+## consumer would read the dismissal as "settled" and restart a paused clock over
+## an unanswered crisis). Only when every card carries buttons does the oldest of
+## all go; the desk holds at most 4 decisions against this 6, so that is a net.
 const MAX_CARDS := 6
 
 var _cards := {}   # id -> PanelContainer
 var _bodies := {}  # id -> Label, the parallel the body needs to be updatable in place
+var _has_actions := {}  # id -> true for a card pushed with answer buttons, so eviction can spare it
 var _next_id := 0
 
 
@@ -98,6 +104,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	# route through Dispatches -- the playtest's F4, with the clock paused behind
 	# it (main.gd's arrival branch). One button per choice, in the order given.
 	if not actions.is_empty():
+		_has_actions[id] = true
 		var actions_box := HBoxContainer.new()
 		actions_box.add_theme_constant_override("separation", 4)
 		for i in range(actions.size()):
@@ -114,9 +121,20 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	_bodies[id] = body_label
 
 	while _cards.size() > MAX_CARDS:
-		dismiss(_cards.keys()[0])
+		dismiss(_eviction_victim(id))
 
 	return id
+
+
+## The card MAX_CARDS drops: the oldest one with no answer buttons, never the card
+## being pushed right now (a plain push into a column of decisions must not eat
+## itself); the oldest of all only when nothing else qualifies. Dictionary key
+## order is insertion order, which is age here.
+func _eviction_victim(newest_id: String) -> String:
+	for card_id in _cards.keys():
+		if card_id != newest_id and not _has_actions.has(card_id):
+			return String(card_id)
+	return String(_cards.keys()[0])
 
 
 ## Rewrites a live card's body in place. A standing card whose content ages --
@@ -137,6 +155,7 @@ func dismiss(id: String) -> void:
 	var card: Control = _cards[id]
 	_cards.erase(id)
 	_bodies.erase(id)
+	_has_actions.erase(id)
 	remove_child(card)
 	card.queue_free()
 	card_dismissed.emit(id)
