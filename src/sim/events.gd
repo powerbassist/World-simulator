@@ -16,8 +16,10 @@ extends RefCounted
 ## the content can see. ns.event_queue holds up to QUEUE_MAX entries ordered
 ## severity-descending then arrival; each entry carries its own countdown and
 ## expires on its own default. The quiet period followed the slot down: a
-## delivery quiets THAT EVENT'S CATEGORY for CATEGORY_QUIET_MONTHS (a resolution
-## re-arms the countdown), because one resolution in fiscal silencing scandal
+## delivery quiets THAT EVENT'S CATEGORY: the category draws again
+## CATEGORY_QUIET_MONTHS months after the delivery month, i.e. it is blocked for
+## the CATEGORY_QUIET_MONTHS - 1 months between (a resolution re-arms the
+## countdown from its own month), because one resolution in fiscal silencing scandal
 ## forever was the global quiet's defect at scale. The per-event cooldown V1.8
 ## designed and cut -- cut on the grounds that the slot already bounded
 ## repetition, an argument that died with the slot -- is back as
@@ -271,6 +273,11 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 			_deliver(state, ns, loader, winner, month_index, is_player)
 
 
+## The quiet counts down BEFORE the hazard loop reads it, in the same tick. A
+## stamp of K at the delivery month M reads K-1 at M+1, K-2 at M+2 ... and is
+## erased at M+K, so the category is blocked for the K-1 months M+1..M+K-1 and draws
+## again AT M+K (K = 3: two blocked months, open on the third). Tested in
+## tests/test_events.gd; the E4 cadence bands were swept on exactly this.
 static func _tick_quiet(ns, month_index: int) -> void:
 	for category in ns.event_category_quiet.keys().duplicate():
 		var left: int = int(ns.event_category_quiet[category]) - 1

@@ -2438,7 +2438,7 @@ static func from_dict(d: Dictionary):
 	s.referendum_pending = d.get("referendum_pending", {})
 	# V1.8's bump to 26 was earned here on absent-key failures (a deleted live
 	# crisis, a replayed `once`, a quiet read as may-fire-now); the canonical V4.4
-	# argument for the seven-register rewrite is game_state.gd's SAVE_VERSION block.
+	# argument for the six-register rewrite is game_state.gd's SAVE_VERSION block.
 	s.event_queue.clear()
 	for row in d.get("event_queue", []):
 		if typeof(row) == TYPE_DICTIONARY:

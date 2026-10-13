@@ -18,6 +18,8 @@ extends SceneTree
 ##
 ## E1b lifetime accumulation, now on the real machine (defaults and answer-well).
 ## E4  cadence and the desk, swept over CATEGORY_QUIET_MONTHS -- the V4.4 dial.
+##     E4/E5 run the real Events.tick_month but measure HAZARD arrivals only: their
+##     _tick_events chain writes no hook stamps (hooks are witnessed in E6).
 ## E5  category spread over a full idle run at the shipped constants.
 ## E6  the hook vocabulary, staged register by register and witnessed landing.
 ## E7  chooser spread: what the other twenty-eight answered over a term.
@@ -558,6 +560,13 @@ func _weighted_offset(effects: Dictionary) -> float:
 ## is a CONSTRUCTION, not a measurement (the tick's own delivery gate), so it is
 ## asserted here and never tuned against -- a row that breaks it is a machine
 ## defect, not a band failure.
+##
+## WHAT E4 (AND E5) MEASURE: the real Events.tick_month, but fed by _tick_events,
+## whose chain runs NO machine that writes the hook stamps (no Legislature
+## ledger, Cabinet resignations, Industry bids/failures, Commodities prices or
+## Orgs accessions), so the hook doors never fire in these runs. The cadence and
+## spread below are therefore HAZARD arrivals only (plus any chain a hazard
+## choice arms); hook events are witnessed separately, in E6.
 const QUIET_SWEEP := [1, 2, 3, 4, 5, 6]
 const CADENCE_MIN := 6.0
 const CADENCE_MAX := 18.0
@@ -604,6 +613,8 @@ func _table_e4_cadence() -> void:
 ## CONTENT verdict (rebalance likelihoods/weights in data/events/), recorded
 ## rather than tuned.
 const CATEGORY_SHARE_MAX := 0.30
+## E5 shares the E4 driver, so it likewise counts HAZARD arrivals only -- the
+## hook doors are never exercised here (E6 witnesses them).
 
 
 func _table_e5_categories() -> void:

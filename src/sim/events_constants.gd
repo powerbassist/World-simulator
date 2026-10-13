@@ -165,7 +165,10 @@ const ON_ACTIONS := [
 	"takeover_bid", "firm_failed", "commodity_price_high", "accession_won",
 ]
 
-## How long after a resolution a CATEGORY stays quiet before it may draw again.
+## How many months after a delivery or resolution a CATEGORY may draw again. The
+## countdown runs before the hazard reads it, so a stamp of 3 at month M blocks
+## M+1 and M+2 (TWO blocked months) and the category is open AT M+3: the value is
+## the gap to the next draw, not the count of silent months.
 ##
 ## THE V4.4 TUNED DIAL THAT REPLACES EVENT_COOLDOWN_MONTHS. That constant's E1 band
 ## (2-6 events per term) was measured against ONE pending slot and a GLOBAL quiet;

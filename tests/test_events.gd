@@ -116,6 +116,8 @@ func _init() -> void:
 	_test_answering_early_and_late_cost_the_same()
 	_test_once_is_marked_at_delivery()
 	_test_the_quiet_period_holds()
+	_test_the_quiet_cadence_is_delivery_month_plus_three()
+	_test_an_ai_fiscal_answer_never_touches_the_players_budget()
 	_test_the_diary_shows_the_deadline()
 	_test_calendar_is_still_a_leaf()
 	_test_the_nine_never_get_an_event()
@@ -1063,6 +1065,118 @@ func _count_in_category(ns, category: String) -> int:
 		if String(entry.get("category", "")) == category:
 			n += 1
 	return n
+
+
+## WHAT CATEGORY_QUIET_MONTHS 3 REALLY MEANS, pinned at the machine. `_tick_quiet`
+## decrements BEFORE the hazard loop reads the register, so a delivery at month M
+## stamps 3 and the category is blocked at M+1 (reads 2) and M+2 (reads 1) -- TWO
+## blocked months after the delivery month -- then M+3 decrements to 0, erases the
+## entry and the category draws again. The value reads "draws again K months
+## later", not "K months of silence". NO behaviour change: E4's cadence bands were
+## swept on exactly this arithmetic. Two legs: the register's own countdown, and the
+## end-to-end cadence of an AI nation resolving a likelihood-1.0 fixture in place
+## (an AI delivery and resolution are one tick, so the delivery months ARE the
+## cadence, with no desk countdown mixed in).
+func _test_the_quiet_cadence_is_delivery_month_plus_three() -> void:
+	# Leg 1: the countdown on its own. 3 -> 2 -> 1 -> erased, so the third tick
+	# after the stamp is the first that no longer blocks.
+	var probe_state = _new_state()
+	var pns = probe_state.player()
+	pns.event_category_quiet["scandal"] = 3
+	Events._tick_quiet(pns, 0)
+	if int(pns.event_category_quiet.get("scandal", 0)) != 2:
+		_fail("a delivery's quiet stamp of 3 did not read 2 after one tick -- the first month after delivery must still block")
+	Events._tick_quiet(pns, 1)
+	if int(pns.event_category_quiet.get("scandal", 0)) != 1:
+		_fail("the quiet stamp did not read 1 after two ticks -- the second month after delivery must still block")
+	Events._tick_quiet(pns, 2)
+	if pns.event_category_quiet.has("scandal"):
+		_fail("the quiet stamp survived three ticks -- the category must draw again three months after the delivery month")
+
+	# Leg 2: end to end. An AI nation, a fixture that passes every draw, and the
+	# months its history records the occasion: M, M+3, M+6 -- never M+1 or M+2.
+	var fixture = _make_event("cadence_fixture", false)
+	fixture.likelihood = 1.0
+	var stub := _StubLoader.new()
+	stub.events = [fixture]
+	var state = _new_state()
+	var ai = state.nations["DEU"]
+	var delivered_at: Array[int] = []
+	for offset in range(0, 7):
+		var before: int = ai.event_history.size()
+		state.year = START_YEAR + int(offset / 12)
+		state.month = (offset % 12) + 1
+		Events.tick_month(state, stub)
+		if ai.event_history.size() > before:
+			delivered_at.append(offset)
+	var expected: Array[int] = [0, 3, 6]
+	if delivered_at != expected:
+		_fail("an AI nation's likelihood-1.0 fixture was delivered at month offsets %s, expected %s -- blocked M+1 and M+2, open M+3" % [delivered_at, expected])
+
+
+## THE BLOCK'S HEADLINE DEFECT, PINNED. V4.4's first chooser routed an AI nation's
+## event fiscal effects through Budget.commit(), which is the PLAYER's command verb
+## (it reads state.player()): the other twenty-eight governments' crisis answers
+## rewrote the President's tax rates and spending. The fix is the nation-scoped
+## Budget.apply_pending(), called from Legislature.apply_effects(). Pinned two
+## ways: the AI nation moves by exactly the authored amount, and the player's
+## whole serialised nation is byte-identical -- rates, spending, schedule, the
+## demand impulse and the books (there is no pending-budget register on the nation:
+## the budget panel holds its edits in the UI, so the saved nation IS the surface).
+func _test_an_ai_fiscal_answer_never_touches_the_players_budget() -> void:
+	var raw := {"id": "ai_fiscal_fixture", "name": "Ai Fiscal Fixture", "summary": "s", "likelihood": 0.05,
+		"category": "fiscal", "respond_months": 2, "choices": [
+			{"id": "tax", "label": "Tax", "summary": "raise income tax", "effects": {"tax_rates_pct": {"income": 1.5}}, "default": true},
+			{"id": "spend", "label": "Spend", "summary": "raise health", "effects": {"spending_pct_gdp": {"health": 0.4}}},
+		]}
+	var errs: Array[String] = []
+	var ev = GameEvent.from_dict(raw, "x.json", errs,
+		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+	if not errs.is_empty():
+		_fail("the fiscal fixture did not load: %s" % [errs])
+		return
+	var stub := _StubLoader.new()
+	stub.events = [ev]
+
+	for choice in ev.choices:
+		var state = _new_state()
+		var player = state.player()
+		var ai = state.nations["DEU"]
+		var player_before: String = JSON.stringify(player.to_dict(), "", true)
+		var ai_tax_before: float = float(ai.tax_rates_pct["income"])
+		var ai_health_before: float = float(ai.spending_pct_gdp["health"])
+		var player_tax_before: float = float(player.tax_rates_pct["income"])
+		var player_health_before: float = float(player.spending_pct_gdp["health"])
+		Events._resolve(state, ai, stub, ev, choice, false, {})
+		var cid := String(choice["id"])
+		if cid == "tax":
+			if not is_equal_approx(float(ai.tax_rates_pct["income"]), ai_tax_before + 1.5):
+				_fail("the AI nation's income rate did not move by the authored +1.5 (%.4f -> %.4f)" % [ai_tax_before, float(ai.tax_rates_pct["income"])])
+		else:
+			if not is_equal_approx(float(ai.spending_pct_gdp["health"]), ai_health_before + 0.4):
+				_fail("the AI nation's health spending did not move by the authored +0.4 (%.4f -> %.4f)" % [ai_health_before, float(ai.spending_pct_gdp["health"])])
+		if JSON.stringify(player.to_dict(), "", true) != player_before:
+			_fail("an AI nation's '%s' answer changed the PLAYER's nation -- the fiscal effect leaked through the player-scoped commit" % cid)
+		# Explicit reads beside the whole-nation comparison, so a failure names the
+		# register rather than only "something differs".
+		if float(player.tax_rates_pct["income"]) != player_tax_before:
+			_fail("the player's income rate moved under an AI '%s' answer" % cid)
+		if float(player.spending_pct_gdp["health"]) != player_health_before:
+			_fail("the player's health spending moved under an AI '%s' answer" % cid)
+
+	# The whole path, not just _resolve: the AI's own delivery picks a choice through
+	# the chooser and resolves in place. Whichever it picks, the player is untouched
+	# and the AI nation's history carries the row.
+	var state2 = _new_state()
+	var player2 = state2.player()
+	var ai2 = state2.nations["DEU"]
+	var player2_before: String = JSON.stringify(player2.to_dict(), "", true)
+	var rows_before: int = ai2.event_history.size()
+	Events._deliver(state2, ai2, stub, ev, Events._absolute_month(int(state2.year), int(state2.month)), false)
+	if ai2.event_history.size() != rows_before + 1:
+		_fail("the AI delivery did not resolve in place")
+	if JSON.stringify(player2.to_dict(), "", true) != player2_before:
+		_fail("an AI nation's delivered fiscal event changed the PLAYER's nation")
 
 
 # --- The surfaces ------------------------------------------------------------------

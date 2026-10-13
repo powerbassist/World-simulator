@@ -198,7 +198,7 @@ reaches for; a precondition on one opens a *problem*. Recorded rather than copie
 
 ```
 Events.tick_month(state, loader):          # every nation now, player AND the 28
-  quiet down (per CATEGORY, sparse) + cooldown release
+  quiet down (per CATEGORY, sparse; BEFORE the draw reads it) + cooldown release
   player: expire entries whose months_left hit zero (each on its own default)
   armed chains due this month -> deliver first (a consequence outranks a draw)
   hooks: for each ON_ACTIONS with a live emitter read this month
@@ -217,8 +217,11 @@ message column holds six cards — the old ceiling argument, one size up) — th
 lives at DELIVERY, where all three doors pass, and a chain that finds the desk full
 waits a month while a hook or a draw skips (next happening, next month). `answer()`
 answers a NAMED entry; `choose()` remains the head-answering read kept for harnesses. The
-quiet moved DOWN a level: a resolution quiets its own CATEGORY for
-`CATEGORY_QUIET_MONTHS` 3 — one resolution in fiscal silencing scandal forever was
+quiet moved DOWN a level: a delivery or resolution quiets its own CATEGORY, and
+`CATEGORY_QUIET_MONTHS` 3 is the gap to the next draw, not the count of silent months —
+the countdown runs before the hazard reads it, so a stamp at month M blocks M+1 and M+2
+(two blocked months) and the category draws again AT M+3 (pinned in `tests/test_events.gd`;
+E4's cadence bands were swept on exactly this) — one resolution in fiscal silencing scandal forever was
 the global quiet's defect at nine categories. The per-event cooldown V1.8 designed
 and cut came back: the cut's argument ("the slot already bounds it") died with the
 slot.
