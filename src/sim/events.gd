@@ -199,6 +199,12 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 		for ev in loader.events:
 			if ev.on_action != hook:
 				continue
+			# The hazard pool's player-only skip, for the same reason: an event
+			# already on the desk would pass its draw, hit _deliver's dedupe
+			# (which returns true) and take the one-per-happening break below,
+			# so a sibling hook event on this happening would never draw.
+			if is_player and _on_desk(ns, ev.id):
+				continue
 			if not _gates_pass(ns, ev, month_index) or not _cooldown_ok(ns, ev, month_index):
 				continue
 			if Cycle.unit("%s|%s|hook" % [ns.id, ev.id], month_index) >= ev.likelihood:
@@ -502,8 +508,16 @@ static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -
 	if is_player and _on_desk(ns, ev.id):
 		return true
 	ns.event_category_quiet[ev.category] = K.CATEGORY_QUIET_MONTHS
-	if ev.cooldown_months > 0:
-		ns.event_cooldowns[ev.id] = month_index + int(ev.cooldown_months)
+	# THE FLOOR IS ONE MONTH: an authored cooldown of 0 still binds the rest of
+	# this tick, because every door checks _cooldown_ok BEFORE it delivers and
+	# nothing stamped means a second armed entry, a chain plus a hook, or a
+	# defaulted-then-redelivered desk entry lands the same occasion twice in one
+	# tick. Two things assume one occasion per month: the AI branch below
+	# resolves on the spot (a double delivery applies its effects twice), and
+	# main.gd's _card_events diffs the desk by event id across the tick, which
+	# cannot see an expiry that is re-delivered in the same month. The shipped
+	# book is unaffected (every cooldown-0 event is `once`, which already binds).
+	ns.event_cooldowns[ev.id] = month_index + maxi(int(ev.cooldown_months), 1)
 	if ev.once:
 		ns.event_fired[ev.id] = true
 	if is_player:
@@ -714,6 +728,16 @@ static func _score_choice(ns, choice: Dictionary) -> float:
 ## figures the choice is about -- and what it risks is the default arriving first.
 static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool, entry: Dictionary) -> Dictionary:
 	Legislature.apply_effects(state, ns, choice.get("effects", {}), loader)
+
+	# The same one-month floor as _deliver's, applied at the other end of the
+	# occasion: a desk entry that DEFAULTS this tick (_tick_countdowns runs first)
+	# must not be re-delivered by the chain or hook door in the same month -- the
+	# desk-diff in main.gd would see the id present before and after and show
+	# neither the "Decided for you" card nor a ledger entry. Raised, never lowered:
+	# a longer authored cooldown stamped at delivery stays. The month is the
+	# state's own, the source the history row below and the chain arm read.
+	var resolved_index := _absolute_month(int(state.year), int(state.month))
+	ns.event_cooldowns[ev.id] = maxi(int(ns.event_cooldowns.get(ev.id, -1)), resolved_index + 1)
 
 	# The place is read BEFORE the register is cleared: a past act's site cannot be
 	# re-derived once the shares have moved (V2.6b1's record argument) -- and the

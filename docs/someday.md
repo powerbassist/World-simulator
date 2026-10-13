@@ -69,16 +69,6 @@ work.
 Found by the light-review passes on PR #49, verified real, unreachable with the
 shipped 102-event book — recorded so the refusal is not the last anyone hears.
 
-### Two armed chains can deliver one target twice in a tick
-
-The loader refuses a chain whose target is a hook event (the hook door would
-re-deliver it), but not two choices arming the SAME target: for an AI nation the
-armed loop has no per-event dedupe and `_deliver` resolves immediately, so a
-non-`once`, cooldown-0 target applies its effects twice. The book carries exactly
-one `arms` today. **Trigger:** a second `arms` entry in `data/events/`. **Fix
-shape:** a loader rule refusing two sources onto one target without `once` or a
-cooldown, in the same place as the hook-target refusal.
-
 ### A choice whose every effect is 0.0 loads
 
 `event.gd`'s "costs nothing" refusal fires only when a choice carries NO keys;
@@ -91,19 +81,6 @@ burden 0.0 or past `REGULATION_BURDEN_MAX`, society 0.0, company beside
 current 102, or any lint-clean book that fails to load. **Fix shape:** one
 zero-effect rule at the loader, and the lint's society/company checks lifted to
 the loader's own.
-
-### The desk-diff cannot see a same-tick expiry-and-re-delivery
-
-`_card_events` diffs the desk by event id between BEFORE and AFTER the tick: an id
-still present after skips the "Decided for you" departure card, an id already present
-before skips the arrival card and the unseen mark. An event that expires AND is
-re-delivered in the same tick gets neither. Latent: every hook event and the book's one
-chain target carries `cooldown_months` above its `respond_months` and the cooldown is
-stamped at delivery, so no shipped content can re-deliver a just-expired entry. The
-chain and hook doors also do not check the category quiet that gates the hazard door.
-**Trigger:** the first authored cooldown-0 hook event or chain target (legal per the
-loader today). **Fix shape:** key the diff on the entry (delivery month), not the id,
-or gate the chain/hook doors on a just-resolved-this-tick register.
 
 ### The probe's E2/E3 bands are declared but cannot fail the run
 

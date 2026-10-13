@@ -126,6 +126,8 @@ func _init() -> void:
 	_test_the_desk_is_bounded()
 	_test_the_desk_does_not_double_hold()
 	_test_a_desk_resident_does_not_crowd_out_a_sibling()
+	_test_the_cooldown_floor_is_one_month()
+	_test_a_desk_resident_does_not_crowd_out_a_hook_sibling()
 	_test_the_weighted_pick_is_pure_and_weighted()
 	_test_hooks_fire_on_staged_registers()
 	_test_chains_arm_and_land()
@@ -1337,6 +1339,96 @@ func _test_a_desk_resident_does_not_crowd_out_a_sibling() -> void:
 			_fail("'%s' sat on the desk and crowded out its same-category sibling '%s' from the draw" % [resident.id, sibling.id])
 		if not held.has(resident.id):
 			_fail("the resident '%s' left the desk inside its own deadline" % resident.id)
+
+
+## THE ONE-MONTH COOLDOWN FLOOR, three legs. An authored cooldown of 0 on a
+## non-`once` event used to bind nothing, so the same occasion could land twice in one
+## tick. Likelihood 0 on every fixture keeps the hazard door out: each leg drives the
+## chain / hook door it is about and reads an observable the second delivery changes.
+func _test_the_cooldown_floor_is_one_month() -> void:
+	# (a) An AI nation with two armed entries for one target due the same month. The AI
+	# resolves on the spot, so a second delivery would apply the choice a second time --
+	# the history row count is the observable (one resolution, one row).
+	var state = _new_state()
+	var ai_ns = state.nations["DEU"]
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	var target = _make_event("floor_ai_target", false)
+	target.likelihood = 0.0
+	if target.cooldown_months != 0 or target.once:
+		_fail("the floor fixture is not a cooldown-0, non-once event -- the legs below measure nothing")
+		return
+	var stub := _StubLoader.new()
+	stub.events = [target]
+	ai_ns.event_armed.append({"event_id": target.id, "due_index": month, "source_id": "x"})
+	ai_ns.event_armed.append({"event_id": target.id, "due_index": month, "source_id": "y"})
+	Events.tick_month(state, stub)
+	var resolutions := 0
+	for row in ai_ns.event_history:
+		if String(row.get("event_id", "")) == target.id:
+			resolutions += 1
+	if resolutions != 1:
+		_fail("two armed entries for one cooldown-0 target resolved it %d times in one tick -- expected once" % resolutions)
+
+	# (b) A player entry that DEFAULTS this tick must not come back the same tick by an
+	# armed entry for its own id: the id-diff in main.gd would see it present before and
+	# after and show neither the departure card nor a ledger line.
+	var pstate = _new_state()
+	var pns = pstate.player()
+	var pmonth := Events._absolute_month(int(pstate.year), int(pstate.month))
+	var ev = _make_event("floor_player_event", false)
+	ev.likelihood = 0.0
+	var pstub := _StubLoader.new()
+	pstub.events = [ev]
+	pns.event_queue.clear()
+	Events.announce(pns, ev, pmonth, {})
+	_entry(pns, ev.id)["months_left"] = 1
+	pns.event_armed.append({"event_id": ev.id, "due_index": pmonth, "source_id": "x"})
+	Events.tick_month(pstate, pstub)
+	var defaulted := 0
+	for row in pns.event_history:
+		if String(row.get("event_id", "")) == ev.id and bool(row.get("defaulted", false)):
+			defaulted += 1
+	if defaulted != 1:
+		_fail("the expiring entry left %d defaulted ledger rows -- the leg did not stage an expiry" % defaulted)
+	if not _entry(pns, ev.id).is_empty():
+		_fail("an entry that defaulted this tick was re-delivered by its own armed entry in the same tick")
+
+	# (c) The delivery stamp itself: a cooldown-0 delivery writes month + 1, not nothing.
+	var dstate = _new_state()
+	var dns = dstate.player()
+	var dmonth := Events._absolute_month(int(dstate.year), int(dstate.month))
+	dns.event_queue.clear()
+	dns.event_cooldowns.clear()
+	if not Events._deliver(dstate, dns, pstub, ev, dmonth, true):
+		_fail("the floor fixture did not deliver onto an empty desk")
+	elif int(dns.event_cooldowns.get(ev.id, -1)) != dmonth + 1:
+		_fail("a cooldown-0 delivery stamped %s, expected %d (the one-month floor)" % [dns.event_cooldowns.get(ev.id, "nothing"), dmonth + 1])
+
+
+## A hook event already on the player's desk must not take the hook loop's one slot per
+## happening: it would pass its draw, hit _deliver's dedupe (true) and break, and a
+## sibling on the same happening would never draw. Resident first in book order, which
+## is the order that crowds.
+func _test_a_desk_resident_does_not_crowd_out_a_hook_sibling() -> void:
+	var resident = _make_event("hook_resident", false)
+	resident.on_action = "law_passed"
+	resident.likelihood = 1.0
+	var sibling = _make_event("hook_sibling", false)
+	sibling.on_action = "law_passed"
+	sibling.likelihood = 1.0
+	var stub := _StubLoader.new()
+	stub.events = [resident, sibling]
+	var state = _new_state()
+	var ns = state.player()
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	ns.law_ledger["probe_law"] = {"months": [month - 1]}
+	ns.event_queue.clear()
+	Events.announce(ns, resident, month, {})
+	Events.tick_month(state, stub)
+	if _entry(ns, sibling.id).is_empty():
+		_fail("a hook event on the desk took the happening's one slot and crowded out its sibling")
+	if _entry(ns, resident.id).is_empty():
+		_fail("the resident hook event left the desk inside its own deadline")
 
 
 ## The weighted pick inside a pulsing category is a pure function of (nation,

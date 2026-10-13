@@ -233,6 +233,13 @@ staging primitive `announce()` writes the queue and nothing else (the mark regis
 stay unwritten), so the sited sweep can drive it 48 times without stamping a single
 `once`, cooldown or quiet. The V1.8 reason survives the move intact: the
 mark exists the moment the occasion is in front of somebody, not when they answer it.
+**The cooldown has a floor of one month**, stamped at delivery
+(`month + max(cooldown_months, 1)`) and raised again at resolution (`_resolve` lifts
+the event's until-month to at least the month after): an authored 0 still means one
+occasion per event per month. The AI branch resolves on the spot, so a double delivery
+would apply its choice twice, and the UI's desk-diff keys on the event id, so an entry
+that defaults and is re-delivered in one tick would show neither card nor ledger line.
+The shipped book is unaffected — every cooldown-0 event is `once`.
 
 **The weighted draw is a second pure function**: `Cycle.unit` over (nation,
 category, roster-sorted-ids, month) against cumulative authored weights — same
