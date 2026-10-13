@@ -65,6 +65,7 @@ func _run() -> void:
 	_check_interrupt_card_x_keeps_the_clock()
 	_check_programme_then_interrupt_releases_the_clock()
 	_check_eviction_spares_decision_cards()
+	_check_same_month_defaults_queue_one_effect()
 	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
 	_check_defeat_can_be_dismissed()
@@ -217,8 +218,8 @@ func _check_programme_then_interrupt_releases_the_clock() -> void:
 	# _on_programme_chosen's exit state: the programme flag down, the clock kept down
 	# by the interrupt (its _decision_holds_clock guard).
 	_main._paused_for_programme = false
-	if not clock.paused:
-		_fail("staging error: the clock should still be paused by the interrupt")
+	if not _main._decision_holds_clock():
+		_fail("with the programme flag down the pending interrupt should still hold the clock")
 	var answered: Dictionary = Events.answer(_main._state, _main._loader, String(interrupt_ev.id), String(interrupt_ev.choices[0]["id"]))
 	if answered.is_empty():
 		_fail("could not answer the interrupt after the programme was chosen")
@@ -267,8 +268,62 @@ func _check_eviction_spares_decision_cards() -> void:
 		_fail("with every card carrying buttons the oldest should be the fallback eviction")
 	if all_actions.card_count() != all_actions.MAX_CARDS:
 		_fail("the all-decisions stack exceeded MAX_CARDS")
+	# A PLAIN newcomer into a stack of nothing but decisions evicts itself: the
+	# newcomer is a candidate, so no decision card is taken and none is "dismissed".
+	var crowded = load("res://src/ui/message_stack.gd").new()
+	root.add_child(crowded)
+	var crowded_dismissed: Array[String] = []
+	crowded.card_dismissed.connect(func(id: String): crowded_dismissed.append(id))
+	var decisions: Array[String] = []
+	for i in range(crowded.MAX_CARDS):
+		decisions.append(crowded.push("d%d" % i, "body", [{"label": "Yes"}]))
+	var newcomer: String = crowded.push("plain", "body")
+	for d in decisions:
+		if not crowded._cards.has(d):
+			_fail("a plain push into an all-decision stack evicted decision card %s" % d)
+	if crowded._cards.has(newcomer):
+		_fail("the plain newcomer should have evicted itself from an all-decision stack")
+	if crowded_dismissed.size() != 1 or crowded_dismissed[0] != newcomer:
+		_fail("only the plain newcomer should have been dismissed, got %s" % [crowded_dismissed])
 	stack.queue_free()
 	all_actions.queue_free()
+	crowded.queue_free()
+
+
+## Pass 16 (item 3): two defaults in one tick share ONE pre-tick snapshot, so a
+## ledger entry per default would each claim the joint movement. The departures
+## earn one "Decided for you" card each, but ONE pending effect for the tick.
+func _check_same_month_defaults_queue_one_effect() -> void:
+	var ns = _main._state.player()
+	var year: int = int(_main._state.year)
+	var month: int = int(_main._state.month)
+	var history_size: int = ns.event_history.size()
+	var effects_before: int = _main._pending_effects.size()
+	var cards_before: Array = _main._hud.message_stack._cards.keys()
+	ns.event_queue.clear()
+	var ids := ["pin_default_a", "pin_default_b"]
+	for event_id in ids:
+		ns.event_history.append({
+			"event_id": event_id, "event_name": "Pin %s" % event_id, "defaulted": true,
+			"year": year, "month": month, "choice_label": "carry on", "region_name": "",
+		})
+	_main._card_events(year, month, {ids[0]: true, ids[1]: true}, {})
+	if _main._pending_effects.size() != effects_before + 1:
+		_fail("two same-month defaults queued %d ledger entries, expected exactly 1" % (_main._pending_effects.size() - effects_before))
+	elif not String(_main._pending_effects[effects_before]["label"]).contains("; "):
+		_fail("the merged ledger entry should name both events joined by '; ', got '%s'" % _main._pending_effects[effects_before]["label"])
+	var new_cards := 0
+	for card_id in _main._hud.message_stack._cards.keys().duplicate():
+		if not cards_before.has(card_id):
+			new_cards += 1
+			_main._hud.message_stack.dismiss(card_id)
+	if new_cards != 2:
+		_fail("each default should still earn its own card, got %d" % new_cards)
+	# Clean up: only what this check added.
+	while _main._pending_effects.size() > effects_before:
+		_main._pending_effects.pop_back()
+	while ns.event_history.size() > history_size:
+		ns.event_history.pop_back()
 
 
 ## V2.9 (from the playtest, F4): "3 months to answer" at speed 3 is thirteen
@@ -374,8 +429,9 @@ func _check_departed_and_dismissed_events_leave_the_unseen_set() -> void:
 
 	# Door 2, the X: the card's dismissal must take the unseen mark with it and
 	# resume the clock by the same rule. Pressed through the real button, so a
-	# missing connect fails here -- and so does the MAX_CARDS eviction, which
-	# dismisses through the same signal.
+	# missing connect fails here. (The MAX_CARDS eviction also dismisses through
+	# this signal but never takes a decision card -- pinned in
+	# _check_eviction_spares_decision_cards.)
 	Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
 		Events.region_names(ns, _main._loader))
 	_main._card_events(_main._state.year, _main._state.month, {}, {})

@@ -32,8 +32,10 @@ const CARD_WIDTH := 232
 ## oldest card WITHOUT answer buttons goes first -- a decision card is a question
 ## the world is waiting on, and evicting one is not the player dismissing it (the
 ## consumer would read the dismissal as "settled" and restart a paused clock over
-## an unanswered crisis). Only when every card carries buttons does the oldest of
-## all go; the desk holds at most 4 decisions against this 6, so that is a net.
+## an unanswered crisis). The newcomer counts as a candidate, so a plain card
+## pushed into a column of decisions is the one that goes. Only when every card
+## including the newcomer carries buttons does the oldest of all go; the desk
+## holds at most 4 decisions against this 6, so that is a net.
 const MAX_CARDS := 6
 
 var _cards := {}   # id -> PanelContainer
@@ -121,18 +123,19 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	_bodies[id] = body_label
 
 	while _cards.size() > MAX_CARDS:
-		dismiss(_eviction_victim(id))
+		dismiss(_eviction_victim())
 
 	return id
 
 
-## The card MAX_CARDS drops: the oldest one with no answer buttons, never the card
-## being pushed right now (a plain push into a column of decisions must not eat
-## itself); the oldest of all only when nothing else qualifies. Dictionary key
-## order is insertion order, which is age here.
-func _eviction_victim(newest_id: String) -> String:
+## The card MAX_CARDS drops: the oldest one with no answer buttons, the newcomer
+## included -- a plain card pushed into a column of decisions evicts ITSELF rather
+## than a question the world is waiting on. Only when every card, newcomer
+## included, carries buttons does the oldest of all go. Dictionary key order is
+## insertion order, which is age here.
+func _eviction_victim() -> String:
 	for card_id in _cards.keys():
-		if card_id != newest_id and not _has_actions.has(card_id):
+		if not _has_actions.has(card_id):
 			return String(card_id)
 	return String(_cards.keys()[0])
 

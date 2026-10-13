@@ -925,10 +925,12 @@ func _wire_hud() -> void:
 	# The unseen set's second door. An X on a decision card used to strand the
 	# event's id in _unseen_events: only an ANSWER erased it, so the arrival
 	# pause could outlive every answer and hold the clock over an empty set. The
-	# MAX_CARDS eviction is NOT a door: it spares cards carrying answer buttons
-	# (message_stack's _eviction_victim), so a crowd of plain cards cannot
-	# "dismiss" a decision and restart the clock over it -- it reaches this
-	# handler only for a plain card, whose id maps to no event. The
+	# MAX_CARDS eviction is NOT a door: it takes the oldest card WITHOUT answer
+	# buttons, the newcomer included (message_stack's _eviction_victim), so a
+	# crowd of plain cards cannot "dismiss" a decision and restart the clock over
+	# it -- it reaches this handler only for a plain card, whose id maps to no
+	# event. Only a stack of nothing but decisions (more than the desk's 4 can
+	# hold) falls back to the oldest. The
 	# invariant, stated once across all its doors: AN ID LEAVES _unseen_events
 	# WHEN IT LEAVES THE DESK OR ITS CARD IS DISMISSED. An id already taken off
 	# the maps (the answer path above dismisses its own card after erasing)

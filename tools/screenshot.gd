@@ -2534,7 +2534,7 @@ func _put_a_crisis_on_the_desk() -> void:
 ## `--event`'s sibling, and separate from it because the two flags want DIFFERENT
 ## first arrivals: --event stops at whatever draws and only notes a missing
 ## subject, while this loop's whole claim is the place suffix, so it keeps ticking
-## until the pending event is one the hazard SITED. That wait is a fixed month,
+## until ANY entry on the desk is one the hazard SITED. That wait is a fixed month,
 ## not a search -- the hazard is pure in (nation, event, month), events.gd's own
 ## argument -- and the non-sited events met on the way lapse on their own
 ## respond_months and cooldown, because answering one would put a row in the
@@ -2544,8 +2544,8 @@ func _put_a_sited_crisis_on_the_desk() -> void:
 	if state == null:
 		return
 	var ns = state.player()
-	# 240 rather than --event's 48: the flood is a 0.06 draw behind the one-slot
-	# queue and its cooldown, and the horizon has to cover a run of bad hashes
+	# 240 rather than --event's 48: the flood is a 0.06 draw competing for the
+	# four-entry desk and its own cooldown, and the horizon has to cover a run of bad hashes
 	# rather than the mean of them. The re-run measured ~10 draws in 168 months,
 	# so the deterministic sequence lands well inside this.
 	var horizon := 240
