@@ -130,6 +130,7 @@ func _init() -> void:
 	_test_a_desk_resident_does_not_crowd_out_a_sibling()
 	_test_the_cooldown_floor_is_one_month()
 	_test_a_chain_may_arm_a_hook_event()
+	_test_a_chain_ignores_the_targets_preconditions()
 	_test_a_desk_resident_does_not_crowd_out_a_hook_sibling()
 	_test_the_weighted_pick_is_pure_and_weighted()
 	_test_hooks_fire_on_staged_registers()
@@ -1584,6 +1585,63 @@ func _test_a_chain_may_arm_a_hook_event() -> void:
 		_fail("the armed entry survived its own delivery")
 
 
+## A CHAIN DELIVERS REGARDLESS OF THE TARGET'S PRECONDITIONS (the author's decision:
+## the arming is the occasion, preconditions gate the hazard and hook doors). The armed
+## door keeps the target's existence, its `once` mark and its cooldown. The fixture's
+## gate is provably closed (deficit >= 1000 % of GDP), asserted first so a fixture that
+## quietly opened could not make the legs below vacuous. Player leg: the entry lands on
+## the desk at its due month and the armed entry is spent. AI leg: it resolves once.
+## `once` leg: a once-fired target still kills the chain, nothing delivered.
+func _test_a_chain_ignores_the_targets_preconditions() -> void:
+	var target = _make_event("chain_gated_target", false)
+	target.likelihood = 0.0
+	target.preconditions = [{"field": "deficit_pct_gdp", "op": ">=", "value": 1000.0}]
+	var stub := _StubLoader.new()
+	stub.events = [target]
+
+	var state = _new_state()
+	var ns = state.player()
+	if Legislature.preconditions_met(ns, target.preconditions):
+		_fail("the gated-chain fixture's precondition is open -- the legs below measure nothing")
+		return
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	ns.event_queue.clear()
+	ns.event_armed.append({"event_id": target.id, "due_index": month, "source_id": "x"})
+	Events.tick_month(state, stub)
+	if Events.pending_event_id(ns) != target.id:
+		_fail("a chain whose target's precondition fails was not delivered at its due month (desk holds '%s')" % Events.pending_event_id(ns))
+	if not ns.event_armed.is_empty():
+		_fail("the delivered gated chain left its armed entry behind")
+
+	var astate = _new_state()
+	var ai_ns = astate.nations["DEU"]
+	var amonth := Events._absolute_month(int(astate.year), int(astate.month))
+	if Legislature.preconditions_met(ai_ns, target.preconditions):
+		_fail("the AI nation's gate is open -- the AI leg measures nothing")
+		return
+	ai_ns.event_armed.append({"event_id": target.id, "due_index": amonth, "source_id": "x"})
+	Events.tick_month(astate, stub)
+	if _history_rows(ai_ns, target.id) != 1:
+		_fail("an AI nation resolved a gated chain %d times, expected once" % _history_rows(ai_ns, target.id))
+
+	var ostate = _new_state()
+	var ons = ostate.player()
+	var once_target = _make_event("chain_once_target", false)
+	once_target.likelihood = 0.0
+	once_target.once = true
+	var ostub := _StubLoader.new()
+	ostub.events = [once_target]
+	var omonth := Events._absolute_month(int(ostate.year), int(ostate.month))
+	ons.event_queue.clear()
+	ons.event_fired[once_target.id] = true
+	ons.event_armed.append({"event_id": once_target.id, "due_index": omonth, "source_id": "x"})
+	Events.tick_month(ostate, ostub)
+	if Events.is_pending(ons):
+		_fail("a once-fired target was delivered by its chain -- the once mark must still kill it")
+	if not ons.event_armed.is_empty():
+		_fail("the chain onto a once-fired target survived -- it should die at the door")
+
+
 func _history_rows(ns, event_id: String) -> int:
 	var rows := 0
 	for row in ns.event_history:
@@ -1763,9 +1821,10 @@ func _test_chains_arm_and_land() -> void:
 	var ns = state.player()
 	var source = _event("procurement_scandal")
 	var target = _event("emergency_budget_demand")
-	# The chain lands "through the same gates", and the target's own authored gate
-	# is deficit >= 5.5 -- fresh France runs 5.05, so the gate is STAGED open, the
-	# chooser test's staging, or the consequence dies silently at its own door.
+	# The chain door ignores the target's preconditions (see
+	# _test_a_chain_ignores_the_targets_preconditions); the gate is staged open
+	# anyway (the chooser test's staging) so this test still reads the shipped
+	# target in its own authored situation.
 	ns.deficit_pct_gdp = 6.0
 	var chosen: Dictionary = {}
 	# The choice lives in the SHARED loader's book: the mutation is undone on EVERY

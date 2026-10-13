@@ -257,12 +257,15 @@ while the desk-held event used up the happening's one slot. AI nations have no d
 are untouched.
 
 **Only the hazard door checks the category quiet.** The chain and hook doors run
-`_gates_pass` and `_cooldown_ok` and nothing more: a consequence or a happening-triggered
+no quiet check: a consequence or a happening-triggered
 event is delivered inside a quieted category (delivery then re-stamps the quiet). The
 quiet throttles the standing draw, not the world's reactions to what the player did.
+(The hook door runs `_gates_pass` and `_cooldown_ok`; the chain door runs the `once`
+mark and `_cooldown_ok` only — see Chains below.)
 
 **An armed chain entry whose target is cooling down in its due month is erased** — the
-existing "cooling down dies silently" rule. The one-month floor makes that reachable for
+existing "cooling down dies silently" rule (the target's preconditions are not checked at
+this door). The one-month floor makes that reachable for
 a chain that collides with a same-tick resolution of a cooldown-0 target (the resolution
 raises the target's until-month to the month after, and the armed entry finds it cooling).
 No shipped content reaches it: every cooldown-0 event is `once`, and no chain targets one
@@ -295,8 +298,13 @@ event).
 
 **Chains**: a choice carrying `arms {event_id, delay_months}` schedules the
 follow-up at an absolute due month; due entries deliver FIRST (a consequence
-outranks a draw), through the same gates, and the loader refuses unknown targets
-and cycles at load. The machine V4.1 refused, built once, here.
+outranks a draw), and the loader refuses unknown targets and cycles at load. **A chain
+delivers its target regardless of the target's preconditions** — the arming IS the
+occasion (the player's own choice promised the consequence), so a government below the
+target's gate still receives it; the target's `once` mark and cooldown still bind (a
+once-fired target, or one cooling down in the due month, kills the chain), and a full
+desk makes it wait a month. The preconditions gate the hazard and hook doors only.
+The machine V4.1 refused, built once, here.
 
 **The register is a third shape, and the handoff offered two.** A **deferred command**
 ([[calendar-model|U6a]]) is something the player scheduled and can cancel for free; a

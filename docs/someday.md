@@ -105,6 +105,8 @@ fiscal, cleanliness and unrest terms, so it re-tunes the `CHOOSER_*` weights and
 moves 28 nations' trajectories. **Trigger:** a tuning pass on the chooser, or an
 authored event where narrow-versus-broad is the whole decision. **Fix shape:** the
 size-weighted SUM, with the `CHOOSER_*` weights re-swept by `events_probe` E7.
+Kept parked by the author on 2026-10-14 (argmax moves in 1 of 102 events; a re-tune of
+`CHOOSER_*` against E7 is a tuning task).
 
 ### `Budget.project()` ticks every nation's events
 
@@ -159,6 +161,13 @@ event uses `law_passed` (7 of 8 vocabulary entries have a consumer). **Trigger:*
 first authored `law_passed` event. **Fix shape:** stamp passage in `Legislature.apply`
 itself rather than reading it back off the ledger.
 
+Two more facts about the same hook (Task 15, `events.gd`'s emitter comment states them):
+it misses every ledger-less passage (the ledger's writer returns early when no ledgered
+channel moved, so constitutional and institutional Acts and pure repeals never fire it),
+and one happening can fire two hooks (a carried private member's bill fires
+`member_bill_passed` at month M and `law_passed` at M+1; `law_repealed` can pair with it
+likewise). Same trigger and fix shape.
+
 ### Flavour text that assumes the Union
 
 `river_flood` mentions "the Union's solidarity fund" and reads oddly for a non-member
@@ -184,6 +193,27 @@ swept into E5's spread (all <= 18.9 % against 30) rather than introduced after i
 **Trigger:** a category whose measured share runs below its authored weight, or
 QUEUE_MAX shrinking. **Fix shape:** rotate the order by the month or choose among the
 pulsing categories by their authored weight.
+
+### The desk bound outranks severity
+
+With the desk at `QUEUE_MAX`, any further delivery is dropped whatever its severity or
+interrupt flag: a severity-3 interrupt such as `blackout_night` is lost without trace if
+four minor entries hold the desk. Same-month collisions between categories are decided by
+sorted category name, not severity (the entry above). Measured rarity: E4's overfull
+share is under 5 %, and `blackout_night` draws at 0.008/month while debt >= 95 %.
+**Trigger:** a playtest or probe run where a critical event is lost to a full desk.
+**Fix shape:** a critical or interrupt arrival displaces the lowest-severity entry (which
+defaults at once, with its "Decided for you" card), or interrupts may exceed `QUEUE_MAX`
+(needs the card column's capacity revisited — next entry).
+
+### The card column is nearly all protected
+
+Decision cards (up to `QUEUE_MAX` 4) and the term-start programme card are protected from
+`MAX_CARDS` (6) eviction, leaving 1-2 slots for plain news. Several plain cards pushed in
+one tick ("Decided for you", a takeover bid, an assembly division) evict each other before
+the frame draws, and an already-marked-announced notice is never re-shown. **Trigger:** a
+playtest note of a missing "Decided for you" card, or `MAX_CARDS` changing. **Fix shape:**
+a larger column, or one-tick coalescing of plain cards.
 
 ## Carried from earlier blocks (pointers, not duplicates)
 
