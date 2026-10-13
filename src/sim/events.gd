@@ -188,7 +188,7 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 		# hazard and hook doors, where nothing has asked for the event; here the
 		# ARMING is the occasion (the player's own choice promised the
 		# consequence), so a government below the target's gate still receives it.
-		if ev == null or (ev.once and ns.event_fired.has(ev.id)) or not _cooldown_ok(ns, ev, month_index):
+		if ev == null or _once_blocks(ns, ev) or not _cooldown_ok(ns, ev, month_index):
 			ns.event_armed.erase(armed)
 			continue
 		# The armed entry is erased ONLY on a delivered consequence: a door that
@@ -365,8 +365,14 @@ static func _weighted_pick(ns, fired: Array, month_index: int):
 	return fired[fired.size() - 1]
 
 
+## A `once` event that already fired is closed to every door; one helper so the
+## armed door (which skips preconditions) and _gates_pass cannot diverge on it.
+static func _once_blocks(ns, ev) -> bool:
+	return ev.once and ns.event_fired.has(ev.id)
+
+
 static func _gates_pass(ns, ev, month_index: int) -> bool:
-	if ev.once and ns.event_fired.has(ev.id):
+	if _once_blocks(ns, ev):
 		return false
 	return Legislature.preconditions_met(ns, ev.preconditions)
 
@@ -396,8 +402,9 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 			# release, referendum settlement) fires twice, at M on the == leg
 			# and at M+1 on the lag. The ledger records only passages that moved
 			# a ledgered channel by a non-zero amount (Legislature._record_ledger
-			# returns early otherwise), so a constitutional or institutional Act
-			# and a pure repeal never fire it, and one happening can fire two
+			# returns early otherwise), so a passage that writes no ledgered
+			# channel (for example a purely institutional Act, or a pure repeal)
+			# never fires it, and one happening can fire two
 			# hooks: a carried private member's bill fires member_bill_passed at
 			# M and law_passed at M+1. Assembly bills are a DISTINCT hook
 			# (member_bill_passed below) reading its own stamp,
@@ -785,7 +792,8 @@ static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool,
 	# V4.4: the chain. A choice that arms a follow-up schedules it at an absolute
 	# due month -- content's say, at a delay the schema bounds. The armed entry
 	# survives the save (a consequence the player paid for must not evaporate),
-	# and its arrival next month runs through the same gates as any draw.
+	# and its arrival is checked at the armed door (target exists, `once`,
+	# cooldown) -- not against the target's preconditions.
 	var arms: Dictionary = choice.get("arms", {})
 	if not arms.is_empty():
 		var month_index := _absolute_month(int(state.year), int(state.month))

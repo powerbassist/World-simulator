@@ -256,9 +256,8 @@ pool does, so a sibling hook event on the same happening can draw where it never
 while the desk-held event used up the happening's one slot. AI nations have no desk and
 are untouched.
 
-**Only the hazard door checks the category quiet.** The chain and hook doors run
-no quiet check: a consequence or a happening-triggered
-event is delivered inside a quieted category (delivery then re-stamps the quiet). The
+**Only the hazard door checks the category quiet.** The chain and hook doors run no
+quiet check: a consequence or a happening-triggered event is delivered inside a quieted category (delivery then re-stamps the quiet). The
 quiet throttles the standing draw, not the world's reactions to what the player did.
 (The hook door runs `_gates_pass` and `_cooldown_ok`; the chain door runs the `once`
 mark and `_cooldown_ok` only — see Chains below.)

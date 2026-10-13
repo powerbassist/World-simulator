@@ -1814,8 +1814,9 @@ func _test_hooks_fire_on_staged_registers() -> void:
 
 
 ## A choice that ARMS a follow-up schedules it: due at its delay, ahead of the
-## calendar's draws, through the same gates. The chain is the machine V4.1 refused,
-## built once, here.
+## calendar's draws, past the armed door's three checks (target exists, `once`,
+## cooldown; not its preconditions). The chain is the machine V4.1 refused, built
+## once, here.
 func _test_chains_arm_and_land() -> void:
 	var state = _new_state()
 	var ns = state.player()

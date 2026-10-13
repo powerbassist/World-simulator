@@ -163,7 +163,7 @@ itself rather than reading it back off the ledger.
 
 Two more facts about the same hook (Task 15, `events.gd`'s emitter comment states them):
 it misses every ledger-less passage (the ledger's writer returns early when no ledgered
-channel moved, so constitutional and institutional Acts and pure repeals never fire it),
+channel moved, so a passage that writes no ledgered channel -- for example a purely institutional Act, or a pure repeal -- never fires it),
 and one happening can fire two hooks (a carried private member's bill fires
 `member_bill_passed` at month M and `law_passed` at M+1; `law_repealed` can pair with it
 likewise). Same trigger and fix shape.
