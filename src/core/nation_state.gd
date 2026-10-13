@@ -522,12 +522,6 @@ var event_cooldowns: Dictionary = {}
 ## the player paid for must not evaporate on save -- `held_bills`' free-escape case.
 var event_armed: Array[Dictionary] = []
 
-## V4.4. Hook name -> the absolute month it last fired, for THIS nation. Not RNG
-## state (the pure-function pin stands): it is the reload-safety of an edge whose
-## source is a register another machine wrote, without which a save made in the
-## month of a happening and reloaded could hand the same happening to the hook twice.
-var event_hook_fired: Dictionary = {}
-
 ## V4.4. Law id -> the absolute month it was repealed. The V4.2 ledger ERASE is
 ## silent (legislature.gd's own record), so the repeal's month is stamped beside
 ## it -- one line, one writer, and only the law_repealed hook reads it.
@@ -1863,7 +1857,6 @@ func duplicate_state():
 	s.event_category_quiet = event_category_quiet.duplicate(true)
 	s.event_cooldowns = event_cooldowns.duplicate(true)
 	s.event_armed = event_armed.duplicate(true)
-	s.event_hook_fired = event_hook_fired.duplicate(true)
 	# The two hook stamps ride the family: both are serialised, and a copy that
 	# dropped them made a projection forget a repeal or an accession the world
 	# still remembers -- the empty-at-staging hole test_state_copy.gd now stages
@@ -2136,7 +2129,6 @@ func to_dict() -> Dictionary:
 		"event_category_quiet": event_category_quiet,
 		"event_cooldowns": event_cooldowns,
 		"event_armed": event_armed,
-		"event_hook_fired": event_hook_fired,
 		"repealed_at": repealed_at,
 		"last_accession": last_accession,
 		"assembly_bill_passed_month": assembly_bill_passed_month,
@@ -2461,7 +2453,6 @@ static func from_dict(d: Dictionary):
 	for row in d.get("event_armed", []):
 		if typeof(row) == TYPE_DICTIONARY:
 			s.event_armed.append(row.duplicate(true))
-	s.event_hook_fired = d.get("event_hook_fired", {}).duplicate(true)
 	s.repealed_at = d.get("repealed_at", {}).duplicate(true)
 	s.last_accession = d.get("last_accession", {}).duplicate(true)
 	s.assembly_bill_passed_month = int(d.get("assembly_bill_passed_month", -1))

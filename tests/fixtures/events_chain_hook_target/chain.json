@@ -18,7 +18,7 @@
     {
       "id": "loaded_hook",
       "name": "Hook",
-      "summary": "A hook event that a chain must not arm.",
+      "summary": "A hook event that a chain may arm (the cooldown floor keeps the hook door off it).",
       "likelihood": 0.01,
       "respond_months": 2,
       "category": "fiscal",

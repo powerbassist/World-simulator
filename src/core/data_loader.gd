@@ -2521,16 +2521,11 @@ func _load_events(events_dir: String) -> void:
 	# event's own choices are alternatives, so one choice's arms never reaches
 	# another's, but an armed event arms in turn when IT is answered, which is where
 	# a cycle would live.
-	# A chain TARGET may not itself be a hook event. Both doors run in the SAME tick
-	# (armed chains first, then hooks), and the hook door re-delivers every event whose
-	# on_action matches -- it has no dedupe against the desk OR the chain, so a target
-	# that is also a hook event resolves twice in one month and its choice effects
-	# apply twice. Refused here rather than guarded at runtime: the machine has no
-	# per-event "already delivered this tick" register, and one added for a shape no
-	# author has yet wanted is machinery the content does not need.
-	var events_by_id := {}
-	for ev in events:
-		events_by_id[ev.id] = ev
+	# A chain TARGET may be a hook event: both doors run in the same tick (armed
+	# chains first, then hooks), but events.gd's _deliver stamps a cooldown of at
+	# least the next month on every delivery and every door checks it, so the hook
+	# door cannot deliver what the chain door just delivered
+	# (tests/test_events.gd pins it at runtime).
 	var arm_edges := {}
 	for ev in events:
 		for choice in ev.choices:
@@ -2541,12 +2536,6 @@ func _load_events(events_dir: String) -> void:
 			if not seen_ids.has(target):
 				errors.append("%s: '%s' arms '%s', which is not a loaded event -- a chain that points at nothing can never land" % [
 					events_dir, ev.id, target
-				])
-				continue
-			var target_ev = events_by_id.get(target)
-			if target_ev != null and target_ev.on_action != "":
-				errors.append("%s: '%s' arms '%s', whose on_action '%s' lets the hook door re-deliver it -- a chain that arms a hook event can resolve twice in one tick: the hook door re-delivers it" % [
-					events_dir, ev.id, target, target_ev.on_action
 				])
 				continue
 			if not arm_edges.has(ev.id):

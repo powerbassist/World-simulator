@@ -64,7 +64,7 @@ extends RefCounted
 ## in those files names this one.
 ##
 ## WRITES ns.event_queue, ns.event_fired, ns.event_category_quiet,
-## ns.event_cooldowns, ns.event_armed, ns.event_hook_fired and ns.event_history,
+## ns.event_cooldowns, ns.event_armed and ns.event_history,
 ## and nothing else. Every effect a choice carries is written by
 ## Legislature.apply_effects(), which stays the single writer of all six channels.
 
@@ -87,7 +87,6 @@ static func init_nation(ns) -> void:
 	ns.event_category_quiet = {}
 	ns.event_cooldowns = {}
 	ns.event_armed.clear()
-	ns.event_hook_fired = {}
 	ns.event_history.clear()
 
 
@@ -191,12 +190,16 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 		if _deliver(state, ns, loader, ev, month_index, is_player):
 			ns.event_armed.erase(armed)
 
+	# No per-hook "already fired this month" stamp: the hook is a pure read of a
+	# register another machine wrote, and the only way to see the same month twice
+	# is a second Events.tick_month on one state in one month, which no caller does
+	# (the clock emits month_elapsed once per rollover, Budget.project advances its
+	# copy's month before each tick, and a save is taken after the tick). If one
+	# ever did, _cooldown_ok below already refuses the second delivery of any event,
+	# because _deliver stamps a cooldown of at least the next month.
 	for hook in K.ON_ACTIONS:
-		if int(ns.event_hook_fired.get(hook, -1)) == month_index:
-			continue
 		if not _hook_fired(state, ns, loader, hook, month_index):
 			continue
-		ns.event_hook_fired[hook] = month_index
 		for ev in loader.events:
 			if ev.on_action != hook:
 				continue
@@ -216,7 +219,7 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 			# next passage -- which the ledger will stamp, and the hook will
 			# see, because it fires again next month the register says so.
 			# A full desk (the return ignored above) skips FINALLY, like the
-			# hazard door: the happening is stamped, and the next happening
+			# hazard door: the happening is spent, and the next happening
 			# re-fires the hook -- a hook is not banked against the desk.
 			break
 

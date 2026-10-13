@@ -3,26 +3,25 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_event_chain_loader.gd
 ## Non-zero exit on any failure.
 ##
-## V4.4's chain loader refusal: a chain target that is itself a hook event can be
-## delivered twice in one tick (the armed-chain door, then the hook door -- which
-## has no dedupe), so its choice effects would apply twice. Refused at LOAD.
-## tests/test_events.gd already covers arming and landing; this pins the refusal.
+## V4.4's chain loader: a chain target that is itself a hook event LOADS. It was
+## refused until pass 18 (the armed-chain door and the hook door could both deliver
+## it in one tick); pass 17's cooldown floor in events.gd's _deliver removed the
+## premise, and tests/test_events.gd pins the runtime half. This file pins the load
+## and the loader's other set-level checks (collision keys).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 
 func _init() -> void:
 	var failures: Array[String] = []
 
-	# RED: a chain arming an event that carries on_action must be refused, naming
-	# the shape (the hook door re-delivering it).
-	var bad := DataLoader.new()
-	bad._load_events("res://tests/fixtures/events_chain_hook_target")
-	var refused := false
-	for e in bad.errors:
-		if e.find("loaded_hook") != -1 and e.find("re-deliver") != -1:
-			refused = true
-	if not refused:
-		failures.append("a chain arming a hook event loaded, or was refused without naming the hook re-delivery: %s" % [bad.errors])
+	# POSITIVE: a chain arming an event that carries on_action loads clean, both
+	# events present.
+	var hooked := DataLoader.new()
+	hooked._load_events("res://tests/fixtures/events_chain_hook_target")
+	if not hooked.errors.is_empty():
+		failures.append("a chain arming a hook event was refused: %s" % [hooked.errors])
+	if hooked.events.size() != 2:
+		failures.append("the chain/hook fixture should load 2 events, loaded %d" % hooked.events.size())
 
 	# GREEN: shipped content arms only a non-hook target (deficit_ceiling_vote,
 	# on_action empty), so the real book still loads clean.

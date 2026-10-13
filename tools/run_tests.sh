@@ -118,8 +118,8 @@ tests=(
   # V4.4: re-derive event_lint.py's E1b per-choice mean and business-worst bands;
   # shell-only lint rules otherwise never run in the agent suite.
   tests/test_event_content.gd
-  # V4.4: a chain may not arm a hook event (the hook door would re-deliver it the
-  # same tick) -- refused at load, negative case on a fixture.
+  # V4.4: a chain may arm a hook event (pass 17's cooldown floor keeps the hook
+  # door off it) -- loads clean; the collision-key legs stay on fixtures.
   tests/test_event_chain_loader.gd
   tests/test_credit.gd
   tests/test_tax.gd

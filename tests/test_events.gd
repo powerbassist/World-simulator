@@ -127,6 +127,7 @@ func _init() -> void:
 	_test_the_desk_does_not_double_hold()
 	_test_a_desk_resident_does_not_crowd_out_a_sibling()
 	_test_the_cooldown_floor_is_one_month()
+	_test_a_chain_may_arm_a_hook_event()
 	_test_a_desk_resident_does_not_crowd_out_a_hook_sibling()
 	_test_the_weighted_pick_is_pure_and_weighted()
 	_test_hooks_fire_on_staged_registers()
@@ -840,8 +841,6 @@ func _test_register_seeds_empty() -> void:
 			_fail("%s starts inside a cooldown" % id)
 		if not ns.event_armed.is_empty():
 			_fail("%s starts with a chain armed" % id)
-		if not ns.event_hook_fired.is_empty():
-			_fail("%s starts with a hook stamp" % id)
 		if not ns.event_history.is_empty():
 			_fail("%s starts with a history" % id)
 
@@ -1407,6 +1406,52 @@ func _test_the_cooldown_floor_is_one_month() -> void:
 		_fail("the floor fixture did not deliver onto an empty desk")
 	elif int(dns.event_cooldowns.get(ev.id, -1)) != dmonth + 1:
 		_fail("a cooldown-0 delivery stamped %s, expected %d (the one-month floor)" % [dns.event_cooldowns.get(ev.id, "nothing"), dmonth + 1])
+
+
+## A CHAIN MAY ARM A HOOK EVENT (the loader's refusal of the shape went at pass 18).
+## An AI nation with an armed entry for a hook-event target, due the very month that
+## target's hook fires, resolves it ONCE: the chain door delivers first and
+## _deliver's cooldown floor keeps the hook door off it. The AI resolves on the spot,
+## so a second delivery would apply the choice twice -- the history row count is the
+## observable. The control run (no armed entry) proves the hook really does deliver
+## this fixture, so "once" is not "never".
+func _test_a_chain_may_arm_a_hook_event() -> void:
+	var target = _make_event("chain_hook_target", false)
+	target.on_action = "law_passed"
+	target.likelihood = 1.0
+	if target.cooldown_months != 0 or target.once:
+		_fail("the chain/hook fixture is not a cooldown-0, non-once event -- the legs below measure nothing")
+		return
+	var stub := _StubLoader.new()
+	stub.events = [target]
+
+	var control = _new_state()
+	var control_ns = control.nations["DEU"]
+	var cmonth := Events._absolute_month(int(control.year), int(control.month))
+	control_ns.law_ledger["probe_law"] = {"months": [cmonth - 1]}
+	Events.tick_month(control, stub)
+	if _history_rows(control_ns, target.id) != 1:
+		_fail("the hook alone delivered the fixture %d times -- the control premise failed" % _history_rows(control_ns, target.id))
+
+	var state = _new_state()
+	var ai_ns = state.nations["DEU"]
+	var month := Events._absolute_month(int(state.year), int(state.month))
+	ai_ns.law_ledger["probe_law"] = {"months": [month - 1]}
+	ai_ns.event_armed.append({"event_id": target.id, "due_index": month, "source_id": "x"})
+	Events.tick_month(state, stub)
+	var rows := _history_rows(ai_ns, target.id)
+	if rows != 1:
+		_fail("a chain-armed hook event resolved %d times in the tick its hook fired -- expected once" % rows)
+	if not ai_ns.event_armed.is_empty():
+		_fail("the armed entry survived its own delivery")
+
+
+func _history_rows(ns, event_id: String) -> int:
+	var rows := 0
+	for row in ns.event_history:
+		if String(row.get("event_id", "")) == event_id:
+			rows += 1
+	return rows
 
 
 ## A hook event already on the player's desk must not take the hook loop's one slot per

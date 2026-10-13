@@ -243,7 +243,9 @@ occasion per event per month. The AI branch resolves on the spot, so a double de
 would apply its choice twice, and the UI's desk-diff keys on the event id, so an entry
 that defaults and is re-delivered in one tick would show neither card nor ledger line.
 The floor itself leaves the shipped book unaffected — every cooldown-0 event is `once`,
-which already binds.
+which already binds. This floor is also why a chain MAY arm a hook event: the chain door
+delivers first and every door checks the cooldown, so the hook door cannot deliver the
+same event again in that tick (the loader refused the shape until pass 18).
 
 **The hook door's desk skip is a shipped-behaviour change (pass 17), separate from the
 floor**: the player's hook loop now skips an event the desk already holds, as the hazard
@@ -533,15 +535,17 @@ carrying every crisis.
 
 ## 8. `SAVE_VERSION` 25 → 26, on three fields of four
 
-> **V4.4 bumps 38 → 39 on SEVEN registers, argued apart in
+> **V4.4 bumps 38 → 39 on SIX registers, argued apart in
 > `src/core/game_state.gd`'s documentation block**: `event_queue` (the slot
 > became the desk — a dropped queue is the V1.8 free escape times four),
 > `event_category_quiet` and `event_cooldowns` (sparse until-registers whose
 > absent value means *may draw now*, the `event_quiet_months` case one level
-> down), `event_armed` (a chain the player paid for must not evaporate),
-> `event_hook_fired` (the hooks' reload-safety stamp — NOT RNG state; the
-> pure-function absence pins below survive and stay red), and the two stamps
-> other machines write (`repealed_at`, `last_accession`). The table below is
+> down), `event_armed` (a chain the player paid for must not evaporate), and
+> the two stamps other machines write (`repealed_at`, `last_accession`; the
+> pure-function absence pins below survive and stay red). A seventh,
+> `event_hook_fired`, was removed at pass 18 as dead state: its guard could
+> only trip on a second tick of one month, which no caller does, and the
+> cooldown floor refuses the second delivery regardless. The table below is
 > the V1.8 record for the fields that became the queue.
 
 They fail the rule by **three different failures**, so `tests/test_save_load.gd` asserts

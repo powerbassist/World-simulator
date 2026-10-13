@@ -423,8 +423,6 @@ def main() -> int:
         all_events.append((fname, ev))
         file_counts[fname] = file_counts.get(fname, 0) + 1
 
-    by_id = {ev.get("id", ""): ev for _fname, ev in all_events}
-
     # Second pass over the arms: now every id in the book is known.
     for fname, ev in all_events:
         for choice in ev.get("choices", []):
@@ -434,14 +432,6 @@ def main() -> int:
             if isinstance(target, str) and target and target not in arm_edges:
                 rep.fail("%s: %s: arms '%s', which is not a loaded event -- a chain that points at nothing can never land" % (
                     fname, ev.get("id", "<no id>"), target))
-            # The loader's two set-level refusals (data_loader.gd, _load_events):
-            # a target that is a hook event is re-delivered by the hook door the
-            # same tick, and a chain that re-arms its own ancestry never ends.
-            elif isinstance(target, str) and target:
-                hook_of = by_id.get(target, {}).get("on_action", "")
-                if hook_of:
-                    rep.fail("%s: %s: arms '%s', whose on_action '%s' lets the hook door re-deliver it" % (
-                        fname, ev.get("id", "<no id>"), target, hook_of))
 
     # Cycle walk over the same edges, depth-first with its own path, one report per
     # start -- the loader's rule, restated.
