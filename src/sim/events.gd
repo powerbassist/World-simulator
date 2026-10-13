@@ -665,8 +665,17 @@ static func answer(state, loader, event_id: String, choice_id: String) -> Dictio
 ## note -- approval-seeking on the size-weighted bloc response, a fiscal term
 ## that prefers balance when the deficit is high, a cleanliness term when
 ## corruption is high, a concession term when unrest is high -- and the terms
-## TRADE, which is the point: a deficit-running government in unrest prefers the
+## TRADE, which is the point: a deficit-running government in unrest would prefer the
 ## concession a balanced one refuses. Deterministic; ties go to content order.
+##
+## THE BOUND, stated where the chooser is described: _choose runs only for AI
+## nations, and an AI nation's unrest_pct never ticks (Unrest.tick_month skips a
+## nation without has_budget) while its deficit_pct_gdp moves only when an event's own
+## fiscal effect recomputes it. So the unrest term is reachable only by a nation whose
+## unrest ticks -- for today's AI nations it reads its start value -- and the fiscal
+## term reads starting data. The trade-off above is a property of a budgeted nation
+## the day AI nations get a budget tick, with no edit here. See docs/someday.md, "The
+## AI nations' unrest and deficit registers never tick".
 static func _choose(ns, ev) -> Dictionary:
 	var best: Dictionary = {}
 	var best_score := -INF
