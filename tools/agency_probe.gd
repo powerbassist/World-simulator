@@ -60,6 +60,9 @@ const Events = preload("res://src/sim/events.gd")
 const Media = preload("res://src/sim/media.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Energy = preload("res://src/sim/energy.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
+const Statute = preload("res://src/sim/statute.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 
@@ -264,15 +267,20 @@ func _run_style(style: Dictionary) -> Dictionary:
 		state.year = year
 		state.month = month
 
-		# The tick order is main.gd's and balance_probe.gd's, verbatim in
-		# sequence: a probe whose month differs from the game's month measures
-		# a simulation the player never played.
+		# The tick order is main.gd's and balance_probe.gd's for every machine this
+		# probe runs: a probe whose month differs from the game's month measures
+		# a simulation the player never played. Commodities, Statute and Industry
+		# are in main.gd's slots because Events.tick_month reads their registers
+		# the same month (tests/test_events.gd's tick-order pin holds this file to
+		# it). Programme and Characters are not run -- this probe predates the
+		# programme credit and measures the player nation's record without them.
 		var access_by_nation: Dictionary = {}
 		for member_id in state.nations.keys():
 			access_by_nation[member_id] = Regions.accessibility_for(
 				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
 		Energy.tick_month(state, loader, access_by_nation)
 		Economy.tick_month(state)
+		Commodities.tick_month(state, loader)
 		Budget.tick_month(state)
 		Orgs.tick_month(state, loader)
 		Inflation.tick_month(state)
@@ -285,10 +293,12 @@ func _run_style(style: Dictionary) -> Dictionary:
 			record_m6 = Opinion.competence_record(ns)
 		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state, loader)
+		Statute.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		Diplomacy.tick_month(state, loader)
 		Defence.tick_month(state)
 		Companies.tick_month(state, loader)
+		Industry.tick_month(state, loader)
 		Migration.tick_month(state, loader)
 		Investment.tick_month(state)
 		Projects.tick_month(state, loader)

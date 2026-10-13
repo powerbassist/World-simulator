@@ -857,11 +857,24 @@ func _table_e1b_accumulation() -> void:
 		var a := _run_machine(regime, RUN_MONTHS, true, 0)
 		var dw := _worst_offset(d["state"])
 		var aw := _worst_offset(a["state"])
+		var def_saturated: bool = absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
+		var ans_saturated: bool = absf(float(aw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
 		print("%-14s %8d %8d   %-11s %9.4f   %-11s %9.4f%s" % [
 			regime, int(d["months"]), int(d["arrivals"]),
 			dw["bloc"], float(dw["value"]), aw["bloc"], float(aw["value"]),
-			"   *** SATURATED ***" if absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001 else "",
+			"   *** SATURATED ***" if def_saturated else "",
 		])
+		# The band is the header's: STRICTLY SLACK of the clamp on the all-defaults
+		# path. Printing the marker without failing it left the run exiting 0 over
+		# "every declared band PASSED". The answer-well path is held too -- it adds
+		# the best choices' own offsets and a clamp reached there is the same
+		# convergence of regimes.
+		if def_saturated:
+			_band_failed("E1b: regime %s on the all-defaults path reaches the bloc_offset clamp -- bloc %s at %.4f against +-%.2f" % [
+				regime, dw["bloc"], float(dw["value"]), LegislatureK.BLOC_OFFSET_MAX])
+		if ans_saturated:
+			_band_failed("E1b: regime %s on the answer-well path reaches the bloc_offset clamp -- bloc %s at %.4f against +-%.2f" % [
+				regime, aw["bloc"], float(aw["value"]), LegislatureK.BLOC_OFFSET_MAX])
 
 
 ## The bloc carrying the largest absolute offset. Read off the LIVE register rather than

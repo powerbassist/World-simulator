@@ -83,6 +83,9 @@ const Events = preload("res://src/sim/events.gd")
 const Media = preload("res://src/sim/media.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Energy = preload("res://src/sim/energy.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
+const Statute = preload("res://src/sim/statute.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 
@@ -262,13 +265,18 @@ func _run_style(style: Dictionary, months: int) -> Dictionary:
 
 		# main.gd's order, with Programme immediately before Opinion -- the
 		# wiring under test. Elections runs last, which is the term-boundary
-		# guarantee the wiring comment in main.gd states.
+		# guarantee the wiring comment in main.gd states. Commodities, Statute and
+		# Industry are ticked in main.gd's slots because Events.tick_month reads
+		# their registers the same month (tests/test_events.gd's tick-order pin
+		# holds this file to it); Characters and the UI-side announcers are not
+		# run here.
 		var access_by_nation: Dictionary = {}
 		for member_id in state.nations.keys():
 			access_by_nation[member_id] = Regions.accessibility_for(
 				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
 		Energy.tick_month(state, loader, access_by_nation)
 		Economy.tick_month(state)
+		Commodities.tick_month(state, loader)
 		Budget.tick_month(state)
 		Orgs.tick_month(state, loader)
 		Inflation.tick_month(state)
@@ -288,10 +296,12 @@ func _run_style(style: Dictionary, months: int) -> Dictionary:
 
 		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state, loader)
+		Statute.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		Diplomacy.tick_month(state, loader)
 		Defence.tick_month(state)
 		Companies.tick_month(state, loader)
+		Industry.tick_month(state, loader)
 		Migration.tick_month(state, loader)
 		Investment.tick_month(state)
 		Projects.tick_month(state, loader)

@@ -459,6 +459,10 @@ func _test_tick_order_pin() -> void:
 	# test_balance's month loop is the other balance harness: it ticks all four
 	# (Commodities since pass 17), so it is held to the same order as main.gd.
 	_check_events_order_in("res://tests/test_balance.gd", all_four)
+	# The two measurement probes whose loops tick Events: held to the same order as
+	# main.gd so the hooks that read these registers can fire in what they measure.
+	_check_events_order_in("res://tools/agency_probe.gd", all_four)
+	_check_events_order_in("res://tools/programme_probe.gd", all_four)
 	_check_events_order_in("res://src/sim/budget.gd", ["Orgs", "Statute", "Industry"])
 	_check_events_order_in("res://tests/test_budget.gd", ["Orgs", "Statute", "Industry"])
 
