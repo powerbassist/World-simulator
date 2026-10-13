@@ -51,11 +51,11 @@ extends RefCounted
 ## ============================================================================
 ## This file preloads its constants and Legislature -- apply_effects, the ONE
 ## applier, and read_field, the one precondition reader -- and nothing else. No UI,
-## no opinion.gd, no law.gd (the loader extracts `immediate` and every `on_*` through Law.extract_shared_effects at
-## load; by the time a conclusion fires, its effects are an ordinary effect
-## dictionary). Content lives in data/programme/ and is read through the loader
-## on every tick, so the register -- like the pledge register beside it --
-## round-trips the DECISION and never the ladder.
+## no opinion.gd, no law.gd (the loader extracts `immediate` and every `on_*`
+## through Law.extract_shared_effects at load; by the time a conclusion fires, its
+## effects are an ordinary effect dictionary). Content lives in data/programme/ and
+## is read through the loader on every tick, so the register -- like the pledge
+## register beside it -- round-trips the DECISION and never the ladder.
 ##
 ## THE NINE ARE INERT. Programme.init_nation() seeds every nation (the Campaign
 ## and Projects precedent) but only the player's register is ever populated:

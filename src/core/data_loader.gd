@@ -147,8 +147,9 @@ var programme: Array = []
 
 ## V1.8's occasions. The SEVENTH directory on data/diplomatic-actions/'s shape, and the
 ## last content type the V1 tier adds. Ordered rather than keyed, and the order still
-## matters in two places: the hook door takes the FIRST open event on a happening and
-## breaks (authored order is that tiebreak), and Events._weighted_pick walks the
+## matters in two places: the hook door takes the FIRST event on a happening that
+## passes its gates, cooldown and likelihood draw, then breaks (authored order is that
+## tiebreak), and Events._weighted_pick walks the
 ## cumulative authored weights in content order. It does NOT break a same-month tie
 ## between hazard draws: the winner inside a category is a pure weighted draw keyed
 ## on the SORTED roster of eligible ids, so reordering the files only moves where a

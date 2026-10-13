@@ -1684,11 +1684,13 @@ func _check_event_fields(loader) -> void:
 	# A save written while `event_hook_fired` still existed must load: from_dict reads
 	# explicit keys, so the dead key is ignored, and the field is not written back.
 	var legacy: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
-	(legacy["nations"]["FRA"] as Dictionary)["event_hook_fired"] = {"law_passed": month}
+	(legacy["nations"]["FRA"] as Dictionary)["event_hook_fired"] = {"law_passed": month}	# from_dict never returns null, so "it loaded" is no assertion: a field staged above
+	# (event_cooldowns, month + 12) must come back from THIS payload, which proves the
+	# load read the legacy dictionary and not a fresh game.
 	var legacy_back = GameState.from_dict(legacy)
-	if legacy_back == null or legacy_back.player() == null:
-		_fail("a save carrying the removed event_hook_fired key did not load")
-	elif (legacy_back.to_dict()["nations"]["FRA"] as Dictionary).has("event_hook_fired"):
+	if int(legacy_back.player().event_cooldowns.get("procurement_scandal", -1)) != month + 12:
+		_fail("a save carrying the removed event_hook_fired key did not load its other fields")
+	if (legacy_back.to_dict()["nations"]["FRA"] as Dictionary).has("event_hook_fired"):
 		_fail("a save carrying the removed event_hook_fired key wrote it back out")
 
 	# (7) `event_history` earns NOTHING and is serialised regardless, unchanged

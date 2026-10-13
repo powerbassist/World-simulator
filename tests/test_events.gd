@@ -1414,11 +1414,14 @@ func _test_the_cooldown_floor_is_one_month() -> void:
 
 ## A CHAIN MAY ARM A HOOK EVENT (the loader's refusal of the shape went at pass 18).
 ## An AI nation with an armed entry for a hook-event target, due the very month that
-## target's hook fires, resolves it ONCE: the chain door delivers first and
-## _deliver's cooldown floor keeps the hook door off it. The AI resolves on the spot,
-## so a second delivery would apply the choice twice -- the history row count is the
-## observable. The control run (no armed entry) proves the hook really does deliver
-## this fixture, so "once" is not "never".
+## target's hook fires, resolves it ONCE: the chain door delivers first and the
+## one-month cooldown floor keeps the hook door off it. On this AI path the floor is
+## written TWICE -- _deliver stamps it, then the in-tick _resolve raises it again to
+## the same month + 1 -- so this test goes red only when BOTH are removed, not when
+## either alone is. The AI resolves on the spot, so a second delivery would
+## apply the choice twice -- the history row count is the observable. The control run
+## (no armed entry) proves the hook really does deliver this fixture, so "once" is
+## not "never".
 func _test_a_chain_may_arm_a_hook_event() -> void:
 	var target = _make_event("chain_hook_target", false)
 	target.on_action = "law_passed"

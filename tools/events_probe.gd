@@ -836,8 +836,10 @@ func _table_e7_chooser() -> void:
 ## price is not a lifetime charge -- and economy-model.md's IMPULSE_MAX a sixth time.
 ##
 ## BAND: the worst bloc's accumulated event offset over a full reachable run must leave
-## BLOC_OFFSET_MAX STRICTLY SLACK, on the all-defaults path, which is the worst case a
-## player can actually produce. docs/defence-model.md's measured-and-slack discipline.
+## BLOC_OFFSET_MAX STRICTLY SLACK, on BOTH paths: the all-defaults path (what a player
+## who never opens the window produces) and the answer-well path (every entry answered
+## with its best choice on arrival). A clamp reached on either fails the band.
+## docs/defence-model.md's measured-and-slack discipline.
 func _table_e1b_accumulation() -> void:
 	print("\n=== E1b  LIFETIME ACCUMULATION against the bloc_offset clamp (+-%.2f) ===" % LegislatureK.BLOC_OFFSET_MAX)
 	print("A per-decision price is not a lifetime charge. Measured on the ALL-DEFAULTS")
@@ -864,11 +866,10 @@ func _table_e1b_accumulation() -> void:
 			dw["bloc"], float(dw["value"]), aw["bloc"], float(aw["value"]),
 			"   *** SATURATED ***" if def_saturated else "",
 		])
-		# The band is the header's: STRICTLY SLACK of the clamp on the all-defaults
-		# path. Printing the marker without failing it left the run exiting 0 over
-		# "every declared band PASSED". The answer-well path is held too -- it adds
-		# the best choices' own offsets and a clamp reached there is the same
-		# convergence of regimes.
+		# The band is the header's: STRICTLY SLACK of the clamp on both paths.
+		# Printing the marker without failing it left the run exiting 0 over
+		# "every declared band PASSED". The answer-well path adds the best choices'
+		# own offsets, and a clamp reached there is the same convergence of regimes.
 		if def_saturated:
 			_band_failed("E1b: regime %s on the all-defaults path reaches the bloc_offset clamp -- bloc %s at %.4f against +-%.2f" % [
 				regime, dw["bloc"], float(dw["value"]), LegislatureK.BLOC_OFFSET_MAX])
