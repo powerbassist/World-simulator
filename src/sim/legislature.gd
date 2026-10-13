@@ -277,6 +277,12 @@ static func _tick_held_bills(state, ns, loader) -> void:
 			released["assembly_division_month"] = int(state.year) * 12 + int(state.month)
 		_review_and_apply(state, ns, law, loader, released)
 		ns.last_law_result = released
+		# The member_bill_passed hook's own stamp: last_law_result is
+		# overwritten by any later division this month, the release with it.
+		# After the review, because the court can strike a released bill
+		# (passed -> false) and a struck bill did not come into force.
+		if origin == "assembly" and bool(released.get("passed", false)):
+			ns.assembly_bill_passed_month = int(state.year) * 12 + int(state.month)
 
 
 ## THE COURT'S GATE, and it is the LAST stage of the pipeline rather than a second

@@ -562,6 +562,8 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##   * `ns.repealed_at` and `ns.last_accession` -- the two hook stamps other
 ##     machines write; serialised with the family so a reload does not forget a
 ##     repeal or an accession the world still remembers.
+## `ns.assembly_bill_passed_month` joined the family after the bump WITHOUT one: absent
+## reads -1, "no assembly bill has passed", true of every older save.
 ## The ONE-WAY gate stands: save_manager refuses a version mismatch outright,
 ## so from_dict's defaults are robustness, not a bridge -- no v38 save ever
 ## reaches them.

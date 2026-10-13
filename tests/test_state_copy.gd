@@ -99,6 +99,7 @@ func _init() -> void:
 			var staged_ns = state.nations[id]
 			staged_ns.repealed_at["copy_probe_law"] = 1234
 			staged_ns.last_accession = {"org": "copy_probe_org", "month_index": 1234}
+			staged_ns.assembly_bill_passed_month = 1234
 			staged_ns.event_hook_fired["copy_probe_hook"] = 1234
 			staged_ns.event_fired["copy_probe_event"] = true
 			staged_ns.event_category_quiet["copy_probe_category"] = 3

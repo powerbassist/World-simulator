@@ -1574,6 +1574,7 @@ func _check_event_fields(loader) -> void:
 	ns.event_hook_fired["law_passed"] = month
 	ns.repealed_at["income_tax"] = month
 	ns.last_accession = {"org": "eu", "month_index": month}
+	ns.assembly_bill_passed_month = month
 	# One resolved event in the ledger, so the display record has something to survive.
 	ns.event_history.push_front({
 		"event_id": ev.id, "event_name": ev.event_name,
@@ -1614,6 +1615,8 @@ func _check_event_fields(loader) -> void:
 	if String(bns.last_accession.get("org", "")) != "eu" \
 			or int(bns.last_accession.get("month_index", -1)) != month:
 		_fail("last_accession did not survive the round trip")
+	if bns.assembly_bill_passed_month != month:
+		_fail("assembly_bill_passed_month did not survive the round trip")
 
 	# (2) `event_queue` earns the bump, and it is `event_pending`'s case one level
 	# up: absent, crises the country is facing VANISH -- a free escape from every

@@ -538,6 +538,17 @@ var repealed_at: Dictionary = {}
 ## nation joined -- the accession_won hook reads this stamp.
 var last_accession: Dictionary = {}
 
+## V4.4 review. The absolute month (`year*12+month`, `assembly_division_month`'s
+## form) an ASSEMBLY bill last came into force, -1 for never. It exists because
+## `last_law_result` is overwritten by every later division in the same month: a
+## held bill RELEASED by Legislature._tick_held_bills was erased by a same-month
+## private member's bill that failed in Statute, and the member_bill_passed hook
+## never saw the release. Two writers, one per place an assembly bill takes
+## effect (the release, and a division that passes and is not held); the hook is
+## the only reader. NO SAVE_VERSION bump: absent reads -1, "no assembly bill has
+## passed", which is the truth about every older save (`last_accession`'s case).
+var assembly_bill_passed_month: int = -1
+
 ## What happened and what the player chose, newest first, capped at EVENTS_KEPT. A
 ## DISPLAY RECORD: nothing in src/sim/ reads it back, and tests/test_events.gd asserts
 ## that by reading every file in the directory -- V1.3f's `foreign_acts` property in the
@@ -1859,6 +1870,7 @@ func duplicate_state():
 	# against.
 	s.repealed_at = repealed_at.duplicate(true)
 	s.last_accession = last_accession.duplicate(true)
+	s.assembly_bill_passed_month = assembly_bill_passed_month
 	s.event_history = event_history.duplicate(true)
 	s.permits_system_change = permits_system_change
 
@@ -2127,6 +2139,7 @@ func to_dict() -> Dictionary:
 		"event_hook_fired": event_hook_fired,
 		"repealed_at": repealed_at,
 		"last_accession": last_accession,
+		"assembly_bill_passed_month": assembly_bill_passed_month,
 		"event_history": event_history,
 		"permits_system_change": permits_system_change,
 
@@ -2451,6 +2464,7 @@ static func from_dict(d: Dictionary):
 	s.event_hook_fired = d.get("event_hook_fired", {}).duplicate(true)
 	s.repealed_at = d.get("repealed_at", {}).duplicate(true)
 	s.last_accession = d.get("last_accession", {}).duplicate(true)
+	s.assembly_bill_passed_month = int(d.get("assembly_bill_passed_month", -1))
 	s.event_history.clear()
 	for row in d.get("event_history", []):
 		if typeof(row) == TYPE_DICTIONARY:

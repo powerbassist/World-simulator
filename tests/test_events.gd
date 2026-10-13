@@ -446,7 +446,7 @@ func _test_the_climate_content() -> void:
 const _EVENTS_READS_AFTER := {
 	"Commodities": "the commodity_price_high hook reads commodity_state",
 	"Orgs": "the accession_won hook reads ns.last_accession",
-	"Statute": "the member_bill_passed hook reads the assembly_division_month stamp",
+	"Statute": "the member_bill_passed hook reads the assembly_bill_passed_month stamp",
 	"Industry": "the takeover_bid and firm_failed hooks read industry registers",
 }
 
@@ -1506,17 +1506,28 @@ func _test_hooks_fire_on_staged_registers() -> void:
 		_fail("accession_won fired for a NATO accession -- the hook is the Union's")
 	ns.last_accession = {}
 
-	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month, "passed": true}
+	# member_bill_passed reads its own stamp, pinned BOTH directions: M fires,
+	# M-1 (last month's passage) does not, and the default -1 does not.
+	if Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+		_fail("member_bill_passed fired with no assembly bill ever passed (default -1)")
+	ns.assembly_bill_passed_month = month
 	if not Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
-		_fail("member_bill_passed did not read the assembly division stamp")
-	# A bill the house defeated, the upper chamber blocked, or the upper chamber
-	# HELD carries the same stamps with passed=false -- none of them is a bill passed.
-	for shape in [{}, {"blocked_by_upper": true}, {"held_by_upper": true}]:
-		var lost: Dictionary = {"assembly_bill": true, "assembly_division_month": month, "passed": false}
-		lost.merge(shape)
-		ns.last_law_result = lost
-		if Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
-			_fail("member_bill_passed fired for a division that did not pass (%s)" % [shape])
+		_fail("member_bill_passed did not read the assembly_bill_passed_month stamp")
+	ns.assembly_bill_passed_month = month - 1
+	if Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+		_fail("member_bill_passed fired on a stamp from last month -- the hook is a month read")
+	# The pass-17 finding: a later division the same month (a private member's
+	# bill that FAILS) overwrites last_law_result, and used to erase a held bill's
+	# release with it. The stamp is independent of that register.
+	ns.assembly_bill_passed_month = month
+	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month, "passed": false}
+	if not Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+		_fail("a failed same-month division in last_law_result cancelled the passed-bill stamp")
+	# And the inverse: a passed-looking last_law_result with no stamp fires nothing.
+	ns.assembly_bill_passed_month = -1
+	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month, "passed": true}
+	if Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+		_fail("member_bill_passed read last_law_result instead of its own stamp")
 	ns.last_law_result = {}
 
 	# And a stale stamp fires nothing: the emitters are month reads, not edges.

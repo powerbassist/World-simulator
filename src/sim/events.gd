@@ -399,15 +399,14 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 					return true
 			return false
 		"member_bill_passed":
-			# `passed` is part of the name: every division stamps assembly_bill and
-			# its month, a defeated, blocked or HELD bill included (a held bill's
-			# division carries passed=false; its release writes a fresh passed=true
-			# result), so the stamp alone fired this hook for a bill the house had
-			# just killed.
-			var result: Dictionary = ns.last_law_result
-			return bool(result.get("assembly_bill", false)) \
-				and bool(result.get("passed", false)) \
-				and int(result.get("assembly_division_month", -1)) == month_index
+			# Reads its OWN stamp, written where an assembly bill comes into
+			# force (Statute's passing division, Legislature's held-bill release
+			# for origin "assembly") -- never last_law_result, which every later
+			# division of the month overwrites: a release at M was erased by a
+			# same-month private member's bill that failed, and the hook never
+			# saw it. A defeated, blocked or HELD division writes no stamp, so
+			# "passed" stays part of the name.
+			return ns.assembly_bill_passed_month == month_index
 		"minister_resigned":
 			# Cabinet writes the stamp AFTER this machine's slot in the month
 			# handler, so the readable window is LAST month's resignation -- the
