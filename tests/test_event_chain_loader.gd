@@ -31,6 +31,26 @@ func _init() -> void:
 	if not good.errors.is_empty():
 		failures.append("the shipped event book was refused: %s" % [good.errors])
 
+	# The collision key (data_loader._load_events) carries on_action and keeps the
+	# eu_member scope. Pairs sharing a subject and a gate but differing in on_action
+	# (hazard vs hook), or in membership (members-only vs open), are different
+	# occasions and must load; the same hook twice is still one event authored twice.
+	var apart := DataLoader.new()
+	apart._load_events("res://tests/fixtures/events_collision_on_action")
+	if not apart.errors.is_empty():
+		failures.append("events differing in on_action or eu scope were refused as one event authored twice: %s" % [apart.errors])
+	if apart.events.size() != 4:
+		failures.append("the on_action/eu fixture should load 4 events, loaded %d (an earlier error would show above)" % apart.events.size())
+
+	var twin := DataLoader.new()
+	twin._load_events("res://tests/fixtures/events_collision_same_action")
+	var twin_refused := false
+	for e in twin.errors:
+		if e.find("twin_one") != -1 and e.find("twin_two") != -1 and e.find("authored twice") != -1:
+			twin_refused = true
+	if not twin_refused:
+		failures.append("two hook events with one subject, gate and on_action were not refused as one event authored twice: %s" % [twin.errors])
+
 	if failures.is_empty():
 		print("test_event_chain_loader: all checks passed")
 		quit(0)

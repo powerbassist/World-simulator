@@ -2592,7 +2592,9 @@ func _answer_a_crisis() -> void:
 		if not bool(c["is_default"]):
 			answered = String(c["id"])
 			break
-	Events.choose(state, _main._loader, answered)
+	# By id, not the head: a more severe entry already on the desk would be the head,
+	# and choose() would then answer THAT entry (or nothing, for a choice id it lacks).
+	Events.answer(state, _main._loader, String(first.id), answered)
 
 	var second = _main._loader.events[1]
 	ns.event_category_quiet = {}

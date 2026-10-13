@@ -27,6 +27,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
@@ -439,6 +440,12 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
 		Energy.tick_month(state, _loader, access_by_nation)
 		Economy.tick_month(state)
+		# V4.4 pass 17, in main.gd's slot (immediately after Economy, before Budget):
+		# the events machine's commodity_price_high hook reads the register this call
+		# writes, so a harness that skipped it ran a different event model from the
+		# game and from tools/balance_probe.gd. Pinned by tests/test_events.gd's
+		# `_test_tick_order_pin`.
+		Commodities.tick_month(state, _loader)
 		Budget.tick_month(state)
 		Orgs.tick_month(state, _loader)
 		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.

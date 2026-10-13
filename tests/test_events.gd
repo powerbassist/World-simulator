@@ -440,7 +440,7 @@ func _test_the_climate_content() -> void:
 ## Commodities, Orgs, Statute and Industry in `_on_month_elapsed`; the pin in
 ## test_commodities.gd holds only Economy < Commodities < Opinion, so this is
 ## the pin for the Events end. The balance probe mirrors the order and is held
-## to it too, as are Budget.project() and test_budget's mirror of it -- those
+## to it too, as is tests/test_balance.gd's loop, as are Budget.project() and test_budget's mirror of it -- those
 ## two never tick Commodities (the projection prices no goods), so they are held
 ## to the three predecessors they do run.
 const _EVENTS_READS_AFTER := {
@@ -454,6 +454,9 @@ func _test_tick_order_pin() -> void:
 	var all_four := ["Commodities", "Orgs", "Statute", "Industry"]
 	_check_events_order_in("res://src/ui/main.gd", all_four)
 	_check_events_order_in("res://tools/balance_probe.gd", all_four)
+	# test_balance's month loop is the other balance harness: it ticks all four
+	# (Commodities since pass 17), so it is held to the same order as main.gd.
+	_check_events_order_in("res://tests/test_balance.gd", all_four)
 	_check_events_order_in("res://src/sim/budget.gd", ["Orgs", "Statute", "Industry"])
 	_check_events_order_in("res://tests/test_budget.gd", ["Orgs", "Statute", "Industry"])
 

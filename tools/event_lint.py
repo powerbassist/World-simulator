@@ -378,18 +378,21 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
 
     # THE SAME-SUBJECT + SAME-GATE COLLISION, the loader's own rule re-derived
     # (data_loader._load_events): gate = subject office + the sorted field+op+value
-    # list; only an event that NAMES a subject or a GATE can collide -- a
-    # pure-hazard crisis about nobody is a shape the content owns, and two such
-    # events are separated by id, body, likelihood, once-ness and the hash.
-    # Membership is a scope, not a trigger (the loader skips `eu_member` here too).
-    preconds = [p for p in preconds if not (isinstance(p, dict) and p.get("field") == "eu_member")]
-    if ev.get("subject_office") or preconds:
+    # list AND the on_action (a hazard event and a hook event with one subject and
+    # one gate are unrelated occasions); only an event that NAMES a subject or a
+    # GATE can collide -- a pure-hazard crisis about nobody is a shape the content
+    # owns, and two such events are separated by id, body, likelihood, once-ness and
+    # the hash. Membership is a scope, not a trigger: it does not make an event name
+    # a gate, but it stays in the key (an EU-only event and an ungated sibling fire
+    # in different months) -- the loader does the same.
+    named_gate = any(isinstance(p, dict) and p.get("field") != "eu_member" for p in preconds)
+    if ev.get("subject_office") or named_gate:
         # The value float-formats and only numeric conds enter the key, the loader's
         # own shape (law.gd extract_preconditions stores `float(value)` and `continue`s
         # the rest) -- raw JSON `10` and `10.0` are one gate there and one here too.
         rows = sorted("%s%s%s" % (p.get("field"), p.get("op"), float(p.get("value"))) for p in preconds
                       if isinstance(p, dict) and is_number(p.get("value")))
-        gate = "%s|%s" % (ev.get("subject_office", ""), ",".join(rows))
+        gate = "%s|%s|%s" % (ev.get("subject_office", ""), ev.get("on_action", ""), ",".join(rows))
         if gate in gates:
             rep.fail("%s: %s: has the same subject and the same gate as '%s' -- two events that can only ever fire in the same months are one event authored twice" % (
                 where, ev_id, gates[gate]))
