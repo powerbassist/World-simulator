@@ -37,7 +37,8 @@ const CARD_WIDTH := 232
 ## explains a live clock hold). The newcomer counts as a candidate, so an
 ## unprotected card pushed into a column of protected ones is the one that goes.
 ## Only when every card including the newcomer is protected does the oldest of all
-## go; the desk holds at most 4 decisions against this 6, so that is a net.
+## go; the desk holds at most 4 decisions plus the one programme card against
+## this 6, so that is a net.
 const MAX_CARDS := 6
 
 var _cards := {}   # id -> PanelContainer

@@ -25,6 +25,7 @@ extends SceneTree
 
 const GameState = preload("res://src/core/game_state.gd")
 const Elections = preload("res://src/sim/elections.gd")
+const Programme = preload("res://src/sim/programme.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -67,6 +68,7 @@ func _run() -> void:
 	_check_manual_toggle_takes_the_clock()
 	_check_eviction_spares_decision_cards()
 	_check_protected_plain_card_survives_eviction()
+	_check_stale_programme_hold_clears()
 	_check_same_month_defaults_queue_one_effect()
 	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
@@ -277,21 +279,67 @@ func _check_manual_toggle_takes_the_clock() -> void:
 	if card_id == "":
 		_fail("the manual-toggle arrival made no linked card")
 		return
-	# Run past it with the cluster's own button, then pause again with Space.
+	# Each door pinned on its own: the programme hold is staged beside the arrival
+	# flag, the cluster's button is pressed and BOTH must drop; then both are
+	# re-armed and Space must drop both again -- so a door reverted to a bare
+	# toggle fails on its own line instead of hiding behind the other.
+	_main._paused_for_programme = true
 	_main._hud.clock_cluster.pause_toggled.emit()
 	if clock.paused:
 		_fail("the cluster's pause button did not run the clock")
+	if _main._paused_for_decision:
+		_fail("the cluster's pause button left the arrival flag up")
+	if _main._paused_for_programme:
+		_fail("the cluster's pause button left the programme hold up")
+	_main._paused_for_decision = true
+	_main._paused_for_programme = true
 	var space := InputEventKey.new()
 	space.keycode = KEY_SPACE
 	space.pressed = true
 	_main._unhandled_input(space)
 	if not clock.paused:
 		_fail("Space did not pause the clock")
+	if _main._paused_for_decision:
+		_fail("Space left the arrival flag up")
+	if _main._paused_for_programme:
+		_fail("Space left the programme hold up")
 	if not _main._unseen_events.has(String(ev.id)):
 		_fail("a manual toggle erased the unseen mark (the card is still unseen)")
 	_main._hud.message_stack.dismiss(card_id)
 	if not clock.paused:
 		_fail("closing the last unseen card unpaused a clock the player had paused by hand")
+
+	# B: Space (run), Space (pause), then CHOOSE the programme -- the choice must not
+	# unpause against the player's pause. The real choose path; its trace (register,
+	# chosen-term scalar, stock, queued ledger entry, new cards) is undone after.
+	var avail: Array = Programme.available(_main._state, ns, _main._loader)
+	if avail.is_empty():
+		_fail("no term-start offer to pin the programme choice on")
+	else:
+		var saved_programme: Array = ns.programme.duplicate(true)
+		var saved_term: int = int(ns.programme_chosen_term)
+		var saved_stock: float = float(ns.programme_stock)
+		var effects_before: int = _main._pending_effects.size()
+		var cards_before: Array = _main._hud.message_stack._cards.keys()
+		_main._enforce_term_start_programme()  # the hold and card a real term start raises
+		_main._toggle_pause_by_hand()  # run
+		_main._toggle_pause_by_hand()  # pause
+		if not clock.paused:
+			_fail("the staging toggles left the clock running")
+		_main._on_programme_chosen(String(avail[0]["id"]))
+		if int(ns.programme_chosen_term) != int(ns.terms_served):
+			_fail("the programme choice did not land (nothing to pin the pause on)")
+		if not clock.paused:
+			_fail("choosing the programme unpaused a clock the player had paused by hand")
+		ns.programme = saved_programme
+		ns.programme_chosen_term = saved_term
+		ns.programme_stock = saved_stock
+		while _main._pending_effects.size() > effects_before:
+			_main._pending_effects.pop_back()
+		for card in _main._hud.message_stack._cards.keys().duplicate():
+			if not cards_before.has(card):
+				_main._hud.message_stack.dismiss(card)
+		_main._programme_card_id = ""
 
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
@@ -340,6 +388,36 @@ func _check_protected_plain_card_survives_eviction() -> void:
 	if not String(_main._programme_card_id).is_empty():
 		_main._hud.message_stack.dismiss(_main._programme_card_id)
 		_main._programme_card_id = ""
+	_main._paused_for_programme = false
+	_main._paused_for_decision = false
+	clock.paused = false
+
+
+## Pass 19 (follow-up A): the player runs the clock past a term start. The offer
+## goes empty with no choice, and the (protected) programme card plus the
+## programme hold are stale -- left up, every later arrival answer takes the
+## programme branch of _resume_if_decision_settled(), drops the arrival flag and
+## never resumes. _enforce_term_start_programme() (it runs every month end) must
+## clear both. Staged by marking the term's programme chosen, which is the
+## structural reason Programme.available() is empty; undone after.
+func _check_stale_programme_hold_clears() -> void:
+	var ns = _main._state.player()
+	var clock: Node = _main.get_node("Clock")
+	var saved_term: int = int(ns.programme_chosen_term)
+	ns.programme_chosen_term = int(ns.terms_served)
+	if not Programme.available(_main._state, ns, _main._loader).is_empty():
+		_fail("the staged state still offers a programme (nothing to pin the stale hold on)")
+	_main._programme_card_id = _main._hud.message_stack.push("stale programme", "body", [], null, true)
+	var stale_card: String = _main._programme_card_id
+	_main._paused_for_programme = true
+	_main._enforce_term_start_programme()
+	if _main._paused_for_programme:
+		_fail("the stale programme hold survived a month end with no offer")
+	if _main._hud.message_stack._cards.has(stale_card):
+		_fail("the stale programme card survived a month end with no offer")
+	if not String(_main._programme_card_id).is_empty():
+		_fail("the stale programme card id was not cleared")
+	ns.programme_chosen_term = saved_term
 	_main._paused_for_programme = false
 	_main._paused_for_decision = false
 	clock.paused = false

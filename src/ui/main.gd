@@ -846,12 +846,16 @@ func _entry(id: String, label: String) -> Dictionary:
 ## arrival flag drops: left up, a later answer or X on the last unseen card would
 ## run _resume_if_decision_settled() and unpause the clock against the player's
 ## own pause, and _decision_holds_clock() would keep holding it after an election
-## dismissal or programme choice the player had already run past. ONLY the arrival
-## flag goes: _unseen_events (the cards stay unseen), an interrupt on the desk and
-## an unchosen programme each hold the clock on their own account.
+## dismissal or programme choice the player had already run past. The programme
+## hold goes for the same reason: Space (run), Space (pause), then CHOOSE would
+## otherwise unpause in _on_programme_chosen against the player's own pause. The
+## card and the offer stay -- the player can still choose. Not touched:
+## _unseen_events (the cards stay unseen) and an interrupt on the desk, which
+## holds the clock on its own account.
 func _toggle_pause_by_hand() -> void:
 	_clock.toggle_pause()
 	_paused_for_decision = false
+	_paused_for_programme = false
 
 
 ## Every signal the furniture emits, connected in one place. hud.gd builds and
@@ -2615,10 +2619,19 @@ func _enforce_term_start_programme() -> void:
 	# whole gate. An empty offer pauses nothing: there is no decision to wait
 	# behind, and a clock stopped with nothing on the desk is a stuck game.
 	if Programme.available(_state, ns, _loader).is_empty():
+		# The offer is gone without a choice (the player ran the clock past the
+		# term start): the hold and its card are stale. Left up, every later
+		# arrival answer would take _resume_if_decision_settled()'s programme
+		# branch, drop the arrival flag and never resume -- a stranded clock. Only
+		# the flag and the card go; the clock stays as the player has it.
+		_paused_for_programme = false
+		if not _programme_card_id.is_empty():
+			_hud.message_stack.dismiss(_programme_card_id)
+			_programme_card_id = ""
 		return
 	if not _programme_card_id.is_empty():
 		_hud.message_stack.dismiss(_programme_card_id)
-	_programme_card_id = _hud.message_stack.push(
+	_programme_card_id =_hud.message_stack.push(
 		"The term's programme",
 		"The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise.",
 		[], null,
