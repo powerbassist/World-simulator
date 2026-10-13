@@ -186,6 +186,8 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 
 	if not d.has("respond_months") or not (typeof(d["respond_months"]) == TYPE_INT or typeof(d["respond_months"]) == TYPE_FLOAT):
 		errors.append("%s: %s respond_months is missing or not numeric" % [filename, ev.id])
+	elif not _is_integral(d["respond_months"]):
+		errors.append("%s: %s respond_months = %s is not a whole number of months" % [filename, ev.id, str(d["respond_months"])])
 	else:
 		ev.respond_months = int(d["respond_months"])
 		if ev.respond_months < K.RESPOND_MONTHS_MIN or ev.respond_months > K.RESPOND_MONTHS_MAX:
@@ -213,6 +215,8 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 	if d.has("severity"):
 		if not (typeof(d["severity"]) == TYPE_INT or typeof(d["severity"]) == TYPE_FLOAT):
 			errors.append("%s: %s severity is not numeric" % [filename, ev.id])
+		elif not _is_integral(d["severity"]):
+			errors.append("%s: %s severity = %s is not a whole number (1 minor, 2 major, 3 critical)" % [filename, ev.id, str(d["severity"])])
 		else:
 			ev.severity = int(d["severity"])
 			if ev.severity < K.SEVERITY_MIN or ev.severity > K.SEVERITY_MAX:
@@ -235,6 +239,8 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 	if d.has("cooldown_months"):
 		if not (typeof(d["cooldown_months"]) == TYPE_INT or typeof(d["cooldown_months"]) == TYPE_FLOAT):
 			errors.append("%s: %s cooldown_months is not numeric" % [filename, ev.id])
+		elif not _is_integral(d["cooldown_months"]):
+			errors.append("%s: %s cooldown_months = %s is not a whole number of months" % [filename, ev.id, str(d["cooldown_months"])])
 		else:
 			ev.cooldown_months = int(d["cooldown_months"])
 			if ev.cooldown_months < 0 or ev.cooldown_months > K.EVENT_COOLDOWN_MAX_MONTHS:
@@ -259,6 +265,14 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 			])
 
 	return ev
+
+
+## JSON numbers arrive as float, so "an integer field" means a float with no
+## fractional part. `int()` would load 2.9 as 2 silently (and 0.5 as 0, then
+## refuse it for a range it was never given); the schema refuses the value
+## itself, naming it. The caller has already checked the type is numeric.
+static func _is_integral(v) -> bool:
+	return float(v) == floorf(float(v))
 
 
 const KNOWN_KEYS := [
@@ -328,9 +342,10 @@ static func _extract_choices(d: Dictionary, event_id: String, filename: String, 
 				if typeof(target) != TYPE_STRING or target == "":
 					errors.append("%s: %s arms.event_id is missing or not a string" % [filename, path])
 				elif not (typeof(delay) == TYPE_INT or typeof(delay) == TYPE_FLOAT) \
+						or not _is_integral(delay) \
 						or int(delay) < K.ARMS_DELAY_MIN_MONTHS \
 						or int(delay) > K.ARMS_DELAY_MAX_MONTHS:
-					errors.append("%s: %s arms.delay_months = %s out of range [%d, %d]" % [
+					errors.append("%s: %s arms.delay_months = %s is not a whole number in [%d, %d]" % [
 						filename, path, str(delay), K.ARMS_DELAY_MIN_MONTHS, K.ARMS_DELAY_MAX_MONTHS
 					])
 				else:

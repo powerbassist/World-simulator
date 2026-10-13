@@ -440,31 +440,33 @@ func _test_the_climate_content() -> void:
 ## emitter stamps against `== month_index` (member_bill_passed, takeover_bid,
 ## firm_failed, accession_won) and commodity_price_high is a level read on
 ## `ns.commodity_state`. They fire only because Events.tick_month runs AFTER
-## Commodities, Orgs, Statute and Industry in `_on_month_elapsed`; the pin in
-## test_commodities.gd holds only Economy < Commodities < Opinion, so this is
-## the pin for the Events end. The balance probe mirrors the order and is held
-## to it too, as is tests/test_balance.gd's loop, as are Budget.project() and
-## test_budget's mirror of it -- those two never tick Commodities (the
-## projection prices no goods), so they are held to the three predecessors they
-## do run.
+## Commodities, Orgs, Legislature, Statute and Industry in `_on_month_elapsed`;
+## the pin in test_commodities.gd holds only Economy < Commodities < Opinion, so
+## this is the pin for the Events end. The balance probe mirrors the order and is
+## held to it too, as is tests/test_balance.gd's loop, as are Budget.project()
+## and test_budget's mirror of it -- those two never tick Commodities (the
+## projection prices no goods) and never tick Legislature (budget.gd says so
+## beside its Statute call), so they are held to the three predecessors they do
+## run.
 const _EVENTS_READS_AFTER := {
 	"Commodities": "the commodity_price_high hook reads commodity_state",
 	"Orgs": "the accession_won hook reads ns.last_accession",
+	"Legislature": "the member_bill_passed hook reads assembly_bill_passed_month, which Legislature._tick_held_bills writes for an assembly-origin release",
 	"Statute": "the member_bill_passed hook reads the assembly_bill_passed_month stamp",
 	"Industry": "the takeover_bid and firm_failed hooks read industry registers",
 }
 
 func _test_tick_order_pin() -> void:
-	var all_four := ["Commodities", "Orgs", "Statute", "Industry"]
-	_check_events_order_in("res://src/ui/main.gd", all_four)
-	_check_events_order_in("res://tools/balance_probe.gd", all_four)
-	# test_balance's month loop is the other balance harness: it ticks all four
+	var all_five := ["Commodities", "Orgs", "Legislature", "Statute", "Industry"]
+	_check_events_order_in("res://src/ui/main.gd", all_five)
+	_check_events_order_in("res://tools/balance_probe.gd", all_five)
+	# test_balance's month loop is the other balance harness: it ticks all five
 	# (Commodities since pass 17), so it is held to the same order as main.gd.
-	_check_events_order_in("res://tests/test_balance.gd", all_four)
+	_check_events_order_in("res://tests/test_balance.gd", all_five)
 	# The two measurement probes whose loops tick Events: held to the same order as
 	# main.gd so the hooks that read these registers can fire in what they measure.
-	_check_events_order_in("res://tools/agency_probe.gd", all_four)
-	_check_events_order_in("res://tools/programme_probe.gd", all_four)
+	_check_events_order_in("res://tools/agency_probe.gd", all_five)
+	_check_events_order_in("res://tools/programme_probe.gd", all_five)
 	_check_events_order_in("res://src/sim/budget.gd", ["Orgs", "Statute", "Industry"])
 	_check_events_order_in("res://tests/test_budget.gd", ["Orgs", "Statute", "Industry"])
 

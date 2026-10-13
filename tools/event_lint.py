@@ -127,6 +127,13 @@ def is_number(v) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
+def is_whole(v) -> bool:
+    """Mirrors src/core/event.gd _is_integral: an int-typed schema field must carry
+    no fractional part (the loader would otherwise int() 2.9 down to 2 in silence).
+    Caller has already checked is_number."""
+    return float(v).is_integer()
+
+
 def business_strictly_worst(off: dict) -> bool:
     """STRICT: business's offset sits below EVERY other named bloc's. A running
     min() credited a tie at the minimum to whichever bloc iterated first.
@@ -278,6 +285,9 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
 
     if not is_number(ev.get("respond_months")):
         rep.fail("%s: %s: respond_months is missing or not numeric" % (where, ev_id))
+    elif not is_whole(ev["respond_months"]):
+        rep.fail("%s: %s: respond_months = %s is not a whole number of months" % (
+            where, ev_id, ev["respond_months"]))
     elif not (RESPOND_MONTHS_MIN <= int(ev["respond_months"]) <= RESPOND_MONTHS_MAX):
         rep.fail("%s: %s: respond_months = %s out of range [%d, %d]" % (
             where, ev_id, ev["respond_months"], RESPOND_MONTHS_MIN, RESPOND_MONTHS_MAX))
@@ -288,6 +298,9 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
     severity = ev.get("severity", 1)
     if not is_number(severity):
         rep.fail("%s: %s: severity is not numeric" % (where, ev_id))
+    elif not is_whole(severity):
+        rep.fail("%s: %s: severity = %s is not a whole number (1 minor, 2 major, 3 critical)" % (
+            where, ev_id, severity))
     elif not (SEVERITY_MIN <= int(severity) <= SEVERITY_MAX):
         rep.fail("%s: %s: severity = %s out of range [%d, %d]" % (
             where, ev_id, severity, SEVERITY_MIN, SEVERITY_MAX))
@@ -302,6 +315,9 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
     cooldown = ev.get("cooldown_months", 0)
     if not is_number(cooldown):
         rep.fail("%s: %s: cooldown_months is not numeric" % (where, ev_id))
+    elif not is_whole(cooldown):
+        rep.fail("%s: %s: cooldown_months = %s is not a whole number of months" % (
+            where, ev_id, cooldown))
     elif not (0 <= int(cooldown) <= COOLDOWN_MAX_MONTHS):
         rep.fail("%s: %s: cooldown_months = %s out of range [0, %d]" % (
             where, ev_id, cooldown, COOLDOWN_MAX_MONTHS))
@@ -366,8 +382,9 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
             else:
                 arm_edges.setdefault(ev_id, []).append(arms.get("event_id", ""))
                 delay = arms.get("delay_months", 0)
-                if not is_number(delay) or not (ARMS_DELAY_MIN_MONTHS <= int(delay) <= ARMS_DELAY_MAX_MONTHS):
-                    rep.fail("%s: %s.%s: arms.delay_months = %s out of range [%d, %d]" % (
+                if not is_number(delay) or not is_whole(delay) \
+                        or not (ARMS_DELAY_MIN_MONTHS <= int(delay) <= ARMS_DELAY_MAX_MONTHS):
+                    rep.fail("%s: %s.%s: arms.delay_months = %s is not a whole number in [%d, %d]" % (
                         where, ev_id, cid, delay, ARMS_DELAY_MIN_MONTHS, ARMS_DELAY_MAX_MONTHS))
                 if not isinstance(arms.get("event_id"), str) or not arms.get("event_id"):
                     rep.fail("%s: %s.%s: arms.event_id is missing or not a string" % (where, ev_id, cid))

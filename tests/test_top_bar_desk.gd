@@ -131,6 +131,28 @@ func _run() -> void:
 	if ids.has("events"):
 		_fail("a clear desk and pending.gd still marks the events window")
 
+	# HOVERABLE. A Label defaults to MOUSE_FILTER_IGNORE, so a tooltip on one never
+	# shows -- the hovered control is the box above it. Refresh once more with the
+	# desk loaded so every figure that sets a tooltip has set it, then walk the
+	# whole bar. The programme labels only get a tooltip while a programme runs, so
+	# they are asserted by name rather than left to a walk that finds them empty.
+	_announce(state, _event(SEV1))
+	_bar.refresh(state, null, _loader)
+	var with_tips := 0
+	var stack: Array = [_bar]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		stack.append_array(node.get_children())
+		if node is Control and not String(node.tooltip_text).is_empty():
+			with_tips += 1
+			if node.mouse_filter == Control.MOUSE_FILTER_IGNORE:
+				_fail("a top-bar control carries the tooltip '%s' but ignores the mouse -- it can never show" % node.tooltip_text)
+	if with_tips < 4:
+		_fail("only %d top-bar controls carry a tooltip -- the walk is not reaching the figures" % with_tips)
+	for pl in [_bar._programme_label, _bar._programme_value]:
+		if pl.mouse_filter == Control.MOUSE_FILTER_IGNORE:
+			_fail("a programme figure label ignores the mouse -- its tooltip can never show")
+
 
 func _announce(state, ev) -> void:
 	var ns = state.player()

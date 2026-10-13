@@ -110,11 +110,13 @@ func _build_figure(key: String, title: String, tip := "") -> Control:
 	label.text = title.to_upper()
 	label.theme_type_variation = UiTheme.MICRO
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hoverable(label)
 	box.add_child(label)
 
 	var value := Label.new()
 	value.theme_type_variation = UiTheme.FIGURE
 	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hoverable(value)
 	box.add_child(value)
 	_figure_values[key] = value
 	if not tip.is_empty():
@@ -147,16 +149,29 @@ func _build_programme_figure() -> Control:
 	_programme_label = Label.new()
 	_programme_label.theme_type_variation = UiTheme.MICRO
 	_programme_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hoverable(_programme_label)
 	box.add_child(_programme_label)
 
 	_programme_value = Label.new()
 	_programme_value.theme_type_variation = UiTheme.FIGURE
 	_programme_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hoverable(_programme_value)
 	box.add_child(_programme_value)
 
 	box.visible = false
 	_programme_box = box
 	return box
+
+
+## A Label defaults to MOUSE_FILTER_IGNORE in Godot 4, so the hovered control
+## under a figure is its HBoxContainer -- which carries no tooltip -- and a
+## tooltip_text set on the Label never appears. PASS makes the Label a hover
+## target while still propagating the event, so a click on the strip is not
+## swallowed (STOP would). Every figure Label goes through here, because the
+## tooltips are set later (refresh) and a check at build time cannot know which
+## ones will carry one.
+func _hoverable(label: Label) -> void:
+	label.mouse_filter = Control.MOUSE_FILTER_PASS
 
 
 func _spacer() -> Control:

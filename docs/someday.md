@@ -134,6 +134,14 @@ tick (a later AI-economy block) — the chooser then reads live figures with no 
 **Fix shape:** none in the events machine; state the bound where the chooser is
 described.
 
+One edge of the same gap: when an AI nation's first fiscal event resolves,
+`Legislature.apply_effects` -> `Budget.apply_pending` + `Budget.recompute` refreshes
+that nation's long-frozen deficit in one step (GDP growth, debt service and tariffs
+since the new game all land at once), so a deficit gate or the chooser's deficit floor
+can flip on that refresh rather than on the event's own delta. **Trigger:** an
+AI-nation event series that clusters around a first fiscal answer, or the budget tick
+above. **Fix shape:** none needed once AI nations tick their budgets.
+
 ### The projection prices no goods, and `law_passed` has no consumer
 
 `Budget.project()` ticks Events but not Commodities, so the `commodity_price_high` hook
@@ -157,6 +165,16 @@ itself rather than reading it back off the ledger.
 player; it is not gated (a flood is a flood) and the copy would need a membership-aware
 variant. **Trigger:** the first non-EU playthrough note. **Fix shape:** drop the clause
 or split the summary.
+
+### `commodity_price_high` is a level read, and the hook door skips the category quiet
+
+The hook is true every month while any good sits at >= 1.25x base, and the hook door
+does not respect the category quiet, so a sustained high price can feed a nation's
+desk its two commodity events (draws 0.45 / 0.40, cooldowns 8 / 10) every few months,
+outside the hazard-only cadence E4 measures. **Trigger:** a balance run where a price
+stays high for a year, or a playtest note on commodity events piling up. **Fix
+shape:** fire on the crossing (edge) rather than the level, or let the hook door
+respect the category quiet -- an author/tuning call.
 
 ### Same-month category collisions favour the early alphabet
 

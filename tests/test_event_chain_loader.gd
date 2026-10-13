@@ -50,6 +50,31 @@ func _init() -> void:
 	if not twin_refused:
 		failures.append("two hook events with one subject, gate and on_action were not refused as one event authored twice: %s" % [twin.errors])
 
+	# INTEGER FIELDS REFUSE A FRACTION. JSON numbers arrive as float, and int() loaded
+	# severity 2.5 as 2 in silence (0.5 was then refused for a range it never had).
+	# Each of the four int-typed fields is refused with the event and the value named;
+	# the control event writes the same fields as whole floats (2.0) and must load.
+	var frac := DataLoader.new()
+	frac._load_events("res://tests/fixtures/events_fractional_ints")
+	var expect := {
+		"frac_severity": ["severity", "2.5"],
+		"frac_cooldown": ["cooldown_months", "3.5"],
+		"frac_respond": ["respond_months", "2.5"],
+		"frac_arm": ["arms.delay_months", "1.5"],
+	}
+	for eid: String in expect.keys():
+		var field: String = expect[eid][0]
+		var val: String = expect[eid][1]
+		var hit := false
+		for e in frac.errors:
+			if e.find(eid) != -1 and e.find(field) != -1 and e.find(val) != -1 and e.find("whole number") != -1:
+				hit = true
+		if not hit:
+			failures.append("%s: fractional %s = %s was not refused as not-a-whole-number: %s" % [eid, field, val, frac.errors])
+	for e in frac.errors:
+		if e.find("whole_floats") != -1:
+			failures.append("whole numbers written as floats were refused: %s" % e)
+
 	if failures.is_empty():
 		print("test_event_chain_loader: all checks passed")
 		quit(0)
