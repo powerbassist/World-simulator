@@ -16,6 +16,7 @@ var _failures: Array[String] = []
 
 func _init() -> void:
 	_check_lint_vocabulary()
+	_check_business_worst_is_strict()
 	var entries: Array = []
 	var dir := DirAccess.open("res://data/events")
 	if dir == null:
@@ -127,6 +128,44 @@ func _check_lint_bloc_size(text: String) -> void:
 					% [bloc, found[bloc], OpinionK.BLOC_SIZE[bloc]])
 
 
+## STRICT: business's offset must sit below EVERY other named bloc's. A running
+## minimum credited a tie to whichever bloc iterated first, so equal hurt to business
+## and workers counted by dictionary order. tools/event_lint.py carries the identical
+## rule. A lone-business offset counts (nothing else is lower).
+func _business_is_strictly_worst(offset: Dictionary) -> bool:
+	if not offset.has("business"):
+		return false
+	for bloc in offset:
+		if String(bloc) != "business" and float(offset["business"]) >= float(offset[bloc]):
+			return false
+	return true
+
+
+func _business_worst_count(entries: Array) -> int:
+	var n := 0
+	for row in entries:
+		for choice in row[1].get("choices", []):
+			if typeof(choice) != TYPE_DICTIONARY:
+				continue
+			var offset: Dictionary = choice.get("effects", {}).get("bloc_offset", {})
+			if not offset.is_empty() and _business_is_strictly_worst(offset):
+				n += 1
+	return n
+
+
+## The strict rule's own pin: the shipped book has no tie at the minimum, so only
+## synthetic rows can fail it. Tie placed with business FIRST in iteration order and
+## again with it last, so a first-wins running minimum is wrong in one of the two.
+func _check_business_worst_is_strict() -> void:
+	var tie_first := [["x.json", {"choices": [{"effects": {"bloc_offset": {"business": -0.05, "workers": -0.05, "urban": 0.02}}}]}]]
+	var tie_last := [["x.json", {"choices": [{"effects": {"bloc_offset": {"workers": -0.05, "business": -0.05, "urban": 0.02}}}]}]]
+	var strict := [["x.json", {"choices": [{"effects": {"bloc_offset": {"workers": -0.04, "business": -0.05, "urban": 0.02}}}]}]]
+	if _business_worst_count(tie_first) != 0 or _business_worst_count(tie_last) != 0:
+		_fail("a tie with business at the minimum was counted as business strictly worst")
+	if _business_worst_count(strict) != 1:
+		_fail("business strictly lowest was not counted as business-worst")
+
+
 func _band_failures(entries: Array) -> Array[String]:
 	var failures: Array[String] = []
 	var business_worst := 0
@@ -143,22 +182,13 @@ func _band_failures(entries: Array) -> Array[String]:
 			if offset.is_empty():
 				continue
 			var mean := 0.0
-			# STRICT: business's offset must sit below EVERY other named bloc's.
-			# A running minimum credited a tie to whichever bloc iterated first,
-			# so equal hurt to business and workers counted by dictionary order.
-			# tools/event_lint.py carries the identical rule.
-			var business_strictly_worst := offset.has("business")
 			for bloc in offset:
-				var value := float(offset[bloc])
 				if OpinionK.BLOC_SIZE.has(bloc):
-					mean += float(OpinionK.BLOC_SIZE[bloc]) * value
-				if String(bloc) != "business" and offset.has("business") \
-						and float(offset["business"]) >= value:
-					business_strictly_worst = false
+					mean += float(OpinionK.BLOC_SIZE[bloc]) * float(offset[bloc])
 			if absf(mean) > MEAN_BAND:
 				failures.append("%s: %s.%s size-weighted mean %+.4f outside +-%.3f"
 						% [fname, event_id, choice_id, mean, MEAN_BAND])
-			if business_strictly_worst:
+			if _business_is_strictly_worst(offset):
 				business_worst += 1
 			choice_total += 1
 	if choice_total > 0:

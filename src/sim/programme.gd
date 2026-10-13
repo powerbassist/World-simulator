@@ -49,7 +49,8 @@ extends RefCounted
 ## ============================================================================
 ## A LEAF, WITH THE LOADER HOLDING THE LADDER
 ## ============================================================================
-## This file preloads its constants and Legislature.apply_effects -- the ONE
+## This file preloads its constants, orgs_constants.gd (the Union's content id,
+## which the eu_member reader spells) and Legislature.apply_effects -- the ONE
 ## applier -- and nothing else. No UI, no opinion.gd, no law.gd (the loader
 ## extracts `immediate` and every `on_*` through Law.extract_shared_effects at
 ## load; by the time a conclusion fires, its effects are an ordinary effect

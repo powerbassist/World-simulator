@@ -127,6 +127,28 @@ def is_number(v) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
+def business_strictly_worst(off: dict) -> bool:
+    """STRICT: business's offset sits below EVERY other named bloc's. A running
+    min() credited a tie at the minimum to whichever bloc iterated first.
+    tests/test_event_content.gd's _business_is_strictly_worst is the identical
+    rule. A lone-business offset counts (nothing else is lower)."""
+    if "business" not in off:
+        return False
+    return all(float(off["business"]) < float(v) for b, v in off.items() if b != "business")
+
+
+def self_check_strict_rule(rep: "Report") -> None:
+    """The shipped book has no tie at the minimum, so only synthetic rows can fail
+    the strict rule. Tie placed with business first and last in iteration order."""
+    tie_first = {"business": -0.05, "workers": -0.05, "urban": 0.02}
+    tie_last = {"workers": -0.05, "business": -0.05, "urban": 0.02}
+    strict = {"workers": -0.04, "business": -0.05, "urban": 0.02}
+    if business_strictly_worst(tie_first) or business_strictly_worst(tie_last):
+        rep.fail("self-check: a tie with business at the minimum counted as business strictly worst")
+    if not business_strictly_worst(strict):
+        rep.fail("self-check: business strictly lowest was not counted as business-worst")
+
+
 def load_events(rep: Report):
     """Every data/events/*.json -> list of (filename, entry-dict). Top-level
     underscore-prefixed keys are file comments, the crises.json shape."""
@@ -381,6 +403,7 @@ def main() -> int:
                     help="print failures only; same exit contract")
     args = ap.parse_args()
     rep = Report(args.check)
+    self_check_strict_rule(rep)
 
     events = load_events(rep)
     seen_ids: dict = {}
@@ -455,14 +478,7 @@ def main() -> int:
             if not isinstance(off, dict) or not off:
                 continue
             choice_total += 1
-            # STRICT: business's offset must sit below EVERY other named bloc's.
-            # min() credited a tie at the minimum to whichever bloc iterated
-            # first, so a choice that hurt business and workers equally counted
-            # (or not) by dict order. tests/test_event_content.gd's _band_failures
-            # carries the identical rule.
-            if "business" in off and all(
-                float(off["business"]) < float(v) for b, v in off.items() if b != "business"
-            ):
+            if business_strictly_worst(off):
                 worst_count += 1
                 per_event_worst.setdefault(ev.get("id", "<no id>"), []).append(str(choice.get("id", "")))
     share = worst_count / choice_total if choice_total else 0.0
