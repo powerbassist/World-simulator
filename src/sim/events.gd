@@ -125,7 +125,8 @@ static func interrupt_pending(ns) -> bool:
 
 
 ## Whether the player's desk already holds this event. One reader for the hazard
-## pool's skip and _deliver's dedupe, so the two cannot disagree about "present".
+## pool's skip, the hook door's skip and _deliver's dedupe, so the three cannot
+## disagree about "present".
 static func _on_desk(ns, event_id: String) -> bool:
 	for entry in ns.event_queue:
 		if String(entry.get("event_id", "")) == event_id:
@@ -379,7 +380,7 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 			# settlement) fires twice, at M on the == leg and at M+1 on the lag.
 			# In-tick passages are covered too, one month late, which a
 			# consequence event wants anyway. Assembly bills are a DISTINCT hook
-			# (member_bill_passed below) reading the division stamp, which
+			# (member_bill_passed below) reading its own stamp, assembly_bill_passed_month, which
 			# Cabinet-side ordering does not delay.
 			for law_id in ns.law_ledger:
 				var months: Array = ns.law_ledger[law_id].get("months", [])
@@ -565,13 +566,16 @@ static func region_names(ns, loader) -> Dictionary:
 ##
 ## THE REGISTERS ARE NOT WRITTEN HERE. The `once` mark, the per-event cooldown and
 ## the category quiet are first stamped at DELIVERY -- _deliver(), the tick's door --
-## and not at announcement (a resolution later RE-ARMS the category quiet, see
-## _resolve), which is the one place that differs
+## and not at announcement (a resolution later RE-ARMS the category quiet and
+## raises the event's cooldown to at least the month after it, see _resolve), which
+## is the one place that differs
 ## from Legislature.apply()'s `passed_law_ids`: an event HAS HAPPENED the moment it
 ## is delivered, and marking at resolution would mean a save reloaded mid-crisis
 ## could see the same revelation announced twice. Delivery is also what makes the
 ## marks bind for the AI, whose branch never calls this function; and the sweeps
-## that drive this primitive month after month must leave no cooldown state behind.
+## that drive this primitive month after month must leave no cooldown state behind
+## -- which holds for sweeps that never resolve: a sweep that answers the entry
+## runs _resolve and stamps the cooldown and the quiet like any other resolution.
 static func announce(ns, ev, month_index: int, region_by_id: Dictionary) -> void:
 	var entry := {
 		"event_id": ev.id,

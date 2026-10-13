@@ -440,9 +440,10 @@ func _test_the_climate_content() -> void:
 ## Commodities, Orgs, Statute and Industry in `_on_month_elapsed`; the pin in
 ## test_commodities.gd holds only Economy < Commodities < Opinion, so this is
 ## the pin for the Events end. The balance probe mirrors the order and is held
-## to it too, as is tests/test_balance.gd's loop, as are Budget.project() and test_budget's mirror of it -- those
-## two never tick Commodities (the projection prices no goods), so they are held
-## to the three predecessors they do run.
+## to it too, as is tests/test_balance.gd's loop, as are Budget.project() and
+## test_budget's mirror of it -- those two never tick Commodities (the
+## projection prices no goods), so they are held to the three predecessors they
+## do run.
 const _EVENTS_READS_AFTER := {
 	"Commodities": "the commodity_price_high hook reads commodity_state",
 	"Orgs": "the accession_won hook reads ns.last_accession",

@@ -1676,11 +1676,16 @@ func _check_event_fields(loader) -> void:
 	(no_stamps["nations"]["FRA"] as Dictionary).erase("event_hook_fired")
 	(no_stamps["nations"]["FRA"] as Dictionary).erase("repealed_at")
 	(no_stamps["nations"]["FRA"] as Dictionary).erase("last_accession")
+	(no_stamps["nations"]["FRA"] as Dictionary).erase("assembly_bill_passed_month")
 	var dropped_stamps = GameState.from_dict(no_stamps)
 	if not dropped_stamps.player().event_hook_fired.is_empty() \
 			or not dropped_stamps.player().repealed_at.is_empty() \
 			or not dropped_stamps.player().last_accession.is_empty():
 		_fail("dropping the hook stamps left a memory behind")
+	# The month stamp's empty value is -1, not 0: month 0 is a real month, and a
+	# default of 0 would read as "an assembly bill passed in month 0".
+	if int(dropped_stamps.player().assembly_bill_passed_month) != -1:
+		_fail("dropping assembly_bill_passed_month did not read -1 (got %d)" % dropped_stamps.player().assembly_bill_passed_month)
 
 	# (7) `event_history` earns NOTHING and is serialised regardless, unchanged
 	# from V1.8. A display record nothing in src/sim/ reads back -- `unrest_acts`'

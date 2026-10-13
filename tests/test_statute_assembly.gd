@@ -506,10 +506,15 @@ func _test_release_and_division_same_month() -> void:
 	var division_result: Dictionary = ns.last_law_result
 	# The member_bill_passed hook's whole reason for its own stamp: the division
 	# just overwrote last_law_result, and a division that did not pass must
-	# leave the release's stamp standing.
-	if bool(assembly_release.get("passed", false)) and not bool(division_result.get("passed", false)) \
-			and ns.assembly_bill_passed_month != release_month:
-		_fail("a failed same-month division erased the release's assembly_bill_passed_month stamp")
+	# leave the release's stamp standing. The setup is asserted, not assumed: if
+	# the fixture's division passed (or the release did not), the stamp check below
+	# would test nothing and the leg would pass vacuously.
+	if not bool(assembly_release.get("passed", false)):
+		_fail("setup: the release did not come into force -- the stamp-survival check has no stamp to protect: %s" % [assembly_release])
+	if bool(division_result.get("passed", false)):
+		_fail("setup: the same-month division passed -- the stamp-survival check needs it to FAIL: %s" % [division_result])
+	if ns.assembly_bill_passed_month != release_month:
+		_fail("a failed same-month division erased the release's assembly_bill_passed_month stamp (reads %d, release month %d)" % [ns.assembly_bill_passed_month, release_month])
 	if String(division_result.get("law_id", "")) != ENDORSE_LAW:
 		_fail("setup: the in-tray bill did not divide this month: '%s'" % division_result.get("law_id", ""))
 		return

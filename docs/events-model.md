@@ -203,6 +203,9 @@ Events.tick_month(state, loader):          # every nation now, player AND the 28
   armed chains due this month -> deliver first (a consequence outranks a draw)
   hooks: for each ON_ACTIONS with a live emitter read this month
       -> one hook event per happening (likelihood = spawn chance, gates still apply)
+      -> the player's door skips an event already on the desk, so a sibling hook
+         event on the same happening can draw (pass 17; before it the desk-held
+         event passed its draw, hit the dedupe and took the one-per-happening break)
   standing hazard: group the month's draws by category
       -> one WEIGHTED winner per pulsing category (Cycle.unit over the roster)
       -> player: land on the desk (severity-ordered, QUEUE_MAX 4, dedup by id)
@@ -239,7 +242,26 @@ the event's until-month to at least the month after): an authored 0 still means 
 occasion per event per month. The AI branch resolves on the spot, so a double delivery
 would apply its choice twice, and the UI's desk-diff keys on the event id, so an entry
 that defaults and is re-delivered in one tick would show neither card nor ledger line.
-The shipped book is unaffected — every cooldown-0 event is `once`.
+The floor itself leaves the shipped book unaffected — every cooldown-0 event is `once`,
+which already binds.
+
+**The hook door's desk skip is a shipped-behaviour change (pass 17), separate from the
+floor**: the player's hook loop now skips an event the desk already holds, as the hazard
+pool does, so a sibling hook event on the same happening can draw where it never could
+while the desk-held event used up the happening's one slot. AI nations have no desk and
+are untouched.
+
+**Only the hazard door checks the category quiet.** The chain and hook doors run
+`_gates_pass` and `_cooldown_ok` and nothing more: a consequence or a happening-triggered
+event is delivered inside a quieted category (delivery then re-stamps the quiet). The
+quiet throttles the standing draw, not the world's reactions to what the player did.
+
+**An armed chain entry whose target is cooling down in its due month is erased** — the
+existing "cooling down dies silently" rule. The one-month floor makes that reachable for
+a chain that collides with a same-tick resolution of a cooldown-0 target (the resolution
+raises the target's until-month to the month after, and the armed entry finds it cooling).
+No shipped content reaches it: every cooldown-0 event is `once`, and no chain targets one
+that can resolve in its own due month.
 
 **The weighted draw is a second pure function**: `Cycle.unit` over (nation,
 category, roster-sorted-ids, month) against cumulative authored weights — same
