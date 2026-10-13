@@ -562,7 +562,8 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## trip on a second tick of one month; the bump stands on the other six, and an older
 ## save carrying the key loads, `from_dict` reading explicit keys only.)
 ## `ns.assembly_bill_passed_month` joined the family after the bump WITHOUT one: absent
-## reads -1, "no assembly bill has passed", true of every older save.
+## reads -1, "no assembly bill has passed", true of every older save; so did
+## `ns.commodity_high_month` (pass 22), absent reading -1, "no price has crossed yet".
 ## The ONE-WAY gate stands: save_manager refuses a version mismatch outright,
 ## so from_dict's defaults are robustness, not a bridge -- no v38 save ever
 ## reaches them.

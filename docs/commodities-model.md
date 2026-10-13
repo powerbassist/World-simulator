@@ -52,7 +52,7 @@ commented at the field declaration in `src/core/nation_state.gd`):
   output valued at the live price, in EUR bn. This is the CHANGE the block
   models (the step-0 verdict: levels are not reproducible from recipes, deltas
   are). The register's one sim reader since V4.4 is the events machine's
-  `commodity_price_high` hook, which reads `price` — this scalar's own readers
+  `commodity_price_high` hook, which reads the `commodity_high_month` crossing stamp this machine writes beside `price` — this scalar's own readers
   are the UI surfaces: the Commodities panel and the two map layers (§5).
 
 Serialised whole on SAVE_VERSION 37 (V4.6's bump) with a per-entry rebuild

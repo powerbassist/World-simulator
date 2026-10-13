@@ -706,9 +706,9 @@ func _stage_hook(state, hook: String, month_index: int) -> void:
 		"firm_failed":
 			ns.companies["probe_co"] = {"failed_month": month_index}
 		"commodity_price_high":
-			# HOOK_PRICE_RATIO of base is the machine's own "high"; 130 against a
-			# base of 100 clears it from inside the +-75% price clamp.
-			ns.commodity_state["price"] = {"probe_good": 130.0}
+			# An EDGE since pass 22: Commodities stamps the month a price
+			# crossed up through its high line, and the hook reads that stamp.
+			ns.commodity_high_month = month_index
 		"accession_won":
 			ns.last_accession = {"org": "eu", "month_index": month_index}
 
@@ -727,7 +727,6 @@ func _table_e6_hooks() -> void:
 			continue
 		var stub := _StubLoader.new()
 		stub.events = [ev]
-		stub.commodity_goods = {"probe_good": {"base_price": 100.0}}
 		var state = _new_state("FRA")
 		var month_index: int = Events._absolute_month(int(state.year), int(state.month))
 		_stage_hook(state, hook, month_index)

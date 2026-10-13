@@ -458,17 +458,15 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 					return true
 			return false
 		"commodity_price_high":
-			# A LEVEL read, not an edge: the register keeps no price history
-			# (commodities-model's own record), so "spiked" is honestly "is
-			# high" -- at or above HOOK_PRICE_RATIO of base. Repetition is
-			# bounded by the event's own likelihood and cooldown, not by a
-			# crossing the machine cannot see.
-			var prices: Dictionary = ns.commodity_state.get("price", {})
-			for good_id in prices:
-				var base := _base_price_of(loader, String(good_id))
-				if base > 0.0 and float(prices[good_id]) / base >= K.HOOK_PRICE_RATIO:
-					return true
-			return false
+			# An EDGE: Commodities stamps the month a good's price crossed UP
+			# through its high line (commodity_constants.HIGH_PRICE_RATIO of base),
+			# the one place both sides of the update are in hand, and this reads
+			# that stamp. It was a LEVEL read ("is any price at or above the
+			# line"), and the world vector drifts to its clamp within a few
+			# months, so the hook was true almost every month and flooded the
+			# desk. Commodities ticks before Events in every pinned harness
+			# (_EVENTS_READS_AFTER), so the same-month stamp is readable.
+			return ns.commodity_high_month == month_index
 		"accession_won":
 			# The UNION's accession. The stamp is org-generic (`_flip_membership`
 			# writes it for NATO, the eurozone, Schengen and the climate accord
@@ -480,11 +478,6 @@ static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bo
 			return String(ns.last_accession.get("org", "")) == OrgsK.UNION_ORG_ID \
 				and int(ns.last_accession.get("month_index", -1)) == month_index
 	return false
-
-
-static func _base_price_of(loader, good_id: String) -> float:
-	var good: Dictionary = loader.commodity_goods.get(good_id, {})
-	return float(good.get("base_price", 0.0))
 
 
 # --- Delivery ----------------------------------------------------------------------

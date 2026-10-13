@@ -1249,9 +1249,10 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# slot and Orgs' rule, both stated at their own calls below.
 	#
 	# Since V4.4 the register HAS a live sim reader: the events machine's
-	# commodity_price_high hook reads `ns.commodity_state` inside Events.tick_month,
-	# which runs AFTER this slot -- so the same-month read this slot exists for now
-	# has its consumer, and the order is load-bearing where V4.6 could only pin it.
+	# commodity_price_high hook reads the `ns.commodity_high_month` crossing stamp this
+	# call writes, inside Events.tick_month, which runs AFTER this slot -- so the
+	# same-month read this slot exists for now has its consumer, and the order is
+	# load-bearing where V4.6 could only pin it.
 	# Said out loud because that is exactly when an order rots: tests/test_events.gd's
 	# `_test_tick_order_pin` is what stops a later task placing Events before these
 	# four modules by convenience -- its five hooks read registers Commodities,

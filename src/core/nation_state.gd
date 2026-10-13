@@ -543,6 +543,17 @@ var last_accession: Dictionary = {}
 ## passed", which is the truth about every older save (`last_accession`'s case).
 var assembly_bill_passed_month: int = -1
 
+## V4.4 pass 22. The absolute month (`year*12+month`, `assembly_bill_passed_month`'s
+## form) in which ANY good's world price last CROSSED UP through
+## commodity_constants.HIGH_PRICE_RATIO of its base -- below the line before the
+## tick, at or above it after -- -1 for never. Commodities writes it (the one machine
+## that sees both sides of the update), the commodity_price_high hook is its only
+## reader. It exists because the hook was a LEVEL read on a vector that drifts to its
+## clamp within months, true almost every month; the register keeps no price history,
+## so the edge is stamped where the update happens. NO SAVE_VERSION bump: absent reads
+## -1, "no crossing yet", true of every older save (`assembly_bill_passed_month`'s case).
+var commodity_high_month: int = -1
+
 ## What happened and what the player chose, newest first, capped at EVENTS_KEPT. A
 ## DISPLAY RECORD: nothing in src/sim/ reads it back, and tests/test_events.gd asserts
 ## that by reading every file in the directory -- V1.3f's `foreign_acts` property in the
@@ -1864,6 +1875,7 @@ func duplicate_state():
 	s.repealed_at = repealed_at.duplicate(true)
 	s.last_accession = last_accession.duplicate(true)
 	s.assembly_bill_passed_month = assembly_bill_passed_month
+	s.commodity_high_month = commodity_high_month
 	s.event_history = event_history.duplicate(true)
 	s.permits_system_change = permits_system_change
 
@@ -2132,6 +2144,7 @@ func to_dict() -> Dictionary:
 		"repealed_at": repealed_at,
 		"last_accession": last_accession,
 		"assembly_bill_passed_month": assembly_bill_passed_month,
+		"commodity_high_month": commodity_high_month,
 		"event_history": event_history,
 		"permits_system_change": permits_system_change,
 
@@ -2456,6 +2469,7 @@ static func from_dict(d: Dictionary):
 	s.repealed_at = d.get("repealed_at", {}).duplicate(true)
 	s.last_accession = d.get("last_accession", {}).duplicate(true)
 	s.assembly_bill_passed_month = int(d.get("assembly_bill_passed_month", -1))
+	s.commodity_high_month = int(d.get("commodity_high_month", -1))
 	s.event_history.clear()
 	for row in d.get("event_history", []):
 		if typeof(row) == TYPE_DICTIONARY:

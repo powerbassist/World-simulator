@@ -1574,6 +1574,7 @@ func _check_event_fields(loader) -> void:
 	ns.repealed_at["income_tax"] = month
 	ns.last_accession = {"org": "eu", "month_index": month}
 	ns.assembly_bill_passed_month = month
+	ns.commodity_high_month = month
 	# One resolved event in the ledger, so the display record has something to survive.
 	ns.event_history.push_front({
 		"event_id": ev.id, "event_name": ev.event_name,
@@ -1614,6 +1615,8 @@ func _check_event_fields(loader) -> void:
 		_fail("last_accession did not survive the round trip")
 	if bns.assembly_bill_passed_month != month:
 		_fail("assembly_bill_passed_month did not survive the round trip")
+	if bns.commodity_high_month != month:
+		_fail("commodity_high_month did not survive the round trip")
 
 	# (2) `event_queue` earns the bump, and it is `event_pending`'s case one level
 	# up: absent, crises the country is facing VANISH -- a free escape from every
@@ -1673,6 +1676,7 @@ func _check_event_fields(loader) -> void:
 	(no_stamps["nations"]["FRA"] as Dictionary).erase("repealed_at")
 	(no_stamps["nations"]["FRA"] as Dictionary).erase("last_accession")
 	(no_stamps["nations"]["FRA"] as Dictionary).erase("assembly_bill_passed_month")
+	(no_stamps["nations"]["FRA"] as Dictionary).erase("commodity_high_month")
 	var dropped_stamps = GameState.from_dict(no_stamps)
 	if not dropped_stamps.player().repealed_at.is_empty() \
 			or not dropped_stamps.player().last_accession.is_empty():
@@ -1681,6 +1685,8 @@ func _check_event_fields(loader) -> void:
 	# default of 0 would read as "an assembly bill passed in month 0".
 	if int(dropped_stamps.player().assembly_bill_passed_month) != -1:
 		_fail("dropping assembly_bill_passed_month did not read -1 (got %d)" % dropped_stamps.player().assembly_bill_passed_month)
+	if int(dropped_stamps.player().commodity_high_month) != -1:
+		_fail("dropping commodity_high_month did not read -1 (got %d) -- a default of 0 would read as a crossing in month 0" % dropped_stamps.player().commodity_high_month)
 	# A save written while `event_hook_fired` still existed must load: from_dict reads
 	# explicit keys, so the dead key is ignored, and the field is not written back.
 	var legacy: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))

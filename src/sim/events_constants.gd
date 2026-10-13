@@ -187,14 +187,6 @@ const CATEGORY_QUIET_MONTHS := 3
 ## the E1 ceiling argument one size up.
 const QUEUE_MAX := 4
 
-## A commodity price counts as HIGH for the commodity_price_high hook at or above
-## this ratio of its base. A LEVEL, not an edge -- the register keeps no price
-## history (commodities-model's own record) -- so the honest hook is "is high", and
-## repetition is bounded by the event's likelihood and cooldown, not by a crossing
-## the machine cannot see. Inside the ±75 % price clamp by construction, so the
-## hook is reachable wherever the clamp lets a shortage go.
-const HOOK_PRICE_RATIO := 1.25
-
 ## ============================================================================
 ## THE AI CHOOSER -- minimal, readable, and each weight is a BAND-DECLARED bound
 ## rather than a tuned dial until the E7 sweep says otherwise (the plan's clause:

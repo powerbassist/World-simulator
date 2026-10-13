@@ -437,10 +437,10 @@ func _test_the_climate_content() -> void:
 			_fail("France's gate for '%s' reads %s at the 2026 baseline -- wrong half of the split" % [ev.id, not expected_open])
 
 
-## Five hooks read registers written earlier in the SAME tick: four compare
+## Five hooks read registers written earlier in the SAME tick: five compare
 ## emitter stamps against `== month_index` (member_bill_passed, takeover_bid,
-## firm_failed, accession_won) and commodity_price_high is a level read on
-## `ns.commodity_state`. They fire only because Events.tick_month runs AFTER
+## firm_failed, accession_won, and commodity_price_high, whose stamp is
+## `ns.commodity_high_month` -- an edge, not a level read). They fire only because Events.tick_month runs AFTER
 ## Commodities, Orgs, Legislature, Statute and Industry in `_on_month_elapsed`;
 ## the pin in test_commodities.gd holds only Economy < Commodities < Opinion, so
 ## this is the pin for the Events end. The balance probe mirrors the order and is
@@ -450,7 +450,7 @@ func _test_the_climate_content() -> void:
 ## beside its Statute call), so they are held to the three predecessors they do
 ## run.
 const _EVENTS_READS_AFTER := {
-	"Commodities": "the commodity_price_high hook reads commodity_state",
+	"Commodities": "the commodity_price_high hook reads the commodity_high_month crossing stamp Commodities writes",
 	"Orgs": "the accession_won hook reads ns.last_accession",
 	"Legislature": "the member_bill_passed hook reads assembly_bill_passed_month, which Legislature._tick_held_bills writes for an assembly-origin release",
 	"Statute": "the member_bill_passed hook reads the assembly_bill_passed_month stamp",
@@ -1803,13 +1803,24 @@ func _test_hooks_fire_on_staged_registers() -> void:
 		_fail("firm_failed fired on a stale month's failure")
 	ns.companies.erase("fake_firm")
 
-	var base_price: float = float(good.get("base_price", 0.0))
-	ns.commodity_state = {"price": {"iron_ore": base_price * K.HOOK_PRICE_RATIO * 1.1}}
-	if not Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
-		_fail("commodity_price_high did not read a price above HOOK_PRICE_RATIO")
-	ns.commodity_state = {"price": {"iron_ore": base_price * 1.1}}
+	# commodity_price_high is an EDGE: it reads the crossing stamp Commodities writes
+	# (ns.commodity_high_month), pinned both directions like member_bill_passed --
+	# M fires, M-1 does not, the default -1 does not. A price vector sitting high
+	# with no crossing this month fires nothing (the level read this replaced fired
+	# on exactly that, almost every month).
 	if Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
-		_fail("commodity_price_high fired below HOOK_PRICE_RATIO")
+		_fail("commodity_price_high fired with no crossing ever stamped (default -1)")
+	ns.commodity_high_month = month
+	if not Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+		_fail("commodity_price_high did not read the commodity_high_month stamp")
+	ns.commodity_high_month = month - 1
+	if Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+		_fail("commodity_price_high fired on last month's crossing -- the hook is an edge, a month read")
+	var base_price: float = float(good.get("base_price", 0.0))
+	ns.commodity_high_month = -1
+	ns.commodity_state = {"price": {"iron_ore": base_price * 1.75}}
+	if Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+		_fail("commodity_price_high fired on a price vector at its clamp with no crossing stamp -- a level read")
 	ns.commodity_state = {}
 
 

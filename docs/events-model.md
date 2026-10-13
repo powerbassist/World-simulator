@@ -288,7 +288,7 @@ law passed (`ns.law_ledger`'s own months list), a repeal landed (the V4.4
 divided (`assembly_division_month`), a minister resigned (`ns.last_resignation`,
 one-month lag — Cabinet ticks after Events), a takeover bid stood or a firm failed
 (two industry stamps on the register the machine already writes), a commodity price
-sits ≥ 1.25× base (a LEVEL read — the register keeps no history), or the Union's
+crossed up through 1.25× base (an EDGE — `Commodities` stamps `ns.commodity_high_month` in the month a good goes from below the line to at or above it, because a level read on a vector that drifts to its clamp within months fired nearly every month and flooded the desk; pass 22), or the Union's
 accession flipped (the `ns.last_accession` stamp inside `_flip_membership` is
 written for every org; `accession_won` fires only when its `org` is `eu`). One vocabulary,
 closed at `events_constants.ON_ACTIONS`, refused loudly at load; `election_lost` is

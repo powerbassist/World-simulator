@@ -641,8 +641,10 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# this loop that can fire something new: the hazard is a pure function of
 		# (nation, event, month), so the projection sees exactly the events the next
 		# twelve months deliver rather than an average of them.
-		# This loop does not tick Commodities, so `commodity_price_high` reads the price
-		# level frozen at the projection's start (docs/someday.md records it).
+		# This loop does not tick Commodities, so nothing writes `commodity_high_month`
+		# inside it and `commodity_price_high` stays false in every projected month
+		# (the copied stamp is the real game's past, never a projected month);
+		# docs/someday.md records that the projection prices no goods.
 		Events.tick_month(sim, loader)
 		# In main.gd's slot a seventh time, and V1.6b is where the question the comment
 		# below asks about Media gets the OPPOSITE answer -- so the two sit together

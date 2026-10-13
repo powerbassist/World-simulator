@@ -147,9 +147,9 @@ above. **Fix shape:** none needed once AI nations tick their budgets.
 ### The projection prices no goods, and `law_passed` has no consumer
 
 `Budget.project()` ticks Events but not Commodities, so the `commodity_price_high` hook
-reads a frozen price vector inside the forecast: if prices sit at or above 1.25x base
-when the panel opens the hook looks true in every projected month, and a shortage that
-develops in the window never appears. `test_budget`'s 1e-9 projection-equals-reality
+reads a crossing stamp nothing writes inside the forecast (since pass 22 the hook is an
+edge on `commodity_high_month`), so it is false in every projected month and a
+shortage that develops in the window never appears. `test_budget`'s 1e-9 projection-equals-reality
 check cannot see it because its mirror omits Commodities too. **Trigger:** the budget
 panel's projection work, or a commodity event that moves the deficit. **Fix shape:**
 tick Commodities in `project()` and in the mirror together.
@@ -175,15 +175,30 @@ player; it is not gated (a flood is a flood) and the copy would need a membershi
 variant. **Trigger:** the first non-EU playthrough note. **Fix shape:** drop the clause
 or split the summary.
 
-### `commodity_price_high` is a level read, and the hook door skips the category quiet
+### `commodity_price_high` was a level read -- converted to an edge at pass 22
 
-The hook is true every month while any good sits at >= 1.25x base, and the hook door
-does not respect the category quiet, so a sustained high price can feed a nation's
-desk its two commodity events (draws 0.45 / 0.40, cooldowns 8 / 10) every few months,
-outside the hazard-only cadence E4 measures. **Trigger:** a balance run where a price
-stays high for a year, or a playtest note on commodity events piling up. **Fix
-shape:** fire on the crossing (edge) rather than the level, or let the hook door
-respect the category quiet -- an author/tuning call.
+RECORD, not an open item. The hook was true every month while any good sat at >= 1.25x
+base, and the world price vector drifts to its clamp within months, so it fired about
+every month and flooded the desk (measured over 168 months, FRA: the level was true in
+168 of 168 months and commodity events were 33 of 67 desk arrivals). It is an edge now:
+`Commodities` stamps `ns.commodity_high_month` in the month a good goes from below
+`HIGH_PRICE_RATIO` of base to at or above it, and the hook reads that stamp (5 months in
+the same run; commodity arrivals 4 of 38). The hook door still does not respect the
+category quiet, which an edge makes unreachable in practice rather than fixes.
+
+### World prices drift to their clamp within months
+
+Found while converting `commodity_price_high` to an edge (pass 22). The commodity
+layer's premise (docs/commodities-model.md, V4.6) is that the world is born in balance
+and only a shock moves the price vector; measured on a new game, it is not: at month 1
+two goods already sit at or above 1.25x base, at month 3 fifteen do (cotton at 1.75x,
+the clamp), and the level read stayed true in 168 of 168 months. The events hook no
+longer depends on the level (it fires on a crossing), so nothing is broken, but any
+future reader of the price vector inherits a world that is mostly at a clamp.
+**Trigger:** a commodities tuning pass, or a feature that reads the price level.
+**Fix shape:** find the recipe/supply imbalance that drives the early drift (V4.6
+territory: the capacity and demand structure should agree, and the gap sign for the
+rising goods says which side is short) before any price constant is touched.
 
 ### Same-month category collisions favour the early alphabet
 
