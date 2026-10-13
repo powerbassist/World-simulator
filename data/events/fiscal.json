@@ -696,7 +696,7 @@
     {
       "id": "repealed_levy_hole",
       "name": "What the levy paid for",
-      "summary": "The assembly's repeal took the levy with it, and the levy was quietly paying for the thing everybody in the debate said they supported. The line is empty now, and nobody voted it empty on purpose.",
+      "summary": "The assembly's repeal has left a gap: whatever the repealed law was quietly paying for, or holding together, is unsettled now, and nobody voted it so on purpose. The people who relied on it have started to ring.",
       "likelihood": 0.015,
       "category": "fiscal",
       "severity": 1,
@@ -708,8 +708,8 @@
       "choices": [
         {
           "id": "rebuild_the_levy",
-          "label": "Rebuild the levy",
-          "summary": "A new levy, narrower and differently named, goes back to the assembly. The repeal's majority gets to vote twice in one year on the same money.",
+          "label": "Raise the income rate",
+          "summary": "The income tax rate goes up four-tenths of a point to cover what the repeal left open. The repeal's majority is asked to explain why the same money is being collected twice under two names.",
           "effects": {
             "tax_rates_pct": {
               "income": 0.4
@@ -725,8 +725,8 @@
         },
         {
           "id": "cut_the_line_instead",
-          "label": "Cut the line instead",
-          "summary": "The thing the levy paid for is cut by the size of the hole and the books balance to the decimal. The users of the thing read the amendment carefully; almost nobody else does.",
+          "label": "Cut education to cover it",
+          "summary": "The education line gives up fifteen-hundredths of a point of GDP to cover the gap and the books balance to the decimal. The students read the notice carefully; almost nobody else does.",
           "effects": {
             "spending_pct_gdp": {
               "education": -0.15
@@ -742,8 +742,8 @@
         },
         {
           "id": "absorb_the_hole",
-          "label": "Absorb the hole",
-          "summary": "The hole is absorbed and the contingency reserve is thinner by exactly that much. Nothing is cut, nothing is raised, and the next surprise arrives with less behind it.",
+          "label": "Leave the gap",
+          "summary": "The gap is left where it fell. Nothing is cut, nothing is raised, and the people it hurt take the silence for a position.",
           "default": true,
           "effects": {
             "bloc_offset": {

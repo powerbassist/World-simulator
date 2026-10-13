@@ -390,7 +390,7 @@
     {
       "id": "com_price_high_desk",
       "name": "The price is the policy now",
-      "summary": "Something the country imports is standing thirty per cent over its price of a year ago, and the question on the desk is the one every government answers badly: absorb it, pass it through, or find somebody to blame. The world price does not care which. The kitchen tables keep a record.",
+      "summary": "A world price the country's industry depends on has just crossed a level well above the one budgets were set against, and the question on the desk is the one every government answers badly: absorb it, pass it through, or find somebody to blame. The world price does not care which. The kitchen tables keep a record.",
       "on_action": "commodity_price_high",
       "likelihood": 0.45,
       "category": "commodity",
@@ -454,7 +454,7 @@
     {
       "id": "com_industry_bills",
       "name": "The factories' input bill",
-      "summary": "The federation has done the quarter's arithmetic on input prices and arrived with it: the mills are buying at margins that close in eight weeks. It would like the state to decide which industries eat the difference, the market having declined to.",
+      "summary": "A world price has crossed a line the federation's arithmetic cannot live with, and it has arrived with the sums: the mills are buying at margins that close in eight weeks. It would like the state to decide who eats the difference, the market having declined to.",
       "on_action": "commodity_price_high",
       "likelihood": 0.4,
       "category": "commodity",
@@ -465,8 +465,8 @@
       "choices": [
         {
           "id": "protect_the_makers",
-          "label": "Protect the manufacturers",
-          "summary": "The input bill is shared out to the consumer sectors and the farms, where the votes are thinner. The mills keep their shifts and the grocery line learns what a subsidy tastes like from the inside.",
+          "label": "Take the mills in hand",
+          "summary": "The state takes the input allocation for industry into its own hands, with a rulebook attached, and the rulebook is a standing load on the sector. The mill workers like the attention; the owners, who have to file for it, and the farms, who are asked to wait, do not.",
           "effects": {
             "company": {
               "sector": "industry",

@@ -689,8 +689,8 @@
       "choices": [
         {
           "id": "block_the_bid",
-          "label": "Block the bid",
-          "summary": "The bid is blocked on grounds the ministry drafts overnight. The champion stays domestic, the bidder's lawyers stay busy, and the markets price a review into every premium.",
+          "label": "Oppose the bid in public",
+          "summary": "The government declares against the bid and sends the ministry to find its grounds overnight. The bidder's lawyers stay busy and the markets price a review into every premium; whether the deal is actually stopped is decided in the companies panel.",
           "effects": {
             "bloc_offset": {
               "business": -0.03,
@@ -703,8 +703,8 @@
         },
         {
           "id": "wave_it_through",
-          "label": "Wave it through",
-          "summary": "The bid passes with undertakings about jobs and boards, both of which expire. The premium is paid, the advisers are paid, and the town waits to learn which undertakings had lawyers.",
+          "label": "Welcome the bid",
+          "summary": "The government says in public that the bid is welcome and asks for undertakings about jobs and boards, both of which expire. The advisers are paid, the town waits to learn which undertakings had lawyers, and the bid's fate stays a matter for the companies panel.",
           "effects": {
             "bloc_offset": {
               "business": 0.024,
@@ -718,8 +718,8 @@
         },
         {
           "id": "refer_and_delay",
-          "label": "Refer and delay",
-          "summary": "The bid is referred to a review with no deadline, which delays it at a price nobody has set. Both boards hate the answer, which is how the desk likes its answers.",
+          "label": "Call for a review",
+          "summary": "The government says the bid deserves a review with no deadline, and commits to nothing else. Both boards hate the answer, which is how the desk likes its answers; the companies panel is where the bid is actually decided.",
           "default": true,
           "effects": {
             "bloc_offset": {
@@ -749,8 +749,8 @@
       "choices": [
         {
           "id": "take_it_public",
-          "label": "Take the plants public",
-          "summary": "The operating plants are lifted out of the estate and into a public vehicle before the scrap men arrive. The name dies; the machines do not, and the treasury owns the difference.",
+          "label": "Back a public takeover",
+          "summary": "The government announces it will stand behind a public vehicle for the operating plants, and the infrastructure line takes the first cost. Whether the state ends up holding the plants is settled in the companies panel; the announcement and the bill are now.",
           "effects": {
             "spending_pct_gdp": {
               "infrastructure": 0.3
@@ -766,8 +766,8 @@
         },
         {
           "id": "rescue_the_plants",
-          "label": "Rescue the plants, not the firm",
-          "summary": "The plants are kept running by order and sold as going concerns; the group's debts stay the estate's problem. The suppliers learn the difference between a firm and its factories.",
+          "label": "Back a rescue of the plants",
+          "summary": "The government says the plants, not the group, are worth saving, and a smaller sum goes to the infrastructure line to show it. The suppliers learn the difference between a firm and its factories; the rescue itself is a decision for the companies panel.",
           "effects": {
             "spending_pct_gdp": {
               "infrastructure": 0.15
@@ -784,7 +784,7 @@
         {
           "id": "let_it_liquidate",
           "label": "Let it liquidate",
-          "summary": "The estate is wound up in the ordinary order and the sites go to whoever bids. The wage claims stand in the queue by statute, and the statute is older than the group.",
+          "summary": "The government says in public that it will not step in. The wage claims stand in the queue by statute, and the statute is older than the group.",
           "default": true,
           "effects": {
             "bloc_offset": {
