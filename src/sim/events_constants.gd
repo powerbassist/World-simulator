@@ -123,6 +123,12 @@ const SEVERITY_MIN := 1
 const SEVERITY_MAX := 3
 const SEVERITY_DEFAULT := 1
 
+## The names of the three severities, index = severity - 1. One list because the
+## desk tooltip and the plate library's file bands each restated it, and a rename
+## in one would have silently mis-named the other (the plate files are the
+## generator's output, so the name is a filename too).
+const SEVERITY_NAMES := ["minor", "major", "critical"]
+
 ## Bound on an event's authored per-event cooldown, months. The V1.8 design cut this
 ## field on the grounds that one pending slot already bounded repetition -- an
 ## argument that died with the slot (the tier doc's own sentence). The bound exists

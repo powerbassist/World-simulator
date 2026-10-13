@@ -329,15 +329,9 @@ static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary, custom
 	return clampf(raw, C.EROSION_MIN, C.EROSION_MAX)
 
 
-## Apply a pending budget. `pending` is {"tax_rates_pct": {...},
-## "spending_pct_gdp": {...}, "tax_progressivity": float}; any key may be omitted to
-## leave it unchanged.
-##
-## The demand impulse is raised here and nowhere else: a budget *change* is a
-## shock, a budget left alone is not. The revenue delta is computed by running
-## revenue_lines() at the old and new rates, so the erosion curve is respected
-## automatically and the two can never drift apart.
-## The player's command verb, player-scoped by construction: the budget screen
+## Commit a pending budget (shape: see apply_pending). The player's command verb,
+## player-scoped by construction: it hands the pending budget to apply_pending()
+## for state.player() and then recomputes the books. The budget screen
 ## and the tax panel land here when -- and only when -- the nation they belong
 ## to is the one the player governs. A repeal's negation and an event choice do
 ## NOT pass through (both route apply_effects() into the nation-scoped
@@ -353,10 +347,19 @@ static func commit(state, pending: Dictionary) -> void:
 	recompute(state, ns)
 
 
+## Apply a pending budget. `pending` is {"tax_rates_pct": {...},
+## "spending_pct_gdp": {...}, "tax_progressivity": float}; any key may be omitted to
+## leave it unchanged.
+##
 ## The one fiscal WRITER, nation-scoped: the landed-rate floors, the yield gate
 ## and the demand impulse, for whoever the effects belong to. `recompute` is the
 ## caller's, not this function's, because it needs the state -- the tariff line
 ## reads the relations the state holds.
+##
+## The demand impulse is raised here and nowhere else: a budget *change* is a
+## shock, a budget left alone is not. The revenue delta is computed by running
+## revenue_lines() at the old and new rates, so the erosion curve is respected
+## automatically and the two can never drift apart.
 static func apply_pending(ns, pending: Dictionary) -> void:
 	var new_rates: Dictionary = ns.tax_rates_pct.duplicate(true)
 	if pending.has("tax_rates_pct"):

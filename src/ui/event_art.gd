@@ -21,12 +21,14 @@ extends RefCounted
 ## hole, no error. What is NOT tolerated is a PARTIAL library once any of it
 ## ships, which is the test's all-or-nothing rule, not this file's.
 
+const EventsK = preload("res://src/sim/events_constants.gd")
+
 const ART_DIR := "res://assets/event_art/"
 
 ## The severity bands, index = severity - 1 (1 minor, 2 major, 3 critical --
-## events_constants' own reading). The names are the files
+## events_constants' SEVERITY_NAMES). The names are the files
 ## tools/event_art_generate.py renders.
-const BANDS := ["minor", "major", "critical"]
+const BANDS = EventsK.SEVERITY_NAMES
 
 ## Seeded variants per plate -- the pool's depth, the generator's VARIANTS.
 const VARIANTS := 2

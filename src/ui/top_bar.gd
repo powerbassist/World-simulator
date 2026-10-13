@@ -4,6 +4,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
+const EventsK = preload("res://src/sim/events_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 ## The thin strip along the top edge -- U2, rebuilt at U5a.
@@ -167,14 +168,14 @@ func _spacer() -> Control:
 
 ## The desk tooltip: a critical on the desk is named outright -- that is the one
 ## line a president must not have to decode -- and any other desk reads as a count
-## by severity. The names are events_constants' own register (1 minor, 2 major,
+## by severity. The names are events_constants' SEVERITY_NAMES (1 minor, 2 major,
 ## 3 critical), not new copy.
 func _desk_tooltip(by_severity: Dictionary) -> String:
 	var parts: Array[String] = []
 	for severity in [3, 2, 1]:
 		var count := int(by_severity.get(severity, 0))
 		if count > 0:
-			parts.append("%d %s" % [count, ["minor", "major", "critical"][severity - 1]])
+			parts.append("%d %s" % [count, EventsK.SEVERITY_NAMES[severity - 1]])
 	return " · ".join(parts) if not parts.is_empty() else "On the desk."
 
 

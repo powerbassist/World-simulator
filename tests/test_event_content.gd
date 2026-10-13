@@ -3,10 +3,6 @@ extends SceneTree
 ## Headless content test: re-derives event_lint.py's two book bands from shipped JSON,
 ## so a rule reachable only by a shell invocation is actually run by the suite.
 
-const BLOC_SIZE := {
-	"workers": 0.30, "pensioners": 0.24, "urban": 0.15,
-	"rural": 0.13, "business": 0.10, "students": 0.08,
-}
 const MEAN_BAND := 0.008
 const BUSINESS_WORST_MAX := 0.30
 
@@ -100,6 +96,35 @@ func _check_lint_vocabulary() -> void:
 		want.sort()
 		if found != want:
 			_fail("event_lint.py %s %s differs from its source list %s" % [name, found, want])
+	_check_lint_bloc_size(text)
+
+
+## BLOC_SIZE is a dictionary, so the list loop above cannot hold it. The lint's
+## size-weighted mean band is only the test's own band if the weights agree, and a
+## re-weighted bloc in opinion_constants would otherwise leave the lint judging the
+## book on the old sizes while this test judged it on the new ones.
+func _check_lint_bloc_size(text: String) -> void:
+	var start := text.find("\nBLOC_SIZE = {")
+	if start < 0:
+		_fail("event_lint.py no longer defines BLOC_SIZE as a dict literal")
+		return
+	var body := text.substr(start, text.find("}", start) - start)
+	var rx := RegEx.new()
+	rx.compile("\"([a-z_]+)\"\\s*:\\s*([0-9.]+)")
+	var found: Dictionary = {}
+	for m in rx.search_all(body):
+		found[m.get_string(1)] = float(m.get_string(2))
+	var want_keys: Array = OpinionK.BLOC_SIZE.keys()
+	var found_keys: Array = found.keys()
+	want_keys.sort()
+	found_keys.sort()
+	if found_keys != want_keys:
+		_fail("event_lint.py BLOC_SIZE keys %s differ from opinion_constants %s" % [found_keys, want_keys])
+		return
+	for bloc in want_keys:
+		if absf(float(found[bloc]) - float(OpinionK.BLOC_SIZE[bloc])) > 1e-9:
+			_fail("event_lint.py BLOC_SIZE[%s] = %s differs from opinion_constants %s"
+					% [bloc, found[bloc], OpinionK.BLOC_SIZE[bloc]])
 
 
 func _band_failures(entries: Array) -> Array[String]:
@@ -122,8 +147,8 @@ func _band_failures(entries: Array) -> Array[String]:
 			var worst_value := INF
 			for bloc in offset:
 				var value := float(offset[bloc])
-				if BLOC_SIZE.has(bloc):
-					mean += float(BLOC_SIZE[bloc]) * value
+				if OpinionK.BLOC_SIZE.has(bloc):
+					mean += float(OpinionK.BLOC_SIZE[bloc]) * value
 				if value < worst_value:
 					worst_value = value
 					worst_bloc = String(bloc)
