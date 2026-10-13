@@ -839,12 +839,27 @@ func _entry(id: String, label: String) -> Dictionary:
 	}
 
 
+## The player's own pause/play (Space, the clock cluster's button) -- the ONLY
+## two manual toggles; speed changes never touch `paused`, and the pause menu,
+## the election dismissal and the holds below set it through their own paths.
+## A manual toggle means the player has taken ownership of the clock, so the
+## arrival flag drops: left up, a later answer or X on the last unseen card would
+## run _resume_if_decision_settled() and unpause the clock against the player's
+## own pause, and _decision_holds_clock() would keep holding it after an election
+## dismissal or programme choice the player had already run past. ONLY the arrival
+## flag goes: _unseen_events (the cards stay unseen), an interrupt on the desk and
+## an unchosen programme each hold the clock on their own account.
+func _toggle_pause_by_hand() -> void:
+	_clock.toggle_pause()
+	_paused_for_decision = false
+
+
 ## Every signal the furniture emits, connected in one place. hud.gd builds and
 ## places the pieces and deliberately wires none of them -- it has no clock and
 ## no GameState, and giving it either would put game control in a layout file.
 func _wire_hud() -> void:
 	_hud.clock_cluster.pause_toggled.connect(func():
-		_clock.toggle_pause()
+		_toggle_pause_by_hand()
 		_update_top_bar()
 	)
 	_hud.clock_cluster.speed_selected.connect(func(s: int):
@@ -925,12 +940,13 @@ func _wire_hud() -> void:
 	# The unseen set's second door. An X on a decision card used to strand the
 	# event's id in _unseen_events: only an ANSWER erased it, so the arrival
 	# pause could outlive every answer and hold the clock over an empty set. The
-	# MAX_CARDS eviction is NOT a door: it takes the oldest card WITHOUT answer
-	# buttons, the newcomer included (message_stack's _eviction_victim), so a
-	# crowd of plain cards cannot "dismiss" a decision and restart the clock over
-	# it -- it reaches this handler only for a plain card, whose id maps to no
-	# event. Only a stack of nothing but decisions (more than the desk's 4 can
-	# hold) falls back to the oldest. The
+	# MAX_CARDS eviction is NOT a door: it takes the oldest UNPROTECTED card (no
+	# answer buttons, not pushed with `protect`), the newcomer included
+	# (message_stack's _eviction_victim), so a crowd of plain cards cannot
+	# "dismiss" a decision and restart the clock over it -- it reaches this
+	# handler only for a plain card, whose id maps to no event. Only a stack of
+	# nothing but protected cards (decisions past the desk's 4, plus the
+	# programme card) falls back to the oldest. The
 	# invariant, stated once across all its doors: AN ID LEAVES _unseen_events
 	# WHEN IT LEAVES THE DESK OR ITS CARD IS DISMISSED. An id already taken off
 	# the maps (the answer path above dismisses its own card after erasing)
@@ -1082,7 +1098,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				_open_pause_menu()
 		KEY_SPACE:
-			_clock.toggle_pause()
+			_toggle_pause_by_hand()
 			_update_top_bar()
 		KEY_1:
 			_clock.set_speed(1)
@@ -2413,6 +2429,12 @@ func _on_load_requested(slot: String) -> void:
 		_hud.message_stack.dismiss(stale_card)
 	_event_cards.clear()
 	_unseen_events.clear()
+	# The discarded game's programme card goes too: _enforce_term_start_programme()
+	# below returns early for a mid-term load, which would leave "choose one
+	# goal..." standing (and its id set) over a game with nothing to choose.
+	if not _programme_card_id.is_empty():
+		_hud.message_stack.dismiss(_programme_card_id)
+		_programme_card_id = ""
 	var loaded_ns = _state.player()
 	var loaded_result: Dictionary = loaded_ns.last_law_result
 	var carries_bill := bool(loaded_result.get("assembly_bill", false))
@@ -2599,6 +2621,10 @@ func _enforce_term_start_programme() -> void:
 	_programme_card_id = _hud.message_stack.push(
 		"The term's programme",
 		"The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise.",
+		[], null,
+		# Protected: this plain card explains a live clock hold, and a few plain
+		# pushes at a term start would otherwise evict it as the oldest.
+		true,
 	)
 	_paused_for_programme = true
 	_clock.paused = true

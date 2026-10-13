@@ -64,7 +64,9 @@ func _run() -> void:
 	_check_event_cards_follow_their_event()
 	_check_interrupt_card_x_keeps_the_clock()
 	_check_programme_then_interrupt_releases_the_clock()
+	_check_manual_toggle_takes_the_clock()
 	_check_eviction_spares_decision_cards()
+	_check_protected_plain_card_survives_eviction()
 	_check_same_month_defaults_queue_one_effect()
 	_check_opening_card_states_the_goal()
 	_check_term_limit_reports_itself()
@@ -235,6 +237,114 @@ func _check_programme_then_interrupt_releases_the_clock() -> void:
 	clock.paused = false
 
 
+## Pass 19 (item 1): the arrival pause belongs to the player until they touch the
+## clock. Arrival -> the player runs past it (cluster button) and pauses again
+## (Space) -> X on the last unseen card must leave the clock paused: the stale
+## arrival flag used to let _resume_if_decision_settled() unpause against the
+## player's own pause. Both manual paths are driven through their real doors (the
+## cluster's signal, a real key event). The unseen mark must survive the toggles --
+## the cards are still unseen, only the clock's ownership moved.
+func _check_manual_toggle_takes_the_clock() -> void:
+	var Events := load("res://src/sim/events.gd")
+	var clock: Node = _main.get_node("Clock")
+	var ns = _main._state.player()
+	var ev = null
+	for candidate in _main._loader.events:
+		if not bool(candidate.interrupt):
+			ev = candidate
+			break
+	if ev == null:
+		_fail("no non-interrupt event in the loader to stage the manual-toggle arrival with")
+		return
+	ns.event_queue.clear()
+	_main._unseen_events.clear()
+	for leftover in _main._event_cards.keys().duplicate():
+		_main._hud.message_stack.dismiss(leftover)
+	_main._event_cards.clear()
+	_main._paused_for_decision = false
+	_main._paused_for_programme = false
+	clock.paused = false
+	Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
+		Events.region_names(ns, _main._loader))
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	if not clock.paused or not _main._paused_for_decision or not _main._unseen_events.has(String(ev.id)):
+		_fail("the manual-toggle staging did not arm the arrival pause")
+		return
+	var card_id := ""
+	for id in _main._event_cards:
+		if String(_main._event_cards[id]) == String(ev.id):
+			card_id = String(id)
+	if card_id == "":
+		_fail("the manual-toggle arrival made no linked card")
+		return
+	# Run past it with the cluster's own button, then pause again with Space.
+	_main._hud.clock_cluster.pause_toggled.emit()
+	if clock.paused:
+		_fail("the cluster's pause button did not run the clock")
+	var space := InputEventKey.new()
+	space.keycode = KEY_SPACE
+	space.pressed = true
+	_main._unhandled_input(space)
+	if not clock.paused:
+		_fail("Space did not pause the clock")
+	if not _main._unseen_events.has(String(ev.id)):
+		_fail("a manual toggle erased the unseen mark (the card is still unseen)")
+	_main._hud.message_stack.dismiss(card_id)
+	if not clock.paused:
+		_fail("closing the last unseen card unpaused a clock the player had paused by hand")
+
+	ns.event_queue.clear()
+	_main._unseen_events.clear()
+	for leftover in _main._event_cards.keys().duplicate():
+		_main._hud.message_stack.dismiss(leftover)
+	_main._event_cards.clear()
+	_main._paused_for_decision = false
+	_main._paused_for_programme = false
+	clock.paused = false
+
+
+## Pass 19 (item 2): a plain card pushed with `protect` survives MAX_CARDS plain
+## pushes (the term-start programme card explains a live clock hold and used to be
+## the oldest plain card, so a few pushes evicted it), and main.gd pushes the
+## programme card protected. Fresh stack for the generic leg so the boot's "YOUR
+## TERM" card is not consumed.
+func _check_protected_plain_card_survives_eviction() -> void:
+	var stack = load("res://src/ui/message_stack.gd").new()
+	root.add_child(stack)
+	var kept: String = stack.push("kept", "body", [], null, true)
+	var plain: Array[String] = []
+	for i in range(stack.MAX_CARDS * 2):
+		plain.append(stack.push("plain %d" % i, "body"))
+	if not stack._cards.has(kept):
+		_fail("a protected plain card was evicted by plain pushes")
+	if stack.card_count() != stack.MAX_CARDS:
+		_fail("the protected stack holds %d cards, expected MAX_CARDS" % stack.card_count())
+	# All protected: nothing to spare, the oldest of all is the net.
+	var wall = load("res://src/ui/message_stack.gd").new()
+	root.add_child(wall)
+	var first: String = wall.push("p0", "body", [], null, true)
+	for i in range(wall.MAX_CARDS):
+		wall.push("p%d" % (i + 1), "body", [], null, true)
+	if wall._cards.has(first) or wall.card_count() != wall.MAX_CARDS:
+		_fail("with every card protected the oldest should be the fallback eviction")
+	stack.queue_free()
+	wall.queue_free()
+
+	# The real wiring: the programme card main.gd pushes is protected.
+	var clock: Node = _main.get_node("Clock")
+	_main._enforce_term_start_programme()
+	if String(_main._programme_card_id).is_empty():
+		_fail("the term start staged no programme card (nothing to pin the protection on)")
+	elif not _main._hud.message_stack._protected.has(_main._programme_card_id):
+		_fail("main.gd pushed the programme card unprotected")
+	if not String(_main._programme_card_id).is_empty():
+		_main._hud.message_stack.dismiss(_main._programme_card_id)
+		_main._programme_card_id = ""
+	_main._paused_for_programme = false
+	_main._paused_for_decision = false
+	clock.paused = false
+
+
 ## Pass 16: the MAX_CARDS eviction is not the player dismissing a decision. A
 ## paused player who triggers a crowd of plain cards (budget, tax, law results)
 ## must not lose the decision card -- main.gd reads every card_dismissed as "the
@@ -300,6 +410,9 @@ func _check_same_month_defaults_queue_one_effect() -> void:
 	var history_size: int = ns.event_history.size()
 	var effects_before: int = _main._pending_effects.size()
 	var cards_before: Array = _main._hud.message_stack._cards.keys()
+	# The live queue is snapshotted and put back below: this check stages on an
+	# empty desk but must hand the player's real queue to later checks intact.
+	var queue_before: Array = ns.event_queue.duplicate(true)
 	ns.event_queue.clear()
 	var ids := ["pin_default_a", "pin_default_b"]
 	for event_id in ids:
@@ -324,6 +437,8 @@ func _check_same_month_defaults_queue_one_effect() -> void:
 		_main._pending_effects.pop_back()
 	while ns.event_history.size() > history_size:
 		ns.event_history.pop_back()
+	ns.event_queue.clear()
+	ns.event_queue.append_array(queue_before)
 
 
 ## V2.9 (from the playtest, F4): "3 months to answer" at speed 3 is thirteen

@@ -513,7 +513,7 @@ rule** — so `tests/test_ui_theme.gd` is untouched.
 `tools/nav_probe.gd` ran the real game for fourteen years with **nothing ever opened**,
 counting months in which a decision was in front of the player against months in which
 anything on screen said so. The message column is the only route a pending thing has
-ever had: `MAX_CARDS` is 6, the **oldest card without answer buttons** is dropped (the oldest of all only when every card carries buttons), the player can dismiss any of
+ever had: `MAX_CARDS` is 6, the **oldest unprotected card** is dropped (a card is protected when it carries answer buttons or was pushed with `protect`, as the term-start programme card is; the oldest of all goes only when every card is protected), the player can dismiss any of
 them, and nothing is ever re-pushed.
 
 | pending | months | unseen, never touching a card | unseen, dismissing each card once read |
