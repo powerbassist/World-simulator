@@ -750,7 +750,7 @@
         {
           "id": "take_it_public",
           "label": "Back a public takeover",
-          "summary": "The government announces it will stand behind a public vehicle for the operating plants, and the infrastructure line takes the first cost. Whether the state ends up holding the plants is settled in the companies panel; the announcement and the bill are now.",
+          "summary": "The government announces it will stand behind a public vehicle for the operating plants, and the infrastructure line is raised to meet it. Whether the state ends up holding the plants is settled in the companies panel; the announcement and the bill are now.",
           "effects": {
             "spending_pct_gdp": {
               "infrastructure": 0.3

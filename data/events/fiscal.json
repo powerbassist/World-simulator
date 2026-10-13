@@ -695,7 +695,7 @@
     },
     {
       "id": "repealed_levy_hole",
-      "name": "What the levy paid for",
+      "name": "What the repeal left open",
       "summary": "The assembly's repeal has left a gap: whatever the repealed law was quietly paying for, or holding together, is unsettled now, and nobody voted it so on purpose. The people who relied on it have started to ring.",
       "likelihood": 0.015,
       "category": "fiscal",
@@ -709,7 +709,7 @@
         {
           "id": "rebuild_the_levy",
           "label": "Raise the income rate",
-          "summary": "The income tax rate goes up four-tenths of a point to cover what the repeal left open. The repeal's majority is asked to explain why the same money is being collected twice under two names.",
+          "summary": "The income tax rate goes up four-tenths of a point to cover what the repeal left open. The repeal's majority is asked to explain why the government is now collecting money to fix the hole it voted to dig.",
           "effects": {
             "tax_rates_pct": {
               "income": 0.4
@@ -726,7 +726,7 @@
         {
           "id": "cut_the_line_instead",
           "label": "Cut education to cover it",
-          "summary": "The education line gives up fifteen-hundredths of a point of GDP to cover the gap and the books balance to the decimal. The students read the notice carefully; almost nobody else does.",
+          "summary": "The education line gives up fifteen-hundredths of a point of GDP, which covers part of what the repeal left open. The students read the notice carefully; almost nobody else does.",
           "effects": {
             "spending_pct_gdp": {
               "education": -0.15

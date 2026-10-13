@@ -402,7 +402,7 @@
         {
           "id": "absorb_it",
           "label": "Absorb it in the budget",
-          "summary": "The spread is paid from the infrastructure line until the world price remembers its manners. The bills hold, the debt holds the difference, and nobody thanks a subsidy for not happening.",
+          "summary": "The infrastructure line is raised to pay the spread, and the world price is left to remember its manners in its own time. The bills hold, the debt holds the difference, and nobody thanks a subsidy for not happening.",
           "effects": {
             "spending_pct_gdp": {
               "infrastructure": 0.1
