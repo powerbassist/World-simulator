@@ -3960,7 +3960,7 @@ somewhere to point now: V1.2c authored no amendment content for
 `parliamentary_republic` because Germany's two-thirds bar was unreachable, and
 V1.2e's `deu_grand_coalition` start makes it reachable.
 
-Save format is at **version 39** (V4.4's bump, on seven event registers -- `event_queue`, `event_category_quiet`, `event_cooldowns`, `event_armed`, `event_hook_fired`, `repealed_at` and `last_accession` -- argued in `game_state.gd`'s `SAVE_VERSION` block; the V2.6b2-to-V2.8 history below stops at 31), and this line has now drifted TWICE. It said **28**
+Save format is at **version 39** (V4.4's bump, on seven event registers -- `event_queue`, `event_category_quiet`, `event_cooldowns`, `event_armed`, `event_hook_fired`, `repealed_at` and `last_accession` -- argued in `game_state.gd`'s `SAVE_VERSION` block; the V2.6b2-to-V2.8 history below stops at 31), and this line has now drifted THREE times -- the third was 31 standing through eight bumps until V4.4's pass-15 review found it. It said **28**
 until V2.6b1 corrected it to 29, and it still said 29 until the V2.8 review found
 `game_state.gd` at 31 -- so it missed V2.6b2's bump to 30 and V2.8's to 31, while both
 of those sessions' own paragraphs below state their numbers correctly. That is precisely
