@@ -1172,9 +1172,24 @@ func _test_an_ai_fiscal_answer_never_touches_the_players_budget() -> void:
 	var ai2 = state2.nations["DEU"]
 	var player2_before: String = JSON.stringify(player2.to_dict(), "", true)
 	var rows_before: int = ai2.event_history.size()
+	var ai2_tax_before: float = float(ai2.tax_rates_pct["income"])
+	var ai2_health_before: float = float(ai2.spending_pct_gdp["health"])
 	Events._deliver(state2, ai2, stub, ev, Events._absolute_month(int(state2.year), int(state2.month)), false)
 	if ai2.event_history.size() != rows_before + 1:
 		_fail("the AI delivery did not resolve in place")
+	else:
+		# And the AI nation's own budget MOVED, by the effects of whichever choice the
+		# chooser recorded: a delivery that logged a row but skipped apply_effects would
+		# otherwise pass every assertion on this leg.
+		var picked: String = String(ai2.event_history[ai2.event_history.size() - 1].get("choice_id", ""))
+		var want_tax: float = ai2_tax_before + (1.5 if picked == "tax" else 0.0)
+		var want_health: float = ai2_health_before + (0.4 if picked == "spend" else 0.0)
+		if picked != "tax" and picked != "spend":
+			_fail("the AI delivery recorded choice '%s', not one of the fixture's" % picked)
+		if not is_equal_approx(float(ai2.tax_rates_pct["income"]), want_tax):
+			_fail("after the AI's delivered '%s' answer its income rate is %.4f, expected %.4f" % [picked, float(ai2.tax_rates_pct["income"]), want_tax])
+		if not is_equal_approx(float(ai2.spending_pct_gdp["health"]), want_health):
+			_fail("after the AI's delivered '%s' answer its health spending is %.4f, expected %.4f" % [picked, float(ai2.spending_pct_gdp["health"]), want_health])
 	if JSON.stringify(player2.to_dict(), "", true) != player2_before:
 		_fail("an AI nation's delivered fiscal event changed the PLAYER's nation")
 

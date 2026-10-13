@@ -26,6 +26,24 @@ extends SceneTree
 const GameState = preload("res://src/core/game_state.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Programme = preload("res://src/sim/programme.gd")
+const Budget = preload("res://src/sim/budget.gd")
+const EventsK = preload("res://src/sim/events_constants.gd")
+
+## Every NationState field Legislature.apply_effects can write (read off its body, plus
+## Budget.apply_pending's tax/spending/progressivity/demand-impulse writes). A programme's
+## `immediate` block lands through it, so a test that makes a real programme choice has
+## to put all of these back, not just the programme register.
+const APPLY_EFFECTS_REGISTERS: Array[String] = [
+	"tax_rates_pct", "spending_pct_gdp", "tax_progressivity", "demand_impulse_pct",
+	"law_structural_offset_pct", "law_potential_target_pct", "law_other_revenue_pct_gdp",
+	"bloc_offset", "regulation_burden", "corruption", "migration_stance",
+	"settlement_stance", "press_freedom", "judicial_independence",
+	"system_id", "censure_rule", "dissolution_rule", "formation_method",
+	"amendment_rule", "term_limit", "term_months", "election_system",
+	"election_threshold_pct", "lose_condition", "head_of_state_kind",
+	"head_of_state_title", "head_of_state_person_id", "head_of_state_next_year",
+	"head_of_state_next_month",
+]
 
 var _failures: Array[String] = []
 var _main
@@ -77,6 +95,7 @@ func _run() -> void:
 	_check_council_vote_leaves_a_record()
 	_check_no_counted_nation_copy()
 	_check_top_bar_budget_balance_label()
+	_check_empty_desk_closed_copy()
 	_check_top_bar_election_clamp()
 
 
@@ -316,9 +335,17 @@ func _check_manual_toggle_takes_the_clock() -> void:
 	if avail.is_empty():
 		_fail("no term-start offer to pin the programme choice on")
 	else:
+		# Prefer an offer whose `immediate` block writes bloc_offset, so the register
+		# restore below is exercised rather than vacuous.
+		var chosen_id: String = String(avail[0]["id"])
+		for offer in avail:
+			if (offer.get("immediate", {}) as Dictionary).has("bloc_offset"):
+				chosen_id = String(offer["id"])
+				break
 		var saved_programme: Array = ns.programme.duplicate(true)
 		var saved_term: int = int(ns.programme_chosen_term)
 		var saved_stock: float = float(ns.programme_stock)
+		var saved_applied: Dictionary = _snapshot_apply_effects_registers(ns)
 		var effects_before: int = _main._pending_effects.size()
 		var cards_before: Array = _main._hud.message_stack._cards.keys()
 		_main._enforce_term_start_programme()  # the hold and card a real term start raises
@@ -326,7 +353,7 @@ func _check_manual_toggle_takes_the_clock() -> void:
 		_main._toggle_pause_by_hand()  # pause
 		if not clock.paused:
 			_fail("the staging toggles left the clock running")
-		_main._on_programme_chosen(String(avail[0]["id"]))
+		_main._on_programme_chosen(chosen_id)
 		if int(ns.programme_chosen_term) != int(ns.terms_served):
 			_fail("the programme choice did not land (nothing to pin the pause on)")
 		if not clock.paused:
@@ -334,6 +361,13 @@ func _check_manual_toggle_takes_the_clock() -> void:
 		ns.programme = saved_programme
 		ns.programme_chosen_term = saved_term
 		ns.programme_stock = saved_stock
+		# `immediate` goes through Legislature.apply_effects, which writes more than the
+		# programme register: put back every register it can write, then recompute the
+		# derived books from them.
+		_restore_apply_effects_registers(ns, saved_applied)
+		Budget.recompute(_main._state, ns)
+		if (ns.bloc_offset as Dictionary) != (saved_applied["bloc_offset"] as Dictionary):
+			_fail("the teardown left the programme's immediate bloc_offset on the nation")
 		while _main._pending_effects.size() > effects_before:
 			_main._pending_effects.pop_back()
 		for card in _main._hud.message_stack._cards.keys().duplicate():
@@ -999,6 +1033,20 @@ func _fail(message: String) -> void:
 	_failures.append(message)
 
 
+func _snapshot_apply_effects_registers(ns) -> Dictionary:
+	var snap := {}
+	for field in APPLY_EFFECTS_REGISTERS:
+		var value = ns.get(field)
+		snap[field] = value.duplicate(true) if (value is Dictionary or value is Array) else value
+	return snap
+
+
+func _restore_apply_effects_registers(ns, snap: Dictionary) -> void:
+	for field in snap:
+		var value = snap[field]
+		ns.set(field, value.duplicate(true) if (value is Dictionary or value is Array) else value)
+
+
 ## B10 (playtest 2026-09-16): the figure was titled "DEFICIT" while its value was
 ## signed -- a surplus printed "+2.1%", a deficit "-10.5%", so "DEFICIT +10.50%"
 ## sat on screen contradicting itself. The label is a balance now.
@@ -1013,6 +1061,37 @@ func _check_top_bar_budget_balance_label() -> void:
 			found = true
 	if not found:
 		_fail("B10 REGRESSED: the top bar carries no BUDGET BALANCE label -- the deficit figure reverted to its self-contradicting title")
+
+
+## Pass 19 minor: the empty-desk line printed "closed 0 months ago" in the month a
+## category's matter was resolved. 0 reads "this month", 1 "1 month ago", N "N months ago".
+func _check_empty_desk_closed_copy() -> void:
+	var panel = _main._events_panel
+	var ns = _main._state.player()
+	var saved_queue: Array = ns.event_queue.duplicate(true)
+	var saved_quiet: Dictionary = ns.event_category_quiet.duplicate(true)
+	var quiet: int = EventsK.CATEGORY_QUIET_MONTHS
+	ns.event_queue.clear()
+	var expected := {
+		quiet: "The last matter closed this month.",
+		quiet - 1: "The last matter closed 1 month ago.",
+		quiet - 2: "The last matter closed 2 months ago.",
+	}
+	for remaining in expected:
+		ns.event_category_quiet = {"scandals": int(remaining)}
+		panel._refresh()
+		var found := false
+		for node in _descendants(panel):
+			if node is Label and not node.is_queued_for_deletion() \
+					and String(node.text).begins_with("Nothing today."):
+				found = true
+				if String(node.text) != "Nothing today. " + String(expected[remaining]):
+					_fail("empty desk with %d quiet months left reads %s" % [remaining, node.text])
+		if not found:
+			_fail("empty desk with %d quiet months left printed no caption" % remaining)
+	ns.event_queue = saved_queue
+	ns.event_category_quiet = saved_quiet
+	panel._refresh()
 
 
 ## B1/B3 (playtest 2026-09-16): the election figure printed the raw int, and two

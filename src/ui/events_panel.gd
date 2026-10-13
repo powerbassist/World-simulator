@@ -165,10 +165,11 @@ func _build_pending(ns) -> void:
 		# which one -- projects_panel.gd's own correction, where a player who could not
 		# tell an empty list from a closed gate would read the lever as broken.
 		if longest_quiet > 0:
-			PanelKit.line(_body, "Nothing today. The last matter closed %d %s ago." % [
-				EventsK.CATEGORY_QUIET_MONTHS - longest_quiet,
-				"month" if EventsK.CATEGORY_QUIET_MONTHS - longest_quiet == 1 else "months",
-			])
+			var closed_ago: int = EventsK.CATEGORY_QUIET_MONTHS - longest_quiet
+			PanelKit.line(_body, "Nothing today. The last matter closed %s." % (
+				"this month" if closed_ago <= 0
+				else "%d %s ago" % [closed_ago, "month" if closed_ago == 1 else "months"]
+			))
 		else:
 			PanelKit.line(_body, "Nothing today.")
 		return

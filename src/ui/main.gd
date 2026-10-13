@@ -2631,7 +2631,7 @@ func _enforce_term_start_programme() -> void:
 		return
 	if not _programme_card_id.is_empty():
 		_hud.message_stack.dismiss(_programme_card_id)
-	_programme_card_id =_hud.message_stack.push(
+	_programme_card_id = _hud.message_stack.push(
 		"The term's programme",
 		"The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise.",
 		[], null,
