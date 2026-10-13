@@ -101,6 +101,12 @@ func _check_leaf_property() -> void:
 ## the WRITE form -- an indexed assignment into the register or an erase on it --
 ## the read/write shape test_characters.gd's tripwire already uses.
 func _check_single_writer() -> void:
+	# The crossing stamp's writer, pinned the same way: commodities.gd assigns it;
+	# nation_state.gd is the field's home (declaration, duplicate_state, from_dict
+	# carry it) and is the only other file allowed an assignment. READS are fine --
+	# events.gd compares it with `==`, which the pattern excludes.
+	var stamp_write := RegEx.new()
+	stamp_write.compile("commodity_high_month\\s*[-+*/]?=(?!=)")
 	for dir in ["src/sim", "src/core", "src/ui"]:
 		var da := DirAccess.open("res://%s" % dir)
 		if da == null:
@@ -115,6 +121,9 @@ func _check_single_writer() -> void:
 				var src := FileAccess.get_file_as_string("res://%s/%s" % [dir, f])
 				if not src.is_empty() and _indexed_write(_code_only(src), "commodity_state"):
 					_fail("%s/%s writes commodity_state -- commodities.gd is its one writer" % [dir, f])
+				if f != "nation_state.gd" and not src.is_empty() \
+						and stamp_write.search(_code_only(src)) != null:
+					_fail("%s/%s assigns commodity_high_month -- commodities.gd is its one writer" % [dir, f])
 			f = da.get_next()
 		da.list_dir_end()
 
@@ -419,8 +428,10 @@ func _check_absent_register_bridge() -> void:
 ##   A. a good just below the line that the tick pushes over it stamps the month;
 ##   B. the vector sitting at-or-above the line before the tick does NOT stamp
 ##      (the stamp would otherwise re-fire every month it stays high);
-##   C. a good that fell back below the line and crosses again re-stamps, with the
-##      NEW month (a "write only the first crossing" shape would keep the old one).
+##   C. a good that fell back below the line (the fall is STAGED by hand -- the
+##      leg tests the second crossing, not why the price fell) and crosses again
+##      re-stamps, with the NEW month (a "write only the first crossing" shape
+##      would keep the old one).
 ## The good staged is the one the unmodified world pushes hardest UP, so "the tick
 ## pushes it over" is a measured premise, checked below, and not an assumption.
 func _check_high_crossing_stamp() -> void:

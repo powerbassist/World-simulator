@@ -1248,7 +1248,8 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# layer writes can be read in the SAME month rather than a month late: Inflation's
 	# slot and Orgs' rule, both stated at their own calls below.
 	#
-	# Since V4.4 the register HAS a live sim reader: the events machine's
+	# Since V4.4 this module's output HAS a live sim reader (the register itself still
+	# has none; the reader takes a stamp on the nation): the events machine's
 	# commodity_price_high hook reads the `ns.commodity_high_month` crossing stamp this
 	# call writes, inside Events.tick_month, which runs AFTER this slot -- so the
 	# same-month read this slot exists for now has its consumer, and the order is

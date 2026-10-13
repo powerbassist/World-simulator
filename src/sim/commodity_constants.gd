@@ -11,7 +11,9 @@ extends RefCounted
 ## NONE OF THESE IS A SWEPT CONSTANT, and the reason is measured rather than
 ## assumed: the world's capacity weights and its demand weights come from the
 ## SAME recipe-derived structure, so the world starts in balance BY CONSTRUCTION
-## and the stationary price vector is base. Run 240 months at PRICE_ELASTICITY
+## and the stationary price vector is base. (That is the design intent; the
+## measurement disagrees -- see docs/someday.md, "World prices drift to their clamp
+## within months".) Run 240 months at PRICE_ELASTICITY
 ## 0.10, 0.30 and 0.60 and the settling prices are identical; the values below
 ## govern how fast a shock is priced, not where it settles. No shipped verb can
 ## cause a shock yet -- that is Task 4's panel and the block's later content -- so
