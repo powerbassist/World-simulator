@@ -1157,32 +1157,41 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 ## That is docs/campaign-model.md's own finding in a new place: maximising the thing you
 ## can see at the moment of the decision is not the same as being better off a term
 ## later. Both still beat the control, which is the property the deadline needs.
+##
+## V4.4: the slot is a desk of up to QUEUE_MAX entries, and five shipped events carry
+## `respond_months == 1`, so a second same-month arrival would default unanswered if only
+## the head were taken. Every entry on the desk is answered, by id, each under the same
+## rule; the ids are snapshotted first because answering removes entries and re-orders.
 func _answer_event(state, loader, ns, mode: String, regime_name: String, year: int, month: int) -> void:
-	if not Events.is_pending(ns):
-		return
-	var ev = Events.pending_event(ns, loader)
-	if ev == null:
-		return
-	var pick: Dictionary = {}
-	var pick_score := 0.0
-	for c in ev.choices:
-		if bool(c["is_default"]):
+	var ids: Array[String] = []
+	for entry in ns.event_queue:
+		var entry_id := String(entry.get("event_id", ""))
+		if entry_id != "" and not ids.has(entry_id):
+			ids.append(entry_id)
+	for event_id in ids:
+		var ev = Events.event_by_id(loader, event_id)
+		if ev == null:
 			continue
-		var score := 0.0
-		var terms: Dictionary = (c["effects"] as Dictionary).get("bloc_offset", {})
-		for bloc in terms:
-			score += float(K.BLOC_SIZE.get(bloc, 0.0)) * float(terms[bloc])
-		if pick.is_empty() or (score > pick_score if mode == "soft" else score < pick_score):
-			pick = c
-			pick_score = score
-	if pick.is_empty():
-		return
-	var record := Events.choose(state, loader, String(pick["id"]))
-	if record.is_empty():
-		return
-	print("  %d-%02d %s: '%s' -> %s" % [
-		year, month, regime_name, ev.event_name, String(pick["label"]),
-	])
+		var pick: Dictionary = {}
+		var pick_score := 0.0
+		for c in ev.choices:
+			if bool(c["is_default"]):
+				continue
+			var score := 0.0
+			var terms: Dictionary = (c["effects"] as Dictionary).get("bloc_offset", {})
+			for bloc in terms:
+				score += float(K.BLOC_SIZE.get(bloc, 0.0)) * float(terms[bloc])
+			if pick.is_empty() or (score > pick_score if mode == "soft" else score < pick_score):
+				pick = c
+				pick_score = score
+		if pick.is_empty():
+			continue
+		var record := Events.answer(state, loader, event_id, String(pick["id"]))
+		if record.is_empty():
+			continue
+		print("  %d-%02d %s: '%s' -> %s" % [
+			year, month, regime_name, ev.event_name, String(pick["label"]),
+		])
 
 
 func _short_the_largest_partner(state, ns, party_list: Array, regime_name: String, year: int, month: int) -> void:
