@@ -5,6 +5,7 @@ extends SceneTree
 ## tests/test_orgs.gd's _force_vote exactly. Not committed at closeout.
 
 const Orgs = preload("res://src/sim/orgs.gd")
+const Council = preload("res://src/sim/council.gd")
 
 var _loader
 
@@ -32,12 +33,7 @@ func _init() -> void:
 		var outcomes := []
 		for choice in [Orgs.VOTE_ABSTAIN, Orgs.VOTE_AGAINST, Orgs.VOTE_FOR]:
 			var s = GameStateT.new_game(_loader, "FRA")
-			s.orgs[p.org_id]["pending"] = {
-				"proposal_id": p.id, "name": p.proposal_name,
-				"summary": p.summary, "months_left": 1,
-				"player_vote": Orgs.VOTE_ABSTAIN,
-				"opened_year": s.year, "opened_month": s.month,
-			}
+			_open_as_the_machine_does(s, p)
 			Orgs.cast_vote(s, p.org_id, choice)
 			Orgs.tick_month(s, _loader)
 			var lv: Dictionary = Orgs.last_vote(s, p.org_id)
@@ -45,3 +41,26 @@ func _init() -> void:
 		var pivotal: bool = outcomes[0] != outcomes[1]
 		print("%s/%s: abstain=%s against=%s for=%s %s" % [p.org_id, p.id, outcomes[0], outcomes[1], outcomes[2], "PIVOTAL" if pivotal else ""])
 	quit(0)
+
+
+## HAND-COPIED. src/sim/orgs.gd `_tick_council()` is the source of truth for
+## the pending entry's shape and for the lobbying step (tools/council_probe.gd's
+## `_open_as_the_machine_does()` is the same copy). A field added to the pending
+## entry there MUST be mirrored here, or this probe divides a pending the game
+## never builds -- and nothing fails to say so. V4.5b added `sponsor` (and the
+## sponsor's lobbying at the opening), so both are mirrored below.
+func _open_as_the_machine_does(s, p) -> void:
+	var sponsor: String = Council.live_sponsor(s, p)
+	s.orgs[p.org_id]["pending"] = {
+		"proposal_id": p.id, "name": p.proposal_name,
+		"summary": p.summary, "months_left": 1,
+		"player_vote": Orgs.VOTE_ABSTAIN,
+		"opened_year": s.year, "opened_month": s.month,
+		"sponsor": sponsor,
+	}
+	if sponsor != "" and not s.nations[sponsor].has_budget:
+		var supports := {}
+		for id in Orgs.members(s, p.org_id):
+			if not s.nations[id].has_budget:
+				supports[id] = Orgs.support(s, s.nations[id], p)
+		s.orgs[p.org_id]["pending"]["lobbied"] = Council.lobby(s, _loader, sponsor, supports)

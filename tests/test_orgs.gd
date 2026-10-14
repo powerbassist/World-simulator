@@ -230,7 +230,7 @@ func _check_proposals_name_orgs() -> void:
 	var eu_ids: Array = []
 	for p in eu_agenda:
 		eu_ids.append(p.id)
-	_ok(eu_ids == ["stability_pact", "debt_reduction_rule", "minimum_corporate_rate", "own_resource_digital", "vat_floor", "joint_borrowing_facility", "corporate_rate_high_floor", "eurozone_fiscal_capacity", "expenditure_ceiling", "fiscal_compact_strict", "cohesion_fund", "recovery_facility", "common_external_tariff", "defence_industry_fund", "carbon_border_adjustment", "investment_floor", "enlargement_preaccession_fund", "steel_safeguard", "migration_solidarity_pact", "cap_reform"],
+	_ok(eu_ids == ["stability_pact", "debt_reduction_rule", "own_resource_digital", "minimum_corporate_rate", "vat_floor", "joint_borrowing_facility", "corporate_rate_high_floor", "expenditure_ceiling", "eurozone_fiscal_capacity", "fiscal_compact_strict", "cohesion_fund", "recovery_facility", "common_external_tariff", "defence_industry_fund", "carbon_border_adjustment", "investment_floor", "enlargement_preaccession_fund", "steel_safeguard", "migration_solidarity_pact", "cap_reform"],
 		"eu agenda preserves flat-file order, got %s" % [eu_ids])
 
 

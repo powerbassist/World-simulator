@@ -54,6 +54,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
+const Council = preload("res://src/sim/council.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const BlocProposal = preload("res://src/core/bloc_proposal.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
@@ -190,6 +191,29 @@ func _table_b(loader) -> void:
 	_division(loader, SOLIDARITY)
 
 
+## HAND-COPIED. src/sim/orgs.gd `_tick_council()` is the source of truth for
+## the pending entry's shape and for the lobbying step (tools/council_probe.gd's
+## `_open_as_the_machine_does()` is the same copy). A field added to the pending
+## entry there MUST be mirrored here, or this probe divides a pending the game
+## never builds -- and nothing fails to say so. V4.5b added `sponsor` (and the
+## sponsor's lobbying at the opening), so both are mirrored below.
+func _open_as_the_machine_does(state, loader, proposal_id: String) -> void:
+	var p = Orgs.proposal_by_id(loader, ACCORD, proposal_id)
+	var sponsor: String = Council.live_sponsor(state, p) if p != null else ""
+	state.orgs[ACCORD]["pending"] = {
+		"proposal_id": proposal_id, "name": proposal_id, "summary": "",
+		"months_left": 1, "player_vote": Orgs.VOTE_ABSTAIN,
+		"opened_year": state.year, "opened_month": state.month,
+		"sponsor": sponsor,
+	}
+	if sponsor != "" and not state.nations[sponsor].has_budget:
+		var supports := {}
+		for id in Orgs.members(state, ACCORD):
+			if not state.nations[id].has_budget:
+				supports[id] = Orgs.support(state, state.nations[id], p)
+		state.orgs[ACCORD]["pending"]["lobbied"] = Council.lobby(state, loader, sponsor, supports)
+
+
 func _division(loader, proposal_id: String) -> void:
 	var tally := {}
 	var reasons := {}
@@ -199,11 +223,7 @@ func _division(loader, proposal_id: String) -> void:
 		if not state.orgs.has(ACCORD):
 			print("\n%s: no %s register -- content not loaded, skipping" % [proposal_id, ACCORD])
 			return
-		state.orgs[ACCORD]["pending"] = {
-			"proposal_id": proposal_id, "name": proposal_id, "summary": "",
-			"months_left": 1, "player_vote": Orgs.VOTE_ABSTAIN,
-			"opened_year": state.year, "opened_month": state.month,
-		}
+		_open_as_the_machine_does(state, loader, proposal_id)
 		Orgs.cast_vote(state, ACCORD, choice)
 		Orgs.tick_month(state, loader)
 		var lv: Dictionary = Orgs.last_vote(state, ACCORD)

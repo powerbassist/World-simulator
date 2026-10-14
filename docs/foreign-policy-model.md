@@ -210,7 +210,7 @@ Every term but the first is against the member's **own books**, and every one of
 
 The same proposal, priced by each member's own books:
 
-- `cohesion_fund` (+0.28 % of GDP): **every member votes against**, reason `would_pay`.
+- `cohesion_fund` (+0.28 % of GDP): **every member votes against**, reason `would_pay`. *(V4.5b1: now +0.05 % under unanimity, sponsored by POL, with CZE the one veto — see `data/bloc-proposals/union_policy.json`.)*
 - `recovery_facility` (−0.30 % of GDP): **every member votes for**, reason `draws_on_it`.
 
 Under V1.3d's rule those two were indistinguishable if they sat at the same point in ideology space. `stability_pact` now divides the council 5–3, with the members in breach of it voting against.

@@ -1601,8 +1601,9 @@ func _terms(state, kind: String, severity: float) -> Dictionary:
 ## the rule -- so the captured frame shows every section of the panel with real
 ## figures in it. Written straight into the register the way _impose_a_spread()
 ## writes measures, and for the identical reason: this is a dev tool looking at
-## pixels, and going through the council's own eighteen-month schedule would mean
-## capturing frame 540.
+## pixels, and going through the council's own schedule (an opening every
+## PROPOSAL_INTERVAL_MONTHS, then VOTE_DELAY_MONTHS to a division) would mean
+## capturing months into the run.
 func _open_the_council() -> void:
 	var state = _main._state
 	if state == null or state.orgs.is_empty():

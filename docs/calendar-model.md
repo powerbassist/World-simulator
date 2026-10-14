@@ -167,12 +167,15 @@ game:
 | | |
 |---|---|
 | Presidential election | 16 months out |
-| Council's first proposal | 18 months out |
+| Council's first proposal | 18 months out (6 since V4.5b1 — see below) |
 | Legislative and European elections | 41 months out |
 | Cooldowns | none — they do not exist until the player has acted |
-| **Events inside a twelve-month horizon** | **0** |
+| **Events inside a twelve-month horizon** | **0** (U6a) |
 
-So the page every player sees first is exactly the page with nothing on it. The
+So the page every player sees first was exactly the page with nothing on it.
+
+> [!note] Superseded in part by V4.5b1 (2026-10-15)
+> `PROPOSAL_INTERVAL_MONTHS` went from 18 to 6, one proposal per presidency. A new game's council openings now fall six months in, inside the horizon. The elections are still past it, so the "later" footer still carries the dates that matter most. The headline test in `tests/test_calendar_panel.gd` keeps that assertion for this reason. The
 plan pre-committed the response to a thin diary as **content or shape, not a
 constant**, and widening `BOOKING_HORIZON_MONTHS` would have been the constant —
 it also bounds booking, so a horizon long enough to catch a four-year-out
