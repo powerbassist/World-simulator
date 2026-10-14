@@ -1187,6 +1187,29 @@ func _test_an_ai_fiscal_answer_never_touches_the_players_budget() -> void:
 		if float(player.spending_pct_gdp["health"]) != player_health_before:
 			_fail("the player's health spending moved under an AI '%s' answer" % cid)
 
+	# THE PLAYER PATH IS UNCHANGED: the filter is for AI nations only. The same
+	# fiscal choice and the firm choice resolved on the PLAYER's nation land their
+	# authored amounts -- without this leg a filter widened to every nation would
+	# pass every assertion above (the AI legs only ever see "did not move").
+	for choice in ev.choices:
+		var cid_p := String(choice["id"])
+		if cid_p == "spend":
+			continue
+		var pstate = _new_state()
+		var pns = pstate.player()
+		var p_tax_before: float = float(pns.tax_rates_pct["income"])
+		var p_burden_before: float = float(pns.regulation_burden.get("industry", 0.0))
+		var p_other_before: float = float(pns.law_other_revenue_pct_gdp)
+		Events._resolve(pstate, pns, stub, ev, choice, false, {})
+		if cid_p == "tax":
+			if not is_equal_approx(float(pns.tax_rates_pct["income"]), p_tax_before + 1.5):
+				_fail("the PLAYER's '%s' answer did not move the income rate by the authored +1.5 (%.4f -> %.4f) -- the AI filter reached the player path" % [cid_p, p_tax_before, float(pns.tax_rates_pct["income"])])
+		else:
+			if not is_equal_approx(float(pns.regulation_burden.get("industry", 0.0)), p_burden_before + 0.05):
+				_fail("the PLAYER's '%s' answer did not move the industry burden by the authored +0.05 -- the AI filter reached the player path" % cid_p)
+			if not is_equal_approx(float(pns.law_other_revenue_pct_gdp), p_other_before - 0.1):
+				_fail("the PLAYER's '%s' answer did not move the other-revenue line by the authored -0.1" % cid_p)
+
 	# The whole path, not just _resolve: the AI's own delivery picks a choice through
 	# the chooser and resolves in place. Whichever it picks, the player is untouched
 	# and the AI nation's history carries the row.

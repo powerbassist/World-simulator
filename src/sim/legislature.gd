@@ -1058,10 +1058,12 @@ static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 		pending["spending_pct_gdp"] = spending
 	if not pending.is_empty():
 		# The NATION-scoped writer, not Budget.commit(): commit is the player's
-		# command and reads state.player(), and V4.4's chooser applies the other
-		# twenty-eight nations' fiscal answers here -- through commit they would
-		# have rewritten the player's budget with another government's crisis
-		# response.
+		# command and reads state.player(). This stays the safeguard so that no
+		# caller whose ns is not the player's can ever reach commit: V4.4's first
+		# chooser applied the other twenty-eight nations' fiscal answers here and
+		# through commit would have rewritten the player's budget with another
+		# government's crisis response. Since pass 23 AI event answers skip the
+		# fiscal channels (Events._resolve), so today no AI caller arrives here.
 		Budget.apply_pending(ns, pending)
 		Budget.recompute(state, ns)
 

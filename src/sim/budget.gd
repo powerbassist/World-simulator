@@ -338,7 +338,8 @@ static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary, custom
 ## apply_pending below); V4.4's chooser made the first caller whose ns is NOT
 ## state.player() (the other twenty-eight answer their own crises), and routing
 ## that through here rewrote the player's budget with another government's
-## answer.
+## answer. Since pass 23 AI answers skip the fiscal channels, so that caller no
+## longer reaches apply_pending at all.
 static func commit(state, pending: Dictionary) -> void:
 	var ns = state.player()
 	if ns == null:

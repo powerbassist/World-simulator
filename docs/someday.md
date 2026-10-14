@@ -125,8 +125,8 @@ re-derived and the partner effect measured first.
 
 `Unrest.tick_month` skips nations without `has_budget` and `Budget.tick_month`
 recomputes only the player, so for the AI nations `unrest_pct` stays at its start
-value (0.0) and `deficit_pct_gdp` moves only when an event's own fiscal effect
-recomputes it. Consequences for the events machine: the chooser's unrest term
+value (0.0) and `deficit_pct_gdp` stays at its authored start (AI event answers skip
+the fiscal channels since pass 23, so nothing recomputes it either). Consequences for the events machine: the chooser's unrest term
 (`CHOOSER_UNREST_FLOOR`) cannot fire for them, unrest-gated events never open for
 them, and deficit-gated ones read starting data — so an AI nation's event frequency
 and choices are set by its authored start rather than by anything it did. The

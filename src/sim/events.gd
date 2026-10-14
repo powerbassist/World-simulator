@@ -690,8 +690,9 @@ static func answer(state, loader, event_id: String, choice_id: String) -> Dictio
 ##
 ## THE BOUND, stated where the chooser is described: _choose runs only for AI
 ## nations, and an AI nation's unrest_pct never ticks (Unrest.tick_month skips a
-## nation without has_budget) while its deficit_pct_gdp moves only when an event's own
-## fiscal effect recomputes it. So the unrest term is reachable only by a nation whose
+## nation without has_budget) and its deficit_pct_gdp stays at its authored start (AI
+## answers skip the fiscal channels since pass 23, so no event answer recomputes it
+## either). So the unrest term is reachable only by a nation whose
 ## unrest ticks -- for today's AI nations it reads its start value -- and the fiscal
 ## term reads starting data. The trade-off above is a property of a budgeted nation
 ## the day AI nations get a budget tick, with no edit here. See docs/someday.md, "The
