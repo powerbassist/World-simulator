@@ -102,3 +102,60 @@ static func swing(pending: Dictionary, nation_id: String) -> float:
 ## cannot be done two ways.
 static func spend_relations(state, a: String, b: String, amount: float) -> void:
 	RK.adjust(state, a, b, -amount, DK.RELATIONS_MIN, DK.RELATIONS_MAX)
+
+
+## The sponsor works the room at the opening. Every member short of the vote
+## threshold by no more than drive x LOBBY_SWING_PER_DRIVE is swung by EXACTLY
+## its gap (plus a rounding margin) and the sponsor pays for each in its own
+## relations with that member. Over-reach is refused rather than half-paid: a
+## swing that cannot turn the member buys nothing, and a sponsor that spent on
+## it would be pricing a gesture. Members in id order, so who is lobbied first
+## never depends on dictionary order.
+##
+## `supports` is each AI member's appraisal of the proposal, computed by
+## orgs.gd (which owns the appraisal); a human sponsor returns {} -- the player
+## bargains by hand through bargain().
+static func lobby(state, loader, sponsor_id: String, supports: Dictionary) -> Dictionary:
+	var out := {}
+	if sponsor_id == "":
+		return out
+	var sponsor = state.nations.get(sponsor_id, null)
+	if sponsor == null or sponsor.has_budget:
+		return out
+	var cap: float = drive(state, loader, sponsor_id) * CouncilK.LOBBY_SWING_PER_DRIVE
+	var ids: Array = supports.keys()
+	ids.sort()
+	for id in ids:
+		if String(id) == sponsor_id:
+			continue
+		var gap: float = K.SUPPORT_THRESHOLD - float(supports[id])
+		if gap <= 0.0:
+			continue
+		var amount: float = gap + CouncilK.LOBBY_MARGIN
+		if amount > cap:
+			continue
+		spend_relations(state, sponsor_id, String(id), amount * CouncilK.LOBBY_RELATIONS_PER_SWING)
+		out[String(id)] = amount
+	return out
+
+
+## The sponsor answers each human member's vote at the division: thanks for a
+## for, resentment for an against, nothing for an abstention -- sitting out is
+## the cheap way to disappoint, which is what makes it a choice.
+static func answer_sponsor(state, loader, sponsor_id: String, by_nation: Dictionary) -> void:
+	if sponsor_id == "":
+		return
+	var d: float = drive(state, loader, sponsor_id)
+	var ids: Array = by_nation.keys()
+	ids.sort()
+	for id in ids:
+		if String(id) == sponsor_id:
+			continue
+		var ns = state.nations.get(String(id), null)
+		if ns == null or not ns.has_budget:
+			continue
+		var vote := String(by_nation[id])
+		if vote == CouncilK.ASK_FOR:
+			spend_relations(state, String(id), sponsor_id, -CouncilK.SPONSOR_THANKS * d)
+		elif vote == CouncilK.ASK_AGAINST:
+			spend_relations(state, String(id), sponsor_id, CouncilK.SPONSOR_SNUB * d)

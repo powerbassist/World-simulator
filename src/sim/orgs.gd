@@ -381,6 +381,17 @@ static func _tick_council(state, loader, org_id: String) -> void:
 		"opened_month": state.month,
 		"sponsor": sponsor,
 	}
+	# V4.5a. An AI sponsor lobbies at the opening, against this month's books --
+	# the books the members will vote on are three months later, so a lobbied
+	# member can still slip, which is honest. Only computed when there is a
+	# sponsor: the appraisal walk is not free and an unsponsored opening must
+	# stay exactly V4.4's.
+	if sponsor != "" and not state.nations[sponsor].has_budget:
+		var supports := {}
+		for id in members(state, org_id):
+			if not state.nations[id].has_budget:
+				supports[id] = support(state, state.nations[id], proposal)
+		register["pending"]["lobbied"] = Council.lobby(state, loader, sponsor, supports)
 	register["months_to_next"] = K.PROPOSAL_INTERVAL_MONTHS
 
 
@@ -501,6 +512,15 @@ static func _resolve(state, loader, org_id: String) -> void:
 		# for exactly this class of reason.
 		if id != state.player_nation_id:
 			reasons[id] = vote_reason(state, state.nations[id], proposal)
+			# V4.5a. Name the deal only when the deal decided it: a reason that
+			# names a swing the vote would have gone the same way without is the
+			# refutation-as-explanation failure FP.vote_reason() records.
+			var sw: float = Council.swing(pending, id)
+			if sw != 0.0:
+				var bare: float = support(state, state.nations[id], proposal)
+				if (bare >= K.SUPPORT_THRESHOLD) != (bare + sw >= K.SUPPORT_THRESHOLD):
+					var bargained: bool = ((pending.get("bargains", {}) as Dictionary).has(id))
+					reasons[id] = CouncilK.REASON_BARGAINED if bargained else CouncilK.REASON_LOBBIED
 		if choice == VOTE_FOR:
 			seats_for += seats
 		elif choice == VOTE_AGAINST:
@@ -552,6 +572,8 @@ static func _resolve(state, loader, org_id: String) -> void:
 		"month": state.month,
 	}
 	register["pending"] = {}
+	# V4.5a. The sponsor answers the human members' votes whichever way it went.
+	Council.answer_sponsor(state, loader, String(pending.get("sponsor", "")), by_nation)
 
 	if passed:
 		_adopt(state, loader, org_id, proposal)
@@ -629,7 +651,10 @@ static func _apply_external_measure(state, loader, org_id: String, proposal) -> 
 static func _vote_of(state, nation_id: String, proposal, pending: Dictionary) -> String:
 	if nation_id == state.player_nation_id:
 		return String(pending.get("player_vote", VOTE_ABSTAIN))
-	return VOTE_FOR if support(state, state.nations[nation_id], proposal) >= K.SUPPORT_THRESHOLD else VOTE_AGAINST
+	# V4.5a: plus what was lobbied and bargained -- exactly 0.0 when neither
+	# happened, which keeps every unplayed division V4.4's.
+	var s: float = support(state, state.nations[nation_id], proposal) + Council.swing(pending, nation_id)
+	return VOTE_FOR if s >= K.SUPPORT_THRESHOLD else VOTE_AGAINST
 
 
 ## How much a member's government wants a proposal adopted.

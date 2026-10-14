@@ -49,6 +49,9 @@ func _init() -> void:
 	_check_tabling_costs_the_chair()
 	_check_one_no_vetoes_a_treaty()
 	_check_abstention_does_not_veto()
+	_check_a_sponsor_lobbies_the_near_miss()
+	_check_no_sponsor_lobbies_nobody()
+	_check_the_sponsor_minds_the_vote()
 	_finish()
 
 
@@ -346,8 +349,8 @@ func _check_tabling_costs_the_chair() -> void:
 # --- Part 4: unanimity -------------------------------------------------------------
 
 ## test_orgs.gd's _force_vote, with `decision` set on the proposal for the call.
-## `all_for` swings every AI member to FOR (a lobbied 1.0 each) so a unanimity
-## check never depends on whether all 26 others happen to back the fixture at
+## `all_for` swings every AI member to FOR (a lobbied 1.0 each, which _vote_of
+## adds through Council.swing) so a unanimity check never depends on whether all 26 others happen to back the fixture at
 ## EU-27 -- bloc-model's "carried by every member" was measured at nine.
 func _force(state, proposal_id: String, choice: String, decision := "", all_for := false) -> bool:
 	var proposal = Orgs.proposal_by_id(_loader, EU_ORG, proposal_id)
@@ -391,3 +394,71 @@ func _check_abstention_does_not_veto() -> void:
 	var una = _fresh()
 	_ok(_force(una, "recovery_facility", Orgs.VOTE_ABSTAIN, CouncilK.DECISION_UNANIMITY, true),
 		"an abstention blocked a unanimity proposal every other member backs -- constructive abstention is gone")
+
+
+# --- Part 5: sponsors --------------------------------------------------------------
+
+func _check_a_sponsor_lobbies_the_near_miss() -> void:
+	var state = _fresh()
+	# Build supports for every AI member, then pick one we can place in reach by
+	# construction: the lobby turns members short by <= drive * LOBBY_SWING_PER_DRIVE.
+	var supports := {"ITA": K.SUPPORT_THRESHOLD - 0.05, "ESP": K.SUPPORT_THRESHOLD - 0.90, "NLD": K.SUPPORT_THRESHOLD + 0.30}
+	var before_ita: float = RK.score(state, "DEU", "ITA")
+	var lobbied: Dictionary = Council.lobby(state, _loader, "DEU", supports)
+	var cap: float = Council.drive(state, _loader, "DEU") * CouncilK.LOBBY_SWING_PER_DRIVE
+	if cap < 0.05 + CouncilK.LOBBY_MARGIN:
+		_fail("DEU's drive %.2f cannot close a 0.05 gap -- pick a fixture inside its reach" % Council.drive(state, _loader, "DEU"))
+		return
+	_ok(lobbied.has("ITA"), "the sponsor did not lobby a member 0.05 short")
+	_ok(not lobbied.has("ESP"), "the sponsor lobbied a member far out of reach")
+	_ok(not lobbied.has("NLD"), "the sponsor lobbied a member already for it")
+	var swing_ita: float = float(lobbied.get("ITA", 0.0))
+	_ok(supports["ITA"] + swing_ita >= K.SUPPORT_THRESHOLD, "the lobby's swing did not turn ITA")
+	_ok(is_equal_approx(before_ita - RK.score(state, "DEU", "ITA"), swing_ita * CouncilK.LOBBY_RELATIONS_PER_SWING),
+		"lobbying ITA cost DEU %.3f relations, expected %.3f" % [before_ita - RK.score(state, "DEU", "ITA"), swing_ita * CouncilK.LOBBY_RELATIONS_PER_SWING])
+	# A human sponsor bargains by hand, never by this automatic path.
+	_ok(Council.lobby(state, _loader, PLAYER, supports).is_empty(), "the player's nation lobbied automatically")
+
+
+func _check_no_sponsor_lobbies_nobody() -> void:
+	var state = _fresh()
+	_tick_until_open(state, EU_ORG)
+	_ok(not (Orgs.pending(state, EU_ORG) as Dictionary).has("lobbied")
+		or ((Orgs.pending(state, EU_ORG) as Dictionary)["lobbied"] as Dictionary).is_empty(),
+		"an unsponsored proposal opened with lobbying")
+
+
+func _check_the_sponsor_minds_the_vote() -> void:
+	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
+	var kept: String = p.sponsor
+	p.sponsor = "DEU"
+	var d: float
+	var backed = _fresh()
+	d = Council.drive(backed, _loader, "DEU")
+	var b0: float = RK.score(backed, PLAYER, "DEU")
+	_force_sponsored(backed, p, Orgs.VOTE_FOR)
+	_ok(is_equal_approx(RK.score(backed, PLAYER, "DEU") - b0, CouncilK.SPONSOR_THANKS * d),
+		"backing DEU's proposal moved FRA-DEU by %.3f, expected +%.3f" % [RK.score(backed, PLAYER, "DEU") - b0, CouncilK.SPONSOR_THANKS * d])
+	var opposed = _fresh()
+	var o0: float = RK.score(opposed, PLAYER, "DEU")
+	_force_sponsored(opposed, p, Orgs.VOTE_AGAINST)
+	_ok(is_equal_approx(o0 - RK.score(opposed, PLAYER, "DEU"), CouncilK.SPONSOR_SNUB * d),
+		"opposing DEU's proposal moved FRA-DEU by %.3f, expected -%.3f" % [RK.score(opposed, PLAYER, "DEU") - o0, CouncilK.SPONSOR_SNUB * d])
+	var abstained = _fresh()
+	var a0: float = RK.score(abstained, PLAYER, "DEU")
+	_force_sponsored(abstained, p, Orgs.VOTE_ABSTAIN)
+	_ok(RK.score(abstained, PLAYER, "DEU") == a0, "abstaining on DEU's proposal moved relations")
+	p.sponsor = kept
+
+
+## Opens `p` with its sponsor recorded, casts, divides. Relations drift is
+## Diplomacy's (not ticked here), so a delta is exactly the sponsor's answer.
+func _force_sponsored(state, p, choice: String) -> void:
+	state.orgs[EU_ORG]["pending"] = {
+		"proposal_id": p.id, "name": p.proposal_name, "summary": p.summary,
+		"months_left": 1, "player_vote": Orgs.VOTE_ABSTAIN,
+		"sponsor": Council.live_sponsor(state, p),
+		"opened_year": state.year, "opened_month": state.month,
+	}
+	Orgs.cast_vote(state, EU_ORG, choice)
+	Orgs.tick_month(state, _loader)
