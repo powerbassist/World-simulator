@@ -1,6 +1,6 @@
 {
   "_source": "authored",
-  "_note": "The proposals that are not about the deficit: two that move money in opposite directions, one that binds a spending line, and the one that makes the bloc act as a single power against the nations outside it. See docs/bloc-model.md. V4.5b sponsors and decision classes, placed by tools/council_probe.gd table T. cohesion_fund and recovery_facility are UNANIMITY: multiannual-budget and own-resources matters are, and the real recovery fund rode the Own Resources Decision through unanimity and national ratification. common_external_tariff stays qualified majority, because trade policy is. Under unanimity cohesion_fund's 0.28 call drew 26 vetoes at every cell of the sweep grid. The transfer term prices every member as a payer, and nobody draws on the fund, so no position could carry it. Under qualified majority it had never opened in a 168-month run either. It now calls 0.05, at (-0.4, 0.0), and its sponsor is PRT, the friends-of-cohesion member. POL, the first choice, vetoed its own proposal: the sponsor is the one member that never lobbies itself. The one veto left is CZE.",
+  "_note": "The proposals that are not about the deficit: two that move money in opposite directions, one that binds a spending line, and the one that makes the bloc act as a single power against the nations outside it. See docs/bloc-model.md. V4.5b sponsors and decision classes, placed by tools/council_probe.gd table T. cohesion_fund and recovery_facility are UNANIMITY: multiannual-budget and own-resources matters are, and the real recovery fund rode the Own Resources Decision through unanimity and national ratification. common_external_tariff stays qualified majority, because trade policy is. Under unanimity cohesion_fund's 0.28 call drew 26 vetoes at every cell of the sweep grid. The transfer term prices every member as a payer, and nobody draws on the fund, so no position could carry it. Under qualified majority it had never opened in a 168-month run either. It now calls 0.05, at (-0.4, 0.0), and its sponsor is PRT, the friends-of-cohesion member. POL, the first choice, vetoed its own proposal: the sponsor is the one member that never lobbies itself. The one veto left is CZE. The seven V4.5b rows were placed by `--sweep`. defence_industry_fund (FRA) sits at (0.0, -0.4), the qualified-majority row inside the abstention window: France for carries it, 454 to 266; France abstaining carries it, 373 to 266; France against blocks it, 373 to 347. Six cells on the grid carry it alone, and that is not a design choice. carbon_border_adjustment, investment_floor, steel_safeguard, migration_solidarity_pact and cap_reform carry alone on EVERY cell, so their positions are flavour only. Each has a lobbying sponsor and costs a member little; the council does not need France for them, and that is the contrast with the window. enlargement_preaccession_fund is sponsored by LTU, not POL. POL vetoed its own proposal, because the transfer term prices every member as a payer and a sponsor never lobbies itself. Under LTU nobody vetoes, and France decides.",
   "proposals": [
     {
       "id": "cohesion_fund",
@@ -43,6 +43,109 @@
         "kind": "tariff",
         "severity": 0.35
       }
+    },
+    {
+      "id": "defence_industry_fund",
+      "org": "eu",
+      "decision": "qmr",
+      "sponsor": "FRA",
+      "name": "Defence Industry Fund",
+      "summary": "A common fund that buys European-made equipment for members' armed forces. The money is the bloc's; the factories it fills are mostly in the members that proposed it.",
+      "position": {
+        "economic": 0.0,
+        "social": -0.4
+      },
+      "transfer_pct_gdp": 0.06
+    },
+    {
+      "id": "carbon_border_adjustment",
+      "org": "eu",
+      "decision": "qmr",
+      "sponsor": "FRA",
+      "name": "Carbon Border Adjustment",
+      "summary": "Imports from outside the bloc pay at the border the carbon price its own producers already pay at home. Fair to the factories inside, a tariff to everyone outside.",
+      "position": {
+        "economic": -0.4,
+        "social": -0.4
+      },
+      "external_measure": {
+        "kind": "tariff",
+        "severity": 0.15
+      }
+    },
+    {
+      "id": "investment_floor",
+      "org": "eu",
+      "decision": "qmr",
+      "sponsor": "ITA",
+      "name": "Public Investment Floor",
+      "summary": "Every member keeps infrastructure spending at or above 2.5% of GDP. The rule that reads the other way from the deficit rules: it is the cutting that breaches it.",
+      "position": {
+        "economic": -0.4,
+        "social": 0.0
+      },
+      "constraint": {
+        "field": "spending_infrastructure",
+        "op": ">=",
+        "value": 2.5,
+        "tolerance": 2.0,
+        "severity": 0.15
+      }
+    },
+    {
+      "id": "enlargement_preaccession_fund",
+      "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "LTU",
+      "name": "Pre-Accession Fund",
+      "summary": "Money to bring the candidate states up to the bloc's standards before they join. Paid now by the members, for a council that will be larger and harder to move later.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.0
+      },
+      "transfer_pct_gdp": 0.05
+    },
+    {
+      "id": "steel_safeguard",
+      "org": "eu",
+      "decision": "qmr",
+      "sponsor": "ITA",
+      "name": "Steel Safeguard",
+      "summary": "A quota-and-tariff wall around the bloc's steel market against cheap imports. The mills are saved; every member that builds anything out of steel pays for it.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.4
+      },
+      "external_measure": {
+        "kind": "tariff",
+        "severity": 0.2
+      }
+    },
+    {
+      "id": "migration_solidarity_pact",
+      "org": "eu",
+      "decision": "qmr",
+      "sponsor": "GRC",
+      "name": "Migration Solidarity Pact",
+      "summary": "Every member either takes a share of the arrivals at the bloc's southern edge or pays into a fund that houses them. The frontline members get the money; the others get to choose which kind of help they give.",
+      "position": {
+        "economic": -0.4,
+        "social": -0.4
+      },
+      "transfer_pct_gdp": 0.03
+    },
+    {
+      "id": "cap_reform",
+      "org": "eu",
+      "decision": "qmr",
+      "sponsor": "NLD",
+      "name": "Farm Policy Reform",
+      "summary": "The common farm budget is cut back and the savings returned to members' own budgets. Lighter calls for every treasury, and a hard year for every member whose farmers vote.",
+      "position": {
+        "economic": 0.4,
+        "social": 0.0
+      },
+      "transfer_pct_gdp": -0.05
     }
   ]
 }

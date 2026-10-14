@@ -973,6 +973,11 @@ func _check_the_chair_picks_inside_its_window() -> void:
 					break
 		Orgs.tick_month(state, _loader)
 		var id := String(Orgs.pending(state, EU_ORG).get("proposal_id", ""))
+		# V4.5b's book is long enough that a full cycle of adoptions exhausts
+		# it: once nothing is eligible the window is empty and nothing may open.
+		if window.is_empty():
+			_ok(id == "", "opening %d chose '%s' with nothing eligible" % [i, id])
+			break
 		_ok(window.has(id), "opening %d chose '%s' outside its window %s" % [i, id, window])
 		seen[id] = true
 		state.orgs[EU_ORG]["pending"]["months_left"] = 1

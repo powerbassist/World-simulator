@@ -1,6 +1,6 @@
 {
   "_source": "authored",
-  "_note": "Bloc proposals, V1.3d. Shaped after the real Stability and Growth Pact and the Excessive Deficit Procedure, but the numbers are game numbers set by tools/bloc_probe.gd and not by the Treaties -- see docs/bloc-model.md. File order is the council's agenda: src/sim/bloc.gd rotates an index over the loaded list, so a proposal added here changes what comes up and when. V3.3 re-measured the council over 27 members: the authored positions produced unanimous or near-unanimous divisions in which no member's abstention could matter, so debt_reduction_rule's position was re-set by tools/ (the tally probe) to land the division inside the player's pivotal band -- 385 for of 639 cast against a 351.45 threshold, so France's 81 seats decide it whichever way they vote. V4.5b gave each row a sponsor and a decision class, and placed both by tools/council_probe.gd's table T rather than by feel. stability_pact (DEU, the 1997 pact's champion) and debt_reduction_rule (NLD, the frugal file) stay qualified majority. minimum_corporate_rate is UNANIMITY, because EU tax law is (Art. 115 TFEU), and its floor moved from 18 to 15: 15 percent is the real Pillar Two floor (Council Directive (EU) 2022/2523, adopted by unanimity after a holdout). The move was forced by measurement as well. At 18 the four low-rate members (BGR, CYP, HUN, IRL) vetoed at every position on the sweep grid and under every sponsor, which is a treaty nobody could ever carry. At 15 two vetoes remain, BGR and HUN, the fight the real directive had. The sponsor is DEU, not FRA: France is the player, a player-sponsored row gets no AI lobbying, and with France as sponsor CYP and IRL stay against.",
+  "_note": "Bloc proposals, V1.3d. Shaped after the real Stability and Growth Pact and the Excessive Deficit Procedure, but the numbers are game numbers set by tools/bloc_probe.gd and not by the Treaties -- see docs/bloc-model.md. File order is the council's agenda: src/sim/bloc.gd rotates an index over the loaded list, so a proposal added here changes what comes up and when. V3.3 re-measured the council over 27 members: the authored positions produced unanimous or near-unanimous divisions in which no member's abstention could matter, so debt_reduction_rule's position was re-set by tools/ (the tally probe) to land the division inside the player's pivotal band -- 385 for of 639 cast against a 351.45 threshold, so France's 81 seats decide it whichever way they vote. V4.5b gave each row a sponsor and a decision class, and placed both by tools/council_probe.gd's table T rather than by feel. stability_pact (DEU, the 1997 pact's champion) and debt_reduction_rule (NLD, the frugal file) stay qualified majority. minimum_corporate_rate is UNANIMITY, because EU tax law is (Art. 115 TFEU), and its floor moved from 18 to 15: 15 percent is the real Pillar Two floor (Council Directive (EU) 2022/2523, adopted by unanimity after a holdout). The move was forced by measurement as well. At 18 the four low-rate members (BGR, CYP, HUN, IRL) vetoed at every position on the sweep grid and under every sponsor, which is a treaty nobody could ever carry. At 15 two vetoes remain, BGR and HUN, the fight the real directive had. The sponsor is DEU, not FRA: France is the player, a player-sponsored row gets no AI lobbying, and with France as sponsor CYP and IRL stay against. The seven V4.5b rows were each placed by `--sweep`. Unanimity rows sit at the cell with the fewest vetoes, never more than three. The order alternates rule and money, so the rotation never runs three fiscal rules in a row. own_resource_digital (FRA) calls 0.04, not the provisional 0.05: at 0.05 four members vetoed even at the best cell, and at 0.04 three do (CZE, POL, ROU). corporate_rate_high_floor runs at severity 0.10 and tolerance 10, with DEU as sponsor rather than FRA. Under France it drew at least six vetoes on every cell, because France does not lobby. Under DEU three remain: BGR, CYP, HUN. fiscal_compact_strict keeps the treaty's 60 percent but reads it over a tolerance of 100, at severity 0.15. At tolerance 60 seven or eight members vetoed on every cell. DEU sponsors it, the real compact's champion, because AUT, the first choice, is above 60 itself and vetoed its own proposal. GRC and ITA veto it now, the two members furthest over. vat_floor and joint_borrowing_facility carry with France's vote and fail without it. eurozone_fiscal_capacity calls 0.08 and draws three vetoes (CZE, POL, ROU), the members outside the euro. expenditure_ceiling carries on every cell of the grid: it binds nobody today.",
   "proposals": [
     {
       "id": "stability_pact",
@@ -57,6 +57,121 @@
         "value": 15.0,
         "tolerance": 8.0,
         "severity": 0.19
+      }
+    },
+    {
+      "id": "own_resource_digital",
+      "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "FRA",
+      "name": "Digital Levy Own Resource",
+      "summary": "A levy on the largest digital platforms' turnover, paid into the common budget rather than any member's. The bloc gains a revenue line of its own; every treasury that hosts a platform's European office loses the argument it used to win.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.0
+      },
+      "transfer_pct_gdp": 0.04
+    },
+    {
+      "id": "vat_floor",
+      "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "DEU",
+      "name": "VAT Rate Floor",
+      "summary": "A standard VAT rate of at least 15% in every member. Every member is above it today; the floor exists so that nobody races down to it tomorrow.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.0
+      },
+      "constraint": {
+        "field": "tax_vat",
+        "op": ">=",
+        "value": 15.0,
+        "tolerance": 5.0,
+        "severity": 0.12
+      }
+    },
+    {
+      "id": "joint_borrowing_facility",
+      "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "ITA",
+      "name": "Joint Borrowing Facility",
+      "summary": "The bloc borrows again on its own name and lends the proceeds on to members at its own rate. The cheap money arrives now; the question of who stands behind it is left for a later council.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.0
+      },
+      "transfer_pct_gdp": -0.1
+    },
+    {
+      "id": "corporate_rate_high_floor",
+      "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "DEU",
+      "name": "Corporate Rate Convergence",
+      "summary": "A second, higher floor under corporation tax: 21%, closer to the large members' own rates than to the small ones'. The tax competition the first floor narrowed, this one would end.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.0
+      },
+      "constraint": {
+        "field": "tax_corporate",
+        "op": ">=",
+        "value": 21.0,
+        "tolerance": 10.0,
+        "severity": 0.1
+      }
+    },
+    {
+      "id": "eurozone_fiscal_capacity",
+      "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "ESP",
+      "name": "Common Fiscal Capacity",
+      "summary": "A standing budget line that pays out when a member's economy turns down, funded by a call on all of them. Insurance for the members who expect to claim on it, a bill for the ones who do not.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.0
+      },
+      "transfer_pct_gdp": 0.08
+    },
+    {
+      "id": "expenditure_ceiling",
+      "org": "eu",
+      "decision": "qmr",
+      "sponsor": "NLD",
+      "name": "Expenditure Ceiling",
+      "summary": "Total public spending held under 50% of GDP. The ceiling does not touch what a government spends on; it touches how much, which is the argument the frugal members have always wanted to have.",
+      "position": {
+        "economic": 0.4,
+        "social": 0.0
+      },
+      "constraint": {
+        "field": "total_spending_pct_gdp",
+        "op": "<=",
+        "value": 50.0,
+        "tolerance": 8.0,
+        "severity": 0.18
+      }
+    },
+    {
+      "id": "fiscal_compact_strict",
+      "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "DEU",
+      "name": "Strict Fiscal Compact",
+      "summary": "Public debt under 60% of GDP, the treaty number, read as a commitment rather than an aspiration. Most of the council is above it, and that is the point of asking.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.0
+      },
+      "constraint": {
+        "field": "debt_to_gdp_pct",
+        "op": "<=",
+        "value": 60.0,
+        "tolerance": 100.0,
+        "severity": 0.15
       }
     }
   ]
