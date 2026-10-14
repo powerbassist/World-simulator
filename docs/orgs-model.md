@@ -317,5 +317,13 @@ and no `sponsor`, and no regime issues a council command, so every new path
 collapses to V4.4's (swing +0.0, aid line +0.0, empty registers skipped). One
 moved line outside the per-machine `listening on 127.0.0.1` noise is a DEFECT.
 
+**HELD, 2026-10-14:** 1690 of 1690 printed lines identical across all fifty
+regimes (50 `invariants: OK` blocks each side), and identical UNFILTERED -- not
+even the autoload noise line differed. Suite 105/105 green (7:40) on the same
+tree. Two bounds the machine records rather than models: the AI members of a
+unanimity proposal are taken to have ratified (no AI assembly runs), and a
+treaty needing a constitutional revision first (France's Art. 54) is not
+modelled -- every treaty bill is an ordinary `simple`-majority act.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]
