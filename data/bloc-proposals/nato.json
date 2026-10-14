@@ -1,15 +1,16 @@
 {
   "_source": "authored",
-  "_note": "The 2 percent defence floor, MOVED at V3.2 from data/bloc-proposals/union_policy.json where V1.3d authored it as an EU proposal. Every term of it -- id, name, summary, position, constraint -- is unchanged; only the org it reaches changed, and with it the council that votes: eight members including GBR and excluding AUT and CHE, on the alliance's own roster. The floor it constrains is spending_defence, the tolerance and severity are the V1.3d numbers, and the eu's severity table now sums to 0.78 against BURDEN_MAX 1.0 -- the exact-sum property that table carried was a consequence of authoring four rules to fill the ceiling, and the move changes the authored set.",
+  "_note": "The 2 percent defence floor, MOVED at V3.2 from data/bloc-proposals/union_policy.json where V1.3d authored it as an EU proposal. Every term of it -- id, name, summary, position, constraint -- is unchanged; only the org it reaches changed, and with it the council that votes: eight members including GBR and excluding AUT and CHE, on the alliance's own roster. The floor it constrains is spending_defence, the tolerance and severity are the V1.3d numbers, and the eu's severity table now sums to 0.78 against BURDEN_MAX 1.0 -- the exact-sum property that table carried was a consequence of authoring four rules to fill the ceiling, and the move changes the authored set. V4.5b: NATO decides by consensus (data/orgs/nato.json), so this floor is a unanimity question sponsored by POL, the eastern flank's ask. At the V3.2 position (0.55, 0.8) four members below 2 percent (ESP, GBR, NLD, SVN) vetoed. The sweep moved it to (0.4, 0.0), where POL's lobbying carries the room and France's own vote decides it.",
   "proposals": [
     {
       "id": "common_defence_floor",
       "org": "nato",
+      "sponsor": "POL",
       "name": "Common Defence Commitment",
       "summary": "Every member undertakes to hold defence spending at or above 2% of GDP. The commitment is political; the embarrassment of missing it is not.",
       "position": {
-        "economic": 0.55,
-        "social": 0.8
+        "economic": 0.4,
+        "social": 0.0
       },
       "constraint": {
         "field": "spending_defence",

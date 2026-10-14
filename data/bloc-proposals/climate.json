@@ -1,15 +1,17 @@
 {
   "_source": "authored",
-  "_note": "The climate accord's agenda, V3.5. File order is the council's: the ceiling first, the fund second. The ceiling's VALUE is derived, not authored -- the EU-27 population-weighted mean of the nations' measured co2e_per_capita_t at new-game is 5.4687 t, rounded to 0.5 the way CONTRIBUTION_MAX_PCT_GDP was re-derived: 5.5, with 15 of 27 members inside at start, so the division is real before anyone builds anything (tools/climate_probe.gd table (a) recomputes it and prints MATCH or MISMATCH; on a mismatch the probe's number wins). The TOLERANCE was swept, and the sweep's finding is recorded because the next climate session will want it: below about 5 the pivotal band is EMPTY -- every over-ceiling member's cost term (APPRAISE_RULE_WEIGHT 3.0 x severity x breach/tolerance) holds the whole 180-seat high-emitter bloc against the rule at every position on the grid, others-for pins at 203-210, and no authoring of the position can put France's 69 inside the decision. At 6.0 the small-over members (IRL, SVN, AUT -- 0.5 to 0.8 t over) become affordable to their own governments' ideology term and the plateau at 219 opens; the position was placed at the centre of it. Tallies at the shipped numbers (probe table (b)): France for 288/452, abstain 219/383, against 219/452 -- her abstention carries, her opposition blocks, her backing passes. The solidarity clause is authored OUTSIDE that band on purpose: at (-0.3, -0.2) it reads 306 others-for, so the council carries it whichever way France casts (sweep table (s2)) -- a coalition's question, the contrast that makes the ceiling's pivotal band mean something.",
+  "_note": "The climate accord's agenda, V3.5. File order is the council's: the ceiling first, the fund second. The ceiling's VALUE is derived, not authored -- the EU-27 population-weighted mean of the nations' measured co2e_per_capita_t at new-game is 5.4687 t, rounded to 0.5 the way CONTRIBUTION_MAX_PCT_GDP was re-derived: 5.5, with 15 of 27 members inside at start, so the division is real before anyone builds anything (tools/climate_probe.gd table (a) recomputes it and prints MATCH or MISMATCH; on a mismatch the probe's number wins). The TOLERANCE was swept, and the sweep's finding is recorded because the next climate session will want it: below about 5 the pivotal band is EMPTY -- every over-ceiling member's cost term (APPRAISE_RULE_WEIGHT 3.0 x severity x breach/tolerance) holds the whole 180-seat high-emitter bloc against the rule at every position on the grid, others-for pins at 203-210, and no authoring of the position can put France's 69 inside the decision. At 6.0 the small-over members (IRL, SVN, AUT -- 0.5 to 0.8 t over) become affordable to their own governments' ideology term and the plateau at 219 opens; the position was placed at the centre of it. Tallies at the shipped numbers (probe table (b)): France for 288/452, abstain 219/383, against 219/452 -- her abstention carries, her opposition blocks, her backing passes. The solidarity clause is authored OUTSIDE that band on purpose: at (-0.3, -0.2) it reads 306 others-for, so the council carries it whichever way France casts (sweep table (s2)) -- a coalition's question, the contrast that makes the ceiling's pivotal band mean something. V4.5b supersedes the tallies above. Sponsors now lobby at the opening, and with DNK lobbying the ceiling carried at (0, 0) whichever way France voted. The sweep put it at (-0.4, -0.4), the nearest cell where France decides and her abstention still carries: 306 for, 237 abstaining, 237 against, of 452 seats. The solidarity clause (ESP) stays the coalition's question, carried whichever way France votes. Both are qualified majority, the environment formation's rule.",
   "proposals": [
     {
       "id": "emissions_ceiling",
       "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "DNK",
       "name": "Emissions Ceiling",
       "summary": "Members undertake to hold greenhouse-gas emissions under 5.5 tonnes of CO2e per head -- the bloc's own measured average. The line is where the average is, not where the scientists would put it, and the members above it are the reason the council exists.",
       "position": {
-        "economic": 0.0,
-        "social": 0.0
+        "economic": -0.4,
+        "social": -0.4
       },
       "constraint": {
         "field": "co2e_per_capita_t",
@@ -22,6 +24,8 @@
     {
       "id": "climate_solidarity_clause",
       "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "ESP",
       "name": "Climate Solidarity Clause",
       "summary": "A standing call on every member's budget for the transition fund -- four hundredths of a percent of GDP, small enough to pass and real enough to matter. The money follows the same channel the cohesion fund does; the accord simply holds its own tin.",
       "position": {

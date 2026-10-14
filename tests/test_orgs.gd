@@ -29,6 +29,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Org = preload("res://src/core/org.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
+const Council = preload("res://src/sim/council.gd")
 const K = preload("res://src/sim/bloc_constants.gd")
 const OK = preload("res://src/sim/opinion_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
@@ -439,22 +440,26 @@ func _check_the_council_divides_and_binds() -> void:
 		resolved - opened, K.VOTE_DELAY_MONTHS
 	])
 
-	# Outvoted, and bound. recovery_facility carries on the others alone, so a
+	# Outvoted, and bound. debt_reduction_rule carries on the others alone, so a
 	# player voting against it still ends up with it in force -- which is the
 	# "one member among many" half of the done-when, asserted rather than claimed.
+	# V4.5b: recovery_facility was the subject until it became a unanimity
+	# treaty, where France's "against" is a veto; a qualified-majority row has
+	# to carry this assertion.
 	var outvoted = _fresh()
-	var carried := _force_vote(outvoted, "recovery_facility", Orgs.VOTE_AGAINST)
+	var carried := _force_vote(outvoted, "debt_reduction_rule", Orgs.VOTE_AGAINST)
 	if not carried:
-		_fail("recovery_facility did not carry over France's objection -- the player is never outvoted, so the council is a legislature they control")
-	elif not ((outvoted.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility")):
-		_fail("recovery_facility carried but did not enter the register")
+		_fail("debt_reduction_rule did not carry over France's objection -- the player is never outvoted, so the council is a legislature they control")
+	elif not ((outvoted.orgs[EU_ORG]["rules"] as Dictionary).has("debt_reduction_rule")):
+		_fail("debt_reduction_rule carried but did not enter the register")
 
 	# And the other direction: a proposal the council will not have, whatever the
-	# player does. common_defence_floor sits where a defence commitment actually
-	# sits in ideology space, and the other members will not carry it.
+	# player does. minimum_corporate_rate is a unanimity treaty two low-rate
+	# members veto (V4.5b; common_defence_floor held this place until NATO's
+	# consensus rule and its sponsor's lobbying made it France's to decide).
 	var lost = _fresh()
-	if _force_vote(lost, "common_defence_floor", Orgs.VOTE_FOR):
-		_fail("common_defence_floor carried on France's vote -- nothing is out of the player's reach, so they are not one member among many")
+	if _force_vote(lost, "minimum_corporate_rate", Orgs.VOTE_FOR):
+		_fail("minimum_corporate_rate carried on France's vote -- nothing is out of the player's reach, so they are not one member among many")
 
 
 ## Abstention has to be a third option, not a slower way of voting no.
@@ -1082,12 +1087,24 @@ func _force_vote(state, proposal_id: String, choice: String) -> bool:
 		_fail("org '%s' holds no register on this state" % proposal.org_id)
 		return false
 
+	# V4.5b: opened as orgs.gd's _tick_council() opens one -- the live sponsor
+	# rides in the pending entry and lobbies the AI members at once. Every
+	# shipped proposal has a sponsor now, so a bare division is a council the
+	# game never runs, and the pivotal-band assertions below would measure it.
+	var sponsor: String = Council.live_sponsor(state, proposal)
 	state.orgs[proposal.org_id]["pending"] = {
 		"proposal_id": proposal.id, "name": proposal.proposal_name,
 		"summary": proposal.summary, "months_left": 1,
 		"player_vote": Orgs.VOTE_ABSTAIN,
 		"opened_year": state.year, "opened_month": state.month,
+		"sponsor": sponsor,
 	}
+	if sponsor != "" and not state.nations[sponsor].has_budget:
+		var supports := {}
+		for id in Orgs.members(state, proposal.org_id):
+			if not state.nations[id].has_budget:
+				supports[id] = Orgs.support(state, state.nations[id], proposal)
+		state.orgs[proposal.org_id]["pending"]["lobbied"] = Council.lobby(state, _loader, sponsor, supports)
 	if not Orgs.cast_vote(state, proposal.org_id, choice):
 		_fail("cast_vote(%s) was refused" % choice)
 	Orgs.tick_month(state, _loader)

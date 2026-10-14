@@ -1,21 +1,25 @@
 {
   "_source": "authored",
-  "_note": "The proposals that are not about the deficit: two that move money in opposite directions, one that binds a spending line, and the one that makes the bloc act as a single power against the nations outside it. See docs/bloc-model.md.",
+  "_note": "The proposals that are not about the deficit: two that move money in opposite directions, one that binds a spending line, and the one that makes the bloc act as a single power against the nations outside it. See docs/bloc-model.md. V4.5b sponsors and decision classes, placed by tools/council_probe.gd table T. cohesion_fund and recovery_facility are UNANIMITY: multiannual-budget and own-resources matters are, and the real recovery fund rode the Own Resources Decision through unanimity and national ratification. common_external_tariff stays qualified majority, because trade policy is. Under unanimity cohesion_fund's 0.28 call drew 26 vetoes at every cell of the sweep grid. The transfer term prices every member as a payer, and nobody draws on the fund, so no position could carry it. Under qualified majority it had never opened in a 168-month run either. It now calls 0.05, at (-0.4, 0.0), and its sponsor is PRT, the friends-of-cohesion member. POL, the first choice, vetoed its own proposal: the sponsor is the one member that never lobbies itself. The one veto left is CZE.",
   "proposals": [
     {
       "id": "cohesion_fund",
       "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "PRT",
       "name": "Cohesion Fund Expansion",
       "summary": "A larger common fund for the bloc's poorer regions, paid for by a higher call on every member's budget.",
       "position": {
-        "economic": -0.45,
-        "social": -0.15
+        "economic": -0.4,
+        "social": 0.0
       },
-      "transfer_pct_gdp": 0.28
+      "transfer_pct_gdp": 0.05
     },
     {
       "id": "recovery_facility",
       "org": "eu",
+      "decision": "unanimity",
+      "sponsor": "ITA",
       "name": "Recovery and Resilience Facility",
       "summary": "Joint borrowing against the bloc's own credit, disbursed to members as investment grants. Cheaper than borrowing alone, and it is the bloc's balance sheet that carries it.",
       "position": {
@@ -27,6 +31,8 @@
     {
       "id": "common_external_tariff",
       "org": "eu",
+      "decision": "qmr",
+      "sponsor": "FRA",
       "name": "Common External Tariff",
       "summary": "The bloc levies as one on goods entering from outside it. Every member's customs post charges the same rate, and no member sets its own.",
       "position": {

@@ -3,6 +3,7 @@ extends SceneTree
 ## The V4.5b instrument: the contested council, measured.
 ## godot --headless --script res://tools/council_probe.gd
 ## godot --headless --script res://tools/council_probe.gd -- --sweep <proposal_id>
+## godot --headless --script res://tools/council_probe.gd -- --t      (table T only)
 ##
 ## Model: docs/orgs-model.md, "V4.5 -- the council, contested", which declared
 ## the bands BEFORE this file ran. Content is read, never named: every table
@@ -151,6 +152,11 @@ func _init() -> void:
 
 	var t0: int = Time.get_ticks_msec()
 	_table_t()
+	# `--t`: table T alone -- the placement loop re-reads it after every edit,
+	# and the 168-month runs behind C1-C6 are what make a full pass take a minute.
+	if args.has("--t"):
+		quit(0)
+		return
 	# The idle run serves both windows: C1 reads its first term, C3/C6 all of it.
 	# The always run only has a term to measure, so it ends there.
 	var idle: Dictionary = _run_term(false, true, MONTHS, false)
@@ -758,8 +764,10 @@ func _table_s(proposal_id: String) -> bool:
 		printerr("--sweep: no proposal '%s'" % proposal_id)
 		return false
 	print("\n########## S sweep %s (%s, %s) ##########" % [p.id, p.org_id, Council.decision_of(_loader, p)])
-	print("cells: CA carries-alone, PD player-decides, LA lost-anyway; * = abstention-window")
+	print("cells: CA carries-alone, PD player-decides, LA lost-anyway; * = abstention-window;")
+	print("       a unanimity row appends how many members veto with FRA for (gate G3 reads it)")
 	print("authored position: economic %.2f, social %.2f" % [float(p.position.get("economic", 0.0)), float(p.position.get("social", 0.0))])
+	var unanimity: bool = Council.decision_of(_loader, p) == CouncilK.DECISION_UNANIMITY
 	var kept: Dictionary = (p.position as Dictionary).duplicate()
 	var head: String = "%-12s" % "soc \\ eco"
 	for e in SWEEP_AXIS:
@@ -771,7 +779,10 @@ func _table_s(proposal_id: String) -> bool:
 			p.position = {"economic": float(e), "social": float(s)}
 			var t: Dictionary = _tally(p)
 			var code: String = String(VERDICT_CODE[t["verdict"]])
-			line += "%8s" % (code + ("*" if bool(t["abst_window"]) else ""))
+			code += "*" if bool(t["abst_window"]) else ""
+			if unanimity:
+				code += str(((t["for"] as Dictionary).get("vetoed_by", []) as Array).size())
+			line += "%8s" % code
 		print(line)
 	p.position = kept
 	return true
