@@ -557,7 +557,9 @@ static func _resolve(state, loader, org_id: String) -> void:
 		# panel, because the books a member voted on are this month's and the panel
 		# is read later. V1.3c's budget panel showed a tariff collecting nothing
 		# for exactly this class of reason.
-		if id != state.player_nation_id:
+		if id != state.player_nation_id and id == String(pending.get("sponsor", "")):
+			reasons[id] = CouncilK.REASON_SPONSOR
+		elif id != state.player_nation_id:
 			reasons[id] = vote_reason(state, state.nations[id], proposal)
 			# V4.5a. Name the deal only when the deal decided it: a reason that
 			# names a swing the vote would have gone the same way without is the
@@ -723,6 +725,13 @@ static func _apply_external_measure(state, loader, org_id: String, proposal) -> 
 static func _vote_of(state, nation_id: String, proposal, pending: Dictionary) -> String:
 	if nation_id == state.player_nation_id:
 		return String(pending.get("player_vote", VOTE_ABSTAIN))
+	# V4.5b. The sponsor is the nation that WANTS this adopted -- it tabled it and
+	# spent relations lobbying for it -- so it votes for before any appraisal.
+	# Appraised like any member, it was priced as a payer of its own transfer:
+	# V4.5b1 T4's sweeps had five authored sponsors (POL, LTU, LVA, EST, AUT)
+	# veto their own proposals, a sponsor lobbying the room it then outvoted.
+	if nation_id == String(pending.get("sponsor", "")):
+		return VOTE_FOR
 	# V4.5a: plus what was lobbied and bargained -- exactly 0.0 when neither
 	# happened, which keeps every unplayed division V4.4's.
 	var s: float = support(state, state.nations[nation_id], proposal) + Council.swing(pending, nation_id)

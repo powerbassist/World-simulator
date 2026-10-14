@@ -55,6 +55,7 @@ func _init() -> void:
 	_check_a_sponsor_lobbies_the_near_miss()
 	_check_an_opening_lobbies_end_to_end()
 	_check_no_sponsor_lobbies_nobody()
+	_check_a_sponsor_votes_for_its_own()
 	_check_the_sponsor_minds_the_vote()
 	_check_a_favour_turns_a_member()
 	_check_bargains_are_refused_honestly()
@@ -495,6 +496,34 @@ func _check_a_sponsor_lobbies_the_near_miss() -> void:
 		"lobbying ITA cost DEU %.3f relations, expected %.3f" % [before_ita - RK.score(state, "DEU", "ITA"), swing_ita * CouncilK.LOBBY_RELATIONS_PER_SWING])
 	# A human sponsor bargains by hand, never by this automatic path.
 	_ok(Council.lobby(state, _loader, PLAYER, supports).is_empty(), "the player's nation lobbied automatically")
+
+
+## V4.5b. The sponsor votes for what it tabled, whatever its own appraisal says:
+## T4's sweeps found five authored sponsors vetoing their own transfer proposals,
+## because the appraisal prices every member as a payer. Picks a member whose
+## bare appraisal is BELOW the threshold, so the assertion fails if the rule goes.
+func _check_a_sponsor_votes_for_its_own() -> void:
+	var state = _fresh()
+	var subject := ""
+	var sponsor := ""
+	for p in _loader.org_proposals[EU_ORG]:
+		for id in Orgs.members(state, EU_ORG):
+			if id != PLAYER and Orgs.support(state, state.nations[id], p) < K.SUPPORT_THRESHOLD:
+				subject = p.id
+				sponsor = id
+				break
+		if subject != "":
+			break
+	if subject == "":
+		_fail("no eu proposal has a member appraising it below the threshold -- nothing to test the sponsor rule on")
+		return
+	_open(state, subject, sponsor)
+	Orgs.tick_month(state, _loader)
+	var last: Dictionary = Orgs.last_vote(state, EU_ORG)
+	_ok(String((last.get("votes", {}) as Dictionary).get(sponsor, "")) == Orgs.VOTE_FOR,
+		"%s sponsored %s and voted against it" % [sponsor, subject])
+	_ok(String((last.get("reasons", {}) as Dictionary).get(sponsor, "")) == CouncilK.REASON_SPONSOR,
+		"%s's vote on its own %s is not named as the sponsor's (%s)" % [sponsor, subject, (last.get("reasons", {}) as Dictionary).get(sponsor, "")])
 
 
 func _check_no_sponsor_lobbies_nobody() -> void:

@@ -99,11 +99,13 @@ const CURRENCIES := [CURRENCY_FAVOUR, CURRENCY_AID, CURRENCY_VOTE_TRADE]
 const RATIFY_PENDING := "pending"
 const RATIFY_DONE := "ratified"
 
-## The two vote-reason keys this block adds beside foreign_policy.gd's five. Kept
+## The vote-reason keys this block adds beside foreign_policy.gd's five. Kept
 ## here, not in FP.VOTE_REASON_KEYS, because FP's keys name terms of the
-## appraisal and these name what was done TO the appraisal.
+## appraisal and these name what was done TO the appraisal -- or, for the
+## sponsor, why the appraisal was never asked.
 const REASON_LOBBIED := "lobbied"
 const REASON_BARGAINED := "bargained"
+const REASON_SPONSOR := "sponsor"
 
 ## The AI chair's agenda power, bounded (author's call, 2026-10-14): it opens
 ## its most-supported proposal among the next CHAIR_WINDOW eligible ones in
