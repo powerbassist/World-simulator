@@ -16,16 +16,24 @@ extends SceneTree
 ##       opened as the machine opens one (the live sponsor lobbies), then
 ##       divided at once. Verdict: carries-alone (carries with FRA against),
 ##       player-decides (for and against differ), lost-anyway (fails with FRA
-##       for); `+abst` flags an abstention-window (abstain and against differ).
+##       for), inverted (fails with FRA for, carries against -- should be
+##       impossible); `+abst` flags an abstention-window (abstain and against differ).
 ##       Unanimity rows list the vetoing ids when FRA votes for. Footer per org.
 ##   C1  THE PLAYER DECIDES. One 168-month FRA run on the real month, no player
 ##       council command. At each opening, on duplicate_state() copies resolved
 ##       at once, does ANY single bargain (currency x member, asking FRA's
-##       preferred outcome) flip the outcome to it? Band 0.20-0.50.
+##       preferred outcome) flip the outcome to it? Band 0.20-0.50 on the
+##       DISTINCT-proposal share (proposals ever decidable / proposals ever
+##       opened) -- one proposal re-opening every 18 months must not set the
+##       band by repetition. The per-opening share is printed as context.
 ##   C2  SPENDING IS NOT FREE. The idle run (`never`) beside an `always` run that
-##       strikes a favour (else aid) with the first turnable member whenever the
-##       forecast is not FRA's preference. Mean FRA relations with the bargained
-##       members at month 168, and the gap. Band gap >= 5.0.
+##       strikes a bargain only when a counterfactual shows it flips the division
+##       to FRA's preference (favour first, aid fallback, members in id order).
+##       Bargains struck, currency mix, mean cost, and mean FRA relations with
+##       the bargained members at run end (per member and the gap). Band
+##       gap >= 5.0.
+##   Both runs stop where balance_probe.gd stops: FRA out of government. A run
+##   that stopped early marks the C1/C2/C3 (and C6) band lines MISS-INVALID.
 ##   C3  UNANIMITY IS REACHABLE. The idle run's unanimity divisions: carried vs
 ##       vetoed. Band >= 1 carried and >= 1 vetoed.
 ##   C4  RATIFICATION IS A FIGHT. Every unanimity proposal as a treaty bill in
@@ -106,7 +114,10 @@ const C5_PUSH_TOLERANCES := 2.0
 const V_CARRIES := "carries-alone"
 const V_DECIDES := "player-decides"
 const V_LOST := "lost-anyway"
-const VERDICT_CODE := {V_CARRIES: "CA", V_DECIDES: "PD", V_LOST: "LA"}
+## Fails with FRA for yet carries with FRA against -- should be impossible (the
+## tally is monotone in FRA's vote); a row that reads it is a machine finding.
+const V_INVERTED := "inverted"
+const VERDICT_CODE := {V_CARRIES: "CA", V_DECIDES: "PD", V_LOST: "LA", V_INVERTED: "IN"}
 
 var _loader
 
@@ -126,8 +137,7 @@ func _init() -> void:
 			printerr("--sweep needs a proposal id")
 			quit(1)
 			return
-		_table_s(String(args[at + 1]))
-		quit(0)
+		quit(0 if _table_s(String(args[at + 1])) else 1)
 		return
 
 	var t0: int = Time.get_ticks_msec()
@@ -153,8 +163,13 @@ func _fresh():
 	return state
 
 
-func _band(id: String, ok: bool, number: String) -> void:
-	print("BAND %s: %s (%s)" % [id, "PASS" if ok else "MISS", number])
+## `valid` false: the run the band reads stopped early (FRA left government),
+## so the number measures a shorter term than the band was declared over.
+func _band(id: String, ok: bool, number: String, valid := true) -> void:
+	var verdict: String = "PASS" if ok else "MISS"
+	if not valid:
+		verdict = "MISS-INVALID"
+	print("BAND %s: %s (%s)" % [id, verdict, number])
 
 
 ## Whether FRA wants this proposal adopted: its own government's appraisal
@@ -168,6 +183,11 @@ func _prefers_pass(state, p) -> bool:
 ## entry, then the live AI sponsor's lobbying), due to divide on the next tick.
 ## The opening stamp is the state's month; a forced division has no setup
 ## bargain whose stamp it could collide with.
+##
+## HAND-COPIED. src/sim/orgs.gd `_tick_council()` is the source of truth for
+## the pending entry's shape and for the lobbying step. A field added to the
+## pending entry there MUST be mirrored here, or table T and the sweep divide
+## a pending the game never builds -- and nothing fails to say so.
 func _open_as_the_machine_does(state, p) -> void:
 	var org_id: String = p.org_id
 	var sponsor: String = Council.live_sponsor(state, p)
@@ -211,6 +231,8 @@ func _tally(p) -> Dictionary:
 		verdict = V_CARRIES
 	elif pf:
 		verdict = V_DECIDES
+	elif px:
+		verdict = V_INVERTED
 	return {"for": f, "abstain": a, "against": x, "verdict": verdict, "abst_window": pa != px}
 
 
@@ -229,9 +251,9 @@ func _table_t() -> void:
 		var proposals: Array = _loader.org_proposals.get(org_id, [])
 		print("\n-- %s (%d proposals; FRA member: %s) --" % [org_id, proposals.size(),
 			"yes" if probe_state.nations[PLAYER].orgs.has(org_id) else "NO"])
-		print("%-28s %-9s %-11s %-16s %-16s %-16s %-15s %s" % [
+		print("%-28s %-9s %-11s %-16s %-16s %-16s %-21s %s" % [
 			"proposal", "class", "sponsor", "FRA for", "FRA abstain", "FRA against", "verdict", "vetoes(FRA for)"])
-		var counts := {V_CARRIES: 0, V_DECIDES: 0, V_LOST: 0, "abstention-window": 0}
+		var counts := {V_CARRIES: 0, V_DECIDES: 0, V_LOST: 0, V_INVERTED: 0, "abstention-window": 0}
 		for p in proposals:
 			var decision: String = Council.decision_of(_loader, p)
 			var sponsor: String = Council.live_sponsor(probe_state, p)
@@ -247,11 +269,11 @@ func _table_t() -> void:
 				vetoes = ",".join(PackedStringArray((t["for"] as Dictionary).get("vetoed_by", [])))
 				if vetoes == "":
 					vetoes = "none"
-			print("%-28s %-9s %-11s %-16s %-16s %-16s %-15s %s" % [
+			print("%-28s %-9s %-11s %-16s %-16s %-16s %-21s %s" % [
 				p.id, decision, sp, _seats(t["for"]), _seats(t["abstain"]), _seats(t["against"]),
 				String(t["verdict"]) + ("+abst" if bool(t["abst_window"]) else ""), vetoes])
-		print("footer %s: carries-alone %d, player-decides %d, lost-anyway %d, abstention-window %d" % [
-			org_id, counts[V_CARRIES], counts[V_DECIDES], counts[V_LOST], counts["abstention-window"]])
+		print("footer %s: carries-alone %d, player-decides %d, lost-anyway %d, inverted %d, abstention-window %d" % [
+			org_id, counts[V_CARRIES], counts[V_DECIDES], counts[V_LOST], counts[V_INVERTED], counts["abstention-window"]])
 
 
 # --- the 168-month run -------------------------------------------------------------------
@@ -268,7 +290,10 @@ func _run_term(bargain_always: bool, measure_c1: bool) -> Dictionary:
 	var openings: Array = []
 	var c1_rows: Array = []
 	var bargained := {}
+	var strikes: Array = []
 	var opened_ids := {}
+	var months_run := 0
+	var stopped_early := false
 	for org_id in council_ids:
 		opened_ids[org_id] = {}
 
@@ -362,17 +387,32 @@ func _run_term(bargain_always: bool, measure_c1: bool) -> Dictionary:
 			if measure_c1:
 				c1_rows.append(_c1_opening(state, org_id, p))
 			if bargain_always:
-				var struck: String = _strike_if_needed(state, org_id, p)
-				if struck != "":
-					bargained[struck] = true
-				print("  always %d-%02d %-15s %-28s %s" % [year, month, org_id, pid,
-					("bargained " + struck) if struck != "" else "no bargain needed or none turnable"])
+				var strike: Dictionary = _strike_if_deciding(state, org_id, p)
+				if not strike.is_empty():
+					bargained[String(strike["member"])] = true
+					strikes.append(strike)
+				var said: String = "no deciding bargain (forecast is the preference, or none flips it)"
+				if not strike.is_empty():
+					said = "bargained %s(%s), cost %.2f relations" % [strike["member"], strike["currency"], float(strike["cost"])]
+				print("  always %d-%02d %-15s %-28s %s" % [year, month, org_id, pid, said])
+
+		months_run = i + 1
+		# balance_probe.gd's own stop (its _run(), `if not ns.in_government: break`):
+		# a president out of government is not the player the bands are about.
+		if not ns.in_government:
+			stopped_early = i + 1 < MONTHS
+			print("  (out of government from %d-%02d; run stops)" % [year, month])
+			break
 
 	var label: String = "always" if bargain_always else "idle/never"
 	print("## run %s: %d divisions, %d openings, %.1f s" % [label, divisions.size(), openings.size(),
 		float(Time.get_ticks_msec() - t0) / 1000.0])
+	print("## run %s end: in_government %s, has_executive %s, months run %d of %d%s" % [label,
+		str(ns.in_government), str(ns.has_executive), months_run, MONTHS,
+		" -- STOPPED EARLY" if stopped_early else ""])
 	return {"state": state, "divisions": divisions, "openings": openings, "c1": c1_rows,
-		"bargained": bargained, "opened_ids": opened_ids}
+		"bargained": bargained, "strikes": strikes, "opened_ids": opened_ids,
+		"stopped_early": stopped_early, "months_run": months_run}
 
 
 func _days_in_month(m: int, y: int) -> int:
@@ -414,42 +454,35 @@ func _c1_opening(state, org_id: String, p) -> Dictionary:
 	return row
 
 
-## C2's `always` player at one opening: when the forecast is not FRA's
-## preference, a FAVOUR with the first member in id order it turns toward the
-## ask; failing any, AID on the same rule. Returns the member bargained, or "".
-func _strike_if_needed(state, org_id: String, p) -> String:
+## C2's `always` player at one opening. Strikes a bargain ONLY when a
+## counterfactual shows it decides: the forecast (a copy divided now, C1's
+## method) is not FRA's preference, and the same bargain struck on a copy flips
+## that copy to it. Currency outer, member inner: every member in id order is
+## tried with a favour first (the cheapest currency), then every member with
+## aid; the first flipping bargain is struck on the live state. None flips:
+## nothing is struck -- a bargain that changes no outcome is not what C2 prices.
+## Returns {member, currency, cost} or {}.
+func _strike_if_deciding(state, org_id: String, p) -> Dictionary:
 	var want: bool = _prefers_pass(state, p)
 	if _resolve_copy(state.duplicate_state(), org_id) == want:
-		return ""
+		return {}
 	var ask: String = CouncilK.ASK_FOR if want else CouncilK.ASK_AGAINST
-	for pair in [[CouncilK.CURRENCY_FAVOUR, CouncilK.FAVOUR_SWING], [CouncilK.CURRENCY_AID, CouncilK.AID_SWING]]:
-		# A favour below its relations floor is refused, so the favour pass only
-		# considers members it can actually be struck with.
-		var id: String = _first_turnable(state, org_id, p, ask, float(pair[1]),
-			pair[0] == CouncilK.CURRENCY_FAVOUR)
-		if id == "":
-			continue
-		if Council.bargain(state, org_id, id, String(pair[0]), ask):
-			return "%s(%s)" % [id, pair[0]]
-	return ""
-
-
-## The first member (id order, not FRA, not the sponsor) whose vote `swing`
-## turns toward `ask`, reading the appraisal plus what is already lobbied.
-## `favour_floor` also requires the relations a favour needs.
-func _first_turnable(state, org_id: String, p, ask: String, swing: float, favour_floor := false) -> String:
-	var pend: Dictionary = Orgs.pending(state, org_id)
-	for id in Orgs.members(state, org_id):
-		if id == PLAYER or id == String(pend.get("sponsor", "")):
-			continue
-		if favour_floor and RK.score(state, PLAYER, id) < CouncilK.FAVOUR_MIN_RELATIONS:
-			continue
-		var s: float = Orgs.support(state, state.nations[id], p) + Council.swing(pend, id)
-		if ask == CouncilK.ASK_FOR and s < BK.SUPPORT_THRESHOLD and s + swing >= BK.SUPPORT_THRESHOLD:
-			return id
-		if ask == CouncilK.ASK_AGAINST and s >= BK.SUPPORT_THRESHOLD and s - swing < BK.SUPPORT_THRESHOLD:
-			return id
-	return ""
+	for currency in [CouncilK.CURRENCY_FAVOUR, CouncilK.CURRENCY_AID]:
+		for id in Orgs.members(state, org_id):
+			if id == PLAYER:
+				continue
+			var copy = state.duplicate_state()
+			if not Council.bargain(copy, org_id, id, String(currency), ask):
+				continue
+			if _resolve_copy(copy, org_id) != want:
+				continue
+			var before: float = RK.score(state, PLAYER, String(id))
+			if not Council.bargain(state, org_id, String(id), String(currency), ask):
+				push_error("council_probe: a bargain struck on the copy was refused live")
+				return {}
+			return {"member": String(id), "currency": String(currency),
+				"cost": before - RK.score(state, PLAYER, String(id))}
+	return {}
 
 
 # --- C1 .. C6 ---------------------------------------------------------------------------------
@@ -459,45 +492,73 @@ func _table_c1(idle: Dictionary) -> void:
 	print("%-8s %-15s %-28s %-6s %-9s %-10s %s" % ["opened", "org", "proposal", "wants", "forecast", "decidable", "by"])
 	var decidable := 0
 	var rows: Array = idle["c1"]
+	var per := {}
 	for r in rows:
+		var key: String = "%s/%s" % [r["org_id"], r["proposal_id"]]
+		if not per.has(key):
+			per[key] = [0, 0]
+		per[key][0] += 1
 		if bool(r["decidable"]):
 			decidable += 1
+			per[key][1] += 1
 		print("%d-%02d  %-15s %-28s %-6s %-9s %-10s %s" % [int(r["year"]), int(r["month"]), r["org_id"], r["proposal_id"],
 			"pass" if bool(r["want"]) else "fail", "pass" if bool(r["forecast"]) else "fail",
 			"YES" if bool(r["decidable"]) else ("-" if bool(r["want"]) == bool(r["forecast"]) else "no"), r["by"]])
+	print("openings per proposal (opened / decidable):")
+	var keys: Array = per.keys()
+	keys.sort()
+	var ever := 0
+	for key in keys:
+		if int(per[key][1]) > 0:
+			ever += 1
+		print("  %-45s %d / %d" % [key, int(per[key][0]), int(per[key][1])])
 	var n: int = rows.size()
 	var share: float = float(decidable) / float(n) if n > 0 else 0.0
-	print("divisions (FRA's councils) %d, decidable %d, share %.3f" % [n, decidable, share])
-	_band("C1", share >= C1_MIN and share <= C1_MAX, "%.3f" % share)
+	var distinct: float = float(ever) / float(keys.size()) if not keys.is_empty() else 0.0
+	print("per-opening: divisions (FRA's councils) %d, decidable %d, share %.3f (context, not the band)" % [n, decidable, share])
+	print("DISTINCT: proposals ever opened %d, ever decidable %d, share %.3f" % [keys.size(), ever, distinct])
+	# The band reads the DISTINCT share: one proposal re-opening every 18 months
+	# must not set it by repetition.
+	_band("C1", distinct >= C1_MIN and distinct <= C1_MAX, "distinct %.3f" % distinct, not bool(idle["stopped_early"]))
 
 
 func _table_c2(idle: Dictionary, always: Dictionary) -> void:
-	print("\n########## C2 spending is not free (FRA relations with the bargained members, month %d) ##########" % MONTHS)
-	var ids: Array = (always["bargained"] as Dictionary).keys()
-	# The bargained label is "ID(currency)"; the member is the id before "(".
-	var members := {}
-	for label in ids:
-		members[String(label).get_slice("(", 0)] = true
-	var mids: Array = members.keys()
+	print("\n########## C2 spending is not free (FRA relations with the bargained members at run end: never %d, always %d months) ##########" % [int(idle["months_run"]), int(always["months_run"])])
+	var valid: bool = not bool(idle["stopped_early"]) and not bool(always["stopped_early"])
+	var strikes: Array = always["strikes"]
+	var mix := {}
+	var cost := 0.0
+	for st in strikes:
+		mix[st["currency"]] = int(mix.get(st["currency"], 0)) + 1
+		cost += float(st["cost"])
+	var mix_keys: Array = mix.keys()
+	mix_keys.sort()
+	var mix_parts: PackedStringArray = []
+	for k in mix_keys:
+		mix_parts.append("%s %d" % [k, int(mix[k])])
+	var mean_cost: float = cost / float(strikes.size()) if not strikes.is_empty() else 0.0
+	print("bargains struck %d; currency mix: %s; mean relations cost per bargain %.2f" % [strikes.size(),
+		", ".join(mix_parts) if not mix_parts.is_empty() else "-", mean_cost])
+	var mids: Array = (always["bargained"] as Dictionary).keys()
 	mids.sort()
 	if mids.is_empty():
 		print("the always run struck no bargain -- nothing to compare")
-		_band("C2", false, "n/a")
+		_band("C2", false, "n/a", valid)
 		return
 	var sum_never := 0.0
 	var sum_always := 0.0
-	print("%-6s %8s %8s" % ["member", "never", "always"])
+	print("%-6s %8s %8s %8s" % ["member", "never", "always", "gap"])
 	for id in mids:
 		var rn: float = RK.score(idle["state"], PLAYER, String(id))
 		var ra: float = RK.score(always["state"], PLAYER, String(id))
 		sum_never += rn
 		sum_always += ra
-		print("%-6s %8.2f %8.2f" % [id, rn, ra])
+		print("%-6s %8.2f %8.2f %8.2f" % [id, rn, ra, rn - ra])
 	var mean_never: float = sum_never / float(mids.size())
 	var mean_always: float = sum_always / float(mids.size())
 	var gap: float = mean_never - mean_always
 	print("bargained members %d; mean never %.2f, always %.2f, gap %.2f" % [mids.size(), mean_never, mean_always, gap])
-	_band("C2", gap >= C2_MIN_GAP, "%.2f" % gap)
+	_band("C2", gap >= C2_MIN_GAP, "%.2f" % gap, valid)
 
 
 func _table_c3(idle: Dictionary) -> void:
@@ -524,7 +585,7 @@ func _table_c3(idle: Dictionary) -> void:
 	for key in keys:
 		print("  %-40s carried %d, vetoed %d" % [key, per[key][0], per[key][1]])
 	print("unanimity divisions %d: carried %d, vetoed %d" % [carried + vetoed, carried, vetoed])
-	_band("C3", carried >= 1 and vetoed >= 1, "carried %d, vetoed %d" % [carried, vetoed])
+	_band("C3", carried >= 1 and vetoed >= 1, "carried %d, vetoed %d" % [carried, vetoed], not bool(idle["stopped_early"]))
 
 
 func _table_c4() -> void:
@@ -622,7 +683,7 @@ func _write_field(ns, field: String, value: float) -> void:
 
 
 func _table_c6(idle: Dictionary) -> void:
-	print("\n########## C6 agenda reach (idle run: proposals never opened in %d months) ##########" % MONTHS)
+	print("\n########## C6 agenda reach (idle run: proposals never opened in %d of %d months) ##########" % [int(idle["months_run"]), MONTHS])
 	var never := 0
 	var opened_ids: Dictionary = idle["opened_ids"]
 	var ids: Array = opened_ids.keys()
@@ -636,12 +697,13 @@ func _table_c6(idle: Dictionary) -> void:
 		never += missing.size()
 		print("  %-15s opened %d of %d; never: %s" % [org_id, all.size() - missing.size(), all.size(),
 			", ".join(PackedStringArray(missing)) if not missing.is_empty() else "-"])
-	_band("C6", never == 0, "%d never opened" % never)
+	# Also invalid on a stopped run: a shorter term opens fewer proposals.
+	_band("C6", never == 0, "%d never opened" % never, not bool(idle["stopped_early"]))
 
 
 # --- S: the sweep ------------------------------------------------------------------------------
 
-func _table_s(proposal_id: String) -> void:
+func _table_s(proposal_id: String) -> bool:
 	var p = null
 	for org_id in _loader.org_proposals.keys():
 		for q in _loader.org_proposals[org_id]:
@@ -649,7 +711,7 @@ func _table_s(proposal_id: String) -> void:
 				p = q
 	if p == null:
 		printerr("--sweep: no proposal '%s'" % proposal_id)
-		return
+		return false
 	print("\n########## S sweep %s (%s, %s) ##########" % [p.id, p.org_id, Council.decision_of(_loader, p)])
 	print("cells: CA carries-alone, PD player-decides, LA lost-anyway; * = abstention-window")
 	print("authored position: economic %.2f, social %.2f" % [float(p.position.get("economic", 0.0)), float(p.position.get("social", 0.0))])
@@ -667,3 +729,4 @@ func _table_s(proposal_id: String) -> void:
 			line += "%8s" % (code + ("*" if bool(t["abst_window"]) else ""))
 		print(line)
 	p.position = kept
+	return true
