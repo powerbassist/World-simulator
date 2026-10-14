@@ -263,31 +263,27 @@ func _check_new_game_is_exactly_quiet() -> void:
 	_ok(sat["europe"] == 0.0, "the europe issue starts at %.17f, not exactly 0.0" % float(sat["europe"]))
 
 
-## The severities of every org's authored rules must sum to AT MOST BURDEN_MAX,
-## and the eu's to EXACTLY it. Not decoration: V1.3d's probe had them summing to
-## 1.35 against a ceiling of 1.0, so the clamp removed 0.35 of real burden. Per
-## org the same assertion; across orgs the TOTAL clamp can now contact, which is
-## the composition bound recorded in orgs-model.md -- a second rule-carrying org
-## re-opens that measurement.
+## The burden can never pass BURDEN_MAX inside one org: the council admits at
+## most MAX_RULES_IN_FORCE constraint rules at once, so the binding sum is the
+## largest MAX_RULES_IN_FORCE severities of that org's constraint proposals.
+## Required <= BURDEN_MAX for every org (V1.3d's "sum to exactly the ceiling"
+## held while each org had <= 4 constraint proposals; V4.5b1's content broke
+## that shape and this is the rule it was standing in for). The CROSS-org raw
+## total is NOT bounded here -- that is the one clamp, measured by
+## tools/council_probe.gd table C5 and recorded in docs/orgs-model.md.
 func _check_severities_sum_to_the_ceiling() -> void:
-	for org in _loader.orgs:
-		if not org.council:
-			continue
-		var total := 0.0
-		var constraining := 0
-		for p in _loader.org_proposals.get(org.id, []):
-			if p.constraint.is_empty():
-				continue
-			constraining += 1
-			total += float(p.constraint["severity"])
-		_ok(constraining <= K.MAX_RULES_IN_FORCE, "%s: %d proposals carry a constraint but only %d can bind at once" % [
-			org.id, constraining, K.MAX_RULES_IN_FORCE
-		])
-		# The eu's four authored severities summed EXACTLY to the ceiling until
-		# track (b) moved the floor (0.22) to NATO; the eu table now sums 0.78 and
-		# the exact property is a record, not a claim. Every org still respects
-		# the ceiling, which is the part that stops a clamp ever biting.
-		_ok(total <= K.BURDEN_MAX + 1.0e-9, "%s rule severities sum to %.6f, above BURDEN_MAX %.2f" % [org.id, total, K.BURDEN_MAX])
+	for org_id in _loader.org_proposals.keys():
+		var sev: Array = []
+		for p in _loader.org_proposals[org_id]:
+			if not p.constraint.is_empty():
+				sev.append(float(p.constraint["severity"]))
+		sev.sort()
+		sev.reverse()
+		var top := 0.0
+		for i in mini(sev.size(), K.MAX_RULES_IN_FORCE):
+			top += float(sev[i])
+		_ok(top <= K.BURDEN_MAX + 1e-9, "org %s: its %d heaviest constraint severities sum to %.3f, past BURDEN_MAX %.2f" % [
+			org_id, mini(sev.size(), K.MAX_RULES_IN_FORCE), top, K.BURDEN_MAX])
 
 
 ## The burden is the breach, scaled by tolerance and severity, and it is zero for

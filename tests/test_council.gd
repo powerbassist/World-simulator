@@ -224,6 +224,30 @@ func _restore_presidency(kept: Dictionary) -> void:
 	_loader.orgs_by_id[EU_ORG].presidency = kept
 
 
+## Strip the eu's authored presidency for one check; restore with _restore_presidency.
+func _without_presidency() -> Dictionary:
+	var org = _loader.orgs_by_id[EU_ORG]
+	var kept: Dictionary = org.presidency
+	org.presidency = {}
+	return kept
+
+
+## Strip every shipped eu proposal's authored decision and sponsor for one check.
+func _strip_eu_content() -> Array:
+	var kept: Array = []
+	for p in _loader.org_proposals[EU_ORG]:
+		kept.append([p, p.decision, p.sponsor])
+		p.decision = ""
+		p.sponsor = ""
+	return kept
+
+
+func _restore_eu_content(kept: Array) -> void:
+	for row in kept:
+		row[0].decision = row[1]
+		row[0].sponsor = row[2]
+
+
 func _check_chair_is_the_calendar() -> void:
 	var kept := _with_presidency(["ITA", "FRA", "DEU"], 6, 2025, 1)
 	var state = _fresh()
@@ -243,7 +267,9 @@ func _check_chair_is_the_calendar() -> void:
 	state.month = 12
 	_ok(Council.presiding_nation(state, _loader, EU_ORG) == "DEU", "Dec 2024 chair is '%s', expected DEU" % Council.presiding_nation(state, _loader, EU_ORG))
 	_restore_presidency(kept)
+	var none := _without_presidency()
 	_ok(Council.presiding_nation(_fresh(), _loader, EU_ORG) == "", "an org with no presidency has a chair")
+	_restore_presidency(none)
 
 
 func _check_chair_skips_a_leaver() -> void:
@@ -257,6 +283,7 @@ func _check_chair_skips_a_leaver() -> void:
 
 
 func _check_decision_inherits_the_org() -> void:
+	var kc := _strip_eu_content()
 	var p = _loader.org_proposals[EU_ORG][0]
 	var org = _loader.orgs_by_id[EU_ORG]
 	_ok(Council.decision_of(_loader, p) == CouncilK.DECISION_QMR, "a shipped proposal reads a decision other than qmr")
@@ -268,6 +295,7 @@ func _check_decision_inherits_the_org() -> void:
 	_ok(Council.decision_of(_loader, p) == CouncilK.DECISION_QMR, "a proposal's own decision did not override its org's")
 	p.decision = kept_decision
 	org.decision_rule = kept_rule
+	_restore_eu_content(kc)
 
 
 func _check_drive_reads_the_head_of_government() -> void:
@@ -309,6 +337,8 @@ func _tick_until_open(state, org_id: String, limit := K.PROPOSAL_INTERVAL_MONTHS
 
 
 func _check_no_presidency_keeps_the_rotation() -> void:
+	var kc := _strip_eu_content()
+	var kp := _without_presidency()
 	# The inertness clause on the agenda: with no presidency the first proposal
 	# opened is the authored list's first, exactly as V4.4 opened it.
 	var state = _fresh()
@@ -316,9 +346,12 @@ func _check_no_presidency_keeps_the_rotation() -> void:
 	var expected: String = _loader.org_proposals[EU_ORG][0].id
 	_ok(first == expected, "with no presidency the eu opened '%s', expected rotation's '%s'" % [first, expected])
 	_ok(String(Orgs.pending(state, EU_ORG).get("sponsor", "x")) == "", "an unsponsored proposal opened with a sponsor")
+	_restore_eu_content(kc)
+	_restore_presidency(kp)
 
 
 func _check_an_ai_chair_opens_what_it_wants() -> void:
+	var kc := _strip_eu_content()
 	var state = _fresh()
 	# Chair DEU for the whole run (one-member order is a legal rotation).
 	var kept := _with_presidency(["DEU"], 6, 2000, 1)
@@ -340,9 +373,11 @@ func _check_an_ai_chair_opens_what_it_wants() -> void:
 	var opened := _tick_until_open(state, EU_ORG)
 	_ok(opened == best.id, "DEU chair opened '%s', expected its most-supported in-window '%s'" % [opened, best.id])
 	_restore_presidency(kept)
+	_restore_eu_content(kc)
 
 
 func _check_a_human_chair_sets_the_agenda() -> void:
+	var kc := _strip_eu_content()
 	var kept := _with_presidency([PLAYER], 6, 2000, 1)
 	var state = _fresh()
 	var choice: String = _loader.org_proposals[EU_ORG][2].id
@@ -356,9 +391,11 @@ func _check_a_human_chair_sets_the_agenda() -> void:
 	_ok(not Orgs.set_agenda(other, _loader, EU_ORG, choice), "set_agenda accepted while DEU chairs")
 	_ok(not Orgs.set_agenda(other, _loader, "no_such_org", choice), "set_agenda accepted an unknown org")
 	_restore_presidency(kept2)
+	_restore_eu_content(kc)
 
 
 func _check_tabling_costs_the_chair() -> void:
+	var kc := _strip_eu_content()
 	var kept := _with_presidency(["DEU"], 6, 2000, 1)
 	var state = _fresh()
 	var choice: String = _loader.org_proposals[EU_ORG][3].id
@@ -372,8 +409,11 @@ func _check_tabling_costs_the_chair() -> void:
 	_restore_presidency(kept)
 
 	# No chair, nobody to ask.
+	var kp := _without_presidency()
 	var unchaired = _fresh()
 	_ok(not Orgs.table_proposal(unchaired, _loader, EU_ORG, choice), "tabling accepted in a council with no presidency")
+	_restore_presidency(kp)
+	_restore_eu_content(kc)
 
 
 # --- Part 4: unanimity -------------------------------------------------------------
@@ -401,6 +441,7 @@ func _force(state, proposal_id: String, choice: String, decision := "", all_for 
 		"lobbied": lobbied,
 		# A forced division is a LATER opening than any bargain struck in the setup: debts
 		# are keyed by the opening stamp, and the same-month stamp would read as "this division".
+		# month + 1 is a synthetic stamp (it may read 13); only its distinctness from the setup division matters.
 		"opened_year": state.year, "opened_month": state.month + 1,
 	}
 	if not Orgs.cast_vote(state, EU_ORG, choice):
@@ -411,6 +452,7 @@ func _force(state, proposal_id: String, choice: String, decision := "", all_for 
 
 
 func _check_one_no_vetoes_a_treaty() -> void:
+	var kc := _strip_eu_content()
 	# recovery_facility is carried by every member (bloc-model §6): under QMR the
 	# player is outvoted; under unanimity the player's no is a veto.
 	var qmr = _fresh()
@@ -420,12 +462,15 @@ func _check_one_no_vetoes_a_treaty() -> void:
 	var last: Dictionary = Orgs.last_vote(una, EU_ORG)
 	_ok((last.get("vetoed_by", []) as Array) == [PLAYER], "vetoed_by is %s, expected [FRA]" % [last.get("vetoed_by", [])])
 	_ok(String(last.get("decision", "")) == CouncilK.DECISION_UNANIMITY, "last_vote does not record its decision class")
+	_restore_eu_content(kc)
 
 
 func _check_abstention_does_not_veto() -> void:
+	var kc := _strip_eu_content()
 	var una = _fresh()
 	_ok(_force(una, "recovery_facility", Orgs.VOTE_ABSTAIN, CouncilK.DECISION_UNANIMITY, true),
 		"an abstention blocked a unanimity proposal every other member backs -- constructive abstention is gone")
+	_restore_eu_content(kc)
 
 
 # --- Part 5: sponsors --------------------------------------------------------------
@@ -453,14 +498,19 @@ func _check_a_sponsor_lobbies_the_near_miss() -> void:
 
 
 func _check_no_sponsor_lobbies_nobody() -> void:
+	var kc := _strip_eu_content()
+	var kp := _without_presidency()
 	var state = _fresh()
 	_tick_until_open(state, EU_ORG)
 	_ok(not (Orgs.pending(state, EU_ORG) as Dictionary).has("lobbied")
 		or ((Orgs.pending(state, EU_ORG) as Dictionary)["lobbied"] as Dictionary).is_empty(),
 		"an unsponsored proposal opened with lobbying")
+	_restore_eu_content(kc)
+	_restore_presidency(kp)
 
 
 func _check_the_sponsor_minds_the_vote() -> void:
+	var kc := _strip_eu_content()
 	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
 	var kept: String = p.sponsor
 	p.sponsor = "DEU"
@@ -472,6 +522,7 @@ func _check_the_sponsor_minds_the_vote() -> void:
 		# sponsor that answers nothing.
 		_fail("DEU's drive is %.3f -- every sponsor-answer assertion below would be vacuous" % d)
 		p.sponsor = kept
+		_restore_eu_content(kc)
 		return
 	var b0: float = RK.score(backed, PLAYER, "DEU")
 	_force_sponsored(backed, p, Orgs.VOTE_FOR)
@@ -487,6 +538,7 @@ func _check_the_sponsor_minds_the_vote() -> void:
 	_force_sponsored(abstained, p, Orgs.VOTE_ABSTAIN)
 	_ok(RK.score(abstained, PLAYER, "DEU") == a0, "abstaining on DEU's proposal moved relations")
 	p.sponsor = kept
+	_restore_eu_content(kc)
 
 
 ## Opens `p` with its sponsor recorded, casts, divides. Relations drift is
@@ -496,6 +548,7 @@ func _force_sponsored(state, p, choice: String) -> void:
 		"proposal_id": p.id, "name": p.proposal_name, "summary": p.summary,
 		"months_left": 1, "player_vote": Orgs.VOTE_ABSTAIN,
 		"sponsor": Council.live_sponsor(state, p),
+		# month + 1 is a synthetic stamp (it may read 13); only its distinctness from the setup division matters.
 		"opened_year": state.year, "opened_month": state.month + 1,
 	}
 	Orgs.cast_vote(state, EU_ORG, choice)
@@ -581,6 +634,7 @@ func _check_aid_pays_for_a_year() -> void:
 
 
 func _check_a_vote_trade_comes_due() -> void:
+	var kc := _strip_eu_content()
 	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
 	var kept: String = p.sponsor
 	p.sponsor = "ITA"
@@ -614,6 +668,7 @@ func _check_a_vote_trade_comes_due() -> void:
 		Council.tick_register(lapsed, EU_ORG)
 	_ok((lapsed.orgs[EU_ORG]["debts"] as Array).is_empty(), "an IOU outlived IOU_EXPIRY_MONTHS")
 	p.sponsor = kept
+	_restore_eu_content(kc)
 
 
 # --- Part 7: ratification at home ---------------------------------------------------
@@ -623,6 +678,7 @@ func _carry_treaty(state) -> void:
 
 
 func _check_a_treaty_waits_for_home() -> void:
+	var kc := _strip_eu_content()
 	var state = _fresh()
 	_carry_treaty(state)
 	var r: Dictionary = state.orgs[EU_ORG]["ratifying"]
@@ -635,18 +691,22 @@ func _check_a_treaty_waits_for_home() -> void:
 	_force(qmr, "recovery_facility", Orgs.VOTE_FOR)
 	_ok((qmr.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "a qmr proposal went to ratification")
 	_ok((qmr.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "a carried qmr proposal was not adopted")
+	_restore_eu_content(kc)
 
 
 func _check_ratified_is_adopted() -> void:
+	var kc := _strip_eu_content()
 	var state = _fresh()
 	_carry_treaty(state)
 	Orgs.record_ratification(state, _loader, EU_ORG, PLAYER, true)
 	_ok((state.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "a ratified treaty was not adopted")
 	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "ratification did not close")
 	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "ratified", "last_vote does not record the ratification")
+	_restore_eu_content(kc)
 
 
 func _check_rejected_falls_for_all() -> void:
+	var kc := _strip_eu_content()
 	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
 	var kept: String = p.sponsor
 	p.sponsor = "DEU"
@@ -662,9 +722,11 @@ func _check_rejected_falls_for_all() -> void:
 	_ok(is_equal_approx(d0 - RK.score(state, PLAYER, "DEU"), CouncilK.RATIFY_FAIL_SPONSOR * drive), "the sponsor's price for a killed treaty is wrong")
 	_ok(is_equal_approx(i0 - RK.score(state, PLAYER, "ITA"), CouncilK.RATIFY_FAIL_MEMBER), "a bystander's price for a killed treaty is wrong")
 	p.sponsor = kept
+	_restore_eu_content(kc)
 
 
 func _check_the_window_closes() -> void:
+	var kc := _strip_eu_content()
 	var state = _fresh()
 	_carry_treaty(state)
 	var i0: float = RK.score(state, PLAYER, "ITA")
@@ -675,9 +737,11 @@ func _check_the_window_closes() -> void:
 	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "failed", "last_vote does not record the window closing as a failure")
 	_ok(is_equal_approx(i0 - RK.score(state, PLAYER, "ITA"), CouncilK.RATIFY_FAIL_MEMBER),
 		"the late member was priced %.3f by a bystander, expected %.3f" % [i0 - RK.score(state, PLAYER, "ITA"), CouncilK.RATIFY_FAIL_MEMBER])
+	_restore_eu_content(kc)
 
 
 func _check_the_treaty_is_a_bill() -> void:
+	var kc := _strip_eu_content()
 	var state = _fresh()
 	_carry_treaty(state)
 	var forecast: Dictionary = Ratification.forecast(state, _loader, EU_ORG)
@@ -688,12 +752,14 @@ func _check_the_treaty_is_a_bill() -> void:
 		"submit() disagreed with its own forecast with no upper chamber in the way")
 	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "submit() did not settle the ratification")
 	_ok(bool(Ratification.submit(state, _loader, EU_ORG).get("refused", false)), "a second submit with nothing ratifying was not refused")
+	_restore_eu_content(kc)
 
 
 # --- the final-review fix wave ------------------------------------------------------
 
 ## I1. A nation that leaves the club cannot block, or ratify, a treaty of it.
 func _check_a_withdrawal_ends_the_ratification() -> void:
+	var kc := _strip_eu_content()
 	var state = _fresh()
 	_carry_treaty(state)
 	_ok(not (state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "fixture: the carried treaty is not ratifying")
@@ -713,6 +779,7 @@ func _check_a_withdrawal_ends_the_ratification() -> void:
 	Orgs.record_ratification(other, _loader, EU_ORG, PLAYER, true)
 	_ok(not (other.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "a non-member's ratification adopted the treaty")
 	_ok(bool(Ratification.submit(other, _loader, EU_ORG).get("refused", false)), "submit() accepted a non-member")
+	_restore_eu_content(kc)
 
 
 ## I2. The budget panel's breakdown is what the line charged, in every month.
@@ -738,6 +805,7 @@ func _check_the_breakdown_sums_every_month_of_a_package() -> void:
 
 ## I3. The proposal already before the council cannot be chosen or tabled again.
 func _check_the_pending_proposal_cannot_be_chosen() -> void:
+	var kc := _strip_eu_content()
 	var pending_id: String = _loader.org_proposals[EU_ORG][1].id
 	var kept := _with_presidency([PLAYER], 6, 2000, 1)
 	var chaired = _fresh()
@@ -756,11 +824,13 @@ func _check_the_pending_proposal_cannot_be_chosen() -> void:
 	_ok((state.orgs[EU_ORG]["tabled"] as Dictionary).is_empty(), "a refused tabling was queued")
 	_ok(Orgs.table_proposal(state, _loader, EU_ORG, _loader.org_proposals[EU_ORG][2].id), "tabling refused a different proposal while one is pending")
 	_restore_presidency(kept2)
+	_restore_eu_content(kc)
 
 
 ## M1. A choice left over from a presidency that ended must not survive an
 ## opening the tabled path made.
 func _check_a_tabled_opening_clears_a_stale_choice() -> void:
+	var kc := _strip_eu_content()
 	var kept := _with_presidency(["DEU"], 6, 2000, 1)
 	var state = _fresh()
 	var tabled: String = _loader.org_proposals[EU_ORG][3].id
@@ -769,6 +839,7 @@ func _check_a_tabled_opening_clears_a_stale_choice() -> void:
 	_ok(_tick_until_open(state, EU_ORG) == tabled, "fixture: the tabled proposal did not open")
 	_ok(String(state.orgs[EU_ORG]["agenda_choice"]) == "", "a stale agenda choice survived a tabled opening")
 	_restore_presidency(kept)
+	_restore_eu_content(kc)
 
 
 ## M3. A sponsor is not bargained with over its own proposal.
@@ -785,6 +856,7 @@ func _check_a_sponsor_is_not_bargained_with() -> void:
 
 ## M2. The treaty's sponsor charges only if it is still in the club.
 func _check_a_leaving_sponsor_charges_nothing() -> void:
+	var kc := _strip_eu_content()
 	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
 	var kept: String = p.sponsor
 	p.sponsor = "DEU"
@@ -796,11 +868,14 @@ func _check_a_leaving_sponsor_charges_nothing() -> void:
 	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "failed", "fixture: the treaty did not fall")
 	_ok(RK.score(state, PLAYER, "DEU") == d0, "a sponsor that left the club still charged for the killed treaty")
 	p.sponsor = kept
+	_restore_eu_content(kc)
 
 
 ## M7. An AI sponsor works the room at the opening, end to end: lobbied exactly
 ## the members within its reach, and a lobbied member whose vote flipped is named.
 func _check_an_opening_lobbies_end_to_end() -> void:
+	var kc := _strip_eu_content()
+	var kp := _without_presidency()
 	var proposals: Array = _loader.org_proposals[EU_ORG]
 	var probe = _fresh()
 	var reachable_i := -1
@@ -831,12 +906,16 @@ func _check_an_opening_lobbies_end_to_end() -> void:
 				barren_s = s
 	if reachable_i < 0:
 		_fail("no AI sponsor has any eu member within reach on any shipped proposal -- lobbying is decorative on shipped content")
+		_restore_eu_content(kc)
+		_restore_presidency(kp)
 		return
 	var lobbied: Dictionary = _open_sponsored(proposals[reachable_i], reachable_s)
 	_ok(not lobbied.is_empty(), "%s sponsoring '%s' lobbied nobody although a member was within reach" % [reachable_s, proposals[reachable_i].id])
 	if barren_i >= 0:
 		var none: Dictionary = _open_sponsored(proposals[barren_i], barren_s)
 		_ok(none.is_empty(), "%s sponsoring '%s' lobbied although no member was within reach" % [barren_s, proposals[barren_i].id])
+	_restore_eu_content(kc)
+	_restore_presidency(kp)
 
 
 ## Opens `p` through the real scheduler with `sponsor` as its sponsor and the
@@ -871,6 +950,7 @@ func _open_sponsored(p, sponsor: String) -> Dictionary:
 
 
 func _check_the_chair_picks_inside_its_window() -> void:
+	var kc := _strip_eu_content()
 	# A chair may only open one of the next CHAIR_WINDOW eligible proposals in
 	# rotation order, and the rotation advances one step per opening: the
 	# favourite cannot be re-opened every time it chairs.
@@ -901,9 +981,11 @@ func _check_the_chair_picks_inside_its_window() -> void:
 	# re-open its favourite.
 	_ok(seen.size() > 1, "a single chair opened the same proposal %d times running" % all.size())
 	_restore_presidency(kept)
+	_restore_eu_content(kc)
 
 
 func _check_a_treaty_iou_settles_at_home() -> void:
+	var kc := _strip_eu_content()
 	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
 	var kept: String = p.sponsor
 	p.sponsor = "ITA"
@@ -926,6 +1008,7 @@ func _check_a_treaty_iou_settles_at_home() -> void:
 		else:
 			_ok(is_equal_approx(delta, 0.0), "ratifying repaid the IOU but moved relations by %.3f" % delta)
 	p.sponsor = kept
+	_restore_eu_content(kc)
 
 
 func _check_malformed_presidency_types_are_refused() -> void:
