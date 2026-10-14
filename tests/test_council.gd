@@ -34,6 +34,10 @@ func _init() -> void:
 		_fail("data did not load cleanly: %s" % [_loader.errors])
 
 	_check_constants_cohere()
+	_check_org_fields_parse()
+	_check_org_fields_refused()
+	_check_proposal_fields_parse()
+	_check_sponsor_must_be_a_member()
 	_finish()
 
 
@@ -79,3 +83,92 @@ func _check_constants_cohere() -> void:
 	# The currencies are ordered by price: favour < aid < vote trade.
 	_ok(CouncilK.FAVOUR_SWING < CouncilK.AID_SWING and CouncilK.AID_SWING < CouncilK.IOU_SWING,
 		"bargain swings are not ordered favour < aid < vote_trade")
+
+
+# --- Part 1: content fields --------------------------------------------------------
+
+func _org_dict(extra: Dictionary) -> Dictionary:
+	var d := {
+		"id": "probe_org", "name": "Probe Org", "council": true,
+		"members": {"FRA": {"seats": 10}, "DEU": {"seats": 10}, "ITA": {"seats": 10}},
+	}
+	d.merge(extra, true)
+	return d
+
+
+func _check_org_fields_parse() -> void:
+	var errors: Array[String] = []
+	var plain = Org.from_dict(_org_dict({}), "probe.json", errors)
+	_ok(errors.is_empty(), "a plain org refused: %s" % [errors])
+	_ok(plain.decision_rule == CouncilK.DECISION_QMR, "an org with no decision_rule reads '%s', expected qmr" % plain.decision_rule)
+	_ok(plain.presidency.is_empty(), "an org with no presidency carries one")
+
+	errors = []
+	var chaired = Org.from_dict(_org_dict({
+		"decision_rule": "unanimity",
+		"presidency": {"order": ["ITA", "FRA", "DEU"], "months": 6, "anchor": {"year": 2025, "month": 7}},
+	}), "probe.json", errors)
+	_ok(errors.is_empty(), "a chaired org refused: %s" % [errors])
+	_ok(chaired.decision_rule == CouncilK.DECISION_UNANIMITY, "decision_rule did not parse")
+	_ok(int(chaired.presidency.get("months", 0)) == 6, "presidency.months did not parse")
+	_ok(int(chaired.presidency.get("anchor_index", -1)) == 2025 * 12 + 6, "presidency anchor_index is %d, expected %d" % [int(chaired.presidency.get("anchor_index", -1)), 2025 * 12 + 6])
+	_ok((chaired.presidency.get("order", []) as Array) == ["ITA", "FRA", "DEU"], "presidency.order did not keep authored order")
+
+
+func _check_org_fields_refused() -> void:
+	var bad := [
+		{"decision_rule": "consensus"},
+		{"presidency": {"order": [], "months": 6, "anchor": {"year": 2025, "month": 1}}},
+		{"presidency": {"order": ["FRA", "GBR"], "months": 6, "anchor": {"year": 2025, "month": 1}}},
+		{"presidency": {"order": ["FRA", "FRA"], "months": 6, "anchor": {"year": 2025, "month": 1}}},
+		{"presidency": {"order": ["FRA"], "months": 0, "anchor": {"year": 2025, "month": 1}}},
+		{"presidency": {"order": ["FRA"], "months": 25, "anchor": {"year": 2025, "month": 1}}},
+		{"presidency": {"order": ["FRA"], "months": 6, "anchor": {"year": 2025, "month": 13}}},
+	]
+	for extra in bad:
+		var errors: Array[String] = []
+		Org.from_dict(_org_dict(extra), "probe.json", errors)
+		_ok(not errors.is_empty(), "malformed org field accepted silently: %s" % [extra])
+
+
+func _proposal_dict(extra: Dictionary) -> Dictionary:
+	var d := {
+		"id": "probe_p", "org": EU_ORG, "name": "Probe", "summary": "",
+		"position": {"economic": 0.0, "social": 0.0}, "transfer_pct_gdp": 0.05,
+	}
+	d.merge(extra, true)
+	return d
+
+
+func _check_proposal_fields_parse() -> void:
+	var org_ids: Array = _loader.orgs_by_id.keys()
+	var errors: Array[String] = []
+	var plain = BlocProposal.from_dict(_proposal_dict({}), "probe.json", errors, org_ids)
+	_ok(errors.is_empty(), "a plain proposal refused: %s" % [errors])
+	_ok(plain.decision == "" and plain.sponsor == "", "a plain proposal carries a decision or a sponsor")
+
+	errors = []
+	var full = BlocProposal.from_dict(_proposal_dict({"decision": "unanimity", "sponsor": "DEU"}), "probe.json", errors, org_ids)
+	_ok(errors.is_empty(), "a sponsored unanimity proposal refused: %s" % [errors])
+	_ok(full.decision == CouncilK.DECISION_UNANIMITY and full.sponsor == "DEU", "decision/sponsor did not parse")
+
+	errors = []
+	BlocProposal.from_dict(_proposal_dict({"decision": "majority"}), "probe.json", errors, org_ids)
+	_ok(not errors.is_empty(), "an unknown decision class was accepted")
+	errors = []
+	BlocProposal.from_dict(_proposal_dict({"sponsor": 7}), "probe.json", errors, org_ids)
+	_ok(not errors.is_empty(), "a non-string sponsor was accepted")
+
+
+func _check_sponsor_must_be_a_member() -> void:
+	var p = _loader.bloc_proposals[0]
+	var kept: String = p.sponsor
+	var kept_errors: Array[String] = []
+	kept_errors.append_array(_loader.errors)
+	p.sponsor = "GBR"  # outside the eu by the authored register
+	_loader.errors.clear()
+	_loader._validate_bloc_proposals()
+	_ok(not _loader.errors.is_empty(), "a sponsor outside the proposal's org was accepted")
+	p.sponsor = kept
+	_loader.errors.clear()
+	_loader.errors.append_array(kept_errors)
