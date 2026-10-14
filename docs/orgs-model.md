@@ -228,5 +228,84 @@ proposal per player-choice):
   opposition blocks it, her backing passes it. `stability_pact` stays where
   V1.3d put it -- uncarryable by the player is the point of a council.
 
+---
+## V4.5 — the council, contested (clauses declared BEFORE the machine, 2026-10-14)
+
+The deterministic rotation becomes a fight. Plan of record:
+`docs/superpowers/plans/2026-10-14-v4.5a-council-machine.md` (V4.5a, the machine)
+and V4.5b's (content, probe, panel). Module: `src/sim/council.gd`; ratification:
+`src/sim/ratification.gd`; numbers: `src/sim/council_constants.gd`.
+
+**The inertness clause.** Every V4.5 behaviour is gated on content the V4.4
+register does not carry: an org with no `presidency` keeps the rotation, a
+proposal with no `decision` reads its org's `decision_rule` (default `qmr`, the
+V1.3d tally), a proposal with no `sponsor` lobbies nobody, and bargains, tabling
+and ratification need a player command or a unanimity proposal. So V4.5a's
+re-run is predicted BIT-IDENTICAL; one moved line is a defect.
+
+**Decision classes.** `qmr`: the cast-seat share at `PASS_SEAT_FRACTION`,
+unchanged. `unanimity`: carries iff no member votes against and at least one
+votes for — abstention does not block (the real Council's constructive
+abstention, which keeps the player's third vote option alive in the new class).
+Unanimity IS the treaty class: it carries to ratification, QMR binds directly.
+
+**Presidency.** Authored per org: an `order` of member ids, a term in `months`,
+and the `anchor` date order[0]'s term began. The chair is DERIVED from the
+calendar (no state, nothing to save), skipping a nation that has left. An AI
+chair opens the eligible proposal it supports most (ties: authored order); a
+human chair opens the one it chose with `Orgs.set_agenda()`, or the rotation if
+it chose nothing. Any member may TABLE a proposal by paying the chair
+`TABLE_RELATIONS_COST` relations; a tabled proposal opens first, sponsored by
+whoever tabled it.
+
+**Sponsors.** A proposal's authored `sponsor` is a NATION; the sponsor's face is
+that nation's live head of government (`ns.pm_person_id`), and the person's
+authored `ambition` is the sponsor's DRIVE — the one person state that both
+prices the sponsor's lobbying and how much it minds the player's vote (no second
+ambition meter). An AI sponsor lobbies at open: each member short of
+`SUPPORT_THRESHOLD` by no more than `drive × LOBBY_SWING_PER_DRIVE` is swung by
+exactly its gap (+`LOBBY_MARGIN`), paid in the sponsor's relations with it at
+`LOBBY_RELATIONS_PER_SWING` per point. At the division the sponsor thanks a
+human member who backed it (`SPONSOR_THANKS × drive`) and resents one who
+opposed it (`SPONSOR_SNUB × drive`); abstention costs nothing.
+
+**Bargains — three currencies, one per member per division.** The player asks a
+member to vote `for` or `against`, paying in: a FAVOUR (relations with that
+member, `FAVOUR_RELATIONS_COST`, refused below `FAVOUR_MIN_RELATIONS`, swing
+`FAVOUR_SWING`); AID (`AID_PCT_GDP` of the player's GDP on the org's transfer
+line for `AID_MONTHS`, swing `AID_SWING` — money is the price, through the
+budget line orgs.gd already sums); or a VOTE TRADE (an IOU, swing `IOU_SWING`:
+the next division the creditor sponsors, the player owes a `for`; anything else
+costs `IOU_BETRAYAL` relations; unpaid IOUs lapse after `IOU_EXPIRY_MONTHS`).
+A swing enters the member's vote as an additive on its appraisal; the
+division's recorded reason names the bargain only when the bargain flipped it.
+
+**Ratification at home.** A carried unanimity proposal is not adopted: every
+member whose politics the game simulates (`has_budget`) must ratify it within
+`RATIFY_WINDOW_MONTHS`. The ratification is a BILL — `Ratification.treaty_bill()`
+builds a `Law` on the proposal's own position, `majority: simple`, and the
+player's assembly divides it through `Legislature.resolve_vote()` (and the upper
+chamber where it holds an absolute veto); rebels are priced by
+`Discipline.penalise_rebellions()` exactly as for any bill. No second resolver.
+All ratify: the treaty is adopted. One rejects, or the window closes: the treaty
+falls FOR EVERY MEMBER (2005's shape), the sponsor charges the failing member
+`RATIFY_FAIL_SPONSOR × drive` and every other member `RATIFY_FAIL_MEMBER`.
+AI members that voted for it are taken to have ratified — they have no assembly
+the game runs; recorded as a bound, not modelled.
+
+**Bands owed (V4.5b's `tools/council_probe.gd`, declared here, measured there):**
+- C1 the player decides — with bargains available, the share of divisions over
+  a term the player's spending changes the outcome of: band 0.20–0.50 (a council
+  you can never move is decorative; one you always move is a second legislature).
+- C2 spending is not free — a player who bargains every division ends a term with
+  mean relations to the bargained members at least 5 points below one who never
+  bargains.
+- C3 unanimity is reachable — at least one authored unanimity proposal carries
+  on lobbying alone in a 168-month idle run, and at least one does not.
+- C4 ratification is a fight — at a neutral-approval new-game, the FRA assembly's
+  treaty forecast sits inside [40 %, 60 %] yes for at least two authored treaties.
+- C5 the BURDEN_MAX re-measure — raw cross-org burden at total defiance with the
+  V4.5b register, recorded with its number against the V3.5 1.33.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]
