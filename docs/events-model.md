@@ -285,12 +285,12 @@ the ×0.2 proportional rescale lands 12.0/term, dead interior).
 **Hooks are the block's "the game watches you" change**: an event fires BECAUSE a
 law passed (`ns.law_ledger`'s own months list), a repeal landed (the V4.4
 `ns.repealed_at` stamp beside the ledger's silent erase), a private member's bill
-divided (`assembly_division_month`), a minister resigned (`ns.last_resignation`,
+became law (`ns.assembly_bill_passed_month`, written only where the bill comes into force), a minister resigned (`ns.last_resignation`,
 one-month lag — Cabinet ticks after Events), a takeover bid stood or a firm failed
 (two industry stamps on the register the machine already writes), a commodity price
 crossed up through 1.25× base (an EDGE — `Commodities` stamps `ns.commodity_high_month` in the month a good goes from below the line to at or above it, because a level read on a vector that drifts to its clamp within months fired nearly every month and flooded the desk; pass 22), or the Union's
 accession flipped (the `ns.last_accession` stamp inside `_flip_membership` is
-written for every org; `accession_won` fires only when its `org` is `eu`). One vocabulary,
+written for every org; `accession_won` fires only when its `org` is `eu`). **Two vocabulary names have no shipped consumer:** `law_passed` (never had one) and `commodity_price_high` — the two commodity events that rode it, `com_price_high_desk` and `com_industry_bills`, are ordinary HAZARD events in the `commodity` category since pass 23 (median likelihood of the category's other six, 0.0033), because the V4.6 price drift crosses goods one after another in months 1–5 of every new game for all 29 nations and never again, so the edge fired only inside that artefact. The hook stays in the vocabulary and its emitter stays witnessed (test sweep, events_probe E6); re-bind the two events once the drift is fixed (docs/someday.md). One vocabulary,
 closed at `events_constants.ON_ACTIONS`, refused loudly at load; `election_lost` is
 refused WITH ITS REASON (a lost election ends the game — nothing could answer the
 event).
@@ -342,7 +342,15 @@ place in `src/sim/` to read the player id rather than `has_budget`, for the same
 > A minimal situational chooser (`Events._choose`) scores each choice against the
 > nation's own position — size-weighted bloc response, a fiscal term above a
 > deficit floor, a corruption term, an unrest term — and resolves the occasion
-> IN THE SAME TICK through the one applier. Deterministic (two identical states
+> IN THE SAME TICK through the one applier — **minus four channels**: for an AI
+> nation `Events._resolve` hands the applier a COPY of the choice's effects without
+> `tax_rates_pct`, `spending_pct_gdp`, `company` and `other_revenue_pct_gdp`
+> (pass 23). Nothing ticks the other 28 governments' rates, spending lines, firm
+> burdens or other-revenue line back toward anything, so an event answer written
+> there only ratchets (measured: AI infrastructure +1.45 points of GDP on average,
+> an industry burden at its clamp). The chooser still SCORES every effect, and
+> `bloc_offset`, `society`, `structural_unemployment_pct`, `potential_growth_pct`
+> still land. Deterministic (two identical states
 > answer identically, test-pinned), never defaulted (an AI nation that says
 > nothing is an occasion that never happened), and its queue is structurally
 > empty because it has no desk. The sixth recorded instance is this one, and

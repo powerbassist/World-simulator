@@ -31,6 +31,10 @@ signal save_load_requested
 const BAR_HEIGHT := 40
 
 var _figure_values := {}
+## Each figure's caption label, by the same key as _figure_values -- kept so a
+## caller that needs the caption (the desk's live tooltip) does not reach it by
+## child index through the value's parent.
+var _figure_captions := {}
 ## V4.1. The programme figure, hidden until a programme runs -- it is not one
 ## of the four always-on figures, so it keeps its own references beside the
 ## dict the others share.
@@ -119,6 +123,7 @@ func _build_figure(key: String, title: String, tip := "") -> Control:
 	_hoverable(value)
 	box.add_child(value)
 	_figure_values[key] = value
+	_figure_captions[key] = label
 	if not tip.is_empty():
 		value.tooltip_text = tip
 		label.tooltip_text = tip
@@ -133,7 +138,7 @@ func _build_figure(key: String, title: String, tip := "") -> Control:
 func _set_desk_tip(text: String) -> void:
 	var value: Control = _figure_values["desk"]
 	value.tooltip_text = text
-	var caption: Control = value.get_parent().get_child(0)
+	var caption: Control = _figure_captions["desk"]
 	caption.tooltip_text = text
 
 

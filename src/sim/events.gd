@@ -47,7 +47,8 @@ extends RefCounted
 ## it and the nine had no decider. The decider exists now: a minimal chooser
 ## scoring each choice against the NATION'S OWN position (approval-weighted bloc
 ## response, plus fiscal, corruption and unrest terms), applied through
-## Legislature.apply_effects() like every choice the player makes. An AI nation
+## Legislature.apply_effects() like every choice the player makes -- minus the
+## fiscal and company channels, which an AI resolution skips (see _resolve). An AI nation
 ## receives and resolves in the same tick -- it has no desk, so it has no queue;
 ## its resolved history is the visible trace. Deterministic like everything here:
 ## same state, same choice, and ties go to content order. docs/events-model.md
@@ -761,7 +762,22 @@ static func _score_choice(ns, choice: Dictionary) -> float:
 ## twice. What waiting actually buys is information -- another month of the
 ## figures the choice is about -- and what it risks is the default arriving first.
 static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool, entry: Dictionary) -> Dictionary:
-	Legislature.apply_effects(state, ns, choice.get("effects", {}), loader)
+	var applied: Dictionary = choice.get("effects", {})
+	if String(ns.id) != String(state.player_nation_id):
+		# AN AI NATION'S ANSWER LEAVES ITS BUDGET AND ITS FIRMS ALONE. Nothing ticks
+		# the twenty-eight other nations' rates, spending lines, firm burdens or
+		# other-revenue line back toward anything -- no budget regime, no assembly,
+		# no firm layer reads them as a policy -- so an event answer written there
+		# only RATCHETS (measured at pass 23: AI infrastructure +1.45 points of GDP
+		# on average, an industry burden pinned at its clamp). The chooser still
+		# SCORES every effect (the choice is judged on the whole menu), and every
+		# other channel -- bloc_offset, society, structural_unemployment_pct,
+		# potential_growth_pct -- still lands. A COPY: the content dictionary is
+		# shared by all twenty-nine nations and the player's own desk.
+		applied = choice.get("effects", {}).duplicate()
+		for fiscal_key in ["tax_rates_pct", "spending_pct_gdp", "company", "other_revenue_pct_gdp"]:
+			applied.erase(fiscal_key)
+	Legislature.apply_effects(state, ns, applied, loader)
 
 	# The same one-month floor as _deliver's, applied at the other end of the
 	# occasion: a desk entry that DEFAULTS this tick (_tick_countdowns runs first)

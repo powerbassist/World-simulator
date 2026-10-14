@@ -1,5 +1,5 @@
 {
-  "_note": "Sixty goods clear through world markets at prices the register clamps at seventy-five per cent either way, and the occasions here are the mornings the bill arrives. Nothing in this file causes a shortage -- the register carries flows, not stocks -- these are the politics of one that already happened at the wharf. The two hook events ride commodity_price_high, which is a LEVEL read over every good at once, so their prose names no good: whichever import spiked, the card has to be true of it. Their likelihoods sit above the hazard band on purpose -- the dispatch's call -- because the hook only draws in the months the register says something is already expensive, and their cooldowns keep the answer from machine-gunning the desk.",
+  "_note": "Sixty goods clear through world markets at prices the register clamps at seventy-five per cent either way, and the occasions here are the mornings the bill arrives. Nothing in this file causes a shortage -- the register carries flows, not stocks -- these are the politics of one that already happened at the wharf. The last two events, com_price_high_desk and com_industry_bills, are ordinary hazard events at the median likelihood of the six above (0.0033). They were authored as commodity_price_high hook events (0.45 and 0.40 per happening) and UNBOUND at pass 23: the V4.6 price drift crosses goods one after another in months 1-5 of every new game for all 29 nations and never again, so the hook fired only inside that artefact. commodity_price_high stays in the vocabulary with no consumer, like law_passed; re-bind them once the drift is fixed. Their prose names no good and ties to no happening: whichever import is running high, the card has to be true of it.",
   "events": [
     {
       "id": "com_gas_squeeze",
@@ -390,9 +390,8 @@
     {
       "id": "com_price_high_desk",
       "name": "The price is the policy now",
-      "summary": "A world price the country's industry depends on has just crossed a level well above the one budgets were set against, and the question on the desk is the one every government answers badly: absorb it, pass it through, or find somebody to blame. The world price does not care which. The kitchen tables keep a record.",
-      "on_action": "commodity_price_high",
-      "likelihood": 0.45,
+      "summary": "World prices for something the country's industry depends on are running well above the level budgets were set against, and the question on the desk is the one every government answers badly: absorb it, pass it through, or find somebody to blame. The world price does not care which. The kitchen tables keep a record.",
+      "likelihood": 0.0033,
       "category": "commodity",
       "severity": 2,
       "cooldown_months": 8,
@@ -454,9 +453,8 @@
     {
       "id": "com_industry_bills",
       "name": "The factories' input bill",
-      "summary": "A world price has crossed a line the federation's arithmetic cannot live with, and it has arrived with the sums: the mills are buying at margins that close in eight weeks. It would like the state to decide who eats the difference, the market having declined to.",
-      "on_action": "commodity_price_high",
-      "likelihood": 0.4,
+      "summary": "World prices have been running at a level the federation's arithmetic cannot live with, and it has arrived with the sums: the mills are buying at margins that close in eight weeks. It would like the state to decide who eats the difference, the market having declined to.",
+      "likelihood": 0.0033,
       "category": "commodity",
       "severity": 2,
       "cooldown_months": 10,

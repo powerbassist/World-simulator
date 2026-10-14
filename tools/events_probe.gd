@@ -641,8 +641,9 @@ func _table_e5_categories() -> void:
 ## hook in events_constants.ON_ACTIONS, stage the exact register its emitter reads
 ## (copied from Events._hook_fired's own match arms -- when the machine moves an
 ## emitter, this staging moves with it) and assert an on_action-bearing fixture lands
-## on the desk for a stub loader at likelihood 1.0. The shipped book carries EIGHT
-## on_action events beside these fixtures; the fixtures remain the sweep because the
+## on the desk for a stub loader at likelihood 1.0. The shipped book carries SIX
+## on_action events beside these fixtures (commodity_price_high has none since pass
+## 23, like law_passed -- a vocabulary name needs a witness, not a consumer); the fixtures remain the sweep because the
 ## shipped hooks fire on live register writes this probe does not stage, so the hand
 ## staging is what witnesses every name on every run.
 class _StubLoader:
@@ -715,7 +716,7 @@ func _stage_hook(state, hook: String, month_index: int) -> void:
 
 func _table_e6_hooks() -> void:
 	print("\n=== E6  HOOK RATES: every name in ON_ACTIONS, staged onto its register ===")
-	print("Eight shipped events carry on_action beside these fixtures; each row is")
+	print("Six shipped events carry on_action beside these fixtures; each row is")
 	print("still a fixture at likelihood 1.0 on a stub loader, because the shipped")
 	print("hooks fire on live register writes this probe does not stage.\n")
 	var passed := 0

@@ -1122,15 +1122,21 @@ func _test_the_quiet_cadence_is_delivery_month_plus_three() -> void:
 ## (it reads state.player()): the other twenty-eight governments' crisis answers
 ## rewrote the President's tax rates and spending. The fix is the nation-scoped
 ## Budget.apply_pending(), called from Legislature.apply_effects(). Pinned two
-## ways: the AI nation moves by exactly the authored amount, and the player's
-## whole serialised nation is byte-identical -- rates, spending, schedule, the
-## demand impulse and the books (there is no pending-budget register on the nation:
-## the budget panel holds its edits in the UI, so the saved nation IS the surface).
+## ways: the player's whole serialised nation is byte-identical -- rates, spending,
+## schedule, the demand impulse and the books (there is no pending-budget register
+## on the nation: the budget panel holds its edits in the UI, so the saved nation IS
+## the surface) -- and, since pass 23, the AI nation's OWN budget and firm burdens
+## are unmoved too. Nothing ticks the other twenty-eight governments' rates,
+## spending, firm burdens or other-revenue line back toward anything, so an event
+## answer written there only ratchets (measured: AI infrastructure +1.45 points of
+## GDP on average, an industry burden at its clamp); an AI resolution skips the four
+## fiscal/company channels and every other channel (bloc_offset here) still lands.
 func _test_an_ai_fiscal_answer_never_touches_the_players_budget() -> void:
 	var raw := {"id": "ai_fiscal_fixture", "name": "Ai Fiscal Fixture", "summary": "s", "likelihood": 0.05,
 		"category": "fiscal", "respond_months": 2, "choices": [
-			{"id": "tax", "label": "Tax", "summary": "raise income tax", "effects": {"tax_rates_pct": {"income": 1.5}}, "default": true},
-			{"id": "spend", "label": "Spend", "summary": "raise health", "effects": {"spending_pct_gdp": {"health": 0.4}}},
+			{"id": "tax", "label": "Tax", "summary": "raise income tax", "effects": {"tax_rates_pct": {"income": 1.5}, "bloc_offset": {"workers": 0.02}}, "default": true},
+			{"id": "spend", "label": "Spend", "summary": "raise health", "effects": {"spending_pct_gdp": {"health": 0.4}, "bloc_offset": {"workers": 0.02}}},
+			{"id": "firm", "label": "Firm", "summary": "burden industry", "effects": {"company": {"sector": "industry", "burden": 0.05}, "other_revenue_pct_gdp": -0.1, "bloc_offset": {"workers": 0.02}}},
 		]}
 	var errs: Array[String] = []
 	var ev = GameEvent.from_dict(raw, "x.json", errs,
@@ -1148,16 +1154,30 @@ func _test_an_ai_fiscal_answer_never_touches_the_players_budget() -> void:
 		var player_before: String = JSON.stringify(player.to_dict(), "", true)
 		var ai_tax_before: float = float(ai.tax_rates_pct["income"])
 		var ai_health_before: float = float(ai.spending_pct_gdp["health"])
+		var ai_burden_before: float = float(ai.regulation_burden.get("industry", 0.0))
+		var ai_other_before: float = float(ai.law_other_revenue_pct_gdp)
+		var ai_offset_before: float = float(ai.bloc_offset.get("workers", 0.0))
 		var player_tax_before: float = float(player.tax_rates_pct["income"])
 		var player_health_before: float = float(player.spending_pct_gdp["health"])
+		var effects_before: String = JSON.stringify(choice["effects"], "", true)
 		Events._resolve(state, ai, stub, ev, choice, false, {})
 		var cid := String(choice["id"])
-		if cid == "tax":
-			if not is_equal_approx(float(ai.tax_rates_pct["income"]), ai_tax_before + 1.5):
-				_fail("the AI nation's income rate did not move by the authored +1.5 (%.4f -> %.4f)" % [ai_tax_before, float(ai.tax_rates_pct["income"])])
-		else:
-			if not is_equal_approx(float(ai.spending_pct_gdp["health"]), ai_health_before + 0.4):
-				_fail("the AI nation's health spending did not move by the authored +0.4 (%.4f -> %.4f)" % [ai_health_before, float(ai.spending_pct_gdp["health"])])
+		# THE FILTER: none of the four skipped channels moved on the AI nation.
+		if float(ai.tax_rates_pct["income"]) != ai_tax_before:
+			_fail("an AI '%s' answer moved the AI nation's income rate (%.4f -> %.4f) -- AI fiscal channels only ratchet" % [cid, ai_tax_before, float(ai.tax_rates_pct["income"])])
+		if float(ai.spending_pct_gdp["health"]) != ai_health_before:
+			_fail("an AI '%s' answer moved the AI nation's health spending (%.4f -> %.4f)" % [cid, ai_health_before, float(ai.spending_pct_gdp["health"])])
+		if float(ai.regulation_burden.get("industry", 0.0)) != ai_burden_before:
+			_fail("an AI '%s' answer moved the AI nation's industry burden" % cid)
+		if float(ai.law_other_revenue_pct_gdp) != ai_other_before:
+			_fail("an AI '%s' answer moved the AI nation's other-revenue line" % cid)
+		# And every other channel still lands: the choice is not a no-op.
+		if not is_equal_approx(float(ai.bloc_offset.get("workers", 0.0)), ai_offset_before + 0.02):
+			_fail("an AI '%s' answer did not land its bloc_offset (%.4f -> %.4f) -- the filter swallowed more than the fiscal channels" % [cid, ai_offset_before, float(ai.bloc_offset.get("workers", 0.0))])
+		# The content is shared by all twenty-nine nations and the player's desk: the
+		# filter works on a copy.
+		if JSON.stringify(choice["effects"], "", true) != effects_before:
+			_fail("an AI '%s' answer mutated the shared choice content -- the filter must work on a copy" % cid)
 		if JSON.stringify(player.to_dict(), "", true) != player_before:
 			_fail("an AI nation's '%s' answer changed the PLAYER's nation -- the fiscal effect leaked through the player-scoped commit" % cid)
 		# Explicit reads beside the whole-nation comparison, so a failure names the
@@ -1177,22 +1197,24 @@ func _test_an_ai_fiscal_answer_never_touches_the_players_budget() -> void:
 	var rows_before: int = ai2.event_history.size()
 	var ai2_tax_before: float = float(ai2.tax_rates_pct["income"])
 	var ai2_health_before: float = float(ai2.spending_pct_gdp["health"])
+	var ai2_offset_before: float = float(ai2.bloc_offset.get("workers", 0.0))
 	Events._deliver(state2, ai2, stub, ev, Events._absolute_month(int(state2.year), int(state2.month)), false)
 	if ai2.event_history.size() != rows_before + 1:
 		_fail("the AI delivery did not resolve in place")
 	else:
-		# And the AI nation's own budget MOVED, by the effects of whichever choice the
-		# chooser recorded: a delivery that logged a row but skipped apply_effects would
-		# otherwise pass every assertion on this leg.
+		# The AI nation's own budget did NOT move (pass 23: the fiscal and company
+		# channels are skipped for AI resolutions), while the channel the filter
+		# leaves alone DID land -- a delivery that logged a row but skipped
+		# apply_effects altogether would otherwise pass this leg.
 		var picked: String = String(ai2.event_history[ai2.event_history.size() - 1].get("choice_id", ""))
-		var want_tax: float = ai2_tax_before + (1.5 if picked == "tax" else 0.0)
-		var want_health: float = ai2_health_before + (0.4 if picked == "spend" else 0.0)
-		if picked != "tax" and picked != "spend":
+		if picked != "tax" and picked != "spend" and picked != "firm":
 			_fail("the AI delivery recorded choice '%s', not one of the fixture's" % picked)
-		if not is_equal_approx(float(ai2.tax_rates_pct["income"]), want_tax):
-			_fail("after the AI's delivered '%s' answer its income rate is %.4f, expected %.4f" % [picked, float(ai2.tax_rates_pct["income"]), want_tax])
-		if not is_equal_approx(float(ai2.spending_pct_gdp["health"]), want_health):
-			_fail("after the AI's delivered '%s' answer its health spending is %.4f, expected %.4f" % [picked, float(ai2.spending_pct_gdp["health"]), want_health])
+		if float(ai2.tax_rates_pct["income"]) != ai2_tax_before:
+			_fail("after the AI's delivered '%s' answer its income rate moved (%.4f -> %.4f)" % [picked, ai2_tax_before, float(ai2.tax_rates_pct["income"])])
+		if float(ai2.spending_pct_gdp["health"]) != ai2_health_before:
+			_fail("after the AI's delivered '%s' answer its health spending moved (%.4f -> %.4f)" % [picked, ai2_health_before, float(ai2.spending_pct_gdp["health"])])
+		if not is_equal_approx(float(ai2.bloc_offset.get("workers", 0.0)), ai2_offset_before + 0.02):
+			_fail("after the AI's delivered '%s' answer its bloc_offset did not land" % picked)
 	if JSON.stringify(player2.to_dict(), "", true) != player2_before:
 		_fail("an AI nation's delivered fiscal event changed the PLAYER's nation")
 

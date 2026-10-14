@@ -136,13 +136,16 @@ tick (a later AI-economy block) — the chooser then reads live figures with no 
 **Fix shape:** none in the events machine; state the bound where the chooser is
 described.
 
-One edge of the same gap: when an AI nation's first fiscal event resolves,
-`Legislature.apply_effects` -> `Budget.apply_pending` + `Budget.recompute` refreshes
-that nation's long-frozen deficit in one step (GDP growth, debt service and tariffs
-since the new game all land at once), so a deficit gate or the chooser's deficit floor
-can flip on that refresh rather than on the event's own delta. **Trigger:** an
-AI-nation event series that clusters around a first fiscal answer, or the budget tick
-above. **Fix shape:** none needed once AI nations tick their budgets.
+One edge of the same gap, closed at pass 23: an AI nation's first fiscal event used to
+refresh that nation's long-frozen deficit in one step (`Legislature.apply_effects` ->
+`Budget.apply_pending` + `Budget.recompute`: GDP growth, debt service and tariffs since
+the new game all landing at once), so a deficit gate or the chooser's deficit floor
+could flip on that refresh rather than on the event's own delta. That refresh no longer
+happens: AI answers skip the `tax_rates_pct`, `spending_pct_gdp`, `company` and
+`other_revenue_pct_gdp` channels (`Events._resolve`), so an AI nation's deficit stays
+at its authored start until the budget tick below exists. **Trigger:** AI nations
+getting a budget tick -- at which point the skip can be lifted and the fiscal answers
+become a real policy. **Fix shape:** drop the filter in `_resolve`.
 
 ### The projection prices no goods, and `law_passed` has no consumer
 
@@ -157,7 +160,7 @@ tick Commodities in `project()` and in the mirror together.
 The `law_passed` hook reads `ns.law_ledger`, which records only laws that moved a
 ledgered register by a non-zero amount and ignores the institutional channel, so a
 constitutional amendment or electoral-reform Act never stamps a month; and no shipped
-event uses `law_passed` (7 of 8 vocabulary entries have a consumer). **Trigger:** the
+event uses `law_passed` (6 of 8 vocabulary entries have a consumer since pass 23 unbound `commodity_price_high` too). **Trigger:** the
 first authored `law_passed` event. **Fix shape:** stamp passage in `Legislature.apply`
 itself rather than reading it back off the ledger.
 
@@ -186,6 +189,16 @@ every month and flooded the desk (measured over 168 months, FRA: the level was t
 the same run; commodity arrivals 4 of 38). The hook door still does not respect the
 category quiet, which an edge makes unreachable in practice rather than fixes.
 
+**Pass 23 update -- the two events were unbound.** Even as an edge, the hook is true in
+months 1-5 of every new game for all 29 nations (the drift below crossing goods one
+after another) and never again, so it fired only inside that artefact.
+`com_price_high_desk` and `com_industry_bills` lost their `on_action` and are ordinary
+hazard events in the `commodity` category at the median likelihood of the category's
+other six (0.0033); `commodity_price_high` stays in `ON_ACTIONS` with no consumer, like
+`law_passed`. **Trigger to re-bind:** the V4.6 drift fix below, after which the crossing
+means a real shock. **Fix shape:** restore `on_action` and the per-happening likelihoods
+(0.45 / 0.40) on both events and rewrite their summaries to name the crossing.
+
 ### World prices drift to their clamp within months
 
 Found while converting `commodity_price_high` to an edge (pass 22). The commodity
@@ -198,7 +211,9 @@ future reader of the price vector inherits a world that is mostly at a clamp.
 **Trigger:** a commodities tuning pass, or a feature that reads the price level.
 **Fix shape:** find the recipe/supply imbalance that drives the early drift (V4.6
 territory: the capacity and demand structure should agree, and the gap sign for the
-rising goods says which side is short) before any price constant is touched.
+rising goods says which side is short) before any price constant is touched. **Pass
+23:** this drift is why the two hook-bound commodity events were unbound -- the drift
+fix is the trigger to re-bind them (previous entry).
 
 ### Same-month category collisions favour the early alphabet
 
@@ -229,6 +244,16 @@ one tick ("Decided for you", a takeover bid, an assembly division) evict each ot
 the frame draws, and an already-marked-announced notice is never re-shown. **Trigger:** a
 playtest note of a missing "Decided for you" card, or `MAX_CARDS` changing. **Fix shape:**
 a larger column, or one-tick coalescing of plain cards.
+
+### Hook events are rare by construction
+
+Most hook events carry 0.015-0.03 per happening, on happenings that are themselves
+rare (a firm failure runs ~0.62 per nation per 168-month run), so they practically
+never reach the desk -- the book's "the game watches you" layer is mostly latent.
+Authored for the hook's meaning and never measured against its real arrival rate.
+**Trigger:** a tuning pass that measures each hook's real arrival rate in
+balance_probe-style runs. **Fix shape:** per-hook likelihoods set from that
+measurement (the way pass 23 set the commodity pair from the category median).
 
 ## Carried from earlier blocks (pointers, not duplicates)
 
