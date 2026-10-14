@@ -39,6 +39,8 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const GameEvent = preload("res://src/core/event.gd")
 const Events = preload("res://src/sim/events.gd")
+const EventHooks = preload("res://src/sim/event_hooks.gd")
+const EventChooser = preload("res://src/sim/event_chooser.gd")
 const K = preload("res://src/sim/events_constants.gd")
 const LegislatureK = preload("res://src/sim/legislature_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -1444,7 +1446,7 @@ func _test_the_desk_is_bounded() -> void:
 	ns.law_ledger["probe_law"] = {"months": [month - 1]}
 	# Drive the delivery door directly after staging the hook register; this is
 	# not the hook loop in _tick_nation().
-	if not Events._hook_fired(state, ns, stub, hook.on_action, month):
+	if not EventHooks.fired(state, ns, stub, hook.on_action, month):
 		_fail("the full-desk hook-door fixture did not fire its staged law_passed hook")
 	var landed: bool = Events._deliver(state, ns, stub, hook, month, true)
 	if landed:
@@ -1762,10 +1764,10 @@ func _test_hooks_fire_on_staged_registers() -> void:
 	# time (month M), which this machine first reads at M+1 -- so last month's
 	# passage is the readable window and THIS month's is not (yet).
 	ns.law_ledger["probe_law"] = {"months": [month - 1]}
-	if not Events._hook_fired(state, ns, _loader, "law_passed", month):
+	if not EventHooks.fired(state, ns, _loader, "law_passed", month):
 		_fail("law_passed did not read last month's passage -- the lag is the emitter's whole window")
 	ns.law_ledger["probe_law"] = {"months": [month]}
-	if Events._hook_fired(state, ns, _loader, "law_passed", month):
+	if EventHooks.fired(state, ns, _loader, "law_passed", month):
 		_fail("law_passed fired on the command month itself -- with the lag leg that would double-fire an in-tick passage")
 	ns.law_ledger.erase("probe_law")
 
@@ -1774,55 +1776,55 @@ func _test_hooks_fire_on_staged_registers() -> void:
 	# command time, so last month's stamp is the readable window and THIS month's
 	# is not.
 	ns.repealed_at["some_law"] = month - 1
-	if not Events._hook_fired(state, ns, _loader, "law_repealed", month):
+	if not EventHooks.fired(state, ns, _loader, "law_repealed", month):
 		_fail("law_repealed did not read last month's repeal stamp -- the lag is the emitter's whole window")
 	ns.repealed_at["some_law"] = month
-	if Events._hook_fired(state, ns, _loader, "law_repealed", month):
+	if EventHooks.fired(state, ns, _loader, "law_repealed", month):
 		_fail("law_repealed fired on the command month itself -- with the lag leg that would double-fire an in-tick repeal")
 	ns.repealed_at.clear()
 
 	ns.last_resignation = {"portfolio": "health", "party_id": "x", "year": int(state.year), "month": int(state.month) - 1}
-	if not Events._hook_fired(state, ns, _loader, "minister_resigned", month):
+	if not EventHooks.fired(state, ns, _loader, "minister_resigned", month):
 		_fail("minister_resigned did not read last month's resignation stamp")
 	ns.last_resignation = {}
 
 	ns.last_accession = {"org": "eu", "month_index": month}
-	if not Events._hook_fired(state, ns, _loader, "accession_won", month):
+	if not EventHooks.fired(state, ns, _loader, "accession_won", month):
 		_fail("accession_won did not read the accession stamp")
 	# The stamp is written for every org; the hook is the UNION's. NATO joining the
 	# same month must not fire it (and burn eu_accession_bills' `once` mark).
 	ns.last_accession = {"org": "nato", "month_index": month}
-	if Events._hook_fired(state, ns, _loader, "accession_won", month):
+	if EventHooks.fired(state, ns, _loader, "accession_won", month):
 		_fail("accession_won fired for a NATO accession -- the hook is the Union's")
 	ns.last_accession = {}
 
 	# member_bill_passed reads its own stamp, pinned BOTH directions: M fires,
 	# M-1 (last month's passage) does not, and the default -1 does not.
-	if Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+	if EventHooks.fired(state, ns, _loader, "member_bill_passed", month):
 		_fail("member_bill_passed fired with no assembly bill ever passed (default -1)")
 	ns.assembly_bill_passed_month = month
-	if not Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+	if not EventHooks.fired(state, ns, _loader, "member_bill_passed", month):
 		_fail("member_bill_passed did not read the assembly_bill_passed_month stamp")
 	ns.assembly_bill_passed_month = month - 1
-	if Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+	if EventHooks.fired(state, ns, _loader, "member_bill_passed", month):
 		_fail("member_bill_passed fired on a stamp from last month -- the hook is a month read")
 	# The pass-17 finding: a later division the same month (a private member's
 	# bill that FAILS) overwrites last_law_result, and used to erase a held bill's
 	# release with it. The stamp is independent of that register.
 	ns.assembly_bill_passed_month = month
 	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month, "passed": false}
-	if not Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+	if not EventHooks.fired(state, ns, _loader, "member_bill_passed", month):
 		_fail("a failed same-month division in last_law_result cancelled the passed-bill stamp")
 	# And the inverse: a passed-looking last_law_result with no stamp fires nothing.
 	ns.assembly_bill_passed_month = -1
 	ns.last_law_result = {"assembly_bill": true, "assembly_division_month": month, "passed": true}
-	if Events._hook_fired(state, ns, _loader, "member_bill_passed", month):
+	if EventHooks.fired(state, ns, _loader, "member_bill_passed", month):
 		_fail("member_bill_passed read last_law_result instead of its own stamp")
 	ns.last_law_result = {}
 
 	# And a stale stamp fires nothing: the emitters are month reads, not edges.
 	ns.repealed_at["some_law"] = month - 3
-	if Events._hook_fired(state, ns, _loader, "law_repealed", month):
+	if EventHooks.fired(state, ns, _loader, "law_repealed", month):
 		_fail("law_repealed fired on a three-month-old stamp -- the emitters are month reads, not memories")
 
 	# The three register-backed hooks that need external machinery were omitted
@@ -1834,17 +1836,17 @@ func _test_hooks_fire_on_staged_registers() -> void:
 	var fake_company: Dictionary = {}
 	ns.companies["fake_firm"] = fake_company
 	fake_company["bid_month"] = month
-	if not Events._hook_fired(state, ns, _loader, "takeover_bid", month):
+	if not EventHooks.fired(state, ns, _loader, "takeover_bid", month):
 		_fail("takeover_bid did not read a bid_month == month")
 	fake_company["bid_month"] = month - 1
-	if Events._hook_fired(state, ns, _loader, "takeover_bid", month):
+	if EventHooks.fired(state, ns, _loader, "takeover_bid", month):
 		_fail("takeover_bid fired on a stale month's bid")
 	fake_company.erase("bid_month")
 	fake_company["failed_month"] = month
-	if not Events._hook_fired(state, ns, _loader, "firm_failed", month):
+	if not EventHooks.fired(state, ns, _loader, "firm_failed", month):
 		_fail("firm_failed did not read a failed_month == month")
 	fake_company["failed_month"] = month - 1
-	if Events._hook_fired(state, ns, _loader, "firm_failed", month):
+	if EventHooks.fired(state, ns, _loader, "firm_failed", month):
 		_fail("firm_failed fired on a stale month's failure")
 	ns.companies.erase("fake_firm")
 
@@ -1853,18 +1855,18 @@ func _test_hooks_fire_on_staged_registers() -> void:
 	# M fires, M-1 does not, the default -1 does not. A price vector sitting high
 	# with no crossing this month fires nothing (the level read this replaced fired
 	# on exactly that, almost every month).
-	if Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+	if EventHooks.fired(state, ns, _loader, "commodity_price_high", month):
 		_fail("commodity_price_high fired with no crossing ever stamped (default -1)")
 	ns.commodity_high_month = month
-	if not Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+	if not EventHooks.fired(state, ns, _loader, "commodity_price_high", month):
 		_fail("commodity_price_high did not read the commodity_high_month stamp")
 	ns.commodity_high_month = month - 1
-	if Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+	if EventHooks.fired(state, ns, _loader, "commodity_price_high", month):
 		_fail("commodity_price_high fired on last month's crossing -- the hook is an edge, a month read")
 	var base_price: float = float(good.get("base_price", 0.0))
 	ns.commodity_high_month = -1
 	ns.commodity_state = {"price": {"iron_ore": base_price * 1.75}}
-	if Events._hook_fired(state, ns, _loader, "commodity_price_high", month):
+	if EventHooks.fired(state, ns, _loader, "commodity_price_high", month):
 		_fail("commodity_price_high fired on a price vector at its clamp with no crossing stamp -- a level read")
 	ns.commodity_state = {}
 
@@ -1947,9 +1949,9 @@ func _test_the_chooser_situates() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	ns.deficit_pct_gdp = 0.5
-	var balanced = Events._choose(ns, ev)
+	var balanced = EventChooser.choose(ns, ev)
 	ns.deficit_pct_gdp = 6.0
-	var indebted = Events._choose(ns, ev)
+	var indebted = EventChooser.choose(ns, ev)
 	if balanced.is_empty() or indebted.is_empty():
 		_fail("the chooser returned no choice at all")
 		return
@@ -1963,7 +1965,7 @@ func _test_the_chooser_situates() -> void:
 
 
 ## THE VOCABULARY SWEEP THE COMMENTS PROMISE. `ON_ACTIONS` is a closed vocabulary
-## and `_hook_fired`'s match is its machine, and the two must name exactly the
+## and `EventHooks.fired`'s match is its machine, and the two must name exactly the
 ## same set -- in BOTH directions, the house rule: a vocabulary name without a
 ## match arm is a content promise the machine silently never keeps (an event
 ## could load on it and fire nothing, forever), and a match arm outside the
@@ -1974,23 +1976,23 @@ func _test_the_chooser_situates() -> void:
 func _test_the_hook_vocabulary_is_swept() -> void:
 	var arms := {}
 	var in_fn := false
-	for line in _source("res://src/sim/events.gd").split(NEWLINE):
-		if line.begins_with("static func _hook_fired"):
+	for line in _source("res://src/sim/event_hooks.gd").split(NEWLINE):
+		if line.begins_with("static func fired"):
 			in_fn = true
 			continue
 		if not in_fn:
 			continue
-		if line.begins_with("func ") or (line.begins_with("static func ") and not line.contains("_hook_fired")):
+		if line.begins_with("func ") or (line.begins_with("static func ") and not line.begins_with("static func fired")):
 			break
 		var stripped := line.strip_edges()
 		if stripped.begins_with("\"") and stripped.ends_with("\":"):
 			arms[stripped.substr(1, stripped.length() - 3)] = true
 	if arms.is_empty():
-		_fail("could not extract any match arm from _hook_fired -- the extraction is broken, not the machine")
+		_fail("could not extract any match arm from EventHooks.fired -- the extraction is broken, not the machine")
 		return
 	for hook in K.ON_ACTIONS:
 		if not arms.has(hook):
-			_fail("ON_ACTIONS names '%s' and _hook_fired has no branch for it -- a hook that can load and never fire" % hook)
+			_fail("ON_ACTIONS names '%s' and EventHooks.fired has no branch for it -- a hook that can load and never fire" % hook)
 	for hook in arms.keys():
 		if not K.ON_ACTIONS.has(hook):
-			_fail("_hook_fired matches '%s', which is not in ON_ACTIONS -- a live emitter no event may name" % hook)
+			_fail("EventHooks.fired matches '%s', which is not in ON_ACTIONS -- a live emitter no event may name" % hook)

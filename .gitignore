@@ -86,6 +86,9 @@ Thumbs.db
 # Per-machine agent state, like .mcp.json above -- plans and scratch belonging to
 # whichever assistant is driving, not to this game.
 .zcode/
+# .codex/config.toml registers the Godot MCP bridge by an absolute path on this
+# machine -- the same per-machine fact as .mcp.json, tracked by mistake until 2026-10-14.
+.codex/
 .zcodeignore
 .mimosa/
 docs/superpowers/

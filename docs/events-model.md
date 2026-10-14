@@ -338,7 +338,7 @@ place in `src/sim/` to read the player id rather than `has_budget`, for the same
 > **CLOSED AT V4.4.** The paragraph above is the V1.8 record, kept because the
 > reasoning is still the reasoning — the player needs a decider, and the council
 > example still holds for that. What changed: the OTHER 28 nations now have one too.
-> A minimal situational chooser (`Events._choose`) scores each choice against the
+> A minimal situational chooser (`EventChooser.choose` (`src/sim/event_chooser.gd`)) scores each choice against the
 > nation's own position — size-weighted bloc response, a fiscal term above a
 > deficit floor, a corruption term, an unrest term — and resolves the occasion
 > IN THE SAME TICK through the one applier — **minus four channels**: for an AI

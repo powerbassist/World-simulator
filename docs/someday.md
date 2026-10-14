@@ -18,10 +18,10 @@ Decisions only the author can take. Each is a checkbox so the Tasks query on
 [[vault-dashboard]] lists what is still open; tick it with the decision's date
 when it is taken, and record the decision where the line points.
 
-- [ ] V4.4 re-baseline: 24 outcome flips, 20 of them HELD→LOST at the 2032 election through the default-drain channel. Tune the defaults' authored means, tune `CATEGORY_QUIET_MONTHS`, or accept the bound (`reports/v44-rerun-prediction.md`)
+- [x] V4.4 re-baseline: 24 outcome flips, 20 of them HELD→LOST at the 2032 election through the default-drain channel. Tune the defaults' authored means, tune `CATEGORY_QUIET_MONTHS`, or accept the bound (`reports/v44-rerun-prediction.md`). **Decided 2026-10-14: accept the bound** -- ignoring the desk is meant to cost; the defaults' means and the quiet stay as shipped ✅ 2026-10-14
 - [ ] Event-art contact sheet: the plates lean photographic, not painterly. Accept or re-render ([[event-art-plan]])
 - [ ] The book has no true "protect industry" option: `com_industry_bills.protect_the_makers` is a regulation
-- [ ] Re-run `events_probe` E4/E5 since the two commodity events were unbound from their hook (over an hour, run alone)
+- [x] Re-run `events_probe` E4/E5 since the two commodity events were unbound from their hook (over an hour, run alone). **Re-run 2026-10-14** on the split events.gd and the drift-fixed commodities: E4 shipped quiet 3 = 37 arrivals, 12.0 per term, max desk 3, 0.0 % overfull; E5 every category <= 18.9 % (scandal) against 30, commodity 8.1 %; every declared band PASSED. Unchanged from V4.4's recorded 12.0/term and 18.9 % ✅ 2026-10-14
 - [ ] V3.7 portrait generation left incomplete on the unmerged `v3.7-phase-b` ([[v3]] close-out, item 3)
 
 ## Carried from V4.2's close-out (2026-10-05)
@@ -107,7 +107,7 @@ whatever thresholds the author accepts, or retire the kill-switch claim.
 
 ### The AI chooser's bloc term averages over the NAMED blocs only
 
-`_score_choice` divides the size-weighted bloc offset by the weight of the blocs a
+`EventChooser.score_choice` (src/sim/event_chooser.gd) divides the size-weighted bloc offset by the weight of the blocs a
 choice names, so `rural -0.08` scores -0.08 while `-0.05` on all six blocs scores
 -0.05, though by electorate share the second costs four times more. Measured on the
 book (python, bloc term alone, 307 choices, 197 of them naming fewer than six blocs):
@@ -211,21 +211,23 @@ other six (0.0033); `commodity_price_high` stays in `ON_ACTIONS` with no consume
 means a real shock. **Fix shape:** restore `on_action` and the per-happening likelihoods
 (0.45 / 0.40) on both events and rewrite their summaries to name the crossing.
 
-### World prices drift to their clamp within months
+### World prices drift to their clamp within months -- FIXED 2026-10-14
 
-Found while converting `commodity_price_high` to an edge (pass 22). The commodity
-layer's premise (docs/commodities-model.md, V4.6) is that the world is born in balance
-and only a shock moves the price vector; measured on a new game, it is not: at month 1
-two goods already sit at or above 1.25x base, at month 3 fifteen do (cotton at 1.75x,
-the clamp), and the level read stayed true in 168 of 168 months. The events hook no
-longer depends on the level (it fires on a crossing), so nothing is broken, but any
-future reader of the price vector inherits a world that is mostly at a clamp.
-**Trigger:** a commodities tuning pass, or a feature that reads the price level.
-**Fix shape:** find the recipe/supply imbalance that drives the early drift (V4.6
-territory: the capacity and demand structure should agree, and the gap sign for the
-rising goods says which side is short) before any price constant is touched. **Pass
-23:** this drift is why the two hook-bound commodity events were unbound -- the drift
-fix is the trigger to re-bind them (previous entry).
+RECORD, not an open item. The gap counted intermediate use twice, six recipes cost
+more in inputs than their output was worth, and demand's sector mix moved with
+supply so no shock reached a price. All three fixed; before and after are in
+[[commodities-model]] §3b (15 goods >= 1.25x at month 3 before, 0 after; a supply
+shock now moves steel by 10 %). **Re-bind decided against, 2026-10-14 (author's call).**
+With the drift fixed, no good crosses 1.25x base in an idle run until clothing's
+unexplained creep at month ~160, so the hook would fire almost never, and its one
+firing would be that creep rather than a shortage; bound to it, the two events
+would also leave the hazard roll, where they arrive ~3 times a run (E5: commodity
+8.1 %). **New trigger to re-bind `com_price_high_desk` and `com_industry_bills`**,
+all three together: (1) a player verb or world event that can cause a real world
+shortage; (2) clothing's creep attributed, so it cannot fire the hook by
+mistake; (3) `events_probe` E4/E5 ticking Commodities, with the hook's real
+arrival rate measured before it ships. Left open: clothing creeps from 1.04x to 1.27x base over 168 months,
+unattributed.
 
 ### Same-month category collisions favour the early alphabet
 

@@ -142,10 +142,10 @@ const EVENT_COOLDOWN_MAX_MONTHS := 60
 const ARMS_DELAY_MIN_MONTHS := 1
 const ARMS_DELAY_MAX_MONTHS := 18
 
-## The on_action hooks whose emitters are LIVE in src/sim/events.gd. An event naming
+## The on_action hooks whose emitters are LIVE in src/sim/event_hooks.gd. An event naming
 ## anything else is a load error, and a name added to this list without its emitter is
 ## a test failure (tests/test_events.gd's `_test_the_hook_vocabulary_is_swept` reads
-## this list against `_hook_fired`'s match arms, BOTH directions) -- the
+## this list against `EventHooks.fired`'s (src/sim/event_hooks.gd) match arms, BOTH directions) -- the
 ## closed-vocabulary discipline of SUBJECT_OFFICES, applied to the thing that
 ## would otherwise be a stringly-typed hook id.
 ##

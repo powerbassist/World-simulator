@@ -74,8 +74,8 @@ extends RefCounted
 const K = preload("res://src/sim/events_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
-const OpinionK = preload("res://src/sim/opinion_constants.gd")
-const OrgsK = preload("res://src/sim/orgs_constants.gd")
+const EventHooks = preload("res://src/sim/event_hooks.gd")
+const EventChooser = preload("res://src/sim/event_chooser.gd")
 
 
 ## Runs for every nation so the register shape is uniform and duplicate_state()
@@ -207,7 +207,7 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 	# ever did, _cooldown_ok below already refuses the second delivery of any event,
 	# because _deliver stamps a cooldown of at least the next month.
 	for hook in K.ON_ACTIONS:
-		if not _hook_fired(state, ns, loader, hook, month_index):
+		if not EventHooks.fired(state, ns, loader, hook, month_index):
 			continue
 		for ev in loader.events:
 			if ev.on_action != hook:
@@ -382,105 +382,6 @@ static func _cooldown_ok(ns, ev, month_index: int) -> bool:
 	return int(ns.event_cooldowns.get(ev.id, -1)) <= month_index
 
 
-# --- The hooks: the emitters are reads off registers the machines write ---------
-
-## Whether the happening a hook names occurred, for THIS nation, this month. One
-## function per vocabulary entry, and events_constants.ON_ACTIONS' comment is the
-## contract: a name on that list without a branch here fails tests/test_events.gd's
-## `_test_the_hook_vocabulary_is_swept` (which reads both directions) rather than
-## shipping as a silent never-firing hook.
-static func _hook_fired(state, ns, loader, hook: String, month_index: int) -> bool:
-	match hook:
-		"law_passed":
-			# PURE ONE-MONTH LAG, minister_resigned's shape below: the ledger
-			# stamps at APPLY time, and the player's Propose/Force routes apply
-			# at COMMAND time (month M), which this machine first reads at M+1
-			# -- so a same-month read could never fire for them (measured: the
-			# hook stayed false at M+1 and fired only at M). The lag fires once,
-			# one month after a passage lands, for every passage the LEDGER
-			# records -- and that is why the same-month leg is dropped rather
-			# than kept beside it: with both legs, an in-tick passage (held-bill
-			# release, referendum settlement) fires twice, at M on the == leg
-			# and at M+1 on the lag. The ledger records only passages that moved
-			# a ledgered channel by a non-zero amount (Legislature._record_ledger
-			# returns early otherwise), so a passage that writes no ledgered
-			# channel (for example a purely institutional Act, or a pure repeal)
-			# never fires it, and one happening can fire two
-			# hooks: a carried private member's bill fires member_bill_passed at
-			# M and law_passed at M+1. Assembly bills are a DISTINCT hook
-			# (member_bill_passed below) reading its own stamp,
-			# assembly_bill_passed_month, which Cabinet-side ordering does not
-			# delay. No shipped event binds law_passed (docs/someday.md carries
-			# the gap).
-			for law_id in ns.law_ledger:
-				var months: Array = ns.law_ledger[law_id].get("months", [])
-				if not months.is_empty() and int(months[months.size() - 1]) == month_index - 1:
-					return true
-			return false
-		"law_repealed":
-			# V4.4's stamp: the ledger ERASE is silent in the V4.2 machine, so
-			# the repeal's month is written beside it (one line, one writer).
-			# PURE ONE-MONTH LAG, law_passed's shape above: the stamp lands at
-			# APPLY time and the player's Propose/Force repeals apply at COMMAND
-			# time, which this machine first reads at M+1 -- so a same-month read
-			# could never fire for them. The same-month leg is dropped for the
-			# sibling's reason: with both legs an in-tick repeal fires twice.
-			for law_id in ns.repealed_at:
-				if int(ns.repealed_at[law_id]) == month_index - 1:
-					return true
-			return false
-		"member_bill_passed":
-			# Reads its OWN stamp, written where an assembly bill comes into
-			# force (Statute's passing division, Legislature's held-bill release
-			# for origin "assembly") -- never last_law_result, which every later
-			# division of the month overwrites: a release at M was erased by a
-			# same-month private member's bill that failed, and the hook never
-			# saw it. A defeated, blocked or HELD division writes no stamp, so
-			# "passed" stays part of the name.
-			return ns.assembly_bill_passed_month == month_index
-		"minister_resigned":
-			# Cabinet writes the stamp AFTER this machine's slot in the month
-			# handler, so the readable window is LAST month's resignation -- the
-			# same one-month lag the character acts carry, and for the same
-			# reason. The register holds only the last resignation of a month,
-			# which makes this the one-hook-per-happening the break below wants.
-			var stamp: Dictionary = ns.last_resignation
-			if stamp.is_empty():
-				return false
-			return _absolute_month(int(stamp.get("year", 0)), int(stamp.get("month", 0))) == month_index - 1
-		"takeover_bid":
-			for company_id in ns.companies:
-				if int(ns.companies[company_id].get("bid_month", -1)) == month_index:
-					return true
-			return false
-		"firm_failed":
-			for company_id in ns.companies:
-				if int(ns.companies[company_id].get("failed_month", -1)) == month_index:
-					return true
-			return false
-		"commodity_price_high":
-			# An EDGE: Commodities stamps the month a good's price crossed UP
-			# through its high line (commodity_constants.HIGH_PRICE_RATIO of base),
-			# the one place both sides of the update are in hand, and this reads
-			# that stamp. It was a LEVEL read ("is any price at or above the
-			# line"), and the world vector drifts to its clamp within a few
-			# months, so the hook was true almost every month and flooded the
-			# desk. Commodities ticks before Events in every pinned harness
-			# (_EVENTS_READS_AFTER), so the same-month stamp is readable.
-			return ns.commodity_high_month == month_index
-		"accession_won":
-			# The UNION's accession. The stamp is org-generic (`_flip_membership`
-			# writes it for NATO, the eurozone, Schengen and the climate accord
-			# too), but the hook's only consumer is the Commission-and-treaty
-			# card, and a `once` event that burns its mark on a NATO accession is
-			# a card about the wrong institution -- so the org is tested HERE, at
-			# the emitter, rather than widening the hook vocabulary with a
-			# parameter nothing else needs.
-			return String(ns.last_accession.get("org", "")) == OrgsK.UNION_ORG_ID \
-				and int(ns.last_accession.get("month_index", -1)) == month_index
-	return false
-
-
 # --- Delivery ----------------------------------------------------------------------
 
 
@@ -549,7 +450,7 @@ static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -
 			region_names(ns, loader)
 		)
 		return true
-	var choice := _choose(ns, ev)
+	var choice := EventChooser.choose(ns, ev)
 	_resolve(state, ns, loader, ev, choice, false, {})
 	return true
 
@@ -679,75 +580,6 @@ static func answer(state, loader, event_id: String, choice_id: String) -> Dictio
 		return _resolve(state, ns, loader, ev, choice, false, entry)
 	return {}
 
-
-## The AI's desk is the same tick it announced in: score every choice against the
-## nation's own position and take the best. Minimal by events-model §5's closure
-## note -- approval-seeking on the size-weighted bloc response, a fiscal term
-## that prefers balance when the deficit is high, a cleanliness term when
-## corruption is high, a concession term when unrest is high -- and the terms
-## TRADE, which is the point: a deficit-running government in unrest would prefer the
-## concession a balanced one refuses. Deterministic; ties go to content order.
-##
-## THE BOUND, stated where the chooser is described: _choose runs only for AI
-## nations, and an AI nation's unrest_pct never ticks (Unrest.tick_month skips a
-## nation without has_budget) and its deficit_pct_gdp stays at its authored start (AI
-## answers skip the fiscal channels since pass 23, so no event answer recomputes it
-## either). So the unrest term is reachable only by a nation whose
-## unrest ticks -- for today's AI nations it reads its start value -- and the fiscal
-## term reads starting data. The trade-off above is a property of a budgeted nation
-## the day AI nations get a budget tick, with no edit here. See docs/someday.md, "The
-## AI nations' unrest and deficit registers never tick".
-static func _choose(ns, ev) -> Dictionary:
-	var best: Dictionary = {}
-	var best_score := -INF
-	for choice in ev.choices:
-		var score := _score_choice(ns, choice)
-		if score > best_score:
-			best_score = score
-			best = choice
-	return best
-
-
-static func _score_choice(ns, choice: Dictionary) -> float:
-	var effects: Dictionary = choice.get("effects", {})
-	var score := 0.0
-
-	var blocs: Dictionary = effects.get("bloc_offset", {})
-	var weighted := 0.0
-	var weight_sum := 0.0
-	for bloc in blocs:
-		var size: float = float(OpinionK.BLOC_SIZE.get(bloc, 0.0))
-		weighted += size * float(blocs[bloc])
-		weight_sum += size
-	if weight_sum > 0.0:
-		score += weighted / weight_sum
-
-	# Fiscal: a sign-and-size heuristic, not an accounting identity. A tax delta is
-	# points of a RATE and a spending delta is a share of GDP, so the two are in
-	# different units and the sum below is only a rough "does this push the balance
-	# the right way, and how hard" score. The sign is the register's own (a
-	# shortfall is POSITIVE -- E0's finding): revenue-raising adds, spending subtracts.
-	if float(ns.deficit_pct_gdp) > K.CHOOSER_DEFICIT_FLOOR:
-		var balance_delta := 0.0
-		for tax_key in effects.get("tax_rates_pct", {}):
-			balance_delta += float(effects["tax_rates_pct"][tax_key])
-		for spend_key in effects.get("spending_pct_gdp", {}):
-			balance_delta -= float(effects["spending_pct_gdp"][spend_key])
-		score += balance_delta * K.CHOOSER_FISCAL_WEIGHT
-
-	if float(ns.corruption) > K.CHOOSER_CORRUPTION_FLOOR:
-		# Corruption's better direction is unambiguous (E3's fourth axis), so a
-		# dirty government still prefers to clean up when the voters can see it.
-		score -= float(effects.get("society", {}).get("corruption", 0.0)) * K.CHOOSER_CORRUPTION_WEIGHT
-
-	if float(ns.unrest_pct) > K.CHOOSER_UNREST_FLOOR:
-		# A concession is new spending; settlement_stance has no better
-		# direction by design (E3's own argument), so the money is the honest
-		# proxy for what an unrestful country's government reaches for.
-		for spend_key in effects.get("spending_pct_gdp", {}):
-			score += float(effects["spending_pct_gdp"][spend_key]) * K.CHOOSER_UNREST_WEIGHT
-
-	return score
 
 
 # --- The resolution ----------------------------------------------------------------

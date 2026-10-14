@@ -200,6 +200,19 @@ static func tick_month(state, loader) -> void:
 	var per_capita := world_value * 1e9 / 12.0 / world_pop
 	for sector in world_sector_share.keys():
 		world_sector_share[sector] = float(world_sector_share[sector]) / (world_value * 1e9 / 12.0)
+	# THE DEMAND MIX IS ANCHORED to the world's AUTHORED sector mix (data/nations,
+	# static content), while its SIZE stays the live world output above. Read off
+	# the live register, demand moved one-for-one with capacity: a nation that lost
+	# its industry took the same slice out of the world's demand for industrial
+	# goods, the gap stayed 0, and no shortage ever reached a price (measured
+	# 2026-10-14 once the double count below was gone: FRA's industry zeroed for six
+	# months left steel's price unmoved). Anchored, a collapsed endowment is a real
+	# world shortfall. Static content, so a save needs no field: every load
+	# re-derives the same mix. A fixture loader without a nation's data keeps the
+	# live mix rather than inventing one.
+	var anchored := _authored_sector_share(loader, nation_ids)
+	if not anchored.is_empty():
+		world_sector_share = anchored
 
 	var structure: Dictionary = _loader_tables(loader)["structure"]
 	# Everything the loader alone determines, derived once for the whole tick
@@ -209,6 +222,7 @@ static func tick_month(state, loader) -> void:
 
 	# 1-3. Capacity, demand, production -- per nation.
 	var produced := {}
+	var made := {}
 	var demanded := {}
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
@@ -219,11 +233,13 @@ static func tick_month(state, loader) -> void:
 			capacity[good_id] = _bucket(ns, good, structure) / float(good.base_price)
 			demand[good_id] = _want(ns, good, structure, world_sector_share, per_capita)
 		var out: Dictionary = _zeros(loader)
+		var gross: Dictionary = _zeros(loader)
 		# Last month's price vector, which is the one the nation's own register
 		# carries -- every nation's copy is the same numbers, so the route a
 		# nation picks cannot depend on which copy it read.
-		_produce(tables, capacity, ns.commodity_state["price"], out)
+		_produce(tables, capacity, ns.commodity_state["price"], out, gross)
 		produced[nation_id] = out
+		made[nation_id] = gross
 		demanded[nation_id] = demand
 
 	# 4. Trade, one good at a time: that good's surplus nations against its
@@ -266,7 +282,17 @@ static func tick_month(state, loader) -> void:
 	# three-month cap). The flow is the honest signal: a good the world cannot make
 	# this month is dear this month.
 	#
-	# Read on PRODUCTION and not on what each nation ended up holding, which is
+	# Read on GROSS production -- every unit made, before the recipes downstream
+	# took their inputs back out -- because the demand side already carries that
+	# pull: `_structure()` weighs each good by its own use plus every recipe's
+	# use of it, and capacity and demand both read that weight. Comparing it with
+	# the NETTED `out` counted intermediate use twice, so every good that is some
+	# recipe's input started short and rose until it hit the clamp (measured
+	# 2026-10-14: 2 goods >= 1.25x base at month 1, 15 at month 3, cotton at
+	# the 1.75x clamp; on gross production, 0 and 1). A real shortage still
+	# shows: Leontief caps a good's gross output when its input runs out.
+	#
+	# Read on production and not on what each nation ended up holding, which is
 	# what makes the step safe to run after trade: trade only moves units between
 	# nations, so the world totals it compares are the same before and after and
 	# the ordering cannot change the answer.
@@ -276,7 +302,7 @@ static func tick_month(state, loader) -> void:
 		var have_total := 0.0
 		for nation_id in nation_ids:
 			want_total += float(demanded[nation_id][good_id])
-			have_total += float(produced[nation_id][good_id])
+			have_total += float(made[nation_id][good_id])
 		var gap := (want_total - have_total) / want_total if want_total > 0.0 else 0.0
 		gaps[good_id] = clampf(gap, -1.0, 1.0)
 
@@ -330,6 +356,9 @@ static func tick_month(state, loader) -> void:
 ## consumer of the same input reads the reduced figure with no second register to
 ## keep in step.
 ##
+## `gross` takes every unit made BEFORE that decrement -- the price gap reads it
+## (step 5), since demand already carries the downstream pull.
+##
 ## Route choice is by cost and not by availability, a stated limitation rather
 ## than a claim: a nation with no coal takes the coal route and produces nothing
 ## where another route was affordable. Recorded as the first thing a later session
@@ -341,7 +370,7 @@ static func tick_month(state, loader) -> void:
 ## are derived ONCE per loader rather than once per nation per month. The
 ## unhoisted form was a 60-round relaxation and a full recipe scan per good per
 ## nation -- 29 nations' worth of the same answer, every tick.
-static func _produce(tables: Dictionary, capacity: Dictionary, price: Dictionary, out: Dictionary) -> void:
+static func _produce(tables: Dictionary, capacity: Dictionary, price: Dictionary, out: Dictionary, gross: Dictionary) -> void:
 	var routes: Dictionary = tables["routes"]
 	for good_id in tables["order"]:
 		var cap := maxf(float(capacity.get(good_id, 0.0)), 0.0)
@@ -356,6 +385,7 @@ static func _produce(tables: Dictionary, capacity: Dictionary, price: Dictionary
 		if target <= 0.0:
 			continue
 		out[good_id] = float(out.get(good_id, 0.0)) + target
+		gross[good_id] = float(gross.get(good_id, 0.0)) + target
 		if route != null:
 			for input_id in route.inputs.keys():
 				out[String(input_id)] = float(out[String(input_id)]) - float(route.inputs[input_id]) * target
@@ -549,6 +579,32 @@ static func _bucket(ns, good: Dictionary, structure: Dictionary) -> float:
 
 static func _sector_of(loader, good_id: String) -> String:
 	return String(CATEGORY_SECTOR.get(String(loader.commodity_goods[good_id].category), "industry"))
+
+
+## The world's sector mix as authored: each nation's measured GDP times its
+## measured sector shares, summed and normalised. Empty when any nation in play
+## has no authored record, so the caller falls back to the live mix.
+static func _authored_sector_share(loader, nation_ids: Array) -> Dictionary:
+	var nations = loader.get("nations")
+	if not (nations is Dictionary):
+		return {}
+	var weight := {}
+	var total := 0.0
+	for nation_id in nation_ids:
+		if not nations.has(nation_id):
+			return {}
+		var n = nations[nation_id]
+		var gdp := float(n.gdp_eur_bn)
+		var sectors: Dictionary = n.sectors
+		for sector in sectors.keys():
+			var w := gdp * float(sectors[sector])
+			weight[sector] = float(weight.get(sector, 0.0)) + w
+			total += w
+	if total <= 0.0:
+		return {}
+	for sector in weight.keys():
+		weight[sector] = float(weight[sector]) / total
+	return weight
 
 
 static func _sector_value(ns, sector: String) -> float:
