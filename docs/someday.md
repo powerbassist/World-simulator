@@ -21,7 +21,7 @@ when it is taken, and record the decision where the line points.
 - [x] V4.4 re-baseline: 24 outcome flips, 20 of them HELD→LOST at the 2032 election through the default-drain channel. Tune the defaults' authored means, tune `CATEGORY_QUIET_MONTHS`, or accept the bound (`reports/v44-rerun-prediction.md`). **Decided 2026-10-14: accept the bound** -- ignoring the desk is meant to cost; the defaults' means and the quiet stay as shipped ✅ 2026-10-14
 - [ ] Event-art contact sheet: the plates lean photographic, not painterly. Accept or re-render ([[event-art-plan]])
 - [ ] The book has no true "protect industry" option: `com_industry_bills.protect_the_makers` is a regulation
-- [ ] Re-run `events_probe` E4/E5 since the two commodity events were unbound from their hook (over an hour, run alone)
+- [x] Re-run `events_probe` E4/E5 since the two commodity events were unbound from their hook (over an hour, run alone). **Re-run 2026-10-14** on the split events.gd and the drift-fixed commodities: E4 shipped quiet 3 = 37 arrivals, 12.0 per term, max desk 3, 0.0 % overfull; E5 every category <= 18.9 % (scandal) against 30, commodity 8.1 %; every declared band PASSED. Unchanged from V4.4's recorded 12.0/term and 18.9 % ✅ 2026-10-14
 - [ ] V3.7 portrait generation left incomplete on the unmerged `v3.7-phase-b` ([[v3]] close-out, item 3)
 
 ## Carried from V4.2's close-out (2026-10-05)
