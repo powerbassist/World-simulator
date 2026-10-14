@@ -69,6 +69,9 @@ func _init() -> void:
 	_check_the_treaty_is_a_bill()
 	_check_a_withdrawal_ends_the_ratification()
 	_check_a_leaving_sponsor_charges_nothing()
+	_check_the_chair_picks_inside_its_window()
+	_check_a_treaty_iou_settles_at_home()
+	_check_malformed_presidency_types_are_refused()
 	_finish()
 
 
@@ -321,13 +324,21 @@ func _check_an_ai_chair_opens_what_it_wants() -> void:
 	var kept := _with_presidency(["DEU"], 6, 2000, 1)
 	var best = null
 	var best_s := -INF
+	# Inside the chair's window: the first CHAIR_WINDOW eligible proposals from the
+	# rotation's start (V4.5b1 -- the pick is no longer over the whole book).
+	var in_window := 0
 	for p in _loader.org_proposals[EU_ORG]:
+		if not Orgs._eligible(state, EU_ORG, p):
+			continue
+		in_window += 1
+		if in_window > CouncilK.CHAIR_WINDOW:
+			break
 		var s: float = Orgs.support(state, state.nations["DEU"], p)
 		if s > best_s:
 			best_s = s
 			best = p
 	var opened := _tick_until_open(state, EU_ORG)
-	_ok(opened == best.id, "DEU chair opened '%s', expected its most-supported '%s'" % [opened, best.id])
+	_ok(opened == best.id, "DEU chair opened '%s', expected its most-supported in-window '%s'" % [opened, best.id])
 	_restore_presidency(kept)
 
 
@@ -388,7 +399,9 @@ func _force(state, proposal_id: String, choice: String, decision := "", all_for 
 		"summary": proposal.summary, "months_left": 1,
 		"player_vote": Orgs.VOTE_ABSTAIN, "sponsor": Council.live_sponsor(state, proposal),
 		"lobbied": lobbied,
-		"opened_year": state.year, "opened_month": state.month,
+		# A forced division is a LATER opening than any bargain struck in the setup: debts
+		# are keyed by the opening stamp, and the same-month stamp would read as "this division".
+		"opened_year": state.year, "opened_month": state.month + 1,
 	}
 	if not Orgs.cast_vote(state, EU_ORG, choice):
 		_fail("cast_vote(%s) refused" % choice)
@@ -483,7 +496,7 @@ func _force_sponsored(state, p, choice: String) -> void:
 		"proposal_id": p.id, "name": p.proposal_name, "summary": p.summary,
 		"months_left": 1, "player_vote": Orgs.VOTE_ABSTAIN,
 		"sponsor": Council.live_sponsor(state, p),
-		"opened_year": state.year, "opened_month": state.month,
+		"opened_year": state.year, "opened_month": state.month + 1,
 	}
 	Orgs.cast_vote(state, EU_ORG, choice)
 	Orgs.tick_month(state, _loader)
@@ -855,3 +868,76 @@ func _open_sponsored(p, sponsor: String) -> Dictionary:
 			_ok(String((last.get("reasons", {}) as Dictionary).get(id, "")) == CouncilK.REASON_LOBBIED, "%s's flipped vote is not named as lobbied (%s)" % [id, (last.get("reasons", {}) as Dictionary).get(id, "")])
 	p.sponsor = kept
 	return lobbied
+
+
+func _check_the_chair_picks_inside_its_window() -> void:
+	# A chair may only open one of the next CHAIR_WINDOW eligible proposals in
+	# rotation order, and the rotation advances one step per opening: the
+	# favourite cannot be re-opened every time it chairs.
+	var kept := _with_presidency(["DEU"], 6, 2000, 1)
+	var state = _fresh()
+	var all: Array = _loader.org_proposals[EU_ORG]
+	var seen := {}
+	for i in all.size():
+		# The window as the machine will see it at the opening: the next
+		# CHAIR_WINDOW ELIGIBLE proposals from next_index (a rule adopted by an
+		# earlier division drops out, so the window is read live, not assumed).
+		state.orgs[EU_ORG]["months_to_next"] = 1
+		var start := int(state.orgs[EU_ORG].get("next_index", 0))
+		var window: Array = []
+		for offset in all.size():
+			var p = all[(start + offset) % all.size()]
+			if Orgs._eligible(state, EU_ORG, p):
+				window.append(p.id)
+				if window.size() >= CouncilK.CHAIR_WINDOW:
+					break
+		Orgs.tick_month(state, _loader)
+		var id := String(Orgs.pending(state, EU_ORG).get("proposal_id", ""))
+		_ok(window.has(id), "opening %d chose '%s' outside its window %s" % [i, id, window])
+		seen[id] = true
+		state.orgs[EU_ORG]["pending"]["months_left"] = 1
+		Orgs.tick_month(state, _loader)  # divide it so the next can open
+	# The rotation advanced: over a full cycle the one chair did not just
+	# re-open its favourite.
+	_ok(seen.size() > 1, "a single chair opened the same proposal %d times running" % all.size())
+	_restore_presidency(kept)
+
+
+func _check_a_treaty_iou_settles_at_home() -> void:
+	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
+	var kept: String = p.sponsor
+	p.sponsor = "ITA"
+	for rejected in [false, true]:
+		var state = _fresh()
+		_open(state, _loader.org_proposals[EU_ORG][0].id)
+		Council.bargain(state, EU_ORG, "ITA", CouncilK.CURRENCY_VOTE_TRADE, CouncilK.ASK_FOR)
+		Orgs.tick_month(state, _loader)
+		_force(state, "recovery_facility", Orgs.VOTE_FOR, CouncilK.DECISION_UNANIMITY, true)
+		var debts: Array = state.orgs[EU_ORG]["debts"]
+		_ok(debts.size() == 1 and String(debts[0].get("awaiting", "")) == "recovery_facility",
+			"a FOR on a carried treaty did not leave the IOU awaiting ratification")
+		var r0: float = RK.score(state, PLAYER, "ITA")
+		Orgs.record_ratification(state, _loader, EU_ORG, PLAYER, not rejected)
+		var delta: float = r0 - RK.score(state, PLAYER, "ITA")
+		_ok((state.orgs[EU_ORG]["debts"] as Array).is_empty(), "the awaiting IOU was not settled when ratification ended")
+		if rejected:
+			var expected: float = CouncilK.IOU_BETRAYAL + CouncilK.RATIFY_FAIL_SPONSOR * Council.drive(state, _loader, "ITA")
+			_ok(is_equal_approx(delta, expected), "killing the creditor's treaty at home cost %.3f, expected %.3f" % [delta, expected])
+		else:
+			_ok(is_equal_approx(delta, 0.0), "ratifying repaid the IOU but moved relations by %.3f" % delta)
+	p.sponsor = kept
+
+
+func _check_malformed_presidency_types_are_refused() -> void:
+	var bad := [
+		{"presidency": ["FRA"]},
+		{"presidency": "FRA"},
+		{"decision_rule": 5},
+		{"presidency": {"order": [7], "months": 6, "anchor": {"year": 2025, "month": 1}}},
+		{"presidency": {"order": ["FRA"], "months": 6.5, "anchor": {"year": 2025, "month": 1}}},
+		{"presidency": {"order": ["FRA"], "months": 6, "anchor": {"year": 1999, "month": 1}}},
+	]
+	for extra in bad:
+		var errors: Array[String] = []
+		Org.from_dict(_org_dict(extra), "probe.json", errors)
+		_ok(not errors.is_empty(), "malformed org field accepted silently: %s" % [extra])

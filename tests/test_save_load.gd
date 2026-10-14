@@ -631,7 +631,7 @@ func _run_council_registers_roundtrip(loader) -> void:
 	reg["tabled"] = {"proposal_id": "recovery_facility", "by": "FRA"}
 	reg["ratifying"] = {"proposal_id": "stability_pact", "name": "x", "sponsor": "DEU", "months_left": 4, "nations": {"FRA": "pending"}}
 	reg["aid"] = [{"payer": "FRA", "recipient": "ITA", "pct_gdp": 0.05, "months_left": 7}]
-	reg["debts"] = [{"debtor": "FRA", "creditor": "ITA", "made_on": "cohesion_fund", "months_left": 33}]
+	reg["debts"] = [{"debtor": "FRA", "creditor": "ITA", "made_on": 24312, "months_left": 33, "awaiting": "stability_pact"}]
 	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
 	var b: Dictionary = back.orgs["eu"]
 	if String(b.get("agenda_choice", "")) != "cohesion_fund":
@@ -647,6 +647,8 @@ func _run_council_registers_roundtrip(loader) -> void:
 	var debts: Array = b.get("debts", [])
 	if debts.size() != 1 or typeof(debts[0]["months_left"]) != TYPE_INT or int(debts[0]["months_left"]) != 33:
 		_fail("council debts did not come back typed")
+	elif typeof(debts[0]["made_on"]) != TYPE_INT or int(debts[0]["made_on"]) != 24312 or String(debts[0]["awaiting"]) != "stability_pact":
+		_fail("council debt made_on/awaiting did not come back typed")
 
 	# A version-39 save: strip every V4.5a key and load it.
 	var d: Dictionary = JSON.parse_string(JSON.stringify(GameState.new_game(loader, "FRA").to_dict()))

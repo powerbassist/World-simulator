@@ -577,6 +577,10 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     and never ratified, so their absence reads true as well. The rule -- "would
 ##     a missing field read as something wrong?" -- answers no for every one.
 ##     Pinned by tests/test_save_load.gd.
+##     `made_on` became the opening stamp (int) at V4.5b1; a v39 save's string
+##     `made_on` reads as -1, which matches no opening, so an old debt simply
+##     settles at the creditor's next division -- the honest reading; `awaiting`
+##     absent reads "", no treaty pending. No bump.
 const SAVE_VERSION := 39
 
 var save_version: int = SAVE_VERSION
@@ -1510,7 +1514,8 @@ static func from_dict(d: Dictionary):
 		for e in (reg.get("debts", []) as Array):
 			org_register["debts"].append({
 				"debtor": String(e.get("debtor", "")), "creditor": String(e.get("creditor", "")),
-				"made_on": String(e.get("made_on", "")), "months_left": int(e.get("months_left", 0)),
+				"made_on": int(e.get("made_on", -1)), "months_left": int(e.get("months_left", 0)),
+				"awaiting": String(e.get("awaiting", "")),
 			})
 		var org_pend: Dictionary = org_register["pending"]
 		if not (org_pend as Dictionary).is_empty():

@@ -215,8 +215,8 @@ static func bargain(state, org_id: String, target_id: String, currency: String, 
 				return false
 		debts.append({
 			"debtor": ns.id, "creditor": target_id,
-			"made_on": String(pending.get("proposal_id", "")),
-			"months_left": CouncilK.IOU_EXPIRY_MONTHS,
+			"made_on": int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0)),
+			"months_left": CouncilK.IOU_EXPIRY_MONTHS, "awaiting": "",
 		})
 		register["debts"] = debts
 		amount = CouncilK.IOU_SWING
@@ -259,9 +259,13 @@ static func tick_register(state, org_id: String) -> void:
 
 
 ## At a division the creditor sponsors, every IOU owed to it comes due. A `for`
-## repays it; anything else is a betrayal, priced on top of whatever the sponsor
-## charges for the vote itself. A debt struck in THIS division is not due in it.
-static func settle_debts(state, org_id: String, sponsor_id: String, proposal_id: String, by_nation: Dictionary) -> void:
+## repays it -- unless the division is a treaty going home (`treaty_id` set),
+## where a `for` only ARMS the repayment: backing the creditor's treaty at
+## council and killing it in your own assembly is the betrayal it looks like
+## (author's call, 2026-10-14). Anything else is a betrayal now. A debt struck
+## at THIS division's opening is not due in it (keyed by the opening stamp, not
+## the proposal id, so a proposal re-opened years later is a new division).
+static func settle_debts(state, org_id: String, sponsor_id: String, opened_stamp: int, by_nation: Dictionary, treaty_id := "") -> void:
 	if sponsor_id == "":
 		return
 	var register: Dictionary = state.orgs[org_id]
@@ -271,11 +275,32 @@ static func settle_debts(state, org_id: String, sponsor_id: String, proposal_id:
 	var kept: Array = []
 	for d in debts:
 		var debtor := String(d.get("debtor", ""))
-		if String(d.get("creditor", "")) != sponsor_id or String(d.get("made_on", "")) == proposal_id or not by_nation.has(debtor):
+		if String(d.get("creditor", "")) != sponsor_id or int(d.get("made_on", -1)) == opened_stamp \
+				or not by_nation.has(debtor) or String(d.get("awaiting", "")) != "":
 			kept.append(d)
 			continue
 		if String(by_nation[debtor]) != CouncilK.ASK_FOR:
 			spend_relations(state, debtor, sponsor_id, CouncilK.IOU_BETRAYAL)
+		elif treaty_id != "":
+			d["awaiting"] = treaty_id
+			kept.append(d)
+	register["debts"] = kept
+
+
+## A treaty's ratification ended: every IOU awaiting it settles. A debtor that
+## killed it at home pays the betrayal; every other awaiting debt is repaid.
+static func settle_awaiting(state, org_id: String, treaty_id: String, failing: Array) -> void:
+	var register: Dictionary = state.orgs[org_id]
+	var debts: Array = register.get("debts", [])
+	if debts.is_empty():
+		return
+	var kept: Array = []
+	for d in debts:
+		if String(d.get("awaiting", "")) != treaty_id:
+			kept.append(d)
+			continue
+		if failing.has(String(d.get("debtor", ""))):
+			spend_relations(state, String(d.get("debtor", "")), String(d.get("creditor", "")), CouncilK.IOU_BETRAYAL)
 	register["debts"] = kept
 
 

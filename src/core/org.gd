@@ -165,12 +165,18 @@ static func from_dict(raw: Dictionary, fname: String, errors: Array[String]):
 	org.accession_position = _extract_position(raw.get("accession_position", {}), "accession_position", org.id, fname, errors)
 	org.withdrawal_position = _extract_position(raw.get("withdrawal_position", {}), "withdrawal_position", org.id, fname, errors)
 
-	org.decision_rule = String(raw.get("decision_rule", CouncilK.DECISION_QMR))
+	var raw_rule = raw.get("decision_rule", CouncilK.DECISION_QMR)
+	if typeof(raw_rule) != TYPE_STRING:
+		errors.append("%s: %s decision_rule must be a string" % [fname, org.id])
+		raw_rule = CouncilK.DECISION_QMR
+	org.decision_rule = String(raw_rule)
 	if not CouncilK.DECISION_RULES.has(org.decision_rule):
 		errors.append("%s: %s decision_rule '%s' is not one of %s" % [fname, org.id, org.decision_rule, CouncilK.DECISION_RULES])
 		org.decision_rule = CouncilK.DECISION_QMR
 
 	var raw_pres = raw.get("presidency", {})
+	if raw.has("presidency") and typeof(raw_pres) != TYPE_DICTIONARY:
+		errors.append("%s: %s presidency must be an object" % [fname, org.id])
 	if typeof(raw_pres) == TYPE_DICTIONARY and not (raw_pres as Dictionary).is_empty():
 		org.presidency = _extract_presidency(raw_pres, org, fname, errors)
 	return org
@@ -203,6 +209,9 @@ static func _extract_presidency(raw: Dictionary, org, fname: String, errors: Arr
 		errors.append("%s: %s presidency.order missing or empty" % [fname, org.id])
 		return {}
 	for entry in raw_order:
+		if typeof(entry) != TYPE_STRING:
+			errors.append("%s: %s presidency.order entries must be strings" % [fname, org.id])
+			return {}
 		var id := String(entry)
 		if not org.members.has(id):
 			errors.append("%s: %s presidency.order names '%s', not an authored member" % [fname, org.id, id])
@@ -211,7 +220,12 @@ static func _extract_presidency(raw: Dictionary, org, fname: String, errors: Arr
 			errors.append("%s: %s presidency.order names '%s' twice" % [fname, org.id, id])
 			return {}
 		order.append(id)
-	var months := int(raw.get("months", 0))
+	var raw_months = raw.get("months", 0)
+	var whole: bool = typeof(raw_months) == TYPE_INT or (typeof(raw_months) == TYPE_FLOAT and float(raw_months) == roundf(float(raw_months)))
+	if not whole:
+		errors.append("%s: %s presidency.months must be a whole number" % [fname, org.id])
+		return {}
+	var months := int(raw_months)
 	if months < CouncilK.MIN_PRESIDENCY_MONTHS or months > CouncilK.MAX_PRESIDENCY_MONTHS:
 		errors.append("%s: %s presidency.months %d outside [%d, %d]" % [
 			fname, org.id, months, CouncilK.MIN_PRESIDENCY_MONTHS, CouncilK.MAX_PRESIDENCY_MONTHS,
@@ -220,7 +234,7 @@ static func _extract_presidency(raw: Dictionary, org, fname: String, errors: Arr
 	var anchor = raw.get("anchor", {})
 	var year := int(anchor.get("year", 0)) if typeof(anchor) == TYPE_DICTIONARY else 0
 	var month := int(anchor.get("month", 0)) if typeof(anchor) == TYPE_DICTIONARY else 0
-	if year < 2000 or year > 2100 or month < 1 or month > 12:
+	if year < CouncilK.MIN_ANCHOR_YEAR or year > CouncilK.MAX_ANCHOR_YEAR or month < 1 or month > 12:
 		errors.append("%s: %s presidency.anchor out of range" % [fname, org.id])
 		return {}
 	return {"order": order, "months": months, "anchor_index": year * 12 + (month - 1)}

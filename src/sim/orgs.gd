@@ -488,11 +488,32 @@ static func _presidency_pick(state, loader, org_id: String):
 			return null
 		var cp = _proposal_by_id(loader, org_id, choice)
 		return cp if cp != null and _eligible(state, org_id, cp) else null
+	# The window: the next CHAIR_WINDOW eligible proposals in rotation order.
+	# The rotation advances past the window's FIRST entry whatever the chair
+	# picks, so a proposal the chair passes over is next cycle's question
+	# rather than buried for good, and the chair's favourite cannot be
+	# re-opened every time it sits (V4.5a final review #4).
+	var all: Array = loader.org_proposals.get(org_id, [])
+	if all.is_empty():
+		return null
+	var start := int(register.get("next_index", 0))
+	var window: Array = []
+	var first := -1
+	for offset in all.size():
+		var i: int = (start + offset) % all.size()
+		if not _eligible(state, org_id, all[i]):
+			continue
+		if first < 0:
+			first = i
+		window.append(all[i])
+		if window.size() >= CouncilK.CHAIR_WINDOW:
+			break
+	if window.is_empty():
+		return null
+	register["next_index"] = (first + 1) % all.size()
 	var best = null
 	var best_s := -INF
-	for p in loader.org_proposals.get(org_id, []):
-		if not _eligible(state, org_id, p):
-			continue
+	for p in window:
 		var s: float = support(state, cns, p)
 		if s > best_s:
 			best_s = s
@@ -600,17 +621,22 @@ static func _resolve(state, loader, org_id: String) -> void:
 	register["pending"] = {}
 	# V4.5a. The sponsor answers the human members' votes whichever way it went.
 	Council.answer_sponsor(state, loader, String(pending.get("sponsor", "")), by_nation)
-	Council.settle_debts(state, org_id, String(pending.get("sponsor", "")), proposal.id, by_nation)
+	# The members whose assembly the game runs: a carried unanimity proposal goes
+	# home to them. Scanned once, above both the IOU settlement (a `for` on a
+	# treaty only arms its repayment) and the ratification below.
+	var home := {}
+	for id in members(state, org_id):
+		if state.nations[id].has_budget:
+			home[id] = CouncilK.RATIFY_PENDING
+	var goes_home: bool = passed and decision == CouncilK.DECISION_UNANIMITY and not home.is_empty()
+	var opened_stamp: int = int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0))
+	Council.settle_debts(state, org_id, String(pending.get("sponsor", "")), opened_stamp, by_nation, proposal.id if goes_home else "")
 
 	if passed and decision == CouncilK.DECISION_UNANIMITY:
 		# The treaty class goes home before it binds. Every member whose politics
 		# the game runs must ratify; the AI members that voted for it are taken to
 		# have ratified (they have no assembly the game simulates -- a bound,
 		# recorded in docs/orgs-model.md, not a model).
-		var home := {}
-		for id in members(state, org_id):
-			if state.nations[id].has_budget:
-				home[id] = CouncilK.RATIFY_PENDING
 		if not home.is_empty():
 			register["ratifying"] = {
 				"proposal_id": proposal.id,
@@ -840,6 +866,7 @@ static func _adopt_if_ratified(state, loader, org_id: String) -> void:
 	var proposal = _proposal_by_id(loader, org_id, String(r["proposal_id"]))
 	register["ratifying"] = {}
 	_mark_ratification(register, String(r["proposal_id"]), "ratified")
+	Council.settle_awaiting(state, org_id, String(r["proposal_id"]), [])
 	if proposal != null:
 		_adopt(state, loader, org_id, proposal)
 
@@ -869,6 +896,7 @@ static func _treaty_falls(state, loader, org_id: String, failing: Array) -> void
 	register["ratifying"] = {}
 	_mark_ratification(register, String(r.get("proposal_id", "")), "failed")
 	Council.price_failed_treaty(state, loader, org_id, String(r.get("sponsor", "")), failing)
+	Council.settle_awaiting(state, org_id, String(r.get("proposal_id", "")), failing)
 
 
 ## The division record says how ratification ended -- only if it is still the

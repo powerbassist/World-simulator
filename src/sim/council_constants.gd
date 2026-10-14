@@ -104,3 +104,16 @@ const RATIFY_DONE := "ratified"
 ## appraisal and these name what was done TO the appraisal.
 const REASON_LOBBIED := "lobbied"
 const REASON_BARGAINED := "bargained"
+
+## The AI chair's agenda power, bounded (author's call, 2026-10-14): it opens
+## its most-supported proposal among the next CHAIR_WINDOW eligible ones in
+## rotation order, and the rotation advances one step per opening whatever it
+## picks. Three: a semester chair shapes the next file or two, not the whole
+## book -- unbounded, a chair re-opened its favourite every term it sat and a
+## proposal no chair ranked first never opened (V4.5a's final review, #4).
+const CHAIR_WINDOW := 3
+
+## The years an authored presidency anchor may name. Validation bounds, kept
+## here so the loader holds no bare number.
+const MIN_ANCHOR_YEAR := 2000
+const MAX_ANCHOR_YEAR := 2100
