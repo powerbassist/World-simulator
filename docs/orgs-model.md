@@ -276,7 +276,9 @@ member, `FAVOUR_RELATIONS_COST`, refused below `FAVOUR_MIN_RELATIONS`, swing
 line for `AID_MONTHS`, swing `AID_SWING` — money is the price, through the
 budget line orgs.gd already sums); or a VOTE TRADE (an IOU, swing `IOU_SWING`:
 the next division the creditor sponsors, the player owes a `for`; anything else
-costs `IOU_BETRAYAL` relations; unpaid IOUs lapse after `IOU_EXPIRY_MONTHS`).
+costs `IOU_BETRAYAL` relations; unpaid IOUs lapse after `IOU_EXPIRY_MONTHS` + 1 register ticks -- the
+register counts 60..0 inclusive, the same rule that pays aid in exactly
+`AID_MONTHS` months).
 A swing enters the member's vote as an additive on its appraisal; the
 division's recorded reason names the bargain only when the bargain flipped it.
 
@@ -306,6 +308,14 @@ the game runs; recorded as a bound, not modelled.
   treaty forecast sits inside [40 %, 60 %] yes for at least two authored treaties.
 - C5 the BURDEN_MAX re-measure — raw cross-org burden at total defiance with the
   V4.5b register, recorded with its number against the V3.5 1.33.
+
+**The V4.5a re-run, PREDICTED 2026-10-14 before it ran:** BIT-IDENTICAL on every
+`tools/balance_probe.gd` regime, both sides from worktrees (base `main` at
+9e11165, candidate `v4.5-council`). The inertness clause is the whole argument:
+the shipped register carries no `presidency`, no `decision`/`decision_rule`
+and no `sponsor`, and no regime issues a council command, so every new path
+collapses to V4.4's (swing +0.0, aid line +0.0, empty registers skipped). One
+moved line outside the per-machine `listening on 127.0.0.1` noise is a DEFECT.
 
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]
