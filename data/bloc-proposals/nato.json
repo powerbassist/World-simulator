@@ -1,6 +1,6 @@
 {
   "_source": "authored",
-  "_note": "The 2 percent defence floor, MOVED at V3.2 from data/bloc-proposals/union_policy.json where V1.3d authored it as an EU proposal. Every term of it -- id, name, summary, position, constraint -- is unchanged; only the org it reaches changed, and with it the council that votes: eight members including GBR and excluding AUT and CHE, on the alliance's own roster. The floor it constrains is spending_defence, the tolerance and severity are the V1.3d numbers, and the eu's severity table now sums to 0.78 against BURDEN_MAX 1.0 -- the exact-sum property that table carried was a consequence of authoring four rules to fill the ceiling, and the move changes the authored set. V4.5b: NATO decides by consensus (data/orgs/nato.json), so this floor is a unanimity question sponsored by POL, the eastern flank's ask. At the V3.2 position (0.55, 0.8) four members below 2 percent (ESP, GBR, NLD, SVN) vetoed. The sweep moved it to (0.4, 0.0), where POL's lobbying carries the room and France's own vote decides it. The five V4.5b rows were placed by `--sweep`, aiming for three that France decides and three lost even with her vote. A consensus council has no carries-alone verdict, because France's \"against\" is a veto. Each lost row is vetoed by one to three members. defence_floor_2_5 runs at severity 0.15 and sits at (0.0, 0.4); NLD and SVN veto it. Its sponsor is FIN rather than DEU, because DEU is under 2.5 itself and vetoed its own proposal. defence_floor_3_5 runs at severity 0.08, under the 2.5 floor's: at 0.20 thirteen members vetoed at the centre, and the grid offered nothing at three or fewer. It sits at (0.0, 0.8); NLD and SVN veto it. A 3.5 percent pledge that binds lightly is the only one this council could ever carry. eastern_flank_fund is sponsored by DNK; CZE vetoes it. POL, LTU, LVA and EST each vetoed their own proposal on every lost cell: the transfer term prices every ally as a payer, and a sponsor never lobbies itself. resilience_floor and common_funding_increase are France's to decide on every cell, or nearly every cell.",
+  "_note": "The 2 percent defence floor, MOVED at V3.2 from data/bloc-proposals/union_policy.json where V1.3d authored it as an EU proposal. Every term of it -- id, name, summary, position, constraint -- is unchanged; only the org it reaches changed, and with it the council that votes: eight members including GBR and excluding AUT and CHE, on the alliance's own roster. The floor it constrains is spending_defence, the tolerance and severity are the V1.3d numbers, and the eu's severity table now sums to 0.78 against BURDEN_MAX 1.0 -- the exact-sum property that table carried was a consequence of authoring four rules to fill the ceiling, and the move changes the authored set. V4.5b: NATO decides by consensus (data/orgs/nato.json), so this floor is a unanimity question sponsored by POL, the eastern flank's ask. At the V3.2 position (0.55, 0.8) four members below 2 percent (ESP, GBR, NLD, SVN) vetoed. The sweep moved it to (0.4, 0.0), where POL's lobbying carries the room and France's own vote decides it. The five V4.5b rows were placed by `--sweep`, aiming for three that France decides and three lost even with her vote. A consensus council has no carries-alone verdict, because France's \"against\" is a veto. Each lost row is vetoed by one to three members. defence_floor_2_5 runs at severity 0.15. It is sponsored by DEU, the plan's choice; DEU vetoed its own proposal until the sponsor rule of 2026-10-15. The sweep then put it at (0.0, -0.4), the cell where only ITA vetoes. defence_floor_3_5 runs at severity 0.08, under the 2.5 floor's: at 0.20 thirteen members vetoed at the centre, and the grid offered nothing at three or fewer. It sits at (0.0, 0.8); NLD and SVN veto it. A 3.5 percent pledge that binds lightly is the only one this council could ever carry. eastern_flank_fund is sponsored by POL; CZE and ROU veto it. Before the sponsor rule, POL, LTU, LVA and EST each vetoed their own proposal on every lost cell: the transfer term prices every ally as a payer, and a sponsor never lobbies itself. resilience_floor and common_funding_increase are France's to decide on every cell, or nearly every cell. Gate G1 (carries-alone, player-decides and lost-anyway, plus an abstention window among the qmr rows) is WAIVED for this council as a structural bound: an all-unanimity consensus council makes France's \"against\" a veto, so carries-alone cannot exist, and it has no qmr row to hold the window (author's call, 2026-10-15).",
   "proposals": [
     {
       "id": "common_defence_floor",
@@ -35,12 +35,12 @@
     {
       "id": "defence_floor_2_5",
       "org": "nato",
-      "sponsor": "FIN",
+      "sponsor": "DEU",
       "name": "Defence Commitment at 2.5%",
       "summary": "The pledge raised by half a point: defence spending at or above 2.5% of GDP. Most of the eastern allies are already past it; most of the western ones would have to find the money.",
       "position": {
         "economic": 0.0,
-        "social": 0.4
+        "social": -0.4
       },
       "constraint": {
         "field": "spending_defence",
@@ -53,7 +53,7 @@
     {
       "id": "eastern_flank_fund",
       "org": "nato",
-      "sponsor": "DNK",
+      "sponsor": "POL",
       "name": "Eastern Flank Fund",
       "summary": "A common fund for forward-deployed brigades, air defence and fuel stocks on the alliance's eastern border. Paid by every ally, spent where the border is.",
       "position": {
