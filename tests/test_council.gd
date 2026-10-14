@@ -52,6 +52,10 @@ func _init() -> void:
 	_check_a_sponsor_lobbies_the_near_miss()
 	_check_no_sponsor_lobbies_nobody()
 	_check_the_sponsor_minds_the_vote()
+	_check_a_favour_turns_a_member()
+	_check_bargains_are_refused_honestly()
+	_check_aid_pays_for_a_year()
+	_check_a_vote_trade_comes_due()
 	_finish()
 
 
@@ -462,3 +466,117 @@ func _force_sponsored(state, p, choice: String) -> void:
 	}
 	Orgs.cast_vote(state, EU_ORG, choice)
 	Orgs.tick_month(state, _loader)
+
+
+# --- Part 6: bargains --------------------------------------------------------------
+
+## Open `proposal_id` in the eu with the player's vote cast, WITHOUT dividing.
+func _open(state, proposal_id: String, sponsor := "") -> void:
+	var p = Orgs.proposal_by_id(_loader, EU_ORG, proposal_id)
+	state.orgs[EU_ORG]["pending"] = {
+		"proposal_id": p.id, "name": p.proposal_name, "summary": p.summary,
+		"months_left": 1, "player_vote": Orgs.VOTE_ABSTAIN, "sponsor": sponsor,
+		"opened_year": state.year, "opened_month": state.month,
+	}
+
+
+## A member whose bare appraisal of `proposal_id` sits below the threshold by
+## less than `swing` -- one a bargain of that size turns. "" if none.
+func _turnable(state, proposal_id: String, swing: float) -> String:
+	var p = Orgs.proposal_by_id(_loader, EU_ORG, proposal_id)
+	for id in Orgs.members(state, EU_ORG):
+		if id == PLAYER:
+			continue
+		var s: float = Orgs.support(state, state.nations[id], p)
+		if s < K.SUPPORT_THRESHOLD and s + swing >= K.SUPPORT_THRESHOLD:
+			return id
+	return ""
+
+
+func _check_a_favour_turns_a_member() -> void:
+	var state = _fresh()
+	var subject := ""
+	var target := ""
+	for p in _loader.org_proposals[EU_ORG]:
+		target = _turnable(state, p.id, CouncilK.FAVOUR_SWING)
+		if target != "" and RK.score(state, PLAYER, target) >= CouncilK.FAVOUR_MIN_RELATIONS:
+			subject = p.id
+			break
+	if subject == "":
+		_fail("no eu member is within a favour's reach on any shipped proposal -- the cheapest currency is decorative")
+		return
+	_open(state, subject)
+	var r0: float = RK.score(state, PLAYER, target)
+	_ok(Council.bargain(state, EU_ORG, target, CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR), "a favour was refused")
+	_ok(is_equal_approx(r0 - RK.score(state, PLAYER, target), CouncilK.FAVOUR_RELATIONS_COST), "a favour cost the wrong relations")
+	Orgs.tick_month(state, _loader)
+	var last: Dictionary = Orgs.last_vote(state, EU_ORG)
+	_ok(String((last.get("votes", {}) as Dictionary).get(target, "")) == Orgs.VOTE_FOR, "%s did not vote as the favour asked" % target)
+	_ok(String((last.get("reasons", {}) as Dictionary).get(target, "")) == CouncilK.REASON_BARGAINED, "the division does not name the bargain that turned %s" % target)
+
+
+func _check_bargains_are_refused_honestly() -> void:
+	var state = _fresh()
+	var subject: String = _loader.org_proposals[EU_ORG][0].id
+	_ok(not Council.bargain(state, EU_ORG, "DEU", CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR), "a bargain with nothing pending was accepted")
+	_open(state, subject)
+	_ok(not Council.bargain(state, EU_ORG, "DEU", "posting", CouncilK.ASK_FOR), "a refused currency was accepted")
+	_ok(not Council.bargain(state, EU_ORG, "DEU", CouncilK.CURRENCY_FAVOUR, "abstain"), "an ask other than for/against was accepted")
+	_ok(not Council.bargain(state, EU_ORG, PLAYER, CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR), "the player bargained with itself")
+	_ok(not Council.bargain(state, EU_ORG, "GBR", CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR), "a bargain with a non-member was accepted")
+	RK.adjust(state, PLAYER, "DEU", -100.0, 0.0, 100.0)
+	_ok(not Council.bargain(state, EU_ORG, "DEU", CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR), "a favour below FAVOUR_MIN_RELATIONS was accepted")
+	_ok(Council.bargain(state, EU_ORG, "ITA", CouncilK.CURRENCY_AID, CouncilK.ASK_FOR), "aid was refused")
+	_ok(not Council.bargain(state, EU_ORG, "ITA", CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR), "a second bargain with one member in one division was accepted")
+
+
+func _check_aid_pays_for_a_year() -> void:
+	var state = _fresh()
+	var ns = state.player()
+	Orgs.tick_month(state, _loader)
+	var base: float = ns.bloc_transfer_pct_gdp
+	_open(state, _loader.org_proposals[EU_ORG][0].id)
+	state.orgs[EU_ORG]["pending"]["months_left"] = 99  # keep it open; we measure the line, not the vote
+	Council.bargain(state, EU_ORG, "ITA", CouncilK.CURRENCY_AID, CouncilK.ASK_FOR)
+	var paid := 0
+	for i in CouncilK.AID_MONTHS + 3:
+		Orgs.tick_month(state, _loader)
+		if ns.bloc_transfer_pct_gdp > base + CouncilK.AID_PCT_GDP * 0.5:
+			paid += 1
+	_ok(paid == CouncilK.AID_MONTHS, "aid was paid %d months, expected exactly %d" % [paid, CouncilK.AID_MONTHS])
+
+
+func _check_a_vote_trade_comes_due() -> void:
+	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
+	var kept: String = p.sponsor
+	p.sponsor = "ITA"
+
+	# Paid: the IOU is cleared and costs nothing.
+	var paid = _fresh()
+	_open(paid, _loader.org_proposals[EU_ORG][0].id)
+	Council.bargain(paid, EU_ORG, "ITA", CouncilK.CURRENCY_VOTE_TRADE, CouncilK.ASK_FOR)
+	Orgs.tick_month(paid, _loader)
+	_ok((paid.orgs[EU_ORG]["debts"] as Array).size() == 1, "a vote trade did not record a debt")
+	_force_sponsored(paid, p, Orgs.VOTE_FOR)
+	_ok((paid.orgs[EU_ORG]["debts"] as Array).is_empty(), "backing the creditor's proposal did not clear the debt")
+
+	# Betrayed: cleared, and the betrayal is priced on top of the sponsor's snub.
+	var betrayed = _fresh()
+	_open(betrayed, _loader.org_proposals[EU_ORG][0].id)
+	Council.bargain(betrayed, EU_ORG, "ITA", CouncilK.CURRENCY_VOTE_TRADE, CouncilK.ASK_FOR)
+	Orgs.tick_month(betrayed, _loader)
+	var r0: float = RK.score(betrayed, PLAYER, "ITA")
+	_force_sponsored(betrayed, p, Orgs.VOTE_AGAINST)
+	var expected: float = CouncilK.IOU_BETRAYAL + CouncilK.SPONSOR_SNUB * Council.drive(betrayed, _loader, "ITA")
+	_ok(is_equal_approx(r0 - RK.score(betrayed, PLAYER, "ITA"), expected),
+		"betraying the IOU cost %.3f, expected %.3f" % [r0 - RK.score(betrayed, PLAYER, "ITA"), expected])
+	_ok((betrayed.orgs[EU_ORG]["debts"] as Array).is_empty(), "a betrayed debt was not cleared")
+
+	# Lapsed: an unpaid IOU expires silently.
+	var lapsed = _fresh()
+	_open(lapsed, _loader.org_proposals[EU_ORG][0].id)
+	Council.bargain(lapsed, EU_ORG, "ITA", CouncilK.CURRENCY_VOTE_TRADE, CouncilK.ASK_FOR)
+	for i in CouncilK.IOU_EXPIRY_MONTHS + 1:
+		Council.tick_register(lapsed, EU_ORG)
+	_ok((lapsed.orgs[EU_ORG]["debts"] as Array).is_empty(), "an IOU outlived IOU_EXPIRY_MONTHS")
+	p.sponsor = kept

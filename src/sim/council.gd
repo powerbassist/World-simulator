@@ -159,3 +159,112 @@ static func answer_sponsor(state, loader, sponsor_id: String, by_nation: Diction
 			spend_relations(state, String(id), sponsor_id, -CouncilK.SPONSOR_THANKS * d)
 		elif vote == CouncilK.ASK_AGAINST:
 			spend_relations(state, String(id), sponsor_id, CouncilK.SPONSOR_SNUB * d)
+
+
+## The player asks a member to vote `ask` on the proposal pending in this
+## council, and pays in `currency`. One bargain per member per division; every
+## refusal is checked BEFORE anything is spent, so a refused bargain costs
+## nothing. Returns whether it was struck.
+##
+## Postings and concessions are refused this block by the author's call
+## (2026-10-14): no machine exists to price either, and a currency with no
+## price is a free swing.
+static func bargain(state, org_id: String, target_id: String, currency: String, ask: String) -> bool:
+	if not CouncilK.CURRENCIES.has(currency) or not CouncilK.ASKS.has(ask):
+		return false
+	if not state.orgs.has(org_id):
+		return false
+	var register: Dictionary = state.orgs[org_id]
+	var pending: Dictionary = register.get("pending", {})
+	if pending.is_empty():
+		return false
+	var ns = state.player()
+	if ns == null or not ns.orgs.has(org_id) or target_id == ns.id:
+		return false
+	var target = state.nations.get(target_id, null)
+	if target == null or not target.orgs.has(org_id):
+		return false
+	var bargains: Dictionary = pending.get("bargains", {})
+	if bargains.has(target_id):
+		return false
+
+	var amount := 0.0
+	if currency == CouncilK.CURRENCY_FAVOUR:
+		if RK.score(state, ns.id, target_id) < CouncilK.FAVOUR_MIN_RELATIONS:
+			return false
+		spend_relations(state, ns.id, target_id, CouncilK.FAVOUR_RELATIONS_COST)
+		amount = CouncilK.FAVOUR_SWING
+	elif currency == CouncilK.CURRENCY_AID:
+		var aid: Array = register.get("aid", [])
+		aid.append({
+			"payer": ns.id, "recipient": target_id,
+			"pct_gdp": CouncilK.AID_PCT_GDP, "months_left": CouncilK.AID_MONTHS,
+		})
+		register["aid"] = aid
+		amount = CouncilK.AID_SWING
+	elif currency == CouncilK.CURRENCY_VOTE_TRADE:
+		var debts: Array = register.get("debts", [])
+		# One open IOU per creditor per council: a second promise to the same
+		# member before the first is kept is a promise nobody would take.
+		for d in debts:
+			if String(d.get("debtor", "")) == ns.id and String(d.get("creditor", "")) == target_id:
+				return false
+		debts.append({
+			"debtor": ns.id, "creditor": target_id,
+			"made_on": String(pending.get("proposal_id", "")),
+			"months_left": CouncilK.IOU_EXPIRY_MONTHS,
+		})
+		register["debts"] = debts
+		amount = CouncilK.IOU_SWING
+
+	bargains[target_id] = {"currency": currency, "ask": ask, "swing": amount}
+	pending["bargains"] = bargains
+	return true
+
+
+## What this nation pays this org in aid this month, % of GDP. Summed into the
+## org's transfer line by orgs.gd -- the budget line that already carries a
+## club's money, so aid reaches the deficit through the one writer it has.
+static func aid_line(state, nation_id: String, org_id: String) -> float:
+	var total := 0.0
+	for a in (state.orgs[org_id].get("aid", []) as Array):
+		if String(a.get("payer", "")) == nation_id and int(a.get("months_left", 0)) > 0:
+			total += float(a.get("pct_gdp", 0.0))
+	return total
+
+
+## Run AFTER the month's transfer is read: a twelve-month package is then read
+## in exactly twelve months (counted down from AID_MONTHS, pruned at zero).
+static func tick_register(state, org_id: String) -> void:
+	var register: Dictionary = state.orgs[org_id]
+	for key in ["aid", "debts"]:
+		var entries: Array = register.get(key, [])
+		if entries.is_empty():
+			continue
+		var kept: Array = []
+		for e in entries:
+			e["months_left"] = int(e.get("months_left", 0)) - 1
+			if int(e["months_left"]) > 0:
+				kept.append(e)
+		register[key] = kept
+
+
+## At a division the creditor sponsors, every IOU owed to it comes due. A `for`
+## repays it; anything else is a betrayal, priced on top of whatever the sponsor
+## charges for the vote itself. A debt struck in THIS division is not due in it.
+static func settle_debts(state, org_id: String, sponsor_id: String, proposal_id: String, by_nation: Dictionary) -> void:
+	if sponsor_id == "":
+		return
+	var register: Dictionary = state.orgs[org_id]
+	var debts: Array = register.get("debts", [])
+	if debts.is_empty():
+		return
+	var kept: Array = []
+	for d in debts:
+		var debtor := String(d.get("debtor", ""))
+		if String(d.get("creditor", "")) != sponsor_id or String(d.get("made_on", "")) == proposal_id or not by_nation.has(debtor):
+			kept.append(d)
+			continue
+		if String(by_nation[debtor]) != CouncilK.ASK_FOR:
+			spend_relations(state, debtor, sponsor_id, CouncilK.IOU_BETRAYAL)
+	register["debts"] = kept

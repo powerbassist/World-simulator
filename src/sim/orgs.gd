@@ -300,6 +300,11 @@ static func tick_month(state, loader) -> void:
 			total += _org_transfer(state, ns, org_id)
 		ns.bloc_transfer_pct_gdp = total
 
+	# V4.5a. AFTER the transfers are read, so an aid package is paid in exactly
+	# the months it was struck for -- see Council.tick_register().
+	for org_id in council_ids:
+		Council.tick_register(state, org_id)
+
 
 ## One org's line: its standing base, what its rules in force move it by, and
 ## the penalties it charges for defying THEM. Reduces to today's single-org
@@ -320,6 +325,8 @@ static func _org_transfer(state, ns, org_id: String) -> float:
 		float(ns.org_base_transfer_pct_gdp.get(org_id, 0.0))
 		+ rule_transfers
 		+ K.FINE_PCT_GDP_PER_BURDEN * clampf(contributions, 0.0, K.BURDEN_MAX)
+		# V4.5a: side-payments struck as bargains; exactly 0.0 with none.
+		+ Council.aid_line(state, ns.id, org_id)
 	)
 
 
@@ -574,6 +581,7 @@ static func _resolve(state, loader, org_id: String) -> void:
 	register["pending"] = {}
 	# V4.5a. The sponsor answers the human members' votes whichever way it went.
 	Council.answer_sponsor(state, loader, String(pending.get("sponsor", "")), by_nation)
+	Council.settle_debts(state, org_id, String(pending.get("sponsor", "")), proposal.id, by_nation)
 
 	if passed:
 		_adopt(state, loader, org_id, proposal)
