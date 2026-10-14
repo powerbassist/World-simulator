@@ -56,8 +56,23 @@ const SPONSOR_SNUB := 8.0
 ## Favour: the cheapest currency in kind (relations, which drift back) and the
 ## weakest swing. The floor refuses a favour from a member that owes you none --
 ## below resting relations nobody is doing you favours.
+##
+## The COST is measured (V4.5b1 T5, tools/council_probe.gd C2, band: a player
+## who bargains every deciding division ends the term >= 5 points below one who
+## never does, with the members he bargained). At 6 the gap was 0.19: of two
+## favours struck on ITA (months 18 and 54), DRIFT_RATE took 35 % of the price
+## back by month 60 and the rest went to ITA's own AI agenda, which in the
+## bargaining player's diverged world settled a dispute with FRA at month 53
+## (+10.1) -- a ~7.2-point offset present at every cost swept. The gap is about
+## linear in the price (4: -2.44, 6: 0.19, 8: 3.35, 10: 5.97, 11: 7.29, 12: 8.60,
+## 14: 11.23), crossing the band near 9.3; 12 sits inside the passing region,
+## not on its edge. It now costs more than TABLE_RELATIONS_COST (8), whose
+## comment assumes the reverse -- left for the author, not moved here.
+## FAVOUR_SWING was swept x{0.5..1.5}: at 0.075 no favour reaches the one
+## single-member flip on offer (ITA's 0.091 gap) and the player pays in aid
+## (gap -7.70); from 0.1125 up nothing changes. It stays at 0.15.
 const FAVOUR_SWING := 0.15
-const FAVOUR_RELATIONS_COST := 6.0
+const FAVOUR_RELATIONS_COST := 12.0
 const FAVOUR_MIN_RELATIONS := 50.0
 
 ## Aid: money on the org's transfer line. 0.05 % of GDP for a year is ~1.4 bn
@@ -116,6 +131,11 @@ const REASON_SPONSOR := "sponsor"
 ## picks. Three: a semester chair shapes the next file or two, not the whole
 ## book -- unbounded, a chair re-opened its favourite every term it sat and a
 ## proposal no chair ranked first never opened (V4.5a's final review, #4).
+## Swept {2, 3, 4} against C6 (every proposal opens once in 168 months) at
+## V4.5b1 T5: eu leaves 3 / 5 / 4 of its 20 never opened, so no window passes
+## and 3 stays -- the eu has 27 openings for 20 proposals, and the five it
+## misses sat in a chair's window 3-6 times each and lost every time. Never at
+## the MAX_RULES_IN_FORCE cap. A BOUND in docs/orgs-model.md, not a tuning.
 const CHAIR_WINDOW := 3
 
 ## The years an authored presidency anchor may name. Validation bounds, kept

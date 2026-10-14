@@ -325,5 +325,62 @@ unanimity proposal are taken to have ratified (no AI assembly runs), and a
 treaty needing a constitutional revision first (France's Art. 54) is not
 modelled -- every treaty bill is an ordinary `simple`-majority act.
 
+### Bands — verdicts (V4.5b1)
+
+Measured 2026-10-15 by `tools/council_probe.gd` on the T4 register (20 eu, 8
+climate, 6 nato proposals), after printing a diagnosis of every miss and before
+sweeping anything. C6 (agenda reach: every proposal opens at least once in a
+168-month idle run) was declared in the V4.5b1 plan beside C1–C5, before the
+probe ran. No band was redefined after a result. Table T is byte-identical
+before and after the sweep, so gates G1–G4 hold as T4 left them (NATO's G1
+waived by the author's call).
+
+- **C1 the player decides: BOUND at 0.050** (1 of 20 distinct proposals opened in
+  the first term; per opening, 2 of 30). Of 30 openings, 21 already go FRA's way
+  with FRA abstaining, so there is nothing to spend on. Of the other 9, 7 are
+  unanimity divisions with two or three vetoers, which one bargain cannot turn.
+  Only `nato/defence_floor_2_5` has a single blocker (ITA, gap 0.091). The
+  probe's ceiling holds at 0.050 for any largest swing from 0.15 to 0.90, and
+  swinging each of `FAVOUR_SWING`, `AID_SWING` and `IOU_SWING` across ×{0.5–1.5}
+  moved nothing. `CHAIR_WINDOW` 2 reads 0.087, still a miss. **Open for the
+  author:** the band says "with bargains available", but the probe tests one
+  bargain per division, while the machine allows one per member. Read as one per
+  member, the same openings give 0.20 at today's swings (on the band's edge) and
+  0.25 at `IOU_SWING` ×1.5. That re-reading is the author's to make; it is not
+  taken here.
+- **C2 spending is not free: MISS → fixed by `FAVOUR_RELATIONS_COST` 6 → 12;
+  PASS at 8.60** (band ≥ 5). At 6 the gap was 0.19. Two favours were struck on
+  ITA (months 18 and 54). `DiplomacyK.DRIFT_RATE` (0.02/month) took 35 % of the
+  price back by month 60. A +10.1 `settle_dispute` from ITA's own AI agenda at
+  month 53 took the rest: it fires only in the bargaining player's diverged
+  world, and it does so at every swept price, even when the player pays in aid
+  instead. It is a near-constant offset of 7.2–7.7 points. The gap rises roughly
+  linearly with the price (4: −2.44, 6: 0.19, 8: 3.35, 10: 5.97, 11: 7.29,
+  12: 8.60, 14: 11.23) and crosses the band near 9.3. 12 sits inside the passing
+  region; 10 sits on the crossing. The swings do not move C2 above 0.1125.
+  `FAVOUR_SWING` 0.075 drops the favour below ITA's gap, so the player pays in
+  aid (gap −7.70). **Caveats:** the sample is one member and two strikes,
+  because C1's starvation leaves little to bargain over, and one AI act moves
+  the reading by about 8 points (at `CHAIR_WINDOW` 4 the old price of 6 read
+  8.87). The favour now costs more than tabling (`TABLE_RELATIONS_COST` 8),
+  whose comment assumes the reverse. That is left for the author.
+- **C3 unanimity is reachable: PASS** (24 carried, 42 vetoed over 168 months).
+- **C4 ratification is a fight: PASS** (14 of the 17 unanimity proposals forecast
+  inside [40 %, 60 %] yes in FRA's assembly).
+- **C5 the BURDEN_MAX re-measure: RECORDED at 2.215 raw** cross-org burden at
+  total defiance, against V3.5's 1.33 (no band).
+- **C6 agenda reach: BOUND at 5 never opened** (all eu: `debt_reduction_rule`,
+  `eurozone_fiscal_capacity`, `cohesion_fund`, `defence_industry_fund`,
+  `enlargement_preaccession_fund`). climate (8 of 8) and nato (6 of 6) pass.
+  The cap is not the cause: `MAX_RULES_IN_FORCE` (4) was never reached at any of
+  the 27 eu AI-chair openings. Each of the five sat in a chair's window 3–6
+  times and lost to the chair's preferred proposal every time. `CHAIR_WINDOW`
+  {2, 3, 4} leaves 3 / 5 / 4 never opened, so no window passes and it stays at
+  3. The structural reason is that the eu has 27 openings in 168 months for 20
+  proposals, and each chair pick that is not the window's head spends an
+  opening on a repeat. A window of 1 (the pure rotation) would pass, but it
+  would undo the author's 2026-10-14 call that an AI chair chooses within a
+  window.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]

@@ -4,6 +4,7 @@ extends SceneTree
 ## godot --headless --script res://tools/council_probe.gd
 ## godot --headless --script res://tools/council_probe.gd -- --sweep <proposal_id>
 ## godot --headless --script res://tools/council_probe.gd -- --t      (table T only)
+## godot --headless --script res://tools/council_probe.gd -- --only c12|c36  (sweep fast paths)
 ##
 ## Model: docs/orgs-model.md, "V4.5 -- the council, contested", which declared
 ## the bands BEFORE this file ran. Content is read, never named: every table
@@ -51,7 +52,14 @@ extends SceneTree
 ##       per-org burden, the RAW cross-org total, BURDEN_MAX, the clamped burden.
 ##       Recorded against V3.5's 1.33; no band.
 ##   C6  AGENDA REACH. The full 168-month idle run: per org, proposals never
-##       opened. Band: none.
+##       opened. Band: none never opened.
+##   DIAGNOSES (V4.5b1 T5; context lines, never bands): C1 splits the openings
+##   (forecast already the preference / differs / one bargain flips it / no
+##   single bargain can) and prints the ceiling a swing sweep could reach; C2
+##   traces each strike's price against what DRIFT_RATE alone leaves by month
+##   60; C6 says, per never-opened proposal, whether it sat in an AI chair's
+##   window (and what beat it) or was out of reach (in force, ratifying,
+##   capped by MAX_RULES_IN_FORCE, past the window).
 ##   S   THE SWEEP (`--sweep <id>` runs only this): table T's verdict for one
 ##       proposal over a 5x5 (economic, social) grid.
 ##
@@ -66,6 +74,7 @@ const CouncilK = preload("res://src/sim/council_constants.gd")
 const Ratification = preload("res://src/sim/ratification.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const RK = preload("res://src/core/relations.gd")
+const DiplomacyK = preload("res://src/sim/diplomacy_constants.gd")
 
 # The real month's systems -- the set tools/balance_probe.gd's _run() calls.
 const Economy = preload("res://src/sim/economy.gd")
@@ -151,6 +160,29 @@ func _init() -> void:
 		return
 
 	var t0: int = Time.get_ticks_msec()
+	# `--only c12` / `--only c36`: the constant sweeps' fast paths. C1/C2 read
+	# only the first term, so their idle run stops at TERM_MONTHS (C1 is the
+	# same: it reads months 1-60 of the 168); C3/C6 need the full idle run and
+	# nothing else. Same tables, same bands, fewer of them.
+	var only_at: int = args.find("--only")
+	if only_at >= 0 and only_at + 1 < args.size():
+		var which := String(args[only_at + 1])
+		if which == "c12":
+			var idle12: Dictionary = _run_term(false, true, TERM_MONTHS, false)
+			var always12: Dictionary = _run_term(true, false, TERM_MONTHS, true)
+			_table_c1(idle12)
+			_table_c2(idle12, always12)
+		elif which == "c36":
+			var idle36: Dictionary = _run_term(false, true, MONTHS, false)
+			_table_c3(idle36)
+			_table_c6(idle36)
+		else:
+			printerr("--only takes c12 or c36")
+			quit(1)
+			return
+		print("\n## runtime %.1f s" % [float(Time.get_ticks_msec() - t0) / 1000.0])
+		quit(0)
+		return
 	_table_t()
 	# `--t`: table T alone -- the placement loop re-reads it after every edit,
 	# and the 168-month runs behind C1-C6 are what make a full pass take a minute.
@@ -316,6 +348,8 @@ func _run_term(bargain_always: bool, measure_c1: bool, months: int, stop_on_leav
 	var left_office := -1
 	var left_office_date := ""
 	var term_relations := {}
+	var rel_by_month: Array = []
+	var agenda: Array = []
 	for org_id in council_ids:
 		opened_ids[org_id] = {}
 
@@ -344,7 +378,22 @@ func _run_term(bargain_always: bool, measure_c1: bool, months: int, stop_on_leav
 		Economy.tick_month(state)
 		Commodities.tick_month(state, _loader)
 		Budget.tick_month(state)
+		# C6's diagnosis: the agenda each AI chair is about to see, read on the
+		# books Orgs.tick_month is about to read. Context only; a run that does
+		# not record it is the same run.
+		var previews := {}
+		if measure_c1:
+			for org_id in council_ids:
+				var pv: Dictionary = _agenda_preview(state, org_id)
+				if not pv.is_empty():
+					previews[org_id] = pv
 		Orgs.tick_month(state, _loader)
+		for org_id in previews.keys():
+			var pend_now: Dictionary = Orgs.pending(state, org_id)
+			var pv: Dictionary = previews[org_id]
+			pv["opened"] = String(pend_now.get("proposal_id", "")) if int(pend_now.get("opened_year", 0)) == year and int(pend_now.get("opened_month", 0)) == month else ""
+			pv["at"] = i + 1
+			agenda.append(pv)
 		Inflation.tick_month(state)
 		Media.tick_month(state, _loader)
 		Opinion.tick_month(state)
@@ -411,6 +460,9 @@ func _run_term(bargain_always: bool, measure_c1: bool, months: int, stop_on_leav
 			if bargain_always:
 				var strike: Dictionary = _strike_if_deciding(state, org_id, p)
 				if not strike.is_empty():
+					strike["at"] = i + 1
+					strike["org_id"] = org_id
+					strike["proposal_id"] = pid
 					bargained[String(strike["member"])] = true
 					strikes.append(strike)
 				var said: String = "no deciding bargain (forecast is the preference, or none flips it)"
@@ -419,6 +471,9 @@ func _run_term(bargain_always: bool, measure_c1: bool, months: int, stop_on_leav
 				print("  always %d-%02d %-15s %-28s %s" % [year, month, org_id, pid, said])
 
 		months_run = i + 1
+		# C2's diagnosis reads FRA's relations month by month in both runs.
+		if i + 1 <= TERM_MONTHS:
+			rel_by_month.append(_relations_of(state))
 		if i + 1 == TERM_MONTHS:
 			term_relations = _relations_of(state)
 		# balance_probe.gd's guard (its _run(), `if not ns.in_government: break`).
@@ -444,7 +499,62 @@ func _run_term(bargain_always: bool, measure_c1: bool, months: int, stop_on_leav
 	return {"state": state, "divisions": divisions, "openings": openings, "c1": c1_rows,
 		"bargained": bargained, "strikes": strikes, "opened_ids": opened_ids,
 		"months_run": months_run, "left_office": left_office, "left_office_date": left_office_date,
-		"term_relations": term_relations, "term_valid": term_valid}
+		"term_relations": term_relations, "term_valid": term_valid,
+		"rel_by_month": rel_by_month, "agenda": agenda}
+
+
+## C6's DIAGNOSIS: if `org_id` will open a proposal on this month's
+## Orgs.tick_month, what the AI chair's window holds and why every other
+## proposal is not in it. {} when no opening is due, or a human/no chair.
+##
+## HAND-COPIED from src/sim/orgs.gd `_tick_council()` (the countdown and the
+## pending gate) and `_presidency_pick()` (the window). Checked, not trusted:
+## the run records what actually opened beside the predicted pick and C6
+## prints every mismatch.
+func _agenda_preview(state, org_id: String) -> Dictionary:
+	var register: Dictionary = state.orgs[org_id]
+	if not (register.get("pending", {}) as Dictionary).is_empty():
+		return {}
+	if maxi(0, int(register.get("months_to_next", 0)) - 1) > 0:
+		return {}
+	if not (register.get("tabled", {}) as Dictionary).is_empty():
+		return {}
+	var chair: String = Council.presiding_nation(state, _loader, org_id)
+	if chair == "" or state.nations[chair].has_budget:
+		return {}
+	var all: Array = _loader.org_proposals.get(org_id, [])
+	var rules: Dictionary = register.get("rules", {})
+	var constrained := 0
+	for r in rules.values():
+		if not String((r as Dictionary).get("field", "")).is_empty():
+			constrained += 1
+	var status := {}
+	var window: Array = []
+	var start := int(register.get("next_index", 0))
+	for offset in all.size():
+		var p = all[(start + offset) % all.size()]
+		if rules.has(p.id):
+			status[p.id] = "in-force"
+		elif String((register.get("ratifying", {}) as Dictionary).get("proposal_id", "")) == p.id:
+			status[p.id] = "ratifying"
+		elif not p.constraint.is_empty() and constrained >= BK.MAX_RULES_IN_FORCE:
+			status[p.id] = "capped"
+		elif window.size() < CouncilK.CHAIR_WINDOW:
+			window.append(p.id)
+			status[p.id] = "window"
+		else:
+			status[p.id] = "beyond-window"
+	var best := ""
+	var best_s := -INF
+	var supports := {}
+	for pid in window:
+		var s: float = Orgs.support(state, state.nations[chair], Orgs.proposal_by_id(_loader, org_id, pid))
+		supports[pid] = s
+		if s > best_s:
+			best_s = s
+			best = pid
+	return {"org_id": org_id, "chair": chair, "window": window, "supports": supports,
+		"predicted": best, "status": status, "constrained": constrained}
 
 
 ## FRA's relations with every nation, as a plain map -- the month-60 snapshot C2 reads.
@@ -477,9 +587,11 @@ func _c1_opening(state, org_id: String, p) -> Dictionary:
 	var want: bool = _prefers_pass(state, p)
 	var forecast: bool = _resolve_copy(state.duplicate_state(), org_id)
 	var row := {"org_id": org_id, "proposal_id": p.id, "year": state.year, "month": state.month,
-		"want": want, "forecast": forecast, "decidable": false, "by": ""}
+		"want": want, "forecast": forecast, "decidable": false, "by": "",
+		"blockers": [], "need": INF, "need_all": INF, "n_all": 0}
 	if forecast == want:
 		return row
+	_c1_blockers(state, org_id, p, want, row)
 	var ask: String = CouncilK.ASK_FOR if want else CouncilK.ASK_AGAINST
 	for id in Orgs.members(state, org_id):
 		if id == PLAYER:
@@ -493,6 +605,81 @@ func _c1_opening(state, org_id: String, p) -> Dictionary:
 				row["by"] = "%s %s" % [currency, id]
 				return row
 	return row
+
+
+## C1's DIAGNOSIS (context, not the band): at an opening whose forecast is not
+## FRA's preference, which members vote against that preference and by how much
+## (`blockers`, "ID:gap" sorted by gap), and `need`: the smallest single-bargain
+## swing that would flip the division -- INF when no single member can (two or
+## more unanimity vetoers, a QMR margin wider than any one member's seats, or the
+## only blocker is the sponsor, which bargain() refuses). This is what says
+## whether a swing sweep can move C1 at all. The appraisal read is the vote's own
+## (support + lobbied swing on the pending entry, against SUPPORT_THRESHOLD).
+func _c1_blockers(state, org_id: String, p, want: bool, row: Dictionary) -> void:
+	var pend: Dictionary = Orgs.pending(state, org_id)
+	var sponsor := String(pend.get("sponsor", ""))
+	var unanimity: bool = Council.decision_of(_loader, p) == CouncilK.DECISION_UNANIMITY
+	var seats_for := 0
+	var cast := 0
+	var opp: Array = []
+	for id in Orgs.members(state, org_id):
+		var seats: int = Orgs.live_seats(state, org_id, id)
+		var votes_for: bool
+		var s := 0.0
+		if id == PLAYER:
+			continue # abstaining in the forecast: in neither count
+		elif id == sponsor:
+			votes_for = true
+		else:
+			s = Orgs.support(state, state.nations[id], p) + Council.swing(pend, id)
+			votes_for = s >= BK.SUPPORT_THRESHOLD
+		cast += seats
+		if votes_for:
+			seats_for += seats
+		if votes_for != want and id != sponsor:
+			opp.append([id, absf(s - BK.SUPPORT_THRESHOLD), seats])
+	opp.sort_custom(func(a, b): return float(a[1]) < float(b[1]))
+	var parts: Array = []
+	for o in opp:
+		parts.append("%s:%.3f" % [o[0], float(o[1])])
+	row["blockers"] = parts
+	var need := INF
+	for o in opp:
+		var flips := false
+		if unanimity:
+			# want pass: every vetoer must turn, so one bargain needs exactly one.
+			# want fail: any one member turned against vetoes.
+			flips = (opp.size() == 1) if want else true
+		else:
+			var sf: int = seats_for + int(o[2]) if want else seats_for - int(o[2])
+			var carried: bool = cast > 0 and float(sf) >= BK.PASS_SEAT_FRACTION * float(cast)
+			flips = carried == want
+		if flips:
+			need = minf(need, float(o[1]))
+	row["need"] = need
+	# The same question with one bargain PER MEMBER (the machine allows one per
+	# member per division, so a player can work several): the smallest largest
+	# swing over the cheapest set of members that flips it, and how many. Opp is
+	# sorted by gap, so the first prefix that flips minimises the largest gap.
+	# Context for the author, NOT the band -- the band is read on the single
+	# bargain, as the probe declared before it ran.
+	var need_all := INF
+	var n_all := 0
+	var sf_all: int = seats_for
+	for k in opp.size():
+		var o: Array = opp[k]
+		sf_all += int(o[2]) if want else -int(o[2])
+		var done := false
+		if unanimity:
+			done = (k == opp.size() - 1) if want else true
+		else:
+			done = (cast > 0 and float(sf_all) >= BK.PASS_SEAT_FRACTION * float(cast)) == want
+		if done:
+			need_all = float(o[1])
+			n_all = k + 1
+			break
+	row["need_all"] = need_all
+	row["n_all"] = n_all
 
 
 ## C2's `always` player at one opening. Strikes a bargain ONLY when a
@@ -542,9 +729,15 @@ func _table_c1(idle: Dictionary) -> void:
 		if bool(r["decidable"]):
 			decidable += 1
 			per[key][1] += 1
-		print("%d-%02d  %-15s %-28s %-6s %-9s %-10s %s" % [int(r["year"]), int(r["month"]), r["org_id"], r["proposal_id"],
+		var diag: String = ""
+		if bool(r["want"]) != bool(r["forecast"]):
+			diag = "need %s (one per member: %s); against FRA's preference: %s" % [
+				"none-single" if float(r["need"]) == INF else "%.3f" % float(r["need"]),
+				"none" if float(r["need_all"]) == INF else "%d at <= %.3f" % [int(r["n_all"]), float(r["need_all"])],
+				" ".join(PackedStringArray(r["blockers"]))]
+		print("%d-%02d  %-15s %-28s %-6s %-9s %-10s %-16s %s" % [int(r["year"]), int(r["month"]), r["org_id"], r["proposal_id"],
 			"pass" if bool(r["want"]) else "fail", "pass" if bool(r["forecast"]) else "fail",
-			"YES" if bool(r["decidable"]) else ("-" if bool(r["want"]) == bool(r["forecast"]) else "no"), r["by"]])
+			"YES" if bool(r["decidable"]) else ("-" if bool(r["want"]) == bool(r["forecast"]) else "no"), r["by"], diag])
 	print("openings per proposal (opened / decidable):")
 	var keys: Array = per.keys()
 	keys.sort()
@@ -558,9 +751,48 @@ func _table_c1(idle: Dictionary) -> void:
 	var distinct: float = float(ever) / float(keys.size()) if not keys.is_empty() else 0.0
 	print("per-opening: divisions (FRA's councils) %d, decidable %d, share %.3f (context, not the band)" % [n, decidable, share])
 	print("DISTINCT: proposals ever opened %d, ever decidable %d, share %.3f" % [keys.size(), ever, distinct])
+	_c1_diagnosis(rows, keys.size())
 	# The band reads the DISTINCT share: one proposal re-opening every few openings
 	# must not set it by repetition.
 	_band("C1", distinct >= C1_MIN and distinct <= C1_MAX, "distinct %.3f" % distinct, bool(idle["term_valid"]))
+
+
+## C1's diagnosis summary (context): how the openings split, and the ceiling a
+## swing sweep can reach -- the distinct share if the largest single swing were
+## each multiple of today's strongest currency (IOU_SWING). A ceiling below the
+## band says no swing value passes C1 and the miss is structural.
+func _c1_diagnosis(rows: Array, distinct_opened: int) -> void:
+	var same := 0
+	var differ := 0
+	var flipped := 0
+	var structural := 0
+	for r in rows:
+		if bool(r["want"]) == bool(r["forecast"]):
+			same += 1
+			continue
+		differ += 1
+		if bool(r["decidable"]):
+			flipped += 1
+		if float(r["need"]) == INF:
+			structural += 1
+	print("C1 diagnosis: openings %d = forecast already FRA's preference %d + differs %d; of those differing, flipped by one bargain %d, no single bargain can (>=2 vetoers / margin) %d" % [
+		rows.size(), same, differ, flipped, structural])
+	for mult in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0]:
+		var cap: float = CouncilK.IOU_SWING * float(mult)
+		var ids := {}
+		var ids_all := {}
+		for r in rows:
+			if bool(r["want"]) == bool(r["forecast"]):
+				continue
+			var key: String = "%s/%s" % [r["org_id"], r["proposal_id"]]
+			if float(r["need"]) <= cap:
+				ids[key] = true
+			if float(r["need_all"]) <= cap:
+				ids_all[key] = true
+		var d: float = float(distinct_opened) if distinct_opened > 0 else 1.0
+		print("  ceiling at max swing %.3f (IOU_SWING x%.2f): distinct decidable <= %d / %d = %.3f single bargain; %d = %.3f one per member" % [
+			cap, float(mult), ids.size(), distinct_opened, float(ids.size()) / d,
+			ids_all.size(), float(ids_all.size()) / d])
 
 
 func _table_c2(idle: Dictionary, always: Dictionary) -> void:
@@ -599,7 +831,61 @@ func _table_c2(idle: Dictionary, always: Dictionary) -> void:
 	var mean_always: float = sum_always / float(mids.size())
 	var gap: float = mean_never - mean_always
 	print("bargained members %d; mean never %.2f, always %.2f, gap %.2f" % [mids.size(), mean_never, mean_always, gap])
+	_c2_diagnosis(idle, always, mids)
 	_band("C2", gap >= C2_MIN_GAP, "%.2f" % gap, valid)
+
+
+## C2's DIAGNOSIS (context, not the band): each strike's month and price, how
+## the bargained division actually went three months later, and the gap (never
+## minus always) in FRA's relations with that member before the strike, just
+## after it and at month TERM_MONTHS -- beside what DRIFT_RATE alone would have
+## left of the price by then. The difference between the drift-only residual
+## and the measured one is every other channel (the two worlds diverging).
+func _c2_diagnosis(idle: Dictionary, always: Dictionary, mids: Array) -> void:
+	var never_rel: Array = idle["rel_by_month"]
+	var always_rel: Array = always["rel_by_month"]
+	var keep: float = 1.0 - DiplomacyK.DRIFT_RATE
+	print("C2 diagnosis (DRIFT_RATE %.3f: a price struck at month m keeps (1-DRIFT_RATE)^(%d-m) of itself by month %d)" % [
+		DiplomacyK.DRIFT_RATE, TERM_MONTHS, TERM_MONTHS])
+	print("  %-5s %-15s %-28s %-6s %-7s %6s %-9s %9s %9s %9s %9s" % ["month", "org", "proposal", "member", "curr",
+		"cost", "division", "gap@m-1", "gap@m", "drift@60", "gap@60"])
+	var paid := {}
+	var drift_left := {}
+	for st in always["strikes"]:
+		var at: int = int(st["at"])
+		var id := String(st["member"])
+		var outcome: String = "?"
+		for d in always["divisions"]:
+			var idx: int = (int(d["year"]) - START_YEAR) * 12 + int(d["month"]) - 1
+			if idx > at and String(d["org_id"]) == String(st["org_id"]) and String(d["proposal_id"]) == String(st["proposal_id"]):
+				outcome = "carried" if bool(d["passed"]) else "failed"
+				break
+		var before: float = _gap_at(never_rel, always_rel, at - 1, id)
+		var after: float = _gap_at(never_rel, always_rel, at, id)
+		var predicted: float = float(st["cost"]) * pow(keep, TERM_MONTHS - at)
+		paid[id] = float(paid.get(id, 0.0)) + float(st["cost"])
+		drift_left[id] = float(drift_left.get(id, 0.0)) + predicted
+		print("  %-5d %-15s %-28s %-6s %-7s %6.2f %-9s %9.2f %9.2f %9.2f %9.2f" % [at, st["org_id"], st["proposal_id"],
+			id, st["currency"], float(st["cost"]), outcome, before, after, predicted,
+			_gap_at(never_rel, always_rel, TERM_MONTHS, id)])
+	for id in mids:
+		var c: float = float(paid.get(String(id), 0.0))
+		var rd: float = float(drift_left.get(String(id), 0.0))
+		var ra: float = _gap_at(never_rel, always_rel, TERM_MONTHS, String(id))
+		var share: float = (c - rd) / (c - ra) if absf(c - ra) > 0.0001 else 0.0
+		print("  %s: paid %.2f; drift alone leaves %.2f at month %d, measured %.2f; drift's share of the decay %.2f, other channels %.2f" % [
+			id, c, rd, TERM_MONTHS, ra, share, rd - ra])
+		var traj: PackedStringArray = []
+		for m in range(3, TERM_MONTHS + 1, 3):
+			traj.append("m%d %.1f" % [m, _gap_at(never_rel, always_rel, m, String(id))])
+		print("    gap trajectory: %s" % " ".join(traj))
+
+
+## never - always relations for `id` at the end of month `m` (1-based); 0 outside the record.
+func _gap_at(never_rel: Array, always_rel: Array, m: int, id: String) -> float:
+	if m < 1 or m > never_rel.size() or m > always_rel.size():
+		return 0.0
+	return float((never_rel[m - 1] as Dictionary).get(id, 0.0)) - float((always_rel[m - 1] as Dictionary).get(id, 0.0))
 
 
 func _table_c3(idle: Dictionary) -> void:
@@ -740,7 +1026,57 @@ func _table_c6(idle: Dictionary) -> void:
 		never += missing.size()
 		print("  %-15s opened %d of %d; never: %s" % [org_id, all.size() - missing.size(), all.size(),
 			", ".join(PackedStringArray(missing)) if not missing.is_empty() else "-"])
+	_c6_diagnosis(idle, opened_ids)
 	_band("C6", never == 0, "%d never opened" % never)
+
+
+## C6's diagnosis (context): for every proposal that never opened, at the
+## AI-chair openings of the run, how often it sat in the chair's window (and
+## what beat it there, with the chair's appraisal of each), and how often it
+## was out of reach: in force, ratifying, capped by MAX_RULES_IN_FORCE, or
+## eligible but past the window.
+func _c6_diagnosis(idle: Dictionary, opened_ids: Dictionary) -> void:
+	var agenda: Array = idle["agenda"]
+	var mismatch := 0
+	for pv in agenda:
+		if String(pv["opened"]) != String(pv["predicted"]):
+			mismatch += 1
+			print("  preview MISMATCH month %d %s: predicted %s, opened %s" % [int(pv["at"]), pv["org_id"], pv["predicted"], pv["opened"]])
+	print("C6 diagnosis: %d AI-chair openings previewed, %d mismatches against what opened (CHAIR_WINDOW %d, MAX_RULES_IN_FORCE %d)" % [
+		agenda.size(), mismatch, CouncilK.CHAIR_WINDOW, BK.MAX_RULES_IN_FORCE])
+	var ids: Array = opened_ids.keys()
+	ids.sort()
+	for org_id in ids:
+		var capped_openings := 0
+		var n := 0
+		for pv in agenda:
+			if String(pv["org_id"]) != org_id:
+				continue
+			n += 1
+			if int(pv["constrained"]) >= BK.MAX_RULES_IN_FORCE:
+				capped_openings += 1
+		if n > 0:
+			print("  %-15s AI-chair openings %d; at the constraint cap (%d binding rules in force) at %d of them" % [
+				org_id, n, BK.MAX_RULES_IN_FORCE, capped_openings])
+		for p in _loader.org_proposals.get(org_id, []):
+			if (opened_ids[org_id] as Dictionary).has(p.id):
+				continue
+			var counts := {"window": 0, "in-force": 0, "ratifying": 0, "capped": 0, "beyond-window": 0}
+			var beaten: Array = []
+			for pv in agenda:
+				if String(pv["org_id"]) != org_id:
+					continue
+				var st := String((pv["status"] as Dictionary).get(p.id, "?"))
+				counts[st] = int(counts.get(st, 0)) + 1
+				if st == "window":
+					var sup: Dictionary = pv["supports"]
+					beaten.append("m%d %s %.2f<%s %.2f" % [int(pv["at"]), pv["chair"], float(sup[p.id]),
+						pv["predicted"], float(sup[pv["predicted"]])])
+			print("    never %-30s constraint %-3s window %d, beyond-window %d, capped %d, in-force %d, ratifying %d" % [
+				p.id, "yes" if not p.constraint.is_empty() else "no", int(counts["window"]), int(counts["beyond-window"]),
+				int(counts["capped"]), int(counts["in-force"]), int(counts["ratifying"])])
+			if not beaten.is_empty():
+				print("      in the window, beaten: %s" % "; ".join(PackedStringArray(beaten)))
 
 
 ## Context for the full-run bands: the council divides whoever governs France,
