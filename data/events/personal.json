@@ -1,0 +1,676 @@
+{
+  "_note": "V4.3's character machine, seen from the desk: the people around the office want things -- a portfolio, a reckoning, a successor -- and this is where their wanting lands when it becomes the government's problem. The register names no person, as the events channel requires: the loyalist, the rival and the elder are roles and offices, and src/sim/ still holds no person id here. The machine prices its own acts through its own meters; these cards price the politics around them, and none of them is the brief_against act.",
+  "events": [
+    {
+      "id": "the_loyalist_waits",
+      "name": "The loyalist waits",
+      "summary": "The member whose constituency you have never visited has voted with you on every division since the first, defended you on the worst evening of the term, and asked for nothing. This week her office asked, through the press, what the loyalty was for.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.003,
+      "category": "personal",
+      "severity": 1,
+      "cooldown_months": 18,
+      "respond_months": 3,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "choices": [
+        {
+          "id": "give_the_portfolio",
+          "label": "Give her the ministry",
+          "summary": "The appointment is deserved and reads as exactly what it is: a debt paid in public. The ring of advisers who expected the post for one of their own will make sure the reading spreads.",
+          "effects": {
+            "society": {
+              "corruption": 0.04
+            },
+            "bloc_offset": {
+              "workers": 0.02,
+              "urban": -0.02,
+              "students": -0.018,
+              "business": -0.025,
+              "rural": 0.025,
+              "pensioners": 0.01
+            }
+          }
+        },
+        {
+          "id": "a_chairmanship",
+          "label": "Offer the chairmanship instead",
+          "summary": "A development agency gavel, a staff, and none of the votes. It is a real thing and it is not the thing, and she will take it, because taking it is loyal too.",
+          "effects": {
+            "society": {
+              "corruption": 0.01
+            },
+            "bloc_offset": {
+              "workers": 0.008,
+              "urban": -0.008,
+              "students": -0.01,
+              "business": -0.012,
+              "rural": 0.015,
+              "pensioners": 0.005
+            }
+          }
+        },
+        {
+          "id": "pass_over",
+          "label": "Pass her over again",
+          "summary": "The backbench question becomes a backbench answer: loyalty is what you spend when you have nothing else. She keeps voting with you, and stops defending you for free.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.018,
+              "urban": 0.015,
+              "students": 0.012,
+              "business": 0.02,
+              "rural": -0.025,
+              "pensioners": -0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_profile_briefing",
+      "name": "The profile",
+      "summary": "The weekend profile of your presidency quotes eleven sources from inside your own government. The attributions are careful -- 'a minister who has served throughout', 'an adviser close to the leadership' -- and the writer has clearly been given the diary of the summer's two worst weeks.",
+      "subject_office": "head_of_state",
+      "likelihood": 0.0024,
+      "category": "personal",
+      "severity": 2,
+      "weight": 2.0,
+      "cooldown_months": 18,
+      "respond_months": 2,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 1
+        }
+      ],
+      "choices": [
+        {
+          "id": "confront",
+          "label": "Call the rival in",
+          "summary": "The conversation is private and the warning is not: the next attributed quote ends a career. The profiles stop, and the archive now has a villain, which is half the way to a martyr.",
+          "effects": {
+            "bloc_offset": {
+              "workers": 0.01,
+              "urban": -0.02,
+              "students": -0.025,
+              "business": 0.008,
+              "rural": 0.015,
+              "pensioners": 0.012
+            }
+          }
+        },
+        {
+          "id": "open_the_books",
+          "label": "Publish the government's attendance record",
+          "summary": "Every minister's votes, absences and interviews, in one table, on the theory that sunlight makes everyone look equally occupied. Some of the eleven sources are exposed by their own numbers; so are three of yours.",
+          "effects": {
+            "society": {
+              "press_freedom": 0.05
+            },
+            "bloc_offset": {
+              "workers": 0.008,
+              "urban": 0.02,
+              "students": 0.015,
+              "business": -0.018,
+              "rural": -0.02,
+              "pensioners": -0.008
+            }
+          }
+        },
+        {
+          "id": "ignore_it",
+          "label": "Rise above it",
+          "summary": "The office does not answer profiles. The next one is in preparation already, and every minister in the building has noticed that there was no cost to writing one.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.012,
+              "urban": -0.01,
+              "students": -0.014,
+              "business": 0.028,
+              "rural": -0.012,
+              "pensioners": -0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_defector",
+      "name": "The defector",
+      "summary": "The crossing was announced on the evening news and the interview was given on the studio steps, in a jacket chosen for the cameras. The speech took eight weeks to write, quotes your own manifesto nine times, and ends on the line the speechwriters rejected.",
+      "likelihood": 0.002,
+      "category": "personal",
+      "severity": 2,
+      "cooldown_months": 24,
+      "respond_months": 2,
+      "once": false,
+      "choices": [
+        {
+          "id": "expel",
+          "label": "Expel and contest the seat",
+          "summary": "The machinery moves against the defector within the week, and the constituency gets a by-election it did not ask for. The base rallies -- its first rally in a year -- and the swing in one seat is watched from every other.",
+          "effects": {
+            "bloc_offset": {
+              "workers": 0.025,
+              "urban": -0.02,
+              "students": -0.015,
+              "business": -0.018,
+              "rural": 0.018,
+              "pensioners": 0.01
+            }
+          }
+        },
+        {
+          "id": "woo_back",
+          "label": "Buy the return",
+          "summary": "A concession reaches the defector through a mutual friend: a committee chair, a ministry promised, something with a name. It works, which is the problem -- the price is now public, and every ambitious backbencher has read it.",
+          "effects": {
+            "society": {
+              "corruption": 0.04
+            },
+            "bloc_offset": {
+              "workers": -0.01,
+              "urban": -0.015,
+              "students": -0.012,
+              "business": 0.02,
+              "rural": 0.012,
+              "pensioners": 0.008
+            }
+          }
+        },
+        {
+          "id": "let_go",
+          "label": "Let the seat go",
+          "summary": "No by-election is contested, no speech is answered, and the government's majority is one smaller on a Friday. It reads as confidence to the cabinet and as decay to everyone else.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.015,
+              "urban": -0.01,
+              "students": -0.008,
+              "business": 0.03,
+              "rural": -0.015,
+              "pensioners": -0.005
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_elder_letter",
+      "name": "The elder's ultimatum",
+      "summary": "The man who carried the industrial north for the party for thirty years has written, in a memoir serialised this weekend, that the government has lost the working man and no longer notices. The launch party is on Thursday; the leader's box is unclaimed, and the invitation stands until Wednesday night.",
+      "subject_office": "largest_party_leader",
+      "likelihood": 0.002,
+      "category": "personal",
+      "severity": 2,
+      "cooldown_months": 24,
+      "respond_months": 5,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unemployment_pct",
+          "op": ">=",
+          "value": 8.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "change_course",
+          "label": "Change the policy he named",
+          "summary": "The stricken programme is un-stricken by Wednesday, at a cost the finance ministry has been refusing for a year. The elder announces, magnanimously, that the party listens; the finance ministry announces nothing and invoices everything.",
+          "effects": {
+            "spending_pct_gdp": {
+              "pensions": 0.3
+            },
+            "bloc_offset": {
+              "workers": 0.025,
+              "urban": 0.008,
+              "students": -0.018,
+              "business": -0.05,
+              "rural": 0.015,
+              "pensioners": 0.015
+            }
+          }
+        },
+        {
+          "id": "platform_him",
+          "label": "Give him the conference stage",
+          "summary": "He speaks, the hall loves him, and the clip runs all weekend with the government's logo behind him. It costs nothing tonight; the policy he named is now the party's named grievance, and he keeps the receipt.",
+          "effects": {
+            "bloc_offset": {
+              "workers": 0.015,
+              "urban": -0.012,
+              "students": -0.015,
+              "business": -0.01,
+              "rural": 0.018,
+              "pensioners": 0.008
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Let the invitation lapse",
+          "summary": "He speaks anyway, unchaired, to a hall that came for him. The party learns that its own elders answer to no one, and the clip runs all weekend without the logo.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.02,
+              "urban": 0.01,
+              "students": 0.008,
+              "business": 0.025,
+              "rural": -0.018,
+              "pensioners": -0.01
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_succession",
+      "name": "The succession",
+      "summary": "The resignation letter thanked you for your confidence, which the press has read in a day. Three names are running for the vacancy by lunchtime, each promoted by a faction that calls the other two unelectable, and each has counted the committee votes twice.",
+      "on_action": "minister_resigned",
+      "likelihood": 0.02,
+      "category": "personal",
+      "severity": 2,
+      "weight": 2.0,
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "appoint_loyalist",
+          "label": "Appoint the loyalist",
+          "summary": "The one who has never briefed against anyone, including you, is competent the way a safe pair of hands is competent. The other two factions learn that the price of loyalty is a ministry, and the price of disloyalty is waiting.",
+          "effects": {
+            "society": {
+              "corruption": 0.02
+            },
+            "bloc_offset": {
+              "workers": 0.012,
+              "urban": -0.018,
+              "students": -0.012,
+              "business": -0.012,
+              "rural": 0.018,
+              "pensioners": 0.008
+            }
+          }
+        },
+        {
+          "id": "appoint_rival",
+          "label": "Appoint the strongest rival",
+          "summary": "The one who wanted it is the one who can do it, and giving it to them takes the argument out of the factions' mouths. It also hands a platform to the person best placed to use one.",
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.01,
+              "urban": 0.015,
+              "students": 0.012,
+              "business": 0.02,
+              "rural": -0.015,
+              "pensioners": -0.008
+            }
+          }
+        },
+        {
+          "id": "leave_open",
+          "label": "Leave the post unfilled",
+          "summary": "The portfolio is run out of your own office 'for the rest of the quarter', which is how the last permanent vacancy is still run four years on. The factions suspend their count and keep their candidates warm.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.012,
+              "urban": 0.008,
+              "students": 0.005,
+              "business": 0.025,
+              "rural": -0.012,
+              "pensioners": -0.005
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_leadership_question",
+      "name": "The leadership question",
+      "summary": "The junior minister's interview about the leadership question was conducted entirely in the conditional -- 'if the party ever wanted', 'were the position to become vacant' -- and the Sunday papers have run it in the indicative. The minister's office says the transcript was doctored, which has the advantage of being checkable.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.0024,
+      "category": "personal",
+      "severity": 1,
+      "cooldown_months": 18,
+      "respond_months": 2,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "terms_served",
+          "op": ">=",
+          "value": 2
+        }
+      ],
+      "choices": [
+        {
+          "id": "sack",
+          "label": "Dismiss the minister",
+          "summary": "The conditionals stop and the backbenches count what ambition costs. The minister becomes, overnight, the leadership question's answer, with a constituency, a grievance and a great deal of time.",
+          "effects": {
+            "bloc_offset": {
+              "workers": 0.01,
+              "urban": -0.018,
+              "students": -0.02,
+              "business": 0.008,
+              "rural": 0.015,
+              "pensioners": 0.012
+            }
+          }
+        },
+        {
+          "id": "promote",
+          "label": "Promote them out of reach",
+          "summary": "A senior post, a real budget, and the front bench's collective eye upon them: ambition with something to lose. The newspapers lose a story and the minister loses the time to give interviews.",
+          "effects": {
+            "society": {
+              "corruption": 0.02
+            },
+            "bloc_offset": {
+              "workers": -0.008,
+              "urban": 0.012,
+              "students": 0.008,
+              "business": 0.015,
+              "rural": -0.012,
+              "pensioners": -0.006
+            }
+          }
+        },
+        {
+          "id": "starve_it",
+          "label": "Starve it of comment",
+          "summary": "No denial, no dismissal, no quote. The story runs on its own oxygen for a fortnight and finds most of it; the minister's allies note that the government bleeds and call it calm.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.008,
+              "urban": -0.012,
+              "students": -0.012,
+              "business": 0.022,
+              "rural": 0.01,
+              "pensioners": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_grudge_kept",
+      "name": "The grudge",
+      "summary": "The minister passed over at the last reshuffle has stopped troubling to hide it: absent from the vote counts that matter, present at every television studio that will have him, and asking written questions whose drafting has a lawyer's patience.",
+      "likelihood": 0.0022,
+      "category": "personal",
+      "severity": 1,
+      "cooldown_months": 24,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "conciliate",
+          "label": "Offer the reconciliation post",
+          "summary": "The post that was his before it was anyone else's is offered back, through an intermediary, with the words 'unfinished business' left hanging. He takes it, and the grudge goes with him into the building -- which is better than it outside.",
+          "effects": {
+            "society": {
+              "corruption": 0.03
+            },
+            "bloc_offset": {
+              "workers": -0.008,
+              "urban": -0.012,
+              "students": -0.01,
+              "business": 0.015,
+              "rural": 0.012,
+              "pensioners": 0.006
+            }
+          }
+        },
+        {
+          "id": "force_out",
+          "label": "Accept the resignation he keeps drafting",
+          "summary": "The letter is in the drawer and everyone knows it. The government is rid of a running sore, and the backbenches learn the reshuffle's grades are permanent; two others start drafting.",
+          "effects": {
+            "bloc_offset": {
+              "workers": 0.012,
+              "urban": 0.015,
+              "students": 0.012,
+              "business": -0.015,
+              "rural": -0.018,
+              "pensioners": -0.008
+            }
+          }
+        },
+        {
+          "id": "endure",
+          "label": "Endure him",
+          "summary": "The questions continue, the absences continue, and the ministers asked about him learn to say 'the member is entitled'. The grudge is now a fixture of the building, like the lift that sticks.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.008,
+              "urban": -0.012,
+              "students": -0.01,
+              "business": 0.02,
+              "rural": 0.012,
+              "pensioners": 0.005
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_backbench_letters",
+      "name": "The letters",
+      "summary": "The letter is 'signed by at least forty colleagues', which is the letter's whole grammar: nobody's name is confirmed, several signatures are denied, and the total grows whenever a journalist asks. It calls for a contest 'to settle the question the country is already asking'.",
+      "subject_office": "head_of_state",
+      "likelihood": 0.002,
+      "category": "personal",
+      "severity": 3,
+      "weight": 2.0,
+      "cooldown_months": 24,
+      "respond_months": 5,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unrest_pct",
+          "op": ">=",
+          "value": 15.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "call_contest",
+          "label": "Call the contest and win it",
+          "summary": "Naming the day takes the letter's anonymity away: the forty must sign or scatter. Win, and the question is settled for a term at the price of a campaign fought in public against your own side; lose, and the letter was right.",
+          "effects": {
+            "bloc_offset": {
+              "workers": 0.02,
+              "urban": -0.015,
+              "students": -0.012,
+              "business": -0.03,
+              "rural": 0.025,
+              "pensioners": 0.015
+            }
+          }
+        },
+        {
+          "id": "buy_the_forty",
+          "label": "Buy the forty back",
+          "summary": "Committee chairs, a promise on the programme, one ministry quietly enlarged. The letters stop within the month, at a price the cabinet office will spend the rest of the term declining to publish.",
+          "effects": {
+            "society": {
+              "corruption": 0.05
+            },
+            "bloc_offset": {
+              "workers": -0.012,
+              "urban": -0.015,
+              "students": -0.012,
+              "business": 0.02,
+              "rural": 0.015,
+              "pensioners": 0.008
+            }
+          }
+        },
+        {
+          "id": "ride_out",
+          "label": "Ride it out",
+          "summary": "The letters keep arriving at the rate of one news cycle a month, each thinner. It is a strategy of arithmetic: they need a hundred and eighteen, and arithmetic has been unkind before.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.012,
+              "urban": -0.015,
+              "students": -0.015,
+              "business": 0.025,
+              "rural": 0.012,
+              "pensioners": 0.005
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_reshuffle_list",
+      "name": "The reshuffle list",
+      "summary": "Three versions of Thursday's reshuffle are circulating in the building, each typed, each plausible, one of them yours. The ministers named in them have stopped speaking to the ministers named above them, and Thursday is three days off.",
+      "likelihood": 0.0028,
+      "category": "personal",
+      "severity": 1,
+      "cooldown_months": 18,
+      "respond_months": 1,
+      "once": false,
+      "choices": [
+        {
+          "id": "publish_now",
+          "label": "Publish the real list tonight",
+          "summary": "The ambiguity was the leak's whole market; take it away and the versions die by morning. The cabinet you announce three days early spends those three days governing its own disappointments instead of the country.",
+          "effects": {
+            "society": {
+              "press_freedom": 0.03
+            },
+            "bloc_offset": {
+              "workers": 0.008,
+              "urban": 0.012,
+              "students": 0.008,
+              "business": -0.012,
+              "rural": -0.015,
+              "pensioners": -0.005
+            }
+          }
+        },
+        {
+          "id": "deny_all",
+          "label": "Deny every version, including the true one",
+          "summary": "The denials are flat, blanket and, in one case, untrue. It gets you to Thursday with the building's attention intact and its belief in anything the office says spent.",
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.01,
+              "urban": -0.02,
+              "students": -0.015,
+              "business": 0.025,
+              "rural": 0.015,
+              "pensioners": 0.008
+            }
+          }
+        },
+        {
+          "id": "delay",
+          "label": "Postpone the reshuffle",
+          "summary": "Thursday becomes 'when the list is right', the versions multiply, and every minister governs the next month with a campaign for survival running underneath. The country gets a government at half its attention.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.01,
+              "urban": -0.015,
+              "students": -0.012,
+              "business": 0.02,
+              "rural": 0.015,
+              "pensioners": 0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_memoirs",
+      "name": "The memoirs",
+      "summary": "Your first deputy's memoirs are with the serialisers, and three of the chapter titles are already in the building: 'The Write-off', 'What He Knew in March', 'The Second Term, Considered'. Publication is in the spring; the extracts are priced by the weekend.",
+      "likelihood": 0.002,
+      "category": "personal",
+      "severity": 1,
+      "weight": 0.5,
+      "cooldown_months": 36,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "buy_silence",
+          "label": "Buy the extracts back",
+          "summary": "The publisher's price is met through an intermediary, which is how these things are always met, and the manuscript goes into a safe. The book will out; the deal will out sooner.",
+          "effects": {
+            "society": {
+              "corruption": 0.06
+            },
+            "bloc_offset": {
+              "workers": -0.008,
+              "urban": -0.015,
+              "students": -0.012,
+              "business": 0.02,
+              "rural": 0.01,
+              "pensioners": 0.008
+            }
+          }
+        },
+        {
+          "id": "pre_buttle",
+          "label": "Brief against the book first",
+          "summary": "The counter-narrative is seeded with three friendly writers before the extracts run: the deputy's version of March was not the building's. The book lands on a battlefield you chose, and the deputy's publishers have noticed the coordination.",
+          "effects": {
+            "society": {
+              "press_freedom": -0.03
+            },
+            "bloc_offset": {
+              "workers": 0.006,
+              "urban": 0.012,
+              "students": 0.008,
+              "business": -0.01,
+              "rural": -0.015,
+              "pensioners": -0.005
+            }
+          }
+        },
+        {
+          "id": "let_it_run",
+          "label": "Let it serialise",
+          "summary": "The extracts run, the denials run, and the two accounts of March sit on the same news-stand. The book's facts were always your facts; the difference is who tells them.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.008,
+              "urban": -0.01,
+              "students": -0.01,
+              "business": 0.018,
+              "rural": 0.012,
+              "pensioners": 0.005
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

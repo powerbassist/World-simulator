@@ -13,6 +13,7 @@ extends RefCounted
 ## docs/legislature-model.md.
 
 const LK = preload("res://src/sim/legislature_constants.gd")
+const OrgsK = preload("res://src/sim/orgs_constants.gd")
 # V4.2. The yield ceiling lives here (a constants leaf -- no cycle: statute.gd
 # preloads this file, and this file preloads only its constants and leaves).
 const StatuteK = preload("res://src/sim/statute_constants.gd")
@@ -276,6 +277,12 @@ static func _tick_held_bills(state, ns, loader) -> void:
 			released["assembly_division_month"] = int(state.year) * 12 + int(state.month)
 		_review_and_apply(state, ns, law, loader, released)
 		ns.last_law_result = released
+		# The member_bill_passed hook's own stamp: last_law_result is
+		# overwritten by any later division this month, the release with it.
+		# After the review, because the court can strike a released bill
+		# (passed -> false) and a struck bill did not come into force.
+		if origin == "assembly" and bool(released.get("passed", false)):
+			ns.assembly_bill_passed_month = int(state.year) * 12 + int(state.month)
 
 
 ## THE COURT'S GATE, and it is the LAST stage of the pipeline rather than a second
@@ -425,8 +432,8 @@ static func available(ns, all_laws: Array) -> Array:
 		# cap changes nothing the model can price, so the act is not offered:
 		# the _already_in_force shape ("a button that changes nothing is not
 		# offered"), which also stops the direct propose route, whose legality
-		# scan is this very list. The yield gate in Budget.commit() stays as
-		# the backstop for routes that bypass this filter.
+		# scan is this very list. The yield gate in Budget.apply_pending stays
+		# as the backstop for routes that bypass this filter.
 		var birth: Dictionary = law.new_tax
 		var birth_key := String(birth.get("key", ""))
 		if not birth.is_empty() and ns.custom_taxes.has(birth_key):
@@ -528,6 +535,7 @@ static func read_field(ns, field: String) -> float:
 		"terms_served": return float(ns.terms_served)
 		"unrest_pct": return ns.unrest_pct
 		"co2e_per_capita_t": return ns.co2e_per_capita_t
+		"eu_member": return 1.0 if ns.orgs.has(OrgsK.UNION_ORG_ID) else 0.0
 		# V1.5c added the unrest_pct entry and legislature_constants.PRECONDITION_FIELDS in
 		# two separate edits, and the suite caught the gap between them: the whitelist
 		# admits a field and this match decides what it means, so THE LIST EXISTS TWICE
@@ -703,17 +711,18 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 
 
 ## Apply a passed law's effects onto ns. Budget-lever effects are routed through
-## Budget.commit() so the demand impulse, the erosion curve and the opinion
-## issue all fire exactly as they would for a player-driven budget change --
-## the same mechanism, so double-counting is structurally impossible. Every
-## other channel is one clamped accumulator, read by an existing formula.
+## apply_effects() into Budget.apply_pending so the demand impulse, the erosion
+## curve and the opinion issue all fire exactly as they would for a
+## player-driven budget change -- the same mechanism, so double-counting is
+## structurally impossible. Every other channel is one clamped accumulator, read
+## by an existing formula.
 ##
 ## V4.2. Two additions, both of them the statute book and neither a new
 ## applier:
 ##
 ##   - A REPEAL subtracts first. A law with `repeals` set removes the target's
 ##     REALIZED ledger through apply_effects() -- the negated channels, budget
-##     levers routed through Budget.commit() so the erosion curve and the
+##     levers routed into Budget.apply_pending so the erosion curve and the
 ##     demand impulse fire exactly as any budget change would -- then erases
 ##     the target's entry and writes the target's own cooldown (a repealed act
 ##     sits out its cooldown before it can be re-proposed). It happens at the
@@ -741,7 +750,7 @@ static func apply(state, ns, law, loader) -> void:
 		_subtract_ledger(state, ns, loader, law.repeals)
 	# V4.2 T4. A BIRTH registers its params BEFORE the rate moves, and this is
 	# the ONE registration site: the rate's own application runs through
-	# apply_effects() -> Budget.commit(), which refuses a pending rate whose
+	# apply_effects() -> Budget.apply_pending, which refuses a pending rate whose
 	# key has no params behind it -- so a birth that applied its rate first
 	# would be refused by its own applier. One writer, one registration site.
 	if not law.new_tax.is_empty():
@@ -911,9 +920,9 @@ static func repeal_target_legal(ns, loader, law_id: String) -> bool:
 
 
 ## A repeal's subtraction. The negated channels go back through
-## apply_effects() -- the one applier, so budget levers route through
-## Budget.commit() and every clamp re-fires symmetrically -- then the entry is
-## erased and the target's own cooldown written.
+## apply_effects() -- the one applier, whose budget levers reach
+## Budget.apply_pending and every clamp re-fires symmetrically -- then the entry
+## is erased and the target's own cooldown written.
 ##
 ## THE FIRST-ORDER BOUND, stated where it can bite: the subtraction clamps
 ## like any write, so a register already pushed past a bound by OTHER writers
@@ -970,6 +979,9 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 		negated["society"] = terms
 	apply_effects(state, ns, negated, loader)
 	ns.law_ledger.erase(law_id)
+	# V4.4: the erase is silent otherwise, and the law_repealed hook needs to know
+	# WHEN. One writer, one reader (events.gd), sparse.
+	ns.repealed_at[law_id] = int(state.year) * 12 + int(state.month)
 	# One lookup, one writer: the cooldown comes off the target law wherever it
 	# lives. A composed law is not in loader.laws -- the lookup's null reads
 	# legal in repeal_target_legal() above for exactly that reason -- so the
@@ -1007,7 +1019,7 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 ## RESULTING RATE at zero through both directions: a raise-removal lands what
 ## the register holds (current 0, recorded +5 -> 0 removal), and a
 ## cut-restoration passes whole (recorded -5, current 20 -> +5, back to 25).
-## Budget.commit() carries the matching landed-rate floor for its other
+## Budget.apply_pending() carries the matching landed-rate floor for its other
 ## callers; the accumulators keep their clamps and need none of this.
 static func _budget_removal(register: Dictionary, key: String, recorded: float) -> float:
 	var current: float = float(register.get(key, 0.0))
@@ -1045,7 +1057,15 @@ static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 			spending[key] = float(ns.spending_pct_gdp.get(key, 0.0)) + float(effects["spending_pct_gdp"][key])
 		pending["spending_pct_gdp"] = spending
 	if not pending.is_empty():
-		Budget.commit(state, pending)
+		# The NATION-scoped writer, not Budget.commit(): commit is the player's
+		# command and reads state.player(). This stays the safeguard so that no
+		# caller whose ns is not the player's can ever reach commit: V4.4's first
+		# chooser applied the other twenty-eight nations' fiscal answers here and
+		# through commit would have rewritten the player's budget with another
+		# government's crisis response. Since pass 23 AI event answers skip the
+		# fiscal channels (Events._resolve), so today no AI caller arrives here.
+		Budget.apply_pending(ns, pending)
+		Budget.recompute(state, ns)
 
 	if effects.has("structural_unemployment_pct"):
 		ns.law_structural_offset_pct = clampf(

@@ -1,0 +1,695 @@
+{
+  "_note": "The occasions the Union supplies: letters, quorum nights, seating plans and the transposition backlog, each one a domestic bill for a membership decided somewhere else. The Commission is named the way crises.json names it -- an institution generically -- and no country is named at all, so every nation reads the same card. The two hook events ride the V4.4 stamps: the morning after an accession (accession_won) and the backbench bill that met a treaty (member_bill_passed).",
+  "events": [
+    {
+      "id": "eu_infringement_notice",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
+      "name": "The letter from the Commission",
+      "summary": "A directive the country signed was transposed late and then badly, and the Commission has opened the file it opens before it takes a government to court. The fix is a bill nobody will thank you for; the fine is a meter that starts the day the court rules.",
+      "likelihood": 0.004,
+      "category": "european",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "transpose",
+          "label": "Transpose in full",
+          "summary": "The bill goes in as drafted and the meter never starts. The sectors it lands on will spend the term reminding everyone whose signature it carried.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.04
+            },
+            "bloc_offset": {
+              "workers": -0.012,
+              "urban": 0.02,
+              "rural": -0.028,
+              "business": 0.03
+            }
+          }
+        },
+        {
+          "id": "ask_for_time",
+          "label": "Ask for time",
+          "summary": "A derogation is a dignified word for a delay, and it is granted the way delays are granted: once, reluctantly, with a report attached. The meter waits and the sectors get a season's grace.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.02
+            },
+            "bloc_offset": {
+              "workers": -0.008,
+              "urban": 0.012,
+              "rural": -0.022,
+              "business": 0.015,
+              "students": 0.01
+            }
+          }
+        },
+        {
+          "id": "answer_nothing",
+          "label": "Answer nothing",
+          "summary": "The file becomes a court case at its own pace. The ministry keeps the correspondence and the meter keeps the arithmetic.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.024,
+              "workers": 0.016,
+              "rural": 0.012,
+              "business": -0.022,
+              "pensioners": 0.012
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_quota_fight",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
+      "name": "The quota night",
+      "summary": "The Council is in its second morning over a share of something that swims, and the delegation wants instructions before the afternoon session. The fleet is at the quay, the scientists are at the door, and both have the arithmetic on their side.",
+      "likelihood": 0.003,
+      "category": "european",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "back_the_fleet",
+          "label": "Back the fleet",
+          "summary": "The coastal towns keep their share and the scientists write the memo that says what the water will carry. Rural cheers now; the review in three years reads the memo aloud.",
+          "effects": {
+            "company": {
+              "sector": "agriculture",
+              "burden": -0.03
+            },
+            "bloc_offset": {
+              "rural": 0.042,
+              "workers": 0.014,
+              "urban": -0.032,
+              "students": -0.018
+            }
+          }
+        },
+        {
+          "id": "take_the_number",
+          "label": "Take the scientists' number",
+          "summary": "The cut is deeper than the fleet can absorb and the tie-outs are yours to fund. The water gets its years and the quay towns get a programme, a ribbon and a grudge.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.1
+            },
+            "company": {
+              "sector": "agriculture",
+              "burden": 0.03
+            },
+            "bloc_offset": {
+              "rural": -0.024,
+              "urban": 0.024,
+              "workers": -0.006,
+              "pensioners": 0.012
+            }
+          }
+        },
+        {
+          "id": "review_clause",
+          "label": "Concede the review clause",
+          "summary": "Nobody moves this year and the fight is booked for the winter after this one, when your delegation will be one seat weaker.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.014,
+              "urban": -0.014,
+              "workers": -0.008,
+              "students": -0.006,
+              "pensioners": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_summit_ambush",
+      "name": "The family photograph",
+      "summary": "The leaders are arranged on the steps for the official photograph when the head of the delegation beside you proposes, on camera and in your language, a common fund your capital buried in the spring. The communiqué prints tonight and the proposal is in it.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.0024,
+      "category": "european",
+      "severity": 2,
+      "weight": 1.5,
+      "cooldown_months": 12,
+      "respond_months": 1,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        },
+        {
+          "field": "growth_annual_pct",
+          "op": "<=",
+          "value": 0.5
+        }
+      ],
+      "choices": [
+        {
+          "id": "embrace_it",
+          "label": "Say yes on the steps",
+          "summary": "The photograph is front pages everywhere and yours is the smile in it. The fund is real money with your share waiting at the finance ministers, and the partner who sprang it owns the idea either way.",
+          "effects": {
+            "bloc_offset": {
+              "urban": 0.032,
+              "students": 0.022,
+              "workers": 0.012,
+              "rural": -0.038,
+              "business": -0.016
+            }
+          }
+        },
+        {
+          "id": "veto_it",
+          "label": "Kill it before the communiqué",
+          "summary": "The word unanimity is said five times before dinner and the proposal dies in the corridor where summits bury things. The partner's staff leaks by midnight that you killed it, and the leak is accurate.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.024,
+              "business": 0.026,
+              "pensioners": 0.014,
+              "urban": -0.032,
+              "students": -0.024
+            }
+          }
+        },
+        {
+          "id": "study_it",
+          "label": "Say it needs studying",
+          "summary": "The study is real and so is the delay. The proposal survives every draft with your footnote on it, and the partner collects the credit for the idea and the patience.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": 0.014,
+              "students": 0.012,
+              "rural": -0.016,
+              "business": -0.006,
+              "pensioners": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_eastern_partner_row",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
+      "name": "The eastern partner",
+      "summary": "The Union's other engine has decided the migration pact is a budget question and that your agreement to it is optional. Their minister says so in your language, in your press, the day before the call.",
+      "likelihood": 0.003,
+      "category": "european",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "split_it",
+          "label": "Split the difference",
+          "summary": "The pact moves east, the orders move west and both capitals call the exchange a partnership. The workers who read the second half of that sentence are yours.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.02
+            },
+            "bloc_offset": {
+              "workers": -0.03,
+              "business": 0.036,
+              "urban": 0.016,
+              "rural": -0.016
+            }
+          }
+        },
+        {
+          "id": "refuse_publicly",
+          "label": "Refuse in public",
+          "summary": "The veto is cheap today and priced later, and both ministries know the exchange rate. The pact stalls, the partner finds another route around you, and the posters in your industrial towns say what the route is.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.026,
+              "pensioners": 0.016,
+              "workers": 0.012,
+              "business": -0.038,
+              "urban": -0.014
+            }
+          }
+        },
+        {
+          "id": "to_the_ministers",
+          "label": "Let the ministers walk it back",
+          "summary": "The joint statement comes out on Thursday and says nothing with unusual precision. The pact survives in a working group, which is where pacts wait out governments.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": 0.012,
+              "students": 0.01,
+              "rural": -0.012,
+              "workers": -0.008,
+              "pensioners": 0.002
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_rule_of_law_clause",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
+      "name": "The condition they added",
+      "summary": "The fund's renewal came back from the Parliament with a rule-of-law clause welded to every payment. Your courts pass; the members who wrote the clause have read your last two judicial appointments and would like the next two read to them.",
+      "likelihood": 0.0024,
+      "category": "european",
+      "severity": 2,
+      "weight": 0.8,
+      "cooldown_months": 16,
+      "respond_months": 5,
+      "once": false,
+      "choices": [
+        {
+          "id": "sign_the_clause",
+          "label": "Sign the clause",
+          "summary": "The fund flows and the appointments go back to the bar for review. The ministry loses a hand on the courts and the preamble says out loud what the constitution already said.",
+          "effects": {
+            "society": {
+              "judicial_independence": 0.06
+            },
+            "bloc_offset": {
+              "urban": 0.026,
+              "students": 0.02,
+              "rural": -0.022,
+              "pensioners": 0.008
+            }
+          }
+        },
+        {
+          "id": "refuse_the_condition",
+          "label": "Refuse the condition",
+          "summary": "The money stops and the story becomes sovereignty by the weekend. The towns that live on the fund lose it and gain a grievance, and the member who wrote the clause gains the example they wanted.",
+          "effects": {
+            "society": {
+              "judicial_independence": -0.05
+            },
+            "bloc_offset": {
+              "rural": 0.022,
+              "business": 0.022,
+              "workers": 0.01,
+              "urban": -0.03,
+              "students": -0.014
+            }
+          }
+        },
+        {
+          "id": "negotiate_wording",
+          "label": "Negotiate the wording",
+          "summary": "A year of footnotes, a fund paid in instalments and a clause that survives every draft. Both ministries claim the delay as a victory, which is the one thing they agree on.",
+          "default": true,
+          "effects": {
+            "society": {
+              "judicial_independence": 0.02
+            },
+            "bloc_offset": {
+              "urban": 0.012,
+              "rural": -0.01,
+              "workers": -0.008,
+              "pensioners": 0.002
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_farm_rules_fight",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
+      "name": "The crop-spray file",
+      "summary": "The Commission's proposal withdraws the ingredient a quarter of the orchards spray against, and the farm unions have parked tractors in three capitals to say so. The science is on one side, the photographs are on the other, and the vote is this month.",
+      "likelihood": 0.003,
+      "category": "european",
+      "severity": 1,
+      "weight": 1.2,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "vote_for_withdrawal",
+          "label": "Vote for the withdrawal",
+          "summary": "The ingredient goes and the orchards carry it, in yields this season and in labour costs the co-ops price by Friday. The cities that wanted it will buy the fruit anyway.",
+          "effects": {
+            "company": {
+              "sector": "agriculture",
+              "burden": 0.05
+            },
+            "bloc_offset": {
+              "urban": 0.03,
+              "students": 0.026,
+              "rural": -0.042,
+              "workers": -0.006
+            }
+          }
+        },
+        {
+          "id": "join_the_delay",
+          "label": "Join the delaying bloc",
+          "summary": "A two-year transition, a study and a sourcing review, which is the full orchestra of doing nothing. The tractors go home pleased and the water file keeps the ingredient's name in it.",
+          "effects": {
+            "company": {
+              "sector": "agriculture",
+              "burden": -0.02
+            },
+            "bloc_offset": {
+              "rural": 0.036,
+              "business": 0.012,
+              "urban": -0.026,
+              "students": -0.022
+            }
+          }
+        },
+        {
+          "id": "abstain",
+          "label": "Abstain and let it pass",
+          "summary": "The withdrawal carries on the others' votes and the minutes carry your absence. The orchards know who was in the room and so do the cities.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": -0.018,
+              "urban": 0.016,
+              "students": 0.012,
+              "workers": -0.004,
+              "pensioners": 0.002
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_border_checks_row",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
+      "name": "The crossing that takes an hour",
+      "summary": "The member upstream has put patrols back on a border the treaties emptied, and the evening news has found the queue. Their minister calls the checks technical, in their ninth month, and your hauliers have stopped finding it funny.",
+      "likelihood": 0.003,
+      "category": "european",
+      "severity": 1,
+      "weight": 0.8,
+      "cooldown_months": 10,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "take_to_the_court",
+          "label": "Take it to the court",
+          "summary": "The case is strong, the timetable is two years and the queue does not read judgments. The hauliers' association funds the action and the border towns wait for it.",
+          "effects": {
+            "bloc_offset": {
+              "business": 0.03,
+              "urban": 0.016,
+              "workers": -0.012,
+              "rural": -0.022,
+              "students": -0.006
+            }
+          }
+        },
+        {
+          "id": "check_theirs",
+          "label": "Check their lorries too",
+          "summary": "Every truck gets the full look and the queue becomes mutual. The hauliers carry both halves of the insult and the partner's minister discovers the word proportionality.",
+          "effects": {
+            "company": {
+              "sector": "services",
+              "burden": 0.03
+            },
+            "bloc_offset": {
+              "rural": 0.02,
+              "workers": 0.016,
+              "business": -0.03,
+              "urban": -0.008
+            }
+          }
+        },
+        {
+          "id": "keep_the_lane_open",
+          "label": "Keep your side open",
+          "summary": "Your booths stay staffed to the minute and the jam stays on their pavement, which is a policy and also a photograph. The crossing towns absorb the difference in silence.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.016,
+              "business": -0.014,
+              "urban": -0.012,
+              "rural": 0.022,
+              "pensioners": 0.012
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_eurozone_plea",
+      "name": "The stability letter",
+      "summary": "The deficit has reached the point where the finance ministers write jointly, which is how a government learns it is serious. The letter asks for a path in figures before the spring meeting, and the assembly that spends the money has not been consulted.",
+      "likelihood": 0.006,
+      "category": "european",
+      "severity": 2,
+      "weight": 1.5,
+      "cooldown_months": 8,
+      "respond_months": 5,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        },
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">=",
+          "value": 8.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "send_the_path",
+          "label": "Send the path they asked for",
+          "summary": "Two lines down, the pension line and the roads line, and the letter goes back with numbers the ministries have already priced. The answer plays as competence in the salons and as arithmetic in the streets.",
+          "effects": {
+            "spending_pct_gdp": {
+              "pensions": -0.2,
+              "infrastructure": -0.1
+            },
+            "bloc_offset": {
+              "business": 0.034,
+              "urban": 0.012,
+              "pensioners": -0.03,
+              "rural": -0.012,
+              "workers": 0.004
+            }
+          }
+        },
+        {
+          "id": "close_at_the_border",
+          "label": "Close the gap at the border",
+          "summary": "A point on the purchase taxes, which is the quietest instrument and the one everybody pays. The letter is answered and the till receipts answer back for a year.",
+          "effects": {
+            "tax_rates_pct": {
+              "vat": 1.0
+            },
+            "bloc_offset": {
+              "business": 0.026,
+              "rural": -0.014,
+              "workers": -0.016,
+              "pensioners": -0.008,
+              "urban": 0.012
+            }
+          }
+        },
+        {
+          "id": "on_track_letter",
+          "label": "Write back that the plan is on track",
+          "summary": "The plan is a chart and the chart is a draw. The ministers' reply gives you a season, and the season has a number in it.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.03,
+              "workers": 0.014,
+              "rural": -0.012,
+              "urban": 0.014,
+              "pensioners": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_accession_bills",
+      "name": "The morning after the flags",
+      "summary": "The accession was signed to an anthem and the transposition backlog arrived with the flowers: the treaties are law here the day after joining, and the day after is today. The assembly owns the ratifications and the calendar owns eleven months.",
+      "on_action": "accession_won",
+      "likelihood": 0.5,
+      "category": "european",
+      "severity": 3,
+      "respond_months": 6,
+      "once": true,
+      "choices": [
+        {
+          "id": "fast_track",
+          "label": "Put them through in one omnibus",
+          "summary": "Four hundred measures in one bill and the assembly sitting three weekends to pass what the treaties say is already law. The Commission's file closes on schedule; the assembly's does not close at all.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.15
+            },
+            "bloc_offset": {
+              "urban": 0.024,
+              "business": 0.02,
+              "students": 0.014,
+              "rural": -0.028,
+              "workers": -0.006
+            }
+          }
+        },
+        {
+          "id": "transition_periods",
+          "label": "Negotiate the transition periods",
+          "summary": "Eleven of the measures are deferrable under the treaty and you defer the other three hundred and eighty-nine, which takes drafting. The answer satisfies everyone for the season it lasts.",
+          "effects": {
+            "bloc_offset": {
+              "business": 0.03,
+              "urban": 0.014,
+              "rural": -0.024,
+              "workers": -0.012,
+              "pensioners": 0.002
+            }
+          }
+        },
+        {
+          "id": "cherry_pick",
+          "label": "Pass the popular half",
+          "summary": "The assembly keeps the measures that read well and schedules the rest for a review nobody diarises. The Commission's meter starts where the schedule ends, which is what it is for.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.018,
+              "workers": 0.014,
+              "business": -0.03,
+              "urban": -0.016,
+              "students": -0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu_backbench_bill",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
+      "name": "The bill that met the treaty",
+      "summary": "The assembly passed a backbench bill on Friday and the Commission's letter arrived on Monday: the measure the house liked collides with something the country signed. The court can be asked and the assembly can be defied, and both are now yours.",
+      "on_action": "member_bill_passed",
+      "likelihood": 0.03,
+      "category": "european",
+      "severity": 1,
+      "cooldown_months": 10,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "refer_to_the_court",
+          "label": "Send it to the court",
+          "summary": "The reference is honest, slow and fatal to the bill's momentum, which its author will bill to you personally. The treaties say what they always said and the court says it again.",
+          "effects": {
+            "society": {
+              "judicial_independence": 0.04
+            },
+            "bloc_offset": {
+              "urban": 0.02,
+              "students": 0.016,
+              "rural": -0.022,
+              "workers": -0.008
+            }
+          }
+        },
+        {
+          "id": "defy_the_letter",
+          "label": "Defy the letter",
+          "summary": "The bill stands, the infringement meter starts and the flag has a good month in the polls it does well in. The meter is not political and does not do months.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.03,
+              "workers": 0.012,
+              "business": -0.03,
+              "urban": -0.02,
+              "students": -0.014
+            }
+          }
+        },
+        {
+          "id": "amend_in_committee",
+          "label": "Amend it in committee",
+          "summary": "The bill is hollowed by Thursday and passes on time in name only. Its author calls it surrender, the Commission calls it transposition, and the committee calls it Thursday.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": 0.012,
+              "students": 0.008,
+              "rural": -0.012,
+              "workers": -0.004,
+              "pensioners": 0.002
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

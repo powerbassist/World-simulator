@@ -27,6 +27,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
@@ -256,7 +257,7 @@ func _check_two_full_terms_without_softlock() -> void:
 ##
 ## V3.0 RE-CONTRACTED, and the change is the fatigue term's own finding: time in
 ## office is now its own drag (the S5 deferral), and at the shipped rate the
-## do-nothing president no longer WINS the 2031 re-election at all — the run
+## do-nothing president no longer WINS the 2032 re-election at all — the run
 ## ends in a lost vote at month 76, before the 2037 term-out. That is the
 ## playtest's F6 ask working as designed (idle must not be locally optimal), so
 ## the pinned property is no longer "terms out at exactly two elections" but
@@ -439,6 +440,12 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
 		Energy.tick_month(state, _loader, access_by_nation)
 		Economy.tick_month(state)
+		# V4.4 pass 17, in main.gd's slot (immediately after Economy, before Budget):
+		# the events machine's commodity_price_high hook reads the register this call
+		# writes, so a harness that skipped it ran a different event model from the
+		# game and from tools/balance_probe.gd. Pinned by tests/test_events.gd's
+		# `_test_tick_order_pin`.
+		Commodities.tick_month(state, _loader)
 		Budget.tick_month(state)
 		Orgs.tick_month(state, _loader)
 		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.
@@ -815,7 +822,12 @@ func _check_a_nuclear_run_stays_off_every_clamp() -> void:
 ## is the run whose dependency deviation is large and whose growth cost is the
 ## channel's readable face. The nuclear run moves the dependency the other way.
 func _check_a_gas_run_stays_off_every_clamp() -> void:
-	var run := _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, -1, "order_gas_ccgt", 6, 30)
+	# stop_on_loss false, and V4.4 is why: the unanswered desk is a steady
+	# approval drain by design (six-plus categories pulsing, the queue holding
+	# four), and the MANAGED regime now loses the 2032 verdict -- at month 76 of
+	# a channel check whose whole premise is fourteen years of cadence. The vote
+	# is test_two_full_terms' subject; this check watches the energy channel.
+	var run := _play(MANAGED, MONTHS, -1, "FRA", -1, -1, -1, -1, "order_gas_ccgt", 6, 30, false)
 	var ns = run["state"].player()
 
 	if not run["problems"].is_empty():

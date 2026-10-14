@@ -1,0 +1,752 @@
+{
+  "_note": "The unrest category is the street with an organisation and a date -- the strike the federations called, the blockade the tractors can hold, the occupation the students can outlast. The gates are honest here because grievance is measurable and the register says so.",
+  "events": [
+    {
+      "id": "rail_strike_wave",
+      "name": "The rail strike",
+      "summary": "The rail unions have called two days in every three and the timetable is now a rumour. Both sides say they are waiting for the other to move first, and both are right about the other.",
+      "likelihood": 0.0032,
+      "category": "unrest",
+      "severity": 2,
+      "weight": 2.0,
+      "cooldown_months": 10,
+      "respond_months": 2,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unrest_pct",
+          "op": ">=",
+          "value": 8.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "settle_at_the_table",
+          "label": "Settle at the table",
+          "summary": "The pay scale and the roster go to arbitration together and the trains run on Friday. The settlement lands above the inflation number, and every other union has read it.",
+          "effects": {
+            "society": {
+              "settlement": 0.08
+            },
+            "spending_pct_gdp": {
+              "infrastructure": 0.15
+            },
+            "bloc_offset": {
+              "workers": 0.024,
+              "urban": 0.014,
+              "business": -0.024,
+              "rural": -0.014,
+              "pensioners": -0.021
+            }
+          }
+        },
+        {
+          "id": "minimum_service",
+          "label": "Impose a minimum service",
+          "summary": "The law says one train in three and the law is obeyed exactly. The cities move slowly for a month and the grievance banks where grievances bank.",
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.026,
+              "urban": -0.018,
+              "students": -0.01,
+              "business": 0.024,
+              "rural": 0.01,
+              "pensioners": 0.032
+            }
+          }
+        },
+        {
+          "id": "let_it_run",
+          "label": "Let it find its length",
+          "summary": "Nobody moves and the strike finds its own length, which is a number neither side controls.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.02,
+              "urban": -0.016,
+              "students": -0.008,
+              "business": -0.006,
+              "rural": -0.004,
+              "pensioners": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "farmers_blockade",
+      "name": "The tractors come in",
+      "summary": "The ring road is a car park of tractors and the wholesale market has no produce. The farmers' demands are three lines long and the third is the one they actually came for.",
+      "likelihood": 0.0028,
+      "category": "unrest",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 2,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unemployment_pct",
+          "op": ">=",
+          "value": 7.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "concede_the_third_line",
+          "label": "Concede the third line",
+          "summary": "The third line -- the one about next year's payment -- is conceded in a car park interview. The blockade lifts by nightfall, and the farm unions learn what the car park is for.",
+          "effects": {
+            "company": {
+              "sector": "agriculture",
+              "burden": -0.05
+            },
+            "bloc_offset": {
+              "rural": 0.026,
+              "business": -0.012,
+              "urban": -0.014,
+              "workers": -0.006,
+              "pensioners": 0.007
+            }
+          }
+        },
+        {
+          "id": "clear_the_roads",
+          "label": "Clear the roads",
+          "summary": "The ring is cleared at dawn and the fines are real. The roads open, the courthouses fill, and the next blockade is planned somewhere with a lawyer in it.",
+          "effects": {
+            "bloc_offset": {
+              "rural": -0.03,
+              "business": 0.02,
+              "urban": 0.016,
+              "workers": 0.006,
+              "students": -0.008
+            }
+          }
+        },
+        {
+          "id": "let_the_queue_decide",
+          "label": "Offer talks without a date",
+          "summary": "Talks are offered without a date and the produce goes off in the vans. The cities learn where food is priced before the government learns where the votes are.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": -0.022,
+              "urban": -0.014,
+              "workers": -0.008,
+              "business": 0.01,
+              "pensioners": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "student_occupation",
+      "name": "The occupation",
+      "summary": "Two lecture halls and an amphitheatre have been occupied for a week over the fees review, and the occupation's communiques are better written than the ministry's.",
+      "likelihood": 0.0036,
+      "category": "unrest",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 10,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "open_negotiations",
+          "label": "Open negotiations",
+          "summary": "The rector is sent in with a mandate and the halls empty by the weekend. The fees review gains a student seat, which costs the treasury nothing this year.",
+          "effects": {
+            "bloc_offset": {
+              "students": 0.03,
+              "urban": 0.016,
+              "business": -0.014,
+              "rural": -0.01,
+              "workers": -0.007
+            }
+          }
+        },
+        {
+          "id": "clear_the_halls",
+          "label": "Clear the halls",
+          "summary": "The halls are cleared before dawn and the exams proceed. The cohort acquires a memory, and memories of this kind vote for decades.",
+          "effects": {
+            "bloc_offset": {
+              "students": -0.03,
+              "urban": -0.016,
+              "business": 0.02,
+              "rural": 0.012,
+              "pensioners": 0.005
+            }
+          }
+        },
+        {
+          "id": "wait_for_exams",
+          "label": "Wait for the exams",
+          "summary": "Nothing is conceded and nothing is cleared. The occupation outlasts the news cycle and the fees review outlasts the occupation.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "students": -0.016,
+              "urban": -0.012,
+              "business": 0.008,
+              "rural": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "policing_riot",
+      "name": "The third night",
+      "summary": "A police incident on an estate has become three nights of burning cars, the interior ministry has run out of adjectives, and the estate is where the cameras have decided to live.",
+      "likelihood": 0.002,
+      "category": "unrest",
+      "severity": 3,
+      "weight": 0.5,
+      "cooldown_months": 24,
+      "respond_months": 1,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unrest_pct",
+          "op": ">=",
+          "value": 18.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "curfew_and_sweep",
+          "label": "Order a curfew and sweep",
+          "summary": "A curfew, mass arrests and the courts sitting through the weekend. The streets are quiet by Sunday and the estate's account with the state is re-priced for a generation.",
+          "effects": {
+            "society": {
+              "press_freedom": -0.06
+            },
+            "bloc_offset": {
+              "urban": -0.03,
+              "students": -0.02,
+              "workers": -0.01,
+              "business": 0.024,
+              "rural": 0.018,
+              "pensioners": 0.018
+            }
+          }
+        },
+        {
+          "id": "pull_back_and_talk",
+          "label": "Pull the patrols back and talk",
+          "summary": "The patrols withdraw to the ring and the mothers' association does the negotiating the ministry cannot. It works slower than the curfew would and holds longer, probably.",
+          "effects": {
+            "society": {
+              "settlement": 0.06
+            },
+            "bloc_offset": {
+              "urban": 0.024,
+              "students": 0.018,
+              "workers": 0.008,
+              "business": -0.018,
+              "rural": -0.016,
+              "pensioners": -0.015
+            }
+          }
+        },
+        {
+          "id": "call_it_criminality",
+          "label": "Call it criminality",
+          "summary": "The word is used at the podium and the nights decide their own length.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.026,
+              "students": -0.018,
+              "workers": -0.012,
+              "business": 0.012,
+              "rural": 0.01,
+              "pensioners": 0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "hospital_strike",
+      "name": "The wards walk out",
+      "summary": "The nurses have struck for the first time in a generation and the wards run on managers and agency staff at four times the wage. The dispute is about pay; the silence on the picket lines is about the rest.",
+      "likelihood": 0.0024,
+      "category": "unrest",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unemployment_pct",
+          "op": ">=",
+          "value": 6.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "award_the_scale",
+          "label": "Award the scale",
+          "summary": "The scale is awarded in full, backdated, and the health line carries it. Every public union has measured the number by lunchtime.",
+          "effects": {
+            "spending_pct_gdp": {
+              "health": 0.3
+            },
+            "bloc_offset": {
+              "workers": 0.016,
+              "pensioners": 0.014,
+              "urban": 0.01,
+              "business": -0.024,
+              "rural": -0.02
+            }
+          }
+        },
+        {
+          "id": "arbitration_now",
+          "label": "Send it to arbitration",
+          "summary": "Both sides go to arbitration and the wards return under protest. The award arrives in nine weeks, backdated, and nobody has to take responsibility for it.",
+          "effects": {
+            "society": {
+              "settlement": 0.05
+            },
+            "bloc_offset": {
+              "workers": 0.012,
+              "pensioners": 0.01,
+              "urban": 0.006,
+              "business": -0.01,
+              "rural": -0.012
+            }
+          }
+        },
+        {
+          "id": "hold_the_budget_line",
+          "label": "Hold the budget line",
+          "summary": "There is no money this year and the strike outlasts the answer. The agencies invoice, and the deficit pays them.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.02,
+              "urban": -0.012,
+              "pensioners": -0.008,
+              "business": 0.01,
+              "rural": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "fuel_protest",
+      "name": "The pumps",
+      "summary": "The price at the pump has crossed the number where hauliers park their lorries across the depot gates, and the depots have stopped answering the phone. Panic buying is doing the negotiating for them.",
+      "likelihood": 0.0032,
+      "category": "unrest",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 2,
+      "once": false,
+      "choices": [
+        {
+          "id": "rebate_the_hauliers",
+          "label": "Rebate the hauliers",
+          "summary": "Licensed hauliers get a rebate at the depot and the lorries move. Every other road user asks on what principle, and the answer is: on this one.",
+          "effects": {
+            "company": {
+              "sector": "services",
+              "burden": -0.05
+            },
+            "bloc_offset": {
+              "rural": 0.02,
+              "business": 0.014,
+              "urban": -0.012,
+              "workers": -0.008,
+              "pensioners": 0.001
+            }
+          }
+        },
+        {
+          "id": "release_the_reserves",
+          "label": "Release the reserves",
+          "summary": "The strategic reserve is released to the distributors and the price eases by the width of a headline. The structural fact stays exactly where it was.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.014,
+              "rural": -0.008,
+              "workers": -0.006,
+              "business": 0.008,
+              "pensioners": 0.006
+            }
+          }
+        },
+        {
+          "id": "name_the_speculators",
+          "label": "Name the speculators",
+          "summary": "The trading houses are named at the podium and an inquiry is promised. The price falls two days later for reasons already in train, and the podium keeps the credit.",
+          "effects": {
+            "bloc_offset": {
+              "business": -0.028,
+              "workers": 0.012,
+              "urban": 0.014,
+              "rural": 0.008
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "teachers_walkout",
+      "name": "The marking boycott",
+      "summary": "The teachers' unions have struck the exams rota first and the pay talks second, which tells you which one they think the government can afford to lose. The year's timetable is now an opening position.",
+      "likelihood": 0.0036,
+      "category": "unrest",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 10,
+      "respond_months": 3,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "deficit_pct_gdp",
+          "op": ">=",
+          "value": 2.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "fund_the_scale",
+          "label": "Find the money",
+          "summary": "The scale is funded and the education line takes it where everyone can see. The other unions have read it, and the finance minister has read them reading it.",
+          "effects": {
+            "spending_pct_gdp": {
+              "education": 0.3
+            },
+            "bloc_offset": {
+              "workers": 0.014,
+              "students": 0.016,
+              "urban": 0.01,
+              "business": -0.014,
+              "rural": -0.008,
+              "pensioners": -0.019
+            }
+          }
+        },
+        {
+          "id": "phase_it_over_two_years",
+          "label": "Phase it over two years",
+          "summary": "The award is split across two budgets and both sides declare the shape of a victory. The marking resumes; the next dispute is already scheduled.",
+          "effects": {
+            "spending_pct_gdp": {
+              "education": 0.12
+            },
+            "society": {
+              "settlement": 0.03
+            },
+            "bloc_offset": {
+              "workers": 0.008,
+              "students": 0.008,
+              "urban": 0.004,
+              "business": -0.006,
+              "rural": -0.004,
+              "pensioners": -0.01
+            }
+          }
+        },
+        {
+          "id": "substitute_and_wait",
+          "label": "Substitute and wait",
+          "summary": "Supervisors are drafted, the exams sit, and the pay talks resume when the government has a number it likes. The profession's diary has a long memory.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.016,
+              "students": -0.012,
+              "urban": -0.008,
+              "business": 0.01,
+              "rural": 0.006,
+              "pensioners": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "housing_squats",
+      "name": "The empty blocks",
+      "summary": "Three empty blocks on the river were squatted in a single night and the movement has a name, a flag and better lawyers than the owner. The waiting list for those blocks is eleven years.",
+      "likelihood": 0.0024,
+      "category": "unrest",
+      "severity": 1,
+      "weight": 0.5,
+      "cooldown_months": 0,
+      "respond_months": 4,
+      "once": true,
+      "preconditions": [
+        {
+          "field": "unemployment_pct",
+          "op": ">=",
+          "value": 9.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "acquire_and_convert",
+          "label": "Acquire and convert",
+          "summary": "The blocks are taken into the city's housing stock at a price a court will argue about, and the squatters get keys they already hold. The owners' association discovers the courts too.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.2
+            },
+            "bloc_offset": {
+              "students": 0.022,
+              "urban": 0.024,
+              "workers": 0.008,
+              "business": -0.028,
+              "pensioners": -0.021
+            }
+          }
+        },
+        {
+          "id": "evict_at_dawn",
+          "label": "Evict at dawn",
+          "summary": "The bailiffs go in early and the property order is restored by afternoon. The movement loses the blocks and gains exactly the story it wanted.",
+          "effects": {
+            "bloc_offset": {
+              "business": 0.024,
+              "rural": 0.012,
+              "students": -0.024,
+              "urban": -0.018,
+              "workers": 0.002
+            }
+          }
+        },
+        {
+          "id": "tolerate_the_blocks",
+          "label": "Tolerate the blocks",
+          "summary": "Nothing is decided and the blocks hold their population. The city gains a neighbourhood that owes it nothing and watches it closely.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "business": -0.016,
+              "students": 0.008,
+              "urban": 0.01,
+              "rural": -0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pension_march",
+      "name": "The pensions march",
+      "summary": "The pensioner federations have filled the boulevard without a single burned bin, which is more than the weather usually manages, and their demand is one word long: indexation.",
+      "likelihood": 0.002,
+      "category": "unrest",
+      "severity": 2,
+      "weight": 2.0,
+      "cooldown_months": 16,
+      "respond_months": 4,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unrest_pct",
+          "op": ">=",
+          "value": 15.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "pledge_the_index",
+          "label": "Pledge the index",
+          "summary": "Indexation is pledged from the balcony and the march disperses pleased. The line is open-ended, which is what open-ended means.",
+          "effects": {
+            "spending_pct_gdp": {
+              "pensions": 0.35
+            },
+            "bloc_offset": {
+              "pensioners": 0.026,
+              "workers": 0.012,
+              "business": -0.02,
+              "rural": 0.006,
+              "students": -0.008,
+              "urban": -0.03
+            }
+          }
+        },
+        {
+          "id": "commission_the_review",
+          "label": "Commission a review",
+          "summary": "A review is commissioned, reporting after the election season, with the index frozen until it does. The boulevard empties politely and the federations' letters acquire a lawyer's patience.",
+          "effects": {
+            "bloc_offset": {
+              "pensioners": -0.016,
+              "workers": -0.008,
+              "business": 0.012,
+              "urban": 0.006,
+              "rural": -0.004
+            }
+          }
+        },
+        {
+          "id": "let_it_pass",
+          "label": "Let it pass",
+          "summary": "The march passes and the answer is promised after the summer, which is where promises go to become autumns.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "pensioners": -0.018,
+              "workers": -0.008,
+              "students": -0.004,
+              "business": 0.01,
+              "rural": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "port_slowdown",
+      "name": "The ports slow down",
+      "summary": "Work-to-rule at the two big ports has the container stacks up to the cranes and the fruit going by rail around the coast. Nobody is officially on strike, which is the point of work-to-rule.",
+      "likelihood": 0.0024,
+      "category": "unrest",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "settle_at_the_table",
+          "label": "Send it to mediation",
+          "summary": "The roster and the automation clause go to mediation and the cranes move by the weekend. The settlement is noticed in every depot in the country.",
+          "effects": {
+            "society": {
+              "settlement": 0.07
+            },
+            "company": {
+              "sector": "services",
+              "burden": -0.04
+            },
+            "bloc_offset": {
+              "workers": 0.02,
+              "business": -0.018,
+              "urban": -0.008,
+              "rural": -0.006
+            }
+          }
+        },
+        {
+          "id": "legislate_the_minimums",
+          "label": "Legislate the minimums",
+          "summary": "A minimum-moves law goes to the assembly and the unions call a day of action against it. The stacks clear by decree of their own backlog.",
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.024,
+              "business": 0.022,
+              "urban": 0.01,
+              "rural": 0.008,
+              "students": 0.031
+            }
+          }
+        },
+        {
+          "id": "let_the_queues_grow",
+          "label": "Let the queues grow",
+          "summary": "The rulebook is enforced to the letter and the letter is long. The exporters book through a neighbour's ports and some of them do not come back.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.014,
+              "urban": -0.01,
+              "business": -0.008,
+              "rural": -0.006,
+              "pensioners": 0.008,
+              "students": 0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "union_ultimatum",
+      "name": "The unions set a date",
+      "summary": "The federations have agreed a date and a list. They would rather have a settlement than the date, and they have said so in a way that leaves you a fortnight.",
+      "likelihood": 0.05,
+      "category": "unrest",
+      "severity": 2,
+      "cooldown_months": 6,
+      "respond_months": 2,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "unrest_pct",
+          "op": ">=",
+          "value": 10.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "settle",
+          "label": "Settle in full",
+          "summary": "Industrial peace, bought at the pension line and paid for every month after.",
+          "effects": {
+            "society": {
+              "settlement": 0.2
+            },
+            "spending_pct_gdp": {
+              "pensions": 0.4
+            },
+            "bloc_offset": {
+              "workers": 0.028,
+              "urban": 0.017,
+              "pensioners": 0.011,
+              "students": -0.017,
+              "rural": -0.028,
+              "business": -0.067
+            }
+          }
+        },
+        {
+          "id": "partial",
+          "label": "Concede the smaller half",
+          "summary": "Cheaper, and it buys proportionately less.",
+          "effects": {
+            "society": {
+              "settlement": 0.08
+            },
+            "bloc_offset": {
+              "workers": 0.014,
+              "business": -0.028,
+              "rural": -0.008
+            }
+          }
+        },
+        {
+          "id": "hold_firm",
+          "label": "Hold the line",
+          "summary": "You keep the money and they keep the date.",
+          "default": true,
+          "effects": {
+            "society": {
+              "settlement": -0.1
+            },
+            "bloc_offset": {
+              "business": 0.045,
+              "rural": 0.028,
+              "workers": -0.034,
+              "students": -0.028,
+              "urban": -0.011
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

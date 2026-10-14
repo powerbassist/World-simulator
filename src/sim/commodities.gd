@@ -13,9 +13,11 @@ extends RefCounted
 ## HERE WRITES IT. What this file produces is a per-month value-added figure on
 ## `commodity_state`. Since V4.6's Task 3 the machine runs in the live month
 ## (main.gd, after Economy and before Opinion) and in balance_probe.gd. No SIM
-## module reads its output; the readers are the UI surfaces -- Task 4's
-## Commodities panel and the two map layers -- which read after the tick and
-## never feed the simulation back.
+## module reads the `commodity_state` register; its readers are the UI surfaces --
+## Task 4's Commodities panel and the two map layers -- which read after the tick
+## and never feed the simulation back. The one sim reader of anything this module
+## writes is the events machine, and it reads the crossing stamp
+## `ns.commodity_high_month` (outside the register), never `commodity_state`.
 ##
 ## A LEAF, and the tier's own list of what it may touch: commodity_constants, and
 ## nothing else. No economy, no trade, no budget, no UI. Every number it reads of
@@ -23,8 +25,11 @@ extends RefCounted
 ## that file takes plain Dictionaries because its caller owns the register and
 ## this machine genuinely owns one (`calendar.gd`'s position rather than siting's).
 ##
-## WHAT IT OWNS: `ns.commodity_state`, for every nation. Single writer, pinned by
-## tests/test_commodities.gd reading src/. What it never does: write
+## WHAT IT OWNS: `ns.commodity_state`, for every nation, and the one stamp
+## `ns.commodity_high_month` (the absolute month a good's price last crossed up
+## through K.HIGH_PRICE_RATIO of base -- the events machine's hook reads it, since the
+## register keeps no history to read a crossing off). Single writer of both,
+## pinned by tests/test_commodities.gd reading src/. What it never does: write
 ## `sector_output` or `gdp_eur_bn` (Economy's), or reach a panel.
 ##
 ## DETERMINISM IS THE LAW: no rand(), no RandomNumberGenerator, no mutable state
@@ -171,6 +176,8 @@ static func tick_month(state, loader) -> void:
 	# rather than two that can drift. That the two routes agree to the bit is what
 	# tests/test_commodities.gd compares, and it is deterministic for
 	# init_nation's own reason -- a pure function of the nation's measured mix.
+	# (A reseed puts prices back at base, so the next tick can stamp a crossing the
+	# world did not make -- a robustness path only, never reached in a normal game.)
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
 		if ns.commodity_state.is_empty() or not ns.commodity_state.has_all(STATE_KEYS):
@@ -276,15 +283,24 @@ static func tick_month(state, loader) -> void:
 	# 6. Write each nation's register: its own figures plus its copy of the ONE
 	# world price vector (`commodity_state` is per-nation data, and a panel must
 	# read a price without reaching into another nation's state).
+	var month_index := int(state.year) * 12 + int(state.month)
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
 		var price: Dictionary = ns.commodity_state["price"]
 		var value_added := 0.0
 		for good_id in ids:
 			var base := _base(loader, good_id)
+			var previous := float(price[good_id])
 			var next: float = clampf(
-				float(price[good_id]) * (1.0 + K.PRICE_ELASTICITY * float(gaps[good_id])),
+				previous * (1.0 + K.PRICE_ELASTICITY * float(gaps[good_id])),
 				base * (1.0 - K.PRICE_BAND), base * (1.0 + K.PRICE_BAND))
+			# THE CROSSING STAMP: the one place both sides of the update are in
+			# hand. Below the line before, at or above it after -- a good that
+			# STAYS high does not re-stamp, which is the whole point (the
+			# commodity_price_high hook is an edge; a level read fired every month).
+			var line := base * K.HIGH_PRICE_RATIO
+			if previous < line and next >= line:
+				ns.commodity_high_month = month_index
 			price[good_id] = next
 			value_added += float(produced[nation_id][good_id]) * next
 		ns.commodity_state["demand"] = demanded[nation_id]

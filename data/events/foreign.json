@@ -1,0 +1,642 @@
+{
+  "_note": "The world past the table, arriving as ships in the roads, recalls, licences and seating plans. Every partner is 'the partner' and every crisis is a domestic bill for something decided elsewhere, which is the honest shape of the category and the reason none of these names a country. subject_office is set where the story is about a person in an office -- and every such event carries a gate, because an office alone would collide with the scandals' empty gates at load.",
+  "events": [
+    {
+      "id": "for_sanctioned_cargo",
+      "name": "The ship in the roads",
+      "summary": "A cargo vessel has been at anchor nine days because the partner that sanctioned its owner says the cargo is theirs to impound and the flag state, which is you, has stopped returning calls. The charterer's lawyers have priced both answers.",
+      "likelihood": 0.0024,
+      "category": "foreign",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "impound_the_cargo",
+          "label": "Impound the cargo",
+          "summary": "The partner is delighted for a week and the litigation runs for years; every shipper with an awkward manifest starts routing around your ports by the next season.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.02
+            },
+            "bloc_offset": {
+              "urban": 0.024,
+              "business": 0.02,
+              "workers": -0.02,
+              "rural": -0.016
+            }
+          }
+        },
+        {
+          "id": "let_it_sail",
+          "label": "Let it sail",
+          "summary": "The partner's list becomes, on your quays, a suggestion. The port keeps its fees, the flag keeps its customers, and the partner keeps a folder with your name on the spine.",
+          "effects": {
+            "bloc_offset": {
+              "workers": 0.016,
+              "urban": -0.022,
+              "students": -0.012,
+              "business": 0.012,
+              "pensioners": 0.002
+            }
+          }
+        },
+        {
+          "id": "at_anchor",
+          "label": "Keep it at anchor",
+          "summary": "The ninth day becomes the ninth week. The cargo ages on somebody else's books, the anchorage becomes a landmark, and both navies count your anchorages out of habit.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.012,
+              "business": -0.01,
+              "urban": -0.016,
+              "rural": 0.016,
+              "pensioners": 0.012
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_ambassador_recalled",
+      "name": "The recall",
+      "summary": "The partner's ambassador left on four hours' notice over a vote your assembly did not think anyone was watching. The statement says consultations, which is what a rupture is called while both sides still need the word.",
+      "likelihood": 0.003,
+      "category": "foreign",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "send_a_minister",
+          "label": "Send a minister to repair it",
+          "summary": "A quiet arrival, a long lunch and the ambassador is back inside two months. It reads as contrition to the people who read it at all, and as an errand to the people who cast the vote.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.02,
+              "pensioners": 0.012,
+              "urban": -0.016,
+              "students": -0.012,
+              "workers": -0.002
+            }
+          }
+        },
+        {
+          "id": "recall_yours_to_match",
+          "label": "Recall yours to match",
+          "summary": "Symmetry is a policy. The embassies run on chargés, the treaties run on hold, and the members who cast the vote pay for the minister's plane and call it spine.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.03,
+              "workers": 0.012,
+              "pensioners": 0.012,
+              "urban": -0.03,
+              "students": -0.022
+            }
+          }
+        },
+        {
+          "id": "say_nothing",
+          "label": "Say nothing",
+          "summary": "The consultations run at their own pace, which is the partner's. The trade files age on the same shelf as the ambassador's forwarded mail.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.012,
+              "pensioners": 0.008,
+              "urban": -0.014,
+              "students": -0.008,
+              "business": 0.002
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_neighbour_checks",
+      "preconditions": [
+        {
+          "field": "eu_member",
+          "op": "==",
+          "value": 1.0
+        }
+      ],
+      "name": "The queue at the crossing",
+      "summary": "The partner has put patrols back on a border your side has not staffed since the treaties, and the town that lives on day-trippers has lost a season in a fortnight. Their minister calls it technical; your shopkeepers have stopped using the word.",
+      "likelihood": 0.003,
+      "category": "foreign",
+      "severity": 1,
+      "weight": 1.2,
+      "cooldown_months": 10,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "staff_the_crossing",
+          "label": "Staff your side of the crossing",
+          "summary": "Fast lanes, extra booths and overtime at the customs post: the queue halves by the high season and the interior line carries the bill for good. The town calls it leadership; the auditor calls it recurrent.",
+          "effects": {
+            "spending_pct_gdp": {
+              "infrastructure": 0.12
+            },
+            "bloc_offset": {
+              "rural": 0.026,
+              "business": 0.016,
+              "urban": -0.022,
+              "workers": -0.008,
+              "students": -0.006
+            }
+          }
+        },
+        {
+          "id": "make_it_a_summit_item",
+          "label": "Make it a summit item",
+          "summary": "The agenda committee buries it under enlargement, but the photocall at the crossing is worth the season. The partner promises a study, which is what promises are called before they are consultations.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.016,
+              "workers": 0.01,
+              "business": -0.01,
+              "urban": -0.012,
+              "students": 0.002
+            }
+          }
+        },
+        {
+          "id": "wait_the_season",
+          "label": "Wait for their election",
+          "summary": "The patrols are an incumbent's habit and the incumbent is up in the spring. The town has one season, and it is this one.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": -0.03,
+              "business": -0.014,
+              "workers": -0.012,
+              "urban": 0.022,
+              "students": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_arms_export_row",
+      "name": "The export licence",
+      "summary": "The order book has a nine-figure sale on it and the embargo list gained the buyer's name at this month's meeting, on the proposal of the partner whose own docks have been loading since spring. The licence is yours to sign, and everyone is watching the signature.",
+      "likelihood": 0.0024,
+      "category": "foreign",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "sign_the_licence",
+          "label": "Sign the licence",
+          "summary": "The plant keeps two shifts and the partner's foreign ministry keeps the receipts. The next time an embargo list is read aloud, your signature is one of the precedents.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": -0.03
+            },
+            "bloc_offset": {
+              "workers": 0.022,
+              "business": 0.026,
+              "rural": 0.012,
+              "urban": -0.03,
+              "students": -0.02
+            }
+          }
+        },
+        {
+          "id": "refuse_and_say_why",
+          "label": "Refuse and say why",
+          "summary": "The buyer buys from someone whose parliament reads slower. The plant loses a shift, the peace movement calls it a precedent, and the partner's docks keep loading on schedule.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.03
+            },
+            "bloc_offset": {
+              "urban": 0.026,
+              "students": 0.02,
+              "workers": -0.02,
+              "business": -0.022,
+              "rural": -0.008
+            }
+          }
+        },
+        {
+          "id": "sit_on_the_file",
+          "label": "Sit on the file",
+          "summary": "The licence neither issues nor refuses, which the plant reads as no and the buyer's deadline reads for you. The only clock in the file is theirs.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "workers": -0.014,
+              "business": -0.012,
+              "urban": -0.016,
+              "rural": 0.014,
+              "students": 0.008,
+              "pensioners": 0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_spy_file",
+      "name": "The counter-intelligence brief",
+      "summary": "A leaked page from a service briefing names an aide in the largest party's office as a registered contact of a foreign service. The service wants the page sealed, the leader wants the source, and the press already has the page.",
+      "subject_office": "largest_party_leader",
+      "likelihood": 0.0024,
+      "category": "foreign",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 16,
+      "respond_months": 3,
+      "once": false,
+      "choices": [
+        {
+          "id": "table_the_file",
+          "label": "Put the file before the assembly",
+          "summary": "The page is read into the record and the service loses control of its own paper. The leader survives it or does not, and either way the government was seen to let the light in.",
+          "effects": {
+            "society": {
+              "press_freedom": 0.05
+            },
+            "bloc_offset": {
+              "urban": 0.026,
+              "students": 0.02,
+              "rural": -0.022,
+              "pensioners": -0.012,
+              "workers": -0.002
+            }
+          }
+        },
+        {
+          "id": "seal_the_page",
+          "label": "Seal the page for the service",
+          "summary": "The service keeps its file and the government keeps the service's silence, and both of those are debts. The page is reprinted abroad within the week, where it reads even better.",
+          "effects": {
+            "society": {
+              "corruption": 0.04
+            },
+            "bloc_offset": {
+              "pensioners": 0.022,
+              "rural": 0.016,
+              "urban": -0.026,
+              "students": -0.018,
+              "business": 0.002
+            }
+          }
+        },
+        {
+          "id": "to_the_prosecutors",
+          "label": "Let the prosecutors have it",
+          "summary": "The page goes to the office that cannot leak it and cannot hurry. The service calls it procedure, the press calls it a grave, and the leader calls it whatever the verdict says.",
+          "default": true,
+          "effects": {
+            "society": {
+              "judicial_independence": 0.03
+            },
+            "bloc_offset": {
+              "urban": 0.012,
+              "students": 0.01,
+              "rural": -0.012,
+              "pensioners": 0.002,
+              "workers": -0.006
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_trade_retaliation",
+      "name": "The list they drafted",
+      "summary": "The partner's trade ministry has opened a consultation on tariffs that reads like a map of the districts that elected you: the cheese, the steel, the whole harvest calendar. It is a draft, and in trade a draft is a message with a return address.",
+      "likelihood": 0.003,
+      "category": "foreign",
+      "severity": 2,
+      "weight": 1.2,
+      "cooldown_months": 12,
+      "respond_months": 5,
+      "once": false,
+      "choices": [
+        {
+          "id": "open_procurement",
+          "label": "Open the procurement they want",
+          "summary": "The concession sits in a sector that does not vote for you, which is the point of choosing it. The list goes back in the drawer and the districts that paid for the drawer's opening send the bill to the next budget.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.02
+            },
+            "bloc_offset": {
+              "rural": -0.02,
+              "urban": 0.02,
+              "business": 0.024,
+              "workers": -0.012,
+              "students": -0.004
+            }
+          }
+        },
+        {
+          "id": "draft_your_own",
+          "label": "Draft a list of your own",
+          "summary": "Their districts, your tariffs, same length and tone. The chambers of commerce on both sides write identical letters, and neither list goes away once it has been photographed.",
+          "effects": {
+            "company": {
+              "sector": "industry",
+              "burden": 0.03
+            },
+            "bloc_offset": {
+              "rural": 0.022,
+              "workers": 0.016,
+              "urban": -0.02,
+              "business": -0.026,
+              "pensioners": 0.004
+            }
+          }
+        },
+        {
+          "id": "take_the_meeting",
+          "label": "Take the meeting",
+          "summary": "The consultation closes, the list is trimmed by a third and published anyway. The districts that came off it are grateful, and the ones still on it check whose district came off first.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.014,
+              "business": 0.012,
+              "urban": -0.014,
+              "workers": -0.008,
+              "students": -0.004
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_hostage_affair",
+      "name": "The family on the steps",
+      "summary": "A haulage contractor from the interior is six weeks into detention on a charge nobody has shown anybody, and the family has learned to hold the cameras. The partner's courts do not move for petitions and its ministries do not answer inside a month.",
+      "likelihood": 0.002,
+      "category": "foreign",
+      "severity": 2,
+      "weight": 1.0,
+      "cooldown_months": 16,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "send_the_plane",
+          "label": "Send the plane and the doctor",
+          "summary": "A humanitarian landing for a prisoner nobody has sentenced: the partner calls it extraction and files it under your name. The family gets a homecoming and every other family with a file gets a queue at your door.",
+          "effects": {
+            "bloc_offset": {
+              "workers": 0.02,
+              "rural": 0.02,
+              "urban": 0.014,
+              "business": -0.03,
+              "pensioners": -0.004
+            }
+          }
+        },
+        {
+          "id": "ask_the_price",
+          "label": "Ask what the partner wants for him",
+          "summary": "Every jailer has a list and the price is never printed: a vote postponed, a licence waved through, a quiet month. The contractor comes home and the auditor finds the price two years later, in a different currency.",
+          "effects": {
+            "society": {
+              "corruption": 0.04
+            },
+            "bloc_offset": {
+              "workers": 0.012,
+              "rural": 0.016,
+              "urban": -0.018,
+              "students": -0.014,
+              "business": -0.004
+            }
+          }
+        },
+        {
+          "id": "consular_only",
+          "label": "Keep it consular",
+          "summary": "The visits are monthly, the letters are read into the record, and the contractor passes his second winter where he is. The family knows the schedule of your statements better than your own office does.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": -0.026,
+              "workers": -0.016,
+              "urban": -0.012,
+              "pensioners": 0.022,
+              "business": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_base_renewal",
+      "name": "The rent review",
+      "summary": "The base lease is up and the partner's delegation has arrived knowing three numbers: what the base pays your region in wages, what your debt office pays in interest, and which of those is bigger. The term they want is twenty years.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.004,
+      "category": "foreign",
+      "severity": 3,
+      "weight": 1.5,
+      "cooldown_months": 18,
+      "respond_months": 6,
+      "once": true,
+      "preconditions": [
+        {
+          "field": "debt_to_gdp_pct",
+          "op": ">=",
+          "value": 90.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "sign_the_twenty",
+          "label": "Sign the twenty years",
+          "summary": "The rent is real money on a term nobody in the assembly will sit out, and the sovereignty question is settled for a generation by the government that had least choice about it. The region keeps its payroll and the treasury keeps a line it will miss.",
+          "effects": {
+            "other_revenue_pct_gdp": 0.08,
+            "bloc_offset": {
+              "rural": 0.022,
+              "workers": 0.016,
+              "urban": -0.02,
+              "students": -0.016,
+              "pensioners": 0.002
+            }
+          }
+        },
+        {
+          "id": "offer_five",
+          "label": "Offer five and price it up",
+          "summary": "The delegation needs the base more than the term, which your negotiators establish on the first morning. The rent improves and so does the partner's interest in your politics, at a rate the five years compound.",
+          "effects": {
+            "other_revenue_pct_gdp": 0.04,
+            "bloc_offset": {
+              "urban": 0.016,
+              "students": 0.012,
+              "rural": -0.016,
+              "pensioners": -0.01,
+              "business": 0.004
+            }
+          }
+        },
+        {
+          "id": "study_the_lease",
+          "label": "Study it while the lease runs on",
+          "summary": "The base runs month to month and the partner runs the bill up in fees, which is a sentence your own ministry wrote once about someone else. The region reads the uncertainty in its orders before the ministry reads it anywhere.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "rural": -0.03,
+              "workers": -0.02,
+              "business": -0.014,
+              "urban": 0.022,
+              "pensioners": 0.016
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_summit_photo",
+      "name": "The seating plan",
+      "summary": "The summit photograph sets your head of state at the end of the row, next to the government the room has spent a year freezing out over its power stations. The picture is on the wires already; the explanation is yours to write.",
+      "subject_office": "head_of_state",
+      "likelihood": 0.003,
+      "category": "foreign",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 2,
+      "once": false,
+      "preconditions": [
+        {
+          "field": "co2e_per_capita_t",
+          "op": ">=",
+          "value": 6.0
+        }
+      ],
+      "choices": [
+        {
+          "id": "own_the_seat",
+          "label": "Say the seat was accepted",
+          "summary": "We talk to everyone plays as statecraft at home and as a licence abroad, and the ministries that wrote the freeze are booking the interpretation. The next freeze has an asterisk where your name was.",
+          "effects": {
+            "bloc_offset": {
+              "rural": 0.022,
+              "business": 0.022,
+              "pensioners": 0.014,
+              "urban": -0.032,
+              "students": -0.022
+            }
+          }
+        },
+        {
+          "id": "publish_the_complaint",
+          "label": "Publish the protocol complaint",
+          "summary": "The letter to the secretariat goes out within the hour, immediate and undignified, which are also its two defences. The photograph keeps running with a caption nobody reads past.",
+          "effects": {
+            "bloc_offset": {
+              "urban": 0.016,
+              "students": 0.012,
+              "rural": -0.02,
+              "pensioners": -0.012,
+              "business": 0.004
+            }
+          }
+        },
+        {
+          "id": "let_the_picture_speak",
+          "label": "Let the picture speak",
+          "summary": "It speaks fluently. By the weekend the freeze has a new member and the caption has your country's name in it.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.026,
+              "students": -0.022,
+              "rural": -0.012,
+              "business": 0.022,
+              "pensioners": 0.014
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "for_diaspora_petition",
+      "name": "The petition from the old country",
+      "summary": "Two hundred thousand of your citizens hold opinions as well as passports, and the homeland's new press law has given them a petition that gains a page a day. The marches are outside your embassies by Wednesday, which is three days faster than the homeland expected.",
+      "likelihood": 0.0024,
+      "category": "foreign",
+      "severity": 1,
+      "weight": 1.0,
+      "cooldown_months": 12,
+      "respond_months": 4,
+      "once": false,
+      "choices": [
+        {
+          "id": "raise_it_everywhere",
+          "label": "Raise it in every room",
+          "summary": "The foreign ministry raises it, the culture ministry funds the paper it bans, and the homeland returns the compliment in your minority's language. The marches are pleased and the ferries are fuller by autumn.",
+          "effects": {
+            "society": {
+              "migration": 0.04
+            },
+            "bloc_offset": {
+              "urban": 0.02,
+              "students": 0.018,
+              "rural": -0.02,
+              "workers": -0.008,
+              "pensioners": -0.004
+            }
+          }
+        },
+        {
+          "id": "homeland_law",
+          "label": "Call it the homeland's law",
+          "summary": "Correct, and the marches have the photographs of the presses that closed. The petition keeps coming back with more pages, and the pages are all in your language.",
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.02,
+              "students": -0.018,
+              "rural": 0.016,
+              "pensioners": 0.014,
+              "business": 0.006
+            }
+          }
+        },
+        {
+          "id": "quiet_funding",
+          "label": "Fund the paper quietly",
+          "summary": "A culture-line grant with no ministry name on it keeps the presses running and the marches off the news. The homeland's ministry knows anyway; that is what the grant is for.",
+          "default": true,
+          "effects": {
+            "society": {
+              "press_freedom": 0.03
+            },
+            "bloc_offset": {
+              "urban": 0.008,
+              "students": 0.008,
+              "rural": -0.008,
+              "workers": -0.002,
+              "pensioners": 0.002
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

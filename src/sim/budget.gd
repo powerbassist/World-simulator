@@ -34,7 +34,7 @@ const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Energy = preload("res://src/sim/energy.gd")
 ## V4.2 T4, for CUSTOM_TAX_MULT_DEMAND alone: a composed key reads the shared
-## demand default in commit()'s level_effect loop, where the authored five read
+## demand default in apply_pending()'s level_effect loop, where the authored five read
 ## their MULT_TAX rows. Constants only, so the dependency stops at the values.
 const StatuteK = preload("res://src/sim/statute_constants.gd")
 ## The ultra pass-1 projection finding, PR 46 finding 6 / PR 47 finding 1 a third
@@ -329,19 +329,39 @@ static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary, custom
 	return clampf(raw, C.EROSION_MIN, C.EROSION_MAX)
 
 
+## Commit a pending budget (shape: see apply_pending). The player's command verb,
+## player-scoped by construction: it hands the pending budget to apply_pending()
+## for state.player() and then recomputes the books. The budget screen
+## and the tax panel land here when -- and only when -- the nation they belong
+## to is the one the player governs. A repeal's negation and an event choice do
+## NOT pass through (both route apply_effects() into the nation-scoped
+## apply_pending below); V4.4's chooser made the first caller whose ns is NOT
+## state.player() (the other twenty-eight answer their own crises), and routing
+## that through here rewrote the player's budget with another government's
+## answer. Since pass 23 AI answers skip the fiscal channels, so that caller no
+## longer reaches apply_pending at all.
+static func commit(state, pending: Dictionary) -> void:
+	var ns = state.player()
+	if ns == null:
+		return
+	apply_pending(ns, pending)
+	recompute(state, ns)
+
+
 ## Apply a pending budget. `pending` is {"tax_rates_pct": {...},
 ## "spending_pct_gdp": {...}, "tax_progressivity": float}; any key may be omitted to
 ## leave it unchanged.
+##
+## The one fiscal WRITER, nation-scoped: the landed-rate floors, the yield gate
+## and the demand impulse, for whoever the effects belong to. `recompute` is the
+## caller's, not this function's, because it needs the state -- the tariff line
+## reads the relations the state holds.
 ##
 ## The demand impulse is raised here and nowhere else: a budget *change* is a
 ## shock, a budget left alone is not. The revenue delta is computed by running
 ## revenue_lines() at the old and new rates, so the erosion curve is respected
 ## automatically and the two can never drift apart.
-static func commit(state, pending: Dictionary) -> void:
-	var ns = state.player()
-	if ns == null:
-		return
-
+static func apply_pending(ns, pending: Dictionary) -> void:
 	var new_rates: Dictionary = ns.tax_rates_pct.duplicate(true)
 	if pending.has("tax_rates_pct"):
 		# THE LANDED-RATE FLOOR (the ultra pass-9 finding's class): a rate is
@@ -445,7 +465,6 @@ static func commit(state, pending: Dictionary) -> void:
 	ns.tax_progressivity = clampf(
 		new_progressivity, TaxK.PROGRESSIVITY_MIN, TaxK.PROGRESSIVITY_MAX
 	)
-	recompute(state, ns)
 
 
 ## What the books look like the instant `pending` is committed, before any time
@@ -537,8 +556,9 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# Events hazard the loop already includes, so the projection sees
 		# exactly the divisions the next twenty-four months deliver rather
 		# than an average of them. And a carried bill applies through the ONE
-		# applier, whose budget levers route through Budget.commit() into the
-		# very revenue and spending keys the snapshot prints -- a projection
+		# applier, whose budget levers route through apply_effects() into
+		# Budget.apply_pending -- the very revenue and spending keys the
+		# snapshot prints -- a projection
 		# that held the assembly frozen would show a country whose parliament
 		# never legislates. The countdown side of the same machine (law
 		# cooldowns, suspensive holds, referendums) stays in
@@ -622,6 +642,10 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# this loop that can fire something new: the hazard is a pure function of
 		# (nation, event, month), so the projection sees exactly the events the next
 		# twelve months deliver rather than an average of them.
+		# This loop does not tick Commodities, so nothing writes `commodity_high_month`
+		# inside it and `commodity_price_high` stays false in every projected month
+		# (the copied stamp is the real game's past, never a projected month);
+		# docs/someday.md records that the projection prices no goods.
 		Events.tick_month(sim, loader)
 		# In main.gd's slot a seventh time, and V1.6b is where the question the comment
 		# below asks about Media gets the OPPOSITE answer -- so the two sit together

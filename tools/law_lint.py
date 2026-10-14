@@ -69,7 +69,7 @@ MAJORITY_KEYS = ["simple", "absolute", "two_thirds", "amendment"]
 PRECONDITION_FIELDS = [
     "debt_to_gdp_pct", "unemployment_pct", "deficit_pct_gdp",
     "overall_approval_pct", "growth_annual_pct", "terms_served",
-    "unrest_pct", "co2e_per_capita_t",
+    "unrest_pct", "co2e_per_capita_t", "eu_member",
 ]
 PRECONDITION_OPS = ["<", "<=", ">", ">=", "=="]
 # law.gd SCALAR_EFFECT_KEYS / SHARED_EFFECT_CHANNELS

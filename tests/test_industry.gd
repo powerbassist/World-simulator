@@ -109,11 +109,13 @@ func _test_single_writer() -> void:
 	var owned := {"city": false, "failed": false, "rescue_months_left": false,
 		"bid_bidder": false, "bid_price_eur_bn": false, "bid_months_left": false,
 		"subsidy_shadow": false, "subsidy_lapsed_month": false,
-		"owner": false, "courted": false, "board_chair": false}
+		"owner": false, "courted": false, "board_chair": false,
+		"failed_month": false, "bid_month": false}
 	var writers := {"city": [], "failed": [], "rescue_months_left": [],
 		"bid_bidder": [], "bid_price_eur_bn": [], "bid_months_left": [],
 		"subsidy_shadow": [], "subsidy_lapsed_month": [],
-		"owner": [], "courted": [], "board_chair": []}
+		"owner": [], "courted": [], "board_chair": [],
+		"failed_month": [], "bid_month": []}
 	var roots := ["res://src/sim", "res://src/core"]
 	for root_dir: String in roots:
 		var dir := DirAccess.open(root_dir)

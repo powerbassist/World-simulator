@@ -493,23 +493,73 @@ var last_referendum_result: Dictionary = {}
 ## could not reconstruct which month drew which place. A non-sited event's register
 ## carries neither key.
 ##
-## Written by Events.announce(), Events.tick_month() and Events.choose(), and by nothing
-## else.
-var event_pending: Dictionary = {}
+## Written by Events.announce(), Events.tick_month() and Events.answer(), and by nothing
+## else. V4.4: this replaced `event_pending` -- the desk is a QUEUE now (severity-
+## ordered, bounded by events_constants.QUEUE_MAX), because at a hundred-and-two
+## events one slot is a draw the world considered and withdrew for no reason the
+## content can see. Each entry is the V1.8 register's own shape (event_id,
+## event_name, months_left, interrupt, plus region_id/region_name when sited) grown
+## by `severity` and `category`.
+var event_queue: Array[Dictionary] = []
 
 ## Event ids that have already happened, for the `once` ones. `passed_law_ids`' shape.
-## Marked at ANNOUNCEMENT rather than at resolution, because an event has happened the
+## Marked at DELIVERY rather than at resolution, because an event has happened the
 ## moment it arrives -- the choice is the response to it, not the event.
 var event_fired: Dictionary = {}
 
-## Months before any further event may fire. The session's one tuned constant counted
-## down: events_constants.EVENT_COOLDOWN_MONTHS.
-var event_quiet_months: int = 0
+## V4.4. Months before a CATEGORY may draw again, sparse -- entries exist only while
+## they bind. The V1.8 global `event_quiet_months` followed the slot down a level:
+## one resolution in fiscal silencing scandal forever was the global quiet's defect
+## at nine categories.
+var event_category_quiet: Dictionary = {}
+
+## V4.4. Event id -> the absolute month until which it may not draw again, sparse.
+## An until-month rather than a countdown so the register never holds an entry that
+## does not bind, and a save reloaded mid-cooldown keeps the same boundary.
+var event_cooldowns: Dictionary = {}
+
+## V4.4. Chains a choice has armed: {event_id, due_index, source_id}. A consequence
+## the player paid for must not evaporate on save -- `held_bills`' free-escape case.
+var event_armed: Array[Dictionary] = []
+
+## V4.4. Law id -> the absolute month it was repealed. The V4.2 ledger ERASE is
+## silent (legislature.gd's own record), so the repeal's month is stamped beside
+## it -- one line, one writer, and only the law_repealed hook reads it.
+var repealed_at: Dictionary = {}
+
+## V4.4. The last accession that flipped: {org, month_index}. orgs.gd deletes the
+## finished fight the same tick membership changes, so nothing else records WHEN a
+## nation joined -- the accession_won hook reads this stamp.
+var last_accession: Dictionary = {}
+
+## V4.4 review. The absolute month (`year*12+month`, `assembly_division_month`'s
+## form) an ASSEMBLY bill last came into force, -1 for never. It exists because
+## `last_law_result` is overwritten by every later division in the same month: a
+## held bill RELEASED by Legislature._tick_held_bills was erased by a same-month
+## private member's bill that failed in Statute, and the member_bill_passed hook
+## never saw the release. Two writers, one per place an assembly bill takes
+## effect (the release, and a division that passes and is not held); the hook is
+## the only reader. NO SAVE_VERSION bump: absent reads -1, "no assembly bill has
+## passed", which is the truth about every older save (`last_accession`'s case).
+var assembly_bill_passed_month: int = -1
+
+## V4.4 pass 22. The absolute month (`year*12+month`, `assembly_bill_passed_month`'s
+## form) in which ANY good's world price last CROSSED UP through
+## commodity_constants.HIGH_PRICE_RATIO of its base -- below the line before the
+## tick, at or above it after -- -1 for never. Commodities writes it (the one machine
+## that sees both sides of the update), the commodity_price_high hook is its only
+## reader. It exists because the hook was a LEVEL read on a vector that drifts to its
+## clamp within months, true almost every month; the register keeps no price history,
+## so the edge is stamped where the update happens. NO SAVE_VERSION bump: absent reads
+## -1, "no crossing yet", true of every older save (`assembly_bill_passed_month`'s case).
+var commodity_high_month: int = -1
 
 ## What happened and what the player chose, newest first, capped at EVENTS_KEPT. A
 ## DISPLAY RECORD: nothing in src/sim/ reads it back, and tests/test_events.gd asserts
 ## that by reading every file in the directory -- V1.3f's `foreign_acts` property in the
-## session most likely to be tempted to build the grievance ledger literally.
+## session most likely to be tempted to build the grievance ledger literally. V4.4:
+## the AI nations' choices land here too, their own trace of politics that happened
+## to them.
 var event_history: Array[Dictionary] = []
 
 ## Whether this nation's own constitution permits changing its political
@@ -1811,10 +1861,21 @@ func duplicate_state():
 	s.last_referendum_result = last_referendum_result.duplicate(true)
 	# Deep, for referendum_pending's reason above: Events.tick_month() writes
 	# months_left in place, and a shared reference would let Budget.project() tick the
-	# live register on its copy.
-	s.event_pending = event_pending.duplicate(true)
+	# live register on its copy. The whole V4.4 event family copies deep for the
+	# same reason -- the queue's entries are written in place by the countdown.
+	s.event_queue = event_queue.duplicate(true)
 	s.event_fired = event_fired.duplicate(true)
-	s.event_quiet_months = event_quiet_months
+	s.event_category_quiet = event_category_quiet.duplicate(true)
+	s.event_cooldowns = event_cooldowns.duplicate(true)
+	s.event_armed = event_armed.duplicate(true)
+	# The two hook stamps ride the family: both are serialised, and a copy that
+	# dropped them made a projection forget a repeal or an accession the world
+	# still remembers -- the empty-at-staging hole test_state_copy.gd now stages
+	# against.
+	s.repealed_at = repealed_at.duplicate(true)
+	s.last_accession = last_accession.duplicate(true)
+	s.assembly_bill_passed_month = assembly_bill_passed_month
+	s.commodity_high_month = commodity_high_month
 	s.event_history = event_history.duplicate(true)
 	s.permits_system_change = permits_system_change
 
@@ -2075,9 +2136,15 @@ func to_dict() -> Dictionary:
 		"amendment_rule": amendment_rule,
 		"referendum_mode": referendum_mode,
 		"referendum_pending": referendum_pending,
-		"event_pending": event_pending,
+		"event_queue": event_queue,
 		"event_fired": event_fired,
-		"event_quiet_months": event_quiet_months,
+		"event_category_quiet": event_category_quiet,
+		"event_cooldowns": event_cooldowns,
+		"event_armed": event_armed,
+		"repealed_at": repealed_at,
+		"last_accession": last_accession,
+		"assembly_bill_passed_month": assembly_bill_passed_month,
+		"commodity_high_month": commodity_high_month,
 		"event_history": event_history,
 		"permits_system_change": permits_system_change,
 
@@ -2382,24 +2449,31 @@ static func from_dict(d: Dictionary):
 	# `diplo_months_to_act` at U6a.
 	s.referendum_mode = d.get("referendum_mode", "")
 	s.referendum_pending = d.get("referendum_pending", {})
-	# V1.8. THREE OF THESE FOUR EARN THE BUMP TO 26 AND THEY FAIL THE RULE THREE
-	# DIFFERENT WAYS, which is why tests/test_save_load.gd asserts them apart rather
-	# than together. An absent `event_pending` DELETES a crisis the country is already
-	# facing -- a free escape from the one thing this session made un-escapable, which
-	# is `referendum_pending` at V1.7c and `campaign_started` one commit before it. An
-	# absent `event_fired` lets a resolved `once` event happen a second time, so the
-	# player pays its price twice for something already settled. And an absent
-	# `event_quiet_months` reads 0, which means *may fire now* -- U6a's
-	# `diplo_months_to_act`, whose absent value fired nine acts in one month. Only
-	# `event_history` earns nothing: it is a display record, and it is serialised anyway
-	# so the ledger the panel is built around survives a reload.
-	s.event_pending = d.get("event_pending", {})
-	s.event_fired = d.get("event_fired", {})
-	s.event_quiet_months = int(d.get("event_quiet_months", 0))
+	# V1.8's bump to 26 was earned here on absent-key failures (a deleted live
+	# crisis, a replayed `once`, a quiet read as may-fire-now); the canonical V4.4
+	# argument for the six-register rewrite is game_state.gd's SAVE_VERSION block.
+	s.event_queue.clear()
+	for row in d.get("event_queue", []):
+		if typeof(row) == TYPE_DICTIONARY:
+			s.event_queue.append(row.duplicate(true))
+	# Registers are copied, not aliased: two states built from one payload (the
+	# commodity register's from_dict aliasing hazard) would otherwise share them,
+	# and a tick on one would stamp the other's cooldowns and quiet.
+	s.event_fired = d.get("event_fired", {}).duplicate(true)
+	s.event_category_quiet = d.get("event_category_quiet", {}).duplicate(true)
+	s.event_cooldowns = d.get("event_cooldowns", {}).duplicate(true)
+	s.event_armed.clear()
+	for row in d.get("event_armed", []):
+		if typeof(row) == TYPE_DICTIONARY:
+			s.event_armed.append(row.duplicate(true))
+	s.repealed_at = d.get("repealed_at", {}).duplicate(true)
+	s.last_accession = d.get("last_accession", {}).duplicate(true)
+	s.assembly_bill_passed_month = int(d.get("assembly_bill_passed_month", -1))
+	s.commodity_high_month = int(d.get("commodity_high_month", -1))
 	s.event_history.clear()
 	for row in d.get("event_history", []):
 		if typeof(row) == TYPE_DICTIONARY:
-			s.event_history.append(row)
+			s.event_history.append(row.duplicate(true))
 	s.permits_system_change = d.get("permits_system_change", false)
 
 	s.dissolution_rule = d.get("dissolution_rule", "")

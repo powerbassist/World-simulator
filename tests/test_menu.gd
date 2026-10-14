@@ -488,6 +488,14 @@ func _check_pause_menu(game, clock) -> void:
 		return
 	var holder: Control = game._pause_menu.get_parent()
 
+	# A clean slate: this game boots into a term-start programme pause, and the
+	# pause menu's close path now honours a live hold (a save loaded through the
+	# menu re-raises one after the menu took its snapshot) -- this check pins the
+	# SNAPSHOT contract, the hold pins live in test_playability.
+	game._paused_for_programme = false
+	game._paused_for_decision = false
+	game._state.player().event_queue.clear()
+
 	for was_paused in [true, false]:
 		clock.paused = was_paused
 		game._open_pause_menu()

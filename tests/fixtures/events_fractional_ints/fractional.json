@@ -1,0 +1,79 @@
+{
+  "events": [
+    {
+      "id": "frac_severity",
+      "name": "Fractional severity",
+      "summary": "severity 2.5 must be refused, not truncated to 2.",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "severity": 2.5,
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    },
+    {
+      "id": "frac_cooldown",
+      "name": "Fractional cooldown",
+      "summary": "cooldown_months 3.5 must be refused, not truncated to 3.",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "cooldown_months": 3.5,
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    },
+    {
+      "id": "frac_respond",
+      "name": "Fractional respond window",
+      "summary": "respond_months 2.5 must be refused, not truncated to 2.",
+      "likelihood": 0.01,
+      "respond_months": 2.5,
+      "category": "fiscal",
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    },
+    {
+      "id": "frac_arm",
+      "name": "Fractional arms delay",
+      "summary": "arms.delay_months 1.5 must be refused, not truncated to 1.",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}},
+         "arms": {"event_id": "whole_floats", "delay_months": 1.5}}
+      ]
+    },
+    {
+      "id": "whole_floats",
+      "name": "Whole numbers written as floats",
+      "summary": "JSON numbers arrive as float: 2.0 is integral and must still load.",
+      "likelihood": 0.01,
+      "respond_months": 2.0,
+      "category": "fiscal",
+      "severity": 2.0,
+      "cooldown_months": 4.0,
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    }
+  ]
+}

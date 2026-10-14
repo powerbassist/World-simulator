@@ -146,10 +146,14 @@ var pledges: Array[PledgeAction] = []
 var programme: Array = []
 
 ## V1.8's occasions. The SEVENTH directory on data/diplomatic-actions/'s shape, and the
-## last content type the V1 tier adds. Ordered rather than keyed, and the order is
-## load-bearing here in a way it is not for the six above: Events._next_event() takes
-## the FIRST event whose gate is open this month, so authored order is the tiebreak
-## between two crises drawn in the same month.
+## last content type the V1 tier adds. Ordered rather than keyed, and the order still
+## matters in two places: the hook door takes the FIRST event on a happening that
+## passes its gates, cooldown and likelihood draw, then breaks (authored order is that
+## tiebreak), and Events._weighted_pick walks the
+## cumulative authored weights in content order. It does NOT break a same-month tie
+## between hazard draws: the winner inside a category is a pure weighted draw keyed
+## on the SORTED roster of eligible ids, so reordering the files only moves where a
+## given event sits on the weight line.
 ##
 ## Global rather than per nation, and unlike data/companies/ and data/outlets/ that is
 ## not a coverage decision deferred to a later session: an event names no place, no firm
@@ -2480,14 +2484,22 @@ func _load_events(events_dir: String) -> void:
 			seen_ids[ev.id] = true
 
 			var fields: Array[String] = []
+			var names_a_gate := false
 			for cond in ev.preconditions:
+				# Membership is a SCOPE and not a trigger, so it never makes an
+				# event "name a gate" (below) -- but it stays in the KEY: an EU-only
+				# event and an ungated sibling with the same subject and other gate
+				# fire in DIFFERENT months (the sibling also fires for a non-member),
+				# so they are two events, not one authored twice.
+				if cond["field"] != "eu_member":
+					names_a_gate = true
 				fields.append("%s%s%s" % [cond["field"], cond["op"], str(cond["value"])])
 			fields.sort()
 			# V3.5f: A GATE IS WHAT AN EVENT NAMES. This check's target is the gate
 			# somebody wrote twice -- "two scandals about the prime minister with
 			# identical gates" -- but the empty join below made every event with no
 			# subject office and no precondition collide with the first such event
-			# loaded, and data/events/climate.json's river_flood against
+			# loaded, and the old climate.json's river_flood against
 			# broadcast_charter was the first false positive: a pure-hazard crisis
 			# about nobody is a shape the content owns (the scandals' own argument,
 			# one file over), and two such events are separated by id, body,
@@ -2495,14 +2507,62 @@ func _load_events(events_dir: String) -> void:
 			# deciding only which of two same-month draws goes first --
 			# src/sim/events.gd's own comment. The check keeps its full strength for
 			# every event that names a subject or a gate.
-			if ev.has_subject() or not ev.preconditions.is_empty():
-				var gate := "%s|%s" % [ev.subject_office, ",".join(fields)]
+			# The KEY carries on_action too: a hazard event and a hook event with the
+			# same subject and gate are unrelated occasions (the hazard draws on the
+			# state, the hook on a register the machines stamp), not one event twice.
+			if ev.has_subject() or names_a_gate:
+				var gate := "%s|%s|%s" % [ev.subject_office, ev.on_action, ",".join(fields)]
 				if gates.has(gate):
 					errors.append("%s: '%s' has the same subject and the same gate as '%s' -- two events that can only ever fire in the same months are one event authored twice, and the second fires only where the first did not" % [
 						fname, ev.id, str(gates[gate])
 					])
 				gates[gate] = ev.id
 			events.append(ev)
+
+	# V4.4: the checks that need the whole set in hand, _validate_people's pattern --
+	# a chain may arm an event authored in another file, and a cycle is a property of
+	# the SET, not of any one event. Edges run announcing-event -> armed-event; an
+	# event's own choices are alternatives, so one choice's arms never reaches
+	# another's, but an armed event arms in turn when IT is answered, which is where
+	# a cycle would live.
+	# A chain TARGET may be a hook event: both doors run in the same tick (armed
+	# chains first, then hooks), but events.gd's _deliver stamps a cooldown of at
+	# least the next month on every delivery and every door checks it, so the hook
+	# door cannot deliver what the chain door just delivered
+	# (tests/test_events.gd pins it at runtime).
+	var arm_edges := {}
+	for ev in events:
+		for choice in ev.choices:
+			var arms: Dictionary = choice.get("arms", {})
+			if arms.is_empty():
+				continue
+			var target := String(arms.get("event_id", ""))
+			if not seen_ids.has(target):
+				errors.append("%s: '%s' arms '%s', which is not a loaded event -- a chain that points at nothing can never land" % [
+					events_dir, ev.id, target
+				])
+				continue
+			if not arm_edges.has(ev.id):
+				arm_edges[ev.id] = []
+			arm_edges[ev.id].append(target)
+	for start_id in arm_edges.keys():
+		# Depth-first walk carrying its own path; an edge back onto the path is the
+		# cycle. One report per start is enough -- the author fixes the loop, not
+		# every entry into it.
+		var found_cycle := false
+		var frontier: Array = [[start_id, [start_id]]]
+		while not frontier.is_empty() and not found_cycle:
+			var frame: Array = frontier.pop_back()
+			var node: String = frame[0]
+			var node_path: Array = frame[1]
+			for next_id in arm_edges.get(node, []):
+				if node_path.has(next_id):
+					errors.append("%s: the chain through '%s' is a cycle ('%s' -> '%s' closes it) -- a follow-up that re-arms its own ancestry never runs out of future" % [
+						events_dir, start_id, node, next_id
+					])
+					found_cycle = true
+					break
+				frontier.append([next_id, node_path + [next_id]])
 
 
 ## V2.4b. One summit = two files sharing an id: <ID>.dialogue is the scene in

@@ -4,6 +4,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
+const EventsK = preload("res://src/sim/events_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 ## The thin strip along the top edge -- U2, rebuilt at U5a.
@@ -30,6 +31,10 @@ signal save_load_requested
 const BAR_HEIGHT := 40
 
 var _figure_values := {}
+## Each figure's caption label, by the same key as _figure_values -- kept so a
+## caller that needs the caption (the desk's live tooltip) does not reach it by
+## child index through the value's parent.
+var _figure_captions := {}
 ## V4.1. The programme figure, hidden until a programme runs -- it is not one
 ## of the four always-on figures, so it keeps its own references beside the
 ## dict the others share.
@@ -70,6 +75,13 @@ func _ready() -> void:
 	# The People window (R) is the full surface; this strip is the pulse.
 	figures.add_child(_build_figure("people", "People",
 		"People whose loyalty or grudge the term has moved. Open the People window (R)."))
+	# V4.4's interim V4.8 obligation: the desk -- pending events by count, the worst
+	# severity named in the tooltip. Deliberately NOT the programme figure's
+	# empty-state hiding: an empty desk is itself a reading (the value says so),
+	# because the glance this strip serves is "is anything waiting on me", and
+	# hiding the figure answers that question by not asking it.
+	figures.add_child(_build_figure("desk", "Desk",
+		"Events awaiting an answer. Worst severity in the tooltip."))
 
 	row.add_child(_spacer())
 
@@ -102,18 +114,32 @@ func _build_figure(key: String, title: String, tip := "") -> Control:
 	label.text = title.to_upper()
 	label.theme_type_variation = UiTheme.MICRO
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hoverable(label)
 	box.add_child(label)
 
 	var value := Label.new()
 	value.theme_type_variation = UiTheme.FIGURE
 	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hoverable(value)
 	box.add_child(value)
 	_figure_values[key] = value
+	_figure_captions[key] = label
 	if not tip.is_empty():
 		value.tooltip_text = tip
 		label.tooltip_text = tip
 
 	return box
+
+
+## The desk figure's caption and value are two hover targets for one reading, so
+## the live tooltip goes on both -- _build_figure gives the caption a static tip,
+## and left alone it would keep saying nothing about severity while the number
+## beside it named the worst one.
+func _set_desk_tip(text: String) -> void:
+	var value: Control = _figure_values["desk"]
+	value.tooltip_text = text
+	var caption: Control = _figure_captions["desk"]
+	caption.tooltip_text = text
 
 
 ## V4.1. The chosen programme's name and its nearest-deadline entry's progress,
@@ -128,11 +154,13 @@ func _build_programme_figure() -> Control:
 	_programme_label = Label.new()
 	_programme_label.theme_type_variation = UiTheme.MICRO
 	_programme_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hoverable(_programme_label)
 	box.add_child(_programme_label)
 
 	_programme_value = Label.new()
 	_programme_value.theme_type_variation = UiTheme.FIGURE
 	_programme_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hoverable(_programme_value)
 	box.add_child(_programme_value)
 
 	box.visible = false
@@ -140,11 +168,35 @@ func _build_programme_figure() -> Control:
 	return box
 
 
+## A Label defaults to MOUSE_FILTER_IGNORE in Godot 4, so the hovered control
+## under a figure is its HBoxContainer -- which carries no tooltip -- and a
+## tooltip_text set on the Label never appears. PASS makes the Label a hover
+## target while still propagating the event, so a click on the strip is not
+## swallowed (STOP would). Every figure Label goes through here, because the
+## tooltips are set later (refresh) and a check at build time cannot know which
+## ones will carry one.
+func _hoverable(label: Label) -> void:
+	label.mouse_filter = Control.MOUSE_FILTER_PASS
+
+
 func _spacer() -> Control:
 	var spacer := Control.new()
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return spacer
+
+
+## The desk tooltip: a critical on the desk is named outright -- that is the one
+## line a president must not have to decode -- and any other desk reads as a count
+## by severity. The names are events_constants' SEVERITY_NAMES (1 minor, 2 major,
+## 3 critical), not new copy.
+func _desk_tooltip(by_severity: Dictionary) -> String:
+	var parts: Array[String] = []
+	for severity in [3, 2, 1]:
+		var count := int(by_severity.get(severity, 0))
+		if count > 0:
+			parts.append("%d %s" % [count, EventsK.SEVERITY_NAMES[severity - 1]])
+	return " · ".join(parts) if not parts.is_empty() else "On the desk."
 
 
 ## Called every day -- cheap enough that main.gd calls it unconditionally rather
@@ -193,6 +245,23 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		if absf(float(ns.person_loyalty[pid])) >= 0.05 and float(ns.person_grudges.get(pid, 0.0)) < 0.05:
 			moved += 1
 	_figure_values["people"].text = "%d" % moved
+
+	# V4.4: the desk, read straight off the queue register -- the same read
+	# Events.is_pending() makes for the brass mark, so the strip and the mark
+	# cannot disagree about whether something is waiting.
+	var desk: Array = ns.event_queue
+	if desk.is_empty():
+		# Em dash, not "0 pending": the state is "nothing pending" and a confident
+		# zero here would be V1.6d's lie in the strip's own handwriting.
+		_figure_values["desk"].text = "— clear"
+		_set_desk_tip("Nothing awaits an answer.")
+	else:
+		var by_severity := {}
+		for entry in desk:
+			var severity := int(entry.get("severity", 1))
+			by_severity[severity] = int(by_severity.get(severity, 0)) + 1
+		_figure_values["desk"].text = "%d pending" % desk.size()
+		_set_desk_tip(_desk_tooltip(by_severity))
 
 	# V4.1. Derived off the same read the Agenda window draws -- the panel and
 	# the strip cannot print two answers to one progress question.

@@ -51,8 +51,9 @@ commented at the field declaration in `src/core/nation_state.gd`):
 - `value_added_eur_bn` — ONE scalar per nation, not per good: the month's
   output valued at the live price, in EUR bn. This is the CHANGE the block
   models (the step-0 verdict: levels are not reproducible from recipes, deltas
-  are). No SIM module reads it; its readers are the UI surfaces — the
-  Commodities panel and the two map layers (§5).
+  are). The register itself has no sim reader; since V4.4 the events machine's
+  `commodity_price_high` hook reads the `ns.commodity_high_month` crossing stamp this machine writes on the nation, outside the register — this scalar's own readers
+  are the UI surfaces: the Commodities panel and the two map layers (§5).
 
 Serialised whole on SAVE_VERSION 37 (V4.6's bump) with a per-entry rebuild
 in `from_dict` — the aliasing-safe pattern; see §6.
@@ -101,7 +102,7 @@ in `from_dict` — the aliasing-safe pattern; see §6.
 The machine's five, in `src/sim/commodity_constants.gd`: `PRICE_BAND` 0.75 (the
 tier's own precedent, not tuned), `PRICE_ELASTICITY` 0.30, `DEMAND_ELASTICITY`
 1.0 (the unit-elastic price response), `TRADE_RATE` 0.50,
-`STRUCTURE_ITERATIONS` 24. The world starts in balance by construction, so
+`STRUCTURE_ITERATIONS` 24. The world starts in balance by construction (the design intent; the measurement disagrees — see docs/someday.md, "World prices drift to their clamp within months"), so
 PRICE_ELASTICITY is UNVALIDATED — its sweep belongs to whichever task first
 lets a player cause a shortage (V4.7's firm verbs are the first candidates).
 (0.10 is one of the sweep points named in the constant's own comment, never the

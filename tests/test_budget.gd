@@ -422,7 +422,7 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		# never legislated. The PMB hazard is Cycle-keyed over the absolute
 		# month like Events' -- which this loop already runs for exactly that
 		# reason -- so both legs see the same bills and the same divisions, and
-		# a carried division applies through Budget.commit() into the very
+		# a carried division applies through Budget.apply_pending() into the very
 		# revenue and spending keys the comparison walks. PMB_MONTHS_TO_VOTE is
 		# 1, so any bill staged inside a 24-month window divides inside it too:
 		# the checks above exercise this line rather than assuming it inert.

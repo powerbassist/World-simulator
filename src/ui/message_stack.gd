@@ -28,11 +28,22 @@ const CARD_WIDTH := 232
 
 ## Past this many the column would run into the portrait card at 1080p. The
 ## oldest is dropped rather than the newest refused: a message the player has
-## not read yet is worth more than one that has been sitting there.
+## not read yet is worth more than one that has been sitting there. Pass 16/19: the
+## oldest UNPROTECTED card goes first. A card is protected when it carries answer
+## buttons (a decision card is a question the world is waiting on, and evicting
+## one is not the player dismissing it -- the consumer would read the dismissal as
+## "settled" and restart a paused clock over an unanswered crisis) or when its
+## pusher asks for it (push's `protect`: the term-start programme card is plain but
+## explains a live clock hold). The newcomer counts as a candidate, so an
+## unprotected card pushed into a column of protected ones is the one that goes.
+## Only when every card including the newcomer is protected does the oldest of all
+## go; the desk holds at most 4 decisions plus the one programme card against
+## this 6, so that is a net.
 const MAX_CARDS := 6
 
 var _cards := {}   # id -> PanelContainer
 var _bodies := {}  # id -> Label, the parallel the body needs to be updatable in place
+var _protected := {}  # id -> true for a card with answer buttons or pushed with protect, so eviction can spare it
 var _next_id := 0
 
 
@@ -43,7 +54,15 @@ func _ready() -> void:
 
 ## Returns the card's id, so the caller can dismiss it later without having
 ## tracked it -- a resolved crisis should be able to take its own card away.
-func push(title: String, body: String, actions: Array = []) -> String:
+##
+## `art`, when given (V4.4), is the event plate shown on the title's side -- a
+## 16:9 sliver between the title and the close button, the same plate the
+## Dispatches desk entry carries above its title line. Null draws the card
+## exactly as before: missing art is silent here like everywhere else.
+##
+## `protect`, when true, spares a card without buttons from the MAX_CARDS eviction
+## (a card with buttons is always spared); the pusher owns dismissing it.
+func push(title: String, body: String, actions: Array = [], art: Texture2D = null, protect: bool = false) -> String:
 	var id := "card_%d" % _next_id
 	_next_id += 1
 
@@ -62,6 +81,14 @@ func push(title: String, body: String, actions: Array = []) -> String:
 
 	var header := HBoxContainer.new()
 	column.add_child(header)
+
+	if art != null:
+		var plate := TextureRect.new()
+		plate.texture = art
+		plate.custom_minimum_size = Vector2(32, 18)  # 16:9, the plate's own aspect
+		plate.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		plate.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		header.add_child(plate)
 
 	var title_label := Label.new()
 	title_label.text = title.to_upper()
@@ -84,7 +111,10 @@ func push(title: String, body: String, actions: Array = []) -> String:
 	# V2.9: the answer row. A decision answered where the news is, instead of a
 	# route through Dispatches -- the playtest's F4, with the clock paused behind
 	# it (main.gd's arrival branch). One button per choice, in the order given.
+	if protect:
+		_protected[id] = true
 	if not actions.is_empty():
+		_protected[id] = true
 		var actions_box := HBoxContainer.new()
 		actions_box.add_theme_constant_override("separation", 4)
 		for i in range(actions.size()):
@@ -101,9 +131,21 @@ func push(title: String, body: String, actions: Array = []) -> String:
 	_bodies[id] = body_label
 
 	while _cards.size() > MAX_CARDS:
-		dismiss(_cards.keys()[0])
+		dismiss(_eviction_victim())
 
 	return id
+
+
+## The card MAX_CARDS drops: the oldest unprotected one (no answer buttons, not
+## pushed with `protect`), the newcomer included -- an unprotected card pushed into
+## a column of protected ones evicts ITSELF rather than a question the world is
+## waiting on. Only when every card, newcomer included, is protected does the
+## oldest of all go. Dictionary key order is insertion order, which is age here.
+func _eviction_victim() -> String:
+	for card_id in _cards.keys():
+		if not _protected.has(card_id):
+			return String(card_id)
+	return String(_cards.keys()[0])
 
 
 ## Rewrites a live card's body in place. A standing card whose content ages --
@@ -124,6 +166,7 @@ func dismiss(id: String) -> void:
 	var card: Control = _cards[id]
 	_cards.erase(id)
 	_bodies.erase(id)
+	_protected.erase(id)
 	remove_child(card)
 	card.queue_free()
 	card_dismissed.emit(id)

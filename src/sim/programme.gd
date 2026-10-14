@@ -49,13 +49,13 @@ extends RefCounted
 ## ============================================================================
 ## A LEAF, WITH THE LOADER HOLDING THE LADDER
 ## ============================================================================
-## This file preloads its constants and Legislature.apply_effects -- the ONE
-## applier -- and nothing else. No UI, no opinion.gd, no law.gd (the loader
-## extracts `immediate` and every `on_*` through Law.extract_shared_effects at
-## load; by the time a conclusion fires, its effects are an ordinary effect
-## dictionary). Content lives in data/programme/ and is read through the loader
-## on every tick, so the register -- like the pledge register beside it --
-## round-trips the DECISION and never the ladder.
+## This file preloads its constants and Legislature -- apply_effects, the ONE
+## applier, and read_field, the one precondition reader -- and nothing else. No UI,
+## no opinion.gd, no law.gd (the loader extracts `immediate` and every `on_*`
+## through Law.extract_shared_effects at load; by the time a conclusion fires, its
+## effects are an ordinary effect dictionary). Content lives in data/programme/ and
+## is read through the loader on every tick, so the register -- like the pledge
+## register beside it -- round-trips the DECISION and never the ladder.
 ##
 ## THE NINE ARE INERT. Programme.init_nation() seeds every nation (the Campaign
 ## and Projects precedent) but only the player's register is ever populated:
@@ -356,24 +356,18 @@ static func _preconditions_met(ns, conditions: Array) -> bool:
 	return true
 
 
-## Every field here is the nation's own state, which is why this read takes no
-## `state` at all -- the borrowed PRECONDITION_FIELDS are all figures ON the
-## nation, unlike pledges' list, which reaches the campaign clock and so needs
-## the month. An unknown field is an error and a zero, never a silent pass:
-## V1.6d's confident-zero rule, with the push_error where it belongs.
+## The ladder borrows the law's precondition list (TRIGGER_FIELDS is
+## PRECONDITION_FIELDS), so it borrows the law's reader too: the list's meaning lives
+## in Legislature.read_field and nowhere else -- a field added there is readable here
+## with no edit. Every field in it is a figure ON the nation, which is why this read
+## takes no `state`, unlike pledges' list, which reaches the campaign clock. A field
+## outside the list is an error and a zero, never a silent pass (V1.6d's
+## confident-zero rule); the guard is here so the message stays Programme's.
 static func _read_field(ns, field: String) -> float:
-	match field:
-		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
-		"unemployment_pct": return ns.unemployment_pct
-		"deficit_pct_gdp": return ns.deficit_pct_gdp
-		"overall_approval_pct": return ns.overall_approval_pct
-		"growth_annual_pct": return ns.growth_annual_pct
-		"terms_served": return float(ns.terms_served)
-		"unrest_pct": return ns.unrest_pct
-		"co2e_per_capita_t": return ns.co2e_per_capita_t
-		_:
-			push_error("programme: unknown field '%s'" % field)
-			return 0.0
+	if not K.TRIGGER_FIELDS.has(field):
+		push_error("programme: unknown field '%s'" % field)
+		return 0.0
+	return Legislature.read_field(ns, field)
 
 
 ## entry id -> the authored terms. Built from the loader on every call rather

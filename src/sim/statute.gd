@@ -682,6 +682,12 @@ static func _divide(state, ns, loader, bill_id: String) -> void:
 		# No upper chamber, or the chamber carried it: the court, the pipeline's
 		# last stage, exactly as propose()'s ordinary route runs it.
 		Legislature.review_and_apply_after_division(state, ns, law, loader, result)
+		# The member_bill_passed hook's own stamp (nation_state.gd): only a
+		# division that came into force -- the court can still strike it, which
+		# flips passed -- and last_law_result below is overwritten by the next
+		# division of the month, so the hook cannot read it from there.
+		if bool(result.get("passed", false)):
+			ns.assembly_bill_passed_month = _abs_month(state)
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months
 	ns.last_law_result = result

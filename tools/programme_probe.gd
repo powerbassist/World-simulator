@@ -83,6 +83,9 @@ const Events = preload("res://src/sim/events.gd")
 const Media = preload("res://src/sim/media.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Energy = preload("res://src/sim/energy.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
+const Statute = preload("res://src/sim/statute.gd")
+const Industry = preload("res://src/sim/industry.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 
@@ -262,13 +265,18 @@ func _run_style(style: Dictionary, months: int) -> Dictionary:
 
 		# main.gd's order, with Programme immediately before Opinion -- the
 		# wiring under test. Elections runs last, which is the term-boundary
-		# guarantee the wiring comment in main.gd states.
+		# guarantee the wiring comment in main.gd states. Commodities, Statute and
+		# Industry are ticked in main.gd's slots because Events.tick_month reads
+		# their registers the same month (tests/test_events.gd's tick-order pin
+		# holds this file to it); Characters and the UI-side announcers are not
+		# run here.
 		var access_by_nation: Dictionary = {}
 		for member_id in state.nations.keys():
 			access_by_nation[member_id] = Regions.accessibility_for(
 				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
 		Energy.tick_month(state, loader, access_by_nation)
 		Economy.tick_month(state)
+		Commodities.tick_month(state, loader)
 		Budget.tick_month(state)
 		Orgs.tick_month(state, loader)
 		Inflation.tick_month(state)
@@ -288,10 +296,12 @@ func _run_style(style: Dictionary, months: int) -> Dictionary:
 
 		Discipline.tick_month(state, loader)
 		Legislature.tick_month(state, loader)
+		Statute.tick_month(state, loader)
 		Dissolution.tick_month(state)
 		Diplomacy.tick_month(state, loader)
 		Defence.tick_month(state)
 		Companies.tick_month(state, loader)
+		Industry.tick_month(state, loader)
 		Migration.tick_month(state, loader)
 		Investment.tick_month(state)
 		Projects.tick_month(state, loader)
@@ -374,28 +384,34 @@ func _approval_at(state, month_index: int) -> float:
 
 ## Events answered on arrival, every arm, the harness's "soft" rule (V2.9b's):
 ## the non-default choice best for bloc-weighted approval. A fault the player
-## always clears, so the arm comparison never rides an expired card.
+## always clears, so the arm comparison never rides an expired card. V4.4: EVERY
+## entry on the desk is answered, by id, so a same-month second arrival is not left
+## to default; the ids are snapshotted first because answering removes entries.
 func _answer_event(state, loader, ns, year: int, month: int) -> void:
-	if not Events.is_pending(ns):
-		return
-	var ev = Events.pending_event(ns, loader)
-	if ev == null:
-		return
-	var pick: Dictionary = {}
-	var pick_score := 0.0
-	for c in ev.choices:
-		if bool(c["is_default"]):
+	var ids: Array[String] = []
+	for entry in ns.event_queue:
+		var entry_id := String(entry.get("event_id", ""))
+		if entry_id != "" and not ids.has(entry_id):
+			ids.append(entry_id)
+	for event_id in ids:
+		var ev = Events.event_by_id(loader, event_id)
+		if ev == null:
 			continue
-		var score := 0.0
-		var terms: Dictionary = (c["effects"] as Dictionary).get("bloc_offset", {})
-		for bloc in terms:
-			score += float(K.BLOC_SIZE.get(bloc, 0.0)) * float(terms[bloc])
-		if pick.is_empty() or score > pick_score:
-			pick = c
-			pick_score = score
-	if pick.is_empty():
-		return
-	Events.choose(state, loader, String(pick["id"]))
+		var pick: Dictionary = {}
+		var pick_score := 0.0
+		for c in ev.choices:
+			if bool(c["is_default"]):
+				continue
+			var score := 0.0
+			var terms: Dictionary = (c["effects"] as Dictionary).get("bloc_offset", {})
+			for bloc in terms:
+				score += float(K.BLOC_SIZE.get(bloc, 0.0)) * float(terms[bloc])
+			if pick.is_empty() or score > pick_score:
+				pick = c
+				pick_score = score
+		if pick.is_empty():
+			continue
+		Events.answer(state, loader, event_id, String(pick["id"]))
 
 
 func _days_in_month(m: int, y: int) -> int:

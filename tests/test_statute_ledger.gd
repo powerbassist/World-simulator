@@ -10,7 +10,7 @@ extends SceneTree
 ##   - ACCUMULATION: a non-once law passed twice merges into ONE ledger entry
 ##     (the statute book is per-act, not per-passage);
 ##   - REPEAL SUBTRACTS THROUGH THE ONE APPLIER: the negated channels go back
-##     through apply_effects(), so budget levers route through Budget.commit()
+##     through apply_effects(), so budget levers route through Budget.apply_pending()
 ##     and the erosion/demand machinery fires exactly as any budget change;
 ##   - THE MOOT RELEASE (ultra pass 4): a repeal releasing after its target is
 ##     already repealed applies nothing, records target_already_gone, charges

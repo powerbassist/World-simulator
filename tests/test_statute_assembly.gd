@@ -215,6 +215,10 @@ func _test_resolves_without_player() -> void:
 	if int(result.get("assembly_division_month", -1)) != _month_index(gs):
 		_fail("the result carries no division month stamp (got %s, state at %d) -- the card memory has nothing to key on"
 			% [result.get("assembly_division_month", -1), _month_index(gs)])
+	# The hook stamp follows the division's verdict: set iff the bill came into force.
+	var stamped: bool = ns.assembly_bill_passed_month == _month_index(gs)
+	if stamped != bool(result.get("passed", false)):
+		_fail("assembly_bill_passed_month (%d) disagrees with the division's passed=%s" % [ns.assembly_bill_passed_month, result.get("passed", false)])
 	var law = _law_by_id(ENDORSE_LAW)
 	if bool(result.get("passed", true)):
 		if ns.law_cooldown_months.has(ENDORSE_LAW):
@@ -495,8 +499,22 @@ func _test_release_and_division_same_month() -> void:
 	if assembly_release.is_empty():
 		_fail("setup: the hold did not release with its assembly keys -- the capture has nothing to hand over: %s" % [release_result])
 		return
+	var release_month: int = int(assembly_release.get("assembly_division_month", -3))
+	if bool(assembly_release.get("passed", false)) and ns.assembly_bill_passed_month != release_month:
+		_fail("the release came into force but assembly_bill_passed_month reads %d, not %d" % [ns.assembly_bill_passed_month, release_month])
 	Statute.tick_month(gs, _loader)
 	var division_result: Dictionary = ns.last_law_result
+	# The member_bill_passed hook's whole reason for its own stamp: the division
+	# just overwrote last_law_result, and a division that did not pass must
+	# leave the release's stamp standing. The setup is asserted, not assumed: if
+	# the fixture's division passed (or the release did not), the stamp check below
+	# would test nothing and the leg would pass vacuously.
+	if not bool(assembly_release.get("passed", false)):
+		_fail("setup: the release did not come into force -- the stamp-survival check has no stamp to protect: %s" % [assembly_release])
+	if bool(division_result.get("passed", false)):
+		_fail("setup: the same-month division passed -- the stamp-survival check needs it to FAIL: %s" % [division_result])
+	if ns.assembly_bill_passed_month != release_month:
+		_fail("a failed same-month division erased the release's assembly_bill_passed_month stamp (reads %d, release month %d)" % [ns.assembly_bill_passed_month, release_month])
 	if String(division_result.get("law_id", "")) != ENDORSE_LAW:
 		_fail("setup: the in-tray bill did not divide this month: '%s'" % division_result.get("law_id", ""))
 		return

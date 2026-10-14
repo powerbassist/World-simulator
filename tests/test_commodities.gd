@@ -37,6 +37,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Commodities = preload("res://src/sim/commodities.gd")
+const CommodityK = preload("res://src/sim/commodity_constants.gd")
 
 ## Long enough for a price homeostat to overshoot twice if it is going to.
 const TICKS := 12
@@ -62,6 +63,7 @@ func _init() -> void:
 	_check_prices_hold_the_band()
 	_check_tick_order_pin()
 	_check_absent_register_bridge()
+	_check_high_crossing_stamp()
 
 	if _failures.is_empty():
 		print("test_commodities: all checks passed")
@@ -99,6 +101,12 @@ func _check_leaf_property() -> void:
 ## the WRITE form -- an indexed assignment into the register or an erase on it --
 ## the read/write shape test_characters.gd's tripwire already uses.
 func _check_single_writer() -> void:
+	# The crossing stamp's writer, pinned the same way: commodities.gd assigns it;
+	# nation_state.gd is the field's home (declaration, duplicate_state, from_dict
+	# carry it) and is the only other file allowed an assignment. READS are fine --
+	# events.gd compares it with `==`, which the pattern excludes.
+	var stamp_write := RegEx.new()
+	stamp_write.compile("commodity_high_month\\s*[-+*/]?=(?!=)")
 	for dir in ["src/sim", "src/core", "src/ui"]:
 		var da := DirAccess.open("res://%s" % dir)
 		if da == null:
@@ -113,6 +121,9 @@ func _check_single_writer() -> void:
 				var src := FileAccess.get_file_as_string("res://%s/%s" % [dir, f])
 				if not src.is_empty() and _indexed_write(_code_only(src), "commodity_state"):
 					_fail("%s/%s writes commodity_state -- commodities.gd is its one writer" % [dir, f])
+				if f != "nation_state.gd" and not src.is_empty() \
+						and stamp_write.search(_code_only(src)) != null:
+					_fail("%s/%s assigns commodity_high_month -- commodities.gd is its one writer" % [dir, f])
 			f = da.get_next()
 		da.list_dir_end()
 
@@ -406,6 +417,80 @@ func _check_absent_register_bridge() -> void:
 		if not _deep_equal(fresh.nations[nation_id].commodity_state, partial.nations[nation_id].commodity_state):
 			_fail("nation %s seeded from a PARTIAL commodity_state (one key of seven) diverged from a fresh init -- a partial register must reseed whole, not fault on the missing keys" % nation_id)
 			return
+
+
+## THE CROSSING STAMP (V4.4 pass 22). `ns.commodity_high_month` is the absolute
+## month a good's price went from below HIGH_PRICE_RATIO of base to at-or-above it
+## across ONE tick, which is what makes the events hook an edge: the world vector
+## drifts to its clamp within months, so a level read fired almost every month.
+## Three legs, each against a vector STAGED so the answer does not depend on how
+## many OTHER goods happen to cross that month:
+##   A. a good just below the line that the tick pushes over it stamps the month;
+##   B. the vector sitting at-or-above the line before the tick does NOT stamp
+##      (the stamp would otherwise re-fire every month it stays high);
+##   C. a good that fell back below the line (the fall is STAGED by hand -- the
+##      leg tests the second crossing, not why the price fell) and crosses again
+##      re-stamps, with the NEW month (a "write only the first crossing" shape
+##      would keep the old one).
+## The good staged is the one the unmodified world pushes hardest UP, so "the tick
+## pushes it over" is a measured premise, checked below, and not an assumption.
+func _check_high_crossing_stamp() -> void:
+	var probe = _new_state()
+	if probe == null:
+		return
+	var probe_ns = probe.player()
+	if probe_ns.commodity_high_month != -1:
+		_fail("a fresh game's commodity_high_month reads %d, not -1" % probe_ns.commodity_high_month)
+	var rising := ""
+	var rise := 1.0
+	var goods := _goods_sorted()
+	Commodities.tick_month(probe, _loader)
+	for good_id in goods:
+		var ratio := float(probe_ns.commodity_state["price"][good_id]) / float(_loader.commodity_goods[good_id].base_price)
+		if ratio > rise:
+			rise = ratio
+			rising = String(good_id)
+	if rising == "":
+		_fail("no good's price rose in the first tick -- the crossing legs have nothing to push over the line")
+		return
+
+	var state = _new_state()
+	var ns = state.player()
+	var prices: Dictionary = ns.commodity_state["price"]
+	var line_of := func(good_id) -> float:
+		return float(_loader.commodity_goods[good_id].base_price) * CommodityK.HIGH_PRICE_RATIO
+	var stage_all_high := func() -> void:
+		for good_id in goods:
+			prices[good_id] = float(line_of.call(good_id)) * 1.001
+
+	# A. just below the line, pushed over it.
+	stage_all_high.call()
+	prices[rising] = float(line_of.call(rising)) * 0.999999
+	var month_a := int(state.year) * 12 + int(state.month)
+	Commodities.tick_month(state, _loader)
+	if float(prices[rising]) < float(line_of.call(rising)):
+		_fail("%s staged just under the line did not cross it in one tick -- the premise of legs A and C does not hold" % rising)
+		return
+	if ns.commodity_high_month != month_a:
+		_fail("a good crossing the line in month %d left commodity_high_month at %d" % [month_a, ns.commodity_high_month])
+
+	# B. at-or-above the line before the tick: staying high stamps nothing.
+	ns.commodity_high_month = -1
+	state.month += 1
+	stage_all_high.call()
+	Commodities.tick_month(state, _loader)
+	if ns.commodity_high_month != -1:
+		_fail("a vector already above the line stamped month %d -- the hook would fire every month it stays high" % ns.commodity_high_month)
+
+	# C. fell back below the line, crosses again: the NEW month replaces the old.
+	state.month += 1
+	stage_all_high.call()
+	prices[rising] = float(line_of.call(rising)) * 0.999999
+	var month_c := int(state.year) * 12 + int(state.month)
+	ns.commodity_high_month = month_a
+	Commodities.tick_month(state, _loader)
+	if ns.commodity_high_month != month_c:
+		_fail("a good that fell back and crossed again left commodity_high_month at %d, not the new month %d" % [ns.commodity_high_month, month_c])
 
 
 ## The fixture, and since Task 3 it deliberately does NOT seed: `new_game()` does,

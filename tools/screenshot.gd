@@ -2534,7 +2534,7 @@ func _put_a_crisis_on_the_desk() -> void:
 ## `--event`'s sibling, and separate from it because the two flags want DIFFERENT
 ## first arrivals: --event stops at whatever draws and only notes a missing
 ## subject, while this loop's whole claim is the place suffix, so it keeps ticking
-## until the pending event is one the hazard SITED. That wait is a fixed month,
+## until ANY entry on the desk is one the hazard SITED. That wait is a fixed month,
 ## not a search -- the hazard is pure in (nation, event, month), events.gd's own
 ## argument -- and the non-sited events met on the way lapse on their own
 ## respond_months and cooldown, because answering one would put a row in the
@@ -2544,8 +2544,8 @@ func _put_a_sited_crisis_on_the_desk() -> void:
 	if state == null:
 		return
 	var ns = state.player()
-	# 240 rather than --event's 48: the flood is a 0.06 draw behind the one-slot
-	# queue and its cooldown, and the horizon has to cover a run of bad hashes
+	# 240 rather than --event's 48: the flood is a 0.06 draw competing for the
+	# four-entry desk and its own cooldown, and the horizon has to cover a run of bad hashes
 	# rather than the mean of them. The re-run measured ~10 draws in 168 months,
 	# so the deterministic sequence lands well inside this.
 	var horizon := 240
@@ -2554,8 +2554,11 @@ func _put_a_sited_crisis_on_the_desk() -> void:
 		# The register only gains region_id on a sited announce, so the key is the
 		# honest marker -- checking the event content here would be a second opinion
 		# about what sited means.
-		if Events.is_pending(ns) and ns.event_pending.has("region_id"):
-			return
+		# ANY entry: the desk is severity-ordered, so a sited flood can sit behind
+		# a more severe head and the head alone would miss it.
+		for entry in ns.event_queue:
+			if entry.has("region_id"):
+				return
 	printerr("--climate: no sited event drew inside %d months" % horizon)
 
 
@@ -2589,10 +2592,12 @@ func _answer_a_crisis() -> void:
 		if not bool(c["is_default"]):
 			answered = String(c["id"])
 			break
-	Events.choose(state, _main._loader, answered)
+	# By id, not the head: a more severe entry already on the desk would be the head,
+	# and choose() would then answer THAT entry (or nothing, for a choice id it lacks).
+	Events.answer(state, _main._loader, String(first.id), answered)
 
 	var second = _main._loader.events[1]
-	ns.event_quiet_months = 0
+	ns.event_category_quiet = {}
 	Events.announce(ns, second, Events._absolute_month(int(state.year), int(state.month)),
 		Events.region_names(ns, _main._loader))
 	_tick_months(second.respond_months + 1)

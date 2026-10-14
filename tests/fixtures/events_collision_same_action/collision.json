@@ -1,0 +1,38 @@
+{
+  "events": [
+    {
+      "id": "twin_one",
+      "name": "One",
+      "summary": "A hook event about the prime minister, gated on debt.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "on_action": "law_passed",
+      "preconditions": [{"field": "debt_to_gdp_pct", "op": ">=", "value": 85.0}],
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    },
+    {
+      "id": "twin_two",
+      "name": "Two",
+      "summary": "The same hook, subject and gate again: one event authored twice.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "on_action": "law_passed",
+      "preconditions": [{"field": "debt_to_gdp_pct", "op": ">=", "value": 85.0}],
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    }
+  ]
+}

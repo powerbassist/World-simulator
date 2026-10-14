@@ -113,9 +113,14 @@ tests=(
   # at authoring time per the pass-5 fleet's find.
   tests/test_statute_assembly.gd
   # V4.2 T7: the grown book's content shape -- counts, theme and per-bloc sign
-  # coverage, spread bands -- re-derived from the JSON beside tools/law_lint.py,
-  # because a check only a shell invocation can reach is one the suite never runs.
+  # coverage, spread bands -- re-derived from JSON beside tools/law_lint.py.
   tests/test_law_content.gd
+  # V4.4: re-derive event_lint.py's E1b per-choice mean and business-worst bands;
+  # shell-only lint rules otherwise never run in the agent suite.
+  tests/test_event_content.gd
+  # V4.4: a chain may arm a hook event (pass 17's cooldown floor keeps the hook
+  # door off it) -- loads clean; the collision-key legs stay on fixtures.
+  tests/test_event_chain_loader.gd
   tests/test_credit.gd
   tests/test_tax.gd
   tests/test_sectors.gd
@@ -142,6 +147,14 @@ tests=(
   tests/test_upper_house.gd
   tests/test_judiciary.gd
   tests/test_events.gd
+  # V4.4 T11: the event plate library -- the generator's --dry-run pinned
+  # set-equal to what the helper can name, every nameable plate bytes-loading
+  # once any ships, no orphan art, and the one-reader rule over src/ui.
+  tests/test_event_art.gd
+  # V4.4 T7: the desk figure on the top bar -- the empty desk reads a clear
+  # state and stays visible, the count is the queue's own and the tooltip names
+  # the worst severity, and the brass mark keys on the same read the strip does.
+  tests/test_top_bar_desk.gd
   tests/test_geography.gd
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
   # has exactly one reader.

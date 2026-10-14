@@ -1,0 +1,72 @@
+{
+  "events": [
+    {
+      "id": "pair_a_hazard",
+      "name": "Hazard",
+      "summary": "A hazard event about the prime minister, gated on debt.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "preconditions": [{"field": "debt_to_gdp_pct", "op": ">=", "value": 85.0}],
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    },
+    {
+      "id": "pair_a_hook",
+      "name": "Hook",
+      "summary": "A hook event with the same subject and gate: an unrelated occasion.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "on_action": "law_passed",
+      "preconditions": [{"field": "debt_to_gdp_pct", "op": ">=", "value": 85.0}],
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    },
+    {
+      "id": "pair_e_union_only",
+      "name": "Union only",
+      "summary": "Same subject and other gate as its sibling, but members only.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "preconditions": [
+        {"field": "eu_member", "op": "==", "value": 1.0},
+        {"field": "unemployment_pct", "op": ">=", "value": 9.0}
+      ],
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    },
+    {
+      "id": "pair_e_open",
+      "name": "Open",
+      "summary": "Fires for a non-member too, so it is not the members-only event twice.",
+      "subject_office": "head_of_government",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "preconditions": [{"field": "unemployment_pct", "op": ">=", "value": 9.0}],
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    }
+  ]
+}

@@ -52,6 +52,7 @@ const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
+const EventArt = preload("res://src/ui/event_art.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
@@ -126,7 +127,12 @@ var _hud
 var _windows
 var _top_bar
 var _paused_for_decision := false
-var _decision_card_id := ""
+## V4.4: the desk is a queue, so the decision-card machinery tracks a SET. Card id
+## -> the event id its buttons answer (the pressed card answers ITS row, not the
+## desk's head), and the unseen set is what the arrival pause holds the clock for:
+## it clears as the player answers, and the clock resumes when it empties.
+var _event_cards := {}        # card id -> event id
+var _unseen_events := {}      # event id -> true while the player has not answered
 ## V4.1. The term-start programme's card and its pause -- the arrival-pause
 ## machinery pointed at the agenda. See _enforce_term_start_programme().
 var _paused_for_programme := false
@@ -606,6 +612,24 @@ func _ready() -> void:
 	_events_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
+		# V4.4: the panel answers by id (Events.answer), so a panel answer must
+		# clear the arrival pause exactly like a card answer: ids that left the
+		# desk are answered (or expired), ids still on it keep the clock held,
+		# and the set is never re-grown here -- an entry that never had an
+		# arrival card (a loaded save) holds the clock through the interrupt
+		# path, not this one. Before V4.4 this path never resumed the clock at
+		# all and the player unpaused by hand.
+		var ns_after = _state.player()
+		if ns_after != null:
+			var still_on := {}
+			for entry in ns_after.event_queue:
+				still_on[String(entry.get("event_id", ""))] = true
+			for unseen_id in _unseen_events.keys().duplicate():
+				if not still_on.has(unseen_id):
+					_unseen_events.erase(unseen_id)
+					_dismiss_event_cards(unseen_id)
+		_resume_if_decision_settled()
+		_windows.mark_all_dirty()
 	)
 
 	# V2.4b. The summit scene, chained off V2.4a's meeting arrival. NOT in the
@@ -649,7 +673,8 @@ func _ready() -> void:
 		if ns != null and not ns.in_government:
 			get_tree().change_scene_to_file(MENU_SCENE)
 			return
-		_clock.paused = false
+		if not _decision_holds_clock():
+			_clock.paused = false
 		# V4.1. A won election that started a new term left the choice open,
 		# and the dismissal must not quietly resume past it. A no-op when
 		# there is nothing to choose.
@@ -814,12 +839,31 @@ func _entry(id: String, label: String) -> Dictionary:
 	}
 
 
+## The player's own pause/play (Space, the clock cluster's button) -- the ONLY
+## two manual toggles; speed changes never touch `paused`, and the pause menu,
+## the election dismissal and the holds below set it through their own paths.
+## A manual toggle means the player has taken ownership of the clock, so the
+## arrival flag drops: left up, a later answer or X on the last unseen card would
+## run _resume_if_decision_settled() and unpause the clock against the player's
+## own pause, and _decision_holds_clock() would keep holding it after an election
+## dismissal or programme choice the player had already run past. The programme
+## hold goes for the same reason: Space (run), Space (pause), then CHOOSE would
+## otherwise unpause in _on_programme_chosen against the player's own pause. The
+## card and the offer stay -- the player can still choose. Not touched:
+## _unseen_events (the cards stay unseen) and an interrupt on the desk, which
+## holds the clock on its own account.
+func _toggle_pause_by_hand() -> void:
+	_clock.toggle_pause()
+	_paused_for_decision = false
+	_paused_for_programme = false
+
+
 ## Every signal the furniture emits, connected in one place. hud.gd builds and
 ## places the pieces and deliberately wires none of them -- it has no clock and
 ## no GameState, and giving it either would put game control in a layout file.
 func _wire_hud() -> void:
 	_hud.clock_cluster.pause_toggled.connect(func():
-		_clock.toggle_pause()
+		_toggle_pause_by_hand()
 		_update_top_bar()
 	)
 	_hud.clock_cluster.speed_selected.connect(func(s: int):
@@ -873,29 +917,50 @@ func _wire_hud() -> void:
 		_windows.open("events")
 	)
 
-	# V2.9: a decision card's buttons answer the pending event -- the same
-	# Events.choose chain Dispatches uses, with U4's before-snapshot contract --
-	# and the clock the arrival paused resumes. Only the decision card carries
+	# V2.9 + V4.4: a decision card's buttons answer the event THAT CARD names --
+	# the same Events.answer chain Dispatches uses, with U4's before-snapshot
+	# contract -- and the clock the arrival paused resumes only when nothing the
+	# player has not seen is still on the desk. Only decision cards carry
 	# buttons, so any card_action is a decision answer by construction.
-	_hud.message_stack.card_action.connect(func(_id: String, index: int):
+	_hud.message_stack.card_action.connect(func(id: String, index: int):
 		var ns = _state.player()
-		var ev = Events.pending_event(ns, _loader)
+		var event_id := String(_event_cards.get(id, ""))
+		var ev = Events.event_by_id(_loader, event_id) if event_id != "" else null
 		if ev == null or index >= ev.choices.size():
 			return
 		var before := Budget.snapshot(_state)
-		var record := Events.choose(_state, _loader, String(ev.choices[index]["id"]))
+		var record := Events.answer(_state, _loader, event_id, String(ev.choices[index]["id"]))
 		if record.is_empty():
 			return
 		_queue_effect("%s: %s" % [String(ev.event_name), String(ev.choices[index]["label"])], before)
-		if not _decision_card_id.is_empty():
-			_hud.message_stack.dismiss(_decision_card_id)
-			_decision_card_id = ""
-		if _paused_for_decision:
-			_paused_for_decision = false
-			_clock.paused = false
-			_hud.clock_cluster.refresh(_clock)
+		_event_cards.erase(id)
+		_unseen_events.erase(event_id)
+		_hud.message_stack.dismiss(id)
+		_resume_if_decision_settled()
 		_update_top_bar()
 		_windows.mark_all_dirty()
+	)
+
+	# The unseen set's second door. An X on a decision card used to strand the
+	# event's id in _unseen_events: only an ANSWER erased it, so the arrival
+	# pause could outlive every answer and hold the clock over an empty set. The
+	# MAX_CARDS eviction is NOT a door: it takes the oldest UNPROTECTED card (no
+	# answer buttons, not pushed with `protect`), the newcomer included
+	# (message_stack's _eviction_victim), so a crowd of plain cards cannot
+	# "dismiss" a decision and restart the clock over it -- it reaches this
+	# handler only for a plain card, whose id maps to no event. Only a stack of
+	# nothing but protected cards (decisions past the desk's 4, plus the
+	# programme card) falls back to the oldest. The
+	# invariant, stated once across all its doors: AN ID LEAVES _unseen_events
+	# WHEN IT LEAVES THE DESK OR ITS CARD IS DISMISSED. An id already taken off
+	# the maps (the answer path above dismisses its own card after erasing)
+	# falls through as "": both erases are no-ops and the resume is idempotent,
+	# so this re-entry is harmless by construction.
+	_hud.message_stack.card_dismissed.connect(func(id: String):
+		var event_id := String(_event_cards.get(id, ""))
+		_event_cards.erase(id)
+		_unseen_events.erase(event_id)
+		_resume_if_decision_settled()
 	)
 
 	# U5c. The legend proposes a layer, the map view holds it, and the legend is
@@ -976,6 +1041,9 @@ func _open_pause_menu() -> void:
 func _close_pause_menu() -> void:
 	_set_pause_menu_visible(false)
 	_settings_panel.hide()
+	# Resume restores the clock the player had; a save loaded THROUGH the menu
+	# folds its re-raised holds into the snapshot (_note_holds_for_pause_menu),
+	# so a player who unpaused by hand over a pending interrupt keeps that choice.
 	_clock.paused = _paused_before_menu
 	_update_top_bar()
 
@@ -1034,7 +1102,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				_open_pause_menu()
 		KEY_SPACE:
-			_clock.toggle_pause()
+			_toggle_pause_by_hand()
 			_update_top_bar()
 		KEY_1:
 			_clock.set_speed(1)
@@ -1180,12 +1248,17 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# layer writes can be read in the SAME month rather than a month late: Inflation's
 	# slot and Orgs' rule, both stated at their own calls below.
 	#
-	# NO SIM MODULE READS THE COMMODITY STATE -- its readers are the UI surfaces
-	# (Task 4's Commodities panel and the two map layers), which read AFTER the
-	# tick -- so the slot is pinned rather than forced by a live SIM reader. Said
-	# out loud because that is exactly when an order rots: the pin in
-	# tests/test_commodities.gd is what stops a later task placing it by
-	# convenience.
+	# Since V4.4 this module's output HAS a live sim reader (the register itself still
+	# has none; the reader takes a stamp on the nation): the events machine's
+	# commodity_price_high hook reads the `ns.commodity_high_month` crossing stamp this
+	# call writes, inside Events.tick_month, which runs AFTER this slot -- so the
+	# same-month read this slot exists for now has its consumer, and the order is
+	# load-bearing where V4.6 could only pin it.
+	# Said out loud because that is exactly when an order rots: tests/test_events.gd's
+	# `_test_tick_order_pin` is what stops a later task placing Events before these
+	# four modules by convenience -- its five hooks read registers Commodities,
+	# Orgs, Statute and Industry wrote this same tick (the pin in
+	# tests/test_commodities.gd holds only Economy < Commodities < Opinion).
 	Commodities.tick_month(_state, _loader)
 	Budget.tick_month(_state)
 	# Between Budget and Opinion, and both halves of that are load-bearing. AFTER
@@ -1441,9 +1514,14 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# _card_appointment() already covers, and the one case where the player did not even
 	# know a decision was being made on their behalf.
 	var event_before := Budget.snapshot(_state)
-	var pending_before: bool = Events.is_pending(_state.player())
+	# V4.4: the before-state is the desk's CONTENT, not its emptiness -- a
+	# resolve-and-replace month (one answered, another arrived) is ordinary now,
+	# and the boolean edge detector fired neither branch on exactly that month.
+	var desk_before := {}
+	for desk_entry in _state.player().event_queue:
+		desk_before[String(desk_entry.get("event_id", ""))] = true
 	Events.tick_month(_state, _loader)
-	_card_events(year, month, pending_before, event_before)
+	_card_events(year, month, desk_before, event_before)
 	_enforce_interrupt()
 
 	# Reads unpopularity Opinion already settled and discipline Discipline
@@ -1914,49 +1992,85 @@ func _card_character_acts(acts: Array) -> void:
 ## opens the window where it is answered. A DEFAULT is a thing that already happened to
 ## the player's government with no button pressed -- _card_appointment()'s class exactly,
 ## and the sharper case, because with an appointment the player at least booked it.
-func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) -> void:
+func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictionary) -> void:
 	if _hud == null or _hud.message_stack == null or _state == null:
 		return
 	var ns = _state.player()
 	if ns == null:
 		return
 
-	if was_pending and not Events.is_pending(ns) and not ns.event_history.is_empty():
-		var record: Dictionary = ns.event_history[0]
-		if bool(record.get("defaulted", false)) and int(record.get("year", 0)) == year and int(record.get("month", 0)) == month:
-			# A sited crisis names its place here too: this card and the Dispatches
-			# ledger print the same record, and two readouts of one record that
-			# disagree is the failure class this column keeps catching.
-			var named := String(record.get("event_name", ""))
-			var where := String(record.get("region_name", ""))
-			if where != "":
-				named = "%s — %s" % [named, where]
-			_hud.message_stack.push(
-				"Decided for you",
-				"%s. Nobody answered, so it went the way it was always going to: %s." % [
-					named, String(record.get("choice_label", "")),
-				],
-			)
-			# The delta is queued HERE and not at the choice, because this is the one
-			# case where the player made no decision -- U4's baseline still belongs
-			# against it, or a budget that moved by default moves for no reason the
-			# ledger names.
-			_queue_effect(String(record.get("event_name", "")), before)
-			return
+	# What LEFT the desk this month: ids that were on it before the tick and are
+	# not now. Each is a resolution, and each earns its own card -- two crises the
+	# clock answered in one month is twice the news, not the same news twice.
+	var after := {}
+	for entry in ns.event_queue:
+		after[String(entry.get("event_id", ""))] = true
+	var defaulted_names: Array[String] = []
+	for event_id in desk_before.keys():
+		if after.has(event_id):
+			continue
+		# The unseen set's first door, and the invariant's desk half: an id that
+		# has left the desk is not unseen, whether it left by the machine's own
+		# default (_tick_countdowns answered it a moment ago), the player's card
+		# answer or a Dispatches answer -- and its arrival card goes with it.
+		# An erase of _unseen_events missed here used to strand the id and hold
+		# the clock past every later answer; a missing card purge left decision
+		# buttons with no event to answer.
+		_dismiss_event_cards(event_id)
+		_unseen_events.erase(event_id)
+		var record := {}
+		for row in ns.event_history:
+			if String(row.get("event_id", "")) == event_id:
+				record = row
+				break
+		if record.is_empty():
+			continue
+		if not bool(record.get("defaulted", false)) or int(record.get("year", 0)) != year or int(record.get("month", 0)) != month:
+			continue
+		# A sited crisis names its place here too: this card and the Dispatches
+		# ledger print the same record, and two readouts of one record that
+		# disagree is the failure class this column keeps catching.
+		var named := String(record.get("event_name", ""))
+		var where := String(record.get("region_name", ""))
+		if where != "":
+			named = "%s — %s" % [named, where]
+		_hud.message_stack.push(
+			"Decided for you",
+			"%s. Nobody answered, so it went the way it was always going to: %s." % [
+				named, String(record.get("choice_label", "")),
+			],
+		)
+		defaulted_names.append(String(record.get("event_name", "")))
 
-	if not was_pending and Events.is_pending(ns):
-		var ev = Events.pending_event(ns, _loader)
+	# The delta is queued HERE and not at the choice, because this is the one case
+	# where the player made no decision -- U4's baseline still belongs against it,
+	# or a budget that moved by default moves for no reason the ledger names. ONE
+	# entry for the whole tick: every departure shares the same pre-tick snapshot,
+	# so a queue entry per default would each claim the joint movement of all of
+	# them (the cards stay one per event -- only the ledger line is merged).
+	if not defaulted_names.is_empty():
+		_queue_effect("; ".join(defaulted_names), before)
+
+	# What ARRIVED: ids on the desk now that were not before. Each gets its own
+	# decision card, answering its own row.
+	for entry in ns.event_queue:
+		var event_id := String(entry.get("event_id", ""))
+		if desk_before.has(event_id):
+			continue
+		var ev = Events.event_by_id(_loader, event_id)
 		if ev == null:
-			return
-		var left := Events.months_left(ns)
+			continue
+		var left := int(entry.get("months_left", 0))
 		# A decision the player has not seen must not expire behind their back:
 		# "3 months to answer" at speed 3 is thirteen seconds, and both playtest
 		# runs produced "Decided for you" records no player answered (2026-09-05).
 		# Arrival pauses; the interrupt flag (V2.4b) still opens Dispatches on
-		# top -- non-modal, per events-model's argument, but the clock waits.
+		# top -- non-modal, per events-model's argument, but the clock waits
+		# until everything unseen has been answered.
 		_paused_for_decision = true
 		_clock.paused = true
 		_hud.clock_cluster.refresh(_clock)
+		_unseen_events[event_id] = true
 		# And the card itself is the answer surface (the clock is stopped, so the
 		# choices cannot be pressed against a running world). The default-choice
 		# marker is events_panel's own wording.
@@ -1967,13 +2081,86 @@ func _card_events(year: int, month: int, was_pending: bool, before: Dictionary) 
 				"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
 			]})
 		# The title names the place for a sited event -- read straight off the
-		# register, `pending_event_name()` untouched (V3.5). The name is already in
-		# the register because every reader of it is a leaf over pending state.
+		# entry, `event_name` untouched (V3.5). The name is already in the
+		# register because every reader of it is a leaf over pending state.
 		var title: String = ev.event_name
-		var where := String(ns.event_pending.get("region_name", ""))
+		var where := String(entry.get("region_name", ""))
 		if where != "":
 			title = "%s — %s" % [title, where]
-		_decision_card_id = _hud.message_stack.push(title, _decision_body(ev, left), actions)
+		# The same plate the Dispatches desk entry carries, on the title's side:
+		# one crisis, one image, in both places it is read. Null (no art yet)
+		# draws the card exactly as before -- missing art is silent.
+		var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
+		var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions, art)
+		_event_cards[card_id] = event_id
+
+	# The unseen set's third door re-check: the pause is re-judged AFTER the
+	# arrivals, not beside the departure erase above -- a same-month
+	# resolve-and-replace (one default fires, another crisis lands) must not
+	# resume past the fresh arrival. The same three lines the card-answer path
+	# runs.
+	_resume_if_decision_settled()
+
+
+## The one resume rule for the arrival pause, shared by all four doors (panel
+## answer, card answer, card dismissal, the post-arrival re-check). Clearing the
+## unseen set ends THIS pause, not every pause: an interrupt-flagged event still
+## on the desk (its card's X must not release a clock the flag holds "until
+## answered") and an unchosen term-start programme each own the clock
+## independently, so the clock stays down. The two differ in who releases it:
+## the programme's own choice does (_on_programme_chosen), so the arrival flag
+## drops; an interrupt has no release of its own but the answer, so the flag
+## STAYS up and the answer's call to this function is what lets the clock go --
+## dropping it on an X would strand the clock after the later Dispatches answer.
+## ORDER MATTERS (pass 16): the interrupt test comes BEFORE the programme's. With
+## both pending, the programme branch used to drop the flag first; the programme's
+## choice then left the interrupt held with no flag, and answering the interrupt
+## found nothing to release. Interrupt pending keeps the flag whatever else holds.
+func _resume_if_decision_settled() -> void:
+	if not _paused_for_decision or not _unseen_events.is_empty():
+		return
+	var ns = _state.player() if _state != null else null
+	if ns != null and Events.interrupt_pending(ns):
+		return
+	if _paused_for_programme:
+		_paused_for_decision = false
+		return
+	_paused_for_decision = false
+	_clock.paused = false
+	_hud.clock_cluster.refresh(_clock)
+
+
+## A load through the pause menu re-raises its holds AFTER the menu took its
+## "was the clock running" snapshot, and closing the menu would restore that stale
+## snapshot over them. Folding the holds in here -- the one place that knows a
+## load just happened -- keeps _close_pause_menu a plain restore.
+func _note_holds_for_pause_menu() -> void:
+	if _paused_for_programme or _decision_holds_clock():
+		_paused_before_menu = true
+
+
+## Whether an event still owns the clock: an unseen arrival, or an interrupt on the
+## desk. The programme pause and the election dismissal consult this before they
+## release the clock, so choosing a programme cannot run time out from under a
+## question nobody has answered.
+func _decision_holds_clock() -> bool:
+	if _paused_for_decision and not _unseen_events.is_empty():
+		return true
+	var ns = _state.player() if _state != null else null
+	return ns != null and Events.interrupt_pending(ns)
+
+
+## Dismiss every message-stack card keyed to an event that has left the desk.
+## Finds card ids in _event_cards mapping to `event_id`, dismisses each, and
+## iterates a copy of the keys because `dismiss()` emits `card_dismissed` whose
+## handler erases from _event_cards -- re-entry is harmless; the handler also
+## erases from _unseen_events, which is a no-op when the caller already erased it.
+func _dismiss_event_cards(event_id: String) -> void:
+	if _hud == null or _hud.message_stack == null:
+		return
+	for card_id in _event_cards.keys().duplicate():
+		if String(_event_cards.get(card_id, "")) == event_id:
+			_hud.message_stack.dismiss(card_id)
 
 
 ## The decision card's body: the event's summary line, then the deadline -- the
@@ -2237,6 +2424,23 @@ func _on_load_requested(slot: String) -> void:
 	# happened to match.
 	_announced_assembly_bills.clear()
 	_assembly_cards.clear()
+	# The V4.4 desk's three ride the same rule -- a stale unseen id would hold
+	# the clock past the load and a discarded game's decision card would route
+	# Events.answer against the loaded state (the decision pause beside the
+	# load's own pause below is the third).
+	# The discarded game's decision cards leave the STACK too: clearing only the
+	# map left their answer buttons on screen, looking live and doing nothing
+	# (card_action finds no event for the id and returns silently).
+	for stale_card in _event_cards.keys().duplicate():
+		_hud.message_stack.dismiss(stale_card)
+	_event_cards.clear()
+	_unseen_events.clear()
+	# The discarded game's programme card goes too: _enforce_term_start_programme()
+	# below returns early for a mid-term load, which would leave "choose one
+	# goal..." standing (and its id set) over a game with nothing to choose.
+	if not _programme_card_id.is_empty():
+		_hud.message_stack.dismiss(_programme_card_id)
+		_programme_card_id = ""
 	var loaded_ns = _state.player()
 	var loaded_result: Dictionary = loaded_ns.last_law_result
 	var carries_bill := bool(loaded_result.get("assembly_bill", false))
@@ -2248,6 +2452,14 @@ func _on_load_requested(slot: String) -> void:
 	_clock.month = _state.month
 	_clock.day = int(result["day"])
 	_clock.paused = true
+	# The discarded game's decision pause dies here, not just its clock: the
+	# loaded game's interrupt enforcement re-raises a pause if the save carries
+	# one, so the flag must not survive as a second holder of it. The programme
+	# pause dies with it: _enforce_term_start_programme() below re-raises it only
+	# if the loaded game is at a term start, and a stale true would otherwise
+	# block every later auto-resume (_resume_if_decision_settled reads it).
+	_paused_for_decision = false
+	_paused_for_programme = false
 
 	_map_view.setup(_loader, _state)
 	_minimap.setup(_map_view, _loader, _state)
@@ -2268,9 +2480,10 @@ func _on_load_requested(slot: String) -> void:
 	# again. Until the V2.8 review this WAS a hand-written list, and it had drifted
 	# by five: city, energy, events, region and summit. The events panel is the one
 	# that made it more than a stale readout -- events_panel.gd calls
-	# Events.choose(_state, ...), so answering a crisis after a load wrote the
-	# decision into the discarded state and the real event defaulted at its
-	# deadline. mark_all_dirty()'s own comment predicted exactly this, about
+	# Events.answer(_state, _loader, ev.id, ...), so answering a crisis after a
+	# load wrote the decision into the discarded state and the real event
+	# defaulted at its deadline. mark_all_dirty()'s own comment predicted exactly
+	# this, about
 	# exactly this kind of list, which is why the fix is the same one: derive it,
 	# so the omission is structurally impossible rather than remembered.
 	for panel in _windows.panels():
@@ -2303,6 +2516,7 @@ func _on_load_requested(slot: String) -> void:
 	# V4.1. A save made at an unchosen term start is still one: the same
 	# reload-re-raise reasoning _enforce_interrupt() carries, one register over.
 	_enforce_term_start_programme()
+	_note_holds_for_pause_menu()
 
 	_save_load_panel.report("Loaded '%s'." % slot)
 	_save_load_panel.mark_dirty()
@@ -2315,8 +2529,9 @@ func _on_load_requested(slot: String) -> void:
 ## precisely for the one the argument does not cover: an event nobody could
 ## reasonably choose to ignore. The pause reads the serialised register, which
 ## is what makes the reload re-raise the SAME code path rather than a second
-## one: announce wrote the flag into event_pending, and both the month tick and
-## a fresh load read it here.
+## one: announce wrote the flag into the queue's entries, and both the month tick
+## and a fresh load read it here. V4.4: an ANY read -- the desk can hold
+## several things and any one of them carrying the flag is the pause.
 ##
 ## Every event WITHOUT the flag is untouched -- this function pauses nothing and
 ## opens nothing for it, and tests/test_events.gd pins that.
@@ -2326,9 +2541,14 @@ func _enforce_interrupt() -> void:
 	var ns = _state.player()
 	if ns == null or not Events.is_pending(ns):
 		return
-	if not bool(ns.event_pending.get("interrupt", false)):
+	if not Events.interrupt_pending(ns):
 		return
 	_clock.paused = true
+	# The interrupt pause IS a decision pause: raising the flag here (the load
+	# path and a month's re-pause both reach this) is what lets the answer's
+	# _resume_if_decision_settled() release it; without it a re-raised interrupt
+	# stayed paused after being answered.
+	_paused_for_decision = true
 	if _events_panel != null:
 		_windows.open("events")
 	_hud.clock_cluster.refresh(_clock)
@@ -2401,12 +2621,25 @@ func _enforce_term_start_programme() -> void:
 	# whole gate. An empty offer pauses nothing: there is no decision to wait
 	# behind, and a clock stopped with nothing on the desk is a stuck game.
 	if Programme.available(_state, ns, _loader).is_empty():
+		# The offer is gone without a choice (the player ran the clock past the
+		# term start): the hold and its card are stale. Left up, every later
+		# arrival answer would take _resume_if_decision_settled()'s programme
+		# branch, drop the arrival flag and never resume -- a stranded clock. Only
+		# the flag and the card go; the clock stays as the player has it.
+		_paused_for_programme = false
+		if not _programme_card_id.is_empty():
+			_hud.message_stack.dismiss(_programme_card_id)
+			_programme_card_id = ""
 		return
 	if not _programme_card_id.is_empty():
 		_hud.message_stack.dismiss(_programme_card_id)
 	_programme_card_id = _hud.message_stack.push(
 		"The term's programme",
 		"The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise.",
+		[], null,
+		# Protected: this plain card explains a live clock hold, and a few plain
+		# pushes at a term start would otherwise evict it as the oldest.
+		true,
 	)
 	_paused_for_programme = true
 	_clock.paused = true
@@ -2440,8 +2673,9 @@ func _on_programme_chosen(entry_id: String) -> void:
 		_programme_card_id = ""
 	if _paused_for_programme:
 		_paused_for_programme = false
-		_clock.paused = false
-		_hud.clock_cluster.refresh(_clock)
+		if not _decision_holds_clock():
+			_clock.paused = false
+			_hud.clock_cluster.refresh(_clock)
 	_update_top_bar()
 	_windows.mark_all_dirty()
 

@@ -104,6 +104,11 @@ const PRECONDITION_FIELDS := [
 	"debt_to_gdp_pct", "unemployment_pct", "deficit_pct_gdp",
 	"overall_approval_pct", "growth_annual_pct", "terms_served",
 	"unrest_pct", "co2e_per_capita_t",
+	# V4.4. Membership of the Union as a 0/1 reading, so an event that is a
+	# Commission letter can be gated on "== 1" and a non-member player (GBR, CHE)
+	# is not dealt a letter addressed to institutions they have left or never
+	# joined. Read live off ns.orgs, so an accession switches the book on.
+	"eu_member",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]

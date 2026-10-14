@@ -12,6 +12,8 @@ extends SceneTree
 ## headline bands: total count, theme coverage, per-bloc sign coverage, id
 ## uniqueness, and the linter's spread bands. It must NOT shell out.
 
+const LegislatureK = preload("res://src/sim/legislature_constants.gd")
+
 const THEME_KEYS := ["tax", "labour", "social", "institutional", "business"]
 const BLOC_KEYS := ["workers", "pensioners", "urban", "rural", "business", "students"]
 
@@ -137,6 +139,8 @@ func _init() -> void:
 			_fail(failures, "bloc '%s' is one-signed across the whole book (+%d/-%d)"
 					% [bloc, pos_count, neg_count])
 
+	_check_lint_precondition_fields(failures)
+
 	if failures.is_empty():
 		print("test_law_content: all checks passed (%d laws across %d files)" % [total, themed.size()])
 		quit(0)
@@ -144,6 +148,32 @@ func _init() -> void:
 		for f in failures:
 			printerr(f)
 		quit(1)
+
+
+## tools/law_lint.py restates PRECONDITION_FIELDS by hand, and a restated list nothing
+## compares drifts the day the source grows -- `eu_member` joined the loader's list and
+## the lint went on refusing every law that read it. The list is parsed out of the python
+## file's text and held equal to its source (tests/test_event_content.gd's approach for
+## event_lint.py).
+func _check_lint_precondition_fields(failures: Array[String]) -> void:
+	var text := FileAccess.get_file_as_string("res://tools/law_lint.py")
+	var start := text.find("\nPRECONDITION_FIELDS = [")
+	if start < 0:
+		_fail(failures, "law_lint.py no longer defines PRECONDITION_FIELDS as a list literal")
+		return
+	var body := text.substr(start, text.find("]", start) - start)
+	var found: Array[String] = []
+	var rx := RegEx.new()
+	rx.compile("\"([a-z_0-9]+)\"")
+	for m in rx.search_all(body):
+		found.append(m.get_string(1))
+	var want: Array[String] = []
+	for item in LegislatureK.PRECONDITION_FIELDS:
+		want.append(String(item))
+	found.sort()
+	want.sort()
+	if found != want:
+		_fail(failures, "law_lint.py PRECONDITION_FIELDS %s differs from legislature_constants %s" % [found, want])
 
 
 func _mean(values: Array[float]) -> float:

@@ -82,6 +82,31 @@ func _init() -> void:
 	state.deployments[Relations.directed_key("FRA", "ITA")] = {
 		"kind": "chosen", "since_year": state.year, "since_month": state.month,
 	}
+	# The V4.4 hook stamps, the same hole one register over: both are empty at
+	# staging on every nation, so duplicate_state() dropping them ENTIRELY was
+	# invisible to the walker below (0 entries equals 0 entries -- the ultra
+	# pass-1 finding). Staged on every nation because the check runs per nation:
+	# one staged nation would leave twenty-eight vacuous passes behind it.
+	var Events = load("res://src/sim/events.gd")
+	var staged_event = null
+	for candidate in loader.events:
+		staged_event = candidate
+		break
+	if staged_event == null:
+		_fail("event-register copy staging needs a loaded event")
+	else:
+		for id in state.nations:
+			var staged_ns = state.nations[id]
+			staged_ns.repealed_at["copy_probe_law"] = 1234
+			staged_ns.last_accession = {"org": "copy_probe_org", "month_index": 1234}
+			staged_ns.assembly_bill_passed_month = 1234
+			staged_ns.commodity_high_month = 1234
+			staged_ns.event_fired["copy_probe_event"] = true
+			staged_ns.event_category_quiet["copy_probe_category"] = 3
+			staged_ns.event_cooldowns["copy_probe_event"] = 1234
+			staged_ns.event_armed.append({"event_id": String(staged_event.id), "due_index": 1234, "source_id": "copy_probe_source"})
+			Events.announce(staged_ns, staged_event, 1234, {})
+			staged_ns.event_history.append({"event_id": "copy_probe_event", "event_name": "Copy probe", "choice_id": "copy_probe_choice", "choice_label": "Copy probe", "defaulted": false, "year": 2026, "month": 1})
 
 	var copy = state.duplicate_state()
 

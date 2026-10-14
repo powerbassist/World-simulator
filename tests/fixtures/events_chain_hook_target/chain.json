@@ -1,0 +1,34 @@
+{
+  "events": [
+    {
+      "id": "chain_source",
+      "name": "Source",
+      "summary": "Arms a follow-up.",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}},
+         "arms": {"event_id": "loaded_hook", "delay_months": 2}}
+      ]
+    },
+    {
+      "id": "loaded_hook",
+      "name": "Hook",
+      "summary": "A hook event that a chain may arm (the cooldown floor keeps the hook door off it).",
+      "likelihood": 0.01,
+      "respond_months": 2,
+      "category": "fiscal",
+      "on_action": "law_passed",
+      "choices": [
+        {"id": "a", "label": "A", "summary": "s", "default": true,
+         "effects": {"bloc_offset": {"workers": 0.1}}},
+        {"id": "b", "label": "B", "summary": "s",
+         "effects": {"bloc_offset": {"workers": -0.1}}}
+      ]
+    }
+  ]
+}

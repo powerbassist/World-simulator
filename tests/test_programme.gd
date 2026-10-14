@@ -21,6 +21,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const Programme = preload("res://src/sim/programme.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const LawK = preload("res://src/core/law.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -66,6 +67,7 @@ func _init() -> void:
 	_test_the_register_carries_no_content()
 	_test_the_register_round_trips_through_json()
 	_test_preloads_are_a_short_list()
+	_test_trigger_reads_delegate_to_the_laws_reader()
 	_test_the_nine_never_choose()
 	_test_no_hand_written_entry_list()
 
@@ -644,6 +646,47 @@ func _test_no_hand_written_entry_list() -> void:
 
 
 # --- Harness --------------------------------------------------------------------------
+
+## The ladder borrows the law's precondition list, so Programme._read_field must BE
+## Legislature.read_field for every field on it -- one reader, one meaning. Each field
+## is staged to a distinct non-zero value so a reader that fell through to the 0.0
+## default, or mixed two fields up, cannot pass; eu_member is checked both ways.
+func _test_trigger_reads_delegate_to_the_laws_reader() -> void:
+	var ns = _new_state().player()
+	ns.unemployment_pct = 7.3
+	ns.deficit_pct_gdp = 4.1
+	ns.overall_approval_pct = 41.5
+	ns.growth_annual_pct = 1.7
+	ns.terms_served = 2
+	ns.unrest_pct = 3.3
+	ns.co2e_per_capita_t = 5.5
+	var expected := {
+		"unemployment_pct": 7.3,
+		"deficit_pct_gdp": 4.1,
+		"overall_approval_pct": 41.5,
+		"growth_annual_pct": 1.7,
+		"terms_served": 2.0,
+		"unrest_pct": 3.3,
+		"co2e_per_capita_t": 5.5,
+		"debt_to_gdp_pct": float(ns.debt_to_gdp_pct()),
+	}
+	for field in ProgrammeK.TRIGGER_FIELDS:
+		if field == "eu_member":
+			continue
+		var got: float = Programme._read_field(ns, field)
+		if not is_equal_approx(got, Legislature.read_field(ns, field)):
+			_fail("Programme._read_field('%s') = %s, the law's reader says %s" % [field, got, Legislature.read_field(ns, field)])
+		if not expected.has(field):
+			_fail("TRIGGER_FIELDS grew '%s' and this test stages no value for it" % field)
+		elif not is_equal_approx(got, float(expected[field])):
+			_fail("Programme._read_field('%s') = %s, staged %s" % [field, got, expected[field]])
+	ns.orgs = ["eu"]
+	if not is_equal_approx(Programme._read_field(ns, "eu_member"), 1.0):
+		_fail("a Union member reads eu_member != 1.0 through the programme reader")
+	ns.orgs = []
+	if not is_equal_approx(Programme._read_field(ns, "eu_member"), 0.0):
+		_fail("a non-member reads eu_member != 0.0 through the programme reader")
+
 
 func _new_state():
 	return GameState.new_game(_loader, PLAYER)

@@ -23,7 +23,8 @@ extends RefCounted
 ## `subsidy_shadow`, `subsidy_lapsed_month` (the failure hazard's memory of a
 ## withdrawn subsidy), `board_chair` (the seat dies with the firm at the
 ## failure commit) and `courted` (the courtship dies with it too -- the same
-## commit clears the standing x5 hazard). B2's VERB CHANNEL is the second
+## commit clears the standing x5 hazard), plus V4.4's `failed_month` and
+## `bid_month` (the events hooks' month stamps). B2's VERB CHANNEL is the second
 ## writer of the keys it answers: companies.gd's execute() clears/converts
 ## bids (block/allow), writes `owner` and `board_chair` (appoint_board,
 ## break_up), resets `subsidy_lapsed_month` when support is re-authored (the
@@ -349,6 +350,11 @@ static func _failures(ns, majors: Array, month: int) -> void:
 		if Cycle.unit("industry|%s|fail" % company.id, month) >= hazard:
 			continue
 		entry["failed"] = true
+		# V4.4: the firm_failed hook's stamp. The machine writes field diffs only
+		# (no journal, by the register's own design), so "failed THIS month" is a
+		# stamp on the entry -- read by events.gd's hook emitter, ignored by
+		# everything else.
+		entry["failed_month"] = month
 		entry["share"] = 0.0
 		# The support stops with the production it supported: a subsidy standing
 		# on a failed firm would bill on while the firm employed nobody -- and,
@@ -472,6 +478,11 @@ static func _bids(state, ns, loader, majors: Array, month: int) -> void:
 		entry["bid_bidder"] = pick
 		entry["bid_price_eur_bn"] = Companies.value_eur_bn(ns, company)
 		entry["bid_months_left"] = IK.BID_WINDOW_MONTHS
+		# V4.4: the takeover_bid hook's stamp, failed_month's argument one verb
+		# over -- the machine writes field diffs only, so "a bid ARRIVED this
+		# month" is a stamp on the entry. Not cleared when the bid lapses: a
+		# stale stamp never matches a later month, so it is inert by the match.
+		entry["bid_month"] = month
 
 
 ## The open bid on this nation's register, if any: {company_id, bidder_id,
