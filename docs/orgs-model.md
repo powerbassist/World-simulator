@@ -386,5 +386,22 @@ waived by the author's call).
   would undo the author's 2026-10-14 call that an AI chair chooses within a
   window.
 
+**The V4.5b1 track (b) re-run, PREDICTED 2026-10-15 before it ran** (base
+`50071cd`, V4.5a's close; candidate the b1 tip; both from worktrees). NOT
+bit-identity -- content landed. Lines may move only through these channels:
+(i) the agenda: one opening per 6 months per council (was one per 21) under a
+presidency window, so more divisions and a different order; (ii) relations:
+sponsor lobbying, sponsor thanks/snubs never fire (no regime votes in councils;
+the player abstains), and every treaty that carries FALLS at its ratification
+window because no regime submits it -- `RATIFY_FAIL_SPONSOR`/`_MEMBER` dips on
+FRA's pairs; (iii) more rules in force (qmr constraints and transfers carried
+by the AI majority) reaching the deficit through the transfer line and fines,
+and the `europe` issue through the clamped burden; (iv) collective tariffs on
+non-members (GBR, CHE) through the directed register. Expected direction:
+FRA's and the members' deficits slightly worse, `europe` salience up, GBR/CHE
+trade weights down; approval moves of a point or two; outcome flips possible
+where V4.4's re-baseline already sat on knife edges. A moved line that none of
+(i)-(iv) explains is a DEFECT.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]
