@@ -80,11 +80,13 @@ const IOU_BETRAYAL := 15.0
 ## favour (the chair gives up its own pick, not just a vote), below a betrayal.
 const TABLE_RELATIONS_COST := 8.0
 
-## Ratification. Six months: long enough to fit a division between monthly ticks
-## and a busy assembly, short enough to close well inside PROPOSAL_INTERVAL_MONTHS
-## (18) so two treaties are never ratifying in one council at once -- pinned by
-## tests/test_council.gd.
-const RATIFY_WINDOW_MONTHS := 6
+## Ratification. Five months: long enough to fit a division between monthly ticks
+## and a busy assembly, and strictly inside PROPOSAL_INTERVAL_MONTHS (6, one file
+## per presidency) so a treaty's window closes before the next division and two
+## treaties are never ratifying in one council at once -- pinned by
+## tests/test_council.gd. It was 6 against an 18-month interval; the interval
+## moved to the presidency's semester on 2026-10-15 and this followed it.
+const RATIFY_WINDOW_MONTHS := 5
 ## Killing a treaty everyone else signed costs more with its sponsor (scaled by
 ## drive) than with the bystanders, and the bystanders are many.
 const RATIFY_FAIL_SPONSOR := 12.0

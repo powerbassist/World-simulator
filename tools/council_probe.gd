@@ -26,7 +26,7 @@ extends SceneTree
 ##       single bargain (currency x member, asking FRA's preferred outcome) flip
 ##       the outcome to it? Band 0.20-0.50 on the
 ##       DISTINCT-proposal share (proposals ever decidable / proposals ever
-##       opened) -- one proposal re-opening every 18 months must not set the
+##       opened) -- one proposal re-opening every few openings must not set the
 ##       band by repetition. The per-opening share is printed as context.
 ##   C2  SPENDING IS NOT FREE. The idle run (`never`) beside an `always` run of
 ##       the first term (60 months) that strikes a bargain only when a
@@ -558,7 +558,7 @@ func _table_c1(idle: Dictionary) -> void:
 	var distinct: float = float(ever) / float(keys.size()) if not keys.is_empty() else 0.0
 	print("per-opening: divisions (FRA's councils) %d, decidable %d, share %.3f (context, not the band)" % [n, decidable, share])
 	print("DISTINCT: proposals ever opened %d, ever decidable %d, share %.3f" % [keys.size(), ever, distinct])
-	# The band reads the DISTINCT share: one proposal re-opening every 18 months
+	# The band reads the DISTINCT share: one proposal re-opening every few openings
 	# must not set it by repetition.
 	_band("C1", distinct >= C1_MIN and distinct <= C1_MAX, "distinct %.3f" % distinct, bool(idle["term_valid"]))
 
