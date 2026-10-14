@@ -639,7 +639,7 @@ func _table_e5_categories() -> void:
 ## The no-name-without-a-branch pin has a source-level twin in tests/test_events.gd's
 ## `_test_the_hook_vocabulary_is_swept`; this table is its runtime witness. For each
 ## hook in events_constants.ON_ACTIONS, stage the exact register its emitter reads
-## (copied from Events._hook_fired's own match arms -- when the machine moves an
+## (copied from EventHooks.fired's (src/sim/event_hooks.gd) own match arms -- when the machine moves an
 ## emitter, this staging moves with it) and assert an on_action-bearing fixture lands
 ## on the desk for a stub loader at likelihood 1.0. The shipped book carries SIX
 ## on_action events beside these fixtures (commodity_price_high has none since pass
