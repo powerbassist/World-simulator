@@ -346,8 +346,10 @@ waived by the author's call).
   author:** the band says "with bargains available", but the probe tests one
   bargain per division, while the machine allows one per member. Read as one per
   member, the same openings give 0.20 at today's swings (on the band's edge) and
-  0.25 at `IOU_SWING` ×1.5. That re-reading is the author's to make; it is not
-  taken here.
+  0.25 at `IOU_SWING` ×1.5. **Kept as declared (2026-10-15):** re-reading a band
+  after seeing its result is the selector failure this project refuses, so C1
+  stands as a BOUND at 0.050. The lever still open is CONTENT: unanimity rows
+  placed with a single vetoer within a bargain's reach.
 - **C2 spending is not free: MISS → fixed by `FAVOUR_RELATIONS_COST` 6 → 12;
   PASS at 8.60** (band ≥ 5). At 6 the gap was 0.19. Two favours were struck on
   ITA (months 18 and 54). `DiplomacyK.DRIFT_RATE` (0.02/month) took 35 % of the
@@ -357,13 +359,14 @@ waived by the author's call).
   instead. It is a near-constant offset of 7.2–7.7 points. The gap rises roughly
   linearly with the price (4: −2.44, 6: 0.19, 8: 3.35, 10: 5.97, 11: 7.29,
   12: 8.60, 14: 11.23) and crosses the band near 9.3. 12 sits inside the passing
-  region; 10 sits on the crossing. The swings do not move C2 above 0.1125.
+  region; 10 (5.97) passes but sits close to the ~9.3 crossing. FAVOUR_SWING was swept too: from 0.1125 up nothing changes. The probe has no RNG, so the +10.1 AI act is a stable, repeatable artefact of that world.
   `FAVOUR_SWING` 0.075 drops the favour below ITA's gap, so the player pays in
   aid (gap −7.70). **Caveats:** the sample is one member and two strikes,
   because C1's starvation leaves little to bargain over, and one AI act moves
   the reading by about 8 points (at `CHAIR_WINDOW` 4 the old price of 6 read
-  8.87). The favour now costs more than tabling (`TABLE_RELATIONS_COST` 8),
-  whose comment assumes the reverse. That is left for the author.
+  8.87). Tabling was 8, below the new favour; it moved to 14 so the declared
+  ordering holds (favour 12 < tabling 14 < betrayal 15) -- not band-measured,
+  since neither probe run tables.
 - **C3 unanimity is reachable: PASS** (24 carried, 42 vetoed over 168 months).
 - **C4 ratification is a fight: PASS** (14 of the 17 unanimity proposals forecast
   inside [40 %, 60 %] yes in FRA's assembly).
@@ -376,7 +379,8 @@ waived by the author's call).
   the 27 eu AI-chair openings. Each of the five sat in a chair's window 3–6
   times and lost to the chair's preferred proposal every time. `CHAIR_WINDOW`
   {2, 3, 4} leaves 3 / 5 / 4 never opened, so no window passes and it stays at
-  3. The structural reason is that the eu has 27 openings in 168 months for 20
+  3. The lever still open is CONTENT: re-placing those five rows so some chair
+  ranks them first. The structural reason is that the eu has 27 openings in 168 months for 20
   proposals, and each chair pick that is not the window's head spends an
   opening on a repeat. A window of 1 (the pure rotation) would pass, but it
   would undo the author's 2026-10-14 call that an AI chair chooses within a

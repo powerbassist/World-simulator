@@ -66,8 +66,9 @@ const SPONSOR_SNUB := 8.0
 ## (+10.1) -- a ~7.2-point offset present at every cost swept. The gap is about
 ## linear in the price (4: -2.44, 6: 0.19, 8: 3.35, 10: 5.97, 11: 7.29, 12: 8.60,
 ## 14: 11.23), crossing the band near 9.3; 12 sits inside the passing region,
-## not on its edge. It now costs more than TABLE_RELATIONS_COST (8), whose
-## comment assumes the reverse -- left for the author, not moved here.
+## not on its edge. The probe has no RNG, so the +10.1 act recurs identically
+## at every price -- a stable artefact of one world, not a flaky reading; still,
+## the pass rests on two strikes with one member and is recorded as fragile.
 ## FAVOUR_SWING was swept x{0.5..1.5}: at 0.075 no favour reaches the one
 ## single-member flip on offer (ITA's 0.091 gap) and the player pays in aid
 ## (gap -7.70); from 0.1125 up nothing changes. It stays at 0.15.
@@ -93,7 +94,10 @@ const IOU_BETRAYAL := 15.0
 
 ## Tabling: what the chair charges to put the player's proposal first. Above a
 ## favour (the chair gives up its own pick, not just a vote), below a betrayal.
-const TABLE_RELATIONS_COST := 8.0
+## 8 until V4.5b1 T5 measured the favour up to 12; raised to 14 to keep the
+## ordering this comment states (favour 12 < tabling 14 < betrayal 15). Not
+## measured by a band -- the probe's idle and bargaining runs never table.
+const TABLE_RELATIONS_COST := 14.0
 
 ## Ratification. Five months: long enough to fit a division between monthly ticks
 ## and a busy assembly, and strictly inside PROPOSAL_INTERVAL_MONTHS (6, one file
