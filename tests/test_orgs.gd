@@ -219,8 +219,8 @@ func _check_proposals_name_orgs() -> void:
 		_ok(_loader.orgs_by_id.has(p.org_id), "proposal '%s' names a LOADED org" % p.id)
 		per_org[p.org_id] = int(per_org.get(p.org_id, 0)) + 1
 	_ok(int(per_org.get(EU_ORG, 0)) == 20, "eu carries 20 proposals (V4.5b's book; the floor moved to NATO at V3.2), got %d" % int(per_org.get(EU_ORG, 0)))
-	_ok(int(per_org.get("nato", 0)) == 1, "nato carries the moved floor, got %d" % int(per_org.get("nato", 0)))
-	_ok(int(per_org.get(ACCORD, 0)) == 2, "the accord carries its two proposals, got %d" % int(per_org.get(ACCORD, 0)))
+	_ok(int(per_org.get("nato", 0)) == 6, "nato carries the moved floor and V4.5b's five, got %d" % int(per_org.get("nato", 0)))
+	_ok(int(per_org.get(ACCORD, 0)) == 8, "the accord carries its two proposals and V4.5b's six, got %d" % int(per_org.get(ACCORD, 0)))
 
 	# File order IS the agenda. The eu list must be fiscal.json's proposals then
 	# union_policy.json's, in authored order -- a reorder would silently change
@@ -923,7 +923,7 @@ func _check_climate_accord_register() -> void:
 	var agenda_ids: Array = []
 	for p in agenda:
 		agenda_ids.append(p.id)
-	_ok(agenda_ids == [CEILING, SOLIDARITY], "the accord's agenda preserves flat-file order, got %s" % [agenda_ids])
+	_ok(agenda_ids == [CEILING, SOLIDARITY, "climate_border_levy", "ceiling_tightened", "just_transition_fund", "green_investment_floor", "adaptation_fund", "net_zero_glidepath"], "the accord's agenda preserves flat-file order, got %s" % [agenda_ids])
 	for p in agenda:
 		if p.id == CEILING:
 			var c: Dictionary = p.constraint

@@ -1,6 +1,6 @@
 {
   "_source": "authored",
-  "_note": "The 2 percent defence floor, MOVED at V3.2 from data/bloc-proposals/union_policy.json where V1.3d authored it as an EU proposal. Every term of it -- id, name, summary, position, constraint -- is unchanged; only the org it reaches changed, and with it the council that votes: eight members including GBR and excluding AUT and CHE, on the alliance's own roster. The floor it constrains is spending_defence, the tolerance and severity are the V1.3d numbers, and the eu's severity table now sums to 0.78 against BURDEN_MAX 1.0 -- the exact-sum property that table carried was a consequence of authoring four rules to fill the ceiling, and the move changes the authored set. V4.5b: NATO decides by consensus (data/orgs/nato.json), so this floor is a unanimity question sponsored by POL, the eastern flank's ask. At the V3.2 position (0.55, 0.8) four members below 2 percent (ESP, GBR, NLD, SVN) vetoed. The sweep moved it to (0.4, 0.0), where POL's lobbying carries the room and France's own vote decides it.",
+  "_note": "The 2 percent defence floor, MOVED at V3.2 from data/bloc-proposals/union_policy.json where V1.3d authored it as an EU proposal. Every term of it -- id, name, summary, position, constraint -- is unchanged; only the org it reaches changed, and with it the council that votes: eight members including GBR and excluding AUT and CHE, on the alliance's own roster. The floor it constrains is spending_defence, the tolerance and severity are the V1.3d numbers, and the eu's severity table now sums to 0.78 against BURDEN_MAX 1.0 -- the exact-sum property that table carried was a consequence of authoring four rules to fill the ceiling, and the move changes the authored set. V4.5b: NATO decides by consensus (data/orgs/nato.json), so this floor is a unanimity question sponsored by POL, the eastern flank's ask. At the V3.2 position (0.55, 0.8) four members below 2 percent (ESP, GBR, NLD, SVN) vetoed. The sweep moved it to (0.4, 0.0), where POL's lobbying carries the room and France's own vote decides it. The five V4.5b rows were placed by `--sweep`, aiming for three that France decides and three lost even with her vote. A consensus council has no carries-alone verdict, because France's \"against\" is a veto. Each lost row is vetoed by one to three members. defence_floor_2_5 runs at severity 0.15 and sits at (0.0, 0.4); NLD and SVN veto it. Its sponsor is FIN rather than DEU, because DEU is under 2.5 itself and vetoed its own proposal. defence_floor_3_5 runs at severity 0.08, under the 2.5 floor's: at 0.20 thirteen members vetoed at the centre, and the grid offered nothing at three or fewer. It sits at (0.0, 0.8); NLD and SVN veto it. A 3.5 percent pledge that binds lightly is the only one this council could ever carry. eastern_flank_fund is sponsored by DNK; CZE vetoes it. POL, LTU, LVA and EST each vetoed their own proposal on every lost cell: the transfer term prices every ally as a payer, and a sponsor never lobbies itself. resilience_floor and common_funding_increase are France's to decide on every cell, or nearly every cell.",
   "proposals": [
     {
       "id": "common_defence_floor",
@@ -18,6 +18,84 @@
         "value": 2.0,
         "tolerance": 2.0,
         "severity": 0.22
+      }
+    },
+    {
+      "id": "common_funding_increase",
+      "org": "nato",
+      "sponsor": "GBR",
+      "name": "Common Funding Increase",
+      "summary": "A larger call on every ally for the alliance's own budget: the headquarters, the shared radars, the pipelines and the exercises nobody owns alone. Small money, paid by everyone, argued over every year.",
+      "position": {
+        "economic": 0.4,
+        "social": 0.0
+      },
+      "transfer_pct_gdp": 0.03
+    },
+    {
+      "id": "defence_floor_2_5",
+      "org": "nato",
+      "sponsor": "FIN",
+      "name": "Defence Commitment at 2.5%",
+      "summary": "The pledge raised by half a point: defence spending at or above 2.5% of GDP. Most of the eastern allies are already past it; most of the western ones would have to find the money.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.4
+      },
+      "constraint": {
+        "field": "spending_defence",
+        "op": ">=",
+        "value": 2.5,
+        "tolerance": 2.0,
+        "severity": 0.15
+      }
+    },
+    {
+      "id": "eastern_flank_fund",
+      "org": "nato",
+      "sponsor": "DNK",
+      "name": "Eastern Flank Fund",
+      "summary": "A common fund for forward-deployed brigades, air defence and fuel stocks on the alliance's eastern border. Paid by every ally, spent where the border is.",
+      "position": {
+        "economic": 0.4,
+        "social": 0.4
+      },
+      "transfer_pct_gdp": 0.05
+    },
+    {
+      "id": "resilience_floor",
+      "org": "nato",
+      "sponsor": "NLD",
+      "name": "Resilience Commitment",
+      "summary": "Allies keep infrastructure spending at or above 1.5% of GDP -- the ports, rail and grids an army needs to move. A defence pledge written as a civil budget line.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.4
+      },
+      "constraint": {
+        "field": "spending_infrastructure",
+        "op": ">=",
+        "value": 1.5,
+        "tolerance": 2.0,
+        "severity": 0.1
+      }
+    },
+    {
+      "id": "defence_floor_3_5",
+      "org": "nato",
+      "sponsor": "POL",
+      "name": "Defence Commitment at 3.5%",
+      "summary": "Defence spending at or above 3.5% of GDP, the frontline states' own level asked of everyone. A wartime number in a peacetime budget, and every ally that is not on the border knows it.",
+      "position": {
+        "economic": 0.0,
+        "social": 0.8
+      },
+      "constraint": {
+        "field": "spending_defence",
+        "op": ">=",
+        "value": 3.5,
+        "tolerance": 3.0,
+        "severity": 0.08
       }
     }
   ]
