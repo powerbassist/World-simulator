@@ -567,6 +567,13 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## The ONE-WAY gate stands: save_manager refuses a version mismatch outright,
 ## so from_dict's defaults are robustness, not a bridge -- no v38 save ever
 ## reaches them.
+##   * V4.5a -- NO BUMP, argued rather than assumed. The contested council added
+##     five register keys (agenda_choice, tabled, ratifying, aid, debts) and three
+##     pending keys (sponsor, lobbied, bargains). Each one's ABSENCE reads true for
+##     a version-39 save: before V4.5a nothing was ever chosen, tabled, ratifying,
+##     paid as aid or owed, and no opened proposal had a sponsor, a lobby or a
+##     bargain. The rule -- "would a missing field read as something wrong?" --
+##     answers no for all eight. Pinned by tests/test_save_load.gd.
 const SAVE_VERSION := 39
 
 var save_version: int = SAVE_VERSION
@@ -1478,7 +1485,29 @@ static func from_dict(d: Dictionary):
 			"last_vote": reg.get("last_vote", {}),
 			"next_index": int(reg.get("next_index", 0)),
 			"months_to_next": int(reg.get("months_to_next", 0)),
+			# V4.5a. Every key defaults to "nothing", which is the truth for a
+			# version-39 save -- the no-bump argument in the SAVE_VERSION block.
+			"agenda_choice": String(reg.get("agenda_choice", "")),
+			"tabled": (reg.get("tabled", {}) as Dictionary),
+			"ratifying": (reg.get("ratifying", {}) as Dictionary),
+			"aid": [],
+			"debts": [],
 		}
+		# months_left is the one int in the ratification register: JSON hands every
+		# number back as a float, and it is a countdown compared with ==.
+		var rat: Dictionary = org_register["ratifying"]
+		if not rat.is_empty():
+			rat["months_left"] = int(rat.get("months_left", 0))
+		for a in (reg.get("aid", []) as Array):
+			org_register["aid"].append({
+				"payer": String(a.get("payer", "")), "recipient": String(a.get("recipient", "")),
+				"pct_gdp": float(a.get("pct_gdp", 0.0)), "months_left": int(a.get("months_left", 0)),
+			})
+		for e in (reg.get("debts", []) as Array):
+			org_register["debts"].append({
+				"debtor": String(e.get("debtor", "")), "creditor": String(e.get("creditor", "")),
+				"made_on": String(e.get("made_on", "")), "months_left": int(e.get("months_left", 0)),
+			})
 		var org_pend: Dictionary = org_register["pending"]
 		if not (org_pend as Dictionary).is_empty():
 			org_pend["months_left"] = int(org_pend.get("months_left", 1))

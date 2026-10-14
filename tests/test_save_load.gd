@@ -141,6 +141,7 @@ func _init() -> void:
 	_run_trade_roundtrip(loader)
 	_run_coercion_roundtrip(loader)
 	_run_bloc_roundtrip(loader)
+	_run_council_registers_roundtrip(loader)
 	_run_org_fight_roundtrip(loader)
 	_run_agenda_roundtrip(loader)
 	_run_defence_roundtrip(loader)
@@ -618,6 +619,45 @@ func _run_coercion_roundtrip(loader) -> void:
 	# bump on its own and that is still true -- the three checks above are the
 	# argument, and they are what this line has been replaced by rather than
 	# deleted. See docs/coercion-model.md and docs/bloc-model.md.
+
+
+## V4.5a. The contested council's registers round-trip with their types, and a
+## save written before they existed loads with them empty and ticks. No bump:
+## the argument is in game_state.gd's SAVE_VERSION block, this is its pin.
+func _run_council_registers_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var reg: Dictionary = state.orgs["eu"]
+	reg["agenda_choice"] = "cohesion_fund"
+	reg["tabled"] = {"proposal_id": "recovery_facility", "by": "FRA"}
+	reg["ratifying"] = {"proposal_id": "stability_pact", "name": "x", "sponsor": "DEU", "months_left": 4, "nations": {"FRA": "pending"}}
+	reg["aid"] = [{"payer": "FRA", "recipient": "ITA", "pct_gdp": 0.05, "months_left": 7}]
+	reg["debts"] = [{"debtor": "FRA", "creditor": "ITA", "made_on": "cohesion_fund", "months_left": 33}]
+	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	var b: Dictionary = back.orgs["eu"]
+	if String(b.get("agenda_choice", "")) != "cohesion_fund":
+		_fail("council agenda_choice did not round-trip")
+	if String((b.get("tabled", {}) as Dictionary).get("by", "")) != "FRA":
+		_fail("council tabled did not round-trip")
+	var rat: Dictionary = b.get("ratifying", {})
+	if typeof(rat.get("months_left")) != TYPE_INT or int(rat.get("months_left", 0)) != 4:
+		_fail("council ratifying.months_left did not come back an int 4")
+	var aid: Array = b.get("aid", [])
+	if aid.size() != 1 or typeof(aid[0]["months_left"]) != TYPE_INT or not is_equal_approx(float(aid[0]["pct_gdp"]), 0.05):
+		_fail("council aid did not come back typed")
+	var debts: Array = b.get("debts", [])
+	if debts.size() != 1 or typeof(debts[0]["months_left"]) != TYPE_INT or int(debts[0]["months_left"]) != 33:
+		_fail("council debts did not come back typed")
+
+	# A version-39 save: strip every V4.5a key and load it.
+	var d: Dictionary = JSON.parse_string(JSON.stringify(GameState.new_game(loader, "FRA").to_dict()))
+	for org_id in (d["orgs"] as Dictionary).keys():
+		for key in ["agenda_choice", "tabled", "ratifying", "aid", "debts"]:
+			(d["orgs"][org_id] as Dictionary).erase(key)
+	var old = GameState.from_dict(d)
+	var o: Dictionary = old.orgs["eu"]
+	if not (String(o.get("agenda_choice", "x")) == "" and (o.get("tabled", {"x": 1}) as Dictionary).is_empty() 			and (o.get("ratifying", {"x": 1}) as Dictionary).is_empty() 			and (o.get("aid", [1]) as Array).is_empty() and (o.get("debts", [1]) as Array).is_empty()):
+		_fail("a pre-V4.5a save did not load with empty council registers")
+	Orgs.tick_month(old, loader)  # must not error
 
 
 ## V1.3d, and the session that answers the assertion V1.3c left above.
