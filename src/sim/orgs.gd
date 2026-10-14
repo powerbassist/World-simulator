@@ -354,6 +354,15 @@ static func _tick_council(state, loader, org_id: String) -> void:
 			late.sort()
 			_treaty_falls(state, loader, org_id, late)
 
+	# V4.5b. The countdown to the next opening runs EVERY month, the pending
+	# division's months included, so openings are PROPOSAL_INTERVAL_MONTHS apart
+	# -- one per presidency, the author's call. Counted only while nothing was
+	# pending, it made opening-to-opening VOTE_DELAY_MONTHS + the interval (9,
+	# not 6). Floored at 0: if a division is still pending when it runs out
+	# (an interval shorter than the vote delay), the next opening is the first
+	# month after that division resolves.
+	register["months_to_next"] = maxi(0, int(register.get("months_to_next", 0)) - 1)
+
 	var pending: Dictionary = register.get("pending", {})
 	if not pending.is_empty():
 		if int(pending["months_left"]) > 1:
@@ -362,7 +371,6 @@ static func _tick_council(state, loader, org_id: String) -> void:
 		_resolve(state, loader, org_id)
 		return
 
-	register["months_to_next"] = int(register.get("months_to_next", 0)) - 1
 	if int(register["months_to_next"]) > 0:
 		return
 

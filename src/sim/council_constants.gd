@@ -82,7 +82,8 @@ const TABLE_RELATIONS_COST := 8.0
 
 ## Ratification. Five months: long enough to fit a division between monthly ticks
 ## and a busy assembly, and strictly inside PROPOSAL_INTERVAL_MONTHS (6, one file
-## per presidency) so a treaty's window closes before the next division and two
+## per presidency) so a treaty's window closes before the next division -- carried
+## at opening + 3, expired at opening + 8, next division at opening + 9 -- and two
 ## treaties are never ratifying in one council at once -- pinned by
 ## tests/test_council.gd. It was 6 against an 18-month interval; the interval
 ## moved to the presidency's semester on 2026-10-15 and this followed it.

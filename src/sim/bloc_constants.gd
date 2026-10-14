@@ -12,10 +12,11 @@ extends RefCounted
 
 # --- The council -----------------------------------------------------------------
 
-## Months between one proposal reaching the council and the next: one per
-## presidency (author's call, 2026-10-15). A semester presidency tables one file,
-## so a council divides about twice a year -- ten times in a five-year term,
-## each one an occasion rather than a monthly chore (the legislature is where
+## Months from one opening to the next: one per presidency (author's call,
+## 2026-10-15). The countdown runs through the pending division's months too
+## (orgs.gd _tick_council), so this IS the opening-to-opening gap -- a council
+## divides twice a year, ten times per org in a five-year term, each one an
+## occasion rather than a monthly chore (the legislature is where
 ## this game asks for a decision every month). Eighteen was V1.3d's, set for a
 ## six-proposal book; V4.5b1's C6 showed it opening only 6 of the eu's 20
 ## proposals in a 168-month run, so most of the book was never seen.

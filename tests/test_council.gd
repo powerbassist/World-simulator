@@ -45,6 +45,7 @@ func _init() -> void:
 	_check_drive_reads_the_head_of_government()
 	_check_swing_signs_the_ask()
 	_check_no_presidency_keeps_the_rotation()
+	_check_openings_are_an_interval_apart()
 	_check_an_ai_chair_opens_what_it_wants()
 	_check_a_human_chair_sets_the_agenda()
 	_check_tabling_costs_the_chair()
@@ -56,6 +57,7 @@ func _init() -> void:
 	_check_an_opening_lobbies_end_to_end()
 	_check_no_sponsor_lobbies_nobody()
 	_check_a_sponsor_votes_for_its_own()
+	_check_a_player_sponsor_keeps_its_cast_vote()
 	_check_the_sponsor_minds_the_vote()
 	_check_a_favour_turns_a_member()
 	_check_bargains_are_refused_honestly()
@@ -337,6 +339,33 @@ func _tick_until_open(state, org_id: String, limit := K.PROPOSAL_INTERVAL_MONTHS
 	return ""
 
 
+## V4.5b. One proposal per presidency means openings PROPOSAL_INTERVAL_MONTHS
+## apart, opening to opening. The countdown once paused while a division was
+## pending, which made the gap VOTE_DELAY_MONTHS + the interval; this fails if
+## it does again.
+func _check_openings_are_an_interval_apart() -> void:
+	var kc := _strip_eu_content()
+	var kp := _without_presidency()
+	var state = _fresh()
+	var openings: Array = []
+	var was_pending := false
+	for i in 4 * K.PROPOSAL_INTERVAL_MONTHS:
+		Orgs.tick_month(state, _loader)
+		var now_pending: bool = not (Orgs.pending(state, EU_ORG) as Dictionary).is_empty()
+		if now_pending and not was_pending:
+			openings.append(i)
+		was_pending = now_pending
+	if openings.size() < 2:
+		_fail("the eu opened %d proposals in %d months -- no gap to measure" % [openings.size(), 4 * K.PROPOSAL_INTERVAL_MONTHS])
+	else:
+		for j in range(1, openings.size()):
+			_ok(int(openings[j]) - int(openings[j - 1]) == K.PROPOSAL_INTERVAL_MONTHS,
+				"openings at months %d and %d are %d apart, expected PROPOSAL_INTERVAL_MONTHS %d" % [
+				openings[j - 1], openings[j], int(openings[j]) - int(openings[j - 1]), K.PROPOSAL_INTERVAL_MONTHS])
+	_restore_eu_content(kc)
+	_restore_presidency(kp)
+
+
 func _check_no_presidency_keeps_the_rotation() -> void:
 	var kc := _strip_eu_content()
 	var kp := _without_presidency()
@@ -524,6 +553,20 @@ func _check_a_sponsor_votes_for_its_own() -> void:
 		"%s sponsored %s and voted against it" % [sponsor, subject])
 	_ok(String((last.get("reasons", {}) as Dictionary).get(sponsor, "")) == CouncilK.REASON_SPONSOR,
 		"%s's vote on its own %s is not named as the sponsor's (%s)" % [sponsor, subject, (last.get("reasons", {}) as Dictionary).get(sponsor, "")])
+
+
+## The sponsor rule is an AI rule: a PLAYER who tabled a proposal (and so
+## sponsors it) still votes as cast -- abstaining on or opposing her own file
+## is her call, and the rule must not take it from her.
+func _check_a_player_sponsor_keeps_its_cast_vote() -> void:
+	var state = _fresh()
+	var subject: String = _loader.org_proposals[EU_ORG][0].id
+	_open(state, subject, PLAYER)
+	_ok(Orgs.cast_vote(state, EU_ORG, Orgs.VOTE_AGAINST), "the player's vote on her own tabled proposal was refused")
+	Orgs.tick_month(state, _loader)
+	var last: Dictionary = Orgs.last_vote(state, EU_ORG)
+	_ok(String((last.get("votes", {}) as Dictionary).get(PLAYER, "")) == Orgs.VOTE_AGAINST,
+		"the player sponsored %s and cast against, but the division recorded %s" % [subject, (last.get("votes", {}) as Dictionary).get(PLAYER, "")])
 
 
 func _check_no_sponsor_lobbies_nobody() -> void:
