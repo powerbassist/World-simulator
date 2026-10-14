@@ -288,6 +288,13 @@ static func tick_month(state, loader) -> void:
 		_tick_council(state, loader, org_id)
 	_tick_accessions(state, loader)
 
+	# V4.5a. BEFORE the transfers are read: the breakdown the budget panel shows is
+	# read after this tick, so it must see the same register the line charged. An
+	# entry struck with N months is paid in exactly N ticks (N-1 .. 0) and pruned
+	# when it goes below zero -- see Council.tick_register().
+	for org_id in council_ids:
+		Council.tick_register(state, org_id)
+
 	# Gated on has_budget rather than on the player id, the same flag
 	# Budget.tick_month and Opinion.tick_month use -- a second playable nation is
 	# a data change, not a change here.
@@ -299,11 +306,6 @@ static func tick_month(state, loader) -> void:
 		for org_id in ns.orgs:
 			total += _org_transfer(state, ns, org_id)
 		ns.bloc_transfer_pct_gdp = total
-
-	# V4.5a. AFTER the transfers are read, so an aid package is paid in exactly
-	# the months it was struck for -- see Council.tick_register().
-	for org_id in council_ids:
-		Council.tick_register(state, org_id)
 
 
 ## One org's line: its standing base, what its rules in force move it by, and
@@ -386,6 +388,10 @@ static func _tick_council(state, loader, org_id: String) -> void:
 		# every month: a council with no agenda is quiet, not busy.
 		register["months_to_next"] = K.PROPOSAL_INTERVAL_MONTHS
 		return
+	# Cleared at EVERY opening, not only where the chair's pick ran: a tabled
+	# opening skips _presidency_pick(), and a choice left over from a presidency
+	# that has since ended would otherwise surface years later under the next one.
+	register["agenda_choice"] = ""
 	if sponsor == "":
 		sponsor = Council.live_sponsor(state, proposal)
 
@@ -748,6 +754,11 @@ static func proposal_by_id(loader, org_id: String, proposal_id: String):
 	return _proposal_by_id(loader, org_id, proposal_id)
 
 
+## Whether this proposal is the one the council is dividing now.
+static func _is_pending(state, org_id: String, proposal_id: String) -> bool:
+	return String((state.orgs[org_id].get("pending", {}) as Dictionary).get("proposal_id", "")) == proposal_id
+
+
 ## The player, chairing, chooses what opens next. Refused when the player does
 ## not chair this council now, or the proposal could not open -- the same
 ## refuse-rather-than-record shape cast_vote() uses.
@@ -759,6 +770,12 @@ static func set_agenda(state, loader, org_id: String, proposal_id: String) -> bo
 		return false
 	var p = _proposal_by_id(loader, org_id, proposal_id)
 	if p == null or not _eligible(state, org_id, p):
+		return false
+	# The proposal before the council NOW is still eligible (it is not yet in
+	# force), so _eligible() cannot refuse it; the check lives here, in the
+	# commands, because the openers call _eligible() and must stay as they were.
+	# Left alone it would open a second time the moment this division closed.
+	if _is_pending(state, org_id, proposal_id):
 		return false
 	state.orgs[org_id]["agenda_choice"] = proposal_id
 	return true
@@ -781,6 +798,8 @@ static func table_proposal(state, loader, org_id: String, proposal_id: String) -
 	var p = _proposal_by_id(loader, org_id, proposal_id)
 	if p == null or not _eligible(state, org_id, p):
 		return false
+	if _is_pending(state, org_id, proposal_id):
+		return false
 	Council.spend_relations(state, ns.id, chair, CouncilK.TABLE_RELATIONS_COST)
 	state.orgs[org_id]["tabled"] = {"proposal_id": proposal_id, "by": ns.id}
 	return true
@@ -792,6 +811,12 @@ static func table_proposal(state, loader, org_id: String, proposal_id: String) -
 static func record_ratification(state, loader, org_id: String, nation_id: String, passed: bool) -> void:
 	if not state.orgs.has(org_id):
 		return
+	# A nation outside the club has no home vote on its treaty -- withdrawal
+	# removes it from the window (see _leave_council), and this keeps a stray
+	# call from counting a vote the club never asked for.
+	var voter = state.nations.get(nation_id, null)
+	if voter == null or not voter.orgs.has(org_id):
+		return
 	var register: Dictionary = state.orgs[org_id]
 	var r: Dictionary = register.get("ratifying", {})
 	if r.is_empty() or String((r.get("nations", {}) as Dictionary).get(nation_id, "")) != CouncilK.RATIFY_PENDING:
@@ -800,6 +825,15 @@ static func record_ratification(state, loader, org_id: String, nation_id: String
 		_treaty_falls(state, loader, org_id, [nation_id])
 		return
 	r["nations"][nation_id] = CouncilK.RATIFY_DONE
+	_adopt_if_ratified(state, loader, org_id)
+
+
+## Close the ratification and adopt the treaty if no member is still pending.
+static func _adopt_if_ratified(state, loader, org_id: String) -> void:
+	var register: Dictionary = state.orgs[org_id]
+	var r: Dictionary = register.get("ratifying", {})
+	if r.is_empty():
+		return
 	for id in (r["nations"] as Dictionary).keys():
 		if String(r["nations"][id]) != CouncilK.RATIFY_DONE:
 			return
@@ -808,6 +842,25 @@ static func record_ratification(state, loader, org_id: String, nation_id: String
 	_mark_ratification(register, String(r["proposal_id"]), "ratified")
 	if proposal != null:
 		_adopt(state, loader, org_id, proposal)
+
+
+## What a nation leaving the club leaves behind in its council. Its place in a
+## ratification window goes: a club cannot wait on, or be blocked by, a member
+## it no longer has -- if every REMAINING home vote is in, the treaty is adopted
+## (the alternative, letting the window run out, would kill a treaty everyone
+## still in the club signed, and charge the leaver's departure to it as a
+## failure). A tabling the leaver paid for goes with it: its chair owed it to a
+## member, not to an outsider.
+static func _leave_council(state, loader, nation_id: String, org_id: String) -> void:
+	if not state.orgs.has(org_id):
+		return
+	var register: Dictionary = state.orgs[org_id]
+	var r: Dictionary = register.get("ratifying", {})
+	if not r.is_empty() and (r["nations"] as Dictionary).erase(nation_id):
+		_adopt_if_ratified(state, loader, org_id)
+	var tabled: Dictionary = register.get("tabled", {})
+	if not tabled.is_empty() and String(tabled.get("by", "")) == nation_id:
+		register["tabled"] = {}
 
 
 static func _treaty_falls(state, loader, org_id: String, failing: Array) -> void:
@@ -1093,6 +1146,7 @@ static func _flip_membership(state, loader, ns, fight) -> void:
 				doomed.append(directed)
 		for directed in doomed:
 			state.measures.erase(directed)
+		_leave_council(state, loader, ns.id, org_id)
 
 	if org.net_transfers:
 		# Re-derive the org's whole net-position table over the LIVE roster: the
@@ -1153,8 +1207,9 @@ static func last_vote(state, org_id: String) -> Dictionary:
 
 ## What the player's contribution breaks down into, for the budget panel: the
 ## standing net position per org, what each org's rules in force moved it by,
-## and the penalties being charged for defying them. Sums to
-## ns.bloc_transfer_pct_gdp.
+## the penalties being charged for defying them, and the aid it is paying as a
+## bargain's price (V4.5a). Sums to ns.bloc_transfer_pct_gdp when read after
+## tick_month.
 static func transfer_breakdown(state, ns) -> Dictionary:
 	var orgs := {}
 	var total := 0.0
@@ -1165,15 +1220,20 @@ static func transfer_breakdown(state, ns) -> Dictionary:
 		for rule in (register.get("rules", {}) as Dictionary).values():
 			rule_transfers += float(rule.get("transfer_pct_gdp", 0.0))
 			contributions += float(rule_breach(state, ns, org_id, rule)["contribution"])
+		# Same expression, same order as _org_transfer(), so the sum the panel
+		# prints is the sum the line charged. An org with no register has no aid.
+		var aid: float = Council.aid_line(state, ns.id, org_id) if state.orgs.has(org_id) else 0.0
 		var line := (
 			float(ns.org_base_transfer_pct_gdp.get(org_id, 0.0))
 			+ rule_transfers
 			+ K.FINE_PCT_GDP_PER_BURDEN * clampf(contributions, 0.0, K.BURDEN_MAX)
+			+ aid
 		)
 		orgs[org_id] = {
 			"base": float(ns.org_base_transfer_pct_gdp.get(org_id, 0.0)),
 			"rules": rule_transfers,
 			"fine": K.FINE_PCT_GDP_PER_BURDEN * clampf(contributions, 0.0, K.BURDEN_MAX),
+			"aid": aid,
 		}
 		total += line
 	return {

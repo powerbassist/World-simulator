@@ -48,20 +48,27 @@ func _init() -> void:
 	_check_an_ai_chair_opens_what_it_wants()
 	_check_a_human_chair_sets_the_agenda()
 	_check_tabling_costs_the_chair()
+	_check_the_pending_proposal_cannot_be_chosen()
+	_check_a_tabled_opening_clears_a_stale_choice()
 	_check_one_no_vetoes_a_treaty()
 	_check_abstention_does_not_veto()
 	_check_a_sponsor_lobbies_the_near_miss()
+	_check_an_opening_lobbies_end_to_end()
 	_check_no_sponsor_lobbies_nobody()
 	_check_the_sponsor_minds_the_vote()
 	_check_a_favour_turns_a_member()
 	_check_bargains_are_refused_honestly()
+	_check_a_sponsor_is_not_bargained_with()
 	_check_aid_pays_for_a_year()
+	_check_the_breakdown_sums_every_month_of_a_package()
 	_check_a_vote_trade_comes_due()
 	_check_a_treaty_waits_for_home()
 	_check_ratified_is_adopted()
 	_check_rejected_falls_for_all()
 	_check_the_window_closes()
 	_check_the_treaty_is_a_bill()
+	_check_a_withdrawal_ends_the_ratification()
+	_check_a_leaving_sponsor_charges_nothing()
 	_finish()
 
 
@@ -200,8 +207,9 @@ func _check_sponsor_must_be_a_member() -> void:
 
 # --- Part 2: the pure reads -------------------------------------------------------
 
-## Sets a presidency on the loaded eu for the duration of `body`, restoring it
-## after. Every Part-3+ check that needs a chair uses this.
+## Sets a presidency on the loaded eu and returns the one it replaced; the
+## caller restores it with _restore_presidency() when its check is done. Every
+## check that needs a chair uses this pair.
 func _with_presidency(order: Array, months: int, anchor_year: int, anchor_month: int) -> Dictionary:
 	var org = _loader.orgs_by_id[EU_ORG]
 	var kept: Dictionary = org.presidency
@@ -250,11 +258,12 @@ func _check_decision_inherits_the_org() -> void:
 	var org = _loader.orgs_by_id[EU_ORG]
 	_ok(Council.decision_of(_loader, p) == CouncilK.DECISION_QMR, "a shipped proposal reads a decision other than qmr")
 	var kept_rule: String = org.decision_rule
+	var kept_decision: String = p.decision
 	org.decision_rule = CouncilK.DECISION_UNANIMITY
 	_ok(Council.decision_of(_loader, p) == CouncilK.DECISION_UNANIMITY, "a proposal with no decision did not inherit its org's rule")
 	p.decision = CouncilK.DECISION_QMR
 	_ok(Council.decision_of(_loader, p) == CouncilK.DECISION_QMR, "a proposal's own decision did not override its org's")
-	p.decision = ""
+	p.decision = kept_decision
 	org.decision_rule = kept_rule
 
 
@@ -445,6 +454,12 @@ func _check_the_sponsor_minds_the_vote() -> void:
 	var d: float
 	var backed = _fresh()
 	d = Council.drive(backed, _loader, "DEU")
+	if d <= 0.0:
+		# A zero drive makes every delta below 0 == 0: the check would pass on a
+		# sponsor that answers nothing.
+		_fail("DEU's drive is %.3f -- every sponsor-answer assertion below would be vacuous" % d)
+		p.sponsor = kept
+		return
 	var b0: float = RK.score(backed, PLAYER, "DEU")
 	_force_sponsored(backed, p, Orgs.VOTE_FOR)
 	_ok(is_equal_approx(RK.score(backed, PLAYER, "DEU") - b0, CouncilK.SPONSOR_THANKS * d),
@@ -639,10 +654,14 @@ func _check_rejected_falls_for_all() -> void:
 func _check_the_window_closes() -> void:
 	var state = _fresh()
 	_carry_treaty(state)
+	var i0: float = RK.score(state, PLAYER, "ITA")
 	for i in CouncilK.RATIFY_WINDOW_MONTHS:
 		Orgs.tick_month(state, _loader)
 	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "the ratification window did not close")
 	_ok(not (state.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "an unratified treaty was adopted when the window closed")
+	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "failed", "last_vote does not record the window closing as a failure")
+	_ok(is_equal_approx(i0 - RK.score(state, PLAYER, "ITA"), CouncilK.RATIFY_FAIL_MEMBER),
+		"the late member was priced %.3f by a bystander, expected %.3f" % [i0 - RK.score(state, PLAYER, "ITA"), CouncilK.RATIFY_FAIL_MEMBER])
 
 
 func _check_the_treaty_is_a_bill() -> void:
@@ -656,3 +675,183 @@ func _check_the_treaty_is_a_bill() -> void:
 		"submit() disagreed with its own forecast with no upper chamber in the way")
 	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "submit() did not settle the ratification")
 	_ok(bool(Ratification.submit(state, _loader, EU_ORG).get("refused", false)), "a second submit with nothing ratifying was not refused")
+
+
+# --- the final-review fix wave ------------------------------------------------------
+
+## I1. A nation that leaves the club cannot block, or ratify, a treaty of it.
+func _check_a_withdrawal_ends_the_ratification() -> void:
+	var state = _fresh()
+	_carry_treaty(state)
+	_ok(not (state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "fixture: the carried treaty is not ratifying")
+	# A tabling the leaver made dies with its membership too.
+	state.orgs[EU_ORG]["tabled"] = {"proposal_id": _loader.org_proposals[EU_ORG][3].id, "by": PLAYER}
+	Orgs._flip_membership(state, _loader, state.player(), {"org_id": EU_ORG, "kind": Orgs.FIGHT_WITHDRAWAL})
+	_ok(not state.player().orgs.has(EU_ORG), "fixture: the withdrawal did not flip membership")
+	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "a treaty is still waiting on a nation that left")
+	_ok((state.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "the leaver's pending ratification blocked the club: the treaty was not adopted")
+	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "ratified", "last_vote does not record the treaty as ratified")
+	_ok((state.orgs[EU_ORG]["tabled"] as Dictionary).is_empty(), "a tabling by the leaver survived its withdrawal")
+	_ok(bool(Ratification.submit(state, _loader, EU_ORG).get("refused", false)), "the player ratified a club it left")
+	# A stray ratification call from a non-member does nothing, in a still-open window.
+	var other = _fresh()
+	_carry_treaty(other)
+	other.player().orgs.erase(EU_ORG)
+	Orgs.record_ratification(other, _loader, EU_ORG, PLAYER, true)
+	_ok(not (other.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "a non-member's ratification adopted the treaty")
+	_ok(bool(Ratification.submit(other, _loader, EU_ORG).get("refused", false)), "submit() accepted a non-member")
+
+
+## I2. The budget panel's breakdown is what the line charged, in every month.
+func _check_the_breakdown_sums_every_month_of_a_package() -> void:
+	var state = _fresh()
+	var ns = state.player()
+	Orgs.tick_month(state, _loader)
+	_open(state, _loader.org_proposals[EU_ORG][0].id)
+	state.orgs[EU_ORG]["pending"]["months_left"] = 99
+	_ok(Council.bargain(state, EU_ORG, "ITA", CouncilK.CURRENCY_AID, CouncilK.ASK_FOR), "fixture: aid was refused")
+	var months_with_aid := 0
+	for i in CouncilK.AID_MONTHS + 2:
+		Orgs.tick_month(state, _loader)
+		var parts: Dictionary = Orgs.transfer_breakdown(state, ns)
+		_ok(is_equal_approx(float(parts["total"]), ns.bloc_transfer_pct_gdp),
+			"month %d: breakdown total %.6f != the line %.6f" % [i + 1, float(parts["total"]), ns.bloc_transfer_pct_gdp])
+		var aid: float = float(((parts["orgs"] as Dictionary)[EU_ORG] as Dictionary).get("aid", -1.0))
+		_ok(is_equal_approx(aid, Council.aid_line(state, PLAYER, EU_ORG)), "month %d: the breakdown's aid %.4f != the aid charged" % [i + 1, aid])
+		if aid > 0.0:
+			months_with_aid += 1
+	_ok(months_with_aid == CouncilK.AID_MONTHS, "the breakdown showed aid in %d months, expected %d" % [months_with_aid, CouncilK.AID_MONTHS])
+
+
+## I3. The proposal already before the council cannot be chosen or tabled again.
+func _check_the_pending_proposal_cannot_be_chosen() -> void:
+	var pending_id: String = _loader.org_proposals[EU_ORG][1].id
+	var kept := _with_presidency([PLAYER], 6, 2000, 1)
+	var chaired = _fresh()
+	_open(chaired, pending_id)
+	_ok(not Orgs.set_agenda(chaired, _loader, EU_ORG, pending_id), "the chair chose the proposal already pending")
+	_ok(String(chaired.orgs[EU_ORG]["agenda_choice"]) == "", "a refused set_agenda recorded a choice")
+	_ok(Orgs.set_agenda(chaired, _loader, EU_ORG, _loader.org_proposals[EU_ORG][2].id), "set_agenda refused a different proposal while one is pending")
+	_restore_presidency(kept)
+
+	var kept2 := _with_presidency(["DEU"], 6, 2000, 1)
+	var state = _fresh()
+	_open(state, pending_id)
+	var before: float = RK.score(state, PLAYER, "DEU")
+	_ok(not Orgs.table_proposal(state, _loader, EU_ORG, pending_id), "the pending proposal was tabled")
+	_ok(RK.score(state, PLAYER, "DEU") == before, "a refused tabling spent relations")
+	_ok((state.orgs[EU_ORG]["tabled"] as Dictionary).is_empty(), "a refused tabling was queued")
+	_ok(Orgs.table_proposal(state, _loader, EU_ORG, _loader.org_proposals[EU_ORG][2].id), "tabling refused a different proposal while one is pending")
+	_restore_presidency(kept2)
+
+
+## M1. A choice left over from a presidency that ended must not survive an
+## opening the tabled path made.
+func _check_a_tabled_opening_clears_a_stale_choice() -> void:
+	var kept := _with_presidency(["DEU"], 6, 2000, 1)
+	var state = _fresh()
+	var tabled: String = _loader.org_proposals[EU_ORG][3].id
+	state.orgs[EU_ORG]["agenda_choice"] = _loader.org_proposals[EU_ORG][2].id
+	Orgs.table_proposal(state, _loader, EU_ORG, tabled)
+	_ok(_tick_until_open(state, EU_ORG) == tabled, "fixture: the tabled proposal did not open")
+	_ok(String(state.orgs[EU_ORG]["agenda_choice"]) == "", "a stale agenda choice survived a tabled opening")
+	_restore_presidency(kept)
+
+
+## M3. A sponsor is not bargained with over its own proposal.
+func _check_a_sponsor_is_not_bargained_with() -> void:
+	var state = _fresh()
+	_open(state, _loader.org_proposals[EU_ORG][0].id, "ITA")
+	var r0: float = RK.score(state, PLAYER, "ITA")
+	_ok(not Council.bargain(state, EU_ORG, "ITA", CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR), "a bargain with the proposal's own sponsor was struck")
+	_ok(RK.score(state, PLAYER, "ITA") == r0, "a refused sponsor bargain spent relations")
+	_ok(not Council.bargain(state, EU_ORG, "ITA", CouncilK.CURRENCY_AID, CouncilK.ASK_FOR), "aid was struck with the proposal's own sponsor")
+	_ok((state.orgs[EU_ORG].get("aid", []) as Array).is_empty(), "a refused sponsor bargain left an aid entry")
+	_ok(Council.bargain(state, EU_ORG, "ESP", CouncilK.CURRENCY_AID, CouncilK.ASK_FOR), "a bargain with a non-sponsor was refused")
+
+
+## M2. The treaty's sponsor charges only if it is still in the club.
+func _check_a_leaving_sponsor_charges_nothing() -> void:
+	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
+	var kept: String = p.sponsor
+	p.sponsor = "DEU"
+	var state = _fresh()
+	_carry_treaty(state)
+	state.nations["DEU"].orgs.erase(EU_ORG)
+	var d0: float = RK.score(state, PLAYER, "DEU")
+	Orgs.record_ratification(state, _loader, EU_ORG, PLAYER, false)
+	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "failed", "fixture: the treaty did not fall")
+	_ok(RK.score(state, PLAYER, "DEU") == d0, "a sponsor that left the club still charged for the killed treaty")
+	p.sponsor = kept
+
+
+## M7. An AI sponsor works the room at the opening, end to end: lobbied exactly
+## the members within its reach, and a lobbied member whose vote flipped is named.
+func _check_an_opening_lobbies_end_to_end() -> void:
+	var proposals: Array = _loader.org_proposals[EU_ORG]
+	var probe = _fresh()
+	var reachable_i := -1
+	var reachable_s := ""
+	var barren_i := -1
+	var barren_s := ""
+	var ai: Array = []
+	for id in Orgs.members(probe, EU_ORG):
+		if not probe.nations[id].has_budget:
+			ai.append(String(id))
+	ai.sort()
+	for i in proposals.size():
+		for s in ai:
+			var cap: float = Council.drive(probe, _loader, s) * CouncilK.LOBBY_SWING_PER_DRIVE
+			var in_reach := false
+			for id in ai:
+				if id == s:
+					continue
+				var gap: float = K.SUPPORT_THRESHOLD - Orgs.support(probe, probe.nations[id], proposals[i])
+				if gap > 0.0 and gap + CouncilK.LOBBY_MARGIN <= cap:
+					in_reach = true
+					break
+			if in_reach and reachable_i < 0:
+				reachable_i = i
+				reachable_s = s
+			if not in_reach and barren_i < 0:
+				barren_i = i
+				barren_s = s
+	if reachable_i < 0:
+		_fail("no AI sponsor has any eu member within reach on any shipped proposal -- lobbying is decorative on shipped content")
+		return
+	var lobbied: Dictionary = _open_sponsored(proposals[reachable_i], reachable_s)
+	_ok(not lobbied.is_empty(), "%s sponsoring '%s' lobbied nobody although a member was within reach" % [reachable_s, proposals[reachable_i].id])
+	if barren_i >= 0:
+		var none: Dictionary = _open_sponsored(proposals[barren_i], barren_s)
+		_ok(none.is_empty(), "%s sponsoring '%s' lobbied although no member was within reach" % [barren_s, proposals[barren_i].id])
+
+
+## Opens `p` through the real scheduler with `sponsor` as its sponsor and the
+## rotation pointed at it, divides it, and checks every lobbied member's record.
+## Returns the opening's `lobbied` map.
+func _open_sponsored(p, sponsor: String) -> Dictionary:
+	var kept: String = p.sponsor
+	p.sponsor = sponsor
+	var state = _fresh()
+	var index: int = (_loader.org_proposals[EU_ORG] as Array).find(p)
+	state.orgs[EU_ORG]["next_index"] = index
+	var opened := _tick_until_open(state, EU_ORG)
+	_ok(opened == p.id, "the rotation opened '%s', expected '%s'" % [opened, p.id])
+	var lobbied: Dictionary = ((Orgs.pending(state, EU_ORG) as Dictionary).get("lobbied", {}) as Dictionary).duplicate()
+	_ok(String(Orgs.pending(state, EU_ORG).get("sponsor", "")) == sponsor, "the opening dropped its sponsor")
+	var bare := {}
+	for id in lobbied.keys():
+		bare[id] = Orgs.support(state, state.nations[id], p)
+	for i in K.VOTE_DELAY_MONTHS + 1:
+		if Orgs.pending(state, EU_ORG).is_empty():
+			break
+		Orgs.tick_month(state, _loader)
+	var last: Dictionary = Orgs.last_vote(state, EU_ORG)
+	_ok(String(last.get("proposal_id", "")) == p.id, "the division did not happen")
+	for id in lobbied.keys():
+		var flipped: bool = (float(bare[id]) < K.SUPPORT_THRESHOLD) and (float(bare[id]) + float(lobbied[id]) >= K.SUPPORT_THRESHOLD)
+		if flipped:
+			_ok(String((last.get("votes", {}) as Dictionary).get(id, "")) == Orgs.VOTE_FOR, "%s was lobbied over the line but did not vote for" % id)
+			_ok(String((last.get("reasons", {}) as Dictionary).get(id, "")) == CouncilK.REASON_LOBBIED, "%s's flipped vote is not named as lobbied (%s)" % [id, (last.get("reasons", {}) as Dictionary).get(id, "")])
+	p.sponsor = kept
+	return lobbied

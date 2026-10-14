@@ -184,6 +184,10 @@ static func bargain(state, org_id: String, target_id: String, currency: String, 
 	var target = state.nations.get(target_id, null)
 	if target == null or not target.orgs.has(org_id):
 		return false
+	# Asking a sponsor to vote for its own proposal buys nothing honest -- it
+	# would take the payment for a vote it was always going to cast.
+	if String(pending.get("sponsor", "")) == target_id:
+		return false
 	var bargains: Dictionary = pending.get("bargains", {})
 	if bargains.has(target_id):
 		return false
@@ -228,13 +232,18 @@ static func bargain(state, org_id: String, target_id: String, currency: String, 
 static func aid_line(state, nation_id: String, org_id: String) -> float:
 	var total := 0.0
 	for a in (state.orgs[org_id].get("aid", []) as Array):
-		if String(a.get("payer", "")) == nation_id and int(a.get("months_left", 0)) > 0:
+		if String(a.get("payer", "")) == nation_id and int(a.get("months_left", 0)) >= 0:
 			total += float(a.get("pct_gdp", 0.0))
 	return total
 
 
-## Run AFTER the month's transfer is read: a twelve-month package is then read
-## in exactly twelve months (counted down from AID_MONTHS, pruned at zero).
+## Run BEFORE the month's transfer is read, so the line and the breakdown read
+## after the tick see one register. An entry struck with AID_MONTHS is counted
+## down to AID_MONTHS-1 on its first tick and still charges at 0; it is pruned
+## only when it goes below zero -- paid exactly AID_MONTHS times. (Run AFTER the
+## read instead and the last month's breakdown, taken after the prune, no longer
+## shows what the line just charged.) An IOU lives IOU_EXPIRY_MONTHS + 1 ticks
+## on the same rule: nothing reads its months_left but this prune.
 static func tick_register(state, org_id: String) -> void:
 	var register: Dictionary = state.orgs[org_id]
 	for key in ["aid", "debts"]:
@@ -244,7 +253,7 @@ static func tick_register(state, org_id: String) -> void:
 		var kept: Array = []
 		for e in entries:
 			e["months_left"] = int(e.get("months_left", 0)) - 1
-			if int(e["months_left"]) > 0:
+			if int(e["months_left"]) >= 0:
 				kept.append(e)
 		register[key] = kept
 
@@ -277,6 +286,11 @@ static func settle_debts(state, org_id: String, sponsor_id: String, proposal_id:
 static func price_failed_treaty(state, loader, org_id: String, sponsor_id: String, failing: Array) -> void:
 	if failing.is_empty():
 		return
+	# The sponsor is the id stored when the division carried; a sponsor that has
+	# since left the club has no standing to charge anyone for a treaty of it.
+	var sponsor = state.nations.get(sponsor_id, null)
+	if sponsor == null or not sponsor.orgs.has(org_id):
+		sponsor_id = ""
 	var d: float = drive(state, loader, sponsor_id) if sponsor_id != "" else 0.0
 	var others: Array = []
 	for id in state.nations.keys():

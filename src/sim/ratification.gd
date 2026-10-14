@@ -54,7 +54,7 @@ static func forecast(state, loader, org_id: String) -> Dictionary:
 static func submit(state, loader, org_id: String) -> Dictionary:
 	var proposal = _ratifying_proposal(state, loader, org_id)
 	var ns = state.player()
-	if proposal == null or ns == null or not ns.has_budget:
+	if proposal == null or ns == null or not ns.has_budget or not ns.orgs.has(org_id):
 		return {"refused": true}
 	var r: Dictionary = state.orgs[org_id]["ratifying"]
 	if String((r.get("nations", {}) as Dictionary).get(ns.id, "")) != CouncilK.RATIFY_PENDING:

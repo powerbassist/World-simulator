@@ -655,8 +655,14 @@ func _run_council_registers_roundtrip(loader) -> void:
 			(d["orgs"][org_id] as Dictionary).erase(key)
 	var old = GameState.from_dict(d)
 	var o: Dictionary = old.orgs["eu"]
-	if not (String(o.get("agenda_choice", "x")) == "" and (o.get("tabled", {"x": 1}) as Dictionary).is_empty() 			and (o.get("ratifying", {"x": 1}) as Dictionary).is_empty() 			and (o.get("aid", [1]) as Array).is_empty() and (o.get("debts", [1]) as Array).is_empty()):
-		_fail("a pre-V4.5a save did not load with empty council registers")
+	if String(o.get("agenda_choice", "x")) != "":
+		_fail("a pre-V4.5a save did not load with an empty agenda_choice")
+	if not (o.get("tabled", {"x": 1}) as Dictionary).is_empty():
+		_fail("a pre-V4.5a save did not load with an empty tabled register")
+	if not (o.get("ratifying", {"x": 1}) as Dictionary).is_empty():
+		_fail("a pre-V4.5a save did not load with an empty ratifying register")
+	if not (o.get("aid", [1]) as Array).is_empty() or not (o.get("debts", [1]) as Array).is_empty():
+		_fail("a pre-V4.5a save did not load with empty aid and debts registers")
 	Orgs.tick_month(old, loader)  # must not error
 
 

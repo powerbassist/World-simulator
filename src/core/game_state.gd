@@ -572,8 +572,11 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     pending keys (sponsor, lobbied, bargains). Each one's ABSENCE reads true for
 ##     a version-39 save: before V4.5a nothing was ever chosen, tabled, ratifying,
 ##     paid as aid or owed, and no opened proposal had a sponsor, a lobby or a
-##     bargain. The rule -- "would a missing field read as something wrong?" --
-##     answers no for all eight. Pinned by tests/test_save_load.gd.
+##     bargain. `last_vote` gained four keys too (decision, vetoed_by, sponsor,
+##     ratification): a pre-V4.5a division was qmr, vetoed by nobody, unsponsored
+##     and never ratified, so their absence reads true as well. The rule -- "would
+##     a missing field read as something wrong?" -- answers no for every one.
+##     Pinned by tests/test_save_load.gd.
 const SAVE_VERSION := 39
 
 var save_version: int = SAVE_VERSION
@@ -681,13 +684,14 @@ var measures := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of measure term
 ## `next_index` and `months_to_next` are the whole scheduler. There is no RNG
 ## anywhere in it, so the council survives a save and a reload with no generator
 ## state to serialise -- the same property docs/opinion-model.md's polling noise
-## gets for free. Written ONLY by src/sim/orgs.gd. See docs/bloc-model.md and,
+## gets for free. Written by src/sim/orgs.gd and council.gd. See docs/bloc-model.md and,
 ## as of V3.2, docs/orgs-model.md.
 ##
 ## One register per council org -- org_id -> {rules, pending, last_vote,
 ## next_index, months_to_next} -- for every org whose content carries
-## `council: true`. The V1.3d register, one instance per council. Written ONLY
-## by src/sim/orgs.gd. Serialised; the bloc->orgs rename is what earns
+## `council: true`. The V1.3d register, one instance per council. Written by
+## src/sim/orgs.gd AND, for the keys it owns (pending.lobbied/bargains, register
+## aid/debts), src/sim/council.gd. Serialised; the bloc->orgs rename is what earns
 ## SAVE_VERSION 32, because rules in force dropped silently across a rename are
 ## wrong rather than empty.
 var orgs := {}
