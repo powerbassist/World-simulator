@@ -43,6 +43,10 @@ func _init() -> void:
 	_check_decision_inherits_the_org()
 	_check_drive_reads_the_head_of_government()
 	_check_swing_signs_the_ask()
+	_check_no_presidency_keeps_the_rotation()
+	_check_an_ai_chair_opens_what_it_wants()
+	_check_a_human_chair_sets_the_agenda()
+	_check_tabling_costs_the_chair()
 	_finish()
 
 
@@ -263,3 +267,75 @@ func _check_swing_signs_the_ask() -> void:
 	_ok(is_equal_approx(Council.swing(pending, "DEU"), -0.05), "DEU swing %.3f, expected 0.10 lobbied - 0.15 asked against" % Council.swing(pending, "DEU"))
 	_ok(is_equal_approx(Council.swing(pending, "ITA"), 0.20), "ITA swing %.3f, expected +0.20" % Council.swing(pending, "ITA"))
 	_ok(Council.swing({}, "DEU") == 0.0, "an empty pending produced a swing")
+
+
+# --- Part 3: the agenda -----------------------------------------------------------
+
+## Tick until this org opens a proposal; return its id ("" if none in `limit`).
+func _tick_until_open(state, org_id: String, limit := K.PROPOSAL_INTERVAL_MONTHS + 2) -> String:
+	for i in limit:
+		Orgs.tick_month(state, _loader)
+		var p: Dictionary = Orgs.pending(state, org_id)
+		if not p.is_empty():
+			return String(p["proposal_id"])
+	return ""
+
+
+func _check_no_presidency_keeps_the_rotation() -> void:
+	# The inertness clause on the agenda: with no presidency the first proposal
+	# opened is the authored list's first, exactly as V4.4 opened it.
+	var state = _fresh()
+	var first := _tick_until_open(state, EU_ORG)
+	var expected: String = _loader.org_proposals[EU_ORG][0].id
+	_ok(first == expected, "with no presidency the eu opened '%s', expected rotation's '%s'" % [first, expected])
+	_ok(String(Orgs.pending(state, EU_ORG).get("sponsor", "x")) == "", "an unsponsored proposal opened with a sponsor")
+
+
+func _check_an_ai_chair_opens_what_it_wants() -> void:
+	var state = _fresh()
+	# Chair DEU for the whole run (one-member order is a legal rotation).
+	var kept := _with_presidency(["DEU"], 6, 2000, 1)
+	var best = null
+	var best_s := -INF
+	for p in _loader.org_proposals[EU_ORG]:
+		var s: float = Orgs.support(state, state.nations["DEU"], p)
+		if s > best_s:
+			best_s = s
+			best = p
+	var opened := _tick_until_open(state, EU_ORG)
+	_ok(opened == best.id, "DEU chair opened '%s', expected its most-supported '%s'" % [opened, best.id])
+	_restore_presidency(kept)
+
+
+func _check_a_human_chair_sets_the_agenda() -> void:
+	var kept := _with_presidency([PLAYER], 6, 2000, 1)
+	var state = _fresh()
+	var choice: String = _loader.org_proposals[EU_ORG][2].id
+	_ok(Orgs.set_agenda(state, _loader, EU_ORG, choice), "set_agenda refused while the player chairs")
+	_ok(_tick_until_open(state, EU_ORG) == choice, "the chair's choice was not what opened")
+	_ok(String(state.orgs[EU_ORG]["agenda_choice"]) == "", "the agenda choice was not consumed")
+	_restore_presidency(kept)
+
+	var kept2 := _with_presidency(["DEU"], 6, 2000, 1)
+	var other = _fresh()
+	_ok(not Orgs.set_agenda(other, _loader, EU_ORG, choice), "set_agenda accepted while DEU chairs")
+	_ok(not Orgs.set_agenda(other, _loader, "no_such_org", choice), "set_agenda accepted an unknown org")
+	_restore_presidency(kept2)
+
+
+func _check_tabling_costs_the_chair() -> void:
+	var kept := _with_presidency(["DEU"], 6, 2000, 1)
+	var state = _fresh()
+	var choice: String = _loader.org_proposals[EU_ORG][3].id
+	var before: float = RK.score(state, PLAYER, "DEU")
+	_ok(Orgs.table_proposal(state, _loader, EU_ORG, choice), "table_proposal refused")
+	_ok(is_equal_approx(RK.score(state, PLAYER, "DEU"), before - CouncilK.TABLE_RELATIONS_COST),
+		"tabling cost %.2f relations with the chair, expected %.2f" % [before - RK.score(state, PLAYER, "DEU"), CouncilK.TABLE_RELATIONS_COST])
+	_ok(not Orgs.table_proposal(state, _loader, EU_ORG, _loader.org_proposals[EU_ORG][4].id), "a second tabling was accepted while one is queued")
+	_ok(_tick_until_open(state, EU_ORG) == choice, "the tabled proposal did not open first")
+	_ok(String(Orgs.pending(state, EU_ORG).get("sponsor", "")) == PLAYER, "a tabled proposal is not sponsored by whoever tabled it")
+	_restore_presidency(kept)
+
+	# No chair, nobody to ask.
+	var unchaired = _fresh()
+	_ok(not Orgs.table_proposal(unchaired, _loader, EU_ORG, choice), "tabling accepted in a council with no presidency")

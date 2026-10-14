@@ -46,6 +46,9 @@ const RK = preload("res://src/core/relations.gd")
 const FP = preload("res://src/sim/foreign_policy.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+## V4.5a. A leaf: council.gd preloads nothing of this file's.
+const Council = preload("res://src/sim/council.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
 
 const VOTE_FOR := "for"
 const VOTE_AGAINST := "against"
@@ -74,6 +77,15 @@ static func init_state(state, loader) -> void:
 				"last_vote": {},
 				"next_index": 0,
 				"months_to_next": K.PROPOSAL_INTERVAL_MONTHS,
+				# V4.5a -- the contested layer's registers, empty at new-game.
+				# Each one's absence reads correctly for an older save (nothing
+				# was chosen, tabled, ratifying, paid or owed before V4.5),
+				# which is the SAVE_VERSION argument in game_state.gd.
+				"agenda_choice": "",
+				"tabled": {},
+				"ratifying": {},
+				"aid": [],
+				"debts": [],
 			}
 		state.org_effects[org.id] = {
 			"relations_bonus": org.relations_bonus,
@@ -332,12 +344,30 @@ static func _tick_council(state, loader, org_id: String) -> void:
 	if int(register["months_to_next"]) > 0:
 		return
 
-	var proposal = _next_proposal(state, loader, org_id)
+	# V4.5a. Three pickers in precedence order, and the order is the design: a
+	# proposal someone PAID to table outranks the chair's own pick, and the
+	# chair's pick outranks the rotation. With no presidency and nothing tabled
+	# only the rotation runs -- the inertness clause, bit-identical to V4.4.
+	var sponsor := ""
+	var proposal = null
+	var tabled: Dictionary = register.get("tabled", {})
+	if not tabled.is_empty():
+		register["tabled"] = {}
+		var tp = _proposal_by_id(loader, org_id, String(tabled.get("proposal_id", "")))
+		if tp != null and _eligible(state, org_id, tp):
+			proposal = tp
+			sponsor = String(tabled.get("by", ""))
+	if proposal == null:
+		proposal = _presidency_pick(state, loader, org_id)
+	if proposal == null:
+		proposal = _next_proposal(state, loader, org_id)
 	if proposal == null:
 		# Nothing left to put to the council. Try again next interval rather than
 		# every month: a council with no agenda is quiet, not busy.
 		register["months_to_next"] = K.PROPOSAL_INTERVAL_MONTHS
 		return
+	if sponsor == "":
+		sponsor = Council.live_sponsor(state, proposal)
 
 	register["pending"] = {
 		"proposal_id": proposal.id,
@@ -349,6 +379,7 @@ static func _tick_council(state, loader, org_id: String) -> void:
 		"player_vote": VOTE_ABSTAIN,
 		"opened_year": state.year,
 		"opened_month": state.month,
+		"sponsor": sponsor,
 	}
 	register["months_to_next"] = K.PROPOSAL_INTERVAL_MONTHS
 
@@ -364,27 +395,72 @@ static func _next_proposal(state, loader, org_id: String):
 	if all.is_empty():
 		return null
 
-	var rules: Dictionary = (state.orgs[org_id].get("rules", {}) as Dictionary)
-	var constrained := 0
-	for r in rules.values():
-		if not (r as Dictionary).get("field", "").is_empty():
-			constrained += 1
-
 	var start := int(state.orgs[org_id].get("next_index", 0))
 	for offset in all.size():
 		var i: int = (start + offset) % all.size()
 		var p = all[i]
-		if rules.has(p.id):
-			continue
-		# The ceiling bounds rules that BIND POLICY, not proposals. A transfer or
-		# an external measure adds no constraint row to the panel and no term to
-		# the burden, so capping those too would make the council fall silent for
-		# most of a long run with content still unused.
-		if not p.constraint.is_empty() and constrained >= K.MAX_RULES_IN_FORCE:
+		# The ceiling bounds rules that BIND POLICY, not proposals -- see
+		# _eligible(). A transfer or an external measure adds no constraint row
+		# and no burden term, so capping those too would make the council fall
+		# silent for most of a long run with content still unused.
+		if not _eligible(state, org_id, p):
 			continue
 		state.orgs[org_id]["next_index"] = (i + 1) % all.size()
 		return p
 	return null
+
+
+## Whether this proposal may open now: not already in force, not the treaty
+## this council is ratifying, and -- for a proposal that binds policy -- under
+## the rules-in-force ceiling. One rule for all three pickers, so the tabled
+## path and the chair cannot open what the rotation would refuse.
+static func _eligible(state, org_id: String, p) -> bool:
+	var register: Dictionary = state.orgs[org_id]
+	var rules: Dictionary = (register.get("rules", {}) as Dictionary)
+	if rules.has(p.id):
+		return false
+	if String((register.get("ratifying", {}) as Dictionary).get("proposal_id", "")) == p.id:
+		return false
+	if p.constraint.is_empty():
+		return true
+	var constrained := 0
+	for r in rules.values():
+		if not (r as Dictionary).get("field", "").is_empty():
+			constrained += 1
+	return constrained < K.MAX_RULES_IN_FORCE
+
+
+## The chair's pick, or null to fall through to the rotation.
+##
+## An AI chair opens the eligible proposal it supports most -- the presidency's
+## real power is the agenda, and a chair that put forward what it wanted least
+## would be a rotation in costume. Strict `>` keeps authored order on ties. A
+## human chair opens what it chose with set_agenda(), or nothing (the rotation)
+## if it chose nothing; a choice left over from a presidency that has ended is
+## cleared, so a stale pick never surfaces years later under the next one.
+static func _presidency_pick(state, loader, org_id: String):
+	var chair := Council.presiding_nation(state, loader, org_id)
+	var register: Dictionary = state.orgs[org_id]
+	var choice := String(register.get("agenda_choice", ""))
+	register["agenda_choice"] = ""
+	if chair == "":
+		return null
+	var cns = state.nations[chair]
+	if cns.has_budget:
+		if choice == "":
+			return null
+		var cp = _proposal_by_id(loader, org_id, choice)
+		return cp if cp != null and _eligible(state, org_id, cp) else null
+	var best = null
+	var best_s := -INF
+	for p in loader.org_proposals.get(org_id, []):
+		if not _eligible(state, org_id, p):
+			continue
+		var s: float = support(state, cns, p)
+		if s > best_s:
+			best_s = s
+			best = p
+	return best
 
 
 ## The loaded proposal with this id on this org's agenda, or null. Linear over a
@@ -582,6 +658,50 @@ static func cast_vote(state, org_id: String, choice: String) -> bool:
 	if ns == null or not ns.orgs.has(org_id):
 		return false
 	state.orgs[org_id]["pending"]["player_vote"] = choice
+	return true
+
+
+## Public lookup for ratification.gd and the panel; the private name stays for
+## the callers this file already has.
+static func proposal_by_id(loader, org_id: String, proposal_id: String):
+	return _proposal_by_id(loader, org_id, proposal_id)
+
+
+## The player, chairing, chooses what opens next. Refused when the player does
+## not chair this council now, or the proposal could not open -- the same
+## refuse-rather-than-record shape cast_vote() uses.
+static func set_agenda(state, loader, org_id: String, proposal_id: String) -> bool:
+	if not state.orgs.has(org_id):
+		return false
+	var ns = state.player()
+	if ns == null or Council.presiding_nation(state, loader, org_id) != ns.id:
+		return false
+	var p = _proposal_by_id(loader, org_id, proposal_id)
+	if p == null or not _eligible(state, org_id, p):
+		return false
+	state.orgs[org_id]["agenda_choice"] = proposal_id
+	return true
+
+
+## The player, not chairing, pays the chair to put a proposal first. One tabled
+## item per council at a time; refused in a council with no presidency (nobody
+## to ask) and to the chair itself (set_agenda() is free for a reason).
+static func table_proposal(state, loader, org_id: String, proposal_id: String) -> bool:
+	if not state.orgs.has(org_id):
+		return false
+	var ns = state.player()
+	if ns == null or not ns.orgs.has(org_id):
+		return false
+	var chair := Council.presiding_nation(state, loader, org_id)
+	if chair == "" or chair == ns.id:
+		return false
+	if not (state.orgs[org_id].get("tabled", {}) as Dictionary).is_empty():
+		return false
+	var p = _proposal_by_id(loader, org_id, proposal_id)
+	if p == null or not _eligible(state, org_id, p):
+		return false
+	Council.spend_relations(state, ns.id, chair, CouncilK.TABLE_RELATIONS_COST)
+	state.orgs[org_id]["tabled"] = {"proposal_id": proposal_id, "by": ns.id}
 	return true
 
 
