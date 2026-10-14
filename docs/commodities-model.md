@@ -104,12 +104,44 @@ in `from_dict` — the aliasing-safe pattern; see §6.
    price step — because a convergence test would be a rand-adjacent
    non-determinism this project refuses.
 
+## §3b The drift, found and fixed (2026-10-14)
+
+The claim above was false as shipped: measured on a new game in main.gd's order,
+2 goods sat at >= 1.25x base at month 1, 15 at month 3 and 21 from month 6 on,
+12 of them at the 1.75x clamp for the rest of a 168-month run. Two causes, both
+fixed:
+
+- **The gap counted intermediate use twice.** Demand reads `_structure()`, which
+  already weighs each good by every recipe's use of it, but the gap compared it
+  with production NETTED of what the recipes downstream consumed. It now reads
+  gross production (`_produce`'s `gross`); the netted figure still feeds output,
+  trade and value added.
+- **Six recipes cost more in inputs than their output was worth** at base price
+  (clothing's cotton alone was 204 against a base of 25). `goods.json` rebased
+  clothing 474, appliances 1390, consumer electronics 1440, electronics 2080,
+  pharma 4980, uranium fuel 72000 -- relative prices, at least twice the inputs'
+  cost, values from the 2026-10-14 probe rather than authored research.
+
+A third finding came out of the first: **a supply shock never reached a price.**
+Demand's sector mix was read off the live register, so a nation that lost its
+industry took the same slice out of world demand and the gap stayed 0 (the old
+shortage test passed only because steel was drifting up anyway). Demand's MIX is
+now anchored to the authored sector shares in `data/nations` while its SIZE stays
+live world output.
+
+Measured after (scratch probe, Energy -> Economy -> Commodities -> Budget ->
+Inflation -> Demography, FRA, 168 months): 0 goods >= 1.25x through month 120,
+1 at month 168 (clothing at 1.27x, a slow creep from 1.04x at month 1 that the
+probe did not attribute); 0 at the clamp. FRA's industry zeroed for six months
+moves steel from 1.005x to 1.105x base against 1.004x in the control run; before
+the fix both runs read 1.677x.
+
 ## §4 The constants
 
 The machine's five, in `src/sim/commodity_constants.gd`: `PRICE_BAND` 0.75 (the
 tier's own precedent, not tuned), `PRICE_ELASTICITY` 0.30, `DEMAND_ELASTICITY`
 1.0 (the unit-elastic price response), `TRADE_RATE` 0.50,
-`STRUCTURE_ITERATIONS` 24. The world starts in balance by construction (the design intent; the measurement disagrees — see docs/someday.md, "World prices drift to their clamp within months"), so
+`STRUCTURE_ITERATIONS` 24. The world starts in balance by construction, so
 PRICE_ELASTICITY is UNVALIDATED — its sweep belongs to whichever task first
 lets a player cause a shortage (V4.7's firm verbs are the first candidates).
 (0.10 is one of the sweep points named in the constant's own comment, never the
