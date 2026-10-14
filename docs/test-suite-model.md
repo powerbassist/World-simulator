@@ -1,3 +1,10 @@
+---
+title: Test Suite Model
+tags:
+  - tooling
+  - testing
+---
+
 # Test-suite model — the cockpit and the runner
 
 **2026-09-11 · branch `test-suite-cockpit` · the gate's measured record: 51:56 sequential → 9:18 parallel and sharded, 82/82 both ways.** Instrument: `tools/suite_runner.py` (one execution core), `tools/suite_gui.py` (the view). Baseline numbers live in `reports/baseline_times.txt` (gitignored, like all of `reports/`); every run's artifacts live in `reports/suite_runs/<ts>/` and are committed nowhere — the model doc carries the numbers, the tooling produces them.

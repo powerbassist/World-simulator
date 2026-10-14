@@ -1,3 +1,10 @@
+---
+title: Commodities Model
+tags:
+  - model
+  - simulation
+---
+
 # Commodities model
 
 V4.6 — the commodity economy. The machine: `src/sim/commodities.gd` (a leaf

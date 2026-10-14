@@ -9,9 +9,15 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V4.4
+
 **V4.4 — EVENTS AT SCALE — IS BUILT on `v4.4-events-at-scale` (2026-10-07): the slot became a severity-ordered DESK, the quiet went per-category, hooks make the world watch you, chains arm consequences, the other 28 nations answer for themselves, and the book is 9 → 102 events across nine categories with 54 category-art plates — subagent-driven build on the Flash fleet, every task review-gated, two real machine defects caught by the loop (typed-array init crashes on `new_game`; the AI chooser routing fiscal effects through the player-scoped `Budget.commit` — fixed with a nation-scoped `apply_pending`).** THE MACHINE (`src/sim/events.gd`, one rewrite): `ns.event_queue` (QUEUE_MAX 4, severity-desc, dedupe by id, `answer()` by entry id beside the kept head-`choose()`), `event_category_quiet` (CATEGORY_QUIET_MONTHS 3 — the global quiet died with the slot), per-event `cooldown_months` back from the V1.8 cut (sparse until-months), the weighted pick a second PURE function (Cycle.unit over nation|category|sorted-roster|month against cumulative authored weights — the roster salt is the review's correlation fix), HOOKS read registers the machines already write plus three V4.4 stamps (`ns.repealed_at` beside the ledger's silent erase; `failed_month`/`bid_month` on firm entries; `ns.last_accession` inside `_flip_membership`) — vocabulary closed at `events_constants.ON_ACTIONS`, `election_lost` REFUSED WITH ITS REASON (a lost election ends the game; nothing could answer it), CHAINS arm at authored delays and deliver due-first (loader refuses unknown targets and cycles at load), and THE AI CHOOSER closes the sixth "no AI chooser" note AT THE RULE — minimal situational scoring (bloc-weighted response + fiscal/corruption/unrest terms), in-tick resolution through the one applier, never defaulted, determinism test-pinned; `once`/cooldown/quiet mark at DELIVERY so the 28 AI nations bind them too (the review's find — announce-only marking left them free). **SAVE_VERSION 39 on six registers, argued in game_state.gd** (a seventh, `event_hook_fired`, was removed at pass 18 as dead state); the no-stored-draw absence pins stand. CONTENT: nine category files (scandals 16, personal 10, fiscal 13, unrest 11, industrial 14, european 10, foreign 10, commodity 8, disaster 10), the six legacies moved and re-tuned (x0.2 likelihoods, five choices to the band), `crises.json`/`climate.json` retired, E1b's mean±0.008 and business-worst≤30% now `tools/event_lint.py` (it failed the five pre-band carried choices on first run, as an instrument should), and **`LIKELIHOOD_MIN` 0.005→0.002 at integration** — the V1.8 floor was calibrated at nine events for player-visibility; at 102 the floor's job is world-visibility, and the [6,18]/term cadence band is arithmetically unreachable above it (all-94-at-0.005 measured 22/term; the ×0.2 proportional book lands 12.0/term dead interior — escalation-authorized, the comment rewritten at the constant). Probes: `events_probe.gd` drives the REAL machine now — E4 cadence/overfull, E5 category spread (all ≤18.9% against 30), E6 8/8 hooks witnessed, E7 28/28 nations answering, zero defaults, choices situating. ART: 54 WebP plates (9 categories × 3 severity bands × 2 variants) on the V3.7 recipe, bytes-loaded, wired into the desk and the arrival cards; the photographic-vs-painterly lean and the contact sheet are the AUTHOR's eye ([docs/event-art-plan.md](docs/event-art-plan.md)). **THE RE-BASELINE (both sides from worktrees, 51 regimes): 0 identical, 24 outcome flips — 20 HELD→LOST at the 2032 second election, ONE-DIRECTIONAL through the declared default-drain channel (hands_off −2.0 approval by 2032; ~12 answers/term vs the slot-era ~4), the prediction's 1–4 a magnitude miss recorded as such — OPEN AUTHOR CALL, not tuned (levers: the defaults' authored means, CATEGORY_QUIET_MONTHS, or accept the bound; the verdict block lives in reports/v44-rerun-prediction.md).** Invariants 50/50, zero stray lines after the last OK (V1.7c), first divergence 2027 everywhere (the AI acts in year one, as predicted). Suite 104/104 (the two convergence-loop content tests included); names clean. Model: [docs/events-model.md](docs/events-model.md) §5/§6/§7/§8/§9/§11 rewritten AT the rule in the block's own commits. NEXT: V4.5 — the council, contested.**
 
+## V4.2
+
 **V4.2 — THE STATUTE BOOK — IS BUILT AND MERGED (PR #48, merged 2026-10-07) after a 20-pass version-close ultra: 63 verified findings, every one discharged (curve 10 → 11 → 8 → 6 → 5 → 3 → 5 → 1 → 2 → 3 → 5 → 1 → 1 → 1 → 2 → 1; the last three passes comment/copy-level only, per the V4.7 convergence standard). Composition (`src/sim/statute.gd`, drafting budget + the auto-derived `bloc_offset` price table, bands declared then swept by `tools/composition_probe.gd`), the per-law effect ledger (`ns.law_ledger`, REALIZED deltas — `SAVE_VERSION` 38, six registers), the repeal verb (a law like any other; constitutional/institutional-channel targets refused; the budget floor `_budget_removal` lands what the register holds), custom tax keys (the `nation_state.gd` sixth-key refusal rewritten at the rule; birth gates cap the base×rate product at wealth's own 12.0, reserved revenue-line names refused at birth via `Budget.COMPUTED_REVENUE_LINES` with a re-deriving pin, and the yield-cap offer gate keeps a re-passage past the ceiling unoffered), the tax panel (KEY_X, rate as a number), the bill briefing + two paid polls (fixed-forecast keyed on the purchase month; `src/sim/` knows no blur — source-scan pin), PMBs + chief-backed lobbying (the `assembly_bills` in-tray; endorse via `resolve_vote`'s DEFAULTED param), content 42 → 120 laws + `tools/law_lint.py`. Re-baseline HELD (51 regimes, 8 identical / 43 moved / 986 pairs, earliest divergence at the first assembly-division month — the assembly acts in the idle world). Suite 100/100. Model: [docs/legislature-model.md](docs/legislature-model.md) §ledger/repeal/composition/assembly; the carried register (refuted-but-real items with re-raise triggers) lives in [docs/someday.md](docs/someday.md). OPEN: the P1(ii) effects-blind-divisions author call, and the V4.4 hooks the block already wired. NEXT: V4.4 — events at scale.**
+
+## V4.7
 
 **V4.7 — INDUSTRY — IS BUILT AND MERGED: V4.7a's two-tier register (PR #46, merged 2026-09-28) and V4.7b's autonomy machine (PR #47, merged 2026-10-02) — closed after a 15-pass version-close ultra over the cumulative diff: 99 verified findings, every one discharged (the curve 8 → 9 → 2 → 10 → 7 → 10 → 7 → 7 → 10 → 5 → 4 → 4 → 4 → 5 → 3; the last three passes comment-level only). B1/B2/B3 reviewed in-session, B4 close-out 2026-09-29. THE REGISTER: 317 majors + 2,420 generated body = 2,737 firms across all 29 nations, SAVE_VERSION stays 37 — the register is SPARSE (majors seeded only, entries appear when touched) and `_seed_missing_majors()` repairs pre-roster saves at the first tick (the PR #46 ultra review's headline: sparse + verbatim-restore + v37 = missing-key crash, four lenses). THE BLOCK'S SPINE (the step-0 finding): the subsidy's share channel is ABSOLUTE, not scale-aware — a 0.01 firm drains the same pool as a 0.14 major and ends a 60-month subsidy at 0.13 — so the pool is MAJORS-ONLY, `BODY_SHARE_MAX` 0.03, body firms never verb targets, and body reads fall back to authored content (`share_of_company`). The plan carries all amendments at the review that forced them.**
 
@@ -21,7 +27,11 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 **B4 ALSO FOUND THE TICK COST NO GATE COULD SEE: the scale probe predates B1 and times Companies only, so the machine's month was never inside a band — the re-baseline's wall clock ran 2.5× slow, and a scratch timing probe measured `Industry.tick_month` at 1,124 ms/month over the roster (~8 unconditional relocation Dijkstras per nation-month; the single draw with the discount inside needs the distance BEFORE the hazard). The memo (`_dist_memo`, keyed on the graph's structural hash — loader content is immutable post-load; it lives in industry.gd, not network.gd, because tests pass synthetic same-size graphs) carries it to 16.45 ms with no distance changed and no draw moved; suite 94/94 (the 94th is test_industry_surfaces.gd, the pass-5 fleet's net for the UI surfaces).** The V1.4 sweep's rival mirror in `companies_probe.gd` follows the majors-only pool by rule now instead of by accident of zeros; `--bid`/`--failing` staging flags captured two judged frames (`FOREIGN TAKEOVER BID — AUI offers € 4.3 bn for Granval Cooperative`, `FAILING FIRMS — Banque Méridienne, rescue window: 6 months left`), both stages writing the register exactly as the machine writes it and neither ticking afterwards (the windows lapse). Model: [docs/companies-model.md](docs/companies-model.md) §31–38; the V4.2 handoff's stub-or-defer clause is RESOLVED — lobbying DEFERRED, V4.2 builds it whole against the 317 chiefs. **Open: the author call on hand-curating the 25 generated nations' majors (narrow `firms_generate.py --check` to the body tier first), and V4.6's from_dict aliasing sweep for `plants`/`projects`/`sector_investment` (companies itself is fixed). Also carried open: the budget panel's per-frame 2×24-month projection (~4.5 s base, pre-PR-47 -- PR-46's finding 6; the machine's share of it is banded at 7.0 s in the scale probe's verdict). NEXT (AMENDED 2026-10-05): V4.2 is BUILT and owns the lobbying machine whole -- see the V4.2 row above; after its merge the order resumes at V4.4.**
 
+## V4.6
+
 **V4.6 — THE COMMODITY ECONOMY — IS BUILT ON `v4.6-commodity-economy` (2026-09-20): both step-0 gates discharged BEFORE a recipe was authored, the block closed in one session of its estimated 15–22 because the gates' verdict narrowed it honestly, and the re-run held its bit-identical prediction (both probe regimes, cold-worktree dialogue_manager noise isolated per V1.7c — the 19 moved lines were the baseline worktree's missing class cache, not content).** The gates (committed dd20c51, `tools/production_scale_probe.gd` + `tools/production_gdp_probe.gd`): the tick budget PASSED (29.3/5.2 ms vs the 300 ms band — the Victoria 3 late-game form is unreachable at this abstraction), and the GDP-reproduction probe FAILED ON LEVELS (Spearman ρ = 0.902 — the ordering of all 29 economies reproduced from population + sector shares alone — but worst relative error 0.822 against a 0.20 band). The finding, in the tier doc's own terms: the ABSTRACTION LEVEL was wrong, not the recipes — **the layer models GDP *changes*; the level stays the register's measured value; a per-nation productivity lever was REFUSED as circular** (fitted against observed GDP it reproduces by construction — the first probe draft did exactly that and was rewritten before it ran). The build: 60 goods in seven categories + 34 recipes (`data/commodities/`, loader-validated loud), `src/sim/commodities.gd` a leaf preloading only its constants, the seven-key `commodity_state` register on **SAVE_VERSION 37**, production in topological recipe order (the first draft grew steel from nothing because category order wasn't topological — measured, fixed, pinned), surplus→deficit routing, world prices clamped ±75 %, the tick wired after Economy before Opinion in `main.gd::_on_month_elapsed` (the plan named game_state.gd; that file has no month tick — recorded at the pin) and the balance_probe mirror, a lazy seed for an ABSENT register (a stripped payload, a hand-built fixture, or a caller before the first tick -- NOT a pre-37 bridge, since save_manager refuses a version mismatch outright; pinned three ways, including the stripped-payload leg), the Commodities panel (KEY_H, flow-coverage shortage alert — the register carries NO stock: a carried stock drove prices to 0.50× base in the prototype, measured and recorded), and two map layers in the existing registry. **T5's serialisation found a REAL from_dict ALIASING DEFECT** (two states sharing one register, found by measurement, fixed rebuild-style, mutation-pinned) and left the same hazard RECORDED LIVE for `companies`/`plants`/`projects`/`sector_investment` — predates the block, in commodities-model §6, waiting for its sweep. PRICE_ELASTICITY is UNVALIDATED (the world is born in balance); its sweep belongs to the first task that lets a player cause a shortage. Suite 90/90; model: [docs/commodities-model.md](docs/commodities-model.md).
+
+## V4.3
 
 **V4.3 — PEOPLE WHO WANT THINGS — IS BUILT ON `v4.3-people` (2026-09-18): the character machine, the deep bench, the surfaces, the V3.7 wall committed, and the re-baseline re-run bit-identical at the first ship (1681/1681, zero diff) then, after the review's channel fixes, EXACTLY THREE moved lines — the two `managed_censors` brief_against act lines the fixed channel exists to fire, 94/94 verdicts identical — with the bench GPU pass since harvested and the branch in PR #44 under review.** The machine: `src/sim/characters.gd`, a leaf preloading only character constants, the act constants, government (the price primitive) and legislature (the ONE applier), meters handed in by the caller (the calendar.gd law), ticks after Cabinet before Elections (pinned from source), player nation only, NO rand anywhere (pinned by two-identical-states). The content: `Person` grew to EIGHT fields — the seven of the character contract (kind/traits/ambition/party_id/wants, closed vocabularies validated at parse, cross-register halves resolved in `_validate_people` where the whole loader is in hand) plus `bench`, the portrait tiering flag. The state: **SIX registers on SAVE_VERSION 36** — the five planned plus `person_want_state`, the edge-trigger's memory (a denial straddling a save must not re-fire its grudge on every load). The events-model §3 and people-model §2/§4/§13 were rewritten AT the rule in the schema's own commit, and people-model §14 is the layer's model section.
 
@@ -38,6 +48,8 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 **THE THREE THAT DID NOT NEED CODE, AND THE PERF VERDICTS — measured, not argued.** **B7** (panels clip their lower content) is NOT a defect: a throwaway headless probe drove each named panel's own inner ScrollContainer to its bottom and every photographed tail (the last law row's Force button, the EFFORTS entry, the fifth organisation, the fleet ledger, the EP section) came INTO VIEW — the real question is affordance (a 10px scrollbar nobody notices), the fold-hairline generalisation to inner scrolls is DEFERRED, and the probe itself was deleted per the scratch rule; **B15** `--network`'s byte-identical frame is content-fits by construction (both scroll levels at zero range at that state); **3.1** the famous 2.24-second accessibility month was the PROBE's own warmup tick recording the one-time Dijkstra-cache build it existed to exclude into `max` — `_us.clear()` after the warm tick is the whole fix, and the game was never freezing: `main.gd` warms the cache at boot, the LOAD path re-attaches the same `loader.region_graph` instance the warm keyed on, and `duplicate_state()`'s deep copy hits the value-keyed cache at 1.8 ms (V3.7's lesson holding). The corrected instrument reads the accessibility loop at 708 µs mean / 924 µs max and the month at 133 ms. **Recorded open:** 3.2 pan fps (the documented map re-record lever), 3.3 the loading screen (feature work — 15.8 s to the game scene with nothing saying so), 3.4 the ownerless 15 s stall, B12 (month-0 dash placeholders, a product-copy call), B13 (the Summit ObjectDB leak, one run in 105, no repro), and the hover-label shadows in `MapCities`/`MapMarkers` whose comments still describe the replaced 1px technique (review P2 note).
 
 **TWO REVIEW ROUNDS, BOTH LANDED BEFORE MERGE, AND ONE GATE INCIDENT WORTH ITS OWN PARAGRAPH.** The first pass (before the specialist reviewer models were reachable) found three P1s: slot names reached `user://` paths unvalidated — now `SaveManager.valid_slot_name()` refuses separators, traversal, whitespace and Windows device names at the SOURCE, `save_game` and `delete_slot` both pass through it (delete trusts nothing); the termed-out verdict was printing its defeat line TWICE (the duplicate only became visible when the footer stopped crushing one copy to a column — now `defeated and not termed_out`, pinned one-sentence-per-verdict, and the ghost-label trap — `queue_free`'s copy still readable same-frame, the fold finding a third place — is filtered in the check); and the close-path fix above. The second pass (the `code-reviewer` specialist, once its model was available) returned approve-with-fixes on two one-liners: a merged comment had silently commented OUT the polling fixture's `Budget.commit` (the suite stayed green on a fixture that no longer did what it said), and `save_game` lacked the boundary guard its own new comment claimed — both fixed, and the Escape-priority comment now states the choice (dialog first; an armed reticle under a MOUSE_FILTER_IGNORE holder survives one press) instead of a false impossibility. **The gate incident:** Mimosa's commit gate force-blocked the first Wave-1 commit on the playtest's OWN driver scripts — `reports/playtest-2026-09-16/raw/*.py` are SSRF-shaped vision-API clients in a GITIGNORED evidence folder, and the hook scans the whole tree with no exclusion mechanism. The 18 scripts are archived byte-preserved into `raw/playtest-scripts-archived-2026-09-17.zip` with the README noting it — **a future session that drops any HTTP-client script into the working tree will hit this block again.** Screenshot verification: six frames captured through the project's own harness and judged in-session (vision path working) — the defeat modal, the ten-year bar (`NEXT VOTE —`, `BUDGET BALANCE −6.74%`), the legend caption and key rows, and the Alps zoom. Model: [reports/playtest-2026-09-16/report.md](reports/playtest-2026-09-16/report.md) — read-only, nothing in it was modified except the archived scripts and its README row.
+
+## V4.1
 
 **V4.1 SHIPPED THE PROGRAMME 2026-09-15 — the agenda register, the decaying
 credit channel at span 4.5 with the gate PASSED, and the game's first answer
@@ -88,6 +100,8 @@ decision event answered after the same-month election dismissal can eat the
 term-start pause — three boolean pausers, one clock — with the offer staying
 answerable until Elections next advances `months_in_term`.
 
+## V4.0
+
 **V4.0 MEASURED THE AGENCY CALL AND THE LEVEL FORM MISSED ITS GATE — the
 verdict is FAIL and the channel's form, not its span, is what missed
 (2026-09-14).** The competence-credit channel shipped as designed
@@ -119,6 +133,8 @@ LOST→HELD through the declared unrest-act channel; `ruinous` HELD→LOST on a
 the miss, mechanism is the two declared channels, not a third). Suite 82/82.
 Model: [docs/agency-model.md](docs/agency-model.md). **V4.1 follows and names
 this channel verbatim — its handoff carries the agreement clause.**
+
+## V3.7
 
 **V3.7 shipped the portrait wall's PHASE A 2026-09-12, and the block's
 central promise held: the whole generation stack is built, wired and tested
@@ -154,6 +170,8 @@ contact sheet is the gate, the legacy branch deleted in the assets commit.
 **The V3 tier closes at V3.7, not V3.6** — the retrospective and every open
 call (V3.0's gate routes, V3.5's loader-gate ack, Phase B) are in
 docs/tiers/v3.md's close-out section, handed to the author in one place.
+
+## V3.6
 
 **V3.6 shipped ceremony, sound and the front door 2026-09-12, and the row's
 "small" held: three machines and one told line on surfaces that already
@@ -226,6 +244,8 @@ settled frame were all judged clean in-session (vision path verified working
 this harness first). Suite 82/82; names clean; frames in
 `.superpowers/sdd/frames/`.
 
+## Test-suite cockpit
+
 **The test-suite cockpit shipped 2026-09-11** — the gate is one execution core,
 `python tools/suite_runner.py --ci`, and the measured wall moved **51:56 → 9:18**
 (parallel + per-check sharding, 82/82 held at every step); the model doc is
@@ -259,6 +279,8 @@ probes, one of which is a tick budget**: nothing in this project has ever timed 
 simulation month (`tools/frame_probe.gd` times frames), and Victoria 3 ships the same
 model shape to a late game its own players call unplayable. Everything
 below this paragraph is the V2.1 record and has not been re-cut since.
+
+## V2.1a
 
 **V2.1a shipped the panel system, V2.1b migrated every panel onto it, and V2.1c settled navigation.** `src/ui/panel_kit.gd`
 holds six static primitives -- `section`, `heading`, `line`, `row`, `figure`, `ledger` --
@@ -341,6 +363,8 @@ NOT banned**: a cell inside somebody else's grid is the panel's own, because `le
 cannot carry a per-cell tooltip and an autowrapping kit label collapses a fixed column.
 `people_panel` went 520 -> 700px, which is height fixing a **readout** rather than a fold.
 
+## V2.1c
+
 **V2.1c SHIPPED NAVIGATION AND THE RESTING SCREEN, AND THE V2.1 BLOCK IS COMPLETE.** The
 row's own question -- *should the resting screen show anything at all* -- was answered by
 measuring rather than by arguing. `tools/nav_probe.gd` ran the real game for fourteen years
@@ -394,6 +418,8 @@ SVG off disk and rasterises it **on every call**, on the path that refreshes wit
 Both tints are rasterised once at `add_cluster()` now, and the frame before and after is
 identical to the pixel -- **a screenshot pass structurally cannot see that class**. Model:
 [docs/panel-system.md](docs/panel-system.md) sections 13-17.
+
+## V2.2
 
 **V2.2 SPLIT, AND V2.2a SHIPPED THE GEOGRAPHIC REGISTER.** The per-session table stopped
 at V2.1c, so **there was no V2.2 row at all** and the tier/model/effort call was authored
@@ -524,6 +550,8 @@ directly to assert every named city lies inside its own region's polygon -- U6c'
 containment check one level down, and the thing that catches a mistyped digit or a geometry
 vintage that has moved under the figures.
 
+## V2.2b
+
 **V2.2b SHIPPED THE MAP AND THE TWO PANELS, and the expected red turned red on the day it
 named.** `data_loader.gd` loads `regions.geojson` into `region_features` (NUTS id → outer
 rings, `_load_geo`'s shape) with a **fourth `_validate_regions()` rule** cross-checking the
@@ -580,6 +608,8 @@ deleted it to one line through the registry, so registering the two panels IS th
 And the month-136 warning on `nav_probe.gd`'s loop was inherited by nothing: no probe this
 session runs a month at all, and `geography_probe.gd` still runs none.
 
+## V2.3
+
 **V2.3 SHIPPED THE FACE OF POWER: 71 portraits, a glyph on every window, and the placeholder silhouette PROMOTED to the shared fallback.** The recipe is two
 committed halves and one machine dependency stated honestly: `tools/portraits_generate.py`
 drives the author's local ComfyUI (updated in-session to 0.34.0 / torch 2.13) through
@@ -619,6 +649,8 @@ vision path survived the session that built a wall of faces** (model, judge agen
 route all refused image input), so the screenshot frames were captured and the AUTHOR
 holds the verdict on the second wall -- the same authority that rejected the first.
 
+## V2.4b
+
 **V2.4b SHIPPED THE SCENES, AND THE STEP-0 GATE WAS THE SESSION'S FIRST RESULT.**
 `dialogue_manager` had to prove it runs under `--headless --script` -- the regime
 `tools/run_tests.sh` IS -- before any content was authored; it did, and the adoption
@@ -657,6 +689,8 @@ and a new script cannot type its own return -- AGENTS.md's first gotcha, caught 
 [docs/summits-model.md](docs/summits-model.md).
 
 
+## V2.4a
+
 **V2.4a SHIPPED THE DAY, AND THE ROW'S BIT-IDENTITY PREDICTION WAS THE THING THAT
 DID NOT HOLD.** Scarcity is **occupancy only** -- an `opens_meeting` booking occupies
 travel out, the meeting and travel back, overlapping blocks are refused, and U6a's
@@ -692,6 +726,8 @@ other's occupancy -- V1.3f's measuring-the-wrong-state error, in the file writte
 avoid it, a third time. `SAVE_VERSION` stays 27, both predicted absences pinned; the
 screenshot frames were captured for the author (no vision path, V2.3's honest gap
 standing). Model: [docs/calendar-model.md](docs/calendar-model.md) section 12.
+
+## V2.5
 
 **V2.5 MADE NATIONAL GDP THE SUM OF THE REGIONS, and the swap is one line:
 `_apply_growth_to_sectors()` now takes the region sum as its target and its last
@@ -755,6 +791,8 @@ the twenty-first session and found NO BUG** -- V1.6c's clean-sheet precedent,
 reported as such; the vision path WORKED this time, so the three frames
 (`--diverge`, `--region`, `--open economy`) are judged, not handed off. Model:
 [docs/region-economy-model.md](docs/region-economy-model.md).
+
+## V2.6a
 
 **V2.6a MADE PEOPLE MOVE, and the machine is one expression applied twice with
 different denominators.** V2.2a's two share registers are live state now:
@@ -834,6 +872,8 @@ these same shares; **V2.6c** owns natural change, whose conservation law differs
 (internal migration is zero-sum nationally, birth and death are not) and whose
 step-0 gate is whether regional age structure is obtainable from the register's
 own dataset. Model: [docs/migration-model.md](docs/migration-model.md).
+
+## V2.6b1
 
 **V2.6b1 GAVE THE GRIEVANCE A PLACE, AND THE ROW'S CENTRAL CLAIM WAS FALSE BEFORE ANY
 CODE WAS WRITTEN.** `src/sim/siting.gd` is a leaf that preloads **nothing** -- a caller
@@ -926,6 +966,8 @@ a campaign meeting's a verb whose failure mode is dominance, so **V2.6b2** owns 
 on V2.4a's travel days plus a per-region saturation counter. Model:
 [docs/siting-model.md](docs/siting-model.md).
 
+## V2.6b2
+
 **V2.6b2 SITED THE CAMPAIGN, AND THE RE-BASELINE MOVED THE ANCHOR BEFORE IT MOVED THE WINDOW.**
 The site is the PLAYER'S -- `Campaign.execute()` takes `region_id`, refuses a start without one
 and refuses a region outside the acting nation's own live register, and **`Siting.site()` is not
@@ -971,6 +1013,8 @@ where the meetings are") instead of ticking past the run-up to find a demonstrat
 
 
 
+## V2.6c
+
 **V2.6c SHIPPED NATURAL CHANGE, THE GATE'S OWN PREMISE WAS THE STALE ROW, AND THE V2.6 BLOCK IS CLOSED.** The decomposition note gated the session on regional AGE STRUCTURE from `demo_r_pjangrp3` -- and the sibling dataset **`demo_r_gind3` publishes `NATGROWRT`, the crude rate of natural change, directly per region**, so the measured quantity arrived without importing the 22 brackets and without authoring the age-mix-to-rate mapping demography-model §2 refused (a weighted sum nothing could measure). The gate's other half passed cold: **eight readers** of the shares already existed -- map crosses, city panel, region panel, the per-head index, migration's two pulls, siting, campaign reach, `labour_force()` -- so no new reader was needed and V1.5b's cut did not apply. **THE PARTITION, NOT A RE-BASELINE**: `ns.population` stays Economy's measured compound, `demography.gd` is untouched (the strictest leaf stays strict), and the regions redistribute the differential around a **live-share-weighted mean** -- `ds_i = s_i (nc_i - mean)/12`, telescoping exactly to zero, migration's invariant on a third flow. **THE ANCHOR LESSON'S OTHER SIDE, RECORDED WHERE THE NEXT SESSION WILL LOOK**: population-weighted mean-one is RIGHT here -- births happen where the people are, the V2.6b1 side of the line -- where V2.6b2 took campaign reach OFF it because reach is delivered where the player goes. The machine is one new leaf preloading NOTHING (`src/sim/natural_change.gd`, stricter than siting.gd: pure arithmetic, argument-fed, no writes), composed inside `migration.gd` so the share registers keep exactly one writer, **ungated by `MIGRATION_RATE`** -- zeroing the rate isolates migration, and the natural flow must run through that isolation for it to stay an isolation of migration alone (the guard moved from `tick_month()` into `_tick_nation()` for that reason). The rate reaches the flow through `Regions.natural_change()`, an accessor named for the QUANTITY rather than the field -- `share_of()`'s naming rule, because the one-reader scan is textual and an accessor that restates the field name IS a second reader to it.
 
 **THE CONTENT IS MEASURED AND BRITAIN'S BOUND EXTENDED RATHER THAN BROKE.** Windows are the widest contiguous run in which every register code carries a value, rates averaged over them (the COVID years would otherwise date-stamp the field): seven nations 2012-2024, FRA 2014-2024, NLD 2012-2022 -- **NL31/NL33 vanish from THIS series one year before pjangrp3's re-coding**, each series gets its own vintage ruling, exactly as the gate predicted. **UKM (Scotland) publishes no rates at ANY year**: eleven of twelve UK codes are measured 2012-2018 (London +0.79 %/yr down to the North East's -0.07 -- a bigger spread than most nations' migration produces) and every British region carries 0.0, because a differential mixing measured and invented rates invents flows toward and away from Scotland no measurement supports -- V2.5's call one quantity over, with the numbers recorded beside it so the import picks them up the day Scotland publishes. Luxembourg TRANSFORMS as the plan said: no differential ever (one region cannot differ from itself; asserted EXACTLY unchanged after 168 months), but the national total was never bound. The plan-time probe's clause-(0) pre-check printed numbers 100x too large -- a permille-to-fraction conversion written once and not twice -- and the corrected estimate (FRA 0.0151) landed within 4 %% of what the sim measured.
@@ -979,6 +1023,8 @@ where the meetings are") instead of ticking past the run-up to find a demonstrat
 
 **THE RE-RUN HELD THE PREDICTION AND THEN SOME: 4 content lines of 1646 differ, all last-printed digits.** Both sides from worktrees (the discipline the plan wrote and V2.6a's session skipped once), 48 invariants each, tails identical, V1.7c's third-stray-line check clean. National headlines bit-identical in every regime; **zero outcome changes**; and the named watch-point -- **Germany's +0.4 %% siting margin -- HELD** (no siting line moved at all; the natural differential moves shares ~1.5 %% relative over fourteen years and the site margins are wider than that). `SAVE_VERSION` stays 30, eleven pins green; no new tick call, no new regime, no new UI -- the readouts that multiply the shares have shown the movement since V2.2b. Surfaces recount: **~15 and 4 new files against the row's ~12 and 2**, the instrument upgrade having removed the bracket pipeline the row's gate would have needed. **THE SCREENSHOT PASS FOUND ONE BUG AND IT WAS OLDER THAN THE SESSION, THIRD SESSION RUNNING**: V2.6b2's `_site_the_demonstration()` read `staged["city_id"]` off the empty dictionary bare `--site` stages, so the bare flag had crashed since V2.6b2 -- its own pass only ever ran `--campaign --site`. Fixed with `.get` and the reason at the call site. Frames clean: `--move` (ten years, Paris 2.4 M, ledger refreshed) and `--site` ("Lille -- 246 k -- where the unions are out"). Model: [docs/natural-change-model.md](docs/natural-change-model.md). **V2.6 CLOSES HERE; the next handoff is V2.7's decomposition call** -- network and resources, whose graph shape (per-region adjacency vs routed geometry) is deliberately undecided and is that session's first question.
 
+## V2.7
+
 **V2.7 SHIPPED THE NETWORK AND THE SITED PROJECTS, AND THE STEP-0 GATE ANSWERED THE TIER'S OPEN QUESTION BY COUNTING.** `tools/network_probe.gd` committed before any `src/` edit: adjacency over the committed polygons reads **every ring of every polygon** -- a reader taking only outer rings reports 12 components and 10 false isolates, because AT13, BE1 and DE3 are connected only through their hosts' HOLE rings -- and measured **243 edges, 9 components, 8 off the mainland**. Berlin reaches Hamburg in three hops and Milan in five THROUGH A THIRD COUNTRY, so the routed geometry the tier note reserved for transit buys nothing this roster can see; what adjacency cannot express is water, and water is **exactly eight authored sea links**, each a real crossing in service. Routed geometry is also a licence refusal this repo had already made: ODbL's share-alike attaches to derived databases and data/ would be one. **Clause (d) REFUSED the six-branch production mix** -- nama_10r_3gva's six NACE branches rank the 112 regions at Spearman **0.9170** against the three-key sector_mix, above the 0.90 clause fixed before the run -- so `production_mix` was never authored and `specialisation()` reads `sector_mix`, the refusal recorded beside the field that would have been. Clause (e) passed at |corr| **0.3360**: the network term is not the mix term renamed.
 
 **THE GRAPH IS CONTENT WITH THREE PROVENANCES** -- `data/geo/region_graph.json`: adjacency derived, endowment measured (tran_r_net MWAY density at 2018, the only year carrying every register code because 2019 drops the UK for the FOURTH time in this import's history; rail refused on its own coverage table, 0 of 9 Austrian codes), sea links authored and each naming its crossing. `src/sim/network.gd` is a LEAF taking Dictionaries, the distance table cached per graph because the per-month recompute would put a Dijkstra sweep in every tick. The anchor is a THIRD KIND and was measured rather than inherited: output-weighted mean-one, because V2.5's spine closes only when every regional deviation is zero-mean in output weights. **DECAY_KM is derived, not swept**: 2924.9 km at the continental component's own mean eccentricity of 9.65 hops. The deviation in `regions.gd` now has THREE zero-mean terms -- mix, network, and sited-project payoffs -- collapsed onto one expression first (proven bit-identical, 1626 lines, filtered diff empty, BEFORE the constant went live), and the `access`/`sites` arguments are REQUIRED everywhere: a defaulted {} would silently run the pre-V2.7 model, V1.5d's own failure.
@@ -986,6 +1032,8 @@ where the meetings are") instead of ticking past the run-up to find a demonstrat
 **THE SWEEP'S BAND HAS ONE EDGE, WHICH IS THE SESSION'S CENTRAL FINDING.** Clause (ii) never binds: at any candidate the output drift is 44x under SHARE_DRIFT_MAX and the population drift is pinned by natural change at 0.0160 against the 0.0164 ceiling -- the drift MIGRATION_RATE already owns. V1.5d's midpoint rule assumes two crossings and the measured band is [crossing, infinity) -- V1.5a's "a band an observable cannot reach is a bound and not a selector", recorded rather than tuned against. So the crossing ships, and the DIFFERENTIAL one: the channel's own fingerprint against the inert run is EXACTLY LINEAR at 0.010 pp per unit beta, crossing the 0.1 pp readability bar at **`NETWORK_BETA` 10.0** -- grid-independent by construction, and the total-move reading (confounded by the mix term's own 0.093 pp baseline) holds there too. **THE MIGRATION RE-SWEEP, THE PLAN'S SHARPEST RISK, CAME BACK IDENTICAL AT EVERY PRINTED FIGURE**: clause (0)'s natural-only row reads 0.01558 exactly as V2.6c left it, the shipped row 0.01599 exactly, and the interval is unchanged -- the third mover's contribution lands below the drift table's fifth decimal because migration owns 1-3 % of the combined movement. `MIGRATION_RATE` stays 0.0003; the ceiling stays binding at 2.5 %% slack.
 
 **A PROJECT NAMES A PLACE NOW, AND THE PLACE IS DERIVED AND STORED NOWHERE.** The authored `project_sites` coordinate answers "which region" through a hole-aware point-in-polygon over full-ring geometry the loader now keeps BESIDE the renderer's outer-ring shape (Berlin's site lives inside Brandenburg's outer ring; only the hole says whose it is) -- all fifteen sites resolve. The payoff lands zero-mean on the site region while V1.6f's national channel still carries the level; the edge-cost cut a rail spine physically is was REFUSED because it needs a payoff-to-kilometre constant nobody could measure. The map lives on GameState as non-serialised derived state (`project_sited_pct`), rebuilt by the one module that owns completions and re-derived on load -- a stored site could disagree with data/nations/ about where the rail spine is. **`SAVE_VERSION` STAYS 30** on three absences pinned apart (graph, accessibility index, site region), and the disk round trip proves "content, not saved" did not become "content, not loaded either". **The re-run held the prediction and then some: 2 moving lines of 1647**, one a hundredth of unemployment and one a hundredth of growth (both the predicted Okun/unrest-siting chain), 48 invariants each, zero outcome changes, no new regime. **The screenshot pass found NO BUG for the first time since V1.6c** -- frames clean, fold probe stable, Corse the least-connected region reading the lowest reach on the new eighth column. Plan-draft bugs fixed in passing: the register payload iteration that would have crashed the graph build, and `write_geojson`'s arity. Model: [docs/network-model.md](docs/network-model.md). **V2.8's siting inheritance is direct** -- adjacency won, a click resolves to a region by `Projects.site_region()`'s own cast, and V2.8 sits on the register rather than on a path set.
+
+## V2.8
 
 **V2.8 MADE ENERGY PLACED, AND THE FIRST VERB WHERE THE PLAYER WRITES A COORDINATE
 SHIPPED WHOLE -- the block was planned without the split the count asked for, and
@@ -1075,8 +1123,10 @@ arithmetic exact), V1.4c's date/state race in the tool and not the game. The
 frames were judged in-session -- the vision path V2.5 opened held. Model:
 [docs/energy-model.md](docs/energy-model.md).
 
+## V2.8.1
+
 **V2.8.1 REPAIRED THE PLAYTEST'S BUGS, AND V2.9 BUILT THE PLAYER'S SEAT — both off
-the 2026-09-05 play report ([[playtest-2026-09-05]] -- reports/, gitignored), which played two
+the 2026-09-05 play report (`reports/playtest-2026-09-05.md`, gitignored), which played two
 full terms through the real UI and returned "a serious simulation wearing no
 game." Two branches, one block each: `v2.8.1-repair` (five readout fixes: the
 election modal's collapsed table — the one content panel without
@@ -1112,6 +1162,8 @@ card wraps "Win / the vote." onto a third line, and the default-choice marker
 truncates at card width. `.gdskills/` is gitignored now. V2.9b (the agency
 probe — idle won 26.2, active lost 23.4, the playtest's F6) is the next row and
 it is a MEASUREMENT session, not a build.
+
+## V3.0
 
 **V3.0 TUNED THE AGENCY PROBLEM AND THE GATE CAME BACK FAIL BY MEASUREMENT —
 which is the outcome the plan named, not a session failure.** A second playtest
@@ -1157,6 +1209,8 @@ via a `stop_on_loss` param. `test_opinion`/`test_tax` re-pinned with the
 measured numbers beside them. Suite 79/79 green, names clean, two screenshot
 frames (polling, economy) captured for the author. Handoff:
 .superpowers/sdd/v3.1-handoff.md.
+
+## V3.1
 
 **V3.1 SHIPPED THE MAP PLATFORM, AND THE STEP-0 PROFILE REFUTED THE ROW'S PREMISE IN
 BOTH HALVES — the session's first result, before any code.** The handoff's gate was
@@ -1207,6 +1261,8 @@ re-run — U-track only, and the re-run prediction (bit-identical) held triviall
 Screenshot pass: vision WORKED this harness — identity frames and diff crops judged
 in-session. Model: [docs/map-platform-model.md](docs/map-platform-model.md). Handoff:
 .superpowers/sdd/v3.2-handoff.md.
+
+## V3.2
 
 **V3.2 SHIPPED THE ALLIANCE SYSTEM, AND THE STEP-0 AUDIT CORRECTED THE HANDOFF BEFORE
 ANY CODE — `bloc_offset` is the VOTER-bloc opinion channel (six electoral blocs) and
@@ -1267,6 +1323,8 @@ rewritten from the org's authored `accession_seats` at the flip, `phase` seriali
 re-derive over the LIVE roster, EP clock rolled forward in whole terms — each with a
 regression test, suite 80/80 green. Model: [docs/orgs-model.md](docs/orgs-model.md); bloc-model
 stands as the one-org record with a forward note.
+
+## V3.3
 
 **V3.3 GREW THE ROSTER TO EU-27 + 2, AND THE STEP-0 AUDIT CORRECTED THE TRANCHE LABEL
 BEFORE ANYTHING RAN** — the loader REQUIRES parties, people and a full government block
@@ -1336,6 +1394,8 @@ reaches the map, a window or the HUD. **A structural check that names one instan
 check for that instance, not for the rule** -- and a bug the player meets in the first
 second can sit behind a green 80/80 for a whole tier.
 
+
+## V3.4
 
 **V3.4 DREW THE GRAPH AND SHIPPED NINE FALSE OR OVERSTATED CLAIMS -- REVIEW CAUGHT ALL
 NINE, THE SUITE CAUGHT NONE, AND THE PATTERN UNDER THEM IS ONE SENTENCE: A CLAIM'S
@@ -1454,6 +1514,8 @@ rescues 10.6 px between two markers. Suite **82 files** green, names clean. Mode
 [docs/map-platform-model.md](docs/map-platform-model.md) section 4 and section 7, whose
 obligation this block DISCHARGED and re-issued: **any further animated surface uses the
 same split**, and **a cap on a redraw is a cap on the IDLE rate only**.
+
+## V3.5
 
 **V3.5 SHIPPED ENVIRONMENT AND CLIMATE, AND THE BLOCK'S OUTPUT SHIPS NO TUNED CONSTANT
 AT ALL -- `projects_constants.gd`'s position a fourth time, this one by design rather
@@ -1626,10 +1688,14 @@ carries no row for the session being planned"* -- so V2 breaks the pattern by wr
 row first. The effort call still belongs to the receiving session: read the row cold, count
 the surfaces, challenge it.
 
+## U5a
+
 **U5a shipped the ruler's shell, U5b the world map and U5c its layers,
 interrupting the S-track queue on request.** The map is the background, not a
 tab; `dashboard.gd` and its rail are deleted; the panels are pinnable floating
 windows.
+
+## U5b
 
 **U5b made the map a map of the world.** Four layers back to front: the NASA Blue
 Marble raster, the outlines of ~160 countries the game does not simulate, the ten
@@ -1643,6 +1709,8 @@ world under the viewport, which nothing needed before there was anything out
 there to leave. The minimap fills the slot `clock_cluster.gd` reserved a session
 early, and `tests/test_minimap.gd` asserts the cluster did **not** grow — that,
 not the minimap's presence, is what the reservation was for.
+
+## U5c
 
 **U5c made the ten coloured by what the player has with them.**
 `src/ui/map_layers.gd` is the only place a roster fill is chosen, and it is a
@@ -1716,6 +1784,8 @@ proves nothing — and a generic `--open <window id>`. It earned its keep twice 
 one session: the bloc panel was printing `deficit_pct_gdp <= 3.0` at a player, and
 its own budget section fell below the fold.
 
+## V1.3
+
 **V1.3 is decomposed into six sessions, V1.3a–f. V1.3a and V1.3b are built.**
 The argument, the four calls it made, and the per-session table were in
 ROADMAP.md (retired 2026-10-05 -- the tier docs carry the build order now);
@@ -1724,6 +1794,8 @@ bullet with the session that builds it. Order: (a) relations and diplomatic
 actions, (b) trade intensity and agreements, (c) tariffs and sanctions, (d) the
 bloc, (e) AI foreign policy, (f) defence.
 
+## V1.3a
+
 **V1.3a shipped the schema everything b–f reads.** Relations are pair state on
 `GameState.relations`, **symmetric**, keyed `"DEU|FRA"` by `src/core/relations.gd`
 — the only thing allowed to build a key — and derived at start from EU
@@ -1731,6 +1803,8 @@ co-membership and `government.neighbours`. The counterparty response is a
 **declared stopgap** V1.3e replaces, asserted as such in `tests/test_diplomacy.gd`.
 The model, every constant, and the measured tables are
 [docs/diplomacy-model.md](docs/diplomacy-model.md).
+
+## V1.3b
 
 **V1.3b made external demand directed.** `src/sim/trade.gd` derives a per-viewer
 weight over the other nine from partner size, EU co-membership, a shared border
@@ -1743,6 +1817,8 @@ than a detail: an openness *level* that responded to relations makes the free,
 unpriced `state_visit` worth two permanent points of GDP. The model, both
 escalation triggers, and the measured tables are
 [docs/trade-model.md](docs/trade-model.md).
+
+## V1.3c
 
 **V1.3c shipped coercion, on the project's first directed state.**
 `GameState.measures` is keyed `"FRA>DEU"` by a second builder in
@@ -1777,6 +1853,8 @@ touching `TRADE_BETA`. `COERCION_IMPULSE_MAX` was separately found *binding in
 reachable play* at 4.0 and raised to 6.0, equal to `IMPULSE_MAX_PCT`. The model,
 every constant and the measured tables are
 [docs/coercion-model.md](docs/coercion-model.md).
+
+## V1.3d
 
 **V1.3d shipped the bloc, and the fourth kind of live state.** `GameState.bloc`
 is not per-nation, not a symmetric pair and not a directed pair — it is **one
@@ -1834,6 +1912,8 @@ session needed **no eleventh regime** where b and c each did. GDP, growth, trend
 and unemployment are bit-identical in all thirty runs; exactly one run changed
 outcome, on a two-seat censure margin.
 
+## V1.3e
+
 **V1.3e shipped the interest model, and the row split.** All four declared
 stopgaps are discharged — the counterparty *reaction*, its *decision*, its
 *retaliation* and the council's *vote* — and all four mutation tests were watched
@@ -1885,6 +1965,8 @@ margin. The re-run also caught a break the suite could not: `balance_probe.gd`
 referenced the deleted constant and every new run failed to parse, because
 `tools/` is excluded from `run_tests.sh` by design.
 
+## V1.3f
+
 **V1.3f shipped the acting agent, and the block has no stopgaps left.**
 `_tick_agenda()` lives in `diplomacy.gd` beside `_tick_retaliation()` — the
 interest model preloads `trade.gd` preloads `coercion.gd` and can never reach
@@ -1929,6 +2011,8 @@ that spends nothing of V1.8's argument: an act by a simulated nation is state
 `GameState.foreign_acts`, the UI decides what earns a card, and
 `tests/test_foreign_policy.gd` asserts **nothing in `src/sim/` reads it back** —
 V1.3e's *no grievance ledger* property survives only if that stays true.
+
+## V1.3g
 
 **V1.3g shipped defence, and the V1.3 block is complete.** `GameState.pacts` is
 symmetric pair state on `relations.gd`'s existing key builder and
@@ -1995,6 +2079,8 @@ pre-mutation figures and getting away with it. `screenshot.gd` now marks panels
 dirty in `main.gd`'s own idiom. The nation panel's fold also reappeared one session
 after V1.3e paid for it there, and **height alone could not fix it**: four verbs are
 ~136px against a ~886px ceiling, so it took 80px of height plus two tightenings.
+
+## U6
 
 **U6 split, and U6a shipped the president's diary.** The row counted **~40
 surfaces and four machines** — the largest ever on this project — so it split on
@@ -2069,6 +2155,8 @@ pushes a float sentinel, every copied Array had been untyped until now, and the
 three `Array[Dictionary]` fields were all excluded for unrelated reasons — so it
 reported "shared with the copy" for a field that is duplicated correctly.
 
+## U6b
+
 **U6b shipped the register, and the row was wrong about what the work was.**
 The roster half already existed: ~70 named people were live as loose strings in
 **five** places, and **every one of the ten nation files wrote a person's name
@@ -2123,6 +2211,8 @@ before the check means anything. **The balance re-run is bit-identical across al
 fourteen regimes with no fifteenth needed** — predicted in advance, and a first
 for this run: U6a and V1.3g each needed a new regime because each added a verb,
 and a name is not a decision.
+
+## V1.4
 
 **V1.4 is decomposed into three sessions, V1.4a–c; a and b are built.** The row
 was one line and one line is not a session: (a) the firm register and subsidies,
@@ -2191,6 +2281,8 @@ recomputed on the first tick. **What is not in the register is the interesting
 half**: a firm's authored share and headcount are content, so the baseline every
 deviation is measured against round-trips through `data/companies/` rather than
 through the save.
+
+## V1.4b
 
 **V1.4b shipped sector regulation, and the session boundary was the whole point.**
 A regulation is a **law**: it reaches `effects.company` through
@@ -2270,6 +2362,8 @@ running, and the bug was the flag's: one rule each way came out at `-0.000 pts` 
 the ledger because industry's 186k jobs at +0.40 and services' 213k at −0.35 shed and
 hire within **fifteen people** of each other.
 
+## V1.4c
+
 **V1.4c shipped ownership, and the V1.4 block is complete.** `state_share` is a
 third field on the firm register with a **third single writer**, so `share` moves
 only under a subsidy, `state_share` only under an ownership op and
@@ -2345,6 +2439,8 @@ opens over the panel the flag just set up. And **the budget panel has never had 
 deployments row** — V1.3g wrote `_set_figure("deployments", …)` with no `FIGURE_ROWS`
 entry, `_set_figure()` returns silently on an unknown key, and V1.4a then wrote
 "beside the deployment line" about a line that was not there.
+
+## V1.5
 
 **V1.5 is decomposed into four sessions, V1.5a–d, and (a) is built.** The row was
 nine bullets and nine bullets is not a session: (a) the delivery layer, (b)
@@ -2450,6 +2546,8 @@ missing from a green suite; it is `check_names.sh`'s U6b failure in a new place,
 check that silently covers less than it appears to. Both are wired in now and both
 pass.
 
+## V1.5b
+
 **V1.5b shipped demographics and migration, and the row's central premise was wrong.**
 The decomposition deferred (b) partly because ten authored age structures with **no
 dataset behind them** would be the clustered `coalition_position` failure a block later.
@@ -2537,6 +2635,8 @@ line** arrives free on the overview because `_fill_services()` already loops
 the pass confirmed both: the economy panel reads *"43 retired per 100 of working age, +7
 since the start"* with the clock correctly at 2030, and the overview reads *"Pensions
 delivery −0.34 on baseline"* in red while the health line stays **silent**.
+
+## V1.5c
 
 **V1.5c shipped unrest, and it is the session where the block's inverted rule and the
 rule it replaced finally agree.** The statistic is `unrest_pct` and **the verb is the
@@ -2636,6 +2736,8 @@ places** and the session had added one. Three test fixtures predated
 `imported.inequality`, which is V1.5b's own fixture failure repeating. Model:
 [docs/unrest-model.md](docs/unrest-model.md).
 
+## V1.5d
+
 **V1.5d shipped media and information, and the V1.5 block is complete.** The row asked for
 outlets that frame the player's actions, and **the framing machine already existed**:
 `opinion.gd`'s `salience_weights()` has amplified bad news at a global `SALIENCE_GAIN = 5.0`
@@ -2725,6 +2827,8 @@ would be permanent furniture. The effect reaches the polling panel's agenda and
 `elections.gd`'s attribution **for free** through `ns.issue_salience`. Model:
 [docs/media-model.md](docs/media-model.md).
 
+## V1.6e
+
 **V1.6e shipped sectoral investment, and the row asked for a write the model refuses.**
 [[docs/tiers/v1.md]] section 6 says the lever acts "on `sector_output` itself";
 `Economy._apply_growth_to_sectors()` reconciles the three sectors against the month's GDP
@@ -2780,6 +2884,8 @@ frame of a scrolling panel photographed at the top, showing three sector rows sa
 state programme" while the ledger read a live 0.654 % of GDP. Model:
 [docs/sector-model.md](docs/sector-model.md).
 
+## V1.6f
+
 **V1.6f shipped infrastructure projects, and the V1.6 block is COMPLETE.** The row
 split **again, on the same rule V1.6e split on** -- recounted, what was left was two
 S-track machines and one U-track one, so the marker layer with per-project geography as
@@ -2787,6 +2893,8 @@ content is **U6c** and V1.6f built the sim half. Two consecutive sessions cut on
 two-track rule, a first. The visible consequence is in the content: **no project names a
 place**, because a lon/lat nothing reads is a field carrying no information, so the five
 are generic and the session that draws them owns naming them.
+
+## U6c
 
 **U6c shipped the marker layer, and section 6 is complete to its last clause.**
 **Instance thirty-nine is in the row's own wording**: every statement of this machine --
@@ -2900,6 +3008,8 @@ ACTION's, which is an imperative -- right on a button, wrong after a colon -- so
 three-quantity term list, because a name is not a strength. Model:
 [docs/projects-model.md](docs/projects-model.md).
 
+## V1.6
+
 **V1.6 is decomposed into five sessions, V1.6a-e, and (a) is built.** The row was five
 bullets plus an obligation inherited from V1.4c: (a) the business cycle, (b) inflation,
 (c) bond yields and the credit rating, (d) five taxes and brackets, (e) sectoral
@@ -2914,6 +3024,8 @@ twenty-eight** - "infrastructure projects" names `_update_potential_shift()`'s
 separately, dropping its "visible on the map" clause; and "arriving whether or not
 deserved" collides head-on with `economy-model.md`'s no-randomness rule. The orphan
 check came back **clean**, which is itself the finding.
+
+## V1.6a
 
 **V1.6a shipped the business cycle, and it has no `tick_month()`.** `Cycle.impulse_pct()`
 is a pure function of (nation id, absolute month) - three sines whose periods and signs
@@ -2969,6 +3081,8 @@ predicted NOT bit-identical and was not: **all 29 regimes differ, ZERO outcome c
 and the deficit moves 0.07 points against approval's 7.60 because every budget line is a
 share of GDP. **No thirtieth regime was needed** - the cycle is not a verb. Model:
 [docs/cycle-model.md](docs/cycle-model.md).
+
+## V1.6b
 
 **V1.6b shipped inflation, and the row's own input was refuted by the data.** The
 constant-price boundary was decided before any code and holds: **no nominal layer**, four
@@ -3031,6 +3145,8 @@ failures, so the test asserts them separately. The screenshot pass earned its ke
 neighbouring row** (`%+.1f` against a quantity whose whole reachable range is 0.145 points,
 printing "+0.0" against a live figure) and a flag that ticked 48 months and so ran **past**
 the thing it exists to photograph. Model: [docs/inflation-model.md](docs/inflation-model.md).
+
+## V1.6c
 
 **V1.6c shipped the bond market, and two of the four inputs the row names do not exist.**
 `economy_constants.DEBT_REAL_RATE_PCT` stays the **anchor** and `Budget.recompute()` reads
@@ -3096,6 +3212,8 @@ the rating and red once the letter falls out of the band the anchor sits in;
 `screenshot.gd` gained `--downgrade`, and **the twelfth screenshot pass found no bug**, a
 first, reported as such rather than dressed up. Model:
 [docs/credit-model.md](docs/credit-model.md).
+
+## V1.6d
 
 **V1.6d shipped five taxes and brackets, and the tripwire meant to fire did not.**
 `TAX_KEYS` is five; `capital_gains` and `wealth` extend the three tables
@@ -3190,6 +3308,8 @@ player's half-finished edits, so `screenshot.gd --redistribute` re-syncs and
 [docs/tax-model.md](docs/tax-model.md) §11 carries the bug. Model:
 [docs/tax-model.md](docs/tax-model.md).
 
+## V1.7
+
 **V1.7 is decomposed into three sessions, V1.7a-c, and (a) is built.** The row was three
 bullets against a block cell naming four items and neither count was right: (a) the
 campaign phase, (b) campaign promises and the trust price, (c) electoral system choice
@@ -3201,6 +3321,8 @@ precedent. **Machine count is two**, which is what makes it three sessions. **(b
 recorded in advance as the row most likely to split**, on the trust quantity. No V1.7
 session ships a U-track machine, recorded because two consecutive sessions split on that
 rule.
+
+## V1.7a
 
 **V1.7a shipped the campaign phase, and the row was answered by a DELETION.** Of the
 bullet's three nouns -- *time, money, messaging* -- only money survived contact with what
@@ -3288,6 +3410,8 @@ enforces it, and a "campaign opens" entry is a fixed offset from a date the stri
 carries. The window length lives in `campaign_constants.gd`, so the row would have cost
 that property for a derived date.
 
+## V1.7b
+
 **V1.7b shipped campaign promises, and the row that was recorded in advance as the one
 most likely to SPLIT did not.** The pre-registered trigger was the trust quantity — *if
 the price cannot land on an existing register the way V1.5d landed legitimacy on the
@@ -3372,6 +3496,8 @@ at 27.0. **The eighteenth screenshot pass found two bugs, both the readout's**: 
 cost printed in no unit two lines under a turnout figure of the identical shape, and a
 live promise that never said what it had cost — the one figure the section exists to be a
 ledger of. Model: [docs/pledge-model.md](docs/pledge-model.md).
+
+## V1.7c
 
 **V1.7c shipped the referendum and the electoral system, and the V1.7 block is
 COMPLETE.** Two stopgaps discharged, both declared in advance and both pointing here by
@@ -3529,6 +3655,8 @@ model and their agreement about a bit-identical re-run was about nothing. A bit-
 re-run is the reassuring outcome, which is exactly why that check is a test and not a
 habit.
 
+## V1.1e
+
 **V1.1e SHIPPED THE UPPER HOUSE AND THE JUDICIARY, AND THE V1 TIER IS COMPLETE.**
 Nothing is left in it. The row said *Light / Sonnet 5 / Medium -- a second chamber is
 the existing vote resolution run twice with different composition* and named **one of
@@ -3631,6 +3759,9 @@ Italy's 67.6), grievance **11.87** against a quiet run's 8.79, and the president
 2027 at 23.5 %** where `managed` holds at 25.8. **Capturing the courts costs the office.**
 Model: [docs/upper-house-model.md](docs/upper-house-model.md) and
 [docs/judiciary-model.md](docs/judiciary-model.md).
+
+## V1.8
+
 **V1.8 shipped events, and THE V1 TIER IS COMPLETE.** One session, not decomposed --
 the first block since V1.1 not to split -- because fire → pending → choose → apply is
 **one pipeline**, which is V1.3d's rule, so V1.3e's split trigger answers no. ~36

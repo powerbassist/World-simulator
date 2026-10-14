@@ -1,3 +1,10 @@
+---
+title: Map Platform Model
+tags:
+  - model
+  - ui
+---
+
 # Map platform model — V3.1
 
 **2026-09-06 · branch `main` · probe: `tools/frame_probe.gd` @ cfa3cd4 · instrument committed beside the verdict it produced.**

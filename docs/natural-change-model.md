@@ -1,3 +1,10 @@
+---
+title: Natural Change Model
+tags:
+  - model
+  - simulation
+---
+
 # Natural change — V2.6c
 
 Births minus deaths, per region, as a measured rate that moves the population

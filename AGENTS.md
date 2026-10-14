@@ -55,6 +55,13 @@ bash tools/check_mcp.sh
 ```
 
 ```bash
+python tools/check_vault.py
+```
+
+The vault check: unresolved wikilinks, docs the index does not reach, orphans, missing
+frontmatter -- over tracked files only. What each Obsidian plugin is for: [docs/vault.md](docs/vault.md).
+
+```bash
 godot --path "<repo>"
 ```
 
@@ -194,9 +201,9 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 **V4.4 — EVENTS AT SCALE — IS MERGED (PR #49, merge commit `5a2d00a`, 2026-10-14)** after a 23-pass review loop. The event slot became a severity-ordered desk (`ns.event_queue`, `QUEUE_MAX` 4); the quiet went per-category; hooks (a closed vocabulary in `events_constants.ON_ACTIONS`) make the world react to what the player did; a choice can arm a chain; the other 28 nations answer through a deterministic chooser, with tax, spending and company effects skipped for them (their budgets never tick); the book is 102 events in nine categories with 54 art plates. `SAVE_VERSION` is **39** (argued in `game_state.gd`'s `SAVE_VERSION` block). Suite 104/104, names clean. Model: [docs/events-model.md](docs/events-model.md).
 
-**Open for the author, none urgent** (each recorded with a trigger in [docs/someday.md](docs/someday.md)): the re-baseline's 24 outcome flips (20 HELD→LOST at the 2032 election, through the default-drain channel — levers: the defaults' authored means, `CATEGORY_QUIET_MONTHS`, or accept the bound; `reports/v44-rerun-prediction.md`); the event-art contact sheet verdict (the plates lean photographic, not painterly — [docs/event-art-plan.md](docs/event-art-plan.md)); `com_industry_bills.protect_the_makers` is a regulation, so the book has no true "protect industry" option; `events_probe` E4/E5 were not re-run after the two commodity events were unbound from their hook (V4.6's world prices drift to their clamp within months, which the hook's edge fires on once and then never again).
+**Open for the author, none urgent** (each recorded with a trigger in [docs/someday.md](docs/someday.md), and listed as a checkbox under its "Open author calls" so the vault dashboard shows what is still open): the re-baseline's 24 outcome flips (20 HELD→LOST at the 2032 election, through the default-drain channel — levers: the defaults' authored means, `CATEGORY_QUIET_MONTHS`, or accept the bound; `reports/v44-rerun-prediction.md`); the event-art contact sheet verdict (the plates lean photographic, not painterly — [docs/event-art-plan.md](docs/event-art-plan.md)); `com_industry_bills.protect_the_makers` is a regulation, so the book has no true "protect industry" option; `events_probe` E4/E5 were not re-run after the two commodity events were unbound from their hook (V4.6's world prices drift to their clamp within months, which the hook's edge fires on once and then never again).
 
-**NEXT: V4.5 — the council, contested.** Per-block history (what each version built, what each probe measured, each refused alternative) lives in [docs/history.md](docs/history.md), moved out of this file so every session does not pay for it; the tier docs are [docs/tiers/](docs/tiers/) and the parking lot is [docs/someday.md](docs/someday.md).
+**NEXT: V4.5 — the council, contested.** Per-block history (what each version built, what each probe measured, each refused alternative) lives in [docs/history.md](docs/history.md), moved out of this file so every session does not pay for it; the tier docs are `docs/tiers/` ([v4](docs/tiers/v4.md) is current) and the parking lot is [docs/someday.md](docs/someday.md).
 
 **Save format** is at the version above. The rule for a bump is not "a new field bumps" but "a missing field would read as something wrong": an absent value that reads correctly for every older save (a register that was "nothing yet", a stamp at -1) earns no bump and is pinned by `tests/test_save_load.gd`; a content-derived static that `from_dict()` cannot re-derive does. There has never been a migration — a superseded save is refused outright. The version history is in `game_state.gd` and `docs/history.md`; do not copy the current number into prose that nothing keeps in step with the code.
 

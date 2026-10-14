@@ -1,3 +1,10 @@
+---
+title: Energy Model
+tags:
+  - model
+  - simulation
+---
+
 # The energy model — the mix, the dependency, and the two prices of a place
 
 V2.8. `src/sim/energy.gd` holds one machine: a per-nation register of plants

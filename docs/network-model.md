@@ -1,3 +1,10 @@
+---
+title: Network Model
+tags:
+  - model
+  - simulation
+---
+
 # The network model — where a region sits
 
 V2.7. `src/sim/network.gd` turns a transport graph into a per-region
