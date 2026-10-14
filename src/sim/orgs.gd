@@ -519,13 +519,29 @@ static func _resolve(state, loader, org_id: String) -> void:
 	# it through on a smaller base. That is constructive abstention, and it is what
 	# the real Council does.
 	var cast: int = seats_for + seats_against
-	var passed: bool = cast > 0 and float(seats_for) >= K.PASS_SEAT_FRACTION * float(cast)
+	var decision: String = Council.decision_of(loader, proposal)
+	var vetoed_by: Array = []
+	var passed: bool
+	if decision == CouncilK.DECISION_UNANIMITY:
+		# Any member against is a veto; an abstention is not -- the real
+		# Council's constructive abstention, and the only reason the player's
+		# third option survives a class where one voice decides.
+		for id in by_nation.keys():
+			if by_nation[id] == VOTE_AGAINST:
+				vetoed_by.append(id)
+		vetoed_by.sort()
+		passed = seats_for > 0 and vetoed_by.is_empty()
+	else:
+		passed = cast > 0 and float(seats_for) >= K.PASS_SEAT_FRACTION * float(cast)
 
 	register["last_vote"] = {
 		"proposal_id": proposal.id,
 		"name": proposal.proposal_name,
 		"org_id": org_id,
 		"passed": passed,
+		"decision": decision,
+		"vetoed_by": vetoed_by,
+		"sponsor": String(pending.get("sponsor", "")),
 		"seats_for": seats_for,
 		"seats_against": seats_against,
 		"seats_total": seats_total,

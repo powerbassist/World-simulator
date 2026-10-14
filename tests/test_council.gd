@@ -47,6 +47,8 @@ func _init() -> void:
 	_check_an_ai_chair_opens_what_it_wants()
 	_check_a_human_chair_sets_the_agenda()
 	_check_tabling_costs_the_chair()
+	_check_one_no_vetoes_a_treaty()
+	_check_abstention_does_not_veto()
 	_finish()
 
 
@@ -339,3 +341,53 @@ func _check_tabling_costs_the_chair() -> void:
 	# No chair, nobody to ask.
 	var unchaired = _fresh()
 	_ok(not Orgs.table_proposal(unchaired, _loader, EU_ORG, choice), "tabling accepted in a council with no presidency")
+
+
+# --- Part 4: unanimity -------------------------------------------------------------
+
+## test_orgs.gd's _force_vote, with `decision` set on the proposal for the call.
+## `all_for` swings every AI member to FOR (a lobbied 1.0 each) so a unanimity
+## check never depends on whether all 26 others happen to back the fixture at
+## EU-27 -- bloc-model's "carried by every member" was measured at nine.
+func _force(state, proposal_id: String, choice: String, decision := "", all_for := false) -> bool:
+	var proposal = Orgs.proposal_by_id(_loader, EU_ORG, proposal_id)
+	if proposal == null:
+		_fail("no eu proposal '%s'" % proposal_id)
+		return false
+	var kept: String = proposal.decision
+	proposal.decision = decision
+	var lobbied := {}
+	if all_for:
+		for id in Orgs.members(state, EU_ORG):
+			if id != PLAYER:
+				lobbied[id] = 1.0
+	state.orgs[EU_ORG]["pending"] = {
+		"proposal_id": proposal.id, "name": proposal.proposal_name,
+		"summary": proposal.summary, "months_left": 1,
+		"player_vote": Orgs.VOTE_ABSTAIN, "sponsor": Council.live_sponsor(state, proposal),
+		"lobbied": lobbied,
+		"opened_year": state.year, "opened_month": state.month,
+	}
+	if not Orgs.cast_vote(state, EU_ORG, choice):
+		_fail("cast_vote(%s) refused" % choice)
+	Orgs.tick_month(state, _loader)
+	proposal.decision = kept
+	return bool((Orgs.last_vote(state, EU_ORG) as Dictionary).get("passed", false))
+
+
+func _check_one_no_vetoes_a_treaty() -> void:
+	# recovery_facility is carried by every member (bloc-model §6): under QMR the
+	# player is outvoted; under unanimity the player's no is a veto.
+	var qmr = _fresh()
+	_ok(_force(qmr, "recovery_facility", Orgs.VOTE_AGAINST), "recovery_facility fell under qmr -- the fixture moved")
+	var una = _fresh()
+	_ok(not _force(una, "recovery_facility", Orgs.VOTE_AGAINST, CouncilK.DECISION_UNANIMITY, true), "the player's no did not veto a unanimity proposal")
+	var last: Dictionary = Orgs.last_vote(una, EU_ORG)
+	_ok((last.get("vetoed_by", []) as Array) == [PLAYER], "vetoed_by is %s, expected [FRA]" % [last.get("vetoed_by", [])])
+	_ok(String(last.get("decision", "")) == CouncilK.DECISION_UNANIMITY, "last_vote does not record its decision class")
+
+
+func _check_abstention_does_not_veto() -> void:
+	var una = _fresh()
+	_ok(_force(una, "recovery_facility", Orgs.VOTE_ABSTAIN, CouncilK.DECISION_UNANIMITY, true),
+		"an abstention blocked a unanimity proposal every other member backs -- constructive abstention is gone")
