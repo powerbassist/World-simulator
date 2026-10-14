@@ -8,7 +8,7 @@ tags:
 # Someday
 
 > [!warning] Not part of near-term planning
-> Nothing on this page is scheduled, estimated, or committed to. It exists so good ideas have somewhere to live that is not the . Treat it as a parking lot, not a backlog.
+> Nothing on this page is scheduled, estimated, or committed to. It exists so good ideas have somewhere to live that is not a tier doc. Treat it as a parking lot, not a backlog.
 
 > [!note] Parked is not the same as declined
 > Everything here is *unscheduled*. Things that were considered and **decided

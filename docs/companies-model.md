@@ -67,7 +67,7 @@ Deliberately absent, and each for a stated reason:
 > resolved at load and validated loud — rendered on the card, the People window
 > and B3's board-chair line. What §2 refused was a CEO who ACTS: a firm's own
 > interest reaching the state through a verb of its own. That refusal still
-> holds — the chief is a face and a bench tier until [[v4.2]]'s lobbying gives
+> holds — the chief is a face and a bench tier until [[tiers/v4|V4.2]]'s lobbying gives
 > a firm's interest a lever, and §37 records the gap as the declared stopgap
 > it is.
 
@@ -1255,7 +1255,7 @@ gate. The pin lives in `tests/test_companies_tiers.gd` beside the round-trip.
 ## 37. The declared stopgaps and the open calls
 
 - **The executive kind carries no meter and no wants** — and the deferral
-  this bullet declared is RESOLVED: [[v4.2]] built the lever, and the lever
+  this bullet declared is RESOLVED: [[tiers/v4|V4.2]] built the lever, and the lever
   is an ACT, not a meter. A chief's interest reaches the statute book
   through `statute.gd`'s chief-backed assembly bill — the sector's biggest
   major signs the ask as `backer_chief`, the assembly divides, and the

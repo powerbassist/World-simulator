@@ -1,0 +1,1 @@
+- [ ] <% tp.system.prompt("The decision, in one line") %> (raised <% tp.date.now("YYYY-MM-DD") %>; recorded in <% tp.system.prompt("Where it is argued: a wikilink or a path") %>)

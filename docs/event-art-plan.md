@@ -1,3 +1,10 @@
+---
+title: Event Art Plan
+tags:
+  - art
+  - plan
+---
+
 # V4.4 event art — generation plan (Task 11)
 
 40–60 themed illustrations REUSED BY CATEGORY (CK3's `theme` shape), on the V3.7

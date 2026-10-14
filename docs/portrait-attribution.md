@@ -1,3 +1,10 @@
+---
+title: Portrait Attribution
+tags:
+  - data
+  - licensing
+---
+
 # Portrait reference attribution (V3.7 Phase B3)
 
 The portrait wall's likeness comes from Wikimedia Commons photographs of the

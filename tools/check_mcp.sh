@@ -132,6 +132,14 @@ fi
 # `uid://c3rodes2l3gxb` rather than as a path. It sat in the working tree unseen until
 # an external review found it. AGENTS.md's rule is "no autoloads in the game code", so
 # the guard is now that rule rather than a list of the ways one addon writes itself in.
+#
+# THE RULE HAS ONE STATED EXCEPTION, AND THE GUARD READS IT FROM GIT. V2.4b adopted
+# dialogue_manager by committing the addon whole, so its autoload and its plugin.cfg
+# resolve on a fresh clone; flagging them warned on every run about a decision already
+# taken. An entry is therefore stray only when what it points at is NOT TRACKED --
+# AGENTS.md's "src/ may reference an addon file only if that file is committed", applied
+# to project.godot. A uid:// entry cannot be resolved here, so it is still flagged.
+tracked() { case "$1" in res://*) git ls-files --error-unmatch -- "${1#res://}" >/dev/null 2>&1 ;; *) return 1 ;; esac; }
 if git rev-parse --git-dir >/dev/null 2>&1; then
   # What the NEXT commit will contain: the index when project.godot is staged,
   # HEAD otherwise. Checking HEAD first would keep warning about a line the index
@@ -148,14 +156,15 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
   autoloads="$(git show "$autoload_src" 2>/dev/null | awk '
     /^\[autoload\]/ { inside = 1; next }
     /^\[/           { inside = 0 }
-    inside && /=/    { print $1 }
-  ')"
+    inside && /=/    { split($0, kv, "="); gsub(/["*]/, "", kv[2]); print kv[1] "=" kv[2] }
+  ' | while IFS= read -r entry; do tracked "${entry#*=}" || printf '%s
+' "$entry"; done)"
   if [ -n "$autoloads" ]; then
-    warn "$autoload_where carries an [autoload] section -- these point into gitignored addons/, so a fresh clone logs each as a missing script. Drop the section from what you commit:"
+    warn "$autoload_where carries an autoload whose script is not tracked -- a fresh clone logs each as a missing script. Drop it from what you commit:"
     printf '         %s
 ' $autoloads
   else
-    ok "no autoload in what the next commit would contain"
+    ok "every autoload in what the next commit would contain points at a tracked script"
   fi
 
   # The same failure through the other door. `enabled=` names plugin.cfg paths, and
@@ -166,9 +175,10 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
   extra_plugins="$(git show "$autoload_src" 2>/dev/null \
     | sed -n 's/^enabled=PackedStringArray(\(.*\))$/\1/p' \
     | tr ',' '\n' | tr -d ' "' | sed 's|^res://||' \
-    | grep -v '^$' | grep -v '^addons/godot_mcp_toolkit/plugin.cfg$' || true)"
+    | grep -v '^$' | grep -v '^addons/godot_mcp_toolkit/plugin.cfg$'     | while IFS= read -r cfg; do tracked "res://$cfg" || printf '%s
+' "$cfg"; done || true)"
   if [ -n "$extra_plugins" ]; then
-    warn "$autoload_where enables addons beyond the toolkit -- a fresh clone errors on each. Drop them from enabled= in what you commit:"
+    warn "$autoload_where enables an untracked addon beyond the toolkit -- a fresh clone errors on each. Drop them from enabled= in what you commit:"
     printf '         %s\n' $extra_plugins
   else
     ok "no stray addon enabled in what the next commit would contain"

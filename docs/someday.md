@@ -12,6 +12,18 @@ Everything here carries its own re-raise trigger — the condition under which t
 item stops being parking and becomes work. An item without a trigger is a wish,
 and does not belong on this page.
 
+## Open author calls
+
+Decisions only the author can take. Each is a checkbox so the Tasks query on
+[[vault-dashboard]] lists what is still open; tick it with the decision's date
+when it is taken, and record the decision where the line points.
+
+- [ ] V4.4 re-baseline: 24 outcome flips, 20 of them HELD→LOST at the 2032 election through the default-drain channel. Tune the defaults' authored means, tune `CATEGORY_QUIET_MONTHS`, or accept the bound (`reports/v44-rerun-prediction.md`)
+- [ ] Event-art contact sheet: the plates lean photographic, not painterly. Accept or re-render ([[event-art-plan]])
+- [ ] The book has no true "protect industry" option: `com_industry_bills.protect_the_makers` is a regulation
+- [ ] Re-run `events_probe` E4/E5 since the two commodity events were unbound from their hook (over an hour, run alone)
+- [ ] V3.7 portrait generation left incomplete on the unmerged `v3.7-phase-b` ([[v3]] close-out, item 3)
+
 ## Carried from V4.2's close-out (2026-10-05)
 
 Found during the version-close ultra's eight-pass review of PR #48, refuted as

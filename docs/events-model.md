@@ -386,7 +386,7 @@ and nothing fires.
 **The plan had `deficit_pct_gdp` as a `<=` field.** It is not: `Budget.tick_month()` sets
 it to `total_spending_pct_gdp - total_revenue_pct_gdp`, so **a shortfall is POSITIVE** and
 `austerity` reads −9.41 because it runs a surplus. `balance_probe.gd`'s `_print_row()`
-negates it for display, which is why every deficit quoted in [[CLAUDE]] and in the model
+negates it for display, which is why every deficit quoted in AGENTS.md (then CLAUDE.md) and in the model
 docs carries the opposite sign from the field. **An event authored on the plan's sign
 would have fired only on a surplus.**
 

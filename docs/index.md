@@ -42,15 +42,23 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[bloc-model]] — the supranational bloc: proposals, the council, rules in force, transfers, and the twelfth opinion issue
 - [[orgs-model]] — the org register (V3.2): membership as data, one register per council, the composition rule, accession and withdrawal as fights
 - [[foreign-policy-model]] — why the other nine answer as they do, and how they choose a target and a verb unprompted
+- [[summits-model]] — the scene a meeting becomes: a state visit lands, a scene is drawn, the player talks, one choice is priced (V2.4b)
+- [[agency-model]] — the competence-credit channel: how running the country *well*, not *differently*, reaches a voter (V4.0)
+- [[programme-model]] — the government's programme: an agenda the player chooses at term start, judged on what it was for (V4.1)
 - [[defence-model]] — capability derived from sustained spending, defensive pacts, and the alliance obligation that bills you at home
 - [[calendar-model]] — the president's diary: dated state put on a timeline, optional booking, and the currency a probe deleted
 - [[people-model]] — the named-individual register: one record per person, ids in state, and the minister bench a probe cut before it was authored
 - [[companies-model]] — named firms as a partition of a sector, subsidies as the first verb pointed at something that is not a nation, and the two channels that read exactly zero until the player acts
 - [[society-model]] — service quality as a stock the project had already built three times under other names, corruption as the factor that decides what a spending line buys, and the double count that had to be resolved rather than avoided
 - [[unrest-model]] — the grievance stock and the unions that act on it, an inequality statistic nothing the player can move, and the output-only price its own probe refuted
+- [[demography-model]] — ageing at a measured rate, the dependency ratio it produces, and what that ratio puts pressure on (V1.5b)
+- [[natural-change-model]] — births minus deaths per region, a measured rate that moves the population shares (V2.6)
 - [[media-model]] — outlets with leanings, framing as a per-bloc salience gain on a machine `opinion.gd` had been running since S10, and press freedom priced in a legitimacy quantity that turned out to already exist
 - [[tax-model]] — five taxes and brackets, the wealth tax that is not on the other four's rate scale, and the tripwire that could not fire
 - [[sector-model]] — sectoral investment: a capital stock on the sector's own trend rate, why `sector_output` had no room for a second writer, and why the lever buys output and no jobs
+- [[commodities-model]] — the commodity economy: world prices, per-nation commodity state, and the content in `data/commodities/` (V4.6)
+- [[energy-model]] — power plants as a per-nation register, a build countdown, a computed spending line and a derived mix (V2.8)
+- [[climate-model]] — an emissions read over the energy mix, two sited disasters on the event schema, and a fifth org (V3.5)
 - [[projects-model]] — infrastructure projects: a dated commitment that bills while it builds and pays once when it opens, why the diary needed no second scheduler, and why the bill is not the cost
 - [[campaign-model]] — the campaign phase: money spent on TURNOUT rather than on opinion, why the row's other two nouns were already answered, and why maximising your own vote share is not the same as winning
 - [[pledge-model]] — campaign promises: why the trust price needed no new quantity, why a promise is judged EVERY MONTH rather than at the end of the term, and the difference between a bet on the world and a self-imposed constraint
@@ -60,12 +68,16 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[judiciary-model]] — the court, rule of law, and a lock with a key you can buy
 - [[panel-system]] — the row primitives twenty-five panels stopped writing for themselves, the sweep derived from the window registry, and the fold a headless harness turned out to be able to see
 - [[events-model]] — events as OCCASIONS rather than mechanics, why the schema is the law channel and not the union of ten, the deterministic hazard, and the accumulation bound that a per-decision band could not see
+- [[event-art-plan]] — the V4.4 event art: plates reused by category and severity, the recipe, and the licence trail
 - [[geography-model]] — regions and cities as a two-level partition of population, why the NUTS level is per nation, and the population cut that had to be measured three times because GeoNames files boroughs as cities
+- [[siting-model]] — the contract by which a national quantity acquires a place (V2.6b1)
+- [[map-platform-model]] — the map as a platform: the frame budget a profile measured, and the playtest finding it refuted (V3.1)
 - [[region-economy-model]] — national GDP as the sum of the regions, the zero-mean mix deviation that keeps the aggregate honest, and Britain's recorded absence of any regional divergence
 - [[network-model]] — the 112 regions on a transport graph: adjacency derived, eight authored sea links, an output-weighted accessibility index, and the beta sweep whose band turned out to have one edge
 - [[migration-model]] — the two population partitions made live: a zero-sum flow on expected income and named employers, the rate measured from Europe's own regional drift, and the two nations that structurally cannot move
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
+- [[portrait-attribution]] — the Wikimedia Commons photographs behind the generated portraits, credited as their licences require
 - [[tooling]] — Godot version, MCP setup, machine prerequisites
 - [[test-suite-model]] — one execution core for the gate: parallel workers, exclusive lane, per-check sharding byte-identical to the monolithic run, and the cockpit that reads it
 - [[decision-log]] — corrections made mid-session that changed the plan, and why
@@ -76,12 +88,20 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[mvp]] — France, one term, one way to lose
 - [[v1]] — what gets built once the MVP works. Complete; nothing left in it
 - [[v2]] — the world becomes visible and located: geography, faces, a calendar that costs something, motion
-- [[v3]] — Europe, whole: the map as a platform, the alliance system, the EU-27 roster, roads and climate. Signed 2026-09-06; V3.0–V3.4 built, V3.5 in flight
-- [[v4]] — the world wants things: agency settled, a player agenda, characters, events at scale, industry, the reading surface. **DRAFT, unsigned**
+- [[v3]] — Europe, whole: the map as a platform, the alliance system, the EU-27 roster, roads and climate. Signed 2026-09-06; V3.0–V3.7 built, V3.7's portrait generation left incomplete by the author's call (2026-09-14)
+- [[v4]] — the world wants things: agency settled, a player agenda, characters, events at scale, industry, the reading surface. Signed 2026-09-13; V4.0–V4.4, V4.6 and V4.7 built, V4.5 next
 - [[history]] — the per-block record of what each version built, measured and refused (moved out of AGENTS.md at V4.4's close)
-- [[someday]] — the parking lot, not scheduled
+- [[someday]] — deferred engineering issues, each with the trigger that would reopen it
+- [[tiers/someday|someday (ideas)]] — the parking lot for design ideas, not scheduled
 - [[declined]] — considered and decided against, with what would reopen each
 - [[out-of-scope-mvp]] — the explicit exclusion list, with reasons
+
+## Working notes
+
+- [[vault]] — how this vault is set up: excluded folders, what each plugin is for, the templates
+- [[vault-dashboard]] — live views over the docs (Dataview) and the open author calls (Tasks)
+- [[architecture.excalidraw|architecture]] — the `data → sim → ui` rule as a drawing
+- [[2026-09-07-v3.3-roster-eu27]] — the one committed build plan (the others are gitignored scratch)
 
 ## Brainstorm
 
