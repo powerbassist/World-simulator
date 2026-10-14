@@ -217,11 +217,16 @@ RECORD, not an open item. The gap counted intermediate use twice, six recipes co
 more in inputs than their output was worth, and demand's sector mix moved with
 supply so no shock reached a price. All three fixed; before and after are in
 [[commodities-model]] §3b (15 goods >= 1.25x at month 3 before, 0 after; a supply
-shock now moves steel by 10 %). **The re-bind trigger in the previous entry is met**:
-restoring `on_action` on `com_price_high_desk` and `com_industry_bills` is now an
-author call, and it changes what the desk delivers, so it needs `events_probe` to
-tick Commodities first (E4/E5 still omit it) and a measured arrival rate before it
-ships. Left open: clothing creeps from 1.04x to 1.27x base over 168 months,
+shock now moves steel by 10 %). **Re-bind decided against, 2026-10-14 (author's call).**
+With the drift fixed, no good crosses 1.25x base in an idle run until clothing's
+unexplained creep at month ~160, so the hook would fire almost never, and its one
+firing would be that creep rather than a shortage; bound to it, the two events
+would also leave the hazard roll, where they arrive ~3 times a run (E5: commodity
+8.1 %). **New trigger to re-bind `com_price_high_desk` and `com_industry_bills`**,
+all three together: (1) a player verb or world event that can cause a real world
+shortage; (2) clothing's creep attributed, so it cannot fire the hook by
+mistake; (3) `events_probe` E4/E5 ticking Commodities, with the hook's real
+arrival rate measured before it ships. Left open: clothing creeps from 1.04x to 1.27x base over 168 months,
 unattributed.
 
 ### Same-month category collisions favour the early alphabet
