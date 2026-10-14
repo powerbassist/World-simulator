@@ -339,6 +339,19 @@ static func _org_transfer(state, ns, org_id: String) -> float:
 static func _tick_council(state, loader, org_id: String) -> void:
 	var register: Dictionary = state.orgs[org_id]
 
+	# V4.5a. The ratification window runs whatever the council is doing; a
+	# treaty nobody ratified in time falls exactly as one rejected does.
+	var ratifying: Dictionary = register.get("ratifying", {})
+	if not ratifying.is_empty():
+		ratifying["months_left"] = int(ratifying.get("months_left", 0)) - 1
+		if int(ratifying["months_left"]) <= 0:
+			var late: Array = []
+			for id in (ratifying.get("nations", {}) as Dictionary).keys():
+				if String(ratifying["nations"][id]) == CouncilK.RATIFY_PENDING:
+					late.append(String(id))
+			late.sort()
+			_treaty_falls(state, loader, org_id, late)
+
 	var pending: Dictionary = register.get("pending", {})
 	if not pending.is_empty():
 		if int(pending["months_left"]) > 1:
@@ -583,6 +596,25 @@ static func _resolve(state, loader, org_id: String) -> void:
 	Council.answer_sponsor(state, loader, String(pending.get("sponsor", "")), by_nation)
 	Council.settle_debts(state, org_id, String(pending.get("sponsor", "")), proposal.id, by_nation)
 
+	if passed and decision == CouncilK.DECISION_UNANIMITY:
+		# The treaty class goes home before it binds. Every member whose politics
+		# the game runs must ratify; the AI members that voted for it are taken to
+		# have ratified (they have no assembly the game simulates -- a bound,
+		# recorded in docs/orgs-model.md, not a model).
+		var home := {}
+		for id in members(state, org_id):
+			if state.nations[id].has_budget:
+				home[id] = CouncilK.RATIFY_PENDING
+		if not home.is_empty():
+			register["ratifying"] = {
+				"proposal_id": proposal.id,
+				"name": proposal.proposal_name,
+				"sponsor": String(pending.get("sponsor", "")),
+				"months_left": CouncilK.RATIFY_WINDOW_MONTHS,
+				"nations": home,
+			}
+			register["last_vote"]["ratification"] = "pending"
+			return
 	if passed:
 		_adopt(state, loader, org_id, proposal)
 
@@ -752,6 +784,47 @@ static func table_proposal(state, loader, org_id: String, proposal_id: String) -
 	Council.spend_relations(state, ns.id, chair, CouncilK.TABLE_RELATIONS_COST)
 	state.orgs[org_id]["tabled"] = {"proposal_id": proposal_id, "by": ns.id}
 	return true
+
+
+## One member's home vote on the treaty this council is ratifying. All ratified:
+## adopted for everyone. One rejection: it falls for everyone, the 2005 shape --
+## the author's call (2026-10-14) over an opt-out or binding-anyway.
+static func record_ratification(state, loader, org_id: String, nation_id: String, passed: bool) -> void:
+	if not state.orgs.has(org_id):
+		return
+	var register: Dictionary = state.orgs[org_id]
+	var r: Dictionary = register.get("ratifying", {})
+	if r.is_empty() or String((r.get("nations", {}) as Dictionary).get(nation_id, "")) != CouncilK.RATIFY_PENDING:
+		return
+	if not passed:
+		_treaty_falls(state, loader, org_id, [nation_id])
+		return
+	r["nations"][nation_id] = CouncilK.RATIFY_DONE
+	for id in (r["nations"] as Dictionary).keys():
+		if String(r["nations"][id]) != CouncilK.RATIFY_DONE:
+			return
+	var proposal = _proposal_by_id(loader, org_id, String(r["proposal_id"]))
+	register["ratifying"] = {}
+	_mark_ratification(register, String(r["proposal_id"]), "ratified")
+	if proposal != null:
+		_adopt(state, loader, org_id, proposal)
+
+
+static func _treaty_falls(state, loader, org_id: String, failing: Array) -> void:
+	var register: Dictionary = state.orgs[org_id]
+	var r: Dictionary = register.get("ratifying", {})
+	register["ratifying"] = {}
+	_mark_ratification(register, String(r.get("proposal_id", "")), "failed")
+	Council.price_failed_treaty(state, loader, org_id, String(r.get("sponsor", "")), failing)
+
+
+## The division record says how ratification ended -- only if it is still the
+## record of THIS treaty's division (a later division has replaced it otherwise,
+## and rewriting that one would be a lie about a different vote).
+static func _mark_ratification(register: Dictionary, proposal_id: String, outcome: String) -> void:
+	var last: Dictionary = register.get("last_vote", {})
+	if String(last.get("proposal_id", "")) == proposal_id:
+		last["ratification"] = outcome
 
 
 # --- what the rules cost ----------------------------------------------------------

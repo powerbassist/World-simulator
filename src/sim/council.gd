@@ -268,3 +268,25 @@ static func settle_debts(state, org_id: String, sponsor_id: String, proposal_id:
 		if String(by_nation[debtor]) != CouncilK.ASK_FOR:
 			spend_relations(state, debtor, sponsor_id, CouncilK.IOU_BETRAYAL)
 	register["debts"] = kept
+
+
+## A treaty everyone else signed, killed at home. The sponsor charges each
+## failing member in proportion to how badly it wanted the thing; every other
+## member charges a flat bystander's price. Ids sorted -- pricing order must not
+## depend on dictionary order even though relations writes commute today.
+static func price_failed_treaty(state, loader, org_id: String, sponsor_id: String, failing: Array) -> void:
+	if failing.is_empty():
+		return
+	var d: float = drive(state, loader, sponsor_id) if sponsor_id != "" else 0.0
+	var others: Array = []
+	for id in state.nations.keys():
+		if state.nations[id].orgs.has(org_id):
+			others.append(String(id))
+	others.sort()
+	for f in failing:
+		if sponsor_id != "" and sponsor_id != String(f):
+			spend_relations(state, sponsor_id, String(f), CouncilK.RATIFY_FAIL_SPONSOR * d)
+		for m in others:
+			if m == String(f) or m == sponsor_id:
+				continue
+			spend_relations(state, m, String(f), CouncilK.RATIFY_FAIL_MEMBER)

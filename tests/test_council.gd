@@ -16,6 +16,7 @@ const Org = preload("res://src/core/org.gd")
 const BlocProposal = preload("res://src/core/bloc_proposal.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Council = preload("res://src/sim/council.gd")
+const Ratification = preload("res://src/sim/ratification.gd")
 const K = preload("res://src/sim/bloc_constants.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const RK = preload("res://src/core/relations.gd")
@@ -56,6 +57,11 @@ func _init() -> void:
 	_check_bargains_are_refused_honestly()
 	_check_aid_pays_for_a_year()
 	_check_a_vote_trade_comes_due()
+	_check_a_treaty_waits_for_home()
+	_check_ratified_is_adopted()
+	_check_rejected_falls_for_all()
+	_check_the_window_closes()
+	_check_the_treaty_is_a_bill()
 	_finish()
 
 
@@ -580,3 +586,73 @@ func _check_a_vote_trade_comes_due() -> void:
 		Council.tick_register(lapsed, EU_ORG)
 	_ok((lapsed.orgs[EU_ORG]["debts"] as Array).is_empty(), "an IOU outlived IOU_EXPIRY_MONTHS")
 	p.sponsor = kept
+
+
+# --- Part 7: ratification at home ---------------------------------------------------
+
+func _carry_treaty(state) -> void:
+	_force(state, "recovery_facility", Orgs.VOTE_FOR, CouncilK.DECISION_UNANIMITY, true)
+
+
+func _check_a_treaty_waits_for_home() -> void:
+	var state = _fresh()
+	_carry_treaty(state)
+	var r: Dictionary = state.orgs[EU_ORG]["ratifying"]
+	_ok(String(r.get("proposal_id", "")) == "recovery_facility", "a carried unanimity proposal did not go to ratification")
+	_ok(not (state.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "a treaty was adopted before it was ratified")
+	_ok(String((r.get("nations", {}) as Dictionary).get(PLAYER, "")) == CouncilK.RATIFY_PENDING, "the player is not asked to ratify")
+	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "pending", "last_vote does not say ratification is pending")
+	# QMR binds directly -- no ratification.
+	var qmr = _fresh()
+	_force(qmr, "recovery_facility", Orgs.VOTE_FOR)
+	_ok((qmr.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "a qmr proposal went to ratification")
+	_ok((qmr.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "a carried qmr proposal was not adopted")
+
+
+func _check_ratified_is_adopted() -> void:
+	var state = _fresh()
+	_carry_treaty(state)
+	Orgs.record_ratification(state, _loader, EU_ORG, PLAYER, true)
+	_ok((state.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "a ratified treaty was not adopted")
+	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "ratification did not close")
+	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "ratified", "last_vote does not record the ratification")
+
+
+func _check_rejected_falls_for_all() -> void:
+	var p = Orgs.proposal_by_id(_loader, EU_ORG, "recovery_facility")
+	var kept: String = p.sponsor
+	p.sponsor = "DEU"
+	var state = _fresh()
+	_carry_treaty(state)
+	var d0: float = RK.score(state, PLAYER, "DEU")
+	var i0: float = RK.score(state, PLAYER, "ITA")
+	Orgs.record_ratification(state, _loader, EU_ORG, PLAYER, false)
+	_ok(not (state.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "a rejected treaty was adopted")
+	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "a rejected treaty is still ratifying")
+	_ok(String(Orgs.last_vote(state, EU_ORG).get("ratification", "")) == "failed", "last_vote does not record the failure")
+	var drive: float = Council.drive(state, _loader, "DEU")
+	_ok(is_equal_approx(d0 - RK.score(state, PLAYER, "DEU"), CouncilK.RATIFY_FAIL_SPONSOR * drive), "the sponsor's price for a killed treaty is wrong")
+	_ok(is_equal_approx(i0 - RK.score(state, PLAYER, "ITA"), CouncilK.RATIFY_FAIL_MEMBER), "a bystander's price for a killed treaty is wrong")
+	p.sponsor = kept
+
+
+func _check_the_window_closes() -> void:
+	var state = _fresh()
+	_carry_treaty(state)
+	for i in CouncilK.RATIFY_WINDOW_MONTHS:
+		Orgs.tick_month(state, _loader)
+	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "the ratification window did not close")
+	_ok(not (state.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility"), "an unratified treaty was adopted when the window closed")
+
+
+func _check_the_treaty_is_a_bill() -> void:
+	var state = _fresh()
+	_carry_treaty(state)
+	var forecast: Dictionary = Ratification.forecast(state, _loader, EU_ORG)
+	_ok(forecast.has("yes_seats") and forecast.has("party_votes"), "the ratification forecast is not Legislature.resolve_vote()'s result")
+	_ok(String(forecast.get("law_id", "")) == "treaty:recovery_facility", "the treaty bill's id is '%s'" % forecast.get("law_id", ""))
+	var result: Dictionary = Ratification.submit(state, _loader, EU_ORG)
+	_ok(bool(result.get("passed", false)) == bool(forecast.get("passed", false)) or result.has("upper_passed"),
+		"submit() disagreed with its own forecast with no upper chamber in the way")
+	_ok((state.orgs[EU_ORG]["ratifying"] as Dictionary).is_empty(), "submit() did not settle the ratification")
+	_ok(bool(Ratification.submit(state, _loader, EU_ORG).get("refused", false)), "a second submit with nothing ratifying was not refused")
