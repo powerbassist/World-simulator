@@ -403,5 +403,27 @@ trade weights down; approval moves of a point or two; outcome flips possible
 where V4.4's re-baseline already sat on knife edges. A moved line that none of
 (i)-(iv) explains is a DEFECT.
 
+**HELD, with one channel restated (2026-10-15).** 51 of 51 regimes moved (as
+predicted: the council meets in every regime); 50 `invariants: OK` blocks each
+side; no script errors; 1724 candidate lines against 1690 (the extra lines are
+election-attribution rows and discipline rows whose numbers moved). **Three
+outcome flips, all LOST → HELD at the 2032 presidential**, each a knife edge
+(`managed_books_ahead` 23.6 → 24.0 %, `managed_tightens_migration` 24.0 → 24.3 %,
+`flat_tax` 23.7 → 24.2 %). Traced, not assumed (an idle FRA, `Orgs.tick_month`
+alone, both trees): the burden arrives at month 12 instead of 48 and settles at
+0.139 against 0.113 (the stability pact now carries in year one and France is in
+breach), the transfer line is higher early (0.372 vs 0.333 at month 12), and the
+idle run holds 13 rules against 6 -- no unanimity proposal among them: every
+treaty falls unratified, channel (ii). **Restated:** the prediction's "`europe`
+salience up" read wrongly at the election screen -- `europe` drops OUT of the
+printed attribution in the candidate, because the deficit channel (iii) lifts
+`public_finances` and `jobs` above it, not because Europe bites less (the burden
+is higher, earlier). The three flips move by +0.3 to +0.5 vote points; WHICH
+channel lifts the incumbent despite a heavier burden was NOT isolated (candidates:
+the early burden settling into `start`-relative salience before the term's
+election, or trade through the collective tariffs) -- recorded as an open
+attribution for b2's review, the flips themselves accepted as knife-edge moves
+inside the predicted channels.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]
