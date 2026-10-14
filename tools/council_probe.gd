@@ -19,31 +19,38 @@ extends SceneTree
 ##       for), inverted (fails with FRA for, carries against -- should be
 ##       impossible); `+abst` flags an abstention-window (abstain and against differ).
 ##       Unanimity rows list the vetoing ids when FRA votes for. Footer per org.
-##   C1  THE PLAYER DECIDES. One 168-month FRA run on the real month, no player
-##       council command. At each opening, on duplicate_state() copies resolved
-##       at once, does ANY single bargain (currency x member, asking FRA's
-##       preferred outcome) flip the outcome to it? Band 0.20-0.50 on the
+##   C1  THE PLAYER DECIDES. The idle FRA run on the real month, no player
+##       council command, read over the FIRST TERM (months 1-60). At each opening
+##       in that window, on duplicate_state() copies resolved at once, does ANY
+##       single bargain (currency x member, asking FRA's preferred outcome) flip
+##       the outcome to it? Band 0.20-0.50 on the
 ##       DISTINCT-proposal share (proposals ever decidable / proposals ever
 ##       opened) -- one proposal re-opening every 18 months must not set the
 ##       band by repetition. The per-opening share is printed as context.
-##   C2  SPENDING IS NOT FREE. The idle run (`never`) beside an `always` run that
-##       strikes a bargain only when a counterfactual shows it flips the division
-##       to FRA's preference (favour first, aid fallback, members in id order).
-##       Bargains struck, currency mix, mean cost, and mean FRA relations with
-##       the bargained members at run end (per member and the gap). Band
-##       gap >= 5.0.
-##   Both runs stop where balance_probe.gd stops: FRA out of government. A run
-##   that stopped early marks the C1/C2/C3 (and C6) band lines MISS-INVALID.
-##   C3  UNANIMITY IS REACHABLE. The idle run's unanimity divisions: carried vs
-##       vetoed. Band >= 1 carried and >= 1 vetoed.
+##   C2  SPENDING IS NOT FREE. The idle run (`never`) beside an `always` run of
+##       the first term (60 months) that strikes a bargain only when a
+##       counterfactual shows it flips the division to FRA's preference (favours
+##       across all members first, then aid; members in id order). Bargains
+##       struck, currency mix, mean cost, and mean FRA relations with the
+##       bargained members AT MONTH 60 (per member and the gap). Band gap >= 5.0.
+##   THE WINDOWS, from the band wording docs/orgs-model.md declared. C1 is "over
+##   a term" and C2 "ends a term": both read months 1-60, the term a player
+##   plays, under balance_probe.gd's in_government guard -- a president out of
+##   office is not the player those bands are about, so FRA leaving office
+##   inside months 1-60 marks C1/C2 MISS-INVALID. C3 and C6 are "in a 168-month
+##   idle run": the council divides whoever governs France, so that run never
+##   stops on the election; the month FRA left office is printed as context and
+##   marks nothing invalid.
+##   C3  UNANIMITY IS REACHABLE. The full 168-month idle run's unanimity
+##       divisions: carried vs vetoed. Band >= 1 carried and >= 1 vetoed.
 ##   C4  RATIFICATION IS A FIGHT. Every unanimity proposal as a treaty bill in
 ##       FRA's new-game assembly: yes / (yes + no). Band >= 2 inside [0.40, 0.60].
 ##   C5  THE BURDEN_MAX RE-MEASURE. Every org's heaviest constraint proposals in
 ##       force (<= MAX_RULES_IN_FORCE each), FRA's books past every tolerance:
 ##       per-org burden, the RAW cross-org total, BURDEN_MAX, the clamped burden.
 ##       Recorded against V3.5's 1.33; no band.
-##   C6  AGENDA REACH. The idle run: per org, proposals never opened in 168
-##       months. Band: none.
+##   C6  AGENDA REACH. The full 168-month idle run: per org, proposals never
+##       opened. Band: none.
 ##   S   THE SWEEP (`--sweep <id>` runs only this): table T's verdict for one
 ##       proposal over a 5x5 (economic, social) grid.
 ##
@@ -94,6 +101,8 @@ const Commodities = preload("res://src/sim/commodities.gd")
 const PLAYER := "FRA"
 ## balance_probe.gd's term: fourteen years from January 2026.
 const MONTHS := 168
+## The first term: the window C1 and C2 read ("over a term", "ends a term").
+const TERM_MONTHS := 60
 const START_YEAR := 2026
 
 ## The bands, as docs/orgs-model.md declared them.
@@ -142,8 +151,10 @@ func _init() -> void:
 
 	var t0: int = Time.get_ticks_msec()
 	_table_t()
-	var idle: Dictionary = _run_term(false, true)
-	var always: Dictionary = _run_term(true, false)
+	# The idle run serves both windows: C1 reads its first term, C3/C6 all of it.
+	# The always run only has a term to measure, so it ends there.
+	var idle: Dictionary = _run_term(false, true, MONTHS, false)
+	var always: Dictionary = _run_term(true, false, TERM_MONTHS, true)
 	_table_c1(idle)
 	_table_c2(idle, always)
 	_table_c3(idle)
@@ -278,10 +289,13 @@ func _table_t() -> void:
 
 # --- the 168-month run -------------------------------------------------------------------
 
-## One term on the real month. `bargain_always`: C2's `always` player. `measure_c1`:
-## test every opening for a deciding bargain on copies. Returns the division log,
-## the openings, C1's rows and the final state.
-func _run_term(bargain_always: bool, measure_c1: bool) -> Dictionary:
+## `months` on the real month. `bargain_always`: C2's `always` player. `measure_c1`:
+## test every opening for a deciding bargain on copies. Both act only inside the
+## first term and only while FRA governs (the in_government guard). `stop_on_leaving`:
+## break when FRA leaves office, balance_probe.gd's stop. Returns the division
+## log, the openings, C1's rows, FRA's relations at month TERM_MONTHS, when FRA
+## left office, and whether the first term is valid.
+func _run_term(bargain_always: bool, measure_c1: bool, months: int, stop_on_leaving: bool) -> Dictionary:
 	var t0: int = Time.get_ticks_msec()
 	var state = _fresh()
 	var ns = state.player()
@@ -293,13 +307,15 @@ func _run_term(bargain_always: bool, measure_c1: bool) -> Dictionary:
 	var strikes: Array = []
 	var opened_ids := {}
 	var months_run := 0
-	var stopped_early := false
+	var left_office := -1
+	var left_office_date := ""
+	var term_relations := {}
 	for org_id in council_ids:
 		opened_ids[org_id] = {}
 
 	var year := START_YEAR
 	var month := 1
-	for i in range(MONTHS):
+	for i in range(months):
 		month += 1
 		if month > 12:
 			month = 1
@@ -381,7 +397,7 @@ func _run_term(bargain_always: bool, measure_c1: bool) -> Dictionary:
 			var pid := String(pend["proposal_id"])
 			opened_ids[org_id][pid] = true
 			openings.append({"org_id": org_id, "proposal_id": pid, "year": year, "month": month})
-			if not ns.orgs.has(org_id):
+			if not ns.orgs.has(org_id) or i + 1 > TERM_MONTHS or not ns.in_government:
 				continue
 			var p = Orgs.proposal_by_id(_loader, org_id, pid)
 			if measure_c1:
@@ -397,22 +413,41 @@ func _run_term(bargain_always: bool, measure_c1: bool) -> Dictionary:
 				print("  always %d-%02d %-15s %-28s %s" % [year, month, org_id, pid, said])
 
 		months_run = i + 1
-		# balance_probe.gd's own stop (its _run(), `if not ns.in_government: break`):
-		# a president out of government is not the player the bands are about.
-		if not ns.in_government:
-			stopped_early = i + 1 < MONTHS
-			print("  (out of government from %d-%02d; run stops)" % [year, month])
-			break
+		if i + 1 == TERM_MONTHS:
+			term_relations = _relations_of(state)
+		# balance_probe.gd's guard (its _run(), `if not ns.in_government: break`).
+		if not ns.in_government and left_office < 0:
+			left_office = i + 1
+			left_office_date = "%d-%02d" % [year, month]
+			print("  (FRA out of government from %s, month %d%s)" % [left_office_date, left_office,
+				"; run stops" if stop_on_leaving else "; the councils keep dividing"])
+			if stop_on_leaving:
+				break
 
+	if term_relations.is_empty():
+		term_relations = _relations_of(state)
+	# FRA in office through the whole first term: what C1/C2 need to be valid.
+	var term_valid: bool = left_office < 0 or left_office > TERM_MONTHS
 	var label: String = "always" if bargain_always else "idle/never"
 	print("## run %s: %d divisions, %d openings, %.1f s" % [label, divisions.size(), openings.size(),
 		float(Time.get_ticks_msec() - t0) / 1000.0])
-	print("## run %s end: in_government %s, has_executive %s, months run %d of %d%s" % [label,
-		str(ns.in_government), str(ns.has_executive), months_run, MONTHS,
-		" -- STOPPED EARLY" if stopped_early else ""])
+	print("## run %s end: in_government %s, has_executive %s, months run %d of %d, left office %s; first term (1-%d) %s" % [
+		label, str(ns.in_government), str(ns.has_executive), months_run, months,
+		("%s (month %d)" % [left_office_date, left_office]) if left_office > 0 else "never",
+		TERM_MONTHS, "VALID" if term_valid else "INVALID -- FRA left office inside it"])
 	return {"state": state, "divisions": divisions, "openings": openings, "c1": c1_rows,
 		"bargained": bargained, "strikes": strikes, "opened_ids": opened_ids,
-		"stopped_early": stopped_early, "months_run": months_run}
+		"months_run": months_run, "left_office": left_office, "left_office_date": left_office_date,
+		"term_relations": term_relations, "term_valid": term_valid}
+
+
+## FRA's relations with every nation, as a plain map -- the month-60 snapshot C2 reads.
+func _relations_of(state) -> Dictionary:
+	var out := {}
+	for id in state.nations.keys():
+		if String(id) != PLAYER:
+			out[String(id)] = RK.score(state, PLAYER, String(id))
+	return out
 
 
 func _days_in_month(m: int, y: int) -> int:
@@ -488,7 +523,7 @@ func _strike_if_deciding(state, org_id: String, p) -> Dictionary:
 # --- C1 .. C6 ---------------------------------------------------------------------------------
 
 func _table_c1(idle: Dictionary) -> void:
-	print("\n########## C1 the player decides (idle run; one bargain on a copy, resolved at once) ##########")
+	print("\n########## C1 the player decides (idle run, first term months 1-%d; one bargain on a copy, resolved at once) ##########" % TERM_MONTHS)
 	print("%-8s %-15s %-28s %-6s %-9s %-10s %s" % ["opened", "org", "proposal", "wants", "forecast", "decidable", "by"])
 	var decidable := 0
 	var rows: Array = idle["c1"]
@@ -519,12 +554,12 @@ func _table_c1(idle: Dictionary) -> void:
 	print("DISTINCT: proposals ever opened %d, ever decidable %d, share %.3f" % [keys.size(), ever, distinct])
 	# The band reads the DISTINCT share: one proposal re-opening every 18 months
 	# must not set it by repetition.
-	_band("C1", distinct >= C1_MIN and distinct <= C1_MAX, "distinct %.3f" % distinct, not bool(idle["stopped_early"]))
+	_band("C1", distinct >= C1_MIN and distinct <= C1_MAX, "distinct %.3f" % distinct, bool(idle["term_valid"]))
 
 
 func _table_c2(idle: Dictionary, always: Dictionary) -> void:
-	print("\n########## C2 spending is not free (FRA relations with the bargained members at run end: never %d, always %d months) ##########" % [int(idle["months_run"]), int(always["months_run"])])
-	var valid: bool = not bool(idle["stopped_early"]) and not bool(always["stopped_early"])
+	print("\n########## C2 spending is not free (first term; FRA relations with the bargained members at month %d) ##########" % TERM_MONTHS)
+	var valid: bool = bool(idle["term_valid"]) and bool(always["term_valid"])
 	var strikes: Array = always["strikes"]
 	var mix := {}
 	var cost := 0.0
@@ -549,8 +584,8 @@ func _table_c2(idle: Dictionary, always: Dictionary) -> void:
 	var sum_always := 0.0
 	print("%-6s %8s %8s %8s" % ["member", "never", "always", "gap"])
 	for id in mids:
-		var rn: float = RK.score(idle["state"], PLAYER, String(id))
-		var ra: float = RK.score(always["state"], PLAYER, String(id))
+		var rn: float = float((idle["term_relations"] as Dictionary).get(String(id), 0.0))
+		var ra: float = float((always["term_relations"] as Dictionary).get(String(id), 0.0))
 		sum_never += rn
 		sum_always += ra
 		print("%-6s %8.2f %8.2f %8.2f" % [id, rn, ra, rn - ra])
@@ -562,7 +597,8 @@ func _table_c2(idle: Dictionary, always: Dictionary) -> void:
 
 
 func _table_c3(idle: Dictionary) -> void:
-	print("\n########## C3 unanimity is reachable (idle run's unanimity divisions) ##########")
+	print("\n########## C3 unanimity is reachable (full %d-month idle run's unanimity divisions) ##########" % int(idle["months_run"]))
+	_left_office_context(idle)
 	var carried := 0
 	var vetoed := 0
 	var per := {}
@@ -585,7 +621,7 @@ func _table_c3(idle: Dictionary) -> void:
 	for key in keys:
 		print("  %-40s carried %d, vetoed %d" % [key, per[key][0], per[key][1]])
 	print("unanimity divisions %d: carried %d, vetoed %d" % [carried + vetoed, carried, vetoed])
-	_band("C3", carried >= 1 and vetoed >= 1, "carried %d, vetoed %d" % [carried, vetoed], not bool(idle["stopped_early"]))
+	_band("C3", carried >= 1 and vetoed >= 1, "carried %d, vetoed %d" % [carried, vetoed])
 
 
 func _table_c4() -> void:
@@ -683,7 +719,8 @@ func _write_field(ns, field: String, value: float) -> void:
 
 
 func _table_c6(idle: Dictionary) -> void:
-	print("\n########## C6 agenda reach (idle run: proposals never opened in %d of %d months) ##########" % [int(idle["months_run"]), MONTHS])
+	print("\n########## C6 agenda reach (full idle run: proposals never opened in %d of %d months) ##########" % [int(idle["months_run"]), MONTHS])
+	_left_office_context(idle)
 	var never := 0
 	var opened_ids: Dictionary = idle["opened_ids"]
 	var ids: Array = opened_ids.keys()
@@ -697,8 +734,16 @@ func _table_c6(idle: Dictionary) -> void:
 		never += missing.size()
 		print("  %-15s opened %d of %d; never: %s" % [org_id, all.size() - missing.size(), all.size(),
 			", ".join(PackedStringArray(missing)) if not missing.is_empty() else "-"])
-	# Also invalid on a stopped run: a shorter term opens fewer proposals.
-	_band("C6", never == 0, "%d never opened" % never, not bool(idle["stopped_early"]))
+	_band("C6", never == 0, "%d never opened" % never)
+
+
+## Context for the full-run bands: the council divides whoever governs France,
+## so leaving office invalidates nothing here -- but a reader should know.
+func _left_office_context(run: Dictionary) -> void:
+	if int(run["left_office"]) > 0:
+		print("context: FRA left office %s (month %d); the councils kept dividing" % [run["left_office_date"], int(run["left_office"])])
+	else:
+		print("context: FRA held office all %d months" % int(run["months_run"]))
 
 
 # --- S: the sweep ------------------------------------------------------------------------------
