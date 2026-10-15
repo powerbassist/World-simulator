@@ -52,7 +52,12 @@ const Region = preload("res://src/core/region.gd")
 const City = preload("res://src/core/city.gd")
 const Companies = preload("res://src/sim/companies.gd")
 
-const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
+## The register is the list (V4 handoff): a literal 29-id roster here went
+## stale the moment V4.11 grew the roster -- five test files at once.
+func _nations() -> Array:
+	var ids: Array = _loader.nations.keys()
+	ids.sort()
+	return ids
 
 ## tools/import_data.py's CITY_SNAP_DEG. A coastal commune falls outside the GISCO
 ## 10M coastline -- Birkenhead, Portsmouth, A Coruna, Cadiz, Antibes -- so the
@@ -86,7 +91,7 @@ func _init() -> void:
 
 
 func _check_register_loads() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		if not _loader.regions.has(nation_id):
 			_fail("no region register for '%s' -- an absent file is an error here, unlike companies and outlets" % nation_id)
 			continue
@@ -101,7 +106,7 @@ func _check_register_loads() -> void:
 func _check_ids_are_unique_and_namespaced() -> void:
 	var region_ids := {}
 	var city_ids := {}
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		for region in _loader.regions.get(nation_id, []):
 			if region_ids.has(region.id):
 				_fail("region id '%s' is used by both %s and %s" % [region.id, region_ids[region.id], nation_id])
@@ -115,7 +120,7 @@ func _check_ids_are_unique_and_namespaced() -> void:
 
 
 func _check_national_partition() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var list: Array = _loader.regions.get(nation_id, [])
 		var total := 0.0
 		for region in list:
@@ -128,7 +133,7 @@ func _check_national_partition() -> void:
 
 
 func _check_city_partition() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		for region in _loader.regions.get(nation_id, []):
 			var total := 0.0
 			for city in region.cities:
@@ -145,7 +150,7 @@ func _check_cities_lie_inside_their_region() -> void:
 		_fail("data/geo/regions.geojson holds no features")
 		return
 
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		for region in _loader.regions.get(nation_id, []):
 			if not polygons.has(region.id):
 				_fail("region '%s' has a register entry and no geometry" % region.id)
@@ -227,7 +232,7 @@ func _check_no_level_in_src() -> void:
 	# unrecognised-key error refuses one inside a region, and this covers the file's
 	# own top level -- which nothing else does.
 	var allowed := ["_source", "_year", "_note", "regions"]
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var text := FileAccess.get_file_as_string("res://data/regions/%s.json" % nation_id)
 		var parsed = JSON.parse_string(text)
 		if typeof(parsed) != TYPE_DICTIONARY:
@@ -318,7 +323,7 @@ func _check_register_has_no_simulation() -> void:
 func _check_geometry_loads_at_startup() -> void:
 	var expected := 0
 	var register_ids := {}
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		for region in _loader.regions.get(nation_id, []):
 			register_ids[region.id] = true
 			expected += 1

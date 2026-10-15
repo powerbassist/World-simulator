@@ -32,7 +32,12 @@ const Person = preload("res://src/core/person.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
 
-const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
+## The register is the list (V4 handoff): a literal 29-id roster here went
+## stale the moment V4.11 grew the roster -- five test files at once.
+func _nations() -> Array:
+	var ids: Array = _loader.nations.keys()
+	ids.sort()
+	return ids
 
 var _failures: Array[String] = []
 var _loader
@@ -69,9 +74,9 @@ func _init() -> void:
 
 
 func _check_register_loads() -> void:
-	if _loader.people.size() != NATIONS.size():
-		_fail("register holds %d nations, expected %d" % [_loader.people.size(), NATIONS.size()])
-	for id in NATIONS:
+	if _loader.people.size() != _nations().size():
+		_fail("register holds %d nations, expected %d" % [_loader.people.size(), _nations().size()])
+	for id in _nations():
 		var roster: Array = _loader.people.get(id, [])
 		if roster.is_empty():
 			_fail("%s has no people at all" % id)
@@ -100,7 +105,7 @@ func _check_ids_are_namespaced() -> void:
 
 
 func _check_every_reference_resolves() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var nation = _loader.nations[nation_id]
 		for slot in [
 			nation.leader_person_id, nation.head_of_state_person_id,
@@ -120,7 +125,7 @@ func _check_every_reference_resolves() -> void:
 ## re-derives it independently so the two cannot silently diverge.
 func _check_no_orphans() -> void:
 	var referenced := {}
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var nation = _loader.nations[nation_id]
 		referenced[nation.leader_person_id] = true
 		referenced[nation.head_of_state_person_id] = true
@@ -338,7 +343,7 @@ func _check_no_name_is_authored_twice() -> void:
 	var names := {}
 	for pid in _loader.person_by_id.keys():
 		names[_loader.person_by_id[pid].person_name] = pid
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		for path in ["res://data/nations/%s.json" % nation_id, "res://data/parties/%s.json" % nation_id]:
 			var text := FileAccess.get_file_as_string(path)
 			for person_name in names.keys():
@@ -351,7 +356,7 @@ func _check_no_name_is_authored_twice() -> void:
 ## authored king, so every republic in Europe restored the same man.
 func _check_restored_monarch_is_per_nation() -> void:
 	var seen := {}
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var pid := String(_loader.nations[nation_id].pretender_person_id)
 		if seen.has(pid):
 			_fail("%s and %s share pretender '%s' -- a restoration must return that nation's OWN dynasty" % [nation_id, seen[pid], pid])
@@ -360,7 +365,7 @@ func _check_restored_monarch_is_per_nation() -> void:
 	# And a monarchy points the slot at the monarch it already has, so a
 	# republic-then-restoration puts the same house back rather than inventing a
 	# second claimant for one country.
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var nation = _loader.nations[nation_id]
 		if nation.head_of_state_kind == "hereditary_monarch":
 			if nation.pretender_person_id != nation.head_of_state_person_id:

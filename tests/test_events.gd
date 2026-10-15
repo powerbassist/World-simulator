@@ -364,8 +364,9 @@ func _test_a_non_sited_register_gains_no_keys() -> void:
 ## 13 regions the odds are (1/13)^47.
 func _test_every_nation_can_be_sited() -> void:
 	var state = _new_state()
-	if state.nations.size() != 29:
-		_fail("the sweep ran over %d nations, expected 29" % state.nations.size())
+	# The loader's count, not a literal: V4.11 grew the roster past 29.
+	if state.nations.size() != _loader.nations.size():
+		_fail("the sweep ran over %d nations, expected %d" % [state.nations.size(), _loader.nations.size()])
 	var events: Array = []
 	for ev_id in [SITED_A, SITED_B]:
 		var ev = _event(ev_id)

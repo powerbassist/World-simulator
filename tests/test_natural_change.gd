@@ -12,7 +12,12 @@ const GameState = preload("res://src/core/game_state.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const NaturalChange = preload("res://src/sim/natural_change.gd")
 
-const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
+## The register is the list (V4 handoff): a literal 29-id roster here went
+## stale the moment V4.11 grew the roster -- five test files at once.
+func _nations() -> Array:
+	var ids: Array = _loader.nations.keys()
+	ids.sort()
+	return ids
 
 var _failures: Array[String] = []
 var _loader
@@ -68,7 +73,7 @@ func _init() -> void:
 ## but Britain carrying a real spread, because a register whose rates all agreed
 ## would be a register whose flow was dead on arrival.
 func _check_the_content_is_measured() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var list: Array = _loader.regions.get(nation_id, [])
 		var spread_min := INF
 		var spread_max := -INF
@@ -124,11 +129,11 @@ func _check_conservation_is_exact() -> void:
 	# the same claim -- the suite audit's F4.
 	var state = GameState.new_game(_loader, "FRA")
 	var start: Dictionary = {}
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		start[nation_id] = Migration.named_region_total(state.nations[nation_id], _loader.regions.get(nation_id, []))
 	for i in 168:
 		Migration.tick_month(state, _loader)
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var list: Array = _loader.regions.get(nation_id, [])
 		var drift: float = absf(Migration.named_region_total(state.nations[nation_id], list) - float(start[nation_id]))
 		if drift > 0.000000000001:
