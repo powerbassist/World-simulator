@@ -52,6 +52,9 @@ var _close_button: Button
 
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
+## True once a deadline-bearing verb (a treaty waiting on the player's assembly)
+## has taken `_primary`; later offers and claims then leave it alone.
+var _primary_claimed := false
 
 ## A verb the machine refused, spoken on the NEXT refresh rather than appended
 ## and immediately queue_free'd -- the first version added the line and then
@@ -133,6 +136,7 @@ func _refresh() -> void:
 	if ns == null:
 		return
 	_primary = null
+	_primary_claimed = false
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -392,6 +396,15 @@ func _proposal_label(org_id: String, proposal_id: String) -> String:
 func offer_primary(control: Control) -> void:
 	if _primary == null:
 		_primary = control
+
+
+## A verb with a deadline outranks whatever came first in build order. Without
+## this the ratify card lost the primary slot to an earlier org's membership
+## button: FRA sits in the climate accord, which is listed before the EU.
+func claim_primary(control: Control) -> void:
+	if not _primary_claimed:
+		_primary = control
+		_primary_claimed = true
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract,

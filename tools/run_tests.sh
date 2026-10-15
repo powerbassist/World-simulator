@@ -212,6 +212,8 @@ tests=(
   # playability audit's register, and it turns red when somebody FIXES one.
   # See docs/playability-audit.md.
   tests/test_playability.gd
+  # V4.5b2 T6: the council panel's verbs, the desk mark and the Europe figure.
+  tests/test_orgs_panel.gd
   tests/test_acknowledgments.gd
 )
 

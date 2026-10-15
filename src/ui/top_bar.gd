@@ -249,7 +249,8 @@ func _refresh_europe(state, ns, loader) -> void:
 
 	var lines: Array[String] = [
 		"Burden %.2f" % burden,
-		"%d rules in force bind you, %d breached" % [rules.size(), breached],
+		("1 rule in force binds you, %d breached" % breached) if rules.size() == 1 \
+			else ("%d rules in force bind you, %d breached" % [rules.size(), breached]),
 		"%d %s owed" % [owed, "IOU" if owed == 1 else "IOUs"],
 		("Treaty awaiting your assembly: %s" % treaty_text) if treaty_left >= 0 else "No treaty awaiting you",
 	]

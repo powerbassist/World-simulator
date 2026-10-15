@@ -139,7 +139,7 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 	var button := Button.new()
 	button.text = "Put it to the assembly"
 	button.pressed.connect(panel._on_ratify.bind(org.id))
-	panel.offer_primary(button)
+	panel.claim_primary(button)
 	body.add_child(button)
 
 
