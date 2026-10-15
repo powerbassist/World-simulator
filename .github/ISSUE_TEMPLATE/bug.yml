@@ -1,0 +1,27 @@
+name: Bug
+description: Something in the game or the tools does not work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce it
+      description: The date in game, what you clicked, or the command you ran. Attach a save file if you can.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit or version
+      description: "`git log --oneline -1`"
+  - type: input
+    id: godot
+    attributes:
+      label: Godot version and OS
+      placeholder: 4.7.1-stable, Windows 11

@@ -136,7 +136,7 @@ election can ever resolve to contradict it.
 Captured:
 
 ```bash
-godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated --out defeated.png
+godot --path . --script res://tools/screenshot.gd -- --defeated --out defeated.png
 ```
 
 The frame shows the plate with **no button anywhere on it**, and behind it a
@@ -178,7 +178,7 @@ that proves it is permanent.
 Captured:
 
 ```bash
-godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy --out blank_diplomacy.png
+godot --path . --script res://tools/screenshot.gd -- --blank diplomacy --out blank_diplomacy.png
 ```
 
 The frame shows the DIPLOMACY title bar with its PIN and X still intact above a

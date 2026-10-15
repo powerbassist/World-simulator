@@ -62,7 +62,15 @@ The vault check: unresolved wikilinks, docs the index does not reach, orphans, m
 frontmatter -- over tracked files only. What each Obsidian plugin is for: [docs/vault.md](docs/vault.md).
 
 ```bash
-godot --path "<repo>"
+reuse lint
+```
+
+The licence check (`pip install reuse`): every tracked file needs a licence, declared
+in `REUSE.toml` — a new asset, a new data source or a third-party file needs an
+annotation there. The layers are listed in [README.md](README.md); CI runs it.
+
+```bash
+godot --path .
 ```
 
 `tools/` is dev-only and never ships.

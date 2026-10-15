@@ -1,0 +1,227 @@
+# Which licence covers which file -- the REUSE spec (https://reuse.software),
+# checked by `reuse lint` in CI. Later annotations override earlier ones, so the
+# general rules come first and the exceptions after them.
+version = 1
+
+[[annotations]]
+# Default: code, tools, tests, project files.
+path = [
+  "**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "PolyForm-Noncommercial-1.0.0"
+
+[[annotations]]
+# Game content, the design vault, and the art generated from text alone (local ComfyUI). Upstream data credited in ATTRIBUTION.md.
+path = [
+  "data/**",
+  "docs/**",
+  "*.md",
+  ".obsidian/*.json",
+  "assets/portraits/**",
+  "assets/portrait_scenes/**",
+  "assets/event_art/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Busts generated from CC BY / CC BY-SA / CC0 / public-domain Wikimedia Commons photographs; credited per image in docs/portrait-attribution.md.
+path = [
+  "assets/portraits/*/AUT_haslinger.webp*",
+  "assets/portraits/*/AUT_kettler.webp*",
+  "assets/portraits/*/AUT_steinhauser.webp*",
+  "assets/portraits/*/BEL_vanhamme.webp*",
+  "assets/portraits/*/BGR_ganeva.webp*",
+  "assets/portraits/*/BGR_kishev.webp*",
+  "assets/portraits/*/BGR_koleva.webp*",
+  "assets/portraits/*/CYP_christofi.webp*",
+  "assets/portraits/*/CYP_giallouridou.webp*",
+  "assets/portraits/*/CYP_hadjipavlou.webp*",
+  "assets/portraits/*/CYP_petrou.webp*",
+  "assets/portraits/*/CYP_zachariou.webp*",
+  "assets/portraits/*/CZE_kraus.webp*",
+  "assets/portraits/*/CZE_strnad.webp*",
+  "assets/portraits/*/DEU_vogler.webp*",
+  "assets/portraits/*/DNK_skovgaard.webp*",
+  "assets/portraits/*/DNK_sorensen.webp*",
+  "assets/portraits/*/DNK_valdemar_vi.webp*",
+  "assets/portraits/*/EST_kirus.webp*",
+  "assets/portraits/*/EST_lepik.webp*",
+  "assets/portraits/*/EST_soova.webp*",
+  "assets/portraits/*/FIN_koiranen.webp*",
+  "assets/portraits/*/FIN_peltomaa.webp*",
+  "assets/portraits/*/FIN_rautio.webp*",
+  "assets/portraits/*/FIN_salmela.webp*",
+  "assets/portraits/*/FRA_aumont.webp*",
+  "assets/portraits/*/FRA_charles_xi.webp*",
+  "assets/portraits/*/FRA_lachapelle.webp*",
+  "assets/portraits/*/GBR_kilbride.webp*",
+  "assets/portraits/*/GBR_robert_iii.webp*",
+  "assets/portraits/*/GBR_wexford.webp*",
+  "assets/portraits/*/GRC_alexandros_ii.webp*",
+  "assets/portraits/*/GRC_iliopoulos.webp*",
+  "assets/portraits/*/GRC_markou.webp*",
+  "assets/portraits/*/GRC_vlachos.webp*",
+  "assets/portraits/*/HRV_jurisic.webp*",
+  "assets/portraits/*/HRV_vidovic.webp*",
+  "assets/portraits/*/HUN_balogh.webp*",
+  "assets/portraits/*/HUN_cser.webp*",
+  "assets/portraits/*/HUN_nagy.webp*",
+  "assets/portraits/*/IRL_hession.webp*",
+  "assets/portraits/*/IRL_lavelle.webp*",
+  "assets/portraits/*/IRL_nolan.webp*",
+  "assets/portraits/*/IRL_tarrant.webp*",
+  "assets/portraits/*/ITA_carlo_alberto_ii.webp*",
+  "assets/portraits/*/ITA_lambertini.webp*",
+  "assets/portraits/*/ITA_ronchi.webp*",
+  "assets/portraits/*/ITA_trevisan.webp*",
+  "assets/portraits/*/LTU_bilius.webp*",
+  "assets/portraits/*/LTU_klimaite.webp*",
+  "assets/portraits/*/LTU_stanulis.webp*",
+  "assets/portraits/*/LTU_urbonaite.webp*",
+  "assets/portraits/*/LTU_zaleckas.webp*",
+  "assets/portraits/*/LUX_adolphe_iii.webp*",
+  "assets/portraits/*/LUX_everling.webp*",
+  "assets/portraits/*/LUX_reiland.webp*",
+  "assets/portraits/*/LUX_weiler.webp*",
+  "assets/portraits/*/MLT_cassar.webp*",
+  "assets/portraits/*/MLT_zahra.webp*",
+  "assets/portraits/*/NLD_kuiperink.webp*",
+  "assets/portraits/*/NLD_stoffels.webp*",
+  "assets/portraits/*/NLD_terborg.webp*",
+  "assets/portraits/*/POL_ostrowski.webp*",
+  "assets/portraits/*/PRT_manuel_iii.webp*",
+  "assets/portraits/*/PRT_salgueiro.webp*",
+  "assets/portraits/*/PRT_sequeira.webp*",
+  "assets/portraits/*/PRT_vasconcelos.webp*",
+  "assets/portraits/*/ROU_iordache.webp*",
+  "assets/portraits/*/ROU_mihai_ii.webp*",
+  "assets/portraits/*/ROU_moraru.webp*",
+  "assets/portraits/*/ROU_nagy.webp*",
+  "assets/portraits/*/ROU_vasilescu.webp*",
+  "assets/portraits/*/SVK_baran.webp*",
+  "assets/portraits/*/SVK_hraska.webp*",
+  "assets/portraits/*/SVK_petrik.webp*",
+  "assets/portraits/*/SVK_vozar.webp*",
+  "assets/portraits/*/SVN_hribernik.webp*",
+  "assets/portraits/*/SVN_kotnik.webp*",
+  "assets/portraits/*/SVN_saje.webp*",
+  "assets/portraits/*/SVN_zajc.webp*",
+  "assets/portraits/*/SWE_bergvall.webp*",
+  "assets/portraits/*/SWE_holmqvist.webp*",
+  "assets/portraits/*/SWE_karl_xvii.webp*",
+  "assets/portraits/*/SWE_sandberg.webp*",
+  "assets/portraits/*/SWE_vikstrom.webp*",
+]
+precedence = "override"
+SPDX-FileCopyrightText = ["2026 powerbassist", "see docs/portrait-attribution.md for each source photograph"]
+SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+[[annotations]]
+# Public domain imagery.
+path = [
+  "assets/map/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "NASA Earth Observatory (Blue Marble)"
+SPDX-License-Identifier = "LicenseRef-PublicDomain"
+
+[[annotations]]
+path = [
+  "assets/fonts/BarlowCondensed*",
+  "assets/fonts/OFL-BarlowCondensed.txt",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2017 The Barlow Project Authors"
+SPDX-License-Identifier = "OFL-1.1"
+
+[[annotations]]
+path = [
+  "assets/fonts/IBMPlexMono*",
+  "assets/fonts/OFL-IBMPlexMono.txt",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2017 IBM Corp."
+SPDX-License-Identifier = "OFL-1.1"
+
+[[annotations]]
+path = [
+  "addons/dialogue_manager/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2022-present Nathan Hoad and Dialogue Manager contributors"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+  "addons/at-icons/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026-present Valentin Fossati (Voxybuns) and contributors"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+# Unmodified third-party Obsidian plugin bundle; source: https://github.com/blacksmithgu/obsidian-dataview
+path = [
+  ".obsidian/plugins/dataview/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Michael Brenan"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+# Unmodified third-party Obsidian plugin bundle; source: https://github.com/zsviczian/obsidian-excalidraw-plugin
+path = [
+  ".obsidian/plugins/obsidian-excalidraw-plugin/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Zsolt Viczian"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+# Unmodified third-party Obsidian plugin bundle; source: https://github.com/Vinzent03/obsidian-git
+path = [
+  ".obsidian/plugins/obsidian-git/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Vinzent"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+# Unmodified third-party Obsidian plugin bundle; source: https://github.com/coddingtonbear/obsidian-local-rest-api
+path = [
+  ".obsidian/plugins/obsidian-local-rest-api/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Adam Coddington"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+# Unmodified third-party Obsidian plugin bundle; source: https://github.com/obsidian-tasks-group/obsidian-tasks
+path = [
+  ".obsidian/plugins/obsidian-tasks-plugin/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Clare Macrae, Ilyas Landikov, Martin Schenck"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+# Unmodified third-party Obsidian plugin bundle; source: https://github.com/tgrosinger/advanced-tables-obsidian
+path = [
+  ".obsidian/plugins/table-editor-obsidian/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Tony Grosinger"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+[[annotations]]
+# Unmodified third-party Obsidian plugin bundle; source: https://github.com/SilentVoid13/Templater
+path = [
+  ".obsidian/plugins/templater-obsidian/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "SilentVoid"
+SPDX-License-Identifier = "AGPL-3.0-only"

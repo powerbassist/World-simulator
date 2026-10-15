@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Composition probe: godot --path "<repo>" --headless --script tools/composition_probe.gd
+## Composition probe: godot --path . --headless --script tools/composition_probe.gd
 ## Dev-only, never ships.
 ##
 ## V4.2 T3. The statute book's composition machine was DECLARED at T2 with
