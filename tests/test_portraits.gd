@@ -323,7 +323,8 @@ func _check_scene_set_pin() -> void:
 ## dependency (the suite runner itself).
 func _check_python_teeth() -> void:
 	var out: Array = []
-	var code := OS.execute("python",
+	# SUITE_PYTHON: tools/run_tests.sh exports the interpreter it found (python or python3).
+	var code := OS.execute(OS.get_environment("SUITE_PYTHON") if OS.has_environment("SUITE_PYTHON") else "python",
 		[ProjectSettings.globalize_path("res://tools/portraits_generate.py"), "--self-check"], out)
 	if code != 0:
 		_fail("the portrait prompt builder failed --self-check (exit %d): %s" % [code, out])

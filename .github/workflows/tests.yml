@@ -25,6 +25,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Public repo: a fork's pull request runs this workflow, so the token can read
+# and nothing else, every action is pinned to a commit (a moved tag cannot swap
+# the code under us), and there is no pull_request_target anywhere in it.
+permissions:
+  contents: read
+
 concurrency:
   group: tests-${{ github.ref }}
   cancel-in-progress: true
@@ -47,15 +53,15 @@ jobs:
         # vault and shards" job's count check.
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.13"
 
       - name: Cache Godot
         id: godot-cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
         with:
           path: ~/godot
           key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
@@ -86,25 +92,29 @@ jobs:
       # what `tools/ci_shards.py --rebalance` re-splits the suite from.
       - name: Keep the run report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: suite-runs-shard-${{ matrix.shard }}
           path: reports/suite_runs/
           if-no-files-found: ignore
 
   checks:
-    name: Names, vault and shards
+    name: Names, vault, licences and shards
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.13"
       - name: Banned names
         run: bash tools/check_names.sh
       - name: Vault links
         run: python tools/check_vault.py
+      - name: Every file has a declared licence (REUSE)
+        run: |
+          pip install --quiet reuse==6.2.0
+          reuse lint
       - name: Every registered test is in exactly one shard
         run: bash tools/run_tests.sh --print-tests | python tools/ci_shards.py --check
       - name: The matrix runs every shard

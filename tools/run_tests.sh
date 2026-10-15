@@ -246,22 +246,30 @@ if [ "${1:-}" = "--print-tests" ]; then
 fi
 
 # Python is a gate dependency now -- tools/import_data.py already made it
-# one for the import pipeline. Fail loud, never silent.
-if ! command -v python >/dev/null 2>&1; then
-  echo "python not found -- the suite runner needs it (tools/suite_runner.py)" >&2
+# one for the import pipeline. Fail loud, never silent. `python3` too: a stock
+# Debian/Ubuntu has no `python`, and the public-repo stranger test (a blank
+# Ubuntu following only the README) stopped here on its first command.
+py=""
+for cand in python python3; do
+  if command -v "$cand" >/dev/null 2>&1; then py="$cand"; break; fi
+done
+if [ -z "$py" ]; then
+  echo "python not found (tried python, python3) -- the suite runner needs it (tools/suite_runner.py)" >&2
   exit 2
 fi
+# The tests that run a tools/*.py themselves (test_portraits, test_event_art) read it.
+export SUITE_PYTHON="$py"
 
 # CI only: SUITE_SHARD=K runs shard K of tools/ci_shards.json instead of the
 # whole registry (a private repo's runner has 2 cores -- see that file). The
 # check first: a registered test in no shard would run nowhere on CI.
 if [ -n "${SUITE_SHARD:-}" ]; then
-  shard_list=$(printf '%s\n' "${tests[@]}" | python tools/ci_shards.py --shard "$SUITE_SHARD") || exit 1
+  shard_list=$(printf '%s\n' "${tests[@]}" | "$py" tools/ci_shards.py --shard "$SUITE_SHARD") || exit 1
   mapfile -t tests <<< "${shard_list//$'\r'/}"  # Windows python prints CRLF
 fi
 
 # Step 0: the gate tests its own tooling before it gates anything else.
-python tools/suite_runner.py --selftest || exit 1
+"$py" tools/suite_runner.py --selftest || exit 1
 
 # A FRESH CLONE HAS NO .godot/, AND WITHOUT ONE THERE IS NO
 # global_script_class_cache.cfg -- so every `class_name` in a committed addon is
@@ -278,4 +286,4 @@ fi
 # script-error scan that lived below this point moved into it, so they exist
 # in exactly one place. Flags pass through: -j1 for sequential, --verbose
 # for the old print-everything stream.
-exec python tools/suite_runner.py --ci "$@" "${tests[@]}"
+exec "$py" tools/suite_runner.py --ci "$@" "${tests[@]}"
