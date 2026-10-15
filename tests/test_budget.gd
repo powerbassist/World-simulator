@@ -50,6 +50,7 @@ func _init() -> void:
 	_check_second_nation_calibrates()
 	_check_income_tax_rise()
 	_check_debt_accumulates()
+	_check_debt_moves_by_the_deficit()
 	_check_projection_matches()
 	_check_projection_matches_after_diplomacy()
 	_check_projection_matches_under_unrest()
@@ -193,6 +194,26 @@ func _check_debt_accumulates() -> void:
 	var last: Dictionary = snaps[59]
 	if last["total_spending_pct_gdp"] <= last["debt_service_pct_gdp"]:
 		_fail("total spending does not include debt service")
+
+
+## The MAGNITUDE of the accrual, which _check_debt_accumulates() cannot see: it
+## asserts direction only, and the suite audit's mutation M5 (the monthly accrual
+## doubled, `/ 12.0` -> `/ 6.0`) kept the whole suite green through it. One month's
+## deficit is a twelfth of the annual figure, at the GDP the same recompute read --
+## so recompute first (pure bookkeeping, and tick_month() recomputes the same
+## state again before it accrues) and pin the identity, not a band.
+func _check_debt_moves_by_the_deficit() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	Budget.recompute(state, ns)
+	var debt_before: float = ns.debt_eur_bn
+	var expected: float = ns.deficit_pct_gdp / 100.0 * ns.gdp_eur_bn / 12.0
+	Budget.tick_month(state)
+	var moved: float = ns.debt_eur_bn - debt_before
+	if absf(moved - expected) > 1e-9 * maxf(1.0, absf(expected)):
+		_fail("one month moved debt by %.6f bn, expected deficit %.4f%% x GDP %.1f bn / 12 = %.6f bn" % [
+			moved, ns.deficit_pct_gdp, ns.gdp_eur_bn, expected
+		])
 
 
 ## Done-when: the projection shown before committing matches what happens.
