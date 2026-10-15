@@ -217,7 +217,7 @@ tests=(
   tests/test_acknowledgments.gd
 )
 
-# THE RUNNER IS THE WHOLE GATE -- there is no CI -- so a test file on disk that is
+# THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is
 # missing from the array above runs NOWHERE, and passes for as long as nobody looks.
 # That has now happened four times (test_companies at V1.4a, test_cabinet, test_summits
 # at V2.4b, test_map_plants at V2.8), each found by eye whole sessions later, and each
@@ -250,6 +250,14 @@ fi
 if ! command -v python >/dev/null 2>&1; then
   echo "python not found -- the suite runner needs it (tools/suite_runner.py)" >&2
   exit 2
+fi
+
+# CI only: SUITE_SHARD=K runs shard K of tools/ci_shards.json instead of the
+# whole registry (a private repo's runner has 2 cores -- see that file). The
+# check first: a registered test in no shard would run nowhere on CI.
+if [ -n "${SUITE_SHARD:-}" ]; then
+  shard_list=$(printf '%s\n' "${tests[@]}" | python tools/ci_shards.py --shard "$SUITE_SHARD") || exit 1
+  mapfile -t tests <<< "${shard_list//$'\r'/}"  # Windows python prints CRLF
 fi
 
 # Step 0: the gate tests its own tooling before it gates anything else.
