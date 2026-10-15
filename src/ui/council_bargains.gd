@@ -70,6 +70,15 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 	)
 
 	PanelKit.line(inner, "Ask a member to vote %s. One bargain per member per division." % vote)
+	# Someone already bargained with can sort out of the visible rows (a FOR ask on a
+	# member who leans FOR moves it away from the threshold), so name them here.
+	var struck: Dictionary = pending.get("bargains", {})
+	if not struck.is_empty():
+		var done: Array = []
+		for id in struck.keys():
+			done.append("%s (%s)" % [loader.nation_name(String(id)), String(struck[id].get("currency", "")).replace("_", " ")])
+		done.sort()
+		PanelKit.line(inner, "Already bargained this division: %s." % ", ".join(done))
 	for i in mini(rows.size(), MAX_ROWS):
 		_member_row(inner, panel, state, loader, ns, org, pending, vote, rows[i])
 	if rows.size() > MAX_ROWS:

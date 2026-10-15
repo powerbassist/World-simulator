@@ -52,6 +52,10 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let the tree settle before any panel is built
 
+	if _frame > 2:
+		_run_frame_scenario()
+		return false
+
 	_check_sponsor_and_decision_lines()
 	_check_a_bargain_reaches_the_sim()
 	_check_a_refused_bargain_speaks()
@@ -59,7 +63,7 @@ func _process(_delta: float) -> bool:
 	_check_the_ratify_card()
 	_check_the_desk_marks_a_treaty()
 	_check_the_europe_figure()
-	_finish()
+	_start_frame_scenario()
 	return false
 
 
@@ -212,11 +216,11 @@ func _check_a_bargain_reaches_the_sim() -> void:
 	panel.acted.connect(func(_b, label): acted.append(label))
 	_refresh(panel)
 
-	var for_button := _button_named(panel, "Against")
-	if for_button == null or for_button.disabled:
+	var against_button := _button_named(panel, "Against")
+	if against_button == null or against_button.disabled:
 		_fail("no enabled Against button on a pending proposal")
 		return
-	for_button.pressed.emit()
+	against_button.pressed.emit()
 	if voted.size() != 1:
 		_fail("casting Against emitted voted %d times, expected 1" % voted.size())
 	if String(Orgs.pending(state, EU_ORG).get("player_vote", "")) != Orgs.VOTE_AGAINST:
@@ -244,6 +248,9 @@ func _check_a_bargain_reaches_the_sim() -> void:
 		return
 	favour.pressed.emit()
 
+	_refresh(panel)
+	if not _text(panel).contains("Already bargained this division: %s (favour)" % name):
+		_fail("the table does not name who was already bargained with: %s" % _text(panel))
 	var bargains: Dictionary = Orgs.pending(state, EU_ORG).get("bargains", {})
 	if not bargains.has(target):
 		_fail("pressing Favour did not put %s in pending.bargains" % target)
@@ -431,6 +438,50 @@ func _check_the_europe_figure() -> void:
 	if treaty_text != "Treaty: 3m":
 		_fail("a pending ratification reads '%s', not 'Treaty: 3m'" % treaty_text)
 	_drop(bar)
+
+
+## The dirty -> visible -> _process -> _refresh gate every handler relies on, driven
+## by REAL frames: the panel rebuilds itself, nobody calls _refresh(). Stages run
+## on consecutive frames; the scene-tree script's _process runs before the
+## panel's within a frame, so a press at frame k is rendered by the end of k.
+var _fs_panel: Control
+var _fs_stage := 0
+
+
+func _start_frame_scenario() -> void:
+	var state = _fresh()
+	state.orgs[EU_ORG]["pending"] = {}
+	_fs_panel = _panel_for(state)  # visible: its own first _process builds the body
+	_fs_stage = 1
+
+
+func _run_frame_scenario() -> void:
+	var panel := _fs_panel
+	match _fs_stage:
+		1:
+			if not _text(panel).contains("THE EUROPEAN UNION"):
+				_fail("a visible panel did not build itself on its own frame")
+			if _text(panel).contains("Refused:"):
+				_fail("fixture: the panel opens already refusing")
+			panel._on_vote(EU_ORG, Orgs.VOTE_FOR)
+		2:
+			if not _text(panel).contains("Refused: that vote"):
+				_fail("a refused press on a visible panel was not re-rendered by its own _process")
+			# Hidden: the press marks dirty and nothing rebuilds until it is shown.
+			panel.hide()
+			panel._on_bargain(EU_ORG, SPONSOR, CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR)
+		3:
+			if _text(panel).contains("that bargain can no longer"):
+				_fail("a hidden panel rebuilt itself")
+			if not panel._dirty:
+				_fail("a press on a hidden panel did not mark it dirty")
+			panel.show()
+		4:
+			if not _text(panel).contains("Refused: that bargain can no longer"):
+				_fail("a panel shown again did not rebuild the press it missed")
+			_drop(panel)
+			_finish()
+	_fs_stage += 1
 
 
 func _bar_for(state) -> Control:

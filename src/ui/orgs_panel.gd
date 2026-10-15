@@ -392,7 +392,8 @@ func _proposal_label(org_id: String, proposal_id: String) -> String:
 	return String(p.proposal_name) if p != null else proposal_id
 
 
-## Called by CouncilSection for each enabled verb it builds; the first one wins.
+## Called by CouncilSection for each enabled verb it builds; the first one wins,
+## unless a deadline verb has already been claimed (see claim_primary).
 func offer_primary(control: Control) -> void:
 	if _primary == null:
 		_primary = control
@@ -412,7 +413,9 @@ func claim_primary(control: Control) -> void:
 ##
 ## The councils' vote buttons are rebuilt on every refresh and the one the
 ## player already holds is disabled, so this is the FIRST ENABLED verb in build
-## order rather than a member held from _ready(). Null while no proposal is
+## order rather than a member held from _ready() -- except that a claimed
+## deadline verb (a treaty waiting on the assembly, claim_primary) outranks build
+## order. Null while no proposal is
 ## pending anywhere, which is most months: the panel is then a readout and has
 ## no verb to put above the fold.
 func primary_action() -> Control:
