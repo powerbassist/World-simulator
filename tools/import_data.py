@@ -42,6 +42,21 @@ NATIONS = [
     "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE",
 ]
 
+# V4.11. The pooled statistics -- the cycle anchor's mean SD, CYCLE_COMMON_SHARE,
+# the inflation persistence and the Phillips regression -- are measured over the
+# 29, and the neighbours are measured AGAINST that anchor rather than into it.
+# V3.3 let the pool grow and had to re-denominate CYCLE_AMPLITUDE_PCT 1.70 ->
+# 3.245; Ukraine's and Bosnia's war and transition years would move every Union
+# nation's amplitude again. Holding the pool keeps the 29's imported blocks
+# byte-identical, so the V4.11 re-baseline is the neighbours' PRESENCE and not a
+# re-instrumentation of everyone else. A slice rather than a second list, so the
+# pool cannot drift from the roster it was swept on.
+ANCHOR_POOL = NATIONS[:29]
+
+# V4.11. Natural Earth's code for Kosovo is its own (`KOS`); the World Bank's and
+# this roster's is `XKX`. Read at every ADM0_A3 the two geometry builders take.
+GEO_ALIASES = {"KOS": "XKX"}
+
 YEAR = 2024
 USD_TO_EUR = 0.92
 
@@ -61,7 +76,11 @@ TREND_FROM_YEAR = 2015
 # and the old edge dropped every one of its polygons); the north span that actually
 # binds the opening fit is unchanged, so the fit should not move -- computed, not
 # assumed, and CITY_MIN_ZOOM is re-derived against the computed number.
-LON_MIN, LON_MAX = -11, 35
+#
+# V4.11 widens it again, to -25..45, for the neighbourhood: Iceland reaches -24.5 W,
+# Turkey 44.8 E and Ukraine 40.2 E. The fit is re-computed rather than assumed, and
+# CITY_MIN_ZOOM re-derived against it, exactly as V3.3 did.
+LON_MIN, LON_MAX = -25, 45
 LAT_MIN, LAT_MAX = 34, 72
 
 # U5b, the world backdrop. Deliberately the 1:110m file rather than the 1:50m one
@@ -483,7 +502,7 @@ def build_cycle_blocks(series):
         mean = sum(values) / len(values)
         sd[nid] = (sum((v - mean) ** 2 for v in values) / len(values)) ** 0.5
 
-    roster_mean = sum(sd.values()) / len(sd)
+    roster_mean = sum(sd[nid] for nid in ANCHOR_POOL) / len(ANCHOR_POOL)
     if roster_mean <= 0.0:
         sys.exit("every nation's growth volatility is zero -- the series is empty")
 
@@ -496,21 +515,21 @@ def build_cycle_blocks(series):
     # factor, and the mean pairwise correlation. Two methods agreeing is what makes
     # this a measurement instead of a plausible number -- V1.5c's two-harness rule,
     # applied to data rather than to a probe.
-    years = sorted(set.intersection(*[set(series[nid]) for nid in NATIONS]))
+    years = sorted(set.intersection(*[set(series[nid]) for nid in ANCHOR_POOL]))
     dev = {
         nid: [series[nid][y] - sum(series[nid][z] for z in years) / len(years) for y in years]
-        for nid in NATIONS
+        for nid in ANCHOR_POOL
     }
-    common = [sum(dev[nid][i] for nid in NATIONS) / len(NATIONS) for i in range(len(years))]
+    common = [sum(dev[nid][i] for nid in ANCHOR_POOL) / len(ANCHOR_POOL) for i in range(len(years))]
 
     def pvar(xs):
         m = sum(xs) / len(xs)
         return sum((x - m) ** 2 for x in xs) / len(xs)
 
-    var_share = pvar(common) / (sum(pvar(dev[nid]) for nid in NATIONS) / len(NATIONS))
+    var_share = pvar(common) / (sum(pvar(dev[nid]) for nid in ANCHOR_POOL) / len(ANCHOR_POOL))
     cors = []
-    for i, a in enumerate(NATIONS):
-        for b in NATIONS[i + 1:]:
+    for i, a in enumerate(ANCHOR_POOL):
+        for b in ANCHOR_POOL[i + 1:]:
             cov = sum(dev[a][k] * dev[b][k] for k in range(len(years))) / len(years)
             cors.append(cov / (pvar(dev[a]) * pvar(dev[b])) ** 0.5)
     print(
@@ -585,7 +604,7 @@ def build_prices_blocks(series, unemployment):
     # Demeaned per nation so the pooled fit measures how sticky inflation IS, not how
     # different the ten countries are from each other.
     lag_x, lag_y = [], []
-    for nid in NATIONS:
+    for nid in ANCHOR_POOL:
         years = sorted(series[nid])
         for i, y in enumerate(years):
             dev = series[nid][y] - anchors[nid]
@@ -600,7 +619,7 @@ def build_prices_blocks(series, unemployment):
     # is exactly what src/sim/economy.gd's `structural_unemployment_pct` is.
     def slope(lo, hi):
         xs, ys = [], []
-        for nid in NATIONS:
+        for nid in ANCHOR_POOL:
             years = [
                 y for y in sorted(series[nid])
                 if lo <= y <= hi and y in unemployment.get(nid, {})
@@ -885,6 +904,7 @@ def build_geo():
     for feature in ne["features"]:
         # Never ISO_A3 — it is "-99" for France in this dataset.
         adm0 = feature["properties"].get("ADM0_A3")
+        adm0 = GEO_ALIASES.get(adm0, adm0)
         if adm0 not in NATIONS:
             continue
 
@@ -928,7 +948,7 @@ def build_world():
     for feature in ne["features"]:
         props = feature["properties"]
         adm0 = props.get("ADM0_A3")
-        if adm0 in NATIONS:
+        if GEO_ALIASES.get(adm0, adm0) in NATIONS:
             continue
 
         # ADM0_A3 is "-99" for a handful of disputed entries in this file, and
@@ -1247,6 +1267,30 @@ def load_region_sector_mix():
 GBR_GDP_MIO_EUR = None
 
 
+# V4.11. Where a nation's regional series is ABSENT at the dataset boundary, the
+# documented proxy is allowed -- and only there; everywhere else a missing figure
+# is a broken download and stops the import. This table generalises what was a
+# Britain-only guard (`nid != "GBR"` at two sites) once the neighbourhood brought
+# more boundaries. Per SERIES, not per nation: Norway's regional GDP is absent
+# while its regional unemployment is measured, and the measured half is kept.
+# `why` is the provenance phrase each file's `_source` carries -- Britain's is the
+# exact wording its file already carries, so its re-import is byte-identical.
+# Every entry is a measured gap with its number in docs/data-sources.md.
+PROXY_SERIES = {
+    "GBR": {
+        "series": {"gdp", "unemployment", "natural_change"},
+        "why": "no UK regional GDP, unemployment or GVA exists in Eurostat and none was authored",
+        "natural_why": ("demo_r_gind3 carries NATGROWRT for eleven of the twelve UK codes "
+                        "(2012-2018) but Scotland (UKM) publishes none at any year"),
+    },
+}
+
+
+def proxied(nid, series):
+    """True when `series` is a documented dataset-boundary proxy for this nation."""
+    return series in PROXY_SERIES.get(nid, {}).get("series", ())
+
+
 # The register is the 2021 geometry, and for two Dutch provinces the economic series
 # only answer under their 2024 codes: Utrecht and Zuid-Holland were renumbered NL31 ->
 # NL35 and NL33 -> NL36, and nama_10r_2gdp and nama_10r_3gva carry ONLY the new codes
@@ -1379,11 +1423,11 @@ def load_natural_change(code_lists):
             if window is None or len(run) > window[1] - window[0] + 1:
                 window = (run[0], run[-1])
         if window is None:
-            # Britain's dataset boundary, encoded rather than special-cased by nation:
-            # the rule is that NO window means NO field, and Britain is the only nation
-            # it can fire on -- a hole in any other nation is a broken download, so it
-            # exits loudly instead of quietly shipping zeros.
-            if nid == "GBR":
+            # A dataset boundary, encoded rather than special-cased by nation: the
+            # rule is that NO window means NO field, and only a nation PROXY_SERIES
+            # names can take it -- a hole in any other nation is a broken download, so
+            # it exits loudly instead of quietly shipping zeros.
+            if proxied(nid, "natural_change"):
                 out[nid] = {"window": None,
                             "rates": {c: 0.0 for c in codes}}
                 continue
@@ -1944,13 +1988,16 @@ def build_regions():
         national_gdp = gdp.get(cc)
         national_rate = unemployment.get(cc)
         national_gva_mix = normalised_mix(mixes[cc]) if cc in mixes else None
-        # The whole-nation proxy triggers on the NATION rather than on the code, so a
+        # The proxy triggers on the NATION's figure rather than on the code, so a
         # series that thins out later takes the same documented path rather than a new
-        # one. Britain is the only nation allowed onto it: everywhere else a missing
-        # national figure is a broken download, not a dataset boundary.
-        proxy = national_gdp is None or national_rate is None
-        if proxy and nid != "GBR":
-            sys.exit(f"{nid}: regional economics missing and no fallback is authored")
+        # one. Only PROXY_SERIES may take it, series by series: everywhere else a
+        # missing national figure is a broken download, not a dataset boundary.
+        proxy_gdp = national_gdp is None
+        proxy_rate = national_rate is None
+        for series, missing in (("gdp", proxy_gdp), ("unemployment", proxy_rate)):
+            if missing and not proxied(nid, series):
+                sys.exit(f"{nid}: regional {series} missing and no fallback is authored")
+        proxy = proxy_gdp and proxy_rate
         regions = []
         for region in entry["kept"]:
             cities = []
@@ -1977,12 +2024,18 @@ def build_regions():
                 region_rel = 1.0
                 region_mix = dict(proxy_mix(nid))
             else:
-                region_gdp = econ_figure(gdp, code)
-                if region_gdp is None:
-                    sys.exit(f"{nid}: region {code} has a polygon and no GDP figure")
-                region_gdp_share = floor_share(region_gdp / national_gdp)
-                region_rel = round(
-                    econ_figure(unemployment, code, national_rate) / national_rate, 6)
+                if proxy_gdp:
+                    region_gdp_share = share
+                else:
+                    region_gdp = econ_figure(gdp, code)
+                    if region_gdp is None:
+                        sys.exit(f"{nid}: region {code} has a polygon and no GDP figure")
+                    region_gdp_share = floor_share(region_gdp / national_gdp)
+                if proxy_rate:
+                    region_rel = 1.0
+                else:
+                    region_rel = round(
+                        econ_figure(unemployment, code, national_rate) / national_rate, 6)
                 # The mix degrades one step at a time, measured figure first: the
                 # region's own GVA, then the nation's own GVA, then -- Switzerland's
                 # case, where nama_10r_3gva carries a TOTAL branch and no branches at
@@ -2028,24 +2081,25 @@ def build_regions():
                         "GISCO NUTS_RG_10M_%d; GeoNames cities15000; "
                         "%s%s%s"
                         % (entry["level"], entry["year"], REGION_NUTS_VINTAGE,
-                           ("population proxy -- no UK regional GDP, unemployment or GVA "
-                            "exists in Eurostat and none was authored, so gdp_share is the "
+                           ("population proxy -- %s, so gdp_share is the "
                             "population share, unemployment_rel is 1.0 and the mix is the "
-                            "national mix"
+                            "national mix" % PROXY_SERIES[nid]["why"]
                             if proxy else
                             "Eurostat nama_10r_2gdp, lfst_r_lfu3rt and nama_10r_3gva (%d)"
-                            % REGION_ECON_YEAR),
+                            % REGION_ECON_YEAR
+                            + ("; regional GDP is the population-share proxy -- %s"
+                               % PROXY_SERIES[nid]["why"] if proxy_gdp else "")
+                            + ("; unemployment_rel is 1.0 -- %s"
+                               % PROXY_SERIES[nid]["why"] if proxy_rate else "")),
                            ("; branch GVA is absent for the country, so every region "
                             "carries the nation's own World Bank sector shares"
                             if national_gva_mix is None and not proxy else ""),
                            ("; natural change from demo_r_gind3 NATGROWRT, window-averaged "
                             "%d-%d" % nat_window
                             if nat_window else
-                            "; natural change is 0.0 for every region -- demo_r_gind3 "
-                            "carries NATGROWRT for eleven of the twelve UK codes "
-                            "(2012-2018) but Scotland (UKM) publishes none at any year, "
+                            "; natural change is 0.0 for every region -- %s, "
                             "and a differential mixing measured and invented rates "
-                            "invents flows"))),
+                            "invents flows" % PROXY_SERIES[nid]["natural_why"]))),
             "_year": entry["year"],
             "_note": ("Generated by tools/import_data.py -- every field here is "
                       "dataset-derived and a re-import overwrites the file whole. "
