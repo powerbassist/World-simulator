@@ -56,10 +56,16 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 		return
 
 	var rows: Array = []
+	var sponsor_row: Dictionary = {}
 	for id in Orgs.members(state, org.id):
 		if String(id) == ns.id:
 			continue
 		var margin: float = Orgs.support(state, state.nations[id], proposal) + Council.swing(pending, String(id)) - BK.SUPPORT_THRESHOLD
+		# The sponsor is settled, not closest to flipping: shown last, outside
+		# the MAX_ROWS cut, so the player always sees whose proposal it is.
+		if String(pending.get("sponsor", "")) == String(id):
+			sponsor_row = {"id": String(id), "margin": margin}
+			continue
 		rows.append({"id": String(id), "margin": margin})
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var ma: float = absf(float(a["margin"]))
@@ -76,19 +82,34 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 	if not struck.is_empty():
 		var done: Array = []
 		for id in struck.keys():
-			done.append("%s (%s)" % [loader.nation_name(String(id)), String(struck[id].get("currency", "")).replace("_", " ")])
+			done.append("%s (%s, asked %s)" % [
+				loader.nation_name(String(id)), String(struck[id].get("currency", "")).replace("_", " "),
+				String(struck[id].get("ask", "")).to_upper(),
+			])
 		done.sort()
 		PanelKit.line(inner, "Already bargained this division: %s." % ", ".join(done))
 	for i in mini(rows.size(), MAX_ROWS):
 		_member_row(inner, panel, state, loader, ns, org, pending, vote, rows[i])
 	if rows.size() > MAX_ROWS:
 		PanelKit.line(inner, "… and %d more, already settled." % (rows.size() - MAX_ROWS))
+	if not sponsor_row.is_empty():
+		_member_row(inner, panel, state, loader, ns, org, pending, vote, sponsor_row)
 	PanelKit.line(inner, "A vote trade is an IOU: when the member you trade with next sponsors a proposal you must back it — abstaining counts as breaking it (%d goodwill). On a treaty it only counts as kept if your assembly ratifies." % roundi(CouncilK.IOU_BETRAYAL))
 
 
 static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pending: Dictionary, ask: String, row: Dictionary) -> void:
 	var id: String = row["id"]
 	var margin: float = float(row["margin"])
+	# An AI sponsor votes FOR its own proposal (Orgs._vote_of), whatever the
+	# appraisal says, so it is settled, never "leaning against".
+	if String(pending.get("sponsor", "")) == id:
+		PanelKit.line(inner, "%s — its own proposal: votes FOR" % loader.nation_name(id), PanelKit.Tone.PLAIN)
+		var sb := Button.new()
+		sb.text = "Nothing to bargain for"
+		sb.disabled = true
+		sb.tooltip_text = "It sponsored this proposal: it would take the payment for a vote it was always going to cast."
+		inner.add_child(sb)
+		return
 	PanelKit.line(inner, "%s — leans %s (%+.2f)" % [
 		loader.nation_name(id), "FOR" if margin >= 0.0 else "AGAINST", margin,
 	], PanelKit.Tone.PLAIN)
@@ -176,8 +197,9 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 		return
 
 	var inner := _fold(body, panel, "agenda:" + org.id, title)
-	if not chairing:
-		PanelKit.line(inner, "It usually opens under the next presidency.")
+	if chairing:
+		var open_idx: int = state.year * 12 + (state.month - 1) + Council.months_to_opening(state, org.id)
+		PanelKit.line(inner, "You chair the council from %s %d: choose what opens first." % [MONTHS[open_idx % 12], open_idx / 12])
 	var listed := 0
 	for p in loader.org_proposals.get(org.id, []):
 		# _eligible is the sim's one opening rule; reading it here keeps the list

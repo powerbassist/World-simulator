@@ -802,14 +802,16 @@ static func _is_pending(state, org_id: String, proposal_id: String) -> bool:
 	return String((state.orgs[org_id].get("pending", {}) as Dictionary).get("proposal_id", "")) == proposal_id
 
 
-## The player, chairing, chooses what opens next. Refused when the player does
-## not chair this council now, or the proposal could not open -- the same
+## The player, chairing at the next opening, chooses what opens. The CHAIR-ELECT
+## acts: openings fall on the tick that seats a new chair, so only the chair
+## now would be too late. Refused when the player does not chair at the next
+## opening, or the proposal could not open -- the same
 ## refuse-rather-than-record shape cast_vote() uses.
 static func set_agenda(state, loader, org_id: String, proposal_id: String) -> bool:
 	if not state.orgs.has(org_id):
 		return false
 	var ns = state.player()
-	if ns == null or Council.presiding_nation(state, loader, org_id) != ns.id:
+	if ns == null or Council.chair_at_next_opening(state, loader, org_id) != ns.id:
 		return false
 	var p = _proposal_by_id(loader, org_id, proposal_id)
 	if p == null or not _eligible(state, org_id, p):
@@ -833,7 +835,8 @@ static func table_proposal(state, loader, org_id: String, proposal_id: String) -
 	var ns = state.player()
 	if ns == null or not ns.orgs.has(org_id):
 		return false
-	var chair := Council.presiding_nation(state, loader, org_id)
+	# Paid to the chair at the next opening: the one who will put it first.
+	var chair := Council.chair_at_next_opening(state, loader, org_id)
 	if chair == "" or chair == ns.id:
 		return false
 	if not (state.orgs[org_id].get("tabled", {}) as Dictionary).is_empty():

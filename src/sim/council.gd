@@ -33,12 +33,18 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 ## re-plans the trio; a game that froze the chair on a non-member would let a
 ## nation outside the club set its agenda.
 static func presiding_nation(state, loader, org_id: String) -> String:
+	return chair_at_index(state, loader, org_id, state.year * 12 + (state.month - 1))
+
+
+## The chair at the month `now` (year * 12 + month - 1). The one place the
+## rotation is evaluated, so the chair NOW and the chair at a later date cannot
+## drift apart.
+static func chair_at_index(state, loader, org_id: String, now: int) -> String:
 	var org = loader.orgs_by_id.get(org_id, null)
 	if org == null or org.presidency.is_empty():
 		return ""
 	var order: Array = org.presidency["order"]
 	var months: int = int(org.presidency["months"])
-	var now: int = state.year * 12 + (state.month - 1)
 	var term: int = floori(float(now - int(org.presidency["anchor_index"])) / float(months))
 	var n: int = order.size()
 	for step in n:
@@ -47,6 +53,28 @@ static func presiding_nation(state, loader, org_id: String) -> String:
 		if ns != null and ns.orgs.has(org_id):
 			return id
 	return ""
+
+
+## Months until the council next opens a proposal, mirroring Orgs._tick_council:
+## an opening needs the countdown at 0 AND no division pending at the start of
+## the tick, and a division with L months left resolves on the Lth tick and the
+## opening follows on the next. The clock moves before the tick, so the opening
+## lands at now + this many months.
+static func months_to_opening(state, org_id: String) -> int:
+	var register: Dictionary = state.orgs.get(org_id, {})
+	var to_next: int = int(register.get("months_to_next", 0))
+	var pending: Dictionary = register.get("pending", {})
+	if pending.is_empty():
+		return maxi(to_next, 1)
+	return maxi(to_next, int(pending.get("months_left", 1)) + 1)
+
+
+## Who chairs at the next opening: the one who will actually put something
+## first. Openings fall on the tick that seats a new chair, so the CURRENT chair
+## is the wrong one to ask about the agenda. Pure: reads, never mutates.
+static func chair_at_next_opening(state, loader, org_id: String) -> String:
+	var now: int = state.year * 12 + (state.month - 1)
+	return chair_at_index(state, loader, org_id, now + months_to_opening(state, org_id))
 
 
 ## The decision class a proposal is divided under: its own if authored, its

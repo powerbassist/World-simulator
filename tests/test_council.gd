@@ -48,6 +48,7 @@ func _init() -> void:
 	_check_openings_are_an_interval_apart()
 	_check_an_ai_chair_opens_what_it_wants()
 	_check_a_human_chair_sets_the_agenda()
+	_check_the_chair_elect_acts()
 	_check_tabling_costs_the_chair()
 	_check_the_pending_proposal_cannot_be_chosen()
 	_check_a_tabled_opening_clears_a_stale_choice()
@@ -421,6 +422,49 @@ func _check_a_human_chair_sets_the_agenda() -> void:
 	_ok(not Orgs.set_agenda(other, _loader, EU_ORG, choice), "set_agenda accepted while DEU chairs")
 	_ok(not Orgs.set_agenda(other, _loader, "no_such_org", choice), "set_agenda accepted an unknown org")
 	_restore_presidency(kept2)
+	_restore_eu_content(kc)
+
+
+## The chair-elect acts. Openings fall on the tick that seats a new chair, so the
+## player must be able to choose BEFORE their presidency starts and pay the chair
+## who will actually open. Real EU order and real dates: FRA chairs 2035-H2,
+## SVN 2035-H1, CZE 2036-H1.
+func _check_the_chair_elect_acts() -> void:
+	var kc := _strip_eu_content()
+	var choice: String = _loader.org_proposals[EU_ORG][2].id
+	var other: String = _loader.org_proposals[EU_ORG][3].id
+
+	# June 2035, the opening is next month (July): FRA is chair-elect.
+	var state = _fresh()
+	state.year = 2035
+	state.month = 6
+	state.orgs[EU_ORG]["months_to_next"] = 1
+	_ok(Council.presiding_nation(state, _loader, EU_ORG) == "SVN", "fixture: 2035-06 chair is '%s', expected SVN" % Council.presiding_nation(state, _loader, EU_ORG))
+	_ok(Council.chair_at_next_opening(state, _loader, EU_ORG) == PLAYER, "the chair at the 2035-07 opening is not FRA")
+	_ok(Orgs.set_agenda(state, _loader, EU_ORG, choice), "set_agenda refused to the chair-elect")
+	_ok(not Orgs.table_proposal(state, _loader, EU_ORG, other), "tabling accepted although the player chairs at the opening")
+	state.month = 7
+	_ok(_tick_until_open(state, EU_ORG, 1) == choice, "the chair-elect's choice did not open at the seating tick")
+
+	# April 2035, the opening is next month (May) under SVN: not the player's.
+	var early = _fresh()
+	early.year = 2035
+	early.month = 4
+	early.orgs[EU_ORG]["months_to_next"] = 1
+	_ok(not Orgs.set_agenda(early, _loader, EU_ORG, choice), "set_agenda accepted for an opening another nation chairs")
+
+	# December 2035: FRA chairs now, CZE will chair at the January opening. Tabling
+	# pays CZE, and set_agenda is refused to the player.
+	var late = _fresh()
+	late.year = 2035
+	late.month = 12
+	late.orgs[EU_ORG]["months_to_next"] = 1
+	_ok(Council.presiding_nation(late, _loader, EU_ORG) == PLAYER, "fixture: 2035-12 chair is not FRA")
+	_ok(Council.chair_at_next_opening(late, _loader, EU_ORG) == "CZE", "the chair at the 2036-01 opening is '%s', expected CZE" % Council.chair_at_next_opening(late, _loader, EU_ORG))
+	_ok(not Orgs.set_agenda(late, _loader, EU_ORG, choice), "set_agenda accepted by the outgoing chair")
+	var czech: float = RK.score(late, PLAYER, "CZE")
+	_ok(Orgs.table_proposal(late, _loader, EU_ORG, other), "tabling refused to the next chair")
+	_ok(is_equal_approx(RK.score(late, PLAYER, "CZE"), czech - CouncilK.TABLE_RELATIONS_COST), "tabling did not pay the chair at the next opening")
 	_restore_eu_content(kc)
 
 

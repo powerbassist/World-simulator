@@ -250,8 +250,11 @@ func _check_a_bargain_reaches_the_sim() -> void:
 	favour.pressed.emit()
 
 	_refresh(panel)
-	if not _text(panel).contains("Already bargained this division: %s (favour)" % name):
+	if not _text(panel).contains("Already bargained this division: %s (favour, asked AGAINST)" % name):
 		_fail("the table does not name who was already bargained with: %s" % _text(panel))
+	var sponsor_name: String = _loader.nation_name(String(Orgs.pending(state, EU_ORG).get("sponsor", "")))
+	if not _text(panel).contains("%s — its own proposal: votes FOR" % sponsor_name) or _text(panel).contains("%s — leans" % sponsor_name):
+		_fail("the sponsor's row does not read as settled FOR: %s" % _text(panel))
 	var bargains: Dictionary = Orgs.pending(state, EU_ORG).get("bargains", {})
 	if not bargains.has(target):
 		_fail("pressing Favour did not put %s in pending.bargains" % target)

@@ -59,7 +59,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 	else:
 		PanelKit.line(body, String(pending.get("name", "")), PanelKit.Tone.PLAIN)
 		PanelKit.line(body, String(pending.get("summary", "")))
-		_sponsor_row(body, state, loader, ns, pending)
+		_sponsor_row(body, state, loader, ns, org, pending)
 		_decision_line(body, loader, org, pending)
 		_lobbying_line(body, loader, pending)
 		PanelKit.line(body, "Divides in %d %s." % [
@@ -89,11 +89,12 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 			"abstaining" if current == Orgs.VOTE_ABSTAIN else "voting " + current,
 			loader.nation_name(ns.id), org.seats(ns.id),
 		])
+		_sponsor_reaction_line(body, state, loader, ns, pending)
 		Bargains.build_table(body, panel, state, loader, ns, org, pending)
 
 	_aid_line(body, state, ns, org)
 	Bargains.build_debts(body, state, loader, ns, org)
-	Bargains.build_agenda(body, panel, state, loader, ns, org, Council.presiding_nation(state, loader, org.id))
+	Bargains.build_agenda(body, panel, state, loader, ns, org, Council.chair_at_next_opening(state, loader, org.id))
 
 	var last: Dictionary = Orgs.last_vote(state, org.id)
 	if not last.is_empty():
@@ -107,7 +108,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 			_vote_words(String(last.get("player_vote", ""))),
 		])
 		_outcome(body, loader, last)
-		_why(body, last)
+		_why(body, loader, last)
 	PanelKit.line(body, "", PanelKit.Tone.PLAIN)
 
 
@@ -134,9 +135,11 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 		PanelKit.line(body, "Your assembly, if it voted today: %s" % LawPanel.forecast_text(
 			ns, parties, treaty, LawPanel.forecast_band(ns, treaty.id)), PanelKit.Tone.PLAIN)
 	var members: int = Orgs.members(state, org.id).size()
-	PanelKit.line(body, "If it falls here it falls for all %d members; %s will not forget it." % [
-		members, loader.nation_name(String(r.get("sponsor", ""))),
-	])
+	var r_sponsor := String(r.get("sponsor", ""))
+	var falls := "If it falls here it falls for all %d members" % members
+	if r_sponsor != "" and r_sponsor != ns.id:
+		falls += "; %s will not forget it" % loader.nation_name(r_sponsor)
+	PanelKit.line(body, falls + ".")
 	var button := Button.new()
 	button.text = "Put it to the assembly"
 	button.pressed.connect(panel._on_ratify.bind(org.id))
@@ -153,7 +156,7 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 ## per nation: the interesting object is the CAMP. The reasons are recorded at
 ## the moment of the division by src/sim/orgs.gd, not recomputed here -- the
 ## books a member voted on were that month's.
-static func _why(body: VBoxContainer, last: Dictionary) -> void:
+static func _why(body: VBoxContainer, loader, last: Dictionary) -> void:
 	var reasons: Dictionary = last.get("reasons", {})
 	if reasons.is_empty():
 		return
@@ -167,7 +170,7 @@ static func _why(body: VBoxContainer, last: Dictionary) -> void:
 		if not camps.has(key):
 			camps[key] = []
 		camps[key].append("%s %s" % [
-			String(id), "for" if String(votes.get(id, "")) == Orgs.VOTE_FOR else "against",
+			loader.nation_name(String(id)), "for" if String(votes.get(id, "")) == Orgs.VOTE_FOR else "against",
 		])
 
 	var keys: Array = camps.keys()
@@ -194,13 +197,18 @@ static func _vote_reason_text(key: String) -> String:
 ## Who put the pending proposal forward, with the face of the person who is
 ## pushing it. The sponsor's head of government is read live (Council.drive's
 ## contract), so an election abroad changes the face on the next refresh.
-static func _sponsor_row(body: VBoxContainer, state, loader, ns, pending: Dictionary) -> void:
+static func _sponsor_row(body: VBoxContainer, state, loader, ns, org, pending: Dictionary) -> void:
 	var sponsor := String(pending.get("sponsor", ""))
 	if sponsor == "":
 		PanelKit.line(body, "No sponsor \u2014 the presidency put it forward.")
 		return
 	if sponsor == ns.id:
-		PanelKit.line(body, "You tabled it.")
+		# Tabled by the player (paid) vs authored as the player nation's own.
+		var authored = Orgs.proposal_by_id(loader, org.id, String(pending.get("proposal_id", "")))
+		if authored != null and String(authored.sponsor) == ns.id:
+			PanelKit.line(body, "Your government's proposal.")
+		else:
+			PanelKit.line(body, "You tabled it.")
 		return
 	var sponsor_ns = state.nations.get(sponsor, null)
 	var drive: float = Council.drive(state, loader, sponsor)
@@ -219,6 +227,26 @@ static func _sponsor_row(body: VBoxContainer, state, loader, ns, pending: Dictio
 		var face := Portrait.framed_for(person_id, FACE_SIZE)
 		row.add_child(face)
 		row.move_child(face, 0)
+	# The player's own IOU to this sponsor: the one place a vote is owed.
+	for d in (state.orgs[org.id].get("debts", []) as Array):
+		if String(d.get("debtor", "")) == ns.id and String(d.get("creditor", "")) == sponsor and String(d.get("awaiting", "")) == "":
+			var line := "This is %s's proposal: you owe them a vote — anything but FOR costs %d goodwill" % [loader.nation_name(sponsor), roundi(CouncilK.IOU_BETRAYAL)]
+			var p = Orgs.proposal_by_id(loader, org.id, String(pending.get("proposal_id", "")))
+			if p != null and Council.decision_of(loader, p) == CouncilK.DECISION_UNANIMITY:
+				line += " and it only counts if your assembly ratifies"
+			PanelKit.line(body, line + ".")
+			break
+
+
+## What the sponsor makes of the player's vote, in numbers a player can weigh.
+static func _sponsor_reaction_line(body: VBoxContainer, state, loader, ns, pending: Dictionary) -> void:
+	var sponsor := String(pending.get("sponsor", ""))
+	if sponsor == "" or sponsor == ns.id or not state.nations.has(sponsor):
+		return
+	var d: float = Council.drive(state, loader, sponsor)
+	PanelKit.line(body, "Backing it earns %s goodwill (+%.1f); opposing it costs %.1f; abstaining costs nothing." % [
+		loader.nation_name(sponsor), CouncilK.SPONSOR_THANKS * d, CouncilK.SPONSOR_SNUB * d,
+	])
 
 
 ## The decision class in plain words; the numbers come from the constants so the
