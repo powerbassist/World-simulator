@@ -1842,6 +1842,9 @@ func _stage_contested_council() -> void:
 				if state.month > 12:
 					state.month = 1
 					state.year += 1
+			# The HUD clock reads the clock, not the state: move both.
+			_main._clock.year = state.year
+			_main._clock.month = state.month
 			register["pending"] = {}
 			for p in loader.org_proposals.get(org, []):
 				if Orgs.set_agenda(state, loader, org, p.id):
@@ -1853,6 +1856,11 @@ func _stage_contested_council() -> void:
 		if _council_frame == "sponsored":
 			_main._orgs_panel.set_section_open("room:" + org, true)
 		_main._orgs_panel.mark_dirty()
+		var scroller = _main._orgs_panel._body.get_parent()
+		if scroller is ScrollContainer:
+			scroller.scroll_vertical = 0
+	# The top bar's Europe figure, refreshed the way main.gd does after an action.
+	_main._update_top_bar()
 
 
 ## Fill the diary so a frame of it shows something. U6a.

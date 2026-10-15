@@ -63,6 +63,7 @@ func _process(_delta: float) -> bool:
 	_check_the_ratify_card()
 	_check_the_desk_marks_a_treaty()
 	_check_the_europe_figure()
+	_check_a_waiting_council_lists_first()
 	_start_frame_scenario()
 	return false
 
@@ -438,6 +439,20 @@ func _check_the_europe_figure() -> void:
 	if treaty_text != "Treaty: 3m":
 		_fail("a pending ratification reads '%s', not 'Treaty: 3m'" % treaty_text)
 	_drop(bar)
+
+
+## An org with a division waiting on the player is listed before one with nothing.
+func _check_a_waiting_council_lists_first() -> void:
+	var state = _fresh()
+	_stage_pending(state)
+	var panel := _panel_for(state)
+	_refresh(panel)
+	var text := _text(panel)
+	var eu_at := text.find("THE EUROPEAN UNION")
+	var climate_at := text.find("THE CLIMATE ACCORD")
+	if eu_at < 0 or climate_at < 0 or eu_at > climate_at:
+		_fail("a pending eu division does not list before the climate accord (%d vs %d)" % [eu_at, climate_at])
+	_drop(panel)
 
 
 ## The dirty -> visible -> _process -> _refresh gate every handler relies on, driven

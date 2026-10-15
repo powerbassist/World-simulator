@@ -25,6 +25,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Council = preload("res://src/sim/council.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const CouncilSection = preload("res://src/ui/council_section.gd")
 const Relations = preload("res://src/core/relations.gd")
@@ -148,7 +149,24 @@ func _refresh() -> void:
 		PanelKit.line(_body, _refusal_text)
 		_refusal_text = ""
 
+	# Orgs that need the player come first: a treaty waiting on the player's
+	# ratification, then a division awaiting the player's vote. Otherwise the
+	# authored order buries the one decision with a deadline below the fold of
+	# whichever council happens to be listed earlier. Authored order is kept
+	# within each group (a stable partition, not a sort).
+	var ratify: Array = []
+	var voting: Array = []
+	var rest: Array = []
 	for org in _loader.orgs:
+		var register: Dictionary = _state.orgs.get(org.id, {})
+		var nations: Dictionary = (register.get("ratifying", {}) as Dictionary).get("nations", {})
+		if ns.orgs.has(org.id) and String(nations.get(ns.id, "")) == CouncilK.RATIFY_PENDING:
+			ratify.append(org)
+		elif ns.orgs.has(org.id) and not (register.get("pending", {}) as Dictionary).is_empty():
+			voting.append(org)
+		else:
+			rest.append(org)
+	for org in ratify + voting + rest:
 		if ns.orgs.has(org.id):
 			_refresh_member_org(ns, org)
 		else:
