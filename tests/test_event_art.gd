@@ -72,7 +72,8 @@ func _nameable_plates() -> Array[String]:
 ## the side that would otherwise drift silently.
 func _check_generator_and_display_agree() -> void:
 	var out: Array = []
-	var code := OS.execute("python",
+	# SUITE_PYTHON: tools/run_tests.sh exports the interpreter it found (python or python3).
+	var code := OS.execute(OS.get_environment("SUITE_PYTHON") if OS.has_environment("SUITE_PYTHON") else "python",
 		[ProjectSettings.globalize_path("res://tools/event_art_generate.py"), "--dry-run"], out)
 	if code != 0:
 		_fail("the plate generator --dry-run failed (exit %d): %s" % [code, out])

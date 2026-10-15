@@ -29,8 +29,9 @@ The first open imports the assets, which takes a minute or so.
 
 ## Run the tests
 
-The suite is headless and needs `bash` and `python` (3.10 or later) on `PATH`, and
-`godot` too (or set `GODOT_BIN`):
+The suite is headless. It needs `bash`, Python 3.10 or later (as `python` or
+`python3`) and `godot` on `PATH`, or `GODOT_BIN` set to Godot's path. On
+Debian/Ubuntu, Godot also needs `libfontconfig1` (`sudo apt install libfontconfig1`).
 
 ```bash
 bash tools/run_tests.sh
