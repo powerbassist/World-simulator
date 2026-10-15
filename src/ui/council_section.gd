@@ -17,12 +17,35 @@ extends RefCounted
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const Council = preload("res://src/sim/council.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
+const BK = preload("res://src/sim/bloc_constants.gd")
+const Portrait = preload("res://src/ui/portrait.gd")
+
+const FACE_SIZE := Vector2(48, 60)
+const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+## How many chairs after the current one the presidency line names.
+const NEXT_CHAIRS := 3
+## A drive at or above these reads "hard" / "steadily"; below, "lightly". The
+## player never sees the number, only the verb -- the ambition behind it is a
+## person trait, not a meter.
+const DRIVE_HARD := 0.66
+const DRIVE_STEADY := 0.33
+
+
+## Stands in for GameState so Council.presiding_nation can be asked about a
+## later date without touching the real one: it reads only year, month, nations.
+class DateProxy:
+	var year: int = 0
+	var month: int = 1
+	var nations: Dictionary = {}
 
 
 ## What is on the table at this org's council, and the player's own vote.
 ## First, because it is the only part of this section the player can act on.
-static func build(body: VBoxContainer, panel, state, ns, org) -> void:
+static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 	PanelKit.heading(body, "BEFORE THE COUNCIL")
+	_chair_line(body, state, loader, ns, org)
 
 	var pending: Dictionary = Orgs.pending(state, org.id)
 	if pending.is_empty():
@@ -30,6 +53,9 @@ static func build(body: VBoxContainer, panel, state, ns, org) -> void:
 	else:
 		PanelKit.line(body, String(pending.get("name", "")), PanelKit.Tone.PLAIN)
 		PanelKit.line(body, String(pending.get("summary", "")))
+		_sponsor_row(body, state, loader, ns, pending)
+		_decision_line(body, loader, org, pending)
+		_lobbying_line(body, loader, pending)
 		PanelKit.line(body, "Divides in %d %s." % [
 			int(pending.get("months_left", 0)),
 			"month" if int(pending.get("months_left", 0)) == 1 else "months",
@@ -67,6 +93,7 @@ static func build(body: VBoxContainer, panel, state, ns, org) -> void:
 			int(last.get("seats_for", 0)), int(last.get("seats_against", 0)),
 			int(last.get("seats_total", 0)), ns.id, String(last.get("player_vote", "")),
 		])
+		_outcome(body, loader, last)
 		_why(body, last)
 	PanelKit.line(body, "", PanelKit.Tone.PLAIN)
 
@@ -112,4 +139,110 @@ static func _vote_reason_text(key: String) -> String:
 		ForeignPolicy.VOTE_REASON_WOULD_PAY: return "would have to pay for it"
 		ForeignPolicy.VOTE_REASON_TRADES_OUTSIDE: return "trades outside the org"
 		ForeignPolicy.VOTE_REASON_POLITICS: return "on the politics of it"
+		CouncilK.REASON_LOBBIED: return "brought round by the sponsor"
+		CouncilK.REASON_BARGAINED: return "struck a bargain with you"
+		CouncilK.REASON_SPONSOR: return "its own proposal"
 	return key
+
+
+## Who put the pending proposal forward, with the face of the person who is
+## pushing it. The sponsor's head of government is read live (Council.drive's
+## contract), so an election abroad changes the face on the next refresh.
+static func _sponsor_row(body: VBoxContainer, state, loader, ns, pending: Dictionary) -> void:
+	var sponsor := String(pending.get("sponsor", ""))
+	if sponsor == "":
+		PanelKit.line(body, "No sponsor \u2014 the presidency put it forward.")
+		return
+	if sponsor == ns.id:
+		PanelKit.line(body, "You tabled it.")
+		return
+	var sponsor_ns = state.nations.get(sponsor, null)
+	var drive: float = Council.drive(state, loader, sponsor)
+	var how := "lightly"
+	if drive >= DRIVE_HARD:
+		how = "hard"
+	elif drive >= DRIVE_STEADY:
+		how = "steadily"
+	var person_id := String(sponsor_ns.pm_person_id) if sponsor_ns != null else ""
+	var who: String = loader.person_name(person_id)
+	var text := "Sponsored by %s" % loader.nation_name(sponsor)
+	if who != "":
+		text += " \u2014 %s pushes it %s" % [who, how]
+	var row := PanelKit.row(body, text, "")
+	if person_id != "":
+		var face := Portrait.framed_for(person_id, FACE_SIZE)
+		row.add_child(face)
+		row.move_child(face, 0)
+
+
+## The decision class in plain words; the numbers come from the constants so the
+## copy cannot drift from the rule.
+static func _decision_line(body: VBoxContainer, loader, org, pending: Dictionary) -> void:
+	var p = Orgs.proposal_by_id(loader, org.id, String(pending.get("proposal_id", "")))
+	var rule: String = Council.decision_of(loader, p) if p != null else String(org.decision_rule)
+	if rule == CouncilK.DECISION_UNANIMITY:
+		PanelKit.line(body, "A treaty: one vote against vetoes it. If it carries, your assembly must ratify it within %d months \u2014 one rejection anywhere kills it for every member." % CouncilK.RATIFY_WINDOW_MONTHS)
+	else:
+		PanelKit.line(body, "Decided by qualified majority: %d %% of the seats cast. Abstaining lowers the bar instead of blocking." % roundi(BK.PASS_SEAT_FRACTION * 100.0))
+
+
+static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> void:
+	var lobbied: Dictionary = pending.get("lobbied", {})
+	if lobbied.is_empty():
+		return
+	var names: Array = []
+	for id in lobbied.keys():
+		names.append(loader.nation_name(String(id)))
+	names.sort()
+	PanelKit.line(body, "%s has spent goodwill to bring round: %s." % [
+		loader.nation_name(String(pending.get("sponsor", ""))), ", ".join(names),
+	])
+
+
+## The presidency: who chairs now, until when, and the next few. Evaluated by
+## Council.presiding_nation on a DateProxy so the non-member skip rule lives in
+## one place.
+static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
+	if org.presidency.is_empty():
+		if org.decision_rule == CouncilK.DECISION_UNANIMITY:
+			PanelKit.line(body, "No rotating chair: the Secretary General convenes, decisions by consensus.")
+		return
+	var current := Council.presiding_nation(state, loader, org.id)
+	if current == "":
+		return
+	if current == ns.id:
+		PanelKit.line(body, "You chair the council this semester.")
+		return
+	var months: int = int(org.presidency["months"])
+	var anchor: int = int(org.presidency["anchor_index"])
+	var now: int = state.year * 12 + (state.month - 1)
+	var term: int = floori(float(now - anchor) / float(months))
+	var end_idx: int = anchor + (term + 1) * months - 1
+	var proxy := DateProxy.new()
+	proxy.nations = state.nations
+	var next: Array = []
+	for k in range(1, NEXT_CHAIRS + 1):
+		var idx: int = now + k * months
+		proxy.year = idx / 12
+		proxy.month = idx % 12 + 1
+		var id := Council.presiding_nation(proxy, loader, org.id)
+		if id != "":
+			next.append(loader.nation_name(id))
+	var text := "Presidency: %s (to %s %d)" % [loader.nation_name(current), MONTHS[end_idx % 12], end_idx / 12]
+	if not next.is_empty():
+		text += ", then %s" % ", ".join(next)
+	PanelKit.line(body, text + ".")
+
+
+## Vetoes and the road home for the last division.
+static func _outcome(body: VBoxContainer, loader, last: Dictionary) -> void:
+	var vetoed: Array = last.get("vetoed_by", [])
+	if not vetoed.is_empty():
+		var names: Array = []
+		for id in vetoed:
+			names.append(loader.nation_name(String(id)))
+		PanelKit.line(body, "Vetoed by %s." % ", ".join(names))
+	match String(last.get("ratification", "")):
+		"pending": PanelKit.line(body, "Awaiting ratification at home.")
+		"ratified": PanelKit.line(body, "Ratified.")
+		"failed": PanelKit.line(body, "Fell at ratification.")

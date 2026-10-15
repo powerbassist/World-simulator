@@ -153,7 +153,7 @@ func _refresh_member_org(ns, org) -> void:
 		PanelKit.line(_body, org.summary, PanelKit.Tone.PLAIN)
 
 	if org.council:
-		CouncilSection.build(_body, self, _state, ns, org)
+		CouncilSection.build(_body, self, _state, _loader, ns, org)
 		_refresh_rules(ns, org)
 	if org.net_transfers:
 		_refresh_contribution(ns, org)
@@ -211,6 +211,8 @@ func _refresh_contribution(ns, org) -> void:
 		PanelKit.line(_body, "Adopted programmes: %+.3f%% of GDP" % float(per_org.get("rules", 0.0)), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("fine", 0.0))):
 		PanelKit.line(_body, "Penalties: %+.3f%% of GDP" % float(per_org.get("fine", 0.0)), PanelKit.Tone.PLAIN)
+	if not is_zero_approx(float(per_org.get("aid", 0.0))):
+		PanelKit.line(_body, "Side-payments (aid): %+.3f%% of GDP" % float(per_org.get("aid", 0.0)), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "All organisations, total: %+.3f%% of GDP" % float(parts.get("total", 0.0)), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP.")
 
