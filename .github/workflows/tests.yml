@@ -29,7 +29,8 @@ env:
 
 jobs:
   suite:
-    name: Headless suite (Godot ${{ env.GODOT_VERSION }})
+    # Plain text: a job name cannot read the env context (a workflow-file error, 0s run).
+    name: Headless suite
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
