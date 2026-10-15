@@ -313,8 +313,13 @@ func _check_share_delta_direction() -> void:
 ## real quantity and it is test_natural_change.gd's, not this check's. City shares
 ## are untouched by natural change, so the city half needs no isolation.
 func _check_the_tick_moves_toward_the_pull() -> void:
+	# ONE game for every nation: Migration.tick_month() ticks all of them each call
+	# and each nation's flow reads only its own regions, so the 29 runs this used to
+	# make (a fresh game and 168 months per nation, asserting one) did 29x the work
+	# for the same claims -- the suite audit's F4, and the CI's longest single unit.
+	var state = GameState.new_game(_loader, "FRA")
+	var claims: Dictionary = {}
 	for nation_id in NATIONS:
-		var state = GameState.new_game(_loader, nation_id)
 		var ns = state.nations[nation_id]
 		var list: Array = _loader.regions.get(nation_id, [])
 
@@ -372,9 +377,24 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 					continue
 				city_gainers[top_id] = Migration.city_share(ns, top_id)
 				city_losers[bottom_id] = Migration.city_share(ns, bottom_id)
+		claims[nation_id] = {"ranked_regions": ranked_regions, "best_id": best_id, "worst_id": worst_id,
+			"best_start": best_start, "worst_start": worst_start, "saved_rates": saved_rates,
+			"city_gainers": city_gainers, "city_losers": city_losers}
 
-		for i in 168:
-			Migration.tick_month(state, _loader)
+	for i in 168:
+		Migration.tick_month(state, _loader)
+
+	for nation_id in NATIONS:
+		var ns = state.nations[nation_id]
+		var list: Array = _loader.regions.get(nation_id, [])
+		var c: Dictionary = claims[nation_id]
+		var ranked_regions: bool = c["ranked_regions"]
+		var best_id: String = c["best_id"]
+		var worst_id: String = c["worst_id"]
+		var best_start: float = c["best_start"]
+		var worst_start: float = c["worst_start"]
+		var city_gainers: Dictionary = c["city_gainers"]
+		var city_losers: Dictionary = c["city_losers"]
 
 		if ranked_regions:
 			var best_moved: float = Migration.region_share(ns, best_id) - best_start
@@ -394,7 +414,7 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 				_fail("%s: city '%s' moved %+.8f of its region under the live tick after ranking lowest in named payroll per head -- migration must move people AWAY from the worse place" % [nation_id, city_id, moved])
 
 		for region in list:
-			region.natural_change_pct = float(saved_rates[region.id])
+			region.natural_change_pct = float(c["saved_rates"][region.id])
 
 
 ## V1.5d SHIPPED WITH NEITHER HARNESS CALLING Media.tick_month(), so both ran the

@@ -119,14 +119,18 @@ func _check_share_delta_direction() -> void:
 ## `sum s_i (r_i - mean)` ceases to telescope the moment the mean is taken in
 ## weights the deltas do not use. Conservation IS the call-site assertion.
 func _check_conservation_is_exact() -> void:
+	# ONE game for every nation: Migration.tick_month() ticks all of them each call,
+	# so a fresh game and 168 months per nation (asserting one) was 29x the work for
+	# the same claim -- the suite audit's F4.
+	var state = GameState.new_game(_loader, "FRA")
+	var start: Dictionary = {}
 	for nation_id in NATIONS:
-		var state = GameState.new_game(_loader, nation_id)
-		var ns = state.nations[nation_id]
+		start[nation_id] = Migration.named_region_total(state.nations[nation_id], _loader.regions.get(nation_id, []))
+	for i in 168:
+		Migration.tick_month(state, _loader)
+	for nation_id in NATIONS:
 		var list: Array = _loader.regions.get(nation_id, [])
-		var start: float = Migration.named_region_total(ns, list)
-		for i in 168:
-			Migration.tick_month(state, _loader)
-		var drift: float = absf(Migration.named_region_total(ns, list) - start)
+		var drift: float = absf(Migration.named_region_total(state.nations[nation_id], list) - float(start[nation_id]))
 		if drift > 0.000000000001:
 			_fail("%s: the named regions' total drifted %f over 168 months -- the combined flow does not telescope" % [nation_id, drift])
 

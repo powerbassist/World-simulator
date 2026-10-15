@@ -44,6 +44,7 @@ func _init() -> void:
 	_check_template_count_and_themes()
 	_check_extra_law_is_data_only_edit()
 	_check_vote_follows_assembly_composition()
+	_check_majority_boundaries()
 	_check_support_monotone_in_distance()
 	_check_determinism()
 	_check_failed_vote_names_opponents()
@@ -144,6 +145,55 @@ func _check_vote_follows_assembly_composition() -> void:
 
 	if real_result["passed"] == hostile_result["passed"] and real_result["yes_seats"] == hostile_result["yes_seats"]:
 		_fail("resolve_vote produced an identical outcome against a real and a deliberately hostile assembly")
+
+
+## THE EXACT BOUNDARIES of the two fixed thresholds, which nothing pinned: the
+## suite audit's mutations M1 (a simple-majority tie passes, `>` -> `>=`) and M2
+## (exactly two thirds fails, `>=` -> `>`) both kept the whole suite green. Two
+## parties whose line and own conscience agree (so no seat rebels whatever their
+## size) carry the whole assembly, sized to sit ON each boundary and one seat
+## either side. 300 seats because 2/3 x 300 is exactly 200.0 in floating point --
+## a total whose two thirds is not a whole number could not hold the boundary.
+func _check_majority_boundaries() -> void:
+	var state = _new_state()
+	var ns = state.player().duplicate_state()
+	var party_list: Array = _loader.parties["FRA"]
+	var law = _find_law("retirement_age_reform")
+	if law == null:
+		_fail("fixture law 'retirement_age_reform' not found")
+		return
+	var yes_id := ""
+	var no_id := ""
+	for party in party_list:
+		var line := Legislature.vote_of(Legislature.support(ns, party, law))
+		if line != Legislature.vote_of(Legislature.spatial_support(ns, party, law)):
+			continue
+		if line == "yes" and yes_id == "":
+			yes_id = party.id
+		elif line == "no" and no_id == "":
+			no_id = party.id
+	if yes_id == "" or no_id == "":
+		_fail("no rebel-free yes and no parties on 'retirement_age_reform' (yes '%s', no '%s') -- the fixture moved" % [yes_id, no_id])
+		return
+
+	var saved_majority: String = law.majority
+	ns.assembly_seats = 300
+	# [majority, yes seats, no seats, must pass]
+	for c in [["simple", 150, 150, false], ["simple", 151, 149, true],
+			["two_thirds", 200, 100, true], ["two_thirds", 199, 101, false]]:
+		law.majority = c[0]
+		ns.seats_by_party = {}
+		for party in party_list:
+			ns.seats_by_party[party.id] = 0
+		ns.seats_by_party[yes_id] = c[1]
+		ns.seats_by_party[no_id] = c[2]
+		var result := Legislature.resolve_vote(ns, party_list, law)
+		if result["yes_seats"] != c[1] or result["no_seats"] != c[2]:
+			_fail("%s %d-%d: the vote counted %d-%d -- the boundary case is not the one asked" % [c[0], c[1], c[2], result["yes_seats"], result["no_seats"]])
+		elif bool(result["passed"]) != c[3]:
+			_fail("%s majority, %d yes to %d no of 300: passed=%s, expected %s" % [c[0], c[1], c[2], result["passed"], c[3]])
+	# The loader's law objects are shared with every later check.
+	law.majority = saved_majority
 
 
 ## Support falls monotonically as a law's own position moves further from a

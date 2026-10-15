@@ -25,6 +25,7 @@ func _init() -> void:
 
 	_check_seats_sum_and_bounds()
 	_check_threshold_excludes()
+	_check_threshold_is_inclusive()
 	_check_dhondt_worked_example()
 	_check_power_law_amplifies_and_preserves_order()
 	_check_parallel_equals_its_components()
@@ -71,6 +72,18 @@ func _check_threshold_excludes() -> void:
 			total += int(v)
 		if total != 100:
 			_fail("%s: seats sum to %d with a threshold applied, expected 100" % [system, total])
+
+
+## A party ON the threshold is in: "at least 5%" is the real rule (and what
+## _above_threshold's `>=` says), and the suite audit's mutation M8 (`>=` -> `>`)
+## kept the whole suite green because every fixture sat clear of the line.
+## 0.05 and 5.0 / 100.0 are the same double, so the share is exactly on it.
+func _check_threshold_is_inclusive() -> void:
+	var shares := {"big": 0.85, "edge": 0.05, "medium": 0.10}
+	for system in ["pr_dhondt", "pr_national"]:
+		var result := ElectoralSystems.allocate(system, shares, 100, 5.0)
+		if int(result.get("edge", 0)) == 0:
+			_fail("%s: a party at exactly the 5%% threshold won no seats" % system)
 
 
 ## The textbook D'Hondt example (Wikipedia "D'Hondt method"): four parties,
