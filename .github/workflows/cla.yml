@@ -6,6 +6,9 @@
 # reason that trigger usually is not: it never checks out or runs the pull
 # request's code -- the pinned action reads comments and writes one JSON file.
 # Do not add a checkout of the PR head here.
+#
+# `claude` is on the allowlist because the author's own commits carry a
+# Co-Authored-By trailer for the AI assistant, which GitHub maps to that account.
 
 name: CLA
 
@@ -36,4 +39,4 @@ jobs:
           path-to-signatures: signatures/cla.json
           path-to-document: ${{ github.server_url }}/${{ github.repository }}/blob/main/CLA.md
           branch: cla-signatures
-          allowlist: powerbassist,dependabot[bot],github-actions[bot]
+          allowlist: powerbassist,claude,dependabot[bot],github-actions[bot]
