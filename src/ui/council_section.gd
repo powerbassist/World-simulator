@@ -21,6 +21,7 @@ const Council = preload("res://src/sim/council.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const Bargains = preload("res://src/ui/council_bargains.gd")
 
 const FACE_SIZE := Vector2(48, 60)
 const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -82,6 +83,11 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 		PanelKit.line(body, "Currently: %s. %s holds %d of the council's seats." % [
 			current, ns.id, org.seats(ns.id),
 		])
+		Bargains.build_table(body, panel, state, loader, ns, org, pending)
+
+	_aid_line(body, state, ns, org)
+	Bargains.build_debts(body, state, loader, ns, org)
+	Bargains.build_agenda(body, panel, state, loader, ns, org, Council.presiding_nation(state, loader, org.id))
 
 	var last: Dictionary = Orgs.last_vote(state, org.id)
 	if not last.is_empty():
@@ -89,9 +95,10 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 		PanelKit.line(body, "Last division: %s — %s" % [
 			String(last.get("name", "")), "carried" if bool(last.get("passed", false)) else "fell",
 		], PanelKit.Tone.PLAIN)
-		PanelKit.line(body, "%d for, %d against, of %d seats. %s voted %s." % [
+		PanelKit.line(body, "%d for, %d against, of %d seats. %s %s." % [
 			int(last.get("seats_for", 0)), int(last.get("seats_against", 0)),
-			int(last.get("seats_total", 0)), ns.id, String(last.get("player_vote", "")),
+			int(last.get("seats_total", 0)), loader.nation_name(ns.id),
+			_vote_words(String(last.get("player_vote", ""))),
 		])
 		_outcome(body, loader, last)
 		_why(body, last)
@@ -210,10 +217,10 @@ static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 	var current := Council.presiding_nation(state, loader, org.id)
 	if current == "":
 		return
-	if current == ns.id:
-		PanelKit.line(body, "You chair the council this semester.")
-		return
 	var months: int = int(org.presidency["months"])
+	if current == ns.id:
+		PanelKit.line(body, "You chair the council this %s." % ("semester" if months == 6 else "term"))
+		return
 	var anchor: int = int(org.presidency["anchor_index"])
 	var now: int = state.year * 12 + (state.month - 1)
 	var term: int = floori(float(now - anchor) / float(months))
@@ -226,7 +233,8 @@ static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 		proxy.year = idx / 12
 		proxy.month = idx % 12 + 1
 		var id := Council.presiding_nation(proxy, loader, org.id)
-		if id != "":
+		# A small rotation can seat the same chair twice running; "then X, X" is noise.
+		if id != "" and (next.is_empty() or next[-1] != loader.nation_name(id)):
 			next.append(loader.nation_name(id))
 	var text := "Presidency: %s (to %s %d)" % [loader.nation_name(current), MONTHS[end_idx % 12], end_idx / 12]
 	if not next.is_empty():
@@ -246,3 +254,26 @@ static func _outcome(body: VBoxContainer, loader, last: Dictionary) -> void:
 		"pending": PanelKit.line(body, "Awaiting ratification at home.")
 		"ratified": PanelKit.line(body, "Ratified.")
 		"failed": PanelKit.line(body, "Fell at ratification.")
+
+
+## "voted for" in words rather than the raw choice key.
+static func _vote_words(vote: String) -> String:
+	match vote:
+		Orgs.VOTE_FOR: return "voted for"
+		Orgs.VOTE_AGAINST: return "voted against"
+	return "abstained"
+
+
+## Aid the player pays into this council. Orgs with a transfer line show it in
+## THE BUDGET; the rest (a climate accord) have no such section, so it is said here.
+static func _aid_line(body: VBoxContainer, state, ns, org) -> void:
+	if org.net_transfers:
+		return
+	var pct: float = Council.aid_line(state, ns.id, org.id)
+	if pct <= 0.0:
+		return
+	var left := 0
+	for a in (state.orgs[org.id].get("aid", []) as Array):
+		if String(a.get("payer", "")) == ns.id:
+			left = maxi(left, int(a.get("months_left", 0)) + 1)
+	PanelKit.line(body, "You are paying %.2f %% of GDP in side-payments to this council (%d months left)." % [pct, left])

@@ -24,6 +24,7 @@ extends PanelContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
+const Council = preload("res://src/sim/council.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const CouncilSection = preload("res://src/ui/council_section.gd")
 const Relations = preload("res://src/core/relations.gd")
@@ -56,6 +57,10 @@ var _primary: Control = null
 ## marked the panel dirty, so the refresh erased it before a frame passed and
 ## the message was a dead write.
 var _refusal_text := ""
+
+## Which folds of the council block are open ("room:<org>", "agenda:<org>"). On the
+## panel, not the section, because the body is rebuilt on every refresh.
+var _open_sections: Dictionary = {}
 
 
 func _ready() -> void:
@@ -320,6 +325,51 @@ func _on_vote(org_id: String, choice: String) -> void:
 		return
 	voted.emit(before, "Council vote (%s): %s" % [org_id.to_upper(), choice])
 	_dirty = true
+
+
+func is_section_open(key: String) -> bool:
+	return bool(_open_sections.get(key, false))
+
+
+func set_section_open(key: String, open: bool) -> void:
+	_open_sections[key] = open
+
+
+func _on_bargain(org_id: String, target_id: String, currency: String, ask: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	if not Council.bargain(_state, org_id, target_id, currency, ask):
+		_refusal_text = "Refused: that bargain can no longer be struck."
+		_dirty = true
+		return
+	acted.emit(before, "Council bargain (%s): %s with %s" % [
+		org_id.to_upper(), currency.replace("_", " "), _loader.nation_name(target_id),
+	])
+	_dirty = true
+
+
+func _on_set_agenda(org_id: String, proposal_id: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	if not Orgs.set_agenda(_state, _loader, org_id, proposal_id):
+		_refusal_text = "Refused: that proposal cannot be put first."
+		_dirty = true
+		return
+	acted.emit(before, "Council agenda (%s): you put %s first" % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
+	_dirty = true
+
+
+func _on_table(org_id: String, proposal_id: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	if not Orgs.table_proposal(_state, _loader, org_id, proposal_id):
+		_refusal_text = "Refused: the chair will not table that now."
+		_dirty = true
+		return
+	acted.emit(before, "Council agenda (%s): tabled %s" % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
+	_dirty = true
+
+
+func _proposal_label(org_id: String, proposal_id: String) -> String:
+	var p = Orgs.proposal_by_id(_loader, org_id, proposal_id)
+	return String(p.proposal_name) if p != null else proposal_id
 
 
 ## Called by CouncilSection for each enabled verb it builds; the first one wins.
