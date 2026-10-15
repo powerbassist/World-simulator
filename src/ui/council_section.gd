@@ -23,6 +23,7 @@ const BK = preload("res://src/sim/bloc_constants.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Bargains = preload("res://src/ui/council_bargains.gd")
 const Ratification = preload("res://src/sim/ratification.gd")
+const LawPanel = preload("res://src/ui/law_panel.gd")
 
 const FACE_SIZE := Vector2(48, 60)
 const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -122,24 +123,15 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 	PanelKit.heading(body, "RATIFY AT HOME — %s (%d %s left)" % [
 		String(r.get("name", "")), left, "month" if left == 1 else "months",
 	])
-	var forecast: Dictionary = Ratification.forecast(state, loader, org.id)
-	if not forecast.has("refused"):
-		PanelKit.line(body, "Your assembly: %d for, %d against, %d abstaining — %s" % [
-			int(forecast["yes_seats"]), int(forecast["no_seats"]), int(forecast["abstain_seats"]),
-			"carries" if bool(forecast["passed"]) else "falls",
-		], PanelKit.Tone.PLAIN)
-		var opposed := PackedStringArray()
-		var behind := PackedStringArray()
-		for party in loader.parties.get(ns.id, []):
-			var line := String((forecast.get("party_votes", {}) as Dictionary).get(party.id, ""))
-			if line == "no":
-				opposed.append(party.party_name)
-			elif line == "yes":
-				behind.append(party.party_name)
-		if not behind.is_empty():
-			PanelKit.line(body, "Voting for: %s" % ", ".join(behind))
-		if not opposed.is_empty():
-			PanelKit.line(body, "Voting against: %s" % ", ".join(opposed))
+	# The SAME blurred forecast a bill gets in the law screen (law_panel's static
+	# forecast_text): exact seat counts here would be a free precise whip count
+	# the project's fixed-forecast rule withholds from every other division.
+	var proposal = Orgs.proposal_by_id(loader, org.id, String(r.get("proposal_id", "")))
+	if proposal != null:
+		var treaty = Ratification.treaty_bill(proposal)
+		var parties: Array = loader.parties.get(ns.id, [])
+		PanelKit.line(body, "Your assembly, if it voted today: %s" % LawPanel.forecast_text(
+			ns, parties, treaty, LawPanel.forecast_band(ns, treaty.id)), PanelKit.Tone.PLAIN)
 	var members: int = Orgs.members(state, org.id).size()
 	PanelKit.line(body, "If it falls here it falls for all %d members; %s will not forget it." % [
 		members, loader.nation_name(String(r.get("sponsor", ""))),
