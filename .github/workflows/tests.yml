@@ -5,7 +5,13 @@
 # creeping into the committed project.godot; dialogue_manager's class_name types
 # unresolvable without the class cache) -- a local machine always runs warm and
 # never sees either. tools/run_tests.sh does its own one-time --headless --import
-# when .godot/ is absent, so this job adds nothing to the suite's own logic.
+# when .godot/ is absent, so this job adds nothing to the suite's own logic. The
+# Godot binary is cached; .godot/ never is, or the fresh-clone gate is gone.
+#
+# The suite is split over 4 runners (tools/ci_shards.json, balanced by measured
+# duration): a private repo's runner has 2 cores, and the whole suite on one ran
+# 25.5 min. Branch protection should require the one "tests" job at the bottom,
+# not each shard, so the shard count can change without touching the rule.
 #
 # Not here: tools/check_mcp.sh (it needs a running editor and the per-machine
 # godot_mcp_toolkit addon, neither of which a clone has) and the windowed
@@ -30,9 +36,16 @@ env:
 jobs:
   suite:
     # Plain text: a job name cannot read the env context (a workflow-file error, 0s run).
-    name: Headless suite
+    name: Suite shard ${{ matrix.shard }}/4
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # Must match the shard count in tools/ci_shards.json; a shard out of
+        # range fails loud in ci_shards.py, a missing one fails the "Names,
+        # vault and shards" job's count check.
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
 
@@ -40,32 +53,47 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
       - name: Install Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           curl -fsSL -o godot.zip "$url"
           unzip -q godot.zip -d "$HOME/godot"
+
+      - name: Put Godot on PATH
+        run: |
           mkdir -p "$HOME/.local/bin"
-          ln -s "$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/.local/bin/godot"
+          ln -sf "$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/.local/bin/godot"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Godot version
         run: godot --headless --version
 
-      - name: Run the suite
+      - name: Run the shard
         run: bash tools/run_tests.sh
+        env:
+          SUITE_SHARD: ${{ matrix.shard }}
 
-      - name: Keep the per-test logs
-        if: failure()
+      # Always, not only on failure: the per-test durations in events.ndjson are
+      # what `tools/ci_shards.py --rebalance` re-splits the suite from.
+      - name: Keep the run report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: suite-runs
+          name: suite-runs-shard-${{ matrix.shard }}
           path: reports/suite_runs/
           if-no-files-found: ignore
 
   checks:
-    name: Names and vault
+    name: Names, vault and shards
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -77,3 +105,23 @@ jobs:
         run: bash tools/check_names.sh
       - name: Vault links
         run: python tools/check_vault.py
+      - name: Every registered test is in exactly one shard
+        run: bash tools/run_tests.sh --print-tests | python tools/ci_shards.py --check
+      - name: The matrix runs every shard
+        run: |
+          n=$(python -c "import json; print(len(json.load(open('tools/ci_shards.json'))['shards']))")
+          grep -q "shard: \[$(seq -s ', ' 1 "$n")\]" .github/workflows/tests.yml \
+            || { echo "tools/ci_shards.json has $n shards; the suite matrix must list 1..$n"; exit 1; }
+
+  # The one check to require on main: green only when every shard and the checks
+  # are green (a skipped or cancelled shard is not a pass).
+  tests:
+    name: tests
+    if: always()
+    needs: [suite, checks]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All shards and checks passed
+        run: |
+          [ "${{ needs.suite.result }}" = "success" ] && [ "${{ needs.checks.result }}" = "success" ] \
+            || { echo "suite=${{ needs.suite.result }} checks=${{ needs.checks.result }}"; exit 1; }
