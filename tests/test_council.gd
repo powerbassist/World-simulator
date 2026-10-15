@@ -717,8 +717,12 @@ func _check_a_vote_trade_comes_due() -> void:
 	Council.bargain(paid, EU_ORG, "ITA", CouncilK.CURRENCY_VOTE_TRADE, CouncilK.ASK_FOR)
 	Orgs.tick_month(paid, _loader)
 	_ok((paid.orgs[EU_ORG]["debts"] as Array).size() == 1, "a vote trade did not record a debt")
+	var paid_r0: float = RK.score(paid, PLAYER, "ITA")
 	_force_sponsored(paid, p, Orgs.VOTE_FOR)
 	_ok((paid.orgs[EU_ORG]["debts"] as Array).is_empty(), "backing the creditor's proposal did not clear the debt")
+	# Repaying costs nothing beyond the sponsor's thanks: no betrayal charge, only the gain.
+	var paid_delta: float = RK.score(paid, PLAYER, "ITA") - paid_r0
+	_ok(paid_delta >= -0.0001, "repaying the IOU cost relations (%.3f)" % paid_delta)
 
 	# Betrayed: cleared, and the betrayal is priced on top of the sponsor's snub.
 	var betrayed = _fresh()
@@ -819,6 +823,9 @@ func _check_the_treaty_is_a_bill() -> void:
 	var forecast: Dictionary = Ratification.forecast(state, _loader, EU_ORG)
 	_ok(forecast.has("yes_seats") and forecast.has("party_votes"), "the ratification forecast is not Legislature.resolve_vote()'s result")
 	_ok(String(forecast.get("law_id", "")) == "treaty:recovery_facility", "the treaty bill's id is '%s'" % forecast.get("law_id", ""))
+	var snap_before: String = JSON.stringify(state.to_dict())
+	Ratification.forecast(state, _loader, EU_ORG)
+	_ok(JSON.stringify(state.to_dict()) == snap_before, "Ratification.forecast mutated the game state")
 	var result: Dictionary = Ratification.submit(state, _loader, EU_ORG)
 	_ok(bool(result.get("passed", false)) == bool(forecast.get("passed", false)) or result.has("upper_passed"),
 		"submit() disagreed with its own forecast with no upper chamber in the way")
@@ -1096,6 +1103,8 @@ func _check_malformed_presidency_types_are_refused() -> void:
 		{"presidency": {"order": [7], "months": 6, "anchor": {"year": 2025, "month": 1}}},
 		{"presidency": {"order": ["FRA"], "months": 6.5, "anchor": {"year": 2025, "month": 1}}},
 		{"presidency": {"order": ["FRA"], "months": 6, "anchor": {"year": 1999, "month": 1}}},
+		{"presidency": {"order": ["FRA"], "months": 6, "anchor": {"year": "2025", "month": 1}}},
+		{"presidency": {"order": ["FRA"], "months": 6, "anchor": {"year": 2025, "month": [1]}}},
 	]
 	for extra in bad:
 		var errors: Array[String] = []

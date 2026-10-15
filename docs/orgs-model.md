@@ -432,5 +432,48 @@ projection that runs past a ratification window shows the treaty falling by defa
 and the calendar's "Ratification deadline" are what tell the player to act first;
 the projection is not taught to guess.
 
+### As built (V4.5b2)
+
+The surfaces, in the order the player meets them (`src/ui/council_section.gd`,
+`council_bargains.gd`, `orgs_panel.gd`):
+
+- **Orgs needing the player sort first.** An org with a vote the player can
+  steer, an IOU owed, or a treaty to ratify rises above the quiet ones; the
+  others keep register order.
+- **Council block, top to bottom:** the sponsor's face and drive (the live head
+  of government's, not a fixed portrait); the decision copy (which rule decides
+  this proposal -- qmr or unanimity, and who holds a veto); the chair line (who
+  presides, for how many more months, who is next -- from the calendar-derived
+  presidency); then **WORK THE ROOM**, with every price read from
+  `council_constants.gd` rather than typed into copy (lobby, the three
+  currencies, tabling); the **already-bargained line** (what the player has
+  spent on this proposal, so a second ask is read as a second ask); **IOUs
+  owed**; and the agenda verbs (table, set the agenda) when the player holds the
+  chair.
+- **The ratification card** puts the treaty to the assembly using the bill's
+  **blurred** forecast -- the same `FORECAST_UNCERTAIN_BAND` the law panel uses.
+  The fixed-forecast rule holds here too: the exact seat count is never shown,
+  because the card is a bill briefing and the player does not get to read the
+  assembly more precisely for a treaty than for a statute.
+- **The desk mark and the calendar deadline.** A pending ratification marks the
+  desk and puts a "Ratification deadline" on the calendar, so the window
+  (`RATIFY_WINDOW_MONTHS`) is something the player is told about, not something
+  that lapses.
+- **The top-bar Europe figure** -- the one-number reading of where the council
+  stands, interim until V4.8's unified reading surface.
+
+**Decisions taken during b2.**
+(1) `claim_primary`: a *deadline* verb outranks build order. When a ratification
+window is closing, the card's button takes the primary slot over a build action
+that was there first.
+(2) The ratify forecast is blurred, as above -- first drafted with exact seats,
+caught at the T4 review.
+(3) Orgs needing action sort first -- first drafted in register order, which
+buried a closing window under quiet orgs; found staging frames at T7.
+
+**Not built.** Event hooks: no authored event needs one, so the closed
+vocabulary in `events_constants.ON_ACTIONS` is unchanged. The `Budget.project`
+bound is recorded above ("the projection never ratifies") and is not revisited.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]

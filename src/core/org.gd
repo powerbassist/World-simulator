@@ -232,8 +232,16 @@ static func _extract_presidency(raw: Dictionary, org, fname: String, errors: Arr
 		])
 		return {}
 	var anchor = raw.get("anchor", {})
-	var year := int(anchor.get("year", 0)) if typeof(anchor) == TYPE_DICTIONARY else 0
-	var month := int(anchor.get("month", 0)) if typeof(anchor) == TYPE_DICTIONARY else 0
+	# Type-check before int(): int("x") or int([]) is a runtime error, and a
+	# malformed data file must be a loader error instead.
+	var year := 0
+	var month := 0
+	if typeof(anchor) == TYPE_DICTIONARY:
+		var ry = anchor.get("year", 0)
+		var rm = anchor.get("month", 0)
+		if (typeof(ry) == TYPE_INT or typeof(ry) == TYPE_FLOAT) and (typeof(rm) == TYPE_INT or typeof(rm) == TYPE_FLOAT):
+			year = int(ry)
+			month = int(rm)
 	if year < CouncilK.MIN_ANCHOR_YEAR or year > CouncilK.MAX_ANCHOR_YEAR or month < 1 or month > 12:
 		errors.append("%s: %s presidency.anchor out of range" % [fname, org.id])
 		return {}
