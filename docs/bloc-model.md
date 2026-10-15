@@ -167,6 +167,9 @@ The first run had **six of seven proposals decided by France's own vote** — th
 
 **The fix was content, not the constant.** The member-position list the probe prints is why: the other eight are clustered, so no sigma alone spreads the tallies. Moving `common_defence_floor` to where a defence commitment actually sits in ideology space — right and traditional — is what put a proposal out of France's reach. 0.90 is then the only value swept with all three columns non-zero.
 
+> [!note] Superseded by V4.5b1
+> The arithmetic below is V1.3d's: nine members, seven proposals, an 18-month interval, and no sponsors or unanimity. For the 27-member councils, the 34-proposal book and its measured verdicts, see [[orgs-model]] §V4.5 and `tools/council_probe.gd` table T.
+
 France holds 81 of 393 member seats. `recovery_facility` carries on the other eight alone, so a France voting against it is **outvoted and bound** — which is the done-when condition, asserted rather than claimed. `common_defence_floor` fails even with France voting for it. Neither is dead content: member governments change at their own elections over a fourteen-year run, and the council's arithmetic moves with them.
 
 ## 5. The first reader of the directed register

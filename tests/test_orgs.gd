@@ -29,6 +29,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Org = preload("res://src/core/org.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
+const Council = preload("res://src/sim/council.gd")
 const K = preload("res://src/sim/bloc_constants.gd")
 const OK = preload("res://src/sim/opinion_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
@@ -217,9 +218,9 @@ func _check_proposals_name_orgs() -> void:
 		_ok(p.org_id != "", "proposal '%s' names an org" % p.id)
 		_ok(_loader.orgs_by_id.has(p.org_id), "proposal '%s' names a LOADED org" % p.id)
 		per_org[p.org_id] = int(per_org.get(p.org_id, 0)) + 1
-	_ok(int(per_org.get(EU_ORG, 0)) == 6, "eu carries 6 proposals after the floor moved to NATO, got %d" % int(per_org.get(EU_ORG, 0)))
-	_ok(int(per_org.get("nato", 0)) == 1, "nato carries the moved floor, got %d" % int(per_org.get("nato", 0)))
-	_ok(int(per_org.get(ACCORD, 0)) == 2, "the accord carries its two proposals, got %d" % int(per_org.get(ACCORD, 0)))
+	_ok(int(per_org.get(EU_ORG, 0)) == 20, "eu carries 20 proposals (V4.5b's book; the floor moved to NATO at V3.2), got %d" % int(per_org.get(EU_ORG, 0)))
+	_ok(int(per_org.get("nato", 0)) == 6, "nato carries the moved floor and V4.5b's five, got %d" % int(per_org.get("nato", 0)))
+	_ok(int(per_org.get(ACCORD, 0)) == 8, "the accord carries its two proposals and V4.5b's six, got %d" % int(per_org.get(ACCORD, 0)))
 
 	# File order IS the agenda. The eu list must be fiscal.json's proposals then
 	# union_policy.json's, in authored order -- a reorder would silently change
@@ -229,7 +230,7 @@ func _check_proposals_name_orgs() -> void:
 	var eu_ids: Array = []
 	for p in eu_agenda:
 		eu_ids.append(p.id)
-	_ok(eu_ids == ["stability_pact", "debt_reduction_rule", "minimum_corporate_rate", "cohesion_fund", "recovery_facility", "common_external_tariff"],
+	_ok(eu_ids == ["stability_pact", "debt_reduction_rule", "own_resource_digital", "minimum_corporate_rate", "vat_floor", "joint_borrowing_facility", "corporate_rate_high_floor", "expenditure_ceiling", "eurozone_fiscal_capacity", "fiscal_compact_strict", "cohesion_fund", "recovery_facility", "common_external_tariff", "defence_industry_fund", "carbon_border_adjustment", "investment_floor", "enlargement_preaccession_fund", "steel_safeguard", "migration_solidarity_pact", "cap_reform"],
 		"eu agenda preserves flat-file order, got %s" % [eu_ids])
 
 
@@ -263,31 +264,27 @@ func _check_new_game_is_exactly_quiet() -> void:
 	_ok(sat["europe"] == 0.0, "the europe issue starts at %.17f, not exactly 0.0" % float(sat["europe"]))
 
 
-## The severities of every org's authored rules must sum to AT MOST BURDEN_MAX,
-## and the eu's to EXACTLY it. Not decoration: V1.3d's probe had them summing to
-## 1.35 against a ceiling of 1.0, so the clamp removed 0.35 of real burden. Per
-## org the same assertion; across orgs the TOTAL clamp can now contact, which is
-## the composition bound recorded in orgs-model.md -- a second rule-carrying org
-## re-opens that measurement.
+## The burden can never pass BURDEN_MAX inside one org: the council admits at
+## most MAX_RULES_IN_FORCE constraint rules at once, so the binding sum is the
+## largest MAX_RULES_IN_FORCE severities of that org's constraint proposals.
+## Required <= BURDEN_MAX for every org (V1.3d's "sum to exactly the ceiling"
+## held while each org had <= 4 constraint proposals; V4.5b1's content broke
+## that shape and this is the rule it was standing in for). The CROSS-org raw
+## total is NOT bounded here -- that is the one clamp, measured by
+## tools/council_probe.gd table C5 and recorded in docs/orgs-model.md.
 func _check_severities_sum_to_the_ceiling() -> void:
-	for org in _loader.orgs:
-		if not org.council:
-			continue
-		var total := 0.0
-		var constraining := 0
-		for p in _loader.org_proposals.get(org.id, []):
-			if p.constraint.is_empty():
-				continue
-			constraining += 1
-			total += float(p.constraint["severity"])
-		_ok(constraining <= K.MAX_RULES_IN_FORCE, "%s: %d proposals carry a constraint but only %d can bind at once" % [
-			org.id, constraining, K.MAX_RULES_IN_FORCE
-		])
-		# The eu's four authored severities summed EXACTLY to the ceiling until
-		# track (b) moved the floor (0.22) to NATO; the eu table now sums 0.78 and
-		# the exact property is a record, not a claim. Every org still respects
-		# the ceiling, which is the part that stops a clamp ever biting.
-		_ok(total <= K.BURDEN_MAX + 1.0e-9, "%s rule severities sum to %.6f, above BURDEN_MAX %.2f" % [org.id, total, K.BURDEN_MAX])
+	for org_id in _loader.org_proposals.keys():
+		var sev: Array = []
+		for p in _loader.org_proposals[org_id]:
+			if not p.constraint.is_empty():
+				sev.append(float(p.constraint["severity"]))
+		sev.sort()
+		sev.reverse()
+		var top := 0.0
+		for i in mini(sev.size(), K.MAX_RULES_IN_FORCE):
+			top += float(sev[i])
+		_ok(top <= K.BURDEN_MAX + 1e-9, "org %s: its %d heaviest constraint severities sum to %.3f, past BURDEN_MAX %.2f" % [
+			org_id, mini(sev.size(), K.MAX_RULES_IN_FORCE), top, K.BURDEN_MAX])
 
 
 ## The burden is the breach, scaled by tolerance and severity, and it is zero for
@@ -443,22 +440,26 @@ func _check_the_council_divides_and_binds() -> void:
 		resolved - opened, K.VOTE_DELAY_MONTHS
 	])
 
-	# Outvoted, and bound. recovery_facility carries on the others alone, so a
+	# Outvoted, and bound. debt_reduction_rule carries on the others alone, so a
 	# player voting against it still ends up with it in force -- which is the
 	# "one member among many" half of the done-when, asserted rather than claimed.
+	# V4.5b: recovery_facility was the subject until it became a unanimity
+	# treaty, where France's "against" is a veto; a qualified-majority row has
+	# to carry this assertion.
 	var outvoted = _fresh()
-	var carried := _force_vote(outvoted, "recovery_facility", Orgs.VOTE_AGAINST)
+	var carried := _force_vote(outvoted, "debt_reduction_rule", Orgs.VOTE_AGAINST)
 	if not carried:
-		_fail("recovery_facility did not carry over France's objection -- the player is never outvoted, so the council is a legislature they control")
-	elif not ((outvoted.orgs[EU_ORG]["rules"] as Dictionary).has("recovery_facility")):
-		_fail("recovery_facility carried but did not enter the register")
+		_fail("debt_reduction_rule did not carry over France's objection -- the player is never outvoted, so the council is a legislature they control")
+	elif not ((outvoted.orgs[EU_ORG]["rules"] as Dictionary).has("debt_reduction_rule")):
+		_fail("debt_reduction_rule carried but did not enter the register")
 
 	# And the other direction: a proposal the council will not have, whatever the
-	# player does. common_defence_floor sits where a defence commitment actually
-	# sits in ideology space, and the other members will not carry it.
+	# player does. minimum_corporate_rate is a unanimity treaty two low-rate
+	# members veto (V4.5b; common_defence_floor held this place until NATO's
+	# consensus rule and its sponsor's lobbying made it France's to decide).
 	var lost = _fresh()
-	if _force_vote(lost, "common_defence_floor", Orgs.VOTE_FOR):
-		_fail("common_defence_floor carried on France's vote -- nothing is out of the player's reach, so they are not one member among many")
+	if _force_vote(lost, "minimum_corporate_rate", Orgs.VOTE_FOR):
+		_fail("minimum_corporate_rate carried on France's vote -- nothing is out of the player's reach, so they are not one member among many")
 
 
 ## Abstention has to be a third option, not a slower way of voting no.
@@ -922,7 +923,7 @@ func _check_climate_accord_register() -> void:
 	var agenda_ids: Array = []
 	for p in agenda:
 		agenda_ids.append(p.id)
-	_ok(agenda_ids == [CEILING, SOLIDARITY], "the accord's agenda preserves flat-file order, got %s" % [agenda_ids])
+	_ok(agenda_ids == [CEILING, SOLIDARITY, "climate_border_levy", "ceiling_tightened", "just_transition_fund", "green_investment_floor", "adaptation_fund", "net_zero_glidepath"], "the accord's agenda preserves flat-file order, got %s" % [agenda_ids])
 	for p in agenda:
 		if p.id == CEILING:
 			var c: Dictionary = p.constraint
@@ -1086,12 +1087,24 @@ func _force_vote(state, proposal_id: String, choice: String) -> bool:
 		_fail("org '%s' holds no register on this state" % proposal.org_id)
 		return false
 
+	# V4.5b: opened as orgs.gd's _tick_council() opens one -- the live sponsor
+	# rides in the pending entry and lobbies the AI members at once. Every
+	# shipped proposal has a sponsor now, so a bare division is a council the
+	# game never runs, and the pivotal-band assertions below would measure it.
+	var sponsor: String = Council.live_sponsor(state, proposal)
 	state.orgs[proposal.org_id]["pending"] = {
 		"proposal_id": proposal.id, "name": proposal.proposal_name,
 		"summary": proposal.summary, "months_left": 1,
 		"player_vote": Orgs.VOTE_ABSTAIN,
 		"opened_year": state.year, "opened_month": state.month,
+		"sponsor": sponsor,
 	}
+	if sponsor != "" and not state.nations[sponsor].has_budget:
+		var supports := {}
+		for id in Orgs.members(state, proposal.org_id):
+			if not state.nations[id].has_budget:
+				supports[id] = Orgs.support(state, state.nations[id], proposal)
+		state.orgs[proposal.org_id]["pending"]["lobbied"] = Council.lobby(state, _loader, sponsor, supports)
 	if not Orgs.cast_vote(state, proposal.org_id, choice):
 		_fail("cast_vote(%s) was refused" % choice)
 	Orgs.tick_month(state, _loader)

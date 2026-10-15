@@ -1,15 +1,17 @@
 {
   "_source": "authored",
-  "_note": "The climate accord's agenda, V3.5. File order is the council's: the ceiling first, the fund second. The ceiling's VALUE is derived, not authored -- the EU-27 population-weighted mean of the nations' measured co2e_per_capita_t at new-game is 5.4687 t, rounded to 0.5 the way CONTRIBUTION_MAX_PCT_GDP was re-derived: 5.5, with 15 of 27 members inside at start, so the division is real before anyone builds anything (tools/climate_probe.gd table (a) recomputes it and prints MATCH or MISMATCH; on a mismatch the probe's number wins). The TOLERANCE was swept, and the sweep's finding is recorded because the next climate session will want it: below about 5 the pivotal band is EMPTY -- every over-ceiling member's cost term (APPRAISE_RULE_WEIGHT 3.0 x severity x breach/tolerance) holds the whole 180-seat high-emitter bloc against the rule at every position on the grid, others-for pins at 203-210, and no authoring of the position can put France's 69 inside the decision. At 6.0 the small-over members (IRL, SVN, AUT -- 0.5 to 0.8 t over) become affordable to their own governments' ideology term and the plateau at 219 opens; the position was placed at the centre of it. Tallies at the shipped numbers (probe table (b)): France for 288/452, abstain 219/383, against 219/452 -- her abstention carries, her opposition blocks, her backing passes. The solidarity clause is authored OUTSIDE that band on purpose: at (-0.3, -0.2) it reads 306 others-for, so the council carries it whichever way France casts (sweep table (s2)) -- a coalition's question, the contrast that makes the ceiling's pivotal band mean something.",
+  "_note": "The climate accord's agenda, V3.5. File order is the council's: the ceiling first, the fund second. The ceiling's VALUE is derived, not authored -- the EU-27 population-weighted mean of the nations' measured co2e_per_capita_t at new-game is 5.4687 t, rounded to 0.5 the way CONTRIBUTION_MAX_PCT_GDP was re-derived: 5.5, with 15 of 27 members inside at start, so the division is real before anyone builds anything (tools/climate_probe.gd table (a) recomputes it and prints MATCH or MISMATCH; on a mismatch the probe's number wins). The TOLERANCE was swept, and the sweep's finding is recorded because the next climate session will want it: below about 5 the pivotal band is EMPTY -- every over-ceiling member's cost term (APPRAISE_RULE_WEIGHT 3.0 x severity x breach/tolerance) holds the whole 180-seat high-emitter bloc against the rule at every position on the grid, others-for pins at 203-210, and no authoring of the position can put France's 69 inside the decision. At 6.0 the small-over members (IRL, SVN, AUT -- 0.5 to 0.8 t over) become affordable to their own governments' ideology term and the plateau at 219 opens; the position was placed at the centre of it. Tallies at the shipped numbers (probe table (b)): France for 288/452, abstain 219/383, against 219/452 -- her abstention carries, her opposition blocks, her backing passes. The solidarity clause is authored OUTSIDE that band on purpose: at (-0.3, -0.2) it reads 306 others-for, so the council carries it whichever way France casts (sweep table (s2)) -- a coalition's question, the contrast that makes the ceiling's pivotal band mean something. V4.5b supersedes the tallies above. Sponsors now lobby at the opening, and with DNK lobbying the ceiling carried at (0, 0) whichever way France voted. The sweep put it at (-0.4, -0.4), the nearest cell where France decides and her abstention still carries: 306 for, 237 abstaining, 237 against, of 452 seats. The solidarity clause (ESP) stays the coalition's question, carried whichever way France votes. Both are qualified majority, the environment formation's rule. The six V4.5b rows were placed by `--sweep`. ceiling_tightened (DNK, 4.5 t, severity 0.20) sits at (-0.4, -0.4), France's to decide with an abstention window: 297 for, 228 abstaining, 228 against. just_transition_fund (POL) calls 0.10, not the provisional 0.06: at 0.06 it carried alone on every cell but one corner. At 0.10, at (-0.4, -0.8), France decides it: 317, 248, 248. Those figures are after the sponsor rule of 2026-10-15, when POL started voting for its own fund; before it they were 280, 211, 211. net_zero_glidepath (SWE) is the accord's one unanimity row, a treaty change. At severity 0.20 and tolerance 5, eleven members vetoed; at 0.10 over 8 the grid's best cells drew 0 to 2. It sits at (-0.4, -0.4), where LUX and POL veto it. climate_border_levy, green_investment_floor and adaptation_fund carry alone on EVERY cell of the grid, so their positions are flavour only.",
   "proposals": [
     {
       "id": "emissions_ceiling",
       "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "DNK",
       "name": "Emissions Ceiling",
       "summary": "Members undertake to hold greenhouse-gas emissions under 5.5 tonnes of CO2e per head -- the bloc's own measured average. The line is where the average is, not where the scientists would put it, and the members above it are the reason the council exists.",
       "position": {
-        "economic": 0.0,
-        "social": 0.0
+        "economic": -0.4,
+        "social": -0.4
       },
       "constraint": {
         "field": "co2e_per_capita_t",
@@ -22,6 +24,8 @@
     {
       "id": "climate_solidarity_clause",
       "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "ESP",
       "name": "Climate Solidarity Clause",
       "summary": "A standing call on every member's budget for the transition fund -- four hundredths of a percent of GDP, small enough to pass and real enough to matter. The money follows the same channel the cohesion fund does; the accord simply holds its own tin.",
       "position": {
@@ -29,6 +33,105 @@
         "social": -0.2
       },
       "transfer_pct_gdp": 0.04
+    },
+    {
+      "id": "climate_border_levy",
+      "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "FRA",
+      "name": "Climate Border Levy",
+      "summary": "Imports from outside the accord pay a levy on the carbon they carry. The members' own heavy industry stops paying for being clean; every trading partner outside starts paying for not being.",
+      "position": {
+        "economic": 0.0,
+        "social": -0.4
+      },
+      "external_measure": {
+        "kind": "tariff",
+        "severity": 0.15
+      }
+    },
+    {
+      "id": "ceiling_tightened",
+      "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "DNK",
+      "name": "Tightened Emissions Ceiling",
+      "summary": "The accord's ceiling lowered to 4.5 tonnes of CO2e per head -- a tonne under today's average. Half the council is above the new line, and the half below it is the half that wrote it.",
+      "position": {
+        "economic": -0.4,
+        "social": -0.4
+      },
+      "constraint": {
+        "field": "co2e_per_capita_t",
+        "op": "<=",
+        "value": 4.5,
+        "tolerance": 5.0,
+        "severity": 0.2
+      }
+    },
+    {
+      "id": "just_transition_fund",
+      "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "POL",
+      "name": "Just Transition Fund",
+      "summary": "A common fund for the coal regions and the workers whose jobs the ceiling ends. Paid by every member, spent mostly in the few that still burn coal.",
+      "position": {
+        "economic": -0.4,
+        "social": -0.8
+      },
+      "transfer_pct_gdp": 0.10
+    },
+    {
+      "id": "green_investment_floor",
+      "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "ESP",
+      "name": "Green Investment Floor",
+      "summary": "Members keep infrastructure spending at or above 2% of GDP, so the grids and rail the ceiling depends on get built. The accord's one rule about what to spend rather than what to stop.",
+      "position": {
+        "economic": -0.4,
+        "social": 0.0
+      },
+      "constraint": {
+        "field": "spending_infrastructure",
+        "op": ">=",
+        "value": 2.0,
+        "tolerance": 2.0,
+        "severity": 0.1
+      }
+    },
+    {
+      "id": "adaptation_fund",
+      "org": "climate_accord",
+      "decision": "qmr",
+      "sponsor": "GRC",
+      "name": "Adaptation Fund",
+      "summary": "A fund for the members already paying for the climate that has arrived: the floods, the fires, the dry summers in the south. A small call on everyone, spent where the weather is worst.",
+      "position": {
+        "economic": -0.4,
+        "social": -0.4
+      },
+      "transfer_pct_gdp": 0.03
+    },
+    {
+      "id": "net_zero_glidepath",
+      "org": "climate_accord",
+      "decision": "unanimity",
+      "sponsor": "SWE",
+      "name": "Net-Zero Glidepath",
+      "summary": "A binding path to 3 tonnes of CO2e per head, the line the science points at rather than the bloc's average. A treaty change, ratified at home, and the heaviest emitters can each stop it alone.",
+      "position": {
+        "economic": -0.4,
+        "social": -0.4
+      },
+      "constraint": {
+        "field": "co2e_per_capita_t",
+        "op": "<=",
+        "value": 3.0,
+        "tolerance": 8.0,
+        "severity": 0.10
+      }
     }
   ]
 }

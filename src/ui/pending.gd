@@ -30,6 +30,7 @@ extends RefCounted
 const Events = preload("res://src/sim/events.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Statute = preload("res://src/sim/statute.gd")
@@ -75,6 +76,12 @@ static func window_ids(state, loader) -> Array:
 		if not state.nations[state.player_nation_id].orgs.has(org_id):
 			continue
 		if not (Orgs.pending(state, org_id) as Dictionary).is_empty():
+			out.append("orgs")
+			break
+		# A treaty waiting on THIS assembly: an idle player otherwise kills it by
+		# default at the window's end, and is charged for it.
+		var ratifying: Dictionary = state.orgs[org_id].get("ratifying", {})
+		if String((ratifying.get("nations", {}) as Dictionary).get(state.player_nation_id, "")) == CouncilK.RATIFY_PENDING:
 			out.append("orgs")
 			break
 

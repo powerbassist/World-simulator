@@ -101,13 +101,14 @@ func _check_fits_the_band(panel) -> void:
 
 
 ## THE HEADLINE, and the one assertion in this file written against a measured
-## fact rather than an intention. A brand-new game has booked nothing AND has
-## nothing dated inside the strip's own horizon: France's presidential election
-## is sixteen months out, the council's first proposal eighteen, the legislative
-## election forty-one, and cooldowns do not exist until the player has acted. So
-## the page every player sees first is exactly the page with nothing on it, and
-## the "later" footer is what answers that. If this fails, U6a shipped a diary
-## that opens blank.
+## fact rather than an intention. A brand-new game has booked nothing. U6a
+## measured nothing dated inside the strip's own horizon either; since V4.5b1
+## (one proposal per presidency, PROPOSAL_INTERVAL_MONTHS 6) the councils' first
+## openings fall six months in, so the horizon carries those and nothing else.
+## France's presidential election is sixteen months out and the legislative
+## election forty-one, both past the horizon, so the "later" footer is still what
+## names the dates that matter most. Cooldowns do not exist until the player has
+## acted. If this fails, the diary opens with the big dates missing.
 func _check_strip_shows_unbooked_dates(panel, state) -> void:
 	if not state.appointments.is_empty():
 		_fail("a new game started with %d bookings -- this check needs an empty diary to mean anything" % state.appointments.size())
@@ -127,7 +128,7 @@ func _check_strip_shows_unbooked_dates(panel, state) -> void:
 	if not carries:
 		_fail("a new game's diary opened with no dated state anywhere on it -- U6a's headline is that the game already knows these dates")
 	if not text.contains("LATER"):
-		_fail("nothing fell inside the horizon and no `later` footer was drawn -- this is the exact state a new game starts in")
+		_fail("no `later` footer was drawn -- a new game's elections are all past the horizon, and the footer is what names them")
 	# And it must be readable WITHOUT scrolling. The footer sits under thirteen
 	# em dashes on a new game, so the strip alone answers "what is coming" only
 	# for a player who already scrolled to find out that nothing is.

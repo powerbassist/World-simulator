@@ -9,6 +9,10 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --layer coercion --coerce
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --orgs
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --orgs --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --council-sponsored
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --council-treaty
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --council-ratify
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --council-chair
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --cluster state
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
@@ -51,6 +55,8 @@ extends SceneTree
 const Relations = preload("res://src/core/relations.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
+const Council = preload("res://src/sim/council.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -149,6 +155,11 @@ var _coerce := false
 ## exists to check. This puts a rule in force, a proposal on the table, and the
 ## player in breach of the rule, then opens the window.
 var _orgs := false
+
+## V4.5b2 T7. One of "sponsored" | "treaty" | "ratify" | "chair": which contested-
+## council state _stage_contested_council() puts the EU in before the orgs window
+## opens. A string, not four bools, because the frames are mutually exclusive.
+var _council_frame := ""
 
 ## V1.3f. A new game's message column is empty and a frame of nothing proves
 ## nothing about it -- the same argument --coerce and --orgs were each added on.
@@ -437,6 +448,8 @@ func _init() -> void:
 			_coerce = true
 		elif args[i] == "--orgs":
 			_orgs = true
+		elif args[i] in ["--council-sponsored", "--council-treaty", "--council-ratify", "--council-chair"]:
+			_council_frame = String(args[i]).trim_prefix("--council-")
 		elif args[i] == "--agenda":
 			_agenda = true
 		elif args[i] == "--programme" and i + 1 < args.size():
@@ -649,6 +662,8 @@ func _apply_view() -> void:
 		_impose_a_spread()
 	if _orgs:
 		_open_the_council()
+	if _council_frame != "":
+		_stage_contested_council()
 	if _agenda:
 		_run_the_agenda()
 	if _programme != "":
@@ -1601,8 +1616,9 @@ func _terms(state, kind: String, severity: float) -> Dictionary:
 ## the rule -- so the captured frame shows every section of the panel with real
 ## figures in it. Written straight into the register the way _impose_a_spread()
 ## writes measures, and for the identical reason: this is a dev tool looking at
-## pixels, and going through the council's own eighteen-month schedule would mean
-## capturing frame 540.
+## pixels, and going through the council's own schedule (an opening every
+## PROPOSAL_INTERVAL_MONTHS, then VOTE_DELAY_MONTHS to a division) would mean
+## capturing months into the run.
 func _open_the_council() -> void:
 	var state = _main._state
 	if state == null or state.orgs.is_empty():
@@ -1715,6 +1731,136 @@ func _open_the_council() -> void:
 	_main._windows.open("orgs")
 	if _main._orgs_panel != null:
 		_main._orgs_panel.mark_dirty()
+
+
+## V4.5b2 T7. The contested council's four states, staged through the real sim
+## commands (cast_vote, Council.bargain, set_agenda); the register is written
+## directly only where no command creates the thing (a pending division, a
+## ratifying treaty, a last_vote, an IOU awaiting a treaty) -- the way
+## tests/test_orgs_panel.gd stages them. Proposals are named by id: this is a
+## dev tool looking at one authored state, and the ids are the content it frames.
+func _stage_contested_council() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	var org := "eu"
+	if state == null or not state.orgs.has(org):
+		return
+	var player: String = state.player_nation_id
+	var register: Dictionary = state.orgs[org]
+	var others: Array = []
+	for id in Orgs.members(state, org):
+		if String(id) != player:
+			others.append(String(id))
+	others.sort()
+
+	match _council_frame:
+		"sponsored":
+			var p = Orgs.proposal_by_id(loader, org, "investment_floor")
+			if p == null:
+				return
+			var sponsor: String = p.sponsor
+			register["pending"] = {
+				"proposal_id": p.id, "name": p.proposal_name, "summary": p.summary,
+				"org_id": org, "org_name": loader.orgs_by_id[org].name,
+				"months_left": 2, "player_vote": Orgs.VOTE_ABSTAIN,
+				"opened_year": state.year, "opened_month": state.month,
+				"sponsor": sponsor,
+			}
+			# The sponsor's lobbying through its real path, as the opening runs it.
+			var supports := {}
+			for id in Orgs.members(state, org):
+				if not state.nations[id].has_budget:
+					supports[id] = Orgs.support(state, state.nations[id], p)
+			var lobbied: Dictionary = Council.lobby(state, loader, sponsor, supports)
+			if lobbied.is_empty():
+				# A drive too low to turn anyone: write one so the frame still shows
+				# the lobbied mark -- the layout is what this frame judges.
+				for id in others:
+					if id != sponsor:
+						lobbied[id] = 0.1
+						break
+			register["pending"]["lobbied"] = lobbied
+			Orgs.cast_vote(state, org, Orgs.VOTE_FOR)
+			for id in others:
+				if id != sponsor and not lobbied.has(id):
+					Relations.adjust(state, player, id, 100.0, 0.0, 100.0)
+					Council.bargain(state, org, id, CouncilK.CURRENCY_FAVOUR, CouncilK.ASK_FOR)
+					break
+		"treaty":
+			var p = Orgs.proposal_by_id(loader, org, "cohesion_fund")
+			if p == null:
+				return
+			register["pending"] = {
+				"proposal_id": p.id, "name": p.proposal_name, "summary": p.summary,
+				"org_id": org, "org_name": loader.orgs_by_id[org].name,
+				"months_left": 2, "player_vote": Orgs.VOTE_ABSTAIN,
+				"opened_year": state.year, "opened_month": state.month,
+				"sponsor": p.sponsor,
+			}
+			# A previous division of another treaty that a veto killed.
+			var q = Orgs.proposal_by_id(loader, org, "enlargement_preaccession_fund")
+			var vetoers: Array = []
+			for id in others:
+				if id != "POL" and vetoers.size() < 2:
+					vetoers.append(id)
+			var votes := {}
+			var reasons := {}
+			for id in Orgs.members(state, org):
+				var vetoes: bool = vetoers.has(id)
+				votes[id] = Orgs.VOTE_AGAINST if vetoes else Orgs.VOTE_FOR
+				if id != player:
+					reasons[id] = Orgs.vote_reason(state, state.nations[id], q)
+			register["last_vote"] = {
+				"proposal_id": q.id, "name": q.proposal_name, "org_id": org,
+				"passed": false, "decision": CouncilK.DECISION_UNANIMITY,
+				"vetoed_by": vetoers, "sponsor": q.sponsor,
+				"seats_for": 0, "seats_against": 0, "seats_total": 0,
+				"player_vote": Orgs.VOTE_FOR, "votes": votes, "reasons": reasons,
+				"year": state.year, "month": state.month,
+			}
+		"ratify":
+			var p = Orgs.proposal_by_id(loader, org, "recovery_facility")
+			if p == null:
+				return
+			register["ratifying"] = {
+				"proposal_id": p.id, "name": p.proposal_name, "sponsor": p.sponsor,
+				"months_left": 4, "nations": {player: CouncilK.RATIFY_PENDING},
+			}
+			# An IOU the player owes the sponsor, repaid only if the treaty clears.
+			register["debts"] = [{
+				"debtor": player, "creditor": p.sponsor,
+				"made_on": state.year * 12 + state.month - 3,
+				"months_left": CouncilK.IOU_EXPIRY_MONTHS, "awaiting": p.id,
+			}]
+		"chair":
+			# Walk the calendar to a semester the player chairs rather than doing the
+			# rotation's arithmetic here: presiding_nation() is the one authority.
+			for i in 400:
+				if Council.presiding_nation(state, loader, org) == player:
+					break
+				state.month += 1
+				if state.month > 12:
+					state.month = 1
+					state.year += 1
+			# The HUD clock reads the clock, not the state: move both.
+			_main._clock.year = state.year
+			_main._clock.month = state.month
+			register["pending"] = {}
+			for p in loader.org_proposals.get(org, []):
+				if Orgs.set_agenda(state, loader, org, p.id):
+					break
+			_main._orgs_panel.set_section_open("agenda:" + org, true)
+
+	_main._windows.open("orgs")
+	if _main._orgs_panel != null:
+		if _council_frame == "sponsored":
+			_main._orgs_panel.set_section_open("room:" + org, true)
+		_main._orgs_panel.mark_dirty()
+		var scroller = _main._orgs_panel._body.get_parent()
+		if scroller is ScrollContainer:
+			scroller.scroll_vertical = 0
+	# The top bar's Europe figure, refreshed the way main.gd does after an action.
+	_main._update_top_bar()
 
 
 ## Fill the diary so a frame of it shows something. U6a.

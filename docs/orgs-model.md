@@ -228,5 +228,252 @@ proposal per player-choice):
   opposition blocks it, her backing passes it. `stability_pact` stays where
   V1.3d put it -- uncarryable by the player is the point of a council.
 
+---
+## V4.5 — the council, contested (clauses declared BEFORE the machine, 2026-10-14)
+
+The deterministic rotation becomes a fight. Plan of record:
+`docs/superpowers/plans/2026-10-14-v4.5a-council-machine.md` (V4.5a, the machine)
+and V4.5b's (content, probe, panel). Module: `src/sim/council.gd`; ratification:
+`src/sim/ratification.gd`; numbers: `src/sim/council_constants.gd`.
+
+**The inertness clause.** Every V4.5 behaviour is gated on content the V4.4
+register does not carry: an org with no `presidency` keeps the rotation, a
+proposal with no `decision` reads its org's `decision_rule` (default `qmr`, the
+V1.3d tally), a proposal with no `sponsor` lobbies nobody, and bargains, tabling
+and ratification need a player command or a unanimity proposal. So V4.5a's
+re-run is predicted BIT-IDENTICAL; one moved line is a defect.
+
+**Decision classes.** `qmr`: the cast-seat share at `PASS_SEAT_FRACTION`,
+unchanged. `unanimity`: carries iff no member votes against and at least one
+votes for — abstention does not block (the real Council's constructive
+abstention, which keeps the player's third vote option alive in the new class).
+Unanimity IS the treaty class: it carries to ratification, QMR binds directly.
+
+**Presidency.** Authored per org: an `order` of member ids, a term in `months`,
+and the `anchor` date order[0]'s term began. The chair is DERIVED from the
+calendar (no state, nothing to save), skipping a nation that has left. An AI
+chair opens the eligible proposal it supports most (ties: authored order); a
+human chair opens the one it chose with `Orgs.set_agenda()`, or the rotation if
+it chose nothing. Any member may TABLE a proposal by paying the chair
+`TABLE_RELATIONS_COST` relations; a tabled proposal opens first, sponsored by
+whoever tabled it.
+
+**Sponsors.** A proposal's authored `sponsor` is a NATION; the sponsor's face is
+that nation's live head of government (`ns.pm_person_id`), and the person's
+authored `ambition` is the sponsor's DRIVE — the one person state that both
+prices the sponsor's lobbying and how much it minds the player's vote (no second
+ambition meter). An AI sponsor lobbies at open: each member short of
+`SUPPORT_THRESHOLD` by no more than `drive × LOBBY_SWING_PER_DRIVE` is swung by
+exactly its gap (+`LOBBY_MARGIN`), paid in the sponsor's relations with it at
+`LOBBY_RELATIONS_PER_SWING` per point. At the division the sponsor thanks a
+human member who backed it (`SPONSOR_THANKS × drive`) and resents one who
+opposed it (`SPONSOR_SNUB × drive`); abstention costs nothing.
+
+**Bargains — three currencies, one per member per division.** The player asks a
+member to vote `for` or `against`, paying in: a FAVOUR (relations with that
+member, `FAVOUR_RELATIONS_COST`, refused below `FAVOUR_MIN_RELATIONS`, swing
+`FAVOUR_SWING`); AID (`AID_PCT_GDP` of the player's GDP on the org's transfer
+line for `AID_MONTHS`, swing `AID_SWING` — money is the price, through the
+budget line orgs.gd already sums); or a VOTE TRADE (an IOU, swing `IOU_SWING`:
+the next division the creditor sponsors, the player owes a `for`; anything else
+costs `IOU_BETRAYAL` relations; unpaid IOUs lapse after `IOU_EXPIRY_MONTHS` + 1 register ticks -- the
+register counts 60..0 inclusive, the same rule that pays aid in exactly
+`AID_MONTHS` months).
+A swing enters the member's vote as an additive on its appraisal; the
+division's recorded reason names the bargain only when the bargain flipped it.
+
+**Ratification at home.** A carried unanimity proposal is not adopted: every
+member whose politics the game simulates (`has_budget`) must ratify it within
+`RATIFY_WINDOW_MONTHS`. The ratification is a BILL — `Ratification.treaty_bill()`
+builds a `Law` on the proposal's own position, `majority: simple`, and the
+player's assembly divides it through `Legislature.resolve_vote()` (and the upper
+chamber where it holds an absolute veto); rebels are priced by
+`Discipline.penalise_rebellions()` exactly as for any bill. No second resolver.
+All ratify: the treaty is adopted. One rejects, or the window closes: the treaty
+falls FOR EVERY MEMBER (2005's shape), the sponsor charges the failing member
+`RATIFY_FAIL_SPONSOR × drive` and every other member `RATIFY_FAIL_MEMBER`.
+AI members that voted for it are taken to have ratified — they have no assembly
+the game runs; recorded as a bound, not modelled.
+
+**Bands owed (V4.5b's `tools/council_probe.gd`, declared here, measured there):**
+- C1 the player decides — with bargains available, the share of divisions over
+  a term the player's spending changes the outcome of: band 0.20–0.50 (a council
+  you can never move is decorative; one you always move is a second legislature).
+- C2 spending is not free — a player who bargains every division ends a term with
+  mean relations to the bargained members at least 5 points below one who never
+  bargains.
+- C3 unanimity is reachable — at least one authored unanimity proposal carries
+  on lobbying alone in a 168-month idle run, and at least one does not.
+- C4 ratification is a fight — at a neutral-approval new-game, the FRA assembly's
+  treaty forecast sits inside [40 %, 60 %] yes for at least two authored treaties.
+- C5 the BURDEN_MAX re-measure — raw cross-org burden at total defiance with the
+  V4.5b register, recorded with its number against the V3.5 1.33.
+
+**The V4.5a re-run, PREDICTED 2026-10-14 before it ran:** BIT-IDENTICAL on every
+`tools/balance_probe.gd` regime, both sides from worktrees (base `main` at
+9e11165, candidate `v4.5-council`). The inertness clause is the whole argument:
+the shipped register carries no `presidency`, no `decision`/`decision_rule`
+and no `sponsor`, and no regime issues a council command, so every new path
+collapses to V4.4's (swing +0.0, aid line +0.0, empty registers skipped). One
+moved line outside the per-machine `listening on 127.0.0.1` noise is a DEFECT.
+
+**HELD, 2026-10-14:** 1690 of 1690 printed lines identical across all fifty
+regimes (50 `invariants: OK` blocks each side), and identical UNFILTERED -- not
+even the autoload noise line differed. Suite 105/105 green (7:40) on the same
+tree. Two bounds the machine records rather than models: the AI members of a
+unanimity proposal are taken to have ratified (no AI assembly runs), and a
+treaty needing a constitutional revision first (France's Art. 54) is not
+modelled -- every treaty bill is an ordinary `simple`-majority act.
+
+### Bands — verdicts (V4.5b1)
+
+Measured 2026-10-15 by `tools/council_probe.gd` on the T4 register (20 eu, 8
+climate, 6 nato proposals), after printing a diagnosis of every miss and before
+sweeping anything. C6 (agenda reach: every proposal opens at least once in a
+168-month idle run) was declared in the V4.5b1 plan beside C1–C5, before the
+probe ran. No band was redefined after a result. Table T is byte-identical
+before and after the sweep, so gates G1–G4 hold as T4 left them (NATO's G1
+waived by the author's call).
+
+- **C1 the player decides: BOUND at 0.050** (1 of 20 distinct proposals opened in
+  the first term; per opening, 2 of 30). Of 30 openings, 21 already go FRA's way
+  with FRA abstaining, so there is nothing to spend on. Of the other 9, 7 are
+  unanimity divisions with two or three vetoers, which one bargain cannot turn.
+  Only `nato/defence_floor_2_5` has a single blocker (ITA, gap 0.091). The
+  probe's ceiling holds at 0.050 for any largest swing from 0.15 to 0.90, and
+  swinging each of `FAVOUR_SWING`, `AID_SWING` and `IOU_SWING` across ×{0.5–1.5}
+  moved nothing. `CHAIR_WINDOW` 2 reads 0.087, still a miss. **Open for the
+  author:** the band says "with bargains available", but the probe tests one
+  bargain per division, while the machine allows one per member. Read as one per
+  member, the same openings give 0.20 at today's swings (on the band's edge) and
+  0.25 at `IOU_SWING` ×1.5. **Kept as declared (2026-10-15):** re-reading a band
+  after seeing its result is the selector failure this project refuses, so C1
+  stands as a BOUND at 0.050. The lever still open is CONTENT: unanimity rows
+  placed with a single vetoer within a bargain's reach.
+- **C2 spending is not free: MISS → fixed by `FAVOUR_RELATIONS_COST` 6 → 12;
+  PASS at 8.60** (band ≥ 5). At 6 the gap was 0.19. Two favours were struck on
+  ITA (months 18 and 54). `DiplomacyK.DRIFT_RATE` (0.02/month) took 35 % of the
+  price back by month 60. A +10.1 `settle_dispute` from ITA's own AI agenda at
+  month 53 took the rest: it fires only in the bargaining player's diverged
+  world, and it does so at every swept price, even when the player pays in aid
+  instead. It is a near-constant offset of 7.2–7.7 points. The gap rises roughly
+  linearly with the price (4: −2.44, 6: 0.19, 8: 3.35, 10: 5.97, 11: 7.29,
+  12: 8.60, 14: 11.23) and crosses the band near 9.3. 12 sits inside the passing
+  region; 10 (5.97) passes but sits close to the ~9.3 crossing. FAVOUR_SWING was swept too: from 0.1125 up nothing changes. The probe has no RNG, so the +10.1 AI act is a stable, repeatable artefact of that world.
+  `FAVOUR_SWING` 0.075 drops the favour below ITA's gap, so the player pays in
+  aid (gap −7.70). **Caveats:** the sample is one member and two strikes,
+  because C1's starvation leaves little to bargain over, and one AI act moves
+  the reading by about 8 points (at `CHAIR_WINDOW` 4 the old price of 6 read
+  8.87). Tabling was 8, below the new favour; it moved to 14 so the declared
+  ordering holds (favour 12 < tabling 14 < betrayal 15) -- not band-measured,
+  since neither probe run tables.
+- **C3 unanimity is reachable: PASS** (24 carried, 42 vetoed over 168 months).
+- **C4 ratification is a fight: PASS** (14 of the 17 unanimity proposals forecast
+  inside [40 %, 60 %] yes in FRA's assembly).
+- **C5 the BURDEN_MAX re-measure: RECORDED at 2.215 raw** cross-org burden at
+  total defiance, against V3.5's 1.33 (no band).
+- **C6 agenda reach: BOUND at 5 never opened** (all eu: `debt_reduction_rule`,
+  `eurozone_fiscal_capacity`, `cohesion_fund`, `defence_industry_fund`,
+  `enlargement_preaccession_fund`). climate (8 of 8) and nato (6 of 6) pass.
+  The cap is not the cause: `MAX_RULES_IN_FORCE` (4) was never reached at any of
+  the 27 eu AI-chair openings. Each of the five sat in a chair's window 3–6
+  times and lost to the chair's preferred proposal every time. `CHAIR_WINDOW`
+  {2, 3, 4} leaves 3 / 5 / 4 never opened, so no window passes and it stays at
+  3. The lever still open is CONTENT: re-placing those five rows so some chair
+  ranks them first. The structural reason is that the eu has 27 openings in 168 months for 20
+  proposals, and each chair pick that is not the window's head spends an
+  opening on a repeat. A window of 1 (the pure rotation) would pass, but it
+  would undo the author's 2026-10-14 call that an AI chair chooses within a
+  window.
+
+**The V4.5b1 track (b) re-run, PREDICTED 2026-10-15 before it ran** (base
+`50071cd`, V4.5a's close; candidate the b1 tip; both from worktrees). NOT
+bit-identity -- content landed. Lines may move only through these channels:
+(i) the agenda: one opening per 6 months per council (was one per 21) under a
+presidency window, so more divisions and a different order; (ii) relations:
+sponsor lobbying, sponsor thanks/snubs never fire (no regime votes in councils;
+the player abstains), and every treaty that carries FALLS at its ratification
+window because no regime submits it -- `RATIFY_FAIL_SPONSOR`/`_MEMBER` dips on
+FRA's pairs; (iii) more rules in force (qmr constraints and transfers carried
+by the AI majority) reaching the deficit through the transfer line and fines,
+and the `europe` issue through the clamped burden; (iv) collective tariffs on
+non-members (GBR, CHE) through the directed register. Expected direction:
+FRA's and the members' deficits slightly worse, `europe` salience up, GBR/CHE
+trade weights down; approval moves of a point or two; outcome flips possible
+where V4.4's re-baseline already sat on knife edges. A moved line that none of
+(i)-(iv) explains is a DEFECT.
+
+**HELD, with one channel restated (2026-10-15).** 51 of 51 regimes moved (as
+predicted: the council meets in every regime); 50 `invariants: OK` blocks each
+side; no script errors; 1724 candidate lines against 1690 (the extra lines are
+election-attribution rows and discipline rows whose numbers moved). **Three
+outcome flips, all LOST → HELD at the 2032 presidential**, each a knife edge
+(`managed_books_ahead` 23.6 → 24.0 %, `managed_tightens_migration` 24.0 → 24.3 %,
+`flat_tax` 23.7 → 24.2 %). Traced, not assumed (an idle FRA, `Orgs.tick_month`
+alone, both trees): the burden arrives at month 12 instead of 48 and settles at
+0.139 against 0.113 (the stability pact now carries in year one and France is in
+breach), the transfer line is higher early (0.372 vs 0.333 at month 12), and the
+idle run holds 13 rules against 6 -- no unanimity proposal among them: every
+treaty falls unratified, channel (ii). **Restated:** the prediction's "`europe`
+salience up" read wrongly at the election screen -- `europe` drops OUT of the
+printed attribution in the candidate, because the deficit channel (iii) lifts
+`public_finances` and `jobs` above it, not because Europe bites less (the burden
+is higher, earlier). The three flips move by +0.3 to +0.5 vote points; WHICH
+channel lifts the incumbent despite a heavier burden was NOT isolated (candidates:
+the early burden settling into `start`-relative salience before the term's
+election, or trade through the collective tariffs) -- recorded as an open
+attribution for b2's review, the flips themselves accepted as knife-edge moves
+inside the predicted channels.
+
+**Recorded bound (V4.5b2): the projection never ratifies.** `Budget.project`
+runs the months forward without the player pressing "Put it to the assembly", so a
+projection that runs past a ratification window shows the treaty falling by default
+(and its sponsor and members charged for it). The ratification card, the desk mark
+and the calendar's "Ratification deadline" are what tell the player to act first;
+the projection is not taught to guess.
+
+### As built (V4.5b2)
+
+The surfaces, in the order the player meets them (`src/ui/council_section.gd`,
+`council_bargains.gd`, `orgs_panel.gd`):
+
+- **Orgs needing the player sort first.** An org with a vote the player can
+  steer, an IOU owed, or a treaty to ratify rises above the quiet ones; the
+  others keep register order.
+- **Council block, top to bottom:** the sponsor's face and drive (the live head
+  of government's, not a fixed portrait); the decision copy (which rule decides
+  this proposal -- qmr or unanimity, and who holds a veto); the chair line (who
+  presides, for how many more months, who is next -- from the calendar-derived
+  presidency); then **WORK THE ROOM**, with every price read from
+  `council_constants.gd` rather than typed into copy (lobby, the three
+  currencies, tabling); the **already-bargained line** (what the player has
+  spent on this proposal, so a second ask is read as a second ask); **IOUs
+  owed**; and the agenda verbs (table, set the agenda) when the player holds the
+  chair.
+- **The ratification card** puts the treaty to the assembly using the bill's
+  **blurred** forecast -- the same `FORECAST_UNCERTAIN_BAND` the law panel uses.
+  The fixed-forecast rule holds here too: the exact seat count is never shown,
+  because the card is a bill briefing and the player does not get to read the
+  assembly more precisely for a treaty than for a statute.
+- **The desk mark and the calendar deadline.** A pending ratification marks the
+  desk and puts a "Ratification deadline" on the calendar, so the window
+  (`RATIFY_WINDOW_MONTHS`) is something the player is told about, not something
+  that lapses.
+- **The top-bar Europe figure** -- the one-number reading of where the council
+  stands, interim until V4.8's unified reading surface.
+
+**Decisions taken during b2.**
+(1) `claim_primary`: a *deadline* verb outranks build order. When a ratification
+window is closing, the card's button takes the primary slot over a build action
+that was there first.
+(2) The ratify forecast is blurred, as above -- first drafted with exact seats,
+caught at the T4 review.
+(3) Orgs needing action sort first -- first drafted in register order, which
+buried a closing window under quiet orgs; found staging frames at T7.
+
+**Not built.** Event hooks: no authored event needs one, so the closed
+vocabulary in `events_constants.ON_ACTIONS` is unchanged. The `Budget.project`
+bound is recorded above ("the projection never ratifies") and is not revisited.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]

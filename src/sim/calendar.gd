@@ -412,6 +412,16 @@ static func fixed_dates(state) -> Array:
 				# the same panel, so the fix is the same one: the reference IS the name.
 				String(pending.get("name", ""))
 			))
+		# V4.5b2: the deadline to put a treaty to the player's assembly. Only
+		# while the player's own seat is still "pending" -- once they have
+		# ratified, the date is no longer theirs to meet.
+		var ratifying = register.get("ratifying", {})
+		if typeof(ratifying) == TYPE_DICTIONARY and not ratifying.is_empty() \
+				and String((ratifying.get("nations", {}) as Dictionary).get(state.player_nation_id, "")) == "pending":
+			out.append(_fixed_in(
+				state, K.FIXED_COUNCIL_RATIFICATION, int(ratifying.get("months_left", 0)),
+				String(ratifying.get("name", ""))
+			))
 
 	if ns.dissolution_lockout_remaining > 0:
 		out.append(_fixed_in(

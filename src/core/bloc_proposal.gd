@@ -16,6 +16,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/bloc_constants.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
 
 var id: String = ""
 var proposal_name: String = ""
@@ -47,6 +48,17 @@ var transfer_pct_gdp: float = 0.0
 ## every member against every non-member. Optional, and the first reader of
 ## V1.3c's directed register from outside src/sim/coercion.gd.
 var external_measure: Dictionary = {}
+
+## V4.5a. This proposal's decision class, or "" to read its org's decision_rule
+## -- a proposal cannot see its org at parse time, so the inheritance is
+## resolved by Council.decision_of() at the division, not here.
+var decision: String = ""
+
+## V4.5a. The NATION that wants this adopted, or "" for none. A nation, not a
+## person: the face is that nation's live head of government, so an election
+## abroad changes who is pushing without the content knowing. Validated against
+## the org's authored members by data_loader._validate_bloc_proposals().
+var sponsor: String = ""
 
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String], org_ids: Array):
@@ -93,6 +105,20 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], or
 			errors.append("%s: %s transfer_pct_gdp %.3f exceeds the limit of +/-%.2f%% of GDP" % [
 				filename, p.id, p.transfer_pct_gdp, K.MAX_PROPOSAL_TRANSFER_PCT_GDP,
 			])
+
+	var decision = d.get("decision", "")
+	if typeof(decision) != TYPE_STRING:
+		errors.append("%s: %s decision must be a string" % [filename, p.id])
+	elif decision != "" and not CouncilK.DECISION_RULES.has(decision):
+		errors.append("%s: %s decision '%s' is not one of %s" % [filename, p.id, decision, CouncilK.DECISION_RULES])
+	else:
+		p.decision = decision
+
+	var sponsor = d.get("sponsor", "")
+	if typeof(sponsor) != TYPE_STRING:
+		errors.append("%s: %s sponsor must be a nation id string" % [filename, p.id])
+	else:
+		p.sponsor = sponsor
 
 	# A proposal that constrains nobody, moves no money and sets no external
 	# measure is a vote about nothing -- the council would divide over it and the

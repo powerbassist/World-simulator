@@ -2161,6 +2161,16 @@ func _validate_bloc_proposals() -> void:
 				outsider_count += 1
 		if member_count == 0:
 			errors.append("bloc-proposals: %s is loaded, but no loaded nation is a member of org '%s'" % [p.id, org.id])
+		# V4.5a. A sponsor outside the club cannot table, lobby or mind -- and a
+		# sponsor id that is no loaded nation is a typo that would read as "no
+		# sponsor" forever. Checked against the AUTHORED start: a sponsor who later
+		# withdraws loses the proposal at run time (Council reads live membership),
+		# which is a fight's outcome rather than a content error.
+		if p.sponsor != "":
+			if not nations.has(p.sponsor):
+				errors.append("bloc-proposals: %s sponsor '%s' is not a loaded nation" % [p.id, p.sponsor])
+			elif not org.is_member(p.sponsor):
+				errors.append("bloc-proposals: %s sponsor '%s' is not a member of '%s'" % [p.id, p.sponsor, org.id])
 		# A collective external tariff with nobody outside the bloc to levy it on
 		# is content that can never do anything -- the same class of quiet failure
 		# a scenario naming an unplayable nation is refused for.

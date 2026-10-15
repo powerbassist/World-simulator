@@ -567,6 +567,20 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## The ONE-WAY gate stands: save_manager refuses a version mismatch outright,
 ## so from_dict's defaults are robustness, not a bridge -- no v38 save ever
 ## reaches them.
+##   * V4.5a -- NO BUMP, argued rather than assumed. The contested council added
+##     five register keys (agenda_choice, tabled, ratifying, aid, debts) and three
+##     pending keys (sponsor, lobbied, bargains). Each one's ABSENCE reads true for
+##     a version-39 save: before V4.5a nothing was ever chosen, tabled, ratifying,
+##     paid as aid or owed, and no opened proposal had a sponsor, a lobby or a
+##     bargain. `last_vote` gained four keys too (decision, vetoed_by, sponsor,
+##     ratification): a pre-V4.5a division was qmr, vetoed by nobody, unsponsored
+##     and never ratified, so their absence reads true as well. The rule -- "would
+##     a missing field read as something wrong?" -- answers no for every one.
+##     Pinned by tests/test_save_load.gd.
+##     `made_on` became the opening stamp (int) at V4.5b1; a v39 save's string
+##     `made_on` reads as -1, which matches no opening, so an old debt simply
+##     settles at the creditor's next division -- the honest reading; `awaiting`
+##     absent reads "", no treaty pending. No bump.
 const SAVE_VERSION := 39
 
 var save_version: int = SAVE_VERSION
@@ -674,13 +688,14 @@ var measures := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of measure term
 ## `next_index` and `months_to_next` are the whole scheduler. There is no RNG
 ## anywhere in it, so the council survives a save and a reload with no generator
 ## state to serialise -- the same property docs/opinion-model.md's polling noise
-## gets for free. Written ONLY by src/sim/orgs.gd. See docs/bloc-model.md and,
+## gets for free. Written by src/sim/orgs.gd and council.gd. See docs/bloc-model.md and,
 ## as of V3.2, docs/orgs-model.md.
 ##
 ## One register per council org -- org_id -> {rules, pending, last_vote,
 ## next_index, months_to_next} -- for every org whose content carries
-## `council: true`. The V1.3d register, one instance per council. Written ONLY
-## by src/sim/orgs.gd. Serialised; the bloc->orgs rename is what earns
+## `council: true`. The V1.3d register, one instance per council. Written by
+## src/sim/orgs.gd AND, for the keys it owns (pending.lobbied/bargains, register
+## aid/debts), src/sim/council.gd. Serialised; the bloc->orgs rename is what earns
 ## SAVE_VERSION 32, because rules in force dropped silently across a rename are
 ## wrong rather than empty.
 var orgs := {}
@@ -1478,7 +1493,30 @@ static func from_dict(d: Dictionary):
 			"last_vote": reg.get("last_vote", {}),
 			"next_index": int(reg.get("next_index", 0)),
 			"months_to_next": int(reg.get("months_to_next", 0)),
+			# V4.5a. Every key defaults to "nothing", which is the truth for a
+			# version-39 save -- the no-bump argument in the SAVE_VERSION block.
+			"agenda_choice": String(reg.get("agenda_choice", "")),
+			"tabled": (reg.get("tabled", {}) as Dictionary),
+			"ratifying": (reg.get("ratifying", {}) as Dictionary),
+			"aid": [],
+			"debts": [],
 		}
+		# months_left is the one int in the ratification register: JSON hands every
+		# number back as a float, and it is a countdown compared with ==.
+		var rat: Dictionary = org_register["ratifying"]
+		if not rat.is_empty():
+			rat["months_left"] = int(rat.get("months_left", 0))
+		for a in (reg.get("aid", []) as Array):
+			org_register["aid"].append({
+				"payer": String(a.get("payer", "")), "recipient": String(a.get("recipient", "")),
+				"pct_gdp": float(a.get("pct_gdp", 0.0)), "months_left": int(a.get("months_left", 0)),
+			})
+		for e in (reg.get("debts", []) as Array):
+			org_register["debts"].append({
+				"debtor": String(e.get("debtor", "")), "creditor": String(e.get("creditor", "")),
+				"made_on": int(e.get("made_on", -1)), "months_left": int(e.get("months_left", 0)),
+				"awaiting": String(e.get("awaiting", "")),
+			})
 		var org_pend: Dictionary = org_register["pending"]
 		if not (org_pend as Dictionary).is_empty():
 			org_pend["months_left"] = int(org_pend.get("months_left", 1))

@@ -67,6 +67,7 @@ const FIXED_EXECUTIVE := "executive"
 const FIXED_HEAD_OF_STATE := "head_of_state"
 const FIXED_COUNCIL_PROPOSAL := "council_proposal"
 const FIXED_COUNCIL_VOTE := "council_vote"
+const FIXED_COUNCIL_RATIFICATION := "council_ratification"
 const FIXED_DISSOLUTION := "dissolution_lockout"
 const FIXED_COOLDOWN := "cooldown"
 

@@ -15,6 +15,7 @@ extends RefCounted
 ## arrays.
 
 const OrgK := preload("res://src/core/org_constants.gd")
+const CouncilK := preload("res://src/sim/council_constants.gd")
 
 var id: String = ""
 var name: String = ""
@@ -66,6 +67,17 @@ var accession_seats: int = 0
 ## authored content, measured in play, not tuned here.
 var accession_position: Dictionary = {}
 var withdrawal_position: Dictionary = {}
+
+## V4.5a. How this council decides when a proposal does not say: `qmr` (V1.3d's
+## cast-seat tally) or `unanimity` (the treaty class). Default qmr, which is what
+## every pre-V4.5 council did -- the inertness clause in docs/orgs-model.md.
+var decision_rule: String = "qmr"
+
+## V4.5a. The rotating chair, or {} for a council the rotation still drives.
+## {"order": [member ids], "months": int, "anchor_index": year * 12 + month - 1}
+## -- anchor_index is when order[0]'s term BEGAN, so the chair is a pure
+## function of the calendar and nothing about it is ever saved.
+var presidency: Dictionary = {}
 
 var errors: Array[String] = []
 
@@ -152,6 +164,21 @@ static func from_dict(raw: Dictionary, fname: String, errors: Array[String]):
 
 	org.accession_position = _extract_position(raw.get("accession_position", {}), "accession_position", org.id, fname, errors)
 	org.withdrawal_position = _extract_position(raw.get("withdrawal_position", {}), "withdrawal_position", org.id, fname, errors)
+
+	var raw_rule = raw.get("decision_rule", CouncilK.DECISION_QMR)
+	if typeof(raw_rule) != TYPE_STRING:
+		errors.append("%s: %s decision_rule must be a string" % [fname, org.id])
+		raw_rule = CouncilK.DECISION_QMR
+	org.decision_rule = String(raw_rule)
+	if not CouncilK.DECISION_RULES.has(org.decision_rule):
+		errors.append("%s: %s decision_rule '%s' is not one of %s" % [fname, org.id, org.decision_rule, CouncilK.DECISION_RULES])
+		org.decision_rule = CouncilK.DECISION_QMR
+
+	var raw_pres = raw.get("presidency", {})
+	if raw.has("presidency") and typeof(raw_pres) != TYPE_DICTIONARY:
+		errors.append("%s: %s presidency must be an object" % [fname, org.id])
+	if typeof(raw_pres) == TYPE_DICTIONARY and not (raw_pres as Dictionary).is_empty():
+		org.presidency = _extract_presidency(raw_pres, org, fname, errors)
 	return org
 
 
@@ -170,6 +197,55 @@ static func _extract_position(raw, key: String, org_id: String, fname: String, e
 			continue
 		out[axis] = clampf(float(v), -1.0, 1.0)
 	return out
+
+
+## The chair's rotation. Every id must be an AUTHORED member, once each: a chair
+## who is not in the club, or one who presides twice per cycle, is a typo the
+## register refuses rather than a rotation the council silently runs.
+static func _extract_presidency(raw: Dictionary, org, fname: String, errors: Array[String]) -> Dictionary:
+	var order: Array = []
+	var raw_order = raw.get("order", [])
+	if typeof(raw_order) != TYPE_ARRAY or (raw_order as Array).is_empty():
+		errors.append("%s: %s presidency.order missing or empty" % [fname, org.id])
+		return {}
+	for entry in raw_order:
+		if typeof(entry) != TYPE_STRING:
+			errors.append("%s: %s presidency.order entries must be strings" % [fname, org.id])
+			return {}
+		var id := String(entry)
+		if not org.members.has(id):
+			errors.append("%s: %s presidency.order names '%s', not an authored member" % [fname, org.id, id])
+			return {}
+		if order.has(id):
+			errors.append("%s: %s presidency.order names '%s' twice" % [fname, org.id, id])
+			return {}
+		order.append(id)
+	var raw_months = raw.get("months", 0)
+	var whole: bool = typeof(raw_months) == TYPE_INT or (typeof(raw_months) == TYPE_FLOAT and float(raw_months) == roundf(float(raw_months)))
+	if not whole:
+		errors.append("%s: %s presidency.months must be a whole number" % [fname, org.id])
+		return {}
+	var months := int(raw_months)
+	if months < CouncilK.MIN_PRESIDENCY_MONTHS or months > CouncilK.MAX_PRESIDENCY_MONTHS:
+		errors.append("%s: %s presidency.months %d outside [%d, %d]" % [
+			fname, org.id, months, CouncilK.MIN_PRESIDENCY_MONTHS, CouncilK.MAX_PRESIDENCY_MONTHS,
+		])
+		return {}
+	var anchor = raw.get("anchor", {})
+	# Type-check before int(): int("x") or int([]) is a runtime error, and a
+	# malformed data file must be a loader error instead.
+	var year := 0
+	var month := 0
+	if typeof(anchor) == TYPE_DICTIONARY:
+		var ry = anchor.get("year", 0)
+		var rm = anchor.get("month", 0)
+		if (typeof(ry) == TYPE_INT or typeof(ry) == TYPE_FLOAT) and (typeof(rm) == TYPE_INT or typeof(rm) == TYPE_FLOAT):
+			year = int(ry)
+			month = int(rm)
+	if year < CouncilK.MIN_ANCHOR_YEAR or year > CouncilK.MAX_ANCHOR_YEAR or month < 1 or month > 12:
+		errors.append("%s: %s presidency.anchor out of range" % [fname, org.id])
+		return {}
+	return {"order": order, "months": months, "anchor_index": year * 12 + (month - 1)}
 
 
 ## The nation's voting weight in this org's council (and its EP seats where

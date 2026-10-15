@@ -24,9 +24,12 @@ extends PanelContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
+const Council = preload("res://src/sim/council.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
-const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const CouncilSection = preload("res://src/ui/council_section.gd")
 const Relations = preload("res://src/core/relations.gd")
+const Ratification = preload("res://src/sim/ratification.gd")
 const Trends = preload("res://src/ui/trends.gd")
 
 signal closed
@@ -50,12 +53,19 @@ var _close_button: Button
 
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
+## True once a deadline-bearing verb (a treaty waiting on the player's assembly)
+## has taken `_primary`; later offers and claims then leave it alone.
+var _primary_claimed := false
 
 ## A verb the machine refused, spoken on the NEXT refresh rather than appended
 ## and immediately queue_free'd -- the first version added the line and then
 ## marked the panel dirty, so the refresh erased it before a frame passed and
 ## the message was a dead write.
 var _refusal_text := ""
+
+## Which folds of the council block are open ("room:<org>", "agenda:<org>"). On the
+## panel, not the section, because the body is rebuilt on every refresh.
+var _open_sections: Dictionary = {}
 
 
 func _ready() -> void:
@@ -127,6 +137,7 @@ func _refresh() -> void:
 	if ns == null:
 		return
 	_primary = null
+	_primary_claimed = false
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -138,7 +149,24 @@ func _refresh() -> void:
 		PanelKit.line(_body, _refusal_text)
 		_refusal_text = ""
 
+	# Orgs that need the player come first: a treaty waiting on the player's
+	# ratification, then a division awaiting the player's vote. Otherwise the
+	# authored order buries the one decision with a deadline below the fold of
+	# whichever council happens to be listed earlier. Authored order is kept
+	# within each group (a stable partition, not a sort).
+	var ratify: Array = []
+	var voting: Array = []
+	var rest: Array = []
 	for org in _loader.orgs:
+		var register: Dictionary = _state.orgs.get(org.id, {})
+		var nations: Dictionary = (register.get("ratifying", {}) as Dictionary).get("nations", {})
+		if ns.orgs.has(org.id) and String(nations.get(ns.id, "")) == CouncilK.RATIFY_PENDING:
+			ratify.append(org)
+		elif ns.orgs.has(org.id) and not (register.get("pending", {}) as Dictionary).is_empty():
+			voting.append(org)
+		else:
+			rest.append(org)
+	for org in ratify + voting + rest:
 		if ns.orgs.has(org.id):
 			_refresh_member_org(ns, org)
 		else:
@@ -153,108 +181,12 @@ func _refresh_member_org(ns, org) -> void:
 		PanelKit.line(_body, org.summary, PanelKit.Tone.PLAIN)
 
 	if org.council:
-		_refresh_vote(ns, org)
+		CouncilSection.build(_body, self, _state, _loader, ns, org)
 		_refresh_rules(ns, org)
 	if org.net_transfers:
 		_refresh_contribution(ns, org)
 	_refresh_membership_verb(ns, org)
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-
-
-## What is on the table at this org's council, and the player's own vote.
-## First, because it is the only part of this section the player can act on.
-func _refresh_vote(ns, org) -> void:
-	PanelKit.heading(_body, "BEFORE THE COUNCIL")
-
-	var pending: Dictionary = Orgs.pending(_state, org.id)
-	if pending.is_empty():
-		PanelKit.line(_body, "Nothing before the council. The presidency brings the next proposal forward in due course.")
-	else:
-		PanelKit.line(_body, String(pending.get("name", "")), PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, String(pending.get("summary", "")))
-		PanelKit.line(_body, "Divides in %d %s." % [
-			int(pending.get("months_left", 0)),
-			"month" if int(pending.get("months_left", 0)) == 1 else "months",
-		], PanelKit.Tone.PLAIN)
-
-		var current := String(pending.get("player_vote", Orgs.VOTE_ABSTAIN))
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		for choice in Orgs.VOTE_CHOICES:
-			var button := Button.new()
-			button.text = choice.capitalize()
-			button.disabled = choice == current
-			# An abstention is in the denominator and neither numerator, so sitting
-			# out makes passage harder without spending anything on opposing it.
-			# Said here because it is the one rule of this panel a player would
-			# otherwise have to infer from a tally.
-			if choice == Orgs.VOTE_ABSTAIN:
-				button.tooltip_text = "Counted against the threshold, for neither side."
-			button.pressed.connect(_on_vote.bind(org.id, choice))
-			if _primary == null and not button.disabled:
-				_primary = button
-			row.add_child(button)
-		_body.add_child(row)
-		PanelKit.line(_body, "Currently: %s. %s holds %d of the council's seats." % [
-			current, ns.id, org.seats(ns.id),
-		])
-
-	var last: Dictionary = Orgs.last_vote(_state, org.id)
-	if not last.is_empty():
-		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, "Last division: %s — %s" % [
-			String(last.get("name", "")), "carried" if bool(last.get("passed", false)) else "fell",
-		], PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, "%d for, %d against, of %d seats. %s voted %s." % [
-			int(last.get("seats_for", 0)), int(last.get("seats_against", 0)),
-			int(last.get("seats_total", 0)), ns.id, String(last.get("player_vote", "")),
-		])
-		_refresh_why(last)
-	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-
-
-## WHY each member voted as it did, not only how.
-##
-## Until V1.3e the eight voted on ideology alone and there was nothing to say.
-## Now they price a proposal against their own books, and the division is only
-## legible if the player can see that Luxembourg opposed a fund it would pay for
-## while Italy backed one it would draw on. Grouped by reason rather than listed
-## per nation: the interesting object is the CAMP. The reasons are recorded at
-## the moment of the division by src/sim/orgs.gd, not recomputed here -- the
-## books a member voted on were that month's.
-func _refresh_why(last: Dictionary) -> void:
-	var reasons: Dictionary = last.get("reasons", {})
-	if reasons.is_empty():
-		return
-	var votes: Dictionary = last.get("votes", {})
-
-	var camps: Dictionary = {}
-	var order: Array = reasons.keys()
-	order.sort()
-	for id in order:
-		var key := String(reasons[id])
-		if not camps.has(key):
-			camps[key] = []
-		camps[key].append("%s %s" % [
-			String(id), "for" if String(votes.get(id, "")) == Orgs.VOTE_FOR else "against",
-		])
-
-	var keys: Array = camps.keys()
-	keys.sort()
-	for key in keys:
-		PanelKit.line(_body, "%s: %s" % [_vote_reason_text(String(key)), ", ".join(camps[key])])
-
-
-## The model returns a key; the wording lives here, because src/sim/ does not know
-## the UI exists and a test should not assert on prose.
-func _vote_reason_text(key: String) -> String:
-	match key:
-		ForeignPolicy.VOTE_REASON_DRAWS_ON_IT: return "stood to draw on it"
-		ForeignPolicy.VOTE_REASON_ALREADY_IN_BREACH: return "already outside the rule"
-		ForeignPolicy.VOTE_REASON_WOULD_PAY: return "would have to pay for it"
-		ForeignPolicy.VOTE_REASON_TRADES_OUTSIDE: return "trades outside the org"
-		ForeignPolicy.VOTE_REASON_POLITICS: return "on the politics of it"
-	return key
 
 
 ## What THIS org's rules bind, and what each is costing THIS nation rather than
@@ -307,6 +239,8 @@ func _refresh_contribution(ns, org) -> void:
 		PanelKit.line(_body, "Adopted programmes: %+.3f%% of GDP" % float(per_org.get("rules", 0.0)), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("fine", 0.0))):
 		PanelKit.line(_body, "Penalties: %+.3f%% of GDP" % float(per_org.get("fine", 0.0)), PanelKit.Tone.PLAIN)
+	if not is_zero_approx(float(per_org.get("aid", 0.0))):
+		PanelKit.line(_body, "Side-payments (aid): %+.3f%% of GDP" % float(per_org.get("aid", 0.0)), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "All organisations, total: %+.3f%% of GDP" % float(parts.get("total", 0.0)), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP.")
 
@@ -406,9 +340,90 @@ func _on_membership(org_id: String, joining: bool) -> void:
 
 func _on_vote(org_id: String, choice: String) -> void:
 	var before := Trends.snapshot_now(_state)
-	Orgs.cast_vote(_state, org_id, choice)
+	if not Orgs.cast_vote(_state, org_id, choice):
+		# Same silent-failure class as _on_membership: a press the machine refused
+		# must not report a decision to Overview's RECENT DECISIONS.
+		_refusal_text = "Refused: that vote can no longer be cast."
+		_dirty = true
+		return
 	voted.emit(before, "Council vote (%s): %s" % [org_id.to_upper(), choice])
 	_dirty = true
+
+
+func is_section_open(key: String) -> bool:
+	return bool(_open_sections.get(key, false))
+
+
+func set_section_open(key: String, open: bool) -> void:
+	_open_sections[key] = open
+
+
+func _on_bargain(org_id: String, target_id: String, currency: String, ask: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	if not Council.bargain(_state, org_id, target_id, currency, ask):
+		_refusal_text = "Refused: that bargain can no longer be struck."
+		_dirty = true
+		return
+	acted.emit(before, "Council bargain (%s): %s with %s" % [
+		org_id.to_upper(), currency.replace("_", " "), _loader.nation_name(target_id),
+	])
+	_dirty = true
+
+
+func _on_ratify(org_id: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	# Read before submitting: the register clears its ratifying block on a verdict.
+	var treaty := String((_state.orgs[org_id].get("ratifying", {}) as Dictionary).get("name", ""))
+	var result: Dictionary = Ratification.submit(_state, _loader, org_id)
+	if result.has("refused"):
+		_refusal_text = "Refused: the treaty can no longer be put to the assembly."
+		_dirty = true
+		return
+	acted.emit(before, "Treaty put to the assembly: %s — %s" % [
+		treaty, "ratified" if bool(result.get("passed", false)) else "rejected",
+	])
+	_dirty = true
+
+
+func _on_set_agenda(org_id: String, proposal_id: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	if not Orgs.set_agenda(_state, _loader, org_id, proposal_id):
+		_refusal_text = "Refused: that proposal cannot be put first."
+		_dirty = true
+		return
+	acted.emit(before, "Council agenda (%s): you put %s first" % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
+	_dirty = true
+
+
+func _on_table(org_id: String, proposal_id: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	if not Orgs.table_proposal(_state, _loader, org_id, proposal_id):
+		_refusal_text = "Refused: the chair will not table that now."
+		_dirty = true
+		return
+	acted.emit(before, "Council agenda (%s): tabled %s" % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
+	_dirty = true
+
+
+func _proposal_label(org_id: String, proposal_id: String) -> String:
+	var p = Orgs.proposal_by_id(_loader, org_id, proposal_id)
+	return String(p.proposal_name) if p != null else proposal_id
+
+
+## Called by CouncilSection for each enabled verb it builds; the first one wins,
+## unless a deadline verb has already been claimed (see claim_primary).
+func offer_primary(control: Control) -> void:
+	if _primary == null:
+		_primary = control
+
+
+## A verb with a deadline outranks whatever came first in build order. Without
+## this the ratify card lost the primary slot to an earlier org's membership
+## button: FRA sits in the climate accord, which is listed before the EU.
+func claim_primary(control: Control) -> void:
+	if not _primary_claimed:
+		_primary = control
+		_primary_claimed = true
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract,
@@ -416,7 +431,9 @@ func _on_vote(org_id: String, choice: String) -> void:
 ##
 ## The councils' vote buttons are rebuilt on every refresh and the one the
 ## player already holds is disabled, so this is the FIRST ENABLED verb in build
-## order rather than a member held from _ready(). Null while no proposal is
+## order rather than a member held from _ready() -- except that a claimed
+## deadline verb (a treaty waiting on the assembly, claim_primary) outranks build
+## order. Null while no proposal is
 ## pending anywhere, which is most months: the panel is then a readout and has
 ## no verb to put above the fold.
 func primary_action() -> Control:

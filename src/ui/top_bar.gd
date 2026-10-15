@@ -6,6 +6,8 @@ const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
 
 ## The thin strip along the top edge -- U2, rebuilt at U5a.
 ##
@@ -38,6 +40,7 @@ var _figure_captions := {}
 ## V4.1. The programme figure, hidden until a programme runs -- it is not one
 ## of the four always-on figures, so it keeps its own references beside the
 ## dict the others share.
+var _europe_box: Control
 var _programme_box: Control
 var _programme_label: Label
 var _programme_value: Label
@@ -82,6 +85,14 @@ func _ready() -> void:
 	# hiding the figure answers that question by not asking it.
 	figures.add_child(_build_figure("desk", "Desk",
 		"Events awaiting an answer. Worst severity in the tooltip."))
+	# V4.5b2's interim Europe figure, same precedent: a treaty waiting on the
+	# player's assembly, else the burden of the club's rules. Hidden for a player
+	# in no council org -- a standing "— clear" there would claim a Europe the
+	# nation is not part of.
+	var europe := _build_figure("europe", "Europe", "The councils you sit on.")
+	europe.visible = false
+	_europe_box = europe
+	figures.add_child(europe)
 
 	row.add_child(_spacer())
 
@@ -186,6 +197,66 @@ func _spacer() -> Control:
 	return spacer
 
 
+## The Europe figure's caption and value are two hover targets for one reading,
+## so the live tooltip goes on both (same reason as _set_desk_tip).
+func _set_europe_tip(text: String) -> void:
+	(_figure_values["europe"] as Control).tooltip_text = text
+	(_figure_captions["europe"] as Control).tooltip_text = text
+
+
+## Reads the player's council standing off the registers: the treaty awaiting
+## the assembly (state.orgs[..].ratifying), the one burden price, the rules in
+## force and the IOUs the player still owes. Read-only.
+func _refresh_europe(state, ns, loader) -> void:
+	var council: Array = Orgs.council_ids(state)
+	var mine: Array = []
+	for org_id in council:
+		if ns.orgs.has(org_id):
+			mine.append(org_id)
+	_europe_box.visible = not mine.is_empty()
+	if mine.is_empty():
+		return
+
+	var burden := Orgs.burden(state, ns, council)
+	var rules: Array = Orgs.rules_in_force(state, ns)
+	var breached := 0
+	for rule in rules:
+		if float(rule.get("breach", 0.0)) > 0.0:
+			breached += 1
+
+	var owed := 0
+	var treaty_text := ""
+	var treaty_left := -1
+	for org_id in mine:
+		var org_state: Dictionary = state.orgs[org_id]
+		for debt in (org_state.get("debts", []) as Array):
+			if String(debt.get("debtor", "")) == ns.id:
+				owed += 1
+		var r: Dictionary = org_state.get("ratifying", {})
+		if not r.is_empty() and String((r.get("nations", {}) as Dictionary).get(ns.id, "")) == CouncilK.RATIFY_PENDING:
+			var left := int(r.get("months_left", 0))
+			if treaty_left < 0 or left < treaty_left:
+				treaty_left = left
+				treaty_text = "%s, %s" % [String(r.get("name", "")),
+					"1 month left" if left == 1 else "%d months left" % left]
+
+	if treaty_left >= 0:
+		_figure_values["europe"].text = "Treaty: %dm" % treaty_left
+	elif burden > 0.0:
+		_figure_values["europe"].text = "Burden %.2f" % burden
+	else:
+		_figure_values["europe"].text = "— clear"
+
+	var lines: Array[String] = [
+		"Burden %.2f" % burden,
+		("1 rule in force binds you, %d breached" % breached) if rules.size() == 1 \
+			else ("%d rules in force bind you, %d breached" % [rules.size(), breached]),
+		"%d %s owed" % [owed, "IOU" if owed == 1 else "IOUs"],
+		("Treaty awaiting your assembly: %s" % treaty_text) if treaty_left >= 0 else "No treaty awaiting you",
+	]
+	_set_europe_tip("\n".join(lines))
+
+
 ## The desk tooltip: a critical on the desk is named outright -- that is the one
 ## line a president must not have to decode -- and any other desk reads as a count
 ## by severity. The names are events_constants' SEVERITY_NAMES (1 minor, 2 major,
@@ -262,6 +333,8 @@ func refresh(state, _clock: Node, loader = null) -> void:
 			by_severity[severity] = int(by_severity.get(severity, 0)) + 1
 		_figure_values["desk"].text = "%d pending" % desk.size()
 		_set_desk_tip(_desk_tooltip(by_severity))
+
+	_refresh_europe(state, ns, loader)
 
 	# V4.1. Derived off the same read the Agenda window draws -- the panel and
 	# the strip cannot print two answers to one progress question.

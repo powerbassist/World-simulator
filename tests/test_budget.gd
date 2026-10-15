@@ -175,9 +175,14 @@ func _check_debt_accumulates() -> void:
 				i, i + 1, snaps[i - 1]["debt_eur_bn"], snaps[i]["debt_eur_bn"]
 			])
 			break
-		if snaps[i]["debt_service_pct_gdp"] <= snaps[i - 1]["debt_service_pct_gdp"]:
-			_fail("debt service did not grow between month %d and %d (%.4f -> %.4f)" % [
-				i, i + 1, snaps[i - 1]["debt_service_pct_gdp"], snaps[i]["debt_service_pct_gdp"]
+		# Debt service is yield x debt / GDP, and the yield moves with the credit
+		# cycle: a month where the yield eases as fast as the debt ratio climbs is
+		# a legitimate plateau (V4.5b1's cadence put one at month 31 -> 32,
+		# 2.72641 both sides, yield 2.1828 -> 2.1815). So the line must GROW year
+		# on year, not every single month -- the debt itself still must.
+		if i >= 12 and snaps[i]["debt_service_pct_gdp"] <= snaps[i - 12]["debt_service_pct_gdp"]:
+			_fail("debt service did not grow over the year to month %d (%.4f -> %.4f)" % [
+				i + 1, snaps[i - 12]["debt_service_pct_gdp"], snaps[i]["debt_service_pct_gdp"]
 			])
 			break
 

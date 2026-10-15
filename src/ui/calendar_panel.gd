@@ -50,6 +50,7 @@ const FIXED_LABEL := {
 	K.FIXED_HEAD_OF_STATE: "Head of state's term ends",
 	K.FIXED_COUNCIL_PROPOSAL: "Council proposes",
 	K.FIXED_COUNCIL_VOTE: "Council votes",
+	K.FIXED_COUNCIL_RATIFICATION: "Ratification deadline",
 	K.FIXED_DISSOLUTION: "Dissolution available again",
 	K.FIXED_COOLDOWN: "Available again",
 	K.FIXED_PROJECT: "Opens",

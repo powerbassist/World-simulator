@@ -46,6 +46,9 @@ const RK = preload("res://src/core/relations.gd")
 const FP = preload("res://src/sim/foreign_policy.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+## V4.5a. A leaf: council.gd preloads nothing of this file's.
+const Council = preload("res://src/sim/council.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
 
 const VOTE_FOR := "for"
 const VOTE_AGAINST := "against"
@@ -74,6 +77,15 @@ static func init_state(state, loader) -> void:
 				"last_vote": {},
 				"next_index": 0,
 				"months_to_next": K.PROPOSAL_INTERVAL_MONTHS,
+				# V4.5a -- the contested layer's registers, empty at new-game.
+				# Each one's absence reads correctly for an older save (nothing
+				# was chosen, tabled, ratifying, paid or owed before V4.5),
+				# which is the SAVE_VERSION argument in game_state.gd.
+				"agenda_choice": "",
+				"tabled": {},
+				"ratifying": {},
+				"aid": [],
+				"debts": [],
 			}
 		state.org_effects[org.id] = {
 			"relations_bonus": org.relations_bonus,
@@ -276,6 +288,13 @@ static func tick_month(state, loader) -> void:
 		_tick_council(state, loader, org_id)
 	_tick_accessions(state, loader)
 
+	# V4.5a. BEFORE the transfers are read: the breakdown the budget panel shows is
+	# read after this tick, so it must see the same register the line charged. An
+	# entry struck with N months is paid in exactly N ticks (N-1 .. 0) and pruned
+	# when it goes below zero -- see Council.tick_register().
+	for org_id in council_ids:
+		Council.tick_register(state, org_id)
+
 	# Gated on has_budget rather than on the player id, the same flag
 	# Budget.tick_month and Opinion.tick_month use -- a second playable nation is
 	# a data change, not a change here.
@@ -308,6 +327,8 @@ static func _org_transfer(state, ns, org_id: String) -> float:
 		float(ns.org_base_transfer_pct_gdp.get(org_id, 0.0))
 		+ rule_transfers
 		+ K.FINE_PCT_GDP_PER_BURDEN * clampf(contributions, 0.0, K.BURDEN_MAX)
+		# V4.5a: side-payments struck as bargains; exactly 0.0 with none.
+		+ Council.aid_line(state, ns.id, org_id)
 	)
 
 
@@ -320,6 +341,28 @@ static func _org_transfer(state, ns, org_id: String) -> float:
 static func _tick_council(state, loader, org_id: String) -> void:
 	var register: Dictionary = state.orgs[org_id]
 
+	# V4.5a. The ratification window runs whatever the council is doing; a
+	# treaty nobody ratified in time falls exactly as one rejected does.
+	var ratifying: Dictionary = register.get("ratifying", {})
+	if not ratifying.is_empty():
+		ratifying["months_left"] = int(ratifying.get("months_left", 0)) - 1
+		if int(ratifying["months_left"]) <= 0:
+			var late: Array = []
+			for id in (ratifying.get("nations", {}) as Dictionary).keys():
+				if String(ratifying["nations"][id]) == CouncilK.RATIFY_PENDING:
+					late.append(String(id))
+			late.sort()
+			_treaty_falls(state, loader, org_id, late)
+
+	# V4.5b. The countdown to the next opening runs EVERY month, the pending
+	# division's months included, so openings are PROPOSAL_INTERVAL_MONTHS apart
+	# -- one per presidency, the author's call. Counted only while nothing was
+	# pending, it made opening-to-opening VOTE_DELAY_MONTHS + the interval (9,
+	# not 6). Floored at 0: if a division is still pending when it runs out
+	# (an interval shorter than the vote delay), the next opening is the first
+	# month after that division resolves.
+	register["months_to_next"] = maxi(0, int(register.get("months_to_next", 0)) - 1)
+
 	var pending: Dictionary = register.get("pending", {})
 	if not pending.is_empty():
 		if int(pending["months_left"]) > 1:
@@ -328,16 +371,37 @@ static func _tick_council(state, loader, org_id: String) -> void:
 		_resolve(state, loader, org_id)
 		return
 
-	register["months_to_next"] = int(register.get("months_to_next", 0)) - 1
 	if int(register["months_to_next"]) > 0:
 		return
 
-	var proposal = _next_proposal(state, loader, org_id)
+	# V4.5a. Three pickers in precedence order, and the order is the design: a
+	# proposal someone PAID to table outranks the chair's own pick, and the
+	# chair's pick outranks the rotation. With no presidency and nothing tabled
+	# only the rotation runs -- the inertness clause, bit-identical to V4.4.
+	var sponsor := ""
+	var proposal = null
+	var tabled: Dictionary = register.get("tabled", {})
+	if not tabled.is_empty():
+		register["tabled"] = {}
+		var tp = _proposal_by_id(loader, org_id, String(tabled.get("proposal_id", "")))
+		if tp != null and _eligible(state, org_id, tp):
+			proposal = tp
+			sponsor = String(tabled.get("by", ""))
+	if proposal == null:
+		proposal = _presidency_pick(state, loader, org_id)
+	if proposal == null:
+		proposal = _next_proposal(state, loader, org_id)
 	if proposal == null:
 		# Nothing left to put to the council. Try again next interval rather than
 		# every month: a council with no agenda is quiet, not busy.
 		register["months_to_next"] = K.PROPOSAL_INTERVAL_MONTHS
 		return
+	# Cleared at EVERY opening, not only where the chair's pick ran: a tabled
+	# opening skips _presidency_pick(), and a choice left over from a presidency
+	# that has since ended would otherwise surface years later under the next one.
+	register["agenda_choice"] = ""
+	if sponsor == "":
+		sponsor = Council.live_sponsor(state, proposal)
 
 	register["pending"] = {
 		"proposal_id": proposal.id,
@@ -349,7 +413,19 @@ static func _tick_council(state, loader, org_id: String) -> void:
 		"player_vote": VOTE_ABSTAIN,
 		"opened_year": state.year,
 		"opened_month": state.month,
+		"sponsor": sponsor,
 	}
+	# V4.5a. An AI sponsor lobbies at the opening, against this month's books --
+	# the books the members will vote on are three months later, so a lobbied
+	# member can still slip, which is honest. Only computed when there is a
+	# sponsor: the appraisal walk is not free and an unsponsored opening must
+	# stay exactly V4.4's.
+	if sponsor != "" and not state.nations[sponsor].has_budget:
+		var supports := {}
+		for id in members(state, org_id):
+			if not state.nations[id].has_budget:
+				supports[id] = support(state, state.nations[id], proposal)
+		register["pending"]["lobbied"] = Council.lobby(state, loader, sponsor, supports)
 	register["months_to_next"] = K.PROPOSAL_INTERVAL_MONTHS
 
 
@@ -364,27 +440,93 @@ static func _next_proposal(state, loader, org_id: String):
 	if all.is_empty():
 		return null
 
-	var rules: Dictionary = (state.orgs[org_id].get("rules", {}) as Dictionary)
-	var constrained := 0
-	for r in rules.values():
-		if not (r as Dictionary).get("field", "").is_empty():
-			constrained += 1
-
 	var start := int(state.orgs[org_id].get("next_index", 0))
 	for offset in all.size():
 		var i: int = (start + offset) % all.size()
 		var p = all[i]
-		if rules.has(p.id):
-			continue
-		# The ceiling bounds rules that BIND POLICY, not proposals. A transfer or
-		# an external measure adds no constraint row to the panel and no term to
-		# the burden, so capping those too would make the council fall silent for
-		# most of a long run with content still unused.
-		if not p.constraint.is_empty() and constrained >= K.MAX_RULES_IN_FORCE:
+		# The ceiling bounds rules that BIND POLICY, not proposals -- see
+		# _eligible(). A transfer or an external measure adds no constraint row
+		# and no burden term, so capping those too would make the council fall
+		# silent for most of a long run with content still unused.
+		if not _eligible(state, org_id, p):
 			continue
 		state.orgs[org_id]["next_index"] = (i + 1) % all.size()
 		return p
 	return null
+
+
+## Whether this proposal may open now: not already in force, not the treaty
+## this council is ratifying, and -- for a proposal that binds policy -- under
+## the rules-in-force ceiling. One rule for all three pickers, so the tabled
+## path and the chair cannot open what the rotation would refuse.
+static func _eligible(state, org_id: String, p) -> bool:
+	var register: Dictionary = state.orgs[org_id]
+	var rules: Dictionary = (register.get("rules", {}) as Dictionary)
+	if rules.has(p.id):
+		return false
+	if String((register.get("ratifying", {}) as Dictionary).get("proposal_id", "")) == p.id:
+		return false
+	if p.constraint.is_empty():
+		return true
+	var constrained := 0
+	for r in rules.values():
+		if not (r as Dictionary).get("field", "").is_empty():
+			constrained += 1
+	return constrained < K.MAX_RULES_IN_FORCE
+
+
+## The chair's pick, or null to fall through to the rotation.
+##
+## An AI chair opens the eligible proposal it supports most -- the presidency's
+## real power is the agenda, and a chair that put forward what it wanted least
+## would be a rotation in costume. Strict `>` keeps authored order on ties. A
+## human chair opens what it chose with set_agenda(), or nothing (the rotation)
+## if it chose nothing; a choice left over from a presidency that has ended is
+## cleared, so a stale pick never surfaces years later under the next one.
+static func _presidency_pick(state, loader, org_id: String):
+	var chair := Council.presiding_nation(state, loader, org_id)
+	var register: Dictionary = state.orgs[org_id]
+	var choice := String(register.get("agenda_choice", ""))
+	register["agenda_choice"] = ""
+	if chair == "":
+		return null
+	var cns = state.nations[chair]
+	if cns.has_budget:
+		if choice == "":
+			return null
+		var cp = _proposal_by_id(loader, org_id, choice)
+		return cp if cp != null and _eligible(state, org_id, cp) else null
+	# The window: the next CHAIR_WINDOW eligible proposals in rotation order.
+	# The rotation advances past the window's FIRST entry whatever the chair
+	# picks, so a proposal the chair passes over is next cycle's question
+	# rather than buried for good, and the chair's favourite cannot be
+	# re-opened every time it sits (V4.5a final review #4).
+	var all: Array = loader.org_proposals.get(org_id, [])
+	if all.is_empty():
+		return null
+	var start := int(register.get("next_index", 0))
+	var window: Array = []
+	var first := -1
+	for offset in all.size():
+		var i: int = (start + offset) % all.size()
+		if not _eligible(state, org_id, all[i]):
+			continue
+		if first < 0:
+			first = i
+		window.append(all[i])
+		if window.size() >= CouncilK.CHAIR_WINDOW:
+			break
+	if window.is_empty():
+		return null
+	register["next_index"] = (first + 1) % all.size()
+	var best = null
+	var best_s := -INF
+	for p in window:
+		var s: float = support(state, cns, p)
+		if s > best_s:
+			best_s = s
+			best = p
+	return best
 
 
 ## The loaded proposal with this id on this org's agenda, or null. Linear over a
@@ -423,8 +565,19 @@ static func _resolve(state, loader, org_id: String) -> void:
 		# panel, because the books a member voted on are this month's and the panel
 		# is read later. V1.3c's budget panel showed a tariff collecting nothing
 		# for exactly this class of reason.
-		if id != state.player_nation_id:
+		if id != state.player_nation_id and id == String(pending.get("sponsor", "")):
+			reasons[id] = CouncilK.REASON_SPONSOR
+		elif id != state.player_nation_id:
 			reasons[id] = vote_reason(state, state.nations[id], proposal)
+			# V4.5a. Name the deal only when the deal decided it: a reason that
+			# names a swing the vote would have gone the same way without is the
+			# refutation-as-explanation failure FP.vote_reason() records.
+			var sw: float = Council.swing(pending, id)
+			if sw != 0.0:
+				var bare: float = support(state, state.nations[id], proposal)
+				if (bare >= K.SUPPORT_THRESHOLD) != (bare + sw >= K.SUPPORT_THRESHOLD):
+					var bargained: bool = ((pending.get("bargains", {}) as Dictionary).has(id))
+					reasons[id] = CouncilK.REASON_BARGAINED if bargained else CouncilK.REASON_LOBBIED
 		if choice == VOTE_FOR:
 			seats_for += seats
 		elif choice == VOTE_AGAINST:
@@ -443,13 +596,29 @@ static func _resolve(state, loader, org_id: String) -> void:
 	# it through on a smaller base. That is constructive abstention, and it is what
 	# the real Council does.
 	var cast: int = seats_for + seats_against
-	var passed: bool = cast > 0 and float(seats_for) >= K.PASS_SEAT_FRACTION * float(cast)
+	var decision: String = Council.decision_of(loader, proposal)
+	var vetoed_by: Array = []
+	var passed: bool
+	if decision == CouncilK.DECISION_UNANIMITY:
+		# Any member against is a veto; an abstention is not -- the real
+		# Council's constructive abstention, and the only reason the player's
+		# third option survives a class where one voice decides.
+		for id in by_nation.keys():
+			if by_nation[id] == VOTE_AGAINST:
+				vetoed_by.append(id)
+		vetoed_by.sort()
+		passed = seats_for > 0 and vetoed_by.is_empty()
+	else:
+		passed = cast > 0 and float(seats_for) >= K.PASS_SEAT_FRACTION * float(cast)
 
 	register["last_vote"] = {
 		"proposal_id": proposal.id,
 		"name": proposal.proposal_name,
 		"org_id": org_id,
 		"passed": passed,
+		"decision": decision,
+		"vetoed_by": vetoed_by,
+		"sponsor": String(pending.get("sponsor", "")),
 		"seats_for": seats_for,
 		"seats_against": seats_against,
 		"seats_total": seats_total,
@@ -460,7 +629,34 @@ static func _resolve(state, loader, org_id: String) -> void:
 		"month": state.month,
 	}
 	register["pending"] = {}
+	# V4.5a. The sponsor answers the human members' votes whichever way it went.
+	Council.answer_sponsor(state, loader, String(pending.get("sponsor", "")), by_nation)
+	# The members whose assembly the game runs: a carried unanimity proposal goes
+	# home to them. Scanned once, above both the IOU settlement (a `for` on a
+	# treaty only arms its repayment) and the ratification below.
+	var home := {}
+	for id in members(state, org_id):
+		if state.nations[id].has_budget:
+			home[id] = CouncilK.RATIFY_PENDING
+	var goes_home: bool = passed and decision == CouncilK.DECISION_UNANIMITY and not home.is_empty()
+	var opened_stamp: int = int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0))
+	Council.settle_debts(state, org_id, String(pending.get("sponsor", "")), opened_stamp, by_nation, proposal.id if goes_home else "")
 
+	if passed and decision == CouncilK.DECISION_UNANIMITY:
+		# The treaty class goes home before it binds. Every member whose politics
+		# the game runs must ratify; the AI members that voted for it are taken to
+		# have ratified (they have no assembly the game simulates -- a bound,
+		# recorded in docs/orgs-model.md, not a model).
+		if not home.is_empty():
+			register["ratifying"] = {
+				"proposal_id": proposal.id,
+				"name": proposal.proposal_name,
+				"sponsor": String(pending.get("sponsor", "")),
+				"months_left": CouncilK.RATIFY_WINDOW_MONTHS,
+				"nations": home,
+			}
+			register["last_vote"]["ratification"] = "pending"
+			return
 	if passed:
 		_adopt(state, loader, org_id, proposal)
 
@@ -537,7 +733,17 @@ static func _apply_external_measure(state, loader, org_id: String, proposal) -> 
 static func _vote_of(state, nation_id: String, proposal, pending: Dictionary) -> String:
 	if nation_id == state.player_nation_id:
 		return String(pending.get("player_vote", VOTE_ABSTAIN))
-	return VOTE_FOR if support(state, state.nations[nation_id], proposal) >= K.SUPPORT_THRESHOLD else VOTE_AGAINST
+	# V4.5b. The sponsor is the nation that WANTS this adopted -- it tabled it and
+	# spent relations lobbying for it -- so it votes for before any appraisal.
+	# Appraised like any member, it was priced as a payer of its own transfer:
+	# V4.5b1 T4's sweeps had five authored sponsors (POL, LTU, LVA, EST, AUT)
+	# veto their own proposals, a sponsor lobbying the room it then outvoted.
+	if nation_id == String(pending.get("sponsor", "")):
+		return VOTE_FOR
+	# V4.5a: plus what was lobbied and bargained -- exactly 0.0 when neither
+	# happened, which keeps every unplayed division V4.4's.
+	var s: float = support(state, state.nations[nation_id], proposal) + Council.swing(pending, nation_id)
+	return VOTE_FOR if s >= K.SUPPORT_THRESHOLD else VOTE_AGAINST
 
 
 ## How much a member's government wants a proposal adopted.
@@ -583,6 +789,143 @@ static func cast_vote(state, org_id: String, choice: String) -> bool:
 		return false
 	state.orgs[org_id]["pending"]["player_vote"] = choice
 	return true
+
+
+## Public lookup for ratification.gd and the panel; the private name stays for
+## the callers this file already has.
+static func proposal_by_id(loader, org_id: String, proposal_id: String):
+	return _proposal_by_id(loader, org_id, proposal_id)
+
+
+## Whether this proposal is the one the council is dividing now.
+static func _is_pending(state, org_id: String, proposal_id: String) -> bool:
+	return String((state.orgs[org_id].get("pending", {}) as Dictionary).get("proposal_id", "")) == proposal_id
+
+
+## The player, chairing at the next opening, chooses what opens. The CHAIR-ELECT
+## acts: openings fall on the tick that seats a new chair, so only the chair
+## now would be too late. Refused when the player does not chair at the next
+## opening, or the proposal could not open -- the same
+## refuse-rather-than-record shape cast_vote() uses.
+static func set_agenda(state, loader, org_id: String, proposal_id: String) -> bool:
+	if not state.orgs.has(org_id):
+		return false
+	var ns = state.player()
+	if ns == null or Council.chair_at_next_opening(state, loader, org_id) != ns.id:
+		return false
+	var p = _proposal_by_id(loader, org_id, proposal_id)
+	if p == null or not _eligible(state, org_id, p):
+		return false
+	# The proposal before the council NOW is still eligible (it is not yet in
+	# force), so _eligible() cannot refuse it; the check lives here, in the
+	# commands, because the openers call _eligible() and must stay as they were.
+	# Left alone it would open a second time the moment this division closed.
+	if _is_pending(state, org_id, proposal_id):
+		return false
+	state.orgs[org_id]["agenda_choice"] = proposal_id
+	return true
+
+
+## The player, not chairing, pays the chair to put a proposal first. One tabled
+## item per council at a time; refused in a council with no presidency (nobody
+## to ask) and to the chair itself (set_agenda() is free for a reason).
+static func table_proposal(state, loader, org_id: String, proposal_id: String) -> bool:
+	if not state.orgs.has(org_id):
+		return false
+	var ns = state.player()
+	if ns == null or not ns.orgs.has(org_id):
+		return false
+	# Paid to the chair at the next opening: the one who will put it first.
+	var chair := Council.chair_at_next_opening(state, loader, org_id)
+	if chair == "" or chair == ns.id:
+		return false
+	if not (state.orgs[org_id].get("tabled", {}) as Dictionary).is_empty():
+		return false
+	var p = _proposal_by_id(loader, org_id, proposal_id)
+	if p == null or not _eligible(state, org_id, p):
+		return false
+	if _is_pending(state, org_id, proposal_id):
+		return false
+	Council.spend_relations(state, ns.id, chair, CouncilK.TABLE_RELATIONS_COST)
+	state.orgs[org_id]["tabled"] = {"proposal_id": proposal_id, "by": ns.id}
+	return true
+
+
+## One member's home vote on the treaty this council is ratifying. All ratified:
+## adopted for everyone. One rejection: it falls for everyone, the 2005 shape --
+## the author's call (2026-10-14) over an opt-out or binding-anyway.
+static func record_ratification(state, loader, org_id: String, nation_id: String, passed: bool) -> void:
+	if not state.orgs.has(org_id):
+		return
+	# A nation outside the club has no home vote on its treaty -- withdrawal
+	# removes it from the window (see _leave_council), and this keeps a stray
+	# call from counting a vote the club never asked for.
+	var voter = state.nations.get(nation_id, null)
+	if voter == null or not voter.orgs.has(org_id):
+		return
+	var register: Dictionary = state.orgs[org_id]
+	var r: Dictionary = register.get("ratifying", {})
+	if r.is_empty() or String((r.get("nations", {}) as Dictionary).get(nation_id, "")) != CouncilK.RATIFY_PENDING:
+		return
+	if not passed:
+		_treaty_falls(state, loader, org_id, [nation_id])
+		return
+	r["nations"][nation_id] = CouncilK.RATIFY_DONE
+	_adopt_if_ratified(state, loader, org_id)
+
+
+## Close the ratification and adopt the treaty if no member is still pending.
+static func _adopt_if_ratified(state, loader, org_id: String) -> void:
+	var register: Dictionary = state.orgs[org_id]
+	var r: Dictionary = register.get("ratifying", {})
+	if r.is_empty():
+		return
+	for id in (r["nations"] as Dictionary).keys():
+		if String(r["nations"][id]) != CouncilK.RATIFY_DONE:
+			return
+	var proposal = _proposal_by_id(loader, org_id, String(r["proposal_id"]))
+	register["ratifying"] = {}
+	_mark_ratification(register, String(r["proposal_id"]), "ratified")
+	Council.settle_awaiting(state, org_id, String(r["proposal_id"]), [])
+	if proposal != null:
+		_adopt(state, loader, org_id, proposal)
+
+
+## What a nation leaving the club leaves behind in its council. Its place in a
+## ratification window goes: a club cannot wait on, or be blocked by, a member
+## it no longer has -- if every REMAINING home vote is in, the treaty is adopted
+## (the alternative, letting the window run out, would kill a treaty everyone
+## still in the club signed, and charge the leaver's departure to it as a
+## failure). A tabling the leaver paid for goes with it: its chair owed it to a
+## member, not to an outsider.
+static func _leave_council(state, loader, nation_id: String, org_id: String) -> void:
+	if not state.orgs.has(org_id):
+		return
+	var register: Dictionary = state.orgs[org_id]
+	var r: Dictionary = register.get("ratifying", {})
+	if not r.is_empty() and (r["nations"] as Dictionary).erase(nation_id):
+		_adopt_if_ratified(state, loader, org_id)
+	var tabled: Dictionary = register.get("tabled", {})
+	if not tabled.is_empty() and String(tabled.get("by", "")) == nation_id:
+		register["tabled"] = {}
+
+
+static func _treaty_falls(state, loader, org_id: String, failing: Array) -> void:
+	var register: Dictionary = state.orgs[org_id]
+	var r: Dictionary = register.get("ratifying", {})
+	register["ratifying"] = {}
+	_mark_ratification(register, String(r.get("proposal_id", "")), "failed")
+	Council.price_failed_treaty(state, loader, org_id, String(r.get("sponsor", "")), failing)
+	Council.settle_awaiting(state, org_id, String(r.get("proposal_id", "")), failing)
+
+
+## The division record says how ratification ended -- only if it is still the
+## record of THIS treaty's division (a later division has replaced it otherwise,
+## and rewriting that one would be a lie about a different vote).
+static func _mark_ratification(register: Dictionary, proposal_id: String, outcome: String) -> void:
+	var last: Dictionary = register.get("last_vote", {})
+	if String(last.get("proposal_id", "")) == proposal_id:
+		last["ratification"] = outcome
 
 
 # --- what the rules cost ----------------------------------------------------------
@@ -851,6 +1194,7 @@ static func _flip_membership(state, loader, ns, fight) -> void:
 				doomed.append(directed)
 		for directed in doomed:
 			state.measures.erase(directed)
+		_leave_council(state, loader, ns.id, org_id)
 
 	if org.net_transfers:
 		# Re-derive the org's whole net-position table over the LIVE roster: the
@@ -911,8 +1255,9 @@ static func last_vote(state, org_id: String) -> Dictionary:
 
 ## What the player's contribution breaks down into, for the budget panel: the
 ## standing net position per org, what each org's rules in force moved it by,
-## and the penalties being charged for defying them. Sums to
-## ns.bloc_transfer_pct_gdp.
+## the penalties being charged for defying them, and the aid it is paying as a
+## bargain's price (V4.5a). Sums to ns.bloc_transfer_pct_gdp when read after
+## tick_month.
 static func transfer_breakdown(state, ns) -> Dictionary:
 	var orgs := {}
 	var total := 0.0
@@ -923,15 +1268,20 @@ static func transfer_breakdown(state, ns) -> Dictionary:
 		for rule in (register.get("rules", {}) as Dictionary).values():
 			rule_transfers += float(rule.get("transfer_pct_gdp", 0.0))
 			contributions += float(rule_breach(state, ns, org_id, rule)["contribution"])
+		# Same expression, same order as _org_transfer(), so the sum the panel
+		# prints is the sum the line charged. An org with no register has no aid.
+		var aid: float = Council.aid_line(state, ns.id, org_id) if state.orgs.has(org_id) else 0.0
 		var line := (
 			float(ns.org_base_transfer_pct_gdp.get(org_id, 0.0))
 			+ rule_transfers
 			+ K.FINE_PCT_GDP_PER_BURDEN * clampf(contributions, 0.0, K.BURDEN_MAX)
+			+ aid
 		)
 		orgs[org_id] = {
 			"base": float(ns.org_base_transfer_pct_gdp.get(org_id, 0.0)),
 			"rules": rule_transfers,
 			"fine": K.FINE_PCT_GDP_PER_BURDEN * clampf(contributions, 0.0, K.BURDEN_MAX),
+			"aid": aid,
 		}
 		total += line
 	return {
