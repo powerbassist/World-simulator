@@ -22,6 +22,7 @@ const CouncilK = preload("res://src/sim/council_constants.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Bargains = preload("res://src/ui/council_bargains.gd")
+const Ratification = preload("res://src/sim/ratification.gd")
 
 const FACE_SIZE := Vector2(48, 60)
 const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -45,6 +46,9 @@ class DateProxy:
 ## What is on the table at this org's council, and the player's own vote.
 ## First, because it is the only part of this section the player can act on.
 static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
+	# First, and the only primary candidate above the vote buttons: a treaty
+	# waiting on the player's assembly dies for every member if left alone.
+	_ratify_card(body, panel, state, loader, ns, org)
 	PanelKit.heading(body, "BEFORE THE COUNCIL")
 	_chair_line(body, state, loader, ns, org)
 
@@ -103,6 +107,48 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 		_outcome(body, loader, last)
 		_why(body, last)
 	PanelKit.line(body, "", PanelKit.Tone.PLAIN)
+
+
+## RATIFY AT HOME: the forecast of the player's own assembly on a treaty the
+## council carried, and the one button that puts it to them. The forecast is
+## Legislature.resolve_vote's pure result, shown in law_panel's words.
+static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> void:
+	var r: Dictionary = state.orgs[org.id].get("ratifying", {})
+	if r.is_empty():
+		return
+	if String((r.get("nations", {}) as Dictionary).get(ns.id, "")) != CouncilK.RATIFY_PENDING:
+		return
+	var left: int = int(r.get("months_left", 0))
+	PanelKit.heading(body, "RATIFY AT HOME — %s (%d %s left)" % [
+		String(r.get("name", "")), left, "month" if left == 1 else "months",
+	])
+	var forecast: Dictionary = Ratification.forecast(state, loader, org.id)
+	if not forecast.has("refused"):
+		PanelKit.line(body, "Your assembly: %d for, %d against, %d abstaining — %s" % [
+			int(forecast["yes_seats"]), int(forecast["no_seats"]), int(forecast["abstain_seats"]),
+			"carries" if bool(forecast["passed"]) else "falls",
+		], PanelKit.Tone.PLAIN)
+		var opposed := PackedStringArray()
+		var behind := PackedStringArray()
+		for party in loader.parties.get(ns.id, []):
+			var line := String((forecast.get("party_votes", {}) as Dictionary).get(party.id, ""))
+			if line == "no":
+				opposed.append(party.party_name)
+			elif line == "yes":
+				behind.append(party.party_name)
+		if not behind.is_empty():
+			PanelKit.line(body, "Voting for: %s" % ", ".join(behind))
+		if not opposed.is_empty():
+			PanelKit.line(body, "Voting against: %s" % ", ".join(opposed))
+	var members: int = Orgs.members(state, org.id).size()
+	PanelKit.line(body, "If it falls here it falls for all %d members; %s will not forget it." % [
+		members, loader.nation_name(String(r.get("sponsor", ""))),
+	])
+	var button := Button.new()
+	button.text = "Put it to the assembly"
+	button.pressed.connect(panel._on_ratify.bind(org.id))
+	panel.offer_primary(button)
+	body.add_child(button)
 
 
 ## WHY each member voted as it did, not only how.

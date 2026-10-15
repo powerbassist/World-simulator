@@ -425,5 +425,12 @@ election, or trade through the collective tariffs) -- recorded as an open
 attribution for b2's review, the flips themselves accepted as knife-edge moves
 inside the predicted channels.
 
+**Recorded bound (V4.5b2): the projection never ratifies.** `Budget.project`
+runs the months forward without the player pressing "Put it to the assembly", so a
+projection that runs past a ratification window shows the treaty falling by default
+(and its sponsor and members charged for it). The ratification card, the desk mark
+and the calendar's "Ratification deadline" are what tell the player to act first;
+the projection is not taught to guess.
+
 Related: [[bloc-model]] · [[foreign-policy-model]] · [[coercion-model]] ·
 [[referendum-model]]

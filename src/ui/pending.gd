@@ -77,6 +77,12 @@ static func window_ids(state, loader) -> Array:
 		if not (Orgs.pending(state, org_id) as Dictionary).is_empty():
 			out.append("orgs")
 			break
+		# A treaty waiting on THIS assembly: an idle player otherwise kills it by
+		# default at the window's end, and is charged for it.
+		var ratifying: Dictionary = state.orgs[org_id].get("ratifying", {})
+		if String((ratifying.get("nations", {}) as Dictionary).get(state.player_nation_id, "")) == "pending":
+			out.append("orgs")
+			break
 
 	# The run-up, which is the only window in which an effort can be started at
 	# all -- V1.7a's "a standing rate with a deadline", and the deadline is a date

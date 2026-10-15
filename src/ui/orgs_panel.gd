@@ -28,6 +28,7 @@ const Council = preload("res://src/sim/council.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const CouncilSection = preload("res://src/ui/council_section.gd")
 const Relations = preload("res://src/core/relations.gd")
+const Ratification = preload("res://src/sim/ratification.gd")
 const Trends = preload("res://src/ui/trends.gd")
 
 signal closed
@@ -343,6 +344,21 @@ func _on_bargain(org_id: String, target_id: String, currency: String, ask: Strin
 		return
 	acted.emit(before, "Council bargain (%s): %s with %s" % [
 		org_id.to_upper(), currency.replace("_", " "), _loader.nation_name(target_id),
+	])
+	_dirty = true
+
+
+func _on_ratify(org_id: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	# Read before submitting: the register clears its ratifying block on a verdict.
+	var treaty := String((_state.orgs[org_id].get("ratifying", {}) as Dictionary).get("name", ""))
+	var result: Dictionary = Ratification.submit(_state, _loader, org_id)
+	if result.has("refused"):
+		_refusal_text = "Refused: the treaty can no longer be put to the assembly."
+		_dirty = true
+		return
+	acted.emit(before, "Treaty put to the assembly: %s — %s" % [
+		treaty, "ratified" if bool(result.get("passed", false)) else "rejected",
 	])
 	_dirty = true
 

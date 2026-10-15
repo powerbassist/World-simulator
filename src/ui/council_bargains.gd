@@ -74,9 +74,7 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 		_member_row(inner, panel, state, loader, ns, org, pending, vote, rows[i])
 	if rows.size() > MAX_ROWS:
 		PanelKit.line(inner, "… and %d more, already settled." % (rows.size() - MAX_ROWS))
-	PanelKit.line(inner, "A vote trade is an IOU: when %s next sponsors a proposal you must back it — abstaining counts as breaking it (%d goodwill). On a treaty it only counts as kept if your assembly ratifies." % [
-		"that member", roundi(CouncilK.IOU_BETRAYAL),
-	])
+	PanelKit.line(inner, "A vote trade is an IOU: when the member you trade with next sponsors a proposal you must back it — abstaining counts as breaking it (%d goodwill). On a treaty it only counts as kept if your assembly ratifies." % roundi(CouncilK.IOU_BETRAYAL))
 
 
 static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pending: Dictionary, ask: String, row: Dictionary) -> void:
@@ -119,7 +117,8 @@ static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pen
 			button.tooltip_text = reason
 		else:
 			button.pressed.connect(panel._on_bargain.bind(org.id, id, currency, ask))
-			panel.offer_primary(button)
+			# No offer_primary: these sit in a collapsed fold, and the panel's
+			# primary_action must be a control the player can see.
 		buttons.add_child(button)
 	inner.add_child(buttons)
 
