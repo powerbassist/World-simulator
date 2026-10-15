@@ -146,5 +146,11 @@ const INFLATION_MAX := 30.0
 ## The measured roster spans 1.117 (Switzerland) to 2.903 (Spain), so these are wide
 ## enough that a re-import cannot trip them and narrow enough that a broken download
 ## cannot pass.
+##
+## V4.11 widened the ceiling 20 -> 40, and the reason is a measured regime, not a
+## loosened check: the neighbourhood's euro-era (1999-2024) means are Turkey 23.4,
+## Belarus 34.8, Serbia 14.7 -- real high-inflation economies, which the window rule
+## (one window for every nation, Rule 1) cannot and should not re-cut. 40 still
+## refuses a percent-for-per-mille or hyperinflation-year download error.
 const ANCHOR_MIN := -2.0
-const ANCHOR_MAX := 20.0
+const ANCHOR_MAX := 40.0

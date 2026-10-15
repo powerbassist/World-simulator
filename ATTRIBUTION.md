@@ -4,6 +4,10 @@
 
 Nation economic statistics sourced from the World Bank Open Data catalog (https://data.worldbank.org/), used under the World Bank's Terms of Use for datasets (CC BY 4.0).
 
+## Our World in Data
+
+Four per-nation figures the World Bank publishes for no year at all (Serbian and Montenegrin CO2 per capita, Albanian renewable electricity share, Icelandic fossil share of primary energy) are read from Our World in Data's CO2 and energy datasets (https://github.com/owid/co2-data, https://github.com/owid/energy-data), used under CC BY 4.0. Hannah Ritchie, Pablo Rosado and Max Roser, Our World in Data.
+
 ## Natural Earth
 
 Border geometry sourced from Natural Earth (https://www.naturalearthdata.com/), public domain.

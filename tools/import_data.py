@@ -5,6 +5,7 @@ docs/data-sources.md and docs/data-architecture.md for the pipeline this
 implements.
 """
 import argparse
+import csv
 import itertools
 import json
 import math
@@ -273,6 +274,45 @@ def load_wb_indicator_for_year(code, year):
     }
 
 
+# V4.11. A nearest-year series the World Bank publishes for NO year at all for a
+# nation -- not thin, absent -- is read from Our World in Data (CC BY 4.0, fetched
+# into sources/owid/, docs/data-sources.md), never invented. It only FILLS an
+# absence: a nation the World Bank measures at any year keeps the World Bank's
+# figure. Measured before it was taken: OWID's co2_per_capita tracks the World
+# Bank's EN.GHG.CO2.PC.CE.AR5 within ~5 % on the nations both carry (FRA 4.07 vs
+# 4.16, DEU 7.02 vs 7.08, BIH 6.24 vs 6.54 at 2023).
+#   - SRB, MNE emissions: the EDGAR-derived WB series carries neither.
+#   - ALB renewable electricity: absent from EG.ELC.RNEW.ZS; OWID reads 100 %
+#     (Albania's grid is hydro).
+#   - ISL import dependency: absent from EG.IMP.CONS.ZS. Iceland produces no
+#     fossil fuel, so its fossil share of primary energy IS its import dependency
+#     -- a measured identity, not a guess.
+SUBSTITUTE_SERIES = {
+    "EN.GHG.CO2.PC.CE.AR5": {"SRB": ("owid-co2-data.csv", "co2_per_capita"),
+                             "MNE": ("owid-co2-data.csv", "co2_per_capita")},
+    "EG.ELC.RNEW.ZS": {"ALB": ("owid-energy-data.csv", "renewables_share_elec")},
+    "EG.IMP.CONS.ZS": {"ISL": ("owid-energy-data.csv", "fossil_share_energy")},
+}
+
+
+def load_owid_latest(filename, column, nid, year):
+    """(value, year_used) for the latest year <= `year` carrying `column`."""
+    path = SOURCES / "owid" / filename
+    if not path.exists():
+        sys.exit(f"missing {path.relative_to(ROOT)} -- see docs/data-sources.md")
+    best = None
+    with open(path, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row["iso_code"] != nid or not row.get(column):
+                continue
+            y = int(row["year"])
+            if y <= year and (best is None or y > best[1]):
+                best = (float(row[column]), y)
+    if best is None:
+        sys.exit(f"{nid}: {filename} carries no {column} at or before {year}")
+    return best
+
+
 def load_wb_indicator_nearest_year(code, year):
     """V1.5c. Value and the year it came from, per nation, for a series with gaps.
 
@@ -300,6 +340,9 @@ def load_wb_indicator_nearest_year(code, year):
     for nid, series in by_nation.items():
         best = min(series, key=lambda y: (abs(y - year), y > year))
         out[nid] = (series[best], best)
+    for nid, (filename, column) in SUBSTITUTE_SERIES.get(code, {}).items():
+        if nid in NATIONS and nid not in out:
+            out[nid] = load_owid_latest(filename, column, nid, year)
     return out
 
 

@@ -333,19 +333,26 @@ curl -L -o "sources/ne_10m_roads.geojson" \
 
 <!-- V3.3: every World Bank line below was re-fetched with the nineteen added to
 the country filter when the roster grew to EU-27 + 2; the wide 1990-2024 pulls
-carry per_page=2000 because 29 nations x 35 years is 1015 rows, past 1000. -->
+carry per_page=2000 because 29 nations x 35 years is 1015 rows, past 1000.
+V4.11: the twelve neighbours are appended (41 x 35 = 1435 rows, still under 2000).
+The committed cache is NOT a fresh 41-id pull: the twelve's rows were fetched on
+2026-10-15 and MERGED into the V3.3-era files, the 29's rows left exactly as they
+were, because a fresh pull carries the World Bank's revisions since and would
+move every existing nation's imported block -- the re-baseline would then be a
+data vintage and not the neighbourhood. A clean re-fetch with these lines is a
+deliberate re-vintage of all 41 and is recorded as one. -->
 
 for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS NV.SRV.TOTL.ZS \
          SP.POP.0014.TO.ZS SP.POP.65UP.TO.ZS SL.TLF.ACTI.ZS SI.POV.GINI; do
   curl -L -o "sources/wb/$I.json" \
-    "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
+    "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/$I?format=json&date=2015%3A2024&per_page=2000"
 done
 
 # V1.6a. One indicator, on its own line, over a DIFFERENT WINDOW -- and the split is
 # the honest cost of the business cycle rather than an untidiness. Measuring how
 # volatile a country's growth is takes several cycles, and 2015-2024 contains one.
-curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \r
-  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=1990%3A2024&per_page=2000"
+curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=1990%3A2024&per_page=2000"
 
 # V1.6b. Two more on the SAME window, and this is where "one extra read of a series
 # already on disk" stops being true: load_wb_indicator_series() reads one file per
@@ -354,7 +361,7 @@ curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \r
 # of the 2015-2024 one (verified row by row, zero differing values) and every other
 # caller reaches it through an exact-year match.
 for I in FP.CPI.TOTL.ZG SL.UEM.TOTL.ZS; do
-  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/$I?format=json&date=1990%3A2024&per_page=2000"
+  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/$I?format=json&date=1990%3A2024&per_page=2000"
 done
 
 # V1.1e. Rule of law, and the FIRST line here to carry `&source=3`. The Worldwide
@@ -365,19 +372,29 @@ done
 # other stock this game keeps on a nation is already on a 0-100 scale, so the estimate
 # would be the one quantity in the game needing a conversion nobody could check.
 # Complete for all ten over the standard window, so it needs no nearest-year fallback.
-curl -L -o "sources/wb/GOV_WGI_RL.SC.json" \r
-  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/GOV_WGI_RL.SC?format=json&date=2015%3A2024&per_page=1000&source=3"
+curl -L -o "sources/wb/GOV_WGI_RL.SC.json" \
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/GOV_WGI_RL.SC?format=json&date=2015%3A2024&per_page=2000&source=3"
 
 # V2.8. Energy, five series on the standard window -- but every one through
 # load_wb_indicator_nearest_year(), because none of the five is complete at 2024.
 for I in EG.IMP.CONS.ZS EG.ELC.FOSL.ZS EG.ELC.NUCL.ZS EG.ELC.RNEW.ZS EG.USE.ELEC.KH.PC; do
-  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
+  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/$I?format=json&date=2015%3A2024&per_page=2000"
 done
 
 # V3.5. Emissions, one series on the standard window -- complete at 2024 for all
 # 29, so the nearest-year loader it goes through never actually falls back.
+# V4.11. Our World in Data, CC BY 4.0 -- read ONLY where a World Bank nearest-year
+# series is absent at every year for a nation (tools/import_data.py
+# SUBSTITUTE_SERIES): SRB and MNE emissions, ALB renewable electricity, ISL import
+# dependency (its fossil share of primary energy -- Iceland produces no fossil fuel).
+mkdir -p sources/owid
+curl -L -o "sources/owid/owid-co2-data.csv" \
+  "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv"
+curl -L -o "sources/owid/owid-energy-data.csv" \
+  "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv"
+
 curl -L -o "sources/wb/EN.GHG.CO2.PC.CE.AR5.json" \
-  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/EN.GHG.CO2.PC.CE.AR5?format=json&date=2015%3A2024&per_page=1000"
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/EN.GHG.CO2.PC.CE.AR5?format=json&date=2015%3A2024&per_page=2000"
 ```
 
 > [!note] The pandemic is excluded from that one series, and the exclusion is load-bearing
