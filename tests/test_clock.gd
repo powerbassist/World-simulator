@@ -24,7 +24,7 @@ func _init() -> void:
 	for i in range(days_in_2026):
 		clock.advance_one_day()
 
-	if month_elapsed_count[0] != 12:
+	if month_elapsed_count[0] != 13:  # PROOF: deliberately red
 		failures.append("month_elapsed fired %d times over one year, expected 12" % month_elapsed_count[0])
 	if clock.year != 2027 or clock.month != 1 or clock.day != 1:
 		failures.append("after 365 days from 2026-01-01, expected 2027-01-01, got %d-%d-%d" % [clock.year, clock.month, clock.day])
