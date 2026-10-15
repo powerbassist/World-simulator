@@ -86,7 +86,8 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 			row.add_child(button)
 		body.add_child(row)
 		PanelKit.line(body, "Currently: %s. %s holds %d of the council's seats." % [
-			current, ns.id, org.seats(ns.id),
+			"abstaining" if current == Orgs.VOTE_ABSTAIN else "voting " + current,
+			loader.nation_name(ns.id), org.seats(ns.id),
 		])
 		Bargains.build_table(body, panel, state, loader, ns, org, pending)
 
