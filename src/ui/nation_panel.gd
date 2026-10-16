@@ -22,6 +22,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Relations = preload("res://src/core/relations.gd")
+const Roster = preload("res://src/core/roster.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DFK = preload("res://src/sim/defence_constants.gd")
@@ -165,6 +166,11 @@ func _refresh() -> void:
 	# The two blank spacers this block had are down to one, for the fold reason in
 	# _ready(): a blank line costs the same as a verb row, and there are fourteen
 	# verbs competing for the space now.
+	# V4.11c. Said only for the simulated grade (the author's call): the player
+	# chose among the playable ones at New Game and needs no reminder there, but a
+	# neighbour that answers every verb and can never be picked should say so.
+	if Roster.grade(_loader, _nation_id) == "simulated":
+		PanelKit.line(_body, "Simulated neighbour — not playable", PanelKit.Tone.DIM)
 	PanelKit.line(_body, "Leader: %s (%s)" % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "GDP: EUR %.0fbn   growth %+.2f%%" % [ns.gdp_eur_bn, ns.growth_annual_pct], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "Unemployment: %.1f%%" % ns.unemployment_pct, PanelKit.Tone.PLAIN)

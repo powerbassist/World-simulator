@@ -69,6 +69,7 @@ func _run() -> void:
 	_check_pressing_act_moves_relations(panel, state)
 	_check_acted_signal_carries_a_baseline(panel, state)
 	_check_trade_rows_after_signing(panel, state)
+	_check_the_grade_line(panel, state)
 
 
 ## The player's own nation is not a pair, so there is nothing to score and
@@ -346,6 +347,46 @@ func _check_cooldown_names_itself(panel, state) -> void:
 	# Erased rather than cleared: the checks after this one press whichever verb
 	# is enabled first, and only this key was this check's to set.
 	state.player().diplo_cooldown_months.erase(Diplomacy.cooldown_key("state_visit", TARGET))
+
+
+## V4.11c. A simulated neighbour says it cannot be played; a playable nation says
+## nothing about it. The absence half reads only rows NOT queued for deletion --
+## _refresh()'s queue_free is deferred, so the stale rows of the nation shown
+## before are still children inside this frame.
+func _check_the_grade_line(panel, state) -> void:
+	const LINE := "Simulated neighbour — not playable"
+	var simulated := ""
+	var ids: Array = _main._loader.nations.keys()
+	ids.sort()
+	for id in ids:
+		if not _main._loader.nations[id].playable:
+			simulated = id
+			break
+	if simulated == "":
+		_fail("no simulated nation in the data -- the grade line has nothing to show")
+		return
+	_show(panel, TARGET)
+	if _live_body_text(panel).contains(LINE):
+		_fail("the playable %s reads '%s'" % [TARGET, LINE])
+	_show(panel, simulated)
+	if not _live_body_text(panel).contains(LINE):
+		_fail("the simulated %s does not say it cannot be played" % simulated)
+
+
+func _live_body_text(panel) -> String:
+	var text := ""
+	for node in panel._body.get_children():
+		if node.is_queued_for_deletion():
+			continue
+		if node is Label:
+			text += node.text + "
+"
+		else:
+			for child in node.get_children():
+				if child is Label:
+					text += child.text + "
+"
+	return text
 
 
 func _show(panel, nation_id: String) -> void:
