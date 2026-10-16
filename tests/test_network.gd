@@ -42,8 +42,8 @@ func _check_leaf() -> void:
 
 func _check_adjacency(loader) -> void:
 	var adj: Dictionary = Network.adjacency(loader.region_graph)
-	if adj.size() != 241:
-		_fail("adjacency covers %d regions, expected 241" % adj.size())
+	if adj.size() != 277:
+		_fail("adjacency covers %d regions, expected 277" % adj.size())
 	# Symmetric: an undirected edge stated once must be readable from both ends, or
 	# a Dijkstra from Marseille and one from Ajaccio disagree about the crossing.
 	for region_id in adj.keys():

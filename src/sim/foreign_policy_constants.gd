@@ -23,6 +23,15 @@ extends RefCounted
 ## it named -- one over a nation's partners -- is a ratio to the LIVE roster, and
 ## the constant hard-codes the ten-era denominator. foreign_policy.even_share()
 ## derives it now; the thresholds' meaning is unchanged, which is the point.
+##
+## V4.11: the derivation became EVEN_SHARE_SCALE x the nation's own trade
+## Herfindahl (effective partners -- the count diluted as small neighbours
+## joined). The scale is MEASURED, not swept: one over the partner count divided
+## by the mean Herfindahl on the 29-nation roster every threshold in this file was
+## calibrated on (main 48166f2: mean sum w^2 = 0.088097, 1/28 / 0.088097). So on
+## that roster the MEAN even share is exactly the old 1/28 and every constant
+## below keeps its meaning on average. docs/foreign-policy-model.md, V4.11.
+const EVEN_SHARE_SCALE := 0.4054
 
 ## Economic exposure: the directed trade weight, straight from src/sim/trade.gd.
 ##

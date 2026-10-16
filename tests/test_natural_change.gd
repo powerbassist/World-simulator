@@ -86,7 +86,7 @@ func _check_the_content_is_measured() -> void:
 		if nation_id == "GBR":
 			if spread_min != 0.0 or spread_max != 0.0:
 				_fail("Britain carries a natural differential -- UKM publishes no rates, so the import's bound is zero everywhere")
-		elif list.size() > 1 and spread_max - spread_min <= 0.0:
+		elif list.size() > 1 and spread_max - spread_min <= 0.0 and not _is_proxy_shape(list):
 			# One region cannot spread against itself, which is Luxembourg's case and
 			# why the bound is read off the register's size rather than named: a
 			# nation with no spread and more than one region is either a broken
@@ -285,3 +285,16 @@ func _finish() -> void:
 	for message in _failures:
 		printerr("FAIL: %s" % message)
 	quit(1)
+
+
+## V4.11: the POPULATION-PROXY shape, read off the register rather than named.
+## Britain was the one nation importing it (V2.2a) and the test said "GBR"; the
+## neighbourhood's five non-NUTS nations import it too. A register whose every
+## region carries gdp_share == share and unemployment_rel == 1.0 has no regional
+## divergence BY CONSTRUCTION (docs/data-sources.md records each as a bound), so
+## there is no pull to move people and no measured spread to assert.
+func _is_proxy_shape(list: Array) -> bool:
+	for region in list:
+		if absf(region.gdp_share - region.share) > 1e-6 or absf(region.unemployment_rel - 1.0) > 1e-9:
+			return false
+	return true

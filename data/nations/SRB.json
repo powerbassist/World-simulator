@@ -74,7 +74,7 @@
     },
     "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Serbia was a kingdom until 1918 and its crown passed into Yugoslavia's; the restored monarch here is fictional.",
     "pretender_person": "SRB_mihailo_ii",
-    "neighbours": ["BGR", "HRV", "HUN", "MKD", "MNE", "ROU"]
+    "neighbours": ["BGR", "BIH", "HRV", "HUN", "MKD", "MNE", "ROU", "XKX"]
   },
   "fiscal": {
     "_source": "authored",

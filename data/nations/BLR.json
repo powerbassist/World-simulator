@@ -1,0 +1,177 @@
+{
+  "id": "BLR",
+  "name": "Belarus",
+  "geo_id": "BLR",
+  "capital": "Minsk",
+  "playable": false,
+  "leader": {
+    "person": "BLR_karpovich",
+    "title": "President",
+    "party": "hramadski_saiuz"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#C8313E", "#C8313E", "#4AA657"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "House of Representatives",
+      "assembly_seats": 110,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "110 single-member districts, first past the post with a runoff where turnout fails -- the machinery's fptp. Elected 25 February 2024, so the next falls in early 2029. International observers have judged no election since 1994 free or fair, and the 2024 one admitted only four registered parties after the 2023 re-registration law dissolved the rest: the register below has no opposition party because the chamber has none, which is the measurement, not an omission. Constitution of Belarus, Arts. 90-91; Wikipedia, '2024 Belarusian parliamentary election'.",
+        "system": "fptp",
+        "next": {
+          "year": 2029,
+          "month": 2
+        },
+        "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The President may dissolve the chambers after a no-confidence vote, two refusals of a Prime Minister, or a systematic breach of the constitution (Art. 94) -- the template's executive_discretion, conditioned, with a lockout. Constitution of Belarus, Art. 94.",
+        "rule": "executive_discretion",
+        "lockout_months": 12,
+        "notice_months": 3
+      }
+    },
+    "system": "semi_presidential_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for five years; the 2022 amendments restored a two-term limit counted from the next election, a reset the machinery cannot express. Re-elected in January 2025, so the next falls in January 2030. The template is the nearest machinery for a presidency that dominates the state; the AI's behaviour, not a constitutional field, is what makes it autocratic. Constitution of Belarus, Arts. 79-81.",
+      "kind": "executive_president",
+      "title": "President",
+      "person": "BLR_karpovich"
+    },
+    "term_limit": 0,
+    "executive": {
+      "_source": "authored",
+      "_note": "January 2030; five-year term. The 2022 two-term limit applies only to terms begun after it, recorded here and authored 0, CYP's convention. Constitution of Belarus, Art. 81.",
+      "title": "President",
+      "term_years": 5,
+      "next": {
+        "year": 2030,
+        "month": 1
+      }
+    },
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 140: two thirds of both chambers, or a referendum (the 1996, 2004 and 2022 changes all went by referendum). The semi-presidential template carries three_fifths only, the lower bar recorded honestly as the template's. Constitution of Belarus, Arts. 138-140.",
+      "rule": "three_fifths",
+      "referendum": "optional",
+      "_referendum_note": "The referendum is an alternative route the President controls, not a mandatory stage. Constitution of Belarus, Art. 140.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "No eternity clause; the 2022 referendum created the All-Belarusian People's Assembly as a new state organ."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court reviews laws for conformity (Art. 116); its independence is formal. Constitution of Belarus, Art. 116.",
+      "review": "constitutional"
+    },
+    "upper": {
+      "_source": "authored",
+      "_note": "The Council of the Republic: 64 members, 56 chosen by the regional councils and 8 appointed by the President. It approves or rejects the House's bills, and the House overrides a rejection by two thirds -- suspensive for ordinary law; constitutional change needs both chambers, absolute. Constitution of Belarus, Arts. 91, 100.",
+      "chamber": "Council of the Republic",
+      "seats": 64,
+      "ordinary": "suspensive",
+      "amendment": "absolute"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President appoints the Prime Minister with the House's consent (Art. 84) -- the template's presidential_appointment; a no-confidence vote needs a majority of the House's full composition (Art. 97), absolute_members. Constitution of Belarus, Arts. 84, 97.",
+      "method": "presidential_appointment",
+      "censure": "absolute_members",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "BLR_dubovik"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. The medieval principality of Polotsk is the nearest crown; the restored line here is fictional.",
+    "pretender_person": "BLR_vseslav_ii",
+    "neighbours": ["LTU", "LVA", "POL", "UKR"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/Ministry of Finance ~2024, rounded, on AUT.json's conventions. VAT 20% standard; corporate 20% (raised from 18% in 2025); income 13% flat; capital gains 13%; no wealth tax. Revenue ~25% of GDP excludes the social-protection fund's contributions, counted as a separate budget there. Debt ~33% of GDP (end-2024). A large state-owned industrial sector carries much of what other budgets spend directly; the split is the V1.2a policy split, not a reconciliation. Spending scaled to expenditure near 37% of GDP.",
+    "debt_to_gdp_pct": 33.0,
+    "tax_revenue_pct_gdp": 25.0,
+    "tax_rates_pct": {
+      "income": 13.0,
+      "corporate": 20.0,
+      "vat": 20.0,
+      "capital_gains": 13.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 4.0,
+      "education": 4.5,
+      "defence": 1.5,
+      "pensions": 9.5,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 14.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 9100000,
+    "gdp_eur_bn": 72.3,
+    "unemployment_pct": 3.5,
+    "sectors": {
+      "agriculture": 0.08,
+      "industry": 0.355,
+      "services": 0.565
+    },
+    "cohorts": {
+      "young_pct": 16.3,
+      "old_pct": 17.67,
+      "young_pct_per_yr": 0.014,
+      "old_pct_per_yr": 0.373,
+      "participation_pct": 79.61,
+      "pop_growth_pct": -0.392
+    },
+    "inequality": {
+      "gini_index": 24.4,
+      "gini_index_per_yr": -0.24,
+      "_year": 2020,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.778,
+      "growth_sd_pct": 6.221,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 18.467,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": [1999, 2000]
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.611464,
+        "nuclear": 0.357182,
+        "renewable": 0.031354
+      },
+      "import_dependency_pct": 71.137,
+      "kwh_per_capita": 4415.3,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2024,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 5.94,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 37.7
+    }
+  }
+}

@@ -213,7 +213,7 @@ var world_features: Dictionary = {}
 
 ## The roster tripwire's number (_validate_cross_file). One constant so the
 ## V4.11 tranches move it in one place.
-const ROSTER_SIZE := 36
+const ROSTER_SIZE := 41
 
 ## NUTS id -> Array[PackedVector2Array], the same shape as geo_features, from
 ## data/geo/regions.geojson -- V2.2b. Keyed by the region's own NUTS code, which

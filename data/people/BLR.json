@@ -1,0 +1,272 @@
+{
+  "people": [
+    {
+      "id": "BLR_karpovich",
+      "name": "Viktar Karpovich",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn",
+        "vain"
+      ],
+      "ambition": 0.95,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BLR_dubovik",
+      "name": "Siarhei Dubovik",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BLR_zhukovsky",
+      "name": "Aliaksandr Zhukovsky",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "fervent"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BLR_savitsky",
+      "name": "Dzmitry Savitsky",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BLR_ivanova",
+      "name": "Natallia Ivanova",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.25,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BLR_vseslav_ii",
+      "name": "Vseslav II",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "principled"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "BLR_chief_baranau_handal",
+      "name": "Raman Baranau",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_charnou_materyialy",
+      "name": "Halina Charnou",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_marozau_transpart",
+      "name": "Yulia Marozau",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_bank_sakalou",
+      "name": "Siarhei Sakalou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_tavarystva_kuzniatsou",
+      "name": "Ihar Kuzniatsou",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_kuzmich_materyialy",
+      "name": "Siarhei Kuzmich",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_handlovy_dom_vasilevich",
+      "name": "Siarhei Vasilevich",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_bank_prakopovich",
+      "name": "Darya Prakopovich",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_naumenka_enierhietyka",
+      "name": "Natallia Naumenka",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_prakopovich_materyialy",
+      "name": "Raman Prakopovich",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_handlovy_dom_charnou",
+      "name": "Pavel Charnou",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_zaitsau",
+      "name": "Ihar Zaitsau",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_hurynovich_materyialy",
+      "name": "Dzmitry Hurynovich",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    },
+    {
+      "id": "BLR_chief_shautsou_ahra",
+      "name": "Dzmitry Shautsou",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    }
+  ]
+}

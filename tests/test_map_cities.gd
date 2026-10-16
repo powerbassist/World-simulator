@@ -24,7 +24,7 @@ func _nations() -> Array:
 	var ids: Array = _main._loader.nations.keys()
 	ids.sort()
 	return ids
-const EXPECTED_CITIES := 1262  # geography-model.md's volume clause (<= 1 800 cities, V3.3), re-checked at V4.11a1 (36 nations); CITY_MIN_POP 58000 held so the 29's cities stay byte-identical
+const EXPECTED_CITIES := 1373  # geography-model.md's volume clause (<= 1 800 cities, V3.3), re-checked at V4.11a2 (41 nations); CITY_MIN_POP 58000 held so the 29's cities stay byte-identical
 
 var _failures: Array[String] = []
 var _main

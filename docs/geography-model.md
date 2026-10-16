@@ -379,6 +379,40 @@ continent, the Greek archipelago served from Piraeus and Igoumenitsa, Malta
 from Pozzallo, Cyprus from Piraeus; Ireland needs none, over the land border
 with Northern Ireland.
 
+## 10. V4.11: the neighbourhood, and two kinds of region
+
+**The register is 277 regions over 41 nations, 1 373 named cities, 640 graph edges
+(623 land + 17 sea), one component.** The twelve neighbours are simulated and not
+playable; the 29's regions, cities and edges are byte-identical to V3.3's, checked
+by re-importing and diffing `data/`, because every roster-wide quantity the
+importer computes (the cycle anchor, the inflation statistics, the motorway
+endowment mean) is pooled on `import_data.ANCHOR_POOL`, the 29.
+
+**Two kinds of region now share the register.** Seven neighbours are NUTS-covered
+(NOR, ISL, SRB, TUR at NUTS 1, ALB, MKD, MNE) and go through the V2.2 pipeline
+unchanged. Five are not (BIH, UKR, MDA, XKX, BLR): their regions are Natural Earth
+admin-1 polygons dressed as NUTS (`inject_admin1`), with ISO 3166-2 ids, the
+statistician's own population shares where published, and the population proxy for
+every economic series -- Britain's shape, generalised to `PROXY_SERIES`. Bosnia's 18
+Natural Earth units are dissolved to its entities (the CHE-cantons refusal: finer than
+any nation reads); Moldova and Kosovo are one region each.
+
+**Crimea and Sevastopol are outside the register** -- Natural Earth 5.1.2 draws them
+inside Russia in both layers, and the game takes the layer as published (a bound,
+recorded in [[data-sources]]). The map draws no front lines; war is refused at the tier.
+
+**Cross-source adjacency is a rule, not a list**: GISCO and Natural Earth never share
+a vertex, so a pair with a Natural Earth region on one side is adjacent when 10
+boundary vertices of one lie within 0.05 deg of the other's -- swept against the real
+map until it admitted every true border and no false one ([[data-sources]] has the
+sweep). Iceland joins the graph through its real ferry (Hirtshals-Seydisfjordur).
+
+**The volume clause holds without a re-sweep**: 1 373 named cities against V3.3's
+(iii) ceiling of 1 800, at `CITY_MIN_POP` 58 000 held so the 29's cities did not move.
+
+**The grade is derived**: `src/core/roster.gd` reads playable / simulated off the
+nation file's one bool and outline off the world register, pinned by `tests/test_roster.gd`.
+
 ---
 
 Related: [[tiers/v2]] · [[companies-model]] · [[data-sources]] · [[data-architecture]]

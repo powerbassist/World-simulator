@@ -50,6 +50,11 @@ NATIONS = [
     "ALB",
     "MKD",
     "MNE",
+    "BIH",
+    "UKR",
+    "MDA",
+    "XKX",
+    "BLR",
 ]
 
 # V4.11. The pooled statistics -- the cycle anchor's mean SD, CYCLE_COMMON_SHARE,
@@ -222,6 +227,13 @@ PRICES_INDICATOR = "FP.CPI.TOTL.ZG"
 PRICES_FROM_YEAR = 1990
 PRICES_EXCLUDE_YEARS = []
 
+# V4.11a2. The ANCHOR's one exclusion, a rule rather than a list: any year above this
+# is a currency collapse and is dropped from that nation's anchor (build_prices_blocks
+# says why). 100 % is the conventional line well below the 50 %-a-month Cagan
+# definition, and above every measured year of the Union and of eleven of the twelve
+# neighbours; the excluded years are written into the nation's own `_excludes`.
+PRICES_HYPERINFLATION_PCT = 100.0
+
 # V3.3. The ANCHOR's window is not the regression's window, and the nineteen are
 # the reason. A 1990 start is the business-cycle series' window because measuring
 # volatility wants several cycles -- but a mean over 1990-2024 for a post-communist
@@ -276,50 +288,110 @@ def load_wb_indicator_for_year(code, year):
     path = SOURCES / "wb" / f"{code}.json"
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
-    return {
+    out = {
         row["countryiso3code"]: row["value"]
         for row in (data[1] or [])
         if row["date"] == str(year)
     }
+    for nid, by_year in AUTHORED_SERIES.get(code, {}).items():
+        if nid in NATIONS and out.get(nid) is None and year in by_year:
+            out[nid] = by_year[year]
+    return out
 
 
 # V4.11. A nearest-year series the World Bank publishes for NO year at all for a
-# nation -- not thin, absent -- is read from Our World in Data (CC BY 4.0, fetched
-# into sources/owid/, docs/data-sources.md), never invented. It only FILLS an
-# absence: a nation the World Bank measures at any year keeps the World Bank's
-# figure. Measured before it was taken: OWID's co2_per_capita tracks the World
-# Bank's EN.GHG.CO2.PC.CE.AR5 within ~5 % on the nations both carry (FRA 4.07 vs
-# 4.16, DEU 7.02 vs 7.08, BIH 6.24 vs 6.54 at 2023).
-#   - SRB, MNE emissions: the EDGAR-derived WB series carries neither.
-#   - ALB renewable electricity: absent from EG.ELC.RNEW.ZS; OWID reads 100 %
-#     (Albania's grid is hydro).
-#   - ISL import dependency: absent from EG.IMP.CONS.ZS. Iceland produces no
-#     fossil fuel, so its fossil share of primary energy IS its import dependency
-#     -- a measured identity, not a guess.
+# nation -- not thin, absent -- is read from a second MEASURED source, never
+# invented. It only FILLS an absence: a nation the World Bank measures at any year
+# keeps the World Bank's figure. Sources, each fetched into sources/ (lines in
+# docs/data-sources.md):
+#   - Our World in Data (CC BY 4.0). Its co2_per_capita tracks the World Bank's
+#     EN.GHG.CO2.PC.CE.AR5 within ~5 % on the nations both carry (FRA 4.07 vs
+#     4.16, DEU 7.02 vs 7.08, BIH 6.24 vs 6.54 at 2023). Kosovo has no iso code
+#     there and is matched by name.
+#   - Eurostat nrg_ind_id (the energy-dependency table), which carries the
+#     Energy Community members and the EEA -- the direct measure of what
+#     EG.IMP.CONS.ZS measures. (V4.11a1 first read Iceland's fossil share of
+#     primary energy as a stand-in, 19.5 %; the direct figure is 16.8 %.)
+# Spec: ("owid", file, column, name-or-None) | ("owid_ratio", file, numerator,
+# denominator, scale, name-or-None) | ("eurostat", file, geo).
 SUBSTITUTE_SERIES = {
-    "EN.GHG.CO2.PC.CE.AR5": {"SRB": ("owid-co2-data.csv", "co2_per_capita"),
-                             "MNE": ("owid-co2-data.csv", "co2_per_capita")},
-    "EG.ELC.RNEW.ZS": {"ALB": ("owid-energy-data.csv", "renewables_share_elec")},
-    "EG.IMP.CONS.ZS": {"ISL": ("owid-energy-data.csv", "fossil_share_energy")},
+    "EN.GHG.CO2.PC.CE.AR5": {"SRB": ("owid", "owid-co2-data.csv", "co2_per_capita", None),
+                             "MNE": ("owid", "owid-co2-data.csv", "co2_per_capita", None),
+                             "XKX": ("owid", "owid-co2-data.csv", "co2_per_capita", "Kosovo")},
+    "EG.ELC.RNEW.ZS": {"ALB": ("owid", "owid-energy-data.csv", "renewables_share_elec", None)},
+    "EG.IMP.CONS.ZS": {"ISL": ("eurostat", "nrg_ind_id_neighbours.json", "IS"),
+                       "XKX": ("eurostat", "nrg_ind_id_neighbours.json", "XK")},
+    # Demand, not generation: Kosovo imports ~28 % of its electricity, and the
+    # World Bank series this stands in for is CONSUMPTION per head.
+    "EG.USE.ELEC.KH.PC": {"XKX": ("owid_ratio", "owid-energy-data.csv",
+                                  "electricity_demand", "population", 1e9, "Kosovo")},
 }
 
 
-def load_owid_latest(filename, column, nid, year):
-    """(value, year_used) for the latest year <= `year` carrying `column`."""
+def load_owid_latest(filename, column, nid, year, name=None, denominator=None, scale=1.0):
+    """(value, year_used) for the latest year <= `year` carrying `column` (and
+    `denominator`, when the figure is a ratio of two columns)."""
     path = SOURCES / "owid" / filename
     if not path.exists():
         sys.exit(f"missing {path.relative_to(ROOT)} -- see docs/data-sources.md")
     best = None
     with open(path, encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            if row["iso_code"] != nid or not row.get(column):
+            if (row["country"] != name) if name else (row["iso_code"] != nid):
+                continue
+            if not row.get(column) or (denominator and not row.get(denominator)):
                 continue
             y = int(row["year"])
             if y <= year and (best is None or y > best[1]):
-                best = (float(row[column]), y)
+                value = float(row[column])
+                if denominator:
+                    value = value * scale / float(row[denominator])
+                best = (value, y)
     if best is None:
         sys.exit(f"{nid}: {filename} carries no {column} at or before {year}")
     return best
+
+
+def load_eurostat_latest(filename, geo, year):
+    """(value, year_used) from a cached single-series Eurostat response (one geo
+    and time dimension left), the latest year <= `year`."""
+    raw = load_jsonstat(filename, ["geo", "time"])
+    best = None
+    for (g, y), value in raw.items():
+        if g == geo and int(y) <= year and (best is None or int(y) > best[1]):
+            best = (value, int(y))
+    if best is None:
+        sys.exit(f"{geo}: {filename} carries no value at or before {year}")
+    return best
+
+
+def load_substitute(spec, nid, year):
+    kind = spec[0]
+    if kind == "owid":
+        return load_owid_latest(spec[1], spec[2], nid, year, name=spec[3])
+    if kind == "owid_ratio":
+        return load_owid_latest(spec[1], spec[2], nid, year, name=spec[5],
+                                denominator=spec[3], scale=spec[4])
+    if kind == "eurostat":
+        return load_eurostat_latest(spec[1], spec[2], year)
+    sys.exit(f"unknown substitute source {kind}")
+
+
+# V4.11a2. An EXACT-YEAR series (complete at YEAR for every nation, where a gap is
+# a broken download) absent for a neighbour at YEAR is AUTHORED from the national
+# statistician or central bank, on the `fiscal` block's precedent -- a number with
+# its source, never a nearest-year read, so the 41's exact-year contract holds.
+#   - Ukraine: the State Statistics Service suspended its labour-force survey under
+#     martial law; the World Bank series stop at 2021. Unemployment 14.2 % is the
+#     National Bank of Ukraine's 2024 estimate (Inflation Report, October 2024);
+#     participation holds 2021's last measured 66.8 % -- no 2024 figure exists.
+#   - Kosovo: no World Bank labour series at any year. Kosovo Agency of Statistics,
+#     Labour Force Survey 2024: unemployment 10.8 %, activity 43.2 % (100 minus the
+#     published 56.8 % inactivity); 2015: activity 37.6 %.
+AUTHORED_SERIES = {
+    "SL.UEM.TOTL.ZS": {"UKR": {2024: 14.2}, "XKX": {2024: 10.8}},
+    "SL.TLF.ACTI.ZS": {"UKR": {2024: 66.8}, "XKX": {2024: 43.2, 2015: 37.6}},
+}
 
 
 def load_wb_indicator_nearest_year(code, year):
@@ -349,9 +421,9 @@ def load_wb_indicator_nearest_year(code, year):
     for nid, series in by_nation.items():
         best = min(series, key=lambda y: (abs(y - year), y > year))
         out[nid] = (series[best], best)
-    for nid, (filename, column) in SUBSTITUTE_SERIES.get(code, {}).items():
+    for nid, spec in SUBSTITUTE_SERIES.get(code, {}).items():
         if nid in NATIONS and nid not in out:
-            out[nid] = load_owid_latest(filename, column, nid, year)
+            out[nid] = load_substitute(spec, nid, year)
     return out
 
 
@@ -642,8 +714,21 @@ def build_prices_blocks(series, unemployment):
     the three and would be the wrong one to ship.
     """
     anchors = {}
+    hyper = {}
     for nid in NATIONS:
-        values = [v for y, v in series.get(nid, {}).items() if y >= ANCHOR_FROM_YEAR]
+        # V4.11a2. HYPERINFLATION YEARS ARE NOT THE REGIME, for every nation (Rule 1):
+        # a year above PRICES_HYPERINFLATION_PCT is a monetary collapse, the
+        # pandemic's role in the cycle series -- an exogenous disaster, not the
+        # inflation a government lives with. Belarus is the case that measured it:
+        # 293.7 % in 1999 and 168.6 % in 2000 put its euro-era mean at 34.8 %/yr,
+        # above src/sim/inflation_constants.gd's runtime clamp of 30, so the clamp
+        # would have been setting the model (the V1.5c failure). Without them it is
+        # 18.5. No Union nation and no other neighbour reaches 100 % in the window
+        # (Serbia's 95.0 in 2001 is the nearest), so every other anchor is unchanged.
+        hyper[nid] = sorted(y for y, v in series.get(nid, {}).items()
+                            if y >= ANCHOR_FROM_YEAR and v > PRICES_HYPERINFLATION_PCT)
+        values = [v for y, v in series.get(nid, {}).items()
+                  if y >= ANCHOR_FROM_YEAR and y not in hyper[nid]]
         if len(values) < 5:
             sys.exit(
                 f"{nid}: only {len(values)} usable years of {PRICES_INDICATOR} in "
@@ -711,7 +796,7 @@ def build_prices_blocks(series, unemployment):
             "inflation_pct": round(anchors[nid], 3),
             "_from_year": ANCHOR_FROM_YEAR,
             "_to_year": YEAR,
-            "_excludes": list(PRICES_EXCLUDE_YEARS),
+            "_excludes": sorted(set(PRICES_EXCLUDE_YEARS) | set(hyper[nid])),
         }
         for nid in NATIONS
     }
@@ -1103,6 +1188,13 @@ REGION_LEVEL = {
     "ALB": 2,  # 3
     "MKD": 2,  # 1, the whole country
     "MNE": 2,  # 1, the whole country
+    # V4.11a2. No NUTS exists for these five: "2" is the level their SYNTHETIC
+    # codes take (inject_admin1), four characters like a NUTS 2 code.
+    "BIH": 2,  # 3 entities, dissolved from Natural Earth's 18 units
+    "UKR": 2,  # 25 oblasts and Kyiv City (Natural Earth's assignment, recorded)
+    "MDA": 2,  # 1, the whole country
+    "XKX": 2,  # 1, the whole country
+    "BLR": 2,  # 6 voblasts and Minsk City
 }
 
 REGION_NUTS_VINTAGE = 2021
@@ -1121,6 +1213,9 @@ NUTS_COUNTRY = {
     "ROU": "RO", "SVK": "SK", "SVN": "SI", "SWE": "SE",
     "NOR": "NO", "ISL": "IS", "SRB": "RS", "TUR": "TR", "ALB": "AL",
     "MKD": "MK", "MNE": "ME",
+    # V4.11a2: not NUTS codes -- the ISO 3166 prefixes the synthetic regions
+    # carry and the GeoNames country codes the city join reads.
+    "BIH": "BA", "UKR": "UA", "MDA": "MD", "XKX": "XK", "BLR": "BY",
 }
 
 # GeoNames uses the ISO 3166 code, so Britain is `GB` and Greece is `GR` where
@@ -1364,6 +1459,36 @@ PROXY_SERIES = {
         "series": {"unemployment"},
         "why": "lfst_r_lfu3rt carries no ME code with a value at 2022",
     },
+    "BIH": {
+        "series": {"gdp", "unemployment", "natural_change"},
+        "why": "no NUTS region exists for it -- Natural Earth admin-1 geometry, official or GeoNames regional population shares of the World Bank total",
+        "natural_why": "no regional rate exists, so every region carries the national World Bank crude birth minus death rate",
+        "natural_national": True,
+    },
+    "UKR": {
+        "series": {"gdp", "unemployment", "natural_change"},
+        "why": "no NUTS region exists for it -- Natural Earth admin-1 geometry, official or GeoNames regional population shares of the World Bank total",
+        "natural_why": "no regional rate exists, so every region carries the national World Bank crude birth minus death rate",
+        "natural_national": True,
+    },
+    "MDA": {
+        "series": {"gdp", "unemployment", "natural_change"},
+        "why": "no NUTS region exists for it -- Natural Earth admin-1 geometry, official or GeoNames regional population shares of the World Bank total",
+        "natural_why": "no regional rate exists, so every region carries the national World Bank crude birth minus death rate",
+        "natural_national": True,
+    },
+    "XKX": {
+        "series": {"gdp", "unemployment", "natural_change"},
+        "why": "no NUTS region exists for it -- Natural Earth admin-1 geometry, official or GeoNames regional population shares of the World Bank total",
+        "natural_why": "no regional rate exists, so every region carries the national World Bank crude birth minus death rate",
+        "natural_national": True,
+    },
+    "BLR": {
+        "series": {"gdp", "unemployment", "natural_change"},
+        "why": "no NUTS region exists for it -- Natural Earth admin-1 geometry, official or GeoNames regional population shares of the World Bank total",
+        "natural_why": "no regional rate exists, so every region carries the national World Bank crude birth minus death rate",
+        "natural_national": True,
+    },
 }
 
 
@@ -1512,8 +1637,14 @@ def load_natural_change(code_lists):
             # names can take it -- a hole in any other nation is a broken download, so
             # it exits loudly instead of quietly shipping zeros.
             if proxied(nid, "natural_change"):
+                # V4.11a2: a nation with a measured NATIONAL rate (the five with
+                # no NUTS) carries it in every region; Britain, whose national
+                # rate exists but whose regional one is a mix of measured and
+                # absent, keeps the zeros V2.6c chose.
+                rate = (natural_national_rate(nid)
+                        if PROXY_SERIES[nid].get("natural_national") else 0.0)
                 out[nid] = {"window": None,
-                            "rates": {c: 0.0 for c in codes}}
+                            "rates": {c: rate for c in codes}}
                 continue
             missing = [c for c in codes
                        if not any(c in by_year[y] for y in years)]
@@ -1789,7 +1920,8 @@ def build_region_graph(registers, nuts):
 
     vertices = {}
     for code in sorted(codes):
-        feature = nuts[REGION_LEVEL[_nation_of(code, registers)]][code]
+        feature = (nuts[REGION_LEVEL[_nation_of(code, registers)]].get(code)
+                   or _ADMIN1_FEATURES[code])
         geometry = feature["geometry"]
         polygons = ([geometry["coordinates"]]
                     if geometry["type"] == "Polygon" else geometry["coordinates"])
@@ -1808,8 +1940,46 @@ def build_region_graph(registers, nuts):
     # The features are already resolved per code for the vertex pass; kept so
     # the principal-point fallback reads the same geometry the adjacency did.
     features_by_code = {
-        code: nuts[REGION_LEVEL[_nation_of(code, registers)]][code] for code in sorted(codes)
+        code: (nuts[REGION_LEVEL[_nation_of(code, registers)]].get(code)
+               or _ADMIN1_FEATURES[code]) for code in sorted(codes)
     }
+
+    # V4.11a2. Natural Earth and GISCO draw the same border with different
+    # vertices, so shared-vertex adjacency cannot see a Ukrainian oblast touch a
+    # Polish voivodeship. For any pair with a Natural Earth region on one side, a
+    # border is ADJACENCY_HITS boundary vertices of one within ADJACENCY_TOL_DEG of
+    # the other's -- several, not one, so a quadripoint or a narrow strait does not
+    # become a land edge. The resulting cross-source edges are printed for review.
+    synthetic = sorted(c for c in codes if c in _ADMIN1_FEATURES)
+    if synthetic:
+        cell = ADJACENCY_TOL_DEG
+        grid = {}
+        for code in sorted(codes):
+            for polygon in _polygons_of(features_by_code[code]):
+                for ring in polygon:
+                    for lon, lat in ring:
+                        grid.setdefault((int(lon // cell), int(lat // cell)), set()).add(code)
+        cross = set()
+        for code in synthetic:
+            hits = {}
+            for polygon in _polygons_of(features_by_code[code]):
+                for ring in polygon:
+                    for lon, lat in ring:
+                        gx, gy = int(lon // cell), int(lat // cell)
+                        near = set()
+                        for dx in (-1, 0, 1):
+                            for dy in (-1, 0, 1):
+                                near |= grid.get((gx + dx, gy + dy), set())
+                        for other in near:
+                            if other != code:
+                                hits[other] = hits.get(other, 0) + 1
+            for other, n in hits.items():
+                if n >= ADJACENCY_HITS:
+                    pair = tuple(sorted((code, other)))
+                    if pair not in pairs:
+                        cross.add(pair)
+        pairs |= cross
+        print("region graph: %d cross-source land edges: %s" % (len(cross), sorted(cross)))
 
     edges = []
     for a, b in sorted(pairs):
@@ -1942,6 +2112,15 @@ def assign_cities(index):
             elif near_kept <= CITY_SNAP_DEG:
                 counts["snapped"] += 1
                 nearest["cities"].append(city)
+            elif nid in ADMIN1_NATIONS or nid in SINGLE_REGION:
+                # V4.11a2. GeoNames files a place by its country code while the
+                # register's geometry is Natural Earth's, and the two disagree in
+                # one place: Natural Earth draws Crimea and Sevastopol inside
+                # Russia, GeoNames files their towns under UA. A place outside
+                # every polygon of a synthetic-region nation is outside the
+                # register, the residual's kind -- counted, never invented into
+                # the nearest oblast.
+                counts["outside"] = counts.get("outside", 0) + 1
             else:
                 sys.exit("%s: '%s' at %.4f,%.4f is %.2f deg from any region"
                          % (nid, city["name"], lon, lat, near_kept))
@@ -2057,10 +2236,246 @@ def select_cities(region):
     return named
 
 
+
+# ---------------------------------------------------------------------------
+# V4.11a2. The five neighbours NUTS does not cover -- BIH UKR MDA XKX BLR.
+# Natural Earth admin-1 (public domain, 1:10m) is the geometry, GeoNames the
+# population; both are made to look like NUTS to the pipeline above (a synthetic
+# GISCO-shaped feature and a synthetic population per code), so every later stage
+# -- the city join, the register, the region geometry, the graph -- runs unchanged.
+# The economics are PROXY_SERIES's (no regional series exists for any of the five).
+# ---------------------------------------------------------------------------
+
+ADMIN1_SOURCE = "ne_10m_admin_1_states_provinces.geojson"
+
+# The cross-source adjacency's two numbers (build_region_graph). 0.05 deg is about
+# 4-5 km at these latitudes -- the gap between GISCO's 1:10M and Natural Earth's
+# 1:10m drawings of one border. The hit count was SWEPT and checked against the
+# real map: at 3 and at 6 it admits five pairs that do not touch (Mazowieckie-
+# Brest, Kyiv City-Chernihiv, the Federation-Montenegro, Borsod-Zakarpattia,
+# North-West Romania-Chernivtsi), at 10 it admits none and keeps every real
+# border of the five (33 edges).
+ADJACENCY_TOL_DEG = 0.05
+ADJACENCY_HITS = 10
+
+# Region per admin-1 unit for these, dissolved to ONE region for the single-region
+# two (the LUX precedent). Moldova is dissolved from its 40 admin-1 units rather
+# than read from the 1:50m outline so its border has the SAME vertices as
+# Ukraine's -- one source, one resolution, a shared-vertex adjacency.
+ADMIN1_NATIONS = ("UKR", "BLR", "BIH")
+SINGLE_REGION = {"MDA": ("MD00", "Moldova"), "XKX": ("XK00", "Kosovo")}
+
+# Natural Earth's English names are a decade old in three places and collide in
+# two: the city and the oblast of Kyiv, and of Minsk, carry one name each.
+ADMIN1_NAMES = {
+    "UA-30": "Kyiv City", "UA-32": "Kyiv Oblast", "UA-51": "Odesa",
+    "BY-HM": "Minsk City", "BY-MI": "Minsk Region",
+}
+
+# Bosnia's 18 Natural Earth units are the Federation's ten cantons beside the
+# Republika Srpska's regions -- finer than any nation on the roster (3.2 M people
+# in 18 units; Serbia carries 6.6 M in 4), the CHE-cantons refusal's reason. They
+# are dissolved to the country's three constitutional units, the entities. The
+# `type_en` field is the reliable key: every canton says Canton (Natural Earth's
+# `region` field mislabels Posavina and Brcko as Srpska).
+BIH_ENTITIES = (
+    ("BA01", "Federation of Bosnia and Herzegovina"),
+    ("BA02", "Republika Srpska"),
+    ("BA03", "Brčko District"),
+)
+
+
+def _bih_entity(props):
+    if props.get("type_en") == "Canton":
+        return "BA01"
+    if props.get("name", "").startswith("Brčko"):
+        return "BA03"
+    return "BA02"
+
+
+def _signed_area(ring):
+    return sum(ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]
+               for i in range(len(ring) - 1)) / 2.0
+
+
+def dissolve(polygons):
+    """The union of polygons that share their boundary vertices exactly, as a
+    MultiPolygon coordinate list -- by edge cancellation: an edge two polygons
+    share is interior and appears twice, the boundary appears once, and the
+    once-edges chain back into rings. No geometry library: tools/ has none, and
+    Natural Earth's admin-1 layer is topologically clean, which is the only
+    property this needs (checked by the caller: one outer ring per landmass)."""
+    from collections import Counter, defaultdict
+    edges = Counter()
+    for polygon in polygons:
+        for ring in polygon:
+            pts = [(round(x, 6), round(y, 6)) for x, y in ring]
+            for a, b in zip(pts, pts[1:]):
+                if a != b:
+                    edges[(a, b) if a < b else (b, a)] += 1
+    boundary = [e for e, n in edges.items() if n == 1]
+    adjacency = defaultdict(list)
+    for a, b in boundary:
+        adjacency[a].append(b)
+        adjacency[b].append(a)
+    used, rings = set(), []
+    for a, b in boundary:
+        if (a, b) in used:
+            continue
+        used.add((a, b))
+        ring, cur = [a, b], b
+        while cur != a:
+            nxt = None
+            for n in adjacency[cur]:
+                e = (cur, n) if cur < n else (n, cur)
+                if e not in used:
+                    used.add(e)
+                    nxt = n
+                    break
+            if nxt is None:
+                break
+            ring.append(nxt)
+            cur = nxt
+        if ring[-1] == a and len(ring) >= 4:
+            rings.append([list(p) for p in ring])
+    rings.sort(key=lambda r: -abs(_signed_area(r)))
+    out = []
+    for ring in rings:
+        host = next((poly for poly in out if _point_in_ring(ring[0][0], ring[0][1], poly[0])), None)
+        if host is None:
+            out.append([ring])
+        else:
+            host.append(ring)
+    return out
+
+
+# Official regional populations where the statistician publishes them, used IN
+# PLACE of the GeoNames city share -- measured at V4.11a2 to be badly biased toward
+# urban units (Bosnia's Federation read 81 % against the census's 63 %, Kyiv City
+# 15 % against 7 %). Only the SHARES are read: each nation is rescaled to its World
+# Bank total, so the vintage gap between these and YEAR moves no national figure.
+#   UKR: State Statistics Service estimates for 2022 (pre-invasion residence, Crimea
+#        and Sevastopol excluded), as tabulated in Wikipedia's 'Oblasts of Ukraine';
+#        Kyiv City 2 952 301 (1 January 2022). Wartime displacement is unmodelled.
+#   BLR: Belstat, 1 January 2024.
+#   BIH: the 2013 census, entity totals (the last census; no later count exists).
+ADMIN1_POPULATION = {
+    "UA05": 1566000, "UA07": 1046000, "UA09": 2145000, "UA12": 3214000,
+    "UA14": 4157000, "UA18": 1213000, "UA21": 1247000, "UA23": 1699000,
+    "UA26": 1382000, "UA30": 2952301, "UA32": 1775000, "UA35": 958000,
+    "UA46": 2515000, "UA48": 1126000, "UA51": 2395000, "UA53": 1392000,
+    "UA56": 1146000, "UA59": 1094000, "UA61": 1035000, "UA63": 2683000,
+    "UA65": 1026000, "UA68": 1274000, "UA71": 1198000, "UA74": 994000,
+    "UA77": 897000,
+    "BYBR": 1308569, "BYHM": 1992862, "BYHO": 1338617, "BYHR": 992556,
+    "BYMA": 981174, "BYMI": 1460289, "BYVI": 1081911,
+    "BA01": 2219220, "BA02": 1228423, "BA03": 83516,
+}
+
+_ADMIN1_FEATURES = {}
+
+
+def _wb_value(code, nid):
+    value = load_wb_indicator_for_year(code, YEAR).get(nid)
+    if value is None:
+        sys.exit(f"{nid}: missing {YEAR} {code}")
+    return value
+
+
+def inject_admin1(populations, nuts):
+    """Writes synthetic NUTS-shaped features and populations for the five into
+    the two dictionaries build_region_index() reads. Population per unit is the
+    GeoNames city sum's share of the national figure -- a proxy that undercounts
+    rural regions, recorded in docs/data-sources.md as the bound it is."""
+    wanted = [n for n in NATIONS if n in ADMIN1_NATIONS or n in SINGLE_REGION]
+    if not wanted:
+        return
+    with open(SOURCES / ADMIN1_SOURCE, encoding="utf-8") as f:
+        admin1 = json.load(f)
+    path = SOURCES / "geonames" / "cities15000.zip"
+    with zipfile.ZipFile(path) as archive:
+        raw = archive.read("cities15000.txt").decode("utf-8")
+    places = {}
+    for line in raw.splitlines():
+        fields = line.split("\t")
+        if len(fields) < 15 or fields[7] in CITY_EXCLUDED_FEATURE_CODES:
+            continue
+        places.setdefault(fields[8], []).append((float(fields[5]), float(fields[4]), int(fields[14])))
+
+    year = REGION_YEARS[0]
+    for nid in wanted:
+        cc = NUTS_COUNTRY[nid]
+        adm0 = {v: k for k, v in GEO_ALIASES.items()}.get(nid, nid)
+        units = [f for f in admin1["features"] if f["properties"].get("adm0_a3") == adm0]
+        if not units:
+            sys.exit(f"{nid}: Natural Earth admin-1 carries no unit for {adm0}")
+        groups = {}
+        if nid in SINGLE_REGION:
+            code, name = SINGLE_REGION[nid]
+            groups[code] = (name, [p for u in units for p in _polygons_of(u)])
+        elif nid == "BIH":
+            names = dict(BIH_ENTITIES)
+            for u in units:
+                code = _bih_entity(u["properties"])
+                groups.setdefault(code, (names[code], []))[1].extend(_polygons_of(u))
+        else:
+            for u in units:
+                iso = u["properties"]["iso_3166_2"]
+                code = cc + iso.split("-")[1]
+                name = ADMIN1_NAMES.get(iso, u["properties"].get("name_en") or u["properties"]["name"])
+                groups[code] = (name, _polygons_of(u))
+
+        national = _wb_value("SP.POP.TOTL", nid)
+        city_pop = {}
+        for code, (name, polys) in groups.items():
+            if nid in SINGLE_REGION or nid == "BIH":
+                polys = dissolve(polys)
+                groups[code] = (name, polys)
+            total = 0
+            for lon, lat, pop in places.get(CITY_COUNTRY[nid], []):
+                if any(_point_in_polygon(lon, lat, p) for p in polys):
+                    total += pop
+            city_pop[code] = total
+        if all(code in ADMIN1_POPULATION for code in groups):
+            city_pop = {code: ADMIN1_POPULATION[code] for code in groups}
+        named = sum(city_pop.values())
+        if named <= 0:
+            sys.exit(f"{nid}: no GeoNames place falls inside any admin-1 unit")
+        for code, (name, polys) in groups.items():
+            feature = {"type": "Feature",
+                       "properties": {"NUTS_ID": code, "NAME_LATN": name},
+                       "geometry": {"type": "MultiPolygon", "coordinates": polys}}
+            nuts[REGION_LEVEL[nid]][code] = feature
+            _ADMIN1_FEATURES[code] = feature
+            # A unit with no place over cities15000's cut reads 0 and drops into
+            # the residual through assign_cities' Aland rule.
+            populations[year][code] = round(national * city_pop[code] / named)
+        populations[year][cc] = round(national)
+        print(f"admin-1: {nid} {len(groups)} regions, outer rings "
+              f"{sum(len(g[1]) for g in groups.values())}")
+
+
+def natural_national_rate(nid):
+    """Per cent per year, signed: the World Bank's crude birth minus death rate
+    (per mille), averaged over the standard window -- for the five, which have no
+    regional natural-change series, one measured national rate for every region
+    rather than Britain's zeros."""
+    rates = []
+    for year in range(TREND_FROM_YEAR, YEAR + 1):
+        b = load_wb_indicator_for_year("SP.DYN.CBRT.IN", year).get(nid)
+        d = load_wb_indicator_for_year("SP.DYN.CDRT.IN", year).get(nid)
+        if b is not None and d is not None:
+            rates.append((b - d) / 10.0)
+    if not rates:
+        sys.exit(f"{nid}: no crude birth/death rate in [{TREND_FROM_YEAR}, {YEAR}]")
+    return round(sum(rates) / len(rates), 3)
+
+
 def build_regions():
     """{nation id: the file to write}, plus the index and the join's own counts."""
     populations = load_eurostat_region_population()
     nuts = load_gisco_nuts()
+    inject_admin1(populations, nuts)
     index = build_region_index(populations, nuts)
     counts = assign_cities(index)
     gdp = load_region_gdp()
@@ -2186,9 +2601,14 @@ def build_regions():
                            ("; natural change from demo_r_gind3 NATGROWRT, window-averaged "
                             "%d-%d" % nat_window
                             if nat_window else
-                            "; natural change is 0.0 for every region -- %s, "
-                            "and a differential mixing measured and invented rates "
-                            "invents flows" % PROXY_SERIES[nid]["natural_why"]))),
+                            ("; natural change is the national World Bank crude rate, "
+                             "%.3f %%/yr, in every region -- %s"
+                             % (natural[nid]["rates"][entry["kept"][0]["id"]],
+                                PROXY_SERIES[nid]["natural_why"])
+                             if PROXY_SERIES[nid].get("natural_national") else
+                             "; natural change is 0.0 for every region -- %s, "
+                             "and a differential mixing measured and invented rates "
+                             "invents flows" % PROXY_SERIES[nid]["natural_why"])))),
             "_year": entry["year"],
             "_note": ("Generated by tools/import_data.py -- every field here is "
                       "dataset-derived and a re-import overwrites the file whole. "

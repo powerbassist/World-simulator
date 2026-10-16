@@ -1,0 +1,272 @@
+{
+  "people": [
+    {
+      "id": "MDA_ciobanu",
+      "name": "Victor Ciobanu",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "loyal"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MDA_lungu",
+      "name": "Elena Lungu",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MDA_rotaru",
+      "name": "Igor Rotaru",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.75,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MDA_moraru",
+      "name": "Vasile Moraru",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "pragmatic"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MDA_cebotari",
+      "name": "Ion Cebotari",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MDA_rusu",
+      "name": "Ana Rusu",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "principled"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MDA_bogdan_iv",
+      "name": "Bogdan IV",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "loyal"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MDA_chief_banca_croitoru",
+      "name": "Eugen Croitoru",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_casa_de_comert_mereacre",
+      "name": "Andrei Mereacre",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_vrabie_energie",
+      "name": "Gheorghe Vrabie",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_casa_de_comert_olaru",
+      "name": "Nicolae Olaru",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.84,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_casa_de_comert_prodan",
+      "name": "Alexandru Prodan",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_turcanu_logistica",
+      "name": "Tatiana Țurcanu",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_companie_pascari",
+      "name": "Irina Pascari",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_companie_rosca",
+      "name": "Dumitru Roșca",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_ciorba",
+      "name": "Alexandru Ciorbă",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_balan_transport",
+      "name": "Ana Balan",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_morari",
+      "name": "Dumitru Morari",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.61,
+      "bench": true
+    },
+    {
+      "id": "MDA_chief_popa",
+      "name": "Mihai Popa",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.55,
+      "bench": true
+    }
+  ]
+}

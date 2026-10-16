@@ -388,6 +388,49 @@ That is a property rather than a coincidence, and it is what **no grievance ledg
 | Third-party reach | `THIRD_PARTY_MIN_STAKE_SHARE` of an even share. Below it, X does not notice. |
 | The coercion impulse | `COERCION_IMPULSE_MAX` = 6.0, measured unreached at −4.287 in the worst case. |
 
+## V4.11 — the even share becomes effective partners (clauses declared BEFORE the code, 2026-10-16)
+
+**The defect, measured.** `even_share()` was one over the partner COUNT. Growing
+the roster 29 → 36 with seven small neighbours shrank it from 1/28 to 1/35, so
+every big partner's stake read 25 % larger without anything having changed between
+them: Britain's accept scores at rest rose by about 0.22 (FRA 0.974 → 1.196, DEU
+0.946 → 1.173, ITA 1.057 → 1.319 — past `ACCEPT_MIN` 1.20) and `tests/test_trade.gd`'s
+counterparty gate went inert. At 41 France and Germany would follow. A yardstick
+that moves when tiny partners join is measuring the roster, not the relationship.
+
+**The definition (author's call, 2026-10-15).** `even_share(state, a)` =
+`EVEN_SHARE_SCALE × Σ_b w_ab²` — the Herfindahl of nation A's OWN trade-weight
+vector (`Trade.weights`), i.e. one over A's EFFECTIVE number of partners, times one
+constant. Read from trade weights rather than from the stake vector, because the
+stake vector is itself built on the even share (a circle GDScript would compute
+forever). It is now PER NATION: a nation with concentrated trade (BEL, N_eff 8.0)
+has a larger even share than a diffuse one (HUN, 15.8), so "more than its fair
+share of my attention" means the same thing to both.
+
+**`EVEN_SHARE_SCALE` = 0.4054 is MEASURED, not swept**: one over the partner count
+divided by the mean Herfindahl, on the 29-nation roster every threshold below was
+calibrated on (`main` at 48166f2: mean Σw² = 0.08810, N_eff 7.9–15.8, mean 12.1).
+So on the calibration roster the MEAN even share equals the old 1/28 exactly, and
+every constant expressed against it (ACCEPT_MIN, PACT_ACCEPT_MIN,
+THIRD_PARTY_MIN_STAKE_SHARE, CARD_MIN_STAKE_SHARE, the agenda's stake factor) keeps
+its meaning on average; what moves is only the per-nation redistribution by
+concentration — the intended change. Measured robustness: the seven a1 neighbours
+moved N_eff by about 10 % (FRA 8.5 → 9.2, GBR 14.1 → 16.4) where the count moved 25 %.
+
+**Bands, declared before the run (checked at 41):**
+
+- (i) Britain's floor-relations proposals to the three largest economies (FRA, DEU,
+  ITA) are REFUSED at rest — `test_trade`'s gate, the V1.3b/V3.3 calibration case.
+- (ii) After the strongest positive verb on every pair, at least one partner signs
+  with Britain — the same test's second half.
+- (iii) The V3.3 verdict table's SHAPE holds for Britain at rest: the majors sit
+  under the gate, at least one mid-sized or small partner sits at or above it.
+- (iv) `tests/test_foreign_policy.gd`, `test_diplomacy.gd`, `test_trade.gd`,
+  `test_council.gd`, `test_orgs.gd` green at 41 with no threshold re-tuned. A
+  constant re-tuned to pass would be the V1.5c failure; a miss is reported, not
+  absorbed.
+
+
 ## Deliberately absent
 
 - **No grievance ledger.** The relations number is the memory. This is what keeps `SAVE_VERSION` at 11 and what makes the model a pure read.

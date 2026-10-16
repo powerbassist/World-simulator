@@ -1846,7 +1846,7 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		return
 
 	var player_id: String = _state.player_nation_id
-	var floor_share: float = ForeignPolicy.even_share(_state) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
+	var floor_share: float = ForeignPolicy.even_share(_state, player_id) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
 
 	# Oldest first, so the newest act ends up at the top of the column: push()
 	# appends and the stack drops from the front when it overflows.

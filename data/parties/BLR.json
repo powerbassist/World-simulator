@@ -1,0 +1,10 @@
+{
+  "_note": "Fictionalised. The 2024 House: 51 seats to the regime-founded party, 46 nominal independents, 8 communists, 4 liberal democrats, 1 labour -- every one of them supporting the President. The independents are carried as one bloc because they vote as one. Opposition parties were dissolved by the 2023 re-registration law and sit nowhere.",
+  "parties": [
+    {"id": "rodny_krai", "name": "Rodny Krai", "ideology_slot": "centre_right", "seat_share": 0.464, "leader_person": "BLR_dubovik", "discipline": 0.95, "competence": 0.55, "excluded_partners": []},
+    {"id": "hramadski_saiuz", "name": "Hramadski Saiuz", "ideology_slot": "centrist", "seat_share": 0.418, "leader_person": "BLR_karpovich", "discipline": 0.95, "competence": 0.55, "excluded_partners": []},
+    {"id": "partyia_pratsy", "name": "Partyia Pratsy", "ideology_slot": "left_populist", "seat_share": 0.073, "leader_person": "BLR_zhukovsky", "discipline": 0.9, "competence": 0.45, "excluded_partners": []},
+    {"id": "dziarzhauny_front", "name": "Dziarzhauny Front", "ideology_slot": "nationalist_right", "seat_share": 0.036, "leader_person": "BLR_savitsky", "discipline": 0.9, "competence": 0.45, "excluded_partners": []},
+    {"id": "sotsyialny_rukh", "name": "Satsyialny Rukh", "ideology_slot": "social_democratic", "seat_share": 0.009, "leader_person": "BLR_ivanova", "discipline": 0.85, "competence": 0.45, "excluded_partners": []}
+  ]
+}

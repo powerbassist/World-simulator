@@ -143,7 +143,7 @@
         "nuclear": 0.0,
         "renewable": 0.999847
       },
-      "import_dependency_pct": 19.502,
+      "import_dependency_pct": 16.807,
       "kwh_per_capita": 49241.2,
       "_years": {
         "energy_import_dependency_pct": 2024,

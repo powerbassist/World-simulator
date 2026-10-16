@@ -1,0 +1,294 @@
+{
+  "people": [
+    {
+      "id": "UKR_levchuk",
+      "name": "Andriy Levchuk",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "principled"
+      ],
+      "ambition": 0.78,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "UKR_kovalenko",
+      "name": "Oksana Kovalenko",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "UKR_kravets",
+      "name": "Petro Kravets",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "networked"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:yevropeiskyi_vybir",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "UKR_ostapchuk",
+      "name": "Vadym Ostapchuk",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "pragmatic"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "UKR_ostrovska",
+      "name": "Halyna Ostrovska",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "ambitious"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "UKR_savchuk",
+      "name": "Iryna Savchuk",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "fervent"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "UKR_bondar",
+      "name": "Serhiy Bondar",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "loyal"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "UKR_danylo_ii",
+      "name": "Danylo II",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "loyal"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "UKR_chief_panchenko",
+      "name": "Ihor Panchenko",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_havryliuk_promyslovist",
+      "name": "Ihor Havryliuk",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_semeniuk",
+      "name": "Yuliia Semeniuk",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_tovarystvo_ivaniuk",
+      "name": "Daryna Ivaniuk",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.39,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_lukashchuk",
+      "name": "Kateryna Lukashchuk",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_bank_nazarenko",
+      "name": "Andriy Nazarenko",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_yurchenko_promyslovist",
+      "name": "Andriy Yurchenko",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_vasylenko",
+      "name": "Roman Vasylenko",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_bank_lytovchenko",
+      "name": "Daryna Lytovchenko",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_bank_ivaniuk",
+      "name": "Volodymyr Ivaniuk",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_yurchenko_enerhiia",
+      "name": "Taras Yurchenko",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "UKR_chief_stepaniuk",
+      "name": "Dmytro Stepaniuk",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    }
+  ]
+}

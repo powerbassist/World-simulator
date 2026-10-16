@@ -1,0 +1,172 @@
+{
+  "id": "BIH",
+  "name": "Bosnia and Herzegovina",
+  "geo_id": "BIH",
+  "capital": "Sarajevo",
+  "playable": false,
+  "leader": {
+    "person": "BIH_jelavic",
+    "title": "Chair of the Council of Ministers",
+    "party": "hrvatska_zajednica"
+  },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#002395", "#FECB00", "#002395"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "House of Representatives",
+      "assembly_seats": 42,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "D'Hondt in eight multi-member districts split between the two entities (28 seats from the Federation, 14 from the Republika Srpska) with compensatory seats and a 3% threshold, reduced to national PR -- the entity split is the Dayton constitution's own shape and is unmodelled. Elected 2 October 2022, so the next general election falls in October 2026. Election Law of BiH; Wikipedia, '2022 Bosnian general election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2026,
+          "month": 10
+        },
+        "threshold_pct": 3.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Dayton constitution gives the Presidency a power to dissolve the House of PEOPLES (Art. IV.3(g)) and none over the House of Representatives, which sits its four years; no early state election has ever been held. The parliamentary_republic template cannot say 'none', so confidence_failure -- the rule that fires only after a lost confidence vote, which BiH's practice never produces -- is the nearest reading, the gap recorded here. Constitution of BiH (Annex 4, Dayton), Art. IV.",
+        "rule": "confidence_failure",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "A COLLECTIVE head of state: a three-member Presidency (one Bosniak and one Croat elected from the Federation, one Serb from the Republika Srpska), directly elected for four years, the chair rotating every eight months. The collegial kind exists only in the directorial template, whose formation BiH does not have, so the office reads as elected_president and the person below is the sitting chair -- the rotation and the other two members are the honest gap. Constitution of BiH, Art. V.",
+      "kind": "elected_president",
+      "title": "Chair of the Presidency",
+      "person": "BIH_mujkic",
+      "term_years": 4,
+      "next": {
+        "year": 2026,
+        "month": 10
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. X: a decision of the Parliamentary Assembly with two thirds of those present and voting in the House of Representatives (and the House of Peoples' assent); the human-rights catalogue cannot be diminished at all. The template's two_thirds reads the first; the ethnic vetoes of the House of Peoples are the upper block's absolute verdict below. Constitution of BiH, Art. X.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "No constitutional referendum exists at state level. Constitution of BiH, Art. X.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "Art. X.2 entrenches only the rights catalogue; the institutional order -- the entities, the collective Presidency -- is amendable by the Art. X.1 route, which is why every constitutional-reform package since 2006 was a parliamentary vote and not a nullity."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court (three of its nine judges appointed by the President of the European Court of Human Rights) reviews state and entity law for conformity with the constitution. Constitution of BiH, Art. VI.",
+      "review": "constitutional"
+    },
+    "upper": {
+      "_source": "authored",
+      "_note": "The House of Peoples: 15 delegates, five Bosniak, five Croat, five Serb, chosen by the entity parliaments. Every law needs both houses, and a majority of any one people's delegates can block a decision as destructive of a vital interest -- the template's absolute verdict on both classes, the ethnic veto's mechanics unmodelled. Constitution of BiH, Art. IV.",
+      "chamber": "House of Peoples",
+      "seats": 15,
+      "ordinary": "absolute",
+      "amendment": "absolute"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The Presidency nominates the Chair of the Council of Ministers and the House of Representatives confirms him (Art. V.4); by convention the post rotates among the three peoples, and the 2023 council is chaired from the Croat party. A vote of no confidence by the House removes the Council (Art. V.4(c)). Constitution of BiH, Art. V.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Chair of the Council of Ministers",
+      "head_of_government_person": "BIH_jelavic"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. The medieval Kingdom of Bosnia ended in 1463; the restored line here is fictional.",
+    "pretender_person": "BIH_tvrtko_iii",
+    "neighbours": ["HRV", "MNE", "SRB"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government (state, entities, Brcko, cantons and municipalities consolidated), IMF ~2024, rounded, on AUT.json's conventions. VAT 17% (the single state rate); corporate 10%; income 10% flat in both entities; capital gains 10%; no wealth tax. Revenue ~38% of GDP includes the entities' social contributions. Debt ~28% of GDP (end-2024). Defence 0.8% is the state-level Armed Forces budget. Spending scaled to expenditure near 42% of GDP, the cost of a constitution with fourteen governments.",
+    "debt_to_gdp_pct": 28.0,
+    "tax_revenue_pct_gdp": 38.0,
+    "tax_rates_pct": {
+      "income": 10.0,
+      "corporate": 10.0,
+      "vat": 17.0,
+      "capital_gains": 10.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 6.5,
+      "education": 4.0,
+      "defence": 0.8,
+      "pensions": 9.0,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 16.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 3200000,
+    "gdp_eur_bn": 27.4,
+    "unemployment_pct": 10.7,
+    "sectors": {
+      "agriculture": 0.054,
+      "industry": 0.268,
+      "services": 0.678
+    },
+    "cohorts": {
+      "young_pct": 13.04,
+      "old_pct": 22.23,
+      "young_pct_per_yr": -0.138,
+      "old_pct_per_yr": 0.553,
+      "participation_pct": 62.92,
+      "pop_growth_pct": -1.172
+    },
+    "inequality": {
+      "gini_index": 30.3,
+      "gini_index_per_yr": -0.433,
+      "_year": 2021,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 3.3,
+      "growth_sd_pct": 11.549,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.333,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.610093,
+        "nuclear": 0.0,
+        "renewable": 0.389907
+      },
+      "import_dependency_pct": 27.877,
+      "kwh_per_capita": 3859.7,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 6.45,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 52.4
+    }
+  }
+}

@@ -335,7 +335,7 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 		var worst_id := ""
 		var best_start := 0.0
 		var worst_start := 0.0
-		if nation_id != "GBR" and list.size() > 1:
+		if not _is_proxy_shape(list) and list.size() > 1:
 			var best_pull := -INF
 			var worst_pull := INF
 			for region in list:
@@ -487,3 +487,16 @@ func _finish() -> void:
 	for message in _failures:
 		printerr("FAIL: %s" % message)
 	quit(1)
+
+
+## V4.11: the POPULATION-PROXY shape, read off the register rather than named.
+## Britain was the one nation importing it (V2.2a) and the test said "GBR"; the
+## neighbourhood's five non-NUTS nations import it too. A register whose every
+## region carries gdp_share == share and unemployment_rel == 1.0 has no regional
+## divergence BY CONSTRUCTION (docs/data-sources.md records each as a bound), so
+## there is no pull to move people and no measured spread to assert.
+func _is_proxy_shape(list: Array) -> bool:
+	for region in list:
+		if absf(region.gdp_share - region.share) > 1e-6 or absf(region.unemployment_rel - 1.0) > 1e-9:
+			return false
+	return true

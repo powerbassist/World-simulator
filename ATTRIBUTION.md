@@ -6,11 +6,11 @@ Nation economic statistics sourced from the World Bank Open Data catalog (https:
 
 ## Our World in Data
 
-Four per-nation figures the World Bank publishes for no year at all (Serbian and Montenegrin CO2 per capita, Albanian renewable electricity share, Icelandic fossil share of primary energy) are read from Our World in Data's CO2 and energy datasets (https://github.com/owid/co2-data, https://github.com/owid/energy-data), used under CC BY 4.0. Hannah Ritchie, Pablo Rosado and Max Roser, Our World in Data.
+Per-nation figures the World Bank publishes for no year at all (Serbian, Montenegrin and Kosovan CO2 per capita, Albanian renewable electricity share, Kosovan electricity consumption per head) are read from Our World in Data's CO2 and energy datasets (https://github.com/owid/co2-data, https://github.com/owid/energy-data), used under CC BY 4.0. Hannah Ritchie, Pablo Rosado and Max Roser, Our World in Data.
 
 ## Natural Earth
 
-Border geometry sourced from Natural Earth (https://www.naturalearthdata.com/), public domain.
+Border geometry sourced from Natural Earth (https://www.naturalearthdata.com/), public domain -- admin-0 for the nations and outlines, and since V4.11a2 admin-1 (1:10m) for the regions of Ukraine, Belarus, Bosnia and Herzegovina, Moldova and Kosovo.
 
 ## NASA Blue Marble
 
@@ -39,6 +39,18 @@ equivalent to CC BY 4.0, attribution required.
 
 Generated into `data/regions/*.json` and `data/geo/regions.geojson` at V2.2a, and
 credited here in the same commit as the fetch rather than at ship time.
+
+V4.11: the energy-dependency table (`nrg_ind_id`) supplies Kosovo's and Iceland's import
+dependency, under the same policy.
+
+## Official regional statistics (V4.11a2)
+
+Regional population shares for Ukraine (State Statistics Service of Ukraine, 2022
+estimates), Belarus (Belstat, 1 January 2024) and Bosnia and Herzegovina (2013 census,
+entity totals); Ukrainian unemployment from the National Bank of Ukraine's Inflation
+Report (October 2024); Kosovan labour figures from the Kosovo Agency of Statistics
+Labour Force Survey 2024. Official statistics, cited in `tools/import_data.py` and
+`docs/data-sources.md`.
 
 ## GeoNames
 

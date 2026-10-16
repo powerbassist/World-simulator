@@ -439,7 +439,7 @@ func _check_third_parties_take_sides() -> void:
 	# A nation with no stake in the target must not be dragged in. Without the
 	# floor every act moves all eight remaining nations by some unreadable amount
 	# and forty-five pairs drift on every click.
-	var scale := ForeignPolicy.stake(state, "GBR", "DEU") / ForeignPolicy.even_share(state)
+	var scale: float = ForeignPolicy.stake(state, "GBR", "DEU") / ForeignPolicy.even_share(state, "GBR")
 	if scale <= 0.0:
 		_failures.append("GBR has literally no stake in DEU, which makes the floor untestable")
 

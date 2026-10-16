@@ -238,7 +238,8 @@ ANO 2011
 Občanská demokratická strana
 Babiš
 Fiala
-Pavel
+# V4.11: full name -- Pavel is also a common Belarusian and Czech first name.
+Petr Pavel
 Zeman
 Okamura
 # --- Denmark ---
@@ -544,6 +545,92 @@ Andrija Mandić
 Abazović
 Petrović-Njegoš
 Elektroprivreda Crne Gore
+# --- Bosnia and Herzegovina ---
+Stranka demokratske akcije
+Savez nezavisnih socijaldemokrata
+Hrvatska demokratska zajednica BiH
+Socijaldemokratska partija BiH
+Demokratska fronta
+Narod i Pravda
+Naša stranka
+Srpska demokratska stranka
+Partija demokratskog progresa
+Dodik
+Izetbegović
+Čović
+Komšić
+Krišto
+Cvijanović
+Bećirović
+Konaković
+# Full name: Nikšić is also Montenegro's second city.
+Nermin Nikšić
+Kotromanić
+# --- Ukraine ---
+Sluha narodu
+Servant of the People
+Yevropeiska Solidarnist
+European Solidarity
+Batkivshchyna
+Holos
+Opozytsiina platforma
+Zelensky
+Zelenskyy
+Poroshenko
+Tymoshenko
+Yanukovych
+Shmyhal
+Svyrydenko
+Stefanchuk
+Klitschko
+Zaluzhnyi
+Naftogaz
+Ukrnafta
+Ukrzaliznytsia
+Kyivstar
+Metinvest
+PrivatBank
+# --- Moldova ---
+Partidul Acțiune și Solidaritate
+Partidul Socialiștilor din Republica Moldova
+Blocul Electoral Patriotic
+Partidul Nostru
+Partidul Democrația Acasă
+Maia Sandu
+Dodon
+Recean
+Alexandru Munteanu
+Usatîi
+Plahotniuc
+Voronin
+Moldtelecom
+# --- Kosovo ---
+Vetëvendosje
+Partia Demokratike e Kosovës
+Lidhja Demokratike e Kosovës
+Aleanca për Ardhmërinë e Kosovës
+Srpska Lista
+Kurti
+Vjosa Osmani
+Hashim Thaçi
+Thaçi
+Haradinaj
+Abdixhiku
+Hoxhaj
+Ibrahim Rugova
+Rugova
+# --- Belarus ---
+Belaya Rus
+Liberal Democratic Party of Belarus
+Communist Party of Belarus
+Lukashenko
+Lukashenka
+Tsikhanouskaya
+Tsikhanouski
+Turchin
+Golovchenko
+Belaruskali
+Belavia
 
 
 [places]

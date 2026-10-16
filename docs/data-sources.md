@@ -308,7 +308,7 @@ nations they border, and the geo files' new features changed):
 | Nation | NUTS level, regions | Regional GDP | Regional unemployment | Natural change | Other |
 |---|---|---|---|---|---|
 | NOR | 2, **6** (NO0B Svalbard/Jan Mayen has no GeoNames place: residual) | **absent** (zero NO codes in `nama_10r_2gdp`) -- population-share proxy | measured | measured, 2013-2024 | `tran_r_net` MWAY absent for NO08/NO09/NO0A: roster-mean fallback (Greece's bound); energy import dependency **-729 %** (the World Bank's own figure for a net exporter, not clamped -- LUX's 109.6 rule) |
-| ISL | 2, **1** | absent -- proxy, share 1.0, costs nothing | measured | measured | import dependency absent at every year -- OWID fossil share of primary energy (19.5 %, 2024); one GeoNames city over the cut (Reykjavik) |
+| ISL | 2, **1** | absent -- proxy, share 1.0, costs nothing | measured | measured | import dependency absent at every year -- Eurostat `nrg_ind_id` 16.8 % (2024; a1 first read OWID's fossil share of primary energy, 19.5 %); one GeoNames city over the cut (Reykjavik) |
 | SRB | 2, **4** (Kosovo is outside the RS codes) | measured | measured | measured | emissions absent at every year -- OWID 6.24 t |
 | TUR | **1**, 12 (NUTS 2's 26 is finer than anything reads) | measured | measured | measured; TRC +2.07 %/yr, `region.gd`'s catch widened 2 -> 3 | inflation anchor 23.4 %/yr -- `ANCHOR_MAX` 20 -> 40; tax rates FITTED effective (income 15, VAT 18) to the 22 % collected |
 | ALB | 2, **3** | measured | **absent** -- `unemployment_rel` 1.0 | measured | renewable electricity absent at every year -- OWID 100 %; cycle amplitude 2.15 (the 1990s transition) |
@@ -318,6 +318,56 @@ nations they border, and the geo files' new features changed):
 The proxies are `import_data.PROXY_SERIES`, per SERIES rather than per nation
 (Norway keeps its measured unemployment while its GDP is proxied), replacing the
 two Britain-only guards the importer carried since V2.2a.
+
+**V4.11a2 — the five NUTS does not cover** (BIH UKR MDA XKX BLR). No Eurostat
+regional series exists for any of them, so the register is built on three other
+sources made to look like NUTS to the pipeline (`import_data.inject_admin1`):
+
+- **Geometry: Natural Earth admin-1, 1:10m** (public domain, `ne_10m_admin_1_states_provinces.geojson`,
+  fetch line above). Ukraine **25** regions (24 oblasts and Kyiv City), Belarus **7**,
+  Bosnia **3** entities DISSOLVED from Natural Earth's 18 units (the Federation's ten
+  cantons beside the Republika Srpska's regions -- finer than any nation on the roster),
+  Moldova and Kosovo **1** each, dissolved from their admin-1 units so their borders
+  share Ukraine's and Serbia's vertices. Region ids are the ISO 3166-2 suffixes
+  (`UA30` Kyiv City, `BYHM` Minsk City) or `BA01`-`BA03`, `MD00`, `XK00`.
+- **Crimea and Sevastopol are outside the register.** Natural Earth 5.1.2's default
+  view draws them inside Russia, in admin-0 and admin-1 alike; this game takes the
+  layer as published and records it here as a bound. GeoNames files their towns under
+  UA, so they fall outside every Ukrainian polygon and drop into the residual (the
+  importer counts them). Ukraine's population and GDP are the World Bank's own
+  national figures, unchanged by this.
+- **Population: the statistician's own regional figures** where published, as SHARES
+  of the World Bank total -- Ukraine's State Statistics Service 2022 estimates
+  (pre-invasion residence; wartime displacement unmodelled), Belstat 1 January 2024,
+  Bosnia's 2013 census entities. The GeoNames city-share proxy the importer first used
+  was measured badly urban-biased (the Federation 81 % against the census's 63 %, Kyiv
+  City 15 % against 7 %) and is kept only for the single-region two, where it reads 1.0.
+  Brcko District carries no GeoNames place inside its polygon and drops into the
+  residual (Aland's rule): Bosnia names two regions, 98 % of its people.
+- **Economics: proxies.** `gdp_share` = population share, `unemployment_rel` = 1.0,
+  mix = the national World Bank sector shares. Natural change is the NATIONAL World
+  Bank crude birth minus death rate, 2015-2024 mean, in every region (UKR -0.61,
+  BLR -0.40, BIH -0.54, MDA -0.14, XKX +0.66 %/yr) -- a measured national rate rather
+  than Britain's zeros.
+- **Adjacency across sources** (`ADJACENCY_TOL_DEG` 0.05, `ADJACENCY_HITS` 10): GISCO and
+  Natural Earth draw one border with different vertices. The hit count was swept 3 / 6 /
+  10 and checked against the real map: 10 admits all 33 real cross-source borders and
+  none of the five false pairs the lower settings admitted.
+
+**National series, V4.11a2.** Exact-year gaps AUTHORED (`import_data.AUTHORED_SERIES`):
+Ukraine's labour survey is suspended under martial law -- unemployment 14.2 % is the
+National Bank of Ukraine's 2024 estimate (Inflation Report, October 2024),
+participation holds 2021's last measured 66.8 %; Kosovo has no World Bank labour series
+at any year -- Kosovo Agency of Statistics LFS 2024, unemployment 10.8 %, activity 43.2 %
+(2015: 37.6 %). Nearest-year gaps from a second measured source
+(`SUBSTITUTE_SERIES`): Kosovo's emissions (OWID 4.78 t, matched by name -- OWID gives
+Kosovo no iso code) and electricity consumption per head (OWID demand over population);
+Kosovo's and Iceland's import dependency from **Eurostat `nrg_ind_id`** (XK 32.2 %
+2022, IS 16.8 % 2024 -- the direct measure; V4.11a1's Iceland figure, its fossil share
+of primary energy, 19.5 %, was replaced by it). Moldova's World Bank unemployment
+reads 1.4 % (ILO-modelled) and is taken as published. Belarus's inflation anchor is
+34.8 %/yr, inside the widened `ANCHOR_MAX`. Kosovo's contested status (Serbia and five
+EU members do not recognise it) has no field: relations seed structurally, a bound.
 
 ## Rejected sources
 
@@ -433,6 +483,18 @@ curl -L -o "sources/owid/owid-co2-data.csv" \
   "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv"
 curl -L -o "sources/owid/owid-energy-data.csv" \
   "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv"
+
+# V4.11a2. The five NUTS does not cover: Natural Earth admin-1 (public domain, 40 MB),
+# the World Bank crude birth/death rates for the five's national natural change, and
+# Eurostat's energy-dependency table for Kosovo and Iceland.
+curl -L -o "sources/ne_10m_admin_1_states_provinces.geojson" \
+  "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_admin_1_states_provinces.geojson"
+for I in SP.DYN.CBRT.IN SP.DYN.CDRT.IN; do
+  curl -L -o "sources/wb/$I.json" \
+    "https://api.worldbank.org/v2/country/BIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
+done
+curl -L -o "sources/eurostat/nrg_ind_id_neighbours.json" \
+  "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_ind_id?format=JSON&lang=EN&geo=XK&geo=BA&geo=MD&geo=UA&geo=IS&siec=TOTAL"
 
 curl -L -o "sources/wb/EN.GHG.CO2.PC.CE.AR5.json" \
   "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/EN.GHG.CO2.PC.CE.AR5?format=json&date=2015%3A2024&per_page=2000"

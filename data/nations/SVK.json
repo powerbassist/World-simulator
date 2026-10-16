@@ -73,7 +73,7 @@
     },
     "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
     "pretender_person": "SVK_pal_ii",
-    "neighbours": ["CZE", "POL", "HUN"]
+    "neighbours": ["CZE", "HUN", "POL", "UKR"]
   },
   "fiscal": {
     "_source": "authored",

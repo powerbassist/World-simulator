@@ -74,7 +74,7 @@
     },
     "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. The modern state has never been a monarchy; the restored line is the house's invention, as MLT's is.",
     "pretender_person": "MKD_kiril_i",
-    "neighbours": ["ALB", "BGR", "GRC", "SRB"]
+    "neighbours": ["ALB", "BGR", "GRC", "SRB", "XKX"]
   },
   "fiscal": {
     "_source": "authored",

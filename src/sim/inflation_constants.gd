@@ -149,8 +149,10 @@ const INFLATION_MAX := 30.0
 ##
 ## V4.11 widened the ceiling 20 -> 40, and the reason is a measured regime, not a
 ## loosened check: the neighbourhood's euro-era (1999-2024) means are Turkey 23.4,
-## Belarus 34.8, Serbia 14.7 -- real high-inflation economies, which the window rule
-## (one window for every nation, Rule 1) cannot and should not re-cut. 40 still
-## refuses a percent-for-per-mille or hyperinflation-year download error.
+## Serbia 14.7, Belarus 18.5 -- real high-inflation economies, which the window rule
+## (one window for every nation, Rule 1) cannot and should not re-cut. (Belarus read
+## 34.8 until tools/import_data.py dropped hyperinflation years above 100 % from
+## every anchor -- its 1999 and 2000; the runtime clamp is 30.) 40 still refuses a
+## percent-for-per-mille download error.
 const ANCHOR_MIN := -2.0
 const ANCHOR_MAX := 40.0

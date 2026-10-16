@@ -27,8 +27,8 @@ func _init() -> void:
 	if spines.size() != edges.size():
 		_fail("spines %d != edges %d -- a region lost its principal city" % [spines.size(), edges.size()])
 
-	if edges.size() != 534:
-		_fail("the graph has %d edges, expected 534 (517 land + 17 sea)" % edges.size())
+	if edges.size() != 640:
+		_fail("the graph has %d edges, expected 640 (623 land + 17 sea)" % edges.size())
 
 	var sea := 0
 	for s in spines:

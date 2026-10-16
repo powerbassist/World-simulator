@@ -195,6 +195,16 @@ CORP_SUFFIX = {
             "Osiguruvanje", "Gradežništvo", "Logistika", "Zemjodelstvo", "Materijali"],
     "MNE": ["Industrija", "Grupa", "Trgovina", "Energija", "Saobraćaj",
             "Osiguranje", "Građevina", "Logistika", "Poljoprivreda", "Materijali"],
+    "BIH": ["Industrija", "Grupa", "Trgovina", "Energija", "Transport",
+            "Osiguranje", "Građevina", "Logistika", "Poljoprivreda", "Materijali"],
+    "UKR": ["Promyslovist", "Hrupa", "Torhivlia", "Enerhiia", "Transport",
+            "Strakhuvannia", "Budivnytstvo", "Lohistyka", "Ahro", "Materialy"],
+    "MDA": ["Industrie", "Grup", "Comerț", "Energie", "Transport",
+            "Asigurări", "Construcții", "Logistică", "Agricultură", "Materiale"],
+    "XKX": ["Industria", "Grupi", "Tregtia", "Energjia", "Transporti",
+            "Sigurimet", "Ndërtimi", "Logjistika", "Bujqësia", "Materialet"],
+    "BLR": ["Prom", "Hrupa", "Handal", "Enierhietyka", "Transpart",
+            "Strakhavannie", "Budaunitstva", "Lahistyka", "Ahra", "Materyialy"],
 }
 # A prefix a firm's named after -- a bank, a company (used for both tiers).
 CORP_PREFIX = {
@@ -235,6 +245,11 @@ CORP_PREFIX = {
     "ALB": ["Banka", "Shoqëria", "Shtëpia Tregtare"],
     "MKD": ["Banka", "Društvo", "Trgovska kuḱa"],
     "MNE": ["Banka", "Društvo", "Trgovačka kuća"],
+    "BIH": ["Banka", "Društvo", "Trgovačka kuća"],
+    "UKR": ["Bank", "Tovarystvo", "Torhovyi dim"],
+    "MDA": ["Bancă", "Companie", "Casă de comerț"],
+    "XKX": ["Banka", "Shoqëria", "Shtëpia Tregtare"],
+    "BLR": ["Bank", "Tavarystva", "Handlovy dom"],
 }
 
 TRAITS = ["ambitious", "loyal", "principled", "pragmatic", "vain", "stubborn",

@@ -74,7 +74,7 @@
     },
     "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Albania was a kingdom from 1928 to 1939; the restored monarch here is fictional.",
     "pretender_person": "ALB_gjergj_i",
-    "neighbours": ["GRC", "MKD", "MNE"]
+    "neighbours": ["GRC", "MKD", "MNE", "XKX"]
   },
   "fiscal": {
     "_source": "authored",

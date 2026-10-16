@@ -74,7 +74,7 @@
     },
     "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Montenegro was a kingdom from 1910 to 1918; the restored monarch here is fictional.",
     "pretender_person": "MNE_danilo_iii",
-    "neighbours": ["ALB", "HRV", "SRB"]
+    "neighbours": ["ALB", "BIH", "HRV", "SRB", "XKX"]
   },
   "fiscal": {
     "_source": "authored",

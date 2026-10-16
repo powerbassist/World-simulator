@@ -1,0 +1,164 @@
+{
+  "id": "MDA",
+  "name": "Moldova",
+  "geo_id": "MDA",
+  "capital": "Chișinău",
+  "playable": false,
+  "leader": {
+    "person": "MDA_ciobanu",
+    "title": "Prime Minister",
+    "party": "partidul_reformei"
+  },
+  "flag": {
+    "layout": "vertical",
+    "bands": ["#0046AE", "#FFD200", "#CC092F"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Parliament",
+      "assembly_seats": 101,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Closed-list national PR (D'Hondt) with a 5% threshold for parties and 7% for blocs, back from the 2019 mixed system. Elected 28 September 2025, so the next is due by autumn 2029. Electoral Code of Moldova; Wikipedia, '2025 Moldovan parliamentary election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2029,
+          "month": 9
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The President may dissolve Parliament only if no government is invested within 45 days after two requests, or if it is blocked for three months (Art. 85) -- the template's confidence_failure reads the government-formation trigger. Constitution of Moldova, Art. 85.",
+        "rule": "confidence_failure",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for four years since 2016 (two terms at most); re-elected in the November 2024 run-off, so the next falls in autumn 2028. Constitution of Moldova, Arts. 78, 80.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "MDA_lungu",
+      "term_years": 4,
+      "next": {
+        "year": 2028,
+        "month": 10
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 143: two thirds of the deputies, six months after the initiative; the provisions on sovereignty, independence, unity and permanent neutrality need a referendum (Art. 142). The template's two_thirds, the referendum tier read as optional. Constitution of Moldova, Arts. 141-143.",
+      "rule": "two_thirds",
+      "referendum": "optional",
+      "_referendum_note": "Art. 142(1)'s referendum is mandatory for the entrenched provisions only -- a split the field cannot carry. The 2024 EU-accession referendum amended the preamble by that route. Constitution of Moldova, Art. 142.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "Art. 142(2) forbids revisions that suppress rights; the form of government is amendable, as the 2000 move to an indirectly elected President and the 2016 return to a direct one show."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court reviews the constitutionality of laws (Arts. 134-140). Constitution of Moldova, Art. 135.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President designates a candidate after consulting the factions, and Parliament invests the government by a majority of elected deputies (Art. 98). A motion of censure carries with a majority of deputies (Art. 106), read as simple_present. Constitution of Moldova, Arts. 98, 106.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "MDA_ciobanu"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. The medieval Principality of Moldavia is the nearest crown; the restored line here is fictional.",
+    "pretender_person": "MDA_bogdan_iv",
+    "neighbours": ["ROU", "UKR"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/Ministry of Finance ~2024, rounded, on AUT.json's conventions. VAT 20% standard; corporate 12%; income 12% flat; capital gains 6% (half the gain taxed at 12%); no wealth tax. Revenue ~31% of GDP includes social contributions. Debt ~38% of GDP (end-2024). Pensions 9.5% is an ageing, emigrating population's heaviest line. Spending scaled to expenditure near 39% of GDP. The breakaway Transnistrian region is inside the territory and outside every figure here, the census and the budget's own boundary.",
+    "debt_to_gdp_pct": 38.0,
+    "tax_revenue_pct_gdp": 31.0,
+    "tax_rates_pct": {
+      "income": 12.0,
+      "corporate": 12.0,
+      "vat": 20.0,
+      "capital_gains": 6.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.0,
+      "education": 5.5,
+      "defence": 0.6,
+      "pensions": 9.5,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 15.5
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 2400000,
+    "gdp_eur_bn": 16.8,
+    "unemployment_pct": 1.4,
+    "sectors": {
+      "agriculture": 0.085,
+      "industry": 0.196,
+      "services": 0.719
+    },
+    "cohorts": {
+      "young_pct": 19.79,
+      "old_pct": 16.21,
+      "young_pct_per_yr": 0.173,
+      "old_pct_per_yr": 0.5,
+      "participation_pct": 74.26,
+      "pop_growth_pct": -1.827
+    },
+    "inequality": {
+      "gini_index": 26.8,
+      "gini_index_per_yr": -0.022,
+      "_year": 2024,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 2.682,
+      "growth_sd_pct": 9.387,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 10.589,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.929739,
+        "nuclear": 0.0,
+        "renewable": 0.070261
+      },
+      "import_dependency_pct": 85.123,
+      "kwh_per_capita": 2550.0,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 3.42,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 56.0
+    }
+  }
+}

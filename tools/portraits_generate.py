@@ -152,6 +152,11 @@ REGION = {
     "ALB": "western Balkan, olive skin, dark eyes",
     "MKD": "southern Balkan, olive skin, dark brown hair",
     "MNE": "Dinaric Balkan, fair to olive skin, tall build",
+    "BIH": "central Balkan, fair to olive skin, dark hair",
+    "UKR": "East Slavic, fair skin, light brown hair",
+    "MDA": "Bessarabian, fair to olive skin, dark eyes",
+    "XKX": "Albanian Balkan, olive skin, dark hair, sharp features",
+    "BLR": "East Slavic, fair skin, pale eyes, light hair",
 }
 
 ## 4b. Role, derived from the data that already owns the relationship -- the
