@@ -346,6 +346,7 @@ static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary
 	# tick's measured budget. target_terms() carries the same reasoning.
 	var sv: Dictionary = FP.stake_vector(state, actor_id)
 	var wbm: Dictionary = Trade.weights_before_measures(state, actor_id)
+	var even: float = FP.even_share(state, actor_id)
 
 	for target_id in ids:
 		if target_id == actor_id:
@@ -355,7 +356,7 @@ static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary
 		if offers.is_empty():
 			continue
 
-		var terms := FP.target_terms(state, actor_id, target_id, sv, wbm)
+		var terms := FP.target_terms(state, actor_id, target_id, sv, wbm, even)
 
 		for action in offers:
 			# Agreements between an AI and the PLAYER are out of scope, and the

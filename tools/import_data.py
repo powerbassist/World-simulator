@@ -2248,9 +2248,11 @@ def select_cities(region):
 
 ADMIN1_SOURCE = "ne_10m_admin_1_states_provinces.geojson"
 
-# The cross-source adjacency's two numbers (build_region_graph). 0.05 deg is about
-# 4-5 km at these latitudes -- the gap between GISCO's 1:10M and Natural Earth's
-# 1:10m drawings of one border. The hit count was SWEPT and checked against the
+# The cross-source adjacency's two numbers (build_region_graph). Vertices are
+# hashed into cells of ADJACENCY_TOL_DEG and compared over the 3x3 neighbourhood,
+# so a "hit" is a vertex within one to two cells -- roughly 0.05-0.1 deg, 4-10 km,
+# the gap between GISCO's 1:10M and Natural Earth's 1:10m drawings of one border.
+# The hit count was SWEPT on this exact test and checked against the
 # real map: at 3 and at 6 it admits five pairs that do not touch (Mazowieckie-
 # Brest, Kyiv City-Chernihiv, the Federation-Montenegro, Borsod-Zakarpattia,
 # North-West Romania-Chernivtsi), at 10 it admits none and keeps every real
@@ -2336,8 +2338,12 @@ def dissolve(polygons):
                 break
             ring.append(nxt)
             cur = nxt
-        if ring[-1] == a and len(ring) >= 4:
-            rings.append([list(p) for p in ring])
+        # A chain that does not close is a topology gap (a sliver, a rounding
+        # mismatch): silently dropping it would delete territory or open a
+        # phantom hole, so it stops the import instead.
+        if ring[-1] != a or len(ring) < 4:
+            sys.exit("dissolve: an open boundary chain of %d points from %s" % (len(ring), a))
+        rings.append([list(p) for p in ring])
     rings.sort(key=lambda r: -abs(_signed_area(r)))
     out = []
     for ring in rings:
@@ -2436,7 +2442,12 @@ def inject_admin1(populations, nuts):
                 if any(_point_in_polygon(lon, lat, p) for p in polys):
                     total += pop
             city_pop[code] = total
-        if all(code in ADMIN1_POPULATION for code in groups):
+        if nid in ADMIN1_NATIONS:
+            # The official table must cover every unit: falling back to the city
+            # share for one code would silently reinstate the measured bias.
+            missing = [code for code in groups if code not in ADMIN1_POPULATION]
+            if missing:
+                sys.exit(f"{nid}: ADMIN1_POPULATION carries no figure for {missing}")
             city_pop = {code: ADMIN1_POPULATION[code] for code in groups}
         named = sum(city_pop.values())
         if named <= 0:

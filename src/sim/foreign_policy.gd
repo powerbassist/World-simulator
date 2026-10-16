@@ -416,9 +416,11 @@ static func retaliation_fraction(state, imposer_id: String, target_id: String, c
 	var leverage: float = float(
 		iw.get(target_id, 0.0)
 	) / even_share_of(iw)
-	var exposure: float = float(
-		Trade.weights_before_measures(state, target_id).get(imposer_id, 0.0)
-	) / even_share(state, target_id)
+	# Numerator and yardstick from ONE vector, the target's before-measures one --
+	# leverage's own convention two lines up. (The first V4.11 cut divided by the
+	# post-measure even share, which disagrees whenever a measure is in force.)
+	var tw: Dictionary = Trade.weights_before_measures(state, target_id)
+	var exposure: float = float(tw.get(imposer_id, 0.0)) / even_share_of(tw)
 
 	# A nation that already resents you answers harder than its books alone would
 	# justify. The one place in this file where grievance is allowed to beat
@@ -690,7 +692,7 @@ static func desire(state, actor_id: String, effects: Dictionary, target_id: Stri
 ## The split is also where the API stops being about a verb: Diplomacy holds one
 ## of these per target and asks desire_from() about each action it has.
 static func target_terms(state, actor_id: String, target_id: String,
-		stake_vec: Dictionary = {}, actor_wbm: Dictionary = {}) -> Dictionary:
+		stake_vec: Dictionary = {}, actor_wbm: Dictionary = {}, actor_even: float = -1.0) -> Dictionary:
 	# The AI agenda scores ~28 targets per acting nation, and stake_vector() plus
 	# the actor's own before-measures weights do not vary across that loop --
 	# nothing mutates state between scoring and the execute() that follows it.
@@ -700,6 +702,9 @@ static func target_terms(state, actor_id: String, target_id: String,
 	# vector, inside retaliation_fraction -- stays built there.
 	var sv: Dictionary = stake_vec if not stake_vec.is_empty() else stake_vector(state, actor_id)
 	var aw: Dictionary = actor_wbm if not actor_wbm.is_empty() else Trade.weights_before_measures(state, actor_id)
+	# V4.11: the actor's even share is a third per-actor invariant (it reads the
+	# actor's whole trade vector), hoisted by the same caller for the same reason.
+	var even: float = actor_even if actor_even > 0.0 else even_share(state, actor_id)
 	return {
 		# How much this partner matters, as a MULTIPLIER on the opportunity rather
 		# than a term added to it. See _desire_parts() for why that distinction is
@@ -713,7 +718,7 @@ static func target_terms(state, actor_id: String, target_id: String,
 		# fourteen years, at all, while it sat comfortably above AGENDA_ACT_MIN the
 		# whole time. Being outranked forever is a different failure from being
 		# unreachable, and only the second one a bar can fix.
-		"stake_factor": pow(float(sv.get(target_id, 0.0)) / even_share(state, actor_id), K.AGENDA_STAKE_EXPONENT),
+		"stake_factor": pow(float(sv.get(target_id, 0.0)) / even, K.AGENDA_STAKE_EXPONENT),
 		"amity": amity(state, actor_id, target_id),
 		# Read BEFORE measures, for the reason docs/coercion-model.md gives at length
 		# and retaliation_fraction() already follows: what a hostile act destroys is

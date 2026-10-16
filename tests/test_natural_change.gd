@@ -86,7 +86,13 @@ func _check_the_content_is_measured() -> void:
 		if nation_id == "GBR":
 			if spread_min != 0.0 or spread_max != 0.0:
 				_fail("Britain carries a natural differential -- UKM publishes no rates, so the import's bound is zero everywhere")
-		elif list.size() > 1 and spread_max - spread_min <= 0.0 and not _is_proxy_shape(list):
+		elif list.size() > 1 and _is_proxy_shape(list):
+			# A proxy-shaped register carries ONE measured national rate in every
+			# region (the five non-NUTS neighbours, V4.11) -- assert that it does,
+			# rather than only excusing the missing spread.
+			if spread_max - spread_min > 0.0 or is_zero_approx(spread_max):
+				_fail("%s is proxy-shaped but its regions do not share one non-zero national rate (%f..%f)" % [nation_id, spread_min, spread_max])
+		elif list.size() > 1 and spread_max - spread_min <= 0.0:
 			# One region cannot spread against itself, which is Luxembourg's case and
 			# why the bound is read off the register's size rather than named: a
 			# nation with no spread and more than one region is either a broken
