@@ -2380,6 +2380,42 @@ ADMIN1_POPULATION = {
 
 _ADMIN1_FEATURES = {}
 
+# V4.11a2, measured by tools/frame_probe.gd: Natural Earth's 1:10m admin-1 carries
+# ten times GISCO 1:10M's vertex density (Ukraine alone 19 652 region vertices
+# against Germany's 1 617), and panning the map at the opening fit went from 51 to
+# 133 ms a frame. The DRAWN geometry (data/geo/regions.geojson) is simplified to
+# about GISCO's density; the city join and the adjacency read the full-resolution
+# polygons, so the register itself does not move.
+ADMIN1_SIMPLIFY_DEG = 0.02
+
+
+def simplify_ring(ring, tolerance):
+    """Douglas-Peucker on one closed ring; keeps at least four points."""
+    if len(ring) <= 8:
+        return ring
+    def dp(points):
+        (x1, y1), (x2, y2) = points[0][:2], points[-1][:2]
+        dx, dy = x2 - x1, y2 - y1
+        norm = (dx * dx + dy * dy) ** 0.5
+        best, index = 0.0, 0
+        for i in range(1, len(points) - 1):
+            px, py = points[i][:2]
+            if norm == 0.0:
+                dist = ((px - x1) ** 2 + (py - y1) ** 2) ** 0.5
+            else:
+                dist = abs(dy * px - dx * py + x2 * y1 - y2 * x1) / norm
+            if dist > best:
+                best, index = dist, i
+        if best <= tolerance:
+            return [points[0], points[-1]]
+        return dp(points[:index + 1])[:-1] + dp(points[index:])
+    # Split the closed ring at its far point so both halves are open polylines.
+    far = max(range(len(ring)), key=lambda i: (ring[i][0] - ring[0][0]) ** 2 + (ring[i][1] - ring[0][1]) ** 2)
+    out = dp(ring[:far + 1])[:-1] + dp(ring[far:])
+    if out[0] != out[-1]:
+        out.append(out[0])
+    return out if len(out) >= 4 else ring
+
 
 def _wb_value(code, nid):
     value = load_wb_indicator_for_year(code, YEAR).get(nid)
@@ -2652,8 +2688,12 @@ def build_region_geo(index):
     features = []
     for nid in NATIONS:
         for region in index[nid]["kept"]:
+            polygons = region["polygons"]
+            if region["id"] in _ADMIN1_FEATURES:
+                polygons = [[simplify_ring(ring, ADMIN1_SIMPLIFY_DEG) for ring in polygon]
+                            for polygon in polygons]
             kept = [[clean_ring(ring) for ring in polygon]
-                    for polygon in region["polygons"]]
+                    for polygon in polygons]
             features.append({
                 "type": "Feature",
                 "properties": {"id": region["id"], "nation": nid, "name": region["name"]},
