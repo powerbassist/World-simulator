@@ -56,6 +56,7 @@ func _run() -> void:
 	_check_world_geometry(loader, map)
 	_check_raster(map)
 	_check_projection_and_hit_test(map)
+	_check_outline_hover(map)
 	_check_pan_zoom(map)
 	_check_camera(map)
 	_check_layer_state(map)
@@ -235,6 +236,78 @@ func _check_projection_and_hit_test(map) -> void:
 		lon += 0.5
 	if grid_hits < 29:
 		_fail("grid found only %d nation-hitting points across 29 nations" % grid_hits)
+
+
+## V4.11c. An outline answers a HOVER through its own test and nothing else: no
+## nation hover, no click, and `_nation_at_lonlat` still never reads the outline
+## register -- "you cannot click Poland", restated for the block that made
+## outlines readable.
+func _check_outline_hover(map) -> void:
+	var outline_id := ""
+	var pt := Vector2.ZERO
+	var ids: Array = map._world_polygons.keys()
+	ids.sort()
+	for id in ids:
+		for ring: PackedVector2Array in map._world_polygons[id]:
+			if ring.size() < 50:
+				continue
+			var c := Vector2.ZERO
+			for q in ring:
+				c += q
+			c /= ring.size()
+			if Geometry2D.is_point_in_polygon(c, ring) and map._nation_at_lonlat(c) == "":
+				outline_id = id
+				pt = c
+				break
+		if outline_id != "":
+			break
+	if outline_id == "":
+		_fail("no outline ring with an inside centroid -- cannot test the outline hover")
+		return
+	if map._outline_at_lonlat(pt) != outline_id:
+		_fail("the outline test missed %s at its own centroid (got '%s')" % [outline_id, map._outline_at_lonlat(pt)])
+
+	var hovered: Array = []
+	var clicked: Array = []
+	var on_hover := func(id: String) -> void: hovered.append(id)
+	var on_click := func(id: String) -> void: clicked.append(id)
+	map.nation_hovered.connect(on_hover)
+	map.nation_clicked.connect(on_click)
+	var screen: Vector2 = map._lonlat_to_screen(pt.x, pt.y)
+	var move := InputEventMouseMotion.new()
+	move.position = screen
+	map._gui_input(move)
+	if map._hovered_outline != outline_id:
+		_fail("hovering %s set the outline hover to '%s'" % [outline_id, map._hovered_outline])
+	if map._hovered_id != "" or hovered.has(outline_id):
+		_fail("hovering the outline %s reached the nation hover" % outline_id)
+	map._gui_input(_mouse_event(MOUSE_BUTTON_LEFT, true, screen))
+	map._gui_input(_mouse_event(MOUSE_BUTTON_LEFT, false, screen))
+	if not clicked.is_empty():
+		_fail("a click on the outline %s emitted nation_clicked %s" % [outline_id, str(clicked)])
+
+	# A roster nation under the cursor wins: the readout never competes with one.
+	var fra: PackedVector2Array = map._polygons["FRA"][0]
+	var fc := Vector2.ZERO
+	for q in fra:
+		fc += q
+	fc /= fra.size()
+	move = InputEventMouseMotion.new()
+	move.position = map._lonlat_to_screen(fc.x, fc.y)
+	map._gui_input(move)
+	if map._hovered_outline != "":
+		_fail("over France the outline hover still read '%s'" % map._hovered_outline)
+	map.nation_hovered.disconnect(on_hover)
+	map.nation_clicked.disconnect(on_click)
+
+	var text := FileAccess.get_file_as_string("res://src/ui/map_view.gd")
+	var start := text.find("func _nation_at_lonlat")
+	var stop := text.find("
+func ", start + 1)
+	var body := text.substr(start, stop - start)
+	for forbidden in ["_world_polygons", "_outline_at_lonlat", "_ring_boxes_world"]:
+		if body.contains(forbidden):
+			_fail("_nation_at_lonlat() reads %s -- an outline would become clickable" % forbidden)
 
 
 func _check_pan_zoom(map) -> void:
