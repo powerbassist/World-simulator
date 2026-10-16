@@ -162,12 +162,14 @@ static func stake(state, a_id: String, b_id: String) -> float:
 ## gives: the normalisation reads all nine, so resolving one pair at a time inside
 ## a loop that is also moving relations would normalise some partners against this
 ## month's state and some against last month's.
-static func stake_vector(state, a_id: String) -> Dictionary:
+static func stake_vector(state, a_id: String, a_weights: Dictionary = {}) -> Dictionary:
 	var a = state.nations.get(a_id)
 	if a == null:
 		return {}
 
-	var trade: Dictionary = Trade.weights(state, a_id)
+	# A caller already holding A's live weights may pass them (third_party_effects
+	# reads the same vector for its own yardstick); empty means build-your-own.
+	var trade: Dictionary = a_weights if not a_weights.is_empty() else Trade.weights(state, a_id)
 	var even: float = even_share_of(trade)
 	var raw: Dictionary = {}
 	var total: float = 0.0
@@ -473,10 +475,12 @@ static func third_party_effects(state, actor_id: String, target_id: String, delt
 	for x_id in others:
 		if x_id == actor_id or x_id == target_id:
 			continue
-		var care: float = stake(state, x_id, target_id)
-		# The floor is X's own even share since V4.11 -- whether X notices is a
-		# question about X's attention, not the roster's size.
-		var x_even: float = even_share(state, x_id)
+		# One trade-vector build per observer, shared by its stake and its
+		# yardstick -- the floor is X's own even share since V4.11, because
+		# whether X notices is a question about X's attention, not the roster's.
+		var xw: Dictionary = Trade.weights(state, x_id)
+		var care: float = float(stake_vector(state, x_id, xw).get(target_id, 0.0))
+		var x_even: float = even_share_of(xw)
 		if care < x_even * K.THIRD_PARTY_MIN_STAKE_SHARE:
 			continue
 
