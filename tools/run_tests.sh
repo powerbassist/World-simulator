@@ -49,6 +49,7 @@ tests=(
   tests/test_roster.gd
   # V4.11b: the real endowments and the outline register, as content.
   tests/test_endowments.gd
+  tests/test_map_outlines.gd
   # V4.7a: the chiefs -- the firm->person edge and the executive stopgap's
   # schema state, registered at authoring time like everything above it.
   tests/test_chiefs.gd
