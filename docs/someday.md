@@ -227,7 +227,9 @@ all three together: (1) a player verb or world event that can cause a real world
 shortage; (2) clothing's creep attributed, so it cannot fire the hook by
 mistake; (3) `events_probe` E4/E5 ticking Commodities, with the hook's real
 arrival rate measured before it ships. Left open: clothing creeps from 1.04x to 1.27x base over 168 months,
-unattributed.
+unattributed. **V4.11b2 (2026-10-16):** real endowments bring the crossing forward,
+1.278x at month 96 (was ~160), with a manufactures wave near 1.13x around month 84 --
+[[commodities-model]] §8 as measured. Trigger (2) is further away, not closer.
 
 ### Same-month category collisions favour the early alphabet
 
@@ -280,6 +282,13 @@ measurement (the way pass 23 set the commodity pair from the category median).
   machine was built. V4.11b's real endowments are what one would stand on (the world
   pool's supply is now a price lever). **Trigger:** a block that gives the player a
   supply-side commodity verb.
+- **World production does not grow.** `W` (the world volume a natural good's shares
+  divide) reads authored figures only, so it is fixed at the start while every
+  economy's requirement grows. The likely cause of V4.11b2's manufactures wave at
+  month ~84 (unverified -- [[commodities-model]] §8 as measured). **Trigger:** the
+  first block that reads commodity prices into GDP or lets a shortage reach the
+  player; **fix shape:** grow `W` with world GDP (the outline register gains a trend,
+  or the roster's realised growth stands in), then re-run the probe.
 
 ## Carried from earlier blocks (pointers, not duplicates)
 

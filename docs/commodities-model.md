@@ -197,6 +197,13 @@ so the sweep that fixes it cannot be forgotten.
 - `tests/test_save_load.gd` — round-trip with every one of the seven keys
   moved off default; relative+absolute float tolerance measured in the
   comment; mutation-based aliasing pin.
+- `tests/test_endowments.gd` (V4.11b) — every natural good endowed and summing
+  to one, the outline register one-for-one with the map, Europe's roster share
+  of four imported goods under 0.10, Germany's steel made from imported ore, the
+  natural goods opening within 2 %, a pool cut moving lithium's price.
+- `tools/endowment_probe.gd` (V4.11b2, not a test) — §8's four bands on
+  `main.gd`'s month order, the Commodities tick time, the price-high crossings
+  and each good's peak; runs on a pre-V4.11b tree for the baseline.
 
 ## §8 V4.11 — real endowments and the world pool (clauses declared BEFORE the code, 2026-10-16)
 
@@ -255,3 +262,46 @@ outline relations (no reader — `someday`); an export-control verb (the tier's
 V4.6 lift was never built, and building it is its own block); manufactures
 crossing to the outlines (no measured source for outline manufacturing that the
 structure weights would not simply invent).
+
+### §8 as measured (V4.11b2, 2026-10-16)
+
+`tools/endowment_probe.gd` on `main.gd`'s month order, base `d6a24346` (before
+V4.11b) against the tip:
+
+| Band | Line | Measured | Verdict |
+|---|---|---|---|
+| (i) natural goods at month 1 | within ±2 % | worst 0.01 % (crude oil) | PASS |
+| (ii) EU-27 net import share at month 12 | ≥ 0.70 | lithium 0.991, rare earths 1.000, crude oil 0.987, nickel 1.000 | PASS |
+| (iii) 50 % pool cut for six months, from rest at month 12 | ≥ 1.25× | 1.75× (the clamp) for each of lithium, rare earths, nickel, crude oil, copper, uranium; over 1.25 in the cut's second month | PASS |
+| (iv) pinned at the clamp after 120 months | none | none | PASS |
+
+- **Band (i) is scoped to NATURAL goods, by measurement, not by tuning.** The
+  manufactures open off base (worst 3.8 % at month 1) as they did before this
+  block; §3b's drift record owns them.
+- **Band (ii) divides by HOLDINGS** (endowment plus net trade, what EU industry
+  processes). The b1 scratch read 1.12 by dividing by population demand, the
+  wrong yardstick.
+- **Band (iii) is a cliff, not a curve, at 50 %.** The pool supplies nearly all of
+  Europe's ore, so halving it is a world shortage near half, and any lasting gap
+  walks the price to the clamp. The dose rows grade it: lithium cut by 5 % reads
+  1.057× after six months, 10 % reads 1.117×, 20 % reads 1.255× (over the line in
+  the sixth month). A future supply verb has a usable range below ~20 %.
+- **The long run changed shape.** Base: every agricultural good drifts to 1.12×
+  and clothing to 1.20× by month 120, still rising; no price crosses 1.25×. Tip:
+  natural goods hold (none reaches 1.10×), a manufactures wave peaks near 1.13×
+  around month 84, and clothing crosses 1.25× once (1.278× at month 96, back to
+  1.202× by month 120) -- the one crossing of the `commodity_price_high` line,
+  seen by all 41 nations. Clothing's creep predates the block (it reached 1.27×
+  at month ~160 before); V4.11b moves its crossing from ~160 to 96. The wave's
+  cause is NOT isolated. The likely one, unverified: `W` is static (authored
+  figures) while economies grow, so world supply of natural goods stands still as
+  requirement rises -- recorded in [[someday]].
+- **No player-facing effect today.** The hook has no consumer (V4.4 pass 23
+  unbound its two events, and the author kept them unbound on 2026-10-14), and
+  value added feeds no GDP. The balance re-run (51 regimes, 168 months) came back
+  BYTE-IDENTICAL, base against tip, and V4.4's E4/E5 tables are identical with
+  every band PASSED (12.0 arrivals per term) -- though E4/E5's chain never ticks
+  Commodities, so their identity says nothing about this layer (someday's
+  re-bind trigger (3)).
+- **Tick:** `Commodities.tick_month` 40.1 → 46.5 ms mean (+16 %; the routing
+  pass and the pool), about 1.6 % of the 392 ms month.
