@@ -94,6 +94,24 @@ var regions: Dictionary = {}
 var commodity_goods: Dictionary = {}
 var commodity_recipes: Dictionary = {}
 
+## V4.11b. good id -> {producer id: share of WORLD production}, for the raw and agri
+## goods only; producers are nation ids, outline ids and WORLD_OTHER (what the
+## sources leave unnamed). Generated content (tools/endowments_generate.py,
+## docs/commodities-model.md section 8). EMPTY when the file is absent, and that
+## absence reads correctly: commodities.gd then sizes every capacity from sector
+## output exactly as it did before V4.11 -- which is what the commodity fixtures
+## that carry only goods and recipes rely on.
+var commodity_endowments: Dictionary = {}
+
+## V4.11b. outline id -> {"name": String, "gdp_eur_bn": float (-1.0 = unmeasured)}
+## for every country world.geojson draws that the roster does not simulate. The
+## REGISTER of the outline grade (src/core/roster.gd); its GDP is the one figure
+## an outline's commodity demand reads. No domestic model.
+var outlines: Dictionary = {}
+
+## The producer id the endowment file uses for the sources' unnamed remainder.
+const WORLD_OTHER := "WORLD_OTHER"
+
 ## nation id -> Array[Outlet], in authored file order. Absent for the same reason
 ## `companies` may be absent, and with a stronger consequence: a nation with no
 ## data/outlets/<ID>.json has NO press, so media.gd's per-bloc deviation is exactly
@@ -248,7 +266,7 @@ var region_graph: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world") -> void:
 	nations.clear()
 	parties.clear()
 	people.clear()
@@ -278,6 +296,8 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	org_proposals.clear()
 	commodity_goods.clear()
 	commodity_recipes.clear()
+	commodity_endowments.clear()
+	outlines.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -350,6 +370,8 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	# not been filled yet.
 	_load_commodity_goods(commodities_dir.path_join("goods.json"))
 	_load_commodity_recipes(commodities_dir.path_join("recipes.json"))
+	_load_commodity_endowments(commodities_dir.path_join("endowments.json"))
+	_load_outlines(world_dir.path_join("outlines.json"))
 
 	_validate_cross_file(geo_path, world_path)
 	_validate_amendments()
@@ -1376,6 +1398,90 @@ func _validate_commodities() -> void:
 		errors.append("data/commodities/goods.json defines no goods")
 	if commodity_recipes.is_empty():
 		errors.append("data/commodities/recipes.json defines no recipes")
+	_validate_endowments()
+
+
+## V4.11b. Both files may be absent (a fixture); a file that IS present must be a
+## partition per good over producers the registers know, covering every raw and
+## agri good -- a good it skipped would silently keep the synthetic capacity
+## beside real ones, and the world would stop balancing.
+func _load_commodity_endowments(path: String) -> void:
+	if not FileAccess.file_exists(path):
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(parsed) != TYPE_DICTIONARY or typeof((parsed as Dictionary).get("goods")) != TYPE_DICTIONARY:
+		errors.append("data/commodities/endowments.json: expected {\"goods\": {...}}")
+		return
+	var goods: Dictionary = (parsed as Dictionary)["goods"]
+	for good_id in goods.keys():
+		var entry = goods[good_id]
+		if typeof(entry) != TYPE_DICTIONARY or typeof((entry as Dictionary).get("shares")) != TYPE_DICTIONARY:
+			errors.append("endowments.json: %s has no shares object" % good_id)
+			continue
+		var shares := {}
+		for producer in (entry as Dictionary)["shares"].keys():
+			shares[String(producer)] = float((entry as Dictionary)["shares"][producer])
+		commodity_endowments[String(good_id)] = shares
+
+
+func _load_outlines(path: String) -> void:
+	if not FileAccess.file_exists(path):
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(parsed) != TYPE_DICTIONARY or typeof((parsed as Dictionary).get("outlines")) != TYPE_ARRAY:
+		errors.append("data/world/outlines.json: expected {\"outlines\": [...]}")
+		return
+	for entry in (parsed as Dictionary)["outlines"]:
+		if typeof(entry) != TYPE_DICTIONARY or String((entry as Dictionary).get("id", "")) == "":
+			errors.append("outlines.json: an entry has no id")
+			continue
+		var e: Dictionary = entry
+		var gdp = e.get("gdp_eur_bn", null)
+		outlines[String(e["id"])] = {
+			"name": String(e.get("name", "")),
+			"gdp_eur_bn": float(gdp) if gdp != null else -1.0,
+		}
+
+
+## The outline register against the map that draws it, one-for-one -- run from
+## _validate_cross_file(), the first place world.geojson is in hand.
+func _validate_outlines() -> void:
+	if outlines.is_empty():
+		return
+	for id in outlines.keys():
+		if not world_features.has(id):
+			errors.append("outlines.json: '%s' is not drawn by world.geojson" % id)
+		if nations.has(id):
+			errors.append("outlines.json: '%s' is a nation file too -- one grade per id" % id)
+	for id in world_features.keys():
+		if not outlines.has(id):
+			errors.append("world.geojson draws '%s' and outlines.json does not carry it" % id)
+
+
+func _validate_endowments() -> void:
+	if commodity_endowments.is_empty():
+		return
+	for good_id in commodity_goods.keys():
+		var category := String(commodity_goods[good_id].get("category", ""))
+		var natural := category == "raw" or category == "agri"
+		if natural and not commodity_endowments.has(good_id):
+			errors.append("endowments.json: raw/agri good '%s' has no endowment" % good_id)
+		if not natural and commodity_endowments.has(good_id):
+			errors.append("endowments.json: '%s' is %s, not raw or agri -- manufactures are made, not endowed" % [good_id, category])
+	for good_id in commodity_endowments.keys():
+		if not commodity_goods.has(good_id):
+			errors.append("endowments.json: '%s' is not a registered good" % good_id)
+			continue
+		var total := 0.0
+		for producer in commodity_endowments[good_id].keys():
+			var share := float(commodity_endowments[good_id][producer])
+			if share < 0.0 or share > 1.0:
+				errors.append("endowments.json: %s share of %s is %s, outside [0, 1]" % [producer, good_id, str(share)])
+			total += share
+			if producer != WORLD_OTHER and not nations.has(producer) and not outlines.has(producer):
+				errors.append("endowments.json: %s names producer '%s', neither a nation nor an outline" % [good_id, producer])
+		if absf(total - 1.0) > 1e-4:
+			errors.append("endowments.json: %s shares sum to %s, not 1" % [good_id, str(total)])
 
 
 ## data/energy-actions/*.json, _load_projects()'s shape. Per-entry validation lives
@@ -2227,6 +2333,7 @@ func _validate_cross_file(geo_path: String, world_path: String) -> void:
 			errors.append("%s.json: geo_id '%s' has no matching feature in %s" % [n.id, n.geo_id, geo_path])
 
 	_load_geo(world_path, world_features)
+	_validate_outlines()
 
 	for id in nations.keys():
 		var n = nations[id]

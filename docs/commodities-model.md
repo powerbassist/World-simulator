@@ -197,3 +197,61 @@ so the sweep that fixes it cannot be forgotten.
 - `tests/test_save_load.gd` — round-trip with every one of the seven keys
   moved off default; relative+absolute float tolerance measured in the
   comment; mutation-based aliasing pin.
+
+## §8 V4.11 — real endowments and the world pool (clauses declared BEFORE the code, 2026-10-16)
+
+Plan: `docs/superpowers/plans/2026-10-16-v4.11b-the-world-pool.md`. The author's
+call: REAL endowments for raw and agricultural goods, for every producer — the 41
+and the world's 133 outlines — traded through one world pool.
+
+**Why, measured.** At 41 nations every price sat at 1.00× base after 36 months:
+the world was balanced by construction, because each nation's capacity for every
+good — lithium ore and rare earths included — was its sector output times a
+structure weight, the same weight its demand reads. Europe "mined" lithium in
+proportion to its industry. A world pool added beside that could only glut.
+
+**Endowment.** For each good in categories `raw` and `agri`, a producer's capacity
+is `share[g][p] × W[g]`: `share` its fraction of WORLD production (content,
+`data/commodities/endowments.json`, generated from USGS / OWID / FAOSTAT), `W[g]`
+the world volume — the sum of every producer's REQUIREMENT for g. A roster
+nation's requirement is what its own industry processes: the pre-V4.11 capacity,
+sector output times the structure weight, read from AUTHORED figures for `W`.
+An outline's is its own GDP through the world sector mix and the same weight
+(`data/world/outlines.json`). The world therefore starts balanced at base prices
+(no opening shock); what changes is WHO makes it. `W` reads authored figures
+only, so capacity is a pure function of content: no state, no save field.
+
+> [!note] Corrected before the first commit (2026-10-16)
+> The first cut sized `W` and routed natural goods on each nation's
+> POPULATION-based want. Measured at month 1, Germany held exactly its want of
+> coal and ore, its coke and power plants took all the coal, and its steel
+> stopped -- an industrial nation processes more than its people's basket. The
+> requirement is what the recipes need, and with it a fully supplied nation
+> produces exactly what it did before V4.11.
+
+**The world pool.** The outlines aggregated: one seller and one buyer per good,
+carrying their summed shares (plus the sources' unnamed "other countries"
+remainder) and their summed demand. No per-outline state, no domestic model.
+
+**Order.** Raw and agri goods route FIRST, on REQUIREMENT minus endowment —
+roster sellers, then the pool, against roster buyers in sorted id order; the pool
+buys any roster surplus left — and
+downstream production then reads each nation's POST-TRADE holdings of raw and
+agri inputs, so steel can be made from imported ore. Manufactures and services
+route after production exactly as before (a closed roster market — a bound).
+
+**Bands, declared now and checked in V4.11b2:**
+
+- (i) the month-1 price vector within ±2 % of base for every good;
+- (ii) the EU-27's net import share of lithium ore, rare earths, crude oil and
+  nickel ore ≥ 0.70 at month 12 — Europe imports what it actually imports;
+- (iii) a six-month 50 % cut in the pool's supply of one good moves that good's
+  price to ≥ 1.25× base, the `commodity_price_high` hook's line — the observable
+  that makes the pool a foreign-policy surface;
+- (iv) no good pinned at the ±75 % clamp at rest after 120 months.
+
+**Refused, with reasons:** per-outline state (the tier: no domestic model);
+outline relations (no reader — `someday`); an export-control verb (the tier's
+V4.6 lift was never built, and building it is its own block); manufactures
+crossing to the outlines (no measured source for outline manufacturing that the
+structure weights would not simply invent).

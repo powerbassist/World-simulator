@@ -57,6 +57,13 @@ const PRICE_BAND := 0.75
 ## chain produced and not to a stock nothing maintains.
 const TRADE_RATE := 0.50
 
+## V4.11b. The share of its net position the WORLD POOL trades in a month: all of it.
+## TRADE_RATE's half-offer models one nation keeping a month's buffer; the pool is
+## the rest of the world clearing against Europe, and a half-rate pool would leave
+## Europe short of every good it imports by construction while the world price read
+## balanced. Argued, not swept -- docs/commodities-model.md section 8.
+const POOL_OFFER_RATE := 1.0
+
 ## Fixed-point iterations when deriving the recipe structure's weights. A FIXED
 ## count rather than a convergence test, so the answer cannot depend on a
 ## floating-point comparison. Measured: this register's graph is acyclic and

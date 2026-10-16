@@ -75,3 +75,19 @@ The generation recipe (`tools/portraits_generate.py` +
 it; the committed PNGs are the shipped artefact, and the recipe is how person
 seventy-two gets a portrait, not a claim the bytes are reproducible on another
 machine.
+
+## World production and the outline register (V4.11b)
+
+Raw-material and agricultural endowments in `data/commodities/endowments.json`:
+mine production from the U.S. Geological Survey, *Mineral Commodity Summaries 2025*
+(public domain), read through Our World in Data's minerals indicators (CC BY 4.0);
+coal, oil and gas production from Our World in Data's energy dataset (CC BY 4.0);
+crops, livestock and roundwood from FAOSTAT (Food and Agriculture Organization of
+the United Nations, datasets QCL and FO, accessed 2026-10-16, CC BY 4.0 under FAO's
+2025 open-data policy and its statistical-database terms of use); fish and seafood (capture and aquaculture) from the World Bank / FAO via
+Our World in Data (CC BY 4.0); uranium shares authored from the World Nuclear
+Association's 2024 mine-production figures (world-nuclear.org), cited as public facts.
+Outline GDP in `data/world/outlines.json` from World Bank Open Data (CC BY 4.0), Taiwan's
+from its Directorate-General of Budget, Accounting and Statistics; outline names from
+Natural Earth (public domain).
+

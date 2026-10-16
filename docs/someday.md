@@ -269,6 +269,18 @@ Authored for the hook's meaning and never measured against its real arrival rate
 balance_probe-style runs. **Fix shape:** per-hook likelihoods set from that
 measurement (the way pass 23 set the commodity pair from the category median).
 
+## Carried from V4.11b (2026-10-16)
+
+- **An outline relation.** The V4.11 brief gave every outline "a relation"; nothing in
+  the sim would read one -- outlines have no diplomacy, no agreements and no verbs aimed
+  at them -- so the author refused it for now (inert content). **Trigger:** the first
+  machine that acts on an outline (an export control against a supplier, a sanction on
+  the world pool, an agreement with a non-European partner).
+- **An export-control verb.** The V4 tier lists export controls as lifted to V4.6; no
+  machine was built. V4.11b's real endowments are what one would stand on (the world
+  pool's supply is now a price lever). **Trigger:** a block that gives the player a
+  supply-side commodity verb.
+
 ## Carried from earlier blocks (pointers, not duplicates)
 
 - **The 25 generated nations' majors are generator-owned** — hand-curating

@@ -139,11 +139,13 @@ const STATE_KEYS := [
 ## sectors above zero, so the zero is reached by a fixture or by a player-caused
 ## collapse and not by content.
 static func init_nation(ns, loader) -> void:
-	var structure: Dictionary = _loader_tables(loader)["structure"]
+	var tables: Dictionary = _loader_tables(loader)
+	var structure: Dictionary = tables["structure"]
+	var endowed: Dictionary = tables["endowed"]
 	var capacity: Dictionary = {}
 	for good_id in _goods(loader):
 		var good: Dictionary = loader.commodity_goods[good_id]
-		capacity[good_id] = _bucket(ns, good, structure) / float(good.base_price)
+		capacity[good_id] = _capacity_of(ns, good, structure, endowed)
 
 	ns.commodity_state = {
 		"capacity": capacity,
@@ -219,38 +221,71 @@ static func tick_month(state, loader) -> void:
 	# rather than once per nation -- the recipe table is static content and the
 	# per-nation loop below must not re-derive it 29 times.
 	var tables: Dictionary = _loader_tables(loader)
+	var endowed: Dictionary = tables["endowed"]
+	var natural: Dictionary = endowed.get("goods", {})
 
 	# 1-3. Capacity, demand, production -- per nation.
 	var produced := {}
 	var made := {}
 	var demanded := {}
+	var capacities := {}
+	var required := {}
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
 		var capacity: Dictionary = {}
 		var demand: Dictionary = {}
 		for good_id in ids:
 			var good: Dictionary = loader.commodity_goods[good_id]
-			capacity[good_id] = _bucket(ns, good, structure) / float(good.base_price)
+			capacity[good_id] = _capacity_of(ns, good, structure, endowed)
 			demand[good_id] = _want(ns, good, structure, world_sector_share, per_capita)
-		var out: Dictionary = _zeros(loader)
-		var gross: Dictionary = _zeros(loader)
-		# Last month's price vector, which is the one the nation's own register
-		# carries -- every nation's copy is the same numbers, so the route a
-		# nation picks cannot depend on which copy it read.
-		_produce(tables, capacity, ns.commodity_state["price"], out, gross)
-		produced[nation_id] = out
-		made[nation_id] = gross
+		capacities[nation_id] = capacity
 		demanded[nation_id] = demand
+		# What this nation's own industry processes of each natural good -- the
+		# pre-V4.11 capacity. Routing fills the gap between it and the endowment.
+		var need := {}
+		for good_id in natural.keys():
+			need[good_id] = _bucket(ns, loader.commodity_goods[good_id], structure) / float(loader.commodity_goods[good_id].base_price)
+		required[nation_id] = need
 
-	# 4. Trade, one good at a time: that good's surplus nations against its
-	# deficit nations, both in SORTED id order. The alternative -- Dictionary
-	# iteration order -- is the indeterminism the harness cannot see.
+	# V4.11b. NATURAL GOODS TRADE BEFORE ANYTHING IS MADE OF THEM. A nation's
+	# recipes draw only on what it holds, so with real endowments Europe's steel,
+	# fuels and electricity would stop the month its ore and crude became real --
+	# routing raw and agri goods first (roster sellers, then the world pool) lets
+	# imported ore become domestic steel. docs/commodities-model.md section 8.
 	var traded := {}
 	var spare_by_nation := {}
 	for nation_id in nation_ids:
 		traded[nation_id] = _zeros(loader)
 		spare_by_nation[nation_id] = _zeros(loader)
+	var pool_price: Dictionary = state.nations[nation_ids[0]].commodity_state["price"] if not nation_ids.is_empty() else {}
+	for good_id in natural.keys():
+		_route_natural(good_id, nation_ids, capacities, required, endowed, pool_price, loader, traded, spare_by_nation)
+
+	for nation_id in nation_ids:
+		var ns = state.nations[nation_id]
+		var capacity: Dictionary = capacities[nation_id]
+		# The recipes read POST-TRADE holdings of natural goods: what was mined
+		# here plus what came in, less what went out.
+		var holding: Dictionary = capacity.duplicate()
+		for good_id in natural.keys():
+			holding[good_id] = maxf(float(capacity[good_id]) + float(traded[nation_id][good_id]), 0.0)
+		var out: Dictionary = _zeros(loader)
+		var gross: Dictionary = _zeros(loader)
+		# Last month's price vector, which is the one the nation's own register
+		# carries -- every nation's copy is the same numbers, so the route a
+		# nation picks cannot depend on which copy it read.
+		_produce(tables, holding, ns.commodity_state["price"], out, gross)
+		produced[nation_id] = out
+		made[nation_id] = gross
+
+	# 4. Trade, one good at a time: that good's surplus nations against its
+	# deficit nations, both in SORTED id order. The alternative -- Dictionary
+	# iteration order -- is the indeterminism the harness cannot see.
 	for good_id in ids:
+		# Natural goods were routed before production (V4.11b); routing them again
+		# on post-production figures would trade the same ore twice.
+		if natural.has(good_id):
+			continue
 		var offered := {}
 		for nation_id in nation_ids:
 			var spare := float(produced[nation_id][good_id]) - float(demanded[nation_id][good_id])
@@ -300,6 +335,18 @@ static func tick_month(state, loader) -> void:
 	for good_id in ids:
 		var want_total := 0.0
 		var have_total := 0.0
+		if natural.has(good_id):
+			# The WORLD's gap for a natural good: every producer's endowment against
+			# every buyer's want, the pool's included -- read before trade, which only
+			# moves units between holders and cannot change the totals.
+			want_total = _pool_want(endowed, good_id, pool_price, loader)
+			have_total = float(endowed["pool_capacity"].get(good_id, 0.0))
+			for nation_id in nation_ids:
+				want_total += float(required[nation_id][good_id])
+				have_total += float(capacities[nation_id][good_id])
+			var g_natural := (want_total - have_total) / want_total if want_total > 0.0 else 0.0
+			gaps[good_id] = clampf(g_natural, -1.0, 1.0)
+			continue
 		for nation_id in nation_ids:
 			want_total += float(demanded[nation_id][good_id])
 			have_total += float(made[nation_id][good_id])
@@ -329,6 +376,10 @@ static func tick_month(state, loader) -> void:
 				ns.commodity_high_month = month_index
 			price[good_id] = next
 			value_added += float(produced[nation_id][good_id]) * next
+			# V4.11b: a natural good routed OUT before production left `produced`
+			# but was mined here -- its value stays with the nation that dug it.
+			if natural.has(good_id) and float(traded[nation_id][good_id]) < 0.0:
+				value_added -= float(traded[nation_id][good_id]) * next
 		ns.commodity_state["demand"] = demanded[nation_id]
 		# `output` is what `_produce` left standing, which is NET of the inputs
 		# this nation's own downstream recipes consumed -- and that is exactly what
@@ -435,6 +486,7 @@ static func _loader_tables(loader) -> Dictionary:
 		_cache_loader = loader
 		var tables: Dictionary = _static_tables(loader)
 		tables["structure"] = _structure(loader)
+		tables["endowed"] = _endowment_tables(loader, tables["structure"])
 		_cache_tables = tables
 	return _cache_tables
 
@@ -653,3 +705,134 @@ static func _zeros(loader) -> Dictionary:
 	for good_id in _goods(loader):
 		out[good_id] = 0.0
 	return out
+
+
+# --- V4.11b: real endowments and the world pool -----------------------------------
+# docs/commodities-model.md section 8. Everything here is a pure function of the
+# loader's content (authored nation figures, the outline register, the endowment
+# shares), memoised with the recipe tables, so it adds no state and no save field.
+
+## A good's capacity for one nation: its share of the WORLD's volume where the good
+## is endowed, its sector output times the structure weight otherwise.
+static func _capacity_of(ns, good: Dictionary, structure: Dictionary, endowed: Dictionary) -> float:
+	var good_id := String(good.id)
+	var natural: Dictionary = endowed.get("goods", {})
+	if natural.has(good_id):
+		return float(endowed["capacity"].get(String(ns.id), {}).get(good_id, 0.0))
+	return _bucket(ns, good, structure) / float(good.base_price)
+
+
+## {} when the loader carries no endowments (a fixture, or the pre-V4.11 model).
+## Otherwise: "goods" (the endowed set), "capacity" {nation: {good: units/month}},
+## "pool_capacity" and "pool_base_want" {good: units/month}.
+##
+## The WORLD VOLUME is the world's REQUIREMENT -- every roster nation's from its
+## AUTHORED sector output through `_bucket`'s own formula (what its industry
+## processes), every outline's from its own GDP through the world sector mix --
+## so the world opens balanced and the shares only decide who makes it.
+static func _endowment_tables(loader, structure: Dictionary) -> Dictionary:
+	var shares = loader.get("commodity_endowments")
+	if not (shares is Dictionary) or (shares as Dictionary).is_empty():
+		return {}
+	var nations: Dictionary = loader.nations
+	var nation_ids: Array = nations.keys()
+	nation_ids.sort()
+	var wss := _authored_sector_share(loader, nation_ids)
+	var outlines: Dictionary = loader.get("outlines") if loader.get("outlines") is Dictionary else {}
+	var outline_value := 0.0
+	for outline_id in outlines.keys():
+		outline_value += maxf(float(outlines[outline_id]["gdp_eur_bn"]), 0.0) * 1e9 / 12.0
+
+	var capacity := {}
+	for nation_id in nation_ids:
+		capacity[nation_id] = {}
+	var pool_capacity := {}
+	var pool_base_want := {}
+	var endowed_goods := {}
+	for good_id in (shares as Dictionary).keys():
+		if not loader.commodity_goods.has(good_id):
+			continue
+		var good: Dictionary = loader.commodity_goods[good_id]
+		var sector := String(CATEGORY_SECTOR.get(String(good.category), "industry"))
+		var weight := float(structure.get(good_id, 0.0)) / float(good.base_price)
+		var roster_need := 0.0
+		for nation_id in nation_ids:
+			var n = nations[nation_id]
+			roster_need += float(n.gdp_eur_bn) * 1e9 / 12.0 * float(n.sectors.get(sector, 0.0)) * weight
+		var outline_want := outline_value * float(wss.get(sector, 0.0)) * weight
+		var world := roster_need + outline_want
+		var good_shares: Dictionary = shares[good_id]
+		var pool_share := 0.0
+		for producer in good_shares.keys():
+			var s := float(good_shares[producer])
+			if nations.has(producer):
+				capacity[producer][good_id] = s * world
+			else:
+				pool_share += s
+		pool_capacity[good_id] = pool_share * world
+		pool_base_want[good_id] = outline_want
+		endowed_goods[good_id] = true
+	return {
+		"goods": endowed_goods,
+		"capacity": capacity,
+		"pool_capacity": pool_capacity,
+		"pool_base_want": pool_base_want,
+	}
+
+
+## The world pool's requirement for a good at this month's price, with `_want`'s
+## own price response -- the outlines buy less of what grew dear.
+static func _pool_want(endowed: Dictionary, good_id: String, price: Dictionary, loader) -> float:
+	var base := float(loader.commodity_goods[good_id].base_price)
+	var p := float(price.get(good_id, base))
+	return float(endowed["pool_base_want"].get(good_id, 0.0)) * pow(base / maxf(p, 1e-9), K.DEMAND_ELASTICITY)
+
+
+## One natural good across the roster and the pool. Roster sellers offer their
+## spare at TRADE_RATE to roster buyers first, in sorted id order; the pool then
+## SELLS its whole net surplus to whoever is still short, or BUYS what roster
+## sellers still offer up to its net shortfall. The pool trades its full net
+## position because it is the rest of the world clearing against Europe, not one
+## nation keeping a month's buffer (K.POOL_OFFER_RATE, argued at the constant).
+static func _route_natural(good_id: String, nation_ids: Array, capacities: Dictionary, required: Dictionary,
+		endowed: Dictionary, price: Dictionary, loader, traded: Dictionary, spare_by_nation: Dictionary) -> void:
+	var offered := {}
+	for nation_id in nation_ids:
+		var spare := float(capacities[nation_id][good_id]) - float(required[nation_id][good_id])
+		if spare > 0.0:
+			offered[nation_id] = spare * K.TRADE_RATE
+			spare_by_nation[nation_id][good_id] = spare
+	var pool_net := float(endowed["pool_capacity"].get(good_id, 0.0)) - _pool_want(endowed, good_id, price, loader)
+	var pool_offer := maxf(pool_net, 0.0) * K.POOL_OFFER_RATE
+	var pool_need := maxf(-pool_net, 0.0) * K.POOL_OFFER_RATE
+	for buyer in nation_ids:
+		var want := float(required[buyer][good_id]) - float(capacities[buyer][good_id])
+		if want <= 0.0:
+			continue
+		for seller in nation_ids:
+			if want <= 0.0:
+				break
+			if not offered.has(seller):
+				continue
+			var moved: float = minf(want, float(offered[seller]))
+			if moved <= 0.0:
+				continue
+			offered[seller] = float(offered[seller]) - moved
+			want -= moved
+			traded[seller][good_id] = float(traded[seller][good_id]) - moved
+			traded[buyer][good_id] = float(traded[buyer][good_id]) + moved
+		if want > 0.0 and pool_offer > 0.0:
+			var from_pool: float = minf(want, pool_offer)
+			pool_offer -= from_pool
+			traded[buyer][good_id] = float(traded[buyer][good_id]) + from_pool
+	for seller in nation_ids:
+		if pool_need <= 0.0:
+			break
+		if not offered.has(seller):
+			continue
+		var sold: float = minf(pool_need, float(offered[seller]))
+		if sold <= 0.0:
+			continue
+		offered[seller] = float(offered[seller]) - sold
+		pool_need -= sold
+		traded[seller][good_id] = float(traded[seller][good_id]) - sold

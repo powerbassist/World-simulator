@@ -369,6 +369,68 @@ reads 1.4 % (ILO-modelled) and is taken as published. Belarus's inflation anchor
 34.8 %/yr, inside the widened `ANCHOR_MAX`. Kosovo's contested status (Serbia and five
 EU members do not recognise it) has no field: relations seed structurally, a bound.
 
+### V4.11b — world production (real endowments) and the outline register
+
+**Why the block needed it** is in [[commodities-model]] §8: the closed 41-nation world
+balanced by construction, every nation "mining" every raw good in proportion to its
+industry. `tools/endowments_generate.py` writes two generated files from the sources
+below: `data/commodities/endowments.json` (each producer's SHARE of world production
+of each raw and agri good -- shares only, the volume is sized from requirement in the
+machine) and `data/world/outlines.json` (each of the 133 outlines' name and GDP).
+
+**Sources, and the routes taken when the first choice failed:**
+
+- **Metals -- USGS Mineral Commodity Summaries 2025** (public domain). ScienceBase,
+  its own host, answered Cloudflare error 1033 and pubs.usgs.gov 502/530 on
+  2026-10-16, so the same figures were read from **Our World in Data's minerals
+  indicators** (CC BY 4.0; ids 1131083 bauxite, 1131096 copper, 1131114 iron ore
+  iron content, 1131119 lithium, 1131129 nickel, 1131149 rare earths -- mine
+  production, 2024, with USGS's own world total and "Other countries").
+- **Coal, oil, gas** -- Our World in Data energy (cached since V4.11a), production in TWh.
+- **Crops, livestock, roundwood** -- FAOSTAT bulk QCL (items 1717 cereals primary,
+  1765 meat total, 1780 milk total, 1735 vegetables primary, 564 wine, 1723 sugar
+  crops primary, 328 seed cotton) and FO (1861 roundwood); CC BY 4.0 under FAO's
+  2025 open-data policy and its terms of use. FAOSTAT carries no fisheries series.
+- **Fish** -- World Bank / FAO capture plus aquaculture, via Our World in Data.
+- **Uranium** -- no clean public source (USGS MCS excludes it). The World Nuclear
+  Association's 2024 mine-production table, AUTHORED in the generator as public
+  facts with the citation (the author's call: WNA's reuse policy was not readable).
+- **Outline GDP** -- World Bank `NY.GDP.MKTP.CD`, latest year 2019-2024; **Taiwan**
+  (absent from the World Bank) authored from DGBAS, USD 781 bn 2024. Ten outlines
+  carry no GDP at any year -- ATA, ATF, CYN, ERI, FLK, PRK, SAH, SDS (the World Bank
+  carries no South Sudan GDP in the window), SOL, YEM -- and make demand nowhere: a bound.
+
+**Bounds recorded with their numbers:**
+
+- **Rare earths**: USGS rounds the world to 390 000 t while its countries add to
+  more; the denominator is their sum, so "other" is 0.0 (the generator says so).
+- Natural Earth codes South Sudan `SDS` and Western Sahara `SAH`; the generator maps
+  them to ISO `SSD`/`ESH` for the source joins.
+- A producer a source does not list reads **zero**, never a guess; the unnamed
+  remainder belongs to the world pool (`WORLD_OTHER`), never spread over the roster.
+
+| Good | Source | Year | Roster share | Unnamed |
+|---|---|---|---|---|
+| `bauxite` | USGS MCS 2025 via OWID indicator 1131083 | 2024 | 0.010 | 0.012 |
+| `cereals` | FAOSTAT QCL item 1717 | 2024 | 0.126 | 0.000 |
+| `coal` | OWID energy coal_production | 2024 | 0.023 | 0.015 |
+| `copper_ore` | USGS MCS 2025 via OWID indicator 1131096 | 2024 | 0.018 | 0.133 |
+| `cotton` | FAOSTAT QCL item 328 | 2024 | 0.032 | 0.011 |
+| `crude_oil` | OWID energy oil_production | 2024 | 0.028 | 0.013 |
+| `dairy` | FAOSTAT QCL item 1780 | 2024 | 0.220 | 0.009 |
+| `fish` | World Bank/FAO capture + aquaculture via OWID | 2024 | 0.049 | 0.013 |
+| `iron_ore` | USGS MCS 2025 via OWID indicator 1131114 | 2024 | 0.036 | 0.049 |
+| `lithium_ore` | USGS MCS 2025 via OWID indicator 1131119 | 2024 | 0.002 | 0.019 |
+| `meat` | FAOSTAT QCL item 1765 | 2024 | 0.151 | 0.003 |
+| `natural_gas` | OWID energy gas_production | 2024 | 0.046 | 0.026 |
+| `nickel_ore` | USGS MCS 2025 via OWID indicator 1131129 | 2024 | 0.000 | 0.093 |
+| `rare_earths` | USGS MCS 2025 via OWID indicator 1131149 | 2024 | 0.000 | 0.000 |
+| `sugar` | FAOSTAT QCL item 1723 | 2024 | 0.078 | 0.004 |
+| `timber` | FAOSTAT FO item 1861 (roundwood) | 2024 | 0.150 | 0.002 |
+| `uranium_ore` | World Nuclear Association 2024 (authored) | 2024 | 0.005 | 0.003 |
+| `vegetables` | FAOSTAT QCL item 1735 | 2024 | 0.084 | 0.001 |
+| `wine` | FAOSTAT QCL item 564 | 2023 | 0.612 | 0.000 |
+
 ## Rejected sources
 
 ### OpenStreetMap
@@ -495,6 +557,22 @@ for I in SP.DYN.CBRT.IN SP.DYN.CDRT.IN; do
 done
 curl -L -o "sources/eurostat/nrg_ind_id_neighbours.json" \
   "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_ind_id?format=JSON&lang=EN&geo=XK&geo=BA&geo=MD&geo=UA&geo=IS&siec=TOTAL"
+
+# V4.11b. World production and the outline register (tools/endowments_generate.py).
+# Metals: USGS MCS 2025 via Our World in Data's indicator API (ScienceBase was down).
+mkdir -p sources/owid/minerals sources/fao sources/wb_world
+for ID in 1131083 1131096 1131114 1131119 1131129 1131149; do
+  curl -L -o "sources/owid/minerals/$ID.data.json" "https://api.ourworldindata.org/v1/indicators/$ID.data.json"
+  curl -L -o "sources/owid/minerals/$ID.metadata.json" "https://api.ourworldindata.org/v1/indicators/$ID.metadata.json"
+done
+curl -L -o "sources/owid/capture-fisheries-vs-aquaculture.csv" \
+  "https://ourworldindata.org/grapher/capture-fisheries-vs-aquaculture.csv?v=1&csvType=full&useColumnShortNames=true"
+curl -L -o "sources/fao/Production_Crops_Livestock_E_All_Data_(Normalized).zip" \
+  "https://bulks-faostat.fao.org/production/Production_Crops_Livestock_E_All_Data_(Normalized).zip"
+curl -L -o "sources/fao/Forestry_E_All_Data_(Normalized).zip" \
+  "https://bulks-faostat.fao.org/production/Forestry_E_All_Data_(Normalized).zip"
+curl -L -o "sources/wb_world/NY.GDP.MKTP.CD.json" \
+  "https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD?format=json&date=2019%3A2024&per_page=20000"
 
 curl -L -o "sources/wb/EN.GHG.CO2.PC.CE.AR5.json" \
   "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/EN.GHG.CO2.PC.CE.AR5?format=json&date=2015%3A2024&per_page=2000"

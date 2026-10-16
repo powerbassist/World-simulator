@@ -8,12 +8,14 @@ extends RefCounted
 ## the runtime `has_budget` gate, which is why "simulated" needs no machine.
 
 
-## "playable" / "simulated" for a nation file, "outline" for a world-register
+## "playable" / "simulated" for a nation file, "outline" for an outline-register
 ## country, "" for anything else.
 static func grade(loader, id: String) -> String:
 	var nation = loader.nations.get(id, null)
 	if nation != null:
 		return "playable" if nation.playable else "simulated"
-	if loader.world_features.has(id):
+	# V4.11b: the outline REGISTER (data/world/outlines.json), which the loader
+	# pins to world.geojson's drawn set one-for-one.
+	if loader.outlines.has(id):
 		return "outline"
 	return ""
