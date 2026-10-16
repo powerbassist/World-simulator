@@ -1,6 +1,6 @@
 {
   "_source": "authored",
-  "_note": "The alliance. AUT is a member of the EU and of NATO in the real world only by partnership -- here, as in fact, it is neutral and stays out; CHE is neutral twice over. GBR is the point of the register: a full member here and outside the EU, which the one hardcoded bloc object could not say. council: false in track (a) -- the org register and its membership land first, the council and its agenda (the 2 percent defence floor, moved here from the EU's proposal list where it never quite belonged) land with the fights and content in track (b). Bonuses zero-priced on the eurozone.json reasoning. The accession and withdrawal positions are MEASURED, not felt: Referendum.yes_share() was swept over the two-axis grid at a neutral-approval new-game, and every authored question sits 0.010-0.023 above the strict majority at rest -- winnable by a president the country does not hate, losable by one it does (INCUMBENT_SWING moves both ways), because a membership vote no electorate could ever pass is not a fight, it is a locked door. Council: true from track (b), with the 2 percent defence floor moved here from the EU's proposal list where it never quite belonged -- the pledge is the alliance's. The seat weights are AUTHORED and population-shaped (roughly population in millions): NATO decides by consensus in reality and has no seats; the game's council machinery needs weights, and an invented weight is a number content carries, not one code guesses. The eu agenda ran 6 proposals at V3.2. Since V4.5b it runs 20, with this council's own book of six beside it (data/bloc-proposals/). V4.5b: decision_rule unanimity and NO presidency -- the alliance has no rotating chair (the Secretary General chairs the North Atlantic Council) and decides by consensus, so every proposal here is one any single member can stop; the seat weights above still price favours and lobbying, never the count. Gate G1 of V4.5b's content plan, which asks every big council for a row that carries without France and an abstention window among its qmr rows, is WAIVED here as a structural bound (author's call, 2026-10-15). Under consensus France's \"against\" is a veto, so no row can carry without her, and there are no qmr rows.",
+  "_note": "The alliance. AUT is a member of the EU and of NATO in the real world only by partnership -- here, as in fact, it is neutral and stays out; CHE is neutral twice over. GBR is the point of the register: a full member here and outside the EU, which the one hardcoded bloc object could not say. council: false in track (a) -- the org register and its membership land first, the council and its agenda (the 2 percent defence floor, moved here from the EU's proposal list where it never quite belonged) land with the fights and content in track (b). Bonuses zero-priced on the eurozone.json reasoning. The accession and withdrawal positions are MEASURED, not felt: Referendum.yes_share() was swept over the two-axis grid at a neutral-approval new-game, and every authored question sits 0.010-0.023 above the strict majority at rest -- winnable by a president the country does not hate, losable by one it does (INCUMBENT_SWING moves both ways), because a membership vote no electorate could ever pass is not a fight, it is a locked door. Council: true from track (b), with the 2 percent defence floor moved here from the EU's proposal list where it never quite belonged -- the pledge is the alliance's. The seat weights are AUTHORED and population-shaped (roughly population in millions): NATO decides by consensus in reality and has no seats; the game's council machinery needs weights, and an invented weight is a number content carries, not one code guesses. The eu agenda ran 6 proposals at V3.2. Since V4.5b it runs 20, with this council's own book of six beside it (data/bloc-proposals/). V4.5b: decision_rule unanimity and NO presidency -- the alliance has no rotating chair (the Secretary General chairs the North Atlantic Council) and decides by consensus, so every proposal here is one any single member can stop; the seat weights above still price favours and lobbying, never the count. Gate G1 of V4.5b's content plan, which asks every big council for a row that carries without France and an abstention window among its qmr rows, is WAIVED here as a structural bound (author's call, 2026-10-15). Under consensus France's \"against\" is a veto, so no row can carry without her, and there are no qmr rows. V4.11: the neighbourhood seats six more -- NOR, ISL, TUR, ALB, MKD, MNE -- on the same population rule, which makes Turkey (85) the heaviest seat in the alliance; under consensus the weight prices favours and lobbying, never the count. They are AI members: V4.5's ratification runs only for the player's nation, so a neighbour votes by appraisal and is never ratified at home.",
   "id": "nato",
   "name": "NATO",
   "summary": "The Atlantic alliance. An attack on one is an attack on all -- on paper, and in the domestic politics of every cabinet that has to pay for it.",
@@ -76,6 +76,24 @@
     },
     "GBR": {
       "seats": 69
+    },
+    "NOR": {
+      "seats": 6
+    },
+    "ISL": {
+      "seats": 1
+    },
+    "TUR": {
+      "seats": 85
+    },
+    "ALB": {
+      "seats": 2
+    },
+    "MKD": {
+      "seats": 2
+    },
+    "MNE": {
+      "seats": 1
     }
   },
   "council": true,

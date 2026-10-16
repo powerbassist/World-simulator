@@ -1,0 +1,289 @@
+{
+  "people": [
+    {
+      "id": "SRB_petrovic",
+      "name": "Dragan Petrović",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SRB_radovanovic",
+      "name": "Nenad Radovanović",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.9,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SRB_lazic",
+      "name": "Jelena Lazić",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "fervent"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SRB_nikolic",
+      "name": "Zoran Nikolić",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "networked"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SRB_markovic",
+      "name": "Vuk Marković",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SRB_stankovic",
+      "name": "Milan Stanković",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "fervent"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SRB_kovacs",
+      "name": "Ferenc Kovács",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "loyal"
+      ],
+      "ambition": 0.35,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SRB_mihailo_ii",
+      "name": "Mihailo II",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "ambitious"
+      ],
+      "ambition": 0.65,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "SRB_chief_grujic_osiguranje",
+      "name": "Uroš Grujić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_crnobrnja",
+      "name": "Predrag Crnobrnja",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_banka_zivkovic",
+      "name": "Dejan Živković",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_novakovic_trgovina",
+      "name": "Ivan Novaković",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.49,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_drustvo_simic",
+      "name": "Goran Simić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_banka_vukovic",
+      "name": "Jasmina Vuković",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_vukovic",
+      "name": "Miroslav Vuković",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_trgovacka_kuca_pavlovic",
+      "name": "Dejan Pavlović",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_milenkovic_transport",
+      "name": "Vladimir Milenković",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_trgovacka_kuca_ristic",
+      "name": "Bojan Ristić",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "SRB_chief_ilic",
+      "name": "Nada Ilić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.57,
+      "bench": true
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+{
+  "people": [
+    {
+      "id": "MKD_trajkovski",
+      "name": "Goran Trajkovski",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.74,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MKD_stojanov",
+      "name": "Vesna Stojanova",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "networked"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MKD_selimi",
+      "name": "Arbër Selimi",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MKD_bajrami",
+      "name": "Driton Bajrami",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "ambitious"
+      ],
+      "ambition": 0.62,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MKD_ristovski",
+      "name": "Aleksandar Ristovski",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MKD_nikolovski",
+      "name": "Marko Nikolovski",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "pragmatic"
+      ],
+      "ambition": 0.48,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MKD_angelovska",
+      "name": "Elena Angelovska",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "loyal"
+      ],
+      "ambition": 0.32,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MKD_kiril_i",
+      "name": "Kiril I",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "principled"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MKD_chief_trgovska_kuka_janevski",
+      "name": "Tanja Janevski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.81,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_trgovska_kuka_spasovski",
+      "name": "Zoran Spasovski",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_jovanovski_trgovija",
+      "name": "Petar Jovanovski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_ilievski_grupa",
+      "name": "Petar Ilievski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_trgovska_kuka_dimovski",
+      "name": "Blagoja Dimovski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_uzunov_osiguruvanje",
+      "name": "Kiril Uzunov",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.78,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_banka_mitrevski",
+      "name": "Dimitar Mitrevski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.3,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_banka_blazevski",
+      "name": "Tanja Blaževski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_spasovski",
+      "name": "Zoran Spasovski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_drustvo_kocevski",
+      "name": "Trajče Kocevski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "MKD_chief_bojadziev_logistika",
+      "name": "Trajče Bojadžiev",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.74,
+      "bench": true
+    }
+  ]
+}

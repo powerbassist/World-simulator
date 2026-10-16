@@ -1,0 +1,164 @@
+{
+  "id": "ALB",
+  "name": "Albania",
+  "geo_id": "ALB",
+  "capital": "Tirana",
+  "playable": false,
+  "leader": {
+    "person": "ALB_dushku",
+    "title": "Prime Minister",
+    "party": "partia_e_rilindjes"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#E41E20", "#000000", "#E41E20"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Kuvendi",
+      "assembly_seats": 140,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Regional-list PR in twelve counties, D'Hondt, with a 1% national threshold since the 2024 electoral-code change; reduced to national D'Hondt. Elected 11 May 2025 for four years, so the next is due by spring 2029. Electoral Code of Albania; Wikipedia, '2025 Albanian parliamentary election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2029,
+          "month": 5
+        },
+        "threshold_pct": 1.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The President dissolves the Kuvendi only when it fails to elect a Prime Minister (Art. 96) or by its own two-thirds decision to dissolve (Art. 65(2)) -- the nearest template reading is confidence_failure, the self-dissolution route recorded here. Constitution of Albania, Arts. 65, 96.",
+        "rule": "confidence_failure",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, elected by the Kuvendi for five years (a single re-election allowed); elected June 2022 and sworn in July, so the next falls in July 2027. Ceremonial. Constitution of Albania, Arts. 86-89.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "ALB_dervishi",
+      "term_years": 5,
+      "next": {
+        "year": 2027,
+        "month": 7
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 177: two thirds of all deputies; one fifth of them may ask that an approved amendment go to referendum, which then decides it. Constitution of Albania, Art. 177.",
+      "rule": "two_thirds",
+      "referendum": "optional",
+      "_referendum_note": "The referendum is triggered by a fifth of the deputies (Art. 177(4)), FRA's optional-stage shape in a parliamentary key. Constitution of Albania, Art. 177.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "No eternity clause; the 1998 constitution itself was adopted by referendum and has been amended by the Art. 177 route (2008, 2016)."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court reviews the constitutionality of laws (Arts. 124-134), rebuilt after the 2016 justice-reform vetting. Constitution of Albania, Art. 131.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President nominates the Prime Minister from the majority and the Kuvendi approves him by a majority of all deputies (Art. 96). No-confidence is CONSTRUCTIVE: a motion carries only by electing a successor with a majority of all members (Art. 105) -- the template's constructive_absolute reads it exactly. Constitution of Albania, Arts. 96, 105.",
+      "method": "investiture",
+      "censure": "constructive_absolute",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "ALB_dushku"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Albania was a kingdom from 1928 to 1939; the restored monarch here is fictional.",
+    "pretender_person": "ALB_gjergj_i",
+    "neighbours": ["GRC", "MKD", "MNE"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/Ministry of Finance ~2024, rounded, on AUT.json's conventions. VAT 20% standard; corporate 15%; income 13 is the middle band of the 0/13/23 wage schedule; capital gains 15%; no wealth tax. Revenue ~27% of GDP includes social contributions. Debt ~56% of GDP (end-2024). Spending scaled to expenditure near 30% of GDP; defence 1.8% on the path to NATO's 2%.",
+    "debt_to_gdp_pct": 56.0,
+    "tax_revenue_pct_gdp": 27.0,
+    "tax_rates_pct": {
+      "income": 13.0,
+      "corporate": 15.0,
+      "vat": 20.0,
+      "capital_gains": 15.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 2.8,
+      "education": 2.6,
+      "defence": 1.8,
+      "pensions": 5.5,
+      "infrastructure": 4.0
+    },
+    "other_spending_pct_gdp": 13.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 2400000,
+    "gdp_eur_bn": 24.9,
+    "unemployment_pct": 10.7,
+    "sectors": {
+      "agriculture": 0.179,
+      "industry": 0.259,
+      "services": 0.562
+    },
+    "cohorts": {
+      "young_pct": 16.84,
+      "old_pct": 16.92,
+      "young_pct_per_yr": -0.239,
+      "old_pct_per_yr": 0.487,
+      "participation_pct": 76.16,
+      "pop_growth_pct": -1.531
+    },
+    "inequality": {
+      "gini_index": 29.4,
+      "gini_index_per_yr": -0.68,
+      "_year": 2020,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 2.153,
+      "growth_sd_pct": 7.535,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.536,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.0,
+        "nuclear": 0.0,
+        "renewable": 1.0
+      },
+      "import_dependency_pct": 29.062,
+      "kwh_per_capita": 2986.4,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2021,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2024,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 1.79,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 56.9
+    }
+  }
+}

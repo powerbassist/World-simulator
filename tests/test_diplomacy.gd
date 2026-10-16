@@ -171,14 +171,16 @@ func _check_key_is_canonical() -> void:
 		_failures.append("Relations.other() did not return the far side of the pair")
 
 
-## Twenty-nine nations is 406 unordered pairs (the ten-era figure was 45, and
-## the number is the pin: a count this load-bearing is re-measured, not
-## relaxed, when the roster grows). A missing pair would read as 0.0 -- the
-## WORST relations -- so "every pair exists" is a real invariant, not a count.
+## n nations is n(n-1)/2 unordered pairs (45 in the ten era, 406 at V3.3's 29).
+## V4.11 derives the figure from the roster rather than pinning it: the roster
+## now grows in tranches, and the invariant is "every pair, once", which the
+## formula states and a literal only copies. A missing pair would read as 0.0
+## -- the WORST relations -- so "every pair exists" is a real invariant.
 func _check_every_pair_seeded() -> void:
 	var expected: int = Relations.all_pairs(_loader.nations.keys()).size()
-	if expected != 406:
-		_failures.append("expected 406 pairs over twenty-nine nations, all_pairs gave %d" % expected)
+	var n: int = _loader.nations.size()
+	if expected != n * (n - 1) / 2:
+		_failures.append("expected %d pairs over %d nations, all_pairs gave %d" % [n * (n - 1) / 2, n, expected])
 	if _state.relations.size() != expected:
 		_failures.append("seed_relations left %d pairs, expected %d" % [_state.relations.size(), expected])
 	for pair in Relations.all_pairs(_loader.nations.keys()):

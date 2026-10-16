@@ -125,8 +125,8 @@ func _check_legend_key_samples() -> void:
 
 
 func _check_geometry(loader) -> void:
-	if loader.geo_features.size() != 29:
-		_fail("expected geometry for 29 features, loaded %d" % loader.geo_features.size())
+	if loader.geo_features.size() != loader.nations.size():
+		_fail("expected geometry for %d features, loaded %d" % [loader.nations.size(), loader.geo_features.size()])
 	for id in loader.nations.keys():
 		var n = loader.nations[id]
 		var polys: Array = loader.geo_features.get(n.geo_id, [])
@@ -154,12 +154,14 @@ func _check_world_geometry(loader, map) -> void:
 		if loader.world_features.has(geo_id):
 			_fail("%s is in both europe.geojson and world.geojson; it would be drawn twice" % geo_id)
 
-	# Oslo. Inside Norway, which the game renders and does not simulate. (This
-	# point was Warsaw through the ten-nation era, because Poland itself was
-	# backdrop then; V3.3's roster made Poland a nation and the negative case
-	# moved north with it.)
-	var oslo: Vector2 = map._lonlat_to_screen(10.75, 59.9)
-	var hit: String = map.nation_at_screen_point(oslo)
+	# Kaliningrad. Inside Russia's exclave, which the game renders and does not
+	# simulate. (This point was Warsaw through the ten-nation era and Oslo from
+	# V3.3; each roster growth made the old probe a nation, and V4.11's
+	# neighbourhood took Norway. The exclave is the strongest negative case left:
+	# on screen at the opening fit and walled in by POL and LTU, so a hit-test
+	# that leaked a neighbour's ring across the border would fire here.)
+	var outside: Vector2 = map._lonlat_to_screen(20.51, 54.71)
+	var hit: String = map.nation_at_screen_point(outside)
 	if hit != "":
 		_fail("a point inside a non-simulated country hit-tested as '%s'" % hit)
 
@@ -421,7 +423,7 @@ func _check_roads_staged() -> bool:
 			# THE CULL IS ASSERTED BY COUNT, NOT BY EYE. A pass that transforms
 			# first and culls second draws the identical picture, costs the whole
 			# roster, and no frame would say so -- so the failing case is a count
-			# of exactly 463 and the bound has to sit below it.
+			# of the whole graph and the bound has to sit below it.
 			#
 			# The bound is a FRACTION rather than a figure, because the figure
 			# depends on the window: MAX_ZOOM is 8.0 and BASE_SCALE 12, so at the

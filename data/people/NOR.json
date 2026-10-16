@@ -1,0 +1,300 @@
+{
+  "people": [
+    {
+      "id": "NOR_solvang",
+      "name": "Eirik Solvang",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "networked"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_energy_union",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NOR_haugland",
+      "name": "Silje Haugland",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent"
+      ],
+      "ambition": 0.81,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NOR_ekeland",
+      "name": "Trond Ekeland",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "networked"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:borgarlaget",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NOR_brekke",
+      "name": "Marit Brekke",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.47,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NOR_tveit",
+      "name": "Ola Tveit",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "loyal"
+      ],
+      "ambition": 0.42,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NOR_lunde",
+      "name": "Ingrid Lunde",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "fervent"
+      ],
+      "ambition": 0.39,
+      "wants": [
+        {
+          "object": "programme:prog_green_industry",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NOR_olav_vi",
+      "name": "Olav VI",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.2,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "NOR_chief_skarstein_bygg",
+      "name": "Sverre Skarstein",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_bakketun",
+      "name": "Halvard Bakketun",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_lien_gruppen",
+      "name": "Jostein Lien",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_skarstein",
+      "name": "Jostein Skarstein",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_opsahl_gruppen",
+      "name": "Eli Opsahl",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_nesheim_forsikring",
+      "name": "Leif Nesheim",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_bank_aamot",
+      "name": "Knut Aamot",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.43,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_kvamme_industri",
+      "name": "Arne Kvamme",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_skarstein_landbruk",
+      "name": "Rune Skarstein",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.67,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_ulvestad_industri",
+      "name": "Rune Ulvestad",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_ronneberg",
+      "name": "Leif Rønneberg",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_fjellstad",
+      "name": "Arne Fjellstad",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "NOR_chief_myrvold_bygg",
+      "name": "Halvard Myrvold",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    }
+  ]
+}

@@ -1,0 +1,260 @@
+{
+  "people": [
+    {
+      "id": "ALB_dushku",
+      "name": "Erion Dushku",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "networked",
+        "vain"
+      ],
+      "ambition": 0.85,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ALB_kola",
+      "name": "Arben Kola",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "fervent"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ALB_shkurti",
+      "name": "Besnik Shkurti",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_jobs_first",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ALB_kryeziu",
+      "name": "Mimoza Kryeziu",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.36,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ALB_dervishi",
+      "name": "Fatmir Dervishi",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ALB_gjergj_i",
+      "name": "Gjergj I",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "ambitious"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ALB_chief_shtepia_tregtare_malaj",
+      "name": "Erion Malaj",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.52,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_shtepia_tregtare_avdia",
+      "name": "Lindita Avdia",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_marku_logjistika",
+      "name": "Mirela Marku",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_dibra",
+      "name": "Erion Dibra",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_lika_bujqesia",
+      "name": "Lorenc Lika",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_shoqeria_gjini",
+      "name": "Ardian Gjini",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.37,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_bardhi_energjia",
+      "name": "Bledar Bardhi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_gjini_bujqesia",
+      "name": "Zana Gjini",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_avdia",
+      "name": "Blerina Avdia",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.76,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_cani_ndertimi",
+      "name": "Erion Cani",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.54,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_pepa_logjistika",
+      "name": "Gentian Pepa",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_tafa",
+      "name": "Ilir Tafa",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.83,
+      "bench": true
+    },
+    {
+      "id": "ALB_chief_shtepia_tregtare_xhafa",
+      "name": "Mirela Xhafa",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    }
+  ]
+}

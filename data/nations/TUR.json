@@ -1,0 +1,169 @@
+{
+  "id": "TUR",
+  "name": "Turkey",
+  "geo_id": "TUR",
+  "capital": "Ankara",
+  "playable": false,
+  "leader": {
+    "person": "TUR_karaman",
+    "title": "President",
+    "party": "yukselis_partisi"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#E30A17", "#E30A17"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Grand National Assembly",
+      "assembly_seats": 600,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "D'Hondt in 87 multi-member districts with a 7% national threshold (lowered from 10% in 2022), reduced to national PR; alliance lists that let small parties ride a partner past the threshold are unmodelled. Elected 14 May 2023 alongside the President for five years, so the next falls in May 2028. Constitution of Turkey, Art. 77; Law 2839; Wikipedia, '2023 Turkish parliamentary election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2028,
+          "month": 5
+        },
+        "threshold_pct": 7.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 116: the President may renew the elections, and so may the Assembly by three fifths -- but either renewal ends the President's own term too, a mutual-destruction cost the template's executive_discretion carries only as its lockout and notice. Elections follow within about 90 days. Constitution of Turkey, Art. 116.",
+        "rule": "executive_discretion",
+        "lockout_months": 6,
+        "notice_months": 3
+      }
+    },
+    "system": "semi_presidential_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "Turkey has been PURELY presidential since the 2017 referendum took effect in 2018: the office of Prime Minister was abolished, and the President heads both state and government, appoints the ministers and issues decrees. The template is CYP's nearest machinery for the same shape. Elected May 2023 with the Assembly. Constitution of Turkey, Arts. 101-106.",
+      "kind": "executive_president",
+      "title": "President",
+      "person": "TUR_karaman"
+    },
+    "term_limit": 0,
+    "executive": {
+      "_source": "authored",
+      "_note": "Five-year term, elected concurrently with the Assembly in May 2028, run-off two weeks after a first round without a majority. Art. 101 limits a President to two terms, with a third possible only if the Assembly calls an early election in the second -- a rule the machinery's total-term counter cannot express, so term_limit is authored 0 and the rule recorded here. Constitution of Turkey, Art. 101.",
+      "title": "President",
+      "term_years": 5,
+      "next": {
+        "year": 2028,
+        "month": 5
+      }
+    },
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 175: 360 of 600 votes (three fifths) sends an amendment to a mandatory referendum; 400 (two thirds) adopts it outright unless the President submits it to referendum anyway. The template's three_fifths is the lower bar; the referendum tier is read as optional. Constitution of Turkey, Art. 175.",
+      "rule": "three_fifths",
+      "referendum": "optional",
+      "_referendum_note": "Between 360 and 399 votes the referendum is MANDATORY -- the 2007, 2010 and 2017 amendments all went that way -- a split the referendum field cannot carry. Constitution of Turkey, Art. 175.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "Art. 4 makes Arts. 1-3 -- the republican form, the characteristics of the Republic, the indivisibility of the state -- unamendable, and forbids even proposing their amendment: an explicit eternity clause, FRA's Art. 89 s. 5 shape."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court reviews laws and presidential decrees for constitutionality (Arts. 146-153). Constitution of Turkey, Art. 148.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "There is no Prime Minister and no confidence vote: the President appoints and dismisses ministers alone (Art. 104), and the 2017 change abolished the interpellation that could bring a cabinet down. The template's absolute_members bar is CYP's nearest reading of an assembly that cannot remove the executive. The head-of-government slot is the President. Constitution of Turkey, Arts. 104, 106.",
+      "method": "presidential_appointment",
+      "censure": "absolute_members",
+      "head_of_government_title": "President",
+      "head_of_government_person": "TUR_karaman"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. The sultanate was abolished in 1922; the restored line here is fictional -- and Art. 4 makes the act unreachable, which is the point of the eternity clause.",
+    "pretender_person": "TUR_mehmed_ix",
+    "neighbours": ["BGR", "GRC"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD ~2024, rounded, on AUT.json's conventions. corporate 25% statutory; income 15 and VAT 18 are FITTED EFFECTIVE rates on AUT's and IRL's convention -- the statutory 15-40% brackets and 20% VAT would model 28.8% of GDP against the 22% collected, because the informal economy and the reduced VAT bands (1% and 10%) keep the real bases far below the model's; capital gains 10% stands in for the withholding on securities gains (0-10%); no wealth tax. Revenue ~22% of GDP is the OECD Revenue Statistics figure, low against the Union. Debt ~25% of GDP (end-2024), low because inflation has eroded the lira debt. Spending scaled to expenditure near 35% of GDP; defence ~2% is the NATO-reported share.",
+    "debt_to_gdp_pct": 25.0,
+    "tax_revenue_pct_gdp": 22.0,
+    "tax_rates_pct": {
+      "income": 15.0,
+      "corporate": 25.0,
+      "vat": 18.0,
+      "capital_gains": 10.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 3.0,
+      "education": 3.8,
+      "defence": 2.0,
+      "pensions": 7.5,
+      "infrastructure": 3.5
+    },
+    "other_spending_pct_gdp": 15.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 85500000,
+    "gdp_eur_bn": 1250.0,
+    "unemployment_pct": 8.8,
+    "sectors": {
+      "agriculture": 0.066,
+      "industry": 0.287,
+      "services": 0.647
+    },
+    "cohorts": {
+      "young_pct": 21.45,
+      "old_pct": 10.28,
+      "young_pct_per_yr": -0.268,
+      "old_pct_per_yr": 0.296,
+      "participation_pct": 60.4,
+      "pop_growth_pct": 0.996
+    },
+    "inequality": {
+      "gini_index": 43.7,
+      "gini_index_per_yr": 0.1,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.211,
+      "growth_sd_pct": 4.238,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 23.366,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.602346,
+        "nuclear": 0.0,
+        "renewable": 0.397654
+      },
+      "import_dependency_pct": 70.088,
+      "kwh_per_capita": 3806.1,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 5.38,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 44.9
+    }
+  }
+}

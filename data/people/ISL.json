@@ -1,0 +1,315 @@
+{
+  "people": [
+    {
+      "id": "ISL_ragnarsdottir",
+      "name": "Sólveig Ragnarsdóttir",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_hospital_year",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_in_the_black",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ISL_bergsson",
+      "name": "Hallgrímur Bergsson",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "wants": [
+        {
+          "object": "programme:prog_turn_the_debt",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ISL_hrafnsdottir",
+      "name": "Ásdís Hrafnsdóttir",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "networked"
+      ],
+      "ambition": 0.52,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ISL_eyjolfsson",
+      "name": "Kristján Eyjólfsson",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "vain"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ISL_steinsson",
+      "name": "Bjarki Steinsson",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ISL_magnusdottir",
+      "name": "Unnur Magnúsdóttir",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ISL_olafsdottir",
+      "name": "Ragnheiður Ólafsdóttir",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "loyal"
+      ],
+      "ambition": 0.3,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ISL_haraldur_i",
+      "name": "Haraldur I",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "ambitious"
+      ],
+      "ambition": 0.8,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "ISL_chief_verslunarhus_arnarson",
+      "name": "Ásta Arnarson",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_verslunarhus_finnsson",
+      "name": "Einar Finnsson",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_sverrisson",
+      "name": "Erla Sverrisson",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_hauksson_vorustjornun",
+      "name": "Ragnar Hauksson",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_njalsson_flutningar",
+      "name": "Gísli Njálsson",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_ulfarsson_orka",
+      "name": "Ari Úlfarsson",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_danielsson",
+      "name": "Snorri Daníelsson",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.41,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_valdottir_byggingar",
+      "name": "Ragnar Valdóttir",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_kjartansdottir",
+      "name": "Gísli Kjartansdóttir",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.7,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_njalsson",
+      "name": "Baldur Njálsson",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_njalsson_flutningar_landbunadur",
+      "name": "Davíð Njálsson",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_runolfsson_verslun",
+      "name": "Gísli Runólfsson",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.51,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_verslunarhus_jonsdottir",
+      "name": "Guðrún Jónsdóttir",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.34,
+      "bench": true
+    },
+    {
+      "id": "ISL_chief_verslunarhus_hlynsdottir",
+      "name": "Þórir Hlynsdóttir",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    }
+  ]
+}

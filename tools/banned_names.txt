@@ -350,7 +350,9 @@ Partido Socialista
 Chega
 Iniciativa Liberal
 CDS
-Montenegro
+# V4.11: the full name, not the surname -- Montenegro is a roster nation now,
+# and the surname alone would ban the country's own name from its own file.
+Luís Montenegro
 Marcelo
 Guterres
 Ventura
@@ -395,6 +397,153 @@ Kristersson
 Andersson
 Åkesson
 Bildt
+
+# --- V4.11, the neighbourhood (simulated, not playable) ---
+# The S1 rule for every nation in scope: real parties and sitting/recent heads of
+# state and government and party leaders of each neighbour, added in the same
+# commit as the content that echoes them; surnames alone where distinctive, full
+# names where generic. Real major companies sit beside them, as at V3.3.
+# --- Norway ---
+Arbeiderpartiet
+Fremskrittspartiet
+Høyre
+Sosialistisk Venstreparti
+Senterpartiet
+Rødt
+Miljøpartiet De Grønne
+Kristelig Folkeparti
+Venstre
+Støre
+Erna Solberg
+Listhaug
+Vedum
+Bergstø
+Marie Sneve Martinussen
+Guri Melby
+Harald V
+Haakon Magnus
+Equinor
+Norsk Hydro
+Telenor
+Kongsberg Gruppen
+Orkla
+Yara
+# --- Iceland ---
+Samfylkingin
+Sjálfstæðisflokkurinn
+Viðreisn
+Flokkur fólksins
+Miðflokkurinn
+Framsóknarflokkurinn
+Píratar
+Kristrún Frostadóttir
+Frostadóttir
+Bjarni Benediktsson
+Katrín Jakobsdóttir
+Þorgerður Katrín Gunnarsdóttir
+Inga Sæland
+Sigmundur Davíð Gunnlaugsson
+Halla Tómasdóttir
+Guðni Th. Jóhannesson
+Landsvirkjun
+Icelandair
+# --- Serbia ---
+Srpska napredna stranka
+Socijalistička partija Srbije
+Srbija protiv nasilja
+Srbija ne sme da stane
+Nova demokratska stranka Srbije
+Mi – Glas iz naroda
+Savez vojvođanskih Mađara
+Vučić
+Vučević
+Brnabić
+Macut
+Dačić
+Nestorović
+Đilas
+Marinika Tepić
+Karađorđević
+Naftna industrija Srbije
+Telekom Srbija
+Elektroprivreda Srbije
+# --- Turkey ---
+Adalet ve Kalkınma Partisi
+Cumhuriyet Halk Partisi
+Milliyetçi Hareket Partisi
+İYİ Parti
+Halkların Eşitlik ve Demokrasi Partisi
+DEM Parti
+Yeniden Refah Partisi
+Türkiye İşçi Partisi
+Erdoğan
+Kılıçdaroğlu
+Özgür Özel
+Bahçeli
+İmamoğlu
+Akşener
+Dervişoğlu
+Bakırhan
+Hatimoğulları
+Demirtaş
+Osmanoğlu
+Koç Holding
+Sabancı
+Turkcell
+Türk Telekom
+Turkish Airlines
+Türk Hava Yolları
+Arçelik
+Tüpraş
+Ziraat Bankası
+# --- Albania ---
+Partia Socialiste e Shqipërisë
+Partia Demokratike e Shqipërisë
+Partia Socialdemokrate e Shqipërisë
+Partia Mundësia
+Shqipëria Bëhet
+Lëvizja Bashkë
+Edi Rama
+Sali Berisha
+Bajram Begaj
+Ilir Meta
+Lulzim Basha
+Agron Shehaj
+Adriatik Lapaj
+Leka Zogu
+Zogu
+Albtelecom
+# --- North Macedonia ---
+VMRO-DPMNE
+Socijaldemokratski sojuz na Makedonija
+SDSM
+Demokratska unija za integracija
+Bashkimi Demokratik për Integrim
+VLEN
+ZNAM
+Mickoski
+Siljanovska-Davkova
+Zaev
+Pendarovski
+Kovačevski
+Ali Ahmeti
+Apasiev
+Maksim Dimitrievski
+# --- Montenegro ---
+Pokret Evropa sad
+Demokratska partija socijalista
+Za budućnost Crne Gore
+Demokratska Crna Gora
+Bošnjačka stranka
+Socijalistička narodna partija
+Spajić
+Milatović
+Đukanović
+Bečić
+Andrija Mandić
+Abazović
+Petrović-Njegoš
+Elektroprivreda Crne Gore
 
 
 [places]

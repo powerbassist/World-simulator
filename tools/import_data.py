@@ -41,6 +41,15 @@ NATIONS = [
     "FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT",
     "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL",
     "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE",
+    # V4.11, the neighbourhood: simulated, not playable. Appended after the 29 so
+    # ANCHOR_POOL's slice stays the 29, in the order they entered.
+    "NOR",
+    "ISL",
+    "SRB",
+    "TUR",
+    "ALB",
+    "MKD",
+    "MNE",
 ]
 
 # V4.11. The pooled statistics -- the cycle anchor's mean SD, CYCLE_COMMON_SHARE,
@@ -1083,6 +1092,17 @@ REGION_LEVEL = {
     "SVK": 2,  # 4 oblasti
     "SVN": 2,  # 2: Vzhodna, Zahodna
     "SWE": 2,  # 8 riksomraden
+    # V4.11. NUTS 2 is the planning unit wherever it exists, as at V3.3; Turkey is
+    # the exception the other way -- 26 statistical NUTS 2 units for one
+    # non-playable nation is finer than anything reads, and NUTS 1's twelve
+    # macro-regions are what Eurostat publishes its GDP and unemployment for.
+    "NOR": 2,  # 7 landsdeler
+    "ISL": 2,  # 1, the whole country
+    "SRB": 2,  # 4, Kosovo outside the RS codes
+    "TUR": 1,  # 12 macro-regions
+    "ALB": 2,  # 3
+    "MKD": 2,  # 1, the whole country
+    "MNE": 2,  # 1, the whole country
 }
 
 REGION_NUTS_VINTAGE = 2021
@@ -1099,6 +1119,8 @@ NUTS_COUNTRY = {
     "EST": "EE", "FIN": "FI", "GRC": "EL", "HUN": "HU", "IRL": "IE",
     "LTU": "LT", "LVA": "LV", "MLT": "MT", "POL": "PL", "PRT": "PT",
     "ROU": "RO", "SVK": "SK", "SVN": "SI", "SWE": "SE",
+    "NOR": "NO", "ISL": "IS", "SRB": "RS", "TUR": "TR", "ALB": "AL",
+    "MKD": "MK", "MNE": "ME",
 }
 
 # GeoNames uses the ISO 3166 code, so Britain is `GB` and Greece is `GR` where
@@ -1326,6 +1348,22 @@ PROXY_SERIES = {
         "natural_why": ("demo_r_gind3 carries NATGROWRT for eleven of the twelve UK codes "
                         "(2012-2018) but Scotland (UKM) publishes none at any year"),
     },
+    "NOR": {
+        "series": {"gdp"},
+        "why": "nama_10r_2gdp carries no NO code with a value at 2022",
+    },
+    "ISL": {
+        "series": {"gdp"},
+        "why": "nama_10r_2gdp carries no IS code with a value at 2022 -- Iceland is one region, so the proxy share is 1.0 and costs nothing",
+    },
+    "ALB": {
+        "series": {"unemployment"},
+        "why": "lfst_r_lfu3rt carries no AL code with a value at 2022",
+    },
+    "MNE": {
+        "series": {"unemployment"},
+        "why": "lfst_r_lfu3rt carries no ME code with a value at 2022",
+    },
 }
 
 
@@ -1408,6 +1446,9 @@ SEA_LINKS = [
     ("EL54", "EL62", "Igoumenitsa-Kerkyra ferry"),
     ("ITG1", "MT00", "Pozzallo-Valletta ferry"),
     ("EL30", "CY00", "Piraeus-Limassol ferry"),
+    # V4.11. Iceland is the neighbourhood's one island nation, and its weekly car
+    # ferry from Seydisfjordur to Hirtshals (via Torshavn) is the crossing in service.
+    ("DK05", "IS00", "Hirtshals-Seydisfjordur ferry"),
 ]
 
 
@@ -1786,8 +1827,13 @@ def build_region_graph(registers, nuts):
     edges.sort(key=lambda e: (e[0], e[1]))
 
     raw = load_transport_endowment(codes)
-    if raw:
-        mean = sum(raw.values()) / len(raw)
+    # V4.11: the mean is the ANCHOR_POOL's, for build_cycle_blocks()'s reason --
+    # a roster-wide mean moved every existing region's endowment the moment
+    # Norway's sparse motorways entered it.
+    pool_codes = {r["id"] for nid in ANCHOR_POOL for r in registers[nid]["regions"]}
+    pool_raw = [v for code, v in raw.items() if code in pool_codes]
+    if pool_raw:
+        mean = sum(pool_raw) / len(pool_raw)
         # The roster mean, not a per-nation one: the graph is international (58 of
         # its 243 land edges cross a border), so an endowment normalised per nation
         # would make a Belgian motorway mean the same thing as a Spanish one and the

@@ -1,0 +1,164 @@
+{
+  "id": "MNE",
+  "name": "Montenegro",
+  "geo_id": "MNE",
+  "capital": "Podgorica",
+  "playable": false,
+  "leader": {
+    "person": "MNE_vujosevic",
+    "title": "Prime Minister",
+    "party": "pokret_novi_talas"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#D4AF37", "#C40308", "#C40308", "#C40308", "#D4AF37"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Skupština",
+      "assembly_seats": 81,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "D'Hondt in a single national constituency with a 3% threshold, lowered for minority lists (0.7% for the Croat community) -- the minority relief unmodelled. Elected 11 June 2023, so the next is due by mid-2027. Law on the Election of Councillors and MPs; Wikipedia, '2023 Montenegrin parliamentary election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2027,
+          "month": 6
+        },
+        "threshold_pct": 3.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Skupština may shorten its own mandate by a majority of all MPs, and the President must dissolve it if no government is elected within 90 days (Art. 92) -- self_dissolution is the nearest single rule, the failed-formation route recorded here. Constitution of Montenegro, Arts. 84, 92.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for five years, two terms at most; elected April 2023 and inaugurated in May, so the next falls in spring 2028. Constitution of Montenegro, Arts. 96-97.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "MNE_radonjic",
+      "term_years": 5,
+      "next": {
+        "year": 2028,
+        "month": 4
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 156: two thirds of all MPs; amendments to the state's character, sovereignty, borders and the amendment procedure itself then need confirmation by referendum (Art. 157) with three fifths of the electorate. The two_thirds bar is carried; the entrenched tier is read as optional. Constitution of Montenegro, Arts. 156-157.",
+      "rule": "two_thirds",
+      "referendum": "optional",
+      "_referendum_note": "Art. 157's referendum is mandatory for the entrenched chapters only -- a split the referendum field cannot carry. Constitution of Montenegro, Art. 157.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "No eternity clause; the form of the state sits in the referendum-gated tier, which is a higher bar and not a bar."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court reviews the constitutionality of laws (Arts. 149-154). Constitution of Montenegro, Art. 149.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President proposes a Prime Minister after consulting the parliamentary groups, and the Skupština elects the government by a majority of all MPs (Art. 103). No-confidence needs a majority of all MPs (Art. 107), read as simple_present. The 2023 government is a broad coalition. Constitution of Montenegro, Arts. 103, 107.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "MNE_vujosevic"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Montenegro was a kingdom from 1910 to 1918; the restored monarch here is fictional.",
+    "pretender_person": "MNE_danilo_iii",
+    "neighbours": ["ALB", "HRV", "SRB"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/Ministry of Finance ~2024, rounded, on AUT.json's conventions. VAT 21% standard; corporate 15 is the top of the 9-15% progressive schedule; income 12 blends the 0/9/15 wage schedule; capital gains 15%; no wealth tax. Revenue ~36% of GDP includes social contributions, cut by the 2022 'Europe Now' contribution reform. Debt ~60% of GDP (end-2024), in euros: Montenegro uses the euro unilaterally and is NOT a eurozone member, which is why data/orgs/eurozone.json does not list it. Spending scaled to expenditure near 40% of GDP.",
+    "debt_to_gdp_pct": 60.0,
+    "tax_revenue_pct_gdp": 36.0,
+    "tax_rates_pct": {
+      "income": 12.0,
+      "corporate": 15.0,
+      "vat": 21.0,
+      "capital_gains": 15.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.5,
+      "education": 4.0,
+      "defence": 1.5,
+      "pensions": 10.0,
+      "infrastructure": 5.0
+    },
+    "other_spending_pct_gdp": 14.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 600000,
+    "gdp_eur_bn": 7.61,
+    "unemployment_pct": 13.2,
+    "sectors": {
+      "agriculture": 0.044,
+      "industry": 0.153,
+      "services": 0.803
+    },
+    "cohorts": {
+      "young_pct": 18.13,
+      "old_pct": 17.83,
+      "young_pct_per_yr": -0.053,
+      "old_pct_per_yr": 0.379,
+      "participation_pct": 70.84,
+      "pop_growth_pct": -0.02
+    },
+    "inequality": {
+      "gini_index": 34.3,
+      "gini_index_per_yr": -0.783,
+      "_year": 2021,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.115,
+      "growth_sd_pct": 3.904,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 3.315,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.394557,
+        "nuclear": 0.0,
+        "renewable": 0.605443
+      },
+      "import_dependency_pct": 34.176,
+      "kwh_per_capita": 4691.1,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 3.72,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 61.7
+    }
+  }
+}

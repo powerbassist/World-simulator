@@ -148,12 +148,13 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 		errors.append("%s: %s missing or non-numeric field 'natural_change_pct'" % [filename, path])
 	else:
 		r.natural_change_pct = float(d["natural_change_pct"])
-		# Signed and per-head: the roster's measured span is +0.85 (Murcia) to
-		# -0.82 (Campania's interior) and a natural rate outside plus-or-minus two
-		# per cent has no measured precedent, so it is a mistyped digit rather than
-		# demography.
-		if absf(r.natural_change_pct) > 2.0:
-			errors.append("%s: %s natural_change_pct = %s is outside plus-or-minus 2 %%/yr -- no measured rate in the roster approaches this" % [
+		# Signed and per-head: the EU-29's measured span is +0.85 (Murcia) to
+		# -0.82 (Campania's interior). V4.11 widened the catch from two per cent
+		# to three for a MEASURED rate, not a looser check: Southeastern Anatolia
+		# (TRC) reads +2.07 %/yr, a young-population region the Union has no
+		# counterpart to. Three still refuses a per-mille-for-per-cent slip.
+		if absf(r.natural_change_pct) > 3.0:
+			errors.append("%s: %s natural_change_pct = %s is outside plus-or-minus 3 %%/yr -- no measured rate in the roster approaches this" % [
 				filename, path, str(r.natural_change_pct),
 			])
 

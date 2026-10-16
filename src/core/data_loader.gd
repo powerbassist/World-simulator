@@ -211,6 +211,10 @@ var geo_features: Dictionary = {}
 ## there is no filter anywhere that could be forgotten.
 var world_features: Dictionary = {}
 
+## The roster tripwire's number (_validate_cross_file). One constant so the
+## V4.11 tranches move it in one place.
+const ROSTER_SIZE := 36
+
 ## NUTS id -> Array[PackedVector2Array], the same shape as geo_features, from
 ## data/geo/regions.geojson -- V2.2b. Keyed by the region's own NUTS code, which
 ## is Region.id, so map_view.gd joins the register to its geometry with a
@@ -2202,9 +2206,10 @@ func _validate_neighbours() -> void:
 func _validate_cross_file(geo_path: String, world_path: String) -> void:
 	# V3.3: the roster is EU-27 plus the two non-EU neighbours, so the pin the
 	# ten-nation era carried moves to 29. A tripwire, not a limit -- a roster
-	# change edits this number beside the data it describes.
-	if nations.size() != 29:
-		errors.append("expected 29 nations, loaded %d" % nations.size())
+	# change edits this number beside the data it describes. V4.11 grows it by
+	# the neighbourhood's twelve, simulated and not playable.
+	if nations.size() != ROSTER_SIZE:
+		errors.append("expected %d nations, loaded %d" % [ROSTER_SIZE, nations.size()])
 
 	# At least one, not exactly one -- V1.2a made a second nation playable, and
 	# a third later is a one-flag data edit, not a code change. See ROADMAP.md (retired 2026-10-05 -- the tier docs carry the build order now).

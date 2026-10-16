@@ -79,7 +79,7 @@ func _check_the_content_is_measured() -> void:
 		var spread_max := -INF
 		for region in list:
 			var rate: float = region.natural_change_pct
-			if absf(rate) > 2.0:
+			if absf(rate) > 3.0:  # region.gd's catch, widened at V4.11 for TRC's measured +2.07
 				_fail("%s region '%s' carries natural_change_pct %f -- outside the range any measured rate in the roster approaches" % [nation_id, region.id, rate])
 			spread_min = minf(spread_min, rate)
 			spread_max = maxf(spread_max, rate)

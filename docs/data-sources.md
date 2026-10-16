@@ -278,6 +278,47 @@ All three carry zero `UK` geo codes at 2022, for the same reason `nama_10r_2gdp`
 
 `tools/region_drift.py` reads `demo_r_pjangrp3` over every published year to measure how far real European regional population shares actually drift — [[migration-model|the ceiling `migration_constants.MIGRATION_RATE`'s clause (ii) is checked against]]. The fetch loop above starts at **2014**, and that lower bound is chosen rather than merely convenient: **2011, 2012 and 2013 each return an EMPTY value dict for this exact request** — not a short one, an empty one — which is where the NUTS 2021 back-cast begins. A fresh clone that only runs the recorded loop (2014 onward) cannot see this directly, since the loop never fetches the empty years to observe the emptiness; it is recorded here instead, so the window's lower bound is explained rather than merely chosen.
 
+### V4.11 — the neighbourhood: coverage, measured per nation
+
+The roster grew past the Union in two tranches: **V4.11a1** the seven NUTS-covered
+neighbours (NOR ISL SRB TUR ALB MKD MNE), **V4.11a2** the five with no NUTS at all
+(BIH UKR MDA XKX BLR). Every gap below is a BOUND with its number, the V3.3
+discipline; none was filled by a number nobody measured.
+
+**Three rules keep the 29 byte-identical**, checked by re-importing and diffing
+`data/` (only the seven new nations, the neighbour lists of the seven Union
+nations they border, and the geo files' new features changed):
+
+- **The World Bank cache is a MERGE**, not a re-pull: the twelve's rows were
+  fetched on 2026-10-15 and appended to the V3.3-era files. A fresh 41-id pull
+  carries the Bank's revisions since and would re-vintage every imported block.
+- **Pooled statistics stay on the 29** (`import_data.ANCHOR_POOL`): the cycle
+  anchor's mean SD, `CYCLE_COMMON_SHARE`, the inflation persistence and Phillips
+  slope, and the motorway-endowment mean. The neighbours are measured AGAINST the
+  anchor the constants were swept on. The endowment mean was found the hard way:
+  the first Norway import moved every existing region's endowment by a few per
+  cent through a roster-wide mean.
+- **Generators keep their streams**: `tools/firms_generate.py` draws the 29 first
+  on its fixed seed and gives each neighbour its own seeded stream (ALB sorts
+  before AUT and would otherwise have regenerated every nation's firms); the
+  neighbourhood's name pools live outside `bench_generate.NAMES` for the same reason.
+
+**Coverage, V4.11a1** (Eurostat cache at 2022 unless said):
+
+| Nation | NUTS level, regions | Regional GDP | Regional unemployment | Natural change | Other |
+|---|---|---|---|---|---|
+| NOR | 2, **6** (NO0B Svalbard/Jan Mayen has no GeoNames place: residual) | **absent** (zero NO codes in `nama_10r_2gdp`) -- population-share proxy | measured | measured, 2013-2024 | `tran_r_net` MWAY absent for NO08/NO09/NO0A: roster-mean fallback (Greece's bound); energy import dependency **-729 %** (the World Bank's own figure for a net exporter, not clamped -- LUX's 109.6 rule) |
+| ISL | 2, **1** | absent -- proxy, share 1.0, costs nothing | measured | measured | import dependency absent at every year -- OWID fossil share of primary energy (19.5 %, 2024); one GeoNames city over the cut (Reykjavik) |
+| SRB | 2, **4** (Kosovo is outside the RS codes) | measured | measured | measured | emissions absent at every year -- OWID 6.24 t |
+| TUR | **1**, 12 (NUTS 2's 26 is finer than anything reads) | measured | measured | measured; TRC +2.07 %/yr, `region.gd`'s catch widened 2 -> 3 | inflation anchor 23.4 %/yr -- `ANCHOR_MAX` 20 -> 40; tax rates FITTED effective (income 15, VAT 18) to the 22 % collected |
+| ALB | 2, **3** | measured | **absent** -- `unemployment_rel` 1.0 | measured | renewable electricity absent at every year -- OWID 100 %; cycle amplitude 2.15 (the 1990s transition) |
+| MKD | 2, **1** | measured | measured | measured | -- |
+| MNE | 2, **1** | measured | **absent** -- `unemployment_rel` 1.0 | measured | emissions absent at every year -- OWID 3.72 t |
+
+The proxies are `import_data.PROXY_SERIES`, per SERIES rather than per nation
+(Norway keeps its measured unemployment while its GDP is proxied), replacing the
+two Britain-only guards the importer carried since V2.2a.
+
 ## Rejected sources
 
 ### OpenStreetMap

@@ -1,0 +1,293 @@
+{
+  "people": [
+    {
+      "id": "MNE_vujosevic",
+      "name": "Luka Vujošević",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.72,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_paybelt",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MNE_vukcevic",
+      "name": "Dragana Vukčević",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.66,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        },
+        {
+          "object": "office:party_leadership:gradjanska_stranka",
+          "stance": "want"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MNE_jovicevic",
+      "name": "Nebojša Jovićević",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "loyal"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_federal_moment",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MNE_raicevic",
+      "name": "Ivana Raičević",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MNE_kurpejovic",
+      "name": "Senad Kurpejović",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "loyal"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_growing_towns",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MNE_bojovic",
+      "name": "Rade Bojović",
+      "kind": "politician",
+      "traits": [
+        "stubborn",
+        "fervent"
+      ],
+      "ambition": 0.38,
+      "wants": [
+        {
+          "object": "programme:prog_the_pension_pact",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MNE_radonjic",
+      "name": "Petar Radonjić",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "networked"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MNE_danilo_iii",
+      "name": "Danilo III",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "loyal"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "MNE_chief_mijatovic_trgovina",
+      "name": "Sanja Mijatović",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_banka_lakic",
+      "name": "Branko Lakić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.47,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_jovovic_trgovina",
+      "name": "Nikola Jovović",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.53,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_baosic_trgovina",
+      "name": "Miloš Baošić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.79,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_banka_vucinic",
+      "name": "Ivana Vučinić",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.48,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_popovic",
+      "name": "Dušan Popović",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_raickovic",
+      "name": "Željko Raičković",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.64,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_boskovic",
+      "name": "Igor Bošković",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_drustvo_vujovic",
+      "name": "Ljubica Vujović",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.36,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_cerovic",
+      "name": "Miloš Cerović",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_gazivoda_saobracaj",
+      "name": "Nikola Gazivoda",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_durisic_materijali",
+      "name": "Zorana Đurišić",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.44,
+      "bench": true
+    },
+    {
+      "id": "MNE_chief_boskovic_gradevina",
+      "name": "Danilo Bošković",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.44,
+      "bench": true
+    }
+  ]
+}
