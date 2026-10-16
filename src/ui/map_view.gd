@@ -242,9 +242,13 @@ const WORLD_BORDER_WIDTH := 1.0
 ## like one the player can act on (the roster's line stays the brightest).
 const WORLD_BORDER_HOVER := Color(0.71, 0.78, 0.86, 0.70)
 const WORLD_BORDER_HOVER_WIDTH := 1.5
-## The readout's offset from the cursor, and its line gap.
+## The readout's offset from the cursor, its line gap and its plate's padding.
 const OUTLINE_READOUT_OFFSET := Vector2(14.0, -8.0)
-const OUTLINE_READOUT_GAP := 15.0
+const OUTLINE_READOUT_GAP := 16.0
+const OUTLINE_READOUT_PAD := 6.0
+## The plate's body: the HUD's hull, a touch translucent so the country under it
+## still reads as the thing being described.
+const OUTLINE_READOUT_PLATE := Color(0.063, 0.106, 0.188, 0.92)
 
 ## Hover and the viewer's own nation both move the *stroke* rather than the fill,
 ## and on a data layer that is not a style choice. U5b's hover lifted the fill
@@ -977,8 +981,10 @@ func _draw_outline_hover_ring() -> void:
 
 
 ## V4.11c. Two lines beside the cursor -- the outline's name, then what it supplies
-## the world (MapOutlines owns the text). The city label's shadow and colour, for
-## the same reason: over a photograph the contrast runs from snow to open sea.
+## the world (MapOutlines owns the text) -- on a small HUD plate: the hull body and
+## the brass hairline on the TOP edge only (the U5a signature). The first cut used
+## the city label's bare shadowed text and the windowed screenshot showed why a
+## plate: over snow and the roster's own labels the line could not be read.
 ## Clamped inside the control so a hover near the right edge still reads.
 func _draw_outline_readout() -> void:
 	if _hovered_outline == "" or _loader == null:
@@ -993,14 +999,17 @@ func _draw_outline_readout() -> void:
 	var width := 0.0
 	for line in lines:
 		width = maxf(width, font.get_string_size(String(line[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, int(line[1])).x)
-	var at := _hover_screen + OUTLINE_READOUT_OFFSET
-	at.x = clampf(at.x, 4.0, maxf(4.0, size.x - width - 4.0))
-	at.y = clampf(at.y, OUTLINE_READOUT_GAP, maxf(OUTLINE_READOUT_GAP, size.y - OUTLINE_READOUT_GAP))
-	for line in lines:
-		var text := String(line[0])
-		var font_size := int(line[1])
-		draw_string(font, at + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, MapCities.LABEL_SHADOW)
-		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, MapCities.LABEL_COLOR)
+	var plate_size := Vector2(width + 2.0 * OUTLINE_READOUT_PAD, OUTLINE_READOUT_GAP * lines.size() + OUTLINE_READOUT_PAD)
+	var corner := _hover_screen + OUTLINE_READOUT_OFFSET
+	corner.x = clampf(corner.x, 4.0, maxf(4.0, size.x - plate_size.x - 4.0))
+	corner.y = clampf(corner.y, 4.0, maxf(4.0, size.y - plate_size.y - 4.0))
+	draw_rect(Rect2(corner, plate_size), OUTLINE_READOUT_PLATE)
+	draw_line(corner, corner + Vector2(plate_size.x, 0.0), UiTheme.ACCENT, 1.0)
+	var at := corner + Vector2(OUTLINE_READOUT_PAD, OUTLINE_READOUT_GAP - 2.0)
+	for i in lines.size():
+		var text := String(lines[i][0])
+		var font_size := int(lines[i][1])
+		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiTheme.TEXT if i == 0 else UiTheme.TEXT_DIM)
 		at.y += OUTLINE_READOUT_GAP
 
 

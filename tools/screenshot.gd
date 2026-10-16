@@ -16,6 +16,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --cluster state
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
@@ -114,6 +115,10 @@ var _layer := ""
 var _hover := ""
 var _site := false
 var _hover_project := ""  ## U6c, a project marker rather than a nation
+## V4.11c, an outline (a country drawn but not simulated). Its own flag for
+## --hover-project's reason: a nation hover and an outline hover are different
+## states on the map, and one flag meaning both would hide which one failed.
+var _hover_outline := ""
 
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
 ## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
@@ -417,6 +422,24 @@ var _termlimit := false
 var _main
 
 
+## V4.11c. Hover an outline the way a cursor would: the first point of a coarse
+## grid over the VISIBLE map that the outline test answers with this id, so the
+## readout lands on screen at any zoom (a centroid of Russia sits off it).
+func _stage_outline_hover() -> void:
+	var map = _main._map_view
+	var view: Rect2 = map.visible_lonlat_rect()
+	var steps := 60
+	for ix in range(1, steps):
+		for iy in range(1, steps):
+			var pt := view.position + Vector2(view.size.x * ix / steps, view.size.y * iy / steps)
+			if map._nation_at_lonlat(pt) == "" and map._outline_at_lonlat(pt) == _hover_outline:
+				map._hovered_outline = _hover_outline
+				map._hover_screen = map._lonlat_to_screen(pt.x, pt.y)
+				map.queue_redraw()
+				return
+	printerr("--hover-outline: %s is not under any visible point" % _hover_outline)
+
+
 func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	for i in args.size():
@@ -434,6 +457,8 @@ func _init() -> void:
 			# lowercase -- one flag with two case rules is a flag that fails
 			# silently on whichever half you did not think of.
 			_hover_project = args[i + 1]
+		elif args[i] == "--hover-outline" and i + 1 < args.size():
+			_hover_outline = args[i + 1].to_upper()
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
 		elif args[i] == "--center" and i + 2 < args.size():
@@ -803,6 +828,8 @@ func _apply_view() -> void:
 		# no flag can reach is a frame nobody ever looks at.
 		_main._map_view._hovered_project = _hover_project
 		_main._map_view.queue_redraw()
+	if _hover_outline != "":
+		_stage_outline_hover()
 	if _blank != "":
 		_blank_a_window()
 	if _termlimit:
