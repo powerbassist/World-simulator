@@ -360,6 +360,17 @@ static func tick_month(state, loader) -> void:
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
 		var price: Dictionary = ns.commodity_state["price"]
+		# V4.11b. A natural good's `produced` is the POST-TRADE holding less this
+		# nation's own use -- trade ran before production. Undo the trade so the
+		# register means what it means for every other good: made here, net of own
+		# use, before anything was bought or sold. Unclamped for value added (an
+		# importer's consumed ore is an input it bought, and comes off), clamped at 0
+		# for the `output` a panel prints as "units made". The first cut added back
+		# exports only, so every imported unit was counted by both sides and the
+		# panel showed imports as made and then again as bought (V4.11 review).
+		var own: Dictionary = (produced[nation_id] as Dictionary).duplicate()
+		for good_id in natural.keys():
+			own[good_id] = float(own[good_id]) - float(traded[nation_id][good_id])
 		var value_added := 0.0
 		for good_id in ids:
 			var base := _base(loader, good_id)
@@ -375,17 +386,15 @@ static func tick_month(state, loader) -> void:
 			if previous < line and next >= line:
 				ns.commodity_high_month = month_index
 			price[good_id] = next
-			value_added += float(produced[nation_id][good_id]) * next
-			# V4.11b: a natural good routed OUT before production left `produced`
-			# but was mined here -- its value stays with the nation that dug it.
-			if natural.has(good_id) and float(traded[nation_id][good_id]) < 0.0:
-				value_added -= float(traded[nation_id][good_id]) * next
+			value_added += float(own[good_id]) * next
+		for good_id in natural.keys():
+			own[good_id] = maxf(float(own[good_id]), 0.0)
 		ns.commodity_state["demand"] = demanded[nation_id]
 		# `output` is what `_produce` left standing, which is NET of the inputs
 		# this nation's own downstream recipes consumed -- and that is exactly what
 		# makes the figure below value added rather than gross production: a tonne
 		# of ore that went into this month's steel is not also counted as ore.
-		ns.commodity_state["output"] = produced[nation_id]
+		ns.commodity_state["output"] = own
 		ns.commodity_state["trade"] = traded[nation_id]
 		ns.commodity_state["surplus"] = spare_by_nation[nation_id]
 		ns.commodity_state["value_added_eur_bn"] = value_added / 1e9

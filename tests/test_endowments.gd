@@ -90,6 +90,16 @@ func _check_imported_ore_becomes_steel(loader) -> void:
 		_fail("DEU imported no iron ore")
 	if float(de["output"]["steel"]) <= 0.0 and float(de["trade"]["steel"]) >= 0.0:
 		_fail("DEU made no steel from its imported ore -- natural goods did not route before production")
+	# The V4.11 review's double count: a natural good's "made here" is never more
+	# than was mined here, so imported ore cannot read as made (and then again as
+	# bought). Every nation, every endowed good.
+	for nation_id in state.nations.keys():
+		var cs: Dictionary = state.nations[nation_id].commodity_state
+		for good_id in loader.commodity_endowments.keys():
+			if float(cs["output"][good_id]) > float(cs["capacity"][good_id]) + 1e-6:
+				_fail("%s reads %s %s made against %s mined -- imports counted as made" % [
+					nation_id, str(cs["output"][good_id]), good_id, str(cs["capacity"][good_id])])
+				return
 
 
 ## The world volume is every producer's requirement, so endowment and requirement

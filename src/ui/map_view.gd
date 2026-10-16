@@ -330,6 +330,13 @@ func _notification(what: int) -> void:
 		_zoom = clampf(_zoom, min_zoom(), MAX_ZOOM)
 		_clamp_pan()
 		queue_redraw()
+	elif what == NOTIFICATION_MOUSE_EXIT and _hovered_outline != "":
+		# V4.11c. The readout is a plate of text, not a brighter stroke: when the
+		# cursor leaves for a window or the HUD no further motion reaches this
+		# control, so without this it stays on screen until the cursor comes back
+		# (the V4.11 review). Godot 4 sends the exit when a window occludes the map.
+		_hovered_outline = ""
+		queue_redraw()
 
 
 func setup(loader, state) -> void:

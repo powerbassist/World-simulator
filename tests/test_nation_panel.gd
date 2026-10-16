@@ -353,24 +353,37 @@ func _check_cooldown_names_itself(panel, state) -> void:
 ## nothing about it. The absence half reads only rows NOT queued for deletion --
 ## _refresh()'s queue_free is deferred, so the stale rows of the nation shown
 ## before are still children inside this frame.
+##
+## TWO simulated nations, one in the Union and one outside it: the grade is every
+## nation without `playable`, and the first wording ("neighbour") was false for
+## Italy -- a test that took only the first sorted id (ALB) could not see it.
 func _check_the_grade_line(panel, state) -> void:
-	const LINE := "Simulated neighbour — not playable"
-	var simulated := ""
+	const LINE := "Simulated nation — not playable"
+	var inside := ""
+	var outside := ""
 	var ids: Array = _main._loader.nations.keys()
 	ids.sort()
 	for id in ids:
-		if not _main._loader.nations[id].playable:
-			simulated = id
-			break
-	if simulated == "":
-		_fail("no simulated nation in the data -- the grade line has nothing to show")
+		if _main._loader.nations[id].playable:
+			continue
+		if state.nations[id].orgs.has("eu"):
+			if inside == "":
+				inside = id
+		elif outside == "":
+			outside = id
+	if inside == "" or outside == "":
+		_fail("need a simulated nation inside and outside the EU, got '%s' and '%s'" % [inside, outside])
 		return
 	_show(panel, TARGET)
 	if _live_body_text(panel).contains(LINE):
 		_fail("the playable %s reads '%s'" % [TARGET, LINE])
-	_show(panel, simulated)
-	if not _live_body_text(panel).contains(LINE):
-		_fail("the simulated %s does not say it cannot be played" % simulated)
+	for simulated in [inside, outside]:
+		_show(panel, simulated)
+		var text := _live_body_text(panel)
+		if not text.contains(LINE):
+			_fail("the simulated %s does not say it cannot be played" % simulated)
+		if text.contains("neighbour"):
+			_fail("the simulated %s is called a neighbour" % simulated)
 
 
 func _live_body_text(panel) -> String:

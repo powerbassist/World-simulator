@@ -168,9 +168,11 @@ func _refresh() -> void:
 	# verbs competing for the space now.
 	# V4.11c. Said only for the simulated grade (the author's call): the player
 	# chose among the playable ones at New Game and needs no reminder there, but a
-	# neighbour that answers every verb and can never be picked should say so.
+	# nation that answers every verb and can never be picked should say so. NOT
+	# "neighbour": the simulated grade is every nation without `playable` -- Italy
+	# and Spain as much as the twelve (the V4.11 review caught the first wording).
 	if Roster.grade(_loader, _nation_id) == "simulated":
-		PanelKit.line(_body, "Simulated neighbour — not playable", PanelKit.Tone.DIM)
+		PanelKit.line(_body, "Simulated nation — not playable", PanelKit.Tone.DIM)
 	PanelKit.line(_body, "Leader: %s (%s)" % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "GDP: EUR %.0fbn   growth %+.2f%%" % [ns.gdp_eur_bn, ns.growth_annual_pct], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "Unemployment: %.1f%%" % ns.unemployment_pct, PanelKit.Tone.PLAIN)

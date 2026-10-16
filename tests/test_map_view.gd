@@ -285,6 +285,11 @@ func _check_outline_hover(map) -> void:
 	map._gui_input(_mouse_event(MOUSE_BUTTON_LEFT, false, screen))
 	if not clicked.is_empty():
 		_fail("a click on the outline %s emitted nation_clicked %s" % [outline_id, str(clicked)])
+	# Leaving the map takes the readout with it -- no later motion would.
+	map._gui_input(move)
+	map.notification(Control.NOTIFICATION_MOUSE_EXIT)
+	if map._hovered_outline != "":
+		_fail("the outline readout outlived the cursor leaving the map ('%s')" % map._hovered_outline)
 
 	# A roster nation under the cursor wins: the readout never competes with one.
 	var fra: PackedVector2Array = map._polygons["FRA"][0]
