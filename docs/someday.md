@@ -290,6 +290,17 @@ measurement (the way pass 23 set the commodity pair from the category median).
   player; **fix shape:** grow `W` with world GDP (the outline register gains a trend,
   or the roster's realised growth stands in), then re-run the probe.
 
+## Carried from V4.11c (2026-10-17)
+
+- **Portraits for the twelve neighbours.** Skipped at the V4.11c gate (author's
+  call): their people files hold 16–22 people each, ~235 with executives, so the pass
+  is ~2.5x the brief's 80–100 and nothing yet seats one of them across the player's
+  desk. Until then a person with no portrait draws the silhouette
+  (`tests/test_portraits.gd` pins the fallback); `tools/portraits_generate.py --only
+  <id>` generates a slice resumably. **Trigger:** the first
+  surface that seats a neighbour's person in front of the player (a summit, a council
+  face for a non-member, a neighbour's cabinet read).
+
 ## Carried from earlier blocks (pointers, not duplicates)
 
 - **The 25 generated nations' majors are generator-owned** — hand-curating
