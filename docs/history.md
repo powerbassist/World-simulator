@@ -11,6 +11,15 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.10
 
+**V4.10b -- BORDERS, GLYPHS AND NAMES AT DEPTH -- IS BUILT on `v4.10b-glyphs-labels` (2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged.**
+
+- **Plan gate (author):** materials to c; the third border key is the roster grade; greedy labels by tier on a grid; tiers by capital, then population.
+- **The band, rule first:** tiers 1-2 named from zoom 2.0 (>= 80 % in the Ruhr and the Po valley), tier 3 a bound (64 % over the Ruhr at max zoom), hover only.
+- **Found by measuring:** blocking every glyph made the placement cost 25-45 ms and held tier 2 under 60 %; only tier 1-2 marks are obstacles now, and tier 3 is skipped before projection (1.5-2.9 ms per placement).
+- **Capitals:** a folded name match; MDA folds, MLT is a bound (Valletta is below the register's cut).
+- **Cost (paired, one run):** max zoom +0.14 ms, opening fit +0.36, drag at max 0.00; the drag at the opening fit +6.2 ms goes to c.
+- Model: [map-platform-model](map-platform-model.md) §10.
+
 **V4.10a -- THE GROUND AT DEPTH -- IS MERGED (PR #10, merge commit `d8abd155`, 2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged, no settings key.**
 
 - **Plan gate (author, 2026-10-18):** a + b + c kept despite V5's UI rework (the map is world drawing; its seams survive); 2-pass review budget per PR; the V4 tier close-out is its own session after c.

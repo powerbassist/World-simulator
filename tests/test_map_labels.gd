@@ -24,6 +24,7 @@ func _init() -> void:
 	_check_deterministic()
 	_check_dense_cluster()
 	_check_cost()
+	_check_no_comparator_sort()
 	_finish()
 
 
@@ -141,16 +142,26 @@ func _check_cost() -> void:
 	var placed: Array = MapLabels.place(cands, [], VIEW, _measure)
 	var ms := float(Time.get_ticks_usec() - t0) / 1000.0
 	print("cost: 1400 candidates -> %d placed in %.2f ms (headless)" % [placed.size(), ms])
-	# A STRESS figure, not the game's: 1400 is every city on the roster at once,
-	# which no zoom asks for (tier-1 names only at the opening fit; tier 2 and 3
-	# names only once the view holds a few hundred cities). Measured 13.5 ms on
-	# the dev machine headless after two rewrites (27 -> 21 -> 13.5: grid cells
-	# without allocation, then a native sort); the plan's 4 ms line was not
-	# reachable in GDScript at this count, and the real on-screen counts are
-	# priced by frame_probe's paired PAN rows instead. The cap catches a
-	# regression to the comparator sort or the allocating grid (both ~2x).
-	if ms > 20.0:
-		_failures.append("cost: 1400 candidates took %.2f ms (cap 20)" % ms)
+	# A STRESS figure, not the game's, and PRINTED rather than asserted: 1400 is
+	# every city on the roster at once, which no zoom asks for, and a wall-clock
+	# cap in a parallel suite is flaky by construction -- the first cap (20 ms)
+	# failed at 22.7 ms in the full suite while the same file alone ran 13.5 ms.
+	# The shipped placement's cost is priced where frames are priced:
+	# tools/label_probe.gd (1.5-2.9 ms per placement) and frame_probe.gd's paired
+	# labels_off rows. What a test CAN pin without a clock is the shape that made
+	# it fast: the native key sort (see _check_no_comparator_sort).
+	print("cost: 1400 candidates -> %d placed in %.2f ms (headless, not asserted)" % [placed.size(), ms])
+
+
+## The first placer sorted with a GDScript comparator, and the sort alone was
+## 10 ms of 21 at 1400 candidates; Array.sort() on precomputed keys is ~1.7 ms.
+## Pinned on the source, which is clock-free.
+func _check_no_comparator_sort() -> void:
+	var src := FileAccess.get_file_as_string("res://src/ui/map_labels.gd")
+	for line in src.split("
+"):
+		if line.split("#")[0].contains("sort_custom("):
+			_failures.append("map_labels.gd sorts with a GDScript comparator again: %s" % line.strip_edges())
 
 
 func _finish() -> void:

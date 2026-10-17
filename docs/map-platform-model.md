@@ -514,3 +514,73 @@ measure at depth and a third of a millisecond at the opening fit, where both qua
   by pass (fill, hairline, roads, cities, plants, outlines) before any lever is pulled.
 - If c's shaders re-bake the ground to channels (paper and sea tinted on the GPU instead of in
   the generator), the band, the sidecar and the opaque-core skip stay as they are.
+
+## 10. V4.10b — borders, glyphs and names at depth
+
+**2026-10-18 · branch `v4.10b-glyphs-labels` · probes: `tools/label_probe.gd`, `tools/frame_probe.gd` (paired rows).**
+
+**Materials moved to V4.10c** (author's call at the b plan gate): a pattern and an edge darkening on
+every region fill are a shader's job, and on the CPU they would be another pass per ring on every
+re-record of a drag that already costs ~24 ms at max zoom.
+
+### Borders by kind
+
+One table, `map_view.BORDER_KINDS`, keyed by the roster grade (V4.11's derived playable / simulated
+/ outline, read through `Roster.grade()` and cached in `setup()`) plus the regional hairline:
+widths 2.0 / 1.4 / 1.0 / 0.75 px. Each kind carries a photo colour (the pre-V4.10b values) and a
+paper colour (ink), blended by `ground_alpha()` so a line never sits on the wrong ground. Hover
+takes the playable colour at full alpha instead of white, the weakest line there is over paper.
+
+### Glyph tiers
+
+`src/ui/map_glyphs.gd`: tier 1 the nation's capital, tier 2 live population ≥ 500 000, tier 3 the
+rest; the mark changes (a capital is ringed, tier 3 is thinner), the size stays `radius_of()`.
+Capitals are a folded name match against `data/nations/*.json` — 39 of 41 matched exactly, MDA's
+"Chișinău" folds onto the city "Chisinau", and **MLT is a bound**: Valletta is below the city
+register's cut, so Malta's largest city carries the ring.
+
+### Names: the placer and the band
+
+`src/ui/map_labels.gd` places names greedily in rank order (nation names first and centred, then
+tier, population, id) over a 64 px grid hash; a name with no free anchor of four is dropped, so a
+dense cluster shows its largest names. A total order keeps a still camera's labels still.
+
+**The band, written before the run:** a tier is named from the lowest zoom of the grid
+(2.0 … 8.0) where ≥ 70 % of its on-screen cities get a name in BOTH stress views, the Ruhr
+(7.0 E 51.4 N) and the Po valley (9.5 E 45.6 N), with the tiers above it on.
+
+| tier | Ruhr, % named | Po valley, % named | band |
+|---|---|---|---|
+| 1 | 98 % at 2.0 | 98 % at 2.0 | **named from 2.0** (= `CITY_MIN_ZOOM`) |
+| 2 | 83 % at 2.0 | 80 % at 2.0 | **named from 2.0** |
+| 3 | 64 % at 8.0 (max) | 71 % at 8.0 | **BOUND: hover only** (`LABEL_ZOOM_T3 = INF`) |
+
+**The obstacle set decided the band, and it was changed for cost before the band was read.** The
+first form blocked every on-screen glyph: ~1300 rects inserted per placement, 25–45 ms per
+re-record, tier 1 named only from 3.5 and tier 2 never above 60 %. Tier-3 crosses (2–4 px) are no
+longer obstacles; a haloed name over one still reads. The 70 % rule itself was not touched.
+
+The shipped placement (tiers 1–2 named, tier 3 skipped before it is projected) costs **1.5–2.9 ms
+per re-record** in the stress views; the placer alone places 1400 candidates in 13.5 ms headless
+(a stress figure, printed and not asserted: a wall-clock cap failed at 22.7 ms inside the parallel suite; `tests/test_map_labels.gd` pins the native sort on the source instead).
+
+### What it costs (paired labels off/on, one run, 1440p, vsync off)
+
+| row | off | on | delta | budget |
+|---|---|---|---|---|
+| max zoom, still | 2.54 | 2.68 | +0.14 | ≤ 0.5 |
+| opening fit, still | 10.39 | 10.75 | +0.36 | ≤ 1.0 |
+| drag at max zoom | 24.24 | 24.24 | 0.00 | ≤ 2.0 |
+| drag at the opening fit | 76.59 | 82.81 | **+6.2** | not budgeted |
+
+G2 on this tree, same run: 2.71 − 1.01 = **1.70 ms**. The border, glyph and road changes are not
+separable inside one run, so their share is only visible across runs (2.14 ms with V4.10a alone).
+Read that as "b did not push G2 up", not as b recovering the gate: the run-to-run spread is
+0.3 ms, and V4.10c still owes the attribution.
+
+### Handed to V4.10c
+
+- Materials (pattern, edge darkening) as the first canvas_item shader(s).
+- The drag at the opening fit: 76–83 ms. The label pass adds 6.2 ms to it, and most of the rest
+  is the map's own re-record (§8). c attributes by pass before pulling a lever.
+- G2 against the absolute 2.0, measured across two runs.
