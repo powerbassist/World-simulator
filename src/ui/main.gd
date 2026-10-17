@@ -656,6 +656,13 @@ func _ready() -> void:
 
 	_build_action_bar()
 	_wire_hud()
+	# V4.8a: an alert on the strip names the window that answers it, with the
+	# shortcut the window manager actually binds -- read here, once every window
+	# is registered, so the strip never carries a hand-copied key.
+	for id in _windows.panel_ids():
+		var key: int = _windows.shortcut(id)
+		if key != KEY_NONE:
+			_top_bar.window_keys[id] = OS.get_keycode_string(key)
 
 	# Four panels stay modal, not docked: election results and censure land on
 	# the player regardless of which tab is open, and settings/save-load are

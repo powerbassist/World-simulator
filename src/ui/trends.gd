@@ -77,6 +77,11 @@ static func approval_delta(state, months: int) -> float:
 	var then := entry_at(state, months)
 	if now.is_empty() or then.is_empty():
 		return NAN
+	# delta()'s own key check, which this sibling lacked: an entry with no
+	# approval read as a polled zero and printed a fake movement
+	# (playability-audit Register B).
+	if not now.has(APPROVAL_KEY) or not then.has(APPROVAL_KEY):
+		return NAN
 	return _polled(now) - _polled(then)
 
 

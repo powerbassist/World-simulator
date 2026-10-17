@@ -1,28 +1,17 @@
 extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-const Trends = preload("res://src/ui/trends.gd")
-const Programme = preload("res://src/sim/programme.gd")
-const ProgrammeK = preload("res://src/sim/programme_constants.gd")
-const EventsK = preload("res://src/sim/events_constants.gd")
-const PanelKit = preload("res://src/ui/panel_kit.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
-const CouncilK = preload("res://src/sim/council_constants.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
 
-## The thin strip along the top edge -- U2, rebuilt at U5a.
+## The thin strip along the top edge -- U2, rebuilt at U5a, made ONE THING at V4.8a.
 ##
-## U2 put six things here because there was nowhere else to put them: the date,
-## pause, three speeds and four figures. U5a gives the clock its own corner
-## cluster and gives approval to the portrait card, which leaves this doing the
-## one job a permanent top strip is good at -- the two or three numbers that are
-## true about the country regardless of what the player is looking at.
-##
-## Deficit, GDP, unemployment, and next to them the vote that ends the
-## player's term (V2.9, from the playtest: the goal was four clicks deep and
-## two surfaces disagreed about it). Not approval (the portrait carries it, and
-## a president reads their own standing off their own face) and not government
-## standing, which is a Politics-panel question the player checks rather than
-## monitors.
+## U2 put six things here because there was nowhere else to put them; U5a gave the
+## clock its own corner cluster and left this the job a permanent top strip is good
+## at -- the numbers that are true about the country regardless of what the player
+## is looking at. V4.1-V4.7 each landed an interim figure here (programme, people,
+## desk, Europe); V4.8a moved every reading into strip_readings.gd's register, so
+## this file is the HOST: one figure per ORDER entry, drawing whatever the register
+## returns. A new reading is a register entry, never a branch here.
 ##
 ## Reads state, never writes it. The gear and save buttons emit; main.gd decides
 ## what they open, the same shape as every other panel here.
@@ -31,19 +20,23 @@ signal settings_requested
 signal save_load_requested
 
 const BAR_HEIGHT := 40
+## The programme caption's width: "PROGRAMME" itself, so the strip's measured
+## width is the same with or without one running.
+const PROGRAMME_CAPTION_PX := 104
+## Caption-to-value gap inside a stacked figure; negative pulls the two lines
+## together so the bar stays inside window_frame.gd's TOP_MARGIN.
+const FIGURE_LINE_GAP := -4
 
 var _figure_values := {}
-## Each figure's caption label, by the same key as _figure_values -- kept so a
-## caller that needs the caption (the desk's live tooltip) does not reach it by
-## child index through the value's parent.
+## Each figure's caption label, by the same key as _figure_values -- kept so the
+## live tooltip goes on both hover targets, and the programme can name itself.
 var _figure_captions := {}
-## V4.1. The programme figure, hidden until a programme runs -- it is not one
-## of the four always-on figures, so it keeps its own references beside the
-## dict the others share.
-var _europe_box: Control
-var _programme_box: Control
-var _programme_label: Label
-var _programme_value: Label
+## Window id -> its shortcut's key string ("E"), filled once by main.gd after every
+## window is registered, so an alert names the key the shell really binds.
+var window_keys := {}
+## The row the figures sit in -- read by the walker test's width check.
+var _figures: HBoxContainer
+var _tools: HBoxContainer
 
 
 func _ready() -> void:
@@ -58,124 +51,59 @@ func _ready() -> void:
 
 	row.add_child(_spacer())
 
-	var figures := HBoxContainer.new()
-	figures.add_theme_constant_override("separation", 34)
-	row.add_child(figures)
-
-	# B10 (playtest 2026-09-16): the value was always signed -- a surplus printed
-	# "+2.1%", a deficit "-10.5%" -- so "DEFICIT +10.50%" was a live contradiction
-	# on screen. A balance is a signed quantity; the label now says so.
-	figures.add_child(_build_figure("deficit", "Budget balance",
-		"Surplus is +, deficit is −."))
-	figures.add_child(_build_figure("gdp", "GDP"))
-	figures.add_child(_build_figure("unemployment", "Unemployment"))
-	figures.add_child(_build_figure("election", "Next vote"))
-	figures.add_child(_build_programme_figure())
-	# V4.3's interim People figure: how many people the term has MOVED (a
-	# non-zero grudge or loyalty), not how many exist -- the register is 1595
-	# and a permanent "1595" says nothing. Rises only when the player's
-	# decisions move someone, which is the number a president actually tracks.
-	# The People window (R) is the full surface; this strip is the pulse.
-	figures.add_child(_build_figure("people", "People",
-		"People whose loyalty or grudge the term has moved. Open the People window (R)."))
-	# V4.4's interim V4.8 obligation: the desk -- pending events by count, the worst
-	# severity named in the tooltip. Deliberately NOT the programme figure's
-	# empty-state hiding: an empty desk is itself a reading (the value says so),
-	# because the glance this strip serves is "is anything waiting on me", and
-	# hiding the figure answers that question by not asking it.
-	figures.add_child(_build_figure("desk", "Desk",
-		"Events awaiting an answer. Worst severity in the tooltip."))
-	# V4.5b2's interim Europe figure, same precedent: a treaty waiting on the
-	# player's assembly, else the burden of the club's rules. Hidden for a player
-	# in no council org -- a standing "— clear" there would claim a Europe the
-	# nation is not part of.
-	var europe := _build_figure("europe", "Europe", "The councils you sit on.")
-	europe.visible = false
-	_europe_box = europe
-	figures.add_child(europe)
+	_figures = HBoxContainer.new()
+	_figures.add_theme_constant_override("separation", 26)
+	row.add_child(_figures)
+	for id in StripReadings.ORDER:
+		_figures.add_child(_build_figure(id, String(StripReadings.CAPTIONS[id])))
 
 	row.add_child(_spacer())
 
-	var tools := HBoxContainer.new()
-	tools.add_theme_constant_override("separation", 4)
-	row.add_child(tools)
+	_tools = HBoxContainer.new()
+	_tools.add_theme_constant_override("separation", 4)
+	row.add_child(_tools)
 
 	var save := Button.new()
 	save.text = "SAVE"
 	save.theme_type_variation = UiTheme.SUBROW_BUTTON
 	save.tooltip_text = "Save and load (S)"
 	save.pressed.connect(func(): save_load_requested.emit())
-	tools.add_child(save)
+	_tools.add_child(save)
 
 	var settings := Button.new()
 	settings.text = "MENU"
 	settings.theme_type_variation = UiTheme.SUBROW_BUTTON
 	settings.tooltip_text = "Pause menu (Esc)"
 	settings.pressed.connect(func(): settings_requested.emit())
-	tools.add_child(settings)
+	_tools.add_child(settings)
 
 
-## Label and value on one line rather than stacked, which is what lets the strip
-## be 40px instead of U2's 64 and still read at a glance.
-func _build_figure(key: String, title: String, tip := "") -> Control:
-	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 7)
+## Caption above value. U5a put them on one line to get the strip to 40px; at
+## V4.8a's thirteen readings one line needed 2219 px of a 1920 screen, so they
+## stack again -- with a negative separation so the two lines sit inside the
+## frames' TOP_MARGIN, which is what keeps the 826px window band unchanged.
+func _build_figure(key: String, title: String) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", FIGURE_LINE_GAP)
 
 	var label := Label.new()
 	label.text = title.to_upper()
 	label.theme_type_variation = UiTheme.MICRO
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hoverable(label)
 	box.add_child(label)
 
 	var value := Label.new()
 	value.theme_type_variation = UiTheme.FIGURE
-	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hoverable(value)
 	box.add_child(value)
 	_figure_values[key] = value
 	_figure_captions[key] = label
-	if not tip.is_empty():
-		value.tooltip_text = tip
-		label.tooltip_text = tip
-
-	return box
-
-
-## The desk figure's caption and value are two hover targets for one reading, so
-## the live tooltip goes on both -- _build_figure gives the caption a static tip,
-## and left alone it would keep saying nothing about severity while the number
-## beside it named the worst one.
-func _set_desk_tip(text: String) -> void:
-	var value: Control = _figure_values["desk"]
-	value.tooltip_text = text
-	var caption: Control = _figure_captions["desk"]
-	caption.tooltip_text = text
-
-
-## V4.1. The chosen programme's name and its nearest-deadline entry's progress,
-## as a fifth figure -- the deadline the strip already carries one of (the vote)
-## now has the thing that is supposed to land before it. Hidden while nothing
-## runs, the defence-allies rule: a permanent "no programme" slot says nothing
-## in every game that never opens the Agenda, which is most of them.
-func _build_programme_figure() -> Control:
-	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 7)
-
-	_programme_label = Label.new()
-	_programme_label.theme_type_variation = UiTheme.MICRO
-	_programme_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hoverable(_programme_label)
-	box.add_child(_programme_label)
-
-	_programme_value = Label.new()
-	_programme_value.theme_type_variation = UiTheme.FIGURE
-	_programme_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hoverable(_programme_value)
-	box.add_child(_programme_value)
-
-	box.visible = false
-	_programme_box = box
+	# The programme's caption is its NAME (V4.1), which content writes and no width
+	# bounds -- clipped with an ellipsis, the full name in the tip, so one long
+	# programme cannot push the strip off the screen.
+	if key == "programme":
+		label.custom_minimum_size.x = PROGRAMME_CAPTION_PX
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	return box
 
 
@@ -183,9 +111,7 @@ func _build_programme_figure() -> Control:
 ## under a figure is its HBoxContainer -- which carries no tooltip -- and a
 ## tooltip_text set on the Label never appears. PASS makes the Label a hover
 ## target while still propagating the event, so a click on the strip is not
-## swallowed (STOP would). Every figure Label goes through here, because the
-## tooltips are set later (refresh) and a check at build time cannot know which
-## ones will carry one.
+## swallowed (STOP would).
 func _hoverable(label: Label) -> void:
 	label.mouse_filter = Control.MOUSE_FILTER_PASS
 
@@ -197,217 +123,40 @@ func _spacer() -> Control:
 	return spacer
 
 
-## The Europe figure's caption and value are two hover targets for one reading,
-## so the live tooltip goes on both (same reason as _set_desk_tip).
-func _set_europe_tip(text: String) -> void:
-	(_figure_values["europe"] as Control).tooltip_text = text
-	(_figure_captions["europe"] as Control).tooltip_text = text
-
-
-## Reads the player's council standing off the registers: the treaty awaiting
-## the assembly (state.orgs[..].ratifying), the one burden price, the rules in
-## force and the IOUs the player still owes. Read-only.
-func _refresh_europe(state, ns, loader) -> void:
-	var council: Array = Orgs.council_ids(state)
-	var mine: Array = []
-	for org_id in council:
-		if ns.orgs.has(org_id):
-			mine.append(org_id)
-	_europe_box.visible = not mine.is_empty()
-	if mine.is_empty():
-		return
-
-	var burden := Orgs.burden(state, ns, council)
-	var rules: Array = Orgs.rules_in_force(state, ns)
-	var breached := 0
-	for rule in rules:
-		if float(rule.get("breach", 0.0)) > 0.0:
-			breached += 1
-
-	var owed := 0
-	var treaty_text := ""
-	var treaty_left := -1
-	for org_id in mine:
-		var org_state: Dictionary = state.orgs[org_id]
-		for debt in (org_state.get("debts", []) as Array):
-			if String(debt.get("debtor", "")) == ns.id:
-				owed += 1
-		var r: Dictionary = org_state.get("ratifying", {})
-		if not r.is_empty() and String((r.get("nations", {}) as Dictionary).get(ns.id, "")) == CouncilK.RATIFY_PENDING:
-			var left := int(r.get("months_left", 0))
-			if treaty_left < 0 or left < treaty_left:
-				treaty_left = left
-				treaty_text = "%s, %s" % [String(r.get("name", "")),
-					"1 month left" if left == 1 else "%d months left" % left]
-
-	if treaty_left >= 0:
-		_figure_values["europe"].text = "Treaty: %dm" % treaty_left
-	elif burden > 0.0:
-		_figure_values["europe"].text = "Burden %.2f" % burden
-	else:
-		_figure_values["europe"].text = "— clear"
-
-	var lines: Array[String] = [
-		"Burden %.2f" % burden,
-		("1 rule in force binds you, %d breached" % breached) if rules.size() == 1 \
-			else ("%d rules in force bind you, %d breached" % [rules.size(), breached]),
-		"%d %s owed" % [owed, "IOU" if owed == 1 else "IOUs"],
-		("Treaty awaiting your assembly: %s" % treaty_text) if treaty_left >= 0 else "No treaty awaiting you",
-	]
-	_set_europe_tip("\n".join(lines))
-
-
-## The desk tooltip: a critical on the desk is named outright -- that is the one
-## line a president must not have to decode -- and any other desk reads as a count
-## by severity. The names are events_constants' SEVERITY_NAMES (1 minor, 2 major,
-## 3 critical), not new copy.
-func _desk_tooltip(by_severity: Dictionary) -> String:
-	var parts: Array[String] = []
-	for severity in [3, 2, 1]:
-		var count := int(by_severity.get(severity, 0))
-		if count > 0:
-			parts.append("%d %s" % [count, EventsK.SEVERITY_NAMES[severity - 1]])
-	return " · ".join(parts) if not parts.is_empty() else "On the desk."
-
-
 ## Called every day -- cheap enough that main.gd calls it unconditionally rather
-## than gating it behind a dirty flag like the floating panels, matching the HUD
-## it replaces. The loader is optional so the existing two-argument call still
-## works; without one there is no content to name and the figure stays hidden.
+## than gating it behind a dirty flag like the floating panels. The loader is
+## optional so the two-argument call still works; without one, the readings that
+## need content (the programme, Supplies) stay hidden.
+##
+## A bad player_nation_id gives player() == null (playability-audit Register B's
+## crash row: it crashed here on the next day tick) -- nothing to read, so nothing
+## is drawn.
 func refresh(state, _clock: Node, loader = null) -> void:
-	if state == null:
+	if state == null or state.player() == null:
 		return
-	var ns = state.player()
-
-	# Signed the way a player reads it: a deficit is a negative number. B10: the
-	# title above now says "BALANCE" so the + and − signs on this figure agree
-	# with their own label.
-	_figure_values["deficit"].text = "%+.2f%%" % -ns.deficit_pct_gdp
-	_figure_values["gdp"].text = "%.0f Bn" % ns.gdp_eur_bn
-	_figure_values["unemployment"].text = "%.2f%%" % ns.unemployment_pct
-	# Count, not date: the number ticking down is the urgency; the Overview's
-	# date line and the Diary carry the calendar. Same query as theirs, so the
-	# three surfaces cannot disagree again. Tooltip keeps the date for free.
-	#
-	# B3: months_to_vote counts the EXECUTIVE clock where the nation has one,
-	# while the Polling panel counts the assembly's -- both correct, so the
-	# tooltip names which vote this figure is counting rather than leaving two
-	# correct numbers to read as a contradiction.
-	var months := Trends.months_to_vote(state, ns)
-	# B1 (playtest 2026-09-16): the raw int printed "NEXT VOTE -44 mo" in two
-	# ten-year captures -- months_to_vote can legally go negative once the date
-	# has passed and the next schedule has not been drawn. The tooltip's
-	# months_text clamps; the figure must too.
-	if months > 0:
-		_figure_values["election"].text = "%d mo" % months
-	elif months == 0:
-		_figure_values["election"].text = "now"
-	else:
-		_figure_values["election"].text = "—"
-	_figure_values["election"].tooltip_text = _election_tooltip(state, ns, loader, months)
-
-	# V4.3: the moved-people count, both registers read the same way so the
-	# figure and the People window's rows cannot disagree about who counts.
-	var moved := 0
-	for pid in ns.person_grudges.keys():
-		if float(ns.person_grudges[pid]) >= 0.05:
-			moved += 1
-	for pid in ns.person_loyalty.keys():
-		if absf(float(ns.person_loyalty[pid])) >= 0.05 and float(ns.person_grudges.get(pid, 0.0)) < 0.05:
-			moved += 1
-	_figure_values["people"].text = "%d" % moved
-
-	# V4.4: the desk, read straight off the queue register -- the same read
-	# Events.is_pending() makes for the brass mark, so the strip and the mark
-	# cannot disagree about whether something is waiting.
-	var desk: Array = ns.event_queue
-	if desk.is_empty():
-		# Em dash, not "0 pending": the state is "nothing pending" and a confident
-		# zero here would be V1.6d's lie in the strip's own handwriting.
-		_figure_values["desk"].text = "— clear"
-		_set_desk_tip("Nothing awaits an answer.")
-	else:
-		var by_severity := {}
-		for entry in desk:
-			var severity := int(entry.get("severity", 1))
-			by_severity[severity] = int(by_severity.get(severity, 0)) + 1
-		_figure_values["desk"].text = "%d pending" % desk.size()
-		_set_desk_tip(_desk_tooltip(by_severity))
-
-	_refresh_europe(state, ns, loader)
-
-	# V4.1. Derived off the same read the Agenda window draws -- the panel and
-	# the strip cannot print two answers to one progress question.
-	var programme := _nearest_programme(ns, loader)
-	_programme_box.visible = not programme.is_empty()
-	if programme.is_empty():
-		return
-	var terms: Dictionary = programme["terms"]
-	var live: Dictionary = programme["entry"]
-	var name_text := String(terms.get("name", String(live["entry_id"])))
-	_programme_label.text = name_text.to_upper()
-	var read: Dictionary = Programme.progress_of(ns, terms)
-	var fraction := PanelKit.progress_fraction(
-		float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
-	_programme_value.text = "%.0f%%" % (fraction * 100.0)
-	var tip := "%s -- %.2f against a %.2f goal" % [
-		name_text, float(read["current_value"]), float(read["goal_value"]),
-	]
-	var clock_text := _programme_clock_text(terms, live)
-	if not clock_text.is_empty():
-		tip += " · %s" % clock_text
-	_programme_label.tooltip_text = tip
-	_programme_value.tooltip_text = tip
-
-
-## B1/B3. The vote figure counts Trends.vote_date() -- the EXECUTIVE clock where
-## the nation elects one separately, the single chamber's schedule where it does
-## not (the two are then the same schedule, trends.gd's own note). Name which
-## vote is being counted, off the loader's nation data; no nation-specific copy.
-## Without a loader the two-argument call still works and keeps the original
-## generic wording.
-func _election_tooltip(state, ns, loader, months: int) -> String:
-	if months < 0:
-		# No "Win it." here: the vote the player was supposed to win is over.
-		return "The vote that ends your term has been held."
-	var what := "vote"
-	if loader != null and loader.nations.has(ns.id):
-		var nation = loader.nations[ns.id]
-		if bool(ns.has_executive):
-			what = "vote for %s" % nation.executive_title
-		else:
-			what = "vote for the %s" % nation.chamber_name
-	return "The %s that ends your term -- %s. Win it." % [what, Trends.months_text(months)]
-
-
-## The register entry the strip prices: the live one with the nearest deadline,
-## or the first live one when none carries a clock. The strip's whole contract
-## is the glance -- one name, one percentage.
-func _nearest_programme(ns, loader) -> Dictionary:
-	var best := {}
-	var best_left := 1 << 30
-	for entry in ns.programme:
-		if String(entry["status"]) != ProgrammeK.STATUS_ACTIVE:
+	for id in StripReadings.ORDER:
+		var r: Dictionary = StripReadings.read(id, state, loader)
+		var value: Label = _figure_values[id]
+		var caption: Label = _figure_captions[id]
+		value.get_parent().visible = bool(r["visible"])
+		if not bool(r["visible"]):
 			continue
-		var terms: Dictionary = Programme.terms_of(loader, String(entry["entry_id"]))
-		if terms.is_empty():
-			continue
-		var timeout := int(terms.get("timeout_months", 0))
-		# A deadline always beats a no-deadline entry; no-deadline entries keep
-		# register order, which is the order the player chose them in.
-		var left := timeout - int(entry["months_live"])
-		var score := left if timeout > 0 else (1 << 30) - 1
-		if best.is_empty() or score < best_left:
-			best = {"terms": terms, "entry": entry}
-			best_left = score
-	return best
+		value.text = String(r["text"])
+		if r.has("caption"):
+			caption.text = String(r["caption"]).to_upper()
+		var alert := String(r["alert_window"])
+		value.theme_type_variation = UiTheme.FIGURE if alert.is_empty() else UiTheme.FIGURE_ALERT
+		var tip := String(r["tip"])
+		if not alert.is_empty():
+			tip += "\nOpen %s." % _window_hint(alert)
+		value.tooltip_text = tip
+		caption.tooltip_text = tip
 
 
-func _programme_clock_text(terms: Dictionary, live: Dictionary) -> String:
-	var timeout := int(terms.get("timeout_months", 0))
-	if timeout <= 0:
-		return ""
-	var left := timeout - int(live["months_live"])
-	if left <= 0:
-		return "its deadline is now"
-	return "%s to its deadline" % ("1 month" if left == 1 else "%d months" % left)
+## "the economy window (E)" -- the key read from the window manager at startup,
+## so an alert cannot name a shortcut the shell does not bind.
+func _window_hint(window_id: String) -> String:
+	var key := String(window_keys.get(window_id, ""))
+	if key.is_empty():
+		return "the %s window" % window_id
+	return "the %s window (%s)" % [window_id, key]

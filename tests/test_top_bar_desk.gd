@@ -149,7 +149,7 @@ func _run() -> void:
 				_fail("a top-bar control carries the tooltip '%s' but ignores the mouse -- it can never show" % node.tooltip_text)
 	if with_tips < 4:
 		_fail("only %d top-bar controls carry a tooltip -- the walk is not reaching the figures" % with_tips)
-	for pl in [_bar._programme_label, _bar._programme_value]:
+	for pl in [_bar._figure_captions["programme"], _bar._figure_values["programme"]]:
 		if pl.mouse_filter == Control.MOUSE_FILTER_IGNORE:
 			_fail("a programme figure label ignores the mouse -- its tooltip can never show")
 
