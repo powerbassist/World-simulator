@@ -26,7 +26,8 @@
    "tests/test_panel_kit.gd",
    "tests/test_balance.gd",
    "tests/test_orgs_panel.gd",
-   "tests/test_roster.gd"
+   "tests/test_roster.gd",
+   "tests/test_message_settings.gd"
   ],
   [
    "tests/test_clock.gd",

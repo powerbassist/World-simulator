@@ -199,6 +199,9 @@ tests=(
   tests/test_portraits.gd
   tests/test_game_loop.gd
   tests/test_menu.gd
+  # V4.8c: the message-settings register, and the lapse guard that keeps the
+  # arrival pause's contract for a category set not to pause.
+  tests/test_message_settings.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd
   tests/test_minimap.gd

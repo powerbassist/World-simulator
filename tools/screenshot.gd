@@ -26,6 +26,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip approval:1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open outliner
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip deficit:1
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --settings
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --failing --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
@@ -130,6 +131,10 @@ var _tip := ""
 ## programme entry, a failing major, a good short of demand, people with a
 ## grudge), so --open outliner photographs the window with every section drawn.
 var _outliner := false
+
+## V4.8c. The settings screen up over the game, so the MESSAGES grid (thirty-six
+## band pickers under the display rows) is judged at 1080 rather than argued.
+var _settings := false
 
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
 ## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
@@ -517,6 +522,8 @@ func _init() -> void:
 			_tip = args[i + 1]
 		elif args[i] == "--outliner":
 			_outliner = true
+		elif args[i] == "--settings":
+			_settings = true
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
 		elif args[i] == "--center" and i + 2 < args.size():
@@ -767,6 +774,8 @@ func _apply_view() -> void:
 		_nationalise_a_firm()
 	if _outliner:
 		_stage_the_outliner()
+	if _settings:
+		_main._settings_panel.show()
 	if _bid:
 		_open_a_bid()
 	if _failing:

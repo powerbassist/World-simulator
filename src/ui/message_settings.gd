@@ -1,0 +1,101 @@
+extends RefCounted
+
+## V4.8c. Message settings -- Victoria 3's shape, wired to severity.
+##
+## Per event category, four switches: NOTIFY (the action-bar mark, pending.gd),
+## FEED (the Dispatches ledger's record), POPUP (the message_stack decision card)
+## and PAUSE (the arrival pause). Each switch holds a SEVERITY THRESHOLD, not a
+## boolean: it fires for an event at or above it. A category carries no severity of
+## its own -- its events do (`ev.severity`, 1..3) -- so a per-category on/off could
+## not give "defaults banded by severity" any meaning; a threshold per category is
+## the one shape where it does. OFF is one past the worst severity.
+##
+## Static, like pending.gd, and read-only over nothing: the register is a plain
+## Dictionary {category: {switch: threshold}} that main.gd holds and hands to the
+## readers. An EMPTY dictionary reads as the defaults everywhere, so a reader
+## constructed before main.gd loads the file draws exactly what a first launch does.
+##
+## Persisted in the settings screen's own file under `[messages]`, absent key ->
+## default (settings_panel.gd's `[audio]`/`[display]` precedent). It is not a save
+## field: these are the player's preferences, not the game's state, so a loaded game
+## keeps whatever this machine says and SAVE_VERSION does not move.
+##
+## WHAT PAUSE OFF DOES NOT BUY. The arrival pause exists because a decision that
+## expired unseen was "Decided for you" in both playtests (2026-09-05). PAUSE OFF
+## defers the pause, it does not remove it: main.gd's lapse guard holds the clock
+## for an unanswered quiet decision in its LAST month. And an interrupt-flagged
+## event ignores this register entirely -- the flag is the content saying "until
+## answered", and a preference does not overrule content.
+
+const EventsK = preload("res://src/sim/events_constants.gd")
+
+const SECTION := "messages"
+const SWITCHES := ["notify", "feed", "popup", "pause"]
+
+## The player-facing column names, in SWITCHES order.
+const SWITCH_LABELS := ["Notify", "Feed", "Popup", "Pause"]
+
+## One past critical: no severity reaches it.
+const OFF := EventsK.SEVERITY_MAX + 1
+
+## The bands a switch can sit at, index = threshold - 1, so the settings screen's
+## OptionButton index and the stored value are one subtraction apart.
+const BAND_LABELS := ["All", "Major+", "Critical", "Off"]
+
+## The defaults, one band per switch and the same for every category -- banded by
+## severity, not by taste: nothing here says scandals matter less than disasters.
+## Notify, feed and popup show everything, which is what the game did before this
+## register existed. PAUSE is Major+ (author's call, 2026-10-17): a minor arrival
+## keeps the clock running and is caught by the lapse guard in its last month; a
+## major or critical one still stops the world on arrival as it always has.
+const DEFAULTS := {"notify": 1, "feed": 1, "popup": 1, "pause": 2}
+
+
+## Every category, every switch, at its default.
+static func defaults() -> Dictionary:
+	var out := {}
+	for category in EventsK.CATEGORIES:
+		var row := {}
+		for switch in SWITCHES:
+			row[switch] = int(DEFAULTS[switch])
+		out[category] = row
+	return out
+
+
+## The whole register as the file holds it; an absent key, an absent file or an
+## out-of-band value reads as the default.
+static func load_from(path: String) -> Dictionary:
+	var cfg := ConfigFile.new()
+	cfg.load(path)  # an absent file leaves it empty, which is the default set
+	var out := defaults()
+	for category in EventsK.CATEGORIES:
+		for switch in SWITCHES:
+			var stored := int(cfg.get_value(SECTION, _key(category, switch), int(DEFAULTS[switch])))
+			out[category][switch] = clampi(stored, EventsK.SEVERITY_MIN, OFF)
+	return out
+
+
+## Writes the register into `path`, keeping every other section the file holds.
+static func save_to(settings: Dictionary, path: String) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(path)
+	for category in EventsK.CATEGORIES:
+		for switch in SWITCHES:
+			cfg.set_value(SECTION, _key(category, switch), threshold(settings, category, switch))
+	cfg.save(path)
+
+
+## The band one switch sits at for one category; the default when the register
+## does not say.
+static func threshold(settings: Dictionary, category: String, switch: String) -> int:
+	var row: Dictionary = settings.get(category, {})
+	return int(row.get(switch, DEFAULTS.get(switch, 1)))
+
+
+## Whether `switch` fires for an event of `category` at `severity`.
+static func allows(settings: Dictionary, category: String, severity: int, switch: String) -> bool:
+	return severity >= threshold(settings, category, switch)
+
+
+static func _key(category: String, switch: String) -> String:
+	return "%s.%s" % [category, switch]

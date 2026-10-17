@@ -86,6 +86,7 @@ const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const Hud = preload("res://src/ui/hud.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const Pending = preload("res://src/ui/pending.gd")
+const MessageSettings = preload("res://src/ui/message_settings.gd")
 const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -133,7 +134,16 @@ var _paused_for_decision := false
 ## desk's head), and the unseen set is what the arrival pause holds the clock for:
 ## it clears as the player answers, and the clock resumes when it empties.
 var _event_cards := {}        # card id -> event id
-var _unseen_events := {}      # event id -> true while the player has not answered
+var _unseen_events := {}      # event id -> whether it holds the clock (below)
+## V4.8c: the unseen set's VALUE says whether the id holds the clock. An arrival
+## whose category's pause band it meets enters as true; a quiet one enters as false
+## -- unanswered, but the world keeps running -- until the lapse guard turns it
+## true in its last month. The doors that erase an id are unchanged; the two clock
+## checks read _unseen_holds(), not emptiness.
+## The player's message settings (message_settings.gd), read from the settings
+## file at boot and again whenever the settings screen closes. Cached because
+## Pending.window_ids runs on the per-day path, where a file read is not free.
+var _messages := {}
 ## V4.1. The term-start programme's card and its pause -- the arrival-pause
 ## machinery pointed at the agenda. See _enforce_term_start_programme().
 var _paused_for_programme := false
@@ -197,6 +207,7 @@ func _ready() -> void:
 
 	_loader = DataLoader.new()
 	_loader.load_all()
+	_messages = MessageSettings.load_from(SettingsPanel.CONFIG_PATH)
 
 	if not _loader.errors.is_empty():
 		for e in _loader.errors:
@@ -620,6 +631,7 @@ func _ready() -> void:
 	_events_panel = EventsPanel.new()
 	_windows.register("events", "Dispatches", _events_panel, KEY_N, ICONS + "envelope.svg")
 	_events_panel.setup(_state, _loader)
+	_events_panel.set_messages(_messages)
 	_events_panel.hide_close_button()
 	_events_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
@@ -720,7 +732,14 @@ func _ready() -> void:
 	_settings_panel = SettingsPanel.new()
 	_add_centered(_settings_panel)
 	_settings_panel.hide()
-	_settings_panel.closed.connect(func(): _set_pause_menu_visible(true))
+	_settings_panel.closed.connect(func():
+		# V4.8c: the settings screen is the register's only writer, so closing it
+		# is the one moment the cached copy can go stale.
+		_messages = MessageSettings.load_from(SettingsPanel.CONFIG_PATH)
+		_events_panel.set_messages(_messages)
+		_update_top_bar()
+		_set_pause_menu_visible(true)
+	)
 
 	# Blocking, unlike every other panel: a pause menu you can click past into
 	# the map underneath is not paused in any sense the player recognises.
@@ -990,6 +1009,7 @@ func _wire_hud() -> void:
 	# U5c. The legend proposes a layer, the map view holds it, and the legend is
 	# then told what it now shows -- one direction, so the two cannot disagree
 	# about which layer is up.
+	_hud.map_legend.setup_roster(_loader)
 	_hud.map_legend.layer_selected.connect(func(id: String):
 		_map_view.set_layer(id)
 		_hud.map_legend.show_layer(_map_view.layer(), _state, _map_view.viewer_id())
@@ -2084,39 +2104,36 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		var ev = Events.event_by_id(_loader, event_id)
 		if ev == null:
 			continue
-		var left := int(entry.get("months_left", 0))
 		# A decision the player has not seen must not expire behind their back:
 		# "3 months to answer" at speed 3 is thirteen seconds, and both playtest
 		# runs produced "Decided for you" records no player answered (2026-09-05).
 		# Arrival pauses; the interrupt flag (V2.4b) still opens Dispatches on
 		# top -- non-modal, per events-model's argument, but the clock waits
 		# until everything unseen has been answered.
-		_paused_for_decision = true
-		_clock.paused = true
-		_hud.clock_cluster.refresh(_clock)
-		_unseen_events[event_id] = true
-		# And the card itself is the answer surface (the clock is stopped, so the
-		# choices cannot be pressed against a running world). The default-choice
-		# marker is events_panel's own wording.
-		var actions: Array = []
-		for choice in ev.choices:
-			actions.append({"label": "%s%s" % [
-				String(choice.get("label", "")),
-				"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
-			]})
-		# The title names the place for a sited event -- read straight off the
-		# entry, `event_name` untouched (V3.5). The name is already in the
-		# register because every reader of it is a leaf over pending state.
-		var title: String = ev.event_name
-		var where := String(entry.get("region_name", ""))
-		if where != "":
-			title = "%s — %s" % [title, where]
-		# The same plate the Dispatches desk entry carries, on the title's side:
-		# one crisis, one image, in both places it is read. Null (no art yet)
-		# draws the card exactly as before -- missing art is silent.
-		var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
-		var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions, art)
-		_event_cards[card_id] = event_id
+		# V4.8c: arrival pauses when the category's PAUSE band says so (default
+		# Major+). A quiet arrival is still unseen -- it enters the set as false,
+		# and _guard_lapses() holds the clock for it in its last month, so the
+		# contract above is kept by name rather than by the arrival pause.
+		var severity := int(entry.get("severity", 1))
+		var holds := MessageSettings.allows(_messages, ev.category, severity, "pause")
+		if holds:
+			_paused_for_decision = true
+			_clock.paused = true
+			_hud.clock_cluster.refresh(_clock)
+		_unseen_events[event_id] = holds
+		if MessageSettings.allows(_messages, ev.category, severity, "popup"):
+			_push_decision_card(ev, entry)
+
+	# A quiet arrival's card stays up while the clock runs, so every live
+	# decision card's deadline is re-read here, before the guard: a card saying
+	# "3 months" beside a desk saying one is two readouts of one entry
+	# disagreeing (review pass 2). Before V4.8c the arrival stopped the clock
+	# and the sentence could not age under the player.
+	_refresh_decision_bodies(ns)
+
+	# After the arrivals, so a quiet arrival with one month to answer is caught
+	# in the month it lands.
+	_guard_lapses(ns)
 
 	# The unseen set's third door re-check: the pause is re-judged AFTER the
 	# arrivals, not beside the departure erase above -- a same-month
@@ -2124,6 +2141,85 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 	# resume past the fresh arrival. The same three lines the card-answer path
 	# runs.
 	_resume_if_decision_settled()
+
+
+## V4.8c, THE LAPSE GUARD -- the arrival pause's contract, kept for a quiet
+## arrival. Every unanswered entry the pause band let through (false in the unseen
+## set) whose countdown is down to its last month -- Events._tick_countdowns
+## answers it by default on the NEXT tick -- now holds the clock, and gets its
+## decision card if the popup band suppressed one: a clock stopped with nothing on
+## screen saying why is the silent failure this column exists to catch. Runs every
+## month, right after the tick moved the countdowns. An interrupt is not its
+## business: _enforce_interrupt() holds those whatever the settings say.
+func _guard_lapses(ns) -> void:
+	for entry in ns.event_queue:
+		var event_id := String(entry.get("event_id", ""))
+		if not _unseen_events.has(event_id) or bool(_unseen_events[event_id]):
+			continue
+		if int(entry.get("months_left", 0)) > 1:
+			continue
+		var ev = Events.event_by_id(_loader, event_id)
+		if ev == null:
+			continue
+		_unseen_events[event_id] = true
+		_paused_for_decision = true
+		_clock.paused = true
+		_hud.clock_cluster.refresh(_clock)
+		if not _event_cards.values().has(event_id):
+			_push_decision_card(ev, entry)
+
+
+## The decision card for one desk entry: the event's choices as buttons, the
+## place in the title for a sited event, the plate beside it. One builder for the
+## arrival and the lapse guard, so the guard's card is the arrival's card.
+func _push_decision_card(ev, entry: Dictionary) -> void:
+	var event_id := String(entry.get("event_id", ""))
+	var left := int(entry.get("months_left", 0))
+	# The card itself is the answer surface. Since V4.8c a quiet arrival's card
+	# can be answered with the clock running -- Events.answer is the same chain
+	# either way; only the arrival pause used to guarantee a stopped world. The
+	# default-choice marker is events_panel's own wording.
+	var actions: Array = []
+	for choice in ev.choices:
+		actions.append({"label": "%s%s" % [
+			String(choice.get("label", "")),
+			"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
+		]})
+	# The title names the place for a sited event -- read straight off the
+	# entry, `event_name` untouched (V3.5). The name is already in the
+	# register because every reader of it is a leaf over pending state.
+	var title: String = ev.event_name
+	var where := String(entry.get("region_name", ""))
+	if where != "":
+		title = "%s — %s" % [title, where]
+	# The same plate the Dispatches desk entry carries, on the title's side:
+	# one crisis, one image, in both places it is read. Null (no art yet)
+	# draws the card exactly as before -- missing art is silent.
+	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
+	var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions, art)
+	_event_cards[card_id] = event_id
+
+
+## Every live decision card's deadline sentence, re-read off the desk. A card
+## whose event has left the desk was dismissed above; one the eviction dropped is
+## a set_body() no-op.
+func _refresh_decision_bodies(ns) -> void:
+	var left_by_id := {}
+	for entry in ns.event_queue:
+		left_by_id[String(entry.get("event_id", ""))] = int(entry.get("months_left", 0))
+	for card_id in _event_cards.keys():
+		var event_id := String(_event_cards[card_id])
+		if not left_by_id.has(event_id):
+			continue
+		var ev = Events.event_by_id(_loader, event_id)
+		if ev != null:
+			_hud.message_stack.set_body(String(card_id), _decision_body(ev, int(left_by_id[event_id])))
+
+
+## Whether any unseen id holds the clock -- V4.8c's reading of what used to be
+## "the unseen set is not empty": a quiet id is unanswered but holds nothing.
+func _unseen_holds() -> bool:
+	return _unseen_events.values().has(true)
 
 
 ## The one resume rule for the arrival pause, shared by all four doors (panel
@@ -2141,7 +2237,7 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 ## choice then left the interrupt held with no flag, and answering the interrupt
 ## found nothing to release. Interrupt pending keeps the flag whatever else holds.
 func _resume_if_decision_settled() -> void:
-	if not _paused_for_decision or not _unseen_events.is_empty():
+	if not _paused_for_decision or _unseen_holds():
 		return
 	var ns = _state.player() if _state != null else null
 	if ns != null and Events.interrupt_pending(ns):
@@ -2168,7 +2264,7 @@ func _note_holds_for_pause_menu() -> void:
 ## release the clock, so choosing a programme cannot run time out from under a
 ## question nobody has answered.
 func _decision_holds_clock() -> bool:
-	if _paused_for_decision and not _unseen_events.is_empty():
+	if _paused_for_decision and _unseen_holds():
 		return true
 	var ns = _state.player() if _state != null else null
 	return ns != null and Events.interrupt_pending(ns)
@@ -2756,4 +2852,4 @@ func _update_top_bar() -> void:
 		# also STOPS pending when the player answers it, and every command in this
 		# file already ends by calling this function -- so the mark clears on the
 		# press rather than a month later.
-		_hud.action_bar.show_pending(Pending.window_ids(_state, _loader))
+		_hud.action_bar.show_pending(Pending.window_ids(_state, _loader, _messages))

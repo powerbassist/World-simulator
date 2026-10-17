@@ -29,6 +29,7 @@ const Programme = preload("res://src/sim/programme.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const MessageSettings = preload("res://src/ui/message_settings.gd")
 
 ## Every NationState field Legislature.apply_effects can write (read off its body, plus
 ## Budget.apply_pending's tax/spending/progressivity/demand-impulse writes). A programme's
@@ -78,6 +79,14 @@ func _run() -> void:
 	_main._paused_for_decision = false
 	_main._state.player().event_queue.clear()
 	_main.get_node("Clock").paused = false
+	# V4.8c: these pins are the arrival pause's MECHANICS, written when every
+	# arrival paused. Pause at All for every category, so they hold whatever this
+	# machine's settings.cfg says and whatever severity the staged event carries;
+	# the bands themselves are tests/test_message_settings.gd's.
+	var pause_all := MessageSettings.defaults()
+	for category in pause_all.keys():
+		pause_all[category]["pause"] = EventsK.SEVERITY_MIN
+	_main._messages = pause_all
 
 	_check_decision_arrival_stops_the_clock()
 	_check_departed_and_dismissed_events_leave_the_unseen_set()

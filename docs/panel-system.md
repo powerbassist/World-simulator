@@ -744,3 +744,65 @@ against. A row click asks `main.gd` to open the window that answers it. **People
 left the strip here** -- a count of people the term has moved is a margin note, not
 a standing figure -- and `tests/test_surfaces_people.gd`'s scan now reads
 `outliner_readings.gd`.
+
+## 21. Message settings and the legend's grades (V4.8c)
+
+**The register** (`src/ui/message_settings.gd`, static): per event category
+(`EventsK.CATEGORIES`), four switches -- `notify` (the Dispatches mark,
+`pending.gd`), `feed` (the Dispatches ledger), `popup` (the message_stack decision
+card), `pause` (the arrival pause). Each holds a SEVERITY THRESHOLD, 1..3 or
+`OFF` (4): it fires for an event at or above it. A category has no severity of its
+own, so a per-category boolean could not make "defaults banded by severity" mean
+anything. Defaults are one band per switch, the same for every category: notify,
+feed and popup at All (what the game did before), **pause at Major+ (author's
+call, 2026-10-17)**. An empty dictionary reads as the defaults everywhere.
+Persisted in `user://settings.cfg` under `[messages]` (`<category>.<switch>`),
+absent key -> default, out-of-band -> clamped. Not a save field: no
+`SAVE_VERSION` move. `main.gd` caches it at boot and re-reads it when the settings
+screen closes, because `Pending.window_ids` runs on the per-day path.
+
+**THE CONTRACT, KEPT BY NAME: the lapse guard.** The arrival pause existed because
+a decision that expired unseen was "Decided for you" in both playtests
+(2026-09-05). Pause off defers that pause; it does not remove it. `_unseen_events`
+now maps id -> holds-the-clock: an arrival that meets its pause band enters `true`
+(pauses, as before), a quiet one enters `false`. `_guard_lapses()` runs every
+month after the countdowns move: an unanswered quiet entry with `months_left <= 1`
+(`Events._tick_countdowns` answers it by default on the next tick) turns `true`,
+the clock stops, and its decision card is pushed if the popup band suppressed it.
+Every live decision card's "N months to answer" is re-read each month
+(`_refresh_decision_bodies`): a quiet card ages under a running clock, which no
+card did before. The two clock checks read `_unseen_holds()`, not emptiness; every erase door is
+unchanged (an answer, a dismissed card, an id leaving the desk). Interrupt events
+ignore the register: the flag is content saying "until answered".
+
+**What each switch leaves alone.** The desk in Dispatches shows every entry: it is
+where a decision is answered. The ledger hides a filtered record and SAYS SO ("N
+records hidden by your message settings") -- a ledger that shrank silently reads as
+lost history. The notify mark still lights for an interrupt and for a decision in
+its last month, the guard's band. The "Decided for you" card is not filtered: it
+is the evidence of a lapse, and muting it would hide the failure the guard exists
+for.
+
+**The screen.** `settings_panel.gd` draws a MESSAGES grid below the display rows:
+a category per row, a band picker per switch (`BAND_LABELS`, index = threshold -
+1). `messages_from_controls()` is what it saves.
+
+**The legend's grades.** On the Political layer only, three count rows above the
+caption -- playable, simulated, outlines -- from `Roster.counts(loader)`, which
+counts THROUGH `Roster.grade()` over the nation files and the outline register.
+No swatch: every nation is its own colour, so a grade has no colour to promise
+(and the political layer's no-swatch pin stands). `MapOutlines.profile_of` stays
+the hover readout.
+
+**Instruments.** `tests/test_message_settings.gd`: the register (every cell, the
+defaults, Major+ pinned), the file round-trip (absent file, other sections kept,
+clamp), the settings grid (36 pickers showing the stored bands), and the contract
+driven through the machine's own `_tick_countdowns` with the game's rule that a
+paused clock ticks no month -- the quiet decision must stop the clock with one
+month left and never leave the desk by default. `tests/test_map_layers.gd` counts
+the grades WITHOUT `Roster.grade` (the nation flag and the outline register) and
+pins the rows to the Political layer. Mutation-checked: guard one month late,
+guard call removed, quiet arrivals kept out of the unseen set, pause default at
+All, notify's last-month clause dropped, the hidden-records line dropped, the
+picker index off by one, the outline count dropped, the rows left up on Relations
+-- each failed its own line.

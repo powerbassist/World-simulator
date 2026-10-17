@@ -33,10 +33,12 @@ const Government = preload("res://src/sim/government.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
+const MessageSettings = preload("res://src/ui/message_settings.gd")
 
 var _state
 var _loader
 var _dirty := true
+var _messages := {}  # V4.8c: the FEED band filters the ledger; empty = defaults
 
 var _title: Label
 var _body: VBoxContainer
@@ -95,6 +97,13 @@ func _ready() -> void:
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
+	_dirty = true
+
+
+## V4.8c. The player's message settings; main.gd hands them in at boot and again
+## whenever the settings screen closes.
+func set_messages(messages: Dictionary) -> void:
+	_messages = messages
 	_dirty = true
 
 
@@ -332,8 +341,23 @@ func _build_ledger(ns) -> void:
 	if ns.event_history.is_empty():
 		PanelKit.line(_body, "Nothing has come up yet.")
 		return
+	# V4.8c: the FEED band per category. Only the ledger is filtered -- the desk
+	# above is where a decision is answered, so it shows every entry whatever the
+	# settings say. Severity is the event's own (the record does not carry it).
+	# A hidden row is COUNTED, never silent: a ledger that shrank with nothing
+	# saying why reads as lost history.
+	var hidden := 0
 	for record in ns.event_history:
+		var ev = Events.event_by_id(_loader, String(record.get("event_id", "")))
+		var severity := int(ev.severity) if ev != null else EventsK.SEVERITY_MAX
+		if not MessageSettings.allows(_messages, String(record.get("category", "")), severity, "feed"):
+			hidden += 1
+			continue
 		_build_record(record)
+	if hidden > 0:
+		PanelKit.line(_body, "%d %s hidden by your message settings." % [
+			hidden, "record" if hidden == 1 else "records",
+		])
 
 
 func _build_record(record: Dictionary) -> void:
