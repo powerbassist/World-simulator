@@ -30,11 +30,18 @@ const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const WindowFrame = preload("res://src/ui/window_frame.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Government = preload("res://src/sim/government.gd")
+const StripChildren = preload("res://src/ui/strip_children.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 ## Zero is a true level for these, not an absence: nobody angry, nobody moved.
 const ZERO_IS_A_LEVEL := ["unrest", "people"]
 
 const SCREEN_WIDTH := 1920.0
+
+## Level-1 lines that open a child once every child is staged: the three approval
+## issues, then debt, coalition, programme entries, the desk, the rules, the
+## shortage. A count, so a register edit that quietly drops a child_id fails.
+const EXPECTED_CHILD_LINES := 9
 
 var _failures: Array[String] = []
 var _loader
@@ -67,6 +74,9 @@ func _process(_delta: float) -> bool:
 	_check_absence_reads_as_a_dash()
 	_check_alerts_name_real_windows()
 	_check_the_strip_fits()
+	_check_every_child_resolves()
+	_check_child_inputs_are_live()
+	_check_a_missing_history_reads_as_a_dash_at_level_two()
 	_finish()
 	return false
 
@@ -171,23 +181,7 @@ func _check_alerts_name_real_windows() -> void:
 
 	var state = _new_state()
 	var ns = state.player()
-	ns.unrest_pct = UnrestK.UNREST_THRESHOLD_PCT + 1.0
-	ns.is_minority = true
-	ns.event_queue.append({"event_id": "walker", "severity": 3})
-	var staged_treaty := false
-	for org_id in Orgs.council_ids(state):
-		if ns.orgs.has(org_id):
-			state.orgs[org_id]["ratifying"] = {
-				"name": "Walker treaty", "months_left": 2,
-				"nations": {ns.id: CouncilK.RATIFY_PENDING},
-			}
-			staged_treaty = true
-			break
-	if not staged_treaty:
-		_fail("FRA sits on no council -- the Europe alert cannot be staged")
-	# A good nobody covers: demand with nothing made and nothing bought.
-	var good_id := String(_loader.commodity_goods.keys()[0])
-	ns.commodity_state = {"demand": {good_id: 100.0}, "output": {good_id: 0.0}, "trade": {good_id: 0.0}}
+	_stage_every_alert(state)
 
 	var alerting := 0
 	for id in StripReadings.ORDER:
@@ -216,6 +210,129 @@ func _check_alerts_name_real_windows() -> void:
 	var margin_text := String(StripReadings.read("assembly", state, _loader)["text"])
 	if margin_text != "-1":
 		_fail("a coalition of exactly majority_seats reads '%s', not '-1' -- it is one seat short" % margin_text)
+
+
+## Every alert the register can raise, staged on one state.
+func _stage_every_alert(state) -> void:
+	var ns = state.player()
+	ns.unrest_pct = UnrestK.UNREST_THRESHOLD_PCT + 1.0
+	ns.is_minority = true
+	ns.event_queue.append({"event_id": "walker", "severity": 3})
+	var staged_treaty := false
+	for org_id in Orgs.council_ids(state):
+		if ns.orgs.has(org_id):
+			state.orgs[org_id]["ratifying"] = {
+				"name": "Walker treaty", "months_left": 2,
+				"nations": {ns.id: CouncilK.RATIFY_PENDING},
+			}
+			staged_treaty = true
+			break
+	if not staged_treaty:
+		_fail("FRA sits on no council -- the Europe alert cannot be staged")
+	# A good nobody covers: demand with nothing made and nothing bought.
+	var good_id := String(_loader.commodity_goods.keys()[0])
+	ns.commodity_state = {"demand": {good_id: 100.0}, "output": {good_id: 0.0}, "trade": {good_id: 0.0}}
+
+
+## The alerts plus the three things only a child needs: a running programme entry,
+## a council rule that binds, and (FRA's new game already seats a coalition).
+func _stage_every_child(state) -> void:
+	_stage_every_alert(state)
+	var ns = state.player()
+	ns.programme.append({
+		"entry_id": String(_loader.programme[0]["id"]), "chosen_term": 0, "months_live": 0,
+		"status": "active", "concluded_term": -1, "concluded_term_month": -1,
+	})
+	for org_id in Orgs.council_ids(state):
+		if ns.orgs.has(org_id):
+			state.orgs[org_id]["rules"]["walker_rule"] = {
+				"name": "Walker rule", "field": "deficit_pct_gdp", "op": "<=",
+				"value": -50.0, "severity": 1.0, "tolerance": 1.0,
+			}
+			break
+
+
+## Level 2: every child_id a level-1 line carries must resolve to a real
+## breakdown, and every issue the game can rank must have one -- a new issue
+## added to ISSUE_LABEL without a child fails here, not in a playtest.
+func _check_every_child_resolves() -> void:
+	var state = _new_state()
+	_stage_every_child(state)
+	var seen := 0
+	for id in StripReadings.ORDER:
+		var r: Dictionary = StripReadings.read(id, state, _loader)
+		for line in (r["lines"] as Array):
+			var cid := String(line["child_id"])
+			if cid.is_empty():
+				continue
+			seen += 1
+			var c: Dictionary = StripChildren.child(id, cid, state, _loader)
+			if c.is_empty() or (c["lines"] as Array).is_empty() or String(c["title"]).is_empty():
+				_fail("'%s' line '%s' opens child '%s', which resolves to nothing" % [id, line["text"], cid])
+	if seen != EXPECTED_CHILD_LINES:
+		_fail("%d child lines appeared, %d expected" % [seen, EXPECTED_CHILD_LINES])
+	for issue in OpinionK.ISSUE_LABEL.keys():
+		if StripChildren.child("approval", "issue:%s" % issue, state, _loader).is_empty():
+			_fail("issue '%s' has no level-2 breakdown" % issue)
+	if not StripChildren.child("approval", "no-such-child", state, _loader).is_empty():
+		_fail("an unknown child id resolved -- the lookup is a catch-all")
+	if not StripChildren.child("gdp", "debt", state, _loader).is_empty():
+		_fail("a child resolved under the wrong reading -- the lookup ignores the reading id")
+
+
+## The children are read from the state, never typed: perturb the input a child
+## reports and require the child to move (the level-1 walker's shape).
+func _check_child_inputs_are_live() -> void:
+	var state = _new_state()
+	_stage_every_child(state)
+	var ns = state.player()
+	var probes := [
+		# Line 0 only: the satisfaction line below it moves with the same input and
+		# would hide a hard-coded operands line (the mutation check caught exactly that).
+		["approval", "issue:jobs", "unemployment_pct", 4.0, 0],
+		["deficit", "debt", "debt_eur_bn", 900.0],
+		["desk", "queue", "event_queue", null],
+		["commodities", "short", "commodity_state", null],
+		["assembly", "coalition", "coalition_party_ids", null],
+	]
+	for probe in probes:
+		var before := _child_key(probe, state)
+		var field: String = probe[2]
+		match field:
+			"event_queue":
+				ns.event_queue.append({"event_id": "walker_two", "severity": 1})
+			"commodity_state":
+				var good_id := String(_loader.commodity_goods.keys()[0])
+				ns.commodity_state["demand"][good_id] = 100.0
+				ns.commodity_state["output"][good_id] = 10.0
+			"coalition_party_ids":
+				ns.seats_by_party["walker_party"] = 7
+				ns.coalition_party_ids.append("walker_party")
+			_:
+				ns.set(field, float(ns.get(field)) + float(probe[3]))
+		var after := _child_key(probe, state)
+		if before == after:
+			_fail("child '%s/%s' did not move when '%s' changed -- it is not read from it" % [probe[0], probe[1], field])
+
+
+func _child_key(probe: Array, state) -> String:
+	var c: Dictionary = StripChildren.child(probe[0], probe[1], state, _loader)
+	if probe.size() > 4:
+		return String((c["lines"] as Array)[int(probe[4])])
+	return JSON.stringify(c)
+
+
+## A new game has no history: the debt path's older rows are a dash, not 0.0.
+func _check_a_missing_history_reads_as_a_dash_at_level_two() -> void:
+	var state = _new_state()
+	var c: Dictionary = StripChildren.child("deficit", "debt", state, _loader)
+	var dashes := 0
+	for line in (c["lines"] as Array):
+		if String(line).ends_with("—"):
+			dashes += 1
+	if dashes != StripChildren.DEBT_PATH_MONTHS.size():
+		_fail("the debt path prints %d dashes with no history, expected %d: %s" % [
+			dashes, StripChildren.DEBT_PATH_MONTHS.size(), c["lines"]])
 
 
 ## Every reading showing at once must fit a 1920 screen beside the tools, each at
