@@ -87,6 +87,8 @@ const Hud = preload("res://src/ui/hud.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
+const Sound = preload("res://src/ui/sound.gd")
+const SoundBed = preload("res://src/ui/sound_bed.gd")
 const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -295,6 +297,11 @@ func _ready() -> void:
 
 	_hud = Hud.new()
 	add_child(_hud)
+	# V4.9c. The desk's bed, rendered on a worker and swelling in once it is,
+	# and the one-shot set on another (sound.gd's warm()): nothing in this
+	# _ready() waits for either.
+	SoundBed.start(self, "game")
+	Sound.warm()
 	_top_bar = _hud.top_bar
 	_hud.ribbon.setup(_state, _loader)
 
@@ -912,8 +919,18 @@ func _entry(id: String, label: String) -> Dictionary:
 ## holds the clock on its own account.
 func _toggle_pause_by_hand() -> void:
 	_clock.toggle_pause()
+	# V4.9c. By hand only: a pause the game takes (an arrival, the lapse guard)
+	# already carries its own sound, the event sting, and a hold that resumes
+	# itself is the world going on, not the player acting.
+	Sound.cue(self, "pause" if _clock.paused else "resume")
 	_paused_for_decision = false
 	_paused_for_programme = false
+
+
+## V4.9c. The sound set's warm-up is a worker task, and a task the pool was
+## given must be waited on before the scene that started it goes.
+func _exit_tree() -> void:
+	Sound.settle()
 
 
 ## Every signal the furniture emits, connected in one place. hud.gd builds and
@@ -2112,6 +2129,12 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 
 	# What ARRIVED: ids on the desk now that were not before. Each gets its own
 	# decision card, answering its own row.
+	# V4.9c: and ONE sting for the month, at the worst severity that arrived --
+	# two crises in one tick are one piece of news to the ear, and two stings on
+	# one frame would only be louder, not clearer. Gated on NOTIFY (author's
+	# call, 2026-10-17): the sting is a notification, so a category the player
+	# has told not to notify stays silent too.
+	var sting_severity := 0
 	for entry in ns.event_queue:
 		var event_id := String(entry.get("event_id", ""))
 		if desk_before.has(event_id):
@@ -2130,6 +2153,12 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		# and _guard_lapses() holds the clock for it in its last month, so the
 		# contract above is kept by name rather than by the arrival pause.
 		var severity := int(entry.get("severity", 1))
+		# An interrupt ignores the register entirely (message_settings.gd's
+		# header; pending.gd's notify read does the same): the content says
+		# "until answered", and a preference does not silence it (review pass 1).
+		if bool(entry.get("interrupt", false)) \
+				or MessageSettings.allows(_messages, ev.category, severity, "notify"):
+			sting_severity = maxi(sting_severity, severity)
 		var holds := MessageSettings.allows(_messages, ev.category, severity, "pause")
 		if holds:
 			_paused_for_decision = true
@@ -2138,6 +2167,8 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		_unseen_events[event_id] = holds
 		if MessageSettings.allows(_messages, ev.category, severity, "popup"):
 			_push_decision_card(ev, entry)
+	if sting_severity > 0:
+		Sound.event_sting(self, sting_severity)
 
 	# A quiet arrival's card stays up while the clock runs, so every live
 	# decision card's deadline is re-read here, before the guard: a card saying
@@ -2685,7 +2716,8 @@ func _enforce_interrupt() -> void:
 	# stayed paused after being answered.
 	_paused_for_decision = true
 	if _events_panel != null:
-		_windows.open("events")
+		# Quiet (V4.9c): the arrival's sound is the event sting.
+		_windows.open("events", true)
 	_hud.clock_cluster.refresh(_clock)
 
 

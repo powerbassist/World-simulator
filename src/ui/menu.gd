@@ -21,6 +21,7 @@ const CreditsPanel = preload("res://src/ui/credits_panel.gd")
 const NationSelectPanel = preload("res://src/ui/nation_select_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const LoadingScreen = preload("res://src/ui/loading_screen.gd")
+const SoundBed = preload("res://src/ui/sound_bed.gd")
 
 ## The nation the menu plate builds its throwaway month-0 state around. FRA is
 ## the premise nation, and the plate reads only content that is identical for
@@ -45,6 +46,7 @@ var _focus_return: Control
 ## The loading screen once a game is starting; a second start is refused while
 ## it runs (a double-click on Continue would otherwise boot two games).
 var _loading
+var _bed
 
 
 func _ready() -> void:
@@ -83,6 +85,9 @@ func _ready() -> void:
 	_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_build_scrim())
 	add_child(_build_menu())
+	# V4.9c. The front door's bed. Rendered on a worker, so the menu's first
+	# frame (tools/menu_boot_probe.gd's number) pays nothing for it.
+	_bed = SoundBed.start(self, "menu")
 
 	_load_panel = SaveLoadPanel.new()
 	_load_panel.load_requested.connect(_start_game)
@@ -264,6 +269,10 @@ func _start_game(load_slot: String, nation_id: String = "", scenario_id: String 
 	# The plate is under an opaque screen from here on: hidden, it costs the
 	# boot no frame time.
 	_plate.hide()
+	# The menu's chord swells out under the loading screen rather than cutting
+	# off when this scene is freed; the desk's own bed swells in after.
+	if is_instance_valid(_bed):
+		_bed.fade_out()
 	_loading = LoadingScreen.new()
 	add_child(_loading)
 	_loading.entered.connect(func(_game: Node): queue_free())

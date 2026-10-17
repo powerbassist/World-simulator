@@ -11,7 +11,19 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.9
 
-**V4.9b -- ELECTION NIGHT AND THE MAP'S CROSSFADE -- IS BUILT on `v4.9b-night` (2026-10-17). One `src/sim/` diff (`Elections.regional_shares()`, pure, two constants), `SAVE_VERSION` unchanged, no settings key.**
+**V4.9c -- THE SYNTHESIZED SOUND SET -- IS BUILT on `v4.9c-sound` (2026-10-17). No `src/sim/` diff, `SAVE_VERSION` unchanged, one settings key (`[audio] ambient`, default ON).**
+
+- **Contract and instruments: [panel-system](panel-system.md) §24.**
+- **Author calls at the plan gate (2026-10-17):** the beds get their own Ambience switch, default ON; the event sting follows each category's NOTIFY band.
+- **The set:** two 16 s beds (menu, game), window open/close, pause/resume by hand, an election-night declare tick, the event sting at three severities, V3.6's election sting -- eleven one-shots and two loops, all additive synthesis from one constants file. The sting's recipe moved out of `sting.gd` with its bytes pinned by hash.
+- **Measured first:** the generic render cost 193 ms for the one-shots (80 ms for the critical sting alone) and ~300 ms per bed after hoisting the partials into typed arrays (-45 %, no float changed). Too much for a frame, so beds render on a worker and swell in, and the one-shots warm on a worker as the game opens.
+- **The tests caught the tuning:** the first cut put a bed as loud as the quietest tick, the major sting quieter than the minor, and two stings ended on a click -- all four red on the rendered samples, fixed by level and duration.
+- **Mutation-checked, and one survived:** a `_skipping` flag meant to silence a skipped count was dead -- `skip()` lands the count at t = 1, where the last-region rule already silences it. Deleted.
+- **Review (budget 3, bar: changes what a player hears or sees), 2 passes:** pass 1 fixed three -- an interrupt silenced by its NOTIFY band, its Dispatches' open tick over the sting, two overlapping beds after Ambience off/on -- and left three below the bar; pass 2 clean.
+- **Not verifiable here:** how it sounds. Files exported for the author's ear.
+- **Refused:** voice, licensed music, a composed score; a click on every button; a volume ladder.
+
+**V4.9b -- ELECTION NIGHT AND THE MAP'S CROSSFADE -- IS MERGED (PR #8, merge commit `cb7784f3`, 2026-10-17). One `src/sim/` diff (`Elections.regional_shares()`, pure, two constants), `SAVE_VERSION` unchanged, no settings key.**
 
 - **Contract and instruments: [panel-system](panel-system.md) §23.**
 - **Author call at the plan gate (2026-10-17):** the regions show a DERIVED swing rather than the national shares thirteen times -- the incumbent tilted by regional unemployment x jobs salience, renormalised so the weighted totals are the verdict exactly (1e-12). Measured at France's opening: 24.4-28.0 % by region around 26.5 %.

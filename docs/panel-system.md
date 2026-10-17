@@ -1022,3 +1022,125 @@ first frame, settled). `tools/screenshot.gd --tally` turns motion on for its
 mid-count frame. Mutation-checked: the dismissal not retiring the count, the count
 not reset before it runs, declaration order reversed, the crossfade not starting
 from the screen, the regional tilt not renormalised -- each failed its own test.
+
+## 24. The synthesized sound set (V4.9c)
+
+**Every sound is generated, none is recorded** -- the author's call at the tier
+signing (2026-09-13), with V3.6's sting as the house style: additive sine
+partials under exponential envelopes, rendered to 16-bit mono PCM into an
+`AudioStreamWAV`. No binary, no licence, no `.import`, no fresh-clone question.
+A session wanting a recording re-opens every obligation `sting.gd`'s header lists.
+
+**Four files, one job each.** `src/ui/sound_constants.gd` holds every recipe and
+level with its reason (the `*_constants.gd` rule, audio edition).
+`src/ui/synth.gd` renders a recipe -- pure, static, node-free, so a worker can
+run it. `src/ui/sound.gd` is the one door for one-shots (`Sound.cue(parent, id)`,
+`Sound.event_sting(parent, severity)`), with a stream cache and the worker
+warm-up. `src/ui/sound_bed.gd` is a node: a looping bed that fades in, answers
+the settings while it plays, and fades out. `sting.gd` stays as the name the
+election plate calls; its recipe moved to `ELECTION`, byte-identical (SHA-256
+pinned in `tests/test_sound.gd`, taken from the pre-move code).
+
+**The vocabulary.**
+
+| sound | where it plays | recipe | heard peak |
+|---|---|---|---|
+| bed `menu` | the front door, under everything | open D (D2 A2 D3 A3 E4), 16 s loop, 2 s fades | -38.6 dBFS |
+| bed `game` | the desk | A minor low (A1 E2 A2 C3), 16 s loop, 3 s fades | -39.9 dBFS |
+| `open` / `close` | a window opening / closing (`window_manager.gd`) | E6+B6 / B5+F#6 ticks, 80-90 ms | -29.6 / -32.4 |
+| `pause` / `resume` | the clock paused / resumed BY HAND (`main.gd`) | A5 to E5 falling / rising, 0.24 s | -32.6 |
+| `declare` | each region declaring on election night | G6, 50 ms | -34.7 |
+| `event_1/2/3` | a month's arrivals, at the worst severity NOTIFY lets through | minor bell E5 / major two-strike G4 then D5 / critical D minor low chord | -21.3 / -19.2 / -14.2 |
+| `election` | the verdict's reveal (V3.6) | D3-A3-D4 toll, 1.4 s | -10.3 |
+
+**The level ladder** is the set's one rule: beds < UI cues < event stings
+(minor < major < critical) < the election sting, nothing above V3.6's -8 dB. It
+is measured on the RENDERED samples (player level + the buffer's own peak), not
+on the recipe numbers -- the first cut failed it twice (a bed as loud as the
+quietest tick; the major sting quieter than the minor), and the test caught both.
+The table's figures are from `wave` + numpy FFT over exported files (2026-10-17);
+the FFT's top bins land on each recipe's pitches.
+
+**Restraint is the design.** A sound marks only a change V4.9a's motion already
+marks. No click sound on every button. A window displaced by an open is part of
+one gesture -- one `open`, no `close` -- and `close_all()` (key M) is one `close`.
+A pause the game takes (an arrival, the lapse guard) makes no pause cue: its sound
+is the event sting. Two crises in one month are ONE sting, at the worse severity:
+two on one frame would only be louder. The sting follows the **NOTIFY** band
+(author's call, 2026-10-17): it is a notification, so a category set not to notify
+arrives silent. On election night the last region declares with the verdict's
+sting rather than a tick a frame before it -- and that same rule silences a skip,
+because `skip()` lands the count in one step at t = 1 (a separate `_skipping` flag
+was written, then deleted when the mutation check proved it dead).
+
+**Click-free, by test.** Every one-shot starts on a zero sample (an attack ramp,
+and a late partial carries its own) and ends under 2 % of full scale in its last
+5 ms -- the first major and critical cuts (0.95 s, 1.3 s) ended on a click and
+were lengthened to 1.2 s and 1.8 s. A bed is seamless only if every partial and
+every swell completes a WHOLE number of cycles in its loop, so its frequencies sit
+on the 1/16 Hz grid (D2 is 73.4375, not 73.42); the test checks the grid and that
+the seam's jump is no bigger than the bed's ordinary steps.
+
+**Cost, measured 2026-10-17 (this machine, GDScript, best of three):**
+
+| render | ms |
+|---|---|
+| the eleven one-shots together | 193 (critical alone 80, election 43, ticks 1-6) |
+| bed `menu` / `game` | 359 / 287 |
+
+Hoisting the partials into typed arrays (TAU x hz and -decay are the very
+subexpressions the products evaluated first, so no float changed -- the hash
+held) cut both by ~45 %. Still too much for a frame, so nothing renders on the
+main thread in play: each bed renders on a `WorkerThreadPool` task and swells in
+when done (the menu's first frame pays nothing -- `tools/menu_boot_probe.gd`'s
+number), and `Sound.warm()` renders the one-shot set on a worker as the game
+opens, so the first crisis does not stall its own frame. A cue asked for before
+the warm-up finishes renders itself on the spot. Every task is waited on before
+its owner leaves (`SoundBed._exit_tree`, `main.gd`'s `_exit_tree` ->
+`Sound.settle()`).
+
+**Settings.** `[audio] enabled` (V3.6) governs everything; `[audio] ambient`
+(new, default ON -- author's call) governs the beds alone, because a loop is the
+one sound a player may want off while keeping the cues. Both are read at play
+time; a bed watches the settings screen's `revision` counter (motion.gd's
+pattern) and fades out or back in the moment the pause menu saves. Absent key ->
+default, so no file or save field moves.
+
+**Headless.** Cues play into the Dummy driver, so the wiring is countable in the
+suite. Beds and the warm-up do not run under `--headless` (the suite builds
+`main.tscn` some thirty times and would spend a worker each time on sound nobody
+hears); `SoundBed.override` and `Sound.warm(true)` are the tests' doors.
+
+**Instruments.** `tests/test_sound.gd` (suite-exclusive: it writes the audio
+keys): the hash pin, determinism, length, no clip, zero start, quiet tail, the
+ladder, the bed grid and seam, severity lookup, the worker warm-up rendering what
+the main thread would, the settings gate, the window gestures, pause by hand, the
+month's one sting at the worst severity and its NOTIFY band, election-night ticks
+against a skip, and a bed's swell, Ambience off (faded, not cut), back on, and
+`fade_out()`. Mutation-checked: an off-grid bed partial, a displaced window's
+close cue, the NOTIFY gate removed, the Ambience gate removed, the sting's synth
+perturbed -- each turned the test red.
+
+**Review pass 1 (2026-10-17), bar "changes what a player hears or sees" -- three
+fixed, three left.** (1) The sting obeyed the NOTIFY band for an interrupt, which
+the register ignores everywhere else (`pending.gd`): an interrupt now always
+stings. (2) The Dispatches window an interrupt opens played its open tick on top
+of the sting; the game's own open is quiet now (`open(id, quiet)`). (3) Ambience
+off then on overlapped two copies of the bed; a bed keeps ONE player for its life,
+faded to silence and stopped on off, faded back up on on -- and the test now
+waits for the stop, which the first version never checked (the mutation survived
+until it did). Left: the game bed cuts rather than fades when the game scene is
+freed (a scene change frees the player with it, and a re-parented tail would add
+its own gap); the per-cue settings read (a ~0.1 ms file read, inaudible); and the
+night test's exact tick count (cannot skip a beat at today's step cap). Pass 2
+traced the fixes (every `open()` caller, a re-enable mid-fade, the load path's
+quiet Dispatches) and found nothing at the bar; the loop stopped at two of its
+budgeted three.
+
+**Not verified here, and cannot be:** how it SOUNDS. The suite proves levels,
+pitches, seams and wiring; the ear is the author's. The rendered files (levels
+baked in, each bed twice so the seam is inside the file) were sent for listening.
+
+**Refused:** voice, licensed music, a composed score (the tier's refusal); a click
+on every button; a volume ladder in settings (two switches are every level the set
+needs today); per-category sting toggles beyond the message bands that already exist.
