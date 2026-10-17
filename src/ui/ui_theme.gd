@@ -217,8 +217,10 @@ static func _panels(theme: Theme) -> void:
 	bar.set_corner_radius_all(0)
 	bar.content_margin_left = 16
 	bar.content_margin_right = 16
-	bar.content_margin_top = 6
-	bar.content_margin_bottom = 6
+	# 3, down from 6 at V4.8a: the figures stack caption over value now, and the
+	# strip must stay inside window_frame.gd's 44px TOP_MARGIN (it drew 50 at 6).
+	bar.content_margin_top = 3
+	bar.content_margin_bottom = 3
 	theme.set_type_variation(TOP_BAR_PANEL, "PanelContainer")
 	theme.set_stylebox("panel", TOP_BAR_PANEL, bar)
 

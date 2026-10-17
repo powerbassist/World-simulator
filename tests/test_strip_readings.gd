@@ -28,6 +28,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const WindowFrame = preload("res://src/ui/window_frame.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## Zero is a true level for these, not an absence: nobody angry, nobody moved.
 const ZERO_IS_A_LEVEL := ["unrest", "people"]
@@ -48,6 +49,10 @@ func _init() -> void:
 		_finish()
 		return
 	_bar = load("res://src/ui/top_bar.gd").new()
+	# The game's theme, as main.gd applies it: without it the labels measure in
+	# the engine's default font and the width and height checks pass on a strip
+	# smaller than the one that ships (they did, 2026-10-17: 44 px here, 50 drawn).
+	_bar.theme = UiTheme.build()
 	root.add_child(_bar)
 
 
