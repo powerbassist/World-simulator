@@ -32,10 +32,16 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 ## per-key dictionary instead (see _issue_operands), inflation reads the
 ## deviation Inflation already computes.
 const ISSUE_FIELDS := {
-	"jobs": ["unemployment_pct", "start_unemployment_pct", "Unemployment", "%.2f%%"],
-	"growth": ["growth_annual_pct", "trend_annual_pct", "Growth", "%.2f%%"],
-	"public_finances": ["deficit_pct_gdp", "start_deficit_pct_gdp", "Deficit", "%.2f%% of GDP"],
-	"europe": ["bloc_burden", "start_bloc_burden", "Council burden", "%.2f"],
+	"jobs": {"now": "unemployment_pct", "base": "start_unemployment_pct", "against": "at the start",
+		"caption": "Unemployment", "fmt": "%.2f%%"},
+	# Growth is priced against the nation's TREND, not where growth began: calling
+	# it "at the start" told the player the wrong baseline (V4.8b review).
+	"growth": {"now": "growth_annual_pct", "base": "trend_annual_pct", "against": "against its trend",
+		"caption": "Growth", "fmt": "%.2f%%"},
+	"public_finances": {"now": "deficit_pct_gdp", "base": "start_deficit_pct_gdp", "against": "at the start",
+		"caption": "Deficit", "fmt": "%.2f%% of GDP"},
+	"europe": {"now": "bloc_burden", "base": "start_bloc_burden", "against": "at the start",
+		"caption": "Council burden", "fmt": "%.2f"},
 }
 
 ## How far back the debt path reaches, in months: the strip's own window, then
@@ -102,10 +108,10 @@ static func _issue(ns, issue: String) -> Dictionary:
 
 static func _issue_operands(ns, issue: String) -> String:
 	if ISSUE_FIELDS.has(issue):
-		var spec: Array = ISSUE_FIELDS[issue]
-		var fmt: String = spec[3]
-		return "%s %s now, %s at the start." % [
-			spec[2], fmt % float(ns.get(spec[0])), fmt % float(ns.get(spec[1]))]
+		var spec: Dictionary = ISSUE_FIELDS[issue]
+		var fmt: String = spec["fmt"]
+		return "%s %s now, %s %s." % [
+			spec["caption"], fmt % float(ns.get(spec["now"])), fmt % float(ns.get(spec["base"])), spec["against"]]
 	if issue == "inflation":
 		return "Inflation %+.2f points since the start." % Inflation.inflation_deviation(ns)
 	if issue.begins_with("tax_"):
@@ -191,17 +197,8 @@ static func _rules(state, ns) -> Dictionary:
 static func _short(ns, loader) -> Dictionary:
 	if loader == null:
 		return {}
-	var short: Array = []
-	for good_id in loader.commodity_goods.keys():
-		var covered := CommoditiesPanel.coverage(ns, String(good_id))
-		if covered < CommoditiesPanel.SHORTAGE_COVERAGE:
-			short.append({"id": String(good_id), "coverage": covered})
-	short.sort_custom(func(a, b) -> bool:
-		if not is_equal_approx(float(a["coverage"]), float(b["coverage"])):
-			return float(a["coverage"]) < float(b["coverage"])
-		return String(a["id"]) < String(b["id"]))
 	var lines: Array = []
-	for row in short:
+	for row in CommoditiesPanel.shortages(ns, loader.commodity_goods.keys()):
 		var good = loader.commodity_goods.get(row["id"])
 		lines.append("%s: %.0f%% of demand" % [
 			String(good.name) if good != null else String(row["id"]), float(row["coverage"]) * 100.0])

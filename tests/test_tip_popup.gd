@@ -11,6 +11,10 @@ extends SceneTree
 ##   - level 2 opens only from a line that carries a child_id, swaps when the
 ##     pointer moves to another child line, and closes when it moves to a plain
 ##     one -- and the breakdown is asked for LAZILY, at the hover, never at open;
+##   - the popup is sized to its rows once layout has run (a wrapping Label reports
+##     its minimum height for the width it had before layout: the first windowed
+##     capture showed a 600 px popup round three lines) and level 2 flips to the
+##     left of level 1 when it would leave the screen;
 ##   - the bar routes a real figure's hover into the popup, draws the register's
 ##     own lines, and leaves Godot's built-in tooltip empty (a non-empty one would
 ##     draw a second tooltip beside ours).
@@ -33,6 +37,9 @@ var _popup
 var _figure: Label
 var _asked: Array[String] = []
 
+## The wrapped three-row popup's height ceiling; the unfitted bug measured 600.
+const REFIT_MAX_HEIGHT := 260.0
+
 
 func _init() -> void:
 	_loader = DataLoader.new()
@@ -54,13 +61,55 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 2:
 		return false  # let _ready() run on both
+	if _frame > 2:
+		if _frame == 7:
+			_check_the_refit()
+			_finish()
+		return false
 	_check_the_dismissal_rule()
 	_check_level_two_follows_the_pointer()
 	_check_the_grace_window()
 	_check_a_refresh_rewrites_in_place()
 	_check_the_bar_routes_a_real_hover()
-	_finish()
+	_check_level_two_flips_at_the_screen_edge()
+	_stage_the_refit()
 	return false
+
+
+## Frame 2 staged a popup of long wrapping lines; the engine's own frames (the
+## popup's _process re-fits for two) ran since. Checked at the later frame.
+func _stage_the_refit() -> void:
+	_popup.hide_all()
+	_figure.position = Vector2(300, 6)
+	var long_text := "Unemployment: 17% of minds, satisfaction +0.00 and a clause long enough to wrap"
+	_popup.figure_entered("k", _figure, [
+		{"text": long_text, "child_id": ""}, {"text": long_text, "child_id": ""},
+		{"text": long_text, "child_id": ""},
+	], Callable(self, "_provider"))
+	_popup.tick(TipPopup.OPEN_DELAY_S + 0.01)
+
+
+func _check_the_refit() -> void:
+	var height: float = _popup._l1.size.y
+	# Six wrapped rows at the theme's body size are well under this; the unfitted
+	# panel was 600 px.
+	if height > REFIT_MAX_HEIGHT or height <= 0.0:
+		_fail("level 1 is %.0f px tall round three wrapping lines -- it was not re-fitted after layout" % height)
+
+
+func _check_level_two_flips_at_the_screen_edge() -> void:
+	_popup.hide_all()
+	var screen: Vector2 = _popup.get_viewport_rect().size
+	_figure.position = Vector2(screen.x - 120.0, 6)
+	_open_level_one()
+	_popup.line_entered(1)
+	var l1: Rect2 = Rect2(_popup._l1.position, _popup._l1.get_combined_minimum_size())
+	var l2: Rect2 = Rect2(_popup._l2.position, _popup._l2.get_combined_minimum_size())
+	if l2.end.x > screen.x:
+		_fail("level 2 %s runs off a %s screen instead of flipping left" % [l2, screen])
+	if l2.position.x >= l1.position.x:
+		_fail("level 2 did not flip to the left of level 1 at the right edge (%s vs %s)" % [l2, l1])
+	_figure.position = Vector2(300, 6)
 
 
 func _provider(child_id: String) -> Dictionary:

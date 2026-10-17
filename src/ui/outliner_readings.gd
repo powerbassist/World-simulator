@@ -135,16 +135,7 @@ static func _goods(ns, loader) -> Array:
 	var rows: Array = []
 	if loader == null or ns.commodity_state.is_empty():
 		return rows
-	var short: Array = []
-	for good_id in loader.commodity_goods.keys():
-		var covered := CommoditiesPanel.coverage(ns, String(good_id))
-		if covered < CommoditiesPanel.SHORTAGE_COVERAGE:
-			short.append({"id": String(good_id), "coverage": covered})
-	short.sort_custom(func(a, b) -> bool:
-		if not is_equal_approx(float(a["coverage"]), float(b["coverage"])):
-			return float(a["coverage"]) < float(b["coverage"])
-		return String(a["id"]) < String(b["id"]))
-	for item in short:
+	for item in CommoditiesPanel.shortages(ns, loader.commodity_goods.keys()):
 		var good = loader.commodity_goods.get(item["id"])
 		rows.append(_row("%s — %.0f%% of demand" % [
 			String(good.name) if good != null else String(item["id"]), float(item["coverage"]) * 100.0],

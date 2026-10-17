@@ -273,6 +273,14 @@ func _check_every_child_resolves() -> void:
 	for issue in OpinionK.ISSUE_LABEL.keys():
 		if StripChildren.child("approval", "issue:%s" % issue, state, _loader).is_empty():
 			_fail("issue '%s' has no level-2 breakdown" % issue)
+	# The baseline each issue is priced against, named truthfully: growth is priced
+	# against the nation's trend, not where it began (the review caught "at the start").
+	var growth: Dictionary = StripChildren.child("approval", "issue:growth", state, _loader)
+	if not String((growth["lines"] as Array)[0]).contains("trend"):
+		_fail("the growth breakdown does not say it is priced against the trend: %s" % [growth["lines"]])
+	var jobs: Dictionary = StripChildren.child("approval", "issue:jobs", state, _loader)
+	if not String((jobs["lines"] as Array)[0]).contains("at the start"):
+		_fail("the jobs breakdown does not say it is priced against the start: %s" % [jobs["lines"]])
 	if not StripChildren.child("approval", "no-such-child", state, _loader).is_empty():
 		_fail("an unknown child id resolved -- the lookup is a catch-all")
 	if not StripChildren.child("gdp", "debt", state, _loader).is_empty():

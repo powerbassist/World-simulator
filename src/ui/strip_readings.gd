@@ -412,16 +412,12 @@ static func _europe(state, ns) -> Dictionary:
 static func _commodities(ns, loader) -> Dictionary:
 	if ns.commodity_state.is_empty() or loader == null:
 		return _reading("—", "", false)
-	var worst_id := ""
-	var worst := 2.0
-	for good_id in loader.commodity_goods.keys():
-		var c := CommoditiesPanel.coverage(ns, String(good_id))
-		if c < worst or (is_equal_approx(c, worst) and String(good_id) < worst_id):
-			worst = c
-			worst_id = String(good_id)
+	var short: Array = CommoditiesPanel.shortages(ns, loader.commodity_goods.keys())
 	var bar := CommoditiesPanel.SHORTAGE_COVERAGE * 100.0
-	if worst_id.is_empty() or worst >= CommoditiesPanel.SHORTAGE_COVERAGE:
+	if short.is_empty():
 		return _reading("— covered", "Every good above %.0f%% of the month's demand." % bar)
+	var worst_id := String(short[0]["id"])
+	var worst := float(short[0]["coverage"])
 	var good = loader.commodity_goods.get(worst_id)
 	var name := String(good.name) if good != null else worst_id
 	return _reading_lines("%s %.0f%%" % [name, worst * 100.0], [_line(
