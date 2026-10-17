@@ -115,8 +115,7 @@ static func read(id: String, state, loader) -> Dictionary:
 static func _reading(text: String, tip: String, visible := true, alert_window := "") -> Dictionary:
 	var lines: Array = []
 	if not tip.is_empty():
-		for row in tip.split("
-"):
+		for row in tip.split("\n"):
 			lines.append(_line(row))
 	return {"text": text, "tip": tip, "visible": visible, "alert_window": alert_window, "lines": lines}
 
@@ -129,8 +128,7 @@ static func _reading_lines(text: String, lines: Array, visible := true, alert_wi
 	for line in lines:
 		texts.append(String(line["text"]))
 	return {
-		"text": text, "tip": "
-".join(texts), "visible": visible,
+		"text": text, "tip": "\n".join(texts), "visible": visible,
 		"alert_window": alert_window, "lines": lines,
 	}
 

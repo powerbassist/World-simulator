@@ -1132,7 +1132,7 @@ func _check_top_bar_election_clamp() -> void:
 	top_bar.refresh(state, _main._clock, _main._loader)
 	if top_bar._figure_values["election"].text != "—":
 		_fail("B1 REGRESSED: a stale vote date printed '%s' -- the raw negative that captured as 'NEXT VOTE -44 mo'" % top_bar._figure_values["election"].text)
-	var tip: String = top_bar._figure_values["election"].tooltip_text
+	var tip: String = top_bar.tip_of("election")
 	if tip != "The vote that ends your term has been held.":
 		_fail("B1: the past-vote tooltip reads '%s'" % tip)
 

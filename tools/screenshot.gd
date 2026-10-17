@@ -23,6 +23,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip approval:1
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip deficit:1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --failing --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
@@ -119,6 +121,10 @@ var _hover_project := ""  ## U6c, a project marker rather than a nation
 ## --hover-project's reason: a nation hover and an outline hover are different
 ## states on the map, and one flag meaning both would hide which one failed.
 var _hover_outline := ""
+## V4.8b. "<reading>" or "<reading>:<line>" -- opens that strip figure's tooltip
+## popup through the bar's own hover handler, and the level-2 breakdown of the
+## named level-1 line. A hover state no flag can reach is a popup nobody looks at.
+var _tip := ""
 
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
 ## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
@@ -425,6 +431,22 @@ var _main
 ## V4.11c. Hover an outline the way a cursor would: the first point of a coarse
 ## grid over the VISIBLE map that the outline test answers with this id, so the
 ## readout lands on screen at any zoom (a centroid of Russia sits off it).
+## V4.8b, for --tip. The bar is refreshed first (a tip exists only after a
+## refresh), then the hover goes through the same handler the label's mouse
+## signal calls, so the frame is the popup a player's pointer produces.
+func _stage_tip() -> void:
+	var parts := _tip.split(":")
+	var bar = _main._hud.top_bar
+	bar.refresh(_main._state, _main._clock, _main._loader)
+	if not bar._figure_values.has(parts[0]):
+		push_error("screenshot: --tip '%s' is not a strip reading" % parts[0])
+		return
+	bar._on_figure_entered(parts[0], bar._figure_values[parts[0]])
+	bar._popup.tick(bar._popup.OPEN_DELAY_S + 0.01)
+	if parts.size() > 1:
+		bar._popup.line_entered(int(parts[1]))
+
+
 func _stage_outline_hover() -> void:
 	var map = _main._map_view
 	var view: Rect2 = map.visible_lonlat_rect()
@@ -459,6 +481,8 @@ func _init() -> void:
 			_hover_project = args[i + 1]
 		elif args[i] == "--hover-outline" and i + 1 < args.size():
 			_hover_outline = args[i + 1].to_upper()
+		elif args[i] == "--tip" and i + 1 < args.size():
+			_tip = args[i + 1]
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
 		elif args[i] == "--center" and i + 2 < args.size():
@@ -830,6 +854,8 @@ func _apply_view() -> void:
 		_main._map_view.queue_redraw()
 	if _hover_outline != "":
 		_stage_outline_hover()
+	if _tip != "":
+		_stage_tip()
 	if _blank != "":
 		_blank_a_window()
 	if _termlimit:

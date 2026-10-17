@@ -114,8 +114,7 @@ func _check_tip_is_derived_from_lines() -> void:
 		var texts: Array[String] = []
 		for line in (r["lines"] as Array):
 			texts.append(String(line["text"]))
-		if String(r["tip"]) != "
-".join(texts):
+		if String(r["tip"]) != "\n".join(texts):
 			_fail("'%s' tip is not its lines joined -- two sources for one tooltip" % id)
 
 
@@ -201,8 +200,8 @@ func _check_alerts_name_real_windows() -> void:
 	var unrest: Label = _bar._figure_values["unrest"]
 	if unrest.theme_type_variation != "FigureAlert":
 		_fail("an alerting unrest reading is drawn as '%s', not the alert tone" % unrest.theme_type_variation)
-	if not String(unrest.tooltip_text).contains("Economy (E)"):
-		_fail("the unrest alert does not name its window and key: '%s'" % unrest.tooltip_text)
+	if not _bar.tip_of("unrest").contains("Economy (E)"):
+		_fail("the unrest alert does not name its window and key: '%s'" % _bar.tip_of("unrest"))
 	# The assembly margin is seats beyond the BARE majority (more than
 	# majority_seats): exactly majority_seats is one short and must read "-1".
 	ns.is_minority = false
