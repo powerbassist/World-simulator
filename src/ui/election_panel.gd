@@ -22,6 +22,10 @@ signal dismissed
 ## What the plate is titled while the count runs: the verdict is the last
 ## thing the night shows, so the title cannot be it yet.
 const NIGHT_TITLE := "ELECTION NIGHT"
+const SKIP_LABEL := "Skip count"
+## How long after a skip the footer button ignores presses: a double click's
+## second press lands well inside it, a deliberate second press does not.
+const SKIP_GUARD_MS := 400
 
 ## The one thing the agency work proved the player needs TOLD rather than
 ## shown (V3.6): approval prices CHANGE, not level, so standing still reads
@@ -48,11 +52,14 @@ var _cells: Array = []
 var _verdict_nodes: Array = []
 var _verdict_title := ""
 var _ticker: Label
-## Bumped by every rebuild and by dismissal: a count still running for a plate
-## that was replaced or closed steps into nothing rather than revealing (and
-## sounding) a verdict nobody is looking at.
+## Bumped by every rebuild: a count still running for a plate that was
+## replaced steps into nothing rather than revealing (and sounding) a verdict
+## nobody is looking at.
 var _night_id := 0
 var _revealed := false
+var _cont: Button
+var _dismiss_label := ""
+var _guard_until := 0
 
 
 func _ready() -> void:
@@ -216,17 +223,11 @@ func show_results(results: Array) -> void:
 	if defeated and not termed_out:
 		_verdict_nodes.append(PanelKit.line(_sections, "You have lost your office. This term is over.", PanelKit.Tone.PLAIN))
 
-	var cont := Button.new()
-	cont.text = "Leave office" if defeated else "Continue"
-	# Live through the whole count: a defeated player always has a control, and
-	# a press here is a dismissal the player meant (V3.6). It retires the count,
-	# so the verdict is not revealed -- and sounded -- behind a closed plate.
-	cont.pressed.connect(func():
-		_night_id += 1
-		hide()
-		dismissed.emit()
-	)
-	_footer.add_child(cont)
+	_dismiss_label = "Leave office" if defeated else "Continue"
+	_cont = Button.new()
+	_cont.text = _dismiss_label
+	_cont.pressed.connect(_on_footer_pressed)
+	_footer.add_child(_cont)
 
 	_start_night()
 
@@ -243,6 +244,7 @@ func _start_night() -> void:
 		_reveal()
 		return
 	_title.text = NIGHT_TITLE
+	_cont.text = SKIP_LABEL
 	# Hidden, not transparent: a transparent verdict kept its space, and the
 	# windowed capture showed the count under a ~200 px hole where the
 	# attribution would be. The verdict lands on top of the table instead.
@@ -290,6 +292,7 @@ func _reveal() -> void:
 		return
 	_revealed = true
 	_title.text = _verdict_title
+	_cont.text = _dismiss_label
 	Motion.pulse(_title)
 	for node in _verdict_nodes:
 		node.visible = true
@@ -297,14 +300,33 @@ func _reveal() -> void:
 	Sting.play(self)
 
 
-## Any click on the plate ends the count at once, verdict and all; Space or
-## Enter on the focused footer button dismisses outright. The button's press is
-## deliberately NOT routed through here: a click that lands on it is a dismissal
-## the player meant, and a ceremony that could eat that click would be a
-## ceremony that ate a result (the V3.6 handoff's own sentence).
+## Any click on the plate ends the count at once, verdict and all. A click,
+## not any button: the wheel scrolls the double-election plate, and a scroll
+## that ended the count would be a ceremony taken from the player who was
+## reading it (review pass 1).
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
+	if event is InputEventMouseButton and event.pressed \
+			and (event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT):
 		skip()
+
+
+## The footer button says what it does. During the count it reads Skip count
+## and skips: it used to read Continue / Leave office from the first frame,
+## which told the player the verdict the night was holding back, and pressing
+## it on a defeat sent them to the menu having seen neither the result nor why
+## (review pass 1). After the reveal it dismisses, as V3.6's did -- a click
+## that lands on it is a dismissal the player meant -- except within
+## SKIP_GUARD_MS of a skip, so the second half of a double click on Skip count
+## cannot dismiss a verdict that has been on screen for a tenth of a second.
+func _on_footer_pressed() -> void:
+	if not _revealed:
+		skip()
+		_guard_until = Time.get_ticks_msec() + SKIP_GUARD_MS
+		return
+	if Time.get_ticks_msec() < _guard_until:
+		return
+	hide()
+	dismissed.emit()
 
 
 ## Lands the night on its final state: every figure the result's own, the

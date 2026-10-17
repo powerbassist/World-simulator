@@ -985,12 +985,24 @@ same code path.
 | exit | what happens |
 |---|---|
 | a click anywhere on the plate | `skip()`: the count finishes, the verdict shows and settles |
-| Continue / Leave office mid-count | dismisses at once (a click on the button is a dismissal the player meant, V3.6); the count is retired, so no verdict is revealed -- or sounded -- behind a closed plate |
+| the footer button mid-count | reads Skip count and skips; after the reveal it reads Continue / Leave office and dismisses, ignoring presses for 0.4 s after a skip so a double click cannot dismiss an unseen verdict |
+| the mouse wheel | scrolls; only a left or right click skips |
 | a second result replacing the plate | the old count is retired the same way (`_night_id`) |
 | motion off (setting, `--headless`) | the plate opens settled, verdict and all |
 | time | the verdict comes after the count's own duration, on wall-clock time |
 
 The footer button is live throughout, so a defeated player always has a control.
+
+**Review pass 1 (2026-10-17), bar "changes what a player sees" -- three fixed, one
+left.** (1) The footer read Continue / Leave office from the count's first frame:
+it told the verdict the night held back, and pressing it on a defeat sent the
+player to the menu having seen neither the result nor why. It reads Skip count
+until the reveal now. (2) Any pressed mouse button skipped, the wheel included,
+so scrolling the double-election plate ended the count. (3) A nation with no
+population shares would have shown the count full from frame one; regions then
+count equally. Left: `screenshot.gd --tally` runs with motion on throughout, so
+its settled frame can catch a strip figure mid-roll (a tool, not the game).
+Each fix has a test, mutation-checked.
 
 **The map's crossfade.** `map_view.set_layer()` fades the roster fills from what
 was ON SCREEN (mid-fade included) to the new layer's over `LAYER_S` 0.3 s. Only the

@@ -50,7 +50,7 @@ func _process(_delta: float) -> bool:
 			_panel.setup(_state, _loader)
 			_check_night_holds_the_verdict()
 			_check_skip_lands_on_the_result()
-			_check_dismiss_retires_the_count()
+			_check_footer_button_during_the_count()
 			_check_rebuild_retires_the_count()
 			_started = Time.get_ticks_msec()
 			_seconds = minf(float(_panel._night.size()) * Motion.DECLARE_S, Motion.NIGHT_MAX_S)
@@ -99,6 +99,16 @@ func _check_count_model() -> void:
 		last = w
 	if night.latest(0.0) != "" or night.latest(1.0) != String(night.order[0]["name"]):
 		_fail("latest() names '%s' at the first declaration, expected '%s'" % [night.latest(1.0), night.order[0]["name"]])
+	# A nation with no population shares counts every region the same rather
+	# than reading full from the first frame (review pass 1).
+	var ns = _state.player()
+	var kept: Dictionary = ns.region_pop_share
+	ns.region_pop_share = {}
+	var flat = ElectionNight.new(_state, _results)
+	ns.region_pop_share = kept
+	if absf(flat.counted_weight(1.0) - 1.0 / float(n)) > 1e-9:
+		_fail("with no population shares one region counts as %.4f of the electorate, expected %.4f" % [
+			flat.counted_weight(1.0), 1.0 / float(n)])
 	# The lead moves: halfway through, the incumbent's running share is not
 	# yet the national one.
 	var incumbent := String(_results[0]["incumbent_party_id"])
@@ -172,18 +182,36 @@ func _check_figures_final(when: String) -> void:
 		_fail("%s the ticker reads '%s'" % [when, _panel._ticker.text])
 
 
-## Continue mid-count dismisses, and the count it leaves behind never reveals
-## (or sounds) a verdict behind the closed plate.
-func _check_dismiss_retires_the_count() -> void:
+## Review pass 1. The footer button must not tell the verdict before the count
+## does, nor dismiss a result unseen: mid-count it reads Skip count and skips;
+## the second press of a double click does not dismiss; a deliberate press
+## after the guard does. And the wheel scrolls -- it does not skip.
+func _check_footer_button_during_the_count() -> void:
 	_panel.show()
 	_panel.show_results(_results)
-	var button: Button = _panel._footer.get_child(_panel._footer.get_child_count() - 1)
+	var button: Button = _panel._cont
+	if button.text != ElectionPanel.SKIP_LABEL:
+		_fail("mid-count the footer button reads '%s' -- it tells the verdict before the count does" % button.text)
+	var wheel := InputEventMouseButton.new()
+	wheel.pressed = true
+	wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	_panel._gui_input(wheel)
+	if _panel._revealed:
+		_fail("a wheel tick over the plate skipped the count")
+	button.pressed.emit()
+	if not _panel.visible:
+		_fail("Skip count dismissed the plate instead of skipping")
+	if not _panel._revealed:
+		_fail("Skip count did not reveal the verdict")
+	if button.text == ElectionPanel.SKIP_LABEL:
+		_fail("after the reveal the footer button still reads Skip count")
+	button.pressed.emit()
+	if not _panel.visible:
+		_fail("the second press of a double click on Skip count dismissed the verdict")
+	OS.delay_msec(ElectionPanel.SKIP_GUARD_MS + 50)
 	button.pressed.emit()
 	if _panel.visible:
-		_fail("Continue mid-count did not dismiss the plate")
-	Motion.finish(_panel)
-	if _panel._revealed:
-		_fail("a count dismissed mid-way revealed its verdict afterwards")
+		_fail("a press after the guard did not dismiss the revealed plate")
 	_panel.show()
 
 

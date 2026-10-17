@@ -48,6 +48,12 @@ func _init(state, results: Array) -> void:
 	var total := 0.0
 	for r in regions:
 		total += float(r["weight"])
+	# No population shares at all (a data gap on a new nation): every region
+	# counts the same, rather than a count whose bars read full from frame one.
+	if total <= 0.0:
+		for r in regions:
+			r["weight"] = 1.0
+		total = float(regions.size())
 	var jobs_salience: float = float(ns.issue_salience.get("jobs", 0.0))
 
 	var cumulative := [0.0]
