@@ -769,7 +769,9 @@ now maps id -> holds-the-clock: an arrival that meets its pause band enters `tru
 month after the countdowns move: an unanswered quiet entry with `months_left <= 1`
 (`Events._tick_countdowns` answers it by default on the next tick) turns `true`,
 the clock stops, and its decision card is pushed if the popup band suppressed it.
-The two clock checks read `_unseen_holds()`, not emptiness; every erase door is
+Every live decision card's "N months to answer" is re-read each month
+(`_refresh_decision_bodies`): a quiet card ages under a running clock, which no
+card did before. The two clock checks read `_unseen_holds()`, not emptiness; every erase door is
 unchanged (an answer, a dismissed card, an id leaving the desk). Interrupt events
 ignore the register: the flag is content saying "until answered".
 
