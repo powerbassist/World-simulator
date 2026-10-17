@@ -29,6 +29,15 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 - **Mutation checks**, each seen to fail the walker: a hard-coded issue operand (survived the first probe, which compared the satisfaction line too -- the probe now reads line 0), a dropped `child_id`, a debt path printing `0.0` for no history, an unfiltered `pinned`, a wrong shortage order, a bad row window, a popup closing on level 2, a zero grace, a hover signal never connected.
 - **The `.import` files** the editor rewrites on every `--import` stay out of every commit, like `project.godot`.
 
+**V4.8c -- MESSAGE SETTINGS AND THE LEGEND'S GRADES -- IS BUILT on `v4.8c-messages` (2026-10-17). No `src/sim/` diff, `SAVE_VERSION` unchanged. V4.8 closes here.**
+
+- **Contract and instruments: [panel-system](panel-system.md) §21.** `src/ui/message_settings.gd` is a register of severity thresholds per category per switch (notify / feed / popup / pause), persisted under `[messages]` in `user://settings.cfg`; the settings screen draws it as a grid.
+- **Author call at the plan gate: pause defaults to Major+.** A minor arrival keeps the clock running. Notify, feed and popup default to All -- the game's behaviour before the block.
+- **The arrival pause's contract is replaced by name: the lapse guard.** A quiet arrival is unseen but does not hold; in its last month (`months_left <= 1`, defaulted on the next tick) it holds the clock and gets its card. Tested through `Events._tick_countdowns` itself, so a guard one month late fails as it would in play (mutation-checked).
+- **Why thresholds, not booleans:** a category has no severity; its events do (`ev.severity`, already on every desk entry). The history record carries no severity, so the ledger reads the event's own -- no sim field added.
+- **The legend** gains three Political-layer count rows from `Roster.counts()` (new, counts through `grade()`); the caption no longer claims "every nation the game simulates" is the whole map.
+- **Refused:** filtering the "Decided for you" card (it is the evidence a lapse happened); hiding desk entries under feed (the desk is the answer surface); a per-(category, severity) grid of 108 toggles (the threshold says the same in 36).
+
 ## V4.11
 
 **V4.11a — THE NEIGHBOURHOOD'S TWELVE — IS BUILT on `v4.11-neighbourhood` (2026-10-15/16, a1 + a2): the roster is 41, the twelve simulated and not playable (NOR ISL SRB TUR ALB MKD MNE; BIH UKR MDA XKX BLR), `SAVE_VERSION` 39 → 40 on no field (V3.3's argument). Register 277 regions, 1 373 cities, 640 edges (623 land + 17 sea), one component. Plan: `docs/superpowers/plans/2026-10-15-v4.11-the-neighbourhood.md`.**
