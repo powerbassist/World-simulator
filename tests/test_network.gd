@@ -144,6 +144,44 @@ func _check_warm(loader) -> void:
 	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
 	if not text.contains("Net.warm("):
 		_fail("src/ui/main.gd no longer warms the network table at boot")
+	_check_warm_step(graph)
+
+
+## V4.9a. The loading screen's sliced warm must leave the SAME table warm() does --
+## same rows, same key order, same foreign sums -- or the bar would be buying its
+## motion with a different world. A 1 us budget forces one row per slice, so the
+## fraction must climb on every call and land on exactly 1.0.
+func _check_warm_step(graph: Dictionary) -> void:
+	var reference_rows: Dictionary = Network._matrix_rows.duplicate(true)
+	var reference_foreign: Dictionary = Network._foreign_rows.duplicate(true)
+	Network._matrix_rows = {}
+	Network._matrix_graph = {}
+	Network._foreign_rows = {}
+	Network._foreign_graph = {}
+	var last := 0.0
+	var steps := 0
+	var expected: int = graph.get("endowment", {}).size()
+	while true:
+		var fraction: float = Network.warm_step(graph, 1)
+		steps += 1
+		if fraction <= last and fraction < 1.0:
+			_fail("warm_step() fraction did not climb: %.4f after %.4f" % [fraction, last])
+			return
+		last = fraction
+		if fraction >= 1.0 or steps > expected + 1:
+			break
+	if last != 1.0:
+		_fail("warm_step() never finished (%.4f after %d steps)" % [last, steps])
+	if steps != expected:
+		_fail("warm_step() at 1 us took %d slices, expected one per row (%d)" % [steps, expected])
+	if Network._matrix_rows != reference_rows:
+		_fail("warm_step() built a different distance table than warm()")
+	if Network._matrix_rows.keys() != reference_rows.keys():
+		_fail("warm_step() built the rows in a different order than warm()")
+	if Network._foreign_rows != reference_foreign:
+		_fail("warm_step() left different foreign sums than warm()")
+	if Network.warm_step(graph, 1) != 1.0:
+		_fail("warm_step() on a warm table did not report 1.0")
 
 
 ## The foreign-endowment split regroups the interleaved market-potential sum,

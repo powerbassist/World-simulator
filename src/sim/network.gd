@@ -246,13 +246,55 @@ static func _foreign_part(graph: Dictionary) -> Dictionary:
 
 
 ## Warms the per-graph caches. The 213x213 distance table costs ~2 s to build
-## ONCE per process, and built lazily that cost landed on the player's first
+## ONCE per process (measured at 29 nations; ~4.4 s at 41 -- V4.9a's
+## tools/boot_stages_probe.gd), and built lazily that cost landed on the player's first
 ## month boundary as a visible freeze -- the only slow call in 240 simmed
 ## months (measured, tools/_spike_probe.gd's verdict). Paid at boot instead,
 ## right after the state exists, where the loading moment already is.
 static func warm(graph: Dictionary) -> void:
 	_distance_rows(graph)
 	_foreign_part(graph)
+
+
+## V4.9a. warm() in slices, so the loading screen can draw between them: at 41
+## nations the table measured ~4.5 s, one frozen frame the bar could not move
+## through. Each slice builds whole rows with distances_from() -- the same call
+## _distance_rows() makes, row by row, so the finished table is the same table
+## (tests/test_network.gd pins it) -- until `budget_usec` is spent, and returns
+## the fraction of rows built. 1.0 means both caches are warm and warm() is a
+## no-op. A row is the unit because a row is ~20 ms: finer would mean a
+## resumable Dijkstra for no visible gain.
+static var _warm_graph: Dictionary = {}
+static var _warm_rows: Dictionary = {}
+
+static func warm_step(graph: Dictionary, budget_usec: int) -> float:
+	if graph == _matrix_graph and not _matrix_rows.is_empty():
+		_foreign_part(graph)
+		return 1.0
+	if graph != _warm_graph:
+		_warm_graph = graph
+		_warm_rows = {}
+	var ids: Array = graph.get("endowment", {}).keys()
+	if ids.is_empty():
+		return 1.0
+	var start := Time.get_ticks_usec()
+	for region_id in ids:
+		var key := String(region_id)
+		if _warm_rows.has(key):
+			continue
+		_warm_rows[key] = distances_from(graph, key)
+		if Time.get_ticks_usec() - start >= budget_usec:
+			break
+	if _warm_rows.size() < ids.size():
+		return float(_warm_rows.size()) / float(ids.size())
+	# Built in the endowment's own key order above, so the dictionary reads the
+	# same way _distance_rows()'s would.
+	_matrix_graph = graph
+	_matrix_rows = _warm_rows
+	_warm_graph = {}
+	_warm_rows = {}
+	_foreign_part(graph)
+	return 1.0
 
 
 ## Half the L1 distance between a region's production mix and its nation's: 0.0 for a

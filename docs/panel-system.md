@@ -806,3 +806,134 @@ guard call removed, quiet arrivals kept out of the unseen set, pause default at
 All, notify's last-month clause dropped, the hidden-records line dropped, the
 picker index off by one, the outline count dropped, the rows left up on Relations
 -- each failed its own line.
+
+## 22. The loading screen and the motion vocabulary (V4.9a)
+
+**The boot, measured before it was designed.** Menu -> New Game used to be one
+`add_child(main)`: the window froze with the menu still up. Measured at 41
+nations (`tools/boot_stages_probe.gd`, windowed, two runs, 2026-10-17):
+
+| stage | what | measured | on the bar |
+|---|---|---|---|
+| scene | `main.tscn` and every script it preloads, compiled on a loader thread | 1.28-1.38 s | 1300 ms |
+| data | `DataLoader.load_all()` | 0.36 s | 360 ms |
+| world | `GameState.new_game()` | 0.07 s | 70 ms |
+| network | `Net.warm_step()`, a few region rows per frame | 4.9-5.2 s | 5000 ms |
+| enter | `main.gd`'s `_ready()` -- the map, the panels | 0.76-0.82 s | 780 ms |
+
+7.5-7.7 s in all. The network table is two thirds of it -- `network.gd`'s comment
+said ~2 s, written at 29 nations; at 41 it is 4.4 s headless (the comment now
+says both). The bar's fill is
+completed weight over total weight (`BootStages.STAGES`), so it moves at the
+speed the work does; the probe prints measured beside weight, and a drifted stage
+is fixed by copying the column back. No tween on the bar.
+
+**The shape: the same work, moved earlier, not duplicated.** `src/ui/boot_stages.gd`
+builds the loader and the state across frames and hands them to `main.gd` as
+`pending_loader` / `pending_state`; `main.gd` takes them when set and builds its own
+when not -- so every test and tool that loads `main.tscn` directly boots exactly as
+before (the `pending_load_slot` precedent: one path to keep correct). `main.gd`'s
+`_ready()` stayed synchronous ON PURPOSE: thirty tests instantiate it and read it
+two frames later, and an awaited `_ready()` would have made every one of them a
+timing question. `Net.warm_step(graph, budget_usec)` is the one `src/sim/` diff:
+`warm()` in row-sized slices, building the same table in the same key order
+(`tests/test_network.gd` pins rows, order and foreign sums against `warm()`).
+
+**Two stages cannot show inside themselves, and the bar says so rather than
+inventing a pace.** Godot reports no progress inside the scene compile (a script's
+preloads are not tracked dependencies) -- the bar holds at 0 with COMPILING THE
+GAME for ~1.3 s while frames keep drawing. Enter is main.gd's own `_ready()`: the
+loading screen draws ENTER's label at its true position (~90 %) on the frame
+before, then the window is busy for ~0.8 s, then the screen sits over the game at
+100 % and fades off it (0.3 s). A time-based estimate inside either was refused:
+it is the "fake tween" the tier doc rules out.
+
+**Per-frame budget, measured:** 30 ms of work per frame spent ~1.2 s of an 8.1 s
+boot drawing frames; 50 ms (~20 fps, `loading_screen.gd` `BUDGET_USEC`) halves it.
+A loading screen needs to look alive, not to run at 60 fps.
+
+**Input.** The screen is opaque, STOP on the mouse and holds the keyboard focus,
+so a menu button focused behind it cannot start a second game on Enter; the menu
+also refuses a second `_start_game()` while one boot runs. It moves itself to the
+root before the menu frees, so the fade outlives the menu.
+
+**The motion vocabulary** (`src/ui/motion.gd`, static). Every tween is time-based
+(Godot's Tween on process delta -- V3.6's tally discipline), keeps running under a
+paused tree, and is decorative ONLY: nothing waits on it, nothing gates input, the
+final value is what a reader sees the moment motion is off.
+
+| verb | where | what | why that long |
+|---|---|---|---|
+| `open` | `window_manager.open()`, on the way in only | fade + grow from 0.97 about the centre, 0.16 s | under ~0.1 s reads as flicker, over ~0.25 s a window you asked for is slow |
+| `arrive` | `message_stack.push()` | fade, 0.24 s (the stack owns layout, so no scale) | news, not a request: a touch longer than a window |
+| `roll_text` | the strip's twelve figures | each number in the reading rolls to its new value, 0.3 s | settled before the next day tick at speed 3 |
+| `pulse` | the clock's date, once per day | brass to its own colour, 0.22 s | the beats' rhythm IS the speed; a paused date is dimmed to 0.55 instead |
+
+**A long frame must not eat the motion -- found by the sequence capture, not the
+suite.** The Budget window's first frame takes ~0.4 s to build its content; a
+self-running tween took its whole 0.16 s fade inside that one frozen frame, so the
+window "appeared" exactly as before, on the heavy windows where opening matters
+most (`tools/motion_frames.gd` logged alpha 1.00 two frames after opening). Motion
+now steps its own tweens from `SceneTree.process_frame` with each frame's delta
+capped at `MAX_STEP_S` (1/30 s) -- still time-based, never frame-counted, the
+standard max-delta guard. Re-captured: alpha 0.67 two frames in, 1.00 settled.
+
+**Review pass 1 (2026-10-17), bar "changes what a player sees" -- five fixed, one
+left.** (1) A new reading equal to the value shown mid-roll returned early and let
+the roll finish on its OLD target: a roll is now STOPPED where it stands before the
+new one starts. (2) The clock's refresh finished the running beat to set its alpha,
+so a second refresh the same day (a month boundary, any command) cancelled that
+day's pulse: the beat now tweens the colour channels only, and alpha is the
+clock's. (3) The loading screen's reveal was a self-running tween started right
+after the game's ~0.8 s build frame, which it spent whole: it now goes through
+`Motion.fade_out()` and the clamped stepper. (4) The menu's map plate is hidden
+when the loading screen goes up, so it costs the boot no frames. (6) Tests for
+each, mutation-checked. Left: (5) a first-opened window grows about the centre of
+the size it had before its content resized -- cosmetic, and not visible in the
+windowed capture.
+
+`roll_text` is built on two pure functions, `same_template()` and
+`interpolate_text()`: a reading rolls only when its words, its count of numbers and
+each number's decimals are unchanged; a sign flip, a changed shape or a grouped
+figure ("1,234", which would roll group by group) snaps. A mid-roll text is a real
+intermediate value, never a garbled one.
+
+**Off switch.** `[display] motion` in `user://settings.cfg` (absent = ON, the V3.6
+default rule), a Motion row on the settings screen. `Motion.enabled()` reads it at
+play time, cached against `SettingsPanel.revision` (bumped on every save) so the
+strip's dozen figures per day do not each read the file. Under `--headless` motion
+is OFF unless `Motion.override` forces it: every other test reads labels the
+moment they are set. `Motion.finish(node)` is the skip path (completes the tween,
+final values applied) -- V4.9b's election night is the first ceremony that needs it.
+
+**Refused, with the reason.** A close animation (a fading window stays visible
+and clickable for its duration, and `open_ids()` and every test read `visible` the
+moment `close()` returns). An awaited `main.gd` `_ready()` (above). Rolling any
+figure outside the strip (V5 reworks the panels; the vocabulary survives it, the
+call sites will not). Reusing the menu's own loader for the game (0.36 s saved,
+against a loader object shared by a discarded viewer state -- not worth a second
+owner of content).
+
+**Instruments.** `tools/boot_stages_probe.gd` (the bar's truth, windowed and
+headless). `tests/test_boot_stages.gd`: the stage table matches what `step()`
+handles, the bar never goes back and sits at exactly enter's share at enter, every
+stage is shown and timed, the network is warm at ready, `main.gd` TAKES the loader
+and state it was handed (a main that rebuilt them still boots, twice as slowly),
+a load carries its slot and builds the throwaway state for main's default.
+`tools/motion_frames.gd` (windowed): SEQUENCE captures to `reports/motion_frames/`
+-- the loading screen at first frame, past 30 % and 60 %, at enter, and fading off
+the game; a window at open, two frames in, settled -- with the window's alpha
+logged per shot. (`tools/screenshot.gd` forces motion OFF so its single frames are
+always settled.) `tests/test_motion.gd`: the pure roll and template cases, off under
+headless, `finish()` lands each verb on its final values, an interrupted roll ends
+final, a 300 ms frame does not finish an opening, `open` settles on wall-clock time
+without `finish()`, the window manager opens
+through it and does not re-run on a raise, the clock beats on a day and not on its
+first date or while paused. `tests/test_menu.gd` now drives its three starts one
+after another through the loading screen (opaque, focused, monotonic) and refuses
+a double start. Mutation-checked: `Motion.open` removed from the window manager,
+`main.gd` ignoring `pending_state`, the delta clamp removed -- each failed its own
+line.
+
+`tools/menu_boot_probe.gd` (the 300 ms degrade clause on the menu plate) is
+untouched by this block: the loading screen runs after the menu, not inside it.

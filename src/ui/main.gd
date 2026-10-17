@@ -121,6 +121,14 @@ const RECENT_EFFECTS_KEPT := 5
 ## A property rather than an autoload -- see menu.gd's note.
 var pending_load_slot := ""
 
+## V4.9a. Set by the loading screen (src/ui/boot_stages.gd), which built them
+## across frames so the bar could move: when present, _ready() takes them
+## instead of building its own. Null on a direct scene load -- every test and
+## tool -- which boots exactly as it did before. Untyped for pending_load_slot's
+## reason in menu.gd.
+var pending_loader = null
+var pending_state = null
+
 @onready var _clock: Node = $Clock
 
 var _state
@@ -205,8 +213,11 @@ func _ready() -> void:
 	# modal panels share one set of styles instead of three hand-built ones.
 	UiTheme.apply(self)
 
-	_loader = DataLoader.new()
-	_loader.load_all()
+	if pending_loader != null:
+		_loader = pending_loader
+	else:
+		_loader = DataLoader.new()
+		_loader.load_all()
 	_messages = MessageSettings.load_from(SettingsPanel.CONFIG_PATH)
 
 	if not _loader.errors.is_empty():
@@ -223,14 +234,18 @@ func _ready() -> void:
 			n.id, n.nation_name, pop_m, n.gdp_eur_bn, n.debt_to_gdp_pct
 		])
 
-	_state = GameState.new_game(_loader, pending_player_id, pending_scenario_id)
+	if pending_state != null:
+		_state = pending_state
+	else:
+		_state = GameState.new_game(_loader, pending_player_id, pending_scenario_id)
 	if not _state.errors.is_empty():
 		for e in _state.errors:
 			push_error(e)
 		return
 	# The distance table is warmed HERE, not on its first lazy caller: ~2 s once
 	# per process is boot cost, while a lazy build makes the player's first
-	# month boundary freeze. See network.gd::warm().
+	# month boundary freeze. See network.gd::warm(). Behind the loading screen
+	# (V4.9a) the table is already warm and this returns at once.
 	Net.warm(_state.region_graph)
 	_state.year = _clock.year
 	_state.month = _clock.month

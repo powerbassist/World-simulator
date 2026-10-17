@@ -4,6 +4,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const StripChildren = preload("res://src/ui/strip_children.gd")
 const TipPopup = preload("res://src/ui/tip_popup.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 ## The thin strip along the top edge -- U2, rebuilt at U5a, made ONE THING at V4.8a.
 ##
@@ -186,7 +187,9 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		value.get_parent().visible = bool(r["visible"])
 		if not bool(r["visible"]):
 			continue
-		value.text = String(r["text"])
+		# V4.9a. Rolls to the new value when only its numbers moved; a reading
+		# that changed shape snaps. Final the moment motion is off (headless).
+		Motion.roll_text(value, String(r["text"]))
 		if r.has("caption"):
 			caption.text = String(r["caption"]).to_upper()
 		var alert := String(r["alert_window"])

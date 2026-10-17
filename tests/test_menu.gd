@@ -20,6 +20,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const Clock = preload("res://src/core/clock.gd")
+const LoadingScreen = preload("res://src/ui/loading_screen.gd")
 
 const SLOT := "__test_menu_continue__"
 const SAVED_YEAR := 2031
@@ -76,21 +77,117 @@ func _process(_delta: float) -> bool:
 			return false
 		4:
 			_check_start_row_geometry()
-			_menu._start_game(SLOT)
-			_continued_game = root.get_child(root.get_child_count() - 1)
-			# _start_game() queue_free()s the menu it was called on -- deferred,
-			# so _menu is still a valid Control for the rest of this frame, and a
-			# second call on it (New Game's path this time) is safe.
-			_menu._start_game("", "DEU")
-			_new_game_deu = root.get_child(root.get_child_count() - 1)
+			_watch_loading("scenario")
 			return false
 		_:
-			_check_loaded_game()
-			_check_new_game_nation_select()
-			_check_new_game_scenario()
-			_cleanup()
-			_finish()
+			return _drive_starts()
+
+
+## V4.9a. A start is no longer one synchronous call: the loading screen boots
+## the game a stage per frame and the menu frees itself once the game is in.
+## So the three starts run one after another, each on a FRESH menu (the old
+## one is gone), and each game is captured off the loading screen's `entered`
+## signal rather than off the root's last child -- the loading screen moves
+## itself there to fade off the game.
+const START_TIMEOUT_FRAMES := 3000
+var _start_queue: Array = ["slot", "deu"]
+var _captured := ""
+var _waiting_frames := 0
+var _progress_seen: Array[float] = []
+var _menu_ready_frame := -1
+
+
+func _watch_loading(which: String) -> void:
+	var loading = _menu._loading
+	if loading == null:
+		_fail("starting a game (%s) put up no loading screen" % which)
+		_finish_all()
+		return
+	_check_loading_screen(loading, which)
+	_captured = ""
+	_waiting_frames = 0
+	_progress_seen.clear()
+	loading.entered.connect(func(game: Node):
+		match which:
+			"scenario":
+				_new_game_fra_scenario = game
+			"slot":
+				_continued_game = game
+			"deu":
+				_new_game_deu = game
+		_captured = which
+	)
+	_watching = loading
+	_waiting_start = true
+
+
+## The loading screen frees itself once its game is in, so whether a start is
+## still running is its own flag rather than a test on a reference that goes
+## stale mid-wait.
+var _watching
+var _waiting_start := false
+
+
+func _drive_starts() -> bool:
+	if _waiting_start:
+		if _captured.is_empty():
+			if is_instance_valid(_watching) and _watching.boot != null:
+				_progress_seen.append(float(_watching.boot.progress()))
+			_waiting_frames += 1
+			if _waiting_frames > START_TIMEOUT_FRAMES:
+				_fail("a start never entered its game in %d frames" % START_TIMEOUT_FRAMES)
+				_finish_all()
 			return false
+		_check_progress_monotonic(_captured)
+		_watching = null
+		_waiting_start = false
+		if _start_queue.is_empty():
+			_finish_all()
+			return false
+		_menu = load("res://src/ui/menu.tscn").instantiate()
+		root.add_child(_menu)
+		_menu_ready_frame = _frame
+		return false
+	if _menu_ready_frame >= 0 and _frame > _menu_ready_frame:
+		_menu_ready_frame = -1
+		var which: String = _start_queue.pop_front()
+		if which == "slot":
+			_menu._start_game(SLOT)
+			# Refused while a boot runs: a double-click on Continue must not
+			# start two games.
+			_menu._start_game(SLOT)
+			if _menu.get_children().filter(func(c): return c is LoadingScreen).size() != 1:
+				_fail("a second _start_game() during a boot put up a second loading screen")
+		else:
+			_menu._start_game("", "DEU")
+		_watch_loading(which)
+	return false
+
+
+func _finish_all() -> void:
+	_check_loaded_game()
+	_check_new_game_nation_select()
+	_check_new_game_scenario()
+	_cleanup()
+	_finish()
+
+
+## The loading screen is opaque to input and holds the focus, so a menu button
+## left focused behind it cannot start a second game on Enter.
+func _check_loading_screen(loading: Control, which: String) -> void:
+	if loading.mouse_filter != Control.MOUSE_FILTER_STOP:
+		_fail("the loading screen (%s) lets clicks through to the menu" % which)
+	if loading.get_viewport().gui_get_focus_owner() != loading:
+		_fail("the loading screen (%s) does not hold the keyboard focus" % which)
+
+
+## The bar is honest only if it never goes back.
+func _check_progress_monotonic(which: String) -> void:
+	for i in range(1, _progress_seen.size()):
+		if _progress_seen[i] < _progress_seen[i - 1]:
+			_fail("the loading bar (%s) went backwards: %.3f after %.3f" % [
+				which, _progress_seen[i], _progress_seen[i - 1]])
+			return
 
 
 func _check_structure() -> void:
@@ -425,7 +522,6 @@ func _check_start_row_geometry() -> void:
 		])
 
 	_play_button(wrapped).pressed.emit()
-	_new_game_fra_scenario = root.get_child(root.get_child_count() - 1)
 
 
 ## The chosen start has to reach main.gd's pending_scenario_id and then the
