@@ -144,15 +144,15 @@ static func _deficit(state, ns) -> Dictionary:
 	return _reading("%+.2f%%" % -ns.deficit_pct_gdp, tip)
 
 
-## The arrow is the growth RATE's sign, not a six-month change: "is the economy
-## growing" is the glance, and a GDP that rises slower than last year is still
-## rising.
+## The arrow is GDP's own six-month change -- every arrow on the strip means
+## "this figure, over Trends' window", so one glyph never means two things (the
+## review caught a rate-sign arrow beside approval's change arrow).
 static func _gdp(state, ns) -> Dictionary:
 	var tip := "Growth %.2f%% a year, %s over %d months." % [
 		ns.growth_annual_pct,
 		Trends.change_text(Trends.delta(state, "growth_annual_pct", WINDOW)), WINDOW,
 	]
-	return _reading("%.0f Bn%s" % [ns.gdp_eur_bn, _arrow(ns.growth_annual_pct)], tip)
+	return _reading("%.0f Bn%s" % [ns.gdp_eur_bn, _arrow(Trends.delta(state, "gdp_eur_bn", WINDOW))], tip)
 
 
 static func _unemployment(state, ns) -> Dictionary:
@@ -181,13 +181,16 @@ static func _unrest(ns) -> Dictionary:
 	return _reading("%.0f" % ns.unrest_pct, tip, true, "economy" if striking else "")
 
 
-## The margin a president reads: seats over the line, signed. Government's own
-## majority_seats, the arithmetic the Politics panel prints beside it.
+## The margin a president reads: seats beyond the bare majority, signed -- "+0" is
+## exactly enough, "-1" one short. A majority needs MORE than majority_seats
+## (Government's own line, which the Politics panel prints), so the bare majority
+## is majority_seats + 1; the first version subtracted majority_seats alone and
+## read "+0" for a government one seat short.
 static func _assembly(ns) -> Dictionary:
 	if ns.assembly_seats <= 0:
 		return _reading("—", "No assembly arithmetic for this nation.")
 	var majority := Government.majority_seats(ns)
-	var margin: int = ns.coalition_seats - majority
+	var margin: int = ns.coalition_seats - (majority + 1)
 	var standing := "Majority government"
 	if ns.is_cohabitation:
 		standing = "Cohabitation — the assembly majority is against you"
@@ -416,7 +419,7 @@ static func _people(ns) -> Dictionary:
 		if absf(float(ns.person_loyalty[pid])) >= MOVED_AT and float(ns.person_grudges.get(pid, 0.0)) < MOVED_AT:
 			moved += 1
 	return _reading("%d" % moved,
-		"People whose loyalty or grudge the term has moved. Open the People window (R).")
+		"People whose loyalty or grudge the term has moved; the People window names them.")
 
 
 ## ▲/▼ beside a figure; nothing for NAN or a move under Trends' own snap.

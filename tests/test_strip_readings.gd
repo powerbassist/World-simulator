@@ -29,6 +29,7 @@ const CouncilK = preload("res://src/sim/council_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const WindowFrame = preload("res://src/ui/window_frame.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Government = preload("res://src/sim/government.gd")
 
 ## Zero is a true level for these, not an absence: nobody angry, nobody moved.
 const ZERO_IS_A_LEVEL := ["unrest", "people"]
@@ -185,13 +186,20 @@ func _check_alerts_name_real_windows() -> void:
 		_fail("only %d of 5 staged alerts fired" % alerting)
 
 	# The bar turns an alerting figure to the alert tone and names the window.
-	_bar.window_keys["economy"] = "E"
+	_bar.window_hints["economy"] = "Economy (E)"
 	_bar.refresh(state, null, _loader)
 	var unrest: Label = _bar._figure_values["unrest"]
 	if unrest.theme_type_variation != "FigureAlert":
 		_fail("an alerting unrest reading is drawn as '%s', not the alert tone" % unrest.theme_type_variation)
-	if not String(unrest.tooltip_text).contains("(E)"):
-		_fail("the unrest alert does not name its window's key: '%s'" % unrest.tooltip_text)
+	if not String(unrest.tooltip_text).contains("Economy (E)"):
+		_fail("the unrest alert does not name its window and key: '%s'" % unrest.tooltip_text)
+	# The assembly margin is seats beyond the BARE majority (more than
+	# majority_seats): exactly majority_seats is one short and must read "-1".
+	ns.is_minority = false
+	ns.coalition_seats = Government.majority_seats(ns)
+	var margin_text := String(StripReadings.read("assembly", state, _loader)["text"])
+	if margin_text != "-1":
+		_fail("a coalition of exactly majority_seats reads '%s', not '-1' -- it is one seat short" % margin_text)
 
 
 ## Every reading showing at once must fit a 1920 screen beside the tools, each at

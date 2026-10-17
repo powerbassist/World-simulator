@@ -31,9 +31,10 @@ var _figure_values := {}
 ## Each figure's caption label, by the same key as _figure_values -- kept so the
 ## live tooltip goes on both hover targets, and the programme can name itself.
 var _figure_captions := {}
-## Window id -> its shortcut's key string ("E"), filled once by main.gd after every
-## window is registered, so an alert names the key the shell really binds.
-var window_keys := {}
+## Window id -> "Dispatches (N)": the frame's title and bound key, filled once by
+## main.gd after every window is registered, so an alert names the window the way
+## the shell does (the review caught "the events window" for Dispatches).
+var window_hints := {}
 ## The row the figures sit in -- read by the walker test's width check.
 var _figures: HBoxContainer
 var _tools: HBoxContainer
@@ -153,10 +154,7 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		caption.tooltip_text = tip
 
 
-## "the economy window (E)" -- the key read from the window manager at startup,
-## so an alert cannot name a shortcut the shell does not bind.
+## "Economy (E)" -- the hint main.gd read off the window manager; the bare id only
+## for a bar refreshed before main.gd filled the hints (a test harness).
 func _window_hint(window_id: String) -> String:
-	var key := String(window_keys.get(window_id, ""))
-	if key.is_empty():
-		return "the %s window" % window_id
-	return "the %s window (%s)" % [window_id, key]
+	return String(window_hints.get(window_id, window_id))

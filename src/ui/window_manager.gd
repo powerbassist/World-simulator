@@ -33,6 +33,7 @@ const SIDE_MARGIN := 40.0
 var _frames := {}       # id -> WindowFrame
 var _keys := {}         # id -> keycode, KEY_NONE for a window with no shortcut
 var _icons := {}        # id -> at-icons path, "" for a window with no icon yet
+var _titles := {}       # id -> the title its frame shows
 var _cascade_index := 0
 
 
@@ -69,6 +70,7 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 		])
 	_keys[id] = key
 	_icons[id] = icon_path
+	_titles[id] = title
 
 	var frame := WindowFrame.new()
 	add_child(frame)
@@ -149,6 +151,11 @@ func panel_ids() -> Array:
 ## The letter that toggles a window, or KEY_NONE.
 func shortcut(id: String) -> int:
 	return int(_keys.get(id, KEY_NONE))
+
+
+## The title a window's frame shows -- what an alert elsewhere must call it.
+func title(id: String) -> String:
+	return String(_titles.get(id, id))
 
 
 ## The at-icons SVG registered for a window's name, or "". `_entry()` reads this

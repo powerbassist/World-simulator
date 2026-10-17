@@ -683,9 +683,10 @@ never a branch in `top_bar.gd`.
 registers -- and never recomputes one. An unknown change is a dash.
 
 **The alert contract.** `alert_window` is set only on a threshold the game
-already holds; the figure takes `FigureAlert` and the tip ends "Open the
-<window> window (<key>)", the key read from the window manager by `main.gd`
-once every window is registered.
+already holds; the figure takes `FigureAlert` and the tip ends "Open
+<Title> (<key>)." -- the frame's title and bound key, read from the window
+manager by `main.gd` once every window is registered (an id would have said
+"events" for Dispatches).
 
 **The walker.** `tests/test_strip_readings.gd` perturbs every declared input and
 requires the reading to move, checks dashes for absence, alert windows against
