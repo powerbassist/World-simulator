@@ -16,6 +16,7 @@
    "tests/test_top_bar_desk.gd",
    "tests/test_strip_readings.gd",
    "tests/test_tip_popup.gd",
+   "tests/test_outliner.gd",
    "tests/test_regions.gd",
    "tests/test_siting.gd",
    "tests/test_people_panel.gd",

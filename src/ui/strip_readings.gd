@@ -36,15 +36,15 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 
 ## Strip order: standing, money, the economy, the country, the assembly, the clock,
-## the desk, the world, the people. "people" is TRANSITIONAL -- V4.8b moves it into
-## the outliner and deletes it here.
+## the desk, the world. People left at V4.8b: a count of people the term has moved is
+## a margin note, not a standing figure, and the outliner lists them by name.
 ##
 ## Thirteen on one line needed 2219 px on a 1920 screen (tests/test_strip_readings.gd's
 ## width check, 2026-10-17); the figures went two-line instead -- caption above
 ## value, U2's shape -- the author's call at that measurement.
 const ORDER: Array[String] = [
 	"approval", "deficit", "gdp", "unemployment", "inflation", "unrest",
-	"assembly", "election", "programme", "desk", "europe", "commodities", "people",
+	"assembly", "election", "programme", "desk", "europe", "commodities",
 ]
 
 ## B10 (playtest 2026-09-16): "Budget balance", not "Deficit" -- the value is
@@ -53,7 +53,7 @@ const CAPTIONS := {
 	"approval": "Approval", "deficit": "Budget balance", "gdp": "GDP",
 	"unemployment": "Unemployment", "inflation": "Inflation", "unrest": "Unrest",
 	"assembly": "Assembly", "election": "Next vote", "programme": "Programme",
-	"desk": "Desk", "europe": "Europe", "commodities": "Supplies", "people": "People",
+	"desk": "Desk", "europe": "Europe", "commodities": "Supplies",
 }
 
 ## The NationState fields each reading's text or tip is read from.
@@ -69,9 +69,6 @@ const INPUTS := {
 	"assembly": ["coalition_seats"],
 	"desk": ["event_queue"],
 }
-
-## A grudge or loyalty under this has not been moved by the term (V4.3's figure).
-const MOVED_AT := 0.05
 
 ## Trends' own window, so the strip and the Overview cannot disagree about "lately".
 const WINDOW := Trends.TREND_MONTHS
@@ -105,8 +102,6 @@ static func read(id: String, state, loader) -> Dictionary:
 			return _europe(state, ns)
 		"commodities":
 			return _commodities(ns, loader)
-		"people":
-			return _people(ns)
 	return _reading("—", "")
 
 
@@ -432,21 +427,6 @@ static func _commodities(ns, loader) -> Dictionary:
 	return _reading_lines("%s %.0f%%" % [name, worst * 100.0], [_line(
 		"%s covers %.0f%% of the month's demand -- the shortage line is %.0f%%." % [name, worst * 100.0, bar],
 		"short")], true, "commodities")
-
-
-## V4.3. How many people the term has MOVED (a non-zero grudge or loyalty), not
-## how many exist -- the register is 1595 and a permanent "1595" says nothing.
-## Both registers read the same way the People window's rows do.
-static func _people(ns) -> Dictionary:
-	var moved := 0
-	for pid in ns.person_grudges.keys():
-		if float(ns.person_grudges[pid]) >= MOVED_AT:
-			moved += 1
-	for pid in ns.person_loyalty.keys():
-		if absf(float(ns.person_loyalty[pid])) >= MOVED_AT and float(ns.person_grudges.get(pid, 0.0)) < MOVED_AT:
-			moved += 1
-	return _reading("%d" % moved,
-		"People whose loyalty or grudge the term has moved; the People window names them.")
 
 
 ## ▲/▼ beside a figure; nothing for NAN or a move under Trends' own snap.

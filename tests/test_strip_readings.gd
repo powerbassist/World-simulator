@@ -34,7 +34,7 @@ const StripChildren = preload("res://src/ui/strip_children.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 ## Zero is a true level for these, not an absence: nobody angry, nobody moved.
-const ZERO_IS_A_LEVEL := ["unrest", "people"]
+const ZERO_IS_A_LEVEL := ["unrest"]
 
 const SCREEN_WIDTH := 1920.0
 
@@ -350,7 +350,6 @@ func _check_the_strip_fits() -> void:
 		"unemployment": "12.34%", "inflation": "10.5%", "unrest": "100",
 		"assembly": "+123", "election": "60 mo", "programme": "100%",
 		"desk": "12 pending", "europe": "Treaty: 12m", "commodities": "%s 18%%" % longest,
-		"people": "1595",
 	}
 	for id in StripReadings.ORDER:
 		if not widest.has(id):

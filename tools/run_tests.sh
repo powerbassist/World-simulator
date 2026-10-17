@@ -163,6 +163,7 @@ tests=(
   tests/test_top_bar_desk.gd
   tests/test_strip_readings.gd
   tests/test_tip_popup.gd
+  tests/test_outliner.gd
   tests/test_geography.gd
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
   # has exactly one reader.
