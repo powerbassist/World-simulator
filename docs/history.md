@@ -11,7 +11,7 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.10
 
-**V4.10a -- THE GROUND AT DEPTH -- IS BUILT on `v4.10-map-close-up` (2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged, no settings key.**
+**V4.10a -- THE GROUND AT DEPTH -- IS MERGED (PR #10, merge commit `d8abd155`, 2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged, no settings key.**
 
 - **Plan gate (author, 2026-10-18):** a + b + c kept despite V5's UI rework (the map is world drawing; its seams survive); 2-pass review budget per PR; the V4 tier close-out is its own session after c.
 - **What shipped:** `tools/ground_generate.py` (one-time bake, ETOPO 2022 60s via NOAA ERDDAP), `assets/map/ground_europe.webp` (4920x3000 at 60 px/deg, 654 KB, extent -31..51 E / 28..78 N derived from the roster's rings + 6 deg), `src/ui/map_ground.gd`, the band in `map_view._draw_raster()`, `tests/test_map_ground.gd`.
