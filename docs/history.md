@@ -9,6 +9,17 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V4.10
+
+**V4.10a -- THE GROUND AT DEPTH -- IS BUILT on `v4.10-map-close-up` (2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged, no settings key.**
+
+- **Plan gate (author, 2026-10-18):** a + b + c kept despite V5's UI rework (the map is world drawing; its seams survive); 2-pass review budget per PR; the V4 tier close-out is its own session after c.
+- **What shipped:** `tools/ground_generate.py` (one-time bake, ETOPO 2022 60s via NOAA ERDDAP), `assets/map/ground_europe.webp` (4920x3000 at 60 px/deg, 654 KB, extent -31..51 E / 28..78 N derived from the roster's rings + 6 deg), `src/ui/map_ground.gd`, the band in `map_view._draw_raster()`, `tests/test_map_ground.gd`.
+- **The gate finding:** G2 measured 2.27 / 2.29 ms on the tree BEFORE any ground work (EU-29 was 1.37) -- V3.4-V4.11 content grew the max-zoom draw 451 -> 574 calls. Author's call: a judged on its own delta; V4.10c owns the absolute 2.0.
+- **Measured (1440p, vsync off, paired in one run):** max zoom 3.91 -> 3.47 (the photograph is skipped under an opaque core), mid-band 1.9 9.80 -> 9.92, opening fit 10.20 -> 10.52, max-zoom drag 23.27 -> 23.37. Boot: decode + mipmaps + upload ~285 ms; `enter` re-weighted 780 -> 1080.
+- **A crack class found on the preview, not in any test:** the three geometry vintages do not tile, and over paper a gap reads as sea. Filled where the DEM says land (z > 0); straits are below sea level and stay open.
+- Model: [map-platform-model](map-platform-model.md) §9.
+
 ## V4.9
 
 **V4.9c -- THE SYNTHESIZED SOUND SET -- IS MERGED (PR #9, merge commit `2daf3858`, 2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged, one settings key (`[audio] ambient`, default ON).**
