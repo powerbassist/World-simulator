@@ -11,7 +11,7 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.9
 
-**V4.9c -- THE SYNTHESIZED SOUND SET -- IS BUILT on `v4.9c-sound` (2026-10-17). No `src/sim/` diff, `SAVE_VERSION` unchanged, one settings key (`[audio] ambient`, default ON).**
+**V4.9c -- THE SYNTHESIZED SOUND SET -- IS MERGED (PR #9, merge commit `2daf3858`, 2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged, one settings key (`[audio] ambient`, default ON).**
 
 - **Contract and instruments: [panel-system](panel-system.md) §24.**
 - **Author calls at the plan gate (2026-10-17):** the beds get their own Ambience switch, default ON; the event sting follows each category's NOTIFY band.
