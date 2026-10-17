@@ -2124,6 +2124,13 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		if MessageSettings.allows(_messages, ev.category, severity, "popup"):
 			_push_decision_card(ev, entry)
 
+	# A quiet arrival's card stays up while the clock runs, so every live
+	# decision card's deadline is re-read here, before the guard: a card saying
+	# "3 months" beside a desk saying one is two readouts of one entry
+	# disagreeing (review pass 2). Before V4.8c the arrival stopped the clock
+	# and the sentence could not age under the player.
+	_refresh_decision_bodies(ns)
+
 	# After the arrivals, so a quiet arrival with one month to answer is caught
 	# in the month it lands.
 	_guard_lapses(ns)
@@ -2168,9 +2175,10 @@ func _guard_lapses(ns) -> void:
 func _push_decision_card(ev, entry: Dictionary) -> void:
 	var event_id := String(entry.get("event_id", ""))
 	var left := int(entry.get("months_left", 0))
-	# The card itself is the answer surface (the clock is stopped, so the
-	# choices cannot be pressed against a running world). The default-choice
-	# marker is events_panel's own wording.
+	# The card itself is the answer surface. Since V4.8c a quiet arrival's card
+	# can be answered with the clock running -- Events.answer is the same chain
+	# either way; only the arrival pause used to guarantee a stopped world. The
+	# default-choice marker is events_panel's own wording.
 	var actions: Array = []
 	for choice in ev.choices:
 		actions.append({"label": "%s%s" % [
@@ -2190,6 +2198,22 @@ func _push_decision_card(ev, entry: Dictionary) -> void:
 	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
 	var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions, art)
 	_event_cards[card_id] = event_id
+
+
+## Every live decision card's deadline sentence, re-read off the desk. A card
+## whose event has left the desk was dismissed above; one the eviction dropped is
+## a set_body() no-op.
+func _refresh_decision_bodies(ns) -> void:
+	var left_by_id := {}
+	for entry in ns.event_queue:
+		left_by_id[String(entry.get("event_id", ""))] = int(entry.get("months_left", 0))
+	for card_id in _event_cards.keys():
+		var event_id := String(_event_cards[card_id])
+		if not left_by_id.has(event_id):
+			continue
+		var ev = Events.event_by_id(_loader, event_id)
+		if ev != null:
+			_hud.message_stack.set_body(String(card_id), _decision_body(ev, int(left_by_id[event_id])))
 
 
 ## Whether any unseen id holds the clock -- V4.8c's reading of what used to be

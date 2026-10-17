@@ -50,6 +50,7 @@ func _process(_delta: float) -> bool:
 	else:
 		_check_quiet_arrival_and_lapse_guard()
 		_check_loud_arrival_pauses()
+		_check_quiet_card_deadline_ages()
 		_check_notify_band()
 		_check_feed_band()
 	_finish()
@@ -257,6 +258,44 @@ func _check_loud_arrival_pauses() -> void:
 		_fail("pause ALL: the arrival did not stop the clock")
 	if _card_for(String(ev.id)) == "":
 		_fail("popup default: the arrival pushed no card")
+	_reset_desk()
+
+
+## Review pass 2: a quiet arrival's card stays up while the clock runs, so its
+## "N months to answer" must follow the desk, month by month -- and the guard's
+## last month must read "1 month", not the arrival's number.
+func _check_quiet_card_deadline_ages() -> void:
+	var ev = _quiet_candidate()
+	if ev == null:
+		return
+	var ns = _main._state.player()
+	var event_id := String(ev.id)
+	_reset_desk()
+	var reg := MessageSettings.defaults()
+	reg[ev.category]["pause"] = MessageSettings.OFF
+	_main._messages = reg
+	Events.announce(ns, ev, _month_index(), Events.region_names(ns, _main._loader))
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	var card_id := _card_for(event_id)
+	if card_id == "":
+		_fail("deadline: the quiet arrival with popup on pushed no card")
+		return
+	while not _main._clock.paused:
+		var before := _desk(ns)
+		Events._tick_countdowns(_main._state, ns, _main._loader, _month_index())
+		_main._card_events(_main._state.year, _main._state.month, before, {})
+		if not _desk(ns).has(event_id):
+			_fail("deadline: the quiet decision lapsed")
+			return
+		var left := -1
+		for entry in ns.event_queue:
+			if String(entry.get("event_id", "")) == event_id:
+				left = int(entry.get("months_left", 0))
+		var want := "You have %d %s to answer." % [left, "month" if left == 1 else "months"]
+		var body: String = _main._hud.message_stack._bodies[card_id].text
+		if not body.ends_with(want):
+			_fail("deadline: the card reads '%s' with %d months left" % [body, left])
+			break
 	_reset_desk()
 
 
