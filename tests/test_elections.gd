@@ -43,6 +43,7 @@ func _init() -> void:
 	_check_governing_badly_loses()
 	_check_governing_well_wins_and_second_term_starts()
 	_check_determinism()
+	_check_regional_shares()
 
 	_finish()
 
@@ -265,6 +266,65 @@ func _check_determinism() -> void:
 
 ## The real tick sequence, one calendar month: Economy, Budget, Opinion, then
 ## Elections — the exact order main.gd's _on_month_elapsed wires.
+## V4.9b. Election night's regional results: derived from a verdict, so they
+## must ADD UP to it -- every party's population-weighted share over the
+## regions is its national share at 1e-12, every region's shares sum to one,
+## and the tilt is real (the night has something to show). Plus the identity
+## case: no salience on jobs, no swing.
+func _check_regional_shares() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var party_list: Array = _loader.parties.get(ns.id, [])
+	var result: Dictionary = Elections.resolve(ns, party_list, ns.election_system, ns.election_threshold_pct, "national", state.year, state.month)
+	var national: Dictionary = result["vote_share"]
+	var incumbent := String(result["incumbent_party_id"])
+	var regions: Array = []
+	for region in state.regions.get(ns.id, []):
+		regions.append({
+			"id": region.id,
+			"weight": float(ns.region_pop_share.get(region.id, 0.0)),
+			"jobless_index": region.unemployment_rel,
+		})
+	if regions.size() < 2:
+		_fail("FRA has %d regions; the night needs several" % regions.size())
+		return
+	var salience: float = float(ns.issue_salience.get("jobs", 0.0))
+	var regional: Dictionary = Elections.regional_shares(national, incumbent, regions, salience)
+	var total := 0.0
+	for r in regions:
+		total += float(r["weight"])
+	var lo := 1.0
+	var hi := 0.0
+	for r in regions:
+		var shares: Dictionary = regional[r["id"]]
+		var sum := 0.0
+		for party_id in shares.keys():
+			sum += float(shares[party_id])
+			if float(shares[party_id]) < 0.0:
+				_fail("region %s gives %s a negative share" % [r["id"], party_id])
+		if absf(sum - 1.0) > 1e-12:
+			_fail("region %s's shares sum to %.15f, not 1" % [r["id"], sum])
+		lo = minf(lo, float(shares[incumbent]))
+		hi = maxf(hi, float(shares[incumbent]))
+	for party_id in national.keys():
+		var weighted := 0.0
+		for r in regions:
+			weighted += float(r["weight"]) * float(regional[r["id"]][party_id])
+		if absf(weighted / total - float(national[party_id])) > 1e-12:
+			_fail("%s's regional shares add up to %.15f, the verdict says %.15f" % [
+				party_id, weighted / total, float(national[party_id])])
+	# The measurement REGION_SWING's comment cites, printed so a retune reads it.
+	print("test_elections: FRA incumbent regional range %.1f%% - %.1f%% (national %.1f%%, jobs salience %.3f)" % [
+		lo * 100.0, hi * 100.0, float(national[incumbent]) * 100.0, salience])
+	if hi - lo < 0.01:
+		_fail("the incumbent's regional range is %.2f points; the night would show one number thirteen times" % ((hi - lo) * 100.0))
+	var flat: Dictionary = Elections.regional_shares(national, incumbent, regions, 0.0)
+	for r in regions:
+		if flat[r["id"]] != national:
+			_fail("with no salience on jobs, region %s still swings" % r["id"])
+			break
+
+
 func _tick(state) -> Array:
 	state.month += 1
 	if state.month > 12:

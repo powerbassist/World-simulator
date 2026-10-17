@@ -349,6 +349,52 @@ static func resolve(ns, party_list: Array, system: String, threshold_pct: float,
 	}
 
 
+## V4.9b. Election night's regional results, derived from a national verdict
+## already decided -- `national` is resolve()'s "vote_share", and nothing about
+## the outcome is recomputed. `regions` is [{id, weight, jobless_index}],
+## weight the region's share of the population, jobless_index its unemployment
+## relative to the national rate (1.0 = national). The CALLER reads those off
+## the regional register: V2.5 gives regions.gd alone the register in src/sim/
+## (tests/test_geography.gd), and this function never touches a Region.
+## `jobs_salience` is the nation's salience on the jobs issue. Returns
+## {region id -> {party id -> share}}.
+##
+## The incumbent is tilted per region (see election_constants' REGION_SWING),
+## then the tilts are divided by their weighted mean, so the population-weighted
+## incumbent share over the regions IS the national one; the other parties
+## share what the incumbent did not take in the proportions they hold
+## nationally, which makes their weighted totals national too. Pure, leaf-shaped
+## like the rest of this file: plain Dictionaries in, plain Dictionaries out.
+static func regional_shares(national: Dictionary, incumbent_party_id: String, regions: Array, jobs_salience: float) -> Dictionary:
+	var out := {}
+	if regions.is_empty():
+		return out
+	var tilt := {}
+	var weighted := 0.0
+	var total := 0.0
+	for r in regions:
+		var raw: float = -K.REGION_SWING * jobs_salience * (float(r["jobless_index"]) - 1.0)
+		var f: float = 1.0 + clampf(raw, -K.REGION_TILT_MAX, K.REGION_TILT_MAX)
+		tilt[r["id"]] = f
+		weighted += float(r["weight"]) * f
+		total += float(r["weight"])
+	var mean: float = weighted / total if total > 0.0 else 1.0
+	var inc: float = float(national.get(incumbent_party_id, 0.0))
+	for r in regions:
+		var f: float = float(tilt[r["id"]]) / mean
+		# The incumbent's regional share can never pass 1: with the tilt capped
+		# at 1.35 over a mean near 1, that needs a national share above ~70 %,
+		# which no party in the data approaches -- and the clamp keeps the
+		# others' scale non-negative if one ever did.
+		var inc_r: float = minf(inc * f, 1.0)
+		var rest: float = (1.0 - inc_r) / (1.0 - inc) if inc < 1.0 else 0.0
+		var shares := {}
+		for party_id in national.keys():
+			shares[party_id] = inc_r if party_id == incumbent_party_id else float(national[party_id]) * rest
+		out[r["id"]] = shares
+	return out
+
+
 ## A directly elected executive is not a seat allocation — one office, won on
 ## the highest vote share. Reuses vote_share() and attribution() unchanged, so
 ## the presidential verdict is computed from exactly the same opinion state the

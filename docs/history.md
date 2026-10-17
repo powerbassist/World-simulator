@@ -11,6 +11,15 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.9
 
+**V4.9b -- ELECTION NIGHT AND THE MAP'S CROSSFADE -- IS BUILT on `v4.9b-night` (2026-10-17). One `src/sim/` diff (`Elections.regional_shares()`, pure, two constants), `SAVE_VERSION` unchanged, no settings key.**
+
+- **Contract and instruments: [panel-system](panel-system.md) §23.**
+- **Author call at the plan gate (2026-10-17):** the regions show a DERIVED swing rather than the national shares thirteen times -- the incumbent tilted by regional unemployment x jobs salience, renormalised so the weighted totals are the verdict exactly (1e-12). Measured at France's opening: 24.4-28.0 % by region around 26.5 %.
+- **The night** (`src/ui/election_night.gd` + `election_panel.gd`): regions declare smallest first, figures roll to the running count, the verdict, attribution and sting come last. Replaces V3.6's tally; `Motion.run()` is the new verb; the tables are built at their finals, so motion off and skip are the same path.
+- **The map's crossfade:** a layer toggle fades the fills from what was on screen over 0.3 s; strokes and legend switch at once. V4.10 shares `set_layer()`.
+- **Found on the way:** the first windowed capture showed the held-back verdict as a ~200 px hole above the count (transparent keeps its space) -- now hidden; and `tests/test_geography.gd` caught `regional_shares()` naming the regional register in `src/sim/`, which V2.5 gives `regions.gd` alone -- the caller now reads it and passes a `jobless_index`.
+- **Refused:** a running seat projection, rows reordering as the lead moves, regions lit on the map (§23).
+
 **V4.9a -- THE LOADING SCREEN AND THE MOTION VOCABULARY -- IS MERGED (PR #7, merge commit `14b6d2a2`, 2026-10-17). One `src/sim/` diff (`Net.warm_step`, the same table in slices), `SAVE_VERSION` unchanged, one settings key (`[display] motion`).**
 
 - **Contract and instruments: [panel-system](panel-system.md) §22.**
