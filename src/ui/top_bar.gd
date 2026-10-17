@@ -2,6 +2,8 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
+const StripChildren = preload("res://src/ui/strip_children.gd")
+const TipPopup = preload("res://src/ui/tip_popup.gd")
 
 ## The thin strip along the top edge -- U2, rebuilt at U5a, made ONE THING at V4.8a.
 ##
@@ -12,6 +14,12 @@ const StripReadings = preload("res://src/ui/strip_readings.gd")
 ## desk, Europe); V4.8a moved every reading into strip_readings.gd's register, so
 ## this file is the HOST: one figure per ORDER entry, drawing whatever the register
 ## returns. A new reading is a register entry, never a branch here.
+##
+## V4.8b: a figure's tooltip is the two-level TipPopup, not Godot's own -- the
+## built-in one cannot be hovered into, so a line that opens a breakdown needs
+## its own. tooltip_text stays empty on the strip (a non-empty one would draw a
+## second tooltip beside ours); tip_of(id) is the plain text a test or a reader
+## can still get.
 ##
 ## Reads state, never writes it. The gear and save buttons emit; main.gd decides
 ## what they open, the same shape as every other panel here.
@@ -31,6 +39,13 @@ var _figure_values := {}
 ## Each figure's caption label, by the same key as _figure_values -- kept so the
 ## live tooltip goes on both hover targets, and the programme can name itself.
 var _figure_captions := {}
+## Reading id -> its level-1 lines as last refreshed, alert line included.
+var _tips := {}
+var _popup
+## The state and loader the last refresh read, so a level-2 breakdown is answered
+## from the same world the figure shows.
+var _state
+var _loader
 ## Window id -> "Dispatches (N)": the frame's title and bound key, filled once by
 ## main.gd after every window is registered, so an alert names the window the way
 ## the shell does (the review caught "the events window" for Dispatches).
@@ -64,6 +79,9 @@ func _ready() -> void:
 	_tools.add_theme_constant_override("separation", 4)
 	row.add_child(_tools)
 
+	_popup = TipPopup.new()
+	add_child(_popup)
+
 	var save := Button.new()
 	save.text = "SAVE"
 	save.theme_type_variation = UiTheme.SUBROW_BUTTON
@@ -90,12 +108,12 @@ func _build_figure(key: String, title: String) -> Control:
 	var label := Label.new()
 	label.text = title.to_upper()
 	label.theme_type_variation = UiTheme.MICRO
-	_hoverable(label)
+	_hoverable(label, key)
 	box.add_child(label)
 
 	var value := Label.new()
 	value.theme_type_variation = UiTheme.FIGURE
-	_hoverable(value)
+	_hoverable(value, key)
 	box.add_child(value)
 	_figure_values[key] = value
 	_figure_captions[key] = label
@@ -108,13 +126,37 @@ func _build_figure(key: String, title: String) -> Control:
 	return box
 
 
-## A Label defaults to MOUSE_FILTER_IGNORE in Godot 4, so the hovered control
-## under a figure is its HBoxContainer -- which carries no tooltip -- and a
-## tooltip_text set on the Label never appears. PASS makes the Label a hover
-## target while still propagating the event, so a click on the strip is not
-## swallowed (STOP would).
-func _hoverable(label: Label) -> void:
+## A Label defaults to MOUSE_FILTER_IGNORE in Godot 4, so it never sees the
+## pointer and no hover reaches the popup. PASS makes the Label a hover target
+## while still propagating the event, so a click on the strip is not swallowed
+## (STOP would).
+func _hoverable(label: Label, key: String) -> void:
 	label.mouse_filter = Control.MOUSE_FILTER_PASS
+	label.mouse_entered.connect(_on_figure_entered.bind(key, label))
+	label.mouse_exited.connect(_on_figure_exited.bind(key))
+
+
+func _on_figure_entered(key: String, anchor: Label) -> void:
+	if not _tips.has(key):
+		return
+	# Anchored to the figure's box, not the one label, so the popup hangs from the
+	# caption's left edge whichever of the two the pointer touched.
+	var box: Control = anchor.get_parent()
+	_popup.figure_entered(key, box, _tips[key], func(child_id: String) -> Dictionary:
+		return StripChildren.child(key, child_id, _state, _loader))
+
+
+func _on_figure_exited(key: String) -> void:
+	_popup.figure_exited(key)
+
+
+## The plain text of a reading's tooltip, alert line included: the lines the
+## popup draws, joined.
+func tip_of(id: String) -> String:
+	var texts: Array[String] = []
+	for line in (_tips.get(id, []) as Array):
+		texts.append(String(line["text"]))
+	return "\n".join(texts)
 
 
 func _spacer() -> Control:
@@ -135,6 +177,8 @@ func _spacer() -> Control:
 func refresh(state, _clock: Node, loader = null) -> void:
 	if state == null or state.player() == null:
 		return
+	_state = state
+	_loader = loader
 	for id in StripReadings.ORDER:
 		var r: Dictionary = StripReadings.read(id, state, loader)
 		var value: Label = _figure_values[id]
@@ -147,11 +191,11 @@ func refresh(state, _clock: Node, loader = null) -> void:
 			caption.text = String(r["caption"]).to_upper()
 		var alert := String(r["alert_window"])
 		value.theme_type_variation = UiTheme.FIGURE if alert.is_empty() else UiTheme.FIGURE_ALERT
-		var tip := String(r["tip"])
+		var lines: Array = (r["lines"] as Array).duplicate()
 		if not alert.is_empty():
-			tip += "\nOpen %s." % _window_hint(alert)
-		value.tooltip_text = tip
-		caption.tooltip_text = tip
+			lines.append({"text": "Open %s." % _window_hint(alert), "child_id": ""})
+		_tips[id] = lines
+		_popup.update_lines(id, lines)
 
 
 ## "Economy (E)" -- the hint main.gd read off the window manager; the bare id only

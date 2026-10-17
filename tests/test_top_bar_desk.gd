@@ -96,7 +96,7 @@ func _run() -> void:
 		return
 	if String(value.text) != "2 pending":
 		_fail("two entries read '%s', expected the queue's own count" % value.text)
-	var tip := String(value.tooltip_text)
+	var tip: String = _bar.tip_of("desk")
 	if not tip.contains("critical"):
 		_fail("a critical on the desk and the tooltip says '%s' -- the worst severity must be named outright" % tip)
 
@@ -106,14 +106,14 @@ func _run() -> void:
 	_bar.refresh(state, null, _loader)
 	if String(value.text) != "1 pending":
 		_fail("one entry reads '%s', expected 1 pending" % value.text)
-	tip = String(value.tooltip_text)
+	tip = _bar.tip_of("desk")
 	if not tip.contains("minor") or tip.contains("major") or tip.contains("critical"):
 		_fail("one minor on the desk and the tooltip says '%s' -- expected the count-by-severity form" % tip)
 
 	# One major beside the minor: both counted, worst named as the count.
 	_announce(state, _event(SEV2))
 	_bar.refresh(state, null, _loader)
-	tip = String(value.tooltip_text)
+	tip = _bar.tip_of("desk")
 	if not (tip.contains("1 major") and tip.contains("1 minor")):
 		_fail("a major and a minor on the desk and the tooltip says '%s'" % tip)
 
@@ -138,17 +138,22 @@ func _run() -> void:
 	# they are asserted by name rather than left to a walk that finds them empty.
 	_announce(state, _event(SEV1))
 	_bar.refresh(state, null, _loader)
+	# V4.8b: the strip's tooltip is the TipPopup, fed by hover on the figure's two
+	# labels, so the thing that must hold is that every visible figure has a tip
+	# AND both its labels can see the pointer (a Label ignores it by default).
 	var with_tips := 0
-	var stack: Array = [_bar]
-	while not stack.is_empty():
-		var node: Node = stack.pop_back()
-		stack.append_array(node.get_children())
-		if node is Control and not String(node.tooltip_text).is_empty():
-			with_tips += 1
-			if node.mouse_filter == Control.MOUSE_FILTER_IGNORE:
-				_fail("a top-bar control carries the tooltip '%s' but ignores the mouse -- it can never show" % node.tooltip_text)
+	for id in _bar._figure_values.keys():
+		var parts: Array = [_bar._figure_values[id], _bar._figure_captions[id]]
+		if not (parts[0] as Control).get_parent().visible:
+			continue
+		with_tips += 1
+		if _bar.tip_of(id).is_empty():
+			_fail("the visible '%s' figure has no tip" % id)
+		for part in parts:
+			if (part as Control).mouse_filter == Control.MOUSE_FILTER_IGNORE:
+				_fail("a '%s' figure label ignores the mouse -- its popup can never open" % id)
 	if with_tips < 4:
-		_fail("only %d top-bar controls carry a tooltip -- the walk is not reaching the figures" % with_tips)
+		_fail("only %d top-bar figures carry a tip -- the walk is not reaching the figures" % with_tips)
 	for pl in [_bar._figure_captions["programme"], _bar._figure_values["programme"]]:
 		if pl.mouse_filter == Control.MOUSE_FILTER_IGNORE:
 			_fail("a programme figure label ignores the mouse -- its tooltip can never show")

@@ -23,6 +23,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip approval:1
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open outliner
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip deficit:1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --failing --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
@@ -119,6 +122,14 @@ var _hover_project := ""  ## U6c, a project marker rather than a nation
 ## --hover-project's reason: a nation hover and an outline hover are different
 ## states on the map, and one flag meaning both would hide which one failed.
 var _hover_outline := ""
+## V4.8b. "<reading>" or "<reading>:<line>" -- opens that strip figure's tooltip
+## popup through the bar's own hover handler, and the level-2 breakdown of the
+## named level-1 line. A hover state no flag can reach is a popup nobody looks at.
+var _tip := ""
+## V4.8b. Stage one thing pinned in each outliner section (a running pinned
+## programme entry, a failing major, a good short of demand, people with a
+## grudge), so --open outliner photographs the window with every section drawn.
+var _outliner := false
 
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
 ## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
@@ -425,6 +436,49 @@ var _main
 ## V4.11c. Hover an outline the way a cursor would: the first point of a coarse
 ## grid over the VISIBLE map that the outline test answers with this id, so the
 ## readout lands on screen at any zoom (a centroid of Russia sits off it).
+## V4.8b, for --outliner. Writes the registers the outliner reads, the way
+## tests/test_outliner.gd stages them, so the frame is the window with every
+## section populated.
+func _stage_the_outliner() -> void:
+	var loader = _main._loader
+	var ns = _main._state.player()
+	for entry in loader.programme:
+		if bool(entry.get("pinned", false)):
+			ns.programme.append({
+				"entry_id": String(entry["id"]), "chosen_term": 0, "months_live": 0,
+				"status": "active", "concluded_term": -1, "concluded_term_month": -1,
+			})
+			break
+	var major = Companies.majors_of(loader, ns.id)[0]
+	var live: Dictionary = ns.companies.get(major.id, {})
+	live["failed"] = true
+	live["rescue_months_left"] = 3
+	ns.companies[major.id] = live
+	var good_id := String(loader.commodity_goods.keys()[0])
+	ns.commodity_state = {"demand": {good_id: 100.0}, "output": {good_id: 12.0}, "trade": {good_id: 0.0}}
+	var ids: Array = loader.person_by_id.keys()
+	ids.sort()
+	for i in 3:
+		ns.person_grudges[String(ids[i])] = 0.5 - 0.1 * i
+	ns.person_loyalty[String(ids[3])] = -0.4
+
+
+## V4.8b, for --tip. The bar is refreshed first (a tip exists only after a
+## refresh), then the hover goes through the same handler the label's mouse
+## signal calls, so the frame is the popup a player's pointer produces.
+func _stage_tip() -> void:
+	var parts := _tip.split(":")
+	var bar = _main._hud.top_bar
+	bar.refresh(_main._state, _main._clock, _main._loader)
+	if not bar._figure_values.has(parts[0]):
+		push_error("screenshot: --tip '%s' is not a strip reading" % parts[0])
+		return
+	bar._on_figure_entered(parts[0], bar._figure_values[parts[0]])
+	bar._popup.tick(bar._popup.OPEN_DELAY_S + 0.01)
+	if parts.size() > 1:
+		bar._popup.line_entered(int(parts[1]))
+
+
 func _stage_outline_hover() -> void:
 	var map = _main._map_view
 	var view: Rect2 = map.visible_lonlat_rect()
@@ -459,6 +513,10 @@ func _init() -> void:
 			_hover_project = args[i + 1]
 		elif args[i] == "--hover-outline" and i + 1 < args.size():
 			_hover_outline = args[i + 1].to_upper()
+		elif args[i] == "--tip" and i + 1 < args.size():
+			_tip = args[i + 1]
+		elif args[i] == "--outliner":
+			_outliner = true
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
 		elif args[i] == "--center" and i + 2 < args.size():
@@ -707,6 +765,8 @@ func _apply_view() -> void:
 		_regulate_a_sector()
 	if _nationalise:
 		_nationalise_a_firm()
+	if _outliner:
+		_stage_the_outliner()
 	if _bid:
 		_open_a_bid()
 	if _failing:
@@ -830,6 +890,8 @@ func _apply_view() -> void:
 		_main._map_view.queue_redraw()
 	if _hover_outline != "":
 		_stage_outline_hover()
+	if _tip != "":
+		_stage_tip()
 	if _blank != "":
 		_blank_a_window()
 	if _termlimit:

@@ -30,11 +30,18 @@ const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const WindowFrame = preload("res://src/ui/window_frame.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Government = preload("res://src/sim/government.gd")
+const StripChildren = preload("res://src/ui/strip_children.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 ## Zero is a true level for these, not an absence: nobody angry, nobody moved.
-const ZERO_IS_A_LEVEL := ["unrest", "people"]
+const ZERO_IS_A_LEVEL := ["unrest"]
 
 const SCREEN_WIDTH := 1920.0
+
+## Level-1 lines that open a child once every child is staged: the three approval
+## issues, then debt, coalition, programme entries, the desk, the rules, the
+## shortage. A count, so a register edit that quietly drops a child_id fails.
+const EXPECTED_CHILD_LINES := 9
 
 var _failures: Array[String] = []
 var _loader
@@ -62,10 +69,14 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let the bar's _ready() run
 	_check_every_reading_resolves()
+	_check_tip_is_derived_from_lines()
 	_check_every_input_is_live()
 	_check_absence_reads_as_a_dash()
 	_check_alerts_name_real_windows()
 	_check_the_strip_fits()
+	_check_every_child_resolves()
+	_check_child_inputs_are_live()
+	_check_a_missing_history_reads_as_a_dash_at_level_two()
 	_finish()
 	return false
 
@@ -83,7 +94,7 @@ func _check_every_reading_resolves() -> void:
 		if not StripReadings.CAPTIONS.has(id):
 			_fail("'%s' has no caption" % id)
 		var r: Dictionary = StripReadings.read(id, state, _loader)
-		for key in ["text", "tip", "visible", "alert_window"]:
+		for key in ["text", "tip", "visible", "alert_window", "lines"]:
 			if not r.has(key):
 				_fail("'%s' returned no '%s'" % [id, key])
 				return
@@ -91,6 +102,20 @@ func _check_every_reading_resolves() -> void:
 			_fail("'%s' is visible with text '%s' and tip '%s'" % [id, r["text"], r["tip"]])
 	if not _bar._figure_values.has(StripReadings.ORDER[0]):
 		_fail("the bar built no figure for '%s' -- it is not drawing the register" % StripReadings.ORDER[0])
+
+
+## V4.8b. A reading's tip is its level-1 lines joined: one source for the tooltip,
+## so the popup (which draws the lines) and the plain tip (which the walker and
+## tip_of read) cannot say two things.
+func _check_tip_is_derived_from_lines() -> void:
+	var state = _new_state()
+	for id in StripReadings.ORDER:
+		var r: Dictionary = StripReadings.read(id, state, _loader)
+		var texts: Array[String] = []
+		for line in (r["lines"] as Array):
+			texts.append(String(line["text"]))
+		if String(r["tip"]) != "\n".join(texts):
+			_fail("'%s' tip is not its lines joined -- two sources for one tooltip" % id)
 
 
 ## The walker proper: perturb each declared input and require the reading to move.
@@ -155,23 +180,7 @@ func _check_alerts_name_real_windows() -> void:
 
 	var state = _new_state()
 	var ns = state.player()
-	ns.unrest_pct = UnrestK.UNREST_THRESHOLD_PCT + 1.0
-	ns.is_minority = true
-	ns.event_queue.append({"event_id": "walker", "severity": 3})
-	var staged_treaty := false
-	for org_id in Orgs.council_ids(state):
-		if ns.orgs.has(org_id):
-			state.orgs[org_id]["ratifying"] = {
-				"name": "Walker treaty", "months_left": 2,
-				"nations": {ns.id: CouncilK.RATIFY_PENDING},
-			}
-			staged_treaty = true
-			break
-	if not staged_treaty:
-		_fail("FRA sits on no council -- the Europe alert cannot be staged")
-	# A good nobody covers: demand with nothing made and nothing bought.
-	var good_id := String(_loader.commodity_goods.keys()[0])
-	ns.commodity_state = {"demand": {good_id: 100.0}, "output": {good_id: 0.0}, "trade": {good_id: 0.0}}
+	_stage_every_alert(state)
 
 	var alerting := 0
 	for id in StripReadings.ORDER:
@@ -191,8 +200,8 @@ func _check_alerts_name_real_windows() -> void:
 	var unrest: Label = _bar._figure_values["unrest"]
 	if unrest.theme_type_variation != "FigureAlert":
 		_fail("an alerting unrest reading is drawn as '%s', not the alert tone" % unrest.theme_type_variation)
-	if not String(unrest.tooltip_text).contains("Economy (E)"):
-		_fail("the unrest alert does not name its window and key: '%s'" % unrest.tooltip_text)
+	if not _bar.tip_of("unrest").contains("Economy (E)"):
+		_fail("the unrest alert does not name its window and key: '%s'" % _bar.tip_of("unrest"))
 	# The assembly margin is seats beyond the BARE majority (more than
 	# majority_seats): exactly majority_seats is one short and must read "-1".
 	ns.is_minority = false
@@ -200,6 +209,137 @@ func _check_alerts_name_real_windows() -> void:
 	var margin_text := String(StripReadings.read("assembly", state, _loader)["text"])
 	if margin_text != "-1":
 		_fail("a coalition of exactly majority_seats reads '%s', not '-1' -- it is one seat short" % margin_text)
+
+
+## Every alert the register can raise, staged on one state.
+func _stage_every_alert(state) -> void:
+	var ns = state.player()
+	ns.unrest_pct = UnrestK.UNREST_THRESHOLD_PCT + 1.0
+	ns.is_minority = true
+	ns.event_queue.append({"event_id": "walker", "severity": 3})
+	var staged_treaty := false
+	for org_id in Orgs.council_ids(state):
+		if ns.orgs.has(org_id):
+			state.orgs[org_id]["ratifying"] = {
+				"name": "Walker treaty", "months_left": 2,
+				"nations": {ns.id: CouncilK.RATIFY_PENDING},
+			}
+			staged_treaty = true
+			break
+	if not staged_treaty:
+		_fail("FRA sits on no council -- the Europe alert cannot be staged")
+	# A good nobody covers: demand with nothing made and nothing bought.
+	var good_id := String(_loader.commodity_goods.keys()[0])
+	ns.commodity_state = {"demand": {good_id: 100.0}, "output": {good_id: 0.0}, "trade": {good_id: 0.0}}
+
+
+## The alerts plus the three things only a child needs: a running programme entry,
+## a council rule that binds, and (FRA's new game already seats a coalition).
+func _stage_every_child(state) -> void:
+	_stage_every_alert(state)
+	var ns = state.player()
+	ns.programme.append({
+		"entry_id": String(_loader.programme[0]["id"]), "chosen_term": 0, "months_live": 0,
+		"status": "active", "concluded_term": -1, "concluded_term_month": -1,
+	})
+	for org_id in Orgs.council_ids(state):
+		if ns.orgs.has(org_id):
+			state.orgs[org_id]["rules"]["walker_rule"] = {
+				"name": "Walker rule", "field": "deficit_pct_gdp", "op": "<=",
+				"value": -50.0, "severity": 1.0, "tolerance": 1.0,
+			}
+			break
+
+
+## Level 2: every child_id a level-1 line carries must resolve to a real
+## breakdown, and every issue the game can rank must have one -- a new issue
+## added to ISSUE_LABEL without a child fails here, not in a playtest.
+func _check_every_child_resolves() -> void:
+	var state = _new_state()
+	_stage_every_child(state)
+	var seen := 0
+	for id in StripReadings.ORDER:
+		var r: Dictionary = StripReadings.read(id, state, _loader)
+		for line in (r["lines"] as Array):
+			var cid := String(line["child_id"])
+			if cid.is_empty():
+				continue
+			seen += 1
+			var c: Dictionary = StripChildren.child(id, cid, state, _loader)
+			if c.is_empty() or (c["lines"] as Array).is_empty() or String(c["title"]).is_empty():
+				_fail("'%s' line '%s' opens child '%s', which resolves to nothing" % [id, line["text"], cid])
+	if seen != EXPECTED_CHILD_LINES:
+		_fail("%d child lines appeared, %d expected" % [seen, EXPECTED_CHILD_LINES])
+	for issue in OpinionK.ISSUE_LABEL.keys():
+		if StripChildren.child("approval", "issue:%s" % issue, state, _loader).is_empty():
+			_fail("issue '%s' has no level-2 breakdown" % issue)
+	# The baseline each issue is priced against, named truthfully: growth is priced
+	# against the nation's trend, not where it began (the review caught "at the start").
+	var growth: Dictionary = StripChildren.child("approval", "issue:growth", state, _loader)
+	if not String((growth["lines"] as Array)[0]).contains("trend"):
+		_fail("the growth breakdown does not say it is priced against the trend: %s" % [growth["lines"]])
+	var jobs: Dictionary = StripChildren.child("approval", "issue:jobs", state, _loader)
+	if not String((jobs["lines"] as Array)[0]).contains("at the start"):
+		_fail("the jobs breakdown does not say it is priced against the start: %s" % [jobs["lines"]])
+	if not StripChildren.child("approval", "no-such-child", state, _loader).is_empty():
+		_fail("an unknown child id resolved -- the lookup is a catch-all")
+	if not StripChildren.child("gdp", "debt", state, _loader).is_empty():
+		_fail("a child resolved under the wrong reading -- the lookup ignores the reading id")
+
+
+## The children are read from the state, never typed: perturb the input a child
+## reports and require the child to move (the level-1 walker's shape).
+func _check_child_inputs_are_live() -> void:
+	var state = _new_state()
+	_stage_every_child(state)
+	var ns = state.player()
+	var probes := [
+		# Line 0 only: the satisfaction line below it moves with the same input and
+		# would hide a hard-coded operands line (the mutation check caught exactly that).
+		["approval", "issue:jobs", "unemployment_pct", 4.0, 0],
+		["deficit", "debt", "debt_eur_bn", 900.0],
+		["desk", "queue", "event_queue", null],
+		["commodities", "short", "commodity_state", null],
+		["assembly", "coalition", "coalition_party_ids", null],
+	]
+	for probe in probes:
+		var before := _child_key(probe, state)
+		var field: String = probe[2]
+		match field:
+			"event_queue":
+				ns.event_queue.append({"event_id": "walker_two", "severity": 1})
+			"commodity_state":
+				var good_id := String(_loader.commodity_goods.keys()[0])
+				ns.commodity_state["demand"][good_id] = 100.0
+				ns.commodity_state["output"][good_id] = 10.0
+			"coalition_party_ids":
+				ns.seats_by_party["walker_party"] = 7
+				ns.coalition_party_ids.append("walker_party")
+			_:
+				ns.set(field, float(ns.get(field)) + float(probe[3]))
+		var after := _child_key(probe, state)
+		if before == after:
+			_fail("child '%s/%s' did not move when '%s' changed -- it is not read from it" % [probe[0], probe[1], field])
+
+
+func _child_key(probe: Array, state) -> String:
+	var c: Dictionary = StripChildren.child(probe[0], probe[1], state, _loader)
+	if probe.size() > 4:
+		return String((c["lines"] as Array)[int(probe[4])])
+	return JSON.stringify(c)
+
+
+## A new game has no history: the debt path's older rows are a dash, not 0.0.
+func _check_a_missing_history_reads_as_a_dash_at_level_two() -> void:
+	var state = _new_state()
+	var c: Dictionary = StripChildren.child("deficit", "debt", state, _loader)
+	var dashes := 0
+	for line in (c["lines"] as Array):
+		if String(line).ends_with("—"):
+			dashes += 1
+	if dashes != StripChildren.DEBT_PATH_MONTHS.size():
+		_fail("the debt path prints %d dashes with no history, expected %d: %s" % [
+			dashes, StripChildren.DEBT_PATH_MONTHS.size(), c["lines"]])
 
 
 ## Every reading showing at once must fit a 1920 screen beside the tools, each at
@@ -218,7 +358,6 @@ func _check_the_strip_fits() -> void:
 		"unemployment": "12.34%", "inflation": "10.5%", "unrest": "100",
 		"assembly": "+123", "election": "60 mo", "programme": "100%",
 		"desk": "12 pending", "europe": "Treaty: 12m", "commodities": "%s 18%%" % longest,
-		"people": "1595",
 	}
 	for id in StripReadings.ORDER:
 		if not widest.has(id):

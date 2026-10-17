@@ -8,8 +8,8 @@ extends SceneTree
 ## nobody will know, which is people-model 9's finding in a new place.
 ##
 ## Also pinned: the People panel and the person card exist, take state and
-## loader through the standard setup() contract, and the top bar's People
-## figure reads the registers the panel reads. These are the structural
+## loader through the standard setup() contract, and the outliner's People
+## section (the strip's People figure until V4.8b) reads the registers the panel reads. These are the structural
 ## halves a headless suite CAN see; the visual pass is close-out's.
 
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
@@ -166,11 +166,14 @@ func _check_person_card_contract() -> void:
 
 
 func _check_top_bar_people_figure() -> void:
-	var src := FileAccess.get_file_as_string("res://src/ui/strip_readings.gd")
+	var src := FileAccess.get_file_as_string("res://src/ui/outliner_readings.gd")
 	if not src.contains("\"people\""):
-		_fail("strip_readings.gd has no people figure -- the interim surface was dropped")
+		_fail("outliner_readings.gd has no people section -- the surface was dropped")
 	if not src.contains("person_grudges") or not src.contains("person_loyalty"):
-		_fail("strip_readings.gd's people figure does not read the character registers")
+		_fail("outliner_readings.gd's people section does not read the character registers")
+	var strip := FileAccess.get_file_as_string("res://src/ui/strip_readings.gd")
+	if strip.contains("person_grudges"):
+		_fail("strip_readings.gd still reads the character registers -- People left the strip at V4.8b")
 
 
 func _fail(message: String) -> void:

@@ -54,6 +54,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
+const OutlinerPanel = preload("res://src/ui/outliner_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const RegionPanel = preload("res://src/ui/region_panel.gd")
@@ -156,6 +157,7 @@ var _nation_panel
 var _orgs_panel
 var _calendar_panel
 var _people_panel
+var _outliner_panel
 var _companies_panel
 var _projects_panel
 var _region_panel
@@ -491,6 +493,16 @@ func _ready() -> void:
 	_people_panel.setup(_state, _loader)
 	_people_panel.hide_close_button()
 
+	# V4.8b. What is pinned -- the agenda, firms in trouble, goods short, people
+	# who are against the term -- as one register-driven list. A window rather
+	# than a HUD plate (moving a plate moves the frames the 826 px band is
+	# measured against); a row opens the window that answers it.
+	_outliner_panel = OutlinerPanel.new()
+	_windows.register("outliner", "Outliner", _outliner_panel, KEY_Q, ICONS + "clipboard.svg")
+	_outliner_panel.setup(_state, _loader)
+	_outliner_panel.hide_close_button()
+	_outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
+
 	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
 	# actor and the verb pointed at it is a spending decision, which is why the bill
 	# lands on the budget panel beside the deployment bill and not anywhere near
@@ -787,6 +799,9 @@ func _build_action_bar() -> void:
 		_entry("calendar", "Diary"),
 		# A president's people are state too, by the same argument the diary took.
 		_entry("people", "People"),
+		# V4.8b. The pinned things -- one line, the streak this function's comment
+		# keeps predicting.
+		_entry("outliner", "Outliner"),
 		# V1.7a. One line, exactly as this function's own comment has now correctly
 		# predicted for six sessions running.
 		_entry("campaign", "Campaign"),

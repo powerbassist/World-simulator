@@ -428,7 +428,7 @@ func _check_the_europe_figure() -> void:
 	var burden_text := String(bar._figure_values["europe"].text)
 	if burden_text != "Burden 0.50":
 		_fail("one rule breached by a full tolerance reads '%s', not 'Burden 0.50'" % burden_text)
-	var tip := String(bar._figure_values["europe"].tooltip_text)
+	var tip: String = bar.tip_of("europe")
 	if not tip.contains("1 rule in force binds you, 1 breached"):
 		_fail("the tooltip does not read the singular for one rule: %s" % tip)
 	if tip.contains("1 rules"):

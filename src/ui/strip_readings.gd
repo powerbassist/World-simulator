@@ -36,15 +36,15 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 
 ## Strip order: standing, money, the economy, the country, the assembly, the clock,
-## the desk, the world, the people. "people" is TRANSITIONAL -- V4.8b moves it into
-## the outliner and deletes it here.
+## the desk, the world. People left at V4.8b: a count of people the term has moved is
+## a margin note, not a standing figure, and the outliner lists them by name.
 ##
 ## Thirteen on one line needed 2219 px on a 1920 screen (tests/test_strip_readings.gd's
 ## width check, 2026-10-17); the figures went two-line instead -- caption above
 ## value, U2's shape -- the author's call at that measurement.
 const ORDER: Array[String] = [
 	"approval", "deficit", "gdp", "unemployment", "inflation", "unrest",
-	"assembly", "election", "programme", "desk", "europe", "commodities", "people",
+	"assembly", "election", "programme", "desk", "europe", "commodities",
 ]
 
 ## B10 (playtest 2026-09-16): "Budget balance", not "Deficit" -- the value is
@@ -53,7 +53,7 @@ const CAPTIONS := {
 	"approval": "Approval", "deficit": "Budget balance", "gdp": "GDP",
 	"unemployment": "Unemployment", "inflation": "Inflation", "unrest": "Unrest",
 	"assembly": "Assembly", "election": "Next vote", "programme": "Programme",
-	"desk": "Desk", "europe": "Europe", "commodities": "Supplies", "people": "People",
+	"desk": "Desk", "europe": "Europe", "commodities": "Supplies",
 }
 
 ## The NationState fields each reading's text or tip is read from.
@@ -69,9 +69,6 @@ const INPUTS := {
 	"assembly": ["coalition_seats"],
 	"desk": ["event_queue"],
 }
-
-## A grudge or loyalty under this has not been moved by the term (V4.3's figure).
-const MOVED_AT := 0.05
 
 ## Trends' own window, so the strip and the Overview cannot disagree about "lately".
 const WINDOW := Trends.TREND_MONTHS
@@ -105,13 +102,34 @@ static func read(id: String, state, loader) -> Dictionary:
 			return _europe(state, ns)
 		"commodities":
 			return _commodities(ns, loader)
-		"people":
-			return _people(ns)
 	return _reading("—", "")
 
 
+## A reading whose tip is plain text: one level-1 line per row of it, none opening
+## a child. A reading with a breakdown builds its lines itself (_reading_lines).
 static func _reading(text: String, tip: String, visible := true, alert_window := "") -> Dictionary:
-	return {"text": text, "tip": tip, "visible": visible, "alert_window": alert_window}
+	var lines: Array = []
+	if not tip.is_empty():
+		for row in tip.split("\n"):
+			lines.append(_line(row))
+	return {"text": text, "tip": tip, "visible": visible, "alert_window": alert_window, "lines": lines}
+
+
+## V4.8b. `lines` is the structured tip -- {text, child_id}, child_id "" for a line
+## with nothing under it -- and `tip` is those texts joined, so the popup that draws
+## the lines and the plain tip the walker reads are one source.
+static func _reading_lines(text: String, lines: Array, visible := true, alert_window := "") -> Dictionary:
+	var texts: Array[String] = []
+	for line in lines:
+		texts.append(String(line["text"]))
+	return {
+		"text": text, "tip": "\n".join(texts), "visible": visible,
+		"alert_window": alert_window, "lines": lines,
+	}
+
+
+static func _line(text: String, child_id := "") -> Dictionary:
+	return {"text": text, "child_id": child_id}
 
 
 ## The polled figure, PollNoise at both ends -- the same read the portrait card
@@ -122,15 +140,15 @@ static func _approval(state, ns) -> Dictionary:
 	var shown := PollNoise.displayed(
 		PollNoise.poll_id(state.year, state.month), PollingPanel.HEADLINE_KEY, ns.overall_approval_pct)
 	var change := Trends.approval_delta(state, WINDOW)
-	var lines: Array[String] = [
-		"Polled approval, %s over %d months." % [Trends.change_text(change), WINDOW],
+	var lines: Array = [
+		_line("Polled approval, %s over %d months." % [Trends.change_text(change), WINDOW]),
 	]
 	for row in Elections.attribution(ns):
-		lines.append("%s: %.0f%% of minds, satisfaction %+.2f" % [
+		lines.append(_line("%s: %.0f%% of minds, satisfaction %+.2f" % [
 			OpinionK.ISSUE_LABEL.get(row["issue"], String(row["issue"])),
 			float(row["salience"]) * 100.0, float(row["satisfaction"]),
-		])
-	return _reading("%.0f%%%s" % [shown, _arrow(change)], "\n".join(lines))
+		], "issue:%s" % row["issue"]))
+	return _reading_lines("%.0f%%%s" % [shown, _arrow(change)], lines)
 
 
 ## Balance on the figure, the debt path in the tip -- "treasury and the debt path"
@@ -138,10 +156,13 @@ static func _approval(state, ns) -> Dictionary:
 ## the player cannot act on apart from the balance that moves it.
 static func _deficit(state, ns) -> Dictionary:
 	var debt_change := Trends.delta(state, "debt_to_gdp_pct", WINDOW)
-	var tip := "Surplus is +, deficit is −.\nDebt %.0f Bn, %.0f%% of GDP, %s over %d months." % [
-		ns.debt_eur_bn, ns.debt_to_gdp_pct(), Trends.change_text(debt_change), WINDOW,
+	var lines: Array = [
+		_line("Surplus is +, deficit is −."),
+		_line("Debt %.0f Bn, %.0f%% of GDP, %s over %d months." % [
+			ns.debt_eur_bn, ns.debt_to_gdp_pct(), Trends.change_text(debt_change), WINDOW,
+		], "debt"),
 	]
-	return _reading("%+.2f%%" % -ns.deficit_pct_gdp, tip)
+	return _reading_lines("%+.2f%%" % -ns.deficit_pct_gdp, lines)
 
 
 ## The arrow is GDP's own six-month change -- every arrow on the strip means
@@ -200,7 +221,7 @@ static func _assembly(ns) -> Dictionary:
 		standing, ns.coalition_seats, ns.assembly_seats, majority,
 	]
 	var troubled: bool = ns.is_cohabitation or ns.is_minority
-	return _reading("%+d" % margin, tip, true, "politics" if troubled else "")
+	return _reading_lines("%+d" % margin, [_line(tip, "coalition")], true, "politics" if troubled else "")
 
 
 ## Count, not date: the number ticking down is the urgency; the Overview's date
@@ -257,10 +278,10 @@ static func _programme(ns, loader) -> Dictionary:
 	var tip := "%s -- %.2f against a %.2f goal" % [
 		name_text, float(progress["current_value"]), float(progress["goal_value"]),
 	]
-	var clock_text := _programme_clock_text(terms, live)
+	var clock_text := programme_clock_text(terms, live)
 	if not clock_text.is_empty():
 		tip += " · %s" % clock_text
-	var out := _reading("%.0f%%" % (fraction * 100.0), tip)
+	var out := _reading_lines("%.0f%%" % (fraction * 100.0), [_line(tip, "entries")])
 	out["caption"] = name_text
 	return out
 
@@ -287,7 +308,7 @@ static func _nearest_programme(ns, loader) -> Dictionary:
 	return best
 
 
-static func _programme_clock_text(terms: Dictionary, live: Dictionary) -> String:
+static func programme_clock_text(terms: Dictionary, live: Dictionary) -> String:
 	var timeout := int(terms.get("timeout_months", 0))
 	if timeout <= 0:
 		return ""
@@ -313,7 +334,7 @@ static func _desk(ns) -> Dictionary:
 		var severity := int(entry.get("severity", 1))
 		by_severity[severity] = int(by_severity.get(severity, 0)) + 1
 	var critical := int(by_severity.get(3, 0)) > 0
-	return _reading("%d pending" % desk.size(), _desk_tooltip(by_severity), true,
+	return _reading_lines("%d pending" % desk.size(), [_line(_desk_tooltip(by_severity), "queue")], true,
 		"events" if critical else "")
 
 
@@ -372,15 +393,16 @@ static func _europe(state, ns) -> Dictionary:
 	elif burden > 0.0:
 		text = "Burden %.2f" % burden
 
-	var lines: Array[String] = [
-		"The councils you sit on.",
-		"Burden %.2f" % burden,
-		("1 rule in force binds you, %d breached" % breached) if rules.size() == 1 \
+	var lines: Array = [
+		_line("The councils you sit on."),
+		_line("Burden %.2f" % burden),
+		_line(("1 rule in force binds you, %d breached" % breached) if rules.size() == 1 \
 			else ("%d rules in force bind you, %d breached" % [rules.size(), breached]),
-		"%d %s owed" % [owed, "IOU" if owed == 1 else "IOUs"],
-		("Treaty awaiting your assembly: %s" % treaty_text) if treaty_left >= 0 else "No treaty awaiting you",
+			"rules" if not rules.is_empty() else ""),
+		_line("%d %s owed" % [owed, "IOU" if owed == 1 else "IOUs"]),
+		_line(("Treaty awaiting your assembly: %s" % treaty_text) if treaty_left >= 0 else "No treaty awaiting you"),
 	]
-	return _reading(text, "\n".join(lines), true, "orgs" if treaty_left >= 0 else "")
+	return _reading_lines(text, lines, true, "orgs" if treaty_left >= 0 else "")
 
 
 ## V4.6's interim entry, owed and missing until V4.8a: the worst-covered good,
@@ -390,36 +412,17 @@ static func _europe(state, ns) -> Dictionary:
 static func _commodities(ns, loader) -> Dictionary:
 	if ns.commodity_state.is_empty() or loader == null:
 		return _reading("—", "", false)
-	var worst_id := ""
-	var worst := 2.0
-	for good_id in loader.commodity_goods.keys():
-		var c := CommoditiesPanel.coverage(ns, String(good_id))
-		if c < worst or (is_equal_approx(c, worst) and String(good_id) < worst_id):
-			worst = c
-			worst_id = String(good_id)
+	var short: Array = CommoditiesPanel.shortages(ns, loader.commodity_goods.keys())
 	var bar := CommoditiesPanel.SHORTAGE_COVERAGE * 100.0
-	if worst_id.is_empty() or worst >= CommoditiesPanel.SHORTAGE_COVERAGE:
+	if short.is_empty():
 		return _reading("— covered", "Every good above %.0f%% of the month's demand." % bar)
+	var worst_id := String(short[0]["id"])
+	var worst := float(short[0]["coverage"])
 	var good = loader.commodity_goods.get(worst_id)
 	var name := String(good.name) if good != null else worst_id
-	return _reading("%s %.0f%%" % [name, worst * 100.0],
+	return _reading_lines("%s %.0f%%" % [name, worst * 100.0], [_line(
 		"%s covers %.0f%% of the month's demand -- the shortage line is %.0f%%." % [name, worst * 100.0, bar],
-		true, "commodities")
-
-
-## V4.3. How many people the term has MOVED (a non-zero grudge or loyalty), not
-## how many exist -- the register is 1595 and a permanent "1595" says nothing.
-## Both registers read the same way the People window's rows do.
-static func _people(ns) -> Dictionary:
-	var moved := 0
-	for pid in ns.person_grudges.keys():
-		if float(ns.person_grudges[pid]) >= MOVED_AT:
-			moved += 1
-	for pid in ns.person_loyalty.keys():
-		if absf(float(ns.person_loyalty[pid])) >= MOVED_AT and float(ns.person_grudges.get(pid, 0.0)) < MOVED_AT:
-			moved += 1
-	return _reading("%d" % moved,
-		"People whose loyalty or grudge the term has moved; the People window names them.")
+		"short")], true, "commodities")
 
 
 ## ▲/▼ beside a figure; nothing for NAN or a move under Trends' own snap.

@@ -193,24 +193,11 @@ func _refresh() -> void:
 ## country has (no shortage) is stated by the ABSENCE of the alarm, not by an empty
 ## list under an alarm's name.
 func _build_alert(ns) -> void:
-	var short: Array = []
-	for good_id in _goods_in_order():
-		var covered: float = coverage(ns, good_id)
-		if covered < SHORTAGE_COVERAGE:
-			short.append({"id": good_id, "coverage": covered})
-
+	var short: Array = shortages(ns, _goods_in_order())
 	if short.is_empty():
 		return
 
 	var body := PanelKit.section(_body, SHORTAGE_HEADING)
-
-	# Worst first, then by id so two equal figures have a total order -- the
-	# determinism rule the sim holds and a panel owes for the same reason: two
-	# refreshes of one state must print the same screen.
-	short.sort_custom(func(a, b) -> bool:
-		if not is_equal_approx(float(a["coverage"]), float(b["coverage"])):
-			return float(a["coverage"]) < float(b["coverage"])
-		return String(a["id"]) < String(b["id"]))
 
 	var rows: Array = []
 	for i in mini(ALERT_HEAD, short.size()):
@@ -358,6 +345,25 @@ static func coverage(ns, good_id: String) -> float:
 	var made := float((cs.get("output", {}) as Dictionary).get(good_id, 0.0))
 	var bought := maxf(0.0, float((cs.get("trade", {}) as Dictionary).get(good_id, 0.0)))
 	return clampf((made + bought) / want, 0.0, 1.0)
+
+
+## The goods under the shortage line, worst first and then by id so two equal
+## figures have a total order -- the determinism rule the sim holds and a panel
+## owes for the same reason: two refreshes of one state must print the same
+## screen. ONE implementation: this window, the strip's Supplies figure and its
+## level-2 breakdown, and the outliner all read it, which is what lets them claim
+## they cannot disagree about which good is worst (V4.8b review).
+static func shortages(ns, good_ids: Array) -> Array:
+	var short: Array = []
+	for good_id in good_ids:
+		var covered := coverage(ns, String(good_id))
+		if covered < SHORTAGE_COVERAGE:
+			short.append({"id": String(good_id), "coverage": covered})
+	short.sort_custom(func(a, b) -> bool:
+		if not is_equal_approx(float(a["coverage"]), float(b["coverage"])):
+			return float(a["coverage"]) < float(b["coverage"])
+		return String(a["id"]) < String(b["id"]))
+	return short
 
 
 ## A unit quantity at the scale this panel prints them. The register's counts run
