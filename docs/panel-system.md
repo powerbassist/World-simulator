@@ -667,3 +667,28 @@ panel's sections are `queue_free()`d but not yet reaped in the same frame --
 the fold finding again, a same-frame read answering for the last frame. And
 `ConfigFile` has no per-key erase, so "the default fires on an absent key" is
 tested by rebuilding the file without the audio section.
+
+## 19. The strip (V4.8a)
+
+The top bar is a HOST over one register, `src/ui/strip_readings.gd`: `ORDER`
+is the strip, `CAPTIONS` its words, `INPUTS` the `NationState` fields each
+reading declares, and `read(id, state, loader)` returns
+`{text, tip, visible, alert_window}` (plus `caption` for the programme, whose
+name is its caption, clipped at 104 px). A new reading is a register entry,
+never a branch in `top_bar.gd`.
+
+**The tooltip contract.** A tip surfaces a figure an existing query computes
+-- `Trends.delta` / `approval_delta`, `Elections.attribution`,
+`Inflation.inflation_deviation`, `Government.majority_seats`, the org and queue
+registers -- and never recomputes one. An unknown change is a dash.
+
+**The alert contract.** `alert_window` is set only on a threshold the game
+already holds; the figure takes `FigureAlert` and the tip ends "Open the
+<window> window (<key>)", the key read from the window manager by `main.gd`
+once every window is registered.
+
+**The walker.** `tests/test_strip_readings.gd` perturbs every declared input and
+requires the reading to move, checks dashes for absence, alert windows against
+`main.gd`'s registrations, and the strip's size at worst-case text WITH the game
+theme (unthemed, it measured 44 px where 50 was drawn). The strip must stay
+inside `window_frame.gd`'s `TOP_MARGIN`, which is what keeps the 826 px band.

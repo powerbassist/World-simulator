@@ -9,6 +9,18 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V4.8
+
+**V4.8a — THE STRIP, WHOLE — IS BUILT on `v4.8-reading-surface` (2026-10-17): the top bar is one register of thirteen readings with hover breakdowns and an alert tone; no `src/sim/` diff. Plan: `docs/superpowers/plans/2026-10-17-v4.8a-reading-surface.md`.**
+
+- **The register** (`src/ui/strip_readings.gd`, static like `pending.gd`): `ORDER`, `CAPTIONS`, `INPUTS`, and `read(id, state, loader)` → `{text, tip, visible, alert_window}`. `top_bar.gd` is the host and knows no reading. New: approval with its six-month trend (the portrait's polled read), inflation, unrest, the assembly margin, Supplies (V4.6's owed and MISSING interim entry, through `commodities_panel.gd`'s now-static `coverage()`); debt rides the balance tip.
+- **Author's call at step 0: tooltips surface only what existing code computes.** The handoff's "Trends' attribution machine" is three pieces -- Trends' six-month deltas, `Elections.attribution`, `briefing.gd` -- and GDP, inflation and unrest have no decomposition anywhere; their tips say what the number is and stop.
+- **Alerts** only where the game already holds a threshold: unrest past `UNREST_THRESHOLD_PCT`, a minority or cohabitation, a critical on the desk, a treaty awaiting the assembly, a good under `SHORTAGE_COVERAGE`. The figure turns `FigureAlert` (FIGURE's face, BAD's colour) and the tip names the window with the key `main.gd`'s window manager binds.
+- **THE STRIP DID NOT FIT, MEASURED.** Thirteen on one line needed 2219 px of a 1920 screen (2107 even with shortened captions and People out); the author chose stacked figures (caption over value, U2's shape). The first windowed shot drew the stack 50 px against `window_frame`'s 44 px `TOP_MARGIN` while the walker said 44 -- it measured the bar without the game theme. The walker now applies `UiTheme.build()`; the padding dropped 6 → 3; re-shot at 44. The 826 px band is unchanged.
+- **The walker** (`tests/test_strip_readings.gd`): every reading resolves; every declared input is perturbed and the reading must move; a history-less game prints dashes, never `0.0 pp`; every alert names a window `main.gd` registers; the strip fits 1920 × 44 at worst-case text. Mutation-checked: a hard-coded unemployment reading failed three ways.
+- **Register B**: `approval_delta` no longer invents a movement from an entry without approval, and the top bar no longer crashes on a null `player()` (both pinned in `test_playability.gd`, both seen failing first). The shortcut row was already fixed (D U C R I); the council "0 months", "0 of N seats" and missing-bloc rows do not reproduce by construction (struck in the audit with the reason).
+- **Author, mid-block: the UI is fully reworked in V5.** Effort went to the register and the walker, the seams that survive; the layout is the cheapest legible one.
+
 ## V4.11
 
 **V4.11a — THE NEIGHBOURHOOD'S TWELVE — IS BUILT on `v4.11-neighbourhood` (2026-10-15/16, a1 + a2): the roster is 41, the twelve simulated and not playable (NOR ISL SRB TUR ALB MKD MNE; BIH UKR MDA XKX BLR), `SAVE_VERSION` 39 → 40 on no field (V3.3's argument). Register 277 regions, 1 373 cities, 640 edges (623 land + 17 sea), one component. Plan: `docs/superpowers/plans/2026-10-15-v4.11-the-neighbourhood.md`.**

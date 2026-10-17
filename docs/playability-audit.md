@@ -382,16 +382,24 @@ confirming one should move it up and add its check.
 
 ### Numbers that are wrong rather than absent
 
-- `trends.gd:75-88` — `approval_delta()` checks `is_empty()` but not
+- ~~`trends.gd:75-88` — `approval_delta()` checks `is_empty()` but not
   `has(APPROVAL_KEY)`, unlike its sibling `delta()` which returns `NAN`. A
   history entry missing approval yields a small **fake** approval movement, and
   that number feeds Overview's lead sentence, the election countdown and the
-  Moving column.
-- `elections.gd:258-259` `.get(..., 0)` renders at `election_panel.gd:172,176`
-  as *"X is no longer the largest party: 0 of 577 seats"*.
-- `polling_panel.gd:197` renders a missing bloc as **`0%`** approval — a
-  plausible-looking catastrophe rather than an obvious absence.
-- `bloc_panel.gd:159-161` prints *"Divides in 0 months"*.
+  Moving column.~~ **FIXED at V4.8a** (2026-10-17), pinned by
+  `test_playability.gd`'s `_check_approval_delta_missing_key`, seen failing first.
+- ~~`elections.gd:258-259` `.get(..., 0)` renders at `election_panel.gd:172,176`
+  as *"X is no longer the largest party: 0 of 577 seats"*.~~ **Does not reproduce**
+  (V4.8a, 2026-10-17): the seats line prints only for a `national` result, where
+  `incumbent_seats` is the party's real count (`elections.gd:344`) -- a 0 there is
+  a true zero; the `executive` and `termed_out` kinds carry 0 and never print it.
+- ~~`polling_panel.gd:197` renders a missing bloc as **`0%`** approval — a
+  plausible-looking catastrophe rather than an obvious absence.~~ **Does not
+  reproduce** (V4.8a): `opinion.gd:65-69` seeds every `BLOC_KEYS` entry at start.
+- ~~`bloc_panel.gd:159-161` prints *"Divides in 0 months"*.~~ **Does not
+  reproduce** (V4.8a): `bloc_panel.gd` is gone; its line lives in
+  `council_section.gd:65`, and a pending proposal's `months_left` never goes below
+  1 (`orgs.gd:368` resolves at 1).
 
 ### Diary
 
@@ -408,8 +416,10 @@ confirming one should move it up and add its check.
   `law_panel.gd:140-234`, `overview_panel.gd:457-476` (`recent_effects` is
   serialised), `main.gd:746-798` (`foreign_acts`, `unrest_acts`).
 - A save with a bad `player_nation_id` gives `player() == null`
-  (`game_state.gd:807-808`, unvalidated at `save_manager.gd:107`) and crashes at
-  `top_bar.gd:104-109` on the next day tick.
+  (`game_state.gd:807-808`, unvalidated at `save_manager.gd:107`) ~~and crashes at
+  `top_bar.gd:104-109` on the next day tick~~. **The top bar half is FIXED at V4.8a**
+  (it returns early; pinned by `_check_top_bar_null_player`, seen crashing first);
+  the unvalidated load is still open.
 
 ### Save format and UX
 
@@ -421,8 +431,9 @@ confirming one should move it up and add its check.
 
 ### Smaller
 
-- Five windows have no keyboard shortcut at all: `diplomacy`, `bloc`,
-  `calendar`, `people`, `companies`.
+- ~~Five windows have no keyboard shortcut at all: `diplomacy`, `bloc`,
+  `calendar`, `people`, `companies`.~~ **FIXED before V4.8a** (verified 2026-10-17:
+  `diplomacy` D, `orgs` U, `calendar` C, `people` R, `companies` I in `main.gd`).
 - `hud.gd:112-118` `is_over_furniture()` is documented as guarding map clicks;
   its only callers are in `tests/test_shell.gd`. Dead in the shipped path.
 
