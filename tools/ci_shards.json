@@ -57,6 +57,7 @@
    "tests/test_map_view.gd",
    "tests/test_map_layers.gd",
    "tests/test_map_cull.gd",
+   "tests/test_map_ground.gd",
    "tests/test_map_network.gd",
    "tests/test_shell.gd",
    "tests/test_hud.gd",

@@ -6,6 +6,7 @@
   "px_per_deg": 60.0,
   "width": 4920,
   "height": 3000,
+  "feather_deg": 3.0,
   "source": "ETOPO 2022 v1 60s surface",
   "generator": "tools/ground_generate.py"
 }

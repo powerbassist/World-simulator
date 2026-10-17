@@ -287,6 +287,7 @@ def _sidecar(extent, ppd, w, h) -> dict:
         "lon_min": float(lon_min), "lon_max": float(lon_max),
         "lat_min": float(lat_min), "lat_max": float(lat_max),
         "px_per_deg": float(ppd), "width": w, "height": h,
+        "feather_deg": FEATHER_DEG,
         "source": SOURCE_NAME, "generator": "tools/ground_generate.py",
     }
 
