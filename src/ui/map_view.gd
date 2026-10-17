@@ -48,6 +48,7 @@ extends Control
 ## law_panel.gd exposes _on_propose() instead of only a button signal.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Motion = preload("res://src/ui/motion.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
@@ -222,6 +223,15 @@ var _has_fitted := false
 ## legible, so it is what the map should open on and what an unknown id falls
 ## back to -- see MapLayers.layer().
 var _layer := MapLayers.POLITICAL
+
+## V4.9b. A layer change crossfades rather than cuts: `_fill_from` is what the
+## map showed the moment the player toggled (mid-blend included, so a second
+## toggle starts from the colours on screen), `_layer_blend` how far the new
+## layer's fills have come in, 1.0 when no fade runs. Only the FILL fades --
+## strokes, hover and the legend change at once, because they say which layer
+## is up and should not be ambiguous for 0.3 s. V4.10's modes share this path.
+var _fill_from: Dictionary = {}
+var _layer_blend := 1.0
 
 ## The sea, now only a fallback. Kept rather than deleted with the raster's
 ## arrival because MapRaster.texture() returning null is a declared outcome, not
@@ -724,8 +734,19 @@ func set_layer(layer_id: String) -> void:
 	var resolved := String(MapLayers.layer(layer_id)["id"])
 	if resolved == _layer:
 		return
+	var shown: Dictionary = _shown_fills(viewer_id()) if _state != null else {}
+	# Land any fade still running BEFORE taking its place: its last step clears
+	# _fill_from, which must not happen after the new one is set.
+	Motion.finish(self)
 	_layer = resolved
-	queue_redraw()
+	_fill_from = shown
+	_layer_blend = 0.0
+	Motion.run(self, Motion.LAYER_S, func(t: float):
+		_layer_blend = t
+		if t >= 1.0:
+			_fill_from = {}
+		queue_redraw()
+	)
 
 
 func layer() -> String:
@@ -1041,6 +1062,19 @@ func _layer_fills(viewer: String) -> Dictionary:
 	return _fill_cache
 
 
+## The fills as drawn this frame: the layer's own, or mid-crossfade each
+## nation's colour on its way from what was shown before the toggle.
+func _shown_fills(viewer: String) -> Dictionary:
+	var fills: Dictionary = _layer_fills(viewer)
+	if _fill_from.is_empty() or _layer_blend >= 1.0:
+		return fills
+	var out := {}
+	for id in fills.keys():
+		var to: Color = fills[id]
+		out[id] = (_fill_from[id] as Color).lerp(to, _layer_blend) if _fill_from.has(id) else to
+	return out
+
+
 func _draw_roster() -> void:
 	var view := visible_lonlat_rect()
 	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))
@@ -1055,7 +1089,7 @@ func _draw_roster() -> void:
 	# updates -- it is still derived once per re-record, exactly as before. The
 	# memo below extends that same argument across the re-records that share a
 	# month (`_fill_key`), because the state cannot move between them.
-	var fills: Dictionary = _layer_fills(viewer)
+	var fills: Dictionary = _shown_fills(viewer)
 
 	for id in _polygons.keys():
 		var color: Color = fills[id]

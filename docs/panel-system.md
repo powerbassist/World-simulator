@@ -937,3 +937,88 @@ line.
 
 `tools/menu_boot_probe.gd` (the 300 ms degrade clause on the menu plate) is
 untouched by this block: the loading screen runs after the menu, not inside it.
+
+## 23. Election night and the map's crossfade (V4.9b)
+
+**Election night is V3.6's tally grown into the count.** The plate opens titled
+ELECTION NIGHT with every figure at zero; the player's regions declare one at a
+time, smallest population first; every table's vote shares roll to the running
+count, the seats and bars fill by the share of the electorate counted; a ticker
+names the latest region ("7 of 13 regions declared -- latest, Bretagne."); and
+only when the last region is in does the title become the verdict, the verdict
+lines and the attribution fade in, and the sting sounds. The held-back lines are
+HIDDEN during the count, not transparent: the first windowed capture showed a
+transparent verdict keeping its ~200 px above the table as a dead hole, so the
+verdict now lands on top of the table when it comes. Nothing about the result
+is recomputed: the tables are BUILT at their finals, the night resets their
+display and interpolates back, and at the end of the count the shares are the
+result's own dictionary (`ElectionNight.shares_at()` returns it, not a sum that
+agrees with it).
+
+**The regions are derived, and the author chose that at the plan gate.** The model
+has one national vote share per party. Two options were put: every region reports
+the national shares (honest, and thirteen identical rows), or a DERIVED swing. The
+author took the swing. `Elections.regional_shares()` (pure, in `src/sim/`, no state)
+tilts the incumbent per region by `-REGION_SWING x jobs salience x
+(relative unemployment - 1)`, capped at `REGION_TILT_MAX`, divides the tilts by their
+population-weighted mean, and lets the other parties share the rest in their
+national proportions -- so every party's population-weighted share over the
+regions IS its national share (`tests/test_elections.gd`, 1e-12). Measured at
+France's opening: the incumbent runs 24.4-28.0 % by region around a national
+26.5 % (jobs salience 0.165). Display only: nothing reads it back.
+
+**Seats are not projected.** A running vote share could be fed to
+`ElectoralSystems.allocate()` for a running seat projection; it was not, because a
+projection that swings the seat count mid-night and then lands somewhere else is a
+second, wrong answer on screen. Seats and bars come in proportionally to the
+electorate counted, ending on the result's seats.
+
+**Pacing** (`motion.gd`): `DECLARE_S` 0.28 s a region, the whole count capped at
+`NIGHT_MAX_S` 4.5 s (France's thirteen take 3.64 s; Italy's twenty-one are
+squeezed into the cap). Through `Motion.run()`, the verb this block added: a
+callback from t = 0 to 1 over the clamped stepper, one call at t = 1 when motion is
+off or the node is finished -- so the settled plate and the skipped plate are the
+same code path.
+
+**Every way out lands somewhere honest** (`tests/test_election_night.gd`):
+
+| exit | what happens |
+|---|---|
+| a click anywhere on the plate | `skip()`: the count finishes, the verdict shows and settles |
+| the footer button mid-count | reads Skip count and skips; after the reveal it reads Continue / Leave office and dismisses, ignoring presses for 0.4 s after a skip so a double click cannot dismiss an unseen verdict |
+| the mouse wheel | scrolls; only a left or right click skips |
+| a second result replacing the plate | the old count is retired the same way (`_night_id`) |
+| motion off (setting, `--headless`) | the plate opens settled, verdict and all |
+| time | the verdict comes after the count's own duration, on wall-clock time |
+
+The footer button is live throughout, so a defeated player always has a control.
+
+**Review pass 1 (2026-10-17), bar "changes what a player sees" -- three fixed, one
+left.** (1) The footer read Continue / Leave office from the count's first frame:
+it told the verdict the night held back, and pressing it on a defeat sent the
+player to the menu having seen neither the result nor why. It reads Skip count
+until the reveal now. (2) Any pressed mouse button skipped, the wheel included,
+so scrolling the double-election plate ended the count. (3) A nation with no
+population shares would have shown the count full from frame one; regions then
+count equally. Left: `screenshot.gd --tally` runs with motion on throughout, so
+its settled frame can catch a strip figure mid-roll (a tool, not the game).
+Each fix has a test, mutation-checked. Pass 2 was clean at the bar: it found only three
+lines of prose still describing the old mid-count dismissal.
+
+**The map's crossfade.** `map_view.set_layer()` fades the roster fills from what
+was ON SCREEN (mid-fade included) to the new layer's over `LAYER_S` 0.3 s. Only the
+fill fades: strokes, the hover mark and the legend switch at once, because they say
+which layer is up. A second toggle mid-fade starts from the mid-fade colour
+(`tests/test_map_view.gd`). V4.10's modes go through the same `set_layer()`.
+
+**Refused.** Lighting the regions on the map as they declare (the plate covers
+the middle of the screen, and V5 reworks both); reordering the table rows as the
+lead changes (rows jumping under a reader's eye); a running seat projection
+(above).
+
+**Instruments.** `tools/motion_frames.gd` gained two sequences: `layer_*` (toggle,
+mid-crossfade, settled) and `night_*` (start, a third, two thirds, the verdict's
+first frame, settled). `tools/screenshot.gd --tally` turns motion on for its
+mid-count frame. Mutation-checked: the dismissal not retiring the count, the count
+not reset before it runs, declaration order reversed, the crossfade not starting
+from the screen, the regional tilt not renormalised -- each failed its own test.

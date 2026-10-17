@@ -95,3 +95,27 @@ const TWO_ROUND_EXPONENT := 2.0
 ## by single-member plurality contests this model cannot simulate seat by seat
 ## either, so the majoritarian share is approximated the same way FPTP is.
 const PARALLEL_PR_WEIGHT := 0.62
+
+# --- Election night (V4.9b) -----------------------------------------------------
+
+## The regional swing election night draws, and why it exists at all. The model
+## has no regional vote: vote_share() is one national number per party. A night
+## where every region reported the national shares would be thirteen identical
+## rows, so regional_shares() TILTS the incumbent per region by how far that
+## region's unemployment sits from the national rate, weighted by how much the
+## electorate cares about jobs -- the one issue the regions already carry data
+## for (relative unemployment, imported). Where jobs matter, the regions hit
+## hardest turn hardest on whoever governs. Display only: the tilts are
+## renormalised so the population-weighted total is the verdict EXACTLY, and
+## nothing reads them back into the sim.
+##
+## 2.0 was measured, not felt (tests/test_elections.gd prints it): at France's
+## opening (jobs salience 0.165) the incumbent runs 24.4 % to 28.0 % across its
+## thirteen regions around a national 26.5 % -- enough that the lead moves as
+## the count comes in, small enough that no region reads as a landslide the
+## national number does not contain.
+const REGION_SWING := 2.0
+## Guard rail on one region's multiplier, the INCUMBENT_SWING reasoning: an
+## outlier region (an overseas department at three times the national rate) must
+## not be drawn handing the incumbent nothing, or double.
+const REGION_TILT_MAX := 0.35

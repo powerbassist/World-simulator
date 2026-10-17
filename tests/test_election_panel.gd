@@ -66,7 +66,7 @@ func _process(_delta: float) -> bool:
 		_run_national_text()
 	elif _frame == NATIONAL_GEOMETRY_FRAME:
 		_check_told_once()
-		_check_tally()
+		_check_night_settled()
 		_check_national_geometry()
 		_check_sting_gate()
 		_run_defeated_text()
@@ -566,41 +566,28 @@ func _finish() -> void:
 		quit(1)
 
 
-## V3.6: the tally. Bars start empty and fill by tween; any press on the plate
-## snaps them to the finals the result already computed; a footer button stays
-## live throughout (the test drives dismissal itself below, so a swallowed
-## click here would stall the whole ladder). The mid-animation read leans on
-## the stagger: the LAST bar carries (n-1) x 0.08 s of delay plus 1.2 s of
-## fill, which two frames cannot consume.
-func _check_tally() -> void:
+## V4.9b: the night as the real tick leaves it. Headless, motion is off, so
+## the plate opens on the settled count -- the verdict titled, every seat bar
+## full, the ticker done. The sequence itself (count, skip, dismissal, rebuild,
+## wall-clock) is tests/test_election_night.gd's; what belongs here is that the
+## main scene's own election lands on its finals with no motion to run it.
+func _check_night_settled() -> void:
 	var panel = _main._election_panel
-	if panel._tally_pairs.is_empty():
-		_fail("the national panel opened with no tally pairs (no seat bars built)")
+	if panel._cells.is_empty():
+		_fail("the national panel opened with no count cells (no tables built)")
 		return
-	# The verdict and the ledger numbers are static information: they were
-	# complete on the frame the animation started, and the finals recorded in
-	# the pairs must be exactly what the bars are filling toward.
-	var pairs: Array = panel._tally_pairs.duplicate()
-	for p in pairs:
-		if float(p["final"]) <= 0.0:
-			_fail("a tally final reads %.2f; the result's own bar math is positive" % p["final"])
-	if panel._tally_tween == null or not panel._tally_tween.is_valid():
-		_fail("the tally tween is not running while the panel is up")
-		return
-	var last: Dictionary = pairs[pairs.size() - 1]
-	if float(last["bar"].value) >= float(last["final"]):
-		_fail("the last seat bar reached its final before the stagger allowed it")
-	# Skip: a press anywhere on the plate finishes the tally instantly.
-	var ev := InputEventMouseButton.new()
-	ev.pressed = true
-	ev.button_index = MOUSE_BUTTON_LEFT
-	panel._gui_input(ev)
-	for p in pairs:
+	if not panel._revealed or panel._title.text == ElectionPanel.NIGHT_TITLE:
+		_fail("with motion off the plate opened mid-count ('%s')" % panel._title.text)
+	var bars := 0
+	for cell in panel._cells:
+		if cell["bar"] == null:
+			continue
+		bars += 1
 		# Tolerance, not equality: bar.value round-trips a 32-bit property while
-		# `final` is a 64-bit double -- the printed digits agree and the last
-		# bits do not, and a hundredth of a seat-percent is far under one pixel
-		# of bar.
-		if not is_instance_valid(p["bar"]) or absf(float(p["bar"].value) - float(p["final"])) > 0.005:
-			_fail("after skip, a seat bar reads %.4f against final %.4f" % [p["bar"].value, p["final"]])
-	if not panel._tally_pairs.is_empty():
-		_fail("the tally register did not clear on skip")
+		# `final_bar` is a 64-bit double.
+		if float(cell["final_bar"]) < 0.0 or absf(float(cell["bar"].value) - float(cell["final_bar"])) > 0.005:
+			_fail("a seat bar reads %.4f against final %.4f" % [cell["bar"].value, cell["final_bar"]])
+	if bars == 0:
+		_fail("the June 2029 plate built no seat bars")
+	if not panel._ticker.text.begins_with("All "):
+		_fail("the settled plate's ticker reads '%s'" % panel._ticker.text)

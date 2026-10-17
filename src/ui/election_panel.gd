@@ -14,15 +14,18 @@ const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Sting = preload("res://src/ui/sting.gd")
+const Motion = preload("res://src/ui/motion.gd")
+const ElectionNight = preload("res://src/ui/election_night.gd")
 
 signal dismissed
 
-## Display pacing, not model tuning: how long a seat bar takes to fill and how
-## much each row waits on the one above it. Skippable by any press (see
-## _gui_input) -- a ceremony the player can end is a ceremony, one they cannot
-## is an obstacle.
-const TALLY_S := 1.2
-const TALLY_STAGGER_S := 0.08
+## What the plate is titled while the count runs: the verdict is the last
+## thing the night shows, so the title cannot be it yet.
+const NIGHT_TITLE := "ELECTION NIGHT"
+const SKIP_LABEL := "Skip count"
+## How long after a skip the footer button ignores presses: a double click's
+## second press lands well inside it, a deliberate second press does not.
+const SKIP_GUARD_MS := 400
 
 ## The one thing the agency work proved the player needs TOLD rather than
 ## shown (V3.6): approval prices CHANGE, not level, so standing still reads
@@ -37,8 +40,26 @@ var _loader
 var _title: Label
 var _sections: VBoxContainer
 var _footer: Control
-var _tally_pairs: Array = []
-var _tally_tween: Tween
+## V4.9b, election night. V3.6's tally filled the seat bars; the night grew it
+## into the count -- the regions declare (src/ui/election_night.gd), every
+## figure in every table moves with them, the verdict comes last. `_cells` holds
+## each row's live controls and finals; `_verdict_nodes` what the night holds
+## back. Time-based through Motion.run(), so it is off under --headless and
+## skippable by any press on the plate (see _gui_input) -- a ceremony the
+## player can end is a ceremony, one they cannot is an obstacle.
+var _night
+var _cells: Array = []
+var _verdict_nodes: Array = []
+var _verdict_title := ""
+var _ticker: Label
+## Bumped by every rebuild: a count still running for a plate that was
+## replaced steps into nothing rather than revealing (and sounding) a verdict
+## nobody is looking at.
+var _night_id := 0
+var _revealed := false
+var _cont: Button
+var _dismiss_label := ""
+var _guard_until := 0
 
 
 func _ready() -> void:
@@ -90,7 +111,11 @@ func setup(state, loader) -> void:
 ## panel fresh; there is no partial-refresh path because this only ever shows
 ## once per election, not every frame like the other two panels.
 func show_results(results: Array) -> void:
-	_kill_tally()
+	_night_id += 1
+	Motion.finish(self)
+	_cells.clear()
+	_verdict_nodes.clear()
+	_revealed = false
 	for child in _sections.get_children():
 		child.queue_free()
 	for child in _footer.get_children():
@@ -127,21 +152,25 @@ func show_results(results: Array) -> void:
 	var snap: bool = national != null and bool(national.get("snap", false))
 
 	if executive != null:
-		_title.text = "TERM LIMIT" if termed_out else ("DEFEATED" if defeated else "RE-ELECTED")
+		_verdict_title = "TERM LIMIT" if termed_out else ("DEFEATED" if defeated else "RE-ELECTED")
 	elif national != null:
 		# A legislative election under a separately elected executive does not
 		# end the term. It decides whether the player still commands a majority.
 		if ns.has_executive:
 			if ns.is_cohabitation:
-				_title.text = "COHABITATION"
+				_verdict_title = "COHABITATION"
 			elif snap:
-				_title.text = "SNAP ELECTION"
+				_verdict_title = "SNAP ELECTION"
 			else:
-				_title.text = "NEW ASSEMBLY"
+				_verdict_title = "NEW ASSEMBLY"
 		else:
-			_title.text = "DEFEATED" if defeated else "RE-ELECTED"
+			_verdict_title = "DEFEATED" if defeated else "RE-ELECTED"
 	else:
-		_title.text = "EUROPEAN PARLIAMENT ELECTION"
+		_verdict_title = "EUROPEAN PARLIAMENT ELECTION"
+	_title.text = _verdict_title
+
+	_night = ElectionNight.new(_state, results)
+	_ticker = PanelKit.line(_sections, "", PanelKit.Tone.DIM)
 
 	# A termed-out notice carries no vote, so there is no table to draw -- see
 	# elections.gd. It still gets a sentence: a plate carrying nothing but a title
@@ -157,11 +186,11 @@ func show_results(results: Array) -> void:
 	# playtest buried "What decided it" under the table. Where the executive is
 	# drawn from the chamber the NATIONAL result is the verdict and leads.
 	elif executive != null:
-		_sections.add_child(_build_section(executive, _loader.nations[ns.id].executive_title, true))
+		_sections.add_child(_build_section(executive, results.find(executive), _loader.nations[ns.id].executive_title, true))
 	if national != null:
-		_sections.add_child(_build_section(national, _loader.nations[ns.id].chamber_name, executive == null))
+		_sections.add_child(_build_section(national, results.find(national), _loader.nations[ns.id].chamber_name, executive == null))
 	if eu_result != null:
-		_sections.add_child(_build_section(eu_result, ""))
+		_sections.add_child(_build_section(eu_result, results.find(eu_result), ""))
 
 	if national != null and ns.has_executive and not defeated:
 		var gov := ""
@@ -177,7 +206,7 @@ func show_results(results: Array) -> void:
 			gov = "%s %s forms a government with %d of %d seats." % [
 				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
 			]
-		PanelKit.line(_sections, gov, PanelKit.Tone.PLAIN)
+		_verdict_nodes.append(PanelKit.line(_sections, gov, PanelKit.Tone.PLAIN))
 
 	# V1.6 audit, V2. The footer gets a control in BOTH branches. It used to build
 	# the button only on the winning side, and main.gd unpauses only on `dismissed`
@@ -192,62 +221,126 @@ func show_results(results: Array) -> void:
 	# and while the footer bug crushed this copy to a column the duplication
 	# was invisible -- one sentence per verdict now that both render.
 	if defeated and not termed_out:
-		PanelKit.line(_sections, "You have lost your office. This term is over.", PanelKit.Tone.PLAIN)
+		_verdict_nodes.append(PanelKit.line(_sections, "You have lost your office. This term is over.", PanelKit.Tone.PLAIN))
 
-	var cont := Button.new()
-	cont.text = "Leave office" if defeated else "Continue"
-	cont.pressed.connect(func(): hide(); dismissed.emit())
-	_footer.add_child(cont)
+	_dismiss_label = "Leave office" if defeated else "Continue"
+	_cont = Button.new()
+	_cont.text = _dismiss_label
+	_cont.pressed.connect(_on_footer_pressed)
+	_footer.add_child(_cont)
 
-	_start_tally()
+	_start_night()
+
+
+## The count, then the verdict. The tables were built with their final
+## figures, so a night that never runs -- motion off, a cold caller outside the
+## tree (the half-dead Control gotcha: a tween there would not step) -- reveals
+## them as built. Otherwise every figure is reset to the empty count, what the
+## verdict says is held back, and Motion.run() declares the regions.
+func _start_night() -> void:
+	var n: int = _night.size()
+	if _cells.is_empty() or n == 0 or not is_inside_tree() or not Motion.enabled():
+		_apply_count(float(n))
+		_reveal()
+		return
+	_title.text = NIGHT_TITLE
+	_cont.text = SKIP_LABEL
+	# Hidden, not transparent: a transparent verdict kept its space, and the
+	# windowed capture showed the count under a ~200 px hole where the
+	# attribution would be. The verdict lands on top of the table instead.
+	for node in _verdict_nodes:
+		node.visible = false
+	_apply_count(0.0)
+	var id := _night_id
+	Motion.run(self, minf(float(n) * Motion.DECLARE_S, Motion.NIGHT_MAX_S), func(t: float):
+		if id != _night_id:
+			return
+		_apply_count(t * float(n))
+		if t >= 1.0:
+			_reveal()
+	)
+
+
+## Every table's figures at `counted` regions declared: the running vote share,
+## and the seats and bar declared so far -- the final scaled by the share of the
+## electorate counted. Seats are not projected from a running vote; they come
+## in with the regions that elect them.
+func _apply_count(counted: float) -> void:
+	var w: float = _night.counted_weight(counted)
+	for cell in _cells:
+		var shares: Dictionary = _night.shares_at(int(cell["result"]), counted)
+		cell["share"].text = "%.1f%%" % (float(shares.get(cell["party"], 0.0)) * 100.0)
+		if cell["seats"] != null:
+			cell["seats"].text = str(roundi(float(cell["final_seats"]) * w))
+		if cell["bar"] != null:
+			cell["bar"].value = float(cell["final_bar"]) * w
+	var n: int = _night.size()
+	# No regions, or no table to count into (a term-limit notice carries no vote).
+	if n == 0 or _cells.is_empty():
+		_ticker.visible = false
+	elif counted >= float(n):
+		_ticker.text = "All %d regions declared." % n
+	elif _night.declared(counted) == 0:
+		_ticker.text = "Polls closed. The count begins."
+	else:
+		_ticker.text = "%d of %d regions declared -- latest, %s." % [
+			_night.declared(counted), n, _night.latest(counted)]
+
+
+func _reveal() -> void:
+	if _revealed:
+		return
+	_revealed = true
+	_title.text = _verdict_title
+	_cont.text = _dismiss_label
+	Motion.pulse(_title)
+	for node in _verdict_nodes:
+		node.visible = true
+		Motion.arrive(node)
 	Sting.play(self)
 
 
-## The tally reveals what show_results already computed: each bar tweens to the
-## `final` recorded at build time, so a skip lands on exactly the numbers the
-## result carries. Time-based (Tween), never frame-counted -- the ceremony must
-## cost the same at 30 and 144 fps. The out-of-tree guard is the half-dead
-## Control gotcha: create_tween() on a node outside the tree does not run, so a
-## cold caller gets the finished readout rather than a silent non-animation.
-func _start_tally() -> void:
-	if _tally_pairs.is_empty():
-		return
-	if not is_inside_tree():
-		_kill_tally()
-		return
-	_tally_tween = create_tween()
-	for i in _tally_pairs.size():
-		var p: Dictionary = _tally_pairs[i]
-		_tally_tween.tween_property(p["bar"], "value", p["final"], TALLY_S) \
-			.set_delay(i * TALLY_STAGGER_S)
-
-
-## Any click finishes the tally instantly; Space or Enter on the focused footer
-## button dismisses outright, which ends the ceremony its own way. The button's
-## press is deliberately NOT routed through here: a click that lands on it is a
-## dismissal the player meant, and a ceremony that could eat that click would
-## be a ceremony that ate a result (the V3.6 handoff's own sentence).
+## Any click on the plate ends the count at once, verdict and all. A click,
+## not any button: the wheel scrolls the double-election plate, and a scroll
+## that ended the count would be a ceremony taken from the player who was
+## reading it (review pass 1).
 func _gui_input(event: InputEvent) -> void:
-	if _tally_tween == null:
+	if event is InputEventMouseButton and event.pressed \
+			and (event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT):
+		skip()
+
+
+## The footer button says what it does. During the count it reads Skip count
+## and skips: it used to read Continue / Leave office from the first frame,
+## which told the player the verdict the night was holding back, and pressing
+## it on a defeat sent them to the menu having seen neither the result nor why
+## (review pass 1). After the reveal it dismisses, as V3.6's did -- a click
+## that lands on it is a dismissal the player meant -- except within
+## SKIP_GUARD_MS of a skip, so the second half of a double click on Skip count
+## cannot dismiss a verdict that has been on screen for a tenth of a second.
+func _on_footer_pressed() -> void:
+	if not _revealed:
+		skip()
+		_guard_until = Time.get_ticks_msec() + SKIP_GUARD_MS
 		return
-	if event is InputEventMouseButton and event.pressed:
-		_kill_tally()
+	if Time.get_ticks_msec() < _guard_until:
+		return
+	hide()
+	dismissed.emit()
 
 
-## Kills the tween and snaps every live bar to its final. Freed bars (a
-## previous election's, queue_free'd when the plate rebuilt) are skipped --
-## setting a value on a freed instance is the crash this guard exists for.
-func _kill_tally() -> void:
-	if _tally_tween != null and _tally_tween.is_valid():
-		_tally_tween.kill()
-	_tally_tween = null
-	for p in _tally_pairs:
-		if is_instance_valid(p["bar"]):
-			p["bar"].value = p["final"]
-	_tally_pairs.clear()
+## Lands the night on its final state: every figure the result's own, the
+## verdict shown and settled. Public so a test and the screenshot tool take the
+## path a click takes.
+func skip() -> void:
+	Motion.finish(self)
+	for node in _verdict_nodes:
+		if is_instance_valid(node):
+			Motion.finish(node)
+	Motion.finish(_title)
 
 
-func _build_section(result: Dictionary, chamber_label: String, verdict := false) -> Control:
+func _build_section(result: Dictionary, index: int, chamber_label: String, verdict := false) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 
@@ -260,31 +353,35 @@ func _build_section(result: Dictionary, chamber_label: String, verdict := false)
 
 	if result["kind"] == "executive":
 		var winner_name := _party_name(result["largest_party_id"])
-		PanelKit.line(box, (
+		_verdict_nodes.append(PanelKit.line(box, (
 			"%s holds the office on %.1f%% of the vote." if result["incumbent_largest"]
 			else "%s takes the office; you polled %.1f%%."
-		) % [winner_name, float(result["incumbent_vote_share"]) * 100.0], PanelKit.Tone.PLAIN)
+		) % [winner_name, float(result["incumbent_vote_share"]) * 100.0], PanelKit.Tone.PLAIN))
 
 	if result["kind"] == "national":
 		var incumbent_name := _party_name(result["incumbent_party_id"])
-		PanelKit.line(box, (
+		_verdict_nodes.append(PanelKit.line(box, (
 			"%s remains the largest party: %d of %d seats." if result["incumbent_largest"]
 			else "%s is no longer the largest party: %d of %d seats."
-		) % [incumbent_name, result["incumbent_seats"], result["seats_total"]], PanelKit.Tone.PLAIN)
+		) % [incumbent_name, result["incumbent_seats"], result["seats_total"]], PanelKit.Tone.PLAIN))
 
 	# The verdict's own section reads verdict, then why, then the numbers -- a
 	# result screen, not a spreadsheet (V2.9). The other sections on a
 	# double-election panel keep table-then-attribution, which is where a
 	# chamber's detail belongs.
+	# The attribution says why the verdict went the way it did, so the night
+	# holds it back with the verdict.
+	var attribution := _build_attribution(result, verdict)
+	_verdict_nodes.append(attribution)
 	if verdict:
-		box.add_child(_build_attribution(result, true))
-	box.add_child(_build_party_table(result))
+		box.add_child(attribution)
+	box.add_child(_build_party_table(result, index))
 	if not verdict:
-		box.add_child(_build_attribution(result))
+		box.add_child(attribution)
 	return box
 
 
-func _build_party_table(result: Dictionary) -> Control:
+func _build_party_table(result: Dictionary, index: int) -> Control:
 	var seats: Dictionary = result["seats"]
 	var shares: Dictionary = result["vote_share"]
 
@@ -316,7 +413,24 @@ func _build_party_table(result: Dictionary) -> Control:
 		rows.append(row)
 
 	var host := VBoxContainer.new()
-	PanelKit.ledger(host, rows)
+	var grid := PanelKit.ledger(host, rows)
+	# The count's handles on this table: each row's share and seats cells, read
+	# out of the grid in PanelKit.ledger's row-major order, header row first.
+	var columns: int = grid.columns
+	var row_cells := {}
+	for i in ordered.size():
+		var party_id: String = ordered[i]
+		var cell := {
+			"result": index,
+			"party": party_id,
+			"share": grid.get_child((i + 1) * columns + 1),
+			"seats": grid.get_child((i + 1) * columns + 2) if has_seats else null,
+			"final_seats": int(seats.get(party_id, 0)),
+			"bar": null,
+			"final_bar": 0.0,
+		}
+		row_cells[party_id] = cell
+		_cells.append(cell)
 
 	# Bars under the ledger: the table numbers the seats, the bars weigh them —
 	# the economy panel's idiom, themed by ui_theme's ProgressBar entry, so no
@@ -337,11 +451,12 @@ func _build_party_table(result: Dictionary) -> Control:
 			var bar := ProgressBar.new()
 			bar.custom_minimum_size = Vector2(240.0, 12.0)
 			bar.max_value = 100.0
-			# The tally starts the bars empty and records the finished value the
-			# table already computed -- the reveal interpolates DISPLAY values
-			# only; nothing about the result is recomputed or gated on frames.
-			bar.value = 0.0
-			_tally_pairs.append({"bar": bar, "final": 100.0 * float(seats[party_id]) / float(total)})
+			# Built at the finished value the table already computed; the night
+			# interpolates DISPLAY values only -- nothing about the result is
+			# recomputed or gated on frames.
+			bar.value = 100.0 * float(seats[party_id]) / float(total)
+			row_cells[party_id]["bar"] = bar
+			row_cells[party_id]["final_bar"] = bar.value
 			bar.show_percentage = false
 			bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			bar_row.add_child(bar)

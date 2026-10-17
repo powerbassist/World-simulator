@@ -41,6 +41,17 @@ const PAUSED_ALPHA := 0.55
 ## on a frame that stalls (a window building its content) the motion resumes
 ## where it was rather than having finished unseen.
 const MAX_STEP_S := 1.0 / 30.0
+## V4.9b. A map layer crossfading into the next: as long as a figure's roll, so
+## a toggle reads as one change of the map rather than a cut -- and short
+## enough that a player paging through the six layers is never waiting on it.
+const LAYER_S := 0.3
+## Election night's count: each region declares on its own beat, and the
+## whole count is capped so a nation with many regions does not hold the
+## verdict longer than a player will sit through. 0.28 s is a beat the eye can
+## follow as "one more region"; 4.5 s is France's thirteen with room for
+## Germany's sixteen, after which the beats shorten instead.
+const DECLARE_S := 0.28
+const NIGHT_MAX_S := 4.5
 
 const _META := &"motion_tween"
 
@@ -142,6 +153,19 @@ static func _step_clamped(node: Node, tween: Tween) -> void:
 		tween.custom_step(minf(live.get_process_delta_time(), MAX_STEP_S))
 	holder.append(stepper)
 	tree.process_frame.connect(stepper)
+
+
+## Calls `step` with t from 0 to 1 over `seconds`, through the clamped
+## stepper -- the verb for a sequence that is not one property (election
+## night's count, a map layer's crossfade). Motion off, or finish(node): one
+## call at t = 1, so the end state is the same code path either way.
+static func run(node: Node, seconds: float, step: Callable) -> void:
+	if not enabled():
+		finish(node)
+		step.call(1.0)
+		return
+	var tween := _tween(node)
+	tween.tween_method(step, 0.0, 1.0, seconds)
 
 
 ## A window opening: a fade and a small grow from its centre. Only for a

@@ -10,6 +10,7 @@ extends SceneTree
 
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -431,6 +432,38 @@ func _check_layer_state(map) -> void:
 
 	map._hovered_id = hovered_before
 	map.set_layer(MapLayers.POLITICAL)
+	_check_layer_crossfade(map, viewer, target)
+
+
+## V4.9b. A layer toggle crossfades the fills: headless (motion off) the new
+## layer is drawn at once; with motion on the fill starts at what was SHOWN and
+## lands on the new layer's own colours, and a second toggle mid-fade starts
+## from the mid-fade colour, not from either layer's.
+func _check_layer_crossfade(map, viewer: String, target: String) -> void:
+	if map._layer_blend != 1.0 or not map._fill_from.is_empty():
+		_fail("with motion off a layer toggle left a fade behind (blend %.2f)" % map._layer_blend)
+	var political: Color = map._layer_fills(viewer)[target]
+	Motion.override = 1
+	map.set_layer(MapLayers.RELATIONS)
+	var relations: Color = map._layer_fills(viewer)[target]
+	if not map._shown_fills(viewer)[target].is_equal_approx(political):
+		_fail("the crossfade did not start from the colour on screen")
+	var tween: Tween = map.get_meta(&"motion_tween")
+	tween.custom_step(Motion.LAYER_S * 0.5)
+	var mid: Color = map._shown_fills(viewer)[target]
+	if mid.is_equal_approx(political) or mid.is_equal_approx(relations):
+		_fail("half a crossfade draws %s, expected between %s and %s" % [mid, political, relations])
+	map.set_layer(MapLayers.TRADE)
+	if not map._shown_fills(viewer)[target].is_equal_approx(mid):
+		_fail("a toggle mid-fade jumped from %s to %s" % [mid, map._shown_fills(viewer)[target]])
+	Motion.finish(map)
+	if map._layer_blend != 1.0 or not map._fill_from.is_empty():
+		_fail("finish() left the crossfade at blend %.2f" % map._layer_blend)
+	if not map._shown_fills(viewer)[target].is_equal_approx(map._layer_fills(viewer)[target]):
+		_fail("a finished crossfade does not draw the layer's own fill")
+	map.set_layer(MapLayers.POLITICAL)
+	Motion.finish(map)
+	Motion.override = -1
 
 
 func _check_click_opens_panel_with_live_values(map) -> void:

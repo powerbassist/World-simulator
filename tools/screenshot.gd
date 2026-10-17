@@ -381,9 +381,10 @@ var _election := false
 ## accepted but a no-op there, and every main-scene staging flag is ignored.
 var _menu := false
 
-## V3.6, the thirty-second flag: the tally's two states. Stages the June 2029
+## V3.6, the thirty-second flag: the tally's two states (election night's
+## count since V4.9b). Stages the June 2029
 ## double election (41 months -- the May 2027 presidential plate has no seats,
-## so no bars), captures the plate mid-fill, then finishes the tally the way a
+## so no bars), captures the plate mid-count, then finishes the tally the way a
 ## click does and captures it settled. The election pauses the clock itself, so
 ## the second frame cannot cross a day flip.
 var _tally := false
@@ -633,6 +634,9 @@ func _init() -> void:
 			_menu = true
 		elif args[i] == "--tally":
 			_tally = true
+			# V4.9b: the count is motion, so this flag alone turns it back on --
+			# the mid-count frame is the point of the capture.
+			Motion.override = 1
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
 		elif args[i] == "--cluster" and i + 1 < args.size():
