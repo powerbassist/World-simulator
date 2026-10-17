@@ -50,6 +50,7 @@ extends Control
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
+const MapGround = preload("res://src/ui/map_ground.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
 const MapOutlines = preload("res://src/ui/map_outlines.gd")
@@ -140,6 +141,11 @@ var _nation_boxes: Dictionary = {}  # nation id -> Rect2, the lon/lat bbox of th
 var _world_polygons: Dictionary = {}  # same shape, the ~160 nations not simulated
 var _labels: Dictionary = {}  # nation id -> {pos: Vector2 lon/lat, text: String}
 var _texture: ImageTexture = null
+## V4.10a. The ground at depth and its lon/lat rect, both from MapGround; null
+## on a missing asset, and then the photograph keeps every zoom as before.
+var _ground: ImageTexture = null
+var _ground_bounds := Rect2()
+var _ground_feather_deg := 0.0
 var _center_lon := 0.0
 var _center_lat := 0.0
 
@@ -325,6 +331,10 @@ const LABEL_OUTLINE_PX := 3
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_NONE
+	# V4.10a. The ground is mipmapped because at the band's low edge it is
+	# minified 4:1 (60 texels/deg onto 15 px/deg) and shimmers without; the
+	# photograph has no mipmaps and falls back to plain linear, as before.
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 
 
 ## The first layout pass is where the control finally has a size, which is what
@@ -384,6 +394,9 @@ func setup(loader, state) -> void:
 
 	_world_polygons = loader.world_features
 	_texture = MapRaster.texture()
+	_ground = MapGround.texture()
+	_ground_bounds = MapGround.bounds()
+	_ground_feather_deg = float(MapGround.sidecar().get("feather_deg", 0.0))
 
 	# Per-ring bounding boxes for the draw cull, built ONCE beside the arrays
 	# they walk -- the same call _nation_boxes made for the hit test. The cull
@@ -964,17 +977,40 @@ func _draw() -> void:
 		draw_line(at - Vector2(0, 20), at + Vector2(0, 20), UiTheme.ACCENT, 1.0)
 
 
+## V4.10a. How much of the ground is drawn over the photograph at this zoom: 0
+## at globe view, 1 at depth, the derived band between (MapGround.band_alpha).
+## 0 when the asset is missing, which is the whole fresh-clone fallback.
+func ground_alpha() -> float:
+	if _ground == null:
+		return 0.0
+	return MapGround.band_alpha(_zoom, BASE_SCALE)
+
+
 func _draw_raster() -> void:
-	if _texture == null:
-		draw_rect(Rect2(Vector2.ZERO, size), SEA)
-		return
-	var top_left := _lonlat_to_screen(MapRaster.LON_MIN, MapRaster.LAT_MAX)
-	var bottom_right := _lonlat_to_screen(MapRaster.LON_MAX, MapRaster.LAT_MIN)
-	draw_texture_rect(_texture, Rect2(top_left, bottom_right - top_left), false)
+	var a := ground_alpha()
+	# A whole-screen photograph under an opaque ground is fill nobody sees: skip
+	# it once the band is complete and the view sits inside the ground's opaque
+	# core (its bounds less the baked feather). Anywhere else -- mid-band, or
+	# panned to where the ground feathers out -- the photograph is what shows
+	# through, so it draws.
+	var core := _ground_bounds.grow(-_ground_feather_deg)
+	if not (a >= 1.0 and core.encloses(visible_lonlat_rect())):
+		if _texture == null:
+			draw_rect(Rect2(Vector2.ZERO, size), SEA)
+		else:
+			var top_left := _lonlat_to_screen(MapRaster.LON_MIN, MapRaster.LAT_MAX)
+			var bottom_right := _lonlat_to_screen(MapRaster.LON_MAX, MapRaster.LAT_MIN)
+			draw_texture_rect(_texture, Rect2(top_left, bottom_right - top_left), false)
+	if a > 0.0:
+		var g_tl := _lonlat_to_screen(_ground_bounds.position.x, _ground_bounds.end.y)
+		var g_br := _lonlat_to_screen(_ground_bounds.end.x, _ground_bounds.position.y)
+		draw_texture_rect(_ground, Rect2(g_tl, g_br - g_tl), false, Color(1.0, 1.0, 1.0, a))
 
 
-## Outlines only, no fill: the landmass is already in the photograph underneath,
-## and what a border adds is the political line the photograph cannot show.
+## Outlines only, no fill: the landmass is already underneath -- in the
+## photograph at globe view, in the baked ground at depth (V4.10a), whose land
+## mask was rasterised from these same rings -- and what a border adds is the
+## political line neither can show.
 func _draw_world_borders() -> void:
 	var view := visible_lonlat_rect()
 	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))

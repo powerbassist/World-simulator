@@ -449,3 +449,68 @@ patch and one PAN row prices it:
 Acceptance for either is §6's method unchanged: same-tree, files toggled, clock frozen,
 pixel identity at min/fit/cross/max. Neither changes a drawn pixel, so a non-zero
 differing-byte count is a defect and not a tuning question.
+
+## 9. V4.10a — the ground at depth
+
+**2026-10-18 · branch `v4.10-map-close-up` · probe: `tools/frame_probe.gd` (paired rows) · same machine as §1.**
+
+**The satellite is retired at depth, not scaled.** §5's per-tile LOD refusal stands untouched: the
+photograph stays one quad and keeps globe view, where its 15 texels per degree are honest, and a
+second quad — a paper-and-hillshade ground baked once by `tools/ground_generate.py` — takes over as
+the zoom outruns them. No tile, no stream, no mesh (the tier doc's three refusals, unchanged).
+
+### The band, derived
+
+`MapGround.band_alpha(zoom, BASE_SCALE)` is a smoothstep from **zoom 1.25** (the photograph drawn
+1:1: 15 texels/deg over 12 px/deg) to **zoom 2.5** (a 2× upscale, visibly soft). Neither number is
+taste: `SAT_TEXELS_PER_DEG` is asserted against the decoded raster's width by
+`tests/test_map_ground.gd`, so a new photograph cannot move the band silently. The opening fit
+(2.08) lands mid-crossfade; the author signed that off at the plan gate. Once the band is complete
+and the view sits inside the ground's opaque core (its bounds less the 3° baked feather), the
+photograph is not drawn at all; panned out to the feather, it shows through and the hand-off is a
+fade, not a line.
+
+### The asset
+
+4920 × 3000 at 60 px/deg (ETOPO 2022's native arc-minute grid, so the resample is an identity),
+extent −31…51 E / 28…78 N derived from the roster's rings plus 6°, WebP 654 KB on disk,
+**78.7 MB decoded with mipmaps** (mipmaps because at the band's low edge it is minified 4:1).
+Decode + mipmaps + upload: **~285 ms** timed alone, inside the plan's 300 ms line; the boot's
+`enter` stage moved 780 → 1084 ms and its weight was re-measured. The coast is rasterised from
+`data/geo/`'s own outer rings, not from the DEM, so paper coast and stroked coast agree; the DEM
+only shades. One defect class was found by eye on the preview and is now handled in the generator:
+the three geometry vintages (1:110m world, 1:50m roster, 1:10m regions) do not tile, and every
+gap along a shared land border printed as a sea-coloured crack over paper — invisible over the
+photograph. Narrow "sea" the DEM calls land (z > 0) is filled; real straits are below sea level
+and stay open.
+
+### The gate
+
+**The tree was already over V3.1's G2 before this block touched it.** Two baseline runs on
+today's tree: `1440 max_zoom` 3.44 / 3.79 ms against `1440 max, no map` 1.17 / 1.50 — **G2 =
+2.27 / 2.29 ms** against the 2.0 gate (1.37 at EU-29, §4). The max-zoom draw grew from 451 to 574
+calls through V3.4's roads, V4.6's plants and V4.11's outlines; G3's opening fit is 10.4–10.9 ms
+against its 8.0. **Author's call (2026-10-18): V4.10a is judged on its own delta, and the absolute
+2.0 is V4.10c's to recover** — c is the sub-block that re-declares the gate, so it attributes the
+growth by pass.
+
+The delta is priced inside ONE run: each new probe row has a `ground_off` twin that nulls
+`map_view._ground` — the fresh-clone fallback, which is exactly the pre-V4.10a draw — because the
+run-to-run spread on G2 (~0.3 ms) is the size of the thing being measured.
+
+| row (1440p, vsync off) | ground off | ground on | delta |
+|---|---|---|---|
+| max zoom | 3.91 | 3.47 | **−0.44** (the photograph is skipped) |
+| mid-band 1.9 (both quads) | 9.80 | 9.92 | +0.12 |
+| opening fit 2.08 (both quads) | 10.20 | 10.52 | +0.32 |
+| drag at max zoom, every frame | 23.27 | 23.37 | +0.10 |
+
+G2 with the ground on, same run: **2.14 ms** (3.18 − 1.04). The ground costs nothing a player can
+measure at depth and a third of a millisecond at the opening fit, where both quads draw.
+
+### Handed to V4.10c
+
+- **Recover G2 ≤ 2.0 ms at max zoom.** The overrun is not the ground's; attribute the 574 calls
+  by pass (fill, hairline, roads, cities, plants, outlines) before any lever is pulled.
+- If c's shaders re-bake the ground to channels (paper and sea tinted on the GPU instead of in
+  the generator), the band, the sidecar and the opaque-core skip stay as they are.

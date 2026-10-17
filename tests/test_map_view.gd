@@ -56,6 +56,7 @@ func _run() -> void:
 	_check_geometry(loader)
 	_check_world_geometry(loader, map)
 	_check_raster(map)
+	_check_ground_band(map)
 	_check_projection_and_hit_test(map)
 	_check_outline_hover(map)
 	_check_pan_zoom(map)
@@ -183,6 +184,28 @@ func _check_raster(map) -> void:
 		return
 	if map._texture.get_width() < 1000:
 		_fail("map raster is %d px wide, far below the shipped asset" % map._texture.get_width())
+
+
+## V4.10a. The ground takes over by the derived band and only by it: none at the
+## furthest zoom out, all of it at max zoom, and none at all when the asset is
+## missing -- which is the whole fresh-clone fallback, and a ground_alpha() that
+## stayed positive with no texture would hand draw_texture_rect a null.
+func _check_ground_band(map) -> void:
+	var zoom_before: float = map._zoom
+	map._zoom = map.min_zoom()
+	if map.ground_alpha() != 0.0:
+		_fail("ground shows at the furthest zoom out: alpha %f" % map.ground_alpha())
+	map._zoom = map.MAX_ZOOM
+	if map._ground == null:
+		_fail("map view did not take the ground texture in setup()")
+	elif map.ground_alpha() != 1.0:
+		_fail("ground not fully drawn at max zoom: alpha %f" % map.ground_alpha())
+	var ground = map._ground
+	map._ground = null
+	if map.ground_alpha() != 0.0:
+		_fail("ground_alpha() is %f with no ground texture" % map.ground_alpha())
+	map._ground = ground
+	map._zoom = zoom_before
 
 
 func _check_projection_and_hit_test(map) -> void:
