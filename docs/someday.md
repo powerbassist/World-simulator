@@ -229,7 +229,11 @@ mistake; (3) `events_probe` E4/E5 ticking Commodities, with the hook's real
 arrival rate measured before it ships. Left open: clothing creeps from 1.04x to 1.27x base over 168 months,
 unattributed. **V4.11b2 (2026-10-16):** real endowments bring the crossing forward,
 1.278x at month 96 (was ~160), with a manufactures wave near 1.13x around month 84 --
-[[commodities-model]] §8 as measured. Trigger (2) is further away, not closer.
+[[commodities-model]] §8 as measured. Trigger (2) is further away, not closer. **V4.11 review (2026-10-17):**
+once the energy endowments read every producer (Europe's own oil, gas and coal had
+been zeroed by a year-selection bug), the crossing went away again: clothing peaks at
+1.202x at month 120, the wave at 1.136x near month 85, 0 crossings in 120 months. The
+creep is still unattributed and still rising at month 120.
 
 ### Same-month category collisions favour the early alphabet
 

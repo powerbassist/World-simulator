@@ -271,7 +271,7 @@ V4.11b) against the tip:
 | Band | Line | Measured | Verdict |
 |---|---|---|---|
 | (i) natural goods at month 1 | within ±2 % | worst 0.01 % (crude oil) | PASS |
-| (ii) EU-27 net import share at month 12 | ≥ 0.70 | lithium 0.991, rare earths 1.000, crude oil 0.987, nickel 1.000 | PASS |
+| (ii) EU-27 net import share at month 12 | ≥ 0.70 | lithium 0.991, rare earths 1.000, crude oil 0.976 (0.987 before the review's energy fix), nickel 1.000 | PASS |
 | (iii) 50 % pool cut for six months, from rest at month 12 | ≥ 1.25× | 1.75× (the clamp) for each of lithium, rare earths, nickel, crude oil, copper, uranium; over 1.25 in the cut's second month | PASS |
 | (iv) pinned at the clamp after 120 months | none | none | PASS |
 
@@ -296,6 +296,15 @@ V4.11b) against the tip:
   cause is NOT isolated. The likely one, unverified: `W` is static (authored
   figures) while economies grow, so world supply of natural goods stands still as
   requirement rises -- recorded in [[someday]].
+- **Re-measured after the V4.11 review (2026-10-17).** The energy endowments had
+  read every producer at the world's latest year, and OWID's small-producer series
+  end in 2016 -- so 19 roster nations' oil, 16 nations' gas and six nations' coal
+  (Germany's, France's and Poland's oil among them, Kosovo's lignite through a blank
+  OWID code) read zero and sat in the pool. Each producer now reads its own latest
+  year within ten (`producer_years` in the data names each). All four bands still
+  PASS; crude oil's EU import share reads 0.976 (was 0.987); the wave peaks at 1.136×
+  near month 85, and clothing does NOT cross: 1.202× at month 120, 0 crossings of
+  the hook line in 120 months. The tick is unchanged (46.3 ms).
 - **No player-facing effect today.** The hook has no consumer (V4.4 pass 23
   unbound its two events, and the author kept them unbound on 2026-10-14), and
   value added feeds no GDP. The balance re-run (51 regimes, 168 months) came back

@@ -25,6 +25,7 @@ func _init() -> void:
 	_check_imported_ore_becomes_steel(loader)
 	_check_the_world_opens_balanced(loader)
 	_check_a_pool_cut_moves_the_price()
+	_check_small_energy_producers_read(loader)
 
 	if _failures.is_empty():
 		print("test_endowments: all checks passed")
@@ -131,6 +132,16 @@ func _check_a_pool_cut_moves_the_price() -> void:
 	var ratio := float(state.nations["FRA"].commodity_state["price"][good_id]) / float(loader.commodity_goods[good_id].base_price)
 	if ratio <= 1.05:
 		_fail("halving the world pool's lithium left its price at %.3f of base" % ratio)
+
+
+## The V4.11 review's pass 2: OWID's small-producer energy series end in 2016, and
+## reading every producer at the WORLD's latest year zeroed them -- Germany's oil,
+## Kosovo's lignite (whose OWID row has a blank code). Two measured producers that
+## each failure mode would zero.
+func _check_small_energy_producers_read(loader) -> void:
+	for pair in [["crude_oil", "DEU"], ["coal", "XKX"]]:
+		if float(loader.commodity_endowments[pair[0]].get(pair[1], 0.0)) <= 0.0:
+			_fail("%s reads no %s -- the energy generator dropped a stale-vintage producer" % [pair[1], pair[0]])
 
 
 func _fail(message: String) -> void:

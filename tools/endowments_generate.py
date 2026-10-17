@@ -112,13 +112,36 @@ def minerals(indicator):
     return out, world, year
 
 
+# Kosovo has no ISO 3166 entry and OWID's energy file leaves its iso_code BLANK, so
+# it is matched by name; the roster says XKX.
+OWID_NAME_TO_ISO = {"Kosovo": "XKX"}
+# How far back a producer's own last figure may sit behind the world's year. OWID's
+# country series come from two vintages: the Energy Institute's (to 2024) for the
+# large producers and the EIA's, which ENDS IN 2016, for everyone else -- Germany's
+# and France's oil, Bosnia's and Kosovo's lignite. Reading every producer at the
+# world's year alone silently zeroed ~1-2 % of each fuel's world output and moved it
+# into the pool (the V4.11 review, pass 2). Ten years admits the 2016 vintage and
+# nothing older; the year each such producer was read at is written beside its share.
+ENERGY_STALE_YEARS = 10
+
+
 def owid_energy(column):
+    """{iso: value}, world, year, {iso: older year read} -- each producer at its OWN
+    latest year within ENERGY_STALE_YEARS of the world's."""
     rows = list(csv.DictReader(open(SOURCES / "owid" / "owid-energy-data.csv", encoding="utf-8")))
     year = max(int(r["year"]) for r in rows if r["country"] == "World" and r.get(column) and int(r["year"]) <= YEAR)
-    out = {r["iso_code"]: float(r[column]) for r in rows
-           if int(r["year"]) == year and r.get(column) and len(r["iso_code"]) == 3}
+    latest = {}
+    for r in rows:
+        code = OWID_NAME_TO_ISO.get(r["country"], r["iso_code"])
+        y = int(r["year"])
+        if len(code) != 3 or not r.get(column) or y > year or y < year - ENERGY_STALE_YEARS:
+            continue
+        if code not in latest or y > latest[code][0]:
+            latest[code] = (y, float(r[column]))
+    out = {code: v for code, (y, v) in latest.items()}
+    older = {code: y for code, (y, v) in latest.items() if y < year and v > 0.0}
     world = next(float(r[column]) for r in rows if r["country"] == "World" and int(r["year"]) == year)
-    return out, world, year
+    return out, world, year, older
 
 
 def fish():
@@ -195,9 +218,12 @@ def build():
         goods[good] = {"year": year, "source": "USGS MCS 2025 via OWID indicator %s" % ind,
                        "shares": shares_for(prod, world, producers)}
     for good, col in ENERGY.items():
-        prod, world, year = owid_energy(col)
-        goods[good] = {"year": year, "source": "OWID energy %s" % col,
-                       "shares": shares_for(prod, world, producers)}
+        prod, world, year, older = owid_energy(col)
+        shares = shares_for(prod, world, producers)
+        goods[good] = {"year": year, "source": "OWID energy %s" % col, "shares": shares}
+        stale = {pid: older[iso_of(pid)] for pid in sorted(shares) if iso_of(pid) in older}
+        if stale:
+            goods[good]["producer_years"] = stale
     for good, item in FAO_QCL.items():
         prod, world, year = fao("Production_Crops_Livestock_E_All_Data_(Normalized).zip", item, m49_to_iso)
         goods[good] = {"year": year, "source": "FAOSTAT QCL item %s" % item,
