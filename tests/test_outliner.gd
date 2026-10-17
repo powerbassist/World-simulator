@@ -9,8 +9,10 @@ extends SceneTree
 ## never a row of zeros, every row names a window the game really registers, and
 ## the one ordering and the one cap it owns are pinned.
 ##
-## The window half (the panel, the click, the registration) is added with the
-## panel in the same file, below the register's checks.
+## The window half is below the register's checks: the panel draws exactly the
+## visible sections, a row click asks main.gd for the row's window, and main.gd
+## registers the window and the action bar lists it. Driven a frame at a time
+## (docs/engine-decision.md: a Control outside the tree is half-dead).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -18,10 +20,15 @@ const OutlinerReadings = preload("res://src/ui/outliner_readings.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const OutlinerPanel = preload("res://src/ui/outliner_panel.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
 var _loader
 var _frame := 0
+var _full_panel
+var _empty_panel
+var _requested: Array[String] = []
 
 
 func _init() -> void:
@@ -36,6 +43,19 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 2:
 		return false
+	if _frame == 2:
+		_check_the_register()
+		_build_the_panels()
+		return false
+	if _frame < 4:
+		return false  # the panels' own _process refreshes them
+	_check_the_panel()
+	_check_main_registers_the_window()
+	_finish()
+	return false
+
+
+func _check_the_register() -> void:
 	_check_every_section_resolves()
 	_check_absence_hides_a_section()
 	_check_the_agenda_is_the_pinned_entries()
@@ -44,8 +64,6 @@ func _process(_delta: float) -> bool:
 	_check_goods_order_matches_the_strip()
 	_check_the_row_cap()
 	_check_the_people_section()
-	_finish()
-	return false
 
 
 func _new_state():
@@ -318,6 +336,101 @@ func _check_the_people_section() -> void:
 	var first_name: String = _loader.person_name(String(ids[1]))
 	if not String(rows[0]["text"]).begins_with(first_name):
 		_fail("the largest grudge is not first: '%s' (expected %s)" % [rows[0]["text"], first_name])
+
+
+func _build_the_panels() -> void:
+	root.theme = UiTheme.build()
+	var state = _new_state()
+	_stage_everything(state)
+	_full_panel = OutlinerPanel.new()
+	root.add_child(_full_panel)
+	_full_panel.setup(state, _loader)
+	_full_panel.window_requested.connect(func(id: String): _requested.append(id))
+	_empty_panel = OutlinerPanel.new()
+	root.add_child(_empty_panel)
+	_empty_panel.setup(_new_state(), _loader)
+
+
+## Every row the panel draws, in order: the Labels that take the pointer.
+func _row_labels(panel) -> Array:
+	var out: Array = []
+	var stack: Array = [panel._body]
+	while not stack.is_empty():
+		var node: Node = stack.pop_front()
+		for child in node.get_children():
+			if child is Label and (child as Label).mouse_filter == Control.MOUSE_FILTER_STOP:
+				out.append(child)
+			stack.append(child)
+	return out
+
+
+func _check_the_panel() -> void:
+	# One drawn row per register row, in section order -- the panel adds none of
+	# its own and drops none.
+	var state = _full_panel._state
+	var expected: Array = []
+	for section in OutlinerReadings.SECTIONS:
+		for row in (OutlinerReadings.read(section, state, _loader)["rows"] as Array):
+			expected.append(row)
+	var labels := _row_labels(_full_panel)
+	if labels.size() != expected.size() or expected.is_empty():
+		_fail("the panel draws %d rows, the register has %d" % [labels.size(), expected.size()])
+		return
+	for i in labels.size():
+		if (labels[i] as Label).text != String(expected[i]["text"]):
+			_fail("row %d reads '%s', the register says '%s'" % [i, (labels[i] as Label).text, expected[i]["text"]])
+
+	# A click asks for the row's window; a release or a right click does not.
+	for i in labels.size():
+		_requested.clear()
+		var press := InputEventMouseButton.new()
+		press.button_index = MOUSE_BUTTON_LEFT
+		press.pressed = true
+		(labels[i] as Label).gui_input.emit(press)
+		if _requested != [String(expected[i]["window"])]:
+			_fail("clicking row %d asked for %s, expected '%s'" % [i, _requested, expected[i]["window"]])
+	_requested.clear()
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	(labels[0] as Label).gui_input.emit(release)
+	var right := InputEventMouseButton.new()
+	right.button_index = MOUSE_BUTTON_RIGHT
+	right.pressed = true
+	(labels[0] as Label).gui_input.emit(right)
+	if not _requested.is_empty():
+		_fail("a release or a right click opened a window: %s" % [_requested])
+
+	# Nothing pinned: one line that says so, and no clickable row.
+	if not _row_labels(_empty_panel).is_empty():
+		_fail("the empty outliner draws clickable rows")
+	var said := false
+	var stack: Array = [_empty_panel._body]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		stack.append_array(node.get_children())
+		if node is Label and (node as Label).text == OutlinerPanel.NOTHING_PINNED:
+			said = true
+	if not said:
+		_fail("the empty outliner does not say '%s'" % OutlinerPanel.NOTHING_PINNED)
+
+	# A refresh after the state moves redraws (mark_dirty is what main.gd's month
+	# tick calls); a panel that never rebuilt would show last month's firm.
+	state.player().companies.clear()
+	_full_panel.mark_dirty()
+	_full_panel._process(0.0)
+	if _row_labels(_full_panel).size() >= labels.size():
+		_fail("the outliner did not redraw after mark_dirty -- it shows a firm that is gone")
+
+
+func _check_main_registers_the_window() -> void:
+	var src := FileAccess.get_file_as_string("res://src/ui/main.gd")
+	if not src.contains("_windows.register(\"outliner\""):
+		_fail("main.gd registers no 'outliner' window")
+	if not src.contains("_entry(\"outliner\""):
+		_fail("the action bar does not list the outliner")
+	if not src.contains("window_requested.connect"):
+		_fail("main.gd does not connect the outliner's window_requested -- a row click opens nothing")
 
 
 func _fail(message: String) -> void:
