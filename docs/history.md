@@ -9,6 +9,19 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V4.9
+
+**V4.9a -- THE LOADING SCREEN AND THE MOTION VOCABULARY -- IS BUILT on `v4.9a-boot` (2026-10-17). One `src/sim/` diff (`Net.warm_step`, the same table in slices), `SAVE_VERSION` unchanged, one settings key (`[display] motion`).**
+
+- **Contract and instruments: [panel-system](panel-system.md) §22.**
+- **Author calls at the plan gate (2026-10-17):** all three sub-blocks, full, despite the V5 rework -- motion as one reusable vocabulary rather than per-panel polish; and `Net.warm` made resumable so the bar moves through its 4.5 s honestly rather than holding on one frozen frame.
+- **Measured first:** menu -> game froze ~7 s with the menu showing. Stages windowed: scene compile 1.3 s, data 0.36 s, world 0.07 s, network 5.0 s (4.4 s of work plus frames), enter 0.78 s. The network table had doubled since its comment (~2 s at 29 nations). The bar's weights are those numbers.
+- **The same work moved earlier, not duplicated:** `boot_stages.gd` builds the loader and the state across frames and hands them to `main.gd` (`pending_loader` / `pending_state`); a direct scene load builds its own, so the thirty tests that load `main.tscn` are untouched. `test_menu.gd` was rewritten to drive its three starts sequentially through the loading screen, each on a fresh menu.
+- **Motion** (`src/ui/motion.gd`): a window opens, a card arrives, the strip's figures roll, the date beats once a day (dimmed when paused). Off under `--headless` and by the settings row; `finish()` is the skip path V4.9b's sequence will use.
+- **The capture caught what the suite could not:** a heavy window's ~0.4 s build frame swallowed the whole 0.16 s opening -- motion stepped with a 1/30 s delta cap since, pinned by a stalled-frame test (§22).
+- **Two defects found on the way, worth keeping.** A test polling `_watching != null` on a loading screen that had freed itself never advanced (a freed reference is neither null nor usable) -- replaced by an explicit flag. And a Python edit on Windows rewrote twelve LF files as CRLF (text-mode write); caught by git's warning, normalised before commit.
+- **Refused:** a close animation, an awaited `main.gd` `_ready()`, a time-estimated fill inside the two stages Godot cannot observe, reusing the menu's loader (all argued in §22).
+
 ## V4.8
 
 **V4.8a — THE STRIP, WHOLE — IS BUILT on `v4.8-reading-surface` (2026-10-17): the top bar is one register of thirteen readings with hover breakdowns and an alert tone; no `src/sim/` diff. Plan: `docs/superpowers/plans/2026-10-17-v4.8a-reading-surface.md`.**

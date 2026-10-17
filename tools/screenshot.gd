@@ -58,6 +58,7 @@ extends SceneTree
 ## framebuffer, and with no rendering device there is nothing in it.
 
 const Relations = preload("res://src/core/relations.gd")
+const Motion = preload("res://src/ui/motion.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Council = preload("res://src/sim/council.gd")
@@ -500,6 +501,10 @@ func _stage_outline_hover() -> void:
 
 
 func _init() -> void:
+	# V4.9a. Every staged state is captured SETTLED: a window opened a frame
+	# before the capture would otherwise be caught mid-fade. Motion itself is
+	# judged from tools/motion_frames.gd's sequence captures, not from here.
+	Motion.override = 0
 	var args := OS.get_cmdline_user_args()
 	for i in args.size():
 		if args[i] == "--frames" and i + 1 < args.size():

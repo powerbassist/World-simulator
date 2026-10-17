@@ -17,6 +17,7 @@ extends Control
 ## Holds no game state. main.gd registers panels it has already built and wired.
 
 const WindowFrame = preload("res://src/ui/window_frame.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 signal opened(id: String)
 signal closed(id: String)
@@ -106,6 +107,11 @@ func open(id: String) -> void:
 	# somewhere deliberate must not jump back to the cascade when it is raised.
 	if not already_open:
 		_place(frame)
+		# V4.9a. Opens rather than appears -- on the way in only, so raising a
+		# window already up does not re-run it. Close stays instant: a fade-out
+		# would keep a closed window visible and clickable for its duration, and
+		# open_ids() and every test read `visible` the moment close() returns.
+		Motion.open(frame)
 	_raise(id)
 
 	opened.emit(id)

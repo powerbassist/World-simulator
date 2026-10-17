@@ -2,12 +2,13 @@ extends PanelContainer
 
 ## The settings screen, reachable from the main menu and from the pause menu.
 ##
-## Four controls, because four is how many settings this game currently has
+## Five controls, because five is how many settings this game currently has
 ## that do something. There is no autosave, no difficulty and no keybind
 ## remapping, so there are no rows for them -- a screen of dead toggles
 ## advertises scope that does not exist. Sound arrived at V3.6 as one binary
 ## row rather than a volume ladder: one synthesized sting exists, and Off/On
-## is every level it needs.
+## is every level it needs. Motion arrived at V4.9a the same way: Off is
+## reduced motion, every tween landing on its final value at once.
 ##
 ## V4.8c added the MESSAGES grid below them: per event category, the severity
 ## band at which each of four switches fires (message_settings.gd owns the
@@ -59,10 +60,21 @@ const DEFAULT_SCALE_INDEX := 1
 ## ships silent is scope nobody will ever notice shipped (V3.6).
 const DEFAULT_SOUND := true
 
+## Motion on a first launch (V4.9a). Off is the reduced-motion choice: every
+## tween in src/ui/motion.gd lands on its final value at once, so nothing a
+## player reads depends on watching an animation finish.
+const DEFAULT_MOTION := true
+
+## Bumped on every save, so a reader that caches a setting (motion.gd) knows to
+## read the file again. Static: the menu's screen and the pause menu's are two
+## instances writing one file.
+static var revision := 0
+
 var _fullscreen_button: OptionButton
 var _resolution_button: OptionButton
 var _scale_button: OptionButton
 var _sound_button: OptionButton
+var _motion_button: OptionButton
 var _message_buttons := {}  # category -> {switch: OptionButton}
 
 ## Narrow enough that a category label and four band pickers fit the panel's
@@ -109,11 +121,20 @@ static func sound_enabled() -> bool:
 	return bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND))
 
 
+## Read at play time, for sound_enabled()'s reason: the pause menu's change
+## governs the very next tween.
+static func motion_enabled() -> bool:
+	var cfg := ConfigFile.new()
+	cfg.load(CONFIG_PATH)
+	return bool(cfg.get_value("display", "motion", DEFAULT_MOTION))
+
+
 func _save_and_apply() -> void:
 	var fullscreen := _fullscreen_button.selected == 1
 	var resolution_index := _resolution_button.selected
 	var scale_index := _scale_button.selected
 	var sound_on := _sound_button.selected == 1
+	var motion_on := _motion_button.selected == 1
 
 	var cfg := ConfigFile.new()
 	cfg.load(CONFIG_PATH)
@@ -121,7 +142,9 @@ func _save_and_apply() -> void:
 	cfg.set_value("display", "resolution_index", resolution_index)
 	cfg.set_value("display", "ui_scale_index", scale_index)
 	cfg.set_value("audio", "enabled", sound_on)
+	cfg.set_value("display", "motion", motion_on)
 	cfg.save(CONFIG_PATH)
+	revision += 1
 
 	_apply(get_window(), fullscreen, resolution_index, scale_index)
 	_resolution_button.disabled = fullscreen
@@ -153,6 +176,7 @@ func _ready() -> void:
 	_resolution_button = _add_row(grid, "Resolution", _resolution_labels())
 	_scale_button = _add_row(grid, "Interface scale", _scale_labels())
 	_sound_button = _add_row(grid, "Sound", ["Off", "On"])
+	_motion_button = _add_row(grid, "Motion", ["Off", "On"])
 
 	_build_messages(root)
 
@@ -273,6 +297,7 @@ func _load_into_controls() -> void:
 	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)), 0, RESOLUTIONS.size() - 1))
 	_scale_button.select(clampi(int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX)), 0, UI_SCALES.size() - 1))
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
+	_motion_button.select(1 if bool(cfg.get_value("display", "motion", DEFAULT_MOTION)) else 0)
 	_resolution_button.disabled = fullscreen
 	var messages := MessageSettings.load_from(CONFIG_PATH)
 	for category in _message_buttons.keys():

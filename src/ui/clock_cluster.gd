@@ -12,6 +12,7 @@ extends PanelContainer
 ## same shape Budget.commit() uses. main.gd is the one holding the Clock.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 signal pause_toggled
 signal speed_selected(speed: int)
@@ -95,7 +96,20 @@ func set_minimap(minimap: Control) -> void:
 func refresh(clock: Node) -> void:
 	if clock == null:
 		return
-	_date_label.text = "%02d %s %d" % [clock.day, MONTH_NAMES[clock.month - 1], clock.year]
+	var date := "%02d %s %d" % [clock.day, MONTH_NAMES[clock.month - 1], clock.year]
+	# V4.9a. The clock shows its speed rather than stating it: one brass beat per
+	# day, so the beats' own rhythm is the speed, and a paused date is dimmed --
+	# still the date, visibly not moving. The dim is state, not motion, so it
+	# holds with motion off too.
+	# finish() first: a beat still running would tween the alpha back to the
+	# one it started from.
+	Motion.finish(_date_label)
+	_date_label.modulate.a = Motion.PAUSED_ALPHA if clock.paused else 1.0
+	if date != _date_label.text:
+		var first := _date_label.text.is_empty()
+		_date_label.text = date
+		if not first and not clock.paused:
+			Motion.pulse(_date_label)
 	_pause_button.text = "|>" if clock.paused else "||"
 	for s in _speed_buttons.keys():
 		_speed_buttons[s].button_pressed = (not clock.paused) and clock.speed == s

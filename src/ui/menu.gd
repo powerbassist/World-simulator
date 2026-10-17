@@ -20,8 +20,7 @@ const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const CreditsPanel = preload("res://src/ui/credits_panel.gd")
 const NationSelectPanel = preload("res://src/ui/nation_select_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-
-const GAME_SCENE := "res://src/ui/main.tscn"
+const LoadingScreen = preload("res://src/ui/loading_screen.gd")
 
 ## The nation the menu plate builds its throwaway month-0 state around. FRA is
 ## the premise nation, and the plate reads only content that is identical for
@@ -43,6 +42,9 @@ var _viewer_state
 ## The menu entry that opened the current overlay, so closing it puts keyboard
 ## focus back where the player left it rather than nowhere.
 var _focus_return: Control
+## The loading screen once a game is starting; a second start is refused while
+## it runs (a double-click on Continue would otherwise boot two games).
+var _loading
 
 
 func _ready() -> void:
@@ -252,15 +254,14 @@ func _unhandled_input(event: InputEvent) -> void:
 ## ("" for the standard one). Both are ignored when loading -- a save carries
 ## its own player_nation_id and scenario_id, and main.gd's load path replaces
 ## the whole GameState wholesale after building a throwaway one.
+##
+## V4.9a: the scene is built by the loading screen (boot_stages.gd), a stage per
+## frame, rather than here in one call that froze the window for seconds. The
+## pending_* properties are set there, the same three this used to set.
 func _start_game(load_slot: String, nation_id: String = "", scenario_id: String = "") -> void:
-	# Untyped, like main.gd's panel references: pending_load_slot is a script
-	# property, and a Node-typed variable cannot see it without a cast that buys
-	# nothing here.
-	var game = load(GAME_SCENE).instantiate()
-	game.pending_load_slot = load_slot
-	if not nation_id.is_empty():
-		game.pending_player_id = nation_id
-	game.pending_scenario_id = scenario_id
-	get_tree().root.add_child(game)
-	get_tree().current_scene = game
-	queue_free()
+	if _loading != null:
+		return
+	_loading = LoadingScreen.new()
+	add_child(_loading)
+	_loading.entered.connect(func(_game: Node): queue_free())
+	_loading.start(nation_id, scenario_id, load_slot)

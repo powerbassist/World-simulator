@@ -17,6 +17,7 @@ extends VBoxContainer
 ## owns what it means.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 signal card_dismissed(id: String)
 signal card_activated(id: String)
@@ -127,6 +128,9 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 		column.add_child(actions_box)
 
 	add_child(card)
+	# V4.9a. A card arrives rather than existing: a fade only, since the stack
+	# lays it out. Clickable from its first frame -- the fade gates nothing.
+	Motion.arrive(card)
 	_cards[id] = card
 	_bodies[id] = body_label
 

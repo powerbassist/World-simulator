@@ -27,7 +27,8 @@
    "tests/test_balance.gd",
    "tests/test_orgs_panel.gd",
    "tests/test_roster.gd",
-   "tests/test_message_settings.gd"
+   "tests/test_message_settings.gd",
+   "tests/test_motion.gd"
   ],
   [
    "tests/test_clock.gd",
@@ -119,7 +120,8 @@
    "tests/test_map_flows.gd",
    "tests/test_overview_panel.gd",
    "tests/test_save_load.gd",
-   "tests/test_acknowledgments.gd"
+   "tests/test_acknowledgments.gd",
+   "tests/test_boot_stages.gd"
   ]
  ]
 }

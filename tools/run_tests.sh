@@ -202,6 +202,12 @@ tests=(
   # V4.8c: the message-settings register, and the lapse guard that keeps the
   # arrival pause's contract for a category set not to pause.
   tests/test_message_settings.gd
+  # V4.9a: the staged boot behind the loading screen (stage table, a bar that
+  # never goes back, main.gd taking the loader and state it was handed) and the
+  # motion vocabulary (the pure roll, off under --headless, time-based tweens,
+  # the window and clock wiring).
+  tests/test_boot_stages.gd
+  tests/test_motion.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd
   tests/test_minimap.gd
