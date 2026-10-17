@@ -195,9 +195,9 @@ func _refresh() -> void:
 func _build_alert(ns) -> void:
 	var short: Array = []
 	for good_id in _goods_in_order():
-		var coverage: float = _coverage(ns, good_id)
-		if coverage < SHORTAGE_COVERAGE:
-			short.append({"id": good_id, "coverage": coverage})
+		var covered: float = coverage(ns, good_id)
+		if covered < SHORTAGE_COVERAGE:
+			short.append({"id": good_id, "coverage": covered})
 
 	if short.is_empty():
 		return
@@ -258,7 +258,7 @@ func _build_balance(ns) -> void:
 				# in an ordinary month and a fixed one-place format is V1.6b's
 				# `+0.0` against a live figure. PanelKit widens until it is not a lie.
 				PanelKit.delta(100.0 * (price / base - 1.0) if base > 0.0 else 0.0, "%"),
-				"%.0f%%" % (100.0 * _coverage(ns, good_id)),
+				"%.0f%%" % (100.0 * coverage(ns, good_id)),
 			])
 		PanelKit.ledger(body, rows)
 	PanelKit.line(_body, "Columns: units made · net units bought (positive) or sold (negative) · price against its base · the share of this month's demand covered. Prices are the one world vector; every nation's copy reads the same.")
@@ -348,7 +348,7 @@ func _ratio_text(v: float) -> String:
 ## what it bought. Clamped at 0 so an overshoot reads as 0 short rather than
 ## negative, and 1.0 where nothing was wanted -- a good nobody wants is not short,
 ## which is the negative control the test pins.
-func _coverage(ns, good_id: String) -> float:
+static func coverage(ns, good_id: String) -> float:
 	var cs: Dictionary = ns.commodity_state
 	if cs.is_empty():
 		return 1.0
