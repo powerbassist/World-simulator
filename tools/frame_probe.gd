@@ -69,6 +69,12 @@ const SIZE_BASE := Vector2i(1920, 1080)
 const SIZE_BIG := Vector2i(2560, 1440)
 
 var _main: Node = null
+## V4.10a. The ground texture map_view took in setup(), held here so a row can
+## take it away and give it back. "ground_off" rows sample the same tree with the
+## ground absent -- the fresh-clone fallback, which is exactly the pre-V4.10a
+## draw -- so the ground's own cost is a difference inside ONE run, not across
+## two runs whose spread (0.3 ms on G2, 2026-10-18) is the size of the delta.
+var _ground_tex: Texture2D = null
 var _phase := "settle"
 var _settle_left := 30
 var _samples: Array = []  # {label, frames, delta_sum, max_ms, calls, prims}
@@ -164,6 +170,19 @@ func _build_configs() -> void:
 	_configs.append({"label": "PAN fit, political, no flows", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
 	_configs.append({"label": "PAN fit, TRADE, no flows", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "trade": true, "run": true, "pan": true})
 	_configs.append({"label": "PAN fit, TRADE, convoys on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true, "pan": true})
+	# V4.10a, THE GROUND -- each row paired with its ground-off twin in the same
+	# run. Max zoom is the gate (G2's row and its delta); 1.9 is mid-band, where
+	# BOTH quads draw, the block's worst still frame; the opening fit is what the
+	# game opens on (alpha ~0.8, both quads); the max-zoom drag prices the one
+	# extra quad a re-record now carries.
+	_configs.append({"label": "V4.10a 1440 max_zoom, ground off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
+	_configs.append({"label": "V4.10a 1440 max_zoom, ground on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10a 1440 mid-band 1.9, ground off", "zoom": 1.9, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
+	_configs.append({"label": "V4.10a 1440 mid-band 1.9, ground on", "zoom": 1.9, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10a 1440 opening fit, ground off", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
+	_configs.append({"label": "V4.10a 1440 opening fit, ground on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10a PAN max, ground off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "ground_off": true})
+	_configs.append({"label": "V4.10a PAN max, ground on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
 	# The clock-health windows reproduce P4's own regime: vsync ON, 1440p,
 	# clock unpaused at speed 1.
 	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
@@ -229,6 +248,10 @@ func _apply_config(cfg: Dictionary) -> void:
 	DisplayServer.window_set_vsync_mode(
 		DisplayServer.VSYNC_ENABLED if bool(cfg["vsync"]) else DisplayServer.VSYNC_DISABLED)
 	_main._map_view.visible = bool(cfg["map"])
+	if _ground_tex == null:
+		_ground_tex = _main._map_view._ground
+	_main._map_view._ground = null if bool(cfg.get("ground_off", false)) else _ground_tex
+	_main._map_view.queue_redraw()
 	_main._minimap.visible = bool(cfg["minimap"])
 	# V3.4. Roads ride map_view's own pass, so they are toggled by the layer
 	# gate rather than by a node; the flows overlay is its own control and is
