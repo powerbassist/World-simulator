@@ -5,7 +5,7 @@ extends RefCounted
 ## figure is moving worst". No state of its own, so every function is static and
 ## the caller holds nothing between refreshes.
 ##
-## History is written once per simulated month by main.gd's _on_month_elapsed()
+## History is written once per simulated month by src/sim/world_month.gd's month
 ## -- Budget.snapshot() merged with Opinion.snapshot(), stamped year and month.
 ## It survives save/load. It is the only rolling series the game keeps, which is
 ## why this module exists rather than each panel caching its own previous values
@@ -134,7 +134,7 @@ static func worst_of(rows: Array[Dictionary]) -> Dictionary:
 	return found
 
 
-## The same merged shape main.gd's _on_month_elapsed() stamps into history --
+## The same merged shape src/sim/world_month.gd stamps into history --
 ## Budget.snapshot() plus Opinion.snapshot(), dated now -- but callable mid-month
 ## without ticking anything. U4's decision-effects baseline: captured the instant
 ## a command is committed, so comparing it against next month's real history

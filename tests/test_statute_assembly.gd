@@ -139,16 +139,18 @@ func _labels_text(node: Node) -> String:
 ## test_industry's pattern: the order is read off the source, because a test
 ## that only ticked in one order would pass a file wired in the wrong one.
 func _test_tick_order_pin() -> void:
-	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
+	var text := FileAccess.get_file_as_string("res://src/sim/world_month.gd")
 	var legislature := text.find("Legislature.tick_month")
 	var statute := text.find("Statute.tick_month")
 	if legislature < 0 or statute < 0:
-		_fail("main.gd is missing a tick (Legislature %d, Statute %d)" % [legislature, statute])
+		_fail("world_month.gd is missing a tick (Legislature %d, Statute %d)" % [legislature, statute])
 		return
 	if not (legislature < statute):
 		_fail("tick order broken: Legislature (%d) < Statute (%d) must hold -- a failed bill's cooldown must be written after the countdown pass" % [
 			legislature, statute])
-	for harness_path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd", "res://tests/test_budget.gd"]:
+	# The balance harnesses run world_month.gd's month (tests/test_world_month.gd);
+	# the projection's mirror still ticks its own subset.
+	for harness_path in ["res://tests/test_budget.gd"]:
 		var harness := FileAccess.get_file_as_string(harness_path)
 		if harness.find("Statute.tick_month") < 0:
 			_fail("%s does not mirror the Statute tick -- the harness would run a different model" % harness_path)
@@ -545,11 +547,13 @@ func _test_release_and_division_same_month() -> void:
 	main_ui._announce_assembly_events({})
 	if main_ui._hud.message_stack.pushed.size() != 2:
 		_fail("a quiet month re-announced a collision card")
-	# And the SOURCE: the capture must sit between the two ticks it guards.
+	# And the SOURCE: the capture must sit between the two ticks it guards --
+	# main.gd's step hook takes it AFTER Legislature and spends it AFTER Statute,
+	# and world_month.gd runs Statute straight after Legislature.
 	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
-	var legislature_idx := text.find("Legislature.tick_month")
+	var legislature_idx := text.find("\t\t\"Legislature\":")
 	var capture_idx := text.find("var assembly_release")
-	var statute_idx := text.find("Statute.tick_month")
+	var statute_idx := text.find("\t\t\"Statute\":")
 	if not (legislature_idx < capture_idx and capture_idx < statute_idx):
 		_fail("main.gd does not capture the release between its two ticks -- a same-month division swallows the release card")
 	main_ui.free()

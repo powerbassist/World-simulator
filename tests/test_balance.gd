@@ -26,37 +26,19 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
-const Economy = preload("res://src/sim/economy.gd")
-const Commodities = preload("res://src/sim/commodities.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
-const Opinion = preload("res://src/sim/opinion.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
-const Statute = preload("res://src/sim/statute.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
-const Characters = preload("res://src/sim/characters.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const Industry = preload("res://src/sim/industry.gd")
-const Investment = preload("res://src/sim/investment.gd")
-const Projects = preload("res://src/sim/projects.gd")
-const Campaign = preload("res://src/sim/campaign.gd")
-const Pledges = preload("res://src/sim/pledges.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Tax = preload("res://src/sim/tax.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
-const Society = preload("res://src/sim/society.gd")
-const Demography = preload("res://src/sim/demography.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
-const Events = preload("res://src/sim/events.gd")
-const Media = preload("res://src/sim/media.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -429,149 +411,61 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		state.year = year
 		state.month = month
 
-		# V2.8. The accessibility index per nation, built here because energy.gd
-		# never learns that a graph exists, and immediately BEFORE Economy because
-		# economy.gd READS ns.energy_impulse_pct rather than computing it -- a
-		# harness that skipped this tick would read a stale field and the re-run
-		# would catch what a fresh zero would have hidden.
-		var access_by_nation: Dictionary = {}
-		for member_id in state.nations.keys():
-			access_by_nation[member_id] = Regions.accessibility_for(
-				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
-		Energy.tick_month(state, _loader, access_by_nation)
-		Economy.tick_month(state)
-		# V4.4 pass 17, in main.gd's slot (immediately after Economy, before Budget):
-		# the events machine's commodity_price_high hook reads the register this call
-		# writes, so a harness that skipped it ran a different event model from the
-		# game and from tools/balance_probe.gd. Pinned by tests/test_events.gd's
-		# `_test_tick_order_pin`.
-		Commodities.tick_month(state, _loader)
-		Budget.tick_month(state)
-		Orgs.tick_month(state, _loader)
-		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.
-		# Added to the harness in the same commit as the model, because the balance re-run
-		# came back BIT-IDENTICAL without it and the prediction said it would not -- the
-		# harness was running the pre-session model and its agreement meant nothing. That
-		# is U6a's day-loop finding: a system this loop never calls is a system whose
-		# bit-identity proves nothing about it.
-		# V1.6b. See src/ui/main.gd for why this sits after Economy and before Opinion.
-		Inflation.tick_month(state)
-		Media.tick_month(state, _loader)
-		Opinion.tick_month(state)
-		var entry := Budget.snapshot(state)
-		entry.merge(Opinion.snapshot(state))
-		state.append_history(entry)
-		Discipline.tick_month(state, _loader)
-		Legislature.tick_month(state, _loader)
-		# V4.2 T6, in main.gd's slot and AFTER the legislature for the cooldown
-		# reason main.gd states at its own call: a harness that never called this
-		# would run the pre-PMB model, and its agreement with the mirror would be
-		# about nothing (the V1.5d bug class).
-		Statute.tick_month(state, _loader)
-		Dissolution.tick_month(state)
-		# V1.4a, in main.gd's slot. Inert for every regime here that subsidises
-		# nobody -- the share shift is exactly zero with no subsidy standing and all
-		# three prices are exactly 0.0 -- so the checks above are unchanged by it.
-		Companies.tick_month(state, _loader)
-		# V4.7b, in main.gd's slot -- and NOT inert, which is the pass-6 fleet's
-		# important: the machine's idle world fails ~0.62 firms/nation per run and
-		# prices the register into unemployment, so this harness ran a pre-V4.7b
-		# model while its mirror ran the real one, the parity breach the file's own
-		# comments below forbid.
-		Industry.tick_month(state, _loader)
-		# After Companies, because the city pull reads live headcount: a month in which
-		# a subsidy moved a firm's hiring should move people in the same month rather
-		# than the next one. After Economy for the same reason one level up -- the
-		# region pull reads live regional output and unemployment, both settled in
-		# Economy's own tick.
-		Migration.tick_month(state, _loader)
-		# V1.6e, in main.gd's slot beside Companies, and inert for every regime here:
-		# the trend shift and the bill both read EXACTLY 0.0 with no programme standing.
-		# Present in this harness for V1.5d's reason -- a system a harness never calls is
-		# a system whose bit-identity proves nothing about it -- rather than because any
-		# check below needs it.
-		Investment.tick_month(state)
-		# V1.6f, in main.gd's slot and in balance_probe.gd's. The two harnesses must
-		# tick the same list or their agreement is about nothing -- V1.5d shipped with
-		# neither of them calling its module, and the diff of exactly zero lines was
-		# what gave it away only because the prediction had been written down first.
-		Projects.tick_month(state, _loader)
-		# V1.7a, in main.gd's slot and in balance_probe.gd's, for the reason the line
-		# above gives: the two harnesses must tick the same list or their agreement is
-		# about nothing. It is NOT inert for a regime that never campaigns -- the window
-		# opens on the clock alone, so what runs under every other regime is the clear.
-		Campaign.tick_month(state, _loader)
-		Pledges.tick_month(state, _loader)
-		# V1.5a, in main.gd's slot, and NOT inert where the four above it were: the
-		# quality stock reads the live spending line, so any regime that moves one moves
-		# the `health` satisfaction term with it.
-		# V1.5b, immediately before Society: the quality stock divides by this layer's
-		# dependency factor, so demography must have settled before quality reads it.
-		Demography.tick_month(state)
-		Society.tick_month(state)
-		Unrest.tick_month(state)
-		# V1.8, in main.gd's slot. Runs for EVERY regime rather than only the ones that
-		# answer an event, for the reason Projects' and Campaign's lines give: a tick
-		# that only ever executes under the regime designed to exercise it is a tick
-		# nobody has tested. Unlike those two it is NOT inert for the others -- an event
-		# fires on the state a budget produces, and a default applies itself.
-		Events.tick_month(state, _loader)
-		Cabinet.tick_month(state, _loader)
-		# V4.3, main.gd's slot, so the balance run exercises the character
-		# layer through the call the game makes -- the V1.5d rule against a
-		# coupling the acts could otherwise drift behind. The returned acts are
-		# not asserted here; tests/test_characters.gd owns the bands.
-		Characters.tick_month(state, _loader, {
-			"grievance": float(ns.unrest_pct),
-			"press_freedom": float(ns.press_freedom),
-			"judicial_independence": Judiciary.independence_deviation(ns),
-		})
+		# The game's own month (src/sim/world_month.gd), every system main.gd runs:
+		# a balance harness that ticks a hand-kept list agrees with the game about
+		# nothing the list has missed -- V1.5d's bug class, which this loop's copy
+		# repeated (it never ticked Diplomacy or Defence). The regime's commands
+		# ride the step hook, in the slot they had: after the systems, before the
+		# vote.
+		var report := WorldMonth.tick_month(state, _loader, func(step: String, after: bool, _report: Dictionary) -> void:
+			if after or step != "Elections":
+				return
+			if i + 1 == dissolve_at_month:
+				Dissolution.dissolve(state, ns)
 
-		if i + 1 == dissolve_at_month:
-			Dissolution.dissolve(state, ns)
+			if i + 1 == subsidise_at_month:
+				_subsidise_the_largest(state, ns)
 
-		if i + 1 == subsidise_at_month:
-			_subsidise_the_largest(state, ns)
+			if i + 1 == regulate_at_month:
+				_regulate_everything(state, ns)
 
-		if i + 1 == regulate_at_month:
-			_regulate_everything(state, ns)
+			# V1.1e. The whole three-Act judicial ladder at one month -- the reachable worst
+			# case, the treatment the subsidy stack and the regulation stack already get.
+			if i + 1 == capture_at_month:
+				for law_id in ["judicial_appointments_reform", "court_jurisdiction_limits",
+						"judicial_tenure_act"]:
+					for law in _loader.laws:
+						if law.id == law_id:
+							Legislature.apply(state, ns, law, _loader)
+			if i + 1 == nationalise_at_month:
+				_nationalise_the_largest(state, ns)
 
-		# V1.1e. The whole three-Act judicial ladder at one month -- the reachable worst
-		# case, the treatment the subsidy stack and the regulation stack already get.
-		if i + 1 == capture_at_month:
-			for law_id in ["judicial_appointments_reform", "court_jurisdiction_limits",
-					"judicial_tenure_act"]:
-				for law in _loader.laws:
-					if law.id == law_id:
-						Legislature.apply(state, ns, law, _loader)
-		if i + 1 == nationalise_at_month:
-			_nationalise_the_largest(state, ns)
-
-		# V2.8's two regimes, on tools/balance_probe.gd's cadence: an order at
-		# `order_month`, repeated at the source's own build length. Through
-		# Energy.execute() and never by writing ns.plants -- a regime that bypasses
-		# the verb tests a model the player cannot reach. Largest region by live
-		# population share, ties broken by the sorted scan: deterministic, which is
-		# what a re-run needs and an opinion is not.
-		if order_action_id != "" and i + 1 >= order_month and (i + 1 - order_month) % order_repeat_months == 0:
-			var e_action = null
-			for a in _loader.energy_actions:
-				if a.id == order_action_id:
-					e_action = a
-			if e_action != null:
-				var e_weights: Dictionary = {}
-				var e_largest := ""
-				var e_best: float = -1.0
-				for region in _loader.regions.get(nation_id, []):
-					var e_share: float = Migration.region_share(ns, region.id)
-					e_weights[region.id] = e_share
-					if e_share > e_best:
-						e_best = e_share
-						e_largest = region.id
-				var e_access: Dictionary = Regions.accessibility_for(
-					ns, state.regions.get(nation_id, []), state.region_graph)
-				Energy.execute(state, ns, _loader, _loader.energy_actions, e_action,
-					Vector2(0.0, 0.0), e_largest, "", e_access, e_weights)
+			# V2.8's two regimes, on tools/balance_probe.gd's cadence: an order at
+			# `order_month`, repeated at the source's own build length. Through
+			# Energy.execute() and never by writing ns.plants -- a regime that bypasses
+			# the verb tests a model the player cannot reach. Largest region by live
+			# population share, ties broken by the sorted scan: deterministic, which is
+			# what a re-run needs and an opinion is not.
+			if order_action_id != "" and i + 1 >= order_month and (i + 1 - order_month) % order_repeat_months == 0:
+				var e_action = null
+				for a in _loader.energy_actions:
+					if a.id == order_action_id:
+						e_action = a
+				if e_action != null:
+					var e_weights: Dictionary = {}
+					var e_largest := ""
+					var e_best: float = -1.0
+					for region in _loader.regions.get(nation_id, []):
+						var e_share: float = Migration.region_share(ns, region.id)
+						e_weights[region.id] = e_share
+						if e_share > e_best:
+							e_best = e_share
+							e_largest = region.id
+					var e_access: Dictionary = Regions.accessibility_for(
+						ns, state.regions.get(nation_id, []), state.region_graph)
+					Energy.execute(state, ns, _loader, _loader.energy_actions, e_action,
+						Vector2(0.0, 0.0), e_largest, "", e_access, e_weights)
+		)
 
 		# The verdict on the player is the EXECUTIVE election where one exists —
 		# France's presidency — and the legislative one where the head of
@@ -579,7 +473,7 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# separately elected executive changes the assembly, not the office, so
 		# collecting it here would score the player on a vote they cannot lose.
 		var verdict_kind := "executive" if ns.has_executive else "national"
-		for r in Elections.tick_month(state, _loader):
+		for r in report["election_results"]:
 			all_results.append(r)
 			if r["kind"] == verdict_kind:
 				elections.append(r)

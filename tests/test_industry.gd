@@ -82,20 +82,19 @@ func _month_index(state) -> int:
 ## test_characters' pattern: the order is read off the source, because a test
 ## that only ticked in one order would pass a file wired in the wrong one.
 func _test_tick_order_pin() -> void:
-	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
+	var text := FileAccess.get_file_as_string("res://src/sim/world_month.gd")
 	var companies := text.find("Companies.tick_month")
 	var industry := text.find("Industry.tick_month")
 	var migration := text.find("Migration.tick_month")
 	if companies < 0 or industry < 0 or migration < 0:
-		_fail("main.gd is missing one of the three ticks (Companies %d, Industry %d, Migration %d)" % [
+		_fail("world_month.gd is missing one of the three ticks (Companies %d, Industry %d, Migration %d)" % [
 			companies, industry, migration])
 		return
 	if not (companies < industry and industry < migration):
 		_fail("tick order broken: Companies (%d) < Industry (%d) < Migration (%d) must hold" % [
 			companies, industry, migration])
-	var probe := FileAccess.get_file_as_string("res://tools/balance_probe.gd")
-	if probe.find("Industry.tick_month") < 0:
-		_fail("balance_probe.gd does not mirror the Industry tick -- the harness would run a different model")
+	# The harness no longer mirrors the tick: it runs world_month.gd's month, and
+	# tests/test_world_month.gd holds it to that.
 
 
 ## The autonomy fields' register keys, and the only files allowed to write

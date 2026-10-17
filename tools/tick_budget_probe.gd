@@ -9,10 +9,9 @@ extends SceneTree
 ## hundreds of ms IS a visible freeze at every month boundary, and no re-run
 ## would have caught it because every harness prints invariants, never time.
 ##
-## This times each system call in main.gd's exact _on_month_elapsed order (the
-## balance_probe.gd mirror, which tests/test_inflation.gd holds to the same
-## sequence) over 60 months on the live V3.3 roster -- 29 nations, 213 regions,
-## 1065 cities -- and prints per-system totals, means and worst months.
+## This times each step of src/sim/world_month.gd -- the month main.gd runs,
+## through the step hook, so no step can go untimed -- over 60 months on the
+## live roster, and prints per-system totals, means and worst months.
 ##
 ## Not a test, excluded from run_tests.sh: it is the committed instrument beside
 ## the verdict it produces, measure_austerity_peak.gd's precedent. The numbers
@@ -21,34 +20,7 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
-const Regions = preload("res://src/sim/regions.gd")
-const Energy = preload("res://src/sim/energy.gd")
-const Economy = preload("res://src/sim/economy.gd")
-const Budget = preload("res://src/sim/budget.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
-const Media = preload("res://src/sim/media.gd")
-const Opinion = preload("res://src/sim/opinion.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
-const Legislature = preload("res://src/sim/legislature.gd")
-const Statute = preload("res://src/sim/statute.gd")
-const Dissolution = preload("res://src/sim/dissolution.gd")
-const Diplomacy = preload("res://src/sim/diplomacy.gd")
-const Defence = preload("res://src/sim/defence.gd")
-const Companies = preload("res://src/sim/companies.gd")
-const Industry = preload("res://src/sim/industry.gd")
-const Migration = preload("res://src/sim/migration.gd")
-const Investment = preload("res://src/sim/investment.gd")
-const Projects = preload("res://src/sim/projects.gd")
-const Campaign = preload("res://src/sim/campaign.gd")
-const Pledges = preload("res://src/sim/pledges.gd")
-const Demography = preload("res://src/sim/demography.gd")
-const Society = preload("res://src/sim/society.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
-const Events = preload("res://src/sim/events.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
-const Calendar = preload("res://src/sim/calendar.gd")
-const Elections = preload("res://src/sim/elections.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const Trade = preload("res://src/sim/trade.gd")
 
 const MONTHS := 60
@@ -61,7 +33,10 @@ var _us: Dictionary = {}
 func _time(name: String, f: Callable) -> void:
 	var t0 := Time.get_ticks_usec()
 	f.call()
-	var dt := Time.get_ticks_usec() - t0
+	_record(name, Time.get_ticks_usec() - t0)
+
+
+func _record(name: String, dt: int) -> void:
 	if not _us.has(name):
 		_us[name] = [0, 0, 0]
 	var row: Array = _us[name]
@@ -92,7 +67,7 @@ func _initialize() -> void:
 	# caches (network.gd's per-graph Dijkstra table among them), and counting it
 	# would pin a phantom 100x outlier on whichever system ran first. Clearing
 	# the accumulator is the "outside the timer" the comment always claimed:
-	# _tick records through _time, so without the clear the warmup's ~2 s build
+	# _tick records into _us, so without the clear the warmup's ~2 s build
 	# landed in the accessibility row's max and mean denominator -- the 2026-09-16
 	# playtest read that artifact as a live 2.24 s month-boundary freeze.
 	_tick(state, loader, year, month)
@@ -112,53 +87,18 @@ func _initialize() -> void:
 
 
 func _tick(state, loader, year: int, month: int) -> void:
-	# --- main.gd _on_month_elapsed, in order ---
-	var access_by_nation: Dictionary = {}
-	_time("accessibility loop", func() -> void:
-		for member_id in state.nations.keys():
-			access_by_nation[member_id] = Regions.accessibility_for(
-				state.nations[member_id], state.regions.get(member_id, []), state.region_graph))
-	_time("Energy", func() -> void: Energy.tick_month(state, loader, access_by_nation))
-	_time("Economy", func() -> void: Economy.tick_month(state))
-	_time("Budget", func() -> void: Budget.tick_month(state))
-	_time("Orgs", func() -> void: Orgs.tick_month(state, loader))
-	_time("Inflation", func() -> void: Inflation.tick_month(state))
-	_time("Media", func() -> void: Media.tick_month(state, loader))
-	_time("Opinion", func() -> void: Opinion.tick_month(state))
-	var entry: Dictionary
-	_time("history snapshot", func() -> void:
-		entry = Budget.snapshot(state)
-		entry.merge(Opinion.snapshot(state))
-		state.append_history(entry))
-	_time("Discipline", func() -> void: Discipline.tick_month(state, loader))
-	_time("Legislature", func() -> void: Legislature.tick_month(state, loader))
-	# V4.2, main.gd's order -- the PR-47 blindness class on the month
-	# instrument, repeated and closed: the statute book's month ran unmeasured
-	# while the header still claimed the exact order.
-	_time("Statute", func() -> void: Statute.tick_month(state, loader))
-	_time("Dissolution", func() -> void: Dissolution.tick_month(state))
-	_time("Diplomacy", func() -> void: Diplomacy.tick_month(state, loader))
-	_time("Defence", func() -> void: Defence.tick_month(state))
-	_time("Companies", func() -> void: Companies.tick_month(state, loader))
-	# V4.7b, main.gd's order -- the pass-9 fleet's find that the whole-month
-	# instrument was the one mirror left unextended (the PR-46 blindness
-	# class on the month probe). The mirror is otherwise HISTORICAL: the
-	# systems wired in by PRs #42/#44/#45 (Programme, Characters,
-	# Commodities) and the calendar family are still not timed here; the
-	# scale probe is the instrument that tracks the current month.
-	_time("Industry", func() -> void: Industry.tick_month(state, loader))
-	_time("Migration", func() -> void: Migration.tick_month(state, loader))
-	_time("Investment", func() -> void: Investment.tick_month(state))
-	_time("Projects", func() -> void: Projects.tick_month(state, loader))
-	_time("Campaign", func() -> void: Campaign.tick_month(state, loader))
-	_time("Pledges", func() -> void: Pledges.tick_month(state, loader))
-	_time("Demography", func() -> void: Demography.tick_month(state))
-	_time("Society", func() -> void: Society.tick_month(state))
-	_time("Unrest", func() -> void: Unrest.tick_month(state))
-	_time("Events", func() -> void: Events.tick_month(state, loader))
-	_time("Cabinet", func() -> void: Cabinet.tick_month(state, loader))
-	_time("Calendar", func() -> void: Calendar.tick_month(state))
-	_time("Elections", func() -> void: Elections.tick_month(state, loader))
+	# The month is WorldMonth's, timed step by step through its hook: the clock is
+	# stamped before each step and read after it, so every system main.gd runs is
+	# a row here and a system added to the month is timed without touching this
+	# file. The hand-copied order this replaced had stopped timing Commodities,
+	# Programme and Characters while its header still claimed the exact order.
+	var started := {}
+	WorldMonth.tick_month(state, loader, func(step: String, after: bool, _report: Dictionary) -> void:
+		if not after:
+			started[step] = Time.get_ticks_usec()
+			return
+		_record(step, Time.get_ticks_usec() - int(started[step]))
+	)
 	# --- the monthly UI-side reads main.gd also pays (map Flows.refresh's parts
 	# and the action bar's read), kept because they are month-boundary work the
 	# frame pays even though no sim system owns them ---

@@ -77,22 +77,22 @@ func _check_leaf_property() -> void:
 			_fail("characters.gd preloads outside its leaf: %s" % l.strip_edges())
 
 
-## THE TICK-ORDER PIN: main.gd's call order, read from source (the
+## THE TICK-ORDER PIN: the game month's call order, read from source (the
 ## programme/tick-order precedent -- a comment saying the order is not the
 ## check; the two call sites' relative order is). Comments are STRIPPED first:
-## main.gd discusses "Elections.tick_month()" in prose above the handler, and
+## world_month.gd discusses "Elections.tick_month" in prose above its call, and
 ## a raw find() would order the COMMENT, not the call.
 func _check_tick_order_pin() -> void:
-	var src := FileAccess.get_file_as_string("res://src/ui/main.gd")
+	var src := FileAccess.get_file_as_string("res://src/sim/world_month.gd")
 	if src.is_empty():
-		_fail("could not read src/ui/main.gd")
+		_fail("could not read src/sim/world_month.gd")
 		return
 	var code := _code_only(src)
 	var cabinet_at := code.find("Cabinet.tick_month(")
 	var characters_at := code.find("Characters.tick_month(")
-	var elections_at := code.find("var results := Elections.tick_month(")
+	var elections_at := code.find("Elections.tick_month(")
 	if cabinet_at == -1 or characters_at == -1 or elections_at == -1:
-		_fail("main.gd is missing one of Cabinet/Characters/Elections tick calls")
+		_fail("world_month.gd is missing one of Cabinet/Characters/Elections tick calls")
 		return
 	if not (cabinet_at < characters_at and characters_at < elections_at):
 		_fail("Characters.tick_month must run after Cabinet and before Elections in the month handler -- wants read Opinion-settled state, Elections writes the stamp pair and runs last")

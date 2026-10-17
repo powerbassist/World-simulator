@@ -434,7 +434,9 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 ## so order matters structurally. A future edit moving the call ahead of either would
 ## pass the presence check silently.
 func _check_both_harnesses_tick() -> void:
-	for path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd", "res://src/ui/main.gd"]:
+	# The month the game and both balance harnesses run (tests/test_world_month.gd
+	# holds them to it).
+	for path in ["res://src/sim/world_month.gd"]:
 		var text := FileAccess.get_file_as_string(path)
 		if not text.contains("Migration.tick_month"):
 			_fail("%s does not call Migration.tick_month -- a harness running the pre-session model agrees with the other about nothing" % path)

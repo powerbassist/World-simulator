@@ -5,7 +5,7 @@ extends SceneTree
 ## same-month guarantee rests on. The register machine's own contract is
 ## tests/test_programme.gd; this file is the opinion side of
 ## docs/programme-model.md §3, plus the one property a unit test cannot see --
-## that main.gd concludes the register IMMEDIATELY before Opinion reads it,
+## that the game's month concludes the register IMMEDIATELY before Opinion reads it,
 ## with Elections (the only writer of terms_served/months_in_term) after both.
 ##
 ## PROGRAMME_SPAN is deliberately not pinned here -- the Task 4 sweep owns it,
@@ -153,13 +153,18 @@ func _test_the_decay_half_life_lands_inside_the_band() -> void:
 
 ## The same-month guarantee, read from the source the way test_inflation pins
 ## the Media call: Programme.tick_month must be IMMEDIATELY before
-## Opinion.tick_month in main.gd (nothing between them but comments), and
-## Elections.tick_month -- the only writer of the stamp pair -- must come
-## after both. Elections between the pair would reset months_in_term in a won
-## election month between stamp and read, and the pulse would go silently
-## unpaid; the wiring comment in main.gd says the same thing.
+## Opinion.tick_month in the game's month, src/sim/world_month.gd (nothing between
+## them but comments and the step hook's own two calls), and Elections.tick_month
+## -- the only writer of the stamp pair -- must come after both. Elections between
+## the pair would reset months_in_term in a won election month between stamp and
+## read, and the pulse would go silently unpaid; the wiring comment in
+## world_month.gd says the same thing.
+##
+## The hook is the one seam a caller can reach between the pair, so main.gd -- the
+## caller with the most hooks -- is read too: it must hook neither the end of
+## Programme nor the start of Opinion.
 func _test_the_guarantee_is_pinned_in_main() -> void:
-	var lines := FileAccess.get_file_as_string("res://src/ui/main.gd").split("\n")
+	var lines := FileAccess.get_file_as_string("res://src/sim/world_month.gd").split("\n")
 	var programme_at := -1
 	var opinion_at := -1
 	var elections_at := -1
@@ -167,21 +172,30 @@ func _test_the_guarantee_is_pinned_in_main() -> void:
 		var stripped := String(lines[i]).strip_edges()
 		if stripped.begins_with("#"):
 			continue
-		if programme_at < 0 and stripped == "Programme.tick_month(_state, _loader)":
+		if programme_at < 0 and stripped == "Programme.tick_month(state, loader)":
 			programme_at = i
-		elif programme_at >= 0 and opinion_at < 0 and stripped == "Opinion.tick_month(_state)":
+		elif programme_at >= 0 and opinion_at < 0 and stripped == "Opinion.tick_month(state)":
 			opinion_at = i
 		elif opinion_at >= 0 and elections_at < 0 and stripped.contains("Elections.tick_month("):
 			elections_at = i
 	if programme_at < 0 or opinion_at < 0 or elections_at < 0:
-		_fail("main.gd is missing the Programme/Opinion/Elections sequence")
+		_fail("world_month.gd is missing the Programme/Opinion/Elections sequence")
 		return
 	for j in range(programme_at + 1, opinion_at):
 		var stripped := String(lines[j]).strip_edges()
-		if stripped != "" and not stripped.begins_with("#"):
-			_fail("main.gd runs '%s' between Programme.tick_month and Opinion.tick_month -- the same-month guarantee is broken" % stripped)
+		if stripped == "" or stripped.begins_with("#"):
+			continue
+		if stripped == '_after(on_step, "Programme", report)' or stripped == '_before(on_step, "Opinion", report)':
+			continue
+		_fail("world_month.gd runs '%s' between Programme.tick_month and Opinion.tick_month -- the same-month guarantee is broken" % stripped)
 	if elections_at < opinion_at:
-		_fail("main.gd runs Elections before the Programme/Opinion pair -- a won election month would drop the pulse")
+		_fail("world_month.gd runs Elections before the Programme/Opinion pair -- a won election month would drop the pulse")
+
+	# main.gd's hook: arms of its before-branch sit three tabs in, its after-branch's
+	# two. Neither may be the seam between the pair.
+	for line in FileAccess.get_file_as_string("res://src/ui/main.gd").split("\n"):
+		if line.strip_edges() == '"Programme":' or line == '\t\t\t"Opinion":':
+			_fail("main.gd hooks the seam between Programme and Opinion ('%s') -- the same-month guarantee holds only while nothing runs there" % line.strip_edges())
 
 
 # --- Harness --------------------------------------------------------------------------

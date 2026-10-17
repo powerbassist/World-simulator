@@ -12,21 +12,21 @@ extends SceneTree
 ## rather than tests/ for exactly that reason, and excluded from run_tests.sh.
 ##
 ## Pass a regime name to run one: --headless --script ... -- hands_off
+##
+## Pass `--json=PATH` (absolute, or res://) to also write the outcome table: one
+## row per verdict the text prints and one per run, which tools/balance_diff.py
+## compares between two trees -- a re-baseline read off a diff of the verdicts
+## rather than by eye across the whole text. Nothing extra goes to stdout, so the
+## text of a run that writes the table is byte-identical to one that does not.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
-const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
-const Opinion = preload("res://src/sim/opinion.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
-const Statute = preload("res://src/sim/statute.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Characters = preload("res://src/sim/characters.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
 const Government = preload("res://src/sim/government.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
@@ -41,7 +41,6 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -51,7 +50,6 @@ const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Events = preload("res://src/sim/events.gd")
-const Media = preload("res://src/sim/media.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const DemographyK = preload("res://src/sim/demography_constants.gd")
@@ -61,7 +59,7 @@ const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Energy = preload("res://src/sim/energy.gd")
-const Commodities = preload("res://src/sim/commodities.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
 ## openness may claim on its own. Half: openness shares that budget with
@@ -595,13 +593,22 @@ const UNREST_REGIMES := {
 }
 
 
+## The outcome table `--json=PATH` writes: see the header.
+var _outcomes: Array = []
+var _runs: Array = []
+
+
 func _init() -> void:
 	var only := ""
 	var nation_id := "FRA"
+	var json_path := ""
 	# Either bare token may be the regime name or the nation id -- a nation id
 	# is always three uppercase letters, which no regime name is, so order
 	# doesn't matter: `-- managed DEU` and `-- DEU managed` both work.
 	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--json="):
+			json_path = arg.substr("--json=".length())
+			continue
 		if arg.length() == 3 and arg == arg.to_upper():
 			nation_id = arg
 		else:
@@ -619,6 +626,7 @@ func _init() -> void:
 				-1, -1, -1, -1, -1, -1, "", "", -1,
 				int(regime["energy_month"]), String(regime["energy_action"]), int(regime["energy_repeat"])
 			)
+			_write_outcomes(json_path)
 			quit()
 			return
 		if not REGIMES.has(only):
@@ -747,7 +755,39 @@ func _init() -> void:
 				-1, -1, -1, -1, int(regime["referendum_month"]), int(regime["electoral_month"])
 			)
 
+	_write_outcomes(json_path)
 	quit(0)
+
+
+## One verdict as a row. `margin` is the incumbent's vote share less the best
+## rival's, so a HELD verdict reads positive and a LOST one negative, and a
+## shrinking lead shows up before it flips.
+func _outcome_row(regime_name: String, nation_id: String, r: Dictionary, kind: String, verdict: String) -> Dictionary:
+	var shares: Dictionary = r.get("vote_share", {})
+	var incumbent := String(r["incumbent_party_id"])
+	var own := float(shares.get(incumbent, 0.0))
+	var rival := 0.0
+	for party_id in shares:
+		if String(party_id) != incumbent:
+			rival = maxf(rival, float(shares[party_id]))
+	return {
+		"regime": regime_name, "nation": nation_id,
+		"year": int(r["year"]), "month": int(r["month"]),
+		"kind": kind, "verdict": verdict,
+		"vote_share": own, "margin": own - rival,
+		"incumbent_seats": int(r["incumbent_seats"]), "seats_total": int(r["seats_total"]),
+	}
+
+
+func _write_outcomes(path: String) -> void:
+	if path == "":
+		return
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f == null:
+		printerr("could not write %s: %s" % [path, error_string(FileAccess.get_open_error())])
+		return
+	f.store_string(JSON.stringify({"elections": _outcomes, "runs": _runs}, "  ", false))
+	f.close()
 
 
 ## `delta` is a REGIMES-shaped entry: tax_rates_pct / spending_pct_gdp deltas in
@@ -802,7 +842,10 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 	var elections: Array[String] = []
 	var problems: Array[String] = []
-	var peak_unrest := 0.0
+	# A Dictionary, not a float: the step hook below is a lambda, and a lambda
+	# captures a local by value.
+	var run := {"peak_unrest": 0.0}
+	var out_of_government := ""
 
 	var year := START_YEAR
 	var month := 1
@@ -814,259 +857,161 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		state.year = year
 		state.month = month
 
-		# V2.8. The accessibility index per nation, built here because energy.gd
-		# never learns that a graph exists, and immediately BEFORE Economy because
-		# economy.gd READS ns.energy_impulse_pct rather than computing it -- a
-		# harness that skipped this tick would read a stale field and the re-run
-		# would catch what a fresh zero would have hidden.
-		var access_by_nation: Dictionary = {}
-		for member_id in state.nations.keys():
-			access_by_nation[member_id] = Regions.accessibility_for(
-				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
-		Energy.tick_month(state, loader, access_by_nation)
-		Economy.tick_month(state)
-		# V4.6. In main.gd's slot -- after Economy, whose `sector_output` the layer
-		# derives every nation's capacity from, and before Opinion. Nothing in this
-		# probe reads the commodity state, so it is here for balance_probe.gd's own
-		# standing rule: a harness runs the REAL month, and a system left out is a
-		# system whose agreement with main.gd means nothing (U6a's day-loop finding,
-		# restated at every tick this loop has gained since).
-		Commodities.tick_month(state, loader)
-		Budget.tick_month(state)
-		Orgs.tick_month(state, loader)
-		# V1.5d, in main.gd's slot: BEFORE Opinion, which is this channel's only reader.
-		# Added to the harness in the same commit as the model, because the balance re-run
-		# came back BIT-IDENTICAL without it and the prediction said it would not -- the
-		# harness was running the pre-session model and its agreement meant nothing. That
-		# is U6a's day-loop finding: a system this loop never calls is a system whose
-		# bit-identity proves nothing about it.
-		# V1.6b. See src/ui/main.gd for why this sits after Economy and before Opinion.
-		Inflation.tick_month(state)
-		Media.tick_month(state, loader)
-		Opinion.tick_month(state)
-		var entry := Budget.snapshot(state)
-		entry.merge(Opinion.snapshot(state))
-		state.append_history(entry)
-		Discipline.tick_month(state, loader)
-		Legislature.tick_month(state, loader)
-		# V4.2 T6, in main.gd's slot and AFTER the legislature for the cooldown
-		# reason main.gd states at its own call: a harness that never called this
-		# would run the pre-PMB model, and its agreement with the mirror would be
-		# about nothing (the V1.5d bug class).
-		Statute.tick_month(state, loader)
-		Dissolution.tick_month(state)
-		# Added at V1.3b, and inert for every regime that does not sign anything:
-		# relations start at their resting value and this drifts them toward it, so
-		# with no diplomatic act the step is exactly zero. It matters only once a
-		# regime moves a pair, and leaving it out would have let the trade weight
-		# read a relations score that never decays -- a different simulation from
-		# the one main.gd runs.
-		Diplomacy.tick_month(state, loader)
-		# Added at V1.3g, in main.gd's slot, and inert for every regime that signs no
-		# pact: with an empty pact register there is nothing to reconcile and the
-		# bill is exactly 0.0, so the ten budget regimes are provably unchanged.
-		# Capability DOES move here -- "managed" cuts defence by 1.4 points -- but
-		# nothing in the economy reads it, which is the "no economy reader" call
-		# stated where it can be checked rather than only in the model doc.
-		Defence.tick_month(state)
-		# Added at V1.4a, in main.gd's slot, and inert for every regime that subsidises
-		# nobody: with no subsidy standing the share shift is exactly zero for every
-		# firm and all three prices are exactly 0.0, so the fourteen regimes above are
-		# provably unchanged by it. Unlike Defence's capability, NOTHING here moves
-		# under an unsubsidised run at all -- not even a figure the economy ignores.
-		Companies.tick_month(state, loader)
-		# V4.7b, main.gd's order: the autonomy machine ticks after Companies and
-		# before Migration.
-		Industry.tick_month(state, loader)
-		# After Companies, because the city pull reads live headcount: a month in which
-		# a subsidy moved a firm's hiring should move people in the same month rather
-		# than the next one. After Economy for the same reason one level up -- the
-		# region pull reads live regional output and unemployment, both settled in
-		# Economy's own tick.
-		Migration.tick_month(state, loader)
-		# V1.6e, in main.gd's slot beside Companies. Inert for every regime that invests
-		# in nothing -- the trend shift is EXACTLY 0.0 with no programme standing and the
-		# bill is exactly 0.0 -- so the thirty-two regimes above are provably unchanged by
-		# it. Added to the harness in the same commit as the model, which is V1.5d's
-		# finding applied rather than rediscovered: a system this loop never calls is a
-		# system whose bit-identity proves nothing about it.
-		Investment.tick_month(state)
-		# V1.6f, in main.gd's slot. Runs for EVERY regime and not only the two that
-		# build, for the reason U6a's day loop does: a tick that only ever executes
-		# under the regime designed to exercise it is a tick nobody has tested, and
-		# V1.5d shipped a whole session whose harness never called its own module.
-		# With an empty register this is one sorted key list over nothing.
-		Projects.tick_month(state, loader)
-		# V1.7a, in main.gd's slot and BEFORE Elections for main.gd's reason: the window
-		# is inclusive of the month of the vote, so the last month of effort must be
-		# accrued before the vote reads it. Runs for EVERY regime and not only the two
-		# that campaign, for the reason Projects' line above gives -- and here it is
-		# doing something under every regime rather than nothing, because the window
-		# opens on the clock alone and the clear is what runs when it shuts.
-		Campaign.tick_month(state, loader)
-		Pledges.tick_month(state, loader)
-		# V1.5a, in main.gd's slot. NOT inert for every other regime, unlike the four
-		# additions above it, and that is the difference this row exists to record: the
-		# quality stock reads the live spending line, so it diverges from its own
-		# reference in every regime that moves one -- `managed` and `austerity` both do.
-		# The seventeen regimes above are therefore NOT bit-identical after this session,
-		# which the plan predicted before the run.
-		# V1.5b, immediately before Society: the quality stock divides by this layer's
-		# dependency factor, so demography must have settled before quality reads it.
-		Demography.tick_month(state)
-		Society.tick_month(state)
-		Unrest.tick_month(state)
-		peak_unrest = maxf(peak_unrest, float(ns.unrest_pct))
-		# V1.8, in main.gd's slot. Runs for EVERY regime rather than only the two that
-		# answer, for the reason Projects' and Campaign's lines above give -- and this is
-		# the first addition since V1.5a that is NOT inert for the rest: an event fires
-		# on the state a budget produces, and its default applies itself whether or not
-		# anybody is listening. The re-run was predicted not to be bit-identical for
-		# exactly that reason, and tools/events_probe.gd table E0c named which regimes
-		# would move before it was run.
-		Events.tick_month(state, loader)
-		# V1.8. Answered ON ARRIVAL rather than at some month before the deadline, and
-		# that is deliberate: tests/test_events.gd pins that answering early and answering
-		# late cost the same, so a regime that waited would differ from this one in
-		# nothing except how long the card sat there.
-		if answer_events != "":
-			_answer_event(state, loader, ns, answer_events, regime_name, year, month)
-		Cabinet.tick_month(state, loader)
-		# V4.3, main.gd's slot: after Cabinet, before the agreement/election
-		# blocks. The acts are PRINTED (one line per act) so the re-run's
-		# prediction -- idle regimes fire ~zero acts, act lines are the only
-		# new output -- is checkable from the diff itself. Meters read here and
-		# handed in: characters.gd preloads none of their systems.
-		var _char_acts := Characters.tick_month(state, loader, {
-			"grievance": float(ns.unrest_pct),
-			"press_freedom": float(ns.press_freedom),
-			"judicial_independence": Judiciary.independence_deviation(ns),
-		})
-		for _act in _char_acts:
-			print("characters: %s %s" % [regime_name, String(_act["act"])])
+		# The month is src/sim/world_month.gd's: main.gd's order, every system in
+		# it, so a re-run cannot agree with the game about a model the game no
+		# longer runs (V1.5d's bug class, which this loop's hand copy repeated
+		# system by system until the copy was retired). What this harness adds runs
+		# through the step hook, at the slot it ran in when the loop was a copy.
+		var report := WorldMonth.tick_month(state, loader, func(step: String, after: bool, step_report: Dictionary) -> void:
+			if after and step == "Unrest":
+				run["peak_unrest"] = maxf(float(run["peak_unrest"]), float(ns.unrest_pct))
+				return
+			if after and step == "Events":
+				# V1.8. Answered ON ARRIVAL rather than at some month before the
+				# deadline, and that is deliberate: tests/test_events.gd pins that
+				# answering early and answering late cost the same, so a regime that
+				# waited would differ from this one in nothing except how long the
+				# card sat there.
+				if answer_events != "":
+					_answer_event(state, loader, ns, answer_events, regime_name, year, month)
+				return
+			if after and step == "Characters":
+				# V4.3. The acts are PRINTED (one line per act) so the re-run's
+				# prediction -- idle regimes fire ~zero acts, act lines are the only
+				# new output -- is checkable from the diff itself.
+				for _act in step_report["character_acts"]:
+					print("characters: %s %s" % [regime_name, String(_act["act"])])
+				return
+			if after or step != "Elections":
+				return
 
-		if i + 1 == agreement_month:
-			_sign_agreement(state, loader, ns, regime_name, year, month)
+			# Everything a regime DOES, after the month's systems and before the vote:
+			# the slot it has always had.
+			if i + 1 == agreement_month:
+				_sign_agreement(state, loader, ns, regime_name, year, month)
 
-		if i + 1 == tariff_month:
-			_impose_tariffs(state, loader, ns, regime_name, year, month)
+			if i + 1 == tariff_month:
+				_impose_tariffs(state, loader, ns, regime_name, year, month)
 
-		if i + 1 == pact_month:
-			_sign_pact(state, loader, ns, regime_name, year, month)
+			if i + 1 == pact_month:
+				_sign_pact(state, loader, ns, regime_name, year, month)
 
-		if i + 1 == deploy_month:
-			_deploy_forces(state, loader, ns, regime_name, year, month)
+			if i + 1 == deploy_month:
+				_deploy_forces(state, loader, ns, regime_name, year, month)
 
-		if i + 1 == book_month:
-			_book_ahead(state, loader, regime_name, year, month)
+			if i + 1 == book_month:
+				_book_ahead(state, loader, regime_name, year, month)
 
-		if i + 1 == subsidy_month:
-			_subsidise(state, loader, ns, regime_name, year, month)
+			if i + 1 == subsidy_month:
+				_subsidise(state, loader, ns, regime_name, year, month)
 
-		if i + 1 == regulate_month:
-			_regulate(state, loader, ns, regime_name, year, month)
+			if i + 1 == regulate_month:
+				_regulate(state, loader, ns, regime_name, year, month)
 
-		if i + 1 == nationalise_month:
-			_nationalise(state, loader, ns, regime_name, year, month)
+			if i + 1 == nationalise_month:
+				_nationalise(state, loader, ns, regime_name, year, month)
 
-		if i + 1 == corrupt_month:
-			_corrupt(state, loader, ns, regime_name, year, month)
-		if i + 1 == migrate_month:
-			_tighten_migration(state, loader, ns, regime_name, year, month)
-		if i + 1 == switch_month:
-			_switch_budget(state, ns, switch_delta, regime_name, year, month)
-		if i + 1 == settle_month:
-			_settle(state, loader, ns, regime_name, year, month)
-		if i + 1 == censor_month:
-			_censor(state, loader, ns, regime_name, year, month)
-		if i + 1 == invest_month:
-			_invest(state, loader, ns, regime_name, year, month)
-		if i + 1 == build_month:
-			_break_ground(state, loader, ns, regime_name, year, month)
+			if i + 1 == corrupt_month:
+				_corrupt(state, loader, ns, regime_name, year, month)
+			if i + 1 == migrate_month:
+				_tighten_migration(state, loader, ns, regime_name, year, month)
+			if i + 1 == switch_month:
+				_switch_budget(state, ns, switch_delta, regime_name, year, month)
+			if i + 1 == settle_month:
+				_settle(state, loader, ns, regime_name, year, month)
+			if i + 1 == censor_month:
+				_censor(state, loader, ns, regime_name, year, month)
+			if i + 1 == invest_month:
+				_invest(state, loader, ns, regime_name, year, month)
+			if i + 1 == build_month:
+				_break_ground(state, loader, ns, regime_name, year, month)
 
-		# V2.8's two regimes, on the same cadence the plan wrote for them: an order
-		# at `energy_month`, repeated at the source's own build length, so a
-		# fourteen-year run sustains a FLEET rather than a single station. Through
-		# Energy.execute() and never by writing ns.plants -- a regime that bypasses
-		# the verb tests a model the player cannot reach. The siting region is the
-		# nation's largest by live population share, ties broken by the sorted scan,
-		# because a regime needs a deterministic answer and not an opinion.
-		if energy_action_id != "" and i + 1 >= energy_month and (i + 1 - energy_month) % energy_repeat_months == 0:
-			var e_action = null
-			for a in loader.energy_actions:
-				if a.id == energy_action_id:
-					e_action = a
-			if e_action != null:
-				var e_weights: Dictionary = {}
-				var e_largest := ""
-				var e_best: float = -1.0
-				for region in loader.regions.get(nation_id, []):
-					var share: float = Migration.region_share(ns, region.id)
-					e_weights[region.id] = share
-					if share > e_best:
-						e_best = share
-						e_largest = region.id
-				var e_access: Dictionary = Regions.accessibility_for(
-					ns, state.regions.get(nation_id, []), state.region_graph)
-				Energy.execute(state, ns, loader, loader.energy_actions, e_action,
-					Vector2(0.0, 0.0), e_largest, "", e_access, e_weights)
-		if i + 1 == campaign_month:
-			_campaign(state, loader, ns, regime_name, year, month)
-		# V2.6b2: four months into the field, stand the effort down and start the
-		# next-ranked one at ITS best site -- the tour the saturation counter makes
-		# worth taking.
-		if i + 1 == campaign_tour_month:
-			_campaign_tour(state, loader, ns, regime_name, year, month)
-		if i + 1 == pledge_month:
-			_promise(state, loader, ns, regime_name, year, month)
-		if i + 1 == referendum_month:
-			_call_referendum(state, loader, ns, regime_name, year, month)
-		if i + 1 == electoral_month:
-			_reform_the_ballot(state, loader, ns, regime_name, year, month)
-		# V1.1e. At month 6, the same month every other law regime fires.
-		if i + 1 == 6 and chamber_kind != "":
-			_meet_the_second_chamber(state, loader, ns, regime_name, chamber_kind, year, month)
+			# V2.8's two regimes, on the same cadence the plan wrote for them: an order
+			# at `energy_month`, repeated at the source's own build length, so a
+			# fourteen-year run sustains a FLEET rather than a single station. Through
+			# Energy.execute() and never by writing ns.plants -- a regime that bypasses
+			# the verb tests a model the player cannot reach. The siting region is the
+			# nation's largest by live population share, ties broken by the sorted scan,
+			# because a regime needs a deterministic answer and not an opinion.
+			if energy_action_id != "" and i + 1 >= energy_month and (i + 1 - energy_month) % energy_repeat_months == 0:
+				var e_action = null
+				for a in loader.energy_actions:
+					if a.id == energy_action_id:
+						e_action = a
+				if e_action != null:
+					var e_weights: Dictionary = {}
+					var e_largest := ""
+					var e_best: float = -1.0
+					for region in loader.regions.get(nation_id, []):
+						var share: float = Migration.region_share(ns, region.id)
+						e_weights[region.id] = share
+						if share > e_best:
+							e_best = share
+							e_largest = region.id
+					var e_access: Dictionary = Regions.accessibility_for(
+						ns, state.regions.get(nation_id, []), state.region_graph)
+					Energy.execute(state, ns, loader, loader.energy_actions, e_action,
+						Vector2(0.0, 0.0), e_largest, "", e_access, e_weights)
+			if i + 1 == campaign_month:
+				_campaign(state, loader, ns, regime_name, year, month)
+			# V2.6b2: four months into the field, stand the effort down and start the
+			# next-ranked one at ITS best site -- the tour the saturation counter makes
+			# worth taking.
+			if i + 1 == campaign_tour_month:
+				_campaign_tour(state, loader, ns, regime_name, year, month)
+			if i + 1 == pledge_month:
+				_promise(state, loader, ns, regime_name, year, month)
+			if i + 1 == referendum_month:
+				_call_referendum(state, loader, ns, regime_name, year, month)
+			if i + 1 == electoral_month:
+				_reform_the_ballot(state, loader, ns, regime_name, year, month)
+			# V1.1e. At month 6, the same month every other law regime fires.
+			if i + 1 == 6 and chamber_kind != "":
+				_meet_the_second_chamber(state, loader, ns, regime_name, chamber_kind, year, month)
 
-		# U6a. The day loop this file has never had, and it runs for EVERY regime
-		# rather than only the one that books -- a dispatch that only ever executes
-		# under the regime designed to exercise it is not a dispatch anybody has
-		# tested. With an empty register Calendar.due() is one is_empty() check, so
-		# the thirteen regimes above are provably unchanged by it.
-		state.day = 0
-		for d in range(_days_in_month(month, year)):
-			state.day = d + 1
-			for appointment in Calendar.due(state, year, month, state.day):
-				_keep_appointment(state, loader, appointment, regime_name)
-		Calendar.tick_month(state)
+			# U6a. The day loop this file has never had, and it runs for EVERY regime
+			# rather than only the one that books -- a dispatch that only ever executes
+			# under the regime designed to exercise it is not a dispatch anybody has
+			# tested. With an empty register Calendar.due() is one is_empty() check, so
+			# the thirteen regimes above are provably unchanged by it. The month's
+			# Calendar.tick_month() prune has already run inside WorldMonth; it never
+			# drops an open booking, so this loop dispatches what it did when the prune
+			# ran after it.
+			state.day = 0
+			for d in range(_days_in_month(month, year)):
+				state.day = d + 1
+				for appointment in Calendar.due(state, year, month, state.day):
+					_keep_appointment(state, loader, appointment, regime_name)
 
-		if i + 1 == dissolve_month:
-			var before_seats: int = ns.coalition_seats
-			Dissolution.dissolve(state, ns)
-			if ns.dissolution_pending:
-				print("  %d-%02d %s: DISSOLVED — coalition %d/%d before the call" % [
-					year, month, regime_name, before_seats, ns.assembly_seats,
-				])
-			else:
-				print("  %d-%02d %s: dissolution REFUSED — %s" % [
-					year, month, regime_name, Dissolution.refusal_reason(state, ns),
-				])
+			if i + 1 == dissolve_month:
+				var before_seats: int = ns.coalition_seats
+				Dissolution.dissolve(state, ns)
+				if ns.dissolution_pending:
+					print("  %d-%02d %s: DISSOLVED — coalition %d/%d before the call" % [
+						year, month, regime_name, before_seats, ns.assembly_seats,
+					])
+				else:
+					print("  %d-%02d %s: dissolution REFUSED — %s" % [
+						year, month, regime_name, Dissolution.refusal_reason(state, ns),
+					])
 
-		if i + 1 == cabinet_shortfall_month:
-			_short_the_largest_partner(state, ns, party_list, regime_name, year, month)
+			if i + 1 == cabinet_shortfall_month:
+				_short_the_largest_partner(state, ns, party_list, regime_name, year, month)
 
-		if i + 1 == amend_month and amendment_id != "":
-			var law = _find_law(loader, amendment_id)
-			if law == null:
-				printerr("  amendment '%s' not found in data/laws" % amendment_id)
-			else:
-				var result := Legislature.propose(state, loader, law)
-				print("  %d-%02d %s: amendment '%s' — %s (%d/%d, needed %s)" % [
-					year, month, regime_name, amendment_id,
-					"PASSED" if result["passed"] else "failed",
-					result["yes_seats"], result["seats_total"], ns.amendment_rule,
-				])
+			if i + 1 == amend_month and amendment_id != "":
+				var law = _find_law(loader, amendment_id)
+				if law == null:
+					printerr("  amendment '%s' not found in data/laws" % amendment_id)
+				else:
+					var result := Legislature.propose(state, loader, law)
+					print("  %d-%02d %s: amendment '%s' — %s (%d/%d, needed %s)" % [
+						year, month, regime_name, amendment_id,
+						"PASSED" if result["passed"] else "failed",
+						result["yes_seats"], result["seats_total"], ns.amendment_rule,
+					])
+		)
 
-		var results := Elections.tick_month(state, loader)
+		var results: Array = report["election_results"]
 		for r in results:
 			if r["kind"] == "national" and bool(r.get("snap", false)):
 				print("  %d-%02d %s: SNAP resolved — coalition now %d/%d" % [
@@ -1078,29 +1023,33 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			# government but cannot remove the player, so it is reported
 			# separately rather than scored as a win or a loss.
 			if r["kind"] == "national" and ns.has_executive:
+				var standing := "COHABITATION" if ns.is_cohabitation else ("MINORITY" if ns.is_minority else "majority")
 				elections.append("%d-%02d %s: legislative — incumbent %d/%d seats, government %d/%d %s" % [
 					r["year"], r["month"], regime_name,
 					r["incumbent_seats"], r["seats_total"],
 					ns.coalition_seats, ns.assembly_seats,
-					"COHABITATION" if ns.is_cohabitation else ("MINORITY" if ns.is_minority else "majority"),
+					standing,
 				])
+				_outcomes.append(_outcome_row(regime_name, nation_id, r, "legislative", standing))
 				continue
 			var verdict_kind := "executive" if ns.has_executive else "national"
 			if r["kind"] != verdict_kind:
 				continue
+			var verdict := "HELD" if r["incumbent_largest"] else "LOST"
 			if r["kind"] == "executive":
 				# One office, no seats to report.
 				elections.append("%d-%02d %s: presidential — incumbent %.1f%% vote — %s" % [
 					r["year"], r["month"], regime_name,
 					r["incumbent_vote_share"] * 100.0,
-					"HELD" if r["incumbent_largest"] else "LOST",
+					verdict,
 				])
 			else:
 				elections.append("%d-%02d %s: incumbent %.1f%% vote, %d/%d seats — %s" % [
 					r["year"], r["month"], regime_name,
 					r["incumbent_vote_share"] * 100.0, r["incumbent_seats"],
-					r["seats_total"], "HELD" if r["incumbent_largest"] else "LOST",
+					r["seats_total"], verdict,
 				])
+			_outcomes.append(_outcome_row(regime_name, nation_id, r, String(r["kind"]), verdict))
 			# What the result screen tells the player. The point of printing it
 			# here is that it must name the number the player actually moved.
 			for a in r["attribution"]:
@@ -1115,6 +1064,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 
 		if not ns.in_government:
 			print("  (out of government from %d-%02d; simulation stops)" % [year, month])
+			out_of_government = "%d-%02d" % [year, month]
 			break
 
 	for line in elections:
@@ -1126,8 +1076,14 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 	# rather than assumed because tools/unrest_probe.gd's own harness has no elections
 	# and so cannot see a run that ENDS before the grievance matures.
 	print("  unrest: peak %.2f, ended at %.2f, acts %d (threshold %.1f)" % [
-		peak_unrest, ns.unrest_pct, state.unrest_acts.size(), UnrestK.UNREST_THRESHOLD_PCT,
+		float(run["peak_unrest"]), ns.unrest_pct, state.unrest_acts.size(), UnrestK.UNREST_THRESHOLD_PCT,
 	])
+	_runs.append({
+		"regime": regime_name, "nation": nation_id,
+		"out_of_government": out_of_government,
+		"problems": problems.size(),
+		"unrest_acts": state.unrest_acts.size(),
+	})
 	if cabinet_shortfall_month > 0:
 		print("  resignations over the run: %d (last: %s)" % [ns.resignations_count, ns.last_resignation])
 	if problems.is_empty():

@@ -237,6 +237,9 @@ tests=(
   tests/test_overview_panel.gd
   tests/test_save_load.gd
   tests/test_balance.gd
+  # The game's month as ONE function: its step order, the hook as a seam, and
+  # no hand copy of the month left in any harness.
+  tests/test_world_month.gd
   # Every check in this one pins a KNOWN BUG rather than a feature -- it is the
   # playability audit's register, and it turns red when somebody FIXES one.
   # See docs/playability-audit.md.

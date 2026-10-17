@@ -363,8 +363,9 @@ func _test_both_harnesses_still_tick_the_legislature() -> void:
 	# Budget alone -- it is a fiscal projection, not a month of the game -- so a held
 	# bill is invisible to it BY DESIGN and asserting otherwise would be asking the
 	# projection to legislate. The difference is stated rather than the list copied.
-	for path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd",
-			"res://src/ui/main.gd"]:
+	# Since the world-month refactor the three run ONE month, src/sim/world_month.gd
+	# (tests/test_world_month.gd holds them to it), so that is the file read.
+	for path in ["res://src/sim/world_month.gd"]:
 		var src := FileAccess.get_file_as_string(path)
 		if src.is_empty():
 			_fail("could not read %s" % path)

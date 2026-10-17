@@ -14,6 +14,7 @@ extends SceneTree
 ##       V2.8 is its first pricer and owes its own table.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Siting = preload("res://src/sim/siting.gd")
 const Migration = preload("res://src/sim/migration.gd")
@@ -21,28 +22,9 @@ const Energy = preload("res://src/sim/energy.gd")
 const EnergyAction = preload("res://src/core/energy_action.gd")
 const EnergyK = preload("res://src/sim/energy_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
-const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Opinion = preload("res://src/sim/opinion.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
-const Media = preload("res://src/sim/media.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const LegislatureK = preload("res://src/sim/legislature_constants.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
-const Legislature = preload("res://src/sim/legislature.gd")
-const Dissolution = preload("res://src/sim/dissolution.gd")
-const Companies = preload("res://src/sim/companies.gd")
-const Investment = preload("res://src/sim/investment.gd")
-const Projects = preload("res://src/sim/projects.gd")
-const Campaign = preload("res://src/sim/campaign.gd")
-const Pledges = preload("res://src/sim/pledges.gd")
-const Demography = preload("res://src/sim/demography.gd")
-const Society = preload("res://src/sim/society.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
-const Events = preload("res://src/sim/events.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
-const Elections = preload("res://src/sim/elections.gd")
 
 const ROSTER := ["FRA", "DEU", "GBR", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "AUT"]
 
@@ -141,35 +123,9 @@ func _managed_state(loader, nation_id: String):
 ## (V1.3f's measuring-the-wrong-state error, in the file written to avoid it).
 ## Energy BEFORE Economy, because economy.gd reads the field the energy tick wrote.
 func _tick(state, loader) -> void:
-	var access_by_nation: Dictionary = {}
-	for member_id in state.nations.keys():
-		access_by_nation[member_id] = Regions.accessibility_for(
-			state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
-	Energy.tick_month(state, loader, access_by_nation)
-	Economy.tick_month(state)
-	Budget.tick_month(state)
-	Orgs.tick_month(state, loader)
-	Inflation.tick_month(state)
-	Media.tick_month(state, loader)
-	Opinion.tick_month(state)
-	var entry := Budget.snapshot(state)
-	entry.merge(Opinion.snapshot(state))
-	state.append_history(entry)
-	Discipline.tick_month(state, loader)
-	Legislature.tick_month(state, loader)
-	Dissolution.tick_month(state)
-	Companies.tick_month(state, loader)
-	Migration.tick_month(state, loader)
-	Investment.tick_month(state)
-	Projects.tick_month(state, loader)
-	Campaign.tick_month(state, loader)
-	Pledges.tick_month(state, loader)
-	Demography.tick_month(state)
-	Society.tick_month(state)
-	Unrest.tick_month(state)
-	Events.tick_month(state, loader)
-	Cabinet.tick_month(state, loader)
-	Elections.tick_month(state, loader)
+	# The game's own month (src/sim/world_month.gd), not a copy of it: the copy
+	# this replaced had fallen behind main.gd by several systems.
+	WorldMonth.tick_month(state, loader)
 
 
 func _advance(state) -> void:

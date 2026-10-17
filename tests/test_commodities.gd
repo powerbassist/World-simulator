@@ -313,8 +313,8 @@ func _check_prices_hold_the_band() -> void:
 ## THE TICK ORDER, source-read off the month handler the way test_characters.gd
 ## pins Characters' slot: comments stripped first, then the RELATIVE positions of
 ## the three calls. A comment saying the order is not the check; the call sites'
-## order is. NOT in game_state.gd, which has no month tick at all -- main.gd's
-## `_on_month_elapsed` is the sequence every harness in this project mirrors.
+## order is. NOT in game_state.gd, which has no month tick at all --
+## src/sim/world_month.gd is the month the game and every balance harness run.
 ##
 ## AFTER Economy: capacity is derived from `sector_output`, which Economy settles,
 ## so a tick before it would price this month's production off last month's mix.
@@ -324,20 +324,14 @@ func _check_prices_hold_the_band() -> void:
 ## priced in it rather than a month later -- Opinion's own "reads the same month"
 ## rule for Inflation and Orgs.
 ##
-## AND THE MIRROR, one focused second read: balance_probe.gd is the re-run
-## instrument and calls itself main.gd's order, so its slot is checked too. The
-## four other harnesses that tick a subset (test_balance, agency/calendar/media/
-## trade probes) are NOT checked and deliberately do not carry the call: no SIM
-## module reads `commodity_state`, so a harness that omits it cannot disagree with
-## main.gd about a SIM figure -- a harness builds no UI, and the layer's readers
-## (the panel and the map layers) print nothing in one. `Programme`, a player-only
-## system whose harness state is empty, is absent from them for the same reason.
-## The omission is recorded here rather than left to be rediscovered: the day a
-## SIM reader lands, this list is the one that has to grow, and test_inflation.gd's
-## `_check_every_harness_ticks_it` is the shape to copy when it does.
+## There used to be a second read, of balance_probe.gd's hand copy of the month;
+## the copy is gone, and tests/test_world_month.gd holds every harness to the one
+## month instead. The partial-month probes (calendar/media/trade and the rest)
+## still tick a subset and do not carry the call: no SIM module reads the register
+## itself (the commodity_price_high hook reads a stamp, through Events), so a probe
+## without Events cannot disagree about a SIM figure.
 func _check_tick_order_pin() -> void:
-	_check_order_in("res://src/ui/main.gd", "main.gd")
-	_check_order_in("res://tools/balance_probe.gd", "balance_probe.gd")
+	_check_order_in("res://src/sim/world_month.gd", "world_month.gd")
 
 
 func _check_order_in(path: String, label: String) -> void:

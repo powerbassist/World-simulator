@@ -34,36 +34,18 @@ extends SceneTree
 ## channel never confounds the family comparison.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const GameState = preload("res://src/core/game_state.gd")
-const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
-const Dissolution = preload("res://src/sim/dissolution.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
-const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
-const Companies = preload("res://src/sim/companies.gd")
-const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
-const Pledges = preload("res://src/sim/pledges.gd")
-const Society = preload("res://src/sim/society.gd")
-const Demography = preload("res://src/sim/demography.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
 const Events = preload("res://src/sim/events.gd")
-const Media = preload("res://src/sim/media.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
-const Energy = preload("res://src/sim/energy.gd")
-const Commodities = preload("res://src/sim/commodities.gd")
-const Statute = preload("res://src/sim/statute.gd")
-const Industry = preload("res://src/sim/industry.gd")
-const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 
 const START_YEAR := 2026
@@ -258,7 +240,8 @@ func _run_style(style: Dictionary) -> Dictionary:
 	var year := START_YEAR
 	var month := 1
 	var result_record := {}
-	var record_m6 := 0.0
+	# A Dictionary, so the step hook's lambda can write it.
+	var record := {"m6": 0.0}
 	for i in range(MONTHS):
 		month += 1
 		if month > 12:
@@ -267,74 +250,40 @@ func _run_style(style: Dictionary) -> Dictionary:
 		state.year = year
 		state.month = month
 
-		# The tick order is main.gd's and balance_probe.gd's for every machine this
-		# probe runs: a probe whose month differs from the game's month measures
-		# a simulation the player never played. Commodities, Statute and Industry
-		# are in main.gd's slots because Events.tick_month reads their registers
-		# the same month (tests/test_events.gd's tick-order pin holds this file to
-		# it). Programme and Characters are not run -- this probe predates the
-		# programme credit and measures the player nation's record without them.
-		var access_by_nation: Dictionary = {}
-		for member_id in state.nations.keys():
-			access_by_nation[member_id] = Regions.accessibility_for(
-				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
-		Energy.tick_month(state, loader, access_by_nation)
-		Economy.tick_month(state)
-		Commodities.tick_month(state, loader)
-		Budget.tick_month(state)
-		Orgs.tick_month(state, loader)
-		Inflation.tick_month(state)
-		Media.tick_month(state, loader)
-		Opinion.tick_month(state)
-		var entry := Budget.snapshot(state)
-		entry.merge(Opinion.snapshot(state))
-		state.append_history(entry)
-		if state.history.size() == 6:
-			record_m6 = Opinion.competence_record(ns)
-		Discipline.tick_month(state, loader)
-		Legislature.tick_month(state, loader)
-		Statute.tick_month(state, loader)
-		Dissolution.tick_month(state)
-		Diplomacy.tick_month(state, loader)
-		Defence.tick_month(state)
-		Companies.tick_month(state, loader)
-		Industry.tick_month(state, loader)
-		Migration.tick_month(state, loader)
-		Investment.tick_month(state)
-		Projects.tick_month(state, loader)
-		Campaign.tick_month(state, loader)
-		Pledges.tick_month(state, loader)
-		Demography.tick_month(state)
-		Society.tick_month(state)
-		Unrest.tick_month(state)
-		Events.tick_month(state, loader)
-		_answer_event(state, loader, ns, log, year, month)
-		Cabinet.tick_month(state, loader)
+		# The month is the game's own (src/sim/world_month.gd): a probe whose month
+		# differs from the game's measures a simulation the player never played.
+		# The probe's reads and verbs ride the step hook at the slots they always had.
+		var report := WorldMonth.tick_month(state, loader, func(step: String, after: bool, _report: Dictionary) -> void:
+			if after and step == "History":
+				if state.history.size() == 6:
+					record["m6"] = Opinion.competence_record(ns)
+			elif after and step == "Events":
+				_answer_event(state, loader, ns, log, year, month)
+			elif not after and step == "Elections":
+				# The verbs, in the slot the harness puts its regime actions: after the
+				# ticks, before the election.
+				if (i + 1) in commit_months and not (style["budget"] as Dictionary).is_empty():
+					Budget.commit(state, _pending_for(ns, style["budget"]))
+				if bool(style["laws"]) and (i + 1) in LAW_MONTHS:
+					_propose_best_law(state, loader, ns, party_list, log, year, month)
+				if bool(style["diplomacy"]) and (i + 1) in DIPLO_MONTHS:
+					_sign_an_agreement(state, loader, ns, log, year, month)
+				if (i + 1) in (style["campaign"] as Array):
+					_campaign_best_site(state, loader, ns, log, year, month, campaign_log)
+				if bool(style["project"]) and i + 1 == 6:
+					_break_ground(state, loader, ns, log, year, month)
 
-		# The verbs, in the slot the harness puts its regime actions: after the
-		# ticks, before the calendar and the election.
-		if (i + 1) in commit_months and not (style["budget"] as Dictionary).is_empty():
-			Budget.commit(state, _pending_for(ns, style["budget"]))
-		if bool(style["laws"]) and (i + 1) in LAW_MONTHS:
-			_propose_best_law(state, loader, ns, party_list, log, year, month)
-		if bool(style["diplomacy"]) and (i + 1) in DIPLO_MONTHS:
-			_sign_an_agreement(state, loader, ns, log, year, month)
-		if (i + 1) in (style["campaign"] as Array):
-			_campaign_best_site(state, loader, ns, log, year, month, campaign_log)
-		if bool(style["project"]) and i + 1 == 6:
-			_break_ground(state, loader, ns, log, year, month)
+				# The day loop for calendar parity. None of these styles BOOK anything
+				# (the agreement verb executes; it does not book), so the register is
+				# empty by construction and due() is the one is_empty() check the
+				# harness's U6a note describes.
+				state.day = 0
+				for d in range(_days_in_month(month, year)):
+					state.day = d + 1
+					Calendar.due(state, year, month, state.day)
+		)
 
-		# The day loop for calendar parity. None of these styles BOOK anything
-		# (the agreement verb executes; it does not book), so the register is
-		# empty by construction and due() is the one is_empty() check the
-		# harness's U6a note describes.
-		state.day = 0
-		for d in range(_days_in_month(month, year)):
-			state.day = d + 1
-			Calendar.due(state, year, month, state.day)
-		Calendar.tick_month(state)
-
-		for r in Elections.tick_month(state, loader):
+		for r in report["election_results"]:
 			if r["kind"] == "executive" or (r["kind"] == "national" and not ns.has_executive):
 				result_record = r
 

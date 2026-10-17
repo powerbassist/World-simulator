@@ -18,8 +18,9 @@ extends SceneTree
 ##
 ## E1b lifetime accumulation, now on the real machine (defaults and answer-well).
 ## E4  cadence and the desk, swept over CATEGORY_QUIET_MONTHS -- the V4.4 dial.
-##     E4/E5 run the real Events.tick_month but measure HAZARD arrivals only: their
-##     _tick_events chain writes no hook stamps (hooks are witnessed in E6).
+##     E4/E5 run the game's whole month (_tick_events), so a hook arrival counts
+##     beside the hazard ones. Before the world-month refactor their chain wrote no
+##     hook stamps and they measured HAZARD arrivals only (hooks are witnessed in E6).
 ## E5  category spread over a full idle run at the shipped constants.
 ## E6  the hook vocabulary, staged register by register and witnessed landing.
 ## E7  chooser spread: what the other twenty-eight answered over a term.
@@ -33,6 +34,7 @@ extends SceneTree
 ## project's record, and this file is written against it rather than after it.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -419,26 +421,21 @@ func _table_e0c_prediction(paths: Dictionary) -> void:
 
 # --- The real-machine driver, and the E4 surgery on the one V4.4 dial ---------------
 
-## tests/test_events.gd's _tick() order, copied verbatim: the minimal chain an
-## event reads and that reads an event. The full _step above stays for the E0
-## tables and E2/E3, whose premises are the field ranges and the outcome
-## comparison -- and that chain deliberately does NOT tick the machine, which is
-## why those tables keep reading the world they have always read. E1's local
-## mirror is gone: its EVENT_COOLDOWN_MONTHS no longer exists in the machine's
-## behaviour (the per-category quiet replaced it), and a mirror of a machine that
-## no longer runs measures nothing -- V1.5d's harness-runs-the-old-model failure,
-## pre-empted.
+## The game's own month (src/sim/world_month.gd). Until the world-month refactor
+## this was tests/test_events.gd's minimal chain -- what an event reads and what
+## reads an event -- and the chain never ticked Commodities, Orgs, Statute or
+## Industry, so four of the five hooks tests/test_events.gd's tick-order pin names
+## could not fire in what E4/E5 measured. The full _step above stays for the E0
+## tables and E2/E3, whose premises are the field ranges and the outcome comparison
+## -- and that chain deliberately does NOT tick the machine, which is why those
+## tables keep reading the world they have always read. E1's local mirror is gone:
+## its EVENT_COOLDOWN_MONTHS no longer exists in the machine's behaviour (the
+## per-category quiet replaced it), and a mirror of a machine that no longer runs
+## measures nothing -- V1.5d's harness-runs-the-old-model failure, pre-empted.
 func _tick_events(state, months_in: int) -> void:
 	state.year = START_YEAR + int(months_in / 12)
 	state.month = (months_in % 12) + 1
-	Economy.tick_month(state)
-	Budget.tick_month(state)
-	Inflation.tick_month(state)
-	Opinion.tick_month(state)
-	Demography.tick_month(state)
-	Society.tick_month(state)
-	Unrest.tick_month(state)
-	Events.tick_month(state, _loader)
+	WorldMonth.tick_month(state, _loader)
 
 
 ## One FRA run on the real machine, tallied from the desk. `answer_well` answers
