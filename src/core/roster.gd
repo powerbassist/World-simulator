@@ -19,3 +19,16 @@ static func grade(loader, id: String) -> String:
 	if loader.outlines.has(id):
 		return "outline"
 	return ""
+
+
+## V4.8c. How many of each grade the registers hold, counted THROUGH grade() so
+## the map legend's key cannot disagree with the rule it keys: {grade: count}.
+static func counts(loader) -> Dictionary:
+	var out := {"playable": 0, "simulated": 0, "outline": 0}
+	for id in loader.nations.keys():
+		var g := grade(loader, String(id))
+		out[g] = int(out.get(g, 0)) + 1
+	for id in loader.outlines.keys():
+		var g := grade(loader, String(id))
+		out[g] = int(out.get(g, 0)) + 1
+	return out

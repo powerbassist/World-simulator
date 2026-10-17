@@ -124,7 +124,7 @@ func _check_registry_drives_the_switcher() -> void:
 ## reintroduce either defect.
 func _check_political_caption() -> void:
 	var caption := String(MapLayers.layer(MapLayers.POLITICAL)["caption"])
-	var authored := "Every nation the game simulates, in its own colour."
+	var authored := "Roster nations in their own colour; outlines as borders, read on hover."
 	if caption != authored:
 		_fail("the political caption is not the authored string: '%s'" % caption)
 	if caption.is_empty():
@@ -333,6 +333,37 @@ func _check_legend_swatches_match_the_map() -> void:
 	legend.show_layer(MapLayers.POLITICAL, state, "FRA")
 	if not _all_color_rects(legend).is_empty():
 		_fail("the political layer has no stops but the legend drew swatches")
+
+	# V4.8c: the grade rows, counted here WITHOUT Roster.grade -- straight off
+	# the nation files' flag and the outline register -- so a grade rule that
+	# drifts from the registers fails on this line rather than agreeing with
+	# itself.
+	var loader = _main._loader
+	var playable := 0
+	for id in loader.nations.keys():
+		if loader.nations[id].playable:
+			playable += 1
+	var want := [
+		"%d  playable" % playable,
+		"%d  simulated" % (loader.nations.size() - playable),
+		"%d  outlines" % loader.outlines.size(),
+	]
+	var rows: Array = legend._grades.get_children().filter(
+		func(n): return not n.is_queued_for_deletion())
+	if rows.size() != want.size():
+		_fail("political legend: %d grade rows, want %d" % [rows.size(), want.size()])
+	else:
+		for i in want.size():
+			if not String(rows[i].text).begins_with(String(want[i])):
+				_fail("political legend row %d reads '%s', want '%s...'" % [i, rows[i].text, want[i]])
+	if not legend._grades.visible:
+		_fail("political legend: the grade rows are hidden on the Political layer")
+	if playable == 0 or loader.outlines.is_empty():
+		_fail("political legend: the registers are empty -- the count check proved nothing")
+	legend.show_layer(MapLayers.RELATIONS, state, "FRA")
+	if legend._grades.visible:
+		_fail("the grade rows stay up on the Relations layer")
+	legend.show_layer(MapLayers.POLITICAL, state, "FRA")
 
 
 ## The asymmetry as the player meets it. A relations readout may name the pair,

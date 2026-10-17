@@ -138,7 +138,7 @@ const LAYERS: Array[Dictionary] = [
 		"label": "Political",
 		"alpha": 0.20,
 		"stops": [],
-		"caption": "Every nation the game simulates, in its own colour.",
+		"caption": "Roster nations in their own colour; outlines as borders, read on hover.",
 	},
 	{
 		"id": RELATIONS,
