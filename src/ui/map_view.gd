@@ -52,6 +52,8 @@ const Motion = preload("res://src/ui/motion.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapGround = preload("res://src/ui/map_ground.gd")
 const Roster = preload("res://src/core/roster.gd")
+const MapGlyphs = preload("res://src/ui/map_glyphs.gd")
+const MapLabels = preload("res://src/ui/map_labels.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
 const MapOutlines = preload("res://src/ui/map_outlines.gd")
@@ -151,6 +153,19 @@ var _ground_feather_deg := 0.0
 ## and static for the session, so cached in setup() beside the ring boxes rather
 ## than asked per ring per re-record.
 var _border_kind: Dictionary = {}
+## V4.10b. city_id -> nation_id for each nation's capital (MapGlyphs.capitals):
+## content, built once in setup(); a city's TIER is recomputed with the city list
+## each month because tiers 2 and 3 read live population.
+var _capitals: Dictionary = {}
+## Text sizes by "size|text": the names are content, so a width is measured once
+## per session rather than once per re-record per city.
+var _text_size: Dictionary = {}
+## The last placement, read by tests/test_map_view.gd and tools/label_probe.gd.
+var _last_placed: Array = []
+## Per tier, how many cities were on screen and eligible at the last placement.
+var _label_onscreen: Dictionary = {}
+## Probe seam (tools/frame_probe.gd's paired rows): false skips the label pass.
+var _labels_enabled := true
 var _center_lon := 0.0
 var _center_lat := 0.0
 
@@ -345,6 +360,21 @@ const LABEL_COLOR := Color(0.94, 0.96, 1.0, 0.92)
 const LABEL_OUTLINE_COLOR := Color(0.0, 0.0, 0.0, 0.8)
 const LABEL_OUTLINE_PX := 3
 
+## V4.10b. The zoom at which each glyph tier's cities are NAMED permanently (below
+## it a city is named on hover only, as before). Set by tools/label_probe.gd's
+## band, written before the run: a tier turns on at the lowest zoom of the grid
+## where >= 70 % of its on-screen cities get a name in BOTH stress views
+## (Nordrhein-Westfalen, Lombardia) with the tiers above it already on. The
+## measured table is in docs/map-platform-model.md §10. Measured 2026-10-18:
+## tiers 1 and 2 pass at the grid's first step (>= 80 % named in both views at
+## 2.0, which is CITY_MIN_ZOOM, so they are named wherever their marks are drawn).
+## Tier 3 is a BOUND: it peaks at 64 % over the Ruhr at max zoom (71 % over
+## Lombardia), so tier-3 names stay on hover -- INF says "never" without a magic
+## zoom a later MAX_ZOOM could quietly reach.
+const LABEL_ZOOM_T1 := 2.0
+const LABEL_ZOOM_T2 := 2.0
+const LABEL_ZOOM_T3 := INF
+
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -435,6 +465,8 @@ func setup(loader, state) -> void:
 			loader.region_features[region_id])
 	for id in _world_polygons.keys():
 		_ring_boxes_world[id] = _ring_boxes_for(_world_polygons[id])
+
+	_capitals = MapGlyphs.capitals(loader)
 
 	# Built here for _refresh_markers()'s reason: a hit test can happen before the
 	# first frame is drawn, and an empty list would answer it with "nothing here".
@@ -700,6 +732,8 @@ func _outline_at_lonlat(pt: Vector2) -> String:
 ## the hook U5c already added for the same staleness, and the draw stays a draw.
 func refresh_cities() -> void:
 	_cities = MapCities.cities(_loader, _state)
+	for city in _cities:
+		city["tier"] = MapGlyphs.tier_of(city, _capitals)
 
 
 func _refresh_markers() -> void:
@@ -1278,33 +1312,126 @@ func _draw_spines() -> void:
 	_spines_drawn = MapNetwork.draw_spines(
 		self, _spines, view,
 		func(lon: float, lat: float) -> Vector2: return _lonlat_to_screen(lon, lat),
-		size
+		size, ground_alpha()
 	)
 
 
-## The roster only. Naming the ~160 countries the player cannot click would say
-## the opposite of what U5b is for -- the unlabelled ones are the edge of the
-## game, and leaving them unnamed is how that edge is visible without a click
-## that leads nowhere.
+## Every permanent name on the map, nation and (since V4.10b) city, drawn from
+## one placement -- see _place_labels() for who is named and in what order.
 func _draw_labels() -> void:
-	if _zoom < LABEL_MIN_ZOOM:
+	if not _labels_enabled:
 		return
 	var font := get_theme_default_font()
 	if font == null:
 		return
 	var font_size := UiTheme.SIZE_MICRO
-	for id in _labels.keys():
-		var entry: Dictionary = _labels[id]
-		var lonlat: Vector2 = entry["pos"]
-		var text: String = entry["text"]
-		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		var at := _lonlat_to_screen(lonlat.x, lonlat.y) - Vector2(width / 2.0, 0.0)
+	var ascent := font.get_ascent(font_size)
+	for p in _place_labels():
+		var at: Vector2 = (p["rect"] as Rect2).position + Vector2(0.0, ascent)
 		# An outline halo rather than the old 1px offset shadow: over a satellite
-		# image the contrast varies from Alpine snow to North Sea, and a 3px
-		# near-black halo holds legibility on both without putting a box on the
-		# map. Outline only -- the shadow it replaced is NOT drawn beside it.
-		draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_OUTLINE_PX, LABEL_OUTLINE_COLOR)
-		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
+		# image the contrast varies from Alpine snow to North Sea, and over the
+		# paper ground (V4.10a) a light name needs its dark edge just as much. One
+		# style for nation and city names: the placer, not the paint, ranks them.
+		draw_string_outline(font, at, String(p["text"]), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_OUTLINE_PX, LABEL_OUTLINE_COLOR)
+		draw_string(font, at, String(p["text"]), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
+
+
+func _label_zoom(tier: int) -> float:
+	match tier:
+		1:
+			return LABEL_ZOOM_T1
+		2:
+			return LABEL_ZOOM_T2
+	return LABEL_ZOOM_T3
+
+
+func _measure_text(font: Font, font_size: int, text: String) -> Vector2:
+	var key := "%d|%s" % [font_size, text]
+	var cached = _text_size.get(key)
+	if cached != null:
+		return cached
+	var sz := Vector2(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x,
+		font.get_height(font_size))
+	_text_size[key] = sz
+	return sz
+
+
+## V4.10b. ONE placement over every name on screen -- the roster's nation names
+## first (a country's name outranks every city in it), then each on-screen city
+## whose tier is named at this zoom, ranked tier, population, id (MapLabels'
+## total order). Every drawn glyph is an obstacle a name may not cover, and the
+## hovered city is left out: its hover label in _draw_cities() is the one name it
+## gets. Callable outside _draw() so the tests and tools/label_probe.gd read the
+## same placement the frame draws.
+##
+## max_tier >= 1 is the probe's override: name tiers 1..max_tier at ANY zoom from
+## CITY_MIN_ZOOM, ignoring LABEL_ZOOM_T*, which is how the band was measured.
+##
+## The only "only the roster is named" rule from U5b survives: outlines get no
+## name. Naming the countries the player cannot click would say the opposite of
+## what the outline grade is for.
+func _place_labels(max_tier := -1) -> Array:
+	_last_placed = []
+	_label_onscreen = {1: 0, 2: 0, 3: 0}
+	var font := get_theme_default_font()
+	if font == null:
+		return _last_placed
+	var font_size := UiTheme.SIZE_MICRO
+	var view := Rect2(Vector2.ZERO, size)
+	var measure := func(text: String) -> Vector2: return _measure_text(font, font_size, text)
+	var candidates: Array = []
+	var blocked: Array = []
+	if _zoom >= LABEL_MIN_ZOOM:
+		for id in _labels.keys():
+			var entry: Dictionary = _labels[id]
+			var lonlat: Vector2 = entry["pos"]
+			candidates.append({
+				"id": "nation:%s" % id, "text": entry["text"],
+				"at": _lonlat_to_screen(lonlat.x, lonlat.y), "gap": 0.0,
+				"rank": [0, 0.0, String(id)], "anchors": ["center"],
+			})
+	if _zoom >= CITY_MIN_ZOOM:
+		# A tier that is neither named at this zoom nor an obstacle (tier 3, by
+		# the band) contributes nothing, so it is skipped BEFORE it is projected:
+		# ~1270 of 1373 cities, and the projection was most of the pass's cost.
+		# Tiers 1-2 always walk (they are obstacles); the probe's override walks
+		# exactly what it asked to name.
+		var top_tier := 3
+		if max_tier >= 1:
+			top_tier = maxi(max_tier, 2)
+		elif _zoom < _label_zoom(3):
+			top_tier = 2
+		for city in _cities:
+			var tier := int(city.get("tier", 3))
+			if tier > top_tier:
+				continue
+			var lonlat: Vector2 = city["lonlat"]
+			var at := _lonlat_to_screen(lonlat.x, lonlat.y)
+			if not view.has_point(at):
+				continue
+			var glyph := MapGlyphs.glyph_rect(at, city, tier)
+			# Only tiers 1-2 are obstacles. With every on-screen glyph blocked, a
+			# placement over the Ruhr at the opening fit inserted ~1300 rects and
+			# cost 25-45 ms per re-record (tools/label_probe.gd, 2026-10-18) --
+			# paid on every frame of a drag. A tier-3 cross is 2-4 px and a
+			# haloed name over it still reads; a capital's ring or a big city's
+			# cross under a name does not.
+			if tier <= 2:
+				blocked.append(glyph)
+			var named := tier <= max_tier if max_tier >= 1 else _zoom >= _label_zoom(tier)
+			if not named:
+				continue
+			_label_onscreen[tier] = int(_label_onscreen[tier]) + 1
+			var city_id := String(city["city_id"])
+			if city_id == _hovered_city:
+				continue
+			candidates.append({
+				"id": "city:%s" % city_id, "text": String(city["name"]), "at": at,
+				"gap": glyph.size.x * 0.5 + MapLabels.PAD_PX,
+				"rank": [tier, -float(city["population"]), city_id],
+			})
+	_last_placed = MapLabels.place(candidates, blocked, view, measure)
+	return _last_placed
 
 
 ## The fifth pass, behind the markers -- V2.2b, and the tier doc's *"brass
@@ -1316,10 +1443,10 @@ func _draw_labels() -> void:
 ##
 ## Gated on CITY_MIN_ZOOM, where the marker pass is not: five sites on France are
 ## the whole point of that layer at any zoom, while 581 crosses at the Europe fit
-## are noise by the register's own volume clause. The name is drawn on hover
-## alone, for labels' reason -- at this zoom the crosses are dense enough that
-## permanent names would collide, and a cross that needs its name asks for it
-## with the cursor.
+## are noise by the register's own volume clause. The FULL label (name,
+## population, unrest) is drawn here on hover; since V4.10b a city whose tier is
+## named at this zoom also carries a permanent name, placed by _place_labels()
+## so that names never collide -- the reason they used to be hover-only.
 func _draw_cities() -> void:
 	if _zoom < CITY_MIN_ZOOM:
 		return
@@ -1344,13 +1471,9 @@ func _draw_cities() -> void:
 		if at.y < -cull_pad or at.y > size.y + cull_pad:
 			continue
 
-		# A cross rather than a dot: the one glyph left that says *people* rather
-		# than *thing*, and it stays legible from 2px to 12px where a ring would
-		# close up. The arms are the radius on the diagonal, so two cities a few
-		# pixels apart read as two marks, the bigger of them the bigger.
-		var arm := Vector2(radius, 0.0).rotated(PI / 4.0)
-		draw_line(at - arm, at + arm, color, width)
-		draw_line(at - Vector2(arm.x, -arm.y), at + Vector2(arm.x, -arm.y), color, width)
+		# V4.10b: the mark by tier (MapGlyphs) -- V2.2b's cross for tiers 2 and 3,
+		# thinner for 3, ringed for a capital. Size is still radius_of().
+		MapGlyphs.draw_glyph(self, at, city, int(city.get("tier", 3)), width)
 
 		# V2.6b1. A ring around the cross where the country's demonstration is. It is
 		# NOT a fifth map layer and NOT a sixth draw pass: a LAYERS entry chooses a

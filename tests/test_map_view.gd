@@ -59,6 +59,7 @@ func _run() -> void:
 	_check_raster(map)
 	_check_ground_band(map)
 	_check_border_kinds(loader, map)
+	_check_city_labels(map)
 	_check_projection_and_hit_test(map)
 	_check_outline_hover(map)
 	_check_pan_zoom(map)
@@ -240,6 +241,38 @@ func _check_border_kinds(loader, map) -> void:
 	map._zoom = z
 	if not photo.is_equal_approx(map.BORDER_KINDS["playable"]["photo"]) or (map._ground != null and not paper.is_equal_approx(map.BORDER_KINDS["playable"]["paper"])):
 		_fail("border colour does not follow the ground band: %s / %s" % [photo, paper])
+
+
+## V4.10b. City names at depth. Over Paris at max zoom the placer must name
+## cities (a label pass that silently placed nothing is the failure no frame
+## counter shows), never overlap two names, and never name the hovered city
+## twice -- its hover label (name, population, unrest) is the one it gets.
+func _check_city_labels(map) -> void:
+	var zoom_before: float = map._zoom
+	var pan_before: Vector2 = map._pan_offset
+	var hovered_before: String = map._hovered_city
+	map._zoom = map.MAX_ZOOM
+	map.center_on_lonlat(2.35, 48.86)
+	var placed: Array = map._place_labels()
+	var city_id := ""
+	for p in placed:
+		if String(p["id"]).begins_with("city:"):
+			city_id = String(p["id"]).trim_prefix("city:")
+			break
+	if city_id == "":
+		_fail("no city name placed over Paris at max zoom")
+	else:
+		for i in placed.size():
+			for j in range(i + 1, placed.size()):
+				if (placed[i]["rect"] as Rect2).intersects(placed[j]["rect"]):
+					_fail("labels overlap: %s and %s" % [placed[i]["id"], placed[j]["id"]])
+		map._hovered_city = city_id
+		for p in map._place_labels():
+			if String(p["id"]) == "city:" + city_id:
+				_fail("the hovered city %s also got a permanent label" % city_id)
+	map._hovered_city = hovered_before
+	map._pan_offset = pan_before
+	map._zoom = zoom_before
 
 
 func _check_projection_and_hit_test(map) -> void:

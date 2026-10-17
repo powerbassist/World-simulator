@@ -67,6 +67,8 @@ static func _free(grid: Dictionary, r: Rect2) -> bool:
 
 static func _anchor_rect(anchor: String, at: Vector2, gap: float, size: Vector2) -> Rect2:
 	match anchor:
+		"center":
+			return Rect2(at - size * 0.5, size)
 		"right":
 			return Rect2(Vector2(at.x + gap, at.y - size.y * 0.5), size)
 		"above":
@@ -77,7 +79,9 @@ static func _anchor_rect(anchor: String, at: Vector2, gap: float, size: Vector2)
 			return Rect2(Vector2(at.x - size.x * 0.5, at.y + gap), size)
 
 
-## candidates: [{"id", "text", "at": Vector2, "gap": float, "rank": Array}]
+## candidates: [{"id", "text", "at": Vector2, "gap": float, "rank": Array}],
+## optionally "anchors": [String] in place of ANCHORS -- a nation's name is
+## centred on its label point and nowhere else ("center").
 ## blocked: [Rect2] the marks a name may not cover. measure(text) -> Vector2.
 ## Returns [{"id", "text", "anchor", "rect": Rect2}] in placement order; the rect
 ## is the text's box (top-left origin), and the caller sets the baseline from
@@ -100,7 +104,7 @@ static func place(candidates: Array, blocked: Array, view: Rect2, measure: Calla
 	for k: Array in keys:
 		var c: Dictionary = candidates[int(k[-1])]
 		var size: Vector2 = measure.call(String(c["text"]))
-		for anchor: String in ANCHORS:
+		for anchor: String in c.get("anchors", ANCHORS):
 			var r := _anchor_rect(anchor, c["at"], float(c["gap"]), size)
 			if not view.encloses(r) or not _free(grid, r):
 				continue
