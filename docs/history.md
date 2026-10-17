@@ -11,7 +11,7 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.9
 
-**V4.9b -- ELECTION NIGHT AND THE MAP'S CROSSFADE -- IS BUILT on `v4.9b-night` (2026-10-17). One `src/sim/` diff (`Elections.regional_shares()`, pure, two constants), `SAVE_VERSION` unchanged, no settings key.**
+**V4.9b -- ELECTION NIGHT AND THE MAP'S CROSSFADE -- IS MERGED (PR #8, merge commit `cb7784f3`, 2026-10-17). One `src/sim/` diff (`Elections.regional_shares()`, pure, two constants), `SAVE_VERSION` unchanged, no settings key.**
 
 - **Contract and instruments: [panel-system](panel-system.md) §23.**
 - **Author call at the plan gate (2026-10-17):** the regions show a DERIVED swing rather than the national shares thirteen times -- the incumbent tilted by regional unemployment x jobs salience, renormalised so the weighted totals are the verdict exactly (1e-12). Measured at France's opening: 24.4-28.0 % by region around 26.5 %.
