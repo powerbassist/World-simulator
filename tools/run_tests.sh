@@ -209,7 +209,7 @@ tests=(
   tests/test_boot_stages.gd
   tests/test_motion.gd
   # V4.9b: election night -- the regions declare, the figures end on the
-  # result's own, the verdict last; skip, dismissal, rebuild and wall-clock.
+  # result's own, the verdict last; skip, the footer button, rebuild and wall-clock.
   tests/test_election_night.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd

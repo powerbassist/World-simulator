@@ -1002,7 +1002,8 @@ so scrolling the double-election plate ended the count. (3) A nation with no
 population shares would have shown the count full from frame one; regions then
 count equally. Left: `screenshot.gd --tally` runs with motion on throughout, so
 its settled frame can catch a strip figure mid-roll (a tool, not the game).
-Each fix has a test, mutation-checked.
+Each fix has a test, mutation-checked. Pass 2 was clean at the bar: it found only three
+lines of prose still describing the old mid-count dismissal.
 
 **The map's crossfade.** `map_view.set_layer()` fades the roster fills from what
 was ON SCREEN (mid-fade included) to the new layer's over `LAYER_S` 0.3 s. Only the
