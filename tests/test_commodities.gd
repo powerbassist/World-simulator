@@ -150,7 +150,17 @@ func _check_seeding() -> void:
 		if cap.size() != _loader.commodity_goods.size():
 			_fail("nation %s seeded %d capacities for %d goods" % [nation_id, cap.size(), _loader.commodity_goods.size()])
 		for good_id in _goods_sorted():
-			if not cap.has(good_id) or float(cap[good_id]) <= 0.0:
+			if not cap.has(good_id):
+				_fail("nation %s seeded no capacity for %s" % [nation_id, good_id])
+				continue
+			# V4.11b: a raw or agri good's capacity is the nation's REAL share of
+			# world production -- zero where it mines nothing, by design (Albania
+			# has no lithium). Every OTHER good keeps the sector-output claim.
+			if _loader.commodity_endowments.has(good_id):
+				var share := float(_loader.commodity_endowments[good_id].get(nation_id, 0.0))
+				if (share > 0.0) != (float(cap[good_id]) > 0.0):
+					_fail("nation %s: %s share %f but capacity %f -- the endowment did not reach the seed" % [nation_id, good_id, share, float(cap[good_id])])
+			elif float(cap[good_id]) <= 0.0:
 				_fail("nation %s has no capacity for %s -- its authored sector mix has a zero where this machine needs an endowment" % [nation_id, good_id])
 			var base := float(_loader.commodity_goods[good_id].base_price)
 			if not is_equal_approx(float(cs["price"].get(good_id, 0.0)), base):

@@ -56,6 +56,7 @@ func _run() -> void:
 	_check_world_geometry(loader, map)
 	_check_raster(map)
 	_check_projection_and_hit_test(map)
+	_check_outline_hover(map)
 	_check_pan_zoom(map)
 	_check_camera(map)
 	_check_layer_state(map)
@@ -125,8 +126,8 @@ func _check_legend_key_samples() -> void:
 
 
 func _check_geometry(loader) -> void:
-	if loader.geo_features.size() != 29:
-		_fail("expected geometry for 29 features, loaded %d" % loader.geo_features.size())
+	if loader.geo_features.size() != loader.nations.size():
+		_fail("expected geometry for %d features, loaded %d" % [loader.nations.size(), loader.geo_features.size()])
 	for id in loader.nations.keys():
 		var n = loader.nations[id]
 		var polys: Array = loader.geo_features.get(n.geo_id, [])
@@ -154,12 +155,14 @@ func _check_world_geometry(loader, map) -> void:
 		if loader.world_features.has(geo_id):
 			_fail("%s is in both europe.geojson and world.geojson; it would be drawn twice" % geo_id)
 
-	# Oslo. Inside Norway, which the game renders and does not simulate. (This
-	# point was Warsaw through the ten-nation era, because Poland itself was
-	# backdrop then; V3.3's roster made Poland a nation and the negative case
-	# moved north with it.)
-	var oslo: Vector2 = map._lonlat_to_screen(10.75, 59.9)
-	var hit: String = map.nation_at_screen_point(oslo)
+	# Kaliningrad. Inside Russia's exclave, which the game renders and does not
+	# simulate. (This point was Warsaw through the ten-nation era and Oslo from
+	# V3.3; each roster growth made the old probe a nation, and V4.11's
+	# neighbourhood took Norway. The exclave is the strongest negative case left:
+	# on screen at the opening fit and walled in by POL and LTU, so a hit-test
+	# that leaked a neighbour's ring across the border would fire here.)
+	var outside: Vector2 = map._lonlat_to_screen(20.51, 54.71)
+	var hit: String = map.nation_at_screen_point(outside)
 	if hit != "":
 		_fail("a point inside a non-simulated country hit-tested as '%s'" % hit)
 
@@ -233,6 +236,83 @@ func _check_projection_and_hit_test(map) -> void:
 		lon += 0.5
 	if grid_hits < 29:
 		_fail("grid found only %d nation-hitting points across 29 nations" % grid_hits)
+
+
+## V4.11c. An outline answers a HOVER through its own test and nothing else: no
+## nation hover, no click, and `_nation_at_lonlat` still never reads the outline
+## register -- "you cannot click Poland", restated for the block that made
+## outlines readable.
+func _check_outline_hover(map) -> void:
+	var outline_id := ""
+	var pt := Vector2.ZERO
+	var ids: Array = map._world_polygons.keys()
+	ids.sort()
+	for id in ids:
+		for ring: PackedVector2Array in map._world_polygons[id]:
+			if ring.size() < 50:
+				continue
+			var c := Vector2.ZERO
+			for q in ring:
+				c += q
+			c /= ring.size()
+			if Geometry2D.is_point_in_polygon(c, ring) and map._nation_at_lonlat(c) == "":
+				outline_id = id
+				pt = c
+				break
+		if outline_id != "":
+			break
+	if outline_id == "":
+		_fail("no outline ring with an inside centroid -- cannot test the outline hover")
+		return
+	if map._outline_at_lonlat(pt) != outline_id:
+		_fail("the outline test missed %s at its own centroid (got '%s')" % [outline_id, map._outline_at_lonlat(pt)])
+
+	var hovered: Array = []
+	var clicked: Array = []
+	var on_hover := func(id: String) -> void: hovered.append(id)
+	var on_click := func(id: String) -> void: clicked.append(id)
+	map.nation_hovered.connect(on_hover)
+	map.nation_clicked.connect(on_click)
+	var screen: Vector2 = map._lonlat_to_screen(pt.x, pt.y)
+	var move := InputEventMouseMotion.new()
+	move.position = screen
+	map._gui_input(move)
+	if map._hovered_outline != outline_id:
+		_fail("hovering %s set the outline hover to '%s'" % [outline_id, map._hovered_outline])
+	if map._hovered_id != "" or hovered.has(outline_id):
+		_fail("hovering the outline %s reached the nation hover" % outline_id)
+	map._gui_input(_mouse_event(MOUSE_BUTTON_LEFT, true, screen))
+	map._gui_input(_mouse_event(MOUSE_BUTTON_LEFT, false, screen))
+	if not clicked.is_empty():
+		_fail("a click on the outline %s emitted nation_clicked %s" % [outline_id, str(clicked)])
+	# Leaving the map takes the readout with it -- no later motion would.
+	map._gui_input(move)
+	map.notification(Control.NOTIFICATION_MOUSE_EXIT)
+	if map._hovered_outline != "":
+		_fail("the outline readout outlived the cursor leaving the map ('%s')" % map._hovered_outline)
+
+	# A roster nation under the cursor wins: the readout never competes with one.
+	var fra: PackedVector2Array = map._polygons["FRA"][0]
+	var fc := Vector2.ZERO
+	for q in fra:
+		fc += q
+	fc /= fra.size()
+	move = InputEventMouseMotion.new()
+	move.position = map._lonlat_to_screen(fc.x, fc.y)
+	map._gui_input(move)
+	if map._hovered_outline != "":
+		_fail("over France the outline hover still read '%s'" % map._hovered_outline)
+	map.nation_hovered.disconnect(on_hover)
+	map.nation_clicked.disconnect(on_click)
+
+	var text := FileAccess.get_file_as_string("res://src/ui/map_view.gd")
+	var start := text.find("func _nation_at_lonlat")
+	var stop := text.find("
+func ", start + 1)
+	var body := text.substr(start, stop - start)
+	for forbidden in ["_world_polygons", "_outline_at_lonlat", "_ring_boxes_world"]:
+		if body.contains(forbidden):
+			_fail("_nation_at_lonlat() reads %s -- an outline would become clickable" % forbidden)
 
 
 func _check_pan_zoom(map) -> void:
@@ -421,7 +501,7 @@ func _check_roads_staged() -> bool:
 			# THE CULL IS ASSERTED BY COUNT, NOT BY EYE. A pass that transforms
 			# first and culls second draws the identical picture, costs the whole
 			# roster, and no frame would say so -- so the failing case is a count
-			# of exactly 463 and the bound has to sit below it.
+			# of the whole graph and the bound has to sit below it.
 			#
 			# The bound is a FRACTION rather than a figure, because the figure
 			# depends on the window: MAX_ZOOM is 8.0 and BASE_SCALE 12, so at the

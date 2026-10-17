@@ -144,6 +144,19 @@ REGION = {
     "SVK": "Central European, fair skin, high cheekbones",
     "SVN": "Alpine and Balkan mix, fair to olive skin",
     "SWE": "Nordic, fair skin, pale eyes",
+    # V4.11, the neighbourhood -- described appearance only, as above.
+    "NOR": "Scandinavian, fair skin, weathered complexion",
+    "ISL": "North Atlantic Nordic, fair skin, light eyes",
+    "SRB": "Balkan, fair to olive skin, dark hair, strong features",
+    "TUR": "Anatolian, olive skin, dark eyes, dark hair",
+    "ALB": "western Balkan, olive skin, dark eyes",
+    "MKD": "southern Balkan, olive skin, dark brown hair",
+    "MNE": "Dinaric Balkan, fair to olive skin, tall build",
+    "BIH": "central Balkan, fair to olive skin, dark hair",
+    "UKR": "East Slavic, fair skin, light brown hair",
+    "MDA": "Bessarabian, fair to olive skin, dark eyes",
+    "XKX": "Albanian Balkan, olive skin, dark hair, sharp features",
+    "BLR": "East Slavic, fair skin, pale eyes, light hair",
 }
 
 ## 4b. Role, derived from the data that already owns the relationship -- the

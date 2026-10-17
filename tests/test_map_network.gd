@@ -27,15 +27,15 @@ func _init() -> void:
 	if spines.size() != edges.size():
 		_fail("spines %d != edges %d -- a region lost its principal city" % [spines.size(), edges.size()])
 
-	if edges.size() != 463:
-		_fail("the graph has %d edges, expected 463 (447 land + 16 sea)" % edges.size())
+	if edges.size() != 640:
+		_fail("the graph has %d edges, expected 640 (623 land + 17 sea)" % edges.size())
 
 	var sea := 0
 	for s in spines:
 		if String(s["kind"]) == "sea":
 			sea += 1
-	if sea != 16:
-		_fail("%d sea spines, expected 16 authored crossings" % sea)
+	if sea != 17:
+		_fail("%d sea spines, expected 17 authored crossings" % sea)
 
 	_check_anchor(loader, spines)
 	_check_box(spines)

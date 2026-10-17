@@ -846,7 +846,7 @@ func _gbr_table(loader) -> void:
 		print("%-6s %10.3f %10.3f %10.3f   %d" % [actor, hi, lo, hi - lo, signs])
 
 	print("")
-	print("An even share is %.3f. A nation whose max and min both sit on it has no" % ForeignPolicy.even_share(state))
+	print("An even share is %.3f. A nation whose max and min both sit on it has no" % ForeignPolicy.even_share(state, "GBR"))
 	print("foreign policy at all -- that is the inert reading this table exists to catch.")
 	_accept_sweep(loader)
 
@@ -859,7 +859,7 @@ func _gbr_table(loader) -> void:
 		var s: float = FP.accept_score(state, "GBR", String(id), terms)
 		var f: float = FP.retaliation_fraction(state, String(id), "GBR", CK.RETALIATION_FRACTION)
 		print("  GBR->%-4s stake %.3f (%.2fx even)  accept %+.3f %-8s  answers %s at %.3f" % [
-			id, float(gbr[id]), float(gbr[id]) / ForeignPolicy.even_share(state), s,
+			id, float(gbr[id]), float(gbr[id]) / ForeignPolicy.even_share(state, "GBR"), s,
 			"signs" if s >= K.ACCEPT_MIN else "refuses", id, f,
 		])
 

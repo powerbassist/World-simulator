@@ -18,8 +18,13 @@ extends SceneTree
 
 const MapCities = preload("res://src/ui/map_cities.gd")
 
-const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
-const EXPECTED_CITIES := 1065  # geography-model.md §7(b)'s count, the volume clause re-measured at V3.3: CITY_MIN_POP 58000 on the EU-29 roster, the interior of BALANCE_PLAN.md's pre-declared band
+## The register is the list (V4 handoff): a literal 29-id roster here went
+## stale the moment V4.11 grew the roster -- five test files at once.
+func _nations() -> Array:
+	var ids: Array = _main._loader.nations.keys()
+	ids.sort()
+	return ids
+const EXPECTED_CITIES := 1373  # geography-model.md's volume clause (<= 1 800 cities, V3.3), re-checked at V4.11a2 (41 nations); CITY_MIN_POP 58000 held so the 29's cities stay byte-identical
 
 var _failures: Array[String] = []
 var _main
@@ -73,7 +78,7 @@ func _check_the_list_is_the_register(loader, state) -> void:
 		if ids.has(city["city_id"]):
 			_fail("city id '%s' appears twice in the draw list" % String(city["city_id"]))
 		ids[city["city_id"]] = true
-	for id in NATIONS:
+	for id in _nations():
 		if not nations_seen.has(id):
 			_fail("no city of %s reached the draw list" % id)
 

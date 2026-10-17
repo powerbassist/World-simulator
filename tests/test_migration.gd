@@ -14,7 +14,12 @@ const MigrationK = preload("res://src/sim/migration_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Companies = preload("res://src/sim/companies.gd")
 
-const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
+## The register is the list (V4 handoff): a literal 29-id roster here went
+## stale the moment V4.11 grew the roster -- five test files at once.
+func _nations() -> Array:
+	var ids: Array = _loader.nations.keys()
+	ids.sort()
+	return ids
 
 var _failures: Array[String] = []
 var _loader
@@ -76,7 +81,7 @@ func _init() -> void:
 ## the seed disagreed with the file on the first frame the divergence would be
 ## measured against the wrong thing.
 func _check_seed_matches_the_content() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var state = GameState.new_game(_loader, nation_id)
 		var ns = state.nations[nation_id]
 		var list: Array = _loader.regions.get(nation_id, [])
@@ -103,7 +108,7 @@ func _check_seed_matches_the_content() -> void:
 ## construction. That is a bound with a number beside it, and the day somebody
 ## authors the twelve ITL1 figures this assertion turns red and says so.
 func _check_pull_is_expected_income() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var state = GameState.new_game(_loader, nation_id)
 		var ns = state.nations[nation_id]
 		var list: Array = _loader.regions.get(nation_id, [])
@@ -143,7 +148,7 @@ func _check_pull_is_expected_income() -> void:
 ## rather than named, so an eleventh companies file changes this test's answer without
 ## changing its text.
 func _check_city_pull_matches_named_payroll() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var state = GameState.new_game(_loader, nation_id)
 		var ns = state.nations[nation_id]
 		var list: Array = _loader.regions.get(nation_id, [])
@@ -319,7 +324,7 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 	# for the same claims -- the suite audit's F4, and the CI's longest single unit.
 	var state = GameState.new_game(_loader, "FRA")
 	var claims: Dictionary = {}
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var ns = state.nations[nation_id]
 		var list: Array = _loader.regions.get(nation_id, [])
 
@@ -330,7 +335,7 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 		var worst_id := ""
 		var best_start := 0.0
 		var worst_start := 0.0
-		if nation_id != "GBR" and list.size() > 1:
+		if not _is_proxy_shape(list) and list.size() > 1:
 			var best_pull := -INF
 			var worst_pull := INF
 			for region in list:
@@ -384,7 +389,7 @@ func _check_the_tick_moves_toward_the_pull() -> void:
 	for i in 168:
 		Migration.tick_month(state, _loader)
 
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var ns = state.nations[nation_id]
 		var list: Array = _loader.regions.get(nation_id, [])
 		var c: Dictionary = claims[nation_id]
@@ -482,3 +487,16 @@ func _finish() -> void:
 	for message in _failures:
 		printerr("FAIL: %s" % message)
 	quit(1)
+
+
+## V4.11: the POPULATION-PROXY shape, read off the register rather than named.
+## Britain was the one nation importing it (V2.2a) and the test said "GBR"; the
+## neighbourhood's five non-NUTS nations import it too. A register whose every
+## region carries gdp_share == share and unemployment_rel == 1.0 has no regional
+## divergence BY CONSTRUCTION (docs/data-sources.md records each as a bound), so
+## there is no pull to move people and no measured spread to assert.
+func _is_proxy_shape(list: Array) -> bool:
+	for region in list:
+		if absf(region.gdp_share - region.share) > 1e-6 or absf(region.unemployment_rel - 1.0) > 1e-9:
+			return false
+	return true

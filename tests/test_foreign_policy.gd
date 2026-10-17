@@ -228,9 +228,9 @@ func _check_ideology_is_the_weak_term() -> void:
 ## and forty-five pairs drift on every click for reasons no readout could explain.
 func _check_third_party_floor_holds() -> void:
 	var effects := ForeignPolicy.third_party_effects(_state, PLAYER, "DEU", -8.0)
-	var floor_share := ForeignPolicy.even_share(_state) * K.THIRD_PARTY_MIN_STAKE_SHARE
 	for effect in effects:
 		var x: String = String(effect["a"])
+		var floor_share: float = ForeignPolicy.even_share(_state, x) * K.THIRD_PARTY_MIN_STAKE_SHARE
 		if ForeignPolicy.stake(_state, x, "DEU") < floor_share:
 			_failures.append("%s was dragged into an act on DEU with a stake below the floor" % x)
 			return

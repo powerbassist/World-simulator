@@ -22,7 +22,8 @@
    "tests/test_window_frame.gd",
    "tests/test_panel_kit.gd",
    "tests/test_balance.gd",
-   "tests/test_orgs_panel.gd"
+   "tests/test_orgs_panel.gd",
+   "tests/test_roster.gd"
   ],
   [
    "tests/test_clock.gd",
@@ -52,7 +53,8 @@
    "tests/test_map_cull.gd",
    "tests/test_map_network.gd",
    "tests/test_shell.gd",
-   "tests/test_hud.gd"
+   "tests/test_hud.gd",
+   "tests/test_endowments.gd"
   ],
   [
    "tests/test_data.gd",
@@ -82,7 +84,8 @@
    "tests/test_menu.gd",
    "tests/test_map_plants.gd",
    "tests/test_ui_theme.gd",
-   "tests/test_playability.gd"
+   "tests/test_playability.gd",
+   "tests/test_map_outlines.gd"
   ],
   [
    "tests/test_political_systems.gd",

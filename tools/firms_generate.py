@@ -44,6 +44,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from bench_generate import NAMES, fold, slug  # the committed bench name pools
 from curated_names.extra_surnames import EXTRA_SURNAMES
+from curated_names.neighbour_names import NEIGHBOUR_NAMES
+from import_data import ANCHOR_POOL
+
+# V4.11. THE 29 KEEP THE STREAM THEY WERE GENERATED ON. One RNG draws over the
+# nations in sorted order, so a neighbour that sorts early (ALB before AUT)
+# would shift every later nation's draws and regenerate firms nobody asked to
+# change. The 29 -- import_data's ANCHOR_POOL, the roster this tool first
+# generated -- are drawn first on SEED exactly as before; each neighbour then
+# draws on its OWN seeded stream, so adding a nation never moves another's.
+FROZEN_STREAM = set(ANCHOR_POOL)
 
 ROOT = Path(__file__).resolve().parent.parent
 COMPANIES_DIR = ROOT / "data" / "companies"
@@ -170,6 +180,31 @@ CORP_SUFFIX = {
             "Seguros", "Construção", "Logística", "Agricultura", "Materiais"],
     "MLT": ["Industries", "Group", "Trading", "Energy", "Transport",
             "Insurance", "Construction", "Logistics", "Agri", "Materials"],
+    # V4.11, the neighbourhood.
+    "NOR": ["Industri", "Gruppen", "Handel", "Energi", "Transport",
+            "Forsikring", "Bygg", "Logistikk", "Landbruk", "Materialer"],
+    "ISL": ["Iðnaður", "Samstæða", "Verslun", "Orka", "Flutningar",
+            "Tryggingar", "Byggingar", "Vörustjórnun", "Landbúnaður", "Efni"],
+    "SRB": ["Industrija", "Grupa", "Trgovina", "Energija", "Transport",
+            "Osiguranje", "Gradnja", "Logistika", "Poljoprivreda", "Materijali"],
+    "TUR": ["Sanayi", "Grup", "Ticaret", "Enerji", "Taşımacılık",
+            "Sigorta", "İnşaat", "Lojistik", "Tarım", "Malzeme"],
+    "ALB": ["Industria", "Grupi", "Tregtia", "Energjia", "Transporti",
+            "Sigurimet", "Ndërtimi", "Logjistika", "Bujqësia", "Materialet"],
+    "MKD": ["Industrija", "Grupa", "Trgovija", "Energetika", "Transport",
+            "Osiguruvanje", "Gradežništvo", "Logistika", "Zemjodelstvo", "Materijali"],
+    "MNE": ["Industrija", "Grupa", "Trgovina", "Energija", "Saobraćaj",
+            "Osiguranje", "Građevina", "Logistika", "Poljoprivreda", "Materijali"],
+    "BIH": ["Industrija", "Grupa", "Trgovina", "Energija", "Transport",
+            "Osiguranje", "Građevina", "Logistika", "Poljoprivreda", "Materijali"],
+    "UKR": ["Promyslovist", "Hrupa", "Torhivlia", "Enerhiia", "Transport",
+            "Strakhuvannia", "Budivnytstvo", "Lohistyka", "Ahro", "Materialy"],
+    "MDA": ["Industrie", "Grup", "Comerț", "Energie", "Transport",
+            "Asigurări", "Construcții", "Logistică", "Agricultură", "Materiale"],
+    "XKX": ["Industria", "Grupi", "Tregtia", "Energjia", "Transporti",
+            "Sigurimet", "Ndërtimi", "Logjistika", "Bujqësia", "Materialet"],
+    "BLR": ["Prom", "Hrupa", "Handal", "Enierhietyka", "Transpart",
+            "Strakhavannie", "Budaunitstva", "Lahistyka", "Ahra", "Materyialy"],
 }
 # A prefix a firm's named after -- a bank, a company (used for both tiers).
 CORP_PREFIX = {
@@ -202,6 +237,19 @@ CORP_PREFIX = {
     "IRL": ["Bank", "Company", "Trust"],
     "PRT": ["Banco", "Companhia", "Sociedade"],
     "MLT": ["Bank", "Company", "Trust"],
+    "NOR": ["Bank", "Selskap", "Handelshus"],
+    "ISL": ["Banki", "Félag", "Verslunarhús"],
+    "SRB": ["Banka", "Društvo", "Trgovačka kuća"],
+    # Turkish puts "Bankası"/"Şirketi" AFTER the name; these three read as prefixes.
+    "TUR": ["Holding", "Ticaret", "Grup"],
+    "ALB": ["Banka", "Shoqëria", "Shtëpia Tregtare"],
+    "MKD": ["Banka", "Društvo", "Trgovska kuḱa"],
+    "MNE": ["Banka", "Društvo", "Trgovačka kuća"],
+    "BIH": ["Banka", "Društvo", "Trgovačka kuća"],
+    "UKR": ["Bank", "Tovarystvo", "Torhovyi dim"],
+    "MDA": ["Bancă", "Companie", "Casă de comerț"],
+    "XKX": ["Banka", "Shoqëria", "Shtëpia Tregtare"],
+    "BLR": ["Bank", "Tavarystva", "Handlovy dom"],
 }
 
 TRAITS = ["ambitious", "loyal", "principled", "pragmatic", "vain", "stubborn",
@@ -236,8 +284,14 @@ def nation_cities(nation: str) -> list:
     return out
 
 
+def name_pools(nation: str) -> dict:
+    """bench_generate's pools for the 29, the neighbourhood's own for the rest
+    (curated_names/neighbour_names.py says why they live apart)."""
+    return NAMES[nation] if nation in NAMES else NEIGHBOUR_NAMES[nation]
+
+
 def surname_pool(nation: str) -> list:
-    base = list(NAMES[nation]["surnames"]) + list(EXTRA_SURNAMES.get(nation, []))
+    base = list(name_pools(nation)["surnames"]) + list(EXTRA_SURNAMES.get(nation, []))
     # de-dup preserving order
     seen = set()
     out = []
@@ -365,8 +419,8 @@ def gen_majors(rng: random.Random, nation: str, cities: list, used_slugs: set) -
     holds fewer firms than a services body needing ~0.65 at 0.0135."""
     weights = nation_sector_weights(nation)
     surnames = surname_pool(nation)
-    given_f = NAMES[nation]["given_f"]
-    given_m = NAMES[nation]["given_m"]
+    given_f = name_pools(nation)["given_f"]
+    given_m = name_pools(nation)["given_m"]
     suffixes = CORP_SUFFIX[nation]
     prefixes = CORP_PREFIX[nation]
 
@@ -585,7 +639,11 @@ def main() -> int:
     drafts = {}
 
     # sorted iteration: deterministic content regardless of filesystem order
-    for nation in sorted(p.stem for p in NATIONS_DIR.glob("*.json")):
+    every = sorted(p.stem for p in NATIONS_DIR.glob("*.json"))
+    order = [n for n in every if n in FROZEN_STREAM] + [n for n in every if n not in FROZEN_STREAM]
+    shared_rng = rng
+    for nation in order:
+        rng = shared_rng if nation in FROZEN_STREAM else random.Random("%d:%s" % (SEED, nation))
         cities = nation_cities(nation)
         used_slugs = set()
         # The people register's ids are TAKEN, exactly like authored firm ids:

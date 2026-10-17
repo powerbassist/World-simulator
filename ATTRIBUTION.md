@@ -4,9 +4,13 @@
 
 Nation economic statistics sourced from the World Bank Open Data catalog (https://data.worldbank.org/), used under the World Bank's Terms of Use for datasets (CC BY 4.0).
 
+## Our World in Data
+
+Per-nation figures the World Bank publishes for no year at all (Serbian, Montenegrin and Kosovan CO2 per capita, Albanian renewable electricity share, Kosovan electricity consumption per head) are read from Our World in Data's CO2 and energy datasets (https://github.com/owid/co2-data, https://github.com/owid/energy-data), used under CC BY 4.0. Hannah Ritchie, Pablo Rosado and Max Roser, Our World in Data.
+
 ## Natural Earth
 
-Border geometry sourced from Natural Earth (https://www.naturalearthdata.com/), public domain.
+Border geometry sourced from Natural Earth (https://www.naturalearthdata.com/), public domain -- admin-0 for the nations and outlines, and since V4.11a2 admin-1 (1:10m) for the regions of Ukraine, Belarus, Bosnia and Herzegovina, Moldova and Kosovo.
 
 ## NASA Blue Marble
 
@@ -36,6 +40,18 @@ equivalent to CC BY 4.0, attribution required.
 Generated into `data/regions/*.json` and `data/geo/regions.geojson` at V2.2a, and
 credited here in the same commit as the fetch rather than at ship time.
 
+V4.11: the energy-dependency table (`nrg_ind_id`) supplies Kosovo's and Iceland's import
+dependency, under the same policy.
+
+## Official regional statistics (V4.11a2)
+
+Regional population shares for Ukraine (State Statistics Service of Ukraine, 2022
+estimates), Belarus (Belstat, 1 January 2024) and Bosnia and Herzegovina (2013 census,
+entity totals); Ukrainian unemployment from the National Bank of Ukraine's Inflation
+Report (October 2024); Kosovan labour figures from the Kosovo Agency of Statistics
+Labour Force Survey 2024. Official statistics, cited in `tools/import_data.py` and
+`docs/data-sources.md`.
+
 ## GeoNames
 
 City names, populations and coordinates from the GeoNames geographical database
@@ -59,3 +75,19 @@ The generation recipe (`tools/portraits_generate.py` +
 it; the committed PNGs are the shipped artefact, and the recipe is how person
 seventy-two gets a portrait, not a claim the bytes are reproducible on another
 machine.
+
+## World production and the outline register (V4.11b)
+
+Raw-material and agricultural endowments in `data/commodities/endowments.json`:
+mine production from the U.S. Geological Survey, *Mineral Commodity Summaries 2025*
+(public domain), read through Our World in Data's minerals indicators (CC BY 4.0);
+coal, oil and gas production from Our World in Data's energy dataset (CC BY 4.0);
+crops, livestock and roundwood from FAOSTAT (Food and Agriculture Organization of
+the United Nations, datasets QCL and FO, accessed 2026-10-16, CC BY 4.0 under FAO's
+2025 open-data policy and its statistical-database terms of use); fish and seafood (capture and aquaculture) from the World Bank / FAO via
+Our World in Data (CC BY 4.0); uranium shares authored from the World Nuclear
+Association's 2024 mine-production figures (world-nuclear.org), cited as public facts.
+Outline GDP in `data/world/outlines.json` from World Bank Open Data (CC BY 4.0), Taiwan's
+from its Directorate-General of Budget, Accounting and Statistics; outline names from
+Natural Earth (public domain).
+

@@ -12,7 +12,12 @@ const GameState = preload("res://src/core/game_state.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const NaturalChange = preload("res://src/sim/natural_change.gd")
 
-const NATIONS := ["FRA", "DEU", "ITA", "ESP", "BEL", "NLD", "LUX", "CHE", "GBR", "AUT", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "GRC", "HUN", "IRL", "LTU", "LVA", "MLT", "POL", "PRT", "ROU", "SVK", "SVN", "SWE"]
+## The register is the list (V4 handoff): a literal 29-id roster here went
+## stale the moment V4.11 grew the roster -- five test files at once.
+func _nations() -> Array:
+	var ids: Array = _loader.nations.keys()
+	ids.sort()
+	return ids
 
 var _failures: Array[String] = []
 var _loader
@@ -68,19 +73,25 @@ func _init() -> void:
 ## but Britain carrying a real spread, because a register whose rates all agreed
 ## would be a register whose flow was dead on arrival.
 func _check_the_content_is_measured() -> void:
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var list: Array = _loader.regions.get(nation_id, [])
 		var spread_min := INF
 		var spread_max := -INF
 		for region in list:
 			var rate: float = region.natural_change_pct
-			if absf(rate) > 2.0:
+			if absf(rate) > 3.0:  # region.gd's catch, widened at V4.11 for TRC's measured +2.07
 				_fail("%s region '%s' carries natural_change_pct %f -- outside the range any measured rate in the roster approaches" % [nation_id, region.id, rate])
 			spread_min = minf(spread_min, rate)
 			spread_max = maxf(spread_max, rate)
 		if nation_id == "GBR":
 			if spread_min != 0.0 or spread_max != 0.0:
 				_fail("Britain carries a natural differential -- UKM publishes no rates, so the import's bound is zero everywhere")
+		elif list.size() > 1 and _is_proxy_shape(list):
+			# A proxy-shaped register carries ONE measured national rate in every
+			# region (the five non-NUTS neighbours, V4.11) -- assert that it does,
+			# rather than only excusing the missing spread.
+			if spread_max - spread_min > 0.0 or is_zero_approx(spread_max):
+				_fail("%s is proxy-shaped but its regions do not share one non-zero national rate (%f..%f)" % [nation_id, spread_min, spread_max])
 		elif list.size() > 1 and spread_max - spread_min <= 0.0:
 			# One region cannot spread against itself, which is Luxembourg's case and
 			# why the bound is read off the register's size rather than named: a
@@ -124,11 +135,11 @@ func _check_conservation_is_exact() -> void:
 	# the same claim -- the suite audit's F4.
 	var state = GameState.new_game(_loader, "FRA")
 	var start: Dictionary = {}
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		start[nation_id] = Migration.named_region_total(state.nations[nation_id], _loader.regions.get(nation_id, []))
 	for i in 168:
 		Migration.tick_month(state, _loader)
-	for nation_id in NATIONS:
+	for nation_id in _nations():
 		var list: Array = _loader.regions.get(nation_id, [])
 		var drift: float = absf(Migration.named_region_total(state.nations[nation_id], list) - float(start[nation_id]))
 		if drift > 0.000000000001:
@@ -280,3 +291,16 @@ func _finish() -> void:
 	for message in _failures:
 		printerr("FAIL: %s" % message)
 	quit(1)
+
+
+## V4.11: the POPULATION-PROXY shape, read off the register rather than named.
+## Britain was the one nation importing it (V2.2a) and the test said "GBR"; the
+## neighbourhood's five non-NUTS nations import it too. A register whose every
+## region carries gdp_share == share and unemployment_rel == 1.0 has no regional
+## divergence BY CONSTRUCTION (docs/data-sources.md records each as a bound), so
+## there is no pull to move people and no measured spread to assert.
+func _is_proxy_shape(list: Array) -> bool:
+	for region in list:
+		if absf(region.gdp_share - region.share) > 1e-6 or absf(region.unemployment_rel - 1.0) > 1e-9:
+			return false
+	return true

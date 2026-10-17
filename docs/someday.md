@@ -227,7 +227,13 @@ all three together: (1) a player verb or world event that can cause a real world
 shortage; (2) clothing's creep attributed, so it cannot fire the hook by
 mistake; (3) `events_probe` E4/E5 ticking Commodities, with the hook's real
 arrival rate measured before it ships. Left open: clothing creeps from 1.04x to 1.27x base over 168 months,
-unattributed.
+unattributed. **V4.11b2 (2026-10-16):** real endowments bring the crossing forward,
+1.278x at month 96 (was ~160), with a manufactures wave near 1.13x around month 84 --
+[[commodities-model]] §8 as measured. Trigger (2) is further away, not closer. **V4.11 review (2026-10-17):**
+once the energy endowments read every producer (Europe's own oil, gas and coal had
+been zeroed by a year-selection bug), the crossing went away again: clothing peaks at
+1.202x at month 120, the wave at 1.136x near month 85, 0 crossings in 120 months. The
+creep is still unattributed and still rising at month 120.
 
 ### Same-month category collisions favour the early alphabet
 
@@ -268,6 +274,36 @@ Authored for the hook's meaning and never measured against its real arrival rate
 **Trigger:** a tuning pass that measures each hook's real arrival rate in
 balance_probe-style runs. **Fix shape:** per-hook likelihoods set from that
 measurement (the way pass 23 set the commodity pair from the category median).
+
+## Carried from V4.11b (2026-10-16)
+
+- **An outline relation.** The V4.11 brief gave every outline "a relation"; nothing in
+  the sim would read one -- outlines have no diplomacy, no agreements and no verbs aimed
+  at them -- so the author refused it for now (inert content). **Trigger:** the first
+  machine that acts on an outline (an export control against a supplier, a sanction on
+  the world pool, an agreement with a non-European partner).
+- **An export-control verb.** The V4 tier lists export controls as lifted to V4.6; no
+  machine was built. V4.11b's real endowments are what one would stand on (the world
+  pool's supply is now a price lever). **Trigger:** a block that gives the player a
+  supply-side commodity verb.
+- **World production does not grow.** `W` (the world volume a natural good's shares
+  divide) reads authored figures only, so it is fixed at the start while every
+  economy's requirement grows. The likely cause of V4.11b2's manufactures wave at
+  month ~84 (unverified -- [[commodities-model]] §8 as measured). **Trigger:** the
+  first block that reads commodity prices into GDP or lets a shortage reach the
+  player; **fix shape:** grow `W` with world GDP (the outline register gains a trend,
+  or the roster's realised growth stands in), then re-run the probe.
+
+## Carried from V4.11c (2026-10-17)
+
+- **Portraits for the twelve neighbours.** Skipped at the V4.11c gate (author's
+  call): their people files hold 16–22 people each, ~235 with executives, so the pass
+  is ~2.5x the brief's 80–100 and nothing yet seats one of them across the player's
+  desk. Until then a person with no portrait draws the silhouette
+  (`tests/test_portraits.gd` pins the fallback); `tools/portraits_generate.py --only
+  <id>` generates a slice resumably. **Trigger:** the first
+  surface that seats a neighbour's person in front of the player (a summit, a council
+  face for a non-member, a neighbour's cabinet read).
 
 ## Carried from earlier blocks (pointers, not duplicates)
 

@@ -1,0 +1,164 @@
+{
+  "id": "SRB",
+  "name": "Serbia",
+  "geo_id": "SRB",
+  "capital": "Belgrade",
+  "playable": false,
+  "leader": {
+    "person": "SRB_petrovic",
+    "title": "Prime Minister",
+    "party": "stranka_stabilnosti"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#C6363C", "#0C4076", "#FFFFFF"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "National Assembly",
+      "assembly_seats": 250,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "D'Hondt in a single national constituency with a 3% threshold, waived for national-minority lists -- national PR in the plainest sense, the waiver unmodelled. Elected 17 December 2023 for four years, so the next is due by December 2027; an earlier snap election has been repeatedly floated and is the dissolution rule's to price. Constitution of Serbia, Art. 100; Wikipedia, '2023 Serbian parliamentary election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2027,
+          "month": 12
+        },
+        "threshold_pct": 3.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The President dissolves the Assembly on the Government's reasoned proposal (Art. 109) -- an executive-advice shape the parliamentary_republic template reads as self_dissolution, MLT's precedent. Snap elections in 2014, 2016, 2020 and 2023 show the lever is used; elections follow within 45-60 days. Constitution of Serbia, Art. 109.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for five years, two terms at most; elected April 2022, so the next falls in April 2027. Formally limited, in practice the dominant figure of the governing party -- an informal power the parliamentary template cannot express and records here instead. Constitution of Serbia, Arts. 114-116.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "SRB_radovanovic",
+      "term_years": 5,
+      "next": {
+        "year": 2027,
+        "month": 4
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 203: two thirds of all deputies; amendments to the preamble, the principles, rights and freedoms, the system of authority, states of emergency and the amendment procedure itself then go to a mandatory referendum. The machinery carries the two_thirds bar; the mandatory-referendum tier is read as optional, recorded below. Constitution of Serbia, Art. 203.",
+      "rule": "two_thirds",
+      "referendum": "optional",
+      "_referendum_note": "Art. 203(7): the entrenched chapters need a referendum by law, the rest do not -- a split the referendum field cannot carry, so the softer reading is authored. Constitution of Serbia, Art. 203.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "No eternity clause; the 2006 constitution replaced the 1990 one by the referendum route, and the system of authority sits inside the amendable, referendum-gated tier."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court reviews the constitutionality of laws (Arts. 166-175). Constitution of Serbia, Art. 167.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President proposes a Prime Minister after consulting the lists, and the Assembly elects the government by a majority of all deputies (Art. 127). A no-confidence vote needs a majority of all deputies (Art. 130); the template's simple_present is the nearest bar. The current Prime Minister took office in April 2025 after his predecessor resigned. Constitution of Serbia, Arts. 127, 130.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "SRB_petrovic"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Serbia was a kingdom until 1918 and its crown passed into Yugoslavia's; the restored monarch here is fictional.",
+    "pretender_person": "SRB_mihailo_ii",
+    "neighbours": ["BGR", "BIH", "HRV", "HUN", "MKD", "MNE", "ROU", "XKX"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/Ministry of Finance ~2024, rounded, on AUT.json's conventions. VAT 20% standard; corporate 15%; income 10% is the statutory flat wage tax, with social contributions (~35% of gross) carrying most of the labour burden through revenue rather than this rate; capital gains 15%; no wealth tax. Revenue ~38% of GDP includes social contributions. Debt ~47% of GDP (end-2024). Infrastructure 4.5% reflects the capital-spending programme of the mid-2020s. Spending scaled to expenditure near 43% of GDP.",
+    "debt_to_gdp_pct": 47.0,
+    "tax_revenue_pct_gdp": 38.0,
+    "tax_rates_pct": {
+      "income": 10.0,
+      "corporate": 15.0,
+      "vat": 20.0,
+      "capital_gains": 15.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 5.5,
+      "education": 3.5,
+      "defence": 2.2,
+      "pensions": 9.5,
+      "infrastructure": 4.5
+    },
+    "other_spending_pct_gdp": 18.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 6600000,
+    "gdp_eur_bn": 82.9,
+    "unemployment_pct": 7.2,
+    "sectors": {
+      "agriculture": 0.037,
+      "industry": 0.271,
+      "services": 0.692
+    },
+    "cohorts": {
+      "young_pct": 14.31,
+      "old_pct": 22.69,
+      "young_pct_per_yr": -0.003,
+      "old_pct_per_yr": 0.422,
+      "participation_pct": 73.97,
+      "pop_growth_pct": -0.824
+    },
+    "inequality": {
+      "gini_index": 32.8,
+      "gini_index_per_yr": -0.963,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.123,
+      "growth_sd_pct": 3.93,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 14.702,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.656123,
+        "nuclear": 0.0,
+        "renewable": 0.343877
+      },
+      "import_dependency_pct": 41.157,
+      "kwh_per_capita": 5165.7,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 6.24,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 55.2
+    }
+  }
+}

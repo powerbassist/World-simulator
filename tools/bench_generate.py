@@ -526,6 +526,8 @@ def slug(s: str) -> str:
     s = fold(s).lower()
     s = s.replace("ł", "l").replace("ø", "o").replace("đ", "d").replace("ß", "ss")
     s = s.replace("å", "a").replace("æ", "ae").replace("œ", "oe")
+    # V4.11: Icelandic and Turkish letters NFKD does not decompose.
+    s = s.replace("ð", "d").replace("þ", "th").replace("ı", "i")
     out = []
     for c in s:
         if c.isalnum():

@@ -278,6 +278,159 @@ All three carry zero `UK` geo codes at 2022, for the same reason `nama_10r_2gdp`
 
 `tools/region_drift.py` reads `demo_r_pjangrp3` over every published year to measure how far real European regional population shares actually drift — [[migration-model|the ceiling `migration_constants.MIGRATION_RATE`'s clause (ii) is checked against]]. The fetch loop above starts at **2014**, and that lower bound is chosen rather than merely convenient: **2011, 2012 and 2013 each return an EMPTY value dict for this exact request** — not a short one, an empty one — which is where the NUTS 2021 back-cast begins. A fresh clone that only runs the recorded loop (2014 onward) cannot see this directly, since the loop never fetches the empty years to observe the emptiness; it is recorded here instead, so the window's lower bound is explained rather than merely chosen.
 
+### V4.11 — the neighbourhood: coverage, measured per nation
+
+The roster grew past the Union in two tranches: **V4.11a1** the seven NUTS-covered
+neighbours (NOR ISL SRB TUR ALB MKD MNE), **V4.11a2** the five with no NUTS at all
+(BIH UKR MDA XKX BLR). Every gap below is a BOUND with its number, the V3.3
+discipline; none was filled by a number nobody measured.
+
+**Three rules keep the 29 byte-identical**, checked by re-importing and diffing
+`data/` (only the seven new nations, the neighbour lists of the seven Union
+nations they border, and the geo files' new features changed):
+
+- **The World Bank cache is a MERGE**, not a re-pull: the twelve's rows were
+  fetched on 2026-10-15 and appended to the V3.3-era files. A fresh 41-id pull
+  carries the Bank's revisions since and would re-vintage every imported block.
+- **Pooled statistics stay on the 29** (`import_data.ANCHOR_POOL`): the cycle
+  anchor's mean SD, `CYCLE_COMMON_SHARE`, the inflation persistence and Phillips
+  slope, and the motorway-endowment mean. The neighbours are measured AGAINST the
+  anchor the constants were swept on. The endowment mean was found the hard way:
+  the first Norway import moved every existing region's endowment by a few per
+  cent through a roster-wide mean.
+- **Generators keep their streams**: `tools/firms_generate.py` draws the 29 first
+  on its fixed seed and gives each neighbour its own seeded stream (ALB sorts
+  before AUT and would otherwise have regenerated every nation's firms); the
+  neighbourhood's name pools live outside `bench_generate.NAMES` for the same reason.
+
+**Coverage, V4.11a1** (Eurostat cache at 2022 unless said):
+
+| Nation | NUTS level, regions | Regional GDP | Regional unemployment | Natural change | Other |
+|---|---|---|---|---|---|
+| NOR | 2, **6** (NO0B Svalbard/Jan Mayen has no GeoNames place: residual) | **absent** (zero NO codes in `nama_10r_2gdp`) -- population-share proxy | measured | measured, 2013-2024 | `tran_r_net` MWAY absent for NO08/NO09/NO0A: roster-mean fallback (Greece's bound); energy import dependency **-729 %** (the World Bank's own figure for a net exporter, not clamped -- LUX's 109.6 rule) |
+| ISL | 2, **1** | absent -- proxy, share 1.0, costs nothing | measured | measured | import dependency absent at every year -- Eurostat `nrg_ind_id` 16.8 % (2024; a1 first read OWID's fossil share of primary energy, 19.5 %); one GeoNames city over the cut (Reykjavik) |
+| SRB | 2, **4** (Kosovo is outside the RS codes) | measured | measured | measured | emissions absent at every year -- OWID 6.24 t |
+| TUR | **1**, 12 (NUTS 2's 26 is finer than anything reads) | measured | measured | measured; TRC +2.07 %/yr, `region.gd`'s catch widened 2 -> 3 | inflation anchor 23.4 %/yr -- `ANCHOR_MAX` 20 -> 40; tax rates FITTED effective (income 15, VAT 18) to the 22 % collected |
+| ALB | 2, **3** | measured | **absent** -- `unemployment_rel` 1.0 | measured | renewable electricity absent at every year -- OWID 100 %; cycle amplitude 2.15 (the 1990s transition) |
+| MKD | 2, **1** | measured | measured | measured | -- |
+| MNE | 2, **1** | measured | **absent** -- `unemployment_rel` 1.0 | measured | emissions absent at every year -- OWID 3.72 t |
+
+The proxies are `import_data.PROXY_SERIES`, per SERIES rather than per nation
+(Norway keeps its measured unemployment while its GDP is proxied), replacing the
+two Britain-only guards the importer carried since V2.2a.
+
+**V4.11a2 — the five NUTS does not cover** (BIH UKR MDA XKX BLR). No Eurostat
+regional series exists for any of them, so the register is built on three other
+sources made to look like NUTS to the pipeline (`import_data.inject_admin1`):
+
+- **Geometry: Natural Earth admin-1, 1:10m** (public domain, `ne_10m_admin_1_states_provinces.geojson`,
+  fetch line above). Ukraine **25** regions (24 oblasts and Kyiv City), Belarus **7**,
+  Bosnia **3** entities DISSOLVED from Natural Earth's 18 units (the Federation's ten
+  cantons beside the Republika Srpska's regions -- finer than any nation on the roster),
+  Moldova and Kosovo **1** each, dissolved from their admin-1 units so their borders
+  share Ukraine's and Serbia's vertices. Region ids are the ISO 3166-2 suffixes
+  (`UA30` Kyiv City, `BYHM` Minsk City) or `BA01`-`BA03`, `MD00`, `XK00`.
+- **Crimea and Sevastopol are outside the register.** Natural Earth 5.1.2's default
+  view draws them inside Russia, in admin-0 and admin-1 alike; this game takes the
+  layer as published and records it here as a bound. GeoNames files their towns under
+  UA, so they fall outside every Ukrainian polygon and drop into the residual (the
+  importer counts them). Ukraine's population and GDP are the World Bank's own
+  national figures, unchanged by this.
+- **Population: the statistician's own regional figures** where published, as SHARES
+  of the World Bank total -- Ukraine's State Statistics Service 2022 estimates
+  (pre-invasion residence; wartime displacement unmodelled), Belstat 1 January 2024,
+  Bosnia's 2013 census entities. The GeoNames city-share proxy the importer first used
+  was measured badly urban-biased (the Federation 81 % against the census's 63 %, Kyiv
+  City 15 % against 7 %) and is kept only for the single-region two, where it reads 1.0.
+  Brcko District carries no GeoNames place inside its polygon and drops into the
+  residual (Aland's rule): Bosnia names two regions, 98 % of its people.
+- **Economics: proxies.** `gdp_share` = population share, `unemployment_rel` = 1.0,
+  mix = the national World Bank sector shares. Natural change is the NATIONAL World
+  Bank crude birth minus death rate, 2015-2024 mean, in every region (UKR -0.61,
+  BLR -0.40, BIH -0.54, MDA -0.14, XKX +0.66 %/yr) -- a measured national rate rather
+  than Britain's zeros.
+- **Adjacency across sources** (`ADJACENCY_TOL_DEG` 0.05, `ADJACENCY_HITS` 10): GISCO and
+  Natural Earth draw one border with different vertices. The hit count was swept 3 / 6 /
+  10 and checked against the real map: 10 admits all 33 real cross-source borders and
+  none of the five false pairs the lower settings admitted.
+
+**National series, V4.11a2.** Exact-year gaps AUTHORED (`import_data.AUTHORED_SERIES`):
+Ukraine's labour survey is suspended under martial law -- unemployment 14.2 % is the
+National Bank of Ukraine's 2024 estimate (Inflation Report, October 2024),
+participation holds 2021's last measured 66.8 %; Kosovo has no World Bank labour series
+at any year -- Kosovo Agency of Statistics LFS 2024, unemployment 10.8 %, activity 43.2 %
+(2015: 37.6 %). Nearest-year gaps from a second measured source
+(`SUBSTITUTE_SERIES`): Kosovo's emissions (OWID 4.78 t, matched by name -- OWID gives
+Kosovo no iso code) and electricity consumption per head (OWID demand over population);
+Kosovo's and Iceland's import dependency from **Eurostat `nrg_ind_id`** (XK 32.2 %
+2022, IS 16.8 % 2024 -- the direct measure; V4.11a1's Iceland figure, its fossil share
+of primary energy, 19.5 %, was replaced by it). Moldova's World Bank unemployment
+reads 1.4 % (ILO-modelled) and is taken as published. Belarus's inflation anchor is
+34.8 %/yr, inside the widened `ANCHOR_MAX`. Kosovo's contested status (Serbia and five
+EU members do not recognise it) has no field: relations seed structurally, a bound.
+
+### V4.11b — world production (real endowments) and the outline register
+
+**Why the block needed it** is in [[commodities-model]] §8: the closed 41-nation world
+balanced by construction, every nation "mining" every raw good in proportion to its
+industry. `tools/endowments_generate.py` writes two generated files from the sources
+below: `data/commodities/endowments.json` (each producer's SHARE of world production
+of each raw and agri good -- shares only, the volume is sized from requirement in the
+machine) and `data/world/outlines.json` (each of the 133 outlines' name and GDP).
+
+**Sources, and the routes taken when the first choice failed:**
+
+- **Metals -- USGS Mineral Commodity Summaries 2025** (public domain). ScienceBase,
+  its own host, answered Cloudflare error 1033 and pubs.usgs.gov 502/530 on
+  2026-10-16, so the same figures were read from **Our World in Data's minerals
+  indicators** (CC BY 4.0; ids 1131083 bauxite, 1131096 copper, 1131114 iron ore
+  iron content, 1131119 lithium, 1131129 nickel, 1131149 rare earths -- mine
+  production, 2024, with USGS's own world total and "Other countries").
+- **Coal, oil, gas** -- Our World in Data energy (cached since V4.11a), production in TWh.
+- **Crops, livestock, roundwood** -- FAOSTAT bulk QCL (items 1717 cereals primary,
+  1765 meat total, 1780 milk total, 1735 vegetables primary, 564 wine, 1723 sugar
+  crops primary, 328 seed cotton) and FO (1861 roundwood); CC BY 4.0 under FAO's
+  2025 open-data policy and its terms of use. FAOSTAT carries no fisheries series.
+- **Fish** -- World Bank / FAO capture plus aquaculture, via Our World in Data.
+- **Uranium** -- no clean public source (USGS MCS excludes it). The World Nuclear
+  Association's 2024 mine-production table, AUTHORED in the generator as public
+  facts with the citation (the author's call: WNA's reuse policy was not readable).
+- **Outline GDP** -- World Bank `NY.GDP.MKTP.CD`, latest year 2019-2024; **Taiwan**
+  (absent from the World Bank) authored from DGBAS, USD 781 bn 2024. Ten outlines
+  carry no GDP at any year -- ATA, ATF, CYN, ERI, FLK, PRK, SAH, SDS (the World Bank
+  carries no South Sudan GDP in the window), SOL, YEM -- and make demand nowhere: a bound.
+
+**Bounds recorded with their numbers:**
+
+- **Rare earths**: USGS rounds the world to 390 000 t while its countries add to
+  more; the denominator is their sum, so "other" is 0.0 (the generator says so).
+- Natural Earth codes South Sudan `SDS` and Western Sahara `SAH`; the generator maps
+  them to ISO `SSD`/`ESH` for the source joins.
+- A producer a source does not list reads **zero**, never a guess; the unnamed
+  remainder belongs to the world pool (`WORLD_OTHER`), never spread over the roster.
+
+| Good | Source | Year | Roster share | Unnamed |
+|---|---|---|---|---|
+| `bauxite` | USGS MCS 2025 via OWID indicator 1131083 | 2024 | 0.010 | 0.012 |
+| `cereals` | FAOSTAT QCL item 1717 | 2024 | 0.126 | 0.000 |
+| `coal` | OWID energy coal_production | 2024 | 0.023 | 0.015 |
+| `copper_ore` | USGS MCS 2025 via OWID indicator 1131096 | 2024 | 0.018 | 0.133 |
+| `cotton` | FAOSTAT QCL item 328 | 2024 | 0.032 | 0.011 |
+| `crude_oil` | OWID energy oil_production | 2024 | 0.028 | 0.013 |
+| `dairy` | FAOSTAT QCL item 1780 | 2024 | 0.220 | 0.009 |
+| `fish` | World Bank/FAO capture + aquaculture via OWID | 2024 | 0.049 | 0.013 |
+| `iron_ore` | USGS MCS 2025 via OWID indicator 1131114 | 2024 | 0.036 | 0.049 |
+| `lithium_ore` | USGS MCS 2025 via OWID indicator 1131119 | 2024 | 0.002 | 0.019 |
+| `meat` | FAOSTAT QCL item 1765 | 2024 | 0.151 | 0.003 |
+| `natural_gas` | OWID energy gas_production | 2024 | 0.046 | 0.026 |
+| `nickel_ore` | USGS MCS 2025 via OWID indicator 1131129 | 2024 | 0.000 | 0.093 |
+| `rare_earths` | USGS MCS 2025 via OWID indicator 1131149 | 2024 | 0.000 | 0.000 |
+| `sugar` | FAOSTAT QCL item 1723 | 2024 | 0.078 | 0.004 |
+| `timber` | FAOSTAT FO item 1861 (roundwood) | 2024 | 0.150 | 0.002 |
+| `uranium_ore` | World Nuclear Association 2024 (authored) | 2024 | 0.005 | 0.003 |
+| `vegetables` | FAOSTAT QCL item 1735 | 2024 | 0.084 | 0.001 |
+| `wine` | FAOSTAT QCL item 564 | 2023 | 0.612 | 0.000 |
+
 ## Rejected sources
 
 ### OpenStreetMap
@@ -333,19 +486,26 @@ curl -L -o "sources/ne_10m_roads.geojson" \
 
 <!-- V3.3: every World Bank line below was re-fetched with the nineteen added to
 the country filter when the roster grew to EU-27 + 2; the wide 1990-2024 pulls
-carry per_page=2000 because 29 nations x 35 years is 1015 rows, past 1000. -->
+carry per_page=2000 because 29 nations x 35 years is 1015 rows, past 1000.
+V4.11: the twelve neighbours are appended (41 x 35 = 1435 rows, still under 2000).
+The committed cache is NOT a fresh 41-id pull: the twelve's rows were fetched on
+2026-10-15 and MERGED into the V3.3-era files, the 29's rows left exactly as they
+were, because a fresh pull carries the World Bank's revisions since and would
+move every existing nation's imported block -- the re-baseline would then be a
+data vintage and not the neighbourhood. A clean re-fetch with these lines is a
+deliberate re-vintage of all 41 and is recorded as one. -->
 
 for I in NY.GDP.MKTP.CD SP.POP.TOTL SL.UEM.TOTL.ZS NV.AGR.TOTL.ZS NV.IND.TOTL.ZS NV.SRV.TOTL.ZS \
          SP.POP.0014.TO.ZS SP.POP.65UP.TO.ZS SL.TLF.ACTI.ZS SI.POV.GINI; do
   curl -L -o "sources/wb/$I.json" \
-    "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
+    "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/$I?format=json&date=2015%3A2024&per_page=2000"
 done
 
 # V1.6a. One indicator, on its own line, over a DIFFERENT WINDOW -- and the split is
 # the honest cost of the business cycle rather than an untidiness. Measuring how
 # volatile a country's growth is takes several cycles, and 2015-2024 contains one.
-curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \r
-  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=1990%3A2024&per_page=2000"
+curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=1990%3A2024&per_page=2000"
 
 # V1.6b. Two more on the SAME window, and this is where "one extra read of a series
 # already on disk" stops being true: load_wb_indicator_series() reads one file per
@@ -354,7 +514,7 @@ curl -L -o "sources/wb/NY.GDP.MKTP.KD.ZG.json" \r
 # of the 2015-2024 one (verified row by row, zero differing values) and every other
 # caller reaches it through an exact-year match.
 for I in FP.CPI.TOTL.ZG SL.UEM.TOTL.ZS; do
-  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/$I?format=json&date=1990%3A2024&per_page=2000"
+  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/$I?format=json&date=1990%3A2024&per_page=2000"
 done
 
 # V1.1e. Rule of law, and the FIRST line here to carry `&source=3`. The Worldwide
@@ -365,19 +525,57 @@ done
 # other stock this game keeps on a nation is already on a 0-100 scale, so the estimate
 # would be the one quantity in the game needing a conversion nobody could check.
 # Complete for all ten over the standard window, so it needs no nearest-year fallback.
-curl -L -o "sources/wb/GOV_WGI_RL.SC.json" \r
-  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/GOV_WGI_RL.SC?format=json&date=2015%3A2024&per_page=1000&source=3"
+curl -L -o "sources/wb/GOV_WGI_RL.SC.json" \
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/GOV_WGI_RL.SC?format=json&date=2015%3A2024&per_page=2000&source=3"
 
 # V2.8. Energy, five series on the standard window -- but every one through
 # load_wb_indicator_nearest_year(), because none of the five is complete at 2024.
 for I in EG.IMP.CONS.ZS EG.ELC.FOSL.ZS EG.ELC.NUCL.ZS EG.ELC.RNEW.ZS EG.USE.ELEC.KH.PC; do
-  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
+  curl -L -o "sources/wb/$I.json"     "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/$I?format=json&date=2015%3A2024&per_page=2000"
 done
 
 # V3.5. Emissions, one series on the standard window -- complete at 2024 for all
 # 29, so the nearest-year loader it goes through never actually falls back.
+# V4.11. Our World in Data, CC BY 4.0 -- read ONLY where a World Bank nearest-year
+# series is absent at every year for a nation (tools/import_data.py
+# SUBSTITUTE_SERIES): SRB and MNE emissions, ALB renewable electricity, ISL import
+# dependency (its fossil share of primary energy -- Iceland produces no fossil fuel).
+mkdir -p sources/owid
+curl -L -o "sources/owid/owid-co2-data.csv" \
+  "https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv"
+curl -L -o "sources/owid/owid-energy-data.csv" \
+  "https://raw.githubusercontent.com/owid/energy-data/master/owid-energy-data.csv"
+
+# V4.11a2. The five NUTS does not cover: Natural Earth admin-1 (public domain, 40 MB),
+# the World Bank crude birth/death rates for the five's national natural change, and
+# Eurostat's energy-dependency table for Kosovo and Iceland.
+curl -L -o "sources/ne_10m_admin_1_states_provinces.geojson" \
+  "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_admin_1_states_provinces.geojson"
+for I in SP.DYN.CBRT.IN SP.DYN.CDRT.IN; do
+  curl -L -o "sources/wb/$I.json" \
+    "https://api.worldbank.org/v2/country/BIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/$I?format=json&date=2015%3A2024&per_page=1000"
+done
+curl -L -o "sources/eurostat/nrg_ind_id_neighbours.json" \
+  "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_ind_id?format=JSON&lang=EN&geo=XK&geo=BA&geo=MD&geo=UA&geo=IS&siec=TOTAL"
+
+# V4.11b. World production and the outline register (tools/endowments_generate.py).
+# Metals: USGS MCS 2025 via Our World in Data's indicator API (ScienceBase was down).
+mkdir -p sources/owid/minerals sources/fao sources/wb_world
+for ID in 1131083 1131096 1131114 1131119 1131129 1131149; do
+  curl -L -o "sources/owid/minerals/$ID.data.json" "https://api.ourworldindata.org/v1/indicators/$ID.data.json"
+  curl -L -o "sources/owid/minerals/$ID.metadata.json" "https://api.ourworldindata.org/v1/indicators/$ID.metadata.json"
+done
+curl -L -o "sources/owid/capture-fisheries-vs-aquaculture.csv" \
+  "https://ourworldindata.org/grapher/capture-fisheries-vs-aquaculture.csv?v=1&csvType=full&useColumnShortNames=true"
+curl -L -o "sources/fao/Production_Crops_Livestock_E_All_Data_(Normalized).zip" \
+  "https://bulks-faostat.fao.org/production/Production_Crops_Livestock_E_All_Data_(Normalized).zip"
+curl -L -o "sources/fao/Forestry_E_All_Data_(Normalized).zip" \
+  "https://bulks-faostat.fao.org/production/Forestry_E_All_Data_(Normalized).zip"
+curl -L -o "sources/wb_world/NY.GDP.MKTP.CD.json" \
+  "https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD?format=json&date=2019%3A2024&per_page=20000"
+
 curl -L -o "sources/wb/EN.GHG.CO2.PC.CE.AR5.json" \
-  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE/indicator/EN.GHG.CO2.PC.CE.AR5?format=json&date=2015%3A2024&per_page=1000"
+  "https://api.worldbank.org/v2/country/FRA%3BDEU%3BITA%3BESP%3BBEL%3BNLD%3BLUX%3BCHE%3BGBR%3BAUT%3BBGR%3BHRV%3BCYP%3BCZE%3BDNK%3BEST%3BFIN%3BGRC%3BHUN%3BIRL%3BLTU%3BLVA%3BMLT%3BPOL%3BPRT%3BROU%3BSVK%3BSVN%3BSWE%3BNOR%3BISL%3BSRB%3BTUR%3BALB%3BMKD%3BMNE%3BBIH%3BUKR%3BMDA%3BXKX%3BBLR/indicator/EN.GHG.CO2.PC.CE.AR5?format=json&date=2015%3A2024&per_page=2000"
 ```
 
 > [!note] The pandemic is excluded from that one series, and the exclusion is load-bearing

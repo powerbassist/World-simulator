@@ -17,9 +17,11 @@ extends Control
 ## country the game does not simulate, the ten it does (filled by their REGIONS
 ## since V2.2b, on 1:10m GISCO geometry under the 1:50m national outline), their
 ## labels, V2.2b's city crosses, and U6c's project markers. The second is drawn
-## from `_world_polygons` and hit-tested by nothing -- `_nation_at_lonlat`
-## iterates `_polygons` alone, so "you cannot click Poland" is structural rather
-## than a filter somewhere that could be forgotten.
+## from `_world_polygons`, and `_nation_at_lonlat` iterates `_polygons` alone,
+## so "you cannot click Poland" is structural rather than a filter somewhere that
+## could be forgotten. Since V4.11c an outline can be READ: `_outline_at_lonlat`
+## is its own hover test over `_world_polygons`, run only where no roster nation
+## answered, and it feeds a readout -- never a click, never `nation_hovered`.
 ##
 ## The marker pass keeps that property by having its OWN hit test:
 ## `_project_at_screen_point()` is a radius test in screen space over `_markers`
@@ -49,6 +51,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
+const MapOutlines = preload("res://src/ui/map_outlines.gd")
 const MapCities = preload("res://src/ui/map_cities.gd")
 const MapPlants = preload("res://src/ui/map_plants.gd")
 const MapNetwork = preload("res://src/ui/map_network.gd")
@@ -184,6 +187,11 @@ var _fill_cache: Dictionary = {}
 ## and wins an overlap; see MapCities and refresh_cities() below.
 var _cities: Array = []
 var _hovered_city := ""
+## V4.11c. The outline under the cursor ("" for none), and where the cursor
+## entered it -- the readout draws there rather than at a centroid, which for
+## Russia or Canada can sit off-screen.
+var _hovered_outline := ""
+var _hover_screen := Vector2.ZERO
 
 ## Built once in setup() from content that never mutates -- the graph, and each
 ## region's cities[0]. Not rebuilt on the monthly hook the way _cities is: a
@@ -229,6 +237,18 @@ const SEA := Color(0.043, 0.075, 0.129)
 const COAST := Color(0.95, 0.96, 0.99, 0.88)
 const WORLD_BORDER := Color(0.71, 0.78, 0.86, 0.22)
 const WORLD_BORDER_WIDTH := 1.0
+## V4.11c. The hovered outline's line: the world border's hue at roughly the
+## coastline's strength, so the country being read stands out without looking
+## like one the player can act on (the roster's line stays the brightest).
+const WORLD_BORDER_HOVER := Color(0.71, 0.78, 0.86, 0.70)
+const WORLD_BORDER_HOVER_WIDTH := 1.5
+## The readout's offset from the cursor, its line gap and its plate's padding.
+const OUTLINE_READOUT_OFFSET := Vector2(14.0, -8.0)
+const OUTLINE_READOUT_GAP := 16.0
+const OUTLINE_READOUT_PAD := 6.0
+## The plate's body: the HUD's hull, a touch translucent so the country under it
+## still reads as the thing being described.
+const OUTLINE_READOUT_PLATE := Color(0.063, 0.106, 0.188, 0.92)
 
 ## Hover and the viewer's own nation both move the *stroke* rather than the fill,
 ## and on a data layer that is not a style choice. U5b's hover lifted the fill
@@ -309,6 +329,13 @@ func _notification(what: int) -> void:
 		# below the new floor and the current pan outside the world.
 		_zoom = clampf(_zoom, min_zoom(), MAX_ZOOM)
 		_clamp_pan()
+		queue_redraw()
+	elif what == NOTIFICATION_MOUSE_EXIT and _hovered_outline != "":
+		# V4.11c. The readout is a plate of text, not a brighter stroke: when the
+		# cursor leaves for a window or the HUD no further motion reaches this
+		# control, so without this it stays on screen until the cursor comes back
+		# (the V4.11 review). Godot 4 sends the exit when a window occludes the map.
+		_hovered_outline = ""
 		queue_redraw()
 
 
@@ -595,6 +622,24 @@ func nation_at_screen_point(screen_pos: Vector2) -> String:
 	return _nation_at_lonlat(_screen_to_lonlat(screen_pos))
 
 
+## V4.11c. The outline under a lon/lat point, or "". Its OWN test over the outline
+## register, the marker precedent: `_nation_at_lonlat` stays roster-only, so an
+## outline can be read but never clicked or selected. The per-ring boxes are the
+## ones the border pass culls on, built in setup() from the same arrays.
+func _outline_at_lonlat(pt: Vector2) -> String:
+	for id in _world_polygons.keys():
+		var polys: Array = _world_polygons[id]
+		var boxes: Array = _ring_boxes_world[id]
+		for r in range(polys.size()):
+			var box: Rect2 = boxes[r]
+			if box.size.x < 0.0 or not box.has_point(pt):
+				continue
+			var ring: PackedVector2Array = polys[r]
+			if ring.size() >= 3 and Geometry2D.is_point_in_polygon(pt, ring):
+				return id
+	return ""
+
+
 ## V2.6b1. The city list is NOT static, and the comment that used to sit on it said
 ## it was -- which is how V2.6a's own headline readout claim went untrue on screen
 ## without anything going red. `population` is `Migration.city_population()`, live
@@ -822,6 +867,9 @@ func _gui_input(event: InputEvent) -> void:
 			_drag_moved += delta.length()
 			_last_mouse_pos = event.position
 			pan_by(delta)
+			# The readout sits at a screen point, so a pan would leave it floating
+			# over whatever slid under it; it returns on the next free move.
+			_hovered_outline = ""
 		else:
 			var id := nation_at_screen_point(event.position)
 			if id != _hovered_id:
@@ -842,6 +890,16 @@ func _gui_input(event: InputEvent) -> void:
 			if city != _hovered_city:
 				_hovered_city = city
 				queue_redraw()
+			# V4.11c. A fourth hover, and only where no roster nation answered:
+			# the outline readout never competes with a nation under the cursor.
+			var outline := "" if id != "" else _outline_at_lonlat(_screen_to_lonlat(event.position))
+			# Redrawn on a CHANGE only, as the nation hover is: a readout that
+			# followed the cursor would re-record the whole map on every move
+			# (~73 ms at the opening fit), so it anchors where the cursor entered.
+			if outline != _hovered_outline:
+				_hovered_outline = outline
+				_hover_screen = event.position
+				queue_redraw()
 
 
 func _draw() -> void:
@@ -861,6 +919,7 @@ func _draw() -> void:
 	_oy = _pan_offset.y + cc.y + _center_lat * _kx
 	_draw_raster()
 	_draw_world_borders()
+	_draw_outline_hover_ring()
 	_draw_roster()
 	_draw_spines()
 	# Labels above city crosses: a brass cross over near-white text buried the
@@ -872,6 +931,8 @@ func _draw() -> void:
 	_draw_markers()
 	MapPlants.draw_plants(self, _state, func(lon: float, lat: float) -> Vector2:
 		return _lonlat_to_screen(lon, lat))
+	# Frontmost: a readout is text the player asked for with the cursor.
+	_draw_outline_readout()
 	if _placing:
 		# A brass reticle at the cursor. The state's own material marks what is
 		# waiting on the player -- V2.1c's rule, reused rather than joined by a
@@ -909,6 +970,54 @@ func _draw_world_borders() -> void:
 				screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 			screen_points.append(screen_points[0])
 			draw_polyline(screen_points, WORLD_BORDER, WORLD_BORDER_WIDTH)
+
+
+## V4.11c. The hovered outline restroked brighter, in the world pass's slot so the
+## roster still draws over a shared coastline.
+func _draw_outline_hover_ring() -> void:
+	if _hovered_outline == "" or not _world_polygons.has(_hovered_outline):
+		return
+	for ring: PackedVector2Array in _world_polygons[_hovered_outline]:
+		if ring.size() < 2:
+			continue
+		var screen_points := PackedVector2Array()
+		for p in ring:
+			screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
+		screen_points.append(screen_points[0])
+		draw_polyline(screen_points, WORLD_BORDER_HOVER, WORLD_BORDER_HOVER_WIDTH)
+
+
+## V4.11c. Two lines beside the cursor -- the outline's name, then what it supplies
+## the world (MapOutlines owns the text) -- on a small HUD plate: the hull body and
+## the brass hairline on the TOP edge only (the U5a signature). The first cut used
+## the city label's bare shadowed text and the windowed screenshot showed why a
+## plate: over snow and the roster's own labels the line could not be read.
+## Clamped inside the control so a hover near the right edge still reads.
+func _draw_outline_readout() -> void:
+	if _hovered_outline == "" or _loader == null:
+		return
+	var font := get_theme_default_font()
+	if font == null:
+		return
+	var lines := [
+		[MapOutlines.name_of(_loader, _hovered_outline), UiTheme.SIZE_SMALL],
+		[MapOutlines.profile_of(_loader, _hovered_outline), UiTheme.SIZE_MICRO],
+	]
+	var width := 0.0
+	for line in lines:
+		width = maxf(width, font.get_string_size(String(line[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, int(line[1])).x)
+	var plate_size := Vector2(width + 2.0 * OUTLINE_READOUT_PAD, OUTLINE_READOUT_GAP * lines.size() + OUTLINE_READOUT_PAD)
+	var corner := _hover_screen + OUTLINE_READOUT_OFFSET
+	corner.x = clampf(corner.x, 4.0, maxf(4.0, size.x - plate_size.x - 4.0))
+	corner.y = clampf(corner.y, 4.0, maxf(4.0, size.y - plate_size.y - 4.0))
+	draw_rect(Rect2(corner, plate_size), OUTLINE_READOUT_PLATE)
+	draw_line(corner, corner + Vector2(plate_size.x, 0.0), UiTheme.ACCENT, 1.0)
+	var at := corner + Vector2(OUTLINE_READOUT_PAD, OUTLINE_READOUT_GAP - 2.0)
+	for i in lines.size():
+		var text := String(lines[i][0])
+		var font_size := int(lines[i][1])
+		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiTheme.TEXT if i == 0 else UiTheme.TEXT_DIM)
+		at.y += OUTLINE_READOUT_GAP
 
 
 ## MapLayers.fills() behind the month-keyed memo the `_fill_key` paragraph argues.

@@ -197,3 +197,120 @@ so the sweep that fixes it cannot be forgotten.
 - `tests/test_save_load.gd` — round-trip with every one of the seven keys
   moved off default; relative+absolute float tolerance measured in the
   comment; mutation-based aliasing pin.
+- `tests/test_endowments.gd` (V4.11b) — every natural good endowed and summing
+  to one, the outline register one-for-one with the map, Europe's roster share
+  of four imported goods under 0.10, Germany's steel made from imported ore, the
+  natural goods opening within 2 %, a pool cut moving lithium's price.
+- `tools/endowment_probe.gd` (V4.11b2, not a test) — §8's four bands on
+  `main.gd`'s month order, the Commodities tick time, the price-high crossings
+  and each good's peak; runs on a pre-V4.11b tree for the baseline.
+
+## §8 V4.11 — real endowments and the world pool (clauses declared BEFORE the code, 2026-10-16)
+
+Plan: `docs/superpowers/plans/2026-10-16-v4.11b-the-world-pool.md`. The author's
+call: REAL endowments for raw and agricultural goods, for every producer — the 41
+and the world's 133 outlines — traded through one world pool.
+
+**Why, measured.** At 41 nations every price sat at 1.00× base after 36 months:
+the world was balanced by construction, because each nation's capacity for every
+good — lithium ore and rare earths included — was its sector output times a
+structure weight, the same weight its demand reads. Europe "mined" lithium in
+proportion to its industry. A world pool added beside that could only glut.
+
+**Endowment.** For each good in categories `raw` and `agri`, a producer's capacity
+is `share[g][p] × W[g]`: `share` its fraction of WORLD production (content,
+`data/commodities/endowments.json`, generated from USGS / OWID / FAOSTAT), `W[g]`
+the world volume — the sum of every producer's REQUIREMENT for g. A roster
+nation's requirement is what its own industry processes: the pre-V4.11 capacity,
+sector output times the structure weight, read from AUTHORED figures for `W`.
+An outline's is its own GDP through the world sector mix and the same weight
+(`data/world/outlines.json`). The world therefore starts balanced at base prices
+(no opening shock); what changes is WHO makes it. `W` reads authored figures
+only, so capacity is a pure function of content: no state, no save field.
+
+> [!note] Corrected before the first commit (2026-10-16)
+> The first cut sized `W` and routed natural goods on each nation's
+> POPULATION-based want. Measured at month 1, Germany held exactly its want of
+> coal and ore, its coke and power plants took all the coal, and its steel
+> stopped -- an industrial nation processes more than its people's basket. The
+> requirement is what the recipes need, and with it a fully supplied nation
+> produces exactly what it did before V4.11.
+
+**The world pool.** The outlines aggregated: one seller and one buyer per good,
+carrying their summed shares (plus the sources' unnamed "other countries"
+remainder) and their summed demand. No per-outline state, no domestic model.
+
+**Order.** Raw and agri goods route FIRST, on REQUIREMENT minus endowment —
+roster sellers, then the pool, against roster buyers in sorted id order; the pool
+buys any roster surplus left — and
+downstream production then reads each nation's POST-TRADE holdings of raw and
+agri inputs, so steel can be made from imported ore. Manufactures and services
+route after production exactly as before (a closed roster market — a bound).
+
+**Bands, declared now and checked in V4.11b2:**
+
+- (i) the month-1 price vector within ±2 % of base for every good;
+- (ii) the EU-27's net import share of lithium ore, rare earths, crude oil and
+  nickel ore ≥ 0.70 at month 12 — Europe imports what it actually imports;
+- (iii) a six-month 50 % cut in the pool's supply of one good moves that good's
+  price to ≥ 1.25× base, the `commodity_price_high` hook's line — the observable
+  that makes the pool a foreign-policy surface;
+- (iv) no good pinned at the ±75 % clamp at rest after 120 months.
+
+**Refused, with reasons:** per-outline state (the tier: no domestic model);
+outline relations (no reader — `someday`); an export-control verb (the tier's
+V4.6 lift was never built, and building it is its own block); manufactures
+crossing to the outlines (no measured source for outline manufacturing that the
+structure weights would not simply invent).
+
+### §8 as measured (V4.11b2, 2026-10-16)
+
+`tools/endowment_probe.gd` on `main.gd`'s month order, base `d6a24346` (before
+V4.11b) against the tip:
+
+| Band | Line | Measured | Verdict |
+|---|---|---|---|
+| (i) natural goods at month 1 | within ±2 % | worst 0.01 % (crude oil) | PASS |
+| (ii) EU-27 net import share at month 12 | ≥ 0.70 | lithium 0.991, rare earths 1.000, crude oil 0.976 (0.987 before the review's energy fix), nickel 1.000 | PASS |
+| (iii) 50 % pool cut for six months, from rest at month 12 | ≥ 1.25× | 1.75× (the clamp) for each of lithium, rare earths, nickel, crude oil, copper, uranium; over 1.25 in the cut's second month | PASS |
+| (iv) pinned at the clamp after 120 months | none | none | PASS |
+
+- **Band (i) is scoped to NATURAL goods, by measurement, not by tuning.** The
+  manufactures open off base (worst 3.8 % at month 1) as they did before this
+  block; §3b's drift record owns them.
+- **Band (ii) divides by HOLDINGS** (endowment plus net trade, what EU industry
+  processes). The b1 scratch read 1.12 by dividing by population demand, the
+  wrong yardstick.
+- **Band (iii) is a cliff, not a curve, at 50 %.** The pool supplies nearly all of
+  Europe's ore, so halving it is a world shortage near half, and any lasting gap
+  walks the price to the clamp. The dose rows grade it: lithium cut by 5 % reads
+  1.057× after six months, 10 % reads 1.117×, 20 % reads 1.255× (over the line in
+  the sixth month). A future supply verb has a usable range below ~20 %.
+- **The long run changed shape.** Base: every agricultural good drifts to 1.12×
+  and clothing to 1.20× by month 120, still rising; no price crosses 1.25×. Tip:
+  natural goods hold (none reaches 1.10×), a manufactures wave peaks near 1.13×
+  around month 84, and clothing crosses 1.25× once (1.278× at month 96, back to
+  1.202× by month 120) -- the one crossing of the `commodity_price_high` line,
+  seen by all 41 nations. Clothing's creep predates the block (it reached 1.27×
+  at month ~160 before); V4.11b moves its crossing from ~160 to 96. The wave's
+  cause is NOT isolated. The likely one, unverified: `W` is static (authored
+  figures) while economies grow, so world supply of natural goods stands still as
+  requirement rises -- recorded in [[someday]].
+- **Re-measured after the V4.11 review (2026-10-17).** The energy endowments had
+  read every producer at the world's latest year, and OWID's small-producer series
+  end in 2016 -- so 19 roster nations' oil, 16 nations' gas and six nations' coal
+  (Germany's, France's and Poland's oil among them, Kosovo's lignite through a blank
+  OWID code) read zero and sat in the pool. Each producer now reads its own latest
+  year within ten (`producer_years` in the data names each). All four bands still
+  PASS; crude oil's EU import share reads 0.976 (was 0.987); the wave peaks at 1.136×
+  near month 85, and clothing does NOT cross: 1.202× at month 120, 0 crossings of
+  the hook line in 120 months. The tick is unchanged (46.3 ms).
+- **No player-facing effect today.** The hook has no consumer (V4.4 pass 23
+  unbound its two events, and the author kept them unbound on 2026-10-14), and
+  value added feeds no GDP. The balance re-run (51 regimes, 168 months) came back
+  BYTE-IDENTICAL, base against tip, and V4.4's E4/E5 tables are identical with
+  every band PASSED (12.0 arrivals per term) -- though E4/E5's chain never ticks
+  Commodities, so their identity says nothing about this layer (someday's
+  re-bind trigger (3)).
+- **Tick:** `Commodities.tick_month` 40.1 → 46.5 ms mean (+16 %; the routing
+  pass and the pool), about 1.6 % of the 392 ms month.

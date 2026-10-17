@@ -1,0 +1,157 @@
+{
+  "id": "NOR",
+  "name": "Norway",
+  "geo_id": "NOR",
+  "capital": "Oslo",
+  "playable": false,
+  "leader": {
+    "person": "NOR_solvang",
+    "title": "Prime Minister",
+    "party": "samhaldspartiet"
+  },
+  "flag": {
+    "layout": "cross",
+    "bands": ["#BA0C2F", "#FFFFFF", "#00205B"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Storting",
+      "assembly_seats": 169,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "Modified Sainte-Lague in 19 multi-member constituencies with 19 levelling seats (one per constituency), reduced to national PR -- SWE's reading of the same Nordic shape. The 4% gate is the statutory threshold for a share of the levelling seats, standing in for the constituency seats a party below it can still win. Elected 8 September 2025 for a fixed four-year term, so the next is due September 2029. Grunnloven ss. 57-59; Wikipedia, '2025 Norwegian parliamentary election'.",
+        "system": "pr_national",
+        "next": {
+          "year": 2029,
+          "month": 9
+        },
+        "threshold_pct": 4.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Storting CANNOT be dissolved: Grunnloven s. 71 fixes its four-year term, and there is no provision for an early election at all -- the one European parliament with CHE's fixed shape inside a monarchy. constitutional_monarchy's allowed list gained 'none' at V4.11 for this file; src/sim/dissolution.gd already read the rule generally. Grunnloven s. 71.",
+        "rule": "none",
+        "lockout_months": 0,
+        "notice_months": 1
+      }
+    },
+    "system": "constitutional_monarchy",
+    "head_of_state": {
+      "kind": "hereditary_monarch",
+      "title": "King",
+      "person": "NOR_olav_vi"
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Grunnloven s. 121: a proposal tabled in the first three years of one Storting is adopted, or not, by the next one after an election, with two thirds of the votes and two thirds of the members present -- the machinery's two_thirds, the intervening election being the delay it does not model. Grunnloven s. 121.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "Norway has no constitutional referendum; the 1905 and EU-membership votes were consultative and statutory. Grunnloven s. 121.",
+      "permits_system_change": false,
+      "_permits_system_change_note": "S. 121's own last sentence: an amendment 'must never contradict the principles embodied in this Constitution', read as protecting the constitutional monarchy -- a soft eternity clause, FRA's Art. 89 s. 5 shape rather than SWE's open revision."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "Ordinary courts review the constitutionality of Acts in the case before them, a power the Supreme Court has exercised since the 19th century and s. 89 codified in 2015 -- decentralised review, no constitutional court. Grunnloven s. 89.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "Negative parliamentarism: the King appoints the government on the outgoing Prime Minister's advice and no investiture vote is held; a government governs until a simple majority of the Storting votes no confidence (s. 15, 2007). Coalition negotiation is the nearest reading of a minority-government tradition -- the Labour cabinet appointed after the 2025 election governs without a majority. Grunnloven ss. 12, 15.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "NOR_solvang"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Authored per nation because the law is generic and the dynasty is not; a monarchy points this at its own sitting monarch.",
+    "pretender_person": "NOR_olav_vi",
+    "neighbours": ["FIN", "SWE"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD/SSB estimates ~2024, rounded, on SWE.json's conventions. VAT 25% is the statutory standard rate; corporate 22% the statutory rate on ordinary income; income 30 blends the 22% flat tax on ordinary income with the bracket tax; capital gains 37.8% is the 22% rate grossed up by the 1.72 shareholder adjustment; wealth 1.0% is the combined municipal and state net-wealth tax, the only one levied on this roster at that rate. Revenue ~41% of GDP is the OECD Revenue Statistics figure (taxes only -- the petroleum fund's transfer is not tax). Gross debt ~43% of GDP sits beside a sovereign fund several times GDP, which no field here carries: the debt is real and the cushion is the unmodelled half. Spending scaled to general-government expenditure near 46% of GDP.",
+    "debt_to_gdp_pct": 43.0,
+    "tax_revenue_pct_gdp": 41.0,
+    "tax_rates_pct": {
+      "income": 30.0,
+      "corporate": 22.0,
+      "vat": 25.0,
+      "capital_gains": 37.8,
+      "wealth": 1.0
+    },
+    "spending_pct_gdp": {
+      "health": 7.9,
+      "education": 5.0,
+      "defence": 2.2,
+      "pensions": 6.5,
+      "infrastructure": 3.5
+    },
+    "other_spending_pct_gdp": 21.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 5600000,
+    "gdp_eur_bn": 461.0,
+    "unemployment_pct": 4,
+    "sectors": {
+      "agriculture": 0.019,
+      "industry": 0.394,
+      "services": 0.587
+    },
+    "cohorts": {
+      "young_pct": 16.19,
+      "old_pct": 18.79,
+      "young_pct_per_yr": -0.199,
+      "old_pct_per_yr": 0.279,
+      "participation_pct": 80.34,
+      "pop_growth_pct": 0.796
+    },
+    "inequality": {
+      "gini_index": 26.5,
+      "gini_index_per_yr": -0.125,
+      "_year": 2023,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 0.416,
+      "growth_sd_pct": 1.457,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.443,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.010299,
+        "nuclear": 0.0,
+        "renewable": 0.989701
+      },
+      "import_dependency_pct": -729.012,
+      "kwh_per_capita": 23673.1,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 7.18,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 90.5
+    }
+  }
+}

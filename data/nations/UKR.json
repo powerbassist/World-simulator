@@ -1,0 +1,169 @@
+{
+  "id": "UKR",
+  "name": "Ukraine",
+  "geo_id": "UKR",
+  "capital": "Kyiv",
+  "playable": false,
+  "leader": {
+    "person": "UKR_levchuk",
+    "title": "President",
+    "party": "narodna_sluzhba"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#0057B7", "#FFD700"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Verkhovna Rada",
+      "assembly_seats": 450,
+      "term_years": 5,
+      "election": {
+        "_source": "authored",
+        "_note": "Open-list proportional representation with a 5% threshold under the 2020 Electoral Code (the 2019 Rada was elected half by list, half in single-member districts). Elected 21 July 2019; the 2024 election was SUSPENDED under martial law, which the constitution forbids elections during, and no date exists. The game books October 2027 -- the AUTHOR'S CALL (2026-10-15), a plausible post-suspension date inside a first term, recorded as a bound rather than a forecast. This game draws no war (docs/tiers/v4.md refuses it); the suspension is the one trace it leaves here. Constitution of Ukraine, Arts. 76-77, 83; Electoral Code 2020.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2027,
+          "month": 10
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "Art. 90: the President may terminate the Rada's powers if no coalition forms within a month, no cabinet within sixty days, or no plenary sits for thirty days -- conditioned discretion, read as the template's executive_discretion with a lockout; not within the Rada's first year or the President's last six months, and never under martial law. Constitution of Ukraine, Art. 90.",
+        "rule": "executive_discretion",
+        "lockout_months": 12,
+        "notice_months": 2
+      }
+    },
+    "system": "semi_presidential_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for five years, two consecutive terms at most; commander-in-chief, nominates the defence and foreign ministers and the Prime Minister for the Rada's approval. Elected April 2019; the 2024 election was suspended under martial law. Constitution of Ukraine, Arts. 102-106.",
+      "kind": "executive_president",
+      "title": "President",
+      "person": "UKR_levchuk"
+    },
+    "term_limit": 0,
+    "executive": {
+      "_source": "authored",
+      "_note": "Booked March 2027 -- the AUTHOR'S CALL (2026-10-15), the same reasoning as the Rada's date above; two rounds, five-year term. Art. 103's two-consecutive-terms limit is recorded here and authored 0 below, CYP's convention. Constitution of Ukraine, Art. 103.",
+      "title": "President",
+      "term_years": 5,
+      "next": {
+        "year": 2027,
+        "month": 3
+      }
+    },
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 155: a draft passes a preliminary majority of all deputies and then 300 of 450 -- two thirds -- at the next session; Chapters I, III and XIII additionally need a national referendum (Art. 156); no amendment may be made under martial law (Art. 157). The semi-presidential template carries three_fifths only, the lower bar recorded honestly as the template's. Constitution of Ukraine, Arts. 155-157.",
+      "rule": "three_fifths",
+      "referendum": "optional",
+      "_referendum_note": "Art. 156's referendum is mandatory for the entrenched chapters only -- a split the referendum field cannot carry. Constitution of Ukraine, Art. 156.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "Art. 157 forbids amendments that abolish or restrict rights or the state's independence and territorial integrity; the form of government itself was changed by the 2004 and 2014 amendments, so it is amendable."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court reviews the constitutionality of laws (Arts. 147-153). Constitution of Ukraine, Art. 150.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The Rada appoints the Prime Minister on the President's nomination, made on the coalition's proposal (Art. 114) -- the template's presidential_appointment. A no-confidence vote needs a majority of the Rada's constitutional composition, 226 (Art. 87), the template's absolute_members exactly. The current Prime Minister took office in July 2025. Constitution of Ukraine, Arts. 87, 114.",
+      "method": "presidential_appointment",
+      "censure": "absolute_members",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "UKR_kovalenko"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. The medieval Kingdom of Ruthenia is the nearest crown; the restored line here is fictional.",
+    "pretender_person": "UKR_danylo_ii",
+    "neighbours": ["BLR", "HUN", "MDA", "POL", "ROU", "SVK"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/Ministry of Finance ~2024, rounded, on AUT.json's conventions -- A WARTIME BUDGET, measured as it is: defence ~26% of GDP and expenditure near 65%, the gap financed by allied grants and loans that no field here carries. VAT 20%; corporate 18%; income 23 is the 18% personal rate plus the military levy (1.5% raised to 5% in December 2024); capital gains 18%; no wealth tax. Revenue ~36% of GDP includes the unified social contribution. Debt ~90% of GDP (end-2024). The AI nation's budget does not tick (V4.4), so these figures seed its standing and its trade, not a deficit spiral.",
+    "debt_to_gdp_pct": 90.0,
+    "tax_revenue_pct_gdp": 36.0,
+    "tax_rates_pct": {
+      "income": 23.0,
+      "corporate": 18.0,
+      "vat": 20.0,
+      "capital_gains": 18.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 3.5,
+      "education": 5.0,
+      "defence": 26.0,
+      "pensions": 9.0,
+      "infrastructure": 2.0
+    },
+    "other_spending_pct_gdp": 20.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 37900000,
+    "gdp_eur_bn": 176.0,
+    "unemployment_pct": 14.2,
+    "sectors": {
+      "agriculture": 0.084,
+      "industry": 0.22,
+      "services": 0.696
+    },
+    "cohorts": {
+      "young_pct": 13.89,
+      "old_pct": 18.96,
+      "young_pct_per_yr": -0.132,
+      "old_pct_per_yr": 0.423,
+      "participation_pct": 66.8,
+      "pop_growth_pct": -2.09
+    },
+    "inequality": {
+      "gini_index": 25.6,
+      "gini_index_per_yr": 0.02,
+      "_year": 2020,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 2.713,
+      "growth_sd_pct": 9.494,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 12.756,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.320275,
+        "nuclear": 0.550406,
+        "renewable": 0.129319
+      },
+      "import_dependency_pct": 23.226,
+      "kwh_per_capita": 2598.6,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2024,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 3.13,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 46.1
+    }
+  }
+}

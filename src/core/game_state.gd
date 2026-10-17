@@ -581,7 +581,22 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     `made_on` reads as -1, which matches no opening, so an old debt simply
 ##     settles at the creditor's next division -- the honest reading; `awaiting`
 ##     absent reads "", no treaty pending. No bump.
-const SAVE_VERSION := 39
+##   * V4.11 -- 39 -> 40 ON NO FIELD, V3.3's argument word for word. The
+##     neighbourhood adds nations, not fields: every neighbour round-trips through
+##     data/ and its state is the same NationState every nation carries. But the
+##     roster a save was made against is part of its contract -- from_dict builds
+##     nations from the save dictionary ALONE and the gate refuses only version
+##     MISMATCHES, so a version-39 save made against the 29-nation roster would
+##     load, unrefused, as a silent 29-nation world against org data whose NATO
+##     now seats Turkey, Norway and four more. The V4.11 handoff's "likely none"
+##     held for the neighbours' numbers and not for their existence.
+##   * V4.11b -- NO BUMP, argued. Real endowments and the world pool add no field:
+##     the endowment shares and the outline register are content, the world volume
+##     and every capacity are re-derived from that content every tick (memoised with
+##     the recipe tables in commodities.gd), and `commodity_state` keeps its seven
+##     keys. A version-40 save's register reseeds through the existing lazy-seed
+##     path, which tests/test_commodities.gd pins.
+const SAVE_VERSION := 40
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

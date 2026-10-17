@@ -282,8 +282,12 @@ func _test_register_scale() -> void:
 		# Every sector must be represented by BOTH tiers or by neither naming
 		# anything -- the loader's two-named-firms floor plus the coverage band
 		# below mean a sector named at all is named by majors and body alike.
-	if total < 2700 or total > 3100:
-		_fail("register holds %d firms, outside [2700, 3100]" % total)
+	# A3 pinned [2700, 3100] over 29 nations -- about 93 to 107 firms a nation.
+	# V4.11 states the band per nation so the roster's tranches do not each
+	# re-litigate a total; the 29-nation figure is unchanged by the rewrite.
+	var n_nations: int = _loader.nations.size()
+	if total < 93 * n_nations or total > 107 * n_nations:
+		_fail("register holds %d firms, outside [%d, %d]" % [total, 93 * n_nations, 107 * n_nations])
 
 
 ## A3's body bands -- the brief's step-1 declarations, each pinned here so a

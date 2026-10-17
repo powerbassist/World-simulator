@@ -64,14 +64,24 @@ func _draw_bands(vertical: bool) -> void:
 		draw_rect(rect, _bands[i])
 
 
-## Field first, cross second -- the band order the data declares.
+## Field first, cross second -- the band order the data declares. A THIRD band
+## (V4.11: Norway, Iceland) makes the second a fimbriation: drawn as a wider
+## cross under the third, the way those two flags edge their cross in white.
 func _draw_cross() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), _bands[0])
 	if _bands.size() < 2:
 		return
 	var arm := minf(size.x, size.y) * 0.2
-	draw_rect(Rect2(Vector2((size.x - arm) / 2.0, size.y * 0.2), Vector2(arm, size.y * 0.6)), _bands[1])
-	draw_rect(Rect2(Vector2(size.x * 0.2, (size.y - arm) / 2.0), Vector2(size.x * 0.6, arm)), _bands[1])
+	if _bands.size() >= 3:
+		_draw_cross_arms(arm * 1.6, _bands[1])
+		_draw_cross_arms(arm * 0.8, _bands[2])
+	else:
+		_draw_cross_arms(arm, _bands[1])
+
+
+func _draw_cross_arms(arm: float, colour: Color) -> void:
+	draw_rect(Rect2(Vector2((size.x - arm) / 2.0, size.y * 0.2), Vector2(arm, size.y * 0.6)), colour)
+	draw_rect(Rect2(Vector2(size.x * 0.2, (size.y - arm) / 2.0), Vector2(size.x * 0.6, arm)), colour)
 
 
 ## Field, then the saltire and cross colours in band order. Simplified: the

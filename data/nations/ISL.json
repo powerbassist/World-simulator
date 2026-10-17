@@ -1,0 +1,164 @@
+{
+  "id": "ISL",
+  "name": "Iceland",
+  "geo_id": "ISL",
+  "capital": "Reykjavík",
+  "playable": false,
+  "leader": {
+    "person": "ISL_ragnarsdottir",
+    "title": "Prime Minister",
+    "party": "jafnadarbandalagid"
+  },
+  "flag": {
+    "layout": "cross",
+    "bands": ["#02529C", "#FFFFFF", "#DC1E35"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Althing",
+      "assembly_seats": 63,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "D'Hondt in six constituencies with nine levelling seats, reduced to national PR with the 5% national gate that decides who shares the levelling seats. The snap election of 30 November 2024 opened a four-year term, so the next is due by November 2028. Constitution of Iceland, Art. 31; Wikipedia, '2024 Icelandic parliamentary election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2028,
+          "month": 11
+        },
+        "threshold_pct": 5.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The President dissolves the Althing on the Prime Minister's advice (Art. 24), which is how the 2024 snap election was called -- MLT's executive-advice shape, which the parliamentary_republic template reads as self_dissolution, the gap recorded here. Polling within 45 days. Constitution of Iceland, Art. 24.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for four years with no term limit; elected 1 June 2024 and inaugurated 1 August, so the next falls in June 2028. Largely ceremonial, with the Art. 26 power to refer a bill to referendum by declining to sign it -- unmodelled. Constitution of Iceland, Arts. 5-6, 26.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "ISL_olafsdottir",
+      "term_years": 4,
+      "next": {
+        "year": 2028,
+        "month": 6
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 79: an amendment passed by the Althing triggers a dissolution and an election, and the new Althing must pass it unchanged -- a SIMPLE majority twice with an election between. The template carries two_thirds only; the machinery reads the intervening election's cost as that bar, the honest difference recorded here. Constitution of Iceland, Art. 79.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "Only the church provision (Art. 79, second paragraph) requires a referendum; the rest of the constitution amends without one. Constitution of Iceland, Art. 79.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "No eternity clause; the 1944 republican constitution has been revised by the Art. 79 procedure several times."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "The ordinary courts, led by the Supreme Court (Haestirettur), review whether an Act conflicts with the constitution in the case before them -- decentralised review on the Nordic pattern. Constitution of Iceland, Art. 2; Supreme Court practice since 1943.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President gives a party leader the mandate to form a government; there is no investiture vote and a coalition governs until a no-confidence motion carries by simple majority. Coalition negotiation is the plain reading -- the 2024 government is a three-party coalition. Constitution of Iceland, Arts. 15, 24.",
+      "method": "coalition_negotiation",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "ISL_ragnarsdottir"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. Iceland's crown was the Danish king's until 1944; the restored line is the house's invention, as MLT's is.",
+    "pretender_person": "ISL_haraldur_i",
+    "neighbours": []
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/OECD/Statistics Iceland ~2024, rounded, on SWE.json's conventions. VAT 24% standard; corporate 20%; income 34 is the FITTED EFFECTIVE rate on AUT's and IRL's convention -- the statutory 31.5-46.3% brackets at their middle would model 35.3% of GDP against the 34% collected, and the model's revenue must not exceed the nation's; capital gains 22% on capital income; no wealth tax since 2015. Revenue ~34% of GDP is the OECD Revenue Statistics figure. Gross debt ~61% of GDP. Defence 0.1% because Iceland keeps no armed forces -- the coast guard and NATO host costs are the line. Pensions 3.0% is low because the occupational funds are funded and sit outside the state. Spending scaled to expenditure near 43% of GDP.",
+    "debt_to_gdp_pct": 61.0,
+    "tax_revenue_pct_gdp": 34.0,
+    "tax_rates_pct": {
+      "income": 34.0,
+      "corporate": 20.0,
+      "vat": 24.0,
+      "capital_gains": 22.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 7.0,
+      "education": 7.0,
+      "defence": 0.1,
+      "pensions": 3.0,
+      "infrastructure": 3.0
+    },
+    "other_spending_pct_gdp": 23.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 400000,
+    "gdp_eur_bn": 30.5,
+    "unemployment_pct": 3.6,
+    "sectors": {
+      "agriculture": 0.04,
+      "industry": 0.226,
+      "services": 0.734
+    },
+    "cohorts": {
+      "young_pct": 17.76,
+      "old_pct": 15.64,
+      "young_pct_per_yr": -0.27,
+      "old_pct_per_yr": 0.218,
+      "participation_pct": 87.53,
+      "pop_growth_pct": 1.744
+    },
+    "inequality": {
+      "gini_index": 26.8,
+      "gini_index_per_yr": 0.0,
+      "_year": 2019,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 1.011,
+      "growth_sd_pct": 3.538,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 4.888,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.000153,
+        "nuclear": 0.0,
+        "renewable": 0.999847
+      },
+      "import_dependency_pct": 16.807,
+      "kwh_per_capita": 49241.2,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2016,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 8.52,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 85.0
+    }
+  }
+}

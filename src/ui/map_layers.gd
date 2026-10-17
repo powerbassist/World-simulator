@@ -16,6 +16,7 @@ extends RefCounted
 ## is the control the player is looking at.
 
 const Trade = preload("res://src/sim/trade.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Relations = preload("res://src/core/relations.gd")
@@ -49,10 +50,11 @@ const RELATIONS_MAX_SHOWN := 72.0
 
 ## A weight vector is normalised over the viewer's partners, so the honest
 ## reference is not zero but an even SHARE -- and which share is even depends on
-## the partner count, which is why V3.3 retired the literal 1/9 this ramp was
+## the viewer's partners, which is why V3.3 retired the literal 1/9 this ramp was
 ## anchored on: at twenty-nine nations it drew four times a partner's fair
-## share as "even". trade_even_share() derives it; "dominant" stays three times
-## that, which is what TRADE_MAX_SHOWN's 0.33 always was against 1/9.
+## share as "even". trade_even_share() reads it from the sim (effective partners
+## since V4.11); "dominant" stays three times that, which is what
+## TRADE_MAX_SHOWN's 0.33 always was against 1/9.
 
 ## The coercion ramp's domain: total severity on the pair, both directions summed.
 ##
@@ -414,11 +416,12 @@ static func fills(layer_id: String, state, viewer_id: String, nation_ids: Array)
 		return out
 
 	# The one vector. value() reads exactly this dictionary and
-	# trade_even_share() exactly this size, so the colour below is the colour
+	# trade_even_share() derives from exactly this vector (even_share_of is the
+	# same read off a vector in hand), so the colour below is the colour
 	# swatch() would have returned -- tests/test_map_layers.gd pins that
 	# equality rather than trusting this comment.
 	var weights: Dictionary = Trade.weights(state, viewer_id)
-	var even := 1.0 / float(maxi(1, weights.size()))
+	var even: float = ForeignPolicy.even_share_of(weights)
 	var trade_alpha := alpha(TRADE)
 	for id in nation_ids:
 		var nation_id := String(id)
@@ -477,13 +480,13 @@ static func production_stops(even: float) -> Array:
 	]
 
 
-## The trade ramp's anchor: one over the viewer's partner count, the share a
-## weight would carry if the viewer's demand were spread evenly -- the same
-## derivation foreign_policy.even_share() makes for the sim's thresholds, and
-## for the same reason. "Dominant" stays three times it.
+## The trade ramp's anchor: the viewer's even share, READ from
+## foreign_policy.even_share() rather than re-derived -- the effective-partner
+## yardstick since V4.11 (a partner count diluted as small neighbours joined), so
+## the colour that reads "an even share" is the one the sim's thresholds mean.
+## "Dominant" stays three times it.
 static func trade_even_share(state, viewer_id: String) -> float:
-	var count := Trade.weights(state, viewer_id).size()
-	return 1.0 / float(maxi(1, count))
+	return ForeignPolicy.even_share(state, viewer_id)
 
 
 static func ramp_trade(v: float, even: float) -> Color:

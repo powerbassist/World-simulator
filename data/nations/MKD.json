@@ -1,0 +1,164 @@
+{
+  "id": "MKD",
+  "name": "North Macedonia",
+  "geo_id": "MKD",
+  "capital": "Skopje",
+  "playable": false,
+  "leader": {
+    "person": "MKD_trajkovski",
+    "title": "Prime Minister",
+    "party": "vnatresna_obnova"
+  },
+  "flag": {
+    "layout": "horizontal",
+    "bands": ["#D20000", "#FFE600", "#D20000"]
+  },
+  "government": {
+    "legislative": {
+      "chamber": "Sobranie",
+      "assembly_seats": 120,
+      "term_years": 4,
+      "election": {
+        "_source": "authored",
+        "_note": "D'Hondt in six twenty-seat districts with no statutory threshold; the three diaspora seats were abolished before 2024, leaving 120. Reduced to national D'Hondt with a 0.0 gate. Elected 8 May 2024, so the next is due by spring 2028. Electoral Code of North Macedonia; Wikipedia, '2024 North Macedonian parliamentary election'.",
+        "system": "pr_dhondt",
+        "next": {
+          "year": 2028,
+          "month": 5
+        },
+        "threshold_pct": 0.0
+      },
+      "dissolution": {
+        "_source": "authored",
+        "_note": "The Sobranie dissolves itself by a majority of all deputies (Art. 63(6)) -- the template's self_dissolution read literally; elections follow within 60 days, run by the caretaker 'technical government' convention. Constitution of North Macedonia, Art. 63.",
+        "rule": "self_dissolution",
+        "lockout_months": 0,
+        "notice_months": 2
+      }
+    },
+    "system": "parliamentary_republic",
+    "head_of_state": {
+      "_source": "authored",
+      "_note": "The President, directly elected for five years, two terms at most, with a 40% turnout requirement in the second round; elected May 2024, so the next falls in spring 2029. Largely ceremonial. Constitution of North Macedonia, Arts. 80-81.",
+      "kind": "elected_president",
+      "title": "President",
+      "person": "MKD_angelovska",
+      "term_years": 5,
+      "next": {
+        "year": 2029,
+        "month": 5
+      }
+    },
+    "term_limit": 0,
+    "amendment": {
+      "_source": "authored",
+      "_note": "Art. 131: two thirds of all deputies, with a double majority (two thirds AND a majority of the deputies of the non-majority communities) for the provisions the 2001 Ohrid Agreement entrenched -- the community lock is unmodelled. Constitution of North Macedonia, Art. 131.",
+      "rule": "two_thirds",
+      "referendum": "none",
+      "_referendum_note": "No constitutional referendum is required; the 2018 name referendum was consultative and the change passed by Art. 131's parliamentary route. Constitution of North Macedonia, Art. 131.",
+      "permits_system_change": true,
+      "_permits_system_change_note": "No eternity clause; the 2019 name change shows how far the Art. 131 route reaches."
+    },
+    "judicial": {
+      "_source": "authored",
+      "_note": "A Constitutional Court reviews the constitutionality of laws (Arts. 108-113). Constitution of North Macedonia, Art. 110.",
+      "review": "constitutional"
+    },
+    "formation": {
+      "_source": "authored",
+      "_note": "The President gives the mandate to the largest party's candidate, and the Sobranie elects the government by a majority of all deputies (Art. 90); by convention the coalition includes an ethnic-Albanian party. No-confidence needs a majority of all deputies (Art. 92), read as simple_present. Constitution of North Macedonia, Arts. 90, 92.",
+      "method": "investiture",
+      "censure": "simple_present",
+      "head_of_government_title": "Prime Minister",
+      "head_of_government_person": "MKD_trajkovski"
+    },
+    "_pretender_note": "Whom data/laws/amendments.json's Restoration Act puts on the throne. The modern state has never been a monarchy; the restored line is the house's invention, as MLT's is.",
+    "pretender_person": "MKD_kiril_i",
+    "neighbours": ["ALB", "BGR", "GRC", "SRB", "XKX"]
+  },
+  "fiscal": {
+    "_source": "authored",
+    "_note": "General government, IMF/Ministry of Finance ~2024, rounded, on AUT.json's conventions. VAT 18% standard; corporate 10%; income 10% flat; capital gains 10%; no wealth tax. Revenue ~27% of GDP includes social contributions. Debt ~55% of GDP (end-2024). Pensions 9% is the heavy line of an ageing, emigrating population. Spending scaled to expenditure near 36% of GDP.",
+    "debt_to_gdp_pct": 55.0,
+    "tax_revenue_pct_gdp": 27.0,
+    "tax_rates_pct": {
+      "income": 10.0,
+      "corporate": 10.0,
+      "vat": 18.0,
+      "capital_gains": 10.0,
+      "wealth": 0.0
+    },
+    "spending_pct_gdp": {
+      "health": 4.8,
+      "education": 3.6,
+      "defence": 1.8,
+      "pensions": 9.0,
+      "infrastructure": 3.5
+    },
+    "other_spending_pct_gdp": 13.0
+  },
+  "imported": {
+    "_source": "worldbank",
+    "_year": 2024,
+    "_trend_from_year": 2015,
+    "_usd_eur": 0.92,
+    "population": 1800000,
+    "gdp_eur_bn": 15.6,
+    "unemployment_pct": 12.3,
+    "sectors": {
+      "agriculture": 0.07,
+      "industry": 0.279,
+      "services": 0.651
+    },
+    "cohorts": {
+      "young_pct": 16.82,
+      "old_pct": 18.02,
+      "young_pct_per_yr": -0.136,
+      "old_pct_per_yr": 0.513,
+      "participation_pct": 65.77,
+      "pop_growth_pct": -0.522
+    },
+    "inequality": {
+      "gini_index": 33.5,
+      "gini_index_per_yr": -0.525,
+      "_year": 2019,
+      "_from_year": 2015
+    },
+    "cycle": {
+      "amplitude_rel": 0.979,
+      "growth_sd_pct": 3.426,
+      "_from_year": 1990,
+      "_to_year": 2024,
+      "_excludes": [2020, 2021]
+    },
+    "prices": {
+      "inflation_pct": 2.792,
+      "_from_year": 1999,
+      "_to_year": 2024,
+      "_excludes": []
+    },
+    "energy": {
+      "mix": {
+        "fossil": 0.661968,
+        "nuclear": 0.0,
+        "renewable": 0.338032
+      },
+      "import_dependency_pct": 65.671,
+      "kwh_per_capita": 3301.4,
+      "_years": {
+        "energy_import_dependency_pct": 2024,
+        "elc_fossil_pct": 2024,
+        "elc_nuclear_pct": 2021,
+        "elc_renewable_pct": 2021,
+        "energy_kwh_per_capita": 2024
+      }
+    },
+    "emissions": {
+      "co2e_per_capita_t": 4.0,
+      "_year": 2024
+    },
+    "institutions": {
+      "rule_of_law_score": 54.9
+    }
+  }
+}

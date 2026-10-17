@@ -1,0 +1,10 @@
+{
+  "parties": [
+    {"id": "stranka_demokratskog_jedinstva", "name": "Stranka demokratskog jedinstva", "ideology_slot": "centre_right", "seat_share": 0.214, "leader_person": "BIH_mehmedovic", "discipline": 0.85, "competence": 0.6, "excluded_partners": ["savez_srpskih_socijalista"]},
+    {"id": "savez_srpskih_socijalista", "name": "Savez srpskih socijalista", "ideology_slot": "nationalist_right", "seat_share": 0.19, "leader_person": "BIH_vukmanovic", "discipline": 0.9, "competence": 0.55, "excluded_partners": ["stranka_demokratskog_jedinstva"]},
+    {"id": "socijaldemokratska_alijansa", "name": "Socijaldemokratska alijansa", "ideology_slot": "social_democratic", "seat_share": 0.19, "leader_person": "BIH_hodzic", "discipline": 0.8, "competence": 0.6, "excluded_partners": []},
+    {"id": "gradjanski_savez", "name": "Građanski savez", "ideology_slot": "progressive_liberal", "seat_share": 0.143, "leader_person": "BIH_karabegovic", "discipline": 0.75, "competence": 0.6, "excluded_partners": []},
+    {"id": "srpski_demokratski_blok", "name": "Srpski demokratski blok", "ideology_slot": "regionalist", "seat_share": 0.144, "leader_person": "BIH_stojanovic", "discipline": 0.75, "competence": 0.5, "excluded_partners": []},
+    {"id": "hrvatska_zajednica", "name": "Hrvatska zajednica", "ideology_slot": "regionalist_right", "seat_share": 0.119, "leader_person": "BIH_jelavic", "discipline": 0.9, "competence": 0.6, "excluded_partners": []}
+  ]
+}

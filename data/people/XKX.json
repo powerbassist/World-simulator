@@ -1,0 +1,282 @@
+{
+  "people": [
+    {
+      "id": "XKX_berisha_a",
+      "name": "Arianit Berisha",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn",
+        "principled"
+      ],
+      "ambition": 0.82,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "XKX_hyseni",
+      "name": "Valon Hyseni",
+      "kind": "politician",
+      "traits": [
+        "networked",
+        "ambitious"
+      ],
+      "ambition": 0.7,
+      "wants": [
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "XKX_morina",
+      "name": "Vjollca Morina",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "principled"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_the_european_voice",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "XKX_demiri",
+      "name": "Ferdi Demiri",
+      "kind": "politician",
+      "traits": [
+        "pragmatic",
+        "loyal"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "XKX_jovanovic",
+      "name": "Milan Jovanović",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "wants": [
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "XKX_zeqiri",
+      "name": "Burim Zeqiri",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "ambitious"
+      ],
+      "ambition": 0.58,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "XKX_gashi",
+      "name": "Albana Gashi",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "networked"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "XKX_skender_ii",
+      "name": "Skënder II",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "principled"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "XKX_chief_zeka",
+      "name": "Kushtrim Zeka",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_hasani_energjia",
+      "name": "Shpend Hasani",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_zeka_grupi",
+      "name": "Teuta Zeka",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_aliu",
+      "name": "Agon Aliu",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked"
+      ],
+      "ambition": 0.32,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_kastrati_transporti",
+      "name": "Agon Kastrati",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_rexhepi_industria",
+      "name": "Hana Rexhepi",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_kelmendi_materialet",
+      "name": "Visar Kelmendi",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_banka_rrustemi",
+      "name": "Faton Rrustemi",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_shtepia_tregtare_shala",
+      "name": "Agon Shala",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_shtepia_tregtare_kryeziu",
+      "name": "Kushtrim Kryeziu",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.46,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_kastrati_sigurimet",
+      "name": "Shqipe Kastrati",
+      "kind": "executive",
+      "traits": [
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.77,
+      "bench": true
+    },
+    {
+      "id": "XKX_chief_zeka_logjistika",
+      "name": "Arben Zeka",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.58,
+      "bench": true
+    }
+  ]
+}

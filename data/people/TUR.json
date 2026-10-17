@@ -1,0 +1,241 @@
+{
+  "people": [
+    {
+      "id": "TUR_karaman",
+      "name": "Hakan Karaman",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "fervent",
+        "networked"
+      ],
+      "ambition": 0.92,
+      "wants": [
+        {
+          "object": "programme:prog_the_record_majority",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_industrial_renewal",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "TUR_aydin",
+      "name": "Selin Aydın",
+      "kind": "politician",
+      "traits": [
+        "principled",
+        "networked"
+      ],
+      "ambition": 0.68,
+      "wants": [
+        {
+          "object": "programme:prog_clean_hands",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_civil_register",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "TUR_kaya",
+      "name": "Rojda Kaya",
+      "kind": "politician",
+      "traits": [
+        "fervent",
+        "stubborn"
+      ],
+      "ambition": 0.55,
+      "wants": [
+        {
+          "object": "programme:prog_free_airwaves",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "TUR_ozturk",
+      "name": "Bülent Öztürk",
+      "kind": "politician",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.5,
+      "wants": [
+        {
+          "object": "programme:prog_the_firm_hand",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "TUR_celik",
+      "name": "Ayten Çelik",
+      "kind": "politician",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.63,
+      "wants": [
+        {
+          "object": "programme:prog_six_per_cent",
+          "stance": "sponsor"
+        },
+        {
+          "object": "programme:prog_the_open_door",
+          "stance": "oppose"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "TUR_mehmed_ix",
+      "name": "Mehmed IX",
+      "kind": "politician",
+      "traits": [
+        "vain",
+        "principled"
+      ],
+      "ambition": 0.4,
+      "wants": [
+        {
+          "object": "programme:prog_the_statesman_term",
+          "stance": "sponsor"
+        }
+      ],
+      "bench": false
+    },
+    {
+      "id": "TUR_chief_holding_balci",
+      "name": "Orhan Balcı",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.8,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_kurt",
+      "name": "Kemal Kurt",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "pragmatic"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_akgul_tasimacilik",
+      "name": "Burak Akgül",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.33,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_tekin",
+      "name": "Tuncay Tekin",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_yavuz",
+      "name": "Serkan Yavuz",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_dincer",
+      "name": "Tülin Dinçer",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.72,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_sahin_enerji",
+      "name": "Tülin Şahin",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_holding_tas",
+      "name": "Gökhan Taş",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.71,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_ticaret_kaplan",
+      "name": "Burak Kaplan",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.6,
+      "bench": true
+    },
+    {
+      "id": "TUR_chief_duman_enerji",
+      "name": "Orhan Duman",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.4,
+      "bench": true
+    }
+  ]
+}

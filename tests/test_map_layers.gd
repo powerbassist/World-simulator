@@ -145,7 +145,7 @@ func _check_political_caption() -> void:
 ## just restate the constants -- but a check that the ramp is a ramp.
 func _check_ramps_are_monotone() -> void:
 	_check_ramp_spread(MapLayers.RELATIONS, MapLayers.RELATIONS_MIN_SHOWN, MapLayers.RELATIONS_MAX_SHOWN)
-	# The trade ramp's domain derives from the viewer's partner count (V3.3), so
+	# The trade ramp's domain derives from the viewer's effective partners (V4.11), so
 	# the spread is checked against the same even share the map draws with.
 	var state_for_trade = _main._state
 	var even := MapLayers.trade_even_share(state_for_trade, "FRA")
