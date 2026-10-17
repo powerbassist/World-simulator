@@ -673,8 +673,9 @@ tested by rebuilding the file without the audio section.
 The top bar is a HOST over one register, `src/ui/strip_readings.gd`: `ORDER`
 is the strip, `CAPTIONS` its words, `INPUTS` the `NationState` fields each
 reading declares, and `read(id, state, loader)` returns
-`{text, tip, visible, alert_window}` (plus `caption` for the programme, whose
-name is its caption, clipped at 104 px). A new reading is a register entry,
+`{text, tip, visible, alert_window, lines}` (plus `caption` for the programme,
+whose name is its caption, clipped at 104 px). `lines` is the structured tip
+(§20); `tip` is those lines joined. A new reading is a register entry,
 never a branch in `top_bar.gd`.
 
 **The tooltip contract.** A tip surfaces a figure an existing query computes
@@ -693,3 +694,53 @@ requires the reading to move, checks dashes for absence, alert windows against
 `main.gd`'s registrations, and the strip's size at worst-case text WITH the game
 theme (unthemed, it measured 44 px where 50 was drawn). The strip must stay
 inside `window_frame.gd`'s `TOP_MARGIN`, which is what keeps the 826 px band.
+
+## 20. The two-level tip and the outliner (V4.8b)
+
+**A tip is lines, and a line may open a child.** `read()` returns `lines:
+[{text, child_id}]`; `tip` is `"\n".join` of their texts, so the popup that draws
+the lines and the plain tip a test reads (`top_bar.tip_of(id)`) are one source.
+`strip_children.gd`'s `child(reading_id, child_id, state, loader)` answers a
+`child_id` with `{title, lines}` -- lazily, at the hover, never on the per-day
+refresh. Depth is two and stops there. Seven lines open a child: an approval
+issue (the operands `Opinion.issue_satisfaction` subtracts -- where the figure
+stands against the term's start -- plus the salience and satisfaction the line
+already prints), the debt path (`Trends.entry_at`, a dash where history is
+short), the coalition's parties, every running programme entry, the desk's
+queue, the rules in force, the goods under the shortage line. GDP, unemployment,
+inflation, unrest and the vote have none: nothing decomposes them, and a child
+that invented a breakdown would be the recompute the contract forbids.
+
+**The popup** (`tip_popup.gd`) replaces Godot's tooltip on the strip, which cannot
+be hovered into. `tooltip_text` stays empty on the figures (a non-empty one draws
+a second tooltip beside ours; `test_top_bar_desk.gd` pins it). One dismissal rule,
+`stays_open(over_figure, over_l1, over_l2)`, and a grace window for the diagonal
+move; `OPEN_DELAY_S` is the dwell. Both are felt numbers with no simulation
+meaning. Level 2 sits flush beside level 1 and flips left at the screen edge. A
+day tick refreshes a stationary popup's text in place -- rebuilding rows under the
+pointer would fire exit/enter pairs and flicker the child. **A wrapping Label
+reports its minimum height for the width it had before layout, so a panel sized on
+the frame it is built is several times too tall (the first windowed capture showed
+a 600 px popup round three lines); the popup re-fits for two frames after layout.**
+
+**The walker's level 2** (`test_strip_readings.gd`): every `child_id` a staged
+state raises resolves to a titled, non-empty breakdown; every `OpinionK.ISSUE_LABEL`
+key has one; an unknown id and a child under the wrong reading resolve to nothing;
+the children move when the input they report moves (the issue probe reads line 0
+only -- the satisfaction line below it moves with the same input and hid a
+hard-coded operands line, which the mutation check caught).
+
+**The outliner** (`outliner_readings.gd`, `outliner_panel.gd`) is a register by the
+strip's shape: `SECTIONS`, `CAPTIONS`, `INPUTS`, `read(section, state, loader)` ->
+`{title, rows, visible}`, a row being `{text, tone, window}`. Nothing in it is
+player-chosen, so it adds no save field: agenda (the entries the content `pinned`),
+firms in trouble (`Industry.failing` and `Industry.pending_bid` -- the two states
+`pending.gd` already marks), supplies short (the shortage line, worst first, the
+strip's order), people you watch (a grudge, or loyalty turned against the term).
+An empty section is hidden, never a row of zeros. `ROW_CAP` rows a section, then
+"+N more". It is a window (`"outliner"`, key Q, one `register()` and one action-bar
+line), not a HUD plate: a plate moves the frames the 826 px band is measured
+against. A row click asks `main.gd` to open the window that answers it. **People
+left the strip here** -- a count of people the term has moved is a margin note, not
+a standing figure -- and `tests/test_surfaces_people.gd`'s scan now reads
+`outliner_readings.gd`.

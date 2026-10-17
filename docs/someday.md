@@ -305,6 +305,23 @@ measurement (the way pass 23 set the commodity pair from the category median).
   surface that seats a neighbour's person in front of the player (a summit, a council
   face for a non-member, a neighbour's cabinet read).
 
+## Carried from V4.8b (2026-10-17)
+
+- **A player-chosen watchlist for the outliner.** The tier doc says "watched
+  firms"; nothing in the game is watched, so the outliner shows firms in trouble
+  (a failing major in its rescue window, a standing foreign bid). A real watchlist
+  is a register the player writes -- a save field (a bump, since an absent list
+  would read as "watching nothing", which is correct for an old save, so possibly
+  no bump: decide at the plan) and a command, not a UI-only change. **Trigger:** a
+  playtest where a player says they lost track of a firm that was not failing.
+- **Level-2 breakdowns for GDP, unemployment, inflation and unrest.** None has a
+  decomposition in the machine (the V4.8a call: no `src/sim/` diff), so their tips
+  say what the number is and stop. **Trigger:** a block that adds such a query (a
+  growth-accounting split would feed both the tip and the Economy panel).
+- **The popup's felt timings** (`OPEN_DELAY_S` 0.3 s, `GRACE_S` 0.2 s) were set by
+  reasoning, not by a hand on a mouse: a headless suite cannot feel them. **Trigger:**
+  the first hands-on pass; V5 reworks the layer anyway.
+
 ## Carried from earlier blocks (pointers, not duplicates)
 
 - **The 25 generated nations' majors are generator-owned** — hand-curating
