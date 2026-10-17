@@ -110,8 +110,33 @@ static func read(id: String, state, loader) -> Dictionary:
 	return _reading("—", "")
 
 
+## A reading whose tip is plain text: one level-1 line per row of it, none opening
+## a child. A reading with a breakdown builds its lines itself (_reading_lines).
 static func _reading(text: String, tip: String, visible := true, alert_window := "") -> Dictionary:
-	return {"text": text, "tip": tip, "visible": visible, "alert_window": alert_window}
+	var lines: Array = []
+	if not tip.is_empty():
+		for row in tip.split("
+"):
+			lines.append(_line(row))
+	return {"text": text, "tip": tip, "visible": visible, "alert_window": alert_window, "lines": lines}
+
+
+## V4.8b. `lines` is the structured tip -- {text, child_id}, child_id "" for a line
+## with nothing under it -- and `tip` is those texts joined, so the popup that draws
+## the lines and the plain tip the walker reads are one source.
+static func _reading_lines(text: String, lines: Array, visible := true, alert_window := "") -> Dictionary:
+	var texts: Array[String] = []
+	for line in lines:
+		texts.append(String(line["text"]))
+	return {
+		"text": text, "tip": "
+".join(texts), "visible": visible,
+		"alert_window": alert_window, "lines": lines,
+	}
+
+
+static func _line(text: String, child_id := "") -> Dictionary:
+	return {"text": text, "child_id": child_id}
 
 
 ## The polled figure, PollNoise at both ends -- the same read the portrait card

@@ -62,6 +62,7 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let the bar's _ready() run
 	_check_every_reading_resolves()
+	_check_tip_is_derived_from_lines()
 	_check_every_input_is_live()
 	_check_absence_reads_as_a_dash()
 	_check_alerts_name_real_windows()
@@ -83,7 +84,7 @@ func _check_every_reading_resolves() -> void:
 		if not StripReadings.CAPTIONS.has(id):
 			_fail("'%s' has no caption" % id)
 		var r: Dictionary = StripReadings.read(id, state, _loader)
-		for key in ["text", "tip", "visible", "alert_window"]:
+		for key in ["text", "tip", "visible", "alert_window", "lines"]:
 			if not r.has(key):
 				_fail("'%s' returned no '%s'" % [id, key])
 				return
@@ -91,6 +92,21 @@ func _check_every_reading_resolves() -> void:
 			_fail("'%s' is visible with text '%s' and tip '%s'" % [id, r["text"], r["tip"]])
 	if not _bar._figure_values.has(StripReadings.ORDER[0]):
 		_fail("the bar built no figure for '%s' -- it is not drawing the register" % StripReadings.ORDER[0])
+
+
+## V4.8b. A reading's tip is its level-1 lines joined: one source for the tooltip,
+## so the popup (which draws the lines) and the plain tip (which the walker and
+## tip_of read) cannot say two things.
+func _check_tip_is_derived_from_lines() -> void:
+	var state = _new_state()
+	for id in StripReadings.ORDER:
+		var r: Dictionary = StripReadings.read(id, state, _loader)
+		var texts: Array[String] = []
+		for line in (r["lines"] as Array):
+			texts.append(String(line["text"]))
+		if String(r["tip"]) != "
+".join(texts):
+			_fail("'%s' tip is not its lines joined -- two sources for one tooltip" % id)
 
 
 ## The walker proper: perturb each declared input and require the reading to move.
