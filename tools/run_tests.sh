@@ -161,6 +161,7 @@ tests=(
   # state and stays visible, the count is the queue's own and the tooltip names
   # the worst severity, and the brass mark keys on the same read the strip does.
   tests/test_top_bar_desk.gd
+  tests/test_strip_readings.gd
   tests/test_geography.gd
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
   # has exactly one reader.

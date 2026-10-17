@@ -28,6 +28,7 @@ const Elections = preload("res://src/sim/elections.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 ## Every NationState field Legislature.apply_effects can write (read off its body, plus
 ## Budget.apply_pending's tax/spending/progressivity/demand-impulse writes). A programme's
@@ -97,6 +98,8 @@ func _run() -> void:
 	_check_top_bar_budget_balance_label()
 	_check_empty_desk_closed_copy()
 	_check_top_bar_election_clamp()
+	_check_approval_delta_missing_key()
+	_check_top_bar_null_player()
 
 
 ## X dismissal must not release independent interrupt or programme clock owner.
@@ -1132,6 +1135,29 @@ func _check_top_bar_election_clamp() -> void:
 	var tip: String = top_bar._figure_values["election"].tooltip_text
 	if tip != "The vote that ends your term has been held.":
 		_fail("B1: the past-vote tooltip reads '%s'" % tip)
+
+
+## Register B ("Numbers that are wrong rather than absent"): approval_delta checked
+## is_empty() but not the key, so a history entry with no approval read as a polled
+## zero and printed a fake movement -- into the strip's approval trend from V4.8a.
+func _check_approval_delta_missing_key() -> void:
+	var state = GameState.new_game(_main._loader, "FRA")
+	state.history.clear()
+	state.history.append({"year": 2027, "month": 1})
+	state.history.append({"year": 2027, "month": 2, "overall_approval_pct": 40.0})
+	if not is_nan(Trends.approval_delta(state, 1)):
+		_fail("Register B: approval_delta invented a movement from an entry with no approval")
+
+
+## Register B ("Crash surface"): a save with a bad player_nation_id gives
+## player() == null, and the top bar crashed on the next day tick.
+func _check_top_bar_null_player() -> void:
+	var state = GameState.new_game(_main._loader, "FRA")
+	state.player_nation_id = "ZZZ"
+	if state.player() != null:
+		_fail("Register B: the null-player fixture moved -- 'ZZZ' resolved to a nation")
+		return
+	_main._top_bar.refresh(state, _main._clock, _main._loader)
 
 
 func _finish() -> void:

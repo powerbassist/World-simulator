@@ -80,6 +80,7 @@ const FIGURE_LABEL := "FigureLabel"  ## the caption above a large number
 const CAPTION := "Caption"           ## dim secondary text
 const GOOD_TEXT := "GoodText"        ## a delta that is good news
 const BAD_TEXT := "BadText"          ## a delta that is bad news
+const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
 
 # -- Container and button variations -------------------------------------------
 
@@ -216,14 +217,16 @@ static func _panels(theme: Theme) -> void:
 	bar.set_corner_radius_all(0)
 	bar.content_margin_left = 16
 	bar.content_margin_right = 16
-	bar.content_margin_top = 6
-	bar.content_margin_bottom = 6
+	# 3, down from 6 at V4.8a: the figures stack caption over value now, and the
+	# strip must stay inside window_frame.gd's 44px TOP_MARGIN (it drew 50 at 6).
+	bar.content_margin_top = 3
+	bar.content_margin_bottom = 3
 	theme.set_type_variation(TOP_BAR_PANEL, "PanelContainer")
 	theme.set_stylebox("panel", TOP_BAR_PANEL, bar)
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, HEADING, MICRO, FIGURE, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT]:
+	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT]:
 		theme.set_type_variation(variation, "Label")
 
 	var bold := _font(FONT_CHROME_BOLD)
@@ -255,6 +258,14 @@ static func _labels(theme: Theme) -> void:
 	theme.set_color("font_color", FIGURE, TEXT)
 	if figures != null:
 		theme.set_font("font", FIGURE, figures)
+
+	# V4.8a. The strip's alert tone: the figure's own face and size, BAD's colour,
+	# so a reading in trouble changes colour and nothing else -- a figure that
+	# changed size when it went bad would shove its neighbours along the strip.
+	theme.set_font_size("font_size", FIGURE_ALERT, SIZE_FIGURE)
+	theme.set_color("font_color", FIGURE_ALERT, BAD)
+	if figures != null:
+		theme.set_font("font", FIGURE_ALERT, figures)
 
 	theme.set_font_size("font_size", HERO, SIZE_HERO)
 	theme.set_color("font_color", HERO, TEXT)

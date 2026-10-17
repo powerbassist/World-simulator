@@ -166,11 +166,11 @@ func _check_person_card_contract() -> void:
 
 
 func _check_top_bar_people_figure() -> void:
-	var src := FileAccess.get_file_as_string("res://src/ui/top_bar.gd")
+	var src := FileAccess.get_file_as_string("res://src/ui/strip_readings.gd")
 	if not src.contains("\"people\""):
-		_fail("top_bar.gd has no people figure -- the interim surface was dropped")
+		_fail("strip_readings.gd has no people figure -- the interim surface was dropped")
 	if not src.contains("person_grudges") or not src.contains("person_loyalty"):
-		_fail("top_bar.gd's people figure does not read the character registers")
+		_fail("strip_readings.gd's people figure does not read the character registers")
 
 
 func _fail(message: String) -> void:

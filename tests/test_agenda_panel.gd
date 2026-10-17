@@ -194,14 +194,14 @@ func _check_the_bar_reads_the_derived_pair(panel, state, ns, loader) -> void:
 ## percentage up top, the row in the Overview's programme section.
 func _check_the_other_surfaces_read_the_register(panel, state, ns, loader) -> void:
 	_main._update_top_bar()
-	if not _main._top_bar._programme_box.visible:
+	if not _main._top_bar._figure_values["programme"].get_parent().visible:
 		_fail("the top bar's programme figure is hidden with a live programme on the register")
 	var terms: Dictionary = Programme.terms_of(loader, String(ns.programme[0]["entry_id"]))
 	var name_text := String(terms["name"]).to_upper()
-	if not String(_main._top_bar._programme_label.text).contains(name_text):
-		_fail("the top-bar strip does not name the chosen programme: '%s'" % _main._top_bar._programme_label.text)
-	if not String(_main._top_bar._programme_value.text).ends_with("%"):
-		_fail("the top-bar strip carries no progress percentage: '%s'" % _main._top_bar._programme_value.text)
+	if not String(_main._top_bar._figure_captions["programme"].text).contains(name_text):
+		_fail("the top-bar strip does not name the chosen programme: '%s'" % _main._top_bar._figure_captions["programme"].text)
+	if not String(_main._top_bar._figure_values["programme"].text).ends_with("%"):
+		_fail("the top-bar strip carries no progress percentage: '%s'" % _main._top_bar._figure_values["programme"].text)
 
 	var overview = _main._overview_panel
 	overview.mark_dirty()
@@ -272,7 +272,7 @@ func _check_a_conclusion_pushes_a_card(panel, state, ns, loader) -> void:
 		_fail("the campaign panel's programme line does not read the completion")
 
 	_main._update_top_bar()
-	if _main._top_bar._programme_box.visible:
+	if _main._top_bar._figure_values["programme"].get_parent().visible:
 		_fail("the top bar still shows a programme with nothing live on the register")
 
 
