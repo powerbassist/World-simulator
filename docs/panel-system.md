@@ -1132,7 +1132,10 @@ waits for the stop, which the first version never checked (the mutation survived
 until it did). Left: the game bed cuts rather than fades when the game scene is
 freed (a scene change frees the player with it, and a re-parented tail would add
 its own gap); the per-cue settings read (a ~0.1 ms file read, inaudible); and the
-night test's exact tick count (cannot skip a beat at today's step cap).
+night test's exact tick count (cannot skip a beat at today's step cap). Pass 2
+traced the fixes (every `open()` caller, a re-enable mid-fade, the load path's
+quiet Dispatches) and found nothing at the bar; the loop stopped at two of its
+budgeted three.
 
 **Not verified here, and cannot be:** how it SOUNDS. The suite proves levels,
 pitches, seams and wiring; the ear is the author's. The rendered files (levels

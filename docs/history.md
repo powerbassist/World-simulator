@@ -19,6 +19,7 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 - **Measured first:** the generic render cost 193 ms for the one-shots (80 ms for the critical sting alone) and ~300 ms per bed after hoisting the partials into typed arrays (-45 %, no float changed). Too much for a frame, so beds render on a worker and swell in, and the one-shots warm on a worker as the game opens.
 - **The tests caught the tuning:** the first cut put a bed as loud as the quietest tick, the major sting quieter than the minor, and two stings ended on a click -- all four red on the rendered samples, fixed by level and duration.
 - **Mutation-checked, and one survived:** a `_skipping` flag meant to silence a skipped count was dead -- `skip()` lands the count at t = 1, where the last-region rule already silences it. Deleted.
+- **Review (budget 3, bar: changes what a player hears or sees), 2 passes:** pass 1 fixed three -- an interrupt silenced by its NOTIFY band, its Dispatches' open tick over the sting, two overlapping beds after Ambience off/on -- and left three below the bar; pass 2 clean.
 - **Not verifiable here:** how it sounds. Files exported for the author's ear.
 - **Refused:** voice, licensed music, a composed score; a click on every button; a volume ladder.
 

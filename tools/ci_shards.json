@@ -122,7 +122,8 @@
    "tests/test_overview_panel.gd",
    "tests/test_save_load.gd",
    "tests/test_acknowledgments.gd",
-   "tests/test_boot_stages.gd"
+   "tests/test_boot_stages.gd",
+   "tests/test_sound.gd"
   ]
  ]
 }
