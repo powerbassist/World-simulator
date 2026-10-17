@@ -11,7 +11,7 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.9
 
-**V4.9a -- THE LOADING SCREEN AND THE MOTION VOCABULARY -- IS BUILT on `v4.9a-boot` (2026-10-17). One `src/sim/` diff (`Net.warm_step`, the same table in slices), `SAVE_VERSION` unchanged, one settings key (`[display] motion`).**
+**V4.9a -- THE LOADING SCREEN AND THE MOTION VOCABULARY -- IS MERGED (PR #7, merge commit `14b6d2a2`, 2026-10-17). One `src/sim/` diff (`Net.warm_step`, the same table in slices), `SAVE_VERSION` unchanged, one settings key (`[display] motion`).**
 
 - **Contract and instruments: [panel-system](panel-system.md) §22.**
 - **Author calls at the plan gate (2026-10-17):** all three sub-blocks, full, despite the V5 rework -- motion as one reusable vocabulary rather than per-panel polish; and `Net.warm` made resumable so the bar moves through its 4.5 s honestly rather than holding on one frozen frame.
