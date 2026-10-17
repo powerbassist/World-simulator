@@ -2153,7 +2153,11 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		# and _guard_lapses() holds the clock for it in its last month, so the
 		# contract above is kept by name rather than by the arrival pause.
 		var severity := int(entry.get("severity", 1))
-		if MessageSettings.allows(_messages, ev.category, severity, "notify"):
+		# An interrupt ignores the register entirely (message_settings.gd's
+		# header; pending.gd's notify read does the same): the content says
+		# "until answered", and a preference does not silence it (review pass 1).
+		if bool(entry.get("interrupt", false)) \
+				or MessageSettings.allows(_messages, ev.category, severity, "notify"):
 			sting_severity = maxi(sting_severity, severity)
 		var holds := MessageSettings.allows(_messages, ev.category, severity, "pause")
 		if holds:
@@ -2712,7 +2716,8 @@ func _enforce_interrupt() -> void:
 	# stayed paused after being answered.
 	_paused_for_decision = true
 	if _events_panel != null:
-		_windows.open("events")
+		# Quiet (V4.9c): the arrival's sound is the event sting.
+		_windows.open("events", true)
 	_hud.clock_cluster.refresh(_clock)
 
 

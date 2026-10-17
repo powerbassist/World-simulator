@@ -1121,6 +1121,19 @@ against a skip, and a bed's swell, Ambience off (faded, not cut), back on, and
 close cue, the NOTIFY gate removed, the Ambience gate removed, the sting's synth
 perturbed -- each turned the test red.
 
+**Review pass 1 (2026-10-17), bar "changes what a player hears or sees" -- three
+fixed, three left.** (1) The sting obeyed the NOTIFY band for an interrupt, which
+the register ignores everywhere else (`pending.gd`): an interrupt now always
+stings. (2) The Dispatches window an interrupt opens played its open tick on top
+of the sting; the game's own open is quiet now (`open(id, quiet)`). (3) Ambience
+off then on overlapped two copies of the bed; a bed keeps ONE player for its life,
+faded to silence and stopped on off, faded back up on on -- and the test now
+waits for the stop, which the first version never checked (the mutation survived
+until it did). Left: the game bed cuts rather than fades when the game scene is
+freed (a scene change frees the player with it, and a re-parented tail would add
+its own gap); the per-cue settings read (a ~0.1 ms file read, inaudible); and the
+night test's exact tick count (cannot skip a beat at today's step cap).
+
 **Not verified here, and cannot be:** how it SOUNDS. The suite proves levels,
 pitches, seams and wiring; the ear is the author's. The rendered files (levels
 baked in, each bed twice so the seam is inside the file) were sent for listening.

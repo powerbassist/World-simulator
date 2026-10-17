@@ -95,11 +95,19 @@ func _process(_delta: float) -> void:
 	if _seen_revision != SettingsPanel.revision:
 		_seen_revision = SettingsPanel.revision
 		_want = SettingsPanel.sound_enabled() and SettingsPanel.ambient_enabled()
-		if not _want and _player != null:
-			var gone := _player
-			_player = null
+		# One player for the bed's life: off fades it to silence and stops it,
+		# on fades the same player back up from wherever the fade-out had got
+		# to. A fresh player per switch overlapped the old one's fade-out with
+		# a second copy of the loop (review pass 1).
+		if _player != null:
 			_kill_fade()
-			_fade_player(gone, SoundK.SILENT_DB, func(): gone.queue_free())
+			if _want:
+				if not _player.playing:
+					_player.play()
+				_tween = _fade_player(_player, float(recipe()["level_db"]), Callable())
+			else:
+				var fading := _player
+				_tween = _fade_player(fading, SoundK.SILENT_DB, func(): fading.stop())
 
 	if not _want or _player != null:
 		return
@@ -123,7 +131,6 @@ func _render() -> void:
 
 ## A fade in progress is killed before the same player fades the other way:
 ## two tweens on one volume_db would fight, and whichever ran last would win.
-## A fade OUT is never killed -- it is the old player's own way to silence.
 func _kill_fade() -> void:
 	if _tween != null and _tween.is_valid():
 		_tween.kill()

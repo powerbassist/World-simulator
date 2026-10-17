@@ -87,7 +87,10 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 	_frames[id] = frame
 
 
-func open(id: String) -> void:
+## `quiet` for a window the GAME opens on the back of news that already has its
+## sound -- the interrupt's Dispatches, whose sound is the event sting (review
+## pass 1: the open tick played on top of it, two sounds for one arrival).
+func open(id: String, quiet: bool = false) -> void:
 	if not _frames.has(id):
 		return
 
@@ -117,7 +120,8 @@ func open(id: String) -> void:
 		Motion.open(frame)
 		# V4.9c. On the way in only, for Motion.open's reason: raising a
 		# window that is already up is not an arrival.
-		Sound.cue(self, "open")
+		if not quiet:
+			Sound.cue(self, "open")
 	_raise(id)
 
 	opened.emit(id)

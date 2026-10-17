@@ -90,19 +90,37 @@ func _process(_delta: float) -> bool:
 			elif _waited_out("the menu bed never started playing"):
 				return _finish()
 		2:
-			# Ambience off: the next frame the bed sees the save, lets go of its
-			# player and fades it out.
+			# Ambience off: the next frame the bed sees the save and fades its
+			# player out -- the same player, kept for the way back.
 			if _bed.playing():
-				_fail("Ambience off: the bed is still playing")
+				_fail("Ambience off: the bed still reports playing")
 			_faded_player = _first_player(_bed)
 			if _faded_player == null:
 				_fail("Ambience off: the bed cut its player instead of fading it")
-			_set_audio(true, true)
+				return _finish()
 			_wait_started = Time.get_ticks_msec()
-			_phase = 3
+			_phase = 6
+		6:
+			# The fade ends in silence and a stopped player, not a muted loop
+			# still running.
+			if not _faded_player.playing:
+				if _faded_player.volume_db > SoundK.SILENT_DB + 0.5:
+					_fail("Ambience off: the player stopped at %.1f dB, not after fading out" % _faded_player.volume_db)
+				_set_audio(true, true)
+				_wait_started = Time.get_ticks_msec()
+				_phase = 3
+			elif _waited_out("Ambience off: the bed never fell silent"):
+				return _finish()
 		3:
-			# Back on: the cached stream starts again at once, no second render.
+			# Back on: the same player fades back up -- never a second copy of
+			# the loop overlapping the first's fade-out (review pass 1).
 			if _bed.playing():
+				var players := 0
+				for c in _bed.get_children():
+					if c is AudioStreamPlayer:
+						players += 1
+				if players != 1 or _first_player(_bed) != _faded_player:
+					_fail("Ambience back on made a new player (%d now) instead of reviving the faded one" % players)
 				_leaving_bed = _bed
 				_leaving_bed.fade_out()
 				_wait_started = Time.get_ticks_msec()
@@ -388,8 +406,38 @@ func _check_event_sting() -> void:
 	_main._card_events(_main._state.year, _main._state.month, {}, {})
 	if _sting_count() != before:
 		_fail("notify OFF: the arrival still played a sting")
+
+	# An interrupt ignores the register: notify OFF still stings, and the
+	# Dispatches window the interrupt opens adds no open tick on top.
+	var urgent = _interrupt_event()
+	if urgent == null:
+		_fail("the book has no interrupt event to stage")
+	else:
+		_reset_desk()
+		_main._windows.close_all()
+		reg = MessageSettings.defaults()
+		reg[urgent.category]["notify"] = MessageSettings.OFF
+		_main._messages = reg
+		before = _sting_count()
+		var opens := _players(_main._windows, "open")
+		Events.announce(ns, urgent, month, names)
+		_main._card_events(_main._state.year, _main._state.month, {}, {})
+		_main._enforce_interrupt()
+		if _sting_count() != before + 1:
+			_fail("notify OFF silenced an interrupt -- the register must not apply to it")
+		if not _main._windows.is_open("events"):
+			_fail("the staged interrupt did not open Dispatches")
+		elif _players(_main._windows, "open") != opens:
+			_fail("the interrupt's Dispatches played an open tick over the sting")
 	_reset_desk()
 	_main._messages = MessageSettings.defaults()
+
+
+func _interrupt_event():
+	for ev in _main._loader.events:
+		if bool(ev.interrupt):
+			return ev
+	return null
 
 
 func _two_severities() -> Array:
