@@ -82,6 +82,26 @@ static func finish(node: Node) -> void:
 	node.remove_meta(_META)
 
 
+static func _stop(node: Node) -> void:
+	if node.has_meta(_META):
+		var tween: Tween = node.get_meta(_META)
+		if tween != null and tween.is_valid():
+			tween.kill()
+		node.remove_meta(_META)
+
+
+## Fades `item` out and then calls `done` -- the loading screen's reveal. Through
+## the clamped stepper, because it starts right after the game's ~0.8 s build
+## frame, which a self-running tween would spend whole. Motion off: `done` now.
+static func fade_out(item: CanvasItem, seconds: float, done: Callable) -> void:
+	if not enabled():
+		done.call()
+		return
+	var tween := _tween(item)
+	tween.tween_property(item, "modulate:a", 0.0, seconds)
+	tween.tween_callback(done)
+
+
 static func _tween(node: Node) -> Tween:
 	finish(node)
 	var tween := node.create_tween()
@@ -151,15 +171,18 @@ static func arrive(control: Control) -> void:
 	tween.tween_property(control, "modulate:a", 1.0, ARRIVE_S)
 
 
-## One beat on a label, brass to its own colour.
+## One beat on a label, brass to its own colour. The three colour channels
+## only: alpha stays the caller's (the clock dims a paused date through it), so
+## a refresh setting alpha mid-beat neither cancels the beat nor is undone by it.
 static func pulse(item: CanvasItem) -> void:
 	if not enabled():
 		return
-	var rest := Color(1, 1, 1, item.modulate.a)
 	item.modulate = Color(PULSE_TINT.r, PULSE_TINT.g, PULSE_TINT.b, item.modulate.a)
 	var tween := _tween(item)
+	tween.set_parallel(true)
 	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(item, "modulate", rest, PULSE_S)
+	for channel in ["modulate:r", "modulate:g", "modulate:b"]:
+		tween.tween_property(item, channel, 1.0, PULSE_S)
 
 
 ## Sets `label` to `text`, rolling every number in it from the value it shows
@@ -168,6 +191,10 @@ static func pulse(item: CanvasItem) -> void:
 ## set at once. The label's text is final the moment the tween finishes or is
 ## finished; mid-roll it is a real intermediate value, never a garbled one.
 static func roll_text(label: Label, text: String) -> void:
+	# A roll still running is STOPPED where it is, not finished: finishing would
+	# land it on its old target, and a new reading equal to the value now shown
+	# would then return below with that stale target on screen.
+	_stop(label)
 	var from := label.text
 	if from == text:
 		return

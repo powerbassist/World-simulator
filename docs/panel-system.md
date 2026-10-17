@@ -878,6 +878,20 @@ now steps its own tweens from `SceneTree.process_frame` with each frame's delta
 capped at `MAX_STEP_S` (1/30 s) -- still time-based, never frame-counted, the
 standard max-delta guard. Re-captured: alpha 0.67 two frames in, 1.00 settled.
 
+**Review pass 1 (2026-10-17), bar "changes what a player sees" -- five fixed, one
+left.** (1) A new reading equal to the value shown mid-roll returned early and let
+the roll finish on its OLD target: a roll is now STOPPED where it stands before the
+new one starts. (2) The clock's refresh finished the running beat to set its alpha,
+so a second refresh the same day (a month boundary, any command) cancelled that
+day's pulse: the beat now tweens the colour channels only, and alpha is the
+clock's. (3) The loading screen's reveal was a self-running tween started right
+after the game's ~0.8 s build frame, which it spent whole: it now goes through
+`Motion.fade_out()` and the clamped stepper. (4) The menu's map plate is hidden
+when the loading screen goes up, so it costs the boot no frames. (6) Tests for
+each, mutation-checked. Left: (5) a first-opened window grows about the centre of
+the size it had before its content resized -- cosmetic, and not visible in the
+windowed capture.
+
 `roll_text` is built on two pure functions, `same_template()` and
 `interpolate_text()`: a reading rolls only when its words, its count of numbers and
 each number's decimals are unchanged; a sign flip, a changed shape or a grouped

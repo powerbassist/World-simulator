@@ -16,6 +16,8 @@ var _frame := 0
 var _timed: Control
 var _timed_started := 0
 var _stalled: Control
+var _fading: Control
+var _faded := false
 var _manager
 var _cluster
 var _clock
@@ -42,12 +44,23 @@ func _process(_delta: float) -> bool:
 			_stalled = Control.new()
 			root.add_child(_stalled)
 			Motion.open(_stalled)
+			# The loading screen's reveal starts right after the game's long
+			# build frame: it must survive one too.
+			_fading = Control.new()
+			root.add_child(_fading)
+			Motion.fade_out(_fading, 0.2, func(): _faded = true)
 			OS.delay_msec(300)
 			return false
 		2:
+			# Tweens step after _process, so the stalled frame's delta is spent
+			# in the frame after this one: read on frame 3.
+			return false
+		3:
 			# Unclamped, the 300 ms frame would have finished the 0.16 s open.
 			if _stalled.modulate.a > 0.99:
 				_fail("one 300 ms frame finished Motion.open() -- a long frame ate the motion")
+			if _faded:
+				_fail("one 300 ms frame finished Motion.fade_out() -- the loading screen's reveal would vanish in a frame")
 			# Started after the stall, and read on wall-clock time below: a
 			# frame-counted tween would settle after N frames whatever their length.
 			_timed = Control.new()
@@ -125,6 +138,19 @@ func _check_roll() -> void:
 	Motion.finish(label)
 	if label.text != "20%":
 		_fail("finish() left a rolling figure at '%s', expected '20%%'" % label.text)
+	# A new reading equal to the value shown MID-roll must stop there, not let
+	# the roll run on to its old target.
+	label.text = "10%"
+	Motion.roll_text(label, "20%")
+	var rolling: Tween = label.get_meta(&"motion_tween")
+	rolling.custom_step(Motion.ROLL_S * 0.5)
+	var shown := label.text
+	if shown == "10%" or shown == "20%":
+		_fail("half a roll shows '%s', expected an intermediate value" % shown)
+	Motion.roll_text(label, shown)
+	Motion.finish(label)
+	if label.text != shown:
+		_fail("a reading equal to the mid-roll value ended at '%s', expected '%s' (stale target)" % [label.text, shown])
 	# A second roll interrupting the first starts from the shown value and ends final.
 	Motion.roll_text(label, "30%")
 	Motion.roll_text(label, "40%")
@@ -207,10 +233,16 @@ func _check_clock_beats() -> void:
 	_cluster.refresh(_clock)
 	if label.modulate.is_equal_approx(Color.WHITE):
 		_fail("a day passing did not beat the clock's date")
+	# The same day refreshed again (a month boundary, any command) keeps the beat.
+	_cluster.refresh(_clock)
+	if label.modulate.is_equal_approx(Color.WHITE):
+		_fail("a second refresh the same day cancelled the clock's beat")
 	_clock.paused = true
 	_cluster.refresh(_clock)
 	if not is_equal_approx(label.modulate.a, Motion.PAUSED_ALPHA):
 		_fail("a paused clock's date reads alpha %.2f, expected %.2f" % [label.modulate.a, Motion.PAUSED_ALPHA])
+	# Let the running beat land, then: a date set while paused starts none.
+	Motion.finish(label)
 	_clock.day += 1
 	_cluster.refresh(_clock)
 	if not label.modulate.is_equal_approx(Color(1, 1, 1, Motion.PAUSED_ALPHA)):

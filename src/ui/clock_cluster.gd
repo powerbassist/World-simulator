@@ -101,9 +101,8 @@ func refresh(clock: Node) -> void:
 	# day, so the beats' own rhythm is the speed, and a paused date is dimmed --
 	# still the date, visibly not moving. The dim is state, not motion, so it
 	# holds with motion off too.
-	# finish() first: a beat still running would tween the alpha back to the
-	# one it started from.
-	Motion.finish(_date_label)
+	# Alpha only: the beat tweens the colour channels, so a second refresh the
+	# same day (a month boundary, any command) leaves it running.
 	_date_label.modulate.a = Motion.PAUSED_ALPHA if clock.paused else 1.0
 	if date != _date_label.text:
 		var first := _date_label.text.is_empty()

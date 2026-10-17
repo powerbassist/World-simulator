@@ -133,10 +133,5 @@ func _enter() -> void:
 	release_focus()
 	focus_mode = Control.FOCUS_NONE
 	entered.emit(game)
-	if Motion.enabled():
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var tween := create_tween()
-		tween.tween_property(self, "modulate:a", 0.0, REVEAL_S)
-		tween.tween_callback(queue_free)
-	else:
-		queue_free()
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Motion.fade_out(self, REVEAL_S, queue_free)

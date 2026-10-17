@@ -261,6 +261,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func _start_game(load_slot: String, nation_id: String = "", scenario_id: String = "") -> void:
 	if _loading != null:
 		return
+	# The plate is under an opaque screen from here on: hidden, it costs the
+	# boot no frame time.
+	_plate.hide()
 	_loading = LoadingScreen.new()
 	add_child(_loading)
 	_loading.entered.connect(func(_game: Node): queue_free())
