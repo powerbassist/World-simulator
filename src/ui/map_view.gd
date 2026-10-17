@@ -51,6 +51,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapGround = preload("res://src/ui/map_ground.gd")
+const Roster = preload("res://src/core/roster.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
 const MapOutlines = preload("res://src/ui/map_outlines.gd")
@@ -146,6 +147,10 @@ var _texture: ImageTexture = null
 var _ground: ImageTexture = null
 var _ground_bounds := Rect2()
 var _ground_feather_deg := 0.0
+## V4.10b. Each roster nation's border kind, its Roster.grade() -- content-derived
+## and static for the session, so cached in setup() beside the ring boxes rather
+## than asked per ring per re-record.
+var _border_kind: Dictionary = {}
 var _center_lon := 0.0
 var _center_lat := 0.0
 
@@ -245,14 +250,31 @@ var _layer_blend := 1.0
 ## black void with ten countries floating in it.
 const SEA := Color(0.043, 0.075, 0.129)
 
-## Coastlines of the ten, and a quieter line for the outlines of everything else.
-## The world layer is deliberately dimmer than the roster: it is context, and a
-## border the player cannot cross should not compete with one they can. The
-## roster's line is bright because over a satellite photograph it is doing the
-## work the fill used to do -- saying which ten answer a click.
-const COAST := Color(0.95, 0.96, 0.99, 0.88)
-const WORLD_BORDER := Color(0.71, 0.78, 0.86, 0.22)
-const WORLD_BORDER_WIDTH := 1.0
+## V4.10b. BORDERS WEIGHTED BY KIND, one table, one draw pass per kind. The third
+## key is the roster grade (author's call at the V4.10b plan gate): V4.11's derived
+## playable / simulated / outline, read through Roster.grade() and never stored,
+## beside the regional hairline inside a nation. Before this every roster nation
+## stroked the same near-white line and only the world layer was quieter.
+##
+## Each kind carries TWO colours because the ground under it changes with the
+## zoom band (V4.10a): over the satellite at globe view a line has to be light to
+## read against sea and forest, over the paper ground at depth it has to be ink.
+## border_color() blends them by ground_alpha(), so a line never sits on the
+## wrong ground. The photo colours are the pre-V4.10b values unchanged: COAST was
+## (0.95, 0.96, 0.99, 0.88), WORLD_BORDER (0.71, 0.78, 0.86, 0.22), REGION_BORDER
+## (0.71, 0.78, 0.86, 0.35).
+##
+## Widths are a hierarchy a player reads without a legend: the nations you can
+## lead heaviest, the ones the game runs a step lighter (they still answer a
+## click), the world's outlines at the old world-border weight, and the regional
+## hairline lightest, because it is structure inside a country rather than the
+## edge of one. COAST_WIDTH (1.5) sat between the first two.
+const BORDER_KINDS := {
+	"playable": {"photo": Color(0.95, 0.96, 0.99, 0.88), "paper": Color(0.13, 0.11, 0.09, 0.92), "width": 2.0},
+	"simulated": {"photo": Color(0.95, 0.96, 0.99, 0.70), "paper": Color(0.13, 0.11, 0.09, 0.72), "width": 1.4},
+	"outline": {"photo": Color(0.71, 0.78, 0.86, 0.22), "paper": Color(0.22, 0.19, 0.16, 0.40), "width": 1.0},
+	"regional": {"photo": Color(0.71, 0.78, 0.86, 0.35), "paper": Color(0.22, 0.19, 0.16, 0.45), "width": 0.75},
+}
 ## V4.11c. The hovered outline's line: the world border's hue at roughly the
 ## coastline's strength, so the country being read stands out without looking
 ## like one the player can act on (the roster's line stays the brightest).
@@ -271,22 +293,18 @@ const OUTLINE_READOUT_PLATE := Color(0.063, 0.106, 0.188, 0.92)
 ## toward the accent by 0.35, which on the political layer says "this one is under
 ## the cursor" and on a relations layer says a pair is warmer than it is -- the
 ## one place in the interface where pointing at a number would change it. The
-## outline is already what separates the roster (see COAST), so it is the honest
+## outline is already what separates the roster (see BORDER_KINDS), so it is the honest
 ## carrier for both marks.
-## Hover is width alone, not brightness: COAST is already near-white, so a
-## brighter white adds nothing and brass is spoken for by the home mark. 3.0 was
+## Hover is mostly width: the roster's photo line is already near-white, so a
+## brighter white adds little and brass is spoken for by the home mark. 3.0 was
 ## legible in a frame only just, hence 4.0.
-const COAST_WIDTH := 1.5
 const HOVER_WIDTH := 4.0
 const HOME_WIDTH := 2.5
 
-## V2.2b: the hairline between one region and the next, inside the national
-## outline. It sits between WORLD_BORDER and COAST in brightness on purpose:
-## it is structure inside the roster, not context outside it, but it must stay
-## quiet enough that the bright national stroke remains the one line saying
-## which ten answer a click.
-const REGION_BORDER := Color(0.71, 0.78, 0.86, 0.35)
-const REGION_BORDER_WIDTH := 1.0
+## V2.2b's regional hairline lives in BORDER_KINDS["regional"] since V4.10b: it
+## is structure inside the roster, not context outside it, and must stay quiet
+## enough that the national stroke remains the line saying which nations answer
+## a click.
 
 ## V3.1 culling. The pad is DERIVED, not swept: the widest stroke on the map is
 ## HOVER_WIDTH (4.0 px) and antialias feather adds a couple more, so a ring
@@ -397,6 +415,9 @@ func setup(loader, state) -> void:
 	_ground = MapGround.texture()
 	_ground_bounds = MapGround.bounds()
 	_ground_feather_deg = float(MapGround.sidecar().get("feather_deg", 0.0))
+	_border_kind.clear()
+	for id in ids:
+		_border_kind[id] = Roster.grade(loader, String(id))
 
 	# Per-ring bounding boxes for the draw cull, built ONCE beside the arrays
 	# they walk -- the same call _nation_boxes made for the hit test. The cull
@@ -986,6 +1007,17 @@ func ground_alpha() -> float:
 	return MapGround.band_alpha(_zoom, BASE_SCALE)
 
 
+## V4.10b. The border kind a nation or outline strokes with: its roster grade.
+func border_kind_of(id: String) -> String:
+	return String(_border_kind.get(id, "outline"))
+
+
+## The kind's line colour on whatever ground is under it right now.
+func border_color(kind: String) -> Color:
+	var k: Dictionary = BORDER_KINDS[kind]
+	return (k["photo"] as Color).lerp(k["paper"], ground_alpha())
+
+
 func _draw_raster() -> void:
 	var a := ground_alpha()
 	# A whole-screen photograph under an opaque ground is fill nobody sees: skip
@@ -1012,6 +1044,8 @@ func _draw_raster() -> void:
 ## mask was rasterised from these same rings -- and what a border adds is the
 ## political line neither can show.
 func _draw_world_borders() -> void:
+	var outline_color := border_color("outline")
+	var outline_width := float(BORDER_KINDS["outline"]["width"])
 	var view := visible_lonlat_rect()
 	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))
 	for id in _world_polygons.keys():
@@ -1026,7 +1060,7 @@ func _draw_world_borders() -> void:
 			for p in ring:
 				screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 			screen_points.append(screen_points[0])
-			draw_polyline(screen_points, WORLD_BORDER, WORLD_BORDER_WIDTH)
+			draw_polyline(screen_points, outline_color, outline_width)
 
 
 ## V4.11c. The hovered outline restroked brighter, in the world pass's slot so the
@@ -1126,18 +1160,30 @@ func _draw_roster() -> void:
 	# memo below extends that same argument across the re-records that share a
 	# month (`_fill_key`), because the state cannot move between them.
 	var fills: Dictionary = _shown_fills(viewer)
+	# Border colours once per re-record, not per ring: they move with the zoom
+	# band only, and every ring of a kind shares one.
+	var kind_colors := {}
+	for kind in BORDER_KINDS.keys():
+		kind_colors[kind] = border_color(kind)
+	var regional_color: Color = kind_colors["regional"]
+	var regional_width := float(BORDER_KINDS["regional"]["width"])
 
 	for id in _polygons.keys():
 		var color: Color = fills[id]
 
-		# Brass for the nation the player governs, thicker white under the cursor,
-		# the plain coastline otherwise. The home mark wins a collision: hovering
-		# your own country should not stop it being yours, and it carries no value
-		# on either data layer for the readout to disagree with.
-		var stroke := COAST
-		var width := COAST_WIDTH
+		# Brass for the nation the player governs, the heaviest line at hover
+		# width under the cursor, its kind's line otherwise. The home mark wins a
+		# collision: hovering your own country should not stop it being yours,
+		# and it carries no value on either data layer for the readout to
+		# disagree with. Hover takes the playable kind's colour rather than pure
+		# white since V4.10b: white was right over the photograph and is the
+		# weakest line there is over paper; the playable colour is near-white at
+		# globe view and ink at depth.
+		var kind := border_kind_of(String(id))
+		var stroke: Color = kind_colors[kind]
+		var width := float(BORDER_KINDS[kind]["width"])
 		if id == _hovered_id:
-			stroke = Color(1.0, 1.0, 1.0, 1.0)
+			stroke = Color(kind_colors["playable"], 1.0)
 			width = HOVER_WIDTH
 		if MapLayers.is_viewer(viewer, id):
 			stroke = UiTheme.ACCENT
@@ -1191,7 +1237,7 @@ func _draw_roster() -> void:
 		for region_points: PackedVector2Array in region_rings:
 			var closed := region_points.duplicate()
 			closed.append(region_points[0])
-			draw_polyline(closed, REGION_BORDER, REGION_BORDER_WIDTH)
+			draw_polyline(closed, regional_color, regional_width)
 
 		# The national stroke last, from the 1:50m outline it has always used:
 		# the bright line is the one that says which ten answer a click, and it

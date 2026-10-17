@@ -11,6 +11,7 @@ extends SceneTree
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const Roster = preload("res://src/core/roster.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -57,6 +58,7 @@ func _run() -> void:
 	_check_world_geometry(loader, map)
 	_check_raster(map)
 	_check_ground_band(map)
+	_check_border_kinds(loader, map)
 	_check_projection_and_hit_test(map)
 	_check_outline_hover(map)
 	_check_pan_zoom(map)
@@ -206,6 +208,38 @@ func _check_ground_band(map) -> void:
 		_fail("ground_alpha() is %f with no ground texture" % map.ground_alpha())
 	map._ground = ground
 	map._zoom = zoom_before
+
+
+## V4.10b. Borders weighted by kind, the third key the roster grade (author's
+## call): the table has exactly the four kinds, their widths are a hierarchy a
+## player can read (playable heaviest, the regional hairline lightest), and every
+## nation's kind IS its derived grade -- a stored copy would drift from Roster.
+func _check_border_kinds(loader, map) -> void:
+	var kinds: Array = map.BORDER_KINDS.keys()
+	kinds.sort()
+	if kinds != ["outline", "playable", "regional", "simulated"]:
+		_fail("BORDER_KINDS keys are %s" % [kinds])
+		return
+	var w := func(k: String) -> float: return float(map.BORDER_KINDS[k]["width"])
+	if not (w.call("playable") > w.call("simulated") and w.call("simulated") > w.call("outline") and w.call("outline") > w.call("regional")):
+		_fail("border widths are not a hierarchy: %s" % [map.BORDER_KINDS])
+	for id in loader.nations.keys():
+		if map.border_kind_of(String(id)) != Roster.grade(loader, String(id)):
+			_fail("%s strokes as %s, its grade is %s" % [id, map.border_kind_of(String(id)), Roster.grade(loader, String(id))])
+			return
+	for id in loader.outlines.keys():
+		if map.border_kind_of(String(id)) != "outline":
+			_fail("outline %s strokes as %s" % [id, map.border_kind_of(String(id))])
+			return
+	# The stroke follows the ground: photo colour at globe view, ink at depth.
+	var z: float = map._zoom
+	map._zoom = map.min_zoom()
+	var photo: Color = map.border_color("playable")
+	map._zoom = map.MAX_ZOOM
+	var paper: Color = map.border_color("playable")
+	map._zoom = z
+	if not photo.is_equal_approx(map.BORDER_KINDS["playable"]["photo"]) or (map._ground != null and not paper.is_equal_approx(map.BORDER_KINDS["playable"]["paper"])):
+		_fail("border colour does not follow the ground band: %s / %s" % [photo, paper])
 
 
 func _check_projection_and_hit_test(map) -> void:
