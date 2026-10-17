@@ -57,10 +57,13 @@ ERDDAP = "https://oceanwatch.pifsc.noaa.gov/erddap/griddap/ETOPO_2022_v1_60s.nc"
 SOURCE_NAME = "ETOPO 2022 v1 60s surface"
 
 # The extent is the bbox of every roster ring (europe.geojson: the 41 simulated
-# nations) grown by this margin and snapped OUT to whole degrees. Six degrees is
-# a little over half a screen at the band's top edge (zoom 2.5, 30 px/deg on a
-# 1920 px map), so the feather below sits off-screen while the player looks at
-# any roster nation's coast.
+# nations) grown by this margin and snapped OUT to whole degrees. The margin does
+# NOT keep the feather off-screen: a 1920 px map spans 64 deg at zoom 2.5 and
+# 20 deg at max zoom, so framing an edge nation (Iceland, eastern Turkey, Ukraine,
+# Cyprus, the North Cape) shows the paper fading into the photograph inside the
+# frame. Hiding it at zoom 2.5 would take ~32 deg of margin -- an asset several
+# times this size for a fade the V4.10a review judged honest. Six degrees keeps
+# every roster coast on opaque paper with the 3 deg fade beyond it.
 EXTENT_MARGIN_DEG = 6.0
 
 # Alpha ramps 255 -> 0 across the last FEATHER_DEG inside each edge. Wide enough
