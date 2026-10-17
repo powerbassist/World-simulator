@@ -135,6 +135,13 @@ reason anyone predicted.
 > [!note] This is committed, not downloaded at build time
 > `sources/` is gitignored and holds datasets a script reads once. The raster is not one of those: it is an *asset the running game draws*, so it lives in `assets/map/` and is committed, under the same reasoning the `.gitignore`'s at-icons exception already states. At 2.5 MB it is a tenth of the at-icons set that exception was written for.
 
+### NOAA ETOPO 2022 — the ground's hillshade
+
+- **License:** Public domain. A work of NOAA's National Centers for Environmental Information, i.e. of the US federal government (17 U.S.C. § 105); the ERDDAP server it is fetched from states that the data "may be used and redistributed for free". Credited anyway, for the Blue Marble entry's reason.
+- **Provides:** ETOPO 2022 v1, 60 arc-second, ice surface — elevation and bathymetry on a one-sample-per-arc-minute grid, fetched once as two NetCDF-3 subsets (the server serves longitudes 0–360, so an extent across Greenwich is two requests) into the gitignored `sources/etopo/`, ~63 MB.
+- **Used for:** `assets/map/ground_europe.webp` (V4.10a), the paper-and-hillshade ground the map draws at depth in place of the satellite. The DEM only SHADES: the coast is rasterised from the game's own `data/geo/` rings, so the paper coast and the stroked coast agree by construction. Baked by `tools/ground_generate.py`, which also writes the bounds sidecar `assets/map/ground_europe.json` that `src/ui/map_ground.gd` reads — the extent is derived from the roster geometry, never authored.
+- **Fetched once, never streamed:** the tier doc refuses a streamed tile source by name. The download is a flag on the generator, not a build step; the committed asset is what the game draws, under the Blue Marble entry's "committed, not downloaded" note.
+
 ### World Bank Open Data — economic seed values
 
 - **License:** CC BY 4.0. Attribution required.
@@ -704,6 +711,22 @@ files don't silently change under a future re-download. Then run
 > scalar arrays are written back on one line so the output already matches what is
 > committed. **After any import, `git diff data/nations/` should show only what you
 > meant to change** — that check is only readable because of the second fix.
+
+The ground at depth (V4.10a) is committed too. Only if it needs re-baking —
+the first command fetches the DEM once into `sources/etopo/`, the second bakes from
+that cache, the third checks the sidecar still matches the geometry:
+
+```bash
+python tools/ground_generate.py --download
+```
+
+```bash
+python tools/ground_generate.py
+```
+
+```bash
+python tools/ground_generate.py --check
+```
 
 The map raster is **not** fetched here, because it is not a dataset — it is a
 committed asset and is already in the repo at
