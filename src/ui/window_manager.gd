@@ -18,6 +18,7 @@ extends Control
 
 const WindowFrame = preload("res://src/ui/window_frame.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const Sound = preload("res://src/ui/sound.gd")
 
 signal opened(id: String)
 signal closed(id: String)
@@ -94,7 +95,9 @@ func open(id: String) -> void:
 		if other_id == id:
 			continue
 		if _frames[other_id].visible and not _frames[other_id].pinned:
-			close(other_id)
+			# Quiet: the window displaced by this one is part of one gesture,
+			# and the gesture's sound is the open below.
+			close(other_id, true)
 
 	var frame = _frames[id]
 	var already_open: bool = frame.visible
@@ -112,15 +115,20 @@ func open(id: String) -> void:
 		# would keep a closed window visible and clickable for its duration, and
 		# open_ids() and every test read `visible` the moment close() returns.
 		Motion.open(frame)
+		# V4.9c. On the way in only, for Motion.open's reason: raising a
+		# window that is already up is not an arrival.
+		Sound.cue(self, "open")
 	_raise(id)
 
 	opened.emit(id)
 
 
-func close(id: String) -> void:
+func close(id: String, quiet: bool = false) -> void:
 	if not _frames.has(id) or not _frames[id].visible:
 		return
 	_frames[id].hide()
+	if not quiet:
+		Sound.cue(self, "close")
 	closed.emit(id)
 
 
@@ -212,9 +220,15 @@ func mark_all_dirty() -> void:
 			panel.mark_dirty()
 
 
+## One close cue for the sweep, not one per window: three identical ticks on
+## one frame are one tick played three times louder.
 func close_all() -> void:
+	var any := false
 	for id in _frames.keys():
-		close(id)
+		any = any or is_open(id)
+		close(id, true)
+	if any:
+		Sound.cue(self, "close")
 
 
 func _raise(id: String) -> void:

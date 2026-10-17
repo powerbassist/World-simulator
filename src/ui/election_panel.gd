@@ -14,6 +14,7 @@ const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Sting = preload("res://src/ui/sting.gd")
+const Sound = preload("res://src/ui/sound.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const ElectionNight = preload("res://src/ui/election_night.gd")
 
@@ -60,6 +61,8 @@ var _revealed := false
 var _cont: Button
 var _dismiss_label := ""
 var _guard_until := 0
+## V4.9c. Regions already ticked for this night.
+var _ticked := 0
 
 
 func _ready() -> void:
@@ -251,11 +254,21 @@ func _start_night() -> void:
 	for node in _verdict_nodes:
 		node.visible = false
 	_apply_count(0.0)
+	_ticked = 0
 	var id := _night_id
 	Motion.run(self, minf(float(n) * Motion.DECLARE_S, Motion.NIGHT_MAX_S), func(t: float):
 		if id != _night_id:
 			return
 		_apply_count(t * float(n))
+		# One tick per region as it declares -- except the last, which declares
+		# with the verdict's sting instead of a tick a frame before it. That one
+		# rule is also what silences a skip: skip() lands the count in a single
+		# step at t = 1, so the regions it declares at once declare with the
+		# last, and the count's sound stops with the count (test_sound.gd).
+		var declared: int = _night.declared(t * float(n))
+		if declared > _ticked and declared < n:
+			Sound.cue(self, "declare")
+		_ticked = maxi(_ticked, declared)
 		if t >= 1.0:
 			_reveal()
 	)

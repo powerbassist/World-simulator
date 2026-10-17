@@ -211,6 +211,12 @@ tests=(
   # V4.9b: election night -- the regions declare, the figures end on the
   # result's own, the verdict last; skip, the footer button, rebuild and wall-clock.
   tests/test_election_night.gd
+  # V4.9c: the synthesized sound set -- the election sting's bytes pinned
+  # through its move, every sound deterministic, unclipped and click-free, the
+  # level ladder and seamless beds measured on the rendered samples; the
+  # wiring (settings gate, window gestures, pause, the event sting's band) and
+  # a bed's swell, Ambience off and fade-out.
+  tests/test_sound.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd
   tests/test_minimap.gd
