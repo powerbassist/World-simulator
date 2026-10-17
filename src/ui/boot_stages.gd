@@ -44,13 +44,16 @@ const GAME_SCENE := "res://src/ui/main.tscn"
 ##   network -- Net.warm_step(), sliced by row; its cost includes the frames
 ##              drawn between slices (~0.5 s at loading_screen.gd's budget)
 ##   enter   -- main.gd's _ready(): the map, the panels; atomic, and drawn
-##              BEFORE it runs, so the bar shows how much is left while it does
+##              BEFORE it runs, so the bar shows how much is left while it does.
+##              Re-measured 2026-10-18 at V4.10a: 1084 ms, up from 780 by the
+##              ground's decode + mipmaps + upload in map_view.setup() (~285 ms
+##              timed alone); the other four stages held inside their spread.
 const STAGES := [
 	{"id": "scene", "label": "Compiling the game", "ms": 1300},
 	{"id": "data", "label": "Reading the record", "ms": 360},
 	{"id": "world", "label": "Founding the world", "ms": 70},
 	{"id": "network", "label": "Measuring the distances", "ms": 5000},
-	{"id": "enter", "label": "Opening the desk", "ms": 780},
+	{"id": "enter", "label": "Opening the desk", "ms": 1080},
 ]
 
 var nation_id := ""

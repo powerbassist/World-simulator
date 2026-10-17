@@ -1,0 +1,12 @@
+{
+  "lon_min": -31.0,
+  "lon_max": 51.0,
+  "lat_min": 28.0,
+  "lat_max": 78.0,
+  "px_per_deg": 60.0,
+  "width": 4920,
+  "height": 3000,
+  "feather_deg": 3.0,
+  "source": "ETOPO 2022 v1 60s surface",
+  "generator": "tools/ground_generate.py"
+}

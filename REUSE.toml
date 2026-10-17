@@ -130,6 +130,17 @@ SPDX-FileCopyrightText = "NASA Earth Observatory (Blue Marble)"
 SPDX-License-Identifier = "LicenseRef-PublicDomain"
 
 [[annotations]]
+# V4.10a: the ground at depth -- baked by tools/ground_generate.py from NOAA's
+# ETOPO 2022 relief (US federal work) and the repo's own Natural Earth geometry,
+# both public domain. Declared after the Blue Marble block so it wins for these.
+path = [
+  "assets/map/ground_europe.*",
+]
+precedence = "override"
+SPDX-FileCopyrightText = ["NOAA NCEI (ETOPO 2022)", "Natural Earth (geometry)"]
+SPDX-License-Identifier = "LicenseRef-PublicDomain"
+
+[[annotations]]
 path = [
   "assets/fonts/BarlowCondensed*",
   "assets/fonts/OFL-BarlowCondensed.txt",
