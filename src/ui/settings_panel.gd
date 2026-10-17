@@ -9,6 +9,10 @@ extends PanelContainer
 ## row rather than a volume ladder: one synthesized sting exists, and Off/On
 ## is every level it needs.
 ##
+## V4.8c added the MESSAGES grid below them: per event category, the severity
+## band at which each of four switches fires (message_settings.gd owns the
+## register, its defaults and the file section; this screen only draws it).
+##
 ## Persisted to user://settings.cfg with the engine's own ConfigFile. Settings
 ## that reset on every launch are not settings.
 ##
@@ -18,6 +22,8 @@ extends PanelContainer
 signal closed
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const MessageSettings = preload("res://src/ui/message_settings.gd")
+const EventsK = preload("res://src/sim/events_constants.gd")
 const CONFIG_PATH := "user://settings.cfg"
 
 ## Windowed sizes offered. Fullscreen ignores these; the size is the display's.
@@ -57,6 +63,11 @@ var _fullscreen_button: OptionButton
 var _resolution_button: OptionButton
 var _scale_button: OptionButton
 var _sound_button: OptionButton
+var _message_buttons := {}  # category -> {switch: OptionButton}
+
+## Narrow enough that a category label and four band pickers fit the panel's
+## width; the longest band label ("Critical") still reads whole.
+const BAND_BUTTON_WIDTH := 96
 
 
 # --- persistence -------------------------------------------------------------
@@ -143,6 +154,8 @@ func _ready() -> void:
 	_scale_button = _add_row(grid, "Interface scale", _scale_labels())
 	_sound_button = _add_row(grid, "Sound", ["Off", "On"])
 
+	_build_messages(root)
+
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(spacer)
@@ -184,6 +197,58 @@ func _add_row(grid: GridContainer, label_text: String, options: Array) -> Option
 	return button
 
 
+## V4.8c. One row per event category, one band picker per switch. Its own grid
+## (five columns) rather than rows in the display grid above, because these are
+## a table read across -- a category's four switches side by side -- and the
+## two-column grid would stack them into thirty-six rows.
+func _build_messages(root: VBoxContainer) -> void:
+	PanelKit.line(root, "MESSAGES", PanelKit.Tone.PLAIN)
+	PanelKit.line(root, "For each kind of event, the least severe one each switch fires for. Pause off still stops the clock in a decision's last month.")
+
+	var grid := GridContainer.new()
+	grid.columns = 1 + MessageSettings.SWITCHES.size()
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 4)
+	root.add_child(grid)
+
+	grid.add_child(Label.new())
+	for heading in MessageSettings.SWITCH_LABELS:
+		var label := Label.new()
+		label.text = String(heading)
+		grid.add_child(label)
+
+	for category in EventsK.CATEGORIES:
+		var name_label := Label.new()
+		name_label.text = String(category).capitalize()
+		grid.add_child(name_label)
+		var row := {}
+		for switch in MessageSettings.SWITCHES:
+			var button := OptionButton.new()
+			button.custom_minimum_size.x = BAND_BUTTON_WIDTH
+			for band in MessageSettings.BAND_LABELS:
+				button.add_item(String(band))
+			button.item_selected.connect(func(_index: int): _save_messages())
+			grid.add_child(button)
+			row[switch] = button
+		_message_buttons[category] = row
+
+
+## The register as the pickers show it. Index + 1 is the threshold: BAND_LABELS
+## is ordered so the two are one addition apart.
+func messages_from_controls() -> Dictionary:
+	var out := {}
+	for category in _message_buttons.keys():
+		var row := {}
+		for switch in _message_buttons[category].keys():
+			row[switch] = int(_message_buttons[category][switch].selected) + 1
+		out[category] = row
+	return out
+
+
+func _save_messages() -> void:
+	MessageSettings.save_to(messages_from_controls(), CONFIG_PATH)
+
+
 func _resolution_labels() -> Array:
 	var labels: Array = []
 	for size in RESOLUTIONS:
@@ -209,3 +274,8 @@ func _load_into_controls() -> void:
 	_scale_button.select(clampi(int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX)), 0, UI_SCALES.size() - 1))
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_resolution_button.disabled = fullscreen
+	var messages := MessageSettings.load_from(CONFIG_PATH)
+	for category in _message_buttons.keys():
+		for switch in _message_buttons[category].keys():
+			_message_buttons[category][switch].select(
+				MessageSettings.threshold(messages, category, switch) - 1)

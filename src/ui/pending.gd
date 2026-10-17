@@ -27,13 +27,13 @@ extends RefCounted
 ## rather than a branch anywhere else -- V2.4's day agenda and V2.8's energy each
 ## know their own answer to *is something waiting?*
 
-const Events = preload("res://src/sim/events.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Statute = preload("res://src/sim/statute.gd")
+const MessageSettings = preload("res://src/ui/message_settings.gd")
 
 
 ## The window ids with something on them awaiting an answer, in the order a
@@ -41,7 +41,10 @@ const Statute = preload("res://src/sim/statute.gd")
 ## rides along for the reads that need content -- the programme's offer, and
 ## the industry checks whose orphan skip walks the loader's majors (a register
 ## entry for a firm a content edit removed must not light a mark forever).
-static func window_ids(state, loader) -> Array:
+##
+## `messages` is the player's message settings (message_settings.gd); empty reads
+## as the defaults, which mark every crisis.
+static func window_ids(state, loader, messages := {}) -> Array:
 	var out: Array = []
 	if state == null:
 		return out
@@ -59,7 +62,11 @@ static func window_ids(state, loader) -> Array:
 		out.append("agenda")
 
 	# A crisis with a countdown, which answers itself if nobody answers it.
-	if Events.is_pending(ns):
+	# V4.8c: only a crisis its category's NOTIFY band lets through marks the
+	# window -- or one in its last month, the lapse guard's band, because a
+	# decision about to be answered by default is waiting whatever the settings
+	# say, and an interrupt, which the content says waits until answered.
+	if _events_waiting(ns, messages):
 		out.append("events")
 
 	# A vote the country has already been called to. V1.7c. V4.2 T6 extends the
@@ -99,3 +106,13 @@ static func window_ids(state, loader) -> Array:
 		out.append("companies")
 
 	return out
+
+
+static func _events_waiting(ns, messages: Dictionary) -> bool:
+	for entry in ns.event_queue:
+		if bool(entry.get("interrupt", false)) or int(entry.get("months_left", 0)) <= 1:
+			return true
+		if MessageSettings.allows(messages, String(entry.get("category", "")),
+				int(entry.get("severity", 1)), "notify"):
+			return true
+	return false
