@@ -11,7 +11,7 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.10
 
-**V4.10b -- BORDERS, GLYPHS AND NAMES AT DEPTH -- IS BUILT on `v4.10b-glyphs-labels` (2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged.**
+**V4.10b -- BORDERS, GLYPHS AND NAMES AT DEPTH -- IS MERGED (PR #11, merge commit `acbde1d0`, 2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged.**
 
 - **Plan gate (author):** materials to c; the third border key is the roster grade; greedy labels by tier on a grid; tiers by capital, then population.
 - **The band, rule first:** tiers 1-2 named from zoom 2.0 (>= 80 % in the Ruhr and the Po valley), tier 3 a bound (64 % over the Ruhr at max zoom), hover only.
