@@ -53,6 +53,7 @@ author's words reduced to rows, with whose call each answer is.
 | The Union | The EU **co-finances infrastructure and some sectors**; some laws or decisions can **put the nation outside EU law** | author |
 | The city at depth | Zoomed in, a city shows **the firms and infrastructure around it** | author: **icons placed on the map**, not a separate screen; map icons **vector**, ElevenLabs raster art in the record a click opens (the session's recommendation, taken) |
 | Relief and water | **Relief, rivers, lakes** integrated | author |
+| Taxes | A **tax tab** to **introduce, adjust and abolish** taxes (ISF, production taxes, a sugar tax…), each change showing **the estimated revenue gained or lost** | author |
 | Engine | **Move to the latest Godot** | author; the session's ruling: 4.7.2 (stable maintenance) in V5.0, 4.8 when it is stable (beta 1 on 2026-10-15) |
 | War (V6) | Wars for resources, territory and more; **annexation**; the player **moves armies on the map** (Hearts of Iron, not Suzerain); **build or destroy military sites** (bases, naval bases, nuclear silos); **order equipment** from national firms, or foreign ones when allowed (arms embargo) — also when the national industry cannot supply | author |
 | Intelligence (V6) | **Espionage**, and a per-nation **level of knowledge** of every other nation (France knows its allies well up to *secret défense*, knows little of North Korea unless it spies or hacks) | author |
@@ -292,11 +293,11 @@ neither it nor any box). What V5 does with each:
 | Open call | V5 disposition |
 |---|---|
 | Event art: photographic, not painterly | **Taken in the interview: photographic, with a shared grade.** Tick it at V5.1's plan gate |
-| No true "protect industry" option | Trigger: V5.3's sector law tiles |
-| Portrait wall face verdict | Still the author's; fold into D11's portrait pass |
-| Effects-blind divisions | Decide at V5.3's plan gate: graded decisions make breadth visible to the player, which is when a division blind to it starts to read wrong |
-| Hand-curate the 25 generated majors | Untouched by V5 |
-| Events dominance standard | Trigger: V5.2 rewrites events with speakers — re-tune or retire E3 there |
+| No true "protect industry" option | Trigger: V5.3's sector law tiles — **add one, taken by the author 2026-10-19** |
+| Portrait wall face verdict | **Taken 2026-10-19:** reject the faces the session flagged (about 8 unusable, ~15 streaked backgrounds) and regenerate them in D11's portrait pass (V5.2a) |
+| Effects-blind divisions | **Taken 2026-10-19: make them effects-aware** in V5.3b — graded decisions make breadth visible to the player, which is when a division blind to it starts to read wrong |
+| Hand-curate the 25 generated majors | **Taken 2026-10-19: leave them generator-owned** |
+| Events dominance standard | **Taken 2026-10-19: re-tune to 0 dominated pairs** and wire E2/E3 to fail the run, in V5.2d |
 | Calendar booking composed laws | Trigger: V5.2's diary rework — recommended yes, **taken by the author 2026-10-19** |
 | Month tick at 41 nations | **V5.0's gate** |
 
