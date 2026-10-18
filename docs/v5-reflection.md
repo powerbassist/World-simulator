@@ -13,7 +13,7 @@ tags:
 > tree measured cold, and a long interview with the author, who added most of
 > the asks below. [[v4]] is closed and nothing here relitigates it: where V4
 > left something open, it is input to V5, not a complaint against V4. The tier
-> draft this reflection feeds is [[v5]], **unsigned**.
+> draft this reflection feeds is [[v5]] — **signed by the author 2026-10-19**.
 
 Every claim that carries a number is tagged **measured** (run in this session,
 the command or file named), **recorded** (measured by an earlier block, the
@@ -289,8 +289,9 @@ Sizes are **inferred**: S = 1–2 sessions, M = 3–5, L = 6+.
 
 ### D15 — The open-call pile, with a V5 disposition each
 
-[[someday]]'s "Open author calls" checklist stays as it is (this session edits
-neither it nor any box). What V5 does with each:
+[[someday]]'s "Open author calls" checklist was left as it was while the
+author decided; every box below was ticked with its decision at the tier's
+signing, 2026-10-19. What V5 does with each:
 
 | Open call | V5 disposition |
 |---|---|
