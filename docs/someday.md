@@ -22,7 +22,12 @@ when it is taken, and record the decision where the line points.
 - [ ] Event-art contact sheet: the plates lean photographic, not painterly. Accept or re-render ([[event-art-plan]])
 - [ ] The book has no true "protect industry" option: `com_industry_bills.protect_the_makers` is a regulation
 - [x] Re-run `events_probe` E4/E5 since the two commodity events were unbound from their hook (over an hour, run alone). **Re-run 2026-10-14** on the split events.gd and the drift-fixed commodities: E4 shipped quiet 3 = 37 arrivals, 12.0 per term, max desk 3, 0.0 % overfull; E5 every category <= 18.9 % (scandal) against 30, commodity 8.1 %; every declared band PASSED. Unchanged from V4.4's recorded 12.0/term and 18.9 % ✅ 2026-10-14
-- [ ] V3.7 portrait generation left incomplete on the unmerged `v3.7-phase-b` ([[v3]] close-out, item 3)
+- [ ] The portrait wall's face verdict. Generation is no longer open: it closed inside V4.3 (PR #44, `cf329b5d`; [[v3]] close-out, item 3), wall and bench harvested, no person without art. What only the author can do is judge the faces: the contact sheet `.superpowers/sdd/frames/v43_wall_contact_neutral.png` and the counterpart table `reports/portrait_counterparts_review.md`; rejects via `tools/curate_references.py --reject` (both files are machine-local)
+- [ ] Effects-blind divisions: make `resolve_vote()` effects-aware, or keep the measured bound (the V4.2 P1(ii) call, below)
+- [ ] Hand-curate the 25 generated nations' majors, or leave them generator-owned (open since V4.7a's A3 review; "Carried from earlier blocks", below)
+- [ ] The events book's dominance standard: re-tune the grown book to V1.8's 0 dominated pairs, or retire E3's kill-switch claim (E3 measures 35 and 4; "The probe's E2/E3 bands", below)
+- [ ] The calendar booking composed laws: wanted or not (the diary item, below)
+- [ ] The month tick at 41 nations: 392 ms against the 300 ms band V4.6's synthetic probe was set on. Accept, or open a tick-cost block ("Carried from V4.11", below)
 
 ## Carried from V4.2's close-out (2026-10-05)
 
@@ -30,16 +35,14 @@ Found during the version-close ultra's eight-pass review of PR #48, refuted as
 *not this PR's defect* or *not yet reachable* — recorded here so the refutation
 is not the last anyone hears of them.
 
-### Negative pending rates through `Budget.apply_pending()` (general case)
+### Negative pending rates through `Budget.apply_pending()` -- FIXED (V4.2 ultra pass 9)
 
-`Budget.apply_pending()` floors every pending write at zero and refuses unknown
-keys, but beyond that trusts its callers; the repeal path floors its negation
-at the register (`Legislature._budget_removal`). What remains open is
-the general case: any *future* sim caller — the general compose window above
-all — could send a negative pending rate, and the pre-existing corporate route
-has the same shape today. **Trigger:** the general compose window shipping, or
-any new `apply_pending()` caller. **Fix shape:** an apply_pending-side refusal (or floor) on
-negative pending values closes the whole class at the one writer.
+RECORD, not an open item. The fix shape this entry named is in the tree: the one
+writer floors every landed tax rate and spending line at zero, whoever calls it
+(`src/sim/budget.gd:385` for the authored tax keys, `:413` for spending; a born
+key's rate is floored and yield-gated at `:400-406`). A future `apply_pending()`
+caller cannot land a negative rate. Verified against the code at the V4
+close-out, 2026-10-18.
 
 ### The calendar cannot book composed laws
 
@@ -219,7 +222,8 @@ supply so no shock reached a price. All three fixed; before and after are in
 [[commodities-model]] §3b (15 goods >= 1.25x at month 3 before, 0 after; a supply
 shock now moves steel by 10 %). **Re-bind decided against, 2026-10-14 (author's call).**
 With the drift fixed, no good crosses 1.25x base in an idle run until clothing's
-unexplained creep at month ~160, so the hook would fire almost never, and its one
+unexplained creep at month ~160 (its likely cause is the fixed world volume, "World
+production does not grow" under V4.11b below -- one open item, recorded twice), so the hook would fire almost never, and its one
 firing would be that creep rather than a shortage; bound to it, the two events
 would also leave the hazard roll, where they arrive ~3 times a run (E5: commodity
 8.1 %). **New trigger to re-bind `com_price_high_desk` and `com_industry_bills`**,
@@ -275,7 +279,7 @@ Authored for the hook's meaning and never measured against its real arrival rate
 balance_probe-style runs. **Fix shape:** per-hook likelihoods set from that
 measurement (the way pass 23 set the commodity pair from the category median).
 
-## Carried from V4.11b (2026-10-16)
+## Carried from V4.11 (2026-10-16)
 
 - **An outline relation.** The V4.11 brief gave every outline "a relation"; nothing in
   the sim would read one -- outlines have no diplomacy, no agreements and no verbs aimed
@@ -293,6 +297,14 @@ measurement (the way pass 23 set the commodity pair from the category median).
   first block that reads commodity prices into GDP or lets a shortage reach the
   player; **fix shape:** grow `W` with world GDP (the outline register gains a trend,
   or the roster's realised growth stands in), then re-run the probe.
+- **The month tick at 41 nations is 392 ms** (V4.11a's tick probe: 218 -> 392,
+  Diplomacy 70 -> 159 and Economy 37 -> 76, the N² of (41/29)²), above the 300 ms
+  band V4.6's synthetic probe was set on. Two known shares of Diplomacy's growth,
+  recorded by the V4.11 review and not fixed: `target_terms` recomputes the exposure
+  yardstick per target, and the accept/refusal/pact terms build the trade vector
+  twice. **Trigger:** the author's call above, a roster past 41, or a playtest that
+  feels the month. **Fix shape:** measure first (the tick probe, one run), then the
+  two Diplomacy recomputations.
 
 ## Carried from V4.11c (2026-10-17)
 
@@ -356,6 +368,15 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   (companies itself is fixed, T5 rebuild) — V4.6 §6's record.
 - **`PRICE_ELASTICITY` is unvalidated** — the sweep belongs to the first task
   that lets a player cause a shortage (V4.6's record).
+- **The budget panel's projection cost** (~4.5 s per refresh, PR #46's finding 6;
+  [[history]] §V4.7) is the trigger two V4.4 items above share ("`Budget.project()`
+  ticks every nation's events", "The projection prices no goods"). **Trigger:** a
+  playtest that feels the panel, or V5's UI rework of the budget panel.
+- **The 2026-09-16 playtest's open rows** — B12 (month-0 dash placeholders, a copy
+  call), B13 (the Summit ObjectDB leak, one run in 105) and the termed-out player's
+  stale vote date — live in `reports/playtest-2026-09-16/report.md` (machine-local).
+  Its perf rows 3.2 (pan fps) and 3.3 (no loading screen) are CLOSED by V4.10c and
+  V4.9a. **Trigger:** the next playtest.
 
 ---
 
