@@ -445,10 +445,10 @@ func _test_the_climate_content() -> void:
 ## emitter stamps against `== month_index` (member_bill_passed, takeover_bid,
 ## firm_failed, accession_won, and commodity_price_high, whose stamp is
 ## `ns.commodity_high_month` -- an edge, not a level read). They fire only because Events.tick_month runs AFTER
-## Commodities, Orgs, Legislature, Statute and Industry in `_on_month_elapsed`;
+## Commodities, Orgs, Legislature, Statute and Industry in src/sim/world_month.gd;
 ## the pin in test_commodities.gd holds only Economy < Commodities < Opinion, so
-## this is the pin for the Events end. The balance probe mirrors the order and is
-## held to it too, as is tests/test_balance.gd's loop, as are Budget.project()
+## this is the pin for the Events end. The game and both balance harnesses run
+## that one month (tests/test_world_month.gd), and Budget.project()
 ## and test_budget's mirror of it -- those two never tick Commodities (the
 ## projection prices no goods) and never tick Legislature (budget.gd says so
 ## beside its Statute call), so they are held to the three predecessors they do
@@ -463,15 +463,10 @@ const _EVENTS_READS_AFTER := {
 
 func _test_tick_order_pin() -> void:
 	var all_five := ["Commodities", "Orgs", "Legislature", "Statute", "Industry"]
-	_check_events_order_in("res://src/ui/main.gd", all_five)
-	_check_events_order_in("res://tools/balance_probe.gd", all_five)
-	# test_balance's month loop is the other balance harness: it ticks all five
-	# (Commodities since pass 17), so it is held to the same order as main.gd.
-	_check_events_order_in("res://tests/test_balance.gd", all_five)
-	# The two measurement probes whose loops tick Events: held to the same order as
-	# main.gd so the hooks that read these registers can fire in what they measure.
-	_check_events_order_in("res://tools/agency_probe.gd", all_five)
-	_check_events_order_in("res://tools/programme_probe.gd", all_five)
+	# The game's month, which main.gd, both balance harnesses and the measurement
+	# probes all run now (tests/test_world_month.gd holds them to it) -- one read
+	# where there used to be five hand copies.
+	_check_events_order_in("res://src/sim/world_month.gd", all_five)
 	_check_events_order_in("res://src/sim/budget.gd", ["Orgs", "Statute", "Industry"])
 	_check_events_order_in("res://tests/test_budget.gd", ["Orgs", "Statute", "Industry"])
 
@@ -1369,13 +1364,13 @@ func _test_the_dependency_runs_one_way() -> void:
 
 ## V1.5d cost a session to two harnesses that never called Media.tick_month(), so both
 ## ran the pre-session model and their agreement about a bit-identical re-run was about
-## nothing. tests/test_referendum.gd made that structural for two files; four here,
-## because Budget.project() and src/ui/main.gd are the two that would fail SILENTLY --
-## a forecast that never counts a deadline down tells the player doing nothing is free.
+## nothing. tests/test_referendum.gd made that structural; here it is the game's month
+## (which main.gd and both balance harnesses run) and Budget.project(), the two that
+## would fail SILENTLY -- a forecast that never counts a deadline down tells the
+## player doing nothing is free.
 func _test_every_harness_ticks_it() -> void:
 	for path in [
-		"res://tools/balance_probe.gd", "res://tests/test_balance.gd",
-		"res://src/sim/budget.gd", "res://src/ui/main.gd",
+		"res://src/sim/world_month.gd", "res://src/sim/budget.gd",
 	]:
 		var src := _code(path)
 		if not src.contains("Events.tick_month("):

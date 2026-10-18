@@ -461,8 +461,9 @@ func _test_the_nine_never_call_one() -> void:
 ## tests/test_pledges.gd's device, inherited and widened. V1.5d shipped with neither
 ## balance harness calling Media.tick_month(), so both ran the pre-session model and
 ## their agreement about a bit-identical re-run was about nothing.
+## Both run src/sim/world_month.gd's month now, which is what is read.
 func _test_both_harnesses_name_the_widened_tick() -> void:
-	for path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd"]:
+	for path in ["res://src/sim/world_month.gd"]:
 		var src := FileAccess.get_file_as_string(path)
 		if src.is_empty():
 			_fail("could not read %s" % path)

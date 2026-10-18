@@ -831,8 +831,9 @@ var history: Array[Dictionary] = []
 
 ## What the player's last few commands actually did -- U4. Newest first, each
 ## {label, year, month, movements}, movements in Trends.movements_between()
-## shape. Appended by main.gd's _on_month_elapsed(), the one place a committed
-## decision's baseline meets the history entry it is measured against.
+## shape. Appended by main.gd's month hook, at the step src/sim/world_month.gd
+## writes the history entry -- the one place a committed decision's baseline
+## meets the history entry it is measured against.
 var recent_effects: Array[Dictionary] = []
 
 ## What the other nine did on their own initiative — V1.3f. Newest first, each

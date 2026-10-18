@@ -114,7 +114,7 @@ func _init() -> void:
 	quit(0)
 
 
-## main.gd's _on_month_elapsed() order, Defence included. bloc_probe.gd's own
+## src/sim/world_month.gd's order, reduced, Defence included. bloc_probe.gd's own
 ## _tick() predates V1.3g and omits it; a probe measuring what a month OFFERS
 ## cannot afford to run a different month from the game.
 func _tick(state, loader, i: int) -> void:

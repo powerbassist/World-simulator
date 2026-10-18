@@ -330,11 +330,12 @@ func _check_no_nominal_layer() -> void:
 
 
 ## Every harness that ticks a per-nation system must tick this one. V1.5d's bug, made
-## a check rather than a memory. The four listed are the ones whose silence would be
-## invisible: the game, both balance harnesses, and the projection.
+## a check rather than a memory. The month every harness runs is world_month.gd's
+## (tests/test_world_month.gd holds the game and the balance harnesses to it), so
+## that file is read here, with the projection and its mirror -- the two that still
+## tick a subset of their own, and whose silence would be invisible.
 func _check_every_harness_ticks_it() -> void:
-	for path in ["res://src/ui/main.gd", "res://tests/test_balance.gd",
-			"res://tools/balance_probe.gd", "res://src/sim/budget.gd",
+	for path in ["res://src/sim/world_month.gd", "res://src/sim/budget.gd",
 			"res://tests/test_budget.gd"]:
 		var source := FileAccess.get_file_as_string(path)
 		var called := false

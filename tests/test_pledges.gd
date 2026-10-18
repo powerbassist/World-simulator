@@ -439,8 +439,11 @@ func _test_elections_does_not_know_this_file_exists() -> void:
 ## about a bit-identical re-run was about nothing. A bit-identical re-run is the
 ## REASSURING outcome, so nothing about it invites suspicion -- which is exactly why
 ## this check is a test and not a habit.
+##
+## Both run src/sim/world_month.gd's month now (tests/test_world_month.gd holds them
+## to it), so the month is what is read.
 func _test_both_balance_harnesses_tick_it() -> void:
-	for path in ["res://tools/balance_probe.gd", "res://tests/test_balance.gd"]:
+	for path in ["res://src/sim/world_month.gd"]:
 		var text := FileAccess.get_file_as_string(path)
 		if text.is_empty():
 			_fail("%s could not be read" % path)

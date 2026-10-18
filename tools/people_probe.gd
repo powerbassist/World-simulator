@@ -532,9 +532,9 @@ func _word_match(haystack: String, needle: String) -> bool:
 	return false
 
 
-## main.gd's _on_month_elapsed() order. Copied rather than shared, the way every
-## other probe in tools/ copies it -- a probe that drifts from the game's own
-## month is measuring a different game.
+## src/sim/world_month.gd's order, reduced. Copied rather than called, a subset
+## under tests/test_world_month.gd's hand-tick ceiling -- a probe that drifts
+## from the game's own month is measuring a different game.
 func _tick(state, loader, i: int) -> void:
 	state.month = (i + 1) % 12 + 1
 	state.year = START_YEAR + (i + 1) / 12

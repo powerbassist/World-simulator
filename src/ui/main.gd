@@ -12,45 +12,28 @@ const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const Economy = preload("res://src/sim/economy.gd")
-const Commodities = preload("res://src/sim/commodities.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Net = preload("res://src/sim/network.gd")
 const Region = preload("res://src/core/region.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
-const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
-const Statute = preload("res://src/sim/statute.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
-const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
-const Companies = preload("res://src/sim/companies.gd")
 const Industry = preload("res://src/sim/industry.gd")
-const Investment = preload("res://src/sim/investment.gd")
-const Projects = preload("res://src/sim/projects.gd")
-const Campaign = preload("res://src/sim/campaign.gd")
-const Pledges = preload("res://src/sim/pledges.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
-const Society = preload("res://src/sim/society.gd")
-const Demography = preload("res://src/sim/demography.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
-const Judiciary = preload("res://src/sim/judiciary.gd")
-const Characters = preload("res://src/sim/characters.gd")
 const Events = preload("res://src/sim/events.gd")
-const Media = preload("res://src/sim/media.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
@@ -1228,14 +1211,6 @@ func _on_nation_clicked(nation_id: String) -> void:
 	_windows.open("diplomacy")
 
 
-## The simulation's whole entry point. Economy first so budget percentages apply
-## to this month's GDP; opinion last, so it reacts to figures that have already
-## settled rather than to last month's. See docs/economy-model.md.
-##
-## The history entry is the two snapshots merged. Opinion is deliberately not
-## folded into Budget.snapshot(): Budget.project() runs only the economy and
-## budget ticks on its copy, so a snapshot carrying approval would make the
-## projection-equals-reality test compare a real month against a stale one.
 ## The panel armed a technology; the map is now waiting for the point.
 var _armed_energy_action: String = ""
 
@@ -1305,324 +1280,16 @@ func _on_month_elapsed(year: int, month: int) -> void:
 		return
 	_state.year = year
 	_state.month = month
-	# V2.8. The accessibility index per nation, built here because energy.gd never
-	# learns that a graph exists. Same index Regions already computes, so the
-	# Dijkstra rows are served from network.gd's own per-graph cache and this
-	# costs a lookup. Immediately BEFORE Economy, because economy.gd READS
-	# ns.energy_impulse_pct rather than computing it -- an energy tick placed after
-	# the economy would price this month's mix against last month's growth, a
-	# one-month lag in a channel with no reason to have one.
-	var access_by_nation: Dictionary = {}
-	for nation_id in _state.nations.keys():
-		access_by_nation[nation_id] = Regions.accessibility_for(
-			_state.nations[nation_id], _state.regions.get(nation_id, []), _state.region_graph)
-	Energy.tick_month(_state, _loader, access_by_nation)
-	Economy.tick_month(_state)
-	# V4.6. Immediately AFTER Economy, from which it derives every nation's capacity
-	# off the `sector_output` that call just settled -- a tick before it would price
-	# this month's production off last month's mix. BEFORE Opinion, so a figure this
-	# layer writes can be read in the SAME month rather than a month late: Inflation's
-	# slot and Orgs' rule, both stated at their own calls below.
-	#
-	# Since V4.4 this module's output HAS a live sim reader (the register itself still
-	# has none; the reader takes a stamp on the nation): the events machine's
-	# commodity_price_high hook reads the `ns.commodity_high_month` crossing stamp this
-	# call writes, inside Events.tick_month, which runs AFTER this slot -- so the
-	# same-month read this slot exists for now has its consumer, and the order is
-	# load-bearing where V4.6 could only pin it.
-	# Said out loud because that is exactly when an order rots: tests/test_events.gd's
-	# `_test_tick_order_pin` is what stops a later task placing Events before these
-	# four modules by convenience -- its five hooks read registers Commodities,
-	# Orgs, Statute and Industry wrote this same tick (the pin in
-	# tests/test_commodities.gd holds only Economy < Commodities < Opinion).
-	Commodities.tick_month(_state, _loader)
-	Budget.tick_month(_state)
-	# Between Budget and Opinion, and both halves of that are load-bearing. AFTER
-	# Budget, because the burden reads the deficit that Budget has just settled and
-	# charges its penalty into NEXT month's recompute -- which is what stops a rule
-	# on the deficit feeding a fine that widens the deficit that deepens the breach.
-	# BEFORE Opinion, because the `europe` issue reads the burden, and wired the
-	# other way round every org reaction would carry a spurious extra month of lag.
-	Orgs.tick_month(_state, _loader)
-	# V1.5d, and BEFORE Opinion rather than after it, which is the opposite of where
-	# Society and Unrest sit. Those two write a load Opinion consumes next month on
-	# purpose, to break a loop that runs through approval. This one reads
-	# coalition_position, which Elections and Government rewrite AFTER Opinion in this
-	# same sequence -- so it is already reading last month's government and the loop
-	# approval -> censure -> re-formation -> framing -> approval is broken structurally,
-	# for free.
-	# V1.6b. AFTER Economy, which settled the unemployment it reads, and BEFORE Opinion,
-	# which prices it in the SAME month -- unlike Society and Unrest below, which sit
-	# after Opinion and are read on the following one. Said here because a reader
-	# comparing the two will otherwise assume symmetry.
-	#
-	# Every harness that ticks a system must make this call, and there are seven:
-	# here, tests/test_balance.gd, tools/balance_probe.gd, src/sim/budget.gd's
-	# project(), tests/test_budget.gd's mirror of it, and four probes.
-	# tests/test_inflation.gd reads the source of the first four and fails if the call
-	# is missing, because V1.5d cost a session to two harnesses that never called
-	# Media.tick_month() and therefore agreed about nothing.
-	Inflation.tick_month(_state)
-
-	Media.tick_month(_state, _loader)
-	# V4.1, immediately before Opinion: the register concludes first, so a
-	# conclusion and the pulse Opinion prices off it land in the SAME month --
-	# programme_pulse() reads concluded_this_month(), which matches the
-	# conclusion's stamped (terms_served, months_in_term) against the live pair.
-	#
-	# THE TERM-BOUNDARY GUARANTEE: no code between this call and the
-	# Opinion.tick_month call below writes either counter, and the ONLY writer
-	# of the pair anywhere in this loop is Elections.tick_month, which runs
-	# LAST -- so a conclusion landing in the election month is stamped and paid
-	# before the vote can reset months_in_term. The pair cannot desync within a
-	# tick by construction. If Elections ever moves between these two calls, a
-	# won election stamps (T, m) and resets to (T+1, 0) between stamp and read,
-	# concluded_this_month() matches nothing, and the pulse is silently unpaid --
-	# move Elections back after the pair before trusting a conclusion again.
-	Programme.tick_month(_state, _loader)
-	Opinion.tick_month(_state)
-	# V4.1. The conclusions, as cards -- deliberately AFTER Opinion and not
-	# between the pair: tests/test_programme_channel.gd pins that nothing but
-	# comments runs between Programme.tick_month and Opinion.tick_month, and
-	# the pin is the same-month guarantee's source form. The read is safe
-	# anywhere in this handler BEFORE Elections.tick_month, which is the ONLY
-	# writer of the (terms_served, months_in_term) pair
-	# concluded_this_month() matches against and which runs last -- so the
-	# cards see exactly the conclusions the pulse was priced on, one
-	# statement later.
-	_card_programme_conclusions()
-
-	var entry := Budget.snapshot(_state)
-	entry.merge(Opinion.snapshot(_state))
-	_state.append_history(entry)
-
-	# The stamped entry (year/month added), so movements_between() reads the
-	# same "now" for approval's poll-noise lookup that the rest of the UI does.
-	var dated_entry := entry.duplicate(true)
-	dated_entry["year"] = year
-	dated_entry["month"] = month
-	for pending in _pending_effects:
-		_state.recent_effects.push_front({
-			"label": pending["label"],
-			"year": year,
-			"month": month,
-			"movements": Trends.movements_between(pending["before"], dated_entry),
-		})
-	_pending_effects.clear()
-	while _state.recent_effects.size() > RECENT_EFFECTS_KEPT:
-		_state.recent_effects.remove_at(_state.recent_effects.size() - 1)
-
-	# U6a prunes resolved bookings older than the strip can reach. The register is
-	# the diary's whole memory, so this is what keeps a save file finite.
-	Calendar.tick_month(_state)
-
-	_windows.mark_all_dirty()
-
-	# U5c. The map draws only on hover, pan, zoom and resize, which was complete
-	# while its colours came from a hash of the nation id and is not now: relations
-	# drift every month and a trade weight moves with every partner's GDP. Without
-	# this the data layers show the colours of whenever the mouse last moved.
-	if _map_view != null:
-		# V2.6b1. The city list is rebuilt on the same monthly hook, and for a
-		# sharper version of the same reason: a city's population is two live shares
-		# times a live head count, and where the unions are out changes with the
-		# grievance. Without this the crosses keep the sizes they had at new game --
-		# which is what V2.6a's "cities grow and shrink for free" actually did on
-		# screen until the V2.6b1 screenshot pass looked at a frame.
-		_map_view.refresh_cities()
-		_map_view.queue_redraw()
-
-		# Same monthly hook and the same reason as the city list beside it: a
-		# trade weight moves with every partner's GDP and an accessibility index
-		# with every region's output share. Without this the convoys keep the
-		# densities they had at new game, which is what "cities grow and shrink
-		# for free" actually did on screen until a screenshot pass looked.
-		if _map_flows != null:
-			_map_flows.refresh()
-
-	# Discipline reads the approval Opinion has just settled, so it goes after
-	# that and before anything that reads a coalition bonus or a censure vote.
-	Discipline.tick_month(_state, _loader)
-
-	# Cooldowns count down before the election check, same ordering reasoning as
-	# everything else in this handler: state settles top to bottom, elections
-	# read it last.
-	Legislature.tick_month(_state, _loader)
-	# The ultra pass-4 finding: a held bill releasing writes ns.last_law_result
-	# above, and the assembly's own tick below overwrites the same register
-	# when a private member's bill divides the SAME month -- the release card
-	# was then permanently unreachable, its only announcement surface read
-	# after both writers. Capture the release before it can be swallowed and
-	# hand it to the announcer beside the division; empty unless a release
-	# actually fired (assembly_bill + released are the machine's own two keys
-	# for it).
-	var assembly_release: Dictionary = {}
-	var release_ns = _state.player()
-	if release_ns != null:
-		var release_result: Dictionary = release_ns.last_law_result
-		if bool(release_result.get("assembly_bill", false)) \
-				and bool(release_result.get("released", false)):
-			assembly_release = release_result.duplicate(true)
-	# V4.2 T6. The assembly's own life -- private members' bills and the
-	# chiefs' lobbying -- ticks AFTER the legislature, so a bill failing its
-	# division writes its authored cooldown AFTER this month's countdown pass
-	# has run and keeps its full length (the V2.8 ordering, one machine down).
-	Statute.tick_month(_state, _loader)
-	_announce_assembly_events(assembly_release)
-	Dissolution.tick_month(_state)
-
-	# Relations drift and diplomatic cooldowns, alongside the other cooldown
-	# ticks. After Opinion, which has already read the bloc offsets an action
-	# wrote last month, and before Elections, which runs last on settled state.
-	Diplomacy.tick_month(_state, _loader)
-
-	# V1.3g: capability converges, and alliance obligations are reconciled against
-	# the measures Diplomacy has just finished writing. AFTER Diplomacy so the
-	# obligation arrives in the month the measure did -- that is the one thing here
-	# with no lag, and it is what the whole feature is about. Both PRICES then lag by
-	# exactly one month together, because Budget has already closed this month's
-	# books: a same-month bill with a next-month opinion cost would be two lags where
-	# one will do, and they would disagree about which month the deployment started.
-	#
-	# The lag also breaks a real loop structurally rather than by iterating: bill ->
-	# deficit -> a PRECONDITION_FIELDS entry -> which verbs are available -> measures
-	# -> obligations -> bill. src/sim/orgs.gd makes the same call for the same reason.
-	# Counted either side of the tick so an obligation that opens can be carded
-	# without src/sim/ growing a record for the UI to read. Derived here rather than
-	# serialised, which is the same call V1.3f made for foreign_acts in reverse: that
-	# one is state the sim already writes, this one is a difference the UI can see
-	# for itself.
-	var obliged_before := _obliged_count()
-	Defence.tick_month(_state)
-	_card_obligations(obliged_before)
-
-	# V1.3f: and now the nine act on their own initiative inside that tick, so
-	# whatever they just did is read off the record and put in front of the player.
-	_card_foreign_acts(year, month)
-
-	# V1.4a: subsidised firms take share from their named rivals, and all three firm
-	# prices are recomputed. In Defence's slot and for Defence's reason -- Budget has
-	# closed this month's books, so the bill and both deviation channels lag by
-	# exactly one month TOGETHER rather than one of them lagging alone, and the lag
-	# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
-	# entry -> which verbs are available -> a new subsidy -> bill.
-	Companies.tick_month(_state, _loader)
-	Industry.tick_month(_state, _loader)
-	_announce_industry_events()
-
-	# After Companies, because the city pull reads live headcount: a month in which a
-	# subsidy moved a firm's hiring should move people in the same month rather than
-	# the next one. After Economy for the same reason one level up -- the region pull
-	# reads live regional output and unemployment, both settled in Economy's own tick.
-	Migration.tick_month(_state, _loader)
-
-	# V1.6e: the capital each sector's standing programme has bought converges toward
-	# the programme's intensity, and the bill is recomputed. In Companies' slot for
-	# Companies' reason, and the loop it breaks is the identical one: bill -> deficit
-	# -> a PRECONDITION_FIELDS entry -> which investment actions are available -> a
-	# new programme -> bill. Sixth time this argument has been made.
-	Investment.tick_month(_state)
-
-	# V1.6f: every project under construction loses a month, any that run out COMPLETE
-	# and write their permanent addend, and the bill is recomputed. In Investment's
-	# slot for Investment's reason, and the loop is the identical one a seventh time:
-	# bill -> deficit -> a PRECONDITION_FIELDS entry -> which project actions are
-	# available -> a new build -> bill. Advance, complete, then price, so a project
-	# that finishes this month stops billing this month.
-	Projects.tick_month(_state, _loader)
-
-	# V1.7a: a month of every campaign effort in the field, onto the mobilisation the
-	# vote reads, and the bill recomputed -- or the whole register cleared, if the
-	# run-up is over. In Projects' slot for Projects' reason, and the loop is the
-	# identical one an eighth time: bill -> deficit -> a PRECONDITION_FIELDS entry ->
-	# which campaign actions are available -> a new effort -> bill.
-	#
-	# BEFORE Elections, which is what makes the month of the vote count: the window is
-	# inclusive of it, so the last month of effort is accrued and read by the vote it
-	# was bought for. Elections then pushes next_executive_* five years out, and NEXT
-	# month this call finds the window closed and clears the register. That is the
-	# whole of the clearing mechanism: a level read, so campaign.gd needs no hook at
-	# the vote and elections.gd needs no knowledge of the window.
-	Campaign.tick_month(_state, _loader)
-
-	# V1.7b: every promise on the books judged against the state it named, and charged
-	# for the month if it is being broken. Immediately after Campaign for the same
-	# reason Campaign sits before Elections -- the last month of a term is judged, and
-	# THEN the vote is held.
-	#
-	# There is no loop to break here and so no lag to argue about: a promise writes
-	# ns.bloc_offset, which is not a spending line, not a deficit and not a
-	# PRECONDITION_FIELDS entry of its own. It is also why this call is absent from
-	# Budget.project(): a projection that charged a broken promise would be a budget
-	# preview quietly moving approval.
-	Pledges.tick_month(_state, _loader)
-
-	# V1.5a: services converge on what the country actually spends on them, delivered.
-	# In Companies' slot for Companies' reason and not for the general tick-order one:
-	# quality reaches `overall_approval_pct`, which is a PRECONDITION_FIELDS entry, so
-	# quality -> approval -> which laws are available -> a `society` law -> corruption
-	# -> quality closes exactly the loop the one-month lag exists to break. Fifth time
-	# this argument has been made, and the first where the loop runs through opinion
-	# rather than through the deficit.
-	# V1.5b, immediately before Society: the quality stock divides by this layer's
-	# dependency factor, so demography must have settled before quality reads it.
-	Demography.tick_month(_state)
-	Society.tick_month(_state)
-	# V1.5c, immediately after Society: the grievance target reads the `health` and
-	# `pensions` satisfactions, which read the quality stock the line above just settled.
-	# It stays after Opinion for the same reason the two above it do, and the loop it
-	# breaks is a second one -- `unrest_pct` is itself a PRECONDITION_FIELDS entry, so
-	# unrest -> which laws are available -> a settlement law -> the stance -> unrest.
-	Unrest.tick_month(_state)
-	# V1.5c: the unions act inside that tick, and whatever they just did is read off
-	# the record and put in front of the player. _card_foreign_acts()'s split exactly --
-	# the sim writes the record, the UI decides what earns a card, and src/sim/ never
-	# reads the list back, which tests/test_unrest.gd asserts over the whole directory.
-	_card_unrest_acts(year, month)
-
-	# V1.8, immediately after Unrest and before Cabinet and Elections. AFTER Unrest
-	# because `unrest_pct` is one of the fields an event may be preconditioned on and it
-	# has only just settled; BEFORE Elections for the reason everything in this handler
-	# sits above it -- state settles top to bottom and the vote reads it last.
-	#
-	# `before` is captured for the U4 decision delta, because a default arriving is a
-	# thing that happened to the player's budget with no button pressed -- the class
-	# _card_appointment() already covers, and the one case where the player did not even
-	# know a decision was being made on their behalf.
-	var event_before := Budget.snapshot(_state)
-	# V4.4: the before-state is the desk's CONTENT, not its emptiness -- a
-	# resolve-and-replace month (one answered, another arrived) is ordinary now,
-	# and the boolean edge detector fired neither branch on exactly that month.
-	var desk_before := {}
-	for desk_entry in _state.player().event_queue:
-		desk_before[String(desk_entry.get("event_id", ""))] = true
-	Events.tick_month(_state, _loader)
-	_card_events(year, month, desk_before, event_before)
-	_enforce_interrupt()
-
-	# Reads unpopularity Opinion already settled and discipline Discipline
-	# already ticked -- a resignation this month is judged against this
-	# month's numbers, not last month's.
-	Cabinet.tick_month(_state, _loader)
-
-	# V4.3, after Cabinet (wants read Opinion-settled state and the cabinet's
-	# vacancies) and before Elections (the stamp pair's only writer still runs
-	# last, and a challenge's new party leader is in place before the vote
-	# prices it). The meters are read here and handed in -- the leaf law keeps
-	# unrest.gd/media.gd/judiciary.gd un-preloaded in characters.gd. The acts
-	# go to the message stack as cards, T5's surface; the record is not state.
-	var _character_acts := Characters.tick_month(_state, _loader, {
-		"grievance": float(_state.player().unrest_pct),
-		"press_freedom": float(_state.player().press_freedom),
-		"judicial_independence": Judiciary.independence_deviation(_state.player()),
-	})
-	_card_character_acts(_character_acts)
+	# The sim's whole month is src/sim/world_month.gd, the one copy of the order
+	# every harness runs too. What stays here is the UI's half of it, threaded
+	# through the step hook at the slot each card has always read from.
+	var report := WorldMonth.tick_month(_state, _loader, _on_month_step.bind(year, month))
 
 	# Elections run last, on the already-settled history entry, and can fire a
 	# national and an EP result in the same month (France and Belgium, June
 	# 2029). Any result pauses the clock — the player reads it before time moves
 	# again, whether that reading ends in Continue or in defeat.
-	var results := Elections.tick_month(_state, _loader)
+	var results: Array = report["election_results"]
 	if not results.is_empty() and _election_panel != null:
 		_clock.paused = true
 		_election_panel.show_results(results)
@@ -1642,6 +1309,141 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	# closes itself.
 	if results.is_empty():
 		_enforce_term_start_programme()
+
+
+## What one month's hook has captured BEFORE a step, for the card read AFTER it.
+## Reset at the first step, so nothing carries from one month to the next.
+var _month_capture: Dictionary = {}
+
+
+## The UI's half of the month, called by WorldMonth.tick_month() before and
+## after every step. Each card reads the record at the slot it always read it:
+## a card that waited for the end of the month would read a register the later
+## systems have moved on.
+func _on_month_step(step: String, after: bool, report: Dictionary, year: int, month: int) -> void:
+	if not after:
+		match step:
+			"Access":
+				_month_capture = {}
+			"Defence":
+				# Counted either side of the tick so an obligation that opens can be
+				# carded without src/sim/ growing a record for the UI to read. Derived
+				# here rather than serialised, which is the same call V1.3f made for
+				# foreign_acts in reverse: that one is state the sim already writes,
+				# this one is a difference the UI can see for itself.
+				_month_capture["obliged_before"] = _obliged_count()
+			"Events":
+				# `before` is captured for the U4 decision delta, because a default
+				# arriving is a thing that happened to the player's budget with no
+				# button pressed -- the class _card_appointment() already covers, and
+				# the one case where the player did not even know a decision was
+				# being made on their behalf.
+				_month_capture["event_before"] = Budget.snapshot(_state)
+				# V4.4: the before-state is the desk's CONTENT, not its emptiness -- a
+				# resolve-and-replace month (one answered, another arrived) is
+				# ordinary now, and the boolean edge detector fired neither branch on
+				# exactly that month.
+				var desk_before := {}
+				for desk_entry in _state.player().event_queue:
+					desk_before[String(desk_entry.get("event_id", ""))] = true
+				_month_capture["desk_before"] = desk_before
+		return
+
+	match step:
+		"Opinion":
+			# V4.1. The conclusions, as cards -- deliberately AFTER Opinion and not
+			# between the pair: the same-month guarantee is world_month.gd's, and
+			# this hook writes neither counter. The read is safe anywhere BEFORE
+			# Elections, which is the ONLY writer of the (terms_served,
+			# months_in_term) pair concluded_this_month() matches against and which
+			# runs last -- so the cards see exactly the conclusions the pulse was
+			# priced on.
+			_card_programme_conclusions()
+		"History":
+			# The stamped entry (year/month added), so movements_between() reads the
+			# same "now" for approval's poll-noise lookup that the rest of the UI does.
+			var dated_entry: Dictionary = (report["history_entry"] as Dictionary).duplicate(true)
+			dated_entry["year"] = year
+			dated_entry["month"] = month
+			for pending in _pending_effects:
+				_state.recent_effects.push_front({
+					"label": pending["label"],
+					"year": year,
+					"month": month,
+					"movements": Trends.movements_between(pending["before"], dated_entry),
+				})
+			_pending_effects.clear()
+			while _state.recent_effects.size() > RECENT_EFFECTS_KEPT:
+				_state.recent_effects.remove_at(_state.recent_effects.size() - 1)
+		"Calendar":
+			_windows.mark_all_dirty()
+
+			# U5c. The map draws only on hover, pan, zoom and resize, which was
+			# complete while its colours came from a hash of the nation id and is not
+			# now: relations drift every month and a trade weight moves with every
+			# partner's GDP. Without this the data layers show the colours of
+			# whenever the mouse last moved.
+			if _map_view != null:
+				# V2.6b1. The city list is rebuilt on the same monthly hook, and for a
+				# sharper version of the same reason: a city's population is two live
+				# shares times a live head count, and where the unions are out changes
+				# with the grievance. Without this the crosses keep the sizes they had
+				# at new game -- which is what V2.6a's "cities grow and shrink for
+				# free" actually did on screen until the V2.6b1 screenshot pass looked
+				# at a frame.
+				_map_view.refresh_cities()
+				_map_view.queue_redraw()
+
+				# Same monthly hook and the same reason as the city list beside it: a
+				# trade weight moves with every partner's GDP and an accessibility
+				# index with every region's output share. Without this the convoys
+				# keep the densities they had at new game, which is what "cities grow
+				# and shrink for free" actually did on screen until a screenshot pass
+				# looked.
+				if _map_flows != null:
+					_map_flows.refresh()
+		"Legislature":
+			# The ultra pass-4 finding: a held bill releasing writes
+			# ns.last_law_result in Legislature's tick, and the assembly's own tick
+			# (Statute) overwrites the same register when a private member's bill
+			# divides the SAME month -- the release card was then permanently
+			# unreachable, its only announcement surface read after both writers.
+			# Capture the release before it can be swallowed and hand it to the
+			# announcer beside the division; empty unless a release actually fired
+			# (assembly_bill + released are the machine's own two keys for it).
+			var assembly_release: Dictionary = {}
+			var release_ns = _state.player()
+			if release_ns != null:
+				var release_result: Dictionary = release_ns.last_law_result
+				if bool(release_result.get("assembly_bill", false)) \
+						and bool(release_result.get("released", false)):
+					assembly_release = release_result.duplicate(true)
+			_month_capture["assembly_release"] = assembly_release
+		"Statute":
+			_announce_assembly_events(_month_capture.get("assembly_release", {}))
+		"Defence":
+			_card_obligations(int(_month_capture.get("obliged_before", 0)))
+			# V1.3f: and now the nine act on their own initiative inside that tick,
+			# so whatever they just did is read off the record and put in front of
+			# the player.
+			_card_foreign_acts(year, month)
+		"Industry":
+			_announce_industry_events()
+		"Unrest":
+			# V1.5c: the unions act inside that tick, and whatever they just did is
+			# read off the record and put in front of the player.
+			# _card_foreign_acts()'s split exactly -- the sim writes the record, the
+			# UI decides what earns a card, and src/sim/ never reads the list back,
+			# which tests/test_unrest.gd asserts over the whole directory.
+			_card_unrest_acts(year, month)
+		"Events":
+			_card_events(year, month, _month_capture.get("desk_before", {}),
+				_month_capture.get("event_before", {}))
+			_enforce_interrupt()
+		"Characters":
+			# T5's surface: the acts go to the message stack as cards; the record is
+			# not state.
+			_card_character_acts(report["character_acts"])
 
 
 ## V4.7b: the autonomy machine's two player-facing events, as cards. The
@@ -1778,7 +1580,7 @@ func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
 		var card_id: String = _hud.message_stack.push(
 			"A chief before the assembly" if backed else "Private member's bill", body)
 		_assembly_cards[bill_id] = card_id
-	# The release card, handed in from _on_month_elapsed. The capture there is
+	# The release card, handed in from _on_month_step. The capture there is
 	# what lets a COLLISION month -- a PMB dividing the same tick an
 	# assembly-origin hold releases -- push both cards: the register read
 	# below holds only the last writer. The release keeps its OWN memory slot
@@ -2863,8 +2665,9 @@ func _programme_refusal_text(reason: String) -> String:
 ## V4.1. What concluded this month, as a card -- complete, fail and invalid
 ## alike, concluded_this_month()'s one read. _card_foreign_acts()'s split: the
 ## sim writes the record, the UI decides what earns a card, and src/sim/ never
-## reads the list back. Called from _on_month_elapsed() INSIDE the tick window
-## the pulse is priced in -- see the Programme.tick_month call site.
+## reads the list back. Called from _on_month_step() INSIDE the tick window
+## the pulse is priced in -- see the Programme.tick_month call site in
+## src/sim/world_month.gd.
 func _card_programme_conclusions() -> void:
 	if _hud == null or _hud.message_stack == null or _state == null:
 		return

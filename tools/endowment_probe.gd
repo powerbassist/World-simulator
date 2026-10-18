@@ -3,11 +3,10 @@ extends SceneTree
 ## Endowment probe: godot --headless --script res://tools/endowment_probe.gd
 ##
 ## V4.11b2's committed instrument for docs/commodities-model.md section 8's four
-## bands, run on main.gd's _on_month_elapsed order (tick_budget_probe.gd's mirror,
-## with the systems that mirror still leaves out -- Commodities, Programme,
-## Characters -- put back in their slots). A probe that ticked Commodities alone
-## would measure a world whose sector output never moves, and band (iv) is a
-## statement about ten years of a moving one (AGENTS.md: green is not measured).
+## bands, run on the game's own month (src/sim/world_month.gd, the order main.gd
+## runs). A probe that ticked Commodities alone would measure a world whose
+## sector output never moves, and band (iv) is a statement about ten years of a
+## moving one (AGENTS.md: green is not measured).
 ##
 ##   (i)   month 1: every NATURAL good's price within +-2 % of base. Scoped to
 ##         natural goods at b2: the manufactures drift (clothing 1.04-1.14 by
@@ -29,39 +28,9 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
-const Regions = preload("res://src/sim/regions.gd")
-const Energy = preload("res://src/sim/energy.gd")
-const Economy = preload("res://src/sim/economy.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const Commodities = preload("res://src/sim/commodities.gd")
 const CK = preload("res://src/sim/commodity_constants.gd")
-const Budget = preload("res://src/sim/budget.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
-const Media = preload("res://src/sim/media.gd")
-const Programme = preload("res://src/sim/programme.gd")
-const Opinion = preload("res://src/sim/opinion.gd")
-const Calendar = preload("res://src/sim/calendar.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
-const Legislature = preload("res://src/sim/legislature.gd")
-const Statute = preload("res://src/sim/statute.gd")
-const Dissolution = preload("res://src/sim/dissolution.gd")
-const Diplomacy = preload("res://src/sim/diplomacy.gd")
-const Defence = preload("res://src/sim/defence.gd")
-const Companies = preload("res://src/sim/companies.gd")
-const Industry = preload("res://src/sim/industry.gd")
-const Migration = preload("res://src/sim/migration.gd")
-const Investment = preload("res://src/sim/investment.gd")
-const Projects = preload("res://src/sim/projects.gd")
-const Campaign = preload("res://src/sim/campaign.gd")
-const Pledges = preload("res://src/sim/pledges.gd")
-const Demography = preload("res://src/sim/demography.gd")
-const Society = preload("res://src/sim/society.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
-const Events = preload("res://src/sim/events.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
-const Characters = preload("res://src/sim/characters.gd")
-const Judiciary = preload("res://src/sim/judiciary.gd")
-const Elections = preload("res://src/sim/elections.gd")
 
 const START_YEAR := 2026
 const PLAYER := "FRA"
@@ -230,64 +199,32 @@ func _tick(state, loader, i: int, timed: bool = true) -> void:
 		if state.month > 12:
 			state.month = 1
 			state.year += 1
-	# --- main.gd _on_month_elapsed, in order ---
-	var access_by_nation: Dictionary = {}
-	for nation_id in state.nations.keys():
-		access_by_nation[nation_id] = Regions.accessibility_for(
-			state.nations[nation_id], state.regions.get(nation_id, []), state.region_graph)
-	Energy.tick_month(state, loader, access_by_nation)
-	Economy.tick_month(state)
-	var t0 := Time.get_ticks_usec()
-	Commodities.tick_month(state, loader)
-	# Month 0 pays the memo build; the row is the steady month.
-	if timed and i > 0:
-		_commodity_us.append(Time.get_ticks_usec() - t0)
-	if timed:
-		for nation_id in state.nations.keys():
-			var stamp := int(state.nations[nation_id].commodity_high_month)
-			if stamp >= 0 and stamp != int(_last_stamp.get(nation_id, -1)):
-				_crossings["world"] += 1
-				if nation_id == PLAYER:
-					_crossings["player"] += 1
-			_last_stamp[nation_id] = stamp
-		for good_id in loader.commodity_goods.keys():
-			var r := _price_ratio(state, loader, good_id)
-			if r > float(_peak.get(good_id, [0.0, 0])[0]):
-				_peak[good_id] = [r, i + 1]
-	Budget.tick_month(state)
-	Orgs.tick_month(state, loader)
-	Inflation.tick_month(state)
-	Media.tick_month(state, loader)
-	Programme.tick_month(state, loader)
-	Opinion.tick_month(state)
-	var entry: Dictionary = Budget.snapshot(state)
-	entry.merge(Opinion.snapshot(state))
-	state.append_history(entry)
-	Calendar.tick_month(state)
-	Discipline.tick_month(state, loader)
-	Legislature.tick_month(state, loader)
-	Statute.tick_month(state, loader)
-	Dissolution.tick_month(state)
-	Diplomacy.tick_month(state, loader)
-	Defence.tick_month(state)
-	Companies.tick_month(state, loader)
-	Industry.tick_month(state, loader)
-	Migration.tick_month(state, loader)
-	Investment.tick_month(state)
-	Projects.tick_month(state, loader)
-	Campaign.tick_month(state, loader)
-	Pledges.tick_month(state, loader)
-	Demography.tick_month(state)
-	Society.tick_month(state)
-	Unrest.tick_month(state)
-	Events.tick_month(state, loader)
-	Cabinet.tick_month(state, loader)
-	Characters.tick_month(state, loader, {
-		"grievance": float(state.player().unrest_pct),
-		"press_freedom": float(state.player().press_freedom),
-		"judicial_independence": Judiciary.independence_deviation(state.player()),
-	})
-	Elections.tick_month(state, loader)
+	# The month is WorldMonth's; the probe's reads ride its hook at the slot they
+	# need -- the Commodities row timed across the call itself, and the crossing
+	# and price reads right after it, before anything later in the month moves them.
+	var clock := {"t0": 0}
+	WorldMonth.tick_month(state, loader, func(step: String, after: bool, _report: Dictionary) -> void:
+		if step != "Commodities":
+			return
+		if not after:
+			clock["t0"] = Time.get_ticks_usec()
+			return
+		# Month 0 pays the memo build; the row is the steady month.
+		if timed and i > 0:
+			_commodity_us.append(Time.get_ticks_usec() - int(clock["t0"]))
+		if timed:
+			for nation_id in state.nations.keys():
+				var stamp := int(state.nations[nation_id].commodity_high_month)
+				if stamp >= 0 and stamp != int(_last_stamp.get(nation_id, -1)):
+					_crossings["world"] += 1
+					if nation_id == PLAYER:
+						_crossings["player"] += 1
+				_last_stamp[nation_id] = stamp
+			for good_id in loader.commodity_goods.keys():
+				var r := _price_ratio(state, loader, good_id)
+				if r > float(_peak.get(good_id, [0.0, 0])[0]):
+					_peak[good_id] = [r, i + 1]
+	)
 
 
 func _print_timing() -> void:

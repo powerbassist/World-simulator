@@ -25,6 +25,7 @@
    "tests/test_window_frame.gd",
    "tests/test_panel_kit.gd",
    "tests/test_balance.gd",
+   "tests/test_world_month.gd",
    "tests/test_orgs_panel.gd",
    "tests/test_roster.gd",
    "tests/test_message_settings.gd",

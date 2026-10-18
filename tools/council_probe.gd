@@ -67,6 +67,7 @@ extends SceneTree
 ## not a defect. The bands are what V4.5b's content is placed to reach.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Council = preload("res://src/sim/council.gd")
@@ -76,37 +77,10 @@ const BK = preload("res://src/sim/bloc_constants.gd")
 const RK = preload("res://src/core/relations.gd")
 const DiplomacyK = preload("res://src/sim/diplomacy_constants.gd")
 
-# The real month's systems -- the set tools/balance_probe.gd's _run() calls.
-const Economy = preload("res://src/sim/economy.gd")
-const Budget = preload("res://src/sim/budget.gd")
-const Opinion = preload("res://src/sim/opinion.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
+# The systems this probe reads outside the month (the month is WorldMonth's).
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
-const Statute = preload("res://src/sim/statute.gd")
-const Judiciary = preload("res://src/sim/judiciary.gd")
-const Characters = preload("res://src/sim/characters.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
-const Dissolution = preload("res://src/sim/dissolution.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
-const Diplomacy = preload("res://src/sim/diplomacy.gd")
-const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
-const Companies = preload("res://src/sim/companies.gd")
-const Industry = preload("res://src/sim/industry.gd")
-const Investment = preload("res://src/sim/investment.gd")
-const Projects = preload("res://src/sim/projects.gd")
-const Campaign = preload("res://src/sim/campaign.gd")
-const Pledges = preload("res://src/sim/pledges.gd")
-const Society = preload("res://src/sim/society.gd")
-const Demography = preload("res://src/sim/demography.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
-const Events = preload("res://src/sim/events.gd")
-const Media = preload("res://src/sim/media.gd")
-const Migration = preload("res://src/sim/migration.gd")
-const Regions = preload("res://src/sim/regions.gd")
-const Energy = preload("res://src/sim/energy.gd")
-const Commodities = preload("res://src/sim/commodities.gd")
 
 const PLAYER := "FRA"
 ## balance_probe.gd's term: fourteen years from January 2026.
@@ -363,74 +337,35 @@ func _run_term(bargain_always: bool, measure_c1: bool, months: int, stop_on_leav
 		state.year = year
 		state.month = month
 
-		# ---- THE REAL MONTH, copied from tools/balance_probe.gd _run(), lines
-		# 809-1069 (the month loop from `for i in range(MONTHS)` to
-		# Elections.tick_month), in its order and without shortening. Dropped:
-		# only the regime commands (`if i + 1 == <x>_month` blocks, the energy
-		# order cadence, dissolution and amendment calls) and the print lines --
-		# this run issues no command, which is what "idle" means. See that file
-		# for why each system sits where it does.
-		var access_by_nation: Dictionary = {}
-		for member_id in state.nations.keys():
-			access_by_nation[member_id] = Regions.accessibility_for(
-				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
-		Energy.tick_month(state, _loader, access_by_nation)
-		Economy.tick_month(state)
-		Commodities.tick_month(state, _loader)
-		Budget.tick_month(state)
-		# C6's diagnosis: the agenda each AI chair is about to see, read on the
-		# books Orgs.tick_month is about to read. Context only; a run that does
-		# not record it is the same run.
+		# ---- THE REAL MONTH: src/sim/world_month.gd, the order main.gd runs. This
+		# run issues no command, which is what "idle" means; its reads ride the step
+		# hook at the slot each one needs.
+		# C6's diagnosis: the agenda each AI chair is about to see, read on the books
+		# Orgs.tick_month is about to read. Context only; a run that does not record
+		# it is the same run.
 		var previews := {}
-		if measure_c1:
-			for org_id in council_ids:
-				var pv: Dictionary = _agenda_preview(state, org_id)
-				if not pv.is_empty():
-					previews[org_id] = pv
-		Orgs.tick_month(state, _loader)
-		for org_id in previews.keys():
-			var pend_now: Dictionary = Orgs.pending(state, org_id)
-			var pv: Dictionary = previews[org_id]
-			pv["opened"] = String(pend_now.get("proposal_id", "")) if int(pend_now.get("opened_year", 0)) == year and int(pend_now.get("opened_month", 0)) == month else ""
-			pv["at"] = i + 1
-			agenda.append(pv)
-		Inflation.tick_month(state)
-		Media.tick_month(state, _loader)
-		Opinion.tick_month(state)
-		var entry := Budget.snapshot(state)
-		entry.merge(Opinion.snapshot(state))
-		state.append_history(entry)
-		Discipline.tick_month(state, _loader)
-		Legislature.tick_month(state, _loader)
-		Statute.tick_month(state, _loader)
-		Dissolution.tick_month(state)
-		Diplomacy.tick_month(state, _loader)
-		Defence.tick_month(state)
-		Companies.tick_month(state, _loader)
-		Industry.tick_month(state, _loader)
-		Migration.tick_month(state, _loader)
-		Investment.tick_month(state)
-		Projects.tick_month(state, _loader)
-		Campaign.tick_month(state, _loader)
-		Pledges.tick_month(state, _loader)
-		Demography.tick_month(state)
-		Society.tick_month(state)
-		Unrest.tick_month(state)
-		Events.tick_month(state, _loader)
-		Cabinet.tick_month(state, _loader)
-		var _char_acts := Characters.tick_month(state, _loader, {
-			"grievance": float(ns.unrest_pct),
-			"press_freedom": float(ns.press_freedom),
-			"judicial_independence": Judiciary.independence_deviation(ns),
-		})
-		state.day = 0
-		for d in range(_days_in_month(month, year)):
-			state.day = d + 1
-			# No command books anything, so nothing can be due; say so if it is.
-			for appointment in Calendar.due(state, year, month, state.day):
-				push_error("council_probe: an appointment fell due in an idle run: %s" % [appointment])
-		Calendar.tick_month(state)
-		var _results := Elections.tick_month(state, _loader)
+		WorldMonth.tick_month(state, _loader, func(step: String, after: bool, _report: Dictionary) -> void:
+			if step == "Orgs" and not after:
+				if measure_c1:
+					for org_id in council_ids:
+						var pv: Dictionary = _agenda_preview(state, org_id)
+						if not pv.is_empty():
+							previews[org_id] = pv
+			elif step == "Orgs" and after:
+				for org_id in previews.keys():
+					var pend_now: Dictionary = Orgs.pending(state, org_id)
+					var pv: Dictionary = previews[org_id]
+					pv["opened"] = String(pend_now.get("proposal_id", "")) if int(pend_now.get("opened_year", 0)) == year and int(pend_now.get("opened_month", 0)) == month else ""
+					pv["at"] = i + 1
+					agenda.append(pv)
+			elif step == "Elections" and not after:
+				state.day = 0
+				for d in range(_days_in_month(month, year)):
+					state.day = d + 1
+					# No command books anything, so nothing can be due; say so if it is.
+					for appointment in Calendar.due(state, year, month, state.day):
+						push_error("council_probe: an appointment fell due in an idle run: %s" % [appointment])
+		)
 		# ---- end of the real month.
 
 		# The month's divisions, read off each council's record.

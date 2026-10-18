@@ -188,8 +188,9 @@ so the sweep that fixes it cannot be forgotten.
   (src-wide scan), determinism (two states + duplicate, 12 ticks), price band
   under collapsed endowment, production-chain completeness (the topological
   pin), lazy-seed check (three legs), tick order after Economy before
-  Opinion in `main.gd::_on_month_elapsed` AND `tools/balance_probe.gd`
-  (source-read over both mirrors).
+  Opinion in `src/sim/world_month.gd` -- the one month the game and every
+  balance harness run (source-read; `tests/test_world_month.gd` holds the
+  harnesses to it).
 - `tests/test_commodities_panel.gd` — registration one-source, month-0 build,
   tree one-line-per-recipe (keyed by recipe id), shortage flip at the exact edge
   with whole-register takeover, map-mode toggles, legend swatch AND rendered

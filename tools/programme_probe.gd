@@ -13,8 +13,8 @@ extends SceneTree
 ##   the register's clock must run from term start -- the authored Maastricht
 ##   timeout of 6 then concludes in month 6, the read month). The programme is
 ##   chosen at new game, when months_in_term is 0 and Programme.is_term_start()
-##   is true. The tick order is main.gd's with Programme.tick_month immediately
-##   before Opinion.tick_month -- the wiring under test.
+##   is true. The month is src/sim/world_month.gd's, with Programme.tick_month
+##   immediately before Opinion.tick_month -- the wiring under test.
 ##
 ##   THE ONE SCRIPTED INPUT. No authored entry completes naturally on the
 ##   fresh-game cycle inside the window (unemployment starts 7.4 against a 7.0
@@ -55,39 +55,15 @@ extends SceneTree
 ##   anchors the slope, the way V4.0's did.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const GameState = preload("res://src/core/game_state.gd")
-const Economy = preload("res://src/sim/economy.gd")
-const Budget = preload("res://src/sim/budget.gd")
-const Orgs = preload("res://src/sim/orgs.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const PK = preload("res://src/sim/programme_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
-const Inflation = preload("res://src/sim/inflation.gd")
 const Elections = preload("res://src/sim/elections.gd")
-const Legislature = preload("res://src/sim/legislature.gd")
-const Discipline = preload("res://src/sim/discipline.gd")
-const Dissolution = preload("res://src/sim/dissolution.gd")
-const Diplomacy = preload("res://src/sim/diplomacy.gd")
-const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
-const Companies = preload("res://src/sim/companies.gd")
-const Investment = preload("res://src/sim/investment.gd")
-const Projects = preload("res://src/sim/projects.gd")
-const Campaign = preload("res://src/sim/campaign.gd")
-const Pledges = preload("res://src/sim/pledges.gd")
-const Society = preload("res://src/sim/society.gd")
-const Demography = preload("res://src/sim/demography.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
 const Events = preload("res://src/sim/events.gd")
-const Media = preload("res://src/sim/media.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
-const Energy = preload("res://src/sim/energy.gd")
-const Commodities = preload("res://src/sim/commodities.gd")
-const Statute = preload("res://src/sim/statute.gd")
-const Industry = preload("res://src/sim/industry.gd")
-const Regions = preload("res://src/sim/regions.gd")
-const Migration = preload("res://src/sim/migration.gd")
 
 const START_YEAR := 2026
 const MONTHS := 16           # The term: Jan 2026 -> the May 2027 election.
@@ -263,66 +239,33 @@ func _run_style(style: Dictionary, months: int) -> Dictionary:
 		state.year = year
 		state.month = month
 
-		# main.gd's order, with Programme immediately before Opinion -- the
-		# wiring under test. Elections runs last, which is the term-boundary
-		# guarantee the wiring comment in main.gd states. Commodities, Statute and
-		# Industry are ticked in main.gd's slots because Events.tick_month reads
-		# their registers the same month (tests/test_events.gd's tick-order pin
-		# holds this file to it); Characters and the UI-side announcers are not
-		# run here.
-		var access_by_nation: Dictionary = {}
-		for member_id in state.nations.keys():
-			access_by_nation[member_id] = Regions.accessibility_for(
-				state.nations[member_id], state.regions.get(member_id, []), state.region_graph)
-		Energy.tick_month(state, loader, access_by_nation)
-		Economy.tick_month(state)
-		Commodities.tick_month(state, loader)
-		Budget.tick_month(state)
-		Orgs.tick_month(state, loader)
-		Inflation.tick_month(state)
-		Media.tick_month(state, loader)
-		# The harness's one scripted input, in the slot between the economy
-		# having settled and the register being judged. Both write arms carry
-		# it; every band read is arm-vs-arm across it.
-		if bool(style["write"]) and month == WRITE_MONTH:
-			ns.growth_annual_pct = WRITE_GROWTH
-		Programme.tick_month(state, loader)
-		pulse_trace.append(Programme.programme_pulse(ns))
-		Opinion.tick_month(state)
-		stock_trace.append(float(ns.programme_stock))
-		var entry := Budget.snapshot(state)
-		entry.merge(Opinion.snapshot(state))
-		state.append_history(entry)
+		# The game's own month (src/sim/world_month.gd), Programme immediately
+		# before Opinion -- the wiring under test -- and Elections last, which is
+		# the term-boundary guarantee world_month.gd states. The harness's reads and
+		# its one scripted input ride the step hook.
+		var report := WorldMonth.tick_month(state, loader, func(step: String, after: bool, _report: Dictionary) -> void:
+			if not after and step == "Programme":
+				# The harness's one scripted input, in the slot between the economy
+				# having settled and the register being judged. Both write arms carry
+				# it; every band read is arm-vs-arm across it.
+				if bool(style["write"]) and month == WRITE_MONTH:
+					ns.growth_annual_pct = WRITE_GROWTH
+			elif after and step == "Programme":
+				pulse_trace.append(Programme.programme_pulse(ns))
+			elif after and step == "Opinion":
+				stock_trace.append(float(ns.programme_stock))
+			elif after and step == "Events":
+				_answer_event(state, loader, ns, year, month)
+			elif not after and step == "Elections":
+				# The day loop for calendar parity; nothing is booked, so due() is the
+				# one is_empty() check the harness's U6a note describes.
+				state.day = 0
+				for d in range(_days_in_month(month, year)):
+					state.day = d + 1
+					Calendar.due(state, year, month, state.day)
+		)
 
-		Discipline.tick_month(state, loader)
-		Legislature.tick_month(state, loader)
-		Statute.tick_month(state, loader)
-		Dissolution.tick_month(state)
-		Diplomacy.tick_month(state, loader)
-		Defence.tick_month(state)
-		Companies.tick_month(state, loader)
-		Industry.tick_month(state, loader)
-		Migration.tick_month(state, loader)
-		Investment.tick_month(state)
-		Projects.tick_month(state, loader)
-		Campaign.tick_month(state, loader)
-		Pledges.tick_month(state, loader)
-		Demography.tick_month(state)
-		Society.tick_month(state)
-		Unrest.tick_month(state)
-		Events.tick_month(state, loader)
-		_answer_event(state, loader, ns, year, month)
-		Cabinet.tick_month(state, loader)
-
-		# The day loop for calendar parity; nothing is booked, so due() is the
-		# one is_empty() check the harness's U6a note describes.
-		state.day = 0
-		for d in range(_days_in_month(month, year)):
-			state.day = d + 1
-			Calendar.due(state, year, month, state.day)
-		Calendar.tick_month(state)
-
-		for r in Elections.tick_month(state, loader):
+		for r in report["election_results"]:
 			if r["kind"] == "executive":
 				result_record = r
 
