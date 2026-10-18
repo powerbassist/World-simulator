@@ -17,7 +17,8 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 - **The band, rule first:** tiers 1-2 named from zoom 2.0 (>= 80 % in the Ruhr and the Po valley), tier 3 a bound (64 % over the Ruhr at max zoom), hover only.
 - **Found by measuring:** blocking every glyph made the placement cost 25-45 ms and held tier 2 under 60 %; only tier 1-2 marks are obstacles now, and tier 3 is skipped before projection (1.5-2.9 ms per placement).
 - **Capitals:** a folded name match; MDA folds, MLT is a bound (Valletta is below the register's cut).
-- **Cost (paired, one run):** max zoom +0.14 ms, opening fit +0.36, drag at max 0.00; the drag at the opening fit +6.2 ms goes to c.
+- **Review pass 1 (Critical):** centred nation names were dropped under capital rings -- 20 of 41 at the opening fit. Names may now sit over marks, never over names; the hovered city's label is reserved; the outline hover follows the ground.
+- **Cost (paired, one run, after the fix):** max zoom +0.15 ms, opening fit +0.79, drag at max +0.67; the drag at the opening fit +5.8 ms goes to c.
 - Model: [map-platform-model](map-platform-model.md) §10.
 
 **V4.10a -- THE GROUND AT DEPTH -- IS MERGED (PR #10, merge commit `d8abd155`, 2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged, no settings key.**

@@ -551,8 +551,8 @@ dense cluster shows its largest names. A total order keeps a still camera's labe
 
 | tier | Ruhr, % named | Po valley, % named | band |
 |---|---|---|---|
-| 1 | 98 % at 2.0 | 98 % at 2.0 | **named from 2.0** (= `CITY_MIN_ZOOM`) |
-| 2 | 83 % at 2.0 | 80 % at 2.0 | **named from 2.0** |
+| 1 | 88 % at 2.0 | 88 % at 2.0 | **named from 2.0** (= `CITY_MIN_ZOOM`) |
+| 2 | 81 % at 2.0 | 80 % at 2.0 | **named from 2.0** |
 | 3 | 64 % at 8.0 (max) | 71 % at 8.0 | **BOUND: hover only** (`LABEL_ZOOM_T3 = INF`) |
 
 **The obstacle set decided the band, and it was changed for cost before the band was read.** The
@@ -560,7 +560,13 @@ first form blocked every on-screen glyph: ~1300 rects inserted per placement, 25
 re-record, tier 1 named only from 3.5 and tier 2 never above 60 %. Tier-3 crosses (2–4 px) are no
 longer obstacles; a haloed name over one still reads. The 70 % rule itself was not touched.
 
-The shipped placement (tiers 1–2 named, tier 3 skipped before it is projected) costs **1.5–2.9 ms
+**Nation names may sit over marks, never over names** (`"over_marks"`). Review pass 1 found the
+first form dropping 20 of 41 roster names at the opening fit: a nation's name has one anchor, its
+centre, and a capital's ring under it was enough to lose Spain to Madrid. The band above is
+re-measured with the fix (tier 1 moved from 98 % to 88 %: the names now always place, and cities
+give way). The hovered city's full label is **reserved**: no name may cover it.
+
+The shipped placement (tiers 1–2 named, tier 3 skipped before it is projected) costs **1.5–3.3 ms
 per re-record** in the stress views; the placer alone places 1400 candidates in 13.5 ms headless
 (a stress figure, printed and not asserted: a wall-clock cap failed at 22.7 ms inside the parallel suite; `tests/test_map_labels.gd` pins the native sort on the source instead).
 
@@ -568,12 +574,13 @@ per re-record** in the stress views; the placer alone places 1400 candidates in 
 
 | row | off | on | delta | budget |
 |---|---|---|---|---|
-| max zoom, still | 2.54 | 2.68 | +0.14 | ≤ 0.5 |
-| opening fit, still | 10.39 | 10.75 | +0.36 | ≤ 1.0 |
-| drag at max zoom | 24.24 | 24.24 | 0.00 | ≤ 2.0 |
-| drag at the opening fit | 76.59 | 82.81 | **+6.2** | not budgeted |
+| max zoom, still | 2.61 | 2.76 | +0.15 | ≤ 0.5 |
+| opening fit, still | 10.17 | 10.96 | +0.79 | ≤ 1.0 |
+| drag at max zoom | 24.14 | 24.81 | +0.67 | ≤ 2.0 |
+| drag at the opening fit | 76.74 | 82.56 | **+5.8** | not budgeted |
 
-G2 on this tree, same run: 2.71 − 1.01 = **1.70 ms**. The border, glyph and road changes are not
+(After the review's fix pass; the first run, before nation names always placed, read +0.14 /
++0.36 / 0.00 / +6.2.) G2 on this tree, same run: 2.92 − 0.93 = **1.99 ms** (1.70 in the first run). The border, glyph and road changes are not
 separable inside one run, so their share is only visible across runs (2.14 ms with V4.10a alone).
 Read that as "b did not push G2 up", not as b recovering the gate: the run-to-run spread is
 0.3 ms, and V4.10c still owes the attribution.
@@ -581,6 +588,6 @@ Read that as "b did not push G2 up", not as b recovering the gate: the run-to-ru
 ### Handed to V4.10c
 
 - Materials (pattern, edge darkening) as the first canvas_item shader(s).
-- The drag at the opening fit: 76–83 ms. The label pass adds 6.2 ms to it, and most of the rest
+- The drag at the opening fit: 76–83 ms. The label pass adds ~6 ms to it, and most of the rest
   is the map's own re-record (§8). c attributes by pass before pulling a lever.
 - G2 against the absolute 2.0, measured across two runs.
