@@ -208,6 +208,15 @@ func _build_configs() -> void:
 		var off: Array = [] if pass_name == "" else [pass_name]
 		var tag: String = "all" if pass_name == "" else "-" + pass_name
 		_configs.append({"label": "C PAN fit %s" % tag, "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "off": off})
+	# V4.10c, THE MATERIALS -- map_fill.gdshader's band and pattern off (the fill
+	# as it was) against on, paired in this run: still at max zoom (G2's frame),
+	# still at the opening fit (the most fill on screen), and the fit drag.
+	for pair in [["C materials max", mv.MAX_ZOOM, false], ["C materials fit", 2.08, false], ["C materials PAN fit", 2.08, true]]:
+		for off in [true, false]:
+			var row := {"label": "%s, %s" % [pair[0], "off" if off else "on"], "zoom": pair[1], "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "off": ["materials_off"] if off else []}
+			if pair[2]:
+				row.merge({"flows": false, "run": true, "pan": true})
+			_configs.append(row)
 	# The clock-health windows reproduce P4's own regime: vsync ON, 1440p,
 	# clock unpaused at speed 1.
 	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})

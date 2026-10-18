@@ -591,3 +591,114 @@ Read that as "b did not push G2 up", not as b recovering the gate: the run-to-ru
 - The drag at the opening fit: 76–83 ms. The label pass adds ~6 ms to it, and most of the rest
   is the map's own re-record (§8). c attributes by pass before pulling a lever.
 - G2 against the absolute 2.0, measured across two runs.
+
+## 11. V4.10c — materials and the gate
+
+**2026-10-18 · branch `v4.10c-materials-gate` · probe: `tools/frame_probe.gd` (the "C" rows; `PROBE_ONLY=<prefix>` runs a subset).**
+
+### Attribution first
+
+`map_view._pass_off` turns one draw pass off at a time; the "C max" (G2's still frame) and
+"C PAN fit" (the opening-fit drag) rows price each pass against an all-on row in one run.
+
+| pass off (one run, 1440p) | max zoom, ms | drag at the fit, ms |
+|---|---|---|
+| none (all on, twice) | 2.86 / 2.88 | 83.6 / 84.5 |
+| roster (fills + lines) | 1.50 | 19.0 |
+| roster fills only | 2.24 | 42.8 |
+| roster lines only | 2.24 | 67.6 |
+| cities | 2.44 | 74.6 |
+| labels | 2.45 | 78.4 |
+
+**The roster pass was the map**: 1.37 ms of max zoom and 65 ms of the 83 ms drag, and none of
+it was the camera's. A fill depends on the layer, the state and the viewer; a line on the zoom,
+the hover and the viewer; neither on the pan. Yet every drag frame re-projected ~41k points and
+`draw_colored_polygon` re-triangulated every ring. §8's counted-not-profiled list was this.
+
+### The lever: projected layers, built once
+
+The raster, the outline borders, the roster fills and the roster's lines are child `Node2D`
+layers of the map (`src/ui/map_draw_layer.gd`), `show_behind_parent`, in the old pass order.
+The last three are drawn in **lon/lat** and projected by the node's transform, which `_draw()`
+sets every re-record. Each of the three is **one mesh, built once in `setup()`**:
+
+- **Fills** (`src/ui/map_fill_mesh.gd`): every ring triangulated once in lon/lat (an affine
+  map carries a triangulation over, so this is the triangulation the old call made each
+  frame), in the old draw order so translucent fills compound as before. Colour is a palette
+  texel per nation, read by index in the shader: a layer toggle, a month or a crossfade frame
+  rewrites 41 texels (float texels: 8-bit truncated 0.407 to 0.404).
+- **Lines** (`src/ui/map_line_mesh.gd`, `src/ui/map_line.gdshader`): every ring a closed
+  strip, two vertices per point along its miter. The colour (palette row 0) and the width in
+  screen pixels (row 1) are texels; the shader pushes each vertex out by half the width over
+  the scale. A hover, a zoom or a ground-band step rewrites texels; the mesh never changes.
+
+A pan or a zoom re-records **no projected layer** (`tests/test_map_view.gd` asserts it by each
+layer's draw generation, and a mutation that re-records on pan fails it). The raster stays
+screen-space and re-records with every frame (two rects).
+
+**V3.1's ring cull is retired** (§2's `_ring_reaches_view()`, its boxes and
+`tests/test_map_cull.gd`): no ring pass culls any more, because a layer that is not
+re-recorded on pan draws whole. The GPU clips what is off screen. Roads, cities, labels and
+markers keep their own culls; they are still drawn per frame in screen space.
+
+**The first cut kept the lines as `draw_polyline` on a layer**, re-recorded on zoom only. The
+drag fell to 23 ms and **max zoom rose 2.9 → 6.3 ms**: a layer that never re-records on pan
+cannot cull to the view, and ~1300 uncull'd polylines were ~1500 draw calls replayed each
+frame. That measurement is why lines are a mesh too.
+
+### Materials: `src/ui/map_fill.gdshader`
+
+The project's first canvas_item shader, and the map's only material. On the fill mesh:
+
+- **Edge band.** A strip along each nation's 1:50m ring (coasts included), its inner edge
+  pushed inward by `band_px / px_per_deg` in `vertex()`, so it is 7 px wide at every zoom
+  with no rebuild. The fill's colour at 0.55 brightness and 3x alpha at the line, easing to
+  nothing. On the nation, not the region: region hairlines already mark regions, and a band
+  on each would quilt the tint. *Rejected:* a baked edge-distance texture, whose border is
+  quantised to its texel (1/30 deg is 8 px at max zoom) and would sit off the vector line.
+- **Pattern.** A diagonal hatch, 7 px apart, moving the fill's alpha ±10 %, in screen pixels
+  anchored to the land so it pans with it. The first value (±22 %) read as stripes at depth.
+
+Values and reasons: `map_view.FILL_MATERIAL`. `materials_off` (a `_pass_off` key) draws the
+pre-c fill for the paired rows.
+
+| paired rows, on minus off, ms | run A | run B | run C |
+|---|---|---|---|
+| max zoom, still | −0.69 | −0.20 | −0.41 |
+| opening fit, still | −0.01 | +0.34 | −0.08 |
+| drag at the fit | −0.53 | −0.94 | −0.54 |
+
+Inside the run spread every time (the off row runs first and pays the warm-up): **the
+materials cost nothing a frame shows.**
+
+### The gate, and the drag
+
+| (1440p, vsync off, ms) | before c | run 1 | run 2 |
+|---|---|---|---|
+| max zoom | 2.85 – 3.00 | 1.49 | 1.51 |
+| no map | 0.91 – 1.28 | 1.23 | 0.93 |
+| **G2** | 1.57 – 2.29 | **0.26** | **0.58** |
+| opening fit, still | 11.0 – 11.5 | 2.76 | 2.97 |
+| drag at the opening fit | 82 – 84 | 18.4 | 18.3 |
+| drag at max zoom | 25.4 | — | 9.6 |
+| draw calls at max zoom | 585 | 258 | 258 |
+
+**G2 is under 2.0 in both runs** (and the subtrahend, "no map", carries as much of the spread
+as the map now does). The drag at the fit is 4.5x faster; what is left of it is the per-frame
+screen-space passes: cities ~8 ms, labels ~6, roads ~2 (the same rows, after). Not pulled: no
+lever there is as clean, and 18 ms is a 55 fps drag.
+
+### Decided and parked at c
+
+Decided: every data layer sits on the parchment at depth (by design); the hovered city's
+reserved label beats a nation's name (the player asked). The other design questions PRs #10
+and #11 raised are parked with triggers in [[someday]] ("Carried from V4.10").
+
+### What changed on screen
+
+The three windowed shots against main (opening fit, max zoom, trade layer with a hover, an
+outline hover) differ only by the materials: nations read as tinted shapes deepening toward
+their borders, a faint weave in the fill. Lines, widths and the home and hover strokes match.
+Two details moved and are not visible: the roster's strokes now all draw above every roster
+fill (before, a later nation's 0.2-alpha fill tinted an earlier nation's stroke where the two
+overlapped), and a ring's closing point is now joined.

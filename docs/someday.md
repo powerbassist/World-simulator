@@ -322,6 +322,31 @@ measurement (the way pass 23 set the commodity pair from the category median).
   reasoning, not by a hand on a mouse: a headless suite cannot feel them. **Trigger:**
   the first hands-on pass; V5 reworks the layer anyway.
 
+## Carried from V4.10 (2026-10-18)
+
+The design questions PRs #10 and #11 raised, settled at V4.10c. Two were decided and
+are not parked: **every data layer sits on the parchment at depth** (the ground is the
+map there, and a fill is a tint over it at the layer's alpha -- by design), and **the
+hovered city's reserved label beats a nation's name** (the player asked for it with the
+cursor; the name returns when the cursor leaves). The rest are parked:
+
+- **The ground's edge fade shows** around Iceland, Turkey, Ukraine and Cyprus: the baked
+  extent is the roster's rings + 6 deg, and its 3 deg feather lets the photograph back
+  in where those coasts run near the edge. Widening the extent grows the asset.
+  **Trigger:** V5's map art pass, or a playtest that zooms there and says so.
+- **The ground's decode costs the boot ~300 ms** (`enter` 780 -> 1080 ms). It could move
+  to the boot's worker beside the scene compile. **Trigger:** the next boot-time budget.
+- **Malta's capital ring sits on St Paul's Bay**: Valletta is under the city register's
+  cut, so MLT's largest city carries the ring (a bound, [[map-platform-model]] §10).
+  **Trigger:** the city register gains capitals below its cut.
+- **Hovering a city reshuffles nearby names**: the reserved hover box frees or takes
+  slots, so names move while the cursor moves. **Trigger:** a playtest that notices.
+- **The legend's road key is brass; roads at depth are ink.** The legend is UI, and V5
+  reworks the UI. **Trigger:** V5's legend.
+- **Small nations' names drop between zoom 1.4 and 2.0** (or on small windows): a
+  collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
+  rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
+
 ## Carried from earlier blocks (pointers, not duplicates)
 
 - **The 25 generated nations' majors are generator-owned** — hand-curating
