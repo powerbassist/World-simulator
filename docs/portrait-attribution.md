@@ -14,52 +14,92 @@ are derivatives of the works below; this file credits them as their
 licences require. No real person's name appears in any prompt or in `data/`
 — this file is the single committed record of the reference sources.
 
-- `AUT_haslinger` (as Ingrid Haslinger): "File:Pamela Rendi-Wagner ECDC.png" — Unknown authorUnknown author, cc0. 
+- `AUT_aichinger` (as Theresa Aichinger): "File:Leonore_Gewessler_-_2025-05-19_-_54530062295_(cropped).jpg" — diegruenen, cc0. 
+- `AUT_haslinger` (as Ingrid Haslinger): "File:21.10.2021_„Rotes_Foyer“_(51614161299)_(cropped).jpg" — SPÖ Presse und Kommunikation, cc by-sa 2.0. 
 - `AUT_kettler` (as Bernhard Kettler): "File:Christian_Stocker.jpg" — Stenbocki maja, cc by 4.0. 
+- `AUT_kranzler` (as Elisabeth Kranzler): "File:Verleihung_des_Bruno-Kreisky-Preises_2020_(51277719662).jpg" — SPÖ Presse und Kommunikation, cc by-sa 2.0. 
+- `AUT_prantl` (as Wolfgang Prantl): "File:Herbert_Kickl_-_Pressekonferenz_am_1._Sep._2020.JPG" — C.Stadler/Bwag, cc by-sa 4.0. 
+- `AUT_rudolf_v` (as Rudolf V): "File:Karl_Habsburg-Lothringen_(2022).jpg" — Fgach80, cc by-sa 4.0. 
 - `AUT_steinhauser` (as Lukas Steinhauser): "File:Matthias_Strolz_20130516_cropped.jpg" — Matthias_Strolz_20130516.jpg: NEOS Das Neue Österreich
 derivative work: Gugganij, cc by-sa 2.0. 
+- `BEL_segers` (as Tom Segers): "File:Raoul_Hedebouw_Bxl_Climate.jpg" — Vincent Groleau, cc by-sa 4.0. 
+- `BEL_van_craen` (as Joris Van Craen): "File:Tom_Van_Grieken_(2016_D)_(cropped).jpg" — Vlaams Belang, cc by 2.0. 
 - `BEL_vanhamme` (as Lore Vanhamme): "File:Wouter_Van_Besien.jpg" — DJ Buck. Edited and cropped by User:DimiTalen., cc by-sa 2.5. 
 - `BGR_ganeva` (as Емилия Ганева): "File:Korneliya_Ninova_(48NS).png" — Unknown authorUnknown author, cc by 2.5 bg. 
+- `BGR_halilov` (as Осман Халилов): "File:Delyan_Peevski_1_(portrait).jpg" — VBorishev, cc by 4.0. 
 - `BGR_kishev` (as Богдан Кисьов): "File:Official_portrait_of_Rumen_Radev_(2026)_(cropped).jpg" — Government of Bulgaria, cc by 4.0. 
 - `BGR_koleva` (as Румяна Колева): "File:DesislavaAtanasova.png" — National Assembly of Bulgaria, cc0. 
+- `BGR_rangelov` (as Димитър Рангелов): "File:Kiril_Petkov_(cropped).jpg" — Government of Bulgaria, cc by 4.0. 
 - `CYP_christofi` (as Andreas Christofi): "File:Επίσκεψη_ΥΠΕΞ_Ν._Κοτζιά_στην_Κυπριακή_Δημοκρατία_(Λευκωσία,_26-28.10.2015)_cropped.jpg" — Υπουργείο Εξωτερικών, cc by-sa 2.0. 
 - `CYP_giallouridou` (as Eleni Giallouridou): "File:Annita_Demetriou_visits_Ireland,_June_2023_01_(cropped).jpg" — Houses of the Oireachtas, cc by 2.0. 
 - `CYP_hadjipavlou` (as Stavros Hadjipavlou): "File:Nikos_Christodoulides_in_EPP_2025_(54486813313)_(cropped).jpg" — European People's Party, cc by 2.0. 
 - `CYP_petrou` (as Charalambos Petrou): "File:Sstefanou.jpg" — stefanos stefanou, cc0. 
 - `CYP_zachariou` (as Michalis Zachariou): "File:Nikolas_papadopoulos_2020.jpg" — Democratic Party of Cyprus, cc by-sa 4.0. 
-- `CZE_kraus` (as Miloš Kraus): "File:Petr Pavel (2023-02-14) (cropped).jpg" — pirati.cz, cc by-sa 2.0. 
+- `CZE_holub` (as Karel Holub): "File:Tomio_Okamura_portrét_(cropped).jpg" — Tomio Okamura, cc by-sa 4.0. 
+- `CZE_kraus` (as Miloš Kraus): "File:Petr_Pavel.jpg" — Jana Jabůrková, Jiří Turek (J3T), cc by-sa 4.0. 
 - `CZE_strnad` (as Jakub Strnad): "File:Zdeněk_Hřib_(Nov_2024)_(cropped).jpg" — https://www.flickr.com/photos/pirati/, cc by-sa 2.0. 
-- `DEU_vogler` (as Matthias Vogler): "File:Friedrich Merz Portrait (non-symmetric).png" — Guamedo1234, cc by 4.0. 
+- `DEU_bohlen` (as Katrin Bohlen): "File:2025-05-05_Unterzeichnung_des_Koalitionsvertrages_der_21._Wahlperiode_des_Bundestages_by_Sandro_Halank–033.jpg" — Sandro Halank, Wikimedia Commons, cc by-sa 4.0. 
+- `DEU_emmerich` (as Wolfgang Emmerich): "File:Frank-Walter_Steinmeier_2026.jpeg" — The President's Office, Maldives, cc by 4.0. 
+- `DEU_falk` (as Dietrich Falk): "File:Björn_Höcke_(cropped).jpg" — Steffen Prößdorf, cc by-sa 4.0. 
+- `DEU_friedrich_iv` (as Friedrich IV): "File:Georg_Friedrich_Prinz_von_Preußen1,_Pour_le_Merite_2014.JPG" — StagiaireMGIMO, cc by-sa 3.0. 
+- `DEU_grotholt` (as Marlene Grotholt): "File:Christine_Buchholz_im_Plenarsaal.jpg" — Olaf Krostitz (Linksfraktion), cc by-sa 4.0. 
+- `DEU_ruppert` (as Jens Ruppert): "File:2020-02-14_Christian_Lindner_(Bundestagsprojekt_2020)_by_Sandro_Halank–2.jpg" — Sandro Halank, Wikimedia Commons, cc by-sa 4.0. 
+- `DEU_seibold` (as Annika Seibold): "File:2025-01-27-Franziska_Brantner-Hart_aber_fair-1472.jpg" — Superbass, cc by-sa 4.0. 
+- `DEU_vogler` (as Matthias Vogler): "File:2024-08-21_Friedrich_Merz_in_Erfurt_2024_STP_3041_by_Stepro_(3x4_cropped).jpg" — Steffen Prößdorf, cc by-sa 4.0. 
+- `DNK_brandt` (as Rikke Brandt): "File:Sofie_Carsten_Nielsen_på_DTU_(6132412295)_(cropped).jpg" — Sofie Carsten Nielsen, cc by 2.0. 
+- `DNK_krogh` (as Jens Erik Krogh): "File:Morten_Messerschmidt_by_Christian_Ursilva_(2026).jpg" — Christian Ursilva from Copenhagen, Denmark, cc by-sa 4.0. 
+- `DNK_lindberg` (as Torkil Lindberg): "File:Troels_Lund_Poulsen_in_DR_Byen_by_Christain_Ursilva.jpg" — Christian Ursilva from Copenhagen, Denmark, cc by-sa 4.0. 
 - `DNK_skovgaard` (as Esben Skovgaard): "File:Jacob_Mark_på_ChrBorg_NOV_2018_Foto_William_Vest-Lillesoe_WEB-9_(cropped).jpg" — William Vest-Lillesøe, cc by-sa 4.0. 
 - `DNK_sorensen` (as Birte Sørensen): "File:Mette_Frederiksen_in_Aalborg,_13_September_2023_(P-061809-00-03)_(cropped).jpg" — Christophe Licoppe / European Union, 2023 / EC – Audiovisual Service, cc by 4.0. 
 - `DNK_valdemar_vi` (as Valdemar VI): "File:King_Frederik_X_in_2025.jpg" — Finnish Government, cc by 2.0. 
-- `EST_kirus` (as Jaan Kirus): "File:Airlangga Hartarto and Kersti Kaljulaid during 2021 ATxSG.jpg" — Office of Coordinating Minister for Economic Affairs of Indonesia, public domain. 
+- `ESP_alfonso_vii` (as Alfonso VII): "File:Daiga_Mieriņa_tiekas_ar_Spānijas_karali_-_53814974005_(cropped)-2.jpg" — Saeima, cc by-sa 2.0. 
+- `ESP_bustamante` (as Álvaro Bustamante): "File:ALBERTO_NÚÑEZ_FEIJÓO.jpg" — Partido Popular PP, cc0. 
+- `ESP_mendiola` (as Iker Mendiola): "File:10N2019_Íñigo_Errejón_(cropped).jpg" — Thomas Holbach, cc by-sa 4.0. 
+- `ESP_sanchis` (as Rocío Sanchís): "File:Macarena_Olona_(51148521527)_(cropped).jpg" — Vox España, pdm-owner. 
+- `EST_kirus` (as Jaan Kirus): "File:Kersti_Kaljulaid_-_2018.jpg" — Anna Zaugarova, cc by-sa 4.0. 
 - `EST_lepik` (as Madis Lepik): "File:Kristen_Michal_in_2026.jpg" — Stenbocki maja, cc by 4.0. 
+- `EST_luik` (as Urmas Luik): "File:Martin_Helme_Cumbre_de_Madrid_8_de_Febrero_(3x4_cropped).jpg" — Vox España, cc0. 
+- `EST_randma` (as Tiit Randma): "File:Leaders’_Retreat_(54270740667)_(cropped).jpg" — European People's Party, cc by 2.0. 
 - `EST_soova` (as Maret Soova): "File:Jevgeni_Ossinovski.jpg" — AMeedia, cc by-sa 4.0. 
+- `EST_talivee` (as Marju Talivee): "File:Liina_Kersna_(crop).jpg" — Renee Altrov, cc by-sa 4.0. 
 - `FIN_koiranen` (as Teemu Koiranen): "File:Jussi_Halla-aho_9.5.2023.jpg" — FinnishGovernment, cc by 2.0. 
+- `FIN_nordlund` (as Jonas Nordlund): "File:Anders-Adlercreutz-01_(cropped).jpg" — Lauri Heikkinen, valtioneuvoston kanslia (click on "Avoin aineisto", go to "Ministerit" tab), cc by 4.0. 
+- `FIN_nummela` (as Sirkka Nummela): "File:Annika_Saarikko_in_2021_(cropped).jpg" — Valtioneuvoston kanslia, cc by 4.0. 
 - `FIN_peltomaa` (as Outi Peltomaa): "File:Kansanedustaja_Sofia_Virta_2023_(cropped_3).jpg" — WikiAuthorities, cc by-sa 4.0. 
 - `FIN_rautio` (as Eero Rautio): "File:Finnish_President_Alexander_Stubb_arrives_to_the_South_Portico_of_the_White_House_for_a_meeting_with_President_Donald_Trump_(54732037329)_(cropped_2).jpg" — The White House, public domain. 
 - `FIN_salmela` (as Anni Salmela): "File:2019_Tytti_Tuppurainen_(48137854342)_(cropped).jpg" — Bundesministerium für Europa, Integration und Äußeres, cc by 2.0. 
+- `FIN_vaino_i` (as Väinö I): "File:Donatus_Landgraf_von_Hessen_(2022).jpg" — Stefan Krug, cc by-sa 4.0. 
+- `FIN_viitanen` (as Juho Viitanen): "File:Petteri-Orpo-01_(cropped).jpg" — Lauri Heikkinen, valtioneuvoston kanslia, cc by 4.0. 
 - `FRA_aumont` (as Cécile Aumont): "File:Rachel_Keke_2021.jpg" — NPA - L’Anticapitaliste, cc by 3.0. 
-- `FRA_charles_xi` (as Charles XI): "File:Louis Alphonse de Bourbon et la princesse Marie-Marguerite (1) (cropped).jpg" — HJK, cc by-sa 4.0. 
-- `FRA_lachapelle` (as Bruno Lachapelle): "File:Portrait d'Olivier Faure (cropped).jpg" — Olivier Faure, cc by-sa 2.0. 
-- `GBR_kilbride` (as Rhona Kilbride): "File:Kate Forbes 2024.jpg" — Scottish Government, cc by 2.0. 
+- `FRA_charles_xi` (as Charles XI): "File:19_janvier_2020_(77)_cropped.jpg" — FC (Secrétariat de Louis de Bourbon, Duc d'Anjou), cc by-sa 4.0. 
+- `FRA_ferrand` (as Camille Ferrand): "File:20210819_tondelier.m-cr3.jpg" — Greenbox, cc by-sa 4.0. 
+- `FRA_lachapelle` (as Bruno Lachapelle): "File:OF_MATIGNON_-_MAXIME_CLAM_(cropped).png" — KimiRaikkonen3, public domain. 
+- `FRA_moucron` (as Daniel Moucron): "File:Emmanuel_Macron_2025_(cropped).jpg" — Nebojša Tejić, public domain. 
+- `FRA_vasseur` (as Hélène Vasseur): "File:Valérie_Pécresse_(2022)_(cropped_2).jpg" — European People's Party, cc by 2.0. 
+- `GBR_cobbett` (as Miriam Cobbett): "File:Official_portrait_of_Carla_Denyer_MP_crop_2.jpg" — ©House of Commons / Roger Harris, cc by 3.0. 
+- `GBR_harlow` (as Duncan Harlow): "File:Official_portrait_of_Nigel_Farage_MP_(3x4_cropped).jpg" — Laurie Noble, cc by 3.0. 
+- `GBR_kilbride` (as Rhona Kilbride): "File:Kate_Forbes_-_53727242856_(cropped).jpg" — Scottish Government, cc by 2.0. 
+- `GBR_pell` (as Adrian Pell): "File:Official_portrait_of_Ed_Davey_MP_crop_2,_2024.jpg" — ©House of Commons, cc by 3.0. 
 - `GBR_robert_iii` (as Robert III): "File:King_Charles_III_(July_2023).jpg" — White House, public domain. 
-- `GBR_wexford` (as Caroline Wexford): "File:Official portrait of Kemi Badenoch MP crop 3, 2024 (cropped).jpg" — ©House of Commons/Roger Harris, cc by 4.0. 
+- `GBR_wexford` (as Caroline Wexford): "File:Official_portrait_of_Kemi_Badenoch_MP,_2024_(3x4_cropped).jpg" — Roger Harris, cc by 3.0. 
 - `GRC_alexandros_ii` (as Alexandros II): "File:Pavlos.png" — Iason Raissis, cc by-sa 2.0. 
-- `GRC_iliopoulos` (as Takis Iliopoulos): "File:Sokratis Famellos (cropped portrait view).jpg" — Arno Mikkor (see profile), cc by 2.0. 
+- `GRC_iliopoulos` (as Takis Iliopoulos): "File:Famellos_deth_(cropped).png" — Σωκράτης Φάμελλος, cc by 3.0. 
 - `GRC_markou` (as Lefteris Markou): "File:Η_δημοσιογραφική_έρευνα_σήμερα_-_Κώστας_Βαξεβάνης_-_Left.gr.png" — Left.gr, cc by 3.0. 
+- `GRC_stavrou` (as Iason Stavrou): "File:Kyriakos_Mitsotakis_2026.jpg" — Yorgos Karahalis, cc by 4.0. 
 - `GRC_vlachos` (as Nikiforos Vlachos): "File:Konstantinos_Tasoulas_in_2025.jpg" — Kyriakos Samartzidis, cc by 4.0. 
 - `HRV_jurisic` (as Marko Jurišić): "File:Ivan_Penava_28.06.2023.png" — PIXSELL, cc by 3.0. 
+- `HRV_ravlic` (as Tomislav Ravlić): "File:Službena_fotografija_predsjednika_Republike_Hrvatske_Zorana_Milanovića.jpg" — Ured predsjednika Republike Hrvatske, public domain. 
 - `HRV_vidovic` (as Krešimir Vidović): "File:Tomislav Coric cropped.png" — wiki:user:Zlatkoivanec, cc by 4.0. 
 - `HUN_balogh` (as Zsolt Balogh): "File:Sulyok_Tamás_hivatalos_portréja_(cropped).jpg" — Sándor Palota, cc by-sa 4.0. 
 - `HUN_cser` (as Gábor Cser): "File:Viktor_Orban_2025_(cropped).jpg" — The White House, public domain. 
+- `HUN_matyas_ii` (as Mátyás II): "File:Georg_von_Habsburg_in_2024_01.jpg" — Christopher Michel, cc by-sa 4.0. 
 - `HUN_nagy` (as Bence Nagy): "File:Toroczkai_László_2024_(cropped).jpg" — Ipipedia (talk · contribs), cc0. 
 - `IRL_hession` (as Rory Hession): "File:Simon Harris (official portrait) 2020.jpg" — Houses of the Oireachtas, cc by 4.0. 
 - `IRL_lavelle` (as Aoife Lavelle): "File:Mary_McAleese,_President_of_Ireland_(cropped).jpg" — Griffith College, cc by-sa 3.0. 
 - `IRL_nolan` (as Saoirse Nolan): "File:Holly_Cairns,_April_2023_(headshot).jpg" — Houses of the Oireachtas, cc by 2.0. 
 - `IRL_tarrant` (as Niamh Tarrant): "File:Mary_Lou_McDonald_2025_2.jpg" — Office of the President of Ireland, public domain. 
-- `ITA_carlo_alberto_ii` (as Carlo Alberto II): "File:Emanuele Filiberto di Savoia, duca d'Aosta.jpg" — Giacomo Grosso, public domain. 
+- `ITA_carlo_alberto_ii` (as Carlo Alberto II): "File:Emanuele_Filiberto_di_Savoia_-_Capitolo_Generale_degli_Ordini_Dinastici_di_Casa_Savoia_2025.jpg" — Jilligate, cc by-sa 4.0. 
+- `ITA_fossati` (as Chiara Fossati): "File:Elly_Schlein_in_2023_(cropped).jpg" — European Commission (Jennifer Jacquemart), cc by 4.0. 
 - `ITA_lambertini` (as Vittorio Lambertini): "File:Minister_Antonio_Tajani_2025.jpg" — U.S. Department of State, public domain. 
 - `ITA_ronchi` (as Piergiorgio Ronchi): "File:Giancarlo Giorgetti 1996.jpg" — Camera dei Deputati, cc by-sa 4.0. 
 - `ITA_trevisan` (as Enzo Trevisan): "File:Alessandra_Todde_daticamera.jpg" — Camera dei deputati, cc by-sa 4.0. 
@@ -68,24 +108,38 @@ derivative work: Gugganij, cc by-sa 2.0.
 - `LTU_stanulis` (as Vygantas Stanulis): "File:Prime_Minister_Petteri_Orpo_and_President_of_Lithuania_Gitanas_Nausėda_met_in_Helsinki_2_September.jpg" — FinnishGovernment, cc by 4.0. 
 - `LTU_urbonaite` (as Dalia Urbonaitė): "File:Саулюс_Сквернялис_(32227351496).jpg" — Saeima, cc by-sa 2.0. 
 - `LTU_zaleckas` (as Marius Zaleckas): "File:Remigijus_Zemaitaitis_cropped.jpg" — ArmanaviciusZalieckasDeividas, cc by-sa 4.0. 
+- `LTU_zukauskas` (as Gabrielius Žukauskas): "File:Landsbergis_by_Mindaugas_Mikulenas_26.jpg" — Mindaugas Mikulėnas, cc by-sa 4.0. 
 - `LUX_adolphe_iii` (as Adolphe III): "File:Louis II de Bourbon Condé and his son Henri-Jules, Duke of Enghien - Versailles, MV 8449.jpg" — Attributed to Justus van Egmont / Attributed to Pierre Mignard I / Formerly attributed to Claude Lefèbvre, public domain. 
 - `LUX_everling` (as Marc Everling): "File:Luc Frieden, January 2022.jpg" — Pierre Guersing, cc by-sa 4.0. 
 - `LUX_reiland` (as Anouk Reiland): "File:Rainbow Center opening Luxembourg FwZZkgTXwAE6haT (Tom Barrett).jpg" — photographer of the U.S. Embassy to Luxembourg (U.S. Department of State), public domain. 
 - `LUX_weiler` (as Nathalie Weiler): "File:Yuriko_Backes_EC_2025_(cropped).jpg" — Claudio Centonze - European Commission, cc by 4.0. 
+- `LVA_kalns` (as Andrejs Kalns): "File:Diskusija_“Dalītā_īpašuma_izbeigšanas_problemātika”_(33471200768)_(cropped).jpg" — Saeima, cc by-sa 2.0. 
+- `LVA_kreituss` (as Jānis Kreituss): "File:Dombrovskis_EC_Portrait_2024.jpg" — European Commission Audiovisual Service, cc by 4.0. 
+- `LVA_krumins` (as Ojārs Krūmiņš): "File:12.Saeimas_deputāts_Raivis_Dzintars_(15796319978).jpg" — Saeima, cc by-sa 2.0. 
+- `LVA_vitola` (as Ineta Vītola): "File:VVF2022.jpg" — Reinis Inkēns, Saeima, cc by-sa 2.0. 
+- `MLT_camilleri` (as Sandra Camilleri): "File:Sandra_Gauci_(2023).jpg" — European Greens from Brussels, Belgium, cc by 2.0. 
 - `MLT_cassar` (as Adrian Cassar): "File:Robert_Abela_-_Official_Portrait_2022_(cropped).jpg" — Media Relations Office, Office of the Prime Minister of Malta, cc by-sa 4.0. 
 - `MLT_zahra` (as Bernard Zahra): "File:Bernard_Grech_in_2022.jpg" — European People's Party, cc by 2.0. 
-- `NLD_kuiperink` (as Sander Kuiperink): "File:Geert Wilders PVV, portret door Kees Wennekendonk.jpg" — Keeswennekendonk, cc by-sa 4.0. 
+- `NLD_bosveld` (as Ellen Bosveld): "File:Jetta_Klijnsma_2015_(1).jpg" — Rijksoverheid.nl, cc0. 
+- `NLD_kuiperink` (as Sander Kuiperink): "File:Cumbre_de_Madrid_8_de_Febrero_-_54314677909.jpg" — Vox España, cc0. 
 - `NLD_stoffels` (as Marijke Stoffels): "File:Mona_Keijzer,_January_2025.jpg" — Jennifer Jacquemart / EC - Audiovisual Service, cc by 4.0. 
 - `NLD_terborg` (as Willem Terborg): "File:Dick_Schoof_in_2025.jpg" — Ministerie van Buitenlandse Zaken, cc by-sa 4.0. 
+- `NLD_wielinga` (as Fenna Wielinga): "File:Suzanne_Kröger_2019_(1)_(cropped).jpg" — GroenLinks, cc by-sa 4.0. 
+- `POL_grabowski` (as Szymon Grabowski): "File:Szymon_Hołownia_sejm,_2026_(cropped2).jpg" — fot. Piotr Molęcki / Kancelaria Sejmu, cc by 4.0. 
 - `POL_ostrowski` (as Bogdan Ostrowski): "File:Karol_Nawrocki_(2025)_(cropped).jpg" — The White House, public domain. 
+- `POL_piasecki` (as Robert Piasecki): "File:Adrian_Zandberg_Sejm_2020.jpg" — Adrian Grycuk, cc by-sa 3.0 pl. 
+- `POL_wilk` (as Grzegorz Wilk): "File:Przemysław_Czarnek_Sejm_2019.jpg" — Adrian Grycuk, cc by-sa 3.0 pl. 
+- `POL_zawadzki` (as Marek Zawadzki): "File:Donald_Tusk_2025_(2).jpg" — Gov.pl, cc by 3.0 pl. 
+- `PRT_amaral` (as Tiago Amaral): "File:André_Ventura_Cumbre_de_Madrid_8_de_Febrero_(3x4_cropped).jpg" — Vox España, cc0. 
 - `PRT_manuel_iii` (as Manuel III): "File:Duarte_Pio_di_Braganza_(3.1).jpg" — Elekes Andor, cc by 4.0. 
-- `PRT_salgueiro` (as Marta Salgueiro): "File:Marcelo Rebelo de Sousa em 2017.png" — Waldyrious, cc by-sa 4.0. 
+- `PRT_salgueiro` (as Marta Salgueiro): "File:Marcelo_Rebelo_de_Sousa_(Web_Summit).jpg" — Web Summit, cc by 2.0. 
 - `PRT_sequeira` (as Rui Sequeira): "File:Debate_com_PS,_legislativas_2025_(54439465391)(cropped_2).jpg" — Esquerda.net, cc by-sa 2.0. 
 - `PRT_vasconcelos` (as Duarte Vasconcelos): "File:Antonio-Mosca-1913-Illustrazione-italiana.jpg" — Unknown authorUnknown author, public domain. 
 - `ROU_iordache` (as Elena Iordache): "File:Elena_Lasconi,_interviu_Europa_FM,_2023-09-21.jpg" — Europa FM, cc by 3.0. 
 - `ROU_mihai_ii` (as Mihai II): "File:Transylvania_Open_2024_finalists_ceremony_(53524427921)_(cropped).jpg" — Nuță Lucian from Cluj-Napoca, Romania, cc by-sa 2.0. 
 - `ROU_moraru` (as Vasile Moraru): "File:Képernyőkép 2025-01-26 115400.png" — The Government of Romania, cc0. 
 - `ROU_nagy` (as Katalin Nagy): "File:Kelemen_Hunor_-.jpg" — Elekes Andor, cc by 4.0. 
+- `ROU_radulescu` (as Tudor Rădulescu): "File:Portret_George_Simion_(7)_(decupat).jpg" — AUR Alianța pentru Unirea Românilor, cc by-sa 2.0. 
 - `ROU_vasilescu` (as Octav Vasilescu): "File:Nicusor_Dan_in_2026.jpg" — U.S. Embassy Romania, public domain. 
 - `SVK_baran` (as Peter Barán): "File:Andrej_Danko,_2018.jpg" — Igec133, cc by-sa 4.0. 
 - `SVK_hraska` (as Tomáš Hraška): "File:Matus-Sutaj-Estok-portrait.jpg" — European Union, public domain. 
@@ -93,6 +147,7 @@ derivative work: Gugganij, cc by-sa 2.0.
 - `SVK_vozar` (as Marián Vozár): "File:Robert_Fico_portrait,_2025_large.jpg" — European Commission (Christophe Licoppe), cc by 4.0. 
 - `SVN_hribernik` (as Luka Hribernik): "File:Luka_Mesec_2026.jpg" — gov.si, public domain. 
 - `SVN_kotnik` (as Urša Kotnik): "File:Srečanje_z_županjami_in_župani_na_Brdu_-_5._6._2023_-_Alenka_Bratušek.jpg" — Vlada Republike Slovenije, public domain. 
+- `SVN_rebernik` (as Nataša Rebernik): "File:Tanja_Fajon_on_7_March_2024_-_redna_seja_vlade_-_2024-03-07_-_Vlada_Republike_Slovenije_(cropped).jpg" — Danijel Kovačič Grmek, public domain. 
 - `SVN_saje` (as Borut Saje): "File:Parliament’s U.S. Friendship Group met with Ambassador.jpg" — US Embassy Slovenia Facebook, public domain. 
 - `SVN_zajc` (as Mojca Zajc): "File:Nataša_Pirc_Musar_2026.jpg" — Borut Živulovič, public domain. 
 - `SWE_bergvall` (as Pär Bergvall): "File:Almedalen_Muharrem_Demirok_(cropped).jpg" — News Oresund, cc by 2.0. 
