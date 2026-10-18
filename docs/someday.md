@@ -19,15 +19,15 @@ Decisions only the author can take. Each is a checkbox so the Tasks query on
 when it is taken, and record the decision where the line points.
 
 - [x] V4.4 re-baseline: 24 outcome flips, 20 of them HELD→LOST at the 2032 election through the default-drain channel. Tune the defaults' authored means, tune `CATEGORY_QUIET_MONTHS`, or accept the bound (`reports/v44-rerun-prediction.md`). **Decided 2026-10-14: accept the bound** -- ignoring the desk is meant to cost; the defaults' means and the quiet stay as shipped ✅ 2026-10-14
-- [ ] Event-art contact sheet: the plates lean photographic, not painterly. Accept or re-render ([[event-art-plan]])
-- [ ] The book has no true "protect industry" option: `com_industry_bills.protect_the_makers` is a regulation
+- [x] Event-art contact sheet: the plates lean photographic, not painterly. Accept or re-render ([[event-art-plan]]). **Decided 2026-10-19: accept the photographic style**, with one shared grade across the library in V5.1a ([[v5]]) ✅ 2026-10-19
+- [x] The book has no true "protect industry" option: `com_industry_bills.protect_the_makers` is a regulation. **Decided 2026-10-19: add a true one** in V5.3b's law tiles ([[v5]]) ✅ 2026-10-19
 - [x] Re-run `events_probe` E4/E5 since the two commodity events were unbound from their hook (over an hour, run alone). **Re-run 2026-10-14** on the split events.gd and the drift-fixed commodities: E4 shipped quiet 3 = 37 arrivals, 12.0 per term, max desk 3, 0.0 % overfull; E5 every category <= 18.9 % (scandal) against 30, commodity 8.1 %; every declared band PASSED. Unchanged from V4.4's recorded 12.0/term and 18.9 % ✅ 2026-10-14
-- [ ] The portrait wall's face verdict. Generation is no longer open: it closed inside V4.3 (PR #44, `cf329b5d`; [[v3]] close-out, item 3), wall and bench harvested, no person without art. What only the author can do is judge the faces: the contact sheet `.superpowers/sdd/frames/v43_wall_contact_neutral.png` and the counterpart table `reports/portrait_counterparts_review.md`; rejects via `tools/curate_references.py --reject` (both files are machine-local)
-- [ ] Effects-blind divisions: make `resolve_vote()` effects-aware, or keep the measured bound (the V4.2 P1(ii) call, below)
-- [ ] Hand-curate the 25 generated nations' majors, or leave them generator-owned (open since V4.7a's A3 review; "Carried from earlier blocks", below)
-- [ ] The events book's dominance standard: re-tune the grown book to V1.8's 0 dominated pairs, or retire E3's kill-switch claim (E3 measures 35 and 4; "The probe's E2/E3 bands", below)
-- [ ] The calendar booking composed laws: wanted or not (the diary item, below)
-- [ ] The month tick at 41 nations: 392 ms against the 300 ms band V4.6's synthetic probe was set on. Accept, or open a tick-cost block ("Carried from V4.11", below)
+- [x] The portrait wall's face verdict. Generation is no longer open: it closed inside V4.3 (PR #44, `cf329b5d`; [[v3]] close-out, item 3), wall and bench harvested, no person without art. What only the author can do is judge the faces: the contact sheet `.superpowers/sdd/frames/v43_wall_contact_neutral.png` and the counterpart table `reports/portrait_counterparts_review.md`; rejects via `tools/curate_references.py --reject` (both files are machine-local) **Decided 2026-10-19: reject the faces the V5 reflection flagged on the contact sheet** (about eight unusable, about fifteen streaked backgrounds) and regenerate them in V5.2a's portrait pass ([[v5]]) ✅ 2026-10-19
+- [x] Effects-blind divisions: make `resolve_vote()` effects-aware, or keep the measured bound (the V4.2 P1(ii) call, below). **Decided 2026-10-19: make it effects-aware**, in V5.3b ([[v5]]) ✅ 2026-10-19
+- [x] Hand-curate the 25 generated nations' majors, or leave them generator-owned (open since V4.7a's A3 review; "Carried from earlier blocks", below). **Decided 2026-10-19: leave them generator-owned** ✅ 2026-10-19
+- [x] The events book's dominance standard: re-tune the grown book to V1.8's 0 dominated pairs, or retire E3's kill-switch claim (E3 measures 35 and 4; "The probe's E2/E3 bands", below). **Decided 2026-10-19: re-tune to 0** and wire E2/E3 to fail the run, in V5.2d ([[v5]]) ✅ 2026-10-19
+- [x] The calendar booking composed laws: wanted or not (the diary item, below). **Decided 2026-10-19: wanted**, in V5.2's diary rework ([[v5]]) ✅ 2026-10-19
+- [x] The month tick at 41 nations: 392 ms against the 300 ms band V4.6's synthetic probe was set on. Accept, or open a tick-cost block ("Carried from V4.11", below). **Decided 2026-10-19: open it** — V5.0c, against 300 ms mean and 450 ms worst month, median of three runs (re-measured at 446 ms mean, [[v5]]) ✅ 2026-10-19
 
 ## Carried from V4.2's close-out (2026-10-05)
 
