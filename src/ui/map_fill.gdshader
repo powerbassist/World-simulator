@@ -10,7 +10,8 @@
 //
 // EDGE BAND. Along each nation's 1:50m ring (coast included) the fill deepens
 // toward the line: a strip whose inner edge vertex() pushes inward by
-// band_px / px_per_deg, so it stays band_px wide on screen at every zoom.
+// band_px / px_per_deg, so it stays band_px wide on screen at every zoom --
+// or less, where its ring is narrower than that (the cap, map_fill_mesh.gd).
 //
 // PATTERN. A faint diagonal hatch in the fill's alpha, in screen pixels but
 // anchored to the land, so it pans with the map instead of swimming over it.
@@ -21,8 +22,8 @@
 //
 // Measured (tools/frame_probe.gd, "C materials" rows, paired in one run, three
 // runs, 1440p, vsync off): on minus off is -0.2 to -0.7 ms at max zoom, -0.3 to
-// +0.3 at the opening fit, -0.5 to -0.9 on the drag -- inside the 0.3 ms run
-// spread every time. The band and the hatch cost nothing a frame shows.
+// +0.3 at the opening fit, -0.9 to +0.5 on the drag -- signs that flip between
+// runs, the probe's noise. The band and the hatch cost nothing a frame shows.
 // map-platform-model.md §11.
 shader_type canvas_item;
 
@@ -33,6 +34,9 @@ uniform float px_per_deg = 12.0;
 // The band at the line is the fill's colour band_shade as bright and band_gain
 // times as opaque, easing to nothing at the inner edge.
 uniform float band_px;
+// map_fill_mesh.gd's CAP_RANGE_DEG: a band vertex's alpha times this is its
+// ring's cap in degrees (set with the materials, from the one constant).
+uniform float cap_range_deg;
 uniform float band_shade;
 uniform float band_gain;
 uniform float pattern_px = 1.0;
@@ -47,7 +51,7 @@ void vertex() {
 	int index = int(round(COLOR.r * 255.0));
 	v_is_band = COLOR.b;
 	v_across = COLOR.g;
-	VERTEX += UV * (band_px / px_per_deg);
+	VERTEX += UV * min(band_px / px_per_deg, COLOR.a * cap_range_deg);
 	v_land_px = VERTEX * px_per_deg;
 	v_fill = texelFetch(palette, ivec2(index, 0), 0);
 }

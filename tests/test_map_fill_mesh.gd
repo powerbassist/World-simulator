@@ -22,6 +22,7 @@ func _init() -> void:
 	_check_spike_is_clamped()
 	_check_degenerate_rings()
 	_check_line_mesh()
+	_check_band_cap()
 	_finish()
 
 
@@ -132,6 +133,33 @@ func _check_line_mesh() -> void:
 		if not uvs[v].is_equal_approx(-uvs[v + 1]) or uvs[v].length() < 0.99:
 			_fail("line vertex pair %d is not pushed equally either side (%s, %s)" % [v / 2, uvs[v], uvs[v + 1]])
 			break
+
+
+## Rings narrower than the band (review, pass 1: Malta, Gozo, the Greek islands,
+## Luxembourg at globe view): pushed the way the shader pushes -- by the smaller
+## of the band and the ring's decoded cap -- every inner vertex stays inside its
+## ring, at the furthest zoom out and at the opening fit. A ring wide enough
+## keeps the whole band.
+func _check_band_cap() -> void:
+	var strip := PackedVector2Array([Vector2(0, 0), Vector2(1, 1), Vector2(0.95, 1.05), Vector2(-0.05, 0.05)])
+	var islet := PackedVector2Array([Vector2(14.3, 35.8), Vector2(14.5, 35.8), Vector2(14.5, 35.95), Vector2(14.3, 35.95)])
+	var big := PackedVector2Array([Vector2(0, 0), Vector2(20, 0), Vector2(20, 20), Vector2(0, 20)])
+	for px_per_deg: float in [6.0, 25.0]:
+		var band := 7.0 / px_per_deg
+		for case in [["diagonal strip", strip], ["islet", islet]]:
+			var built := MapFillMesh.build([{"rings": [case[1]], "regions": []}])
+			var arrays: Array = (built["mesh"] as ArrayMesh).surface_get_arrays(0)
+			var verts: PackedVector2Array = arrays[Mesh.ARRAY_VERTEX]
+			var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+			var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+			for v in range(int(built["fill_vertices"]), verts.size()):
+				var push := minf(band, colors[v].a * MapFillMesh.CAP_RANGE_DEG)
+				var at: Vector2 = verts[v] + uvs[v] * push
+				if uvs[v] != Vector2.ZERO and not Geometry2D.is_point_in_polygon(at, case[1]):
+					_fail("%s at %.0f px/deg: band vertex %d pushed to %s, outside the ring" % [case[0], px_per_deg, v, at])
+					break
+	if MapFillMesh.band_cap(big) < 7.0 / 6.0:
+		_fail("a 20-degree square caps the band at %.2f deg, below the band itself" % MapFillMesh.band_cap(big))
 
 
 func _fail(msg: String) -> void:

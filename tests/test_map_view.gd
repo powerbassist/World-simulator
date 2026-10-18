@@ -252,7 +252,8 @@ func _check_border_kinds(loader, map) -> void:
 
 ## V4.10c. The projected layers: four children behind the map's own draw, in
 ## the old single pass's order, and a palette that holds every roster nation's
-## fill as drawn (8-bit, so compared at 1/255).
+## fill as drawn, exactly (float texels), and a fill mesh no live ring was
+## dropped from.
 func _check_projected_layers(map) -> void:
 	var names: Array = []
 	for child in map.get_children():
@@ -262,6 +263,8 @@ func _check_projected_layers(map) -> void:
 		_fail("projected layers are %s, expected raster, world lines, fills, roster lines" % [names])
 	if map._fill_mesh == null:
 		_fail("the roster built no fill mesh")
+	if map._fill_skipped != 0:
+		_fail("%d roster rings failed to triangulate in lon/lat -- they draw no fill" % map._fill_skipped)
 	if not (map._fill_node.material is ShaderMaterial):
 		_fail("the fill layer carries no materials shader")
 	map.set_layer(MapLayers.RELATIONS)

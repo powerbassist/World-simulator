@@ -607,13 +607,15 @@ Read that as "b did not push G2 up", not as b recovering the gate: the run-to-ru
 | roster (fills + lines) | 1.50 | 19.0 |
 | roster fills only | 2.24 | 42.8 |
 | roster lines only | 2.24 | 67.6 |
-| cities | 2.44 | 74.6 |
-| labels | 2.45 | 78.4 |
+| cities | 2.70 | 75.9 |
+| labels | 2.65 | 78.2 |
 
 **The roster pass was the map**: 1.37 ms of max zoom and 65 ms of the 83 ms drag, and none of
 it was the camera's. A fill depends on the layer, the state and the viewer; a line on the zoom,
 the hover and the viewer; neither on the pan. Yet every drag frame re-projected ~41k points and
 `draw_colored_polygon` re-triangulated every ring. §8's counted-not-profiled list was this.
+(The all-on, roster, fills and lines rows are one run, `reports/v4.10c_attrib2.log`; the
+cities and labels rows are the run before it, `v4.10c_attrib.log`, all-on 2.90 / 83.0.)
 
 ### The lever: projected layers, built once
 
@@ -653,7 +655,11 @@ The project's first canvas_item shader, and the map's only material. On the fill
 - **Edge band.** A strip along each nation's 1:50m ring (coasts included), its inner edge
   pushed inward by `band_px / px_per_deg` in `vertex()`, so it is 7 px wide at every zoom
   with no rebuild. The fill's colour at 0.55 brightness and 3x alpha at the line, easing to
-  nothing. On the nation, not the region: region hairlines already mark regions, and a band
+  nothing. **Capped per ring** at 0.8 x area / perimeter (a share of its mean half-width,
+  carried in the band vertices' alpha): review pass 1 found 112 of the 194 roster rings
+  thinner than the band at the opening fit (Malta ~5 x 4 px), whose band would have spilled
+  past the far coast, and Luxembourg's into its neighbours at globe view. A thin peninsula of
+  a large ring is not caught (a bound). On the nation, not the region: region hairlines already mark regions, and a band
   on each would quilt the tint. *Rejected:* a baked edge-distance texture, whose border is
   quantised to its texel (1/30 deg is 8 px at max zoom) and would sit off the vector line.
 - **Pattern.** A diagonal hatch, 7 px apart, moving the fill's alpha ±10 %, in screen pixels
@@ -662,14 +668,15 @@ The project's first canvas_item shader, and the map's only material. On the fill
 Values and reasons: `map_view.FILL_MATERIAL`. `materials_off` (a `_pass_off` key) draws the
 pre-c fill for the paired rows.
 
-| paired rows, on minus off, ms | run A | run B | run C |
+| paired rows, on minus off, ms | run A (`after2`, hatch ±22 %) | run B (`g2_run1`) | run C (`g2_run2`) |
 |---|---|---|---|
 | max zoom, still | −0.69 | −0.20 | −0.41 |
-| opening fit, still | −0.01 | +0.34 | −0.08 |
-| drag at the fit | −0.53 | −0.94 | −0.54 |
+| opening fit, still | −0.30 | +0.34 | −0.08 |
+| drag at the fit | +0.52 | −0.94 | −0.54 |
 
-Inside the run spread every time (the off row runs first and pays the warm-up): **the
-materials cost nothing a frame shows.**
+Every drag pair carries a 137–143 ms hitch in one of its two rows, and the signs flip
+between runs: the deltas are the probe's noise, not the shader's (the off row runs first and
+pays any warm-up). **The materials cost nothing a frame shows.**
 
 ### The gate, and the drag
 

@@ -24,16 +24,36 @@ extends RefCounted
 ## width in screen pixels at every zoom without the mesh ever being rebuilt.
 ## With the band width at 0 the strip has no area and draws nothing.
 ##
+## THE CAP. A ring narrower than the band would push its inner edge past the far
+## coast: at the opening fit the band is 0.28 deg and 112 of the roster's 194
+## rings are thinner than that somewhere (Malta is ~5 x 4 px there), and at globe
+## view Luxembourg's band would reach ~4 px into its neighbours (review, pass 1).
+## So each band vertex carries its ring's cap -- band_cap(), a share of the
+## ring's mean half-width -- and the shader pushes by the smaller of the band and
+## the cap. A long thin island on a diagonal is caught too, which a bounding box
+## is not; a thin peninsula of a large ring is not, and stays a bound.
+##
 ## Vertex encoding (map_fill.gdshader reads it):
 ##   VERTEX  lon, lat
 ##   COLOR.r nation index / 255 (the palette texel; 8-bit, so <= 255 nations)
 ##   COLOR.g across the band: 0 on the line, 1 on the inner edge
 ##   COLOR.b 1 for a band vertex, 0 for a fill vertex
+##   COLOR.a a band vertex's cap / CAP_RANGE_DEG (8-bit, rounded down)
 ##   UV      the inward miter for a band's inner vertex, else zero
+## A BOUND: vertex() reads COLOR after the canvas multiplied it by the item's
+## inherited modulate. Nothing modulates map_view or its ancestors (2026-10-18);
+## a fade or tint on the map would scale these channels -- move them to CUSTOM0
+## then.
 
 ## A miter longer than this many band widths is clamped: a needle-sharp coastal
 ## spike would otherwise throw its inner vertex far across the country.
 const MITER_LIMIT := 2.0
+## The cap's share of a ring's mean half-width (area / perimeter, which is half
+## the width of a long strip): 0.8 stops two facing pushes 20% short of meeting.
+const BAND_CAP_SHARE := 0.8
+## The largest cap the 8-bit channel holds, in degrees: 0.01 deg steps. A cap
+## above it is never reached -- the band is 1.2 deg at the furthest zoom out.
+const CAP_RANGE_DEG := 2.55
 
 
 ## nations: one entry per roster nation in palette order, each
@@ -138,14 +158,26 @@ static func inward_miters(ring: PackedVector2Array) -> PackedVector2Array:
 	return out
 
 
+## The furthest a band may push inward into this ring, in degrees.
+static func band_cap(ring: PackedVector2Array) -> float:
+	var perimeter := 0.0
+	var n := ring.size()
+	for i in n:
+		perimeter += ring[i].distance_to(ring[(i + 1) % n])
+	if perimeter <= 0.0:
+		return 0.0
+	return BAND_CAP_SHARE * absf(signed_area2(ring)) * 0.5 / perimeter
+
+
 static func _append_band(ring: PackedVector2Array, n: int, verts: PackedVector2Array,
 		colors: PackedColorArray, uvs: PackedVector2Array, indices: PackedInt32Array) -> void:
 	var count := ring.size()
 	if count < 3:
 		return
 	var miters := inward_miters(ring)
-	var on_line := Color(float(n) / 255.0, 0.0, 1.0, 1.0)
-	var inner := Color(float(n) / 255.0, 1.0, 1.0, 1.0)
+	var cap := floorf(clampf(band_cap(ring) / CAP_RANGE_DEG, 0.0, 1.0) * 255.0) / 255.0
+	var on_line := Color(float(n) / 255.0, 0.0, 1.0, cap)
+	var inner := Color(float(n) / 255.0, 1.0, 1.0, cap)
 	var base := verts.size()
 	for i in count:
 		verts.append(ring[i])

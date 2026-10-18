@@ -16,12 +16,16 @@ extends RefCounted
 ## Geometry: each ring a closed strip, two vertices per point pushed either way
 ## along the point's miter (MapFillMesh's, clamped at MITER_LIMIT). draw_polyline
 ## pushed along the unclamped average normal and left the closing point
-## unjoined; at 0.75 to 3 px the two are the same line.
+## unjoined; at the map's 0.75 to 4 px the two are the same line.
 ##
 ## Vertex encoding (map_line.gdshader reads it):
 ##   VERTEX    lon, lat
 ##   COLOR.rg  palette index, low byte then high byte, each / 255
 ##   UV        the miter, signed for the side
+## A BOUND: vertex() reads COLOR after the canvas multiplied it by the item's
+## inherited modulate. Nothing modulates map_view or its ancestors (2026-10-18);
+## a fade or tint on the map would scale these channels -- move them to CUSTOM0
+## then.
 
 const MapFillMesh = preload("res://src/ui/map_fill_mesh.gd")
 

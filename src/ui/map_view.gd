@@ -188,8 +188,9 @@ var _raster_node: Node2D
 var _world_node: Node2D
 var _fill_node: Node2D
 var _lines_node: Node2D
-## The line palettes are rewritten when this moves: zoom (the kind colours
-## follow ground_alpha), hover, outline hover, viewer.
+## The line palettes are rewritten when this moves: the ground band (the kind
+## colours follow ground_alpha, and the widths are pixels, so the zoom alone
+## changes nothing), hover, outline hover, viewer.
 var _line_key: Array = []
 var _world_line_mesh: ArrayMesh = null
 var _world_line_material: ShaderMaterial
@@ -201,6 +202,10 @@ var _roster_line_material: ShaderMaterial
 var _roster_line_image: Image
 var _roster_line_texture: ImageTexture
 var _fill_mesh: ArrayMesh = null
+## Rings the triangulator refused at the last setup(); tests/test_map_view.gd pins
+## it at 0 on the live data (lon/lat is a different scale from the screen the old
+## per-frame call triangulated in, and the ear clipper's epsilon is absolute).
+var _fill_skipped := 0
 var _fill_material: ShaderMaterial
 ## One texel per roster nation, in _palette_ids order; _palette_shown is what
 ## the texture holds, so an unchanged fill writes nothing. Float texels: an 8-bit
@@ -375,9 +380,9 @@ const HOME_WIDTH := 2.5
 ## V3.1 culling. The pad is DERIVED, not swept: the widest stroke on the map is
 ## HOVER_WIDTH (4.0 px) and antialias feather adds a couple more, so a ring
 ## whose box comes within 8 px of the view edge could still paint a pixel of
-## line. The ring passes convert it to degrees at the current zoom and share
-## one value, so no pass can pad differently and survive the two-pass enclave
-## rule; the city pass keeps it in screen pixels beside its own radius terms.
+## line. Since V4.10c no ring pass culls (the projected layers draw whole); the
+## spine pass converts it to degrees at the current zoom, and the city pass keeps
+## it in screen pixels beside its own radius terms.
 const CULL_PAD_PX := 8.0
 
 ## Below this zoom a label is dropped. At the world view ten labels across Europe
@@ -429,9 +434,10 @@ const LABEL_ZOOM_T3 := INF
 ## V4.10c. map_fill.gdshader's materials, set once per setup() (the shader's own
 ## header says what each does). The band is 7 px: wide enough to read as a tint
 ## deepening toward the border at the opening fit, narrow enough that Luxembourg
-## (~15 px across there) keeps a pale middle. The hatch is 7 px apart and moves
-## the fill's alpha by 22% either way -- at the political layer's 0.20 alpha that
-## is a weave the eye finds only when looking for it, which is the brief.
+## (~15 px across there) keeps a pale middle; a ring narrower than the band
+## caps it (MapFillMesh.band_cap). The hatch is 7 px apart and moves the fill's
+## alpha by 10% either way: a weave the eye finds only when looking for it, which
+## is the brief. The first value, 22%, read as stripes at depth.
 const FILL_MATERIAL := {
 	"band_px": 7.0,
 	"band_shade": 0.55,
@@ -709,8 +715,8 @@ func _ring_boxes_for(polys: Array) -> Array:
 
 
 ## The per-draw expansion of _lonlat_to_screen()'s affine: screen =
-## (p.x * _kx + _ox, p.y * _ky + _oy). Written by _draw(), read by the heavy
-## ring passes only. See the comment in _draw().
+## (p.x * _kx + _ox, p.y * _ky + _oy). Written by _draw(), read by
+## _project_layers() as the layers' transform and the shaders' scale.
 var _kx: float = 0.0
 var _ky: float = 0.0
 var _ox: float = 0.0
@@ -750,8 +756,8 @@ func nation_at_screen_point(screen_pos: Vector2) -> String:
 
 ## V4.11c. The outline under a lon/lat point, or "". Its OWN test over the outline
 ## register, the marker precedent: `_nation_at_lonlat` stays roster-only, so an
-## outline can be read but never clicked or selected. The per-ring boxes are the
-## ones the border pass culls on, built in setup() from the same arrays.
+## outline can be read but never clicked or selected. The per-ring boxes are
+## built in setup() from the same arrays.
 func _outline_at_lonlat(pt: Vector2) -> String:
 	for id in _world_polygons.keys():
 		var polys: Array = _world_polygons[id]
@@ -1049,14 +1055,13 @@ func _on(pass_name: String) -> bool:
 
 func _draw() -> void:
 	_fit_zoom()
-	# THE ONE TRANSFORM, EXPANDED ONCE PER DRAW. The heavy passes below inline
-	# _lonlat_to_screen() as two multiply-adds over these locals: a pan re-record
-	# walks every visible ring's points (65k at the EU-27 roster), and a GDScript
-	# function call per point cost ~80 ms per pan frame -- a drag at 11 fps.
-	# The folded constants reorder two multiplications against the function
-	# body, which moves projected vertices by less than a billionth of a pixel;
-	# the function stays the readable statement of the transform and every
-	# non-hot path (hit tests, cities, labels, markers, plants) still calls it.
+	# THE ONE TRANSFORM, EXPANDED ONCE PER DRAW: _lonlat_to_screen()'s affine as
+	# a scale and an offset, which _project_layers() hands to the projected
+	# layers as their transform (V4.10c). The folded constants reorder two
+	# multiplications against the function body, which moves a vertex by less
+	# than a billionth of a pixel; the function stays the readable statement of
+	# the transform and every screen-space pass (hit tests, cities, labels,
+	# markers, plants) still calls it.
 	_kx = BASE_SCALE * _zoom
 	_ky = -BASE_SCALE * _zoom
 	var cc := _control_center()
@@ -1146,7 +1151,9 @@ func _build_layers(loader, ids: Array) -> void:
 		for region in loader.regions.get(id, []):
 			regions.append_array(loader.region_features.get(region.id, []))
 		nations.append({"rings": _polygons[id], "regions": regions})
-	_fill_mesh = MapFillMesh.build(nations)["mesh"]
+	var built := MapFillMesh.build(nations)
+	_fill_mesh = built["mesh"]
+	_fill_skipped = int(built["skipped"])
 	_palette_ids = ids.duplicate()
 	_palette_image = Image.create(maxi(_palette_ids.size(), 1), 1, false, Image.FORMAT_RGBAF)
 	_palette_texture = ImageTexture.create_from_image(_palette_image)
@@ -1154,6 +1161,7 @@ func _build_layers(loader, ids: Array) -> void:
 	_palette_shown.resize(_palette_ids.size())
 	_palette_shown.fill(Color(0, 0, 0, 0))
 	_fill_material.set_shader_parameter("palette", _palette_texture)
+	_fill_material.set_shader_parameter("cap_range_deg", MapFillMesh.CAP_RANGE_DEG)
 	_set_materials(true)
 
 	# The outlines: one palette index per outline, so a hover is a texel.
@@ -1220,7 +1228,7 @@ func _project_layers() -> void:
 	var materials := not _pass_off.has("materials_off")
 	if materials != _materials_on:
 		_set_materials(materials)
-	var key := [_zoom, _hovered_id, _hovered_outline, viewer_id()]
+	var key := [ground_alpha(), _hovered_id, _hovered_outline, viewer_id()]
 	if key != _line_key:
 		_line_key = key
 		_sync_line_palettes()
@@ -1356,7 +1364,11 @@ func _sync_line_palettes() -> void:
 	# under it, at the hover strength. The fixed pale blue was right over the
 	# photograph and LIGHTER than the resting ink line over paper -- the hover cue
 	# reversed at depth.
-	var outline_hover := Color(kind_colors["outline"], WORLD_BORDER_HOVER.a)
+	# Composed over the resting line: before V4.10c the hover ring was a second
+	# stroke drawn over the outline's own, so the line read at both alphas
+	# stacked (0.77 over the photograph, 0.82 at depth), not at the ring's 0.70.
+	var rest_a: float = (kind_colors["outline"] as Color).a
+	var outline_hover := Color(kind_colors["outline"], 1.0 - (1.0 - rest_a) * (1.0 - WORLD_BORDER_HOVER.a))
 	for i in _world_line_ids.size():
 		var hovered: bool = _world_line_ids[i] == _hovered_outline
 		_world_line_image.set_pixel(i, 0, outline_hover if hovered else kind_colors["outline"])
