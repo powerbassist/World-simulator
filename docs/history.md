@@ -11,7 +11,17 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V4.10
 
-**V4.10b -- BORDERS, GLYPHS AND NAMES AT DEPTH -- IS BUILT on `v4.10b-glyphs-labels` (2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged.**
+**V4.10c -- MATERIALS AND THE GATE -- IS BUILT on `v4.10c-materials-gate` (2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged. V4.10 closes here.**
+
+- **Attribution before any lever** (`map_view._pass_off`, frame_probe's "C" rows, one run): the roster pass was 1.37 ms of max zoom and 65 ms of the 83 ms drag at the opening fit (fills 41, lines 16, the shared projection loop the rest).
+- **The lever:** the roster and the outline borders are projected layers (`src/ui/map_draw_layer.gd`), each one mesh built once in `setup()` (`map_fill_mesh.gd`, `map_line_mesh.gd`); colour and line width are palette texels the shaders read. A pan or a zoom re-records none of them (asserted by draw generation in `tests/test_map_view.gd`).
+- **Found by measuring:** lines first kept as `draw_polyline` on an uncull'd layer pushed max zoom 2.9 -> 6.3 ms (~1500 draw calls); that is why lines are a mesh too.
+- **Materials:** `src/ui/map_fill.gdshader`, the first canvas_item shader -- a 7 px edge band per nation (vertex-pushed, constant in pixels at every zoom; a baked distance texture was refused, its border quantised 8 px off the line at max zoom) and a faint hatch (first cut ±22 % read as stripes, shipped ±10 %). Paired on/off: inside the run spread in three runs.
+- **The gate:** G2 0.26 / 0.58 ms in two full runs (was 1.57-2.29); opening fit 11.5 -> 2.9 ms; drag at the fit 83 -> 18 ms (the rest is cities ~8, labels ~6, roads ~2 -- not pulled).
+- **Design questions from PRs #10/#11:** two decided (parchment under every layer; the reserved hover label), six parked in [someday](someday.md) with triggers.
+- Model: [map-platform-model](map-platform-model.md) §11.
+
+**V4.10b -- BORDERS, GLYPHS AND NAMES AT DEPTH -- IS MERGED (PR #11, merge commit `acbde1d0`, 2026-10-18). No `src/sim/` diff, `SAVE_VERSION` unchanged.**
 
 - **Plan gate (author):** materials to c; the third border key is the roster grade; greedy labels by tier on a grid; tiers by capital, then population.
 - **The band, rule first:** tiers 1-2 named from zoom 2.0 (>= 80 % in the Ruhr and the Po valley), tier 3 a bound (64 % over the Ruhr at max zoom), hover only.

@@ -36,7 +36,7 @@ extends Control
 ##
 ## U5c added a second, unrelated sense of the word: a MAP layer is what the ten
 ## are *coloured by* -- political, relations, trade. Those live entirely in
-## map_layers.gd and change only what `_draw_roster()` fills with. The two never
+## map_layers.gd and change only what `_sync_fill_palette()` fills with. The two never
 ## interact: no map layer adds, removes or reorders a draw layer, and the ~160
 ## non-simulated countries are coloured by none of them, having neither a pair
 ## nor a trade weight to show.
@@ -60,6 +60,11 @@ const MapOutlines = preload("res://src/ui/map_outlines.gd")
 const MapCities = preload("res://src/ui/map_cities.gd")
 const MapPlants = preload("res://src/ui/map_plants.gd")
 const MapNetwork = preload("res://src/ui/map_network.gd")
+const MapFillMesh = preload("res://src/ui/map_fill_mesh.gd")
+const MapDrawLayer = preload("res://src/ui/map_draw_layer.gd")
+const MapLineMesh = preload("res://src/ui/map_line_mesh.gd")
+const LINE_SHADER = preload("res://src/ui/map_line.gdshader")
+const FILL_SHADER = preload("res://src/ui/map_fill.gdshader")
 
 signal nation_clicked(nation_id: String)
 
@@ -166,6 +171,53 @@ var _last_placed: Array = []
 var _label_onscreen: Dictionary = {}
 ## Probe seam (tools/frame_probe.gd's paired rows): false skips the label pass.
 var _labels_enabled := true
+## V4.10c probe seam: pass names _draw() skips (see _on()). Empty in the game.
+var _pass_off: Dictionary = {}
+
+## V4.10c, THE PROJECTED LAYERS (docs/map-platform-model.md §11). Content that
+## depends on the layer, the state, the hover and the zoom but NEVER on the pan
+## is drawn by child layers in lon/lat and projected by their transform, so a
+## drag moves a transform instead of re-recording ~41k points. Back to front,
+## all behind this control's own draw: the raster (screen-space, re-recorded
+## with every _draw -- two rects), the outline borders (one line mesh), the
+## roster fills (one mesh, map_fill_mesh.gd), the roster's hairlines and
+## national strokes (one line mesh, map_line_mesh.gd). The order is the order
+## the old single pass drew them in. The three meshes are built once in setup()
+## and never re-recorded: colour and width live in palettes the shaders read.
+var _raster_node: Node2D
+var _world_node: Node2D
+var _fill_node: Node2D
+var _lines_node: Node2D
+## The line palettes are rewritten when this moves: the ground band (the kind
+## colours follow ground_alpha, and the widths are pixels, so the zoom alone
+## changes nothing), hover, outline hover, viewer.
+var _line_key: Array = []
+var _world_line_mesh: ArrayMesh = null
+var _world_line_material: ShaderMaterial
+var _world_line_ids: Array = []
+var _world_line_image: Image
+var _world_line_texture: ImageTexture
+var _roster_line_mesh: ArrayMesh = null
+var _roster_line_material: ShaderMaterial
+var _roster_line_image: Image
+var _roster_line_texture: ImageTexture
+var _fill_mesh: ArrayMesh = null
+## Rings the triangulator refused at the last setup(); tests/test_map_view.gd pins
+## it at 0 on the live data (lon/lat is a different scale from the screen the old
+## per-frame call triangulated in, and the ear clipper's epsilon is absolute).
+var _fill_skipped := 0
+var _fill_material: ShaderMaterial
+## One texel per roster nation, in _palette_ids order; _palette_shown is what
+## the texture holds, so an unchanged fill writes nothing. Float texels: an 8-bit
+## palette truncates each channel (0.407 read back 0.404), and the old vertex
+## colour was the float MapLayers chose.
+var _palette_ids: Array = []
+var _palette_image: Image
+var _palette_texture: ImageTexture
+var _palette_shown := PackedColorArray()
+## Probe seam (frame_probe.gd's paired `materials_off` rows): false draws the
+## fills as they were before V4.10c -- palette only, no band, no pattern.
+var _materials_on := true
 ## _hover_label_rect()'s memo of the hovered city's record (see there).
 var _hover_rec_id := ""
 var _hover_rec: Dictionary = {}
@@ -183,8 +235,8 @@ var _hovered_id := ""
 var _markers: Array = []
 var _hovered_project := ""
 
-## THE FILL MEMO. `_draw_roster()` re-records every pan and zoom frame (a drag
-## queues a redraw per mouse-motion event), and MapLayers.fills() is stateless on
+## THE FILL MEMO. `_sync_fill_palette()` runs on every pan and zoom re-record (a
+## drag queues a redraw per mouse-motion event), and MapLayers.fills() is stateless on
 ## purpose -- its own header says nothing is cached there -- so importing the layer
 ## re-sums all 29 nations x 60 goods on EVERY frame. Measured: 1.506 ms/frame for
 ## IMPORT_DEPENDENCY against a 0.040 ms political baseline, ~38x, which the player
@@ -245,7 +297,7 @@ var _has_fitted := false
 
 ## Which layer is up. The fill is map_layers.gd's business as of U5c -- there is
 ## no colour table and no alpha constant in this file any more, and no mode flag
-## threaded through _draw() either: _draw_roster() asks the registry for a Colour
+## threaded through _draw() either: _sync_fill_palette() asks the registry for a Colour
 ## per id, and a new layer is an entry there that this file never learns about.
 ##
 ## Political by default. It is the layer that needs no simulation state to be
@@ -328,9 +380,9 @@ const HOME_WIDTH := 2.5
 ## V3.1 culling. The pad is DERIVED, not swept: the widest stroke on the map is
 ## HOVER_WIDTH (4.0 px) and antialias feather adds a couple more, so a ring
 ## whose box comes within 8 px of the view edge could still paint a pixel of
-## line. The ring passes convert it to degrees at the current zoom and share
-## one value, so no pass can pad differently and survive the two-pass enclave
-## rule; the city pass keeps it in screen pixels beside its own radius terms.
+## line. Since V4.10c no ring pass culls (the projected layers draw whole); the
+## spine pass converts it to degrees at the current zoom, and the city pass keeps
+## it in screen pixels beside its own radius terms.
 const CULL_PAD_PX := 8.0
 
 ## Below this zoom a label is dropped. At the world view ten labels across Europe
@@ -379,6 +431,22 @@ const LABEL_ZOOM_T1 := 2.0
 const LABEL_ZOOM_T2 := 2.0
 const LABEL_ZOOM_T3 := INF
 
+## V4.10c. map_fill.gdshader's materials, set once per setup() (the shader's own
+## header says what each does). The band is 7 px: wide enough to read as a tint
+## deepening toward the border at the opening fit, narrow enough that Luxembourg
+## (~15 px across there) keeps a pale middle; where a ring narrows to less than
+## twice the band, each band vertex's own cap keeps it inside
+## (MapFillMesh.band_caps). The hatch is 7 px apart and moves the fill's
+## alpha by 10% either way: a weave the eye finds only when looking for it, which
+## is the brief. The first value, 22%, read as stripes at depth.
+const FILL_MATERIAL := {
+	"band_px": 7.0,
+	"band_shade": 0.55,
+	"band_gain": 3.0,
+	"pattern_px": 7.0,
+	"pattern_strength": 0.10,
+}
+
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -387,6 +455,38 @@ func _ready() -> void:
 	# minified 4:1 (60 texels/deg onto 15 px/deg) and shimmers without; the
 	# photograph has no mipmaps and falls back to plain linear, as before.
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_ensure_layers()
+
+
+## The projected layers, built on first need: menu.gd calls setup() BEFORE
+## add_child(), so _ready() has not run when setup() builds the meshes. A child
+## can be added to a node outside the tree; it enters with its parent.
+func _ensure_layers() -> void:
+	if _raster_node != null:
+		return
+	_raster_node = _add_layer("RasterLayer", _draw_raster)
+	_world_node = _add_layer("WorldLines", _draw_world_borders)
+	_fill_node = _add_layer("RosterFills", _draw_roster_fills)
+	_lines_node = _add_layer("RosterLines", _draw_roster_lines)
+	_fill_material = ShaderMaterial.new()
+	_fill_material.shader = FILL_SHADER
+	_fill_node.material = _fill_material
+	_world_line_material = ShaderMaterial.new()
+	_world_line_material.shader = LINE_SHADER
+	_world_node.material = _world_line_material
+	_roster_line_material = ShaderMaterial.new()
+	_roster_line_material.shader = LINE_SHADER
+	_lines_node.material = _roster_line_material
+
+
+## Behind this control's own draw, in the order they are added (see _raster_node).
+func _add_layer(layer_name: String, painter: Callable) -> Node2D:
+	var layer: Node2D = MapDrawLayer.new()
+	layer.name = layer_name
+	layer.painter = painter
+	layer.show_behind_parent = true
+	add_child(layer)
+	return layer
 
 
 ## The first layout pass is where the control finally has a size, which is what
@@ -453,22 +553,12 @@ func setup(loader, state) -> void:
 	for id in ids:
 		_border_kind[id] = Roster.grade(loader, String(id))
 
-	# Per-ring bounding boxes for the draw cull, built ONCE beside the arrays
-	# they walk -- the same call _nation_boxes made for the hit test. The cull
-	# itself used to recompute each ring's box on every re-record, walking all
-	# ~28k visible-ring points per pan frame for a number that never changes:
-	# the rings are content. Built from the same arrays the draw walks, so a
-	# box and its ring cannot disagree.
-	_ring_boxes_roster.clear()
-	_ring_boxes_region.clear()
+	# The outline hit test's per-ring boxes, built ONCE beside the arrays it
+	# walks: the rings are content, so a box and its ring cannot disagree.
 	_ring_boxes_world.clear()
-	for id in ids:
-		_ring_boxes_roster[id] = _ring_boxes_for(_polygons[id])
-	for region_id in loader.region_features.keys():
-		_ring_boxes_region[String(region_id)] = _ring_boxes_for(
-			loader.region_features[region_id])
 	for id in _world_polygons.keys():
 		_ring_boxes_world[id] = _ring_boxes_for(_world_polygons[id])
+	_build_layers(loader, ids)
 
 	_capitals = MapGlyphs.capitals(loader)
 
@@ -593,40 +683,6 @@ func visible_lonlat_rect() -> Rect2:
 	)
 
 
-## True when a lon/lat ring's bounding box reaches the view rect, grown by the
-## stroke pad. Conservative by construction: a bounding box can only
-## OVER-include, never clip a visible ring -- a huge ring whose box covers the
-## view draws whole, exactly as before. Static geometry (loader data never
-## mutates), so reading live lon/lat bounds carries no staleness class; city
-## populations are the live quantity and are culled on screen points instead.
-## Applied inside each pass over the same rings, which is what keeps the
-## two-pass enclave draw intact: any ring drawn at all is drawn as both fill
-## and hairline, because the hairline list is built only from rings this
-## predicate let through.
-## The single-ring statement of the draw cull, and the shape the cached boxes
-## in _draw() answer for the whole roster at once -- the same split as
-## network.gd's _network_pct/_sited_pct beside their per-roster pass. Kept as
-## the readable contract tests/test_map_cull.gd pins; the draw reads the boxes.
-func _ring_reaches_view(ring: PackedVector2Array, view: Rect2) -> bool:
-	if ring.size() < 3:
-		return false
-	var pad := CULL_PAD_PX / (BASE_SCALE * _zoom)
-	var min_lon := INF
-	var max_lon := -INF
-	var min_lat := INF
-	var max_lat := -INF
-	for p in ring:
-		min_lon = minf(min_lon, p.x)
-		max_lon = maxf(max_lon, p.x)
-		min_lat = minf(min_lat, p.y)
-		max_lat = maxf(max_lat, p.y)
-	if max_lon < view.position.x - pad or min_lon > view.end.x + pad:
-		return false
-	if max_lat < view.position.y - pad or min_lat > view.end.y + pad:
-		return false
-	return true
-
-
 ## Puts a lon/lat point at the centre of the control, then re-clamps. The minimap
 ## calls this; so does _fit_zoom(), because a zoom chosen without recentring can
 ## leave the pan from the previous size behind.
@@ -641,11 +697,8 @@ func _control_center() -> Vector2:
 	return size / 2.0
 
 
-## Per-ring bounding boxes, index-aligned with the ring arrays they gate. A
-## negative-size Rect2 marks a ring the old cull never drew (fewer than three
-## points) so the draw's single `continue` covers both gates.
-var _ring_boxes_roster: Dictionary = {}
-var _ring_boxes_region: Dictionary = {}
+## Per-ring bounding boxes, index-aligned with the outline rings the hover test
+## walks. A negative-size Rect2 marks a ring under three points, which never drew.
 var _ring_boxes_world: Dictionary = {}
 
 
@@ -663,8 +716,8 @@ func _ring_boxes_for(polys: Array) -> Array:
 
 
 ## The per-draw expansion of _lonlat_to_screen()'s affine: screen =
-## (p.x * _kx + _ox, p.y * _ky + _oy). Written by _draw(), read by the heavy
-## ring passes only. See the comment in _draw().
+## (p.x * _kx + _ox, p.y * _ky + _oy). Written by _draw(), read by
+## _project_layers() as the layers' transform and the shaders' scale.
 var _kx: float = 0.0
 var _ky: float = 0.0
 var _ox: float = 0.0
@@ -704,8 +757,8 @@ func nation_at_screen_point(screen_pos: Vector2) -> String:
 
 ## V4.11c. The outline under a lon/lat point, or "". Its OWN test over the outline
 ## register, the marker precedent: `_nation_at_lonlat` stays roster-only, so an
-## outline can be read but never clicked or selected. The per-ring boxes are the
-## ones the border pass culls on, built in setup() from the same arrays.
+## outline can be read but never clicked or selected. The per-ring boxes are
+## built in setup() from the same arrays.
 func _outline_at_lonlat(pt: Vector2) -> String:
 	for id in _world_polygons.keys():
 		var polys: Array = _world_polygons[id]
@@ -997,35 +1050,44 @@ func _gui_input(event: InputEvent) -> void:
 				queue_redraw()
 
 
+func _on(pass_name: String) -> bool:
+	return not _pass_off.has(pass_name)
+
+
 func _draw() -> void:
 	_fit_zoom()
-	# THE ONE TRANSFORM, EXPANDED ONCE PER DRAW. The heavy passes below inline
-	# _lonlat_to_screen() as two multiply-adds over these locals: a pan re-record
-	# walks every visible ring's points (65k at the EU-27 roster), and a GDScript
-	# function call per point cost ~80 ms per pan frame -- a drag at 11 fps.
-	# The folded constants reorder two multiplications against the function
-	# body, which moves projected vertices by less than a billionth of a pixel;
-	# the function stays the readable statement of the transform and every
-	# non-hot path (hit tests, cities, labels, markers, plants) still calls it.
+	# THE ONE TRANSFORM, EXPANDED ONCE PER DRAW: _lonlat_to_screen()'s affine as
+	# a scale and an offset, which _project_layers() hands to the projected
+	# layers as their transform (V4.10c). The folded constants reorder two
+	# multiplications against the function body, which moves a vertex by less
+	# than a billionth of a pixel; the function stays the readable statement of
+	# the transform and every screen-space pass (hit tests, cities, labels,
+	# markers, plants) still calls it.
 	_kx = BASE_SCALE * _zoom
 	_ky = -BASE_SCALE * _zoom
 	var cc := _control_center()
 	_ox = _pan_offset.x + cc.x - _center_lon * _kx
 	_oy = _pan_offset.y + cc.y + _center_lat * _kx
-	_draw_raster()
-	_draw_world_borders()
-	_draw_outline_hover_ring()
-	_draw_roster()
-	_draw_spines()
+	# V4.10c. The raster, the outlines and the roster are child layers now; this
+	# is where they follow the camera. Every pass sits behind _on():
+	# tools/frame_probe.gd turns them off one at a time to ATTRIBUTE the map's
+	# cost by pass (map-platform-model §11). Nothing in the game sets _pass_off.
+	_project_layers()
+	if _on("spines"):
+		_draw_spines()
 	# Labels above city crosses: a brass cross over near-white text buried the
 	# name (B6), and text is what the cross points at. _refresh_markers() is a
 	# state read, not a draw, so the pins still draw last and stay on top.
-	_draw_cities()
-	_draw_labels()
+	if _on("cities"):
+		_draw_cities()
+	if _on("labels"):
+		_draw_labels()
 	_refresh_markers()
-	_draw_markers()
-	MapPlants.draw_plants(self, _state, func(lon: float, lat: float) -> Vector2:
-		return _lonlat_to_screen(lon, lat))
+	if _on("markers"):
+		_draw_markers()
+	if _on("plants"):
+		MapPlants.draw_plants(self, _state, func(lon: float, lat: float) -> Vector2:
+			return _lonlat_to_screen(lon, lat))
 	# Frontmost: a readout is text the player asked for with the cursor.
 	_draw_outline_readout()
 	if _placing:
@@ -1058,7 +1120,8 @@ func border_color(kind: String) -> Color:
 	return (k["photo"] as Color).lerp(k["paper"], ground_alpha())
 
 
-func _draw_raster() -> void:
+## The RasterLayer: screen-space, so it re-records with every _draw (two rects).
+func _draw_raster(canvas: CanvasItem) -> void:
 	var a := ground_alpha()
 	# A whole-screen photograph under an opaque ground is fill nobody sees: skip
 	# it once the band is complete and the view sits inside the ground's opaque
@@ -1068,58 +1131,117 @@ func _draw_raster() -> void:
 	var core := _ground_bounds.grow(-_ground_feather_deg)
 	if not (a >= 1.0 and core.encloses(visible_lonlat_rect())):
 		if _texture == null:
-			draw_rect(Rect2(Vector2.ZERO, size), SEA)
+			canvas.draw_rect(Rect2(Vector2.ZERO, size), SEA)
 		else:
 			var top_left := _lonlat_to_screen(MapRaster.LON_MIN, MapRaster.LAT_MAX)
 			var bottom_right := _lonlat_to_screen(MapRaster.LON_MAX, MapRaster.LAT_MIN)
-			draw_texture_rect(_texture, Rect2(top_left, bottom_right - top_left), false)
+			canvas.draw_texture_rect(_texture, Rect2(top_left, bottom_right - top_left), false)
 	if a > 0.0:
 		var g_tl := _lonlat_to_screen(_ground_bounds.position.x, _ground_bounds.end.y)
 		var g_br := _lonlat_to_screen(_ground_bounds.end.x, _ground_bounds.position.y)
-		draw_texture_rect(_ground, Rect2(g_tl, g_br - g_tl), false, Color(1.0, 1.0, 1.0, a))
+		canvas.draw_texture_rect(_ground, Rect2(g_tl, g_br - g_tl), false, Color(1.0, 1.0, 1.0, a))
 
 
-## Outlines only, no fill: the landmass is already underneath -- in the
-## photograph at globe view, in the baked ground at depth (V4.10a), whose land
-## mask was rasterised from these same rings -- and what a border adds is the
-## political line neither can show.
-func _draw_world_borders() -> void:
-	var outline_color := border_color("outline")
-	var outline_width := float(BORDER_KINDS["outline"]["width"])
-	var view := visible_lonlat_rect()
-	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))
-	for id in _world_polygons.keys():
-		var polys: Array = _world_polygons[id]
-		var boxes: Array = _ring_boxes_world[id]
-		for r in range(polys.size()):
-			var box: Rect2 = boxes[r]
-			if box.size.x < 0.0 or not padded.intersects(box):
-				continue
-			var ring: PackedVector2Array = polys[r]
-			var screen_points := PackedVector2Array()
-			for p in ring:
-				screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
-			screen_points.append(screen_points[0])
-			draw_polyline(screen_points, outline_color, outline_width)
+## The content behind the layers, built once per setup(): the fill mesh, the two
+## line meshes and their palettes. Nothing here is rebuilt by the camera.
+func _build_layers(loader, ids: Array) -> void:
+	_ensure_layers()
+	var nations: Array = []
+	for id in ids:
+		var regions: Array = []
+		for region in loader.regions.get(id, []):
+			regions.append_array(loader.region_features.get(region.id, []))
+		nations.append({"rings": _polygons[id], "regions": regions})
+	var built := MapFillMesh.build(nations)
+	_fill_mesh = built["mesh"]
+	_fill_skipped = int(built["skipped"])
+	_palette_ids = ids.duplicate()
+	_palette_image = Image.create(maxi(_palette_ids.size(), 1), 1, false, Image.FORMAT_RGBAF)
+	_palette_texture = ImageTexture.create_from_image(_palette_image)
+	_palette_shown = PackedColorArray()
+	_palette_shown.resize(_palette_ids.size())
+	_palette_shown.fill(Color(0, 0, 0, 0))
+	_fill_material.set_shader_parameter("palette", _palette_texture)
+	_fill_material.set_shader_parameter("cap_range_deg", MapFillMesh.CAP_RANGE_DEG)
+	_set_materials(true)
+
+	# The outlines: one palette index per outline, so a hover is a texel.
+	_world_line_ids = _world_polygons.keys()
+	var world_rings: Array = []
+	for i in _world_line_ids.size():
+		for ring: PackedVector2Array in _world_polygons[_world_line_ids[i]]:
+			world_rings.append([i, ring])
+	_world_line_mesh = MapLineMesh.build(world_rings)
+	_world_line_image = Image.create(maxi(_world_line_ids.size(), 1), 2, false, Image.FORMAT_RGBAF)
+	_world_line_texture = ImageTexture.create_from_image(_world_line_image)
+	_world_line_material.set_shader_parameter("palette", _world_line_texture)
+
+	# The roster, in the old draw order: per nation its regional hairlines (the
+	# one shared index past the nations), then its national stroke (its own).
+	var regional := ids.size()
+	var roster_rings: Array = []
+	for n in ids.size():
+		for region in loader.regions.get(ids[n], []):
+			for ring: PackedVector2Array in loader.region_features.get(region.id, []):
+				roster_rings.append([regional, ring])
+		for ring: PackedVector2Array in _polygons[ids[n]]:
+			roster_rings.append([n, ring])
+	_roster_line_mesh = MapLineMesh.build(roster_rings)
+	_roster_line_image = Image.create(ids.size() + 1, 2, false, Image.FORMAT_RGBAF)
+	_roster_line_texture = ImageTexture.create_from_image(_roster_line_image)
+	_roster_line_material.set_shader_parameter("palette", _roster_line_texture)
+
+	_line_key = []
+	_fill_node.queue_redraw()
+	_world_node.queue_redraw()
+	_lines_node.queue_redraw()
 
 
-## V4.11c. The hovered outline restroked brighter, in the world pass's slot so the
-## roster still draws over a shared coastline.
-func _draw_outline_hover_ring() -> void:
-	if _hovered_outline == "" or not _world_polygons.has(_hovered_outline):
+func _set_materials(on: bool) -> void:
+	_materials_on = on
+	for key: String in FILL_MATERIAL.keys():
+		var value: float = FILL_MATERIAL[key]
+		if not on and (key == "band_px" or key == "pattern_strength"):
+			value = 0.0
+		_fill_material.set_shader_parameter(key, value)
+
+
+## Once per re-record: the layers take the camera's transform and the seam's
+## visibility, the shaders take the scale, the fill palette takes the fills, and
+## the line palettes are rewritten only when their key moved. A pan reaches
+## nothing below but the transforms, one uniform per layer and the raster's two
+## rects; no projected layer re-records.
+func _project_layers() -> void:
+	var t := Transform2D(Vector2(_kx, 0.0), Vector2(0.0, _ky), Vector2(_ox, _oy))
+	_world_node.transform = t
+	_fill_node.transform = t
+	_lines_node.transform = t
+	_raster_node.visible = _on("raster")
+	_world_node.visible = _on("world")
+	_fill_node.visible = _on("roster") and _on("roster_fill")
+	_lines_node.visible = _on("roster") and _on("roster_line")
+	_raster_node.queue_redraw()
+	if _loader == null:
 		return
-	# V4.10b: the outline kind's colour on the ground under it, at the hover
-	# strength. The fixed pale blue was right over the photograph and LIGHTER than
-	# the resting ink line over paper -- the hover cue reversed at depth.
-	var hover_color := Color(border_color("outline"), WORLD_BORDER_HOVER.a)
-	for ring: PackedVector2Array in _world_polygons[_hovered_outline]:
-		if ring.size() < 2:
-			continue
-		var screen_points := PackedVector2Array()
-		for p in ring:
-			screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
-		screen_points.append(screen_points[0])
-		draw_polyline(screen_points, hover_color, WORLD_BORDER_HOVER_WIDTH)
+	_sync_fill_palette()
+	for material: ShaderMaterial in [_fill_material, _world_line_material, _roster_line_material]:
+		material.set_shader_parameter("px_per_deg", _kx)
+	var materials := not _pass_off.has("materials_off")
+	if materials != _materials_on:
+		_set_materials(materials)
+	var key := [ground_alpha(), _hovered_id, _hovered_outline, viewer_id()]
+	if key != _line_key:
+		_line_key = key
+		_sync_line_palettes()
+
+
+## The WorldLines layer: every outline border, one mesh. Outlines only, no fill:
+## the landmass is already underneath -- in the photograph at globe view, in the
+## baked ground at depth (V4.10a), whose land mask was rasterised from these
+## same rings -- and what a border adds is the political line neither can show.
+func _draw_world_borders(canvas: CanvasItem) -> void:
+	if _world_line_mesh != null:
+		canvas.draw_mesh(_world_line_mesh, null)
 
 
 ## V4.11c. Two lines beside the cursor -- the outline's name, then what it supplies
@@ -1189,32 +1311,74 @@ func _shown_fills(viewer: String) -> Dictionary:
 	return out
 
 
-func _draw_roster() -> void:
-	var view := visible_lonlat_rect()
-	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))
-	var viewer := viewer_id()
+## The RosterFills layer: the one mesh, coloured by the palette in the shader.
+func _draw_roster_fills(canvas: CanvasItem) -> void:
+	if _fill_mesh != null:
+		canvas.draw_mesh(_fill_mesh, null)
 
-	# One pass for every fill on the layer, rather than one call per nation.
-	# What that buys is a trade-layer measurement: swatch() reads the viewer's
-	# partner vector twice per nation, so the per-nation form paid fifty-eight
-	# Trade.weights() builds to fill twenty-nine countries. See MapLayers.fills().
-	# A fill depends on the layer, the state and the viewer and on NOTHING the
-	# camera does, so hoisting it out of this loop cannot change when a colour
-	# updates -- it is still derived once per re-record, exactly as before. The
-	# memo below extends that same argument across the re-records that share a
-	# month (`_fill_key`), because the state cannot move between them.
-	var fills: Dictionary = _shown_fills(viewer)
-	# Border colours once per re-record, not per ring: they move with the zoom
-	# band only, and every ring of a kind shares one.
+
+## The fills into the palette, once per re-record and written only on change.
+## One pass for every fill on the layer, rather than one call per nation: what
+## that buys is a trade-layer measurement -- swatch() reads the viewer's partner
+## vector twice per nation, so the per-nation form paid fifty-eight
+## Trade.weights() builds to fill twenty-nine countries (see MapLayers.fills()).
+## A fill depends on the layer, the state and the viewer and on NOTHING the
+## camera does; the memo (`_fill_key`) extends that across the re-records that
+## share a month, because the state cannot move between them.
+func _sync_fill_palette() -> void:
+	var fills: Dictionary = _shown_fills(viewer_id())
+	var changed := false
+	for i in _palette_ids.size():
+		var color: Color = fills[_palette_ids[i]]
+		if color != _palette_shown[i]:
+			_palette_shown[i] = color
+			_palette_image.set_pixel(i, 0, color)
+			changed = true
+	if changed:
+		_palette_texture.update(_palette_image)
+
+
+## The RosterLines layer: per nation its regional hairlines, then its national
+## stroke, one mesh. ALL fills sit below ALL of these (the fill layer is under
+## this one), which is the order the enclaves need: with holes dropped a host
+## region's outer ring covers its enclave, and the roster carries one enclave of
+## EACH direction (Berlin outpopulates its host Brandenburg, Bremen is a third of
+## its host Niedersachsen), so no fill-and-stroke order renders both, and only
+## every line after every fill does.
+func _draw_roster_lines(canvas: CanvasItem) -> void:
+	if _roster_line_mesh != null:
+		canvas.draw_mesh(_roster_line_mesh, null)
+
+
+## Every line's colour (row 0) and width in screen pixels (row 1), written when
+## the ground band, a hover or the viewer moves -- the colours follow
+## ground_alpha, the widths are pixels, and the meshes never change.
+func _sync_line_palettes() -> void:
+	# Border colours once per sync, not per ring: they move with the zoom band
+	# only, and every ring of a kind shares one.
 	var kind_colors := {}
 	for kind in BORDER_KINDS.keys():
 		kind_colors[kind] = border_color(kind)
-	var regional_color: Color = kind_colors["regional"]
-	var regional_width := float(BORDER_KINDS["regional"]["width"])
 
-	for id in _polygons.keys():
-		var color: Color = fills[id]
+	var outline_width := float(BORDER_KINDS["outline"]["width"])
+	# V4.10b: the hovered outline takes the outline kind's colour on the ground
+	# under it, at the hover strength. The fixed pale blue was right over the
+	# photograph and LIGHTER than the resting ink line over paper -- the hover cue
+	# reversed at depth.
+	# Composed over the resting line: before V4.10c the hover ring was a second
+	# stroke drawn over the outline's own, so the line read at both alphas
+	# stacked (0.77 over the photograph, 0.82 at depth), not at the ring's 0.70.
+	var rest_a: float = (kind_colors["outline"] as Color).a
+	var outline_hover := Color(kind_colors["outline"], 1.0 - (1.0 - rest_a) * (1.0 - WORLD_BORDER_HOVER.a))
+	for i in _world_line_ids.size():
+		var hovered: bool = _world_line_ids[i] == _hovered_outline
+		_world_line_image.set_pixel(i, 0, outline_hover if hovered else kind_colors["outline"])
+		_world_line_image.set_pixel(i, 1, Color(WORLD_BORDER_HOVER_WIDTH if hovered else outline_width, 0, 0, 1))
+	_world_line_texture.update(_world_line_image)
 
+	var viewer := viewer_id()
+	for n in _palette_ids.size():
+		var id := String(_palette_ids[n])
 		# Brass for the nation the player governs, the heaviest line at hover
 		# width under the cursor, its kind's line otherwise. The home mark wins a
 		# collision: hovering your own country should not stop it being yours,
@@ -1223,7 +1387,7 @@ func _draw_roster() -> void:
 		# white since V4.10b: white was right over the photograph and is the
 		# weakest line there is over paper; the playable colour is near-white at
 		# globe view and ink at depth.
-		var kind := border_kind_of(String(id))
+		var kind := border_kind_of(id)
 		var stroke: Color = kind_colors[kind]
 		var width := float(BORDER_KINDS[kind]["width"])
 		if id == _hovered_id:
@@ -1232,71 +1396,12 @@ func _draw_roster() -> void:
 		if MapLayers.is_viewer(viewer, id):
 			stroke = UiTheme.ACCENT
 			width = HOME_WIDTH
-
-		# V2.2b, finer map geometry. The nation is still FILLED from the 1:50m
-		# roster outline first, as a same-hue base under the 1:10m region fills:
-		# GISCO and Natural Earth disagree at the coast by a few kilometres, which
-		# is a few pixels at MAX_ZOOM, and the base turns that disagreement from a
-		# hole in the country into a seam the eye cannot find. What the player
-		# sees as the fill is the regions.
-		var polys: Array = _polygons[id]
-		var boxes: Array = _ring_boxes_roster[id]
-		for r in range(polys.size()):
-			var box: Rect2 = boxes[r]
-			if box.size.x < 0.0 or not padded.intersects(box):
-				continue
-			var ring: PackedVector2Array = polys[r]
-			var base_points := PackedVector2Array()
-			for p in ring:
-				base_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
-			draw_colored_polygon(base_points, color)
-
-		# Region fills first, ALL of them, then ALL the hairlines. The two-pass
-		# order is structural rather than stylistic: with holes dropped, a host
-		# region's outer ring covers its enclave, and whether the enclave's own
-		# boundary survives depends entirely on draw order -- the roster carries
-		# one enclave of EACH direction (Berlin outpopulates its host Brandenburg,
-		# Bremen is a third of its host Niedersachsen), so no fill-and-stroke
-		# order renders both, and only drawing every line after every fill does.
-		# In the same hue the covered fills are invisible; only the lines show.
-		var region_rings: Array = []
-		for region in _loader.regions.get(id, []):
-			var region_ring_arrays: Array = _loader.region_features.get(region.id, [])
-			var region_boxes: Array = _ring_boxes_region.get(region.id, [])
-			for ri in range(region_ring_arrays.size()):
-				var ring: PackedVector2Array = region_ring_arrays[ri]
-				# The cull gates the FILL, and region_rings is built only from
-				# rings the cull let through -- so the hairline loop below
-				# cannot disagree with it, which is how the two-pass enclave
-				# draw survives culling: any ring drawn at all is drawn in
-				# both passes.
-				var rbox: Rect2 = region_boxes[ri] if ri < region_boxes.size() else Rect2(0, 0, -1, -1)
-				if rbox.size.x < 0.0 or not padded.intersects(rbox):
-					continue
-				var region_points := PackedVector2Array()
-				for p in ring:
-					region_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
-				draw_colored_polygon(region_points, color)
-				region_rings.append(region_points)
-		for region_points: PackedVector2Array in region_rings:
-			var closed := region_points.duplicate()
-			closed.append(region_points[0])
-			draw_polyline(closed, regional_color, regional_width)
-
-		# The national stroke last, from the 1:50m outline it has always used:
-		# the bright line is the one that says which ten answer a click, and it
-		# belongs to the nation rather than to any region of it.
-		for r in range(polys.size()):
-			var box: Rect2 = boxes[r]
-			if box.size.x < 0.0 or not padded.intersects(box):
-				continue
-			var ring: PackedVector2Array = polys[r]
-			var stroke_points := PackedVector2Array()
-			for p in ring:
-				stroke_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
-			var closed := stroke_points.duplicate()
-			closed.append(stroke_points[0])
-			draw_polyline(closed, stroke, width)
+		_roster_line_image.set_pixel(n, 0, stroke)
+		_roster_line_image.set_pixel(n, 1, Color(width, 0, 0, 1))
+	var regional := _palette_ids.size()
+	_roster_line_image.set_pixel(regional, 0, kind_colors["regional"])
+	_roster_line_image.set_pixel(regional, 1, Color(float(BORDER_KINDS["regional"]["width"]), 0, 0, 1))
+	_roster_line_texture.update(_roster_line_image)
 
 
 ## The spine pass -- V3.4, between the roster fills and the labels. Over the land
@@ -1312,7 +1417,7 @@ func _draw_roster() -> void:
 ## Culled in DEGREES against the view before anything is projected, which is
 ## docs/map-platform-model.md §7's "cull first, transform second" in its own
 ## words. The list is static content, so reading live lon/lat bounds carries no
-## staleness class -- the same argument _ring_reaches_view() already states.
+## staleness class: the spines are content, read once.
 func _draw_spines() -> void:
 	_spines_drawn = 0
 	if _zoom < CITY_MIN_ZOOM:

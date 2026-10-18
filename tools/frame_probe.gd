@@ -195,6 +195,28 @@ func _build_configs() -> void:
 	_configs.append({"label": "V4.10b PAN max, labels on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
 	_configs.append({"label": "V4.10b PAN fit, labels off", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "labels_off": true})
 	_configs.append({"label": "V4.10b PAN fit, labels on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
+	# V4.10c, ATTRIBUTION -- the map's cost by pass, each pass turned off alone
+	# (map_view._pass_off) against an all-on row, in ONE run. Max zoom still is
+	# G2's frame (what the GPU replays); the opening-fit drag is the re-record
+	# (what the CPU rebuilds every frame of a drag). "all" appears twice per
+	# family so the run's own spread is printed beside the deltas.
+	for pass_name in ["", "raster", "world", "roster", "roster_fill", "roster_line", "spines", "cities", "labels", "markers", "plants", ""]:
+		var off: Array = [] if pass_name == "" else [pass_name]
+		var tag: String = "all" if pass_name == "" else "-" + pass_name
+		_configs.append({"label": "C max %s" % tag, "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "off": off})
+	for pass_name in ["", "raster", "world", "roster", "roster_fill", "roster_line", "spines", "cities", "labels", "markers", "plants", ""]:
+		var off: Array = [] if pass_name == "" else [pass_name]
+		var tag: String = "all" if pass_name == "" else "-" + pass_name
+		_configs.append({"label": "C PAN fit %s" % tag, "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "off": off})
+	# V4.10c, THE MATERIALS -- map_fill.gdshader's band and pattern off (the fill
+	# as it was) against on, paired in this run: still at max zoom (G2's frame),
+	# still at the opening fit (the most fill on screen), and the fit drag.
+	for pair in [["C materials max", mv.MAX_ZOOM, false], ["C materials fit", 2.08, false], ["C materials PAN fit", 2.08, true]]:
+		for off in [true, false]:
+			var row := {"label": "%s, %s" % [pair[0], "off" if off else "on"], "zoom": pair[1], "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "off": ["materials_off"] if off else []}
+			if pair[2]:
+				row.merge({"flows": false, "run": true, "pan": true})
+			_configs.append(row)
 	# The clock-health windows reproduce P4's own regime: vsync ON, 1440p,
 	# clock unpaused at speed 1.
 	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
@@ -264,6 +286,9 @@ func _apply_config(cfg: Dictionary) -> void:
 		_ground_tex = _main._map_view._ground
 	_main._map_view._ground = null if bool(cfg.get("ground_off", false)) else _ground_tex
 	_main._map_view._labels_enabled = not bool(cfg.get("labels_off", false))
+	_main._map_view._pass_off = {}
+	for pass_name in cfg.get("off", []):
+		_main._map_view._pass_off[String(pass_name)] = true
 	_main._map_view.queue_redraw()
 	_main._minimap.visible = bool(cfg["minimap"])
 	# V3.4. Roads ride map_view's own pass, so they are toggled by the layer
@@ -357,6 +382,16 @@ func _process(delta: float) -> bool:
 			_main._clock.day_advanced.connect(func(_y: int, _m: int, _d: int): _clock_days += 1)
 			_print_inventory()
 			_build_configs()
+			# PROBE_ONLY=<prefix>[,<prefix>] keeps the rows whose label starts with one of
+			# them: an iteration on one pass need not pay the whole ~10-minute sweep.
+			var only := OS.get_environment("PROBE_ONLY")
+			if only != "":
+				var prefixes := only.split(",")
+				_configs = _configs.filter(func(c: Dictionary) -> bool:
+					for prefix in prefixes:
+						if String(c["label"]).begins_with(prefix):
+							return true
+					return false)
 			_phase = "next_config"
 		"next_config":
 			if not _configs.is_empty():

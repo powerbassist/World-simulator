@@ -17,6 +17,10 @@ var _failures: Array[String] = []
 var _main
 var _frame := 0
 var _stage: int = 0
+var _layer_stage: int = 0
+var _layer_gens: Dictionary = {}
+var _layer_origin := Vector2.ZERO
+var _hover_target := ""
 
 
 func _init() -> void:
@@ -35,7 +39,7 @@ func _process(_delta: float) -> bool:
 	# V3.4's staged checks hold the report back until each has had its own
 	# settled frame; a run that never built a map view has nothing to stage and
 	# has already recorded that failure in _run().
-	if _main._map_view == null or _check_roads_staged():
+	if _main._map_view == null or (_check_roads_staged() and _check_layers_staged()):
 		_finish()
 	return false
 
@@ -59,6 +63,7 @@ func _run() -> void:
 	_check_raster(map)
 	_check_ground_band(map)
 	_check_border_kinds(loader, map)
+	_check_projected_layers(map)
 	_check_city_labels(map)
 	_check_nation_names_survive(map)
 	_check_hover_label_reserved(map)
@@ -243,6 +248,102 @@ func _check_border_kinds(loader, map) -> void:
 	map._zoom = z
 	if not photo.is_equal_approx(map.BORDER_KINDS["playable"]["photo"]) or (map._ground != null and not paper.is_equal_approx(map.BORDER_KINDS["playable"]["paper"])):
 		_fail("border colour does not follow the ground band: %s / %s" % [photo, paper])
+
+
+## V4.10c. The projected layers: four children behind the map's own draw, in
+## the old single pass's order, and a palette that holds every roster nation's
+## fill as drawn, exactly (float texels), and a fill mesh no live ring was
+## dropped from.
+func _check_projected_layers(map) -> void:
+	var names: Array = []
+	for child in map.get_children():
+		if child is Node2D and child.show_behind_parent:
+			names.append(String(child.name))
+	if names != ["RasterLayer", "WorldLines", "RosterFills", "RosterLines"]:
+		_fail("projected layers are %s, expected raster, world lines, fills, roster lines" % [names])
+	if map._fill_mesh == null:
+		_fail("the roster built no fill mesh")
+	if map._fill_skipped != 0:
+		_fail("%d roster rings failed to triangulate in lon/lat -- they draw no fill" % map._fill_skipped)
+	if not (map._fill_node.material is ShaderMaterial):
+		_fail("the fill layer carries no materials shader")
+	map.set_layer(MapLayers.RELATIONS)
+	map._sync_fill_palette()
+	var fills: Dictionary = map._shown_fills(map.viewer_id())
+	for i in map._palette_ids.size():
+		var id: String = map._palette_ids[i]
+		var texel: Color = map._palette_image.get_pixel(i, 0)
+		var want: Color = fills[id]
+		if not texel.is_equal_approx(want):
+			_fail("palette texel for %s is %s, its fill is %s" % [id, texel, want])
+			break
+	map.set_layer(MapLayers.POLITICAL)
+	map._sync_fill_palette()
+
+
+## V4.10c, THE LEVER, asserted as behaviour rather than by a frame time: a pan
+## MOVES the projected layers (their transform) and re-records none of them;
+## neither does a zoom or a hover -- the lines' colour and width are palette
+## texels the shader reads, so a hover is a texel, not a re-record. The raster
+## re-records with every frame.
+func _check_layers_staged() -> bool:
+	var map = _main._map_view
+	match _layer_stage:
+		0:
+			map.set_zoom_for_test(3.0)
+			map.center_on_lonlat(10.0, 50.0)
+			_layer_stage = 1
+		1:
+			_layer_gens = _gens(map)
+			_layer_origin = map._fill_node.transform.origin
+			map.pan_by(Vector2(40.0, 0.0))
+			_layer_stage = 2
+		2:
+			var g := _gens(map)
+			if map._fill_node.transform.origin.is_equal_approx(_layer_origin):
+				_fail("a pan did not move the fill layer's transform")
+			for layer in ["fills", "lines", "world"]:
+				if g[layer] != _layer_gens[layer]:
+					_fail("a pan re-recorded the %s layer (%d -> %d)" % [layer, _layer_gens[layer], g[layer]])
+			if g["raster"] <= _layer_gens["raster"]:
+				_fail("a pan did not re-record the raster layer")
+			_layer_gens = g
+			map.set_zoom_for_test(3.5)
+			_layer_stage = 3
+		3:
+			var g := _gens(map)
+			for layer in ["fills", "lines", "world"]:
+				if g[layer] != _layer_gens[layer]:
+					_fail("a zoom re-recorded the %s layer" % layer)
+			_layer_gens = g
+			_hover_target = "DEU" if map.viewer_id() != "DEU" else "FRA"
+			map._hovered_id = _hover_target
+			map.queue_redraw()
+			_layer_stage = 4
+		4:
+			var g := _gens(map)
+			for layer in ["fills", "lines", "world"]:
+				if g[layer] != _layer_gens[layer]:
+					_fail("a hover re-recorded the %s layer" % layer)
+			var n: int = map._palette_ids.find(_hover_target)
+			var width: float = map._roster_line_image.get_pixel(n, 1).r
+			if not is_equal_approx(width, map.HOVER_WIDTH):
+				_fail("the hovered nation's line width texel is %.2f, not HOVER_WIDTH" % width)
+			var home: int = map._palette_ids.find(map.viewer_id())
+			if not map._roster_line_image.get_pixel(home, 0).is_equal_approx(map.UiTheme.ACCENT):
+				_fail("the home nation's line texel is not brass")
+			map._hovered_id = ""
+			return true
+	return false
+
+
+func _gens(map) -> Dictionary:
+	return {
+		"raster": map._raster_node.generation,
+		"world": map._world_node.generation,
+		"fills": map._fill_node.generation,
+		"lines": map._lines_node.generation,
+	}
 
 
 ## V4.10b. City names at depth. Over Paris at max zoom the placer must name
@@ -701,6 +802,9 @@ func _check_roads_staged() -> bool:
 				_fail("%d of %d spines survived the cull at max zoom over Paris -- not viewport-bounded" % [map.spines_drawn(), total])
 			elif map.spines_drawn() <= 0:
 				_fail("no spines at all at max zoom over Paris -- the cull is rejecting everything")
+			_stage = 4
+			return true
+		4:
 			return true
 	return false
 

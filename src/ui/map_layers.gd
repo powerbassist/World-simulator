@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## What colour a nation is on the map, and why -- U5c. The one place a roster
-## fill is chosen; map_view.gd's _draw_roster() asks this and indexes nothing
+## fill is chosen; map_view.gd's _sync_fill_palette() asks this and indexes nothing
 ## itself.
 ##
 ## **A registry, not a mode flag.** LAYERS below is the whole surface: adding
@@ -346,14 +346,14 @@ static func is_viewer(viewer_id: String, nation_id: String) -> bool:
 	return viewer_id == nation_id
 
 
-## The fill, alpha already applied. The one function _draw_roster() calls.
+## The fill, alpha already applied. The one function _sync_fill_palette() reaches.
 static func color_for(layer_id: String, state, viewer_id: String, nation_id: String) -> Color:
 	var color := swatch(layer_id, state, viewer_id, nation_id)
 	color.a = alpha(layer_id)
 	return color
 
 
-## Every roster fill for one layer, derived in one pass. _draw_roster() calls
+## Every roster fill for one layer, derived in one pass. _sync_fill_palette() calls
 ## this instead of color_for() per nation, and the reason is a measurement
 ## rather than tidiness.
 ##
