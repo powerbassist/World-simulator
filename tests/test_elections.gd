@@ -264,8 +264,6 @@ func _check_determinism() -> void:
 		_fail("determinism: incumbent_largest differed between two resolutions of the same state")
 
 
-## The real tick sequence, one calendar month: Economy, Budget, Opinion, then
-## Elections — the exact order main.gd's _on_month_elapsed wires.
 ## V4.9b. Election night's regional results: derived from a verdict, so they
 ## must ADD UP to it -- every party's population-weighted share over the
 ## regions is its national share at 1e-12, every region's shares sum to one,
@@ -325,6 +323,8 @@ func _check_regional_shares() -> void:
 			break
 
 
+## One calendar month, reduced: Economy, Budget, Opinion, then Elections -- the
+## subset of src/sim/world_month.gd's order these checks read, in that order.
 func _tick(state) -> Array:
 	state.month += 1
 	if state.month > 12:

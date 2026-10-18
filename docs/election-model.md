@@ -28,8 +28,9 @@ clock.month_elapsed
   → Elections.tick_month(state, loader)   schedule check, vote share, seats
 ```
 
-Elections run in the same monthly handler as everything else — `main.gd`'s
-`_on_month_elapsed` — rather than on a signal of their own. Two reasons. First,
+Elections run in the same monthly handler as everything else —
+`src/sim/world_month.gd`'s `tick_month()`, which `main.gd` calls on the clock's
+month — rather than on a signal of their own. Two reasons. First,
 the clock ([[engine-decision]]) deliberately knows nothing but the calendar; a
 term is not a calendar concept, and giving `clock.gd` one would break the
 one-system-one-job rule for a feature only elections need. Second, the election

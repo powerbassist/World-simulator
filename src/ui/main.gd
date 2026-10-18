@@ -1580,7 +1580,7 @@ func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
 		var card_id: String = _hud.message_stack.push(
 			"A chief before the assembly" if backed else "Private member's bill", body)
 		_assembly_cards[bill_id] = card_id
-	# The release card, handed in from _on_month_elapsed. The capture there is
+	# The release card, handed in from _on_month_step. The capture there is
 	# what lets a COLLISION month -- a PMB dividing the same tick an
 	# assembly-origin hold releases -- push both cards: the register read
 	# below holds only the last writer. The release keeps its OWN memory slot
@@ -2665,8 +2665,9 @@ func _programme_refusal_text(reason: String) -> String:
 ## V4.1. What concluded this month, as a card -- complete, fail and invalid
 ## alike, concluded_this_month()'s one read. _card_foreign_acts()'s split: the
 ## sim writes the record, the UI decides what earns a card, and src/sim/ never
-## reads the list back. Called from _on_month_elapsed() INSIDE the tick window
-## the pulse is priced in -- see the Programme.tick_month call site.
+## reads the list back. Called from _on_month_step() INSIDE the tick window
+## the pulse is priced in -- see the Programme.tick_month call site in
+## src/sim/world_month.gd.
 func _card_programme_conclusions() -> void:
 	if _hud == null or _hud.message_stack == null or _state == null:
 		return
