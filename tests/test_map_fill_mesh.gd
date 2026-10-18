@@ -136,17 +136,21 @@ func _check_line_mesh() -> void:
 
 
 ## Rings narrower than the band (review, pass 1: Malta, Gozo, the Greek islands,
-## Luxembourg at globe view): pushed the way the shader pushes -- by the smaller
-## of the band and the ring's decoded cap -- every inner vertex stays inside its
-## ring, at the furthest zoom out and at the opening fit. A ring wide enough
-## keeps the whole band.
+## Luxembourg at globe view) and a thin peninsula of a large ring (pass 2):
+## pushed the way the shader pushes -- by the smaller of the band and the
+## vertex's decoded cap -- every inner vertex stays inside its ring, at the
+## furthest zoom out and at the opening fit. A compact ring with room keeps the
+## whole band (pass 2: a per-ring cap had thinned Luxembourg to 2.5 px of 7).
 func _check_band_cap() -> void:
 	var strip := PackedVector2Array([Vector2(0, 0), Vector2(1, 1), Vector2(0.95, 1.05), Vector2(-0.05, 0.05)])
 	var islet := PackedVector2Array([Vector2(14.3, 35.8), Vector2(14.5, 35.8), Vector2(14.5, 35.95), Vector2(14.3, 35.95)])
 	var big := PackedVector2Array([Vector2(0, 0), Vector2(20, 0), Vector2(20, 20), Vector2(0, 20)])
+	var spit := PackedVector2Array([Vector2(0, 0), Vector2(10, 0), Vector2(10, 10), Vector2(5.05, 10),
+		Vector2(5.05, 14), Vector2(4.95, 14), Vector2(4.95, 10), Vector2(0, 10)])
+	var compact := PackedVector2Array([Vector2(6, 49.5), Vector2(6.8, 49.5), Vector2(6.8, 50.3), Vector2(6, 50.3)])
 	for px_per_deg: float in [6.0, 25.0]:
 		var band := 7.0 / px_per_deg
-		for case in [["diagonal strip", strip], ["islet", islet]]:
+		for case in [["diagonal strip", strip], ["islet", islet], ["peninsula", spit]]:
 			var built := MapFillMesh.build([{"rings": [case[1]], "regions": []}])
 			var arrays: Array = (built["mesh"] as ArrayMesh).surface_get_arrays(0)
 			var verts: PackedVector2Array = arrays[Mesh.ARRAY_VERTEX]
@@ -158,8 +162,14 @@ func _check_band_cap() -> void:
 				if uvs[v] != Vector2.ZERO and not Geometry2D.is_point_in_polygon(at, case[1]):
 					_fail("%s at %.0f px/deg: band vertex %d pushed to %s, outside the ring" % [case[0], px_per_deg, v, at])
 					break
-	if MapFillMesh.band_cap(big) < 7.0 / 6.0:
-		_fail("a 20-degree square caps the band at %.2f deg, below the band itself" % MapFillMesh.band_cap(big))
+	for case in [["20-degree square", big, 6.0], ["Luxembourg-sized square", compact, 25.0]]:
+		var ring: PackedVector2Array = case[1]
+		var miters := MapFillMesh.inward_miters(ring)
+		var caps := MapFillMesh.band_caps(ring, miters)
+		for i in ring.size():
+			if caps[i] * miters[i].length() < 7.0 / float(case[2]) - 0.01:
+				_fail("%s: vertex %d's cap %.3f deg holds the band under its 7 px at %.0f px/deg" % [case[0], i, caps[i], case[2]])
+				break
 
 
 func _fail(msg: String) -> void:

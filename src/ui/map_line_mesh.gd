@@ -10,8 +10,8 @@ extends RefCounted
 ## §11). As a mesh they are one call, and nothing about them re-records again:
 ## each vertex carries its ring's palette index, and map_line.gdshader reads the
 ## colour (row 0) and the width in screen pixels (row 1) from the palette and
-## pushes the vertex out by half that width over the scale. A hover, a zoom, a
-## ground-band step rewrites texels.
+## pushes the vertex out by half that width over the scale. A hover or a
+## ground-band step rewrites texels; a zoom alone touches nothing.
 ##
 ## Geometry: each ring a closed strip, two vertices per point pushed either way
 ## along the point's miter (MapFillMesh's, clamped at MITER_LIMIT). draw_polyline

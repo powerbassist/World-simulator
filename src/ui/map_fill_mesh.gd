@@ -24,14 +24,18 @@ extends RefCounted
 ## width in screen pixels at every zoom without the mesh ever being rebuilt.
 ## With the band width at 0 the strip has no area and draws nothing.
 ##
-## THE CAP. A ring narrower than the band would push its inner edge past the far
-## coast: at the opening fit the band is 0.28 deg and 112 of the roster's 194
-## rings are thinner than that somewhere (Malta is ~5 x 4 px there), and at globe
-## view Luxembourg's band would reach ~4 px into its neighbours (review, pass 1).
-## So each band vertex carries its ring's cap -- band_cap(), a share of the
-## ring's mean half-width -- and the shader pushes by the smaller of the band and
-## the cap. A long thin island on a diagonal is caught too, which a bounding box
-## is not; a thin peninsula of a large ring is not, and stays a bound.
+## THE CAP. Where a ring is narrower than the band, its inner edge would cross
+## the far coast: at the opening fit the band is 0.28 deg, Malta is ~5 x 4 px,
+## and at globe view Luxembourg's band would reach ~4 px into its neighbours
+## (review, pass 1). So each band VERTEX carries its own cap: the distance its
+## inward ray travels before it leaves the ring, halved (band_caps()), so two
+## facing pushes can at most meet. The shader pushes by the smaller of the band
+## and the cap. Per vertex, not per ring: pass 1's fix was one cap per ring from
+## area / perimeter, which is a strip's half-width but a quarter of a compact
+## shape's width, so it thinned the band on rings that had room (review, pass 2:
+## Luxembourg 2.5 px instead of 7) and still missed thin peninsulas of large
+## rings. The cast walks a grid of the ring's edges (exact against a brute-force
+## cast on the live roster); ~80 ms per setup() over the roster's 13.5k points.
 ##
 ## Vertex encoding (map_fill.gdshader reads it):
 ##   VERTEX  lon, lat
@@ -48,12 +52,17 @@ extends RefCounted
 ## A miter longer than this many band widths is clamped: a needle-sharp coastal
 ## spike would otherwise throw its inner vertex far across the country.
 const MITER_LIMIT := 2.0
-## The cap's share of a ring's mean half-width (area / perimeter, which is half
-## the width of a long strip): 0.8 stops two facing pushes 20% short of meeting.
-const BAND_CAP_SHARE := 0.8
-## The largest cap the 8-bit channel holds, in degrees: 0.01 deg steps. A cap
-## above it is never reached -- the band is 1.2 deg at the furthest zoom out.
-const CAP_RANGE_DEG := 2.55
+## The share of a vertex's inward hit distance its band may cover: a half, so
+## two pushes from facing coasts can at most meet in the middle.
+const BAND_CAP_SHARE := 0.5
+## The widest band there is, in degrees -- 7 px at the furthest zoom out on a
+## 1920-wide window is ~1.2 deg -- and so the largest cap worth storing: the 8-bit
+## channel holds it in 0.005 deg steps (half a pixel at max zoom). A ray that
+## leaves no nearer than this needs no cap.
+const CAP_RANGE_DEG := 1.25
+## The edge grid's cell, in degrees: about the widest band, so a ray walks a
+## handful of cells (0.25 and 0.5 timed the same on the live roster).
+const CAP_CELL_DEG := 0.25
 
 
 ## nations: one entry per roster nation in palette order, each
@@ -158,15 +167,62 @@ static func inward_miters(ring: PackedVector2Array) -> PackedVector2Array:
 	return out
 
 
-## The furthest a band may push inward into this ring, in degrees.
-static func band_cap(ring: PackedVector2Array) -> float:
-	var perimeter := 0.0
+## Per vertex of a clean ring, the furthest its band may push inward, in degrees
+## along the miter (the shader multiplies the miter by it): half the distance
+## the vertex's inward ray travels before it crosses the ring, at most
+## CAP_RANGE_DEG. The ray walks the cells it crosses nearest first
+## (Amanatides-Woo), testing only the edges filed there.
+static func band_caps(ring: PackedVector2Array, miters: PackedVector2Array) -> PackedFloat32Array:
 	var n := ring.size()
+	# Arrays, not PackedInt32Array: a packed array read out of a Dictionary is a
+	# copy, and appending to the copy files nothing (the first prototype's bug).
+	var grid := {}
 	for i in n:
-		perimeter += ring[i].distance_to(ring[(i + 1) % n])
-	if perimeter <= 0.0:
-		return 0.0
-	return BAND_CAP_SHARE * absf(signed_area2(ring)) * 0.5 / perimeter
+		var a := ring[i]
+		var b := ring[(i + 1) % n]
+		for cx in range(floori(minf(a.x, b.x) / CAP_CELL_DEG), floori(maxf(a.x, b.x) / CAP_CELL_DEG) + 1):
+			for cy in range(floori(minf(a.y, b.y) / CAP_CELL_DEG), floori(maxf(a.y, b.y) / CAP_CELL_DEG) + 1):
+				var key := Vector2i(cx, cy)
+				if grid.has(key):
+					(grid[key] as Array).append(i)
+				else:
+					grid[key] = [i]
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		var length := miters[i].length()
+		var d := miters[i] / length
+		var p := ring[i]
+		var best := CAP_RANGE_DEG * length / BAND_CAP_SHARE
+		var c := Vector2i(floori(p.x / CAP_CELL_DEG), floori(p.y / CAP_CELL_DEG))
+		var step := Vector2i(1 if d.x > 0.0 else -1, 1 if d.y > 0.0 else -1)
+		var t_max := Vector2(INF, INF)
+		var t_delta := Vector2(INF, INF)
+		if d.x != 0.0:
+			t_max.x = ((float(c.x) + (1.0 if d.x > 0.0 else 0.0)) * CAP_CELL_DEG - p.x) / d.x
+			t_delta.x = CAP_CELL_DEG / absf(d.x)
+		if d.y != 0.0:
+			t_max.y = ((float(c.y) + (1.0 if d.y > 0.0 else 0.0)) * CAP_CELL_DEG - p.y) / d.y
+			t_delta.y = CAP_CELL_DEG / absf(d.y)
+		var t_enter := 0.0
+		while t_enter <= best:
+			if grid.has(c):
+				for e: int in grid[c]:
+					if e == i or e == (i - 1 + n) % n:
+						continue
+					var hit = Geometry2D.segment_intersects_segment(p, p + d * best, ring[e], ring[(e + 1) % n])
+					if hit != null:
+						best = minf(best, p.distance_to(hit))
+			if t_max.x < t_max.y:
+				t_enter = t_max.x
+				t_max.x += t_delta.x
+				c.x += step.x
+			else:
+				t_enter = t_max.y
+				t_max.y += t_delta.y
+				c.y += step.y
+		out[i] = minf(BAND_CAP_SHARE * best / length, CAP_RANGE_DEG)
+	return out
 
 
 static func _append_band(ring: PackedVector2Array, n: int, verts: PackedVector2Array,
@@ -175,16 +231,16 @@ static func _append_band(ring: PackedVector2Array, n: int, verts: PackedVector2A
 	if count < 3:
 		return
 	var miters := inward_miters(ring)
-	var cap := floorf(clampf(band_cap(ring) / CAP_RANGE_DEG, 0.0, 1.0) * 255.0) / 255.0
-	var on_line := Color(float(n) / 255.0, 0.0, 1.0, cap)
-	var inner := Color(float(n) / 255.0, 1.0, 1.0, cap)
+	var caps := band_caps(ring, miters)
 	var base := verts.size()
 	for i in count:
+		# Rounded DOWN to the channel's step, so the stored cap never exceeds it.
+		var cap := floorf(caps[i] / CAP_RANGE_DEG * 255.0) / 255.0
 		verts.append(ring[i])
-		colors.append(on_line)
+		colors.append(Color(float(n) / 255.0, 0.0, 1.0, cap))
 		uvs.append(Vector2.ZERO)
 		verts.append(ring[i])
-		colors.append(inner)
+		colors.append(Color(float(n) / 255.0, 1.0, 1.0, cap))
 		uvs.append(miters[i])
 	for i in count:
 		var o0 := base + 2 * i

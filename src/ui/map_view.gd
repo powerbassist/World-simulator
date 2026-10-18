@@ -434,8 +434,9 @@ const LABEL_ZOOM_T3 := INF
 ## V4.10c. map_fill.gdshader's materials, set once per setup() (the shader's own
 ## header says what each does). The band is 7 px: wide enough to read as a tint
 ## deepening toward the border at the opening fit, narrow enough that Luxembourg
-## (~15 px across there) keeps a pale middle; a ring narrower than the band
-## caps it (MapFillMesh.band_cap). The hatch is 7 px apart and moves the fill's
+## (~15 px across there) keeps a pale middle; where a ring narrows to less than
+## twice the band, each band vertex's own cap keeps it inside
+## (MapFillMesh.band_caps). The hatch is 7 px apart and moves the fill's
 ## alpha by 10% either way: a weave the eye finds only when looking for it, which
 ## is the brief. The first value, 22%, read as stripes at depth.
 const FILL_MATERIAL := {
@@ -1350,8 +1351,8 @@ func _draw_roster_lines(canvas: CanvasItem) -> void:
 
 
 ## Every line's colour (row 0) and width in screen pixels (row 1), written when
-## the zoom, a hover or the viewer moves -- the colours follow ground_alpha, the
-## widths are pixels, and the meshes never change.
+## the ground band, a hover or the viewer moves -- the colours follow
+## ground_alpha, the widths are pixels, and the meshes never change.
 func _sync_line_palettes() -> void:
 	# Border colours once per sync, not per ring: they move with the zoom band
 	# only, and every ring of a kind shares one.

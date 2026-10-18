@@ -632,7 +632,7 @@ sets every re-record. Each of the three is **one mesh, built once in `setup()`**
 - **Lines** (`src/ui/map_line_mesh.gd`, `src/ui/map_line.gdshader`): every ring a closed
   strip, two vertices per point along its miter. The colour (palette row 0) and the width in
   screen pixels (row 1) are texels; the shader pushes each vertex out by half the width over
-  the scale. A hover, a zoom or a ground-band step rewrites texels; the mesh never changes.
+  the scale. A hover or a ground-band step rewrites texels (a zoom alone changes nothing: widths are pixels); the mesh never changes.
 
 A pan or a zoom re-records **no projected layer** (`tests/test_map_view.gd` asserts it by each
 layer's draw generation, and a mutation that re-records on pan fails it). The raster stays
@@ -655,11 +655,16 @@ The project's first canvas_item shader, and the map's only material. On the fill
 - **Edge band.** A strip along each nation's 1:50m ring (coasts included), its inner edge
   pushed inward by `band_px / px_per_deg` in `vertex()`, so it is 7 px wide at every zoom
   with no rebuild. The fill's colour at 0.55 brightness and 3x alpha at the line, easing to
-  nothing. **Capped per ring** at 0.8 x area / perimeter (a share of its mean half-width,
-  carried in the band vertices' alpha): review pass 1 found 112 of the 194 roster rings
-  thinner than the band at the opening fit (Malta ~5 x 4 px), whose band would have spilled
-  past the far coast, and Luxembourg's into its neighbours at globe view. A thin peninsula of
-  a large ring is not caught (a bound). On the nation, not the region: region hairlines already mark regions, and a band
+  nothing. **Capped per vertex**: each band vertex carries (in its alpha) half
+  the distance its inward ray travels before it leaves the ring, and the shader pushes by the
+  smaller of the band and that cap, so two facing pushes can at most meet. Review pass 1
+  found the uncapped band spilling past the far coast of every ring narrower than it (Malta is
+  ~5 x 4 px at the opening fit) and Luxembourg's into its neighbours at globe view; pass 1's
+  fix, one cap per ring from area / perimeter, was a strip's half-width but a quarter of a
+  compact shape's width, and pass 2 measured it thinning bands that had room (Luxembourg
+  2.5 px of 7, Slovenia 4.7) while still missing thin peninsulas. The per-vertex cast walks a
+  grid of the ring's edges, matches a brute-force cast exactly on the live roster, and costs
+  ~80 ms per `setup()`. On the nation, not the region: region hairlines already mark regions, and a band
   on each would quilt the tint. *Rejected:* a baked edge-distance texture, whose border is
   quantised to its texel (1/30 deg is 8 px at max zoom) and would sit off the vector line.
 - **Pattern.** A diagonal hatch, 7 px apart, moving the fill's alpha ±10 %, in screen pixels
