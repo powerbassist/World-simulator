@@ -7,9 +7,11 @@ extends RefCounted
 ## re-record is event-driven (docs/map-platform-model.md §2), so it is paid on a
 ## pan or a hover, not per frame.
 ##
-## Greedy, deliberately: candidates go in rank order (map_view passes tier, then
-## population, then id), each tries four anchors, and the first that collides with
-## nothing already placed wins; a candidate with no free anchor is DROPPED. So the
+## Greedy, deliberately: candidates go in rank order (map_view passes nation names
+## first, playable first, then cities by tier, population, id), each tries its
+## anchors (four by default, one -- "center" -- for a nation), and the first that
+## clears every placed name, every reserved box and, unless "over_marks", every
+## mark wins; a candidate with no free anchor is DROPPED. So the
 ## biggest names in a dense cluster always win and the small ones give way -- the
 ## look of a printed political map, and the worst case is legible rather than
 ## cluttered (the Ruhr at a country-scale zoom names its largest cities only).

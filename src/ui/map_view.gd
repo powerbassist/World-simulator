@@ -166,6 +166,9 @@ var _last_placed: Array = []
 var _label_onscreen: Dictionary = {}
 ## Probe seam (tools/frame_probe.gd's paired rows): false skips the label pass.
 var _labels_enabled := true
+## _hover_label_rect()'s memo of the hovered city's record (see there).
+var _hover_rec_id := ""
+var _hover_rec: Dictionary = {}
 var _center_lon := 0.0
 var _center_lat := 0.0
 
@@ -735,6 +738,8 @@ func refresh_cities() -> void:
 	_cities = MapCities.cities(_loader, _state)
 	for city in _cities:
 		city["tier"] = MapGlyphs.tier_of(city, _capitals)
+	_hover_rec_id = ""
+	_hover_rec = {}
 
 
 func _refresh_markers() -> void:
@@ -1364,10 +1369,12 @@ func _measure_text(font: Font, font_size: int, text: String) -> Vector2:
 ## V4.10b. ONE placement over every name on screen -- the roster's nation names
 ## first (a country's name outranks every city in it), then each on-screen city
 ## whose tier is named at this zoom, ranked tier, population, id (MapLabels'
-## total order). Every drawn glyph is an obstacle a name may not cover, and the
-## hovered city is left out: its hover label in _draw_cities() is the one name it
-## gets. Callable outside _draw() so the tests and tools/label_probe.gd read the
-## same placement the frame draws.
+## total order). Tier 1-2 marks are obstacles a city name may not cover; a nation
+## name may sit over them ("over_marks") but never over another name. The hovered
+## city is left out, and its full hover label (drawn by _draw_cities()) is
+## reserved, so no name covers the text the player pointed at. Callable outside
+## _draw() so the tests and tools/label_probe.gd read the same placement the
+## frame draws.
 ##
 ## max_tier >= 1 is the probe's override: name tiers 1..max_tier at ANY zoom from
 ## CITY_MIN_ZOOM, ignoring LABEL_ZOOM_T*, which is how the band was measured.
@@ -1454,9 +1461,19 @@ func _hover_label_rect() -> Rect2:
 	var font := get_theme_default_font()
 	if font == null:
 		return Rect2()
-	for city in _cities:
-		if String(city["city_id"]) != _hovered_city:
-			continue
+	# The hovered city's record, found once per hover rather than by walking all
+	# ~1373 cities on every re-record: a drag that starts on a cross keeps
+	# _hovered_city for its whole length, so the walk would be paid per frame
+	# (V4.10b review pass 2). refresh_cities() drops the memo with the list.
+	if _hover_rec_id != _hovered_city:
+		_hover_rec_id = _hovered_city
+		_hover_rec = {}
+		for c in _cities:
+			if String(c["city_id"]) == _hovered_city:
+				_hover_rec = c
+				break
+	if not _hover_rec.is_empty():
+		var city: Dictionary = _hover_rec
 		var font_size := UiTheme.SIZE_MICRO
 		var lonlat: Vector2 = city["lonlat"]
 		var at := _lonlat_to_screen(lonlat.x, lonlat.y)
