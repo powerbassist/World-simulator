@@ -166,6 +166,8 @@ var _last_placed: Array = []
 var _label_onscreen: Dictionary = {}
 ## Probe seam (tools/frame_probe.gd's paired rows): false skips the label pass.
 var _labels_enabled := true
+## V4.10c probe seam: pass names _draw() skips (see _on()). Empty in the game.
+var _pass_off: Dictionary = {}
 ## _hover_label_rect()'s memo of the hovered city's record (see there).
 var _hover_rec_id := ""
 var _hover_rec: Dictionary = {}
@@ -997,6 +999,10 @@ func _gui_input(event: InputEvent) -> void:
 				queue_redraw()
 
 
+func _on(pass_name: String) -> bool:
+	return not _pass_off.has(pass_name)
+
+
 func _draw() -> void:
 	_fit_zoom()
 	# THE ONE TRANSFORM, EXPANDED ONCE PER DRAW. The heavy passes below inline
@@ -1012,20 +1018,31 @@ func _draw() -> void:
 	var cc := _control_center()
 	_ox = _pan_offset.x + cc.x - _center_lon * _kx
 	_oy = _pan_offset.y + cc.y + _center_lat * _kx
-	_draw_raster()
-	_draw_world_borders()
+	# V4.10c. Every pass sits behind _on(): tools/frame_probe.gd turns them off
+	# one at a time to ATTRIBUTE the map's cost by pass (map-platform-model §11)
+	# before any lever is pulled. Nothing in the game sets _pass_off.
+	if _on("raster"):
+		_draw_raster()
+	if _on("world"):
+		_draw_world_borders()
 	_draw_outline_hover_ring()
-	_draw_roster()
-	_draw_spines()
+	if _on("roster"):
+		_draw_roster()
+	if _on("spines"):
+		_draw_spines()
 	# Labels above city crosses: a brass cross over near-white text buried the
 	# name (B6), and text is what the cross points at. _refresh_markers() is a
 	# state read, not a draw, so the pins still draw last and stay on top.
-	_draw_cities()
-	_draw_labels()
+	if _on("cities"):
+		_draw_cities()
+	if _on("labels"):
+		_draw_labels()
 	_refresh_markers()
-	_draw_markers()
-	MapPlants.draw_plants(self, _state, func(lon: float, lat: float) -> Vector2:
-		return _lonlat_to_screen(lon, lat))
+	if _on("markers"):
+		_draw_markers()
+	if _on("plants"):
+		MapPlants.draw_plants(self, _state, func(lon: float, lat: float) -> Vector2:
+			return _lonlat_to_screen(lon, lat))
 	# Frontmost: a readout is text the player asked for with the cursor.
 	_draw_outline_readout()
 	if _placing:
@@ -1249,7 +1266,8 @@ func _draw_roster() -> void:
 			var base_points := PackedVector2Array()
 			for p in ring:
 				base_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
-			draw_colored_polygon(base_points, color)
+			if _on("roster_fill"):
+				draw_colored_polygon(base_points, color)
 
 		# Region fills first, ALL of them, then ALL the hairlines. The two-pass
 		# order is structural rather than stylistic: with holes dropped, a host
@@ -1276,12 +1294,14 @@ func _draw_roster() -> void:
 				var region_points := PackedVector2Array()
 				for p in ring:
 					region_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
-				draw_colored_polygon(region_points, color)
+				if _on("roster_fill"):
+					draw_colored_polygon(region_points, color)
 				region_rings.append(region_points)
 		for region_points: PackedVector2Array in region_rings:
 			var closed := region_points.duplicate()
 			closed.append(region_points[0])
-			draw_polyline(closed, regional_color, regional_width)
+			if _on("roster_line"):
+				draw_polyline(closed, regional_color, regional_width)
 
 		# The national stroke last, from the 1:50m outline it has always used:
 		# the bright line is the one that says which ten answer a click, and it
@@ -1296,7 +1316,8 @@ func _draw_roster() -> void:
 				stroke_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 			var closed := stroke_points.duplicate()
 			closed.append(stroke_points[0])
-			draw_polyline(closed, stroke, width)
+			if _on("roster_line"):
+				draw_polyline(closed, stroke, width)
 
 
 ## The spine pass -- V3.4, between the roster fills and the labels. Over the land
