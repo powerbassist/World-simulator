@@ -53,7 +53,8 @@ author's words reduced to rows, with whose call each answer is.
 | The Union | The EU **co-finances infrastructure and some sectors**; some laws or decisions can **put the nation outside EU law** | author |
 | The city at depth | Zoomed in, a city shows **the firms and infrastructure around it** | author: **icons placed on the map**, not a separate screen; map icons **vector**, ElevenLabs raster art in the record a click opens (the session's recommendation, taken) |
 | Relief and water | **Relief, rivers, lakes** integrated | author |
-| Taxes | A **tax tab** to **introduce, adjust and abolish** taxes (ISF, production taxes, a sugar tax…), each change showing **the estimated revenue gained or lost** | author |
+| Taxes | A **tax tab** to **introduce, adjust and abolish** taxes (ISF, production taxes, a sugar tax…), each change showing **the estimated revenue gained or lost**; taxes are **introduced or abolished in the autumn finance bill**, a **rate adjusted after parliament approves it** | author |
+| Polls | **Commission polls** to learn whether a measure is popular | author |
 | Engine | **Move to the latest Godot** | author; the session's ruling: 4.7.2 (stable maintenance) in V5.0, 4.8 when it is stable (beta 1 on 2026-10-15) |
 | War (V6) | Wars for resources, territory and more; **annexation**; the player **moves armies on the map** (Hearts of Iron, not Suzerain); **build or destroy military sites** (bases, naval bases, nuclear silos); **order equipment** from national firms, or foreign ones when allowed (arms embargo) — also when the national industry cannot supply | author |
 | Intelligence (V6) | **Espionage**, and a per-nation **level of knowledge** of every other nation (France knows its allies well up to *secret défense*, knows little of North Korea unless it spies or hacks) | author |
