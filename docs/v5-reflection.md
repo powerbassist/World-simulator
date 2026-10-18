@@ -297,7 +297,7 @@ neither it nor any box). What V5 does with each:
 | Effects-blind divisions | Decide at V5.3's plan gate: graded decisions make breadth visible to the player, which is when a division blind to it starts to read wrong |
 | Hand-curate the 25 generated majors | Untouched by V5 |
 | Events dominance standard | Trigger: V5.2 rewrites events with speakers — re-tune or retire E3 there |
-| Calendar booking composed laws | Trigger: V5.2's diary rework — recommend yes |
+| Calendar booking composed laws | Trigger: V5.2's diary rework — recommended yes, **taken by the author 2026-10-19** |
 | Month tick at 41 nations | **V5.0's gate** |
 
 ### D16 — The desk and the card column were built for six events a career
