@@ -183,6 +183,18 @@ func _build_configs() -> void:
 	_configs.append({"label": "V4.10a 1440 opening fit, ground on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
 	_configs.append({"label": "V4.10a PAN max, ground off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "ground_off": true})
 	_configs.append({"label": "V4.10a PAN max, ground on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
+	# V4.10b, THE NAMES -- the label pass (nation names + tier 1-2 city names
+	# through MapLabels.place()) paired with its labels_off twin. Still rows price
+	# what a held camera replays; the PAN rows price the placement itself, which
+	# runs on every re-record and so on every frame of a drag.
+	_configs.append({"label": "V4.10b 1440 max_zoom, labels off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "labels_off": true})
+	_configs.append({"label": "V4.10b 1440 max_zoom, labels on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10b 1440 opening fit, labels off", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "labels_off": true})
+	_configs.append({"label": "V4.10b 1440 opening fit, labels on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10b PAN max, labels off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "labels_off": true})
+	_configs.append({"label": "V4.10b PAN max, labels on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
+	_configs.append({"label": "V4.10b PAN fit, labels off", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "labels_off": true})
+	_configs.append({"label": "V4.10b PAN fit, labels on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
 	# The clock-health windows reproduce P4's own regime: vsync ON, 1440p,
 	# clock unpaused at speed 1.
 	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
@@ -251,6 +263,7 @@ func _apply_config(cfg: Dictionary) -> void:
 	if _ground_tex == null:
 		_ground_tex = _main._map_view._ground
 	_main._map_view._ground = null if bool(cfg.get("ground_off", false)) else _ground_tex
+	_main._map_view._labels_enabled = not bool(cfg.get("labels_off", false))
 	_main._map_view.queue_redraw()
 	_main._minimap.visible = bool(cfg["minimap"])
 	# V3.4. Roads ride map_view's own pass, so they are toggled by the layer

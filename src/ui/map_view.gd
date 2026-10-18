@@ -51,6 +51,9 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapGround = preload("res://src/ui/map_ground.gd")
+const Roster = preload("res://src/core/roster.gd")
+const MapGlyphs = preload("res://src/ui/map_glyphs.gd")
+const MapLabels = preload("res://src/ui/map_labels.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const MapMarkers = preload("res://src/ui/map_markers.gd")
 const MapOutlines = preload("res://src/ui/map_outlines.gd")
@@ -146,6 +149,26 @@ var _texture: ImageTexture = null
 var _ground: ImageTexture = null
 var _ground_bounds := Rect2()
 var _ground_feather_deg := 0.0
+## V4.10b. Each roster nation's border kind, its Roster.grade() -- content-derived
+## and static for the session, so cached in setup() beside the ring boxes rather
+## than asked per ring per re-record.
+var _border_kind: Dictionary = {}
+## V4.10b. city_id -> nation_id for each nation's capital (MapGlyphs.capitals):
+## content, built once in setup(); a city's TIER is recomputed with the city list
+## each month because tiers 2 and 3 read live population.
+var _capitals: Dictionary = {}
+## Text sizes by "size|text": the names are content, so a width is measured once
+## per session rather than once per re-record per city.
+var _text_size: Dictionary = {}
+## The last placement, read by tests/test_map_view.gd and tools/label_probe.gd.
+var _last_placed: Array = []
+## Per tier, how many cities were on screen and eligible at the last placement.
+var _label_onscreen: Dictionary = {}
+## Probe seam (tools/frame_probe.gd's paired rows): false skips the label pass.
+var _labels_enabled := true
+## _hover_label_rect()'s memo of the hovered city's record (see there).
+var _hover_rec_id := ""
+var _hover_rec: Dictionary = {}
 var _center_lon := 0.0
 var _center_lat := 0.0
 
@@ -245,17 +268,35 @@ var _layer_blend := 1.0
 ## black void with ten countries floating in it.
 const SEA := Color(0.043, 0.075, 0.129)
 
-## Coastlines of the ten, and a quieter line for the outlines of everything else.
-## The world layer is deliberately dimmer than the roster: it is context, and a
-## border the player cannot cross should not compete with one they can. The
-## roster's line is bright because over a satellite photograph it is doing the
-## work the fill used to do -- saying which ten answer a click.
-const COAST := Color(0.95, 0.96, 0.99, 0.88)
-const WORLD_BORDER := Color(0.71, 0.78, 0.86, 0.22)
-const WORLD_BORDER_WIDTH := 1.0
+## V4.10b. BORDERS WEIGHTED BY KIND, one table, one draw pass per kind. The third
+## key is the roster grade (author's call at the V4.10b plan gate): V4.11's derived
+## playable / simulated / outline, read through Roster.grade() and never stored,
+## beside the regional hairline inside a nation. Before this every roster nation
+## stroked the same near-white line and only the world layer was quieter.
+##
+## Each kind carries TWO colours because the ground under it changes with the
+## zoom band (V4.10a): over the satellite at globe view a line has to be light to
+## read against sea and forest, over the paper ground at depth it has to be ink.
+## border_color() blends them by ground_alpha(), so a line never sits on the
+## wrong ground. The photo colours are the pre-V4.10b values unchanged: COAST was
+## (0.95, 0.96, 0.99, 0.88), WORLD_BORDER (0.71, 0.78, 0.86, 0.22), REGION_BORDER
+## (0.71, 0.78, 0.86, 0.35).
+##
+## Widths are a hierarchy a player reads without a legend: the nations you can
+## lead heaviest, the ones the game runs a step lighter (they still answer a
+## click), the world's outlines at the old world-border weight, and the regional
+## hairline lightest, because it is structure inside a country rather than the
+## edge of one. COAST_WIDTH (1.5) sat between the first two.
+const BORDER_KINDS := {
+	"playable": {"photo": Color(0.95, 0.96, 0.99, 0.88), "paper": Color(0.13, 0.11, 0.09, 0.92), "width": 2.0},
+	"simulated": {"photo": Color(0.95, 0.96, 0.99, 0.70), "paper": Color(0.13, 0.11, 0.09, 0.72), "width": 1.4},
+	"outline": {"photo": Color(0.71, 0.78, 0.86, 0.22), "paper": Color(0.22, 0.19, 0.16, 0.40), "width": 1.0},
+	"regional": {"photo": Color(0.71, 0.78, 0.86, 0.35), "paper": Color(0.22, 0.19, 0.16, 0.45), "width": 0.75},
+}
 ## V4.11c. The hovered outline's line: the world border's hue at roughly the
 ## coastline's strength, so the country being read stands out without looking
-## like one the player can act on (the roster's line stays the brightest).
+## like one the player can act on (the roster's line stays the brightest). Since
+## V4.10b only its ALPHA is read: the hue follows border_color("outline").
 const WORLD_BORDER_HOVER := Color(0.71, 0.78, 0.86, 0.70)
 const WORLD_BORDER_HOVER_WIDTH := 1.5
 ## The readout's offset from the cursor, its line gap and its plate's padding.
@@ -271,22 +312,18 @@ const OUTLINE_READOUT_PLATE := Color(0.063, 0.106, 0.188, 0.92)
 ## toward the accent by 0.35, which on the political layer says "this one is under
 ## the cursor" and on a relations layer says a pair is warmer than it is -- the
 ## one place in the interface where pointing at a number would change it. The
-## outline is already what separates the roster (see COAST), so it is the honest
+## outline is already what separates the roster (see BORDER_KINDS), so it is the honest
 ## carrier for both marks.
-## Hover is width alone, not brightness: COAST is already near-white, so a
-## brighter white adds nothing and brass is spoken for by the home mark. 3.0 was
+## Hover is mostly width: the roster's photo line is already near-white, so a
+## brighter white adds little and brass is spoken for by the home mark. 3.0 was
 ## legible in a frame only just, hence 4.0.
-const COAST_WIDTH := 1.5
 const HOVER_WIDTH := 4.0
 const HOME_WIDTH := 2.5
 
-## V2.2b: the hairline between one region and the next, inside the national
-## outline. It sits between WORLD_BORDER and COAST in brightness on purpose:
-## it is structure inside the roster, not context outside it, but it must stay
-## quiet enough that the bright national stroke remains the one line saying
-## which ten answer a click.
-const REGION_BORDER := Color(0.71, 0.78, 0.86, 0.35)
-const REGION_BORDER_WIDTH := 1.0
+## V2.2b's regional hairline lives in BORDER_KINDS["regional"] since V4.10b: it
+## is structure inside the roster, not context outside it, and must stay quiet
+## enough that the national stroke remains the line saying which nations answer
+## a click.
 
 ## V3.1 culling. The pad is DERIVED, not swept: the widest stroke on the map is
 ## HOVER_WIDTH (4.0 px) and antialias feather adds a couple more, so a ring
@@ -326,6 +363,21 @@ const LABEL_COLOR := Color(0.94, 0.96, 1.0, 0.92)
 ## would double-darken every glyph edge for no gain, so only the outline draws.
 const LABEL_OUTLINE_COLOR := Color(0.0, 0.0, 0.0, 0.8)
 const LABEL_OUTLINE_PX := 3
+
+## V4.10b. The zoom at which each glyph tier's cities are NAMED permanently (below
+## it a city is named on hover only, as before). Set by tools/label_probe.gd's
+## band, written before the run: a tier turns on at the lowest zoom of the grid
+## where >= 70 % of its on-screen cities get a name in BOTH stress views
+## (Nordrhein-Westfalen, Lombardia) with the tiers above it already on. The
+## measured table is in docs/map-platform-model.md §10. Measured 2026-10-18:
+## tiers 1 and 2 pass at the grid's first step (>= 80 % named in both views at
+## 2.0, which is CITY_MIN_ZOOM, so they are named wherever their marks are drawn).
+## Tier 3 is a BOUND: it peaks at 64 % over the Ruhr at max zoom (71 % over
+## Lombardia), so tier-3 names stay on hover -- INF says "never" without a magic
+## zoom a later MAX_ZOOM could quietly reach.
+const LABEL_ZOOM_T1 := 2.0
+const LABEL_ZOOM_T2 := 2.0
+const LABEL_ZOOM_T3 := INF
 
 
 func _ready() -> void:
@@ -397,6 +449,9 @@ func setup(loader, state) -> void:
 	_ground = MapGround.texture()
 	_ground_bounds = MapGround.bounds()
 	_ground_feather_deg = float(MapGround.sidecar().get("feather_deg", 0.0))
+	_border_kind.clear()
+	for id in ids:
+		_border_kind[id] = Roster.grade(loader, String(id))
 
 	# Per-ring bounding boxes for the draw cull, built ONCE beside the arrays
 	# they walk -- the same call _nation_boxes made for the hit test. The cull
@@ -414,6 +469,8 @@ func setup(loader, state) -> void:
 			loader.region_features[region_id])
 	for id in _world_polygons.keys():
 		_ring_boxes_world[id] = _ring_boxes_for(_world_polygons[id])
+
+	_capitals = MapGlyphs.capitals(loader)
 
 	# Built here for _refresh_markers()'s reason: a hit test can happen before the
 	# first frame is drawn, and an empty list would answer it with "nothing here".
@@ -679,6 +736,10 @@ func _outline_at_lonlat(pt: Vector2) -> String:
 ## the hook U5c already added for the same staleness, and the draw stays a draw.
 func refresh_cities() -> void:
 	_cities = MapCities.cities(_loader, _state)
+	for city in _cities:
+		city["tier"] = MapGlyphs.tier_of(city, _capitals)
+	_hover_rec_id = ""
+	_hover_rec = {}
 
 
 func _refresh_markers() -> void:
@@ -986,6 +1047,17 @@ func ground_alpha() -> float:
 	return MapGround.band_alpha(_zoom, BASE_SCALE)
 
 
+## V4.10b. The border kind a nation or outline strokes with: its roster grade.
+func border_kind_of(id: String) -> String:
+	return String(_border_kind.get(id, "outline"))
+
+
+## The kind's line colour on whatever ground is under it right now.
+func border_color(kind: String) -> Color:
+	var k: Dictionary = BORDER_KINDS[kind]
+	return (k["photo"] as Color).lerp(k["paper"], ground_alpha())
+
+
 func _draw_raster() -> void:
 	var a := ground_alpha()
 	# A whole-screen photograph under an opaque ground is fill nobody sees: skip
@@ -1012,6 +1084,8 @@ func _draw_raster() -> void:
 ## mask was rasterised from these same rings -- and what a border adds is the
 ## political line neither can show.
 func _draw_world_borders() -> void:
+	var outline_color := border_color("outline")
+	var outline_width := float(BORDER_KINDS["outline"]["width"])
 	var view := visible_lonlat_rect()
 	var padded := view.grow(CULL_PAD_PX / (BASE_SCALE * _zoom))
 	for id in _world_polygons.keys():
@@ -1026,7 +1100,7 @@ func _draw_world_borders() -> void:
 			for p in ring:
 				screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 			screen_points.append(screen_points[0])
-			draw_polyline(screen_points, WORLD_BORDER, WORLD_BORDER_WIDTH)
+			draw_polyline(screen_points, outline_color, outline_width)
 
 
 ## V4.11c. The hovered outline restroked brighter, in the world pass's slot so the
@@ -1034,6 +1108,10 @@ func _draw_world_borders() -> void:
 func _draw_outline_hover_ring() -> void:
 	if _hovered_outline == "" or not _world_polygons.has(_hovered_outline):
 		return
+	# V4.10b: the outline kind's colour on the ground under it, at the hover
+	# strength. The fixed pale blue was right over the photograph and LIGHTER than
+	# the resting ink line over paper -- the hover cue reversed at depth.
+	var hover_color := Color(border_color("outline"), WORLD_BORDER_HOVER.a)
 	for ring: PackedVector2Array in _world_polygons[_hovered_outline]:
 		if ring.size() < 2:
 			continue
@@ -1041,7 +1119,7 @@ func _draw_outline_hover_ring() -> void:
 		for p in ring:
 			screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 		screen_points.append(screen_points[0])
-		draw_polyline(screen_points, WORLD_BORDER_HOVER, WORLD_BORDER_HOVER_WIDTH)
+		draw_polyline(screen_points, hover_color, WORLD_BORDER_HOVER_WIDTH)
 
 
 ## V4.11c. Two lines beside the cursor -- the outline's name, then what it supplies
@@ -1126,18 +1204,30 @@ func _draw_roster() -> void:
 	# memo below extends that same argument across the re-records that share a
 	# month (`_fill_key`), because the state cannot move between them.
 	var fills: Dictionary = _shown_fills(viewer)
+	# Border colours once per re-record, not per ring: they move with the zoom
+	# band only, and every ring of a kind shares one.
+	var kind_colors := {}
+	for kind in BORDER_KINDS.keys():
+		kind_colors[kind] = border_color(kind)
+	var regional_color: Color = kind_colors["regional"]
+	var regional_width := float(BORDER_KINDS["regional"]["width"])
 
 	for id in _polygons.keys():
 		var color: Color = fills[id]
 
-		# Brass for the nation the player governs, thicker white under the cursor,
-		# the plain coastline otherwise. The home mark wins a collision: hovering
-		# your own country should not stop it being yours, and it carries no value
-		# on either data layer for the readout to disagree with.
-		var stroke := COAST
-		var width := COAST_WIDTH
+		# Brass for the nation the player governs, the heaviest line at hover
+		# width under the cursor, its kind's line otherwise. The home mark wins a
+		# collision: hovering your own country should not stop it being yours,
+		# and it carries no value on either data layer for the readout to
+		# disagree with. Hover takes the playable kind's colour rather than pure
+		# white since V4.10b: white was right over the photograph and is the
+		# weakest line there is over paper; the playable colour is near-white at
+		# globe view and ink at depth.
+		var kind := border_kind_of(String(id))
+		var stroke: Color = kind_colors[kind]
+		var width := float(BORDER_KINDS[kind]["width"])
 		if id == _hovered_id:
-			stroke = Color(1.0, 1.0, 1.0, 1.0)
+			stroke = Color(kind_colors["playable"], 1.0)
 			width = HOVER_WIDTH
 		if MapLayers.is_viewer(viewer, id):
 			stroke = UiTheme.ACCENT
@@ -1191,7 +1281,7 @@ func _draw_roster() -> void:
 		for region_points: PackedVector2Array in region_rings:
 			var closed := region_points.duplicate()
 			closed.append(region_points[0])
-			draw_polyline(closed, REGION_BORDER, REGION_BORDER_WIDTH)
+			draw_polyline(closed, regional_color, regional_width)
 
 		# The national stroke last, from the 1:50m outline it has always used:
 		# the bright line is the one that says which ten answer a click, and it
@@ -1232,33 +1322,168 @@ func _draw_spines() -> void:
 	_spines_drawn = MapNetwork.draw_spines(
 		self, _spines, view,
 		func(lon: float, lat: float) -> Vector2: return _lonlat_to_screen(lon, lat),
-		size
+		size, ground_alpha()
 	)
 
 
-## The roster only. Naming the ~160 countries the player cannot click would say
-## the opposite of what U5b is for -- the unlabelled ones are the edge of the
-## game, and leaving them unnamed is how that edge is visible without a click
-## that leads nowhere.
+## Every permanent name on the map, nation and (since V4.10b) city, drawn from
+## one placement -- see _place_labels() for who is named and in what order.
 func _draw_labels() -> void:
-	if _zoom < LABEL_MIN_ZOOM:
+	if not _labels_enabled:
 		return
 	var font := get_theme_default_font()
 	if font == null:
 		return
 	var font_size := UiTheme.SIZE_MICRO
-	for id in _labels.keys():
-		var entry: Dictionary = _labels[id]
-		var lonlat: Vector2 = entry["pos"]
-		var text: String = entry["text"]
-		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		var at := _lonlat_to_screen(lonlat.x, lonlat.y) - Vector2(width / 2.0, 0.0)
+	var ascent := font.get_ascent(font_size)
+	for p in _place_labels():
+		var at: Vector2 = (p["rect"] as Rect2).position + Vector2(0.0, ascent)
 		# An outline halo rather than the old 1px offset shadow: over a satellite
-		# image the contrast varies from Alpine snow to North Sea, and a 3px
-		# near-black halo holds legibility on both without putting a box on the
-		# map. Outline only -- the shadow it replaced is NOT drawn beside it.
-		draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_OUTLINE_PX, LABEL_OUTLINE_COLOR)
-		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
+		# image the contrast varies from Alpine snow to North Sea, and over the
+		# paper ground (V4.10a) a light name needs its dark edge just as much. One
+		# style for nation and city names: the placer, not the paint, ranks them.
+		draw_string_outline(font, at, String(p["text"]), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_OUTLINE_PX, LABEL_OUTLINE_COLOR)
+		draw_string(font, at, String(p["text"]), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, LABEL_COLOR)
+
+
+func _label_zoom(tier: int) -> float:
+	match tier:
+		1:
+			return LABEL_ZOOM_T1
+		2:
+			return LABEL_ZOOM_T2
+	return LABEL_ZOOM_T3
+
+
+func _measure_text(font: Font, font_size: int, text: String) -> Vector2:
+	var key := "%d|%s" % [font_size, text]
+	var cached = _text_size.get(key)
+	if cached != null:
+		return cached
+	var sz := Vector2(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x,
+		font.get_height(font_size))
+	_text_size[key] = sz
+	return sz
+
+
+## V4.10b. ONE placement over every name on screen -- the roster's nation names
+## first (a country's name outranks every city in it), then each on-screen city
+## whose tier is named at this zoom, ranked tier, population, id (MapLabels'
+## total order). Tier 1-2 marks are obstacles a city name may not cover; a nation
+## name may sit over them ("over_marks") but never over another name. The hovered
+## city is left out, and its full hover label (drawn by _draw_cities()) is
+## reserved, so no name covers the text the player pointed at. Callable outside
+## _draw() so the tests and tools/label_probe.gd read the same placement the
+## frame draws.
+##
+## max_tier >= 1 is the probe's override: name tiers 1..max_tier at ANY zoom from
+## CITY_MIN_ZOOM, ignoring LABEL_ZOOM_T*, which is how the band was measured.
+##
+## The only "only the roster is named" rule from U5b survives: outlines get no
+## name. Naming the countries the player cannot click would say the opposite of
+## what the outline grade is for.
+func _place_labels(max_tier := -1) -> Array:
+	_last_placed = []
+	_label_onscreen = {1: 0, 2: 0, 3: 0}
+	var font := get_theme_default_font()
+	if font == null:
+		return _last_placed
+	var font_size := UiTheme.SIZE_MICRO
+	var view := Rect2(Vector2.ZERO, size)
+	var measure := func(text: String) -> Vector2: return _measure_text(font, font_size, text)
+	var candidates: Array = []
+	var blocked: Array = []
+	if _zoom >= LABEL_MIN_ZOOM:
+		for id in _labels.keys():
+			var entry: Dictionary = _labels[id]
+			var lonlat: Vector2 = entry["pos"]
+			candidates.append({
+				"id": "nation:%s" % id, "text": entry["text"],
+				"at": _lonlat_to_screen(lonlat.x, lonlat.y), "gap": 0.0,
+				"rank": [0, 0.0 if border_kind_of(String(id)) == "playable" else 1.0, String(id)],
+				"anchors": ["center"], "over_marks": true,
+			})
+	if _zoom >= CITY_MIN_ZOOM:
+		# A tier that is neither named at this zoom nor an obstacle (tier 3, by
+		# the band) contributes nothing, so it is skipped BEFORE it is projected:
+		# ~1270 of 1373 cities, and the projection was most of the pass's cost.
+		# Tiers 1-2 always walk (they are obstacles); the probe's override walks
+		# exactly what it asked to name.
+		var top_tier := 3
+		if max_tier >= 1:
+			top_tier = maxi(max_tier, 2)
+		elif _zoom < _label_zoom(3):
+			top_tier = 2
+		for city in _cities:
+			var tier := int(city.get("tier", 3))
+			if tier > top_tier:
+				continue
+			var lonlat: Vector2 = city["lonlat"]
+			var at := _lonlat_to_screen(lonlat.x, lonlat.y)
+			if not view.has_point(at):
+				continue
+			var glyph := MapGlyphs.glyph_rect(at, city, tier)
+			# Only tiers 1-2 are obstacles. With every on-screen glyph blocked, a
+			# placement over the Ruhr at the opening fit inserted ~1300 rects and
+			# cost 25-45 ms per re-record (tools/label_probe.gd, 2026-10-18) --
+			# paid on every frame of a drag. A tier-3 cross is 2-4 px and a
+			# haloed name over it still reads; a capital's ring or a big city's
+			# cross under a name does not.
+			if tier <= 2:
+				blocked.append(glyph)
+			var named := tier <= max_tier if max_tier >= 1 else _zoom >= _label_zoom(tier)
+			if not named:
+				continue
+			_label_onscreen[tier] = int(_label_onscreen[tier]) + 1
+			var city_id := String(city["city_id"])
+			if city_id == _hovered_city:
+				continue
+			candidates.append({
+				"id": "city:%s" % city_id, "text": String(city["name"]), "at": at,
+				"gap": glyph.size.x * 0.5 + MapLabels.PAD_PX,
+				"rank": [tier, -float(city["population"]), city_id],
+			})
+	var reserved: Array = []
+	var hover_rect := _hover_label_rect()
+	if hover_rect.size.x > 0.0:
+		reserved.append(hover_rect)
+	_last_placed = MapLabels.place(candidates, blocked, view, measure, reserved)
+	return _last_placed
+
+
+## The hovered city's full label box -- the same text, offset and size
+## _draw_cities() draws it with -- or Rect2() when no city is hovered (or the map
+## is above CITY_MIN_ZOOM's cut, where no city is drawn). Reserved in the
+## placement so no permanent name lands on the text the player pointed at.
+func _hover_label_rect() -> Rect2:
+	if _hovered_city == "" or _zoom < CITY_MIN_ZOOM:
+		return Rect2()
+	var font := get_theme_default_font()
+	if font == null:
+		return Rect2()
+	# The hovered city's record, found once per hover rather than by walking all
+	# ~1373 cities on every re-record: a drag that starts on a cross keeps
+	# _hovered_city for its whole length, so the walk would be paid per frame
+	# (V4.10b review pass 2). refresh_cities() drops the memo with the list.
+	if _hover_rec_id != _hovered_city:
+		_hover_rec_id = _hovered_city
+		_hover_rec = {}
+		for c in _cities:
+			if String(c["city_id"]) == _hovered_city:
+				_hover_rec = c
+				break
+	if not _hover_rec.is_empty():
+		var city: Dictionary = _hover_rec
+		var font_size := UiTheme.SIZE_MICRO
+		var lonlat: Vector2 = city["lonlat"]
+		var at := _lonlat_to_screen(lonlat.x, lonlat.y)
+		var text: String = MapCities.label_of(city)
+		var sz := _measure_text(font, font_size, text)
+		var text_at := at + MapCities.label_offset(MapCities.radius_of(city)) - Vector2(sz.x / 2.0, 0.0)
+		# text_at is the baseline; the box runs from the ascent above it, and the
+		# drop shadow's 1 px is inside the placer's own 2 px pad.
+		return Rect2(Vector2(text_at.x, text_at.y - font.get_ascent(font_size)), sz)
+	return Rect2()
 
 
 ## The fifth pass, behind the markers -- V2.2b, and the tier doc's *"brass
@@ -1270,10 +1495,10 @@ func _draw_labels() -> void:
 ##
 ## Gated on CITY_MIN_ZOOM, where the marker pass is not: five sites on France are
 ## the whole point of that layer at any zoom, while 581 crosses at the Europe fit
-## are noise by the register's own volume clause. The name is drawn on hover
-## alone, for labels' reason -- at this zoom the crosses are dense enough that
-## permanent names would collide, and a cross that needs its name asks for it
-## with the cursor.
+## are noise by the register's own volume clause. The FULL label (name,
+## population, unrest) is drawn here on hover; since V4.10b a city whose tier is
+## named at this zoom also carries a permanent name, placed by _place_labels()
+## so that names never collide -- the reason they used to be hover-only.
 func _draw_cities() -> void:
 	if _zoom < CITY_MIN_ZOOM:
 		return
@@ -1298,13 +1523,9 @@ func _draw_cities() -> void:
 		if at.y < -cull_pad or at.y > size.y + cull_pad:
 			continue
 
-		# A cross rather than a dot: the one glyph left that says *people* rather
-		# than *thing*, and it stays legible from 2px to 12px where a ring would
-		# close up. The arms are the radius on the diagonal, so two cities a few
-		# pixels apart read as two marks, the bigger of them the bigger.
-		var arm := Vector2(radius, 0.0).rotated(PI / 4.0)
-		draw_line(at - arm, at + arm, color, width)
-		draw_line(at - Vector2(arm.x, -arm.y), at + Vector2(arm.x, -arm.y), color, width)
+		# V4.10b: the mark by tier (MapGlyphs) -- V2.2b's cross for tiers 2 and 3,
+		# thinner for 3, ringed for a capital. Size is still radius_of().
+		MapGlyphs.draw_glyph(self, at, city, int(city.get("tier", 3)), width)
 
 		# V2.6b1. A ring around the cross where the country's demonstration is. It is
 		# NOT a fifth map layer and NOT a sixth draw pass: a LAYERS entry chooses a

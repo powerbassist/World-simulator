@@ -11,6 +11,7 @@ extends SceneTree
 const MapLayers = preload("res://src/ui/map_layers.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const Roster = preload("res://src/core/roster.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -57,6 +58,10 @@ func _run() -> void:
 	_check_world_geometry(loader, map)
 	_check_raster(map)
 	_check_ground_band(map)
+	_check_border_kinds(loader, map)
+	_check_city_labels(map)
+	_check_nation_names_survive(map)
+	_check_hover_label_reserved(map)
 	_check_projection_and_hit_test(map)
 	_check_outline_hover(map)
 	_check_pan_zoom(map)
@@ -205,6 +210,126 @@ func _check_ground_band(map) -> void:
 	if map.ground_alpha() != 0.0:
 		_fail("ground_alpha() is %f with no ground texture" % map.ground_alpha())
 	map._ground = ground
+	map._zoom = zoom_before
+
+
+## V4.10b. Borders weighted by kind, the third key the roster grade (author's
+## call): the table has exactly the four kinds, their widths are a hierarchy a
+## player can read (playable heaviest, the regional hairline lightest), and every
+## nation's kind IS its derived grade -- a stored copy would drift from Roster.
+func _check_border_kinds(loader, map) -> void:
+	var kinds: Array = map.BORDER_KINDS.keys()
+	kinds.sort()
+	if kinds != ["outline", "playable", "regional", "simulated"]:
+		_fail("BORDER_KINDS keys are %s" % [kinds])
+		return
+	var w := func(k: String) -> float: return float(map.BORDER_KINDS[k]["width"])
+	if not (w.call("playable") > w.call("simulated") and w.call("simulated") > w.call("outline") and w.call("outline") > w.call("regional")):
+		_fail("border widths are not a hierarchy: %s" % [map.BORDER_KINDS])
+	for id in loader.nations.keys():
+		if map.border_kind_of(String(id)) != Roster.grade(loader, String(id)):
+			_fail("%s strokes as %s, its grade is %s" % [id, map.border_kind_of(String(id)), Roster.grade(loader, String(id))])
+			return
+	for id in loader.outlines.keys():
+		if map.border_kind_of(String(id)) != "outline":
+			_fail("outline %s strokes as %s" % [id, map.border_kind_of(String(id))])
+			return
+	# The stroke follows the ground: photo colour at globe view, ink at depth.
+	var z: float = map._zoom
+	map._zoom = map.min_zoom()
+	var photo: Color = map.border_color("playable")
+	map._zoom = map.MAX_ZOOM
+	var paper: Color = map.border_color("playable")
+	map._zoom = z
+	if not photo.is_equal_approx(map.BORDER_KINDS["playable"]["photo"]) or (map._ground != null and not paper.is_equal_approx(map.BORDER_KINDS["playable"]["paper"])):
+		_fail("border colour does not follow the ground band: %s / %s" % [photo, paper])
+
+
+## V4.10b. City names at depth. Over Paris at max zoom the placer must name
+## cities (a label pass that silently placed nothing is the failure no frame
+## counter shows), never overlap two names, and never name the hovered city
+## twice -- its hover label (name, population, unrest) is the one it gets.
+func _check_city_labels(map) -> void:
+	var zoom_before: float = map._zoom
+	var pan_before: Vector2 = map._pan_offset
+	var hovered_before: String = map._hovered_city
+	map._zoom = map.MAX_ZOOM
+	map.center_on_lonlat(2.35, 48.86)
+	var placed: Array = map._place_labels()
+	var city_id := ""
+	for p in placed:
+		if String(p["id"]).begins_with("city:"):
+			city_id = String(p["id"]).trim_prefix("city:")
+			break
+	if city_id == "":
+		_fail("no city name placed over Paris at max zoom")
+	else:
+		for i in placed.size():
+			for j in range(i + 1, placed.size()):
+				if (placed[i]["rect"] as Rect2).intersects(placed[j]["rect"]):
+					_fail("labels overlap: %s and %s" % [placed[i]["id"], placed[j]["id"]])
+		map._hovered_city = city_id
+		for p in map._place_labels():
+			if String(p["id"]) == "city:" + city_id:
+				_fail("the hovered city %s also got a permanent label" % city_id)
+	map._hovered_city = hovered_before
+	map._pan_offset = pan_before
+	map._zoom = zoom_before
+
+
+## V4.10b review pass 1. A nation's name is centred on one point and has no
+## other anchor, so if a capital's ring or a big city's cross may block it, half
+## the roster loses its name at the opening fit (Spain to Madrid, Poland to Lodz)
+## -- names every earlier version drew. Every roster nation whose label point is
+## on screen must be named, at the opening fit and at max zoom over Paris.
+func _check_nation_names_survive(map) -> void:
+	var zoom_before: float = map._zoom
+	var pan_before: Vector2 = map._pan_offset
+	for z in [2.08, map.MAX_ZOOM]:
+		map._zoom = z
+		map.center_on_lonlat(2.35, 48.86)
+		var named := {}
+		for p in map._place_labels():
+			named[String(p["id"])] = true
+		var view := Rect2(Vector2.ZERO, map.size).grow(-40.0)
+		for id in map._labels.keys():
+			var lonlat: Vector2 = map._labels[id]["pos"]
+			if view.has_point(map._lonlat_to_screen(lonlat.x, lonlat.y)) and not named.has("nation:%s" % id):
+				_fail("at zoom %.2f the on-screen nation %s lost its name" % [z, id])
+	map._pan_offset = pan_before
+	map._zoom = zoom_before
+
+
+## V4.10b review pass 1. The hovered city's full label (name, population, unrest)
+## is the text the player pointed at; no permanent name may be placed over it.
+func _check_hover_label_reserved(map) -> void:
+	var zoom_before: float = map._zoom
+	var pan_before: Vector2 = map._pan_offset
+	var hovered_before: String = map._hovered_city
+	map._zoom = map.MAX_ZOOM
+	map.center_on_lonlat(7.0, 51.4)
+	# A tier-3 city in the thick of the Ruhr: its hover label is wide and its
+	# neighbours are named.
+	var target := ""
+	var view := Rect2(Vector2.ZERO, map.size).grow(-200.0)
+	for city in map._cities:
+		var lonlat: Vector2 = city["lonlat"]
+		if int(city.get("tier", 3)) == 3 and view.has_point(map._lonlat_to_screen(lonlat.x, lonlat.y)):
+			target = String(city["city_id"])
+			break
+	if target == "":
+		_fail("no tier-3 city on screen over the Ruhr to hover")
+	else:
+		map._hovered_city = target
+		var hover_rect: Rect2 = map._hover_label_rect()
+		if hover_rect.size.x <= 0.0:
+			_fail("no hover label rect for hovered city %s" % target)
+		for p in map._place_labels():
+			if (p["rect"] as Rect2).intersects(hover_rect):
+				_fail("%s is placed over the hover label of %s" % [p["id"], target])
+				break
+	map._hovered_city = hovered_before
+	map._pan_offset = pan_before
 	map._zoom = zoom_before
 
 

@@ -35,6 +35,15 @@ const SEA := Color(0.788, 0.635, 0.153, 0.42)
 
 const WIDTH := 1.0
 
+## V4.10b, roads at their weight. Over the paper ground (V4.10a) a brass line at
+## 0.30 alpha all but vanishes into the parchment, so a land spine blends toward a
+## warm dark ink and a little more width as the ground comes in -- infrastructure
+## printed on the map rather than a glint on a photograph. Still one colour family
+## with the brass, so it is not a second accent. Ferries keep their brass dash:
+## they cross the dark sea, where brass still reads.
+const LAND_PAPER := Color(0.36, 0.25, 0.10, 0.60)
+const WIDTH_PAPER := 1.25
+
 ## The ferry dash. Long enough to read as a dash at the zoom roads appear at
 ## (CITY_MIN_ZOOM).
 ##
@@ -114,8 +123,10 @@ static func spines(loader) -> Array:
 ## method.
 static func draw_spines(
 	canvas: CanvasItem, spine_list: Array, view: Rect2, to_screen: Callable,
-	control_size: Vector2
+	control_size: Vector2, ground_alpha := 0.0
 ) -> int:
+	var land := LAND.lerp(LAND_PAPER, ground_alpha)
+	var width := lerpf(WIDTH, WIDTH_PAPER, ground_alpha)
 	var drawn := 0
 	for s in spine_list:
 		# BORDERS EXCLUDED: Rect2.intersects() defaults include_borders to
@@ -133,7 +144,7 @@ static func draw_spines(
 		if String(s["kind"]) == "sea":
 			_draw_dashed(canvas, a, b, control_size)
 		else:
-			canvas.draw_line(a, b, LAND, WIDTH)
+			canvas.draw_line(a, b, land, width)
 		drawn += 1
 	return drawn
 

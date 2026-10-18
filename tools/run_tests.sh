@@ -224,6 +224,8 @@ tests=(
   tests/test_map_cities.gd
   tests/test_map_cull.gd
   tests/test_map_ground.gd
+  tests/test_map_glyphs.gd
+  tests/test_map_labels.gd
   tests/test_map_plants.gd
   tests/test_map_network.gd
   tests/test_map_flows.gd
