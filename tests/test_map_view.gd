@@ -60,6 +60,8 @@ func _run() -> void:
 	_check_ground_band(map)
 	_check_border_kinds(loader, map)
 	_check_city_labels(map)
+	_check_nation_names_survive(map)
+	_check_hover_label_reserved(map)
 	_check_projection_and_hit_test(map)
 	_check_outline_hover(map)
 	_check_pan_zoom(map)
@@ -270,6 +272,62 @@ func _check_city_labels(map) -> void:
 		for p in map._place_labels():
 			if String(p["id"]) == "city:" + city_id:
 				_fail("the hovered city %s also got a permanent label" % city_id)
+	map._hovered_city = hovered_before
+	map._pan_offset = pan_before
+	map._zoom = zoom_before
+
+
+## V4.10b review pass 1. A nation's name is centred on one point and has no
+## other anchor, so if a capital's ring or a big city's cross may block it, half
+## the roster loses its name at the opening fit (Spain to Madrid, Poland to Lodz)
+## -- names every earlier version drew. Every roster nation whose label point is
+## on screen must be named, at the opening fit and at max zoom over Paris.
+func _check_nation_names_survive(map) -> void:
+	var zoom_before: float = map._zoom
+	var pan_before: Vector2 = map._pan_offset
+	for z in [2.08, map.MAX_ZOOM]:
+		map._zoom = z
+		map.center_on_lonlat(2.35, 48.86)
+		var named := {}
+		for p in map._place_labels():
+			named[String(p["id"])] = true
+		var view := Rect2(Vector2.ZERO, map.size).grow(-40.0)
+		for id in map._labels.keys():
+			var lonlat: Vector2 = map._labels[id]["pos"]
+			if view.has_point(map._lonlat_to_screen(lonlat.x, lonlat.y)) and not named.has("nation:%s" % id):
+				_fail("at zoom %.2f the on-screen nation %s lost its name" % [z, id])
+	map._pan_offset = pan_before
+	map._zoom = zoom_before
+
+
+## V4.10b review pass 1. The hovered city's full label (name, population, unrest)
+## is the text the player pointed at; no permanent name may be placed over it.
+func _check_hover_label_reserved(map) -> void:
+	var zoom_before: float = map._zoom
+	var pan_before: Vector2 = map._pan_offset
+	var hovered_before: String = map._hovered_city
+	map._zoom = map.MAX_ZOOM
+	map.center_on_lonlat(7.0, 51.4)
+	# A tier-3 city in the thick of the Ruhr: its hover label is wide and its
+	# neighbours are named.
+	var target := ""
+	var view := Rect2(Vector2.ZERO, map.size).grow(-200.0)
+	for city in map._cities:
+		var lonlat: Vector2 = city["lonlat"]
+		if int(city.get("tier", 3)) == 3 and view.has_point(map._lonlat_to_screen(lonlat.x, lonlat.y)):
+			target = String(city["city_id"])
+			break
+	if target == "":
+		_fail("no tier-3 city on screen over the Ruhr to hover")
+	else:
+		map._hovered_city = target
+		var hover_rect: Rect2 = map._hover_label_rect()
+		if hover_rect.size.x <= 0.0:
+			_fail("no hover label rect for hovered city %s" % target)
+		for p in map._place_labels():
+			if (p["rect"] as Rect2).intersects(hover_rect):
+				_fail("%s is placed over the hover label of %s" % [p["id"], target])
+				break
 	map._hovered_city = hovered_before
 	map._pan_offset = pan_before
 	map._zoom = zoom_before

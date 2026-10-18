@@ -81,12 +81,19 @@ static func _anchor_rect(anchor: String, at: Vector2, gap: float, size: Vector2)
 
 ## candidates: [{"id", "text", "at": Vector2, "gap": float, "rank": Array}],
 ## optionally "anchors": [String] in place of ANCHORS -- a nation's name is
-## centred on its label point and nowhere else ("center").
+## centred on its label point and nowhere else ("center") -- and "over_marks":
+## true for a name that may sit over a blocked mark (never over another name).
+## A nation's name needs it: with one anchor, a capital's ring under its centre
+## would drop it, and the V4.10b review counted 20 of 41 roster names lost that
+## way at the opening fit (Spain to Madrid, Poland to Lodz).
+## reserved: [Rect2] that NO name may cover, over_marks or not -- the hovered
+## city's full label, which is the text the player pointed at.
 ## blocked: [Rect2] the marks a name may not cover. measure(text) -> Vector2.
 ## Returns [{"id", "text", "anchor", "rect": Rect2}] in placement order; the rect
 ## is the text's box (top-left origin), and the caller sets the baseline from
 ## its own font's ascent.
-static func place(candidates: Array, blocked: Array, view: Rect2, measure: Callable) -> Array:
+static func place(candidates: Array, blocked: Array, view: Rect2, measure: Callable,
+		reserved: Array = []) -> Array:
 	# Native Array.sort() on [rank..., index] keys (Arrays compare element-wise),
 	# not sort_custom: a GDScript comparator cost 10 ms of the first 21 ms at
 	# 1400 candidates; this is ~1.7 ms. The index never decides an order the rank
@@ -97,18 +104,26 @@ static func place(candidates: Array, blocked: Array, view: Rect2, measure: Calla
 		k.append(i)
 		keys.append(k)
 	keys.sort()
-	var grid := {}
+	# Two grids: names (and the reserved boxes) every candidate must clear, and
+	# marks that only an "over_marks" candidate may sit on.
+	var names := {}
+	var marks := {}
 	for b: Rect2 in blocked:
-		_insert(grid, b)
+		_insert(marks, b)
+	for r: Rect2 in reserved:
+		_insert(names, r)
 	var placed: Array = []
 	for k: Array in keys:
 		var c: Dictionary = candidates[int(k[-1])]
 		var size: Vector2 = measure.call(String(c["text"]))
+		var over_marks := bool(c.get("over_marks", false))
 		for anchor: String in c.get("anchors", ANCHORS):
 			var r := _anchor_rect(anchor, c["at"], float(c["gap"]), size)
-			if not view.encloses(r) or not _free(grid, r):
+			if not view.encloses(r) or not _free(names, r):
 				continue
-			_insert(grid, r)
+			if not over_marks and not _free(marks, r):
+				continue
+			_insert(names, r)
 			placed.append({"id": c["id"], "text": c["text"], "anchor": anchor, "rect": r})
 			break
 	return placed

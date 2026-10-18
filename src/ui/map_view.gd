@@ -292,7 +292,8 @@ const BORDER_KINDS := {
 }
 ## V4.11c. The hovered outline's line: the world border's hue at roughly the
 ## coastline's strength, so the country being read stands out without looking
-## like one the player can act on (the roster's line stays the brightest).
+## like one the player can act on (the roster's line stays the brightest). Since
+## V4.10b only its ALPHA is read: the hue follows border_color("outline").
 const WORLD_BORDER_HOVER := Color(0.71, 0.78, 0.86, 0.70)
 const WORLD_BORDER_HOVER_WIDTH := 1.5
 ## The readout's offset from the cursor, its line gap and its plate's padding.
@@ -1102,6 +1103,10 @@ func _draw_world_borders() -> void:
 func _draw_outline_hover_ring() -> void:
 	if _hovered_outline == "" or not _world_polygons.has(_hovered_outline):
 		return
+	# V4.10b: the outline kind's colour on the ground under it, at the hover
+	# strength. The fixed pale blue was right over the photograph and LIGHTER than
+	# the resting ink line over paper -- the hover cue reversed at depth.
+	var hover_color := Color(border_color("outline"), WORLD_BORDER_HOVER.a)
 	for ring: PackedVector2Array in _world_polygons[_hovered_outline]:
 		if ring.size() < 2:
 			continue
@@ -1109,7 +1114,7 @@ func _draw_outline_hover_ring() -> void:
 		for p in ring:
 			screen_points.append(Vector2(p.x * _kx + _ox, p.y * _ky + _oy))
 		screen_points.append(screen_points[0])
-		draw_polyline(screen_points, WORLD_BORDER_HOVER, WORLD_BORDER_HOVER_WIDTH)
+		draw_polyline(screen_points, hover_color, WORLD_BORDER_HOVER_WIDTH)
 
 
 ## V4.11c. Two lines beside the cursor -- the outline's name, then what it supplies
@@ -1388,7 +1393,8 @@ func _place_labels(max_tier := -1) -> Array:
 			candidates.append({
 				"id": "nation:%s" % id, "text": entry["text"],
 				"at": _lonlat_to_screen(lonlat.x, lonlat.y), "gap": 0.0,
-				"rank": [0, 0.0, String(id)], "anchors": ["center"],
+				"rank": [0, 0.0 if border_kind_of(String(id)) == "playable" else 1.0, String(id)],
+				"anchors": ["center"], "over_marks": true,
 			})
 	if _zoom >= CITY_MIN_ZOOM:
 		# A tier that is neither named at this zoom nor an obstacle (tier 3, by
@@ -1430,8 +1436,37 @@ func _place_labels(max_tier := -1) -> Array:
 				"gap": glyph.size.x * 0.5 + MapLabels.PAD_PX,
 				"rank": [tier, -float(city["population"]), city_id],
 			})
-	_last_placed = MapLabels.place(candidates, blocked, view, measure)
+	var reserved: Array = []
+	var hover_rect := _hover_label_rect()
+	if hover_rect.size.x > 0.0:
+		reserved.append(hover_rect)
+	_last_placed = MapLabels.place(candidates, blocked, view, measure, reserved)
 	return _last_placed
+
+
+## The hovered city's full label box -- the same text, offset and size
+## _draw_cities() draws it with -- or Rect2() when no city is hovered (or the map
+## is above CITY_MIN_ZOOM's cut, where no city is drawn). Reserved in the
+## placement so no permanent name lands on the text the player pointed at.
+func _hover_label_rect() -> Rect2:
+	if _hovered_city == "" or _zoom < CITY_MIN_ZOOM:
+		return Rect2()
+	var font := get_theme_default_font()
+	if font == null:
+		return Rect2()
+	for city in _cities:
+		if String(city["city_id"]) != _hovered_city:
+			continue
+		var font_size := UiTheme.SIZE_MICRO
+		var lonlat: Vector2 = city["lonlat"]
+		var at := _lonlat_to_screen(lonlat.x, lonlat.y)
+		var text: String = MapCities.label_of(city)
+		var sz := _measure_text(font, font_size, text)
+		var text_at := at + MapCities.label_offset(MapCities.radius_of(city)) - Vector2(sz.x / 2.0, 0.0)
+		# text_at is the baseline; the box runs from the ascent above it, and the
+		# drop shadow's 1 px is inside the placer's own 2 px pad.
+		return Rect2(Vector2(text_at.x, text_at.y - font.get_ascent(font_size)), sz)
+	return Rect2()
 
 
 ## The fifth pass, behind the markers -- V2.2b, and the tier doc's *"brass

@@ -25,6 +25,7 @@ func _init() -> void:
 	_check_dense_cluster()
 	_check_cost()
 	_check_no_comparator_sort()
+	_check_over_marks_and_reserved()
 	_finish()
 
 
@@ -162,6 +163,26 @@ func _check_no_comparator_sort() -> void:
 "):
 		if line.split("#")[0].contains("sort_custom("):
 			_failures.append("map_labels.gd sorts with a GDScript comparator again: %s" % line.strip_edges())
+
+
+## V4.10b review pass 1: a one-anchor name over a mark is dropped unless it may
+## sit over marks; a reserved box beats everyone, over_marks or not.
+func _check_over_marks_and_reserved() -> void:
+	var at := Vector2(600, 400)
+	var mark := Rect2(at - Vector2(5, 5), Vector2(10, 10))
+	var nation := _cand("nation", "SPAIN", at, [0, 0.0, "nation"])
+	nation["anchors"] = ["center"]
+	var dropped: Array = MapLabels.place([nation], [mark], VIEW, _measure)
+	if not dropped.is_empty():
+		_failures.append("over_marks: a centred name over a mark placed without the flag")
+	nation["over_marks"] = true
+	var kept: Array = MapLabels.place([nation], [mark], VIEW, _measure)
+	if kept.size() != 1:
+		_failures.append("over_marks: a centred name with the flag was dropped over a mark")
+	var reserved := Rect2(at - Vector2(30, 10), Vector2(60, 20))
+	var blocked_by_reserve: Array = MapLabels.place([nation], [mark], VIEW, _measure, [reserved])
+	if not blocked_by_reserve.is_empty():
+		_failures.append("reserved: a name was placed over a reserved box")
 
 
 func _finish() -> void:
