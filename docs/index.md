@@ -89,7 +89,9 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[v1]] — what gets built once the MVP works. Complete; nothing left in it
 - [[v2]] — the world becomes visible and located: geography, faces, a calendar that costs something, motion
 - [[v3]] — Europe, whole: the map as a platform, the alliance system, the EU-27 roster, roads and climate. Signed 2026-09-06; V3.0–V3.7 built, V3.7's portrait generation left incomplete by the author's call (2026-09-14)
-- [[v4]] — the world wants things: agency settled, a player agenda, characters, events at scale, industry, the reading surface. Signed 2026-09-13; V4.0–V4.4, V4.6 and V4.7 built, V4.5 next
+- [[v4]] — the world wants things: agency settled, a player agenda, characters, events at scale, industry, the reading surface. Signed 2026-09-13; closed 2026-10-18, twelve blocks merged
+- [[v5]] — the world talks back: the audit, a new shell and charter, people who talk, decisions in real units, the real network. UNSIGNED draft (2026-10-19)
+- [[v5-reflection]] — what V4 left and what the author asked for: load-bearing debts, design tensions, three candidate themes with verdicts
 - [[history]] — the per-block record of what each version built, measured and refused (moved out of AGENTS.md at V4.4's close)
 - [[someday]] — deferred engineering issues, each with the trigger that would reopen it
 - [[tiers/someday|someday (ideas)]] — the parking lot for design ideas, not scheduled
