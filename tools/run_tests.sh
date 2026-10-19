@@ -13,6 +13,7 @@ tests=(
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd
+  tests/test_nation_fields.gd
   tests/test_electoral_systems.gd
   tests/test_elections.gd
   tests/test_government.gd
