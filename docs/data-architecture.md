@@ -394,6 +394,8 @@ Later sessions add their own fields the same way the nation schema is grown — 
 
 Both are hand-written field lists, so a field added to the class and forgotten in the copy fails silently and nastily — the projection ends up sharing a Dictionary with the live game. `tests/test_state_copy.gd` (S5) enumerates the fields off the object rather than listing them, and checks both failure modes: not copied at all, and copied by reference. It needs no edit when a session adds a field, which is the point.
 
+**V5.0a: NationState's half is no longer hand-written.** `duplicate_state()`, `to_dict()` and `from_dict()` each walk one table, `src/core/nation_fields.gd`: a row per field carrying how it copies, how it is read back, its default and whether its absence reads correctly for an older save (the bump rule below, as a column). `tests/test_nation_fields.gd` fails when a `var` has no row, round-trips every field from a sentinel, checks a loaded state shares nothing with its payload, and pins the must-bump set against `SAVE_VERSION`. `GameState`'s triple is still hand-written: its registers each carry a bespoke per-entry schema the table's readers do not cover.
+
 Systems in `src/sim/` read and write `GameState`. Nothing else does. The UI reads it and never writes it — player intent goes back as explicit commands, of which `Budget.commit()` is the first. This is the one-way dependency rule from [[engine-decision]].
 
 ### Persistence
@@ -413,6 +415,10 @@ Live state is serialised to a JSON save file. The whole `GameState` object, writ
 > state the first already moved. Round-trip through JSON when a test or a tool
 > needs two independent copies — or use `duplicate_state()`, which does deep-copy
 > and is what `Budget.project()` uses.
+>
+> **V5.0a closed the NationState half:** its `from_dict()` now REBUILDS every
+> register through the field table's readers, so two NationStates loaded from
+> one payload share nothing. `GameState.from_dict()` is unchanged.
 
 **`save_version` is written from the very first save.** It costs one line now. Retrofitting it after there are saves in the wild means guessing at a format from its contents. On load: matching version proceeds, older version runs a migration if one exists, unknown or newer version fails with a clear message rather than half-loading.
 

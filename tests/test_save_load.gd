@@ -2116,7 +2116,7 @@ func _run_commodity_roundtrip(loader) -> void:
 	# `loaded`: `loaded` is a from_dict() product and its register is a REBUILD, so
 	# writing through it would have proved the rebuild is writable rather than that
 	# the live state's figure survives JSON. (`state` and `loaded` still share
-	# nothing -- that is what _commodity_state_from's rebuild exists for.)
+	# nothing -- that is what nation_field_readers.commodity_state()'s rebuild exists for.)
 	var commodity_clock := Clock.new()
 	var disk_error := SaveManager.save_game(state, commodity_clock, COMMODITY_SLOT)
 	commodity_clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
