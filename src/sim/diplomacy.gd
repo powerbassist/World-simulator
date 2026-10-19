@@ -37,6 +37,7 @@ const CK = preload("res://src/sim/coercion_constants.gd")
 ## below already owned the loop, so the decision belongs here and Coercion keeps
 ## only the terms it builds.
 const FP = preload("res://src/sim/foreign_policy.gd")
+const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const FPK = preload("res://src/sim/foreign_policy_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
@@ -378,16 +379,16 @@ static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary
 			# an accept/refuse surface: a second machine, and the split V1.3e's own
 			# machine-count test would have caught. AI-to-AI agreements are unaffected
 			# and do run.
-			if _is_agreement_verb(action) and state.nations[target_id].has_budget:
+			if Verbs.is_agreement_verb(action) and state.nations[target_id].has_budget:
 				continue
 
 			# V1.3g inherits that exclusion exactly, for the same reason and with the
-			# narrower test _is_pact_signing_verb() explains: would_accept_pact() is
+			# narrower test Verbs.is_pact_signing_verb() explains: would_accept_pact() is
 			# the COUNTERPARTY's decision, so an AI offering the player an alliance
 			# would have the interest model answer on the player's behalf. AI-to-AI
 			# pacts are unaffected and do run, and an AI can still abandon a pact with
 			# the player -- which is the half the agreement version gets wrong.
-			if _is_pact_signing_verb(action) and state.nations[target_id].has_budget:
+			if Verbs.is_pact_signing_verb(action) and state.nations[target_id].has_budget:
 				continue
 
 			var score_v: float = FP.desire_from(terms, action.effects)
@@ -401,43 +402,6 @@ static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary
 					"reason": FP.act_reason(terms, action.effects),
 				}
 	return best
-
-
-## Which counterparty said no, and why. One place rather than a ternary at the call
-## site, so a sixth channel with a gate of its own has somewhere obvious to go.
-static func _refusal_reason_for(
-	state, actor_id: String, target_id: String, terms: Dictionary, pact_terms: Dictionary
-) -> String:
-	if String(pact_terms.get("op", "")) == "sign":
-		return FP.pact_refusal_reason(state, actor_id, target_id)
-	return refusal_reason(state, actor_id, target_id, terms)
-
-
-## Whether an action asks a counterparty to SIGN a pact -- read off the op rather
-## than off the channel being non-empty, which is where _is_agreement_verb() sits.
-##
-## The distinction is load-bearing rather than tidy. Only signing needs consent:
-## abandoning is unilateral, and deploying happens under a pact already agreed. Read
-## as "the channel is non-empty", the _best_act() exclusion below would mean an AI
-## can never ABANDON a pact with the player -- a human locked into an alliance the
-## other side hates, permanently, with no exit on its own side.
-##
-## > [!note] An existing consequence this uncovered, recorded rather than fixed here
-## > _is_agreement_verb() DOES have the non-empty shape, so `withdraw_from_compact`
-## > is skipped whenever the target is the player: an AI can never withdraw from a
-## > trade agreement with the player. Out of V1.3g's scope; written down so it is
-## > not rediscovered as new.
-static func _is_pact_signing_verb(action) -> bool:
-	var pact: Dictionary = action.effects.get("pact", {})
-	return String(pact.get("op", "")) == "sign"
-
-
-## Whether an action writes GameState.agreements in either direction. Read off the
-## effects rather than off a list of action ids, so a new agreement verb in
-## data/diplomatic-actions/ is covered without an edit here -- the data-not-code
-## rule docs/engine-decision.md states first.
-static func _is_agreement_verb(action) -> bool:
-	return not (action.effects.get("agreement", {}) as Dictionary).is_empty()
 
 
 ## The kind of measure `actor` has in force against `target`, or "" for none.
@@ -661,7 +625,7 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 			# V1.3b shipped `refused_by_partner` and nothing in src/ui/ ever read
 			# it, so a partner declining a treaty was silent to the player. Now
 			# there is a reason to show, this carries it.
-			"refusal_reason": _refusal_reason_for(state, actor_id, target_id, terms, pact_terms) if blocked_by_partner else "",
+			"refusal_reason": Verbs.refusal_reason_for(state, actor_id, target_id, terms, pact_terms) if blocked_by_partner else "",
 			"relations_before": score(state, actor_id, target_id),
 			"relations_after": score(state, actor_id, target_id),
 		}
