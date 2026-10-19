@@ -43,7 +43,7 @@ before this block:
 ## The template is a constraint, not a defaults table
 
 `data/political-systems/<id>.json`, one file per system, loaded by
-`DataLoader._load_political_systems()` and parsed by `political_system.gd`
+`PoliticsLoader.load_political_systems()` and parsed by `political_system.gd`
 into a `PoliticalSystem` value type — the same `from_dict()`/`_extract_*`
 shape `nation.gd` and `party.gd` already use.
 

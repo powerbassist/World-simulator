@@ -634,7 +634,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	# indistinguishable from "this nation borders nobody", and one of the ten
 	# genuinely borders nobody. Whether each id names a nation that LOADED, and
 	# whether the relation is mutual, are cross-file questions --
-	# data_loader.gd's _validate_neighbours().
+	# GeoLoader.validate_neighbours().
 	n.neighbours = _extract_neighbours(government, n.id, filename, errors)
 
 	var fiscal: Dictionary = _extract_dict(d, "fiscal", filename, errors)

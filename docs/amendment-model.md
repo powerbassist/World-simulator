@@ -193,7 +193,7 @@ institutional field at **runtime**, long after that check has run — so the
 same check has to hold for every value an amendment could ever write, not
 just the value a nation starts with.
 
-`DataLoader._validate_amendments()` (new, called after both `laws` and
+`PoliticsLoader.validate_amendments()` (new, called after both `laws` and
 `political_systems` are loaded) checks every constitutional law's
 `effects.institutional` against every template named in its own `systems`
 list, the same fields `_validate_political_system()` checks for a nation:
@@ -256,7 +256,7 @@ Refused outright, as always; no migration.
 - `src/core/political_system.gd` — `allowed_amendment_rules`
 - `src/core/nation_state.gd` — `amendment_rule` (mutable, unlike its siblings)
 - `src/core/law.gd` — `constitutional`, `systems`, `effects.institutional`
-- `src/core/data_loader.gd` — `_validate_amendments()`, plus one line in `_validate_political_system()`
+- `src/core/loaders/politics_loader.gd` — `PoliticsLoader.validate_amendments()`, plus one line in `validate_political_system()`
 - `src/core/game_state.gd` — `SAVE_VERSION` 6 → 7
 - `src/sim/legislature.gd` — `available()`'s systems filter, `resolve_vote()`'s amendment arm, `apply()`'s institutional channel, `propose()`'s 49.3 refusal
 - `src/sim/legislature_constants.gd` — `"amendment"` majority key, `AMENDMENT_RULE_FRACTIONS`

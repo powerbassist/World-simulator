@@ -375,7 +375,7 @@ plus the null-state path.
 ### Where the other ~69 ms goes: counted, not profiled
 
 Not a profile -- the counts below are exact, derived from the committed geometry
-(`data/geo/*.geojson` read through `_outer_ring()`, which keeps the outer ring of each
+(`data/geo/*.geojson` read through `GeoLoader.outer_ring()`, which keeps the outer ring of each
 polygon and drops the holes), and they agree with §4's inventory. **What no line here
 claims is a share of the 69 ms in milliseconds.** That attribution is the probe's, and
 the probe has not been run on it.

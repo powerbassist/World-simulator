@@ -263,7 +263,7 @@ respects on its own.
 the fifth theme is V1.4b's and is named for a **domain** like the other four rather
 than for a mechanism: a theme called "regulation" is where [[v1]] §6's sectoral
 investment would wrongly land, and what separates those two is the firm register,
-not the word. `_load_laws()` directory-scans, so a fifth file needed no loader
+not the word. `PoliticsLoader.load_laws()` directory-scans, so a fifth file needed no loader
 change —
 the same shape `data/parties/*.json` uses. See [[data-architecture]] for the
 full field list and `src/core/law.gd` for validation.

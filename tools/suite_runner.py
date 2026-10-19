@@ -21,8 +21,10 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from dataclasses import dataclass, field
@@ -49,6 +51,15 @@ GODOT = os.environ.get("GODOT_BIN", "godot")
 # orphan godots holding user:// open against the next run's exclusive lane.
 _LIVE_CHILDREN: set = set()
 _CHILDREN_LOCK = threading.Lock()
+
+# --isolate (V5.0b): the environment EVERY godot this runner spawns gets, the
+# cold-clone --import included. A private APPDATA puts user:// (saves, settings,
+# logs, the exclusive lane's backup) under a temp dir, so two runs in two
+# checkouts cannot touch each other's state or the real user dir. APPDATA and
+# not override.cfg: the isolation experiment (2026-10-19) measured a cold
+# --import writing the REAL user dir with override.cfg present. XDG_DATA_HOME is
+# the same move off Windows (untested there). None = inherit, today's behaviour.
+_CHILD_ENV: dict | None = None
 
 
 @dataclass
@@ -110,7 +121,7 @@ def run_child(cmd: list[str], timeout: float) -> tuple[str, int, str]:
     proc = subprocess.Popen(
         cmd, cwd=str(REPO), stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-        errors="replace",
+        errors="replace", env=_CHILD_ENV,
     )
     with _CHILDREN_LOCK:
         _LIVE_CHILDREN.add(proc)
@@ -394,6 +405,15 @@ def _selftest() -> int:
     expect(not ex2 and checks2 == ["_check_a", "_check_b"],
            "shard tag parse: %r %r" % (ex2, checks2))
 
+    # The bare gate's registry read (V5.0b): bash's comment rule, and a parse
+    # that finds no array yields nothing (main() refuses it) rather than a guess.
+    reg = parse_registry("x\ntests=(\n  tests/test_a.gd\n  # tests/test_b.gd\n"
+                         "  tests/test_c.gd  # trailing note\n)\n")
+    expect(reg == ["tests/test_a.gd", "tests/test_c.gd"], "registry parse: %r" % reg)
+    expect(parse_registry("tests = ( tests/test_a.gd )\n") == [],
+           "an unmatched registry must parse empty")
+    expect(len(registry()[0]) > 100, "the real registry parses: %d" % len(registry()[0]))
+
     if failures:
         for f in failures:
             print("SELFTEST FAIL: %s" % f)
@@ -415,17 +435,46 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--verbose", action="store_true",
                     help="print every test's full output, green included (the old default)")
     ap.add_argument("--run-dir", default=None)
+    ap.add_argument("--isolate", action="store_true",
+                    help="private APPDATA per run (user:// in a temp dir): two isolated "
+                         "runs in two checkouts may overlap; kept on failure for its logs")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)
 
     if args.selftest:
         return _selftest()
     if not args.tests:
-        ap.error("no tests given (bash tools/run_tests.sh --print-tests prints the registry)")
+        # AGENTS.md's agent gate is this command with no tests, and it used to
+        # exit 2 here. The list is still run_tests.sh's tests=() -- read, not
+        # copied -- and its unregistered-test rule applies on the way, so a bare
+        # gate is as strict as the bash one -- its step 0 (the selftest) and its
+        # SUITE_PYTHON export too. Parsed rather than run through bash: a
+        # core.autocrlf checkout hands bash a CRLF script it cannot execute.
+        if _selftest() != 0:
+            return 1
+        os.environ.setdefault("SUITE_PYTHON", sys.executable)
+        args.tests, unregistered = registry()
+        if not args.tests:
+            # A reformatted run_tests.sh the parse no longer matches must not
+            # become a gate that runs nothing and prints "passed".
+            print("no tests parsed from tools/run_tests.sh's tests=() -- "
+                  "fix registry() before trusting a bare gate", file=sys.stderr)
+            return 2
+        if unregistered:
+            print("test files on disk but absent from tools/run_tests.sh: %s"
+                  % " ".join(unregistered), file=sys.stderr)
+            return 1
 
     if not _godot_available():
         print("godot not found -- set GODOT_BIN if it is not on PATH", file=sys.stderr)
         return 2
+
+    global _CHILD_ENV
+    appdata = None
+    if args.isolate:
+        appdata = tempfile.mkdtemp(prefix="nsim_appdata_")
+        _CHILD_ENV = {**os.environ, "APPDATA": appdata, "XDG_DATA_HOME": appdata}
+        print("isolated: APPDATA=%s" % appdata, file=sys.stderr)
 
     # The cold-clone rule (V2.8 review): no .godot/ means no script class
     # cache, and the committed autoload does not parse. One import pass.
@@ -433,7 +482,8 @@ def main(argv: list[str] | None = None) -> int:
         print("no .godot/ -- importing once so the script class cache exists",
               file=sys.stderr)
         subprocess.run([GODOT, "--headless", "--import"], cwd=str(REPO),
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       env=_CHILD_ENV)
 
     writer = RunWriter(Path(args.run_dir) if args.run_dir else None)
     print("run dir: %s" % writer.dir, file=sys.stderr)
@@ -449,20 +499,53 @@ def main(argv: list[str] | None = None) -> int:
         for r in exc.results:  # the captured output of the finished ones
             writer.write_log(r)
         writer.finish(exc.results, interrupted=True, jobs=args.jobs)
+        _report_isolated(appdata)
         return 130
     except KeyboardInterrupt:  # second Ctrl-C, or one before any child ran
         _kill_live_children()
         print("interrupted", file=sys.stderr)
         writer.finish([], interrupted=True, jobs=args.jobs)
+        _report_isolated(appdata)
         return 130
     elapsed = int(time.monotonic() - t0)
     code = writer.finish(results, interrupted=False, jobs=args.jobs)
+    if code == 0 and appdata is not None:
+        shutil.rmtree(appdata, ignore_errors=True)
+    else:
+        _report_isolated(appdata)
     if code == 0:
         print("test suite passed -- %d tests in %d:%02d"
               % (len(results), elapsed // 60, elapsed % 60))
     else:
         print("test suite failed", file=sys.stderr)
     return code
+
+
+def _report_isolated(appdata: str | None) -> None:
+    """A failed or interrupted isolated run keeps its user dir, and says where."""
+    if appdata is not None:
+        print("isolated user dir kept for its logs: %s" % appdata, file=sys.stderr)
+
+
+def registry() -> tuple[list[str], list[str]]:
+    """(the tests=() array of tools/run_tests.sh in order, tests/test_*.gd
+    files on disk that it does not list)."""
+    text = (REPO / "tools" / "run_tests.sh").read_text(encoding="utf-8")
+    tests = parse_registry(text)
+    on_disk = sorted("tests/" + p.name for p in (REPO / "tests").glob("test_*.gd"))
+    return tests, [t for t in on_disk if t not in tests]
+
+
+def parse_registry(text: str) -> list[str]:
+    """The tests=() array as bash reads it: a `#` starts a comment, so a
+    commented-out entry is not registered."""
+    block = re.search(r"^tests=\((.*?)^\)", text, re.MULTILINE | re.DOTALL)
+    if not block:
+        return []
+    words: list[str] = []
+    for line in block.group(1).splitlines():
+        words += line.split("#", 1)[0].split()
+    return [w for w in words if w.startswith("tests/")]
 
 
 def _godot_available() -> bool:

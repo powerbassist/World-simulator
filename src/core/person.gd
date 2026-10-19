@@ -29,7 +29,7 @@ extends RefCounted
 ## Validation splits in two by necessity, not taste: people load BEFORE
 ## parties and programme, so this file checks shape and closed vocabularies
 ## (kind, traits, stance-for-family, threshold coherence) and
-## data_loader._validate_people() resolves the cross-register halves (party
+## PeopleLoader.validate_people() resolves the cross-register halves (party
 ## ids, programme entries, portfolios) once the whole loader is in hand.
 ## `kind` absent reads "politician" -- the truth about every one of the 213
 ## entries that existed before V4.3 -- and an explicit unknown kind is an
@@ -163,7 +163,7 @@ static func _validate_want(w, wpath: String, filename: String, errors: Array[Str
 		errors.append("%s: %s stance '%s' is not legal for a %s want (%s)" % [
 			filename, wpath, stance, family, str(CharacterK.WANT_STANCES[family])])
 		return
-	# The meter's own key, HERE rather than in data_loader._validate_want: it is
+	# The meter's own key, HERE rather than in PeopleLoader.resolve_want(): it is
 	# a closed vocabulary like kind and traits, and the loader's half only
 	# resolves cross-register references. A want for "meter:corruption" would
 	# otherwise load clean and sit inert forever -- the exact class the closed

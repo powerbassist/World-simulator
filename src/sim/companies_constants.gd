@@ -99,7 +99,7 @@ const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
 
 ## The smallest share a MAJOR may be authored at. A firm below this cannot move
 ## its sector by any reachable amount, so it is a name on a panel rather than a
-## firm -- the same standard _validate_people() applies to an unreferenced
+## firm -- the same standard PeopleLoader.validate_people() applies to an unreferenced
 ## person, and the same one U6b's probe cut a five-deep minister bench for.
 ## MAJORS only: company.gd scopes this floor by tier, and a body firm reads
 ## MIN_BODY_SHARE below, because the body's whole band (~0.005 typical share)

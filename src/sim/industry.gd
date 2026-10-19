@@ -47,7 +47,7 @@ const Net = preload("res://src/sim/network.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 
 ## The relocation distance tables are a pure function of loader content: the
-## graph is built once by _load_region_graph, never mutated after (only
+## graph is built once by RegionsLoader.load_region_graph, never mutated after (only
 ## clear()ed by the next load_all), and duplicate_state()'s deep copy
 ## duplicates content. One memo therefore serves every graph the process
 ## holds, keyed on the graph's structural hash -- any content difference

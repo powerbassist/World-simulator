@@ -48,7 +48,7 @@ resting(A, B) = REST_BASE + EU_CO_MEMBER_BONUS + SHARED_BORDER_BONUS
 > [!success] Landed at V1.3b, and the escape hatch was not needed
 > [[trade-model|The directed trade weight]] is normalised per viewer, so it has two sides where the pair key has one, and the disparity is simply the ratio between them: `w(LUX→DEU)` is **13.1×** `w(DEU→LUX)`, while `w(FRA→DEU)` and `w(DEU→FRA)` differ by 1.1×. Luxembourg's trade is mostly with Germany and Germany's is barely with Luxembourg; France and Germany matter to each other about equally. Neither statement is expressible here, both fall out there for free, and **nothing in this file changed to allow it** — which is what the note below predicted.
 
-`data_loader.gd`'s `_validate_neighbours()` fails at startup if a border is not mutual. Without it the symmetric key would be resting on an asymmetric input, and the derivation would depend on which file it happened to read first.
+`GeoLoader.validate_neighbours()` (`src/core/loaders/geo_loader.gd`) fails at startup if a border is not mutual. Without it the symmetric key would be resting on an asymmetric input, and the derivation would depend on which file it happened to read first.
 
 The four tiers this produces, and the pairs at each:
 

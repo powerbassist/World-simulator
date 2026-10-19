@@ -108,7 +108,7 @@ func _test_content_loads() -> void:
 		if _action(id) == null:
 			_fail("company action '%s' is missing" % id)
 
-	# The rule DataLoader._validate_companies() enforces, asserted here as a
+	# The rule CompaniesLoader.validate_companies() enforces, asserted here as a
 	# property of the shipped content rather than only of the checker: a sector with
 	# one named firm has no rival to take share from, so a subsidy pointed at it is
 	# a sector lever wearing a company's name -- which is what keeps V1.4's subsidy

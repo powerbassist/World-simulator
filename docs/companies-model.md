@@ -50,7 +50,7 @@ decision rather than picking a sector.
 Without it every firm in a sector answers alike, and V1.4's subsidy *is* [[v1]]
 §6's "sectoral investment — a lever pointed at a sector". That is the clustered
 `coalition_position` finding [[foreign-policy-model]] records, caught at design
-time rather than by a probe. It is also why `_validate_companies()` **refuses a
+time rather than by a probe. It is also why `CompaniesLoader.validate_companies()` **refuses a
 sector with one named firm**: a firm with no rival cannot gain share from
 anybody, so a subsidy pointed at it is a sector lever wearing a company's name.
 
@@ -300,8 +300,8 @@ save carries no company content and that a register entry holds nothing beyond
 ```
 DataLoader.load_all()
   → _load_companies(id)     ×10, an ABSENT file is legal
-  → _load_company_actions()
-  → _validate_companies()   ≥2 firms per named sector; shares sum ≤ 1.0
+  → VerbActionsLoader.load_company_actions()
+  → CompaniesLoader.validate_companies()   ≥2 firms per named sector; shares sum ≤ 1.0
 
 GameState._build_nation() → Companies.init_nation(ns, company_list)
 main.gd monthly            → Companies.tick_month(state, loader)   [after Defence]
@@ -447,7 +447,7 @@ That widening is not a compromise, it is the session's whole case — see §12.
 levers already exist on a law. The sixth session running with no new content type,
 and the fifth with no new effect channel.
 
-## 12. Row 12: `_validate_companies()`'s defence against §6 does not transfer
+## 12. Row 12: `CompaniesLoader.validate_companies()`'s defence against §6 does not transfer
 
 The sharpest thing in the session, and the **twelfth** instance of the
 stale/missing-row failure [[trade-model|V1.3b]] first recorded.

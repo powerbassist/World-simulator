@@ -128,7 +128,7 @@ rather than one variant among several, and avoids three near-empty files.
 ### Validation, split in two
 
 Range and shape live in `scenario.gd`; anything needing the nation's own roster
-lives in `data_loader._validate_scenarios()`, beside the other cross-file checks.
+lives in `PoliticsLoader.validate_scenarios()`, beside the other cross-file checks.
 Both fail loudly at startup, the same discipline a bad nation file gets:
 
 - an unknown nation, or one that is not `playable` — a scenario offered from a

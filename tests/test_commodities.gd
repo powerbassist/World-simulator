@@ -107,7 +107,8 @@ func _check_single_writer() -> void:
 	# events.gd compares it with `==`, which the pattern excludes.
 	var stamp_write := RegEx.new()
 	stamp_write.compile("commodity_high_month\\s*[-+*/]?=(?!=)")
-	for dir in ["src/sim", "src/core", "src/ui"]:
+	# src/core/loaders since V5.0b: the scan does not recurse.
+	for dir in ["src/sim", "src/core", "src/core/loaders", "src/ui"]:
 		var da := DirAccess.open("res://%s" % dir)
 		if da == null:
 			continue

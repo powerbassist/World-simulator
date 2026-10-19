@@ -330,7 +330,7 @@ static func _extract_choices(d: Dictionary, event_id: String, filename: String, 
 		# V4.4: a choice may arm a follow-up event at a delay -- the chain machine
 		# V4.1 deliberately refused, built once here. The target is validated as a
 		# loaded event id by the loader's cross-check (it needs the whole set in
-		# hand, _validate_people's pattern); here only the shape and the delay bound.
+		# hand, PeopleLoader.validate_people's pattern); here only the shape and the delay bound.
 		var arms := {}
 		if entry.has("arms"):
 			var raw_arms = entry["arms"]

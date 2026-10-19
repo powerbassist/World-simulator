@@ -115,7 +115,8 @@ func _test_single_writer() -> void:
 		"subsidy_shadow": [], "subsidy_lapsed_month": [],
 		"owner": [], "courted": [], "board_chair": [],
 		"failed_month": [], "bid_month": []}
-	var roots := ["res://src/sim", "res://src/core"]
+	# src/core/loaders since V5.0b: get_files() does not recurse.
+	var roots := ["res://src/sim", "res://src/core", "res://src/core/loaders"]
 	for root_dir: String in roots:
 		var dir := DirAccess.open(root_dir)
 		if dir == null:

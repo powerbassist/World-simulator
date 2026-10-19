@@ -111,6 +111,8 @@ jobs:
         run: bash tools/check_names.sh
       - name: Vault links
         run: python tools/check_vault.py
+      - name: Size ratchet (code lines; tools/size_baseline.json)
+        run: python tools/check_size.py
       - name: Every file has a declared licence (REUSE)
         run: |
           pip install --quiet reuse==6.2.0

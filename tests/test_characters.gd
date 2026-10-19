@@ -123,7 +123,8 @@ func _check_single_writers() -> void:
 	# And the same scan over src/core and src/ui, where a stray writer would be
 	# no less a defect -- the UI writes nothing, and core's state layer touches
 	# the registers only through whole-property assignment in the round-trip.
-	for dir in ["src/core", "src/ui"]:
+	# src/core/loaders since V5.0b: the scan does not recurse.
+	for dir in ["src/core", "src/core/loaders", "src/ui"]:
 		var da := DirAccess.open("res://%s" % dir)
 		if da == null:
 			continue
