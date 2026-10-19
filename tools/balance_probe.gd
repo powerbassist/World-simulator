@@ -597,6 +597,21 @@ const UNREST_REGIMES := {
 var _outcomes: Array = []
 var _runs: Array = []
 
+## V5.0c0's selection: the one regime asked for ("" = all), whether this run only
+## lists the serial order, the names seen, and how many ran.
+var _only := ""
+var _listing := false
+var _listed: Array = []
+var _ran := 0
+
+
+func _want(name: String) -> bool:
+	_listed.append(name)
+	if _listing or (_only != "" and name != _only):
+		return false
+	_ran += 1
+	return true
+
 
 func _init() -> void:
 	var only := ""
@@ -609,152 +624,198 @@ func _init() -> void:
 		if arg.begins_with("--json="):
 			json_path = arg.substr("--json=".length())
 			continue
+		if arg == "--list":
+			_listing = true
+			continue
 		if arg.length() == 3 and arg == arg.to_upper():
 			nation_id = arg
 		else:
 			only = arg
+	_only = only
 
+	# V5.0c0. EVERY regime is runnable on its own now, by name, in any family --
+	# tools/balance_parallel.py runs one probe per regime and merges their tables
+	# in the order below, which `--list` prints. Each loop asks _want(); a plain
+	# run wants everything, so its order and its output are what they always were.
 	var names: Array = REGIMES.keys()
-	if only != "":
-		# V2.8. An energy regime is one of the two new ones, runnable on its own
-		# through the same dispatch the full run uses -- a regime that can only be
-		# exercised in a two-hour batch is a regime nobody exercises while editing.
-		if ENERGY_REGIMES.has(only):
-			var regime: Dictionary = ENERGY_REGIMES[only]
-			_run(
-				nation_id, only, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				-1, -1, -1, -1, -1, -1, "", "", -1,
-				int(regime["energy_month"]), String(regime["energy_action"]), int(regime["energy_repeat"])
-			)
-			_write_outcomes(json_path)
-			quit()
-			return
-		if not REGIMES.has(only):
-			printerr("unknown regime '%s'; known: %s" % [only, names])
-			quit(1)
-			return
-		names = [only]
-
 	for name in names:
+		if not _want(name):
+			continue
 		_run(nation_id, name, REGIMES[name])
 
-	if only == "":
-		for name in DISSOLUTION_REGIMES.keys():
-			var regime: Dictionary = DISSOLUTION_REGIMES[name]
-			_run(nation_id, name, regime["budget"], int(regime["dissolve_month"]))
-		for name in CABINET_REGIMES.keys():
-			var regime: Dictionary = CABINET_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, int(regime["shortfall_month"]))
-		for name in AMENDMENT_REGIMES.keys():
-			var regime: Dictionary = AMENDMENT_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, int(regime["amend_month"]), String(regime["amendment_id"]))
-		for name in TRANSITION_REGIMES.keys():
-			var regime: Dictionary = TRANSITION_REGIMES[name]
-			_run(String(regime["nation_id"]), name, regime["budget"], -1, -1, int(regime["amend_month"]), String(regime["amendment_id"]))
-		for name in TRADE_REGIMES.keys():
-			var regime: Dictionary = TRADE_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", int(regime["agreement_month"]))
-		for name in COERCION_REGIMES.keys():
-			var regime: Dictionary = COERCION_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, int(regime["tariff_month"]))
-		for name in DEFENCE_REGIMES.keys():
-			var regime: Dictionary = DEFENCE_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, int(regime["pact_month"]), int(regime["deploy_month"]))
-		for name in CALENDAR_REGIMES.keys():
-			var regime: Dictionary = CALENDAR_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, int(regime["book_month"]))
-		for name in COMPANY_REGIMES.keys():
-			var regime: Dictionary = COMPANY_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, int(regime["subsidy_month"]))
-		for name in REGULATION_REGIMES.keys():
-			var regime: Dictionary = REGULATION_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, int(regime["regulate_month"]))
-		for name in OWNERSHIP_REGIMES.keys():
-			var regime: Dictionary = OWNERSHIP_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, int(regime["nationalise_month"]))
-		for name in SOCIETY_REGIMES.keys():
-			var regime: Dictionary = SOCIETY_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, int(regime["corrupt_month"]))
-		for name in DEMOGRAPHY_REGIMES.keys():
-			var regime: Dictionary = DEMOGRAPHY_REGIMES[name]
-			_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, int(regime["migrate_month"]))
-		for name in MEDIA_REGIMES.keys():
-			var regime: Dictionary = MEDIA_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {},
-				int(regime["censor_month"])
-			)
-		for name in UNREST_REGIMES.keys():
-			var regime: Dictionary = UNREST_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-				int(regime["settle_month"]),
-				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
-			)
-		for name in TAX_REGIMES.keys():
-			var regime: Dictionary = TAX_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-				int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
-			)
-		for name in INVESTMENT_REGIMES.keys():
-			var regime: Dictionary = INVESTMENT_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				int(regime["invest_month"])
-			)
-		for name in PROJECT_REGIMES.keys():
-			var regime: Dictionary = PROJECT_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				-1, int(regime["build_month"])
-			)
+	for name in DISSOLUTION_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = DISSOLUTION_REGIMES[name]
+		_run(nation_id, name, regime["budget"], int(regime["dissolve_month"]))
+	for name in CABINET_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = CABINET_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, int(regime["shortfall_month"]))
+	for name in AMENDMENT_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = AMENDMENT_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, int(regime["amend_month"]), String(regime["amendment_id"]))
+	for name in TRANSITION_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = TRANSITION_REGIMES[name]
+		_run(String(regime["nation_id"]), name, regime["budget"], -1, -1, int(regime["amend_month"]), String(regime["amendment_id"]))
+	for name in TRADE_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = TRADE_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", int(regime["agreement_month"]))
+	for name in COERCION_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = COERCION_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, int(regime["tariff_month"]))
+	for name in DEFENCE_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = DEFENCE_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, int(regime["pact_month"]), int(regime["deploy_month"]))
+	for name in CALENDAR_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = CALENDAR_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, int(regime["book_month"]))
+	for name in COMPANY_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = COMPANY_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, int(regime["subsidy_month"]))
+	for name in REGULATION_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = REGULATION_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, int(regime["regulate_month"]))
+	for name in OWNERSHIP_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = OWNERSHIP_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, int(regime["nationalise_month"]))
+	for name in SOCIETY_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = SOCIETY_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, int(regime["corrupt_month"]))
+	for name in DEMOGRAPHY_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = DEMOGRAPHY_REGIMES[name]
+		_run(nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, int(regime["migrate_month"]))
+	for name in MEDIA_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = MEDIA_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {},
+			int(regime["censor_month"])
+		)
+	for name in UNREST_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = UNREST_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+			int(regime["settle_month"]),
+			int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
+		)
+	for name in TAX_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = TAX_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+			int(regime.get("switch_month", -1)), regime.get("switch_delta", {})
+		)
+	for name in INVESTMENT_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = INVESTMENT_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+			int(regime["invest_month"])
+		)
+	for name in PROJECT_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = PROJECT_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+			-1, int(regime["build_month"])
+		)
 
-		for name in ENERGY_REGIMES.keys():
-			var regime: Dictionary = ENERGY_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				-1, -1, -1, -1, -1, -1, "", "", -1,
-				int(regime["energy_month"]), String(regime["energy_action"]), int(regime["energy_repeat"])
-			)
+	for name in ENERGY_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = ENERGY_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+			-1, -1, -1, -1, -1, -1, "", "", -1,
+			int(regime["energy_month"]), String(regime["energy_action"]), int(regime["energy_repeat"])
+		)
 
-		for name in CAMPAIGN_REGIMES.keys():
-			var regime: Dictionary = CAMPAIGN_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				-1, -1, int(regime["campaign_month"]), -1, -1, -1, "", "",
-				int(regime.get("campaign_tour_month", -1))
-			)
+	for name in CAMPAIGN_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = CAMPAIGN_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+			-1, -1, int(regime["campaign_month"]), -1, -1, -1, "", "",
+			int(regime.get("campaign_tour_month", -1))
+		)
 
-		for name in PLEDGE_REGIMES.keys():
-			var regime: Dictionary = PLEDGE_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-				int(regime["switch_month"]), regime["switch_delta"], -1,
-				-1, -1, -1, int(regime["pledge_month"])
-			)
+	for name in PLEDGE_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = PLEDGE_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+			int(regime["switch_month"]), regime["switch_delta"], -1,
+			-1, -1, -1, int(regime["pledge_month"])
+		)
 
-		for name in EVENT_REGIMES.keys():
-			var regime: Dictionary = EVENT_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				-1, -1, -1, -1, -1, -1, String(regime["answer"])
-			)
+	for name in EVENT_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = EVENT_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+			-1, -1, -1, -1, -1, -1, String(regime["answer"])
+		)
 
-		for name in CHAMBER_REGIMES.keys():
-			var chamber_regime: Dictionary = CHAMBER_REGIMES[name]
-			_run(
-				nation_id, name, chamber_regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				-1, -1, -1, -1, -1, -1, "", String(chamber_regime["kind"])
-			)
+	for name in CHAMBER_REGIMES.keys():
+		if not _want(name):
+			continue
+		var chamber_regime: Dictionary = CHAMBER_REGIMES[name]
+		_run(
+			nation_id, name, chamber_regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+			-1, -1, -1, -1, -1, -1, "", String(chamber_regime["kind"])
+		)
 
-		for name in REFERENDUM_REGIMES.keys():
-			var regime: Dictionary = REFERENDUM_REGIMES[name]
-			_run(
-				nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
-				-1, -1, -1, -1, int(regime["referendum_month"]), int(regime["electoral_month"])
-			)
+	for name in REFERENDUM_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = REFERENDUM_REGIMES[name]
+		_run(
+			nation_id, name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+			-1, -1, -1, -1, int(regime["referendum_month"]), int(regime["electoral_month"])
+		)
 
+
+	if _listing:
+		print("\n".join(PackedStringArray(_listed)))
+		quit(0)
+		return
+	if only != "" and _ran == 0:
+		printerr("unknown regime '%s'; known: %s" % [only, _listed])
+		quit(1)
+		return
 	_write_outcomes(json_path)
 	quit(0)
 
