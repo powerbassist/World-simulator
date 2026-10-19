@@ -11,7 +11,7 @@ Machine setup. Not game code — none of this ships.
 
 ## Godot
 
-**4.7.1-stable**, installed with winget rather than the portable zip, so upgrades are a command rather than a manual re-download.
+**4.7.2-stable**, installed with winget rather than the portable zip, so upgrades are a command rather than a manual re-download.
 
 ```bash
 winget install --id GodotEngine.GodotEngine --exact
@@ -240,7 +240,7 @@ Its MIT licence is committed alongside, and `ATTRIBUTION.md` credits it. **Nothi
 > Using it would mean either moving simulation logic into the scene tree — the
 > one thing the architecture is tested against — or running two AI systems. It
 > also ships as a GDExtension in most builds, which pins to the engine version
-> and fights the deliberate `4.7.1` pin.
+> and fights the deliberate `4.7.2` pin.
 >
 > Written down here so a V1.3 session does not rediscover it after wiring half a
 > tree. If behaviour trees are wanted, the plain-GDScript version is a few

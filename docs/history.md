@@ -9,6 +9,10 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V5.0a0 — the engine, 4.7.1 → 4.7.2 (2026-10-19)
+
+Godot bumped to **4.7.2-stable** (winget; CI pin `GODOT_VERSION` in `.github/workflows/tests.yml`, AGENTS.md's stack line, README, CONTRIBUTING, tooling.md and the bug template follow). Proof: `tools/balance_probe.gd` over the 51 regimes captured on 4.7.1 (`base.json`, main `14719499`, before the upgrade) and re-run on 4.7.2 after one `--headless --import`; `balance_diff.py`: 166 vs 166 verdicts, 0 flipped, 0 changes past tolerance; the two JSONs are byte-identical (`cmp`). Targeted tests `test_ui_theme`, `test_save_load`, `test_data` pass on 4.7.2; the full suite on 4.7.2 is the parent session's run and CI's four cold-cache shards. The dated 4.7.1 history (engine-decision's S4 note, the S1 tooling note) stays as written.
+
 ## V4 — closed (2026-10-18)
 
 The tier's close-out (the merge record, promised against shipped, the measured gates, the lessons) is the closing section of [docs/tiers/v4.md](tiers/v4.md). Several block rows below still say "IS BUILT": each of them merged, and the merge table there gives its PR and commit.

@@ -162,7 +162,7 @@ Four reasons, and the last two are the load-bearing ones:
   `legislature.gd`'s vote resolution, both of which are already plain scored
   search in `src/sim/` with no framework under them.
 - **Engine version.** v1.8.0 states support for Godot **4.6**; this project
-  pins **4.7.1**. A C++ GDExtension against a newer engine is a
+  pins **4.7.2** (4.7.1 when this was written). A C++ GDExtension against a newer engine is a
   binary-compatibility bet, and the plugin is not currently enabled in
   `project.godot`.
 - **It breaks [[engine-decision|Rule 2]].** Its runtime is Node/Resource-based
