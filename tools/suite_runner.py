@@ -21,8 +21,10 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from dataclasses import dataclass, field
@@ -49,6 +51,15 @@ GODOT = os.environ.get("GODOT_BIN", "godot")
 # orphan godots holding user:// open against the next run's exclusive lane.
 _LIVE_CHILDREN: set = set()
 _CHILDREN_LOCK = threading.Lock()
+
+# --isolate (V5.0b): the environment EVERY godot this runner spawns gets, the
+# cold-clone --import included. A private APPDATA puts user:// (saves, settings,
+# logs, the exclusive lane's backup) under a temp dir, so two runs in two
+# checkouts cannot touch each other's state or the real user dir. APPDATA and
+# not override.cfg: the isolation experiment (2026-10-19) measured a cold
+# --import writing the REAL user dir with override.cfg present. XDG_DATA_HOME is
+# the same move off Windows (untested there). None = inherit, today's behaviour.
+_CHILD_ENV: dict | None = None
 
 
 @dataclass
@@ -110,7 +121,7 @@ def run_child(cmd: list[str], timeout: float) -> tuple[str, int, str]:
     proc = subprocess.Popen(
         cmd, cwd=str(REPO), stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-        errors="replace",
+        errors="replace", env=_CHILD_ENV,
     )
     with _CHILDREN_LOCK:
         _LIVE_CHILDREN.add(proc)
@@ -415,17 +426,35 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--verbose", action="store_true",
                     help="print every test's full output, green included (the old default)")
     ap.add_argument("--run-dir", default=None)
+    ap.add_argument("--isolate", action="store_true",
+                    help="private APPDATA per run (user:// in a temp dir): two isolated "
+                         "runs in two checkouts may overlap; kept on failure for its logs")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)
 
     if args.selftest:
         return _selftest()
     if not args.tests:
-        ap.error("no tests given (bash tools/run_tests.sh --print-tests prints the registry)")
+        # The registry, from its one home: AGENTS.md's agent gate is this command
+        # with no tests, and it used to exit 2 here. run_tests.sh's own
+        # unregistered-test check runs on the way, so a bare gate is as strict.
+        listed = subprocess.run(["bash", "tools/run_tests.sh", "--print-tests"],
+                                cwd=str(REPO), capture_output=True, text=True)
+        if listed.returncode != 0:
+            print(listed.stderr, file=sys.stderr, end="")
+            return listed.returncode or 2
+        args.tests = [t.strip() for t in listed.stdout.splitlines() if t.strip()]
 
     if not _godot_available():
         print("godot not found -- set GODOT_BIN if it is not on PATH", file=sys.stderr)
         return 2
+
+    global _CHILD_ENV
+    appdata = None
+    if args.isolate:
+        appdata = tempfile.mkdtemp(prefix="nsim_appdata_")
+        _CHILD_ENV = {**os.environ, "APPDATA": appdata, "XDG_DATA_HOME": appdata}
+        print("isolated: APPDATA=%s" % appdata, file=sys.stderr)
 
     # The cold-clone rule (V2.8 review): no .godot/ means no script class
     # cache, and the committed autoload does not parse. One import pass.
@@ -433,7 +462,8 @@ def main(argv: list[str] | None = None) -> int:
         print("no .godot/ -- importing once so the script class cache exists",
               file=sys.stderr)
         subprocess.run([GODOT, "--headless", "--import"], cwd=str(REPO),
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       env=_CHILD_ENV)
 
     writer = RunWriter(Path(args.run_dir) if args.run_dir else None)
     print("run dir: %s" % writer.dir, file=sys.stderr)
@@ -457,6 +487,11 @@ def main(argv: list[str] | None = None) -> int:
         return 130
     elapsed = int(time.monotonic() - t0)
     code = writer.finish(results, interrupted=False, jobs=args.jobs)
+    if appdata is not None:
+        if code == 0:
+            shutil.rmtree(appdata, ignore_errors=True)
+        else:
+            print("isolated user dir kept for its logs: %s" % appdata, file=sys.stderr)
     if code == 0:
         print("test suite passed -- %d tests in %d:%02d"
               % (len(results), elapsed // 60, elapsed % 60))

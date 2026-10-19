@@ -312,7 +312,15 @@ fi
 # on a machine whose python is missing.
 if [ ! -d ".godot" ]; then
   echo "no .godot/ -- importing once so the script class cache exists" >&2
-  godot --headless --import >/dev/null 2>&1 || true
+  case " $* " in
+    # --isolate covers this import too: a cold --import writes the user dir,
+    # and is the step override.cfg was measured NOT to redirect (V5.0b).
+    *" --isolate "*)
+      import_appdata="$(mktemp -d)"
+      APPDATA="$import_appdata" XDG_DATA_HOME="$import_appdata"         godot --headless --import >/dev/null 2>&1 || true
+      rm -rf "$import_appdata" ;;
+    *) godot --headless --import >/dev/null 2>&1 || true ;;
+  esac
 fi
 
 # One execution core. The status line, per-test capture, noise filter and
