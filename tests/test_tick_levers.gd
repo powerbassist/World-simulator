@@ -15,6 +15,10 @@ extends SceneTree
 ##      Orgs step).
 ##   3. Trade's skipped lookups are skipped only while the registers are EMPTY:
 ##      with an agreement and a measure on a pair, the vector still prices both.
+##   4. Cycle's seed memo returns the FNV value the loop computes.
+##   5. Commodities' shared routes give the same production as each nation
+##      choosing its own, and an equal price vector compares equal by value
+##      (the reuse guard reads `!=`).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -23,6 +27,8 @@ const Regions = preload("res://src/sim/regions.gd")
 const Org = preload("res://src/core/org.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const RK = preload("res://src/core/relations.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
+const Commodities = preload("res://src/sim/commodities.gd")
 
 var _failures: Array[String] = []
 
@@ -40,6 +46,8 @@ func _init() -> void:
 	_check_unemployment_batch(state)
 	_check_shared_bonus_memo(state, loader)
 	_check_trade_registers(state)
+	_check_seed_memo()
+	_check_shared_routes(state, loader)
 	_finish()
 
 
@@ -107,6 +115,42 @@ func _check_trade_registers(state) -> void:
 		_fail("a measure on %s-%s did not cut the weight (%s -> %s)" % [a, b, with_agreement[b], with_measure[b]])
 	if ids.size() < 3:
 		_fail("roster too small to exercise the trade registers")
+
+
+func _check_seed_memo() -> void:
+	for key in ["FRA|evt_strike", "industry|x|invest", "statute|pmb|DEU", "", "ÄÖ|€"]:
+		var h: int = 2166136261
+		for i in key.length():
+			h = (h ^ key.unicode_at(i)) & 0xFFFFFFFF
+			h = (h * 16777619) & 0xFFFFFFFF
+		for pass_i in range(2):  # a miss, then a hit
+			if Cycle._key_seed(key) != h:
+				_fail("seed of '%s' on pass %d is %d, FNV says %d" % [key, pass_i, Cycle._key_seed(key), h])
+
+
+func _check_shared_routes(state, loader) -> void:
+	var tables: Dictionary = Commodities._loader_tables(loader)
+	var price: Dictionary = state.nations["FRA"].commodity_state["price"]
+	if price.is_empty():
+		_fail("no price vector to test the shared routes against")
+		return
+	if not (price.duplicate() == price) or price.duplicate() != price:
+		_fail("an equal price vector does not compare equal -- the route reuse would never fire")
+	var chosen := {}
+	for good_id in tables["order"]:
+		chosen[good_id] = Commodities._cheapest_route(tables, good_id, price)
+	for id in ["FRA", "DEU", "POL"]:
+		if not state.nations.has(id):
+			continue
+		var capacity: Dictionary = state.nations[id].commodity_state.get("capacity", {})
+		var out_a := {}
+		var gross_a := {}
+		var out_b := {}
+		var gross_b := {}
+		Commodities._produce(tables, capacity, price, out_a, gross_a)
+		Commodities._produce(tables, capacity, price, out_b, gross_b, chosen)
+		if var_to_str(out_a) != var_to_str(out_b) or var_to_str(gross_a) != var_to_str(gross_b):
+			_fail("%s: production with the shared routes differs from its own" % id)
 
 
 func _fail(message: String) -> void:

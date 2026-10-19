@@ -142,8 +142,25 @@ static func unit(seed_key: String, index: int) -> float:
 
 
 static func _key_seed(key: String) -> int:
+	var hit = _seed_memo.get(key)
+	if hit != null:
+		return hit
 	var h: int = 2166136261
 	for i in key.length():
 		h = (h ^ key.unicode_at(i)) & _U32
 		h = (h * 16777619) & _U32
+	# Bounded so a key that carries a month cannot grow it without limit; the
+	# keys the month draws are content-shaped (nation, event, firm), a few
+	# thousand, so the bound is never reached in play.
+	if _seed_memo.size() >= SEED_MEMO_MAX:
+		_seed_memo.clear()
+	_seed_memo[key] = h
 	return h
+
+
+## V5.0c. _key_seed() is FNV over the key's characters in a GDScript loop, and the
+## month asks it for the same few thousand keys every month (each event's hazard
+## per nation, each firm's draws): a pure function of the string, so the memo
+## returns the same int it would compute. Events' row was mostly this loop.
+const SEED_MEMO_MAX := 65536
+static var _seed_memo: Dictionary = {}

@@ -261,6 +261,11 @@ static func tick_month(state, loader) -> void:
 	for good_id in natural.keys():
 		_route_natural(good_id, nation_ids, capacities, required, endowed, pool_price, loader, traded, spare_by_nation)
 
+	var shared_price: Dictionary = pool_price
+	var shared_routes := {}
+	if not shared_price.is_empty():
+		for good_id in tables["order"]:
+			shared_routes[good_id] = _cheapest_route(tables, good_id, shared_price)
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
 		var capacity: Dictionary = capacities[nation_id]
@@ -274,7 +279,16 @@ static func tick_month(state, loader) -> void:
 		# Last month's price vector, which is the one the nation's own register
 		# carries -- every nation's copy is the same numbers, so the route a
 		# nation picks cannot depend on which copy it read.
-		_produce(tables, holding, ns.commodity_state["price"], out, gross)
+		# V5.0c: the route is a function of the price vector alone, and every
+		# nation carries the same vector -- so the routes are chosen once for it
+		# and reused by every nation whose vector is EQUAL to it. A nation whose
+		# copy ever differed would choose its own, so this is the same route by
+		# construction, not by trusting the invariant above.
+		var price_now: Dictionary = ns.commodity_state["price"]
+		if shared_price.is_empty() or price_now != shared_price:
+			_produce(tables, holding, price_now, out, gross)
+		else:
+			_produce(tables, holding, price_now, out, gross, shared_routes)
 		produced[nation_id] = out
 		made[nation_id] = gross
 
@@ -430,11 +444,12 @@ static func tick_month(state, loader) -> void:
 ## are derived ONCE per loader rather than once per nation per month. The
 ## unhoisted form was a 60-round relaxation and a full recipe scan per good per
 ## nation -- 29 nations' worth of the same answer, every tick.
-static func _produce(tables: Dictionary, capacity: Dictionary, price: Dictionary, out: Dictionary, gross: Dictionary) -> void:
+static func _produce(tables: Dictionary, capacity: Dictionary, price: Dictionary, out: Dictionary, gross: Dictionary,
+		chosen: Dictionary = {}) -> void:
 	var routes: Dictionary = tables["routes"]
 	for good_id in tables["order"]:
 		var cap := maxf(float(capacity.get(good_id, 0.0)), 0.0)
-		var route = _cheapest_route(tables, good_id, price)
+		var route = chosen[good_id] if chosen.has(good_id) else _cheapest_route(tables, good_id, price)
 		var target := cap
 		if route != null:
 			for input_id in route.inputs.keys():
