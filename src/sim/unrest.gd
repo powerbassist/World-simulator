@@ -389,9 +389,8 @@ static func site_weights(ns, region_list: Array) -> Dictionary:
 ## one region cannot differ from itself. Both nations are then unpriced by
 ## arithmetic, because Siting.concentration() reads 1.0 on an empty site.
 static func site_signal(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
-	var rates: Dictionary = {}
-	for region in region_list:
-		rates[region.id] = Regions.unemployment_pct(ns, region_list, region.id, access, sites)
+	# One pass rather than one per region: the same floats (V5.0c).
+	var rates: Dictionary = Regions.unemployment_by_region(ns, region_list, access, sites)
 	return Siting.excess(rates, site_weights(ns, region_list))
 
 

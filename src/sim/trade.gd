@@ -159,6 +159,13 @@ static func _raw(state, actor_id: String, with_agreements: bool, with_measures: 
 		return {}
 
 	var out := {}
+	# V5.0c, the month's hottest loop (Diplomacy builds ~400 of these vectors a
+	# month): the pair key is built once rather than twice, and the agreement and
+	# measure registers are not probed while they are empty -- a pair with no
+	# entry multiplies by exactly 1.0 there, so skipping the lookup is the same
+	# float, not an approximation (the 51-regime table is cmp-identical).
+	var any_agreement: bool = with_agreements and not state.agreements.is_empty()
+	var any_measure: bool = with_measures and not state.measures.is_empty()
 	for partner_id in state.nations.keys():
 		if partner_id == actor_id:
 			continue
@@ -176,15 +183,15 @@ static func _raw(state, actor_id: String, with_agreements: bool, with_measures: 
 		# Floored at zero rather than clamped to a minimum: a pair at relations 0
 		# should be able to read as no trade at all, and INTENSITY_SPAN is set so
 		# the floor is not reached at any relations value in the readable range.
-		var relations: float = float(state.relations.get(RK.key(actor_id, partner_id), DK.REST_BASE))
+		var pair_key := RK.key(actor_id, partner_id)
+		var relations: float = float(state.relations.get(pair_key, DK.REST_BASE))
 		value *= maxf(0.0, 1.0 + K.INTENSITY_SPAN * (relations - DK.REST_BASE) / 100.0)
 
-		if with_agreements:
-			var pair_key := RK.key(actor_id, partner_id)
+		if any_agreement:
 			if state.agreements.has(pair_key):
 				value *= float(state.agreements[pair_key].get("weight_multiplier", 1.0))
 
-		if with_measures:
+		if any_measure:
 			# Measures in EITHER direction on the pair, because goods stop moving
 			# both ways whichever side imposed. The register is directed so that a
 			# tariff and its retaliation stay distinguishable; the trade effect is

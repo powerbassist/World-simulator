@@ -105,8 +105,15 @@ static func region_pull(ns, region_list: Array, region_id: String, access: Dicti
 	var share: float = region_share(ns, region_id)
 	if share <= 0.0:
 		return 0.0
+	return _pull_at(ns, region_id, share, Regions.unemployment_pct(ns, region_list, region_id, access, sites))
+
+
+## region_pull() with the region's unemployment already in hand -- the tick asks
+## Regions.unemployment_by_region() once per nation rather than once per region
+## (V5.0c), and this is the same arithmetic on the same float.
+static func _pull_at(ns, region_id: String, share: float, unemployment: float) -> float:
 	var per_head: float = Regions.share_of(ns, region_id) / share
-	var employed: float = 1.0 - Regions.unemployment_pct(ns, region_list, region_id, access, sites) / 100.0
+	var employed: float = 1.0 - unemployment / 100.0
 	return per_head * employed
 
 
@@ -299,9 +306,10 @@ static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, 
 	var shares: Dictionary = {}
 	var weighted: float = 0.0
 	var total: float = 0.0
+	var unemployment: Dictionary = Regions.unemployment_by_region(ns, region_list, access, sites)
 	for region in region_list:
-		var pull: float = region_pull(ns, region_list, region.id, access, sites)
 		var share: float = region_share(ns, region.id)
+		var pull: float = 0.0 if share <= 0.0 else _pull_at(ns, region.id, share, float(unemployment[region.id]))
 		pulls[region.id] = pull
 		shares[region.id] = share
 		weighted += share * pull

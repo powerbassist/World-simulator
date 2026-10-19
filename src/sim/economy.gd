@@ -23,7 +23,15 @@ static func tick_month(state) -> void:
 	# the order nations are ticked in. Same reason the single GDP-weighted
 	# aggregate this replaced was computed once, and more load-bearing now: the
 	# table is ninety directed entries reading every nation's GDP.
-	var table := Trade.weight_table(state)
+	#
+	# V5.0c: only the rows the impulse below reads -- the has_budget nations'.
+	# Trade.weight_table() built all forty-one and the loop read four; each row
+	# is the same Trade.weights() on the same snapshot, so the four are the same
+	# floats.
+	var table := {}
+	for ns in state.nations.values():
+		if ns.has_budget:
+			table[ns.id] = Trade.weights(state, ns.id)
 
 	# The impulse is resolved for every nation BEFORE any nation ticks, not inside
 	# the loop below. Snapshotting the weight table alone is not enough: the
@@ -50,7 +58,12 @@ static func tick_month(state) -> void:
 	for ns in state.nations.values():
 		# The BEFORE-measures vector, not `table`: damage is done by the trade a
 		# measure destroys, not by what survives it. See Coercion.impulse().
-		damage[ns.id] = Coercion.impulse(state, ns, Trade.weights_before_measures(state, ns.id))
+		# V5.0c: Coercion.impulse() is exactly 0.0 before it reads the row when no
+		# measure targets the nation, so the row is built only when one does.
+		if Coercion.against(state, ns.id).is_empty():
+			damage[ns.id] = 0.0
+		else:
+			damage[ns.id] = Coercion.impulse(state, ns, Trade.weights_before_measures(state, ns.id))
 
 	var impulses := {}
 	for ns in state.nations.values():

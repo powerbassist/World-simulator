@@ -272,6 +272,50 @@ func is_member(nation_id: String) -> bool:
 ## callers -- Trade.weights() and ForeignPolicy._resting() -- have state and
 ## nothing else, and the dependency rules forbid handing them one.
 static func shared_bonus(state, a_id: String, b_id: String, key: String) -> float:
+	if _memo_state != null and state == _memo_state:
+		var by_key: Dictionary = _memo.get(key, {})
+		if by_key.is_empty():
+			_memo[key] = by_key
+		var by_a: Dictionary = by_key.get(a_id, {})
+		if by_a.is_empty():
+			by_key[a_id] = by_a
+		var hit = by_a.get(b_id)
+		if hit != null:
+			return hit
+		var value := _shared_bonus(state, a_id, b_id, key)
+		by_a[b_id] = value
+		return value
+	return _shared_bonus(state, a_id, b_id, key)
+
+
+## V5.0c. shared_bonus() memoised for the length of ONE Diplomacy tick, the
+## month's hottest caller: every trade vector and stake vector Diplomacy builds
+## asks it once per partner, ~30 000 times a month, for an answer that cannot
+## change inside the tick -- membership (NationState.orgs) and the effects
+## snapshot (GameState.org_effects) are written by orgs.gd alone, and nothing
+## Diplomacy runs calls into it. So a hit is the float the loop below would have
+## returned (the 51-regime table is cmp-identical).
+##
+## Scoped by the caller, not by a guess: Diplomacy.tick_month() opens it for its
+## own state and closes it before returning, and every other caller -- another
+## state, a projection copy, a UI read, the month outside that window -- misses
+## the identity check and computes. The static slot is network.gd's and
+## industry.gd's precedent for a module-level memo.
+static var _memo_state = null
+static var _memo: Dictionary = {}
+
+
+static func memo_open(state) -> void:
+	_memo_state = state
+	_memo = {}
+
+
+static func memo_close() -> void:
+	_memo_state = null
+	_memo = {}
+
+
+static func _shared_bonus(state, a_id: String, b_id: String, key: String) -> float:
 	var a = state.nations.get(a_id)
 	var b = state.nations.get(b_id)
 	if a == null or b == null:

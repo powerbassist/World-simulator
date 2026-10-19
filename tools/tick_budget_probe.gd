@@ -28,6 +28,11 @@ const START_YEAR := 2026
 
 ## name -> [total_us, calls, max_us]
 var _us: Dictionary = {}
+## V5.0c. Each timed month's wall time, whole: the band (300 ms mean AND 450 ms
+## worst month) is about the freeze a player sees at one month boundary, and
+## the per-system maxima above fall in DIFFERENT months, so their sum is not a
+## month anyone lived.
+var _month_us: Array[int] = []
 
 
 func _time(name: String, f: Callable) -> void:
@@ -80,7 +85,9 @@ func _initialize() -> void:
 			year += 1
 		state.year = year
 		state.month = month
+		var t0 := Time.get_ticks_usec()
 		_tick(state, loader, year, month)
+		_month_us.append(Time.get_ticks_usec() - t0)
 
 	_report()
 	quit(0)
@@ -122,3 +129,11 @@ func _report() -> void:
 	for r in worst_rows:
 		print("%-22s %10.0f %10.0f %10.1f" % [r["name"], r["mean"], r["max"], float(r["total"]) / 1000.0])
 	print("%-22s %10.0f %10s %10.1f" % ["MONTH TOTAL (mean)", float(total) / float(MONTHS), "-", float(total) / 1000.0])
+	var months := _month_us.duplicate()
+	months.sort()
+	var wall := 0
+	for dt in months:
+		wall += dt
+	print("MONTH WALL mean %.1f ms  median %.1f ms  worst %.1f ms (month %d of %d)" % [
+		float(wall) / float(months.size()) / 1000.0, float(months[months.size() / 2]) / 1000.0,
+		float(months[-1]) / 1000.0, _month_us.find(months[-1]) + 1, months.size()])

@@ -136,6 +136,9 @@ static func score(state, a: String, b: String) -> float:
 ## are the entire content of the derivation. The same not-defaulted reasoning
 ## Legislature.apply() gives for its own loader argument.
 static func tick_month(state, loader) -> void:
+	# V5.0c: membership cannot change inside this tick, so Org.shared_bonus() is
+	# memoised for it (see memo_open()); closed on the way out, the one exit.
+	Org.memo_open(state)
 	for pair_key in state.relations.keys():
 		# Explicitly String()-wrapped: Dictionary.keys() is untyped, and `:=`
 		# cannot infer a type through it.
@@ -182,6 +185,7 @@ static func tick_month(state, loader) -> void:
 	# twelve. A silent one-month asymmetry between the player and the nine, in a
 	# session whose whole subject is that they use the same verbs.
 	_tick_agenda(state, loader)
+	Org.memo_close()
 
 
 ## Answer every measure that has been in force long enough and has not yet been

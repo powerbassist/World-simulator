@@ -336,6 +336,67 @@ static func unemployment_pct(ns, region_list: Array, region_id: String, access: 
 	return ns.unemployment_pct
 
 
+## unemployment_pct() for every region of a nation in one pass -- V5.0c's tick
+## lever. Asked region by region, each call re-derived everything that does not
+## depend on the region (the GDP-weighted mean trend, the national production
+## mix, the network term's weighted mean, the sited mean, and share_of()'s
+## national total under every one of them): cubic in the region count, and the
+## month's single largest line after Diplomacy, because Migration asks it for
+## every region of every nation. Here each of those is computed ONCE, by the same
+## functions on the same inputs, and each region's figure is the same expression
+## in the same order -- `w * spec * lg` stays left to right, `mix + net + sited`
+## stays that sum -- so the result is the same float unemployment_pct() returns,
+## not an approximation of it (tests/test_regions.gd pins the two equal; the
+## 51-regime table is cmp-identical).
+static func unemployment_by_region(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	if region_list.is_empty():
+		return out
+	var mean_trend: float = _mean_trend_pct(ns, region_list)
+	var shares: Dictionary = {}
+	for other in region_list:
+		shares[other.id] = share_of(ns, other.id)
+	var net_on: bool = NK.NETWORK_BETA != 0.0
+	var spec: Dictionary = {}
+	var lg: Dictionary = {}
+	var net_weighted: float = 0.0
+	var net_total: float = 0.0
+	if net_on:
+		var national: Dictionary = _national_production_mix(ns, region_list)
+		for other in region_list:
+			spec[other.id] = Net.specialisation(other.sector_mix, national)
+			lg[other.id] = log(maxf(float(access.get(other.id, 1.0)), 0.0001))
+			var w: float = float(shares[other.id])
+			net_weighted += w * float(spec[other.id]) * float(lg[other.id])
+			net_total += w
+	var site_weighted: float = 0.0
+	var site_total: float = 0.0
+	if not sites.is_empty():
+		for other in region_list:
+			var w: float = float(shares[other.id])
+			site_weighted += w * float(sites.get(other.id, 0.0))
+			site_total += w
+	for region in region_list:
+		if out.has(region.id):
+			continue
+		var deviation: float = 0.0
+		if region.id != K.RESIDUAL_KEY:
+			var mix: float = trend_pct(region) - mean_trend
+			var net: float = 0.0
+			if net_on and net_total > 0.0:
+				net = NK.NETWORK_BETA * (float(spec[region.id]) * float(lg[region.id]) - net_weighted / net_total)
+			var sited: float = 0.0
+			if not sites.is_empty() and site_total > 0.0:
+				sited = float(sites.get(region.id, 0.0)) - site_weighted / site_total
+			deviation = mix + net + sited
+		out[region.id] = clampf(
+			ns.unemployment_pct * region.unemployment_rel - C.OKUN * deviation,
+			C.UNEMP_MIN_PCT,
+			C.UNEMP_MAX_PCT
+		)
+	return out
+
+
 ## Output per head against the national average: 1.0 is exactly average, and nothing
 ## authored the spread. The quantity the Region panel leads with, and the one that
 ## makes two partitions of one nation worth carrying rather than one.
