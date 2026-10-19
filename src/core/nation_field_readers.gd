@@ -9,9 +9,11 @@ extends RefCounted
 ## would make `from_dict(state.to_dict())` share a register with `state`, and the
 ## two would run as one simulation. Every reader returns a container it built.
 ##
-## THE CASTS ARE LOAD-BEARING. Godot's JSON hands numbers back as floats, so an
-## int-typed countdown comes back a float and a whole-number float can come back
-## shaped differently from the run that saved it; a register that comes back
+## THE CASTS ARE LOAD-BEARING. Godot 4.7.2's JSON hands every number back as a
+## float, so an int-typed countdown comes back a float; and a code path that wrote
+## a whole number as an int into a float register keeps the int on a direct
+## to_dict()/from_dict() trip (or through a JSON that returns ints, as the V2.8
+## review found one did) -- either way a register that comes back
 ## different from how it went out is a trap for whoever reads it next. Each reader
 ## restores the types its register declares, and each whitelists its keys: a
 ## hand-edited save carrying anything else is dropped on the floor.
@@ -63,7 +65,7 @@ static func rows(raw) -> Array[Dictionary]:
 	return out
 
 
-## The character registers' halves, typed: a JSON 1.0 comes back as the int 1,
+## The character registers' halves, typed: a whole number can arrive as an int,
 ## a typed Dictionary deserves the type it declares, and a stray non-string key
 ## in an override is a corrupted save refusing loudly rather than a type hole.
 static func float_map_typed(raw) -> Dictionary[String, float]:
@@ -137,8 +139,8 @@ static func programme(raw) -> Array:
 
 ## The commodity register is a Dictionary OF Dictionaries (six good-id maps plus
 ## one float), so the aliasing problem is a level deeper than the flat maps'.
-## Each inner map is rebuilt with its values cast to float -- a JSON 1.0 in a
-## capacity figure comes back as the int 1. What made aliasing fatal HERE rather
+## Each inner map is rebuilt with its values cast to float -- a capacity of
+## exactly 1.0 must not come back the int 1. What made aliasing fatal HERE rather
 ## than latent is that commodities.gd mutates entries IN PLACE: measured before
 ## the V4.6 fix, the round-trip fixture advanced its register three months per
 ## loop instead of one. ABSENT is not seeded here: seeding is commodities.gd's

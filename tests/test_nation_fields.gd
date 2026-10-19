@@ -44,8 +44,8 @@ const MUST_BUMP_PIN := {
 }
 
 ## Sentinels per read kind, each in the exact shape and types its reader returns,
-## and none a fresh NationState ever holds. Every float a reader re-casts is a
-## WHOLE number -- the case the casts exist for. Godot 4.7.2's JSON already hands
+## and none a fresh NationState ever holds. Every float a MAP or REGISTER reader
+## re-casts is a WHOLE number, unique in its entry so a swapped key shows -- the case the casts exist for. Godot 4.7.2's JSON already hands
 ## these back as floats (measured: dropping float() from float_map still passes),
 ## so today the casts are a guard and these sentinels are what shows one missing
 ## on an engine whose JSON returns ints. A float no reader casts carries a
@@ -247,7 +247,7 @@ func _sentinel(read: int, declared):
 			var bools: Dictionary[String, bool] = {"sentinel": true}
 			return bools
 		Fields.PLEDGES:
-			return [{"pledge_id": "p", "field": "f", "op": "max", "value": 2.0,
+			return [{"pledge_id": "p", "field": "f", "op": "max", "value": 6.0,
 				"from_year": 2026, "from_month": 2, "until_year": 2030, "until_month": 3,
 				"breach_months": 4, "months_live": 5}]
 		Fields.PROGRAMME:
