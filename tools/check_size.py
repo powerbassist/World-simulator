@@ -20,7 +20,7 @@ Usage: python tools/check_size.py            (CI; exit 1 on a violation)
                                               refusing to RAISE or ADD any entry)
        python tools/check_size.py --init     (the one-time first baseline: admits
                                               every file over the line as it stands)
-Stdlib only; reads `git ls-files`, so untracked scratch never counts.
+Stdlib only; reads `git ls-files` (tracked plus not-yet-staged, ignored files out).
 """
 from __future__ import annotations
 
@@ -47,8 +47,11 @@ def code_lines(text: str) -> int:
 
 
 def tracked(prefix: str, suffixes: tuple[str, ...]) -> list[str]:
-    out = subprocess.run(["git", "ls-files", prefix], cwd=REPO, capture_output=True,
-                         text=True, check=True).stdout
+    # --others: a new file is held to the rule before it is staged, which is
+    # when splitting it is cheap; --exclude-standard keeps ignored scratch out.
+    out = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard",
+                          prefix], cwd=REPO, capture_output=True, text=True,
+                         check=True).stdout
     return sorted(p for p in out.splitlines() if p.endswith(suffixes) and (REPO / p).is_file())
 
 
@@ -68,6 +71,10 @@ def main(argv: list[str]) -> int:
 
     if "--update" in argv or "--init" in argv:
         init = "--init" in argv
+        if init and BASELINE.is_file():
+            print("refusing --init: the baseline exists, and --init would admit any file "
+                  "over the line -- use --update", file=sys.stderr)
+            return 1
         new = {}
         for p, (code, _total) in sizes.items():
             if code <= NEW_FILE_MAX:

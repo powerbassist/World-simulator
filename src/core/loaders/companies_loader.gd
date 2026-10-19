@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. data/companies/: the firm register per nation and the partition checks against the sectors.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Company = preload("res://src/core/company.gd")
@@ -16,7 +17,7 @@ const Company = preload("res://src/core/company.gd")
 ##
 ## AN ABSENT FILE IS NOT AN ERROR, where an absent people file is. Every nation
 ## needs a leader; only a nation somebody can play needs firms, because only a
-## player can subsidise one and _validate_companies() below refuses content
+## player can subsidise one and CompaniesLoader.validate_companies() below refuses content
 ## nothing can reach. A nation with no file has unpartitioned sectors, which is
 ## what all ten had before this session -- so the seven that are not yet playable
 ## keep running the model they always ran.
@@ -103,7 +104,7 @@ static func validate_companies(loader) -> void:
 			by_sector[company.sector].append(company)
 
 		# The nation's people, for chief resolution -- built once per nation
-		# rather than per firm, the programme-ids idiom _validate_people uses.
+		# rather than per firm, the programme-ids idiom PeopleLoader.validate_people uses.
 		# id -> person, because the chief check needs the KIND, not just the id.
 		var people_by_id := {}
 		for person in loader.people.get(nation_id, []):

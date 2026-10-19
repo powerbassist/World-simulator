@@ -58,13 +58,13 @@ var people: Dictionary = {}
 ## is read BARE — off NationState.pm_person_id, off an appointment entry that
 ## carries no nation field, out of last_censure in a save — so it has to be
 ## self-describing and globally unique. Hence the `<NATION>_<surname>` scheme and
-## the prefix check in _validate_people(). See docs/people-model.md.
+## the prefix check in PeopleLoader.validate_people(). See docs/people-model.md.
 var person_by_id: Dictionary = {}
 ## nation id -> Array[Company], in authored file order — the order the Companies
 ## window reads. UNLIKE `people`, a nation may legitimately be ABSENT here: a
 ## nation with no data/companies/<ID>.json has unpartitioned sectors, which is
 ## what every nation looked like before V1.4a. That is why _load_companies() does
-## not append a "could not read file" error the way _load_people() does.
+## not append a "could not read file" error the way PeopleLoader.load_people() does.
 var companies: Dictionary = {}
 
 ## nation id -> Array[Region], in authored order, which the importer writes
@@ -82,7 +82,7 @@ var regions: Dictionary = {}
 ## Keyed by id, and a DICTIONARY rather than a typed value type for
 ## region_graph's own reason: the reader takes them as DATA and a type here
 ## would be a second record of a file that already states its own shape. What
-## only this file can see -- and what _load_commodity_recipes() refuses per entry
+## only this file can see -- and what CommoditiesLoader.load_commodity_recipes() refuses per entry
 ## -- is that every recipe's output and every one of its inputs names a good the
 ## register declares, because an input nobody declares would sit in the file
 ## looking like a recipe and produce nothing at tick time.
@@ -175,7 +175,7 @@ var events: Array[GameEvent] = []
 ## Summit scenes, V2.4b. Keyed by partner nation id, each value the pool of
 ## Summit scenes a meeting there can draw. A nation with no pool draws nothing
 ## at its arrivals -- a meeting without a scene is the ordinary state visit,
-## not an error. Loaded from data/summits/ (see _load_summits).
+## not an error. Loaded from data/summits/ (see EventsLoader.load_summits).
 var summits := {}
 
 var laws: Array[Law] = []
@@ -211,7 +211,7 @@ var errors: Array[String] = []
 ## feature's MultiPolygon; each PackedVector2Array is that polygon's outer ring
 ## only, raw (lon, lat) degrees -- holes are not kept, S8's map only needs
 ## recognisable borders and a click hit-test, not exact enclaves. Read once at
-## startup by _load_geo(), same as the id list _validate_cross_file already
+## startup by GeoLoader.load_geo(), same as the id list GeoLoader.validate_cross_file already
 ## cross-checks.
 var geo_features: Dictionary = {}
 
@@ -238,7 +238,7 @@ var region_features: Dictionary = {}
 ## wants outer rings only, which is why region_features above stays that shape; the
 ## point-in-polygon that files a project's authored coordinate under a region needs
 ## the holes, because Berlin's site lives inside Brandenburg's outer ring and only
-## the hole ring says whose it is. Written by the same _load_geo pass over the same
+## the hole ring says whose it is. Written by the same GeoLoader.load_geo pass over the same
 ## file, so the two can never describe different rosters.
 var region_rings: Dictionary = {}
 
@@ -325,7 +325,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 		if nation.id != "":
 			nations[nation.id] = nation
 
-	# People before parties, because _load_parties() resolves each party's
+	# People before parties, because PoliticsLoader.load_parties() resolves each party's
 	# leader_person_id against the register and a reference cannot be checked
 	# against a dictionary that has not been filled yet.
 	for id in nations.keys():

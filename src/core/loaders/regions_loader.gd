@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. data/regions/ and the region graph: the places per nation, checked against the geometry and the graph.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const Region = preload("res://src/core/region.gd")
 const GeoLoader = preload("res://src/core/loaders/geo_loader.gd")
@@ -72,7 +73,7 @@ static func load_regions(loader, nation_id: String, regions_dir: String) -> void
 ## in data/companies/"* -- failing silently, and it is the ONLY thing making that field
 ## load-bearing before V2.2b draws it. U6c's rule about a coordinate nothing reads.
 ##
-## The orphan file: _validate_outlets()' scan, for its reason. A per-nation lookup
+## The orphan file: OutletsLoader.validate_outlets()' scan, for its reason. A per-nation lookup
 ## structurally cannot see data/regions/FRE.json, because that file is simply never
 ## opened -- which is tools/check_names.sh's zero-files-scanned burn in a new place.
 ##
@@ -82,7 +83,7 @@ static func load_regions(loader, nation_id: String, regions_dir: String) -> void
 ## regions, so a region with figures and no geometry is an import that has drifted
 ## from its own authority. V2.2a shipped the file unopened (nothing drew it, so a
 ## launch should not pay 180 KB for it); V2.2b draws it, and this is where the
-## load happens -- _validate_cross_file's precedent, the load and the check it
+## load happens -- GeoLoader.validate_cross_file's precedent, the load and the check it
 ## exists for arriving together.
 static func validate_regions(loader, regions_dir: String, regions_geo_path: String, regions_graph_path: String) -> void:
 	var city_ids := {}

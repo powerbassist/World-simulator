@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. data/commodities/ and data/world/: the goods, the recipes, the endowments and the outline nations.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 
 ## V4.6's seven, closed. The granularity rule behind the list is
@@ -174,7 +175,7 @@ static func load_outlines(loader, path: String) -> void:
 
 
 ## The outline register against the map that draws it, one-for-one -- run from
-## _validate_cross_file(), the first place world.geojson is in hand.
+## GeoLoader.validate_cross_file(), the first place world.geojson is in hand.
 static func validate_outlines(loader) -> void:
 	if loader.outlines.is_empty():
 		return

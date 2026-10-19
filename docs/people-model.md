@@ -94,7 +94,7 @@ BEL_baudouin_iii`). Full convention in [[fictionalization]].
 
 ## 4. No person is unreferenced, and the loader refuses one
 
-`_validate_people()` checks the usual direction — every reference resolves, and
+`PeopleLoader.validate_people()` checks the usual direction — every reference resolves, and
 resolves to a person of that nation — and then checks the unusual one: **every
 person is pointed at by something.** An orphan fails the load.
 
@@ -306,10 +306,10 @@ added a verb; U6b adds none. A name is not a decision.
 
 ```
 DataLoader.load_all()
-  → _load_people(id)     ×10, BEFORE parties, since a party resolves its leader
-  → _load_parties(id)    ×10
+  → PeopleLoader.load_people(id)     ×10, BEFORE parties, since a party resolves its leader
+  → PoliticsLoader.load_parties(id)    ×10
   → …
-  → _validate_people()   every reference resolves; every person is referenced
+  → PeopleLoader.validate_people()   every reference resolves; every person is referenced
 
 src/sim/    moves person IDS and resolves none of them
 src/ui/     resolves, via DataLoader.person_name(id)

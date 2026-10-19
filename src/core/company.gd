@@ -81,7 +81,7 @@ var tier: String = "major"
 ## refuses a major without one: a champion with no face is the count-is-the-
 ## design rule half-built), refused on body firms (the body is acted upon,
 ## nobody fronts it). The id itself is validated cross-register in
-## _validate_companies, the way party ids resolve for people.
+## CompaniesLoader.validate_companies, the way party ids resolve for people.
 var chief_id: String = ""
 
 
@@ -127,7 +127,7 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 			errors.append("%s: %s share = %s must be in (0, 1]" % [filename, path, str(c.share)])
 		elif c.share < share_floor:
 			# A MAJOR too small to move its sector is a name on a panel. The floor is
-			# the same standard _validate_people() applies to an unreferenced person:
+			# the same standard PeopleLoader.validate_people() applies to an unreferenced person:
 			# content with no reachable effect fails the load rather than sitting in a
 			# file looking like a feature. A body firm reads MIN_BODY_SHARE's smaller
 			# floor instead -- not because its whole band sits under the major floor

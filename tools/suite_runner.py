@@ -447,8 +447,12 @@ def main(argv: list[str] | None = None) -> int:
         # AGENTS.md's agent gate is this command with no tests, and it used to
         # exit 2 here. The list is still run_tests.sh's tests=() -- read, not
         # copied -- and its unregistered-test rule applies on the way, so a bare
-        # gate is as strict as the bash one. Parsed rather than run through bash:
-        # a core.autocrlf checkout hands bash a CRLF script it cannot execute.
+        # gate is as strict as the bash one -- its step 0 (the selftest) and its
+        # SUITE_PYTHON export too. Parsed rather than run through bash: a
+        # core.autocrlf checkout hands bash a CRLF script it cannot execute.
+        if _selftest() != 0:
+            return 1
+        os.environ.setdefault("SUITE_PYTHON", sys.executable)
         args.tests, unregistered = registry()
         if not args.tests:
             # A reformatted run_tests.sh the parse no longer matches must not

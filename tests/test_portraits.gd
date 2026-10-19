@@ -5,7 +5,7 @@ extends SceneTree
 ##
 ##   - NO ORPHAN ART. A PNG in assets/portraits/ that belongs to no person in
 ##     the register is stale weight the next art run would silently carry
-##     forward -- the orphan precedent _validate_people() sets for content,
+##     forward -- the orphan precedent PeopleLoader.validate_people() sets for content,
 ##     pointed at assets (docs/tiers/v2.md §3's warning box).
 ##   - THE BYTES PATH, NOT load(). A portrait loaded through the import system
 ##     passes in the editor and fails here, exactly as tests/test_map_view.gd's

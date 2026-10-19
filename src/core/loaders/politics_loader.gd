@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. Parties, laws, political systems and scenarios, with the validators that read them against each other.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
@@ -123,7 +124,7 @@ static func load_laws(loader, laws_dir: String) -> void:
 ## Reads every data/political-systems/*.json file. See docs/political-systems.md
 ## and political_system.gd's own header for why a template is a constraint, not
 ## a defaults table -- the constraint itself is enforced below, in
-## _validate_cross_file(), against every nation that names one.
+## GeoLoader.validate_cross_file(), against every nation that names one.
 static func load_political_systems(loader, political_systems_dir: String) -> void:
 	var da := DirAccess.open(political_systems_dir)
 	if da == null:
@@ -163,7 +164,7 @@ static func load_political_systems(loader, political_systems_dir: String) -> voi
 ## Same directory-scan shape as laws and political systems: no manifest, so
 ## adding a scenario is a file, not a file plus an index entry. The cross-file
 ## half of the validation (which nation, which parties, which blocs) is
-## _validate_scenarios() below. See docs/scenario-model.md.
+## PoliticsLoader.validate_scenarios() below. See docs/scenario-model.md.
 static func load_scenarios(loader, scenarios_dir: String) -> void:
 	var da := DirAccess.open(scenarios_dir)
 	if da == null:
@@ -257,7 +258,7 @@ static func validate_amendments(loader) -> void:
 ## system, appending an error for every field that system does not permit.
 ## Shared by an ordinary amendment (checked against every system it's
 ## proposed UNDER) and a system transition (checked against the single system
-## it TARGETS) -- see _validate_amendments() above.
+## it TARGETS) -- see PoliticsLoader.validate_amendments() above.
 static func validate_institutional_against_system(loader, law, inst: Dictionary, system_id: String) -> void:
 	if not loader.political_systems.has(system_id):
 		loader.errors.append("laws: %s names system '%s', which has no file in data/political-systems/" % [law.id, system_id])
@@ -302,7 +303,7 @@ static func validate_scenarios(loader) -> void:
 		var roster: Array = loader.parties.get(s.nation_id, [])
 		if not s.seat_share.is_empty():
 			# Merged over the nation's authored shares, then summed -- the same
-			# invariant _load_parties() holds the party file to, checked against
+			# invariant PoliticsLoader.load_parties() holds the party file to, checked against
 			# what the scenario ACTUALLY produces rather than against the override
 			# fragment, which is not required to sum to anything on its own.
 			var merged := {}

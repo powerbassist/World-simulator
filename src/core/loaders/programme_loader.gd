@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. data/programme/: the government programme entries, their triggers and their effects.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const C = preload("res://src/sim/economy_constants.gd")
 const Law = preload("res://src/core/law.gd")
@@ -14,7 +15,7 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 
 
 ## Reads every data/programme/*.json file -- {"programme": [...]}, the directory-scan
-## shape _load_pledges uses. Entries are kept as raw validated Dictionaries: the
+## shape CampaignLoader.load_pledges uses. Entries are kept as raw validated Dictionaries: the
 ## extraction below is the validation, and src/sim/programme.gd casts on every read.
 ##
 ## THE LOUD REFUSALS, on the summits' sidecar contract's reasoning:

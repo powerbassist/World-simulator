@@ -436,7 +436,7 @@ LAST month to land the goal, and the same tick concludes `fail` if it did
 not). The term-start gate is a LEVEL READ of `months_in_term` (0 at new game
 and again in the month a won election resets it) — defence-model's V1.3g
 rule: an obligation that opens itself closes itself, so nothing lifts a flag
-it must remember to clear. `_load_programme` refuses loudly off §2's
+it must remember to clear. `ProgrammeLoader.load_programme` refuses loudly off §2's
 whitelist — no trigger and no deadline, a typo'd field, the `institutional`
 slot, an unknown channel, an unknown trigger field are all load-time errors
 (`test_programme.gd`'s five negative fixtures). `SAVE_VERSION` 35 on the

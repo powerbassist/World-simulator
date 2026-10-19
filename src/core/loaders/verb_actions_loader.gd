@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. The three economic verb directories: company actions, investment actions and projects.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const CompanyAction = preload("res://src/core/company_action.gd")
 const InvestmentAction = preload("res://src/core/investment_action.gd")
@@ -13,7 +14,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const ProjectAction = preload("res://src/core/project_action.gd")
 
 
-## Directory-scanned, exactly like _load_diplomatic_actions() -- adding a verb is
+## Directory-scanned, exactly like DiplomacyLoader.load_diplomatic_actions() -- adding a verb is
 ## a file, not a file plus an index entry. Every file holds {"actions": [...]}.
 static func load_company_actions(loader, actions_dir: String) -> void:
 	var da := DirAccess.open(actions_dir)
@@ -60,7 +61,7 @@ static func load_company_actions(loader, actions_dir: String) -> void:
 			loader.company_actions.append(action)
 
 
-## V1.6e. _load_company_actions()'s shape, and deliberately a separate directory
+## V1.6e. VerbActionsLoader.load_company_actions()'s shape, and deliberately a separate directory
 ## rather than a fourth op on the company channel: a subsidy is pointed at a firm
 ## inside a sector and this is pointed at the sector, which is exactly the
 ## distinction docs/companies-model.md section 12 says no validator can enforce
@@ -110,7 +111,7 @@ static func load_investment_actions(loader, actions_dir: String) -> void:
 			loader.investment_actions.append(action)
 
 
-## V1.6f. _load_investment_actions()'s shape, and deliberately a separate directory
+## V1.6f. VerbActionsLoader.load_investment_actions()'s shape, and deliberately a separate directory
 ## rather than a third op on the investment channel: a programme is a standing rate
 ## pointed at a sector and a project is a discrete dated commitment pointed at a named
 ## thing, which is the distinction docs/sector-model.md section 1 used to split this

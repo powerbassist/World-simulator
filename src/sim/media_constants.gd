@@ -183,7 +183,7 @@ const PRESS_FREEDOM_MAX := 1.00
 ##
 ## companies_constants.MIN_AUTHORED_SHARE's argument, transferred rather than copied:
 ## a firm too small to move its sector is a label, and an outlet nobody reads is a
-## masthead. The floor is the same standard _validate_people() applies to an
+## masthead. The floor is the same standard PeopleLoader.validate_people() applies to an
 ## unreferenced person -- content with no reachable effect fails the load rather than
 ## sitting in a file looking like a feature.
 const MIN_AUTHORED_REACH := 0.05

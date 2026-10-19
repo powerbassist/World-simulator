@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. data/outlets/: the press register per nation and its orphan-file check.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const Outlet = preload("res://src/core/outlet.gd")
 
@@ -19,7 +20,7 @@ const Outlet = preload("res://src/core/outlet.gd")
 ## makes an outlets file for a nation that does not exist structurally impossible
 ## instead of an error somebody has to remember to write. What it cannot see is an
 ## ORPHAN file -- data/outlets/FRE.json is simply never opened -- so
-## _validate_outlets() scans the directory for exactly that, which is
+## OutletsLoader.validate_outlets() scans the directory for exactly that, which is
 ## tools/check_names.sh's zero-files-scanned burn caught in advance rather than after.
 ##
 ## AN ABSENT FILE IS NOT AN ERROR, for _load_companies()' reason and one stronger: a
@@ -71,9 +72,9 @@ static func load_outlets(loader, nation_id: String, outlets_dir: String) -> void
 ## deliberately NOT here.
 ##
 ## A bloc's named reaches summing past 1.0 is a partition claiming more audience than
-## the bloc contains -- _validate_companies()' share check, transferred whole.
+## the bloc contains -- CompaniesLoader.validate_companies()' share check, transferred whole.
 ##
-## _validate_companies() ALSO refuses a sector holding exactly one named firm, and that
+## CompaniesLoader.validate_companies() ALSO refuses a sector holding exactly one named firm, and that
 ## refusal does NOT transfer. Its reason is that a lone firm has no rival to take share
 ## from, so a subsidy pointed at it moves nothing; a lone outlet has nothing of the kind
 ## wrong with it, because its hostility simply IS 100 % of its bloc's affiliated press

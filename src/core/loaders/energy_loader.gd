@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. data/energy-sources.json and data/energy-actions/: the plant catalogue and its verbs.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const EnergyAction = preload("res://src/core/energy_action.gd")
 const EnergyK = preload("res://src/sim/energy_constants.gd")
@@ -13,7 +14,7 @@ const EnergySource = preload("res://src/core/energy_source.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 
-## V1.7a. _load_projects()'s shape, and deliberately a separate directory rather than
+## V1.7a. VerbActionsLoader.load_projects()'s shape, and deliberately a separate directory rather than
 ## a third op on the project channel: a project is a discrete dated commitment pointed
 ## at a named thing and a campaign effort is a standing rate pointed at a slice of the
 ## electorate, which is the distinction docs/tiers/v1.md section 7 exists for.
@@ -23,7 +24,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 ## CONSISTENT -- that no two entries define the same effort, and that every stop names
 ## an effort some start actually defines. A stop pointing at nothing loads as a button
 ## that is never available, which is a content bug that renders as an absence and would
-## be found by a player rather than by a check. _load_projects()'s own split, inherited.
+## be found by a player rather than by a check. VerbActionsLoader.load_projects()'s own split, inherited.
 ## data/energy-sources.json, ONE file and global. Per-entry validation lives in
 ## src/core/energy_source.gd; what only this function can see is that the file
 ## parsed at all and that no two entries share an id -- the register is keyed by id,
@@ -80,7 +81,7 @@ static func validate_energy_sources(loader) -> void:
 				loader.errors.append("%s: imported.energy.mix names branch '%s', which is not in BRANCHES" % [nation_id, branch])
 
 
-## data/energy-actions/*.json, _load_projects()'s shape. Per-entry validation lives
+## data/energy-actions/*.json, VerbActionsLoader.load_projects()'s shape. Per-entry validation lives
 ## in src/core/energy_action.gd; what only this function can see is duplicate ids --
 ## two actions with one id would be two buttons the registry cannot tell apart.
 static func load_energy_actions(loader, actions_dir: String) -> void:

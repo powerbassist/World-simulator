@@ -346,7 +346,7 @@ func _check_geometry_loads_at_startup() -> void:
 ## the day the map drew it. This is the same shape one register over: the graph is
 ## loaded because src/sim/network.gd reads it every tick, and a graph whose ids have
 ## drifted from the register is an import that has come apart -- which is exactly
-## what _validate_regions()'s fifth rule catches for the graph.
+## what RegionsLoader.validate_regions()'s fifth rule catches for the graph.
 func _check_region_graph() -> void:
 	var graph: Dictionary = _loader.region_graph
 	if graph.is_empty():

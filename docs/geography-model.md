@@ -325,7 +325,7 @@ regional economy is a genuinely different object in those two countries.
 - **UI arrived at V2.2b.** `data_loader.gd` loads the geojson into
   `region_features` now — the 180 KB is paid because something draws it — and
   the loader cross-checks every register region against its geometry, the
-  fourth `_validate_regions()` rule, catching at load time an import that drifts
+  fourth `RegionsLoader.validate_regions()` rule, catching at load time an import that drifts
   from its own authority. The map fills each nation from its 1:10m regions under
   the 1:50m national stroke, and what makes that render correctly with holes
   dropped is a two-pass draw: every region fill first, every hairline after, so

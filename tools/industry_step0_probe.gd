@@ -41,7 +41,7 @@ func _init() -> void:
 		return
 
 	# The body-scale stand-in is appended to the in-memory loader list AFTER
-	# load_all(): _validate_companies() has already run, the quiet baseline keeps
+	# load_all(): CompaniesLoader.validate_companies() has already run, the quiet baseline keeps
 	# every channel at exactly 0.0 for a never-touched firm, and no data file is
 	# edited. headcount is scaled off the named register's own jobs-per-share so
 	# the body firm is a fair average, not a straw one.

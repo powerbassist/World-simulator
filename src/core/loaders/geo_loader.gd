@@ -3,12 +3,13 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. The map geometry and the roster-wide checks that need every nation in scope (neighbours, the roster tripwire).
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 
-## The roster tripwire's number (_validate_cross_file). One constant so the
+## The roster tripwire's number (GeoLoader.validate_cross_file). One constant so the
 ## V4.11 tranches move it in one place.
 const ROSTER_SIZE := 41
 const CommoditiesLoader = preload("res://src/core/loaders/commodities_loader.gd")
@@ -137,7 +138,7 @@ static func outer_ring(loader, polygon_coords: Array) -> PackedVector2Array:
 
 
 ## Every ring of one polygon, outer first, holes after -- V2.7. Kept beside
-## _outer_ring() because the pair states the rule twice on purpose: the renderer
+## GeoLoader.outer_ring() because the pair states the rule twice on purpose: the renderer
 ## drops the holes and the siting cast needs them, and only reading this file once
 ## keeps the two from ever disagreeing about what the geometry says.
 static func all_rings(loader, polygon_coords: Array) -> Array:

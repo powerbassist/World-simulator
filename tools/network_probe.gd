@@ -37,8 +37,8 @@ extends SceneTree
 ##       see network_constants.gd's table and docs/network-model.md section 6.
 ##
 ## ONE DEVIATION FROM THE PLAN'S DRAFT, and it is the plan's own instruction: the
-## draft read loader.region_features, but _load_geo() keeps only OUTER rings
-## (data_loader.gd's _outer_ring -- the renderer and hit-test ignore holes). A
+## draft read loader.region_features, but GeoLoader.load_geo() keeps only OUTER rings
+## (GeoLoader.outer_ring -- the renderer and hit-test ignore holes). A
 ## reader over that shape reports 12 components and 10 isolates, adding AT13, BE1
 ## and DE3 to the singleton list -- the exact first-pass bug the plan records. The
 ## fix is in THIS file, not in src/: the probe parses data/geo/regions.geojson

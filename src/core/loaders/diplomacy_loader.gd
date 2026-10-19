@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. Diplomatic actions, the orgs and their council proposals.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const BlocProposal = preload("res://src/core/bloc_proposal.gd")
 const DiplomaticAction = preload("res://src/core/diplomatic_action.gd")
@@ -14,7 +15,7 @@ const Org = preload("res://src/core/org.gd")
 const OrgK = preload("res://src/core/org_constants.gd")
 
 
-## Directory-scanned, exactly like _load_laws() and _load_scenarios() -- adding
+## Directory-scanned, exactly like PoliticsLoader.load_laws() and PoliticsLoader.load_scenarios() -- adding
 ## an action is a file, not a file plus an index entry. Every file holds
 ## {"actions": [...]}, matching a law file's {"laws": [...]}, so several actions
 ## can share a themed file. There is no cross-file half: an action names no
@@ -65,8 +66,8 @@ static func load_diplomatic_actions(loader, actions_dir: String) -> void:
 			loader.diplomatic_actions.append(action)
 
 
-## Directory-scanned, exactly like _load_laws(), _load_scenarios() and
-## _load_diplomatic_actions() -- adding a proposal is a file, not a file plus an
+## Directory-scanned, exactly like PoliticsLoader.load_laws(), PoliticsLoader.load_scenarios() and
+## DiplomacyLoader.load_diplomatic_actions() -- adding a proposal is a file, not a file plus an
 ## index entry. Every file holds {"proposals": [...]}, matching a law file's
 ## {"laws": [...]}, so several proposals can share a themed file.
 ##
@@ -200,7 +201,7 @@ static func load_bloc_proposals(loader, proposals_dir: String) -> void:
 ## The cross-file half: a proposal names no nation, but two of its shapes only
 ## mean something against the roster it will run in.
 ##
-## Runs after _load_orgs(), because both checks need that org's membership.
+## Runs after DiplomacyLoader.load_orgs(), because both checks need that org's membership.
 static func validate_bloc_proposals(loader) -> void:
 	for p in loader.bloc_proposals:
 		# The proposal's own org must exist and be populated -- a proposal on an

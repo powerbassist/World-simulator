@@ -96,7 +96,7 @@ no data from `data_loader.gd` to decide.
 
 ### 2. Target-side validation
 
-[[amendment-model|V1.2c's]] `_validate_amendments()` checks written fields
+[[amendment-model|V1.2c's]] `PoliticsLoader.validate_amendments()` checks written fields
 against every system in `law.systems` — the systems the law is proposed
 **under**. A `system_id` write inverts that: the written state has to be
 legal under the **target**, not the systems it started from. `systems` still
@@ -259,8 +259,8 @@ catch a serializer that only ever saw the starting value.
 - `src/core/political_system.gd` — `allowed_head_of_state_kinds`
 - `src/core/law.gd` — `system_id`/`head_of_state` in `_extract_institutional()`,
   the completeness rule, `changes_system`
-- `src/core/data_loader.gd` — `_validate_amendments()`'s target-side branch,
-  `_validate_institutional_against_system()`, the head-of-state-kind check in
+- `src/core/data_loader.gd` — `PoliticsLoader.validate_amendments()`'s target-side branch,
+  `PoliticsLoader.validate_institutional_against_system()`, the head-of-state-kind check in
   `_validate_political_system()`
 - `src/core/nation_state.gd`, `src/core/game_state.gd` — `permits_system_change`,
   `SAVE_VERSION` 7 → 8

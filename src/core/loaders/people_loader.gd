@@ -3,9 +3,10 @@ extends RefCounted
 ## V5.0b: one of DataLoader's per-content loaders. data/people/: the person register per nation and its cross-register checks (party, office and want references).
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator and the only caller, every register still lives on the loader
+## orchestrator (a few test entry points delegate here too), every register lives on the loader
 ## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim, its members read through `loader.`.
+## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
+## through `loader.`.
 
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const Person = preload("res://src/core/person.gd")
@@ -197,7 +198,7 @@ static func check_person_ref(loader, nation_id: String, where: String, slot: Str
 		return
 	# A nation pointing at another nation's person would resolve to a name and be
 	# wrong in the one way a resolving reference can be — the same reason
-	# _validate_neighbours() checks mutuality rather than mere existence.
+	# GeoLoader.validate_neighbours() checks mutuality rather than mere existence.
 	if not pid.begins_with("%s_" % nation_id):
 		loader.errors.append("%s: %s names person '%s', who belongs to another nation" % [where, slot, pid])
 		return
