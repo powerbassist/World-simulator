@@ -37,7 +37,7 @@ concurrency:
 
 env:
   # Pinned like project.godot's config/features: bump deliberately, with the repo.
-  GODOT_VERSION: "4.7.1"
+  GODOT_VERSION: "4.7.2"
 
 jobs:
   suite:

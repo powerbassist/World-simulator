@@ -27,5 +27,5 @@ Pull requests are welcome once they meet the points below.
 
 ## Godot version
 
-4.7.1-stable, standard (non-Mono). Do not commit `project.godot`: the editor
+4.7.2-stable, standard (non-Mono). Do not commit `project.godot`: the editor
 rewrites it on every open (see AGENTS.md, "Gotchas").

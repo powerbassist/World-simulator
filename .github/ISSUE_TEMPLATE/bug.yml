@@ -24,4 +24,4 @@ body:
     id: godot
     attributes:
       label: Godot version and OS
-      placeholder: 4.7.1-stable, Windows 11
+      placeholder: 4.7.2-stable, Windows 11

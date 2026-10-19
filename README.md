@@ -14,8 +14,8 @@ this alpha.
 
 ## Run it
 
-1. Install **Godot 4.7.1-stable, standard (non-Mono)** from
-   <https://godotengine.org/download/archive/4.7.1-stable/>. The project is pinned
+1. Install **Godot 4.7.2-stable, standard (non-Mono)** from
+   <https://godotengine.org/download/archive/4.7.2-stable/>. The project is pinned
    to 4.7; another version may not open it.
 2. Clone this repository.
 3. Open the folder in Godot and press Play, or from a terminal at the repository
