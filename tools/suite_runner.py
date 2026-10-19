@@ -405,6 +405,15 @@ def _selftest() -> int:
     expect(not ex2 and checks2 == ["_check_a", "_check_b"],
            "shard tag parse: %r %r" % (ex2, checks2))
 
+    # The bare gate's registry read (V5.0b): bash's comment rule, and a parse
+    # that finds no array yields nothing (main() refuses it) rather than a guess.
+    reg = parse_registry("x\ntests=(\n  tests/test_a.gd\n  # tests/test_b.gd\n"
+                         "  tests/test_c.gd  # trailing note\n)\n")
+    expect(reg == ["tests/test_a.gd", "tests/test_c.gd"], "registry parse: %r" % reg)
+    expect(parse_registry("tests = ( tests/test_a.gd )\n") == [],
+           "an unmatched registry must parse empty")
+    expect(len(registry()[0]) > 100, "the real registry parses: %d" % len(registry()[0]))
+
     if failures:
         for f in failures:
             print("SELFTEST FAIL: %s" % f)
@@ -441,6 +450,12 @@ def main(argv: list[str] | None = None) -> int:
         # gate is as strict as the bash one. Parsed rather than run through bash:
         # a core.autocrlf checkout hands bash a CRLF script it cannot execute.
         args.tests, unregistered = registry()
+        if not args.tests:
+            # A reformatted run_tests.sh the parse no longer matches must not
+            # become a gate that runs nothing and prints "passed".
+            print("no tests parsed from tools/run_tests.sh's tests=() -- "
+                  "fix registry() before trusting a bare gate", file=sys.stderr)
+            return 2
         if unregistered:
             print("test files on disk but absent from tools/run_tests.sh: %s"
                   % " ".join(unregistered), file=sys.stderr)
@@ -505,10 +520,21 @@ def registry() -> tuple[list[str], list[str]]:
     """(the tests=() array of tools/run_tests.sh in order, tests/test_*.gd
     files on disk that it does not list)."""
     text = (REPO / "tools" / "run_tests.sh").read_text(encoding="utf-8")
-    block = re.search(r"^tests=\((.*?)^\)", text, re.MULTILINE | re.DOTALL)
-    tests = [t for t in block.group(1).split() if t.startswith("tests/")] if block else []
+    tests = parse_registry(text)
     on_disk = sorted("tests/" + p.name for p in (REPO / "tests").glob("test_*.gd"))
     return tests, [t for t in on_disk if t not in tests]
+
+
+def parse_registry(text: str) -> list[str]:
+    """The tests=() array as bash reads it: a `#` starts a comment, so a
+    commented-out entry is not registered."""
+    block = re.search(r"^tests=\((.*?)^\)", text, re.MULTILINE | re.DOTALL)
+    if not block:
+        return []
+    words: list[str] = []
+    for line in block.group(1).splitlines():
+        words += line.split("#", 1)[0].split()
+    return [w for w in words if w.startswith("tests/")]
 
 
 def _godot_available() -> bool:
