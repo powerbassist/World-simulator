@@ -55,7 +55,7 @@ static func weight_table(state) -> Dictionary:
 ## has two, and the disparity is the ratio between them. See
 ## docs/diplomacy-model.md section 2.
 static func weights(state, actor_id: String) -> Dictionary:
-	return _normalise(_raw(state, actor_id, true, true))
+	return _normalise(_raw_turn(state, actor_id, true, true))
 
 
 ## The same vector as if no coercive measure existed, agreements still in force.
@@ -69,7 +69,7 @@ static func weights(state, actor_id: String) -> Dictionary:
 ## collecting less AND hurting less while costing more trend. Measured, then fixed
 ## here rather than tuned around.
 static func weights_before_measures(state, actor_id: String) -> Dictionary:
-	return _normalise(_raw(state, actor_id, true, false))
+	return _normalise(_raw_turn(state, actor_id, true, false))
 
 
 ## The openness index: this nation's raw trade mass against what the same mass
@@ -153,6 +153,43 @@ static func has_agreement(state, a: String, b: String) -> bool:
 ## potential_shift channel infrastructure and education write. Revenue now, trend
 ## later: the protectionist trade-off, obtained from machinery already measured
 ## rather than from a new channel. See docs/coercion-model.md.
+## V5.0c. The raw vectors of ONE diplomatic turn -- an acting nation scoring its
+## targets and then executing its choice -- memoised: retaliation_fraction()
+## builds every target's before-measures vector, and the third-party pass in
+## execute() builds the same nations' vectors again before anything has moved.
+## Opened by Diplomacy for one actor and closed before execute() writes its
+## first relation (turn_close()), so a hit is always the vector the same state
+## would recompute; any other state, or any read outside that window, computes.
+## Keyed by the flags AS THEY BITE: with an empty register, "with measures" and
+## "before measures" are the same floats (the skipped lookups below), so the two
+## flavours share an entry exactly when they are equal.
+static var _turn_state = null
+static var _turn: Dictionary = {}
+
+
+static func turn_open(state) -> void:
+	_turn_state = state
+	_turn = {}
+
+
+static func turn_close() -> void:
+	_turn_state = null
+	_turn = {}
+
+
+static func _raw_turn(state, actor_id: String, with_agreements: bool, with_measures: bool) -> Dictionary:
+	if _turn_state == null or state != _turn_state:
+		return _raw(state, actor_id, with_agreements, with_measures)
+	var bites_a: bool = with_agreements and not state.agreements.is_empty()
+	var bites_m: bool = with_measures and not state.measures.is_empty()
+	var key := "%s|%d|%d" % [actor_id, int(bites_a), int(bites_m)]
+	var hit = _turn.get(key)
+	if hit == null:
+		hit = _raw(state, actor_id, with_agreements, with_measures)
+		_turn[key] = hit
+	return hit
+
+
 static func _raw(state, actor_id: String, with_agreements: bool, with_measures: bool) -> Dictionary:
 	var a = state.nations.get(actor_id)
 	if a == null:
@@ -217,7 +254,8 @@ static func _sum(raw: Dictionary) -> float:
 static func _normalise(raw: Dictionary) -> Dictionary:
 	var total := _sum(raw)
 	if total <= 0.0:
-		return raw
+		# A copy, not the vector itself: the raw vector may be the turn memo's.
+		return raw.duplicate()
 	var out := {}
 	for id in raw.keys():
 		out[id] = float(raw[id]) / total

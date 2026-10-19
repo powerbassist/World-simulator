@@ -306,13 +306,19 @@ static func _tick_agenda(state, loader) -> void:
 		# RETALIATION_MIN_SEVERITY does for an answer.
 		ns.diplo_months_to_act = FPK.AGENDA_INTERVAL_MONTHS
 
+		# One actor's turn, scored and executed against one state: its trade
+		# vectors are memoised for it (Trade.turn_open()) and execute() closes the
+		# memo before its first write; closed again here whichever way it left.
+		Trade.turn_open(state)
 		var choice := _best_act(state, loader, actor_id, ids)
 		if choice.is_empty():
+			Trade.turn_close()
 			continue
 
 		var result := execute(
 			state, loader.diplomatic_actions, choice["action"], actor_id, choice["target_id"]
 		)
+		Trade.turn_close()
 		if not bool(result.get("applied", false)):
 			continue
 
@@ -537,10 +543,13 @@ static func available(state, all_actions: Array, actor_id: String, target_id: St
 	if ns == null:
 		return out
 
+	# V5.0c: no key is built while nothing is cooling down -- an empty register
+	# answers "no" to every key, so the result is the same list.
+	var cooling: bool = not ns.diplo_cooldown_months.is_empty()
 	for action in all_actions:
 		if action.id == "":
 			continue
-		if ns.diplo_cooldown_months.has(cooldown_key(action.id, target_id)):
+		if cooling and ns.diplo_cooldown_months.has(cooldown_key(action.id, target_id)):
 			continue
 		if _preconditions_met(state, ns, action, target_id):
 			out.append(action)
@@ -673,6 +682,8 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 	# records the trade probe catching in the impulse, which was invisible until
 	# something finally perturbed a partner.
 	var third_party: Array = FP.third_party_effects(state, actor_id, target_id, delta)
+	# The last read of the turn: everything below writes (V5.0c's turn memo).
+	Trade.turn_close()
 
 	var after := RK.adjust(
 		state, actor_id, target_id, delta, DK.RELATIONS_MIN, DK.RELATIONS_MAX
