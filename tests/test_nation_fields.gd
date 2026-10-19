@@ -45,8 +45,11 @@ const MUST_BUMP_PIN := {
 
 ## Sentinels per read kind, each in the exact shape and types its reader returns,
 ## and none a fresh NationState ever holds. Every float a reader re-casts is a
-## WHOLE number, so a dropped float() shows as an int on the JSON path; a float no
-## reader casts carries a fraction; free-form values are strings.
+## WHOLE number -- the case the casts exist for. Godot 4.7.2's JSON already hands
+## these back as floats (measured: dropping float() from float_map still passes),
+## so today the casts are a guard and these sentinels are what shows one missing
+## on an engine whose JSON returns ints. A float no reader casts carries a
+## fraction; free-form values are strings.
 const ALIAS_PROBE := "__alias_probe__"
 
 var _failures: Array[String] = []
