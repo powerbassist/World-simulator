@@ -1,12 +1,14 @@
 extends RefCounted
 
-## V5.0b: one of DataLoader's per-content loaders. data/people/: the person register per nation and its cross-register checks (party, office and want references).
+## V5.0b: one of DataLoader's per-content loaders. data/people/: the person
+## register per nation and its cross-register checks (party, office and want
+## references).
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator (a few test entry points delegate here too), every register lives on the loader
-## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
-## through `loader.`.
+## orchestrator (a few test entry points delegate here too); every register
+## lives on the loader, whose public surface did not move. Each function here
+## is the body that used to be DataLoader._<name>() verbatim, now
+## PeopleLoader.<name>(loader, ...), its members read through `loader.`.
 
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const Person = preload("res://src/core/person.gd")

@@ -32,7 +32,7 @@ var debt_to_gdp_pct: float = 0.0
 
 ## party id -> seat share. Merged OVER the nation's authored shares, so naming
 ## one party leaves the rest alone -- but the merged total still has to sum to
-## 1.0, which data_loader._validate_scenario() checks against the real roster.
+## 1.0, which PoliticsLoader.validate_scenarios() checks against the real roster.
 var seat_share: Dictionary = {}
 
 ## bloc key -> starting approval in [0, 100]. Applied over APPROVAL_NEUTRAL;
@@ -88,7 +88,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 
 	# Range only. WHICH party ids and WHICH bloc keys are legal is a cross-file
 	# question -- it needs the nation's own roster -- so it lives in
-	# data_loader._validate_scenario() beside the other cross-file checks.
+	# PoliticsLoader.validate_scenarios() beside the other cross-file checks.
 	for party_id in s.seat_share.keys():
 		var share: float = s.seat_share[party_id]
 		if share < 0.0 or share > 1.0:

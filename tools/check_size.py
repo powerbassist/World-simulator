@@ -17,7 +17,9 @@ that is only a comment -- because comments are the house style, not a second job
 
 Usage: python tools/check_size.py            (CI; exit 1 on a violation)
        python tools/check_size.py --update   (rewrite the baseline from the tree,
-                                              refusing to RAISE or ADD any entry)
+                                              refusing to RAISE or ADD any entry; a
+                                              baselined file that moved keeps its
+                                              allowance under the new path)
        python tools/check_size.py --init     (the one-time first baseline: admits
                                               every file over the line as it stands)
 Stdlib only; reads `git ls-files` (tracked plus not-yet-staged, ignored files out).
@@ -76,6 +78,10 @@ def main(argv: list[str]) -> int:
                   "over the line -- use --update", file=sys.stderr)
             return 1
         new = {}
+        # A baselined file that left the tree may hand its allowance to ONE new
+        # path no larger than it: a move or a rename, which the ratchet must not
+        # turn into a forced split or a hand edit of the JSON.
+        vacated = sorted(((v, p) for p, v in baseline.items() if p not in sizes), reverse=True)
         for p, (code, _total) in sizes.items():
             if code <= NEW_FILE_MAX:
                 continue
@@ -84,9 +90,13 @@ def main(argv: list[str]) -> int:
                       % (p, baseline[p], code), file=sys.stderr)
                 return 1
             if p not in baseline and not init:
-                print("refusing to admit %s at %d code lines: a new file stays at or under %d"
-                      % (p, code, NEW_FILE_MAX), file=sys.stderr)
-                return 1
+                moved_from = next((q for v, q in vacated if v >= code), None)
+                if moved_from is None:
+                    print("refusing to admit %s at %d code lines: a new file stays at or under %d"
+                          % (p, code, NEW_FILE_MAX), file=sys.stderr)
+                    return 1
+                vacated = [(v, q) for v, q in vacated if q != moved_from]
+                print("%s takes over %s's allowance (a move)" % (p, moved_from))
             new[p] = code
         BASELINE.write_text(json.dumps({
             "_note": "Code lines per src/ file over %d, the most each may hold. Lowered by "

@@ -101,7 +101,7 @@ against every system in `law.systems` — the systems the law is proposed
 **under**. A `system_id` write inverts that: the written state has to be
 legal under the **target**, not the systems it started from. `systems` still
 gates proposability; only the direction the cross-check runs changed.
-`DataLoader._validate_institutional_against_system()` is the same per-system
+`PoliticsLoader.validate_institutional_against_system()` is the same per-system
 check both paths now call — extracted, not duplicated, when the second
 caller appeared.
 

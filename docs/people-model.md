@@ -416,7 +416,7 @@ trait is the floor.
 Objects resolve AT LOAD — shape and closed vocabularies in `person.gd`
 (kinds, traits, stance-for-family, threshold coherence: a meter want carries
 EXACTLY ONE of `below`/`above`, and no other family reads one), cross-register
-halves in `data_loader._validate_people()`, the first place the whole loader is
+halves in `PeopleLoader.validate_people()`, the first place the whole loader is
 in hand — people load BEFORE parties and programme, so a want cannot be checked
 against registers that are not filled yet. Unresolvable = load error, loud,
 naming the file and the person id. **Satisfaction is DERIVED, never stored** —

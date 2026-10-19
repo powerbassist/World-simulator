@@ -499,25 +499,32 @@ def main(argv: list[str] | None = None) -> int:
         for r in exc.results:  # the captured output of the finished ones
             writer.write_log(r)
         writer.finish(exc.results, interrupted=True, jobs=args.jobs)
+        _report_isolated(appdata)
         return 130
     except KeyboardInterrupt:  # second Ctrl-C, or one before any child ran
         _kill_live_children()
         print("interrupted", file=sys.stderr)
         writer.finish([], interrupted=True, jobs=args.jobs)
+        _report_isolated(appdata)
         return 130
     elapsed = int(time.monotonic() - t0)
     code = writer.finish(results, interrupted=False, jobs=args.jobs)
-    if appdata is not None:
-        if code == 0:
-            shutil.rmtree(appdata, ignore_errors=True)
-        else:
-            print("isolated user dir kept for its logs: %s" % appdata, file=sys.stderr)
+    if code == 0 and appdata is not None:
+        shutil.rmtree(appdata, ignore_errors=True)
+    else:
+        _report_isolated(appdata)
     if code == 0:
         print("test suite passed -- %d tests in %d:%02d"
               % (len(results), elapsed // 60, elapsed % 60))
     else:
         print("test suite failed", file=sys.stderr)
     return code
+
+
+def _report_isolated(appdata: str | None) -> None:
+    """A failed or interrupted isolated run keeps its user dir, and says where."""
+    if appdata is not None:
+        print("isolated user dir kept for its logs: %s" % appdata, file=sys.stderr)
 
 
 def registry() -> tuple[list[str], list[str]]:

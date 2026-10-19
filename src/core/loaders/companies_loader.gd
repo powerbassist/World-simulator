@@ -1,12 +1,13 @@
 extends RefCounted
 
-## V5.0b: one of DataLoader's per-content loaders. data/companies/: the firm register per nation and the partition checks against the sectors.
+## V5.0b: one of DataLoader's per-content loaders. data/companies/: the firm
+## register per nation and the partition checks against the sectors.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
-## orchestrator (a few test entry points delegate here too), every register lives on the loader
-## (its public surface did not move), and each function here is the body that
-## used to be DataLoader._<name>() verbatim (now <ThisLoader>.<name>), its members read
-## through `loader.`.
+## orchestrator (a few test entry points delegate here too); every register
+## lives on the loader, whose public surface did not move. Each function here
+## is the body that used to be DataLoader._<name>() verbatim, now
+## CompaniesLoader.<name>(loader, ...), its members read through `loader.`.
 
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Company = preload("res://src/core/company.gd")

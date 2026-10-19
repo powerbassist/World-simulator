@@ -317,7 +317,8 @@ if [ ! -d ".godot" ]; then
     # and is the step override.cfg was measured NOT to redirect (V5.0b).
     *" --isolate "*)
       import_appdata="$(mktemp -d)"
-      APPDATA="$import_appdata" XDG_DATA_HOME="$import_appdata"         godot --headless --import >/dev/null 2>&1 || true
+      APPDATA="$import_appdata" XDG_DATA_HOME="$import_appdata" \
+        godot --headless --import >/dev/null 2>&1 || true
       rm -rf "$import_appdata" ;;
     *) godot --headless --import >/dev/null 2>&1 || true ;;
   esac
