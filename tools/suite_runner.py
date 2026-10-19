@@ -435,15 +435,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.selftest:
         return _selftest()
     if not args.tests:
-        # The registry, from its one home: AGENTS.md's agent gate is this command
-        # with no tests, and it used to exit 2 here. run_tests.sh's own
-        # unregistered-test check runs on the way, so a bare gate is as strict.
-        listed = subprocess.run(["bash", "tools/run_tests.sh", "--print-tests"],
-                                cwd=str(REPO), capture_output=True, text=True)
-        if listed.returncode != 0:
-            print(listed.stderr, file=sys.stderr, end="")
-            return listed.returncode or 2
-        args.tests = [t.strip() for t in listed.stdout.splitlines() if t.strip()]
+        # AGENTS.md's agent gate is this command with no tests, and it used to
+        # exit 2 here. The list is still run_tests.sh's tests=() -- read, not
+        # copied -- and its unregistered-test rule applies on the way, so a bare
+        # gate is as strict as the bash one. Parsed rather than run through bash:
+        # a core.autocrlf checkout hands bash a CRLF script it cannot execute.
+        args.tests, unregistered = registry()
+        if unregistered:
+            print("test files on disk but absent from tools/run_tests.sh: %s"
+                  % " ".join(unregistered), file=sys.stderr)
+            return 1
 
     if not _godot_available():
         print("godot not found -- set GODOT_BIN if it is not on PATH", file=sys.stderr)
@@ -498,6 +499,16 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("test suite failed", file=sys.stderr)
     return code
+
+
+def registry() -> tuple[list[str], list[str]]:
+    """(the tests=() array of tools/run_tests.sh in order, tests/test_*.gd
+    files on disk that it does not list)."""
+    text = (REPO / "tools" / "run_tests.sh").read_text(encoding="utf-8")
+    block = re.search(r"^tests=\((.*?)^\)", text, re.MULTILINE | re.DOTALL)
+    tests = [t for t in block.group(1).split() if t.startswith("tests/")] if block else []
+    on_disk = sorted("tests/" + p.name for p in (REPO / "tests").glob("test_*.gd"))
+    return tests, [t for t in on_disk if t not in tests]
 
 
 def _godot_available() -> bool:
