@@ -182,11 +182,14 @@ static func _raw_turn(state, actor_id: String, with_agreements: bool, with_measu
 		return _raw(state, actor_id, with_agreements, with_measures)
 	var bites_a: bool = with_agreements and not state.agreements.is_empty()
 	var bites_m: bool = with_measures and not state.measures.is_empty()
-	var key := "%s|%d|%d" % [actor_id, int(bites_a), int(bites_m)]
-	var hit = _turn.get(key)
+	var flavour: int = int(bites_a) * 2 + int(bites_m)
+	var by_actor: Dictionary = _turn.get(actor_id, {})
+	if by_actor.is_empty():
+		_turn[actor_id] = by_actor
+	var hit = by_actor.get(flavour)
 	if hit == null:
 		hit = _raw(state, actor_id, with_agreements, with_measures)
-		_turn[key] = hit
+		by_actor[flavour] = hit
 	return hit
 
 

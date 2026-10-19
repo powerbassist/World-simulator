@@ -19,6 +19,9 @@ extends SceneTree
 ##   5. Commodities' shared routes give the same production as each nation
 ##      choosing its own, and an equal price vector compares equal by value
 ##      (the reuse guard reads `!=`).
+##   6. The invariants the two Diplomacy memos REST on, source-scanned: nothing
+##      Diplomacy runs loads orgs.gd or writes membership (Org's memo), and
+##      execute() closes the turn memo before its first relation write.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -48,6 +51,8 @@ func _init() -> void:
 	_check_trade_registers(state)
 	_check_seed_memo()
 	_check_shared_routes(state, loader)
+	_check_turn_flavours(state)
+	_check_memo_invariants()
 	_finish()
 
 
@@ -151,6 +156,42 @@ func _check_shared_routes(state, loader) -> void:
 		Commodities._produce(tables, capacity, price, out_b, gross_b, chosen)
 		if var_to_str(out_a) != var_to_str(out_b) or var_to_str(gross_a) != var_to_str(gross_b):
 			_fail("%s: production with the shared routes differs from its own" % id)
+
+
+## Under an open turn memo, with a measure in force, "with" and "before"
+## measures are different vectors -- the memo must keep them apart.
+func _check_turn_flavours(state) -> void:
+	var probe = state.duplicate_state()
+	probe.measures[RK.directed_key("DEU", "FRA")] = {"severity": 1.0, "since_year": probe.year, "since_month": probe.month}
+	var with_plain: Dictionary = Trade.weights(probe, "FRA")
+	var before_plain: Dictionary = Trade.weights_before_measures(probe, "FRA")
+	Trade.turn_open(probe)
+	var before_memo: Dictionary = Trade.weights_before_measures(probe, "FRA")
+	var with_memo: Dictionary = Trade.weights(probe, "FRA")
+	var with_again: Dictionary = Trade.weights(probe, "FRA")
+	Trade.turn_close()
+	if var_to_str(with_memo) != var_to_str(with_plain) or var_to_str(with_again) != var_to_str(with_plain):
+		_fail("the turn memo served a different 'with measures' vector")
+	if var_to_str(before_memo) != var_to_str(before_plain):
+		_fail("the turn memo served a different 'before measures' vector")
+	if float(with_memo["DEU"]) == float(before_memo["DEU"]):
+		_fail("with a measure in force the two flavours must differ -- the memo shared one entry")
+
+
+func _check_memo_invariants() -> void:
+	for path in ["res://src/sim/diplomacy.gd", "res://src/sim/foreign_policy.gd", "res://src/sim/defence.gd",
+			"res://src/sim/diplomacy_verbs.gd", "res://src/sim/coercion.gd", "res://src/core/relations.gd",
+			"res://src/sim/trade.gd"]:
+		var src := FileAccess.get_file_as_string(path)
+		for forbidden in ["res://src/sim/orgs.gd", ".orgs.append(", ".orgs.erase(", "org_effects["]:
+			if src.contains(forbidden):
+				_fail("%s contains '%s': Diplomacy's tick would write membership under Org's memo" % [path, forbidden])
+	var dip := FileAccess.get_file_as_string("res://src/sim/diplomacy.gd")
+	var start := dip.find("static func execute(")
+	var close_at := dip.find("Trade.turn_close()", start)
+	var first_write := dip.find("RK.adjust(", start)
+	if start < 0 or close_at < 0 or first_write < 0 or close_at > first_write:
+		_fail("execute() must close the turn memo before its first relation write (close at %d, write at %d)" % [close_at, first_write])
 
 
 func _fail(message: String) -> void:

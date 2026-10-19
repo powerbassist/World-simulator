@@ -101,10 +101,10 @@ Four ops rather than a sixth channel: `sign`, `abandon`, `deploy`, `withdraw`. A
 
 The mutual exclusion in `src/core/diplomatic_action.gd` was a single pairwise test and becomes **at most one of {agreement, measure, pact}**. `agreement` + `pact` is technically harmless — different registers, no erase ordering — but it would give one action two counterparty gates, and `execute()`'s single `blocked_by_partner` would have to become an OR that a later session would have to unpick.
 
-`_is_pact_verb()` tests `op == "sign"`, **not** "the channel is non-empty", which is where `_is_agreement_verb()` sits. Only signing needs the counterparty's consent, and testing non-emptiness would mean an AI can never *abandon* a pact with the player — locking a human into an alliance the AI hates, permanently, with no exit on its side.
+`_is_pact_verb()` tests `op == "sign"`, **not** "the channel is non-empty", which is where `is_agreement_verb()` sits (both in `src/sim/diplomacy_verbs.gd` since V5.0c). Only signing needs the counterparty's consent, and testing non-emptiness would mean an AI can never *abandon* a pact with the player — locking a human into an alliance the AI hates, permanently, with no exit on its side.
 
 > [!note] An existing consequence this uncovered, recorded and not fixed here
-> `Diplomacy._is_agreement_verb()` has exactly the non-empty shape today, so `withdraw_from_compact` is skipped when the target is the player: **an AI can never withdraw from a trade agreement with the player.** It is out of this session's scope and is written down rather than quietly repaired inside it.
+> `is_agreement_verb()` (`src/sim/diplomacy_verbs.gd`, `Diplomacy._is_agreement_verb()` before V5.0c) has exactly the non-empty shape today, so `withdraw_from_compact` is skipped when the target is the player: **an AI can never withdraw from a trade agreement with the player.** It is out of this session's scope and is written down rather than quietly repaired inside it.
 
 ## 6. `SAVE_VERSION` 12 → 13
 
@@ -311,7 +311,7 @@ it and would be dishonest content: at 0.215 its price already sits between
 player content.** AI-to-AI pacts are reachable by the model and unreachable by the
 agenda, so the obligation the session is about arrives through the *council's*
 external tariff (table d) rather than through nine nations allying with each other.
-`_is_pact_signing_verb()`'s player exclusion is therefore correct and currently
+`is_pact_signing_verb()`'s player exclusion is therefore correct and currently
 untriggered. The fix is a security term in `_desire_parts()` — a real addition to an
 interest model two sessions measured, which is a session and not a constant.
 
