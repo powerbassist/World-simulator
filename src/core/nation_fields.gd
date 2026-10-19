@@ -191,11 +191,11 @@ const FIELDS := [
 	["event_category_quiet", DEEP, COPIED, {}, false],
 	["event_cooldowns", DEEP, COPIED, {}, false],
 	["event_armed", DEEP, ROWS, [], false],
-	["repealed_at", DEEP, COPIED, {}, false],
+	["repealed_at", DEEP, COPIED, {}, true],  # a stamp: absent is 'not yet'
 	["last_accession", DEEP, COPIED, {}, true],  # a stamp: absent is 'not yet'
 	["assembly_bill_passed_month", SCALAR, VALUE, -1, true],  # a stamp: absent is 'not yet'
 	["commodity_high_month", SCALAR, VALUE, -1, true],  # a stamp: absent is 'not yet'
-	["event_history", DEEP, ROWS, [], false],
+	["event_history", DEEP, ROWS, [], true],  # display record nothing reads back
 	["permits_system_change", SCALAR, VALUE, false, false],
 	["dissolution_rule", SCALAR, VALUE, "", false],
 	["dissolution_lockout_months", SCALAR, VALUE, 0, false],

@@ -39,13 +39,14 @@ const GameState = preload("res://src/core/game_state.gd")
 ## the pin is re-read every time the version moves rather than drifting.
 const MUST_BUMP_PIN := {
 	"save_version": 40,
-	"count": 170,
-	"md5": "f3d855b6c45ecb981296b06ebdd21b06",
+	"count": 168,
+	"md5": "31357071861a7071addfaec0cb90bf87",
 }
 
 ## Sentinels per read kind, each in the exact shape and types its reader returns,
-## and none a fresh NationState ever holds. Numbers that JSON might reshape are
-## either cast back by the reader or carry a fraction; free-form values are strings.
+## and none a fresh NationState ever holds. Every float a reader re-casts is a
+## WHOLE number, so a dropped float() shows as an int on the JSON path; a float no
+## reader casts carries a fraction; free-form values are strings.
 const ALIAS_PROBE := "__alias_probe__"
 
 var _failures: Array[String] = []
@@ -139,23 +140,24 @@ func _check_aliasing(state) -> void:
 			_fail("%s: mutating the loaded state moved the payload -- from_dict assigned instead of rebuilding" % name)
 
 
-## One level of nesting is as deep as any register goes that is not wholly
-## duplicated -- commodity_state, the ledger and the queues are all caught here.
-func _mutate(value) -> void:
+## Every level a register has: commodity_state's goods, the ledger's channels
+## and months, a poll's kinds are two below the field, so a reader that dropped an
+## INNER duplicate is caught as surely as one that assigned the whole payload.
+func _mutate(value, depth: int = 0) -> void:
+	if depth > 3:
+		return
 	if typeof(value) == TYPE_DICTIONARY:
 		for key in value.keys():
-			if typeof(value[key]) == TYPE_DICTIONARY:
-				value[key][ALIAS_PROBE] = ALIAS_PROBE
-			elif typeof(value[key]) == TYPE_ARRAY and value[key].get_typed_builtin() == TYPE_NIL:
-				value[key].append(ALIAS_PROBE)
+			if typeof(value[key]) == TYPE_DICTIONARY or typeof(value[key]) == TYPE_ARRAY:
+				_mutate(value[key], depth + 1)
 		match value.get_typed_value_builtin():
 			TYPE_FLOAT: value[ALIAS_PROBE] = -1.5
 			TYPE_BOOL: value[ALIAS_PROBE] = true
 			_: value[ALIAS_PROBE] = ALIAS_PROBE
 	else:
 		for element in value:
-			if typeof(element) == TYPE_DICTIONARY:
-				element[ALIAS_PROBE] = ALIAS_PROBE
+			if typeof(element) == TYPE_DICTIONARY or typeof(element) == TYPE_ARRAY:
+				_mutate(element, depth + 1)
 		if value.get_typed_builtin() == TYPE_DICTIONARY:
 			value.append({ALIAS_PROBE: ALIAS_PROBE})
 		else:
@@ -225,7 +227,7 @@ func _sentinel(read: int, declared):
 			if typeof(declared) == TYPE_ARRAY:
 				return ["sentinel_a", "sentinel_b"]
 			return {"sentinel": "x", "inner": {"k": "v"}}
-		Fields.FLOAT_MAP: return {"sentinel": 2.5}
+		Fields.FLOAT_MAP: return {"sentinel": 2.0}
 		Fields.INT_MAP: return {"sentinel": 7}
 		Fields.STRING_MAP: return {"sentinel": "v"}
 		Fields.SORTED_STRINGS: return ["a_sentinel", "b_sentinel"]
@@ -233,7 +235,7 @@ func _sentinel(read: int, declared):
 			var rows: Array[Dictionary] = [{"event_id": "sentinel"}]
 			return rows
 		Fields.FLOAT_MAP_TYPED:
-			var floats: Dictionary[String, float] = {"sentinel": 2.5}
+			var floats: Dictionary[String, float] = {"sentinel": 2.0}
 			return floats
 		Fields.STRING_MAP_TYPED:
 			var strings: Dictionary[String, String] = {"sentinel": "v"}
@@ -242,21 +244,21 @@ func _sentinel(read: int, declared):
 			var bools: Dictionary[String, bool] = {"sentinel": true}
 			return bools
 		Fields.PLEDGES:
-			return [{"pledge_id": "p", "field": "f", "op": "max", "value": 1.5,
+			return [{"pledge_id": "p", "field": "f", "op": "max", "value": 2.0,
 				"from_year": 2026, "from_month": 2, "until_year": 2030, "until_month": 3,
 				"breach_months": 4, "months_live": 5}]
 		Fields.PROGRAMME:
 			return [{"entry_id": "e", "chosen_term": 1, "months_live": 2, "status": "done",
 				"concluded_term": 3, "concluded_term_month": 4}]
-		Fields.COMMODITY_STATE: return {"capacity": {"steel": 2.5}, "price_index": 1.25}
+		Fields.COMMODITY_STATE: return {"capacity": {"steel": 2.0}, "price_index": 1.0}
 		Fields.LAW_LEDGER: return {"law_s": {"channels": {"c": 0.5}, "months": ["m"]}}
-		Fields.DRAFT_BILLS: return {"d": {"law_id": "x", "size": 2.5, "months_left": 3}}
+		Fields.DRAFT_BILLS: return {"d": {"law_id": "x", "size": 2.0, "months_left": 3}}
 		Fields.CUSTOM_TAXES:
-			return {"t": {"name": "n", "base_share": 0.25, "erosion": 0.5, "ref_pct": 1.5}}
-		Fields.POLL_PURCHASES: return {"b": {"k": {"month": 3, "cost": 1.5}}}
+			return {"t": {"name": "n", "base_share": 1.0, "erosion": 2.0, "ref_pct": 3.0}}
+		Fields.POLL_PURCHASES: return {"b": {"k": {"month": 3, "cost": 2.0}}}
 		Fields.ASSEMBLY_BILLS:
 			return {"b": {"law_id": "l", "months_left": 2, "backer_firm": "f",
-				"backer_chief": "c", "endorse_bonus": 0.5}}
+				"backer_chief": "c", "endorse_bonus": 1.0}}
 		Fields.HELD_BILLS: return {"l": {"months": 2, "origin": "player"}}
 	return null
 
