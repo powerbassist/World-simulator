@@ -26,11 +26,13 @@ out of each and writes them back in the same layout. Stdlib only.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -38,30 +40,60 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 GODOT = os.environ.get("GODOT_BIN", "godot")
 PROBE = "res://tools/balance_probe.gd"
+# A regime runs ~1-2 min under a full pool; an hour is a hang, not a slow regime.
+TIMEOUT_S = 3600.0
+
+# Live children, killed on an interrupt: the pool's threads own them, and a
+# killed runner must not leave eight Godots saturating the CPU behind it
+# (suite_runner.py's _LIVE_CHILDREN, for the same reason).
+_LIVE: set = set()
+_LIVE_LOCK = threading.Lock()
+
+
+class Failed(Exception):
+    pass
 
 
 def _env(appdata: str) -> dict:
     return {**os.environ, "APPDATA": appdata, "XDG_DATA_HOME": appdata}
 
 
-def _godot(args: list[str], appdata: str) -> subprocess.CompletedProcess:
-    return subprocess.run([GODOT, "--headless", "--path", str(REPO), "--script", PROBE, "--"] + args,
-                          cwd=str(REPO), env=_env(appdata), capture_output=True, text=True,
-                          encoding="utf-8", errors="replace")
+def _godot(args: list[str], appdata: str, script: bool = True) -> tuple[int, str]:
+    cmd = [GODOT, "--headless", "--path", str(REPO)]
+    cmd += (["--script", PROBE, "--"] + args) if script else args
+    proc = subprocess.Popen(cmd, cwd=str(REPO), env=_env(appdata), stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
+    with _LIVE_LOCK:
+        _LIVE.add(proc)
+    try:
+        out, _ = proc.communicate(timeout=TIMEOUT_S)
+        return proc.returncode, out or ""
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        return -1, "balance_parallel: timed out after %.0f s" % TIMEOUT_S
+    finally:
+        with _LIVE_LOCK:
+            _LIVE.discard(proc)
+
+
+def _kill_all() -> None:
+    with _LIVE_LOCK:
+        live = list(_LIVE)
+    for proc in live:
+        try:
+            proc.kill()
+        except OSError:
+            pass
 
 
 def regime_order(tmp: Path) -> list[str]:
-    done = _godot(["--list"], str(tmp / "list_appdata"))
-    names = []
-    for line in done.stdout.splitlines():
-        s = line.strip()
-        # The banner and the MCP bridge's port line are not regime names.
-        if s and " " not in s and not s.startswith("["):
-            names.append(s)
-    if done.returncode != 0 or not names:
-        sys.exit("balance_parallel: `--list` gave no regimes (exit %d)\n%s" % (done.returncode, done.stderr))
+    rc, out = _godot(["--list"], str(tmp / "list_appdata"))
+    # Prefixed lines only: the banner, the MCP bridge and any stray print are not regimes.
+    names = [l.strip()[len("REGIME "):] for l in out.splitlines() if l.strip().startswith("REGIME ")]
+    if rc != 0 or not names:
+        raise Failed("`--list` gave no regimes (exit %d)\n%s" % (rc, out))
     if len(set(names)) != len(names):
-        sys.exit("balance_parallel: a regime name repeats, so one name would run two regimes")
+        raise Failed("a regime name repeats, so one name would run two regimes")
     return names
 
 
@@ -95,7 +127,14 @@ def merge(tables: list[str]) -> str:
     for key in ("elections", "runs"):
         rows = [b for t in tables for b in blocks(t, key)]
         parts.append('  "%s": [\n%s\n  ]' % (key, ",\n".join(rows)) if rows else '  "%s": []' % key)
-    return "{\n" + ",\n".join(parts) + "\n}"
+    merged = "{\n" + ",\n".join(parts) + "\n}"
+    # The splice reads a layout, so check it kept every row: the merged table must
+    # parse, and hold exactly the shards' rows in the shards' order.
+    want = {k: [r for t in tables for r in json.loads(t)[k]] for k in ("elections", "runs")}
+    got = json.loads(merged)
+    if any(got[k] != want[k] for k in want):
+        raise Failed("the splice lost or reordered rows -- has _write_outcomes's layout changed?")
+    return merged
 
 
 def main(argv: list[str]) -> int:
@@ -110,20 +149,13 @@ def main(argv: list[str]) -> int:
 
     tmp = Path(tempfile.mkdtemp(prefix="nsim_balance_"))
     t0 = time.monotonic()
-    names = regime_order(tmp)
-    extra = [args.nation] if args.nation else []
-
-    def run(i_name: tuple[int, str]) -> tuple[str, int, float]:
-        i, name = i_name
-        t = time.monotonic()
-        out = tmp / ("%02d_%s.json" % (i, name))
-        done = _godot([name] + extra + ["--json=" + str(out)], str(tmp / ("appdata_%02d" % i)))
-        (tmp / ("%02d_%s.log" % (i, name))).write_text(done.stdout + done.stderr, encoding="utf-8")
-        ok = done.returncode == 0 and out.is_file()
-        return name, 0 if ok else (done.returncode or 1), time.monotonic() - t
-
-    with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
-        results = list(pool.map(run, enumerate(names)))
+    try:
+        results, names = _run_pool(args, tmp)
+    except (Failed, KeyboardInterrupt) as exc:
+        _kill_all()
+        print("balance_parallel: %s -- logs kept in %s"
+              % ("interrupted" if isinstance(exc, KeyboardInterrupt) else exc, tmp), file=sys.stderr)
+        return 130 if isinstance(exc, KeyboardInterrupt) else 1
     failed = [(n, rc) for n, rc, _d in results if rc != 0]
     if failed:
         print("balance_parallel: %d regime(s) failed: %s -- logs kept in %s"
@@ -131,13 +163,41 @@ def main(argv: list[str]) -> int:
         return 1
 
     tables = [(tmp / ("%02d_%s.json" % (i, n))).read_text(encoding="utf-8") for i, n in enumerate(names)]
-    Path(args.json).write_text(merge(tables), encoding="utf-8", newline="")
+    try:
+        merged = merge(tables)
+    except (Failed, ValueError) as exc:
+        print("balance_parallel: %s -- shard tables kept in %s" % (exc, tmp), file=sys.stderr)
+        return 1
+    Path(args.json).write_text(merged, encoding="utf-8", newline="")
     wall = time.monotonic() - t0
     slowest = max(results, key=lambda r: r[2])
     print("balance_parallel: %d regimes, -j %d, %d:%02d wall (slowest regime %s %.0f s) -> %s"
           % (len(names), args.jobs, int(wall) // 60, int(wall) % 60, slowest[0], slowest[2], args.json))
     shutil.rmtree(tmp, ignore_errors=True)
     return 0
+
+
+def _run_pool(args, tmp: Path) -> tuple[list, list[str]]:
+    # A cold checkout has no .godot/ and so no script class cache: one isolated
+    # import first, as suite_runner.py does, rather than eight probes racing to
+    # build it (and DialogueManager failing to parse in each).
+    if not (REPO / ".godot").is_dir():
+        print("no .godot/ -- importing once so the script class cache exists", file=sys.stderr)
+        _godot(["--import"], str(tmp / "import_appdata"), script=False)
+    names = regime_order(tmp)
+    extra = [args.nation] if args.nation else []
+
+    def run(i_name: tuple[int, str]) -> tuple[str, int, float]:
+        i, name = i_name
+        t = time.monotonic()
+        out = tmp / ("%02d_%s.json" % (i, name))
+        rc, text = _godot([name] + extra + ["--json=" + str(out)], str(tmp / ("appdata_%02d" % i)))
+        (tmp / ("%02d_%s.log" % (i, name))).write_text(text, encoding="utf-8")
+        ok = rc == 0 and out.is_file()
+        return name, 0 if ok else (rc or 1), time.monotonic() - t
+
+    with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
+        return list(pool.map(run, enumerate(names))), names
 
 
 if __name__ == "__main__":

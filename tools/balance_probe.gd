@@ -12,6 +12,9 @@ extends SceneTree
 ## rather than tests/ for exactly that reason, and excluded from run_tests.sh.
 ##
 ## Pass a regime name to run one: --headless --script ... -- hands_off
+## (any family since V5.0c0). `--list` prints the serial order, one
+## `REGIME <name>` line each, and runs nothing -- tools/balance_parallel.py
+## runs one probe per name and splices the tables back in that order.
 ##
 ## Pass `--json=PATH` (absolute, or res://) to also write the outcome table: one
 ## row per verdict the text prints and one per run, which tools/balance_diff.py
@@ -807,9 +810,18 @@ func _init() -> void:
 			-1, -1, -1, -1, int(regime["referendum_month"]), int(regime["electoral_month"])
 		)
 
-
+	# One name, one regime: a name two families shared would run twice here and
+	# be ambiguous to the sharded runner.
+	var seen := {}
+	for listed in _listed:
+		if seen.has(listed):
+			printerr("regime name '%s' is defined twice" % listed)
+			quit(1)
+			return
+		seen[listed] = true
 	if _listing:
-		print("\n".join(PackedStringArray(_listed)))
+		for listed in _listed:
+			print("REGIME %s" % listed)
 		quit(0)
 		return
 	if only != "" and _ran == 0:
