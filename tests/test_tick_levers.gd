@@ -91,17 +91,24 @@ func _check_shared_bonus_memo(state, loader) -> void:
 				if Org.shared_bonus(state, a, b, "trade_bonus") != float(plain[a + ">" + b]):
 					_fail("memoised shared_bonus(%s, %s) differs on pass %d" % [a, b, pass_i])
 	Org.memo_close()
-	# A different state never reads another's memo.
+	# A different state never reads another's memo: prime it with a pair that
+	# DOES share a priced org, then ask a copy whose membership was emptied.
+	var primed: float = Org.shared_bonus(state, "FRA", "DEU", "trade_bonus")
+	if primed <= 0.0:
+		_fail("FRA-DEU shares no priced org -- the cross-state check would be vacuous")
 	var other = state.duplicate_state()
 	Org.memo_open(state)
-	other.nations[ids[0]].orgs = []
-	if Org.shared_bonus(other, ids[0], ids[1], "trade_bonus") != 0.0:
+	Org.shared_bonus(state, "FRA", "DEU", "trade_bonus")
+	other.nations["FRA"].orgs = []
+	if Org.shared_bonus(other, "FRA", "DEU", "trade_bonus") != 0.0:
 		_fail("a second state read the first state's memo")
 	Org.memo_close()
-	# Diplomacy leaves no memo open behind it.
+	# Diplomacy leaves neither memo open behind it.
 	WorldMonth.tick_month(state, loader)
 	if Org._memo_state != null:
 		_fail("the shared_bonus memo is still open after the month")
+	if Trade._turn_state != null:
+		_fail("the trade turn memo is still open after the month")
 
 
 func _check_trade_registers(state) -> void:
@@ -178,20 +185,38 @@ func _check_turn_flavours(state) -> void:
 		_fail("with a measure in force the two flavours must differ -- the memo shared one entry")
 
 
+## Scanned over comment-stripped code, so a docstring cannot trip or satisfy it.
+## The file list is what Diplomacy's tick reaches; a writer of membership or of
+## the effects snapshot in any of them would serve stale bonuses under the memo.
 func _check_memo_invariants() -> void:
 	for path in ["res://src/sim/diplomacy.gd", "res://src/sim/foreign_policy.gd", "res://src/sim/defence.gd",
 			"res://src/sim/diplomacy_verbs.gd", "res://src/sim/coercion.gd", "res://src/core/relations.gd",
-			"res://src/sim/trade.gd"]:
-		var src := FileAccess.get_file_as_string(path)
-		for forbidden in ["res://src/sim/orgs.gd", ".orgs.append(", ".orgs.erase(", "org_effects["]:
-			if src.contains(forbidden):
+			"res://src/sim/trade.gd", "res://src/core/org.gd"]:
+		var code := _code_only(FileAccess.get_file_as_string(path))
+		for forbidden in ["orgs.gd\")", ".orgs = ", ".orgs.append(", ".orgs.push_back(", ".orgs.erase(",
+				".orgs.remove_at(", ".orgs.clear(", ".orgs.sort(", "org_effects = ", "org_effects[org"]:
+			if code.contains(forbidden):
 				_fail("%s contains '%s': Diplomacy's tick would write membership under Org's memo" % [path, forbidden])
-	var dip := FileAccess.get_file_as_string("res://src/sim/diplomacy.gd")
+	# Every kind of write execute() makes comes after the turn memo's close.
+	var dip := _code_only(FileAccess.get_file_as_string("res://src/sim/diplomacy.gd"))
 	var start := dip.find("static func execute(")
 	var close_at := dip.find("Trade.turn_close()", start)
-	var first_write := dip.find("RK.adjust(", start)
-	if start < 0 or close_at < 0 or first_write < 0 or close_at > first_write:
-		_fail("execute() must close the turn memo before its first relation write (close at %d, write at %d)" % [close_at, first_write])
+	if start < 0 or close_at < 0:
+		_fail("execute() no longer closes the turn memo")
+		return
+	for write in ["RK.adjust(", "ns.bloc_offset[", "state.agreements[", "state.agreements.erase(",
+			"state.measures[", "state.measures.erase(", "Defence.", "ns.diplo_cooldown_months[", "state.met_months["]:
+		var at := dip.find(write, start)
+		if at >= 0 and at < close_at:
+			_fail("execute() writes '%s' before it closes the turn memo" % write)
+
+
+func _code_only(src: String) -> String:
+	var out: PackedStringArray = []
+	for line in src.split("\n"):
+		var cut := line.find("#")
+		out.append(line if cut < 0 else line.substr(0, cut))
+	return "\n".join(out)
 
 
 func _fail(message: String) -> void:
