@@ -53,6 +53,9 @@ var _want: Dictionary = {}
 var _quiet := 0
 var _job = null              # Budget.ProjectionJob while one runs
 var _job_key := ""           # "" for "now", else the pending it projects
+## Whether the last projection begun was "now": once a "now" path is on screen the
+## two take turns (_begin()).
+var _last_now := false
 ## The frame the panel redrew in -- want() is its refresh's call: that frame has
 ## spent its share (two ~19 ms previews), and the projection waits one frame.
 var _yield_frame := -1
@@ -142,14 +145,20 @@ func _advance(budget_usec: int) -> void:
 			settled.emit()
 
 
+## "now" first -- until a "now" path is on screen, after which the two take turns.
+## At speed 3 a month closes before a projection does, so "now" is due again each
+## time it lands; first-always would never reach the proposed budget (review pass 1).
 func _begin() -> bool:
-	if _now_due:
+	var wanted: bool = _want_key != "" and _quiet == 0 and (_proposed_due or _proposed_key != _want_key)
+	if _now_due and not (wanted and _last_now and not _now.is_empty()):
 		_now_due = false
+		_last_now = true
 		_job_key = ""
 		_job = Budget.projection(_state, {}, _months, _loader)
 		return true
-	if _want_key != "" and _quiet == 0 and (_proposed_due or _proposed_key != _want_key):
+	if wanted:
 		_proposed_due = false
+		_last_now = false
 		_job_key = _want_key
 		_job = Budget.projection(_state, _want, _months, _loader)
 		return true

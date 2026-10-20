@@ -62,6 +62,8 @@ func _process(_delta: float) -> bool:
 	_check_a_lever_waits_for_quiet(forecast)
 	_check_a_state_change_keeps_the_last_forecast(forecast)
 	_check_a_closed_panel_waits(forecast)
+	_check_a_commit_marks_the_forecast_due(forecast)
+	_check_proposed_lands_while_months_keep_closing(forecast)
 	_check_a_new_game_drops_the_job(forecast)
 	_finish()
 	return true
@@ -143,6 +145,43 @@ func _check_a_closed_panel_waits(forecast) -> void:
 	forecast._process(0.0)
 	if forecast._job == null:
 		_fail("the reopened panel did not resume its forecast")
+
+
+## Review pass 1: a commit changes the budget the forecast was projected from,
+## and the panel's own commit must say so -- not show the old budget's future,
+## unmarked, until the next month.
+func _check_a_commit_marks_the_forecast_due(forecast) -> void:
+	forecast.drain()
+	_panel._on_commit()
+	if not forecast.busy():
+		_fail("a commit left the forecast settled on the budget before it")
+	_panel._refresh()
+	if not String(_panel._figures["proj_growth"][0]).ends_with(Forecast.UPDATING):
+		_fail("after a commit the old forecast is shown as '%s', not marked as updating" % _panel._figures["proj_growth"][0])
+
+
+## Review pass 1: at speed 3 a month closes faster than a projection does, so
+## "now" is due again every time it lands. The proposed budget must still get
+## its turn -- here a month end lands with every finished projection, and the
+## proposed forecast has to appear within two.
+func _check_proposed_lands_while_months_keep_closing(forecast) -> void:
+	forecast.drain()
+	var key: String = _panel._lever_keys()[1]
+	var slider: HSlider = _panel._sliders[key]
+	slider.value = slider.value + 0.5
+	_panel._refresh()
+	forecast._quiet = 0
+	var settles := [0]
+	var month_end := func() -> void:
+		settles[0] += 1
+		forecast.state_changed()
+	forecast.settled.connect(month_end)
+	forecast.state_changed()
+	while settles[0] < 3 and forecast.proposed_path().is_empty():
+		forecast._advance(Forecast.FRAME_BUDGET_USEC)
+	forecast.settled.disconnect(month_end)
+	if forecast.proposed_path().is_empty():
+		_fail("with a month closing on every finished projection, the proposed forecast never landed")
 
 
 func _check_a_new_game_drops_the_job(forecast) -> void:

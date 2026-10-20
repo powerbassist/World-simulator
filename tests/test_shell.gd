@@ -69,6 +69,7 @@ func _run() -> void:
 	_check_save_dialog_traps_hotkeys()
 	_check_term_card_refresh()
 	_check_a_closed_window_costs_nothing()
+	_check_a_tax_commit_reaches_the_budget_forecast()
 
 
 ## A modal's holder is a full-rect CenterContainer, and a Container defaults to
@@ -594,6 +595,21 @@ func _check_a_closed_window_costs_nothing() -> void:
 	_main._windows.close_all()
 	if checked < 20:
 		_fail("only %d registered panels were checked for the closed-window gate" % checked)
+
+
+## V5.1-0a review pass 1: the Tax Code window commits through Budget.commit()
+## too, and the budget window's forecast -- projected off the frame, kept until
+## a change of state -- must hear of it, or it shows the pre-commit budget's
+## future while the books beside it show the new one.
+func _check_a_tax_commit_reaches_the_budget_forecast() -> void:
+	var forecast = _main._budget_panel._forecast
+	_main._windows.open("budget")
+	_main._budget_panel._process(0.0)
+	forecast.drain()
+	_main._tax_panel._on_commit()
+	if not forecast.busy():
+		_fail("a Tax Code commit left the budget's forecast settled on the old rates")
+	_main._windows.close_all()
 
 
 func _collect_text(node) -> String:

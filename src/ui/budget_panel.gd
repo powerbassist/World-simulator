@@ -348,7 +348,9 @@ func _on_revert() -> void:
 		slider.value = _pending_value(key)
 		slider.set_block_signals(false)
 	_edited_keys.clear()
-	_dirty = true
+	# mark_dirty(), not just _dirty (V5.1-0a review pass 1): a commit comes through
+	# here, and the forecast keeps its projection until told the state moved.
+	mark_dirty()
 
 
 func _on_commit() -> void:

@@ -327,13 +327,8 @@ func _ready() -> void:
 	_windows.register("budget", "Budget", _budget_panel, KEY_B, ICONS + "briefcase.svg")
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
-	_budget_panel.committed.connect(func(before, pending):
-		_queue_effect("Budget change", before)
-		# The acknowledgment the playtest found missing: the biggest verb in the
-		# game used to answer with one corner number changing (F3).
-		_hud.message_stack.push("Budget committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
-		_update_top_bar()
-	)
+	_budget_panel.committed.connect(func(before, _pending):
+		_fiscal_committed("Budget change", "Budget committed", before))
 
 	# V4.2 T5. The tax levers' new home, in the Economy cluster beside Budget:
 	# the cluster grammar (panel-system.md §16) puts a surface where its
@@ -352,11 +347,8 @@ func _ready() -> void:
 	# siblings; this is a reference, not state, and the load path's setup()
 	# sweep leaves it alone).
 	_budget_panel.tax_panel = _tax_panel
-	_tax_panel.committed.connect(func(before, pending):
-		_queue_effect("Tax code change", before)
-		_hud.message_stack.push("Tax code committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
-		_update_top_bar()
-	)
+	_tax_panel.committed.connect(func(before, _pending):
+		_fiscal_committed("Tax code change", "Tax code committed", before))
 	# A finished draft opens the briefing on itself: the price it was quoted
 	# and the drafting months are what the press just bought.
 	_tax_panel.brief_requested_draft.connect(func(entry, draft_id):
@@ -1191,6 +1183,19 @@ func _unhandled_input(event: InputEvent) -> void:
 					_save_from_menu = false
 					_save_load_panel.show()
 					_save_load_panel.mark_dirty()
+
+
+## A fiscal command landed -- the Budget window's or the Tax Code's, both through
+## Budget.commit(). The acknowledgment the playtest found missing: the biggest verb
+## in the game used to answer with one corner number changing (F3). V5.1-0a review
+## pass 1: and every window hears of it -- the budget's forecast keeps a projection
+## until the state changes, and a commit from the Tax Code window is a change it
+## would otherwise never hear of.
+func _fiscal_committed(label: String, title: String, before: Dictionary) -> void:
+	_queue_effect(label, before)
+	_hud.message_stack.push(title, "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
+	_windows.mark_all_dirty()
+	_update_top_bar()
 
 
 ## Records a command's pre-commit baseline, to be measured once the month it
