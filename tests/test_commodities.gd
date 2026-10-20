@@ -77,24 +77,32 @@ func _init() -> void:
 ## THE LEAF PROPERTY, source-scanned the way test_characters.gd polices its own:
 ## the ALLOWED preload and no others, checked over comment-stripped source so a
 ## docstring naming a system this file refuses to load cannot satisfy the scan.
+##
+## V5.0c split the natural-goods market into commodities_natural.gd: the same
+## leaf, so it is held to the same rule, and commodities.gd may load only it.
 func _check_leaf_property() -> void:
-	var src := FileAccess.get_file_as_string("res://src/sim/commodities.gd")
-	if src.is_empty():
-		_fail("could not read src/sim/commodities.gd")
-		return
-	var allowed := ["commodity_constants.gd"]
-	var code := _code_only(src)
-	for line in code.split("\n"):
-		var l := String(line)
-		if l.contains("preload("):
-			var found := false
-			for a in allowed:
-				if l.contains(String(a)):
-					found = true
-			if not found:
-				_fail("commodities.gd preloads outside its leaf: %s" % l.strip_edges())
-		if l.contains("get_node(") or l.contains("res://src/ui"):
-			_fail("commodities.gd reaches the UI: %s" % l.strip_edges())
+	var leaf := {
+		"commodities.gd": ["commodity_constants.gd", "commodities_natural.gd"],
+		"commodities_natural.gd": ["commodity_constants.gd"],
+	}
+	for file in leaf:
+		var src := FileAccess.get_file_as_string("res://src/sim/%s" % file)
+		if src.is_empty():
+			_fail("could not read src/sim/%s" % file)
+			continue
+		var allowed: Array = leaf[file]
+		var code := _code_only(src)
+		for line in code.split("\n"):
+			var l := String(line)
+			if l.contains("preload("):
+				var found := false
+				for a in allowed:
+					if l.contains(String(a)):
+						found = true
+				if not found:
+					_fail("%s preloads outside its leaf: %s" % [file, l.strip_edges()])
+			if l.contains("get_node(") or l.contains("res://src/ui"):
+				_fail("%s reaches the UI: %s" % [file, l.strip_edges()])
 
 
 ## SINGLE WRITER: `commodity_state` is commodities.gd's alone. The scan matches

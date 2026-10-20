@@ -55,7 +55,7 @@ static func weight_table(state) -> Dictionary:
 ## has two, and the disparity is the ratio between them. See
 ## docs/diplomacy-model.md section 2.
 static func weights(state, actor_id: String) -> Dictionary:
-	return _normalise(_raw(state, actor_id, true, true))
+	return _normalise(_raw_turn(state, actor_id, true, true))
 
 
 ## The same vector as if no coercive measure existed, agreements still in force.
@@ -69,7 +69,7 @@ static func weights(state, actor_id: String) -> Dictionary:
 ## collecting less AND hurting less while costing more trend. Measured, then fixed
 ## here rather than tuned around.
 static func weights_before_measures(state, actor_id: String) -> Dictionary:
-	return _normalise(_raw(state, actor_id, true, false))
+	return _normalise(_raw_turn(state, actor_id, true, false))
 
 
 ## The openness index: this nation's raw trade mass against what the same mass
@@ -153,12 +153,59 @@ static func has_agreement(state, a: String, b: String) -> bool:
 ## potential_shift channel infrastructure and education write. Revenue now, trend
 ## later: the protectionist trade-off, obtained from machinery already measured
 ## rather than from a new channel. See docs/coercion-model.md.
+## V5.0c. The raw vectors of ONE diplomatic turn -- an acting nation scoring its
+## targets and then executing its choice -- memoised: retaliation_fraction()
+## builds every target's before-measures vector, and the third-party pass in
+## execute() builds the same nations' vectors again before anything has moved.
+## Opened by Diplomacy for one actor and closed before execute() writes its
+## first relation (turn_close()), so a hit is always the vector the same state
+## would recompute; any other state, or any read outside that window, computes.
+## Keyed by the flags AS THEY BITE: with an empty register, "with measures" and
+## "before measures" are the same floats (the skipped lookups below), so the two
+## flavours share an entry exactly when they are equal.
+static var _turn_state = null
+static var _turn: Dictionary = {}
+
+
+static func turn_open(state) -> void:
+	_turn_state = state
+	_turn = {}
+
+
+static func turn_close() -> void:
+	_turn_state = null
+	_turn = {}
+
+
+static func _raw_turn(state, actor_id: String, with_agreements: bool, with_measures: bool) -> Dictionary:
+	if _turn_state == null or state != _turn_state:
+		return _raw(state, actor_id, with_agreements, with_measures)
+	var bites_a: bool = with_agreements and not state.agreements.is_empty()
+	var bites_m: bool = with_measures and not state.measures.is_empty()
+	var flavour: int = int(bites_a) * 2 + int(bites_m)
+	var by_actor: Dictionary = _turn.get(actor_id, {})
+	if by_actor.is_empty():
+		_turn[actor_id] = by_actor
+	var hit = by_actor.get(flavour)
+	if hit == null:
+		hit = _raw(state, actor_id, with_agreements, with_measures)
+		by_actor[flavour] = hit
+	return hit
+
+
 static func _raw(state, actor_id: String, with_agreements: bool, with_measures: bool) -> Dictionary:
 	var a = state.nations.get(actor_id)
 	if a == null:
 		return {}
 
 	var out := {}
+	# V5.0c, the month's hottest loop (Diplomacy builds ~400 of these vectors a
+	# month): the pair key is built once rather than twice, and the agreement and
+	# measure registers are not probed while they are empty -- a pair with no
+	# entry multiplies by exactly 1.0 there, so skipping the lookup is the same
+	# float, not an approximation (the 51-regime table is cmp-identical).
+	var any_agreement: bool = with_agreements and not state.agreements.is_empty()
+	var any_measure: bool = with_measures and not state.measures.is_empty()
 	for partner_id in state.nations.keys():
 		if partner_id == actor_id:
 			continue
@@ -176,15 +223,15 @@ static func _raw(state, actor_id: String, with_agreements: bool, with_measures: 
 		# Floored at zero rather than clamped to a minimum: a pair at relations 0
 		# should be able to read as no trade at all, and INTENSITY_SPAN is set so
 		# the floor is not reached at any relations value in the readable range.
-		var relations: float = float(state.relations.get(RK.key(actor_id, partner_id), DK.REST_BASE))
+		var pair_key := RK.key(actor_id, partner_id)
+		var relations: float = float(state.relations.get(pair_key, DK.REST_BASE))
 		value *= maxf(0.0, 1.0 + K.INTENSITY_SPAN * (relations - DK.REST_BASE) / 100.0)
 
-		if with_agreements:
-			var pair_key := RK.key(actor_id, partner_id)
+		if any_agreement:
 			if state.agreements.has(pair_key):
 				value *= float(state.agreements[pair_key].get("weight_multiplier", 1.0))
 
-		if with_measures:
+		if any_measure:
 			# Measures in EITHER direction on the pair, because goods stop moving
 			# both ways whichever side imposed. The register is directed so that a
 			# tariff and its retaliation stay distinguishable; the trade effect is
@@ -210,7 +257,8 @@ static func _sum(raw: Dictionary) -> float:
 static func _normalise(raw: Dictionary) -> Dictionary:
 	var total := _sum(raw)
 	if total <= 0.0:
-		return raw
+		# A copy, not the vector itself: the raw vector may be the turn memo's.
+		return raw.duplicate()
 	var out := {}
 	for id in raw.keys():
 		out[id] = float(raw[id]) / total

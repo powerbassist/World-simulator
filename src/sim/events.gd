@@ -252,9 +252,12 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 		# landed. AI nations have no desk, so the skip is the player's alone.
 		if is_player and _on_desk(ns, ev.id):
 			continue
-		if not hazard_passes(ns.id, ev.id, _year_of(month_index), _month_of(month_index), float(ev.likelihood)):
+		# V5.0c: the two register reads before the hash, not after -- all four
+		# tests are pure and must all pass, so their order picks the same events;
+		# a cooling or once-fired event no longer pays for a draw it cannot use.
+		if not _cooldown_ok(ns, ev, month_index) or _once_blocks(ns, ev):
 			continue
-		if not _cooldown_ok(ns, ev, month_index):
+		if not hazard_passes(ns.id, ev.id, _year_of(month_index), _month_of(month_index), float(ev.likelihood)):
 			continue
 		if not _gates_pass(ns, ev, month_index):
 			continue
