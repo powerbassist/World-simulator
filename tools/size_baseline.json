@@ -17,7 +17,7 @@
   "src/ui/companies_panel.gd": 309,
   "src/ui/election_panel.gd": 321,
   "src/ui/government_panel.gd": 409,
-  "src/ui/law_panel.gd": 457,
+  "src/ui/law_panel.gd": 453,
   "src/ui/main.gd": 1459,
   "src/ui/map_view.gd": 888,
   "src/ui/overview_panel.gd": 392,

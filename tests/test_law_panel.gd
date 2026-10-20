@@ -9,6 +9,7 @@ extends SceneTree
 ## -- see docs/engine-decision.md.
 
 const Legislature = preload("res://src/sim/legislature.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -94,6 +95,43 @@ func _run() -> void:
 	elif ns.last_law_result["passed"]:
 		_fail("expected the hostile assembly to reject the law, but ns.last_law_result says it passed")
 
+	_check_referendum_verbs_refresh_the_panel(loader, ns)
+
+
+## V5.0d. The two referendum verbs did not mark the panel dirty, so after "Call it
+## off" the REFERENDUM CALLED block and its live button stayed up until the month
+## tick -- and a second press emitted a phantom "withdrawn" decision for a vote
+## that no longer existed. Same for "Referendum": the old result and buttons stayed.
+func _check_referendum_verbs_refresh_the_panel(loader, ns) -> void:
+	var law = _find_law(loader, "single_term_reform")
+	if law == null:
+		_fail("law template 'single_term_reform' not found")
+		return
+	var panel = _main._law_panel
+	var emitted := [0]
+	panel.proposed.connect(func(_b, _n, _r): emitted[0] += 1)
+
+	Referendum.announce(ns, law.id, law.position)
+	panel.mark_dirty()
+	panel._process(0.0)
+	if not _collect_text(panel).contains("REFERENDUM CALLED"):
+		_fail("the staged referendum is not on the panel -- the check below would prove nothing")
+		return
+
+	panel._on_withdraw()
+	panel._process(0.0)
+	if _collect_text(panel).contains("REFERENDUM CALLED"):
+		_fail("the panel still shows REFERENDUM CALLED after Call it off")
+	panel._on_withdraw()
+	if emitted[0] != 1:
+		_fail("Call it off emitted %d decisions for one withdrawal -- a second press must emit nothing" % emitted[0])
+
+	var before := _collect_text(panel)
+	panel._on_referendum(law)
+	panel._process(0.0)
+	if _collect_text(panel) == before:
+		_fail("the panel did not redraw after Referendum")
+
 
 ## V1.1b. With the coalition's discipline eroded, the panel must warn that seats
 ## will break ranks *before* the vote and name who did afterwards. Silent
@@ -149,6 +187,10 @@ func _find_law(loader, law_id: String):
 
 func _collect_text(node) -> String:
 	var out := ""
+	# A refresh queue_free()s the old rows, which stay in the tree until the
+	# frame ends; an absence check must not read them.
+	if node.is_queued_for_deletion():
+		return out
 	if node is Label or node is Button:
 		out += node.text + "\n"
 	for child in node.get_children():
