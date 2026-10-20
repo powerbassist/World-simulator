@@ -39,6 +39,7 @@ extends RefCounted
 ## tests/test_cycle.gd asserts it by reading this file.
 
 const K = preload("res://src/sim/cycle_constants.gd")
+const Parallel = preload("res://src/core/parallel.gd")
 
 const _U32 := 0xFFFFFFFF
 
@@ -142,14 +143,16 @@ static func unit(seed_key: String, index: int) -> float:
 ## for every event of every nation every month.
 static func unit_pair(a: String, b: String, index: int) -> float:
 	var by_a: Dictionary = _pair_memo.get(a, {})
-	if by_a.is_empty():
-		if _pair_memo.size() >= SEED_MEMO_MAX:
-			_pair_memo.clear()
-		_pair_memo[a] = by_a
 	var hit = by_a.get(b)
 	if hit == null:
 		hit = _key_seed(a + "|" + b)
-		by_a[b] = hit
+		# Read-only during a Parallel fan-out (nothing draws there today).
+		if not Parallel.active:
+			if by_a.is_empty():
+				if _pair_memo.size() >= SEED_MEMO_MAX:
+					_pair_memo.clear()
+				_pair_memo[a] = by_a
+			by_a[b] = hit
 	return _unit_from_seed(hit, index)
 
 
@@ -176,6 +179,8 @@ static func _key_seed(key: String) -> int:
 	# Bounded so a key that carries a month cannot grow it without limit; the
 	# keys the month draws are content-shaped (nation, event, firm), a few
 	# thousand, so the bound is never reached in play.
+	if Parallel.active:
+		return h
 	if _seed_memo.size() >= SEED_MEMO_MAX:
 		_seed_memo.clear()
 	_seed_memo[key] = h

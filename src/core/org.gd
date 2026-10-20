@@ -16,6 +16,7 @@ extends RefCounted
 
 const OrgK := preload("res://src/core/org_constants.gd")
 const CouncilK := preload("res://src/sim/council_constants.gd")
+const Parallel = preload("res://src/core/parallel.gd")
 
 var id: String = ""
 var name: String = ""
@@ -274,16 +275,19 @@ func is_member(nation_id: String) -> bool:
 static func shared_bonus(state, a_id: String, b_id: String, key: String) -> float:
 	if _memo_state != null and state == _memo_state:
 		var by_key: Dictionary = _memo.get(key, {})
-		if by_key.is_empty():
-			_memo[key] = by_key
 		var by_a: Dictionary = by_key.get(a_id, {})
-		if by_a.is_empty():
-			by_key[a_id] = by_a
 		var hit = by_a.get(b_id)
 		if hit != null:
 			return hit
 		var value := _shared_bonus(state, a_id, b_id, key)
-		by_a[b_id] = value
+		# V5.0c2: during a Parallel fan-out the memo is read-only -- a worker
+		# serves a hit and computes a miss without storing it.
+		if not Parallel.active:
+			if by_key.is_empty():
+				_memo[key] = by_key
+			if by_a.is_empty():
+				by_key[a_id] = by_a
+			by_a[b_id] = value
 		return value
 	return _shared_bonus(state, a_id, b_id, key)
 

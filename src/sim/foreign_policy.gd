@@ -462,25 +462,50 @@ static func retaliation_fraction(state, imposer_id: String, target_id: String, c
 ## answer would depend on Dictionary iteration order, which is the ordering bug
 ## docs/trade-model.md records the trade probe catching in the impulse. The caller
 ## applies the whole list after it is built.
+##
+## V5.0c2 split it in three so Diplomacy can read the observers on worker threads
+## (src/sim/diplomacy_agenda.gd) and still apply THIS rule: observers(), each
+## observer's observer_terms(), then third_party_from(). This serial composition
+## is the reference the threaded one is tested against.
 static func third_party_effects(state, actor_id: String, target_id: String, delta: float) -> Array:
-	var out: Array = []
 	if is_zero_approx(delta):
-		return out
+		return []
+	var others: Array = observers(state, actor_id, target_id)
+	var seen: Array = []
+	for x_id in others:
+		seen.append(observer_terms(state, x_id, target_id))
+	return third_party_from(others, seen, actor_id, target_id, delta)
 
-	# Sorted, so the list is reproducible rather than dependent on Dictionary
-	# ordering -- the same reason Relations.all_pairs() and Bloc._members() sort.
+
+## Everyone outside the pair, sorted, so the list is reproducible rather than
+## dependent on Dictionary ordering -- the same reason Relations.all_pairs() and
+## Bloc._members() sort.
+static func observers(state, actor_id: String, target_id: String) -> Array:
 	var others: Array = state.nations.keys()
 	others.sort()
-
+	var out: Array = []
 	for x_id in others:
-		if x_id == actor_id or x_id == target_id:
-			continue
-		# One trade-vector build per observer, shared by its stake and its
-		# yardstick -- the floor is X's own even share since V4.11, because
-		# whether X notices is a question about X's attention, not the roster's.
-		var xw: Dictionary = Trade.weights(state, x_id)
-		var care: float = float(stake_vector(state, x_id, xw).get(target_id, 0.0))
-		var x_even: float = even_share_of(xw)
+		if x_id != actor_id and x_id != target_id:
+			out.append(x_id)
+	return out
+
+
+## [X's stake in the target, X's own even share]. One trade-vector build per
+## observer, shared by its stake and its yardstick -- the floor is X's own even
+## share since V4.11, because whether X notices is a question about X's attention,
+## not the roster's. A pure read of the state.
+static func observer_terms(state, x_id: String, target_id: String) -> Array:
+	var xw: Dictionary = Trade.weights(state, x_id)
+	return [float(stake_vector(state, x_id, xw).get(target_id, 0.0)), even_share_of(xw)]
+
+
+## The rule, over `others` and their observer_terms() in the same order.
+static func third_party_from(others: Array, seen: Array, actor_id: String, target_id: String, delta: float) -> Array:
+	var out: Array = []
+	for i in others.size():
+		var x_id: String = others[i]
+		var care: float = seen[i][0]
+		var x_even: float = seen[i][1]
 		if care < x_even * K.THIRD_PARTY_MIN_STAKE_SHARE:
 			continue
 
@@ -696,7 +721,7 @@ static func desire(state, actor_id: String, effects: Dictionary, target_id: Stri
 ## The split is also where the API stops being about a verb: Diplomacy holds one
 ## of these per target and asks desire_from() about each action it has.
 static func target_terms(state, actor_id: String, target_id: String,
-		stake_vec: Dictionary = {}, actor_wbm: Dictionary = {}, actor_even: float = -1.0) -> Dictionary:
+		stake_vec: Dictionary = {}, actor_wbm: Dictionary = {}, actor_even: float = -1.0, factor = null) -> Dictionary:
 	# The AI agenda scores ~28 targets per acting nation, and stake_vector() plus
 	# the actor's own before-measures weights do not vary across that loop --
 	# nothing mutates state between scoring and the execute() that follows it.
@@ -722,7 +747,11 @@ static func target_terms(state, actor_id: String, target_id: String,
 		# fourteen years, at all, while it sat comfortably above AGENDA_ACT_MIN the
 		# whole time. Being outranked forever is a different failure from being
 		# unreachable, and only the second one a bar can fix.
-		"stake_factor": pow(float(sv.get(target_id, 0.0)) / even, K.AGENDA_STAKE_EXPONENT),
+		#
+		# `factor` is this term handed in already taken: Diplomacy's fan-out takes it
+		# on the calling thread (stake_factor(), V5.0c2), because pow() is not
+		# bit-stable on a worker.
+		"stake_factor": float(factor) if factor != null else stake_factor(sv, target_id, even),
 		"amity": amity(state, actor_id, target_id),
 		# Read BEFORE measures, for the reason docs/coercion-model.md gives at length
 		# and retaliation_fraction() already follows: what a hostile act destroys is
@@ -739,6 +768,12 @@ static func target_terms(state, actor_id: String, target_id: String,
 		# tariff, which is why it scales a condemnation too.
 		"risk": retaliation_fraction(state, actor_id, target_id, CK.RETALIATION_FRACTION, aw),
 	}
+
+
+## The stake term of target_terms(): the target's share of the actor's stake over
+## the actor's even share, through AGENDA_STAKE_EXPONENT.
+static func stake_factor(sv: Dictionary, target_id: String, even: float) -> float:
+	return pow(float(sv.get(target_id, 0.0)) / even, K.AGENDA_STAKE_EXPONENT)
 
 
 ## One action scored against a target's pair terms. The cheap half of desire().

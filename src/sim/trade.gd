@@ -30,6 +30,7 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 const RK = preload("res://src/core/relations.gd")
 const Org = preload("res://src/core/org.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Parallel = preload("res://src/core/parallel.gd")
 
 
 ## Every nation's directed weight vector, in one snapshot: {actor_id: {partner_id:
@@ -184,19 +185,48 @@ static func _raw_turn(state, actor_id: String, with_agreements: bool, with_measu
 	var bites_m: bool = with_measures and not state.measures.is_empty()
 	var flavour: int = int(bites_a) * 2 + int(bites_m)
 	var by_actor: Dictionary = _turn.get(actor_id, {})
-	if by_actor.is_empty():
-		_turn[actor_id] = by_actor
 	var hit = by_actor.get(flavour)
 	if hit == null:
 		hit = _raw(state, actor_id, with_agreements, with_measures)
-		by_actor[flavour] = hit
+		# V5.0c2: read-only during a Parallel fan-out, as Org's memo is.
+		if not Parallel.active:
+			if by_actor.is_empty():
+				_turn[actor_id] = by_actor
+			by_actor[flavour] = hit
 	return hit
+
+
+## V5.0c2. Every partner's gravity mass, pow(gdp, GRAVITY_EXPONENT), taken on the
+## calling thread before a Parallel fan-out and read by _raw() while open. pow()
+## is not bit-stable across threads here -- measured: pow() and exp() on a worker
+## differ from the main thread's in the last bit, where +, -, *, / and sqrt(),
+## being correctly rounded, never do -- and the mass is the one pow() on the
+## workers' path. A function of the partner alone, so one per nation covers every
+## vector the fan-out builds, and the value read is the value _raw() would compute.
+static var _mass_state = null
+static var _mass: Dictionary = {}
+
+
+static func masses_open(state) -> void:
+	var masses := {}
+	for id in state.nations.keys():
+		masses[id] = pow(maxf(0.0, state.nations[id].gdp_eur_bn), K.GRAVITY_EXPONENT)
+	_mass = masses
+	_mass_state = state
+
+
+static func masses_close() -> void:
+	_mass_state = null
+	_mass = {}
 
 
 static func _raw(state, actor_id: String, with_agreements: bool, with_measures: bool) -> Dictionary:
 	var a = state.nations.get(actor_id)
 	if a == null:
 		return {}
+	var masses: Dictionary = _mass if _mass_state != null and state == _mass_state else {}
+	if masses.is_empty() and Parallel.active:
+		push_error("trade: a fan-out built a vector without masses_open() -- its pow() ran on a worker")
 
 	var out := {}
 	# V5.0c, the month's hottest loop (Diplomacy builds ~400 of these vectors a
@@ -211,7 +241,8 @@ static func _raw(state, actor_id: String, with_agreements: bool, with_measures: 
 			continue
 		var b = state.nations[partner_id]
 
-		var value: float = pow(maxf(0.0, b.gdp_eur_bn), K.GRAVITY_EXPONENT)
+		var value: float = float(masses[partner_id]) if not masses.is_empty() \
+			else pow(maxf(0.0, b.gdp_eur_bn), K.GRAVITY_EXPONENT)
 		# V3.2: co-membership's trade price is content -- the sum over the orgs
 		# both nations belong to, read from live membership. eu carries 0.50, the
 		# value EU_TRADE_BONUS held; every other org ships 0.0, and multiplying by

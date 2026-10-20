@@ -129,7 +129,8 @@
    "tests/test_save_load.gd",
    "tests/test_acknowledgments.gd",
    "tests/test_boot_stages.gd",
-   "tests/test_sound.gd"
+   "tests/test_sound.gd",
+   "tests/test_diplomacy_parallel.gd"
   ]
  ]
 }
