@@ -97,7 +97,8 @@
    "tests/test_ui_theme.gd",
    "tests/test_playability.gd",
    "tests/test_map_outlines.gd",
-   "tests/test_nation_fields.gd"
+   "tests/test_nation_fields.gd",
+   "tests/test_save_cycle.gd"
   ],
   [
    "tests/test_political_systems.gd",

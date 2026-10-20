@@ -1564,11 +1564,15 @@ static func from_dict(d: Dictionary):
 		typed_hist.append(entry as Dictionary)
 	gs.history = typed_hist
 
-	var effects: Array = d.get("recent_effects", [])
-	var typed_effects: Array[Dictionary] = []
-	for entry in effects:
-		typed_effects.append(entry as Dictionary)
-	gs.recent_effects = typed_effects
+	# A decision's figure with no "before" reading moves by NAN -- Trends' "no
+	# data", which the Overview filters with is_nan(). JSON cannot hold NAN: the
+	# save writes null, so the load reads null back as NAN, or the Overview's
+	# first redraw met a Nil -- the V5.0 play gate's crash on loading a save.
+	for entry in d.get("recent_effects", []):
+		for m in (entry as Dictionary).get("movements", []):
+			for key in ["change", "severity"]:
+				m[key] = NAN if m.get(key) == null else float(m[key])
+		gs.recent_effects.append(entry as Dictionary)
 
 	# Absent, this reads as an empty list, which is CORRECT rather than silently
 	# wrong -- a version-11 save's nine could not act. It is `measures`' case at

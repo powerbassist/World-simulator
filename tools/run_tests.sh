@@ -202,6 +202,9 @@ tests=(
   tests/test_portraits.gd
   tests/test_game_loop.gd
   tests/test_menu.gd
+  # V5.0 fix pass: the play gate's crash -- save, back to the menu, continue,
+  # and the Overview drawn on the loaded game.
+  tests/test_save_cycle.gd
   # V4.8c: the message-settings register, and the lapse guard that keeps the
   # arrival pause's contract for a category set not to pause.
   tests/test_message_settings.gd
