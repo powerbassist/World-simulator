@@ -201,6 +201,16 @@ static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	return out
 
 
+## One region's row of the distance table -- V5.1-0a. The warmed table's row
+## when it holds one, else distances_from() itself: the same floats either way,
+## since the table IS distances_from() row by row. Industry's relocation read
+## built its own rows, ~20 ms a region, which was the first month boundary's
+## 2.4 s after boot while warm() had already built every one of them.
+static func distance_row(graph: Dictionary, from_id: String) -> Dictionary:
+	var rows: Dictionary = _distance_rows(graph)
+	return rows[from_id] if rows.has(from_id) else distances_from(graph, from_id)
+
+
 ## The 112 shortest-path rows, built once per distinct graph and reused. See the
 ## cache comment above the constants for why this is a cache and not a computation
 ## the caller schedules.

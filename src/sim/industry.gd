@@ -273,7 +273,7 @@ static func _relocate(ns, loader, majors: Array, month: int, graph_key: int) -> 
 		var memo_key: String = ns.id + "|" + current_region
 		if not _best_region_memo.has(memo_key):
 			if not _dist_memo.has(current_region):
-				_dist_memo[current_region] = Net.distances_from(graph, current_region)
+				_dist_memo[current_region] = Net.distance_row(graph, current_region)
 			var rows: Dictionary = _dist_memo[current_region]
 			var best_km := INF
 			var best_region := ""
