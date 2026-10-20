@@ -37,6 +37,7 @@ func _init() -> void:
 	_check_restoration_proposable_after_abolition()
 	_check_load_bearing_cross_check_incomplete_bundle()
 	_check_load_bearing_cross_check_illegal_target()
+	_check_held_amendment_lapses_after_a_transition()
 
 	_finish()
 
@@ -246,6 +247,35 @@ func _check_load_bearing_cross_check_illegal_target() -> void:
 			named = true
 	if not named:
 		_fail("a transition bundle illegal under its own target system did not fail to load, or did not name both: %s" % [fixture_loader.errors])
+
+
+## V5.0d. A bill the upper house holds is applied when the hold runs out, and the
+## constitutional gate available() runs at proposal was not re-run then -- so a GBR
+## amendment authored for a monarchy, released after the Republic Act, wrote a
+## dissolution rule the republic's template refuses. It lapses instead; the same
+## for a referendum that settles after the system changed.
+func _check_held_amendment_lapses_after_a_transition() -> void:
+	var state = _new_state("GBR")
+	var ns = state.player()
+	var abolish = _find_law("abolish_the_monarchy")
+	var reform = _find_law("executive_dissolution_reform")
+	if abolish == null or reform == null:
+		_fail("abolish_the_monarchy or executive_dissolution_reform not found")
+		return
+	ns.held_bills[reform.id] = {"months": 1, "origin": "player"}
+	Legislature.apply(state, ns, abolish, _loader)
+	var dissolution_after_transition: String = ns.dissolution_rule
+	Legislature.tick_month(state, _loader)
+	if ns.held_bills.has(reform.id):
+		_fail("the held amendment was not released at the end of its hold")
+	if ns.dissolution_rule != dissolution_after_transition:
+		_fail("a held monarchy amendment released under %s wrote dissolution_rule '%s'" % [ns.system_id, ns.dissolution_rule])
+	if bool(ns.last_law_result.get("passed", true)):
+		_fail("the lapsed release is recorded as passed")
+
+	Legislature._settle_referendum(state, ns, _loader, {"law_id": reform.id, "passed": true})
+	if ns.dissolution_rule != dissolution_after_transition:
+		_fail("a referendum settling a monarchy amendment under %s wrote dissolution_rule '%s'" % [ns.system_id, ns.dissolution_rule])
 
 
 func _fail(message: String) -> void:

@@ -473,9 +473,10 @@ var referendum_mode: String = ""
 ## Referendum.withdraw(), and by nothing else.
 var referendum_pending: Dictionary = {}
 
-## What the country last said, for the panel. `last_project_result`'s shape, and
-## not serialised for its reason either: a display record of something that has
-## already happened to the register above.
+## What the country last said. `last_project_result`'s shape, but SAVED since
+## V5.0d: a membership fight (orgs.gd) advances by reading it the month after the
+## vote, so a save in between lost a won referendum. Absent reads as "no vote
+## yet", correct for every older save -- no bump.
 var last_referendum_result: Dictionary = {}
 
 ## ============================================================================

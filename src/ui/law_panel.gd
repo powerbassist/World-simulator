@@ -218,8 +218,10 @@ func _build_result_summary(result: Dictionary) -> Control:
 	# released branch below is the release that DID apply.
 	elif result.get("target_already_gone", false):
 		verdict = "MOOT — its target was already gone from the book."
+	# A LAPSED release (V5.0d) is a release too: the hold ran out under a
+	# constitution the bill was not written for, and nothing came into force.
 	elif result.get("released", false):
-		verdict = "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
+		verdict = "LAPSED — the constitution it amended is gone." if result.get("lapsed", false) else "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
 	PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN)
 
 	# V2.8 review. Two more outcomes with no division behind them, and the tally
@@ -727,18 +729,18 @@ func _on_propose(law) -> void:
 
 ## The division itself. Public because the briefing's verb lands here through
 ## main.gd -- one propose path (this body), one card path (the `proposed`
-## handler in main.gd), whichever surface pressed the button.
-func run_proposal(law) -> void:
+## handler in main.gd), whichever surface pressed the button. The forced and
+## referendum routes come through it too: when Referendum kept a body of its
+## own it forgot to redraw, and the panel kept the old result's buttons (V5.0d).
+func run_proposal(law, force := false, referendum := false) -> void:
 	var before := Trends.snapshot_now(_state)
-	var result := Legislature.propose(_state, _loader, law)
+	var result := Legislature.propose(_state, _loader, law, force, referendum)
 	proposed.emit(before, law.law_name, result)
 	_dirty = true
 
 
 func _on_referendum(law) -> void:
-	var before := Trends.snapshot_now(_state)
-	var result := Legislature.propose(_state, _loader, law, false, true)
-	proposed.emit(before, law.law_name, result)
+	run_proposal(law, false, true)
 
 
 func _on_withdraw() -> void:
@@ -746,15 +748,16 @@ func _on_withdraw() -> void:
 	var law: Law = _find_law(Referendum.pending_law_id(ns))
 	var law_name: String = law.law_name if law != null else Referendum.pending_law_id(ns)
 	var before := Trends.snapshot_now(_state)
-	Referendum.withdraw(ns)
-	proposed.emit(before, law_name, {"withdrawn": true})
+	# A Legislature command, not Referendum.withdraw(): the panel writes no sim
+	# state itself (AGENTS.md rule 2), and the command sets the loss's cooldown.
+	# Nothing in flight (a stale second press): no decision to record.
+	if not Legislature.withdraw_referendum(_state, ns, _loader).is_empty():
+		proposed.emit(before, law_name, {"withdrawn": true})
+	_dirty = true
 
 
 func _on_force(law) -> void:
-	var before := Trends.snapshot_now(_state)
-	var result := Legislature.propose(_state, _loader, law, true)
-	proposed.emit(before, law.law_name, result)
-	_dirty = true
+	run_proposal(law, true)
 
 
 func _find_law(law_id: String):

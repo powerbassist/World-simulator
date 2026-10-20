@@ -13,7 +13,7 @@ extends RefCounted
 ## docs/legislature-model.md.
 
 const LK = preload("res://src/sim/legislature_constants.gd")
-const OrgsK = preload("res://src/sim/orgs_constants.gd")
+const LawConditions = preload("res://src/sim/law_conditions.gd")
 # V4.2. The yield ceiling lives here (a constants leaf -- no cycle: statute.gd
 # preloads this file, and this file preloads only its constants and leaves).
 const StatuteK = preload("res://src/sim/statute_constants.gd")
@@ -162,12 +162,26 @@ static func tick_month(state, loader) -> void:
 ## this file's job and always has been.
 static func _settle_referendum(state, ns, loader, verdict: Dictionary) -> void:
 	var law = _law_by_id(loader, String(verdict.get("law_id", "")))
-	if law == null:
+	# The constitution can change while the country votes (V5.0d): a law it no
+	# longer allows lapses, the held-bill release's rule below.
+	if law == null or not _constitution_allows(ns, law):
 		return
 	if bool(verdict.get("passed", false)):
 		apply(state, ns, law, loader)
 	elif law.cooldown_months > 0:
 		ns.law_cooldown_months[law.id] = law.cooldown_months
+
+
+## Call off the referendum in flight -- the player's command. Referendum.withdraw()
+## charges a loss's price; the loss's COOLDOWN is this file's half, and it is set by
+## the same _settle_referendum() a vote the country refused runs. Until V5.0d the
+## panel called Referendum.withdraw() alone, so no cooldown was ever set and calling
+## it off beat losing it -- the free hedge referendum.gd's own header rules out.
+static func withdraw_referendum(state, ns, loader) -> Dictionary:
+	var verdict := Referendum.withdraw(ns)
+	if not verdict.is_empty():
+		_settle_referendum(state, ns, loader, verdict)
+	return verdict
 
 
 ## Count every held bill down, and pass the ones whose hold has run out.
@@ -250,6 +264,16 @@ static func _tick_held_bills(state, ns, loader) -> void:
 		# release carries.
 		if law.repeals != "" and ledger_of(ns, law.repeals).is_empty() and law.effects.is_empty():
 			released["target_already_gone"] = true
+			ns.last_law_result = released
+			continue
+		# THE LAPSED RELEASE (V5.0d): available()'s constitutional gate ran when the
+		# bill was proposed, and the system can change during the hold -- a GBR
+		# amendment authored for the monarchy, released after the Republic Act,
+		# wrote a dissolution rule the republic's template refuses. It lapses:
+		# nothing applies, nothing is charged, the moot release's shape.
+		if not _constitution_allows(ns, law):
+			released["passed"] = false
+			released["lapsed"] = true
 			ns.last_law_result = released
 			continue
 		# NEGATED: penalise_blocs() ADDS its argument, and UPPER_OVERRIDE_OFFSET is
@@ -444,9 +468,7 @@ static func available(ns, all_laws: Array) -> Array:
 			var pending_rate: float = float(ns.tax_rates_pct.get(birth_key, 0.0)) 				+ float(law.effects.get("tax_rates_pct", {}).get(birth_key, 0.0))
 			if base * pending_rate > StatuteK.NEW_TAX_YIELD_CEILING:
 				continue
-		if law.constitutional and not law.systems.has(ns.system_id):
-			continue
-		if law.changes_system and not ns.permits_system_change:
+		if not _constitution_allows(ns, law):
 			continue
 		if _already_in_force(ns, law):
 			continue
@@ -481,6 +503,14 @@ static func _in_assembly_tray(ns, law_id: String) -> bool:
 	return false
 
 
+## The constitutional gate: a law authored for a template the nation is not under,
+## or a change of system its constitution forbids. available() runs it at proposal;
+## a held bill's release and a referendum's settle run it again (V5.0d), because the
+## system can change between the division and the day the law would take effect.
+static func _constitution_allows(ns, law) -> bool:
+	return (not law.constitutional or law.systems.has(ns.system_id)) and (not law.changes_system or ns.permits_system_change)
+
+
 ## An electoral-reform Act that names the method the nation already uses changes
 ## nothing, and a button that changes nothing is the bug V1.3e's screenshot pass
 ## found on the diplomacy panel. Checked in code rather than by asking content to
@@ -504,47 +534,16 @@ static func _preconditions_met(ns, law) -> bool:
 	return preconditions_met(ns, law.preconditions)
 
 
-## Public since V1.8: an event carries the same {field, op, value} triple against the
-## same whitelist, so it evaluates them through the same function rather than through a
-## copy. The list legislature_constants.gd and read_field() already spell out twice does
-## not need a third reader spelling it out a fourth time.
+## The precondition reader lives in law_conditions.gd since V5.0d (the size ratchet
+## paid for the session's fixes by moving it out whole); these two forwarders keep
+## Legislature.preconditions_met / read_field the one public surface every caller
+## already names.
 static func preconditions_met(ns, conditions: Array) -> bool:
-	for cond in conditions:
-		var actual: float = read_field(ns, cond["field"])
-		var value: float = cond["value"]
-		var ok: bool
-		match cond["op"]:
-			"<": ok = actual < value
-			"<=": ok = actual <= value
-			">": ok = actual > value
-			">=": ok = actual >= value
-			"==": ok = is_equal_approx(actual, value)
-			_: ok = false
-		if not ok:
-			return false
-	return true
+	return LawConditions.preconditions_met(ns, conditions)
 
 
 static func read_field(ns, field: String) -> float:
-	match field:
-		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
-		"unemployment_pct": return ns.unemployment_pct
-		"deficit_pct_gdp": return ns.deficit_pct_gdp
-		"overall_approval_pct": return ns.overall_approval_pct
-		"growth_annual_pct": return ns.growth_annual_pct
-		"terms_served": return float(ns.terms_served)
-		"unrest_pct": return ns.unrest_pct
-		"co2e_per_capita_t": return ns.co2e_per_capita_t
-		"eu_member": return 1.0 if ns.orgs.has(OrgsK.UNION_ORG_ID) else 0.0
-		# V1.5c added the unrest_pct entry and legislature_constants.PRECONDITION_FIELDS in
-		# two separate edits, and the suite caught the gap between them: the whitelist
-		# admits a field and this match decides what it means, so THE LIST EXISTS TWICE
-		# and a session can add half of it. Not merged here -- src/core/law.gd validates
-		# against the constant at LOAD time and this runs per frame, so the constant has
-		# to be a plain array -- but recorded, because the next field added will hit it.
-		_:
-			push_error("legislature: unknown precondition field '%s'" % field)
-			return 0.0
+	return LawConditions.read_field(ns, field)
 
 
 ## A single party's support for a law, in [-1, +1]. Gaussian falloff on
@@ -690,7 +689,11 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 				# per-method reduction rather than being modelled per nation.
 				passed = yes_seats > no_seats
 			else:
-				passed = float(yes_seats) >= LK.AMENDMENT_RULE_FRACTIONS[ns.amendment_rule] * float(seats_total)
+				# A rule at the absolute fraction is "more than half", like the
+				# absolute arm above; the higher ones are "at least" bars (V5.0d:
+				# >= let a GBR amendment carry at exactly 325 of 650).
+				var bar: float = LK.AMENDMENT_RULE_FRACTIONS[ns.amendment_rule] * float(seats_total)
+				passed = float(yes_seats) > bar if LK.AMENDMENT_RULE_FRACTIONS[ns.amendment_rule] <= LK.ABSOLUTE_MAJORITY_FRACTION else float(yes_seats) >= bar
 		_:
 			push_error("legislature: unknown majority type '%s'" % law.majority)
 			passed = false

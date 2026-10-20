@@ -120,20 +120,20 @@ static func init_state(state, loader) -> void:
 
 
 ## The load path's OTHER half, and the fight machine's save-safety net. A fight
-## in its referendum phase advances by reading `ns.last_referendum_result`,
-## which is deliberately NOT serialised -- `last_project_result`'s case, a
-## display record of something that has already happened. So a game saved in
-## the one-month window after a vote resolved but before this machine consumed
-## it reloads with the pending register empty and the answer gone. The honest
-## resolution is the failed vote's: end the fight with membership unchanged.
-## The domestic price was charged at the resolve, before the save; no outcome
-## is invented; the player is not stranded -- the review's critical finding
+## in its referendum phase advances by reading `ns.last_referendum_result`.
+## V3.2 left that record unsaved and ended every such fight here, which threw
+## away a referendum WON in the month before the save; since V5.0d the record
+## travels, so a fight whose answer is still unconsumed reloads intact and this
+## machine consumes it next month exactly as it would have. What is still ended
+## is a fight with NO recoverable answer -- an older save, or a result already
+## consumed or overwritten: the failed vote's reading, membership unchanged, no
+## outcome invented, and the player not stranded (the V3.2 review's critical
 ## had `phase` dropped at load, which left fights matching NOTHING and every
-## membership verb refused forever. A fight in negotiation reloads intact: its
+## membership verb refused forever). A fight in negotiation reloads intact: its
 ## countdown is serialised state and needs no result to advance.
 static func reconcile_on_load(state, loader) -> void:
-	var doomed := []
-	for i in state.accessions.size():
+	# Backwards, so a removal never shifts an index still to be read.
+	for i in range(state.accessions.size() - 1, -1, -1):
 		var fight: Dictionary = state.accessions[i]
 		if String(fight.get("phase", "")) != "referendum":
 			continue
@@ -143,9 +143,10 @@ static func reconcile_on_load(state, loader) -> void:
 		# not happened yet. Leave it alone.
 		if ns != null and String(ns.referendum_pending.get("law_id", "")) == question:
 			continue
-		doomed.append(i)
-	doomed.reverse()
-	for i in doomed:
+		# Resolved but not yet consumed -- the answer travelled with the save.
+		var answer: Dictionary = ns.last_referendum_result if ns != null else {}
+		if String(answer.get("law_id", "")) == question and not bool(answer.get("org_fight_consumed", false)):
+			continue
 		state.accessions.remove_at(i)
 
 

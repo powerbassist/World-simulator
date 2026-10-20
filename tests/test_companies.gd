@@ -85,6 +85,7 @@ func _init() -> void:
 	_test_no_law_ever_moves_state_share()
 	_test_ownership_verbs_refuse_when_unavailable()
 	_test_the_nine_never_nationalise()
+	_test_a_rescue_never_overfills_its_sector()
 	_finish()
 
 
@@ -769,3 +770,37 @@ func _finish() -> void:
 		for f in _failures:
 			printerr("FAIL: %s" % f)
 		quit(1)
+
+
+## V5.0d. A rescue restores the firm's AUTHORED share, but a failed firm's rivals
+## may hold what a subsidy drained from it before it failed -- so restoring it
+## whole pushed the sector's named shares past 1.0 (docs/companies-model.md 3: the
+## named firms never out-produce their sector). The restore is capped at the
+## sector's headroom; where nothing was drained it is the authored share exactly.
+func _test_a_rescue_never_overfills_its_sector() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var failing = null
+	var rival = null
+	for company in Companies.firms_in_sector(_loader, PLAYER, "agriculture"):
+		if not ns.companies.has(company.id):
+			continue
+		if failing == null:
+			failing = company
+		elif rival == null:
+			rival = company
+	if failing == null or rival == null:
+		_fail("no two registered agriculture firms to stage a drained rescue on")
+		return
+	# The rival took half the failing firm's share (the floor) before it failed.
+	ns.companies[rival.id]["share"] = rival.share + failing.share * 0.5
+	ns.companies[failing.id]["share"] = 0.0
+	ns.companies[failing.id]["failed"] = true
+	ns.companies[failing.id]["rescue_months_left"] = 3
+	var result: Dictionary = Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), failing.id, _loader)
+	if not bool(result.get("applied", false)):
+		_fail("the staged rescue was refused: %s" % [result])
+		return
+	var named := _named_share(ns, "agriculture")
+	if named > 1.0 + 0.000001:
+		_fail("a rescue pushed agriculture's named share to %s -- past the whole sector" % str(named))

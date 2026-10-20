@@ -39,6 +39,7 @@ func _init() -> void:
 	_check_article_49_3_cannot_force_an_amendment()
 	_check_determinism()
 	_check_load_bearing_cross_check()
+	_check_ordinary_law_bar_is_more_than_half()
 
 	_finish()
 
@@ -237,3 +238,35 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+
+## V5.0d. `ordinary_law` maps to ABSOLUTE_MAJORITY_FRACTION, and "absolute" is yes
+## MORE than half (legislature_constants.gd, docs/amendment-model.md) -- but the
+## amendment arm compared with >=, so a GBR amendment carried at exactly 325 of 650
+## where an ordinary absolute Act with the same 325 failed. The other fractions are
+## "at least" bars and stay >=.
+func _check_ordinary_law_bar_is_more_than_half() -> void:
+	var state = _new_state("GBR")
+	var ns = state.player()
+	ns.amendment_rule = "ordinary_law"
+	ns.assembly_seats = 650
+	for law in _loader.laws:
+		if law.majority != "amendment":
+			continue
+		for party in _loader.parties["GBR"]:
+			# A party whose own line is yes casts no rebels when the bonus puts its
+			# whip there too, so every one of its seats is a yes.
+			if Legislature.vote_of(Legislature.spatial_support(ns, party, law)) != "yes":
+				continue
+			ns.seats_by_party = {party.id: 325}
+			var half: Dictionary = Legislature.resolve_vote(ns, [party], law, false, 1.0)
+			if int(half["yes_seats"]) != 325:
+				_fail("staging: %d yes seats, expected 325" % int(half["yes_seats"]))
+				return
+			if bool(half["passed"]):
+				_fail("an ordinary_law amendment carried at exactly half the house (325/650)")
+			ns.seats_by_party = {party.id: 326}
+			if not bool(Legislature.resolve_vote(ns, [party], law, false, 1.0)["passed"]):
+				_fail("an ordinary_law amendment failed at 326/650, more than half")
+			return
+	_fail("no amendment and GBR party to stage the half-house vote on")
