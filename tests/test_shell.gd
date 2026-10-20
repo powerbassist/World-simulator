@@ -68,6 +68,7 @@ func _run() -> void:
 	_check_headline_figures_move_with_nothing_open()
 	_check_save_dialog_traps_hotkeys()
 	_check_term_card_refresh()
+	_check_a_closed_budget_window_costs_nothing()
 
 
 ## A modal's holder is a full-rect CenterContainer, and a Container defaults to
@@ -563,6 +564,25 @@ func _check_headline_figures_move_with_nothing_open() -> void:
 		_fail("the portrait card's approval did not change after three simulated months")
 	if _collect_text(_main._hud.clock_cluster) == clock_before:
 		_fail("the clock cluster's date did not change after three simulated months")
+
+
+## V5.0 fix pass: the play gate's 11-second month end. The budget panel's
+## refresh runs two 24-month projections of the real model (~12 s at 41
+## nations, measured), and the month's sweep marks every panel dirty -- and a
+## panel's own `visible` stays true inside a CLOSED window, so the projections
+## ran every month with the window shut. Closed, the panel stays dirty and runs
+## nothing; opening the window redraws it.
+func _check_a_closed_budget_window_costs_nothing() -> void:
+	_main._windows.close_all()
+	_main._windows.mark_all_dirty()
+	_main._budget_panel._process(0.0)
+	if not _main._budget_panel._dirty:
+		_fail("the budget panel ran its projections with its window closed")
+	_main._windows.open("budget")
+	_main._budget_panel._process(0.0)
+	if _main._budget_panel._dirty:
+		_fail("opening the budget window did not redraw the panel")
+	_main._windows.close_all()
 
 
 func _collect_text(node) -> String:
