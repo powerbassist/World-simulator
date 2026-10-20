@@ -20,7 +20,8 @@ extends SceneTree
 ##   budget_month  one month boundary at speed 3 WITH the budget window open --
 ##               the fix pass measured ~10 s there and left it to this block.
 ##   placement   a reactor armed, the cursor moved over France, the click that
-##               sites it (P4, "freezes when placing construction").
+##               sites it (P4, "freezes when placing construction") -- once with
+##               every window closed, once with the Energy window still open.
 ##
 ## The frame time is the wall time between two calls of this script's
 ## _process(), which SceneTree makes once per frame ahead of the nodes' own --
@@ -69,6 +70,7 @@ var _drag_done := 0
 var _site := Vector2.ZERO
 var _move_done := 0
 var _after_left := 0
+var _keep_open := false
 
 
 func _initialize() -> void:
@@ -138,28 +140,25 @@ func _step(clock: Node) -> bool:
 				_slider.drag_ended.emit(true)
 				_frame_label = "release"
 				_phase = "drag_settle"
-				_after_left = AFTER_FRAMES * 4
+				_after_left = AFTER_FRAMES * 12
 		"drag_settle":
 			_after_left -= 1
-			if (_forecast_settled() and _after_left < AFTER_FRAMES * 3) or _after_left <= 0:
+			if (_forecast_settled() and _after_left < AFTER_FRAMES * 11) or _after_left <= 0:
 				_boundaries = 0
 				clock.paused = false
 				_phase = "budget_month"
 		"budget_month":
-			_answer_pauses(clock)
-			if _boundaries >= 1 and _month_window_left == 0 and _forecast_settled():
+			# At speed 3 a month closes faster than a projection does, so the
+			# forecast is never settled while the clock runs (it shows the last
+			# one, marked updating). After the boundary the clock stops and the
+			# phase waits for it, so its frames are timed too.
+			if _boundaries >= 1 and _month_window_left == 0:
 				clock.paused = true
-				_main._windows.close_all()
-				_main._map_view.center_on_lonlat(SITE_LON, SITE_LAT)
-				_main._windows.open("energy")
-				_main._energy_panel.order_armed.emit("order_nuclear_epr")
-				# The window is closed again so the click reaches the map: closing
-				# it does not disarm (main.gd's Escape does), and where the window
-				# lands over France is layout, not what this phase times.
-				_main._windows.close_all()
-				_site = _main._map_view._lonlat_to_screen(SITE_LON, SITE_LAT)
-				_frame_label = "arm"
-				_phase = "placement"
+				if _forecast_settled():
+					_arm(false)
+					_phase = "placement"
+			else:
+				_answer_pauses(clock)
 		"placement":
 			if _move_done < PLACE_MOVE_FRAMES:
 				var motion := InputEventMouseMotion.new()
@@ -183,17 +182,49 @@ func _step(clock: Node) -> bool:
 			else:
 				_after_left -= 1
 				if _after_left <= 0:
-					_report()
-					return true
+					if _keep_open:
+						_report()
+						return true
+					_arm(true)
+					_move_done = 0
+					_phase = "placement_open"
+		"placement_open":
+			_phase = "placement"
+			var done := _step(clock)
+			_phase = "placement_open"
+			return done
 	return false
 
 
-## The forecast's own "still computing" flag where the panel has one, else
-## settled -- the base it is compared against computed it inside the frame.
+## A reactor armed from the Energy window. Closed again (`keep_open` false) so the
+## click reaches the map -- closing does not disarm, main.gd's Escape does -- or
+## kept open and moved aside, with the site drawn left of it, so the click pays
+## for an open panel's refresh the way the player's click does.
+func _arm(keep_open: bool) -> void:
+	_keep_open = keep_open
+	var mv = _main._map_view
+	_main._windows.close_all()
+	mv.center_on_lonlat(SITE_LON, SITE_LAT)
+	_main._windows.open("energy")
+	_main._energy_panel.order_armed.emit("order_nuclear_epr")
+	if keep_open:
+		var frame: Control = _main._windows.frame("energy")
+		frame.position.x = _main._windows.size.x - frame.size.x
+		var view: Vector2 = mv.size
+		var left: Vector2 = mv._screen_to_lonlat(Vector2(view.x * 0.25, view.y * 0.5))
+		mv.center_on_lonlat(SITE_LON + (SITE_LON - left.x), SITE_LAT)
+	else:
+		_main._windows.close_all()
+	_site = mv._lonlat_to_screen(SITE_LON, SITE_LAT)
+	_frame_label = "arm"
+
+
+## The forecast's own "still computing" flag where the panel has one (V5.1-0a),
+## else settled once the panel has redrawn -- the base computed it in the frame.
 func _forecast_settled() -> bool:
 	var panel = _main._budget_panel
-	if panel.has_method("forecast_busy"):
-		return not panel.forecast_busy()
+	if "_forecast" in panel:
+		return not panel._forecast.busy() and not panel._dirty
 	return not panel._dirty
 
 
@@ -231,7 +262,7 @@ func _report() -> void:
 			row["worst_label"] = f["label"]
 	print("month_frame_probe: months=%d drag_frames=%d" % [_months_wanted, _drag_frames])
 	print("%-14s %7s %10s %-8s %8s %10s" % ["phase", "frames", "worst ms", "at", ">50ms", "wall s"])
-	for key in ["months", "budget_open", "drag", "drag_settle", "budget_month", "placement"]:
+	for key in ["months", "budget_open", "drag", "drag_settle", "budget_month", "placement", "placement_open"]:
 		if not by_phase.has(key):
 			continue
 		var row: Dictionary = by_phase[key]

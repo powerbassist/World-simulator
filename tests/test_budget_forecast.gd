@@ -73,7 +73,12 @@ func _check_the_panel_draws_without_projecting(forecast) -> void:
 		_fail("the panel's first draw projected inside the call")
 	if not String(_panel._figures["proj_growth"][0]).contains(Forecast.COMPUTING):
 		_fail("the forecast row reads '%s' before any projection ran, not computing" % _panel._figures["proj_growth"][0])
+	# Twice: the frame the panel redrew in yields (budget_forecast.gd), the next
+	# runs a slice.
 	forecast._process(0.0)
+	forecast._process(0.0)
+	if forecast._job == null:
+		_fail("the frame after the panel's draw began no projection")
 	if not forecast.busy():
 		_fail("one frame ran a whole 24-month projection -- the freeze, moved one frame later")
 
@@ -133,6 +138,8 @@ func _check_a_closed_panel_waits(forecast) -> void:
 	if forecast._job != null:
 		_fail("a closed panel began a projection")
 	_panel.show()
+	# Twice, for the yield after the panel's last draw (see the first check).
+	forecast._process(0.0)
 	forecast._process(0.0)
 	if forecast._job == null:
 		_fail("the reopened panel did not resume its forecast")

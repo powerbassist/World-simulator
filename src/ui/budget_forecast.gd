@@ -53,6 +53,9 @@ var _want: Dictionary = {}
 var _quiet := 0
 var _job = null              # Budget.ProjectionJob while one runs
 var _job_key := ""           # "" for "now", else the pending it projects
+## The frame the panel redrew in -- want() is its refresh's call: that frame has
+## spent its share (two ~19 ms previews), and the projection waits one frame.
+var _yield_frame := -1
 
 
 func setup(state, loader, months: int) -> void:
@@ -76,6 +79,7 @@ func state_changed() -> void:
 
 ## What the panel proposes now. `edited` false: nothing pending, "proposed" is "now".
 func want(pending: Dictionary, edited: bool) -> void:
+	_yield_frame = Engine.get_process_frames()
 	var key := JSON.stringify(pending, "", true, true) if edited else ""
 	if key == _want_key:
 		return
@@ -109,6 +113,9 @@ func drain() -> void:
 
 func _process(_delta: float) -> void:
 	if _state == null or not get_parent().is_visible_in_tree():
+		return
+	if _yield_frame == Engine.get_process_frames():
+		_yield_frame = -1
 		return
 	if _quiet > 0:
 		_quiet -= 1

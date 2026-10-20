@@ -328,7 +328,6 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_forecast.setup(state, loader, PROJECTION_MONTHS)
-	_now_preview = {}
 	var ns = _state.player()
 	_title.text = "BUDGET — %s" % ns.id
 	_on_revert()
@@ -484,7 +483,10 @@ func _refresh() -> void:
 		_now_preview = Budget.preview(_state, {})
 	_lever_moved = false
 	var now: Dictionary = _now_preview
-	var proposed := Budget.preview(_state, pending)
+	# Nothing edited: nothing is proposed, and the column repeats "now".
+	var edited: bool = not _edited_keys.is_empty() or pending.has("tax_progressivity") \
+		or not pending.get("tax_rates_pct", {}).is_empty()
+	var proposed: Dictionary = Budget.preview(_state, pending) if edited else now
 
 	_set_figure("revenue", _pct_and_eur(now, "total_revenue_pct_gdp"), _pct_and_eur(proposed, "total_revenue_pct_gdp"))
 	_set_figure("tariffs", _tariff_text(now), _tariff_text(proposed))
@@ -509,8 +511,7 @@ func _refresh() -> void:
 	_set_figure("gini", _gini_text(now), _gini_text(proposed))
 
 	# V5.1-0a: the forecast follows the levers rather than freezing them.
-	_forecast.want(pending, not _edited_keys.is_empty() or pending.has("tax_progressivity")
-		or not pending.get("tax_rates_pct", {}).is_empty())
+	_forecast.want(pending, edited)
 	var rows: Dictionary = _forecast.rows(_state.player())
 	for key in rows.keys():
 		_set_figure(key, rows[key][0], rows[key][1])
