@@ -31,6 +31,9 @@ var _date_label: Label
 var _pause_button: Button
 var _speed_buttons := {}
 var _minimap_slot: Control
+## The clock last drawn, and whether it was held -- see _process().
+var _clock: Node = null
+var _shown_held := false
 
 
 func _ready() -> void:
@@ -93,8 +96,25 @@ func set_minimap(minimap: Control) -> void:
 	_minimap_slot.add_child(minimap)
 
 
+## V5.1-0a. A month closing across frames holds the clock (month_runner.gd),
+## and nothing refreshes this while it does -- the held day_advanced is the
+## refresh -- so the cluster watches for the hold itself.
+func _process(_delta: float) -> void:
+	if _clock != null and bool(_clock.held) != _shown_held:
+		refresh(_clock)
+
+
 func refresh(clock: Node) -> void:
 	if clock == null:
+		return
+	_clock = clock
+	_shown_held = bool(clock.held)
+	# The month closing: the date dims as a paused one does and keeps last
+	# month's text -- the 1st arrives with its day_advanced, when the hold lets
+	# go and this is refreshed again -- and the pause button reads as busy.
+	if _shown_held:
+		_date_label.modulate.a = Motion.PAUSED_ALPHA
+		_pause_button.text = "..."
 		return
 	var date := "%02d %s %d" % [clock.day, MONTH_NAMES[clock.month - 1], clock.year]
 	# V4.9a. The clock shows its speed rather than stating it: one brass beat per

@@ -47,6 +47,9 @@ func _process(_delta: float) -> bool:
 		return false
 
 	_main._windows.open("overview")
+	# V5.1-0a: a panel refreshes only while its window shows, so the panel is
+	# drawn now that it does -- not in the frames before, behind a closed window.
+	_main._overview_panel._process(0.0)
 
 	_check_fresh_game_has_no_trends()
 	_check_countdown_matches_the_player_clock()
@@ -195,6 +198,8 @@ func _advance_months(months: int) -> void:
 	var clock: Node = _main.get_node("Clock")
 	for _d in range(DAYS_PER_MONTH * months):
 		clock.advance_one_day()
+	# A month can open another window over this one (an interrupt's Dispatches).
+	_main._windows.open("overview")
 	_main._overview_panel.mark_dirty()
 	_main._overview_panel._process(0.0)
 

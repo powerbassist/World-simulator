@@ -65,7 +65,8 @@
    "tests/test_map_network.gd",
    "tests/test_shell.gd",
    "tests/test_hud.gd",
-   "tests/test_endowments.gd"
+   "tests/test_endowments.gd",
+   "tests/test_month_runner.gd"
   ],
   [
    "tests/test_data.gd",

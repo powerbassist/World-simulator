@@ -246,6 +246,9 @@ tests=(
   # The game's month as ONE function: its step order, the hook as a seam, and
   # no hand copy of the month left in any harness.
   tests/test_world_month.gd
+  # V5.1-0a: that month across frames -- held clock, deferred input, and the
+  # month run in slices saving as the month run whole.
+  tests/test_month_runner.gd
   # Every check in this one pins a KNOWN BUG rather than a feature -- it is the
   # playability audit's register, and it turns red when somebody FIXES one.
   # See docs/playability-audit.md.

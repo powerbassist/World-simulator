@@ -204,6 +204,7 @@ func _check_the_other_surfaces_read_the_register(panel, state, ns, loader) -> vo
 		_fail("the top-bar strip carries no progress percentage: '%s'" % _main._top_bar._figure_values["programme"].text)
 
 	var overview = _main._overview_panel
+	_open_window_of(overview)
 	overview.mark_dirty()
 	overview._process(0.0)
 	var text := ""
@@ -219,7 +220,7 @@ func _check_the_other_surfaces_read_the_register(panel, state, ns, loader) -> vo
 	# shared read: the surface that runs the run-up must not leave the player
 	# reconciling the pledge list and the programme register by hand.
 	var campaign = _main._campaign_panel
-	campaign.show()
+	_open_window_of(campaign)
 	campaign.mark_dirty()
 	campaign._process(0.0)
 	var campaign_text := ""
@@ -261,7 +262,7 @@ func _check_a_conclusion_pushes_a_card(panel, state, ns, loader) -> void:
 	# the term's programme has concluded -- a bar over a delivered programme
 	# would be a lie about a term that is already priced.
 	var campaign = _main._campaign_panel
-	campaign.show()
+	_open_window_of(campaign)
 	campaign.mark_dirty()
 	campaign._process(0.0)
 	var delivered_line := false
@@ -286,7 +287,7 @@ func _deadline_entry(state, ns, loader) -> Dictionary:
 
 
 func _refresh(panel) -> void:
-	panel.show()
+	_open_window_of(panel)
 	panel.mark_dirty()
 	panel._process(0.0)
 
@@ -310,6 +311,15 @@ func _walk(node) -> Array:
 		out.append_array(_walk(child))
 	return out
 
+
+
+## The window holding `panel`, opened: since V5.1-0a a panel refreshes only while
+## its window shows -- as the player sees it -- so a check that reads one opens
+## it first rather than relying on a closed window's panel redrawing anyway.
+func _open_window_of(panel) -> void:
+	for id in _main._windows.panel_ids():
+		if _main._windows.frame(id)._content == panel:
+			_main._windows.open(id)
 
 func _fail(message: String) -> void:
 	_failures.append(message)

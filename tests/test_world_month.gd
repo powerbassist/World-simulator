@@ -25,7 +25,9 @@ const Trade = preload("res://src/sim/trade.gd")
 ## The harnesses that run the real month. Each must call WorldMonth.tick_month in
 ## code (a comment naming it is not a call).
 const HARNESSES := [
-	"res://src/ui/main.gd",
+	# V5.1-0a: the game's month is main.gd's through its runner, which calls the
+	# whole month for a hand-driven day and the same cursor across frames.
+	"res://src/ui/month_runner.gd",
 	"res://tests/test_balance.gd",
 	"res://tools/balance_probe.gd",
 	"res://tools/tick_budget_probe.gd",
