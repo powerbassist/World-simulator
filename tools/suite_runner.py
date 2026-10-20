@@ -52,14 +52,22 @@ GODOT = os.environ.get("GODOT_BIN", "godot")
 _LIVE_CHILDREN: set = set()
 _CHILDREN_LOCK = threading.Lock()
 
-# --isolate (V5.0b): the environment EVERY godot this runner spawns gets, the
-# cold-clone --import included. A private APPDATA puts user:// (saves, settings,
-# logs, the exclusive lane's backup) under a temp dir, so two runs in two
-# checkouts cannot touch each other's state or the real user dir. APPDATA and
-# not override.cfg: the isolation experiment (2026-10-19) measured a cold
-# --import writing the REAL user dir with override.cfg present. XDG_DATA_HOME is
-# the same move off Windows (untested there). None = inherit, today's behaviour.
+# Isolation (V5.0b, the DEFAULT since 2026-10-20): the environment EVERY godot this
+# runner spawns gets, the cold-clone --import included. A private APPDATA puts
+# user:// (saves, settings, logs, the exclusive lane's backup) under a temp dir,
+# so two runs in two checkouts cannot touch each other's state or the real user
+# dir. APPDATA and not override.cfg: the isolation experiment (2026-10-19)
+# measured a cold --import writing the REAL user dir with override.cfg present.
+# XDG_DATA_HOME is the same move off Windows (untested there). Default on rather
+# than opt-in: an opt-in flag is the one a second session forgets, and the run
+# it forgets it on is the one that clobbers the first. None = inherit, which is
+# what --no-isolate asks for.
 _CHILD_ENV: dict | None = None
+
+
+def isolated_env(base: dict, appdata: str) -> dict:
+    """The child environment of an isolated run: user:// under `appdata`."""
+    return {**base, "APPDATA": appdata, "XDG_DATA_HOME": appdata}
 
 
 @dataclass
@@ -414,6 +422,16 @@ def _selftest() -> int:
            "an unmatched registry must parse empty")
     expect(len(registry()[0]) > 100, "the real registry parses: %d" % len(registry()[0]))
 
+    # Isolation is the default and --no-isolate the only way out (2026-10-20); the
+    # child env redirects both user:// roots and keeps everything else.
+    ap_iso = build_parser()
+    expect(ap_iso.parse_args([]).isolate, "a bare run must be isolated")
+    expect(ap_iso.parse_args(["--isolate"]).isolate, "--isolate must still parse")
+    expect(not ap_iso.parse_args(["--no-isolate"]).isolate, "--no-isolate must opt out")
+    env = isolated_env({"PATH": "p", "APPDATA": "real"}, "tmp")
+    expect(env == {"PATH": "p", "APPDATA": "tmp", "XDG_DATA_HOME": "tmp"},
+           "isolated env: %r" % env)
+
     if failures:
         for f in failures:
             print("SELFTEST FAIL: %s" % f)
@@ -422,7 +440,7 @@ def _selftest() -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("tests", nargs="*", help="test paths, e.g. tests/test_clock.gd")
     ap.add_argument("--ci", action="store_true",
@@ -435,11 +453,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--verbose", action="store_true",
                     help="print every test's full output, green included (the old default)")
     ap.add_argument("--run-dir", default=None)
-    ap.add_argument("--isolate", action="store_true",
-                    help="private APPDATA per run (user:// in a temp dir): two isolated "
-                         "runs in two checkouts may overlap; kept on failure for its logs")
+    # --isolate stays accepted (and is the default) so every command line and
+    # guard written against V5.0b's opt-in flag keeps meaning the same thing.
+    ap.add_argument("--isolate", dest="isolate", action="store_true", default=True,
+                    help="private APPDATA per run (user:// in a temp dir; the default): "
+                         "two runs in two checkouts may overlap; kept on failure for its logs")
+    ap.add_argument("--no-isolate", dest="isolate", action="store_false",
+                    help="run against the real user dir (debugging a user:// state by hand)")
     ap.add_argument("--selftest", action="store_true")
-    args = ap.parse_args(argv)
+    return ap
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
 
     if args.selftest:
         return _selftest()
@@ -473,7 +499,7 @@ def main(argv: list[str] | None = None) -> int:
     appdata = None
     if args.isolate:
         appdata = tempfile.mkdtemp(prefix="nsim_appdata_")
-        _CHILD_ENV = {**os.environ, "APPDATA": appdata, "XDG_DATA_HOME": appdata}
+        _CHILD_ENV = isolated_env(dict(os.environ), appdata)
         print("isolated: APPDATA=%s" % appdata, file=sys.stderr)
 
     # The cold-clone rule (V2.8 review): no .godot/ means no script class

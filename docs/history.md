@@ -9,6 +9,10 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## Isolation by default (2026-10-20)
+
+V5.0b's `--isolate` was opt-in, and an opt-in flag is the one a second session forgets on exactly the run that clobbers the first. `suite_runner.py` now isolates every run (a private `APPDATA`/`XDG_DATA_HOME` for every godot it spawns, the cold `--import` included); `--isolate` still parses and means the same, `--no-isolate` is the way back to the real user dir. `run_tests.sh`'s own cold import follows the same default, and the cockpit inherits it through the runner. The selftest pins the default, the opt-out and the child env. Measured on Linux with 4.7.2: two COLD worktrees running the same four tests (the suite-exclusive `test_save_load` among them) side by side, both green in 0:53/0:54, the real user dir never created; the `--no-isolate` control wrote `app_userdata/Nation Simulator` where the inherited `XDG_DATA_HOME` pointed.
+
 ## V5.0d — the pre-review hotspots (2026-10-20)
 
 The eight oldest, most-touched `src/` files reviewed once, then the fix diff once, at a budget fixed before pass 1. Ranked by code lines (excluding the lines V5.0 already rewrote, `14719499..bad0b30e`) × commits touching the file × 1.0 where a V5 block names the file or its system (else 0.5), over files whose lines are mostly last touched before 2026-09-01: `legislature.gd` 31 320, `game_state.gd` 30 184, `nation_state.gd` 19 035, `nation.gd` 14 196, `companies.gd` 13 984, `law_panel.gd` 10 054, `budget.gd` 9 480, `data_loader.gd` 9 240 (reviewed); `law.gd` 8 757 and `budget_panel.gd` 7 084 next. Seven Opus reviewers on the find pass, every claim checked against the code; one on the fix diff, nothing at the bar.
