@@ -19,6 +19,7 @@ extends SceneTree
 
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const Trends = preload("res://src/ui/trends.gd")
 
 const SLOT := "__test_save_cycle__"
 const START_TIMEOUT_FRAMES := 3000
@@ -30,6 +31,7 @@ var _game
 var _menu
 var _loaded
 var _label := ""
+var _saved_changes: Array = []
 var _project_ids: Array = []
 var _waited := 0
 
@@ -122,10 +124,22 @@ func _play_and_save() -> bool:
 		_fail("premise: '%s' moved no figure by NAN, so the save carries nothing the load can drop" % _label)
 		return false
 
+	for m in entry["movements"]:
+		_saved_changes.append(float(m["change"]))
+
 	_game._on_save_requested(SLOT)
 	if not FileAccess.file_exists(SaveManager._path_for(SLOT)):
 		_fail("SAVE through main.gd wrote no file")
 		return false
+
+	# The in-game Load (the pause menu's, same Main): a decision committed after
+	# the save and not yet measured belongs to the DISCARDED game. Left queued,
+	# the loaded game's next History step wrote it into its own recent_effects,
+	# against the old game's baseline, and the next save kept it.
+	_game._queue_effect("A decision after the save", Trends.snapshot_now(state))
+	_game._on_load_requested(SLOT)
+	if not _game._pending_effects.is_empty():
+		_fail("an in-game load kept %d decision(s) queued from the discarded game" % _game._pending_effects.size())
 	return true
 
 
@@ -136,11 +150,17 @@ func _check_loaded() -> void:
 	var entry: Dictionary = _loaded._state.recent_effects[0]
 	if String(entry["label"]) != _label:
 		_fail("the continued game's last decision is '%s', expected '%s'" % [entry["label"], _label])
-	for m in entry["movements"]:
+	var movements: Array = entry["movements"]
+	for i in movements.size():
+		var m: Dictionary = movements[i]
 		for key in ["change", "severity"]:
 			if typeof(m[key]) != TYPE_FLOAT:
 				_fail("a loaded movement's %s is %s, not a number -- NAN did not survive the save" % [key, type_string(typeof(m[key]))])
 				return
+		# NAN reads back as NAN, and every real figure as itself.
+		var saved: float = _saved_changes[i] if i < _saved_changes.size() else NAN
+		if is_nan(saved) != is_nan(float(m["change"])) or (not is_nan(saved) and not is_equal_approx(saved, float(m["change"]))):
+			_fail("movement %d came back as %s, saved as %s" % [i, str(m["change"]), str(saved)])
 	if not _collect_text(_loaded._overview_panel).contains(_label):
 		_fail("the Overview did not draw '%s' on the continued game" % _label)
 	for project_id in _project_ids:
