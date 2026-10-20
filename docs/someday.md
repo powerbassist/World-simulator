@@ -359,6 +359,35 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from the V5.0 fix pass (2026-10-20)
+
+The play gate scored 1/5 and earned one bounded fix pass: the load crash (P1) and the
+11-second month end (P2) were fixed; these were measured and left for their blocks.
+Numbers are the author's save (FRA, 41 nations, November 2027), headless.
+
+- **The budget forecast costs ~10 s per redraw with its window open.** Two 24-month
+  `Budget.project()` runs of the real model (each ~5 s at 41 nations; D14 recorded
+  ~4.5 s for the pair at 29). Since the fix pass the panel draws only while its window
+  is showing, so a closed window costs nothing -- but OPEN, every month end and every
+  lever move pays ~10 s, and a slider drag pays it per changed frame. The levers are
+  NOT broken: a moved lever and Commit apply (health 11.0 -> 12.0 measured); they
+  freeze. **Owner:** V5.1d (the forecast's cost, D14). **Fix shape, measured first:**
+  the "now" projection once per state change rather than per lever move, the proposed
+  one on drag end, then a cheaper model for the forecast than the full month.
+- **The other hidden panels still redraw every month: ~0.4 s.** The same `visible`
+  gate in every panel (law 174 ms, commodities ~60, city ~57, people ~52, orgs ~31...),
+  each refreshing inside a closed window on the month's `mark_all_dirty()` sweep. The
+  budget panel's gate was the 12-second share; the rest is a hitch, not a freeze.
+  **Owner:** V5.1c (the shell: the window manager can gate every panel at once).
+
+- **`tools/foreign_policy_probe.gd` no longer parses.** The editor reports `Identifier
+  "Bloc" not declared` (lines 961, 997, 1012, 1014; 929 calls it too): V3.2a
+  (`9a8994f2`) deleted `bloc.gd` and the probe's preload but not its calls -- and
+  nothing noticed, because no suite test loads a probe.
+  **Owner:** the next block that touches `tools/`. **Fix shape:** the rename in the probe,
+  and a parse check over `tools/*.gd` in CI's checks job (load each with
+  `--check-only`), which catches the whole class.
+
 ## Carried from V5.0d (2026-10-20)
 
 The pre-review hotspot pass (the eight oldest, most-touched `src/` files) fixed what

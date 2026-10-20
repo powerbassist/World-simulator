@@ -2409,8 +2409,11 @@ func _on_load_requested(slot: String) -> void:
 	if not _programme_card_id.is_empty():
 		_hud.message_stack.dismiss(_programme_card_id)
 		_programme_card_id = ""
-	var loaded_ns = _state.player()
-	var loaded_result: Dictionary = loaded_ns.last_law_result
+	# A decision committed and not yet measured belongs to the DISCARDED game:
+	# left queued, the loaded game's next History step wrote it into its own
+	# recent_effects against the old game's baseline (the V5.0 fix-pass review).
+	_pending_effects.clear()
+	var loaded_result: Dictionary = _state.player().last_law_result
 	var carries_bill := bool(loaded_result.get("assembly_bill", false))
 	var released_load := bool(loaded_result.get("released", false))
 	var loaded_stamp := int(loaded_result.get("assembly_division_month", -1))

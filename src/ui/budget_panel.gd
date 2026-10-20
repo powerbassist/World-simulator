@@ -365,8 +365,14 @@ func _pending_value(key: String) -> float:
 
 ## Sliders fire many times during a drag, and every refresh runs two 24-month
 ## projections. Coalesce to at most one refresh per frame.
+##
+## is_visible_in_tree(), not `visible`: the panel's own flag stays true inside a
+## CLOSED window, and the month's sweep marks every panel dirty, so the two
+## projections (~12 s at 41 nations) ran every month with the window shut --
+## the V5.0 play gate's 11-second month end. Hidden, the panel stays dirty and
+## redraws when its window opens.
 func _process(_delta: float) -> void:
-	if not _dirty or not visible or _state == null:
+	if not _dirty or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
 	_refresh()

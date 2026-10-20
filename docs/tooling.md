@@ -120,6 +120,8 @@ Godot being closed is reported, never failed — that is a normal state, not a b
 
 **The editor must be open.** Runtime tools reach the game through the editor channel, so a game launched standalone with `godot --path` publishes a runtime port the bridge cannot route to on its own.
 
+**Re-enabling a plugin that went dark** (measured 2026-10-20): with the editor CLOSED, hand-edit the LOCAL `project.godot` -- the `MCPRuntimeServer` autoload line and `res://addons/godot_mcp_toolkit/plugin.cfg` in `[editor_plugins] enabled=` -- or tick it in Project Settings → Plugins; never commit either. An `AUTH_FAILED` "auth timeout" on the first call from a session that started before the editor was up is transient: retry it.
+
 The loop for looking at the running game:
 
 ```
