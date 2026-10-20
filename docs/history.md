@@ -9,6 +9,26 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V5.1-0a — the month and the budget without a freeze (2026-10-21)
+
+V5.0's play gate scored 1/5 twice, and what the author felt most was time: "half a second delay every month", "budget levers are broken or freeze the game", freezes placing a reactor. V5.1 opened with a "playable first" sub-block 0 (author, 2026-10-20); 0a is the freezes. Measured windowed with `tools/month_frame_probe.gd` (new: the real main scene, 41 nations, speed 3, frame times read between frames), base `59871eda` against the tip the same hour, alone:
+
+| | base | tip |
+|---|---|---|
+| month boundary, nothing open (6 months) | 632–720 ms, the first 3 065 ms | worst 45.2 ms |
+| a budget lever dragged, window open | ~10 000 ms a frame | worst 36.5 ms |
+| opening the budget window | 9 906 ms | 45.3 ms |
+| a month boundary with the budget open | 10 604 ms | 50.0 ms |
+| placing a reactor, every window closed / Energy open | 499 / 438 ms | 17 / 22 ms |
+
+**Every panel draws only while its window shows.** The fix pass gated the budget panel on `is_visible_in_tree()`; the other twenty still gated on their own `visible`, true inside a closed window, so every month's sweep and every command's sweep redrew them all (~0.4 s). Now all of them; `test_shell` holds every registered panel to it. This was also P4: the reactor click's 409–499 ms was `Energy.execute()` plus that sweep, and goes with it. Four panel tests had leaned on the bug (a panel `show()`n inside a closed window still refreshed) and now open the window, as the player does.
+
+**The month across frames, on the main thread.** `src/sim/world_month.gd` is a cursor (`begin`/`run_unit`/`done`): one match in STEPS order, `tick_month()` the cursor run to its end, so there is still one copy of the month. Economy (a pre-pass, then a unit per nation) and Diplomacy (the settling pass, a unit per actor, the memo's close) hand over their ticks as units, `tick_month()` running the same ones. `src/ui/month_runner.gd` runs the units under a 12 ms frame budget, remembering each unit's last cost so a long one starts a fresh frame. Not a worker: `parallel.gd`'s rule 4 (`pow`/`exp` differ in the last bit on a pool thread). While the month closes the clock is held (`Clock.hold/release`; the 1st's `day_advanced` waits, so an appointment still acts after the month), the windows stop processing (every panel holds its frame), and every input event is deferred and replayed in order afterwards; the clock's date dims and its pause button reads "...". A hand-driven day (`advance_one_day()` from a test or a tool) still gets its month whole. The month's sweep moved from the Calendar step's slot to the month's end, where nothing draws half a month (and the budget's untouched levers re-sync after the month's laws). The first month after boot was a 2.4 s frame of its own: Industry's relocation memo ran a Dijkstra per region that `Net.warm()` had already run at boot; it now reads `Net.distance_row()`, the same floats.
+
+**The forecast off the frame.** `Budget.project()` is a cursor too (`projection`/`projection_step`/`projection_done`; Godot's `Projection` is a built-in type, hence `ProjectionJob`), its output `cmp`-identical to the old `project()`'s for "now" and a proposed budget. `src/ui/budget_forecast.gd`, a child of the panel, runs it under a 10 ms budget: "now" once per change of state, "proposed" once the levers have been still for 15 frames, "proposed" = "now" with nothing edited, and a forecast begun before a change finishes and stays shown, marked "...", while the next runs — restarting would never finish at speed 3, where a month closes faster than a projection does. The numbers are the real model's, every nation, 24 months; nothing is an estimate. The rows read "computing ..." until the first lands.
+
+Byte-identity: the 51-regime table at `6046ae3c` (cursor, runner, Industry) `cmp`-identical to the base; the later commits touch the projection (its own `cmp`), the UI and tests. Size ratchet: `diplomacy.gd` 346 → 330 (its travel geography moved verbatim to `diplomacy_travel.gd`), `budget_panel.gd` 322 → 319, `main.gd` held at 1 459. New tests: `test_month_runner` (twin games, six months, one hand-driven and one by real time, saving byte for byte alike; the clock held, a key deferred and replayed once), `test_budget_forecast` (written first), a cursor check in `test_world_month`, lever 9 in `test_tick_levers`. Each new test mutation-checked.
+
 ## V5.0 fix pass — the play gate's crash and freeze (2026-10-20)
 
 The V5.0 play gate scored **1/5**: nobody spoke to the player (V5.2's job, as planned), and two playthrough-breakers. One bounded pass took them, sim numbers untouched (the 51-regime table `cmp`-identical, base `0961f8ab` to tip).
