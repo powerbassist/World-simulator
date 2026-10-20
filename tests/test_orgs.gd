@@ -542,6 +542,17 @@ func _check_the_external_measure_uses_the_directed_key() -> void:
 			if a != b and state.measures.has(Relations.directed_key(a, b)):
 				_fail("a common external tariff put a measure on %s>%s, inside the org" % [a, b])
 
+	# V5.0d: the tag travels through a save. It is the ONLY thing a membership flip
+	# reads to lift exactly the org's own measures, so a load that dropped it left
+	# the common external tariff on a new member, and on every outsider a leaver
+	# used to tariff, for the rest of the run.
+	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	for directed in state.measures.keys():
+		var tag := String((state.measures[directed] as Dictionary).get("org", ""))
+		if tag != "" and String((back.measures.get(directed, {}) as Dictionary).get("org", "")) != tag:
+			_fail("the measure on %s lost its adopting org '%s' through a save" % [directed, tag])
+			break
+
 
 func _check_the_europe_issue_is_the_only_new_one() -> void:
 	if not OK.ISSUE_KEYS.has("europe"):

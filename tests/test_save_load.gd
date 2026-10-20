@@ -806,11 +806,12 @@ func _run_bloc_roundtrip(loader) -> void:
 ## V1.3c exactly, and it would not have earned a bump on its own.
 ## V3.2, the review's critical: a membership fight is a state machine whose
 ## `phase` is the whole of it, and the machine advances by reading
-## `ns.last_referendum_result`, which is a display record and does not travel.
-## Asserted here rather than argued: a fight saved mid-negotiation reloads
-## INTACT and completes; a fight saved in the one-month resolved-but-unconsumed
-## window reloads ended, with membership unchanged -- the honest reading, no
-## outcome invented, and the player not stranded against every membership verb.
+## `ns.last_referendum_result`. Asserted here rather than argued: a fight saved
+## mid-negotiation reloads INTACT and completes. V5.0d: so does a fight saved in
+## the one-month resolved-but-unconsumed window -- the result now travels, where
+## V3.2 had it as a display record and the load ended the fight, which threw away
+## a referendum the country had WON (and whose price was already charged) for a
+## save taken in the month the result card shows.
 func _run_org_fight_roundtrip(loader) -> void:
 	var state = GameState.new_game(loader, "FRA")
 	if not state.errors.is_empty():
@@ -868,9 +869,9 @@ func _run_org_fight_roundtrip(loader) -> void:
 	if not flipped:
 		_fail("the reloaded fight never flipped membership -- the countdown is not advancing")
 
-	# The stranded window: resolved-but-unconsumed. The pending register is
-	# empty, the result is display-only and does not travel, so the load path
-	# ends the fight honestly -- membership unchanged, register empty.
+	# The window: resolved-but-unconsumed. The pending register is empty and the
+	# answer lives only on the result, which travels, so the reloaded fight
+	# consumes it and completes exactly as the unsaved one would.
 	var state2 = GameState.new_game(loader, "FRA")
 	var ns2 = state2.player()
 	if not bool(Orgs.begin_withdrawal(state2, loader, ns2, "eu").get("ok", false)):
@@ -889,10 +890,34 @@ func _run_org_fight_roundtrip(loader) -> void:
 		_fail("load_game(stranded fight) failed: %s" % result2["error"])
 		return
 	var loaded2 = result2["state"]
-	if not loaded2.accessions.is_empty():
-		_fail("a referendum-phase fight with no recoverable result survived the load -- it would strand every membership verb")
-	if not loaded2.nations["FRA"].orgs.has("eu"):
-		_fail("the stranded fight's reconciliation changed membership -- no outcome may be invented")
+	if loaded2.accessions.is_empty():
+		_fail("a fight saved the month its referendum was WON did not survive the load -- the country's answer was thrown away")
+		return
+	var flipped2 := false
+	for i in range(26):
+		Orgs.tick_month(loaded2, loader)
+		if not loaded2.nations["FRA"].orgs.has("eu"):
+			flipped2 = true
+			break
+	if not flipped2:
+		_fail("the fight saved in the resolved-but-unconsumed window never flipped membership after the load")
+
+	# And a fight whose result was ALREADY consumed is not re-triggered by the
+	# record travelling: end it at the referendum phase with the consumed flag set,
+	# as a stale save would carry it, and the load still ends it.
+	var state3 = GameState.new_game(loader, "FRA")
+	var ns3 = state3.player()
+	if not bool(Orgs.begin_withdrawal(state3, loader, ns3, "eu").get("ok", false)):
+		_fail("the consumed-result begin was refused")
+		return
+	for i in range(13):
+		if not Referendum.resolve_due(ns3).is_empty():
+			break
+	ns3.last_referendum_result["org_fight_consumed"] = true
+	var back3 = GameState.from_dict(JSON.parse_string(JSON.stringify(state3.to_dict())))
+	Orgs.reconcile_on_load(back3, loader)
+	if not back3.accessions.is_empty():
+		_fail("a referendum-phase fight whose result was already consumed survived the load -- it would strand every membership verb")
 
 
 func _run_agenda_roundtrip(loader) -> void:
@@ -1468,10 +1493,10 @@ func _check_pledge_fields(loader) -> void:
 ##     VANISHES -- a free withdrawal of the one act this session deliberately made
 ##     un-free. `campaign_started` one commit earlier, and `diplo_months_to_act` at U6a.
 ##
-##   last_referendum_result  NOT SERIALISED AT ALL, `last_project_result`'s case: a
-##     display record of something that has already happened to the register. The
-##     ABSENCE is pinned, so a later session storing it turns this red and has to say
-##     why.
+##   last_referendum_result  serialised since V5.0d, absent-ok. V1.7c left it out as
+##     `last_project_result`'s display record, but V3.2's membership fight advances
+##     by reading it, so a save in the month a vote resolved lost a WON referendum.
+##     Its absence reads as "no vote yet", correct for every older save: no bump.
 func _check_referendum_fields(loader) -> void:
 	var state = GameState.new_game(loader, "FRA")
 	var ns = state.player()
@@ -1538,9 +1563,11 @@ func _check_referendum_fields(loader) -> void:
 	if Referendum.is_pending(dropped_pending.player()):
 		_fail("a tick rebuilt the register -- then it is derivable and the version did not need to move")
 
-	# (5) the ABSENCE. A display record is not state.
-	if (dict["nations"]["FRA"] as Dictionary).has("last_referendum_result"):
-		_fail("a save carries last_referendum_result -- it is a display record, `last_project_result`'s case")
+	# (5) the result TRAVELS (V5.0d). The org fight machine advances by reading
+	# it, so a save in the month a vote resolved must carry it -- and an absent
+	# key reads as {} ("no vote yet"), correct for every older save: no bump.
+	if not (dict["nations"]["FRA"] as Dictionary).has("last_referendum_result"):
+		_fail("a save does not carry last_referendum_result -- a membership fight saved the month its vote resolved loses the answer")
 
 	# (6) and the register carries no CONTENT: a law id, a countdown and the question's
 	# own position, and nothing else. V1.4a's discipline, and the reason the position is
