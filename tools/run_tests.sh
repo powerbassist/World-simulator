@@ -315,14 +315,15 @@ fi
 if [ ! -d ".godot" ]; then
   echo "no .godot/ -- importing once so the script class cache exists" >&2
   case " $* " in
-    # --isolate covers this import too: a cold --import writes the user dir,
-    # and is the step override.cfg was measured NOT to redirect (V5.0b).
-    *" --isolate "*)
+    # Isolation (the runner's default) covers this import too: a cold --import
+    # writes the user dir, and is the step override.cfg was measured NOT to
+    # redirect (V5.0b). Only --no-isolate imports against the real one.
+    *" --no-isolate "*) godot --headless --import >/dev/null 2>&1 || true ;;
+    *)
       import_appdata="$(mktemp -d)"
       APPDATA="$import_appdata" XDG_DATA_HOME="$import_appdata" \
         godot --headless --import >/dev/null 2>&1 || true
       rm -rf "$import_appdata" ;;
-    *) godot --headless --import >/dev/null 2>&1 || true ;;
   esac
 fi
 

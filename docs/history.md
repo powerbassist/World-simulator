@@ -9,6 +9,10 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## Isolation by default (2026-10-20)
+
+V5.0b's `--isolate` was opt-in, and an opt-in flag is the one a second session forgets on exactly the run that clobbers the first. `suite_runner.py` now isolates every run (a private `APPDATA`/`XDG_DATA_HOME` for every godot it spawns, the cold `--import` included); `--isolate` still parses and means the same, `--no-isolate` is the way back to the real user dir. `run_tests.sh`'s own cold import follows the same default, and the cockpit inherits it through the runner. The selftest pins the default, the opt-out and the child env. Measured on Linux with 4.7.2: two COLD worktrees running the same four tests (the suite-exclusive `test_save_load` among them) side by side, both green in 0:53/0:54, the real user dir never created; the `--no-isolate` control wrote `app_userdata/Nation Simulator` where the inherited `XDG_DATA_HOME` pointed.
+
 ## V5.0c2 — the month, threaded: A + B (2026-10-20)
 
 The author's call on V5.0c's 16 ms (2026-10-20): **A + B** in one PR — the byte-identical micro-levers V5.0c named, then Diplomacy's per-target scoring and third-party pass on worker threads, under rules that keep the threaded month the serial month bit for bit. C1 (a longer agenda interval) refused: it changes the game, not its speed. Tip (`47030a46`): mean 241.3 / 238.2 / 245.0 (median **241.3**), worst 304.0 / 277.1 / 325.4 (median **304.0**), against V5.0c's 316.3 / 382.6. **Both bands met** (300 mean, 450 worst). The 51-regime table is `cmp`-identical to V5.0c's base at A alone, at B's first build and three times at the final head.
