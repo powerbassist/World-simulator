@@ -4,35 +4,51 @@ extends SceneTree
 ## Non-zero exit on any failure.
 ##
 ## V5.1-0a: the month a player watches runs across frames (src/ui/month_runner.gd)
-## and the month a test drives by hand runs whole. Two new games side by side:
-## A's month is one Clock.advance_one_day() call, B's is the same day reached by
-## real time passing (the clock's own _process), and B is watched frame by frame.
-## What must hold, each a silent failure if it does not:
+## and the month a test drives by hand runs whole. Three copies of one new game:
+## A is the game whose month is one Clock.advance_one_day() call, B is the game
+## whose month is reached by real time passing (the clock's own _process) and is
+## watched frame by frame, and C is no game at all -- a bare GameState ticked by
+## WorldMonth.tick_month(), the month every balance harness runs. What must hold,
+## each a silent failure if it does not:
 ##
 ##   - B's month takes more than one frame (the freeze is gone) while A's is
 ##     done before the call returns (every harness keeps its whole month);
 ##   - while B's month closes, its calendar does not move, its 1st has not been
 ##     announced, its windows hold their frame, and a key the player presses is
 ##     not acted on -- it is acted on once the month is done, not lost;
-##   - and B ends where A ends, byte for byte: the same month, the UI's half
-##     included, in the same order -- for six months running, so a month that
-##     pauses itself mid-close (an event on the desk, the term-start offer) is
-##     among them.
+##   - B ends every month where A and C end, byte for byte (sorted keys): the
+##     month across frames through the in-game driver is the balance probes'
+##     month -- for six months running, so a month that pauses itself mid-close
+##     (an event on the desk, the term-start offer) is among them;
+##   - and a seventh month is closed under fire: a pause, a speed change, the
+##     save/load dialog's key, a budget commit and a law proposal are all given
+##     while it closes. None of them lands mid-month -- the month's result is
+##     still C's, to the byte -- and every one lands after it, once.
 ##
 ## Driven a frame at a time because the runner IS frames, and because a Control
 ## outside the scene tree has not run _ready() (docs/engine-decision.md).
 
-const MAX_FRAMES := 3000
+const WorldMonth = preload("res://src/sim/world_month.gd")
+const GameState = preload("res://src/core/game_state.gd")
+
+const MAX_FRAMES := 4000
 const MONTHS := 6
 
 var _failures: Array[String] = []
 var _a
 var _b
+var _bare
 var _frame := 0
 var _phase := "boot"
 var _month_frames := 0
 var _months_done := 0
 var _recorder: Recorder
+## The seventh month's commands, and what B looked like the instant its month
+## was done -- before the clock let go and the deferred input was replayed.
+var _law_name := ""
+var _at_month_end := {}
+var _speed_before := 0
+var _settle_left := 0
 
 
 ## What reaches the game as unhandled input. F12 is bound to nothing, so this is
@@ -64,14 +80,24 @@ func _process(_delta: float) -> bool:
 		return _finish()
 	match _phase:
 		"boot":
+			_bare = GameState.new_game(_b._loader, _b.pending_player_id, _b.pending_scenario_id)
+			_bare.year = _b._clock.year
+			_bare.month = _b._clock.month
 			return _start(true)
 		"closing":
 			return _watch()
+		"settle":
+			# Both surfaces lay themselves out before anything is aimed at them.
+			_settle_left -= 1
+			return _aim_and_fire() if _settle_left <= 0 else false
+		"under_fire":
+			return _watch_under_fire()
 	return false
 
 
 ## Both games to the last day of the month by hand, then the rollover: A's by
-## hand, B's by real time. The first month also presses a key while it closes.
+## hand, B's by real time, C's by tick_month(). The first month also presses a
+## key while it closes.
 func _start(first: bool) -> bool:
 	for game in [_a, _b]:
 		if game._state == null:
@@ -90,6 +116,7 @@ func _start(first: bool) -> bool:
 		_fail("a hand-driven day left its month running across frames")
 	if _a._state.history.size() != history_a + 1:
 		_fail("a hand-driven day returned before its month was done")
+	_tick_bare()
 
 	var history_b: int = _b._state.history.size()
 	var last_day: int = _b._state.day
@@ -109,14 +136,7 @@ func _start(first: bool) -> bool:
 		_phase = "closing"
 		return false
 	# A key the player presses while the month closes.
-	var key := InputEventKey.new()
-	key.keycode = KEY_F12
-	key.physical_keycode = KEY_F12
-	key.pressed = true
-	root.push_input(key, true)
-	var release: InputEventKey = key.duplicate()
-	release.pressed = false
-	root.push_input(release, true)
+	_press(KEY_F12)
 	if _recorder.presses != 0:
 		_fail("a key pressed while the month closed reached the game mid-month")
 	if _b._state.history.size() != history_b:
@@ -147,13 +167,173 @@ func _watch() -> bool:
 		_fail("the windows did not resume processing after the month")
 	if _recorder.presses != 1:
 		_fail("the key pressed while the month closed reached the game %d times after it, not once" % _recorder.presses)
-	if JSON.stringify(_a._state.to_dict()) != JSON.stringify(_b._state.to_dict()):
+	if _dump(_a._state) != _dump(_b._state):
 		_fail("month %d, run across frames, saved differently from the month run whole" % _months_done)
 		return _finish()
+	if _dump(_bare) != _dump(_b._state):
+		_fail("month %d, run across frames by the game, saved differently from tick_month() on a bare state" % _months_done)
+		return _finish()
+	_month_frames = 0
 	if _months_done < MONTHS:
-		_month_frames = 0
 		return _start(false)
+	_prepare_under_fire()
+	return false
+
+
+## The seventh month. The budget window is pinned top-right and the briefing for
+## a bill is open, both in reach of the pointer; then real time reaches the 1st
+## and, while the month closes, the player commits the budget, proposes the
+## bill, pauses, picks speed 3 and asks for the save/load dialog -- in that order,
+## the clicks first so no dialog they summon covers them on the replay.
+func _prepare_under_fire() -> void:
+	_b._windows.open("budget")
+	var budget_frame: Control = _b._windows.frame("budget")
+	budget_frame.set_pinned(true)
+	budget_frame.position = Vector2(_b._windows.size.x - budget_frame.size.x - 30.0, 70.0)
+	var law = _b._loader.laws[0]
+	_law_name = String(law.law_name)
+	_b._briefing.open_for_law(law, _b._state, _b._loader)
+	_b._briefing.show()
+	_settle_left = 3
+	_phase = "settle"
+
+
+func _aim_and_fire() -> bool:
+	var commit: Button = _b._budget_panel._commit_button
+	var propose := _find_button(_b._briefing, "Propose the bill")
+	if propose == null:
+		_fail("premise: the briefing has no 'Propose the bill' button")
+		return _finish()
+	for target in [commit, propose]:
+		if _hovered_at(target.get_global_rect().get_center()) != target:
+			_fail("premise: the point aimed at '%s' reaches %s, not the button" % [
+				target.text, _hovered_at(target.get_global_rect().get_center())])
+			return _finish()
+
+	for game in [_a, _b]:
+		while game._clock.day < game._clock._days_in_month(game._clock.month, game._clock.year):
+			game._clock.advance_one_day()
+	_tick_bare()
+	_speed_before = _b._clock.speed
+	_b._clock.paused = false
+	_b._clock._process(1.0 / _b._clock.SPEED_DAYS_PER_SECOND[_b._clock.speed - 1])
+	if not _b._month_runner.running():
+		_fail("premise: the seventh month did not start across frames")
+		return _finish()
+	# The instant the month is done: before the clock lets go and the deferred
+	# input is replayed, B must be C, with not one command in it.
+	var finish: Callable = _b._month_runner._done
+	_b._month_runner._done = func(report: Dictionary) -> void:
+		_at_month_end = {
+			"dump": _dump(_b._state),
+			"paused": _b._clock.paused,
+			"speed": _b._clock.speed,
+			"save_dialog": _b._save_load_panel.visible,
+			"effects": _effect_labels(),
+		}
+		finish.call(report)
+		_at_month_end["paused_after_tail"] = _b._clock.paused
+
+	_click(commit.get_global_rect().get_center())
+	_click(propose.get_global_rect().get_center())
+	_press(KEY_SPACE)
+	_press(KEY_3)
+	_press(KEY_S)
+	_phase = "under_fire"
+	return false
+
+
+func _watch_under_fire() -> bool:
+	if _b._month_runner.running():
+		var labels := _effect_labels()
+		if labels.has("Budget change") or labels.has(_law_name):
+			_fail("a command given while the month closed was applied mid-month: %s" % [labels])
+			return _finish()
+		if _b._clock.speed != _speed_before or _b._save_load_panel.visible:
+			_fail("a key given while the month closed was acted on mid-month")
+			return _finish()
+		return false
+
+	if _at_month_end.is_empty():
+		_fail("the seventh month ended without passing through the runner's end")
+		return _finish()
+	if String(_at_month_end["dump"]) != _dump(_bare):
+		_fail("the month closed under fire is not the month tick_month() runs on a bare state")
+	var labels_then: Array = _at_month_end["effects"]
+	if labels_then.has("Budget change") or labels_then.has(_law_name):
+		_fail("at the month's end a command given during it was already applied: %s" % [labels_then])
+	if int(_at_month_end["speed"]) != _speed_before or bool(_at_month_end["save_dialog"]):
+		_fail("at the month's end a key given during it was already acted on")
+
+	# After it: every command, once.
+	var labels_now := _effect_labels()
+	if labels_now.count("Budget change") != 1:
+		_fail("the budget commit given during the month landed %d times after it, not once" % labels_now.count("Budget change"))
+	if labels_now.count(_law_name) != 1:
+		_fail("the bill proposed during the month landed %d times after it, not once" % labels_now.count(_law_name))
+	if _b._clock.speed != 3:
+		_fail("the speed picked during the month was never applied: speed %d" % _b._clock.speed)
+	if _b._clock.paused == bool(_at_month_end["paused_after_tail"]):
+		_fail("the pause given during the month was never applied after it")
+	if not _b._save_load_panel.visible:
+		_fail("the save/load dialog asked for during the month never opened after it")
 	return _finish()
+
+
+func _tick_bare() -> void:
+	_bare.month += 1
+	if _bare.month > 12:
+		_bare.month = 1
+		_bare.year += 1
+	WorldMonth.tick_month(_bare, _b._loader)
+
+
+func _dump(state) -> String:
+	return JSON.stringify(state.to_dict(), "", true)
+
+
+func _effect_labels() -> Array:
+	var out: Array = []
+	for pending in _b._pending_effects:
+		out.append(String(pending["label"]))
+	return out
+
+
+func _press(keycode: Key) -> void:
+	for pressed in [true, false]:
+		var key := InputEventKey.new()
+		key.keycode = keycode
+		key.physical_keycode = keycode
+		key.pressed = pressed
+		root.push_input(key, true)
+
+
+func _click(at: Vector2) -> void:
+	for pressed in [true, false]:
+		var click := InputEventMouseButton.new()
+		click.button_index = MOUSE_BUTTON_LEFT
+		click.pressed = pressed
+		click.position = at
+		click.global_position = at
+		root.push_input(click, true)
+
+
+func _hovered_at(at: Vector2) -> Control:
+	var motion := InputEventMouseMotion.new()
+	motion.position = at
+	motion.global_position = at
+	root.push_input(motion, true)
+	return root.gui_get_hovered_control()
+
+
+func _find_button(node: Node, text: String) -> Button:
+	if node is Button and String(node.text) == text:
+		return node
+	for child in node.get_children():
+		var found := _find_button(child, text)
+		if found != null:
+			return found
+	return null
 
 
 func _fail(message: String) -> void:
@@ -162,7 +342,7 @@ func _fail(message: String) -> void:
 
 func _finish() -> bool:
 	if _failures.is_empty():
-		print("test_month_runner: all checks passed (%d months)" % _months_done)
+		print("test_month_runner: all checks passed (%d months, then one under fire)" % _months_done)
 		quit(0)
 		return true
 	for message in _failures:
