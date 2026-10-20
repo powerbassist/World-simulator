@@ -326,7 +326,7 @@ static func hazard_passes(nation_id: String, event_id: String, year: int, month:
 		_absolute_month(year, month)
 		- _absolute_month(K.EVENT_EPOCH_YEAR, K.EVENT_EPOCH_MONTH)
 	)
-	return Cycle.unit("%s|%s" % [nation_id, event_id], index) < likelihood
+	return Cycle.unit_pair(nation_id, event_id, index) < likelihood
 
 
 static func _absolute_month(year: int, month: int) -> int:

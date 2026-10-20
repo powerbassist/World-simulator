@@ -133,7 +133,31 @@ static func _wave(seed_key: String, t: float) -> float:
 ## the simulation and one outside it. tests/test_events.gd reads that file and fails if
 ## a splitmix constant appears in it.
 static func unit(seed_key: String, index: int) -> float:
-	var z: int = (_key_seed(seed_key) + index * 0x9E3779B1) & _U32
+	return _unit_from_seed(_key_seed(seed_key), index)
+
+
+## unit("a|b", index) without building the string on a hit -- V5.0c2. The seed is
+## memoised by the key's two parts, and a miss seeds from exactly the string
+## unit() would have hashed, so the draw is the same float. Events' hazard asks it
+## for every event of every nation every month.
+static func unit_pair(a: String, b: String, index: int) -> float:
+	var by_a: Dictionary = _pair_memo.get(a, {})
+	if by_a.is_empty():
+		if _pair_memo.size() >= SEED_MEMO_MAX:
+			_pair_memo.clear()
+		_pair_memo[a] = by_a
+	var hit = by_a.get(b)
+	if hit == null:
+		hit = _key_seed(a + "|" + b)
+		by_a[b] = hit
+	return _unit_from_seed(hit, index)
+
+
+static var _pair_memo: Dictionary = {}
+
+
+static func _unit_from_seed(key_seed: int, index: int) -> float:
+	var z: int = (key_seed + index * 0x9E3779B1) & _U32
 	z = (z + 0x9E3779B9) & _U32
 	z = ((z ^ (z >> 16)) * 0x21F0AAAD) & _U32
 	z = ((z ^ (z >> 15)) * 0x735A2D97) & _U32
