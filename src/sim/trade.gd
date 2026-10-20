@@ -208,6 +208,10 @@ static var _mass: Dictionary = {}
 
 
 static func masses_open(state) -> void:
+	# Inside a fan-out the outer one's table is already open (and a worker must
+	# not write it): a nested open or close is a no-op.
+	if Parallel.active:
+		return
 	var masses := {}
 	for id in state.nations.keys():
 		masses[id] = pow(maxf(0.0, state.nations[id].gdp_eur_bn), K.GRAVITY_EXPONENT)
@@ -216,6 +220,8 @@ static func masses_open(state) -> void:
 
 
 static func masses_close() -> void:
+	if Parallel.active:
+		return
 	_mass_state = null
 	_mass = {}
 

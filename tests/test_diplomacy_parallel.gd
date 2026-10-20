@@ -12,7 +12,11 @@ extends SceneTree
 ##   1. The pool really fans out: one fan-out's elements run on more than one
 ##      thread, and the memo phase is `active` inside it and clear after it.
 ##   2. Each memo is read-only while `active`: a miss computes the same value and
-##      stores nothing (Org.shared_bonus, the trade turn memo, Cycle's two).
+##      stores nothing (Org.shared_bonus, the trade turn memo, Cycle's two); and a
+##      vector built from Trade's masses table is the vector pow() builds.
+##   5. Rule 4 by reading the files: no libm call (pow, exp, log, the trig family)
+##      on the workers' path outside the two sanctioned sites -- the platform this
+##      runs on may well be thread-stable, so the scan is what holds the rule.
 ##   3. Twenty rounds, the world a month further on each round: an acting
 ##      nation's every target slot (pair terms and every offer's score) and its
 ##      best act, threaded against serial, under the memos the tick opens; and
@@ -52,6 +56,7 @@ func _init() -> void:
 	_check_memos_read_only(state)
 	_check_rounds(state, loader)
 	_check_lockstep(loader)
+	_check_no_libm_on_workers()
 	Parallel.enabled = true
 	_finish()
 
@@ -73,7 +78,7 @@ func _check_pool_fans_out() -> void:
 		threads[slot["thread"]] = true
 		if not bool(slot["active"]):
 			_fail("an element ran with the memo phase clear")
-	if threads.size() < 2:
+	if threads.size() < 2 and OS.get_processor_count() > 1:
 		_fail("64 elements ran on %d thread(s) -- the pool did not fan out" % threads.size())
 	if Parallel.active:
 		_fail("the memo phase is still active after the join")
@@ -107,6 +112,15 @@ func _check_memos_read_only(state) -> void:
 	if var_to_str(wa) != var_to_str(wb) or Trade._turn.is_empty():
 		_fail("the turn memo's read-only miss differs from its stored value")
 	Trade.turn_close()
+
+	for id in ids:
+		var plain: Dictionary = Trade.weights(state, id)
+		Trade.masses_open(state)
+		var massed: Dictionary = Trade.weights(state, id)
+		Trade.masses_close()
+		if var_to_str(plain) != var_to_str(massed):
+			_fail("%s: a vector built from the masses table differs from pow()'s" % id)
+			break
 
 	var key := "parallel-test|%d" % Time.get_ticks_usec()
 	Parallel.active = true
@@ -212,6 +226,43 @@ func _check_lockstep(loader) -> void:
 			return
 	if threaded.foreign_acts.is_empty():
 		_fail("no nation acted in %d lockstep months -- the comparison never reached execute()" % LOCKSTEP_MONTHS)
+
+
+## The files whose code the workers run (diplomacy.gd for available() and its
+## reads), and the functions in them allowed a libm call: Trade.masses_open() and
+## ForeignPolicy.stake_factor() run on the calling thread; Trade._raw()'s pow() is
+## the fallback taken only with no masses table open (it errors if a fan-out
+## reaches it); travel_days() and _haversine_km() are not on the workers' path.
+const WORKER_FILES := {
+	"res://src/sim/trade.gd": ["masses_open", "_raw"],
+	"res://src/sim/foreign_policy.gd": ["stake_factor"],
+	"res://src/sim/diplomacy.gd": ["travel_days", "_haversine_km"],
+	"res://src/sim/diplomacy_agenda.gd": [],
+	"res://src/sim/diplomacy_verbs.gd": [],
+	"res://src/sim/coercion.gd": [],
+	"res://src/sim/defence.gd": [],
+	"res://src/core/relations.gd": [],
+	"res://src/core/org.gd": [],
+	"res://src/core/parallel.gd": [],
+}
+
+
+func _check_no_libm_on_workers() -> void:
+	var libm := RegEx.create_from_string("\\b(pow|exp|log|sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh)\\s*\\(|\\*\\*")
+	for path in WORKER_FILES:
+		var allowed: Array = WORKER_FILES[path]
+		var source := FileAccess.get_file_as_string(path)
+		if source.is_empty():
+			_fail("could not read %s" % path)
+			continue
+		var current := ""
+		for line in source.split("\n"):
+			var cut := line.find("#")
+			var code := line if cut < 0 else line.substr(0, cut)
+			if code.begins_with("static func ") or code.begins_with("func "):
+				current = code.get_slice("func ", 1).get_slice("(", 0).strip_edges()
+			if libm.search(code) != null and not allowed.has(current):
+				_fail("%s: %s() calls libm on the workers' path (parallel.gd rule 4): %s" % [path, current, code.strip_edges()])
 
 
 func _fail(message: String) -> void:

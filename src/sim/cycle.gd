@@ -145,18 +145,23 @@ static func unit_pair(a: String, b: String, index: int) -> float:
 	var by_a: Dictionary = _pair_memo.get(a, {})
 	var hit = by_a.get(b)
 	if hit == null:
-		hit = _key_seed(a + "|" + b)
+		hit = _fnv(a + "|" + b)
 		# Read-only during a Parallel fan-out (nothing draws there today).
 		if not Parallel.active:
+			if _pair_count >= SEED_MEMO_MAX:
+				_pair_memo.clear()
+				_pair_count = 0
+				by_a = {}
 			if by_a.is_empty():
-				if _pair_memo.size() >= SEED_MEMO_MAX:
-					_pair_memo.clear()
 				_pair_memo[a] = by_a
 			by_a[b] = hit
+			_pair_count += 1
 	return _unit_from_seed(hit, index)
 
 
+## Bounded by its ENTRY count, both levels together, for _seed_memo's reason.
 static var _pair_memo: Dictionary = {}
+static var _pair_count := 0
 
 
 static func _unit_from_seed(key_seed: int, index: int) -> float:
@@ -172,10 +177,7 @@ static func _key_seed(key: String) -> int:
 	var hit = _seed_memo.get(key)
 	if hit != null:
 		return hit
-	var h: int = 2166136261
-	for i in key.length():
-		h = (h ^ key.unicode_at(i)) & _U32
-		h = (h * 16777619) & _U32
+	var h: int = _fnv(key)
 	# Bounded so a key that carries a month cannot grow it without limit; the
 	# keys the month draws are content-shaped (nation, event, firm), a few
 	# thousand, so the bound is never reached in play.
@@ -184,6 +186,16 @@ static func _key_seed(key: String) -> int:
 	if _seed_memo.size() >= SEED_MEMO_MAX:
 		_seed_memo.clear()
 	_seed_memo[key] = h
+	return h
+
+
+## FNV-1a over the key's characters, the seed every draw starts from. Unmemoised,
+## so unit_pair() can seed a pair without also filing it under its joined key.
+static func _fnv(key: String) -> int:
+	var h: int = 2166136261
+	for i in key.length():
+		h = (h ^ key.unicode_at(i)) & _U32
+		h = (h * 16777619) & _U32
 	return h
 
 
