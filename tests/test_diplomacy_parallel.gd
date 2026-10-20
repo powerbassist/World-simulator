@@ -229,40 +229,64 @@ func _check_lockstep(loader) -> void:
 
 
 ## The files whose code the workers run (diplomacy.gd for available() and its
-## reads), and the functions in them allowed a libm call: Trade.masses_open() and
-## ForeignPolicy.stake_factor() run on the calling thread; Trade._raw()'s pow() is
-## the fallback taken only with no masses table open (it errors if a fan-out
-## reaches it); travel_days() and _haversine_km() are not on the workers' path.
+## reads), each with what it may say: {function: [sanctioned expression, ...]},
+## "*" for a function that runs on the calling thread only. Trade.masses_open()
+## and ForeignPolicy.stake_factor() run there; Trade._raw()'s one pow() is the
+## fallback taken with no masses table open (it errors if a fan-out reaches it),
+## and is the ONLY libm call _raw() may hold; travel_days() and _haversine_km()
+## are not on the workers' path. WORKER_FUNCTIONS names a file read only inside
+## the functions listed -- nation_state.gd is reached through one precondition.
 const WORKER_FILES := {
-	"res://src/sim/trade.gd": ["masses_open", "_raw"],
-	"res://src/sim/foreign_policy.gd": ["stake_factor"],
-	"res://src/sim/diplomacy.gd": ["travel_days", "_haversine_km"],
-	"res://src/sim/diplomacy_agenda.gd": [],
-	"res://src/sim/diplomacy_verbs.gd": [],
-	"res://src/sim/coercion.gd": [],
-	"res://src/sim/defence.gd": [],
-	"res://src/core/relations.gd": [],
-	"res://src/core/org.gd": [],
-	"res://src/core/parallel.gd": [],
+	"res://src/sim/trade.gd": {"masses_open": ["*"], "_raw": ["pow(maxf(0.0, b.gdp_eur_bn), K.GRAVITY_EXPONENT)"]},
+	"res://src/sim/foreign_policy.gd": {"stake_factor": ["*"]},
+	"res://src/sim/diplomacy.gd": {"travel_days": ["*"], "_haversine_km": ["*"]},
+	"res://src/sim/diplomacy_agenda.gd": {},
+	"res://src/sim/diplomacy_verbs.gd": {},
+	"res://src/sim/coercion.gd": {},
+	"res://src/sim/defence.gd": {},
+	"res://src/core/relations.gd": {},
+	"res://src/core/org.gd": {},
+	"res://src/core/parallel.gd": {},
+}
+const WORKER_FUNCTIONS := {
+	"res://src/core/nation_state.gd": ["debt_to_gdp_pct"],
 }
 
 
 func _check_no_libm_on_workers() -> void:
 	var libm := RegEx.create_from_string("\\b(pow|exp|log|sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh)\\s*\\(|\\*\\*")
-	for path in WORKER_FILES:
-		var allowed: Array = WORKER_FILES[path]
+	var strings := RegEx.create_from_string("\"(?:[^\"\\\\]|\\\\.)*\"")
+	var paths: Array = WORKER_FILES.keys() + WORKER_FUNCTIONS.keys()
+	for path in paths:
+		var allowed: Dictionary = WORKER_FILES.get(path, {})
+		var only: Array = WORKER_FUNCTIONS.get(path, [])
 		var source := FileAccess.get_file_as_string(path)
 		if source.is_empty():
 			_fail("could not read %s" % path)
 			continue
 		var current := ""
+		var seen_only := 0
 		for line in source.split("\n"):
-			var cut := line.find("#")
-			var code := line if cut < 0 else line.substr(0, cut)
+			# String literals out first (an error message may name pow()), then
+			# the comment.
+			var code := strings.sub(line, "\"\"", true)
+			var cut := code.find("#")
+			code = code if cut < 0 else code.substr(0, cut)
 			if code.begins_with("static func ") or code.begins_with("func "):
 				current = code.get_slice("func ", 1).get_slice("(", 0).strip_edges()
-			if libm.search(code) != null and not allowed.has(current):
-				_fail("%s: %s() calls libm on the workers' path (parallel.gd rule 4): %s" % [path, current, code.strip_edges()])
+				if only.has(current):
+					seen_only += 1
+			if not only.is_empty() and not only.has(current):
+				continue
+			var sanctioned: Array = allowed.get(current, [])
+			if sanctioned.has("*"):
+				continue
+			for expression in sanctioned:
+				code = code.replace(String(expression), "")
+			if libm.search(code) != null:
+				_fail("%s: %s() calls libm on the workers' path (parallel.gd rule 4): %s" % [path, current, line.strip_edges()])
+		if seen_only != only.size():
+			_fail("%s: found %d of the functions %s -- the scan list is stale" % [path, seen_only, only])
 
 
 func _fail(message: String) -> void:
