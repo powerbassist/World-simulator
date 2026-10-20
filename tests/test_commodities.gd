@@ -349,7 +349,8 @@ func _check_order_in(path: String, label: String) -> void:
 		_fail("could not read %s" % path)
 		return
 	var code := _code_only(src)
-	var economy_at := code.find("Economy.tick_month(")
+	# V5.1-0a: the month calls Economy through its units (world_month.gd's cursor).
+	var economy_at := code.find("Economy.month_units(")
 	var commodities_at := code.find("Commodities.tick_month(")
 	var opinion_at := code.find("Opinion.tick_month(")
 	if economy_at == -1 or commodities_at == -1 or opinion_at == -1:

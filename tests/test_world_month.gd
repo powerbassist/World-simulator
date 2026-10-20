@@ -19,6 +19,8 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
+const Budget = preload("res://src/sim/budget.gd")
+const Trade = preload("res://src/sim/trade.gd")
 
 ## The harnesses that run the real month. Each must call WorldMonth.tick_month in
 ## code (a comment naming it is not a call).
@@ -67,6 +69,7 @@ func _init() -> void:
 
 	_check_the_hook_records_steps_in_order()
 	_check_a_hook_changes_nothing()
+	_check_the_cursor_is_the_month()
 	_check_every_harness_runs_the_month()
 	_check_no_hand_copy_is_left()
 	_finish()
@@ -116,6 +119,47 @@ func _check_a_hook_changes_nothing() -> void:
 		)
 	if JSON.stringify(plain.to_dict()) != JSON.stringify(hooked.to_dict()):
 		_fail("a month ticked with a no-op hook saved differently from one ticked without")
+
+
+## V5.1-0a. The cursor is the month a player watches: src/ui/month_runner.gd
+## runs it a unit at a time across frames, and the UI draws between two units.
+## So the month is held to three things here. The hook sees the same calls in
+## the same order as a month run whole. Economy and Diplomacy arrive in slices
+## (more units than steps -- the reason the cursor exists), each unit under its
+## own key. And what the UI reads between two units -- the books, a trade vector
+## -- writes nothing the month then reads: the sliced month with a reader at
+## every gap saves byte for byte as the month run whole. That the cursor is the
+## OLD month is the balance table's to prove (balance_parallel, base vs tip).
+func _check_the_cursor_is_the_month() -> void:
+	var whole = _new_state()
+	var sliced = _new_state()
+	for m in range(2):
+		_advance(whole)
+		_advance(sliced)
+		var seen_whole: Array = []
+		var seen_sliced: Array = []
+		WorldMonth.tick_month(whole, _loader, func(step: String, after: bool, _report: Dictionary) -> void:
+			seen_whole.append([step, after]))
+		var month = WorldMonth.begin(sliced, _loader, func(step: String, after: bool, _report: Dictionary) -> void:
+			seen_sliced.append([step, after]))
+		var keys := {}
+		var units := 0
+		while not WorldMonth.done(month):
+			keys[WorldMonth.unit_key(month)] = true
+			WorldMonth.run_unit(month)
+			units += 1
+			Budget.snapshot(sliced)
+			Trade.weights(sliced, sliced.player_nation_id)
+		if seen_sliced != seen_whole:
+			_fail("the sliced month's hook saw %d calls in a different order from the whole month's" % seen_sliced.size())
+		# Economy alone brings a pre-pass and a unit per nation.
+		if units <= WorldMonth.STEPS.size() + sliced.nations.size():
+			_fail("the month ran in %d units for %d steps -- Economy and Diplomacy did not slice" % [
+				units, WorldMonth.STEPS.size()])
+		if keys.size() != units:
+			_fail("%d units shared %d keys -- a runner cannot time them apart" % [units, keys.size()])
+	if JSON.stringify(whole.to_dict()) != JSON.stringify(sliced.to_dict()):
+		_fail("two sliced months, read between every unit, saved differently from two whole ones")
 
 
 func _check_every_harness_runs_the_month() -> void:

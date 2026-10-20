@@ -443,7 +443,8 @@ func _check_both_harnesses_tick() -> void:
 
 		# Check that Migration.tick_month runs AFTER both Economy.tick_month and Companies.tick_month
 		var migration_idx: int = text.find("Migration.tick_month")
-		var economy_idx: int = text.find("Economy.tick_month")
+		# V5.1-0a: the month calls Economy through its units (world_month.gd's cursor).
+		var economy_idx: int = text.find("Economy.month_units")
 		var companies_idx: int = text.find("Companies.tick_month")
 
 		if migration_idx != -1 and economy_idx != -1 and migration_idx < economy_idx:

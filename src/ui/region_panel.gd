@@ -103,7 +103,7 @@ func _process(_delta: float) -> void:
 		_pin_frames -= 1
 		if _pin_frames == 0:
 			_scroll.scroll_vertical = int(_body.size.y)
-	if not _dirty or not visible or _state == null:
+	if not _dirty or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
 	_refresh()

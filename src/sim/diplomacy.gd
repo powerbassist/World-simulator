@@ -19,7 +19,7 @@ extends RefCounted
 ## > partner can refuse a treaty outright.
 ## >
 ## > What was still missing after V1.3e is that all of it was REACTIVE -- the nine
-## > answered and never spoke first. _tick_agenda() below is V1.3f, and it is the
+## > answered and never spoke first. _actor_turn() below is V1.3f, and it is the
 ## > last piece: a nation choosing a target and a verb with nobody having acted on
 ## > it. There is no declared stopgap left in this file.
 
@@ -39,6 +39,7 @@ const CK = preload("res://src/sim/coercion_constants.gd")
 const FP = preload("res://src/sim/foreign_policy.gd")
 const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
 const Agenda = preload("res://src/sim/diplomacy_agenda.gd")
+const Travel = preload("res://src/sim/diplomacy_travel.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const FPK = preload("res://src/sim/foreign_policy_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
@@ -138,8 +139,28 @@ static func score(state, a: String, b: String) -> float:
 ## are the entire content of the derivation. The same not-defaulted reasoning
 ## Legislature.apply() gives for its own loader argument.
 static func tick_month(state, loader) -> void:
+	for unit in month_units(state, loader):
+		(unit as Callable).call()
+
+
+## V5.1-0a. The tick in units, for src/sim/world_month.gd's cursor: the settling
+## pass, one unit per nation in the agenda's sorted order, and the memo's close.
+## tick_month() runs the same units in the same order. The memo stays open ACROSS
+## them (V5.0c's reason, below) and a unit run between two frames cannot change
+## membership either; anything else asking Org meanwhile misses its identity check.
+static func month_units(state, loader) -> Array:
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	var units: Array = [func() -> void: _settle(state, loader)]
+	for actor_id in ids:
+		units.append(func() -> void: _actor_turn(state, loader, actor_id, ids))
+	units.append(func() -> void: Org.memo_close())
+	return units
+
+
+static func _settle(state, loader) -> void:
 	# V5.0c: membership cannot change inside this tick, so Org.shared_bonus() is
-	# memoised for it (see memo_open()); closed on the way out, the one exit.
+	# memoised for it (see memo_open()); closed by the tick's last unit.
 	Org.memo_open(state)
 	for pair_key in state.relations.keys():
 		# Explicitly String()-wrapped: Dictionary.keys() is untyped, and `:=`
@@ -185,9 +206,8 @@ static func tick_month(state, loader) -> void:
 	# the agenda first would have this same loop decrement it immediately -- an AI
 	# verb locked for eleven months where the player's identical verb is locked for
 	# twelve. A silent one-month asymmetry between the player and the nine, in a
-	# session whose whole subject is that they use the same verbs.
-	_tick_agenda(state, loader)
-	Org.memo_close()
+	# session whose whole subject is that they use the same verbs -- which is why
+	# month_units() puts every actor's turn after this one.
 
 
 ## Answer every measure that has been in force long enough and has not yet been
@@ -285,60 +305,56 @@ static func _tick_retaliation(state) -> void:
 ## third_party_effects() and Relations.all_pairs() already hold.
 ##
 ## No rand(), like everything else in this file.
-static func _tick_agenda(state, loader) -> void:
-	var ids: Array = state.nations.keys()
-	ids.sort()
+static func _actor_turn(state, loader, actor_id: String, ids: Array) -> void:
+	var ns = state.nations[actor_id]
 
-	for actor_id in ids:
-		var ns = state.nations[actor_id]
+	# The one place in the project this flag is read the other way round:
+	# has_budget means a human decides here, so the agenda skips exactly the
+	# nation the player is governing.
+	if ns.has_budget:
+		return
 
-		# The one place in the project this flag is read the other way round:
-		# has_budget means a human decides here, so the agenda skips exactly the
-		# nation the player is governing.
-		if ns.has_budget:
-			continue
+	ns.diplo_months_to_act -= 1
+	if ns.diplo_months_to_act > 0:
+		return
 
-		ns.diplo_months_to_act -= 1
-		if ns.diplo_months_to_act > 0:
-			continue
+	# Reset WHETHER OR NOT it acts. A nation that declines and retried every
+	# month would make AGENDA_ACT_MIN a delay rather than a gate, and the model
+	# would lose the ability to say nothing at all -- which is the job
+	# RETALIATION_MIN_SEVERITY does for an answer.
+	ns.diplo_months_to_act = FPK.AGENDA_INTERVAL_MONTHS
 
-		# Reset WHETHER OR NOT it acts. A nation that declines and retried every
-		# month would make AGENDA_ACT_MIN a delay rather than a gate, and the model
-		# would lose the ability to say nothing at all -- which is the job
-		# RETALIATION_MIN_SEVERITY does for an answer.
-		ns.diplo_months_to_act = FPK.AGENDA_INTERVAL_MONTHS
-
-		# One actor's turn, scored and executed against one state: its trade
-		# vectors are memoised for it (Trade.turn_open()) and execute() closes the
-		# memo before its first write; closed again here whichever way it left.
-		Trade.turn_open(state)
-		var choice := _best_act(state, loader, actor_id, ids)
-		if choice.is_empty():
-			Trade.turn_close()
-			continue
-
-		var result := execute(
-			state, loader.diplomatic_actions, choice["action"], actor_id, choice["target_id"]
-		)
+	# One actor's turn, scored and executed against one state: its trade
+	# vectors are memoised for it (Trade.turn_open()) and execute() closes the
+	# memo before its first write; closed again here whichever way it left.
+	Trade.turn_open(state)
+	var choice := _best_act(state, loader, actor_id, ids)
+	if choice.is_empty():
 		Trade.turn_close()
-		if not bool(result.get("applied", false)):
-			continue
+		return
 
-		# A DISPLAY RECORD, not a grievance ledger. Nothing in src/sim/ reads this
-		# back and tests/test_foreign_policy.gd asserts so: the relations number is
-		# the memory, which is the property that let V1.3e ship an interest model
-		# with no serialised state at all.
-		state.foreign_acts.push_front({
-			"year": state.year,
-			"month": state.month,
-			"actor_id": actor_id,
-			"target_id": choice["target_id"],
-			"action_id": choice["action"].id,
-			"action_name": choice["action"].action_name,
-			"reason": choice["reason"],
-		})
-		while state.foreign_acts.size() > FPK.AGENDA_ACTS_KEPT:
-			state.foreign_acts.remove_at(state.foreign_acts.size() - 1)
+	var result := execute(
+		state, loader.diplomatic_actions, choice["action"], actor_id, choice["target_id"]
+	)
+	Trade.turn_close()
+	if not bool(result.get("applied", false)):
+		return
+
+	# A DISPLAY RECORD, not a grievance ledger. Nothing in src/sim/ reads this
+	# back and tests/test_foreign_policy.gd asserts so: the relations number is
+	# the memory, which is the property that let V1.3e ship an interest model
+	# with no serialised state at all.
+	state.foreign_acts.push_front({
+		"year": state.year,
+		"month": state.month,
+		"actor_id": actor_id,
+		"target_id": choice["target_id"],
+		"action_id": choice["action"].id,
+		"action_name": choice["action"].action_name,
+		"reason": choice["reason"],
+	})
+	while state.foreign_acts.size() > FPK.AGENDA_ACTS_KEPT:
+		state.foreign_acts.remove_at(state.foreign_acts.size() - 1)
 
 
 ## The best (action, target) `actor_id` could take right now, or {} if nothing
@@ -388,11 +404,11 @@ static func cooldown_key(action_id: String, target_id: String) -> String:
 ## has ever hit (all ten capitals are far above CITY_MIN_POP), so it errors loudly
 ## and prices the journey at the CEILING — a gap must never make travel free.
 static func travel_days(loader, from_id: String, to_id: String) -> int:
-	var from_lonlat: Variant = _capital_lonlat(loader, from_id)
-	var to_lonlat: Variant = _capital_lonlat(loader, to_id)
+	var from_lonlat: Variant = Travel.capital_lonlat(loader, from_id)
+	var to_lonlat: Variant = Travel.capital_lonlat(loader, to_id)
 	if from_lonlat == null or to_lonlat == null:
 		return DK.TRAVEL_DAYS_MAX
-	var km := _haversine_km(from_lonlat, to_lonlat)
+	var km := Travel.haversine_km(from_lonlat, to_lonlat)
 	var days := int(ceil(km / DK.TRAVEL_KM_PER_DAY))
 	return clampi(days, DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX)
 
@@ -406,40 +422,6 @@ static func met(state, a: String, b: String) -> bool:
 	if stamp == null:
 		return false
 	return (state.year * 12 + state.month) - int(stamp) <= DK.MEETING_WINDOW_MONTHS
-
-
-## A nation's capital as a lon/lat, or null. The register keys cities by region,
-## so this scans the nation's own cities for the one named nation.capital — a
-## per-nation scan over a handful of regions, called once at booking time.
-## Variant rather than Vector2 because null is the not-found answer.
-static func _capital_lonlat(loader, nation_id: String) -> Variant:
-	var nation = loader.nations.get(nation_id)
-	if nation == null:
-		push_error("diplomacy: no nation '%s' to read a capital from" % nation_id)
-		return null
-	var wanted := String(nation.capital)
-	for region in loader.regions.get(nation_id, []):
-		for city in region.cities:
-			if String(city.city_name) == wanted:
-				return city.lonlat
-	push_error("diplomacy: capital '%s' of %s is not in the city register" % [wanted, nation_id])
-	return null
-
-
-## Great-circle distance in kilometres. Half the haversine, on a mean-earth
-## radius; the precision is beside the point when the answer is rounded up to
-## whole days against a 280 km rate.
-static func _haversine_km(a: Vector2, b: Vector2) -> float:
-	const EARTH_RADIUS_KM := 6371.0
-	var lon1 := deg_to_rad(a.x)
-	var lat1 := deg_to_rad(a.y)
-	var lon2 := deg_to_rad(b.x)
-	var lat2 := deg_to_rad(b.y)
-	var dlat := lat2 - lat1
-	var dlon := lon2 - lon1
-	var h := sin(dlat * 0.5) * sin(dlat * 0.5) \
-		+ cos(lat1) * cos(lat2) * sin(dlon * 0.5) * sin(dlon * 0.5)
-	return 2.0 * EARTH_RADIUS_KM * asin(minf(1.0, sqrt(h)))
 
 
 ## Every action in `all_actions` that `actor_id` may currently take against

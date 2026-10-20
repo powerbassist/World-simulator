@@ -19,6 +19,24 @@ const Regions = preload("res://src/sim/regions.gd")
 
 
 static func tick_month(state) -> void:
+	for unit in month_units(state):
+		(unit as Callable).call()
+
+
+## V5.1-0a. The tick in units, for src/sim/world_month.gd's cursor: the pre-pass
+## (every impulse resolved off last month's figures), then one unit per nation.
+## tick_month() runs the same units in the same order, so a month spread over
+## frames is this tick run in one; the pre-pass's reason for running ahead of
+## every nation is unchanged and stated in it.
+static func month_units(state) -> Array:
+	var pre := {}
+	var units: Array = [func() -> void: _pre_pass(state, pre)]
+	for ns in state.nations.values():
+		units.append(func() -> void: _tick_one(state, ns, pre))
+	return units
+
+
+static func _pre_pass(state, pre: Dictionary) -> void:
 	# Snapshotted once, from last month's figures, so the result does not depend on
 	# the order nations are ticked in. Same reason the single GDP-weighted
 	# aggregate this replaced was computed once, and more load-bearing now: the
@@ -34,7 +52,7 @@ static func tick_month(state) -> void:
 			table[ns.id] = Trade.weights(state, ns.id)
 
 	# The impulse is resolved for every nation BEFORE any nation ticks, not inside
-	# the loop below. Snapshotting the weight table alone is not enough: the
+	# the per-nation unit. Snapshotting the weight table alone is not enough: the
 	# impulse also reads each partner's growth_annual_pct, and _tick_nation()
 	# overwrites that. Computed in the loop, the player would read this month's
 	# growth for every partner sorted before it and last month's for every partner
@@ -75,26 +93,32 @@ static func tick_month(state) -> void:
 		# wiring change.
 		if ns.has_budget:
 			impulses[ns.id] = Trade.external_impulse(state, ns, table.get(ns.id, {}))
+	pre["impulses"] = impulses
+	pre["damage"] = damage
 
-	for ns in state.nations.values():
-		if impulses.has(ns.id):
-			ns.external_impulse_pct = float(impulses[ns.id])
-		ns.coercion_impulse_pct = float(damage.get(ns.id, 0.0))
-		# V1.6a. Written HERE, from a pure read, and src/sim/cycle.gd has no
-		# tick_month() to call from anywhere else. That is the session's structural
-		# call rather than a convenience: docs/decision-log.md's V1.5d entry records
-		# that neither balance harness ever called Media.tick_month(), so both ran the
-		# pre-session model and their agreement was about nothing. Every harness in
-		# this project already calls Economy.tick_month(), so a system reached from
-		# inside it cannot be forgotten by one and remembered by another.
-		#
-		# Inside the tick loop rather than in a pre-pass above, unlike the trade
-		# impulse and the coercion damage: those two read every OTHER nation's
-		# figures, so they must be snapshotted before any nation moves. This reads
-		# nothing but the clock and the nation's own authored volatility, so tick
-		# order cannot reach it.
-		ns.cycle_impulse_pct = Cycle.impulse_pct(ns, state.year, state.month)
-		_tick_nation(state, ns)
+
+static func _tick_one(state, ns, pre: Dictionary) -> void:
+	var impulses: Dictionary = pre["impulses"]
+	var damage: Dictionary = pre["damage"]
+	if impulses.has(ns.id):
+		ns.external_impulse_pct = float(impulses[ns.id])
+	ns.coercion_impulse_pct = float(damage.get(ns.id, 0.0))
+	# V1.6a. Written HERE, from a pure read, and src/sim/cycle.gd has no
+	# tick_month() to call from anywhere else. That is the session's structural
+	# call rather than a convenience: docs/decision-log.md's V1.5d entry records
+	# that neither balance harness ever called Media.tick_month(), so both ran the
+	# pre-session model and their agreement was about nothing. Every harness in
+	# this project already calls Economy.tick_month() (or its month_units()), so a
+	# system reached from inside it cannot be forgotten by one and remembered by
+	# another.
+	#
+	# Inside the tick loop rather than in a pre-pass above, unlike the trade
+	# impulse and the coercion damage: those two read every OTHER nation's
+	# figures, so they must be snapshotted before any nation moves. This reads
+	# nothing but the clock and the nation's own authored volatility, so tick
+	# order cannot reach it.
+	ns.cycle_impulse_pct = Cycle.impulse_pct(ns, state.year, state.month)
+	_tick_nation(state, ns)
 
 
 static func _tick_nation(state, ns) -> void:

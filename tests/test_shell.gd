@@ -68,7 +68,7 @@ func _run() -> void:
 	_check_headline_figures_move_with_nothing_open()
 	_check_save_dialog_traps_hotkeys()
 	_check_term_card_refresh()
-	_check_a_closed_budget_window_costs_nothing()
+	_check_a_closed_window_costs_nothing()
 
 
 ## A modal's holder is a full-rect CenterContainer, and a Container defaults to
@@ -566,23 +566,34 @@ func _check_headline_figures_move_with_nothing_open() -> void:
 		_fail("the clock cluster's date did not change after three simulated months")
 
 
-## V5.0 fix pass: the play gate's 11-second month end. The budget panel's
-## refresh runs two 24-month projections of the real model (~12 s at 41
-## nations, measured), and the month's sweep marks every panel dirty -- and a
-## panel's own `visible` stays true inside a CLOSED window, so the projections
-## ran every month with the window shut. Closed, the panel stays dirty and runs
-## nothing; opening the window redraws it.
-func _check_a_closed_budget_window_costs_nothing() -> void:
+## V5.0 fix pass: the play gate's 11-second month end -- and V5.1-0a: every
+## panel, not the budget's alone. The month's sweep marks every panel dirty, and
+## a panel's own `visible` stays true inside a CLOSED window, so each one
+## refreshed every month with its window shut: the budget's two 24-month
+## projections were ~12 s of it, the other twenty ~0.4 s (law 174 ms,
+## commodities ~60, city ~57...) -- and the same ~0.4 s on every command that
+## sweeps, which is what the map placement's click paid (P4). Closed, a panel
+## stays dirty and runs nothing; opening its window redraws it. Asked of every
+## registered window, so a panel added later is held to it without a list.
+func _check_a_closed_window_costs_nothing() -> void:
+	var checked := 0
+	for id in _main._windows.panel_ids():
+		var panel = _main._windows.frame(id)._content
+		if not panel.has_method("_process") or not ("_dirty" in panel):
+			continue
+		_main._windows.close_all()
+		_main._windows.mark_all_dirty()
+		panel._process(0.0)
+		if not panel._dirty:
+			_fail("the '%s' panel refreshed with its window closed" % id)
+		_main._windows.open(id)
+		panel._process(0.0)
+		if panel._dirty:
+			_fail("opening the '%s' window did not redraw its panel" % id)
+		checked += 1
 	_main._windows.close_all()
-	_main._windows.mark_all_dirty()
-	_main._budget_panel._process(0.0)
-	if not _main._budget_panel._dirty:
-		_fail("the budget panel ran its projections with its window closed")
-	_main._windows.open("budget")
-	_main._budget_panel._process(0.0)
-	if _main._budget_panel._dirty:
-		_fail("opening the budget window did not redraw the panel")
-	_main._windows.close_all()
+	if checked < 20:
+		_fail("only %d registered panels were checked for the closed-window gate" % checked)
 
 
 func _collect_text(node) -> String:

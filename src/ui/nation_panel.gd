@@ -121,7 +121,7 @@ func show_nation(nation_id: String) -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or not visible or _state == null:
+	if not _dirty or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
 	# V1.6 audit, V10. `_nation_id == ""` used to be part of this early-out, so

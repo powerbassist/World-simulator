@@ -98,7 +98,7 @@ func show_city(city_id: String) -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or not visible or _state == null:
+	if not _dirty or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
 	_refresh()
