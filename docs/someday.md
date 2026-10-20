@@ -359,6 +359,31 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from V5.0d (2026-10-20)
+
+The pre-review hotspot pass (the eight oldest, most-touched `src/` files) fixed what
+it could without moving a number; these it recorded instead.
+
+- **`Budget.project()` never ticks Discipline.** It runs `Statute.tick_month`, so the
+  projection holds parliament's divisions, but `ns.party_discipline` only falls
+  (rebellions) and never drifts toward `Discipline.target()` -- which drops by up to
+  0.20 in the twelve months before a legislative election. A close backbench bill with
+  a fiscal effect can carry in the forecast and fail in play, or the reverse, and the
+  panel's month-24 deficit and debt diverge. Not a probe number (the probe never
+  projects); adding the tick adds cost to the projection V5.1d is cutting.
+  **Owner:** V5.1d (the budget forecast's cost, D14). **Fix shape:**
+  `Discipline.tick_month(sim, loader)` before `Statute.tick_month` in `project()` and
+  in `tests/test_budget.gd`'s mirror, priced against D14's budget.
+- **An orphan firm entry keeps its subsidy bill.** `Companies.subsidy_bill_pct_gdp()`
+  (and the two counts) walk the register, not the loader's majors, so an entry whose
+  firm a content edit removed or renamed without a `SAVE_VERSION` bump bills forever and
+  nothing can withdraw it (`available()` refuses the id). It needs a content edit to a
+  playable nation's majors -- `2bb07d3f` removed 222 ids at one version, none of them
+  subsidised. Walking `majors_of()` instead is byte-identical in a fresh run (same
+  order) and also removes a one-ulp difference between a fresh and a loaded register
+  (the save sorts keys). **Owner:** V5.4e (firms sited at depth). **Trigger:** any edit
+  that removes or renames a playable nation's major.
+
 ## Carried from earlier blocks (pointers, not duplicates)
 
 - **The 25 generated nations' majors are generator-owned** — hand-curating

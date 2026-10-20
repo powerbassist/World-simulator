@@ -117,12 +117,14 @@ stops having the org's tariff levied on it (there is no repeal path that would
 ever lift it otherwise), the leaver stops levying it. A transfer org's net
 positions re-derive over the LIVE roster -- over the authored roster the
 re-derive writes back identical values, a no-op wearing a derivative's clothes.
-And because `last_referendum_result` is deliberately not serialised
-(`last_project_result`'s case), a game saved in the one-month window after a
-vote resolved but before the machine consumed it reloads with the fight ENDED,
-membership unchanged -- the honest resolution, no outcome invented, and the
-player not stranded. A negotiation-phase fight reloads intact: its countdown
-is serialised state.
+`last_referendum_result` is serialised (since V5.0d; absent reads "no vote
+yet", so no bump), so a game saved in the one-month window after a vote
+resolved but before the machine consumed it reloads with the fight intact and
+the answer still waiting -- V3.2 left the record unsaved and ended the fight
+there, which threw away a referendum the country had WON. A fight with no
+recoverable answer (an older save) still reloads ENDED, membership unchanged:
+no outcome invented, and the player not stranded. A negotiation-phase fight
+reloads intact: its countdown is serialised state.
 
 **The accession and withdrawal positions are MEASURED, not felt.** The first
 draft's withdrawal position (econ +0.45, social +0.55) measured yes_share
