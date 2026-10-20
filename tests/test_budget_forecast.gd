@@ -65,6 +65,7 @@ func _process(_delta: float) -> bool:
 	_check_a_commit_marks_the_forecast_due(forecast)
 	_check_proposed_lands_while_months_keep_closing(forecast)
 	_check_a_new_game_drops_the_job(forecast)
+	_check_a_dropped_projection_is_freed()
 	_finish()
 	return true
 
@@ -177,7 +178,7 @@ func _check_proposed_lands_while_months_keep_closing(forecast) -> void:
 		forecast.state_changed()
 	forecast.settled.connect(month_end)
 	forecast.state_changed()
-	while settles[0] < 3 and forecast.proposed_path().is_empty():
+	while settles[0] < 2 and forecast.proposed_path().is_empty():
 		forecast._advance(Forecast.FRAME_BUDGET_USEC)
 	forecast.settled.disconnect(month_end)
 	if forecast.proposed_path().is_empty():
@@ -189,6 +190,20 @@ func _check_a_new_game_drops_the_job(forecast) -> void:
 	_panel.setup(other, _loader)
 	if forecast._job != null or not forecast.now_path().is_empty():
 		_fail("a new game kept the old game's projection")
+
+
+## Code-review pass: a projection's units must not hold the job they belong to.
+## The forecast drops a job whenever the levers move past it or a game loads,
+## and a job that a unit keeps alive keeps its whole copy of the game with it --
+## one more state copy leaked per abandoned projection.
+func _check_a_dropped_projection_is_freed() -> void:
+	var job = Budget.projection(_state, {}, BudgetPanel.PROJECTION_MONTHS, _loader)
+	for _i in range(6):
+		Budget.projection_step(job)
+	var ref: WeakRef = weakref(job)
+	job = null
+	if ref.get_ref() != null:
+		_fail("a projection dropped mid-month was never freed -- its units hold it")
 
 
 func _json(path: Array) -> String:

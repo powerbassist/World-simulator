@@ -386,6 +386,22 @@ these were measured and left.
   `budget_forecast.gd`; a cheaper forecast model (D14's other option) would close it.
 - **One unexplained 63 ms frame** in the second tip run of `tools/month_frame_probe.gd`,
   mid-month, 102 frames before the first boundary, not in the first run. Not the month.
+- **Below the review bar (the code-review pass), recorded rather than fixed:**
+  - a hand-driven `Clock.advance_one_day()` while a sliced month is held runs a second
+    month over the half-run cursor (`month_runner.run()` has no guard). Only a tool or a
+    test can do it: in play every input waits for the month.
+  - an embedded popup (a dropdown left open across the boundary) may take its input
+    ahead of the runner's `_input` (subwindow forwarding). Unverified at runtime; the
+    open popups today choose UI selections, not commands.
+  - mouse events replayed after a window resize during the ~0.4 s hold land at the old
+    canvas coordinates.
+  - Revert re-projects "now" on an unchanged state (~5 s of background work, rows
+    marked "..."), the price of the panel's own commit path calling `mark_dirty()`.
+  - a projection dropped mid-Diplomacy leaves `Org`'s static memo on the dropped copy
+    until the next Diplomacy settle (one copy, bounded; values unaffected).
+  - the visible-only gate is twenty copies of one line; the window manager could stop
+    a closed frame's processing once (V5.1c, the shell), and the clock cluster polls
+    `held` where a signal would do.
 
 ## Carried from the V5.0 fix pass (2026-10-20)
 

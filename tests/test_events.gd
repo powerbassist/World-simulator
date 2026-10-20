@@ -479,7 +479,9 @@ func _first_call_line(lines: PackedStringArray, module: String) -> int:
 		var code := lines[i].strip_edges()
 		if code.begins_with("#"):
 			continue
-		if code.begins_with(needle):
+		# V5.1-0a: Budget.project()'s month is a cursor and hands each call over as
+		# a unit -- `units.append(func() -> void: Events.tick_month(sim, loader))`.
+		if code.begins_with(needle) or code.begins_with("units.append(func() -> void: " + needle):
 			return i
 	return -1
 

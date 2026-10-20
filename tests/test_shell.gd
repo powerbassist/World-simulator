@@ -19,6 +19,7 @@ extends SceneTree
 ## _ready() -- see docs/engine-decision.md.
 
 const Pending = preload("res://src/ui/pending.gd")
+const Budget = preload("res://src/sim/budget.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -70,6 +71,7 @@ func _run() -> void:
 	_check_term_card_refresh()
 	_check_a_closed_window_costs_nothing()
 	_check_a_tax_commit_reaches_the_budget_forecast()
+	_check_any_command_reaches_the_budget_forecast()
 
 
 ## A modal's holder is a full-rect CenterContainer, and a Container defaults to
@@ -609,6 +611,22 @@ func _check_a_tax_commit_reaches_the_budget_forecast() -> void:
 	_main._tax_panel._on_commit()
 	if not forecast.busy():
 		_fail("a Tax Code commit left the budget's forecast settled on the old rates")
+	_main._windows.close_all()
+
+
+## V5.1-0a review (code-review pass): every player command, not only the two
+## fiscal commits, moves what the budget window shows -- a subsidy, a law, a
+## diplomatic act all reach its books. A pinned budget window kept its "now"
+## books and forecast until a sweep, so the next lever move was credited with the
+## command's effect. Asked of one command that sweeps nothing of its own.
+func _check_any_command_reaches_the_budget_forecast() -> void:
+	var forecast = _main._budget_panel._forecast
+	_main._windows.open("budget")
+	_main._budget_panel._process(0.0)
+	forecast.drain()
+	_main._companies_panel.acted.emit(Budget.snapshot(_main._state), "A subsidy")
+	if not forecast.busy():
+		_fail("a player command left the budget's forecast settled on the state before it")
 	_main._windows.close_all()
 
 

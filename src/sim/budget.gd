@@ -545,6 +545,9 @@ static func projection_step(job: ProjectionJob) -> void:
 static func _projected_month(job: ProjectionJob) -> Array:
 	var sim = job.sim
 	var loader = job.loader
+	# The path, not the job: a unit holding its own job is a reference cycle, and a
+	# job the forecast drops mid-run would never be freed, with its copy of the game.
+	var path: Array[Dictionary] = job.path
 	var access_by_nation: Dictionary = {}
 	var units: Array = []
 	units.append(func() -> void:
@@ -721,7 +724,7 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# would be a tick whose result nothing reads, which is the failure this project
 	# has named four times -- so the seventh instance of V1.3b's repair is refused
 	# on the evidence rather than performed by symmetry.
-	units.append(func() -> void: job.path.append(snapshot(sim)))
+	units.append(func() -> void: path.append(snapshot(sim)))
 	return units
 
 

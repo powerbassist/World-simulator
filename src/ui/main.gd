@@ -1187,22 +1187,24 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## A fiscal command landed -- the Budget window's or the Tax Code's, both through
 ## Budget.commit(). The acknowledgment the playtest found missing: the biggest verb
-## in the game used to answer with one corner number changing (F3). V5.1-0a review
-## pass 1: and every window hears of it -- the budget's forecast keeps a projection
-## until the state changes, and a commit from the Tax Code window is a change it
-## would otherwise never hear of.
+## in the game used to answer with one corner number changing (F3).
 func _fiscal_committed(label: String, title: String, before: Dictionary) -> void:
 	_queue_effect(label, before)
 	_hud.message_stack.push(title, "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
-	_windows.mark_all_dirty()
 	_update_top_bar()
 
 
 ## Records a command's pre-commit baseline, to be measured once the month it
 ## was committed in actually elapses -- see _pending_effects and
 ## _on_month_elapsed()'s resolution loop.
+##
+## V5.1-0a: and every window is told the state moved. Every player command comes
+## through here, and half of them swept nothing -- the budget window then kept its
+## "now" books and forecast past a law or a subsidy, and credited the next lever
+## move with the command's effect. A closed window's mark costs nothing.
 func _queue_effect(label: String, before: Dictionary) -> void:
 	_pending_effects.append({"label": label, "before": before})
+	_windows.mark_all_dirty()
 
 
 func _toggle_window(id: String) -> void:

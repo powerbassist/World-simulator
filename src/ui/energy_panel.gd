@@ -44,6 +44,10 @@ var _primary: Control
 ## The fleet section's own container, kept so a map click on a glyph can bring it
 ## above the fold -- the project marker's route into Public Works, one pass over.
 var _fleet_group: Control = null
+## V5.1-0a. The map's route asked for the fleet section. A panel builds only while
+## its window shows, and the route opens the window and asks in the same frame --
+## so the ask waits for the section to exist and be laid out (_process()).
+var _fleet_wanted := false
 var _scroll: ScrollContainer = null
 
 
@@ -94,6 +98,10 @@ func hide_close_button() -> void:
 
 
 func _process(_delta: float) -> void:
+	# A frame after the build, so the containers have laid the section out.
+	if _fleet_wanted and not _dirty and _fleet_group != null and is_instance_valid(_fleet_group):
+		_fleet_wanted = false
+		_scroll.ensure_control_visible(_fleet_group)
 	if not _dirty or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
@@ -318,10 +326,8 @@ func scroll_to_fleet() -> void:
 	# V2.8 review -- a method that exists on nothing in Godot 4 -- so every click on
 	# a plant glyph raised, and the window opened at the top with the fleet section,
 	# the entire point of that route, never brought into view.
-	if _scroll == null or not is_instance_valid(_scroll):
-		return
-	if _fleet_group != null and is_instance_valid(_fleet_group):
-		_scroll.ensure_control_visible(_fleet_group)
+	if _scroll != null and is_instance_valid(_scroll):
+		_fleet_wanted = true
 
 
 func region_name(ns, region_id: String) -> String:
