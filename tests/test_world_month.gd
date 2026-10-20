@@ -48,9 +48,11 @@ const HARNESSES := [
 const MAX_HAND_TICKED := 15
 
 ## The deliberate subsets above the bar, each with the reason it is not the month.
-## "path::function" -> why.
+## "path::function" -> why. Budget.project()'s month left the list at V5.1-0a: its
+## cursor (budget.gd::_projected_month) reaches Economy and Diplomacy through their
+## month_units() and hand-ticks fifteen, at the bar -- still the fiscal projection's
+## deliberate subset (no legislating, voting or promise-charging), now unflagged.
 const ALLOWED := {
-	"res://src/sim/budget.gd::project": "the fiscal projection: a budget preview must not legislate, vote or charge a promise",
 	"res://tests/test_budget.gd::_run": "project()'s mirror, held to project() rather than to the month",
 	"res://tools/events_probe.gd::_step": "E0/E2/E3's reduced world: no Events, by design -- the tables measure the field ranges an event is authored against",
 }

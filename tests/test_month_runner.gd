@@ -15,12 +15,15 @@ extends SceneTree
 ##     announced, its windows hold their frame, and a key the player presses is
 ##     not acted on -- it is acted on once the month is done, not lost;
 ##   - and B ends where A ends, byte for byte: the same month, the UI's half
-##     included, in the same order.
+##     included, in the same order -- for six months running, so a month that
+##     pauses itself mid-close (an event on the desk, the term-start offer) is
+##     among them.
 ##
 ## Driven a frame at a time because the runner IS frames, and because a Control
 ## outside the scene tree has not run _ready() (docs/engine-decision.md).
 
-const MAX_FRAMES := 600
+const MAX_FRAMES := 3000
+const MONTHS := 6
 
 var _failures: Array[String] = []
 var _a
@@ -28,6 +31,7 @@ var _b
 var _frame := 0
 var _phase := "boot"
 var _month_frames := 0
+var _months_done := 0
 var _recorder: Recorder
 
 
@@ -60,15 +64,15 @@ func _process(_delta: float) -> bool:
 		return _finish()
 	match _phase:
 		"boot":
-			return _start()
+			return _start(true)
 		"closing":
 			return _watch()
 	return false
 
 
-## Both games to the last day of the first month by hand, then the rollover:
-## A's by hand, B's by real time.
-func _start() -> bool:
+## Both games to the last day of the month by hand, then the rollover: A's by
+## hand, B's by real time. The first month also presses a key while it closes.
+func _start(first: bool) -> bool:
 	for game in [_a, _b]:
 		if game._state == null:
 			_fail("a main scene built no GameState")
@@ -76,7 +80,6 @@ func _start() -> bool:
 		# The engine must not advance B on its own: real time is handed in below,
 		# exactly one day of it.
 		game._clock.set_process(false)
-		game._clock.paused = false
 		game._clock.set_speed(1)
 		while game._clock.day < game._clock._days_in_month(game._clock.month, game._clock.year):
 			game._clock.advance_one_day()
@@ -90,6 +93,9 @@ func _start() -> bool:
 
 	var history_b: int = _b._state.history.size()
 	var last_day: int = _b._state.day
+	# Whatever paused B last month (a desk, an offer) is let go: real time only
+	# passes on an unpaused clock, and A's hand-driven days never asked.
+	_b._clock.paused = false
 	_b._clock._process(1.0 / _b._clock.SPEED_DAYS_PER_SECOND[0])
 	if not _b._month_runner.running():
 		_fail("real time reaching the 1st ran its month inside one frame")
@@ -99,6 +105,9 @@ func _start() -> bool:
 	if _b._state.day != last_day:
 		_fail("the 1st was announced before its month had run")
 
+	if not first:
+		_phase = "closing"
+		return false
 	# A key the player presses while the month closes.
 	var key := InputEventKey.new()
 	key.keycode = KEY_F12
@@ -123,10 +132,11 @@ func _watch() -> bool:
 			_fail("the calendar moved, or the 1st was announced, while the month closed")
 		if _b._windows.process_mode != Node.PROCESS_MODE_DISABLED:
 			_fail("the windows went on processing while the month closed")
-		if _recorder.presses != 0:
+		if _months_done == 0 and _recorder.presses != 0:
 			_fail("a key pressed while the month closed reached the game mid-month")
 		return false
 
+	_months_done += 1
 	if _month_frames < 1:
 		_fail("B's month closed inside the frame that started it")
 	if _b._clock.held:
@@ -138,7 +148,11 @@ func _watch() -> bool:
 	if _recorder.presses != 1:
 		_fail("the key pressed while the month closed reached the game %d times after it, not once" % _recorder.presses)
 	if JSON.stringify(_a._state.to_dict()) != JSON.stringify(_b._state.to_dict()):
-		_fail("the month run across %d frames saved differently from the month run whole" % _month_frames)
+		_fail("month %d, run across frames, saved differently from the month run whole" % _months_done)
+		return _finish()
+	if _months_done < MONTHS:
+		_month_frames = 0
+		return _start(false)
 	return _finish()
 
 
@@ -148,7 +162,7 @@ func _fail(message: String) -> void:
 
 func _finish() -> bool:
 	if _failures.is_empty():
-		print("test_month_runner: all checks passed (%d frames)" % _month_frames)
+		print("test_month_runner: all checks passed (%d months)" % _months_done)
 		quit(0)
 		return true
 	for message in _failures:

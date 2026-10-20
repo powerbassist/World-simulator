@@ -492,11 +492,62 @@ static func preview(state, pending: Dictionary) -> Dictionary:
 ## site that forgot. tests/test_budget.gd runs the check from a diplomatically
 ## displaced state precisely because the undisplaced one cannot see it.
 static func project(state, pending: Dictionary, months: int, loader) -> Array[Dictionary]:
-	var sim = state.duplicate_state()
-	commit(sim, pending)
+	var job := projection(state, pending, months, loader)
+	while not projection_done(job):
+		projection_step(job)
+	return job.path
 
-	var out: Array[Dictionary] = []
-	for _i in range(months):
+
+## V5.1-0a. project() as a cursor, so the budget window's forecast can run off the
+## frame (src/ui/budget_forecast.gd): ~5 s a projection at 41 nations, which the
+## panel ran inside one frame on every lever move -- the V5.0 play gate's "budget
+## levers are broken or freeze the game". The units are the copy, then each
+## projected month's systems in the order below, Economy and Diplomacy in their own
+## slices; project() is the cursor run to its end, so there is one copy of the
+## loop. Data only; the functions run it.
+class ProjectionJob extends RefCounted:
+	var state
+	var pending: Dictionary
+	var loader
+	var months_left := 0
+	var sim = null
+	var units: Array = []
+	var path: Array[Dictionary] = []
+
+
+static func projection(state, pending: Dictionary, months: int, loader) -> ProjectionJob:
+	var job := ProjectionJob.new()
+	job.state = state
+	job.pending = pending
+	job.loader = loader
+	job.months_left = months
+	return job
+
+
+static func projection_done(job: ProjectionJob) -> bool:
+	return job.sim != null and job.months_left == 0 and job.units.is_empty()
+
+
+## The next unit: the copy (and the pending committed on it) first, then one
+## projected month's units at a time.
+static func projection_step(job: ProjectionJob) -> void:
+	if job.sim == null:
+		job.sim = job.state.duplicate_state()
+		commit(job.sim, job.pending)
+		return
+	if job.units.is_empty():
+		job.units = _projected_month(job)
+		job.months_left -= 1
+	(job.units.pop_front() as Callable).call()
+
+
+## One projected month, as units.
+static func _projected_month(job: ProjectionJob) -> Array:
+	var sim = job.sim
+	var loader = job.loader
+	var access_by_nation: Dictionary = {}
+	var units: Array = []
+	units.append(func() -> void:
 		# V1.6a, AND IT IS A BUG FIX RATHER THAN AN ADDITION. This loop has never
 		# advanced the clock on its copy: it ran twelve ticks at one date, and until now
 		# nothing it called computed anything from the date -- bloc.gd, defence.gd and
@@ -520,158 +571,158 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 		# ns.energy_impulse_pct rather than computing it -- an energy tick placed
 		# after the economy would price this month's mix against last month's
 		# growth, a one-month lag in a channel with no reason to have one.
-		var access_by_nation: Dictionary = {}
 		for nation_id in sim.nations.keys():
 			access_by_nation[nation_id] = Regions.accessibility_for(
 				sim.nations[nation_id], sim.regions.get(nation_id, []), sim.region_graph)
-		Energy.tick_month(sim, loader, access_by_nation)
-		Economy.tick_month(sim)
-		tick_month(sim)
-		# In the same position main.gd runs it -- after Budget, before the snapshot
-		# -- and required for exactly the reason Diplomacy is. The council advances,
-		# a defied rule keeps charging, and a projection that held the bloc frozen
-		# would under-report the deficit of a player in breach. V1.3b's repair, made
-		# once rather than rediscovered.
-		Orgs.tick_month(sim, loader)
-		Diplomacy.tick_month(sim, loader)
-		# In main.gd's slot again, and required for the same reason Bloc and Diplomacy
-		# are: a projection that held defence frozen would report the bill of a player
-		# already under an alliance obligation as never having existed, and would miss
-		# an obligation arriving inside the projected window entirely. V1.3b's repair,
-		# made a third time rather than rediscovered a third time.
-		Defence.tick_month(sim)
-		# In main.gd's slot a fourth time, and required for the same reason the three
-		# above it are: a projection that held the firm register frozen would report a
-		# standing subsidy as costing nothing and would hold the share shift still, so
-		# the one surface in the game that promises "this is what will happen" would be
-		# wrong about the thing the player just paid for.
-		# In main.gd's RELATIVE slot -- after Legislature, BEFORE Companies and
-		# Industry -- and the slot is load-bearing (the ultra pass-10
-		# finding): a division's company-channel burden is priced by this same
-		# month's Companies/Industry passes in reality, so the projection must
-		# write it before they run, not a month late. Present for the reason
-		# the Events paragraph below gives in its own words, made sharper
-		# because the machine is figure-bearing at IDLE: the backbench's PMB
-		# hazard is a pure function of (nation, month), Cycle-keyed like the
-		# Events hazard the loop already includes, so the projection sees
-		# exactly the divisions the next twenty-four months deliver rather
-		# than an average of them. And a carried bill applies through the ONE
-		# applier, whose budget levers route through apply_effects() into
-		# Budget.apply_pending -- the very revenue and spending keys the
-		# snapshot prints -- a projection
-		# that held the assembly frozen would show a country whose parliament
-		# never legislates. The countdown side of the same machine (law
-		# cooldowns, suspensive holds, referendums) stays in
-		# Legislature.tick_month(), which this loop has never run -- the
-		# boundary tests/test_upper_house.gd already records for the fiscal
-		# projection -- so a hold rides out the window and a failed bill's
-		# cooldown does not count down inside it; both are recorded bounds of
-		# this loop, not omissions to patch by symmetry.
-		Statute.tick_month(sim, loader)
-		Companies.tick_month(sim, loader)
-		# In main.gd's slot again -- Companies, then the autonomy machine, then
-		# Migration -- and present for the reason the Companies paragraph above
-		# gives in its own words: industry.gd writes `failed` and zeroes share,
-		# and headcount() prices a failed firm at nobody, so a projection that
-		# held the machine frozen would carry a failing firm's whole payroll
-		# through the window and miss a rescue that lands inside it. The B4
-		# re-baseline measured unemployment as the largest channel moved
-		# through exactly this read.
-		Industry.tick_month(sim, loader)
-		# In main.gd's slot -- between Companies and Investment -- and absent
-		# altogether until the V2.8 review, which is the one system here that had
-		# neither a paragraph justifying its presence nor Media's paragraph
-		# justifying its absence. It is not inert: this is the only writer of
-		# region_pop_share/city_pop_share, and since V2.6c it carries the natural
-		# change flow too. Those shares are read inside this very loop, by
-		# Unrest._tick_nation() through site_report() -> Siting.site() and
-		# Regions.gdp_per_head_index(), which prices act_impulse() -> the sixth
-		# addend of economy.gd's growth sum -> GDP, revenue and deficit_pct_gdp.
-		# Held frozen, a projection could site a strike in the wrong region
-		# entirely -- Germany's demonstration turns on a +0.4 % margin -- so the
-		# one surface that promises "this is what will happen" disagreed with what
-		# happened. V1.3b's repair, made an eighth time.
-		Migration.tick_month(sim, loader)
-		# In main.gd's slot, and required for the reason the five above it are: a
-		# projection that held the investment register frozen would report a
-		# programme committed this month as costing nothing AND would hold the
-		# capital stock still, so the one surface in the game that promises "this
-		# is what will happen" would be silent about both halves of what the player
-		# just signed. V1.3b's repair, made a seventh time rather than rediscovered
-		# a seventh time.
-		Investment.tick_month(sim)
-		# In main.gd's slot, and required for the reason the six above it are: a
-		# projection that held the project register frozen would report a build begun
-		# this month as costing nothing, and -- worse than any of them -- would never
-		# COMPLETE one inside the projected window, so the one surface that promises
-		# "this is what will happen" would be silent about the only moment this lever
-		# has. V1.3b's repair, made an eighth time rather than rediscovered an eighth
-		# time.
-		Projects.tick_month(sim, loader)
-		# In main.gd's slot, and required for the reason the seven above it are -- with a
-		# sharper case than any of them. A projection that held the campaign register
-		# frozen would report a run-up as costing nothing AND would never CLOSE the window
-		# inside the projected months, so a president looking at a twenty-four-month
-		# forecast in the month before an election would see a campaign bill they will
-		# stop paying in four weeks charged for two years.
-		Campaign.tick_month(sim, loader)
-		# In main.gd's slot a fifth time, and required for the same reason the four
-		# above it are: a projection that held the quality stock frozen would report a
-		# spending cut as costing nothing beyond its own delta, when the whole point of
-		# the stock is that the consequence arrives over the following three years.
-		# V1.3b's repair, made a fifth time rather than rediscovered a fifth time.
-		# V1.5b, immediately before Society: the quality stock divides by this layer's
-		# dependency factor, so demography must have settled before quality reads it.
-		Demography.tick_month(sim)
-		Society.tick_month(sim)
-		# In main.gd's slot a sixth time, and required for the same reason the five above
-		# it are -- but this one is the sharpest case yet, because the others report a
-		# standing cost the player has already chosen and this one reports an act nobody
-		# has chosen at all. A projection that held unrest frozen would show a country
-		# heading into a general strike as growing normally for twelve months, which is
-		# the one surface in the game that promises "this is what will happen" being
-		# silent about the thing that is about to happen. V1.3b's repair, made a sixth
-		# time rather than rediscovered a sixth time.
-		Unrest.tick_month(sim)
-		# V1.8, in main.gd's slot immediately after Unrest, and required for the reason
-		# Unrest's own line above gives -- in the one case where it is not about a
-		# standing cost at all. A projection that held the event register frozen would
-		# never count a pending deadline DOWN, so a president looking at a twelve-month
-		# forecast while a crisis sits on their desk would see a future in which the
-		# default never arrives and saying nothing is free. It is also the only line in
-		# this loop that can fire something new: the hazard is a pure function of
-		# (nation, event, month), so the projection sees exactly the events the next
-		# twelve months deliver rather than an average of them.
-		# This loop does not tick Commodities, so nothing writes `commodity_high_month`
-		# inside it and `commodity_price_high` stays false in every projected month
-		# (the copied stamp is the real game's past, never a projected month);
-		# docs/someday.md records that the projection prices no goods.
-		Events.tick_month(sim, loader)
-		# In main.gd's slot a seventh time, and V1.6b is where the question the comment
-		# below asks about Media gets the OPPOSITE answer -- so the two sit together
-		# deliberately, as the pair that shows what the test actually is.
-		#
-		# Media is refused because `framing_gain` reaches a figure only through approval
-		# and this loop holds no election. Inflation is required because it writes
-		# inflation_impulse_pct, the eighth addend in economy.gd's growth sum, so it
-		# reaches GDP, revenue and the deficit on the very next iteration of this loop.
-		# A projection that held it frozen would report a player heading into an
-		# inflationary boom as growing normally for twelve months, and the 1e-9 equality
-		# tests/test_budget.gd asserts is a done-when condition rather than a nicety.
-		Inflation.tick_month(sim)
-		# V1.5d is the first session since V1.3b whose tick does NOT belong here, and
-		# the omission is deliberate rather than forgotten. Media.tick_month() writes
-		# `framing_gain`, which has exactly one reader -- opinion.gd's bloc loop -- and
-		# this projection does not run Opinion at all. Every other addition above
-		# reaches a projected FIGURE: the bloc charges a penalty into the deficit, a
-		# subsidy costs money, the quality stock decays, a strike shrinks output.
-		# Framing reaches a figure only through approval, and approval reaches the
-		# budget only through an election this loop does not hold. Adding the call
-		# would be a tick whose result nothing reads, which is the failure this project
-		# has named four times -- so the seventh instance of V1.3b's repair is refused
-		# on the evidence rather than performed by symmetry.
-		out.append(snapshot(sim))
-	return out
+	)
+	units.append(func() -> void: Energy.tick_month(sim, loader, access_by_nation))
+	units.append_array(Economy.month_units(sim))
+	units.append(func() -> void: tick_month(sim))
+	# In the same position main.gd runs it -- after Budget, before the snapshot
+	# -- and required for exactly the reason Diplomacy is. The council advances,
+	# a defied rule keeps charging, and a projection that held the bloc frozen
+	# would under-report the deficit of a player in breach. V1.3b's repair, made
+	# once rather than rediscovered.
+	units.append(func() -> void: Orgs.tick_month(sim, loader))
+	units.append_array(Diplomacy.month_units(sim, loader))
+	# In main.gd's slot again, and required for the same reason Bloc and Diplomacy
+	# are: a projection that held defence frozen would report the bill of a player
+	# already under an alliance obligation as never having existed, and would miss
+	# an obligation arriving inside the projected window entirely. V1.3b's repair,
+	# made a third time rather than rediscovered a third time.
+	units.append(func() -> void: Defence.tick_month(sim))
+	# In main.gd's slot a fourth time, and required for the same reason the three
+	# above it are: a projection that held the firm register frozen would report a
+	# standing subsidy as costing nothing and would hold the share shift still, so
+	# the one surface in the game that promises "this is what will happen" would be
+	# wrong about the thing the player just paid for.
+	# In main.gd's RELATIVE slot -- after Legislature, BEFORE Companies and
+	# Industry -- and the slot is load-bearing (the ultra pass-10
+	# finding): a division's company-channel burden is priced by this same
+	# month's Companies/Industry passes in reality, so the projection must
+	# write it before they run, not a month late. Present for the reason
+	# the Events paragraph below gives in its own words, made sharper
+	# because the machine is figure-bearing at IDLE: the backbench's PMB
+	# hazard is a pure function of (nation, month), Cycle-keyed like the
+	# Events hazard the loop already includes, so the projection sees
+	# exactly the divisions the next twenty-four months deliver rather
+	# than an average of them. And a carried bill applies through the ONE
+	# applier, whose budget levers route through apply_effects() into
+	# Budget.apply_pending -- the very revenue and spending keys the
+	# snapshot prints -- a projection
+	# that held the assembly frozen would show a country whose parliament
+	# never legislates. The countdown side of the same machine (law
+	# cooldowns, suspensive holds, referendums) stays in
+	# Legislature.tick_month(), which this loop has never run -- the
+	# boundary tests/test_upper_house.gd already records for the fiscal
+	# projection -- so a hold rides out the window and a failed bill's
+	# cooldown does not count down inside it; both are recorded bounds of
+	# this loop, not omissions to patch by symmetry.
+	units.append(func() -> void: Statute.tick_month(sim, loader))
+	units.append(func() -> void: Companies.tick_month(sim, loader))
+	# In main.gd's slot again -- Companies, then the autonomy machine, then
+	# Migration -- and present for the reason the Companies paragraph above
+	# gives in its own words: industry.gd writes `failed` and zeroes share,
+	# and headcount() prices a failed firm at nobody, so a projection that
+	# held the machine frozen would carry a failing firm's whole payroll
+	# through the window and miss a rescue that lands inside it. The B4
+	# re-baseline measured unemployment as the largest channel moved
+	# through exactly this read.
+	units.append(func() -> void: Industry.tick_month(sim, loader))
+	# In main.gd's slot -- between Companies and Investment -- and absent
+	# altogether until the V2.8 review, which is the one system here that had
+	# neither a paragraph justifying its presence nor Media's paragraph
+	# justifying its absence. It is not inert: this is the only writer of
+	# region_pop_share/city_pop_share, and since V2.6c it carries the natural
+	# change flow too. Those shares are read inside this very loop, by
+	# Unrest._tick_nation() through site_report() -> Siting.site() and
+	# Regions.gdp_per_head_index(), which prices act_impulse() -> the sixth
+	# addend of economy.gd's growth sum -> GDP, revenue and deficit_pct_gdp.
+	# Held frozen, a projection could site a strike in the wrong region
+	# entirely -- Germany's demonstration turns on a +0.4 % margin -- so the
+	# one surface that promises "this is what will happen" disagreed with what
+	# happened. V1.3b's repair, made an eighth time.
+	units.append(func() -> void: Migration.tick_month(sim, loader))
+	# In main.gd's slot, and required for the reason the five above it are: a
+	# projection that held the investment register frozen would report a
+	# programme committed this month as costing nothing AND would hold the
+	# capital stock still, so the one surface in the game that promises "this
+	# is what will happen" would be silent about both halves of what the player
+	# just signed. V1.3b's repair, made a seventh time rather than rediscovered
+	# a seventh time.
+	units.append(func() -> void: Investment.tick_month(sim))
+	# In main.gd's slot, and required for the reason the six above it are: a
+	# projection that held the project register frozen would report a build begun
+	# this month as costing nothing, and -- worse than any of them -- would never
+	# COMPLETE one inside the projected window, so the one surface that promises
+	# "this is what will happen" would be silent about the only moment this lever
+	# has. V1.3b's repair, made an eighth time rather than rediscovered an eighth
+	# time.
+	units.append(func() -> void: Projects.tick_month(sim, loader))
+	# In main.gd's slot, and required for the reason the seven above it are -- with a
+	# sharper case than any of them. A projection that held the campaign register
+	# frozen would report a run-up as costing nothing AND would never CLOSE the window
+	# inside the projected months, so a president looking at a twenty-four-month
+	# forecast in the month before an election would see a campaign bill they will
+	# stop paying in four weeks charged for two years.
+	units.append(func() -> void: Campaign.tick_month(sim, loader))
+	# In main.gd's slot a fifth time, and required for the same reason the four
+	# above it are: a projection that held the quality stock frozen would report a
+	# spending cut as costing nothing beyond its own delta, when the whole point of
+	# the stock is that the consequence arrives over the following three years.
+	# V1.3b's repair, made a fifth time rather than rediscovered a fifth time.
+	# V1.5b, immediately before Society: the quality stock divides by this layer's
+	# dependency factor, so demography must have settled before quality reads it.
+	units.append(func() -> void: Demography.tick_month(sim))
+	units.append(func() -> void: Society.tick_month(sim))
+	# In main.gd's slot a sixth time, and required for the same reason the five above
+	# it are -- but this one is the sharpest case yet, because the others report a
+	# standing cost the player has already chosen and this one reports an act nobody
+	# has chosen at all. A projection that held unrest frozen would show a country
+	# heading into a general strike as growing normally for twelve months, which is
+	# the one surface in the game that promises "this is what will happen" being
+	# silent about the thing that is about to happen. V1.3b's repair, made a sixth
+	# time rather than rediscovered a sixth time.
+	units.append(func() -> void: Unrest.tick_month(sim))
+	# V1.8, in main.gd's slot immediately after Unrest, and required for the reason
+	# Unrest's own line above gives -- in the one case where it is not about a
+	# standing cost at all. A projection that held the event register frozen would
+	# never count a pending deadline DOWN, so a president looking at a twelve-month
+	# forecast while a crisis sits on their desk would see a future in which the
+	# default never arrives and saying nothing is free. It is also the only line in
+	# this loop that can fire something new: the hazard is a pure function of
+	# (nation, event, month), so the projection sees exactly the events the next
+	# twelve months deliver rather than an average of them.
+	# This loop does not tick Commodities, so nothing writes `commodity_high_month`
+	# inside it and `commodity_price_high` stays false in every projected month
+	# (the copied stamp is the real game's past, never a projected month);
+	# docs/someday.md records that the projection prices no goods.
+	units.append(func() -> void: Events.tick_month(sim, loader))
+	# In main.gd's slot a seventh time, and V1.6b is where the question the comment
+	# below asks about Media gets the OPPOSITE answer -- so the two sit together
+	# deliberately, as the pair that shows what the test actually is.
+	#
+	# Media is refused because `framing_gain` reaches a figure only through approval
+	# and this loop holds no election. Inflation is required because it writes
+	# inflation_impulse_pct, the eighth addend in economy.gd's growth sum, so it
+	# reaches GDP, revenue and the deficit on the very next iteration of this loop.
+	# A projection that held it frozen would report a player heading into an
+	# inflationary boom as growing normally for twelve months, and the 1e-9 equality
+	# tests/test_budget.gd asserts is a done-when condition rather than a nicety.
+	units.append(func() -> void: Inflation.tick_month(sim))
+	# V1.5d is the first session since V1.3b whose tick does NOT belong here, and
+	# the omission is deliberate rather than forgotten. Media.tick_month() writes
+	# `framing_gain`, which has exactly one reader -- opinion.gd's bloc loop -- and
+	# this projection does not run Opinion at all. Every other addition above
+	# reaches a projected FIGURE: the bloc charges a penalty into the deficit, a
+	# subsidy costs money, the quality stock decays, a strike shrinks output.
+	# Framing reaches a figure only through approval, and approval reaches the
+	# budget only through an election this loop does not hold. Adding the call
+	# would be a tick whose result nothing reads, which is the failure this project
+	# has named four times -- so the seventh instance of V1.3b's repair is refused
+	# on the evidence rather than performed by symmetry.
+	units.append(func() -> void: job.path.append(snapshot(sim)))
+	return units
 
 
 ## The player nation's figures, flat and plain. Deliberately dateless — the date

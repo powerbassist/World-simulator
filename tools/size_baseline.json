@@ -11,7 +11,7 @@
   "src/sim/legislature.gd": 682,
   "src/sim/orgs.gd": 747,
   "src/sim/statute.gd": 512,
-  "src/ui/budget_panel.gd": 322,
+  "src/ui/budget_panel.gd": 319,
   "src/ui/calendar_panel.gd": 467,
   "src/ui/campaign_panel.gd": 385,
   "src/ui/companies_panel.gd": 309,
