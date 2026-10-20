@@ -110,14 +110,14 @@ const CATEGORY_SECTOR := {
 ## followed it down, silently. `_production_order()` computes the real order from
 ## the recipes instead. A category list is the SHAPE THAT PRODUCED THAT BUG, so
 ## there is deliberately no second one to reach for: a good's category is read
-## where it means something (CATEGORY_SECTOR, and the demand basket in `_want`),
+## where it means something (CATEGORY_SECTOR, and the demand basket in `_rows`),
 ## and never as an ordering.
 
 
 ## The seven keys every `commodity_state` carries, in `init_nation()`'s own write
 ## order. The lazy-seed gate reads THIS list rather than `is_empty()` alone: a
 ## hand-built or hand-edited register carrying only SOME of the keys passes an
-## emptiness test and then faults on the first missing one mid-tick (`_want()`
+## emptiness test and then faults on the first missing one mid-tick (`_rows()`
 ## reads `["price"]` before anything writes it), flooding SCRIPT ERRORs instead of
 ## reseeding. A register missing ANY key is no register at all and reseeds WHOLE,
 ## so the failure mode is a silent deterministic rebuild rather than a crash.
@@ -140,14 +140,7 @@ const STATE_KEYS := [
 ## sectors above zero, so the zero is reached by a fixture or by a player-caused
 ## collapse and not by content.
 static func init_nation(ns, loader) -> void:
-	var tables: Dictionary = _loader_tables(loader)
-	var structure: Dictionary = tables["structure"]
-	var endowed: Dictionary = tables["endowed"]
-	var capacity: Dictionary = {}
-	for good_id in _goods(loader):
-		var good: Dictionary = loader.commodity_goods[good_id]
-		capacity[good_id] = _capacity_of(ns, good, structure, endowed)
-
+	var capacity: Dictionary = _rows(ns, _loader_tables(loader), {}, 0.0)[0]
 	ns.commodity_state = {
 		"capacity": capacity,
 		"output": _zeros(loader),
@@ -213,7 +206,7 @@ static func tick_month(state, loader) -> void:
 	# world shortfall. Static content, so a save needs no field: every load
 	# re-derives the same mix. A fixture loader without a nation's data keeps the
 	# live mix rather than inventing one.
-	var anchored := _authored_sector_share(loader, nation_ids)
+	var anchored := Natural.authored_sector_share(loader, nation_ids)
 	if not anchored.is_empty():
 		world_sector_share = anchored
 
@@ -233,14 +226,9 @@ static func tick_month(state, loader) -> void:
 	var required := {}
 	for nation_id in nation_ids:
 		var ns = state.nations[nation_id]
-		var capacity: Dictionary = {}
-		var demand: Dictionary = {}
-		for good_id in ids:
-			var good: Dictionary = loader.commodity_goods[good_id]
-			capacity[good_id] = _capacity_of(ns, good, structure, endowed)
-			demand[good_id] = _want(ns, good, structure, world_sector_share, per_capita)
-		capacities[nation_id] = capacity
-		demanded[nation_id] = demand
+		var rows: Array = _rows(ns, tables, world_sector_share, per_capita)
+		capacities[nation_id] = rows[0]
+		demanded[nation_id] = rows[1]
 		# What this nation's own industry processes of each natural good -- the
 		# pre-V4.11 capacity. Routing fills the gap between it and the endowment.
 		var need := {}
@@ -253,11 +241,12 @@ static func tick_month(state, loader) -> void:
 	# fuels and electricity would stop the month its ore and crude became real --
 	# routing raw and agri goods first (roster sellers, then the world pool) lets
 	# imported ore become domestic steel. docs/commodities-model.md section 8.
+	var zeros: Dictionary = _zeros(loader)
 	var traded := {}
 	var spare_by_nation := {}
 	for nation_id in nation_ids:
-		traded[nation_id] = _zeros(loader)
-		spare_by_nation[nation_id] = _zeros(loader)
+		traded[nation_id] = zeros.duplicate()
+		spare_by_nation[nation_id] = zeros.duplicate()
 	var pool_price: Dictionary = state.nations[nation_ids[0]].commodity_state["price"] if not nation_ids.is_empty() else {}
 	for good_id in natural.keys():
 		Natural.route_natural(good_id, nation_ids, capacities, required, endowed, pool_price, loader, traded, spare_by_nation)
@@ -275,8 +264,8 @@ static func tick_month(state, loader) -> void:
 		var holding: Dictionary = capacity.duplicate()
 		for good_id in natural.keys():
 			holding[good_id] = maxf(float(capacity[good_id]) + float(traded[nation_id][good_id]), 0.0)
-		var out: Dictionary = _zeros(loader)
-		var gross: Dictionary = _zeros(loader)
+		var out: Dictionary = zeros.duplicate()
+		var gross: Dictionary = zeros.duplicate()
 		# Last month's price vector, which is the one the nation's own register
 		# carries -- every nation's copy is the same numbers, so the route a
 		# nation picks cannot depend on which copy it read.
@@ -511,7 +500,8 @@ static func _loader_tables(loader) -> Dictionary:
 		_cache_loader = loader
 		var tables: Dictionary = _static_tables(loader)
 		tables["structure"] = _structure(loader)
-		tables["endowed"] = _endowment_tables(loader, tables["structure"])
+		tables["endowed"] = Natural.endowment_tables(loader, tables["structure"], CATEGORY_SECTOR)
+		tables["per_good"] = _per_good(loader, tables["structure"], tables["endowed"])
 		_cache_tables = tables
 	return _cache_tables
 
@@ -577,27 +567,6 @@ static func _cheapest_route(tables: Dictionary, good_id: String, price: Dictiona
 	return best
 
 
-## What one nation wants of one good this month: its share of the world's
-## per-capita basket, a quantity taken at the good's BASE price and then answered
-## by the LIVE price through the elasticity dial (K = 1.0 is a plain unit-elastic
-## response). Dividing the basket by its base and not by the live price is what
-## keeps the dial single-counted: the second term is the WHOLE price response, so
-## `DEMAND_ELASTICITY` means what its comment promises. Without the second term
-## demand is a constant and the only equilibrium a shortage has is the clamp.
-##
-## The basket is UNIFORM over the world's sector budgets through the recipe
-## structure, so it is the same rule that sizes capacity and the two cannot drift
-## apart for a reason no model states.
-static func _want(ns, good: Dictionary, structure: Dictionary, world_sector_share: Dictionary, per_capita: float) -> float:
-	var sector := String(CATEGORY_SECTOR.get(String(good.category), "industry"))
-	var price := float(ns.commodity_state["price"].get(String(good.id), float(good.base_price)))
-	var base := float(good.base_price)
-	var value: float = per_capita * ns.population \
-		* float(world_sector_share.get(sector, 0.0)) * float(structure.get(String(good.id), 0.0))
-	var quantity := value / maxf(base, 1e-9)
-	return quantity * pow(base / maxf(price, 1e-9), K.DEMAND_ELASTICITY)
-
-
 ## The one structure the whole file runs on: each good's value weight in the
 ## fixed point of `w_g = 1 + the input value one unit of w_g requires, summed
 ## over its routes`. Every route carries an equal share of its output's pull --
@@ -639,6 +608,69 @@ static func _structure(loader) -> Dictionary:
 	return out
 
 
+## One nation's month: [capacity, demand], each {good: units/month}.
+##
+## CAPACITY: a good's share of the WORLD's volume where the good is endowed, the
+## nation's sector output times the structure weight otherwise.
+##
+## DEMAND: its share of the world's per-capita basket, a quantity taken at the
+## good's BASE price and then answered by the LIVE price through the elasticity
+## dial (K = 1.0 is a plain unit-elastic response). Dividing the basket by its base
+## and not by the live price is what keeps the dial single-counted: the second term
+## is the WHOLE price response, so `DEMAND_ELASTICITY` means what its comment
+## promises. Without the second term demand is a constant and the only equilibrium
+## a shortage has is the clamp. The basket is UNIFORM over the world's sector
+## budgets through the recipe structure, so it is the same rule that sizes capacity
+## and the two cannot drift apart for a reason no model states.
+##
+## ONE NATION'S TWO ROWS IN ONE WALK -- V5.0c2. These were `_want()` and
+## `_capacity_of()`, one call each per good per nation per month, and every call
+## re-read the good's category, base price and structure weight. Those are content,
+## so `_per_good()` reads them once per loader; the arithmetic is the two functions'
+## own, term for term and in their order, so the floats are the same
+## (tests/test_tick_levers.gd recomputes both the old way and compares). The price
+## is read with `.get()` because `init_nation()` asks for the capacity row before
+## the register holds one; the demand row it gets back is discarded.
+static func _rows(ns, tables: Dictionary, world_sector_share: Dictionary, per_capita: float) -> Array:
+	var per_good: Dictionary = tables["per_good"]
+	var endowed: Dictionary = tables["endowed"]
+	var endowed_row: Dictionary = endowed["capacity"].get(String(ns.id), {}) if not endowed.is_empty() else {}
+	var price: Dictionary = ns.commodity_state.get("price", {})
+	var head: float = per_capita * ns.population
+	var capacity := {}
+	var demand := {}
+	for i in per_good["key"].size():
+		var id: String = per_good["id"][i]
+		var sector: String = per_good["sector"][i]
+		var base: float = per_good["base"][i]
+		var weight: float = per_good["weight"][i]
+		if per_good["natural"][i]:
+			capacity[per_good["key"][i]] = float(endowed_row.get(id, 0.0))
+		else:
+			capacity[per_good["key"][i]] = _sector_value(ns, sector) * weight / base
+		var quantity: float = head * float(world_sector_share.get(sector, 0.0)) * weight / maxf(base, 1e-9)
+		demand[per_good["key"][i]] = quantity * pow(base / maxf(float(price.get(id, base)), 1e-9), K.DEMAND_ELASTICITY)
+	return [capacity, demand]
+
+
+## Each good's content as `_rows()` reads it, in `_goods()` order: its key, its id,
+## the sector that endows it, its base price, its structure weight and whether it is
+## endowed. A pure function of the loader, cached with the other tables.
+static func _per_good(loader, structure: Dictionary, endowed: Dictionary) -> Dictionary:
+	var natural: Dictionary = endowed.get("goods", {})
+	var out := {"key": [], "id": [], "sector": [], "base": [], "weight": [], "natural": []}
+	for good_id in _goods(loader):
+		var good: Dictionary = loader.commodity_goods[good_id]
+		out["key"].append(good_id)
+		out["id"].append(String(good.id))
+		out["sector"].append(String(CATEGORY_SECTOR.get(String(good.category), "industry")))
+		out["base"].append(float(good.base_price))
+		out["weight"].append(float(structure.get(String(good.id), 0.0)))
+		out["natural"].append(natural.has(String(good.id)))
+	return out
+
+
+
 ## The share of one nation's own sector output a good's capacity is worth, in
 ## EUR per month. The ONLY per-nation input to the mix, and it is the register's
 ## measured figure -- this file's header says why nothing finer is authored.
@@ -649,39 +681,13 @@ static func _bucket(ns, good: Dictionary, structure: Dictionary) -> float:
 	# draft floored this at 1e-9 to keep every column alive, which made a
 	# collapsed endowment produce a nanogram of steel and report it as output --
 	# a guard rail that hid the very state the shortage test exists to create.
-	# The division below is safe: `_want` and the price step both guard their own
+	# The division below is safe: `_rows` and the price step both guard their own
 	# denominators, and every nation file carries all three sectors above zero.
 	return _sector_value(ns, sector) * float(structure.get(String(good.id), 0.0))
 
 
 static func _sector_of(loader, good_id: String) -> String:
 	return String(CATEGORY_SECTOR.get(String(loader.commodity_goods[good_id].category), "industry"))
-
-
-## The world's sector mix as authored: each nation's measured GDP times its
-## measured sector shares, summed and normalised. Empty when any nation in play
-## has no authored record, so the caller falls back to the live mix.
-static func _authored_sector_share(loader, nation_ids: Array) -> Dictionary:
-	var nations = loader.get("nations")
-	if not (nations is Dictionary):
-		return {}
-	var weight := {}
-	var total := 0.0
-	for nation_id in nation_ids:
-		if not nations.has(nation_id):
-			return {}
-		var n = nations[nation_id]
-		var gdp := float(n.gdp_eur_bn)
-		var sectors: Dictionary = n.sectors
-		for sector in sectors.keys():
-			var w := gdp * float(sectors[sector])
-			weight[sector] = float(weight.get(sector, 0.0)) + w
-			total += w
-	if total <= 0.0:
-		return {}
-	for sector in weight.keys():
-		weight[sector] = float(weight[sector]) / total
-	return weight
 
 
 static func _sector_value(ns, sector: String) -> float:
@@ -730,77 +736,3 @@ static func _zeros(loader) -> Dictionary:
 	for good_id in _goods(loader):
 		out[good_id] = 0.0
 	return out
-
-
-# --- V4.11b: real endowments and the world pool -----------------------------------
-# docs/commodities-model.md section 8. Everything here is a pure function of the
-# loader's content (authored nation figures, the outline register, the endowment
-# shares), memoised with the recipe tables, so it adds no state and no save field.
-
-## A good's capacity for one nation: its share of the WORLD's volume where the good
-## is endowed, its sector output times the structure weight otherwise.
-static func _capacity_of(ns, good: Dictionary, structure: Dictionary, endowed: Dictionary) -> float:
-	var good_id := String(good.id)
-	var natural: Dictionary = endowed.get("goods", {})
-	if natural.has(good_id):
-		return float(endowed["capacity"].get(String(ns.id), {}).get(good_id, 0.0))
-	return _bucket(ns, good, structure) / float(good.base_price)
-
-
-## {} when the loader carries no endowments (a fixture, or the pre-V4.11 model).
-## Otherwise: "goods" (the endowed set), "capacity" {nation: {good: units/month}},
-## "pool_capacity" and "pool_base_want" {good: units/month}.
-##
-## The WORLD VOLUME is the world's REQUIREMENT -- every roster nation's from its
-## AUTHORED sector output through `_bucket`'s own formula (what its industry
-## processes), every outline's from its own GDP through the world sector mix --
-## so the world opens balanced and the shares only decide who makes it.
-static func _endowment_tables(loader, structure: Dictionary) -> Dictionary:
-	var shares = loader.get("commodity_endowments")
-	if not (shares is Dictionary) or (shares as Dictionary).is_empty():
-		return {}
-	var nations: Dictionary = loader.nations
-	var nation_ids: Array = nations.keys()
-	nation_ids.sort()
-	var wss := _authored_sector_share(loader, nation_ids)
-	var outlines: Dictionary = loader.get("outlines") if loader.get("outlines") is Dictionary else {}
-	var outline_value := 0.0
-	for outline_id in outlines.keys():
-		outline_value += maxf(float(outlines[outline_id]["gdp_eur_bn"]), 0.0) * 1e9 / 12.0
-
-	var capacity := {}
-	for nation_id in nation_ids:
-		capacity[nation_id] = {}
-	var pool_capacity := {}
-	var pool_base_want := {}
-	var endowed_goods := {}
-	for good_id in (shares as Dictionary).keys():
-		if not loader.commodity_goods.has(good_id):
-			continue
-		var good: Dictionary = loader.commodity_goods[good_id]
-		var sector := String(CATEGORY_SECTOR.get(String(good.category), "industry"))
-		var weight := float(structure.get(good_id, 0.0)) / float(good.base_price)
-		var roster_need := 0.0
-		for nation_id in nation_ids:
-			var n = nations[nation_id]
-			roster_need += float(n.gdp_eur_bn) * 1e9 / 12.0 * float(n.sectors.get(sector, 0.0)) * weight
-		var outline_want := outline_value * float(wss.get(sector, 0.0)) * weight
-		var world := roster_need + outline_want
-		var good_shares: Dictionary = shares[good_id]
-		var pool_share := 0.0
-		for producer in good_shares.keys():
-			var s := float(good_shares[producer])
-			if nations.has(producer):
-				capacity[producer][good_id] = s * world
-			else:
-				pool_share += s
-		pool_capacity[good_id] = pool_share * world
-		pool_base_want[good_id] = outline_want
-		endowed_goods[good_id] = true
-	return {
-		"goods": endowed_goods,
-		"capacity": capacity,
-		"pool_capacity": pool_capacity,
-		"pool_base_want": pool_base_want,
-	}
-

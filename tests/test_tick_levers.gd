@@ -15,13 +15,21 @@ extends SceneTree
 ##      Orgs step).
 ##   3. Trade's skipped lookups are skipped only while the registers are EMPTY:
 ##      with an agreement and a measure on a pair, the vector still prices both.
-##   4. Cycle's seed memo returns the FNV value the loop computes.
+##   4. Cycle's seed memo returns the FNV value the loop computes, and
+##      unit_pair(a, b) draws the float unit("a|b") draws (V5.0c2).
 ##   5. Commodities' shared routes give the same production as each nation
 ##      choosing its own, and an equal price vector compares equal by value
 ##      (the reuse guard reads `!=`).
 ##   6. The invariants the two Diplomacy memos REST on, source-scanned: nothing
 ##      Diplomacy runs loads orgs.gd or writes membership (Org's memo), and
 ##      execute() closes the turn memo before its first relation write.
+##   7. Commodities._rows() (V5.0c2) is the per-good `_capacity_of()` and
+##      `_want()` arithmetic it replaced, recomputed here the old way, for every
+##      nation and good, at a price vector that moves the elasticity term.
+##   8. Companies' three price walks over Walk.priced() (V5.0c2) equal the
+##      full-roster walks, recomputed here the old way: with no burden, with a
+##      burden (the filter must then return everything), and with a body firm
+##      at share 0.0 (its term is -h, not zero, so it must stay in).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -32,6 +40,12 @@ const Trade = preload("res://src/sim/trade.gd")
 const RK = preload("res://src/core/relations.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Commodities = preload("res://src/sim/commodities.gd")
+const Natural = preload("res://src/sim/commodities_natural.gd")
+const CK = preload("res://src/sim/commodity_constants.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const CoK = preload("res://src/sim/companies_constants.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const Walk = preload("res://src/sim/companies_walk.gd")
 
 var _failures: Array[String] = []
 
@@ -51,6 +65,8 @@ func _init() -> void:
 	_check_trade_registers(state)
 	_check_seed_memo()
 	_check_shared_routes(state, loader)
+	_check_rows(state, loader)
+	_check_price_walks(state, loader)
 	_check_turn_flavours(state)
 	_check_memo_invariants()
 	_finish()
@@ -138,6 +154,12 @@ func _check_seed_memo() -> void:
 		for pass_i in range(2):  # a miss, then a hit
 			if Cycle._key_seed(key) != h:
 				_fail("seed of '%s' on pass %d is %d, FNV says %d" % [key, pass_i, Cycle._key_seed(key), h])
+	for pair in [["FRA", "evt_strike"], ["DEU", "evt_strike"], ["FRA", "evt_flood"], ["", ""], ["ÄÖ", "€"]]:
+		for index in [0, 1, 7, 359]:
+			for pass_i in range(2):  # a miss, then a hit
+				var want: float = Cycle.unit("%s|%s" % pair, index)
+				if Cycle.unit_pair(pair[0], pair[1], index) != want:
+					_fail("unit_pair(%s, %d) on pass %d differs from unit('a|b')" % [pair, index, pass_i])
 
 
 func _check_shared_routes(state, loader) -> void:
@@ -163,6 +185,130 @@ func _check_shared_routes(state, loader) -> void:
 		Commodities._produce(tables, capacity, price, out_b, gross_b, chosen)
 		if var_to_str(out_a) != var_to_str(out_b) or var_to_str(gross_a) != var_to_str(gross_b):
 			_fail("%s: production with the shared routes differs from its own" % id)
+
+
+func _check_rows(state, loader) -> void:
+	var probe = state.duplicate_state()
+	var goods: Array = Commodities._goods(loader)
+	for nation_id in probe.nations.keys():
+		var price: Dictionary = probe.nations[nation_id].commodity_state["price"]
+		for i in goods.size():
+			if i % 3 == 0:
+				price[goods[i]] = float(price[goods[i]]) * 1.37
+	var tables: Dictionary = Commodities._loader_tables(loader)
+	var structure: Dictionary = tables["structure"]
+	var endowed: Dictionary = tables["endowed"]
+	if endowed.is_empty():
+		_fail("no endowment tables -- the natural branch of _rows() would go unchecked")
+		return
+	var natural: Dictionary = endowed["goods"]
+	var ids: Array = probe.nations.keys()
+	ids.sort()
+	var wss: Dictionary = Natural.authored_sector_share(loader, ids)
+	var per_capita := 2345.6
+	var checked := 0
+	for nation_id in ids:
+		var ns = probe.nations[nation_id]
+		var rows: Array = Commodities._rows(ns, tables, wss, per_capita)
+		if rows[0].keys() != goods or rows[1].keys() != goods:
+			_fail("%s: _rows() keys are not the goods in _goods() order" % nation_id)
+		for good_id in goods:
+			var good: Dictionary = loader.commodity_goods[good_id]
+			var id := String(good.id)
+			var cap: float
+			if natural.has(id):
+				cap = float(endowed["capacity"].get(String(ns.id), {}).get(id, 0.0))
+			else:
+				cap = Commodities._bucket(ns, good, structure) / float(good.base_price)
+			var sector := String(Commodities.CATEGORY_SECTOR.get(String(good.category), "industry"))
+			var p := float(ns.commodity_state["price"].get(id, float(good.base_price)))
+			var base := float(good.base_price)
+			var value: float = per_capita * ns.population \
+				* float(wss.get(sector, 0.0)) * float(structure.get(id, 0.0))
+			var quantity := value / maxf(base, 1e-9)
+			var want: float = quantity * pow(base / maxf(p, 1e-9), CK.DEMAND_ELASTICITY)
+			if float(rows[0][good_id]) != cap:
+				_fail("%s %s: capacity %.17g, the old way %.17g" % [nation_id, good_id, float(rows[0][good_id]), cap])
+			if float(rows[1][good_id]) != want:
+				_fail("%s %s: demand %.17g, the old way %.17g" % [nation_id, good_id, float(rows[1][good_id]), want])
+			checked += 1
+	if checked < 1000:
+		_fail("only %d rows checked" % checked)
+
+
+func _check_price_walks(state, loader) -> void:
+	var probe = state.duplicate_state()
+	var fra = probe.nations["FRA"]
+	var major = Companies.majors_of(loader, "FRA")[0]
+	var body = Companies.body_of(loader, "FRA")[0]
+	var entry: Dictionary = fra.companies[major.id]
+	entry["share"] = float(entry["share"]) * 1.1
+	entry["subsidy"] = 0.5
+	entry["state_share"] = 0.3
+	if not fra.regulation_burden.is_empty():
+		_fail("FRA starts with a regulation burden -- the plain case would go unchecked")
+	_compare_walks(probe, loader, "plain")
+	var authored_share: float = body.share
+	body.share = 0.0
+	_compare_walks(probe, loader, "zero-share body firm")
+	body.share = authored_share
+	fra.regulation_burden = {"industry": 0.25}
+	_compare_walks(probe, loader, "burdened")
+	if Walk.priced(fra, Companies.firms_of(loader, "FRA")).size() != Companies.firms_of(loader, "FRA").size():
+		_fail("a burdened nation's walk left a firm out")
+
+
+func _compare_walks(probe, loader, label: String) -> void:
+	var moved := 0
+	for nation_id in probe.nations.keys():
+		var ns = probe.nations[nation_id]
+		var old := _old_walks(ns, loader)
+		var now := [Companies.firm_impulse_pct(ns, loader), Companies.firm_jobs_offset_pct(ns, loader),
+			Companies.dividend_revenue_pct_gdp(ns, loader)]
+		for k in 3:
+			if float(now[k]) != float(old[k]):
+				_fail("%s, %s walk %d: %.17g, the full roster says %.17g" % [label, nation_id, k, float(now[k]), float(old[k])])
+			if float(old[k]) != 0.0:
+				moved += 1
+	if moved < 3:
+		_fail("%s: only %d walks are non-zero -- the comparison is near vacuous" % [label, moved])
+
+
+## The three walks as they stood before V5.0c2: every firm of the roster.
+func _old_walks(ns, loader) -> Array:
+	var impulse := 0.0
+	if ns.gdp_eur_bn > 0.0:
+		var subsidised := 0.0
+		var burdened := 0.0
+		for company in Companies.firms_of(loader, ns.id):
+			var intensity := Companies.subsidy_of(ns, company.id)
+			var burden := Companies.regulation_burden_of(ns, company.sector)
+			if intensity == 0.0 and burden == 0.0:
+				continue
+			var gdp_share: float = Companies.output_eur_bn(ns, company) / ns.gdp_eur_bn
+			subsidised += intensity * gdp_share / CoK.GDP_SHARE_REFERENCE
+			burdened += burden * gdp_share / CoK.GDP_SHARE_REFERENCE
+		impulse = clampf(CoK.SUBSIDY_GROWTH_BETA * subsidised - CoK.REGULATION_GROWTH_BETA * burdened,
+			-CoK.FIRM_IMPULSE_MAX_PCT, CoK.FIRM_IMPULSE_MAX_PCT)
+	var jobs := 0.0
+	var labour_force: float = Demography.labour_force(ns)
+	if labour_force > 0.0:
+		var net_jobs := 0.0
+		for company in Companies.firms_of(loader, ns.id):
+			net_jobs += Companies.headcount(ns, company) - company.headcount
+		if net_jobs != 0.0:
+			jobs = clampf(-100.0 * net_jobs / labour_force, -CoK.FIRM_JOBS_MAX_PCT, CoK.FIRM_JOBS_MAX_PCT)
+	var dividend := 0.0
+	if ns.gdp_eur_bn > 0.0:
+		var paid := 0.0
+		for company in Companies.firms_of(loader, ns.id):
+			var held := Companies.state_share_of(ns, company.id)
+			if held <= 0.0:
+				continue
+			paid += held * Companies.output_eur_bn(ns, company) * CoK.DIVIDEND_YIELD
+		if paid != 0.0:
+			dividend = minf(100.0 * paid / ns.gdp_eur_bn, CoK.DIVIDEND_MAX_PCT_GDP)
+	return [impulse, jobs, dividend]
 
 
 ## Under an open turn memo, with a measure in force, "with" and "before"
@@ -191,7 +337,8 @@ func _check_turn_flavours(state) -> void:
 func _check_memo_invariants() -> void:
 	for path in ["res://src/sim/diplomacy.gd", "res://src/sim/foreign_policy.gd", "res://src/sim/defence.gd",
 			"res://src/sim/diplomacy_verbs.gd", "res://src/sim/coercion.gd", "res://src/core/relations.gd",
-			"res://src/sim/trade.gd", "res://src/core/org.gd"]:
+			"res://src/sim/trade.gd", "res://src/core/org.gd", "res://src/sim/diplomacy_agenda.gd",
+			"res://src/core/parallel.gd"]:
 		var code := _code_only(FileAccess.get_file_as_string(path))
 		for forbidden in ["orgs.gd\")", ".orgs = ", ".orgs.append(", ".orgs.push_back(", ".orgs.erase(",
 				".orgs.remove_at(", ".orgs.clear(", ".orgs.sort(", "org_effects = ", "org_effects[org"]:

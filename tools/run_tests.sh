@@ -15,6 +15,7 @@ tests=(
   tests/test_state_copy.gd
   tests/test_nation_fields.gd
   tests/test_tick_levers.gd
+  tests/test_diplomacy_parallel.gd
   tests/test_electoral_systems.gd
   tests/test_elections.gd
   tests/test_government.gd

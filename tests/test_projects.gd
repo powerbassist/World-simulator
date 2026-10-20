@@ -563,7 +563,7 @@ func _test_the_nine_never_build() -> void:
 		if not (state.nations[id].projects as Dictionary).is_empty():
 			_fail("%s began a project with no player command" % id)
 
-	for path in ["res://src/sim/foreign_policy.gd", "res://src/sim/diplomacy.gd"]:
+	for path in ["res://src/sim/foreign_policy.gd", "res://src/sim/diplomacy.gd", "res://src/sim/diplomacy_agenda.gd"]:
 		var src := FileAccess.get_file_as_string(path)
 		if src.contains("Projects.") or src.contains("projects.gd"):
 			_fail("%s reaches the project verb -- an AI agenda for it is a session, not a line" % path)

@@ -9,8 +9,8 @@ extends RefCounted
 const K = preload("res://src/sim/commodity_constants.gd")
 
 
-## The world pool's requirement for a good at this month's price, with `_want`'s
-## own price response -- the outlines buy less of what grew dear.
+## The world pool's requirement for a good at this month's price, with commodities.gd's
+## `_rows()` price response -- the outlines buy less of what grew dear.
 static func pool_want(endowed: Dictionary, good_id: String, price: Dictionary, loader) -> float:
 	var base := float(loader.commodity_goods[good_id].base_price)
 	var p := float(price.get(good_id, base))
@@ -65,3 +65,96 @@ static func route_natural(good_id: String, nation_ids: Array, capacities: Dictio
 		offered[seller] = float(offered[seller]) - sold
 		pool_need -= sold
 		traded[seller][good_id] = float(traded[seller][good_id]) - sold
+
+
+# --- V4.11b: real endowments and the world pool -----------------------------------
+# docs/commodities-model.md section 8. Everything here is a pure function of the
+# loader's content (authored nation figures, the outline register, the endowment
+# shares), memoised with the recipe tables, so it adds no state and no save field.
+#
+# Moved here from commodities.gd with the V5.0c2 lever, verbatim but for the
+# names; `category_sector` is commodities.gd's CATEGORY_SECTOR, passed in so this
+# file keeps its one preload.
+
+## {} when the loader carries no endowments (a fixture, or the pre-V4.11 model).
+## Otherwise: "goods" (the endowed set), "capacity" {nation: {good: units/month}},
+## "pool_capacity" and "pool_base_want" {good: units/month}.
+##
+## The WORLD VOLUME is the world's REQUIREMENT -- every roster nation's from its
+## AUTHORED sector output through commodities.gd's `_bucket()` formula (what its industry
+## processes), every outline's from its own GDP through the world sector mix --
+## so the world opens balanced and the shares only decide who makes it.
+static func endowment_tables(loader, structure: Dictionary, category_sector: Dictionary) -> Dictionary:
+	var shares = loader.get("commodity_endowments")
+	if not (shares is Dictionary) or (shares as Dictionary).is_empty():
+		return {}
+	var nations: Dictionary = loader.nations
+	var nation_ids: Array = nations.keys()
+	nation_ids.sort()
+	var wss := authored_sector_share(loader, nation_ids)
+	var outlines: Dictionary = loader.get("outlines") if loader.get("outlines") is Dictionary else {}
+	var outline_value := 0.0
+	for outline_id in outlines.keys():
+		outline_value += maxf(float(outlines[outline_id]["gdp_eur_bn"]), 0.0) * 1e9 / 12.0
+
+	var capacity := {}
+	for nation_id in nation_ids:
+		capacity[nation_id] = {}
+	var pool_capacity := {}
+	var pool_base_want := {}
+	var endowed_goods := {}
+	for good_id in (shares as Dictionary).keys():
+		if not loader.commodity_goods.has(good_id):
+			continue
+		var good: Dictionary = loader.commodity_goods[good_id]
+		var sector := String(category_sector.get(String(good.category), "industry"))
+		var weight := float(structure.get(good_id, 0.0)) / float(good.base_price)
+		var roster_need := 0.0
+		for nation_id in nation_ids:
+			var n = nations[nation_id]
+			roster_need += float(n.gdp_eur_bn) * 1e9 / 12.0 * float(n.sectors.get(sector, 0.0)) * weight
+		var outline_want := outline_value * float(wss.get(sector, 0.0)) * weight
+		var world := roster_need + outline_want
+		var good_shares: Dictionary = shares[good_id]
+		var pool_share := 0.0
+		for producer in good_shares.keys():
+			var s := float(good_shares[producer])
+			if nations.has(producer):
+				capacity[producer][good_id] = s * world
+			else:
+				pool_share += s
+		pool_capacity[good_id] = pool_share * world
+		pool_base_want[good_id] = outline_want
+		endowed_goods[good_id] = true
+	return {
+		"goods": endowed_goods,
+		"capacity": capacity,
+		"pool_capacity": pool_capacity,
+		"pool_base_want": pool_base_want,
+	}
+
+
+## The world's sector mix as authored: each nation's measured GDP times its
+## measured sector shares, summed and normalised. Empty when any nation in play
+## has no authored record, so the caller falls back to the live mix.
+static func authored_sector_share(loader, nation_ids: Array) -> Dictionary:
+	var nations = loader.get("nations")
+	if not (nations is Dictionary):
+		return {}
+	var weight := {}
+	var total := 0.0
+	for nation_id in nation_ids:
+		if not nations.has(nation_id):
+			return {}
+		var n = nations[nation_id]
+		var gdp := float(n.gdp_eur_bn)
+		var sectors: Dictionary = n.sectors
+		for sector in sectors.keys():
+			var w := gdp * float(sectors[sector])
+			weight[sector] = float(weight.get(sector, 0.0)) + w
+			total += w
+	if total <= 0.0:
+		return {}
+	for sector in weight.keys():
+		weight[sector] = float(weight[sector]) / total
+	return weight

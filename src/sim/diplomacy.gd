@@ -38,6 +38,7 @@ const CK = preload("res://src/sim/coercion_constants.gd")
 ## only the terms it builds.
 const FP = preload("res://src/sim/foreign_policy.gd")
 const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
+const Agenda = preload("res://src/sim/diplomacy_agenda.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const FPK = preload("res://src/sim/foreign_policy_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
@@ -341,67 +342,12 @@ static func _tick_agenda(state, loader) -> void:
 
 
 ## The best (action, target) `actor_id` could take right now, or {} if nothing
-## clears AGENDA_ACT_MIN.
-##
-## One ForeignPolicy.target_terms() per target rather than per candidate: the pair
-## terms cost a trade-weight read each and the verbs do not move them. See that
-## function for why the split is not a micro-optimisation.
+## clears AGENDA_ACT_MIN. The scoring lives in src/sim/diplomacy_agenda.gd since
+## V5.0c2, where each target is scored on a worker thread; it reaches this file's
+## available() only through the callable handed to it here.
 static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary:
-	var best_score: float = FPK.AGENDA_ACT_MIN
-	var best: Dictionary = {}
-
-	# Once per acting nation, not once per target: the stake vector and the
-	# actor's own before-measures weights are invariant across this loop, and
-	# rebuilding them per target was ~112 full trade-vector builds per acting
-	# nation at the 29-nation roster -- the largest single line in the month
-	# tick's measured budget. target_terms() carries the same reasoning.
-	var sv: Dictionary = FP.stake_vector(state, actor_id)
-	var wbm: Dictionary = Trade.weights_before_measures(state, actor_id)
-	var even: float = FP.even_share(state, actor_id)
-
-	for target_id in ids:
-		if target_id == actor_id:
-			continue
-
-		var offers: Array = available(state, loader.diplomatic_actions, actor_id, target_id)
-		if offers.is_empty():
-			continue
-
-		var terms := FP.target_terms(state, actor_id, target_id, sv, wbm, even)
-
-		for action in offers:
-			# Agreements between an AI and the PLAYER are out of scope, and the
-			# reason is that there is nobody to ask. would_accept_agreement() is the
-			# COUNTERPARTY's decision -- so an AI proposing to the player would have
-			# the interest model answer on the player's behalf, which is the one
-			# thing a single-player game must not do with the player's own foreign
-			# policy. An offer the player answers needs pending state, an expiry and
-			# an accept/refuse surface: a second machine, and the split V1.3e's own
-			# machine-count test would have caught. AI-to-AI agreements are unaffected
-			# and do run.
-			if Verbs.is_agreement_verb(action) and state.nations[target_id].has_budget:
-				continue
-
-			# V1.3g inherits that exclusion exactly, for the same reason and with the
-			# narrower test Verbs.is_pact_signing_verb() explains: would_accept_pact() is
-			# the COUNTERPARTY's decision, so an AI offering the player an alliance
-			# would have the interest model answer on the player's behalf. AI-to-AI
-			# pacts are unaffected and do run, and an AI can still abandon a pact with
-			# the player -- which is the half the agreement version gets wrong.
-			if Verbs.is_pact_signing_verb(action) and state.nations[target_id].has_budget:
-				continue
-
-			var score_v: float = FP.desire_from(terms, action.effects)
-			# Strictly greater, so the sorted iteration order breaks ties and the
-			# answer is reproducible.
-			if score_v > best_score:
-				best_score = score_v
-				best = {
-					"action": action,
-					"target_id": target_id,
-					"reason": FP.act_reason(terms, action.effects),
-				}
-	return best
+	return Agenda.best_act(state, actor_id, ids, func(target_id: String) -> Array:
+		return available(state, loader.diplomatic_actions, actor_id, target_id))
 
 
 ## The kind of measure `actor` has in force against `target`, or "" for none.
@@ -645,7 +591,7 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 	# depended on Dictionary iteration order -- the ordering bug docs/trade-model.md
 	# records the trade probe catching in the impulse, which was invisible until
 	# something finally perturbed a partner.
-	var third_party: Array = FP.third_party_effects(state, actor_id, target_id, delta)
+	var third_party: Array = Agenda.third_party_effects(state, actor_id, target_id, delta)
 	# The last read of the turn: everything below writes (V5.0c's turn memo).
 	Trade.turn_close()
 

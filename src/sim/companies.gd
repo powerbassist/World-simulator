@@ -72,6 +72,7 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const Walk = preload("res://src/sim/companies_walk.gd")
 
 
 ## Seeds the live register from content: every MAJOR starts at its authored share
@@ -536,7 +537,9 @@ static func firm_impulse_pct(ns, loader) -> float:
 		return 0.0
 	var subsidised := 0.0
 	var burdened := 0.0
-	for company in firms_of(loader, ns.id):
+	# Walk.priced(): the firms this walk could price, in roster order; every one it
+	# leaves out adds exactly 0.0 (V5.0c2, the argument is that file's header).
+	for company in Walk.priced(ns, firms_of(loader, ns.id)):
 		var intensity := subsidy_of(ns, company.id)
 		var burden := regulation_burden_of(ns, company.sector)
 		if intensity == 0.0 and burden == 0.0:
@@ -577,7 +580,7 @@ static func firm_jobs_offset_pct(ns, loader) -> float:
 		return 0.0
 
 	var net_jobs := 0.0
-	for company in firms_of(loader, ns.id):
+	for company in Walk.priced(ns, firms_of(loader, ns.id)):
 		net_jobs += headcount(ns, company) - company.headcount
 	if net_jobs == 0.0:
 		return 0.0
@@ -604,7 +607,7 @@ static func dividend_revenue_pct_gdp(ns, loader) -> float:
 	if ns.gdp_eur_bn <= 0.0:
 		return 0.0
 	var paid := 0.0
-	for company in firms_of(loader, ns.id):
+	for company in Walk.priced(ns, firms_of(loader, ns.id)):
 		var held := state_share_of(ns, company.id)
 		if held <= 0.0:
 			continue
@@ -1060,7 +1063,5 @@ static func _sector_of_id(ns, loader, company_id: String) -> String:
 
 
 static func _value_of(ns, loader, company_id: String) -> float:
-	for company in firms_of(loader, ns.id):
-		if company.id == company_id:
-			return value_eur_bn(ns, company)
-	return 0.0
+	var firm = _firm_of(ns, loader, company_id)
+	return value_eur_bn(ns, firm) if firm != null else 0.0
