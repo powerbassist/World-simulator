@@ -374,6 +374,17 @@ it could without moving a number; these it recorded instead.
   **Owner:** V5.1d (the budget forecast's cost, D14). **Fix shape:**
   `Discipline.tick_month(sim, loader)` before `Statute.tick_month` in `project()` and
   in `tests/test_budget.gd`'s mirror, priced against D14's budget.
+- **A held referendum-route amendment is released without its referendum.** A bill
+  carried on route B (a chamber majority, then the country) that a suspensive upper
+  house holds is released by `_tick_held_bills()` through `_review_and_apply()`, so it
+  takes effect and the referendum is never called. The hold entry does not record the
+  route. Only ROU has both a suspensive upper house for amendments and an optional
+  referendum, and ROU is not playable; the probe never reaches it. **Owner:** V5.3b (the
+  decision grammar over `resolve_vote()` and its callers -- the same pass found two
+  more Legislature defects, fixed in V5.0d: the `ordinary_law` bar at exactly half,
+  and a held amendment released under a system it was not written for). **Fix shape:**
+  carry `"route": true` on the hold entry (absent reads false, correct for older saves),
+  and on release call `Referendum.announce()` -- or lapse if one is already in flight.
 - **An orphan firm entry keeps its subsidy bill.** `Companies.subsidy_bill_pct_gdp()`
   (and the two counts) walk the register, not the loader's majors, so an entry whose
   firm a content edit removed or renamed without a `SAVE_VERSION` bump bills forever and

@@ -218,8 +218,10 @@ func _build_result_summary(result: Dictionary) -> Control:
 	# released branch below is the release that DID apply.
 	elif result.get("target_already_gone", false):
 		verdict = "MOOT — its target was already gone from the book."
+	# A LAPSED release (V5.0d) is a release too: the hold ran out under a
+	# constitution the bill was not written for, and nothing came into force.
 	elif result.get("released", false):
-		verdict = "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
+		verdict = "LAPSED — the constitution it amended is gone." if result.get("lapsed", false) else "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
 	PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN)
 
 	# V2.8 review. Two more outcomes with no division behind them, and the tally
@@ -746,8 +748,10 @@ func _on_withdraw() -> void:
 	var law: Law = _find_law(Referendum.pending_law_id(ns))
 	var law_name: String = law.law_name if law != null else Referendum.pending_law_id(ns)
 	var before := Trends.snapshot_now(_state)
+	# A Legislature command, not Referendum.withdraw(): the panel writes no sim
+	# state itself (AGENTS.md rule 2), and the command sets the loss's cooldown.
 	# Nothing in flight (a stale second press): no decision to record.
-	if not Referendum.withdraw(ns).is_empty():
+	if not Legislature.withdraw_referendum(_state, ns, _loader).is_empty():
 		proposed.emit(before, law_name, {"withdrawn": true})
 	_dirty = true
 

@@ -122,6 +122,10 @@ func _check_referendum_verbs_refresh_the_panel(loader, ns) -> void:
 	panel._process(0.0)
 	if _collect_text(panel).contains("REFERENDUM CALLED"):
 		_fail("the panel still shows REFERENDUM CALLED after Call it off")
+	# The tooltip's promise: the same cooldown a lost vote sets (V5.0d -- the
+	# panel called Referendum.withdraw() alone and none was ever set).
+	if law.cooldown_months > 0 and not ns.law_cooldown_months.has(law.id):
+		_fail("Call it off set no cooldown on '%s'" % law.id)
 	panel._on_withdraw()
 	if emitted[0] != 1:
 		_fail("Call it off emitted %d decisions for one withdrawal -- a second press must emit nothing" % emitted[0])
