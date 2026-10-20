@@ -261,9 +261,10 @@ different failures, so `tests/test_save_load.gd` asserts them separately.
   **vanishes**, which is a free withdrawal of the one act this session deliberately made
   un-free. `campaign_started`'s case one commit earlier, and `diplo_months_to_act` at
   U6a.
-- `last_referendum_result` — **not serialised at all**, `last_project_result`'s case.
-  The *absence* is pinned, so a later session storing it turns the test red and has to
-  say why.
+- `last_referendum_result` — serialised since V5.0d, absent-ok (absent reads "no vote
+  yet"). V1.7c left it out as `last_project_result`'s display record, but a membership
+  fight ([[orgs-model]]) advances by reading it the month after the vote, so a save in
+  between lost a won referendum.
 
 The register carries a law id, a countdown and the question's own position, and nothing
 else — V1.4a's discipline, and the position is there because the country must answer the

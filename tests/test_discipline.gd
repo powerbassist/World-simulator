@@ -350,7 +350,13 @@ func _passes_on_party_lines(ns, result: Dictionary, law) -> bool:
 	match law.majority:
 		"simple": return yes > no
 		"absolute": return float(yes) > 0.5 * float(ns.assembly_seats)
-		"amendment": return float(yes) >= LK.AMENDMENT_RULE_FRACTIONS.get(ns.amendment_rule, 2.0 / 3.0) * float(ns.assembly_seats)
+		"amendment":
+			# legislature.gd's rule since V5.0d: a bar at the absolute fraction is
+			# "more than half", the higher ones "at least".
+			var fraction: float = LK.AMENDMENT_RULE_FRACTIONS.get(ns.amendment_rule, 2.0 / 3.0)
+			if fraction <= LK.ABSOLUTE_MAJORITY_FRACTION:
+				return float(yes) > fraction * float(ns.assembly_seats)
+			return float(yes) >= fraction * float(ns.assembly_seats)
 		_: return float(yes) >= (2.0 / 3.0) * float(ns.assembly_seats)
 
 

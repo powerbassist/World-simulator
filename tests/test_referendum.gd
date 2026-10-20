@@ -274,10 +274,10 @@ func _test_withdrawal_is_weakly_dominated() -> void:
 	Legislature.propose(withdrawn, _loader, law, false, true)
 	for bloc in OpinionK.BLOC_KEYS:
 		withdrawn.player().bloc_approval[bloc] = 5.0
-	Referendum.withdraw(withdrawn.player())
-	# The cooldown a withdrawal owes is the law's own, set by the same path a loss uses.
-	if law.cooldown_months > 0:
-		withdrawn.player().law_cooldown_months[law.id] = law.cooldown_months
+	# The player's command, not Referendum.withdraw() alone: the cooldown a
+	# withdrawal owes is the law's own, set by the same path a loss uses. Until
+	# V5.0d this test wrote it by hand and the panel never set it at all.
+	Legislature.withdraw_referendum(withdrawn, withdrawn.player(), _loader)
 
 	var lost = _new_state()
 	Legislature.propose(lost, _loader, law, false, true)
@@ -292,6 +292,10 @@ func _test_withdrawal_is_weakly_dominated() -> void:
 		if not is_equal_approx(a, b):
 			_fail("withdrawing and losing charge %s differently: %.6f against %.6f" % [bloc, a, b])
 			break
+	var cooldown_withdrawn := int(withdrawn.player().law_cooldown_months.get(law.id, 0))
+	var cooldown_lost := int(lost.player().law_cooldown_months.get(law.id, 0))
+	if law.cooldown_months > 0 and (cooldown_withdrawn != cooldown_lost or cooldown_withdrawn <= 0):
+		_fail("withdrawing left a cooldown of %d where losing left %d" % [cooldown_withdrawn, cooldown_lost])
 	if not bool(lost.player().last_referendum_result.get("withdrawn", true)) \
 			and not withdrawn.player().last_referendum_result.get("withdrawn", false):
 		_fail("the result record does not distinguish a withdrawal from a loss")

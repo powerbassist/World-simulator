@@ -185,7 +185,7 @@ const FIELDS := [
 	["amendment_rule", SCALAR, VALUE, "", false],
 	["referendum_mode", SCALAR, VALUE, "", false],
 	["referendum_pending", DEEP, COPIED, {}, false],
-	["last_referendum_result", DEEP, NOT_SAVED, {}, true],  # display record of the last verb
+	["last_referendum_result", DEEP, COPIED, {}, true],  # absent is "no vote yet"; the org fight reads it (V5.0d)
 	["event_queue", DEEP, ROWS, [], false],
 	["event_fired", DEEP, COPIED, {}, false],
 	["event_category_quiet", DEEP, COPIED, {}, false],

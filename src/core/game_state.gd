@@ -1433,9 +1433,8 @@ static func from_dict(d: Dictionary):
 	# could not impose a measure -- which is why V1.3c earns no SAVE_VERSION bump.
 	# The same test scenario_id passed and eu_member/neighbours failed. See the
 	# SAVE_VERSION comment at the top of this file and docs/coercion-model.md.
-	var meas: Dictionary = d.get("measures", {})
-	for directed_key in meas.keys():
-		var entry: Dictionary = meas[directed_key]
+	for directed_key in (d.get("measures", {}) as Dictionary).keys():
+		var entry: Dictionary = d["measures"][directed_key]
 		gs.measures[directed_key] = {
 			"action_id": entry.get("action_id", ""),
 			"action_name": entry.get("action_name", ""),
@@ -1445,6 +1444,11 @@ static func from_dict(d: Dictionary):
 			"since_month": int(entry.get("since_month", 0)),
 			"retaliated": bool(entry.get("retaliated", false)),
 		}
+		# An org's collective measure carries its adopting org (orgs.gd's
+		# _apply_external_measure), the one key a membership flip reads to lift
+		# exactly those measures. Absent on a player's own measure, which is what
+		# "" reads as -- no bump.
+		if entry.has("org"): gs.measures[directed_key]["org"] = String(entry["org"])
 
 	# V1.3g's two registers, re-inted field by field the same way. `pacts` absent
 	# reads as {} and that is CORRECT for every version-12 save -- those games could

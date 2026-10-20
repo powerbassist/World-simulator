@@ -837,10 +837,14 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 		# The memory resets with the rescue; a REAL withdrawal stamps again on
 		# its own (the pass-6 fleet's merged find).
 		entry["subsidy_lapsed_month"] = -1
-		for company in firms_of(loader, ns.id):
-			if company.id == company_id:
-				entry["share"] = company.share
-				break
+		# The authored share, capped at the sector's headroom: rivals may still
+		# hold what a subsidy drained from this firm before it failed, and the
+		# named firms never out-produce their sector (docs/companies-model.md 3).
+		# Nothing drained, nothing capped. The sum takes in this firm's own
+		# share too, which a failure set to 0.0, so it adds nothing.
+		var company = _firm_of(ns, loader, company_id)
+		var others: float = firms_in_sector(loader, ns.id, company.sector).reduce(func(sum: float, other) -> float: return sum + share_of_company(ns, other), 0.0)
+		entry["share"] = minf(company.share, maxf(0.0, 1.0 - others))
 		price = K.RESCUE_BAILOUT_PRICE_SHARE * _value_of(ns, loader, company_id)
 
 	match String(terms.get("op", "")):
