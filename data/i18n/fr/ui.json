@@ -298,7 +298,7 @@
   "State programme %.0f %% · capital %.2f · %+.3f %%/yr to this sector": "Programme d'État %.0f %% · capital %.2f · %+.3f %%/an pour ce secteur",
   "No programme · capital %.2f depreciating · %+.3f %%/yr to this sector": "Aucun programme · capital %.2f en dépréciation · %+.3f %%/an pour ce secteur",
   "No state programme": "Aucun programme d'État",
-  "Chair: %s": "Président : %s",
+  "Chair: %s": "Présidence : %s",
   "private · no support": "privé · sans soutien",
   "%.1f bn · %s jobs · %.1f %% of sector": "%.1f Md · %s emplois · %.1f %% du secteur",
   "worth %.1f bn · %.1f bn held · %.2f bn/yr to the treasury": "vaut %.1f Md · %.1f Md détenus · %.2f Md/an pour le Trésor",
