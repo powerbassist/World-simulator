@@ -13,7 +13,7 @@ extends SceneTree
 ##   .law_name  .event_name  .action_name  .proposal_name  .summary   (the loaded rows)
 ##   Campaign / Pledges / Projects.name_of(                          (the sim's English noun)
 ##   .get("name" | "summary" | "label" | "choice_label" | "event_name" | "effort_name" |
-##        "pledge_name" | "project_name"  and the same keys indexed   (rows and records)
+##        "pledge_name" | "project_name" | "action_name"  and indexed  (rows and records)
 ##   .capitalize()                                                   (an id made into a label)
 ##
 ## A read that is not a row's text to a player -- a UI dictionary's own label, a
@@ -24,7 +24,7 @@ extends SceneTree
 const ROOT := "res://src/ui"
 const OK_MARK := "# i18n: row-ok"
 const ACCESSORS := "row|row_name|row_summary|choice_label|choice_summary|record_event_name|record_choice_label|noun|law_name|law_summary"
-const KEYS := "name|summary|label|choice_label|event_name|effort_name|pledge_name|project_name"
+const KEYS := "name|summary|label|choice_label|event_name|effort_name|pledge_name|project_name|action_name"
 
 var _failures: Array[String] = []
 var _raw: Array[RegEx] = []
@@ -120,6 +120,7 @@ func _self_check() -> void:
 		"var heading := String(record[\"event_name\"])",
 		"button.text = choice.capitalize()",
 		"x = tr(law.summary)",
+		"line.text = tr(\"Alliance: %s\") % pact.get(\"action_name\", \"\")",
 	]
 	var clean := [
 		"PanelKit.line(box, Strings.law_summary(law), PanelKit.Tone.PLAIN)",

@@ -274,7 +274,7 @@ func _refresh_outsider_org(ns, org) -> void:
 		levied += 1
 		worst = maxf(worst, float(terms.get("severity", 0.0)))
 		PanelKit.line(_body, tr("%s: %s, severity %s") % [
-			member_id, terms.get("action_name", terms.get("action_id", "")),
+			member_id, Strings.row("diplomatic-actions", String(terms.get("action_id", "")), "name", String(terms.get("action_name", terms.get("action_id", "")))),
 			Num.f(float(terms.get("severity", 0.0)), 2),
 		], PanelKit.Tone.PLAIN)
 	if levied == 0:

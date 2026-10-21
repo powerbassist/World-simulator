@@ -1772,7 +1772,7 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		if target_id != player_id and (not news_of_others or ForeignPolicy.stake(_state, player_id, actor_id) < floor_share):
 			continue
 
-		var key := String(act["action_name"])
+		var key := Strings.row("diplomatic-actions", String(act.get("action_id", "")), "name", String(act["action_name"]))
 		if not by_action.has(key):
 			by_action[key] = {"aimed": [], "elsewhere": []}
 		if target_id == player_id:
@@ -1783,7 +1783,7 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		else:
 			by_action[key]["elsewhere"].append({
 				"actor": _nation_name(actor_id),
-				"body": "%s: %s." % [String(act["action_name"]), _nation_name(target_id)],
+				"body": "%s: %s." % [key, _nation_name(target_id)],
 			})
 
 	for action_name in by_action:

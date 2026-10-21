@@ -223,7 +223,7 @@ func _refresh_actions() -> void:
 	if _state.agreements.has(Relations.key(player_id, _nation_id)):
 		var entry: Dictionary = _state.agreements[Relations.key(player_id, _nation_id)]
 		agreement_line.text = tr("Agreement: %s, since %d/%d") % [
-			entry.get("action_name", entry.get("action_id", "")),
+			Strings.row("diplomatic-actions", String(entry.get("action_id", "")), "name", String(entry.get("action_name", entry.get("action_id", "")))),
 			int(entry.get("since_month", 0)), int(entry.get("since_year", 0)),
 		]
 	else:
@@ -296,7 +296,7 @@ func _alliance_line(player_id: String) -> Control:
 		return line
 
 	var text := tr("Alliance: %s, since %d/%d") % [
-		pact.get("action_name", pact.get("action_id", "")),
+		Strings.row("diplomatic-actions", String(pact.get("action_id", "")), "name", String(pact.get("action_name", pact.get("action_id", "")))),
 		int(pact.get("since_month", 0)), int(pact.get("since_year", 0)),
 	]
 
@@ -325,7 +325,7 @@ func _measure_line(prefix: String, from_id: String, to_id: String) -> Control:
 		return line
 	line.text = tr("%s: %s, severity %s, since %d/%d") % [
 		prefix,
-		terms.get("action_name", terms.get("action_id", "")),
+		Strings.row("diplomatic-actions", String(terms.get("action_id", "")), "name", String(terms.get("action_name", terms.get("action_id", "")))),
 		Num.f(float(terms.get("severity", 0.0)), 2),
 		int(terms.get("since_month", 0)), int(terms.get("since_year", 0)),
 	]
