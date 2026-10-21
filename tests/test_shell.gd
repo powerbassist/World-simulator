@@ -24,6 +24,15 @@ const Budget = preload("res://src/sim/budget.gd")
 var _failures: Array[String] = []
 var _main
 var _frame := 0
+var _phase := "run"
+var _shut_frames := 0
+var _slicing_frames := 0
+
+## Real frames the engine runs over the month's sweep before the closed-window
+## read: every panel's own _process has had its turns by then.
+const SHUT_FRAMES := 3
+## The sliced month's frames before the check gives up on it.
+const SLICING_FRAMES_MAX := 3000
 
 
 func _init() -> void:
@@ -36,7 +45,28 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let the scene's _ready() run
 
-	_run()
+	if _phase == "run":
+		_run()
+		if not _failures.is_empty() or not _begin_a_month_with_every_window_shut():
+			_finish()
+			return false
+		_phase = "slicing"
+		return false
+	if _phase == "slicing":
+		# The month runs across these frames, a unit budget at a time, with the
+		# windows disabled; it ends with them re-enabled and the month's sweep.
+		_slicing_frames += 1
+		if _main._month_runner.running():
+			if _slicing_frames > SLICING_FRAMES_MAX:
+				_fail("the real-time month was still closing after %d frames" % SLICING_FRAMES_MAX)
+				_finish()
+			return false
+		_phase = "shut"
+		return false
+	_shut_frames += 1
+	if _shut_frames < SHUT_FRAMES:
+		return false
+	_check_the_month_left_every_closed_panel_dirty()
 	_finish()
 	return false
 
@@ -597,6 +627,62 @@ func _check_a_closed_window_costs_nothing() -> void:
 	_main._windows.close_all()
 	if checked < 20:
 		_fail("only %d registered panels were checked for the closed-window gate" % checked)
+
+
+## The test audit's S4: the check above calls each panel's _process by hand,
+## after marking it dirty itself. This one is the game's own path: every window
+## shut, every panel clean, ONE month reached by real time passing -- the sliced
+## path a player gets (src/ui/month_runner.gd: the windows disabled while it
+## closes, re-enabled, then main.gd's sweep), not a hand-driven day's whole
+## month -- then real frames. Each panel must come out dirty -- the month's sweep reached it, so it
+## redraws when its window opens -- and still dirty: none refreshed shut, in
+## whatever order the engine processed it. A month end that stopped marking the
+## panels (an opened window showing last month) and a panel that refreshes
+## hidden both fail here.
+func _begin_a_month_with_every_window_shut() -> bool:
+	_main._windows.close_all()
+	# Nothing in flight before the month: the forecast's projection is drained,
+	# so a job found after it began with its window shut.
+	_main._budget_panel._forecast.drain()
+	var clock: Node = _main.get_node("Clock")
+	# The engine must not advance days on its own; real time is handed in below,
+	# one day of it, as test_month_runner.gd's B game takes its month.
+	clock.set_process(false)
+	clock.set_speed(1)
+	while clock.day < clock._days_in_month(clock.month, clock.year):
+		clock.advance_one_day()
+	# The hand-driven days cleaned nothing and the windows are still shut; the
+	# panels are cleaned HERE, so a dirty one after the month was the month's.
+	_main._windows.close_all()
+	for id in _main._windows.panel_ids():
+		var panel = _main._windows.frame(id)._content
+		if "_dirty" in panel:
+			panel._dirty = false
+	clock.paused = false
+	clock._process(1.0 / clock.SPEED_DAYS_PER_SECOND[0])
+	if not _main._month_runner.running():
+		_fail("real time reaching the 1st did not run its month across frames")
+		return false
+	return true
+
+
+func _check_the_month_left_every_closed_panel_dirty() -> void:
+	var checked := 0
+	for id in _main._windows.panel_ids():
+		var panel = _main._windows.frame(id)._content
+		if not ("_dirty" in panel) or _main._windows.is_open(id):
+			continue
+		if not panel._dirty:
+			_fail("after a month with every window shut, the '%s' panel is clean -- it refreshed hidden, or the month never marked it" % id)
+		checked += 1
+	if checked < 20:
+		_fail("only %d registered panels were read after the shut month" % checked)
+	# The budget's forecast has a gate of its own (budget_forecast.gd's
+	# is_visible_in_tree()), and the forecast test reaches it only through the
+	# panel's own hide(), which a `visible` gate passes too -- P2's exact trap.
+	# The month made "now" due; with the window shut it must not begin.
+	if not _main._windows.is_open("budget") and _main._budget_panel._forecast._job != null:
+		_fail("the budget forecast began a projection with its window shut")
 
 
 ## V5.1-0a review pass 1: the Tax Code window commits through Budget.commit()

@@ -242,6 +242,10 @@ tests=(
   tests/test_ui_theme.gd
   tests/test_overview_panel.gd
   tests/test_save_load.gd
+  # The test audit: a PLAYED game through the disk -- the reflective walk over
+  # a state nobody hand-built, no NAN in the save, and twelve months after the
+  # load identical to twelve months without one.
+  tests/test_save_continuity.gd
   tests/test_balance.gd
   # The game's month as ONE function: its step order, the hook as a seam, and
   # no hand copy of the month left in any harness.

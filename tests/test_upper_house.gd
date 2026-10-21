@@ -190,6 +190,7 @@ func _test_the_chamber_votes_unwhipped() -> void:
 	# Assembly carries a bonus the same party does not get in the second chamber.
 	var law = _law("emissions_standards")
 	if law == null:
+		_fail("emissions_standards is not in data/laws -- the coalition-bonus check would measure nothing")
 		return
 	var moved := 0
 	for party in _parties():
