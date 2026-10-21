@@ -1,5 +1,5 @@
 {
-  "_note": "The glossary table (docs/design/glossary-tooltips.md): 48 ranked terms, English only. `definition` is one line (about 200 characters at most); `body` is shown under it when the tooltip is locked. `see_also` lists entry ids; the loader refuses an unknown one. `live` names a SHOWN value in the table the UI owns (rule L1: the headline poll, never the hidden approval; Credit.yield_pct and Credit.rating are reads, never stored fields). `model` is `<doc>#<heading>` of the docs/*-model.md section the definition summarises (P4). A PR that changes a cited section re-reads its entries in the same PR (P4b); state_stake and programme are known to go stale in V5.3. French is parked.",
+  "_note": "The glossary table (docs/design/glossary-tooltips.md): 48 ranked terms, English only. `definition` is one line (about 200 characters at most); `body` is shown under it when the tooltip is locked. `see_also` lists entry ids; the loader refuses an unknown one. `live` names a SHOWN value in the table the UI owns (rule L1: the headline poll, never the hidden approval; Credit.yield_pct and Credit.rating are reads, never stored fields). `model` is `<doc>#<heading>` of the docs/*-model.md section the definition summarises (P4); a LIST of such anchors where a definition draws on several sections. A PR that changes a cited section re-reads its entries in the same PR (P4b); state_stake and programme are known to go stale in V5.3. French is parked.",
   "terms": [
     {
       "id": "programme",
@@ -17,7 +17,7 @@
       "id": "approval",
       "term": "approval",
       "definition": "How much the voters back you: each voter bloc's satisfaction with the issues it cares about, averaged by the bloc's size. It moves a quarter of the way to its target each month.",
-      "body": "A bloc with nothing to complain about sits at 50. Its target moves between about 10 and 90 as the issues it weighs get better or worse.",
+      "body": "A bloc with nothing to complain about sits at 50. Its target moves between about 10 and 90 as the issues it weighs get better or worse. Some acts (a forced bill, a reshuffle, a referendum result, a broken pledge) also add a standing offset to a bloc's approval.",
       "see_also": [
         "poll",
         "voter_bloc",
@@ -58,7 +58,6 @@
         "relations",
         "state_visit"
       ],
-      "live": "embassy_held",
       "model": "diplomacy-model#The embassies that already exist (V5.1-0d)"
     },
     {
@@ -72,7 +71,10 @@
         "gdp"
       ],
       "live": "spending_share",
-      "model": "economy-model#Budget"
+      "model": [
+        "economy-model#Budget",
+        "cabinet-model#Effectiveness multiplies the delta, not the level"
+      ]
     },
     {
       "id": "tax_rate",
@@ -89,7 +91,7 @@
     {
       "id": "deficit",
       "term": "deficit",
-      "definition": "Spending minus revenue in a year, as a share of GDP. A deficit adds to the debt; the voters who care about public finances count it.",
+      "definition": "Spending minus revenue in a year, as a share of GDP. A deficit adds to the debt; the voters who care about public finances judge how it has changed since you took office.",
       "see_also": [
         "debt",
         "spending",
@@ -290,6 +292,7 @@
       "id": "referendum",
       "term": "referendum",
       "definition": "A second ratification stage, never a way around the Assembly: the country votes on top of it. Winning one is a mandate; calling one and losing it costs approval.",
+      "body": "For a constitutional amendment it can stand in for the supermajority where the constitution allows. Calling one off costs exactly what losing it would.",
       "see_also": [
         "amendment",
         "approval"
@@ -318,7 +321,10 @@
         "amendment"
       ],
       "live": "held_bill",
-      "model": "upper-house-model#8. The hold is pure time, and time turned out not to be a cost"
+      "model": [
+        "upper-house-model#8. The hold is pure time, and time turned out not to be a cost",
+        "upper-house-model#10. Article 49.3 is the way past the second chamber"
+      ]
     },
     {
       "id": "term_limit",
@@ -350,7 +356,6 @@
         "cabinet",
         "approval"
       ],
-      "live": "reshuffles_this_term",
       "model": "cabinet-model#The player command"
     },
     {
@@ -384,7 +389,11 @@
         "judicial_independence"
       ],
       "live": "unrest",
-      "model": "unrest-model#1. The session where two rules that were pulling apart finally agree"
+      "model": [
+        "unrest-model#1. The session where two rules that were pulling apart finally agree",
+        "media-model#6. Press freedom: two prices, and no legitimacy quantity was invented",
+        "judiciary-model#7. `JUDICIAL_UNREST_BETA` — set by ratio, because the band could not select"
+      ]
     },
     {
       "id": "relations",
@@ -407,13 +416,12 @@
         "treaty",
         "relations"
       ],
-      "live": "meeting_window",
       "model": "calendar-model#The meeting window"
     },
     {
       "id": "council",
       "term": "council",
-      "definition": "The Union's decision body. A proposal divides by qualified majority or unanimity; the sponsor lobbies members, and you can bargain for votes.",
+      "definition": "An international organisation's decision body (the Union's council, for France). A proposal divides by qualified majority or unanimity; the sponsor lobbies members, and you can bargain for votes.",
       "see_also": [
         "bargain",
         "ratification"
@@ -456,14 +464,17 @@
     {
       "id": "treaty",
       "term": "treaty / agreement",
-      "definition": "An agreement between two nations that changes the trade between them; the partner must accept it.",
+      "definition": "A bilateral treaty or agreement between two nations that changes the trade between them; the partner must accept it.",
       "see_also": [
         "state_visit",
         "relations",
         "tariff"
       ],
       "live": "agreements_in_force",
-      "model": "trade-model#4. Agreements — no new content type"
+      "model": [
+        "foreign-policy-model#3. Whether a partner signs — V1.3b's stopgap",
+        "trade-model#4. Agreements — no new content type"
+      ]
     },
     {
       "id": "tariff",
