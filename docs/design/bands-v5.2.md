@@ -37,7 +37,9 @@ they built and where, and say what they do not know and why" ([[v5]], head).
 ## The frame: a play gate sees a third of a term
 
 - **INFERRED (save and log timestamps):** the author's V5.0 session covered about
-  22 game months in about 27 real minutes ([[v5.2-spec]], "the baseline"). So a
+  22 game months in about 27 real minutes: the save `ABOBA.json` holds the game
+  date 2027-11-08 and was written 27 minutes after the session's log began
+  ([[v5.2-spec]], "the baseline", which cites both). So a
   30-minute play gate sees roughly the first 20 months of a 60-month term.
 - Every per-term band below therefore carries a **first-20-months** corollary,
   because a band met only in years four and five is a band the play gate never
@@ -108,31 +110,41 @@ they built and where, and say what they do not know and why" ([[v5]], head).
 | A decline-everything term: acts (brief, resign, defect, challenge) by a person the player declined, by month 60 | **at least 1** |
 | Same, by month 20 | **at least 1** visible consequence on a card (a grudge level named in words) |
 | A request left unanswered past its window costs at least what an explicit decline of the same request costs | **100 %** of requests |
-| An idle term (every request lapses into a decline, the author's call of 2026-10-21) against the accepted table with no requests at all: the change in France's 2027 executive vote share | **at most 0.02** |
+| The hands-off France run, every request lapsing into a decline (the author's call of 2026-10-21), against the accepted table with no requests: the **2027 executive verdict** | **unchanged** (HELD stays HELD) |
+| The same comparison: the change in the **2027 margin** | **at most 0.017** in absolute value |
 
-- **Why the ceiling (MEASURED anchor):** the hands-off France run holds the 2027
-  election by a margin of 0.034 (QA's accepted base table
-  `.superpowers/sdd/qa/base-4d2ce395.json`, the V5.1-0d re-baseline the author
-  accepted: regime `hands_off`, FRA 2027-05, `margin` 0.0343). A ceiling of 0.02 keeps refusals alone from deciding
-  the election: refusing costs relationships, and the relationships cost votes
-  later, through the acts.
-- **Why the comparison changed (the author's call, 2026-10-21):** an unanswered
-  request is a decline once its window passes ([[v5.2-spec]], "The author's
-  answers", 3). An idle term therefore declines everything by lapse, so the
-  ceiling now compares that idle term with the table before V5.2, the
-  accepted base. **This row is also the bound on the re-baseline** that Systems
-  predicts and the author accepts at build time: the hands-off France run must
-  not lose the 2027 election to lapsed requests alone.
-- **Probe:** `tools/audience_probe.gd`: regime A3 (decline every request
-  explicitly) against A1 (every request lapses), for the lapse row; A1 against
-  the accepted base table (today `base-4d2ce395.json`, or the base Systems
-  names at build time), for the ceiling. The card half is a UI check: a proposed
-  `tests/test_playability.gd` entry (below).
+- **Why the margin and not the vote share (MEASURED anchor):** the hands-off
+  France run holds the 2027 election by a margin of 0.034 (QA's accepted base
+  table `.superpowers/sdd/qa/base-4d2ce395.json`, the V5.1-0d re-baseline the
+  author accepted: regime `hands_off`, FRA 2027-05, `margin` 0.0343). A first
+  draft bounded the vote share at 0.02, which does not protect that margin: a
+  share the incumbent loses to the runner-up moves the margin by twice as much,
+  so a 0.018 loss would flip the election inside the band (QA's finding). The
+  band therefore bounds the margin itself, at half the anchor, so even the
+  worst case leaves the incumbent ahead, and states the verdict outright so a
+  reading of the number cannot hide a flip. Refusing costs relationships, and
+  the relationships cost votes later, through the acts; it must not decide the
+  election on its own.
+- **Why the comparison is idle against the accepted base (the author's call,
+  2026-10-21):** an unanswered request is a decline once its window passes
+  ([[v5.2-spec]], "The author's answers", 3). An idle term therefore declines
+  everything by lapse, so the band compares it with the table before V5.2.
+  **This row is also the bound on the re-baseline** that Systems predicts and
+  the author accepts at build time.
+- **Probe, the path that already works:** `tools/balance_probe.gd -- --json=PATH`
+  at the build tip, regime `hands_off`, against `base-4d2ce395.json` (or the
+  base Systems names at build time), compared with
+  `python tools/balance_diff.py base.json tip.json`. The table already carries
+  `verdict`, `vote_share` and `margin`, and `balance_diff.py` reports a FLIP or
+  a MARGIN move. The lapse-against-decline row is `tools/audience_probe.gd`'s:
+  regime A3 (decline every request explicitly) against A1 (every request
+  lapses). The card half is a UI check: a proposed `tests/test_playability.gd`
+  entry (below).
 - **Failure looks like:** a decline that changes no register, or one that
   changes a register no surface shows (Q2 unanswerable); no act in a
-  decline-everything term (refusing is free); a swing above 0.02 (refusing is
-  ruinous on its own); a lapse cheaper than a decline (ignoring becomes the
-  best answer).
+  decline-everything term (refusing is free); a 2027 flip or a margin move
+  above 0.017 (refusing is ruinous on its own); a lapse cheaper than a decline
+  (ignoring becomes the best answer).
 
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
 
@@ -174,6 +186,7 @@ want, against one) × the channel (audience, phone call).
 | Pairs of levers where one is at least as good on success **and** no costlier on every register, in every cell (Pareto dominance) | **0** |
 | Share of cells in which one lever has the best net value | **at most 40 %** for any lever |
 | Share of cells in which each lever has the best net value | **at least 5 %** for every lever |
+| The denominator of both shares, per lever | the cells **in which that lever is offered**: the whole grid for five levers, and only the friend-or-closer half for appeal to friendship, which is not offered below friend |
 | A phone call's odds against an audience's, same lever, same cell | **at least 0.10 lower** |
 | The answers to a request — book, delegate, decline, and leaving it unanswered — any one of them the best net value over all requests | **at most 50 %** of requests |
 
@@ -205,7 +218,7 @@ Over 200 seeded runs (salts), France, otherwise idle.
 | **Always:** every offer accepted — exposed by month 60 | **at least 80 %** of runs |
 | **Always:** median months to the first exposure | **at most 24** |
 | Exposure odds by currency, for the same act size | **favours < party money < personal wealth < diverted budget** |
-| Exposures by route in the "always" regime | **each route at least 20 %**: the press and the courts |
+| Exposures by route in the "always" regime | **each of the four routes at least 10 %**: the press, the courts, the auditors, a turned person ([[v5.2-spec]], the currencies table) |
 
 - **Why (OPINION):** one bribe in a term should usually stay hidden, or
   corruption is never worth trying; a habit should almost always be found, and
@@ -215,9 +228,10 @@ Over 200 seeded runs (salts), France, otherwise idle.
 - **Probe:** `tools/shadows_probe.gd`, regimes S1 (once) and S2 (always).
 - **Failure looks like:** "always" exposed under 80 % (corruption is free);
   "once" exposed over 30 % (never worth it); the order broken (one currency
-  dominates the others); one route carrying nearly every exposure (the courts'
-  half of "exposure through the press and the courts" is a new trigger,
-  [[v5.2-spec]] C7, and the easiest to leave unbuilt).
+  dominates the others); a route that never fires (the courts' half of
+  "exposure through the press and the courts" is a new trigger,
+  [[v5.2-spec]] C7, and the easiest to leave unbuilt; a turned person needs the
+  relationship register to reach rival or enemy).
 
 ## B7 — The affair is dangerous
 
@@ -259,8 +273,9 @@ Over 200 seeded runs (salts), France, otherwise idle.
 - **I3 — A scene holds the clock** while it is open ([[v5-reflection]] T11).
 - **I4 — The re-baseline is predicted, not discovered.** Since the author's call
   of 2026-10-21, an unanswered request is a decline, so the 51-regime table
-  moves on the played nation's rows ([[v5.2-spec]], "The re-baseline: the table
-  WILL move"). Systems writes the predicted re-baseline before the run, measures
+  may move on the played nation's rows, and the campaign regimes also through
+  party money ([[v5.2-spec]], "The re-baseline: the table WILL move", which
+  lists the rows that cannot move). Systems writes the predicted re-baseline before the run, measures
   it, and the author accepts it before the merge; B3's ceiling bounds it. The AI
   nations book no audiences and receive no requests.
 
@@ -268,7 +283,8 @@ Over 200 seeded runs (salts), France, otherwise idle.
 
 | Probe | Regimes | Bands |
 |---|---|---|
-| `tools/audience_probe.gd` | A1 idle, A2 book everything, A3 decline everything | B1, B2, B3 |
+| `tools/audience_probe.gd` | A1 idle, A2 book everything, A3 decline everything | B1, B2, B3 (all but the 2027 rows) |
+| `tools/balance_probe.gd` (exists) + `tools/balance_diff.py` | `hands_off` at the build tip against the accepted base | B3's 2027 verdict and margin |
 | `tools/lever_probe.gd` | L1 by knowledge band, L2 the grid | B4, B5 |
 | `tools/shadows_probe.gd` | S1 once, S2 always, S3 affair, S4 lies | B6, B7, B8 |
 
