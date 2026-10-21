@@ -29,7 +29,8 @@ extends RefCounted
 ##      address 0. Trade._raw()'s `state == _mass_state` is reached only while
 ##      the masses table is open, so its first run was always on every worker
 ##      at once: a SIGSEGV in CI, and in a fresh-bytecode stress on the Linux
-##      build 4 processes in 6 (0 in 6 with one run on the caller first). Element
+##      build 6 processes in 12 (0 in 6 with one run on the caller first;
+##      tools/opcache_race_probe.gd). Element
 ##      0 primes every operator on its own path before the pool starts, for one
 ##      element's time per fan-out. A branch element 0 skips -- score_targets()
 ##      element 0 with no offer returns before target_terms() -- is primed by
