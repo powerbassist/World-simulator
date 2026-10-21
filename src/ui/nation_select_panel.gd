@@ -181,8 +181,8 @@ func _show_starts(n) -> void:
 	# docs/ describes, and burying it under the authored starts would make the
 	# baseline look like one variant among several.
 	_list.add_child(_build_start_row(
-		n.id, "", "Standard",
-		"The nation as it really stands. The baseline every other start varies from."
+		n.id, "", tr("Standard"),
+		tr("The nation as it really stands. The baseline every other start varies from.")
 	))
 
 	for s in _scenarios_by_nation[n.id]:

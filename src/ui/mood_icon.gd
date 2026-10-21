@@ -11,6 +11,7 @@ extends Control
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 const SIZE := Vector2(22, 22)
 
@@ -30,12 +31,12 @@ func _ready() -> void:
 
 
 static func _tooltip_for(value: int) -> String:
-	var mood := "Steady"
+	var mood := Strings.t("Steady")
 	match value:
-		Portrait.Emotion.PLEASED: mood = "Pleased"
-		Portrait.Emotion.WORRIED: mood = "Worried"
-		Portrait.Emotion.WEARY: mood = "Weary"
-	return "%s -- the president's mood follows approval." % mood
+		Portrait.Emotion.PLEASED: mood = Strings.t("Pleased")
+		Portrait.Emotion.WORRIED: mood = Strings.t("Worried")
+		Portrait.Emotion.WEARY: mood = Strings.t("Weary")
+	return Strings.t("%s -- the president's mood follows approval.") % mood
 
 
 ## How far the mouth bends: positive smiles, negative frowns.

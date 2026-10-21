@@ -51,8 +51,14 @@ var _loader
 ## main.gd after every window is registered, so an alert names the window the way
 ## the shell does (the review caught "the events window" for Dispatches).
 var window_hints := {}
+const FIGURE_GAP := 26
+const FIGURE_GAP_MIN := 6
+
 ## The row the figures sit in -- read by the walker test's width check.
 var _figures: HBoxContainer
+## The gap between the figures as last set, so a day that changes nothing does not
+## re-lay the bar.
+var _gap := FIGURE_GAP
 var _tools: HBoxContainer
 
 
@@ -69,7 +75,7 @@ func _ready() -> void:
 	row.add_child(_spacer())
 
 	_figures = HBoxContainer.new()
-	_figures.add_theme_constant_override("separation", 26)
+	_figures.add_theme_constant_override("separation", FIGURE_GAP)
 	row.add_child(_figures)
 	for id in StripReadings.ORDER:
 		_figures.add_child(_build_figure(id, tr(String(StripReadings.CAPTIONS[id]))))
@@ -196,9 +202,25 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		value.theme_type_variation = UiTheme.FIGURE if alert.is_empty() else UiTheme.FIGURE_ALERT
 		var lines: Array = (r["lines"] as Array).duplicate()
 		if not alert.is_empty():
-			lines.append({"text": "Open %s." % _window_hint(alert), "child_id": ""})
+			lines.append({"text": tr("Open %s.") % _window_hint(alert), "child_id": ""})
 		_tips[id] = lines
 		_popup.update_lines(id, lines)
+	_fit_figures()
+
+
+## The gaps between the figures give way before the screen does. At 26 px they are
+## 286 px of the bar; a longer language's captions and values would otherwise push SAVE
+## and MENU off the right edge (V5.1b; the shell in V5.1c re-lays the bar).
+func _fit_figures() -> void:
+	var gaps := maxi(_figures.get_child_count() - 1, 1)
+	# Over by how much at the NATURAL gap, whatever the gap is now.
+	var over := get_combined_minimum_size().x - get_viewport_rect().size.x + (FIGURE_GAP - _gap) * gaps
+	var gap := FIGURE_GAP
+	if over > 0.0:
+		gap = maxi(FIGURE_GAP_MIN, FIGURE_GAP - ceili(over / gaps) - 1)
+	if gap != _gap:
+		_gap = gap
+		_figures.add_theme_constant_override("separation", gap)
 
 
 ## "Economy (E)" -- the hint main.gd read off the window manager; the bare id only

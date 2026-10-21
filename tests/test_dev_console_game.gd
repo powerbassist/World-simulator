@@ -338,9 +338,21 @@ func _check_overlay() -> bool:
 	_closing_frames += 1
 	if _closing_frames < 3:
 		return false
+	# The month line ranks steps by their measured time, and a loaded machine
+	# reorders them (QA's pool: Events first, Economy out of the top five), so the
+	# step it must name is the heaviest by the runner's own table, never one by name.
+	var costs: Dictionary = _b._month_runner.last_month_costs
+	var heaviest := ""
+	var total := 0
+	for step in costs:
+		total += int(costs[step])
+		if heaviest.is_empty() or int(costs[step]) > int(costs[heaviest]):
+			heaviest = String(step)
 	var text: String = _console_b._overlay.text
-	if not (text.contains("frame") and text.contains("month") and text.contains("Economy")):
-		_fail("the perf overlay does not show frame time and the month's costs: %s" % text)
+	if heaviest.is_empty() or not (text.contains("frame") and text.contains("month %d ms" % roundi(total / 1000.0)) \
+			and text.contains(heaviest)):
+		_fail("the perf overlay does not show frame time and the month's costs (heaviest %s, %d usec): %s" % [
+			heaviest, total, text])
 	if not String(_console_b._counter.text).contains("ERR") or String(_console_b._counter.text).contains("ERR 0"):
 		_fail("the error counter did not count a pushed error: %s" % _console_b._counter.text)
 	var listing: String = _console_b.run_command("errors")

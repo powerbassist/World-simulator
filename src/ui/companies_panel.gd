@@ -42,9 +42,10 @@ const Investment = preload("res://src/sim/investment.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Num = preload("res://src/ui/num.gd")
 
 const SECTOR_LABEL := {
-	"agriculture": "Agriculture", "industry": "Industry", "services": "Services",
+	"agriculture": "Agriculture", "industry": "Industry", "services": "Services",  # i18n: msgid
 }
 
 var _state
@@ -205,8 +206,8 @@ func _build_autonomy_sections(ns) -> void:
 		# bidder resolves through the loader like every other surface -- the
 		# raw three-letter id read as a country's name on the shipped frame
 		# (the pass-4 fleet's find).
-		PanelKit.line(_body, tr("%s offers %.1f bn for %s -- %d months left.") % [
-			_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
+		PanelKit.line(_body, tr("%s offers %s bn for %s -- %d months left.") % [
+			_loader.nation_name(String(bid["bidder_nation"])), Num.f(float(bid["price_eur_bn"]), 1),
 			firm_name, int(bid["months_left"])])
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
@@ -274,26 +275,26 @@ func _firm_object(nation_id: String, company_id: String):
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
 	PanelKit.heading(_body, tr("The public account"))
-	PanelKit.row(_body, tr("Subsidy bill"), tr("%.3f %% of GDP") % ns.subsidy_bill_pct_gdp)
+	PanelKit.row(_body, tr("Subsidy bill"), tr("%s %% of GDP") % Num.f(ns.subsidy_bill_pct_gdp, 3))
 	# V1.4c. On the same ledger and not on a second one, because it is the same
 	# register read from the other side of the budget -- and it lags a month, like the
 	# bill above it, so a firm nationalised this month shows 0.000 until the next tick.
-	PanelKit.row(_body, tr("Dividend income"), tr("%.3f %% of GDP") % ns.dividend_revenue_pct_gdp)
-	PanelKit.row(_body, tr("Growth effect"), tr("%+.3f %%/yr") % ns.firm_impulse_pct)
+	PanelKit.row(_body, tr("Dividend income"), tr("%s %% of GDP") % Num.f(ns.dividend_revenue_pct_gdp, 3))
+	PanelKit.row(_body, tr("Growth effect"), tr("%s %%/yr") % Num.fs(ns.firm_impulse_pct, 3))
 	# Signed the way the player reads it -- jobs, not unemployment points -- because
 	# the stored figure is an offset ADDED to structural unemployment and a positive
 	# number there is bad news. Flipping it here rather than storing it flipped keeps
 	# economy.gd's sum readable.
-	PanelKit.row(_body, tr("Jobs effect"), tr("%+.3f pts unemployment") % ns.firm_jobs_offset_pct)
+	PanelKit.row(_body, tr("Jobs effect"), tr("%s pts unemployment") % Num.fs(ns.firm_jobs_offset_pct, 3))
 	# V1.6e, on the same ledger as the subsidy bill because it is the other half of
 	# one question -- what the state is spending on the productive economy -- and it
 	# lags a month for the same reason.
-	PanelKit.row(_body, tr("Investment bill"), tr("%.3f %% of GDP") % ns.investment_bill_pct_gdp)
+	PanelKit.row(_body, tr("Investment bill"), tr("%s %% of GDP") % Num.f(ns.investment_bill_pct_gdp, 3))
 	# The trend the capital has BOUGHT, not the growth it is producing this month.
 	# Those are different quantities and the difference is the whole lever: the bill
 	# lands immediately and this number takes years to arrive, which is why both are
 	# printed rather than one summary of them.
-	PanelKit.row(_body, tr("Trend bought"), tr("%+.3f %%/yr") % Investment.national_trend_shift_pct(ns))
+	PanelKit.row(_body, tr("Trend bought"), tr("%s %%/yr") % Num.fs(Investment.national_trend_shift_pct(ns), 3))
 
 
 func _build_sector(ns, sector: String) -> void:
@@ -312,11 +313,11 @@ func _build_sector(ns, sector: String) -> void:
 	var burden: float = Companies.regulation_burden_of(ns, sector)
 	var rule := ""
 	if burden > 0.0:
-		rule = " · regulated %+.2f" % burden
+		rule = tr(" · regulated %s") % Num.fs(burden, 2)
 	elif burden < 0.0:
-		rule = " · deregulated %+.2f" % burden
+		rule = tr(" · deregulated %s") % Num.fs(burden, 2)
 	PanelKit.heading(_body, tr("%s · %.0f bn · %.0f %% named%s") % [
-		SECTOR_LABEL.get(sector, sector), sector_output, 100.0 * named, rule,
+		tr(SECTOR_LABEL.get(sector, sector)), sector_output, 100.0 * named, rule,
 	])
 
 	_build_investment(ns, sector)
@@ -360,9 +361,7 @@ func _build_body(ns, sector: String, body: Array) -> void:
 		# Critical 1, V1.6d's present-figure-as-zero class.
 		share += Companies.share_of_company(ns, company)
 		jobs += Companies.headcount(ns, company)
-	PanelKit.line(_body, tr("BODY · %d firms · %.2f of sector · %s jobs") % [
-		body.size(), share, _thousands(jobs),
-	])
+	PanelKit.line(_body, tr("BODY · %d firms · %s of sector · %s jobs") % [body.size(), Num.f(share, 2), _thousands(jobs)])
 	var ranked := body.duplicate()
 	var live_jobs := {}
 	for company in body:
@@ -397,17 +396,13 @@ func _build_investment(ns, sector: String) -> void:
 
 	var state_label := Label.new()
 	if intensity > 0.0:
-		state_label.text = tr("State programme %.0f %% · capital %.2f · %+.3f %%/yr to this sector") % [
-			100.0 * intensity, capital, shift,
-		]
+		state_label.text = tr("State programme %.0f %% · capital %s · %s %%/yr to this sector") % [100.0 * intensity, Num.f(capital, 2), Num.fs(shift, 3)]
 		state_label.theme_type_variation = UiTheme.GOOD_TEXT
 	elif capital > 0.0:
 		# The withdrawn case, and it needs its own line rather than falling into the
 		# one below: the money has stopped and the capital has not gone, which is the
 		# half of this model a single "no programme" caption would misreport.
-		state_label.text = tr("No programme · capital %.2f depreciating · %+.3f %%/yr to this sector") % [
-			capital, shift,
-		]
+		state_label.text = tr("No programme · capital %s depreciating · %s %%/yr to this sector") % [Num.f(capital, 2), Num.fs(shift, 3)]
 		state_label.theme_type_variation = UiTheme.CAPTION
 	else:
 		state_label.text = tr("No state programme")
@@ -472,9 +467,9 @@ func _build_firm(ns, company) -> void:
 	var held := Companies.state_share_of(ns, company.id)
 	var parts: Array[String] = []
 	if held > 0.0:
-		parts.append("public %.0f %%" % (100.0 * held))
+		parts.append(tr("public %.0f %%") % (100.0 * held))
 	if intensity > 0.0:
-		parts.append("subsidised %.0f %%" % (100.0 * intensity))
+		parts.append(tr("subsidised %.0f %%") % (100.0 * intensity))
 
 	var state_label := Label.new()
 	if parts.is_empty():
@@ -489,10 +484,10 @@ func _build_firm(ns, company) -> void:
 	# One caption line rather than three rows: revenue, workforce and share are the
 	# firm's whole readout and a row each would treble this panel's height for a
 	# register that already has eighteen entries across the roster.
-	PanelKit.line(block, tr("%.1f bn · %s jobs · %.1f %% of sector") % [
-		Companies.output_eur_bn(ns, company),
+	PanelKit.line(block, tr("%s bn · %s jobs · %s %% of sector") % [
+		Num.f(Companies.output_eur_bn(ns, company), 1),
 		_thousands(Companies.headcount(ns, company)),
-		100.0 * Companies.share_of(ns, company.id),
+		Num.f(100.0 * Companies.share_of(ns, company.id), 1),
 	])
 
 	# V1.4c. The price is DERIVED, so it exists nowhere an author could have written
@@ -502,12 +497,12 @@ func _build_firm(ns, company) -> void:
 	var money := Label.new()
 	var value := Companies.value_eur_bn(ns, company)
 	if held > 0.0:
-		money.text = tr("worth %.1f bn · %.1f bn held · %.2f bn/yr to the treasury") % [
-			value, held * value,
-			held * Companies.output_eur_bn(ns, company) * CompaniesK.DIVIDEND_YIELD,
+		money.text = tr("worth %s bn · %s bn held · %s bn/yr to the treasury") % [
+			Num.f(value, 1), Num.f(held * value, 1),
+			Num.f(held * Companies.output_eur_bn(ns, company) * CompaniesK.DIVIDEND_YIELD, 2),
 		]
 	else:
-		money.text = tr("worth %.1f bn") % value
+		money.text = tr("worth %s bn") % Num.f(value, 1)
 	money.theme_type_variation = UiTheme.CAPTION
 	block.add_child(money)
 
@@ -542,7 +537,7 @@ func _on_act(ns, company, action) -> void:
 		# split) is the sim's, verbatim; a refusal with none reads as refused
 		# plainly rather than silently.
 		var reason := String(result.get("reason", ""))
-		_last_refusal = "%s refused%s" % [action.action_name, " -- %s" % reason if reason != "" else "."]
+		_last_refusal = tr("%s refused%s") % [action.action_name, " -- %s" % reason if reason != "" else "."]
 		_dirty = true
 		return
 	_last_refusal = ""

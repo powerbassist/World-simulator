@@ -37,6 +37,7 @@ signal closed
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## When a good reads as short: the value of what the country made plus what it
 ## bought, against the value of what it wanted, below this fraction.
@@ -73,7 +74,7 @@ const SHORTAGE_COVERAGE := 0.25
 ## `PanelKit.section()` renders -- it tracks and upper-cases the section's own
 ## heading -- and a constant that held the mixed-case form would be a string no
 ## label on screen ever carries.
-const SHORTAGE_HEADING := "SHORTAGES"
+const SHORTAGE_HEADING := "SHORTAGES"  # i18n: msgid
 
 ## At most this many rows in the alert list, with the rest counted. A shortage
 ## wall is the state this alert exists to summarise, and printing sixty rows of
@@ -197,21 +198,21 @@ func _build_alert(ns) -> void:
 	if short.is_empty():
 		return
 
-	var body := PanelKit.section(_body, SHORTAGE_HEADING)
+	var body := PanelKit.section(_body, tr(SHORTAGE_HEADING))
 
 	var rows: Array = []
 	for i in mini(ALERT_HEAD, short.size()):
 		var good_id := String(short[i]["id"])
 		rows.append([
 			_good_name(good_id),
-			"%.0f%% covered" % (100.0 * float(short[i]["coverage"])),
+			tr("%.0f%% covered") % (100.0 * float(short[i]["coverage"])),
 		])
 	PanelKit.ledger(body, rows)
 	if short.size() > ALERT_HEAD:
 		PanelKit.line(body, tr("and %d more.") % (short.size() - ALERT_HEAD), PanelKit.Tone.BAD)
 	else:
-		PanelKit.line(body, tr("%d good%s below %d%% of the month's demand.") % [
-			short.size(), "" if short.size() == 1 else "s", roundi(SHORTAGE_COVERAGE * 100.0)],
+		PanelKit.line(body, tr_n("%d good below %d%% of the month's demand.", "%d goods below %d%% of the month's demand.", short.size()) % [
+			short.size(), roundi(SHORTAGE_COVERAGE * 100.0)],
 			PanelKit.Tone.BAD)
 
 
@@ -309,7 +310,7 @@ func _inputs_text(recipe: Dictionary) -> String:
 	for input_id in ids:
 		parts.append("%s %s" % [_ratio_text(float(inputs[input_id])), _good_name(String(input_id))])
 	if parts.is_empty():
-		return "nothing"
+		return tr("nothing")
 	return " · ".join(parts)
 
 
@@ -324,7 +325,7 @@ func _ratio_text(v: float) -> String:
 	if magnitude >= 100.0:
 		return "%.0f" % v
 	if magnitude >= 1.0:
-		return "%.2f" % v
+		return Num.f(v, 2)
 	for places in range(1, 5):
 		if magnitude >= pow(10.0, -float(places)):
 			return String(("%." + str(places + 1) + "f") % v)
@@ -377,11 +378,11 @@ static func shortages(ns, good_ids: Array) -> Array:
 func _qty_text(v: float) -> String:
 	var magnitude := absf(v)
 	if magnitude >= 1e9:
-		return "%.1f B" % (v / 1e9)
+		return "%s B" % Num.f((v / 1e9), 1)
 	if magnitude >= 1e6:
-		return "%.1f M" % (v / 1e6)
+		return "%s M" % Num.f((v / 1e6), 1)
 	if magnitude >= 1e3:
-		return "%.1f k" % (v / 1e3)
+		return "%s k" % Num.f((v / 1e3), 1)
 	return "%.0f" % v
 
 

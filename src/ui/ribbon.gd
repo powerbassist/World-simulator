@@ -18,6 +18,7 @@ extends PanelContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 ## Cell and strip geometry. The strip is 44px: enough for a day number over a
 ## 12px block, small enough to sit under the action bar without becoming a
@@ -77,9 +78,7 @@ func _process(_delta: float) -> void:
 	if not _dirty or _state == null or not visible:
 		return
 	_dirty = false
-	_title.text = ("%s %d" % [
-		tr(ClockCluster.MONTH_NAMES[_state.month - 1]), _state.year,
-	]).to_upper()
+	_title.text = DateText.month_year(_state.month, _state.year).to_upper()
 	_cells.queue_redraw()
 
 
@@ -193,11 +192,7 @@ func _on_cells_input(event: InputEvent) -> void:
 			return
 		for e in _state.appointments:
 			if Calendar.verb_key(e) == key:
-				_cells.tooltip_text = "%02d %s — %s" % [
-					int(e.get("day", 1)),
-					tr(ClockCluster.MONTH_NAMES[int(e.get("month", 1)) - 1]),
-					_booking_name(e),
-				]
+				_cells.tooltip_text = "%s — %s" % [DateText.day_month(int(e.get("day", 1)), int(e.get("month", 1))), _booking_name(e)]
 				return
 		_cells.tooltip_text = ""
 
@@ -215,7 +210,7 @@ func _booking_name(entry: Dictionary) -> String:
 				return "%s — %s" % [action_name, String(nation.nation_name)]
 			return action_name
 		"law":
-			return "A law is proposed"
+			return tr("A law is proposed")
 		"reshuffle":
-			return "A portfolio changes hands"
+			return tr("A portfolio changes hands")
 	return String(entry.get("kind", ""))

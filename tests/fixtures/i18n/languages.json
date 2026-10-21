@@ -1,0 +1,7 @@
+{
+  "_note": "test_strings' own language table: a fixture 'fr' whose entries are the test's own (two apples, one greeting), so the plural plumbing is tested without the real French table; the language code has to be a real one because Godot picks the plural rule from the locale.",
+  "languages": [
+    {"code": "en", "name": "English", "plural_forms": 2},
+    {"code": "fr", "name": "Français (fixture)", "plural_forms": 2}
+  ]
+}

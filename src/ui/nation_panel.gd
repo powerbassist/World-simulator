@@ -26,6 +26,7 @@ const Roster = preload("res://src/core/roster.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DFK = preload("res://src/sim/defence_constants.gd")
+const Num = preload("res://src/ui/num.gd")
 
 signal closed
 
@@ -174,9 +175,9 @@ func _refresh() -> void:
 	if Roster.grade(_loader, _nation_id) == "simulated":
 		PanelKit.line(_body, tr("Simulated nation — not playable"), PanelKit.Tone.DIM)
 	PanelKit.line(_body, tr("Leader: %s (%s)") % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %+.2f%%") % [ns.gdp_eur_bn, ns.growth_annual_pct], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Unemployment: %.1f%%") % ns.unemployment_pct, PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Debt: %.1f%% of GDP") % ns.debt_to_gdp_pct(), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)
 
 	# The player's own approval is polled elsewhere with noise applied (see
 	# polling_panel.gd) — this panel shows every nation including rivals the
@@ -232,8 +233,8 @@ func _refresh_actions() -> void:
 	# BOTH directions, on two lines. The register is directed and a retaliation is
 	# the second entry, so a single "coerced" line would hide the half the player
 	# did not choose -- which is the half costing them growth.
-	_actions.add_child(_measure_line("Measures imposed", player_id, _nation_id))
-	_actions.add_child(_measure_line("Measures received", _nation_id, player_id))
+	_actions.add_child(_measure_line(tr("Measures imposed"), player_id, _nation_id))
+	_actions.add_child(_measure_line(tr("Measures received"), _nation_id, player_id))
 
 	# V1.3g, and ONE line for two registers rather than the three it would take to
 	# give the pact, the outbound deployment and its kind a row each. The panel is at
@@ -293,7 +294,7 @@ func _alliance_line(player_id: String) -> Control:
 		line.theme_type_variation = UiTheme.CAPTION
 		return line
 
-	var text := "Alliance: %s, since %d/%d" % [
+	var text := tr("Alliance: %s, since %d/%d") % [
 		pact.get("action_name", pact.get("action_id", "")),
 		int(pact.get("since_month", 0)), int(pact.get("since_year", 0)),
 	]
@@ -303,9 +304,9 @@ func _alliance_line(player_id: String) -> Control:
 		# Named as obliged in the player's own words rather than as a register value.
 		# This is the one commitment they cannot end from this panel, and the sentence
 		# has to say so or the missing button reads as a bug.
-		text += " — forces committed under the pact; only abandoning it ends this"
+		text += tr(" — forces committed under the pact; only abandoning it ends this")
 	elif kind == DFK.DEPLOYMENT_CHOSEN:
-		text += " — forces deployed by choice"
+		text += tr(" — forces deployed by choice")
 
 	line.text = text
 	return line
@@ -321,10 +322,10 @@ func _measure_line(prefix: String, from_id: String, to_id: String) -> Control:
 		line.text = tr("%s: none") % prefix
 		line.theme_type_variation = UiTheme.CAPTION
 		return line
-	line.text = tr("%s: %s, severity %.2f, since %d/%d") % [
+	line.text = tr("%s: %s, severity %s, since %d/%d") % [
 		prefix,
 		terms.get("action_name", terms.get("action_id", "")),
-		float(terms.get("severity", 0.0)),
+		Num.f(float(terms.get("severity", 0.0)), 2),
 		int(terms.get("since_month", 0)), int(terms.get("since_year", 0)),
 	]
 	return line
@@ -363,14 +364,14 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 func _unavailable_reason(action, player_id: String) -> String:
 	var ns = _state.nations.get(player_id)
 	if ns == null:
-		return "Unavailable."
+		return tr("Unavailable.")
 	var key := Diplomacy.cooldown_key(action.id, _nation_id)
 	if ns.diplo_cooldown_months.has(key):
 		# The key is written when the act executes (diplomacy.gd), so this is a
 		# cooldown the player's own act started -- name it as one. "Available
 		# again in 12 months" read like a lock left over from before the game
 		# began (playtest 2026-09-05).
-		return "Cooldown: available again in %d months." % int(ns.diplo_cooldown_months[key])
+		return tr("Cooldown: available again in %d months.") % int(ns.diplo_cooldown_months[key])
 	# Named ahead of the generic reason: "they will not sign" is a different
 	# problem from "you cannot propose", and it is the one the player can fix.
 	var terms: Dictionary = action.effects.get("agreement", {})
@@ -387,7 +388,7 @@ func _unavailable_reason(action, player_id: String) -> String:
 				ForeignPolicy.pact_refusal_reason(_state, player_id, _nation_id)
 			)
 
-	return "Conditions for this action are not met."
+	return tr("Conditions for this action are not met.")
 
 
 ## V1.3e. The model returns a KEY and this turns it into a sentence, because
@@ -400,18 +401,18 @@ func _unavailable_reason(action, player_id: String) -> String:
 func _refusal_text(key: String) -> String:
 	match key:
 		ForeignPolicy.REFUSAL_LOW_STAKE:
-			return "%s will not sign: too little of their trade runs through you." % _nation_id
+			return tr("%s will not sign: too little of their trade runs through you.") % _nation_id
 		ForeignPolicy.REFUSAL_POOR_RELATIONS:
-			return "%s will not sign: relations are not close enough." % _nation_id
+			return tr("%s will not sign: relations are not close enough.") % _nation_id
 		ForeignPolicy.REFUSAL_THIN_TERMS:
-			return "%s will not sign: these terms are not worth it to them." % _nation_id
+			return tr("%s will not sign: these terms are not worth it to them.") % _nation_id
 		# V1.3g, and the only refusal in the set the player answers with a BUDGET
 		# rather than with diplomacy: nobody promises to bleed for an army that is
 		# not there. The sentence has to point at the defence line or the player
 		# reads it as another relations problem and does the wrong thing.
 		ForeignPolicy.REFUSAL_WEAK_PARTNER:
-			return "%s will not sign: your forces are too slight to be worth an alliance. Sustained defence spending is what changes this." % _nation_id
-	return "%s will not sign." % _nation_id
+			return tr("%s will not sign: your forces are too slight to be worth an alliance. Sustained defence spending is what changes this.") % _nation_id
+	return tr("%s will not sign.") % _nation_id
 
 
 func _on_act(action) -> void:

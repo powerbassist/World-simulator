@@ -25,6 +25,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Region = preload("res://src/core/region.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const Num = preload("res://src/ui/num.gd")
 
 var _state
 var _loader
@@ -160,7 +161,7 @@ func _build_list() -> void:
 
 	PanelKit.heading(_body, tr("The named places"))
 	PanelKit.row(_body, tr("Cities"), str(entries.size()))
-	PanelKit.row(_body, tr("Living in a named city"), "%.1f%%" % (named * 100.0))
+	PanelKit.row(_body, tr("Living in a named city"), "%s%%" % Num.f((named * 100.0), 1))
 	PanelKit.line(_body, tr("Everyone else lives in the towns under the cut and the countryside -- the unnamed residual, never stored."))
 
 	PanelKit.heading(_body, tr("By population"))
@@ -194,8 +195,8 @@ func _build_detail(found: Dictionary) -> void:
 	PanelKit.row(_body, tr("Region"), "%s · %s" % [region.region_name, nation_id])
 	PanelKit.row(_body, tr("Nation"), String(nation.nation_name))
 	PanelKit.row(_body, tr("Population"), PanelKit.pop_text(pop))
-	PanelKit.row(_body, tr("Share of its region"), "%.1f%%" % (Migration.city_share(ns, city.id) * 100.0))
-	PanelKit.row(_body, tr("Share of the nation"), "%.2f%%" % (Migration.region_share(ns, region.id) * Migration.city_share(ns, city.id) * 100.0))
+	PanelKit.row(_body, tr("Share of its region"), "%s%%" % Num.f((Migration.city_share(ns, city.id) * 100.0), 1))
+	PanelKit.row(_body, tr("Share of the nation"), "%s%%" % Num.f((Migration.region_share(ns, region.id) * Migration.city_share(ns, city.id) * 100.0), 2))
 
 	PanelKit.heading(_body, tr("Named employers"))
 	# A3. Majors keep a row apiece; the body tier -- which since A3 domiciles

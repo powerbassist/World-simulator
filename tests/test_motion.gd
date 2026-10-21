@@ -6,6 +6,7 @@ extends SceneTree
 ## wall-clock time without finish(), never on a frame count. Plus the wiring:
 ## a window opens through it, the clock beats through it.
 
+const Strings = preload("res://src/ui/strings.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
@@ -14,7 +15,7 @@ const Clock = preload("res://src/core/clock.gd")
 var _failures: Array[String] = []
 var _frame := 0
 var _timed: Control
-var _timed_started := 0
+var _timed_stepped := 0.0
 var _stalled: Control
 var _fading: Control
 var _faded := false
@@ -26,10 +27,11 @@ var _clock
 func _init() -> void:
 	_check_interpolate()
 	_check_template()
+	_check_decimal_comma()
 	_check_headless_is_off()
 
 
-func _process(_delta: float) -> bool:
+func _process(delta: float) -> bool:
 	_frame += 1
 	match _frame:
 		1:
@@ -61,19 +63,23 @@ func _process(_delta: float) -> bool:
 				_fail("one 300 ms frame finished Motion.open() -- a long frame ate the motion")
 			if _faded:
 				_fail("one 300 ms frame finished Motion.fade_out() -- the loading screen's reveal would vanish in a frame")
-			# Started after the stall, and read on wall-clock time below: a
-			# frame-counted tween would settle after N frames whatever their length.
+			# Started after the stall, and read on the motion's own stepped time below
+			# (each frame's delta capped at Motion.MAX_STEP_S): a frame-counted tween
+			# would settle after N frames whatever their length, and a wall-clock
+			# deadline flakes when the suite's parallel load stretches the frames
+			# (V5.1b2).
 			_timed = Control.new()
 			root.add_child(_timed)
 			Motion.open(_timed)
-			_timed_started = Time.get_ticks_msec()
+			_timed_stepped = 0.0
 			return false
 		_:
-			if Time.get_ticks_msec() - _timed_started < int(Motion.OPEN_S * 1000.0) + 150:
+			_timed_stepped += minf(delta, Motion.MAX_STEP_S)
+			if _timed_stepped < Motion.OPEN_S + 0.15:
 				return false
 			if not is_equal_approx(_timed.modulate.a, 1.0) or not _timed.scale.is_equal_approx(Vector2.ONE):
-				_fail("Motion.open() had not settled %.0f ms after OPEN_S on its own (a=%.3f scale=%s)" % [
-					150.0, _timed.modulate.a, _timed.scale])
+				_fail("Motion.open() had not settled %.2f stepped seconds after OPEN_S on its own (a=%.3f scale=%s)" % [
+					0.15, _timed.modulate.a, _timed.scale])
 			Motion.override = -1
 			_report()
 			return true
@@ -97,6 +103,23 @@ func _check_interpolate() -> void:
 		var got := Motion.interpolate_text(c[0], c[1], c[2])
 		if got != c[3]:
 			_fail("interpolate_text(%s, %s, %.2f) = '%s', expected '%s'" % [c[0], c[1], c[2], got, c[3]])
+
+
+## A French figure prints its decimals with a comma ("7,40"): the roll must read the comma
+## as the decimal mark, not as grouping ("1,234" in English still snaps), or every French
+## figure would jump instead of rolling.
+func _check_decimal_comma() -> void:
+	Strings.set_language("fr")
+	var got := Motion.interpolate_text("7,40%", "7,60%", 0.5)
+	if got != "7,50%":
+		_fail("a French decimal should roll: interpolate_text('7,40%%', '7,60%%', 0.5) = '%s'" % got)
+	if not Motion.same_template("7,40%", "7,60%"):
+		_fail("'7,40%' and '7,60%' differ only in their numbers in French")
+	if Motion.same_template("7,40%", "7,6%"):
+		_fail("a changed count of decimals should still snap in French")
+	Strings.set_language("en")
+	if Motion.same_template("1,234", "1,240"):
+		_fail("a grouped English figure should still be refused")
 
 
 func _check_template() -> void:

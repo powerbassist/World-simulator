@@ -113,7 +113,7 @@ func _process(_delta: float) -> void:
 		return
 	if not _streams.has(bed_id):
 		if _task < 0:
-			_task = WorkerThreadPool.add_task(_render, false, "sound bed " + bed_id)
+			_task = WorkerThreadPool.add_task(_render, false, "sound bed " + bed_id)  # i18n: ok
 		return
 	_player = AudioStreamPlayer.new()
 	_player.stream = _streams[bed_id]

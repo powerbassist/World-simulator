@@ -24,6 +24,7 @@ extends RefCounted
 
 const Projects = preload("res://src/sim/projects.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## Screen pixels, not degrees. A marker is a UI mark rather than geography -- the
 ## nation labels already work this way -- so zooming in does not grow the dot,
@@ -103,14 +104,14 @@ static func color_of(marker: Dictionary) -> Color:
 ## on a France 60 pixels wide at the world view.
 static func label_of(marker: Dictionary, loader) -> String:
 	if is_filled(marker):
-		return "%s  --  finished" % String(marker.get("name", ""))
+		return Strings.t("%s  --  finished") % String(marker.get("name", ""))
 	var left := int(marker.get("months_left", 0))
 	var terms := Projects.terms_of(loader, String(marker.get("project_id", "")))
 	var total := int(terms.get("build_months", 0))
 	if total <= 0:
-		return "%s  --  %d months remaining" % [String(marker.get("name", "")), left]
+		return Strings.t("%s  --  %d months remaining") % [String(marker.get("name", "")), left]
 	# "remaining" is not decoration and the screenshot pass is what said so: the
 	# frame read "12 of 96 months", which a player reads as twelve months DONE
 	# when it is twelve to go. Worded exactly as projects_panel.gd words it, so
 	# two surfaces on one register cannot disagree about which number that is.
-	return "%s  --  %d of %d months remaining" % [String(marker.get("name", "")), left, total]
+	return Strings.t("%s  --  %d of %d months remaining") % [String(marker.get("name", "")), left, total]

@@ -41,14 +41,14 @@ const LEVER_MAX := {
 }
 
 const FIGURE_ROWS := [
-	["revenue", "Revenue"],
+	["revenue", "Revenue"],  # i18n: msgid last
 	# Indented under Revenue the way debt service is under Spending, because it is
 	# a component and not a fourth headline. A line of its own rather than folded
 	# into `other`: V1.3c's tariffs are a revenue source the player CHOSE, and one
 	# they cannot see on the panel is the decorative-axis failure
 	# docs/scenario-model.md records, with a different label. Reads "—" while
 	# nothing is imposed, which is every game that has not used the verb.
-	["tariffs", "  of which tariffs"],
+	["tariffs", "  of which tariffs"],  # i18n: msgid last
 	# V1.4c, beside the tariff line and on the same argument: a revenue source the
 	# player chose, which no slider on this panel sets. It differs from tariffs in
 	# that it arrives from a decision taken on a different screen entirely, so a
@@ -56,15 +56,15 @@ const FIGURE_ROWS := [
 	# unnamed-reason failure the four indented lines here all exist to prevent.
 	# Reads "—" while the state holds nothing, which is every game that has not used
 	# the verb.
-	["dividends", "  of which dividends"],
-	["spending", "Spending"],
-	["debt_service", "  of which debt service"],
+	["dividends", "  of which dividends"],  # i18n: msgid last
+	["spending", "Spending"],  # i18n: msgid last
+	["debt_service", "  of which debt service"],  # i18n: msgid last
 	# V1.3d, indented under Spending for the same reason tariffs are indented under
 	# Revenue, and on the same argument: a member's contribution, whatever the
 	# rules in force move it by, and the penalties for defying them are all money
 	# leaving the budget, and the player did not set any of it with a slider.
 	# Reads "—" for a non-member, which is exactly 0.0 by construction.
-	["bloc_transfer", "  of which the Union"],
+	["bloc_transfer", "  of which the Union"],  # i18n: msgid last
 	# V1.3g, beside the Union line and on the same argument a third time: money
 	# leaving the budget that the player set with no slider. It differs from both
 	# lines above in the way that matters most here -- an OBLIGED deployment is
@@ -78,7 +78,7 @@ const FIGURE_ROWS := [
 	# never appeared on this panel, and V1.4a then wrote "beside the deployment line"
 	# about a line that was not there. V1.3g's own screenshot pass could not catch it:
 	# the tool bug it did find made that figure an em dash anyway.
-	["deployments", "  of which deployments"],
+	["deployments", "  of which deployments"],  # i18n: msgid last
 	# V1.4a, beside the deployment line and on the same argument a fourth time:
 	# money leaving the budget that the player set with no slider. Without it a
 	# subsidy signed on the Companies panel would widen the deficit here with
@@ -86,7 +86,7 @@ const FIGURE_ROWS := [
 	# the three above it all exist to prevent.
 	# Reads "—" while nothing is subsidised, which is every game that has not used
 	# the verb.
-	["subsidies", "  of which subsidies"],
+	["subsidies", "  of which subsidies"],  # i18n: msgid last
 	# V1.6e, beside the subsidy line and on the same argument a FIFTH time: money
 	# leaving the budget that the player set with no slider on this panel. It differs
 	# from the subsidy line in the one way that matters to a player reading this
@@ -95,7 +95,7 @@ const FIGURE_ROWS := [
 	# several years before the growth it bought is visible in the rows below.
 	# Reads "—" while no programme stands, which is every game that has not used
 	# the verb.
-	["investment", "  of which investment"],
+	["investment", "  of which investment"],  # i18n: msgid last
 	# V1.6f, beside the investment line and on the same argument a SIXTH time -- and
 	# with the one difference this panel exists to show: every line above it is a
 	# STANDING rate the player can lower, and this one runs for a fixed term and then
@@ -103,7 +103,7 @@ const FIGURE_ROWS := [
 	# a known end date, which is the whole of what makes a project a commitment rather
 	# than a policy. Reads "—" while nothing is under construction, which is every
 	# game that has not used the verb.
-	["projects", "  of which public works"],
+	["projects", "  of which public works"],  # i18n: msgid last
 	# V1.7a, beside the public-works line and on the same argument a SEVENTH time: money
 	# leaving the budget that the player set with no slider on this panel. It differs
 	# from every line above it in WHEN it appears -- it can only exist inside the months
@@ -111,15 +111,15 @@ const FIGURE_ROWS := [
 	# reading this screen in the run-up is looking at the one line here they will not be
 	# paying next year whatever they decide. Reads "-" outside a run-up and while nothing
 	# is in the field, which is most of every game.
-	["campaign", "  of which the campaign"],
+	["campaign", "  of which the campaign"],  # i18n: msgid last
 	# V2.8, and the argument is the campaign row's one more time: a build in
 	# progress and every running station are on the spending total with no slider
 	# on this panel, so the row is the only place the player can see WHAT the
 	# fleet costs. Unlike the campaign it does not stop on a date -- it stops when
 	# the player closes a station, which is why the off switch is a verb.
-	["energy", "  of which energy"],
-	["deficit", "Deficit"],
-	["debt", "Debt"],
+	["energy", "  of which energy"],  # i18n: msgid last
+	["deficit", "Deficit"],  # i18n: msgid last
+	["debt", "Debt"],  # i18n: msgid last
 	# V1.6d. NOT a budget figure, and it is on this panel anyway because the
 	# instruments that move it are money levers -- the brackets, the
 	# capital-gains rate and the wealth rate now live on the Tax Code window
@@ -131,12 +131,12 @@ const FIGURE_ROWS := [
 	# rather than the delivery lines': every game has an inequality index from the
 	# first frame, so a line that appeared only once it moved would hide the level the
 	# offset is measured against.
-	["gini", "Inequality (Gini)"],
+	["gini", "Inequality (Gini)"],  # i18n: msgid last
 	["", ""],
 	# V1.6a: the three projection rows now read as a RANGE. See _forecast_text().
-	["proj_growth", "GDP growth, in 24 months"],
-	["proj_unemployment", "Unemployment, in 24 months"],
-	["proj_debt", "Debt ratio, in 24 months"],
+	["proj_growth", "GDP growth, in 24 months"],  # i18n: msgid last
+	["proj_unemployment", "Unemployment, in 24 months"],  # i18n: msgid last
+	["proj_debt", "Debt ratio, in 24 months"],  # i18n: msgid last
 ]
 
 ## Carries the state Trends.snapshot_now() took the instant before Budget.commit()
@@ -278,10 +278,10 @@ func _fill_figures() -> void:
 	for row in FIGURE_ROWS:
 		var key: String = row[0]
 		if key == "":
-			rows.append([row[1], "", ""])
+			rows.append([tr(row[1]), "", ""])
 			continue
 		var pair: Array = _figures.get(key, [PanelKit.MISSING, PanelKit.MISSING])
-		rows.append([row[1], pair[0], pair[1]])
+		rows.append([tr(row[1]), pair[0], pair[1]])
 	PanelKit.ledger(_figures_box, rows)
 
 
@@ -438,11 +438,11 @@ func _resync_untouched() -> void:
 func _gini_text(snap: Dictionary) -> String:
 	if not snap.has("gini_effective"):
 		return "—"
-	return "%.2f" % float(snap["gini_effective"])
+	return PanelKit.Num.f(float(snap["gini_effective"]), 2)
 
 
 func _lever_text(key: String) -> String:
-	return "%.1f%%" % _pending_value(key)
+	return "%s%%" % PanelKit.Num.f(_pending_value(key), 1)
 
 
 ## The proposed budget: the spending levers with the Tax Code window's draft
@@ -503,7 +503,7 @@ func _refresh() -> void:
 	_set_figure("campaign", _campaign_text(now), _campaign_text(proposed))
 	_set_figure("energy", _energy_text(now), _energy_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
-	_set_figure("debt", "%.1f%% GDP" % now["debt_to_gdp_pct"], "%.1f%% GDP" % proposed["debt_to_gdp_pct"])
+	_set_figure("debt", tr("%s%% GDP") % PanelKit.Num.f(now["debt_to_gdp_pct"], 1), tr("%s%% GDP") % PanelKit.Num.f(proposed["debt_to_gdp_pct"], 1))
 	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
 	# the key was missing from Budget.snapshot() entirely, and the row printed a confident
 	# "0.00" against a live index of about 31 -- a defensive default reading as a
@@ -533,7 +533,7 @@ func _bloc_text(snap: Dictionary) -> String:
 	var pct: float = float(snap.get("bloc_transfer_pct_gdp", 0.0))
 	if is_zero_approx(pct):
 		return "—"
-	return "%+.2f%% GDP" % pct
+	return tr("%s%% GDP") % PanelKit.Num.fs(pct, 2)
 
 
 ## The same em dash again. Unsigned, unlike the Union line: a deployment only ever
@@ -638,7 +638,7 @@ func _tariff_text(snap: Dictionary) -> String:
 
 func _pct_and_eur(snap: Dictionary, key: String) -> String:
 	var pct: float = snap[key]
-	return "%.2f%%  (%.0f bn)" % [pct, pct / 100.0 * float(snap["gdp_eur_bn"])]
+	return tr("%s%%  (%.0f bn)") % [PanelKit.Num.f(pct, 2), pct / 100.0 * float(snap["gdp_eur_bn"])]
 
 
 ## Writes one row of the now/proposed table for this refresh.

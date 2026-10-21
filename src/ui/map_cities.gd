@@ -46,6 +46,7 @@ const UnrestK = preload("res://src/sim/unrest_constants.gd")
 ## for the demonstration ring's reason: whose verb the site belongs to is the sim's
 ## business and not the map's.
 const Campaign = preload("res://src/sim/campaign.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## The population a cross is measured against: capital-city scale, the top of the
 ## roster's own range (London reads ~9.1 M). RADIUS_BASE is what that city draws;
@@ -191,7 +192,7 @@ static func label_of(city: Dictionary) -> String:
 	# surface naming it would be two places to disagree -- the exact split
 	# economy_panel.gd's own unrest line already keeps.
 	if is_unrest(city):
-		text += "  --  where the unions are out"
+		text += Strings.t("  --  where the unions are out")
 	elif is_campaign(city):
-		text += "  --  where the meetings are"
+		text += Strings.t("  --  where the meetings are")
 	return text

@@ -91,13 +91,13 @@ const WEIGHT_BOLD := 650
 
 # -- Label variations. Assign with `label.theme_type_variation = UiTheme.LEAD` --
 
-const LEAD := "Lead"                 ## the one sentence a screen is about
-const HEADING := "Heading"           ## small dim section label above a group
-const MICRO := "Micro"               ## tracked uppercase, smaller than Heading
-const FIGURE := "Figure"             ## a large number
-const HERO := "Hero"                 ## the portrait card's approval, and only it
+const LEAD := "Lead"                 ## the one sentence a screen is about  # i18n: ok
+const HEADING := "Heading"           ## small dim section label above a group  # i18n: ok
+const MICRO := "Micro"               ## tracked uppercase, smaller than Heading  # i18n: ok
+const FIGURE := "Figure"             ## a large number  # i18n: ok
+const HERO := "Hero"                 ## the portrait card's approval, and only it  # i18n: ok
 const FIGURE_LABEL := "FigureLabel"  ## the caption above a large number
-const CAPTION := "Caption"           ## dim secondary text
+const CAPTION := "Caption"           ## dim secondary text  # i18n: ok
 const GOOD_TEXT := "GoodText"        ## a delta that is good news
 const BAD_TEXT := "BadText"          ## a delta that is bad news
 const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
@@ -105,7 +105,7 @@ const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
 # -- Container and button variations -------------------------------------------
 
 const TOP_BAR_PANEL := "TopBarPanel"      ## the thin strip flush to the top edge
-const PLATE := "Plate"                    ## HUD furniture over the map
+const PLATE := "Plate"                    ## HUD furniture over the map  # i18n: ok
 const PLATE_FOLDED := "PlateFolded"       ## a plate whose primary action is below the fold
 const TITLE_BAR := "TitleBar"             ## a floating window's grab handle
 const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
@@ -158,7 +158,7 @@ static func build() -> Theme:
 	if body != null:
 		theme.default_font = body
 
-	for type in ["Label", "Button", "CheckBox", "OptionButton", "LineEdit", "SpinBox"]:
+	for type in ["Label", "Button", "CheckBox", "OptionButton", "LineEdit", "SpinBox"]:  # i18n: ok
 		theme.set_color("font_color", type, TEXT)
 
 	_panels(theme)
@@ -285,7 +285,7 @@ static func _panels(theme: Theme) -> void:
 
 static func _labels(theme: Theme) -> void:
 	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT]:
-		theme.set_type_variation(variation, "Label")
+		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
 	var figures := _face(WEIGHT_BOLD, 0, true)
@@ -362,7 +362,7 @@ static func _buttons(theme: Theme) -> void:
 	# A cluster is an icon with a name under it, not a slab. Flat until it is the
 	# open one, where the accent fills the bar under it -- "one accent says where
 	# you are", the rule the rail button used, at the bottom of the screen.
-	theme.set_type_variation(CLUSTER_BUTTON, "Button")
+	theme.set_type_variation(CLUSTER_BUTTON, "Button")  # i18n: ok
 	theme.set_stylebox("normal", CLUSTER_BUTTON, _cluster_box(Color(0, 0, 0, 0)))
 	theme.set_stylebox("hover", CLUSTER_BUTTON, _cluster_box(SLATE))
 	theme.set_stylebox("pressed", CLUSTER_BUTTON, _cluster_box(SLATE, _accent))
@@ -372,7 +372,7 @@ static func _buttons(theme: Theme) -> void:
 	theme.set_color("font_pressed_color", CLUSTER_BUTTON, _accent)
 	theme.set_color("font_focus_color", CLUSTER_BUTTON, TEXT)
 
-	theme.set_type_variation(SUBROW_BUTTON, "Button")
+	theme.set_type_variation(SUBROW_BUTTON, "Button")  # i18n: ok
 	theme.set_stylebox("normal", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0)))
 	theme.set_stylebox("hover", SUBROW_BUTTON, _button_box(SLATE))
 	theme.set_stylebox("pressed", SUBROW_BUTTON, _button_box(SLATE, _accent))

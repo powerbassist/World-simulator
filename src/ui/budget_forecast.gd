@@ -26,6 +26,7 @@ extends Node
 const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const CycleK = preload("res://src/sim/cycle_constants.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## A settled forecast's rows changed: the panel redraws them.
 signal settled
@@ -242,5 +243,5 @@ func _forecast_half_width(ns) -> float:
 ## figure, which is exactly the forecast the player most needs to read correctly.
 func _forecast_text(value: float, half_width: float, places: int) -> String:
 	if half_width <= 0.0:
-		return "%.*f%%" % [places, value]
-	return "%.*f to %.*f%%" % [places, value - half_width, places, value + half_width]
+		return "%s%%" % Num.f(value, places)
+	return tr("%s to %s%%") % [Num.f(value - half_width, places), Num.f(value + half_width, places)]

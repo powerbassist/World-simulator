@@ -21,6 +21,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 const POLITICAL := "political"
 const RELATIONS := "relations"
@@ -139,19 +140,19 @@ const LAYERS: Array[Dictionary] = [
 		"label": "Political",  # i18n: msgid
 		"alpha": 0.20,
 		"stops": [],
-		"caption": "Roster nations in their own colour; outlines as borders, read on hover.",
+		"caption": "Roster nations in their own colour; outlines as borders, read on hover.",  # i18n: msgid
 	},
 	{
 		"id": RELATIONS,
 		"label": "Relations",  # i18n: msgid
 		"alpha": 0.50,
 		"stops": [
-			{"at": 45.0, "text": "45  no ties"},
-			{"at": 53.0, "text": "53  border only"},
-			{"at": 60.0, "text": "60  bloc only"},
-			{"at": 68.0, "text": "68  bloc and border"},
+			{"at": 45.0, "text": "45  no ties"},  # i18n: msgid
+			{"at": 53.0, "text": "53  border only"},  # i18n: msgid
+			{"at": 60.0, "text": "60  bloc only"},  # i18n: msgid
+			{"at": 68.0, "text": "68  bloc and border"},  # i18n: msgid
 		],
-		"caption": "Your pair score with each nation.",
+		"caption": "Your pair score with each nation.",  # i18n: msgid
 	},
 	{
 		"id": TRADE,
@@ -162,19 +163,19 @@ const LAYERS: Array[Dictionary] = [
 		# literals here is how the legend ended up promising "an even ninth" on a
 		# twenty-eight-partner roster.
 		"stops": [],
-		"caption": "Share of your external demand. Arcs show direction; convoys ride the roads when you zoom in.",
+		"caption": "Share of your external demand. Arcs show direction; convoys ride the roads when you zoom in.",  # i18n: msgid
 	},
 	{
 		"id": COERCION,
 		"label": "Coercion",  # i18n: msgid
 		"alpha": 0.50,
 		"stops": [
-			{"at": 0.0, "text": "—  nothing in force"},
-			{"at": 0.625, "text": "0.6  tariffs one way"},
-			{"at": 1.0, "text": "1.0  tariffs answered"},
-			{"at": 2.0, "text": "2.0  mutual embargo"},
+			{"at": 0.0, "text": "—  nothing in force"},  # i18n: msgid
+			{"at": 0.625, "text": "0.6  tariffs one way"},  # i18n: msgid
+			{"at": 1.0, "text": "1.0  tariffs answered"},  # i18n: msgid
+			{"at": 2.0, "text": "2.0  mutual embargo"},  # i18n: msgid
 		],
-		"caption": "Tariffs and sanctions on the pair, both ways.",
+		"caption": "Tariffs and sanctions on the pair, both ways.",  # i18n: msgid
 	},
 	{
 		"id": PRODUCTION,
@@ -192,7 +193,7 @@ const LAYERS: Array[Dictionary] = [
 		# it the same way, so a literal left here would be shadowed on every live
 		# path and drift from the rows actually drawn.
 		"stops": [],
-		"caption": "Share of the world's commodity value added, this month.",
+		"caption": "Share of the world's commodity value added, this month.",  # i18n: msgid
 	},
 	{
 		"id": IMPORT_DEPENDENCY,
@@ -205,11 +206,11 @@ const LAYERS: Array[Dictionary] = [
 			# the shape of a format literal carried over to two stops that are not
 			# one. The test now reads the RENDERED stop text, not just the swatch
 			# colour, so this class cannot ship silently again.)
-			{"at": 0.0, "text": "0%  self-sufficient"},
-			{"at": 0.25, "text": "25%  a quarter bought in"},
-			{"at": IMPORT_MAX_SHOWN, "text": "%d%%  dependent" % roundi(100.0 * IMPORT_MAX_SHOWN)},
+			{"at": 0.0, "text": "0%  self-sufficient"},  # i18n: msgid
+			{"at": 0.25, "text": "25%  a quarter bought in"},  # i18n: msgid
+			{"at": IMPORT_MAX_SHOWN, "text": "%d%%  dependent" % roundi(100.0 * IMPORT_MAX_SHOWN)},  # i18n: msgid
 		],
-		"caption": "Share of what a nation wants that it buys from abroad.",
+		"caption": "Share of what a nation wants that it buys from abroad.",  # i18n: msgid
 	},
 ]
 
@@ -327,7 +328,7 @@ static func label(layer_id: String) -> String:
 
 
 static func caption(layer_id: String) -> String:
-	return String(layer(layer_id)["caption"])
+	return Strings.t(String(layer(layer_id)["caption"]))
 
 
 static func stops(layer_id: String) -> Array:
@@ -475,9 +476,9 @@ static func production_even_share(state) -> float:
 ## promise a scale the colours do not use -- trade_stops()'s rule, one layer over.
 static func production_stops(even: float) -> Array:
 	return [
-		{"at": 0.0, "text": "0.0  nothing made"},
-		{"at": even, "text": "%.3f  an even share" % even},
-		{"at": PRODUCTION_MAX_SHOWN, "text": "%.2f  industrial core" % PRODUCTION_MAX_SHOWN},
+		{"at": 0.0, "text": Strings.t("0.0  nothing made")},
+		{"at": even, "text": Strings.t("%s  an even share") % Num.f(even, 3)},
+		{"at": PRODUCTION_MAX_SHOWN, "text": Strings.t("%s  industrial core") % Num.f(PRODUCTION_MAX_SHOWN, 2)},
 	]
 
 
@@ -500,9 +501,9 @@ static func ramp_trade(v: float, even: float) -> Color:
 ## a scale the colours do not use.
 static func trade_stops(even: float) -> Array:
 	return [
-		{"at": even / 3.0, "text": "%d%%  marginal" % roundi(100.0 * even / 3.0)},
-		{"at": even, "text": "%d%%  an even share" % roundi(100.0 * even)},
-		{"at": 3.0 * even, "text": "%d%%  dominant" % roundi(300.0 * even)},
+		{"at": even / 3.0, "text": Strings.t("%d%%  marginal") % roundi(100.0 * even / 3.0)},
+		{"at": even, "text": Strings.t("%d%%  an even share") % roundi(100.0 * even)},
+		{"at": 3.0 * even, "text": Strings.t("%d%%  dominant") % roundi(300.0 * even)},
 	]
 
 
@@ -647,7 +648,7 @@ static func _value_added(ns) -> float:
 ## layer does not show.
 static func value_text(layer_id: String, state, viewer_id: String, nation_id: String) -> String:
 	if is_viewer(viewer_id, nation_id) and layer_id in [RELATIONS, TRADE, COERCION]:
-		return "%s — you" % nation_id
+		return Strings.t("%s — you") % nation_id
 	var v := value(layer_id, state, viewer_id, nation_id)
 	if is_nan(v):
 		return nation_id
@@ -655,20 +656,20 @@ static func value_text(layer_id: String, state, viewer_id: String, nation_id: St
 		RELATIONS:
 			return "%s–%s  %.0f / 100" % [viewer_id, nation_id, v]
 		TRADE:
-			return "%s  %.1f%% of %s's demand" % [nation_id, 100.0 * v, viewer_id]
+			return Strings.t("%s  %s%% of %s's demand") % [nation_id, Num.f(100.0 * v, 1), viewer_id]
 		PRODUCTION:
 			# "you" in the tail rather than the bare "— you" the pair layers print,
 			# because the number is real here: the planet's supply tells you your
 			# own weight exactly as well as it tells you anybody else's.
 			var mark := " (you)" if is_viewer(viewer_id, nation_id) else ""
-			return "%s  %.1f%% of world output%s" % [nation_id, 100.0 * v, mark]
+			return Strings.t("%s  %s%% of world output%s") % [nation_id, Num.f(100.0 * v, 1), mark]
 		IMPORT_DEPENDENCY:
 			# A nation at zero buys nothing, and a 0.0 that could also be a NAN
 			# should say which it is -- the layer's own flat-bottom finding.
 			if is_zero_approx(v):
-				return "%s  is self-sufficient%s" % [
+				return Strings.t("%s  is self-sufficient%s") % [
 					nation_id, " (you)" if is_viewer(viewer_id, nation_id) else ""]
-			return "%s  %.0f%% of its demand imported%s" % [
+			return Strings.t("%s  %.0f%% of its demand imported%s") % [
 				nation_id, 100.0 * v, " (you)" if is_viewer(viewer_id, nation_id) else ""]
 		COERCION:
 			# The one readout on this map that names BOTH sides of a pair, and it
@@ -678,8 +679,8 @@ static func value_text(layer_id: String, state, viewer_id: String, nation_id: St
 			# U5c's rule is about what a readout may CLAIM, and it claims nothing
 			# here that the player is not party to.
 			if is_zero_approx(v):
-				return "%s  nothing in force" % nation_id
-			return "%s  you %s, them %s" % [
+				return Strings.t("%s  nothing in force") % nation_id
+			return Strings.t("%s  you %s, them %s") % [
 				nation_id,
 				_measure_text(state, viewer_id, nation_id),
 				_measure_text(state, nation_id, viewer_id),
@@ -694,7 +695,7 @@ static func _measure_text(state, from_id: String, to_id: String) -> String:
 	var terms = state.measures.get(Relations.directed_key(from_id, to_id))
 	if terms == null:
 		return "—"
-	return "%s %.2f" % [String(terms.get("kind", "")), float(terms.get("severity", 0.0))]
+	return "%s %s" % [String(terms.get("kind", "")), Num.f(float(terms.get("severity", 0.0)), 2)]
 
 
 ## Clamped, so a value outside the shown domain saturates at the end of the ramp

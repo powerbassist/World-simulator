@@ -33,6 +33,7 @@ const Projects = preload("res://src/sim/projects.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 signal closed
 
@@ -45,22 +46,22 @@ signal diary_changed
 ## rather than in calendar_constants.gd — src/sim/ names the kind, the panel says
 ## it in English.
 const FIXED_LABEL := {
-	K.FIXED_ELECTION: "Legislative election",
-	K.FIXED_EP_ELECTION: "European election",
-	K.FIXED_EXECUTIVE: "Presidential election",
-	K.FIXED_HEAD_OF_STATE: "Head of state's term ends",
-	K.FIXED_COUNCIL_PROPOSAL: "Council proposes",
-	K.FIXED_COUNCIL_VOTE: "Council votes",
-	K.FIXED_COUNCIL_RATIFICATION: "Ratification deadline",
-	K.FIXED_DISSOLUTION: "Dissolution available again",
-	K.FIXED_COOLDOWN: "Available again",
-	K.FIXED_PROJECT: "Opens",
-	K.FIXED_REFERENDUM: "Referendum",
-	K.FIXED_EVENT: "Answer by",
+	K.FIXED_ELECTION: "Legislative election",  # i18n: msgid
+	K.FIXED_EP_ELECTION: "European election",  # i18n: msgid
+	K.FIXED_EXECUTIVE: "Presidential election",  # i18n: msgid
+	K.FIXED_HEAD_OF_STATE: "Head of state's term ends",  # i18n: msgid
+	K.FIXED_COUNCIL_PROPOSAL: "Council proposes",  # i18n: msgid
+	K.FIXED_COUNCIL_VOTE: "Council votes",  # i18n: msgid
+	K.FIXED_COUNCIL_RATIFICATION: "Ratification deadline",  # i18n: msgid
+	K.FIXED_DISSOLUTION: "Dissolution available again",  # i18n: msgid
+	K.FIXED_COOLDOWN: "Available again",  # i18n: msgid
+	K.FIXED_PROJECT: "Opens",  # i18n: msgid
+	K.FIXED_REFERENDUM: "Referendum",  # i18n: msgid
+	K.FIXED_EVENT: "Answer by",  # i18n: msgid
 }
 
 const KIND_LABEL := {
-	K.KIND_DIPLOMATIC: "Diplomatic act",
+	K.KIND_DIPLOMATIC: "Diplomatic act",  # i18n: msgid
 	K.KIND_LAW: "Propose a law",
 	K.KIND_RESHUFFLE: "Reshuffle a portfolio",
 }
@@ -157,7 +158,7 @@ func _build_form(root: VBoxContainer) -> void:
 	_kind_pick = OptionButton.new()
 	_kind_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for kind in K.KINDS:
-		_kind_pick.add_item(String(KIND_LABEL.get(kind, kind)))
+		_kind_pick.add_item(tr(String(KIND_LABEL.get(kind, kind))))
 	_kind_pick.item_selected.connect(func(_i: int): _refresh_form())
 	grid.add_child(_kind_pick)
 
@@ -256,9 +257,7 @@ func _refresh_strip() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
-	_title.text = tr("Diary — %s %d") % [
-		ClockCluster.MONTH_NAMES[_state.month - 1], _state.year,
-	]
+	_title.text = tr("Diary — %s") % DateText.month_year(_state.month, _state.year)
 
 	var rows := Calendar.upcoming(_state, K.BOOKING_HORIZON_MONTHS)
 	_refresh_next_up(rows)
@@ -275,9 +274,7 @@ func _refresh_strip() -> void:
 		var key := "%d-%02d" % [int(when["year"]), int(when["month"])]
 		var entries: Array = by_month.get(key, [])
 
-		PanelKit.heading(_body, "%s %d" % [
-			ClockCluster.MONTH_NAMES[int(when["month"]) - 1], int(when["year"]),
-		])
+		PanelKit.heading(_body, DateText.month_year(int(when["month"]), int(when["year"])))
 
 		if entries.is_empty():
 			PanelKit.line(_body, "    —")
@@ -309,10 +306,7 @@ func _refresh_next_up(rows: Array) -> void:
 
 	var row: Dictionary = soonest[0]
 	var what := _booking_text(row) if row.has("status") else _fixed_text(row)
-	_next_up.text = tr("Next: %s — %02d %s %d.") % [
-		what, int(row.get("day", 1)),
-		ClockCluster.MONTH_NAMES[int(row["month"]) - 1], int(row["year"]),
-	]
+	_next_up.text = tr("Next: %s — %s.") % [what, DateText.day_month_year(int(row.get("day", 1)), int(row["month"]), int(row["year"]))]
 
 
 ## The footer. Without it a new game's diary opens completely blank -- France's
@@ -327,10 +321,7 @@ func _refresh_later() -> void:
 	PanelKit.heading(_body, tr("LATER"))
 
 	for row in rows:
-		PanelKit.line(_body, "    %s %d — %s" % [
-			ClockCluster.MONTH_NAMES[int(row["month"]) - 1], int(row["year"]),
-			_fixed_text(row),
-		])
+		PanelKit.line(_body, "    %s — %s" % [DateText.month_year(int(row["month"]), int(row["year"])), _fixed_text(row)])
 
 
 ## A booking carries a cancel button; a fixed date does not, because the game
@@ -363,7 +354,7 @@ func _entry_row(entry: Dictionary) -> Control:
 
 func _fixed_text(entry: Dictionary) -> String:
 	var kind := String(entry.get("kind", ""))
-	var label := String(FIXED_LABEL.get(kind, kind))
+	var label := tr(String(FIXED_LABEL.get(kind, kind)))
 	var ref := String(entry.get("ref", ""))
 	if ref.is_empty():
 		return label
@@ -386,7 +377,7 @@ func _fixed_text(entry: Dictionary) -> String:
 func _cooldown_name(ref: String) -> String:
 	if ref.contains("|"):
 		var parts := ref.split("|")
-		return "%s with %s" % [_action_name(parts[0]), _nation_name(parts[1])]
+		return tr("%s with %s") % [_action_name(parts[0]), _nation_name(parts[1])]
 	return _law_name(ref)
 
 
@@ -396,7 +387,7 @@ func _booking_text(entry: Dictionary) -> String:
 			# The person is a LABEL on the act, never part of its identity -- so
 			# it is appended to the text and stays out of Calendar.verb_key().
 			var who: String = _loader.person_name(String(entry.get("person_id", "")))
-			var line := "%s with %s" % [
+			var line := tr("%s with %s") % [
 				_action_name(String(entry.get("action_id", ""))),
 				_nation_name(String(entry.get("target_id", ""))),
 			]
@@ -411,19 +402,19 @@ func _booking_text(entry: Dictionary) -> String:
 				var home: Dictionary = Calendar.arrival_home(entry)
 				# One month prints once -- "MAR–MAR" is always a duplicate, and the
 				# playtest read it as broken text. Two months keep the span form.
-				var dm := ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3)
-				var hm := ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3)
+				var dm := DateText.month(int(depart["month"]))
+				var hm := DateText.month(int(home["month"]))
 				if dm == hm:
-					line += "  (away %02d–%02d %s)" % [int(depart["day"]), int(home["day"]), dm]
+					line += tr("  (away %02d–%02d %s)") % [int(depart["day"]), int(home["day"]), dm]
 				else:
-					line += "  (away %02d–%02d, %s–%s)" % [
+					line += tr("  (away %02d–%02d, %s–%s)") % [
 						int(depart["day"]), int(home["day"]), dm, hm,
 					]
 			return line
 		K.KIND_LAW:
-			return "Propose %s" % _law_name(String(entry.get("law_id", "")))
+			return tr("Propose %s") % _law_name(String(entry.get("law_id", "")))
 		K.KIND_RESHUFFLE:
-			return "%s to %s" % [
+			return tr("%s to %s") % [
 				String(entry.get("portfolio", "")).capitalize(),
 				_party_name(String(entry.get("party_id", ""))),
 			]
@@ -437,9 +428,7 @@ func _refresh_months() -> void:
 	_month_pick.clear()
 	for offset in range(K.BOOKING_HORIZON_MONTHS + 1):
 		var when := _month_at(offset)
-		_month_pick.add_item("%s %d" % [
-			ClockCluster.MONTH_NAMES[int(when["month"]) - 1], int(when["year"]),
-		])
+		_month_pick.add_item(DateText.month_year(int(when["month"]), int(when["year"])))
 	_month_pick.selected = mini(selected, _month_pick.item_count - 1)
 
 
@@ -541,8 +530,8 @@ func _refresh_travel_note() -> void:
 		"day": int(meeting["day"]), "travel_days": travel,
 	})
 	_travel_note.text = tr("Away %d %s – %d %s (%d days' travel each way).") % [
-		int(depart["day"]), ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3),
-		int(home["day"]), ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3),
+		int(depart["day"]), DateText.month(int(depart["month"])),
+		int(home["day"]), DateText.month(int(home["month"])),
 		travel,
 	]
 
@@ -577,10 +566,7 @@ func _on_book() -> void:
 		return
 	var result: Dictionary = Calendar.book(_state, entry)
 	if bool(result["ok"]):
-		_status.text = tr("Booked: %s, %02d %s %d.") % [
-			_booking_text(entry), int(entry["day"]),
-			ClockCluster.MONTH_NAMES[int(entry["month"]) - 1], int(entry["year"]),
-		]
+		_status.text = tr("Booked: %s, %s.") % [_booking_text(entry), DateText.day_month_year(int(entry["day"]), int(entry["month"]), int(entry["year"]))]
 		mark_dirty()
 		diary_changed.emit()
 	else:

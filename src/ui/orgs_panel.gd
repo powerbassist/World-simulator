@@ -31,6 +31,7 @@ const CouncilSection = preload("res://src/ui/council_section.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Ratification = preload("res://src/sim/ratification.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Num = preload("res://src/ui/num.gd")
 
 signal closed
 
@@ -208,24 +209,24 @@ func _refresh_rules(ns, org) -> void:
 		if field == "":
 			PanelKit.line(_body, tr("%s — no policy constraint") % String(rule.get("name", "")), PanelKit.Tone.PLAIN)
 			continue
-		PanelKit.line(_body, "%s — %s %s %.1f" % [
+		PanelKit.line(_body, "%s — %s %s %s" % [
 			String(rule.get("name", "")),
 			BK.CONSTRAINT_LABEL.get(field, field),
 			BK.CONSTRAINT_OP_LABEL.get(String(rule.get("op", "")), String(rule.get("op", ""))),
-			float(rule.get("value", 0.0)),
+			Num.f(float(rule.get("value", 0.0)), 1),
 		], PanelKit.Tone.PLAIN)
 		if float(rule["breach"]) <= 0.0:
 			PanelKit.line(_body, tr("    compliant"))
 		else:
-			PanelKit.line(_body, tr("    outside by %.2f — %.0f%% of this rule's weight") % [
-				float(rule["breach"]),
+			PanelKit.line(_body, tr("    outside by %s — %.0f%% of this rule's weight") % [
+				Num.f(float(rule["breach"]), 2),
 				100.0 * float(rule["contribution"]) / maxf(float(rule["severity"]), 0.0001),
 			])
 
 	# The ONE opinion price: summed over every org and clamped once, said here
 	# once rather than repeated under each org's rules.
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Standing: %.2f of a possible %.2f, across every organisation") % [ns.bloc_burden, BK.BURDEN_MAX], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Standing: %s of a possible %s, across every organisation") % [Num.f(ns.bloc_burden, 2), Num.f(BK.BURDEN_MAX, 2)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("What the electorate weighs under 'Europe'. Zero while you comply — a rule you keep costs you the policy you could not run, not this."))
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
@@ -234,14 +235,14 @@ func _refresh_contribution(ns, org) -> void:
 	PanelKit.heading(_body, tr("THE BUDGET"))
 	var parts := Orgs.transfer_breakdown(_state, ns)
 	var per_org: Dictionary = (parts.get("orgs", {}) as Dictionary).get(org.id, {})
-	PanelKit.line(_body, tr("Net contribution: %+.3f%% of GDP") % float(per_org.get("base", 0.0)), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Net contribution: %s%% of GDP") % Num.fs(float(per_org.get("base", 0.0)), 3), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("rules", 0.0))):
-		PanelKit.line(_body, tr("Adopted programmes: %+.3f%% of GDP") % float(per_org.get("rules", 0.0)), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Adopted programmes: %s%% of GDP") % Num.fs(float(per_org.get("rules", 0.0)), 3), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("fine", 0.0))):
-		PanelKit.line(_body, tr("Penalties: %+.3f%% of GDP") % float(per_org.get("fine", 0.0)), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Penalties: %s%% of GDP") % Num.fs(float(per_org.get("fine", 0.0)), 3), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("aid", 0.0))):
-		PanelKit.line(_body, tr("Side-payments (aid): %+.3f%% of GDP") % float(per_org.get("aid", 0.0)), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("All organisations, total: %+.3f%% of GDP") % float(parts.get("total", 0.0)), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Side-payments (aid): %s%% of GDP") % Num.fs(float(per_org.get("aid", 0.0)), 3), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("All organisations, total: %s%% of GDP") % Num.fs(float(parts.get("total", 0.0)), 3), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP."))
 
 
@@ -271,15 +272,15 @@ func _refresh_outsider_org(ns, org) -> void:
 			continue
 		levied += 1
 		worst = maxf(worst, float(terms.get("severity", 0.0)))
-		PanelKit.line(_body, tr("%s: %s, severity %.2f") % [
+		PanelKit.line(_body, tr("%s: %s, severity %s") % [
 			member_id, terms.get("action_name", terms.get("action_id", "")),
-			float(terms.get("severity", 0.0)),
+			Num.f(float(terms.get("severity", 0.0)), 2),
 		], PanelKit.Tone.PLAIN)
 	if levied == 0:
 		PanelKit.line(_body, tr("None. The council has adopted no common external measure."))
 	else:
 		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, tr("%d of %d members levying, worst severity %.2f.") % [levied, members.size(), worst], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("%d of %d members levying, worst severity %s.") % [levied, members.size(), Num.f(worst, 2)], PanelKit.Tone.PLAIN)
 		PanelKit.line(_body, tr("An organisation acting as one is the only thing in this game that imposes from more than one direction at once."))
 
 
@@ -329,11 +330,11 @@ func _on_membership(org_id: String, joining: bool) -> void:
 		# the next refresh, which the dirty flag triggers. Carried as a member
 		# rather than appended: a line added here is queue_free'd by the very
 		# refresh this mark schedules.
-		_refusal_text = "Refused: %s" % String(result.get("reason", ""))
+		_refusal_text = tr("Refused: %s") % String(result.get("reason", ""))
 		_dirty = true
 		return
-	acted.emit(before, "Membership referendum called: %s %s %s" % [
-		ns.id, "joins" if joining else "leaves", org_id.to_upper(),
+	acted.emit(before, (tr("Membership referendum called: %s joins %s") if joining else tr("Membership referendum called: %s leaves %s")) % [
+		ns.id, org_id.to_upper(),
 	])
 	_dirty = true
 
@@ -343,10 +344,10 @@ func _on_vote(org_id: String, choice: String) -> void:
 	if not Orgs.cast_vote(_state, org_id, choice):
 		# Same silent-failure class as _on_membership: a press the machine refused
 		# must not report a decision to Overview's RECENT DECISIONS.
-		_refusal_text = "Refused: that vote can no longer be cast."
+		_refusal_text = tr("Refused: that vote can no longer be cast.")
 		_dirty = true
 		return
-	voted.emit(before, "Council vote (%s): %s" % [org_id.to_upper(), choice])
+	voted.emit(before, tr("Council vote (%s): %s") % [org_id.to_upper(), choice])
 	_dirty = true
 
 
@@ -361,10 +362,10 @@ func set_section_open(key: String, open: bool) -> void:
 func _on_bargain(org_id: String, target_id: String, currency: String, ask: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	if not Council.bargain(_state, org_id, target_id, currency, ask):
-		_refusal_text = "Refused: that bargain can no longer be struck."
+		_refusal_text = tr("Refused: that bargain can no longer be struck.")
 		_dirty = true
 		return
-	acted.emit(before, "Council bargain (%s): %s with %s" % [
+	acted.emit(before, tr("Council bargain (%s): %s with %s") % [
 		org_id.to_upper(), currency.replace("_", " "), _loader.nation_name(target_id),
 	])
 	_dirty = true
@@ -376,32 +377,30 @@ func _on_ratify(org_id: String) -> void:
 	var treaty := String((_state.orgs[org_id].get("ratifying", {}) as Dictionary).get("name", ""))
 	var result: Dictionary = Ratification.submit(_state, _loader, org_id)
 	if result.has("refused"):
-		_refusal_text = "Refused: the treaty can no longer be put to the assembly."
+		_refusal_text = tr("Refused: the treaty can no longer be put to the assembly.")
 		_dirty = true
 		return
-	acted.emit(before, "Treaty put to the assembly: %s — %s" % [
-		treaty, "ratified" if bool(result.get("passed", false)) else "rejected",
-	])
+	acted.emit(before, (tr("Treaty put to the assembly: %s — ratified") if bool(result.get("passed", false)) else tr("Treaty put to the assembly: %s — rejected")) % treaty)
 	_dirty = true
 
 
 func _on_set_agenda(org_id: String, proposal_id: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	if not Orgs.set_agenda(_state, _loader, org_id, proposal_id):
-		_refusal_text = "Refused: that proposal cannot be put first."
+		_refusal_text = tr("Refused: that proposal cannot be put first.")
 		_dirty = true
 		return
-	acted.emit(before, "Council agenda (%s): you put %s first" % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
+	acted.emit(before, tr("Council agenda (%s): you put %s first") % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
 	_dirty = true
 
 
 func _on_table(org_id: String, proposal_id: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	if not Orgs.table_proposal(_state, _loader, org_id, proposal_id):
-		_refusal_text = "Refused: the chair will not table that now."
+		_refusal_text = tr("Refused: the chair will not table that now.")
 		_dirty = true
 		return
-	acted.emit(before, "Council agenda (%s): tabled %s" % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
+	acted.emit(before, tr("Council agenda (%s): tabled %s") % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
 	_dirty = true
 
 

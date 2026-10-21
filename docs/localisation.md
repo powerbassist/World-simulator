@@ -63,23 +63,63 @@ the keys, and a site not yet wired shows English, which is the safe failure.)
    PanelKit and every builder pass text through untouched -- a helper that also
    translated would translate twice and nothing could tell a wrapped literal from a
    forgotten one. In a `static func` there is no `tr()`: use `Strings.t("...")`.
-2. **`tests/test_i18n_lint.gd` fails on a bare literal at a text sink** (`.text =`,
-   `tooltip_text =`, `PanelKit.*(`, `register(id, "...")`, `add_item(`, the settings,
-   menu and action-bar builders, the message stack's `push`). It reads one line at a
-   time. A literal that is not prose (a glyph, a unit) carries `# i18n: ok`.
-   `dev_*.gd` is English by design.
+2. **`tests/test_i18n_lint.gd` fails on a bare English literal in `src/ui`**, two ways.
+   *At a text sink* (known by shape, so a single lowercase word counts there): `.text =`,
+   `tooltip_text =`, `PanelKit.*(`, `register(id, "...")`, `add_item(`, the settings, menu and
+   action-bar builders, the drawer's `_entry`, the message stack's `push`, the reading helpers
+   (`_line`, `_reading`, `_out`, `_row`), `_queue_effect`, `.report(` -- the first argument and
+   those after a comma, a ternary branch, a `+` and the English default of `.get("k", "...")`
+   on a line that assigns text. *Anywhere else*, a literal that reads as prose: a space
+   between words, a capitalised word, an all-capitals heading, a word beside a `%`
+   placeholder, a dash and a word -- in a return, an append, an argument, a continuation
+   line, a var. A key or an id is never prose by this test (no space, lower case), and a
+   comparison, a `match`, a call that takes a name (`get_node`, `has`, `connect`,
+   `begins_with` ...), a log call and a dictionary key are not text. It reads one line at a
+   time, and pins its own shapes in `_self_check()`. What it cannot see is a single
+   lowercase word away from a sink (`"month" if n == 1 else "months"` is wrapped by hand).
+   A literal that is not prose to a player (a node name, a developer message) carries
+   `# i18n: ok`; `dev_*.gd`, `vendor/` and `grade.gd` (a shader) are outside it.
 3. **Placeholders keep their order.** `%` cannot reorder, so a translation uses the
    same `%d %s %.1f` in the same order as its English; `test_strings.gd` checks every
    entry. Write the English so that order is possible in French (do not build a
    sentence out of fragments joined with `+` -- one string, one `%`).
-4. **Plurals.** Use `tr_n(singular, plural, n)` or two whole sentences; do not write
-   "item(s)". French counts 0 and 1 as singular.
+4. **A sentence is whole, and a count picks the form with `tr_n`.** Never splice a short
+   English word into a translated frame (`"%d %s" % [n, "month" if n == 1 else "months"]`,
+   `"month%s"`, `"party(s)"`, `"%s the stance" % ["Raises" if up else "Lowers"]`): the
+   French noun, verb or agreement is not the English one. A count that picks the form is
+   `tr_n("%d month left", "%d months left", n) % n` (`Strings.tn(...)` in a `static func`),
+   both literals on one line; a choice between two meanings is two whole sentences
+   (`T("Raises %s by %.1f points.") if v > 0.0 else T("Lowers %s by %.1f points.")`).
+   The lint fails a ternary of two short literals inside a format argument. A plural msgid's
+   table entry is a LIST of forms under the singular msgid -- two for English and French
+   (`plural_forms` in `languages.json`; French counts 0 and 1 as the first form) -- each with
+   the singular's placeholders, because the caller formats whichever form is picked.
 5. **A const table of prose cannot call `tr()`.** Keep the English in the const, wrap
    at the use site (`tr(CAPTIONS[key])`), and end each line that holds msgids with
-   `# i18n: msgid` so the extractor lists them and the lint leaves them alone.
+   `# i18n: msgid` so the extractor lists them and the lint leaves them alone (the lint
+   fails prose in a class-level `const`/`static var`/`enum` without it). The marker takes
+   field names (`# i18n: msgid label caption`) or `last` (a `["id", "Text"]` pair); see
+   the worklist section.
 6. **No homonyms yet.** One English string, one translation. When two meanings of the
    same word need two translations, that is the moment to add `tr(msgid, context)`
    support to the loader and the table format; `Strings` reads no context today.
+
+## Dates and numbers
+
+Neither is translated text, and both differ by language, so each has ONE formatter in `src/ui`:
+
+- **Dates: `DateText`** (`src/ui/date_text.gd`). The twelve month names live there (English,
+  `# i18n: msgid`, wrapped at the use site) and so does every date shape: `day_month_year`
+  ("01 JAN 2026", "01 JANV 2026"), `month_year`, `day_month`, `month` (three letters),
+  `month_long`. No panel indexes a month table (`tests/test_date_text.gd` fails one that does):
+  the Diary once printed `JAN` beside a clock that said `JANV`.
+- **Figures with decimals: `Num`** (`src/ui/num.gd`). `Num.f(value, places)` and `Num.fs(value,
+  places)` (signed) print the language's decimal separator (`decimal` in `languages.json`: `.`
+  for English, `,` for French). The format keeps a `%s`: `tr("Rate %s%%") % Num.f(rate, 2)`, so
+  the msgid a translator sees is `Rate %s%%`, not `Rate %.2f%%`. A raw `%.1f` / `%+.2f` in
+  `src/ui` fails `tests/test_i18n_lint.gd` (`%.0f` and `%d` print no decimal and are fine). No
+  thousands separator is shown anywhere, so `Num` has none. A panel reaches `Num` through its own
+  preload, or through `PanelKit.Num` where the file has no line to spare under the size ratchet.
 
 ## What `tr()` does and does not do
 
@@ -130,6 +170,15 @@ python tools/i18n_extract.py                             # coverage per language
           "events": {"com_gas_squeeze.choices.freeze_the_tariff.label": {"en": "Freeze the household tariff", "fr": ""}}}}
 ```
 
+A PLURAL msgid (`tr_n`) lists as `{"en": "%d month left", "en_plural": "%d months left",
+"fr": ["", ""]}`: fill every form of the list (a language's `plural_forms`; French has 2: 0 and 1,
+then the rest). `--apply` writes the list under the singular msgid, refuses a list of the wrong
+length or with an empty form, and checks the placeholders of every form against the singular:
+
+```json
+"%d month left": ["%d mois restant", "%d mois restants"]
+```
+
 `--apply` writes every filled slot into `data/i18n/<lang>/ui.json` (the `ui` group) or
 `data/i18n/<lang>/<kind>.json` (a `rows` group); entries already in a table are kept and
 a filled slot overwrites its key; an empty slot is skipped. It **refuses**, and names, a
@@ -157,17 +206,22 @@ English, French, the pseudolocale and across a live switch. The lint treats the 
 first argument*, a ternary branch (`else "..."`) and the English default of
 `.get("key", "...")` on a line that assigns text.
 
-## What is NOT done (V5.1b's edge)
+## What is NOT done (V5.1b2's edge)
 
-The lint covers the sinks listed in rule 2, not every string: a survey of unwrapped
-prose-like literals in `src/ui` (2026-10-21) found about 870 more, in messages built
-by `+` or `%` away from a sink, returns of sentence fragments, dict values, `push_error`
-text (English by design) and const tables not yet marked. The next passes widen the
-lint's sink list one pattern at a time (a lint that grows red is the worklist), mark
-the const tables with `# i18n: msgid`, and translate. The chrome seeded in French by
-V5.1b is the menu, settings, top bar, window titles, action bar, common buttons and the
-map layers; the rest of the backlog (laws, events, bodies of the panels) is the content
+Every prose literal the lint can see is wrapped or marked: 1 112 UI msgids today
+(`python tools/i18n_extract.py`), 205 translated -- the chrome seeded in V5.1b. The rest
+of the backlog (the other panels' bodies, laws, events, people, firms) is the content
 child's, from `--todo fr`.
+
+What the lint cannot see: a lone lowercase word away from a sink; a short fragment that
+reaches a format string through a variable rather than a ternary inside the argument; a
+fragment appended with `+=` (` -- kept only if %s is ratified at home` is its own msgid with
+edge spaces, the translator's to fit); and text built from data (`String(x).capitalize()`,
+a sim constant such as a chamber name). Every count that picks a form and every
+two-way verb in a sentence is now a whole sentence (V5.1b2): `tr_n` for counts, one
+sentence per branch for choices; a sentence with a FIXED plural word ("... %d months ...")
+still shows "1 months" in English when the count is 1 -- a pre-existing edge, converted to
+`tr_n` as each shows.
 
 `tools/screenshot.gd -- --lang fr` stages the game in French; `--menu` ignores it,
 because the menu applies the saved language when it comes up.

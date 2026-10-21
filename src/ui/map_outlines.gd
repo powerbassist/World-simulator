@@ -1,5 +1,6 @@
 extends RefCounted
 
+const Strings = preload("res://src/ui/strings.gd")
 ## V4.11c. What the map says about an outline -- a country drawn but not
 ## simulated. The text is a pure function of the loader (the outline register and
 ## the endowment shares), map_cities.gd's pattern: map_view draws it, the test
@@ -24,13 +25,13 @@ static func profile_of(loader, id: String) -> String:
 		if share > 0.0:
 			rows.append([share, String(good_id)])
 	if rows.is_empty():
-		return "Outline · No recorded production"
+		return Strings.t("Outline · No recorded production")
 	rows.sort_custom(func(a, b) -> bool:
 		return float(a[0]) > float(b[0]) if a[0] != b[0] else String(a[1]) < String(b[1]))
 	var parts: Array[String] = []
 	for row in rows.slice(0, TOP_GOODS):
 		parts.append("%s %s" % [String(loader.commodity_goods[row[1]].get("name", row[1])), _percent(float(row[0]))])
-	return "Outline · %s of world output" % " · ".join(parts)
+	return Strings.t("Outline · %s of world output") % " · ".join(parts)
 
 
 ## Whole percent, with "<1%" for a share that would round to zero: a top-three good

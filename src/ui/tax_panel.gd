@@ -41,12 +41,12 @@ const PROGRESSIVITY_KEY := "tax_progressivity"
 ## register's question, this table only answers "what is it called". A
 ## composed key is named by the params register instead (see _label_for()).
 const KEY_LABELS := {
-	"income": "Income tax",
-	"corporate": "Corporate tax",
+	"income": "Income tax",  # i18n: msgid
+	"corporate": "Corporate tax",  # i18n: msgid
 	"vat": "VAT",
-	"capital_gains": "Capital gains tax",
-	"wealth": "Wealth tax",
-	PROGRESSIVITY_KEY: "Income brackets",
+	"capital_gains": "Capital gains tax",  # i18n: msgid
+	"wealth": "Wealth tax",  # i18n: msgid
+	PROGRESSIVITY_KEY: "Income brackets",  # i18n: msgid
 }
 
 ## Per-key slider ceilings -- the budget panel's LEVER_MAX rows for the tax
@@ -330,7 +330,7 @@ func _lever_max(key: String) -> float:
 
 func _label_for(key: String) -> String:
 	if KEY_LABELS.has(key):
-		return String(KEY_LABELS[key])
+		return tr(String(KEY_LABELS[key]))
 	var ns = _state.player()
 	var params: Dictionary = ns.custom_taxes.get(key, {})
 	return String(params.get("name", key))
@@ -444,8 +444,8 @@ func _resync_untouched() -> void:
 func _lever_text(key: String) -> String:
 	var value := _pending_value(key)
 	if key == "wealth" or key == PROGRESSIVITY_KEY:
-		return "%.2f" % value
-	return "%.1f" % value
+		return PanelKit.Num.f(value, 2)
+	return PanelKit.Num.f(value, 1)
 
 
 func _refresh() -> void:
@@ -472,22 +472,22 @@ func _fill_bases() -> void:
 	PanelKit.heading(_bases_box, tr("Born keys"))
 	for key in customs:
 		var params: Dictionary = ns.custom_taxes[key]
-		PanelKit.line(_bases_box, tr("%s — base %.2f%% of GDP, erosion %.2f, born at %.1f. Its rate sits in the grid above.") % [
-			String(params.get("name", key)), float(params.get("base_share", 0.0)),
-			float(params.get("erosion", 0.0)), float(params.get("ref_pct", 0.0))], PanelKit.Tone.DIM)
+		PanelKit.line(_bases_box, tr("%s — base %s%% of GDP, erosion %s, born at %s. Its rate sits in the grid above.") % [
+			String(params.get("name", key)), PanelKit.Num.f(float(params.get("base_share", 0.0)), 2),
+			PanelKit.Num.f(float(params.get("erosion", 0.0)), 2), PanelKit.Num.f(float(params.get("ref_pct", 0.0)), 1)], PanelKit.Tone.DIM)
 
 
 func _on_param_changed(_value: float) -> void:
 	_set_param_text(_base_slider)
 	_set_param_text(_erosion_slider)
 	_set_param_text(_rate_slider)
-	_yield_label.text = tr("Would yield %.2f%% of GDP at birth (the most the model prices: %.1f).") % [
-		_base_slider.value * _rate_slider.value, SK.NEW_TAX_YIELD_CEILING]
+	_yield_label.text = tr("Would yield %s%% of GDP at birth (the most the model prices: %s).") % [
+		PanelKit.Num.f(_base_slider.value * _rate_slider.value, 2), PanelKit.Num.f(SK.NEW_TAX_YIELD_CEILING, 1)]
 
 
 func _set_param_text(slider: HSlider) -> void:
 	var value: Label = slider.get_meta("value_label")
-	value.text = "%.2f" % slider.value
+	value.text = PanelKit.Num.f(slider.value, 2)
 
 
 ## The birth. The gates are Statute.draft()'s -- this panel adds none, shows

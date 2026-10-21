@@ -30,6 +30,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Region = preload("res://src/core/region.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const Num = preload("res://src/ui/num.gd")
 
 var _state
 var _loader
@@ -155,13 +156,13 @@ func _build_partition(ns, regions: Array) -> void:
 	# replaced was inlined, and it comes back with the rate that made it load-bearing.
 	var residual: float = maxf(0.0, 1.0 - named)
 	PanelKit.row(_body, tr("Regions"), str(regions.size()))
-	PanelKit.row(_body, tr("Named share of the population"), "%.1f%%" % (named * 100.0))
-	PanelKit.row(_body, tr("Unnamed — extra-regio and overseas"), "%.1f%%" % (residual * 100.0))
+	PanelKit.row(_body, tr("Named share of the population"), "%s%%" % Num.f((named * 100.0), 1))
+	PanelKit.row(_body, tr("Unnamed — extra-regio and overseas"), "%s%%" % Num.f((residual * 100.0), 1))
 	var named_gdp: float = 0.0
 	for region in regions:
 		named_gdp += region.gdp_share
-	PanelKit.row(_body, tr("Named share of output"), "%.1f%%" % (named_gdp * 100.0))
-	PanelKit.row(_body, tr("Unnamed output — extra-regio"), "%.1f%%" % (Region.national_gdp_residual(regions) * 100.0))
+	PanelKit.row(_body, tr("Named share of output"), "%s%%" % Num.f((named_gdp * 100.0), 1))
+	PanelKit.row(_body, tr("Unnamed output — extra-regio"), "%s%%" % Num.f((Region.national_gdp_residual(regions) * 100.0), 1))
 
 	# V2.7. NEVER SILENT, on the rule V1.7c set for the electoral method: every
 	# region has a position on the graph, where an absent route is a fact most
@@ -219,11 +220,11 @@ func _build_table(ns, regions: Array) -> void:
 		var index: float = Regions.gdp_per_head_index(ns, regions, region.id, Migration.region_share(ns, region.id))
 		rows.append([
 			region.region_name,
-			"%.1f%%" % (Regions.share_of(ns, region.id) * 100.0),
+			"%s%%" % Num.f((Regions.share_of(ns, region.id) * 100.0), 1),
 			PanelKit.pop_text(float(ns.population) * Migration.region_share(ns, region.id)),
-			"x%.2f" % index,
-			"x%.2f" % float(access.get(region.id, 1.0)),
-			"%.1f%%" % Regions.unemployment_pct(ns, regions, region.id, access, sites),
+			"x%s" % Num.f(index, 2),
+			"x%s" % Num.f(float(access.get(region.id, 1.0)), 2),
+			"%s%%" % Num.f(Regions.unemployment_pct(ns, regions, region.id, access, sites), 1),
 			_dominant(region),
 			PanelKit.pop_text(jobs) if jobs > 0.0 else "0",
 		])

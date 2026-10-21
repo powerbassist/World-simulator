@@ -232,8 +232,7 @@ func _check_action_bar_subrow() -> void:
 	# label as metadata, which is what it is named by here.
 	var labels := ""
 	for button in bar._subrow.get_children():
-		labels += String(button.get_meta("label", "")).to_upper() + "
-"
+		labels += String(button.get_meta("label", "")).to_upper() + "\n"
 	for entry in ["ECONOMY", "BUDGET"]:
 		if not labels.contains(entry):
 			_fail("the economy sub-row has no '%s' entry: %s" % [entry, labels])

@@ -16,6 +16,7 @@ extends RefCounted
 
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## Durations, in seconds, and why each is that long. Under ~0.1 s a fade reads
 ## as a flicker; over ~0.25 s a window the player asked for feels slow to come.
@@ -248,6 +249,8 @@ static func _numbers() -> RegEx:
 ## True when `a` and `b` differ only in the values of their numbers, each
 ## number keeping its count of decimals.
 static func same_template(a: String, b: String) -> bool:
+	a = _canon(a)
+	b = _canon(b)
 	# A grouped figure ("1,234") would roll group by group, through values it
 	# never takes; the strip prints none, and one that appears snaps instead.
 	if _grouped(a) or _grouped(b):
@@ -269,13 +272,19 @@ static func same_template(a: String, b: String) -> bool:
 static func interpolate_text(a: String, b: String, t: float) -> String:
 	if not same_template(a, b):
 		return b if t >= 1.0 else a
+	# The numbers are read with a point as the decimal mark whatever the language prints
+	# ("7,40" in French) and written back with the language's own; the text between them
+	# is `a`'s, untouched (the canonical form is the same length).
+	var original := a
+	a = _canon(a)
+	b = _canon(b)
 	var ma := _numbers().search_all(a)
 	var mb := _numbers().search_all(b)
 	var out := ""
 	var cursor := 0
 	for i in ma.size():
 		var m: RegExMatch = ma[i]
-		out += a.substr(cursor, m.get_start() - cursor)
+		out += original.substr(cursor, m.get_start() - cursor)
 		var va := m.get_string().to_float()
 		var vb := mb[i].get_string().to_float()
 		var places := _decimals(m.get_string())
@@ -285,10 +294,16 @@ static func interpolate_text(a: String, b: String, t: float) -> String:
 		var width := m.get_string().length() - (places + 1 if places > 0 else 0)
 		if m.get_string().begins_with("0") and width > 1:
 			digits = digits.pad_zeros(width)
-		out += digits
+		out += digits.replace(".", Strings.decimal())
 		cursor = m.get_end()
-	out += a.substr(cursor)
+	out += original.substr(cursor)
 	return out
+
+
+## `text` with the language's decimal mark written as a point, for reading its numbers.
+static func _canon(text: String) -> String:
+	var mark := Strings.decimal()
+	return text if mark == "." else text.replace(mark, ".")
 
 
 static var _grouped_re: RegEx

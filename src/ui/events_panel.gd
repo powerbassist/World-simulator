@@ -176,10 +176,10 @@ func _build_pending(ns) -> void:
 		# tell an empty list from a closed gate would read the lever as broken.
 		if longest_quiet > 0:
 			var closed_ago: int = EventsK.CATEGORY_QUIET_MONTHS - longest_quiet
-			PanelKit.line(_body, tr("Nothing today. The last matter closed %s.") % (
-				"this month" if closed_ago <= 0
-				else "%d %s ago" % [closed_ago, "month" if closed_ago == 1 else "months"]
-			))
+			if closed_ago <= 0:
+				PanelKit.line(_body, tr("Nothing today. The last matter closed this month."))
+			else:
+				PanelKit.line(_body, tr_n("Nothing today. The last matter closed %d month ago.", "Nothing today. The last matter closed %d months ago.", closed_ago) % closed_ago)
 		else:
 			PanelKit.line(_body, tr("Nothing today."))
 		return
@@ -241,8 +241,8 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	# hover read "12 of 96 months" against a project with twelve months LEFT.
 	var left := int(entry.get("months_left", 0))
 	var deadline := Label.new()
-	deadline.text = tr("%d %s to answer, then: %s") % [
-		left, "month" if left == 1 else "months", ev.default_choice().get("label", ""),
+	deadline.text = tr_n("%d month to answer, then: %s", "%d months to answer, then: %s", left) % [
+		left, ev.default_choice().get("label", ""),
 	]
 	# NEUTRAL until the last month, and the first captured frame is why: this line was
 	# GOOD_TEXT at any comfortable distance, so "2 months to answer, then: Say nothing"
@@ -273,7 +273,7 @@ func _build_choice(ns, ev, choice: Dictionary) -> void:
 	# way silence falls -- which is the only thing the deadline is about.
 	button.text = "%s%s" % [
 		String(choice.get("label", "")),
-		"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
+		tr("   (happens if you say nothing)") if bool(choice.get("is_default", false)) else "",
 	]
 	button.pressed.connect(func(): _on_choose(ev, choice))
 	if _primary == null and not button.disabled:
@@ -313,10 +313,10 @@ func _subject_label(ns, ev) -> String:
 	match ev.subject_office:
 		"head_of_government":
 			person_id = ns.pm_person_id
-			office = ns.head_of_government_title if ns.head_of_government_title != "" else "Head of government"
+			office = ns.head_of_government_title if ns.head_of_government_title != "" else tr("Head of government")
 		"head_of_state":
 			person_id = ns.head_of_state_person_id
-			office = ns.head_of_state_title if ns.head_of_state_title != "" else "Head of state"
+			office = ns.head_of_state_title if ns.head_of_state_title != "" else tr("Head of state")
 		"largest_party_leader":
 			var party_list: Array = _loader.parties.get(ns.id, [])
 			var largest := Government.largest_party_id(ns, party_list)
@@ -327,7 +327,7 @@ func _subject_label(ns, ev) -> String:
 					# line naming the deposed person is the resurrected-rival
 					# class in a second surface.
 					person_id = String(ns.party_leader_override.get(party.id, party.leader_person_id))
-					office = "%s, leader" % party.party_name
+					office = tr("%s, leader") % party.party_name
 					break
 	var who: String = _loader.person_name(person_id)
 	if who == "":
@@ -356,9 +356,7 @@ func _build_ledger(ns) -> void:
 			continue
 		_build_record(record)
 	if hidden > 0:
-		PanelKit.line(_body, tr("%d %s hidden by your message settings.") % [
-			hidden, "record" if hidden == 1 else "records",
-		])
+		PanelKit.line(_body, tr_n("%d record hidden by your message settings.", "%d records hidden by your message settings.", hidden) % hidden)
 
 
 func _build_record(record: Dictionary) -> void:

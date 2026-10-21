@@ -15,6 +15,8 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## The comparison window. Six months is long enough that one noisy month does not
 ## dominate and short enough to still be about the player's current term.
@@ -28,11 +30,11 @@ const TREND_MONTHS := 6
 ## be weighed against a 5-point approval slide -- without it, whichever figure
 ## happens to be measured on the largest numbers always wins.
 const WATCHED: Array[Dictionary] = [
-	{"key": "unemployment_pct", "label": "Unemployment", "worse_when_rising": true, "scale": 1.0, "unit": "pp"},
-	{"key": "overall_approval_pct", "label": "Approval", "worse_when_rising": false, "scale": 5.0, "unit": "pp"},
-	{"key": "deficit_pct_gdp", "label": "Deficit", "worse_when_rising": false, "scale": 1.0, "unit": "pp"},
-	{"key": "growth_annual_pct", "label": "Growth", "worse_when_rising": false, "scale": 0.5, "unit": "pp"},
-	{"key": "debt_to_gdp_pct", "label": "Debt", "worse_when_rising": true, "scale": 3.0, "unit": "pp"},
+	{"key": "unemployment_pct", "label": "Unemployment", "worse_when_rising": true, "scale": 1.0, "unit": "pp"},  # i18n: msgid label
+	{"key": "overall_approval_pct", "label": "Approval", "worse_when_rising": false, "scale": 5.0, "unit": "pp"},  # i18n: msgid label
+	{"key": "deficit_pct_gdp", "label": "Deficit", "worse_when_rising": false, "scale": 1.0, "unit": "pp"},  # i18n: msgid label
+	{"key": "growth_annual_pct", "label": "Growth", "worse_when_rising": false, "scale": 0.5, "unit": "pp"},  # i18n: msgid label
+	{"key": "debt_to_gdp_pct", "label": "Debt", "worse_when_rising": true, "scale": 3.0, "unit": "pp"},  # i18n: msgid label
 ]
 
 const APPROVAL_KEY := "overall_approval_pct"
@@ -108,7 +110,7 @@ static func movements(state, months := TREND_MONTHS) -> Array[Dictionary]:
 			severity = worse / float(watch["scale"])
 		out.append({
 			"key": key,
-			"label": watch["label"],
+			"label": Strings.t(watch["label"]),
 			"unit": watch["unit"],
 			"change": change,
 			"severity": severity,
@@ -166,7 +168,7 @@ static func movements_between(before: Dictionary, after: Dictionary) -> Array[Di
 			severity = worse / float(watch["scale"])
 		out.append({
 			"key": key,
-			"label": watch["label"],
+			"label": Strings.t(watch["label"]),
 			"unit": watch["unit"],
 			"change": change,
 			"severity": severity,
@@ -203,10 +205,10 @@ static func months_to_vote(state, ns) -> int:
 ## plural and the zero case.
 static func months_text(months: int) -> String:
 	if months <= 0:
-		return "this month"
+		return Strings.t("this month")
 	if months == 1:
 		return "1 month"
-	return "%d months" % months
+	return Strings.t("%d months") % months
 
 
 ## A signed change with its unit, or an em dash when there is no history to
@@ -218,4 +220,4 @@ static func change_text(change: float, unit := "pp") -> String:
 	# -- a minus sign in front of a zero, which reads as a bug.
 	if absf(change) < 0.05:
 		return "0.0 %s" % unit
-	return "%+.1f %s" % [change, unit]
+	return "%s %s" % [Num.fs(change, 1), unit]
