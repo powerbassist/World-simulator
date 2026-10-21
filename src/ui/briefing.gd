@@ -285,8 +285,11 @@ func _build_polls() -> void:
 	if precise:
 		PanelKit.line(section, "Commissioned poll — margin of error about %.0f point." % PollNoise.PRECISE_MAX_PCT, PanelKit.Tone.DIM)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	# Stacked, not side by side: the two commission buttons are long sentences, and
+	# in Archivo two of them in one row measured 716 px inside a 646 px view -- every
+	# right-aligned figure above landed in the clipped strip (V5.1a QA).
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
 	section.add_child(row)
 	for kind in [StatuteK.POLL_KIND_ASSEMBLY, StatuteK.POLL_KIND_POPULAR]:
 		var btn := Button.new()

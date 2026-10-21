@@ -46,6 +46,11 @@ const GOOD := Color(0.247, 0.702, 0.498)       ## #3FB37F
 const BAD := Color(0.898, 0.325, 0.294)        ## #E5534B
 const WARN := Color(0.890, 0.651, 0.227)       ## #E3A63A attention, not failure
 
+## The map's own mark for what is NOT the player's: another nation's city, project
+## or plant. The accent is the played nation's identity, so it goes on that nation's
+## marks alone; everything else is this one neutral tone.
+const MAP_NEUTRAL := Color(0.827, 0.851, 0.878)  ## #D3D9E0
+
 ## What the accent is when there is no nation to take it from (the menu), and when
 ## no band of the flag passes accent_rule.gd's floors. A cool azure, deliberately
 ## not a flag colour of its own.
@@ -296,7 +301,7 @@ static func _labels(theme: Theme) -> void:
 	# and then recognises by position (cluster names), Heading for sections
 	# inside a panel they read every time.
 	theme.set_font_size("font_size", HEADING, SIZE_SMALL)
-	theme.set_color("font_color", HEADING, _accent)
+	theme.set_color("font_color", HEADING, TEXT)  # neutral: the accent is where-you-are, not a heading
 	if tracked != null:
 		theme.set_font("font", HEADING, tracked)
 
@@ -348,7 +353,10 @@ static func _buttons(theme: Theme) -> void:
 		# Continue read enabled until clicked (playtest 2026-09-05).
 		theme.set_stylebox("disabled", type, _button_box(HULL))
 		theme.set_color("font_hover_color", type, TEXT)
-		theme.set_color("font_pressed_color", type, _accent)
+		# Neutral text on the pressed fill (the accent shows on its border): the fill
+		# is SLATE lightened, lighter than the surface the accent rule judges on, and
+		# the accent's text measured 2.76:1 there.
+		theme.set_color("font_pressed_color", type, TEXT)
 		theme.set_color("font_disabled_color", type, TEXT_DIM)
 
 	# A cluster is an icon with a name under it, not a slab. Flat until it is the

@@ -392,6 +392,13 @@ Below the V5.1 bar, from `code-review 32 high` (the two that met it -- the accen
 - **`Icon.load_icon` injects the fill at `find("<svg ") + 5`**: an SVG whose root tag is followed by a newline or tab returns -1 and corrupts the document. The committed Material files all use a space.
 - **`map_face()`'s six callers keep `if font == null` guards that cannot fire** (it falls back to `ThemeDB.fallback_font`), and a missing Archivo re-attempts the load on every call (only a non-null face is cached).
 
+Recorded from QA's pass on PR #32 (`.superpowers/sdd/qa-report.md`), not fixed:
+
+- **The load-path accent re-apply has no test** (`main.gd`'s `_on_load_requested` calls `UiTheme.apply_for` after a load; QA saw it re-theme DEU -> FRA on screen). A test needs a second nation's save through the real load path.
+- **Hover readouts and labels draw in the width-62 map face** (`map_view.gd` outline readout plate, tip text) as well as the place names; they were not part of the label-packing problem that needed it.
+- **Every load rebuilds the whole theme even for the same nation** (`apply_for` always builds). A cache keyed on the accent colour would skip it.
+- **A flag whose bands are all dull but chromatic would fall back** (the rule's fallback is "no band qualifies", not "no chroma"). None does today and `test_accent_rule`'s 0-fallback check turns the suite red on a new one.
+
 ## Carried from V5.1-0c (2026-10-21)
 
 - **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.

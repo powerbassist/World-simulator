@@ -176,8 +176,9 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
   `godot_mcp_toolkit` is the one this project already uses — it is what
   `runtime_screenshot` and `input_simulate` reach a running game through. **The other
-  four are parked on purpose, not junk** — `at-icons` is half adopted (V2.3 committed
-  the icons `src/` names) and `materialLayers` and `road-generator` are each installed
+  four are parked on purpose, not junk** — `at-icons` is now unreferenced (V2.3 committed
+  the icons `src/` named; V5.1a replaced them with Material Symbols, and the committed files are a
+  c/d cleanup) and `materialLayers` and `road-generator` are each installed
   ahead of a planned use, so do not strip any of them on the reasoning that nothing in
   `src/` reads them yet. **`road-generator`'s planned use is now spent and it was not
   this one**: V3.4 drew the road layer and did NOT reach for the addon, because it
@@ -273,7 +274,8 @@ becomes raspberry; the flag's colour family survives and is never mistaken for a
 state. `UiTheme.ACCENT_FALLBACK` is for a flag with no chroma at all, and for the
 menu. **Two kinds of colour, never mixed:** IDENTITY follows the nation
 (`UiTheme.accent()` -- the open cluster's bar, focus, fills, today's mark, the
-home outline, project and city marks) and STATUS is a fixed tone (`GOOD`, `BAD`,
+home outline, and the PLAYER's own city, project and plant marks; every other
+nation's are `UiTheme.MAP_NEUTRAL`; headings are neutral) and STATUS is a fixed tone (`GOOD`, `BAD`,
 `WARN` -- a mood, a pending mark, the placement reticle). There is no `ACCENT`
 const. `main.gd` re-applies the theme once the played nation is known and on a
 load (`UiTheme.apply_for`); the menu resets it. `test_accent_rule.gd` runs the

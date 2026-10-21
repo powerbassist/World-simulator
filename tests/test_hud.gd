@@ -106,13 +106,15 @@ func _check_icons_load() -> void:
 					_fail("the pending-mark glyph has an opaque pixel %s that is not the attention tone" % px.to_html(false))
 	if not seen_warn:
 		_fail("the pending-mark glyph has no opaque pixel")
-	host.free()
 
 	# The mood icon's WORRIED band sits between GOOD and BAD: a status tone, not the
-	# nation's accent (which could be any hue).
-	UiTheme.apply(Control.new(), Color("#2596FF"))
+	# nation's accent (which could be any hue), and the accent is still the odd one
+	# out while this check runs.
 	if MoodIcon._colour_for(Portrait.Emotion.WORRIED) != UiTheme.WARN:
 		_fail("the WORRIED mood is not drawn in the attention tone")
+	# Put the static accent back and free the stand-in: it must not outlive the check.
+	UiTheme.apply(host)
+	host.free()
 
 	# And the bar is actually using them, not merely able to.
 	for cluster_id in _main._hud.action_bar._cluster_buttons.keys():

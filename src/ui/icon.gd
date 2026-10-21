@@ -46,7 +46,7 @@ static func load_icon(path: String, tint: Color, px: int) -> ImageTexture:
 		native = float(found.get_string(1))
 
 	var image := Image.new()
-	# `native` is the viewBox width in source units; scale is a multiplier, not a size.
+	# `native` is the file's own width attribute (its user units); scale is a multiplier, not a size.
 	if image.load_svg_from_string(svg, float(px) / native) != OK:
 		return null
 	return ImageTexture.create_from_image(image)

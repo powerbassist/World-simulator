@@ -13,6 +13,7 @@ extends SceneTree
 ## only looked at main.tscn would not notice if that one were dropped.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const AccentRule = preload("res://src/ui/accent_rule.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -89,6 +90,7 @@ func _check_theme_contents() -> void:
 				_fail("the disabled %s keeps the live border" % type)
 
 	_check_grammar(theme)
+	_check_pressed_text_contrast(theme)
 	_check_fonts(theme)
 
 
@@ -114,6 +116,12 @@ func _check_grammar(theme: Theme) -> void:
 	# Graphite and near-opaque: the map may show through a HUD plate only faintly.
 	if plate.bg_color.a >= 1.0 or plate.bg_color.a < 0.9:
 		_fail("the plate's alpha is %.2f, outside [0.9, 1.0)" % plate.bg_color.a)
+
+	# Headings (every section label, window title and card title) are neutral: the
+	# board's Bureau mockups set them in text colour, with the accent reserved for the
+	# active tab, the icon and the marker -- "you are here", not "this is a heading".
+	if theme.get_color("font_color", UiTheme.HEADING) == UiTheme.accent():
+		_fail("headings wear the accent, which is reserved for where-you-are marks")
 
 	# The folded plate and a cluster's open marker are the accent's two jobs in
 	# the chrome. An accent that is not the one in force means a nation's colour
@@ -159,6 +167,23 @@ func _check_player_accent_wired() -> void:
 		_fail("the menu left the previous game's accent in force (%s)" % UiTheme.accent().to_html(false))
 	if _menu.theme.get_stylebox("panel", UiTheme.PLATE_FOLDED).border_color != UiTheme.ACCENT_FALLBACK:
 		_fail("the menu's own theme does not carry the fallback accent")
+
+
+## The accent is read as TEXT where a button is pressed, so its contrast has to be
+## measured on the surface that button actually draws: a plain Button's pressed
+## fill is SLATE lightened, lighter than the SLATE the accent rule judges on (QA
+## measured 2.76:1 for France's blue there). Every pressed state's text must clear
+## AA on its own fill.
+func _check_pressed_text_contrast(theme: Theme) -> void:
+	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON]:
+		var box := theme.get_stylebox("pressed", type) as StyleBoxFlat
+		if box == null:
+			_fail("%s has no pressed stylebox" % type)
+			continue
+		var text := theme.get_color("font_pressed_color", type)
+		var ratio := AccentRule.contrast(text, box.bg_color)
+		if ratio < AccentRule.MIN_CONTRAST:
+			_fail("%s pressed text %s on %s is %.2f:1, under AA" % [type, text.to_html(false), box.bg_color.to_html(false), ratio])
 
 
 ## The fonts are the one part of the theme that fails *silently*: a missing
