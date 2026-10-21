@@ -14,10 +14,14 @@ extends SceneTree
 ##
 ## Loads the actual main scene: the pause lives in main.gd's arrival path.
 
+## suite-exclusive: backs up and restores user://settings.cfg -- the foreign-news check writes the [messages] switch
+
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const Events = preload("res://src/sim/events.gd")
+const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
+const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 
 ## A scratch file, never the player's user://settings.cfg.
@@ -44,6 +48,7 @@ func _process(_delta: float) -> bool:
 
 	_check_register()
 	_check_file_round_trip()
+	_check_foreign_news_switch()
 	_check_settings_grid()
 	if _main._state == null or _main._loader == null:
 		_fail("main.tscn did not produce a running game")
@@ -53,6 +58,7 @@ func _process(_delta: float) -> bool:
 		_check_quiet_card_deadline_ages()
 		_check_notify_band()
 		_check_feed_band()
+		_check_news_between_other_nations()
 	_finish()
 	return false
 
@@ -94,6 +100,95 @@ func _check_register() -> void:
 	var off := {"scandal": {"popup": MessageSettings.OFF}}
 	if MessageSettings.allows(off, "scandal", EventsK.SEVERITY_MAX, "popup"):
 		_fail("allows: OFF let a critical through")
+
+
+## V5.1-0c. The author is not told what other countries do to each other unless
+## they ask: the switch defaults Off, round-trips through the settings file, and
+## sits on the Settings screen.
+func _check_foreign_news_switch() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SCRATCH_PATH))
+	if MessageSettings.foreign_news(SCRATCH_PATH):
+		_fail("foreign news: on by default -- the author asked for the opposite")
+	MessageSettings.set_foreign_news(true, SCRATCH_PATH)
+	if not MessageSettings.foreign_news(SCRATCH_PATH):
+		_fail("foreign news: a stored On reads back Off")
+	# Saving the band register must not drop it (save_to keeps unrelated keys).
+	MessageSettings.save_to(MessageSettings.defaults(), SCRATCH_PATH)
+	if not MessageSettings.foreign_news(SCRATCH_PATH):
+		_fail("foreign news: saving the message bands erased the switch")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SCRATCH_PATH))
+	if _settings._foreign_news_button == null:
+		_fail("foreign news: the Settings screen has no control for it")
+
+
+## The card stays for acts between two OTHER nations only when asked for; an act
+## aimed at the player cards regardless.
+func _check_news_between_other_nations() -> void:
+	var state = _main._state
+	var stack = _main._hud.message_stack
+	var player_id: String = state.player_nation_id
+	var floor_share: float = ForeignPolicy.even_share(state, player_id) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
+	# The partner the player has the largest stake in, so the stake filter passes.
+	var actor := ""
+	var best := -1.0
+	for id in state.nations.keys():
+		if String(id) == player_id:
+			continue
+		var stake: float = ForeignPolicy.stake(state, player_id, String(id))
+		if stake > best:
+			best = stake
+			actor = String(id)
+	var target := ""
+	for id in state.nations.keys():
+		if String(id) != player_id and String(id) != actor:
+			target = String(id)
+			break
+	if best < floor_share:
+		_fail("foreign news: no partner clears the stake floor (%.3f < %.3f) -- the check proved nothing" % [best, floor_share])
+		return
+
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	var had := cfg.has_section_key(MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY)
+	var was := MessageSettings.foreign_news(SettingsPanel.CONFIG_PATH)
+
+	for on in [false, true]:
+		MessageSettings.set_foreign_news(on, SettingsPanel.CONFIG_PATH)
+		SettingsPanel.revision += 1  # what a Settings change does; main re-reads the switch when it moves
+		stack.clear()
+		state.foreign_acts.clear()
+		state.foreign_acts.push_front({
+			"year": state.year, "month": state.month,
+			"actor_id": actor, "target_id": target,
+			"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
+		})
+		_main._card_foreign_acts(state.year, state.month)
+		var want := 1 if on else 0
+		if stack.card_count() != want:
+			_fail("foreign news %s: an act between two other nations made %d cards, want %d" % [
+				"On" if on else "Off", stack.card_count(), want])
+		# Aimed at the player: always news.
+		stack.clear()
+		state.foreign_acts.clear()
+		state.foreign_acts.push_front({
+			"year": state.year, "month": state.month,
+			"actor_id": actor, "target_id": player_id,
+			"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
+		})
+		_main._card_foreign_acts(state.year, state.month)
+		if stack.card_count() != 1:
+			_fail("foreign news %s: an act aimed at the player made %d cards, want 1" % [
+				"On" if on else "Off", stack.card_count()])
+	stack.clear()
+	state.foreign_acts.clear()
+
+	var restore := ConfigFile.new()
+	restore.load(SettingsPanel.CONFIG_PATH)
+	if had:
+		restore.set_value(MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, was)
+	else:
+		restore.erase_section_key(MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY)
+	restore.save(SettingsPanel.CONFIG_PATH)
 
 
 func _check_file_round_trip() -> void:

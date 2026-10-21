@@ -314,6 +314,11 @@ func _check_manual_toggle_takes_the_clock() -> void:
 	# flag, the cluster's button is pressed and BOTH must drop; then both are
 	# re-armed and Space must drop both again -- so a door reverted to a bare
 	# toggle fails on its own line instead of hiding behind the other.
+	# V5.1-0c: with the offer unchosen the FIRST press opens the Agenda instead of
+	# running the clock (test_agenda_panel pins that); the Agenda being open, as it
+	# is for a player who has seen the offer, the press is the player declining.
+	_main._windows.open("agenda")
+	_main._agenda_panel._process(0.0)
 	_main._paused_for_programme = true
 	_main._hud.clock_cluster.pause_toggled.emit()
 	if clock.paused:
@@ -334,6 +339,7 @@ func _check_manual_toggle_takes_the_clock() -> void:
 		_fail("Space left the arrival flag up")
 	if _main._paused_for_programme:
 		_fail("Space left the programme hold up")
+	_main._windows.close("agenda")
 	if not _main._unseen_events.has(String(ev.id)):
 		_fail("a manual toggle erased the unseen mark (the card is still unseen)")
 	_main._hud.message_stack.dismiss(card_id)
@@ -361,8 +367,11 @@ func _check_manual_toggle_takes_the_clock() -> void:
 		var effects_before: int = _main._pending_effects.size()
 		var cards_before: Array = _main._hud.message_stack._cards.keys()
 		_main._enforce_term_start_programme()  # the hold and card a real term start raises
+		_main._windows.open("agenda")  # V5.1-0c: a player who has seen the offer declining it
+		_main._agenda_panel._process(0.0)
 		_main._toggle_pause_by_hand()  # run
 		_main._toggle_pause_by_hand()  # pause
+		_main._windows.close("agenda")
 		if not clock.paused:
 			_fail("the staging toggles left the clock running")
 		_main._on_programme_chosen(chosen_id)

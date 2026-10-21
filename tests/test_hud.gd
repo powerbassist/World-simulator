@@ -13,6 +13,7 @@ extends SceneTree
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const MessageStack = preload("res://src/ui/message_stack.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -28,17 +29,29 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 2:
 		return false
+	if _frame > 2:
+		return _later_frames()
 
 	_check_icons_load()
 	_check_portrait_names_the_player()
 	_check_flag_data_reaches_the_card()
 	_check_mood_reads_the_polled_figure()
+	_check_face_is_fixed_and_mood_is_an_icon()
 	_check_action_bar_subrow()
 	_check_message_stack()
 	_check_set_body()
 	_check_card_is_an_answer_surface()
 	_check_foreign_acts_reach_the_column()
 	_check_minimap_slot_reserved()
+	_stage_tall_cards()
+	return false
+
+
+func _later_frames() -> bool:
+	if _frame < 5:
+		return false  # a layout pass or two for the cards to take their height
+	_check_cards_do_not_push_the_ui_down()
+	_check_windows_open_clear_of_the_column()
 	_finish()
 	return false
 
@@ -131,6 +144,34 @@ func _check_mood_reads_the_polled_figure() -> void:
 		bands[card._emotion_for(value)] = true
 	if bands.size() != 4:
 		_fail("approval bands collapse to %d distinct faces, expected 4" % bands.size())
+
+
+## V5.1-0c. The author: "sometimes the president portrait changes" -- the face
+## swapped with approval and nothing said it was a mood read. Now the face is one
+## fixed portrait, and the mood is a small icon beside the number with a tooltip.
+func _check_face_is_fixed_and_mood_is_an_icon() -> void:
+	var card = _main._hud.portrait_card
+	var ns = _main._state.player()
+	var original: float = ns.overall_approval_pct
+	var bust = card._bust
+	if card._mood_icon == null:
+		_fail("the portrait card has no mood icon")
+		return
+	var seen := {}
+	for approval in [95.0, 5.0, 50.0]:
+		ns.overall_approval_pct = approval
+		card.refresh()
+		if card._bust != bust:
+			_fail("the portrait's face was swapped at approval %.0f -- the face must stay fixed" % approval)
+		if card._mood_icon.emotion != card._emotion:
+			_fail("the mood icon shows band %d while the card reads %d" % [card._mood_icon.emotion, card._emotion])
+		if String(card._mood_icon.tooltip_text).is_empty():
+			_fail("the mood icon says nothing at approval %.0f" % approval)
+		seen[card._mood_icon.emotion] = true
+	if seen.size() != 3:
+		_fail("three approvals drew %d distinct moods, want 3" % seen.size())
+	ns.overall_approval_pct = original
+	card.refresh()
 
 
 func _check_action_bar_subrow() -> void:
@@ -371,6 +412,60 @@ func _check_foreign_acts_reach_the_column() -> void:
 
 	stack.clear()
 	state.foreign_acts.clear()
+
+
+## V5.1-0c. The author: "notification push the UI down". The message column sat in
+## the HUD's own layout, so a column of tall cards raised the whole HUD's minimum
+## height and the lower band (portrait, action bar, clock) was shoved off the
+## bottom. The column is an overlay now: whatever it holds, the furniture stays
+## where it was.
+var _portrait_y_before := 0.0
+var _bar_y_before := 0.0
+
+
+func _stage_tall_cards() -> void:
+	var hud = _main._hud
+	_portrait_y_before = hud.portrait_card.global_position.y
+	_bar_y_before = hud.action_bar.global_position.y
+	hud.message_stack.clear()
+	var essay := "A long notification body that keeps going. ".repeat(14)
+	for n in 6:
+		hud.message_stack.push("Tall card %d" % n, essay, [{"label": "Answer"}])
+
+
+func _check_cards_do_not_push_the_ui_down() -> void:
+	var hud = _main._hud
+	if hud.message_stack.card_count() != 6:
+		_fail("the tall-card fixture holds %d cards, want 6" % hud.message_stack.card_count())
+	if absf(hud.portrait_card.global_position.y - _portrait_y_before) > 0.5:
+		_fail("six tall cards moved the portrait card from y=%.1f to y=%.1f" % [
+			_portrait_y_before, hud.portrait_card.global_position.y])
+	if absf(hud.action_bar.global_position.y - _bar_y_before) > 0.5:
+		_fail("six tall cards moved the action bar from y=%.1f to y=%.1f" % [
+			_bar_y_before, hud.action_bar.global_position.y])
+	if hud.message_stack.get_parent() is BoxContainer:
+		_fail("the message column is still in a box container -- its height is layout again")
+	hud.message_stack.clear()
+
+
+## Review pass 2. The column is above the windows (the HUD is drawn last), so a
+## window that opened under it had its left edge -- the budget's levers -- covered
+## until the cards were dismissed. A window now opens to the right of the column.
+## A window as wide as the band is the case that matters: it is the one that
+## reaches the left edge.
+func _check_windows_open_clear_of_the_column() -> void:
+	var wm := WindowManager.new()
+	root.add_child(wm)
+	wm.size = Vector2(1920, 1080)
+	var content := Control.new()
+	content.custom_minimum_size = Vector2(3000, 300)  # wider than any band: it fills it
+	wm.register("wide", "Wide", content)
+	wm.open("wide")
+	var clear_x: float = float(MessageStack.CARD_WIDTH) + 14.0
+	var x: float = wm.frame("wide").position.x
+	if x < clear_x:
+		_fail("a band-wide window opened at x=%.0f, under the message column (clear of it from x=%.0f)" % [x, clear_x])
+	wm.queue_free()
 
 
 func _check_minimap_slot_reserved() -> void:

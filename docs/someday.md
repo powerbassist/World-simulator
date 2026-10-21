@@ -359,6 +359,21 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from V5.1-0c (2026-10-21)
+
+- **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.
+- **The minimap leaving its frame when menus open, and the UI shifting on a category click** (P5, P6) did not reproduce at 1920x1080 or 1280x1024 with the State drawer, a window and cards open. Ask the author for the window size and the click; V5.1c rebuilds the shell either way.
+- **A window dragged left still goes under the message column** (an overlay above windows). New windows open to its right (`WindowManager.LEFT_RESERVE`); the author's drag is theirs. Measured by the parent in 0a: six cards covered the budget window's lever column until dismissed -- fixed for placement, not for a drag. V5.1d (windows).
+- **Which foreign cards a month pushes now depends on the machine's settings file** (the "News of other countries" switch). Tests that read cards are fine while runs stay isolated (a fresh user dir reads Off); a non-isolated run with the switch On would see more cards.
+- **`AgendaPanel.offer_seen` is per panel instance and per `terms_served`**: loading a different save mid-session at the same `terms_served` inherits the seen mark, so the first Space after that load runs without the nudge. Reset it on load if that ever matters.
+- **The Settings screen's resolution row is disabled while fullscreen** with no word why; F11 and the Window row are the way out.
+
+Below the V5.1 bar, from `code-review 30 high` (the four that met it -- the Settings rows resetting a dragged window, the panel's stale rows after F11, the un-maximizing mode write, the unguarded Agenda date -- were fixed test-first):
+
+- **The overlay message column has no bound.** Five or six tall decision cards from y=54 cover the legend and portrait and, at the extreme, run their last buttons off the bottom; before this PR the same column pushed the HUD down instead. A ScrollContainer or a max height belongs to V5.1c's shell.
+- **The dev console's `pause off` goes through the Agenda guard** (`_toggle_pause_by_hand`) and answers "clock paused" at an unchosen term start; an agent sends it twice. The guard is a player nag; `set_paused` could set `Clock.paused` itself. Cheap, but the console file belongs to 0b's surface.
+- **The maximized-window case is not unit-tested** (the headless root has no OS window); the fix is one condition in `SettingsPanel._apply`.
+
 ## Carried from V5.1-0b (2026-10-21)
 
 Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed test-first in `7cd07ad9`):
@@ -371,7 +386,7 @@ Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed t
 Pass 2 (`code-review 28 xhigh`, the parent's), recorded and not fixed:
 
 - **`tests/test_dev_console_game.gd` writes `user://saves` with no `## suite-exclusive:` tag** (the test audit's S11 class). Harmless under isolation, which every run is; tag it if a run ever shares a user dir.
-- **The Logger installs in the console's `_ready`, late in `main._ready`, and `menu.tscn` has no console**, so errors raised at boot (the data load, the menu) never reach the counter. Installing it from the menu too, or earlier, is a V5.1c shell decision.
+- **The Logger installs in the console's `_ready`, late in `main._ready`, and `menu.tscn` has no console**, so errors raised at boot (the data load, the menu) never reach the counter. Installing it from the menu too, or earlier, is a V5.1c shell decision. **First concrete case (V5.1-0c, found by the parent's smoke run):** the menu's `_ready` called `WindowMode.install()`, whose `add_child()` on the still-busy root window failed with "Parent node is busy setting up children" -- F11 was dead and no counter showed it, because the menu has no console. Fixed by a deferred add; the error was only in the game log.
 
 ## Carried from V5.1-0a (2026-10-21)
 

@@ -45,7 +45,6 @@ const MIN_WIDTH := 196
 var _buttons := {}          ## layer id -> Button
 var _stops: VBoxContainer
 var _key: VBoxContainer
-var _grades: VBoxContainer
 var _caption: Label
 var _readout: Label
 var _layer := MapLayers.POLITICAL
@@ -94,15 +93,6 @@ func _ready() -> void:
 	_key.add_child(_key_row(false, "road"))
 	_key.add_child(_key_row(true, "ferry"))
 
-	# V4.8c. The roster's grades, Political layer only: since V4.11 "every
-	# nation in its own colour" is 41 nations of two depths plus the outlines,
-	# and the map draws the first two alike. Counts, not swatches -- each nation
-	# is its own colour, so a grade has no one colour a swatch could promise.
-	# Filled by setup_roster(); empty until then.
-	_grades = VBoxContainer.new()
-	_grades.add_theme_constant_override("separation", 2)
-	column.add_child(_grades)
-
 	_caption = Label.new()
 	_caption.theme_type_variation = UiTheme.CAPTION
 	_caption.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -122,26 +112,6 @@ func _ready() -> void:
 ## control it just addressed.
 var _last_state = null
 var _last_viewer := ""
-
-
-## V4.8c. The grade rows, counted from the registers through Roster.counts() --
-## never a typed "4" or "133". The loader is content and does not change with a
-## load, so this runs once.
-func setup_roster(loader) -> void:
-	for child in _grades.get_children():
-		_grades.remove_child(child)
-		child.queue_free()
-	var counts := Roster.counts(loader)
-	for row in [
-		["playable", "playable, yours to lead"],
-		["simulated", "simulated, run by the game"],
-		["outline", "outlines, one world market"],
-	]:
-		var label := Label.new()
-		label.theme_type_variation = UiTheme.MICRO
-		label.text = "%d  %s" % [int(counts.get(row[0], 0)), String(row[1])]
-		_grades.add_child(label)
-	_grades.visible = _layer == MapLayers.POLITICAL
 
 
 func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
@@ -176,7 +146,6 @@ func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
 	for stop in stops:
 		_stops.add_child(_stop_row(float(stop["at"]), String(stop["text"]), even, prod_even))
 
-	_grades.visible = _layer == MapLayers.POLITICAL
 	_caption.text = MapLayers.caption(_layer)
 	show_hover("", null, "")
 

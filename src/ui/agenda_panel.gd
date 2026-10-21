@@ -29,6 +29,8 @@ const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Trends = preload("res://src/ui/trends.gd")
+const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 
 ## election_panel's bar block size: wide enough to read at a glance, short
 ## enough to leave the window's right edge to the scroll gutter.
@@ -43,6 +45,16 @@ var _body: VBoxContainer
 ## The first enabled CHOOSE button while the offer is up, else the first live
 ## entry's block -- primary_action()'s two halves, campaign_panel's device.
 var _primary: Control = null
+
+## The term (terms_served) whose offer this panel last drew; -1 before any. main.gd's
+## play guard asks it, so the first press of a term opens the Agenda and a press
+## after the Agenda has shown the offer runs the clock.
+var _offer_seen_term := -1
+
+
+## Whether the Agenda has shown this term's offer.
+func offer_seen(ns) -> bool:
+	return _offer_seen_term == int(ns.terms_served)
 
 
 func _ready() -> void:
@@ -114,12 +126,13 @@ func _refresh() -> void:
 			PanelKit.line(_body, _unset_text(ns))
 		return
 
+	_offer_seen_term = int(ns.terms_served)
 	# The frame contract, in the model's own terms: a choice pays nothing
 	# (programme-model §8), the delivery is what the register prices.
 	PanelKit.line(_body,
 		"One of these becomes the term's programme. Choosing it costs nothing;"
 		+ " the register prices the delivery, on the month it lands or the"
-		+ " deadline it misses."
+		+ " deadline it misses. Pressing play without choosing runs the term with none."
 	)
 	_build_offer(ns, offer)
 	_build_register(ns)
@@ -269,10 +282,24 @@ func _clock_text(terms: Dictionary, live_months: int, is_live: bool) -> String:
 	]
 
 
+## V5.1-0c. Mid-term the page used to say only "No programme was set this term."
+## -- true, and no help to a player who loaded a save or ran past the offer, who
+## could not tell a bug from a rule. It states the rule and the date it next opens:
+## a programme is chosen on the first day of a term, and the next term starts at
+## the vote.
 func _unset_text(ns) -> String:
 	if Programme.is_term_start(ns):
 		return "Nothing is offerable this term -- every gate in the book is shut."
-	return "No programme was set this term."
+	var rule := (
+		"No programme was set this term. A programme can only be chosen on the first"
+		+ " day of a term, before the clock runs."
+	)
+	var when := Trends.vote_date(ns)
+	if when.y < 1 or when.y > ClockCluster.MONTH_NAMES.size():
+		return rule  # no vote scheduled: say the rule, not a date that does not exist
+	return rule + " The next term starts after the vote in %s %d, and its programme can be chosen then." % [
+		ClockCluster.MONTH_NAMES[when.y - 1], when.x,
+	]
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold
