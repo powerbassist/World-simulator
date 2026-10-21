@@ -66,6 +66,7 @@ var _not_text_re: RegEx
 var _prose_words_re: RegEx
 var _placeholder_prose_re: RegEx
 var _dash_prose_re: RegEx
+var _unit_re: RegEx
 var _caps_re: RegEx
 var _capitalised_re: RegEx
 var _camel_re: RegEx
@@ -103,6 +104,8 @@ func _init() -> void:
 	_placeholder_prose_re = RegEx.create_from_string(r"^(?=.*%)(?=.*[A-Za-z]{3,})(?=.*\s).*$")
 	# A dash and a word ("— clear", the figure a reading shows when nothing is wrong).
 	_dash_prose_re = RegEx.create_from_string(r"^[—–\-·]\s*[A-Za-z]{3,}")
+	# A placeholder and a unit word ("%d mo", "%.0f Bn", "%+.2f pts"): the unit is text.
+	_unit_re = RegEx.create_from_string(r"%[-+#0]*\d*(?:\.\d+)?[dsf]\s?[A-Za-z]{2,}")
 	_caps_re = RegEx.create_from_string(r"^[A-Z][A-Z'\-]{4,}$")
 	# ... or one capitalised word.
 	_capitalised_re = RegEx.create_from_string(r"^[A-Z][a-z]{3,}[.:!?]?$")
@@ -272,7 +275,7 @@ func _is_prose_anywhere(text: String, before: String, after: String, line: Strin
 	# A literal that is the right of `in`/`==` further along is a comparison.
 	if _camel_re.search(text) and not text.contains(" "):
 		return false
-	if _prose_words_re.search(text) or _placeholder_prose_re.search(text) or _dash_prose_re.search(text) or _caps_re.search(text) or _capitalised_re.search(text):
+	if _prose_words_re.search(text) or _placeholder_prose_re.search(text) or _dash_prose_re.search(text) or _unit_re.search(text) or _caps_re.search(text) or _capitalised_re.search(text):
 		return true
 	return false
 

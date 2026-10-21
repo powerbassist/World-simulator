@@ -100,10 +100,13 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 	if not last.is_empty():
 		PanelKit.line(body, "", PanelKit.Tone.PLAIN)
 		PanelKit.line(body, (Strings.t("Last division: %s — carried") if bool(last.get("passed", false)) else Strings.t("Last division: %s — fell")) % String(last.get("name", "")), PanelKit.Tone.PLAIN)
-		PanelKit.line(body, Strings.t("%d for, %d against, of %d seats. %s %s.") % [
+		var tally := Strings.t("%d for, %d against, of %d seats. %s abstained.")
+		match String(last.get("player_vote", "")):
+			Orgs.VOTE_FOR: tally = Strings.t("%d for, %d against, of %d seats. %s voted for.")
+			Orgs.VOTE_AGAINST: tally = Strings.t("%d for, %d against, of %d seats. %s voted against.")
+		PanelKit.line(body, tally % [
 			int(last.get("seats_for", 0)), int(last.get("seats_against", 0)),
 			int(last.get("seats_total", 0)), loader.nation_name(ns.id),
-			_vote_words(String(last.get("player_vote", ""))),
 		])
 		_outcome(body, loader, last)
 		_why(body, loader, last)
@@ -208,16 +211,16 @@ static func _sponsor_row(body: VBoxContainer, state, loader, ns, org, pending: D
 		return
 	var sponsor_ns = state.nations.get(sponsor, null)
 	var drive: float = Council.drive(state, loader, sponsor)
-	var how := "lightly"
+	var pushes := Strings.t(" \u2014 %s pushes it lightly")
 	if drive >= DRIVE_HARD:
-		how = "hard"
+		pushes = Strings.t(" \u2014 %s pushes it hard")
 	elif drive >= DRIVE_STEADY:
-		how = "steadily"
+		pushes = Strings.t(" \u2014 %s pushes it steadily")
 	var person_id := String(sponsor_ns.pm_person_id) if sponsor_ns != null else ""
 	var who: String = loader.person_name(person_id)
 	var text := Strings.t("Sponsored by %s") % loader.nation_name(sponsor)
 	if who != "":
-		text += Strings.t(" \u2014 %s pushes it %s") % [who, how]
+		text += pushes % who
 	var row := PanelKit.row(body, text, "")
 	if person_id != "":
 		var face := Portrait.framed_for(person_id, FACE_SIZE)
@@ -317,14 +320,6 @@ static func _outcome(body: VBoxContainer, loader, last: Dictionary) -> void:
 		"pending": PanelKit.line(body, Strings.t("Awaiting ratification at home."))
 		"ratified": PanelKit.line(body, Strings.t("Ratified."))
 		"failed": PanelKit.line(body, Strings.t("Fell at ratification."))
-
-
-## "voted for" in words rather than the raw choice key.
-static func _vote_words(vote: String) -> String:
-	match vote:
-		Orgs.VOTE_FOR: return Strings.t("voted for")
-		Orgs.VOTE_AGAINST: return Strings.t("voted against")
-	return "abstained"
 
 
 ## Aid the player pays into this council. Orgs with a transfer line show it in

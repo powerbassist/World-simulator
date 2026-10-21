@@ -298,9 +298,9 @@ func _build_polls() -> void:
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var cost_pct: float = float(StatuteK.POLL_COSTS[kind])
 		var cost_bn: float = float(_ns.gdp_eur_bn) * cost_pct / 100.0
-		# The article is the kind's own initial vowel: "an assembly", "a popular".
-		btn.text = tr("Commission %s %s poll — %.2f%% of GDP (€%.1f bn)") % [
-			"an" if kind.begins_with("a") else "a", kind, cost_pct, cost_bn]
+		# One whole sentence per kind (the article and the kind are the sentence's own).
+		btn.text = (tr("Commission an assembly poll — %.2f%% of GDP (€%.1f bn)") if kind == StatuteK.POLL_KIND_ASSEMBLY
+			else tr("Commission a popular poll — %.2f%% of GDP (€%.1f bn)")) % [cost_pct, cost_bn]
 		if bought.has(kind):
 			# The fixed-forecast rule, made visible: a bought poll is a
 			# published figure, and the second commission is refused by the
@@ -337,7 +337,8 @@ func _on_poll(kind: String) -> void:
 			refusal.text = String(result.get("refusal", tr("Refused.")))
 			refusal.show()
 		return
-	polled.emit(before, tr("Commissioned %s poll: %s") % [kind, _bill_name()])
+	polled.emit(before, (tr("Commissioned an assembly poll: %s") if kind == StatuteK.POLL_KIND_ASSEMBLY
+		else tr("Commissioned a popular poll: %s")) % _bill_name())
 	_rebuild()
 
 

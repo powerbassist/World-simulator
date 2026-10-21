@@ -638,7 +638,7 @@ func _tariff_text(snap: Dictionary) -> String:
 
 func _pct_and_eur(snap: Dictionary, key: String) -> String:
 	var pct: float = snap[key]
-	return "%.2f%%  (%.0f bn)" % [pct, pct / 100.0 * float(snap["gdp_eur_bn"])]
+	return tr("%.2f%%  (%.0f bn)") % [pct, pct / 100.0 * float(snap["gdp_eur_bn"])]
 
 
 ## Writes one row of the now/proposed table for this refresh.

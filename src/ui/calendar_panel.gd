@@ -423,7 +423,7 @@ func _booking_text(entry: Dictionary) -> String:
 		K.KIND_LAW:
 			return tr("Propose %s") % _law_name(String(entry.get("law_id", "")))
 		K.KIND_RESHUFFLE:
-			return "%s to %s" % [
+			return tr("%s to %s") % [
 				String(entry.get("portfolio", "")).capitalize(),
 				_party_name(String(entry.get("party_id", ""))),
 			]

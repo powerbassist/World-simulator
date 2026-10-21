@@ -309,7 +309,7 @@ func _inputs_text(recipe: Dictionary) -> String:
 	for input_id in ids:
 		parts.append("%s %s" % [_ratio_text(float(inputs[input_id])), _good_name(String(input_id))])
 	if parts.is_empty():
-		return "nothing"
+		return tr("nothing")
 	return " · ".join(parts)
 
 

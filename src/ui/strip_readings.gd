@@ -236,9 +236,9 @@ static func _election(state, ns, loader) -> Dictionary:
 	var months := Trends.months_to_vote(state, ns)
 	var text := "—"
 	if months > 0:
-		text = "%d mo" % months
+		text = Strings.t("%d mo") % months
 	elif months == 0:
-		text = "now"
+		text = Strings.t("now")
 	return _reading(text, _election_tooltip(ns, loader, months))
 
 

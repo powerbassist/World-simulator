@@ -578,7 +578,7 @@ func _build_effect_row(effect: Dictionary) -> Control:
 
 func _standing_word(ns) -> String:
 	if ns.is_cohabitation:
-		return "cohabitation"
+		return tr("cohabitation")
 	if ns.is_minority:
 		return tr("minority government")
 	return tr("majority government")
@@ -593,9 +593,9 @@ func _standing_sentence(ns) -> String:
 
 func _satisfaction_word(sat: float) -> String:
 	if sat > SATISFACTION_BAND:
-		return "satisfied"
+		return tr("satisfied")
 	if sat < -SATISFACTION_BAND:
-		return "dissatisfied"
+		return tr("dissatisfied")
 	return tr("neither pleased nor angry")
 
 
