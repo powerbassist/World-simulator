@@ -396,7 +396,7 @@ func _check_foreign_acts_reach_the_column() -> void:
 		"actor_id": other, "target_id": player_id,
 		"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
 	})
-	_main._card_foreign_acts(state.year, state.month)
+	_main._world_news.card_foreign_acts(state.year, state.month)
 	if stack.card_count() != 1:
 		_fail("an act aimed at the player produced %d cards, not 1" % stack.card_count())
 		return
@@ -422,7 +422,7 @@ func _check_foreign_acts_reach_the_column() -> void:
 		"actor_id": player_id, "target_id": other,
 		"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
 	})
-	_main._card_foreign_acts(state.year, state.month)
+	_main._world_news.card_foreign_acts(state.year, state.month)
 	if stack.card_count() != 0:
 		_fail("the player's own act was carded back at them (%d cards)" % stack.card_count())
 
@@ -441,7 +441,7 @@ func _check_foreign_acts_reach_the_column() -> void:
 			"actor_id": actor, "target_id": player_id,
 			"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
 		})
-	_main._card_foreign_acts(state.year, state.month)
+	_main._world_news.card_foreign_acts(state.year, state.month)
 	if stack.card_count() != 1:
 		_fail("four same-action visits produced %d cards, not 1" % stack.card_count())
 		return
@@ -460,7 +460,7 @@ func _check_foreign_acts_reach_the_column() -> void:
 		"actor_id": other, "target_id": third,
 		"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
 	})
-	_main._card_foreign_acts(state.year, state.month)
+	_main._world_news.card_foreign_acts(state.year, state.month)
 	if stack.card_count() != 0:
 		_fail("an act from a previous month was carded again (%d cards)" % stack.card_count())
 

@@ -162,7 +162,7 @@ func _check_news_between_other_nations() -> void:
 			"actor_id": actor, "target_id": target,
 			"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
 		})
-		_main._card_foreign_acts(state.year, state.month)
+		_main._world_news.card_foreign_acts(state.year, state.month)
 		var want := 1 if on else 0
 		if stack.card_count() != want:
 			_fail("foreign news %s: an act between two other nations made %d cards, want %d" % [
@@ -175,7 +175,7 @@ func _check_news_between_other_nations() -> void:
 			"actor_id": actor, "target_id": player_id,
 			"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
 		})
-		_main._card_foreign_acts(state.year, state.month)
+		_main._world_news.card_foreign_acts(state.year, state.month)
 		if stack.card_count() != 1:
 			_fail("foreign news %s: an act aimed at the player made %d cards, want 1" % [
 				"On" if on else "Off", stack.card_count()])

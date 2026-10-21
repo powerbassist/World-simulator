@@ -380,7 +380,8 @@ func _test_upper_house_and_court_pipeline() -> void:
 	# words the coming-into-force and carries no tally to contradict.
 	var main_ui = load("res://src/ui/main.gd").new()
 	main_ui._loader = _loader
-	var held_body: String = main_ui._assembly_result_body(hold_result)
+	main_ui._assembly_news.setup(null, _loader, null)
+	var held_body: String = main_ui._assembly_news._assembly_result_body(hold_result)
 	if held_body.find("defeated") != -1:
 		_fail("a held division's card reads 'defeated': %s" % held_body)
 	if held_body.find("carried") == -1 or held_body.find("suspended") == -1:
@@ -388,10 +389,10 @@ func _test_upper_house_and_court_pipeline() -> void:
 	var blocked_result: Dictionary = hold_result.duplicate(true)
 	blocked_result.erase("held_by_upper")
 	blocked_result["blocked_by_upper"] = true
-	var blocked_body: String = main_ui._assembly_result_body(blocked_result)
+	var blocked_body: String = main_ui._assembly_news._assembly_result_body(blocked_result)
 	if blocked_body.find("blocked") == -1 or blocked_body.find("defeated") != -1:
 		_fail("a blocked division's card does not say blocked: %s" % blocked_body)
-	var release_body: String = main_ui._assembly_result_body(released)
+	var release_body: String = main_ui._assembly_news._assembly_result_body(released)
 	if release_body.find("comes into force") == -1 or release_body.find("ayes") != -1:
 		_fail("a release's card does not word the coming-into-force: %s" % release_body)
 	# The ultra pass-5 finding: the release card names the chamber by the
@@ -404,11 +405,11 @@ func _test_upper_house_and_court_pipeline() -> void:
 	# re-renders as the on-the-record line, never the endorsement ask.
 	var tabling: Dictionary = {"law_id": "high_earner_surtax", "months_left": 1,
 		"backer_firm": "", "backer_chief": "", "endorse_bonus": 0.0}
-	var ask_body: String = main_ui._assembly_bill_body(tabling)
+	var ask_body: String = main_ui._assembly_news._assembly_bill_body(tabling)
 	if ask_body.find("Endorse it") == -1:
 		_fail("an unendorsed tabling card does not offer the stand: %s" % ask_body)
 	tabling["endorse_bonus"] = 0.10
-	var endorsed_body: String = main_ui._assembly_bill_body(tabling)
+	var endorsed_body: String = main_ui._assembly_news._assembly_bill_body(tabling)
 	if endorsed_body.find("Endorse it") != -1 or endorsed_body.find("on the record") == -1:
 		_fail("an endorsed tabling card still offers the stand: %s" % endorsed_body)
 	# The ultra pass-4 finding: a COURT STRIKE outranks every other wording,
@@ -422,7 +423,7 @@ func _test_upper_house_and_court_pipeline() -> void:
 	struck_release["passed"] = false
 	struck_release["yes_seats"] = 300
 	struck_release["no_seats"] = 250
-	var struck_body: String = main_ui._assembly_result_body(struck_release)
+	var struck_body: String = main_ui._assembly_news._assembly_result_body(struck_release)
 	if struck_body.find("struck") == -1:
 		_fail("a struck-down release's card does not name the court: %s" % struck_body)
 	if struck_body.find("comes into force") != -1 or struck_body.find("ayes") != -1:
@@ -433,7 +434,7 @@ func _test_upper_house_and_court_pipeline() -> void:
 		"yes_seats": 300, "no_seats": 250, "abstain_seats": 0, "seats_total": 577,
 		"party_votes": {}, "party_support": {}, "party_rebels": {},
 	}
-	var struck_div_body: String = main_ui._assembly_result_body(struck_division)
+	var struck_div_body: String = main_ui._assembly_news._assembly_result_body(struck_division)
 	if struck_div_body.find("struck") == -1 or struck_div_body.find("defeated") != -1:
 		_fail("a struck-down division's card reads its own tally: %s" % struck_div_body)
 	main_ui.free()
@@ -528,15 +529,16 @@ func _test_release_and_division_same_month() -> void:
 	main_ui._loader = _loader
 	main_ui._state = gs
 	main_ui._hud = _StubHUD.new()
-	main_ui._announce_assembly_events(assembly_release)
+	main_ui._setup_news()
+	main_ui._assembly_news.announce(assembly_release)
 	var pushed: Array = main_ui._hud.message_stack.pushed
 	if pushed.size() != 2:
 		_fail("a collision month pushed %d cards -- the release and the division must BOTH land" % pushed.size())
 	else:
 		# Pin that neither result is lost: each pushed card carries its own
 		# result's body, built the only way a body is built.
-		var release_body: String = main_ui._assembly_result_body(assembly_release)
-		var division_body: String = main_ui._assembly_result_body(division_result)
+		var release_body: String = main_ui._assembly_news._assembly_result_body(assembly_release)
+		var division_body: String = main_ui._assembly_news._assembly_result_body(division_result)
 		if String(pushed[0]["body"]) != release_body:
 			_fail("the release card's body is not the release's own: %s" % [pushed[0]])
 		if String(pushed[1]["body"]) != division_body:
@@ -544,7 +546,7 @@ func _test_release_and_division_same_month() -> void:
 	# A quiet month re-announces neither (the tray is cleared: a generated bill
 	# would legitimately push its own tabling card and spoil the count).
 	ns.assembly_bills.clear()
-	main_ui._announce_assembly_events({})
+	main_ui._assembly_news.announce({})
 	if main_ui._hud.message_stack.pushed.size() != 2:
 		_fail("a quiet month re-announced a collision card")
 	# And the SOURCE: the capture must sit between the two ticks it guards --

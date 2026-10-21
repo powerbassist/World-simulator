@@ -65,10 +65,10 @@ func _run() -> void:
 	# --- The bid: card, mark, memory, panel row ------------------------------
 	_stage_bid(ns, major)
 	var before_bid: int = stack.card_count()
-	_main._announce_industry_events()
+	_main._industry_news.announce()
 	if stack.card_count() <= before_bid:
 		_fail("a staged foreign bid announced no card")
-	if not _main._announced_bids.has(major.id):
+	if not _main._industry_news._announced_bids.has(major.id):
 		_fail("the bid announce left no memory entry")
 	if not Pending.window_ids(state, loader).has("companies"):
 		_fail("no companies pending mark with a bid standing")
@@ -83,23 +83,23 @@ func _run() -> void:
 	# standing after block/allow/lapse).
 	var cards_before_answer: int = stack.card_count()
 	_answer_bid(ns, major)
-	_main._announce_industry_events()
+	_main._industry_news.announce()
 	if stack.card_count() >= cards_before_answer:
 		_fail("the answered bid's card still stands -- the resolved-card contract")
-	if not _main._announced_bids.is_empty():
-		_fail("the bid memory did not clear when the event ended: %s" % str(_main._announced_bids))
+	if not _main._industry_news._announced_bids.is_empty():
+		_fail("the bid memory did not clear when the event ended: %s" % str(_main._industry_news._announced_bids))
 	if Pending.window_ids(state, loader).has("companies"):
 		_fail("companies mark standing with no bid and no failure")
 	_stage_bid(ns, major)
-	_main._announce_industry_events()
-	if not _main._announced_bids.has(major.id):
+	_main._industry_news.announce()
+	if not _main._industry_news._announced_bids.has(major.id):
 		_fail("a second bid on the same firm announced no memory entry -- the write-once class")
 
 	# --- The failure: memory, mark, rescue row -------------------------------
 	_stage_failure(ns, major)
 	_stage_failure(ns, second)
-	_main._announce_industry_events()
-	if not (_main._announced_failures.has(major.id) and _main._announced_failures.has(second.id)):
+	_main._industry_news.announce()
+	if not (_main._industry_news._announced_failures.has(major.id) and _main._industry_news._announced_failures.has(second.id)):
 		_fail("the failure announce missed a memory entry")
 	if not Pending.window_ids(state, loader).has("companies"):
 		_fail("no companies pending mark with failures standing")
@@ -118,14 +118,14 @@ func _run() -> void:
 	var rescue_result: Dictionary = Companies.execute(state, ns, loader.company_actions, rescue, major.id, loader)
 	if not bool(rescue_result.get("applied", false)):
 		_fail("the rescue itself was refused: %s" % str(rescue_result))
-	_main._announce_industry_events()
+	_main._industry_news.announce()
 	if stack.card_count() >= cards_before_rescue:
 		_fail("the rescued firm's card still stands -- the resolved-card contract")
-	if _main._announced_failures.has(major.id):
+	if _main._industry_news._announced_failures.has(major.id):
 		_fail("the rescued firm's memory entry survived -- the per-firm clear did not run")
 	_stage_failure(ns, major)
-	_main._announce_industry_events()
-	if not _main._announced_failures.has(major.id):
+	_main._industry_news.announce()
+	if not _main._industry_news._announced_failures.has(major.id):
 		_fail("a re-failed firm inside another window was card-silent -- the write-once class")
 
 	# --- The SOE chair line: the register read resolves to a NAME ------------
@@ -187,32 +187,32 @@ func _run() -> void:
 	# Both bids answered first, so the memory starts empty.
 	_answer_bid(ns, major)
 	_answer_bid(ns, second)
-	_main._announce_industry_events()
-	if not _main._announced_bids.is_empty():
+	_main._industry_news.announce()
+	if not _main._industry_news._announced_bids.is_empty():
 		_fail("bid memory not empty with no bids standing")
 	_stage_bid(ns, major)
-	_main._announce_industry_events()
-	if not _main._announced_bids.has(major.id):
+	_main._industry_news.announce()
+	if not _main._industry_news._announced_bids.has(major.id):
 		_fail("first bid left no memory entry")
 	# A SECOND bid pends (never announced -- pending_bid shows the first);
 	# the first is ANSWERED: the per-firm erase drops the answered firm, and
 	# the newly-visible bid announces.
 	_stage_bid(ns, second)
 	_answer_bid(ns, major)
-	_main._announce_industry_events()
-	if _main._announced_bids.has(major.id):
+	_main._industry_news.announce()
+	if _main._industry_news._announced_bids.has(major.id):
 		_fail("the answered firm's bid memory survived the per-firm erase")
-	if not _main._announced_bids.has(second.id):
+	if not _main._industry_news._announced_bids.has(second.id):
 		_fail("the newly-visible bid announced no memory entry")
 	# A re-bid on the answered firm while the second bid pends announces
 	# again -- the exact all-clear defect the old code had.
 	_stage_bid(ns, major)
-	_main._announce_industry_events()
-	if not _main._announced_bids.has(major.id):
+	_main._industry_news.announce()
+	if not _main._industry_news._announced_bids.has(major.id):
 		_fail("a re-bid inside another pending bid was card-silent -- the all-clear class")
 	_answer_bid(ns, major)
 	_answer_bid(ns, second)
-	_main._announce_industry_events()
+	_main._industry_news.announce()
 
 	# --- The city panel's live-city employer filter (the pass-6 fleet's find)
 	# The relocation override, written exactly as _relocate does, moves the

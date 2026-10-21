@@ -80,6 +80,9 @@ const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Num = preload("res://src/ui/num.gd")
+const WorldNews = preload("res://src/ui/world_news.gd")
+const IndustryNews = preload("res://src/ui/industry_news.gd")
+const AssemblyNews = preload("res://src/ui/assembly_news.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
@@ -198,6 +201,11 @@ var _pending_effects: Array[Dictionary] = []
 ## V5.1-0a. The month across frames, the clock and the windows held while it
 ## closes -- src/ui/month_runner.gd. A child of this node, added in _ready().
 var _month_runner := MonthRunner.new()
+## The news-card writers, out of this file at V5.1c (D2); `_setup_news()` hands them
+## the live state, at the start and again on a load.
+var _world_news := WorldNews.new()
+var _industry_news := IndustryNews.new()
+var _assembly_news := AssemblyNews.new()
 
 
 func _ready() -> void:
@@ -942,6 +950,7 @@ func _wire_hud() -> void:
 	)
 	_hud.top_bar.settings_requested.connect(_open_pause_menu)
 	_hud.portrait_card.setup(_state, _loader)
+	_setup_news()
 
 	# V2.1c, and the FIRST CONSUMERS of two signals window_manager.gd has emitted
 	# since U5a. The bar was the only route that marked itself: a keypress, a map
@@ -976,7 +985,7 @@ func _wire_hud() -> void:
 		# the click gets the player to the register, whose autonomy sections
 		# surface the pending bid or failing firm. Recorded per the plan's
 		# own rule, that a deferral is a decision and not a discovery.)
-		if _industry_card_firms.has(id):
+		if _industry_news.has_card(id):
 			_windows.open("companies")
 			return
 		_windows.open("events")
@@ -1382,7 +1391,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 				# here rather than serialised, which is the same call V1.3f made for
 				# foreign_acts in reverse: that one is state the sim already writes,
 				# this one is a difference the UI can see for itself.
-				_month_capture["obliged_before"] = _obliged_count()
+				_month_capture["obliged_before"] = _world_news.obliged_count()
 			"Events":
 				# `before` is captured for the U4 decision delta, because a default
 				# arriving is a thing that happened to the player's budget with no
@@ -1444,22 +1453,22 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 					assembly_release = release_result.duplicate(true)
 			_month_capture["assembly_release"] = assembly_release
 		"Statute":
-			_announce_assembly_events(_month_capture.get("assembly_release", {}))
+			_assembly_news.announce(_month_capture.get("assembly_release", {}))
 		"Defence":
-			_card_obligations(int(_month_capture.get("obliged_before", 0)))
+			_world_news.card_obligations(int(_month_capture.get("obliged_before", 0)))
 			# V1.3f: and now the nine act on their own initiative inside that tick,
 			# so whatever they just did is read off the record and put in front of
 			# the player.
-			_card_foreign_acts(year, month)
+			_world_news.card_foreign_acts(year, month)
 		"Industry":
-			_announce_industry_events()
+			_industry_news.announce()
 		"Unrest":
 			# V1.5c: the unions act inside that tick, and whatever they just did is
 			# read off the record and put in front of the player.
-			# _card_foreign_acts()'s split exactly -- the sim writes the record, the
+			# _world_news.card_foreign_acts()'s split exactly -- the sim writes the record, the
 			# UI decides what earns a card, and src/sim/ never reads the list back,
 			# which tests/test_unrest.gd asserts over the whole directory.
-			_card_unrest_acts(year, month)
+			_world_news.card_unrest_acts(year, month)
 		"Events":
 			_card_events(year, month, _month_capture.get("desk_before", {}),
 				_month_capture.get("event_before", {}))
@@ -1467,417 +1476,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 		"Characters":
 			# T5's surface: the acts go to the message stack as cards; the record is
 			# not state.
-			_card_character_acts(report["character_acts"])
-
-
-## V4.7b: the autonomy machine's two player-facing events, as cards. The
-## announced-state memory is main-side (UI): the sim stays free of the card
-## stack, and a dismissed card is remembered as announced -- DISMISSAL NEVER
-## ANSWERS, the bid and the window lapse on their own clocks; the card only
-## has to stop repeating.
-var _announced_bids := {}
-var _announced_failures := {}
-var _industry_card_firms := {}   # card id -> company_id; the route opens the
-# companies window whole -- no focus-by-firm yet (the open deferral above) --
-# so the value is carried for the day that lands, not read today.
-var _bid_cards := {}             # company_id -> its LIVE bid card, taken away when the bid resolves
-var _failure_cards := {}         # company_id -> its LIVE failure card, same contract
-
-func _announce_industry_events() -> void:
-	var ns = _state.player()
-	if ns == null:
-		return
-	var bid: Dictionary = Industry.pending_bid(_state, ns, _loader)
-	# The memory clears PER FIRM, when that firm's own bid ends -- the
-	# failure branch's design below, and the pass-6 fleet's find that the
-	# bid branch was still the all-clear its own comment forswore: with two
-	# bids pending, answering A kept A's entry (pending_bid only shows the
-	# FIRST bid), and a re-bid on A announced nothing.
-	var live_bid_ids := {}
-	for company_id in ns.companies.keys():
-		if String(ns.companies[company_id].get("bid_bidder", "")) != "":
-			live_bid_ids[company_id] = true
-	for announced_id in _announced_bids.keys():
-		if not live_bid_ids.has(announced_id):
-			_announced_bids.erase(announced_id)
-	# A resolved card is TAKEN AWAY -- PR 43's B4 contract, which these two
-	# cards dishonoured until the pass-8 fleet caught it: after block, allow
-	# or lapse the column still asserted an offer that no longer existed.
-	for firm_id in _bid_cards.keys():
-		if not live_bid_ids.has(firm_id):
-			_hud.message_stack.dismiss(String(_bid_cards[firm_id]))
-			_bid_cards.erase(firm_id)
-	if bid.is_empty():
-		_announced_bids.clear()
-	else:
-		var bid_firm := String(bid["company_id"])
-		if not _announced_bids.has(bid_firm):
-			_announced_bids[bid_firm] = true
-			var card_id: String = _hud.message_stack.push(
-				tr("Foreign takeover bid"),
-				tr("%s has offered %s bn for %s. The offer lapses in %d months.") % [
-					_loader.nation_name(String(bid["bidder_nation"])), Num.f(float(bid["price_eur_bn"]), 1),
-					_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])])
-			_bid_cards[bid_firm] = card_id
-			_industry_card_firms[card_id] = bid_firm
-	# The window counts down on EVERY live card, read from the register --
-	# not only pending_bid's first (the pass-9 fleet's find: with two bids
-	# pending, the second firm's card froze at its announce-time months and
-	# could lapse on stale text). The body ages IN PLACE -- the set_body
-	# law, because dismiss-then-push moves the card to the bottom and the
-	# position IS the card's age. A player-dismissed id is a clean no-op:
-	# DISMISSAL NEVER ANSWERS, and never resurrects.
-	for firm_id in _bid_cards.keys():
-		if not live_bid_ids.has(firm_id):
-			continue
-		var entry: Dictionary = ns.companies[firm_id]
-		var parts: PackedStringArray = String(entry.get("bid_bidder", "")).split("|")
-		_hud.message_stack.set_body(String(_bid_cards[firm_id]),
-			tr("%s has offered %s bn for %s. The offer lapses in %d months.") % [
-				_loader.nation_name(parts[0] if parts.size() > 0 else ""),
-				Num.f(float(entry.get("bid_price_eur_bn", 0.0)), 1),
-				_loader.firm_name(ns.id, String(firm_id)),
-				int(entry.get("bid_months_left", 0))])
-	var failing_now := Industry.failing(_state, ns, _loader)
-	# The memory clears PER FIRM, when that firm's own window closes -- the
-	# bid branch's design, not the all-clear the first draft used. Clearing
-	# only when NO firm failed would keep a rescued firm's entry alive while
-	# another window stood, and its RE-failure inside that window would then
-	# be card-silent: the write-once class the comment above names.
-	var failing_ids := {}
-	for failure in failing_now:
-		failing_ids[String(failure["company_id"])] = true
-	for announced_id in _announced_failures.keys():
-		if not failing_ids.has(announced_id):
-			_announced_failures.erase(announced_id)
-	for firm_id in _failure_cards.keys():
-		if not failing_ids.has(firm_id):
-			_hud.message_stack.dismiss(String(_failure_cards[firm_id]))
-			_failure_cards.erase(firm_id)
-	for failure in failing_now:
-		var company_id := String(failure["company_id"])
-		var failure_body := tr("%s is failing. The rescue window stands for %d months; past it the collapse is committed.") % [
-			_loader.firm_name(ns.id, company_id), int(failure["months_left"])]
-		if _announced_failures.has(company_id):
-			if _failure_cards.has(company_id):
-				_hud.message_stack.set_body(String(_failure_cards[company_id]), failure_body)
-			continue
-		_announced_failures[company_id] = true
-		var card_id: String = _hud.message_stack.push(tr("Firm in difficulty"), failure_body)
-		_failure_cards[company_id] = card_id
-		_industry_card_firms[card_id] = company_id
-
-## V4.2 T6: the assembly's own events, as cards -- _announce_industry_events's
-## idiom whole. The announced-state memory is main-side (the sim stays free of
-## the card stack); dismissal never answers (an unendorsed bill still divides);
-## and a tabling card is TAKEN AWAY when its bill resolves, its replacement
-## being the division card and not a stale offer to endorse a bill the house
-## has already settled.
-var _announced_assembly_bills := {}
-var _assembly_cards := {}         # bill_id -> its LIVE tabling card
-var _assembly_result_month := -1  # absolute month whose division card was pushed
-var _assembly_release_month := -1  # absolute month whose release card was pushed
-
-func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
-	var ns = _state.player()
-	if ns == null:
-		return
-	var live_ids := {}
-	for bill_id in ns.assembly_bills.keys():
-		live_ids[bill_id] = true
-	for announced_id in _announced_assembly_bills.keys():
-		if not live_ids.has(announced_id):
-			_announced_assembly_bills.erase(announced_id)
-	for bill_id in _assembly_cards.keys():
-		if not live_ids.has(bill_id):
-			_hud.message_stack.dismiss(String(_assembly_cards[bill_id]))
-			_assembly_cards.erase(bill_id)
-	for bill_id in ns.assembly_bills.keys():
-		var entry: Dictionary = ns.assembly_bills[bill_id]
-		var body := _assembly_bill_body(entry)
-		if _announced_assembly_bills.has(bill_id):
-			if _assembly_cards.has(bill_id):
-				_hud.message_stack.set_body(String(_assembly_cards[bill_id]), body)
-			continue
-		_announced_assembly_bills[bill_id] = true
-		var backed := String(entry.get("backer_firm", "")) != ""
-		var card_id: String = _hud.message_stack.push(
-			tr("A chief before the assembly") if backed else tr("Private member's bill"), body)
-		_assembly_cards[bill_id] = card_id
-	# The release card, handed in from _on_month_step. The capture there is
-	# what lets a COLLISION month -- a PMB dividing the same tick an
-	# assembly-origin hold releases -- push both cards: the register read
-	# below holds only the last writer. The release keeps its OWN memory slot
-	# because both results of a collision carry the same
-	# assembly_division_month stamp; one shared var would swallow the second
-	# card of the pair exactly as the shared register did.
-	if not assembly_release.is_empty() \
-			and int(assembly_release.get("assembly_division_month", -1)) != _assembly_release_month:
-		_assembly_release_month = int(assembly_release.get("assembly_division_month", -1))
-		_hud.message_stack.push(tr("The assembly divides"), _assembly_result_body(assembly_release))
-	# The division card. The assembly_bill marker on ns.last_law_result says
-	# the last division was the assembly's; the memory keys the DIVISION'S OWN
-	# MONTH -- the assembly_division_month stamp the machine writes into the
-	# result -- and not the current month, which is what made a quiet month
-	# whose tick merely found the old result still on the register re-announce
-	# it every month until a new law event overwrote it. The released flag is
-	# excluded since the pass-4 capture: a release that stayed on the register
-	# (a month where the assembly's tick divided nothing) arrives through the
-	# parameter above, and firing here too would push the same card twice.
-	# The in-tray keeps no history, so the stamp is the one per-division fact
-	# left once the entry is erased.
-	var result: Dictionary = ns.last_law_result
-	if bool(result.get("assembly_bill", false)) \
-			and not bool(result.get("released", false)) \
-			and int(result.get("assembly_division_month", -1)) != _assembly_result_month:
-		_assembly_result_month = int(result.get("assembly_division_month", -1))
-		_hud.message_stack.push(tr("The assembly divides"), _assembly_result_body(result))
-
-func _assembly_bill_body(entry: Dictionary) -> String:
-	var law_name := _law_title(String(entry.get("law_id", "")))
-	var months := int(entry.get("months_left", 0))
-	var firm_id := String(entry.get("backer_firm", ""))
-	# The endorsement transition inside the bill's life -- the card must not
-	# keep offering a stand the sim now refuses (the panel drops its button
-	# for the same reason).
-	if float(entry.get("endorse_bonus", 0.0)) > 0.0:
-		return tr_n("%s reaches the floor in %d month. The president's stand is on the record -- endorsed.", "%s reaches the floor in %d months. The president's stand is on the record -- endorsed.", months) % [
-			law_name, months]
-	if firm_id != "":
-		var chief := _loader.person_name(String(entry.get("backer_chief", "")))
-		var firm := _loader.firm_name(_state.player_nation_id, firm_id)
-		if chief == "":
-			return tr_n("%s's chief backs %s. The assembly divides in %d month; whether the president stands behind it is the president's to take.", "%s's chief backs %s. The assembly divides in %d months; whether the president stands behind it is the president's to take.", months) % [
-				firm, law_name, months]
-		return tr_n("%s's chief %s backs %s. The assembly divides in %d month; whether the president stands behind it is the president's to take.", "%s's chief %s backs %s. The assembly divides in %d months; whether the president stands behind it is the president's to take.", months) % [
-			firm, chief, law_name, months]
-	return tr_n("%s reaches the floor in %d month. Endorse it, or let the backbench stand alone.", "%s reaches the floor in %d months. Endorse it, or let the backbench stand alone.", months) % [
-		law_name, months]
-
-func _assembly_result_body(result: Dictionary) -> String:
-	var law_name := _law_title(String(result.get("law_id", "")))
-	# A COURT STRIKE outranks every other wording, and it is checked FIRST
-	# (law_panel's own order) because it fires on BOTH paths that reach this
-	# builder: a release the court stopped still carries released/assembly_bill,
-	# and a struck division still carries its tally. "Comes into force" and
-	# "defeated, N ayes" against a bill the court stopped are both the card
-	# contradicting the state it announces; the court sentence prints alone.
-	if bool(result.get("struck_down", false)):
-		return tr("The court has struck %s down.") % law_name
-	# A SUSPENSIVE REFUSAL IS A HOLD, not a defeat (law_panel's own reading --
-	# one word for different things is the readout bug this project keeps
-	# finding), and a blocked one was beaten somewhere the lower-house tally
-	# below does not show. Both wordings come off the outcome keys the result
-	# actually carries; only the bare false reads "defeated".
-	if bool(result.get("held_by_upper", false)):
-		return tr("The assembly carried %s and the %s has suspended it — it comes into force in %d months.") % [
-			law_name, String(result.get("upper_chamber", tr("second chamber"))), int(result.get("held_months", 0))]
-	if bool(result.get("blocked_by_upper", false)):
-		return tr("The assembly carried %s and the %s has blocked it.") % [
-			law_name, String(result.get("upper_chamber", tr("second chamber")))]
-	# The held bill's release: the coming-into-force event, not a division --
-	# the release result carries no seat tally, and printing zeroes beside
-	# "carried" would contradict its own numbers.
-	if bool(result.get("released", false)):
-		return tr("The %s's hold has run out — %s comes into force.") % [
-			String(result.get("upper_chamber", tr("second chamber"))), law_name]
-	return (tr("The assembly has carried %s, %d ayes to %d noes.") if bool(result.get("passed", false)) else tr("The assembly has defeated %s, %d ayes to %d noes.")) % [
-		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
-
-func _law_title(law_id: String) -> String:
-	return Strings.law_name(_law_by_id(law_id), law_id)
-
-## The player's obliged deployments, right now. Only the obliged ones: a chosen
-## deployment is a command the player just issued and does not need a card telling
-## them they issued it.
-func _obliged_count() -> int:
-	if _state == null:
-		return 0
-	var n := 0
-	for ally_id in Defence.deployments_of(_state, _state.player_nation_id).keys():
-		if Defence.deployment_kind(_state, _state.player_nation_id, String(ally_id)) == DefenceK.DEPLOYMENT_OBLIGED:
-			n += 1
-	return n
-
-
-## V1.3g. An alliance obligation opening is the one thing in this game that puts a
-## standing charge on the player's budget with no command behind it, so it is
-## exactly the thing that must not arrive silently -- the player would otherwise see
-## a deficit move for a reason nothing on screen names, which is the class of
-## failure docs/trade-model.md's unread `refused_by_partner` belongs to.
-func _card_obligations(before: int) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-	var now := _obliged_count()
-	if now <= before:
-		return
-
-	var ns = _state.player()
-	_hud.message_stack.push(
-		tr("Alliance obligation"),
-		tr("Forces are committed under a defensive pact. The budget carries %s%% of GDP for as long as it stands, and only abandoning the pact ends it.") % Num.f((
-			0.0 if ns == null else ns.deployment_bill_pct_gdp
-		), 2),
-	)
-
-
-## Put this month's foreign acts in the message column. V1.3f, and the first thing
-## in the game that ever calls message_stack.push().
-##
-## U5a shipped that column as furniture with a stated reason -- the thing that
-## fills it is events, which docs/tiers/v1.md schedules at V1.8, and wiring it to
-## invented content would have cost that argument. An act by a simulated nation is
-## not invented content; it is state src/sim/ just wrote. So this spends nothing:
-## V1.8 still adds calls rather than a column.
-##
-## The sim writes the record and the UI decides what is worth showing, which is the
-## data -> sim -> ui direction engine-decision.md rule 2 states. src/sim/ never
-## touches this file and GameState.foreign_acts is never read back inside src/sim/
-## -- tests/test_foreign_policy.gd asserts that, because a decision consulting it
-## would be the grievance ledger docs/foreign-policy-model.md is built without.
-##
-## Filtered, and it has to be: nine nations on a cadence produce more acts than the
-## column's six slots, and an unfiltered feed would push a sanction aimed at the
-## player off the bottom before they read it. Anything aimed AT the player always
-## cards; anything between two other nations needs the player to have a real stake
-## in the actor. The threshold reuses the model's own stake vector rather than
-## inventing a second notion of "relevant".
-func _card_foreign_acts(year: int, month: int) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-
-	var player_id: String = _state.player_nation_id
-	var floor_share: float = ForeignPolicy.even_share(_state, player_id) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
-	var news_of_others := SettingsPanel.foreign_news()
-
-	# Oldest first, so the newest act ends up at the top of the column: push()
-	# appends and the stack drops from the front when it overflows.
-	var fresh: Array = []
-	for act in _state.foreign_acts:
-		if int(act["year"]) != year or int(act["month"]) != month:
-			break
-		fresh.push_front(act)
-
-	# Grouped by action, V2.9: four allies state-visiting in one month is ONE
-	# piece of news, not four cards -- five near-identical cards were pushing
-	# decisions off a six-slot column (playtest 2026-09-05). The filters below
-	# are the original stake-floor gates, unchanged; only the carding is grouped.
-	var by_action: Dictionary = {}
-	for act in fresh:
-		var actor_id := String(act["actor_id"])
-		var target_id := String(act["target_id"])
-		if actor_id == player_id:
-			continue
-		# V5.1-0c: news between two other nations is the player's to ask for.
-		if target_id != player_id and (not news_of_others or ForeignPolicy.stake(_state, player_id, actor_id) < floor_share):
-			continue
-
-		var key := Strings.record_action_name(act)
-		if not by_action.has(key):
-			by_action[key] = {"aimed": [], "elsewhere": []}
-		if target_id == player_id:
-			by_action[key]["aimed"].append({
-				"actor": _nation_name(actor_id),
-				"reason": String(act["reason"]),
-			})
-		else:
-			by_action[key]["elsewhere"].append({
-				"actor": _nation_name(actor_id),
-				"body": "%s: %s." % [key, _nation_name(target_id)],
-			})
-
-	for action_name in by_action:
-		var slot: Dictionary = by_action[action_name]
-		var aimed: Array = slot["aimed"]
-		if not aimed.is_empty():
-			# An act aimed at the player names the player in the TITLE and not
-			# again in the body: "Austria -> you / State Visit: France" reads as
-			# though France were a third country involved somehow.
-			var title: String = (
-				tr("%s → you") % String(aimed[0]["actor"]) if aimed.size() == 1
-				else tr("%d× %s → you") % [aimed.size(), action_name]
-			)
-			var who: String = (
-				"%s." % String(aimed[0]["actor"]) if aimed.size() == 1
-				else "%s." % ", ".join(aimed.map(func(a): return String(a["actor"])))
-			)
-			# The model computes a reason and this is the only place it is ever
-			# read. Shipping the key unread would be V1.3b's `refused_by_partner`
-			# a third time -- a field src/sim/ fills in and no surface shows,
-			# which this block has now recorded twice and fixed once. The first
-			# act's reason stands for the group: same action, same month.
-			_hud.message_stack.push(title, "%s %s %s" % [
-				action_name, who, _act_reason_text(String(aimed[0]["reason"])),
-			])
-		else:
-			for line in slot["elsewhere"]:
-				_hud.message_stack.push(String(line["actor"]), String(line["body"]))
-
-
-## V1.5c. What the unions did this month, as a card.
-##
-## No filter, unlike _card_foreign_acts() above, and the asymmetry is the content rather
-## than an oversight: nine nations on a cadence produce more acts than the column has
-## slots, where the player's own country strikes at most once a year. Every act is
-## aimed at the player by definition, so there is nothing to be relevant ABOUT.
-##
-## The LABEL is read here and nowhere in src/sim/ -- unrest_constants.ACT_LABELS carries
-## `protest` and `strike`, the sim picks one off the stock, and this file owns the
-## wording. That is the same split nation_panel.gd has for a refusal and
-## _act_reason_text() below has for a reason, and it is what makes one machine with two
-## names honest rather than two machines wearing the row's vocabulary.
-func _card_unrest_acts(year: int, month: int) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-	for act in _state.unrest_acts:
-		if int(act["year"]) != year or int(act["month"]) != month:
-			continue
-		if String(act["nation_id"]) != _state.player_nation_id:
-			continue
-		# V2.6b1. The card names the PLACE, and it reads it off the act's own record
-		# rather than re-deriving it: a past act's site cannot be recovered once the
-		# shares have moved, which is why unrest.gd writes it down at the moment it
-		# happens. Absent -- every act on a version-29 save, and every nation with no
-		# site -- the sentence falls back to the national wording it has always had,
-		# so an old save reads correctly rather than printing an empty place.
-		var city := String(act.get("city_name", ""))
-		var region := String(act.get("region_name", ""))
-		var body := tr("Grievance stands at %.0f of 100. Output will carry it for months.") % float(act["unrest_pct"])
-		if city != "" and region != "":
-			body = tr("%s, %s. Grievance stands at %.0f of 100. Output will carry it for months.") % [
-				city, region, float(act["unrest_pct"]),
-			]
-		_hud.message_stack.push(_unrest_title(String(act["label"])), body)  # i18n: row-ok a key the title maps
-
-
-## V4.3's interim surface: one card per act, named off the act's own record --
-## the person's NAME is resolved here in the UI, never in src/sim/ (the
-## re-key's law, still). T5's People-panel and hover-card surfaces build on
-## the same records; this column's card exists so an act is never silent.
-func _card_character_acts(acts: Array) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-	for act in acts:
-		var who := _loader.person_name(String(act["person_id"]))
-		var kind := String(act["act"])
-		var detail: Dictionary = act.get("detail", {})
-		var title := tr("The bench stirs")
-		var body := tr("%s acts.") % who if who != "" else tr("Someone acts.")
-		match kind:
-			"resign":
-				title = tr("A resignation")
-				body = tr("%s resigns the premiership. The party holds the office; the government pays in standing.") % who
-			"defect":
-				title = tr("A defection")
-				body = tr("%s crosses the floor. The seat stays with the whip.") % who
-			"challenge":
-				var deposed := _loader.person_name(String(detail.get("deposed", "")))
-				title = tr("A leadership challenge")
-				body = tr("%s takes the leadership. %s stands down.") % [who, deposed] if deposed != "" else tr("%s takes the leadership. The incumbent stands down.") % who
-			"brief_against":
-				title = tr("A leak")
-				body = tr("%s briefs against the government.") % who
-		_hud.message_stack.push(title, body)
+			_world_news.card_character_acts(report["character_acts"])
 
 
 ## V1.8. What arrived on the desk this month, and what the clock decided when the
@@ -2159,22 +1758,9 @@ func _decision_body(ev, left: int) -> String:
 	]
 
 
-func _unrest_title(label: String) -> String:
-	match label:
-		"protest": return tr("Demonstrations")
-		"strike": return tr("General strike")
-	return tr("Industrial action")
-
-
-## The sentence for a ForeignPolicy.ACT_REASON_* key. src/sim/ returns keys and
-## src/ui/ owns the wording, the same split nation_panel.gd has for a refusal and
-## orgs_panel.gd for a vote.
-func _act_reason_text(key: String) -> String:
-	match key:
-		ForeignPolicy.ACT_REASON_INTEREST: return tr("Their interests run this way.")
-		ForeignPolicy.ACT_REASON_GOODWILL: return tr("Mending what had soured.")
-		ForeignPolicy.ACT_REASON_GRIEVANCE: return tr("Answering a grievance.")
-	return ""
+func _setup_news() -> void:
+	for writer in [_world_news, _industry_news, _assembly_news]:
+		writer.setup(_state, _loader, _hud.message_stack)
 
 
 func _nation_name(nation_id: String) -> String:
@@ -2392,11 +1978,7 @@ func _on_load_requested(slot: String) -> void:
 	# be card-silent behind this session's carried entries -- the pass-15
 	# fleet's reproduced find. The stack's ids are monotonic, so a card id never
 	# collides across the load; the cards themselves are cleared just below.
-	_announced_bids.clear()
-	_announced_failures.clear()
-	_bid_cards.clear()
-	_failure_cards.clear()
-	_industry_card_firms.clear()
+	_industry_news.forget()
 	# The assembly's four beside them, the same rule: bill ids collide only
 	# within a run, so those two maps belong to the discarded game. The two
 	# month memories are NOT simply reset to -1 (the ultra pass-7 finding):
@@ -2407,8 +1989,7 @@ func _on_load_requested(slot: String) -> void:
 	# for ITS OWN shape of result and -1 otherwise: a stale memory inherited
 	# from the discarded game could swallow a real card whose stamp it
 	# happened to match.
-	_announced_assembly_bills.clear()
-	_assembly_cards.clear()
+	_assembly_news.forget(_state.player().last_law_result)
 	# The V4.4 desk's three ride the same rule -- a stale unseen id would hold
 	# the clock past the load and a discarded game's decision card would route
 	# Events.answer against the loaded state (the decision pause beside the
@@ -2430,12 +2011,6 @@ func _on_load_requested(slot: String) -> void:
 	# left queued, the loaded game's next History step wrote it into its own
 	# recent_effects against the old game's baseline (the V5.0 fix-pass review).
 	_pending_effects.clear()
-	var loaded_result: Dictionary = _state.player().last_law_result
-	var carries_bill := bool(loaded_result.get("assembly_bill", false))
-	var released_load := bool(loaded_result.get("released", false))
-	var loaded_stamp := int(loaded_result.get("assembly_division_month", -1))
-	_assembly_result_month = loaded_stamp if carries_bill and not released_load else -1
-	_assembly_release_month = loaded_stamp if carries_bill and released_load else -1
 	_clock.year = _state.year
 	_clock.month = _state.month
 	_clock.day = int(result["day"])
@@ -2486,6 +2061,7 @@ func _on_load_requested(slot: String) -> void:
 	_election_panel.setup(_state, _loader)
 	_hud.ribbon.setup(_state, _loader)
 	_hud.portrait_card.setup(_state, _loader)
+	_setup_news()
 	# The mirror is re-established here rather than waiting for the first day to
 	# elapse, because a loaded game opens PAUSED: without this the diary would
 	# refuse a booking for today as "that date has passed" until the player
@@ -2679,7 +2255,7 @@ func _programme_refusal_text(reason: String) -> String:
 
 
 ## V4.1. What concluded this month, as a card -- complete, fail and invalid
-## alike, concluded_this_month()'s one read. _card_foreign_acts()'s split: the
+## alike, concluded_this_month()'s one read. _world_news.card_foreign_acts()'s split: the
 ## sim writes the record, the UI decides what earns a card, and src/sim/ never
 ## reads the list back. Called from _on_month_step() INSIDE the tick window
 ## the pulse is priced in -- see the Programme.tick_month call site in
