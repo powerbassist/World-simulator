@@ -114,7 +114,7 @@ func _refresh() -> void:
 	if ns == null:
 		return
 	_primary = null
-	_title.text = "Agenda"
+	_title.text = tr("Agenda")
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -181,7 +181,7 @@ func _offer_block(ns, terms: Dictionary) -> Control:
 
 func _choose_button(terms: Dictionary) -> Button:
 	var button := Button.new()
-	button.text = "Choose"
+	button.text = tr("Choose")
 	button.tooltip_text = String(terms.get("summary", ""))
 	var entry_id := String(terms["id"])
 	# The verb is a SIGNAL, not a call: the panel names what was chosen and
@@ -200,7 +200,7 @@ func _choose_button(terms: Dictionary) -> Button:
 func _build_register(ns) -> void:
 	if (ns.programme as Array).is_empty():
 		return
-	var body := PanelKit.section(_body, "The register")
+	var body := PanelKit.section(_body, tr("The register"))
 	for entry in ns.programme:
 		body.add_child(_register_block(ns, entry))
 
@@ -224,17 +224,17 @@ func _register_block(ns, entry: Dictionary) -> Control:
 				_primary = block
 			_build_live_read(ns, terms, entry, block)
 		ProgrammeK.STATUS_COMPLETE:
-			PanelKit.line(block, "Delivered, term %d." % (int(entry["concluded_term"]) + 1), PanelKit.Tone.GOOD)
+			PanelKit.line(block, tr("Delivered, term %d.") % (int(entry["concluded_term"]) + 1), PanelKit.Tone.GOOD)
 		ProgrammeK.STATUS_FAIL:
-			PanelKit.line(block, "Missed, term %d." % (int(entry["concluded_term"]) + 1), PanelKit.Tone.BAD)
+			PanelKit.line(block, tr("Missed, term %d.") % (int(entry["concluded_term"]) + 1), PanelKit.Tone.BAD)
 		_:
-			PanelKit.line(block, "Overtaken by the world, term %d." % (int(entry["concluded_term"]) + 1), PanelKit.Tone.DIM)
+			PanelKit.line(block, tr("Overtaken by the world, term %d.") % (int(entry["concluded_term"]) + 1), PanelKit.Tone.DIM)
 	return block
 
 
 func _build_live_read(ns, terms: Dictionary, entry: Dictionary, block: VBoxContainer) -> void:
 	if terms.is_empty():
-		PanelKit.line(block, "No content behind this entry; it concludes on the next tick.", PanelKit.Tone.DIM)
+		PanelKit.line(block, tr("No content behind this entry; it concludes on the next tick."), PanelKit.Tone.DIM)
 		return
 
 	var read: Dictionary = Programme.progress_of(ns, terms)

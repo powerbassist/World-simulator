@@ -56,7 +56,7 @@ func _ready() -> void:
 	margin.add_child(root)
 
 	_title = Label.new()
-	_title.text = "ECONOMY"
+	_title.text = tr("ECONOMY")
 	_title.theme_type_variation = UiTheme.HEADING
 	root.add_child(_title)
 
@@ -75,13 +75,13 @@ func _ready() -> void:
 	columns.add_theme_constant_override("separation", 28)
 	root.add_child(columns)
 
-	_labour = PanelKit.section(columns, "LABOUR")
-	_finances = PanelKit.section(columns, "PUBLIC FINANCES")
+	_labour = PanelKit.section(columns, tr("LABOUR"))
+	_finances = PanelKit.section(columns, tr("PUBLIC FINANCES"))
 
 	root.add_child(HSeparator.new())
 
 	var sectors_heading := Label.new()
-	sectors_heading.text = "OUTPUT BY SECTOR"
+	sectors_heading.text = tr("OUTPUT BY SECTOR")
 	sectors_heading.theme_type_variation = UiTheme.HEADING
 	root.add_child(sectors_heading)
 
@@ -117,21 +117,21 @@ func _refresh() -> void:
 		return
 
 	var nation = _loader.nations.get(ns.id) if _loader != null else null
-	_title.text = "ECONOMY — %s" % (nation.nation_name if nation != null else ns.id)
+	_title.text = tr("ECONOMY — %s") % (nation.nation_name if nation != null else ns.id)
 
 	for body in [_labour, _finances, _sectors]:
 		for child in body.get_children():
 			child.queue_free()
 
-	_headline.text = "EUR %.0fbn   %+.2f%%" % [ns.gdp_eur_bn, ns.growth_annual_pct]
-	_headline_note.text = "Annual growth against a trend of %+.2f%%. %s" % [
+	_headline.text = tr("EUR %.0fbn   %+.2f%%") % [ns.gdp_eur_bn, ns.growth_annual_pct]
+	_headline_note.text = tr("Annual growth against a trend of %+.2f%%. %s") % [
 		ns.trend_annual_pct, _gap_sentence(Economy.output_gap_pct(ns))
 	]
 
-	PanelKit.figure(_labour, "%.1f%%" % ns.unemployment_pct, "unemployment")
-	PanelKit.line(_labour, "Structural floor %.1f%%." % ns.structural_unemployment_pct)
+	PanelKit.figure(_labour, "%.1f%%" % ns.unemployment_pct, tr("unemployment"))
+	PanelKit.line(_labour, tr("Structural floor %.1f%%.") % ns.structural_unemployment_pct)
 	_trend(_labour, "unemployment_pct")
-	PanelKit.line(_labour, "Population %.1fM." % (ns.population / 1_000_000.0))
+	PanelKit.line(_labour, tr("Population %.1fM.") % (ns.population / 1_000_000.0))
 
 	# V1.5b. Here rather than under GOVERNMENT on the overview beside the delivery
 	# lines, and the split is deliberate: a delivery figure is a fact about the
@@ -144,7 +144,7 @@ func _refresh() -> void:
 	# act on. Unlike the two lines there this one is NEVER silent -- every nation has
 	# an age structure from the first frame, where a delivery factor of exactly 1.0 is
 	# a game in which nothing has happened yet.
-	PanelKit.line(_labour, "%.0f retired per 100 of working age, %+.0f since the start." % [
+	PanelKit.line(_labour, tr("%.0f retired per 100 of working age, %+.0f since the start.") % [
 		100.0 * Demography.dependency_ratio(ns),
 		100.0 * (Demography.dependency_ratio(ns) - Demography.start_dependency_ratio(ns)),
 	])
@@ -170,7 +170,7 @@ func _refresh() -> void:
 	# whole REACHABLE deviation at 0.145 points, so one decimal can express exactly two
 	# values of it. A format copied from a neighbouring row is a format chosen for a
 	# quantity an order of magnitude larger.
-	PanelKit.line(_labour, "Inflation %.1f%%, %+.2f since the start." % [
+	PanelKit.line(_labour, tr("Inflation %.1f%%, %+.2f since the start.") % [
 		ns.inflation_pct, Inflation.inflation_deviation(ns),
 	])
 
@@ -185,7 +185,7 @@ func _refresh() -> void:
 	# number with no units the player can act on: _fill_defence()'s finding, third time.
 	if ns.unrest_pct > 0.05:
 		var striking: bool = ns.unrest_pct >= UnrestK.UNREST_THRESHOLD_PCT
-		PanelKit.line(_labour, "Unrest %.0f of 100. %s" % [
+		PanelKit.line(_labour, tr("Unrest %.0f of 100. %s") % [
 			ns.unrest_pct,
 			# Deliberately does not name the act. The label is the message card's --
 			# `protest` at this intensity, `strike` higher up -- and the screenshot pass
@@ -206,16 +206,16 @@ func _refresh() -> void:
 			Regions.accessibility_for(ns, site_list, _state.region_graph),
 			_state.project_sited_pct.get(ns.id, {}))
 		if String(site["region_name"]) != "":
-			PanelKit.line(_labour, "Concentrated in %s%s." % [
+			PanelKit.line(_labour, tr("Concentrated in %s%s.") % [
 				String(site["region_name"]),
 				(" (%s)" % String(site["city_name"])) if String(site["city_name"]) != "" else "",
 			], PanelKit.Tone.DIM)
 
-	PanelKit.figure(_finances, "%+.1f%%" % -ns.deficit_pct_gdp, "deficit, share of GDP")
+	PanelKit.figure(_finances, "%+.1f%%" % -ns.deficit_pct_gdp, tr("deficit, share of GDP"))
 	_trend(_finances, "deficit_pct_gdp")
-	PanelKit.line(_finances, "Debt %.1f%% of GDP." % ns.debt_to_gdp_pct())
+	PanelKit.line(_finances, tr("Debt %.1f%% of GDP.") % ns.debt_to_gdp_pct())
 	_trend(_finances, "debt_to_gdp_pct")
-	PanelKit.line(_finances, "Debt service costs %.1f%% of GDP." % ns.debt_service_pct_gdp)
+	PanelKit.line(_finances, tr("Debt service costs %.1f%% of GDP.") % ns.debt_service_pct_gdp)
 
 	# V2.8, under the debt-service line because both are standing claims on the same
 	# budget. NEVER SILENT, the inflation line's rule rather than the unrest one's:
@@ -224,7 +224,7 @@ func _refresh() -> void:
 	# was wrong, the opposite of a readout. Leads with the level and states the drift
 	# beside it, and the drift gets two decimals because the whole reachable move is
 	# points of a percentage: V1.6b's own format bug, one asymmetry that repeats.
-	PanelKit.line(_finances, "Imports %.1f%% of its energy, %+.2f since the start." % [
+	PanelKit.line(_finances, tr("Imports %.1f%% of its energy, %+.2f since the start.") % [
 		ns.import_dependency_pct, Energy.dependency_deviation_pct(ns, _loader),
 	])
 
@@ -253,7 +253,7 @@ func _refresh() -> void:
 	# unrest caption's rule: the threshold is named by the model rather than by a number
 	# invented for the panel.
 	var rating: String = Credit.rating(ns)
-	PanelKit.line(_finances, "Rated %s. Borrowing at %.2f%%, %+.2f on the anchor." % [
+	PanelKit.line(_finances, tr("Rated %s. Borrowing at %.2f%%, %+.2f on the anchor.") % [
 		rating, Credit.yield_pct(ns), Credit.spread_pct(ns),
 	], PanelKit.Tone.BAD if rating != _anchor_rating() else PanelKit.Tone.DIM)
 
@@ -316,7 +316,7 @@ func _fill_sectors(ns) -> void:
 		row.add_child(share_label)
 
 		var value_label := Label.new()
-		value_label.text = "EUR %.0fbn" % value
+		value_label.text = tr("EUR %.0fbn") % value
 		value_label.theme_type_variation = UiTheme.CAPTION
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		row.add_child(value_label)
@@ -341,7 +341,7 @@ func _fill_sectors(ns) -> void:
 				hi = v
 				richest = region.region_name
 		if hi > 0.0:
-			PanelKit.line(_sectors, "Regions: %s produces x%.2f the national output per head, %s x%.2f." % [
+			PanelKit.line(_sectors, tr("Regions: %s produces x%.2f the national output per head, %s x%.2f.") % [
 				richest, hi, poorest, lo,
 			])
 		# V2.7. Position, on the same x-scale as the line above, and never silent
@@ -362,7 +362,7 @@ func _fill_sectors(ns) -> void:
 				a_hi = v
 				best_connected = region.region_name
 		if a_hi > 0.0 and best_connected != "":
-			PanelKit.line(_sectors, "Reach: %s sits x%.2f the national market, %s x%.2f." % [
+			PanelKit.line(_sectors, tr("Reach: %s sits x%.2f the national market, %s x%.2f.") % [
 				best_connected, a_hi, worst_connected, a_lo,
 			])
 

@@ -78,6 +78,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[data-sources]] — which open datasets seed the content, under which licenses
 - [[fictionalization]] — real nations, invented people, companies and parties
 - [[portrait-attribution]] — the Wikimedia Commons photographs behind the generated portraits, credited as their licences require
+- [[localisation]] — English as the msgid, the French tables, the key scheme for text in data/, the lint and the fit sweep
 - [[tooling]] — Godot version, MCP setup, machine prerequisites
 - [[test-suite-model]] — one execution core for the gate: parallel workers, exclusive lane, per-check sharding byte-identical to the monolithic run, and the cockpit that reads it
 - [[decision-log]] — corrections made mid-session that changed the plan, and why

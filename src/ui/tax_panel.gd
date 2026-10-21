@@ -121,7 +121,7 @@ func _ready() -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(body)
 
-	PanelKit.line(body, "Rates (%, and brackets within income)", PanelKit.Tone.PLAIN)
+	PanelKit.line(body, tr("Rates (%, and brackets within income)"), PanelKit.Tone.PLAIN)
 	_rates_grid = GridContainer.new()
 	_rates_grid.columns = 3
 	_rates_grid.add_theme_constant_override("h_separation", 12)
@@ -178,7 +178,7 @@ func _build_compose() -> Control:
 	var open_row := HBoxContainer.new()
 	outer.add_child(open_row)
 	var open_btn := Button.new()
-	open_btn.text = "Propose a tax"
+	open_btn.text = tr("Propose a tax")
 	open_btn.pressed.connect(func():
 		_compose_box.visible = not _compose_box.visible
 		_refusal.hide())
@@ -189,17 +189,17 @@ func _build_compose() -> Control:
 	_compose_box.hide()
 	outer.add_child(_compose_box)
 
-	PanelKit.line(_compose_box, "A new key is born by a bill: name it, set its base and its birth rate, and draft. When the drafting completes the bill waits on your Propose in the Legislature -- the key prices nothing until the act carries.", PanelKit.Tone.PLAIN)
+	PanelKit.line(_compose_box, tr("A new key is born by a bill: name it, set its base and its birth rate, and draft. When the drafting completes the bill waits on your Propose in the Legislature -- the key prices nothing until the act carries."), PanelKit.Tone.PLAIN)
 
 	var fields := HBoxContainer.new()
 	fields.add_theme_constant_override("separation", 12)
 	_compose_box.add_child(fields)
 	_draft_name = LineEdit.new()
-	_draft_name.placeholder_text = "Name (e.g. The Carbon Levy)"
+	_draft_name.placeholder_text = tr("Name (e.g. The Carbon Levy)")
 	_draft_name.custom_minimum_size.x = 240
 	fields.add_child(_draft_name)
 	_draft_key = LineEdit.new()
-	_draft_key.placeholder_text = "key (e.g. carbon)"
+	_draft_key.placeholder_text = tr("key (e.g. carbon)")
 	_draft_key.custom_minimum_size.x = 160
 	fields.add_child(_draft_key)
 
@@ -207,9 +207,9 @@ func _build_compose() -> Control:
 	params.columns = 3
 	params.add_theme_constant_override("h_separation", 12)
 	_compose_box.add_child(params)
-	_base_slider = _param_slider(params, "Base (% of GDP)", 0.0, SK.NEW_TAX_BASE_SHARE_MAX, 0.01, 0.5)
-	_erosion_slider = _param_slider(params, "Erosion", 0.0, SK.NEW_TAX_EROSION_MAX, 0.01, 0.4)
-	_rate_slider = _param_slider(params, "Birth rate (%)", 0.0, SK.NEW_TAX_RATE_MAX, 0.1, 10.0)
+	_base_slider = _param_slider(params, tr("Base (% of GDP)"), 0.0, SK.NEW_TAX_BASE_SHARE_MAX, 0.01, 0.5)
+	_erosion_slider = _param_slider(params, tr("Erosion"), 0.0, SK.NEW_TAX_EROSION_MAX, 0.01, 0.4)
+	_rate_slider = _param_slider(params, tr("Birth rate (%)"), 0.0, SK.NEW_TAX_RATE_MAX, 0.1, 10.0)
 	for slider: HSlider in [_base_slider, _erosion_slider, _rate_slider]:
 		slider.value_changed.connect(_on_param_changed)
 
@@ -223,7 +223,7 @@ func _build_compose() -> Control:
 	draft_row.alignment = BoxContainer.ALIGNMENT_END
 	_compose_box.add_child(draft_row)
 	var draft_btn := Button.new()
-	draft_btn.text = "Draft the bill"
+	draft_btn.text = tr("Draft the bill")
 	draft_btn.pressed.connect(_on_draft)
 	draft_row.add_child(draft_btn)
 
@@ -261,17 +261,17 @@ func _build_buttons() -> Control:
 	row.alignment = BoxContainer.ALIGNMENT_END
 
 	_commit_button = Button.new()
-	_commit_button.text = "Commit"
+	_commit_button.text = tr("Commit")
 	_commit_button.pressed.connect(_on_commit)
 	row.add_child(_commit_button)
 
 	var revert := Button.new()
-	revert.text = "Revert"
+	revert.text = tr("Revert")
 	revert.pressed.connect(_on_revert)
 	row.add_child(revert)
 
 	_close_button = Button.new()
-	_close_button.text = "Close (X)"
+	_close_button.text = tr("Close (X)")
 	_close_button.pressed.connect(func(): hide())
 	row.add_child(_close_button)
 
@@ -287,7 +287,7 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	var ns = _state.player()
-	_title.text = "TAX CODE — %s" % ns.id
+	_title.text = tr("TAX CODE — %s") % ns.id
 	_on_revert()
 
 
@@ -469,10 +469,10 @@ func _fill_bases() -> void:
 			customs.append(key)
 	if customs.is_empty():
 		return
-	PanelKit.heading(_bases_box, "Born keys")
+	PanelKit.heading(_bases_box, tr("Born keys"))
 	for key in customs:
 		var params: Dictionary = ns.custom_taxes[key]
-		PanelKit.line(_bases_box, "%s — base %.2f%% of GDP, erosion %.2f, born at %.1f. Its rate sits in the grid above." % [
+		PanelKit.line(_bases_box, tr("%s — base %.2f%% of GDP, erosion %.2f, born at %.1f. Its rate sits in the grid above.") % [
 			String(params.get("name", key)), float(params.get("base_share", 0.0)),
 			float(params.get("erosion", 0.0)), float(params.get("ref_pct", 0.0))], PanelKit.Tone.DIM)
 
@@ -481,7 +481,7 @@ func _on_param_changed(_value: float) -> void:
 	_set_param_text(_base_slider)
 	_set_param_text(_erosion_slider)
 	_set_param_text(_rate_slider)
-	_yield_label.text = "Would yield %.2f%% of GDP at birth (the most the model prices: %.1f)." % [
+	_yield_label.text = tr("Would yield %.2f%% of GDP at birth (the most the model prices: %.1f).") % [
 		_base_slider.value * _rate_slider.value, SK.NEW_TAX_YIELD_CEILING]
 
 
@@ -510,7 +510,7 @@ func _on_draft() -> void:
 	}
 	var result: Dictionary = Statute.draft(_state, ns, _loader, spec)
 	if not bool(result.get("ok", false)):
-		_refusal.text = String(result.get("refusal", "Refused."))
+		_refusal.text = String(result.get("refusal", tr("Refused.")))
 		_refusal.show()
 		return
 	_refusal.hide()

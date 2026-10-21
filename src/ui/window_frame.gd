@@ -117,9 +117,9 @@ func _build_title_bar(title: String, icon_path := "") -> Control:
 	# Text glyphs rather than icons: these two are the only controls in the game
 	# that appear on every panel, and a wrong icon here is wrong twenty times.
 	_pin_button = Button.new()
-	_pin_button.text = "PIN"
+	_pin_button.text = tr("PIN")
 	_pin_button.toggle_mode = true
-	_pin_button.tooltip_text = "Keep this panel open when another is opened"
+	_pin_button.tooltip_text = tr("Keep this panel open when another is opened")
 	_pin_button.theme_type_variation = UiTheme.SUBROW_BUTTON
 	_pin_button.pressed.connect(func(): set_pinned(_pin_button.button_pressed))
 	row.add_child(_pin_button)

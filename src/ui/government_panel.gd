@@ -153,7 +153,7 @@ func _ready() -> void:
 	# whatever the body grows to, where 39px of headroom would have been one added
 	# row from failing again.
 	_dissolve_button = Button.new()
-	_dissolve_button.text = "Dissolve"
+	_dissolve_button.text = tr("Dissolve")
 	_dissolve_button.pressed.connect(_on_dissolve)
 	root.add_child(_dissolve_button)
 
@@ -170,7 +170,7 @@ func _ready() -> void:
 	reassign_row.add_child(_party_option)
 
 	_reassign_button = Button.new()
-	_reassign_button.text = "Reassign"
+	_reassign_button.text = tr("Reassign")
 	_reassign_button.pressed.connect(_on_reassign)
 	reassign_row.add_child(_reassign_button)
 
@@ -184,7 +184,7 @@ func _ready() -> void:
 	root.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func():
 		hide()
 		closed.emit()
@@ -230,9 +230,9 @@ func _refresh() -> void:
 	var system = _loader.political_systems.get(ns.system_id)
 	PanelKit.line(_body, "%s." % (system.display_name if system != null else ns.system_id), PanelKit.Tone.PLAIN)
 	if ns.head_of_state_kind != "executive_president":
-		PanelKit.line(_body, "Head of state: %s %s." % [ns.head_of_state_title, _loader.person_name(ns.head_of_state_person_id)], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Head of state: %s %s.") % [ns.head_of_state_title, _loader.person_name(ns.head_of_state_person_id)], PanelKit.Tone.PLAIN)
 	if ns.term_limit > 0:
-		PanelKit.line(_body, "Term limit: %d of %d served." % [ns.terms_served, ns.term_limit], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Term limit: %d of %d served.") % [ns.terms_served, ns.term_limit], PanelKit.Tone.PLAIN)
 
 	var standing := "Majority government"
 	if ns.is_cohabitation:
@@ -242,7 +242,7 @@ func _refresh() -> void:
 	PanelKit.line(_body, standing, PanelKit.Tone.PLAIN)
 
 	var majority := Government.majority_seats(ns)
-	PanelKit.line(_body, "%d of %d seats; a majority needs more than %d." % [
+	PanelKit.line(_body, tr("%d of %d seats; a majority needs more than %d.") % [
 		ns.coalition_seats, ns.assembly_seats, majority
 	], PanelKit.Tone.PLAIN)
 
@@ -250,16 +250,16 @@ func _refresh() -> void:
 	# than it looks: seats a party holds are not seats it necessarily delivers.
 	var breakable := _worst_case_rebels(ns)
 	if breakable > 0:
-		PanelKit.line(_body, "Up to %d of those break ranks on a bill their own party dislikes, leaving %d." % [
+		PanelKit.line(_body, tr("Up to %d of those break ranks on a bill their own party dislikes, leaving %d.") % [
 			breakable, ns.coalition_seats - breakable
 		], PanelKit.Tone.PLAIN)
 
 	if ns.censure_rule == "none":
-		PanelKit.line(_body, "Censure: %s." % CENSURE_LABEL[ns.censure_rule], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Censure: %s.") % CENSURE_LABEL[ns.censure_rule], PanelKit.Tone.PLAIN)
 	else:
 		var needed := Government.censure_seats(ns)
 		var against: int = int(ns.assembly_seats) - int(ns.coalition_seats)
-		PanelKit.line(_body, "Censure needs %d seats — %s. The opposition holds %d." % [
+		PanelKit.line(_body, tr("Censure needs %d seats — %s. The opposition holds %d.") % [
 			needed, CENSURE_LABEL.get(ns.censure_rule, ns.censure_rule), against
 		], PanelKit.Tone.PLAIN)
 		# The honest reading of a French minority government: the opposition can
@@ -269,9 +269,9 @@ func _refresh() -> void:
 		# move too now -- without that, this line and the 49.3 tally below read
 		# as a flat contradiction whenever discipline has eroded.
 		if against >= needed:
-			PanelKit.line(_body, "The opposition could bring this government down on its own.", PanelKit.Tone.PLAIN)
+			PanelKit.line(_body, tr("The opposition could bring this government down on its own."), PanelKit.Tone.PLAIN)
 		else:
-			PanelKit.line(_body, "The opposition cannot reach that threshold on its own, even united.", PanelKit.Tone.PLAIN)
+			PanelKit.line(_body, tr("The opposition cannot reach that threshold on its own, even united."), PanelKit.Tone.PLAIN)
 
 		# What a censure motion would actually do right now, at the hostility a
 		# forced bill would provoke. This is the number Article 49.3 gambles on,
@@ -284,27 +284,27 @@ func _refresh() -> void:
 		var rebels := 0
 		for pid in forced["party_rebels"]:
 			rebels += int(forced["party_rebels"][pid])
-		PanelKit.line(_body, "Under Article 49.3 today: %d seats would move to censure%s." % [
+		PanelKit.line(_body, tr("Under Article 49.3 today: %d seats would move to censure%s.") % [
 			forced["for_seats"],
 			", %d of them against their own party's line" % rebels if rebels > 0 else "",
 		], PanelKit.Tone.PLAIN)
 		if ns.formation_method == "presidential_appointment":
 			if ns.force_cooldown_months > 0:
-				PanelKit.line(_body, "Article 49.3 unavailable for %d months." % ns.force_cooldown_months, PanelKit.Tone.PLAIN)
+				PanelKit.line(_body, tr("Article 49.3 unavailable for %d months.") % ns.force_cooldown_months, PanelKit.Tone.PLAIN)
 			elif forced["carried"]:
-				PanelKit.line(_body, "Forcing a bill now would bring the government down.", PanelKit.Tone.PLAIN)
+				PanelKit.line(_body, tr("Forcing a bill now would bring the government down."), PanelKit.Tone.PLAIN)
 			else:
-				PanelKit.line(_body, "A forced bill would survive censure.", PanelKit.Tone.PLAIN)
+				PanelKit.line(_body, tr("A forced bill would survive censure."), PanelKit.Tone.PLAIN)
 
 	if ns.governments_fallen > 0:
-		PanelKit.line(_body, "Governments censured out of office this run: %d." % ns.governments_fallen, PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Governments censured out of office this run: %d.") % ns.governments_fallen, PanelKit.Tone.PLAIN)
 
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "%s %s." % [n.chamber_name, DISSOLUTION_LABEL.get(ns.dissolution_rule, ns.dissolution_rule)], PanelKit.Tone.PLAIN)
 	if ns.dissolution_rule == "executive_discretion" or ns.dissolution_rule == "head_of_state_limited":
-		PanelKit.line(_body, "Costs public patience on every call, and locks out further use for %d months once the new assembly is seated." % ns.dissolution_lockout_months, PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Costs public patience on every call, and locks out further use for %d months once the new assembly is seated.") % ns.dissolution_lockout_months, PanelKit.Tone.PLAIN)
 	if ns.dissolutions_called > 0:
-		PanelKit.line(_body, "Dissolutions called this run: %d." % ns.dissolutions_called, PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Dissolutions called this run: %d.") % ns.dissolutions_called, PanelKit.Tone.PLAIN)
 
 	var can_dissolve := Dissolution.can_dissolve(_state, ns)
 	_dissolve_button.visible = ns.dissolution_rule != "none" and ns.dissolution_rule != "confidence_failure" and ns.dissolution_rule != "self_dissolution"
@@ -312,41 +312,41 @@ func _refresh() -> void:
 	if not can_dissolve:
 		_dissolve_button.tooltip_text = Dissolution.refusal_reason(_state, ns)
 	else:
-		_dissolve_button.tooltip_text = "Call a snap election. No seat forecast -- read the polls, not a projection."
+		_dissolve_button.tooltip_text = tr("Call a snap election. No seat forecast -- read the polls, not a projection.")
 
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Formation: %s." % METHOD_LABEL.get(ns.formation_method, ns.formation_method), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Agreed position: economic %+.2f, social %+.2f." % [
+	PanelKit.line(_body, tr("Formation: %s.") % METHOD_LABEL.get(ns.formation_method, ns.formation_method), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Agreed position: economic %+.2f, social %+.2f.") % [
 		ns.coalition_position["economic"], ns.coalition_position["social"]
 	], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "A constitutional amendment needs %s." % AMENDMENT_LABEL.get(ns.amendment_rule, ns.amendment_rule), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("A constitutional amendment needs %s.") % AMENDMENT_LABEL.get(ns.amendment_rule, ns.amendment_rule), PanelKit.Tone.PLAIN)
 	if REFERENDUM_LABEL.has(ns.referendum_mode):
 		PanelKit.line(_body, REFERENDUM_LABEL[ns.referendum_mode], PanelKit.Tone.PLAIN)
 	var method: String = String(ELECTION_SYSTEM_LABEL.get(ns.election_system, ns.election_system))
 	if ns.election_threshold_pct > 0.0:
-		PanelKit.line(_body, "The assembly is elected by %s, with a %.1f%% threshold." % [
+		PanelKit.line(_body, tr("The assembly is elected by %s, with a %.1f%% threshold.") % [
 			method, ns.election_threshold_pct
 		], PanelKit.Tone.PLAIN)
 	else:
-		PanelKit.line(_body, "The assembly is elected by %s, with no threshold." % method, PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("The assembly is elected by %s, with no threshold.") % method, PanelKit.Tone.PLAIN)
 
 	# V1.1e. The second chamber and the court, and both are NEVER SILENT for a nation
 	# that has them -- docs/referendum-model.md's V1.7c finding, that a lever whose only
 	# feedback is a wait has no readout at all. A player who passes a court-weakening Act
 	# must be able to read what it did on the frame it did it, not three years later.
 	if ns.has_upper_house:
-		PanelKit.line(_body, "The %s holds %d seats and %s." % [
+		PanelKit.line(_body, tr("The %s holds %d seats and %s.") % [
 			ns.upper_chamber_name, ns.upper_seats, _upper_phrase(ns)], PanelKit.Tone.PLAIN)
 	else:
-		PanelKit.line(_body, "There is no second chamber.", PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("There is no second chamber."), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, _court_phrase(ns), PanelKit.Tone.PLAIN)
 
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "In government", PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("In government"), PanelKit.Tone.PLAIN)
 	_body.add_child(_build_partner_table(ns))
 
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Cabinet", PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Cabinet"), PanelKit.Tone.PLAIN)
 	_body.add_child(_build_cabinet_table(ns))
 	if ns.resignations_count > 0:
 		var last: Dictionary = ns.last_resignation
@@ -355,7 +355,7 @@ func _refresh() -> void:
 			for party in _loader.parties.get(ns.id, []):
 				if party.id == String(last.get("party_id", "")):
 					last_party = party.party_name
-		PanelKit.line(_body, "Ministers resigned this run: %d (last: %s over %s)" % [
+		PanelKit.line(_body, tr("Ministers resigned this run: %d (last: %s over %s)") % [
 			ns.resignations_count, last_party, PORTFOLIO_LABEL.get(last.get("portfolio", ""), last.get("portfolio", ""))
 		], PanelKit.Tone.PLAIN)
 	_refresh_party_option(ns)
@@ -366,7 +366,7 @@ func _refresh() -> void:
 			outside.append("%s (%d)" % [party.party_name, int(ns.seats_by_party.get(party.id, 0))])
 	if not outside.is_empty():
 		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, "In opposition: %s" % ", ".join(outside), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("In opposition: %s") % ", ".join(outside), PanelKit.Tone.PLAIN)
 
 
 ## One row per coalition partner: seats, distance from the agreed position, the
@@ -451,7 +451,7 @@ func _build_partner_table(ns) -> Control:
 		var base := Discipline.base_of(party)
 		var discipline_cell := _right("%.2f" % live)
 		if live < base - 0.005:
-			discipline_cell.text = "%.2f of %.2f" % [live, base]
+			discipline_cell.text = tr("%.2f of %.2f") % [live, base]
 			discipline_cell.theme_type_variation = UiTheme.BAD_TEXT
 		grid.add_child(discipline_cell)
 
@@ -496,7 +496,7 @@ func _build_cabinet_table(ns) -> Control:
 		var pid: String = String(ns.cabinet.get(f, ""))
 		var holder_label := Label.new()
 		if pid == "" or not by_id.has(pid):
-			holder_label.text = "VACANT"
+			holder_label.text = tr("VACANT")
 			holder_label.theme_type_variation = UiTheme.BAD_TEXT
 		else:
 			holder_label.text = by_id[pid].party_name
@@ -515,7 +515,7 @@ func _build_cabinet_table(ns) -> Control:
 			var ent := int(ns.cabinet_entitlement.get(pid, 0))
 			var h := int(held.get(pid, 0))
 			if h < ent:
-				entitlement_cell.text = "%d of %d" % [h, ent]
+				entitlement_cell.text = tr("%d of %d") % [h, ent]
 				entitlement_cell.theme_type_variation = UiTheme.BAD_TEXT
 		grid.add_child(entitlement_cell)
 

@@ -41,20 +41,20 @@ func _ready() -> void:
 	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 
-	PanelKit.line(root, "SAVE / LOAD", PanelKit.Tone.PLAIN)
+	PanelKit.line(root, tr("SAVE / LOAD"), PanelKit.Tone.PLAIN)
 
 	_save_row = HBoxContainer.new()
 	_save_row.add_theme_constant_override("separation", 8)
 	root.add_child(_save_row)
 
 	_name_field = LineEdit.new()
-	_name_field.placeholder_text = "save name"
-	_name_field.text = "quicksave"
+	_name_field.placeholder_text = tr("save name")
+	_name_field.text = tr("quicksave")
 	_name_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_save_row.add_child(_name_field)
 
 	var save_btn := Button.new()
-	save_btn.text = "Save"
+	save_btn.text = tr("Save")
 	save_btn.pressed.connect(_on_save_pressed)
 	_save_row.add_child(save_btn)
 
@@ -62,7 +62,7 @@ func _ready() -> void:
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_status)
 
-	PanelKit.line(root, "Saved games:", PanelKit.Tone.PLAIN)
+	PanelKit.line(root, tr("Saved games:"), PanelKit.Tone.PLAIN)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -81,7 +81,7 @@ func _build_footer() -> Control:
 	row.alignment = BoxContainer.ALIGNMENT_END
 
 	var close_btn := Button.new()
-	close_btn.text = "Close"
+	close_btn.text = tr("Close")
 	close_btn.pressed.connect(close)
 	row.add_child(close_btn)
 
@@ -128,7 +128,7 @@ func _refresh_slot_list() -> void:
 
 	var slots := SaveManager.list_slots()
 	if slots.is_empty():
-		PanelKit.line(_slot_list, "No saved games yet.", PanelKit.Tone.PLAIN)
+		PanelKit.line(_slot_list, tr("No saved games yet."), PanelKit.Tone.PLAIN)
 		return
 
 	for slot in slots:
@@ -159,7 +159,7 @@ func _build_slot_row(slot: String) -> Control:
 	row.add_child(stamp)
 
 	var load_btn := Button.new()
-	load_btn.text = "Load"
+	load_btn.text = tr("Load")
 	load_btn.pressed.connect(func(): load_requested.emit(slot))
 	row.add_child(load_btn)
 
@@ -175,17 +175,17 @@ func _build_slot_row(slot: String) -> Control:
 ## (a save, a load) puts the guard back up.
 func _build_delete_button(slot: String) -> Button:
 	var del_btn := Button.new()
-	del_btn.text = "Delete"
+	del_btn.text = tr("Delete")
 	del_btn.set_meta("armed", false)
 	del_btn.pressed.connect(func():
 		if not bool(del_btn.get_meta("armed")):
 			del_btn.set_meta("armed", true)
-			del_btn.text = "Delete?"
+			del_btn.text = tr("Delete?")
 			return
 		if SaveManager.delete_slot(slot):
-			_status.text = "deleted '%s'" % slot
+			_status.text = tr("deleted '%s'") % slot
 		else:
-			_status.text = "could not delete '%s'" % slot
+			_status.text = tr("could not delete '%s'") % slot
 		_dirty = true
 	)
 	return del_btn
@@ -194,11 +194,11 @@ func _build_delete_button(slot: String) -> Button:
 func _on_save_pressed() -> void:
 	var slot := _name_field.text.strip_edges()
 	if slot.is_empty():
-		_status.text = "enter a save name first"
+		_status.text = tr("enter a save name first")
 		return
 	# Refused here rather than only inside SaveManager so the player learns at
 	# the field; the manager refuses again as the boundary (delete trusts it).
 	if not SaveManager.valid_slot_name(slot):
-		_status.text = "a save name is one line of text -- no slashes or dots"
+		_status.text = tr("a save name is one line of text -- no slashes or dots")
 		return
 	save_requested.emit(slot)

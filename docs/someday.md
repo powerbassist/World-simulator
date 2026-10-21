@@ -384,6 +384,17 @@ Below the V5.1 bar, from `code-review 33 high` (none met it):
 - **`test_load_hygiene` asserts the ribbon's title only**, not its cells (same dirty flag), and reads `message_stack._cards` and `ribbon._title` (private), as `test_statute_surfaces` already does.
 - **A loaded game never gets the "Your term" card** (by the existing comment: "a loaded save never receives it"); an in-game load used to keep, and refresh, the discarded game's card by accident. Not a regression, but the one-line "win the vote by MAY 2027" reminder is gone for loaded games.
 
+## Carried from V5.1-b (2026-10-21)
+
+Localisation plumbing's edge, from the build and `code-review high`; see [[localisation]].
+
+- **A live language switch in game is not done.** `tr()` text is the language a Control was built in; the Settings screen rebuilds itself and says windows opened afterwards follow. Making every open window follow is the shell's work (V5.1c re-homes the windows and can rebuild them on a change). **Trigger:** V5.1c's plan.
+- **About 870 prose-like literals in `src/ui` sit outside the lint's sink list** (messages built by `+`/`%` away from a sink, fragments returned from helpers, dict values, const tables not yet marked `# i18n: msgid`). The lint grows one sink pattern at a time (red is the worklist). **Trigger:** the content child's translation passes.
+- **Un-wrapped dynamic text that equals a msgid is translated anyway** (Godot auto-translates a Control's text): an issue name "Unemployment" shows French because the top bar's caption is a msgid. Harmless, and a homonym (one English word, two French ones) needs `tr(msg, context)` first.
+- **`tools/screenshot.gd -- --menu` ignores `--lang`:** the menu applies the saved language when it comes up. A frame of the French menu needs the setting written to the (isolated) user dir.
+- **The default language is English, not the OS locale** (deterministic suites). Defaulting to a French OS's language is the author's call.
+- **`Law.law_name` / `summary` have no accessor of their own:** every display site goes through `Strings.law_name(law, fallback)`, one preload line per file against the size ratchet (three files were shrunk to pay for it). A `display_name()` on `Law` (src/core, the Systems child's) would remove the preload.
+
 ## Carried from V5.1-a (2026-10-21)
 
 - **The at-icons files are orphaned.** After the Material Symbols swap nothing in `src/` reads `addons/at-icons`; the 24 committed SVGs, the `.gitignore` exception, the REUSE/ATTRIBUTION entries and the docs/tooling.md "committing rule" are dead weight. Delete them in c or d (they touch docs, not code).

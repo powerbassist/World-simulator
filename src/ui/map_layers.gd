@@ -20,6 +20,7 @@ const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Relations = preload("res://src/core/relations.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 const POLITICAL := "political"
 const RELATIONS := "relations"
@@ -135,14 +136,14 @@ const IMPORT_MID_SHOWN := 0.25
 const LAYERS: Array[Dictionary] = [
 	{
 		"id": POLITICAL,
-		"label": "Political",
+		"label": "Political",  # i18n: msgid
 		"alpha": 0.20,
 		"stops": [],
 		"caption": "Roster nations in their own colour; outlines as borders, read on hover.",
 	},
 	{
 		"id": RELATIONS,
-		"label": "Relations",
+		"label": "Relations",  # i18n: msgid
 		"alpha": 0.50,
 		"stops": [
 			{"at": 45.0, "text": "45  no ties"},
@@ -154,7 +155,7 @@ const LAYERS: Array[Dictionary] = [
 	},
 	{
 		"id": TRADE,
-		"label": "Trade",
+		"label": "Trade",  # i18n: msgid
 		"alpha": 0.50,
 		# The trade stops are DERIVED -- trade_stops(even) -- because their scale
 		# is the viewer's own partner count. map_legend.gd branches to it; keeping
@@ -165,7 +166,7 @@ const LAYERS: Array[Dictionary] = [
 	},
 	{
 		"id": COERCION,
-		"label": "Coercion",
+		"label": "Coercion",  # i18n: msgid
 		"alpha": 0.50,
 		"stops": [
 			{"at": 0.0, "text": "—  nothing in force"},
@@ -177,7 +178,7 @@ const LAYERS: Array[Dictionary] = [
 	},
 	{
 		"id": PRODUCTION,
-		"label": "Production",
+		"label": "Production",  # i18n: msgid
 		"alpha": 0.50,
 		# Signed at zero, because a nation with no output at all reads 0.0 and its
 		# cheap fill is the ramp's own low end -- unlike the pair layers, an entry
@@ -195,7 +196,7 @@ const LAYERS: Array[Dictionary] = [
 	},
 	{
 		"id": IMPORT_DEPENDENCY,
-		"label": "Import dep.",
+		"label": "Import dep.",  # i18n: msgid
 		"alpha": 0.50,
 		"stops": [
 			# Plain text and NOT format strings: only the third stop runs through a
@@ -322,7 +323,7 @@ static func alpha(layer_id: String) -> float:
 
 
 static func label(layer_id: String) -> String:
-	return String(layer(layer_id)["label"])
+	return Strings.t(String(layer(layer_id)["label"]))
 
 
 static func caption(layer_id: String) -> String:

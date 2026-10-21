@@ -33,14 +33,14 @@ const SECTION := "messages"
 const SWITCHES := ["notify", "feed", "popup", "pause"]
 
 ## The player-facing column names, in SWITCHES order.
-const SWITCH_LABELS := ["Notify", "Feed", "Popup", "Pause"]
+const SWITCH_LABELS := ["Notify", "Feed", "Popup", "Pause"]  # i18n: msgid
 
 ## One past critical: no severity reaches it.
 const OFF := EventsK.SEVERITY_MAX + 1
 
 ## The bands a switch can sit at, index = threshold - 1, so the settings screen's
 ## OptionButton index and the stored value are one subtraction apart.
-const BAND_LABELS := ["All", "Major+", "Critical", "Off"]
+const BAND_LABELS := ["All", "Major+", "Critical", "Off"]  # i18n: msgid
 
 ## The defaults, one band per switch and the same for every category -- banded by
 ## severity, not by taste: nothing here says scandals matter less than disasters.

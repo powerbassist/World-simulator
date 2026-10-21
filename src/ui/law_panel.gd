@@ -34,6 +34,7 @@ const Statute = preload("res://src/sim/statute.gd")
 ## V4.2 T5. The poll kinds are the constants file's vocabulary -- the same
 ## words buy_poll() records and the briefing's buttons send.
 const StatuteK = preload("res://src/sim/statute_constants.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -110,7 +111,7 @@ func _build_footer() -> Control:
 	row.alignment = BoxContainer.ALIGNMENT_END
 
 	_close_button = Button.new()
-	_close_button.text = "Close (L)"
+	_close_button.text = tr("Close (L)")
 	_close_button.pressed.connect(func(): hide())
 	row.add_child(_close_button)
 
@@ -126,7 +127,7 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	var ns = _state.player()
-	_title.text = "LEGISLATURE — %s" % ns.id
+	_title.text = tr("LEGISLATURE — %s") % ns.id
 	_dirty = true
 
 
@@ -180,7 +181,7 @@ func _refresh() -> void:
 	# legality scan runs, so a draft the player finished is on this list.
 	var available: Array = Legislature.available(ns, _loader.laws + Statute.custom_laws(ns))
 	if available.is_empty():
-		PanelKit.line(_list, "No law is currently proposable.", PanelKit.Tone.PLAIN)
+		PanelKit.line(_list, tr("No law is currently proposable."), PanelKit.Tone.PLAIN)
 		return
 
 	for law in available:
@@ -191,7 +192,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 	var box := VBoxContainer.new()
 
 	var law: Law = _find_law(result["law_id"])
-	var law_label: String = law.law_name if law != null else result["law_id"]
+	var law_label: String = Strings.law_name(law) if law != null else result["law_id"]
 
 	# A carried division on route B is a THIRD outcome and neither word fits it: the
 	# assembly said yes and the country has not been asked. Reading "FAILED" against a
@@ -230,22 +231,22 @@ func _build_result_summary(result: Dictionary) -> Control:
 	# class as the four verdicts above, which is why they are branches and not a
 	# shared "refused" word.
 	if result.get("unavailable", false):
-		PanelKit.line(box, "That is not open to the assembly right now.", PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr("That is not open to the assembly right now."), PanelKit.Tone.PLAIN)
 		return box
 
 	if result.get("referendum_in_flight", false):
-		PanelKit.line(box, "The country is already voting on something else.", PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr("The country is already voting on something else."), PanelKit.Tone.PLAIN)
 		return box
 
 	if result.get("referendum_route", false) and result.get("refused", false):
-		PanelKit.line(box, "This constitution has no referendum route for that.", PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr("This constitution has no referendum route for that."), PanelKit.Tone.PLAIN)
 		return box
 
 	# A forced bill had no division, so the seat tally would read all zeroes.
 	# What happened instead is the censure motion.
 	if result.get("forced", false):
 		if result.get("refused", false):
-			PanelKit.line(box, "Article 49.3 is not available.", PanelKit.Tone.PLAIN)
+			PanelKit.line(box, tr("Article 49.3 is not available."), PanelKit.Tone.PLAIN)
 			return box
 		box.add_child(_build_censure_summary(result.get("censure", {})))
 		return box
@@ -266,7 +267,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 		return box
 
 	var tally := Label.new()
-	tally.text = "Yes %d · No %d · Abstain %d, of %d seats" % [
+	tally.text = tr("Yes %d · No %d · Abstain %d, of %d seats") % [
 		result["yes_seats"], result["no_seats"], result["abstain_seats"], result["seats_total"]
 	]
 	box.add_child(tally)
@@ -274,7 +275,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 	# V1.1e. What the second chamber did, under the Assembly's own tally rather than
 	# beside it, because the two are the same division read twice.
 	if result.has("upper_passed"):
-		PanelKit.line(box, "%s: Yes %d · No %d · Abstain %d, of %d seats" % [
+		PanelKit.line(box, tr("%s: Yes %d · No %d · Abstain %d, of %d seats") % [
 			result.get("upper_chamber", "Second chamber"),
 			result["upper_yes_seats"], result["upper_no_seats"],
 			result["upper_abstain_seats"], result["upper_seats_total"],
@@ -290,9 +291,9 @@ func _build_result_summary(result: Dictionary) -> Control:
 			# releases free, so only a government bill's record promises the
 			# override price.
 			if bool(result.get("assembly_bill", false)):
-				held.text = "It is held for %d months, and then comes into force." % int(result.get("held_months", 0))
+				held.text = tr("It is held for %d months, and then comes into force.") % int(result.get("held_months", 0))
 			else:
-				held.text = "It is held for %d months, and overriding them costs %.2f with every bloc." % [
+				held.text = tr("It is held for %d months, and overriding them costs %.2f with every bloc.") % [
 					int(result.get("held_months", 0)), ChambersK.UPPER_OVERRIDE_OFFSET]
 			held.autowrap_mode = TextServer.AUTOWRAP_WORD
 			box.add_child(held)
@@ -301,7 +302,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 	# player cannot read is not a check on their power, it is a trap. See
 	# docs/judiciary-model.md.
 	if bool(result.get("struck_down", false)):
-		PanelKit.line(box, "The court struck it down: it reaches %.2f against a tolerance of %.2f." % [
+		PanelKit.line(box, tr("The court struck it down: it reaches %.2f against a tolerance of %.2f.") % [
 			float(result.get("reach", 0.0)), float(result.get("tolerance", 0.0))], PanelKit.Tone.PLAIN)
 
 	var rebellion := _rebellion_text(result.get("party_rebels", {}))
@@ -314,7 +315,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 			if result["party_votes"].get(party.id, "") == "no":
 				opposed.append(party.party_name)
 		if not opposed.is_empty():
-			PanelKit.line(box, "Voted against: %s" % ", ".join(opposed), PanelKit.Tone.PLAIN)
+			PanelKit.line(box, tr("Voted against: %s") % ", ".join(opposed), PanelKit.Tone.PLAIN)
 
 	return box
 
@@ -328,20 +329,20 @@ func _build_censure_summary(censure: Dictionary) -> Control:
 
 	var ns = _state.player()
 
-	PanelKit.line(box, "Adopted without a vote under Article 49.3.", PanelKit.Tone.PLAIN)
+	PanelKit.line(box, tr("Adopted without a vote under Article 49.3."), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(box, "Censure motion: %d for · %d against · %d abstained, of %d seats (needs %d)" % [
+	PanelKit.line(box, tr("Censure motion: %d for · %d against · %d abstained, of %d seats (needs %d)") % [
 		censure["for_seats"], censure["against_seats"], censure["abstain_seats"],
 		censure["seats_total"], censure["threshold"],
 	], PanelKit.Tone.PLAIN)
 
 	var verdict := Label.new()
 	if censure["carried"]:
-		verdict.text = "CENSURED. %s falls; %s %s now heads the government." % [
+		verdict.text = tr("CENSURED. %s falls; %s %s now heads the government.") % [
 			_loader.person_name(censure["pm_person_id"]), ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
 		]
 	else:
-		verdict.text = "The motion failed. %s %s survives and the law stands." % [
+		verdict.text = tr("The motion failed. %s %s survives and the law stands.") % [
 			ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
 		]
 	box.add_child(verdict)
@@ -352,7 +353,7 @@ func _build_censure_summary(censure: Dictionary) -> Control:
 			movers.append(party.party_name)
 	if not movers.is_empty():
 		var who := Label.new()
-		who.text = "Moved to censure: %s" % ", ".join(movers)
+		who.text = tr("Moved to censure: %s") % ", ".join(movers)
 		who.autowrap_mode = TextServer.AUTOWRAP_WORD
 		box.add_child(who)
 
@@ -364,7 +365,7 @@ func _build_censure_summary(censure: Dictionary) -> Control:
 	# their party, this one is parties that walked. Only the second is expelled.
 	var defectors: Array = censure["defectors"]
 	if not defectors.is_empty():
-		PanelKit.line(box, "%d coalition party(s) voted to censure and are out of government." % defectors.size(), PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr("%d coalition party(s) voted to censure and are out of government.") % defectors.size(), PanelKit.Tone.PLAIN)
 
 	return box
 
@@ -408,7 +409,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
-	PanelKit.line(box, "%s  (%s, %s)" % [law.law_name, law.theme, _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
+	PanelKit.line(box, "%s  (%s, %s)" % [Strings.law_name(law), law.theme, _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
 
 	# A system transition rewrites the whole constitution, not one field --
 	# named here structurally, off the loaded template's own display_name,
@@ -418,7 +419,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 		var target_system_id: String = law.effects.get("institutional", {}).get("system_id", "")
 		var target = _loader.political_systems.get(target_system_id)
 		var target_label: String = target.display_name if target != null else target_system_id
-		PanelKit.line(box, "Rewrites the constitution to a %s." % target_label, PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr("Rewrites the constitution to a %s.") % target_label, PanelKit.Tone.PLAIN)
 
 	PanelKit.line(box, law.summary, PanelKit.Tone.PLAIN)
 
@@ -426,7 +427,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	row.add_theme_constant_override("separation", 16)
 
 	var forecast := Label.new()
-	forecast.text = "Forecast: %s" % _forecast_text(ns, party_list, law)
+	forecast.text = tr("Forecast: %s") % _forecast_text(ns, party_list, law)
 	forecast.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(forecast)
 
@@ -439,7 +440,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 		PanelKit.line(box, after, PanelKit.Tone.PLAIN)
 
 	var propose_btn := Button.new()
-	propose_btn.text = "Propose"
+	propose_btn.text = tr("Propose")
 	propose_btn.pressed.connect(_on_propose.bind(law))
 	_offer(propose_btn)
 	row.add_child(propose_btn)
@@ -449,12 +450,12 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	# executive bypass. See docs/amendment-model.md.
 	if ns.formation_method == "presidential_appointment" and not law.constitutional:
 		var force_btn := Button.new()
-		force_btn.text = "Force (49.3)"
+		force_btn.text = tr("Force (49.3)")
 		force_btn.disabled = not Government.can_force(ns)
 		if force_btn.disabled:
-			force_btn.tooltip_text = "Cooldown: available again in %d months." % ns.force_cooldown_months
+			force_btn.tooltip_text = tr("Cooldown: available again in %d months.") % ns.force_cooldown_months
 		else:
-			force_btn.tooltip_text = "Adopt without a vote. The assembly may censure the government instead."
+			force_btn.tooltip_text = tr("Adopt without a vote. The assembly may censure the government instead.")
 		force_btn.pressed.connect(_on_force.bind(law))
 		_offer(force_btn)
 		row.add_child(force_btn)
@@ -466,7 +467,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	# Propose button already goes to the country.
 	if Legislature.can_put_to_referendum(ns, law):
 		var ref_btn := Button.new()
-		ref_btn.text = "Referendum"
+		ref_btn.text = tr("Referendum")
 		ref_btn.tooltip_text = (
 			"Pass it by an ordinary majority here, then put it to the country in %d months. "
 			+ "Winning is a mandate and losing is a rebuke, and it cannot be called off for free."
@@ -491,25 +492,24 @@ func _build_pending_referendum(ns) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
-	var law: Law = _find_law(Referendum.pending_law_id(ns))
-	PanelKit.line(box, "REFERENDUM CALLED — %s" % (law.law_name if law != null else Referendum.pending_law_id(ns)), PanelKit.Tone.PLAIN)
+	PanelKit.line(box, tr("REFERENDUM CALLED — %s") % Strings.law_name(_find_law(Referendum.pending_law_id(ns)), Referendum.pending_law_id(ns)), PanelKit.Tone.PLAIN)
 
 	var months := Referendum.months_left(ns)
 	var share := Referendum.yes_share(ns, ns.referendum_pending.get("position", {}))
-	PanelKit.line(box, "The country votes in %d %s. If it voted today: %.1f%% yes, %.1f%% no." % [
+	PanelKit.line(box, tr("The country votes in %d %s. If it voted today: %.1f%% yes, %.1f%% no.") % [
 		months, "month" if months == 1 else "months", share * 100.0, (1.0 - share) * 100.0
 	], PanelKit.Tone.PLAIN)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	var cost := Label.new()
-	cost.text = "Calling it off costs exactly what losing it costs."
+	cost.text = tr("Calling it off costs exactly what losing it costs.")
 	cost.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cost.autowrap_mode = TextServer.AUTOWRAP_WORD
 	row.add_child(cost)
 
 	var withdraw_btn := Button.new()
-	withdraw_btn.text = "Call it off"
+	withdraw_btn.text = tr("Call it off")
 	withdraw_btn.tooltip_text = (
 		"The same %.2f against every bloc a lost vote would charge, and the same cooldown. "
 		+ "What it buys is the slot back now rather than in %d months."
@@ -625,9 +625,8 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
-	var law: Law = _find_law(law_id)
-	PanelKit.line(box, "%s — held by the %s" % [
-		law.law_name if law != null else law_id, ns.upper_chamber_name], PanelKit.Tone.PLAIN)
+	PanelKit.line(box, tr("%s — held by the %s") % [
+		Strings.law_name(_find_law(law_id), law_id), ns.upper_chamber_name], PanelKit.Tone.PLAIN)
 
 	# The ultra pass-2 shape: the entry carries {"months", "origin"}.
 	var months: int = int(ns.held_bills.get(law_id, {}).get("months", 0))
@@ -637,10 +636,10 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	# the clause rode unconditioned, promising a price the assembly class
 	# never pays.
 	if String(ns.held_bills.get(law_id, {}).get("origin", "player")) == "assembly":
-		PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s." % [
+		PanelKit.line(box, tr("The Assembly carried it and the second chamber refused. It comes into force in %s.") % [
 			"one month" if months == 1 else "%d months" % months], PanelKit.Tone.PLAIN)
 	else:
-		PanelKit.line(box, "The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc." % [
+		PanelKit.line(box, tr("The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc.") % [
 			"one month" if months == 1 else "%d months" % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
 	return box
 
@@ -662,15 +661,15 @@ func _build_assembly_section(ns) -> void:
 		PanelKit.line(_list, _endorse_refusal)
 	if ns.assembly_bills.is_empty():
 		return
-	PanelKit.heading(_list, "ASSEMBLY BILLS")
+	PanelKit.heading(_list, tr("ASSEMBLY BILLS"))
 	for bill_id in ns.assembly_bills:
 		var entry: Dictionary = ns.assembly_bills[bill_id]
 		var law = _find_law(String(entry.get("law_id", "")))
 		var months := int(entry.get("months_left", 0))
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override("separation", 2)
-		PanelKit.line(box, "%s — before the assembly, divides in %d %s." % [
-			law.law_name if law != null else String(entry.get("law_id", "")),
+		PanelKit.line(box, tr("%s — before the assembly, divides in %d %s.") % [
+			Strings.law_name(law) if law != null else String(entry.get("law_id", "")),
 			months, "month" if months == 1 else "months"], PanelKit.Tone.PLAIN)
 		var firm_id := String(entry.get("backer_firm", ""))
 		if firm_id != "":
@@ -678,11 +677,11 @@ func _build_assembly_section(ns) -> void:
 			# like every other named person -- a missing name reads as a role,
 			# never as a raw id or an empty space.
 			var chief: String = _loader.person_name(String(entry.get("backer_chief", "")))
-			PanelKit.line(box, "%s's chief %s backs this bill." % [
+			PanelKit.line(box, tr("%s's chief %s backs this bill.") % [
 				_loader.firm_name(ns.id, firm_id),
 				chief if chief != "" else "the chief"], PanelKit.Tone.PLAIN)
 		if float(entry.get("endorse_bonus", 0.0)) != 0.0:
-			PanelKit.line(box, "Endorsed — the president's stand is on the record.", PanelKit.Tone.PLAIN)
+			PanelKit.line(box, tr("Endorsed — the president's stand is on the record."), PanelKit.Tone.PLAIN)
 		else:
 			box.add_child(_build_endorse_button(String(bill_id)))
 		_list.add_child(box)
@@ -697,7 +696,7 @@ func _build_endorse_button(bill_id: String) -> Control:
 	for bloc in StatuteK.PMB_ENDORSE_PRICE:
 		price_bits.append("%s %+.2f" % [String(bloc).capitalize(), float(StatuteK.PMB_ENDORSE_PRICE[bloc])])
 	var endorse_btn := Button.new()
-	endorse_btn.text = "Endorse"
+	endorse_btn.text = tr("Endorse")
 	endorse_btn.tooltip_text = (
 		"Stand behind the bill publicly: %+.2f on every party's support line at its division, "
 		+ "priced now as executive activism (%s). One stand per bill."

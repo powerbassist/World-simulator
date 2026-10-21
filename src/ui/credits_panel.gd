@@ -31,7 +31,7 @@ func _ready() -> void:
 	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 
-	PanelKit.line(root, "CREDITS", PanelKit.Tone.PLAIN)
+	PanelKit.line(root, tr("CREDITS"), PanelKit.Tone.PLAIN)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -49,7 +49,7 @@ func _ready() -> void:
 	root.add_child(footer)
 
 	var close := Button.new()
-	close.text = "Close"
+	close.text = tr("Close")
 	close.pressed.connect(func():
 		hide()
 		closed.emit()

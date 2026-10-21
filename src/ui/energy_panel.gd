@@ -81,7 +81,7 @@ func _ready() -> void:
 	scroll.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -140,7 +140,7 @@ func _refresh() -> void:
 	if nation == null:
 		return
 
-	_title.text = "The electricity of %s" % nation.nation_name
+	_title.text = tr("The electricity of %s") % nation.nation_name
 
 	_primary = null
 	_build_order(ns)
@@ -151,7 +151,7 @@ func _refresh() -> void:
 
 
 func _build_order(ns) -> void:
-	var group := PanelKit.section(_body, "Order")
+	var group := PanelKit.section(_body, tr("Order"))
 
 	_status = PanelKit.line(group, _armed_line(), PanelKit.Tone.PLAIN)
 
@@ -164,7 +164,7 @@ func _build_order(ns) -> void:
 		if source == null:
 			continue
 		offered += 1
-		PanelKit.line(group, "%s · %s · %d months · %.3f %% of GDP a year to build, %.3f %% of GDP a year to run" % [
+		PanelKit.line(group, tr("%s · %s · %d months · %.3f %% of GDP a year to build, %.3f %% of GDP a year to run") % [
 			source.source_name, source.branch, source.build_months,
 			source.build_cost_pct_gdp, source.run_cost_pct_gdp,
 		])
@@ -176,7 +176,7 @@ func _build_order(ns) -> void:
 			_primary = button
 		group.add_child(button)
 	if offered == 0:
-		PanelKit.line(group, "Nothing can be ordered right now -- the deficit precondition is not met.")
+		PanelKit.line(group, tr("Nothing can be ordered right now -- the deficit precondition is not met."))
 
 	# DECOMMISSION IS THE EXCEPTION AND TAKES A LIST. A station that exists is
 	# picked from the fleet; the run cost stops when it closes, which is the whole
@@ -190,7 +190,7 @@ func _build_order(ns) -> void:
 	for plant_id in built:
 		pick.add_item(plant_label(ns, plant_id, _loader))
 	var close := Button.new()
-	close.text = "Close a station"
+	close.text = tr("Close a station")
 	close.pressed.connect(func(): _on_decommission(ns, String(built[pick.get_selected_id()])))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -232,7 +232,7 @@ func _on_decommission(ns, plant_id: String) -> void:
 
 
 func _build_mix(ns) -> void:
-	var group := PanelKit.section(_body, "The mix")
+	var group := PanelKit.section(_body, tr("The mix"))
 	var live: Dictionary = Energy.mix(ns, _loader)
 	var rows: Array = []
 	for branch in ["fossil", "nuclear", "renewable"]:
@@ -241,25 +241,25 @@ func _build_mix(ns) -> void:
 		rows.append([
 			branch.capitalize(),
 			"%.2f%%" % (now * 100.0),
-			PanelKit.delta((now - start) * 100.0, " pts", 2),
+			PanelKit.delta((now - start) * 100.0, tr(" pts"), 2),
 		])
 	PanelKit.ledger(group, rows)
 
 
 func _build_dependency(ns) -> void:
-	var group := PanelKit.section(_body, "Import dependency")
+	var group := PanelKit.section(_body, tr("Import dependency"))
 	# NEVER SILENT, V1.7c's electoral-method line: every country in Europe imports
 	# energy, so a line that disappeared at zero would only ever appear when
 	# something was wrong -- the opposite of a readout.
 	var moved: float = Energy.dependency_deviation_pct(ns, _loader)
-	PanelKit.figure(group, "%.1f%%" % ns.import_dependency_pct, "of the energy the country uses, it buys abroad")
-	PanelKit.row(group, "Since the term began", PanelKit.delta(moved, " pts", 2),
+	PanelKit.figure(group, "%.1f%%" % ns.import_dependency_pct, tr("of the energy the country uses, it buys abroad"))
+	PanelKit.row(group, tr("Since the term began"), PanelKit.delta(moved, tr(" pts"), 2),
 		PanelKit.tone_for(moved, true))
-	PanelKit.line(group, "Above 100 is possible: a country that re-exports fuel buys more than it burns.")
+	PanelKit.line(group, tr("Above 100 is possible: a country that re-exports fuel buys more than it burns."))
 
 
 func _build_emissions(ns) -> void:
-	var group := PanelKit.section(_body, "Emissions")
+	var group := PanelKit.section(_body, tr("Emissions"))
 	# NEVER SILENT, the dependency figure's rule one section over: at an empty
 	# fleet this prints the measured baseline and that is the truth the panel
 	# exists for -- a line that appeared only once the mix had moved would be a
@@ -267,23 +267,23 @@ func _build_emissions(ns) -> void:
 	# rather than printed raw: a national total in tonnes is six zeroes the eye
 	# cannot read, and %.1f Mt is one digit of headroom the fleet cannot exhaust
 	# (the dirtiest plausible fleet moves France by single Mt, not hundreds).
-	PanelKit.figure(group, "%.1f Mt" % (Energy.emissions_tonnes(ns, _loader) / 1.0e6),
+	PanelKit.figure(group, tr("%.1f Mt") % (Energy.emissions_tonnes(ns, _loader) / 1.0e6),
 		"of CO2e the country emits in a year, every gas on one scale")
-	PanelKit.row(group, "Per head", "%.1f t" % ns.co2e_per_capita_t)
+	PanelKit.row(group, tr("Per head"), "%.1f t" % ns.co2e_per_capita_t)
 	# The delta rides the PER-CAPITA form, not the national total, because the
 	# per-capita figure is the one the accord's ceiling constrains -- a row about
 	# a different quantity than the one the politics reads would be a second
 	# answer to the same question (V1.6d's class, at panel scale).
 	var moved: float = ns.co2e_per_capita_t - ns.start_co2e_per_capita_t
-	PanelKit.row(group, "Since the term began", PanelKit.delta(moved, " t", 2),
+	PanelKit.row(group, tr("Since the term began"), PanelKit.delta(moved, " t", 2),
 		PanelKit.tone_for(moved, true))
 
 
 func _build_fleet(ns) -> void:
-	var group := PanelKit.section(_body, "The fleet")
+	var group := PanelKit.section(_body, tr("The fleet"))
 	_fleet_group = group
 	if ns.plants.is_empty():
-		PanelKit.line(group, "Nothing ordered. The mix above is the measured one.")
+		PanelKit.line(group, tr("Nothing ordered. The mix above is the measured one."))
 		return
 	var base: float = Energy.national_twh(ns)
 	var built: Dictionary = Energy.built_twh(ns, _loader)

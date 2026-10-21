@@ -76,7 +76,7 @@ func _ready() -> void:
 	scroll.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -129,7 +129,7 @@ func _refresh() -> void:
 	if nation == null:
 		return
 
-	_title.text = "The regions of %s" % nation.nation_name
+	_title.text = tr("The regions of %s") % nation.nation_name
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -144,7 +144,7 @@ func _refresh() -> void:
 ## the remainders are. Both residuals are derived rather than stored, so these rows
 ## cannot disagree with the table below them.
 func _build_partition(ns, regions: Array) -> void:
-	PanelKit.heading(_body, "The partition")
+	PanelKit.heading(_body, tr("The partition"))
 	var named := 0.0
 	for region in regions:
 		named += Migration.region_share(ns, region.id)
@@ -154,14 +154,14 @@ func _build_partition(ns, regions: Array) -> void:
 	# and print "-0.0%" at a player. The floor was here before the helper this
 	# replaced was inlined, and it comes back with the rate that made it load-bearing.
 	var residual: float = maxf(0.0, 1.0 - named)
-	PanelKit.row(_body, "Regions", str(regions.size()))
-	PanelKit.row(_body, "Named share of the population", "%.1f%%" % (named * 100.0))
-	PanelKit.row(_body, "Unnamed — extra-regio and overseas", "%.1f%%" % (residual * 100.0))
+	PanelKit.row(_body, tr("Regions"), str(regions.size()))
+	PanelKit.row(_body, tr("Named share of the population"), "%.1f%%" % (named * 100.0))
+	PanelKit.row(_body, tr("Unnamed — extra-regio and overseas"), "%.1f%%" % (residual * 100.0))
 	var named_gdp: float = 0.0
 	for region in regions:
 		named_gdp += region.gdp_share
-	PanelKit.row(_body, "Named share of output", "%.1f%%" % (named_gdp * 100.0))
-	PanelKit.row(_body, "Unnamed output — extra-regio", "%.1f%%" % (Region.national_gdp_residual(regions) * 100.0))
+	PanelKit.row(_body, tr("Named share of output"), "%.1f%%" % (named_gdp * 100.0))
+	PanelKit.row(_body, tr("Unnamed output — extra-regio"), "%.1f%%" % (Region.national_gdp_residual(regions) * 100.0))
 
 	# V2.7. NEVER SILENT, on the rule V1.7c set for the electoral method: every
 	# region has a position on the graph, where an absent route is a fact most
@@ -193,7 +193,7 @@ func _build_partition(ns, regions: Array) -> void:
 		if int(degrees[region.id]) < least_degree:
 			least_degree = int(degrees[region.id])
 			least = region.region_name
-	PanelKit.line(_body, "On the transport graph: %d land links and %d sea links touch these regions; %s is the least connected, with %d." % [land, sea, least, least_degree])
+	PanelKit.line(_body, tr("On the transport graph: %d land links and %d sea links touch these regions; %s is the least connected, with %d.") % [land, sea, least, least_degree])
 
 
 ## The league table. The payroll column is the register's one live quantity:
@@ -203,7 +203,7 @@ func _build_partition(ns, regions: Array) -> void:
 ## printing it rather than an em dash is the honest direction: PanelKit's em dash
 ## means a figure is absent, and this one is present and empty.
 func _build_table(ns, regions: Array) -> void:
-	PanelKit.heading(_body, "By share of the population")
+	PanelKit.heading(_body, tr("By share of the population"))
 	# V2.7. One read per refresh; the row loop below passes it to every region's
 	# unemployment figure. The argument is required -- regions.gd's own rule.
 	var access: Dictionary = Regions.accessibility_for(ns, regions, _state.region_graph)
@@ -228,9 +228,9 @@ func _build_table(ns, regions: Array) -> void:
 			PanelKit.pop_text(jobs) if jobs > 0.0 else "0",
 		])
 	PanelKit.ledger(_body, rows)
-	PanelKit.line(_body, "Columns: share of output · people · output per head against the national average · accessibility against the national average · unemployment · dominant sector · named jobs.")
-	PanelKit.line(_body, "National GDP is the sum of these regions. A region grows at the national rate plus what its own sector mix is worth, and those differences cancel across the country — so a region's mix moves its share and never the level.")
-	PanelKit.line(_body, "Position moves output too: what a region makes, times how far its market reaches — also cancelling across the country, also never the level.")
+	PanelKit.line(_body, tr("Columns: share of output · people · output per head against the national average · accessibility against the national average · unemployment · dominant sector · named jobs."))
+	PanelKit.line(_body, tr("National GDP is the sum of these regions. A region grows at the national rate plus what its own sector mix is worth, and those differences cancel across the country — so a region's mix moves its share and never the level."))
+	PanelKit.line(_body, tr("Position moves output too: what a region makes, times how far its market reaches — also cancelling across the country, also never the level."))
 
 
 ## The mix, as one word. The three shares are on the region and the panel has one

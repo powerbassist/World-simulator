@@ -18,8 +18,8 @@ signal pause_toggled
 signal speed_selected(speed: int)
 
 const MONTH_NAMES: Array[String] = [
-	"JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-	"JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+	"JAN", "FEB", "MAR", "APR", "MAY", "JUN",  # i18n: msgid
+	"JUL", "AUG", "SEP", "OCT", "NOV", "DEC",  # i18n: msgid
 ]
 
 ## Reserved for U5b's minimap. Held open as a sized, empty box rather than left
@@ -55,7 +55,7 @@ func _ready() -> void:
 
 	_pause_button = Button.new()
 	_pause_button.theme_type_variation = UiTheme.SUBROW_BUTTON
-	_pause_button.tooltip_text = "Pause (Space)"
+	_pause_button.tooltip_text = tr("Pause (Space)")
 	_pause_button.pressed.connect(func(): pause_toggled.emit())
 	controls.add_child(_pause_button)
 
@@ -68,7 +68,7 @@ func _ready() -> void:
 		button.theme_type_variation = UiTheme.SUBROW_BUTTON
 		button.text = glyphs[s]
 		button.toggle_mode = true
-		button.tooltip_text = "Speed %d (%d)" % [s, s]
+		button.tooltip_text = tr("Speed %d (%d)") % [s, s]
 		button.pressed.connect(func(): speed_selected.emit(s))
 		controls.add_child(button)
 		_speed_buttons[s] = button
@@ -78,7 +78,7 @@ func _ready() -> void:
 	column.add_child(_minimap_slot)
 
 	var placeholder := Label.new()
-	placeholder.text = "MAP OVERVIEW"
+	placeholder.text = tr("MAP OVERVIEW")
 	placeholder.theme_type_variation = UiTheme.MICRO
 	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -116,7 +116,7 @@ func refresh(clock: Node) -> void:
 		_date_label.modulate.a = Motion.PAUSED_ALPHA
 		_pause_button.text = "..."
 		return
-	var date := "%02d %s %d" % [clock.day, MONTH_NAMES[clock.month - 1], clock.year]
+	var date := "%02d %s %d" % [clock.day, tr(MONTH_NAMES[clock.month - 1]), clock.year]
 	# V4.9a. The clock shows its speed rather than stating it: one brass beat per
 	# day, so the beats' own rhythm is the speed, and a paused date is dimmed --
 	# still the date, visibly not moving. The dim is state, not motion, so it

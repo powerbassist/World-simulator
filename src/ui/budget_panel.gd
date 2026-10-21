@@ -26,11 +26,11 @@ const Forecast = preload("res://src/ui/budget_forecast.gd")
 const PROJECTION_MONTHS := 24
 
 const LEVER_LABELS := {
-	"health": "Health",
-	"education": "Education",
-	"defence": "Defence",
-	"pensions": "Pensions",
-	"infrastructure": "Infrastructure",
+	"health": "Health",  # i18n: msgid
+	"education": "Education",  # i18n: msgid
+	"defence": "Defence",  # i18n: msgid
+	"pensions": "Pensions",  # i18n: msgid
+	"infrastructure": "Infrastructure",  # i18n: msgid
 }
 const LEVER_MAX := {
 	"health": 30.0,
@@ -222,7 +222,7 @@ func _build_levers() -> Control:
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	PanelKit.line(box, "Levers (spending % of GDP — the tax rates live on the Tax Code window, X)", PanelKit.Tone.PLAIN)
+	PanelKit.line(box, tr("Levers (spending % of GDP — the tax rates live on the Tax Code window, X)"), PanelKit.Tone.PLAIN)
 
 	var grid := GridContainer.new()
 	grid.columns = 3
@@ -231,7 +231,7 @@ func _build_levers() -> Control:
 
 	for key in _lever_keys():
 		var name_label := Label.new()
-		name_label.text = LEVER_LABELS[key]
+		name_label.text = tr(LEVER_LABELS[key])
 		name_label.custom_minimum_size.x = 130
 		grid.add_child(name_label)
 
@@ -290,17 +290,17 @@ func _build_buttons() -> Control:
 	row.alignment = BoxContainer.ALIGNMENT_END
 
 	_commit_button = Button.new()
-	_commit_button.text = "Commit"
+	_commit_button.text = tr("Commit")
 	_commit_button.pressed.connect(_on_commit)
 	row.add_child(_commit_button)
 
 	var revert := Button.new()
-	revert.text = "Revert"
+	revert.text = tr("Revert")
 	revert.pressed.connect(_on_revert)
 	row.add_child(revert)
 
 	_close_button = Button.new()
-	_close_button.text = "Close (B)"
+	_close_button.text = tr("Close (B)")
 	_close_button.pressed.connect(func(): hide())
 	row.add_child(_close_button)
 
@@ -329,7 +329,7 @@ func setup(state, loader) -> void:
 	_loader = loader
 	_forecast.setup(state, loader, PROJECTION_MONTHS)
 	var ns = _state.player()
-	_title.text = "BUDGET — %s" % ns.id
+	_title.text = tr("BUDGET — %s") % ns.id
 	_on_revert()
 
 

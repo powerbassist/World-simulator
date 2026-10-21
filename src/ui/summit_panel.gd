@@ -89,7 +89,7 @@ func _ready() -> void:
 	root.add_child(_choices_box)
 
 	_continue_button = Button.new()
-	_continue_button.text = "Continue"
+	_continue_button.text = tr("Continue")
 	_continue_button.pressed.connect(func(): _advance())
 	root.add_child(_continue_button)
 
@@ -111,7 +111,7 @@ func show_summit(summit: Dictionary) -> void:
 	_summit_id = String(summit.get("id", ""))
 	_effects = summit.get("effects", {})
 	_choice = ""
-	_title.text = String(summit.get("title", "A meeting"))
+	_title.text = String(summit.get("title", tr("A meeting")))
 
 	var manager = _manager()
 	if manager == null:

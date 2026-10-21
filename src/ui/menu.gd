@@ -160,7 +160,7 @@ func _build_menu() -> Control:
 	center.add_child(column)
 
 	var title := Label.new()
-	title.text = "NATION SIMULATOR"
+	title.text = tr("NATION SIMULATOR")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
 
@@ -172,15 +172,15 @@ func _build_menu() -> Control:
 	# is the entry most launches want and a menu that makes you find the newest
 	# slot yourself is a menu that wastes a click every session.
 	var slots := SaveManager.list_slots()
-	_continue_button = _add_entry(column, "Continue", func(): _start_game(slots[0]))
+	_continue_button = _add_entry(column, tr("Continue"), func(): _start_game(slots[0]))
 	_continue_button.disabled = slots.is_empty()
 
-	_new_game_button = _add_entry(column, "New Game", func(): _show(_nation_select_panel))
+	_new_game_button = _add_entry(column, tr("New Game"), func(): _show(_nation_select_panel))
 	_new_game_button.disabled = _playable_nations().is_empty()
-	_add_entry(column, "Load Game", func(): _show(_load_panel))
-	_add_entry(column, "Settings", func(): _show(_settings_panel))
-	_add_entry(column, "Credits", func(): _show(_credits_panel))
-	_add_entry(column, "Quit", func(): get_tree().quit())
+	_add_entry(column, tr("Load Game"), func(): _show(_load_panel))
+	_add_entry(column, tr("Settings"), func(): _show(_settings_panel))
+	_add_entry(column, tr("Credits"), func(): _show(_credits_panel))
+	_add_entry(column, tr("Quit"), func(): get_tree().quit())
 
 	return center
 

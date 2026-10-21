@@ -32,6 +32,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 signal closed
 
@@ -128,7 +129,7 @@ func _ready() -> void:
 	_build_form(root)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func():
 		hide()
 		closed.emit()
@@ -143,7 +144,7 @@ func _ready() -> void:
 func _build_form(root: VBoxContainer) -> void:
 	var heading := Label.new()
 	heading.theme_type_variation = UiTheme.HEADING
-	heading.text = "BOOK AN APPOINTMENT"
+	heading.text = tr("BOOK AN APPOINTMENT")
 	root.add_child(heading)
 
 	var grid := GridContainer.new()
@@ -152,7 +153,7 @@ func _build_form(root: VBoxContainer) -> void:
 	grid.add_theme_constant_override("v_separation", 6)
 	root.add_child(grid)
 
-	PanelKit.line(grid, "Kind", PanelKit.Tone.PLAIN)
+	PanelKit.line(grid, tr("Kind"), PanelKit.Tone.PLAIN)
 	_kind_pick = OptionButton.new()
 	_kind_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for kind in K.KINDS:
@@ -161,7 +162,7 @@ func _build_form(root: VBoxContainer) -> void:
 	grid.add_child(_kind_pick)
 
 	_subject_label = Label.new()
-	_subject_label.text = "Partner"
+	_subject_label.text = tr("Partner")
 	grid.add_child(_subject_label)
 	_subject_pick = OptionButton.new()
 	_subject_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -169,7 +170,7 @@ func _build_form(root: VBoxContainer) -> void:
 	grid.add_child(_subject_pick)
 
 	_act_label = Label.new()
-	_act_label.text = "Act"
+	_act_label.text = tr("Act")
 	grid.add_child(_act_label)
 	_act_pick = OptionButton.new()
 	_act_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -178,7 +179,7 @@ func _build_form(root: VBoxContainer) -> void:
 	_act_pick.item_selected.connect(func(_i: int): _refresh_travel_note())
 	grid.add_child(_act_pick)
 
-	PanelKit.line(grid, "Date", PanelKit.Tone.PLAIN)
+	PanelKit.line(grid, tr("Date"), PanelKit.Tone.PLAIN)
 	var when_row := HBoxContainer.new()
 	when_row.add_theme_constant_override("separation", 8)
 	_month_pick = OptionButton.new()
@@ -205,7 +206,7 @@ func _build_form(root: VBoxContainer) -> void:
 	root.add_child(_travel_note)
 
 	_book_button = Button.new()
-	_book_button.text = "Book it"
+	_book_button.text = tr("Book it")
 	_book_button.pressed.connect(_on_book)
 	root.add_child(_book_button)
 
@@ -255,7 +256,7 @@ func _refresh_strip() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
-	_title.text = "Diary — %s %d" % [
+	_title.text = tr("Diary — %s %d") % [
 		ClockCluster.MONTH_NAMES[_state.month - 1], _state.year,
 	]
 
@@ -303,12 +304,12 @@ func _refresh_next_up(rows: Array) -> void:
 	if soonest.is_empty():
 		soonest = Calendar.later(_state, K.BOOKING_HORIZON_MONTHS, 1)
 	if soonest.is_empty():
-		_next_up.text = "Nothing ahead."
+		_next_up.text = tr("Nothing ahead.")
 		return
 
 	var row: Dictionary = soonest[0]
 	var what := _booking_text(row) if row.has("status") else _fixed_text(row)
-	_next_up.text = "Next: %s — %02d %s %d." % [
+	_next_up.text = tr("Next: %s — %02d %s %d.") % [
 		what, int(row.get("day", 1)),
 		ClockCluster.MONTH_NAMES[int(row["month"]) - 1], int(row["year"]),
 	]
@@ -323,7 +324,7 @@ func _refresh_later() -> void:
 	if rows.is_empty():
 		return
 
-	PanelKit.heading(_body, "LATER")
+	PanelKit.heading(_body, tr("LATER"))
 
 	for row in rows:
 		PanelKit.line(_body, "    %s %d — %s" % [
@@ -348,7 +349,7 @@ func _entry_row(entry: Dictionary) -> Control:
 		text.text = "    %02d — %s" % [int(entry.get("day", 1)), _booking_text(entry)]
 		if status == K.STATUS_BOOKED:
 			var cancel := Button.new()
-			cancel.text = "Cancel"
+			cancel.text = tr("Cancel")
 			cancel.pressed.connect(_on_cancel.bind(Calendar.verb_key(entry)))
 			row.add_child(cancel)
 		else:
@@ -450,8 +451,8 @@ func _refresh_form() -> void:
 	_subject_pick.clear()
 	match kind:
 		K.KIND_DIPLOMATIC:
-			_subject_label.text = "Partner"
-			_act_label.text = "Act"
+			_subject_label.text = tr("Partner")
+			_act_label.text = tr("Act")
 			var ids: Array = _state.nations.keys()
 			ids.sort()
 			for id in ids:
@@ -459,13 +460,13 @@ func _refresh_form() -> void:
 					_subject_pick.add_item(_nation_name(String(id)))
 					_subject_pick.set_item_metadata(_subject_pick.item_count - 1, String(id))
 		K.KIND_LAW:
-			_subject_label.text = "Chamber"
-			_act_label.text = "Law"
-			_subject_pick.add_item("National Assembly")
+			_subject_label.text = tr("Chamber")
+			_act_label.text = tr("Law")
+			_subject_pick.add_item(tr("National Assembly"))
 			_subject_pick.set_item_metadata(0, "")
 		K.KIND_RESHUFFLE:
-			_subject_label.text = "Party"
-			_act_label.text = "Portfolio"
+			_subject_label.text = tr("Party")
+			_act_label.text = tr("Portfolio")
 			for party_id in ns.coalition_party_ids:
 				_subject_pick.add_item(_party_name(String(party_id)))
 				_subject_pick.set_item_metadata(_subject_pick.item_count - 1, String(party_id))
@@ -493,7 +494,7 @@ func _refresh_acts() -> void:
 				_act_pick.set_item_metadata(_act_pick.item_count - 1, String(action.id))
 		K.KIND_LAW:
 			for law in Legislature.available(ns, _loader.laws):
-				_act_pick.add_item(String(law.law_name))
+				_act_pick.add_item(String(Strings.law_name(law)))
 				_act_pick.set_item_metadata(_act_pick.item_count - 1, String(law.id))
 		K.KIND_RESHUFFLE:
 			var party_id := _selected_subject()
@@ -504,7 +505,7 @@ func _refresh_acts() -> void:
 
 	_book_button.disabled = _act_pick.item_count == 0
 	if _act_pick.item_count == 0:
-		_status.text = "Nothing of that kind is available to book today."
+		_status.text = tr("Nothing of that kind is available to book today.")
 	_refresh_travel_note()
 
 
@@ -539,7 +540,7 @@ func _refresh_travel_note() -> void:
 		"year": int(meeting["year"]), "month": int(meeting["month"]),
 		"day": int(meeting["day"]), "travel_days": travel,
 	})
-	_travel_note.text = "Away %d %s – %d %s (%d days' travel each way)." % [
+	_travel_note.text = tr("Away %d %s – %d %s (%d days' travel each way).") % [
 		int(depart["day"]), ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3),
 		int(home["day"]), ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3),
 		travel,
@@ -576,7 +577,7 @@ func _on_book() -> void:
 		return
 	var result: Dictionary = Calendar.book(_state, entry)
 	if bool(result["ok"]):
-		_status.text = "Booked: %s, %02d %s %d." % [
+		_status.text = tr("Booked: %s, %02d %s %d.") % [
 			_booking_text(entry), int(entry["day"]),
 			ClockCluster.MONTH_NAMES[int(entry["month"]) - 1], int(entry["year"]),
 		]
@@ -586,12 +587,12 @@ func _on_book() -> void:
 		# The refusal reason, printed rather than swallowed. A booking that
 		# refuses silently is docs/trade-model.md's unread `refused_by_partner`,
 		# which this project has now shipped twice.
-		_status.text = "Refused: %s." % String(result["error"])
+		_status.text = tr("Refused: %s.") % String(result["error"])
 
 
 func _on_cancel(key: String) -> void:
 	if Calendar.cancel(_state, key):
-		_status.text = "Cancelled."
+		_status.text = tr("Cancelled.")
 		mark_dirty()
 		diary_changed.emit()
 
@@ -670,10 +671,7 @@ func _action_name(id: String) -> String:
 
 
 func _law_name(id: String) -> String:
-	for law in _loader.laws:
-		if String(law.id) == id:
-			return String(law.law_name)
-	return id
+	return Strings.law_name(_loader.laws.filter(func(l): return String(l.id) == id).front(), id)
 
 
 func _party_name(id: String) -> String:

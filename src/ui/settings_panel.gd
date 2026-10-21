@@ -26,6 +26,7 @@ signal closed
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const WindowMode = preload("res://src/ui/window_mode.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 const CONFIG_PATH := "user://settings.cfg"
@@ -78,6 +79,8 @@ const DEFAULT_AMBIENT := true
 ## instances writing one file.
 static var revision := 0
 
+var _language_button: OptionButton
+var _content: MarginContainer  ## the whole screen, so a language change can rebuild it
 var _fullscreen_button: OptionButton
 var _foreign_news_button: OptionButton
 ## The resolution row as last applied, so a change to it can be told from a change
@@ -97,12 +100,24 @@ const BAND_BUTTON_WIDTH := 96
 
 # --- persistence -------------------------------------------------------------
 
+## The language the file holds; English when there is none.
+static func saved_language() -> String:
+	var cfg := ConfigFile.new()
+	cfg.load(CONFIG_PATH)
+	return String(cfg.get_value("display", "language", Strings.DEFAULT))
+
+
 ## Applied by whichever scene comes up first, before anything is drawn. Static
 ## so it costs no instance: reading three values out of a config file does not
 ## need the panel that edits them to exist.
 static func apply_saved(window: Window) -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(CONFIG_PATH)  # absent file leaves it empty, which is the default set
+	# Before anything is built: tr() gives a Control the text of the language it
+	# was built in, so the language has to be known first. A code the game does
+	# not offer is English rather than a blank interface.
+	if not Strings.set_language(String(cfg.get_value("display", "language", Strings.DEFAULT))):
+		Strings.set_language(Strings.DEFAULT)
 	_apply(
 		window,
 		bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN)),
@@ -201,9 +216,11 @@ func _save_and_apply() -> void:
 	var sound_on := _sound_button.selected == 1
 	var motion_on := _motion_button.selected == 1
 	var ambient_on := _ambient_button.selected == 1
+	var language := String(Strings.languages()[_language_button.selected]["code"])
 
 	var cfg := ConfigFile.new()
 	cfg.load(CONFIG_PATH)
+	cfg.set_value("display", "language", language)
 	cfg.set_value("display", "fullscreen", fullscreen)
 	cfg.set_value("display", "resolution_index", resolution_index)
 	cfg.set_value("display", "ui_scale_index", scale_index)
@@ -219,14 +236,37 @@ func _save_and_apply() -> void:
 	_apply(get_window(), fullscreen, resolution_index, scale_index, resolution_index != _applied_resolution)
 	_applied_resolution = resolution_index
 	_resolution_button.disabled = fullscreen
+	if language != Strings.language() and Strings.set_language(language):
+		_rebuild()
 
 
 # --- construction ------------------------------------------------------------
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(480, 300)
+	_build()
+	# F11 (and any other writer of the file) can move the settings while this panel
+	# sits built and hidden; showing it reads them again, or the next row changed
+	# would write the stale ones back.
+	visibility_changed.connect(func():
+		if visible:
+			_load_into_controls()
+	)
 
+
+## A language change rebuilds the screen: tr() text is the language it was built in,
+## and this is the one screen the player is looking at while the language changes.
+## The old tree leaves at once (it is mid-signal, so it is freed, not deleted).
+func _rebuild() -> void:
+	remove_child(_content)
+	_content.queue_free()
+	_message_buttons = {}
+	_build()
+
+
+func _build() -> void:
 	var margin := MarginContainer.new()
+	_content = margin
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_%s" % side, 16)
 	add_child(margin)
@@ -235,7 +275,7 @@ func _ready() -> void:
 	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 
-	PanelKit.line(root, "SETTINGS", PanelKit.Tone.PLAIN)
+	PanelKit.line(root, tr("SETTINGS"), PanelKit.Tone.PLAIN)
 
 	var grid := GridContainer.new()
 	grid.columns = 2
@@ -243,13 +283,19 @@ func _ready() -> void:
 	grid.add_theme_constant_override("v_separation", 8)
 	root.add_child(grid)
 
-	_fullscreen_button = _add_row(grid, "Window (F11)", ["Windowed", "Fullscreen"])
-	_resolution_button = _add_row(grid, "Resolution", _resolution_labels())
-	_scale_button = _add_row(grid, "Interface scale", _scale_labels())
-	_sound_button = _add_row(grid, "Sound", ["Off", "On"])
-	_ambient_button = _add_row(grid, "Ambience", ["Off", "On"])
-	_motion_button = _add_row(grid, "Motion", ["Off", "On"])
-	_foreign_news_button = _add_row(grid, "News of other countries", ["Off", "On"])
+	var language_names: Array = []
+	for entry in Strings.languages():
+		language_names.append(String(entry["name"]))
+	_language_button = _add_row(grid, tr("Language"), language_names)
+	_fullscreen_button = _add_row(grid, tr("Window (F11)"), [tr("Windowed"), tr("Fullscreen")])
+	_resolution_button = _add_row(grid, tr("Resolution"), _resolution_labels())
+	_scale_button = _add_row(grid, tr("Interface scale"), _scale_labels())
+	_sound_button = _add_row(grid, tr("Sound"), [tr("Off"), tr("On")])
+	_ambient_button = _add_row(grid, tr("Ambience"), [tr("Off"), tr("On")])
+	_motion_button = _add_row(grid, tr("Motion"), [tr("Off"), tr("On")])
+	_foreign_news_button = _add_row(grid, tr("News of other countries"), [tr("Off"), tr("On")])
+
+	PanelKit.line(root, tr("The language applies in full to windows opened after the change; load a game again to apply it to every window."))
 
 	_build_messages(root)
 
@@ -262,7 +308,7 @@ func _ready() -> void:
 	root.add_child(footer)
 
 	var close := Button.new()
-	close.text = "Close"
+	close.text = tr("Close")
 	close.pressed.connect(func():
 		hide()
 		closed.emit()
@@ -270,13 +316,6 @@ func _ready() -> void:
 	footer.add_child(close)
 
 	_load_into_controls()
-	# F11 (and any other writer of the file) can move the settings while this panel
-	# sits built and hidden; showing it reads them again, or the next row changed
-	# would write the stale ones back.
-	visibility_changed.connect(func():
-		if visible:
-			_load_into_controls()
-	)
 
 
 func _add_row(grid: GridContainer, label_text: String, options: Array) -> OptionButton:
@@ -306,8 +345,8 @@ func _add_row(grid: GridContainer, label_text: String, options: Array) -> Option
 ## a table read across -- a category's four switches side by side -- and the
 ## two-column grid would stack them into thirty-six rows.
 func _build_messages(root: VBoxContainer) -> void:
-	PanelKit.line(root, "MESSAGES", PanelKit.Tone.PLAIN)
-	PanelKit.line(root, "For each kind of event, the least severe one each switch fires for. Pause off still stops the clock in a decision's last month.")
+	PanelKit.line(root, tr("MESSAGES"), PanelKit.Tone.PLAIN)
+	PanelKit.line(root, tr("For each kind of event, the least severe one each switch fires for. Pause off still stops the clock in a decision's last month."))
 
 	var grid := GridContainer.new()
 	grid.columns = 1 + MessageSettings.SWITCHES.size()
@@ -318,7 +357,7 @@ func _build_messages(root: VBoxContainer) -> void:
 	grid.add_child(Label.new())
 	for heading in MessageSettings.SWITCH_LABELS:
 		var label := Label.new()
-		label.text = String(heading)
+		label.text = tr(String(heading))
 		grid.add_child(label)
 
 	for category in EventsK.CATEGORIES:
@@ -330,7 +369,7 @@ func _build_messages(root: VBoxContainer) -> void:
 			var button := OptionButton.new()
 			button.custom_minimum_size.x = BAND_BUTTON_WIDTH
 			for band in MessageSettings.BAND_LABELS:
-				button.add_item(String(band))
+				button.add_item(tr(String(band)))
 			button.item_selected.connect(func(_index: int): _save_messages())
 			grid.add_child(button)
 			row[switch] = button
@@ -373,6 +412,10 @@ func _load_into_controls() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(CONFIG_PATH)
 	var fullscreen := bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN))
+	var codes: Array[String] = []
+	for entry in Strings.languages():
+		codes.append(String(entry["code"]))
+	_language_button.select(maxi(codes.find(Strings.language()), 0))
 	_fullscreen_button.select(1 if fullscreen else 0)
 	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)), 0, RESOLUTIONS.size() - 1))
 	_applied_resolution = _resolution_button.selected

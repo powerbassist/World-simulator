@@ -67,6 +67,7 @@ const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const PauseMenu = preload("res://src/ui/pause_menu.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Hud = preload("res://src/ui/hud.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const Pending = preload("res://src/ui/pending.gd")
@@ -304,7 +305,7 @@ func _ready() -> void:
 	# label setup() writes to is still null -- AGENTS.md's gotcha, and the same
 	# order dashboard.gd's add_tab() enforced by doing both itself.
 	_overview_panel = OverviewPanel.new()
-	_windows.register("overview", "Overview", _overview_panel, KEY_O, ICONS + "dashboard.svg")
+	_windows.register("overview", tr("Overview"), _overview_panel, KEY_O, ICONS + "dashboard.svg")
 	_overview_panel.setup(_state, _loader)
 
 	# V4.1. The government's programme: the one window where a programme is
@@ -312,12 +313,12 @@ func _ready() -> void:
 	# beside the Overview it frames -- the agenda is what the term is FOR,
 	# which is the sentence the Overview's other columns read against.
 	_agenda_panel = AgendaPanel.new()
-	_windows.register("agenda", "Agenda", _agenda_panel, KEY_K, ICONS + "event.svg")
+	_windows.register("agenda", tr("Agenda"), _agenda_panel, KEY_K, ICONS + "event.svg")
 	_agenda_panel.setup(_state, _loader)
 	_agenda_panel.programme_chosen.connect(_on_programme_chosen)
 
 	_economy_panel = EconomyPanel.new()
-	_windows.register("economy", "Economy", _economy_panel, KEY_E, ICONS + "monitoring.svg")
+	_windows.register("economy", tr("Economy"), _economy_panel, KEY_E, ICONS + "monitoring.svg")
 	_economy_panel.setup(_state, _loader)
 
 	# hide_close_button() still applies: these panels each build their own Close
@@ -325,7 +326,7 @@ func _ready() -> void:
 	# now provides the real one. Two close buttons on one panel is worse than
 	# either.
 	_budget_panel = BudgetPanel.new()
-	_windows.register("budget", "Budget", _budget_panel, KEY_B, ICONS + "account_balance_wallet.svg")
+	_windows.register("budget", tr("Budget"), _budget_panel, KEY_B, ICONS + "account_balance_wallet.svg")
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
 	_budget_panel.committed.connect(func(before, _pending):
@@ -340,7 +341,7 @@ func _ready() -> void:
 	# erosion curve and the books have one entry point however many windows
 	# move a rate.
 	_tax_panel = TaxPanel.new()
-	_windows.register("tax", "Tax Code", _tax_panel, KEY_X, ICONS + "receipt_long.svg")
+	_windows.register("tax", tr("Tax Code"), _tax_panel, KEY_X, ICONS + "receipt_long.svg")
 	_tax_panel.setup(_state, _loader)
 	_tax_panel.hide_close_button()
 	# V4.2 ultra pass 2: the budget panel's proposed column and 24-month
@@ -380,7 +381,7 @@ func _ready() -> void:
 	)
 
 	_government_panel = GovernmentPanel.new()
-	_windows.register("politics", "Politics", _government_panel, KEY_G, ICONS + "groups.svg")
+	_windows.register("politics", tr("Politics"), _government_panel, KEY_G, ICONS + "groups.svg")
 	_government_panel.setup(_state, _loader)
 	_government_panel.hide_close_button()
 	_government_panel.dissolved.connect(func(before):
@@ -391,7 +392,7 @@ func _ready() -> void:
 	)
 
 	_polling_panel = PollingPanel.new()
-	_windows.register("society", "Society", _polling_panel, KEY_P, ICONS + "forum.svg")
+	_windows.register("society", tr("Society"), _polling_panel, KEY_P, ICONS + "forum.svg")
 	# Loader from the start: the countdown names the chamber off the loader's
 	# own titles, and a boot without it printed the generic "assembly" until
 	# the first load put the two out of agreement.
@@ -399,7 +400,7 @@ func _ready() -> void:
 	_polling_panel.hide_close_button()
 
 	_law_panel = LawPanel.new()
-	_windows.register("legislature", "Legislature", _law_panel, KEY_L, ICONS + "gavel.svg")
+	_windows.register("legislature", tr("Legislature"), _law_panel, KEY_L, ICONS + "gavel.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
 	# V4.2 T5. Propose opens the briefing; the division comes back through
@@ -435,7 +436,7 @@ func _ready() -> void:
 	# _on_nation_clicked(), and reachable from the World cluster as well so the
 	# diplomatic verbs are not hidden behind knowing to click the map.
 	_nation_panel = NationPanel.new()
-	_windows.register("diplomacy", "Diplomacy", _nation_panel, KEY_D, ICONS + "handshake.svg")
+	_windows.register("diplomacy", tr("Diplomacy"), _nation_panel, KEY_D, ICONS + "handshake.svg")
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide_close_button()
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
@@ -467,7 +468,7 @@ func _ready() -> void:
 	# a section of the nation panel: the council is not a nation and has no pixel
 	# on the map to click, so there is nothing to select it by.
 	_orgs_panel = OrgsPanel.new()
-	_windows.register("orgs", "Organisations", _orgs_panel, KEY_U, ICONS + "corporate_fare.svg")
+	_windows.register("orgs", tr("Organisations"), _orgs_panel, KEY_U, ICONS + "corporate_fare.svg")
 	_orgs_panel.setup(_state, _loader)
 	_orgs_panel.hide_close_button()
 	# V1.6 audit, V8. A council vote binds the player whichever way it goes, so it
@@ -486,7 +487,7 @@ func _ready() -> void:
 	# MVP and never showed anywhere -- an election date, the council's next
 	# proposal, every cooldown expiry -- and the only place a booking is made.
 	_calendar_panel = CalendarPanel.new()
-	_windows.register("calendar", "Diary", _calendar_panel, KEY_C, ICONS + "calendar_month.svg")
+	_windows.register("calendar", tr("Diary"), _calendar_panel, KEY_C, ICONS + "calendar_month.svg")
 	_calendar_panel.setup(_state, _loader)
 	_calendar_panel.hide_close_button()
 	# A booking commits nothing this month, so unlike `acted` and `proposed` there
@@ -501,7 +502,7 @@ func _ready() -> void:
 	# U6b. Read-only, and the only surface that shows the whole register rather
 	# than the one person a given screen happens to be about.
 	_people_panel = PeoplePanel.new()
-	_windows.register("people", "People", _people_panel, KEY_R, ICONS + "person.svg")
+	_windows.register("people", tr("People"), _people_panel, KEY_R, ICONS + "person.svg")
 	_people_panel.setup(_state, _loader)
 	_people_panel.hide_close_button()
 
@@ -510,7 +511,7 @@ func _ready() -> void:
 	# than a HUD plate (moving a plate moves the frames the 826 px band is
 	# measured against); a row opens the window that answers it.
 	_outliner_panel = OutlinerPanel.new()
-	_windows.register("outliner", "Outliner", _outliner_panel, KEY_Q, ICONS + "checklist.svg")
+	_windows.register("outliner", tr("Outliner"), _outliner_panel, KEY_Q, ICONS + "checklist.svg")
 	_outliner_panel.setup(_state, _loader)
 	_outliner_panel.hide_close_button()
 	_outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
@@ -524,7 +525,7 @@ func _ready() -> void:
 	# sector programmes beside the firm register, so "Companies" had stopped being
 	# what the surface is about. The id stays "companies" because it is what
 	# _build_action_bar() and tools/screenshot.gd --open both address.
-	_windows.register("companies", "Industry", _companies_panel, KEY_I, ICONS + "factory.svg")
+	_windows.register("companies", tr("Industry"), _companies_panel, KEY_I, ICONS + "factory.svg")
 	_companies_panel.setup(_state, _loader)
 	_companies_panel.hide_close_button()
 	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
@@ -541,7 +542,7 @@ func _ready() -> void:
 	# window is one call plus one line in _build_action_bar(), which is what U5a's
 	# shell was for.
 	_projects_panel = ProjectsPanel.new()
-	_windows.register("projects", "Public Works", _projects_panel, KEY_W, ICONS + "construction.svg")
+	_windows.register("projects", tr("Public Works"), _projects_panel, KEY_W, ICONS + "construction.svg")
 	_projects_panel.setup(_state, _loader)
 	_projects_panel.hide_close_button()
 	_projects_panel.acted.connect(func(before, label):
@@ -556,7 +557,7 @@ func _ready() -> void:
 	# a region until §5 -- so no acted signal, people_panel's shape rather than
 	# projects_panel's.
 	_region_panel = RegionPanel.new()
-	_windows.register("region", "Regions", _region_panel, KEY_T, ICONS + "map.svg")
+	_windows.register("region", tr("Regions"), _region_panel, KEY_T, ICONS + "map.svg")
 	_region_panel.setup(_state, _loader)
 	_region_panel.hide_close_button()
 
@@ -576,7 +577,7 @@ func _ready() -> void:
 	# is the whole criterion -- the drawer's tooltip and the key press both read
 	# it off this one call.
 	_commodities_panel = CommoditiesPanel.new()
-	_windows.register("commodities", "Commodities", _commodities_panel, KEY_H, ICONS + "inventory_2.svg")
+	_windows.register("commodities", tr("Commodities"), _commodities_panel, KEY_H, ICONS + "inventory_2.svg")
 	_commodities_panel.setup(_state, _loader)
 	_commodities_panel.hide_close_button()
 
@@ -584,7 +585,7 @@ func _ready() -> void:
 	# SECOND way in: the map's cross is the route, and this entry is for the
 	# player who does not know that -- §16's own wording.
 	_city_panel = CityPanel.new()
-	_windows.register("city", "Cities", _city_panel, KEY_V, ICONS + "location_city.svg")
+	_windows.register("city", tr("Cities"), _city_panel, KEY_V, ICONS + "location_city.svg")
 	_city_panel.setup(_state, _loader)
 	_city_panel.hide_close_button()
 
@@ -593,7 +594,7 @@ func _ready() -> void:
 	# seventh hand-written list of panel ids to get here, and the drawer's tooltip
 	# reads the letter off the registry rather than restating it.
 	_energy_panel = EnergyPanel.new()
-	_windows.register("energy", "Energy", _energy_panel, KEY_F, ICONS + "bolt.svg")
+	_windows.register("energy", tr("Energy"), _energy_panel, KEY_F, ICONS + "bolt.svg")
 	_energy_panel.setup(_state, _loader)
 	_energy_panel.hide_close_button()
 	_energy_panel.acted.connect(func(before, label):
@@ -616,7 +617,7 @@ func _ready() -> void:
 	# poll -- docs/society-model.md section 11's argument for moving the delivery readout
 	# off it, one block later.
 	_campaign_panel = CampaignPanel.new()
-	_windows.register("campaign", "Campaign", _campaign_panel, KEY_A, ICONS + "campaign.svg")
+	_windows.register("campaign", tr("Campaign"), _campaign_panel, KEY_A, ICONS + "campaign.svg")
 	_campaign_panel.setup(_state, _loader)
 	_campaign_panel.hide_close_button()
 	_campaign_panel.acted.connect(func(before, label):
@@ -630,7 +631,7 @@ func _ready() -> void:
 	# window rather than a modal is in the panel's own header: a crisis the player can
 	# ignore and pay for is the whole of the deadline.
 	_events_panel = EventsPanel.new()
-	_windows.register("events", "Dispatches", _events_panel, KEY_N, ICONS + "mail.svg")
+	_windows.register("events", tr("Dispatches"), _events_panel, KEY_N, ICONS + "mail.svg")
 	_events_panel.setup(_state, _loader)
 	_events_panel.set_messages(_messages)
 	_events_panel.hide_close_button()
@@ -666,7 +667,7 @@ func _ready() -> void:
 	# baseline is taken before the panel ever opens, because a choice made over
 	# dinner is a command with a delta like any other.
 	_summit_panel = SummitPanel.new()
-	_windows.register("summit", "Summit", _summit_panel, KEY_NONE, ICONS + "account_balance.svg")
+	_windows.register("summit", tr("Summit"), _summit_panel, KEY_NONE, ICONS + "account_balance.svg")
 	_summit_panel.setup(_state, _loader)
 	# No hide_close_button(): the frame's X is a live exit -- a summit walked
 	# out on applies nothing, which is the ephemeris working, not a bug.
@@ -782,7 +783,7 @@ func _ready() -> void:
 	# Trends query the top bar and the Overview count by. It sits AFTER the load
 	# branch and inside the new-game case, so a loaded save never receives it.
 	if pending_load_slot.is_empty():
-		_term_card_id = _hud.message_stack.push("Your term", _term_card_body())
+		_term_card_id = _hud.message_stack.push(tr("Your term"), _term_card_body())
 
 	# V4.1, after the opening card so the two land together: a new game IS an
 	# unchosen term start, so the clock sits still behind the programme choice
@@ -811,63 +812,63 @@ func _ready() -> void:
 ## itself never sees a panel, so adding V1.3c's tariffs or U6's calendar is one
 ## register() and one line in this list.
 func _build_action_bar() -> void:
-	_hud.action_bar.add_cluster("state", "State", ICONS + "account_balance.svg", [
-		_entry("overview", "Overview"),
+	_hud.action_bar.add_cluster("state", tr("State"), ICONS + "account_balance.svg", [
+		_entry("overview", tr("Overview")),
 		# V4.1. The term's programme, right after the Overview it frames -- a
 		# president deals with what the term is for before the machinery.
-		_entry("agenda", "Agenda"),
-		_entry("politics", "Politics"),
-		_entry("legislature", "Legislature"),
+		_entry("agenda", tr("Agenda")),
+		_entry("politics", tr("Politics")),
+		_entry("legislature", tr("Legislature")),
 		# A president's diary is state. One line, exactly as the comment above
 		# this function predicted three sessions ago.
-		_entry("calendar", "Diary"),
+		_entry("calendar", tr("Diary")),
 		# A president's people are state too, by the same argument the diary took.
-		_entry("people", "People"),
+		_entry("people", tr("People")),
 		# V4.8b. The pinned things -- one line, the streak this function's comment
 		# keeps predicting.
-		_entry("outliner", "Outliner"),
+		_entry("outliner", tr("Outliner")),
 		# V1.7a. One line, exactly as this function's own comment has now correctly
 		# predicted for six sessions running.
-		_entry("campaign", "Campaign"),
+		_entry("campaign", tr("Campaign")),
 		# V1.8, and the seventh session running. What arrives on a president's desk
 		# without being asked for is state, by the same argument the diary and the
 		# people took.
-		_entry("events", "Dispatches"),
+		_entry("events", tr("Dispatches")),
 	])
-	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "payments.svg", [
-		_entry("economy", "Economy"),
-		_entry("budget", "Budget"),
+	_hud.action_bar.add_cluster("economy", tr("Economy"), ICONS + "payments.svg", [
+		_entry("economy", tr("Economy")),
+		_entry("budget", tr("Budget")),
 		# V4.2 T5. Beside Budget, its own window rather than rows on it: the
 		# tier moved tax out of the Budget panel, and the cluster grammar puts
 		# the surface where its decision lives.
-		_entry("tax", "Tax Code"),
+		_entry("tax", tr("Tax Code")),
 		# V1.4a. One line, exactly as this function's own comment has now correctly
 		# predicted for four sessions running.
-		_entry("companies", "Companies"),
+		_entry("companies", tr("Companies")),
 		# V1.6f. One line, exactly as this function's own comment has now correctly
 		# predicted for five sessions running.
-		_entry("projects", "Public Works"),
+		_entry("projects", tr("Public Works")),
 		# V2.2b, and two lines where the streak said one: the register's two
 		# surfaces land together because they are one partition seen from two
 		# heights, and Economy is their home because §5 is about to make the
 		# economy regional.
-		_entry("region", "Regions"),
-		_entry("city", "Cities"),
+		_entry("region", tr("Regions")),
+		_entry("city", tr("Cities")),
 		# V4.6 Task 4, and the fourth line this function's streak has predicted.
 		# The tier's own grammar puts it here: what the country makes and buys in
 		# is the same domain of decision as the two registers beside it.
-		_entry("commodities", "Commodities"),
+		_entry("commodities", tr("Commodities")),
 		# V2.8, and the grammar is V2.1c's: a cluster is the domain of the decision
 		# rather than the shape of the object, and AGENTS.md already carries the
 		# ruling -- region, city and energy are Economy.
-		_entry("energy", "Energy"),
+		_entry("energy", tr("Energy")),
 	])
-	_hud.action_bar.add_cluster("society", "Society", ICONS + "diversity_3.svg", [
-		_entry("society", "Polling"),
+	_hud.action_bar.add_cluster("society", tr("Society"), ICONS + "diversity_3.svg", [
+		_entry("society", tr("Polling")),
 	])
-	_hud.action_bar.add_cluster("world", "World", ICONS + "public.svg", [
-		_entry("diplomacy", "Diplomacy"),
-		_entry("orgs", "Organisations"),
+	_hud.action_bar.add_cluster("world", tr("World"), ICONS + "public.svg", [
+		_entry("diplomacy", tr("Diplomacy")),
+		_entry("orgs", tr("Organisations")),
 	])
 	_hud.action_bar.panel_requested.connect(func(id: String): _windows.open(id))
 
@@ -1193,7 +1194,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## in the game used to answer with one corner number changing (F3).
 func _fiscal_committed(label: String, title: String, before: Dictionary) -> void:
 	_queue_effect(label, before)
-	_hud.message_stack.push(title, "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
+	_hud.message_stack.push(title, tr("Deficit now %.2f%% of GDP.") % float(_state.player().deficit_pct_gdp))
 	_update_top_bar()
 
 
@@ -1257,7 +1258,7 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 		# console error. The order is already consumed by here (the arm was cleared
 		# above and map_view ended placement), so with nothing on screen the player
 		# had to re-arm without being told why.
-		_hud.message_stack.push("Not your ground", "That point is not in %s." % ns.nation_name)
+		_hud.message_stack.push(tr("Not your ground"), tr("That point is not in %s.") % ns.nation_name)
 		return
 
 	var access: Dictionary = Regions.accessibility_for(ns, _state.regions.get(ns.id, []), _state.region_graph)
@@ -1562,7 +1563,7 @@ func _announce_industry_events() -> void:
 				_hud.message_stack.set_body(String(_failure_cards[company_id]), failure_body)
 			continue
 		_announced_failures[company_id] = true
-		var card_id: String = _hud.message_stack.push("Firm in difficulty", failure_body)
+		var card_id: String = _hud.message_stack.push(tr("Firm in difficulty"), failure_body)
 		_failure_cards[company_id] = card_id
 		_industry_card_firms[card_id] = company_id
 
@@ -1613,7 +1614,7 @@ func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
 	if not assembly_release.is_empty() \
 			and int(assembly_release.get("assembly_division_month", -1)) != _assembly_release_month:
 		_assembly_release_month = int(assembly_release.get("assembly_division_month", -1))
-		_hud.message_stack.push("The assembly divides", _assembly_result_body(assembly_release))
+		_hud.message_stack.push(tr("The assembly divides"), _assembly_result_body(assembly_release))
 	# The division card. The assembly_bill marker on ns.last_law_result says
 	# the last division was the assembly's; the memory keys the DIVISION'S OWN
 	# MONTH -- the assembly_division_month stamp the machine writes into the
@@ -1630,7 +1631,7 @@ func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
 			and not bool(result.get("released", false)) \
 			and int(result.get("assembly_division_month", -1)) != _assembly_result_month:
 		_assembly_result_month = int(result.get("assembly_division_month", -1))
-		_hud.message_stack.push("The assembly divides", _assembly_result_body(result))
+		_hud.message_stack.push(tr("The assembly divides"), _assembly_result_body(result))
 
 func _assembly_bill_body(entry: Dictionary) -> String:
 	var law_name := _law_title(String(entry.get("law_id", "")))
@@ -1682,8 +1683,7 @@ func _assembly_result_body(result: Dictionary) -> String:
 		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
 
 func _law_title(law_id: String) -> String:
-	var law = _law_by_id(law_id)
-	return String(law.law_name) if law != null else law_id
+	return Strings.law_name(_law_by_id(law_id), law_id)
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
 ## deployment is a command the player just issued and does not need a card telling
@@ -2254,7 +2254,7 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 				if law != null:
 					var result := Legislature.propose(_state, _loader, law)
 					ok = bool(result.get("passed", false))
-					label = String(law.law_name)
+					label = Strings.law_name(law)
 			CalendarK.KIND_RESHUFFLE:
 				var portfolio := String(entry.get("portfolio", ""))
 				var party_id := String(entry.get("party_id", ""))
@@ -2658,7 +2658,7 @@ func _on_programme_chosen(entry_id: String) -> void:
 	var before := Budget.snapshot(_state)
 	var result: Dictionary = Programme.choose(_state, ns, entry_id, _loader)
 	if bool(result.get("refused", false)):
-		_hud.message_stack.push("Programme refused", _programme_refusal_text(String(result.get("reason", ""))))
+		_hud.message_stack.push(tr("Programme refused"), _programme_refusal_text(String(result.get("reason", ""))))
 		return
 
 	# Entry open, as a card -- the register now holds the term's programme,
@@ -2708,13 +2708,13 @@ func _card_programme_conclusions() -> void:
 		var name_text := String(terms.get("name", String(entry["entry_id"])))
 		match String(entry["status"]):
 			ProgrammeK.STATUS_COMPLETE:
-				_hud.message_stack.push("Delivered: %s" % name_text,
+				_hud.message_stack.push(tr("Delivered: %s") % name_text,
 					"The goal is met, and the register marks it complete.")
 			ProgrammeK.STATUS_FAIL:
-				_hud.message_stack.push("Missed: %s" % name_text,
+				_hud.message_stack.push(tr("Missed: %s") % name_text,
 					"The goal was not met in time, and the register marks the miss.")
 			_:
-				_hud.message_stack.push("Overtaken: %s" % name_text,
+				_hud.message_stack.push(tr("Overtaken: %s") % name_text,
 					"The world moved on and the entry no longer applies. It concludes without a verdict.")
 
 

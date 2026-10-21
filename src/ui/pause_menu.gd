@@ -31,15 +31,15 @@ func _ready() -> void:
 	margin.add_child(column)
 
 	var title := Label.new()
-	title.text = "PAUSED"
+	title.text = tr("PAUSED")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
 
-	_add_entry(column, "Resume", func(): resumed.emit())
-	_add_entry(column, "Save / Load", func(): save_load_requested.emit())
-	_add_entry(column, "Settings", func(): settings_requested.emit())
-	_add_entry(column, "Main Menu", func(): main_menu_requested.emit())
-	_add_entry(column, "Quit", func(): get_tree().quit())
+	_add_entry(column, tr("Resume"), func(): resumed.emit())
+	_add_entry(column, tr("Save / Load"), func(): save_load_requested.emit())
+	_add_entry(column, tr("Settings"), func(): settings_requested.emit())
+	_add_entry(column, tr("Main Menu"), func(): main_menu_requested.emit())
+	_add_entry(column, tr("Quit"), func(): get_tree().quit())
 
 
 func _add_entry(column: VBoxContainer, text: String, action: Callable) -> void:

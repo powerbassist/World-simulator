@@ -90,12 +90,12 @@ func _build_footer() -> Control:
 	var row := HBoxContainer.new()
 
 	var caveat := Label.new()
-	caveat.text = "Polls carry a margin of error of about %.0f points." % PollNoise.NOISE_MAX_PCT
+	caveat.text = tr("Polls carry a margin of error of about %.0f points.") % PollNoise.NOISE_MAX_PCT
 	caveat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(caveat)
 
 	var close := Button.new()
-	close.text = "Close (P)"
+	close.text = tr("Close (P)")
 	close.pressed.connect(func(): hide(); closed.emit())
 	row.add_child(close)
 	_close_button = close
@@ -120,7 +120,7 @@ func setup(state, loader = null) -> void:
 	_chamber = "assembly"
 	if loader != null and loader.nations.has(state.player().id):
 		_chamber = String(loader.nations[state.player().id].chamber_name)
-	_title.text = "POLLING — %s" % _state.player().id
+	_title.text = tr("POLLING — %s") % _state.player().id
 	_dirty = true
 
 
@@ -156,8 +156,8 @@ func _refresh() -> void:
 		_shown = current
 		_shown_poll_id = id
 
-	_headline.text = "Approval  %.0f%%" % current[HEADLINE_KEY]
-	_election_countdown.text = "Next %s election: %s" % [_chamber, _months_until_text(ns)]
+	_headline.text = tr("Approval  %.0f%%") % current[HEADLINE_KEY]
+	_election_countdown.text = tr("Next %s election: %s") % [_chamber, _months_until_text(ns)]
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -170,12 +170,12 @@ func _refresh() -> void:
 			"%.0f%%" % current[bloc],
 			_change_text(bloc, current[bloc]),
 		])
-	PanelKit.ledger(PanelKit.section(_body, "Approval by bloc"), bloc_rows)
+	PanelKit.ledger(PanelKit.section(_body, tr("Approval by bloc")), bloc_rows)
 
 	var issue_rows: Array = []
 	for entry in Opinion.top_issues(ns, TOP_ISSUE_COUNT):
 		issue_rows.append([K.ISSUE_LABEL[entry[0]], "%.0f%%" % (float(entry[1]) * 100.0)])
-	PanelKit.ledger(PanelKit.section(_body, "What the country is thinking about"), issue_rows)
+	PanelKit.ledger(PanelKit.section(_body, tr("What the country is thinking about")), issue_rows)
 
 
 func _change_text(key: String, value: float) -> String:

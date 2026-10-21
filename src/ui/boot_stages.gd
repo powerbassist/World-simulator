@@ -49,11 +49,11 @@ const GAME_SCENE := "res://src/ui/main.tscn"
 ##              ground's decode + mipmaps + upload in map_view.setup() (~285 ms
 ##              timed alone); the other four stages held inside their spread.
 const STAGES := [
-	{"id": "scene", "label": "Compiling the game", "ms": 1300},
-	{"id": "data", "label": "Reading the record", "ms": 360},
-	{"id": "world", "label": "Founding the world", "ms": 70},
-	{"id": "network", "label": "Measuring the distances", "ms": 5000},
-	{"id": "enter", "label": "Opening the desk", "ms": 1080},
+	{"id": "scene", "label": "Compiling the game", "ms": 1300},  # i18n: msgid label
+	{"id": "data", "label": "Reading the record", "ms": 360},  # i18n: msgid label
+	{"id": "world", "label": "Founding the world", "ms": 70},  # i18n: msgid label
+	{"id": "network", "label": "Measuring the distances", "ms": 5000},  # i18n: msgid label
+	{"id": "enter", "label": "Opening the desk", "ms": 1080},  # i18n: msgid label
 ]
 
 var nation_id := ""

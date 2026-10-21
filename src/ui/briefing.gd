@@ -36,6 +36,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const StatuteK = preload("res://src/sim/statute_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## Emitted for the division, and ONLY for the division: main.gd hides the
 ## briefing and calls law_panel.run_proposal(law), whose `proposed` signal
@@ -133,7 +134,7 @@ func _rebuild() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
-	PanelKit.line(_body, "BILL BRIEFING — %s" % _bill_name(), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("BILL BRIEFING — %s") % _bill_name(), PanelKit.Tone.PLAIN)
 
 	# The attribution sentence IS the channel walk -- joined lines, not a
 	# second description of the same effects. A bill that names no channel
@@ -151,7 +152,7 @@ func _rebuild() -> void:
 
 	if not _draft.is_empty():
 		var months := int(_draft.get("months_left", 0))
-		PanelKit.line(_body, "In drafting: %d %s before it reaches the order paper." % [
+		PanelKit.line(_body, tr("In drafting: %d %s before it reaches the order paper.") % [
 			months, "month" if months == 1 else "months"], PanelKit.Tone.PLAIN)
 
 	_build_polls()
@@ -164,19 +165,19 @@ func _rebuild() -> void:
 	# The division is a law's verb; a draft composes when its countdown ends.
 	if _law != null:
 		var propose_btn := Button.new()
-		propose_btn.text = "Propose the bill"
+		propose_btn.text = tr("Propose the bill")
 		propose_btn.pressed.connect(func(): propose_requested.emit(_law))
 		buttons.add_child(propose_btn)
 
 	var close_btn := Button.new()
-	close_btn.text = "Close"
+	close_btn.text = tr("Close")
 	close_btn.pressed.connect(func(): hide())
 	buttons.add_child(close_btn)
 
 
 func _bill_name() -> String:
 	if _law != null:
-		return String(_law.law_name)
+		return String(Strings.law_name(_law))
 	return String(_draft.get("name", _bill_key))
 
 
@@ -193,7 +194,7 @@ func _repeal_line() -> String:
 		return ""
 	for law in _loader.laws:
 		if String(law.id) == target:
-			return "Repeals: %s." % String(law.law_name)
+			return "Repeals: %s." % String(Strings.law_name(law))
 	var custom: Dictionary = _ns.custom_laws.get(target, {})
 	if not custom.is_empty():
 		return "Repeals: %s." % String(custom.get("name", target))
@@ -207,10 +208,10 @@ func _repeal_line() -> String:
 ## figure shown here is the landed one and a quote that exceeded the bound is
 ## a note beside it, never the number itself.
 func _build_price() -> void:
-	var section := PanelKit.section(_body, "The price")
+	var section := PanelKit.section(_body, tr("The price"))
 	var price: Dictionary = _law.effects.get("bloc_offset", {}) if _law != null else _draft.get("price", {})
 	if price.is_empty():
-		PanelKit.line(section, "The book prices this bill at no bloc directly.", PanelKit.Tone.DIM)
+		PanelKit.line(section, tr("The book prices this bill at no bloc directly."), PanelKit.Tone.DIM)
 		return
 
 	var offended: Array = []
@@ -225,9 +226,9 @@ func _build_price() -> void:
 		if landed < 0.0:
 			offended.append(bloc.capitalize())
 	if offended.is_empty():
-		PanelKit.line(section, "It offends no bloc outright.", PanelKit.Tone.DIM)
+		PanelKit.line(section, tr("It offends no bloc outright."), PanelKit.Tone.DIM)
 	else:
-		PanelKit.line(section, "It offends: %s." % ", ".join(offended), PanelKit.Tone.PLAIN)
+		PanelKit.line(section, tr("It offends: %s.") % ", ".join(offended), PanelKit.Tone.PLAIN)
 
 	# The reversal preview is the record of what the player was SHOWN at draft
 	# time -- the passage subtracts the target's LIVE ledger, so these lines
@@ -238,7 +239,7 @@ func _build_price() -> void:
 	if not _draft.is_empty():
 		var negated: Dictionary = _draft.get("negated", {})
 		if not negated.is_empty():
-			PanelKit.heading(section, "It reverses")
+			PanelKit.heading(section, tr("It reverses"))
 			for line in effect_lines(negated, _ns, true):
 				PanelKit.line(section, line, PanelKit.Tone.DIM)
 
@@ -246,7 +247,7 @@ func _build_price() -> void:
 ## -- The polls ---------------------------------------------------------------
 
 func _build_polls() -> void:
-	var section := PanelKit.section(_body, "The polls")
+	var section := PanelKit.section(_body, tr("The polls"))
 
 	# The assembly read. For a law, the same walk the legislature window
 	# prints -- LawPanel's static, so the two windows cannot disagree about a
@@ -254,10 +255,10 @@ func _build_polls() -> void:
 	# division to forecast until it reaches the order paper.
 	if _law != null:
 		var band := LawPanel.forecast_band(_ns, _bill_key)
-		PanelKit.line(section, "The Assembly: %s" % LawPanel.forecast_text(
+		PanelKit.line(section, tr("The Assembly: %s") % LawPanel.forecast_text(
 			_ns, _party_list, _law, band), PanelKit.Tone.PLAIN)
 	else:
-		PanelKit.line(section, "Drafting first; when it completes, the bill waits on your Propose in the Legislature.", PanelKit.Tone.DIM)
+		PanelKit.line(section, tr("Drafting first; when it completes, the bill waits on your Propose in the Legislature."), PanelKit.Tone.DIM)
 
 	# The country's read, bloc by bloc, at the margin the player has paid
 	# for: the ordinary poll noise, or the commissioned +-1.0 where the
@@ -283,7 +284,7 @@ func _build_polls() -> void:
 		rows.append([String(bloc).capitalize(), "%.1f" % shown])
 	PanelKit.ledger(section, rows)
 	if precise:
-		PanelKit.line(section, "Commissioned poll — margin of error about %.0f point." % PollNoise.PRECISE_MAX_PCT, PanelKit.Tone.DIM)
+		PanelKit.line(section, tr("Commissioned poll — margin of error about %.0f point.") % PollNoise.PRECISE_MAX_PCT, PanelKit.Tone.DIM)
 
 	# Stacked, not side by side: the two commission buttons are long sentences, and
 	# in Archivo two of them in one row measured 716 px inside a 646 px view -- every
@@ -293,17 +294,20 @@ func _build_polls() -> void:
 	section.add_child(row)
 	for kind in [StatuteK.POLL_KIND_ASSEMBLY, StatuteK.POLL_KIND_POPULAR]:
 		var btn := Button.new()
+		# A translated sentence on one line is the widest thing in the briefing: it wraps
+		# (two lines in a longer language) rather than push the figures out of the view.
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var cost_pct: float = float(StatuteK.POLL_COSTS[kind])
 		var cost_bn: float = float(_ns.gdp_eur_bn) * cost_pct / 100.0
 		# The article is the kind's own initial vowel: "an assembly", "a popular".
-		btn.text = "Commission %s %s poll — %.2f%% of GDP (€%.1f bn)" % [
+		btn.text = tr("Commission %s %s poll — %.2f%% of GDP (€%.1f bn)") % [
 			"an" if kind.begins_with("a") else "a", kind, cost_pct, cost_bn]
 		if bought.has(kind):
 			# The fixed-forecast rule, made visible: a bought poll is a
 			# published figure, and the second commission is refused by the
 			# sim even if a stale frame offers the button.
 			btn.disabled = true
-			btn.tooltip_text = "Commissioned — the figures it bought are fixed."
+			btn.tooltip_text = tr("Commissioned — the figures it bought are fixed.")
 		else:
 			btn.pressed.connect(_on_poll.bind(kind))
 		row.add_child(btn)
@@ -331,7 +335,7 @@ func _on_poll(kind: String) -> void:
 	if bool(result.get("refused", false)):
 		var refusal: Label = _body.find_child("RefusalLine", true, false)
 		if refusal != null:
-			refusal.text = String(result.get("refusal", "Refused."))
+			refusal.text = String(result.get("refusal", tr("Refused.")))
 			refusal.show()
 		return
 	polled.emit(before, "Commissioned %s poll: %s" % [kind, _bill_name()])

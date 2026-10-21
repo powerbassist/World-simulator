@@ -141,7 +141,7 @@ func _ready() -> void:
 	gutter.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -185,7 +185,7 @@ func _refresh() -> void:
 		return
 	_primary = null
 
-	_title.text = "Campaign"
+	_title.text = tr("Campaign")
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -211,15 +211,15 @@ func _refresh() -> void:
 ## lever is a decision about TIMING: start early and buy more at more, start late and
 ## buy less at less.
 func _build_clock(ns) -> void:
-	PanelKit.heading(_body, "The vote")
+	PanelKit.heading(_body, tr("The vote"))
 	var months := Campaign.months_to_election(_state, ns)
 	if months < 0:
-		PanelKit.line(_body, "No vote is scheduled.")
+		PanelKit.line(_body, tr("No vote is scheduled."))
 		return
 
-	PanelKit.row(_body, "Months to the vote", "%d" % months)
+	PanelKit.row(_body, tr("Months to the vote"), "%d" % months)
 	if Campaign.is_open(_state, ns):
-		PanelKit.row(_body, "Campaign bill", "%.3f %% of GDP" % ns.campaign_bill_pct_gdp)
+		PanelKit.row(_body, tr("Campaign bill"), tr("%.3f %% of GDP") % ns.campaign_bill_pct_gdp)
 		PanelKit.line(_body, 
 			"The run-up is open. Every effort in the field reaches more voters each"
 			+ " month it runs and costs its price each month it runs, and all of it"
@@ -241,7 +241,7 @@ func _build_clock(ns) -> void:
 ## students at 0.45 have very different room, and that asymmetry is the model rather
 ## than a table -- see Campaign.turnout_of().
 func _build_turnout(ns) -> void:
-	PanelKit.heading(_body, "Expected turnout")
+	PanelKit.heading(_body, tr("Expected turnout"))
 	var moved := false
 	for bloc in OpinionK.BLOC_KEYS:
 		var base: float = float(ElectionK.BLOC_TURNOUT[bloc])
@@ -254,14 +254,14 @@ func _build_turnout(ns) -> void:
 			"%.1f %%   %s" % [now * 100.0, "—" if is_zero_approx(delta) else "%+.1f" % (delta * 100.0)],
 		)
 	if not moved:
-		PanelKit.line(_body, "Nobody has been mobilised. These are the figures an ordinary election gets.")
+		PanelKit.line(_body, tr("Nobody has been mobilised. These are the figures an ordinary election gets."))
 
 
 func _build_running(ns) -> void:
 	var live := Campaign.running(ns)
 	if live.is_empty():
 		return
-	PanelKit.heading(_body, "In the field")
+	PanelKit.heading(_body, tr("In the field"))
 	for eid in live:
 		_build_live(ns, String(eid))
 
@@ -273,7 +273,7 @@ func _build_live(ns, effort_id: String) -> void:
 
 	PanelKit.line(block, Campaign.name_of(_loader, effort_id), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, "%.3f %% of GDP a year · %s" % [
+	PanelKit.line(block, tr("%.3f %% of GDP a year · %s") % [
 		float(terms.get("cost_pct_gdp", 0.0)), _reach_text(terms),
 	], PanelKit.Tone.GOOD)
 
@@ -296,7 +296,7 @@ func _build_live(ns, effort_id: String) -> void:
 ## a region is picked. No default -- a defaulted site would silently ship the capital's
 ## dominance as the model's answer rather than the player's choice.
 func _build_site(ns) -> void:
-	PanelKit.heading(_body, "Meetings in")
+	PanelKit.heading(_body, tr("Meetings in"))
 	var picker := OptionButton.new()
 	var region_ids: Array = []
 	for region in _loader.regions.get(ns.id, []):
@@ -313,7 +313,7 @@ func _build_site(ns) -> void:
 			" days, and a region already spoken to gives less the second time.")
 		return
 	var days := Campaign.travel_days_to(ns, _loader, _site_region)
-	PanelKit.line(_body, "%d day%s' travel · reach ×%.2f a month · %d%% spoken to" % [
+	PanelKit.line(_body, tr("%d day%s' travel · reach ×%.2f a month · %d%% spoken to") % [
 		days, "" if days == 1 else "s",
 		Campaign.factor_of(ns, _loader, _site_region),
 		roundi(Campaign.spoken(ns, _site_region) * 100.0),
@@ -353,7 +353,7 @@ func _region_name(ns, region_id: String) -> String:
 ## out needs to know what it will cost, and a panel that showed a blank list until June
 ## would be the decorative axis docs/scenario-model.md records.
 func _build_available(ns) -> void:
-	PanelKit.heading(_body, "Efforts")
+	PanelKit.heading(_body, tr("Efforts"))
 	var live: Array = Campaign.running(ns)
 	var offered := Campaign.available(_state, ns, _loader.campaign_actions)
 
@@ -372,7 +372,7 @@ func _build_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 
 	PanelKit.line(block, String(terms.get("effort_name", "")), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, "%.3f %% of GDP a year · %s" % [
+	PanelKit.line(block, tr("%.3f %% of GDP a year · %s") % [
 		float(terms.get("cost_pct_gdp", 0.0)), _reach_text(terms),
 	])
 
@@ -411,7 +411,7 @@ func _button(ns, action) -> Button:
 	button.tooltip_text = action.summary
 	if String(action.effects.get("campaign", {}).get("op", "")) == "start" and _site_region == "":
 		button.disabled = true
-		button.tooltip_text = "choose where the meetings are held first"
+		button.tooltip_text = tr("choose where the meetings are held first")
 	button.pressed.connect(func(): _on_act(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button
@@ -442,7 +442,7 @@ func _on_act(ns, action) -> void:
 ## in -- docs/projects-model.md's months-remaining rule, which is that a panel must not
 ## print a second unit for a fact the model already has one for.
 func _build_promises(ns) -> void:
-	PanelKit.heading(_body, "Promises")
+	PanelKit.heading(_body, tr("Promises"))
 
 	_build_programme(ns)
 
@@ -477,16 +477,16 @@ func _build_programme(ns) -> void:
 	var this_term: Array = Programme.this_term(ns)
 	if this_term.is_empty():
 		if Programme.is_term_start(ns):
-			PanelKit.line(_body, "The term's programme is unset -- the Agenda (K) holds the offer.", PanelKit.Tone.DIM)
+			PanelKit.line(_body, tr("The term's programme is unset -- the Agenda (K) holds the offer."), PanelKit.Tone.DIM)
 		else:
-			PanelKit.line(_body, "No programme was set this term.", PanelKit.Tone.DIM)
+			PanelKit.line(_body, tr("No programme was set this term."), PanelKit.Tone.DIM)
 		return
 	for entry in this_term:
 		var terms: Dictionary = Programme.terms_of(_loader, String(entry["entry_id"]))
 		if terms.is_empty():
 			# Content the loader no longer defines: the id stands in rather
 			# than a bar over nothing, agenda_panel.gd's rule.
-			PanelKit.line(_body, "%s -- the content behind it is gone; it concludes on the next tick." % String(entry["entry_id"]), PanelKit.Tone.DIM)
+			PanelKit.line(_body, tr("%s -- the content behind it is gone; it concludes on the next tick.") % String(entry["entry_id"]), PanelKit.Tone.DIM)
 			continue
 		var name_text := String(terms["name"])
 		match String(entry["status"]):
@@ -494,15 +494,15 @@ func _build_programme(ns) -> void:
 				var read: Dictionary = Programme.progress_of(ns, terms)
 				var fraction: float = PanelKit.progress_fraction(
 					float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
-				PanelKit.line(_body, "%s · %.2f now against a %.2f goal · %d%% there" % [
+				PanelKit.line(_body, tr("%s · %.2f now against a %.2f goal · %d%% there") % [
 					name_text, float(read["current_value"]), float(read["goal_value"]), roundi(fraction * 100.0),
 				], PanelKit.Tone.PLAIN)
 			ProgrammeK.STATUS_COMPLETE:
-				PanelKit.line(_body, "%s · Delivered." % name_text, PanelKit.Tone.GOOD)
+				PanelKit.line(_body, tr("%s · Delivered.") % name_text, PanelKit.Tone.GOOD)
 			ProgrammeK.STATUS_FAIL:
-				PanelKit.line(_body, "%s · Missed." % name_text, PanelKit.Tone.BAD)
+				PanelKit.line(_body, tr("%s · Missed.") % name_text, PanelKit.Tone.BAD)
 			_:
-				PanelKit.line(_body, "%s · Overtaken by the world." % name_text, PanelKit.Tone.DIM)
+				PanelKit.line(_body, tr("%s · Overtaken by the world.") % name_text, PanelKit.Tone.DIM)
 
 
 func _build_promise_row(ns, entry: Dictionary) -> void:
@@ -516,7 +516,7 @@ func _build_promise_row(ns, entry: Dictionary) -> void:
 
 	var state_label := Label.new()
 	if not live:
-		state_label.text = "%s · binds the term beginning %02d/%04d" % [
+		state_label.text = tr("%s · binds the term beginning %02d/%04d") % [
 			_promise_text(entry), int(entry["from_month"]), int(entry["from_year"])]
 		state_label.theme_type_variation = UiTheme.CAPTION
 	else:
@@ -526,7 +526,7 @@ func _build_promise_row(ns, entry: Dictionary) -> void:
 		# already made was costing -- the one figure this section exists to be a ledger
 		# of. docs/projects-model.md's months-remaining rule from the other side: the
 		# count is the unit the model charges in, and the total is what the count is for.
-		state_label.text = "%s · %s · broken %d of %d months, %.2f approval" % [
+		state_label.text = tr("%s · %s · broken %d of %d months, %.2f approval") % [
 			_promise_text(entry),
 			"BEING BROKEN" if broken else "being kept",
 			int(entry["breach_months"]), int(entry["months_live"]),

@@ -65,7 +65,7 @@ func _ready() -> void:
 	center.add_child(column)
 
 	var title := Label.new()
-	title.text = "NATION SIMULATOR"
+	title.text = tr("NATION SIMULATOR")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
 
@@ -113,7 +113,7 @@ func _refresh() -> void:
 		return
 	var p: float = boot.progress()
 	_bar.value = p
-	_stage_label.text = boot.label().to_upper()
+	_stage_label.text = tr(boot.label()).to_upper()
 	_percent.text = "%d%%" % floori(p * 100.0)
 
 

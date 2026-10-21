@@ -67,13 +67,13 @@ func _ready() -> void:
 	scroll.add_child(_body)
 
 	_back_button = Button.new()
-	_back_button.text = "All cities"
+	_back_button.text = tr("All cities")
 	_back_button.pressed.connect(func(): _city_id = ""; _dirty = true)
 	_back_button.hide()
 	root.add_child(_back_button)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -147,7 +147,7 @@ func _build_list() -> void:
 	if nation == null:
 		return
 
-	_title.text = "The cities of %s" % nation.nation_name
+	_title.text = tr("The cities of %s") % nation.nation_name
 
 	var entries: Array = []
 	var named := 0.0
@@ -158,12 +158,12 @@ func _build_list() -> void:
 			named += Migration.region_share(ns, region.id) * Migration.city_share(ns, city.id)
 	entries.sort_custom(func(a, b): return float(a["population"]) > float(b["population"]))
 
-	PanelKit.heading(_body, "The named places")
-	PanelKit.row(_body, "Cities", str(entries.size()))
-	PanelKit.row(_body, "Living in a named city", "%.1f%%" % (named * 100.0))
-	PanelKit.line(_body, "Everyone else lives in the towns under the cut and the countryside -- the unnamed residual, never stored.")
+	PanelKit.heading(_body, tr("The named places"))
+	PanelKit.row(_body, tr("Cities"), str(entries.size()))
+	PanelKit.row(_body, tr("Living in a named city"), "%.1f%%" % (named * 100.0))
+	PanelKit.line(_body, tr("Everyone else lives in the towns under the cut and the countryside -- the unnamed residual, never stored."))
 
-	PanelKit.heading(_body, "By population")
+	PanelKit.heading(_body, tr("By population"))
 	var rows: Array = []
 	for entry in entries:
 		var region = entry["region"]
@@ -190,14 +190,14 @@ func _build_detail(found: Dictionary) -> void:
 	_title.text = city.city_name
 	var pop: float = Migration.city_population(ns, region.id, city.id)
 
-	PanelKit.heading(_body, "The place")
-	PanelKit.row(_body, "Region", "%s · %s" % [region.region_name, nation_id])
-	PanelKit.row(_body, "Nation", String(nation.nation_name))
-	PanelKit.row(_body, "Population", PanelKit.pop_text(pop))
-	PanelKit.row(_body, "Share of its region", "%.1f%%" % (Migration.city_share(ns, city.id) * 100.0))
-	PanelKit.row(_body, "Share of the nation", "%.2f%%" % (Migration.region_share(ns, region.id) * Migration.city_share(ns, city.id) * 100.0))
+	PanelKit.heading(_body, tr("The place"))
+	PanelKit.row(_body, tr("Region"), "%s · %s" % [region.region_name, nation_id])
+	PanelKit.row(_body, tr("Nation"), String(nation.nation_name))
+	PanelKit.row(_body, tr("Population"), PanelKit.pop_text(pop))
+	PanelKit.row(_body, tr("Share of its region"), "%.1f%%" % (Migration.city_share(ns, city.id) * 100.0))
+	PanelKit.row(_body, tr("Share of the nation"), "%.2f%%" % (Migration.region_share(ns, region.id) * Migration.city_share(ns, city.id) * 100.0))
 
-	PanelKit.heading(_body, "Named employers")
+	PanelKit.heading(_body, tr("Named employers"))
 	# A3. Majors keep a row apiece; the body tier -- which since A3 domiciles
 	# most of a big city's firms -- is one aggregate line, the companies
 	# panel's own shape. A city holding thirty body firms printed thirty rows
@@ -222,9 +222,9 @@ func _build_detail(found: Dictionary) -> void:
 			body_count += 1
 			body_jobs += Companies.headcount(ns, company)
 	if rows.is_empty() and body_count == 0:
-		PanelKit.line(_body, "No named employer is domiciled here.")
+		PanelKit.line(_body, tr("No named employer is domiciled here."))
 	else:
 		if not rows.is_empty():
 			PanelKit.ledger(_body, rows)
 		if body_count > 0:
-			PanelKit.line(_body, "BODY · %d firms · %s jobs" % [body_count, PanelKit.pop_text(body_jobs)])
+			PanelKit.line(_body, tr("BODY · %d firms · %s jobs") % [body_count, PanelKit.pop_text(body_jobs)])

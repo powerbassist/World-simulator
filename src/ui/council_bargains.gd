@@ -17,6 +17,7 @@ const Council = preload("res://src/sim/council.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## More rows than this and the table is a wall; the rest are the settled ones
 ## (furthest from the threshold), which a bargain cannot move anyway.
@@ -49,7 +50,7 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 	var inner := _fold(body, panel, "room:" + org.id, "WORK THE ROOM")
 	var vote := String(pending.get("player_vote", Orgs.VOTE_ABSTAIN))
 	if vote != Orgs.VOTE_FOR and vote != Orgs.VOTE_AGAINST:
-		PanelKit.line(inner, "Cast your vote first: a bargain asks a member to vote your way.")
+		PanelKit.line(inner, Strings.t("Cast your vote first: a bargain asks a member to vote your way."))
 		return
 	var proposal = Orgs.proposal_by_id(loader, org.id, String(pending.get("proposal_id", "")))
 	if proposal == null:
@@ -75,7 +76,7 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 		return ma < mb
 	)
 
-	PanelKit.line(inner, "Ask a member to vote %s. One bargain per member per division." % vote)
+	PanelKit.line(inner, Strings.t("Ask a member to vote %s. One bargain per member per division.") % vote)
 	# Someone already bargained with can sort out of the visible rows (a FOR ask on a
 	# member who leans FOR moves it away from the threshold), so name them here.
 	var struck: Dictionary = pending.get("bargains", {})
@@ -87,14 +88,14 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 				String(struck[id].get("ask", "")).to_upper(),
 			])
 		done.sort()
-		PanelKit.line(inner, "Already bargained this division: %s." % ", ".join(done))
+		PanelKit.line(inner, Strings.t("Already bargained this division: %s.") % ", ".join(done))
 	for i in mini(rows.size(), MAX_ROWS):
 		_member_row(inner, panel, state, loader, ns, org, pending, vote, rows[i])
 	if rows.size() > MAX_ROWS:
-		PanelKit.line(inner, "… and %d more, already settled." % (rows.size() - MAX_ROWS))
+		PanelKit.line(inner, Strings.t("… and %d more, already settled.") % (rows.size() - MAX_ROWS))
 	if not sponsor_row.is_empty():
 		_member_row(inner, panel, state, loader, ns, org, pending, vote, sponsor_row)
-	PanelKit.line(inner, "A vote trade is an IOU: when the member you trade with next sponsors a proposal you must back it — abstaining counts as breaking it (%d goodwill). On a treaty it only counts as kept if your assembly ratifies." % roundi(CouncilK.IOU_BETRAYAL))
+	PanelKit.line(inner, Strings.t("A vote trade is an IOU: when the member you trade with next sponsors a proposal you must back it — abstaining counts as breaking it (%d goodwill). On a treaty it only counts as kept if your assembly ratifies.") % roundi(CouncilK.IOU_BETRAYAL))
 
 
 static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pending: Dictionary, ask: String, row: Dictionary) -> void:
@@ -103,14 +104,14 @@ static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pen
 	# An AI sponsor votes FOR its own proposal (Orgs._vote_of), whatever the
 	# appraisal says, so it is settled, never "leaning against".
 	if String(pending.get("sponsor", "")) == id:
-		PanelKit.line(inner, "%s — its own proposal: votes FOR" % loader.nation_name(id), PanelKit.Tone.PLAIN)
+		PanelKit.line(inner, Strings.t("%s — its own proposal: votes FOR") % loader.nation_name(id), PanelKit.Tone.PLAIN)
 		var sb := Button.new()
-		sb.text = "Nothing to bargain for"
+		sb.text = Strings.t("Nothing to bargain for")
 		sb.disabled = true
-		sb.tooltip_text = "It sponsored this proposal: it would take the payment for a vote it was always going to cast."
+		sb.tooltip_text = Strings.t("It sponsored this proposal: it would take the payment for a vote it was always going to cast.")
 		inner.add_child(sb)
 		return
-	PanelKit.line(inner, "%s — leans %s (%+.2f)" % [
+	PanelKit.line(inner, Strings.t("%s — leans %s (%+.2f)") % [
 		loader.nation_name(id), "FOR" if margin >= 0.0 else "AGAINST", margin,
 	], PanelKit.Tone.PLAIN)
 
@@ -161,7 +162,7 @@ static func build_debts(body: VBoxContainer, state, loader, ns, org) -> void:
 		if String(d.get("debtor", "")) != ns.id:
 			continue
 		if not any:
-			PanelKit.heading(body, "IOUS OWED")
+			PanelKit.heading(body, Strings.t("IOUS OWED"))
 			any = true
 		var end_idx: int = now + maxi(int(d.get("months_left", 0)), 0)
 		var text := "You owe %s a vote (lapses %s %d)" % [
@@ -189,17 +190,17 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 	var tabled: Dictionary = register.get("tabled", {})
 	if chairing and chosen != "":
 		var p = Orgs.proposal_by_id(loader, org.id, chosen)
-		PanelKit.line(body, "You have put %s first." % (String(p.proposal_name) if p != null else chosen))
+		PanelKit.line(body, Strings.t("You have put %s first.") % (String(p.proposal_name) if p != null else chosen))
 		return
 	if not chairing and not tabled.is_empty():
 		var tp = Orgs.proposal_by_id(loader, org.id, String(tabled.get("proposal_id", "")))
-		PanelKit.line(body, "You have tabled %s with the chair." % (String(tp.proposal_name) if tp != null else "a proposal"))
+		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % (String(tp.proposal_name) if tp != null else Strings.t("a proposal")))
 		return
 
 	var inner := _fold(body, panel, "agenda:" + org.id, title)
 	if chairing:
 		var open_idx: int = state.year * 12 + (state.month - 1) + Council.months_to_opening(state, org.id)
-		PanelKit.line(inner, "You chair the council from %s %d: choose what opens first." % [MONTHS[open_idx % 12], open_idx / 12])
+		PanelKit.line(inner, Strings.t("You chair the council from %s %d: choose what opens first.") % [MONTHS[open_idx % 12], open_idx / 12])
 	var listed := 0
 	for p in loader.org_proposals.get(org.id, []):
 		# _eligible is the sim's one opening rule; reading it here keeps the list
@@ -208,7 +209,7 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 			continue
 		listed += 1
 		var button := Button.new()
-		button.text = ("Put first: %s" if chairing else "Table: %s") % p.proposal_name
+		button.text = (Strings.t("Put first: %s") if chairing else Strings.t("Table: %s")) % p.proposal_name
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		if chairing:
 			button.pressed.connect(panel._on_set_agenda.bind(org.id, p.id))
@@ -216,4 +217,4 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 			button.pressed.connect(panel._on_table.bind(org.id, p.id))
 		inner.add_child(button)
 	if listed == 0:
-		PanelKit.line(inner, "Nothing eligible to bring forward.")
+		PanelKit.line(inner, Strings.t("Nothing eligible to bring forward."))

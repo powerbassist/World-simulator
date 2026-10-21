@@ -78,7 +78,7 @@ func _process(_delta: float) -> void:
 		return
 	_dirty = false
 	_title.text = ("%s %d" % [
-		ClockCluster.MONTH_NAMES[_state.month - 1], _state.year,
+		tr(ClockCluster.MONTH_NAMES[_state.month - 1]), _state.year,
 	]).to_upper()
 	_cells.queue_redraw()
 
@@ -195,7 +195,7 @@ func _on_cells_input(event: InputEvent) -> void:
 			if Calendar.verb_key(e) == key:
 				_cells.tooltip_text = "%02d %s — %s" % [
 					int(e.get("day", 1)),
-					ClockCluster.MONTH_NAMES[int(e.get("month", 1)) - 1],
+					tr(ClockCluster.MONTH_NAMES[int(e.get("month", 1)) - 1]),
 					_booking_name(e),
 				]
 				return

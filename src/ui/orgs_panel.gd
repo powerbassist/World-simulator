@@ -100,7 +100,7 @@ func _ready() -> void:
 	scroll.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func():
 		hide()
 		closed.emit()
@@ -143,7 +143,7 @@ func _refresh() -> void:
 		child.queue_free()
 
 	var memberships: int = ns.orgs.size()
-	_title.text = "Organisations — %d, %d of them yours" % [_loader.orgs.size(), memberships]
+	_title.text = tr("Organisations — %d, %d of them yours") % [_loader.orgs.size(), memberships]
 
 	if not _refusal_text.is_empty():
 		PanelKit.line(_body, _refusal_text)
@@ -194,7 +194,7 @@ func _refresh_member_org(ns, org) -> void:
 ## than vanishing: the constraint is the interesting part, which is
 ## nation_panel.gd's own argument for showing unavailable actions.
 func _refresh_rules(ns, org) -> void:
-	PanelKit.heading(_body, "RULES IN FORCE")
+	PanelKit.heading(_body, tr("RULES IN FORCE"))
 
 	var rules := Orgs.rules_in_force(_state, ns)
 	var org_rules: Array = []
@@ -202,11 +202,11 @@ func _refresh_rules(ns, org) -> void:
 		if String(rule.get("org_id", "")) == org.id:
 			org_rules.append(rule)
 	if org_rules.is_empty():
-		PanelKit.line(_body, "None. Nothing this council has adopted constrains domestic policy.")
+		PanelKit.line(_body, tr("None. Nothing this council has adopted constrains domestic policy."))
 	for rule in org_rules:
 		var field: String = String(rule.get("field", ""))
 		if field == "":
-			PanelKit.line(_body, "%s — no policy constraint" % String(rule.get("name", "")), PanelKit.Tone.PLAIN)
+			PanelKit.line(_body, tr("%s — no policy constraint") % String(rule.get("name", "")), PanelKit.Tone.PLAIN)
 			continue
 		PanelKit.line(_body, "%s — %s %s %.1f" % [
 			String(rule.get("name", "")),
@@ -215,9 +215,9 @@ func _refresh_rules(ns, org) -> void:
 			float(rule.get("value", 0.0)),
 		], PanelKit.Tone.PLAIN)
 		if float(rule["breach"]) <= 0.0:
-			PanelKit.line(_body, "    compliant")
+			PanelKit.line(_body, tr("    compliant"))
 		else:
-			PanelKit.line(_body, "    outside by %.2f — %.0f%% of this rule's weight" % [
+			PanelKit.line(_body, tr("    outside by %.2f — %.0f%% of this rule's weight") % [
 				float(rule["breach"]),
 				100.0 * float(rule["contribution"]) / maxf(float(rule["severity"]), 0.0001),
 			])
@@ -225,24 +225,24 @@ func _refresh_rules(ns, org) -> void:
 	# The ONE opinion price: summed over every org and clamped once, said here
 	# once rather than repeated under each org's rules.
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Standing: %.2f of a possible %.2f, across every organisation" % [ns.bloc_burden, BK.BURDEN_MAX], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "What the electorate weighs under 'Europe'. Zero while you comply — a rule you keep costs you the policy you could not run, not this.")
+	PanelKit.line(_body, tr("Standing: %.2f of a possible %.2f, across every organisation") % [ns.bloc_burden, BK.BURDEN_MAX], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("What the electorate weighs under 'Europe'. Zero while you comply — a rule you keep costs you the policy you could not run, not this."))
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
 
 func _refresh_contribution(ns, org) -> void:
-	PanelKit.heading(_body, "THE BUDGET")
+	PanelKit.heading(_body, tr("THE BUDGET"))
 	var parts := Orgs.transfer_breakdown(_state, ns)
 	var per_org: Dictionary = (parts.get("orgs", {}) as Dictionary).get(org.id, {})
-	PanelKit.line(_body, "Net contribution: %+.3f%% of GDP" % float(per_org.get("base", 0.0)), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Net contribution: %+.3f%% of GDP") % float(per_org.get("base", 0.0)), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("rules", 0.0))):
-		PanelKit.line(_body, "Adopted programmes: %+.3f%% of GDP" % float(per_org.get("rules", 0.0)), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Adopted programmes: %+.3f%% of GDP") % float(per_org.get("rules", 0.0)), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("fine", 0.0))):
-		PanelKit.line(_body, "Penalties: %+.3f%% of GDP" % float(per_org.get("fine", 0.0)), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Penalties: %+.3f%% of GDP") % float(per_org.get("fine", 0.0)), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("aid", 0.0))):
-		PanelKit.line(_body, "Side-payments (aid): %+.3f%% of GDP" % float(per_org.get("aid", 0.0)), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "All organisations, total: %+.3f%% of GDP" % float(parts.get("total", 0.0)), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP.")
+		PanelKit.line(_body, tr("Side-payments (aid): %+.3f%% of GDP") % float(per_org.get("aid", 0.0)), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("All organisations, total: %+.3f%% of GDP") % float(parts.get("total", 0.0)), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP."))
 
 
 ## A non-member's view of one org. The done-when V1.2d's cold read would have
@@ -254,14 +254,14 @@ func _refresh_outsider_org(ns, org) -> void:
 	PanelKit.heading(_body, org.name.to_upper())
 	if not org.summary.is_empty():
 		PanelKit.line(_body, org.summary, PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "%s is not a member. It has no vote in this council and no rule of it binds %s." % [ns.id, ns.id], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("%s is not a member. It has no vote in this council and no rule of it binds %s.") % [ns.id, ns.id], PanelKit.Tone.PLAIN)
 
 	if not org.council:
 		_refresh_membership_verb(ns, org)
 		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 		return
 
-	PanelKit.heading(_body, "MEASURES FROM MEMBERS")
+	PanelKit.heading(_body, tr("MEASURES FROM MEMBERS"))
 	var members := Orgs.members(_state, org.id)
 	var levied := 0
 	var worst := 0.0
@@ -271,16 +271,16 @@ func _refresh_outsider_org(ns, org) -> void:
 			continue
 		levied += 1
 		worst = maxf(worst, float(terms.get("severity", 0.0)))
-		PanelKit.line(_body, "%s: %s, severity %.2f" % [
+		PanelKit.line(_body, tr("%s: %s, severity %.2f") % [
 			member_id, terms.get("action_name", terms.get("action_id", "")),
 			float(terms.get("severity", 0.0)),
 		], PanelKit.Tone.PLAIN)
 	if levied == 0:
-		PanelKit.line(_body, "None. The council has adopted no common external measure.")
+		PanelKit.line(_body, tr("None. The council has adopted no common external measure."))
 	else:
 		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, "%d of %d members levying, worst severity %.2f." % [levied, members.size(), worst], PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, "An organisation acting as one is the only thing in this game that imposes from more than one direction at once.")
+		PanelKit.line(_body, tr("%d of %d members levying, worst severity %.2f.") % [levied, members.size(), worst], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("An organisation acting as one is the only thing in this game that imposes from more than one direction at once."))
 
 
 ## One membership verb per org section: Join when outside, Leave when inside.
@@ -292,7 +292,7 @@ func _refresh_outsider_org(ns, org) -> void:
 func _refresh_membership_verb(ns, org) -> void:
 	var joining: bool = not ns.orgs.has(org.id)
 	var button := Button.new()
-	button.text = ("Begin leaving %s" % org.name) if not joining else ("Begin joining %s" % org.name)
+	button.text = (tr("Begin leaving %s") % org.name) if not joining else (tr("Begin joining %s") % org.name)
 	var fight_running := false
 	for fight in _state.accessions:
 		if String(fight.get("nation_id", "")) == ns.id:
@@ -300,18 +300,18 @@ func _refresh_membership_verb(ns, org) -> void:
 			break
 	if fight_running:
 		button.disabled = true
-		button.tooltip_text = "A membership fight is already running."
+		button.tooltip_text = tr("A membership fight is already running.")
 	elif joining and org.accession_months == 0:
 		button.disabled = true
-		button.tooltip_text = "This organisation has no accession process."
+		button.tooltip_text = tr("This organisation has no accession process.")
 	elif not joining and org.withdrawal_months == 0:
 		button.disabled = true
-		button.tooltip_text = "This organisation has no withdrawal process."
+		button.tooltip_text = tr("This organisation has no withdrawal process.")
 	elif not ns.referendum_pending.is_empty():
 		button.disabled = true
-		button.tooltip_text = "A referendum is already before the country."
+		button.tooltip_text = tr("A referendum is already before the country.")
 	else:
-		button.tooltip_text = "Puts the question to the country by referendum first; the negotiation that follows runs %d months." % (
+		button.tooltip_text = tr("Puts the question to the country by referendum first; the negotiation that follows runs %d months.") % (
 			int(org.accession_months) if joining else int(org.withdrawal_months))
 		button.pressed.connect(_on_membership.bind(org.id, joining))
 		if _primary == null:

@@ -90,7 +90,7 @@ func _ready() -> void:
 	gutter.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -144,7 +144,7 @@ func _refresh() -> void:
 		return
 	_primary = null
 
-	_title.text = "Dispatches"
+	_title.text = tr("Dispatches")
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -159,7 +159,7 @@ func _refresh() -> void:
 # --- On the desk -------------------------------------------------------------------
 
 func _build_pending(ns) -> void:
-	PanelKit.heading(_body, "On your desk")
+	PanelKit.heading(_body, tr("On your desk"))
 
 	# V4.4: the desk is a queue, ordered worst-first by the machine, and the panel
 	# prints every entry -- a Dispatches window that showed only the head would
@@ -176,12 +176,12 @@ func _build_pending(ns) -> void:
 		# tell an empty list from a closed gate would read the lever as broken.
 		if longest_quiet > 0:
 			var closed_ago: int = EventsK.CATEGORY_QUIET_MONTHS - longest_quiet
-			PanelKit.line(_body, "Nothing today. The last matter closed %s." % (
+			PanelKit.line(_body, tr("Nothing today. The last matter closed %s.") % (
 				"this month" if closed_ago <= 0
 				else "%d %s ago" % [closed_ago, "month" if closed_ago == 1 else "months"]
 			))
 		else:
-			PanelKit.line(_body, "Nothing today.")
+			PanelKit.line(_body, tr("Nothing today."))
 		return
 
 	for entry in ns.event_queue:
@@ -223,7 +223,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	PanelKit.line(_body, title, PanelKit.Tone.PLAIN)
 
 	var tag := Label.new()
-	tag.text = "%s — severity %d/%d" % [String(ev.category).capitalize(), int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
+	tag.text = tr("%s — severity %d/%d") % [String(ev.category).capitalize(), int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
 	tag.theme_type_variation = UiTheme.MICRO
 	_body.add_child(tag)
 
@@ -241,7 +241,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	# hover read "12 of 96 months" against a project with twelve months LEFT.
 	var left := int(entry.get("months_left", 0))
 	var deadline := Label.new()
-	deadline.text = "%d %s to answer, then: %s" % [
+	deadline.text = tr("%d %s to answer, then: %s") % [
 		left, "month" if left == 1 else "months", ev.default_choice().get("label", ""),
 	]
 	# NEUTRAL until the last month, and the first captured frame is why: this line was
@@ -338,9 +338,9 @@ func _subject_label(ns, ev) -> String:
 # --- The ledger --------------------------------------------------------------------
 
 func _build_ledger(ns) -> void:
-	PanelKit.heading(_body, "What you decided")
+	PanelKit.heading(_body, tr("What you decided"))
 	if ns.event_history.is_empty():
-		PanelKit.line(_body, "Nothing has come up yet.")
+		PanelKit.line(_body, tr("Nothing has come up yet."))
 		return
 	# V4.8c: the FEED band per category. Only the ledger is filtered -- the desk
 	# above is where a decision is answered, so it shows every entry whatever the
@@ -356,7 +356,7 @@ func _build_ledger(ns) -> void:
 			continue
 		_build_record(record)
 	if hidden > 0:
-		PanelKit.line(_body, "%d %s hidden by your message settings." % [
+		PanelKit.line(_body, tr("%d %s hidden by your message settings.") % [
 			hidden, "record" if hidden == 1 else "records",
 		])
 
@@ -383,7 +383,7 @@ func _build_record(record: Dictionary) -> void:
 	# the one thing a ledger of forced choices has to be able to show is which of them
 	# the clock made instead.
 	if bool(record.get("defaulted", false)):
-		answer.text = "No answer given — %s" % String(record.get("choice_label", ""))
+		answer.text = tr("No answer given — %s") % String(record.get("choice_label", ""))
 		answer.theme_type_variation = UiTheme.BAD_TEXT
 	else:
 		answer.text = String(record.get("choice_label", ""))

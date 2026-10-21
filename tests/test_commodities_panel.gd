@@ -126,7 +126,8 @@ func _check_registered_and_reachable() -> void:
 	for cluster in ["economy", "state", "society", "world"]:
 		bar._toggle_cluster(cluster)
 		for node in _walk(bar):
-			if node is Button and String(node.text) == "COMMODITIES":
+			# The drawer drops to icons when its labels do not fit the row; the label is metadata then.
+			if node is Button and String(node.get_meta("label", node.text)).to_upper() == "COMMODITIES":
 				found = true
 		bar.close_subrow()
 		if found:
