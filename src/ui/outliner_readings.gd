@@ -3,6 +3,7 @@ extends RefCounted
 const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
@@ -28,8 +29,8 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const SECTIONS: Array[String] = ["agenda", "firms", "goods", "people"]
 
 const CAPTIONS := {
-	"agenda": "Agenda", "firms": "Firms in trouble",
-	"goods": "Supplies short", "people": "People you watch",
+	"agenda": "Agenda", "firms": "Firms in trouble",  # i18n: msgid
+	"goods": "Supplies short", "people": "People you watch",  # i18n: msgid
 }
 
 ## The NationState fields each section reads, perturbed by tests/test_outliner.gd.
@@ -52,7 +53,7 @@ const ROW_CAP := 6
 static func read(section: String, state, loader) -> Dictionary:
 	var ns = state.player()
 	var rows: Array = []
-	var title: String = String(CAPTIONS.get(section, section))
+	var title: String = Strings.t(String(CAPTIONS.get(section, section)))
 	match section:
 		"agenda":
 			rows = _agenda(ns, loader)

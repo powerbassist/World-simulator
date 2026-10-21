@@ -67,6 +67,7 @@ const SaveLoadPanel = preload("res://src/ui/save_load_panel.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const PauseMenu = preload("res://src/ui/pause_menu.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Hud = preload("res://src/ui/hud.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const Pending = preload("res://src/ui/pending.gd")
@@ -1682,8 +1683,7 @@ func _assembly_result_body(result: Dictionary) -> String:
 		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
 
 func _law_title(law_id: String) -> String:
-	var law = _law_by_id(law_id)
-	return String(law.law_name) if law != null else law_id
+	return Strings.law_name(_law_by_id(law_id), law_id)
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
 ## deployment is a command the player just issued and does not need a card telling
@@ -2254,7 +2254,7 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 				if law != null:
 					var result := Legislature.propose(_state, _loader, law)
 					ok = bool(result.get("passed", false))
-					label = String(law.law_name)
+					label = Strings.law_name(law)
 			CalendarK.KIND_RESHUFFLE:
 				var portfolio := String(entry.get("portfolio", ""))
 				var party_id := String(entry.get("party_id", ""))

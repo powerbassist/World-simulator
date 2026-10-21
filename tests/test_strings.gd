@@ -11,6 +11,7 @@ extends SceneTree
 ## placeholder survives translation, and the switch is reversible.
 
 const Strings = preload("res://src/ui/strings.gd")
+const Law = preload("res://src/core/law.gd")
 
 var _failures: Array[String] = []
 
@@ -20,7 +21,6 @@ func _init() -> void:
 	_check_switch()
 	_check_rows()
 	_check_tables()
-	_check_pseudo()
 	Strings.set_language("en")
 	_finish()
 	quit(1 if not _failures.is_empty() else 0)
@@ -39,34 +39,49 @@ func _check_languages() -> void:
 
 
 func _check_switch() -> void:
-	if tr("Settings") != "Settings":
-		_fail("tr() in English should return the msgid, got %s" % tr("Settings"))
+	if tr("SETTINGS") != "SETTINGS":
+		_fail("tr() in English should return the msgid, got %s" % tr("SETTINGS"))
 	if not Strings.set_language("fr"):
 		_fail("set_language('fr') was refused")
 	if Strings.language() != "fr":
 		_fail("language() should be fr after the switch")
-	if tr("Settings") != "Paramètres":
-		_fail("tr('Settings') in French should be Paramètres, got %s" % tr("Settings"))
-	if Strings.t("Settings") != "Paramètres":
-		_fail("Strings.t() should translate like tr(), got %s" % Strings.t("Settings"))
+	if tr("SETTINGS") != "PARAMÈTRES":
+		_fail("tr('SETTINGS') in French should be PARAMÈTRES, got %s" % tr("SETTINGS"))
+	if Strings.t("SETTINGS") != "PARAMÈTRES":
+		_fail("Strings.t() should translate like tr(), got %s" % Strings.t("SETTINGS"))
 	if tr("A line no table has ever seen") != "A line no table has ever seen":
 		_fail("a msgid with no translation should come back unchanged")
 	# A language that is not offered is refused and nothing moves.
 	if Strings.set_language("xx"):
 		_fail("an unknown language should be refused")
-	if Strings.language() != "fr" or tr("Settings") != "Paramètres":
+	if Strings.language() != "fr" or tr("SETTINGS") != "PARAMÈTRES":
 		_fail("a refused switch should leave the language as it was")
 	# And the switch is reversible: the French table is removed, not shadowed.
 	Strings.set_language("en")
-	if tr("Settings") != "Settings":
-		_fail("switching back to English should return the msgid, got %s" % tr("Settings"))
+	if tr("SETTINGS") != "SETTINGS":
+		_fail("switching back to English should return the msgid, got %s" % tr("SETTINGS"))
 
 
 func _check_rows() -> void:
 	var english := "Single-Term Presidency Act"
 	if Strings.row("laws", "single_term_reform", "name", english) != english:
 		_fail("in English a row is its own text")
+	# The law accessor the display sites use: the row's own English in English, the
+	# override in French, the English again for a law the table has never heard of.
+	var law := Law.new()
+	law.id = "single_term_reform"
+	law.law_name = english
+	law.summary = "A summary"
+	if Strings.law_name(law) != english:
+		_fail("in English a law's name is its own")
 	Strings.set_language("fr")
+	if Strings.law_name(law) == english:
+		_fail("the French table should override the law's name through law_name()")
+	if Strings.law_name(null, "the_id") != "the_id":
+		_fail("a missing law should show the fallback the caller gives")
+	law.id = "no_such_law"
+	if Strings.law_name(law) != english or Strings.law_summary(law) != "A summary":
+		_fail("a law with no French entry should show its English name and summary")
 	var fr := Strings.row("laws", "single_term_reform", "name", english)
 	if fr == english or fr == "":
 		_fail("the French table should override the single-term law's name, got '%s'" % fr)
@@ -93,17 +108,6 @@ func _check_tables() -> void:
 				_fail("%s: '%s' and its translation do not share placeholders in order" % [lang, msgid])
 	if Strings.placeholders("%d of %s, %.1f%% (%%)") != ["%d", "%s", "%.1f", "%%", "%%"]:
 		_fail("placeholders() read %s" % [Strings.placeholders("%d of %s, %.1f%% (%%)")])
-
-
-func _check_pseudo() -> void:
-	var source := "Save the game %d times"
-	var pseudo := Strings.pseudo(source)
-	if pseudo.length() < int(source.length() * 1.3):
-		_fail("pseudo() should be at least 30%% longer, got %d for %d" % [pseudo.length(), source.length()])
-	if Strings.placeholders(pseudo) != ["%d"]:
-		_fail("pseudo() must keep placeholders, got '%s'" % pseudo)
-	if pseudo == source or Strings.pseudo(source) != pseudo:
-		_fail("pseudo() must change the text and be deterministic")
 
 
 func _fail(message: String) -> void:

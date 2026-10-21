@@ -32,6 +32,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 signal closed
 
@@ -493,7 +494,7 @@ func _refresh_acts() -> void:
 				_act_pick.set_item_metadata(_act_pick.item_count - 1, String(action.id))
 		K.KIND_LAW:
 			for law in Legislature.available(ns, _loader.laws):
-				_act_pick.add_item(String(law.law_name))
+				_act_pick.add_item(String(Strings.law_name(law)))
 				_act_pick.set_item_metadata(_act_pick.item_count - 1, String(law.id))
 		K.KIND_RESHUFFLE:
 			var party_id := _selected_subject()
@@ -670,10 +671,7 @@ func _action_name(id: String) -> String:
 
 
 func _law_name(id: String) -> String:
-	for law in _loader.laws:
-		if String(law.id) == id:
-			return String(law.law_name)
-	return id
+	return Strings.law_name(_loader.laws.filter(func(l): return String(l.id) == id).front(), id)
 
 
 func _party_name(id: String) -> String:

@@ -16,6 +16,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --cluster state
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
@@ -66,6 +67,7 @@ extends SceneTree
 ## framebuffer, and with no rendering device there is nothing in it.
 
 const Relations = preload("res://src/core/relations.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
@@ -270,6 +272,7 @@ var _cluster := ""
 ## nobody, or on a partner who signs, shows the absence of the line rather than the
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
+var _lang := ""  ## --lang CODE: the interface language of the staged game (default English)
 var _defence := false
 
 ## U6a, and --coerce's argument a sixth time. A new game's diary is EMPTY inside
@@ -693,7 +696,12 @@ func _init() -> void:
 			_blank = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
 			_nation = args[i + 1].to_upper()
+		elif args[i] == "--lang" and i + 1 < args.size():
+			_lang = args[i + 1]
 
+	# Before anything is built: tr() text is the language it was built in.
+	if _lang != "" and not Strings.set_language(_lang):
+		push_error("screenshot: language '%s' is not offered" % _lang)
 	if _menu:
 		_main = load("res://src/ui/menu.tscn").instantiate()
 	else:

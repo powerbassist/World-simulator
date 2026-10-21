@@ -34,6 +34,7 @@ const Statute = preload("res://src/sim/statute.gd")
 ## V4.2 T5. The poll kinds are the constants file's vocabulary -- the same
 ## words buy_poll() records and the briefing's buttons send.
 const StatuteK = preload("res://src/sim/statute_constants.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -191,7 +192,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 	var box := VBoxContainer.new()
 
 	var law: Law = _find_law(result["law_id"])
-	var law_label: String = law.law_name if law != null else result["law_id"]
+	var law_label: String = Strings.law_name(law) if law != null else result["law_id"]
 
 	# A carried division on route B is a THIRD outcome and neither word fits it: the
 	# assembly said yes and the country has not been asked. Reading "FAILED" against a
@@ -408,7 +409,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
-	PanelKit.line(box, "%s  (%s, %s)" % [law.law_name, law.theme, _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
+	PanelKit.line(box, "%s  (%s, %s)" % [Strings.law_name(law), law.theme, _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
 
 	# A system transition rewrites the whole constitution, not one field --
 	# named here structurally, off the loaded template's own display_name,
@@ -491,8 +492,7 @@ func _build_pending_referendum(ns) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
-	var law: Law = _find_law(Referendum.pending_law_id(ns))
-	PanelKit.line(box, tr("REFERENDUM CALLED — %s") % (law.law_name if law != null else Referendum.pending_law_id(ns)), PanelKit.Tone.PLAIN)
+	PanelKit.line(box, tr("REFERENDUM CALLED — %s") % Strings.law_name(_find_law(Referendum.pending_law_id(ns)), Referendum.pending_law_id(ns)), PanelKit.Tone.PLAIN)
 
 	var months := Referendum.months_left(ns)
 	var share := Referendum.yes_share(ns, ns.referendum_pending.get("position", {}))
@@ -625,9 +625,8 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
-	var law: Law = _find_law(law_id)
 	PanelKit.line(box, tr("%s — held by the %s") % [
-		law.law_name if law != null else law_id, ns.upper_chamber_name], PanelKit.Tone.PLAIN)
+		Strings.law_name(_find_law(law_id), law_id), ns.upper_chamber_name], PanelKit.Tone.PLAIN)
 
 	# The ultra pass-2 shape: the entry carries {"months", "origin"}.
 	var months: int = int(ns.held_bills.get(law_id, {}).get("months", 0))
@@ -670,7 +669,7 @@ func _build_assembly_section(ns) -> void:
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override("separation", 2)
 		PanelKit.line(box, tr("%s — before the assembly, divides in %d %s.") % [
-			law.law_name if law != null else String(entry.get("law_id", "")),
+			Strings.law_name(law) if law != null else String(entry.get("law_id", "")),
 			months, "month" if months == 1 else "months"], PanelKit.Tone.PLAIN)
 		var firm_id := String(entry.get("backer_firm", ""))
 		if firm_id != "":

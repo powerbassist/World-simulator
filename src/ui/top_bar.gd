@@ -72,7 +72,7 @@ func _ready() -> void:
 	_figures.add_theme_constant_override("separation", 26)
 	row.add_child(_figures)
 	for id in StripReadings.ORDER:
-		_figures.add_child(_build_figure(id, String(StripReadings.CAPTIONS[id])))
+		_figures.add_child(_build_figure(id, tr(String(StripReadings.CAPTIONS[id]))))
 
 	row.add_child(_spacer())
 

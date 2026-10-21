@@ -357,7 +357,7 @@ func _build_messages(root: VBoxContainer) -> void:
 	grid.add_child(Label.new())
 	for heading in MessageSettings.SWITCH_LABELS:
 		var label := Label.new()
-		label.text = String(heading)
+		label.text = tr(String(heading))
 		grid.add_child(label)
 
 	for category in EventsK.CATEGORIES:
@@ -369,7 +369,7 @@ func _build_messages(root: VBoxContainer) -> void:
 			var button := OptionButton.new()
 			button.custom_minimum_size.x = BAND_BUTTON_WIDTH
 			for band in MessageSettings.BAND_LABELS:
-				button.add_item(String(band))
+				button.add_item(tr(String(band)))
 			button.item_selected.connect(func(_index: int): _save_messages())
 			grid.add_child(button)
 			row[switch] = button

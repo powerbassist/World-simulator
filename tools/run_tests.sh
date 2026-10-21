@@ -279,6 +279,7 @@ tests=(
   tests/test_strings.gd
   tests/test_settings_language.gd
   tests/test_i18n_lint.gd
+  tests/test_i18n_fit.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is

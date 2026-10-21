@@ -289,7 +289,9 @@ event-art plates) go through one runtime material, `src/ui/grade.gd`, applied
 with `Grade.apply(rect)`; `test_grade.gd` fails a surface that forgot. Fonts and
 icons are loaded by a path that works before the editor has imported anything
 (bytes for the font, SVG text for icons), because `tools/run_tests.sh` runs
-headless from a fresh clone — never `load()` an icon path. Map place names are the one exception to the body width: `UiTheme.map_face()` at `UiTheme.SIZE_MAP`, the narrow end of Archivo's width axis, because the label packer drops a name that does not fit.
+headless from a fresh clone — never `load()` an icon path.
+
+**Text a player reads goes through `tr("English")`** (V5.1b, [docs/localisation.md](docs/localisation.md)): the English is the msgid, French is `data/i18n/fr/ui.json`, a row of `data/` is `Strings.row(kind, id, field, english)`. The caller wraps, helpers never translate, a `static func` uses `Strings.t()`, and never use a `tr()` result as a key or compare shown text to an English literal. `tests/test_i18n_lint.gd` fails a bare literal at a text sink; `tests/test_i18n_fit.gd` opens every window under +35% pseudolocalization. Map place names are the one exception to the body width: `UiTheme.map_face()` at `UiTheme.SIZE_MAP`, the narrow end of Archivo's width axis, because the label packer drops a name that does not fit.
 
 The shell is: `map_view` full-rect at the back, `window_manager` over it, `hud`
 on top. There is no tab rail. A panel is registered with

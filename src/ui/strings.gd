@@ -97,6 +97,19 @@ static func row(kind: String, id: String, field: String, english: String) -> Str
 	return text if text != "" else english
 
 
+## A law's name and summary as the player reads them: `row("laws", id, field, ...)`
+## with the English the Law object holds. Every display site of a law's name goes
+## through here, so a law the French table has not reached shows English.
+static func law_name(law, fallback := "") -> String:
+	if law == null:
+		return fallback
+	return row("laws", String(law.id), "name", String(law.law_name))
+
+
+static func law_summary(law) -> String:
+	return row("laws", String(law.id), "summary", String(law.summary))
+
+
 ## The printf placeholders of `text` in order, "%%" included: what `%` will consume,
 ## and what a translation must keep (it cannot reorder them).
 static func placeholders(text: String) -> Array[String]:
@@ -106,29 +119,6 @@ static func placeholders(text: String) -> Array[String]:
 	for m in _placeholder_regex.search_all(text):
 		out.append(m.get_string())
 	return out
-
-
-## A stand-in for a language that is longer than English, for the fit sweep that must
-## run before any real French exists: accented vowels (wider glyphs, a font that
-## lacks them shows), 35% more length in wide letters, placeholders untouched.
-static func pseudo(text: String) -> String:
-	var out := ""
-	var i := 0
-	var held := placeholders(text)
-	while i < text.length():
-		var matched := ""
-		for p in held:
-			if text.substr(i, p.length()) == p:
-				matched = p
-				break
-		if matched != "":
-			out += matched
-			i += matched.length()
-			continue
-		var c := text[i]
-		out += {"a": "à", "e": "é", "i": "î", "o": "ô", "u": "ü", "A": "Â", "E": "É", "O": "Ö"}.get(c, c)
-		i += 1
-	return out + "m".repeat(ceili(text.length() * 0.35))
 
 
 static func _table(path: String) -> Dictionary:

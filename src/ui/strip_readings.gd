@@ -50,10 +50,10 @@ const ORDER: Array[String] = [
 ## B10 (playtest 2026-09-16): "Budget balance", not "Deficit" -- the value is
 ## signed, and "DEFICIT +10.50%" was a live contradiction on screen.
 const CAPTIONS := {
-	"approval": "Approval", "deficit": "Budget balance", "gdp": "GDP",
-	"unemployment": "Unemployment", "inflation": "Inflation", "unrest": "Unrest",
-	"assembly": "Assembly", "election": "Next vote", "programme": "Programme",
-	"desk": "Desk", "europe": "Europe", "commodities": "Supplies",
+	"approval": "Approval", "deficit": "Budget balance", "gdp": "GDP",  # i18n: msgid
+	"unemployment": "Unemployment", "inflation": "Inflation", "unrest": "Unrest",  # i18n: msgid
+	"assembly": "Assembly", "election": "Next vote", "programme": "Programme",  # i18n: msgid
+	"desk": "Desk", "europe": "Europe", "commodities": "Supplies",  # i18n: msgid
 }
 
 ## The NationState fields each reading's text or tip is read from.

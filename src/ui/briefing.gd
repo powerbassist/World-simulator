@@ -36,6 +36,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const StatuteK = preload("res://src/sim/statute_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## Emitted for the division, and ONLY for the division: main.gd hides the
 ## briefing and calls law_panel.run_proposal(law), whose `proposed` signal
@@ -176,7 +177,7 @@ func _rebuild() -> void:
 
 func _bill_name() -> String:
 	if _law != null:
-		return String(_law.law_name)
+		return String(Strings.law_name(_law))
 	return String(_draft.get("name", _bill_key))
 
 
@@ -193,7 +194,7 @@ func _repeal_line() -> String:
 		return ""
 	for law in _loader.laws:
 		if String(law.id) == target:
-			return "Repeals: %s." % String(law.law_name)
+			return "Repeals: %s." % String(Strings.law_name(law))
 	var custom: Dictionary = _ns.custom_laws.get(target, {})
 	if not custom.is_empty():
 		return "Repeals: %s." % String(custom.get("name", target))

@@ -52,8 +52,9 @@ and are not in it; a language that wants them adds the kind and the field there.
 
 The accessor is `Strings.row(kind, id, field, english) -> String`: the table's entry
 if the current language has one, else `english`. The display site passes the row's
-English it already holds. (Wired today: the law names in the Legislature window and
-the bill briefing; each further site is one call -- the extractor's `--todo` lists
+English it already holds. (Wired today, through `Strings.law_name(law)` / `law_summary(law)`: the law names in
+the Legislature window, the bill briefing, the diary and the message log; each further
+site is one call -- the extractor's `--todo` lists
 the keys, and a site not yet wired shows English, which is the safe failure.)
 
 ## Rules for `src/ui` text
@@ -99,8 +100,14 @@ is already built (a bare literal would re-translate live; that is why the lint w
 French runs about a third longer. `tests/test_i18n_fit.gd` opens every registered
 window and checks, per `ScrollContainer`, that the content's minimum width does not
 exceed its view (the clipped-numbers failure V5.1a found) -- once in English and once
-under `Strings.pseudo()`, a +35% accented stand-in for every msgid that exists before
-the translations do. Real French fit is each translation PR's check, with
+under the engine's own pseudolocalization (`TranslationServer.pseudolocalization_enabled`,
+expansion ratio 0.35: accents, brackets, +35% length on every string that reaches `tr()`),
+a stand-in that exists before the translations do. It also found a class of bug no
+English run can: a translated string used as a dictionary key or compared with `==`
+(the codemod wrapped `_columns["government"]` once; the pseudo run reported 24
+"invalid access" errors). **Never use a `tr()` result as a key, or compare text a
+panel has shown, against an English literal** -- compare against `tr("...")` or, better,
+against state. Real French fit is each translation PR's check, with
 `tools/screenshot.gd -- --lang fr`.
 
 ## Commands
@@ -113,3 +120,18 @@ python tools/i18n_extract.py --check    # exit 1: stale key, empty value, placeh
 
 Adding a language: a line in `data/i18n/languages.json`, a `data/i18n/<code>/` folder.
 The Settings row, the loader and the tests pick it up.
+
+## What is NOT done (V5.1b's edge)
+
+The lint covers the sinks listed in rule 2, not every string: a survey of unwrapped
+prose-like literals in `src/ui` (2026-10-21) found about 870 more, in messages built
+by `+` or `%` away from a sink, returns of sentence fragments, dict values, `push_error`
+text (English by design) and const tables not yet marked. The next passes widen the
+lint's sink list one pattern at a time (a lint that grows red is the worklist), mark
+the const tables with `# i18n: msgid`, and translate. The chrome seeded in French by
+V5.1b is the menu, settings, top bar, window titles, action bar, common buttons and the
+map layers; the rest of the backlog (laws, events, bodies of the panels) is the content
+child's, from `--todo fr`.
+
+`tools/screenshot.gd -- --lang fr` stages the game in French; `--menu` ignores it,
+because the menu applies the saved language when it comes up.

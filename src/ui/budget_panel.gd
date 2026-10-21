@@ -26,11 +26,11 @@ const Forecast = preload("res://src/ui/budget_forecast.gd")
 const PROJECTION_MONTHS := 24
 
 const LEVER_LABELS := {
-	"health": "Health",
-	"education": "Education",
-	"defence": "Defence",
-	"pensions": "Pensions",
-	"infrastructure": "Infrastructure",
+	"health": "Health",  # i18n: msgid
+	"education": "Education",  # i18n: msgid
+	"defence": "Defence",  # i18n: msgid
+	"pensions": "Pensions",  # i18n: msgid
+	"infrastructure": "Infrastructure",  # i18n: msgid
 }
 const LEVER_MAX := {
 	"health": 30.0,
@@ -231,7 +231,7 @@ func _build_levers() -> Control:
 
 	for key in _lever_keys():
 		var name_label := Label.new()
-		name_label.text = LEVER_LABELS[key]
+		name_label.text = tr(LEVER_LABELS[key])
 		name_label.custom_minimum_size.x = 130
 		grid.add_child(name_label)
 

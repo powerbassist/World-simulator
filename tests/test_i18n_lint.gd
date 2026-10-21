@@ -30,7 +30,7 @@ func _init() -> void:
 	_text_re = RegEx.create_from_string("[A-Za-z]{2,}")
 	for pattern in [
 		r"(?:\.text|tooltip_text|placeholder_text|\.title)\s*=\s*$",
-		r"(?:PanelKit\.\w+|_add_row|_add_entry|\.add_cluster|message_stack\.push|_param_slider)\((?:[^()]|\([^()]*\))*[,(\[]\s*$",
+		r"(?:PanelKit\.\w+|_add_row|_add_entry|\.add_cluster|message_stack\.push|_param_slider)\((?:[^()]|\([^()]*\))*(?:[,(]|(?<![\w\])])\[)\s*$",
 		r"\.register\(\"[^\"]*\",\s*$",
 		r"\.add_item\($",
 	]:

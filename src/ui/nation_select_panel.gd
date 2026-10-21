@@ -82,7 +82,7 @@ func _build_footer() -> Control:
 		# From the start list, Back means "pick a different nation" rather than
 		# "leave New Game" -- otherwise choosing a nation is unrecoverable
 		# without leaving and re-entering the whole flow.
-		if _title.text != "CHOOSE A NATION":
+		if _title.text != tr("CHOOSE A NATION"):
 			_show_nations()
 			focus_first()
 			return

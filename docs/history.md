@@ -9,6 +9,16 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V5.1-b — localisation plumbing (2026-10-21)
+
+The interface child's half of b; the translations and the keyed `data/` rows are the content child's. See [[localisation]].
+
+- **Strings** (`src/ui/strings.gd`): English is the msgid; a language is `data/i18n/<code>/ui.json` read into a `Translation` at runtime (no `.translation` import, so a cold clone works). Rows of `data/` are translated by `Strings.row(kind, id, field, english)`, tables `<kind>.json` keyed `<id>.<field>`. No English table -- ruled, with its cost (an edited English string orphans its French row, which `tools/i18n_extract.py --check` reports).
+- **The Language row** in Settings (`[display] language`, applied by `SettingsPanel.apply_saved` before any scene is built; the screen rebuilds itself on a change; the row says an in-game switch reaches windows opened afterwards).
+- **tr() at every text sink**: 564 literals wrapped by a codemod, `tests/test_i18n_lint.gd` fails a bare one (zero, no ratchet). Static functions use `Strings.t()`. const tables of prose are marked `# i18n: msgid` and wrapped at the use site.
+- **The fit sweep** (`tests/test_i18n_fit.gd`): every window, English and the engine's +35% pseudolocalization, content minimum width against the screen band. It found what the codemod broke -- 24 `_columns[tr("government")]` index lookups -- which no English run could see.
+- **FR seed**: the chrome (menu, settings, top bar, window titles, buttons, map layers), 166 strings.
+
 ## V5.1-a2 — load hygiene (2026-10-21)
 
 Two pre-existing bugs QA saw on PR #32 that the play gate hits the first time a player loads. Both written test-first (`tests/test_load_hygiene.gd`, red on `f858a2c7`).
