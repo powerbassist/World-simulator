@@ -19,10 +19,10 @@ extends SceneTree
 ##   2. Saved and loaded through SaveManager, the path the menu takes. Every
 ##      field of GameState and of every NationState must come back -- the
 ##      reflective walk of test_save_load.gd, over a state nobody hand-built.
-##   3. Nothing the save writes is a NAN or an INF, except the one sanctioned
+##   3. Nothing the save writes is an INF, nor a NAN outside the one sanctioned
 ##      slot (a decision's movement with no "before" reading, which the load
-##      reads back as NAN). JSON writes a NAN as null; the next one would be the
-##      next crash on load.
+##      reads back as NAN). JSON writes a NAN as null, so the FILE SaveManager
+##      wrote is walked too: a null anywhere else is the next crash on load.
 ##   4. CONTINUATION. Twelve more months on the original and on the loaded game,
 ##      then the same walk again: a save that loads wrong but equal-looking (a
 ##      derived register not rebuilt, a type that compares equal and ticks
@@ -50,6 +50,7 @@ const Clock = preload("res://src/core/clock.gd")
 const NationFields = preload("res://src/core/nation_fields.gd")
 
 const SLOT := "__test_save_continuity__"
+const BILL := "emissions_standards"
 const PLAYER := "FRA"
 const PARTNER := "DEU"
 const RIVAL := "ITA"
@@ -122,10 +123,10 @@ func _play_commands(state) -> void:
 		_fail("the tariff on %s was refused" % RIVAL)
 	var pact = _diplomatic("defence_pact")
 	if pact != null and not bool(Diplomacy.execute(state, _loader.diplomatic_actions, pact, PLAYER, PARTNER)["applied"]):
-		Defence.sign_pact(state, PLAYER, PARTNER, pact)
+		_fail("the defence pact with %s was refused" % PARTNER)
 	var deploy = _diplomatic("deploy_forces")
 	if deploy != null and not bool(Diplomacy.execute(state, _loader.diplomatic_actions, deploy, PLAYER, PARTNER)["applied"]):
-		Defence.open_deployment(state, PLAYER, PARTNER, DefenceK.DEPLOYMENT_CHOSEN, deploy)
+		_fail("the deployment to %s was refused" % PARTNER)
 
 	var work = null
 	for action in _loader.project_actions:
@@ -138,12 +139,14 @@ func _play_commands(state) -> void:
 
 	var bill = null
 	for law in _loader.laws:
-		if String(law.id) == "emissions_standards":
+		if String(law.id) == BILL:
 			bill = law
 	if bill == null:
 		_fail("emissions_standards is not in data/laws -- the bill this test proposes")
-	else:
-		Legislature.propose(state, _loader, bill)
+		return
+	var result: Dictionary = Legislature.propose(state, _loader, bill)
+	if not _bill_in_flight_or_law(state.player()) and not bool(result.get("passed", false)):
+		_fail("the bill was proposed and went nowhere: %s" % [result])
 
 
 ## The registers the commands and the months were meant to fill, asserted.
@@ -173,6 +176,8 @@ func _check_fixture(state) -> void:
 		_fail("no measure in force has been answered -- the tariff drew no retaliation in %d months" % PLAYED_MONTHS)
 	if state.accessions.is_empty():
 		_fail("no membership fight in flight to save")
+	if not _bill_in_flight_or_law(ns):
+		_fail("the bill proposed at new game is neither law nor in flight at the save")
 	if state.history.size() < PLAYED_MONTHS:
 		_fail("history holds %d entries after %d months" % [state.history.size(), PLAYED_MONTHS])
 
@@ -188,6 +193,14 @@ func _play(state, months: int) -> void:
 		WorldMonth.tick_month(state, _loader)
 
 
+## The bill as the save carries it: in force (its ledger entry -- passed_law_ids
+## holds `once` laws only), held by the upper house, or out to a referendum.
+## Anything else means the proposal came to nothing.
+func _bill_in_flight_or_law(ns) -> bool:
+	return ns.law_ledger.has(BILL) or ns.held_bills.has(BILL) \
+		or String(ns.referendum_pending.get("law_id", "")) == BILL
+
+
 func _save_and_load(state):
 	var clock := Clock.new()
 	clock.year = state.year
@@ -198,6 +211,14 @@ func _save_and_load(state):
 	if not error.is_empty():
 		_fail("save_game failed on a played game: %s" % error)
 		return null
+	# What SaveManager actually wrote: JSON has no NAN, so a NAN reaches the file
+	# as null. A null anywhere but the sanctioned slot is a NAN (or a missing
+	# value) the load will hand a reader as Nil -- the V5.0 crash's shape.
+	var written = JSON.parse_string(FileAccess.get_file_as_string(SaveManager._path_for(SLOT)))
+	if not (written is Dictionary) or not ((written as Dictionary).get("game_state") is Dictionary):
+		_fail("the save file did not parse back to a payload with a game_state")
+	else:
+		_check_no_null("save", written["game_state"])
 	var result := SaveManager.load_game(SLOT, _loader)
 	if not bool(result.get("ok", false)):
 		_fail("load_game failed on a save this test just wrote: %s" % result.get("error", ""))
@@ -230,15 +251,28 @@ func _compare(when: String, original, loaded) -> void:
 func _check_finite(path: String, value) -> void:
 	match typeof(value):
 		TYPE_FLOAT:
-			if is_nan(value) or is_inf(value):
-				if not _nan_allowed(path):
-					_fail("the save holds %s at %s -- JSON writes it as null" % [value, path])
+			# NAN is the movement slot's own "no data"; an INF is never an answer.
+			if is_inf(value) or (is_nan(value) and not _nan_allowed(path)):
+				_fail("the save holds %s at %s -- JSON cannot write it" % [value, path])
 		TYPE_DICTIONARY:
 			for key in value.keys():
 				_check_finite("%s.%s" % [path, key], value[key])
 		TYPE_ARRAY:
 			for i in range(value.size()):
 				_check_finite("%s[%d]" % [path, i], value[i])
+
+
+func _check_no_null(path: String, value) -> void:
+	match typeof(value):
+		TYPE_NIL:
+			if not _nan_allowed(path):
+				_fail("the save file holds null at %s" % path)
+		TYPE_DICTIONARY:
+			for key in value.keys():
+				_check_no_null("%s.%s" % [path, key], value[key])
+		TYPE_ARRAY:
+			for i in range(value.size()):
+				_check_no_null("%s[%d]" % [path, i], value[i])
 
 
 func _nan_allowed(path: String) -> bool:

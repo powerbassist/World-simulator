@@ -26,10 +26,13 @@ var _main
 var _frame := 0
 var _phase := "run"
 var _shut_frames := 0
+var _slicing_frames := 0
 
 ## Real frames the engine runs over the month's sweep before the closed-window
 ## read: every panel's own _process has had its turns by then.
 const SHUT_FRAMES := 3
+## The sliced month's frames before the check gives up on it.
+const SLICING_FRAMES_MAX := 3000
 
 
 func _init() -> void:
@@ -46,6 +49,17 @@ func _process(_delta: float) -> bool:
 		_run()
 		if not _failures.is_empty() or not _begin_a_month_with_every_window_shut():
 			_finish()
+			return false
+		_phase = "slicing"
+		return false
+	if _phase == "slicing":
+		# The month runs across these frames, a unit budget at a time, with the
+		# windows disabled; it ends with them re-enabled and the month's sweep.
+		_slicing_frames += 1
+		if _main._month_runner.running():
+			if _slicing_frames > SLICING_FRAMES_MAX:
+				_fail("the real-time month was still closing after %d frames" % SLICING_FRAMES_MAX)
+				_finish()
 			return false
 		_phase = "shut"
 		return false
@@ -617,8 +631,10 @@ func _check_a_closed_window_costs_nothing() -> void:
 
 ## The test audit's S4: the check above calls each panel's _process by hand,
 ## after marking it dirty itself. This one is the game's own path: every window
-## shut, every panel clean, ONE real month through main.gd's handler, then real
-## frames. Each panel must come out dirty -- the month's sweep reached it, so it
+## shut, every panel clean, ONE month reached by real time passing -- the sliced
+## path a player gets (src/ui/month_runner.gd: the windows disabled while it
+## closes, re-enabled, then main.gd's sweep), not a hand-driven day's whole
+## month -- then real frames. Each panel must come out dirty -- the month's sweep reached it, so it
 ## redraws when its window opens -- and still dirty: none refreshed shut, in
 ## whatever order the engine processed it. A month end that stopped marking the
 ## panels (an opened window showing last month) and a panel that refreshes
@@ -628,18 +644,24 @@ func _begin_a_month_with_every_window_shut() -> bool:
 	# Nothing in flight before the month: the forecast's projection is drained,
 	# so a job found after it began with its window shut.
 	_main._budget_panel._forecast.drain()
+	var clock: Node = _main.get_node("Clock")
+	# The engine must not advance days on its own; real time is handed in below,
+	# one day of it, as test_month_runner.gd's B game takes its month.
+	clock.set_process(false)
+	clock.set_speed(1)
+	while clock.day < clock._days_in_month(clock.month, clock.year):
+		clock.advance_one_day()
+	# The hand-driven days cleaned nothing and the windows are still shut; the
+	# panels are cleaned HERE, so a dirty one after the month was the month's.
+	_main._windows.close_all()
 	for id in _main._windows.panel_ids():
 		var panel = _main._windows.frame(id)._content
 		if "_dirty" in panel:
 			panel._dirty = false
-	var clock: Node = _main.get_node("Clock")
-	var month_before: int = _main._state.month
-	for _d in range(32):
-		if _main._state.month != month_before:
-			break
-		clock.advance_one_day()
-	if _main._state.month == month_before:
-		_fail("32 days by hand did not reach the next month")
+	clock.paused = false
+	clock._process(1.0 / clock.SPEED_DAYS_PER_SECOND[0])
+	if not _main._month_runner.running():
+		_fail("real time reaching the 1st did not run its month across frames")
 		return false
 	return true
 

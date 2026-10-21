@@ -59,7 +59,9 @@ const TEN_YEARS := 120
 ## How often one event may reach the player's desk in a ten-year do-nothing run.
 ## Measured by the test audit (2026-10-21) over 168 months of the same regime: the
 ## most-delivered event reached FRA's desk 2 times and GBR's 5 (union_ultimatum),
-## 41 and 29 deliveries in all. 8 is that worst plus 60%, over a SHORTER window,
+## 41 and 29 deliveries in all -- counted from the stamps and the desk both, the
+## same figures either way (re-measured at review pass 2). 8 is that worst plus
+## 60%, over a SHORTER window,
 ## so it is slack for the content and tight for the V4.4 class -- a hook or a
 ## cooldown that stops binding lands the same occasion on every month it can.
 const DESK_DELIVERIES_PER_EVENT_MAX := 8
@@ -427,10 +429,14 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 	var problems: Array[String] = []
 	var elections: Array = []
 	var all_results: Array = []
-	# Each delivery to the player's desk, by event id, read where Events._deliver
-	# writes one: the event's cooldown stamp moving.
+	# Each delivery to the player's desk, by event id, read TWO ways and counted
+	# once a month per event: the cooldown stamp Events._deliver writes moving, and
+	# the desk itself -- an entry that is new, or back with more months to answer
+	# than it had. A door that skipped the stamp (the V4.4 hook went round one)
+	# still lands on the desk.
 	var deliveries := {}
 	var cooldowns_before: Dictionary = (ns.event_cooldowns as Dictionary).duplicate()
+	var desk_before := _desk(ns)
 
 	var year := START_YEAR
 	var month := 1
@@ -511,10 +517,18 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 			if r["kind"] == verdict_kind:
 				elections.append(r)
 
+		var landed := {}
 		for ev_id in ns.event_cooldowns.keys():
 			if int(cooldowns_before.get(ev_id, -1)) != int(ns.event_cooldowns[ev_id]):
-				deliveries[ev_id] = int(deliveries.get(ev_id, 0)) + 1
+				landed[ev_id] = true
+		var desk_now := _desk(ns)
+		for ev_id in desk_now.keys():
+			if not desk_before.has(ev_id) or int(desk_now[ev_id]) > int(desk_before[ev_id]):
+				landed[ev_id] = true
+		for ev_id in landed.keys():
+			deliveries[ev_id] = int(deliveries.get(ev_id, 0)) + 1
 		cooldowns_before = (ns.event_cooldowns as Dictionary).duplicate()
+		desk_before = desk_now
 
 		played += 1
 		problems.append_array(_problems(ns, year, month))
@@ -525,6 +539,14 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 			break
 
 	return {"state": state, "months": played, "problems": problems, "elections": elections, "all_results": all_results, "deliveries": deliveries}
+
+
+## The player's desk as event id -> months left to answer.
+func _desk(ns) -> Dictionary:
+	var out := {}
+	for entry in ns.event_queue:
+		out[String(entry.get("event_id", ""))] = int(entry.get("months_left", 0))
+	return out
 
 
 ## Non-finite, non-positive, or resting on a guard clamp. The clamps are

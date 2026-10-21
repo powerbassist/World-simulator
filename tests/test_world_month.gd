@@ -198,8 +198,7 @@ func _check_each_step_runs_its_system() -> void:
 	var pid := String(work.effects["project"]["project_id"])
 	var build_left := Projects.months_left(ns, pid)
 	# Calendar: a resolved booking older than the strip keeps is pruned.
-	var stale := {"kind": "stale", "year": 2000, "month": 1, "day": 1, "status": CalendarK.STATUS_DONE}
-	state.appointments.append(stale)
+	state.appointments.append({"kind": "stale", "year": 2000, "month": 1, "day": 1, "status": CalendarK.STATUS_DONE})
 	# Discipline: a party knocked to the floor converges back toward its target --
 	# a party whose target is above the floor, or a running step could leave it.
 	var party = null
@@ -228,7 +227,14 @@ func _check_each_step_runs_its_system() -> void:
 
 	if Projects.months_left(ns, pid) != build_left - 1:
 		_fail("Projects: a work at %d months left reads %d after a month -- the step did not run" % [build_left, Projects.months_left(ns, pid)])
-	if state.appointments.has(stale):
+	# Counted by its marker, not found by value: an entry rewritten in place
+	# (a status flipped, a date moved) would no longer equal the staged one and
+	# would pass a value lookup while surviving the prune.
+	var survivors := 0
+	for e in state.appointments:
+		if String(e.get("kind", "")) == "stale" and int(e.get("year", 0)) == 2000:
+			survivors += 1
+	if survivors != 0:
 		_fail("Calendar: a booking resolved in 2000 survived the month's prune -- the step did not run")
 	if is_equal_approx(float(ns.party_discipline.get(party.id, -1.0)), DisciplineK.DISCIPLINE_MIN):
 		_fail("Discipline: %s stayed at the floor through a month -- the step did not run" % party.id)
