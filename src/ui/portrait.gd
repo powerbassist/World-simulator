@@ -324,7 +324,7 @@ class Bust extends Control:
 		# The brass hairline the plate carries on its top edge, repeated along
 		# the bottom of the frame so the bust reads as inset rather than as a
 		# hole punched in the card.
-		draw_line(Vector2(0, h - 1), Vector2(w, h - 1), UiTheme.ACCENT, 1.0)
+		draw_line(Vector2(0, h - 1), Vector2(w, h - 1), UiTheme.accent(), 1.0)
 
 	func _draw_ellipse(center: Vector2, radius: Vector2, color: Color) -> void:
 		var points := PackedVector2Array()

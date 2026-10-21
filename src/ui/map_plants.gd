@@ -34,6 +34,6 @@ static func draw_plants(canvas: CanvasItem, state, to_screen: Callable) -> void:
 			var entry: Dictionary = ns.plants[plant_id]
 			var at: Vector2 = to_screen.call(float(entry.get("lon", 0.0)), float(entry.get("lat", 0.0)))
 			if bool(entry.get("done", false)):
-				canvas.draw_circle(at, RADIUS, UITheme.ACCENT)
+				canvas.draw_circle(at, RADIUS, UITheme.accent())
 			else:
-				canvas.draw_arc(at, RADIUS, 0.0, TAU, 20, UITheme.ACCENT, 1.5)
+				canvas.draw_arc(at, RADIUS, 0.0, TAU, 20, UITheme.accent(), 1.5)

@@ -1095,9 +1095,9 @@ func _draw() -> void:
 		# waiting on the player -- V2.1c's rule, reused rather than joined by a
 		# second visual language for "we are waiting on you".
 		var at := get_local_mouse_position()
-		draw_arc(at, 14.0, 0.0, TAU, 32, UiTheme.ACCENT, 1.5)
-		draw_line(at - Vector2(20, 0), at + Vector2(20, 0), UiTheme.ACCENT, 1.0)
-		draw_line(at - Vector2(0, 20), at + Vector2(0, 20), UiTheme.ACCENT, 1.0)
+		draw_arc(at, 14.0, 0.0, TAU, 32, UiTheme.accent(), 1.5)
+		draw_line(at - Vector2(20, 0), at + Vector2(20, 0), UiTheme.accent(), 1.0)
+		draw_line(at - Vector2(0, 20), at + Vector2(0, 20), UiTheme.accent(), 1.0)
 
 
 ## V4.10a. How much of the ground is drawn over the photograph at this zoom: 0
@@ -1268,7 +1268,7 @@ func _draw_outline_readout() -> void:
 	corner.x = clampf(corner.x, 4.0, maxf(4.0, size.x - plate_size.x - 4.0))
 	corner.y = clampf(corner.y, 4.0, maxf(4.0, size.y - plate_size.y - 4.0))
 	draw_rect(Rect2(corner, plate_size), OUTLINE_READOUT_PLATE)
-	draw_line(corner, corner + Vector2(plate_size.x, 0.0), UiTheme.ACCENT, 1.0)
+	draw_line(corner, corner + Vector2(plate_size.x, 0.0), UiTheme.accent(), 1.0)
 	var at := corner + Vector2(OUTLINE_READOUT_PAD, OUTLINE_READOUT_GAP - 2.0)
 	for i in lines.size():
 		var text := String(lines[i][0])
@@ -1394,7 +1394,7 @@ func _sync_line_palettes() -> void:
 			stroke = Color(kind_colors["playable"], 1.0)
 			width = HOVER_WIDTH
 		if MapLayers.is_viewer(viewer, id):
-			stroke = UiTheme.ACCENT
+			stroke = UiTheme.accent()
 			width = HOME_WIDTH
 		_roster_line_image.set_pixel(n, 0, stroke)
 		_roster_line_image.set_pixel(n, 1, Color(width, 0, 0, 1))

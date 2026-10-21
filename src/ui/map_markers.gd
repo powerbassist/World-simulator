@@ -94,7 +94,7 @@ static func is_filled(marker: Dictionary) -> bool:
 
 
 static func color_of(_marker: Dictionary) -> Color:
-	return UiTheme.ACCENT
+	return UiTheme.accent()
 
 
 ## What the marker says when the cursor is on it. Drawn on hover alone: the dots

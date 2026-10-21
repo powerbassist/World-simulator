@@ -1,5 +1,7 @@
 extends RefCounted
 
+const AccentRule = preload("res://src/ui/accent_rule.gd")
+
 ## The game's one Theme -- U3, retuned at U5a. Before U3, three separate places
 ## built a StyleBoxFlat by hand with the same colour typed in three times and two
 ## panels reached for add_theme_font_size_override() to get a big number.
@@ -21,42 +23,48 @@ extends RefCounted
 ##
 ## ---
 ##
-## U5a's direction, because a palette with no stated intent gets edited into mud:
-## a map table in a situation room at night, with sheets of glass laid over it,
-## lit from above. Every HUD plate is a translucent navy sheet with a single
-## brass hairline along its *top* edge and a soft shadow below it. That one rule
-## is the whole visual signature; nothing else gets a glow or a gradient.
+## V5.1a's direction (BUREAU, picked by the author 2026-10-21): a head of state's
+## desk, not a situation room. Graphite panels, near-opaque, one 1px hairline all
+## round; no glow, no gradient. The single accent is the PLAYED NATION'S OWN flag
+## colour, chosen by a rule over the flag's bands (accent_rule.gd) and carried only
+## by what says "you are here" -- the active tab or marker, a focus ring, a fill.
+## The brass top-edge hairline of U5a is gone, and so is the rule against drawing
+## a plate's other three edges: those edges are the grammar now.
 ##
-## The accent is brass rather than the cyan every game HUD reaches for. Brass is
-## the state's own material -- seal, instrument bezel, ministerial fitting -- and
-## cyan would have made this look like a spaceship rather than a palace.
+## Colour names are kept from U5a (fifty callers) and mean what they say here:
+## INK the ground, HULL a panel, SLATE a raised row or hover, EDGE the hairline.
 
 # -- Palette ------------------------------------------------------------------
 
-const INK := Color(0.039, 0.063, 0.125)        ## #0A1020 behind everything
-const HULL := Color(0.063, 0.106, 0.188)       ## #101B30 plate body
-const SLATE := Color(0.106, 0.173, 0.290)      ## #1B2C4A raised row, hover
-const EDGE := Color(0.169, 0.263, 0.408)       ## #2B4368 hairline
-const TEXT := Color(0.867, 0.894, 0.941)       ## #DDE4F0 body text
-const TEXT_DIM := Color(0.486, 0.553, 0.675)   ## #7C8DAC captions
-const ACCENT := Color(0.788, 0.635, 0.153)     ## #C9A227 brass -- the one accent
-const GOOD := Color(0.310, 0.706, 0.467)       ## #4FB477
-const BAD := Color(0.878, 0.353, 0.353)        ## #E05A5A
+const INK := Color(0.059, 0.071, 0.078)        ## #0F1214 behind everything
+const HULL := Color(0.090, 0.106, 0.118)       ## #171B1E panel body
+const SLATE := Color(0.153, 0.176, 0.196)      ## #272D32 raised row, hover
+const EDGE := Color(0.196, 0.224, 0.251)       ## #323940 hairline
+const TEXT := Color(0.929, 0.941, 0.949)       ## #EDF0F2 body text
+const TEXT_DIM := Color(0.557, 0.596, 0.624)   ## #8E989F captions
+const GOOD := Color(0.247, 0.702, 0.498)       ## #3FB37F
+const BAD := Color(0.898, 0.325, 0.294)        ## #E5534B
+const WARN := Color(0.890, 0.651, 0.227)       ## #E3A63A attention, not failure
 
-## The plate's fill is drawn under a translucent alpha so the map reads through
-## the HUD furniture. Modal window *bodies* stay opaque -- a panel of figures you
-## can see a coastline through is unreadable, which is the failure U3's theme
-## test already guards in the other direction.
-const PLATE_ALPHA := 0.94
+## What the accent is when there is no nation to take it from (the menu), and when
+## no band of the flag passes accent_rule.gd's floors. A cool azure, deliberately
+## not a flag colour of its own.
+const ACCENT_FALLBACK := Color(0.361, 0.616, 0.922)  ## #5C9DEB
 
-## A scrollbar's width, which in Godot is its stylebox's own minimum size. Ten is
-## the engine default's order and narrow enough to read as chrome.
+## Panels are graphite and nearly opaque: the map may show through a HUD plate
+## only faintly. A panel of figures you can see a coastline through is unreadable
+## (U3's lesson), which is why a window body stays fully opaque.
+const PLATE_ALPHA := 0.97
+
+## A scrollbar's width, which in Godot is its stylebox's own minimum size.
 const BAR_WIDTH_PX := 10.0
 
 # -- Type scale ---------------------------------------------------------------
 
-## Barlow Condensed is narrower than the engine's built-in sans, so the base size
-## is one step up from U3's 14 to hold the same reading weight.
+## One family, Archivo (variable, SIL OFL), cut by axis rather than by file: the
+## width axis runs 62-125 and 88 is the condensed cut the tables need -- French
+## runs about a fifth longer than English -- while headings may open it up. The
+## base size stays at U5a's 15.
 const SIZE_MICRO := 11   ## tracked uppercase cluster and section labels
 const SIZE_SMALL := 12
 const SIZE_BASE := 15
@@ -64,10 +72,11 @@ const SIZE_LEAD := 18
 const SIZE_FIGURE := 20
 const SIZE_HERO := 30    ## the portrait card's approval figure, and only that
 
-const FONT_CHROME := "res://assets/fonts/BarlowCondensed-Regular.ttf"
-const FONT_CHROME_MEDIUM := "res://assets/fonts/BarlowCondensed-Medium.ttf"
-const FONT_CHROME_BOLD := "res://assets/fonts/BarlowCondensed-SemiBold.ttf"
-const FONT_FIGURE := "res://assets/fonts/IBMPlexMono-SemiBold.ttf"
+const FONT_ARCHIVO := "res://assets/fonts/Archivo-Variable.ttf"
+const WIDTH_CONDENSED := 88
+const WEIGHT_BODY := 400
+const WEIGHT_MEDIUM := 500
+const WEIGHT_BOLD := 650
 
 # -- Label variations. Assign with `label.theme_type_variation = UiTheme.LEAD` --
 
@@ -85,14 +94,31 @@ const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
 # -- Container and button variations -------------------------------------------
 
 const TOP_BAR_PANEL := "TopBarPanel"      ## the thin strip flush to the top edge
-const PLATE := "Plate"                    ## HUD furniture: glass over the map
+const PLATE := "Plate"                    ## HUD furniture over the map
 const PLATE_FOLDED := "PlateFolded"       ## a plate whose primary action is below the fold
 const TITLE_BAR := "TitleBar"             ## a floating window's grab handle
 const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
 const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-row
 
+## The accent in force: the played nation's, set by apply() and read by everything
+## that draws "you are here" -- the theme below, the map's own marks. Static
+## because a Theme is built once per scene root and the map is not a theme.
+static var _accent: Color = ACCENT_FALLBACK
+static var _archivo: FontFile
 
-static func apply(root: Control) -> void:
+
+## The accent a flag resolves to -- accent_rule.gd's floors over the flag's bands,
+## judged against the panel the accent is drawn on and the two semantic tones.
+static func accent_for(bands: Array) -> Color:
+	return AccentRule.pick(bands, HULL, [BAD, GOOD], ACCENT_FALLBACK)
+
+
+static func accent() -> Color:
+	return _accent
+
+
+static func apply(root: Control, accent_color := ACCENT_FALLBACK) -> void:
+	_accent = accent_color
 	root.theme = build()
 
 
@@ -100,9 +126,9 @@ static func build() -> Theme:
 	var theme := Theme.new()
 	theme.default_font_size = SIZE_BASE
 
-	var chrome := _font(FONT_CHROME)
-	if chrome != null:
-		theme.default_font = chrome
+	var body := _face(WEIGHT_BODY)
+	if body != null:
+		theme.default_font = body
 
 	for type in ["Label", "Button", "CheckBox", "OptionButton", "LineEdit", "SpinBox"]:
 		theme.set_color("font_color", type, TEXT)
@@ -140,42 +166,45 @@ static func _font(path: String) -> FontFile:
 	return file
 
 
-## Godot has no letter-spacing on Label, so the tracked uppercase micro labels
-## are a FontVariation over the medium weight rather than a theme constant.
-static func _tracked(path: String, spacing: int) -> Font:
-	var base := _font(path)
-	if base == null:
+## Archivo at a weight, condensed, optionally tracked and with tabular figures.
+## Godot has no letter-spacing on Label, so tracking is a FontVariation's glyph
+## spacing; the axes and the `tnum` feature are keyed by OpenType TAG (an int),
+## not by name -- a string key is accepted and silently does nothing.
+static func _face(weight: int, spacing := 0, tabular := false) -> Font:
+	if _archivo == null:
+		_archivo = _font(FONT_ARCHIVO)
+	if _archivo == null:
 		return null
-	var variation := FontVariation.new()
-	variation.base_font = base
-	variation.set_spacing(TextServer.SPACING_GLYPH, spacing)
-	return variation
+	var ts := TextServerManager.get_primary_interface()
+	var face := FontVariation.new()
+	face.base_font = _archivo
+	face.variation_opentype = {ts.name_to_tag("wght"): weight, ts.name_to_tag("wdth"): WIDTH_CONDENSED}
+	if tabular:
+		face.opentype_features = {ts.name_to_tag("tnum"): 1}
+	if spacing != 0:
+		face.set_spacing(TextServer.SPACING_GLYPH, spacing)
+	return face
 
 
 static func _panels(theme: Theme) -> void:
 	# The default every PanelContainer gets, including the ones nested inside a
-	# panel's own layout. Deliberately quiet: opaque, one hairline, no brass. If
-	# this carried the plate's brass edge, every nested container in twenty
-	# panels would draw one and the signature would read as noise.
+	# panel's own layout. Opaque, one hairline: the grammar of the whole screen.
 	var panel := StyleBoxFlat.new()
 	panel.bg_color = HULL
-	panel.set_corner_radius_all(3)
+	panel.set_corner_radius_all(4)
 	panel.set_border_width_all(1)
 	panel.border_color = EDGE
 	theme.set_stylebox("panel", "PanelContainer", panel)
 
-	# The signature, and the only place it is defined. Applied by hand to the HUD
-	# furniture and to every floating window's outer frame -- see hud.gd and
-	# window_frame.gd. Light falls from above onto a sheet of glass: one brass
-	# line along the top edge, a soft shadow below, and the map showing through.
+	# HUD furniture over the map and every floating window's outer frame -- see
+	# hud.gd and window_frame.gd. The same panel, a touch translucent and with
+	# room inside; it carries no accent, because the accent is reserved for what
+	# marks where you are.
 	var plate := StyleBoxFlat.new()
 	plate.bg_color = Color(HULL.r, HULL.g, HULL.b, PLATE_ALPHA)
-	plate.set_corner_radius_all(3)
-	plate.border_width_top = 1
-	plate.border_color = ACCENT
-	plate.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
-	plate.shadow_size = 8
-	plate.shadow_offset = Vector2(0, 3)
+	plate.set_corner_radius_all(4)
+	plate.set_border_width_all(1)
+	plate.border_color = EDGE
 	plate.content_margin_left = 10
 	plate.content_margin_right = 10
 	plate.content_margin_top = 8
@@ -183,31 +212,25 @@ static func _panels(theme: Theme) -> void:
 	theme.set_type_variation(PLATE, "PanelContainer")
 	theme.set_stylebox("panel", PLATE, plate)
 
-	# The plate again, with the SAME hairline drawn along its bottom edge -- V2.1a,
-	# and the only new mark this project has added to U5a's signature.
-	#
-	# It says one thing and not two. "There is more content below" is the
-	# scrollbar's job and the scrollbar is styled just below; what this says is
-	# **the thing you came to this panel to press is below the fold**, which is a
-	# claim a scrollbar structurally cannot make. That failure has cost five
-	# screenshot passes -- all eight diplomatic verbs lost at V1.3e and again at
-	# V1.3g, three sector rows reading "No state programme" over a live 0.654 %
-	# bill at V1.6e -- and none of them was a scrolling problem. The player could
-	# always scroll. They had no reason to think there was anything to scroll to.
-	#
-	# Brass keeps one meaning under this: the state's own material marks what
-	# matters. It is not a second word for the scrollbar.
+	# The plate outlined in the accent, 2px along its bottom -- V2.1a's one added mark.
+	# It says "the thing you came to this panel to press is below the fold", a
+	# claim a scrollbar structurally cannot make (that failure cost five
+	# screenshot passes: all eight diplomatic verbs lost at V1.3e and again at
+	# V1.3g, three sector rows reading "No state programme" over a live bill at
+	# V1.6e -- the player could always scroll, and had no reason to think there
+	# was anything to scroll to). The accent keeps one meaning under this: it
+	# marks what you are being sent to.
 	var folded := plate.duplicate()
-	folded.border_width_bottom = 1
+	folded.border_width_bottom = 2
+	folded.border_color = _accent
 	theme.set_type_variation(PLATE_FOLDED, "PanelContainer")
 	theme.set_stylebox("panel", PLATE_FOLDED, folded)
 
-	# A window's grab handle. Lighter than the body it sits on, so the draggable
-	# strip is visibly a different thing from the panel's own content.
+	# A window's grab handle. Lighter than the body it sits on.
 	var title := StyleBoxFlat.new()
 	title.bg_color = SLATE
-	title.corner_radius_top_left = 3
-	title.corner_radius_top_right = 3
+	title.corner_radius_top_left = 4
+	title.corner_radius_top_right = 4
 	title.content_margin_left = 12
 	title.content_margin_right = 6
 	title.content_margin_top = 5
@@ -215,11 +238,13 @@ static func _panels(theme: Theme) -> void:
 	theme.set_type_variation(TITLE_BAR, "PanelContainer")
 	theme.set_stylebox("panel", TITLE_BAR, title)
 
-	# The top strip is flush against the window edge, so it gets square corners
-	# and no border at all -- an edge drawn against the screen edge is a seam.
+	# The top strip is flush against the window edge: square corners, and only a
+	# hairline underneath -- an edge drawn against the screen edge is a seam.
 	var bar := StyleBoxFlat.new()
 	bar.bg_color = Color(INK.r, INK.g, INK.b, PLATE_ALPHA)
 	bar.set_corner_radius_all(0)
+	bar.border_width_bottom = 1
+	bar.border_color = EDGE
 	bar.content_margin_left = 16
 	bar.content_margin_right = 16
 	# 3, down from 6 at V4.8a: the figures stack caption over value now, and the
@@ -234,9 +259,9 @@ static func _labels(theme: Theme) -> void:
 	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT]:
 		theme.set_type_variation(variation, "Label")
 
-	var bold := _font(FONT_CHROME_BOLD)
-	var figures := _font(FONT_FIGURE)
-	var tracked := _tracked(FONT_CHROME_MEDIUM, 1)
+	var bold := _face(WEIGHT_BOLD)
+	var figures := _face(WEIGHT_BOLD, 0, true)
+	var tracked := _face(WEIGHT_MEDIUM, 1)
 
 	theme.set_font_size("font_size", LEAD, SIZE_LEAD)
 	theme.set_color("font_color", LEAD, TEXT)
@@ -248,7 +273,7 @@ static func _labels(theme: Theme) -> void:
 	# and then recognises by position (cluster names), Heading for sections
 	# inside a panel they read every time.
 	theme.set_font_size("font_size", HEADING, SIZE_SMALL)
-	theme.set_color("font_color", HEADING, ACCENT)
+	theme.set_color("font_color", HEADING, _accent)
 	if tracked != null:
 		theme.set_font("font", HEADING, tracked)
 
@@ -257,8 +282,9 @@ static func _labels(theme: Theme) -> void:
 	if tracked != null:
 		theme.set_font("font", MICRO, tracked)
 
-	# Figures are monospaced so a ticking number stops shifting its own column
-	# every month -- unemployment going 7.33 -> 7.4 used to move the decimal.
+	# Figures carry the tabular-figures feature so a ticking number stops
+	# shifting its own column every month -- unemployment going 7.33 -> 7.4 used
+	# to move the decimal. (Archivo's default digits are proportional.)
 	theme.set_font_size("font_size", FIGURE, SIZE_FIGURE)
 	theme.set_color("font_color", FIGURE, TEXT)
 	if figures != null:
@@ -288,43 +314,41 @@ static func _labels(theme: Theme) -> void:
 
 
 static func _buttons(theme: Theme) -> void:
-	# U3 left buttons on the engine default, which was survivable against a grey
-	# background and is not against navy -- the default draws a light grey slab.
 	for type in ["Button", "OptionButton"]:
 		theme.set_stylebox("normal", type, _button_box(SLATE, EDGE))
-		theme.set_stylebox("hover", type, _button_box(SLATE.lightened(0.10), ACCENT))
-		theme.set_stylebox("pressed", type, _button_box(SLATE.lightened(0.16), ACCENT))
-		theme.set_stylebox("focus", type, _button_box(Color(0, 0, 0, 0), ACCENT))
+		theme.set_stylebox("hover", type, _button_box(SLATE.lightened(0.10), _accent))
+		theme.set_stylebox("pressed", type, _button_box(SLATE.lightened(0.16), _accent))
+		theme.set_stylebox("focus", type, _button_box(Color(0, 0, 0, 0), _accent))
 		# No border on disabled: live buttons carry EDGE, so the border is what
 		# reads "pressable" at a glance; HULL fill alone is the inert look
 		# (font_disabled_color already dims the text). The menu's disabled
 		# Continue read enabled until clicked (playtest 2026-09-05).
 		theme.set_stylebox("disabled", type, _button_box(HULL))
 		theme.set_color("font_hover_color", type, TEXT)
-		theme.set_color("font_pressed_color", type, ACCENT)
+		theme.set_color("font_pressed_color", type, _accent)
 		theme.set_color("font_disabled_color", type, TEXT_DIM)
 
 	# A cluster is an icon with a name under it, not a slab. Flat until it is the
-	# open one, where brass fills the bar under it -- the same "one accent says
-	# where you are" rule the rail button used, moved to the bottom of the screen.
+	# open one, where the accent fills the bar under it -- "one accent says where
+	# you are", the rule the rail button used, at the bottom of the screen.
 	theme.set_type_variation(CLUSTER_BUTTON, "Button")
 	theme.set_stylebox("normal", CLUSTER_BUTTON, _cluster_box(Color(0, 0, 0, 0)))
 	theme.set_stylebox("hover", CLUSTER_BUTTON, _cluster_box(SLATE))
-	theme.set_stylebox("pressed", CLUSTER_BUTTON, _cluster_box(SLATE, ACCENT))
-	theme.set_stylebox("focus", CLUSTER_BUTTON, _cluster_box(Color(0, 0, 0, 0), ACCENT))
+	theme.set_stylebox("pressed", CLUSTER_BUTTON, _cluster_box(SLATE, _accent))
+	theme.set_stylebox("focus", CLUSTER_BUTTON, _cluster_box(Color(0, 0, 0, 0), _accent))
 	theme.set_color("font_color", CLUSTER_BUTTON, TEXT_DIM)
 	theme.set_color("font_hover_color", CLUSTER_BUTTON, TEXT)
-	theme.set_color("font_pressed_color", CLUSTER_BUTTON, ACCENT)
+	theme.set_color("font_pressed_color", CLUSTER_BUTTON, _accent)
 	theme.set_color("font_focus_color", CLUSTER_BUTTON, TEXT)
 
 	theme.set_type_variation(SUBROW_BUTTON, "Button")
 	theme.set_stylebox("normal", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0)))
 	theme.set_stylebox("hover", SUBROW_BUTTON, _button_box(SLATE))
-	theme.set_stylebox("pressed", SUBROW_BUTTON, _button_box(SLATE, ACCENT))
-	theme.set_stylebox("focus", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0), ACCENT))
+	theme.set_stylebox("pressed", SUBROW_BUTTON, _button_box(SLATE, _accent))
+	theme.set_stylebox("focus", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0), _accent))
 	theme.set_color("font_color", SUBROW_BUTTON, TEXT_DIM)
 	theme.set_color("font_hover_color", SUBROW_BUTTON, TEXT)
-	theme.set_color("font_pressed_color", SUBROW_BUTTON, ACCENT)
+	theme.set_color("font_pressed_color", SUBROW_BUTTON, _accent)
 
 
 ## Used for share-of-a-whole bars (Economy's sector split). The engine default
@@ -337,30 +361,24 @@ static func _progress(theme: Theme) -> void:
 	theme.set_stylebox("background", "ProgressBar", track)
 
 	var fill := StyleBoxFlat.new()
-	fill.bg_color = ACCENT
+	fill.bg_color = _accent
 	fill.set_corner_radius_all(2)
 	theme.set_stylebox("fill", "ProgressBar", fill)
 
 
-## Every floating panel has sat inside a ScrollContainer since U5a, so nothing has
-## been unreachable since then -- and the scrollbar that says so has been on the
-## engine default the whole time, which is a light grey slab against #0A1020. The
-## one indicator this interface already had for "there is more below" was
-## effectively invisible, which is most of why five screenshot passes found a
-## panel photographed at the top of a body nobody could tell was scrolling.
+## Every floating panel sits inside a ScrollContainer, so nothing is unreachable --
+## and the scrollbar that says so was once the engine default, a light grey slab,
+## which is most of why five screenshot passes photographed a panel at the top of a
+## body nobody could tell was scrolling.
 ##
-## Themed rather than replaced. The grabber is EDGE -- the hairline colour, the
-## quietest thing in the palette that is still visible -- and it brightens on
-## hover the way every other control here does. It does NOT go brass: brass is
-## reserved, and V2.2 has already spent the next of it on cities.
+## The grabber is EDGE -- the hairline colour, the quietest thing in the palette
+## that is still visible -- and it brightens on hover like every other control. It
+## does NOT take the accent: the accent says where you are, not that you can scroll.
 static func _scrollbars(theme: Theme) -> void:
 	for type in ["VScrollBar", "HScrollBar"]:
-		# The content margins are the BAR'S WIDTH and not decoration, which is the
-		# whole of a bug the screenshot pass found: a StyleBoxFlat with no content
-		# margins has a minimum size of zero, so the first version of this theming
-		# gave the scrollbar a colour and a width of 0px and it vanished from every
-		# panel at once. It had been on the engine default -- a light grey slab,
-		# nearly invisible on navy but at least present -- since U5a.
+		# The content margins are the BAR'S WIDTH and not decoration: a StyleBoxFlat
+		# with none has a minimum size of zero, so a first version of this theming
+		# gave the scrollbar a colour and a width of 0px and it vanished everywhere.
 		var track := StyleBoxFlat.new()
 		track.bg_color = Color(INK.r, INK.g, INK.b, 0.6)
 		track.set_corner_radius_all(2)
@@ -385,7 +403,7 @@ static func _grabber_box(bg: Color) -> StyleBoxFlat:
 static func _button_box(bg: Color, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = bg
-	box.set_corner_radius_all(2)
+	box.set_corner_radius_all(4)
 	box.content_margin_left = 12
 	box.content_margin_right = 12
 	box.content_margin_top = 5
@@ -396,15 +414,13 @@ static func _button_box(bg: Color, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:
 	return box
 
 
-## A cluster's selected state is a brass bar along the *bottom*, mirroring the
-## plate's top hairline: the bottom bar's light comes from the screen edge it
-## sits on rather than from above. This replaces U2's rail button, whose accent
-## bar ran down the left for the same reason -- the marker sits on the edge the
-## control is anchored to.
+## A cluster's selected state is a bar of the accent along the *bottom*, on the
+## screen edge the control is anchored to (U2's rail button put its bar on the left
+## for the same reason).
 static func _cluster_box(bg: Color, marker := Color(0, 0, 0, 0)) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = bg
-	box.set_corner_radius_all(2)
+	box.set_corner_radius_all(4)
 	box.content_margin_left = 14
 	box.content_margin_right = 14
 	box.content_margin_top = 6

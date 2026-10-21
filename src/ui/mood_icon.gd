@@ -50,7 +50,7 @@ static func _bend_for(value: int) -> float:
 static func _colour_for(value: int) -> Color:
 	match value:
 		Portrait.Emotion.PLEASED: return UiTheme.GOOD
-		Portrait.Emotion.WORRIED: return UiTheme.ACCENT
+		Portrait.Emotion.WORRIED: return UiTheme.accent()
 		Portrait.Emotion.WEARY: return UiTheme.BAD
 	return UiTheme.TEXT_DIM
 

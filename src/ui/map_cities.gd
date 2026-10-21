@@ -153,7 +153,7 @@ static func label_offset(radius: float) -> Vector2:
 
 
 static func color_of(_city: Dictionary) -> Color:
-	return UiTheme.ACCENT
+	return UiTheme.accent()
 
 
 ## Is this the city the country's demonstration is in? Duck-typed off the record the

@@ -95,7 +95,7 @@ func add_cluster(cluster_id: String, label: String, icon_path: String, entries: 
 	_cluster_buttons[cluster_id] = button
 	_cluster_icons[cluster_id] = {
 		"plain": button.icon,
-		"marked": Icon.load_icon(icon_path, UiTheme.ACCENT, ICON_PX),
+		"marked": Icon.load_icon(icon_path, UiTheme.accent(), ICON_PX),
 	}
 	_entries[cluster_id] = entries
 
