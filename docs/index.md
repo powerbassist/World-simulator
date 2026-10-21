@@ -94,6 +94,8 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[v4]] — the world wants things: agency settled, a player agenda, characters, events at scale, industry, the reading surface. Signed 2026-09-13; closed 2026-10-18, twelve blocks merged
 - [[v5]] — the world talks back: the audit, a new shell and charter, people who talk, decisions in real units, the real network. Signed 2026-10-19; V5.0 next
 - [[v5-reflection]] — what V4 left and what the author asked for: load-bearing debts, design tensions, three candidate themes with verdicts
+- [[v5.2-spec]] — V5.2's design: every audience, lever and shadow decision with its trade-off, the dominance matrix, the conflicts with earlier rulings, a pre-mortem
+- [[bands-v5.2]] — V5.2's player-outcome bands, declared before the build, each with its probe and what a failure looks like
 - [[history]] — the per-block record of what each version built, measured and refused (moved out of AGENTS.md at V4.4's close)
 - [[someday]] — deferred engineering issues, each with the trigger that would reopen it
 - [[tiers/someday|someday (ideas)]] — the parking lot for design ideas, not scheduled
