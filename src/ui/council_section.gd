@@ -63,10 +63,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 		_sponsor_row(body, state, loader, ns, org, pending)
 		_decision_line(body, loader, org, pending)
 		_lobbying_line(body, loader, pending)
-		PanelKit.line(body, Strings.t("Divides in %d %s.") % [
-			int(pending.get("months_left", 0)),
-			Strings.t("month") if int(pending.get("months_left", 0)) == 1 else Strings.t("months"),
-		], PanelKit.Tone.PLAIN)
+		PanelKit.line(body, Strings.tn("Divides in %d month.", "Divides in %d months.", int(pending.get("months_left", 0))) % int(pending.get("months_left", 0)), PanelKit.Tone.PLAIN)
 
 		var current := String(pending.get("player_vote", Orgs.VOTE_ABSTAIN))
 		var row := HBoxContainer.new()
@@ -86,10 +83,12 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 				panel.offer_primary(button)
 			row.add_child(button)
 		body.add_child(row)
-		PanelKit.line(body, Strings.t("Currently: %s. %s holds %d of the council's seats.") % [
-			Strings.t("abstaining") if current == Orgs.VOTE_ABSTAIN else Strings.t("voting ") + current,
-			loader.nation_name(ns.id), org.seats(ns.id),
-		])
+		var standing := Strings.t("Currently: voting against. %s holds %d of the council's seats.")
+		if current == Orgs.VOTE_ABSTAIN:
+			standing = Strings.t("Currently: abstaining. %s holds %d of the council's seats.")
+		elif current == Orgs.VOTE_FOR:
+			standing = Strings.t("Currently: voting for. %s holds %d of the council's seats.")
+		PanelKit.line(body, standing % [loader.nation_name(ns.id), org.seats(ns.id)])
 		_sponsor_reaction_line(body, state, loader, ns, pending)
 		Bargains.build_table(body, panel, state, loader, ns, org, pending)
 
@@ -100,9 +99,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 	var last: Dictionary = Orgs.last_vote(state, org.id)
 	if not last.is_empty():
 		PanelKit.line(body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(body, Strings.t("Last division: %s — %s") % [
-			String(last.get("name", "")), Strings.t("carried") if bool(last.get("passed", false)) else Strings.t("fell"),
-		], PanelKit.Tone.PLAIN)
+		PanelKit.line(body, (Strings.t("Last division: %s — carried") if bool(last.get("passed", false)) else Strings.t("Last division: %s — fell")) % String(last.get("name", "")), PanelKit.Tone.PLAIN)
 		PanelKit.line(body, Strings.t("%d for, %d against, of %d seats. %s %s.") % [
 			int(last.get("seats_for", 0)), int(last.get("seats_against", 0)),
 			int(last.get("seats_total", 0)), loader.nation_name(ns.id),
@@ -123,8 +120,8 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 	if String((r.get("nations", {}) as Dictionary).get(ns.id, "")) != CouncilK.RATIFY_PENDING:
 		return
 	var left: int = int(r.get("months_left", 0))
-	PanelKit.heading(body, Strings.t("RATIFY AT HOME — %s (%d %s left)") % [
-		String(r.get("name", "")), left, Strings.t("month") if left == 1 else Strings.t("months"),
+	PanelKit.heading(body, Strings.tn("RATIFY AT HOME — %s (%d month left)", "RATIFY AT HOME — %s (%d months left)", left) % [
+		String(r.get("name", "")), left,
 	])
 	# The SAME blurred forecast a bill gets in the law screen (law_panel's static
 	# forecast_text): exact seat counts here would be a free precise whip count
@@ -170,9 +167,7 @@ static func _why(body: VBoxContainer, loader, last: Dictionary) -> void:
 		var key := String(reasons[id])
 		if not camps.has(key):
 			camps[key] = []
-		camps[key].append("%s %s" % [
-			loader.nation_name(String(id)), Strings.t("for") if String(votes.get(id, "")) == Orgs.VOTE_FOR else Strings.t("against"),
-		])
+		camps[key].append((Strings.t("%s for") if String(votes.get(id, "")) == Orgs.VOTE_FOR else Strings.t("%s against")) % loader.nation_name(String(id)))
 
 	var keys: Array = camps.keys()
 	keys.sort()
@@ -287,7 +282,7 @@ static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 		return
 	var months: int = int(org.presidency["months"])
 	if current == ns.id:
-		PanelKit.line(body, Strings.t("You chair the council this %s.") % (Strings.t("semester") if months == 6 else Strings.t("term")))
+		PanelKit.line(body, Strings.t("You chair the council this semester.") if months == 6 else Strings.t("You chair the council this term."))
 		return
 	var anchor: int = int(org.presidency["anchor_index"])
 	var now: int = state.year * 12 + (state.month - 1)

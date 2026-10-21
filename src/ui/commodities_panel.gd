@@ -210,8 +210,8 @@ func _build_alert(ns) -> void:
 	if short.size() > ALERT_HEAD:
 		PanelKit.line(body, tr("and %d more.") % (short.size() - ALERT_HEAD), PanelKit.Tone.BAD)
 	else:
-		PanelKit.line(body, tr("%d good%s below %d%% of the month's demand.") % [
-			short.size(), "" if short.size() == 1 else "s", roundi(SHORTAGE_COVERAGE * 100.0)],
+		PanelKit.line(body, tr_n("%d good below %d%% of the month's demand.", "%d goods below %d%% of the month's demand.", short.size()) % [
+			short.size(), roundi(SHORTAGE_COVERAGE * 100.0)],
 			PanelKit.Tone.BAD)
 
 

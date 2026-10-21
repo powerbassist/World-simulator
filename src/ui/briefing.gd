@@ -152,8 +152,7 @@ func _rebuild() -> void:
 
 	if not _draft.is_empty():
 		var months := int(_draft.get("months_left", 0))
-		PanelKit.line(_body, tr("In drafting: %d %s before it reaches the order paper.") % [
-			months, tr("month") if months == 1 else tr("months")], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr_n("In drafting: %d month before it reaches the order paper.", "In drafting: %d months before it reaches the order paper.", months) % months, PanelKit.Tone.PLAIN)
 
 	_build_polls()
 
@@ -360,24 +359,21 @@ static func effect_lines(effects: Dictionary, ns, include_bloc := false) -> Arra
 	var out: Array[String] = []
 	for key in effects.get("tax_rates_pct", {}):
 		var v := float(effects["tax_rates_pct"][key])
-		out.append(Strings.t("%s %s by %.1f points.") % [
-			Strings.t("Raises") if v > 0.0 else Strings.t("Lowers"), _tax_label(String(key), ns), absf(v)])
+		out.append((Strings.t("Raises %s by %.1f points.") if v > 0.0 else Strings.t("Lowers %s by %.1f points.")) % [
+			_tax_label(String(key), ns), absf(v)])
 	for key in effects.get("spending_pct_gdp", {}):
 		var v := float(effects["spending_pct_gdp"][key])
-		out.append(Strings.t("%s %s spending by %.2f%% of GDP.") % [
-			Strings.t("Raises") if v > 0.0 else Strings.t("Cuts"), String(key), absf(v)])
+		out.append((Strings.t("Raises %s spending by %.2f%% of GDP.") if v > 0.0 else Strings.t("Cuts %s spending by %.2f%% of GDP.")) % [
+			String(key), absf(v)])
 	if effects.has("structural_unemployment_pct"):
 		var v: float = _scalar_of(effects["structural_unemployment_pct"])
-		out.append(Strings.t("%s %.2f points of structural unemployment.") % [
-			Strings.t("Adds") if v > 0.0 else Strings.t("Takes"), absf(v)])
+		out.append((Strings.t("Adds %.2f points of structural unemployment.") if v > 0.0 else Strings.t("Takes %.2f points of structural unemployment.")) % absf(v))
 	if effects.has("potential_growth_pct"):
 		var v: float = _scalar_of(effects["potential_growth_pct"])
-		out.append(Strings.t("%s potential growth by %.2f points a year.") % [
-			Strings.t("Lifts") if v > 0.0 else Strings.t("Lowers"), absf(v)])
+		out.append((Strings.t("Lifts potential growth by %.2f points a year.") if v > 0.0 else Strings.t("Lowers potential growth by %.2f points a year.")) % absf(v))
 	if effects.has("other_revenue_pct_gdp"):
 		var v: float = _scalar_of(effects["other_revenue_pct_gdp"])
-		out.append(Strings.t("%s %.2f%% of GDP in other revenue.") % [
-			Strings.t("Raises") if v > 0.0 else Strings.t("Forgoes"), absf(v)])
+		out.append((Strings.t("Raises %.2f%% of GDP in other revenue.") if v > 0.0 else Strings.t("Forgoes %.2f%% of GDP in other revenue.")) % absf(v))
 	if effects.has("company"):
 		var company: Dictionary = effects["company"]
 		# TWO SHAPES, the dual reading _scalar_of() gives the scalars above: a
@@ -391,15 +387,14 @@ static func effect_lines(effects: Dictionary, ns, include_bloc := false) -> Arra
 			var v := absf(float(company.get("burden", 0.0)))
 			if v != 0.0:
 				var up: bool = float(company.get("burden", 0.0)) > 0.0
-				out.append(Strings.t("%s a burden of %.2f on the %s sector.") % [
-					Strings.t("Imposes") if up else Strings.t("Lifts"), v, String(company.get("sector", "")).capitalize()])
+				out.append((Strings.t("Imposes a burden of %.2f on the %s sector.") if up else Strings.t("Lifts a burden of %.2f on the %s sector.")) % [
+					v, String(company.get("sector", "")).capitalize()])
 		else:
 			for sector in company:
 				var ledger_v := float(company[sector])
 				if ledger_v != 0.0:
-					out.append(Strings.t("%s a burden of %.2f on the %s sector.") % [
-						Strings.t("Imposes") if ledger_v > 0.0 else Strings.t("Lifts"), absf(ledger_v),
-						String(sector).capitalize()])
+					out.append((Strings.t("Imposes a burden of %.2f on the %s sector.") if ledger_v > 0.0 else Strings.t("Lifts a burden of %.2f on the %s sector.")) % [
+						absf(ledger_v), String(sector).capitalize()])
 	for term in effects.get("society", {}):
 		var v: float = _scalar_of(effects["society"][term])
 		if v != 0.0:
@@ -438,16 +433,16 @@ static func _society_line(term: String, v: float) -> String:
 	var up := v > 0.0
 	match term:
 		"corruption":
-			return Strings.t("%s the anti-corruption stance.") % (Strings.t("Loosens") if up else Strings.t("Tightens"))
+			return Strings.t("Loosens the anti-corruption stance.") if up else Strings.t("Tightens the anti-corruption stance.")
 		"migration":
-			return Strings.t("%s migration.") % (Strings.t("Opens") if up else Strings.t("Tightens"))
+			return Strings.t("Opens migration.") if up else Strings.t("Tightens migration.")
 		"settlement":
-			return Strings.t("%s with the unions.") % (Strings.t("Settles") if up else Strings.t("Takes a harder line"))
+			return Strings.t("Settles with the unions.") if up else Strings.t("Takes a harder line with the unions.")
 		"press_freedom":
-			return Strings.t("%s the press laws.") % (Strings.t("Loosens") if up else Strings.t("Tightens"))
+			return Strings.t("Loosens the press laws.") if up else Strings.t("Tightens the press laws.")
 		"judicial_independence":
-			return Strings.t("%s the courts' independence.") % (Strings.t("Strengthens") if up else Strings.t("Curbs"))
-	return Strings.t("%s the %s stance by %.2f.") % [Strings.t("Raises") if up else Strings.t("Lowers"), term, absf(v)]
+			return Strings.t("Strengthens the courts' independence.") if up else Strings.t("Curbs the courts' independence.")
+	return (Strings.t("Raises the %s stance by %.2f.") if up else Strings.t("Lowers the %s stance by %.2f.")) % [term, absf(v)]
 
 
 static func _scalar_of(value) -> float:

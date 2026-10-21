@@ -22,8 +22,12 @@ extends RefCounted
 
 const DIR := "res://data/i18n"
 const DEFAULT := "en"
-const _PLACEHOLDER := r"%[-+ #0]*\d*(?:\.\d+)?[sdfxXc%]"  # i18n: ok
+## A placeholder is `%` IMMEDIATELY followed by its conversion: a French "50 % du PIB"
+## (a space before the percent sign) holds none.
+const _PLACEHOLDER := r"%[-+#0]*\d*(?:\.\d+)?[sdfxXc%]"  # i18n: ok
 
+## Where the tables are read from; a test points it at a fixture language.
+static var dir := DIR
 static var _language := DEFAULT
 static var _installed: Translation
 ## kind -> {"<id>.<field>": text} for the current language; cleared on a switch.
@@ -37,10 +41,26 @@ static func t(msgid: String) -> String:
 	return TranslationServer.translate(msgid)
 
 
+## `tr_n()` for a static function: the singular and plural English, and the count that
+## picks the form. A table entry is a list of forms under the SINGULAR msgid; every
+## form keeps the singular's placeholders (the caller formats whichever is picked).
+static func tn(singular: String, plural: String, n: int) -> String:
+	return TranslationServer.translate_plural(singular, plural, n)
+
+
+## How many plural forms a language's table gives each plural msgid (its entry in
+## languages.json); 2 for English and French (0 and 1 are the first form in French).
+static func plural_forms(code: String) -> int:
+	for entry in languages():
+		if String(entry["code"]) == code:
+			return int(entry.get("plural_forms", 2))
+	return 2
+
+
 ## The offered languages, English first: [{code, name}].
 static func languages() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	var parsed = _read_json("%s/languages.json" % DIR)
+	var parsed = _read_json("%s/languages.json" % dir)
 	if parsed is Dictionary:
 		for entry in parsed.get("languages", []):
 			if entry is Dictionary and entry.has("code") and entry.has("name"):
@@ -71,7 +91,10 @@ static func set_language(code: String) -> bool:
 		translation.locale = code
 		var table := ui_table(code)
 		for msgid in table:
-			translation.add_message(StringName(msgid), StringName(String(table[msgid])))
+			if table[msgid] is PackedStringArray:
+				translation.add_plural_message(StringName(msgid), table[msgid])
+			else:
+				translation.add_message(StringName(msgid), StringName(String(table[msgid])))
 		TranslationServer.add_translation(translation)
 		_installed = translation
 	TranslationServer.set_locale(code)
@@ -80,7 +103,7 @@ static func set_language(code: String) -> bool:
 
 ## data/i18n/<code>/ui.json: {msgid: translation}. Empty for a missing file.
 static func ui_table(code: String) -> Dictionary:
-	return _table("%s/%s/ui.json" % [DIR, code])
+	return _table("%s/%s/ui.json" % [dir, code])
 
 
 ## A row's text in the current language: the table's entry for `<id>.<field>` in
@@ -91,7 +114,7 @@ static func row(kind: String, id: String, field: String, english: String) -> Str
 	if _language == DEFAULT:
 		return english
 	if not _rows.has(kind):
-		_rows[kind] = _table("%s/%s/%s.json" % [DIR, _language, kind])
+		_rows[kind] = _table("%s/%s/%s.json" % [dir, _language, kind])
 	var table: Dictionary = _rows[kind]
 	var text := String(table.get("%s.%s" % [id, field], ""))
 	return text if text != "" else english
@@ -126,7 +149,12 @@ static func _table(path: String) -> Dictionary:
 	var out := {}
 	if parsed is Dictionary:
 		for key in parsed:
-			if not String(key).begins_with("_"):
+			if String(key).begins_with("_"):
+				continue
+			# A list of plural forms stays a list; everything else is one string.
+			if parsed[key] is Array:
+				out[String(key)] = PackedStringArray(parsed[key])
+			else:
 				out[String(key)] = String(parsed[key])
 	return out
 

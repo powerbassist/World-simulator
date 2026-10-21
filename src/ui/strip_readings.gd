@@ -251,14 +251,12 @@ static func _election_tooltip(ns, loader, months: int) -> String:
 	if months < 0:
 		# No "Win it." here: the vote the player was supposed to win is over.
 		return Strings.t("The vote that ends your term has been held.")
-	var what := "vote"
 	if loader != null and loader.nations.has(ns.id):
 		var nation = loader.nations[ns.id]
 		if bool(ns.has_executive):
-			what = Strings.t("vote for %s") % nation.executive_title
-		else:
-			what = Strings.t("vote for the %s") % nation.chamber_name
-	return Strings.t("The %s that ends your term -- %s. Win it.") % [what, Trends.months_text(months)]
+			return Strings.t("The vote for %s that ends your term -- %s. Win it.") % [nation.executive_title, Trends.months_text(months)]
+		return Strings.t("The vote for the %s that ends your term -- %s. Win it.") % [nation.chamber_name, Trends.months_text(months)]
+	return Strings.t("The vote that ends your term -- %s. Win it.") % Trends.months_text(months)
 
 
 ## V4.1. The chosen programme's name (as the caption) and its nearest-deadline
@@ -316,7 +314,7 @@ static func programme_clock_text(terms: Dictionary, live: Dictionary) -> String:
 	var left := timeout - int(live["months_live"])
 	if left <= 0:
 		return Strings.t("its deadline is now")
-	return Strings.t("%s to its deadline") % ("1 month" if left == 1 else Strings.t("%d months") % left)
+	return Strings.tn("%d month to its deadline", "%d months to its deadline", left) % left
 
 
 ## V4.4. The desk, read straight off the queue register -- the same read
@@ -386,7 +384,7 @@ static func _europe(state, ns) -> Dictionary:
 			if treaty_left < 0 or left < treaty_left:
 				treaty_left = left
 				treaty_text = "%s, %s" % [String(r.get("name", "")),
-					Strings.t("1 month left") if left == 1 else Strings.t("%d months left") % left]
+					Strings.tn("%d month left", "%d months left", left) % left]
 
 	var text := Strings.t("— clear")
 	if treaty_left >= 0:
@@ -397,10 +395,9 @@ static func _europe(state, ns) -> Dictionary:
 	var lines: Array = [
 		_line(Strings.t("The councils you sit on.")),
 		_line(Strings.t("Burden %.2f") % burden),
-		_line((Strings.t("1 rule in force binds you, %d breached") % breached) if rules.size() == 1 \
-			else (Strings.t("%d rules in force bind you, %d breached") % [rules.size(), breached]),
+		_line(Strings.tn("%d rule in force binds you, %d breached", "%d rules in force bind you, %d breached", rules.size()) % [rules.size(), breached],
 			"rules" if not rules.is_empty() else ""),
-		_line(Strings.t("%d %s owed") % [owed, "IOU" if owed == 1 else "IOUs"]),
+		_line(Strings.tn("%d IOU owed", "%d IOUs owed", owed) % owed),
 		_line((Strings.t("Treaty awaiting your assembly: %s") % treaty_text) if treaty_left >= 0 else Strings.t("No treaty awaiting you")),
 	]
 	return _reading_lines(text, lines, true, "orgs" if treaty_left >= 0 else "")

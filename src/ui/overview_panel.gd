@@ -345,8 +345,8 @@ func _fill_defence(ns) -> void:
 	if deployed == 0:
 		PanelKit.line(_columns["government"], tr("Allied with %s.") % ", ".join(allies))
 	else:
-		PanelKit.line(_columns["government"], tr("Allied with %s; %d deployment%s running.") % [
-			", ".join(allies), deployed, "" if deployed == 1 else "s",
+		PanelKit.line(_columns["government"], tr_n("Allied with %s; %d deployment running.", "Allied with %s; %d deployments running.", deployed) % [
+			", ".join(allies), deployed,
 		], PanelKit.Tone.BAD)
 
 
@@ -529,7 +529,7 @@ func _entry_tooltip(ns, terms: Dictionary, entry: Dictionary) -> String:
 	var timeout := int(terms.get("timeout_months", 0))
 	if timeout > 0:
 		var left := timeout - int(entry["months_live"])
-		tip += tr(" · %s to its deadline") % ("1 month" if left <= 1 else tr("%d months") % left)
+		tip += tr_n(" · %d month to its deadline", " · %d months to its deadline", left) % left
 	return tip
 
 
@@ -630,8 +630,7 @@ func _polled_approval(ns) -> float:
 func _moved(change: float) -> String:
 	if absf(change) < 0.05:
 		return tr("flat")
-	var direction := tr("up") if change > 0.0 else tr("down")
-	return tr("%s %.1f points") % [direction, absf(change)]
+	return (tr("up %.1f points") if change > 0.0 else tr("down %.1f points")) % absf(change)
 
 
 func _month_name_ago(months: int) -> String:

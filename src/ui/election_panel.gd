@@ -486,10 +486,8 @@ func _build_attribution(result: Dictionary, is_verdict := false) -> Control:
 	for entry in result["attribution"]:
 		var issue: String = entry["issue"]
 		var satisfaction: float = entry["satisfaction"]
-		var mood := tr("helped") if satisfaction > 0.05 else (tr("hurt") if satisfaction < -0.05 else tr("was neutral"))
-		PanelKit.line(box, tr("%s — %s (salience %.0f%%)") % [
-			OpinionK.ISSUE_LABEL[issue], mood, entry["salience"] * 100.0,
-		], PanelKit.Tone.PLAIN)
+		var line := tr("%s — helped (salience %.0f%%)") if satisfaction > 0.05 else (tr("%s — hurt (salience %.0f%%)") if satisfaction < -0.05 else tr("%s — was neutral (salience %.0f%%)"))
+		PanelKit.line(box, line % [OpinionK.ISSUE_LABEL[issue], entry["salience"] * 100.0], PanelKit.Tone.PLAIN)
 
 	# Once, on the verdict's attribution only -- a sentence printed under every
 	# table on a double-election panel is wallpaper, not a message.

@@ -79,9 +79,8 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 		return Strings.t("a party leadership")
 	if object.begins_with("meter:"):
 		var meter := object.substr("meter:".length())
-		var direction := Strings.t("below") if want.has("below") else Strings.t("above")
 		var threshold := float(want.get("below", want.get("above", 0.0)))
-		return "%s %s %.1f" % [meter.replace("_", " "), direction, threshold]
+		return (Strings.t("%s below %.1f") if want.has("below") else Strings.t("%s above %.1f")) % [meter.replace("_", " "), threshold]
 	return object
 
 var _body: VBoxContainer

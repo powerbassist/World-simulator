@@ -423,8 +423,7 @@ func _ready() -> void:
 		elif bool(result.get("referendum_route", false)):
 			body = tr("To the country -- the vote is scheduled.")
 		else:
-			body = tr("%s. Yes %d, No %d.") % [
-				tr("Passed") if bool(result.get("passed", false)) else tr("Failed"),
+			body = (tr("Passed. Yes %d, No %d.") if bool(result.get("passed", false)) else tr("Failed. Yes %d, No %d.")) % [
 				int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
 			]
 		_hud.message_stack.push(String(law_name), body)
@@ -1641,15 +1640,18 @@ func _assembly_bill_body(entry: Dictionary) -> String:
 	# keep offering a stand the sim now refuses (the panel drops its button
 	# for the same reason).
 	if float(entry.get("endorse_bonus", 0.0)) > 0.0:
-		return tr("%s reaches the floor in %d month%s. The president's stand is on the record -- endorsed.") % [
-			law_name, months, "" if months == 1 else "s"]
+		return tr_n("%s reaches the floor in %d month. The president's stand is on the record -- endorsed.", "%s reaches the floor in %d months. The president's stand is on the record -- endorsed.", months) % [
+			law_name, months]
 	if firm_id != "":
 		var chief := _loader.person_name(String(entry.get("backer_chief", "")))
-		return tr("%s's chief %s backs %s. The assembly divides in %d month%s; whether the president stands behind it is the president's to take.") % [
-			_loader.firm_name(_state.player_nation_id, firm_id),
-			chief if chief != "" else tr("the chief"), law_name, months, "" if months == 1 else "s"]
-	return tr("%s reaches the floor in %d month%s. Endorse it, or let the backbench stand alone.") % [
-		law_name, months, "" if months == 1 else "s"]
+		var firm := _loader.firm_name(_state.player_nation_id, firm_id)
+		if chief == "":
+			return tr_n("%s's chief backs %s. The assembly divides in %d month; whether the president stands behind it is the president's to take.", "%s's chief backs %s. The assembly divides in %d months; whether the president stands behind it is the president's to take.", months) % [
+				firm, law_name, months]
+		return tr_n("%s's chief %s backs %s. The assembly divides in %d month; whether the president stands behind it is the president's to take.", "%s's chief %s backs %s. The assembly divides in %d months; whether the president stands behind it is the president's to take.", months) % [
+			firm, chief, law_name, months]
+	return tr_n("%s reaches the floor in %d month. Endorse it, or let the backbench stand alone.", "%s reaches the floor in %d months. Endorse it, or let the backbench stand alone.", months) % [
+		law_name, months]
 
 func _assembly_result_body(result: Dictionary) -> String:
 	var law_name := _law_title(String(result.get("law_id", "")))
@@ -1678,8 +1680,7 @@ func _assembly_result_body(result: Dictionary) -> String:
 	if bool(result.get("released", false)):
 		return tr("The %s's hold has run out — %s comes into force.") % [
 			String(result.get("upper_chamber", tr("second chamber"))), law_name]
-	return tr("The assembly has %s %s, %d ayes to %d noes.") % [
-		tr("carried") if bool(result.get("passed", false)) else tr("defeated"),
+	return (tr("The assembly has carried %s, %d ayes to %d noes.") if bool(result.get("passed", false)) else tr("The assembly has defeated %s, %d ayes to %d noes.")) % [
 		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
 
 func _law_title(law_id: String) -> String:
@@ -1860,7 +1861,7 @@ func _card_character_acts(acts: Array) -> void:
 		var kind := String(act["act"])
 		var detail: Dictionary = act.get("detail", {})
 		var title := tr("The bench stirs")
-		var body := tr("%s acts.") % (who if who != "" else tr("Someone"))
+		var body := tr("%s acts.") % who if who != "" else tr("Someone acts.")
 		match kind:
 			"resign":
 				title = "A resignation"
@@ -1871,9 +1872,7 @@ func _card_character_acts(acts: Array) -> void:
 			"challenge":
 				var deposed := _loader.person_name(String(detail.get("deposed", "")))
 				title = tr("A leadership challenge")
-				body = tr("%s takes the leadership. %s stands down.") % [
-					who, deposed if deposed != "" else tr("The incumbent"),
-				]
+				body = tr("%s takes the leadership. %s stands down.") % [who, deposed] if deposed != "" else tr("%s takes the leadership. The incumbent stands down.") % who
 			"brief_against":
 				title = "A leak"
 				body = tr("%s briefs against the government.") % who
@@ -2158,8 +2157,8 @@ func _dismiss_event_cards(event_id: String) -> void:
 ## same two sentences the arrival card has always carried, now beside buttons
 ## that answer it (V2.9).
 func _decision_body(ev, left: int) -> String:
-	return tr("%s  You have %d %s to answer.") % [
-		ev.summary, left, tr("month") if left == 1 else tr("months"),
+	return tr_n("%s  You have %d month to answer.", "%s  You have %d months to answer.", left) % [
+		ev.summary, left,
 	]
 
 
@@ -2302,16 +2301,13 @@ func _card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
 		)
 		return
 
-	var kind := String(entry.get("kind", ""))
-	var where := ""
-	if kind == CalendarK.KIND_DIPLOMATIC:
-		where = tr(" with %s") % _nation_name(String(entry.get("target_id", "")))
-	_hud.message_stack.push(
-		tr("Kept: %s") % label,
-		tr("%s%s, as booked.%s") % [
-			label, where, "" if ok else tr(" It did not carry."),
-		],
-	)
+	# One whole sentence per shape, the failure a sentence of its own.
+	var booked := tr("%s, as booked.") % label
+	if String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
+		booked = tr("%s with %s, as booked.") % [label, _nation_name(String(entry.get("target_id", "")))]
+	if not ok:
+		booked += " " + tr("It did not carry.")
+	_hud.message_stack.push(tr("Kept: %s") % label, booked)
 
 
 func _action_by_id(id: String):

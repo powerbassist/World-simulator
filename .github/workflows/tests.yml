@@ -114,7 +114,9 @@ jobs:
       - name: Size ratchet (code lines; tools/size_baseline.json)
         run: python tools/check_size.py
       - name: Translation tables (stale keys, empty values, placeholders)
-        run: python tools/i18n_extract.py --check
+        run: |
+          python tools/i18n_extract.py --selftest
+          python tools/i18n_extract.py --check
       - name: Every file has a declared licence (REUSE)
         run: |
           pip install --quiet reuse==6.2.0

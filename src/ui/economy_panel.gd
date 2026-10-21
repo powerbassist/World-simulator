@@ -272,7 +272,7 @@ func _anchor_rating() -> String:
 func _gap_sentence(gap: float) -> String:
 	if absf(gap) < 0.05:
 		return tr("Output is running at potential.")
-	return tr("Output is %s potential by %.1f%%.") % [tr("above") if gap > 0.0 else tr("below"), absf(gap)]
+	return (tr("Output is above potential by %.1f%%.") if gap > 0.0 else tr("Output is below potential by %.1f%%.")) % absf(gap)
 
 
 ## Largest first, as a share, because the question a sector list answers is

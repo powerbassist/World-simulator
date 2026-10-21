@@ -52,7 +52,10 @@ BS = chr(92)
 # tr( or Strings.t( ending the text before a literal; not str( / substr(.
 WRAPPED = re.compile(r"(?<![A-Za-z0-9_])(?:tr|Strings\.t)\($")
 MARKER = re.compile(r"# i18n: msgid((?: \w+)*)\s*$")
-PLACEHOLDER = re.compile(r"%[-+ #0]*\d*(?:\.\d+)?[sdfxXc%]")
+# A placeholder is % IMMEDIATELY followed by its conversion: a French "50 % du PIB" holds none.
+PLACEHOLDER = re.compile(r"%[-+#0]*\d*(?:\.\d+)?[sdfxXc%]")
+# tr_n( or Strings.tn( ending the text before the SINGULAR of a plural msgid.
+PLURAL_WRAPPED = re.compile(r"(?<![A-Za-z0-9_])(?:tr_n|Strings\.tn)\($")
 
 # data directory -> the fields of a row (dotted for nested) that a player reads as
 # prose. Names of people, parties, outlets, firms and places are proper nouns and are
@@ -125,25 +128,42 @@ def _marked_msgids(line, fields):
     return out
 
 
+def line_msgids(line):
+    """([msgids], {singular: english plural}) of one GDScript line: the literals inside
+    tr()/Strings.t(), the singular (and its plural) of tr_n()/Strings.tn(), or those of a
+    `# i18n: msgid` marked line."""
+    marker = MARKER.search(line)
+    if marker:
+        return _marked_msgids(line, marker.group(1).split()), {}
+    texts = []
+    plurals = {}
+    lits = literals(line)
+    for index, (start, end, text) in enumerate(lits):
+        before = line[:start]
+        if WRAPPED.search(before):
+            texts.append(text)
+        elif PLURAL_WRAPPED.search(before):
+            texts.append(text)
+            if index + 1 < len(lits) and re.match(r"\s*,", line[end + 1:]):
+                plurals[unescape(text)] = unescape(lits[index + 1][2])
+    return texts, plurals
+
+
 def ui_msgids():
+    """({msgid: where}, {singular msgid: English plural}) over src/ui."""
     found = {}
+    plurals = {}
     for path in sorted(glob.glob(os.path.join(ROOT, "src", "ui", "*.gd"))):
         if os.path.basename(path).startswith("dev_"):
             continue
         for number, line in enumerate(open(path, encoding="utf-8"), 1):
             where = "%s:%d" % (os.path.basename(path), number)
-            marker = MARKER.search(line)
-            texts = []
-            if marker:
-                texts = _marked_msgids(line, marker.group(1).split())
-            else:
-                for start, _end, text in literals(line):
-                    if WRAPPED.search(line[:start]):
-                        texts.append(text)
+            texts, found_plurals = line_msgids(line)
+            plurals.update(found_plurals)
             for text in texts:
                 if re.search(r"[A-Za-z]{2,}", text):
                     found.setdefault(unescape(text), where)
-    return found
+    return found, plurals
 
 
 def _rows_of(kind, doc):
@@ -216,30 +236,61 @@ def load_table(lang, name):
     return json.load(open(path, encoding="utf-8"))
 
 
+def plural_forms(lang):
+    """How many plural forms the language gives a plural msgid (languages.json)."""
+    path = os.path.join(ROOT, "data", "i18n", "languages.json")
+    for entry in json.load(open(path, encoding="utf-8")).get("languages", []):
+        if entry.get("code") == lang:
+            return int(entry.get("plural_forms", 2))
+    return 2
+
+
 def sources():
-    """[(table name, {key: english})], UI first. Also the duplicate-id list."""
+    """([(table name, {key: english})] UI first, duplicate row ids, {plural msgid: English plural})."""
     rows, duplicates = row_texts()
-    ui = ui_msgids()
-    return [("ui", {k: k for k in ui})] + sorted(rows.items()), duplicates
+    ui, plurals = ui_msgids()
+    return [("ui", {k: k for k in ui})] + sorted(rows.items()), duplicates, plurals
 
 
-def problems(source, table):
+def problems(source, table, plurals=None, forms=2):
+    """(stale, empty, placeholder mismatches, plural-shape errors) of one table. A plural
+    msgid's entry is a list of `forms` strings, every one with the singular's placeholders;
+    any other entry is one string."""
+    plurals = plurals or {}
     live = {k: v for k, v in table.items() if not k.startswith("_")}
     stale = sorted(k for k in live if k not in source)
-    empty = sorted(k for k, v in live.items() if not str(v).strip())
-    holders = sorted(
-        k for k, v in live.items()
-        if k in source and PLACEHOLDER.findall(source[k]) != PLACEHOLDER.findall(str(v))
-    )
-    return stale, empty, holders
+    empty, holders, shape = [], [], []
+    for k, v in live.items():
+        if k not in source:
+            continue
+        is_list = isinstance(v, list)
+        if (k in plurals) != is_list or (is_list and len(v) != forms):
+            shape.append(k)
+            continue
+        for form in (v if is_list else [v]):
+            if not str(form).strip():
+                empty.append(k)
+                break
+            if PLACEHOLDER.findall(source[k]) != PLACEHOLDER.findall(str(form)):
+                holders.append(k)
+                break
+    return stale, sorted(empty), sorted(holders), sorted(shape)
 
 
 def todo(lang):
     out = {"lang": lang, "ui": {}, "rows": {}}
-    tables, _dups = sources()
+    tables, _dups, plurals = sources()
+    forms = plural_forms(lang)
     for name, source in tables:
         table = load_table(lang, name)
-        missing = {k: {"en": en, lang: ""} for k, en in source.items() if k not in table}
+        missing = {}
+        for k, en in source.items():
+            if k in table:
+                continue
+            if name == "ui" and k in plurals:
+                missing[k] = {"en": en, "en_plural": plurals[k], lang: [""] * forms}
+            else:
+                missing[k] = {"en": en, lang: ""}
         if not missing:
             continue
         if name == "ui":
@@ -249,11 +300,19 @@ def todo(lang):
     return out
 
 
+def _edges(en, text):
+    """The English msgid's leading and trailing spaces, put on a translation: a msgid built
+    to be joined to another string (" -- kept only if %s is ratified") keeps them."""
+    return en[:len(en) - len(en.lstrip())] + text + en[len(en.rstrip()):]
+
+
 def apply_worklist(path):
     """Write the filled slots of a worklist into the tables; returns the number refused."""
     work = json.load(open(path, encoding="utf-8"))
     lang = work["lang"]
-    tables = dict(sources()[0])
+    all_tables, _dups, plurals = sources()
+    tables = dict(all_tables)
+    forms = plural_forms(lang)
     refused = 0
     written = 0
     groups = [("ui", work.get("ui", {}))] + sorted(work.get("rows", {}).items())
@@ -266,22 +325,39 @@ def apply_worklist(path):
         table = load_table(lang, name)
         changed = False
         for key, entry in entries.items():
-            text = str(entry.get(lang, "")).strip()
-            if not text:
-                continue
-            # A msgid built to be joined to another string keeps its edge spaces
-            # (" -- kept only if %s is ratified"); so does the translation.
-            en = source.get(key, "")
-            text = en[:len(en) - len(en.lstrip())] + text + en[len(en.rstrip()):]
+            slot = entry.get(lang, "")
+            plural = name == "ui" and key in plurals
             if key not in source:
-                print("refused (stale, its English is gone): %s/%s" % (name, key))
-                refused += 1
+                if (slot if isinstance(slot, list) else [slot]) != [""] and slot != [""] * forms:
+                    print("refused (stale, its English is gone): %s/%s" % (name, key))
+                    refused += 1
                 continue
-            if PLACEHOLDER.findall(source[key]) != PLACEHOLDER.findall(text):
+            if plural:
+                if not isinstance(slot, list) or len(slot) != forms:
+                    print("refused (a plural msgid takes a list of %d forms): %s/%s" % (forms, name, key))
+                    refused += 1
+                    continue
+                if not any(str(s).strip() for s in slot):
+                    continue
+                if not all(str(s).strip() for s in slot):
+                    print("refused (every plural form must be filled): %s/%s" % (name, key))
+                    refused += 1
+                    continue
+                values = [_edges(key, str(s).strip()) for s in slot]
+            else:
+                if isinstance(slot, list):
+                    print("refused (this msgid is not a plural; one string): %s/%s" % (name, key))
+                    refused += 1
+                    continue
+                text = str(slot).strip()
+                if not text:
+                    continue
+                values = [_edges(source[key], text)]
+            if any(PLACEHOLDER.findall(source[key]) != PLACEHOLDER.findall(v) for v in values):
                 print("refused (placeholders differ from the English): %s/%s" % (name, key))
                 refused += 1
                 continue
-            table[key] = text
+            table[key] = values if plural else values[0]
             written += 1
             changed = True
         if changed:
@@ -292,9 +368,39 @@ def apply_worklist(path):
     return refused
 
 
+def selftest():
+    """What the tool itself must read right; run in CI (--selftest)."""
+    bad = []
+
+    def check(what, got, want):
+        if got != want:
+            bad.append("%s: got %r, wanted %r" % (what, got, want))
+
+    check("spaced percent", PLACEHOLDER.findall("50 % du PIB"), [])
+    check("non-breaking percent", PLACEHOLDER.findall("50\u00a0% du PIB"), [])
+    check("real next to spaced", PLACEHOLDER.findall("%d %% of %s, 50 % du total"), ["%d", "%%", "%s"])
+    check("precision", PLACEHOLDER.findall("%.1f%% (%+d)"), ["%.1f", "%%", "%+d"])
+    check("tr", line_msgids('x.text = tr("Save %d")'), (["Save %d"], {}))
+    check("static", line_msgids('return Strings.t("Done")'), (["Done"], {}))
+    check("plural", line_msgids('return tr_n("%d month", "%d months", n) % n'), (["%d month"], {"%d month": "%d months"}))
+    check("static plural", line_msgids('Strings.tn("%d day", "%d days", n)'), (["%d day"], {"%d day": "%d days"}))
+    check("not a call", line_msgids('var s := str("not me")'), ([], {}))
+    check("marked keys", line_msgids('"health": "Health",  # i18n: msgid'), (["Health"], {}))
+    check("marked last", line_msgids('["revenue", "Revenue"],  # i18n: msgid last'), (["Revenue"], {}))
+    check("problems ok", problems({"%d month": "%d month"}, {"%d month": ["%d mois", "%d mois"]}, {"%d month": "%d months"}), ([], [], [], []))
+    check("problems shape", problems({"%d month": "%d month"}, {"%d month": "%d mois"}, {"%d month": "%d months"})[3], ["%d month"])
+    check("problems placeholder", problems({"%d month": "%d month"}, {"%d month": ["%d mois", "mois"]}, {"%d month": "%d months"})[2], ["%d month"])
+    for line in bad:
+        print("selftest: " + line)
+    print("i18n_extract selftest: %s" % ("failed" if bad else "all checks passed"))
+    return 1 if bad else 0
+
+
 def main(argv):
     # Windows consoles default to a legacy code page; the tables are UTF-8.
     sys.stdout.reconfigure(encoding="utf-8")
+    if "--selftest" in argv:
+        return selftest()
     if "--todo" in argv:
         json.dump(todo(argv[argv.index("--todo") + 1]), sys.stdout, ensure_ascii=False, indent=2)
         print()
@@ -302,18 +408,18 @@ def main(argv):
     if "--apply" in argv:
         return 1 if apply_worklist(argv[argv.index("--apply") + 1]) else 0
     bad = 0
-    tables, duplicates = sources()
+    tables, duplicates, plurals = sources()
     for lang in languages():
         print("== %s" % lang)
         for name, source in tables:
             table = load_table(lang, name)
             done = sum(1 for k in source if k in table)
-            stale, empty, holders = problems(source, table)
-            print("  %-20s %5d / %-5d translated   stale %d, empty %d, placeholder mismatch %d" % (name, done, len(source), len(stale), len(empty), len(holders)))
-            for label, items in (("stale", stale), ("empty", empty), ("placeholders", holders)):
+            stale, empty, holders, shape = problems(source, table, plurals if name == "ui" else {}, plural_forms(lang))
+            print("  %-20s %5d / %-5d translated   stale %d, empty %d, placeholder mismatch %d, plural shape %d" % (name, done, len(source), len(stale), len(empty), len(holders), len(shape)))
+            for label, items in (("stale", stale), ("empty", empty), ("placeholders", holders), ("plural shape", shape)):
                 for key in items[:5]:
                     print("      %s: %s" % (label, key))
-            bad += len(stale) + len(empty) + len(holders)
+            bad += len(stale) + len(empty) + len(holders) + len(shape)
     for line in duplicates:
         print("duplicate row id -- %s" % line)
     bad += len(duplicates)

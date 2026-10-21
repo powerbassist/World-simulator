@@ -71,6 +71,8 @@ var _capitalised_re: RegEx
 var _camel_re: RegEx
 var _key_after_re: RegEx
 var _const_re: RegEx
+var _fragment_re: RegEx
+var _format_arg_re: RegEx
 
 
 func _init() -> void:
@@ -90,7 +92,8 @@ func _init() -> void:
 	_builder_re = RegEx.create_from_string("(?:" + TEXT_FIRST + "|" + ID_FIRST + r")\(")
 	_else_re = RegEx.create_from_string(r"\belse\s*\(*\s*$")
 	_index_re = RegEx.create_from_string(r"(?<=[\w\])])\[\s*$")
-	_wrapped_re = RegEx.create_from_string(r"(?<![\w])(?:tr|Strings\.t)\($")
+	# tr( / Strings.t( hold one literal; tr_n( / Strings.tn( hold the singular and the plural.
+	_wrapped_re = RegEx.create_from_string(r"(?<![\w])(?:(?:tr|Strings\.t)\(|(?:tr_n|Strings\.tn)\((?:\"(?:[^\"\\]|\\.)*\"\s*,\s*)?)$")
 	_not_text_re = RegEx.create_from_string(NOT_TEXT)
 	# Prose: two words with a space between (a lone unit or id has none), ...
 	_prose_words_re = RegEx.create_from_string(r"[A-Za-z]{2,}[^A-Za-z]*\s[^A-Za-z]*[A-Za-z]{2,}|^\s[A-Za-z]{2,}|[A-Za-z]{2,}\s$")
@@ -104,6 +107,12 @@ func _init() -> void:
 	_capitalised_re = RegEx.create_from_string(r"^[A-Z][a-z]{3,}[.:!?]?$")
 	_camel_re = RegEx.create_from_string(r"[a-z][A-Z]")
 	_key_after_re = RegEx.create_from_string(r"^\s*:")
+	# A ternary of two SHORT literals with no placeholder in either ("Raises" if up else
+	# "Lowers"), wrapped or not: a fragment to be spliced into a sentence.
+	_fragment_re = RegEx.create_from_string(r"(?:(?:tr|Strings\.t)\()?\"([^\"%]{1,30})\"\)?\s+if\s+[^\"]+?\s+else\s+\(?(?:(?:tr|Strings\.t)\()?\"([^\"%]{1,30})\"")
+	# ... inside the argument of a format operator: `"..." % [` or `) % (` on this line or
+	# at the end of the line before.
+	_format_arg_re = RegEx.create_from_string(r"[\"\)]\s*%\s*[\[\(]")
 	_const_re = RegEx.create_from_string(r"^(?:const|static var|enum)\b")
 	_self_check()
 	var names := Array(DirAccess.get_files_at(ROOT))
@@ -123,6 +132,7 @@ func _init() -> void:
 func _scan(path: String) -> void:
 	var number := 0
 	var is_const := false
+	var previous := ""
 	for line in FileAccess.get_file_as_string(path).split("
 "):
 		number += 1
@@ -132,15 +142,20 @@ func _scan(path: String) -> void:
 			is_const = true
 		elif line != "" and not line.begins_with("#") and not line[0] in [" ", "	", ")", "]", "}"]:
 			is_const = false
-		for message in _check_line(line, is_const):
+		for message in _check_line(line, is_const, previous):
 			_fail("%s:%d: %s" % [path.get_file(), number, message])
+		previous = line
 
 
 ## The complaints one line earns.
-func _check_line(line: String, is_const: bool) -> Array[String]:
+func _check_line(line: String, is_const: bool, previous := "") -> Array[String]:
 	var out: Array[String] = []
 	if line.strip_edges().begins_with("#") or line.contains(OK_MARK) or line.contains(MSGID_MARK):
 		return out
+	# A fragment spliced into a sentence cannot be translated: make the sentence whole
+	# (one per branch, or tr_n for a count).
+	if _fragment_re.search(line) and (_format_arg_re.search(line) or _format_arg_re.search(previous.strip_edges().right(8))):
+		out.append("a ternary of short fragments inside a format argument: write a whole sentence per branch (tr_n for a count)")
 	for literal in _literals(line):
 		var text: String = literal["text"]
 		if not _text_re.search(text):
@@ -176,10 +191,16 @@ func _self_check() -> void:
 		"_line(tip, \"coalition\")": 0,
 		"_line(\"Surplus\", \"coalition\")": 1,
 		"\"A sentence of prose\" + x": 1,
+		"return tr(\"%s the press laws.\") % (tr(\"Loosens\") if up else tr(\"Tightens\"))": 1,
+		"		tr(\"Raises\") if v > 0.0 else tr(\"Lowers\"), absf(v)])": 0,
 	}
 	var clean := [
 		"label.text = tr(\"Hello world\")",
 		"label.text = Strings.t(\"Hello world\")",
+		"label.text = tr(\"Leave office\") if defeated else tr(\"Continue\")",
+		"b.text = (tr(\"Put first: %s\") if chairing else tr(\"Table: %s\")) % name",
+		"return tr_n(\"%d month left\", \"%d months left\", n) % n",
+		"x = Strings.tn(\"%d day\", \"%d days\", n) % n",
 		"PanelKit.figure(_columns[\"government\"], tr(\"x\"))",
 		"if kind == \"Not available\":",
 		"x = dict[\"Some key\"]",
@@ -199,6 +220,9 @@ func _self_check() -> void:
 	for line in clean:
 		if not _check_line(line, false).is_empty():
 			_fail("self-check: `%s` should be clean, was flagged" % line)
+	# A fragment ternary on the line AFTER a format operator is the same defect.
+	if _check_line("		tr(\"Raises\") if v > 0.0 else tr(\"Lowers\"), absf(v)])", false, "out.append(tr(\"%s %.1f.\") % [").is_empty():
+		_fail("self-check: a fragment ternary inside a format argument list should be flagged")
 	if _check_line("const NAMES := [\"Alpha Beta\"]", true).is_empty():
 		_fail("self-check: prose in a const should be flagged")
 	if not _check_line("const NAMES := [\"Alpha Beta\"]  # i18n: msgid", true).is_empty():

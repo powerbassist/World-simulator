@@ -365,7 +365,7 @@ func _build_censure_summary(censure: Dictionary) -> Control:
 	# their party, this one is parties that walked. Only the second is expelled.
 	var defectors: Array = censure["defectors"]
 	if not defectors.is_empty():
-		PanelKit.line(box, tr("%d coalition party(s) voted to censure and are out of government.") % defectors.size(), PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr_n("%d coalition party voted to censure and is out of government.", "%d coalition parties voted to censure and are out of government.", defectors.size()) % defectors.size(), PanelKit.Tone.PLAIN)
 
 	return box
 
@@ -493,8 +493,8 @@ func _build_pending_referendum(ns) -> Control:
 
 	var months := Referendum.months_left(ns)
 	var share := Referendum.yes_share(ns, ns.referendum_pending.get("position", {}))
-	PanelKit.line(box, tr("The country votes in %d %s. If it voted today: %.1f%% yes, %.1f%% no.") % [
-		months, tr("month") if months == 1 else tr("months"), share * 100.0, (1.0 - share) * 100.0
+	PanelKit.line(box, tr_n("The country votes in %d month. If it voted today: %.1f%% yes, %.1f%% no.", "The country votes in %d months. If it voted today: %.1f%% yes, %.1f%% no.", months) % [
+		months, share * 100.0, (1.0 - share) * 100.0
 	], PanelKit.Tone.PLAIN)
 
 	var row := HBoxContainer.new()
@@ -630,11 +630,10 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	# the clause rode unconditioned, promising a price the assembly class
 	# never pays.
 	if String(ns.held_bills.get(law_id, {}).get("origin", "player")) == "assembly":
-		PanelKit.line(box, tr("The Assembly carried it and the second chamber refused. It comes into force in %s.") % [
-			tr("one month") if months == 1 else tr("%d months") % months], PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr_n("The Assembly carried it and the second chamber refused. It comes into force in %d month.", "The Assembly carried it and the second chamber refused. It comes into force in %d months.", months) % months, PanelKit.Tone.PLAIN)
 	else:
-		PanelKit.line(box, tr("The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc.") % [
-			tr("one month") if months == 1 else tr("%d months") % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr_n("The Assembly carried it and the second chamber refused. It comes into force in %d month, and overriding them costs %.2f with every bloc.", "The Assembly carried it and the second chamber refused. It comes into force in %d months, and overriding them costs %.2f with every bloc.", months) % [
+			months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
 	return box
 
 
@@ -662,9 +661,8 @@ func _build_assembly_section(ns) -> void:
 		var months := int(entry.get("months_left", 0))
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override("separation", 2)
-		PanelKit.line(box, tr("%s — before the assembly, divides in %d %s.") % [
-			Strings.law_name(law) if law != null else String(entry.get("law_id", "")),
-			months, tr("month") if months == 1 else tr("months")], PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr_n("%s — before the assembly, divides in %d month.", "%s — before the assembly, divides in %d months.", months) % [
+			Strings.law_name(law) if law != null else String(entry.get("law_id", "")), months], PanelKit.Tone.PLAIN)
 		var firm_id := String(entry.get("backer_firm", ""))
 		if firm_id != "":
 			# The B3 person_name idiom: the chief resolves through the loader

@@ -276,10 +276,9 @@ func _want_row(ns, person, want: Dictionary) -> void:
 	var tone := PanelKit.Tone.DIM
 	if stance == "oppose":
 		served = not served
-	var mark := tr("served") if served else tr("denied")
 	if not served:
 		tone = PanelKit.Tone.BAD
-	PanelKit.line(_body, "    %s — %s" % [text, mark], tone)
+	PanelKit.line(_body, "    " + ((tr("%s — served") if served else tr("%s — denied")) % text), tone)
 
 
 ## The meter hand-in, matching what main.gd hands Characters.tick_month

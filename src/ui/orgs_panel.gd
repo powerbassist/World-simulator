@@ -332,8 +332,8 @@ func _on_membership(org_id: String, joining: bool) -> void:
 		_refusal_text = tr("Refused: %s") % String(result.get("reason", ""))
 		_dirty = true
 		return
-	acted.emit(before, tr("Membership referendum called: %s %s %s") % [
-		ns.id, tr("joins") if joining else tr("leaves"), org_id.to_upper(),
+	acted.emit(before, (tr("Membership referendum called: %s joins %s") if joining else tr("Membership referendum called: %s leaves %s")) % [
+		ns.id, org_id.to_upper(),
 	])
 	_dirty = true
 
@@ -379,9 +379,7 @@ func _on_ratify(org_id: String) -> void:
 		_refusal_text = tr("Refused: the treaty can no longer be put to the assembly.")
 		_dirty = true
 		return
-	acted.emit(before, tr("Treaty put to the assembly: %s — %s") % [
-		treaty, tr("ratified") if bool(result.get("passed", false)) else tr("rejected"),
-	])
+	acted.emit(before, (tr("Treaty put to the assembly: %s — ratified") if bool(result.get("passed", false)) else tr("Treaty put to the assembly: %s — rejected")) % treaty)
 	_dirty = true
 
 

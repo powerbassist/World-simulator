@@ -76,7 +76,13 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 		return ma < mb
 	)
 
-	PanelKit.line(inner, Strings.t("Ask a member to vote %s. One bargain per member per division.") % vote)
+	match vote:
+		Orgs.VOTE_FOR:
+			PanelKit.line(inner, Strings.t("Ask a member to vote for. One bargain per member per division."))
+		Orgs.VOTE_AGAINST:
+			PanelKit.line(inner, Strings.t("Ask a member to vote against. One bargain per member per division."))
+		_:
+			PanelKit.line(inner, Strings.t("Ask a member to abstain. One bargain per member per division."))
 	# Someone already bargained with can sort out of the visible rows (a FOR ask on a
 	# member who leans FOR moves it away from the threshold), so name them here.
 	var struck: Dictionary = pending.get("bargains", {})
@@ -111,8 +117,8 @@ static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pen
 		sb.tooltip_text = Strings.t("It sponsored this proposal: it would take the payment for a vote it was always going to cast.")
 		inner.add_child(sb)
 		return
-	PanelKit.line(inner, Strings.t("%s — leans %s (%+.2f)") % [
-		loader.nation_name(id), "FOR" if margin >= 0.0 else Strings.t("AGAINST"), margin,
+	PanelKit.line(inner, (Strings.t("%s — leans FOR (%+.2f)") if margin >= 0.0 else Strings.t("%s — leans AGAINST (%+.2f)")) % [
+		loader.nation_name(id), margin,
 	], PanelKit.Tone.PLAIN)
 
 	var why_not := {
@@ -194,7 +200,7 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 		return
 	if not chairing and not tabled.is_empty():
 		var tp = Orgs.proposal_by_id(loader, org.id, String(tabled.get("proposal_id", "")))
-		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % (String(tp.proposal_name) if tp != null else Strings.t("a proposal")))
+		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % String(tp.proposal_name) if tp != null else Strings.t("You have tabled a proposal with the chair."))
 		return
 
 	var inner := _fold(body, panel, "agenda:" + org.id, title)

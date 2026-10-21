@@ -176,10 +176,10 @@ func _build_pending(ns) -> void:
 		# tell an empty list from a closed gate would read the lever as broken.
 		if longest_quiet > 0:
 			var closed_ago: int = EventsK.CATEGORY_QUIET_MONTHS - longest_quiet
-			PanelKit.line(_body, tr("Nothing today. The last matter closed %s.") % (
-				tr("this month") if closed_ago <= 0
-				else tr("%d %s ago") % [closed_ago, tr("month") if closed_ago == 1 else tr("months")]
-			))
+			if closed_ago <= 0:
+				PanelKit.line(_body, tr("Nothing today. The last matter closed this month."))
+			else:
+				PanelKit.line(_body, tr_n("Nothing today. The last matter closed %d month ago.", "Nothing today. The last matter closed %d months ago.", closed_ago) % closed_ago)
 		else:
 			PanelKit.line(_body, tr("Nothing today."))
 		return
@@ -241,8 +241,8 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	# hover read "12 of 96 months" against a project with twelve months LEFT.
 	var left := int(entry.get("months_left", 0))
 	var deadline := Label.new()
-	deadline.text = tr("%d %s to answer, then: %s") % [
-		left, tr("month") if left == 1 else tr("months"), ev.default_choice().get("label", ""),
+	deadline.text = tr_n("%d month to answer, then: %s", "%d months to answer, then: %s", left) % [
+		left, ev.default_choice().get("label", ""),
 	]
 	# NEUTRAL until the last month, and the first captured frame is why: this line was
 	# GOOD_TEXT at any comfortable distance, so "2 months to answer, then: Say nothing"
@@ -356,9 +356,7 @@ func _build_ledger(ns) -> void:
 			continue
 		_build_record(record)
 	if hidden > 0:
-		PanelKit.line(_body, tr("%d %s hidden by your message settings.") % [
-			hidden, tr("record") if hidden == 1 else tr("records"),
-		])
+		PanelKit.line(_body, tr_n("%d record hidden by your message settings.", "%d records hidden by your message settings.", hidden) % hidden)
 
 
 func _build_record(record: Dictionary) -> void:

@@ -304,8 +304,8 @@ func _build_site(ns) -> void:
 		PanelKit.line(_body, tr("Choose where the meetings are held. Reach falls with the journey's travel days, and a region already spoken to gives less the second time."))
 		return
 	var days := Campaign.travel_days_to(ns, _loader, _site_region)
-	PanelKit.line(_body, tr("%d day%s' travel · reach ×%.2f a month · %d%% spoken to") % [
-		days, "" if days == 1 else "s",
+	PanelKit.line(_body, tr_n("%d day's travel · reach ×%.2f a month · %d%% spoken to", "%d days' travel · reach ×%.2f a month · %d%% spoken to", days) % [
+		days,
 		Campaign.factor_of(ns, _loader, _site_region),
 		roundi(Campaign.spoken(ns, _site_region) * 100.0),
 	])
@@ -325,8 +325,8 @@ func _site_text(ns, effort_id: String) -> String:
 		return tr("no meetings on the schedule -- the effort is reaching nobody")
 	var city := Campaign.site_city_name(_loader, ns, site)
 	var days := Campaign.travel_days_to(ns, _loader, site)
-	return tr("meeting in %s (%s) · %d day%s · %d%% spoken to") % [
-		_region_name(ns, site), city, days, "" if days == 1 else "s",
+	return tr_n("meeting in %s (%s) · %d day · %d%% spoken to", "meeting in %s (%s) · %d days · %d%% spoken to", days) % [
+		_region_name(ns, site), city, days,
 		roundi(Campaign.spoken(ns, site) * 100.0),
 	]
 
@@ -513,9 +513,8 @@ func _build_promise_row(ns, entry: Dictionary) -> void:
 		# already made was costing -- the one figure this section exists to be a ledger
 		# of. docs/projects-model.md's months-remaining rule from the other side: the
 		# count is the unit the model charges in, and the total is what the count is for.
-		state_label.text = tr("%s · %s · broken %d of %d months, %.2f approval") % [
+		state_label.text = (tr("%s · BEING BROKEN · broken %d of %d months, %.2f approval") if broken else tr("%s · being kept · broken %d of %d months, %.2f approval")) % [
 			_promise_text(entry),
-			tr("BEING BROKEN") if broken else tr("being kept"),
 			int(entry["breach_months"]), int(entry["months_live"]),
 			-_charged_so_far(entry),
 		]
@@ -547,8 +546,9 @@ func _build_promise_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 ## triple is what the model compares and it is not what anybody says out loud.
 func _promise_text(entry: Dictionary) -> String:
 	var value: float = float(entry.get("value", 0.0))
-	var bound: String = tr("no more than") if String(entry.get("op", "")) == "<=" else tr("no less than")
-	return "%s %s %s" % [tr(FIELD_LABEL.get(String(entry.get("field", "")), String(entry.get("field", "")))), bound, _field_value(String(entry.get("field", "")), value)]
+	var field_label: String = tr(FIELD_LABEL.get(String(entry.get("field", "")), String(entry.get("field", ""))))
+	var shown := _field_value(String(entry.get("field", "")), value)
+	return (tr("%s no more than %s") if String(entry.get("op", "")) == "<=" else tr("%s no less than %s")) % [field_label, shown]
 
 
 func _field_value(field: String, value: float) -> String:

@@ -83,11 +83,17 @@ the keys, and a site not yet wired shows English, which is the safe failure.)
    same `%d %s %.1f` in the same order as its English; `test_strings.gd` checks every
    entry. Write the English so that order is possible in French (do not build a
    sentence out of fragments joined with `+` -- one string, one `%`).
-4. **Plurals.** Use `tr_n(singular, plural, n)` or two whole sentences; do not write
-   "item(s)". French counts 0 and 1 as singular. The existing code builds many counts as
-   `"%d %s" % [n, "month" if n == 1 else "months"]`: both words are wrapped, so they are
-   two msgids ("month", "months") a translator fits to the sentence; `tr_n` is the
-   cleaner form for new code.
+4. **A sentence is whole, and a count picks the form with `tr_n`.** Never splice a short
+   English word into a translated frame (`"%d %s" % [n, "month" if n == 1 else "months"]`,
+   `"month%s"`, `"party(s)"`, `"%s the stance" % ["Raises" if up else "Lowers"]`): the
+   French noun, verb or agreement is not the English one. A count that picks the form is
+   `tr_n("%d month left", "%d months left", n) % n` (`Strings.tn(...)` in a `static func`),
+   both literals on one line; a choice between two meanings is two whole sentences
+   (`T("Raises %s by %.1f points.") if v > 0.0 else T("Lowers %s by %.1f points.")`).
+   The lint fails a ternary of two short literals inside a format argument. A plural msgid's
+   table entry is a LIST of forms under the singular msgid -- two for English and French
+   (`plural_forms` in `languages.json`; French counts 0 and 1 as the first form) -- each with
+   the singular's placeholders, because the caller formats whichever form is picked.
 5. **A const table of prose cannot call `tr()`.** Keep the English in the const, wrap
    at the use site (`tr(CAPTIONS[key])`), and end each line that holds msgids with
    `# i18n: msgid` so the extractor lists them and the lint leaves them alone (the lint
@@ -147,6 +153,15 @@ python tools/i18n_extract.py                             # coverage per language
           "events": {"com_gas_squeeze.choices.freeze_the_tariff.label": {"en": "Freeze the household tariff", "fr": ""}}}}
 ```
 
+A PLURAL msgid (`tr_n`) lists as `{"en": "%d month left", "en_plural": "%d months left",
+"fr": ["", ""]}`: fill every form of the list (a language's `plural_forms`; French has 2: 0 and 1,
+then the rest). `--apply` writes the list under the singular msgid, refuses a list of the wrong
+length or with an empty form, and checks the placeholders of every form against the singular:
+
+```json
+"%d month left": ["%d mois restant", "%d mois restants"]
+```
+
 `--apply` writes every filled slot into `data/i18n/<lang>/ui.json` (the `ui` group) or
 `data/i18n/<lang>/<kind>.json` (a `rows` group); entries already in a table are kept and
 a filled slot overwrites its key; an empty slot is skipped. It **refuses**, and names, a
@@ -181,13 +196,15 @@ Every prose literal the lint can see is wrapped or marked: 1 112 UI msgids today
 of the backlog (the other panels' bodies, laws, events, people, firms) is the content
 child's, from `--todo fr`.
 
-What the lint cannot see: a lone lowercase word away from a sink; a sentence assembled
-from fragments across `+` (merged into one msgid where it was found, but a new one will not
-be caught if each fragment is short and lowercase); and text built from data
-(`String(x).capitalize()`). A French sentence assembled from translated *fragments*
-(`"%s the %s stance by %.2f." % ["Raises" if up else "Lowers", term, v]`) reads as
-English word order; the fix is a whole sentence per case, a Content-child call when it
-shows in French.
+What the lint cannot see: a lone lowercase word away from a sink; a short fragment that
+reaches a format string through a variable rather than a ternary inside the argument; a
+fragment appended with `+=` (` -- kept only if %s is ratified at home` is its own msgid with
+edge spaces, the translator's to fit); and text built from data (`String(x).capitalize()`,
+a sim constant such as a chamber name). Every count that picks a form and every
+two-way verb in a sentence is now a whole sentence (V5.1b2): `tr_n` for counts, one
+sentence per branch for choices; a sentence with a FIXED plural word ("... %d months ...")
+still shows "1 months" in English when the count is 1 -- a pre-existing edge, converted to
+`tr_n` as each shows.
 
 `tools/screenshot.gd -- --lang fr` stages the game in French; `--menu` ignores it,
 because the menu applies the saved language when it comes up.

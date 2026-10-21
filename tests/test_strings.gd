@@ -21,6 +21,8 @@ func _init() -> void:
 	_check_switch()
 	_check_rows()
 	_check_tables()
+	_check_placeholder_parse()
+	_check_plurals()
 	Strings.set_language("en")
 	_finish()
 	quit(1 if not _failures.is_empty() else 0)
@@ -101,13 +103,51 @@ func _check_tables() -> void:
 		if table.is_empty():
 			_fail("the %s UI table is empty or missing" % lang)
 		for msgid in table:
-			var text := String(table[msgid])
-			if text.strip_edges() == "":
-				_fail("%s: '%s' is translated to nothing" % [lang, msgid])
-			if Strings.placeholders(String(msgid)) != Strings.placeholders(text):
-				_fail("%s: '%s' and its translation do not share placeholders in order" % [lang, msgid])
+			# A plural entry is a list of forms; every form keeps the singular's
+			# placeholders, because the caller formats whichever form is picked.
+			var forms: Array = table[msgid] if table[msgid] is Array else [table[msgid]]
+			for form in forms:
+				var text := String(form)
+				if text.strip_edges() == "":
+					_fail("%s: '%s' is translated to nothing" % [lang, msgid])
+				if Strings.placeholders(String(msgid)) != Strings.placeholders(text):
+					_fail("%s: '%s' and its translation do not share placeholders in order" % [lang, msgid])
 	if Strings.placeholders("%d of %s, %.1f%% (%%)") != ["%d", "%s", "%.1f", "%%", "%%"]:
 		_fail("placeholders() read %s" % [Strings.placeholders("%d of %s, %.1f%% (%%)")])
+
+
+## A placeholder is `%` immediately followed by its conversion. A French "50 % du PIB"
+## (a space, even a non-breaking one, before the percent sign) holds none.
+func _check_placeholder_parse() -> void:
+	for text in ["50 % du PIB", "50 % du PIB", "100 % of total", "rate: 5 % d'intérêt"]:
+		if not Strings.placeholders(text).is_empty():
+			_fail("'%s' holds no placeholder, read %s" % [text, Strings.placeholders(text)])
+	if Strings.placeholders("%d %% of %s, 50 % du total") != ["%d", "%%", "%s"]:
+		_fail("a real placeholder next to a spaced percent was misread: %s" % [Strings.placeholders("%d %% of %s, 50 % du total")])
+
+
+## tr_n / Strings.tn through a table: a msgid's value is a list of forms, picked by the
+## language's plural rule (French: 0 and 1 are the first form). The fixture table is
+## the test's own, so this does not borrow the real French.
+func _check_plurals() -> void:
+	var real_dir := Strings.dir
+	Strings.dir = "res://tests/fixtures/i18n"
+	if not Strings.set_language("fr"):
+		_fail("the fixture table was refused")
+	for n in [0, 1, 2, 5]:
+		var want := "%d pomme" % n if n < 2 else "%d pommes" % n
+		if tr_n("%d apple", "%d apples", n) % n != want:
+			_fail("tr_n(%d) gave '%s', wanted '%s'" % [n, tr_n("%d apple", "%d apples", n) % n, want])
+		if Strings.tn("%d apple", "%d apples", n) % n != want:
+			_fail("Strings.tn(%d) differs from tr_n" % n)
+	if tr("Hello %s") % "x" != "Bonjour x":
+		_fail("a plain entry beside the plural ones should still translate")
+	if Strings.plural_forms("fr") != 2:
+		_fail("plural_forms('fr') should read 2 from the language entry")
+	Strings.set_language("en")
+	if tr_n("%d apple", "%d apples", 1) % 1 != "1 apple" or tr_n("%d apple", "%d apples", 3) % 3 != "3 apples":
+		_fail("in English tr_n should pick the source singular or plural")
+	Strings.dir = real_dir
 
 
 func _fail(message: String) -> void:

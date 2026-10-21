@@ -269,12 +269,12 @@ func _clock_text(terms: Dictionary, live_months: int, is_live: bool) -> String:
 	if timeout <= 0:
 		return tr("no deadline")
 	if not is_live:
-		return tr("%d months on the clock") % timeout
+		return tr_n("%d month on the clock", "%d months on the clock", timeout) % timeout
 	var left := timeout - live_months
 	if left <= 0:
 		return tr("month %d of %d -- its deadline is now") % [live_months, timeout]
-	return tr("month %d of %d · %s to its deadline") % [
-		live_months, timeout, "1 month" if left == 1 else tr("%d months") % left,
+	return tr_n("month %d of %d · %d month to its deadline", "month %d of %d · %d months to its deadline", left) % [
+		live_months, timeout, left,
 	]
 
 
