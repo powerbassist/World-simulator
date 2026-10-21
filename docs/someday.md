@@ -386,7 +386,7 @@ Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed t
 Pass 2 (`code-review 28 xhigh`, the parent's), recorded and not fixed:
 
 - **`tests/test_dev_console_game.gd` writes `user://saves` with no `## suite-exclusive:` tag** (the test audit's S11 class). Harmless under isolation, which every run is; tag it if a run ever shares a user dir.
-- **The Logger installs in the console's `_ready`, late in `main._ready`, and `menu.tscn` has no console**, so errors raised at boot (the data load, the menu) never reach the counter. Installing it from the menu too, or earlier, is a V5.1c shell decision.
+- **The Logger installs in the console's `_ready`, late in `main._ready`, and `menu.tscn` has no console**, so errors raised at boot (the data load, the menu) never reach the counter. Installing it from the menu too, or earlier, is a V5.1c shell decision. **First concrete case (V5.1-0c, found by the parent's smoke run):** the menu's `_ready` called `WindowMode.install()`, whose `add_child()` on the still-busy root window failed with "Parent node is busy setting up children" -- F11 was dead and no counter showed it, because the menu has no console. Fixed by a deferred add; the error was only in the game log.
 
 ## Carried from V5.1-0a (2026-10-21)
 

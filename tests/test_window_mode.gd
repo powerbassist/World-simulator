@@ -6,7 +6,7 @@ extends SceneTree
 ## V5.1-0c. The author's "window size change dont work": the game booted
 ## fullscreen with no key out, and a windowed drag snapped back on every return to
 ## the menu. The pure rules (WindowMode.plan), the root window they configure and
-## the F11 key are pinned here; the OS window itself is not reachable headless, so
+## the F11 key -- installed through the menu's real boot path -- are pinned here; the OS window itself is not reachable headless, so
 ## the windowed frames in the PR carry the visual half.
 
 ## suite-exclusive: backs up and restores user://settings.cfg -- the key and Settings checks write the display keys
@@ -19,19 +19,70 @@ var _calls := 0
 var _frame := 0
 
 
+var _host: Window
+
+
 func _process(_delta: float) -> bool:
-	# One frame in: the root window is inside the tree, as it is when the menu's
-	# _ready() calls apply_saved(), so the key node has a viewport to handle on.
 	_frame += 1
-	if _frame < 2:
-		return false
-	_check_plan()
-	_check_root_window_is_resizable_with_a_floor()
-	_check_key_toggles_and_persists()
-	_check_f11_flips_the_window_not_the_file()
-	_check_settings_rows_do_not_fight_the_window()
-	_finish()
+	match _frame:
+		1:
+			_check_plan()  # first: it reads the process-wide "first apply" state
+		2:
+			# The REAL boot path: menu.gd's _ready() calls apply_saved(get_window()),
+			# and at boot that _ready() runs while the root window is still setting up
+			# its children, so an add_child() on that window fails ("Parent node is
+			# busy setting up children"). The first version of install() did exactly
+			# that and F11 was dead in the shipped game. A script cannot make the real
+			# root busy, so a stand-in Window is: the menu is added to a window that is
+			# not in the tree yet, and the window then enters it, propagating _ready()
+			# to the menu while it is blocked -- the same mechanism.
+			_host = Window.new()
+			_host.add_child(load("res://src/ui/menu.tscn").instantiate())
+			root.add_child(_host)
+		4:
+			_check_menu_boot_installs_the_key()
+			_host.queue_free()
+			# The same-frame double call, with nothing installed yet: the second
+			# call must see the first one's pending add.
+			root.unresizable = true  # the state a bad config could have left
+			root.min_size = Vector2i.ZERO
+			SettingsPanel.apply_saved(root)
+			SettingsPanel.apply_saved(root)
+		6:
+			_check_root_window_is_resizable_with_a_floor()
+			_check_key_toggles_and_persists()
+			_check_f11_flips_the_window_not_the_file()
+			_check_settings_rows_do_not_fight_the_window()
+			_finish()
 	return false
+
+
+## Red on the first version of install(): root has no WindowMode node after the
+## menu has booted, and F11 does nothing. The key is pressed through the real node
+## (not a stand-in callable), so the wiring to the window is under test too: the
+## headless root cannot take a mode, but the toggle writes its result to the file.
+func _check_menu_boot_installs_the_key() -> void:
+	var node = _host.get_node_or_null(WindowMode.NODE_NAME)
+	if node == null:
+		_fail("booting the menu left no F11 key node on its window -- install() ran inside the window's own add_child and failed")
+		return
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	var had := cfg.has_section_key("display", "fullscreen")
+	var was: Variant = cfg.get_value("display", "fullscreen") if had else null
+	var want := _host.mode != Window.MODE_FULLSCREEN  # what a flip from this window writes
+	node._unhandled_input(_key(KEY_F11, true, false))
+	var after := ConfigFile.new()
+	after.load(SettingsPanel.CONFIG_PATH)
+	if not after.has_section_key("display", "fullscreen") or bool(after.get_value("display", "fullscreen")) != want:
+		_fail("F11 through the node the menu installed did not toggle the window")
+	var restore := ConfigFile.new()
+	restore.load(SettingsPanel.CONFIG_PATH)
+	if had:
+		restore.set_value("display", "fullscreen", was)
+	else:
+		restore.erase_section_key("display", "fullscreen")
+	restore.save(SettingsPanel.CONFIG_PATH)
 
 
 func _check_plan() -> void:
@@ -64,22 +115,18 @@ func _check_plan() -> void:
 
 
 func _check_root_window_is_resizable_with_a_floor() -> void:
-	root.unresizable = true  # the state a bad config could have left
-	root.min_size = Vector2i.ZERO
-	SettingsPanel.apply_saved(root)
+	# Staged at frame 4: apply_saved() twice in one frame, from a window that had
+	# no key node, with the root forced unresizable.
 	if root.unresizable:
 		_fail("apply_saved left the root window unresizable")
 	if root.min_size != WindowMode.MIN_SIZE:
 		_fail("apply_saved left min_size %s, want %s" % [root.min_size, WindowMode.MIN_SIZE])
-	if root.get_node_or_null(WindowMode.NODE_NAME) == null:
-		_fail("apply_saved installed no F11 key node on the root window")
-	SettingsPanel.apply_saved(root)
 	var keys := 0
 	for child in root.get_children():
 		if child.name == WindowMode.NODE_NAME:
 			keys += 1
 	if keys != 1:
-		_fail("%d F11 key nodes after two apply_saved calls, want one" % keys)
+		_fail("%d F11 key nodes after two same-frame apply_saved calls, want exactly one" % keys)
 
 
 func _check_key_toggles_and_persists() -> void:

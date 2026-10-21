@@ -56,14 +56,24 @@ static func note_applied() -> void:
 var _on_toggle: Callable
 
 
-## Adds the key node to `window` unless it is already there.
+## The meta that marks an add already queued, since a deferred add is not in the
+## tree yet when a second call checks for the node.
+const PENDING_META := "window_mode_pending"
+
+
+## Adds the key node to `window` unless it is already there or already on its way.
+## DEFERRED: at boot the menu's _ready() runs while the root window is still
+## setting up its children, and add_child() on a window in that state fails with
+## "Parent node is busy setting up children" -- the first version added directly
+## and F11 was dead in the shipped game (the parent's smoke run found it).
 static func install(window: Window, on_toggle: Callable) -> void:
-	if window == null or window.get_node_or_null(NODE_NAME) != null:
+	if window == null or window.get_node_or_null(NODE_NAME) != null or window.has_meta(PENDING_META):
 		return
+	window.set_meta(PENDING_META, true)
 	var node := new()
 	node.name = NODE_NAME
 	node._on_toggle = on_toggle
-	window.add_child(node)
+	window.add_child.call_deferred(node)
 
 
 func _unhandled_input(event: InputEvent) -> void:
