@@ -505,6 +505,8 @@ static func _read_field(state, ns, field: String, target_id: String) -> float:
 		# V5.1-0d, the seventh piece of pair state and DIRECTED like a measure: this
 		# nation's own mission in the target's capital (src/sim/diplomacy_embassies.gd).
 		"embassy_held": return 1.0 if ns.embassies.has(target_id) else 0.0
+		# Pass 2: the pairs data/world/embassies.json says have no relations at all.
+		"relations_exist": return 0.0 if ns.no_relations.has(target_id) else 1.0
 		"overall_approval_pct": return ns.overall_approval_pct
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
 		"unemployment_pct": return ns.unemployment_pct
@@ -669,10 +671,8 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 	if action.cooldown_months > 0:
 		ns.diplo_cooldown_months[cooldown_key(action.id, target_id)] = action.cooldown_months
 
-	# V5.1-0d, the sixth effect channel: the actor's mission in the target's capital,
-	# one way. The register rather than the cooldown is what keeps it from reopening.
-	if String(action.effects.get("embassy", "")) == "open" and not ns.embassies.has(target_id):
-		ns.embassies.append(target_id)
+	# V5.1-0d, the sixth effect channel (src/sim/diplomacy_embassies.gd).
+	Embassies.apply(ns, action.effects, target_id)
 
 	# V2.4a, and it is a stamp rather than an effect: the one pair fact this verb
 	# writes that nobody negotiated over. Either direction across the pair opens

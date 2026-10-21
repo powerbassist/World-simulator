@@ -1,5 +1,5 @@
 {
-  "_note": "The two parked V1 rows (embassies, foreign aid), landed on the existing effects.relations channel as the V3 tier's call. Magnitudes anchored on the measured ladder, not tuned: an embassy is state_visit's goodwill class (+5 relations, 12-month cooldown) bought once -- +6 at a 240-month cooldown, gated on having met at all, so it cannot substitute for the visit; since V5.1-0d it is also gated on the embassy register (`embassy_held`), which is what stops it repeating and what makes it unavailable where an embassy already stands (data/world/embassies.json); foreign aid is settle_dispute's climbdown class priced at home (+8 relations, six-bloc split, every bloc under MAX_ACTION_BLOC_OFFSET's 0.15 ceiling), cooldown 48, because giving money away should be seen to cost something at home. The domestic prices are per-bloc by design -- a price on fewer than six blocs never clears the +-3.0 poll-noise floor in the roll-up (diplomacy-model's split-price property), and aid IS a split question: the spending-minded blocs approve, the ones who wanted it spent here do not.",
+  "_note": "The two parked V1 rows (embassies, foreign aid), landed on the existing effects.relations channel as the V3 tier's call. Magnitudes anchored on the measured ladder, not tuned: an embassy is state_visit's goodwill class (+5 relations, 12-month cooldown) bought once -- +6 at a 240-month cooldown, gated on having met at all, so it cannot substitute for the visit; since V5.1-0d it is also gated on the embassy register (`embassy_held`), which is what stops it repeating and what makes it unavailable where an embassy already stands, and on `relations_exist`, so a pair data/world/embassies.json lists as having no diplomatic relations cannot open one; foreign aid is settle_dispute's climbdown class priced at home (+8 relations, six-bloc split, every bloc under MAX_ACTION_BLOC_OFFSET's 0.15 ceiling), cooldown 48, because giving money away should be seen to cost something at home. The domestic prices are per-bloc by design -- a price on fewer than six blocs never clears the +-3.0 poll-noise floor in the roll-up (diplomacy-model's split-price property), and aid IS a split question: the spending-minded blocs approve, the ones who wanted it spent here do not.",
   "actions": [
     {
       "id": "open_embassy",
@@ -21,6 +21,11 @@
           "field": "embassy_held",
           "op": "==",
           "value": 0
+        },
+        {
+          "field": "relations_exist",
+          "op": "==",
+          "value": 1
         }
       ],
       "effects": {

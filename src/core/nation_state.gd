@@ -34,6 +34,14 @@ var neighbours: Array = []
 ## Zagreb. A reloaded game running a different model: eu_member/neighbours' case.
 var embassies: Array = []
 
+## V5.1-0d pass 2: the nations this one has NO diplomatic relations with (symmetric;
+## data/world/embassies.json's exceptions, copied at the same seed), read by the
+## `relations_exist` precondition so open_embassy cannot open what the data says
+## cannot stand. A static copy for neighbours' reason: _read_field() has no loader.
+## Serialised, absent_ok false under the same bump to 41 (no save at 41 ever shipped
+## without it): absent, every pair would read as in relations.
+var no_relations: Array = []
+
 ## The orgs this nation belongs to, sorted org ids. V3.2. LIVE state, not a
 ## content lookup: an accession or a withdrawal rewrites it months into a run,
 ## and every reader -- the trade weight, resting relations, the appraisal's

@@ -42,13 +42,17 @@ SCRIPT_ERROR = re.compile(r"SCRIPT ERROR|Parse Error")
 # S7 (V5.1-0d, the test audit's proposal): a test that exits 0 over an engine or
 # push_error line used to pass -- test_diplomacy carried G1's two capital errors
 # on every run. Now any line that STARTS with ERROR:, or the save path's
-# NaN-in-JSON warning, fails it, unless it is the engine's exit-time leak report
+# NaN-in-JSON warning, fails it, unless it is one of the engine's at-exit leak reports
 # (printed by the engine after the script is done, nothing a test can own) or it
 # matches a regex the test declares in its own source with `## expects-error:`.
 ERROR_LINE = re.compile(r"^(?:USER )?ERROR:.*$|^WARNING:.*NaN.*JSON\.stringify.*$",
                         re.MULTILINE)
-EXIT_LEAK = re.compile(r"^ERROR: \d+ (?:resources still in use|RID allocations "
-                       r"of type .* were leaked) at exit")
+# By SHAPE (pass 2): which at-exit report the engine prints depends on what a test
+# left alive -- resources still in use, RID allocations leaked, PagedAllocator pages
+# in use -- so a list of two would turn a green test red with no code change. An
+# ERROR: about leaks, use or allocations AT EXIT; a test's own line that merely
+# mentions exit is not one.
+EXIT_LEAK = re.compile(r"^ERROR: .*\b(?:in use|leaked|allocations?)\b.*\bat exit\b")
 EXPECTS_TAG = re.compile(r"^[ \t]*## expects-(?:error|warning): *(.+?)\s*$",
                          re.MULTILINE)
 # Tags read from the test's own source -- run_tests.sh counts the directory
@@ -454,6 +458,16 @@ def _selftest() -> int:
     expect(child_verdict("ERROR: 2 RID allocations of type 'P12TextServer' were "
                          "leaked at exit.", 0) == "pass",
            "the engine's RID leak-at-exit report must not fail a test")
+    # Pass 2: the engine's at-exit family by SHAPE, not by list -- what it prints
+    # depends on what a test left alive. Every distinct line seen in this
+    # checkout's runs and in CI's artifacts, plus PagedAllocator's.
+    for leak in ["ERROR: 95 resources still in use at exit (run with --verbose for details).",
+                 "ERROR: 1 RID allocations of type 'P12TextServerAdvanced11FontAdvanced' "
+                 "were leaked at exit.",
+                 "ERROR: Pages in use exist at exit in PagedAllocator: N7Variant8PagedPoolE"]:
+        expect(child_verdict(leak, 0) == "pass", "an engine at-exit leak line failed: %r" % leak)
+    expect(child_verdict("ERROR: test_x: the save could not be written at exit", 0) == "fail",
+           "a test's own error that merely mentions exit must still fail")
     expect(child_verdict("note: an ERROR: mid-line is not the engine's", 0) == "pass",
            "only a line that STARTS with ERROR: counts")
     declared = read_expected_from("extends SceneTree\n"

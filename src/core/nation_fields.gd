@@ -323,4 +323,5 @@ const FIELDS := [
 	["judicial_independence", SCALAR, VALUE, 0.0, false],  # bump 27
 	["start_judicial_independence", SCALAR, VALUE, 0.0, true],  # content (its declaration: earns nothing)
 	["embassies", DEEP, COPIED, [], false],  # bump 41
+	["no_relations", DEEP, COPIED, [], false],  # bump 41
 ]

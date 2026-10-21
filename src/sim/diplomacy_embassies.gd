@@ -5,7 +5,8 @@ extends RefCounted
 ## for Croatia and Cyprus, and a hands-off run had the AI open 33 embassies in the
 ## player's capital in its first three years. The register is
 ## NationState.embassies; the verb's own `embassy_held` precondition reads it and
-## its `embassy` effect writes it, both in diplomacy.gd beside the other channels.
+## its `embassy` effect writes it (apply() below, called from execute()); the
+## `relations_exist` precondition reads the exceptions' copy, `no_relations`.
 ##
 ## Its own file so diplomacy.gd stays within its size baseline; no state of its
 ## own, no sim module preloaded.
@@ -22,7 +23,20 @@ static func seed_register(state, loader) -> void:
 	ids.sort()
 	for a in ids:
 		var held: Array = []
+		var barred: Array = []
 		for b in ids:
-			if a != b and not loader.embassy_exceptions.has(RK.key(a, b)):
+			if a == b:
+				continue
+			if loader.embassy_exceptions.has(RK.key(a, b)):
+				barred.append(b)
+			else:
 				held.append(b)
 		state.nations[a].embassies = held
+		state.nations[a].no_relations = barred
+
+
+## The `embassy` effect channel: the actor's mission in the target's capital, one
+## way. The register rather than the cooldown is what keeps it from reopening.
+static func apply(ns, effects: Dictionary, target_id: String) -> void:
+	if String(effects.get("embassy", "")) == "open" and not ns.embassies.has(target_id):
+		ns.embassies.append(target_id)

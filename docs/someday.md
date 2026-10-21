@@ -359,6 +359,23 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from V5.1-0d (2026-10-21)
+
+The embassies, the capitals and the runner's verdict; two items measured and left.
+
+- **The hands-off AI aims ~95% of its state visits at the player.** The 0d attribution
+  (scratch act counter, hands-off FRA, 168 months through WorldMonth): base 338 of 354
+  state visits target France, tip 353 of 375; the 33 embassies the base AI opened were
+  all in Paris too. Thirty-seven AI nations talk almost only to the president, not to each
+  other -- which is also why the test audit found no AI-to-AI agreement in 168 months.
+  **Owner:** the V5.2 / V5.4 plan gate (people who talk, the real network). Not 0d's: the
+  embassies only removed one of the verbs the skew was spent on.
+- **`Capital.city()` refolds the nation's city list on every call.** Microseconds today:
+  its callers are a booking, the campaign panel's rows and the campaign's factor. **When a
+  per-month caller appears,** the right shape is a fold table the loader builds once
+  (folded name -> city, per nation), NOT a static memo -- static memos read by pool workers
+  are G2's hazard class.
+
 ## Carried from V5.1-0c (2026-10-21)
 
 - **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.

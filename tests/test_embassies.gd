@@ -12,8 +12,12 @@ const GameState = preload("res://src/core/game_state.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DiplomacyLoader = preload("res://src/core/loaders/diplomacy_loader.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 
 const PLAYER := "FRA"
+## Long enough that the base world opened ~31 (first at month 9), short enough to
+## stay a ~10 s check.
+const HANDS_OFF_MONTHS := 24
 
 var _failures: Array[String] = []
 var _loader
@@ -30,6 +34,8 @@ func _init() -> void:
 	_check_seed_follows_the_rule()
 	_check_no_embassy_offered_where_one_exists()
 	_check_opening_one_where_none_exists()
+	_check_no_embassy_where_there_are_no_relations()
+	_check_a_hands_off_world_opens_none()
 	_check_the_register_round_trips()
 	_check_bad_exception_files_refused()
 	_finish()
@@ -98,28 +104,72 @@ func _check_no_embassy_offered_where_one_exists() -> void:
 
 
 ## Where none exists the verb still works, and the REGISTER (not the 240-month
-## cooldown) is what closes it afterwards.
+## cooldown) is what closes it afterwards. The seeded world has no such pair -- every
+## pair either holds one or has no relations -- so the test closes a mission first.
 func _check_opening_one_where_none_exists() -> void:
 	var state = _new_state()
-	_open_the_old_gates(state, "ESP", "XKX")
-	if not _offers_embassy(state, "ESP", "XKX"):
-		_failures.append("Spain is not offered an embassy in Pristina, where it holds none")
+	state.nations[PLAYER].embassies.erase("HRV")
+	_open_the_old_gates(state, PLAYER, "HRV")
+	if not _offers_embassy(state, PLAYER, "HRV"):
+		_failures.append("France is not offered an embassy in Zagreb once its mission there is gone")
 		return
-	var action = null
+	var result: Dictionary = Diplomacy.execute(state, _loader.diplomatic_actions, _open_embassy(), PLAYER, "HRV")
+	if not bool(result.get("applied", false)):
+		_failures.append("open_embassy FRA->HRV did not apply: %s" % [result])
+		return
+	if not state.nations[PLAYER].embassies.has("HRV"):
+		_failures.append("an applied open_embassy did not write the register")
+	state.nations["HRV"].embassies.erase(PLAYER)
+	Diplomacy.execute(state, _loader.diplomatic_actions, _open_embassy(), PLAYER, "HRV")
+	if state.nations["HRV"].embassies.has(PLAYER):
+		_failures.append("France's embassy in Zagreb opened Croatia's in Paris -- a mission is one-way")
+	state.nations[PLAYER].diplo_cooldown_months.clear()
+	if _offers_embassy(state, PLAYER, "HRV"):
+		_failures.append("with the cooldown gone, France is offered a second embassy in Zagreb")
+
+
+## Pass 2: the exceptions bind the verb, not only the seed. A pair the data says has
+## no diplomatic relations cannot open one, however warm and however recently met.
+func _check_no_embassy_where_there_are_no_relations() -> void:
+	var state = _new_state()
+	for pair in [["SRB", "XKX"], ["XKX", "SRB"], ["TUR", "CYP"], ["ESP", "XKX"]]:
+		_open_the_old_gates(state, pair[0], pair[1])
+		if _offers_embassy(state, pair[0], pair[1]):
+			_failures.append("%s is offered an embassy in %s, with which it has no diplomatic relations" % pair)
+
+
+## Pass 2: the PR's own motivating measurement, pinned. A hands-off world through
+## the real month (WorldMonth, its own tick order) opens no embassy: in the base,
+## the AI opened its first in the player's capital in month 9 and ~31 in three
+## years. An executed open_embassy leaves its 240-month cooldown key behind, so a
+## count of those keys is a count of executions.
+func _check_a_hands_off_world_opens_none() -> void:
+	var state = _new_state()
+	var y: int = state.year
+	var m: int = state.month
+	for i in HANDS_OFF_MONTHS:
+		WorldMonth.tick_month(state, _loader)
+		m += 1
+		if m > 12:
+			m = 1
+			y += 1
+		state.year = y
+		state.month = m
+	var opened: Array = []
+	for id in state.nations:
+		for key in state.nations[id].diplo_cooldown_months:
+			if String(key).begins_with("open_embassy"):
+				opened.append("%s:%s" % [id, key])
+	if not opened.is_empty():
+		_failures.append("a hands-off world opened %d embassies in %d months: %s" % [opened.size(), HANDS_OFF_MONTHS, opened])
+
+
+func _open_embassy():
 	for a in _loader.diplomatic_actions:
 		if String(a.id) == "open_embassy":
-			action = a
-	var result: Dictionary = Diplomacy.execute(state, _loader.diplomatic_actions, action, "ESP", "XKX")
-	if not bool(result.get("applied", false)):
-		_failures.append("open_embassy ESP->XKX did not apply: %s" % [result])
-		return
-	if not state.nations["ESP"].embassies.has("XKX"):
-		_failures.append("an applied open_embassy did not write the register")
-	if state.nations["XKX"].embassies.has("ESP"):
-		_failures.append("Spain's embassy in Pristina opened Kosovo's in Madrid -- a mission is one-way")
-	state.nations["ESP"].diplo_cooldown_months.clear()
-	if _offers_embassy(state, "ESP", "XKX"):
-		_failures.append("with the cooldown gone, Spain is offered a second embassy in Pristina")
+			return a
+	_failures.append("no open_embassy content")
+	return null
 
 
 func _check_the_register_round_trips() -> void:
