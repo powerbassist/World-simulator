@@ -13,6 +13,7 @@ extends SceneTree
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const MessageStack = preload("res://src/ui/message_stack.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -50,6 +51,7 @@ func _later_frames() -> bool:
 	if _frame < 5:
 		return false  # a layout pass or two for the cards to take their height
 	_check_cards_do_not_push_the_ui_down()
+	_check_windows_open_clear_of_the_column()
 	_finish()
 	return false
 
@@ -444,6 +446,26 @@ func _check_cards_do_not_push_the_ui_down() -> void:
 	if hud.message_stack.get_parent() is BoxContainer:
 		_fail("the message column is still in a box container -- its height is layout again")
 	hud.message_stack.clear()
+
+
+## Review pass 2. The column is above the windows (the HUD is drawn last), so a
+## window that opened under it had its left edge -- the budget's levers -- covered
+## until the cards were dismissed. A window now opens to the right of the column.
+## A window as wide as the band is the case that matters: it is the one that
+## reaches the left edge.
+func _check_windows_open_clear_of_the_column() -> void:
+	var wm := WindowManager.new()
+	root.add_child(wm)
+	wm.size = Vector2(1920, 1080)
+	var content := Control.new()
+	content.custom_minimum_size = Vector2(3000, 300)  # wider than any band: it fills it
+	wm.register("wide", "Wide", content)
+	wm.open("wide")
+	var clear_x: float = float(MessageStack.CARD_WIDTH) + 14.0
+	var x: float = wm.frame("wide").position.x
+	if x < clear_x:
+		_fail("a band-wide window opened at x=%.0f, under the message column (clear of it from x=%.0f)" % [x, clear_x])
+	wm.queue_free()
 
 
 func _check_minimap_slot_reserved() -> void:

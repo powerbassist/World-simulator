@@ -46,6 +46,16 @@ var _body: VBoxContainer
 ## entry's block -- primary_action()'s two halves, campaign_panel's device.
 var _primary: Control = null
 
+## The term (terms_served) whose offer this panel last drew; -1 before any. main.gd's
+## play guard asks it, so the first press of a term opens the Agenda and a press
+## after the Agenda has shown the offer runs the clock.
+var _offer_seen_term := -1
+
+
+## Whether the Agenda has shown this term's offer.
+func offer_seen(ns) -> bool:
+	return _offer_seen_term == int(ns.terms_served)
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(560, 520)
@@ -116,12 +126,13 @@ func _refresh() -> void:
 			PanelKit.line(_body, _unset_text(ns))
 		return
 
+	_offer_seen_term = int(ns.terms_served)
 	# The frame contract, in the model's own terms: a choice pays nothing
 	# (programme-model §8), the delivery is what the register prices.
 	PanelKit.line(_body,
 		"One of these becomes the term's programme. Choosing it costs nothing;"
 		+ " the register prices the delivery, on the month it lands or the"
-		+ " deadline it misses."
+		+ " deadline it misses. Pressing play without choosing runs the term with none."
 	)
 	_build_offer(ns, offer)
 	_build_register(ns)

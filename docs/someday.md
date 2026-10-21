@@ -363,7 +363,9 @@ cursor; the name returns when the cursor leaves). The rest are parked:
 
 - **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.
 - **The minimap leaving its frame when menus open, and the UI shifting on a category click** (P5, P6) did not reproduce at 1920x1080 or 1280x1024 with the State drawer, a window and cards open. Ask the author for the window size and the click; V5.1c rebuilds the shell either way.
-- **A wide window can still sit under the message column** (the column is an overlay above windows): at 1920 the budget window clears it, a window dragged left does not. V5.1d (windows).
+- **A window dragged left still goes under the message column** (an overlay above windows). New windows open to its right (`WindowManager.LEFT_RESERVE`); the author's drag is theirs. Measured by the parent in 0a: six cards covered the budget window's lever column until dismissed -- fixed for placement, not for a drag. V5.1d (windows).
+- **Which foreign cards a month pushes now depends on the machine's settings file** (the "News of other countries" switch). Tests that read cards are fine while runs stay isolated (a fresh user dir reads Off); a non-isolated run with the switch On would see more cards.
+- **`AgendaPanel.offer_seen` is per panel instance and per `terms_served`**: loading a different save mid-session at the same `terms_served` inherits the seen mark, so the first Space after that load runs without the nudge. Reset it on load if that ever matters.
 - **The Settings screen's resolution row is disabled while fullscreen** with no word why; F11 and the Window row are the way out.
 
 Below the V5.1 bar, from `code-review 30 high` (the four that met it -- the Settings rows resetting a dragged window, the panel's stale rows after F11, the un-maximizing mode write, the unguarded Agenda date -- were fixed test-first):

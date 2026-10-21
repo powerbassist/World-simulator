@@ -902,9 +902,9 @@ func _entry(id: String, label: String) -> Dictionary:
 ## holds the clock on its own account.
 func _toggle_pause_by_hand() -> void:
 	# V5.1-0c. The offer lives only until the clock first runs in a term, so the
-	# press that would forfeit it opens the Agenda instead. With the Agenda already
-	# open the next press is the player declining, and runs.
-	if _paused_for_programme and _clock.paused and not _windows.is_open("agenda"):
+	# press that would forfeit it opens the Agenda instead -- once: when the Agenda
+	# has shown the offer, the next press is the player declining, and runs.
+	if _paused_for_programme and _clock.paused and not _agenda_panel.offer_seen(_state.player()):
 		_windows.open("agenda")
 		return
 	_clock.toggle_pause()
@@ -1746,7 +1746,7 @@ func _card_foreign_acts(year: int, month: int) -> void:
 
 	var player_id: String = _state.player_nation_id
 	var floor_share: float = ForeignPolicy.even_share(_state, player_id) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
-	var news_of_others := MessageSettings.foreign_news(SettingsPanel.CONFIG_PATH)
+	var news_of_others := SettingsPanel.foreign_news()
 
 	# Oldest first, so the newest act ends up at the top of the column: push()
 	# appends and the stack drops from the front when it overflows.

@@ -9,6 +9,8 @@ extends SceneTree
 ## the F11 key are pinned here; the OS window itself is not reachable headless, so
 ## the windowed frames in the PR carry the visual half.
 
+## suite-exclusive: backs up and restores user://settings.cfg -- the key and Settings checks write the display keys
+
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const WindowMode = preload("res://src/ui/window_mode.gd")
 
@@ -26,6 +28,7 @@ func _process(_delta: float) -> bool:
 	_check_plan()
 	_check_root_window_is_resizable_with_a_floor()
 	_check_key_toggles_and_persists()
+	_check_f11_flips_the_window_not_the_file()
 	_check_settings_rows_do_not_fight_the_window()
 	_finish()
 	return false
@@ -96,15 +99,50 @@ func _check_key_toggles_and_persists() -> void:
 	if _calls != 1:
 		_fail("a release, an echo or another key toggled the window (%d calls)" % _calls)
 
+	var was_fullscreen := root.mode == Window.MODE_FULLSCREEN
 	SettingsPanel.toggle_fullscreen(root)
 	var after := ConfigFile.new()
 	after.load(SettingsPanel.CONFIG_PATH)
-	if bool(after.get_value("display", "fullscreen", SettingsPanel.DEFAULT_FULLSCREEN)) == was:
+	# F11 flips what the window is (review pass 2), and writes the result.
+	if bool(after.get_value("display", "fullscreen", SettingsPanel.DEFAULT_FULLSCREEN)) == was_fullscreen:
 		_fail("toggle_fullscreen did not persist the flip -- the Settings row would disagree with the screen")
 	if root.unresizable or root.min_size != WindowMode.MIN_SIZE:
 		_fail("toggling fullscreen left the window unresizable or without its floor")
 
 	# Put the user's file back as it was.
+	var restore := ConfigFile.new()
+	restore.load(SettingsPanel.CONFIG_PATH)
+	if had:
+		restore.set_value("display", "fullscreen", was)
+	else:
+		restore.erase_section_key("display", "fullscreen")
+	restore.save(SettingsPanel.CONFIG_PATH)
+
+
+## Review pass 2. F11 negated the FILE's value; when the file and the window
+## disagree (a file edited by hand, a mode changed another way) the first press
+## changed nothing visible. It flips what the window is.
+func _check_f11_flips_the_window_not_the_file() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	var had := cfg.has_section_key("display", "fullscreen")
+	var was: Variant = cfg.get_value("display", "fullscreen") if had else null
+	cfg.set_value("display", "fullscreen", false)  # the file says windowed...
+	cfg.save(SettingsPanel.CONFIG_PATH)
+	# A child Window: the headless root has no OS window to take a mode.
+	var window := Window.new()
+	root.add_child(window)
+	window.mode = Window.MODE_FULLSCREEN             # ...the window is fullscreen
+	if window.mode != Window.MODE_FULLSCREEN:
+		_fail("the fixture cannot put a window in fullscreen headless -- the next check proves nothing")
+	SettingsPanel.toggle_fullscreen(window)
+	if window.mode == Window.MODE_FULLSCREEN:
+		_fail("F11 on a fullscreen window left it fullscreen because the file said windowed")
+	window.queue_free()
+	var after := ConfigFile.new()
+	after.load(SettingsPanel.CONFIG_PATH)
+	if bool(after.get_value("display", "fullscreen", true)):
+		_fail("F11 wrote fullscreen=true after leaving fullscreen")
 	var restore := ConfigFile.new()
 	restore.load(SettingsPanel.CONFIG_PATH)
 	if had:
@@ -122,9 +160,9 @@ func _check_settings_rows_do_not_fight_the_window() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(SettingsPanel.CONFIG_PATH)
 	var had_fs := cfg.has_section_key("display", "fullscreen")
-	var was_fs: Variant = cfg.get_value("display", "fullscreen", null)
+	var was_fs: Variant = cfg.get_value("display", "fullscreen") if had_fs else null
 	var had_res := cfg.has_section_key("display", "resolution_index")
-	var was_res: Variant = cfg.get_value("display", "resolution_index", null)
+	var was_res: Variant = cfg.get_value("display", "resolution_index") if had_res else null
 	cfg.set_value("display", "fullscreen", false)
 	cfg.set_value("display", "resolution_index", 2)
 	cfg.save(SettingsPanel.CONFIG_PATH)

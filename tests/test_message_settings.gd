@@ -14,6 +14,8 @@ extends SceneTree
 ##
 ## Loads the actual main scene: the pause lives in main.gd's arrival path.
 
+## suite-exclusive: backs up and restores user://settings.cfg -- the foreign-news check writes the [messages] switch
+
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
@@ -152,6 +154,7 @@ func _check_news_between_other_nations() -> void:
 
 	for on in [false, true]:
 		MessageSettings.set_foreign_news(on, SettingsPanel.CONFIG_PATH)
+		SettingsPanel.revision += 1  # what a Settings change does; main re-reads the switch when it moves
 		stack.clear()
 		state.foreign_acts.clear()
 		state.foreign_acts.push_front({

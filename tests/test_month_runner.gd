@@ -110,13 +110,13 @@ func _check_the_budget_slices_the_month(loader) -> void:
 	held.free()
 
 
-## What reaches the game as unhandled input. F11 is bound to nothing, so this is
+## What reaches the game as unhandled input. F9 is bound to nothing (F11 is the window key, F12 the console), so this is
 ## the only reader of it: whether it arrives, and when, is the whole question.
 class Recorder extends Node:
 	var presses := 0
 
 	func _unhandled_input(event: InputEvent) -> void:
-		if event is InputEventKey and event.keycode == KEY_F11 and event.pressed:
+		if event is InputEventKey and event.keycode == KEY_F9 and event.pressed:
 			presses += 1
 
 
@@ -196,7 +196,7 @@ func _start(first: bool) -> bool:
 		_phase = "closing"
 		return false
 	# A key the player presses while the month closes.
-	_press(KEY_F11)
+	_press(KEY_F9)
 	if _recorder.presses != 0:
 		_fail("a key pressed while the month closed reached the game mid-month")
 	if _b._state.history.size() != history_b:

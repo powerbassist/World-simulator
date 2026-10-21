@@ -32,6 +32,14 @@ const CASCADE_WRAP := 5
 ## background stays visible as background.
 const SIDE_MARGIN := 40.0
 
+## V5.1-0c review pass 2. The message column (232 wide, 14 in from the edge) is
+## drawn above every window, so a window opened under it had its left edge -- the
+## budget's levers -- covered until the cards were dismissed. Windows open to the
+## right of it. A reserve, not a measurement of the live column: the column is
+## empty most of the game, and a window that shifted when a card arrived would be
+## furniture moving under the player.
+const LEFT_RESERVE := 260.0
+
 var _frames := {}       # id -> WindowFrame
 var _keys := {}         # id -> keycode, KEY_NONE for a window with no shortcut
 var _icons := {}        # id -> at-icons path, "" for a window with no icon yet
@@ -249,14 +257,14 @@ func _raise(id: String) -> void:
 ## furniture and the window may not use them.
 func _place(frame: Control) -> void:
 	var band := Vector2(
-		size.x - SIDE_MARGIN * 2.0,
+		size.x - LEFT_RESERVE - SIDE_MARGIN,
 		size.y - frame.TOP_MARGIN - frame.BOTTOM_MARGIN
 	)
 	frame.fit_within(band)
 
 	var offset := CASCADE_STEP * float(_cascade_index)
 	frame.position = Vector2(
-		(size.x - frame.size.x) / 2.0,
+		LEFT_RESERVE + (band.x - frame.size.x) / 2.0,
 		frame.TOP_MARGIN + (band.y - frame.size.y) / 2.0
 	) + offset
 	frame.clamp_into_parent()

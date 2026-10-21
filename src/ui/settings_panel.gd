@@ -113,12 +113,14 @@ static func apply_saved(window: Window) -> void:
 	WindowMode.install(window, toggle_fullscreen)
 
 
-## F11: flip fullscreen, persist it, and apply. The Settings row reads the file,
-## so writing it here is what keeps the screen and the row in agreement.
+## F11: flip fullscreen, persist the result, and apply. The Settings row reads the
+## file, so writing it here is what keeps the screen and the row in agreement.
 static func toggle_fullscreen(window: Window) -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(CONFIG_PATH)
-	var fullscreen := not bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN))
+	# Flipped from what the window IS, not from the file: when the two disagree the
+	# first press must still change what the player sees.
+	var fullscreen := window.mode != Window.MODE_FULLSCREEN
 	cfg.set_value("display", "fullscreen", fullscreen)
 	cfg.save(CONFIG_PATH)
 	_apply(
@@ -151,6 +153,20 @@ static func _apply(window: Window, fullscreen: bool, resolution_index: int, scal
 		window.size = RESOLUTIONS[clampi(resolution_index, 0, RESOLUTIONS.size() - 1)]
 	WindowMode.note_applied()
 	window.content_scale_factor = UI_SCALES[clampi(scale_index, 0, UI_SCALES.size() - 1)]
+
+
+## The "news of other countries" switch, read once per settings revision rather
+## than from disk at every month end (main.gd asks inside the month's UI tail).
+## `revision` moves on every Settings change, the one place that writes it.
+static var _foreign_news := false
+static var _foreign_news_revision := -1
+
+
+static func foreign_news() -> bool:
+	if _foreign_news_revision != revision:
+		_foreign_news = MessageSettings.foreign_news(CONFIG_PATH)
+		_foreign_news_revision = revision
+	return _foreign_news
 
 
 ## Read at play time rather than applied at boot: a settings change made from

@@ -318,6 +318,7 @@ func _check_manual_toggle_takes_the_clock() -> void:
 	# running the clock (test_agenda_panel pins that); the Agenda being open, as it
 	# is for a player who has seen the offer, the press is the player declining.
 	_main._windows.open("agenda")
+	_main._agenda_panel._process(0.0)
 	_main._paused_for_programme = true
 	_main._hud.clock_cluster.pause_toggled.emit()
 	if clock.paused:
@@ -367,6 +368,7 @@ func _check_manual_toggle_takes_the_clock() -> void:
 		var cards_before: Array = _main._hud.message_stack._cards.keys()
 		_main._enforce_term_start_programme()  # the hold and card a real term start raises
 		_main._windows.open("agenda")  # V5.1-0c: a player who has seen the offer declining it
+		_main._agenda_panel._process(0.0)
 		_main._toggle_pause_by_hand()  # run
 		_main._toggle_pause_by_hand()  # pause
 		_main._windows.close("agenda")

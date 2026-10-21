@@ -65,7 +65,7 @@ func _run() -> void:
 		return
 
 	_check_the_term_start_pause_fires(state, ns, loader)
-	_check_play_does_not_forfeit_the_offer(state, ns, loader)
+	_check_play_does_not_forfeit_the_offer(panel, state, ns, loader)
 	_check_the_offer_is_built_from_the_register(panel, state, ns, loader)
 	_check_the_choice_is_a_command(panel, state, ns, loader)
 	_check_a_second_choice_refuses(panel, state, ns, loader)
@@ -96,9 +96,12 @@ func _check_the_term_start_pause_fires(state, ns, loader) -> void:
 ## only before the clock first runs in a term (programme.gd is_term_start), and
 ## Space is one keypress away. The first play press while the offer stands used
 ## to drop the hold, one month later the offer was gone for the whole term, and
-## nothing said so. Now that press opens the Agenda and keeps the clock down; a
-## second press is the player choosing to run without a programme.
-func _check_play_does_not_forfeit_the_offer(state, ns, loader) -> void:
+## nothing said so. Now that press opens the Agenda and keeps the clock down -- and
+## only until the Agenda has SHOWN the offer: the next press, with the Agenda open
+## or closed again, is the player choosing to run without a programme (review
+## pass 2: a closed Agenda used to be reopened by every press, and the clock looked
+## stuck).
+func _check_play_does_not_forfeit_the_offer(panel, state, ns, loader) -> void:
 	if not _main._clock.paused or not _main._paused_for_programme:
 		_fail("the guard check needs the term-start hold up")
 		return
@@ -109,12 +112,17 @@ func _check_play_does_not_forfeit_the_offer(state, ns, loader) -> void:
 		_fail("the first Space at an unchosen term start did not open the Agenda that holds the offer")
 	if Programme.available(state, ns, loader).is_empty():
 		_fail("the offer vanished without the clock moving")
+	# The Agenda draws the offer (a frame later in the game), then the player
+	# closes it and presses again: that press runs, it is not the fourth.
+	_refresh(panel)
+	_main._windows.close("agenda")
 	_main._toggle_pause_by_hand()
 	if _main._clock.paused:
-		_fail("a second Space did not run the clock -- the player must be able to decline the offer")
+		_fail("the second Space, with the Agenda closed again, did not run the clock -- the guard nags on every press")
+	if _main._windows.is_open("agenda"):
+		_fail("the second Space reopened the Agenda")
 	# Put the fixture back: the clock has not ticked, so the offer is still there
 	# and the enforcement re-raises the hold and the card for the checks below.
-	_main._windows.close("agenda")
 	_main._enforce_term_start_programme()
 	if not _main._clock.paused or not _main._paused_for_programme:
 		_fail("re-enforcing an unchosen term start did not restore the hold")
