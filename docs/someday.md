@@ -359,6 +359,15 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from V5.1-0b (2026-10-21)
+
+Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed test-first in `7cd07ad9`):
+
+- **The dev scripts ship in a release export.** `main.gd`'s preload keeps `dev_console.gd` and what it preloads in the PCK; `install()` builds nothing there (and `--dev-console` turns it on), so it is inert, not absent. Fully absent means a `load()` behind the build check and an export filter -- V5.1c, when `main.gd` is rebuilt anyway.
+- **`skip 120` is one synchronous call**: ~0.3 s a month, so ~40 s of an unresponsive window (and an MCP call that may time out). A frame-sliced skip would reuse `month_runner.gd`'s cursor; the cap is 120 until someone needs a year-long skip that does not freeze.
+- **Clicking the console's log takes focus off the input**, so a key typed next reaches `main.gd`'s hotkeys (S opens the save dialog). Fixing it costs text selection in the log; click the input first.
+- **The overlay's per-system month cost includes the step hooks' UI work** (cards built in a step's before/after, inside the timed unit).
+
 ## Carried from V5.1-0a (2026-10-21)
 
 The month across frames and the forecast off the frame took the play gate's freezes;
