@@ -83,12 +83,13 @@ TRANSLATABLE = {
 # so `--check` can fail a field nobody shows -- "240/240 translated" once meant 0 on
 # screen. An accessor that names its kind takes it as its first literal argument.
 CALLER_FIXED = {
-    "law_name": ("laws", "name"),
-    "law_summary": ("laws", "summary"),
-    "record_event_name": ("events", "name"),
-    "choice_label": ("events", "choices.*.label"),
-    "record_choice_label": ("events", "choices.*.label"),
-    "choice_summary": ("events", "choices.*.summary"),
+    "law_name": [("laws", "name")],
+    "law_summary": [("laws", "summary")],
+    "record_event_name": [("events", "name")],
+    "choice_label": [("events", "choices.*.label")],
+    "record_choice_label": [("events", "choices.*.label")],
+    "choice_summary": [("events", "choices.*.summary")],
+    "record_action_name": [("diplomatic-actions", "name"), ("bloc-proposals", "name")],
 }
 CALLER_ANY = re.compile(r"Strings\.(\w+)\(")
 LEADING_LITERAL = re.compile(r"^\s*\"([^\"]*)\"")
@@ -249,7 +250,7 @@ def line_callers(line):
     for m in CALLER_ANY.finditer(code):
         fn = m.group(1)
         if fn in CALLER_FIXED:
-            out.append(CALLER_FIXED[fn])
+            out.extend(CALLER_FIXED[fn])
             continue
         args = _call_args(code, m.end())
         lit = [LEADING_LITERAL.match(a) for a in args]
@@ -501,6 +502,8 @@ def selftest():
     check("caller noun", line_callers('Strings.noun("pledges", a, "pledge", "pledge_id", id, "pledge_name", e)'),
           [("pledges", "effects.pledge.pledge_name")])
     check("caller fixed", line_callers('PanelKit.line(b, Strings.law_summary(law))'), [("laws", "summary")])
+    check("caller of two kinds", line_callers('x = Strings.record_action_name(terms)'),
+          [("diplomatic-actions", "name"), ("bloc-proposals", "name")])
     check("caller nested argument", line_callers(
         'PanelKit.line(body, Strings.row("bloc-proposals", String(p.get("proposal_id", "")), "summary", String(p.get("summary", ""))))'),
         [("bloc-proposals", "summary")])

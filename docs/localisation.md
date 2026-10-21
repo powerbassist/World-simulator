@@ -61,7 +61,8 @@ through it (V5.1b3)**, by one of these, all in `src/ui/strings.gd`:
 | `choice_label(event_id, choice)` / `choice_summary(...)` | `<event id>.choices.<choice id>.label` | an event's choices |
 | `record_event_name(record)` / `record_choice_label(record)` | the same keys, from the record's ids | the desk and the ledger: a record copies the English it was made with beside the ids, and that copy is the fallback, so an old save's event the data dropped still reads |
 | `noun(kind, actions, effect, id_key, id, noun_field, english)` | `<action id>.effects.<effect>.<noun_field>` | an action's authored NOUN -- an effort's, a pledge's, a project's name. The sim names the thing by its effect id (`ground_game`), the table keys it by the action's id (`start_ground_game`), so the action is found by the effect id |
-| `row(kind, id, field, english)` | as given | a sim record that copies a row's name beside its id: a council's pending, last and ratifying proposal (`proposal_id`), an adopted rule (keyed by proposal id), the programme's results (`entry_id`), agreements, pacts, measures and foreign acts (`action_id`, kind `diplomatic-actions`) |
+| `record_action_name(record)` | `<action_id>.name` in `diplomatic-actions`, else in `bloc-proposals` | agreements, pacts, measures and foreign acts: most copy a diplomatic action's name, an org's common external measure a bloc proposal's (keyed by the proposal's id); the two kinds' ids never collide |
+| `row(kind, id, field, english)` | as given | a sim record that copies a row's name beside its id: a council's pending, last and ratifying proposal (`proposal_id`), an adopted rule (keyed by proposal id), the programme's results (`entry_id`) |
 
 `tests/test_i18n_rows_lint.gd` fails a read of a row's English outside these
 (`.law_name`, `.event_name`, `.action_name`, `.proposal_name`, `.summary`, the sim's

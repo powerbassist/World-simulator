@@ -15,6 +15,7 @@ extends SceneTree
 const Strings = preload("res://src/ui/strings.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
+const Relations = preload("res://src/core/relations.gd")
 
 const DIR := "user://i18n_rows_fixture"
 ## A row's English must be at least this long to be picked: a short name ("Aid") can sit
@@ -24,6 +25,7 @@ const MIN_PICK := 6
 var _main
 var _failures: Array[String] = []
 var _probed := 0
+var _adopted_id := ""
 
 
 func _initialize() -> void:
@@ -50,6 +52,13 @@ func _initialize() -> void:
 	await _probe("project-actions", "projects", loader.project_actions, "name")
 	_main._on_nation_clicked("DEU")
 	await _probe("diplomatic-actions", "", loader.diplomatic_actions, "name")
+	# A record that copies a row's name beside its id: an org's common measure is keyed by
+	# the bloc PROPOSAL's id, not a diplomatic action's (#49 pass 1). The orgs window
+	# closes first, so only the measure line can show the proposal's name.
+	_main._windows.close("orgs")
+	var measure = _measure_from(state, "DEU", ns.id, _proposals(loader))
+	_main._on_nation_clicked("DEU")
+	await _probe("measure:bloc-proposals", "", [measure], "name")
 
 	# A project under way names its NOUN, not the imperative on the button.
 	for action in loader.project_actions:
@@ -72,8 +81,8 @@ func _initialize() -> void:
 
 	Strings.set_language("en")
 	Strings.dir = Strings.DIR
-	if _probed < 18:
-		_fail("only %d of 18 probes ran" % _probed)
+	if _probed < 19:
+		_fail("only %d of 19 probes ran" % _probed)
 	_finish()
 
 
@@ -167,6 +176,7 @@ func _adopt_a_rule(state, loader) -> void:
 		for proposal in loader.org_proposals[org_id]:
 			if proposal.constraint.is_empty():
 				continue
+			_adopted_id = String(proposal.id)
 			state.orgs[org_id]["rules"][proposal.id] = {
 				"name": proposal.proposal_name, "field": String(proposal.constraint["field"]),
 				"op": String(proposal.constraint["op"]), "value": float(proposal.constraint["value"]),
@@ -175,6 +185,25 @@ func _adopt_a_rule(state, loader) -> void:
 			}
 			return
 	_fail("premise: no council the player sits on has a proposal with a constraint")
+
+
+## An org's common external measure from `from_id` on `to_id`, every field the sim
+## stores one with (orgs.gd _apply_external_measure): its action_id is the PROPOSAL's id.
+## A proposal that carries a measure, and not the rule adopted above.
+func _measure_from(state, from_id: String, to_id: String, proposals: Array):
+	var proposal = null
+	for p in proposals:
+		if not p.external_measure.is_empty() and String(p.id) != _adopted_id:
+			proposal = p
+	if proposal == null:
+		_fail("premise: no proposal with an external measure besides the adopted rule")
+		return proposals[-1]
+	state.measures[Relations.directed_key(from_id, to_id)] = {
+		"action_id": proposal.id, "action_name": proposal.proposal_name,
+		"kind": String(proposal.external_measure["kind"]), "severity": float(proposal.external_measure["severity"]),
+		"since_year": state.year, "since_month": state.month, "org": String(proposal.org_id), "retaliated": true,
+	}
+	return proposal
 
 
 func _proposals(loader) -> Array:

@@ -149,7 +149,7 @@ static func law_summary(law) -> String:
 
 ## The name and summary of a data row as the player reads them (V5.1b3) -- every
 ## display of a row's text goes through these, and tests/test_i18n_rows_lint.gd fails
-## a panel that reads the English field itself. `row` is the loaded object or a plain
+## a panel that reads the English field itself. `row_data` is the loaded object or a plain
 ## row Dictionary ({"id", "name", "summary"} -- the programme's entries). A loaded
 ## object keeps its English name under a property that differs by kind.
 static func row_name(kind: String, row_data) -> String:
@@ -183,6 +183,16 @@ static func record_event_name(record: Dictionary) -> String:
 static func record_choice_label(record: Dictionary) -> String:
 	return row("events", String(record.get("event_id", "")),
 		"choices.%s.label" % String(record.get("choice_id", "")), String(record.get("choice_label", "")))
+
+
+## A sim record's copy of an ACTION's name beside its `action_id` -- an agreement, a
+## pact, a measure, a foreign act. Most are diplomatic actions; an org's common external
+## measure is keyed by the bloc PROPOSAL's id. The two kinds' ids never collide, so the
+## record's kind is whichever table knows the id.
+static func record_action_name(record: Dictionary) -> String:
+	var id := String(record.get("action_id", ""))
+	var english := String(record.get("action_name", id))
+	return row("bloc-proposals", id, "name", row("diplomatic-actions", id, "name", english))
 
 
 ## An action's authored NOUN -- an effort's, a pledge's, a project's name, which sits

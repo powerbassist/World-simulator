@@ -5,7 +5,7 @@ extends SceneTree
 ##
 ## V5.1b3. A data row's text reaches the screen through Strings (src/ui/strings.gd:
 ## row, row_name, row_summary, choice_label, choice_summary, record_event_name,
-## record_choice_label, noun, law_name, law_summary), or a translated table is "done"
+## record_choice_label, record_action_name, noun, law_name, law_summary), or a translated table is "done"
 ## and never shown -- QA found the French law summaries and the programme rows in that
 ## state (#38, #39). This fails, anywhere in src/ui, a read of a row's English that is
 ## not an argument of one of those accessors:
@@ -23,7 +23,7 @@ extends SceneTree
 
 const ROOT := "res://src/ui"
 const OK_MARK := "# i18n: row-ok"
-const ACCESSORS := "row|row_name|row_summary|choice_label|choice_summary|record_event_name|record_choice_label|noun|law_name|law_summary"
+const ACCESSORS := "row|row_name|row_summary|choice_label|choice_summary|record_event_name|record_choice_label|record_action_name|noun|law_name|law_summary"
 const KEYS := "name|summary|label|choice_label|event_name|effort_name|pledge_name|project_name|action_name"
 
 var _failures: Array[String] = []
