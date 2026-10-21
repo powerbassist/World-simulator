@@ -15,7 +15,7 @@
   "abandon_pact.summary": "Se détourner de l'engagement, et de toutes les forces qui s'y trouvent. L'obligation cesse ; la confiance aussi, et chaque nation qui a un intérêt dans l'allié que vous avez quitté prend son parti.",
   "deploy_forces.name": "Déployer en soutien",
   "deploy_forces.summary": "Envoyer des forces aux côtés d'un allié, de votre propre initiative. Cela coûte une part permanente du budget tant qu'elles y sont, et le pays le remarque.",
-  "withdraw_forces.name": "Les ramener à la maison",
+  "withdraw_forces.name": "Rapatrier les forces",
   "withdraw_forces.summary": "Mettre fin à un déploiement que vous avez choisi. La ligne budgétaire part avec lui. Un engagement auquel une alliance vous a obligé ne peut pas être levé ainsi — il n'y a pour cela que le pacte lui-même.",
   "impose_tariffs.name": "Imposer des droits de douane",
   "impose_tariffs.summary": "Prélever des droits sur les marchandises de cette nation. Le Trésor encaisse, et encaisse le plus à ce niveau précis — en poussant plus fort, il reste moins d'échanges à taxer. Les producteurs en concurrence avec les importations sont ravis ; tous ceux qui les achètent ne le sont pas, et le partenaire ripostera dans l'année.",
@@ -24,11 +24,11 @@
   "impose_sanctions.name": "Imposer des sanctions",
   "impose_sanctions.summary": "Fermer la frontière à l'économie de cette nation. Rien n'est perçu — un embargo est un refus d'échanger, non une taxe sur l'échange — et vos propres exportateurs perdent le marché en même temps que les siens. Le plus grand dommage que cet instrument puisse causer, au plus haut prix chez soi.",
   "lift_sanctions.name": "Lever les sanctions",
-  "lift_sanctions.summary": "Rouvrir la frontière. Les échanges reprennent, les dégâts cessent de s'accumuler, et le couple entame le long chemin du retour. Quiconque a plaidé pour l'embargo parlera de capitulation.",
+  "lift_sanctions.summary": "Rouvrir la frontière. Les échanges reprennent, les dégâts cessent de s'accumuler, et les deux pays entament le long chemin du retour. Quiconque a plaidé pour l'embargo parlera de capitulation.",
   "public_condemnation.name": "Condamnation publique",
-  "public_condemnation.summary": "Dénoncer l'autre gouvernement depuis la tribune. Plaît aux électeurs qui voulaient une ligne plus ferme, mal à ceux qui doivent commercer avec eux.",
+  "public_condemnation.summary": "Dénoncer l'autre gouvernement depuis la tribune. Plaît aux électeurs qui voulaient une ligne plus ferme, déplaît à ceux qui doivent commercer avec eux.",
   "open_embassy.name": "Ouvrir une ambassade",
   "open_embassy.summary": "Une mission permanente résidente dans la capitale du partenaire. Elle coûte peu et en dit beaucoup : la relation est désormais une infrastructure, non une correspondance.",
-  "foreign_aid.name": "Paquet d'aide étrangère",
+  "foreign_aid.name": "Plan d'aide à l'étranger",
   "foreign_aid.summary": "Un soutien budgétaire à un partenaire en difficulté. De la gratitude à l'étranger ; chez soi, chaque bloc qui aurait préféré dépenser cet argent ici le fait savoir."
 }
