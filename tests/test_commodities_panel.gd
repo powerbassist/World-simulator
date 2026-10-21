@@ -401,6 +401,17 @@ func _check_map_modes(panel, state) -> void:
 			if not rendered.contains(String(stop["text"])):
 				_fail("the '%s' legend does not show the stop text '%s' -- what is on screen: %s" % [
 					mode, String(stop["text"]), rendered])
+	# A const stop is a msgid: the text the legend looks up must be the literal the
+	# extractor lists. "%d%%  dependent" formatted inside the const was looked up as
+	# "60%  dependent", which no table could ever hold (V5.1b3). The literal states
+	# the number, so the top stop must still match the cap it names.
+	var source := FileAccess.get_file_as_string("res://src/ui/map_layers.gd")
+	for stop in MapLayers.stops("import_dependency"):
+		if not source.contains("\"%s\"" % String(stop["text"])):
+			_fail("the import stop '%s' is not a literal in map_layers.gd, so no table can translate it" % stop["text"])
+	var top := String(MapLayers.stops("import_dependency")[-1]["text"])
+	if not top.begins_with("%d%%" % roundi(100.0 * MapLayers.IMPORT_MAX_SHOWN)):
+		_fail("the import legend's top stop '%s' no longer names the cap, %d%%" % [top, roundi(100.0 * MapLayers.IMPORT_MAX_SHOWN)])
 	legend.show_layer(MapLayers.POLITICAL, state, map.viewer_id())
 
 

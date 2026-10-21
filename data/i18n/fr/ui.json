@@ -776,8 +776,6 @@
   "%s no more than %s": "%s pas plus de %s",
   "%s no less than %s": "%s pas moins de %s",
   "costs nothing to break": "ne coûte rien à rompre",
-  "each month broken: ": "chaque mois de rupture : ",
-  " approval": " de popularité",
   "SHORTAGES": "PÉNURIES",
   "%.0f%% covered": "%.0f %% couvert",
   "nothing": "rien",
@@ -855,11 +853,11 @@
   "Click where it goes. Escape to cancel.": "Cliquez là où elle va. Échap pour annuler.",
   "of CO2e the country emits in a year, every gas on one scale": "d'équivalent CO2 émis par le pays en un an, tous gaz confondus sur une seule échelle",
   "running": "en cours",
-  "%d months left": "%d mois restants",
   "   (happens if you say nothing)": "   (a lieu si vous ne dites rien)",
   "Head of government": "Chef du gouvernement",
   "Head of state": "Chef de l'État",
   "%s, leader": "Direction : %s",
   "appointed by the President; no investiture vote": "nommé par le chef de l'État ; pas de vote d'investiture",
-  "elected by the chamber on an absolute majority": "élu par la chambre à la majorité absolue"
+  "elected by the chamber on an absolute majority": "élu par la chambre à la majorité absolue",
+  "each month broken: %s approval": "chaque mois de rupture : %s de popularité"
 }

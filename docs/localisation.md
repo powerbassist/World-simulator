@@ -51,11 +51,34 @@ and are not in it; a language that wants them adds the kind and the field there.
 (`translations_pot_files` in `project.godot`) -- do not build a parallel path for them.
 
 The accessor is `Strings.row(kind, id, field, english) -> String`: the table's entry
-if the current language has one, else `english`. The display site passes the row's
-English it already holds. (Wired today, through `Strings.law_name(law)` / `law_summary(law)`: the law names in
-the Legislature window, the bill briefing, the diary and the message log; each further
-site is one call -- the extractor's `--todo` lists
-the keys, and a site not yet wired shows English, which is the safe failure.)
+if the current language has one, else `english`. **Every display of a row's text goes
+through it (V5.1b3)**, by one of these, all in `src/ui/strings.gd`:
+
+| Accessor | Key | For |
+|---|---|---|
+| `row_name(kind, row)` / `row_summary(kind, row)` | `<id>.name` / `<id>.summary` | a loaded row (`Law`, `GameEvent`, an action, a `BlocProposal`, an `Org`) or a row Dictionary (a programme entry) |
+| `law_name(law)` / `law_summary(law)` | the same, kind `laws` | laws |
+| `choice_label(event_id, choice)` / `choice_summary(...)` | `<event id>.choices.<choice id>.label` | an event's choices |
+| `record_event_name(record)` / `record_choice_label(record)` | the same keys, from the record's ids | the desk and the ledger: a record copies the English it was made with beside the ids, and that copy is the fallback, so an old save's event the data dropped still reads |
+| `noun(kind, actions, effect, id_key, id, noun_field, english)` | `<action id>.effects.<effect>.<noun_field>` | an action's authored NOUN -- an effort's, a pledge's, a project's name. The sim names the thing by its effect id (`ground_game`), the table keys it by the action's id (`start_ground_game`), so the action is found by the effect id |
+| `record_action_name(record)` | `<action_id>.name` in `diplomatic-actions`, else in `bloc-proposals` | agreements, pacts, measures and foreign acts: most copy a diplomatic action's name, an org's common external measure a bloc proposal's (keyed by the proposal's id); the two kinds' ids never collide |
+| `row(kind, id, field, english)` | as given | a sim record that copies a row's name beside its id: a council's pending, last and ratifying proposal (`proposal_id`), an adopted rule (keyed by proposal id), the programme's results (`entry_id`) |
+
+`tests/test_i18n_rows_lint.gd` fails a read of a row's English outside these
+(`.law_name`, `.event_name`, `.action_name`, `.proposal_name`, `.summary`, the sim's
+`Campaign/Pledges/Projects.name_of(`, `.get("name" | "summary" | "label" | "choice_label" |
+"event_name" | "action_name" | the nouns)` and the same keys indexed, `.capitalize()`). A
+read that is not a row's text -- a UI dictionary's own label, a language's name, a city or
+a party (proper nouns), a composed bill's or tax's name -- ends `# i18n: row-ok <why>`.
+`python tools/i18n_extract.py --check` fails a TRANSLATABLE field that no `src/ui` line
+displays through an accessor (it prints `callers N` per table): "240/240 translated" once
+meant nothing on screen. `tests/test_i18n_rows.gd` gives one row of every kind a French
+text in a fixture table and requires it on screen.
+
+**An id made into a word** (a bloc, a sector, a portfolio, a vote, an event category or
+severity, an energy branch, a programme group, a tax) goes through `src/ui/labels.gd`
+(`Labels.bloc(id)` ...), DateText's pattern: the English in a marked table, translated
+there; never `id.capitalize()`.
 
 ## Rules for `src/ui` text
 
@@ -70,7 +93,9 @@ the keys, and a site not yet wired shows English, which is the safe failure.)
    (`_line`, `_reading`, `_out`, `_row`), `_queue_effect`, `.report(` -- the first argument and
    those after a comma, a ternary branch, a `+` and the English default of `.get("k", "...")`
    on a line that assigns text. *Anywhere else*, a literal that reads as prose: a space
-   between words, a capitalised word, an all-capitals heading, a word beside a `%`
+   and any word of two letters or more (V5.1b3: it once wanted two such words side by
+   side, and "A resignation", "Answering a grievance." and " (you)" walked through), a
+   capitalised word, an all-capitals heading, a word beside a `%`
    placeholder, a dash and a word -- in a return, an append, an argument, a continuation
    line, a var. A key or an id is never prose by this test (no space, lower case), and a
    comparison, a `match`, a call that takes a name (`get_node`, `has`, `connect`,
@@ -189,7 +214,12 @@ key whose English has gone away (stale). Exit 1 if it refused anything.
 are *values* are msgids, the dictionary keys (`"health": "Health"` -> `Health`) are not.
 `# i18n: msgid label` lists only the values of the key `label` (a table whose rows also
 hold ids and numbers, like the boot stages). `--check` also fails when one row id appears
-in two files of the same kind (the second would overwrite the first silently).
+in two files of the same kind (the second would overwrite the first silently), and when a
+`TRANSLATABLE` field has rows but no display caller in `src/ui` (the accessors it counts:
+`CALLER_FIXED` and the call parser in the tool).
+
+A row key with a nested path is the dotted field: an action's noun is
+`start_ground_game.effects.campaign.effort_name`, `pledge_full_employment.effects.pledge.pledge_name`.
 
 Adding a language: a line in `data/i18n/languages.json` and a `data/i18n/<code>/` folder
 (`--todo <code>` builds the first worklist). The Settings row, the loader and the tests
@@ -206,18 +236,27 @@ English, French, the pseudolocale and across a live switch. The lint treats the 
 first argument*, a ternary branch (`else "..."`) and the English default of
 `.get("key", "...")` on a line that assigns text.
 
-## What is NOT done (V5.1b2's edge)
+## What is NOT done (V5.1b3's edge)
 
-Every prose literal the lint can see is wrapped or marked: 1 112 UI msgids today
-(`python tools/i18n_extract.py`), 205 translated -- the chrome seeded in V5.1b. The rest
-of the backlog (the other panels' bodies, laws, events, people, firms) is the content
-child's, from `--todo fr`.
+Every prose literal the lint can see is wrapped or marked, and every row field in
+`TRANSLATABLE` has a display caller (`python tools/i18n_extract.py` prints both). V5.1b3
+added the action nouns (`effects.campaign.effort_name`, `effects.pledge.pledge_name`,
+`effects.project.project_name`) and the orgs (`name`, `summary`) to `TRANSLATABLE`; an
+org's name is translated where French has a usual form and kept where it is a true
+proper noun -- the translator's call, row by row.
+
+What is still English on a French screen, and why: names the data holds that are not in
+`TRANSLATABLE` -- a country outside the roster (the map outlines), a commodity good, a
+roster nation's name, a city, a party, a firm, a person; names the game composes (a
+drafted bill, a custom tax); and English the SIM writes: its constant label tables
+(`OpinionK.ISSUE_LABEL`, the bloc constraint and operator labels, a chamber's name) and a
+literal such as coercion's "Retaliation". The extractor reads `src/ui` and `data/` only,
+so those wait on a decision about where their English lives.
 
 What the lint cannot see: a lone lowercase word away from a sink; a short fragment that
 reaches a format string through a variable rather than a ternary inside the argument; a
 fragment appended with `+=` (` -- kept only if %s is ratified at home` is its own msgid with
-edge spaces, the translator's to fit); and text built from data (`String(x).capitalize()`,
-a sim constant such as a chamber name). Every count that picks a form and every
+edge spaces, the translator's to fit). Every count that picks a form and every
 two-way verb in a sentence is now a whole sentence (V5.1b2): `tr_n` for counts, one
 sentence per branch for choices; a sentence with a FIXED plural word ("... %d months ...")
 still shows "1 months" in English when the count is 1 -- a pre-existing edge, converted to

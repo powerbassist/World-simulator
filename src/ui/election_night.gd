@@ -119,4 +119,4 @@ func declared(counted: float) -> int:
 
 func latest(counted: float) -> String:
 	var k := declared(counted)
-	return "" if k == 0 else String(order[k - 1]["name"])
+	return "" if k == 0 else String(order[k - 1]["name"])  # i18n: row-ok a party's name, a proper noun

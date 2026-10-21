@@ -182,7 +182,7 @@ static func ring_radius(city: Dictionary) -> float:
 ## hover label and the City panel cannot print two roundings of one figure.
 static func label_of(city: Dictionary) -> String:
 	var text := "%s  --  %s" % [
-		String(city.get("name", "")),
+		String(city.get("name", "")),  # i18n: row-ok a city's name, a proper noun
 		PanelKit.pop_text(float(city.get("population", 0.0))),
 	]
 	# V2.6b1. The ring says THAT something is happening and the label says WHAT, which

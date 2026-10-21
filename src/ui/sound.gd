@@ -49,6 +49,9 @@ static func warm(force: bool = false) -> void:
 			todo.append(id)
 	if todo.is_empty():
 		return
+	# The worker and stream()'s main-thread renders must not run a Synth line for the
+	# first time at once (parallel.gd rule 5).
+	Synth.prime()
 	_warm_task = WorkerThreadPool.add_task(func():
 		for id in todo:
 			_warmed[id] = Synth.one_shot(recipe(id))

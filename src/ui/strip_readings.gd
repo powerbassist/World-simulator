@@ -271,7 +271,7 @@ static func _programme(ns, loader) -> Dictionary:
 		return _reading("—", "", false)
 	var terms: Dictionary = programme["terms"]
 	var live: Dictionary = programme["entry"]
-	var name_text := String(terms.get("name", String(live["entry_id"])))
+	var name_text := Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"]))))
 	var progress: Dictionary = Programme.progress_of(ns, terms)
 	var fraction := PanelKit.progress_fraction(
 		float(progress["current_value"]), float(progress["goal_value"]), String(progress["progressbar"]))
@@ -384,7 +384,7 @@ static func _europe(state, ns) -> Dictionary:
 			var left := int(r.get("months_left", 0))
 			if treaty_left < 0 or left < treaty_left:
 				treaty_left = left
-				treaty_text = "%s, %s" % [String(r.get("name", "")),
+				treaty_text = "%s, %s" % [Strings.row("bloc-proposals", String(r.get("proposal_id", "")), "name", String(r.get("name", ""))),
 					Strings.tn("%d month left", "%d months left", left) % left]
 
 	var text := Strings.t("— clear")

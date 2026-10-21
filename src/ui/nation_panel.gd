@@ -17,6 +17,7 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
@@ -222,7 +223,7 @@ func _refresh_actions() -> void:
 	if _state.agreements.has(Relations.key(player_id, _nation_id)):
 		var entry: Dictionary = _state.agreements[Relations.key(player_id, _nation_id)]
 		agreement_line.text = tr("Agreement: %s, since %d/%d") % [
-			entry.get("action_name", entry.get("action_id", "")),
+			Strings.record_action_name(entry),
 			int(entry.get("since_month", 0)), int(entry.get("since_year", 0)),
 		]
 	else:
@@ -295,7 +296,7 @@ func _alliance_line(player_id: String) -> Control:
 		return line
 
 	var text := tr("Alliance: %s, since %d/%d") % [
-		pact.get("action_name", pact.get("action_id", "")),
+		Strings.record_action_name(pact),
 		int(pact.get("since_month", 0)), int(pact.get("since_year", 0)),
 	]
 
@@ -324,7 +325,7 @@ func _measure_line(prefix: String, from_id: String, to_id: String) -> Control:
 		return line
 	line.text = tr("%s: %s, severity %s, since %d/%d") % [
 		prefix,
-		terms.get("action_name", terms.get("action_id", "")),
+		Strings.record_action_name(terms),
 		Num.f(float(terms.get("severity", 0.0)), 2),
 		int(terms.get("since_month", 0)), int(terms.get("since_year", 0)),
 	]
@@ -336,8 +337,8 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	row.add_theme_constant_override("separation", 12)
 
 	var summary := Label.new()
-	summary.text = action.action_name
-	summary.tooltip_text = action.summary
+	summary.text = Strings.row_name("diplomatic-actions", action)
+	summary.tooltip_text = Strings.row_summary("diplomatic-actions", action)
 	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD
 	if not is_available:
@@ -427,7 +428,7 @@ func _on_act(action) -> void:
 		result["reason"] = Diplomacy.refusal_reason(
 			_state, _state.player_nation_id, _nation_id, action.effects.get("agreement", {})
 		)
-	acted.emit(before, "%s: %s" % [action.action_name, _nation_id], result)
+	acted.emit(before, "%s: %s" % [Strings.row_name("diplomatic-actions", action), _nation_id], result)
 	_dirty = true
 
 

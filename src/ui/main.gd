@@ -5,6 +5,7 @@ extends Control
 ## register() now names each window's icon too, and the same path constant serves
 ## both. Plain SVG text, read and rasterised by icon.gd, so a fresh clone works
 ## headless with no import cache.
+const Labels = preload("res://src/ui/labels.gd")
 const ICONS := "res://assets/icons/material/"
 
 const DataLoader = preload("res://src/core/data_loader.gd")
@@ -996,7 +997,7 @@ func _wire_hud() -> void:
 		var record := Events.answer(_state, _loader, event_id, String(ev.choices[index]["id"]))
 		if record.is_empty():
 			return
-		_queue_effect("%s: %s" % [String(ev.event_name), String(ev.choices[index]["label"])], before)
+		_queue_effect("%s: %s" % [Strings.row_name("events", ev), Strings.choice_label(ev.id, ev.choices[index])], before)
 		_event_cards.erase(id)
 		_unseen_events.erase(event_id)
 		_hud.message_stack.dismiss(id)
@@ -1281,7 +1282,7 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 	var result := Energy.execute(_state, ns, _loader, _loader.energy_actions, action,
 		Vector2(lon, lat), region_id, "", access, pop_weights)
 	if bool(result.get("applied", false)):
-		_queue_effect(action.action_name, before)
+		_queue_effect(Strings.row_name("energy-actions", action), before)
 	_windows.mark_all_dirty()
 	_map_view.queue_redraw()
 	_update_top_bar()
@@ -1417,7 +1418,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 			dated_entry["month"] = month
 			for pending in _pending_effects:
 				_state.recent_effects.push_front({
-					"label": pending["label"],
+					"label": pending["label"],  # i18n: row-ok an effect's label, routed when queued
 					"year": year,
 					"month": month,
 					"movements": Trends.movements_between(pending["before"], dated_entry),
@@ -1771,7 +1772,7 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		if target_id != player_id and (not news_of_others or ForeignPolicy.stake(_state, player_id, actor_id) < floor_share):
 			continue
 
-		var key := String(act["action_name"])
+		var key := Strings.record_action_name(act)
 		if not by_action.has(key):
 			by_action[key] = {"aimed": [], "elsewhere": []}
 		if target_id == player_id:
@@ -1782,7 +1783,7 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		else:
 			by_action[key]["elsewhere"].append({
 				"actor": _nation_name(actor_id),
-				"body": "%s: %s." % [String(act["action_name"]), _nation_name(target_id)],
+				"body": "%s: %s." % [key, _nation_name(target_id)],
 			})
 
 	for action_name in by_action:
@@ -1846,7 +1847,7 @@ func _card_unrest_acts(year: int, month: int) -> void:
 			body = tr("%s, %s. Grievance stands at %.0f of 100. Output will carry it for months.") % [
 				city, region, float(act["unrest_pct"]),
 			]
-		_hud.message_stack.push(_unrest_title(String(act["label"])), body)
+		_hud.message_stack.push(_unrest_title(String(act["label"])), body)  # i18n: row-ok a key the title maps
 
 
 ## V4.3's interim surface: one card per act, named off the act's own record --
@@ -1864,17 +1865,17 @@ func _card_character_acts(acts: Array) -> void:
 		var body := tr("%s acts.") % who if who != "" else tr("Someone acts.")
 		match kind:
 			"resign":
-				title = "A resignation"
+				title = tr("A resignation")
 				body = tr("%s resigns the premiership. The party holds the office; the government pays in standing.") % who
 			"defect":
-				title = "A defection"
+				title = tr("A defection")
 				body = tr("%s crosses the floor. The seat stays with the whip.") % who
 			"challenge":
 				var deposed := _loader.person_name(String(detail.get("deposed", "")))
 				title = tr("A leadership challenge")
 				body = tr("%s takes the leadership. %s stands down.") % [who, deposed] if deposed != "" else tr("%s takes the leadership. The incumbent stands down.") % who
 			"brief_against":
-				title = "A leak"
+				title = tr("A leak")
 				body = tr("%s briefs against the government.") % who
 		_hud.message_stack.push(title, body)
 
@@ -1930,17 +1931,13 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		# A sited crisis names its place here too: this card and the Dispatches
 		# ledger print the same record, and two readouts of one record that
 		# disagree is the failure class this column keeps catching.
-		var named := String(record.get("event_name", ""))
+		var named := Strings.record_event_name(record)
 		var where := String(record.get("region_name", ""))
 		if where != "":
 			named = "%s — %s" % [named, where]
-		_hud.message_stack.push(
-			tr("Decided for you"),
-			tr("%s. Nobody answered, so it went the way it was always going to: %s.") % [
-				named, String(record.get("choice_label", "")),
-			],
-		)
-		defaulted_names.append(String(record.get("event_name", "")))
+		_hud.message_stack.push(tr("Decided for you"),
+			tr("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)])
+		defaulted_names.append(Strings.record_event_name(record))
 
 	# The delta is queued HERE and not at the choice, because this is the one case
 	# where the player made no decision -- U4's baseline still belongs against it,
@@ -2052,13 +2049,13 @@ func _push_decision_card(ev, entry: Dictionary) -> void:
 	var actions: Array = []
 	for choice in ev.choices:
 		actions.append({"label": "%s%s" % [
-			String(choice.get("label", "")),
+			Strings.choice_label(ev.id, choice),
 			tr("   (happens if you say nothing)") if bool(choice.get("is_default", false)) else "",
 		]})
 	# The title names the place for a sited event -- read straight off the
 	# entry, `event_name` untouched (V3.5). The name is already in the
 	# register because every reader of it is a leaf over pending state.
-	var title: String = ev.event_name
+	var title: String = Strings.row_name("events", ev)
 	var where := String(entry.get("region_name", ""))
 	if where != "":
 		title = "%s — %s" % [title, where]
@@ -2158,7 +2155,7 @@ func _dismiss_event_cards(event_id: String) -> void:
 ## that answer it (V2.9).
 func _decision_body(ev, left: int) -> String:
 	return tr_n("%s  You have %d month to answer.", "%s  You have %d months to answer.", left) % [
-		ev.summary, left,
+		Strings.row_summary("events", ev), left,
 	]
 
 
@@ -2176,7 +2173,7 @@ func _act_reason_text(key: String) -> String:
 	match key:
 		ForeignPolicy.ACT_REASON_INTEREST: return tr("Their interests run this way.")
 		ForeignPolicy.ACT_REASON_GOODWILL: return tr("Mending what had soured.")
-		ForeignPolicy.ACT_REASON_GRIEVANCE: return "Answering a grievance."
+		ForeignPolicy.ACT_REASON_GRIEVANCE: return tr("Answering a grievance.")
 	return ""
 
 
@@ -2247,7 +2244,7 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 					# this read as false on every arrival, so a kept visit fired
 					# its effects and was recorded as refused anyway.
 					ok = bool(result.get("applied", false))
-					label = String(action.action_name)
+					label = Strings.row_name("diplomatic-actions", action)
 			CalendarK.KIND_LAW:
 				var law = _law_by_id(String(entry.get("law_id", "")))
 				if law != null:
@@ -2260,7 +2257,7 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 				if ns != null and Cabinet.can_assign(ns, portfolio, party_id):
 					Cabinet.assign(_state, portfolio, party_id, party_list)
 					ok = true
-				label = portfolio.capitalize()
+				label = Labels.portfolio(portfolio)
 
 		Calendar.resolve(_state, Calendar.verb_key(entry), ok)
 		if not label.is_empty():
@@ -2655,7 +2652,7 @@ func _on_programme_chosen(entry_id: String) -> void:
 
 	# Entry open, as a card -- the register now holds the term's programme,
 	# and the pulse it will pay lives on its conclusion, not here.
-	var name_text := String(result.get("name", entry_id))
+	var name_text := Strings.row("programme", entry_id, "name", String(result.get("name", entry_id)))
 	_queue_effect(tr("Programme set: %s") % name_text, before)
 	_hud.message_stack.push(name_text, tr("This term's programme. Deliver it and the credit lands on the record; miss its deadline and the miss pays the same shape back."))
 	_drop_programme_card()
@@ -2695,7 +2692,7 @@ func _card_programme_conclusions() -> void:
 		return
 	for entry in Programme.concluded_this_month(ns):
 		var terms: Dictionary = Programme.terms_of(_loader, String(entry["entry_id"]))
-		var name_text := String(terms.get("name", String(entry["entry_id"])))
+		var name_text := Strings.row("programme", String(entry["entry_id"]), "name", String(terms.get("name", String(entry["entry_id"]))))
 		match String(entry["status"]):
 			ProgrammeK.STATUS_COMPLETE:
 				_hud.message_stack.push(tr("Delivered: %s") % name_text,

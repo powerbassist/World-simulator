@@ -31,6 +31,7 @@ signal closed
 ## do.
 signal acted(before, label)
 
+const Labels = preload("res://src/ui/labels.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
@@ -41,19 +42,13 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
 ## The six blocs as a player thinks of them. election_constants.gd and
 ## opinion_constants.gd both key on the bare ids and neither carries a display name;
 ## polling_panel.gd capitalises them in place, which is what this follows.
-const BLOC_LABEL := {
-	"workers": "Workers",  # i18n: msgid
-	"pensioners": "Pensioners",  # i18n: msgid
-	"urban": "Urban",  # i18n: msgid
-	"rural": "Rural",  # i18n: msgid
-	"business": "Business",  # i18n: msgid
-	"students": "Students",  # i18n: msgid
-}
+const BLOC_LABEL := Labels.BLOC
 
 ## The promisable fields as a player thinks of them. Beside BLOC_LABEL for its reason:
 ## src/sim/pledges_constants.gd keys on the bare field names and carries no display
@@ -265,7 +260,7 @@ func _build_live(ns, effort_id: String) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, Campaign.name_of(_loader, effort_id), PanelKit.Tone.PLAIN)
+	PanelKit.line(block, Strings.noun("campaign-actions", _loader.campaign_actions, "campaign", "effort_id", effort_id, "effort_name", Campaign.name_of(_loader, effort_id)), PanelKit.Tone.PLAIN)
 
 	PanelKit.line(block, tr("%s %% of GDP a year · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)], PanelKit.Tone.GOOD)
 
@@ -360,7 +355,7 @@ func _build_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, String(terms.get("effort_name", "")), PanelKit.Tone.PLAIN)
+	PanelKit.line(block, Strings.row("campaign-actions", String(action.id), "effects.campaign.effort_name", String(terms.get("effort_name", ""))), PanelKit.Tone.PLAIN)
 
 	PanelKit.line(block, tr("%s %% of GDP a year · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)])
 
@@ -390,13 +385,13 @@ func _reach_text(terms: Dictionary) -> String:
 		parts.append("%s %s" % [tr(String(BLOC_LABEL.get(bloc, bloc))), Num.fs(moved * 100.0, 1)])
 	if parts.is_empty():
 		return tr("reaches nobody")
-	return "a month: " + ", ".join(parts)
+	return tr("a month: %s") % ", ".join(parts)
 
 
 func _button(ns, action) -> Button:
 	var button := Button.new()
-	button.text = action.action_name
-	button.tooltip_text = action.summary
+	button.text = Strings.row_name("campaign-actions", action)
+	button.tooltip_text = Strings.row_summary("campaign-actions", action)
 	if String(action.effects.get("campaign", {}).get("op", "")) == "start" and _site_region == "":
 		button.disabled = true
 		button.tooltip_text = tr("choose where the meetings are held first")
@@ -415,7 +410,7 @@ func _on_act(ns, action) -> void:
 	if not result.get("applied", false):
 		return
 	_dirty = true
-	acted.emit(before, action.action_name)
+	acted.emit(before, Strings.row_name("campaign-actions", action))
 
 
 # --- Campaign promises (V1.7b) ---------------------------------------------------------
@@ -472,7 +467,7 @@ func _build_programme(ns) -> void:
 			# than a bar over nothing, agenda_panel.gd's rule.
 			PanelKit.line(_body, tr("%s -- the content behind it is gone; it concludes on the next tick.") % String(entry["entry_id"]), PanelKit.Tone.DIM)
 			continue
-		var name_text := String(terms["name"])
+		var name_text := Strings.row_name("programme", terms)
 		match String(entry["status"]):
 			ProgrammeK.STATUS_ACTIVE:
 				var read: Dictionary = Programme.progress_of(ns, terms)
@@ -493,7 +488,7 @@ func _build_promise_row(ns, entry: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, Pledges.name_of(_loader, String(entry["pledge_id"])), PanelKit.Tone.PLAIN)
+	PanelKit.line(block, Strings.noun("pledges", _loader.pledges, "pledge", "pledge_id", String(entry["pledge_id"]), "pledge_name", Pledges.name_of(_loader, String(entry["pledge_id"]))), PanelKit.Tone.PLAIN)
 
 	var live: bool = Pledges.is_live(_state, entry)
 	var broken: bool = live and Pledges.in_breach(_state, ns, entry)
@@ -525,7 +520,7 @@ func _build_promise_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, String(terms.get("pledge_name", "")), PanelKit.Tone.PLAIN)
+	PanelKit.line(block, Strings.row("pledges", String(action.id), "effects.pledge.pledge_name", String(terms.get("pledge_name", ""))), PanelKit.Tone.PLAIN)
 
 	PanelKit.line(block, "%s · %s" % [
 		_promise_text({"field": terms.get("field", ""), "op": terms.get("op", ""), "value": terms.get("value", 0.0)}),
@@ -573,7 +568,7 @@ func _breach_text(terms: Dictionary) -> String:
 	# Signed and with the unit named ONCE at the end. The first captured frame printed
 	# "a month broken: Pensioners 0.14, Rural 0.10" -- four bare numbers in no unit,
 	# against an effort row two lines above printing points of TURNOUT in the same shape.
-	return tr("each month broken: ") + ", ".join(parts) + tr(" approval")
+	return tr("each month broken: %s approval") % ", ".join(parts)
 
 
 ## What a promise has taken off the headline so far, in points of approval: the months
@@ -592,8 +587,8 @@ func _charged_so_far(entry: Dictionary) -> float:
 
 func _pledge_button(ns, action) -> Button:
 	var button := Button.new()
-	button.text = action.action_name
-	button.tooltip_text = action.summary
+	button.text = Strings.row_name("pledges", action)
+	button.tooltip_text = Strings.row_summary("pledges", action)
 	button.pressed.connect(func(): _on_promise(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button
@@ -606,7 +601,7 @@ func _on_promise(ns, action) -> void:
 	if not result.get("applied", false):
 		return
 	_dirty = true
-	acted.emit(before, action.action_name)
+	acted.emit(before, Strings.row_name("pledges", action))
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract,

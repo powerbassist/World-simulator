@@ -32,6 +32,8 @@ const Budget = preload("res://src/sim/budget.gd")
 const Government = preload("res://src/sim/government.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const Grade = preload("res://src/ui/grade.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
@@ -200,7 +202,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	# A sited crisis names its place -- read off the register, which carries the
 	# name because every reader of it (this panel, the calendar, the card) is a
 	# leaf over pending state (V3.5).
-	var title: String = ev.event_name
+	var title: String = Strings.row_name("events", ev)
 	var where := String(entry.get("region_name", ""))
 	if where != "":
 		title = "%s — %s" % [title, where]
@@ -223,7 +225,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	PanelKit.line(_body, title, PanelKit.Tone.PLAIN)
 
 	var tag := Label.new()
-	tag.text = tr("%s — severity %d/%d") % [String(ev.category).capitalize(), int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
+	tag.text = tr("%s — severity %d/%d") % [Labels.event_category(String(ev.category)), int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
 	tag.theme_type_variation = UiTheme.MICRO
 	_body.add_child(tag)
 
@@ -234,7 +236,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 		who_label.theme_type_variation = UiTheme.MICRO
 		_body.add_child(who_label)
 
-	PanelKit.line(_body, ev.summary)
+	PanelKit.line(_body, Strings.row_summary("events", ev))
 
 	# The deadline in the same units the register holds and the diary prints. Two
 	# surfaces reporting one fact in two units is how they come to disagree -- U6c's
@@ -242,7 +244,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	var left := int(entry.get("months_left", 0))
 	var deadline := Label.new()
 	deadline.text = tr_n("%d month to answer, then: %s", "%d months to answer, then: %s", left) % [
-		left, ev.default_choice().get("label", ""),
+		left, Strings.choice_label(ev.id, ev.default_choice()),
 	]
 	# NEUTRAL until the last month, and the first captured frame is why: this line was
 	# GOOD_TEXT at any comfortable distance, so "2 months to answer, then: Say nothing"
@@ -265,14 +267,14 @@ func _build_choice(ns, ev, choice: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, String(choice.get("summary", "")))
+	PanelKit.line(block, Strings.choice_summary(ev.id, choice))
 
 	var button := Button.new()
 	# The default is named as such on its own button. Without it the one option that
 	# will happen anyway looks like the other two, and the player cannot tell which
 	# way silence falls -- which is the only thing the deadline is about.
 	button.text = "%s%s" % [
-		String(choice.get("label", "")),
+		Strings.choice_label(ev.id, choice),
 		tr("   (happens if you say nothing)") if bool(choice.get("is_default", false)) else "",
 	]
 	button.pressed.connect(func(): _on_choose(ev, choice))
@@ -295,7 +297,7 @@ func _on_choose(ev, choice: Dictionary) -> void:
 	if record.is_empty():
 		return
 	_dirty = true
-	acted.emit(before, "%s: %s" % [ev.event_name, String(choice.get("label", ""))])
+	acted.emit(before, "%s: %s" % [Strings.row_name("events", ev), Strings.choice_label(ev.id, choice)])
 
 
 ## The person behind the office, resolved HERE and never in src/sim/.
@@ -365,7 +367,7 @@ func _build_record(record: Dictionary) -> void:
 
 	# The place, for a sited event: the record carries the name because a past
 	# act's site cannot be re-derived once the shares have moved (V2.6b1).
-	var heading := String(record.get("event_name", ""))
+	var heading := Strings.record_event_name(record)
 	var where := String(record.get("region_name", ""))
 	if where != "":
 		heading = "%s — %s" % [heading, where]
@@ -381,10 +383,10 @@ func _build_record(record: Dictionary) -> void:
 	# the one thing a ledger of forced choices has to be able to show is which of them
 	# the clock made instead.
 	if bool(record.get("defaulted", false)):
-		answer.text = tr("No answer given — %s") % String(record.get("choice_label", ""))
+		answer.text = tr("No answer given — %s") % Strings.record_choice_label(record)
 		answer.theme_type_variation = UiTheme.BAD_TEXT
 	else:
-		answer.text = String(record.get("choice_label", ""))
+		answer.text = Strings.record_choice_label(record)
 		answer.theme_type_variation = UiTheme.CAPTION
 	block.add_child(answer)
 
@@ -417,7 +419,7 @@ func _choice_summary(record: Dictionary) -> String:
 	if ev == null:
 		return ""
 	var choice: Dictionary = ev.choice_by_id(String(record.get("choice_id", "")))
-	return String(choice.get("summary", ""))
+	return Strings.choice_summary(ev.id, choice)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract,

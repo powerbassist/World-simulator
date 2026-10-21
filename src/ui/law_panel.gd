@@ -399,9 +399,9 @@ func _majority_phrase(ns, law) -> String:
 		return tr("%s majority") % law.majority
 	match ns.amendment_rule:
 		"ordinary_law": return tr("ordinary majority")
-		"three_fifths": return "3/5 majority"
-		"two_thirds": return "2/3 majority"
-		"three_quarters": return "3/4 majority"
+		"three_fifths": return tr("3/5 majority")
+		"two_thirds": return tr("2/3 majority")
+		"three_quarters": return tr("3/4 majority")
 		"referendum_required": return tr("ordinary majority, then a referendum")
 		_: return ns.amendment_rule
 
@@ -410,7 +410,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
-	PanelKit.line(box, "%s  (%s, %s)" % [Strings.law_name(law), law.theme, _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
+	PanelKit.line(box, "%s  (%s, %s)" % [Strings.law_name(law), PanelKit.Labels.law_theme(law.theme), _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
 
 	# A system transition rewrites the whole constitution, not one field --
 	# named here structurally, off the loaded template's own display_name,
@@ -422,7 +422,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 		var target_label: String = target.display_name if target != null else target_system_id
 		PanelKit.line(box, tr("Rewrites the constitution to a %s.") % target_label, PanelKit.Tone.PLAIN)
 
-	PanelKit.line(box, law.summary, PanelKit.Tone.PLAIN)
+	PanelKit.line(box, Strings.law_summary(law), PanelKit.Tone.PLAIN)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
@@ -685,7 +685,7 @@ func _build_endorse_button(bill_id: String) -> Control:
 	# button cannot drift from what the machine actually charges.
 	var price_bits := PackedStringArray()
 	for bloc in StatuteK.PMB_ENDORSE_PRICE:
-		price_bits.append("%s %s" % [String(bloc).capitalize(), Num.fs(float(StatuteK.PMB_ENDORSE_PRICE[bloc]), 2)])
+		price_bits.append("%s %s" % [PanelKit.Labels.bloc(String(bloc)), Num.fs(float(StatuteK.PMB_ENDORSE_PRICE[bloc]), 2)])
 	var endorse_btn := Button.new()
 	endorse_btn.text = tr("Endorse")
 	endorse_btn.tooltip_text = tr("Stand behind the bill publicly: %s on every party's support line at its division, priced now as executive activism (%s). One stand per bill.") % [Num.fs(StatuteK.PMB_ENDORSE_SUPPORT, 2), ", ".join(price_bits)]
@@ -722,7 +722,7 @@ func _on_propose(law) -> void:
 func run_proposal(law, force := false, referendum := false) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result := Legislature.propose(_state, _loader, law, force, referendum)
-	proposed.emit(before, law.law_name, result)
+	proposed.emit(before, Strings.law_name(law), result)
 	_dirty = true
 
 
@@ -733,7 +733,7 @@ func _on_referendum(law) -> void:
 func _on_withdraw() -> void:
 	var ns = _state.player()
 	var law: Law = _find_law(Referendum.pending_law_id(ns))
-	var law_name: String = law.law_name if law != null else Referendum.pending_law_id(ns)
+	var law_name: String = Strings.law_name(law, Referendum.pending_law_id(ns))
 	var before := Trends.snapshot_now(_state)
 	# A Legislature command, not Referendum.withdraw(): the panel writes no sim
 	# state itself (AGENTS.md rule 2), and the command sets the loss's cooldown.

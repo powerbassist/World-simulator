@@ -16,6 +16,7 @@ extends RefCounted
 ## child(reading_id, child_id, state, loader) -> {title, lines: Array[String]};
 ## {} for a pair this file does not know, so the walker catches a stale id.
 
+const Labels = preload("res://src/ui/labels.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
@@ -101,7 +102,7 @@ static func _issue(ns, issue: String) -> Dictionary:
 	var sat := float(Opinion.issue_satisfaction(ns).get(issue, 0.0))
 	var salience := float(ns.issue_salience.get(issue, 0.0))
 	if label.is_empty():
-		label = Strings.t("%s tax") % issue.trim_prefix("tax_").capitalize()
+		label = Labels.tax(issue.trim_prefix("tax_"))
 	return _out(label, [
 		operands,
 		Strings.t("%.0f%% of minds, satisfaction %s") % [salience * 100.0, Num.fs(sat, 2)],
@@ -164,7 +165,7 @@ static func _programme(ns, loader) -> Dictionary:
 			continue
 		var progress: Dictionary = Programme.progress_of(ns, terms)
 		var line := Strings.t("%s -- %s against a %s goal") % [
-			String(terms.get("name", String(live["entry_id"]))),
+			Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"])))),
 			Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2)]
 		var clock := StripReadings.programme_clock_text(terms, live)
 		if not clock.is_empty():
@@ -177,12 +178,12 @@ static func _queue(ns, loader) -> Dictionary:
 	var names := {}
 	if loader != null:
 		for event in loader.events:
-			names[String(event.id)] = String(event.event_name)
+			names[String(event.id)] = Strings.row_name("events", event)
 	var lines: Array = []
 	for entry in ns.event_queue:
 		var severity := clampi(int(entry.get("severity", 1)), 1, EventsK.SEVERITY_NAMES.size())
 		var event_id := String(entry.get("event_id", ""))
-		lines.append("%s: %s" % [EventsK.SEVERITY_NAMES[severity - 1].capitalize(), names.get(event_id, event_id)])
+		lines.append("%s: %s" % [Labels.severity(EventsK.SEVERITY_NAMES[severity - 1]), names.get(event_id, event_id)])
 	return _out(Strings.t("On the desk"), lines)
 
 
@@ -190,7 +191,7 @@ static func _rules(state, ns) -> Dictionary:
 	var lines: Array = []
 	for rule in Orgs.rules_in_force(state, ns):
 		lines.append(Strings.t("%s · breach %s · contribution %s") % [
-			String(rule.get("name", rule["id"])), Num.f(float(rule.get("breach", 0.0)), 2),
+			Strings.row("bloc-proposals", String(rule["id"]), "name", String(rule.get("name", rule["id"]))), Num.f(float(rule.get("breach", 0.0)), 2),
 			Num.fs(float(rule.get("contribution", 0.0)), 2)])
 	return _out(Strings.t("Rules in force"), lines)
 

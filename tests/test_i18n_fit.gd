@@ -18,6 +18,7 @@ extends SceneTree
 
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Companies = preload("res://src/sim/companies.gd")
 
 ## 1920x1080 is the layout base (stretch canvas_items); this is the width
 ## window_manager._place() gives a window.
@@ -50,6 +51,10 @@ func _sweep(language: String) -> void:
 	root.add_child(main)
 	await process_frame
 	var windows = main._windows
+	# The headless root is 64x64; the window manager is given the layout base, so a
+	# frame's place on screen can be read (the right-edge check below).
+	windows.size = Vector2(1920.0, 1080.0)
+	_stage_a_bid(main._state, main._loader)
 	var ids: Array = windows.panel_ids()
 	if ids.size() < 20:
 		_fail("only %d windows registered under %s" % [ids.size(), language])
@@ -59,6 +64,7 @@ func _sweep(language: String) -> void:
 		await process_frame
 		await process_frame
 		var frame = windows.frame(id)
+		_check_right_edge(windows, frame, id, language)
 		var need: float = frame._content.get_combined_minimum_size().x
 		if not _widths.has(id):
 			_widths[id] = {}
@@ -123,6 +129,46 @@ func _check_briefing(main, language: String) -> void:
 		if need > scroll.size.x + 0.5:
 			_fail("the briefing under %s needs %.0f px but its view is %.0f: right-hand figures are clipped" % [language, need, scroll.size.x])
 	briefing.hide()
+
+
+## QA on #49: a window is placed from its content as it is on the way in -- the
+## panel's rows are built a frame later -- and then grows to them in place. The
+## Companies window with a takeover bid (a seven-button row, 1302 px in French)
+## ended at x=2180 of 1920, its close X off the screen; English sat 23 px short of
+## the same failure. Read after the growth, on each window's first open, with a
+## bid on the desk.
+func _check_right_edge(windows, frame, id: String, language: String) -> void:
+	var right: float = frame.position.x + frame.size.x
+	if id == "companies":
+		print("i18n_fit: companies %-6s right edge %4.0f of %4.0f" % [language, right, windows.size.x])
+		# The other half of the fix: the verbs wrap rather than widen the window.
+		for button in frame._content.find_children("*", "Button", true, false):
+			if button.get_parent() is HBoxContainer:
+				_fail("a row of verbs in Companies is a box that cannot wrap ('%s' under %s)" % [button.text, language])
+	if right > windows.size.x + 0.5:
+		_fail("window '%s' under %s ends at x=%.0f after growing to its content, past the %.0f px screen" % [id, language, right, windows.size.x])
+
+
+## A pending bid on the player's largest major, in the three scalars industry.gd
+## writes (tools/screenshot.gd's --bid): the bidder is another nation's first major.
+## The largest, because a share of 10 % or more adds "break up" -- the seven-button
+## row QA measured.
+func _stage_a_bid(state, loader) -> void:
+	var ns = state.player()
+	var majors: Array = Companies.majors_of(loader, ns.id)
+	if majors.is_empty():
+		_fail("premise: the player has no major firm to bid for")
+		return
+	majors.sort_custom(func(a, b): return Companies.share_of_company(ns, a) > Companies.share_of_company(ns, b))
+	for other_id in state.nations.keys():
+		if other_id == ns.id or Companies.majors_of(loader, other_id).is_empty():
+			continue
+		var entry: Dictionary = ns.companies[majors[0].id]
+		entry["bid_bidder"] = "%s|%s" % [other_id, Companies.majors_of(loader, other_id)[0].id]
+		entry["bid_price_eur_bn"] = 10.0
+		entry["bid_months_left"] = 3
+		return
+	_fail("premise: no other nation has a major firm to bid with")
 
 
 func _collect_scrolls(node: Node, out: Array[ScrollContainer]) -> void:

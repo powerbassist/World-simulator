@@ -333,7 +333,7 @@ func _label_for(key: String) -> String:
 		return tr(String(KEY_LABELS[key]))
 	var ns = _state.player()
 	var params: Dictionary = ns.custom_taxes.get(key, {})
-	return String(params.get("name", key))
+	return String(params.get("name", key))  # i18n: row-ok a composed tax's name, not a data row
 
 
 func _on_revert() -> void:
@@ -473,7 +473,7 @@ func _fill_bases() -> void:
 	for key in customs:
 		var params: Dictionary = ns.custom_taxes[key]
 		PanelKit.line(_bases_box, tr("%s — base %s%% of GDP, erosion %s, born at %s. Its rate sits in the grid above.") % [
-			String(params.get("name", key)), PanelKit.Num.f(float(params.get("base_share", 0.0)), 2),
+			String(params.get("name", key)), PanelKit.Num.f(float(params.get("base_share", 0.0)), 2),  # i18n: row-ok a composed tax's name, not a data row
 			PanelKit.Num.f(float(params.get("erosion", 0.0)), 2), PanelKit.Num.f(float(params.get("ref_pct", 0.0)), 1)], PanelKit.Tone.DIM)
 
 

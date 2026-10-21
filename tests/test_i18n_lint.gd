@@ -98,8 +98,10 @@ func _init() -> void:
 	# tr( / Strings.t( hold one literal; tr_n( / Strings.tn( hold the singular and the plural.
 	_wrapped_re = RegEx.create_from_string(r"(?<![\w])(?:(?:tr|Strings\.t)\(|(?:tr_n|Strings\.tn)\((?:\"(?:[^\"\\]|\\.)*\"\s*,\s*)?)$")
 	_not_text_re = RegEx.create_from_string(NOT_TEXT)
-	# Prose: two words with a space between (a lone unit or id has none), ...
-	_prose_words_re = RegEx.create_from_string(r"[A-Za-z]{2,}[^A-Za-z]*\s[^A-Za-z]*[A-Za-z]{2,}|^\s[A-Za-z]{2,}|[A-Za-z]{2,}\s$")
+	# Prose: a space and a word of two letters or more anywhere (a lone unit or id has no
+	# space). V5.1b3: it once wanted two such words side by side, and "A resignation",
+	# "Answering a grievance." and " (you)" walked through. ...
+	_prose_words_re = RegEx.create_from_string(r"^(?=.*\s)(?=.*[A-Za-z]{2,})")
 	# ... an all-capitals heading, ...
 	# A word and a placeholder with a space somewhere ("Saved '%s'.", "%d pending").
 	_placeholder_prose_re = RegEx.create_from_string(r"^(?=.*%)(?=.*[A-Za-z]{3,})(?=.*\s).*$")
@@ -211,6 +213,14 @@ func _self_check() -> void:
 		"x = \"%5.1f\" % v": 1,
 		"x = \"%.*f\" % [places, v]": 1,
 		"return tr(\"%s the press laws.\") % (tr(\"Loosens\") if up else tr(\"Tightens\"))": 1,
+		# V5.1b3: prose whose words alternate with one-letter ones (no two 2+-letter
+		# words side by side) escaped the old test -- 42 sites at #37's head.
+		"title = \"A resignation\"": 1,
+		"K.KIND_LAW: \"Propose a law\",": 1,
+		"ForeignPolicy.ACT_REASON_GRIEVANCE: return \"Answering a grievance.\"": 1,
+		"\"three_fifths\": return \"3/5 majority\"": 1,
+		"var mark := \" (you)\" if is_viewer(a, b) else \"\"": 1,
+		"return \"1 month\"": 1,
 		"		tr(\"Raises\") if v > 0.0 else tr(\"Lowers\"), absf(v)])": 0,
 	}
 	var clean := [

@@ -47,7 +47,10 @@ func _check_no_private_month_tables() -> void:
 			continue
 		var text := FileAccess.get_file_as_string("res://src/ui/%s" % name)
 		for line in text.split("\n"):
-			if line.contains("MONTH_NAMES[") or line.contains("MONTH_NAMES.size"):
+			# Any month table: the council kept its own ("Jan", "Feb" ... read as MONTHS[i])
+			# beside a clock that printed JANV, until V5.1b3.
+			if line.contains("MONTH_NAMES[") or line.contains("MONTH_NAMES.size") or line.contains("MONTHS[") \
+					or line.to_lower().contains("\"jan\", \"feb\""):
 				_fail("%s reads a month table directly instead of DateText: %s" % [name, line.strip_edges()])
 
 

@@ -19,11 +19,11 @@ const BK = preload("res://src/sim/bloc_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 ## More rows than this and the table is a wall; the rest are the settled ones
 ## (furthest from the threshold), which a bargain cannot move anyway.
 const MAX_ROWS := 12
-const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
 ## A fold: a toggle button over a VBox. Returns the VBox; the caller fills it.
@@ -173,12 +173,12 @@ static func build_debts(body: VBoxContainer, state, loader, ns, org) -> void:
 			any = true
 		var end_idx: int = now + maxi(int(d.get("months_left", 0)), 0)
 		var text := Strings.t("You owe %s a vote (lapses %s %d)") % [
-			loader.nation_name(String(d.get("creditor", ""))), MONTHS[end_idx % 12], end_idx / 12,
+			loader.nation_name(String(d.get("creditor", ""))), DateText.month(end_idx % 12 + 1), end_idx / 12,
 		]
 		var awaiting := String(d.get("awaiting", ""))
 		if awaiting != "":
 			var treaty = Orgs.proposal_by_id(loader, org.id, awaiting)
-			text += Strings.t(" — kept only if %s is ratified at home") % (String(treaty.proposal_name) if treaty != null else awaiting)
+			text += Strings.t(" — kept only if %s is ratified at home") % (Strings.row_name("bloc-proposals", treaty) if treaty != null else awaiting)
 		PanelKit.line(body, text)
 
 
@@ -197,17 +197,17 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 	var tabled: Dictionary = register.get("tabled", {})
 	if chairing and chosen != "":
 		var p = Orgs.proposal_by_id(loader, org.id, chosen)
-		PanelKit.line(body, Strings.t("You have put %s first.") % (String(p.proposal_name) if p != null else chosen))
+		PanelKit.line(body, Strings.t("You have put %s first.") % (Strings.row_name("bloc-proposals", p) if p != null else chosen))
 		return
 	if not chairing and not tabled.is_empty():
 		var tp = Orgs.proposal_by_id(loader, org.id, String(tabled.get("proposal_id", "")))
-		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % String(tp.proposal_name) if tp != null else Strings.t("You have tabled a proposal with the chair."))
+		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % Strings.row_name("bloc-proposals", tp) if tp != null else Strings.t("You have tabled a proposal with the chair."))
 		return
 
 	var inner := _fold(body, panel, "agenda:" + org.id, title)
 	if chairing:
 		var open_idx: int = state.year * 12 + (state.month - 1) + Council.months_to_opening(state, org.id)
-		PanelKit.line(inner, Strings.t("You chair the council from %s %d: choose what opens first.") % [MONTHS[open_idx % 12], open_idx / 12])
+		PanelKit.line(inner, Strings.t("You chair the council from %s %d: choose what opens first.") % [DateText.month(open_idx % 12 + 1), open_idx / 12])
 	var listed := 0
 	for p in loader.org_proposals.get(org.id, []):
 		# _eligible is the sim's one opening rule; reading it here keeps the list
@@ -216,7 +216,7 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 			continue
 		listed += 1
 		var button := Button.new()
-		button.text = (Strings.t("Put first: %s") if chairing else Strings.t("Table: %s")) % p.proposal_name
+		button.text = (Strings.t("Put first: %s") if chairing else Strings.t("Table: %s")) % Strings.row_name("bloc-proposals", p)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		if chairing:
 			button.pressed.connect(panel._on_set_agenda.bind(org.id, p.id))

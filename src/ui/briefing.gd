@@ -29,6 +29,7 @@ extends PanelContainer
 ## one propose path and one card path survive however the bill was asked for.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
@@ -180,7 +181,7 @@ func _rebuild() -> void:
 func _bill_name() -> String:
 	if _law != null:
 		return String(Strings.law_name(_law))
-	return String(_draft.get("name", _bill_key))
+	return String(_draft.get("name", _bill_key))  # i18n: row-ok a drafted bill's composed name, not a data row
 
 
 ## What the bill does to the statue book's target, named for a player who
@@ -199,7 +200,7 @@ func _repeal_line() -> String:
 			return tr("Repeals: %s.") % String(Strings.law_name(law))
 	var custom: Dictionary = _ns.custom_laws.get(target, {})
 	if not custom.is_empty():
-		return tr("Repeals: %s.") % String(custom.get("name", target))
+		return tr("Repeals: %s.") % String(custom.get("name", target))  # i18n: row-ok a composed law's name, not a data row
 	return tr("Repeals: %s.") % target
 
 
@@ -223,10 +224,10 @@ func _build_price() -> void:
 		var shown := Num.fs(landed, 2)
 		if absf(quote) > absf(landed) + 0.005:
 			shown += tr("  (priced %s, lands clamped)") % Num.fs(quote, 2)
-		PanelKit.row(section, bloc.capitalize(), shown,
+		PanelKit.row(section, Labels.bloc(bloc), shown,
 			PanelKit.Tone.BAD if landed < 0.0 else PanelKit.Tone.GOOD)
 		if landed < 0.0:
-			offended.append(bloc.capitalize())
+			offended.append(Labels.bloc(bloc))
 	if offended.is_empty():
 		PanelKit.line(section, tr("It offends no bloc outright."), PanelKit.Tone.DIM)
 	else:
@@ -283,7 +284,7 @@ func _build_polls() -> void:
 		var truth: float = float(_ns.bloc_approval.get(bloc, 0.0))
 		var shown: float = PollNoise.displayed_precise(id, _poll_key(bloc), truth) if precise \
 			else PollNoise.displayed(id, _poll_key(bloc), truth)
-		rows.append([String(bloc).capitalize(), Num.f(shown, 1)])
+		rows.append([Labels.bloc(String(bloc)), Num.f(shown, 1)])
 	PanelKit.ledger(section, rows)
 	if precise:
 		PanelKit.line(section, tr("Commissioned poll — margin of error about %.0f point.") % PollNoise.PRECISE_MAX_PCT, PanelKit.Tone.DIM)
@@ -392,13 +393,13 @@ static func effect_lines(effects: Dictionary, ns, include_bloc := false) -> Arra
 			if v != 0.0:
 				var up: bool = float(company.get("burden", 0.0)) > 0.0
 				out.append((Strings.t("Imposes a burden of %s on the %s sector.") if up else Strings.t("Lifts a burden of %s on the %s sector.")) % [
-					Num.f(v, 2), String(company.get("sector", "")).capitalize()])
+					Num.f(v, 2), Labels.sector(String(company.get("sector", "")))])
 		else:
 			for sector in company:
 				var ledger_v := float(company[sector])
 				if ledger_v != 0.0:
 					out.append((Strings.t("Imposes a burden of %s on the %s sector.") if ledger_v > 0.0 else Strings.t("Lifts a burden of %s on the %s sector.")) % [
-						Num.f(absf(ledger_v), 2), String(sector).capitalize()])
+						Num.f(absf(ledger_v), 2), Labels.sector(String(sector))])
 	for term in effects.get("society", {}):
 		var v: float = _scalar_of(effects["society"][term])
 		if v != 0.0:
@@ -408,7 +409,7 @@ static func effect_lines(effects: Dictionary, ns, include_bloc := false) -> Arra
 			var v := float(effects["bloc_offset"][bloc])
 			if v != 0.0:
 				out.append(Strings.t("Moves the %s bloc's approval price by %s.") % [
-					String(bloc).capitalize(), Num.fs(v, 2)])
+					Labels.bloc(String(bloc)), Num.fs(v, 2)])
 	return out
 
 
@@ -426,7 +427,7 @@ static func _tax_label(key: String, ns) -> String:
 	if authored.has(key):
 		return String(authored[key])
 	var params: Dictionary = ns.custom_taxes.get(key, {})
-	return Strings.t("%s's rate") % String(params.get("name", key))
+	return Strings.t("%s's rate") % String(params.get("name", key))  # i18n: row-ok a composed tax's name, not a data row
 
 
 ## The five society terms, phrased by the stance they name. The SIGN is the

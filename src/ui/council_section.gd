@@ -15,6 +15,7 @@ extends RefCounted
 ## `panel.offer_primary()`, which keeps the panel's fold contract.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Council = preload("res://src/sim/council.gd")
@@ -26,9 +27,9 @@ const Ratification = preload("res://src/sim/ratification.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 const FACE_SIZE := Vector2(48, 60)
-const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 ## How many chairs after the current one the presidency line names.
 const NEXT_CHAIRS := 3
 ## A drive at or above these reads "hard" / "steadily"; below, "lightly". The
@@ -59,8 +60,8 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 	if pending.is_empty():
 		PanelKit.line(body, Strings.t("Nothing before the council. The presidency brings the next proposal forward in due course."))
 	else:
-		PanelKit.line(body, String(pending.get("name", "")), PanelKit.Tone.PLAIN)
-		PanelKit.line(body, String(pending.get("summary", "")))
+		PanelKit.line(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "name", String(pending.get("name", ""))), PanelKit.Tone.PLAIN)
+		PanelKit.line(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "summary", String(pending.get("summary", ""))))
 		_sponsor_row(body, state, loader, ns, org, pending)
 		_decision_line(body, loader, org, pending)
 		_lobbying_line(body, loader, pending)
@@ -71,7 +72,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 		row.add_theme_constant_override("separation", 8)
 		for choice in Orgs.VOTE_CHOICES:
 			var button := Button.new()
-			button.text = choice.capitalize()
+			button.text = Labels.vote(choice)
 			button.disabled = choice == current
 			# An abstention is in the denominator and neither numerator, so sitting
 			# out makes passage harder without spending anything on opposing it.
@@ -100,7 +101,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 	var last: Dictionary = Orgs.last_vote(state, org.id)
 	if not last.is_empty():
 		PanelKit.line(body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(body, (Strings.t("Last division: %s — carried") if bool(last.get("passed", false)) else Strings.t("Last division: %s — fell")) % String(last.get("name", "")), PanelKit.Tone.PLAIN)
+		PanelKit.line(body, (Strings.t("Last division: %s — carried") if bool(last.get("passed", false)) else Strings.t("Last division: %s — fell")) % Strings.row("bloc-proposals", String(last.get("proposal_id", "")), "name", String(last.get("name", ""))), PanelKit.Tone.PLAIN)
 		var tally := Strings.t("%d for, %d against, of %d seats. %s abstained.")
 		match String(last.get("player_vote", "")):
 			Orgs.VOTE_FOR: tally = Strings.t("%d for, %d against, of %d seats. %s voted for.")
@@ -125,7 +126,7 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 		return
 	var left: int = int(r.get("months_left", 0))
 	PanelKit.heading(body, Strings.tn("RATIFY AT HOME — %s (%d month left)", "RATIFY AT HOME — %s (%d months left)", left) % [
-		String(r.get("name", "")), left,
+		Strings.row("bloc-proposals", String(r.get("proposal_id", "")), "name", String(r.get("name", ""))), left,
 	])
 	# The SAME blurred forecast a bill gets in the law screen (law_panel's static
 	# forecast_text): exact seat counts here would be a free precise whip count
@@ -303,7 +304,7 @@ static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 		# A small rotation can seat the same chair twice running; "then X, X" is noise.
 		if id != "" and (next.is_empty() or next[-1] != loader.nation_name(id)):
 			next.append(loader.nation_name(id))
-	var text := Strings.t("Presidency: %s (to %s %d)") % [loader.nation_name(current), MONTHS[end_idx % 12], end_idx / 12]
+	var text := Strings.t("Presidency: %s (to %s %d)") % [loader.nation_name(current), DateText.month(end_idx % 12 + 1), end_idx / 12]
 	if not next.is_empty():
 		text += Strings.t(", then %s") % ", ".join(next)
 	PanelKit.line(body, text + ".")

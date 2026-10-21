@@ -223,7 +223,7 @@ func _toggle_cluster(cluster_id: String) -> void:
 		var button := Button.new()
 		button.theme_type_variation = UiTheme.SUBROW_BUTTON
 		button.toggle_mode = true
-		button.text = str(entry["label"]).to_upper()
+		button.text = str(entry["label"]).to_upper()  # i18n: row-ok translated by the caller (main._build_action_bar)
 		# V2.3: the window's own glyph beside its name in the drawer -- the same
 		# icon the title bar above the open window wears, from the entry's own
 		# "icon" field, which _entry() reads off the window registry. Rasterised
@@ -242,8 +242,8 @@ func _toggle_cluster(cluster_id: String) -> void:
 		# buttons have named theirs in a tooltip since U5a; this is that, for the
 		# fourteen windows.
 		var key := str(entry.get("key", ""))
-		button.tooltip_text = str(entry["label"]) if key.is_empty() else "%s (%s)" % [
-			str(entry["label"]), key,
+		button.tooltip_text = str(entry["label"]) if key.is_empty() else "%s (%s)" % [  # i18n: row-ok translated by the caller (main._build_action_bar)
+			str(entry["label"]), key,  # i18n: row-ok translated by the caller (main._build_action_bar)
 		]
 		# A toggle button flips itself on press, so the open window -- not the
 		# click -- is what decides the mark. Set back and let show_active() say.

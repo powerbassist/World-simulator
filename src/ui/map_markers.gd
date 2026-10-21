@@ -79,7 +79,7 @@ static func markers(loader, state) -> Array:
 			out.append({
 				"nation_id": String(id),
 				"project_id": project_id,
-				"name": Projects.name_of(loader, project_id),
+				"name": Strings.noun("project-actions", loader.project_actions, "project", "project_id", project_id, "project_name", Projects.name_of(loader, project_id)),
 				"lonlat": nation.project_sites[project_id],
 				"built": Projects.is_done(ns, project_id),
 				"months_left": Projects.months_left(ns, project_id),
@@ -104,14 +104,14 @@ static func color_of(marker: Dictionary) -> Color:
 ## on a France 60 pixels wide at the world view.
 static func label_of(marker: Dictionary, loader) -> String:
 	if is_filled(marker):
-		return Strings.t("%s  --  finished") % String(marker.get("name", ""))
+		return Strings.t("%s  --  finished") % String(marker.get("name", ""))  # i18n: row-ok routed through Strings.noun where the marker is built
 	var left := int(marker.get("months_left", 0))
 	var terms := Projects.terms_of(loader, String(marker.get("project_id", "")))
 	var total := int(terms.get("build_months", 0))
 	if total <= 0:
-		return Strings.t("%s  --  %d months remaining") % [String(marker.get("name", "")), left]
+		return Strings.t("%s  --  %d months remaining") % [String(marker.get("name", "")), left]  # i18n: row-ok routed through Strings.noun where the marker is built
 	# "remaining" is not decoration and the screenshot pass is what said so: the
 	# frame read "12 of 96 months", which a player reads as twelve months DONE
 	# when it is twelve to go. Worded exactly as projects_panel.gd words it, so
 	# two surfaces on one register cannot disagree about which number that is.
-	return Strings.t("%s  --  %d of %d months remaining") % [String(marker.get("name", "")), left, total]
+	return Strings.t("%s  --  %d of %d months remaining") % [String(marker.get("name", "")), left, total]  # i18n: row-ok routed through Strings.noun where the marker is built

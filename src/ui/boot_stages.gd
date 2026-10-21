@@ -98,7 +98,7 @@ func progress() -> float:
 
 
 func label() -> String:
-	return String(STAGES[mini(_stage, STAGES.size() - 1)]["label"])
+	return String(STAGES[mini(_stage, STAGES.size() - 1)]["label"])  # i18n: row-ok a marked msgid; the loading screen translates it
 
 
 func stage_id() -> String:

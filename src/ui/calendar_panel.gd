@@ -62,8 +62,8 @@ const FIXED_LABEL := {
 
 const KIND_LABEL := {
 	K.KIND_DIPLOMATIC: "Diplomatic act",  # i18n: msgid
-	K.KIND_LAW: "Propose a law",
-	K.KIND_RESHUFFLE: "Reshuffle a portfolio",
+	K.KIND_LAW: "Propose a law",  # i18n: msgid
+	K.KIND_RESHUFFLE: "Reshuffle a portfolio",  # i18n: msgid
 }
 
 var _state
@@ -361,7 +361,7 @@ func _fixed_text(entry: Dictionary) -> String:
 	if kind == K.FIXED_COOLDOWN:
 		return "%s: %s" % [label, _cooldown_name(ref)]
 	if kind == K.FIXED_PROJECT:
-		return "%s: %s" % [label, Projects.name_of(_loader, ref)]
+		return "%s: %s" % [label, Strings.noun("project-actions", _loader.project_actions, "project", "project_id", ref, "project_name", Projects.name_of(_loader, ref))]
 	if kind == K.FIXED_REFERENDUM:
 		return "%s: %s" % [label, _law_name(ref)]
 	# The event register carries its own name, so this row needs no lookup at all --
@@ -415,7 +415,7 @@ func _booking_text(entry: Dictionary) -> String:
 			return tr("Propose %s") % _law_name(String(entry.get("law_id", "")))
 		K.KIND_RESHUFFLE:
 			return tr("%s to %s") % [
-				String(entry.get("portfolio", "")).capitalize(),
+				PanelKit.Labels.portfolio(String(entry.get("portfolio", ""))),
 				_party_name(String(entry.get("party_id", ""))),
 			]
 	return String(entry.get("kind", ""))
@@ -479,7 +479,7 @@ func _refresh_acts() -> void:
 			if target.is_empty():
 				return
 			for action in Diplomacy.available(_state, _loader.diplomatic_actions, player_id, target):
-				_act_pick.add_item(String(action.action_name))
+				_act_pick.add_item(Strings.row_name("diplomatic-actions", action))
 				_act_pick.set_item_metadata(_act_pick.item_count - 1, String(action.id))
 		K.KIND_LAW:
 			for law in Legislature.available(ns, _loader.laws):
@@ -489,7 +489,7 @@ func _refresh_acts() -> void:
 			var party_id := _selected_subject()
 			for portfolio in CabinetK.PORTFOLIO_KEYS:
 				if Cabinet.can_assign(ns, String(portfolio), party_id):
-					_act_pick.add_item(String(portfolio).capitalize())
+					_act_pick.add_item(PanelKit.Labels.portfolio(String(portfolio)))
 					_act_pick.set_item_metadata(_act_pick.item_count - 1, String(portfolio))
 
 	_book_button.disabled = _act_pick.item_count == 0
@@ -652,7 +652,7 @@ func _leader_person_id(nation_id: String) -> String:
 func _action_name(id: String) -> String:
 	for action in _loader.diplomatic_actions:
 		if String(action.id) == id:
-			return String(action.action_name)
+			return Strings.row_name("diplomatic-actions", action)
 	return id
 
 
