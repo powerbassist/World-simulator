@@ -84,6 +84,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[test-suite-model]] — one execution core for the gate: parallel workers, exclusive lane, per-check sharding byte-identical to the monolithic run, and the cockpit that reads it
 - [[decision-log]] — corrections made mid-session that changed the plan, and why
 - [[playability-audit]] — the first pass that tried to PLAY the game: nine defects, five that break a playthrough, and the register kept as assertions that turn red when fixed
+- [[v5.0-replay]] — the V5.0 play gate's twenty complaints checked against main, and the author's 10-minute replay script
 
 ## Scope tiers
 
