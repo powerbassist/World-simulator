@@ -522,5 +522,154 @@
   "%d of %d months remaining · %s %% of GDP a year · will buy %s %%/yr": "%d mois restants sur %d · %s %% du PIB par an · rapportera %s %%/an",
   "%d months · %s %% of GDP a year · %s %%/yr when it opens": "%d mois · %s %% du PIB par an · %s %%/an à l'ouverture",
   "%s — base %s%% of GDP, erosion %s, born at %s. Its rate sits in the grid above.": "%s — assiette %s %% du PIB, érosion %s, taux initial %s. Son taux figure dans la grille ci-dessus.",
-  "Would yield %s%% of GDP at birth (the most the model prices: %s).": "Rendrait %s %% du PIB à sa création (le maximum que le modèle chiffre : %s)."
+  "Would yield %s%% of GDP at birth (the most the model prices: %s).": "Rendrait %s %% du PIB à sa création (le maximum que le modèle chiffre : %s).",
+  "%d month on the clock": [
+    "%d mois au compteur",
+    "%d mois au compteur"
+  ],
+  "month %d of %d · %d month to its deadline": [
+    "mois %d sur %d · %d mois avant l'échéance",
+    "mois %d sur %d · %d mois avant l'échéance"
+  ],
+  "No programme was set this term. A programme can only be chosen on the first day of a term, before the clock runs.": "Aucun programme n'a été fixé ce mandat. Un programme ne peut être choisi que le premier jour d'un mandat, avant que l'horloge ne tourne.",
+  "In drafting: %d month before it reaches the order paper.": [
+    "En rédaction : %d mois avant l'inscription à l'ordre du jour.",
+    "En rédaction : %d mois avant l'inscription à l'ordre du jour."
+  ],
+  "Commission an assembly poll — %s%% of GDP (€%s bn)": "Commander un sondage à l'assemblée — %s %% du PIB (%s Md€)",
+  "Commission a popular poll — %s%% of GDP (€%s bn)": "Commander un sondage populaire — %s %% du PIB (%s Md€)",
+  "Commissioned an assembly poll: %s": "Sondage à l'assemblée commandé : %s",
+  "Commissioned a popular poll: %s": "Sondage populaire commandé : %s",
+  "Diary — %s": "Calendrier — %s",
+  "Next: %s — %s.": "Prochain : %s — %s.",
+  "Booked: %s, %s.": "Réservé : %s, %s.",
+  "%d day's travel · reach ×%s a month · %d%% spoken to": [
+    "%d jour de trajet · portée ×%s par mois · %d %% de la population rencontrée",
+    "%d jours de trajet · portée ×%s par mois · %d %% de la population rencontrée"
+  ],
+  "meeting in %s (%s) · %d day · %d%% spoken to": [
+    "réunion à %s (%s) · %d jour · %d %% de la population rencontrée",
+    "réunion à %s (%s) · %d jours · %d %% de la population rencontrée"
+  ],
+  "%s · BEING BROKEN · broken %d of %d months, %s approval": "%s · EN RUPTURE · rompu %d mois sur %d, popularité %s",
+  "%s · being kept · broken %d of %d months, %s approval": "%s · tenu · rompu %d mois sur %d, popularité %s",
+  "%d good below %d%% of the month's demand.": [
+    "%d bien sous les %d %% de la demande du mois.",
+    "%d biens sous les %d %% de la demande du mois."
+  ],
+  "Ask a member to vote for. One bargain per member per division.": "Demandez à un membre de voter pour. Un marchandage par membre et par scrutin.",
+  "Ask a member to vote against. One bargain per member per division.": "Demandez à un membre de voter contre. Un marchandage par membre et par scrutin.",
+  "%s — leans FOR (%s)": "%s — penche pour (%s)",
+  "%s — leans AGAINST (%s)": "%s — penche contre (%s)",
+  "Divides in %d month.": [
+    "Vote dans %d mois.",
+    "Vote dans %d mois."
+  ],
+  "Currently: voting against. %s holds %d of the council's seats.": "Actuellement : vote contre. %s détient %d des sièges du Conseil.",
+  "Currently: abstaining. %s holds %d of the council's seats.": "Actuellement : abstention. %s détient %d des sièges du Conseil.",
+  "Currently: voting for. %s holds %d of the council's seats.": "Actuellement : vote pour. %s détient %d des sièges du Conseil.",
+  "Last division: %s — carried": "Dernier scrutin : %s — adopté",
+  "Last division: %s — fell": "Dernier scrutin : %s — rejeté",
+  "%d for, %d against, of %d seats. %s abstained.": "%d pour, %d contre, sur %d sièges. %s s'est abstenu.",
+  "%d for, %d against, of %d seats. %s voted for.": "%d pour, %d contre, sur %d sièges. %s a voté pour.",
+  "%d for, %d against, of %d seats. %s voted against.": "%d pour, %d contre, sur %d sièges. %s a voté contre.",
+  "RATIFY AT HOME — %s (%d month left)": [
+    "RATIFIER CHEZ SOI — %s (%d mois restant)",
+    "RATIFIER CHEZ SOI — %s (%d mois restants)"
+  ],
+  "You chair the council this semester.": "Vous présidez le Conseil ce semestre.",
+  "You chair the council this term.": "Vous présidez le Conseil pour ce mandat.",
+  "%s — helped (salience %.0f%%)": "%s — a bénéficié (poids %.0f %%)",
+  "%s — hurt (salience %.0f%%)": "%s — a pâti (poids %.0f %%)",
+  "%s — was neutral (salience %.0f%%)": "%s — est resté neutre (poids %.0f %%)",
+  "Nothing today. The last matter closed this month.": "Rien aujourd'hui. Le dernier dossier a été clos ce mois-ci.",
+  "Nothing today. The last matter closed %d month ago.": [
+    "Rien aujourd'hui. Le dernier dossier a été clos il y a %d mois.",
+    "Rien aujourd'hui. Le dernier dossier a été clos il y a %d mois."
+  ],
+  "%d month to answer, then: %s": [
+    "%d mois pour répondre, puis : %s",
+    "%d mois pour répondre, puis : %s"
+  ],
+  "%d record hidden by your message settings.": [
+    "%d dossier masqué par vos réglages de messages.",
+    "%d dossiers masqués par vos réglages de messages."
+  ],
+  "%d coalition party voted to censure and is out of government.": [
+    "%d parti de la coalition a voté la censure et quitte le gouvernement.",
+    "%d partis de la coalition ont voté la censure et quittent le gouvernement."
+  ],
+  "The country votes in %d month. If it voted today: %s%% yes, %s%% no.": [
+    "Le pays vote dans %d mois. S'il votait aujourd'hui : %s %% pour, %s %% contre.",
+    "Le pays vote dans %d mois. S'il votait aujourd'hui : %s %% pour, %s %% contre."
+  ],
+  "The Assembly carried it and the second chamber refused. It comes into force in %d month.": [
+    "L'Assemblée l'a adopté et la seconde chambre l'a refusé. Il entre en vigueur dans %d mois.",
+    "L'Assemblée l'a adopté et la seconde chambre l'a refusé. Il entre en vigueur dans %d mois."
+  ],
+  "The Assembly carried it and the second chamber refused. It comes into force in %d month, and overriding them costs %s with every bloc.": [
+    "L'Assemblée l'a adopté et la seconde chambre l'a refusé. Il entre en vigueur dans %d mois, et passer outre coûte %s auprès de chaque bloc.",
+    "L'Assemblée l'a adopté et la seconde chambre l'a refusé. Il entre en vigueur dans %d mois, et passer outre coûte %s auprès de chaque bloc."
+  ],
+  "%s — before the assembly, divides in %d month.": [
+    "%s — devant l'assemblée, vote dans %d mois.",
+    "%s — devant l'assemblée, vote dans %d mois."
+  ],
+  "%s reaches the floor in %d month. The president's stand is on the record -- endorsed.": [
+    "%s arrive en séance dans %d mois. La position de la présidence est publique — soutenu.",
+    "%s arrive en séance dans %d mois. La position de la présidence est publique — soutenu."
+  ],
+  "%s's chief backs %s. The assembly divides in %d month; whether the president stands behind it is the president's to take.": [
+    "%s : son dirigeant ou sa dirigeante soutient %s. L'assemblée vote dans %d mois ; reste à la présidence de décider de s'y associer.",
+    "%s : son dirigeant ou sa dirigeante soutient %s. L'assemblée vote dans %d mois ; reste à la présidence de décider de s'y associer."
+  ],
+  "%s's chief %s backs %s. The assembly divides in %d month; whether the president stands behind it is the president's to take.": [
+    "%s : son dirigeant ou sa dirigeante, %s, soutient %s. L'assemblée vote dans %d mois ; reste à la présidence de décider de s'y associer.",
+    "%s : son dirigeant ou sa dirigeante, %s, soutient %s. L'assemblée vote dans %d mois ; reste à la présidence de décider de s'y associer."
+  ],
+  "%s reaches the floor in %d month. Endorse it, or let the backbench stand alone.": [
+    "%s arrive en séance dans %d mois. Soutenez-le, ou laissez les simples députés s'en charger seuls.",
+    "%s arrive en séance dans %d mois. Soutenez-le, ou laissez les simples députés s'en charger seuls."
+  ],
+  "%s  You have %d month to answer.": [
+    "%s  Vous avez %d mois pour répondre.",
+    "%s  Vous avez %d mois pour répondre."
+  ],
+  "Allied with %s; %d deployment running.": [
+    "Allié : %s ; %d déploiement en cours.",
+    "Allié : %s ; %d déploiements en cours."
+  ],
+  " · %d month to its deadline": [
+    " · %d mois avant l'échéance",
+    " · %d mois avant l'échéance"
+  ],
+  "%d month to its deadline": [
+    "%d mois avant l'échéance",
+    "%d mois avant l'échéance"
+  ],
+  "%d month left": [
+    "%d mois restant",
+    "%d mois restants"
+  ],
+  "%d rule in force binds you, %d breached": [
+    "%d règle en vigueur vous lie, %d violée",
+    "%d règles en vigueur vous lient, %d violées"
+  ],
+  "%d IOU owed": [
+    "%d dette de vote à honorer",
+    "%d dettes de vote à honorer"
+  ],
+  "Ask a member to abstain. One bargain per member per division.": "Demandez à un membre de s'abstenir. Un marchandage par membre et par scrutin.",
+  "January": "janvier",
+  "February": "février",
+  "March": "mars",
+  "April": "avril",
+  "May": "mai",
+  "June": "juin",
+  "July": "juillet",
+  "August": "août",
+  "September": "septembre",
+  "October": "octobre",
+  "November": "novembre",
+  "December": "décembre"
 }
