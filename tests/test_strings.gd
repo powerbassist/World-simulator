@@ -106,9 +106,9 @@ func _check_tables() -> void:
 		if table.is_empty():
 			_fail("the %s UI table is empty or missing" % lang)
 		for msgid in table:
-			# A plural entry is a list of forms; every form keeps the singular's
+			# A plural entry is a list of forms (the loader hands back a PackedStringArray); every form keeps the singular's
 			# placeholders, because the caller formats whichever form is picked.
-			var forms: Array = table[msgid] if table[msgid] is Array else [table[msgid]]
+			var forms: Array = Array(table[msgid]) if table[msgid] is PackedStringArray else [table[msgid]]
 			for form in forms:
 				var text := String(form)
 				if text.strip_edges() == "":
