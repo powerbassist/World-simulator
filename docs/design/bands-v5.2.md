@@ -50,7 +50,7 @@ they built and where, and say what they do not know and why" ([[v5]], head).
 
 | | Declared |
 |---|---|
-| Requests arriving in the inbox, per 60 months, in an **idle** term (the player answers nothing) | **24 to 48** |
+| Requests arriving in the inbox, per 60 months, in an **idle** term (the player answers nothing, so every request lapses into a decline) | **24 to 48** |
 | First request | **by month 3** |
 | Requests in months 1–20 | **at least 8** |
 | Distinct people asking, per term | **at least 12**; no one person more than 25 % of the requests |
@@ -62,6 +62,10 @@ they built and where, and say what they do not know and why" ([[v5]], head).
   12 events a term (**MEASURED**, `docs/someday.md`, "Open author calls", the ticked **Re-run `events_probe` E4/E5** item) makes about one thing
   asked of the player each game month, roughly once a minute and a quarter of
   play. More than that is a flood.
+- **The idle term declines everything by lapse** (the author's call,
+  2026-10-21). So the band also checks that declined people go on asking: a
+  request trigger that falls silent once a person holds a grudge would fail
+  B1 here, in the very regime the play gate's first minutes look like.
 - **Counted at arrival in the inbox, not at generation**, so a request the desk
   drops is a miss ([[v5.2-spec]], pre-mortem cause 2).
 - **Measured on an idle term**, because the want ladder's edge trigger fires 0
@@ -103,7 +107,8 @@ they built and where, and say what they do not know and why" ([[v5]], head).
 | Declines and failed levers that write a non-zero change to the person's grudge, loyalty or rapport, **shown on the person's card** | **100 %** |
 | A decline-everything term: acts (brief, resign, defect, challenge) by a person the player declined, by month 60 | **at least 1** |
 | Same, by month 20 | **at least 1** visible consequence on a card (a grudge level named in words) |
-| Decline-everything against idle: the change in the 2027 executive vote share | **at most 0.02** |
+| A request left unanswered past its window costs at least what an explicit decline of the same request costs | **100 %** of requests |
+| An idle term (every request lapses into a decline, the author's call of 2026-10-21) against the accepted table with no requests at all: the change in France's 2027 executive vote share | **at most 0.02** |
 
 - **Why the ceiling (MEASURED anchor):** the hands-off France run holds the 2027
   election by a margin of 0.034 (QA's accepted base table
@@ -111,13 +116,23 @@ they built and where, and say what they do not know and why" ([[v5]], head).
   accepted: regime `hands_off`, FRA 2027-05, `margin` 0.0343). A ceiling of 0.02 keeps refusals alone from deciding
   the election: refusing costs relationships, and the relationships cost votes
   later, through the acts.
-- **Probe:** `tools/audience_probe.gd`, regime A3 (decline every request
-  explicitly), against A1. The card half is a UI check: a proposed
+- **Why the comparison changed (the author's call, 2026-10-21):** an unanswered
+  request is a decline once its window passes ([[v5.2-spec]], "The author's
+  answers", 3). An idle term therefore declines everything by lapse, so the
+  ceiling now compares that idle term with the table before V5.2, the
+  accepted base. **This row is also the bound on the re-baseline** that Systems
+  predicts and the author accepts at build time: the hands-off France run must
+  not lose the 2027 election to lapsed requests alone.
+- **Probe:** `tools/audience_probe.gd`: regime A3 (decline every request
+  explicitly) against A1 (every request lapses), for the lapse row; A1 against
+  the accepted base table (today `base-4d2ce395.json`, or the base Systems
+  names at build time), for the ceiling. The card half is a UI check: a proposed
   `tests/test_playability.gd` entry (below).
 - **Failure looks like:** a decline that changes no register, or one that
   changes a register no surface shows (Q2 unanswerable); no act in a
   decline-everything term (refusing is free); a swing above 0.02 (refusing is
-  ruinous on its own).
+  ruinous on its own); a lapse cheaper than a decline (ignoring becomes the
+  best answer).
 
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
 
@@ -173,9 +188,11 @@ want, against one) × the channel (audience, phone call).
 - **Failure looks like:** one lever best in most cells (the player stops
   reading people and presses it); a lever never best (dead); calls as good as
   audiences (the diary becomes optional); leaving requests unanswered the best
-  answer to most of them (the player learns never to open the inbox). The last
-  depends on [[v5.2-spec]]'s question 3: if an unanswered request costs nothing,
-  this row is expected to fail, and that is the argument for option (a).
+  answer to most of them (the player learns never to open the inbox). Since the
+  author's call of 2026-10-21 (an unanswered request is a decline once its window
+  passes), this row is expected to pass: leaving a request unanswered is a
+  decline that arrives later, so it can be the best answer only where declining
+  is. A failure here now means the lapse is priced below the decline (B3).
 
 ## B6 — Corruption is tempting, and it is found out
 
@@ -240,9 +257,12 @@ Over 200 seeded runs (salts), France, otherwise idle.
   `absent_ok` verdict per register is proposed in [[v5.2-spec]];
   `tests/test_nation_fields.gd` pins the false set.
 - **I3 — A scene holds the clock** while it is open ([[v5-reflection]] T11).
-- **I4 — Inertness, as an expectation.** The AI nations book no audiences, so
-  the balance table should not move unless an unanswered request counts as a
-  decline ([[v5.2-spec]], question 3). Systems writes the prediction.
+- **I4 — The re-baseline is predicted, not discovered.** Since the author's call
+  of 2026-10-21, an unanswered request is a decline, so the 51-regime table
+  moves on the played nation's rows ([[v5.2-spec]], "The re-baseline: the table
+  WILL move"). Systems writes the predicted re-baseline before the run, measures
+  it, and the author accepts it before the merge; B3's ceiling bounds it. The AI
+  nations book no audiences and receive no requests.
 
 ## The probes, declared
 
