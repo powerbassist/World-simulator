@@ -376,6 +376,14 @@ The embassies, the capitals and the runner's verdict; two items measured and lef
   (folded name -> city, per nation), NOT a static memo -- static memos read by pool workers
   are G2's hazard class.
 
+## Carried from V5.1-a2 (2026-10-21)
+
+Below the V5.1 bar, from `code-review 33 high` (none met it):
+
+- **`message_stack.clear()` runs the `card_dismissed` handler for every card**, plain ones included, before the load resets `_paused_for_decision` and `_unseen_events`: a load from a decision-paused game can briefly set `_clock.paused = false` until the load's own `paused = true` a few lines on. No tick runs between, and the old event-card loop had the same order; moving the flag resets above the clear would remove the ordering.
+- **`test_load_hygiene` asserts the ribbon's title only**, not its cells (same dirty flag), and reads `message_stack._cards` and `ribbon._title` (private), as `test_statute_surfaces` already does.
+- **A loaded game never gets the "Your term" card** (by the existing comment: "a loaded save never receives it"); an in-game load used to keep, and refresh, the discarded game's card by accident. Not a regression, but the one-line "win the vote by MAY 2027" reminder is gone for loaded games.
+
 ## Carried from V5.1-a (2026-10-21)
 
 - **The at-icons files are orphaned.** After the Material Symbols swap nothing in `src/` reads `addons/at-icons`; the 24 committed SVGs, the `.gitignore` exception, the REUSE/ATTRIBUTION entries and the docs/tooling.md "committing rule" are dead weight. Delete them in c or d (they touch docs, not code).
