@@ -14,7 +14,7 @@ const Clock = preload("res://src/core/clock.gd")
 var _failures: Array[String] = []
 var _frame := 0
 var _timed: Control
-var _timed_started := 0
+var _timed_stepped := 0.0
 var _stalled: Control
 var _fading: Control
 var _faded := false
@@ -29,7 +29,7 @@ func _init() -> void:
 	_check_headless_is_off()
 
 
-func _process(_delta: float) -> bool:
+func _process(delta: float) -> bool:
 	_frame += 1
 	match _frame:
 		1:
@@ -61,19 +61,23 @@ func _process(_delta: float) -> bool:
 				_fail("one 300 ms frame finished Motion.open() -- a long frame ate the motion")
 			if _faded:
 				_fail("one 300 ms frame finished Motion.fade_out() -- the loading screen's reveal would vanish in a frame")
-			# Started after the stall, and read on wall-clock time below: a
-			# frame-counted tween would settle after N frames whatever their length.
+			# Started after the stall, and read on the motion's own stepped time below
+			# (each frame's delta capped at Motion.MAX_STEP_S): a frame-counted tween
+			# would settle after N frames whatever their length, and a wall-clock
+			# deadline flakes when the suite's parallel load stretches the frames
+			# (V5.1b2).
 			_timed = Control.new()
 			root.add_child(_timed)
 			Motion.open(_timed)
-			_timed_started = Time.get_ticks_msec()
+			_timed_stepped = 0.0
 			return false
 		_:
-			if Time.get_ticks_msec() - _timed_started < int(Motion.OPEN_S * 1000.0) + 150:
+			_timed_stepped += minf(delta, Motion.MAX_STEP_S)
+			if _timed_stepped < Motion.OPEN_S + 0.15:
 				return false
 			if not is_equal_approx(_timed.modulate.a, 1.0) or not _timed.scale.is_equal_approx(Vector2.ONE):
-				_fail("Motion.open() had not settled %.0f ms after OPEN_S on its own (a=%.3f scale=%s)" % [
-					150.0, _timed.modulate.a, _timed.scale])
+				_fail("Motion.open() had not settled %.2f stepped seconds after OPEN_S on its own (a=%.3f scale=%s)" % [
+					0.15, _timed.modulate.a, _timed.scale])
 			Motion.override = -1
 			_report()
 			return true

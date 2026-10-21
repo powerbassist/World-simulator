@@ -20,7 +20,11 @@ var _state
 var _results: Array = []
 var _panel
 var _frame := 0
-var _started := 0
+## The motion's own clock: each frame's delta capped at Motion.MAX_STEP_S, which is
+## what the count is stepped by. Wall-clock time diverges from it under load (a
+## pooled suite run is 2x slower frames, each still advancing at most one capped
+## step), and a wall-clock deadline flaked there (V5.1b2).
+var _stepped := 0.0
 var _seconds := 0.0
 
 
@@ -37,7 +41,7 @@ func _init() -> void:
 	_check_count_model()
 
 
-func _process(_delta: float) -> bool:
+func _process(delta: float) -> bool:
 	_frame += 1
 	if not _failures.is_empty() and _frame == 1:
 		_report()
@@ -52,23 +56,25 @@ func _process(_delta: float) -> bool:
 			_check_skip_lands_on_the_result()
 			_check_footer_button_during_the_count()
 			_check_rebuild_retires_the_count()
-			_started = Time.get_ticks_msec()
+			_stepped = 0.0
 			_seconds = minf(float(_panel._night.size()) * Motion.DECLARE_S, Motion.NIGHT_MAX_S)
 			return false
 		_:
-			if Time.get_ticks_msec() - _started < int(_seconds * 1000.0) + 300:
+			_stepped += minf(delta, Motion.MAX_STEP_S)
+			if _stepped < _seconds + 0.3:
 				# One frame of slack on the early side: the frame the count was
 				# built in is stepped with that frame's own delta (capped at
 				# Motion.MAX_STEP_S), time the clock here had not started on.
-				if _panel._revealed and Time.get_ticks_msec() - _started < int(_seconds * 1000.0) - 100:
-					_fail("the count revealed its verdict %d ms in, before its %.2f s ran" % [
-						Time.get_ticks_msec() - _started, _seconds])
+				if _panel._revealed and _stepped < _seconds - 0.1:
+					_fail("the count revealed its verdict %.2f stepped seconds in, before its %.2f s ran" % [
+						_stepped, _seconds])
 					_finish()
 					return true
 				return false
-			# Wall-clock, not frames: the night settles on its own time.
+			# Stepped time, not wall-clock and not a frame count: the night settles
+			# on the time Motion hands it.
 			if not _panel._revealed:
-				_fail("the count had not revealed its verdict %.2f s after it started" % (_seconds + 0.3))
+				_fail("the count had not revealed its verdict %.2f stepped seconds after it started" % (_seconds + 0.3))
 			_check_figures_final("after the count ran out on its own")
 			_check_motion_off()
 			_finish()
