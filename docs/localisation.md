@@ -208,3 +208,5 @@ still shows "1 months" in English when the count is 1 -- a pre-existing edge, co
 
 `tools/screenshot.gd -- --lang fr` stages the game in French; `--menu` ignores it,
 because the menu applies the saved language when it comes up.
+
+Recurring French terms and typography for the translation work: [[glossary-fr]].
