@@ -228,7 +228,12 @@ func _check_action_bar_subrow() -> void:
 	bar._toggle_cluster("economy")
 	if bar.open_cluster() != "economy":
 		_fail("opening the economy cluster did not record it as open")
-	var labels := _collect_text(bar._subrow)
+	# The drawer drops to icons when its labels do not fit the row; each entry keeps its
+	# label as metadata, which is what it is named by here.
+	var labels := ""
+	for button in bar._subrow.get_children():
+		labels += String(button.get_meta("label", "")).to_upper() + "
+"
 	for entry in ["ECONOMY", "BUDGET"]:
 		if not labels.contains(entry):
 			_fail("the economy sub-row has no '%s' entry: %s" % [entry, labels])
