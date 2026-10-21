@@ -1,0 +1,16 @@
+{
+  "order_nuclear_epr.name": "Commander un réacteur",
+  "order_nuclear_epr.summary": "Dix ans et un cinquième de point de PIB par mois, et le pays cesse d'acheter du gaz.",
+  "order_gas_ccgt.name": "Commander une centrale à gaz",
+  "order_gas_ccgt.summary": "Rapide, bon marché, et brûle quelque chose acheté à l'étranger.",
+  "order_coal_plant.name": "Commander une centrale à charbon",
+  "order_coal_plant.summary": "Électricité bon marché, emplois nationaux, et la chose la plus sale de la liste.",
+  "order_wind_onshore.name": "Commander un parc éolien",
+  "order_wind_onshore.summary": "Dix-huit mois, pas de facture de combustible, et chaque colline a son comité.",
+  "order_solar_park.name": "Commander un parc solaire",
+  "order_solar_park.summary": "Le plus rapide de la liste et le plus petit.",
+  "order_hydro_scheme.name": "Commander un aménagement hydroélectrique",
+  "order_hydro_scheme.summary": "Six ans, une vallée, et de l'énergie pour un siècle.",
+  "decommission_plant.name": "Fermer une centrale",
+  "decommission_plant.summary": "Cesser de payer pour la faire fonctionner. Tout ce qu'elle produisait, le pays l'achète désormais."
+}

@@ -1,0 +1,20 @@
+{
+  "farm_modernisation.name": "Programme de modernisation agricole",
+  "farm_modernisation.summary": "De l'argent public pour la mécanisation, l'irrigation et la chaîne du froid. Les campagnes le remarquent dans le mois ; le rendement de la terre met la majeure partie d'un mandat à venir.",
+  "agricultural_transformation.name": "Plan de transformation agricole",
+  "agricultural_transformation.summary": "Une reconstruction générationnelle de l'économie rurale, à une échelle que les villes peuvent lire dans le budget. La terre vaudra plus dans dix ans et le débat commence aujourd'hui.",
+  "end_farm_programme.name": "Mettre fin au programme agricole",
+  "end_farm_programme.summary": "L'argent s'arrête. Ce qui a été construit reste construit et se déprécie à partir de maintenant, ce qui est plus lent que la mémoire des campagnes.",
+  "industrial_renewal.name": "Fonds de renouveau industriel",
+  "industrial_renewal.summary": "Installations, outillage et procédés, visant le secteur qui emploie le plus de monde par unité de production. Les syndicats y voient des emplois ; personne ne leur a dit ce que dit la loi d'Okun.",
+  "reindustrialisation.name": "Programme de réindustrialisation",
+  "reindustrialisation.summary": "L'État met tout son poids derrière l'industrie manufacturière pour dix ans. L'engagement économique le plus visible qu'un gouvernement de ce pays puisse prendre, et celui dont la génération suivante parle le plus fort.",
+  "end_industrial_programme.name": "Mettre fin au programme industriel",
+  "end_industrial_programme.summary": "Le fonds se ferme. Les capacités restent et vieillissent, et l'atelier se souvient de qui a signé la fermeture.",
+  "digital_services_push.name": "Impulsion au numérique et aux services",
+  "digital_services_push.summary": "Réseaux, compétences et plomberie réglementaire dont dépend l'économie de services. Les villes et les entreprises le veulent ; les lieux qu'il n'atteindra pas le voient aussi.",
+  "knowledge_economy_plan.name": "Plan pour l'économie de la connaissance",
+  "knowledge_economy_plan.summary": "Dix ans de capital public visant en plein le premier secteur du pays. C'est là qu'est la croissance, et le dire à voix haute, c'est ce qu'entend le reste du pays.",
+  "end_services_programme.name": "Mettre fin au programme des services",
+  "end_services_programme.summary": "L'impulsion cesse. Les réseaux restent, les compétences restent, et le débat sur ceux pour qui la décennie précédente a été faite, non."
+}
