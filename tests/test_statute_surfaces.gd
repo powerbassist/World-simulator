@@ -459,9 +459,12 @@ func _run() -> void:
 		_main._assembly_cards["ghost_bill"] = "card_ghost"
 		_main._assembly_result_month = 42
 		_main._assembly_release_month = 43
-		var cards_before_load: int = _main._hud.message_stack._cards.size()
 		_main._on_load_requested(POLL_SLOT)
 		SaveManager.delete_slot(POLL_SLOT)
+		# The load drops the discarded game's whole stack (V5.1-a2), so the count the
+		# first month must NOT move is the one the load itself left, not the count
+		# before it.
+		var cards_after_load: int = _main._hud.message_stack._cards.size()
 		if not _main._announced_assembly_bills.is_empty() or not _main._assembly_cards.is_empty():
 			_fail("the load path left the bill-id memories behind -- they belong to the discarded game")
 		# THE SEED: the saved register carries leg (j)'s division fixture, so
@@ -488,7 +491,7 @@ func _run() -> void:
 		_main._state.year = y
 		_main._state.month = m
 		_main._announce_assembly_events()
-		if _main._hud.message_stack._cards.size() != cards_before_load:
+		if _main._hud.message_stack._cards.size() != cards_after_load:
 			_fail("the first month after load re-announced the loaded division -- the load boundary must honour the stamp")
 		# THE RELEASE VARIANT, by symmetry: the release stamp rides the same
 		# register (legislature.gd writes it there), so a loaded RELEASE seeds
