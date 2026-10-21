@@ -85,7 +85,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[decision-log]] — corrections made mid-session that changed the plan, and why
 - [[playability-audit]] — the first pass that tried to PLAY the game: nine defects, five that break a playthrough, and the register kept as assertions that turn red when fixed
 - [[v5.0-replay]] — the V5.0 play gate's twenty complaints checked against main, and the author's 10-minute replay script
-- [[glossary-tooltips]] — the instructive layer: 48 ranked terms with definitions tied to their models, underlined terms whose tooltips that nest and lock, the noise rules and the proof
+- [[glossary-tooltips]] — the instructive layer: 48 ranked terms with definitions tied to their models, underlined terms with tooltips that nest and lock, the noise rules and the proof
 
 ## Scope tiers
 
