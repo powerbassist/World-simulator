@@ -78,6 +78,7 @@ const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
 
@@ -2571,11 +2572,7 @@ func _enforce_interrupt() -> void:
 func _term_card_body() -> String:
 	var ns = _state.player()
 	var when := Trends.vote_date(ns)
-	return tr("You hold %s until %s %d -- %s. Win the vote.") % [
-		_nation_name(_state.player_nation_id),
-		ClockCluster.MONTH_NAMES[when.y - 1], when.x,
-		Trends.months_text(Trends.months_to_vote(_state, ns)),
-	]
+	return tr("You hold %s until %s %d -- %s. Win the vote.") % [_nation_name(_state.player_nation_id), DateText.month(when.y), when.x, Trends.months_text(Trends.months_to_vote(_state, ns))]
 
 
 ## The monthly refresh of the opening card, from _on_month_elapsed(). The body

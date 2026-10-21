@@ -33,6 +33,7 @@ const Projects = preload("res://src/sim/projects.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 signal closed
 
@@ -256,9 +257,7 @@ func _refresh_strip() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
-	_title.text = tr("Diary — %s %d") % [
-		ClockCluster.MONTH_NAMES[_state.month - 1], _state.year,
-	]
+	_title.text = tr("Diary — %s") % DateText.month_year(_state.month, _state.year)
 
 	var rows := Calendar.upcoming(_state, K.BOOKING_HORIZON_MONTHS)
 	_refresh_next_up(rows)
@@ -275,9 +274,7 @@ func _refresh_strip() -> void:
 		var key := "%d-%02d" % [int(when["year"]), int(when["month"])]
 		var entries: Array = by_month.get(key, [])
 
-		PanelKit.heading(_body, "%s %d" % [
-			ClockCluster.MONTH_NAMES[int(when["month"]) - 1], int(when["year"]),
-		])
+		PanelKit.heading(_body, DateText.month_year(int(when["month"]), int(when["year"])))
 
 		if entries.is_empty():
 			PanelKit.line(_body, "    —")
@@ -309,10 +306,7 @@ func _refresh_next_up(rows: Array) -> void:
 
 	var row: Dictionary = soonest[0]
 	var what := _booking_text(row) if row.has("status") else _fixed_text(row)
-	_next_up.text = tr("Next: %s — %02d %s %d.") % [
-		what, int(row.get("day", 1)),
-		ClockCluster.MONTH_NAMES[int(row["month"]) - 1], int(row["year"]),
-	]
+	_next_up.text = tr("Next: %s — %s.") % [what, DateText.day_month_year(int(row.get("day", 1)), int(row["month"]), int(row["year"]))]
 
 
 ## The footer. Without it a new game's diary opens completely blank -- France's
@@ -327,10 +321,7 @@ func _refresh_later() -> void:
 	PanelKit.heading(_body, tr("LATER"))
 
 	for row in rows:
-		PanelKit.line(_body, "    %s %d — %s" % [
-			ClockCluster.MONTH_NAMES[int(row["month"]) - 1], int(row["year"]),
-			_fixed_text(row),
-		])
+		PanelKit.line(_body, "    %s — %s" % [DateText.month_year(int(row["month"]), int(row["year"])), _fixed_text(row)])
 
 
 ## A booking carries a cancel button; a fixed date does not, because the game
@@ -411,8 +402,8 @@ func _booking_text(entry: Dictionary) -> String:
 				var home: Dictionary = Calendar.arrival_home(entry)
 				# One month prints once -- "MAR–MAR" is always a duplicate, and the
 				# playtest read it as broken text. Two months keep the span form.
-				var dm := ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3)
-				var hm := ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3)
+				var dm := DateText.month(int(depart["month"]))
+				var hm := DateText.month(int(home["month"]))
 				if dm == hm:
 					line += tr("  (away %02d–%02d %s)") % [int(depart["day"]), int(home["day"]), dm]
 				else:
@@ -437,9 +428,7 @@ func _refresh_months() -> void:
 	_month_pick.clear()
 	for offset in range(K.BOOKING_HORIZON_MONTHS + 1):
 		var when := _month_at(offset)
-		_month_pick.add_item("%s %d" % [
-			ClockCluster.MONTH_NAMES[int(when["month"]) - 1], int(when["year"]),
-		])
+		_month_pick.add_item(DateText.month_year(int(when["month"]), int(when["year"])))
 	_month_pick.selected = mini(selected, _month_pick.item_count - 1)
 
 
@@ -541,8 +530,8 @@ func _refresh_travel_note() -> void:
 		"day": int(meeting["day"]), "travel_days": travel,
 	})
 	_travel_note.text = tr("Away %d %s – %d %s (%d days' travel each way).") % [
-		int(depart["day"]), ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3),
-		int(home["day"]), ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3),
+		int(depart["day"]), DateText.month(int(depart["month"])),
+		int(home["day"]), DateText.month(int(home["month"])),
 		travel,
 	]
 
@@ -577,10 +566,7 @@ func _on_book() -> void:
 		return
 	var result: Dictionary = Calendar.book(_state, entry)
 	if bool(result["ok"]):
-		_status.text = tr("Booked: %s, %02d %s %d.") % [
-			_booking_text(entry), int(entry["day"]),
-			ClockCluster.MONTH_NAMES[int(entry["month"]) - 1], int(entry["year"]),
-		]
+		_status.text = tr("Booked: %s, %s.") % [_booking_text(entry), DateText.day_month_year(int(entry["day"]), int(entry["month"]), int(entry["year"]))]
 		mark_dirty()
 		diary_changed.emit()
 	else:

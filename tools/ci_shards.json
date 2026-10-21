@@ -72,7 +72,8 @@
    "tests/test_hud.gd",
    "tests/test_endowments.gd",
    "tests/test_month_runner.gd",
-   "tests/test_settings_language.gd"
+   "tests/test_settings_language.gd",
+   "tests/test_date_text.gd"
   ],
   [
    "tests/test_data.gd",

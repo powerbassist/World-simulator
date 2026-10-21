@@ -27,11 +27,8 @@ const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
-const MONTH_NAMES: Array[String] = [
-	"January", "February", "March", "April", "May", "June",  # i18n: msgid
-	"July", "August", "September", "October", "November", "December",  # i18n: msgid
-]
 
 ## An election closer than this is the story, whatever else is happening.
 const ELECTION_URGENT_MONTHS := 6
@@ -303,7 +300,7 @@ func _fill_government(ns, censure: Dictionary) -> void:
 func _fill_election(ns, months: int, vote_year: int, vote_month: int) -> void:
 	PanelKit.figure(_columns["election"], Trends.months_text(months), tr("until the vote"))
 	PanelKit.line(_columns["election"], "%s %d." % [
-		tr(MONTH_NAMES[vote_month - 1]), vote_year
+		DateText.month_long(vote_month), vote_year
 	])
 	# The date and the count come from the same clock (the executive's where the
 	# nation has one, the assembly's otherwise), which is what U3's old
@@ -552,7 +549,7 @@ func _build_effect_row(effect: Dictionary) -> Control:
 	row.add_theme_constant_override("separation", 12)
 
 	var label := Label.new()
-	label.text = "%s — %s %d:" % [String(effect["label"]), tr(MONTH_NAMES[int(effect["month"]) - 1]), int(effect["year"])]
+	label.text = "%s — %s %d:" % [String(effect["label"]), DateText.month_long(int(effect["month"])), int(effect["year"])]
 	label.theme_type_variation = UiTheme.CAPTION
 	row.add_child(label)
 
@@ -641,5 +638,5 @@ func _month_name_ago(months: int) -> String:
 		index += 12
 		year -= 1
 	if year == int(_state.year):
-		return tr(MONTH_NAMES[index])
-	return "%s %d" % [tr(MONTH_NAMES[index]), year]
+		return DateText.month_long(index + 1)
+	return "%s %d" % [DateText.month_long(index + 1), year]

@@ -31,6 +31,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 ## election_panel's bar block size: wide enough to read at a glance, short
 ## enough to leave the window's right edge to the scroll gutter.
@@ -288,10 +289,10 @@ func _unset_text(ns) -> String:
 		return tr("Nothing is offerable this term -- every gate in the book is shut.")
 	var rule := tr("No programme was set this term. A programme can only be chosen on the first day of a term, before the clock runs.")
 	var when := Trends.vote_date(ns)
-	if when.y < 1 or when.y > ClockCluster.MONTH_NAMES.size():
+	if when.y < 1 or when.y > DateText.SHORT.size():
 		return rule  # no vote scheduled: say the rule, not a date that does not exist
 	return rule + " " + tr("The next term starts after the vote in %s %d, and its programme can be chosen then.") % [
-		ClockCluster.MONTH_NAMES[when.y - 1], when.x,
+		DateText.month(when.y), when.x,
 	]
 
 

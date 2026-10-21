@@ -280,6 +280,7 @@ tests=(
   tests/test_settings_language.gd
   tests/test_i18n_lint.gd
   tests/test_i18n_fit.gd
+  tests/test_date_text.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is

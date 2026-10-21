@@ -13,14 +13,14 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 signal pause_toggled
 signal speed_selected(speed: int)
 
-const MONTH_NAMES: Array[String] = [
-	"JAN", "FEB", "MAR", "APR", "MAY", "JUN",  # i18n: msgid
-	"JUL", "AUG", "SEP", "OCT", "NOV", "DEC",  # i18n: msgid
-]
+## The English names, for tests and callers that want the table; the interface prints
+## months through DateText, which translates them.
+const MONTH_NAMES := DateText.SHORT
 
 ## Reserved for U5b's minimap. Held open as a sized, empty box rather than left
 ## out, because a corner cluster that changes height the session the minimap
@@ -116,7 +116,7 @@ func refresh(clock: Node) -> void:
 		_date_label.modulate.a = Motion.PAUSED_ALPHA
 		_pause_button.text = "..."
 		return
-	var date := "%02d %s %d" % [clock.day, tr(MONTH_NAMES[clock.month - 1]), clock.year]
+	var date := DateText.day_month_year(clock.day, clock.month, clock.year)
 	# V4.9a. The clock shows its speed rather than stating it: one brass beat per
 	# day, so the beats' own rhythm is the speed, and a paused date is dimmed --
 	# still the date, visibly not moving. The dim is state, not motion, so it
