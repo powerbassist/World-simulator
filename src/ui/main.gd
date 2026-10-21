@@ -34,6 +34,7 @@ const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const MonthRunner = preload("res://src/ui/month_runner.gd")
+const DevConsole = preload("res://src/ui/dev_console.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
@@ -764,6 +765,9 @@ func _ready() -> void:
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
 	add_child(_month_runner)
+	# V5.1-0b. Dev only, and the last child so it draws over everything: a debug
+	# build or --dev-console gets F12's console, a release build gets nothing.
+	DevConsole.install(self)
 
 	# Loading reuses the whole existing load path rather than a separate
 	# start-from-save branch: a new game is built first, then replaced. That
@@ -1159,14 +1163,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_SPACE:
 			_toggle_pause_by_hand()
 			_update_top_bar()
-		KEY_1:
-			_clock.set_speed(1)
-			_update_top_bar()
-		KEY_2:
-			_clock.set_speed(2)
-			_update_top_bar()
-		KEY_3:
-			_clock.set_speed(3)
+		KEY_1, KEY_2, KEY_3:
+			_clock.set_speed(event.keycode - KEY_0)
 			_update_top_bar()
 		KEY_M:
 			# M was the Europe tab. The map is now always underneath, so the

@@ -253,6 +253,9 @@ tests=(
   # V5.1-0a: that month across frames -- held clock, deferred input, and the
   # month run in slices saving as the month run whole.
   tests/test_month_runner.gd
+  tests/test_dev_commands.gd
+  tests/test_dev_console.gd
+  tests/test_dev_console_game.gd
   # V5.1-0a: the budget's forecast off the frame -- exact, quiet-debounced,
   # kept while it updates.
   tests/test_budget_forecast.gd
