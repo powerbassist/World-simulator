@@ -376,6 +376,15 @@ The embassies, the capitals and the runner's verdict; two items measured and lef
   (folded name -> city, per nation), NOT a static memo -- static memos read by pool workers
   are G2's hazard class.
 
+## Carried from V5.1-a (2026-10-21)
+
+- **The at-icons files are orphaned.** After the Material Symbols swap nothing in `src/` reads `addons/at-icons`; the 24 committed SVGs, the `.gitignore` exception, the REUSE/ATTRIBUTION entries and the docs/tooling.md "committing rule" are dead weight. Delete them in c or d (they touch docs, not code).
+- **Plates are wider with Archivo.** The map-layer legend and the portrait card went from 506 to 628 px, covering more map; c's re-layout (the docked workspace, no minimap) is where it gets absorbed, not a font tweak.
+- **The map's data colours stay brass.** Trade and dependency ramps, road/ferry spines, project arcs and the legend's key rows are data colours on the map's own scale, not the interface accent, and are untouched. A retune (and "no layer reads by colour alone") is V5.4's map work.
+- **`events_panel.gd`'s header plate is graded but not unit-tested** (the portrait, the scene backdrop and the arrival card are, in `test_grade.gd`): building the panel needs a state. A silent regression there looks like an ungraded plate.
+- **Sliders still wear the engine default** (the budget levers): the theme never styled `HSlider`. A Bureau slider (graphite track, accent fill) is d's, with the dense-table kit.
+- **The accent rule's fallback covers 14 of 41 flags** (every red-and-white flag, the greens, Ireland's orange): they share one azure. If the author wants those nations to read distinct, the rule's next step is a secondary named palette keyed by hue family, still data.
+
 ## Carried from V5.1-0c (2026-10-21)
 
 - **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.

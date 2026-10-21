@@ -70,10 +70,16 @@ const SIZE_SMALL := 12
 const SIZE_BASE := 15
 const SIZE_LEAD := 18
 const SIZE_FIGURE := 20
+const SIZE_MAP := 10     ## the map's place names, drawn in map_face() -- see WIDTH_MAP
 const SIZE_HERO := 30    ## the portrait card's approval figure, and only that
 
 const FONT_ARCHIVO := "res://assets/fonts/Archivo-Variable.ttf"
 const WIDTH_CONDENSED := 88
+## The map's own labels sit in a few pixels of ocean or a small state, and the
+## collision packer drops a name that does not fit: Archivo at 88 is wider than
+## the Barlow Condensed these labels were tuned on (a 6-letter caps name is 26px
+## in Barlow, 36 in Archivo 88, 27 at the axis floor of 62), so they take the floor.
+const WIDTH_MAP := 62
 const WEIGHT_BODY := 400
 const WEIGHT_MEDIUM := 500
 const WEIGHT_BOLD := 650
@@ -105,6 +111,7 @@ const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-r
 ## because a Theme is built once per scene root and the map is not a theme.
 static var _accent: Color = ACCENT_FALLBACK
 static var _archivo: FontFile
+static var _map_face: Font
 
 
 ## The accent a flag resolves to -- accent_rule.gd's floors over the flag's bands,
@@ -115,6 +122,19 @@ static func accent_for(bands: Array) -> Color:
 
 static func accent() -> Color:
 	return _accent
+
+
+## The face the map draws place names in -- see WIDTH_MAP. One cached object: the
+## map asks for it every frame.
+static func map_face() -> Font:
+	if _map_face == null:
+		_map_face = _face(WEIGHT_BODY, 0, false, WIDTH_MAP)
+	return _map_face if _map_face != null else ThemeDB.fallback_font
+
+
+## The theme for a played nation: its flag's accent, by the rule.
+static func apply_for(root: Control, nation) -> void:
+	apply(root, accent_for(nation.flag_bands))
 
 
 static func apply(root: Control, accent_color := ACCENT_FALLBACK) -> void:
@@ -170,7 +190,7 @@ static func _font(path: String) -> FontFile:
 ## Godot has no letter-spacing on Label, so tracking is a FontVariation's glyph
 ## spacing; the axes and the `tnum` feature are keyed by OpenType TAG (an int),
 ## not by name -- a string key is accepted and silently does nothing.
-static func _face(weight: int, spacing := 0, tabular := false) -> Font:
+static func _face(weight: int, spacing := 0, tabular := false, width := WIDTH_CONDENSED) -> Font:
 	if _archivo == null:
 		_archivo = _font(FONT_ARCHIVO)
 	if _archivo == null:
@@ -178,7 +198,7 @@ static func _face(weight: int, spacing := 0, tabular := false) -> Font:
 	var ts := TextServerManager.get_primary_interface()
 	var face := FontVariation.new()
 	face.base_font = _archivo
-	face.variation_opentype = {ts.name_to_tag("wght"): weight, ts.name_to_tag("wdth"): WIDTH_CONDENSED}
+	face.variation_opentype = {ts.name_to_tag("wght"): weight, ts.name_to_tag("wdth"): width}
 	if tabular:
 		face.opentype_features = {ts.name_to_tag("tnum"): 1}
 	if spacing != 0:

@@ -33,6 +33,7 @@ const Government = preload("res://src/sim/government.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
+const Grade = preload("res://src/ui/grade.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 
 var _state
@@ -217,7 +218,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 		header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		header.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		header.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		_body.add_child(header)
+		_body.add_child(Grade.apply(header))
 
 	PanelKit.line(_body, title, PanelKit.Tone.PLAIN)
 

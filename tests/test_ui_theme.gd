@@ -32,6 +32,7 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let both scenes' _ready() run
 
+	_check_player_accent_wired()
 	_check_theme_contents()
 	_check_scenes_carry_it()
 	_check_no_panel_overrides()
@@ -125,17 +126,31 @@ func _check_grammar(theme: Theme) -> void:
 		_fail("the open cluster does not carry the accent bar")
 
 	# Without a nation (the menu), the accent is the named fallback, not a flag.
-	if UiTheme.accent() != UiTheme.ACCENT_FALLBACK:
-		_fail("the accent in force before any nation is chosen is not the fallback")
-
-	# The accent in force reaches a freshly built theme: set one, rebuild, read.
 	var host := Control.new()
+	UiTheme.apply(host)
+	if UiTheme.accent() != UiTheme.ACCENT_FALLBACK:
+		_fail("the accent in force with no nation chosen is not the fallback")
+
+	# A given accent reaches a freshly built theme: set one, rebuild, read.
 	UiTheme.apply(host, Color("#E3A63A"))
 	var tinted := host.theme.get_stylebox("panel", UiTheme.PLATE_FOLDED) as StyleBoxFlat
 	if tinted.border_color != Color("#E3A63A"):
 		_fail("apply(root, accent) did not carry the accent into the theme")
 	UiTheme.apply(host)
 	host.free()
+
+
+## main.gd re-applies the theme once the played nation is known (and again on a
+## load): the scene boots with the fallback, so a wiring that is missing leaves
+## every nation looking like the menu, and nothing else would say so.
+func _check_player_accent_wired() -> void:
+	var player_id: String = _main._state.player_nation_id
+	var expected := UiTheme.accent_for(_main._loader.nations[player_id].flag_bands)
+	var folded := _main.theme.get_stylebox("panel", UiTheme.PLATE_FOLDED) as StyleBoxFlat
+	if folded.border_color != expected:
+		_fail("main's theme carries %s, not %s -- the played nation's accent" % [folded.border_color.to_html(false), expected.to_html(false)])
+	if expected == UiTheme.ACCENT_FALLBACK:
+		_fail("France resolves to the fallback accent; the wiring check proves nothing")
 
 
 ## The fonts are the one part of the theme that fails *silently*: a missing

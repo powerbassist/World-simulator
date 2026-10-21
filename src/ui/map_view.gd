@@ -1253,7 +1253,7 @@ func _draw_world_borders(canvas: CanvasItem) -> void:
 func _draw_outline_readout() -> void:
 	if _hovered_outline == "" or _loader == null:
 		return
-	var font := get_theme_default_font()
+	var font := UiTheme.map_face()
 	if font == null:
 		return
 	var lines := [
@@ -1436,10 +1436,10 @@ func _draw_spines() -> void:
 func _draw_labels() -> void:
 	if not _labels_enabled:
 		return
-	var font := get_theme_default_font()
+	var font := UiTheme.map_face()
 	if font == null:
 		return
-	var font_size := UiTheme.SIZE_MICRO
+	var font_size := UiTheme.SIZE_MAP
 	var ascent := font.get_ascent(font_size)
 	for p in _place_labels():
 		var at: Vector2 = (p["rect"] as Rect2).position + Vector2(0.0, ascent)
@@ -1490,10 +1490,10 @@ func _measure_text(font: Font, font_size: int, text: String) -> Vector2:
 func _place_labels(max_tier := -1) -> Array:
 	_last_placed = []
 	_label_onscreen = {1: 0, 2: 0, 3: 0}
-	var font := get_theme_default_font()
+	var font := UiTheme.map_face()
 	if font == null:
 		return _last_placed
-	var font_size := UiTheme.SIZE_MICRO
+	var font_size := UiTheme.SIZE_MAP
 	var view := Rect2(Vector2.ZERO, size)
 	var measure := func(text: String) -> Vector2: return _measure_text(font, font_size, text)
 	var candidates: Array = []
@@ -1563,7 +1563,7 @@ func _place_labels(max_tier := -1) -> Array:
 func _hover_label_rect() -> Rect2:
 	if _hovered_city == "" or _zoom < CITY_MIN_ZOOM:
 		return Rect2()
-	var font := get_theme_default_font()
+	var font := UiTheme.map_face()
 	if font == null:
 		return Rect2()
 	# The hovered city's record, found once per hover rather than by walking all
@@ -1607,7 +1607,7 @@ func _hover_label_rect() -> Rect2:
 func _draw_cities() -> void:
 	if _zoom < CITY_MIN_ZOOM:
 		return
-	var font := get_theme_default_font()
+	var font := UiTheme.map_face()
 	for city in _cities:
 		var lonlat: Vector2 = city["lonlat"]
 		var at := _lonlat_to_screen(lonlat.x, lonlat.y)
@@ -1675,7 +1675,7 @@ func _draw_cities() -> void:
 ## crowd is their NAMES -- which is why the text is drawn on hover alone rather
 ## than under LABEL_MIN_ZOOM's rule.
 func _draw_markers() -> void:
-	var font := get_theme_default_font()
+	var font := UiTheme.map_face()
 	for marker in _markers:
 		var lonlat: Vector2 = marker["lonlat"]
 		var at := _lonlat_to_screen(lonlat.x, lonlat.y)

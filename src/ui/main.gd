@@ -223,14 +223,14 @@ func _ready() -> void:
 			n.id, n.nation_name, pop_m, n.gdp_eur_bn, n.debt_to_gdp_pct
 		])
 
-	if pending_state != null:
-		_state = pending_state
-	else:
-		_state = GameState.new_game(_loader, pending_player_id, pending_scenario_id)
+	_state = pending_state if pending_state != null else GameState.new_game(_loader, pending_player_id, pending_scenario_id)
 	if not _state.errors.is_empty():
 		for e in _state.errors:
 			push_error(e)
 		return
+	# The accent is the played nation's own flag colour (V5.1a); the first apply()
+	# above ran before there was a nation and used the fallback.
+	UiTheme.apply_for(self, _loader.nations[_state.player_nation_id])
 	# The distance table is warmed HERE, not on its first lazy caller: ~2 s once
 	# per process is boot cost, while a lazy build makes the player's first
 	# month boundary freeze. See network.gd::warm(). Behind the loading screen
@@ -2393,6 +2393,7 @@ func _on_load_requested(slot: String) -> void:
 		return
 
 	_state = result["state"]
+	UiTheme.apply_for(self, _loader.nations[_state.player_nation_id])  # a loaded game may be another nation's
 	# The announce memories and live-card maps belong to the DISCARDED game:
 	# firm ids are content, so the same id failing in the loaded game would
 	# be card-silent behind this session's carried entries -- the pass-15

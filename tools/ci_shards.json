@@ -102,6 +102,7 @@
    "tests/test_map_plants.gd",
    "tests/test_ui_theme.gd",
    "tests/test_accent_rule.gd",
+   "tests/test_grade.gd",
    "tests/test_playability.gd",
    "tests/test_map_outlines.gd",
    "tests/test_nation_fields.gd",
