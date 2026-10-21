@@ -72,6 +72,7 @@ var _camel_re: RegEx
 var _key_after_re: RegEx
 var _const_re: RegEx
 var _fragment_re: RegEx
+var _split_plural_re: RegEx
 var _format_arg_re: RegEx
 
 
@@ -113,6 +114,9 @@ func _init() -> void:
 	# ... inside the argument of a format operator: `"..." % [` or `) % (` on this line or
 	# at the end of the line before.
 	_format_arg_re = RegEx.create_from_string(r"[\"\)]\s*%\s*[\[\(]")
+	# tr_n( / Strings.tn( whose plural literal is not on the same line as the singular: the
+	# extractor reads one line at a time and would list the msgid with no plural.
+	_split_plural_re = RegEx.create_from_string(r"(?<![\w])(?:tr_n|Strings\.tn)\(\s*\"(?:[^\"\\]|\\.)*\"\s*,(?!\s*\")")
 	_const_re = RegEx.create_from_string(r"^(?:const|static var|enum)\b")
 	_self_check()
 	var names := Array(DirAccess.get_files_at(ROOT))
@@ -152,6 +156,8 @@ func _check_line(line: String, is_const: bool, previous := "") -> Array[String]:
 	var out: Array[String] = []
 	if line.strip_edges().begins_with("#") or line.contains(OK_MARK) or line.contains(MSGID_MARK):
 		return out
+	if _split_plural_re.search(line):
+		out.append("tr_n / Strings.tn: singular and plural literals on one line (the extractor reads one line at a time)")
 	# A fragment spliced into a sentence cannot be translated: make the sentence whole
 	# (one per branch, or tr_n for a count).
 	if _fragment_re.search(line) and (_format_arg_re.search(line) or _format_arg_re.search(previous.strip_edges().right(8))):
@@ -200,6 +206,7 @@ func _self_check() -> void:
 		"label.text = tr(\"Leave office\") if defeated else tr(\"Continue\")",
 		"b.text = (tr(\"Put first: %s\") if chairing else tr(\"Table: %s\")) % name",
 		"return tr_n(\"%d month left\", \"%d months left\", n) % n",
+		"x = tr_n(\"%d day\", \"%d days\", n) % [n, y]",
 		"x = Strings.tn(\"%d day\", \"%d days\", n) % n",
 		"PanelKit.figure(_columns[\"government\"], tr(\"x\"))",
 		"if kind == \"Not available\":",
@@ -220,6 +227,8 @@ func _self_check() -> void:
 	for line in clean:
 		if not _check_line(line, false).is_empty():
 			_fail("self-check: `%s` should be clean, was flagged" % line)
+	if _check_line("x = tr_n(\"%d day\",", false).is_empty():
+		_fail("self-check: a plural split across lines should be flagged")
 	# A fragment ternary on the line AFTER a format operator is the same defect.
 	if _check_line("		tr(\"Raises\") if v > 0.0 else tr(\"Lowers\"), absf(v)])", false, "out.append(tr(\"%s %.1f.\") % [").is_empty():
 		_fail("self-check: a fragment ternary inside a format argument list should be flagged")

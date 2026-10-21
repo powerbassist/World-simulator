@@ -300,6 +300,11 @@ def todo(lang):
     return out
 
 
+def _filled(slot):
+    """Whether a worklist slot (a string, or a list of plural forms) holds any text."""
+    return any(str(s).strip() for s in (slot if isinstance(slot, list) else [slot]))
+
+
 def _edges(en, text):
     """The English msgid's leading and trailing spaces, put on a translation: a msgid built
     to be joined to another string (" -- kept only if %s is ratified") keeps them."""
@@ -328,7 +333,7 @@ def apply_worklist(path):
             slot = entry.get(lang, "")
             plural = name == "ui" and key in plurals
             if key not in source:
-                if (slot if isinstance(slot, list) else [slot]) != [""] and slot != [""] * forms:
+                if _filled(slot):
                     print("refused (stale, its English is gone): %s/%s" % (name, key))
                     refused += 1
                 continue
@@ -337,7 +342,7 @@ def apply_worklist(path):
                     print("refused (a plural msgid takes a list of %d forms): %s/%s" % (forms, name, key))
                     refused += 1
                     continue
-                if not any(str(s).strip() for s in slot):
+                if not _filled(slot):
                     continue
                 if not all(str(s).strip() for s in slot):
                     print("refused (every plural form must be filled): %s/%s" % (name, key))
