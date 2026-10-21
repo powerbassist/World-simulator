@@ -76,8 +76,7 @@ func _init() -> void:
 
 func _scan(path: String) -> void:
 	var number := 0
-	for line in FileAccess.get_file_as_string(path).split("
-"):
+	for line in FileAccess.get_file_as_string(path).split("\n"):
 		number += 1
 		if line.strip_edges().begins_with("#") or line.contains(OK_MARK):
 			continue

@@ -271,7 +271,8 @@ func _fit_drawer() -> void:
 	for sibling in row.get_children():
 		if sibling != self:
 			beside += (sibling as Control).get_combined_minimum_size().x
-	var budget: float = get_viewport_rect().size.x - BAND_MARGIN - beside 		- (row.get_child_count() - 1) * row.get_theme_constant("separation")
+	var budget: float = get_viewport_rect().size.x - BAND_MARGIN - beside \
+		- (row.get_child_count() - 1) * row.get_theme_constant("separation")
 	if _subrow.get_parent().get_combined_minimum_size().x <= budget:
 		return
 	for button in buttons:
