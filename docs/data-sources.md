@@ -440,6 +440,12 @@ machine) and `data/world/outlines.json` (each of the 133 outlines' name and GDP)
 
 ## Rejected sources
 
+### Wikidata embassy items -- tried at V5.1-0d for the embassies that already exist
+
+- **License:** CC0, the least obligation there is.
+- **Measured:** items that are an instance of *embassy* with an operator and a country (SPARQL, 2026-10-21), restricted to the 41-nation roster: 1 300 of the 1 640 directed missions, after mapping the Kingdom of Denmark and the Kingdom of the Netherlands onto their roster ids and dropping 126 dissolved missions. Turkey's embassy in North Nicosia is filed under Cyprus.
+- **Why rejected:** the gaps were the bug itself. Sweden in Brussels and Dublin, Poland in Pristina: each absent item would have offered the player an embassy where one stands. `data/world/embassies.json` states a RULE instead -- every roster state holds one in every other, except the pairs without diplomatic relations -- which errs the other way (small states read too connected) and is recorded as that file's bound. A curated list can replace the rule with no code change. See [[diplomacy-model]].
+
 ### OpenStreetMap
 
 - **License:** ODbL — share-alike on derived databases.

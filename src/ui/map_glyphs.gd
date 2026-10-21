@@ -10,14 +10,17 @@ extends RefCounted
 ## cross beside Zurich. The SIZE of every mark stays MapCities.radius_of() -- tiers
 ## change the mark and the naming rule, not the scale a player already reads.
 ##
-## Capitals are a NAME match between data/nations/*.json "capital" and the city
-## register, folded (case and diacritics), because the two files were imported
-## from different sources: MDA's "Chișinău" is the city "Chisinau". A nation whose
+## Capitals are src/core/capital.gd's rule (V5.1-0d moved it there so the diary's
+## travel pricing reads the same one): a NAME match between data/nations/*.json
+## "capital" and the city register, folded (case and diacritics), because the two
+## files were imported from different sources: MDA's "Chișinău" is the city
+## "Chisinau". A nation whose
 ## capital is not in the register at all falls back to its largest city -- MLT's
 ## Valletta (~6k people) is below the register's cut. That fallback is a BOUND,
 ## recorded in docs/map-platform-model.md §10, not a silent guess.
 
 const MapCities = preload("res://src/ui/map_cities.gd")
+const Capital = preload("res://src/core/capital.gd")
 
 ## The tier-2 floor. Half a million is where a European city stops being a
 ## regional town and starts being a name a player expects on a country-scale map
@@ -37,49 +40,13 @@ const TIER3_WIDTH_SCALE := 0.625
 ## Clearance around a glyph that a name may not enter.
 const RECT_PAD := 2.0
 
-const _FOLD := {
-	"à": "a", "á": "a", "â": "a", "ã": "a", "ä": "a", "å": "a", "ā": "a", "ă": "a", "ą": "a",
-	"ç": "c", "ć": "c", "č": "c", "ĉ": "c", "ď": "d", "đ": "d", "ð": "d",
-	"è": "e", "é": "e", "ê": "e", "ë": "e", "ē": "e", "ė": "e", "ę": "e", "ě": "e",
-	"ğ": "g", "ģ": "g", "ì": "i", "í": "i", "î": "i", "ï": "i", "ī": "i", "į": "i", "ı": "i",
-	"ķ": "k", "ł": "l", "ļ": "l", "ľ": "l", "ñ": "n", "ń": "n", "ň": "n", "ņ": "n",
-	"ò": "o", "ó": "o", "ô": "o", "õ": "o", "ö": "o", "ø": "o", "ő": "o", "ō": "o",
-	"ř": "r", "ŕ": "r", "ś": "s", "š": "s", "ş": "s", "ș": "s", "ť": "t", "ţ": "t", "ț": "t",
-	"ù": "u", "ú": "u", "û": "u", "ü": "u", "ū": "u", "ů": "u", "ű": "u", "ų": "u",
-	"ý": "y", "ÿ": "y", "ź": "z", "ż": "z", "ž": "z",
-	"ß": "ss", "æ": "ae", "œ": "oe", "þ": "th",
-}
-
-
-static func fold(text: String) -> String:
-	var low := text.to_lower()
-	var out := ""
-	for i in low.length():
-		var ch := low[i]
-		out += String(_FOLD.get(ch, ch))
-	return out
-
-
 ## city_id -> nation_id, one per nation (see the header for the fallback).
 static func capitals(loader) -> Dictionary:
 	var out := {}
 	for nid in loader.nations.keys():
-		var want := fold(String(loader.nations[nid].capital))
-		var matches: Array = []
-		var largest := ""
-		var largest_share := -1.0
-		for region in loader.regions.get(nid, []):
-			for city in region.cities:
-				if want != "" and fold(city.city_name) == want:
-					matches.append(city.id)
-				var s := float(region.share) * float(city.share)
-				if s > largest_share:
-					largest_share = s
-					largest = city.id
-		if matches.size() >= 1:
-			out[matches[0]] = String(nid)
-		elif largest != "":
-			out[largest] = String(nid)
+		var city = Capital.city(loader, String(nid))
+		if city != null:
+			out[city.id] = String(nid)
 	return out
 
 
@@ -88,11 +55,11 @@ static func capitals(loader) -> Dictionary:
 static func capital_errors(loader) -> Array[String]:
 	var out: Array[String] = []
 	for nid in loader.nations.keys():
-		var want := fold(String(loader.nations[nid].capital))
+		var want := Capital.fold(String(loader.nations[nid].capital))
 		var n := 0
 		for region in loader.regions.get(nid, []):
 			for city in region.cities:
-				if want != "" and fold(city.city_name) == want:
+				if want != "" and Capital.fold(city.city_name) == want:
 					n += 1
 		if n > 1:
 			out.append("%s: capital '%s' matches %d cities" % [nid, loader.nations[nid].capital, n])

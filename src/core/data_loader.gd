@@ -104,6 +104,10 @@ var commodity_endowments: Dictionary = {}
 ## an outline's commodity demand reads. No domestic model.
 var outlines: Dictionary = {}
 
+## V5.1-0d: the roster pairs with no diplomatic relations, and so no embassy either
+## way -- symmetric pair key -> true (data/world/embassies.json; DiplomacyLoader).
+var embassy_exceptions: Dictionary = {}
+
 
 ## nation id -> Array[Outlet], in authored file order. Absent for the same reason
 ## `companies` may be absent, and with a stronger consequence: a nation with no
@@ -290,6 +294,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	commodity_recipes.clear()
 	commodity_endowments.clear()
 	outlines.clear()
+	embassy_exceptions.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -364,6 +369,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	CommoditiesLoader.load_commodity_recipes(self, commodities_dir.path_join("recipes.json"))
 	CommoditiesLoader.load_commodity_endowments(self, commodities_dir.path_join("endowments.json"))
 	CommoditiesLoader.load_outlines(self, world_dir.path_join("outlines.json"))
+	DiplomacyLoader.load_embassies(self, world_dir.path_join("embassies.json"))
 
 	GeoLoader.validate_cross_file(self, geo_path, world_path)
 	PoliticsLoader.validate_amendments(self)

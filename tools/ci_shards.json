@@ -79,6 +79,7 @@
    "tests/test_government_panel.gd",
    "tests/test_discipline.gd",
    "tests/test_diplomacy.gd",
+   "tests/test_embassies.gd",
    "tests/test_foreign_policy.gd",
    "tests/test_people.gd",
    "tests/test_cabinet.gd",

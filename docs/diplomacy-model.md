@@ -93,6 +93,12 @@ Two effect channels at V1.3a, three since. `relations` is **required and non-zer
 
 Preconditions may test `relations` (against the action's own target) or the acting nation's own fields. A **second pair-state field**, `agreement_active`, joined them at V1.3b, and it is what lets propose and withdraw gate themselves generically: an enter verb asks for 0, an exit verb asks for 1, and `Diplomacy.available()` needs no trade knowledge at all. An unrecognised field is a startup error, not a silently-false predicate.
 
+## The embassies that already exist (V5.1-0d)
+
+`open_embassy` was gated on a meeting and relations >= 50 and nothing else, so the game offered France an embassy in Zagreb and Nicosia, and a hands-off run had the AI open 33 embassies in the player's capital in its first three years. `NationState.embassies` is the register: DIRECTED (France's embassy in Rome is not Italy's in Paris), the ids of the capitals this nation holds a resident mission in. It is seeded at new game by `src/sim/diplomacy_embassies.gd` from a rule the data states, `data/world/embassies.json`: every roster state holds one in every other, except the pairs without diplomatic relations (Cyprus-Turkey, and Kosovo with the ten roster states that do not recognise it). The verb asks the seventh pair field, `embassy_held`, for 0, and writes the sixth effect channel, `embassy: "open"`. The register, not the 240-month cooldown, is what keeps it from reopening. SAVE_VERSION 41.
+
+**Bounds, recorded.** The rule errs toward too many missions: Malta, Luxembourg, Iceland, Montenegro and Kosovo in truth accredit many ambassadors from a neighbouring capital. A Wikidata list was tried first and refused because its gaps were the bug itself (an embassy offered where one stands) -- [[data-sources]]. And on a pair without relations the verb is refused: the exceptions are copied to `NationState.no_relations` at the same seed and the verb asks the eighth pair field, `relations_exist`, for 1 (review pass 2: before it, Serbia at relations 50 could have opened an embassy in Pristina). Recognition itself is not modelled, so nothing opens those pairs during a game.
+
 ## The measurement, run before the content existed
 
 `tools/diplomacy_probe.gd`. The plan named it and named what would count as a failure, which is the discipline [[amendment-model]], [[dissolution-model]] and [[scenario-model]] each established.

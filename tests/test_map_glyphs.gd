@@ -13,6 +13,7 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const MapGlyphs = preload("res://src/ui/map_glyphs.gd")
+const Capital = preload("res://src/core/capital.gd")
 
 var _failures: Array[String] = []
 
@@ -71,6 +72,18 @@ func _check_capitals(loader) -> void:
 		var chisinau = _city_named(loader, "MDA", "Chisinau")
 		if chisinau == null or String(caps.get(chisinau.id, "")) != "MDA":
 			_failures.append("MDA's capital 'Chișinău' did not fold onto the city 'Chisinau'")
+	# V5.1-0d: the diary and the campaign read this rule too, and its fallback is
+	# silent -- so a capital that stops matching by name (a typo, a renamed city)
+	# must fail here rather than quietly move the seat of government to the
+	# largest city. MLT is the one recorded bound.
+	var fell_back: Array = []
+	for nid in loader.nations.keys():
+		var want := Capital.fold(String(loader.nations[nid].capital))
+		var c = Capital.city(loader, String(nid))
+		if c == null or Capital.fold(c.city_name) != want:
+			fell_back.append(String(nid))
+	if fell_back != ["MLT"]:
+		_failures.append("capitals that fall back to the largest city: %s, want only the recorded bound MLT" % [fell_back])
 	if loader.nations.has("MLT"):
 		var largest := _largest_city_id(loader, "MLT")
 		if String(caps.get(largest, "")) != "MLT":

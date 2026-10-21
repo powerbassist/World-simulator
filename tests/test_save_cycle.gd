@@ -127,6 +127,9 @@ func _play_and_save() -> bool:
 	for m in entry["movements"]:
 		_saved_changes.append(float(m["change"]))
 
+	## The NAN movement is this test's premise, so the engine's one-time warning on
+	## stringifying it is expected, not a fault (V5.1-0d, S7).
+	## expects-warning: `NaN` ("Not a Number") found in argument passed to JSON.stringify
 	_game._on_save_requested(SLOT)
 	if not FileAccess.file_exists(SaveManager._path_for(SLOT)):
 		_fail("SAVE through main.gd wrote no file")

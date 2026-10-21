@@ -3,24 +3,34 @@ extends RefCounted
 ## travel_days()'s geography, moved out of diplomacy.gd verbatim at V5.1-0a so
 ## that file could take its month in units without growing past its size
 ## baseline (V5.0c's diplomacy_verbs.gd precedent). Pure reads of the loader; no
-## state, no sim module preloaded.
+## state, and no sim module preloaded beyond the constants.
 
-## A nation's capital as a lon/lat, or null. The register keys cities by region,
-## so this scans the nation's own cities for the one named nation.capital — a
-## per-nation scan over a handful of regions, called once at booking time.
-## Variant rather than Vector2 because null is the not-found answer.
+const DK = preload("res://src/sim/diplomacy_constants.gd")
+const Capital = preload("res://src/core/capital.gd")
+
+
+## Diplomacy.travel_days()'s body, moved here at V5.1-0d so diplomacy.gd could take
+## the embassy register without growing past its size baseline. The contract is
+## that function's comment.
+static func days(loader, from_id: String, to_id: String) -> int:
+	var from_lonlat: Variant = capital_lonlat(loader, from_id)
+	var to_lonlat: Variant = capital_lonlat(loader, to_id)
+	if from_lonlat == null or to_lonlat == null:
+		return DK.TRAVEL_DAYS_MAX
+	var km := haversine_km(from_lonlat, to_lonlat)
+	var days_n := int(ceil(km / DK.TRAVEL_KM_PER_DAY))
+	return clampi(days_n, DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX)
+
+
+## A nation's capital as a lon/lat, or null -- src/core/capital.gd's rule, the one
+## the map draws (G1: this used an exact name match, so MDA and MLT priced at the
+## ceiling). Variant rather than Vector2 because null is the not-found answer, and
+## it now means a nation with no city at all, which still errors loudly.
 static func capital_lonlat(loader, nation_id: String) -> Variant:
-	var nation = loader.nations.get(nation_id)
-	if nation == null:
-		push_error("diplomacy: no nation '%s' to read a capital from" % nation_id)
-		return null
-	var wanted := String(nation.capital)
-	for region in loader.regions.get(nation_id, []):
-		for city in region.cities:
-			if String(city.city_name) == wanted:
-				return city.lonlat
-	push_error("diplomacy: capital '%s' of %s is not in the city register" % [wanted, nation_id])
-	return null
+	var at: Variant = Capital.lonlat(loader, nation_id)
+	if at == null:
+		push_error("diplomacy: nation '%s' has no city to read a capital from" % nation_id)
+	return at
 
 
 ## Great-circle distance in kilometres. Half the haversine, on a mean-earth

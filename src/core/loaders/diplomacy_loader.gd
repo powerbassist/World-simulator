@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## V5.0b: one of DataLoader's per-content loaders. Diplomatic actions, the orgs
-## and their council proposals.
+## and their council proposals, and (V5.1-0d) the pairs that hold no embassy.
 ##
 ## Static functions over the loader they fill: DataLoader.load_all() is the one
 ## orchestrator (a few test entry points delegate here too); every register
@@ -14,6 +14,7 @@ const DiplomaticAction = preload("res://src/core/diplomatic_action.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Org = preload("res://src/core/org.gd")
 const OrgK = preload("res://src/core/org_constants.gd")
+const RK = preload("res://src/core/relations.gd")
 
 
 ## Directory-scanned, exactly like PoliticsLoader.load_laws() and PoliticsLoader.load_scenarios() -- adding
@@ -236,3 +237,41 @@ static func validate_bloc_proposals(loader) -> void:
 		# a scenario naming an unplayable nation is refused for.
 		if not p.external_measure.is_empty() and outsider_count == 0:
 			loader.errors.append("bloc-proposals: %s sets an external measure, but every loaded nation is a member of '%s'" % [p.id, org.id])
+
+
+## V5.1-0d: data/world/embassies.json, the roster pairs WITHOUT diplomatic
+## relations -- the exceptions to the rule that every roster state holds an
+## embassy in every other (the file's own _note says why a rule and not a list).
+## Read after the nations, because a pair is validated against the roster.
+static func load_embassies(loader, path: String) -> void:
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		loader.errors.append("%s: missing or invalid JSON" % path)
+		return
+	var errors: Array[String] = []
+	loader.embassy_exceptions = parse_embassy_exceptions(loader, parsed, path.get_file(), errors)
+	loader.errors.append_array(errors)
+
+
+## Symmetric pair key -> true. Public so tests/test_embassies.gd can feed it a bad
+## file without one on disk. A wrong pair is a load error, never a skipped line:
+## a silently dropped exception would seed an embassy where none can stand.
+static func parse_embassy_exceptions(loader, parsed: Dictionary, fname: String, errors: Array[String]) -> Dictionary:
+	var out := {}
+	var rows = parsed.get("without_relations")
+	if typeof(rows) != TYPE_ARRAY:
+		errors.append("%s: missing or invalid array field 'without_relations'" % fname)
+		return out
+	for i in rows.size():
+		var pair = rows[i].get("pair") if typeof(rows[i]) == TYPE_DICTIONARY else null
+		if typeof(pair) != TYPE_ARRAY or pair.size() != 2 or pair[0] == pair[1]:
+			errors.append("%s: without_relations[%d].pair must name two different nations" % [fname, i])
+			continue
+		if not loader.nations.has(pair[0]) or not loader.nations.has(pair[1]):
+			errors.append("%s: without_relations[%d] names a nation not on the roster: %s" % [fname, i, str(pair)])
+			continue
+		var key := RK.key(String(pair[0]), String(pair[1]))
+		if out.has(key):
+			errors.append("%s: without_relations lists %s twice" % [fname, key])
+		out[key] = true
+	return out

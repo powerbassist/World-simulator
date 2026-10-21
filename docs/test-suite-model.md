@@ -25,11 +25,14 @@ Gate semantics — the table the whole suite stands on:
 
 | child outcome | verdict |
 |---|---|
-| exit 0, no `SCRIPT ERROR`/`Parse Error` in output | pass |
+| exit 0, no `SCRIPT ERROR`/`Parse Error` and no undeclared `ERROR:` line in output | pass |
 | non-zero exit | fail |
 | exit 0 **with** a script error in output | fail — quit(0) over a broken parse is V2.1c's silent-red class, and the gate exists because of it |
+| exit 0 **with** a line starting `ERROR:` / `USER ERROR:`, or the save path's `WARNING: ... NaN ... JSON.stringify` | fail (S7, V5.1-0d) — test_diplomacy passed for months over G1's two capital errors. Not counted: the engine's at-exit family by shape -- an `ERROR:` about leaks, use or allocations at exit (`resources still in use`, `RID allocations ... were leaked`, PagedAllocator's `Pages in use exist`), whichever one a test's leftovers produce -- and any line matching a regex the test declares in its own source, `## expects-error: <regex>` (beside the call that provokes it) |
 | exceeds `--timeout` (default 1800 s) | child killed, status `timeout`, red — a hang is red, not silent |
 | `[MCPRuntimeServer]`/`[MCPRegistry]` lines | filtered from DISPLAY, never from the verdict scan — V1.7c's rule: filter the bridge noise, do not let the filter hide a third line |
+
+**The cold import is checked** (V5.1-0d): with no `.godot/`, the runner's one `--headless --import` writes its output to the run dir's `cold_import.log`, then every committed `.import` file's `dest_files` must exist and no `.tmp` may be left in `.godot/imported/`. A gap gets a second pass; a cache still broken after that exits **2** before any test runs. A cut-off import once left 17 cache files of 84 and the fonts as 0-byte `.tmp`, and every UI test then printed the engine's load errors.
 
 Exit codes: **0** green; **1** any failure; **2** godot not found (`GODOT_BIN`) or no python; **130** interrupted — Ctrl-C cancels queued jobs, kills live children (a killed runner must not orphan godots holding `user://` open against the next run's exclusive lane), and writes a partial `results.json` of what finished.
 

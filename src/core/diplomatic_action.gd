@@ -47,16 +47,17 @@ var opens_meeting: bool = false
 ## acting nation's own state.
 var preconditions: Array = []
 
-## Five channels: `relations` (required and non-zero), `bloc_offset` (optional),
+## Six channels: `relations` (required and non-zero), `bloc_offset` (optional),
 ## `agreement` (V1.3b), `measure` (V1.3c) and `pact` (V1.3g), the last three
 ## optional and MUTUALLY EXCLUSIVE -- each is a separate counterparty decision, and
-## one verb has one answer.
+## one verb has one answer. `embassy` (V5.1-0d) is the sixth, optional and one-way:
+## the actor's mission in the target's capital.
 var effects: Dictionary = {}
 
 ## The list the unknown-channel check reads, so adding a sixth channel is one entry
 ## here rather than a fifth clause in a boolean nobody re-reads. V1.3g found that
 ## chain at four terms and turned it into a list before adding to it.
-const EFFECT_CHANNELS := ["relations", "bloc_offset", "agreement", "measure", "pact"]
+const EFFECT_CHANNELS := ["relations", "bloc_offset", "agreement", "measure", "pact", "embassy"]
 
 
 static func from_dict(d: Dictionary, filename: String, errors: Array[String], bloc_keys: Array):
@@ -165,6 +166,14 @@ static func _extract_effects(d: Dictionary, action_id: String, filename: String,
 
 	if raw.has("pact"):
 		out["pact"] = _extract_pact(raw["pact"], action_id, filename, errors)
+
+	# V5.1-0d: the actor's mission in the target's capital. One op, because closing
+	# an embassy is a rupture the game does not model yet.
+	if raw.has("embassy"):
+		if raw["embassy"] != "open":
+			errors.append("%s: %s effects.embassy must be \"open\"" % [filename, action_id])
+		else:
+			out["embassy"] = "open"
 
 	# V1.3g: at most ONE of the three counterparty channels, where V1.3c wrote a
 	# single pairwise test. Widened rather than extended, because a second pairwise

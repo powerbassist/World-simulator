@@ -142,6 +142,9 @@ const ElectionK = preload("res://src/sim/election_constants.gd")
 ## eight lines of haversine is the cheaper contract to keep.)
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
+## V5.1-0d (G1): which city is the capital, the map's and the diary's one rule. A
+## src/core reader rather than a system, so the leaf check lets it through.
+const Capital = preload("res://src/core/capital.gd")
 
 
 ## Seeds the live register: nothing in the field and nobody mobilised.
@@ -354,15 +357,7 @@ static func fresh_factor(ns, loader, region_id: String) -> float:
 
 
 static func _capital_lonlat(loader, nation_id: String) -> Variant:
-	var nation = loader.nations.get(nation_id)
-	if nation == null:
-		return null
-	var wanted := String(nation.capital)
-	for region in loader.regions.get(nation_id, []):
-		for city in region.cities:
-			if String(city.city_name) == wanted:
-				return city.lonlat
-	return null
+	return Capital.lonlat(loader, nation_id)
 
 
 ## Great-circle distance in kilometres, Diplomacy._haversine_km()'s formula quoted
