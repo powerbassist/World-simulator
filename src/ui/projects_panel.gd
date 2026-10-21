@@ -227,7 +227,7 @@ func _build_completed(ns) -> void:
 		var terms := Projects.terms_of(_loader, String(pid))
 		PanelKit.row(_body,
 			Strings.noun("project-actions", _loader.project_actions, "project", "project_id", String(pid), "project_name", Projects.name_of(_loader, String(pid))),
-			"%s %%/yr" % Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
+			tr("%s %%/yr") % Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
 		)
 
 
@@ -248,10 +248,8 @@ func _build_available(ns) -> void:
 		# every project begun, or the `project_count` gate closed by what is already
 		# under way. A player who cannot tell which will think the lever is broken.
 		if Projects.building_count(ns) > 0:
-			PanelKit.line(_body,
-				tr("Nothing can begin while %d are under construction. Finish or abandon one.")
-				% Projects.building_count(ns)
-			)
+			PanelKit.line(_body, tr_n("Nothing can begin while %d is under construction. Finish or abandon it.", "Nothing can begin while %d are under construction. Finish or abandon one.", Projects.building_count(ns))
+				% Projects.building_count(ns))
 		else:
 			PanelKit.line(_body, tr("Every project has been built."))
 

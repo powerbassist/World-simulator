@@ -200,15 +200,14 @@ const LAYERS: Array[Dictionary] = [
 		"label": "Import dep.",  # i18n: msgid
 		"alpha": 0.50,
 		"stops": [
-			# Plain text and NOT format strings: only the third stop runs through a
-			# format operator, so a doubled percent here is never collapsed and the
-			# legend printed the literal "%%. (The first draft had both doubled --
-			# the shape of a format literal carried over to two stops that are not
-			# one. The test now reads the RENDERED stop text, not just the swatch
-			# colour, so this class cannot ship silently again.)
+			# Plain text and NOT format strings, all three: a doubled percent here is
+			# never collapsed (the first draft printed a literal "%%"), and a stop
+			# formatted inside the const is looked up by its formatted text, which no
+			# table holds (V5.1b3). So the top stop names IMPORT_MAX_SHOWN's 60 % as a
+			# literal; tests/test_commodities_panel.gd fails a retune that leaves it.
 			{"at": 0.0, "text": "0%  self-sufficient"},  # i18n: msgid
 			{"at": 0.25, "text": "25%  a quarter bought in"},  # i18n: msgid
-			{"at": IMPORT_MAX_SHOWN, "text": "%d%%  dependent" % roundi(100.0 * IMPORT_MAX_SHOWN)},  # i18n: msgid
+			{"at": IMPORT_MAX_SHOWN, "text": "60%  dependent"},  # i18n: msgid
 		],
 		"caption": "Share of what a nation wants that it buys from abroad.",  # i18n: msgid
 	},
@@ -331,8 +330,13 @@ static func caption(layer_id: String) -> String:
 	return Strings.t(String(layer(layer_id)["caption"]))
 
 
+## A layer's legend stops in the current language: every stop source -- these, and the
+## derived trade and production stops -- hands the legend finished text.
 static func stops(layer_id: String) -> Array:
-	return layer(layer_id)["stops"]
+	var out: Array = []
+	for stop in layer(layer_id)["stops"]:
+		out.append({"at": stop["at"], "text": Strings.t(String(stop["text"]))})
+	return out
 
 
 ## True when this nation is the one doing the viewing. THE VIEWER'S VALUE IS
@@ -661,16 +665,16 @@ static func value_text(layer_id: String, state, viewer_id: String, nation_id: St
 			# "you" in the tail rather than the bare "— you" the pair layers print,
 			# because the number is real here: the planet's supply tells you your
 			# own weight exactly as well as it tells you anybody else's.
-			var mark := " (you)" if is_viewer(viewer_id, nation_id) else ""
-			return Strings.t("%s  %s%% of world output%s") % [nation_id, Num.f(100.0 * v, 1), mark]
+			return (Strings.t("%s  %s%% of world output (you)") if is_viewer(viewer_id, nation_id)
+				else Strings.t("%s  %s%% of world output")) % [nation_id, Num.f(100.0 * v, 1)]
 		IMPORT_DEPENDENCY:
 			# A nation at zero buys nothing, and a 0.0 that could also be a NAN
 			# should say which it is -- the layer's own flat-bottom finding.
 			if is_zero_approx(v):
-				return Strings.t("%s  is self-sufficient%s") % [
-					nation_id, " (you)" if is_viewer(viewer_id, nation_id) else ""]
-			return Strings.t("%s  %.0f%% of its demand imported%s") % [
-				nation_id, 100.0 * v, " (you)" if is_viewer(viewer_id, nation_id) else ""]
+				return (Strings.t("%s  is self-sufficient (you)") if is_viewer(viewer_id, nation_id)
+					else Strings.t("%s  is self-sufficient")) % nation_id
+			return (Strings.t("%s  %.0f%% of its demand imported (you)") if is_viewer(viewer_id, nation_id)
+				else Strings.t("%s  %.0f%% of its demand imported")) % [nation_id, 100.0 * v]
 		COERCION:
 			# The one readout on this map that names BOTH sides of a pair, and it
 			# may: the colour is a sum, so direction has to be recoverable

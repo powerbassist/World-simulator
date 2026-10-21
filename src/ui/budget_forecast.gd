@@ -37,7 +37,7 @@ signal settled
 const FRAME_BUDGET_USEC := 10000
 ## A quarter second at 60 Hz with no lever moving: the drag is over.
 const QUIET_FRAMES := 15
-const COMPUTING := "computing ..."
+const COMPUTING := "computing ..."  # i18n: msgid
 const UPDATING := " ..."
 
 var _state
@@ -183,7 +183,7 @@ func rows(ns) -> Dictionary:
 
 func _texts(ns, path: Array) -> Dictionary:
 	if path.is_empty():
-		return {"proj_growth": COMPUTING, "proj_unemployment": COMPUTING, "proj_debt": COMPUTING}
+		return {"proj_growth": tr(COMPUTING), "proj_unemployment": tr(COMPUTING), "proj_debt": tr(COMPUTING)}
 	var last: Dictionary = path[-1]
 	var band := _forecast_half_width(ns)
 	# The debt ratio gets a band too, and the screenshot pass is what asked for it: one

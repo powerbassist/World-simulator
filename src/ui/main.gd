@@ -1865,17 +1865,17 @@ func _card_character_acts(acts: Array) -> void:
 		var body := tr("%s acts.") % who if who != "" else tr("Someone acts.")
 		match kind:
 			"resign":
-				title = "A resignation"
+				title = tr("A resignation")
 				body = tr("%s resigns the premiership. The party holds the office; the government pays in standing.") % who
 			"defect":
-				title = "A defection"
+				title = tr("A defection")
 				body = tr("%s crosses the floor. The seat stays with the whip.") % who
 			"challenge":
 				var deposed := _loader.person_name(String(detail.get("deposed", "")))
 				title = tr("A leadership challenge")
 				body = tr("%s takes the leadership. %s stands down.") % [who, deposed] if deposed != "" else tr("%s takes the leadership. The incumbent stands down.") % who
 			"brief_against":
-				title = "A leak"
+				title = tr("A leak")
 				body = tr("%s briefs against the government.") % who
 		_hud.message_stack.push(title, body)
 
@@ -2173,7 +2173,7 @@ func _act_reason_text(key: String) -> String:
 	match key:
 		ForeignPolicy.ACT_REASON_INTEREST: return tr("Their interests run this way.")
 		ForeignPolicy.ACT_REASON_GOODWILL: return tr("Mending what had soured.")
-		ForeignPolicy.ACT_REASON_GRIEVANCE: return "Answering a grievance."
+		ForeignPolicy.ACT_REASON_GRIEVANCE: return tr("Answering a grievance.")
 	return ""
 
 

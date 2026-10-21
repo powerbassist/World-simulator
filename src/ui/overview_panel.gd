@@ -611,7 +611,7 @@ func _satisfaction_tone(sat: float) -> PanelKit.Tone:
 func _when(months: int) -> String:
 	if months <= 0:
 		return tr("this month")
-	return "in %s" % Trends.months_text(months)
+	return tr("in %s") % Trends.months_text(months)
 
 
 ## Approval is always the polled figure, never ns.overall_approval_pct. The true

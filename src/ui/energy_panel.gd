@@ -305,7 +305,7 @@ func _build_fleet(ns) -> void:
 		rows.append([
 			plant_label(ns, String(plant_id), _loader),
 			region_name(ns, String(ns.plants[plant_id].get("region_id", ""))),
-			tr("running") if bool(ns.plants[plant_id].get("done", false)) else tr("%d months left") % months_left,
+			tr("running") if bool(ns.plants[plant_id].get("done", false)) else tr_n("%d month left", "%d months left", months_left) % months_left,
 			"%s%%" % Num.f(share, 2),
 		])
 	PanelKit.ledger(group, rows)

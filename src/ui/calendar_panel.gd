@@ -62,8 +62,8 @@ const FIXED_LABEL := {
 
 const KIND_LABEL := {
 	K.KIND_DIPLOMATIC: "Diplomatic act",  # i18n: msgid
-	K.KIND_LAW: "Propose a law",
-	K.KIND_RESHUFFLE: "Reshuffle a portfolio",
+	K.KIND_LAW: "Propose a law",  # i18n: msgid
+	K.KIND_RESHUFFLE: "Reshuffle a portfolio",  # i18n: msgid
 }
 
 var _state

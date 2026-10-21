@@ -385,7 +385,7 @@ func _reach_text(terms: Dictionary) -> String:
 		parts.append("%s %s" % [tr(String(BLOC_LABEL.get(bloc, bloc))), Num.fs(moved * 100.0, 1)])
 	if parts.is_empty():
 		return tr("reaches nobody")
-	return "a month: " + ", ".join(parts)
+	return tr("a month: %s") % ", ".join(parts)
 
 
 func _button(ns, action) -> Button:
@@ -568,7 +568,7 @@ func _breach_text(terms: Dictionary) -> String:
 	# Signed and with the unit named ONCE at the end. The first captured frame printed
 	# "a month broken: Pensioners 0.14, Rural 0.10" -- four bare numbers in no unit,
 	# against an effort row two lines above printing points of TURNOUT in the same shape.
-	return tr("each month broken: ") + ", ".join(parts) + tr(" approval")
+	return tr("each month broken: %s approval") % ", ".join(parts)
 
 
 ## What a promise has taken off the headline so far, in points of approval: the months

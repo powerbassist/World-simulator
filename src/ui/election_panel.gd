@@ -416,7 +416,7 @@ func _build_party_table(result: Dictionary, index: int) -> Control:
 	for party_id in ordered:
 		var name_text := _party_name(party_id)
 		if party_id == result["incumbent_party_id"]:
-			name_text += "  (incumbent)"
+			name_text = tr("%s  (incumbent)") % name_text
 		var row: Array = [
 			name_text,
 			"%s%%" % PanelKit.Num.f((float(shares.get(party_id, 0.0)) * 100.0), 1),

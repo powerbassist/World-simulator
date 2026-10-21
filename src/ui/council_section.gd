@@ -27,9 +27,9 @@ const Ratification = preload("res://src/sim/ratification.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 const FACE_SIZE := Vector2(48, 60)
-const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 ## How many chairs after the current one the presidency line names.
 const NEXT_CHAIRS := 3
 ## A drive at or above these reads "hard" / "steadily"; below, "lightly". The
@@ -304,7 +304,7 @@ static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 		# A small rotation can seat the same chair twice running; "then X, X" is noise.
 		if id != "" and (next.is_empty() or next[-1] != loader.nation_name(id)):
 			next.append(loader.nation_name(id))
-	var text := Strings.t("Presidency: %s (to %s %d)") % [loader.nation_name(current), MONTHS[end_idx % 12], end_idx / 12]
+	var text := Strings.t("Presidency: %s (to %s %d)") % [loader.nation_name(current), DateText.month(end_idx % 12 + 1), end_idx / 12]
 	if not next.is_empty():
 		text += Strings.t(", then %s") % ", ".join(next)
 	PanelKit.line(body, text + ".")

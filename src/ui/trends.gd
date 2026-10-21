@@ -206,9 +206,7 @@ static func months_to_vote(state, ns) -> int:
 static func months_text(months: int) -> String:
 	if months <= 0:
 		return Strings.t("this month")
-	if months == 1:
-		return "1 month"
-	return Strings.t("%d months") % months
+	return Strings.tn("%d month", "%d months", months) % months
 
 
 ## A signed change with its unit, or an em dash when there is no history to

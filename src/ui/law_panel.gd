@@ -399,9 +399,9 @@ func _majority_phrase(ns, law) -> String:
 		return tr("%s majority") % law.majority
 	match ns.amendment_rule:
 		"ordinary_law": return tr("ordinary majority")
-		"three_fifths": return "3/5 majority"
-		"two_thirds": return "2/3 majority"
-		"three_quarters": return "3/4 majority"
+		"three_fifths": return tr("3/5 majority")
+		"two_thirds": return tr("2/3 majority")
+		"three_quarters": return tr("3/4 majority")
 		"referendum_required": return tr("ordinary majority, then a referendum")
 		_: return ns.amendment_rule
 
