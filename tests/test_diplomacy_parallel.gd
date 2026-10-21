@@ -215,10 +215,11 @@ func _slots(state, loader, actor_id: String, ids: Array, threaded: bool) -> Stri
 			targets.append(id)
 	var offers_of := func(target_id: String) -> Array:
 		return Diplomacy.available(state, loader.diplomatic_actions, actor_id, target_id)
-	return _slots_with(state, actor_id, targets, offers_of, threaded)
+	return _flat(_slots_with(state, actor_id, targets, offers_of, threaded))
 
 
-func _slots_with(state, actor_id: String, targets: Array, offers_of: Callable, threaded: bool) -> String:
+## score_targets() under the memos the tick holds open, its slots as returned.
+func _slots_with(state, actor_id: String, targets: Array, offers_of: Callable, threaded: bool) -> Array:
 	Parallel.enabled = threaded
 	Org.memo_open(state)
 	Trade.turn_open(state)
@@ -226,6 +227,10 @@ func _slots_with(state, actor_id: String, targets: Array, offers_of: Callable, t
 	Trade.turn_close()
 	Org.memo_close()
 	Parallel.enabled = true
+	return slots
+
+
+func _flat(slots: Array) -> String:
 	var flat: Array = []
 	for slot in slots:
 		var candidates: Array = []
@@ -264,10 +269,12 @@ func _check_offers_on_caller(state, loader) -> void:
 		if int(asked[id]) != OS.get_main_thread_id():
 			_fail("%s's offers were asked on thread %d, not the calling thread (G2b)" % [id, int(asked[id])])
 			break
-	if threaded != _slots_with(state, actor_id, targets, offers_of, false):
+	if _flat(threaded) != _flat(_slots_with(state, actor_id, targets, offers_of, false)):
 		_fail("with the first target offered nothing, the threaded slots differ from the serial ones")
-	if not threaded.begins_with("[[{}, []]"):
-		_fail("the first target, offered nothing, did not keep an empty slot: %s" % threaded.left(80))
+	if not (threaded[0] as Dictionary).is_empty():
+		_fail("the first target, offered nothing, did not keep an empty slot: %s" % [threaded[0]])
+	if (threaded[1] as Dictionary).is_empty():
+		_fail("the second target, offered its real offers, has an empty slot -- the check is vacuous")
 
 
 func _check_lockstep(loader) -> void:
@@ -323,7 +330,9 @@ func _check_no_libm_on_workers() -> void:
 ## untyped operator element 0 also runs is primed (rule 5), and a lint over every
 ## untyped `==` on the path would flag that safe majority.
 func _check_identity_by_is_same() -> void:
-	var compare := RegEx.create_from_string("\\w*state\\s*[!=]=|[!=]=\\s*\\w*state\\b")
+	# A bare identifier ending in `state`, either side: not a member (`x.state`),
+	# not a member read through one (`state.player_id`).
+	var compare := RegEx.create_from_string("(?<![.\\w])\\w*state\\s*[!=]=|[!=]=\\s*\\w*state\\b(?!\\s*\\.)")
 	_scan_workers(compare, false, "compares a state with an untyped ==, not is_same() (parallel.gd rule 5)")
 
 
