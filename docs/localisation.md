@@ -171,3 +171,5 @@ child's, from `--todo fr`.
 
 `tools/screenshot.gd -- --lang fr` stages the game in French; `--menu` ignores it,
 because the menu applies the saved language when it comes up.
+
+Recurring French terms and typography for the translation work: [[glossary-fr]].
