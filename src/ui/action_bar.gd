@@ -93,11 +93,11 @@ func add_cluster(cluster_id: String, label: String, icon_path: String, entries: 
 
 	_cluster_row.add_child(button)
 	_cluster_buttons[cluster_id] = button
+	# The pending mark is a STATUS tone -- something waits on you -- so it is the fixed
+	# attention colour, not the played nation's accent (which marks where you ARE).
 	_cluster_icons[cluster_id] = {
 		"plain": button.icon,
-		"path": icon_path,
-		"marked": Icon.load_icon(icon_path, UiTheme.accent(), ICON_PX),
-		"accent": UiTheme.accent(),
+		"marked": Icon.load_icon(icon_path, UiTheme.WARN, ICON_PX),
 	}
 	_entries[cluster_id] = entries
 
@@ -180,19 +180,8 @@ func _refresh_clusters() -> void:
 	for id in _cluster_buttons.keys():
 		var button: Button = _cluster_buttons[id]
 		button.button_pressed = (id == _open_cluster or id == _active_cluster)
-		button.icon = marked_icon(id) if pending.has(id) else _cluster_icons[id]["plain"]
-
-
-## The cluster's pending-mark glyph in the accent now in force. Rasterised at build
-## time, and again here when the accent has moved since: a loaded save of another
-## nation re-applies the theme, and a glyph tinted for the discarded game would
-## sit beside a label and an underline in the new colour.
-func marked_icon(cluster_id: String) -> Texture2D:
-	var icons: Dictionary = _cluster_icons[cluster_id]
-	if icons["accent"] != UiTheme.accent():
-		icons["marked"] = Icon.load_icon(icons["path"], UiTheme.accent(), ICON_PX)
-		icons["accent"] = UiTheme.accent()
-	return icons["marked"]
+		var icons: Dictionary = _cluster_icons[id]
+		button.icon = icons["marked"] if pending.has(id) else icons["plain"]
 
 
 ## The open window's own entry, inside the drawer. Toggle mode so the theme's

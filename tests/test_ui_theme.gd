@@ -152,6 +152,14 @@ func _check_player_accent_wired() -> void:
 	if expected == UiTheme.ACCENT_FALLBACK:
 		_fail("France resolves to the fallback accent; the wiring check proves nothing")
 
+	# The accent is a static: a game's nation must not outlive it. The menu scene
+	# was built AFTER main in _init(), so if it resets the slot, a player who plays
+	# France and returns to the menu sees the fallback, not France's blue.
+	if UiTheme.accent() != UiTheme.ACCENT_FALLBACK:
+		_fail("the menu left the previous game's accent in force (%s)" % UiTheme.accent().to_html(false))
+	if _menu.theme.get_stylebox("panel", UiTheme.PLATE_FOLDED).border_color != UiTheme.ACCENT_FALLBACK:
+		_fail("the menu's own theme does not carry the fallback accent")
+
 
 ## The fonts are the one part of the theme that fails *silently*: a missing
 ## .ttf makes _font() return null, the theme sets nothing, and the game renders

@@ -12,6 +12,8 @@ extends SceneTree
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
+const MoodIcon = preload("res://src/ui/mood_icon.gd")
+const Portrait = preload("res://src/ui/portrait.gd")
 const MessageStack = preload("res://src/ui/message_stack.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 
@@ -87,18 +89,30 @@ func _check_icons_load() -> void:
 		elif off_tint > 0:
 			_fail("icon '%s' has %d opaque pixels that are not the tint" % [name, off_tint])
 
-	# The pending-mark glyph follows the accent in force (a loaded save of another
-	# nation changes it): tinted for the old one, it would sit beside a label and
-	# an underline in the new colour.
+	# The pending-mark glyph is a STATUS tone (something waits on you), the
+	# attention colour, and does NOT follow the played nation's accent: a nation
+	# whose accent were gold would otherwise mark "pending" in its own identity.
 	var bar = _main._hud.action_bar
-	var before: Color = bar.marked_icon("state").get_image().get_pixel(11, 11)
 	var host := Control.new()
-	var elsewhere := Color("#E3A63A")
-	UiTheme.apply(host, elsewhere)
-	var after: Color = bar.marked_icon("state").get_image().get_pixel(11, 11)
-	if before.is_equal_approx(after) or absf(after.r - elsewhere.r) > 0.06:
-		_fail("the marked cluster icon kept the old accent: %s then %s" % [before.to_html(false), after.to_html(false)])
+	UiTheme.apply(host, Color("#2596FF"))
+	var mark: Image = bar._cluster_icons["state"]["marked"].get_image()
+	var seen_warn := false
+	for y in mark.get_height():
+		for x in mark.get_width():
+			var px := mark.get_pixel(x, y)
+			if px.a > 0.95:
+				seen_warn = true
+				if absf(px.r - UiTheme.WARN.r) > 0.06 or absf(px.g - UiTheme.WARN.g) > 0.06 or absf(px.b - UiTheme.WARN.b) > 0.06:
+					_fail("the pending-mark glyph has an opaque pixel %s that is not the attention tone" % px.to_html(false))
+	if not seen_warn:
+		_fail("the pending-mark glyph has no opaque pixel")
 	host.free()
+
+	# The mood icon's WORRIED band sits between GOOD and BAD: a status tone, not the
+	# nation's accent (which could be any hue).
+	UiTheme.apply(Control.new(), Color("#2596FF"))
+	if MoodIcon._colour_for(Portrait.Emotion.WORRIED) != UiTheme.WARN:
+		_fail("the WORRIED mood is not drawn in the attention tone")
 
 	# And the bar is actually using them, not merely able to.
 	for cluster_id in _main._hud.action_bar._cluster_buttons.keys():

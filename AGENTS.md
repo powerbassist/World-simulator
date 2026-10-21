@@ -264,12 +264,20 @@ accent or drops an edge. The U5a brass hairline is gone; do not bring it back as
 a "signature".
 
 The accent is chosen by a **rule over the flag's bands** (`src/ui/accent_rule.gd`,
-`data/nations/*.json`), never by nation id: the first band with enough chroma,
-at least 24° of hue from the alert red and the good-news green, lifted in HSL
-lightness to WCAG AA (4.5:1) on the lightest graphite surface (SLATE, where the accent is read as text); else `UiTheme.ACCENT_FALLBACK`. Code
-that draws "you are here" reads `UiTheme.accent()` — there is no `ACCENT` const —
-and `main.gd` re-applies the theme once the played nation is known and on a load
-(`UiTheme.apply_for`). `test_accent_rule.gd` runs the rule over all 41 flags.
+`data/nations/*.json`), never by nation id: the first band with enough chroma
+whose hue, **shifted** if it falls within 24° of a state tone (alert red,
+good-news green, attention amber) to the nearest clear edge of that zone, and
+lifted in HSL lightness to WCAG AA (4.5:1) on the lightest graphite surface
+(SLATE, where the accent is read as text), still qualifies. Polish crimson
+becomes raspberry; the flag's colour family survives and is never mistaken for a
+state. `UiTheme.ACCENT_FALLBACK` is for a flag with no chroma at all, and for the
+menu. **Two kinds of colour, never mixed:** IDENTITY follows the nation
+(`UiTheme.accent()` -- the open cluster's bar, focus, fills, today's mark, the
+home outline, project and city marks) and STATUS is a fixed tone (`GOOD`, `BAD`,
+`WARN` -- a mood, a pending mark, the placement reticle). There is no `ACCENT`
+const. `main.gd` re-applies the theme once the played nation is known and on a
+load (`UiTheme.apply_for`); the menu resets it. `test_accent_rule.gd` runs the
+rule over all 41 flags.
 
 Type is **Archivo** (variable, SIL OFL) cut by weight and width axes — keyed by
 OpenType *tag*, an int, since a string key is accepted and does nothing — with

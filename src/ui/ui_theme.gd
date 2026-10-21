@@ -115,11 +115,12 @@ static var _map_face: Font
 
 
 ## The accent a flag resolves to -- accent_rule.gd's floors over the flag's bands,
-## judged against the LIGHTEST graphite surface, SLATE: the accent is read as text
+## judged against the three state tones (alert, good, attention) and the LIGHTEST
+## graphite surface, SLATE: the accent is read as text
 ## on a hovered row, the open cluster and a pressed button, not only on a panel, so
 ## the panel (HULL) would pass colours that fail where they are actually used.
 static func accent_for(bands: Array) -> Color:
-	return AccentRule.pick(bands, SLATE, [BAD, GOOD], ACCENT_FALLBACK)
+	return AccentRule.pick(bands, SLATE, [BAD, GOOD, WARN], ACCENT_FALLBACK)
 
 
 static func accent() -> Color:

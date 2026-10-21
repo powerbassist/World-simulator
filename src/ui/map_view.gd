@@ -1091,13 +1091,13 @@ func _draw() -> void:
 	# Frontmost: a readout is text the player asked for with the cursor.
 	_draw_outline_readout()
 	if _placing:
-		# A brass reticle at the cursor. The state's own material marks what is
-		# waiting on the player -- V2.1c's rule, reused rather than joined by a
-		# second visual language for "we are waiting on you".
+		# The attention reticle at the cursor -- a STATUS tone, the same one that marks
+		# a cluster with something waiting (V2.1c's rule: one visual language for "we
+		# are waiting on you"), not the nation's accent.
 		var at := get_local_mouse_position()
-		draw_arc(at, 14.0, 0.0, TAU, 32, UiTheme.accent(), 1.5)
-		draw_line(at - Vector2(20, 0), at + Vector2(20, 0), UiTheme.accent(), 1.0)
-		draw_line(at - Vector2(0, 20), at + Vector2(0, 20), UiTheme.accent(), 1.0)
+		draw_arc(at, 14.0, 0.0, TAU, 32, UiTheme.WARN, 1.5)
+		draw_line(at - Vector2(20, 0), at + Vector2(20, 0), UiTheme.WARN, 1.0)
+		draw_line(at - Vector2(0, 20), at + Vector2(0, 20), UiTheme.WARN, 1.0)
 
 
 ## V4.10a. How much of the ground is drawn over the photograph at this zoom: 0

@@ -41,33 +41,55 @@ func _check_helpers() -> void:
 	if AccentRule.lift(gold, UiTheme.SLATE) != gold:
 		_fail("lift() altered a colour that already had contrast")
 
+	# clear_hue(): a hue outside every forbidden zone is returned as it is; one
+	# inside a zone goes to the nearest edge of that zone plus the margin; and a
+	# hue boxed in by zones on both sides has no clear hue at all.
+	var tones: Array[float] = [3.0, 41.0, 154.0]
+	if not is_equal_approx(AccentRule.clear_hue(209.0, tones), 209.0):
+		_fail("clear_hue moved a hue that was already clear")
+	var crimson := AccentRule.clear_hue(348.0, tones)
+	if absf(crimson - 335.0) > 0.01:
+		_fail("a crimson 348 should shift down to 335 (the alert red's low edge less the margin), got %.2f" % crimson)
+	# 48 is inside the attention tone's zone; its low edge (13) is inside the alert
+	# red's zone, so the only clear edge is the high one.
+	var gold_h := AccentRule.clear_hue(48.0, tones)
+	if absf(gold_h - 69.0) > 0.01:
+		_fail("a gold 48 should shift up to 69 (the attention tone's high edge), got %.2f" % gold_h)
+	var boxed: Array[float] = [0.0, 40.0, 80.0, 120.0, 160.0, 200.0, 240.0, 280.0, 320.0]
+	if AccentRule.clear_hue(20.0, boxed) != -1.0:
+		_fail("a hue with both edges forbidden should have no clear hue")
 
-## The four playable nations, by what the rule must say about each. The ids are
-## the TEST's data, not the rule's: the rule reads bands only.
+	# No chroma anywhere is the one case that falls back.
+	var greys := [Color.WHITE, Color.BLACK, Color("#808080")]
+	if AccentRule.pick(greys, UiTheme.SLATE, [UiTheme.BAD], UiTheme.ACCENT_FALLBACK) != UiTheme.ACCENT_FALLBACK:
+		_fail("a flag of greys should take the fallback")
+
+
+## Real flags, by what the rule must say about each: the colour FAMILY of the first
+## usable band survives, and only the hue is pushed out of a state tone's zone. The
+## ids are the TEST's data, not the rule's: the rule reads bands only.
 func _check_real_flags() -> void:
-	var fallback := UiTheme.ACCENT_FALLBACK
+	# id -> expected hue in degrees (the band's own where no shift is needed).
 	var cases := {
-		"FRA": "blue",      # first band is a blue
-		"GBR": "blue",      # navy, lifted
-		"DEU": "gold",      # black skipped, red too close to the alert red, gold clears
-		"POL": "fallback",  # white has no chroma, crimson is 15 degrees from the alert red
+		"FRA": 209.0,  # blue, untouched
+		"GBR": 222.0,  # navy, untouched
+		"POL": 335.0,  # crimson (348) is 15 degrees from the alert red: raspberry
+		"DEU": 335.0,  # black has no chroma; the red band shifts the same way
+		"ITA": 126.0,  # green (150) sits on the good-news green: nearest edge
 	}
 	for id in cases:
 		var accent := _accent_of(id)
-		match cases[id]:
-			"fallback":
-				if accent != fallback:
-					_fail("%s should take the fallback, got %s" % [id, accent.to_html(false)])
-			"gold":
-				if accent == fallback or absf(accent.h * 360.0 - 48.0) > 12.0:
-					_fail("%s should resolve to its gold band, got %s" % [id, accent.to_html(false)])
-			"blue":
-				if accent == fallback or absf(accent.h * 360.0 - 215.0) > 20.0:
-					_fail("%s should resolve to its blue band, got %s" % [id, accent.to_html(false)])
+		if accent == UiTheme.ACCENT_FALLBACK:
+			_fail("%s fell back although it has a chromatic band" % id)
+			continue
+		if AccentRule.hue_distance(accent.h * 360.0, float(cases[id])) > 1.5:
+			_fail("%s resolved to hue %.1f, expected about %.0f (%s)" % [id, accent.h * 360.0, float(cases[id]), accent.to_html(false)])
 
 
-## Every flag on the roster ends on a colour that is legible on the LIGHTEST graphite surface (SLATE: a hovered row, the open cluster, a pressed button -- where the accent is read as text) and is
-## never mistaken for an alert or a good-news tone.
+## Every flag on the roster ends on a colour that is legible on the LIGHTEST graphite
+## surface (SLATE: a hovered row, the open cluster, a pressed button -- where the
+## accent is read as text), still chromatic, never within MIN_HUE_DISTANCE of a
+## state tone (alert, good news, attention), and still in its band's colour family.
 func _check_roster_invariants() -> void:
 	var fallbacks := 0
 	var ids := _nation_ids()
@@ -75,17 +97,27 @@ func _check_roster_invariants() -> void:
 		_fail("only %d nation files found" % ids.size())
 	for id in ids:
 		var accent := _accent_of(id)
-		if AccentRule.contrast(accent, UiTheme.SLATE) < AccentRule.MIN_CONTRAST - 0.01:
-			_fail("%s accent %s is under the contrast floor" % [id, accent.to_html(false)])
 		if accent == UiTheme.ACCENT_FALLBACK:
 			fallbacks += 1
 			continue
-		for tone in [UiTheme.BAD, UiTheme.GOOD]:
+		if AccentRule.contrast(accent, UiTheme.SLATE) < AccentRule.MIN_CONTRAST - 0.01:
+			_fail("%s accent %s is under the contrast floor" % [id, accent.to_html(false)])
+		if AccentRule.chroma(accent) < AccentRule.MIN_CHROMA:
+			_fail("%s accent %s has gone grey after the lift" % [id, accent.to_html(false)])
+		for tone in [UiTheme.BAD, UiTheme.GOOD, UiTheme.WARN]:
 			if AccentRule.hue_distance(accent.h * 360.0, tone.h * 360.0) < AccentRule.MIN_HUE_DISTANCE - 0.5:
-				_fail("%s accent %s is too near the semantic tone %s" % [id, accent.to_html(false), tone.to_html(false)])
-	# The rule is only worth having if most flags still get their own colour.
-	if fallbacks > ids.size() / 2:
-		_fail("%d of %d nations fell back -- the floors are too tight" % [fallbacks, ids.size()])
+				_fail("%s accent %s is too near the state tone %s" % [id, accent.to_html(false), tone.to_html(false)])
+		# The family survives: some chromatic band is within one zone-width (plus
+		# the margin) of the final hue.
+		var near := false
+		for band in _bands_of(id):
+			if AccentRule.chroma(band) >= AccentRule.MIN_CHROMA and AccentRule.hue_distance(accent.h * 360.0, band.h * 360.0) <= 2.0 * AccentRule.MIN_HUE_DISTANCE + AccentRule.SHIFT_MARGIN:
+				near = true
+		if not near:
+			_fail("%s accent %s is in no band's colour family" % [id, accent.to_html(false)])
+	# The fallback is for a flag with no chroma at all, and every roster flag has some.
+	if fallbacks > 0:
+		_fail("%d of %d nations fell back" % [fallbacks, ids.size()])
 
 
 func _accent_of(id: String) -> Color:
