@@ -93,6 +93,7 @@ func _run_sync() -> void:
 	_check_skip_is_real_months(console)
 	_check_commands_land_where_the_players_do(console)
 	_check_event_is_noticed(console)
+	_check_interrupt_event_holds_the_clock(console)
 	_check_save_load(console)
 	_check_term_start(console_c)
 
@@ -176,6 +177,33 @@ func _check_event_is_noticed(console) -> void:
 		_fail("the UI never noticed the staged event (no arrival bookkeeping)")
 
 
+## An interrupt event is the one the player cannot ignore: arriving by the month it
+## pauses the clock and opens Dispatches (main._enforce_interrupt), so staged by
+## hand it must too -- or the repro is not the event.
+func _check_interrupt_event_holds_the_clock(console) -> void:
+	var ns = _a._state.player()
+	ns.event_queue.clear()
+	_a._unseen_events.clear()
+	_a._paused_for_decision = false
+	_a._clock.paused = false
+	_a._windows.close("events")
+	var id := ""
+	for ev in _a._loader.events:
+		if bool(ev.interrupt):
+			id = String(ev.id)
+			break
+	if id.is_empty():
+		_fail("premise: no interrupt event in the data")
+		return
+	console.run_command("event %s" % id)
+	if not _a._clock.paused or not _a._windows.is_open("events"):
+		_fail("a staged interrupt event did not pause the clock and open Dispatches")
+	ns.event_queue.clear()
+	_a._unseen_events.clear()
+	_a._paused_for_decision = false
+	_a._clock.paused = false
+
+
 func _check_save_load(console) -> void:
 	var ns = _a._state.player()
 	console.run_command("set me.assembly_seats 11")
@@ -190,6 +218,16 @@ func _check_save_load(console) -> void:
 		_fail("loading a missing slot should say so")
 	SaveManager.delete_slot(SLOT)
 	ns = null
+	# A save that will not load: the answer says so and the live game stays.
+	var bad := "dev_console_bad_slot"
+	var file := FileAccess.open(SaveManager._path_for(bad), FileAccess.WRITE)
+	file.store_string("this is not a save")
+	file.close()
+	var live = _a._state
+	r = console.run_command("load %s" % bad)
+	if r.contains("loaded") or not r.contains("failed") or _a._state != live:
+		_fail("a load that failed was reported as done, or replaced the game: %s" % r)
+	SaveManager.delete_slot(bad)
 
 
 ## The election two months out, so the honest route to a term start is short.

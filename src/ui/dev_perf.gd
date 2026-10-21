@@ -11,6 +11,8 @@ extends RefCounted
 ## UNIT of the month it runs (Economy and Diplomacy come in slices that can span
 ## frames, so the step hook's before/after would measure the frames between, not
 ## the work -- V5.1-0a's PR body). The hook is not used for this on purpose.
+## The unit timing still includes whatever the step's own hooks do around it (main.gd's
+## cards for a step's record), so a step reads as the system plus its UI work.
 
 const WINDOW_SEC := 5.0
 ## Steps the month line names; the rest are in the total.

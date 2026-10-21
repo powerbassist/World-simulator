@@ -335,13 +335,19 @@ class MainHost extends DevRegistry.Host:
 	func load_game(slot: String) -> String:
 		if not SaveManager.valid_slot_name(slot) or not SaveManager.list_slots().has(slot):
 			return "no save in slot '%s'" % slot
+		var live = main._state
 		main._on_load_requested(slot)
-		return ""
+		# A load that fails leaves the live game in place and says so on the save
+		# screen; the console must not report it as done.
+		return "" if main._state != live else "the save in '%s' would not load -- the save screen says why" % slot
 
 	## The way an arrival from the month's tick is noticed: the card, the sting, the
 	## pause the message settings ask for.
 	func event_staged(desk_before: Dictionary) -> void:
 		main._card_events(main._clock.year, main._clock.month, desk_before, Budget.snapshot(main._state))
+		# The month's own arrival path ends here too: an interrupt event holds the
+		# clock and opens Dispatches.
+		main._enforce_interrupt()
 
 	func term_started() -> void:
 		main._enforce_term_start_programme()
