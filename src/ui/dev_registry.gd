@@ -16,8 +16,9 @@ extends RefCounted
 ## write between two of its units is exactly the half-month that class of bug
 ## comes from. A command that only reads answers at once.
 ##
-## `run(text) -> String` is the one entry the console and an agent (through the MCP
-## bridge's node_call_method on the console node) share.
+## `run(text) -> String` is the one entry the console and an agent share: through the
+## MCP bridge, `execute_code` on the runtime channel (node_call_method is editor-only
+## and cannot reach a running game -- docs/tooling.md).
 
 const DevCommands = preload("res://src/sim/dev_commands.gd")
 const DevLog = preload("res://src/ui/dev_log.gd")
@@ -216,8 +217,15 @@ func _cmd_skip(args: Array) -> String:
 	var months := String(args[0]).to_int()
 	if months < 1 or months > SKIP_MAX:
 		return "skip takes 1 to %d months" % SKIP_MAX
+	var ns = _host.state().player()
 	for i in months:
 		_host.advance_month()
+		# term_start's stop rule: once the election is lost there is no government
+		# left to run the months of, and the run says so rather than playing on.
+		if ns != null and not ns.in_government:
+			_host.refresh()
+			return "stopped after %d of %d months: the player is out of government (the election was lost) -- now %s" % [
+				i + 1, months, _host.date_text()]
 	_host.refresh()
 	return "skipped %d month%s -- now %s" % [months, "" if months == 1 else "s", _host.date_text()]
 

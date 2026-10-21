@@ -109,6 +109,10 @@ func _test_set_refusals_leave_the_state_alone() -> void:
 		["FRA", "assembly_seats", "3.5"],   # a fraction for an integer
 		["FRA", "has_budget", "maybe"],     # not a bool word
 		["FRA", "gdp_eur_bn", ""],          # nothing
+		["FRA", "gdp_eur_bn", "1e400"],     # overflows to INF, which a save turns into null
+		["FRA", "gdp_eur_bn", "-1e400"],
+		["FRA", "gdp_eur_bn", "nan"],
+		["FRA", "gdp_eur_bn", "inf"],
 	]
 	for c in cases:
 		var r: Dictionary = DevCommands.set_field(_state, c[0], c[1], c[2])

@@ -42,7 +42,7 @@ func worst() -> float:
 ## names the heaviest few; an empty table means no real-time month has closed yet.
 func month_text(costs: Dictionary) -> String:
 	if costs.is_empty():
-		return "no month yet"
+		return "no real-time month since"
 	var names: Array = costs.keys()
 	names.sort_custom(func(a, b): return int(costs[a]) > int(costs[b]))
 	var total := 0

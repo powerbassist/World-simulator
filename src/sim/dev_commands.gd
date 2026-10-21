@@ -166,9 +166,12 @@ static func _parse(kind: int, raw: String) -> Dictionary:
 				return {"ok": true, "value": text.to_int()}
 			return {"ok": false, "wanted": "a whole number"}
 		TYPE_FLOAT:
-			if text.is_valid_float():
-				return {"ok": true, "value": text.to_float()}
-			return {"ok": false, "wanted": "a number"}
+			if not text.is_valid_float():
+				return {"ok": false, "wanted": "a number"}
+			# 1e400 parses to INF, which a save writes as null: the V5.0 load-crash class.
+			if not is_finite(text.to_float()):
+				return {"ok": false, "wanted": "a finite number"}
+			return {"ok": true, "value": text.to_float()}
 		TYPE_BOOL:
 			var word := text.to_lower()
 			if ["true", "on", "yes", "1"].has(word):

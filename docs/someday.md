@@ -368,6 +368,11 @@ Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed t
 - **Clicking the console's log takes focus off the input**, so a key typed next reaches `main.gd`'s hotkeys (S opens the save dialog). Fixing it costs text selection in the log; click the input first.
 - **The overlay's per-system month cost includes the step hooks' UI work** (cards built in a step's before/after, inside the timed unit).
 
+Pass 2 (`code-review 28 xhigh`, the parent's), recorded and not fixed:
+
+- **`tests/test_dev_console_game.gd` writes `user://saves` with no `## suite-exclusive:` tag** (the test audit's S11 class). Harmless under isolation, which every run is; tag it if a run ever shares a user dir.
+- **The Logger installs in the console's `_ready`, late in `main._ready`, and `menu.tscn` has no console**, so errors raised at boot (the data load, the menu) never reach the counter. Installing it from the menu too, or earlier, is a V5.1c shell decision.
+
 ## Carried from V5.1-0a (2026-10-21)
 
 The month across frames and the forecast off the frame took the play gate's freezes;

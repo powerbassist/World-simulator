@@ -17,6 +17,16 @@ extends RefCounted
 ## the backtrace the engine hands over; without one the engine's file is kept.
 
 const MAX_ENTRIES := 200
+## THE ONE KNOWN-EXPECTED LINE, kept out of the counter and named here with its reason:
+## a decision's figure with no baseline reading is NaN by construction (V5.0 fix pass
+## P1, Trends' "no data"), and the save path turns it into null with this by-design
+## warning -- once per process. Without this every clean session would read WARN 1
+## after its first save and the counter would stop meaning anything. It stays in the
+## Errors tab, marked "(expected)". Only the NaN wording: Infinity, or any other line,
+## still counts (that is a real bug).
+const EXPECTED_PATTERN := "^`NaN` \\(\"Not a Number\"\\) found in argument passed to JSON\\.stringify\\(\\)"
+## The engine's own text, for the test.
+const EXPECTED_SAMPLE := "`NaN` (\"Not a Number\") found in argument passed to JSON.stringify(). `NaN` cannot be represented in JSON, so the value has been replaced with `null`."
 
 var errors := 0
 var warnings := 0
@@ -24,6 +34,7 @@ var warnings := 0
 var entries: Array[Dictionary] = []
 
 var _capture := Capture.new()
+var _expected := RegEx.create_from_string(EXPECTED_PATTERN)
 var _installed := false
 
 
@@ -80,11 +91,15 @@ func poll() -> int:
 
 ## Newest MAX_ENTRIES are kept; the counters count every one.
 func add(kind: String, text: String, file: String, line: int, function: String) -> void:
-	if kind == "warning":
+	var expected := kind == "warning" and _expected.search(text) != null
+	if expected:
+		pass
+	elif kind == "warning":
 		warnings += 1
 	else:
 		errors += 1
-	entries.append({"kind": kind, "text": text, "file": file, "line": line, "function": function})
+	entries.append({"kind": kind, "text": text, "file": file, "line": line, "function": function,
+		"expected": expected})
 	if entries.size() > MAX_ENTRIES:
 		entries.pop_front()
 
@@ -97,6 +112,7 @@ func clear() -> void:
 
 ## One line per entry, the way the Errors tab and `errors` print it.
 static func format_entry(entry: Dictionary) -> String:
-	return "[%s] %s  (%s:%d)" % [
+	return "[%s] %s  (%s:%d)%s" % [
 		"E" if String(entry["kind"]) == "error" else "W",
-		entry["text"], entry["file"], int(entry["line"])]
+		entry["text"], entry["file"], int(entry["line"]),
+		" (expected)" if bool(entry.get("expected", false)) else ""]

@@ -57,6 +57,9 @@ var _deferred: Array[InputEvent] = []
 ## hand-driven day runs it whole, now.
 func run(state, loader, on_step: Callable, done: Callable, clock: Node, held: Node) -> void:
 	if not clock.in_real_time:
+		# The table times the last REAL-TIME month; a hand-driven one runs whole and
+		# is not timed, so the old table would pass for current. Clear it instead.
+		last_month_costs = {}
 		done.call(WorldMonth.tick_month(state, loader, on_step))
 		return
 	_month = WorldMonth.begin(state, loader, on_step)

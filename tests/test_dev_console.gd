@@ -131,6 +131,7 @@ func _init() -> void:
 	_test_busy_refuses_only_mutating_commands()
 	_test_get_set_person()
 	_test_skip_and_term_start()
+	_test_skip_stops_on_a_lost_election()
 	_test_event_save_load_open()
 	_test_errors_and_perf_commands()
 	_test_the_console_writes_nothing_itself()
@@ -278,6 +279,20 @@ func _test_skip_and_term_start() -> void:
 		_fail("term_start with no government should refuse before skipping: %s" % r)
 
 
+## skip follows term_start's rule: a lost election ends the run, and the answer says
+## how many months ran and why it stopped.
+func _test_skip_stops_on_a_lost_election() -> void:
+	var host := _stub()
+	host.lose_at = 2
+	var ns = _state.player()
+	var r := _run(host, "skip 5")
+	ns.in_government = true
+	if host.months != 2 or not r.contains("out of government") or not r.contains("2 of 5"):
+		_fail("skip 5 should stop at the lost election after 2 months and say so: %s months=%d" % [r, host.months])
+	if not host.calls.has("refresh"):
+		_fail("skip stopped early without telling the screen")
+
+
 func _test_event_save_load_open() -> void:
 	var host := _stub()
 	var ns = _state.player()
@@ -380,6 +395,18 @@ func _test_logger_capture() -> void:
 	capture.poll()
 	if capture.errors != 1:
 		_fail("an uninstalled log still counted an error")
+	# The save path's by-design warning (a decision's figure with no baseline is NaN)
+	# is listed, marked expected, and not counted: a clean session must read WARN 0.
+	var expected := DevLog.new()
+	expected.add("warning", DevLog.EXPECTED_SAMPLE, "res://src/core/save_manager.gd", 89, "save_game")
+	if expected.warnings != 0 or expected.errors != 0 or expected.entries.size() != 1:
+		_fail("the known NaN warning should be listed but not counted: %d warnings, %d entries" % [expected.warnings, expected.entries.size()])
+	elif not DevLog.format_entry(expected.entries[0]).contains("(expected)"):
+		_fail("the known NaN warning should be marked (expected) in the list")
+	expected.add("warning", "`Infinity` found in argument passed to JSON.stringify()", "res://src/core/save_manager.gd", 89, "save_game")
+	expected.add("warning", "some other warning", "res://src/x.gd", 1, "f")
+	if expected.warnings != 2:
+		_fail("only the NaN line is expected; an Infinity or any other warning still counts: %d" % expected.warnings)
 	var capped := DevLog.new()
 	for i in DevLog.MAX_ENTRIES + 25:
 		capped.add("error", "n%d" % i, "f", i, "fn")
@@ -424,8 +451,8 @@ func _test_perf_numbers() -> void:
 		_fail("month cost text should total and sort the heaviest first: %s" % text)
 	if text.contains("Unrest") or text.contains("Media"):
 		_fail("month cost text should show only the top few: %s" % text)
-	if not perf.month_text({}).contains("no month yet"):
-		_fail("an empty cost table should say there is no month yet")
+	if not perf.month_text({}).contains("no real-time month"):
+		_fail("an empty cost table should say there is no real-time month: %s" % perf.month_text({}))
 
 
 func _test_release_gate() -> void:

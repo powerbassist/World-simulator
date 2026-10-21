@@ -66,6 +66,8 @@ func _process(_delta: float) -> bool:
 			return _after_month()
 		"overlay":
 			return _check_overlay()
+		"stale":
+			return _check_stale()
 	return false
 
 
@@ -224,6 +226,7 @@ func _check_save_load(console) -> void:
 	file.store_string("this is not a save")
 	file.close()
 	var live = _a._state
+	## expects-error: Parse JSON failed
 	r = console.run_command("load %s" % bad)
 	if r.contains("loaded") or not r.contains("failed") or _a._state != live:
 		_fail("a load that failed was reported as done, or replaced the game: %s" % r)
@@ -299,6 +302,38 @@ func _after_month() -> bool:
 	return false
 
 
+## A save of a state holding a NaN (a decision with no baseline) makes the engine warn
+## once; that known line must not turn every clean session's counter to WARN 1.
+## Then a hand-driven month: the overlay must not pass the real-time month's table off
+## as current.
+func _stage_stale_checks() -> void:
+	_b._state.player().gdp_eur_bn = NAN
+	## expects-warning: `NaN` ("Not a Number") found in argument passed to JSON.stringify
+	_console_b.run_command("save %s" % SLOT)
+	SaveManager.delete_slot(SLOT)
+	_b._state.player().gdp_eur_bn = 1.0
+	_console_b.run_command("skip 1")
+	_console_b.run_command("perf on")  # forces the overlay's next refresh
+	_phase = "stale"
+	_closing_frames = 0
+
+
+func _check_stale() -> bool:
+	_closing_frames += 1
+	if _closing_frames < 3:
+		return false
+	if not _b._month_runner.last_month_costs.is_empty():
+		_fail("a hand-driven month left the real-time month's cost table standing")
+	var text: String = _console_b._overlay.text
+	if text.contains("Economy") or not text.contains("no real-time month"):
+		_fail("the overlay still shows an old month's costs after a hand-driven month: %s" % text)
+	if not String(_console_b._counter.text).contains("WARN 0"):
+		_fail("the known NaN save warning was counted: %s" % _console_b._counter.text)
+	if not _console_b.run_command("errors").contains("(expected)"):
+		_fail("the known NaN save warning should be listed, marked (expected)")
+	return _finish()
+
+
 func _check_overlay() -> bool:
 	_closing_frames += 1
 	if _closing_frames < 3:
@@ -311,7 +346,8 @@ func _check_overlay() -> bool:
 	var listing: String = _console_b.run_command("errors")
 	if not (listing.contains("expected error") and listing.contains("test_dev_console_game.gd")):
 		_fail("errors should list the pushed error with its script: %s" % listing)
-	return _finish()
+	_stage_stale_checks()
+	return false
 
 
 func _press(keycode: Key) -> void:

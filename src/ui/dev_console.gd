@@ -12,9 +12,10 @@ extends Control
 ##               last month's cost per system -- src/ui/dev_perf.gd
 ##   commands    src/ui/dev_registry.gd's table; `help` lists it
 ##   run_command(text) -> String
-##               the ONE entry an agent needs: the godot-mcp-toolkit's node_call_method
-##               on this node (docs/tooling.md). The line and its answer land in the
-##               panel too, so a human watching sees what the agent did.
+##               the ONE entry an agent needs: the godot-mcp-toolkit's `execute_code` on
+##               the runtime channel (node_call_method is editor-only and cannot reach
+##               a running game -- docs/tooling.md). The line and its answer land in
+##               the panel too, so a human watching sees what the agent did.
 ##
 ## NOTHING OF IT IN A RELEASE BUILD: install() returns before it builds a node or
 ## registers the Logger unless the build is a debug build or `--dev-console` was
