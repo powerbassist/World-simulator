@@ -51,11 +51,14 @@ var _loader
 ## main.gd after every window is registered, so an alert names the window the way
 ## the shell does (the review caught "the events window" for Dispatches).
 var window_hints := {}
-## The row the figures sit in -- read by the walker test's width check.
 const FIGURE_GAP := 26
 const FIGURE_GAP_MIN := 6
 
+## The row the figures sit in -- read by the walker test's width check.
 var _figures: HBoxContainer
+## The gap between the figures as last set, so a day that changes nothing does not
+## re-lay the bar.
+var _gap := FIGURE_GAP
 var _tools: HBoxContainer
 
 
@@ -209,11 +212,15 @@ func refresh(state, _clock: Node, loader = null) -> void:
 ## 286 px of the bar; a longer language's captions and values would otherwise push SAVE
 ## and MENU off the right edge (V5.1b; the shell in V5.1c re-lays the bar).
 func _fit_figures() -> void:
-	_figures.add_theme_constant_override("separation", FIGURE_GAP)
-	var over := get_combined_minimum_size().x - get_viewport_rect().size.x
+	var gaps := maxi(_figures.get_child_count() - 1, 1)
+	# Over by how much at the NATURAL gap, whatever the gap is now.
+	var over := get_combined_minimum_size().x - get_viewport_rect().size.x + (FIGURE_GAP - _gap) * gaps
+	var gap := FIGURE_GAP
 	if over > 0.0:
-		var gaps := maxi(_figures.get_child_count() - 1, 1)
-		_figures.add_theme_constant_override("separation", maxi(FIGURE_GAP_MIN, FIGURE_GAP - ceili(over / gaps) - 1))
+		gap = maxi(FIGURE_GAP_MIN, FIGURE_GAP - ceili(over / gaps) - 1)
+	if gap != _gap:
+		_gap = gap
+		_figures.add_theme_constant_override("separation", gap)
 
 
 ## "Economy (E)" -- the hint main.gd read off the window manager; the bare id only
