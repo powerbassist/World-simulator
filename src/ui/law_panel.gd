@@ -410,7 +410,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 
-	PanelKit.line(box, "%s  (%s, %s)" % [Strings.law_name(law), law.theme, _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
+	PanelKit.line(box, "%s  (%s, %s)" % [Strings.law_name(law), PanelKit.Labels.law_theme(law.theme), _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
 
 	# A system transition rewrites the whole constitution, not one field --
 	# named here structurally, off the loaded template's own display_name,

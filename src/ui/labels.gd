@@ -32,6 +32,11 @@ const PROGRAMME_GROUP := {
 	"economy": "Economy", "institutions": "Institutions", "europe": "Europe",  # i18n: msgid
 	"society": "Society", "office": "Office",  # i18n: msgid
 }
+## A law's theme, lower case: the Legislature prints it in brackets after the name.
+const LAW_THEME := {
+	"business": "business", "institutional": "institutional", "labour": "labour",  # i18n: msgid
+	"social": "social", "tax": "tax",  # i18n: msgid
+}
 const TAX := {
 	"income": "Income tax", "corporate": "Corporate tax", "vat": "VAT",  # i18n: msgid
 	"capital_gains": "Capital gains tax", "wealth": "Wealth tax",  # i18n: msgid
@@ -78,3 +83,7 @@ static func programme_group(id: String) -> String:
 
 static func tax(id: String) -> String:
 	return of(TAX, id)
+
+
+static func law_theme(id: String) -> String:
+	return of(LAW_THEME, id)

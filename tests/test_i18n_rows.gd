@@ -39,6 +39,8 @@ func _initialize() -> void:
 	await _probe("programme", "agenda", loader.programme, "name")
 	await _probe("laws", "legislature", loader.laws, "name")
 	await _probe("laws", "legislature", loader.laws, "summary")
+	# An id the panel prints as a word goes through Labels and the UI table.
+	await _probe_label("legislature", "institutional")
 	await _probe("orgs", "orgs", loader.orgs, "name")
 	_adopt_a_rule(state, loader)
 	await _probe("bloc-proposals", "orgs", _proposals(loader), "name")
@@ -70,8 +72,8 @@ func _initialize() -> void:
 
 	Strings.set_language("en")
 	Strings.dir = Strings.DIR
-	if _probed < 17:
-		_fail("only %d of 17 probes ran" % _probed)
+	if _probed < 18:
+		_fail("only %d of 18 probes ran" % _probed)
 	_finish()
 
 
@@ -108,6 +110,28 @@ func _probe(label: String, window: String, rows: Array, field: String) -> void:
 	if not _shows(_screen_text(), french):
 		_fail("%s %s: '%s' (%s) is on screen in English, and its French '%s' did not appear; still English in: %s" % [
 			label, field, english, key, french, _showing(_main, english)])
+	_set_language("en")
+
+
+## An id word `english` shown in `window` (a Labels table's msgid) is translated by the
+## UI table: the fixture's ui.json gets it for the one check.
+func _probe_label(window: String, english: String) -> void:
+	_probed += 1
+	_set_language("en")
+	_main._windows.open(window)
+	_main._windows.mark_all_dirty()
+	await _frames(3)
+	if not _screen_text().contains(english):
+		_fail("label '%s': not on screen in '%s' -- the probe cannot check it" % [english, window])
+		return
+	var french := "FR label %d" % _probed
+	_write_json(DIR + "/fr/ui.json", {english: french})
+	_set_language("fr")
+	_main._windows.mark_all_dirty()
+	await _frames(3)
+	if not _shows(_screen_text(), french):
+		_fail("label '%s': its French '%s' did not appear; still English in: %s" % [english, french, _showing(_main, english)])
+	_write_json(DIR + "/fr/ui.json", {})
 	_set_language("en")
 
 
