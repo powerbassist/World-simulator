@@ -529,7 +529,8 @@ func _entry_tooltip(ns, terms: Dictionary, entry: Dictionary) -> String:
 	var timeout := int(terms.get("timeout_months", 0))
 	if timeout > 0:
 		var left := timeout - int(entry["months_live"])
-		tip += tr_n(" · %d month to its deadline", " · %d months to its deadline", left) % left
+		# A deadline at or past now still reads "1 month", as it did.
+		tip += tr_n(" · %d month to its deadline", " · %d months to its deadline", maxi(left, 1)) % maxi(left, 1)
 	return tip
 
 
