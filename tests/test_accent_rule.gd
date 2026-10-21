@@ -31,14 +31,14 @@ func _check_helpers() -> void:
 	if not is_equal_approx(AccentRule.contrast(Color.WHITE, Color.BLACK), 21.0):
 		_fail("contrast(white, black) is not 21")
 	var dark := Color("#0055A4")
-	var lifted := AccentRule.lift(dark, UiTheme.HULL)
-	if AccentRule.contrast(lifted, UiTheme.HULL) < AccentRule.MIN_CONTRAST:
+	var lifted := AccentRule.lift(dark, UiTheme.SLATE)
+	if AccentRule.contrast(lifted, UiTheme.SLATE) < AccentRule.MIN_CONTRAST:
 		_fail("lift() left %s under the contrast floor" % lifted.to_html(false))
 	if absf(lifted.h - dark.h) > 0.01:
 		_fail("lift() changed the hue (%.3f -> %.3f)" % [dark.h, lifted.h])
 	# A colour that already clears the floor is not touched.
 	var gold := Color("#FFCE00")
-	if AccentRule.lift(gold, UiTheme.HULL) != gold:
+	if AccentRule.lift(gold, UiTheme.SLATE) != gold:
 		_fail("lift() altered a colour that already had contrast")
 
 
@@ -66,7 +66,7 @@ func _check_real_flags() -> void:
 					_fail("%s should resolve to its blue band, got %s" % [id, accent.to_html(false)])
 
 
-## Every flag on the roster ends on a colour that is legible on the panel and is
+## Every flag on the roster ends on a colour that is legible on the LIGHTEST graphite surface (SLATE: a hovered row, the open cluster, a pressed button -- where the accent is read as text) and is
 ## never mistaken for an alert or a good-news tone.
 func _check_roster_invariants() -> void:
 	var fallbacks := 0
@@ -75,7 +75,7 @@ func _check_roster_invariants() -> void:
 		_fail("only %d nation files found" % ids.size())
 	for id in ids:
 		var accent := _accent_of(id)
-		if AccentRule.contrast(accent, UiTheme.HULL) < AccentRule.MIN_CONTRAST - 0.01:
+		if AccentRule.contrast(accent, UiTheme.SLATE) < AccentRule.MIN_CONTRAST - 0.01:
 			_fail("%s accent %s is under the contrast floor" % [id, accent.to_html(false)])
 		if accent == UiTheme.ACCENT_FALLBACK:
 			fallbacks += 1

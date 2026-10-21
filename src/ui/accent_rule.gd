@@ -21,7 +21,8 @@ extends RefCounted
 ## - CONTRAST. The accent is drawn as text and as thin lines on graphite, so it
 ##   must hold WCAG AA (4.5:1) there. A flag blue is far too dark for that, so the
 ##   band is lifted: lightness raised in HSL with hue and saturation kept, which
-##   leaves a brighter blue rather than a washed-out one.
+##   leaves a brighter blue rather than a washed-out one. The surface is the
+##   lightest graphite (a hovered row), the worst case the accent is read on.
 ##
 ## No band passing is a real outcome, not an error: the caller's named fallback
 ## applies. Pure functions over colours, with the surface and the tones to avoid

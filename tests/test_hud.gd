@@ -87,6 +87,19 @@ func _check_icons_load() -> void:
 		elif off_tint > 0:
 			_fail("icon '%s' has %d opaque pixels that are not the tint" % [name, off_tint])
 
+	# The pending-mark glyph follows the accent in force (a loaded save of another
+	# nation changes it): tinted for the old one, it would sit beside a label and
+	# an underline in the new colour.
+	var bar = _main._hud.action_bar
+	var before: Color = bar.marked_icon("state").get_image().get_pixel(11, 11)
+	var host := Control.new()
+	var elsewhere := Color("#E3A63A")
+	UiTheme.apply(host, elsewhere)
+	var after: Color = bar.marked_icon("state").get_image().get_pixel(11, 11)
+	if before.is_equal_approx(after) or absf(after.r - elsewhere.r) > 0.06:
+		_fail("the marked cluster icon kept the old accent: %s then %s" % [before.to_html(false), after.to_html(false)])
+	host.free()
+
 	# And the bar is actually using them, not merely able to.
 	for cluster_id in _main._hud.action_bar._cluster_buttons.keys():
 		if _main._hud.action_bar._cluster_buttons[cluster_id].icon == null:

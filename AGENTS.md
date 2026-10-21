@@ -266,7 +266,7 @@ a "signature".
 The accent is chosen by a **rule over the flag's bands** (`src/ui/accent_rule.gd`,
 `data/nations/*.json`), never by nation id: the first band with enough chroma,
 at least 24° of hue from the alert red and the good-news green, lifted in HSL
-lightness to WCAG AA (4.5:1) on the panel; else `UiTheme.ACCENT_FALLBACK`. Code
+lightness to WCAG AA (4.5:1) on the lightest graphite surface (SLATE, where the accent is read as text); else `UiTheme.ACCENT_FALLBACK`. Code
 that draws "you are here" reads `UiTheme.accent()` — there is no `ACCENT` const —
 and `main.gd` re-applies the theme once the played nation is known and on a load
 (`UiTheme.apply_for`). `test_accent_rule.gd` runs the rule over all 41 flags.

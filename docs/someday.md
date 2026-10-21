@@ -385,6 +385,12 @@ The embassies, the capitals and the runner's verdict; two items measured and lef
 - **Sliders still wear the engine default** (the budget levers): the theme never styled `HSlider`. A Bureau slider (graphite track, accent fill) is d's, with the dense-table kit.
 - **The accent rule's fallback covers 14 of 41 flags** (every red-and-white flag, the greens, Ireland's orange): they share one azure. If the author wants those nations to read distinct, the rule's next step is a secondary named palette keyed by hue family, still data.
 
+Below the V5.1 bar, from `code-review 32 high` (the two that met it -- the accent judged on SLATE not HULL, the cluster icons keeping the old accent after a load -- were fixed test-first):
+
+- **`WARN` is a semantic tone the accent rule does not avoid.** DEU's gold accent (#FFCE00, hue 48) is 7 degrees from WARN (#E3A63A, hue 41). Nothing draws WARN yet, so it is latent; adding it to `accent_for`'s avoid list sends DEU, BEL, LTU, MNE and CYP to the fallback. A rule-policy call for the parent/author, not a patch.
+- **`Icon.load_icon` injects the fill at `find("<svg ") + 5`**: an SVG whose root tag is followed by a newline or tab returns -1 and corrupts the document. The committed Material files all use a space.
+- **`map_face()`'s six callers keep `if font == null` guards that cannot fire** (it falls back to `ThemeDB.fallback_font`), and a missing Archivo re-attempts the load on every call (only a non-null face is cached).
+
 ## Carried from V5.1-0c (2026-10-21)
 
 - **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.
