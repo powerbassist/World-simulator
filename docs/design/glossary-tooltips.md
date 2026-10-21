@@ -40,8 +40,10 @@ table, and the definitions below are the designer's.
   are the card body (`src/ui/message_stack.gd`) and the event text
   (`src/ui/events_panel.gd`). **So one primitive carries nearly all the prose**,
   and converting it is the bulk of the work (see "Where it lands").
-- **MEASURED (engine source, `godotengine/godot` tag `4.7.2-stable`,
-  `scene/gui/rich_text_label.cpp`, `_draw_line`):** a `[hint]` tag is underlined
+- **MEASURED, with a caveat (engine source, `godotengine/godot` tag
+  `4.7.2-stable`, `scene/gui/rich_text_label.cpp`, `_draw_line`):** the file was
+  read through a web-fetch summary of its first 100 000 characters, which quoted
+  the lines below, not line by line by hand. A `[hint]` tag is underlined
   with `draw_dashed_line()`, dash length `MAX(2.0, underline_width * 2)`, in the
   **font's colour** with its alpha scaled by the theme's `underline_alpha`. A
   `[url]` (meta) tag is underlined with a solid `draw_line()`.
@@ -211,12 +213,12 @@ author would see first.
 | Hover delay | 0.4 s before a tooltip opens | long enough not to fire while the mouse passes over a term on its way elsewhere |
 | Grace on leaving | 0.3 s | the mouse must be able to travel from the term into its tooltip |
 | Placement | below and right of the term, flipped to fit, clamped to the viewport with an 8 px margin | never off screen, at 1920×1080 or at the 960×540 floor (`WindowMode.MIN_SIZE`) |
-| Width | at most 360 px; a long `body` scrolls | fits the 960×540 floor with room for one nested tooltip beside it |
-| Nesting | up to 3 levels | as in Crusader Kings III and Victoria 3: a term inside a tooltip opens its own |
+| Width | at most 360 px; a long `body` scrolls | two plates side by side fit the 960×540 floor; a third overlaps the first rather than leaving the screen |
+| Nesting | up to 3 levels; a nested plate opens beside its parent if it fits, else over it, offset so the parent's term stays visible | as in Crusader Kings III and Victoria 3: a term inside a tooltip opens its own |
 | Lock | a click on the term, or holding still 1.2 s, with a thin fill on the plate's edge as it locks | a locked tooltip stays while the mouse moves into it, so a nested term can be hovered |
 | Close | moving away from an unlocked chain; Escape or a click elsewhere closes every level | one key always clears the screen |
 | Clicks | an unlocked tooltip passes the mouse through; only a locked one takes clicks, and only on itself | a tooltip must never block a click on the world |
-| Keyboard and gamepad | Tab cycles the marked terms of the focused window, Enter opens and locks, Escape closes | **UNVERIFIED**: `RichTextLabel` has no per-tag focus, so this is a custom cycle |
+| Keyboard and gamepad | a dedicated action (proposed: a `glossary_next` input action, bound to a key Godot does not already use for focus) cycles the marked terms of the focused window, Enter opens and locks, Escape closes | **not Tab**: Tab is Godot's `ui_focus_next`, which moves focus between the window's buttons. **UNVERIFIED**: `RichTextLabel` has no per-tag focus, so this is a custom cycle |
 | Live value | "Your value: 41 % (a poll, ±3)", with the source named | the fog rule: a figure the player sees with its source ([[v5]], "fog is shown, never silent") |
 | Visual | the Bureau plate: near-opaque graphite, an `EDGE` hairline on all four sides, no accent; the underline neutral, never the accent colour | the panel grammar (`AGENTS.md`, UI conventions) |
 
@@ -239,7 +241,7 @@ author would see first.
 
 - **Recommended (OPINION):** prototype path 2 first, because it reuses the
   engine. Fall back to path 3 if the tags do not nest, or if the author wants
-  the `EDGE` colour exactly (author call 1).
+  true dots or the `EDGE` colour exactly (author call 1).
 
 ## Where it lands, in what order, and the cost
 
@@ -266,9 +268,10 @@ The costs are OPINION (S, M or L, relative).
 | # | Proof | Shape |
 |---|---|---|
 | P1 | Every marked term resolves, and no entry is orphaned | a test: every `[g=id]` in `data/` and in the UI strings names an entry, and every entry is marked somewhere or is listed in `see_also`; removing an entry turns it red. The loader's refusals above are its first half. |
-| P2 | A tooltip fits on screen | at 1920×1080 and at 960×540 (`WindowMode.MIN_SIZE`), nested to depth 3, and under `test_i18n_fit`'s +35 % pseudolocalization |
+| P2 | A tooltip fits on screen | at 1920×1080 and at 960×540 (`WindowMode.MIN_SIZE`), nested to depth 3, and under `test_i18n_fit`'s +35 % pseudolocalization. **"Fits" means every plate lies wholly inside the viewport**; at 960×540 a third plate may overlap the first, and the term that opened each plate stays visible |
 | P3 | A windowed screenshot of a hovered and of a locked term | a `tools/screenshot.gd` flag, run windowed (`AGENTS.md`: `--headless` draws nothing) |
 | P4 | Each definition cites its model section | the `model` field: a check that the doc exists and the heading is in it |
+| P4b | A definition is re-read when its model changes | the rule for builders: a PR that changes a model section an entry cites re-reads that entry and updates it in the same PR. Two entries are already known to go stale: `state_stake` (nationalisation becomes a law in V5.3, the author's answer to P12 in [[v5.0-replay]]) and `programme` (the mid-term choice, R5, also V5.3) |
 | P5 | The play gate | the author hovers three named terms, **approval**, **Article 49.3** and **programme**, and says, verbatim, whether each one helped |
 
 **Failure looks like:** half the text underlined (N1-N3 broken); tooltips that
@@ -280,10 +283,12 @@ section, the review catches a wrong sentence).
 
 Each has the recommendation first.
 
-1. **The underline's colour.**
-   (a) *Recommended:* the text's own colour at reduced alpha (path 2): neutral,
-   never the accent, and free from the engine.
-   (b) The `EDGE` hairline colour exactly (path 3): more code.
+1. **The underline's look.** The author asked for "pointillés" (dots). The
+   engine's `[hint]` line is dashed: dashes twice the line's width, at least
+   2 px, which at a 1 px line reads close to dots but is not round dots.
+   (a) *Recommended:* the engine's dashes in the text's own colour at reduced
+   alpha (path 2): neutral, never the accent, and free from the engine.
+   (b) True dots, in the `EDGE` hairline colour exactly (path 3): more code.
 2. **How a term is marked.**
    (a) *Recommended:* markup in the source text: deterministic, and it tells the
    two meanings of "bloc", "stake" and "standing" apart; Content re-keys the
