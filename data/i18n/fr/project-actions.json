@@ -1,0 +1,22 @@
+{
+  "start_high_speed_rail.name": "Construire l'axe ferroviaire à grande vitesse",
+  "start_high_speed_rail.summary": "Une nouvelle ligne voyageurs nord-sud, huit ans de travaux et le plus grand engagement unique qu'un gouvernement de ce pays puisse signer. Les villes qu'elle relie en seront transformées. Qui signe ceci ne sera plus en fonctions quand le premier train roulera.",
+  "abandon_high_speed_rail.name": "Annuler l'axe ferroviaire",
+  "abandon_high_speed_rail.summary": "Les contrats sont déchirés et les terrassements laissés où ils sont. Rien n'est récupéré et rien n'est fini ; la seule chose dont on se souvienne, c'est le chiffre sur la facture.",
+  "start_national_grid.name": "Moderniser le réseau électrique national",
+  "start_national_grid.summary": "Six ans de transport, d'interconnexion et de stockage, pour que le courant arrive là où est le travail. L'industrie le demande depuis dix ans. Les factures arrivent avant les capacités.",
+  "abandon_national_grid.name": "Annuler le programme du réseau",
+  "abandon_national_grid.summary": "Les pylônes s'arrêtent à la limite du département. L'argent est parti, la contrainte non, et les industries qui avaient planifié autour d'elle ont déjà pris d'autres dispositions.",
+  "start_freight_corridor.name": "Ouvrir le corridor portuaire et de fret",
+  "start_freight_corridor.summary": "Des quais en eau profonde, une tête de ligne ferroviaire et la route qui les joint. Quatre ans et demi, et les marchandises circulent plus vite dès l'ouverture. Les villes situées sur le parcours l'entendront à quatre heures du matin.",
+  "abandon_freight_corridor.name": "Annuler le corridor de fret",
+  "abandon_freight_corridor.summary": "Les dragues rentrent et la tête de ligne s'arrête dans un champ. Les camions continuent de traverser le centre-ville, et on les a maintenant payés deux fois.",
+  "start_national_fibre.name": "Tirer la fibre jusqu'à chaque foyer",
+  "start_national_fibre.summary": "Trois ans et demi pour mettre le dernier village sur la même connexion que la capitale. Bon marché au regard de cette liste, et celui qui rend le plus de ce qu'il promet en un seul mandat.",
+  "abandon_national_fibre.name": "Annuler le déploiement de la fibre",
+  "abandon_national_fibre.summary": "Les armoires sont installées mais non raccordées. Tous ceux à qui on l'avait promise savent exactement quel gouvernement l'a promise.",
+  "start_flood_defence.name": "Construire les défenses côtières et contre les inondations",
+  "start_flood_defence.summary": "Deux ans et demi de digues, d'écluses et de recul organisé. La plus petite chose de cette liste et la plus rapide, et celle dont l'absence se remarque en un seul mauvais hiver.",
+  "abandon_flood_defence.name": "Annuler les défenses contre les inondations",
+  "abandon_flood_defence.summary": "Le projet est mis de côté à mi-parcours. L'estuaire se moque de savoir à qui était le mandat, et les photographies seront prises en février."
+}

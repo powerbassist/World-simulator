@@ -582,6 +582,13 @@ it could without moving a number; these it recorded instead.
   Its perf rows 3.2 (pan fps) and 3.3 (no loading screen) are CLOSED by V4.10c and
   V4.9a. **Trigger:** the next playtest.
 
+## Carried from the V5.0 replay audit (2026-10-21)
+
+- **Andorra, Monaco and the other micro-states are not in the roster** (the V5.0 play
+  gate's P9). The roster is 41 nation files, none for AND, MCO, LIE, SMR or VAT. Parked
+  by the author's call (2026-10-21): five near-empty states would add load to every
+  system for little play. See [[v5.0-replay]]. **Trigger:** a roster expansion.
+
 ---
 
 Related: [[index]] · [[legislature-model]] · [[companies-model]] · [[tax-model]]

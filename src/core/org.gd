@@ -273,7 +273,9 @@ func is_member(nation_id: String) -> bool:
 ## callers -- Trade.weights() and ForeignPolicy._resting() -- have state and
 ## nothing else, and the dependency rules forbid handing them one.
 static func shared_bonus(state, a_id: String, b_id: String, key: String) -> float:
-	if _memo_state != null and state == _memo_state:
+	# is_same(), not an untyped `==`: no first-run cache to race on (parallel.gd
+	# rule 5). `state` is never null here.
+	if is_same(state, _memo_state):
 		var by_key: Dictionary = _memo.get(key, {})
 		var by_a: Dictionary = by_key.get(a_id, {})
 		var hit = by_a.get(b_id)
