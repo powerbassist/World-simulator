@@ -294,6 +294,7 @@ func _check_preconditions_gate() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var action = _action_with_relations_precondition()
 	if action == null:
+		_failures.append("no shipped action carries a relations precondition -- the gate check would measure nothing")
 		return
 
 	var threshold: float = 0.0
@@ -365,6 +366,7 @@ func _check_execute_writes_both_channels() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var action = _action_with_bloc_price()
 	if action == null:
+		_failures.append("no shipped action carries a bloc price -- the price check would measure nothing")
 		return
 
 	_force_available(state, action)
@@ -480,6 +482,7 @@ func _check_execute_refuses_when_unavailable() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var action = _action_with_relations_precondition()
 	if action == null:
+		_failures.append("no shipped action carries a relations precondition -- the gate check would measure nothing")
 		return
 
 	var threshold: float = 0.0

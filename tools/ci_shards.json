@@ -31,7 +31,8 @@
    "tests/test_message_settings.gd",
    "tests/test_motion.gd",
    "tests/test_election_night.gd",
-   "tests/test_tick_levers.gd"
+   "tests/test_tick_levers.gd",
+   "tests/test_save_continuity.gd"
   ],
   [
    "tests/test_clock.gd",

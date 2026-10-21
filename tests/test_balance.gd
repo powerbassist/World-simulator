@@ -56,6 +56,15 @@ const START_YEAR := 2026
 ## consecutive full terms after the one it started mid-way through.
 const MONTHS := 168
 const TEN_YEARS := 120
+## How often one event may reach the player's desk in a ten-year do-nothing run.
+## Measured by the test audit (2026-10-21) over 168 months of the same regime: the
+## most-delivered event reached FRA's desk 2 times and GBR's 5 (union_ultimatum),
+## 41 and 29 deliveries in all. 8 is that worst plus 60%, over a SHORTER window,
+## so it is slack for the content and tight for the V4.4 class -- a hook or a
+## cooldown that stops binding lands the same occasion on every month it can.
+const DESK_DELIVERIES_PER_EVENT_MAX := 8
+## The same run's total, at twice FRA's 168-month figure.
+const DESK_DELIVERIES_TOTAL_MAX := 82
 
 ## Never touch the budget.
 const IGNORED := {}
@@ -187,6 +196,7 @@ func _check_ten_years_stay_off_every_clamp() -> void:
 		_fail("ten-year run ended with GDP %.3f" % ns.gdp_eur_bn)
 	if run["months"] < TEN_YEARS:
 		_fail("ten-year run stopped after %d months" % run["months"])
+	_expect_a_quiet_desk("ten-year run", run["deliveries"])
 
 
 ## V1.2d: GBR is the third playable nation. Same shape as the FRA check above
@@ -206,6 +216,25 @@ func _check_gbr_ten_years_stay_off_every_clamp() -> void:
 		_fail("GBR ten-year run ended with GDP %.3f" % ns.gdp_eur_bn)
 	if run["months"] < TEN_YEARS:
 		_fail("GBR ten-year run stopped after %d months" % run["months"])
+	_expect_a_quiet_desk("GBR ten-year run", run["deliveries"])
+
+
+## The test audit's S5, the V4.4 escape as a bound: a commodity hook fired 168
+## months of 168 while every gate was green, because nothing counted what the
+## real month delivers. Counted here, on the clamp watch's own run.
+func _expect_a_quiet_desk(label: String, deliveries: Dictionary) -> void:
+	var total := 0
+	for ev_id in deliveries.keys():
+		total += int(deliveries[ev_id])
+		if int(deliveries[ev_id]) > DESK_DELIVERIES_PER_EVENT_MAX:
+			_fail("%s: '%s' reached the player's desk %d times in ten years (bound %d)" % [
+				label, ev_id, deliveries[ev_id], DESK_DELIVERIES_PER_EVENT_MAX])
+	if total > DESK_DELIVERIES_TOTAL_MAX:
+		_fail("%s: %d desk deliveries in ten years (bound %d)" % [label, total, DESK_DELIVERIES_TOTAL_MAX])
+	if total == 0:
+		_fail("%s: nothing reached the player's desk in ten years -- the count is not reading deliveries" % label)
+	print("%s: %d desk deliveries, most %d of one event" % [label, total,
+		deliveries.values().reduce(func(a, b): return maxi(a, b), 0)])
 
 
 ## Done-when: "A full five-year term is playable start to finish without a crash
@@ -398,6 +427,10 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 	var problems: Array[String] = []
 	var elections: Array = []
 	var all_results: Array = []
+	# Each delivery to the player's desk, by event id, read where Events._deliver
+	# writes one: the event's cooldown stamp moving.
+	var deliveries := {}
+	var cooldowns_before: Dictionary = (ns.event_cooldowns as Dictionary).duplicate()
 
 	var year := START_YEAR
 	var month := 1
@@ -478,6 +511,11 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 			if r["kind"] == verdict_kind:
 				elections.append(r)
 
+		for ev_id in ns.event_cooldowns.keys():
+			if int(cooldowns_before.get(ev_id, -1)) != int(ns.event_cooldowns[ev_id]):
+				deliveries[ev_id] = int(deliveries.get(ev_id, 0)) + 1
+		cooldowns_before = (ns.event_cooldowns as Dictionary).duplicate()
+
 		played += 1
 		problems.append_array(_problems(ns, year, month))
 		# V3.0's stop_on_loss: losing office is now a REACHABLE politics (the
@@ -486,7 +524,7 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		if stop_on_loss and not ns.in_government:
 			break
 
-	return {"state": state, "months": played, "problems": problems, "elections": elections, "all_results": all_results}
+	return {"state": state, "months": played, "problems": problems, "elections": elections, "all_results": all_results, "deliveries": deliveries}
 
 
 ## Non-finite, non-positive, or resting on a guard clamp. The clamps are

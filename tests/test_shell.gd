@@ -24,6 +24,12 @@ const Budget = preload("res://src/sim/budget.gd")
 var _failures: Array[String] = []
 var _main
 var _frame := 0
+var _phase := "run"
+var _shut_frames := 0
+
+## Real frames the engine runs over the month's sweep before the closed-window
+## read: every panel's own _process has had its turns by then.
+const SHUT_FRAMES := 3
 
 
 func _init() -> void:
@@ -36,7 +42,17 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let the scene's _ready() run
 
-	_run()
+	if _phase == "run":
+		_run()
+		if not _failures.is_empty() or not _begin_a_month_with_every_window_shut():
+			_finish()
+			return false
+		_phase = "shut"
+		return false
+	_shut_frames += 1
+	if _shut_frames < SHUT_FRAMES:
+		return false
+	_check_the_month_left_every_closed_panel_dirty()
 	_finish()
 	return false
 
@@ -597,6 +613,45 @@ func _check_a_closed_window_costs_nothing() -> void:
 	_main._windows.close_all()
 	if checked < 20:
 		_fail("only %d registered panels were checked for the closed-window gate" % checked)
+
+
+## The test audit's S4: the check above calls each panel's _process by hand,
+## after marking it dirty itself. This one is the game's own path: every window
+## shut, every panel clean, ONE real month through main.gd's handler, then real
+## frames. Each panel must come out dirty -- the month's sweep reached it, so it
+## redraws when its window opens -- and still dirty: none refreshed shut, in
+## whatever order the engine processed it. A month end that stopped marking the
+## panels (an opened window showing last month) and a panel that refreshes
+## hidden both fail here.
+func _begin_a_month_with_every_window_shut() -> bool:
+	_main._windows.close_all()
+	for id in _main._windows.panel_ids():
+		var panel = _main._windows.frame(id)._content
+		if "_dirty" in panel:
+			panel._dirty = false
+	var clock: Node = _main.get_node("Clock")
+	var month_before: int = _main._state.month
+	for _d in range(32):
+		if _main._state.month != month_before:
+			break
+		clock.advance_one_day()
+	if _main._state.month == month_before:
+		_fail("32 days by hand did not reach the next month")
+		return false
+	return true
+
+
+func _check_the_month_left_every_closed_panel_dirty() -> void:
+	var checked := 0
+	for id in _main._windows.panel_ids():
+		var panel = _main._windows.frame(id)._content
+		if not ("_dirty" in panel):
+			continue
+		if not panel._dirty:
+			_fail("after a month with every window shut, the '%s' panel is clean -- it refreshed hidden, or the month never marked it" % id)
+		checked += 1
+	if checked < 20:
+		_fail("only %d registered panels were read after the shut month" % checked)
 
 
 ## V5.1-0a review pass 1: the Tax Code window commits through Budget.commit()

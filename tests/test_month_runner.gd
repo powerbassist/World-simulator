@@ -30,6 +30,7 @@ extends SceneTree
 
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const GameState = preload("res://src/core/game_state.gd")
+const MonthRunner = preload("res://src/ui/month_runner.gd")
 
 const MAX_FRAMES := 4000
 const MONTHS := 6
@@ -49,6 +50,63 @@ var _law_name := ""
 var _at_month_end := {}
 var _speed_before := 0
 var _settle_left := 0
+
+
+## A clock that is real time and holds, and nothing else: what run() asks of one.
+class HeldClock extends Node:
+	var in_real_time := true
+	var held := false
+
+	func hold() -> void:
+		held = true
+
+	func release() -> void:
+		held = false
+
+
+## The frame budget as STRUCTURE, never as a stopwatch (the test audit,
+## 2026-10-21). "More than one frame" above holds for a month cut in two
+## five-second halves; what makes the month a slice per frame is the rule that a
+## unit known to cost more than what is left of the budget waits for the next
+## frame, after at least one unit has run. Every unit is pre-costed past the
+## whole budget, so the rule allows exactly one unit a frame, and the frames must
+## equal the month's units, counted on a twin state by the cursor itself. And
+## the budget, read back, fits a 60 Hz frame.
+func _check_the_budget_slices_the_month(loader) -> void:
+	if MonthRunner.FRAME_BUDGET_USEC > 16667:
+		_fail("FRAME_BUDGET_USEC is %d -- more than a 60 Hz frame (16 667 us) of simulation alone" % MonthRunner.FRAME_BUDGET_USEC)
+	var twin = GameState.new_game(loader, "FRA")
+	var watched = GameState.new_game(loader, "FRA")
+	for s in [twin, watched]:
+		s.year = 2026
+		s.month = 2
+	var units := 0
+	var cursor = WorldMonth.begin(twin, loader)
+	while not WorldMonth.done(cursor):
+		WorldMonth.run_unit(cursor)
+		units += 1
+
+	var runner = MonthRunner.new()
+	var clock := HeldClock.new()
+	var held := Node.new()
+	var finished := [false]
+	runner.run(watched, loader, Callable(), func(_report: Dictionary) -> void: finished[0] = true, clock, held)
+	for step in range(WorldMonth.STEPS.size()):
+		for unit in range(256):
+			runner._cost["%d:%d" % [step, unit]] = MonthRunner.FRAME_BUDGET_USEC + 1
+	var frames := 0
+	while runner.running() and frames <= units + 1:
+		runner._process(0.0)
+		frames += 1
+	if not finished[0]:
+		_fail("the runner had not finished a month of %d units after %d frames" % [units, frames])
+	elif frames != units:
+		_fail("a month of %d units, every one costed past the budget, took %d frames -- one unit a frame is the rule" % [units, frames])
+	if clock.held:
+		_fail("the runner left its clock held after the month")
+	runner.free()
+	clock.free()
+	held.free()
 
 
 ## What reaches the game as unhandled input. F12 is bound to nothing, so this is
@@ -80,6 +138,7 @@ func _process(_delta: float) -> bool:
 		return _finish()
 	match _phase:
 		"boot":
+			_check_the_budget_slices_the_month(_b._loader)
 			_bare = GameState.new_game(_b._loader, _b.pending_player_id, _b.pending_scenario_id)
 			_bare.year = _b._clock.year
 			_bare.month = _b._clock.month
