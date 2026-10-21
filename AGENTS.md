@@ -11,7 +11,10 @@ Design vault is `docs/` — open **the project root** as the Obsidian vault, not
 ## Stack
 
 - **Godot 4.7.2-stable**, non-Mono. Pinned in `project.godot` (`config/features="4.7"`).
-  Bump deliberately and re-run the tests before committing the bump.
+  Bump deliberately and re-run the tests before committing the bump — and
+  `tools/opcache_race_probe.gd -- --kind=raw` on the Linux build (pinned to two
+  cores, several processes): while it still crashes, the GDScript operator-cache
+  race behind G2 is live and `src/core/parallel.gd` rule 5 stays.
 - **GDScript with static typing** (`var gdp: float`). C# stays available as an
   escape hatch for a hot loop a profiler actually found — not preemptively.
 - No database and no autoloads in the game code. Third-party addons are

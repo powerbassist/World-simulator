@@ -26,16 +26,17 @@ extends RefCounted
 ##      (gdscript_vm.cpp:806-809, 4.7.2 and master): the signature is stored
 ##      before the function pointer, unordered, and a thread that reads the
 ##      signature in between takes the unlocked fast path (:813-820) and calls
-##      address 0. Trade._raw()'s `state == _mass_state` is reached only while
+##      address 0. Trade._raw()'s `state == _mass_state` was reached only while
 ##      the masses table is open, so its first run was always on every worker
 ##      at once: a SIGSEGV in CI, and in a fresh-bytecode stress on the Linux
 ##      build 6 processes in 12 (0 in 6 with one run on the caller first;
-##      tools/opcache_race_probe.gd). Element
-##      0 primes every operator on its own path before the pool starts, for one
-##      element's time per fan-out. A branch element 0 skips -- score_targets()
-##      element 0 with no offer returns before target_terms() -- is primed by
-##      nothing, so a worker-only branch should compare TYPED values, which
-##      compile to the validated opcode and carry no cache.
+##      tools/opcache_race_probe.gd). Element 0 primes every operator on its
+##      own path before the pool starts, for one element's time per fan-out;
+##      score_targets() fans out only the targets with an offer, so its element
+##      0 reaches target_terms() (G2b). A branch element 0 skips is primed by
+##      nothing, so a worker-only branch compares TYPED values, which compile to
+##      the validated opcode and carry no cache, and a state's identity goes
+##      through is_same() (tests/test_diplomacy_parallel.gd scans for `==`).
 ##
 ## `enabled` false runs every fan-out as the plain serial loop with the memos
 ## writable -- the reference tests/test_diplomacy_parallel.gd compares the
@@ -63,6 +64,8 @@ static func each(n: int, fn: Callable) -> void:
 		return
 	active = true
 	fn.call(0)
+	# Safe only because `i + 1` is int + int, the validated opcode: an untyped
+	# operator here would itself first run on every worker at once (rule 5).
 	var rest := func(i: int) -> void: fn.call(i + 1)
 	var task := WorkerThreadPool.add_group_task(rest, n - 1, -1, true)
 	WorkerThreadPool.wait_for_group_task_completion(task)
