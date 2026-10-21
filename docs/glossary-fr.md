@@ -26,7 +26,7 @@ term recurs in a second PR; change a row only with a sweep of the tables.
 
 | English | Français |
 | --- | --- |
-| President | président(e) de la République (chef de l'État in compact text); write président(e) where the role can be held by a woman |
+| President | *président(e) de la République* names a person; *présidence* names the office or a body (a council chaired by a nation, a firm's board, "a presidency that never got to play it"); *chef de l'État* in compact text |
 | Assembly / National Assembly | Assemblée / Assemblée nationale |
 | Legislature | Législature |
 | second chamber | seconde chambre |
