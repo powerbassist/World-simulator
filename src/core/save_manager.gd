@@ -86,7 +86,15 @@ static func save_game(state, clock, slot: String) -> String:
 	if file == null:
 		return "could not open '%s' for writing (%s)" % [temp_path, error_string(FileAccess.get_open_error())]
 
-	file.store_string(JSON.stringify(payload, "\t"))
+	# full_precision: grisu2's shortest digits, which name each double exactly.
+	# The default writes ~15 significant digits, which (measured on a played
+	# game) changed 17 372 floats at load and moved a small value by 5.8%. The
+	# load still is not bit-exact everywhere -- JSON.parse_string reads numbers
+	# through Godot's built_in_strtod, which is not correctly rounded -- but
+	# that is the parser's residue, a few ULP, and no setting here removes it.
+	# The format is the same JSON numbers, so no SAVE_VERSION bump: an older
+	# save reads exactly as it did. sort_keys stays at its default, true.
+	file.store_string(JSON.stringify(payload, "\t", true, true))
 	file.close()
 
 	var dir := DirAccess.open(SAVE_DIR)
