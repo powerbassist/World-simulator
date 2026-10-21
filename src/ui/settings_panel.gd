@@ -80,6 +80,9 @@ static var revision := 0
 
 var _fullscreen_button: OptionButton
 var _foreign_news_button: OptionButton
+## The resolution row as last applied, so a change to it can be told from a change
+## to any other row.
+var _applied_resolution := -1
 var _resolution_button: OptionButton
 var _scale_button: OptionButton
 var _ambient_button: OptionButton
@@ -137,7 +140,10 @@ static func _apply(window: Window, fullscreen: bool, resolution_index: int, scal
 	# Windowed is always resizable, with a floor (V5.1-0c).
 	window.unresizable = not bool(plan["resizable"])
 	window.min_size = plan["min_size"]
-	window.mode = Window.MODE_FULLSCREEN if fullscreen else Window.MODE_WINDOWED
+	# Only on a change: assigning WINDOWED again would un-maximize a window the
+	# player maximized, on every menu entry and every Settings row.
+	if fullscreen != (window.mode == Window.MODE_FULLSCREEN):
+		window.mode = Window.MODE_FULLSCREEN if fullscreen else Window.MODE_WINDOWED
 	# Only meaningful windowed -- resizing a fullscreen window fights the
 	# display, and the setting reasserts itself the moment fullscreen is left.
 	# Skipped when the window is already windowed: the size is then the player's.
@@ -192,8 +198,10 @@ func _save_and_apply() -> void:
 	cfg.save(CONFIG_PATH)
 	revision += 1
 
-	# A choice made on this screen is the player asking for that size.
-	_apply(get_window(), fullscreen, resolution_index, scale_index, true)
+	# The size is the player's to drag: only a resolution picked HERE asks for the
+	# preset, not Sound or Motion changing beside it.
+	_apply(get_window(), fullscreen, resolution_index, scale_index, resolution_index != _applied_resolution)
+	_applied_resolution = resolution_index
 	_resolution_button.disabled = fullscreen
 
 
@@ -246,6 +254,13 @@ func _ready() -> void:
 	footer.add_child(close)
 
 	_load_into_controls()
+	# F11 (and any other writer of the file) can move the settings while this panel
+	# sits built and hidden; showing it reads them again, or the next row changed
+	# would write the stale ones back.
+	visibility_changed.connect(func():
+		if visible:
+			_load_into_controls()
+	)
 
 
 func _add_row(grid: GridContainer, label_text: String, options: Array) -> OptionButton:
@@ -344,6 +359,7 @@ func _load_into_controls() -> void:
 	var fullscreen := bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN))
 	_fullscreen_button.select(1 if fullscreen else 0)
 	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)), 0, RESOLUTIONS.size() - 1))
+	_applied_resolution = _resolution_button.selected
 	_scale_button.select(clampi(int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX)), 0, UI_SCALES.size() - 1))
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_ambient_button.select(1 if bool(cfg.get_value("audio", "ambient", DEFAULT_AMBIENT)) else 0)

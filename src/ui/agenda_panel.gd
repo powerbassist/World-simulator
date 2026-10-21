@@ -279,12 +279,16 @@ func _clock_text(terms: Dictionary, live_months: int, is_live: bool) -> String:
 func _unset_text(ns) -> String:
 	if Programme.is_term_start(ns):
 		return "Nothing is offerable this term -- every gate in the book is shut."
-	var when := Trends.vote_date(ns)
-	return (
+	var rule := (
 		"No programme was set this term. A programme can only be chosen on the first"
-		+ " day of a term, before the clock runs. The next term starts after the vote"
-		+ " in %s %d, and its programme can be chosen then."
-	) % [ClockCluster.MONTH_NAMES[when.y - 1], when.x]
+		+ " day of a term, before the clock runs."
+	)
+	var when := Trends.vote_date(ns)
+	if when.y < 1 or when.y > ClockCluster.MONTH_NAMES.size():
+		return rule  # no vote scheduled: say the rule, not a date that does not exist
+	return rule + " The next term starts after the vote in %s %d, and its programme can be chosen then." % [
+		ClockCluster.MONTH_NAMES[when.y - 1], when.x,
+	]
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold

@@ -366,6 +366,12 @@ cursor; the name returns when the cursor leaves). The rest are parked:
 - **A wide window can still sit under the message column** (the column is an overlay above windows): at 1920 the budget window clears it, a window dragged left does not. V5.1d (windows).
 - **The Settings screen's resolution row is disabled while fullscreen** with no word why; F11 and the Window row are the way out.
 
+Below the V5.1 bar, from `code-review 30 high` (the four that met it -- the Settings rows resetting a dragged window, the panel's stale rows after F11, the un-maximizing mode write, the unguarded Agenda date -- were fixed test-first):
+
+- **The overlay message column has no bound.** Five or six tall decision cards from y=54 cover the legend and portrait and, at the extreme, run their last buttons off the bottom; before this PR the same column pushed the HUD down instead. A ScrollContainer or a max height belongs to V5.1c's shell.
+- **The dev console's `pause off` goes through the Agenda guard** (`_toggle_pause_by_hand`) and answers "clock paused" at an unchosen term start; an agent sends it twice. The guard is a player nag; `set_paused` could set `Clock.paused` itself. Cheap, but the console file belongs to 0b's surface.
+- **The maximized-window case is not unit-tested** (the headless root has no OS window); the fix is one condition in `SettingsPanel._apply`.
+
 ## Carried from V5.1-0b (2026-10-21)
 
 Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed test-first in `7cd07ad9`):

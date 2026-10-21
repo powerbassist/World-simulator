@@ -339,6 +339,22 @@ func _check_mid_term_says_when_the_next_programme_opens(panel, state, ns, loader
 	if not text.to_lower().contains("next term"):
 		_fail("the mid-term Agenda does not name the next term: '%s'" % text)
 
+	# A nation with no scheduled vote must not print a month it does not have.
+	ns.next_election_year = 0
+	ns.next_election_month = 0
+	ns.next_executive_year = 0
+	ns.next_executive_month = 0
+	_refresh(panel)
+	text = ""
+	for node in _walk(panel._body):
+		if node is Label and not node.is_queued_for_deletion():
+			text += String(node.text) + "
+"
+	if text.contains(" 0,") or text.contains(" 0 "):
+		_fail("the mid-term Agenda printed a month for an unscheduled vote: '%s'" % text)
+	if not text.to_lower().contains("no programme was set"):
+		_fail("an unscheduled vote hid the Agenda's own sentence: '%s'" % text)
+
 
 func _refresh(panel) -> void:
 	_open_window_of(panel)

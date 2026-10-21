@@ -26,6 +26,7 @@ func _process(_delta: float) -> bool:
 	_check_plan()
 	_check_root_window_is_resizable_with_a_floor()
 	_check_key_toggles_and_persists()
+	_check_settings_rows_do_not_fight_the_window()
 	_finish()
 	return false
 
@@ -110,6 +111,58 @@ func _check_key_toggles_and_persists() -> void:
 		restore.set_value("display", "fullscreen", was)
 	else:
 		restore.erase_section_key("display", "fullscreen")
+	restore.save(SettingsPanel.CONFIG_PATH)
+
+
+## Review pass 1. Two ways the Settings screen could undo the player's window:
+## every row's change re-applied the preset size (toggling Sound snapped a dragged
+## window back), and the panel read the file only when built, so after F11 its
+## Window row was stale and the next change put the old mode back.
+func _check_settings_rows_do_not_fight_the_window() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	var had_fs := cfg.has_section_key("display", "fullscreen")
+	var was_fs: Variant = cfg.get_value("display", "fullscreen", null)
+	var had_res := cfg.has_section_key("display", "resolution_index")
+	var was_res: Variant = cfg.get_value("display", "resolution_index", null)
+	cfg.set_value("display", "fullscreen", false)
+	cfg.set_value("display", "resolution_index", 2)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+
+	var panel := SettingsPanel.new()
+	root.add_child(panel)
+	var dragged := Vector2i(1500, 820)
+	root.size = dragged
+	if root.size != dragged:
+		_fail("the fixture cannot set the root window's size headless -- the next checks prove nothing")
+
+	panel._sound_button.select(0)
+	panel._save_and_apply()
+	if root.size != dragged:
+		_fail("changing Sound reset a dragged window from %s to %s" % [dragged, root.size])
+	panel._resolution_button.select(0)
+	panel._save_and_apply()
+	if root.size != SettingsPanel.RESOLUTIONS[0]:
+		_fail("picking a resolution left the window at %s, want %s" % [root.size, SettingsPanel.RESOLUTIONS[0]])
+
+	# F11 behind the panel's back, then the panel is shown again.
+	panel.hide()
+	var f11 := ConfigFile.new()
+	f11.load(SettingsPanel.CONFIG_PATH)
+	f11.set_value("display", "fullscreen", true)
+	f11.save(SettingsPanel.CONFIG_PATH)
+	panel.show()
+	if panel._fullscreen_button.selected != 1:
+		_fail("the Settings Window row still reads Windowed after F11 went fullscreen -- the next change would revert it")
+	panel.queue_free()
+
+	var restore := ConfigFile.new()
+	restore.load(SettingsPanel.CONFIG_PATH)
+	for pair in [["fullscreen", had_fs, was_fs], ["resolution_index", had_res, was_res]]:
+		if bool(pair[1]):
+			restore.set_value("display", String(pair[0]), pair[2])
+		else:
+			restore.erase_section_key("display", String(pair[0]))
 	restore.save(SettingsPanel.CONFIG_PATH)
 
 
