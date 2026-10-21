@@ -121,6 +121,11 @@ static func build() -> Theme:
 ## verified -- there is no .import file and load() fails outright, so the bytes
 ## are read straight off disk. Same object either way.
 ##
+## (V5.1-0d: the .ttf.import files are committed, so a fresh clone DOES take the
+## load() path once tools/suite_runner.py's cold --import has run -- which is why
+## the runner now checks that import finished: a cut-off one left the fonts as
+## 0-byte .tmp files and every UI test printed the engine's load errors.)
+##
 ## Returning null is a real outcome, not a bug: the theme then sets no font and
 ## everything falls back to the engine's built-in sans. A missing font should
 ## make the game look plainer, never fail to start.

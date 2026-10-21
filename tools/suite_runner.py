@@ -144,6 +144,51 @@ def read_expected(test: str) -> list:
         return []
 
 
+DEST_FILES = re.compile(r'^dest_files=\[(.*)\]\s*$', re.MULTILINE)
+
+
+def import_gaps(root: Path) -> list[str]:
+    """What a cold `--import` should have written and did not: each `.import`
+    file's dest_files that is missing, and any `.tmp` left in .godot/imported/
+    (an import cut off mid-write). Paths relative to `root`, sorted."""
+    gaps: set[str] = set()
+    for imp in root.rglob("*.import"):
+        if ".godot" in imp.relative_to(root).parts:
+            continue
+        try:
+            m = DEST_FILES.search(imp.read_text(encoding="utf-8"))
+        except OSError:
+            continue
+        if not m:
+            continue
+        for dest in re.findall(r'"res://([^"]+)"', m.group(1)):
+            if not (root / dest).is_file():
+                gaps.add(dest)
+    imported = root / ".godot" / "imported"
+    if imported.is_dir():
+        for tmp in imported.glob("*.tmp"):
+            gaps.add(tmp.relative_to(root).as_posix())
+    return sorted(gaps)
+
+
+def cold_import(log_path: Path) -> list[str]:
+    """One `--import`, its output kept in `log_path`, then checked; a second pass
+    if the first left gaps. Returns what is still missing."""
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    for attempt in (1, 2):
+        with open(log_path, "a", encoding="utf-8", errors="replace") as log:
+            log.write("--- cold import, pass %d ---\n" % attempt)
+            log.flush()
+            subprocess.run([GODOT, "--headless", "--import"], cwd=str(REPO),
+                           stdout=log, stderr=subprocess.STDOUT, env=_CHILD_ENV)
+        gaps = import_gaps(REPO)
+        if not gaps:
+            return []
+        print("cold import pass %d left %d gap(s), e.g. %s"
+              % (attempt, len(gaps), gaps[0]), file=sys.stderr)
+    return gaps
+
+
 def tolerant_console(stream):
     """A console that cannot encode a character prints '?' rather than raising:
     a cp1252 Windows console died on G1's 'ș' printing a failing log, before
@@ -485,6 +530,27 @@ def _selftest() -> int:
                          'to JSON.stringify().', 0, nan_tag) == "pass",
            "an expects-warning tag with parentheses must match its line literally")
 
+    # The cold import, checked (pass 2's blocker): a cut-off import left 17 cache
+    # files of 84 and 0-byte font .tmp files, and every UI test then printed
+    # "Cannot open file .godot/imported/..." lines that S7 rightly fails on.
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / ".godot" / "imported").mkdir(parents=True)
+        (root / "assets").mkdir()
+        (root / "assets" / "a.ttf.import").write_text(
+            '[deps]\n\nsource_file="res://assets/a.ttf"\n'
+            'dest_files=["res://.godot/imported/a.ttf-1.fontdata"]\n', encoding="utf-8")
+        (root / "assets" / "b.txt.import").write_text(
+            '[remap]\n\nimporter="keep"\n', encoding="utf-8")
+        gaps = import_gaps(root)
+        expect(gaps == [".godot/imported/a.ttf-1.fontdata"],
+               "a missing import destination must be a gap: %r" % gaps)
+        (root / ".godot" / "imported" / "a.ttf-1.fontdata").write_bytes(b"x")
+        expect(import_gaps(root) == [], "a complete cache has no gap: %r" % import_gaps(root))
+        (root / ".godot" / "imported" / "a.ttf-1.fontdata123.tmp").write_bytes(b"")
+        expect(import_gaps(root) == [".godot/imported/a.ttf-1.fontdata123.tmp"],
+               "a leftover .tmp is a gap: %r" % import_gaps(root))
+
     # The cp1252 crash: a failing log printed to a Windows console met 'ș' in
     # G1's capital line and died before results.json was written.
     import io
@@ -613,17 +679,26 @@ def main(argv: list[str] | None = None) -> int:
         _CHILD_ENV = isolated_env(dict(os.environ), appdata)
         print("isolated: APPDATA=%s" % appdata, file=sys.stderr)
 
+    writer = RunWriter(Path(args.run_dir) if args.run_dir else None)
+    print("run dir: %s" % writer.dir, file=sys.stderr)
+
     # The cold-clone rule (V2.8 review): no .godot/ means no script class
-    # cache, and the committed autoload does not parse. One import pass.
+    # cache, and the committed autoload does not parse. One import pass --
+    # CHECKED since V5.1-0d: a pass that stopped early (seen once on Windows,
+    # 17 cache files of 84, the fonts as 0-byte .tmp; its output went to
+    # DEVNULL, so why is unknown) let every UI test load a .ttf through a
+    # half-built cache. Its output is kept, a gap gets a second pass, and a
+    # cache still broken after that stops the run: the tests would measure the
+    # cache, not the code.
     if not (REPO / ".godot").is_dir():
         print("no .godot/ -- importing once so the script class cache exists",
               file=sys.stderr)
-        subprocess.run([GODOT, "--headless", "--import"], cwd=str(REPO),
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       env=_CHILD_ENV)
-
-    writer = RunWriter(Path(args.run_dir) if args.run_dir else None)
-    print("run dir: %s" % writer.dir, file=sys.stderr)
+        gaps = cold_import(writer.dir / "cold_import.log")
+        if gaps:
+            print("cold import incomplete after two passes (%d gaps, e.g. %s); "
+                  "log: %s" % (len(gaps), gaps[0], writer.dir / "cold_import.log"),
+                  file=sys.stderr)
+            return 2
     t0 = time.monotonic()
     try:
         jobs = flatten_jobs(args.tests)
