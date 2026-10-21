@@ -36,6 +36,8 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 ## and the content cannot disagree about what "up" means.
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Num = preload("res://src/ui/num.gd")
+const Labels = preload("res://src/ui/labels.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## What a panel prints when it does not know. An em dash is not a small number:
 ## it says the figure is absent, where `0.00` says the figure is zero, and the

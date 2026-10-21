@@ -34,6 +34,7 @@ signal closed
 ## law and a diplomatic action already do.
 signal acted(before, label)
 
+const Labels = preload("res://src/ui/labels.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
@@ -42,11 +43,10 @@ const Investment = preload("res://src/sim/investment.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
-const SECTOR_LABEL := {
-	"agriculture": "Agriculture", "industry": "Industry", "services": "Services",  # i18n: msgid
-}
+const SECTOR_LABEL := Labels.SECTOR
 
 var _state
 var _loader
@@ -422,8 +422,8 @@ func _build_investment(ns, sector: String) -> void:
 
 func _investment_button(ns, action) -> Button:
 	var button := Button.new()
-	button.text = action.action_name
-	button.tooltip_text = action.summary
+	button.text = Strings.row_name("investment-actions", action)
+	button.tooltip_text = Strings.row_summary("investment-actions", action)
 	button.pressed.connect(func(): _on_invest(ns, action))
 	return button
 
@@ -437,7 +437,7 @@ func _on_invest(ns, action) -> void:
 	if not result.get("applied", false):
 		return
 	_dirty = true
-	acted.emit(before, action.action_name)
+	acted.emit(before, Strings.row_name("investment-actions", action))
 
 
 func _build_firm(ns, company) -> void:
@@ -517,8 +517,8 @@ func _build_firm(ns, company) -> void:
 
 func _action_button(ns, company, action) -> Button:
 	var button := Button.new()
-	button.text = action.action_name
-	button.tooltip_text = action.summary
+	button.text = Strings.row_name("company-actions", action)
+	button.tooltip_text = Strings.row_summary("company-actions", action)
 	button.pressed.connect(func(): _on_act(ns, company, action))
 	if _primary == null and not button.disabled:
 		_primary = button
@@ -537,12 +537,12 @@ func _on_act(ns, company, action) -> void:
 		# split) is the sim's, verbatim; a refusal with none reads as refused
 		# plainly rather than silently.
 		var reason := String(result.get("reason", ""))
-		_last_refusal = tr("%s refused%s") % [action.action_name, " -- %s" % reason if reason != "" else "."]
+		_last_refusal = tr("%s refused%s") % [Strings.row_name("company-actions", action), " -- %s" % reason if reason != "" else "."]
 		_dirty = true
 		return
 	_last_refusal = ""
 	_dirty = true
-	acted.emit(before, "%s: %s" % [action.action_name, company.company_name])
+	acted.emit(before, "%s: %s" % [Strings.row_name("company-actions", action), company.company_name])
 
 
 func _thousands(value: float) -> String:

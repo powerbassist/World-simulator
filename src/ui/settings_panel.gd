@@ -25,6 +25,7 @@ extends PanelContainer
 signal closed
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const WindowMode = preload("res://src/ui/window_mode.gd")
@@ -285,7 +286,7 @@ func _build() -> void:
 
 	var language_names: Array = []
 	for entry in Strings.languages():
-		language_names.append(String(entry["name"]))
+		language_names.append(String(entry["name"]))  # i18n: row-ok a language's own name
 	_language_button = _add_row(grid, tr("Language"), language_names)
 	_fullscreen_button = _add_row(grid, tr("Window (F11)"), [tr("Windowed"), tr("Fullscreen")])
 	_resolution_button = _add_row(grid, tr("Resolution"), _resolution_labels())
@@ -362,7 +363,7 @@ func _build_messages(root: VBoxContainer) -> void:
 
 	for category in EventsK.CATEGORIES:
 		var name_label := Label.new()
-		name_label.text = String(category).capitalize()
+		name_label.text = Labels.event_category(String(category))
 		grid.add_child(name_label)
 		var row := {}
 		for switch in MessageSettings.SWITCHES:

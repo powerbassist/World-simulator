@@ -90,10 +90,8 @@ CALLER_FIXED = {
     "record_choice_label": ("events", "choices.*.label"),
     "choice_summary": ("events", "choices.*.summary"),
 }
-CALLER_KIND = re.compile(r"Strings\.(row_name|row_summary)\(\s*\"([\w-]+)\"")
-CALLER_ROW = re.compile(r"Strings\.row\(\s*\"([\w-]+)\"\s*,[^,]*,\s*\"([\w.%]+)\"")
-CALLER_NOUN = re.compile(r"Strings\.noun\(\s*\"([\w-]+)\"\s*,[^,]*,\s*\"(\w+)\"\s*,\s*\"\w+\"\s*,[^,]*,\s*\"(\w+)\"")
 CALLER_ANY = re.compile(r"Strings\.(\w+)\(")
+LEADING_LITERAL = re.compile(r"^\s*\"([^\"]*)\"")
 # The list a kind's rows sit in, per file: laws.json holds {"laws": [...]}; a file
 # whose top level is a single row (orgs) is read as one.
 ROW_LISTS = {"laws": "laws", "events": "events", "programme": "programme"}
@@ -248,16 +246,44 @@ def line_callers(line):
     if cut >= 0:
         code = line[:cut]
     out = []
-    for m in CALLER_KIND.finditer(code):
-        out.append((m.group(2), "name" if m.group(1) == "row_name" else "summary"))
-    for m in CALLER_ROW.finditer(code):
-        out.append((m.group(1), m.group(2).replace("%s", "*")))
-    for m in CALLER_NOUN.finditer(code):
-        out.append((m.group(1), "effects.%s.%s" % (m.group(2), m.group(3))))
     for m in CALLER_ANY.finditer(code):
-        if m.group(1) in CALLER_FIXED:
-            out.append(CALLER_FIXED[m.group(1)])
+        fn = m.group(1)
+        if fn in CALLER_FIXED:
+            out.append(CALLER_FIXED[fn])
+            continue
+        args = _call_args(code, m.end())
+        lit = [LEADING_LITERAL.match(a) for a in args]
+        if fn in ("row_name", "row_summary") and lit and lit[0]:
+            out.append((lit[0].group(1), "name" if fn == "row_name" else "summary"))
+        elif fn == "row" and len(lit) > 2 and lit[0] and lit[2]:
+            out.append((lit[0].group(1), lit[2].group(1).replace("%s", "*")))
+        elif fn == "noun" and len(lit) > 5 and lit[0] and lit[2] and lit[5]:
+            out.append((lit[0].group(1), "effects.%s.%s" % (lit[2].group(1), lit[5].group(1))))
     return out
+
+
+def _call_args(code, start):
+    """The top-level arguments of the call whose `(` ends at `start`, as source text; a
+    call left open runs to the end of the line."""
+    args, depth, quoted, current = [], 0, False, ""
+    for c in code[start:]:
+        if quoted:
+            quoted = c != '"'
+        elif c == '"':
+            quoted = True
+        elif c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if depth == 0:
+                break
+            depth -= 1
+        elif c == "," and depth == 0:
+            args.append(current)
+            current = ""
+            continue
+        current += c
+    args.append(current)
+    return args
 
 
 def display_callers():
@@ -475,6 +501,10 @@ def selftest():
     check("caller noun", line_callers('Strings.noun("pledges", a, "pledge", "pledge_id", id, "pledge_name", e)'),
           [("pledges", "effects.pledge.pledge_name")])
     check("caller fixed", line_callers('PanelKit.line(b, Strings.law_summary(law))'), [("laws", "summary")])
+    check("caller nested argument", line_callers(
+        'PanelKit.line(body, Strings.row("bloc-proposals", String(p.get("proposal_id", "")), "summary", String(p.get("summary", ""))))'),
+        [("bloc-proposals", "summary")])
+    check("caller through PanelKit", line_callers('x = PanelKit.Strings.row_summary("orgs", org)'), [("orgs", "summary")])
     for line in bad:
         print("selftest: " + line)
     print("i18n_extract selftest: %s" % ("failed" if bad else "all checks passed"))

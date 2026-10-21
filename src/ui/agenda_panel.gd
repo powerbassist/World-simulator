@@ -29,6 +29,8 @@ const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const DateText = preload("res://src/ui/date_text.gd")
@@ -158,7 +160,7 @@ func _build_offer(ns, offer: Array) -> void:
 		# pins that every entry carries one, which is what makes this a
 		# content decision rather than a load-order accident.
 		entries.sort_custom(func(a, b): return float(a.get("weight", 0.0)) > float(b.get("weight", 0.0)))
-		var body := PanelKit.section(_body, String(group).capitalize())
+		var body := PanelKit.section(_body, Labels.programme_group(String(group)))
 		for terms in entries:
 			body.add_child(_offer_block(ns, terms))
 
@@ -168,8 +170,8 @@ func _offer_block(ns, terms: Dictionary) -> Control:
 	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, String(terms.get("name", "")), PanelKit.Tone.PLAIN)
-	PanelKit.line(block, String(terms.get("summary", "")))
+	PanelKit.line(block, Strings.row_name("programme", terms), PanelKit.Tone.PLAIN)
+	PanelKit.line(block, Strings.row_summary("programme", terms))
 	PanelKit.line(block, "%s · %s" % [
 		_read_text(ns, terms), _clock_text(terms, 0, false),
 	], PanelKit.Tone.DIM)
@@ -180,7 +182,7 @@ func _offer_block(ns, terms: Dictionary) -> Control:
 func _choose_button(terms: Dictionary) -> Button:
 	var button := Button.new()
 	button.text = tr("Choose")
-	button.tooltip_text = String(terms.get("summary", ""))
+	button.tooltip_text = Strings.row_summary("programme", terms)
 	var entry_id := String(terms["id"])
 	# The verb is a SIGNAL, not a call: the panel names what was chosen and
 	# main.gd performs the command. The panel never writes GameState.
@@ -211,7 +213,7 @@ func _register_block(ns, entry: Dictionary) -> Control:
 	# A register entry whose content the loader no longer defines is the
 	# sim's own load error class (it concludes invalid on the next tick);
 	# until then the id stands in for the name rather than a blank row.
-	var name_text := String(terms.get("name", "")) if not terms.is_empty() else String(entry["entry_id"])
+	var name_text := Strings.row_name("programme", terms) if not terms.is_empty() else String(entry["entry_id"])
 	PanelKit.line(block, name_text, PanelKit.Tone.PLAIN)
 
 	match String(entry["status"]):

@@ -249,7 +249,7 @@ func _lead_text(ns, censure: Dictionary, months: int, top: Array, worst: Diction
 
 	if not worst.is_empty():
 		var sentence := tr("%s is %s since %s.") % [
-			String(worst["label"]), _moved(float(worst["change"])), _month_name_ago(Trends.TREND_MONTHS)
+			String(worst["label"]), _moved(float(worst["change"])), _month_name_ago(Trends.TREND_MONTHS)  # i18n: row-ok Trends translates its labels
 		]
 		var issue: String = ISSUE_FOR_FIGURE.get(worst["key"], "")
 		if issue != "" and not top.is_empty() and top[0][0] == issue:
@@ -422,7 +422,7 @@ func _fill_moving(movements: Array, worst: Dictionary) -> void:
 	_columns["moving"].add_child(grid)
 
 	for row in movements:
-		PanelKit.line(grid, String(row["label"]))
+		PanelKit.line(grid, String(row["label"]))  # i18n: row-ok Trends translates its labels
 
 		var change: float = float(row["change"])
 		var value := Label.new()
@@ -436,7 +436,7 @@ func _fill_moving(movements: Array, worst: Dictionary) -> void:
 	if worst.is_empty():
 		PanelKit.line(_columns["moving"], tr("Nothing has moved much."))
 	else:
-		PanelKit.line(_columns["moving"], tr("%s is the one to watch.") % String(worst["label"]))
+		PanelKit.line(_columns["moving"], tr("%s is the one to watch.") % String(worst["label"]))  # i18n: row-ok Trends translates its labels
 
 
 ## V4.1. The term's programme, per-entry rows with the derived progress -- the
@@ -473,7 +473,7 @@ func _programme_row(ns, entry: Dictionary) -> Control:
 
 	var terms: Dictionary = Programme.terms_of(_loader, String(entry["entry_id"]))
 	var name_label := Label.new()
-	name_label.text = String(terms.get("name", String(entry["entry_id"])))
+	name_label.text = PanelKit.Strings.row("programme", String(entry["entry_id"]), "name", String(terms.get("name", String(entry["entry_id"]))))
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(name_label)
 
@@ -548,7 +548,7 @@ func _build_effect_row(effect: Dictionary) -> Control:
 	row.add_theme_constant_override("separation", 12)
 
 	var label := Label.new()
-	label.text = "%s — %s %d:" % [String(effect["label"]), DateText.month_long(int(effect["month"])), int(effect["year"])]
+	label.text = "%s — %s %d:" % [String(effect["label"]), DateText.month_long(int(effect["month"])), int(effect["year"])]  # i18n: row-ok an effect's label, routed when queued
 	label.theme_type_variation = UiTheme.CAPTION
 	row.add_child(label)
 
@@ -563,7 +563,7 @@ func _build_effect_row(effect: Dictionary) -> Control:
 	for i in mini(EFFECT_FIGURES_SHOWN, ranked.size()):
 		var m: Dictionary = ranked[i]
 		var figure := Label.new()
-		figure.text = "%s %s" % [String(m["label"]), Trends.change_text(float(m["change"]), String(m["unit"]))]
+		figure.text = "%s %s" % [String(m["label"]), Trends.change_text(float(m["change"]), String(m["unit"]))]  # i18n: row-ok Trends translates its labels
 		figure.theme_type_variation = UiTheme.BAD_TEXT if float(m["severity"]) > 0.0 else UiTheme.GOOD_TEXT
 		row.add_child(figure)
 

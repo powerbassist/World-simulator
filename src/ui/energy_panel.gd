@@ -25,6 +25,8 @@ signal order_armed(action_id: String)
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Num = preload("res://src/ui/num.gd")
@@ -170,8 +172,8 @@ func _build_order(ns) -> void:
 			Num.f(source.build_cost_pct_gdp, 3), Num.f(source.run_cost_pct_gdp, 3),
 		])
 		var button := Button.new()
-		button.text = action.action_name
-		button.tooltip_text = action.summary
+		button.text = Strings.row_name("energy-actions", action)
+		button.tooltip_text = Strings.row_summary("energy-actions", action)
 		button.pressed.connect(func(): _on_order(action.id))
 		if _primary == null:
 			_primary = button
@@ -229,7 +231,7 @@ func _on_decommission(ns, plant_id: String) -> void:
 	if not bool(result.get("applied", false)):
 		return
 	_dirty = true
-	acted.emit(before, action.action_name)
+	acted.emit(before, Strings.row_name("energy-actions", action))
 
 
 func _build_mix(ns) -> void:
@@ -240,7 +242,7 @@ func _build_mix(ns) -> void:
 		var now: float = float(live.get(branch, 0.0))
 		var start: float = float(ns.start_energy_mix.get(branch, 0.0))
 		rows.append([
-			branch.capitalize(),
+			Labels.energy_branch(branch),
 			"%s%%" % Num.f((now * 100.0), 2),
 			PanelKit.delta((now - start) * 100.0, tr(" pts"), 2),
 		])

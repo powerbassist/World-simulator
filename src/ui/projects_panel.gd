@@ -37,6 +37,7 @@ const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
 var _state
@@ -193,7 +194,7 @@ func _build_live(ns, project_id: String) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, Projects.name_of(_loader, project_id), PanelKit.Tone.PLAIN)
+	PanelKit.line(block, Strings.noun("project-actions", _loader.project_actions, "project", "project_id", project_id, "project_name", Projects.name_of(_loader, project_id)), PanelKit.Tone.PLAIN)
 
 	var left := Projects.months_left(ns, project_id)
 	var total := int(terms.get("build_months", 0))
@@ -225,7 +226,7 @@ func _build_completed(ns) -> void:
 	for pid in done:
 		var terms := Projects.terms_of(_loader, String(pid))
 		PanelKit.row(_body,
-			Projects.name_of(_loader, String(pid)),
+			Strings.noun("project-actions", _loader.project_actions, "project", "project_id", String(pid), "project_name", Projects.name_of(_loader, String(pid))),
 			"%s %%/yr" % Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
 		)
 
@@ -270,8 +271,8 @@ func _build_offer(ns, action, terms: Dictionary) -> void:
 
 func _button(ns, action) -> Button:
 	var button := Button.new()
-	button.text = action.action_name
-	button.tooltip_text = action.summary
+	button.text = Strings.row_name("project-actions", action)
+	button.tooltip_text = Strings.row_summary("project-actions", action)
 	button.pressed.connect(func(): _on_act(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button
@@ -287,7 +288,7 @@ func _on_act(ns, action) -> void:
 	if not result.get("applied", false):
 		return
 	_dirty = true
-	acted.emit(before, action.action_name)
+	acted.emit(before, Strings.row_name("project-actions", action))
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.

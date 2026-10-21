@@ -15,6 +15,7 @@ extends PanelContainer
 ## names the act from the register by verb_key; the diary prints the richer
 ## sentence, and the two share no figure that could round apart.
 
+const Strings = preload("res://src/ui/strings.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
@@ -205,7 +206,7 @@ func _booking_name(entry: Dictionary) -> String:
 			if nation != null:
 				for action in _loader.diplomatic_actions:
 					if String(action.id) == String(entry.get("action_id", "")):
-						action_name = String(action.action_name)
+						action_name = Strings.row_name("diplomatic-actions", action)
 						break
 				return "%s — %s" % [action_name, String(nation.nation_name)]
 			return action_name

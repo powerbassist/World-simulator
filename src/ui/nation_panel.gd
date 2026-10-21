@@ -17,6 +17,7 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
@@ -336,8 +337,8 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	row.add_theme_constant_override("separation", 12)
 
 	var summary := Label.new()
-	summary.text = action.action_name
-	summary.tooltip_text = action.summary
+	summary.text = Strings.row_name("diplomatic-actions", action)
+	summary.tooltip_text = Strings.row_summary("diplomatic-actions", action)
 	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD
 	if not is_available:
@@ -427,7 +428,7 @@ func _on_act(action) -> void:
 		result["reason"] = Diplomacy.refusal_reason(
 			_state, _state.player_nation_id, _nation_id, action.effects.get("agreement", {})
 		)
-	acted.emit(before, "%s: %s" % [action.action_name, _nation_id], result)
+	acted.emit(before, "%s: %s" % [Strings.row_name("diplomatic-actions", action), _nation_id], result)
 	_dirty = true
 
 

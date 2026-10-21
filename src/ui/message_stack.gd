@@ -121,7 +121,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 		actions_box.add_theme_constant_override("separation", 4)
 		for i in range(actions.size()):
 			var act_btn := Button.new()
-			act_btn.text = String(actions[i]["label"])
+			act_btn.text = String(actions[i]["label"])  # i18n: row-ok routed by the pusher
 			act_btn.theme_type_variation = UiTheme.SUBROW_BUTTON
 			var index := i
 			act_btn.pressed.connect(func(): card_action.emit(id, index))

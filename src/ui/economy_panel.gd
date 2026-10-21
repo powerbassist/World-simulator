@@ -29,6 +29,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 
 ## Widest sector bar, in pixels. The bar is a share of GDP drawn to scale; the
@@ -298,7 +299,7 @@ func _fill_sectors(ns) -> void:
 		_sectors.add_child(row)
 
 		var name_label := Label.new()
-		name_label.text = String(sector).capitalize()
+		name_label.text = Labels.sector(String(sector))
 		name_label.custom_minimum_size.x = 120
 		row.add_child(name_label)
 

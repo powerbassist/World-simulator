@@ -178,7 +178,7 @@ static func build_debts(body: VBoxContainer, state, loader, ns, org) -> void:
 		var awaiting := String(d.get("awaiting", ""))
 		if awaiting != "":
 			var treaty = Orgs.proposal_by_id(loader, org.id, awaiting)
-			text += Strings.t(" — kept only if %s is ratified at home") % (String(treaty.proposal_name) if treaty != null else awaiting)
+			text += Strings.t(" — kept only if %s is ratified at home") % (Strings.row_name("bloc-proposals", treaty) if treaty != null else awaiting)
 		PanelKit.line(body, text)
 
 
@@ -197,11 +197,11 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 	var tabled: Dictionary = register.get("tabled", {})
 	if chairing and chosen != "":
 		var p = Orgs.proposal_by_id(loader, org.id, chosen)
-		PanelKit.line(body, Strings.t("You have put %s first.") % (String(p.proposal_name) if p != null else chosen))
+		PanelKit.line(body, Strings.t("You have put %s first.") % (Strings.row_name("bloc-proposals", p) if p != null else chosen))
 		return
 	if not chairing and not tabled.is_empty():
 		var tp = Orgs.proposal_by_id(loader, org.id, String(tabled.get("proposal_id", "")))
-		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % String(tp.proposal_name) if tp != null else Strings.t("You have tabled a proposal with the chair."))
+		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % Strings.row_name("bloc-proposals", tp) if tp != null else Strings.t("You have tabled a proposal with the chair."))
 		return
 
 	var inner := _fold(body, panel, "agenda:" + org.id, title)
@@ -216,7 +216,7 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 			continue
 		listed += 1
 		var button := Button.new()
-		button.text = (Strings.t("Put first: %s") if chairing else Strings.t("Table: %s")) % p.proposal_name
+		button.text = (Strings.t("Put first: %s") if chairing else Strings.t("Table: %s")) % Strings.row_name("bloc-proposals", p)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		if chairing:
 			button.pressed.connect(panel._on_set_agenda.bind(org.id, p.id))

@@ -11,7 +11,7 @@ const TOP_GOODS := 3
 
 
 static func name_of(loader, id: String) -> String:
-	return String(loader.outlines.get(id, {}).get("name", ""))
+	return String(loader.outlines.get(id, {}).get("name", ""))  # i18n: row-ok not in TRANSLATABLE: a country outside the roster
 
 
 ## "Outline · Sugar 39% · Iron ore 16% · Meat 9% of world output", the goods
@@ -30,7 +30,7 @@ static func profile_of(loader, id: String) -> String:
 		return float(a[0]) > float(b[0]) if a[0] != b[0] else String(a[1]) < String(b[1]))
 	var parts: Array[String] = []
 	for row in rows.slice(0, TOP_GOODS):
-		parts.append("%s %s" % [String(loader.commodity_goods[row[1]].get("name", row[1])), _percent(float(row[0]))])
+		parts.append("%s %s" % [String(loader.commodity_goods[row[1]].get("name", row[1])), _percent(float(row[0]))])  # i18n: row-ok not in TRANSLATABLE: a good's name
 	return Strings.t("Outline · %s of world output") % " · ".join(parts)
 
 

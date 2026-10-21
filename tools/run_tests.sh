@@ -282,6 +282,7 @@ tests=(
   tests/test_i18n_fit.gd
   tests/test_date_text.gd
   tests/test_num.gd
+  tests/test_i18n_rows_lint.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is

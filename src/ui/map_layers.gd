@@ -324,7 +324,7 @@ static func alpha(layer_id: String) -> float:
 
 
 static func label(layer_id: String) -> String:
-	return Strings.t(String(layer(layer_id)["label"]))
+	return Strings.t(String(layer(layer_id)["label"]))  # i18n: row-ok a marked msgid, translated here
 
 
 static func caption(layer_id: String) -> String:

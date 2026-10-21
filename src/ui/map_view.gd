@@ -1544,7 +1544,7 @@ func _place_labels(max_tier := -1) -> Array:
 			if city_id == _hovered_city:
 				continue
 			candidates.append({
-				"id": "city:%s" % city_id, "text": String(city["name"]), "at": at,
+				"id": "city:%s" % city_id, "text": String(city["name"]), "at": at,  # i18n: row-ok a city's name, a proper noun
 				"gap": glyph.size.x * 0.5 + MapLabels.PAD_PX,
 				"rank": [tier, -float(city["population"]), city_id],
 			})

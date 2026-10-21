@@ -18,6 +18,7 @@ extends PanelContainer
 ## would double every face on the People panel -- a face beside a name is
 ## identity, a face beside a face is wallpaper.
 
+const Labels = preload("res://src/ui/labels.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -47,10 +48,7 @@ const STANCE_LABEL := {
 	"demand": "demands", "defend": "defends",
 }
 
-const PORTFOLIO_LABEL := {
-	"health": "Health", "education": "Education", "defence": "Defence",  # i18n: msgid
-	"pensions": "Pensions", "infrastructure": "Infrastructure",  # i18n: msgid
-}
+const PORTFOLIO_LABEL := Labels.PORTFOLIO
 
 
 static func stance_label(stance: String) -> String:
@@ -65,7 +63,7 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 		var entry_id := object.substr("programme:".length())
 		for entry in loader.programme:
 			if String(entry["id"]) == entry_id:
-				return String(entry["name"])
+				return Strings.row_name("programme", entry)
 		return entry_id
 	if object == "office:premiership":
 		return Strings.t("the premiership")

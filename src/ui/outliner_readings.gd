@@ -106,7 +106,7 @@ static func _agenda(ns, loader) -> Array:
 		var progress: Dictionary = Programme.progress_of(ns, terms)
 		var fraction := PanelKit.progress_fraction(
 			float(progress["current_value"]), float(progress["goal_value"]), String(progress["progressbar"]))
-		var text := "%s — %.0f%%" % [String(terms.get("name", String(live["entry_id"]))), fraction * 100.0]
+		var text := "%s — %.0f%%" % [Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"])))), fraction * 100.0]
 		var clock := StripReadings.programme_clock_text(terms, live)
 		if not clock.is_empty():
 			text += " · %s" % clock

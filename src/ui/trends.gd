@@ -110,7 +110,7 @@ static func movements(state, months := TREND_MONTHS) -> Array[Dictionary]:
 			severity = worse / float(watch["scale"])
 		out.append({
 			"key": key,
-			"label": Strings.t(watch["label"]),
+			"label": Strings.t(watch["label"]),  # i18n: row-ok a marked msgid, translated here
 			"unit": watch["unit"],
 			"change": change,
 			"severity": severity,
@@ -168,7 +168,7 @@ static func movements_between(before: Dictionary, after: Dictionary) -> Array[Di
 			severity = worse / float(watch["scale"])
 		out.append({
 			"key": key,
-			"label": Strings.t(watch["label"]),
+			"label": Strings.t(watch["label"]),  # i18n: row-ok a marked msgid, translated here
 			"unit": watch["unit"],
 			"change": change,
 			"severity": severity,

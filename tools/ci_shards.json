@@ -114,7 +114,8 @@
    "tests/test_nation_fields.gd",
    "tests/test_save_cycle.gd",
    "tests/test_budget_forecast.gd",
-   "tests/test_num.gd"
+   "tests/test_num.gd",
+   "tests/test_i18n_rows_lint.gd"
   ],
   [
    "tests/test_political_systems.gd",

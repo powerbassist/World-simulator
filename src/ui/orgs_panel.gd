@@ -23,6 +23,7 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Council = preload("res://src/sim/council.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
@@ -177,9 +178,9 @@ func _refresh() -> void:
 ## One org the player belongs to: its council when it has one, the rules of
 ## ITS that bind this nation, and what membership in it charges.
 func _refresh_member_org(ns, org) -> void:
-	PanelKit.heading(_body, org.name.to_upper())
+	PanelKit.heading(_body, Strings.row_name("orgs", org).to_upper())
 	if not org.summary.is_empty():
-		PanelKit.line(_body, org.summary, PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, Strings.row_summary("orgs", org), PanelKit.Tone.PLAIN)
 
 	if org.council:
 		CouncilSection.build(_body, self, _state, _loader, ns, org)
@@ -207,10 +208,10 @@ func _refresh_rules(ns, org) -> void:
 	for rule in org_rules:
 		var field: String = String(rule.get("field", ""))
 		if field == "":
-			PanelKit.line(_body, tr("%s — no policy constraint") % String(rule.get("name", "")), PanelKit.Tone.PLAIN)
+			PanelKit.line(_body, tr("%s — no policy constraint") % Strings.row("bloc-proposals", String(rule.get("id", "")), "name", String(rule.get("name", ""))), PanelKit.Tone.PLAIN)
 			continue
 		PanelKit.line(_body, "%s — %s %s %s" % [
-			String(rule.get("name", "")),
+			Strings.row("bloc-proposals", String(rule.get("id", "")), "name", String(rule.get("name", ""))),
 			BK.CONSTRAINT_LABEL.get(field, field),
 			BK.CONSTRAINT_OP_LABEL.get(String(rule.get("op", "")), String(rule.get("op", ""))),
 			Num.f(float(rule.get("value", 0.0)), 1),
@@ -252,9 +253,9 @@ func _refresh_contribution(ns, org) -> void:
 ## touch. What they get is the receiving end -- an org acting as one is the only
 ## thing in this game that imposes from many directions at once.
 func _refresh_outsider_org(ns, org) -> void:
-	PanelKit.heading(_body, org.name.to_upper())
+	PanelKit.heading(_body, Strings.row_name("orgs", org).to_upper())
 	if not org.summary.is_empty():
-		PanelKit.line(_body, org.summary, PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, Strings.row_summary("orgs", org), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("%s is not a member. It has no vote in this council and no rule of it binds %s.") % [ns.id, ns.id], PanelKit.Tone.PLAIN)
 
 	if not org.council:
@@ -293,7 +294,7 @@ func _refresh_outsider_org(ns, org) -> void:
 func _refresh_membership_verb(ns, org) -> void:
 	var joining: bool = not ns.orgs.has(org.id)
 	var button := Button.new()
-	button.text = (tr("Begin leaving %s") % org.name) if not joining else (tr("Begin joining %s") % org.name)
+	button.text = (tr("Begin leaving %s") if not joining else tr("Begin joining %s")) % Strings.row_name("orgs", org)
 	var fight_running := false
 	for fight in _state.accessions:
 		if String(fight.get("nation_id", "")) == ns.id:
@@ -374,7 +375,8 @@ func _on_bargain(org_id: String, target_id: String, currency: String, ask: Strin
 func _on_ratify(org_id: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	# Read before submitting: the register clears its ratifying block on a verdict.
-	var treaty := String((_state.orgs[org_id].get("ratifying", {}) as Dictionary).get("name", ""))
+	var ratifying: Dictionary = _state.orgs[org_id].get("ratifying", {})
+	var treaty := Strings.row("bloc-proposals", String(ratifying.get("proposal_id", "")), "name", String(ratifying.get("name", "")))
 	var result: Dictionary = Ratification.submit(_state, _loader, org_id)
 	if result.has("refused"):
 		_refusal_text = tr("Refused: the treaty can no longer be put to the assembly.")
@@ -406,7 +408,7 @@ func _on_table(org_id: String, proposal_id: String) -> void:
 
 func _proposal_label(org_id: String, proposal_id: String) -> String:
 	var p = Orgs.proposal_by_id(_loader, org_id, proposal_id)
-	return String(p.proposal_name) if p != null else proposal_id
+	return Strings.row_name("bloc-proposals", p) if p != null else proposal_id
 
 
 ## Called by CouncilSection for each enabled verb it builds; the first one wins,

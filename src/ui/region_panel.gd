@@ -26,6 +26,7 @@ signal closed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Region = preload("res://src/core/region.gd")
 const Regions = preload("res://src/sim/regions.gd")
@@ -245,4 +246,4 @@ func _dominant(region) -> String:
 		if v > best_share:
 			best_share = v
 			best = key
-	return "%s %.0f%%" % [best.capitalize(), best_share * 100.0]
+	return "%s %.0f%%" % [Labels.sector(best), best_share * 100.0]
