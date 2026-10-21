@@ -359,6 +359,13 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from the V5.0 replay audit (2026-10-21)
+
+- **Andorra, Monaco and the other micro-states are not in the roster** (the V5.0 play
+  gate's P9). The roster is 41 nation files, none for AND, MCO, LIE, SMR or VAT. Parked
+  by the author's call (2026-10-21): five near-empty states would add load to every
+  system for little play. See [[v5.0-replay]]. **Trigger:** a roster expansion.
+
 ## Carried from V5.1-0d (2026-10-21)
 
 The embassies, the capitals and the runner's verdict; two items measured and left.
