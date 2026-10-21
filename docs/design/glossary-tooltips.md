@@ -180,15 +180,18 @@ A table in `data/` (Content's), proposed as `data/glossary/terms.json`:
 
 ### Marking a term in text
 
-- **Recommended: markup in the source text.** A data row or a UI string carries
+- **Markup in the source text (the author's call, 2026-10-21, answer 2).** A data row or a UI string carries
   `[g=approval]approval[/g]` around the word. It is deterministic, and it is
-  the only way to tell the two meanings of "bloc" apart.
+  the only way to tell the two meanings of "bloc", "stake" and "standing" apart.
   - **Its cost (INFERRED):** a marked msgid is a new msgid. Its French row in
     `data/i18n/fr/ui.json` or the `data/i18n/fr/*.json` tables must be
     re-keyed with the same markup, and the i18n lint must learn the tag.
-- **The alternative: a runtime pass** that wraps the first occurrence of each
-  entry's translated `term`. No msgid churn, but it cannot disambiguate, so the
-  three two-meaning words would be excluded.
+- **Not taken: a runtime pass** that wraps the first occurrence of each
+  entry's translated `term`. It had no msgid churn, but it could not
+  disambiguate.
+- **What it settles:** noise rule N3 is enforced by the writer's tag, not by a
+  matcher; P1's test reads the tags; the i18n lint learns `[g=…]`; and Content
+  re-keys the French row of every string it marks, in the same PR.
 
 ## The noise rules
 
@@ -215,14 +218,14 @@ author would see first.
 | Placement | below and right of the term, flipped to fit, clamped to the viewport with an 8 px margin | never off screen, at 1920×1080 or at the 960×540 floor (`WindowMode.MIN_SIZE`) |
 | Width | at most 360 px; a long `body` scrolls | two plates side by side fit the 960×540 floor; a third overlaps the first rather than leaving the screen |
 | Nesting | up to 3 levels; a nested plate opens beside its parent if it fits, else over it, offset so the parent's term stays visible | as in Crusader Kings III and Victoria 3: a term inside a tooltip opens its own |
-| Lock | a click on the term, or holding still 1.2 s, with a thin fill on the plate's edge as it locks | a locked tooltip stays while the mouse moves into it, so a nested term can be hovered |
+| Lock (the author's call, 2026-10-21, answer 4) | a click on the term, or holding still 1.2 s, with a thin fill on the plate's edge as it locks | a locked tooltip stays while the mouse moves into it, so a nested term can be hovered |
 | Close | moving away from an unlocked chain; Escape or a click elsewhere closes every level | one key always clears the screen |
 | Clicks | an unlocked tooltip passes the mouse through; only a locked one takes clicks, and only on itself | a tooltip must never block a click on the world |
 | Keyboard and gamepad | a dedicated action (proposed: a `glossary_next` input action, bound to a key Godot does not already use for focus) cycles the marked terms of the focused window, Enter opens and locks, Escape closes | **not Tab**: Tab is Godot's `ui_focus_next`, which moves focus between the window's buttons. **UNVERIFIED**: `RichTextLabel` has no per-tag focus, so this is a custom cycle |
 | Live value | "Your value: 41 % (a poll, ±3)", with the source named | the fog rule: a figure the player sees with its source ([[v5]], "fog is shown, never silent") |
-| Visual | the Bureau plate: near-opaque graphite, an `EDGE` hairline on all four sides, no accent; the underline neutral, never the accent colour | the panel grammar (`AGENTS.md`, UI conventions) |
+| Visual | the Bureau plate: near-opaque graphite, an `EDGE` hairline on all four sides, no accent; the underline is the engine's dashes in the text's own colour at `underline_alpha` (the author's call, 2026-10-21, answer 1), never the accent colour | the panel grammar (`AGENTS.md`, UI conventions) |
 
-### Drawing the dotted underline — three paths, all UNVERIFIED until Interface prototypes
+### Drawing the underline — path 2 chosen, still UNVERIFIED until Interface prototypes
 
 1. **`[url=g:id]`, `META_UNDERLINE_NEVER`, and a dashed line drawn by hand.**
    The meta signals give hover and click. But `RichTextLabel` exposes no
@@ -239,9 +242,13 @@ author would see first.
    and the `TextServer` and draws itself, underline included. It gives full
    control and `EDGE` exactly, at the cost of the most code.
 
-- **Recommended (OPINION):** prototype path 2 first, because it reuses the
-  engine. Fall back to path 3 if the tags do not nest, or if the author wants
-  true dots or the `EDGE` colour exactly (author call 1).
+- **Chosen: path 2** (the author's call, 2026-10-21, answer 1): the engine's `[hint]` dashes in the
+  text's own colour. Step 0's prototype must prove its two unknowns (the tags
+  nest; an empty custom tooltip suppresses the engine's).
+- **If the prototype fails,** path 3 draws the **same look** (dashes in the
+  text colour), so the author's choice stands and only the cost changes.
+  Interface reports the failure and the cost to the parent before building
+  path 3. Path 1 stays blocked.
 
 ## Where it lands, in what order, and the cost
 
@@ -249,16 +256,17 @@ The costs are OPINION (S, M or L, relative).
 
 | Step | Owner | Lands in | What | Cost |
 |---|---|---|---|---|
-| 0 | Interface | a branch, no merge | the path-2 prototype on one `RichTextLabel`: dashed term, hover, lock, a nested tooltip, the engine tooltip suppressed | S |
+| 0 | Interface | a branch, no merge | the path-2 prototype on one `RichTextLabel`: dashed term, hover, both locks (click, hold 1.2 s), a nested tooltip, the engine tooltip suppressed | S |
 | 1 | Content | `data/glossary/terms.json` + its loader check | the 48 entries above, in English | S |
 | 2 | Interface | **V5.1-c** (the shell) | the mechanism: a rich line control and the tooltip stack, the card body and the event text converted | M |
 | 3 | Interface | **V5.1-d** (the windows) | `PanelKit.line()` returns the rich line, which reaches 309 call sites in 30 files through one primitive; d re-homes every window anyway | M |
 | 4 | Content | the `data/` rows and UI strings that carry a term | the `[g=…]` markup, under the noise rules, and the French rows re-keyed | M |
 | 5 | Content | `data/i18n/fr/` | the French glossary, when the author un-parks it | S |
 
-- **Not a widening of c without the author's yes:** step 2 is the only one in
+- **The timing is the author's (the author's call, 2026-10-21, answer 3):** step 2 is the only one in
   c, and it is the mechanism plus the two sinks c already rebuilds (the card,
-  the inbox). The 309 `PanelKit.line()` sites go to d (author call 3).
+  the inbox, and the event text). The 309 `PanelKit.line()` sites go to d, so c
+  is not widened.
 - **INFERRED risk:** `PanelKit.line()` returns a `Label` today, and a caller
   that uses `Label`-only API breaks when it returns a `RichTextLabel`. Step 3
   starts with a grep of what the 309 callers do with the result.
@@ -279,29 +287,22 @@ only restate the word (a definition with no "what it does" half); tooltips off
 screen (P2); a definition that contradicts its model (P4 catches a missing
 section, the review catches a wrong sentence).
 
-## The author's calls
+## The author's answers (2026-10-21)
 
-Each has the recommendation first.
+Four calls went to the author through the parent session, each with a
+recommendation; the author took the recommendation on all four. Each is folded
+into the sections above.
 
-1. **The underline's look.** The author asked for "pointillés" (dots). The
-   engine's `[hint]` line is dashed: dashes twice the line's width, at least
-   2 px, which at a 1 px line reads close to dots but is not round dots.
-   (a) *Recommended:* the engine's dashes in the text's own colour at reduced
-   alpha (path 2): neutral, never the accent, and free from the engine.
-   (b) True dots, in the `EDGE` hairline colour exactly (path 3): more code.
-2. **How a term is marked.**
-   (a) *Recommended:* markup in the source text: deterministic, and it tells the
-   two meanings of "bloc", "stake" and "standing" apart; Content re-keys the
-   French rows of every marked string.
-   (b) A runtime pass over each entry's term: no msgid churn, and the three
-   two-meaning words are excluded.
-3. **When the prose is converted.**
-   (a) *Recommended:* the mechanism, the card and the event text in V5.1-c; the
-   309 `PanelKit.line()` sites in V5.1-d, which re-homes every window anyway.
-   (b) Everything in c, which widens the shell block.
-4. **How a tooltip locks.**
-   (a) *Recommended:* both a click on the term and holding still 1.2 s.
-   (b) A click only.
+1. **The look:** the engine's `[hint]` dashes in the text's own colour at
+   reduced alpha (path 2). The author asked for "pointillés"; the dashes are
+   twice the line's width, at least 2 px, which at a 1 px line reads close to
+   dots. (Not taken: true dots in the `EDGE` colour, path 3.)
+2. **Marking:** markup in the source text, `[g=id]…[/g]`. (Not taken: a runtime
+   pass.)
+3. **Timing:** the mechanism, the card and the event text in V5.1-c; the 309
+   `PanelKit.line()` sites in V5.1-d. (Not taken: everything in c.)
+4. **The lock:** a click on the term, or holding still for 1.2 s. (Not taken: a
+   click only.)
 
 ## What could not be verified
 
