@@ -31,7 +31,9 @@
    "tests/test_message_settings.gd",
    "tests/test_motion.gd",
    "tests/test_election_night.gd",
-   "tests/test_tick_levers.gd"
+   "tests/test_tick_levers.gd",
+   "tests/test_dev_commands.gd",
+   "tests/test_dev_console.gd"
   ],
   [
    "tests/test_clock.gd",
@@ -133,7 +135,8 @@
    "tests/test_acknowledgments.gd",
    "tests/test_boot_stages.gd",
    "tests/test_sound.gd",
-   "tests/test_diplomacy_parallel.gd"
+   "tests/test_diplomacy_parallel.gd",
+   "tests/test_dev_console_game.gd"
   ]
  ]
 }

@@ -42,6 +42,13 @@ var _held: Node = null
 ## WorldMonth.unit_key() -> that unit's cost last month, usec: the estimate that
 ## keeps a unit known to be long out of a frame already part spent.
 var _cost := {}
+## V5.1-0b. The last month's cost per step, microseconds -- step name -> usec,
+## summed over the step's units: the perf overlay's numbers (src/ui/dev_perf.gd).
+## Timed here, per UNIT, because Economy and Diplomacy come in slices that can span
+## frames: the step hook's before/after would measure the frames between them, not
+## the work. Only a real-time month fills it; a hand-driven one runs whole.
+var last_month_costs := {}
+var _month_costs := {}
 var _deferred: Array[InputEvent] = []
 
 
@@ -50,9 +57,13 @@ var _deferred: Array[InputEvent] = []
 ## hand-driven day runs it whole, now.
 func run(state, loader, on_step: Callable, done: Callable, clock: Node, held: Node) -> void:
 	if not clock.in_real_time:
+		# The table times the last REAL-TIME month; a hand-driven one runs whole and
+		# is not timed, so the old table would pass for current. Clear it instead.
+		last_month_costs = {}
 		done.call(WorldMonth.tick_month(state, loader, on_step))
 		return
 	_month = WorldMonth.begin(state, loader, on_step)
+	_month_costs = {}
 	_done = done
 	_clock = clock
 	_held = held
@@ -74,12 +85,16 @@ func _process(_delta: float) -> void:
 		var now := Time.get_ticks_usec()
 		if ran and now - start + int(_cost.get(key, 0)) > FRAME_BUDGET_USEC:
 			break
+		var step: String = WorldMonth.STEPS[_month.step]
 		WorldMonth.run_unit(_month)
-		_cost[key] = Time.get_ticks_usec() - now
+		var spent := Time.get_ticks_usec() - now
+		_cost[key] = spent
+		_month_costs[step] = int(_month_costs.get(step, 0)) + spent
 		ran = true
 	if not WorldMonth.done(_month):
 		return
 	var report: Dictionary = _month.report
+	last_month_costs = _month_costs
 	_month = null
 	_held.process_mode = Node.PROCESS_MODE_INHERIT
 	# The month's end in the order it always ran: the UI's tail first, then the
