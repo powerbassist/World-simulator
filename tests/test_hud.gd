@@ -20,6 +20,8 @@ const WindowManager = preload("res://src/ui/window_manager.gd")
 var _failures: Array[String] = []
 var _main
 var _frame := 0
+var _growing_wm
+var _growing_content: Control
 
 
 func _init() -> void:
@@ -46,6 +48,7 @@ func _process(_delta: float) -> bool:
 	_check_foreign_acts_reach_the_column()
 	_check_minimap_slot_reserved()
 	_stage_tall_cards()
+	_stage_a_growing_window()
 	return false
 
 
@@ -54,6 +57,7 @@ func _later_frames() -> bool:
 		return false  # a layout pass or two for the cards to take their height
 	_check_cards_do_not_push_the_ui_down()
 	_check_windows_open_clear_of_the_column()
+	_check_a_grown_window_stays_on_screen()
 	_finish()
 	return false
 
@@ -516,6 +520,32 @@ func _check_windows_open_clear_of_the_column() -> void:
 	if x < clear_x:
 		_fail("a band-wide window opened at x=%.0f, under the message column (clear of it from x=%.0f)" % [x, clear_x])
 	wm.queue_free()
+
+
+## QA on #49. A window is placed from its content as it is on the way in, and a
+## panel fills its rows a frame later; the frame then re-fits its SIZE to the
+## grown content and left its POSITION where the narrow window had been centred,
+## so the Companies window with a takeover bid ended at x=2180 of 1920, its close
+## X off the screen. Placed at 600 px wide, grown to 1500: it must stay inside.
+func _stage_a_growing_window() -> void:
+	_growing_wm = WindowManager.new()
+	root.add_child(_growing_wm)
+	_growing_wm.size = Vector2(1920, 1080)
+	_growing_content = Control.new()
+	_growing_content.custom_minimum_size = Vector2(600, 300)
+	_growing_wm.register("growing", "Growing", _growing_content)
+	_growing_wm.open("growing")
+	_growing_content.custom_minimum_size = Vector2(1500, 300)
+
+
+func _check_a_grown_window_stays_on_screen() -> void:
+	var frame = _growing_wm.frame("growing")
+	if frame.size.x < 1500.0:
+		_fail("premise: the window did not grow to its content (%.0f px wide)" % frame.size.x)
+	var right: float = frame.position.x + frame.size.x
+	if right > _growing_wm.size.x + 0.5:
+		_fail("a window that grew in place ends at x=%.0f, past the %.0f px screen" % [right, _growing_wm.size.x])
+	_growing_wm.queue_free()
 
 
 func _check_minimap_slot_reserved() -> void:

@@ -143,10 +143,14 @@ func _process(_delta: float) -> void:
 	# in this game has been sized from its content as it was BEFORE the refresh
 	# that filled it. The People window opened 555px tall around a body of ~700 and
 	# cut its last four rows off with nothing but a scrollbar to say so.
+	# The re-fit changes the SIZE and the window keeps the position it was centred at
+	# while narrow, so it is clamped again: the Companies window with a takeover bid
+	# grew to x=2180 of 1920 and took its close X off the screen (QA on #49).
 	if _band != Vector2.ZERO and _content != null:
 		var wanted := _content.get_combined_minimum_size()
 		if not wanted.is_equal_approx(_fitted_from):
 			fit_within(_band)
+			clamp_into_parent()
 
 	var now := primary_action_below_fold()
 	if now == _folded:

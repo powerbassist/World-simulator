@@ -209,8 +209,7 @@ func _build_autonomy_sections(ns) -> void:
 		PanelKit.line(_body, tr("%s offers %s bn for %s -- %d months left.") % [
 			_loader.nation_name(String(bid["bidder_nation"])), Num.f(float(bid["price_eur_bn"]), 1),
 			firm_name, int(bid["months_left"])])
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
+		var row := PanelKit.buttons(_body)
 		# The same gate the failing row answers to: available() is the door
 		# execute() refuses through. A bid standing on a FAILED firm once
 		# rendered dead Block/Allow buttons beside the rescue row (the
@@ -222,7 +221,6 @@ func _build_autonomy_sections(ns) -> void:
 			var action = _action_by_id(action_id)
 			if action != null and bid_actions.has(action):
 				row.add_child(_action_button(ns, _firm_object(ns.id, String(bid["company_id"])), action))
-		_body.add_child(row)
 	var failing: Array = Industry.failing(_state, ns, _loader)
 	if not failing.is_empty():
 		PanelKit.heading(_body, tr("Failing firms"))
@@ -242,10 +240,7 @@ func _build_autonomy_sections(ns) -> void:
 			# (the failure commit clears the subsidy; the pass-4 fleet found
 			# the note dead). If a future gate ever refuses here again, gate
 			# AND note come back together.
-			var row := HBoxContainer.new()
-			row.add_theme_constant_override("separation", 6)
-			row.add_child(_action_button(ns, _firm_object(ns.id, company_id), action))
-			_body.add_child(row)
+			PanelKit.buttons(_body).add_child(_action_button(ns, _firm_object(ns.id, company_id), action))
 
 
 func _action_by_id(id: String):
@@ -409,13 +404,11 @@ func _build_investment(ns, sector: String) -> void:
 		state_label.theme_type_variation = UiTheme.CAPTION
 	block.add_child(state_label)
 
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 6)
+	var buttons := PanelKit.buttons(block)
 	for action in Investment.available(_state, ns, _loader.investment_actions):
 		if String(action.effects.get("investment", {}).get("sector", "")) != sector:
 			continue
 		buttons.add_child(_investment_button(ns, action))
-	block.add_child(buttons)
 
 	_body.add_child(block)
 
@@ -506,11 +499,9 @@ func _build_firm(ns, company) -> void:
 	money.theme_type_variation = UiTheme.CAPTION
 	block.add_child(money)
 
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 6)
+	var buttons := PanelKit.buttons(block)
 	for action in Companies.available(_state, ns, _loader.company_actions, company.id, _loader):
 		buttons.add_child(_action_button(ns, company, action))
-	block.add_child(buttons)
 
 	_body.add_child(block)
 

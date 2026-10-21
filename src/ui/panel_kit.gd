@@ -58,6 +58,9 @@ const ROW_SEPARATION := 3
 ## short value do not read as one string.
 const COLUMN_SEPARATION := 12
 
+## Between two buttons of one row of verbs, across and between its lines.
+const BUTTON_SEPARATION := 6
+
 ## `delta()` will go this far looking for a decimal place that shows movement
 ## before it gives up and prints the zero honestly. Four is past every unit in
 ## this game -- a percentage point, a share of GDP, a poll point -- and stops
@@ -126,6 +129,18 @@ static func line(parent: Control, text: String, tone := Tone.DIM) -> Label:
 	label.theme_type_variation = _variation(tone, "")
 	parent.add_child(label)
 	return label
+
+
+## A row of verbs that wraps onto a second line rather than widening its window.
+## A flow container's minimum width is its widest button, not the sum of them: a
+## firm's seven actions in French were one 1302 px row, and the Companies window
+## grew past the screen's edge to hold it (QA on #49).
+static func buttons(parent: Control) -> HFlowContainer:
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", BUTTON_SEPARATION)
+	flow.add_theme_constant_override("v_separation", BUTTON_SEPARATION)
+	parent.add_child(flow)
+	return flow
 
 
 ## Caption left, value right, the value carrying the tone. The single commonest
