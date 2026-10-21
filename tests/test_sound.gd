@@ -79,12 +79,15 @@ func _process(_delta: float) -> bool:
 				_check_pause_cue()
 				_check_event_sting()
 			SoundBed.override = 1
+			Synth.primed_thread = -1
 			_bed = SoundBed.start(root, "menu")
 			_wait_started = Time.get_ticks_msec()
 			_phase = 1
 		1:
 			# Rendering on a worker, then swelling in.
 			if _bed.playing() and _bed._player.volume_db > SoundK.SILENT_DB + 1.0:
+				if Synth.primed_thread != OS.get_thread_caller_id():
+					_fail("the bed rendered on a worker before Synth was primed on the calling thread")
 				_set_audio(true, false)
 				_phase = 2
 			elif _waited_out("the menu bed never started playing"):
@@ -256,10 +259,15 @@ func _check_recipe_lookup() -> void:
 ## renders is what the main thread would have.
 func _check_warm() -> void:
 	Sound._cache.clear()
+	Synth.primed_thread = -1
 	Sound.warm(true)
 	if Sound._warm_task < 0:
 		_fail("warm(true) started no worker")
 		return
+	# src/core/parallel.gd rule 5: Synth's lines run once on the calling thread before
+	# any worker runs them (V5.1b3).
+	if Synth.primed_thread != OS.get_thread_caller_id():
+		_fail("warm() posted its worker before Synth was primed on the calling thread")
 	Sound.settle()
 	for id in Sound.ids():
 		if not Sound._cache.has(id):

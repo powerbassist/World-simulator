@@ -8,6 +8,32 @@ extends RefCounted
 ## on a worker thread: nothing here touches the scene tree or a Resource.
 
 
+## Recipes a few samples long that run every line of one_shot() and bed() -- the
+## one-shot's late partial takes both of its branches (before and after its onset).
+## src/core/parallel.gd rule 5: GDScript caches an untyped operator's evaluator the
+## first time a line runs, and two threads running a line for the first time at once
+## can call through a half-written cache, so the first run of each line is the calling
+## thread's, before any worker renders (V5.1b3). Priming with the real first sound would
+## cost the main thread a whole render -- 325-394 ms for a bed, 45 ms for the election
+## one-shot, measured -- and these cost microseconds. The hot loops are typed throughout
+## (a validated operator carries no cache), so this keeps the rule; no crash was seen here.
+const _PRIMER_ONE_SHOT := {
+	"rate": 1000, "duration_s": 0.004, "attack_s": 0.001, "env_decay": 1.0,
+	"partials": [[440.0, 0.5, 1.0, 0.0], [880.0, 0.5, 1.0, 0.001]],
+}
+const _PRIMER_BED := {"rate": 1000, "loop_s": 0.002, "partials": [[110.0, 0.5, 0.1, 0.0]]}
+
+## The thread prime() last ran on, -1 before it ever has; tests/test_sound.gd reads it.
+static var primed_thread := -1
+
+
+## Runs the primers on the calling thread. Call it before handing Synth to a worker.
+static func prime() -> void:
+	one_shot(_PRIMER_ONE_SHOT)
+	bed(_PRIMER_BED)
+	primed_thread = OS.get_thread_caller_id()
+
+
 ## A one-shot: every partial summed, under one envelope and one attack ramp. The
 ## arithmetic is written in exactly V3.6's order (sum left to right, then
 ## sum x env x attack) because the election sting moved here from sting.gd and

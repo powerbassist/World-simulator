@@ -113,6 +113,8 @@ func _process(_delta: float) -> void:
 		return
 	if not _streams.has(bed_id):
 		if _task < 0:
+			# Two beds can render at once on the pool (parallel.gd rule 5).
+			Synth.prime()
 			_task = WorkerThreadPool.add_task(_render, false, "sound bed " + bed_id)  # i18n: ok
 		return
 	_player = AudioStreamPlayer.new()
