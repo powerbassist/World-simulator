@@ -1,0 +1,22 @@
+{
+  "start_ground_game.name": "Envoyer des bénévoles frapper aux portes",
+  "start_ground_game.summary": "Salles paroissiales, porte-blocs et beaucoup de marche. C'est le moins cher de la liste et le plus lent, et cela touche les gens déjà à moitié convaincus et pas tout à fait motivés.",
+  "stop_ground_game.name": "Rappeler les bénévoles",
+  "stop_ground_game.summary": "On cesse de frapper aux portes. Ceux à qui l'on a déjà parlé, on leur a déjà parlé.",
+  "start_broadcast.name": "Acheter les émissions du soir",
+  "start_broadcast.summary": "Heure de grande écoute, tous les soirs jusqu'au scrutin. De loin la chose la plus coûteuse qu'un gouvernement puisse faire à une élection, qui touche les deux blocs qui regardent encore la télévision à l'heure où elle passe.",
+  "stop_broadcast.name": "Annuler les créneaux d'antenne",
+  "stop_broadcast.summary": "Le temps d'antenne est libéré. Il coûtait par mois plus que tout le reste de cette page réuni.",
+  "start_town_halls.name": "Parcourir les bourgs",
+  "start_town_halls.summary": "Une salle par jour, là où aucun ministre n'est venu depuis dix ans. Lent, sans éclat, et la seule chose de cette liste qui fonctionne hors des villes.",
+  "stop_town_halls.name": "Mettre fin à la tournée",
+  "stop_town_halls.summary": "Le car retourne au dépôt et l'on annonce aux bourgs restants que le programme a changé.",
+  "start_digital_push.name": "Inonder les fils d'actualité",
+  "start_digital_push.summary": "De la publicité ciblée vers les deux blocs les moins susceptibles de voter et les plus faciles à atteindre s'ils le font. Cela marche mieux que tout le reste, sur ceux sur qui cela marche, et tous les autres découvrent que cela se passe.",
+  "stop_digital_push.name": "Retirer la publicité",
+  "stop_digital_push.summary": "Les achats sont annulés. Les captures d'écran, non.",
+  "start_donor_circuit.name": "Faire le circuit des donateurs",
+  "start_donor_circuit.summary": "Petits déjeuners, dîners et beaucoup d'écoute. C'est bon marché parce que d'autres paient la salle, et c'est exactement ce que diront tous ceux qui sont dehors.",
+  "stop_donor_circuit.name": "Annuler les petits déjeuners",
+  "stop_donor_circuit.summary": "Les invitations restantes sont déclinées. Celles qui étaient déjà acceptées sont déjà photographiées."
+}
