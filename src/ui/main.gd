@@ -81,6 +81,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Num = preload("res://src/ui/num.gd")
 const WorldNews = preload("res://src/ui/world_news.gd")
+const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 const IndustryNews = preload("res://src/ui/industry_news.gd")
 const AssemblyNews = preload("res://src/ui/assembly_news.gd")
 const DateText = preload("res://src/ui/date_text.gd")
@@ -1788,76 +1789,19 @@ func _on_day_advanced(year: int, month: int, day: int) -> void:
 	_update_top_bar()
 
 
-## The dispatcher. src/sim/calendar.gd hands back entries and knows nothing about
-## what they mean; this fires the command. Every system named here was already
-## preloaded by this file, so the diary added no dependency to it -- and composing
-## two systems' effects is the orchestrator's job, which is the call
-## docs/cabinet-model.md records for Cabinet.seat() and the reason a scheduler
-## reaching into three systems was refused.
-##
-## The `match` is a fixed, small set of system verbs -- the same class as
-## _act_reason_text()'s key-to-wording map -- not per-nation or per-law content,
-## so docs/engine-decision.md Rule 1 holds.
+## The diary's due appointments, fired by DiaryDriver (src/ui/diary_driver.gd) in the
+## diary's order; each outcome's UI half lands here before the next entry fires.
 func _resolve_appointments(year: int, month: int, day: int) -> void:
-	var due: Array = Calendar.due(_state, year, month, day)
-	if due.is_empty():
-		return
-
-	var ns = _state.player()
-	var party_list: Array = _loader.parties.get(_state.player_nation_id, [])
-
-	for entry in due:
-		# THE BASELINE IS TAKEN HERE, not when the player booked. U4's decision
-		# delta measures a command against the next history entry, and a booking
-		# commits nothing in the month it is made -- measured from the press, a
-		# deferred act would report the movements of a month in which it did not
-		# happen. _pending_effects is also documented as not persisted, so a save
-		# across a booking would lose a baseline taken at the press entirely.
-		var before := Budget.snapshot(_state)
-		before.merge(Opinion.snapshot(_state))
-
-		var label := ""
-		var ok := false
-		match String(entry.get("kind", "")):
-			CalendarK.KIND_DIPLOMATIC:
-				var action = _action_by_id(String(entry.get("action_id", "")))
-				if action != null:
-					var result := Diplomacy.execute(
-						_state, _loader.diplomatic_actions, action,
-						_state.player_nation_id, String(entry.get("target_id", "")),
-					)
-					# execute()'s contract is `applied`, not `ok` -- V2.4a found
-					# this read as false on every arrival, so a kept visit fired
-					# its effects and was recorded as refused anyway.
-					ok = bool(result.get("applied", false))
-					label = Strings.row_name("diplomatic-actions", action)
-			CalendarK.KIND_LAW:
-				var law = _law_by_id(String(entry.get("law_id", "")))
-				if law != null:
-					var result := Legislature.propose(_state, _loader, law)
-					ok = bool(result.get("passed", false))
-					label = Strings.law_name(law)
-			CalendarK.KIND_RESHUFFLE:
-				var portfolio := String(entry.get("portfolio", ""))
-				var party_id := String(entry.get("party_id", ""))
-				if ns != null and Cabinet.can_assign(ns, portfolio, party_id):
-					Cabinet.assign(_state, portfolio, party_id, party_list)
-					ok = true
-				label = Labels.portfolio(portfolio)
-
-		Calendar.resolve(_state, Calendar.verb_key(entry), ok)
+	var any := DiaryDriver.resolve(_state, _loader, year, month, day, func(outcome: Dictionary):
+		var label := String(outcome["label"])  # i18n: row-ok DiaryDriver hands back a translated label
 		if not label.is_empty():
-			_queue_effect(label, before)
-		_card_appointment(entry, label, ok)
-
-		# V2.4b: a meeting that LANDED is the summit's trigger. Only the verb
-		# that opens a meeting brings a scene; a refused arrival is a journey
-		# home, and day-only acts were never journeys.
-		if ok and String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
-			var action2 = _action_by_id(String(entry.get("action_id", "")))
-			if action2 != null and action2.opens_meeting:
-				_open_summit(String(entry.get("target_id", "")), before)
-
+			_queue_effect(label, outcome["before"])
+		_world_news.card_appointment(outcome["entry"], label, bool(outcome["ok"]))
+		if String(outcome["summit_target"]) != "":
+			_open_summit(String(outcome["summit_target"]), outcome["before"])
+	)
+	if not any:
+		return
 	_windows.mark_all_dirty()
 	# A booked diplomatic act moves relations, and on that map layer it is a
 	# colour change the player should see the day it happens -- the same reason
@@ -1867,37 +1811,6 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 		_map_view.queue_redraw()
 		if _map_flows != null:
 			_map_flows.refresh()
-
-
-## A kept appointment is something that happened to the player's government with
-## no button pressed that day, so it is exactly the class of event the message
-## column exists for -- alongside an alliance obligation opening and a foreign
-## act. An act that REFUSED on arrival matters more, not less: it is the one
-## outcome the player could not have predicted when they booked it.
-func _card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-	if label.is_empty():
-		_hud.message_stack.push(
-			tr("Appointment lapsed"),
-			tr("Something booked for today no longer exists to be done."),
-		)
-		return
-
-	# One whole sentence per shape, the failure a sentence of its own.
-	var booked := tr("%s, as booked.") % label
-	if String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
-		booked = tr("%s with %s, as booked.") % [label, _nation_name(String(entry.get("target_id", "")))]
-	if not ok:
-		booked += " " + tr("It did not carry.")
-	_hud.message_stack.push(tr("Kept: %s") % label, booked)
-
-
-func _action_by_id(id: String):
-	for action in _loader.diplomatic_actions:
-		if String(action.id) == id:
-			return action
-	return null
 
 
 ## V2.4b. The scene itself. Drawn as data from the leaf sim, handed to the
@@ -1938,13 +1851,6 @@ func _resolve_summit(choice_label: String) -> void:
 	_update_top_bar()
 
 
-
-
-func _law_by_id(id: String):
-	for law in _loader.laws:
-		if String(law.id) == id:
-			return law
-	return null
 
 
 func _on_save_requested(slot: String) -> void:

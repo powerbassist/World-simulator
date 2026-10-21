@@ -13,6 +13,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Num = preload("res://src/ui/num.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
@@ -238,3 +239,27 @@ func _act_reason_text(key: String) -> String:
 		ForeignPolicy.ACT_REASON_GOODWILL: return tr("Mending what had soured.")
 		ForeignPolicy.ACT_REASON_GRIEVANCE: return tr("Answering a grievance.")
 	return ""
+
+
+## A kept appointment is something that happened to the player's government with
+## no button pressed that day, so it is exactly the class of event the message
+## column exists for -- alongside an alliance obligation opening and a foreign
+## act. An act that REFUSED on arrival matters more, not less: it is the one
+## outcome the player could not have predicted when they booked it.
+func card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
+	if _stack == null:
+		return
+	if label.is_empty():
+		_stack.push(
+			tr("Appointment lapsed"),
+			tr("Something booked for today no longer exists to be done."),
+		)
+		return
+
+	# One whole sentence per shape, the failure a sentence of its own.
+	var booked := tr("%s, as booked.") % label
+	if String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
+		booked = tr("%s with %s, as booked.") % [label, _loader.nation_name(String(entry.get("target_id", "")))]
+	if not ok:
+		booked += " " + tr("It did not carry.")
+	_stack.push(tr("Kept: %s") % label, booked)
