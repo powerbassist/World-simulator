@@ -59,7 +59,7 @@ they built and where, and say what they do not know and why" ([[v5]], head).
   pace of about 74 seconds a game month, 24 a term is one request every
   2.5 months, or about one every three minutes of play, and about 8 in a play
   gate. Below that, Q1 is luck. The ceiling of 48 (0.8 a month) plus the desk's
-  12 events a term (**MEASURED**, `docs/someday.md:24`) makes about one thing
+  12 events a term (**MEASURED**, `docs/someday.md`, "Open author calls", the ticked **Re-run `events_probe` E4/E5** item) makes about one thing
   asked of the player each game month, roughly once a minute and a quarter of
   play. More than that is a flood.
 - **Counted at arrival in the inbox, not at generation**, so a request the desk
