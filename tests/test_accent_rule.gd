@@ -59,6 +59,25 @@ func _check_helpers() -> void:
 	if AccentRule.clear_hue(20.0, boxed) != -1.0:
 		_fail("a hue with both edges forbidden should have no clear hue")
 
+	# pick(): the band that needs the SMALLEST hue shift wins, not the first one that
+	# qualifies (the author's colour-family call). Ties go to file order.
+	var red := Color("#DD0000")
+	var yellow := Color("#FFCE00")
+	var fixed := AccentRule.pick([red, yellow], UiTheme.SLATE, [UiTheme.BAD, UiTheme.GOOD, UiTheme.WARN], UiTheme.ACCENT_FALLBACK)
+	if AccentRule.hue_distance(fixed.h * 360.0, 66.4) > 1.5:
+		_fail("red then gold should pick the gold (21 degrees against 25), got hue %.1f" % (fixed.h * 360.0))
+	var reversed := AccentRule.pick([yellow, red], UiTheme.SLATE, [UiTheme.BAD, UiTheme.GOOD, UiTheme.WARN], UiTheme.ACCENT_FALLBACK)
+	if reversed != fixed:
+		_fail("band order changed a pick that is not a tie")
+	var untouched := AccentRule.pick([red, Color("#0055A4")], UiTheme.SLATE, [UiTheme.BAD, UiTheme.GOOD, UiTheme.WARN], UiTheme.ACCENT_FALLBACK)
+	if AccentRule.hue_distance(untouched.h * 360.0, 209.0) > 1.5:
+		_fail("a band that needs no shift should beat one that does, got hue %.1f" % (untouched.h * 360.0))
+	var tie_a := Color("#0055A4")
+	var tie_b := Color("#1166BB")  # same family, same zero shift: the first in file order
+	var tie := AccentRule.pick([tie_a, tie_b], UiTheme.SLATE, [UiTheme.BAD, UiTheme.GOOD, UiTheme.WARN], UiTheme.ACCENT_FALLBACK)
+	if tie != AccentRule.pick([tie_a], UiTheme.SLATE, [UiTheme.BAD, UiTheme.GOOD, UiTheme.WARN], UiTheme.ACCENT_FALLBACK):
+		_fail("a tie should go to the earlier band")
+
 	# No chroma anywhere is the one case that falls back.
 	var greys := [Color.WHITE, Color.BLACK, Color("#808080")]
 	if AccentRule.pick(greys, UiTheme.SLATE, [UiTheme.BAD], UiTheme.ACCENT_FALLBACK) != UiTheme.ACCENT_FALLBACK:
@@ -74,8 +93,9 @@ func _check_real_flags() -> void:
 		"FRA": 209.0,  # blue, untouched
 		"GBR": 222.0,  # navy, untouched
 		"POL": 335.0,  # crimson (348) is 15 degrees from the alert red: raspberry
-		"DEU": 335.0,  # black has no chroma; the red band shifts the same way
-		"ITA": 126.0,  # green (150) sits on the good-news green: nearest edge
+		"DEU": 66.4,  # black has no chroma; red needs 25 degrees, gold 21: gold, shifted up to a bright yellow
+		"ITA": 335.0,  # green needs 24.5 degrees (150 -> 125), red 21.8 (357 -> 335): red, a raspberry
+		"IRL": 181.0,  # green (154) is nearer the good-news green's high edge: 27 degrees, a turquoise; orange needs 49
 	}
 	for id in cases:
 		var accent := _accent_of(id)
