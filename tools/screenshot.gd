@@ -16,6 +16,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --cluster state
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
@@ -270,6 +271,7 @@ var _cluster := ""
 ## nobody, or on a partner who signs, shows the absence of the line rather than the
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
+var _play := ""  ## --play ID: the played nation of the staged game (default France)
 var _defence := false
 
 ## U6a, and --coerce's argument a sixth time. A new game's diary is EMPTY inside
@@ -693,11 +695,15 @@ func _init() -> void:
 			_blank = args[i + 1]
 		elif args[i] == "--nation" and i + 1 < args.size():
 			_nation = args[i + 1].to_upper()
+		elif args[i] == "--play" and i + 1 < args.size():
+			_play = args[i + 1].to_upper()
 
 	if _menu:
 		_main = load("res://src/ui/menu.tscn").instantiate()
 	else:
 		_main = load("res://src/ui/main.tscn").instantiate()
+		if _play != "":
+			_main.pending_player_id = _play
 	root.add_child(_main)
 
 

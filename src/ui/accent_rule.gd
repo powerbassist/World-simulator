@@ -25,12 +25,13 @@ extends RefCounted
 ## A band whose hue falls inside a state tone's zone is NOT skipped (the author's
 ## call, 2026-10-21: keep the flag's colour family, push it out of the state zone).
 ## Its hue is SHIFTED to the nearest edge of the zone plus SHIFT_MARGIN, saturation
-## and lightness kept -- Polish crimson becomes raspberry, Italian green a yellower
-## green -- and then lifted. If that edge lies in ANOTHER tone's zone the other edge
+## and lightness kept -- Polish crimson becomes raspberry, German gold a lime-leaning
+## yellow -- and then lifted. If that edge lies in ANOTHER tone's zone the other edge
 ## is tried; if both are forbidden the band is passed over. The lifted colour is
 ## checked again (a dark saturated band can lift toward grey), and only a colour that
 ## still qualifies is returned. The fallback applies only when no band yields one,
-## which in practice means a flag with no chroma at all.
+## which in practice means a flag with no chroma at all. Which band is shifted is
+## decided in pick(): the one that moves least.
 ##
 ## Pure functions over colours, with the surface and the tones passed in, so this
 ## file never has to know the palette (and cannot cycle with ui_theme.gd, which
@@ -45,10 +46,16 @@ const SHIFT_MARGIN := 4.0
 
 ## The accent for a flag. `bands` is the flag's colours in file order; `avoid` the
 ## state tones the accent must keep its distance from; `surface` what it is drawn on.
+## Of the bands that qualify, the one that needs the SMALLEST hue shift wins, so the
+## flag's colour family moves least (Germany's gold, 21 degrees, rather than its red,
+## 25); a tie goes to file order. "First qualifying band" was the rejected rule: it
+## shifted the most conspicuous band and left a nearer one unused.
 static func pick(bands: Array, surface: Color, avoid: Array, fallback: Color) -> Color:
 	var tones: Array[float] = []
 	for tone in avoid:
 		tones.append((tone as Color).h * 360.0)
+	var best := fallback
+	var best_shift := INF
 	for band in bands:
 		var c: Color = band
 		if chroma(c) < MIN_CHROMA:
@@ -56,11 +63,15 @@ static func pick(bands: Array, surface: Color, avoid: Array, fallback: Color) ->
 		var hue := clear_hue(c.h * 360.0, tones)
 		if hue < 0.0:
 			continue
+		var shift := hue_distance(c.h * 360.0, hue)
+		if shift >= best_shift:
+			continue
 		var hsl := _to_hsl(c)
 		var lifted := lift(_from_hsl(hue / 360.0, hsl.y, hsl.z), surface)
 		if _qualifies(lifted, tones):
-			return lifted
-	return fallback
+			best = lifted
+			best_shift = shift
+	return best
 
 
 ## The hue itself if it is outside every tone's zone; else the nearest clear edge
