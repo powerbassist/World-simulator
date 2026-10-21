@@ -78,15 +78,21 @@ they built and where, and say what they do not know and why" ([[v5]], head).
 | | Declared |
 |---|---|
 | Share of requests a player who books every one cannot place inside the request's window | **20 % to 50 %** |
+| **Audiences held per term** by that player (the done-when's "audiences per term") | **12 to 30**, and **at least 4** in months 1–20 |
 | Requests that offer delegation and decline when the diary cannot place them | **100 %** |
 
 - **Why (MEASURED anchor):** the V2.4a diary already measured 35 % of wants
   unplaceable with visits, a law and a reshuffle against a greedy packer
   ([[calendar-model]] §12). Audiences add load, so the band brackets that figure.
+- **Why the audiences held (INFERRED arithmetic):** B1's 24 to 48 requests,
+  less B2's 20 % to 50 % unplaceable, leaves roughly 12 to 38 a booking player
+  can hold; the ceiling of 30 keeps the diary from being all audiences. At least
+  4 in the first 20 months means a play gate contains several scenes, not one.
 - **Probe:** `tools/audience_probe.gd`, regime A2 (book every request with the
   calendar probe's greedy packer).
-- **Failure looks like:** under 20 % (time is not scarce, and delegation is never
-  needed); over 50 % (the diary is the wall, the R5 complaint "cannot register
+- **Failure looks like:** fewer than 12 audiences held (the scenes are rare
+  even for a player who wants them); under 20 % unplaceable (time is not scarce,
+  and delegation is never needed); over 50 % (the diary is the wall, the R5 complaint "cannot register
   anything" in a new place); any unplaceable request without delegation and
   decline on its card (a dead end).
 
@@ -100,8 +106,9 @@ they built and where, and say what they do not know and why" ([[v5]], head).
 | Decline-everything against idle: the change in the 2027 executive vote share | **at most 0.02** |
 
 - **Why the ceiling (MEASURED anchor):** the hands-off France run holds the 2027
-  election by a margin of 0.034 (`balance_base.json`, regime `hands_off`, FRA
-  2027-05, `margin` 0.0343). A ceiling of 0.02 keeps refusals alone from deciding
+  election by a margin of 0.034 (QA's accepted base table
+  `.superpowers/sdd/qa/base-4d2ce395.json`, the V5.1-0d re-baseline the author
+  accepted: regime `hands_off`, FRA 2027-05, `margin` 0.0343). A ceiling of 0.02 keeps refusals alone from deciding
   the election: refusing costs relationships, and the relationships cost votes
   later, through the acts.
 - **Probe:** `tools/audience_probe.gd`, regime A3 (decline every request
@@ -153,6 +160,7 @@ want, against one) × the channel (audience, phone call).
 | Share of cells in which one lever has the best net value | **at most 40 %** for any lever |
 | Share of cells in which each lever has the best net value | **at least 5 %** for every lever |
 | A phone call's odds against an audience's, same lever, same cell | **at least 0.10 lower** |
+| The answers to a request — book, delegate, decline, and leaving it unanswered — any one of them the best net value over all requests | **at most 50 %** of requests |
 
 - **Net value** is success × the ask's gain minus the expected cost, in the
   registers the lever spends. The probe's header states the exchange weights
@@ -164,7 +172,10 @@ want, against one) × the channel (audience, phone call).
 - **Probe:** `tools/lever_probe.gd`, regime L2.
 - **Failure looks like:** one lever best in most cells (the player stops
   reading people and presses it); a lever never best (dead); calls as good as
-  audiences (the diary becomes optional).
+  audiences (the diary becomes optional); leaving requests unanswered the best
+  answer to most of them (the player learns never to open the inbox). The last
+  depends on [[v5.2-spec]]'s question 3: if an unanswered request costs nothing,
+  this row is expected to fail, and that is the argument for option (a).
 
 ## B6 — Corruption is tempting, and it is found out
 
@@ -177,6 +188,7 @@ Over 200 seeded runs (salts), France, otherwise idle.
 | **Always:** every offer accepted — exposed by month 60 | **at least 80 %** of runs |
 | **Always:** median months to the first exposure | **at most 24** |
 | Exposure odds by currency, for the same act size | **favours < party money < personal wealth < diverted budget** |
+| Exposures by route in the "always" regime | **each route at least 20 %**: the press and the courts |
 
 - **Why (OPINION):** one bribe in a term should usually stay hidden, or
   corruption is never worth trying; a habit should almost always be found, and
@@ -186,7 +198,9 @@ Over 200 seeded runs (salts), France, otherwise idle.
 - **Probe:** `tools/shadows_probe.gd`, regimes S1 (once) and S2 (always).
 - **Failure looks like:** "always" exposed under 80 % (corruption is free);
   "once" exposed over 30 % (never worth it); the order broken (one currency
-  dominates the others).
+  dominates the others); one route carrying nearly every exposure (the courts'
+  half of "exposure through the press and the courts" is a new trigger,
+  [[v5.2-spec]] C7, and the easiest to leave unbuilt).
 
 ## B7 — The affair is dangerous
 
