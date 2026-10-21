@@ -47,7 +47,8 @@ SCRIPT_ERROR = re.compile(r"SCRIPT ERROR|Parse Error")
 # matches a regex the test declares in its own source with `## expects-error:`.
 ERROR_LINE = re.compile(r"^(?:USER )?ERROR:.*$|^WARNING:.*NaN.*JSON\.stringify.*$",
                         re.MULTILINE)
-EXIT_LEAK = re.compile(r"^ERROR: \d+ resources still in use at exit")
+EXIT_LEAK = re.compile(r"^ERROR: \d+ (?:resources still in use|RID allocations "
+                       r"of type .* were leaked) at exit")
 EXPECTS_TAG = re.compile(r"^[ \t]*## expects-(?:error|warning): *(.+?)\s*$",
                          re.MULTILINE)
 # Tags read from the test's own source -- run_tests.sh counts the directory
@@ -450,6 +451,9 @@ def _selftest() -> int:
     expect(child_verdict("ERROR: 28 resources still in use at exit (run with "
                          "--verbose for details).", 0) == "pass",
            "the engine's exit leak report must not fail a test")
+    expect(child_verdict("ERROR: 2 RID allocations of type 'P12TextServer' were "
+                         "leaked at exit.", 0) == "pass",
+           "the engine's RID leak-at-exit report must not fail a test")
     expect(child_verdict("note: an ERROR: mid-line is not the engine's", 0) == "pass",
            "only a line that STARTS with ERROR: counts")
     declared = read_expected_from("extends SceneTree\n"
