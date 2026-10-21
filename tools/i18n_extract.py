@@ -64,15 +64,36 @@ TRANSLATABLE = {
     "laws": ["name", "summary"],
     "events": ["name", "summary", "choices.*.label", "choices.*.summary"],
     "programme": ["name", "summary"],
-    "campaign-actions": ["name", "summary"],
+    # The authored NOUN beside the action's imperative name (V5.1b3): "The ground game"
+    # in the register, "Start the ground game" on the button.
+    "campaign-actions": ["name", "summary", "effects.campaign.effort_name"],
     "diplomatic-actions": ["name", "summary"],
     "company-actions": ["name", "summary"],
     "energy-actions": ["name", "summary"],
     "investment-actions": ["name", "summary"],
-    "project-actions": ["name", "summary"],
+    "project-actions": ["name", "summary", "effects.project.project_name"],
     "bloc-proposals": ["name", "summary"],
-    "pledges": ["name", "summary"],
+    "pledges": ["name", "summary", "effects.pledge.pledge_name"],
+    # An org's name is translated where the language has a usual form ("Commission
+    # europeenne") and left as it is where it is a true proper noun: Content's call, row by row.
+    "orgs": ["name", "summary"],
 }
+
+# How src/ui displays a row field (V5.1b3): the Strings accessors, read off the source
+# so `--check` can fail a field nobody shows -- "240/240 translated" once meant 0 on
+# screen. An accessor that names its kind takes it as its first literal argument.
+CALLER_FIXED = {
+    "law_name": ("laws", "name"),
+    "law_summary": ("laws", "summary"),
+    "record_event_name": ("events", "name"),
+    "choice_label": ("events", "choices.*.label"),
+    "record_choice_label": ("events", "choices.*.label"),
+    "choice_summary": ("events", "choices.*.summary"),
+}
+CALLER_KIND = re.compile(r"Strings\.(row_name|row_summary)\(\s*\"([\w-]+)\"")
+CALLER_ROW = re.compile(r"Strings\.row\(\s*\"([\w-]+)\"\s*,[^,]*,\s*\"([\w.%]+)\"")
+CALLER_NOUN = re.compile(r"Strings\.noun\(\s*\"([\w-]+)\"\s*,[^,]*,\s*\"(\w+)\"\s*,\s*\"\w+\"\s*,[^,]*,\s*\"(\w+)\"")
+CALLER_ANY = re.compile(r"Strings\.(\w+)\(")
 # The list a kind's rows sit in, per file: laws.json holds {"laws": [...]}; a file
 # whose top level is a single row (orgs) is read as one.
 ROW_LISTS = {"laws": "laws", "events": "events", "programme": "programme"}
@@ -216,6 +237,52 @@ def row_texts():
         if texts:
             out[kind] = texts
     return out, duplicates
+
+
+def line_callers(line):
+    """[(kind, field pattern)] the Strings accessor calls on one GDScript line display;
+    a comment is not a caller."""
+    code = line
+    lits = literals(line)
+    cut = line.find("#", lits[-1][1] + 1 if lits else 0)
+    if cut >= 0:
+        code = line[:cut]
+    out = []
+    for m in CALLER_KIND.finditer(code):
+        out.append((m.group(2), "name" if m.group(1) == "row_name" else "summary"))
+    for m in CALLER_ROW.finditer(code):
+        out.append((m.group(1), m.group(2).replace("%s", "*")))
+    for m in CALLER_NOUN.finditer(code):
+        out.append((m.group(1), "effects.%s.%s" % (m.group(2), m.group(3))))
+    for m in CALLER_ANY.finditer(code):
+        if m.group(1) in CALLER_FIXED:
+            out.append(CALLER_FIXED[m.group(1)])
+    return out
+
+
+def display_callers():
+    """{(kind, field pattern): number of call sites} over src/ui (strings.gd itself and the
+    developer console are not display sites)."""
+    out = {}
+    for path in sorted(glob.glob(os.path.join(ROOT, "src", "ui", "*.gd"))):
+        name = os.path.basename(path)
+        if name.startswith("dev_") or name == "strings.gd":
+            continue
+        for line in open(path, encoding="utf-8"):
+            for key in line_callers(line):
+                out[key] = out.get(key, 0) + 1
+    return out
+
+
+def uncalled(kind, rows, callers):
+    """The TRANSLATABLE field patterns of `kind` that hold rows and that no src/ui line
+    displays through Strings."""
+    missing = []
+    for field in TRANSLATABLE.get(kind, []):
+        pattern = re.compile("^[^.]+\\." + re.escape(field).replace("\\*", "[^.]+") + "$")
+        if any(pattern.match(key) for key in rows) and callers.get((kind, field), 0) == 0:
+            missing.append(field)
+    return missing
 
 
 def languages():
@@ -395,6 +462,19 @@ def selftest():
     check("problems ok", problems({"%d month": "%d month"}, {"%d month": ["%d mois", "%d mois"]}, {"%d month": "%d months"}), ([], [], [], []))
     check("problems shape", problems({"%d month": "%d month"}, {"%d month": "%d mois"}, {"%d month": "%d months"})[3], ["%d month"])
     check("problems placeholder", problems({"%d month": "%d month"}, {"%d month": ["%d mois", "mois"]}, {"%d month": "%d months"})[2], ["%d month"])
+    # A wrong dotted path yields no key at all, silently: every noun and the orgs must
+    # find rows in the real data.
+    rows, _dups = row_texts()
+    for kind, field in (("pledges", "effects.pledge.pledge_name"), ("campaign-actions", "effects.campaign.effort_name"),
+                        ("project-actions", "effects.project.project_name"), ("orgs", "name"), ("orgs", "summary")):
+        found = sum(1 for key in rows.get(kind, {}) if key.endswith("." + field))
+        check("%s %s rows found" % (kind, field), found > 0, True)
+    check("caller name", line_callers('x.text = Strings.row_name("events", ev)'), [("events", "name")])
+    check("caller in a comment", line_callers('# Strings.row_name("events", ev)'), [])
+    check("caller dotted", line_callers('Strings.row("events", id, "choices.%s.label" % c, e)'), [("events", "choices.*.label")])
+    check("caller noun", line_callers('Strings.noun("pledges", a, "pledge", "pledge_id", id, "pledge_name", e)'),
+          [("pledges", "effects.pledge.pledge_name")])
+    check("caller fixed", line_callers('PanelKit.line(b, Strings.law_summary(law))'), [("laws", "summary")])
     for line in bad:
         print("selftest: " + line)
     print("i18n_extract selftest: %s" % ("failed" if bad else "all checks passed"))
@@ -414,17 +494,25 @@ def main(argv):
         return 1 if apply_worklist(argv[argv.index("--apply") + 1]) else 0
     bad = 0
     tables, duplicates, plurals = sources()
+    callers = display_callers()
     for lang in languages():
         print("== %s" % lang)
         for name, source in tables:
             table = load_table(lang, name)
             done = sum(1 for k in source if k in table)
             stale, empty, holders, shape = problems(source, table, plurals if name == "ui" else {}, plural_forms(lang))
-            print("  %-20s %5d / %-5d translated   stale %d, empty %d, placeholder mismatch %d, plural shape %d" % (name, done, len(source), len(stale), len(empty), len(holders), len(shape)))
+            shown = "" if name == "ui" else "   callers %d" % sum(n for (kind, _f), n in callers.items() if kind == name)
+            print("  %-20s %5d / %-5d translated   stale %d, empty %d, placeholder mismatch %d, plural shape %d%s" % (name, done, len(source), len(stale), len(empty), len(holders), len(shape), shown))
             for label, items in (("stale", stale), ("empty", empty), ("placeholders", holders), ("plural shape", shape)):
                 for key in items[:5]:
                     print("      %s: %s" % (label, key))
             bad += len(stale) + len(empty) + len(holders) + len(shape)
+    # A field with rows that no src/ui line displays through Strings: its translations
+    # would count as done and never reach the screen.
+    for name, source in tables[1:]:
+        for field in uncalled(name, source, callers):
+            print("no display caller -- %s %s (nothing in src/ui shows it through Strings)" % (name, field))
+            bad += 1
     for line in duplicates:
         print("duplicate row id -- %s" % line)
     bad += len(duplicates)
