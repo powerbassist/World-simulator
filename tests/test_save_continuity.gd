@@ -336,10 +336,13 @@ func _deep_equal(a, b) -> bool:
 			return a == b
 
 
-## NAN equals NAN here: the sanctioned "no data" movement is NAN on both sides.
 ## Check 5: every float leaf of the original's to_dict() against the loaded game's,
 ## by path. Bit-exact means equal (NAN to NAN counts, the sanctioned slot); the
-## worst relative gap is over all the others, with no absolute floor.
+## worst relative gap is over all the others, with no absolute floor. A missing
+## or non-numeric leaf counts as a miss (_compare() names the structure). Known
+## limit: a subnormal float would read back as 0.0 whatever the writer --
+## built_in_strtod's power of ten overflows past 1e308 -- and none is in the
+## fixture.
 func _check_fidelity(original, loaded) -> void:
 	var a := {}
 	var b := {}
@@ -350,7 +353,10 @@ func _check_fidelity(original, loaded) -> void:
 	var worst_path := ""
 	for path in a:
 		var x: float = a[path]
-		var y: float = float(b.get(path, NAN))
+		var got = b.get(path, NAN)
+		if typeof(got) != TYPE_FLOAT and typeof(got) != TYPE_INT:
+			got = NAN
+		var y: float = float(got)
 		if x == y or (is_nan(x) and is_nan(y)):
 			exact += 1
 			continue
@@ -381,6 +387,7 @@ func _float_leaves(value, path: String, out: Dictionary) -> void:
 			out[path] = value
 
 
+## NAN equals NAN here: the sanctioned "no data" movement is NAN on both sides.
 func _floats_equal(a: float, b: float) -> bool:
 	if is_nan(a) or is_nan(b):
 		return is_nan(a) and is_nan(b)

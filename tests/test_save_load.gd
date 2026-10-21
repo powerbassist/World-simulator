@@ -92,8 +92,8 @@ const FLOAT_EPS := 1e-6
 ## setting removes it. test_save_continuity.gd check 5 pins the writer's half
 ## (no float moves past this relative bound, small ones included). This clause
 ## is not a loosening of the absolute one: it only accepts what the magnitude's
-## own representation error
-## can explain, and the margin is measured -- worst realised relative error is
+## own representation error can explain, and the margin is measured -- worst
+## realised relative error is
 ## 7.3e-14 (a gdp residual), so 1e-12 carries ~14x slack while a genuinely lost
 ## or re-derived figure moves by orders more. The floor stays 1e-6 so every
 ## small-magnitude field is checked exactly as tightly as it was.

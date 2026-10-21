@@ -87,8 +87,8 @@ static func save_game(state, clock, slot: String) -> String:
 		return "could not open '%s' for writing (%s)" % [temp_path, error_string(FileAccess.get_open_error())]
 
 	# full_precision: grisu2's shortest digits, which name each double exactly.
-	# The default writes ~15 significant digits, which lost bits in most floats
-	# and moved a small value by 5.8% (the save-precision plan's step 0). The
+	# The default writes ~15 significant digits, which (measured on a played
+	# game) changed 17 372 floats at load and moved a small value by 5.8%. The
 	# load still is not bit-exact everywhere -- JSON.parse_string reads numbers
 	# through Godot's built_in_strtod, which is not correctly rounded -- but
 	# that is the parser's residue, a few ULP, and no setting here removes it.
