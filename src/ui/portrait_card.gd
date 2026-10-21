@@ -24,6 +24,7 @@ const Flag = preload("res://src/ui/flag.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
+const MoodIcon = preload("res://src/ui/mood_icon.gd")
 
 const CARD_SIZE := Vector2(268, 96)
 const FLAG_SIZE := Vector2(30, 20)
@@ -38,6 +39,7 @@ var _approval_label: Label
 var _leader_label: Label
 var _nation_label: Label
 var _flag: Control
+var _mood_icon: Control
 
 
 func _ready() -> void:
@@ -67,6 +69,11 @@ func _ready() -> void:
 	_approval_label = Label.new()
 	_approval_label.theme_type_variation = UiTheme.HERO
 	approval_row.add_child(_approval_label)
+
+	# V5.1-0c. The mood, beside the number it reads from.
+	_mood_icon = MoodIcon.new()
+	_mood_icon.mouse_filter = Control.MOUSE_FILTER_PASS
+	approval_row.add_child(_mood_icon)
 
 	var approval_caption := Label.new()
 	approval_caption.text = "APPROVAL"
@@ -134,13 +141,14 @@ func refresh() -> void:
 		PollNoise.poll_id(_state.year, _state.month), PollingPanel.HEADLINE_KEY, ns.overall_approval_pct
 	)
 	_approval_label.text = "%.0f%%" % shown
-	_update_bust(_emotion_for(shown))
+	_emotion = _emotion_for(shown)
+	_mood_icon.emotion = _emotion
 
 
-## The card's face IS the mood read now -- the V2.9-era emoji face beside the
-## number is gone, because a face that cannot change expression is exactly why
-## the emoji existed. Bands either side of 50 so a government hovering at the
-## neutral point does not flicker between two portraits on poll noise alone.
+## The mood band for an approval figure -- the icon beside the number, since
+## V5.1-0c; the face itself no longer changes (the author's "sometimes the
+## president portrait changes"). Bands either side of 50 so a government hovering
+## at the neutral point does not flicker between two icons on poll noise alone.
 ## STERN has no approval slot: it is the dismissal/clash face, held for later
 ## content rather than shaved off the neutral band.
 func _emotion_for(approval: float) -> int:
@@ -151,13 +159,3 @@ func _emotion_for(approval: float) -> int:
 	if approval >= 35.0:
 		return Portrait.Emotion.WORRIED
 	return Portrait.Emotion.WEARY
-
-
-## Re-stages the bust only when the emotion band actually changes -- a monthly
-## TextureRect churn over poll noise is the rasterise-on-the-clock-path class
-## V2.3 already paid for once.
-func _update_bust(emotion: int) -> void:
-	if emotion == _emotion or _leader_id == "":
-		return
-	_emotion = emotion
-	_set_bust(Portrait.framed_for(_leader_id, Vector2(54, 74), emotion, Portrait.Scene.OFFICE))

@@ -52,6 +52,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --console
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --console-errors
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --perf --frames 120
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --cards 6 --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mood 35
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -249,6 +252,14 @@ var _month_closing := false
 ## ~120: the month closes across frames and the overlay refreshes on a timer).
 var _console := ""
 var _perf_overlay := false
+## V5.1-0c. --cards N fills the notification column with N cards (the column's
+## layout and its overlap with windows are the point); --mood A sets the player's
+## approval to A so the portrait card's mood icon can be read at each band.
+var _cards := 0
+var _mood := -1.0
+## --mid-term: seven months into the term with nothing chosen, the page a loaded
+## game shows (the Agenda's "when can I choose" line).
+var _mid_term := false
 ## V2.1c: pull a cluster's drawer open, so a frame can show the mark on the entry
 ## the player is looking at as well as the mark on the cluster it lives in.
 var _cluster := ""
@@ -664,6 +675,12 @@ func _init() -> void:
 			_console = "console"
 		elif args[i] == "--console-errors":
 			_console = "errors"
+		elif args[i] == "--mid-term":
+			_mid_term = true
+		elif args[i] == "--cards" and i + 1 < args.size():
+			_cards = int(args[i + 1])
+		elif args[i] == "--mood" and i + 1 < args.size():
+			_mood = float(args[i + 1])
 		elif args[i] == "--perf":
 			_perf_overlay = true
 		elif args[i] == "--cluster" and i + 1 < args.size():
@@ -748,6 +765,16 @@ func _process(_delta: float) -> bool:
 		clock._process(1.0 / clock.SPEED_DAYS_PER_SECOND[clock.speed - 1])
 	if (_console != "" or _perf_overlay) and not _menu:
 		_stage_console()
+	if _frame == 3 and not _menu:
+		for n in _cards:
+			_main._hud.message_stack.push("Card %d" % (n + 1), "A notification body long enough to wrap onto a second line in the column.")
+		if _mid_term:
+			_main._state.player().months_in_term = 7
+			_main._enforce_term_start_programme()
+			_main._agenda_panel.mark_dirty()
+		if _mood >= 0.0:
+			_main._state.player().overall_approval_pct = _mood
+			_main._hud.portrait_card.refresh()
 	if _frame < _frames_wanted:
 		return false
 

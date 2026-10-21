@@ -51,6 +51,28 @@ const BAND_LABELS := ["All", "Major+", "Critical", "Off"]
 const DEFAULTS := {"notify": 1, "feed": 1, "popup": 1, "pause": 2}
 
 
+## V5.1-0c. Whether acts between two OTHER nations get a card at all. A separate
+## scalar rather than a category: it is about WHO the news concerns, not how severe
+## it is, and the author did not want to be told what other countries do to each
+## other. Off by default; an act aimed at the player cards regardless. Stored in
+## the same section, so save_to() (which edits keys in place) keeps it.
+const FOREIGN_NEWS_KEY := "foreign_news"
+const DEFAULT_FOREIGN_NEWS := false
+
+
+static func foreign_news(path: String) -> bool:
+	var cfg := ConfigFile.new()
+	cfg.load(path)
+	return bool(cfg.get_value(SECTION, FOREIGN_NEWS_KEY, DEFAULT_FOREIGN_NEWS))
+
+
+static func set_foreign_news(on: bool, path: String) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(path)
+	cfg.set_value(SECTION, FOREIGN_NEWS_KEY, on)
+	cfg.save(path)
+
+
 ## Every category, every switch, at its default.
 static func defaults() -> Dictionary:
 	var out := {}

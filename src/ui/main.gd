@@ -901,6 +901,12 @@ func _entry(id: String, label: String) -> Dictionary:
 ## _unseen_events (the cards stay unseen) and an interrupt on the desk, which
 ## holds the clock on its own account.
 func _toggle_pause_by_hand() -> void:
+	# V5.1-0c. The offer lives only until the clock first runs in a term, so the
+	# press that would forfeit it opens the Agenda instead. With the Agenda already
+	# open the next press is the player declining, and runs.
+	if _paused_for_programme and _clock.paused and not _windows.is_open("agenda"):
+		_windows.open("agenda")
+		return
 	_clock.toggle_pause()
 	# V4.9c. By hand only: a pause the game takes (an arrival, the lapse guard)
 	# already carries its own sound, the event sting, and a hold that resumes
@@ -1024,7 +1030,6 @@ func _wire_hud() -> void:
 	# U5c. The legend proposes a layer, the map view holds it, and the legend is
 	# then told what it now shows -- one direction, so the two cannot disagree
 	# about which layer is up.
-	_hud.map_legend.setup_roster(_loader)
 	_hud.map_legend.layer_selected.connect(func(id: String):
 		_map_view.set_layer(id)
 		_hud.map_legend.show_layer(_map_view.layer(), _state, _map_view.viewer_id())
@@ -1252,12 +1257,10 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 		# console error. The order is already consumed by here (the arm was cleared
 		# above and map_view ended placement), so with nothing on screen the player
 		# had to re-arm without being told why.
-		_hud.message_stack.push(
-			"Not your ground", "That point is not in %s." % ns.nation_name)
+		_hud.message_stack.push("Not your ground", "That point is not in %s." % ns.nation_name)
 		return
 
-	var access: Dictionary = Regions.accessibility_for(
-		ns, _state.regions.get(ns.id, []), _state.region_graph)
+	var access: Dictionary = Regions.accessibility_for(ns, _state.regions.get(ns.id, []), _state.region_graph)
 	var pop_weights: Dictionary = {}
 	for region in _state.regions.get(ns.id, []):
 		pop_weights[region.id] = Migration.region_share(ns, region.id)
@@ -1743,6 +1746,7 @@ func _card_foreign_acts(year: int, month: int) -> void:
 
 	var player_id: String = _state.player_nation_id
 	var floor_share: float = ForeignPolicy.even_share(_state, player_id) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
+	var news_of_others := MessageSettings.foreign_news(SettingsPanel.CONFIG_PATH)
 
 	# Oldest first, so the newest act ends up at the top of the column: push()
 	# appends and the stack drops from the front when it overflows.
@@ -1762,7 +1766,8 @@ func _card_foreign_acts(year: int, month: int) -> void:
 		var target_id := String(act["target_id"])
 		if actor_id == player_id:
 			continue
-		if target_id != player_id and ForeignPolicy.stake(_state, player_id, actor_id) < floor_share:
+		# V5.1-0c: news between two other nations is the player's to ask for.
+		if target_id != player_id and (not news_of_others or ForeignPolicy.stake(_state, player_id, actor_id) < floor_share):
 			continue
 
 		var key := String(act["action_name"])
@@ -2424,9 +2429,7 @@ func _on_load_requested(slot: String) -> void:
 	# The discarded game's programme card goes too: _enforce_term_start_programme()
 	# below returns early for a mid-term load, which would leave "choose one
 	# goal..." standing (and its id set) over a game with nothing to choose.
-	if not _programme_card_id.is_empty():
-		_hud.message_stack.dismiss(_programme_card_id)
-		_programme_card_id = ""
+	_drop_programme_card()
 	# A decision committed and not yet measured belongs to the DISCARDED game:
 	# left queued, the loaded game's next History step wrote it into its own
 	# recent_effects against the old game's baseline (the V5.0 fix-pass review).
@@ -2600,6 +2603,13 @@ func _refresh_term_card() -> void:
 	_hud.message_stack.set_body(_term_card_id, _term_card_body())
 
 
+## The term-start card and its id go together; every door that retires one retires both.
+func _drop_programme_card() -> void:
+	if not _programme_card_id.is_empty():
+		_hud.message_stack.dismiss(_programme_card_id)
+		_programme_card_id = ""
+
+
 func _enforce_term_start_programme() -> void:
 	if _state == null:
 		return
@@ -2617,12 +2627,9 @@ func _enforce_term_start_programme() -> void:
 		# branch, drop the arrival flag and never resume -- a stranded clock. Only
 		# the flag and the card go; the clock stays as the player has it.
 		_paused_for_programme = false
-		if not _programme_card_id.is_empty():
-			_hud.message_stack.dismiss(_programme_card_id)
-			_programme_card_id = ""
+		_drop_programme_card()
 		return
-	if not _programme_card_id.is_empty():
-		_hud.message_stack.dismiss(_programme_card_id)
+	_drop_programme_card()
 	_programme_card_id = _hud.message_stack.push(
 		"The term's programme",
 		"The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise.",
@@ -2658,9 +2665,7 @@ func _on_programme_chosen(entry_id: String) -> void:
 	_hud.message_stack.push(name_text,
 		"This term's programme. Deliver it and the credit lands on the record;"
 		+ " miss its deadline and the miss pays the same shape back.")
-	if not _programme_card_id.is_empty():
-		_hud.message_stack.dismiss(_programme_card_id)
-		_programme_card_id = ""
+	_drop_programme_card()
 	if _paused_for_programme:
 		_paused_for_programme = false
 		if not _decision_holds_clock():

@@ -59,16 +59,12 @@ func _ready() -> void:
 	var rows := _ignore(VBoxContainer.new())
 	body.add_child(rows)
 
-	# Upper band: the message column, hard left, growing downward from under the
-	# top strip. Everything to its right is deliberately empty -- that is the
-	# map, and it is the thing the player is meant to be looking at.
-	var upper := _ignore(HBoxContainer.new())
+	# Upper band: empty, and deliberately so -- that is the map, and it is the thing
+	# the player is meant to be looking at. It only takes the leftover height so the
+	# lower band sits on the bottom edge.
+	var upper := _ignore(Control.new())
 	upper.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	rows.add_child(upper)
-
-	message_stack = MessageStack.new()
-	message_stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	upper.add_child(message_stack)
 
 	# Lower band: portrait left, commands centre, clock right. Each pinned to the
 	# bottom of the band rather than stretched, so a taller cluster grows upward
@@ -105,6 +101,21 @@ func _ready() -> void:
 	clock_cluster = ClockCluster.new()
 	clock_cluster.size_flags_vertical = Control.SIZE_SHRINK_END
 	lower.add_child(clock_cluster)
+
+	# V5.1-0c. The message column is an OVERLAY, not a row of the layout above: it
+	# sat in the upper band, so a column of tall cards raised the HUD's minimum
+	# height and shoved the lower band off the bottom ("notification push the UI
+	# down"). Here its height is nobody's business but its own. Hard left, growing
+	# downward from under the top strip, as before.
+	var overlay := _ignore(MarginContainer.new())
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_theme_constant_override("margin_left", EDGE_MARGIN)
+	overlay.add_theme_constant_override("margin_top", TopBar.BAR_HEIGHT + EDGE_MARGIN)
+	add_child(overlay)
+	message_stack = MessageStack.new()
+	message_stack.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	message_stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	overlay.add_child(message_stack)
 
 	# V2.4a: the day ribbon, the bottom-most plate and the full width of the
 	# screen. Under the action bar and everything else in the lower band, so it

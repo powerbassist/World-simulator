@@ -29,6 +29,8 @@ extends SceneTree
 const Programme = preload("res://src/sim/programme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Pending = preload("res://src/ui/pending.gd")
+const Trends = preload("res://src/ui/trends.gd")
+const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -63,12 +65,14 @@ func _run() -> void:
 		return
 
 	_check_the_term_start_pause_fires(state, ns, loader)
+	_check_play_does_not_forfeit_the_offer(state, ns, loader)
 	_check_the_offer_is_built_from_the_register(panel, state, ns, loader)
 	_check_the_choice_is_a_command(panel, state, ns, loader)
 	_check_a_second_choice_refuses(panel, state, ns, loader)
 	_check_the_bar_reads_the_derived_pair(panel, state, ns, loader)
 	_check_the_other_surfaces_read_the_register(panel, state, ns, loader)
 	_check_a_conclusion_pushes_a_card(panel, state, ns, loader)
+	_check_mid_term_says_when_the_next_programme_opens(panel, state, ns, loader)
 
 
 ## The modal, at the arrival-pause precedent: the clock does not run past an
@@ -86,6 +90,34 @@ func _check_the_term_start_pause_fires(state, ns, loader) -> void:
 		_fail("no programme card was pushed at the unchosen term start")
 	if not Pending.window_ids(state, loader).has("agenda"):
 		_fail("pending.gd does not mark the agenda at an unchosen term start")
+
+
+## V5.1-0c. The author "cannot register anything to the agenda": the offer exists
+## only before the clock first runs in a term (programme.gd is_term_start), and
+## Space is one keypress away. The first play press while the offer stands used
+## to drop the hold, one month later the offer was gone for the whole term, and
+## nothing said so. Now that press opens the Agenda and keeps the clock down; a
+## second press is the player choosing to run without a programme.
+func _check_play_does_not_forfeit_the_offer(state, ns, loader) -> void:
+	if not _main._clock.paused or not _main._paused_for_programme:
+		_fail("the guard check needs the term-start hold up")
+		return
+	_main._toggle_pause_by_hand()
+	if not _main._clock.paused:
+		_fail("the first Space at an unchosen term start ran the clock -- the offer is forfeited by one keypress")
+	if not _main._windows.is_open("agenda"):
+		_fail("the first Space at an unchosen term start did not open the Agenda that holds the offer")
+	if Programme.available(state, ns, loader).is_empty():
+		_fail("the offer vanished without the clock moving")
+	_main._toggle_pause_by_hand()
+	if _main._clock.paused:
+		_fail("a second Space did not run the clock -- the player must be able to decline the offer")
+	# Put the fixture back: the clock has not ticked, so the offer is still there
+	# and the enforcement re-raises the hold and the card for the checks below.
+	_main._windows.close("agenda")
+	_main._enforce_term_start_programme()
+	if not _main._clock.paused or not _main._paused_for_programme:
+		_fail("re-enforcing an unchosen term start did not restore the hold")
 
 
 ## One CHOOSE button per offered entry, and the panel's fold answer is one of
@@ -284,6 +316,28 @@ func _deadline_entry(state, ns, loader) -> Dictionary:
 		if int(terms.get("timeout_months", 0)) > 0:
 			return terms
 	return {}
+
+
+## Mid-term with nothing chosen the panel used to say only "No programme was set
+## this term." -- true, and no help to a player who loaded a save or ran past the
+## offer. It now says when programmes open: the first day of the next term, which
+## starts at the vote.
+func _check_mid_term_says_when_the_next_programme_opens(panel, state, ns, loader) -> void:
+	ns.programme = []
+	ns.programme_chosen_term = -1
+	ns.months_in_term = 7
+	_refresh(panel)
+	var text := ""
+	for node in _walk(panel._body):
+		if node is Label and not node.is_queued_for_deletion():
+			text += String(node.text) + "
+"
+	var when := Trends.vote_date(ns)
+	if not text.contains(ClockCluster.MONTH_NAMES[when.y - 1]) or not text.contains(str(when.x)):
+		_fail("the mid-term Agenda does not say when the next programme opens (%s %d): '%s'" % [
+			ClockCluster.MONTH_NAMES[when.y - 1], when.x, text])
+	if not text.to_lower().contains("next term"):
+		_fail("the mid-term Agenda does not name the next term: '%s'" % text)
 
 
 func _refresh(panel) -> void:

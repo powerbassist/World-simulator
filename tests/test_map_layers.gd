@@ -334,36 +334,27 @@ func _check_legend_swatches_match_the_map() -> void:
 	if not _all_color_rects(legend).is_empty():
 		_fail("the political layer has no stops but the legend drew swatches")
 
-	# V4.8c: the grade rows, counted here WITHOUT Roster.grade -- straight off
-	# the nation files' flag and the outline register -- so a grade rule that
-	# drifts from the registers fails on this line rather than agreeing with
-	# itself.
-	var loader = _main._loader
-	var playable := 0
-	for id in loader.nations.keys():
-		if loader.nations[id].playable:
-			playable += 1
-	var want := [
-		"%d  playable" % playable,
-		"%d  simulated" % (loader.nations.size() - playable),
-		"%d  outlines" % loader.outlines.size(),
-	]
-	var rows: Array = legend._grades.get_children().filter(
-		func(n): return not n.is_queued_for_deletion())
-	if rows.size() != want.size():
-		_fail("political legend: %d grade rows, want %d" % [rows.size(), want.size()])
-	else:
-		for i in want.size():
-			if not String(rows[i].text).begins_with(String(want[i])):
-				_fail("political legend row %d reads '%s', want '%s...'" % [i, rows[i].text, want[i]])
-	if not legend._grades.visible:
-		_fail("political legend: the grade rows are hidden on the Political layer")
-	if playable == 0 or loader.outlines.is_empty():
-		_fail("political legend: the registers are empty -- the count check proved nothing")
+	# V5.1-0c: the grade rows were dev text ("4 playable, yours to lead", "37
+	# simulated, run by the game", "133 outlines, one world market") -- the author
+	# asked why a scope statement was in the game. They are gone; what an outline is
+	# is the caption's job. Pinned over every label the legend draws, so the words
+	# cannot come back under another name.
+	for label in _labels_of(legend):
+		var text := String(label.text).to_lower()
+		for banned in ["playable", "simulated", "run by the game", "yours to lead", "one world market"]:
+			if text.contains(banned):
+				_fail("the legend still carries dev text '%s' in '%s'" % [banned, label.text])
 	legend.show_layer(MapLayers.RELATIONS, state, "FRA")
-	if legend._grades.visible:
-		_fail("the grade rows stay up on the Relations layer")
 	legend.show_layer(MapLayers.POLITICAL, state, "FRA")
+
+
+func _labels_of(node: Node) -> Array:
+	var out: Array = []
+	if node is Label and not node.is_queued_for_deletion():
+		out.append(node)
+	for child in node.get_children():
+		out.append_array(_labels_of(child))
+	return out
 
 
 ## The asymmetry as the player meets it. A relations readout may name the pair,

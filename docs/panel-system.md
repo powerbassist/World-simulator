@@ -787,12 +787,14 @@ for.
 a category per row, a band picker per switch (`BAND_LABELS`, index = threshold -
 1). `messages_from_controls()` is what it saves.
 
-**The legend's grades.** On the Political layer only, three count rows above the
-caption -- playable, simulated, outlines -- from `Roster.counts(loader)`, which
-counts THROUGH `Roster.grade()` over the nation files and the outline register.
-No swatch: every nation is its own colour, so a grade has no colour to promise
-(and the political layer's no-swatch pin stands). `MapOutlines.profile_of` stays
-the hover readout.
+**The legend's grades (removed at V5.1-0c).** V4.8c printed three count rows above the
+caption on the Political layer ("4 playable, yours to lead", "37 simulated, run by
+the game", "133 outlines, one world market"), from `Roster.counts(loader)`. The author
+asked why a scope statement about the build was in the game, and the caption already
+says what an outline is; the rows, `setup_roster()` and `_grades` are gone
+(`Roster.counts` stays, pinned by `test_roster.gd`). `test_map_layers.gd` now scans
+every label the legend draws for the old words. The political layer's no-swatch pin
+stands. `MapOutlines.profile_of` stays the hover readout.
 
 **Instruments.** `tests/test_message_settings.gd`: the register (every cell, the
 defaults, Major+ pinned), the file round-trip (absent file, other sections kept,

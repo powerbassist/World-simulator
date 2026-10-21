@@ -29,6 +29,8 @@ const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Trends = preload("res://src/ui/trends.gd")
+const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 
 ## election_panel's bar block size: wide enough to read at a glance, short
 ## enough to leave the window's right edge to the scroll gutter.
@@ -269,10 +271,20 @@ func _clock_text(terms: Dictionary, live_months: int, is_live: bool) -> String:
 	]
 
 
+## V5.1-0c. Mid-term the page used to say only "No programme was set this term."
+## -- true, and no help to a player who loaded a save or ran past the offer, who
+## could not tell a bug from a rule. It states the rule and the date it next opens:
+## a programme is chosen on the first day of a term, and the next term starts at
+## the vote.
 func _unset_text(ns) -> String:
 	if Programme.is_term_start(ns):
 		return "Nothing is offerable this term -- every gate in the book is shut."
-	return "No programme was set this term."
+	var when := Trends.vote_date(ns)
+	return (
+		"No programme was set this term. A programme can only be chosen on the first"
+		+ " day of a term, before the clock runs. The next term starts after the vote"
+		+ " in %s %d, and its programme can be chosen then."
+	) % [ClockCluster.MONTH_NAMES[when.y - 1], when.x]
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold

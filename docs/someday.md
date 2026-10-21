@@ -359,6 +359,13 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from V5.1-0c (2026-10-21)
+
+- **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.
+- **The minimap leaving its frame when menus open, and the UI shifting on a category click** (P5, P6) did not reproduce at 1920x1080 or 1280x1024 with the State drawer, a window and cards open. Ask the author for the window size and the click; V5.1c rebuilds the shell either way.
+- **A wide window can still sit under the message column** (the column is an overlay above windows): at 1920 the budget window clears it, a window dragged left does not. V5.1d (windows).
+- **The Settings screen's resolution row is disabled while fullscreen** with no word why; F11 and the Window row are the way out.
+
 ## Carried from V5.1-0b (2026-10-21)
 
 Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed test-first in `7cd07ad9`):

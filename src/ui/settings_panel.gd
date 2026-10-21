@@ -26,6 +26,7 @@ signal closed
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
+const WindowMode = preload("res://src/ui/window_mode.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 const CONFIG_PATH := "user://settings.cfg"
 
@@ -78,6 +79,7 @@ const DEFAULT_AMBIENT := true
 static var revision := 0
 
 var _fullscreen_button: OptionButton
+var _foreign_news_button: OptionButton
 var _resolution_button: OptionButton
 var _scale_button: OptionButton
 var _ambient_button: OptionButton
@@ -104,20 +106,45 @@ static func apply_saved(window: Window) -> void:
 		int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)),
 		int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX))
 	)
+	# F11, on the root window so it works in the menu and in the game (V5.1-0c).
+	WindowMode.install(window, toggle_fullscreen)
 
 
-static func _apply(window: Window, fullscreen: bool, resolution_index: int, scale_index: int) -> void:
-	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
-	DisplayServer.window_set_mode(mode)
+## F11: flip fullscreen, persist it, and apply. The Settings row reads the file,
+## so writing it here is what keeps the screen and the row in agreement.
+static func toggle_fullscreen(window: Window) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(CONFIG_PATH)
+	var fullscreen := not bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN))
+	cfg.set_value("display", "fullscreen", fullscreen)
+	cfg.save(CONFIG_PATH)
+	_apply(
+		window,
+		fullscreen,
+		int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)),
+		int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX))
+	)
 
+
+static func _apply(window: Window, fullscreen: bool, resolution_index: int, scale_index: int, force_size := false) -> void:
+	if window == null:
+		return
+	# Everything goes through the Window node, not DisplayServer: the node caches
+	# its own mode and size and writes them back whenever another property
+	# (min_size, unresizable, content_scale_factor) changes, so a DisplayServer
+	# call followed by a node property reverted the mode -- measured, V5.1-0c.
+	var plan := WindowMode.plan(fullscreen, window.mode == Window.MODE_FULLSCREEN, force_size)
+	# Windowed is always resizable, with a floor (V5.1-0c).
+	window.unresizable = not bool(plan["resizable"])
+	window.min_size = plan["min_size"]
+	window.mode = Window.MODE_FULLSCREEN if fullscreen else Window.MODE_WINDOWED
 	# Only meaningful windowed -- resizing a fullscreen window fights the
 	# display, and the setting reasserts itself the moment fullscreen is left.
-	if not fullscreen:
-		var size: Vector2i = RESOLUTIONS[clampi(resolution_index, 0, RESOLUTIONS.size() - 1)]
-		DisplayServer.window_set_size(size)
-
-	if window != null:
-		window.content_scale_factor = UI_SCALES[clampi(scale_index, 0, UI_SCALES.size() - 1)]
+	# Skipped when the window is already windowed: the size is then the player's.
+	if bool(plan["set_size"]):
+		window.size = RESOLUTIONS[clampi(resolution_index, 0, RESOLUTIONS.size() - 1)]
+	WindowMode.note_applied()
+	window.content_scale_factor = UI_SCALES[clampi(scale_index, 0, UI_SCALES.size() - 1)]
 
 
 ## Read at play time rather than applied at boot: a settings change made from
@@ -161,10 +188,12 @@ func _save_and_apply() -> void:
 	cfg.set_value("audio", "enabled", sound_on)
 	cfg.set_value("audio", "ambient", ambient_on)
 	cfg.set_value("display", "motion", motion_on)
+	cfg.set_value(MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, _foreign_news_button.selected == 1)
 	cfg.save(CONFIG_PATH)
 	revision += 1
 
-	_apply(get_window(), fullscreen, resolution_index, scale_index)
+	# A choice made on this screen is the player asking for that size.
+	_apply(get_window(), fullscreen, resolution_index, scale_index, true)
 	_resolution_button.disabled = fullscreen
 
 
@@ -190,12 +219,13 @@ func _ready() -> void:
 	grid.add_theme_constant_override("v_separation", 8)
 	root.add_child(grid)
 
-	_fullscreen_button = _add_row(grid, "Window", ["Windowed", "Fullscreen"])
+	_fullscreen_button = _add_row(grid, "Window (F11)", ["Windowed", "Fullscreen"])
 	_resolution_button = _add_row(grid, "Resolution", _resolution_labels())
 	_scale_button = _add_row(grid, "Interface scale", _scale_labels())
 	_sound_button = _add_row(grid, "Sound", ["Off", "On"])
 	_ambient_button = _add_row(grid, "Ambience", ["Off", "On"])
 	_motion_button = _add_row(grid, "Motion", ["Off", "On"])
+	_foreign_news_button = _add_row(grid, "News of other countries", ["Off", "On"])
 
 	_build_messages(root)
 
@@ -318,6 +348,8 @@ func _load_into_controls() -> void:
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_ambient_button.select(1 if bool(cfg.get_value("audio", "ambient", DEFAULT_AMBIENT)) else 0)
 	_motion_button.select(1 if bool(cfg.get_value("display", "motion", DEFAULT_MOTION)) else 0)
+	_foreign_news_button.select(1 if bool(cfg.get_value(
+		MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, MessageSettings.DEFAULT_FOREIGN_NEWS)) else 0)
 	_resolution_button.disabled = fullscreen
 	var messages := MessageSettings.load_from(CONFIG_PATH)
 	for category in _message_buttons.keys():

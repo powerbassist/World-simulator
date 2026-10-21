@@ -208,6 +208,9 @@ tests=(
   # V4.8c: the message-settings register, and the lapse guard that keeps the
   # arrival pause's contract for a category set not to pause.
   tests/test_message_settings.gd
+  # V5.1-0c: the OS window -- resizable with a floor, a drag kept across the
+  # menu, F11 for fullscreen.
+  tests/test_window_mode.gd
   # V4.9a: the staged boot behind the loading screen (stage table, a bar that
   # never goes back, main.gd taking the loader and state it was handed) and the
   # motion vocabulary (the pure roll, off under --headless, time-based tweens,
