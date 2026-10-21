@@ -1,11 +1,11 @@
 extends Control
 
-## The at-icons set every window glyph and cluster glyph comes from -- V2.3
-## lifted this out of _build_action_bar() because register() now names each
-## window's icon too, and the same path constant serves both. Files under it
-## are committed individually (git add -f, .gitignore's exception); every one
-## src/ references must be, or a fresh clone fails headless.
-const ICONS := "res://addons/at-icons/control/"
+## The Material Symbols Rounded set (Apache-2.0, filled) every window glyph and
+## cluster glyph comes from -- V2.3 lifted this out of _build_action_bar() because
+## register() now names each window's icon too, and the same path constant serves
+## both. Plain SVG text, read and rasterised by icon.gd, so a fresh clone works
+## headless with no import cache.
+const ICONS := "res://assets/icons/material/"
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
@@ -304,7 +304,7 @@ func _ready() -> void:
 	# label setup() writes to is still null -- AGENTS.md's gotcha, and the same
 	# order dashboard.gd's add_tab() enforced by doing both itself.
 	_overview_panel = OverviewPanel.new()
-	_windows.register("overview", "Overview", _overview_panel, KEY_O, ICONS + "gauge.svg")
+	_windows.register("overview", "Overview", _overview_panel, KEY_O, ICONS + "dashboard.svg")
 	_overview_panel.setup(_state, _loader)
 
 	# V4.1. The government's programme: the one window where a programme is
@@ -312,12 +312,12 @@ func _ready() -> void:
 	# beside the Overview it frames -- the agenda is what the term is FOR,
 	# which is the sentence the Overview's other columns read against.
 	_agenda_panel = AgendaPanel.new()
-	_windows.register("agenda", "Agenda", _agenda_panel, KEY_K, ICONS + "target.svg")
+	_windows.register("agenda", "Agenda", _agenda_panel, KEY_K, ICONS + "event.svg")
 	_agenda_panel.setup(_state, _loader)
 	_agenda_panel.programme_chosen.connect(_on_programme_chosen)
 
 	_economy_panel = EconomyPanel.new()
-	_windows.register("economy", "Economy", _economy_panel, KEY_E, ICONS + "pie_chart.svg")
+	_windows.register("economy", "Economy", _economy_panel, KEY_E, ICONS + "monitoring.svg")
 	_economy_panel.setup(_state, _loader)
 
 	# hide_close_button() still applies: these panels each build their own Close
@@ -325,7 +325,7 @@ func _ready() -> void:
 	# now provides the real one. Two close buttons on one panel is worse than
 	# either.
 	_budget_panel = BudgetPanel.new()
-	_windows.register("budget", "Budget", _budget_panel, KEY_B, ICONS + "briefcase.svg")
+	_windows.register("budget", "Budget", _budget_panel, KEY_B, ICONS + "account_balance_wallet.svg")
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
 	_budget_panel.committed.connect(func(before, _pending):
@@ -340,7 +340,7 @@ func _ready() -> void:
 	# erosion curve and the books have one entry point however many windows
 	# move a rate.
 	_tax_panel = TaxPanel.new()
-	_windows.register("tax", "Tax Code", _tax_panel, KEY_X, ICONS + "coins.svg")
+	_windows.register("tax", "Tax Code", _tax_panel, KEY_X, ICONS + "receipt_long.svg")
 	_tax_panel.setup(_state, _loader)
 	_tax_panel.hide_close_button()
 	# V4.2 ultra pass 2: the budget panel's proposed column and 24-month
@@ -380,7 +380,7 @@ func _ready() -> void:
 	)
 
 	_government_panel = GovernmentPanel.new()
-	_windows.register("politics", "Politics", _government_panel, KEY_G, ICONS + "cog.svg")
+	_windows.register("politics", "Politics", _government_panel, KEY_G, ICONS + "groups.svg")
 	_government_panel.setup(_state, _loader)
 	_government_panel.hide_close_button()
 	_government_panel.dissolved.connect(func(before):
@@ -391,7 +391,7 @@ func _ready() -> void:
 	)
 
 	_polling_panel = PollingPanel.new()
-	_windows.register("society", "Society", _polling_panel, KEY_P, ICONS + "speech_bubble.svg")
+	_windows.register("society", "Society", _polling_panel, KEY_P, ICONS + "forum.svg")
 	# Loader from the start: the countdown names the chamber off the loader's
 	# own titles, and a boot without it printed the generic "assembly" until
 	# the first load put the two out of agreement.
@@ -399,7 +399,7 @@ func _ready() -> void:
 	_polling_panel.hide_close_button()
 
 	_law_panel = LawPanel.new()
-	_windows.register("legislature", "Legislature", _law_panel, KEY_L, ICONS + "scales.svg")
+	_windows.register("legislature", "Legislature", _law_panel, KEY_L, ICONS + "gavel.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.hide_close_button()
 	# V4.2 T5. Propose opens the briefing; the division comes back through
@@ -435,7 +435,7 @@ func _ready() -> void:
 	# _on_nation_clicked(), and reachable from the World cluster as well so the
 	# diplomatic verbs are not hidden behind knowing to click the map.
 	_nation_panel = NationPanel.new()
-	_windows.register("diplomacy", "Diplomacy", _nation_panel, KEY_D, ICONS + "hand.svg")
+	_windows.register("diplomacy", "Diplomacy", _nation_panel, KEY_D, ICONS + "handshake.svg")
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide_close_button()
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
@@ -467,7 +467,7 @@ func _ready() -> void:
 	# a section of the nation panel: the council is not a nation and has no pixel
 	# on the map to click, so there is nothing to select it by.
 	_orgs_panel = OrgsPanel.new()
-	_windows.register("orgs", "Organisations", _orgs_panel, KEY_U, ICONS + "book_open.svg")
+	_windows.register("orgs", "Organisations", _orgs_panel, KEY_U, ICONS + "corporate_fare.svg")
 	_orgs_panel.setup(_state, _loader)
 	_orgs_panel.hide_close_button()
 	# V1.6 audit, V8. A council vote binds the player whichever way it goes, so it
@@ -486,7 +486,7 @@ func _ready() -> void:
 	# MVP and never showed anywhere -- an election date, the council's next
 	# proposal, every cooldown expiry -- and the only place a booking is made.
 	_calendar_panel = CalendarPanel.new()
-	_windows.register("calendar", "Diary", _calendar_panel, KEY_C, ICONS + "calendar.svg")
+	_windows.register("calendar", "Diary", _calendar_panel, KEY_C, ICONS + "calendar_month.svg")
 	_calendar_panel.setup(_state, _loader)
 	_calendar_panel.hide_close_button()
 	# A booking commits nothing this month, so unlike `acted` and `proposed` there
@@ -501,7 +501,7 @@ func _ready() -> void:
 	# U6b. Read-only, and the only surface that shows the whole register rather
 	# than the one person a given screen happens to be about.
 	_people_panel = PeoplePanel.new()
-	_windows.register("people", "People", _people_panel, KEY_R, ICONS + "clipboard.svg")
+	_windows.register("people", "People", _people_panel, KEY_R, ICONS + "person.svg")
 	_people_panel.setup(_state, _loader)
 	_people_panel.hide_close_button()
 
@@ -510,7 +510,7 @@ func _ready() -> void:
 	# than a HUD plate (moving a plate moves the frames the 826 px band is
 	# measured against); a row opens the window that answers it.
 	_outliner_panel = OutlinerPanel.new()
-	_windows.register("outliner", "Outliner", _outliner_panel, KEY_Q, ICONS + "clipboard.svg")
+	_windows.register("outliner", "Outliner", _outliner_panel, KEY_Q, ICONS + "checklist.svg")
 	_outliner_panel.setup(_state, _loader)
 	_outliner_panel.hide_close_button()
 	_outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
@@ -541,7 +541,7 @@ func _ready() -> void:
 	# window is one call plus one line in _build_action_bar(), which is what U5a's
 	# shell was for.
 	_projects_panel = ProjectsPanel.new()
-	_windows.register("projects", "Public Works", _projects_panel, KEY_W, ICONS + "road.svg")
+	_windows.register("projects", "Public Works", _projects_panel, KEY_W, ICONS + "construction.svg")
 	_projects_panel.setup(_state, _loader)
 	_projects_panel.hide_close_button()
 	_projects_panel.acted.connect(func(before, label):
@@ -576,7 +576,7 @@ func _ready() -> void:
 	# is the whole criterion -- the drawer's tooltip and the key press both read
 	# it off this one call.
 	_commodities_panel = CommoditiesPanel.new()
-	_windows.register("commodities", "Commodities", _commodities_panel, KEY_H, ICONS + "crate.svg")
+	_windows.register("commodities", "Commodities", _commodities_panel, KEY_H, ICONS + "inventory_2.svg")
 	_commodities_panel.setup(_state, _loader)
 	_commodities_panel.hide_close_button()
 
@@ -584,7 +584,7 @@ func _ready() -> void:
 	# SECOND way in: the map's cross is the route, and this entry is for the
 	# player who does not know that -- §16's own wording.
 	_city_panel = CityPanel.new()
-	_windows.register("city", "Cities", _city_panel, KEY_V, ICONS + "building.svg")
+	_windows.register("city", "Cities", _city_panel, KEY_V, ICONS + "location_city.svg")
 	_city_panel.setup(_state, _loader)
 	_city_panel.hide_close_button()
 
@@ -593,7 +593,7 @@ func _ready() -> void:
 	# seventh hand-written list of panel ids to get here, and the drawer's tooltip
 	# reads the letter off the registry rather than restating it.
 	_energy_panel = EnergyPanel.new()
-	_windows.register("energy", "Energy", _energy_panel, KEY_F, ICONS + "lightning_bolt.svg")
+	_windows.register("energy", "Energy", _energy_panel, KEY_F, ICONS + "bolt.svg")
 	_energy_panel.setup(_state, _loader)
 	_energy_panel.hide_close_button()
 	_energy_panel.acted.connect(func(before, label):
@@ -616,7 +616,7 @@ func _ready() -> void:
 	# poll -- docs/society-model.md section 11's argument for moving the delivery readout
 	# off it, one block later.
 	_campaign_panel = CampaignPanel.new()
-	_windows.register("campaign", "Campaign", _campaign_panel, KEY_A, ICONS + "megaphone.svg")
+	_windows.register("campaign", "Campaign", _campaign_panel, KEY_A, ICONS + "campaign.svg")
 	_campaign_panel.setup(_state, _loader)
 	_campaign_panel.hide_close_button()
 	_campaign_panel.acted.connect(func(before, label):
@@ -630,7 +630,7 @@ func _ready() -> void:
 	# window rather than a modal is in the panel's own header: a crisis the player can
 	# ignore and pay for is the whole of the deadline.
 	_events_panel = EventsPanel.new()
-	_windows.register("events", "Dispatches", _events_panel, KEY_N, ICONS + "envelope.svg")
+	_windows.register("events", "Dispatches", _events_panel, KEY_N, ICONS + "mail.svg")
 	_events_panel.setup(_state, _loader)
 	_events_panel.set_messages(_messages)
 	_events_panel.hide_close_button()
@@ -666,7 +666,7 @@ func _ready() -> void:
 	# baseline is taken before the panel ever opens, because a choice made over
 	# dinner is a command with a delta like any other.
 	_summit_panel = SummitPanel.new()
-	_windows.register("summit", "Summit", _summit_panel, KEY_NONE, ICONS + "institutional_building.svg")
+	_windows.register("summit", "Summit", _summit_panel, KEY_NONE, ICONS + "account_balance.svg")
 	_summit_panel.setup(_state, _loader)
 	# No hide_close_button(): the frame's X is a live exit -- a summit walked
 	# out on applies nothing, which is the ephemeris working, not a bug.
@@ -811,7 +811,7 @@ func _ready() -> void:
 ## itself never sees a panel, so adding V1.3c's tariffs or U6's calendar is one
 ## register() and one line in this list.
 func _build_action_bar() -> void:
-	_hud.action_bar.add_cluster("state", "State", ICONS + "institutional_building.svg", [
+	_hud.action_bar.add_cluster("state", "State", ICONS + "account_balance.svg", [
 		_entry("overview", "Overview"),
 		# V4.1. The term's programme, right after the Overview it frames -- a
 		# president deals with what the term is for before the machinery.
@@ -834,7 +834,7 @@ func _build_action_bar() -> void:
 		# people took.
 		_entry("events", "Dispatches"),
 	])
-	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "coins.svg", [
+	_hud.action_bar.add_cluster("economy", "Economy", ICONS + "payments.svg", [
 		_entry("economy", "Economy"),
 		_entry("budget", "Budget"),
 		# V4.2 T5. Beside Budget, its own window rather than rows on it: the
@@ -862,10 +862,10 @@ func _build_action_bar() -> void:
 		# ruling -- region, city and energy are Economy.
 		_entry("energy", "Energy"),
 	])
-	_hud.action_bar.add_cluster("society", "Society", ICONS + "human.svg", [
+	_hud.action_bar.add_cluster("society", "Society", ICONS + "diversity_3.svg", [
 		_entry("society", "Polling"),
 	])
-	_hud.action_bar.add_cluster("world", "World", ICONS + "globe.svg", [
+	_hud.action_bar.add_cluster("world", "World", ICONS + "public.svg", [
 		_entry("diplomacy", "Diplomacy"),
 		_entry("orgs", "Organisations"),
 	])

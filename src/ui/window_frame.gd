@@ -94,7 +94,7 @@ func _build_title_bar(title: String, icon_path := "") -> Control:
 	row.add_theme_constant_override("separation", 4)
 	bar.add_child(row)
 
-	# V2.3: the window's own glyph ahead of its name, from the same at-icons set
+	# V2.3: the window's own glyph ahead of its name, from the same Material Symbols set
 	# the bar's clusters wear and through the same bytes-then-rasterise path
 	# (icon.gd). Rasterised once here at setup -- the title bar is built once per
 	# session, so Icon.load_icon's no-cache cost never repeats.

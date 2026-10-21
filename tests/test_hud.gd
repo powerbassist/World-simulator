@@ -61,14 +61,31 @@ func _later_frames() -> bool:
 ## ever breaks, the bar renders four unlabelled-looking buttons and nothing
 ## reports an error.
 func _check_icons_load() -> void:
-	const ICONS := "res://addons/at-icons/control/"
-	for name in ["institutional_building", "coins", "human", "globe"]:
+	const ICONS := "res://assets/icons/material/"
+	for name in ["account_balance", "payments", "diversity_3", "public"]:
 		var texture := Icon.load_icon(ICONS + name + ".svg", UiTheme.TEXT, 22)
 		if texture == null:
-			_fail("icon '%s' did not load -- is it committed? see .gitignore's at-icons exception" % name)
+			_fail("icon '%s' did not load -- is assets/icons/material committed?" % name)
 			continue
 		if texture.get_width() != 22:
 			_fail("icon '%s' rasterised at %dpx, expected 22" % [name, texture.get_width()])
+		# The tint is a fill written into the SVG, not a modulate: the glyph's
+		# opaque pixels must come out the tint, not the SVG's default black.
+		var tint := Color("#C0FFEE")
+		var image := Icon.load_icon(ICONS + name + ".svg", tint, 22).get_image()
+		var opaque := 0
+		var off_tint := 0
+		for y in image.get_height():
+			for x in image.get_width():
+				var px := image.get_pixel(x, y)
+				if px.a > 0.95:
+					opaque += 1
+					if absf(px.r - tint.r) > 0.06 or absf(px.g - tint.g) > 0.06 or absf(px.b - tint.b) > 0.06:
+						off_tint += 1
+		if opaque == 0:
+			_fail("icon '%s' rasterised with no opaque pixel at all" % name)
+		elif off_tint > 0:
+			_fail("icon '%s' has %d opaque pixels that are not the tint" % [name, off_tint])
 
 	# And the bar is actually using them, not merely able to.
 	for cluster_id in _main._hud.action_bar._cluster_buttons.keys():

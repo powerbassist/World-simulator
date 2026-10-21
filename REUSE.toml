@@ -214,6 +214,14 @@ SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
+  "assets/icons/material/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Google LLC"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
   "addons/at-icons/**",
 ]
 precedence = "override"
