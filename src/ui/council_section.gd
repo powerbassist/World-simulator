@@ -24,6 +24,7 @@ const Portrait = preload("res://src/ui/portrait.gd")
 const Bargains = preload("res://src/ui/council_bargains.gd")
 const Ratification = preload("res://src/sim/ratification.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 const FACE_SIZE := Vector2(48, 60)
 const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -50,19 +51,19 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 	# First, and the only primary candidate above the vote buttons: a treaty
 	# waiting on the player's assembly dies for every member if left alone.
 	_ratify_card(body, panel, state, loader, ns, org)
-	PanelKit.heading(body, "BEFORE THE COUNCIL")
+	PanelKit.heading(body, Strings.t("BEFORE THE COUNCIL"))
 	_chair_line(body, state, loader, ns, org)
 
 	var pending: Dictionary = Orgs.pending(state, org.id)
 	if pending.is_empty():
-		PanelKit.line(body, "Nothing before the council. The presidency brings the next proposal forward in due course.")
+		PanelKit.line(body, Strings.t("Nothing before the council. The presidency brings the next proposal forward in due course."))
 	else:
 		PanelKit.line(body, String(pending.get("name", "")), PanelKit.Tone.PLAIN)
 		PanelKit.line(body, String(pending.get("summary", "")))
 		_sponsor_row(body, state, loader, ns, org, pending)
 		_decision_line(body, loader, org, pending)
 		_lobbying_line(body, loader, pending)
-		PanelKit.line(body, "Divides in %d %s." % [
+		PanelKit.line(body, Strings.t("Divides in %d %s.") % [
 			int(pending.get("months_left", 0)),
 			"month" if int(pending.get("months_left", 0)) == 1 else "months",
 		], PanelKit.Tone.PLAIN)
@@ -79,13 +80,13 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 			# Said here because it is the one rule of this panel a player would
 			# otherwise have to infer from a tally.
 			if choice == Orgs.VOTE_ABSTAIN:
-				button.tooltip_text = "Counted against the threshold, for neither side."
+				button.tooltip_text = Strings.t("Counted against the threshold, for neither side.")
 			button.pressed.connect(panel._on_vote.bind(org.id, choice))
 			if not button.disabled:
 				panel.offer_primary(button)
 			row.add_child(button)
 		body.add_child(row)
-		PanelKit.line(body, "Currently: %s. %s holds %d of the council's seats." % [
+		PanelKit.line(body, Strings.t("Currently: %s. %s holds %d of the council's seats.") % [
 			"abstaining" if current == Orgs.VOTE_ABSTAIN else "voting " + current,
 			loader.nation_name(ns.id), org.seats(ns.id),
 		])
@@ -99,10 +100,10 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 	var last: Dictionary = Orgs.last_vote(state, org.id)
 	if not last.is_empty():
 		PanelKit.line(body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(body, "Last division: %s — %s" % [
+		PanelKit.line(body, Strings.t("Last division: %s — %s") % [
 			String(last.get("name", "")), "carried" if bool(last.get("passed", false)) else "fell",
 		], PanelKit.Tone.PLAIN)
-		PanelKit.line(body, "%d for, %d against, of %d seats. %s %s." % [
+		PanelKit.line(body, Strings.t("%d for, %d against, of %d seats. %s %s.") % [
 			int(last.get("seats_for", 0)), int(last.get("seats_against", 0)),
 			int(last.get("seats_total", 0)), loader.nation_name(ns.id),
 			_vote_words(String(last.get("player_vote", ""))),
@@ -122,7 +123,7 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 	if String((r.get("nations", {}) as Dictionary).get(ns.id, "")) != CouncilK.RATIFY_PENDING:
 		return
 	var left: int = int(r.get("months_left", 0))
-	PanelKit.heading(body, "RATIFY AT HOME — %s (%d %s left)" % [
+	PanelKit.heading(body, Strings.t("RATIFY AT HOME — %s (%d %s left)") % [
 		String(r.get("name", "")), left, "month" if left == 1 else "months",
 	])
 	# The SAME blurred forecast a bill gets in the law screen (law_panel's static
@@ -132,7 +133,7 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 	if proposal != null:
 		var treaty = Ratification.treaty_bill(proposal)
 		var parties: Array = loader.parties.get(ns.id, [])
-		PanelKit.line(body, "Your assembly, if it voted today: %s" % LawPanel.forecast_text(
+		PanelKit.line(body, Strings.t("Your assembly, if it voted today: %s") % LawPanel.forecast_text(
 			ns, parties, treaty, LawPanel.forecast_band(ns, treaty.id)), PanelKit.Tone.PLAIN)
 	var members: int = Orgs.members(state, org.id).size()
 	var r_sponsor := String(r.get("sponsor", ""))
@@ -141,7 +142,7 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 		falls += "; %s will not forget it" % loader.nation_name(r_sponsor)
 	PanelKit.line(body, falls + ".")
 	var button := Button.new()
-	button.text = "Put it to the assembly"
+	button.text = Strings.t("Put it to the assembly")
 	button.pressed.connect(panel._on_ratify.bind(org.id))
 	panel.claim_primary(button)
 	body.add_child(button)
@@ -200,15 +201,15 @@ static func _vote_reason_text(key: String) -> String:
 static func _sponsor_row(body: VBoxContainer, state, loader, ns, org, pending: Dictionary) -> void:
 	var sponsor := String(pending.get("sponsor", ""))
 	if sponsor == "":
-		PanelKit.line(body, "No sponsor \u2014 the presidency put it forward.")
+		PanelKit.line(body, Strings.t("No sponsor \u2014 the presidency put it forward."))
 		return
 	if sponsor == ns.id:
 		# Tabled by the player (paid) vs authored as the player nation's own.
 		var authored = Orgs.proposal_by_id(loader, org.id, String(pending.get("proposal_id", "")))
 		if authored != null and String(authored.sponsor) == ns.id:
-			PanelKit.line(body, "Your government's proposal.")
+			PanelKit.line(body, Strings.t("Your government's proposal."))
 		else:
-			PanelKit.line(body, "You tabled it.")
+			PanelKit.line(body, Strings.t("You tabled it."))
 		return
 	var sponsor_ns = state.nations.get(sponsor, null)
 	var drive: float = Council.drive(state, loader, sponsor)
@@ -244,7 +245,7 @@ static func _sponsor_reaction_line(body: VBoxContainer, state, loader, ns, pendi
 	if sponsor == "" or sponsor == ns.id or not state.nations.has(sponsor):
 		return
 	var d: float = Council.drive(state, loader, sponsor)
-	PanelKit.line(body, "Backing it earns %s goodwill (+%.1f); opposing it costs %.1f; abstaining costs nothing." % [
+	PanelKit.line(body, Strings.t("Backing it earns %s goodwill (+%.1f); opposing it costs %.1f; abstaining costs nothing.") % [
 		loader.nation_name(sponsor), CouncilK.SPONSOR_THANKS * d, CouncilK.SPONSOR_SNUB * d,
 	])
 
@@ -255,9 +256,9 @@ static func _decision_line(body: VBoxContainer, loader, org, pending: Dictionary
 	var p = Orgs.proposal_by_id(loader, org.id, String(pending.get("proposal_id", "")))
 	var rule: String = Council.decision_of(loader, p) if p != null else String(org.decision_rule)
 	if rule == CouncilK.DECISION_UNANIMITY:
-		PanelKit.line(body, "A treaty: one vote against vetoes it. If it carries, your assembly must ratify it within %d months \u2014 one rejection anywhere kills it for every member." % CouncilK.RATIFY_WINDOW_MONTHS)
+		PanelKit.line(body, Strings.t("A treaty: one vote against vetoes it. If it carries, your assembly must ratify it within %d months \u2014 one rejection anywhere kills it for every member.") % CouncilK.RATIFY_WINDOW_MONTHS)
 	else:
-		PanelKit.line(body, "Decided by qualified majority: %d %% of the seats cast. Abstaining lowers the bar instead of blocking." % roundi(BK.PASS_SEAT_FRACTION * 100.0))
+		PanelKit.line(body, Strings.t("Decided by qualified majority: %d %% of the seats cast. Abstaining lowers the bar instead of blocking.") % roundi(BK.PASS_SEAT_FRACTION * 100.0))
 
 
 static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> void:
@@ -268,7 +269,7 @@ static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> 
 	for id in lobbied.keys():
 		names.append(loader.nation_name(String(id)))
 	names.sort()
-	PanelKit.line(body, "%s has spent goodwill to bring round: %s." % [
+	PanelKit.line(body, Strings.t("%s has spent goodwill to bring round: %s.") % [
 		loader.nation_name(String(pending.get("sponsor", ""))), ", ".join(names),
 	])
 
@@ -279,14 +280,14 @@ static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> 
 static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 	if org.presidency.is_empty():
 		if org.decision_rule == CouncilK.DECISION_UNANIMITY:
-			PanelKit.line(body, "No rotating chair: the Secretary General convenes, decisions by consensus.")
+			PanelKit.line(body, Strings.t("No rotating chair: the Secretary General convenes, decisions by consensus."))
 		return
 	var current := Council.presiding_nation(state, loader, org.id)
 	if current == "":
 		return
 	var months: int = int(org.presidency["months"])
 	if current == ns.id:
-		PanelKit.line(body, "You chair the council this %s." % ("semester" if months == 6 else "term"))
+		PanelKit.line(body, Strings.t("You chair the council this %s.") % (Strings.t("semester") if months == 6 else "term"))
 		return
 	var anchor: int = int(org.presidency["anchor_index"])
 	var now: int = state.year * 12 + (state.month - 1)
@@ -316,11 +317,11 @@ static func _outcome(body: VBoxContainer, loader, last: Dictionary) -> void:
 		var names: Array = []
 		for id in vetoed:
 			names.append(loader.nation_name(String(id)))
-		PanelKit.line(body, "Vetoed by %s." % ", ".join(names))
+		PanelKit.line(body, Strings.t("Vetoed by %s.") % ", ".join(names))
 	match String(last.get("ratification", "")):
-		"pending": PanelKit.line(body, "Awaiting ratification at home.")
-		"ratified": PanelKit.line(body, "Ratified.")
-		"failed": PanelKit.line(body, "Fell at ratification.")
+		"pending": PanelKit.line(body, Strings.t("Awaiting ratification at home."))
+		"ratified": PanelKit.line(body, Strings.t("Ratified."))
+		"failed": PanelKit.line(body, Strings.t("Fell at ratification."))
 
 
 ## "voted for" in words rather than the raw choice key.
@@ -343,4 +344,4 @@ static func _aid_line(body: VBoxContainer, state, ns, org) -> void:
 	for a in (state.orgs[org.id].get("aid", []) as Array):
 		if String(a.get("payer", "")) == ns.id:
 			left = maxi(left, int(a.get("months_left", 0)) + 1)
-	PanelKit.line(body, "You are paying %.2f %% of GDP in side-payments to this council (%d months left)." % [pct, left])
+	PanelKit.line(body, Strings.t("You are paying %.2f %% of GDP in side-payments to this council (%d months left).") % [pct, left])

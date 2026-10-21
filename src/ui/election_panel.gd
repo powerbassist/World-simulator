@@ -180,7 +180,7 @@ func show_results(results: Array) -> void:
 	# and a footer reads like a screen that failed to load, which is too close to
 	# the bug this branch exists to fix.
 	if termed_out:
-		PanelKit.line(_sections, "%s has served %d terms as %s, the most the constitution allows, and cannot stand again. The office passes to whoever wins the election you are not in." % [
+		PanelKit.line(_sections, tr("%s has served %d terms as %s, the most the constitution allows, and cannot stand again. The office passes to whoever wins the election you are not in.") % [
 			_loader.person_name(ns.head_of_state_person_id),
 			ns.terms_served,
 			_loader.nations[ns.id].executive_title,
@@ -224,7 +224,7 @@ func show_results(results: Array) -> void:
 	# and while the footer bug crushed this copy to a column the duplication
 	# was invisible -- one sentence per verdict now that both render.
 	if defeated and not termed_out:
-		_verdict_nodes.append(PanelKit.line(_sections, "You have lost your office. This term is over.", PanelKit.Tone.PLAIN))
+		_verdict_nodes.append(PanelKit.line(_sections, tr("You have lost your office. This term is over."), PanelKit.Tone.PLAIN))
 
 	_dismiss_label = "Leave office" if defeated else "Continue"
 	_cont = Button.new()
@@ -292,11 +292,11 @@ func _apply_count(counted: float) -> void:
 	if n == 0 or _cells.is_empty():
 		_ticker.visible = false
 	elif counted >= float(n):
-		_ticker.text = "All %d regions declared." % n
+		_ticker.text = tr("All %d regions declared.") % n
 	elif _night.declared(counted) == 0:
-		_ticker.text = "Polls closed. The count begins."
+		_ticker.text = tr("Polls closed. The count begins.")
 	else:
-		_ticker.text = "%d of %d regions declared -- latest, %s." % [
+		_ticker.text = tr("%d of %d regions declared -- latest, %s.") % [
 			_night.declared(counted), n, _night.latest(counted)]
 
 
@@ -481,13 +481,13 @@ func _build_party_table(result: Dictionary, index: int) -> Control:
 func _build_attribution(result: Dictionary, is_verdict := false) -> Control:
 	var box := VBoxContainer.new()
 
-	PanelKit.line(box, "What decided it", PanelKit.Tone.PLAIN)
+	PanelKit.line(box, tr("What decided it"), PanelKit.Tone.PLAIN)
 
 	for entry in result["attribution"]:
 		var issue: String = entry["issue"]
 		var satisfaction: float = entry["satisfaction"]
 		var mood := "helped" if satisfaction > 0.05 else ("hurt" if satisfaction < -0.05 else "was neutral")
-		PanelKit.line(box, "%s — %s (salience %.0f%%)" % [
+		PanelKit.line(box, tr("%s — %s (salience %.0f%%)") % [
 			OpinionK.ISSUE_LABEL[issue], mood, entry["salience"] * 100.0,
 		], PanelKit.Tone.PLAIN)
 

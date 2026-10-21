@@ -57,7 +57,7 @@ func _ready() -> void:
 	margin.add_child(root)
 
 	_title = Label.new()
-	_title.text = "CHOOSE A NATION"
+	_title.text = tr("CHOOSE A NATION")
 	root.add_child(_title)
 
 	var scroll := ScrollContainer.new()
@@ -77,7 +77,7 @@ func _build_footer() -> Control:
 	row.alignment = BoxContainer.ALIGNMENT_END
 
 	var close := Button.new()
-	close.text = "Back"
+	close.text = tr("Back")
 	close.pressed.connect(func():
 		# From the start list, Back means "pick a different nation" rather than
 		# "leave New Game" -- otherwise choosing a nation is unrecoverable
@@ -138,11 +138,11 @@ func _clear() -> void:
 
 
 func _show_nations() -> void:
-	_title.text = "CHOOSE A NATION"
+	_title.text = tr("CHOOSE A NATION")
 	_clear()
 
 	if _nations.is_empty():
-		PanelKit.line(_list, "No playable nation found in data/nations/.", PanelKit.Tone.PLAIN)
+		PanelKit.line(_list, tr("No playable nation found in data/nations/."), PanelKit.Tone.PLAIN)
 		return
 
 	for n in _nations:
@@ -161,7 +161,7 @@ func _build_nation_row(n) -> Control:
 	row.add_child(label)
 
 	var play_btn := Button.new()
-	play_btn.text = "Play"
+	play_btn.text = tr("Play")
 	play_btn.pressed.connect(func():
 		if _scenarios_by_nation.get(n.id, []).is_empty():
 			nation_selected.emit(n.id, "")
@@ -174,7 +174,7 @@ func _build_nation_row(n) -> Control:
 
 
 func _show_starts(n) -> void:
-	_title.text = "CHOOSE A START -- %s" % n.nation_name.to_upper()
+	_title.text = tr("CHOOSE A START -- %s") % n.nation_name.to_upper()
 	_clear()
 
 	# Standard first and always: it is the game every measured balance number in
@@ -205,7 +205,7 @@ func _build_start_row(nation_id: String, scenario_id: String, name: String, desc
 	PanelKit.line(column, description)
 
 	var play_btn := Button.new()
-	play_btn.text = "Play"
+	play_btn.text = tr("Play")
 	play_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	play_btn.pressed.connect(func(): nation_selected.emit(nation_id, scenario_id))
 	row.add_child(play_btn)

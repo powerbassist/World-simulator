@@ -275,6 +275,10 @@ tests=(
   # V4.5b2 T6: the council panel's verbs, the desk mark and the Europe figure.
   tests/test_orgs_panel.gd
   tests/test_acknowledgments.gd
+  # V5.1b: the localisation plumbing -- tables, the switch, row keys, the lint, the fit sweep.
+  tests/test_strings.gd
+  tests/test_settings_language.gd
+  tests/test_i18n_lint.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is

@@ -92,7 +92,7 @@ func _ready() -> void:
 	root.add_child(_actions)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func():
 		hide()
 		closed.emit()
@@ -140,12 +140,12 @@ func _process(_delta: float) -> void:
 ## the map IS the picker, and a second list of the same ten would be a surface to
 ## keep in step with it for no gain.
 func _show_empty_state() -> void:
-	_title.text = "No nation selected"
+	_title.text = tr("No nation selected")
 	for child in _body.get_children():
 		child.queue_free()
 	for child in _actions.get_children():
 		child.queue_free()
-	PanelKit.line(_body, "Click a country on the map to open its file. The coloured ones are the nations the game simulates.", PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Click a country on the map to open its file. The coloured ones are the nations the game simulates."), PanelKit.Tone.PLAIN)
 
 
 func mark_dirty() -> void:
@@ -172,19 +172,19 @@ func _refresh() -> void:
 	# "neighbour": the simulated grade is every nation without `playable` -- Italy
 	# and Spain as much as the twelve (the V4.11 review caught the first wording).
 	if Roster.grade(_loader, _nation_id) == "simulated":
-		PanelKit.line(_body, "Simulated nation — not playable", PanelKit.Tone.DIM)
-	PanelKit.line(_body, "Leader: %s (%s)" % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "GDP: EUR %.0fbn   growth %+.2f%%" % [ns.gdp_eur_bn, ns.growth_annual_pct], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Unemployment: %.1f%%" % ns.unemployment_pct, PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Debt: %.1f%% of GDP" % ns.debt_to_gdp_pct(), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Simulated nation — not playable"), PanelKit.Tone.DIM)
+	PanelKit.line(_body, tr("Leader: %s (%s)") % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %+.2f%%") % [ns.gdp_eur_bn, ns.growth_annual_pct], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Unemployment: %.1f%%") % ns.unemployment_pct, PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Debt: %.1f%% of GDP") % ns.debt_to_gdp_pct(), PanelKit.Tone.PLAIN)
 
 	# The player's own approval is polled elsewhere with noise applied (see
 	# polling_panel.gd) — this panel shows every nation including rivals the
 	# player has no poll for, so it reports the true figure plainly rather
 	# than reusing a noise model built around one nation's published polls.
-	PanelKit.line(_body, "Approval: %.0f%%" % ns.overall_approval_pct, PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Approval: %.0f%%") % ns.overall_approval_pct, PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "Term %d of %d months, next election %d/%d" % [
+	PanelKit.line(_body, tr("Term %d of %d months, next election %d/%d") % [
 		ns.months_in_term, ns.term_months, ns.next_election_month, ns.next_election_year
 	], PanelKit.Tone.PLAIN)
 
@@ -204,7 +204,7 @@ func _refresh_actions() -> void:
 
 	var heading := Label.new()
 	heading.theme_type_variation = UiTheme.HEADING
-	heading.text = "RELATIONS"
+	heading.text = tr("RELATIONS")
 	_actions.add_child(heading)
 
 	var score := Diplomacy.score(_state, player_id, _nation_id)
@@ -213,19 +213,19 @@ func _refresh_actions() -> void:
 	# The player's side of the trade weight, not the partner's. The two differ --
 	# that asymmetry is the whole point of the directed weight — and showing the
 	# viewer's own share is what makes "who matters to me" readable.
-	PanelKit.line(_actions, "Trade: %.0f%% of %s's external demand" % [
+	PanelKit.line(_actions, tr("Trade: %.0f%% of %s's external demand") % [
 		100.0 * float(Trade.weights(_state, player_id).get(_nation_id, 0.0)), player_id,
 	])
 
 	var agreement_line := Label.new()
 	if _state.agreements.has(Relations.key(player_id, _nation_id)):
 		var entry: Dictionary = _state.agreements[Relations.key(player_id, _nation_id)]
-		agreement_line.text = "Agreement: %s, since %d/%d" % [
+		agreement_line.text = tr("Agreement: %s, since %d/%d") % [
 			entry.get("action_name", entry.get("action_id", "")),
 			int(entry.get("since_month", 0)), int(entry.get("since_year", 0)),
 		]
 	else:
-		agreement_line.text = "Agreement: none"
+		agreement_line.text = tr("Agreement: none")
 		agreement_line.theme_type_variation = UiTheme.CAPTION
 	_actions.add_child(agreement_line)
 
@@ -289,7 +289,7 @@ func _alliance_line(player_id: String) -> Control:
 
 	var pact = _state.pacts.get(Relations.key(player_id, _nation_id))
 	if pact == null:
-		line.text = "Alliance: none"
+		line.text = tr("Alliance: none")
 		line.theme_type_variation = UiTheme.CAPTION
 		return line
 
@@ -318,10 +318,10 @@ func _measure_line(prefix: String, from_id: String, to_id: String) -> Control:
 	var line := Label.new()
 	var terms = _state.measures.get(Relations.directed_key(from_id, to_id))
 	if terms == null:
-		line.text = "%s: none" % prefix
+		line.text = tr("%s: none") % prefix
 		line.theme_type_variation = UiTheme.CAPTION
 		return line
-	line.text = "%s: %s, severity %.2f, since %d/%d" % [
+	line.text = tr("%s: %s, severity %.2f, since %d/%d") % [
 		prefix,
 		terms.get("action_name", terms.get("action_id", "")),
 		float(terms.get("severity", 0.0)),
@@ -344,12 +344,12 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	row.add_child(summary)
 
 	var button := Button.new()
-	button.text = "Act"
+	button.text = tr("Act")
 	button.disabled = not is_available
 	if not is_available:
 		button.tooltip_text = _unavailable_reason(action, player_id)
 	else:
-		button.tooltip_text = "%+.0f relations with %s." % [
+		button.tooltip_text = tr("%+.0f relations with %s.") % [
 			float(action.effects.get("relations", 0.0)), _nation_id,
 		]
 		button.pressed.connect(_on_act.bind(action))

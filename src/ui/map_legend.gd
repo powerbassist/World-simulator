@@ -60,7 +60,7 @@ func _ready() -> void:
 
 	var heading := Label.new()
 	heading.theme_type_variation = UiTheme.MICRO
-	heading.text = "MAP LAYER"
+	heading.text = tr("MAP LAYER")
 	column.add_child(heading)
 
 	# Built from MapLayers.ids() and from nothing else, so adding a layer to the

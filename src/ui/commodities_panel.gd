@@ -131,7 +131,7 @@ func _ready() -> void:
 	gutter.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -166,7 +166,7 @@ func _refresh() -> void:
 	if nation == null:
 		return
 
-	_title.text = "Commodities of %s" % nation.nation_name
+	_title.text = tr("Commodities of %s") % nation.nation_name
 
 	# remove_child THEN queue_free, which is map_legend.gd's own two lines and not
 	# the plain queue_free most panels use. The reason is measured rather than
@@ -208,9 +208,9 @@ func _build_alert(ns) -> void:
 		])
 	PanelKit.ledger(body, rows)
 	if short.size() > ALERT_HEAD:
-		PanelKit.line(body, "and %d more." % (short.size() - ALERT_HEAD), PanelKit.Tone.BAD)
+		PanelKit.line(body, tr("and %d more.") % (short.size() - ALERT_HEAD), PanelKit.Tone.BAD)
 	else:
-		PanelKit.line(body, "%d good%s below %d%% of the month's demand." % [
+		PanelKit.line(body, tr("%d good%s below %d%% of the month's demand.") % [
 			short.size(), "" if short.size() == 1 else "s", roundi(SHORTAGE_COVERAGE * 100.0)],
 			PanelKit.Tone.BAD)
 
@@ -219,7 +219,7 @@ func _build_alert(ns) -> void:
 ## category with no goods prints that fact rather than nothing, so a content pack
 ## that empties one reads as empty instead of as a section that vanished.
 func _build_balance(ns) -> void:
-	PanelKit.heading(_body, "The balance, this month")
+	PanelKit.heading(_body, tr("The balance, this month"))
 	var prices: Dictionary = (ns.commodity_state.get("price", {}) as Dictionary)
 	for category in DataLoader.COMMODITY_CATEGORIES:
 		var goods: Array = []
@@ -228,7 +228,7 @@ func _build_balance(ns) -> void:
 				goods.append(good_id)
 		var body := PanelKit.section(_body, String(category))
 		if goods.is_empty():
-			PanelKit.line(body, "No good carries this category.")
+			PanelKit.line(body, tr("No good carries this category."))
 			continue
 		var rows: Array = []
 		for good_id in goods:
@@ -248,7 +248,7 @@ func _build_balance(ns) -> void:
 				"%.0f%%" % (100.0 * coverage(ns, good_id)),
 			])
 		PanelKit.ledger(body, rows)
-	PanelKit.line(_body, "Columns: units made · net units bought (positive) or sold (negative) · price against its base · the share of this month's demand covered. Prices are the one world vector; every nation's copy reads the same.")
+	PanelKit.line(_body, tr("Columns: units made · net units bought (positive) or sold (negative) · price against its base · the share of this month's demand covered. Prices are the one world vector; every nation's copy reads the same."))
 
 
 ## The tree, as lines. Grouped by the OUTPUT's category, in the loader's category
@@ -267,8 +267,8 @@ func _build_balance(ns) -> void:
 ## value them against), and a panel that printed a factor requirement the machine
 ## ignores would be presenting a lever the game does not have.
 func _build_tree() -> void:
-	PanelKit.heading(_body, "The industrial tree")
-	PanelKit.line(_body, "What makes what. A good with no line is a primary producer: raw materials, crops and services are not made from anything.")
+	PanelKit.heading(_body, tr("The industrial tree"))
+	PanelKit.line(_body, tr("What makes what. A good with no line is a primary producer: raw materials, crops and services are not made from anything."))
 
 	var by_output: Dictionary = {}
 	for recipe_id in _recipe_ids():
@@ -287,7 +287,7 @@ func _build_tree() -> void:
 				lines.append("%s  <-  %s" % [_good_name(good_id), _inputs_text(recipe)])
 		var body := PanelKit.section(_body, String(category))
 		if lines.is_empty():
-			PanelKit.line(body, "Made from nothing -- produced from the country's own endowment.")
+			PanelKit.line(body, tr("Made from nothing -- produced from the country's own endowment."))
 			continue
 		for text in lines:
 			PanelKit.line(body, text)

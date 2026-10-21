@@ -76,7 +76,7 @@ func _ready() -> void:
 	approval_row.add_child(_mood_icon)
 
 	var approval_caption := Label.new()
-	approval_caption.text = "APPROVAL"
+	approval_caption.text = tr("APPROVAL")
 	approval_caption.theme_type_variation = UiTheme.MICRO
 	column.add_child(approval_caption)
 

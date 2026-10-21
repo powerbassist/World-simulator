@@ -111,7 +111,7 @@ func _ready() -> void:
 	gutter.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -163,7 +163,7 @@ func _refresh() -> void:
 		return
 	_primary = null
 
-	_title.text = "Industry"
+	_title.text = tr("Industry")
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -177,8 +177,8 @@ func _refresh() -> void:
 		# V1.6e turned this from a RETURN into a note. The sector programmes below do
 		# not read the firm register at all, so returning here would have hidden a
 		# working lever behind a missing content file.
-		PanelKit.heading(_body, "No register")
-		PanelKit.line(_body, "No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply.")
+		PanelKit.heading(_body, tr("No register"))
+		PanelKit.line(_body, tr("No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply."))
 
 	if _last_refusal != "":
 		PanelKit.line(_body, _last_refusal)
@@ -198,14 +198,14 @@ func _refresh() -> void:
 func _build_autonomy_sections(ns) -> void:
 	var bid: Dictionary = Industry.pending_bid(_state, ns, _loader)
 	if not bid.is_empty():
-		PanelKit.heading(_body, "Foreign takeover bid")
+		PanelKit.heading(_body, tr("Foreign takeover bid"))
 		var firm_name: String = _loader.firm_name(ns.id, String(bid["company_id"]))
 		# EUR bn, its own format -- pop_text is the POPULATION formatter and
 		# rendered a 50 bn offer as "0 k" (the B3 review's Important). The
 		# bidder resolves through the loader like every other surface -- the
 		# raw three-letter id read as a country's name on the shipped frame
 		# (the pass-4 fleet's find).
-		PanelKit.line(_body, "%s offers %.1f bn for %s -- %d months left." % [
+		PanelKit.line(_body, tr("%s offers %.1f bn for %s -- %d months left.") % [
 			_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
 			firm_name, int(bid["months_left"])])
 		var row := HBoxContainer.new()
@@ -224,10 +224,10 @@ func _build_autonomy_sections(ns) -> void:
 		_body.add_child(row)
 	var failing: Array = Industry.failing(_state, ns, _loader)
 	if not failing.is_empty():
-		PanelKit.heading(_body, "Failing firms")
+		PanelKit.heading(_body, tr("Failing firms"))
 		for failure in failing:
 			var company_id := String(failure["company_id"])
-			PanelKit.line(_body, "%s -- rescue window: %d months left." % [
+			PanelKit.line(_body, tr("%s -- rescue window: %d months left.") % [
 				_loader.firm_name(ns.id, company_id), int(failure["months_left"])])
 			var action = _action_by_id("strategic_rescue")
 			if action == null:
@@ -273,27 +273,27 @@ func _firm_object(nation_id: String, company_id: String):
 ## step by hand; the sector headings below carry the burden instead, so a player who
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
-	PanelKit.heading(_body, "The public account")
-	PanelKit.row(_body, "Subsidy bill", "%.3f %% of GDP" % ns.subsidy_bill_pct_gdp)
+	PanelKit.heading(_body, tr("The public account"))
+	PanelKit.row(_body, tr("Subsidy bill"), tr("%.3f %% of GDP") % ns.subsidy_bill_pct_gdp)
 	# V1.4c. On the same ledger and not on a second one, because it is the same
 	# register read from the other side of the budget -- and it lags a month, like the
 	# bill above it, so a firm nationalised this month shows 0.000 until the next tick.
-	PanelKit.row(_body, "Dividend income", "%.3f %% of GDP" % ns.dividend_revenue_pct_gdp)
-	PanelKit.row(_body, "Growth effect", "%+.3f %%/yr" % ns.firm_impulse_pct)
+	PanelKit.row(_body, tr("Dividend income"), tr("%.3f %% of GDP") % ns.dividend_revenue_pct_gdp)
+	PanelKit.row(_body, tr("Growth effect"), tr("%+.3f %%/yr") % ns.firm_impulse_pct)
 	# Signed the way the player reads it -- jobs, not unemployment points -- because
 	# the stored figure is an offset ADDED to structural unemployment and a positive
 	# number there is bad news. Flipping it here rather than storing it flipped keeps
 	# economy.gd's sum readable.
-	PanelKit.row(_body, "Jobs effect", "%+.3f pts unemployment" % ns.firm_jobs_offset_pct)
+	PanelKit.row(_body, tr("Jobs effect"), tr("%+.3f pts unemployment") % ns.firm_jobs_offset_pct)
 	# V1.6e, on the same ledger as the subsidy bill because it is the other half of
 	# one question -- what the state is spending on the productive economy -- and it
 	# lags a month for the same reason.
-	PanelKit.row(_body, "Investment bill", "%.3f %% of GDP" % ns.investment_bill_pct_gdp)
+	PanelKit.row(_body, tr("Investment bill"), tr("%.3f %% of GDP") % ns.investment_bill_pct_gdp)
 	# The trend the capital has BOUGHT, not the growth it is producing this month.
 	# Those are different quantities and the difference is the whole lever: the bill
 	# lands immediately and this number takes years to arrive, which is why both are
 	# printed rather than one summary of them.
-	PanelKit.row(_body, "Trend bought", "%+.3f %%/yr" % Investment.national_trend_shift_pct(ns))
+	PanelKit.row(_body, tr("Trend bought"), tr("%+.3f %%/yr") % Investment.national_trend_shift_pct(ns))
 
 
 func _build_sector(ns, sector: String) -> void:
@@ -315,7 +315,7 @@ func _build_sector(ns, sector: String) -> void:
 		rule = " · regulated %+.2f" % burden
 	elif burden < 0.0:
 		rule = " · deregulated %+.2f" % burden
-	PanelKit.heading(_body, "%s · %.0f bn · %.0f %% named%s" % [
+	PanelKit.heading(_body, tr("%s · %.0f bn · %.0f %% named%s") % [
 		SECTOR_LABEL.get(sector, sector), sector_output, 100.0 * named, rule,
 	])
 
@@ -360,7 +360,7 @@ func _build_body(ns, sector: String, body: Array) -> void:
 		# Critical 1, V1.6d's present-figure-as-zero class.
 		share += Companies.share_of_company(ns, company)
 		jobs += Companies.headcount(ns, company)
-	PanelKit.line(_body, "BODY · %d firms · %.2f of sector · %s jobs" % [
+	PanelKit.line(_body, tr("BODY · %d firms · %.2f of sector · %s jobs") % [
 		body.size(), share, _thousands(jobs),
 	])
 	var ranked := body.duplicate()
@@ -370,7 +370,7 @@ func _build_body(ns, sector: String, body: Array) -> void:
 	ranked.sort_custom(func(a, b): return float(live_jobs[a.id]) > float(live_jobs[b.id]))
 	for i in mini(5, ranked.size()):
 		var company = ranked[i]
-		PanelKit.line(_body, "  %s · %s jobs" % [
+		PanelKit.line(_body, tr("  %s · %s jobs") % [
 			company.company_name, _thousands(float(live_jobs[company.id])),
 		])
 
@@ -397,7 +397,7 @@ func _build_investment(ns, sector: String) -> void:
 
 	var state_label := Label.new()
 	if intensity > 0.0:
-		state_label.text = "State programme %.0f %% · capital %.2f · %+.3f %%/yr to this sector" % [
+		state_label.text = tr("State programme %.0f %% · capital %.2f · %+.3f %%/yr to this sector") % [
 			100.0 * intensity, capital, shift,
 		]
 		state_label.theme_type_variation = UiTheme.GOOD_TEXT
@@ -405,12 +405,12 @@ func _build_investment(ns, sector: String) -> void:
 		# The withdrawn case, and it needs its own line rather than falling into the
 		# one below: the money has stopped and the capital has not gone, which is the
 		# half of this model a single "no programme" caption would misreport.
-		state_label.text = "No programme · capital %.2f depreciating · %+.3f %%/yr to this sector" % [
+		state_label.text = tr("No programme · capital %.2f depreciating · %+.3f %%/yr to this sector") % [
 			capital, shift,
 		]
 		state_label.theme_type_variation = UiTheme.CAPTION
 	else:
-		state_label.text = "No state programme"
+		state_label.text = tr("No state programme")
 		state_label.theme_type_variation = UiTheme.CAPTION
 	block.add_child(state_label)
 
@@ -462,7 +462,7 @@ func _build_firm(ns, company) -> void:
 	var chair: String = String(ns.companies.get(company.id, {}).get("board_chair", ""))
 	if chair != "":
 		var chair_name: String = _loader.person_name(chair)
-		PanelKit.line(block, "Chair: %s" % (chair_name if chair_name != "" else chair))
+		PanelKit.line(block, tr("Chair: %s") % (chair_name if chair_name != "" else chair))
 
 	# Two facts about one firm, and both are live state with one writer each -- a
 	# subsidy is not an ownership and a player who has done both must see both. Joined
@@ -478,7 +478,7 @@ func _build_firm(ns, company) -> void:
 
 	var state_label := Label.new()
 	if parts.is_empty():
-		state_label.text = "private · no support"
+		state_label.text = tr("private · no support")
 		state_label.theme_type_variation = UiTheme.CAPTION
 	else:
 		state_label.text = " · ".join(parts)
@@ -489,7 +489,7 @@ func _build_firm(ns, company) -> void:
 	# One caption line rather than three rows: revenue, workforce and share are the
 	# firm's whole readout and a row each would treble this panel's height for a
 	# register that already has eighteen entries across the roster.
-	PanelKit.line(block, "%.1f bn · %s jobs · %.1f %% of sector" % [
+	PanelKit.line(block, tr("%.1f bn · %s jobs · %.1f %% of sector") % [
 		Companies.output_eur_bn(ns, company),
 		_thousands(Companies.headcount(ns, company)),
 		100.0 * Companies.share_of(ns, company.id),
@@ -502,12 +502,12 @@ func _build_firm(ns, company) -> void:
 	var money := Label.new()
 	var value := Companies.value_eur_bn(ns, company)
 	if held > 0.0:
-		money.text = "worth %.1f bn · %.1f bn held · %.2f bn/yr to the treasury" % [
+		money.text = tr("worth %.1f bn · %.1f bn held · %.2f bn/yr to the treasury") % [
 			value, held * value,
 			held * Companies.output_eur_bn(ns, company) * CompaniesK.DIVIDEND_YIELD,
 		]
 	else:
-		money.text = "worth %.1f bn" % value
+		money.text = tr("worth %.1f bn") % value
 	money.theme_type_variation = UiTheme.CAPTION
 	block.add_child(money)
 

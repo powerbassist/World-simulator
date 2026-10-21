@@ -55,7 +55,7 @@ func _ready() -> void:
 
 	_pause_button = Button.new()
 	_pause_button.theme_type_variation = UiTheme.SUBROW_BUTTON
-	_pause_button.tooltip_text = "Pause (Space)"
+	_pause_button.tooltip_text = tr("Pause (Space)")
 	_pause_button.pressed.connect(func(): pause_toggled.emit())
 	controls.add_child(_pause_button)
 
@@ -68,7 +68,7 @@ func _ready() -> void:
 		button.theme_type_variation = UiTheme.SUBROW_BUTTON
 		button.text = glyphs[s]
 		button.toggle_mode = true
-		button.tooltip_text = "Speed %d (%d)" % [s, s]
+		button.tooltip_text = tr("Speed %d (%d)") % [s, s]
 		button.pressed.connect(func(): speed_selected.emit(s))
 		controls.add_child(button)
 		_speed_buttons[s] = button
@@ -78,7 +78,7 @@ func _ready() -> void:
 	column.add_child(_minimap_slot)
 
 	var placeholder := Label.new()
-	placeholder.text = "MAP OVERVIEW"
+	placeholder.text = tr("MAP OVERVIEW")
 	placeholder.theme_type_variation = UiTheme.MICRO
 	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

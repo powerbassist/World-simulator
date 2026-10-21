@@ -89,7 +89,7 @@ func _ready() -> void:
 	root.add_child(_choices_box)
 
 	_continue_button = Button.new()
-	_continue_button.text = "Continue"
+	_continue_button.text = tr("Continue")
 	_continue_button.pressed.connect(func(): _advance())
 	root.add_child(_continue_button)
 

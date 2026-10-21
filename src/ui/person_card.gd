@@ -141,12 +141,12 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 	var loyalty := float(ns.person_loyalty.get(person.id, 0.0))
 	var standing := float(ns.person_standing.get(person.id, 0.0))
 	if grudge >= 0.05 or loyalty != 0.0 or standing >= 0.05:
-		PanelKit.row(_body, "Standing", "%.2f" % standing)
-		PanelKit.row(_body, "Loyalty", "%+.2f" % loyalty)
-		PanelKit.row(_body, "Grudge", "%.2f" % grudge)
+		PanelKit.row(_body, tr("Standing"), "%.2f" % standing)
+		PanelKit.row(_body, tr("Loyalty"), "%+.2f" % loyalty)
+		PanelKit.row(_body, tr("Grudge"), "%.2f" % grudge)
 
 	if not person.wants.is_empty():
-		PanelKit.line(_body, "Wants", PanelKit.Tone.DIM)
+		PanelKit.line(_body, tr("Wants"), PanelKit.Tone.DIM)
 		for want in person.wants:
 			PanelKit.line(_body, "  %s %s" % [
 				stance_label(String(want["stance"])),

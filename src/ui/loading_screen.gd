@@ -65,7 +65,7 @@ func _ready() -> void:
 	center.add_child(column)
 
 	var title := Label.new()
-	title.text = "NATION SIMULATOR"
+	title.text = tr("NATION SIMULATOR")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
 

@@ -88,7 +88,7 @@ func _ready() -> void:
 	margin.add_child(root)
 
 	_title = Label.new()
-	_title.text = "OVERVIEW"
+	_title.text = tr("OVERVIEW")
 	_title.theme_type_variation = UiTheme.HEADING
 	root.add_child(_title)
 
@@ -126,7 +126,7 @@ func _ready() -> void:
 	_programme_box.add_theme_constant_override("separation", 4)
 
 	var programme_heading := Label.new()
-	programme_heading.text = "PROGRAMME"
+	programme_heading.text = tr("PROGRAMME")
 	programme_heading.theme_type_variation = UiTheme.HEADING
 	root.add_child(programme_heading)
 	root.add_child(_programme_box)
@@ -134,7 +134,7 @@ func _ready() -> void:
 	root.add_child(HSeparator.new())
 
 	var effects_heading := Label.new()
-	effects_heading.text = "RECENT DECISIONS"
+	effects_heading.text = tr("RECENT DECISIONS")
 	effects_heading.theme_type_variation = UiTheme.HEADING
 	root.add_child(effects_heading)
 
@@ -169,7 +169,7 @@ func _refresh() -> void:
 		return
 
 	var nation = _loader.nations.get(ns.id) if _loader != null else null
-	_title.text = "OVERVIEW — %s%s" % [
+	_title.text = tr("OVERVIEW — %s%s") % [
 		nation.nation_name if nation != null else ns.id, _start_suffix(),
 	]
 
@@ -275,19 +275,19 @@ func _lead_text(ns, censure: Dictionary, months: int, top: Array, worst: Diction
 # --- the four columns -------------------------------------------------------
 
 func _fill_government(ns, censure: Dictionary) -> void:
-	PanelKit.figure(_columns["government"], "%d / %d" % [int(ns.coalition_seats), int(ns.assembly_seats)], "seats held")
-	PanelKit.line(_columns["government"], "%s — a majority needs more than %d." % [
+	PanelKit.figure(_columns[tr("government")], "%d / %d" % [int(ns.coalition_seats), int(ns.assembly_seats)], tr("seats held"))
+	PanelKit.line(_columns[tr("government")], tr("%s — a majority needs more than %d.") % [
 		_standing_sentence(ns), Government.majority_seats(ns)
 	])
 
 	if censure.is_empty():
-		PanelKit.line(_columns["government"], "No censure procedure.")
+		PanelKit.line(_columns[tr("government")], tr("No censure procedure."))
 	elif bool(censure["carried"]):
-		PanelKit.line(_columns["government"], "A censure motion would carry: %d of %d." % [
+		PanelKit.line(_columns[tr("government")], tr("A censure motion would carry: %d of %d.") % [
 			int(censure["for_seats"]), int(censure["threshold"])
 		], PanelKit.Tone.BAD)
 	else:
-		PanelKit.line(_columns["government"], "A censure motion would fail: %d of %d." % [
+		PanelKit.line(_columns[tr("government")], tr("A censure motion would fail: %d of %d.") % [
 			int(censure["for_seats"]), int(censure["threshold"])
 		], PanelKit.Tone.GOOD)
 
@@ -295,32 +295,32 @@ func _fill_government(ns, censure: Dictionary) -> void:
 	# presidential appointment say nothing rather than saying "unavailable".
 	if ns.formation_method == "presidential_appointment":
 		if Government.can_force(ns):
-			PanelKit.line(_columns["government"], "Article 49.3 available.")
+			PanelKit.line(_columns[tr("government")], tr("Article 49.3 available."))
 		else:
-			PanelKit.line(_columns["government"], "Article 49.3 in %s." % Trends.months_text(int(ns.force_cooldown_months)))
+			PanelKit.line(_columns[tr("government")], tr("Article 49.3 in %s.") % Trends.months_text(int(ns.force_cooldown_months)))
 
 
 func _fill_election(ns, months: int, vote_year: int, vote_month: int) -> void:
-	PanelKit.figure(_columns["election"], Trends.months_text(months), "until the vote")
-	PanelKit.line(_columns["election"], "%s %d." % [
+	PanelKit.figure(_columns[tr("election")], Trends.months_text(months), tr("until the vote"))
+	PanelKit.line(_columns[tr("election")], "%s %d." % [
 		MONTH_NAMES[vote_month - 1], vote_year
 	])
 	# The date and the count come from the same clock (the executive's where the
 	# nation has one, the assembly's otherwise), which is what U3's old
 	# "41 months beside a Diary saying May 2027" contradiction was.
 	var change := Trends.approval_delta(_state, Trends.TREND_MONTHS)
-	PanelKit.line(_columns["election"], "Polling %.0f%% (%s)." % [_polled_approval(ns), Trends.change_text(change)])
+	PanelKit.line(_columns[tr("election")], tr("Polling %.0f%% (%s).") % [_polled_approval(ns), Trends.change_text(change)])
 
 
 func _fill_issues(top: Array, satisfaction: Dictionary) -> void:
 	if top.is_empty():
-		PanelKit.line(_columns["issues"], "—")
+		PanelKit.line(_columns[tr("issues")], "—")
 		return
 	for entry in top:
 		var issue: String = entry[0]
 		var sat: float = float(satisfaction.get(issue, 0.0))
-		PanelKit.figure(_columns["issues"], K.ISSUE_LABEL.get(issue, issue), "%.0f%% of what people weigh" % (float(entry[1]) * 100.0))
-		PanelKit.line(_columns["issues"], _satisfaction_word(sat), _satisfaction_tone(sat))
+		PanelKit.figure(_columns[tr("issues")], K.ISSUE_LABEL.get(issue, issue), tr("%.0f%% of what people weigh") % (float(entry[1]) * 100.0))
+		PanelKit.line(_columns[tr("issues")], _satisfaction_word(sat), _satisfaction_tone(sat))
 
 
 ## V1.3g. Under GOVERNMENT rather than in a column or a window of its own: the
@@ -331,7 +331,7 @@ func _fill_issues(top: Array, satisfaction: Dictionary) -> void:
 ## with no units the player can act on; capability WITH the price it sets is the
 ## loop this session is built around -- spend, and commitments get cheaper.
 func _fill_defence(ns) -> void:
-	PanelKit.line(_columns["government"], "Military capability %.2f — a deployment costs %.2f%% of GDP." % [
+	PanelKit.line(_columns[tr("government")], tr("Military capability %.2f — a deployment costs %.2f%% of GDP.") % [
 		ns.military_capability, Defence.deployment_cost_pct_gdp(ns),
 	])
 
@@ -343,9 +343,9 @@ func _fill_defence(ns) -> void:
 	# nothing in every game that never signs a pact, which is most of them.
 	var deployed := Defence.deployment_count(_state, ns.id)
 	if deployed == 0:
-		PanelKit.line(_columns["government"], "Allied with %s." % ", ".join(allies))
+		PanelKit.line(_columns[tr("government")], tr("Allied with %s.") % ", ".join(allies))
 	else:
-		PanelKit.line(_columns["government"], "Allied with %s; %d deployment%s running." % [
+		PanelKit.line(_columns[tr("government")], tr("Allied with %s; %d deployment%s running.") % [
 			", ".join(allies), deployed, "" if deployed == 1 else "s",
 		], PanelKit.Tone.BAD)
 
@@ -380,9 +380,9 @@ func _fill_services(ns) -> void:
 		var label: String = K.ISSUE_LABEL.get(key, key)
 		var text := "%s delivery %+.2f on baseline." % [label, deviation]
 		if deviation < 0.0:
-			PanelKit.line(_columns["government"], text, PanelKit.Tone.BAD)
+			PanelKit.line(_columns[tr("government")], text, PanelKit.Tone.BAD)
 		else:
-			PanelKit.line(_columns["government"], text)
+			PanelKit.line(_columns[tr("government")], text)
 
 	# The cause, beside the effect, and only when the player has moved it. Reads the
 	# factor rather than the level, because the level is a signed abstraction and the
@@ -392,9 +392,9 @@ func _fill_services(ns) -> void:
 	var delivery: float = Society.delivery_factor(ns)
 	var text := "Administration delivers %.0f%% of funding." % (delivery * 100.0)
 	if delivery < 1.0:
-		PanelKit.line(_columns["government"], text, PanelKit.Tone.BAD)
+		PanelKit.line(_columns[tr("government")], text, PanelKit.Tone.BAD)
 	else:
-		PanelKit.line(_columns["government"], text)
+		PanelKit.line(_columns[tr("government")], text)
 
 
 ## V1.5d. The press, in one line, and only when the player has moved it.
@@ -414,9 +414,9 @@ func _fill_press(ns) -> void:
 	if is_zero_approx(ns.press_freedom):
 		return
 	if ns.press_freedom < 0.0:
-		PanelKit.line(_columns["government"], "Press under state oversight (%+.2f)." % ns.press_freedom, PanelKit.Tone.BAD)
+		PanelKit.line(_columns[tr("government")], tr("Press under state oversight (%+.2f).") % ns.press_freedom, PanelKit.Tone.BAD)
 	else:
-		PanelKit.line(_columns["government"], "Press independence guaranteed (%+.2f)." % ns.press_freedom)
+		PanelKit.line(_columns[tr("government")], tr("Press independence guaranteed (%+.2f).") % ns.press_freedom)
 
 
 func _fill_moving(movements: Array, worst: Dictionary) -> void:
@@ -438,9 +438,9 @@ func _fill_moving(movements: Array, worst: Dictionary) -> void:
 		grid.add_child(value)
 
 	if worst.is_empty():
-		PanelKit.line(_columns["moving"], "Nothing has moved much.")
+		PanelKit.line(_columns[tr("moving")], tr("Nothing has moved much."))
 	else:
-		PanelKit.line(_columns["moving"], "%s is the one to watch." % String(worst["label"]))
+		PanelKit.line(_columns[tr("moving")], tr("%s is the one to watch.") % String(worst["label"]))
 
 
 ## V4.1. The term's programme, per-entry rows with the derived progress -- the
@@ -464,7 +464,7 @@ func _fill_programme(ns) -> void:
 			PanelKit.line(_programme_box,
 				"The term's programme is unset -- the Agenda (K) holds the offer.")
 		else:
-			PanelKit.line(_programme_box, "No programme was set this term.")
+			PanelKit.line(_programme_box, tr("No programme was set this term."))
 		return
 
 	for entry in this_term:
@@ -499,13 +499,13 @@ func _programme_row(ns, entry: Dictionary) -> Control:
 			row.add_child(bar)
 			status_label.text = "%.0f%%" % (fraction * 100.0)
 		ProgrammeK.STATUS_COMPLETE:
-			status_label.text = "Delivered"
+			status_label.text = tr("Delivered")
 			status_label.theme_type_variation = UiTheme.GOOD_TEXT
 		ProgrammeK.STATUS_FAIL:
-			status_label.text = "Missed"
+			status_label.text = tr("Missed")
 			status_label.theme_type_variation = UiTheme.BAD_TEXT
 		_:
-			status_label.text = "Overtaken"
+			status_label.text = tr("Overtaken")
 			status_label.theme_type_variation = UiTheme.CAPTION
 	row.add_child(status_label)
 	return row
@@ -539,7 +539,7 @@ func _entry_tooltip(ns, terms: Dictionary, entry: Dictionary) -> String:
 func _fill_recent_effects() -> void:
 	var entries: Array = _state.recent_effects
 	if entries.is_empty():
-		PanelKit.line(_effects_box, "Nothing committed yet this game.")
+		PanelKit.line(_effects_box, tr("Nothing committed yet this game."))
 		return
 
 	for i in mini(RECENT_EFFECTS_SHOWN, entries.size()):
@@ -560,7 +560,7 @@ func _build_effect_row(effect: Dictionary) -> Control:
 	ranked.sort_custom(func(a, b): return float(a["severity"]) > float(b["severity"]))
 
 	if ranked.is_empty():
-		PanelKit.line(row, "nothing moved")
+		PanelKit.line(row, tr("nothing moved"))
 		return row
 
 	for i in mini(EFFECT_FIGURES_SHOWN, ranked.size()):

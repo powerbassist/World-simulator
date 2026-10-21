@@ -121,7 +121,7 @@ func _ready() -> void:
 	scroll.get_v_scroll_bar().value_changed.connect(func(_v): _hide_person_card())
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -157,7 +157,7 @@ func _refresh() -> void:
 		return
 
 	_ns = ns
-	_title.text = "The people of %s" % nation.nation_name
+	_title.text = tr("The people of %s") % nation.nation_name
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -173,7 +173,7 @@ func _refresh() -> void:
 ## content: an amendment can change the head of state, and a censure changes the
 ## head of government, so this reads NationState and not the nation file.
 func _build_executive(ns) -> void:
-	PanelKit.heading(_body, "The executive")
+	PanelKit.heading(_body, tr("The executive"))
 	_face_row(ns.head_of_state_person_id, ns.head_of_state_title, _name_of(ns.head_of_state_person_id))
 	_face_row(ns.pm_person_id, ns.head_of_government_title, _name_of(ns.pm_person_id))
 
@@ -184,20 +184,20 @@ func _build_executive(ns) -> void:
 ## cost to author -- so the bench was cut before it was written and a portfolio
 ## still names the PARTY that holds it. docs/people-model.md §3.
 func _build_cabinet(ns) -> void:
-	PanelKit.heading(_body, "The cabinet")
+	PanelKit.heading(_body, tr("The cabinet"))
 	var by_id := {}
 	for p in _loader.parties.get(ns.id, []):
 		by_id[p.id] = p
 	for f in CK.PORTFOLIO_KEYS:
 		var pid: String = String(ns.cabinet.get(f, ""))
 		if pid == "" or not by_id.has(pid):
-			PanelKit.row(_body, PersonCard.PORTFOLIO_LABEL.get(f, f), "VACANT", PanelKit.Tone.BAD)
+			PanelKit.row(_body, PersonCard.PORTFOLIO_LABEL.get(f, f), tr("VACANT"), PanelKit.Tone.BAD)
 		else:
 			PanelKit.row(_body, PersonCard.PORTFOLIO_LABEL.get(f, f), String(by_id[pid].party_name))
 
 
 func _build_parties(ns) -> void:
-	PanelKit.heading(_body, "The parties")
+	PanelKit.heading(_body, tr("The parties"))
 	for p in _loader.parties.get(ns.id, []):
 		var seats := int(ns.seats_by_party.get(p.id, 0))
 		var leader: String = String(ns.party_leader_override.get(p.id, p.leader_person_id))
@@ -231,7 +231,7 @@ func _build_character_groups(ns) -> void:
 		for person in group:
 			if shown >= GROUP_HEAD:
 				var rest: int = group.size() - GROUP_HEAD
-				PanelKit.line(_body, "… and %d more" % rest, PanelKit.Tone.DIM)
+				PanelKit.line(_body, tr("… and %d more") % rest, PanelKit.Tone.DIM)
 				break
 			_person_row(ns, person)
 			shown += 1
@@ -306,7 +306,7 @@ func _authored_leaders() -> Dictionary:
 ## another nation's head of state can change while the player is not looking,
 ## which is exactly the sort of thing a roster is for.
 func _build_abroad(ns) -> void:
-	PanelKit.heading(_body, "Abroad")
+	PanelKit.heading(_body, tr("Abroad"))
 	var ids: Array = _state.nations.keys()
 	ids.sort()
 	for id in ids:

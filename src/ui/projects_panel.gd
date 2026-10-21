@@ -93,7 +93,7 @@ func _ready() -> void:
 	gutter.add_child(_body)
 
 	_close_button = Button.new()
-	_close_button.text = "Close"
+	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
 	root.add_child(_close_button)
 
@@ -140,7 +140,7 @@ func _refresh() -> void:
 		return
 	_primary = null
 
-	_title.text = "Public Works"
+	_title.text = tr("Public Works")
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -165,9 +165,9 @@ func _refresh() -> void:
 ## last month has bought its full addend and delivered almost none of it -- printing
 ## the delivered figure alone would tell a player their motorway did nothing.
 func _build_ledger(ns) -> void:
-	PanelKit.heading(_body, "The public account")
-	PanelKit.row(_body, "Construction bill", "%.3f %% of GDP" % ns.project_bill_pct_gdp)
-	PanelKit.row(_body, "Trend bought", "%+.3f %%/yr" % ns.project_potential_target_pct)
+	PanelKit.heading(_body, tr("The public account"))
+	PanelKit.row(_body, tr("Construction bill"), tr("%.3f %% of GDP") % ns.project_bill_pct_gdp)
+	PanelKit.row(_body, tr("Trend bought"), tr("%+.3f %%/yr") % ns.project_potential_target_pct)
 	if ns.project_potential_target_pct > 0.0:
 		PanelKit.line(_body,
 			"Bought, not yet delivered: completed works raise the trend the economy is"
@@ -177,9 +177,9 @@ func _build_ledger(ns) -> void:
 
 func _build_building(ns) -> void:
 	var live := Projects.building(ns)
-	PanelKit.heading(_body, "Under construction")
+	PanelKit.heading(_body, tr("Under construction"))
 	if live.is_empty():
-		PanelKit.line(_body, "Nothing is being built.")
+		PanelKit.line(_body, tr("Nothing is being built."))
 		return
 	for pid in live:
 		_build_live(ns, String(pid))
@@ -199,7 +199,7 @@ func _build_live(ns, project_id: String) -> void:
 
 	var left := Projects.months_left(ns, project_id)
 	var total := int(terms.get("build_months", 0))
-	PanelKit.line(block, "%d of %d months remaining · %.3f %% of GDP a year · will buy %+.3f %%/yr" % [
+	PanelKit.line(block, tr("%d of %d months remaining · %.3f %% of GDP a year · will buy %+.3f %%/yr") % [
 		left, total, float(terms.get("cost_pct_gdp", 0.0)),
 		float(terms.get("potential_growth_pct", 0.0)),
 	], PanelKit.Tone.GOOD)
@@ -223,7 +223,7 @@ func _build_completed(ns) -> void:
 	var done := Projects.completed(ns)
 	if done.is_empty():
 		return
-	PanelKit.heading(_body, "Finished")
+	PanelKit.heading(_body, tr("Finished"))
 	for pid in done:
 		var terms := Projects.terms_of(_loader, String(pid))
 		PanelKit.row(_body,
@@ -236,7 +236,7 @@ func _build_completed(ns) -> void:
 ## is not here, because Projects.available() refuses it structurally -- so this list
 ## shrinks over a game and never offers the same motorway twice.
 func _build_available(ns) -> void:
-	PanelKit.heading(_body, "Available")
+	PanelKit.heading(_body, tr("Available"))
 	var offered := 0
 	for action in Projects.available(_state, ns, _loader.project_actions):
 		var terms: Dictionary = action.effects.get("project", {})
@@ -254,14 +254,14 @@ func _build_available(ns) -> void:
 				% Projects.building_count(ns)
 			)
 		else:
-			PanelKit.line(_body, "Every project has been built.")
+			PanelKit.line(_body, tr("Every project has been built."))
 
 
 func _build_offer(ns, action, terms: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, "%d months · %.3f %% of GDP a year · %+.3f %%/yr when it opens" % [
+	PanelKit.line(block, tr("%d months · %.3f %% of GDP a year · %+.3f %%/yr when it opens") % [
 		int(terms.get("build_months", 0)), float(terms.get("cost_pct_gdp", 0.0)),
 		float(terms.get("potential_growth_pct", 0.0)),
 	])

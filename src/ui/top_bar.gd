@@ -84,16 +84,16 @@ func _ready() -> void:
 	add_child(_popup)
 
 	var save := Button.new()
-	save.text = "SAVE"
+	save.text = tr("SAVE")
 	save.theme_type_variation = UiTheme.SUBROW_BUTTON
-	save.tooltip_text = "Save and load (S)"
+	save.tooltip_text = tr("Save and load (S)")
 	save.pressed.connect(func(): save_load_requested.emit())
 	_tools.add_child(save)
 
 	var settings := Button.new()
-	settings.text = "MENU"
+	settings.text = tr("MENU")
 	settings.theme_type_variation = UiTheme.SUBROW_BUTTON
-	settings.tooltip_text = "Pause menu (Esc)"
+	settings.tooltip_text = tr("Pause menu (Esc)")
 	settings.pressed.connect(func(): settings_requested.emit())
 	_tools.add_child(settings)
 
