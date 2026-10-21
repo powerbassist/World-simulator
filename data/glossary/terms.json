@@ -101,7 +101,7 @@
     {
       "id": "debt",
       "term": "debt",
-      "definition": "What the state owes, against GDP. Its level sets the bond yield, and its interest is paid from the budget.",
+      "definition": "What the state owes, against GDP. How far it has risen since you took office, with unrest, sets the bond yield; its interest is paid from the budget.",
       "see_also": [
         "bond_yield",
         "deficit",
@@ -113,7 +113,7 @@
     {
       "id": "bond_yield",
       "term": "bond yield",
-      "definition": "The interest rate the markets charge you, read from the debt each month; never stored.",
+      "definition": "The interest rate the markets charge you, read each month from how far the debt has risen and from unrest; never stored.",
       "see_also": [
         "debt",
         "credit_rating"
@@ -180,7 +180,7 @@
     {
       "id": "business_cycle",
       "term": "cycle / recession",
-      "definition": "The economy's own swings, set by the date: the same in every game on the same date. A wave you cannot stop, only ride.",
+      "definition": "The economy's own swings, set by the date: partly shared by every nation, partly each nation's own, and the same in every game on the same date. A wave you cannot stop, only ride.",
       "see_also": [
         "growth",
         "unemployment"
@@ -202,7 +202,7 @@
     {
       "id": "issue",
       "term": "issue",
-      "definition": "One of the thirteen things the voters judge you on: jobs, growth, taxes, health, public finances and the rest.",
+      "definition": "One of the things the voters judge you on: jobs, growth, each tax, each spending line, public finances, Europe and inflation.",
       "see_also": [
         "voter_bloc",
         "salience",
@@ -312,7 +312,7 @@
     {
       "id": "second_chamber",
       "term": "second chamber",
-      "definition": "The upper house (France's Senate), not elected by the national vote. It can hold a bill for a time, and Article 49.3 is the way past it.",
+      "definition": "The upper house (France's Senate), not elected by the national vote. It can hold a bill for a time, and in France Article 49.3 is the way past it.",
       "see_also": [
         "article_49_3",
         "amendment"
@@ -413,7 +413,7 @@
     {
       "id": "council",
       "term": "council",
-      "definition": "The Union's decision body. A proposal divides by qualified majority or unanimity, and you can lobby and bargain for votes.",
+      "definition": "The Union's decision body. A proposal divides by qualified majority or unanimity; the sponsor lobbies members, and you can bargain for votes.",
       "see_also": [
         "bargain",
         "ratification"
