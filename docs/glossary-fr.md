@@ -19,17 +19,20 @@ term recurs in a second PR; change a row only with a sweep of the tables.
 - Decimal comma in prose (`0,53 %`); placeholders keep their `%.2f` and order.
 - `«` `»` for quoted button names; `·` and `—` kept as in the English.
 - Units: `Md€` (milliard d'euros), `Md` alone where the English says `bn`, `M` for millions, `pt`/`pts`.
+- A `%s` that can be any nation, party or organisation never takes a gender, article or preposition in front of it (`de Pays-Bas`, `Elle`, `le %s` are wrong for some name): use a colon form (`Villes : %s`, `détenu par : %s`).
 - Plural suffix placeholders (`%d day%s`) stay as `%d jour%s`; the code supplies `s`.
 
 ## Institutions and politics
 
 | English | Français |
 | --- | --- |
-| President | président(e) de la République (chef de l'État in compact text) |
+| President | président(e) de la République (chef de l'État in compact text); write président(e) where the role can be held by a woman |
 | Assembly / National Assembly | Assemblée / Assemblée nationale |
 | Legislature | Législature |
 | second chamber | seconde chambre |
-| the Council (an organisation's) | le Conseil |
+| the Council (an organisation's) | le Conseil (capital C) |
+| Force (49.3) | Recourir au 49.3 (short: Engager le 49.3) |
+| Revert | Annuler les modifications |
 | bill (government) | projet de loi |
 | bill (member's) | proposition de loi |
 | Propose (button) | Proposer |
