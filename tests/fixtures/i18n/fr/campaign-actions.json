@@ -1,0 +1,5 @@
+{
+  "_note": "test_strings' fixture rows (V5.1b3): synthetic ids, the accessors' contract only.",
+  "start_fixture_effort.name": "FR lancer l'effort",
+  "start_fixture_effort.effects.campaign.effort_name": "FR l'effort"
+}

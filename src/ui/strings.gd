@@ -35,6 +35,9 @@ static var _installed: Translation
 ## kind -> {"<id>.<field>": text} for the current language; cleared on a switch.
 static var _rows := {}
 static var _placeholder_regex: RegEx
+## The property a loaded row object keeps its English name in, by kind; every action
+## kind uses `action_name`.
+const _NAME_PROPERTY := {"laws": "law_name", "events": "event_name", "bloc-proposals": "proposal_name", "orgs": "name"}
 
 
 ## `tr()` for a static function, where the instance method does not exist. The same
@@ -137,11 +140,63 @@ static func row(kind: String, id: String, field: String, english: String) -> Str
 static func law_name(law, fallback := "") -> String:
 	if law == null:
 		return fallback
-	return row("laws", String(law.id), "name", String(law.law_name))
+	return row_name("laws", law)
 
 
 static func law_summary(law) -> String:
-	return row("laws", String(law.id), "summary", String(law.summary))
+	return row_summary("laws", law)
+
+
+## The name and summary of a data row as the player reads them (V5.1b3) -- every
+## display of a row's text goes through these, and tests/test_i18n_rows_lint.gd fails
+## a panel that reads the English field itself. `row` is the loaded object or a plain
+## row Dictionary ({"id", "name", "summary"} -- the programme's entries). A loaded
+## object keeps its English name under a property that differs by kind.
+static func row_name(kind: String, row_data) -> String:
+	if row_data is Dictionary:
+		return row(kind, String(row_data.get("id", "")), "name", String(row_data.get("name", "")))
+	return row(kind, String(row_data.id), "name", String(row_data.get(_NAME_PROPERTY.get(kind, "action_name"))))
+
+
+static func row_summary(kind: String, row_data) -> String:
+	if row_data is Dictionary:
+		return row(kind, String(row_data.get("id", "")), "summary", String(row_data.get("summary", "")))
+	return row(kind, String(row_data.id), "summary", String(row_data.summary))
+
+
+## An event's choice: `<event id>.choices.<choice id>.label|summary`.
+static func choice_label(event_id: String, choice: Dictionary) -> String:
+	return row("events", event_id, "choices.%s.label" % String(choice.get("id", "")), String(choice.get("label", "")))
+
+
+static func choice_summary(event_id: String, choice: Dictionary) -> String:
+	return row("events", event_id, "choices.%s.summary" % String(choice.get("id", "")), String(choice.get("summary", "")))
+
+
+## A record the sim kept of an event (the desk's entries, the ledger's answers) copies
+## the English it was made with, beside the ids; the ids find the translation and the
+## copy is the fallback, so a save whose event the data has since dropped still reads.
+static func record_event_name(record: Dictionary) -> String:
+	return row("events", String(record.get("event_id", "")), "name", String(record.get("event_name", "")))
+
+
+static func record_choice_label(record: Dictionary) -> String:
+	return row("events", String(record.get("event_id", "")),
+		"choices.%s.label" % String(record.get("choice_id", "")), String(record.get("choice_label", "")))
+
+
+## An action's authored NOUN -- an effort's, a pledge's, a project's name, which sits
+## in `effects.<effect>.<noun_field>` of the action that makes it. The sim names the
+## thing by its effect id (`ground_game`), the table keys it by the action's id
+## (`start_ground_game`), so the action is found by its effect id; `english` is what the
+## sim's name_of() says, the fallback.
+static func noun(kind: String, actions: Array, effect: String, id_key: String, id: String,
+		noun_field: String, english: String) -> String:
+	for action in actions:
+		var terms: Dictionary = action.effects.get(effect, {})
+		if String(terms.get(id_key, "")) == id and terms.has(noun_field):
+			return row(kind, String(action.id), "effects.%s.%s" % [effect, noun_field], english)
+	return english
 
 
 ## The printf placeholders of `text` in order, "%%" included: what `%` will consume,

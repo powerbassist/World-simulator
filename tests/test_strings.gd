@@ -12,6 +12,8 @@ extends SceneTree
 
 const Strings = preload("res://src/ui/strings.gd")
 const Law = preload("res://src/core/law.gd")
+const GameEvent = preload("res://src/core/event.gd")
+const CampaignAction = preload("res://src/core/campaign_action.gd")
 
 var _failures: Array[String] = []
 
@@ -23,6 +25,7 @@ func _init() -> void:
 	_check_tables()
 	_check_placeholder_parse()
 	_check_plurals()
+	_check_row_accessors()
 	Strings.set_language("en")
 	_finish()
 	quit(1 if not _failures.is_empty() else 0)
@@ -147,6 +150,67 @@ func _check_plurals() -> void:
 	Strings.set_language("en")
 	if tr_n("%d apple", "%d apples", 1) % 1 != "1 apple" or tr_n("%d apple", "%d apples", 3) % 3 != "3 apples":
 		_fail("in English tr_n should pick the source singular or plural")
+	Strings.dir = real_dir
+
+
+## V5.1b3. The row accessors every display of a data row goes through, against the
+## fixture tables: a loaded object and a plain row Dictionary, an event's choice, a
+## record's copied English (an old save's event the data has since dropped keeps its
+## own words), and an action's authored noun found through its effect id, which is not
+## the action's id (`start_x` holds the effort `x`).
+func _check_row_accessors() -> void:
+	var event := GameEvent.new()
+	event.id = "fixture_event"
+	event.event_name = "English event"
+	event.summary = "English summary"
+	var choice := {"id": "yield", "label": "English choice", "summary": "English choice summary"}
+	var programme := {"id": "fixture_entry", "name": "English entry", "summary": "English entry summary"}
+	var action := CampaignAction.new()
+	action.id = "start_fixture_effort"
+	action.action_name = "Start the English effort"
+	action.effects = {"campaign": {"op": "start", "effort_id": "fixture_effort", "effort_name": "The English effort"}}
+	var decoy := CampaignAction.new()
+	decoy.id = "stop_fixture_effort"
+	decoy.effects = {"campaign": {"op": "stop", "effort_id": "fixture_effort"}}
+	var actions := [decoy, action]
+	var record := {"event_id": "fixture_event", "event_name": "English event", "choice_id": "yield", "choice_label": "English choice"}
+	var gone := {"event_id": "dropped_since", "event_name": "An old event", "choice_id": "x", "choice_label": "An old choice"}
+	var expect := {
+		"English event": Strings.row_name("events", event),
+		"English summary": Strings.row_summary("events", event),
+		"English choice": Strings.choice_label(event.id, choice),
+		"English choice summary": Strings.choice_summary(event.id, choice),
+		"English entry": Strings.row_name("programme", programme),
+		"English entry summary": Strings.row_summary("programme", programme),
+		"Start the English effort": Strings.row_name("campaign-actions", action),
+		"The English effort": Strings.noun("campaign-actions", actions, "campaign", "effort_id", "fixture_effort", "effort_name", "The English effort"),
+	}
+	for english in expect:
+		if expect[english] != english:
+			_fail("in English a row accessor returns the row's own text: %s gave %s" % [english, expect[english]])
+	var real_dir := Strings.dir
+	Strings.dir = "res://tests/fixtures/i18n"
+	Strings.set_language("fr")
+	# [wanted, got]: a "50 %" in a translation is text, never a placeholder to format.
+	var french := [
+		["FR événement", Strings.row_name("events", event)],
+		["FR résumé d'événement", Strings.row_summary("events", event)],
+		["Céder 50 % du PIB", Strings.choice_label(event.id, choice)],
+		["FR résumé du choix", Strings.choice_summary(event.id, choice)],
+		["FR événement", Strings.record_event_name(record)],
+		["Céder 50 % du PIB", Strings.record_choice_label(record)],
+		["FR programme", Strings.row_name("programme", programme)],
+		["FR résumé du programme", Strings.row_summary("programme", programme)],
+		["FR lancer l'effort", Strings.row_name("campaign-actions", action)],
+		["FR l'effort", Strings.noun("campaign-actions", actions, "campaign", "effort_id", "fixture_effort", "effort_name", "The English effort")],
+		["An old event", Strings.record_event_name(gone)],
+		["An old choice", Strings.record_choice_label(gone)],
+		["The English fallback", Strings.noun("campaign-actions", actions, "campaign", "effort_id", "no_such_effort", "effort_name", "The English fallback")],
+	]
+	for pair in french:
+		if pair[1] != pair[0]:
+			_fail("a row accessor under the fixture French: wanted '%s', got '%s'" % pair)
+	Strings.set_language("en")
 	Strings.dir = real_dir
 
 

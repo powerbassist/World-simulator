@@ -1,0 +1,7 @@
+{
+  "_note": "test_strings' fixture rows (V5.1b3): synthetic ids, the accessors' contract only.",
+  "fixture_event.name": "FR événement",
+  "fixture_event.summary": "FR résumé d'événement",
+  "fixture_event.choices.yield.label": "Céder 50 % du PIB",
+  "fixture_event.choices.yield.summary": "FR résumé du choix"
+}
