@@ -71,6 +71,11 @@ const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Hud = preload("res://src/ui/hud.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
+const ScreenStack = preload("res://src/ui/screen_stack.gd")
+## The registered windows that are scenes, not domains: a summit is something
+## that happens to the player, and owns the screen while it does. A list here
+## until the domain table (V5.1-c2.2) carries the flag.
+const SCENE_WINDOWS := ["summit"]
 const Pending = preload("res://src/ui/pending.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Sound = preload("res://src/ui/sound.gd")
@@ -129,6 +134,7 @@ var _state
 var _loader: DataLoader
 var _hud
 var _windows
+var _stack
 var _top_bar
 var _paused_for_decision := false
 ## V4.4: the desk is a queue, so the decision-card machinery tracks a SET. Card id
@@ -295,6 +301,11 @@ func _ready() -> void:
 
 	_hud = Hud.new()
 	add_child(_hud)
+	# V5.1-c2.1. Where the centred panels' holders were added, so they draw where
+	# they drew: over the HUD, under the dev console.
+	_stack = ScreenStack.new()
+	add_child(_stack)
+	_stack.top_changed.connect(_on_stack_top_changed)
 	# V4.9c. The desk's bed, rendered on a worker and swelling in once it is,
 	# and the one-shot set on another (sound.gd's warm()): nothing in this
 	# _ready() waits for either.
@@ -377,7 +388,7 @@ func _ready() -> void:
 	# (The law panel's own brief_requested lands beside its proposed handler
 	# below -- the panel does not exist yet at this point in _ready().)
 	_briefing = Briefing.new()
-	_add_centered(_briefing)
+	_stack.add(ScreenStack.SCENE, _briefing, false, _briefing.hide)
 	_briefing.hide()
 	_briefing.propose_requested.connect(func(law):
 		_briefing.hide()
@@ -700,12 +711,17 @@ func _ready() -> void:
 		if key != KEY_NONE:
 			hint += " (%s)" % OS.get_keycode_string(key)
 		_top_bar.window_hints[id] = hint
+		# V5.1-c2.1. Every window is on the stack -- a domain at WORKSPACE, a
+		# scene above it -- so Escape puts it away and a hotkey cannot reach past
+		# a scene. Read here for the strip's reason: every window is registered.
+		var layer: int = ScreenStack.SCENE if SCENE_WINDOWS.has(id) else ScreenStack.WORKSPACE
+		_stack.watch(layer, _windows.frame(id), _windows.close.bind(id))
 
 	# Four panels stay modal, not docked: election results and censure land on
 	# the player regardless of which tab is open, and settings/save-load are
 	# reached through the pause menu rather than the rail.
 	_election_panel = ElectionPanel.new()
-	_add_centered(_election_panel, true)
+	_stack.add(ScreenStack.SCENE, _election_panel, true)
 	_election_panel.setup(_state, _loader)
 	_election_panel.hide()
 	# V1.6 audit, V2. Dismissing a WON election resumes play; dismissing a LOST one
@@ -726,7 +742,7 @@ func _ready() -> void:
 	)
 
 	_save_load_panel = SaveLoadPanel.new()
-	_add_centered(_save_load_panel)
+	_stack.add(ScreenStack.SYSTEM, _save_load_panel, false, _save_load_panel.close)
 	_save_load_panel.hide()
 	_save_load_panel.save_requested.connect(_on_save_requested)
 	_save_load_panel.load_requested.connect(_on_load_requested)
@@ -741,7 +757,7 @@ func _ready() -> void:
 	)
 
 	_settings_panel = SettingsPanel.new()
-	_add_centered(_settings_panel)
+	_stack.add(ScreenStack.SYSTEM, _settings_panel, false, _settings_panel.close)
 	_settings_panel.hide()
 	_settings_panel.closed.connect(func():
 		# V4.8c: the settings screen is the register's only writer, so closing it
@@ -755,7 +771,7 @@ func _ready() -> void:
 	# Blocking, unlike every other panel: a pause menu you can click past into
 	# the map underneath is not paused in any sense the player recognises.
 	_pause_menu = PauseMenu.new()
-	_add_centered(_pause_menu, true)
+	_stack.add(ScreenStack.SYSTEM, _pause_menu, true, _close_pause_menu)
 	_set_pause_menu_visible(false)
 	_pause_menu.resumed.connect(_close_pause_menu)
 	_pause_menu.save_load_requested.connect(func():
@@ -1050,48 +1066,7 @@ func _wire_hud() -> void:
 	)
 
 
-func _add_centered(panel: Control, blocking := false) -> void:
-	var holder := CenterContainer.new()
-	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	if not blocking:
-		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	else:
-		# A term result is the one modal moment: dim the world behind it so the
-		# verdict owns the screen, and eat clicks -- the election already paused
-		# the clock; the backdrop makes the map agree (V2.9). The dim is a
-		# SIBLING of the holder, not a child: a CenterContainer collapses a
-		# full-rect child to its minimum size. Added before the holder so it
-		# draws below the panel and above everything added earlier (the map,
-		# the windows), with the HUD -- added later -- still readable above it.
-		# It follows the panel's visibility, so every existing show()/hide()
-		# call site keeps working unchanged.
-		var dim := ColorRect.new()
-		dim.color = Color(0.02, 0.03, 0.05, 0.55)
-		dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		dim.mouse_filter = Control.MOUSE_FILTER_STOP
-		dim.visible = false
-		add_child(dim)
-		# The HOLDER follows the panel too, not just the dim. A Container
-		# defaults to MOUSE_FILTER_PASS, so a full-rect blocking holder goes on
-		# taking every click on the screen while the panel inside it is
-		# invisible -- which is exactly what V2.9 shipped when it made the
-		# election panel blocking: `_election_panel.hide()` hid the panel, the
-		# holder stayed up, and a new game was dead to the mouse from its first
-		# frame. `_set_pause_menu_visible()` had been hiding its own holder by
-		# hand for that reason since U5a; doing it here means the next blocking
-		# panel cannot forget -- and that call site now sets the PANEL only,
-		# because a second writer would be reverted by this one: hiding the
-		# holder re-emits visibility_changed on the panel while the panel's own
-		# flag is still true, and this handler would put the holder back.
-		panel.visibility_changed.connect(func():
-			dim.visible = panel.visible
-			holder.visible = panel.visible
-		)
-	holder.add_child(panel)
-	add_child(holder)
-
-
-## The panel alone -- `_add_centered()`'s blocking branch owns the holder and the
+## The panel alone -- `ScreenStack.add()`'s dimmed branch owns the holder and the
 ## dim, and it is the ONLY owner. Setting the holder here as well used to be the
 ## fix for a blocking CenterContainer that goes on swallowing map clicks while
 ## the panel inside it is invisible; now it would be a write the panel's own
@@ -1100,7 +1075,7 @@ func _add_centered(panel: Control, blocking := false) -> void:
 ## so the two cannot disagree and the order of two lines cannot decide whether
 ## the screen is clickable.
 ##
-## `_unhandled_input()` still reads the HOLDER to ask whether the menu is open.
+## `tests/test_shell.gd` still reads the HOLDER to ask whether the menu is open.
 ## That stays true: the holder now mirrors the panel by construction.
 func _set_pause_menu_visible(shown: bool) -> void:
 	_pause_menu.visible = shown
@@ -1127,13 +1102,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed:
 		return
 
-	# B16 (playtest): with the save dialog open, every letter here was routed
-	# straight at the windows behind it -- or typed into the dialog's name field
-	# once it held focus -- and Escape did nothing. While the dialog is visible
-	# the panel-hotkey branch is skipped (the toggle in the match below still
-	# runs, so S keeps closing it) and Escape closes the dialog first, before
-	# anything else in the match can eat the key.
-	var save_dialog_open: bool = _save_load_panel != null and _save_load_panel.visible
+	# V5.1-c2.1. One question decides whether a letter may open a window: is the
+	# screen still the player's to navigate -- the map, a domain, the inbox -- or
+	# does a scene, a system screen or an armed reticle own it? B16's trap (with
+	# the save dialog open, every letter was routed at the windows behind it) is
+	# now one case of that rule rather than a flag of its own; S keeps its toggle
+	# in the match below, so it can still close the dialog it opened.
+	var navigable: bool = _stack == null or _stack.accepts_hotkeys()
 
 	# V2.1c. The six letters U2 bound to tabs still open the six panels they
 	# opened, and the other eight windows have a letter now -- but the map from
@@ -1142,7 +1117,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# A key TOGGLES rather than selects, because with no rail there is nothing
 	# showing which panel is "current": pressing B twice puts the player back on
 	# the map.
-	if not save_dialog_open and _windows != null:
+	if navigable and _windows != null:
 		var by_key: String = _windows.id_for_key(event.keycode)
 		if not by_key.is_empty():
 			_toggle_window(by_key)
@@ -1150,31 +1125,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	match event.keycode:
 		KEY_ESCAPE:
-			# B16: the open save dialog is the topmost thing Escape can mean.
-			# Checked before the armed placement and the pause menu. A placement
-			# CAN be armed with the dialog open (its holder is
-			# MOUSE_FILTER_IGNORE, so the map under it stays clickable) -- the
-			# ordering is a choice, not an impossibility: this press closes the
-			# dialog, the reticle survives it and dies on the next Escape.
-			if save_dialog_open:
-				# close() rather than a bare hide: the pause-menu restore hangs
-				# off `closed`, and this path must not strand the menu behind.
-				_save_load_panel.close()
+			# V5.1-c2.1. The stack puts away what is on top: the save dialog
+			# before the armed reticle (B16 -- a reticle CAN be armed with the
+			# dialog open, its holder lets the map through), the reticle before
+			# the pause menu (V2.8 -- Escape ending the thing it was offered for
+			# is the mode's own contract), then a scene, then the domain. The
+			# pause menu opens only when nothing there would go: the bare map,
+			# or a term result, which only its own button dismisses.
+			if _stack.cancel():
 				return
-			# V2.8. An armed placement cancels FIRST and the pause menu never
-			# opens -- Escape ending the thing it was offered for is the mode's
-			# own contract, and a pause menu over a waiting reticle is a second
-			# modal answering for the first.
-			if _armed_energy_action != "":
-				_armed_energy_action = ""
-				_energy_panel.clear_armed()
-				_map_view.end_placement()
-				return
-			if _pause_menu == null:
-				return
-			if _pause_menu.get_parent().visible:
-				_close_pause_menu()
-			else:
+			if _pause_menu != null:
 				_open_pause_menu()
 		KEY_SPACE:
 			_toggle_pause_by_hand()
@@ -1184,7 +1144,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_top_bar()
 		KEY_M:
 			# M was the Europe tab. The map is now always underneath, so the
-			# useful thing that key can do is clear everything off it.
+			# useful thing that key can do is clear everything off it -- a
+			# navigation key, so not under a scene (it swept the summit away).
+			if not navigable:
+				return
 			if _windows != null:
 				_windows.close_all()
 			if _hud != null:
@@ -1243,6 +1206,15 @@ var _armed_energy_action: String = ""
 func _on_energy_order_armed(action_id: String) -> void:
 	_armed_energy_action = action_id
 	_map_view.begin_placement()
+	_stack.hold(ScreenStack.PLACEMENT, _cancel_placement)
+
+
+## Escape's end of the armed mode, through the stack.
+func _cancel_placement() -> void:
+	_armed_energy_action = ""
+	_energy_panel.clear_armed()
+	_map_view.end_placement()
+	_stack.release(ScreenStack.PLACEMENT)
 
 
 ## THE POINT MUST LAND IN THE PLAYER'S OWN COUNTRY, and the refusal is loud rather
@@ -1255,6 +1227,7 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 	var action_id := _armed_energy_action
 	_armed_energy_action = ""
 	_energy_panel.clear_armed()
+	_stack.release(ScreenStack.PLACEMENT)
 	var region_id := Region.region_at_lonlat(_loader.region_rings, lon, lat)
 	var ns = _state.nations[_state.player_nation_id]
 	var mine := false
@@ -2019,10 +1992,21 @@ func _enforce_interrupt() -> void:
 	# _resume_if_decision_settled() release it; without it a re-raised interrupt
 	# stayed paused after being answered.
 	_paused_for_decision = true
-	if _events_panel != null:
+	# V5.1-c2.1. Not behind a scene or a system screen: open() would close a
+	# summit to show Dispatches under it. The clock holds all the same, and
+	# _on_stack_top_changed() opens Dispatches when that screen goes.
+	if _events_panel != null and _stack.top() < ScreenStack.SCENE:
 		# Quiet (V4.9c): the arrival's sound is the event sting.
 		_windows.open("events", true)
 	_hud.clock_cluster.refresh(_clock)
+
+
+## The other half of the deferral above: a scene or a system screen went with an
+## interrupt still on the desk, so the player now sees where it is answered -- a
+## held clock with nothing on screen saying why is the failure this prevents.
+func _on_stack_top_changed(from: int, to: int) -> void:
+	if from >= ScreenStack.SCENE and to < ScreenStack.SCENE:
+		_enforce_interrupt()
 
 
 ## V4.1, the term-start enforcement -- the arrival-pause precedent pointed at

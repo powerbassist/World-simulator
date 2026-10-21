@@ -867,7 +867,7 @@ func _check_term_limit_reports_itself() -> void:
 
 # V2. The Continue button used to be built only in the not-defeated branch, and
 # main.gd unpauses only on `dismissed`. That left a plate with nothing to press
-# over a HUD that stayed live -- _add_centered() defaults to non-blocking, so the
+# over a HUD that stayed live -- the centred holder (now ScreenStack.add()) was not dimmed, so the
 # holder is MOUSE_FILTER_IGNORE -- and Space resumed a run the player had lost.
 func _check_defeat_can_be_dismissed() -> void:
 	var panel = _main._election_panel

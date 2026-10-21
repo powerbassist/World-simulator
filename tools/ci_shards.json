@@ -69,6 +69,7 @@
    "tests/test_map_fill_mesh.gd",
    "tests/test_map_network.gd",
    "tests/test_shell.gd",
+   "tests/test_shell_stack.gd",
    "tests/test_hud.gd",
    "tests/test_endowments.gd",
    "tests/test_month_runner.gd",

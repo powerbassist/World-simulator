@@ -255,6 +255,14 @@ func _ready() -> void:
 	)
 
 
+## The one close path, save_load_panel.gd's shape: the Close button and Escape
+## (through the screen stack) both emit `closed`, which puts the pause menu back.
+## Escape used to bypass it and open a SECOND pause menu over this screen.
+func close() -> void:
+	hide()
+	closed.emit()
+
+
 ## A language change rebuilds the screen: tr() text is the language it was built in,
 ## and this is the one screen the player is looking at while the language changes.
 ## The old tree leaves at once (it is mid-signal, so it is freed, not deleted).
@@ -308,13 +316,10 @@ func _build() -> void:
 	footer.alignment = BoxContainer.ALIGNMENT_END
 	root.add_child(footer)
 
-	var close := Button.new()
-	close.text = tr("Close")
-	close.pressed.connect(func():
-		hide()
-		closed.emit()
-	)
-	footer.add_child(close)
+	var close_button := Button.new()
+	close_button.text = tr("Close")
+	close_button.pressed.connect(close)
+	footer.add_child(close_button)
 
 	_load_into_controls()
 
