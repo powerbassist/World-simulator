@@ -9,6 +9,13 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V5.1-a2 — load hygiene (2026-10-21)
+
+Two pre-existing bugs QA saw on PR #32 that the play gate hits the first time a player loads. Both written test-first (`tests/test_load_hygiene.gd`, red on `f858a2c7`).
+
+- **The discarded game's cards.** The load path reset the announce memories and dismissed the *decision* cards, but every plain card stayed up: "You hold Germany until FEB 2029" over a loaded France game. A load now clears the whole stack (`message_stack.clear()`) and forgets the term card's id; the loaded game raises its own cards as it always did. `test_statute_surfaces` (k) compared the first month's card count to the count *before* the load; it now compares to the count the load left.
+- **The ribbon's caption.** `Ribbon.setup()` rebinds the state but did not mark the ribbon dirty, and the ribbon redraws only when dirty, so after a load its title (and cells) kept the old game's month beside the clock's (MAR 2026 over 20 APR 2026). It shows on a load only: a month rolling over marks the ribbon every day. Fixed at the source, in `setup()`.
+
 ## V5.1-a — the charter: BUREAU's grammar (2026-10-21)
 
 The board (three directions, mocked up in French over a real frame and real numbers before any code) went to the author, who picked **Bureau**: graphite, one accent that is the played nation's flag colour, Archivo, Material Symbols. This block builds the *grammar* and re-skins the current shell; the docked workspace, breadcrumb, back/forward and the minimap's removal are c's shell work.

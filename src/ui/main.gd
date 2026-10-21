@@ -2397,8 +2397,8 @@ func _on_load_requested(slot: String) -> void:
 	# The announce memories and live-card maps belong to the DISCARDED game:
 	# firm ids are content, so the same id failing in the loaded game would
 	# be card-silent behind this session's carried entries -- the pass-15
-	# fleet's reproduced find. The stack survives (its ids are monotonic),
-	# so this is a memory reset and not a clear().
+	# fleet's reproduced find. The stack's ids are monotonic, so a card id never
+	# collides across the load; the cards themselves are cleared just below.
 	_announced_bids.clear()
 	_announced_failures.clear()
 	_bid_cards.clear()
@@ -2420,11 +2420,13 @@ func _on_load_requested(slot: String) -> void:
 	# the clock past the load and a discarded game's decision card would route
 	# Events.answer against the loaded state (the decision pause beside the
 	# load's own pause below is the third).
-	# The discarded game's decision cards leave the STACK too: clearing only the
-	# map left their answer buttons on screen, looking live and doing nothing
-	# (card_action finds no event for the id and returns silently).
-	for stale_card in _event_cards.keys().duplicate():
-		_hud.message_stack.dismiss(stale_card)
+	# The discarded game's cards leave the STACK too, ALL of them: clearing only the
+	# map left decision cards' answer buttons on screen, looking live and doing
+	# nothing (card_action finds no event for the id and returns silently), and
+	# the plain ones -- "You hold Germany until FEB 2029" over a loaded France game
+	# (V5.1-a2) -- were never in any map to begin with.
+	_hud.message_stack.clear()
+	_term_card_id = ""
 	_event_cards.clear()
 	_unseen_events.clear()
 	# The discarded game's programme card goes too: _enforce_term_start_programme()

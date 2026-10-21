@@ -63,6 +63,10 @@ func _ready() -> void:
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
+	# A new state is a new month and day: the title and the cells only redraw when
+	# dirty, and a load that rebinds without marking left the discarded game's
+	# month on screen beside the clock's (MAR 2026 over 20 APR 2026).
+	_dirty = true
 
 
 func mark_dirty() -> void:
