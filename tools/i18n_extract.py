@@ -168,7 +168,7 @@ def problems(source, table):
     empty = sorted(k for k, v in table.items() if not str(v).strip())
     holders = sorted(
         k for k, v in table.items()
-        if k in source and PLACEHOLDER.findall(source[k] if isinstance(source[k], str) and k not in source.get("_keyed", {}) else k)
+        if k in source and PLACEHOLDER.findall(source[k])
         != PLACEHOLDER.findall(str(v))
     )
     return stale, empty, holders

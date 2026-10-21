@@ -78,8 +78,8 @@ the keys, and a site not yet wired shows English, which is the safe failure.)
    at the use site (`tr(CAPTIONS[key])`), and end each line that holds msgids with
    `# i18n: msgid` so the extractor lists them and the lint leaves them alone.
 6. **No homonyms yet.** One English string, one translation. When two meanings of the
-   same word need two translations, use `tr("Off", "setting")` and key the table
-   `"setting\u0004Off"` -- not needed so far.
+   same word need two translations, that is the moment to add `tr(msgid, context)`
+   support to the loader and the table format; `Strings` reads no context today.
 
 ## What `tr()` does and does not do
 
@@ -98,8 +98,9 @@ is already built (a bare literal would re-translate live; that is why the lint w
 ## The fit sweep
 
 French runs about a third longer. `tests/test_i18n_fit.gd` opens every registered
-window and checks, per `ScrollContainer`, that the content's minimum width does not
-exceed its view (the clipped-numbers failure V5.1a found) -- once in English and once
+window and checks that its content's minimum width fits the band a window may take
+(1620 px of the 1920 px layout; wider and the right-hand figures are cut off, the
+failure V5.1a found by eye) -- once in English and once
 under the engine's own pseudolocalization (`TranslationServer.pseudolocalization_enabled`,
 expansion ratio 0.35: accents, brackets, +35% length on every string that reaches `tr()`),
 a stand-in that exists before the translations do. It also found a class of bug no

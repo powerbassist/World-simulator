@@ -16,9 +16,17 @@ const Strings = preload("res://src/ui/strings.gd")
 var _failures: Array[String] = []
 var _panel: PanelContainer
 var _frame := 0
+## The player's settings file as this run found it, put back at the end: the suite
+## is isolated by default, but a hand run (or --no-isolate) shares the real user
+## dir, and a test that deletes settings.cfg would delete the developer's.
+var _original: String = ""
+var _had_file := false
 
 
 func _init() -> void:
+	_had_file = FileAccess.file_exists(SettingsPanel.CONFIG_PATH)
+	if _had_file:
+		_original = FileAccess.get_file_as_string(SettingsPanel.CONFIG_PATH)
 	DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 	_check_apply_saved()
 	_panel = SettingsPanel.new()
@@ -30,10 +38,18 @@ func _process(_delta: float) -> bool:
 	if _frame == 2:
 		_check_row()
 		Strings.set_language("en")
-		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
+		_restore_settings()
 		_finish()
 		quit(1 if not _failures.is_empty() else 0)
 	return false
+
+
+func _restore_settings() -> void:
+	if _had_file:
+		var file := FileAccess.open(SettingsPanel.CONFIG_PATH, FileAccess.WRITE)
+		file.store_string(_original)
+	else:
+		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 
 
 func _check_apply_saved() -> void:
