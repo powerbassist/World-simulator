@@ -40,6 +40,7 @@ const FP = preload("res://src/sim/foreign_policy.gd")
 const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
 const Agenda = preload("res://src/sim/diplomacy_agenda.gd")
 const Travel = preload("res://src/sim/diplomacy_travel.gd")
+const Embassies = preload("res://src/sim/diplomacy_embassies.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const FPK = preload("res://src/sim/foreign_policy_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
@@ -84,6 +85,9 @@ static func seed_relations(state, loader) -> void:
 		var a = loader.nations[pair[0]]
 		var b = loader.nations[pair[1]]
 		state.relations[RK.key(pair[0], pair[1])] = resting(a, b, Org.shared_bonus(state, pair[0], pair[1], "relations_bonus"))
+	# V5.1-0d: the embassies the pairs already hold, seeded with the pairs for the
+	# same reason -- it needs every nation to exist -- and from content, not live state.
+	Embassies.seed_register(state, loader)
 
 
 ## Stagger the nine across the agenda cycle. Called once by GameState.new_game(),
@@ -400,17 +404,12 @@ static func cooldown_key(action_id: String, target_id: String) -> String:
 ## spans travel out + the meeting + travel back, so a state visit occupies
 ## 2 * travel_days + 1 days of the diary.
 ##
-## A capital missing from its own nation's cities is a register gap nothing else
-## has ever hit (all ten capitals are far above CITY_MIN_POP), so it errors loudly
-## and prices the journey at the CEILING — a gap must never make travel free.
+## A capital is src/core/capital.gd's rule, the map's own (G1, V5.1-0d: MDA and
+## MLT were missed by an exact match and priced at the ceiling). A nation with no
+## city at all errors loudly and prices at the CEILING — a gap must never make
+## travel free. The body is Travel.days(), moved for the size baseline.
 static func travel_days(loader, from_id: String, to_id: String) -> int:
-	var from_lonlat: Variant = Travel.capital_lonlat(loader, from_id)
-	var to_lonlat: Variant = Travel.capital_lonlat(loader, to_id)
-	if from_lonlat == null or to_lonlat == null:
-		return DK.TRAVEL_DAYS_MAX
-	var km := Travel.haversine_km(from_lonlat, to_lonlat)
-	var days := int(ceil(km / DK.TRAVEL_KM_PER_DAY))
-	return clampi(days, DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX)
+	return Travel.days(loader, from_id, to_id)
 
 
 ## Whether the two leaders have met within the window — the reader half of
@@ -503,6 +502,9 @@ static func _read_field(state, ns, field: String, target_id: String) -> float:
 		# the state visit that grants it is a different verb in the same content
 		# directory.
 		"met_recently": return 1.0 if met(state, ns.id, target_id) else 0.0
+		# V5.1-0d, the seventh piece of pair state and DIRECTED like a measure: this
+		# nation's own mission in the target's capital (src/sim/diplomacy_embassies.gd).
+		"embassy_held": return 1.0 if ns.embassies.has(target_id) else 0.0
 		"overall_approval_pct": return ns.overall_approval_pct
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
 		"unemployment_pct": return ns.unemployment_pct
@@ -666,6 +668,11 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 
 	if action.cooldown_months > 0:
 		ns.diplo_cooldown_months[cooldown_key(action.id, target_id)] = action.cooldown_months
+
+	# V5.1-0d, the sixth effect channel: the actor's mission in the target's capital,
+	# one way. The register rather than the cooldown is what keeps it from reopening.
+	if String(action.effects.get("embassy", "")) == "open" and not ns.embassies.has(target_id):
+		ns.embassies.append(target_id)
 
 	# V2.4a, and it is a stamp rather than an effect: the one pair fact this verb
 	# writes that nobody negotiated over. Either direction across the pair opens

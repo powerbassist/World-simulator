@@ -105,6 +105,8 @@ const PRECONDITION_FIELDS := [
 	"deployment_active", "deployment_chosen", "deployment_obliged",
 	"overall_approval_pct", "debt_to_gdp_pct", "unemployment_pct",
 	"deficit_pct_gdp", "growth_annual_pct", "met_recently",
+	# V5.1-0d: the actor's own embassy in the target's capital (open_embassy asks 0).
+	"embassy_held",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]

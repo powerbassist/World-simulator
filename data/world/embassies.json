@@ -1,0 +1,17 @@
+{
+  "_source": "authored",
+  "_note": "The embassies that already exist, as a RULE rather than a list (V5.1-0d): every roster state holds a resident embassy in the capital of every other roster state, except the pairs below, which have no diplomatic relations and so hold no mission either way. Read once at new game into NationState.embassies (directed: the capitals a nation holds an embassy in); open_embassy is gated on that register, so it is offered only where none exists. The rule was preferred to a list after one was tried: a Wikidata snapshot (CC0, 2026-10-21; items that are an instance of 'embassy' with an operator and a country) held 1 300 of the 1 640 directed roster missions, but its gaps included Sweden in Brussels and Dublin and Poland in Pristina -- each one exactly the bug this file fixes, an embassy offered where one stands. The rule errs the other way, and that is the recorded BOUND: small states (Malta, Luxembourg, Iceland, Montenegro, Kosovo) in truth accredit many of their ambassadors from a neighbouring capital, and here they hold a resident mission everywhere. A sourced list can replace this file without a code change. Facts as of 2026; recognition per each state's foreign ministry and Wikipedia, 'International recognition of Kosovo' and 'Cyprus-Turkey relations'.",
+  "without_relations": [
+    {"pair": ["CYP", "TUR"], "_note": "Turkey recognises only the Turkish Republic of Northern Cyprus; its embassy in North Nicosia is not a mission to the Republic of Cyprus, and Cyprus has none in Ankara."},
+    {"pair": ["ESP", "XKX"], "_note": "Spain does not recognise Kosovo."},
+    {"pair": ["GRC", "XKX"], "_note": "Greece does not recognise Kosovo; it keeps a liaison office in Pristina, not an embassy."},
+    {"pair": ["CYP", "XKX"], "_note": "Cyprus does not recognise Kosovo."},
+    {"pair": ["ROU", "XKX"], "_note": "Romania does not recognise Kosovo; a liaison office, not an embassy."},
+    {"pair": ["SVK", "XKX"], "_note": "Slovakia does not recognise Kosovo; a liaison office, not an embassy."},
+    {"pair": ["SRB", "XKX"], "_note": "Serbia does not recognise Kosovo; the two keep liaison offices under the 2013 Brussels Agreement, not embassies."},
+    {"pair": ["BIH", "XKX"], "_note": "Bosnia and Herzegovina has not recognised Kosovo (Republika Srpska's veto in the Presidency)."},
+    {"pair": ["MDA", "XKX"], "_note": "Moldova does not recognise Kosovo."},
+    {"pair": ["UKR", "XKX"], "_note": "Ukraine does not recognise Kosovo."},
+    {"pair": ["BLR", "XKX"], "_note": "Belarus does not recognise Kosovo."}
+  ]
+}

@@ -29,6 +29,7 @@ tests=(
   tests/test_transition.gd
   tests/test_scenario.gd
   tests/test_diplomacy.gd
+  tests/test_embassies.gd
   tests/test_trade.gd
   tests/test_coercion.gd
   tests/test_orgs.gd

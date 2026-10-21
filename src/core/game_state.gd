@@ -596,7 +596,12 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     the recipe tables in commodities.gd), and `commodity_state` keeps its seven
 ##     keys. A version-40 save's register reseeds through the existing lazy-seed
 ##     path, which tests/test_commodities.gd pins.
-const SAVE_VERSION := 40
+##   * V5.1-0d -- 40 -> 41 on `NationState.embassies`, the directed register of the
+##     embassies that already exist. Seeded from a content rule at new game, and
+##     from_dict() rebuilds from the save alone, so an absent key would read as no
+##     embassy anywhere: the pre-0d model, where open_embassy is offered in every
+##     capital. eu_member/neighbours' case; the argument is at the declaration.
+const SAVE_VERSION := 41
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""

@@ -465,6 +465,10 @@ func _test_campaign_is_a_leaf() -> void:
 			continue
 		if trimmed.contains("_constants.gd"):
 			continue
+		# V5.1-0d (G1): the capital rule is a src/core reader shared with the map
+		# and the diary, not a system -- it preloads nothing and holds no state.
+		if trimmed.contains("res://src/core/capital.gd"):
+			continue
 		_fail("campaign.gd preloads a system: `%s`" % trimmed)
 
 

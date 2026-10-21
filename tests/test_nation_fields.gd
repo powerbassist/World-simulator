@@ -37,10 +37,12 @@ const GameState = preload("res://src/core/game_state.gd")
 ## it alone -- that is the rule working, not a hole: its row says why absence is
 ## the truth, and review reads that line. A SAVE_VERSION move alone also fails, so
 ## the pin is re-read every time the version moves rather than drifting.
+## Re-pinned at 41 (V5.1-0d) for one field, `embassies`: absent, a reloaded world
+## holds no embassy anywhere (its declaration in nation_state.gd has the argument).
 const MUST_BUMP_PIN := {
-	"save_version": 40,
-	"count": 168,
-	"md5": "31357071861a7071addfaec0cb90bf87",
+	"save_version": 41,
+	"count": 169,
+	"md5": "3b2f3a264e471eb15230b73a72aeba31",
 }
 
 ## Sentinels per read kind, each in the exact shape and types its reader returns,

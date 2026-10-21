@@ -22,6 +22,18 @@ var id: String = ""
 ## that would all have to grow one.
 var neighbours: Array = []
 
+## V5.1-0d: the nations whose capital this nation holds a resident embassy in --
+## DIRECTED (France's embassy in Rome is not Italy's in Paris). Seeded at new game
+## by src/sim/diplomacy_embassies.gd from the rule data/world/embassies.json states,
+## then written only by open_embassy's `embassy` effect; it is what gates that verb.
+## Plain Array for neighbours' reason above (test_state_copy's sentinel probe).
+##
+## SERIALISED, absent_ok FALSE, and it is what bumps SAVE_VERSION to 41: an absent
+## key reads as no embassy anywhere -- the pre-0d model, where the AI opens 33
+## "new" embassies in the player's capital and the player is offered one in
+## Zagreb. A reloaded game running a different model: eu_member/neighbours' case.
+var embassies: Array = []
+
 ## The orgs this nation belongs to, sorted org ids. V3.2. LIVE state, not a
 ## content lookup: an accession or a withdrawal rewrites it months into a run,
 ## and every reader -- the trade weight, resting relations, the appraisal's

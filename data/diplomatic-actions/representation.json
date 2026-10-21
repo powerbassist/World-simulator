@@ -16,10 +16,16 @@
           "field": "relations",
           "op": ">=",
           "value": 50.0
+        },
+        {
+          "field": "embassy_held",
+          "op": "==",
+          "value": 0
         }
       ],
       "effects": {
-        "relations": 6.0
+        "relations": 6.0,
+        "embassy": "open"
       }
     },
     {

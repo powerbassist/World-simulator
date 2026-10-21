@@ -11,6 +11,8 @@ const FK = preload("res://src/sim/foreign_policy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DiplomaticAction = preload("res://src/core/diplomatic_action.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
+const Travel = preload("res://src/sim/diplomacy_travel.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
@@ -153,6 +155,21 @@ func _check_travel_table() -> void:
 			_failures.append("%s prices at %d days, outside [%d, %d]" % [
 				id, d, DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX,
 			])
+	# G1 (V5.1-0d): the range above accepts TRAVEL_DAYS_MAX, which is also what an
+	# UNRESOLVED capital prices at -- so MDA ("Chișinău" against the register's
+	# "Chisinau") and MLT (Valletta below the city cut) passed it while pricing a
+	# Warsaw-Chisinau visit at 8 days where 3 is right. Every capital must resolve.
+	for id in _loader.nations.keys():
+		if Travel.capital_lonlat(_loader, String(id)) == null:
+			_failures.append("%s's capital '%s' does not resolve -- its journeys price at the ceiling" % [id, _loader.nations[id].capital])
+	var chisinau := Diplomacy.travel_days(_loader, "POL", "MDA")
+	if chisinau >= DK.TRAVEL_DAYS_MAX:
+		_failures.append("Warsaw-Chisinau prices at %d days, the ceiling; ~800 km is 3" % chisinau)
+	# The campaign's capital read is the second door to the same register.
+	var mlt_region := String(_loader.regions["MLT"][0].id)
+	var tour := Campaign.travel_days_to(_state.nations["MLT"], _loader, mlt_region)
+	if tour >= DK.TRAVEL_DAYS_MAX:
+		_failures.append("a Maltese campaign stop prices at %d days, the ceiling -- campaign.gd cannot find Valletta" % tour)
 
 
 func _action_by_id(id: String):
