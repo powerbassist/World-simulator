@@ -140,11 +140,13 @@ func _rebuild() -> void:
 	# The attribution sentence IS the channel walk -- joined lines, not a
 	# second description of the same effects. A bill that names no channel
 	# (a pure birth, or a pure repeal) prints no sentence: the sections below
-	# say what there is to say.
+	# say what there is to say. Each line is a whole sentence with its own full
+	# stop, so they are joined by a space and nothing is added (QA #50: ". " plus
+	# a final "." printed every stop twice).
 	var effects: Dictionary = _law.effects if _law != null else _draft.get("channels", {})
 	var lines := effect_lines(effects, _ns)
 	if not lines.is_empty():
-		PanelKit.line(_body, ". ".join(lines) + ".", PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, " ".join(lines), PanelKit.Tone.PLAIN)
 	var repeal_text := _repeal_line()
 	if repeal_text != "":
 		PanelKit.line(_body, repeal_text, PanelKit.Tone.PLAIN)
