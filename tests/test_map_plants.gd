@@ -24,11 +24,41 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 3:
 		return false
-	_check_source_purity()
-	_check_layers_unchanged()
-	_check_placement_exclusive()
+	if _frame == 3:
+		_check_source_purity()
+		_check_layers_unchanged()
+		_check_placement_exclusive()
+		_start_the_fleet_route()
+		return false
+	if _frame < 3 + ROUTE_FRAMES:
+		return false
+	_check_the_fleet_route()
 	_report()
 	return true
+
+
+## V5.1-0a review: a glyph's route opens the Energy window and asks it to bring
+## the fleet section into view in the same frame -- and since a panel builds only
+## while its window shows, a window never opened this session has no fleet
+## section yet to scroll to. The window is fitted to a short band here so the
+## fleet, the panel's last section, is below the fold and the scroll is visible.
+const ROUTE_FRAMES := 5
+
+
+func _start_the_fleet_route() -> void:
+	_main._windows.close_all()
+	_main._map_view.plant_clicked.emit("")
+	_main._windows.frame("energy").fit_within(Vector2(900, 260))
+
+
+func _check_the_fleet_route() -> void:
+	var scroll: ScrollContainer = _main._energy_panel._scroll
+	if scroll.get_v_scroll_bar().max_value <= scroll.size.y:
+		_fail("premise: the Energy window's body fits its band, so the fleet route has nothing to scroll")
+		return
+	if scroll.scroll_vertical <= 0:
+		_fail("a plant's route opened the Energy window at the top, not at the fleet section")
+	_main._windows.close_all()
 
 
 ## THE HIT TEST DOES NOT GO THROUGH THE ROSTER, read from the source rather than

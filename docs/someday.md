@@ -359,13 +359,58 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from V5.1-0a (2026-10-21)
+
+The month across frames and the forecast off the frame took the play gate's freezes;
+these were measured and left.
+
+- **A test can print "all checks passed" over a subject that never compiled.** Mid-build,
+  a parse error in `budget_panel.gd` left `tests/test_budget_panel.gd` reporting all checks
+  passed (exit 0) over six SCRIPT ERRORs: its panel was Nil, every check's guard
+  short-circuited, and `suite_runner.py` judges by exit code alone. A sibling test that
+  `preload`s the broken file hangs instead (the SceneTree never quits) until the runner's
+  timeout. **Owner:** the next block that touches `tools/`. **Fix shape:** the runner
+  fails a test whose log carries `Parse Error` or `Compilation failed`, whatever its exit.
+- **An OPEN panel's own refresh is still a frame at the month's end.** The visible-only
+  gate makes a closed window free; an open one redraws on the month's sweep, and some
+  are slow: law 174 ms, commodities ~60, city ~57, people ~52 (the fix pass's figures).
+  With the Legislature window open, every month end is one ~174 ms frame. **Owner:**
+  V5.1c/d (the windows rebuilt); the panels' own builds, not the sim.
+- **The longest month unit left is Commodities, whole: 33 ms mean, 45 ms worst** (then
+  Migration 29/39, Industry 17/24). Inside the ~50 ms target with the draw on top; the
+  next slice (per good or per nation, `month_units()` like Economy's) if the target
+  tightens.
+- **At speed 3 with the budget window open the forecast never settles**: a projection
+  (~5 s of work, ~7 s at the frame budget) outlasts a month (~4.5 s), so the rows show
+  the last finished forecast, marked "...", a month or two behind. By design, stated in
+  `budget_forecast.gd`; a cheaper forecast model (D14's other option) would close it.
+- **One unexplained 63 ms frame** in the second tip run of `tools/month_frame_probe.gd`,
+  mid-month, 102 frames before the first boundary, not in the first run. Not the month.
+- **Below the review bar (the code-review pass), recorded rather than fixed:**
+  - a hand-driven `Clock.advance_one_day()` while a sliced month is held runs a second
+    month over the half-run cursor (`month_runner.run()` has no guard). Only a tool or a
+    test can do it: in play every input waits for the month.
+  - an embedded popup (a dropdown left open across the boundary) may take its input
+    ahead of the runner's `_input` (subwindow forwarding). Unverified at runtime; the
+    open popups today choose UI selections, not commands.
+  - mouse events replayed after a window resize during the ~0.4 s hold land at the old
+    canvas coordinates.
+  - Revert re-projects "now" on an unchanged state (~5 s of background work, rows
+    marked "..."), the price of the panel's own commit path calling `mark_dirty()`.
+  - a projection dropped mid-Diplomacy leaves `Org`'s static memo on the dropped copy
+    until the next Diplomacy settle (one copy, bounded; values unaffected).
+  - the visible-only gate is twenty copies of one line; the window manager could stop
+    a closed frame's processing once (V5.1c, the shell), and the clock cluster polls
+    `held` where a signal would do.
+
 ## Carried from the V5.0 fix pass (2026-10-20)
 
 The play gate scored 1/5 and earned one bounded fix pass: the load crash (P1) and the
 11-second month end (P2) were fixed; these were measured and left for their blocks.
 Numbers are the author's save (FRA, 41 nations, November 2027), headless.
 
-- **The budget forecast costs ~10 s per redraw with its window open.** Two 24-month
+- **PAID at V5.1-0a** (the forecast runs off the frame, `src/ui/budget_forecast.gd`; a
+  lever drag ~10 s → 37 ms a frame). **The budget forecast costs ~10 s per redraw with its window open.** Two 24-month
   `Budget.project()` runs of the real model (each ~5 s at 41 nations; D14 recorded
   ~4.5 s for the pair at 29). Since the fix pass the panel draws only while its window
   is showing, so a closed window costs nothing -- but OPEN, every month end and every
@@ -374,7 +419,7 @@ Numbers are the author's save (FRA, 41 nations, November 2027), headless.
   freeze. **Owner:** V5.1d (the forecast's cost, D14). **Fix shape, measured first:**
   the "now" projection once per state change rather than per lever move, the proposed
   one on drag end, then a cheaper model for the forecast than the full month.
-- **The other hidden panels still redraw every month: ~0.4 s.** The same `visible`
+- **PAID at V5.1-0a** (every panel gates on `is_visible_in_tree()`). **The other hidden panels still redraw every month: ~0.4 s.** The same `visible`
   gate in every panel (law 174 ms, commodities ~60, city ~57, people ~52, orgs ~31...),
   each refreshing inside a closed window on the month's `mark_all_dirty()` sweep. The
   budget panel's gate was the 12-second share; the rest is a hitch, not a freeze.

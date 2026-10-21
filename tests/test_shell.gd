@@ -19,6 +19,7 @@ extends SceneTree
 ## _ready() -- see docs/engine-decision.md.
 
 const Pending = preload("res://src/ui/pending.gd")
+const Budget = preload("res://src/sim/budget.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -68,7 +69,9 @@ func _run() -> void:
 	_check_headline_figures_move_with_nothing_open()
 	_check_save_dialog_traps_hotkeys()
 	_check_term_card_refresh()
-	_check_a_closed_budget_window_costs_nothing()
+	_check_a_closed_window_costs_nothing()
+	_check_a_tax_commit_reaches_the_budget_forecast()
+	_check_any_command_reaches_the_budget_forecast()
 
 
 ## A modal's holder is a full-rect CenterContainer, and a Container defaults to
@@ -566,22 +569,64 @@ func _check_headline_figures_move_with_nothing_open() -> void:
 		_fail("the clock cluster's date did not change after three simulated months")
 
 
-## V5.0 fix pass: the play gate's 11-second month end. The budget panel's
-## refresh runs two 24-month projections of the real model (~12 s at 41
-## nations, measured), and the month's sweep marks every panel dirty -- and a
-## panel's own `visible` stays true inside a CLOSED window, so the projections
-## ran every month with the window shut. Closed, the panel stays dirty and runs
-## nothing; opening the window redraws it.
-func _check_a_closed_budget_window_costs_nothing() -> void:
+## V5.0 fix pass: the play gate's 11-second month end -- and V5.1-0a: every
+## panel, not the budget's alone. The month's sweep marks every panel dirty, and
+## a panel's own `visible` stays true inside a CLOSED window, so each one
+## refreshed every month with its window shut: the budget's two 24-month
+## projections were ~12 s of it, the other twenty ~0.4 s (law 174 ms,
+## commodities ~60, city ~57...) -- and the same ~0.4 s on every command that
+## sweeps, which is what the map placement's click paid (P4). Closed, a panel
+## stays dirty and runs nothing; opening its window redraws it. Asked of every
+## registered window, so a panel added later is held to it without a list.
+func _check_a_closed_window_costs_nothing() -> void:
+	var checked := 0
+	for id in _main._windows.panel_ids():
+		var panel = _main._windows.frame(id)._content
+		if not panel.has_method("_process") or not ("_dirty" in panel):
+			continue
+		_main._windows.close_all()
+		_main._windows.mark_all_dirty()
+		panel._process(0.0)
+		if not panel._dirty:
+			_fail("the '%s' panel refreshed with its window closed" % id)
+		_main._windows.open(id)
+		panel._process(0.0)
+		if panel._dirty:
+			_fail("opening the '%s' window did not redraw its panel" % id)
+		checked += 1
 	_main._windows.close_all()
-	_main._windows.mark_all_dirty()
-	_main._budget_panel._process(0.0)
-	if not _main._budget_panel._dirty:
-		_fail("the budget panel ran its projections with its window closed")
+	if checked < 20:
+		_fail("only %d registered panels were checked for the closed-window gate" % checked)
+
+
+## V5.1-0a review pass 1: the Tax Code window commits through Budget.commit()
+## too, and the budget window's forecast -- projected off the frame, kept until
+## a change of state -- must hear of it, or it shows the pre-commit budget's
+## future while the books beside it show the new one.
+func _check_a_tax_commit_reaches_the_budget_forecast() -> void:
+	var forecast = _main._budget_panel._forecast
 	_main._windows.open("budget")
 	_main._budget_panel._process(0.0)
-	if _main._budget_panel._dirty:
-		_fail("opening the budget window did not redraw the panel")
+	forecast.drain()
+	_main._tax_panel._on_commit()
+	if not forecast.busy():
+		_fail("a Tax Code commit left the budget's forecast settled on the old rates")
+	_main._windows.close_all()
+
+
+## V5.1-0a review (code-review pass): every player command, not only the two
+## fiscal commits, moves what the budget window shows -- a subsidy, a law, a
+## diplomatic act all reach its books. A pinned budget window kept its "now"
+## books and forecast until a sweep, so the next lever move was credited with the
+## command's effect. Asked of one command that sweeps nothing of its own.
+func _check_any_command_reaches_the_budget_forecast() -> void:
+	var forecast = _main._budget_panel._forecast
+	_main._windows.open("budget")
+	_main._budget_panel._process(0.0)
+	forecast.drain()
+	_main._companies_panel.acted.emit(Budget.snapshot(_main._state), "A subsidy")
+	if not forecast.busy():
+		_fail("a player command left the budget's forecast settled on the state before it")
 	_main._windows.close_all()
 
 

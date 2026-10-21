@@ -65,7 +65,8 @@
    "tests/test_map_network.gd",
    "tests/test_shell.gd",
    "tests/test_hud.gd",
-   "tests/test_endowments.gd"
+   "tests/test_endowments.gd",
+   "tests/test_month_runner.gd"
   ],
   [
    "tests/test_data.gd",
@@ -98,7 +99,8 @@
    "tests/test_playability.gd",
    "tests/test_map_outlines.gd",
    "tests/test_nation_fields.gd",
-   "tests/test_save_cycle.gd"
+   "tests/test_save_cycle.gd",
+   "tests/test_budget_forecast.gd"
   ],
   [
    "tests/test_political_systems.gd",

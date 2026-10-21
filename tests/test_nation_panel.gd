@@ -403,7 +403,8 @@ func _live_body_text(panel) -> String:
 
 
 func _show(panel, nation_id: String) -> void:
-	panel.show()
+	# V5.1-0a: a panel refreshes only while its window shows.
+	_main._windows.open("diplomacy")
 	panel.show_nation(nation_id)
 	panel.mark_dirty()
 	panel._process(0.0)

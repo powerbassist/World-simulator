@@ -30,6 +30,9 @@ extends SceneTree
 ##      full-roster walks, recomputed here the old way: with no burden, with a
 ##      burden (the filter must then return everything), and with a body firm
 ##      at share 0.0 (its term is -h, not zero, so it must stay in).
+##   9. Industry's relocation distances are network.gd's warmed rows -- the SAME
+##      Dictionary, so the first month asks no Dijkstra of its own (V5.1-0a: it
+##      asked one per region, ~2.4 s inside the first month boundary).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -46,6 +49,8 @@ const Companies = preload("res://src/sim/companies.gd")
 const CoK = preload("res://src/sim/companies_constants.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Walk = preload("res://src/sim/companies_walk.gd")
+const Industry = preload("res://src/sim/industry.gd")
+const Net = preload("res://src/sim/network.gd")
 
 var _failures: Array[String] = []
 
@@ -69,6 +74,7 @@ func _init() -> void:
 	_check_price_walks(state, loader)
 	_check_turn_flavours(state)
 	_check_memo_invariants()
+	_check_relocation_rows(loader)
 	_finish()
 
 
@@ -365,6 +371,17 @@ func _code_only(src: String) -> String:
 		out.append(line if cut < 0 else line.substr(0, cut))
 	return "\n".join(out)
 
+
+
+func _check_relocation_rows(loader) -> void:
+	if Industry._dist_memo.is_empty():
+		_fail("three months asked Industry for no relocation distance -- the check below would prove nothing")
+		return
+	var table: Dictionary = Net._distance_rows(loader.region_graph)
+	for region_id in Industry._dist_memo.keys():
+		if table.has(region_id) and not is_same(Industry._dist_memo[region_id], table[region_id]):
+			_fail("Industry built its own distance row for %s rather than reading the warmed table" % region_id)
+			return
 
 func _fail(message: String) -> void:
 	if _failures.size() < 30:

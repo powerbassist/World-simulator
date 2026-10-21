@@ -187,6 +187,11 @@ func _test_the_guarantee_is_pinned_in_main() -> void:
 			continue
 		if stripped == '_after(on_step, "Programme", report)' or stripped == '_before(on_step, "Opinion", report)':
 			continue
+		# V5.1-0a: the month is a cursor, one match arm per step, so the seam
+		# between the pair is Opinion's arm label -- and between two frames,
+		# month_runner.gd defers every input, so nothing runs there either.
+		if stripped == '"Opinion":':
+			continue
 		_fail("world_month.gd runs '%s' between Programme.tick_month and Opinion.tick_month -- the same-month guarantee is broken" % stripped)
 	if elections_at < opinion_at:
 		_fail("world_month.gd runs Elections before the Programme/Opinion pair -- a won election month would drop the pulse")

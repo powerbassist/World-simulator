@@ -128,7 +128,7 @@ func setup(state, loader = null) -> void:
 ## uses. Cheaper here — there is no projection to run — but the owner marks this
 ## dirty on every simulated month either way.
 func _process(_delta: float) -> void:
-	if not _dirty or not visible or _state == null:
+	if not _dirty or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
 	_refresh()

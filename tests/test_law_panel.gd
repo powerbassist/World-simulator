@@ -65,7 +65,7 @@ func _run() -> void:
 		ns.seats_by_party[party.id] = 0
 	ns.seats_by_party[furthest_id] = ns.assembly_seats
 
-	_main._law_panel.show()
+	_main._windows.open("legislature")
 	_main._law_panel.setup(_main._state, loader)
 	_main._law_panel.mark_dirty()
 	_main._law_panel._process(0.0)
@@ -108,6 +108,7 @@ func _check_referendum_verbs_refresh_the_panel(loader, ns) -> void:
 		_fail("law template 'single_term_reform' not found")
 		return
 	var panel = _main._law_panel
+	_main._windows.open("legislature")
 	var emitted := [0]
 	panel.proposed.connect(func(_b, _n, _r): emitted[0] += 1)
 
@@ -153,7 +154,7 @@ func _check_rebellion_is_forecast_and_named(loader, ns) -> void:
 	for pid in ns.coalition_party_ids:
 		ns.party_discipline[pid] = 0.2
 
-	_main._law_panel.show()
+	_main._windows.open("legislature")
 	_main._law_panel.setup(_main._state, loader)
 	_main._law_panel.mark_dirty()
 	_main._law_panel._process(0.0)

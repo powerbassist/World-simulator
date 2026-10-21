@@ -33,7 +33,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
-const WorldMonth = preload("res://src/sim/world_month.gd")
+const MonthRunner = preload("res://src/ui/month_runner.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
@@ -190,6 +190,9 @@ var _paused_before_menu := false
 ## in-flight baseline, the same way it would lose an un-elapsed day on the
 ## clock. {label, before} per entry, in commit order.
 var _pending_effects: Array[Dictionary] = []
+## V5.1-0a. The month across frames, the clock and the windows held while it
+## closes -- src/ui/month_runner.gd. A child of this node, added in _ready().
+var _month_runner := MonthRunner.new()
 
 
 func _ready() -> void:
@@ -324,13 +327,8 @@ func _ready() -> void:
 	_windows.register("budget", "Budget", _budget_panel, KEY_B, ICONS + "briefcase.svg")
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
-	_budget_panel.committed.connect(func(before, pending):
-		_queue_effect("Budget change", before)
-		# The acknowledgment the playtest found missing: the biggest verb in the
-		# game used to answer with one corner number changing (F3).
-		_hud.message_stack.push("Budget committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
-		_update_top_bar()
-	)
+	_budget_panel.committed.connect(func(before, _pending):
+		_fiscal_committed("Budget change", "Budget committed", before))
 
 	# V4.2 T5. The tax levers' new home, in the Economy cluster beside Budget:
 	# the cluster grammar (panel-system.md §16) puts a surface where its
@@ -349,11 +347,8 @@ func _ready() -> void:
 	# siblings; this is a reference, not state, and the load path's setup()
 	# sweep leaves it alone).
 	_budget_panel.tax_panel = _tax_panel
-	_tax_panel.committed.connect(func(before, pending):
-		_queue_effect("Tax code change", before)
-		_hud.message_stack.push("Tax code committed", "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
-		_update_top_bar()
-	)
+	_tax_panel.committed.connect(func(before, _pending):
+		_fiscal_committed("Tax code change", "Tax code committed", before))
 	# A finished draft opens the briefing on itself: the price it was quoted
 	# and the drafting months are what the press just bought.
 	_tax_panel.brief_requested_draft.connect(func(entry, draft_id):
@@ -768,6 +763,7 @@ func _ready() -> void:
 
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
+	add_child(_month_runner)
 
 	# Loading reuses the whole existing load path rather than a separate
 	# start-from-save branch: a new game is built first, then replaced. That
@@ -1189,11 +1185,26 @@ func _unhandled_input(event: InputEvent) -> void:
 					_save_load_panel.mark_dirty()
 
 
+## A fiscal command landed -- the Budget window's or the Tax Code's, both through
+## Budget.commit(). The acknowledgment the playtest found missing: the biggest verb
+## in the game used to answer with one corner number changing (F3).
+func _fiscal_committed(label: String, title: String, before: Dictionary) -> void:
+	_queue_effect(label, before)
+	_hud.message_stack.push(title, "Deficit now %.2f%% of GDP." % float(_state.player().deficit_pct_gdp))
+	_update_top_bar()
+
+
 ## Records a command's pre-commit baseline, to be measured once the month it
 ## was committed in actually elapses -- see _pending_effects and
 ## _on_month_elapsed()'s resolution loop.
+##
+## V5.1-0a: and every window is told the state moved. Every player command comes
+## through here, and half of them swept nothing -- the budget window then kept its
+## "now" books and forecast past a law or a subsidy, and credited the next lever
+## move with the command's effect. A closed window's mark costs nothing.
 func _queue_effect(label: String, before: Dictionary) -> void:
 	_pending_effects.append({"label": label, "before": before})
+	_windows.mark_all_dirty()
 
 
 func _toggle_window(id: String) -> void:
@@ -1282,8 +1293,46 @@ func _on_month_elapsed(year: int, month: int) -> void:
 	_state.month = month
 	# The sim's whole month is src/sim/world_month.gd, the one copy of the order
 	# every harness runs too. What stays here is the UI's half of it, threaded
-	# through the step hook at the slot each card has always read from.
-	var report := WorldMonth.tick_month(_state, _loader, _on_month_step.bind(year, month))
+	# through the step hook at the slot each card has always read from. V5.1-0a:
+	# the runner spreads it over frames while real time passes, and hands the
+	# report to _finish_month() once it has run.
+	_month_runner.run(_state, _loader, _on_month_step.bind(year, month), _finish_month, _clock, _windows)
+
+
+## The month's end, once every step has run -- in the frame the runner finishes
+## it, or at once for a hand-driven day.
+func _finish_month(report: Dictionary) -> void:
+	# The month's sweep, moved here from the Calendar step's slot at V5.1-0a:
+	# nothing draws between two steps of a month run whole, so the slot was never
+	# observable -- but with the month across frames, a panel or the map redrawn
+	# mid-month would show half of it. At the end it also re-syncs the budget's
+	# untouched levers against the laws this month carried, not the rates before.
+	_windows.mark_all_dirty()
+
+	# U5c. The map draws only on hover, pan, zoom and resize, which was
+	# complete while its colours came from a hash of the nation id and is not
+	# now: relations drift every month and a trade weight moves with every
+	# partner's GDP. Without this the data layers show the colours of
+	# whenever the mouse last moved.
+	if _map_view != null:
+		# V2.6b1. The city list is rebuilt on the same monthly hook, and for a
+		# sharper version of the same reason: a city's population is two live
+		# shares times a live head count, and where the unions are out changes
+		# with the grievance. Without this the crosses keep the sizes they had
+		# at new game -- which is what V2.6a's "cities grow and shrink for
+		# free" actually did on screen until the V2.6b1 screenshot pass looked
+		# at a frame.
+		_map_view.refresh_cities()
+		_map_view.queue_redraw()
+
+		# Same monthly hook and the same reason as the city list beside it: a
+		# trade weight moves with every partner's GDP and an accessibility
+		# index with every region's output share. Without this the convoys
+		# keep the densities they had at new game, which is what "cities grow
+		# and shrink for free" actually did on screen until a screenshot pass
+		# looked.
+		if _map_flows != null:
+			_map_flows.refresh()
 
 	# Elections run last, on the already-settled history entry, and can fire a
 	# national and an EP result in the same month (France and Belgium, June
@@ -1375,33 +1424,6 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 			_pending_effects.clear()
 			while _state.recent_effects.size() > RECENT_EFFECTS_KEPT:
 				_state.recent_effects.remove_at(_state.recent_effects.size() - 1)
-		"Calendar":
-			_windows.mark_all_dirty()
-
-			# U5c. The map draws only on hover, pan, zoom and resize, which was
-			# complete while its colours came from a hash of the nation id and is not
-			# now: relations drift every month and a trade weight moves with every
-			# partner's GDP. Without this the data layers show the colours of
-			# whenever the mouse last moved.
-			if _map_view != null:
-				# V2.6b1. The city list is rebuilt on the same monthly hook, and for a
-				# sharper version of the same reason: a city's population is two live
-				# shares times a live head count, and where the unions are out changes
-				# with the grievance. Without this the crosses keep the sizes they had
-				# at new game -- which is what V2.6a's "cities grow and shrink for
-				# free" actually did on screen until the V2.6b1 screenshot pass looked
-				# at a frame.
-				_map_view.refresh_cities()
-				_map_view.queue_redraw()
-
-				# Same monthly hook and the same reason as the city list beside it: a
-				# trade weight moves with every partner's GDP and an accessibility
-				# index with every region's output share. Without this the convoys
-				# keep the densities they had at new game, which is what "cities grow
-				# and shrink for free" actually did on screen until a screenshot pass
-				# looked.
-				if _map_flows != null:
-					_map_flows.refresh()
 		"Legislature":
 			# The ultra pass-4 finding: a held bill releasing writes
 			# ns.last_law_result in Legislature's tick, and the assembly's own tick
@@ -1659,10 +1681,8 @@ func _assembly_result_body(result: Dictionary) -> String:
 		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
 
 func _law_title(law_id: String) -> String:
-	for law in _loader.laws:
-		if law.id == law_id:
-			return String(law.law_name)
-	return law_id
+	var law = _law_by_id(law_id)
+	return String(law.law_name) if law != null else law_id
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
 ## deployment is a command the player just issued and does not need a card telling

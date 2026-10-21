@@ -47,6 +47,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --flows --zoom 1.6
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --flows --zoom 6 --paused
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --zoom 6 --center 12.85 55.66
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open budget --forecast-computing
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --month-closing
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -232,6 +234,12 @@ var _event_answered := false
 var _climate := false
 
 var _open := ""
+## V5.1-0a. The budget forecast computes off the frame, so a frame of the budget
+## window drains it first -- unless --forecast-computing asks for the frame
+## before it lands. --month-closing photographs a month mid-close, the clock
+## held across frames (src/ui/month_runner.gd).
+var _forecast_computing := false
+var _month_closing := false
 ## V2.1c: pull a cluster's drawer open, so a frame can show the mark on the entry
 ## the player is looking at as well as the mark on the cluster it lives in.
 var _cluster := ""
@@ -639,6 +647,10 @@ func _init() -> void:
 			Motion.override = 1
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
+		elif args[i] == "--forecast-computing":
+			_forecast_computing = true
+		elif args[i] == "--month-closing":
+			_month_closing = true
 		elif args[i] == "--cluster" and i + 1 < args.size():
 			_cluster = args[i + 1]
 		elif args[i] == "--defeated":
@@ -681,6 +693,19 @@ func _process(_delta: float) -> bool:
 	# The menu stages nothing -- its plate is built in _ready() and static.
 	if _frame == _frames_wanted - APPLY_LEAD_FRAMES and not _menu:
 		_apply_view()
+	# Two frames ahead: the panel states what it proposes, the projections run to
+	# the end, and the settled panel redraws in time for the capture.
+	if _frame == _frames_wanted - 2 and not _menu and not _forecast_computing 			and _main._windows.is_open("budget"):
+		_main._budget_panel._process(0.0)
+		_main._budget_panel._forecast.drain()
+	# One frame ahead: real time reaches the 1st, and the capture lands while the
+	# month is still closing (it takes ten frames or more).
+	if _month_closing and _frame == _frames_wanted - 1 and not _menu:
+		var clock: Node = _main._clock
+		while clock.day < clock._days_in_month(clock.month, clock.year):
+			clock.advance_one_day()
+		clock.paused = false
+		clock._process(1.0 / clock.SPEED_DAYS_PER_SECOND[clock.speed - 1])
 	if _frame < _frames_wanted:
 		return false
 
