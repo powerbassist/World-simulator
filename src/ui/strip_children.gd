@@ -27,6 +27,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## Issue key -> [now field, start field] on NationState, for the issues that are a
 ## delta of one plain field against its start. The tax and spending issues read a
@@ -34,15 +35,15 @@ const Strings = preload("res://src/ui/strings.gd")
 ## deviation Inflation already computes.
 const ISSUE_FIELDS := {
 	"jobs": {"now": "unemployment_pct", "base": "start_unemployment_pct", "against": "at the start",  # i18n: msgid against caption fmt
-		"caption": "Unemployment", "fmt": "%.2f%%"},  # i18n: msgid against caption fmt
+		"caption": "Unemployment", "fmt": "%s%%"},  # i18n: msgid against caption fmt
 	# Growth is priced against the nation's TREND, not where growth began: calling
 	# it "at the start" told the player the wrong baseline (V4.8b review).
 	"growth": {"now": "growth_annual_pct", "base": "trend_annual_pct", "against": "against its trend",  # i18n: msgid against caption fmt
-		"caption": "Growth", "fmt": "%.2f%%"},  # i18n: msgid against caption fmt
+		"caption": "Growth", "fmt": "%s%%"},  # i18n: msgid against caption fmt
 	"public_finances": {"now": "deficit_pct_gdp", "base": "start_deficit_pct_gdp", "against": "at the start",  # i18n: msgid against caption fmt
-		"caption": "Deficit", "fmt": "%.2f%% of GDP"},  # i18n: msgid against caption fmt
+		"caption": "Deficit", "fmt": "%s%% of GDP"},  # i18n: msgid against caption fmt
 	"europe": {"now": "bloc_burden", "base": "start_bloc_burden", "against": "at the start",  # i18n: msgid against caption fmt
-		"caption": "Council burden", "fmt": "%.2f"},  # i18n: msgid against caption fmt
+		"caption": "Council burden", "fmt": "%s"},  # i18n: msgid against caption fmt
 }
 
 ## How far back the debt path reaches, in months: the strip's own window, then
@@ -103,7 +104,7 @@ static func _issue(ns, issue: String) -> Dictionary:
 		label = Strings.t("%s tax") % issue.trim_prefix("tax_").capitalize()
 	return _out(label, [
 		operands,
-		Strings.t("%.0f%% of minds, satisfaction %+.2f") % [salience * 100.0, sat],
+		Strings.t("%.0f%% of minds, satisfaction %s") % [salience * 100.0, Num.fs(sat, 2)],
 	])
 
 
@@ -112,31 +113,31 @@ static func _issue_operands(ns, issue: String) -> String:
 		var spec: Dictionary = ISSUE_FIELDS[issue]
 		var fmt: String = Strings.t(spec["fmt"])
 		return Strings.t("%s %s now, %s %s.") % [
-			Strings.t(spec["caption"]), fmt % float(ns.get(spec["now"])), fmt % float(ns.get(spec["base"])), Strings.t(spec["against"])]
+			Strings.t(spec["caption"]), fmt % Num.f(float(ns.get(spec["now"])), 2), fmt % Num.f(float(ns.get(spec["base"])), 2), Strings.t(spec["against"])]
 	if issue == "inflation":
-		return Strings.t("Inflation %+.2f points since the start.") % Inflation.inflation_deviation(ns)
+		return Strings.t("Inflation %s points since the start.") % Num.fs(Inflation.inflation_deviation(ns), 2)
 	if issue.begins_with("tax_"):
 		var key := issue.substr(4)
 		if ns.tax_rates_pct.has(key):
-			return Strings.t("Rate %.1f%% now, %.1f%% at the start.") % [
-				float(ns.tax_rates_pct[key]), float(ns.start_tax_rates_pct.get(key, 0.0))]
+			return Strings.t("Rate %s%% now, %s%% at the start.") % [
+				Num.f(float(ns.tax_rates_pct[key]), 1), Num.f(float(ns.start_tax_rates_pct.get(key, 0.0)), 1)]
 		return ""
 	if ns.spending_pct_gdp.has(issue):
-		return Strings.t("Spending %.2f%% of GDP now, %.2f%% at the start.") % [
-			float(ns.spending_pct_gdp[issue]), float(ns.start_spending_pct_gdp.get(issue, 0.0))]
+		return Strings.t("Spending %s%% of GDP now, %s%% at the start.") % [
+			Num.f(float(ns.spending_pct_gdp[issue]), 2), Num.f(float(ns.start_spending_pct_gdp.get(issue, 0.0)), 2)]
 	return ""
 
 
 ## Debt-to-GDP now and back along the history Trends reads; a month history does
 ## not reach is a dash, never a zero.
 static func _debt(state, ns) -> Dictionary:
-	var lines: Array = [Strings.t("Now: %.1f%% of GDP (%.0f Bn).") % [ns.debt_to_gdp_pct(), ns.debt_eur_bn]]
+	var lines: Array = [Strings.t("Now: %s%% of GDP (%.0f Bn).") % [Num.f(ns.debt_to_gdp_pct(), 1), ns.debt_eur_bn]]
 	for months in DEBT_PATH_MONTHS:
 		var entry: Dictionary = Trends.entry_at(state, months)
 		if entry.is_empty() or not entry.has("debt_to_gdp_pct"):
 			lines.append(Strings.t("%d months ago: —") % months)
 		else:
-			lines.append(Strings.t("%d months ago: %.1f%% of GDP.") % [months, float(entry["debt_to_gdp_pct"])])
+			lines.append(Strings.t("%d months ago: %s%% of GDP.") % [months, Num.f(float(entry["debt_to_gdp_pct"]), 1)])
 	return _out(Strings.t("Debt path"), lines)
 
 
@@ -162,9 +163,9 @@ static func _programme(ns, loader) -> Dictionary:
 		if terms.is_empty():
 			continue
 		var progress: Dictionary = Programme.progress_of(ns, terms)
-		var line := Strings.t("%s -- %.2f against a %.2f goal") % [
+		var line := Strings.t("%s -- %s against a %s goal") % [
 			String(terms.get("name", String(live["entry_id"]))),
-			float(progress["current_value"]), float(progress["goal_value"])]
+			Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2)]
 		var clock := StripReadings.programme_clock_text(terms, live)
 		if not clock.is_empty():
 			line += " · %s" % clock
@@ -188,9 +189,9 @@ static func _queue(ns, loader) -> Dictionary:
 static func _rules(state, ns) -> Dictionary:
 	var lines: Array = []
 	for rule in Orgs.rules_in_force(state, ns):
-		lines.append(Strings.t("%s · breach %.2f · contribution %+.2f") % [
-			String(rule.get("name", rule["id"])), float(rule.get("breach", 0.0)),
-			float(rule.get("contribution", 0.0))])
+		lines.append(Strings.t("%s · breach %s · contribution %s") % [
+			String(rule.get("name", rule["id"])), Num.f(float(rule.get("breach", 0.0)), 2),
+			Num.fs(float(rule.get("contribution", 0.0)), 2)])
 	return _out(Strings.t("Rules in force"), lines)
 
 

@@ -25,6 +25,7 @@ const Bargains = preload("res://src/ui/council_bargains.gd")
 const Ratification = preload("res://src/sim/ratification.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 const FACE_SIZE := Vector2(48, 60)
 const MONTHS: Array = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -243,8 +244,8 @@ static func _sponsor_reaction_line(body: VBoxContainer, state, loader, ns, pendi
 	if sponsor == "" or sponsor == ns.id or not state.nations.has(sponsor):
 		return
 	var d: float = Council.drive(state, loader, sponsor)
-	PanelKit.line(body, Strings.t("Backing it earns %s goodwill (+%.1f); opposing it costs %.1f; abstaining costs nothing.") % [
-		loader.nation_name(sponsor), CouncilK.SPONSOR_THANKS * d, CouncilK.SPONSOR_SNUB * d,
+	PanelKit.line(body, Strings.t("Backing it earns %s goodwill (+%s); opposing it costs %s; abstaining costs nothing.") % [
+		loader.nation_name(sponsor), Num.f(CouncilK.SPONSOR_THANKS * d, 1), Num.f(CouncilK.SPONSOR_SNUB * d, 1),
 	])
 
 
@@ -334,4 +335,4 @@ static func _aid_line(body: VBoxContainer, state, ns, org) -> void:
 	for a in (state.orgs[org.id].get("aid", []) as Array):
 		if String(a.get("payer", "")) == ns.id:
 			left = maxi(left, int(a.get("months_left", 0)) + 1)
-	PanelKit.line(body, Strings.t("You are paying %.2f %% of GDP in side-payments to this council (%d months left).") % [pct, left])
+	PanelKit.line(body, Strings.t("You are paying %s %% of GDP in side-payments to this council (%d months left).") % [Num.f(pct, 2), left])

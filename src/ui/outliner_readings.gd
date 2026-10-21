@@ -7,6 +7,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## V4.8b. The outliner of pinned things as a REGISTER, the shape strip_readings.gd
 ## gave the strip: SECTIONS is the list, CAPTIONS its words, INPUTS the NationState
@@ -119,8 +120,8 @@ static func _firms(state, ns, loader) -> Array:
 		return rows
 	var bid: Dictionary = Industry.pending_bid(state, ns, loader)
 	if not bid.is_empty():
-		rows.append(_row(Strings.t("%s bids %.1f bn for %s — %d months left") % [
-			loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
+		rows.append(_row(Strings.t("%s bids %s bn for %s — %d months left") % [
+			loader.nation_name(String(bid["bidder_nation"])), Num.f(float(bid["price_eur_bn"]), 1),
 			loader.firm_name(ns.id, String(bid["company_id"])), int(bid["months_left"])],
 			PanelKit.Tone.BAD, "companies"))
 	for failure in Industry.failing(state, ns, loader):
@@ -155,11 +156,11 @@ static func _people(ns, loader) -> Array:
 	for pid in ns.person_grudges.keys():
 		var grudge := float(ns.person_grudges[pid])
 		if grudge >= MOVED_AT:
-			worried.append({"id": String(pid), "weight": grudge, "text": Strings.t("grudge %.2f") % grudge})
+			worried.append({"id": String(pid), "weight": grudge, "text": Strings.t("grudge %s") % Num.f(grudge, 2)})
 	for pid in ns.person_loyalty.keys():
 		var loyalty := float(ns.person_loyalty[pid])
 		if loyalty <= -MOVED_AT and float(ns.person_grudges.get(pid, 0.0)) < MOVED_AT:
-			worried.append({"id": String(pid), "weight": -loyalty, "text": Strings.t("loyalty %.2f") % loyalty})
+			worried.append({"id": String(pid), "weight": -loyalty, "text": Strings.t("loyalty %s") % Num.f(loyalty, 2)})
 	worried.sort_custom(func(a, b) -> bool:
 		if not is_equal_approx(float(a["weight"]), float(b["weight"])):
 			return float(a["weight"]) > float(b["weight"])

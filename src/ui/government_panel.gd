@@ -36,6 +36,7 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## Longest human label for a portfolio -- the panel names the spending line the
 ## player already knows from the Budget tab, not the internal key.
@@ -316,17 +317,15 @@ func _refresh() -> void:
 
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Formation: %s.") % tr(METHOD_LABEL.get(ns.formation_method, ns.formation_method)), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Agreed position: economic %+.2f, social %+.2f.") % [
-		ns.coalition_position["economic"], ns.coalition_position["social"]
+	PanelKit.line(_body, tr("Agreed position: economic %s, social %s.") % [
+		Num.fs(ns.coalition_position["economic"], 2), Num.fs(ns.coalition_position["social"], 2)
 	], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("A constitutional amendment needs %s.") % tr(AMENDMENT_LABEL.get(ns.amendment_rule, ns.amendment_rule)), PanelKit.Tone.PLAIN)
 	if REFERENDUM_LABEL.has(ns.referendum_mode):
 		PanelKit.line(_body, tr(REFERENDUM_LABEL[ns.referendum_mode]), PanelKit.Tone.PLAIN)
 	var method: String = tr(String(ELECTION_SYSTEM_LABEL.get(ns.election_system, ns.election_system)))
 	if ns.election_threshold_pct > 0.0:
-		PanelKit.line(_body, tr("The assembly is elected by %s, with a %.1f%% threshold.") % [
-			method, ns.election_threshold_pct
-		], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("The assembly is elected by %s, with a %s%% threshold.") % [method, Num.f(ns.election_threshold_pct, 1)], PanelKit.Tone.PLAIN)
 	else:
 		PanelKit.line(_body, tr("The assembly is elected by %s, with no threshold.") % method, PanelKit.Tone.PLAIN)
 
@@ -395,10 +394,10 @@ func _court_phrase(ns) -> String:
 	if ns.judicial_review == JudiciaryK.REVIEW_NONE:
 		return tr("No court may strike down an Act of the legislature.")
 	var drift: float = Judiciary.independence_deviation(ns)
-	var text := tr("Rule of law %.1f; the court strikes a bill reaching past %.2f.") % [
-		ns.judicial_independence, Judiciary.tolerance(ns)]
+	var text := tr("Rule of law %s; the court strikes a bill reaching past %s.") % [
+		Num.f(ns.judicial_independence, 1), Num.f(Judiciary.tolerance(ns), 2)]
 	if absf(drift) >= 0.05:
-		text += tr("  %+.1f since the start.") % drift
+		text += tr("  %s since the start.") % Num.fs(drift, 1)
 	return text
 
 
@@ -440,7 +439,7 @@ func _build_partner_table(ns) -> Control:
 		var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, {"economic": 0.0, "social": 0.0})
 		var d_econ: float = float(pos["economic"]) - float(ns.coalition_position["economic"])
 		var d_social: float = float(pos["social"]) - float(ns.coalition_position["social"])
-		grid.add_child(_right("%.2f" % sqrt(d_econ * d_econ + d_social * d_social)))
+		grid.add_child(_right(Num.f(sqrt(d_econ * d_econ + d_social * d_social), 2)))
 
 		var bonus := Government.coalition_bonus(ns, party)
 		grid.add_child(_right("%.0f%%" % (bonus / GK.COALITION_BONUS_MAX * 100.0)))
@@ -449,9 +448,9 @@ func _build_partner_table(ns) -> Control:
 		# at its own ceiling prints one number; one that has slipped prints both.
 		var live := Discipline.of(ns, party)
 		var base := Discipline.base_of(party)
-		var discipline_cell := _right("%.2f" % live)
+		var discipline_cell := _right(Num.f(live, 2))
 		if live < base - 0.005:
-			discipline_cell.text = tr("%.2f of %.2f") % [live, base]
+			discipline_cell.text = tr("%s of %s") % [Num.f(live, 2), Num.f(base, 2)]
 			discipline_cell.theme_type_variation = UiTheme.BAD_TEXT
 		grid.add_child(discipline_cell)
 

@@ -27,6 +27,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Energy = preload("res://src/sim/energy.gd")
+const Num = preload("res://src/ui/num.gd")
 
 var _state
 var _loader
@@ -164,9 +165,9 @@ func _build_order(ns) -> void:
 		if source == null:
 			continue
 		offered += 1
-		PanelKit.line(group, tr("%s · %s · %d months · %.3f %% of GDP a year to build, %.3f %% of GDP a year to run") % [
+		PanelKit.line(group, tr("%s · %s · %d months · %s %% of GDP a year to build, %s %% of GDP a year to run") % [
 			source.source_name, source.branch, source.build_months,
-			source.build_cost_pct_gdp, source.run_cost_pct_gdp,
+			Num.f(source.build_cost_pct_gdp, 3), Num.f(source.run_cost_pct_gdp, 3),
 		])
 		var button := Button.new()
 		button.text = action.action_name
@@ -240,7 +241,7 @@ func _build_mix(ns) -> void:
 		var start: float = float(ns.start_energy_mix.get(branch, 0.0))
 		rows.append([
 			branch.capitalize(),
-			"%.2f%%" % (now * 100.0),
+			"%s%%" % Num.f((now * 100.0), 2),
 			PanelKit.delta((now - start) * 100.0, tr(" pts"), 2),
 		])
 	PanelKit.ledger(group, rows)
@@ -252,7 +253,7 @@ func _build_dependency(ns) -> void:
 	# energy, so a line that disappeared at zero would only ever appear when
 	# something was wrong -- the opposite of a readout.
 	var moved: float = Energy.dependency_deviation_pct(ns, _loader)
-	PanelKit.figure(group, "%.1f%%" % ns.import_dependency_pct, tr("of the energy the country uses, it buys abroad"))
+	PanelKit.figure(group, "%s%%" % Num.f(ns.import_dependency_pct, 1), tr("of the energy the country uses, it buys abroad"))
 	PanelKit.row(group, tr("Since the term began"), PanelKit.delta(moved, tr(" pts"), 2),
 		PanelKit.tone_for(moved, true))
 	PanelKit.line(group, tr("Above 100 is possible: a country that re-exports fuel buys more than it burns."))
@@ -267,9 +268,9 @@ func _build_emissions(ns) -> void:
 	# rather than printed raw: a national total in tonnes is six zeroes the eye
 	# cannot read, and %.1f Mt is one digit of headroom the fleet cannot exhaust
 	# (the dirtiest plausible fleet moves France by single Mt, not hundreds).
-	PanelKit.figure(group, tr("%.1f Mt") % (Energy.emissions_tonnes(ns, _loader) / 1.0e6),
+	PanelKit.figure(group, tr("%s Mt") % Num.f((Energy.emissions_tonnes(ns, _loader) / 1.0e6), 1),
 		tr("of CO2e the country emits in a year, every gas on one scale"))
-	PanelKit.row(group, tr("Per head"), "%.1f t" % ns.co2e_per_capita_t)
+	PanelKit.row(group, tr("Per head"), "%s t" % Num.f(ns.co2e_per_capita_t, 1))
 	# The delta rides the PER-CAPITA form, not the national total, because the
 	# per-capita figure is the one the accord's ceiling constrains -- a row about
 	# a different quantity than the one the politics reads would be a second
@@ -303,7 +304,7 @@ func _build_fleet(ns) -> void:
 			plant_label(ns, String(plant_id), _loader),
 			region_name(ns, String(ns.plants[plant_id].get("region_id", ""))),
 			tr("running") if bool(ns.plants[plant_id].get("done", false)) else tr("%d months left") % months_left,
-			"%.2f%%" % share,
+			"%s%%" % Num.f(share, 2),
 		])
 	PanelKit.ledger(group, rows)
 

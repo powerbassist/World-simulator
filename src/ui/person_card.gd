@@ -22,6 +22,7 @@ const CharacterK = preload("res://src/sim/character_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 const KIND_LABEL := {
 	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
@@ -80,7 +81,7 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 	if object.begins_with("meter:"):
 		var meter := object.substr("meter:".length())
 		var threshold := float(want.get("below", want.get("above", 0.0)))
-		return (Strings.t("%s below %.1f") if want.has("below") else Strings.t("%s above %.1f")) % [meter.replace("_", " "), threshold]
+		return (Strings.t("%s below %s") if want.has("below") else Strings.t("%s above %s")) % [meter.replace("_", " "), Num.f(threshold, 1)]
 	return object
 
 var _body: VBoxContainer
@@ -141,9 +142,9 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 	var loyalty := float(ns.person_loyalty.get(person.id, 0.0))
 	var standing := float(ns.person_standing.get(person.id, 0.0))
 	if grudge >= 0.05 or loyalty != 0.0 or standing >= 0.05:
-		PanelKit.row(_body, tr("Standing"), "%.2f" % standing)
-		PanelKit.row(_body, tr("Loyalty"), "%+.2f" % loyalty)
-		PanelKit.row(_body, tr("Grudge"), "%.2f" % grudge)
+		PanelKit.row(_body, tr("Standing"), Num.f(standing, 2))
+		PanelKit.row(_body, tr("Loyalty"), Num.fs(loyalty, 2))
+		PanelKit.row(_body, tr("Grudge"), Num.f(grudge, 2))
 
 	if not person.wants.is_empty():
 		PanelKit.line(_body, tr("Wants"), PanelKit.Tone.DIM)

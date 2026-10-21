@@ -35,6 +35,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 ## The direction vocabulary's home -- progress_fraction() reads it so the kit
 ## and the content cannot disagree about what "up" means.
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## What a panel prints when it does not know. An em dash is not a small number:
 ## it says the figure is absent, where `0.00` says the figure is zero, and the
@@ -223,14 +224,14 @@ static func ledger(parent: Control, rows: Array) -> GridContainer:
 ## crash, because a crash gets fixed and a plausible number gets quoted. An
 ## explicit `null` in the dictionary means the same thing and is not an error --
 ## that is a snapshot saying "not applicable", which several legitimately do.
-static func figure_text(source: Dictionary, key: String, format := "%.2f") -> String:
+static func figure_text(source: Dictionary, key: String, places := 2) -> String:
 	if not source.has(key):
 		push_error("panel_kit: no '%s' in this snapshot; printing an em dash rather than a zero" % key)
 		return MISSING
 	var value = source[key]
 	if value == null:
 		return MISSING
-	return format % value
+	return Num.f(float(value), places)
 
 
 ## A signed movement, at whatever precision is needed to show that it moved.
@@ -260,7 +261,7 @@ static func delta(value: float, unit := "", places := 1) -> String:
 ## -- figure_text()'s reason, one quantity smaller.
 static func pop_text(pop: float) -> String:
 	if pop >= 1_000_000.0:
-		return "%.1f M" % (pop / 1_000_000.0)
+		return "%s M" % Num.f((pop / 1_000_000.0), 1)
 	return "%.0f k" % (pop / 1_000.0)
 
 

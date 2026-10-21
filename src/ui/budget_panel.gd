@@ -438,11 +438,11 @@ func _resync_untouched() -> void:
 func _gini_text(snap: Dictionary) -> String:
 	if not snap.has("gini_effective"):
 		return "—"
-	return "%.2f" % float(snap["gini_effective"])
+	return PanelKit.Num.f(float(snap["gini_effective"]), 2)
 
 
 func _lever_text(key: String) -> String:
-	return "%.1f%%" % _pending_value(key)
+	return "%s%%" % PanelKit.Num.f(_pending_value(key), 1)
 
 
 ## The proposed budget: the spending levers with the Tax Code window's draft
@@ -503,7 +503,7 @@ func _refresh() -> void:
 	_set_figure("campaign", _campaign_text(now), _campaign_text(proposed))
 	_set_figure("energy", _energy_text(now), _energy_text(proposed))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
-	_set_figure("debt", tr("%.1f%% GDP") % now["debt_to_gdp_pct"], tr("%.1f%% GDP") % proposed["debt_to_gdp_pct"])
+	_set_figure("debt", tr("%s%% GDP") % PanelKit.Num.f(now["debt_to_gdp_pct"], 1), tr("%s%% GDP") % PanelKit.Num.f(proposed["debt_to_gdp_pct"], 1))
 	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
 	# the key was missing from Budget.snapshot() entirely, and the row printed a confident
 	# "0.00" against a live index of about 31 -- a defensive default reading as a
@@ -533,7 +533,7 @@ func _bloc_text(snap: Dictionary) -> String:
 	var pct: float = float(snap.get("bloc_transfer_pct_gdp", 0.0))
 	if is_zero_approx(pct):
 		return "—"
-	return tr("%+.2f%% GDP") % pct
+	return tr("%s%% GDP") % PanelKit.Num.fs(pct, 2)
 
 
 ## The same em dash again. Unsigned, unlike the Union line: a deployment only ever
@@ -638,7 +638,7 @@ func _tariff_text(snap: Dictionary) -> String:
 
 func _pct_and_eur(snap: Dictionary, key: String) -> String:
 	var pct: float = snap[key]
-	return tr("%.2f%%  (%.0f bn)") % [pct, pct / 100.0 * float(snap["gdp_eur_bn"])]
+	return tr("%s%%  (%.0f bn)") % [PanelKit.Num.f(pct, 2), pct / 100.0 * float(snap["gdp_eur_bn"])]
 
 
 ## Writes one row of the now/proposed table for this refresh.

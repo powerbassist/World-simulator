@@ -21,6 +21,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 const POLITICAL := "political"
 const RELATIONS := "relations"
@@ -476,8 +477,8 @@ static func production_even_share(state) -> float:
 static func production_stops(even: float) -> Array:
 	return [
 		{"at": 0.0, "text": Strings.t("0.0  nothing made")},
-		{"at": even, "text": Strings.t("%.3f  an even share") % even},
-		{"at": PRODUCTION_MAX_SHOWN, "text": Strings.t("%.2f  industrial core") % PRODUCTION_MAX_SHOWN},
+		{"at": even, "text": Strings.t("%s  an even share") % Num.f(even, 3)},
+		{"at": PRODUCTION_MAX_SHOWN, "text": Strings.t("%s  industrial core") % Num.f(PRODUCTION_MAX_SHOWN, 2)},
 	]
 
 
@@ -655,13 +656,13 @@ static func value_text(layer_id: String, state, viewer_id: String, nation_id: St
 		RELATIONS:
 			return "%s–%s  %.0f / 100" % [viewer_id, nation_id, v]
 		TRADE:
-			return Strings.t("%s  %.1f%% of %s's demand") % [nation_id, 100.0 * v, viewer_id]
+			return Strings.t("%s  %s%% of %s's demand") % [nation_id, Num.f(100.0 * v, 1), viewer_id]
 		PRODUCTION:
 			# "you" in the tail rather than the bare "— you" the pair layers print,
 			# because the number is real here: the planet's supply tells you your
 			# own weight exactly as well as it tells you anybody else's.
 			var mark := " (you)" if is_viewer(viewer_id, nation_id) else ""
-			return Strings.t("%s  %.1f%% of world output%s") % [nation_id, 100.0 * v, mark]
+			return Strings.t("%s  %s%% of world output%s") % [nation_id, Num.f(100.0 * v, 1), mark]
 		IMPORT_DEPENDENCY:
 			# A nation at zero buys nothing, and a 0.0 that could also be a NAN
 			# should say which it is -- the layer's own flat-bottom finding.
@@ -694,7 +695,7 @@ static func _measure_text(state, from_id: String, to_id: String) -> String:
 	var terms = state.measures.get(Relations.directed_key(from_id, to_id))
 	if terms == null:
 		return "—"
-	return "%s %.2f" % [String(terms.get("kind", "")), float(terms.get("severity", 0.0))]
+	return "%s %s" % [String(terms.get("kind", "")), Num.f(float(terms.get("severity", 0.0)), 2)]
 
 
 ## Clamped, so a value outside the shown domain saturates at the end of the ramp

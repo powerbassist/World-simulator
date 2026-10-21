@@ -35,6 +35,7 @@ const Statute = preload("res://src/sim/statute.gd")
 ## words buy_poll() records and the briefing's buttons send.
 const StatuteK = preload("res://src/sim/statute_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -293,8 +294,8 @@ func _build_result_summary(result: Dictionary) -> Control:
 			if bool(result.get("assembly_bill", false)):
 				held.text = tr("It is held for %d months, and then comes into force.") % int(result.get("held_months", 0))
 			else:
-				held.text = tr("It is held for %d months, and overriding them costs %.2f with every bloc.") % [
-					int(result.get("held_months", 0)), ChambersK.UPPER_OVERRIDE_OFFSET]
+				held.text = tr("It is held for %d months, and overriding them costs %s with every bloc.") % [
+					int(result.get("held_months", 0)), Num.f(ChambersK.UPPER_OVERRIDE_OFFSET, 2)]
 			held.autowrap_mode = TextServer.AUTOWRAP_WORD
 			box.add_child(held)
 
@@ -302,8 +303,8 @@ func _build_result_summary(result: Dictionary) -> Control:
 	# player cannot read is not a check on their power, it is a trap. See
 	# docs/judiciary-model.md.
 	if bool(result.get("struck_down", false)):
-		PanelKit.line(box, tr("The court struck it down: it reaches %.2f against a tolerance of %.2f.") % [
-			float(result.get("reach", 0.0)), float(result.get("tolerance", 0.0))], PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr("The court struck it down: it reaches %s against a tolerance of %s.") % [
+			Num.f(float(result.get("reach", 0.0)), 2), Num.f(float(result.get("tolerance", 0.0)), 2)], PanelKit.Tone.PLAIN)
 
 	var rebellion := _rebellion_text(result.get("party_rebels", {}))
 	if rebellion != "":
@@ -493,9 +494,7 @@ func _build_pending_referendum(ns) -> Control:
 
 	var months := Referendum.months_left(ns)
 	var share := Referendum.yes_share(ns, ns.referendum_pending.get("position", {}))
-	PanelKit.line(box, tr_n("The country votes in %d month. If it voted today: %.1f%% yes, %.1f%% no.", "The country votes in %d months. If it voted today: %.1f%% yes, %.1f%% no.", months) % [
-		months, share * 100.0, (1.0 - share) * 100.0
-	], PanelKit.Tone.PLAIN)
+	PanelKit.line(box, tr_n("The country votes in %d month. If it voted today: %s%% yes, %s%% no.", "The country votes in %d months. If it voted today: %s%% yes, %s%% no.", months) % [months, Num.f(share * 100.0, 1), Num.f((1.0 - share) * 100.0, 1)], PanelKit.Tone.PLAIN)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
@@ -507,7 +506,7 @@ func _build_pending_referendum(ns) -> Control:
 
 	var withdraw_btn := Button.new()
 	withdraw_btn.text = tr("Call it off")
-	withdraw_btn.tooltip_text = tr("The same %.2f against every bloc a lost vote would charge, and the same cooldown. What it buys is the slot back now rather than in %d months.") % [ReferendumK.REFERENDUM_RESULT_OFFSET, months]
+	withdraw_btn.tooltip_text = tr("The same %s against every bloc a lost vote would charge, and the same cooldown. What it buys is the slot back now rather than in %d months.") % [Num.f(ReferendumK.REFERENDUM_RESULT_OFFSET, 2), months]
 	withdraw_btn.pressed.connect(_on_withdraw)
 	_offer(withdraw_btn)
 	row.add_child(withdraw_btn)
@@ -603,11 +602,11 @@ func _after_the_division(ns, party_list: Array, law) -> String:
 	if Judiciary.reviews(ns, law):
 		var tolerance: float = Judiciary.tolerance(ns)
 		if Judiciary.strikes_down(ns, law):
-			parts.append(tr("The court would strike it down: it reaches %.2f against %.2f.") % [
-				law.reach, tolerance])
+			parts.append(tr("The court would strike it down: it reaches %s against %s.") % [
+				Num.f(law.reach, 2), Num.f(tolerance, 2)])
 		elif law.reach > 0.0:
-			parts.append(tr("The court would let it stand: it reaches %.2f against %.2f.") % [
-				law.reach, tolerance])
+			parts.append(tr("The court would let it stand: it reaches %s against %s.") % [
+				Num.f(law.reach, 2), Num.f(tolerance, 2)])
 
 	return " ".join(parts)
 
@@ -632,8 +631,8 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	if String(ns.held_bills.get(law_id, {}).get("origin", "player")) == "assembly":
 		PanelKit.line(box, tr_n("The Assembly carried it and the second chamber refused. It comes into force in %d month.", "The Assembly carried it and the second chamber refused. It comes into force in %d months.", months) % months, PanelKit.Tone.PLAIN)
 	else:
-		PanelKit.line(box, tr_n("The Assembly carried it and the second chamber refused. It comes into force in %d month, and overriding them costs %.2f with every bloc.", "The Assembly carried it and the second chamber refused. It comes into force in %d months, and overriding them costs %.2f with every bloc.", months) % [
-			months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
+		PanelKit.line(box, tr_n("The Assembly carried it and the second chamber refused. It comes into force in %d month, and overriding them costs %s with every bloc.", "The Assembly carried it and the second chamber refused. It comes into force in %d months, and overriding them costs %s with every bloc.", months) % [
+			months, Num.f(ChambersK.UPPER_OVERRIDE_OFFSET, 2)], PanelKit.Tone.PLAIN)
 	return box
 
 
@@ -686,10 +685,10 @@ func _build_endorse_button(bill_id: String) -> Control:
 	# button cannot drift from what the machine actually charges.
 	var price_bits := PackedStringArray()
 	for bloc in StatuteK.PMB_ENDORSE_PRICE:
-		price_bits.append("%s %+.2f" % [String(bloc).capitalize(), float(StatuteK.PMB_ENDORSE_PRICE[bloc])])
+		price_bits.append("%s %s" % [String(bloc).capitalize(), Num.fs(float(StatuteK.PMB_ENDORSE_PRICE[bloc]), 2)])
 	var endorse_btn := Button.new()
 	endorse_btn.text = tr("Endorse")
-	endorse_btn.tooltip_text = tr("Stand behind the bill publicly: %+.2f on every party's support line at its division, priced now as executive activism (%s). One stand per bill.") % [StatuteK.PMB_ENDORSE_SUPPORT, ", ".join(price_bits)]
+	endorse_btn.tooltip_text = tr("Stand behind the bill publicly: %s on every party's support line at its division, priced now as executive activism (%s). One stand per bill.") % [Num.fs(StatuteK.PMB_ENDORSE_SUPPORT, 2), ", ".join(price_bits)]
 	endorse_btn.pressed.connect(_on_endorse.bind(bill_id))
 	_offer(endorse_btn)
 	row.add_child(endorse_btn)

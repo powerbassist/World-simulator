@@ -37,6 +37,7 @@ signal closed
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## When a good reads as short: the value of what the country made plus what it
 ## bought, against the value of what it wanted, below this fraction.
@@ -324,7 +325,7 @@ func _ratio_text(v: float) -> String:
 	if magnitude >= 100.0:
 		return "%.0f" % v
 	if magnitude >= 1.0:
-		return "%.2f" % v
+		return Num.f(v, 2)
 	for places in range(1, 5):
 		if magnitude >= pow(10.0, -float(places)):
 			return String(("%." + str(places + 1) + "f") % v)
@@ -377,11 +378,11 @@ static func shortages(ns, good_ids: Array) -> Array:
 func _qty_text(v: float) -> String:
 	var magnitude := absf(v)
 	if magnitude >= 1e9:
-		return "%.1f B" % (v / 1e9)
+		return "%s B" % Num.f((v / 1e9), 1)
 	if magnitude >= 1e6:
-		return "%.1f M" % (v / 1e6)
+		return "%s M" % Num.f((v / 1e6), 1)
 	if magnitude >= 1e3:
-		return "%.1f k" % (v / 1e3)
+		return "%s k" % Num.f((v / 1e3), 1)
 	return "%.0f" % v
 
 

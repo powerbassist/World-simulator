@@ -6,6 +6,7 @@ extends SceneTree
 ## wall-clock time without finish(), never on a frame count. Plus the wiring:
 ## a window opens through it, the clock beats through it.
 
+const Strings = preload("res://src/ui/strings.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
@@ -26,6 +27,7 @@ var _clock
 func _init() -> void:
 	_check_interpolate()
 	_check_template()
+	_check_decimal_comma()
 	_check_headless_is_off()
 
 
@@ -101,6 +103,23 @@ func _check_interpolate() -> void:
 		var got := Motion.interpolate_text(c[0], c[1], c[2])
 		if got != c[3]:
 			_fail("interpolate_text(%s, %s, %.2f) = '%s', expected '%s'" % [c[0], c[1], c[2], got, c[3]])
+
+
+## A French figure prints its decimals with a comma ("7,40"): the roll must read the comma
+## as the decimal mark, not as grouping ("1,234" in English still snaps), or every French
+## figure would jump instead of rolling.
+func _check_decimal_comma() -> void:
+	Strings.set_language("fr")
+	var got := Motion.interpolate_text("7,40%", "7,60%", 0.5)
+	if got != "7,50%":
+		_fail("a French decimal should roll: interpolate_text('7,40%%', '7,60%%', 0.5) = '%s'" % got)
+	if not Motion.same_template("7,40%", "7,60%"):
+		_fail("'7,40%' and '7,60%' differ only in their numbers in French")
+	if Motion.same_template("7,40%", "7,6%"):
+		_fail("a changed count of decimals should still snap in French")
+	Strings.set_language("en")
+	if Motion.same_template("1,234", "1,240"):
+		_fail("a grouped English figure should still be refused")
 
 
 func _check_template() -> void:

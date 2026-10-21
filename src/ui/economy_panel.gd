@@ -29,6 +29,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## Widest sector bar, in pixels. The bar is a share of GDP drawn to scale; the
 ## figure beside it is the one to read precisely.
@@ -123,15 +124,15 @@ func _refresh() -> void:
 		for child in body.get_children():
 			child.queue_free()
 
-	_headline.text = tr("EUR %.0fbn   %+.2f%%") % [ns.gdp_eur_bn, ns.growth_annual_pct]
-	_headline_note.text = tr("Annual growth against a trend of %+.2f%%. %s") % [
-		ns.trend_annual_pct, _gap_sentence(Economy.output_gap_pct(ns))
+	_headline.text = tr("EUR %.0fbn   %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)]
+	_headline_note.text = tr("Annual growth against a trend of %s%%. %s") % [
+		Num.fs(ns.trend_annual_pct, 2), _gap_sentence(Economy.output_gap_pct(ns))
 	]
 
-	PanelKit.figure(_labour, "%.1f%%" % ns.unemployment_pct, tr("unemployment"))
-	PanelKit.line(_labour, tr("Structural floor %.1f%%.") % ns.structural_unemployment_pct)
+	PanelKit.figure(_labour, "%s%%" % Num.f(ns.unemployment_pct, 1), tr("unemployment"))
+	PanelKit.line(_labour, tr("Structural floor %s%%.") % Num.f(ns.structural_unemployment_pct, 1))
 	_trend(_labour, "unemployment_pct")
-	PanelKit.line(_labour, tr("Population %.1fM.") % (ns.population / 1_000_000.0))
+	PanelKit.line(_labour, tr("Population %sM.") % Num.f((ns.population / 1_000_000.0), 1))
 
 	# V1.5b. Here rather than under GOVERNMENT on the overview beside the delivery
 	# lines, and the split is deliberate: a delivery figure is a fact about the
@@ -170,8 +171,8 @@ func _refresh() -> void:
 	# whole REACHABLE deviation at 0.145 points, so one decimal can express exactly two
 	# values of it. A format copied from a neighbouring row is a format chosen for a
 	# quantity an order of magnitude larger.
-	PanelKit.line(_labour, tr("Inflation %.1f%%, %+.2f since the start.") % [
-		ns.inflation_pct, Inflation.inflation_deviation(ns),
+	PanelKit.line(_labour, tr("Inflation %s%%, %s since the start.") % [
+		Num.f(ns.inflation_pct, 1), Num.fs(Inflation.inflation_deviation(ns), 2),
 	])
 
 	# V1.5c, beside the dependency ratio for the reason the comment above gives: a
@@ -211,11 +212,11 @@ func _refresh() -> void:
 				(" (%s)" % String(site["city_name"])) if String(site["city_name"]) != "" else "",
 			], PanelKit.Tone.DIM)
 
-	PanelKit.figure(_finances, "%+.1f%%" % -ns.deficit_pct_gdp, tr("deficit, share of GDP"))
+	PanelKit.figure(_finances, "%s%%" % Num.fs(-ns.deficit_pct_gdp, 1), tr("deficit, share of GDP"))
 	_trend(_finances, "deficit_pct_gdp")
-	PanelKit.line(_finances, tr("Debt %.1f%% of GDP.") % ns.debt_to_gdp_pct())
+	PanelKit.line(_finances, tr("Debt %s%% of GDP.") % Num.f(ns.debt_to_gdp_pct(), 1))
 	_trend(_finances, "debt_to_gdp_pct")
-	PanelKit.line(_finances, tr("Debt service costs %.1f%% of GDP.") % ns.debt_service_pct_gdp)
+	PanelKit.line(_finances, tr("Debt service costs %s%% of GDP.") % Num.f(ns.debt_service_pct_gdp, 1))
 
 	# V2.8, under the debt-service line because both are standing claims on the same
 	# budget. NEVER SILENT, the inflation line's rule rather than the unrest one's:
@@ -224,8 +225,8 @@ func _refresh() -> void:
 	# was wrong, the opposite of a readout. Leads with the level and states the drift
 	# beside it, and the drift gets two decimals because the whole reachable move is
 	# points of a percentage: V1.6b's own format bug, one asymmetry that repeats.
-	PanelKit.line(_finances, tr("Imports %.1f%% of its energy, %+.2f since the start.") % [
-		ns.import_dependency_pct, Energy.dependency_deviation_pct(ns, _loader),
+	PanelKit.line(_finances, tr("Imports %s%% of its energy, %s since the start.") % [
+		Num.f(ns.import_dependency_pct, 1), Num.fs(Energy.dependency_deviation_pct(ns, _loader), 2),
 	])
 
 	# V1.6c, directly under the debt-service line because that is the line it explains.
@@ -253,8 +254,8 @@ func _refresh() -> void:
 	# unrest caption's rule: the threshold is named by the model rather than by a number
 	# invented for the panel.
 	var rating: String = Credit.rating(ns)
-	PanelKit.line(_finances, tr("Rated %s. Borrowing at %.2f%%, %+.2f on the anchor.") % [
-		rating, Credit.yield_pct(ns), Credit.spread_pct(ns),
+	PanelKit.line(_finances, tr("Rated %s. Borrowing at %s%%, %s on the anchor.") % [
+		rating, Num.f(Credit.yield_pct(ns), 2), Num.fs(Credit.spread_pct(ns), 2),
 	], PanelKit.Tone.BAD if rating != _anchor_rating() else PanelKit.Tone.DIM)
 
 	_fill_sectors(ns)
@@ -272,7 +273,7 @@ func _anchor_rating() -> String:
 func _gap_sentence(gap: float) -> String:
 	if absf(gap) < 0.05:
 		return tr("Output is running at potential.")
-	return (tr("Output is above potential by %.1f%%.") if gap > 0.0 else tr("Output is below potential by %.1f%%.")) % absf(gap)
+	return (tr("Output is above potential by %s%%.") if gap > 0.0 else tr("Output is below potential by %s%%.")) % Num.f(absf(gap), 1)
 
 
 ## Largest first, as a share, because the question a sector list answers is
@@ -341,8 +342,8 @@ func _fill_sectors(ns) -> void:
 				hi = v
 				richest = region.region_name
 		if hi > 0.0:
-			PanelKit.line(_sectors, tr("Regions: %s produces x%.2f the national output per head, %s x%.2f.") % [
-				richest, hi, poorest, lo,
+			PanelKit.line(_sectors, tr("Regions: %s produces x%s the national output per head, %s x%s.") % [
+				richest, Num.f(hi, 2), poorest, Num.f(lo, 2),
 			])
 		# V2.7. Position, on the same x-scale as the line above, and never silent
 		# for a different reason than it: the accessibility spread is non-zero from
@@ -362,8 +363,8 @@ func _fill_sectors(ns) -> void:
 				a_hi = v
 				best_connected = region.region_name
 		if a_hi > 0.0 and best_connected != "":
-			PanelKit.line(_sectors, tr("Reach: %s sits x%.2f the national market, %s x%.2f.") % [
-				best_connected, a_hi, worst_connected, a_lo,
+			PanelKit.line(_sectors, tr("Reach: %s sits x%s the national market, %s x%s.") % [
+				best_connected, Num.f(a_hi, 2), worst_connected, Num.f(a_lo, 2),
 			])
 
 

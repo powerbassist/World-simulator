@@ -113,7 +113,8 @@
    "tests/test_map_outlines.gd",
    "tests/test_nation_fields.gd",
    "tests/test_save_cycle.gd",
-   "tests/test_budget_forecast.gd"
+   "tests/test_budget_forecast.gd",
+   "tests/test_num.gd"
   ],
   [
    "tests/test_political_systems.gd",

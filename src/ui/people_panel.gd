@@ -37,6 +37,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## The face a row carries, at the row's own scale: 22px beside 14px captions
 ## reads as a face, and 30px of height is under two rows of separation.
@@ -244,7 +245,7 @@ func _person_row(ns, person) -> void:
 	var right := _party_or_kind_line(ns, person)
 	var standing := float(ns.person_standing.get(person.id, 0.0))
 	if standing >= 0.05:
-		right += tr(" · standing %.2f") % standing
+		right += tr(" · standing %s") % Num.f(standing, 2)
 	_face_row(person.id, person.person_name, right)
 	for want in person.wants:
 		_want_row(ns, person, want)

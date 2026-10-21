@@ -282,7 +282,7 @@ func _apply_count(counted: float) -> void:
 	var w: float = _night.counted_weight(counted)
 	for cell in _cells:
 		var shares: Dictionary = _night.shares_at(int(cell["result"]), counted)
-		cell["share"].text = "%.1f%%" % (float(shares.get(cell["party"], 0.0)) * 100.0)
+		cell["share"].text = "%s%%" % PanelKit.Num.f((float(shares.get(cell["party"], 0.0)) * 100.0), 1)
 		if cell["seats"] != null:
 			cell["seats"].text = str(roundi(float(cell["final_seats"]) * w))
 		if cell["bar"] != null:
@@ -367,9 +367,9 @@ func _build_section(result: Dictionary, index: int, chamber_label: String, verdi
 	if result["kind"] == "executive":
 		var winner_name := _party_name(result["largest_party_id"])
 		_verdict_nodes.append(PanelKit.line(box, (
-			tr("%s holds the office on %.1f%% of the vote.") if result["incumbent_largest"]
-			else tr("%s takes the office; you polled %.1f%%.")
-		) % [winner_name, float(result["incumbent_vote_share"]) * 100.0], PanelKit.Tone.PLAIN))
+			tr("%s holds the office on %s%% of the vote.") if result["incumbent_largest"]
+			else tr("%s takes the office; you polled %s%%.")
+		) % [winner_name, PanelKit.Num.f(float(result["incumbent_vote_share"]) * 100.0, 1)], PanelKit.Tone.PLAIN))
 
 	if result["kind"] == "national":
 		var incumbent_name := _party_name(result["incumbent_party_id"])
@@ -419,7 +419,7 @@ func _build_party_table(result: Dictionary, index: int) -> Control:
 			name_text += "  (incumbent)"
 		var row: Array = [
 			name_text,
-			"%.1f%%" % (float(shares.get(party_id, 0.0)) * 100.0),
+			"%s%%" % PanelKit.Num.f((float(shares.get(party_id, 0.0)) * 100.0), 1),
 		]
 		if has_seats:
 			row.append(str(seats[party_id]))

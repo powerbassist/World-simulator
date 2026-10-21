@@ -32,6 +32,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## election_panel's bar block size: wide enough to read at a glance, short
 ## enough to leave the window's right edge to the scroll gutter.
@@ -259,7 +260,7 @@ func _build_live_read(ns, terms: Dictionary, entry: Dictionary, block: VBoxConta
 ## disagree about where the figure stands.
 func _read_text(ns, terms: Dictionary) -> String:
 	var read: Dictionary = Programme.progress_of(ns, terms)
-	return tr("%.2f now against a %.2f goal") % [float(read["current_value"]), float(read["goal_value"])]
+	return tr("%s now against a %s goal") % [Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2)]
 
 
 ## The deadline, from the authored timeout and the register's own months-live

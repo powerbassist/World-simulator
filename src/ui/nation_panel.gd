@@ -26,6 +26,7 @@ const Roster = preload("res://src/core/roster.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DFK = preload("res://src/sim/defence_constants.gd")
+const Num = preload("res://src/ui/num.gd")
 
 signal closed
 
@@ -174,9 +175,9 @@ func _refresh() -> void:
 	if Roster.grade(_loader, _nation_id) == "simulated":
 		PanelKit.line(_body, tr("Simulated nation — not playable"), PanelKit.Tone.DIM)
 	PanelKit.line(_body, tr("Leader: %s (%s)") % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %+.2f%%") % [ns.gdp_eur_bn, ns.growth_annual_pct], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Unemployment: %.1f%%") % ns.unemployment_pct, PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Debt: %.1f%% of GDP") % ns.debt_to_gdp_pct(), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)
 
 	# The player's own approval is polled elsewhere with noise applied (see
 	# polling_panel.gd) — this panel shows every nation including rivals the
@@ -321,10 +322,10 @@ func _measure_line(prefix: String, from_id: String, to_id: String) -> Control:
 		line.text = tr("%s: none") % prefix
 		line.theme_type_variation = UiTheme.CAPTION
 		return line
-	line.text = tr("%s: %s, severity %.2f, since %d/%d") % [
+	line.text = tr("%s: %s, severity %s, since %d/%d") % [
 		prefix,
 		terms.get("action_name", terms.get("action_id", "")),
-		float(terms.get("severity", 0.0)),
+		Num.f(float(terms.get("severity", 0.0)), 2),
 		int(terms.get("since_month", 0)), int(terms.get("since_year", 0)),
 	]
 	return line

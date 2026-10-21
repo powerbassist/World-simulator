@@ -29,6 +29,8 @@ const _PLACEHOLDER := r"%[-+#0]*\d*(?:\.\d+)?[sdfxXc%]"  # i18n: ok
 ## Where the tables are read from; a test points it at a fixture language.
 static var dir := DIR
 static var _language := DEFAULT
+## The decimal separator of the current language (languages.json `decimal`); Num reads it.
+static var _decimal := "."
 static var _installed: Translation
 ## kind -> {"<id>.<field>": text} for the current language; cleared on a switch.
 static var _rows := {}
@@ -72,6 +74,11 @@ static func language() -> String:
 	return _language
 
 
+## The decimal separator of the current language: "." in English, "," in French.
+static func decimal() -> String:
+	return _decimal
+
+
 ## Makes `code` the language of every tr() from here on. False, and nothing moves,
 ## for a code languages() does not list.
 static func set_language(code: String) -> bool:
@@ -86,6 +93,10 @@ static func set_language(code: String) -> bool:
 		_installed = null
 	_rows.clear()
 	_language = code
+	_decimal = "."
+	for entry in languages():
+		if String(entry["code"]) == code:
+			_decimal = String(entry.get("decimal", "."))
 	if code != DEFAULT:
 		var translation := Translation.new()
 		translation.locale = code

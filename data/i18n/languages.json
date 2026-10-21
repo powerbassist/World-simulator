@@ -1,15 +1,17 @@
 {
-  "_note": "The languages the Settings screen offers. English is the source text itself (the msgid in src/ui, the value in a data row), so it has no table; every other language has data/i18n/<code>/ui.json and one <kind>.json per data directory it overrides. See docs/localisation.md.",
+  "_note": "The languages the Settings screen offers. English is the source text itself (the msgid in src/ui, the value in a data row), so it has no table; every other language has data/i18n/<code>/ui.json and one <kind>.json per data directory it overrides. See docs/localisation.md. `plural_forms` is how many forms a plural msgid has; `decimal` is the decimal separator Num prints.",
   "languages": [
     {
       "code": "en",
       "name": "English",
-      "plural_forms": 2
+      "plural_forms": 2,
+      "decimal": "."
     },
     {
       "code": "fr",
       "name": "Français",
-      "plural_forms": 2
+      "plural_forms": 2,
+      "decimal": ","
     }
   ]
 }

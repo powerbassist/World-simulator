@@ -78,6 +78,7 @@ const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
@@ -221,9 +222,7 @@ func _ready() -> void:
 	for id in ids:
 		var n: Nation = _loader.nations[id]
 		var pop_m := n.population / 1_000_000.0
-		print("%s %-15s pop %5.1fM   GDP EUR %5.0fbn   debt %5.1f%%" % [
-			n.id, n.nation_name, pop_m, n.gdp_eur_bn, n.debt_to_gdp_pct
-		])
+		print("%s %-15s pop %5.1fM   GDP EUR %5.0fbn   debt %5.1f%%" % [n.id, n.nation_name, pop_m, n.gdp_eur_bn, n.debt_to_gdp_pct])
 
 	_state = pending_state if pending_state != null else GameState.new_game(_loader, pending_player_id, pending_scenario_id)
 	if not _state.errors.is_empty():
@@ -1194,7 +1193,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## in the game used to answer with one corner number changing (F3).
 func _fiscal_committed(label: String, title: String, before: Dictionary) -> void:
 	_queue_effect(label, before)
-	_hud.message_stack.push(title, tr("Deficit now %.2f%% of GDP.") % float(_state.player().deficit_pct_gdp))
+	_hud.message_stack.push(title, tr("Deficit now %s%% of GDP.") % Num.f(float(_state.player().deficit_pct_gdp), 2))
 	_update_top_bar()
 
 
@@ -1515,8 +1514,8 @@ func _announce_industry_events() -> void:
 			_announced_bids[bid_firm] = true
 			var card_id: String = _hud.message_stack.push(
 				tr("Foreign takeover bid"),
-				tr("%s has offered %.1f bn for %s. The offer lapses in %d months.") % [
-					_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
+				tr("%s has offered %s bn for %s. The offer lapses in %d months.") % [
+					_loader.nation_name(String(bid["bidder_nation"])), Num.f(float(bid["price_eur_bn"]), 1),
 					_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])])
 			_bid_cards[bid_firm] = card_id
 			_industry_card_firms[card_id] = bid_firm
@@ -1533,9 +1532,9 @@ func _announce_industry_events() -> void:
 		var entry: Dictionary = ns.companies[firm_id]
 		var parts: PackedStringArray = String(entry.get("bid_bidder", "")).split("|")
 		_hud.message_stack.set_body(String(_bid_cards[firm_id]),
-			tr("%s has offered %.1f bn for %s. The offer lapses in %d months.") % [
+			tr("%s has offered %s bn for %s. The offer lapses in %d months.") % [
 				_loader.nation_name(parts[0] if parts.size() > 0 else ""),
-				float(entry.get("bid_price_eur_bn", 0.0)),
+				Num.f(float(entry.get("bid_price_eur_bn", 0.0)), 1),
 				_loader.firm_name(ns.id, String(firm_id)),
 				int(entry.get("bid_months_left", 0))])
 	var failing_now := Industry.failing(_state, ns, _loader)
@@ -1715,9 +1714,9 @@ func _card_obligations(before: int) -> void:
 	var ns = _state.player()
 	_hud.message_stack.push(
 		tr("Alliance obligation"),
-		tr("Forces are committed under a defensive pact. The budget carries %.2f%% of GDP for as long as it stands, and only abandoning the pact ends it.") % (
+		tr("Forces are committed under a defensive pact. The budget carries %s%% of GDP for as long as it stands, and only abandoning the pact ends it.") % Num.f((
 			0.0 if ns == null else ns.deployment_bill_pct_gdp
-		),
+		), 2),
 	)
 
 

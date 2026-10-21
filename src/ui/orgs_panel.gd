@@ -31,6 +31,7 @@ const CouncilSection = preload("res://src/ui/council_section.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Ratification = preload("res://src/sim/ratification.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Num = preload("res://src/ui/num.gd")
 
 signal closed
 
@@ -208,24 +209,24 @@ func _refresh_rules(ns, org) -> void:
 		if field == "":
 			PanelKit.line(_body, tr("%s — no policy constraint") % String(rule.get("name", "")), PanelKit.Tone.PLAIN)
 			continue
-		PanelKit.line(_body, "%s — %s %s %.1f" % [
+		PanelKit.line(_body, "%s — %s %s %s" % [
 			String(rule.get("name", "")),
 			BK.CONSTRAINT_LABEL.get(field, field),
 			BK.CONSTRAINT_OP_LABEL.get(String(rule.get("op", "")), String(rule.get("op", ""))),
-			float(rule.get("value", 0.0)),
+			Num.f(float(rule.get("value", 0.0)), 1),
 		], PanelKit.Tone.PLAIN)
 		if float(rule["breach"]) <= 0.0:
 			PanelKit.line(_body, tr("    compliant"))
 		else:
-			PanelKit.line(_body, tr("    outside by %.2f — %.0f%% of this rule's weight") % [
-				float(rule["breach"]),
+			PanelKit.line(_body, tr("    outside by %s — %.0f%% of this rule's weight") % [
+				Num.f(float(rule["breach"]), 2),
 				100.0 * float(rule["contribution"]) / maxf(float(rule["severity"]), 0.0001),
 			])
 
 	# The ONE opinion price: summed over every org and clamped once, said here
 	# once rather than repeated under each org's rules.
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Standing: %.2f of a possible %.2f, across every organisation") % [ns.bloc_burden, BK.BURDEN_MAX], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Standing: %s of a possible %s, across every organisation") % [Num.f(ns.bloc_burden, 2), Num.f(BK.BURDEN_MAX, 2)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("What the electorate weighs under 'Europe'. Zero while you comply — a rule you keep costs you the policy you could not run, not this."))
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
@@ -234,14 +235,14 @@ func _refresh_contribution(ns, org) -> void:
 	PanelKit.heading(_body, tr("THE BUDGET"))
 	var parts := Orgs.transfer_breakdown(_state, ns)
 	var per_org: Dictionary = (parts.get("orgs", {}) as Dictionary).get(org.id, {})
-	PanelKit.line(_body, tr("Net contribution: %+.3f%% of GDP") % float(per_org.get("base", 0.0)), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Net contribution: %s%% of GDP") % Num.fs(float(per_org.get("base", 0.0)), 3), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("rules", 0.0))):
-		PanelKit.line(_body, tr("Adopted programmes: %+.3f%% of GDP") % float(per_org.get("rules", 0.0)), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Adopted programmes: %s%% of GDP") % Num.fs(float(per_org.get("rules", 0.0)), 3), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("fine", 0.0))):
-		PanelKit.line(_body, tr("Penalties: %+.3f%% of GDP") % float(per_org.get("fine", 0.0)), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Penalties: %s%% of GDP") % Num.fs(float(per_org.get("fine", 0.0)), 3), PanelKit.Tone.PLAIN)
 	if not is_zero_approx(float(per_org.get("aid", 0.0))):
-		PanelKit.line(_body, tr("Side-payments (aid): %+.3f%% of GDP") % float(per_org.get("aid", 0.0)), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("All organisations, total: %+.3f%% of GDP") % float(parts.get("total", 0.0)), PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Side-payments (aid): %s%% of GDP") % Num.fs(float(per_org.get("aid", 0.0)), 3), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("All organisations, total: %s%% of GDP") % Num.fs(float(parts.get("total", 0.0)), 3), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP."))
 
 
@@ -271,15 +272,15 @@ func _refresh_outsider_org(ns, org) -> void:
 			continue
 		levied += 1
 		worst = maxf(worst, float(terms.get("severity", 0.0)))
-		PanelKit.line(_body, tr("%s: %s, severity %.2f") % [
+		PanelKit.line(_body, tr("%s: %s, severity %s") % [
 			member_id, terms.get("action_name", terms.get("action_id", "")),
-			float(terms.get("severity", 0.0)),
+			Num.f(float(terms.get("severity", 0.0)), 2),
 		], PanelKit.Tone.PLAIN)
 	if levied == 0:
 		PanelKit.line(_body, tr("None. The council has adopted no common external measure."))
 	else:
 		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, tr("%d of %d members levying, worst severity %.2f.") % [levied, members.size(), worst], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("%d of %d members levying, worst severity %s.") % [levied, members.size(), Num.f(worst, 2)], PanelKit.Tone.PLAIN)
 		PanelKit.line(_body, tr("An organisation acting as one is the only thing in this game that imposes from more than one direction at once."))
 
 

@@ -67,6 +67,7 @@ var _prose_words_re: RegEx
 var _placeholder_prose_re: RegEx
 var _dash_prose_re: RegEx
 var _unit_re: RegEx
+var _float_re: RegEx
 var _caps_re: RegEx
 var _capitalised_re: RegEx
 var _camel_re: RegEx
@@ -106,6 +107,9 @@ func _init() -> void:
 	_dash_prose_re = RegEx.create_from_string(r"^[—–\-·]\s*[A-Za-z]{3,}")
 	# A placeholder and a unit word ("%d mo", "%.0f Bn", "%+.2f pts"): the unit is text.
 	_unit_re = RegEx.create_from_string(r"%[-+#0]*\d*(?:\.\d+)?[dsf]\s?[A-Za-z]{2,}")
+	# A float with decimals in a format string: the decimal separator is the language's, so
+	# the figure goes through Num.f / Num.fs and the format keeps a %s.
+	_float_re = RegEx.create_from_string(r"%[-+ #0]*\d*\.(?:[1-9]|\*)f")
 	_caps_re = RegEx.create_from_string(r"^[A-Z][A-Z'\-]{4,}$")
 	# ... or one capitalised word.
 	_capitalised_re = RegEx.create_from_string(r"^[A-Z][a-z]{3,}[.:!?]?$")
@@ -167,6 +171,8 @@ func _check_line(line: String, is_const: bool, previous := "") -> Array[String]:
 		out.append("a ternary of short fragments inside a format argument: write a whole sentence per branch (tr_n for a count)")
 	for literal in _literals(line):
 		var text: String = literal["text"]
+		if _float_re.search(text) and not _not_text_re.search(line.substr(0, literal["start"])):
+			out.append("raw %%.Nf: route the figure through Num.f / Num.fs and keep a %%s in the format (the decimal separator is the language's): \"%s\"" % text)
 		if not _text_re.search(text):
 			continue
 		var before: String = line.substr(0, literal["start"])
@@ -200,12 +206,19 @@ func _self_check() -> void:
 		"_line(tip, \"coalition\")": 0,
 		"_line(\"Surplus\", \"coalition\")": 1,
 		"\"A sentence of prose\" + x": 1,
+		"x = \"%.2f\" % v": 1,
+		"x = tr(\"Rate %+.1f%%\") % v": 1,
+		"x = \"%5.1f\" % v": 1,
+		"x = \"%.*f\" % [places, v]": 1,
 		"return tr(\"%s the press laws.\") % (tr(\"Loosens\") if up else tr(\"Tightens\"))": 1,
 		"		tr(\"Raises\") if v > 0.0 else tr(\"Lowers\"), absf(v)])": 0,
 	}
 	var clean := [
 		"label.text = tr(\"Hello world\")",
 		"label.text = Strings.t(\"Hello world\")",
+		"x = tr(\"Rate %s%%\") % Num.f(v, 1)",
+		"x = \"%.0f\" % v",
+		"push_error(\"bad %.2f\" % v)",
 		"label.text = tr(\"Leave office\") if defeated else tr(\"Continue\")",
 		"b.text = (tr(\"Put first: %s\") if chairing else tr(\"Table: %s\")) % name",
 		"return tr_n(\"%d month left\", \"%d months left\", n) % n",

@@ -41,6 +41,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## The six blocs as a player thinks of them. election_constants.gd and
 ## opinion_constants.gd both key on the bare ids and neither carries a display name;
@@ -219,7 +220,7 @@ func _build_clock(ns) -> void:
 
 	PanelKit.row(_body, tr("Months to the vote"), "%d" % months)
 	if Campaign.is_open(_state, ns):
-		PanelKit.row(_body, tr("Campaign bill"), tr("%.3f %% of GDP") % ns.campaign_bill_pct_gdp)
+		PanelKit.row(_body, tr("Campaign bill"), tr("%s %% of GDP") % Num.f(ns.campaign_bill_pct_gdp, 3))
 		PanelKit.line(_body, tr("The run-up is open. Every effort in the field reaches more voters each month it runs and costs its price each month it runs, and all of it ends at the vote whatever happens."))
 	else:
 		PanelKit.line(_body, tr("The run-up opens %d months from now, %d months before the vote. Nothing can be put in the field until then.")
@@ -244,7 +245,7 @@ func _build_turnout(ns) -> void:
 			moved = true
 		PanelKit.row(_body, 
 			tr(String(BLOC_LABEL.get(bloc, bloc))),
-			"%.1f %%   %s" % [now * 100.0, "—" if is_zero_approx(delta) else "%+.1f" % (delta * 100.0)],
+			"%s %%   %s" % [Num.f(now * 100.0, 1), "—" if is_zero_approx(delta) else Num.fs((delta * 100.0), 1)],
 		)
 	if not moved:
 		PanelKit.line(_body, tr("Nobody has been mobilised. These are the figures an ordinary election gets."))
@@ -266,9 +267,7 @@ func _build_live(ns, effort_id: String) -> void:
 
 	PanelKit.line(block, Campaign.name_of(_loader, effort_id), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("%.3f %% of GDP a year · %s") % [
-		float(terms.get("cost_pct_gdp", 0.0)), _reach_text(terms),
-	], PanelKit.Tone.GOOD)
+	PanelKit.line(block, tr("%s %% of GDP a year · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)], PanelKit.Tone.GOOD)
 
 	PanelKit.line(block, _site_text(ns, effort_id), PanelKit.Tone.PLAIN)
 
@@ -304,9 +303,9 @@ func _build_site(ns) -> void:
 		PanelKit.line(_body, tr("Choose where the meetings are held. Reach falls with the journey's travel days, and a region already spoken to gives less the second time."))
 		return
 	var days := Campaign.travel_days_to(ns, _loader, _site_region)
-	PanelKit.line(_body, tr_n("%d day's travel · reach ×%.2f a month · %d%% spoken to", "%d days' travel · reach ×%.2f a month · %d%% spoken to", days) % [
+	PanelKit.line(_body, tr_n("%d day's travel · reach ×%s a month · %d%% spoken to", "%d days' travel · reach ×%s a month · %d%% spoken to", days) % [
 		days,
-		Campaign.factor_of(ns, _loader, _site_region),
+		Num.f(Campaign.factor_of(ns, _loader, _site_region), 2),
 		roundi(Campaign.spoken(ns, _site_region) * 100.0),
 	])
 
@@ -363,9 +362,7 @@ func _build_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 
 	PanelKit.line(block, String(terms.get("effort_name", "")), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("%.3f %% of GDP a year · %s") % [
-		float(terms.get("cost_pct_gdp", 0.0)), _reach_text(terms),
-	])
+	PanelKit.line(block, tr("%s %% of GDP a year · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)])
 
 	if can_act:
 		block.add_child(_button(ns, action))
@@ -390,7 +387,7 @@ func _reach_text(terms: Dictionary) -> String:
 		var base: float = float(ElectionK.BLOC_TURNOUT[bloc])
 		var odds: float = base / (1.0 - base) * exp(float(mobilisation[bloc]))
 		var moved: float = odds / (1.0 + odds) - base
-		parts.append("%s %+.1f" % [tr(String(BLOC_LABEL.get(bloc, bloc))), moved * 100.0])
+		parts.append("%s %s" % [tr(String(BLOC_LABEL.get(bloc, bloc))), Num.fs(moved * 100.0, 1)])
 	if parts.is_empty():
 		return tr("reaches nobody")
 	return "a month: " + ", ".join(parts)
@@ -481,8 +478,8 @@ func _build_programme(ns) -> void:
 				var read: Dictionary = Programme.progress_of(ns, terms)
 				var fraction: float = PanelKit.progress_fraction(
 					float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
-				PanelKit.line(_body, tr("%s · %.2f now against a %.2f goal · %d%% there") % [
-					name_text, float(read["current_value"]), float(read["goal_value"]), roundi(fraction * 100.0),
+				PanelKit.line(_body, tr("%s · %s now against a %s goal · %d%% there") % [
+					name_text, Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2), roundi(fraction * 100.0),
 				], PanelKit.Tone.PLAIN)
 			ProgrammeK.STATUS_COMPLETE:
 				PanelKit.line(_body, tr("%s · Delivered.") % name_text, PanelKit.Tone.GOOD)
@@ -513,10 +510,10 @@ func _build_promise_row(ns, entry: Dictionary) -> void:
 		# already made was costing -- the one figure this section exists to be a ledger
 		# of. docs/projects-model.md's months-remaining rule from the other side: the
 		# count is the unit the model charges in, and the total is what the count is for.
-		state_label.text = (tr("%s · BEING BROKEN · broken %d of %d months, %.2f approval") if broken else tr("%s · being kept · broken %d of %d months, %.2f approval")) % [
+		state_label.text = (tr("%s · BEING BROKEN · broken %d of %d months, %s approval") if broken else tr("%s · being kept · broken %d of %d months, %s approval")) % [
 			_promise_text(entry),
 			int(entry["breach_months"]), int(entry["months_live"]),
-			-_charged_so_far(entry),
+			Num.f(-_charged_so_far(entry), 2),
 		]
 		state_label.theme_type_variation = UiTheme.BAD_TEXT if broken else UiTheme.GOOD_TEXT
 	block.add_child(state_label)
@@ -553,10 +550,10 @@ func _promise_text(entry: Dictionary) -> String:
 
 func _field_value(field: String, value: float) -> String:
 	if field.begins_with("tax_") or field.begins_with("spending_"):
-		return "%.1f %%" % value
+		return "%s %%" % Num.f(value, 1)
 	if field == "debt_to_gdp_pct" or field == "deficit_pct_gdp":
-		return tr("%.1f %% of GDP") % value
-	return "%.1f %%" % value
+		return tr("%s %% of GDP") % Num.f(value, 1)
+	return "%s %%" % Num.f(value, 1)
 
 
 ## What standing broken costs, per month, in the same points of approval every other
@@ -567,9 +564,9 @@ func _breach_text(terms: Dictionary) -> String:
 	for bloc in OpinionK.BLOC_KEYS:
 		if not offsets.has(bloc):
 			continue
-		parts.append("%s %.2f" % [
+		parts.append("%s %s" % [
 			String(BLOC_LABEL.get(bloc, bloc)),
-			-float(offsets[bloc]) * OpinionK.APPROVAL_SPAN,
+			Num.f(-float(offsets[bloc]) * OpinionK.APPROVAL_SPAN, 2),
 		])
 	if parts.is_empty():
 		return tr("costs nothing to break")

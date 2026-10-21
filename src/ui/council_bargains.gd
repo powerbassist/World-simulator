@@ -18,6 +18,7 @@ const CouncilK = preload("res://src/sim/council_constants.gd")
 const BK = preload("res://src/sim/bloc_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## More rows than this and the table is a wall; the rest are the settled ones
 ## (furthest from the threshold), which a bargain cannot move anyway.
@@ -117,8 +118,8 @@ static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pen
 		sb.tooltip_text = Strings.t("It sponsored this proposal: it would take the payment for a vote it was always going to cast.")
 		inner.add_child(sb)
 		return
-	PanelKit.line(inner, (Strings.t("%s — leans FOR (%+.2f)") if margin >= 0.0 else Strings.t("%s — leans AGAINST (%+.2f)")) % [
-		loader.nation_name(id), margin,
+	PanelKit.line(inner, (Strings.t("%s — leans FOR (%s)") if margin >= 0.0 else Strings.t("%s — leans AGAINST (%s)")) % [
+		loader.nation_name(id), Num.fs(margin, 2),
 	], PanelKit.Tone.PLAIN)
 
 	var why_not := {
@@ -142,7 +143,7 @@ static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pen
 	buttons.add_theme_constant_override("separation", 6)
 	var labels := {
 		CouncilK.CURRENCY_FAVOUR: Strings.t("Favour (%d goodwill)") % roundi(CouncilK.FAVOUR_RELATIONS_COST),
-		CouncilK.CURRENCY_AID: Strings.t("Aid (%.2f %% GDP, %d months)") % [CouncilK.AID_PCT_GDP, CouncilK.AID_MONTHS],
+		CouncilK.CURRENCY_AID: Strings.t("Aid (%s %% GDP, %d months)") % [Num.f(CouncilK.AID_PCT_GDP, 2), CouncilK.AID_MONTHS],
 		CouncilK.CURRENCY_VOTE_TRADE: Strings.t("Vote trade"),
 	}
 	for currency in [CouncilK.CURRENCY_FAVOUR, CouncilK.CURRENCY_AID, CouncilK.CURRENCY_VOTE_TRADE]:

@@ -16,6 +16,7 @@ const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## The comparison window. Six months is long enough that one noisy month does not
 ## dominate and short enough to still be about the player's current term.
@@ -219,4 +220,4 @@ static func change_text(change: float, unit := "pp") -> String:
 	# -- a minus sign in front of a zero, which reads as a bug.
 	if absf(change) < 0.05:
 		return "0.0 %s" % unit
-	return "%+.1f %s" % [change, unit]
+	return "%s %s" % [Num.fs(change, 1), unit]

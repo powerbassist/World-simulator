@@ -35,6 +35,7 @@ const CouncilK = preload("res://src/sim/council_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## Strip order: standing, money, the economy, the country, the assembly, the clock,
 ## the desk, the world. People left at V4.8b: a count of people the term has moved is
@@ -145,9 +146,9 @@ static func _approval(state, ns) -> Dictionary:
 		_line(Strings.t("Polled approval, %s over %d months.") % [Trends.change_text(change), WINDOW]),
 	]
 	for row in Elections.attribution(ns):
-		lines.append(_line(Strings.t("%s: %.0f%% of minds, satisfaction %+.2f") % [
+		lines.append(_line(Strings.t("%s: %.0f%% of minds, satisfaction %s") % [
 			OpinionK.ISSUE_LABEL.get(row["issue"], String(row["issue"])),
-			float(row["salience"]) * 100.0, float(row["satisfaction"]),
+			float(row["salience"]) * 100.0, Num.fs(float(row["satisfaction"]), 2),
 		], "issue:%s" % row["issue"]))
 	return _reading_lines("%.0f%%%s" % [shown, _arrow(change)], lines)
 
@@ -163,15 +164,15 @@ static func _deficit(state, ns) -> Dictionary:
 			ns.debt_eur_bn, ns.debt_to_gdp_pct(), Trends.change_text(debt_change), WINDOW,
 		], "debt"),
 	]
-	return _reading_lines("%+.2f%%" % -ns.deficit_pct_gdp, lines)
+	return _reading_lines("%s%%" % Num.fs(-ns.deficit_pct_gdp, 2), lines)
 
 
 ## The arrow is GDP's own six-month change -- every arrow on the strip means
 ## "this figure, over Trends' window", so one glyph never means two things (the
 ## review caught a rate-sign arrow beside approval's change arrow).
 static func _gdp(state, ns) -> Dictionary:
-	var tip := Strings.t("Growth %.2f%% a year, %s over %d months.") % [
-		ns.growth_annual_pct,
+	var tip := Strings.t("Growth %s%% a year, %s over %d months.") % [
+		Num.f(ns.growth_annual_pct, 2),
 		Trends.change_text(Trends.delta(state, "growth_annual_pct", WINDOW)), WINDOW,
 	]
 	return _reading(Strings.t("%.0f Bn%s") % [ns.gdp_eur_bn, _arrow(Trends.delta(state, "gdp_eur_bn", WINDOW))], tip)
@@ -181,15 +182,15 @@ static func _unemployment(state, ns) -> Dictionary:
 	var tip := Strings.t("Unemployment, %s over %d months.") % [
 		Trends.change_text(Trends.delta(state, "unemployment_pct", WINDOW)), WINDOW,
 	]
-	return _reading("%.2f%%" % ns.unemployment_pct, tip)
+	return _reading("%s%%" % Num.f(ns.unemployment_pct, 2), tip)
 
 
 ## One decimal on the level, two on the drift -- economy_panel.gd's screenshot
 ## finding: the whole reachable deviation is 0.145 points, so one decimal on it
 ## prints "+0.0" against a live, moved figure.
 static func _inflation(ns) -> Dictionary:
-	return _reading("%.1f%%" % ns.inflation_pct,
-		Strings.t("Inflation, %+.2f points since the start.") % Inflation.inflation_deviation(ns))
+	return _reading("%s%%" % Num.f(ns.inflation_pct, 1),
+		Strings.t("Inflation, %s points since the start.") % Num.fs(Inflation.inflation_deviation(ns), 2))
 
 
 ## Zero is a real level here (nobody is angry), not an absence, so it prints. The
@@ -274,8 +275,8 @@ static func _programme(ns, loader) -> Dictionary:
 	var progress: Dictionary = Programme.progress_of(ns, terms)
 	var fraction := PanelKit.progress_fraction(
 		float(progress["current_value"]), float(progress["goal_value"]), String(progress["progressbar"]))
-	var tip := Strings.t("%s -- %.2f against a %.2f goal") % [
-		name_text, float(progress["current_value"]), float(progress["goal_value"]),
+	var tip := Strings.t("%s -- %s against a %s goal") % [
+		name_text, Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2),
 	]
 	var clock_text := programme_clock_text(terms, live)
 	if not clock_text.is_empty():
@@ -390,11 +391,11 @@ static func _europe(state, ns) -> Dictionary:
 	if treaty_left >= 0:
 		text = Strings.t("Treaty: %dm") % treaty_left
 	elif burden > 0.0:
-		text = Strings.t("Burden %.2f") % burden
+		text = Strings.t("Burden %s") % Num.f(burden, 2)
 
 	var lines: Array = [
 		_line(Strings.t("The councils you sit on.")),
-		_line(Strings.t("Burden %.2f") % burden),
+		_line(Strings.t("Burden %s") % Num.f(burden, 2)),
 		_line(Strings.tn("%d rule in force binds you, %d breached", "%d rules in force bind you, %d breached", rules.size()) % [rules.size(), breached],
 			"rules" if not rules.is_empty() else ""),
 		_line(Strings.tn("%d IOU owed", "%d IOUs owed", owed) % owed),

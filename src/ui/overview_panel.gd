@@ -28,6 +28,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const Num = preload("res://src/ui/num.gd")
 
 
 ## An election closer than this is the story, whatever else is happening.
@@ -328,9 +329,7 @@ func _fill_issues(top: Array, satisfaction: Dictionary) -> void:
 ## with no units the player can act on; capability WITH the price it sets is the
 ## loop this session is built around -- spend, and commitments get cheaper.
 func _fill_defence(ns) -> void:
-	PanelKit.line(_columns["government"], tr("Military capability %.2f — a deployment costs %.2f%% of GDP.") % [
-		ns.military_capability, Defence.deployment_cost_pct_gdp(ns),
-	])
+	PanelKit.line(_columns["government"], tr("Military capability %s — a deployment costs %s%% of GDP.") % [Num.f(ns.military_capability, 2), Num.f(Defence.deployment_cost_pct_gdp(ns), 2)])
 
 	var allies: Array = Defence.allies(_state, ns.id)
 	if allies.is_empty():
@@ -375,7 +374,7 @@ func _fill_services(ns) -> void:
 		# thing they caused. Short, because this column is ~110px wide and the
 		# capability line above it already wraps to four lines.
 		var label: String = K.ISSUE_LABEL.get(key, key)
-		var text := tr("%s delivery %+.2f on baseline.") % [label, deviation]
+		var text := tr("%s delivery %s on baseline.") % [label, Num.fs(deviation, 2)]
 		if deviation < 0.0:
 			PanelKit.line(_columns["government"], text, PanelKit.Tone.BAD)
 		else:
@@ -411,9 +410,9 @@ func _fill_press(ns) -> void:
 	if is_zero_approx(ns.press_freedom):
 		return
 	if ns.press_freedom < 0.0:
-		PanelKit.line(_columns["government"], tr("Press under state oversight (%+.2f).") % ns.press_freedom, PanelKit.Tone.BAD)
+		PanelKit.line(_columns["government"], tr("Press under state oversight (%s).") % Num.fs(ns.press_freedom, 2), PanelKit.Tone.BAD)
 	else:
-		PanelKit.line(_columns["government"], tr("Press independence guaranteed (%+.2f).") % ns.press_freedom)
+		PanelKit.line(_columns["government"], tr("Press independence guaranteed (%s).") % Num.fs(ns.press_freedom, 2))
 
 
 func _fill_moving(movements: Array, worst: Dictionary) -> void:
@@ -520,8 +519,8 @@ func _entry_tooltip(ns, terms: Dictionary, entry: Dictionary) -> String:
 	if terms.is_empty():
 		return tr("No content behind this entry; it concludes on the next tick.")
 	var read: Dictionary = Programme.progress_of(ns, terms)
-	var tip := tr("%.2f against a %.2f goal") % [
-		float(read["current_value"]), float(read["goal_value"]),
+	var tip := tr("%s against a %s goal") % [
+		Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2),
 	]
 	var timeout := int(terms.get("timeout_months", 0))
 	if timeout > 0:
@@ -628,7 +627,7 @@ func _polled_approval(ns) -> float:
 func _moved(change: float) -> String:
 	if absf(change) < 0.05:
 		return tr("flat")
-	return (tr("up %.1f points") if change > 0.0 else tr("down %.1f points")) % absf(change)
+	return (tr("up %s points") if change > 0.0 else tr("down %s points")) % Num.f(absf(change), 1)
 
 
 func _month_name_ago(months: int) -> String:

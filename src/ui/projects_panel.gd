@@ -37,6 +37,7 @@ const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Num = preload("res://src/ui/num.gd")
 
 var _state
 var _loader
@@ -166,8 +167,8 @@ func _refresh() -> void:
 ## the delivered figure alone would tell a player their motorway did nothing.
 func _build_ledger(ns) -> void:
 	PanelKit.heading(_body, tr("The public account"))
-	PanelKit.row(_body, tr("Construction bill"), tr("%.3f %% of GDP") % ns.project_bill_pct_gdp)
-	PanelKit.row(_body, tr("Trend bought"), tr("%+.3f %%/yr") % ns.project_potential_target_pct)
+	PanelKit.row(_body, tr("Construction bill"), tr("%s %% of GDP") % Num.f(ns.project_bill_pct_gdp, 3))
+	PanelKit.row(_body, tr("Trend bought"), tr("%s %%/yr") % Num.fs(ns.project_potential_target_pct, 3))
 	if ns.project_potential_target_pct > 0.0:
 		PanelKit.line(_body, tr("Bought, not yet delivered: completed works raise the trend the economy is heading for, and it takes about five years to arrive."))
 
@@ -196,9 +197,9 @@ func _build_live(ns, project_id: String) -> void:
 
 	var left := Projects.months_left(ns, project_id)
 	var total := int(terms.get("build_months", 0))
-	PanelKit.line(block, tr("%d of %d months remaining · %.3f %% of GDP a year · will buy %+.3f %%/yr") % [
-		left, total, float(terms.get("cost_pct_gdp", 0.0)),
-		float(terms.get("potential_growth_pct", 0.0)),
+	PanelKit.line(block, tr("%d of %d months remaining · %s %% of GDP a year · will buy %s %%/yr") % [
+		left, total, Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3),
+		Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
 	], PanelKit.Tone.GOOD)
 
 	var buttons := HBoxContainer.new()
@@ -225,7 +226,7 @@ func _build_completed(ns) -> void:
 		var terms := Projects.terms_of(_loader, String(pid))
 		PanelKit.row(_body,
 			Projects.name_of(_loader, String(pid)),
-			"%+.3f %%/yr" % float(terms.get("potential_growth_pct", 0.0)),
+			"%s %%/yr" % Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
 		)
 
 
@@ -258,9 +259,9 @@ func _build_offer(ns, action, terms: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, tr("%d months · %.3f %% of GDP a year · %+.3f %%/yr when it opens") % [
-		int(terms.get("build_months", 0)), float(terms.get("cost_pct_gdp", 0.0)),
-		float(terms.get("potential_growth_pct", 0.0)),
+	PanelKit.line(block, tr("%d months · %s %% of GDP a year · %s %%/yr when it opens") % [
+		int(terms.get("build_months", 0)), Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3),
+		Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
 	])
 	block.add_child(_button(ns, action))
 

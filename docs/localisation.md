@@ -104,6 +104,23 @@ the keys, and a site not yet wired shows English, which is the safe failure.)
    same word need two translations, that is the moment to add `tr(msgid, context)`
    support to the loader and the table format; `Strings` reads no context today.
 
+## Dates and numbers
+
+Neither is translated text, and both differ by language, so each has ONE formatter in `src/ui`:
+
+- **Dates: `DateText`** (`src/ui/date_text.gd`). The twelve month names live there (English,
+  `# i18n: msgid`, wrapped at the use site) and so does every date shape: `day_month_year`
+  ("01 JAN 2026", "01 JANV 2026"), `month_year`, `day_month`, `month` (three letters),
+  `month_long`. No panel indexes a month table (`tests/test_date_text.gd` fails one that does):
+  the Diary once printed `JAN` beside a clock that said `JANV`.
+- **Figures with decimals: `Num`** (`src/ui/num.gd`). `Num.f(value, places)` and `Num.fs(value,
+  places)` (signed) print the language's decimal separator (`decimal` in `languages.json`: `.`
+  for English, `,` for French). The format keeps a `%s`: `tr("Rate %s%%") % Num.f(rate, 2)`, so
+  the msgid a translator sees is `Rate %s%%`, not `Rate %.2f%%`. A raw `%.1f` / `%+.2f` in
+  `src/ui` fails `tests/test_i18n_lint.gd` (`%.0f` and `%d` print no decimal and are fine). No
+  thousands separator is shown anywhere, so `Num` has none. A panel reaches `Num` through its own
+  preload, or through `PanelKit.Num` where the file has no line to spare under the size ratchet.
+
 ## What `tr()` does and does not do
 
 `tr()` returns a plain String. A `Label` given `tr("Save")` keeps the text of the
