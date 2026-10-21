@@ -15,12 +15,22 @@ extends SceneTree
 ##      long as they existed (V1.5d never called Media, tick_budget_probe never
 ##      timed Commodities, events_probe's E4/E5 chain never ticked Commodities),
 ##      and a copy that falls behind measures a world the game never runs.
+##   4. Each step RUNS its system. (1) records the hook's names, and the names
+##      are run_unit()'s match arms, so a step whose call was deleted, or whose
+##      unit list came back empty, keeps every name in its order. For the eight
+##      systems no other test reaches through the real month, one month must move
+##      a field only that system writes: the test audit deleted each call in turn
+##      (WM1-WM8) and the whole suite stayed green (2026-10-21).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Trade = preload("res://src/sim/trade.gd")
+const Projects = preload("res://src/sim/projects.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const DisciplineK = preload("res://src/sim/discipline_constants.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 
 ## The harnesses that run the real month. Each must call WorldMonth.tick_month in
 ## code (a comment naming it is not a call).
@@ -76,6 +86,8 @@ func _init() -> void:
 	_check_the_cursor_is_the_month()
 	_check_every_harness_runs_the_month()
 	_check_no_hand_copy_is_left()
+	_check_each_step_runs_its_system()
+	_check_every_step_has_an_arm()
 	_finish()
 
 
@@ -164,6 +176,103 @@ func _check_the_cursor_is_the_month() -> void:
 			_fail("%d units shared %d keys -- a runner cannot time them apart" % [units, keys.size()])
 	if JSON.stringify(whole.to_dict()) != JSON.stringify(sliced.to_dict()):
 		_fail("two sliced months, read between every unit, saved differently from two whole ones")
+
+
+## One month on a state staged so each of the eight has something to do, and the
+## field only that system writes, read before and after. Each fingerprint is a
+## level the system moves every month it runs (a countdown, a convergence, a
+## decay, a prune), not an outcome that a quiet month could also leave alone.
+func _check_each_step_runs_its_system() -> void:
+	var state = _new_state()
+	var ns = state.player()
+
+	# Projects: a work under construction loses a month.
+	var work = null
+	for action in _loader.project_actions:
+		if String(action.effects.get("project", {}).get("op", "")) == "start":
+			work = action
+			break
+	if work == null or not bool(Projects.execute(state, ns, _loader.project_actions, work).get("applied", false)):
+		_fail("no public work could be started to stage the Projects step")
+		return
+	var pid := String(work.effects["project"]["project_id"])
+	var build_left := Projects.months_left(ns, pid)
+	# Calendar: a resolved booking older than the strip keeps is pruned.
+	state.appointments.append({"kind": "stale", "year": 2000, "month": 1, "day": 1, "status": CalendarK.STATUS_DONE})
+	# Discipline: a party knocked to the floor converges back toward its target --
+	# a party whose target is above the floor, or a running step could leave it.
+	var party = null
+	for candidate in _loader.parties["FRA"]:
+		if Discipline.target(state, ns, candidate) > DisciplineK.DISCIPLINE_MIN + 0.01:
+			party = candidate
+			break
+	if party == null:
+		_fail("no FRA party has a discipline target above the floor to stage the Discipline step")
+		return
+	ns.party_discipline[party.id] = DisciplineK.DISCIPLINE_MIN
+	# Dissolution: the lockout after a dissolution counts down.
+	ns.dissolution_lockout_remaining = 5
+	# Diplomacy: a verb's cooldown counts down in the settling pass.
+	ns.diplo_cooldown_months["probe|DEU"] = 5
+	# Defence: capability converges toward what the budget buys.
+	ns.military_capability = 0.0
+	# Investment: a programme's capital converges toward its intensity.
+	var sector := String(ns.sector_output.keys()[0])
+	ns.sector_investment[sector] = {"intensity": 1.0, "capital": 0.0}
+	# Campaign: a spoken-to region's saturation decays.
+	ns.campaign_saturation["probe_region"] = 1.0
+
+	_advance(state)
+	WorldMonth.tick_month(state, _loader)
+
+	if Projects.months_left(ns, pid) != build_left - 1:
+		_fail("Projects: a work at %d months left reads %d after a month -- the step did not run" % [build_left, Projects.months_left(ns, pid)])
+	# Counted by its marker, not found by value: an entry rewritten in place
+	# (a status flipped, a date moved) would no longer equal the staged one and
+	# would pass a value lookup while surviving the prune.
+	var survivors := 0
+	for e in state.appointments:
+		if String(e.get("kind", "")) == "stale" and int(e.get("year", 0)) == 2000:
+			survivors += 1
+	if survivors != 0:
+		_fail("Calendar: a booking resolved in 2000 survived the month's prune -- the step did not run")
+	if is_equal_approx(float(ns.party_discipline.get(party.id, -1.0)), DisciplineK.DISCIPLINE_MIN):
+		_fail("Discipline: %s stayed at the floor through a month -- the step did not run" % party.id)
+	if ns.dissolution_lockout_remaining != 4:
+		_fail("Dissolution: a lockout of 5 reads %d after a month -- the step did not run" % ns.dissolution_lockout_remaining)
+	if int(ns.diplo_cooldown_months.get("probe|DEU", 0)) != 4:
+		_fail("Diplomacy: a cooldown of 5 reads %s after a month -- the step did not run" % ns.diplo_cooldown_months.get("probe|DEU", "gone"))
+	if is_zero_approx(float(ns.military_capability)):
+		_fail("Defence: capability at 0 did not move in a month -- the step did not run")
+	if is_zero_approx(float(ns.sector_investment[sector].get("capital", 0.0))):
+		_fail("Investment: capital at 0 under intensity 1 did not move in a month -- the step did not run")
+	if float(ns.campaign_saturation.get("probe_region", 0.0)) >= 1.0:
+		_fail("Campaign: saturation 1.0 did not decay in a month -- the step did not run")
+
+
+## The other half of (4), for the steps no fingerprint covers: _step() matches on
+## the step's NAME and has no default arm, so a STEPS entry renamed without its
+## arm, or an arm renamed without its entry, runs nothing and the hook still
+## records the name in order. Read off the source, as the harness scan is.
+func _check_every_step_has_an_arm() -> void:
+	var src := FileAccess.get_file_as_string("res://src/sim/world_month.gd")
+	var start := src.find("static func _step(")
+	if start < 0:
+		_fail("world_month.gd has no _step() to read the step arms from")
+		return
+	var stop := src.find("\nstatic func ", start + 1)
+	var body := src.substr(start, stop - start if stop > start else -1)
+	var arms := {}
+	for line in body.split("\n"):
+		var stripped := line.strip_edges()
+		if stripped.begins_with("\"") and stripped.ends_with("\":"):
+			arms[stripped.trim_prefix("\"").trim_suffix("\":")] = true
+	for step in WorldMonth.STEPS:
+		if not arms.has(step):
+			_fail("STEPS names '%s' and _step() has no arm for it -- the step runs nothing" % step)
+	for arm in arms.keys():
+		if not WorldMonth.STEPS.has(arm):
+			_fail("_step() has an arm for '%s', which STEPS does not name -- it never runs" % arm)
 
 
 func _check_every_harness_runs_the_month() -> void:
