@@ -162,6 +162,22 @@ input_simulate       events:[...]
 >
 > `GODOT_MCP_EDITOR_PORT` in `.mcp.json` sidesteps it: with a pin the bridge never reads that field, and an unreachable editor becomes a retry loop with a named error instead of a crash. The cost is that the pin and the editor must agree — the editor scans `6550-6560` and takes the first free port, so it lands on 6550 unless something else holds it. `tools/check_mcp.sh` compares the two and says so.
 
+## The in-game dev console (V5.1-0b)
+
+F12 in a debug build (or any build started with `--dev-console`) opens a console over the game: an Errors tab fed by Godot's Logger, a `perf` overlay and a command table (`help` lists it). Dev only: a release build builds none of it. The design and the commands are in [[history]] (V5.1-0b).
+
+**Driving the game from an agent.** The console node is `/root/Main/DevConsole` and has one method, `run_command(text) -> String`. A running game is not an edited scene, so `node_call_method` (editor-only) cannot reach it; use the runtime channel of `execute_code`, which takes an expression:
+
+```
+game_start       scene_path:"main", if_running:"return"
+execute_code     channel:"runtime",
+                 code:"get_node('/root/Main/DevConsole').call('run_command', 'skip 2')"
+```
+
+It returns what the console printed (`skipped 2 months -- now 2026-03-01`). The line and its answer also appear in the panel, so a human watching sees what the agent did. A command that changes the game answers `a month is closing -- try again in a moment` while a month runs across frames; retry. Reads (`get`, `person`, `errors`, `help`) answer at once.
+
+Useful lines: `get me.deficit_pct_gdp`, `set me.gdp_eur_bn 3000`, `skip 12`, `term_start`, `event com_gas_squeeze`, `open budget`, `save` / `load`, `errors 20`. `set` takes a number, flag or text field of `src/core/nation_fields.gd` and settles on the next month's tick like any other change.
+
 ## Godot docs MCP
 
 [Nihilantropy/godot-mcp-docs](https://github.com/Nihilantropy/godot-mcp-docs) — the full official Godot documentation, served locally. Two tools: `get_documentation_tree` and `get_documentation_file`.

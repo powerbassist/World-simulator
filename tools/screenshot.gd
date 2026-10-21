@@ -49,6 +49,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --zoom 6 --center 12.85 55.66
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open budget --forecast-computing
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --month-closing
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --console
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --console-errors
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --perf --frames 120
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -240,6 +243,12 @@ var _open := ""
 ## held across frames (src/ui/month_runner.gd).
 var _forecast_computing := false
 var _month_closing := false
+## V5.1-0b. The dev console (src/ui/dev_console.gd): --console opens it after a few
+## commands, --console-errors opens its Errors tab after a logged error and a
+## warning, --perf shows the overlay after one real-time month (needs --frames
+## ~120: the month closes across frames and the overlay refreshes on a timer).
+var _console := ""
+var _perf_overlay := false
 ## V2.1c: pull a cluster's drawer open, so a frame can show the mark on the entry
 ## the player is looking at as well as the mark on the cluster it lives in.
 var _cluster := ""
@@ -651,6 +660,12 @@ func _init() -> void:
 			_forecast_computing = true
 		elif args[i] == "--month-closing":
 			_month_closing = true
+		elif args[i] == "--console":
+			_console = "console"
+		elif args[i] == "--console-errors":
+			_console = "errors"
+		elif args[i] == "--perf":
+			_perf_overlay = true
 		elif args[i] == "--cluster" and i + 1 < args.size():
 			_cluster = args[i + 1]
 		elif args[i] == "--defeated":
@@ -667,6 +682,31 @@ func _init() -> void:
 	else:
 		_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
+
+
+## V5.1-0b. The dev console's states, staged through its own run_command() the way
+## an agent drives it. --perf starts a real-time month at frame 3 so the runner has
+## a cost table by the time the capture is taken.
+func _stage_console() -> void:
+	var console: Control = _main.get_node("DevConsole")
+	if _perf_overlay and _frame == 3:
+		console.run_command("perf on")
+		var clock: Node = _main._clock
+		while clock.day < clock._days_in_month(clock.month, clock.year):
+			clock.advance_one_day()
+		clock.paused = false
+		clock._process(1.0 / clock.SPEED_DAYS_PER_SECOND[clock.speed - 1])
+	if _frame != _frames_wanted - 2:
+		return
+	match _console:
+		"console":
+			for line in ["help", "get me.deficit_pct_gdp", "set me.assembly_seats 600", "skip 1", "get me.assembly_seats", "event nonsense"]:
+				console.run_command(line)
+			console.toggle()
+		"errors":
+			push_error("staged for the screenshot: an error")
+			push_warning("staged for the screenshot: a warning")
+			console.show_errors()
 
 
 func _process(_delta: float) -> bool:
@@ -706,6 +746,8 @@ func _process(_delta: float) -> bool:
 			clock.advance_one_day()
 		clock.paused = false
 		clock._process(1.0 / clock.SPEED_DAYS_PER_SECOND[clock.speed - 1])
+	if (_console != "" or _perf_overlay) and not _menu:
+		_stage_console()
 	if _frame < _frames_wanted:
 		return false
 
