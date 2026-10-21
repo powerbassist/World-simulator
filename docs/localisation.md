@@ -111,16 +111,51 @@ panel has shown, against an English literal** -- compare against `tr("...")` or,
 against state. Real French fit is each translation PR's check, with
 `tools/screenshot.gd -- --lang fr`.
 
-## Commands
+## The worklist, for the translator
 
 ```bash
-python tools/i18n_extract.py            # coverage per language and table
-python tools/i18n_extract.py --todo fr  # what fr has not translated, as JSON to fill in
-python tools/i18n_extract.py --check    # exit 1: stale key, empty value, placeholder mismatch
+python tools/i18n_extract.py --todo fr > worklist.json   # what fr has not translated
+# ... fill every "fr" slot ...
+python tools/i18n_extract.py --apply worklist.json       # writes data/i18n/fr/*.json
+python tools/i18n_extract.py --check                     # CI: stale, empty, placeholders, duplicate ids
+python tools/i18n_extract.py                             # coverage per language and table
 ```
 
-Adding a language: a line in `data/i18n/languages.json`, a `data/i18n/<code>/` folder.
-The Settings row, the loader and the tests pick it up.
+`--todo` writes one JSON file, the language's slot empty and the English beside it:
+
+```json
+{"lang": "fr",
+ "ui":   {"Save the game": {"en": "Save the game", "fr": ""}},
+ "rows": {"laws":   {"single_term_reform.summary": {"en": "Limit the Presidency ...", "fr": ""}},
+          "events": {"com_gas_squeeze.choices.freeze_the_tariff.label": {"en": "Freeze the household tariff", "fr": ""}}}}
+```
+
+`--apply` writes every filled slot into `data/i18n/<lang>/ui.json` (the `ui` group) or
+`data/i18n/<lang>/<kind>.json` (a `rows` group); entries already in a table are kept and
+a filled slot overwrites its key; an empty slot is skipped. It **refuses**, and names, a
+slot whose placeholders (`%d %s %.1f ...`) differ from the English in kind or order, and a
+key whose English has gone away (stale). Exit 1 if it refused anything.
+
+`# i18n: msgid` on a line of a const table marks it for the extractor: the literals that
+are *values* are msgids, the dictionary keys (`"health": "Health"` -> `Health`) are not.
+`# i18n: msgid label` lists only the values of the key `label` (a table whose rows also
+hold ids and numbers, like the boot stages). `--check` also fails when one row id appears
+in two files of the same kind (the second would overwrite the first silently).
+
+Adding a language: a line in `data/i18n/languages.json` and a `data/i18n/<code>/` folder
+(`--todo <code>` builds the first worklist). The Settings row, the loader and the tests
+pick it up.
+
+## The HUD must fit in every language
+
+The command bar's drawer is the one HUD piece whose width is not fixed (nine entries with
+icons: 1053 px in English, 1195 in French, in a row that also holds the legend and the
+clock). When its labels do not fit the lower row it drops to icons, the label staying as the
+tooltip (`ActionBar._fit_drawer`), and `tests/test_i18n_fit.gd` opens every cluster in
+English, French, the pseudolocale and across a live switch. The lint treats the drawer
+(`_entry(id, label)`) and the message stack's `push(title, body)` as sinks, *including a
+first argument*, a ternary branch (`else "..."`) and the English default of
+`.get("key", "...")` on a line that assigns text.
 
 ## What is NOT done (V5.1b's edge)
 

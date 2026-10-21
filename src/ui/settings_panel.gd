@@ -295,7 +295,7 @@ func _build() -> void:
 	_motion_button = _add_row(grid, tr("Motion"), [tr("Off"), tr("On")])
 	_foreign_news_button = _add_row(grid, tr("News of other countries"), [tr("Off"), tr("On")])
 
-	PanelKit.line(root, tr(tr("The language applies in full to windows opened after the change; load a game again to apply it to every window.")))
+	PanelKit.line(root, tr("The language applies in full to windows opened after the change; load a game again to apply it to every window."))
 
 	_build_messages(root)
 

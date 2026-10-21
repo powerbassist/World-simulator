@@ -294,6 +294,9 @@ func _build_polls() -> void:
 	section.add_child(row)
 	for kind in [StatuteK.POLL_KIND_ASSEMBLY, StatuteK.POLL_KIND_POPULAR]:
 		var btn := Button.new()
+		# A translated sentence on one line is the widest thing in the briefing: it wraps
+		# (two lines in a longer language) rather than push the figures out of the view.
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var cost_pct: float = float(StatuteK.POLL_COSTS[kind])
 		var cost_bn: float = float(_ns.gdp_eur_bn) * cost_pct / 100.0
 		# The article is the kind's own initial vowel: "an assembly", "a popular".
@@ -332,7 +335,7 @@ func _on_poll(kind: String) -> void:
 	if bool(result.get("refused", false)):
 		var refusal: Label = _body.find_child("RefusalLine", true, false)
 		if refusal != null:
-			refusal.text = String(result.get("refusal", "Refused."))
+			refusal.text = String(result.get("refusal", tr("Refused.")))
 			refusal.show()
 		return
 	polled.emit(before, "Commissioned %s poll: %s" % [kind, _bill_name()])

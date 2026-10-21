@@ -510,7 +510,7 @@ func _on_draft() -> void:
 	}
 	var result: Dictionary = Statute.draft(_state, ns, _loader, spec)
 	if not bool(result.get("ok", false)):
-		_refusal.text = String(result.get("refusal", "Refused."))
+		_refusal.text = String(result.get("refusal", tr("Refused.")))
 		_refusal.show()
 		return
 	_refusal.hide()

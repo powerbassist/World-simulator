@@ -20,6 +20,15 @@ signal panel_requested(id: String)
 
 const ICON_PX := 22
 
+## Two of hud.gd's EDGE_MARGIN: the width the HUD's lower row has is the viewport's
+## less this. The drawer is the one piece of that row whose width is not fixed --
+## nine entries with their icons need 1053 px in English and 1195 in French, and
+## the row also holds the legend and the clock -- so when the labels do not fit it
+## drops to icons (the label stays as the tooltip) rather than push the clock, the
+## minimap and the top bar's MENU off the screen. V5.1b; the shell in V5.1c replaces
+## this bar and its sibling plates, and takes the rule with it.
+const BAND_MARGIN := 28.0
+
 var _subrow: HBoxContainer
 var _cluster_row: HBoxContainer
 var _cluster_buttons := {}   # cluster id -> Button
@@ -68,6 +77,10 @@ func _ready() -> void:
 	_cluster_row = HBoxContainer.new()
 	_cluster_row.add_theme_constant_override("separation", 2)
 	cluster_holder.add_child(_cluster_row)
+	get_viewport().size_changed.connect(func():
+		if _open_cluster != "":
+			_fit_drawer()
+	)
 
 
 ## `entries` is an Array of {id, label, key}, where `key` is the printable name of
@@ -224,6 +237,7 @@ func _toggle_cluster(cluster_id: String) -> void:
 			button.add_theme_constant_override("h_separation", 6)
 		var id := str(entry["id"])
 		button.set_meta("window_id", id)
+		button.set_meta("label", button.text)
 		# A shortcut nobody can find is not a shortcut. top_bar.gd's SAVE and MENU
 		# buttons have named theirs in a tooltip since U5a; this is that, for the
 		# fourteen windows.
@@ -240,4 +254,26 @@ func _toggle_cluster(cluster_id: String) -> void:
 		_subrow.add_child(button)
 
 	_mark_subrow(_active_window)
+	_fit_drawer()
 	_subrow.get_parent().show()
+
+
+## Labels while the drawer fits the lower row with them, icons only (an entry with no
+## icon keeps its label) when it does not.
+func _fit_drawer() -> void:
+	var buttons := _subrow.get_children()
+	for button in buttons:
+		button.text = str(button.get_meta("label"))
+	var row := get_parent()
+	if not row is BoxContainer:
+		return
+	var beside := 0.0
+	for sibling in row.get_children():
+		if sibling != self:
+			beside += (sibling as Control).get_combined_minimum_size().x
+	var budget: float = get_viewport_rect().size.x - BAND_MARGIN - beside 		- (row.get_child_count() - 1) * row.get_theme_constant("separation")
+	if _subrow.get_parent().get_combined_minimum_size().x <= budget:
+		return
+	for button in buttons:
+		if button.icon != null:
+			button.text = ""

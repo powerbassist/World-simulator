@@ -18,8 +18,8 @@ signal pause_toggled
 signal speed_selected(speed: int)
 
 const MONTH_NAMES: Array[String] = [
-	"JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-	"JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+	"JAN", "FEB", "MAR", "APR", "MAY", "JUN",  # i18n: msgid
+	"JUL", "AUG", "SEP", "OCT", "NOV", "DEC",  # i18n: msgid
 ]
 
 ## Reserved for U5b's minimap. Held open as a sized, empty box rather than left
@@ -116,7 +116,7 @@ func refresh(clock: Node) -> void:
 		_date_label.modulate.a = Motion.PAUSED_ALPHA
 		_pause_button.text = "..."
 		return
-	var date := "%02d %s %d" % [clock.day, MONTH_NAMES[clock.month - 1], clock.year]
+	var date := "%02d %s %d" % [clock.day, tr(MONTH_NAMES[clock.month - 1]), clock.year]
 	# V4.9a. The clock shows its speed rather than stating it: one brass beat per
 	# day, so the beats' own rhythm is the speed, and a paused date is dimmed --
 	# still the date, visibly not moving. The dim is state, not motion, so it

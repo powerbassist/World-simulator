@@ -287,7 +287,7 @@ static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 		return
 	var months: int = int(org.presidency["months"])
 	if current == ns.id:
-		PanelKit.line(body, Strings.t("You chair the council this %s.") % (Strings.t("semester") if months == 6 else "term"))
+		PanelKit.line(body, Strings.t("You chair the council this %s.") % (Strings.t("semester") if months == 6 else Strings.t("term")))
 		return
 	var anchor: int = int(org.presidency["anchor_index"])
 	var now: int = state.year * 12 + (state.month - 1)

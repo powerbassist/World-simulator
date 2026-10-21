@@ -783,7 +783,7 @@ func _ready() -> void:
 	# Trends query the top bar and the Overview count by. It sits AFTER the load
 	# branch and inside the new-game case, so a loaded save never receives it.
 	if pending_load_slot.is_empty():
-		_term_card_id = _hud.message_stack.push("Your term", _term_card_body())
+		_term_card_id = _hud.message_stack.push(tr("Your term"), _term_card_body())
 
 	# V4.1, after the opening card so the two land together: a new game IS an
 	# unchosen term start, so the clock sits still behind the programme choice
@@ -813,62 +813,62 @@ func _ready() -> void:
 ## register() and one line in this list.
 func _build_action_bar() -> void:
 	_hud.action_bar.add_cluster("state", tr("State"), ICONS + "account_balance.svg", [
-		_entry("overview", "Overview"),
+		_entry("overview", tr("Overview")),
 		# V4.1. The term's programme, right after the Overview it frames -- a
 		# president deals with what the term is for before the machinery.
-		_entry("agenda", "Agenda"),
-		_entry("politics", "Politics"),
-		_entry("legislature", "Legislature"),
+		_entry("agenda", tr("Agenda")),
+		_entry("politics", tr("Politics")),
+		_entry("legislature", tr("Legislature")),
 		# A president's diary is state. One line, exactly as the comment above
 		# this function predicted three sessions ago.
-		_entry("calendar", "Diary"),
+		_entry("calendar", tr("Diary")),
 		# A president's people are state too, by the same argument the diary took.
-		_entry("people", "People"),
+		_entry("people", tr("People")),
 		# V4.8b. The pinned things -- one line, the streak this function's comment
 		# keeps predicting.
-		_entry("outliner", "Outliner"),
+		_entry("outliner", tr("Outliner")),
 		# V1.7a. One line, exactly as this function's own comment has now correctly
 		# predicted for six sessions running.
-		_entry("campaign", "Campaign"),
+		_entry("campaign", tr("Campaign")),
 		# V1.8, and the seventh session running. What arrives on a president's desk
 		# without being asked for is state, by the same argument the diary and the
 		# people took.
-		_entry("events", "Dispatches"),
+		_entry("events", tr("Dispatches")),
 	])
 	_hud.action_bar.add_cluster("economy", tr("Economy"), ICONS + "payments.svg", [
-		_entry("economy", "Economy"),
-		_entry("budget", "Budget"),
+		_entry("economy", tr("Economy")),
+		_entry("budget", tr("Budget")),
 		# V4.2 T5. Beside Budget, its own window rather than rows on it: the
 		# tier moved tax out of the Budget panel, and the cluster grammar puts
 		# the surface where its decision lives.
-		_entry("tax", "Tax Code"),
+		_entry("tax", tr("Tax Code")),
 		# V1.4a. One line, exactly as this function's own comment has now correctly
 		# predicted for four sessions running.
-		_entry("companies", "Companies"),
+		_entry("companies", tr("Companies")),
 		# V1.6f. One line, exactly as this function's own comment has now correctly
 		# predicted for five sessions running.
-		_entry("projects", "Public Works"),
+		_entry("projects", tr("Public Works")),
 		# V2.2b, and two lines where the streak said one: the register's two
 		# surfaces land together because they are one partition seen from two
 		# heights, and Economy is their home because §5 is about to make the
 		# economy regional.
-		_entry("region", "Regions"),
-		_entry("city", "Cities"),
+		_entry("region", tr("Regions")),
+		_entry("city", tr("Cities")),
 		# V4.6 Task 4, and the fourth line this function's streak has predicted.
 		# The tier's own grammar puts it here: what the country makes and buys in
 		# is the same domain of decision as the two registers beside it.
-		_entry("commodities", "Commodities"),
+		_entry("commodities", tr("Commodities")),
 		# V2.8, and the grammar is V2.1c's: a cluster is the domain of the decision
 		# rather than the shape of the object, and AGENTS.md already carries the
 		# ruling -- region, city and energy are Economy.
-		_entry("energy", "Energy"),
+		_entry("energy", tr("Energy")),
 	])
 	_hud.action_bar.add_cluster("society", tr("Society"), ICONS + "diversity_3.svg", [
-		_entry("society", "Polling"),
+		_entry("society", tr("Polling")),
 	])
 	_hud.action_bar.add_cluster("world", tr("World"), ICONS + "public.svg", [
-		_entry("diplomacy", "Diplomacy"),
-		_entry("orgs", "Organisations"),
+		_entry("diplomacy", tr("Diplomacy")),
+		_entry("orgs", tr("Organisations")),
 	])
 	_hud.action_bar.panel_requested.connect(func(id: String): _windows.open(id))
 
@@ -1258,7 +1258,7 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 		# console error. The order is already consumed by here (the arm was cleared
 		# above and map_view ended placement), so with nothing on screen the player
 		# had to re-arm without being told why.
-		_hud.message_stack.push("Not your ground", tr("That point is not in %s.") % ns.nation_name)
+		_hud.message_stack.push(tr("Not your ground"), tr("That point is not in %s.") % ns.nation_name)
 		return
 
 	var access: Dictionary = Regions.accessibility_for(ns, _state.regions.get(ns.id, []), _state.region_graph)
@@ -1563,7 +1563,7 @@ func _announce_industry_events() -> void:
 				_hud.message_stack.set_body(String(_failure_cards[company_id]), failure_body)
 			continue
 		_announced_failures[company_id] = true
-		var card_id: String = _hud.message_stack.push("Firm in difficulty", failure_body)
+		var card_id: String = _hud.message_stack.push(tr("Firm in difficulty"), failure_body)
 		_failure_cards[company_id] = card_id
 		_industry_card_firms[card_id] = company_id
 
@@ -1614,7 +1614,7 @@ func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
 	if not assembly_release.is_empty() \
 			and int(assembly_release.get("assembly_division_month", -1)) != _assembly_release_month:
 		_assembly_release_month = int(assembly_release.get("assembly_division_month", -1))
-		_hud.message_stack.push("The assembly divides", _assembly_result_body(assembly_release))
+		_hud.message_stack.push(tr("The assembly divides"), _assembly_result_body(assembly_release))
 	# The division card. The assembly_bill marker on ns.last_law_result says
 	# the last division was the assembly's; the memory keys the DIVISION'S OWN
 	# MONTH -- the assembly_division_month stamp the machine writes into the
@@ -1631,7 +1631,7 @@ func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
 			and not bool(result.get("released", false)) \
 			and int(result.get("assembly_division_month", -1)) != _assembly_result_month:
 		_assembly_result_month = int(result.get("assembly_division_month", -1))
-		_hud.message_stack.push("The assembly divides", _assembly_result_body(result))
+		_hud.message_stack.push(tr("The assembly divides"), _assembly_result_body(result))
 
 func _assembly_bill_body(entry: Dictionary) -> String:
 	var law_name := _law_title(String(entry.get("law_id", "")))
@@ -2658,7 +2658,7 @@ func _on_programme_chosen(entry_id: String) -> void:
 	var before := Budget.snapshot(_state)
 	var result: Dictionary = Programme.choose(_state, ns, entry_id, _loader)
 	if bool(result.get("refused", false)):
-		_hud.message_stack.push("Programme refused", _programme_refusal_text(String(result.get("reason", ""))))
+		_hud.message_stack.push(tr("Programme refused"), _programme_refusal_text(String(result.get("reason", ""))))
 		return
 
 	# Entry open, as a card -- the register now holds the term's programme,
@@ -2708,13 +2708,13 @@ func _card_programme_conclusions() -> void:
 		var name_text := String(terms.get("name", String(entry["entry_id"])))
 		match String(entry["status"]):
 			ProgrammeK.STATUS_COMPLETE:
-				_hud.message_stack.push("Delivered: %s" % name_text,
+				_hud.message_stack.push(tr("Delivered: %s") % name_text,
 					"The goal is met, and the register marks it complete.")
 			ProgrammeK.STATUS_FAIL:
-				_hud.message_stack.push("Missed: %s" % name_text,
+				_hud.message_stack.push(tr("Missed: %s") % name_text,
 					"The goal was not met in time, and the register marks the miss.")
 			_:
-				_hud.message_stack.push("Overtaken: %s" % name_text,
+				_hud.message_stack.push(tr("Overtaken: %s") % name_text,
 					"The world moved on and the entry no longer applies. It concludes without a verdict.")
 
 

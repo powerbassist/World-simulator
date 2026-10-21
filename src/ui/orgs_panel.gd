@@ -292,7 +292,7 @@ func _refresh_outsider_org(ns, org) -> void:
 func _refresh_membership_verb(ns, org) -> void:
 	var joining: bool = not ns.orgs.has(org.id)
 	var button := Button.new()
-	button.text = ("Begin leaving %s" % org.name) if not joining else ("Begin joining %s" % org.name)
+	button.text = (tr("Begin leaving %s") % org.name) if not joining else (tr("Begin joining %s") % org.name)
 	var fight_running := false
 	for fight in _state.accessions:
 		if String(fight.get("nation_id", "")) == ns.id:

@@ -194,7 +194,7 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 		return
 	if not chairing and not tabled.is_empty():
 		var tp = Orgs.proposal_by_id(loader, org.id, String(tabled.get("proposal_id", "")))
-		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % (String(tp.proposal_name) if tp != null else "a proposal"))
+		PanelKit.line(body, Strings.t("You have tabled %s with the chair.") % (String(tp.proposal_name) if tp != null else Strings.t("a proposal")))
 		return
 
 	var inner := _fold(body, panel, "agenda:" + org.id, title)
@@ -209,7 +209,7 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 			continue
 		listed += 1
 		var button := Button.new()
-		button.text = ("Put first: %s" if chairing else "Table: %s") % p.proposal_name
+		button.text = (Strings.t("Put first: %s") if chairing else Strings.t("Table: %s")) % p.proposal_name
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		if chairing:
 			button.pressed.connect(panel._on_set_agenda.bind(org.id, p.id))
