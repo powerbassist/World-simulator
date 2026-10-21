@@ -27,6 +27,14 @@ extends SceneTree
 ##      then the same walk again: a save that loads wrong but equal-looking (a
 ##      derived register not rebuilt, a type that compares equal and ticks
 ##      differently) shows up as two games that drift apart.
+##   5. FLOAT FIDELITY. The save writes full_precision: shortest round-trip
+##      digits. JSON.parse_string reads them through Godot's own strtod, which is
+##      not correctly rounded, so some floats still come back a few ULP off, but
+##      no float may move by more than FLOAT_REL_EPS, the small ones FLOAT_EPS
+##      would excuse included, and the share that comes back bit-exact stays
+##      above EXACT_SHARE_FLOOR. The 15-digit writer this replaced moved a small
+##      value by 5.8% and lost bits in most floats; this is the check that would
+##      have said so.
 ##
 ## The fixture asserts what it produced, so a command that quietly stops
 ## applying fails here as "the fixture made nothing" rather than passing on an
@@ -66,6 +74,9 @@ const CONTINUED_MONTHS := 12
 ## test_save_load.gd's two float bounds, and its argument for them.
 const FLOAT_EPS := 1e-6
 const FLOAT_REL_EPS := 1e-12
+## Check 5's floor on the floats that come back bit-exact, set between the two
+## writers' measured shares on this fixture (see _check_fidelity()).
+const EXACT_SHARE_FLOOR := 0.0
 
 var _failures: Array[String] = []
 var _loader
@@ -98,6 +109,7 @@ func _init() -> void:
 	if loaded != null:
 		_check_finite("save", state.to_dict())
 		_compare("after the load", state, loaded)
+		_check_fidelity(state, loaded)
 		_play(state, CONTINUED_MONTHS)
 		_play(loaded, CONTINUED_MONTHS)
 		_compare("%d months after the load" % CONTINUED_MONTHS, state, loaded)
@@ -323,6 +335,50 @@ func _deep_equal(a, b) -> bool:
 
 
 ## NAN equals NAN here: the sanctioned "no data" movement is NAN on both sides.
+## Check 5: every float leaf of the original's to_dict() against the loaded game's,
+## by path. Bit-exact means equal (NAN to NAN counts, the sanctioned slot); the
+## worst relative gap is over all the others, with no absolute floor.
+func _check_fidelity(original, loaded) -> void:
+	var a := {}
+	var b := {}
+	_float_leaves(original.to_dict(), "", a)
+	_float_leaves(loaded.to_dict(), "", b)
+	var exact := 0
+	var worst := 0.0
+	var worst_path := ""
+	for path in a:
+		var x: float = a[path]
+		var y: float = float(b.get(path, NAN))
+		if x == y or (is_nan(x) and is_nan(y)):
+			exact += 1
+			continue
+		var rel: float = absf(x - y) / maxf(absf(x), absf(y))
+		if is_nan(rel) or rel > worst:
+			worst = 1.0 if is_nan(rel) else rel
+			worst_path = path
+	var share: float = float(exact) / float(maxi(1, a.size()))
+	print("save fidelity: %d floats, %d bit-exact (%.3f), worst relative %s at %s" % [a.size(), exact, share, String.num_scientific(worst), worst_path])
+	if a.size() < 1000:
+		_fail("the fidelity walk found only %d floats -- it is not walking the save" % a.size())
+	if share < EXACT_SHARE_FLOOR:
+		_fail("%.3f of the save's floats came back bit-exact, under the floor %.2f -- is the save written without full_precision?" % [share, EXACT_SHARE_FLOOR])
+	if worst > FLOAT_REL_EPS:
+		_fail("a float came back %s off (relative) at %s, past %s -- the save lost its digits" % [String.num_scientific(worst), worst_path, String.num_scientific(FLOAT_REL_EPS)])
+
+
+## The float leaves of a to_dict() tree, by path; ints, strings and the rest skip.
+func _float_leaves(value, path: String, out: Dictionary) -> void:
+	match typeof(value):
+		TYPE_DICTIONARY:
+			for key in value:
+				_float_leaves(value[key], "%s/%s" % [path, key], out)
+		TYPE_ARRAY:
+			for i in (value as Array).size():
+				_float_leaves(value[i], "%s[%d]" % [path, i], out)
+		TYPE_FLOAT:
+			out[path] = value
+
+
 func _floats_equal(a: float, b: float) -> bool:
 	if is_nan(a) or is_nan(b):
 		return is_nan(a) and is_nan(b)
