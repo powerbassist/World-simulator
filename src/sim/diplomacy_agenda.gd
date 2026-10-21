@@ -75,21 +75,31 @@ static func score_targets(state, actor_id: String, targets: Array, offers_of: Ca
 	var factors: Array = []
 	for target_id in targets:
 		factors.append(FP.stake_factor(sv, target_id, even))
+	# G2b: every target's offers on the calling thread, and only the targets with
+	# one fanned out. A target with none leaves its slot empty, as it always did;
+	# the fan-out's element 0 is then a target that reaches target_terms(), so
+	# Parallel rule 5 primes the scoring path rather than an early return.
+	var offers: Array = []
+	var live: Array[int] = []
+	for i in targets.size():
+		var target_offers: Array = offers_of.call(targets[i])
+		offers.append(target_offers)
+		if not target_offers.is_empty():
+			live.append(i)
 	var slots: Array = Parallel.slots(targets.size())
 	Trade.masses_open(state)
-	Parallel.each(targets.size(), func(i: int) -> void:
-		_score_target(state, actor_id, targets[i], offers_of, sv, wbm, even, factors[i], slots[i]))
+	Parallel.each(live.size(), func(k: int) -> void:
+		var i: int = live[k]
+		_score_target(state, actor_id, targets[i], offers[i], sv, wbm, even, factors[i], slots[i]))
 	Trade.masses_close()
 	return slots
 
 
-## One target's half of best_act(), on whichever thread runs it: its offers, its
-## pair terms and every eligible offer's score, into `slot` and nowhere else.
-static func _score_target(state, actor_id: String, target_id: String, offers_of: Callable, sv: Dictionary,
+## One target's half of best_act(), on whichever thread runs it: its pair terms
+## and every eligible offer's score, into `slot` and nowhere else. `offers` is
+## never empty: score_targets() fans out only the targets that have one.
+static func _score_target(state, actor_id: String, target_id: String, offers: Array, sv: Dictionary,
 		wbm: Dictionary, even: float, factor: float, slot: Dictionary) -> void:
-	var offers: Array = offers_of.call(target_id)
-	if offers.is_empty():
-		return
 	var terms := FP.target_terms(state, actor_id, target_id, sv, wbm, even, factor)
 	var candidates: Array = []
 	for action in offers:

@@ -26,6 +26,12 @@ extends SceneTree
 ##      threaded against ForeignPolicy's serial composition.
 ##   4. Whole months in lockstep: two copies of one state, one ticked threaded
 ##      and one serial, compared through to_dict() after every month.
+##   6. Rule 5's residual, closed (G2b): score_targets() asks every target's
+##      offers on the calling thread and fans out only the targets with one, so
+##      the fan-out's element 0 always reaches target_terms() -- the first target
+##      having no offer included.
+##   7. Rule 5 by reading the files: a state's identity is compared with
+##      is_same(), never an untyped `==`, whose first run is the race (G2).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -56,9 +62,11 @@ func _init() -> void:
 	for _i in range(3):
 		WorldMonth.tick_month(state, loader)
 	_check_memos_read_only(state)
+	_check_offers_on_caller(state, loader)
 	_check_rounds(state, loader)
 	_check_lockstep(loader)
 	_check_no_libm_on_workers()
+	_check_identity_by_is_same()
 	Parallel.enabled = true
 	_finish()
 
@@ -207,6 +215,11 @@ func _slots(state, loader, actor_id: String, ids: Array, threaded: bool) -> Stri
 			targets.append(id)
 	var offers_of := func(target_id: String) -> Array:
 		return Diplomacy.available(state, loader.diplomatic_actions, actor_id, target_id)
+	return _flat(_slots_with(state, actor_id, targets, offers_of, threaded))
+
+
+## score_targets() under the memos the tick holds open, its slots as returned.
+func _slots_with(state, actor_id: String, targets: Array, offers_of: Callable, threaded: bool) -> Array:
 	Parallel.enabled = threaded
 	Org.memo_open(state)
 	Trade.turn_open(state)
@@ -214,6 +227,10 @@ func _slots(state, loader, actor_id: String, ids: Array, threaded: bool) -> Stri
 	Trade.turn_close()
 	Org.memo_close()
 	Parallel.enabled = true
+	return slots
+
+
+func _flat(slots: Array) -> String:
 	var flat: Array = []
 	for slot in slots:
 		var candidates: Array = []
@@ -221,6 +238,43 @@ func _slots(state, loader, actor_id: String, ids: Array, threaded: bool) -> Stri
 			candidates.append([candidate[0].id, candidate[1]])
 		flat.append([slot.get("terms", {}), candidates])
 	return var_to_str(flat)
+
+
+## The first target is given no offer: its slot stays empty, the scores match the
+## serial path's, and every target's offers were asked on the calling thread --
+## so the fan-out's element 0 is a target that reaches target_terms().
+func _check_offers_on_caller(state, loader) -> void:
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	var actor_id := ""
+	for id in ids:
+		if not state.nations[id].has_budget:
+			actor_id = id
+			break
+	var targets: Array = []
+	for id in ids:
+		if id != actor_id:
+			targets.append(id)
+	var first: String = targets[0]
+	var asked := {}
+	for id in targets:
+		asked[id] = -1
+	var offers_of := func(target_id: String) -> Array:
+		asked[target_id] = OS.get_thread_caller_id()
+		if target_id == first:
+			return []
+		return Diplomacy.available(state, loader.diplomatic_actions, actor_id, target_id)
+	var threaded := _slots_with(state, actor_id, targets, offers_of, true)
+	for id in targets:
+		if int(asked[id]) != OS.get_main_thread_id():
+			_fail("%s's offers were asked on thread %d, not the calling thread (G2b)" % [id, int(asked[id])])
+			break
+	if _flat(threaded) != _flat(_slots_with(state, actor_id, targets, offers_of, false)):
+		_fail("with the first target offered nothing, the threaded slots differ from the serial ones")
+	if not (threaded[0] as Dictionary).is_empty():
+		_fail("the first target, offered nothing, did not keep an empty slot: %s" % [threaded[0]])
+	if (threaded[1] as Dictionary).is_empty():
+		_fail("the second target, offered its real offers, has an empty slot -- the check is vacuous")
 
 
 func _check_lockstep(loader) -> void:
@@ -266,6 +320,26 @@ const WORKER_FUNCTIONS := {
 
 func _check_no_libm_on_workers() -> void:
 	var libm := RegEx.create_from_string("\\b(pow|exp|log|sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh)\\s*\\(|\\*\\*")
+	_scan_workers(libm, true, "calls libm on the workers' path (parallel.gd rule 4)")
+
+
+## Rule 5's typed-compare advice, enforced where it is structural: a memo's state
+## identity check (`state == _mass_state`) is reached only while the memo is
+## open, so its first run can be on every worker at once. is_same() is a utility
+## call, not an operator, and carries no first-run cache. Narrow on purpose: an
+## untyped operator element 0 also runs is primed (rule 5), and a lint over every
+## untyped `==` on the path would flag that safe majority.
+func _check_identity_by_is_same() -> void:
+	# A bare identifier ending in `state`, either side: not a member (`x.state`),
+	# not a member read through one (`state.player_id`).
+	var compare := RegEx.create_from_string("(?<![.\\w])\\w*state\\s*[!=]=|[!=]=\\s*\\w*state\\b(?!\\s*\\.)")
+	_scan_workers(compare, false, "compares a state with an untyped ==, not is_same() (parallel.gd rule 5)")
+
+
+## Every line of code the workers can run, against `pattern`. A function that runs
+## on the calling thread only ("*") is skipped; rule 4's sanctioned expressions are
+## cut first only when `sanctioned_too`.
+func _scan_workers(pattern: RegEx, sanctioned_too: bool, what: String) -> void:
 	var strings := RegEx.create_from_string("\"(?:[^\"\\\\]|\\\\.)*\"")
 	var paths: Array = WORKER_FILES.keys() + WORKER_FUNCTIONS.keys()
 	for path in paths:
@@ -292,10 +366,11 @@ func _check_no_libm_on_workers() -> void:
 			var sanctioned: Array = allowed.get(current, [])
 			if sanctioned.has("*"):
 				continue
-			for expression in sanctioned:
-				code = code.replace(String(expression), "")
-			if libm.search(code) != null:
-				_fail("%s: %s() calls libm on the workers' path (parallel.gd rule 4): %s" % [path, current, line.strip_edges()])
+			if sanctioned_too:
+				for expression in sanctioned:
+					code = code.replace(String(expression), "")
+			if pattern.search(code) != null:
+				_fail("%s: %s() %s: %s" % [path, current, what, line.strip_edges()])
 		if seen_only != only.size():
 			_fail("%s: found %d of the functions %s -- the scan list is stale" % [path, seen_only, only])
 
