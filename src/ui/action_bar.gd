@@ -93,9 +93,11 @@ func add_cluster(cluster_id: String, label: String, icon_path: String, entries: 
 
 	_cluster_row.add_child(button)
 	_cluster_buttons[cluster_id] = button
+	# The pending mark is a STATUS tone -- something waits on you -- so it is the fixed
+	# attention colour, not the played nation's accent (which marks where you ARE).
 	_cluster_icons[cluster_id] = {
 		"plain": button.icon,
-		"marked": Icon.load_icon(icon_path, UiTheme.ACCENT, ICON_PX),
+		"marked": Icon.load_icon(icon_path, UiTheme.WARN, ICON_PX),
 	}
 	_entries[cluster_id] = entries
 

@@ -35,6 +35,8 @@ extends RefCounted
 ## exists anywhere in src/ (the warning box in docs/tiers/v2.md §3). Person
 ## 214 either has art -- or does not, and shows the silhouette until they do.
 
+const Grade = preload("res://src/ui/grade.gd")
+
 const PORTRAITS_DIR := "res://assets/portraits/"
 const SCENES_DIR := "res://assets/portrait_scenes/"
 
@@ -123,7 +125,7 @@ static func control_for(person_id: String, size: Vector2,
 		# it is here so a caller with a differently-shaped slot degrades to a
 		# centered crop rather than a squash.
 		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		return rect
+		return Grade.apply(rect)
 	var bust := Bust.new()
 	bust.custom_minimum_size = size
 	return bust
@@ -173,6 +175,7 @@ static func _stage(person_id: String, size: Vector2,
 	backdrop.texture = backdrop_tex
 	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	Grade.apply(backdrop)
 	var bust := control_for(person_id, size, emotion)
 	var staged := Staged.new(backdrop, bust, SCENE_GRADE[scene_name])
 	staged.custom_minimum_size = size
@@ -324,7 +327,7 @@ class Bust extends Control:
 		# The brass hairline the plate carries on its top edge, repeated along
 		# the bottom of the frame so the bust reads as inset rather than as a
 		# hole punched in the card.
-		draw_line(Vector2(0, h - 1), Vector2(w, h - 1), UiTheme.ACCENT, 1.0)
+		draw_line(Vector2(0, h - 1), Vector2(w, h - 1), UiTheme.accent(), 1.0)
 
 	func _draw_ellipse(center: Vector2, radius: Vector2, color: Color) -> void:
 		var points := PackedVector2Array()

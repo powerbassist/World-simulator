@@ -134,6 +134,7 @@ static func cities(loader, state) -> Array:
 					"population": Migration.city_population(ns, region.id, city.id),
 					"unrest": demo_city != "" and String(city.id) == demo_city,
 					"campaign": campaign_city != "" and String(city.id) == campaign_city,
+					"own": String(id) == String(state.player_nation_id),
 				})
 	out.sort_custom(func(a, b): return float(a["population"]) < float(b["population"]))
 	return out
@@ -152,8 +153,10 @@ static func label_offset(radius: float) -> Vector2:
 	return Vector2(0.0, -radius - 6.0)
 
 
-static func color_of(_city: Dictionary) -> Color:
-	return UiTheme.ACCENT
+## The played nation's own cities wear its accent, every other nation's the neutral
+## map tone (V5.1a QA: zoomed in, Bucharest and Madrid showed France's blue).
+static func color_of(city: Dictionary) -> Color:
+	return UiTheme.accent() if bool(city.get("own", false)) else UiTheme.MAP_NEUTRAL
 
 
 ## Is this the city the country's demonstration is in? Duck-typed off the record the

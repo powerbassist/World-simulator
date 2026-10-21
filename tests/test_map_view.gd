@@ -330,8 +330,8 @@ func _check_layers_staged() -> bool:
 			if not is_equal_approx(width, map.HOVER_WIDTH):
 				_fail("the hovered nation's line width texel is %.2f, not HOVER_WIDTH" % width)
 			var home: int = map._palette_ids.find(map.viewer_id())
-			if not map._roster_line_image.get_pixel(home, 0).is_equal_approx(map.UiTheme.ACCENT):
-				_fail("the home nation's line texel is not brass")
+			if not map._roster_line_image.get_pixel(home, 0).is_equal_approx(map.UiTheme.accent()):
+				_fail("the home nation's line texel is not the accent")
 			map._hovered_id = ""
 			return true
 	return false

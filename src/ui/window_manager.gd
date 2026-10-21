@@ -42,7 +42,7 @@ const LEFT_RESERVE := 260.0
 
 var _frames := {}       # id -> WindowFrame
 var _keys := {}         # id -> keycode, KEY_NONE for a window with no shortcut
-var _icons := {}        # id -> at-icons path, "" for a window with no icon yet
+var _icons := {}        # id -> Material Symbols path, "" for a window with no icon yet
 var _titles := {}       # id -> the title its frame shows
 var _cascade_index := 0
 
@@ -58,7 +58,7 @@ func _ready() -> void:
 ## setup(state, loader) and signal connections made once at startup.
 ##
 ## `key` is the letter that toggles this window, or KEY_NONE for a window reached
-## only by the bar and the mouse -- V2.1c. `icon_path` is the at-icons SVG the
+## only by the bar and the mouse -- V2.1c. `icon_path` is the Material Symbols SVG the
 ## title bar and the drawer draw beside this window's name -- V2.3, carried here
 ## for the same reason `key` is: a second table in main.gd is what the keycode
 ## table WAS, and register() is the one place that already knows the full set.
@@ -184,7 +184,7 @@ func title(id: String) -> String:
 	return String(_titles.get(id, id))
 
 
-## The at-icons SVG registered for a window's name, or "". `_entry()` reads this
+## The Material Symbols SVG registered for a window's name, or "". `_entry()` reads this
 ## rather than restating the path in _build_action_bar() -- the same
 ## one-source-of-truth rule the shortcut above is.
 func icon_path(id: String) -> String:

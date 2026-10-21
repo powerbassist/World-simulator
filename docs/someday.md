@@ -376,6 +376,29 @@ The embassies, the capitals and the runner's verdict; two items measured and lef
   (folded name -> city, per nation), NOT a static memo -- static memos read by pool workers
   are G2's hazard class.
 
+## Carried from V5.1-a (2026-10-21)
+
+- **The at-icons files are orphaned.** After the Material Symbols swap nothing in `src/` reads `addons/at-icons`; the 24 committed SVGs, the `.gitignore` exception, the REUSE/ATTRIBUTION entries and the docs/tooling.md "committing rule" are dead weight. Delete them in c or d (they touch docs, not code).
+- **Plates are wider with Archivo.** The map-layer legend and the portrait card went from 506 to 628 px, covering more map; c's re-layout (the docked workspace, no minimap) is where it gets absorbed, not a font tweak.
+- **The map's data colours stay brass.** Trade and dependency ramps, road/ferry spines, project arcs and the legend's key rows are data colours on the map's own scale, not the interface accent, and are untouched. A retune (and "no layer reads by colour alone") is V5.4's map work.
+- **`events_panel.gd`'s header plate is graded but not unit-tested** (the portrait, the scene backdrop and the arrival card are, in `test_grade.gd`): building the panel needs a state. A silent regression there looks like an ungraded plate.
+- **Sliders still wear the engine default** (the budget levers): the theme never styled `HSlider`. A Bureau slider (graphite track, accent fill) is d's, with the dense-table kit.
+- **The accent rule shifts hues, and a shift can read as a different colour than the flag.** Over the roster 0 of 41 fall back, but DEU's red band shifts to raspberry (#FF4E98, hue 335) although its gold band needs a smaller shift, and a flag with two usable bands takes the first. A least-shift variant (the band whose hue moves least) would give DEU a yellow-green and ITA a raspberry -- the author's chosen examples (gold to bright yellow, green to turquoise) came out differently from the literal rule, and the rule as signed picks the first usable band and the nearest edge.
+- **The home outline (and every accent stroke) can vanish on the map's data ramps.** Contrast of an accent against the ramp mid-tones is 1.2-1.4:1 for blue, raspberry, green and teal accents on the trade, dependency, relations-warm, production and coercion mids (the accent was lifted to read on graphite, so it has the same luminance as a mid-tone fill); a yellow-green accent (BEL) is low on the trade/production highs. A dark casing under the stroke is the fix; it needs a second line pass over `_roster_line_mesh` with a width-plus-2 variant of `map_line.gdshader` and a G2 re-measure, so it is c's, not a patch.
+
+
+Below the V5.1 bar, from `code-review 32 high` (the two that met it -- the accent judged on SLATE not HULL, the cluster icons keeping the old accent after a load -- were fixed test-first, the latter by making the pending mark a fixed WARN status tone in pass 2):
+
+- **`Icon.load_icon` injects the fill at `find("<svg ") + 5`**: an SVG whose root tag is followed by a newline or tab returns -1 and corrupts the document. The committed Material files all use a space.
+- **`map_face()`'s six callers keep `if font == null` guards that cannot fire** (it falls back to `ThemeDB.fallback_font`), and a missing Archivo re-attempts the load on every call (only a non-null face is cached).
+
+Recorded from QA's pass on PR #32 (`.superpowers/sdd/qa-report.md`), not fixed:
+
+- **The load-path accent re-apply has no test** (`main.gd`'s `_on_load_requested` calls `UiTheme.apply_for` after a load; QA saw it re-theme DEU -> FRA on screen). A test needs a second nation's save through the real load path.
+- **Hover readouts and labels draw in the width-62 map face** (`map_view.gd` outline readout plate, tip text) as well as the place names; they were not part of the label-packing problem that needed it.
+- **Every load rebuilds the whole theme even for the same nation** (`apply_for` always builds). A cache keyed on the accent colour would skip it.
+- **A flag whose bands are all dull but chromatic would fall back** (the rule's fallback is "no band qualifies", not "no chroma"). None does today and `test_accent_rule`'s 0-fallback check turns the suite red on a new one.
+
 ## Carried from V5.1-0c (2026-10-21)
 
 - **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.

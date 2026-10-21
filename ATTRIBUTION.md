@@ -18,6 +18,10 @@ Satellite map imagery from NASA's Earth Observatory — Blue Marble: Next Genera
 
 Committed at `assets/map/blue_marble_5400x2700.jpg`. NASA imagery requires no attribution; credited anyway, so the source of the one large binary in the repo is recoverable without archaeology.
 
+## Material Symbols
+
+Interface and window icons from Material Symbols (Rounded, filled) by Google, Apache License 2.0 -- the licence text is committed at `LICENSES/Apache-2.0.txt`. Unmodified SVGs from https://github.com/google/material-design-icons, committed under `assets/icons/material/`; only the glyphs the game draws are included.
+
 ## @icons
 
 Interface icons from the @icons addon — icons by Voxy (Valentin Fossati), in-editor picker by SuperDuperSword and Voxy. MIT License; the full text is committed at `addons/at-icons/LICENSE.txt`.

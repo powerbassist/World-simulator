@@ -33,7 +33,14 @@ static func draw_plants(canvas: CanvasItem, state, to_screen: Callable) -> void:
 		for plant_id in plant_ids:
 			var entry: Dictionary = ns.plants[plant_id]
 			var at: Vector2 = to_screen.call(float(entry.get("lon", 0.0)), float(entry.get("lat", 0.0)))
+			var color := color_of(String(nation_id), String(state.player_nation_id))
 			if bool(entry.get("done", false)):
-				canvas.draw_circle(at, RADIUS, UITheme.ACCENT)
+				canvas.draw_circle(at, RADIUS, color)
 			else:
-				canvas.draw_arc(at, RADIUS, 0.0, TAU, 20, UITheme.ACCENT, 1.5)
+				canvas.draw_arc(at, RADIUS, 0.0, TAU, 20, color, 1.5)
+
+
+## The played nation's plants wear its accent, every other nation's the neutral map
+## tone -- the accent is whose identity this game is, not a colour for every mark.
+static func color_of(nation_id: String, player_id: String) -> Color:
+	return UITheme.accent() if nation_id == player_id else UITheme.MAP_NEUTRAL

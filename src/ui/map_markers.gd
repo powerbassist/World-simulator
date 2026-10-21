@@ -82,6 +82,7 @@ static func markers(loader, state) -> Array:
 				"lonlat": nation.project_sites[project_id],
 				"built": Projects.is_done(ns, project_id),
 				"months_left": Projects.months_left(ns, project_id),
+				"own": String(id) == String(state.player_nation_id),
 			})
 	return out
 
@@ -93,8 +94,8 @@ static func is_filled(marker: Dictionary) -> bool:
 	return bool(marker.get("built", false))
 
 
-static func color_of(_marker: Dictionary) -> Color:
-	return UiTheme.ACCENT
+static func color_of(marker: Dictionary) -> Color:
+	return UiTheme.accent() if bool(marker.get("own", false)) else UiTheme.MAP_NEUTRAL
 
 
 ## What the marker says when the cursor is on it. Drawn on hover alone: the dots

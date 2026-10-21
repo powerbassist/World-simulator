@@ -113,7 +113,7 @@ func _draw_cells() -> void:
 
 		var number_color := UiTheme.TEXT_DIM if not is_past else Color(UiTheme.TEXT_DIM, 0.45)
 		if is_today:
-			number_color = UiTheme.ACCENT
+			number_color = UiTheme.accent()
 		_cells.draw_string(
 			font, Vector2(x + cell_w * 0.5 - 8.0, area.y - 12.0), "%02d" % day,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 1, number_color
@@ -125,7 +125,7 @@ func _draw_cells() -> void:
 			# TOWARD something even where the two touch.
 			var h := MEETING_HEIGHT
 			_cells.draw_rect(
-				Rect2(x + 2.0, area.y - 10.0 - h, cell_w - 4.0, h), UiTheme.ACCENT
+				Rect2(x + 2.0, area.y - 10.0 - h, cell_w - 4.0, h), UiTheme.accent()
 			)
 		elif bool(cell["travel"]):
 			# Hatched, not filled: travel is time the journey spends, not time
@@ -154,7 +154,7 @@ func _draw_cells() -> void:
 			# Today's underline, brass, across the whole cell — the mark says
 			# where on the line the president is standing.
 			_cells.draw_rect(
-				Rect2(x + 2.0, area.y - 4.0, cell_w - 4.0, 2.0), UiTheme.ACCENT
+				Rect2(x + 2.0, area.y - 4.0, cell_w - 4.0, 2.0), UiTheme.accent()
 			)
 		elif _hover_day == day and String(cell["key"]) != "":
 			_cells.draw_rect(

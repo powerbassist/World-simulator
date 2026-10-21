@@ -18,6 +18,7 @@ extends VBoxContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const Grade = preload("res://src/ui/grade.gd")
 
 signal card_dismissed(id: String)
 signal card_activated(id: String)
@@ -89,7 +90,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 		plate.custom_minimum_size = Vector2(32, 18)  # 16:9, the plate's own aspect
 		plate.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		plate.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		header.add_child(plate)
+		header.add_child(Grade.apply(plate))
 
 	var title_label := Label.new()
 	title_label.text = title.to_upper()

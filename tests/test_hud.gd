@@ -12,6 +12,8 @@ extends SceneTree
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
+const MoodIcon = preload("res://src/ui/mood_icon.gd")
+const Portrait = preload("res://src/ui/portrait.gd")
 const MessageStack = preload("res://src/ui/message_stack.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 
@@ -61,14 +63,58 @@ func _later_frames() -> bool:
 ## ever breaks, the bar renders four unlabelled-looking buttons and nothing
 ## reports an error.
 func _check_icons_load() -> void:
-	const ICONS := "res://addons/at-icons/control/"
-	for name in ["institutional_building", "coins", "human", "globe"]:
+	const ICONS := "res://assets/icons/material/"
+	for name in ["account_balance", "payments", "diversity_3", "public"]:
 		var texture := Icon.load_icon(ICONS + name + ".svg", UiTheme.TEXT, 22)
 		if texture == null:
-			_fail("icon '%s' did not load -- is it committed? see .gitignore's at-icons exception" % name)
+			_fail("icon '%s' did not load -- is assets/icons/material committed?" % name)
 			continue
 		if texture.get_width() != 22:
 			_fail("icon '%s' rasterised at %dpx, expected 22" % [name, texture.get_width()])
+		# The tint is a fill written into the SVG, not a modulate: the glyph's
+		# opaque pixels must come out the tint, not the SVG's default black.
+		var tint := Color("#C0FFEE")
+		var image := Icon.load_icon(ICONS + name + ".svg", tint, 22).get_image()
+		var opaque := 0
+		var off_tint := 0
+		for y in image.get_height():
+			for x in image.get_width():
+				var px := image.get_pixel(x, y)
+				if px.a > 0.95:
+					opaque += 1
+					if absf(px.r - tint.r) > 0.06 or absf(px.g - tint.g) > 0.06 or absf(px.b - tint.b) > 0.06:
+						off_tint += 1
+		if opaque == 0:
+			_fail("icon '%s' rasterised with no opaque pixel at all" % name)
+		elif off_tint > 0:
+			_fail("icon '%s' has %d opaque pixels that are not the tint" % [name, off_tint])
+
+	# The pending-mark glyph is a STATUS tone (something waits on you), the
+	# attention colour, and does NOT follow the played nation's accent: a nation
+	# whose accent were gold would otherwise mark "pending" in its own identity.
+	var bar = _main._hud.action_bar
+	var host := Control.new()
+	UiTheme.apply(host, Color("#2596FF"))
+	var mark: Image = bar._cluster_icons["state"]["marked"].get_image()
+	var seen_warn := false
+	for y in mark.get_height():
+		for x in mark.get_width():
+			var px := mark.get_pixel(x, y)
+			if px.a > 0.95:
+				seen_warn = true
+				if absf(px.r - UiTheme.WARN.r) > 0.06 or absf(px.g - UiTheme.WARN.g) > 0.06 or absf(px.b - UiTheme.WARN.b) > 0.06:
+					_fail("the pending-mark glyph has an opaque pixel %s that is not the attention tone" % px.to_html(false))
+	if not seen_warn:
+		_fail("the pending-mark glyph has no opaque pixel")
+
+	# The mood icon's WORRIED band sits between GOOD and BAD: a status tone, not the
+	# nation's accent (which could be any hue), and the accent is still the odd one
+	# out while this check runs.
+	if MoodIcon._colour_for(Portrait.Emotion.WORRIED) != UiTheme.WARN:
+		_fail("the WORRIED mood is not drawn in the attention tone")
+	# Put the static accent back and free the stand-in: it must not outlive the check.
+	UiTheme.apply(host)
+	host.free()
 
 	# And the bar is actually using them, not merely able to.
 	for cluster_id in _main._hud.action_bar._cluster_buttons.keys():
