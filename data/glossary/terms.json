@@ -1,0 +1,555 @@
+{
+  "_note": "The glossary table (docs/design/glossary-tooltips.md): 48 ranked terms, English only. `definition` is one line (about 200 characters at most); `body` is shown under it when the tooltip is locked. `see_also` lists entry ids; the loader refuses an unknown one. `live` names a SHOWN value in the table the UI owns (rule L1: the headline poll, never the hidden approval; Credit.yield_pct and Credit.rating are reads, never stored fields). `model` is `<doc>#<heading>` of the docs/*-model.md section the definition summarises (P4); a LIST of such anchors where a definition draws on several sections. A PR that changes a cited section re-reads its entries in the same PR (P4b); state_stake and programme are known to go stale in V5.3. French is parked.",
+  "terms": [
+    {
+      "id": "programme",
+      "term": "programme",
+      "definition": "The plan you choose for a term: a set of measures with a goal and a deadline. It is offered only on the first day of a term, before the clock runs; completing it pays, failing it costs.",
+      "body": "Progress is read from a live figure, never stored. An entry can have no deadline at all.",
+      "see_also": [
+        "approval",
+        "pledge"
+      ],
+      "live": "programme_progress",
+      "model": "programme-model#2. The field contract"
+    },
+    {
+      "id": "approval",
+      "term": "approval",
+      "definition": "How much the voters back you: each voter bloc's satisfaction with the issues it cares about, averaged by the bloc's size. It moves a quarter of the way to its target each month.",
+      "body": "A bloc with nothing to complain about sits at 50. Its target moves between about 10 and 90 as the issues it weighs get better or worse. Some acts (a forced bill, a reshuffle, a referendum result, a broken pledge) also add a standing offset to a bloc's approval.",
+      "see_also": [
+        "poll",
+        "voter_bloc",
+        "issue",
+        "salience"
+      ],
+      "live": "headline_poll",
+      "model": "opinion-model#Approval"
+    },
+    {
+      "id": "poll",
+      "term": "poll",
+      "definition": "What you see of approval. The true figure is never published; a poll adds noise of up to 3 points either way, redrawn each month.",
+      "body": "The noise is a fixed function of the month, so opening a screen again never changes the number you were shown.",
+      "see_also": [
+        "approval"
+      ],
+      "live": "headline_poll",
+      "model": "opinion-model#Polling noise"
+    },
+    {
+      "id": "state_stake",
+      "term": "stake (in a firm)",
+      "definition": "The share of a firm the state owns. Buying more (nationalising) is paid from the debt at a price set by the firm's output, and the state then takes that share of its dividends.",
+      "see_also": [
+        "subsidy",
+        "debt"
+      ],
+      "live": "firm_state_share",
+      "model": "companies-model#22. The purchase is a BALANCE-SHEET write, and that is why the session added no save field"
+    },
+    {
+      "id": "embassy",
+      "term": "embassy",
+      "definition": "A resident mission in another capital. Every roster state already holds one in every other, except pairs with no diplomatic relations, so opening one is offered only where none stands.",
+      "body": "Opening one also needs relations of at least 50 and a recent meeting.",
+      "see_also": [
+        "relations",
+        "state_visit"
+      ],
+      "model": "diplomacy-model#The embassies that already exist (V5.1-0d)"
+    },
+    {
+      "id": "spending",
+      "term": "spending (a budget line)",
+      "definition": "A budget line, as a share of GDP. Moving it changes the service the voters feel and the deficit; the forecast shows the next 24 months.",
+      "body": "A competent minister at the line makes your change to it count for more.",
+      "see_also": [
+        "deficit",
+        "cabinet",
+        "gdp"
+      ],
+      "live": "spending_share",
+      "model": [
+        "economy-model#Budget",
+        "cabinet-model#Effectiveness multiplies the delta, not the level"
+      ]
+    },
+    {
+      "id": "tax_rate",
+      "term": "tax rate",
+      "definition": "The rate of one of the five taxes. Raising it brings revenue and costs the blocs that weigh that tax.",
+      "see_also": [
+        "deficit",
+        "voter_bloc",
+        "issue"
+      ],
+      "live": "tax_rate",
+      "model": "tax-model#3. Brackets, and the two prices that are not a fourth revenue channel"
+    },
+    {
+      "id": "deficit",
+      "term": "deficit",
+      "definition": "Spending minus revenue in a year, as a share of GDP. A deficit adds to the debt; the voters who care about public finances judge how it has changed since you took office.",
+      "see_also": [
+        "debt",
+        "spending",
+        "gdp"
+      ],
+      "live": "deficit_pct",
+      "model": "economy-model#Budget"
+    },
+    {
+      "id": "debt",
+      "term": "debt",
+      "definition": "What the state owes, against GDP. How far it has risen since you took office, with unrest, sets the bond yield; its interest is paid from the budget.",
+      "see_also": [
+        "bond_yield",
+        "deficit",
+        "credit_rating"
+      ],
+      "live": "debt_pct",
+      "model": "credit-model#1. What stays anchored, decided before any code"
+    },
+    {
+      "id": "bond_yield",
+      "term": "bond yield",
+      "definition": "The interest rate the markets charge you, read each month from how far the debt has risen and from unrest; never stored.",
+      "see_also": [
+        "debt",
+        "credit_rating"
+      ],
+      "live": "credit_yield",
+      "model": "credit-model#5. What the yield reaches, measured"
+    },
+    {
+      "id": "credit_rating",
+      "term": "rating",
+      "definition": "A letter band read off the bond yield. A downgrade is the yield crossing into a worse band.",
+      "see_also": [
+        "bond_yield",
+        "debt"
+      ],
+      "live": "credit_rating",
+      "model": "credit-model#6. The rating is one extra read, and staying that way is pinned"
+    },
+    {
+      "id": "gdp",
+      "term": "GDP",
+      "definition": "The economy's yearly output, in billions of euros: the sum of its three sectors.",
+      "see_also": [
+        "growth",
+        "deficit"
+      ],
+      "live": "gdp",
+      "model": "economy-model#Scope and units"
+    },
+    {
+      "id": "growth",
+      "term": "growth",
+      "definition": "How fast GDP rises in a year. Trend growth is read off the nation's sector mix (France's is about 1.3 %); the business cycle and your budget move actual growth around it.",
+      "see_also": [
+        "gdp",
+        "business_cycle",
+        "unemployment"
+      ],
+      "live": "growth_and_trend",
+      "model": "economy-model#1. Trend growth"
+    },
+    {
+      "id": "unemployment",
+      "term": "unemployment",
+      "definition": "The share of the workforce without a job. It falls when growth beats the trend and drifts back toward a structural rate.",
+      "see_also": [
+        "growth",
+        "voter_bloc"
+      ],
+      "live": "unemployment",
+      "model": "economy-model#6. Unemployment"
+    },
+    {
+      "id": "inflation",
+      "term": "inflation",
+      "definition": "How fast prices rise in a year. Above its anchor it drags growth, and the voters judge you on it.",
+      "see_also": [
+        "growth",
+        "issue"
+      ],
+      "live": "inflation",
+      "model": "inflation-model#4. Price one — the real channel"
+    },
+    {
+      "id": "business_cycle",
+      "term": "cycle / recession",
+      "definition": "The economy's own swings, set by the date: partly shared by every nation, partly each nation's own, and the same in every game on the same date. A wave you cannot stop, only ride.",
+      "see_also": [
+        "growth",
+        "unemployment"
+      ],
+      "model": "cycle-model#2. The generator"
+    },
+    {
+      "id": "voter_bloc",
+      "term": "bloc (of voters)",
+      "definition": "One slice of the electorate (workers, pensioners, urban, rural, business…), each with its own issues and weights.",
+      "see_also": [
+        "approval",
+        "issue",
+        "salience"
+      ],
+      "live": "bloc_poll",
+      "model": "opinion-model#Blocs"
+    },
+    {
+      "id": "issue",
+      "term": "issue",
+      "definition": "One of the things the voters judge you on: jobs, growth, each tax, each spending line, public finances, Europe and inflation.",
+      "see_also": [
+        "voter_bloc",
+        "salience",
+        "approval"
+      ],
+      "model": "opinion-model#Issues"
+    },
+    {
+      "id": "salience",
+      "term": "salience",
+      "definition": "How much a bloc cares about an issue now. The news moves it, and fixing something nobody cares about buys nothing.",
+      "see_also": [
+        "issue",
+        "voter_bloc"
+      ],
+      "model": "opinion-model#Salience"
+    },
+    {
+      "id": "majority",
+      "term": "majority / seats",
+      "definition": "A majority is more than half the Assembly's seats: 289 of 577 in France, where no two parties reach it, so a majority government is at least three parties.",
+      "see_also": [
+        "coalition",
+        "censure"
+      ],
+      "live": "coalition_seats",
+      "model": "government-model#Censure"
+    },
+    {
+      "id": "coalition",
+      "term": "coalition",
+      "definition": "The parties that form the government. The search starts from the executive's own party (the largest party elsewhere) and adds the nearest party in ideology until it holds a majority.",
+      "see_also": [
+        "majority",
+        "censure"
+      ],
+      "live": "coalition",
+      "model": "government-model#The formation search"
+    },
+    {
+      "id": "censure",
+      "term": "censure",
+      "definition": "The Assembly's vote to bring the government down. In France a minority government falls only if the left and right opposition vote together.",
+      "see_also": [
+        "majority",
+        "article_49_3"
+      ],
+      "model": "government-model#Censure"
+    },
+    {
+      "id": "article_49_3",
+      "term": "Article 49.3",
+      "definition": "Adopts a bill with no vote taken. The Assembly may answer with a censure motion; forcing costs approval whether or not the motion carries.",
+      "body": "Only constitutions that give the executive this power have it. It cannot force a constitutional amendment.",
+      "see_also": [
+        "censure",
+        "amendment",
+        "second_chamber"
+      ],
+      "live": "article_49_3_available",
+      "model": "government-model#Article 49.3"
+    },
+    {
+      "id": "party_discipline",
+      "term": "discipline / rebels",
+      "definition": "How tightly a party votes its line. Members far from that line may rebel, voting as they would with no whip on them.",
+      "see_also": [
+        "majority",
+        "coalition"
+      ],
+      "model": "discipline-model#Rebellion is a seat-level split of scalars that already existed"
+    },
+    {
+      "id": "dissolution",
+      "term": "dissolution",
+      "definition": "Dissolving the Assembly calls an early election. It cannot be called while one is pending, during a lockout, or just before a scheduled vote.",
+      "see_also": [
+        "censure",
+        "majority"
+      ],
+      "live": "dissolution_lockout_months",
+      "model": "dissolution-model#What the command does"
+    },
+    {
+      "id": "referendum",
+      "term": "referendum",
+      "definition": "A second ratification stage, never a way around the Assembly: the country votes on top of it. Winning one is a mandate; calling one and losing it costs approval.",
+      "body": "For a constitutional amendment it can stand in for the supermajority where the constitution allows. Calling one off costs exactly what losing it would.",
+      "see_also": [
+        "amendment",
+        "approval"
+      ],
+      "live": "pending_referendum",
+      "model": "referendum-model#2. A referendum is a second ratification stage, not a bypass"
+    },
+    {
+      "id": "amendment",
+      "term": "constitutional amendment",
+      "definition": "A change to the constitution. It needs the nation's own higher threshold, and Article 49.3 cannot force one.",
+      "see_also": [
+        "article_49_3",
+        "referendum",
+        "second_chamber"
+      ],
+      "live": "amendment_threshold",
+      "model": "amendment-model#The threshold is per-nation data, not a global constant"
+    },
+    {
+      "id": "second_chamber",
+      "term": "second chamber",
+      "definition": "The upper house (France's Senate), not elected by the national vote. It can hold a bill for a time, and in France Article 49.3 is the way past it.",
+      "see_also": [
+        "article_49_3",
+        "amendment"
+      ],
+      "live": "held_bill",
+      "model": [
+        "upper-house-model#8. The hold is pure time, and time turned out not to be a cost",
+        "upper-house-model#10. Article 49.3 is the way past the second chamber"
+      ]
+    },
+    {
+      "id": "term_limit",
+      "term": "term limit",
+      "definition": "The most terms the head of state may serve (two for France). Reaching it ends the presidency, as losing does.",
+      "see_also": [
+        "heads"
+      ],
+      "live": "terms_served",
+      "model": "playability-audit#V1 · Term limit removes the player silently, forever · P1"
+    },
+    {
+      "id": "cabinet",
+      "term": "cabinet / portfolio",
+      "definition": "Each of the five spending lines has a minister from a coalition party; a competent one makes your changes to that line count for more.",
+      "see_also": [
+        "reshuffle",
+        "spending",
+        "coalition"
+      ],
+      "live": "portfolio_minister",
+      "model": "cabinet-model#Portfolios are the five spending lines"
+    },
+    {
+      "id": "reshuffle",
+      "term": "reshuffle",
+      "definition": "Giving a portfolio to another coalition party. It costs approval every time, whether or not the new holder is better.",
+      "see_also": [
+        "cabinet",
+        "approval"
+      ],
+      "model": "cabinet-model#The player command"
+    },
+    {
+      "id": "pledge",
+      "term": "pledge",
+      "definition": "A campaign promise. It buys votes in the election you stand in, and costs every month of the next term if it is broken.",
+      "see_also": [
+        "programme",
+        "approval"
+      ],
+      "live": "open_pledges",
+      "model": "pledge-model#4. One verb, two prices, two times"
+    },
+    {
+      "id": "corruption",
+      "term": "corruption",
+      "definition": "How much of what you spend fails to reach the service. A corrupt state's services decay even when spending is unchanged.",
+      "see_also": [
+        "spending",
+        "approval"
+      ],
+      "live": "corruption_readout",
+      "model": "society-model#4. Corruption multiplies the STOCK, not the delta"
+    },
+    {
+      "id": "unrest",
+      "term": "unrest / grievance",
+      "definition": "A grievance stock built from the state of the country (inequality, a muzzled press and weakened courts among its terms). Above its thresholds the unions act.",
+      "see_also": [
+        "press_freedom",
+        "judicial_independence"
+      ],
+      "live": "unrest",
+      "model": [
+        "unrest-model#1. The session where two rules that were pulling apart finally agree",
+        "media-model#6. Press freedom: two prices, and no legitimacy quantity was invented",
+        "judiciary-model#7. `JUDICIAL_UNREST_BETA` — set by ratio, because the band could not select"
+      ]
+    },
+    {
+      "id": "relations",
+      "term": "relations",
+      "definition": "How warm a pair of nations is. Acts raise or lower it, and some verbs need it high enough (an embassy needs 50).",
+      "see_also": [
+        "embassy",
+        "state_visit",
+        "treaty"
+      ],
+      "live": "relations_with_partner",
+      "model": "diplomacy-model#The first state that is neither per-nation nor global"
+    },
+    {
+      "id": "state_visit",
+      "term": "state visit",
+      "definition": "A trip that books days in your diary and opens a meeting window with that leader for a year; the treaty-class verbs need it.",
+      "see_also": [
+        "diary",
+        "treaty",
+        "relations"
+      ],
+      "model": "calendar-model#The meeting window"
+    },
+    {
+      "id": "council",
+      "term": "council",
+      "definition": "An international organisation's decision body (the Union's council, for France). A proposal divides by qualified majority or unanimity; the sponsor lobbies members, and you can bargain for votes.",
+      "see_also": [
+        "bargain",
+        "ratification"
+      ],
+      "live": "next_division",
+      "model": "orgs-model#V4.5 — the council, contested (clauses declared BEFORE the machine, 2026-10-14)"
+    },
+    {
+      "id": "bargain",
+      "term": "bargain / IOU",
+      "definition": "Paying a member for its vote: a favour (relations), aid (a budget line) or a vote trade, an IOU you owe at the creditor's next division.",
+      "see_also": [
+        "council",
+        "relations"
+      ],
+      "live": "open_ious",
+      "model": "orgs-model#V4.5 — the council, contested (clauses declared BEFORE the machine, 2026-10-14)"
+    },
+    {
+      "id": "desk",
+      "term": "desk",
+      "definition": "Where events wait for your answer: four at most, the most severe first.",
+      "see_also": [
+        "diary"
+      ],
+      "live": "events_waiting",
+      "model": "events-model#5. The machine"
+    },
+    {
+      "id": "diary",
+      "term": "diary",
+      "definition": "Your calendar. A booking occupies days, travel included, and two bookings cannot overlap.",
+      "see_also": [
+        "state_visit",
+        "desk"
+      ],
+      "live": "next_booking",
+      "model": "calendar-model#The block, and the scarcity that is occupancy"
+    },
+    {
+      "id": "treaty",
+      "term": "treaty / agreement",
+      "definition": "A bilateral treaty or agreement between two nations that changes the trade between them; the partner must accept it.",
+      "see_also": [
+        "state_visit",
+        "relations",
+        "tariff"
+      ],
+      "live": "agreements_in_force",
+      "model": [
+        "foreign-policy-model#3. Whether a partner signs — V1.3b's stopgap",
+        "trade-model#4. Agreements — no new content type"
+      ]
+    },
+    {
+      "id": "tariff",
+      "term": "tariff / sanctions",
+      "definition": "A measure aimed at one nation: it cuts trade with them, collects a little revenue, and they may retaliate.",
+      "see_also": [
+        "treaty",
+        "relations"
+      ],
+      "live": "measures_in_force",
+      "model": "coercion-model#3. What a tariff collects"
+    },
+    {
+      "id": "ratification",
+      "term": "ratification",
+      "definition": "A treaty the council carries must pass every member's own assembly; one rejection sinks it for all.",
+      "see_also": [
+        "council",
+        "treaty"
+      ],
+      "model": "orgs-model#V4.5 — the council, contested (clauses declared BEFORE the machine, 2026-10-14)"
+    },
+    {
+      "id": "subsidy",
+      "term": "subsidy",
+      "definition": "Paying a firm to grow its output and jobs. The bill is a spending line, and the blocs notice it.",
+      "see_also": [
+        "state_stake",
+        "spending"
+      ],
+      "live": "subsidy_bill",
+      "model": "companies-model#5. What a subsidy costs, and who notices"
+    },
+    {
+      "id": "power_grid",
+      "term": "plant / grid",
+      "definition": "A power station serves the national grid, so it helps the whole country, not only its region; where you site it sets its connection cost and local opposition.",
+      "see_also": [
+        "spending"
+      ],
+      "live": "plants",
+      "model": "energy-model#3. The grid is national"
+    },
+    {
+      "id": "press_freedom",
+      "term": "press freedom",
+      "definition": "How free the press is to frame you. Restricting it changes the coverage and adds to unrest.",
+      "see_also": [
+        "unrest",
+        "judicial_independence"
+      ],
+      "live": "press_freedom",
+      "model": "media-model#6. Press freedom: two prices, and no legitimacy quantity was invented"
+    },
+    {
+      "id": "judicial_independence",
+      "term": "courts / judicial independence",
+      "definition": "How far the courts can go. A law whose reach exceeds the court's tolerance is struck down.",
+      "see_also": [
+        "press_freedom",
+        "amendment"
+      ],
+      "live": "judicial_independence",
+      "model": "judiciary-model#4. The tolerance form, and why the linear one died"
+    },
+    {
+      "id": "heads",
+      "term": "head of state / head of government",
+      "definition": "France has both: the President (head of state, elected on its own clock) and the Prime Minister (head of government, formed from the Assembly). Their two clocks differ.",
+      "see_also": [
+        "term_limit",
+        "coalition"
+      ],
+      "live": "office_holders",
+      "model": "government-model#Two clocks"
+    }
+  ]
+}
