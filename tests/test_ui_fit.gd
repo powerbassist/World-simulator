@@ -12,6 +12,12 @@ extends SceneTree
 ## numbers. The shape of the check is QA's: a ScrollContainer's content minimum
 ## width must not exceed its view. The headless root is 64x64, so a popup is given
 ## its own minimum size first and the comparison is like for like.
+##
+## The same open briefing carries a second, textual check (QA #50): its effect
+## sentence was the lines joined with ". " plus a final ".", over lines that each
+## end in their own full stop, so every one read "... of GDP.." on screen.
+
+const BriefingUi = preload("res://src/ui/briefing.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -32,18 +38,26 @@ func _process(_delta: float) -> bool:
 		_open_briefing()
 	if _frame == 5:
 		_check_briefing()
+		_check_briefing_full_stops()
 		_finish()
 	return false
 
 
+## The first law whose briefing has two effect lines or more: the join is what the
+## text check is about, and one line has nothing to join.
 func _open_briefing() -> void:
 	_briefing = _main._briefing
 	var laws: Array = _main._loader.laws
-	if laws.is_empty():
-		_fail("no authored law to brief on")
+	var pick = null
+	for law in laws:
+		if BriefingUi.effect_lines(law.effects, _main._state.player()).size() >= 2:
+			pick = law
+			break
+	if pick == null:
+		_fail("no authored law has two effect lines to brief on")
 		return
-	_law_id = String(laws[0].id)
-	_briefing.open_for_law(laws[0], _main._state, _main._loader)
+	_law_id = String(pick.id)
+	_briefing.open_for_law(pick, _main._state, _main._loader)
 	_opened = true
 	_briefing.show()
 	_briefing.size = _briefing.custom_minimum_size
@@ -61,6 +75,17 @@ func _check_briefing() -> void:
 		var need := body.get_combined_minimum_size().x
 		if need > scroll.size.x + 0.5:
 			_fail("the briefing for '%s' needs %.0f px but its view is %.0f: right-hand figures are clipped" % [_law_id, need, scroll.size.x])
+
+
+## No label of the open briefing holds a doubled full stop (an ellipsis is three).
+func _check_briefing_full_stops() -> void:
+	if not _opened:
+		return
+	var doubled := RegEx.create_from_string(r"(?<!\.)\.\.(?!\.)")
+	for label in _briefing.find_children("*", "Label", true, false):
+		var text := String((label as Label).text)
+		if doubled.search(text) != null:
+			_fail("the briefing for '%s' prints a doubled full stop: %s" % [_law_id, text])
 
 
 func _scrolls_in(node: Node) -> Array[ScrollContainer]:
