@@ -330,7 +330,7 @@ func _ready() -> void:
 	_budget_panel.setup(_state, _loader)
 	_budget_panel.hide_close_button()
 	_budget_panel.committed.connect(func(before, _pending):
-		_fiscal_committed("Budget change", "Budget committed", before))
+		_fiscal_committed(tr("Budget change"), tr("Budget committed"), before))
 
 	# V4.2 T5. The tax levers' new home, in the Economy cluster beside Budget:
 	# the cluster grammar (panel-system.md §16) puts a surface where its
@@ -350,7 +350,7 @@ func _ready() -> void:
 	# sweep leaves it alone).
 	_budget_panel.tax_panel = _tax_panel
 	_tax_panel.committed.connect(func(before, _pending):
-		_fiscal_committed("Tax code change", "Tax code committed", before))
+		_fiscal_committed(tr("Tax code change"), tr("Tax code committed"), before))
 	# A finished draft opens the briefing on itself: the price it was quoted
 	# and the drafting months are what the press just bought.
 	_tax_panel.brief_requested_draft.connect(func(entry, draft_id):
@@ -385,10 +385,10 @@ func _ready() -> void:
 	_government_panel.setup(_state, _loader)
 	_government_panel.hide_close_button()
 	_government_panel.dissolved.connect(func(before):
-		_queue_effect("Dissolution called", before)
+		_queue_effect(tr("Dissolution called"), before)
 	)
 	_government_panel.reassigned.connect(func(before):
-		_queue_effect("Cabinet reassigned", before)
+		_queue_effect(tr("Cabinet reassigned"), before)
 	)
 
 	_polling_panel = PollingPanel.new()
@@ -415,16 +415,16 @@ func _ready() -> void:
 		var body: String
 		if bool(result.get("refused", false)):
 			if bool(result.get("referendum_in_flight", false)):
-				body = "A referendum is already in flight."
+				body = tr("A referendum is already in flight.")
 			else:
-				body = "The assembly would not take it."
+				body = tr("The assembly would not take it.")
 		elif bool(result.get("withdrawn", false)):
-			body = "Withdrawn."
+			body = tr("Withdrawn.")
 		elif bool(result.get("referendum_route", false)):
-			body = "To the country -- the vote is scheduled."
+			body = tr("To the country -- the vote is scheduled.")
 		else:
-			body = "%s. Yes %d, No %d." % [
-				"Passed" if bool(result.get("passed", false)) else "Failed",
+			body = tr("%s. Yes %d, No %d.") % [
+				tr("Passed") if bool(result.get("passed", false)) else tr("Failed"),
 				int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
 			]
 		_hud.message_stack.push(String(law_name), body)
@@ -447,9 +447,9 @@ func _ready() -> void:
 		var body: String
 		if bool(result.get("refused", false)):
 			var reason := String(result.get("reason", ""))
-			body = "Refused." if reason.is_empty() else "Refused. %s" % reason
+			body = tr("Refused.") if reason.is_empty() else tr("Refused. %s") % reason
 		else:
-			body = "Agreed."
+			body = tr("Agreed.")
 		_hud.message_stack.push(String(label), body)
 		_update_top_bar()
 		# A diplomatic action moves relations, and on the relations layer that is a
@@ -1514,8 +1514,8 @@ func _announce_industry_events() -> void:
 		if not _announced_bids.has(bid_firm):
 			_announced_bids[bid_firm] = true
 			var card_id: String = _hud.message_stack.push(
-				"Foreign takeover bid",
-				"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+				tr("Foreign takeover bid"),
+				tr("%s has offered %.1f bn for %s. The offer lapses in %d months.") % [
 					_loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
 					_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])])
 			_bid_cards[bid_firm] = card_id
@@ -1533,7 +1533,7 @@ func _announce_industry_events() -> void:
 		var entry: Dictionary = ns.companies[firm_id]
 		var parts: PackedStringArray = String(entry.get("bid_bidder", "")).split("|")
 		_hud.message_stack.set_body(String(_bid_cards[firm_id]),
-			"%s has offered %.1f bn for %s. The offer lapses in %d months." % [
+			tr("%s has offered %.1f bn for %s. The offer lapses in %d months.") % [
 				_loader.nation_name(parts[0] if parts.size() > 0 else ""),
 				float(entry.get("bid_price_eur_bn", 0.0)),
 				_loader.firm_name(ns.id, String(firm_id)),
@@ -1556,7 +1556,7 @@ func _announce_industry_events() -> void:
 			_failure_cards.erase(firm_id)
 	for failure in failing_now:
 		var company_id := String(failure["company_id"])
-		var failure_body := "%s is failing. The rescue window stands for %d months; past it the collapse is committed." % [
+		var failure_body := tr("%s is failing. The rescue window stands for %d months; past it the collapse is committed.") % [
 			_loader.firm_name(ns.id, company_id), int(failure["months_left"])]
 		if _announced_failures.has(company_id):
 			if _failure_cards.has(company_id):
@@ -1602,7 +1602,7 @@ func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
 		_announced_assembly_bills[bill_id] = true
 		var backed := String(entry.get("backer_firm", "")) != ""
 		var card_id: String = _hud.message_stack.push(
-			"A chief before the assembly" if backed else "Private member's bill", body)
+			tr("A chief before the assembly") if backed else tr("Private member's bill"), body)
 		_assembly_cards[bill_id] = card_id
 	# The release card, handed in from _on_month_step. The capture there is
 	# what lets a COLLISION month -- a PMB dividing the same tick an
@@ -1641,14 +1641,14 @@ func _assembly_bill_body(entry: Dictionary) -> String:
 	# keep offering a stand the sim now refuses (the panel drops its button
 	# for the same reason).
 	if float(entry.get("endorse_bonus", 0.0)) > 0.0:
-		return "%s reaches the floor in %d month%s. The president's stand is on the record -- endorsed." % [
+		return tr("%s reaches the floor in %d month%s. The president's stand is on the record -- endorsed.") % [
 			law_name, months, "" if months == 1 else "s"]
 	if firm_id != "":
 		var chief := _loader.person_name(String(entry.get("backer_chief", "")))
-		return "%s's chief %s backs %s. The assembly divides in %d month%s; whether the president stands behind it is the president's to take." % [
+		return tr("%s's chief %s backs %s. The assembly divides in %d month%s; whether the president stands behind it is the president's to take.") % [
 			_loader.firm_name(_state.player_nation_id, firm_id),
-			chief if chief != "" else "the chief", law_name, months, "" if months == 1 else "s"]
-	return "%s reaches the floor in %d month%s. Endorse it, or let the backbench stand alone." % [
+			chief if chief != "" else tr("the chief"), law_name, months, "" if months == 1 else "s"]
+	return tr("%s reaches the floor in %d month%s. Endorse it, or let the backbench stand alone.") % [
 		law_name, months, "" if months == 1 else "s"]
 
 func _assembly_result_body(result: Dictionary) -> String:
@@ -1660,26 +1660,26 @@ func _assembly_result_body(result: Dictionary) -> String:
 	# "defeated, N ayes" against a bill the court stopped are both the card
 	# contradicting the state it announces; the court sentence prints alone.
 	if bool(result.get("struck_down", false)):
-		return "The court has struck %s down." % law_name
+		return tr("The court has struck %s down.") % law_name
 	# A SUSPENSIVE REFUSAL IS A HOLD, not a defeat (law_panel's own reading --
 	# one word for different things is the readout bug this project keeps
 	# finding), and a blocked one was beaten somewhere the lower-house tally
 	# below does not show. Both wordings come off the outcome keys the result
 	# actually carries; only the bare false reads "defeated".
 	if bool(result.get("held_by_upper", false)):
-		return "The assembly carried %s and the %s has suspended it — it comes into force in %d months." % [
-			law_name, String(result.get("upper_chamber", "second chamber")), int(result.get("held_months", 0))]
+		return tr("The assembly carried %s and the %s has suspended it — it comes into force in %d months.") % [
+			law_name, String(result.get("upper_chamber", tr("second chamber"))), int(result.get("held_months", 0))]
 	if bool(result.get("blocked_by_upper", false)):
-		return "The assembly carried %s and the %s has blocked it." % [
-			law_name, String(result.get("upper_chamber", "second chamber"))]
+		return tr("The assembly carried %s and the %s has blocked it.") % [
+			law_name, String(result.get("upper_chamber", tr("second chamber")))]
 	# The held bill's release: the coming-into-force event, not a division --
 	# the release result carries no seat tally, and printing zeroes beside
 	# "carried" would contradict its own numbers.
 	if bool(result.get("released", false)):
-		return "The %s's hold has run out — %s comes into force." % [
-			String(result.get("upper_chamber", "second chamber")), law_name]
-	return "The assembly has %s %s, %d ayes to %d noes." % [
-		"carried" if bool(result.get("passed", false)) else "defeated",
+		return tr("The %s's hold has run out — %s comes into force.") % [
+			String(result.get("upper_chamber", tr("second chamber"))), law_name]
+	return tr("The assembly has %s %s, %d ayes to %d noes.") % [
+		tr("carried") if bool(result.get("passed", false)) else tr("defeated"),
 		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
 
 func _law_title(law_id: String) -> String:
@@ -1712,8 +1712,8 @@ func _card_obligations(before: int) -> void:
 
 	var ns = _state.player()
 	_hud.message_stack.push(
-		"Alliance obligation",
-		"Forces are committed under a defensive pact. The budget carries %.2f%% of GDP for as long as it stands, and only abandoning the pact ends it." % (
+		tr("Alliance obligation"),
+		tr("Forces are committed under a defensive pact. The budget carries %.2f%% of GDP for as long as it stands, and only abandoning the pact ends it.") % (
 			0.0 if ns == null else ns.deployment_bill_pct_gdp
 		),
 	)
@@ -1792,8 +1792,8 @@ func _card_foreign_acts(year: int, month: int) -> void:
 			# again in the body: "Austria -> you / State Visit: France" reads as
 			# though France were a third country involved somehow.
 			var title: String = (
-				"%s → you" % String(aimed[0]["actor"]) if aimed.size() == 1
-				else "%d× %s → you" % [aimed.size(), action_name]
+				tr("%s → you") % String(aimed[0]["actor"]) if aimed.size() == 1
+				else tr("%d× %s → you") % [aimed.size(), action_name]
 			)
 			var who: String = (
 				"%s." % String(aimed[0]["actor"]) if aimed.size() == 1
@@ -1840,9 +1840,9 @@ func _card_unrest_acts(year: int, month: int) -> void:
 		# so an old save reads correctly rather than printing an empty place.
 		var city := String(act.get("city_name", ""))
 		var region := String(act.get("region_name", ""))
-		var body := "Grievance stands at %.0f of 100. Output will carry it for months." % float(act["unrest_pct"])
+		var body := tr("Grievance stands at %.0f of 100. Output will carry it for months.") % float(act["unrest_pct"])
 		if city != "" and region != "":
-			body = "%s, %s. Grievance stands at %.0f of 100. Output will carry it for months." % [
+			body = tr("%s, %s. Grievance stands at %.0f of 100. Output will carry it for months.") % [
 				city, region, float(act["unrest_pct"]),
 			]
 		_hud.message_stack.push(_unrest_title(String(act["label"])), body)
@@ -1859,24 +1859,24 @@ func _card_character_acts(acts: Array) -> void:
 		var who := _loader.person_name(String(act["person_id"]))
 		var kind := String(act["act"])
 		var detail: Dictionary = act.get("detail", {})
-		var title := "The bench stirs"
-		var body := "%s acts." % (who if who != "" else "Someone")
+		var title := tr("The bench stirs")
+		var body := tr("%s acts.") % (who if who != "" else tr("Someone"))
 		match kind:
 			"resign":
 				title = "A resignation"
-				body = "%s resigns the premiership. The party holds the office; the government pays in standing." % who
+				body = tr("%s resigns the premiership. The party holds the office; the government pays in standing.") % who
 			"defect":
 				title = "A defection"
-				body = "%s crosses the floor. The seat stays with the whip." % who
+				body = tr("%s crosses the floor. The seat stays with the whip.") % who
 			"challenge":
 				var deposed := _loader.person_name(String(detail.get("deposed", "")))
-				title = "A leadership challenge"
-				body = "%s takes the leadership. %s stands down." % [
-					who, deposed if deposed != "" else "The incumbent",
+				title = tr("A leadership challenge")
+				body = tr("%s takes the leadership. %s stands down.") % [
+					who, deposed if deposed != "" else tr("The incumbent"),
 				]
 			"brief_against":
 				title = "A leak"
-				body = "%s briefs against the government." % who
+				body = tr("%s briefs against the government.") % who
 		_hud.message_stack.push(title, body)
 
 
@@ -1936,8 +1936,8 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		if where != "":
 			named = "%s — %s" % [named, where]
 		_hud.message_stack.push(
-			"Decided for you",
-			"%s. Nobody answered, so it went the way it was always going to: %s." % [
+			tr("Decided for you"),
+			tr("%s. Nobody answered, so it went the way it was always going to: %s.") % [
 				named, String(record.get("choice_label", "")),
 			],
 		)
@@ -2054,7 +2054,7 @@ func _push_decision_card(ev, entry: Dictionary) -> void:
 	for choice in ev.choices:
 		actions.append({"label": "%s%s" % [
 			String(choice.get("label", "")),
-			"   (happens if you say nothing)" if bool(choice.get("is_default", false)) else "",
+			tr("   (happens if you say nothing)") if bool(choice.get("is_default", false)) else "",
 		]})
 	# The title names the place for a sited event -- read straight off the
 	# entry, `event_name` untouched (V3.5). The name is already in the
@@ -2158,16 +2158,16 @@ func _dismiss_event_cards(event_id: String) -> void:
 ## same two sentences the arrival card has always carried, now beside buttons
 ## that answer it (V2.9).
 func _decision_body(ev, left: int) -> String:
-	return "%s  You have %d %s to answer." % [
-		ev.summary, left, "month" if left == 1 else "months",
+	return tr("%s  You have %d %s to answer.") % [
+		ev.summary, left, tr("month") if left == 1 else tr("months"),
 	]
 
 
 func _unrest_title(label: String) -> String:
 	match label:
-		"protest": return "Demonstrations"
-		"strike": return "General strike"
-	return "Industrial action"
+		"protest": return tr("Demonstrations")
+		"strike": return tr("General strike")
+	return tr("Industrial action")
 
 
 ## The sentence for a ForeignPolicy.ACT_REASON_* key. src/sim/ returns keys and
@@ -2175,8 +2175,8 @@ func _unrest_title(label: String) -> String:
 ## orgs_panel.gd for a vote.
 func _act_reason_text(key: String) -> String:
 	match key:
-		ForeignPolicy.ACT_REASON_INTEREST: return "Their interests run this way."
-		ForeignPolicy.ACT_REASON_GOODWILL: return "Mending what had soured."
+		ForeignPolicy.ACT_REASON_INTEREST: return tr("Their interests run this way.")
+		ForeignPolicy.ACT_REASON_GOODWILL: return tr("Mending what had soured.")
 		ForeignPolicy.ACT_REASON_GRIEVANCE: return "Answering a grievance."
 	return ""
 
@@ -2297,19 +2297,19 @@ func _card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
 		return
 	if label.is_empty():
 		_hud.message_stack.push(
-			"Appointment lapsed",
-			"Something booked for today no longer exists to be done.",
+			tr("Appointment lapsed"),
+			tr("Something booked for today no longer exists to be done."),
 		)
 		return
 
 	var kind := String(entry.get("kind", ""))
 	var where := ""
 	if kind == CalendarK.KIND_DIPLOMATIC:
-		where = " with %s" % _nation_name(String(entry.get("target_id", "")))
+		where = tr(" with %s") % _nation_name(String(entry.get("target_id", "")))
 	_hud.message_stack.push(
-		"Kept: %s" % label,
-		"%s%s, as booked.%s" % [
-			label, where, "" if ok else " It did not carry.",
+		tr("Kept: %s") % label,
+		tr("%s%s, as booked.%s") % [
+			label, where, "" if ok else tr(" It did not carry."),
 		],
 	)
 
@@ -2355,7 +2355,7 @@ func _resolve_summit(choice_label: String) -> void:
 	if effects.is_empty():
 		return
 	Legislature.apply_effects(_state, ns, effects, _loader)
-	_queue_effect("Summit: %s" % choice_label, _summit_before)
+	_queue_effect(tr("Summit: %s") % choice_label, _summit_before)
 	_update_top_bar()
 
 
@@ -2371,9 +2371,9 @@ func _law_by_id(id: String):
 func _on_save_requested(slot: String) -> void:
 	var error := SaveManager.save_game(_state, _clock, slot)
 	if error.is_empty():
-		_save_load_panel.report("Saved '%s'." % slot)
+		_save_load_panel.report(tr("Saved '%s'.") % slot)
 	else:
-		_save_load_panel.report("Save failed: %s" % error)
+		_save_load_panel.report(tr("Save failed: %s") % error)
 	_save_load_panel.mark_dirty()
 
 
@@ -2383,7 +2383,7 @@ func _on_save_requested(slot: String) -> void:
 func _on_load_requested(slot: String) -> void:
 	var result := SaveManager.load_game(slot, _loader)
 	if not result["ok"]:
-		_save_load_panel.report("Load failed: %s" % result["error"])
+		_save_load_panel.report(tr("Load failed: %s") % result["error"])
 		_save_load_panel.mark_dirty()
 		# Shown, not merely written to. report() paints a HIDDEN panel on the menu
 		# path -- _ready() has already built a new game by then, so without this a
@@ -2513,7 +2513,7 @@ func _on_load_requested(slot: String) -> void:
 	_enforce_term_start_programme()
 	_note_holds_for_pause_menu()
 
-	_save_load_panel.report("Loaded '%s'." % slot)
+	_save_load_panel.report(tr("Loaded '%s'.") % slot)
 	_save_load_panel.mark_dirty()
 	_update_top_bar()
 
@@ -2575,7 +2575,7 @@ func _enforce_interrupt() -> void:
 func _term_card_body() -> String:
 	var ns = _state.player()
 	var when := Trends.vote_date(ns)
-	return "You hold %s until %s %d -- %s. Win the vote." % [
+	return tr("You hold %s until %s %d -- %s. Win the vote.") % [
 		_nation_name(_state.player_nation_id),
 		ClockCluster.MONTH_NAMES[when.y - 1], when.x,
 		Trends.months_text(Trends.months_to_vote(_state, ns)),
@@ -2634,8 +2634,8 @@ func _enforce_term_start_programme() -> void:
 		return
 	_drop_programme_card()
 	_programme_card_id = _hud.message_stack.push(
-		"The term's programme",
-		"The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise.",
+		tr("The term's programme"),
+		tr("The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise."),
 		[], null,
 		# Protected: this plain card explains a live clock hold, and a few plain
 		# pushes at a term start would otherwise evict it as the oldest.
@@ -2664,10 +2664,8 @@ func _on_programme_chosen(entry_id: String) -> void:
 	# Entry open, as a card -- the register now holds the term's programme,
 	# and the pulse it will pay lives on its conclusion, not here.
 	var name_text := String(result.get("name", entry_id))
-	_queue_effect("Programme set: %s" % name_text, before)
-	_hud.message_stack.push(name_text,
-		"This term's programme. Deliver it and the credit lands on the record;"
-		+ " miss its deadline and the miss pays the same shape back.")
+	_queue_effect(tr("Programme set: %s") % name_text, before)
+	_hud.message_stack.push(name_text, tr("This term's programme. Deliver it and the credit lands on the record; miss its deadline and the miss pays the same shape back."))
 	_drop_programme_card()
 	if _paused_for_programme:
 		_paused_for_programme = false
@@ -2683,11 +2681,11 @@ func _on_programme_chosen(entry_id: String) -> void:
 func _programme_refusal_text(reason: String) -> String:
 	match reason:
 		"not_term_start":
-			return "The term has already begun."
+			return tr("The term has already begun.")
 		"already_chosen":
-			return "This term's programme is already set."
+			return tr("This term's programme is already set.")
 		"not_offerable":
-			return "That goal is not on offer."
+			return tr("That goal is not on offer.")
 	return ""
 
 
@@ -2709,13 +2707,13 @@ func _card_programme_conclusions() -> void:
 		match String(entry["status"]):
 			ProgrammeK.STATUS_COMPLETE:
 				_hud.message_stack.push(tr("Delivered: %s") % name_text,
-					"The goal is met, and the register marks it complete.")
+					tr("The goal is met, and the register marks it complete."))
 			ProgrammeK.STATUS_FAIL:
 				_hud.message_stack.push(tr("Missed: %s") % name_text,
-					"The goal was not met in time, and the register marks the miss.")
+					tr("The goal was not met in time, and the register marks the miss."))
 			_:
 				_hud.message_stack.push(tr("Overtaken: %s") % name_text,
-					"The world moved on and the entry no longer applies. It concludes without a verdict.")
+					tr("The world moved on and the entry no longer applies. It concludes without a verdict."))
 
 
 ## Everything on screen that is not inside a window. Kept under U2's name

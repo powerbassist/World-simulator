@@ -46,12 +46,12 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 ## opinion_constants.gd both key on the bare ids and neither carries a display name;
 ## polling_panel.gd capitalises them in place, which is what this follows.
 const BLOC_LABEL := {
-	"workers": "Workers",
-	"pensioners": "Pensioners",
-	"urban": "Urban",
-	"rural": "Rural",
-	"business": "Business",
-	"students": "Students",
+	"workers": "Workers",  # i18n: msgid
+	"pensioners": "Pensioners",  # i18n: msgid
+	"urban": "Urban",  # i18n: msgid
+	"rural": "Rural",  # i18n: msgid
+	"business": "Business",  # i18n: msgid
+	"students": "Students",  # i18n: msgid
 }
 
 ## The promisable fields as a player thinks of them. Beside BLOC_LABEL for its reason:
@@ -59,21 +59,21 @@ const BLOC_LABEL := {
 ## text, because a constants file naming things in English is a constants file the
 ## content has to agree with in two places.
 const FIELD_LABEL := {
-	"unemployment_pct": "Unemployment",
-	"deficit_pct_gdp": "The deficit",
-	"debt_to_gdp_pct": "The debt",
-	"growth_annual_pct": "Growth",
-	"unrest_pct": "Unrest",
-	"tax_income_pct": "Income tax",
-	"tax_corporate_pct": "Corporation tax",
+	"unemployment_pct": "Unemployment",  # i18n: msgid
+	"deficit_pct_gdp": "The deficit",  # i18n: msgid
+	"debt_to_gdp_pct": "The debt",  # i18n: msgid
+	"growth_annual_pct": "Growth",  # i18n: msgid
+	"unrest_pct": "Unrest",  # i18n: msgid
+	"tax_income_pct": "Income tax",  # i18n: msgid
+	"tax_corporate_pct": "Corporation tax",  # i18n: msgid
 	"tax_vat_pct": "VAT",
-	"tax_capital_gains_pct": "Capital gains tax",
-	"tax_wealth_pct": "The wealth tax",
-	"spending_health_pct_gdp": "Health spending",
-	"spending_education_pct_gdp": "Education spending",
-	"spending_defence_pct_gdp": "Defence spending",
-	"spending_pensions_pct_gdp": "Pension spending",
-	"spending_infrastructure_pct_gdp": "Infrastructure spending",
+	"tax_capital_gains_pct": "Capital gains tax",  # i18n: msgid
+	"tax_wealth_pct": "The wealth tax",  # i18n: msgid
+	"spending_health_pct_gdp": "Health spending",  # i18n: msgid
+	"spending_education_pct_gdp": "Education spending",  # i18n: msgid
+	"spending_defence_pct_gdp": "Defence spending",  # i18n: msgid
+	"spending_pensions_pct_gdp": "Pension spending",  # i18n: msgid
+	"spending_infrastructure_pct_gdp": "Infrastructure spending",  # i18n: msgid
 }
 
 var _state
@@ -220,17 +220,10 @@ func _build_clock(ns) -> void:
 	PanelKit.row(_body, tr("Months to the vote"), "%d" % months)
 	if Campaign.is_open(_state, ns):
 		PanelKit.row(_body, tr("Campaign bill"), tr("%.3f %% of GDP") % ns.campaign_bill_pct_gdp)
-		PanelKit.line(_body, 
-			"The run-up is open. Every effort in the field reaches more voters each"
-			+ " month it runs and costs its price each month it runs, and all of it"
-			+ " ends at the vote whatever happens."
-		)
+		PanelKit.line(_body, tr("The run-up is open. Every effort in the field reaches more voters each month it runs and costs its price each month it runs, and all of it ends at the vote whatever happens."))
 	else:
-		PanelKit.line(_body, 
-			"The run-up opens %d months from now, %d months before the vote. Nothing"
-			% [months - CampaignK.CAMPAIGN_WINDOW_MONTHS, CampaignK.CAMPAIGN_WINDOW_MONTHS]
-			+ " can be put in the field until then."
-		)
+		PanelKit.line(_body, tr("The run-up opens %d months from now, %d months before the vote. Nothing can be put in the field until then.")
+			% [months - CampaignK.CAMPAIGN_WINDOW_MONTHS, CampaignK.CAMPAIGN_WINDOW_MONTHS])
 
 
 ## Who is going to turn out, bloc by bloc, against who would have without a campaign.
@@ -250,7 +243,7 @@ func _build_turnout(ns) -> void:
 		if not is_zero_approx(delta):
 			moved = true
 		PanelKit.row(_body, 
-			String(BLOC_LABEL.get(bloc, bloc)),
+			tr(String(BLOC_LABEL.get(bloc, bloc))),
 			"%.1f %%   %s" % [now * 100.0, "—" if is_zero_approx(delta) else "%+.1f" % (delta * 100.0)],
 		)
 	if not moved:
@@ -308,9 +301,7 @@ func _build_site(ns) -> void:
 	_body.add_child(picker)
 
 	if _site_region == "":
-		PanelKit.line(_body,
-			"Choose where the meetings are held. Reach falls with the journey's travel" +
-			" days, and a region already spoken to gives less the second time.")
+		PanelKit.line(_body, tr("Choose where the meetings are held. Reach falls with the journey's travel days, and a region already spoken to gives less the second time."))
 		return
 	var days := Campaign.travel_days_to(ns, _loader, _site_region)
 	PanelKit.line(_body, tr("%d day%s' travel · reach ×%.2f a month · %d%% spoken to") % [
@@ -331,10 +322,10 @@ func _build_site(ns) -> void:
 func _site_text(ns, effort_id: String) -> String:
 	var site := Campaign.site_of(ns, effort_id)
 	if site == "":
-		return "no meetings on the schedule -- the effort is reaching nobody"
+		return tr("no meetings on the schedule -- the effort is reaching nobody")
 	var city := Campaign.site_city_name(_loader, ns, site)
 	var days := Campaign.travel_days_to(ns, _loader, site)
-	return "meeting in %s (%s) · %d day%s · %d%% spoken to" % [
+	return tr("meeting in %s (%s) · %d day%s · %d%% spoken to") % [
 		_region_name(ns, site), city, days, "" if days == 1 else "s",
 		roundi(Campaign.spoken(ns, site) * 100.0),
 	]
@@ -399,9 +390,9 @@ func _reach_text(terms: Dictionary) -> String:
 		var base: float = float(ElectionK.BLOC_TURNOUT[bloc])
 		var odds: float = base / (1.0 - base) * exp(float(mobilisation[bloc]))
 		var moved: float = odds / (1.0 + odds) - base
-		parts.append("%s %+.1f" % [String(BLOC_LABEL.get(bloc, bloc)), moved * 100.0])
+		parts.append("%s %+.1f" % [tr(String(BLOC_LABEL.get(bloc, bloc))), moved * 100.0])
 	if parts.is_empty():
-		return "reaches nobody"
+		return tr("reaches nobody")
 	return "a month: " + ", ".join(parts)
 
 
@@ -448,11 +439,7 @@ func _build_promises(ns) -> void:
 
 	var books: Array = Pledges.on_the_books(ns)
 	if books.is_empty():
-		PanelKit.line(_body, 
-			"Nothing has been promised. A promise is made in the run-up and binds the"
-			+ " whole of the term it wins: the blocs that want to hear it pay you for"
-			+ " saying it now, and every month it stands broken costs you more."
-		)
+		PanelKit.line(_body, tr("Nothing has been promised. A promise is made in the run-up and binds the whole of the term it wins: the blocs that want to hear it pay you for saying it now, and every month it stands broken costs you more."))
 	for entry in books:
 		_build_promise_row(ns, entry)
 
@@ -528,7 +515,7 @@ func _build_promise_row(ns, entry: Dictionary) -> void:
 		# count is the unit the model charges in, and the total is what the count is for.
 		state_label.text = tr("%s · %s · broken %d of %d months, %.2f approval") % [
 			_promise_text(entry),
-			"BEING BROKEN" if broken else "being kept",
+			tr("BEING BROKEN") if broken else tr("being kept"),
 			int(entry["breach_months"]), int(entry["months_live"]),
 			-_charged_so_far(entry),
 		]
@@ -560,15 +547,15 @@ func _build_promise_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 ## triple is what the model compares and it is not what anybody says out loud.
 func _promise_text(entry: Dictionary) -> String:
 	var value: float = float(entry.get("value", 0.0))
-	var bound: String = "no more than" if String(entry.get("op", "")) == "<=" else "no less than"
-	return "%s %s %s" % [FIELD_LABEL.get(String(entry.get("field", "")), String(entry.get("field", ""))), bound, _field_value(String(entry.get("field", "")), value)]
+	var bound: String = tr("no more than") if String(entry.get("op", "")) == "<=" else tr("no less than")
+	return "%s %s %s" % [tr(FIELD_LABEL.get(String(entry.get("field", "")), String(entry.get("field", "")))), bound, _field_value(String(entry.get("field", "")), value)]
 
 
 func _field_value(field: String, value: float) -> String:
 	if field.begins_with("tax_") or field.begins_with("spending_"):
 		return "%.1f %%" % value
 	if field == "debt_to_gdp_pct" or field == "deficit_pct_gdp":
-		return "%.1f %% of GDP" % value
+		return tr("%.1f %% of GDP") % value
 	return "%.1f %%" % value
 
 
@@ -585,11 +572,11 @@ func _breach_text(terms: Dictionary) -> String:
 			-float(offsets[bloc]) * OpinionK.APPROVAL_SPAN,
 		])
 	if parts.is_empty():
-		return "costs nothing to break"
+		return tr("costs nothing to break")
 	# Signed and with the unit named ONCE at the end. The first captured frame printed
 	# "a month broken: Pensioners 0.14, Rural 0.10" -- four bare numbers in no unit,
 	# against an effort row two lines above printing points of TURNOUT in the same shape.
-	return "each month broken: " + ", ".join(parts) + " approval"
+	return tr("each month broken: ") + ", ".join(parts) + tr(" approval")
 
 
 ## What a promise has taken off the headline so far, in points of approval: the months

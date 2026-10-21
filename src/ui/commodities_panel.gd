@@ -73,7 +73,7 @@ const SHORTAGE_COVERAGE := 0.25
 ## `PanelKit.section()` renders -- it tracks and upper-cases the section's own
 ## heading -- and a constant that held the mixed-case form would be a string no
 ## label on screen ever carries.
-const SHORTAGE_HEADING := "SHORTAGES"
+const SHORTAGE_HEADING := "SHORTAGES"  # i18n: msgid
 
 ## At most this many rows in the alert list, with the rest counted. A shortage
 ## wall is the state this alert exists to summarise, and printing sixty rows of
@@ -197,14 +197,14 @@ func _build_alert(ns) -> void:
 	if short.is_empty():
 		return
 
-	var body := PanelKit.section(_body, SHORTAGE_HEADING)
+	var body := PanelKit.section(_body, tr(SHORTAGE_HEADING))
 
 	var rows: Array = []
 	for i in mini(ALERT_HEAD, short.size()):
 		var good_id := String(short[i]["id"])
 		rows.append([
 			_good_name(good_id),
-			"%.0f%% covered" % (100.0 * float(short[i]["coverage"])),
+			tr("%.0f%% covered") % (100.0 * float(short[i]["coverage"])),
 		])
 	PanelKit.ledger(body, rows)
 	if short.size() > ALERT_HEAD:

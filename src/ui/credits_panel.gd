@@ -64,5 +64,5 @@ func _ready() -> void:
 func _attribution_text() -> String:
 	var text := FileAccess.get_file_as_string(ATTRIBUTION_PATH)
 	if text.strip_edges().is_empty():
-		return "Nation economic statistics: World Bank Open Data (CC BY 4.0).\nBorder geometry: Natural Earth, public domain."
+		return tr("Nation economic statistics: World Bank Open Data (CC BY 4.0).\nBorder geometry: Natural Earth, public domain.")
 	return text

@@ -41,12 +41,12 @@ const PROGRESSIVITY_KEY := "tax_progressivity"
 ## register's question, this table only answers "what is it called". A
 ## composed key is named by the params register instead (see _label_for()).
 const KEY_LABELS := {
-	"income": "Income tax",
-	"corporate": "Corporate tax",
+	"income": "Income tax",  # i18n: msgid
+	"corporate": "Corporate tax",  # i18n: msgid
 	"vat": "VAT",
-	"capital_gains": "Capital gains tax",
-	"wealth": "Wealth tax",
-	PROGRESSIVITY_KEY: "Income brackets",
+	"capital_gains": "Capital gains tax",  # i18n: msgid
+	"wealth": "Wealth tax",  # i18n: msgid
+	PROGRESSIVITY_KEY: "Income brackets",  # i18n: msgid
 }
 
 ## Per-key slider ceilings -- the budget panel's LEVER_MAX rows for the tax
@@ -330,7 +330,7 @@ func _lever_max(key: String) -> float:
 
 func _label_for(key: String) -> String:
 	if KEY_LABELS.has(key):
-		return String(KEY_LABELS[key])
+		return tr(String(KEY_LABELS[key]))
 	var ns = _state.player()
 	var params: Dictionary = ns.custom_taxes.get(key, {})
 	return String(params.get("name", key))

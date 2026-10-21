@@ -45,22 +45,22 @@ signal diary_changed
 ## rather than in calendar_constants.gd — src/sim/ names the kind, the panel says
 ## it in English.
 const FIXED_LABEL := {
-	K.FIXED_ELECTION: "Legislative election",
-	K.FIXED_EP_ELECTION: "European election",
-	K.FIXED_EXECUTIVE: "Presidential election",
-	K.FIXED_HEAD_OF_STATE: "Head of state's term ends",
-	K.FIXED_COUNCIL_PROPOSAL: "Council proposes",
-	K.FIXED_COUNCIL_VOTE: "Council votes",
-	K.FIXED_COUNCIL_RATIFICATION: "Ratification deadline",
-	K.FIXED_DISSOLUTION: "Dissolution available again",
-	K.FIXED_COOLDOWN: "Available again",
-	K.FIXED_PROJECT: "Opens",
-	K.FIXED_REFERENDUM: "Referendum",
-	K.FIXED_EVENT: "Answer by",
+	K.FIXED_ELECTION: "Legislative election",  # i18n: msgid
+	K.FIXED_EP_ELECTION: "European election",  # i18n: msgid
+	K.FIXED_EXECUTIVE: "Presidential election",  # i18n: msgid
+	K.FIXED_HEAD_OF_STATE: "Head of state's term ends",  # i18n: msgid
+	K.FIXED_COUNCIL_PROPOSAL: "Council proposes",  # i18n: msgid
+	K.FIXED_COUNCIL_VOTE: "Council votes",  # i18n: msgid
+	K.FIXED_COUNCIL_RATIFICATION: "Ratification deadline",  # i18n: msgid
+	K.FIXED_DISSOLUTION: "Dissolution available again",  # i18n: msgid
+	K.FIXED_COOLDOWN: "Available again",  # i18n: msgid
+	K.FIXED_PROJECT: "Opens",  # i18n: msgid
+	K.FIXED_REFERENDUM: "Referendum",  # i18n: msgid
+	K.FIXED_EVENT: "Answer by",  # i18n: msgid
 }
 
 const KIND_LABEL := {
-	K.KIND_DIPLOMATIC: "Diplomatic act",
+	K.KIND_DIPLOMATIC: "Diplomatic act",  # i18n: msgid
 	K.KIND_LAW: "Propose a law",
 	K.KIND_RESHUFFLE: "Reshuffle a portfolio",
 }
@@ -157,7 +157,7 @@ func _build_form(root: VBoxContainer) -> void:
 	_kind_pick = OptionButton.new()
 	_kind_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for kind in K.KINDS:
-		_kind_pick.add_item(String(KIND_LABEL.get(kind, kind)))
+		_kind_pick.add_item(tr(String(KIND_LABEL.get(kind, kind))))
 	_kind_pick.item_selected.connect(func(_i: int): _refresh_form())
 	grid.add_child(_kind_pick)
 
@@ -363,7 +363,7 @@ func _entry_row(entry: Dictionary) -> Control:
 
 func _fixed_text(entry: Dictionary) -> String:
 	var kind := String(entry.get("kind", ""))
-	var label := String(FIXED_LABEL.get(kind, kind))
+	var label := tr(String(FIXED_LABEL.get(kind, kind)))
 	var ref := String(entry.get("ref", ""))
 	if ref.is_empty():
 		return label
@@ -386,7 +386,7 @@ func _fixed_text(entry: Dictionary) -> String:
 func _cooldown_name(ref: String) -> String:
 	if ref.contains("|"):
 		var parts := ref.split("|")
-		return "%s with %s" % [_action_name(parts[0]), _nation_name(parts[1])]
+		return tr("%s with %s") % [_action_name(parts[0]), _nation_name(parts[1])]
 	return _law_name(ref)
 
 
@@ -396,7 +396,7 @@ func _booking_text(entry: Dictionary) -> String:
 			# The person is a LABEL on the act, never part of its identity -- so
 			# it is appended to the text and stays out of Calendar.verb_key().
 			var who: String = _loader.person_name(String(entry.get("person_id", "")))
-			var line := "%s with %s" % [
+			var line := tr("%s with %s") % [
 				_action_name(String(entry.get("action_id", ""))),
 				_nation_name(String(entry.get("target_id", ""))),
 			]
@@ -414,14 +414,14 @@ func _booking_text(entry: Dictionary) -> String:
 				var dm := ClockCluster.MONTH_NAMES[int(depart["month"]) - 1].substr(0, 3)
 				var hm := ClockCluster.MONTH_NAMES[int(home["month"]) - 1].substr(0, 3)
 				if dm == hm:
-					line += "  (away %02d–%02d %s)" % [int(depart["day"]), int(home["day"]), dm]
+					line += tr("  (away %02d–%02d %s)") % [int(depart["day"]), int(home["day"]), dm]
 				else:
-					line += "  (away %02d–%02d, %s–%s)" % [
+					line += tr("  (away %02d–%02d, %s–%s)") % [
 						int(depart["day"]), int(home["day"]), dm, hm,
 					]
 			return line
 		K.KIND_LAW:
-			return "Propose %s" % _law_name(String(entry.get("law_id", "")))
+			return tr("Propose %s") % _law_name(String(entry.get("law_id", "")))
 		K.KIND_RESHUFFLE:
 			return "%s to %s" % [
 				String(entry.get("portfolio", "")).capitalize(),

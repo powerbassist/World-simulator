@@ -47,7 +47,7 @@ static func _fold(body: VBoxContainer, panel, key: String, title: String) -> VBo
 
 ## WORK THE ROOM: one row per other member, closest to flipping first.
 static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pending: Dictionary) -> void:
-	var inner := _fold(body, panel, "room:" + org.id, "WORK THE ROOM")
+	var inner := _fold(body, panel, "room:" + org.id, Strings.t("WORK THE ROOM"))
 	var vote := String(pending.get("player_vote", Orgs.VOTE_ABSTAIN))
 	if vote != Orgs.VOTE_FOR and vote != Orgs.VOTE_AGAINST:
 		PanelKit.line(inner, Strings.t("Cast your vote first: a bargain asks a member to vote your way."))
@@ -83,7 +83,7 @@ static func build_table(body: VBoxContainer, panel, state, loader, ns, org, pend
 	if not struck.is_empty():
 		var done: Array = []
 		for id in struck.keys():
-			done.append("%s (%s, asked %s)" % [
+			done.append(Strings.t("%s (%s, asked %s)") % [
 				loader.nation_name(String(id)), String(struck[id].get("currency", "")).replace("_", " "),
 				String(struck[id].get("ask", "")).to_upper(),
 			])
@@ -112,7 +112,7 @@ static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pen
 		inner.add_child(sb)
 		return
 	PanelKit.line(inner, Strings.t("%s — leans %s (%+.2f)") % [
-		loader.nation_name(id), "FOR" if margin >= 0.0 else "AGAINST", margin,
+		loader.nation_name(id), "FOR" if margin >= 0.0 else Strings.t("AGAINST"), margin,
 	], PanelKit.Tone.PLAIN)
 
 	var why_not := {
@@ -120,24 +120,24 @@ static func _member_row(inner: VBoxContainer, panel, state, loader, ns, org, pen
 	}
 	var blocked := ""
 	if String(pending.get("sponsor", "")) == id:
-		blocked = "It sponsored this proposal: it would take the payment for a vote it was always going to cast."
+		blocked = Strings.t("It sponsored this proposal: it would take the payment for a vote it was always going to cast.")
 	elif (pending.get("bargains", {}) as Dictionary).has(id):
-		blocked = "You have already bargained with this member this division."
+		blocked = Strings.t("You have already bargained with this member this division.")
 	for c in why_not.keys():
 		why_not[c] = blocked
 	if blocked == "":
 		if Relations.score(state, ns.id, id) < CouncilK.FAVOUR_MIN_RELATIONS:
-			why_not[CouncilK.CURRENCY_FAVOUR] = "A favour needs relations of at least %d with them." % roundi(CouncilK.FAVOUR_MIN_RELATIONS)
+			why_not[CouncilK.CURRENCY_FAVOUR] = Strings.t("A favour needs relations of at least %d with them.") % roundi(CouncilK.FAVOUR_MIN_RELATIONS)
 		for d in (state.orgs[org.id].get("debts", []) as Array):
 			if String(d.get("debtor", "")) == ns.id and String(d.get("creditor", "")) == id:
-				why_not[CouncilK.CURRENCY_VOTE_TRADE] = "You already owe them a vote in this council."
+				why_not[CouncilK.CURRENCY_VOTE_TRADE] = Strings.t("You already owe them a vote in this council.")
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
 	var labels := {
-		CouncilK.CURRENCY_FAVOUR: "Favour (%d goodwill)" % roundi(CouncilK.FAVOUR_RELATIONS_COST),
-		CouncilK.CURRENCY_AID: "Aid (%.2f %% GDP, %d months)" % [CouncilK.AID_PCT_GDP, CouncilK.AID_MONTHS],
-		CouncilK.CURRENCY_VOTE_TRADE: "Vote trade",
+		CouncilK.CURRENCY_FAVOUR: Strings.t("Favour (%d goodwill)") % roundi(CouncilK.FAVOUR_RELATIONS_COST),
+		CouncilK.CURRENCY_AID: Strings.t("Aid (%.2f %% GDP, %d months)") % [CouncilK.AID_PCT_GDP, CouncilK.AID_MONTHS],
+		CouncilK.CURRENCY_VOTE_TRADE: Strings.t("Vote trade"),
 	}
 	for currency in [CouncilK.CURRENCY_FAVOUR, CouncilK.CURRENCY_AID, CouncilK.CURRENCY_VOTE_TRADE]:
 		var button := Button.new()
@@ -165,13 +165,13 @@ static func build_debts(body: VBoxContainer, state, loader, ns, org) -> void:
 			PanelKit.heading(body, Strings.t("IOUS OWED"))
 			any = true
 		var end_idx: int = now + maxi(int(d.get("months_left", 0)), 0)
-		var text := "You owe %s a vote (lapses %s %d)" % [
+		var text := Strings.t("You owe %s a vote (lapses %s %d)") % [
 			loader.nation_name(String(d.get("creditor", ""))), MONTHS[end_idx % 12], end_idx / 12,
 		]
 		var awaiting := String(d.get("awaiting", ""))
 		if awaiting != "":
 			var treaty = Orgs.proposal_by_id(loader, org.id, awaiting)
-			text += " — kept only if %s is ratified at home" % (String(treaty.proposal_name) if treaty != null else awaiting)
+			text += Strings.t(" — kept only if %s is ratified at home") % (String(treaty.proposal_name) if treaty != null else awaiting)
 		PanelKit.line(body, text)
 
 
@@ -182,7 +182,7 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 	var register: Dictionary = state.orgs[org.id]
 	var pending: Dictionary = Orgs.pending(state, org.id)
 	var chairing: bool = chair == ns.id
-	var title := "SET THE AGENDA" if chairing else "Table a proposal (%d goodwill with %s)" % [
+	var title := Strings.t("SET THE AGENDA") if chairing else Strings.t("Table a proposal (%d goodwill with %s)") % [
 		roundi(CouncilK.TABLE_RELATIONS_COST), loader.nation_name(chair),
 	]
 

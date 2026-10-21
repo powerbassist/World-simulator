@@ -329,11 +329,11 @@ func _on_membership(org_id: String, joining: bool) -> void:
 		# the next refresh, which the dirty flag triggers. Carried as a member
 		# rather than appended: a line added here is queue_free'd by the very
 		# refresh this mark schedules.
-		_refusal_text = "Refused: %s" % String(result.get("reason", ""))
+		_refusal_text = tr("Refused: %s") % String(result.get("reason", ""))
 		_dirty = true
 		return
-	acted.emit(before, "Membership referendum called: %s %s %s" % [
-		ns.id, "joins" if joining else "leaves", org_id.to_upper(),
+	acted.emit(before, tr("Membership referendum called: %s %s %s") % [
+		ns.id, tr("joins") if joining else tr("leaves"), org_id.to_upper(),
 	])
 	_dirty = true
 
@@ -343,10 +343,10 @@ func _on_vote(org_id: String, choice: String) -> void:
 	if not Orgs.cast_vote(_state, org_id, choice):
 		# Same silent-failure class as _on_membership: a press the machine refused
 		# must not report a decision to Overview's RECENT DECISIONS.
-		_refusal_text = "Refused: that vote can no longer be cast."
+		_refusal_text = tr("Refused: that vote can no longer be cast.")
 		_dirty = true
 		return
-	voted.emit(before, "Council vote (%s): %s" % [org_id.to_upper(), choice])
+	voted.emit(before, tr("Council vote (%s): %s") % [org_id.to_upper(), choice])
 	_dirty = true
 
 
@@ -361,10 +361,10 @@ func set_section_open(key: String, open: bool) -> void:
 func _on_bargain(org_id: String, target_id: String, currency: String, ask: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	if not Council.bargain(_state, org_id, target_id, currency, ask):
-		_refusal_text = "Refused: that bargain can no longer be struck."
+		_refusal_text = tr("Refused: that bargain can no longer be struck.")
 		_dirty = true
 		return
-	acted.emit(before, "Council bargain (%s): %s with %s" % [
+	acted.emit(before, tr("Council bargain (%s): %s with %s") % [
 		org_id.to_upper(), currency.replace("_", " "), _loader.nation_name(target_id),
 	])
 	_dirty = true
@@ -376,11 +376,11 @@ func _on_ratify(org_id: String) -> void:
 	var treaty := String((_state.orgs[org_id].get("ratifying", {}) as Dictionary).get("name", ""))
 	var result: Dictionary = Ratification.submit(_state, _loader, org_id)
 	if result.has("refused"):
-		_refusal_text = "Refused: the treaty can no longer be put to the assembly."
+		_refusal_text = tr("Refused: the treaty can no longer be put to the assembly.")
 		_dirty = true
 		return
-	acted.emit(before, "Treaty put to the assembly: %s — %s" % [
-		treaty, "ratified" if bool(result.get("passed", false)) else "rejected",
+	acted.emit(before, tr("Treaty put to the assembly: %s — %s") % [
+		treaty, tr("ratified") if bool(result.get("passed", false)) else tr("rejected"),
 	])
 	_dirty = true
 
@@ -388,20 +388,20 @@ func _on_ratify(org_id: String) -> void:
 func _on_set_agenda(org_id: String, proposal_id: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	if not Orgs.set_agenda(_state, _loader, org_id, proposal_id):
-		_refusal_text = "Refused: that proposal cannot be put first."
+		_refusal_text = tr("Refused: that proposal cannot be put first.")
 		_dirty = true
 		return
-	acted.emit(before, "Council agenda (%s): you put %s first" % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
+	acted.emit(before, tr("Council agenda (%s): you put %s first") % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
 	_dirty = true
 
 
 func _on_table(org_id: String, proposal_id: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	if not Orgs.table_proposal(_state, _loader, org_id, proposal_id):
-		_refusal_text = "Refused: the chair will not table that now."
+		_refusal_text = tr("Refused: the chair will not table that now.")
 		_dirty = true
 		return
-	acted.emit(before, "Council agenda (%s): tabled %s" % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
+	acted.emit(before, tr("Council agenda (%s): tabled %s") % [org_id.to_upper(), _proposal_label(org_id, proposal_id)])
 	_dirty = true
 
 

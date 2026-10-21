@@ -22,7 +22,7 @@ extends RefCounted
 
 const DIR := "res://data/i18n"
 const DEFAULT := "en"
-const _PLACEHOLDER := r"%[-+ #0]*\d*(?:\.\d+)?[sdfxXc%]"
+const _PLACEHOLDER := r"%[-+ #0]*\d*(?:\.\d+)?[sdfxXc%]"  # i18n: ok
 
 static var _language := DEFAULT
 static var _installed: Translation

@@ -17,7 +17,7 @@ signal closed
 ## A row was clicked: main.gd opens that window through the window manager.
 signal window_requested(window_id: String)
 
-const NOTHING_PINNED := "Nothing pinned."
+const NOTHING_PINNED := "Nothing pinned."  # i18n: msgid
 
 var _state
 var _loader
@@ -94,7 +94,7 @@ func _refresh() -> void:
 		for row in (r["rows"] as Array):
 			_draw_row(box, row)
 	if shown == 0:
-		PanelKit.line(_body, NOTHING_PINNED)
+		PanelKit.line(_body, tr(NOTHING_PINNED))
 
 
 ## A row is a Label that takes the pointer: the tone is the label's own (what

@@ -201,8 +201,8 @@ func _build_order(ns) -> void:
 
 func _armed_line() -> String:
 	if _armed_id == "":
-		return "Pick a technology. The next click on the map places it."
-	return "Click where it goes. Escape to cancel."
+		return tr("Pick a technology. The next click on the map places it.")
+	return tr("Click where it goes. Escape to cancel.")
 
 
 func _on_order(action_id: String) -> void:
@@ -268,7 +268,7 @@ func _build_emissions(ns) -> void:
 	# cannot read, and %.1f Mt is one digit of headroom the fleet cannot exhaust
 	# (the dirtiest plausible fleet moves France by single Mt, not hundreds).
 	PanelKit.figure(group, tr("%.1f Mt") % (Energy.emissions_tonnes(ns, _loader) / 1.0e6),
-		"of CO2e the country emits in a year, every gas on one scale")
+		tr("of CO2e the country emits in a year, every gas on one scale"))
 	PanelKit.row(group, tr("Per head"), "%.1f t" % ns.co2e_per_capita_t)
 	# The delta rides the PER-CAPITA form, not the national total, because the
 	# per-capita figure is the one the accord's ceiling constrains -- a row about
@@ -302,7 +302,7 @@ func _build_fleet(ns) -> void:
 		rows.append([
 			plant_label(ns, String(plant_id), _loader),
 			region_name(ns, String(ns.plants[plant_id].get("region_id", ""))),
-			"running" if bool(ns.plants[plant_id].get("done", false)) else "%d months left" % months_left,
+			tr("running") if bool(ns.plants[plant_id].get("done", false)) else tr("%d months left") % months_left,
 			"%.2f%%" % share,
 		])
 	PanelKit.ledger(group, rows)

@@ -22,8 +22,8 @@ signal dismissed
 
 ## What the plate is titled while the count runs: the verdict is the last
 ## thing the night shows, so the title cannot be it yet.
-const NIGHT_TITLE := "ELECTION NIGHT"
-const SKIP_LABEL := "Skip count"
+const NIGHT_TITLE := "ELECTION NIGHT"  # i18n: msgid
+const SKIP_LABEL := "Skip count"  # i18n: msgid
 ## How long after a skip the footer button ignores presses: a double click's
 ## second press lands well inside it, a deliberate second press does not.
 const SKIP_GUARD_MS := 400
@@ -34,7 +34,7 @@ const SKIP_GUARD_MS := 400
 ## vote follows the outcomes with a lag. Measured, not opinion: the V3.0
 ## probe's table (budget-spend approval 38.1 vs idle 49.4; unemployment 6.95
 ## vs 7.58; deficit halved). Copy pinned by the author at the plan gate.
-const TOLD_LINE := "The vote follows the economy with a lag. A term that ran the country better can poll worse than one that did nothing."
+const TOLD_LINE := "The vote follows the economy with a lag. A term that ran the country better can poll worse than one that did nothing."  # i18n: msgid
 
 var _state
 var _loader
@@ -155,21 +155,21 @@ func show_results(results: Array) -> void:
 	var snap: bool = national != null and bool(national.get("snap", false))
 
 	if executive != null:
-		_verdict_title = "TERM LIMIT" if termed_out else ("DEFEATED" if defeated else "RE-ELECTED")
+		_verdict_title = tr("TERM LIMIT") if termed_out else (tr("DEFEATED") if defeated else tr("RE-ELECTED"))
 	elif national != null:
 		# A legislative election under a separately elected executive does not
 		# end the term. It decides whether the player still commands a majority.
 		if ns.has_executive:
 			if ns.is_cohabitation:
-				_verdict_title = "COHABITATION"
+				_verdict_title = tr("COHABITATION")
 			elif snap:
-				_verdict_title = "SNAP ELECTION"
+				_verdict_title = tr("SNAP ELECTION")
 			else:
-				_verdict_title = "NEW ASSEMBLY"
+				_verdict_title = tr("NEW ASSEMBLY")
 		else:
-			_verdict_title = "DEFEATED" if defeated else "RE-ELECTED"
+			_verdict_title = tr("DEFEATED") if defeated else tr("RE-ELECTED")
 	else:
-		_verdict_title = "EUROPEAN PARLIAMENT ELECTION"
+		_verdict_title = tr("EUROPEAN PARLIAMENT ELECTION")
 	_title.text = _verdict_title
 
 	_night = ElectionNight.new(_state, results)
@@ -198,15 +198,15 @@ func show_results(results: Array) -> void:
 	if national != null and ns.has_executive and not defeated:
 		var gov := ""
 		if ns.is_cohabitation:
-			gov = "The new Assembly is against you. %s %s leads a government you did not choose." % [
+			gov = tr("The new Assembly is against you. %s %s leads a government you did not choose.") % [
 				ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
 			]
 		elif ns.is_minority:
-			gov = "%s %s heads a minority government: %d of %d seats." % [
+			gov = tr("%s %s heads a minority government: %d of %d seats.") % [
 				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
 			]
 		else:
-			gov = "%s %s forms a government with %d of %d seats." % [
+			gov = tr("%s %s forms a government with %d of %d seats.") % [
 				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
 			]
 		_verdict_nodes.append(PanelKit.line(_sections, gov, PanelKit.Tone.PLAIN))
@@ -226,7 +226,7 @@ func show_results(results: Array) -> void:
 	if defeated and not termed_out:
 		_verdict_nodes.append(PanelKit.line(_sections, tr("You have lost your office. This term is over."), PanelKit.Tone.PLAIN))
 
-	_dismiss_label = "Leave office" if defeated else "Continue"
+	_dismiss_label = tr("Leave office") if defeated else tr("Continue")
 	_cont = Button.new()
 	_cont.text = _dismiss_label
 	_cont.pressed.connect(_on_footer_pressed)
@@ -246,8 +246,8 @@ func _start_night() -> void:
 		_apply_count(float(n))
 		_reveal()
 		return
-	_title.text = NIGHT_TITLE
-	_cont.text = SKIP_LABEL
+	_title.text = tr(NIGHT_TITLE)
+	_cont.text = tr(SKIP_LABEL)
 	# Hidden, not transparent: a transparent verdict kept its space, and the
 	# windowed capture showed the count under a ~200 px hole where the
 	# attribution would be. The verdict lands on top of the table instead.
@@ -357,25 +357,25 @@ func _build_section(result: Dictionary, index: int, chamber_label: String, verdi
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 
-	var kind_label := "European Parliament election"
+	var kind_label := tr("European Parliament election")
 	if result["kind"] == "national":
-		kind_label = "Snap legislative election" if bool(result.get("snap", false)) else "Legislative election"
+		kind_label = tr("Snap legislative election") if bool(result.get("snap", false)) else tr("Legislative election")
 	elif result["kind"] == "executive":
-		kind_label = "Presidential election"
+		kind_label = tr("Presidential election")
 	PanelKit.line(box, "%s — %s" % [kind_label, chamber_label] if chamber_label != "" else kind_label, PanelKit.Tone.PLAIN)
 
 	if result["kind"] == "executive":
 		var winner_name := _party_name(result["largest_party_id"])
 		_verdict_nodes.append(PanelKit.line(box, (
-			"%s holds the office on %.1f%% of the vote." if result["incumbent_largest"]
-			else "%s takes the office; you polled %.1f%%."
+			tr("%s holds the office on %.1f%% of the vote.") if result["incumbent_largest"]
+			else tr("%s takes the office; you polled %.1f%%.")
 		) % [winner_name, float(result["incumbent_vote_share"]) * 100.0], PanelKit.Tone.PLAIN))
 
 	if result["kind"] == "national":
 		var incumbent_name := _party_name(result["incumbent_party_id"])
 		_verdict_nodes.append(PanelKit.line(box, (
-			"%s remains the largest party: %d of %d seats." if result["incumbent_largest"]
-			else "%s is no longer the largest party: %d of %d seats."
+			tr("%s remains the largest party: %d of %d seats.") if result["incumbent_largest"]
+			else tr("%s is no longer the largest party: %d of %d seats.")
 		) % [incumbent_name, result["incumbent_seats"], result["seats_total"]], PanelKit.Tone.PLAIN))
 
 	# The verdict's own section reads verdict, then why, then the numbers -- a
@@ -412,7 +412,7 @@ func _build_party_table(result: Dictionary, index: int) -> Control:
 	# allocates no seats, and a column of em dashes stacked in a ~20px gutter is
 	# how the playtest read "orphaned letters" down the side of the modal.
 	var has_seats: bool = not seats.is_empty()
-	var rows: Array = [["party", "vote share"] + (["seats"] if has_seats else [])]
+	var rows: Array = [[tr("party"), tr("vote share")] + ([tr("seats")] if has_seats else [])]
 	for party_id in ordered:
 		var name_text := _party_name(party_id)
 		if party_id == result["incumbent_party_id"]:
@@ -486,7 +486,7 @@ func _build_attribution(result: Dictionary, is_verdict := false) -> Control:
 	for entry in result["attribution"]:
 		var issue: String = entry["issue"]
 		var satisfaction: float = entry["satisfaction"]
-		var mood := "helped" if satisfaction > 0.05 else ("hurt" if satisfaction < -0.05 else "was neutral")
+		var mood := tr("helped") if satisfaction > 0.05 else (tr("hurt") if satisfaction < -0.05 else tr("was neutral"))
 		PanelKit.line(box, tr("%s — %s (salience %.0f%%)") % [
 			OpinionK.ISSUE_LABEL[issue], mood, entry["salience"] * 100.0,
 		], PanelKit.Tone.PLAIN)
@@ -494,7 +494,7 @@ func _build_attribution(result: Dictionary, is_verdict := false) -> Control:
 	# Once, on the verdict's attribution only -- a sentence printed under every
 	# table on a double-election panel is wallpaper, not a message.
 	if is_verdict:
-		PanelKit.line(box, TOLD_LINE, PanelKit.Tone.DIM)
+		PanelKit.line(box, tr(TOLD_LINE), PanelKit.Tone.DIM)
 
 	return box
 

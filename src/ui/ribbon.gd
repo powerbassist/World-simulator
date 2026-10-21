@@ -215,7 +215,7 @@ func _booking_name(entry: Dictionary) -> String:
 				return "%s — %s" % [action_name, String(nation.nation_name)]
 			return action_name
 		"law":
-			return "A law is proposed"
+			return tr("A law is proposed")
 		"reshuffle":
-			return "A portfolio changes hands"
+			return tr("A portfolio changes hands")
 	return String(entry.get("kind", ""))

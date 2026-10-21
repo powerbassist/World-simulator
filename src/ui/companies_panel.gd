@@ -44,7 +44,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 const SECTOR_LABEL := {
-	"agriculture": "Agriculture", "industry": "Industry", "services": "Services",
+	"agriculture": "Agriculture", "industry": "Industry", "services": "Services",  # i18n: msgid
 }
 
 var _state
@@ -312,11 +312,11 @@ func _build_sector(ns, sector: String) -> void:
 	var burden: float = Companies.regulation_burden_of(ns, sector)
 	var rule := ""
 	if burden > 0.0:
-		rule = " · regulated %+.2f" % burden
+		rule = tr(" · regulated %+.2f") % burden
 	elif burden < 0.0:
-		rule = " · deregulated %+.2f" % burden
+		rule = tr(" · deregulated %+.2f") % burden
 	PanelKit.heading(_body, tr("%s · %.0f bn · %.0f %% named%s") % [
-		SECTOR_LABEL.get(sector, sector), sector_output, 100.0 * named, rule,
+		tr(SECTOR_LABEL.get(sector, sector)), sector_output, 100.0 * named, rule,
 	])
 
 	_build_investment(ns, sector)
@@ -472,9 +472,9 @@ func _build_firm(ns, company) -> void:
 	var held := Companies.state_share_of(ns, company.id)
 	var parts: Array[String] = []
 	if held > 0.0:
-		parts.append("public %.0f %%" % (100.0 * held))
+		parts.append(tr("public %.0f %%") % (100.0 * held))
 	if intensity > 0.0:
-		parts.append("subsidised %.0f %%" % (100.0 * intensity))
+		parts.append(tr("subsidised %.0f %%") % (100.0 * intensity))
 
 	var state_label := Label.new()
 	if parts.is_empty():
@@ -542,7 +542,7 @@ func _on_act(ns, company, action) -> void:
 		# split) is the sim's, verbatim; a refusal with none reads as refused
 		# plainly rather than silently.
 		var reason := String(result.get("reason", ""))
-		_last_refusal = "%s refused%s" % [action.action_name, " -- %s" % reason if reason != "" else "."]
+		_last_refusal = tr("%s refused%s") % [action.action_name, " -- %s" % reason if reason != "" else "."]
 		_dirty = true
 		return
 	_last_refusal = ""

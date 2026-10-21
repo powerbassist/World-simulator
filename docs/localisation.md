@@ -63,20 +63,37 @@ the keys, and a site not yet wired shows English, which is the safe failure.)
    PanelKit and every builder pass text through untouched -- a helper that also
    translated would translate twice and nothing could tell a wrapped literal from a
    forgotten one. In a `static func` there is no `tr()`: use `Strings.t("...")`.
-2. **`tests/test_i18n_lint.gd` fails on a bare literal at a text sink** (`.text =`,
-   `tooltip_text =`, `PanelKit.*(`, `register(id, "...")`, `add_item(`, the settings,
-   menu and action-bar builders, the message stack's `push`). It reads one line at a
-   time. A literal that is not prose (a glyph, a unit) carries `# i18n: ok`.
-   `dev_*.gd` is English by design.
+2. **`tests/test_i18n_lint.gd` fails on a bare English literal in `src/ui`**, two ways.
+   *At a text sink* (known by shape, so a single lowercase word counts there): `.text =`,
+   `tooltip_text =`, `PanelKit.*(`, `register(id, "...")`, `add_item(`, the settings, menu and
+   action-bar builders, the drawer's `_entry`, the message stack's `push`, the reading helpers
+   (`_line`, `_reading`, `_out`, `_row`), `_queue_effect`, `.report(` -- the first argument and
+   those after a comma, a ternary branch, a `+` and the English default of `.get("k", "...")`
+   on a line that assigns text. *Anywhere else*, a literal that reads as prose: a space
+   between words, a capitalised word, an all-capitals heading, a word beside a `%`
+   placeholder, a dash and a word -- in a return, an append, an argument, a continuation
+   line, a var. A key or an id is never prose by this test (no space, lower case), and a
+   comparison, a `match`, a call that takes a name (`get_node`, `has`, `connect`,
+   `begins_with` ...), a log call and a dictionary key are not text. It reads one line at a
+   time, and pins its own shapes in `_self_check()`. What it cannot see is a single
+   lowercase word away from a sink (`"month" if n == 1 else "months"` is wrapped by hand).
+   A literal that is not prose to a player (a node name, a developer message) carries
+   `# i18n: ok`; `dev_*.gd`, `vendor/` and `grade.gd` (a shader) are outside it.
 3. **Placeholders keep their order.** `%` cannot reorder, so a translation uses the
    same `%d %s %.1f` in the same order as its English; `test_strings.gd` checks every
    entry. Write the English so that order is possible in French (do not build a
    sentence out of fragments joined with `+` -- one string, one `%`).
 4. **Plurals.** Use `tr_n(singular, plural, n)` or two whole sentences; do not write
-   "item(s)". French counts 0 and 1 as singular.
+   "item(s)". French counts 0 and 1 as singular. The existing code builds many counts as
+   `"%d %s" % [n, "month" if n == 1 else "months"]`: both words are wrapped, so they are
+   two msgids ("month", "months") a translator fits to the sentence; `tr_n` is the
+   cleaner form for new code.
 5. **A const table of prose cannot call `tr()`.** Keep the English in the const, wrap
    at the use site (`tr(CAPTIONS[key])`), and end each line that holds msgids with
-   `# i18n: msgid` so the extractor lists them and the lint leaves them alone.
+   `# i18n: msgid` so the extractor lists them and the lint leaves them alone (the lint
+   fails prose in a class-level `const`/`static var`/`enum` without it). The marker takes
+   field names (`# i18n: msgid label caption`) or `last` (a `["id", "Text"]` pair); see
+   the worklist section.
 6. **No homonyms yet.** One English string, one translation. When two meanings of the
    same word need two translations, that is the moment to add `tr(msgid, context)`
    support to the loader and the table format; `Strings` reads no context today.
@@ -157,17 +174,20 @@ English, French, the pseudolocale and across a live switch. The lint treats the 
 first argument*, a ternary branch (`else "..."`) and the English default of
 `.get("key", "...")` on a line that assigns text.
 
-## What is NOT done (V5.1b's edge)
+## What is NOT done (V5.1b2's edge)
 
-The lint covers the sinks listed in rule 2, not every string: a survey of unwrapped
-prose-like literals in `src/ui` (2026-10-21) found about 870 more, in messages built
-by `+` or `%` away from a sink, returns of sentence fragments, dict values, `push_error`
-text (English by design) and const tables not yet marked. The next passes widen the
-lint's sink list one pattern at a time (a lint that grows red is the worklist), mark
-the const tables with `# i18n: msgid`, and translate. The chrome seeded in French by
-V5.1b is the menu, settings, top bar, window titles, action bar, common buttons and the
-map layers; the rest of the backlog (laws, events, bodies of the panels) is the content
+Every prose literal the lint can see is wrapped or marked: 1 112 UI msgids today
+(`python tools/i18n_extract.py`), 205 translated -- the chrome seeded in V5.1b. The rest
+of the backlog (the other panels' bodies, laws, events, people, firms) is the content
 child's, from `--todo fr`.
+
+What the lint cannot see: a lone lowercase word away from a sink; a sentence assembled
+from fragments across `+` (merged into one msgid where it was found, but a new one will not
+be caught if each fragment is short and lowercase); and text built from data
+(`String(x).capitalize()`). A French sentence assembled from translated *fragments*
+(`"%s the %s stance by %.2f." % ["Raises" if up else "Lowers", term, v]`) reads as
+English word order; the fix is a whole sentence per case, a Content-child call when it
+shows in French.
 
 `tools/screenshot.gd -- --lang fr` stages the game in French; `--menu` ignores it,
 because the menu applies the saved language when it comes up.

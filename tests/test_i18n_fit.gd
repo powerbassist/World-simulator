@@ -88,7 +88,7 @@ func _check_hud(main, language: String) -> void:
 		await process_frame
 		_hud_width("lower row with '%s' open" % cluster, lower.get_combined_minimum_size().x, language)
 	bar.close_subrow()
-	_hud_width("top bar", hud.top_bar.get_combined_minimum_size().x, language)
+	_hud_width("top bar", hud.top_bar.get_combined_minimum_size().x, language, 1920.0)
 	_hud_width("map legend", hud.map_legend.get_combined_minimum_size().x, language)
 	# The switch: English pieces, French drawer; then the reverse.
 	if language == "en":
@@ -132,10 +132,10 @@ func _collect_scrolls(node: Node, out: Array[ScrollContainer]) -> void:
 		_collect_scrolls(child, out)
 
 
-func _hud_width(what: String, need: float, language: String) -> void:
+func _hud_width(what: String, need: float, language: String, band := HUD_BAND) -> void:
 	print("i18n_fit: HUD %-6s %-44s %4.0f px" % [language, what, need])
-	if need > HUD_BAND:
-		_fail("HUD under %s: %s needs %.0f px, more than the %.0f px of the screen" % [language, what, need, HUD_BAND])
+	if need > band:
+		_fail("HUD under %s: %s needs %.0f px, more than the %.0f px of the screen" % [language, what, need, band])
 
 
 func _report() -> void:

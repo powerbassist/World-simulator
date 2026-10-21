@@ -40,8 +40,8 @@ const Trends = preload("res://src/ui/trends.gd")
 ## Longest human label for a portfolio -- the panel names the spending line the
 ## player already knows from the Budget tab, not the internal key.
 const PORTFOLIO_LABEL := {
-	"health": "Health", "education": "Education", "defence": "Defence",
-	"pensions": "Pensions", "infrastructure": "Infrastructure",
+	"health": "Health", "education": "Education", "defence": "Defence",  # i18n: msgid
+	"pensions": "Pensions", "infrastructure": "Infrastructure",  # i18n: msgid
 }
 
 ## Longest human label for each formation method. The panel names the rule the
@@ -49,35 +49,35 @@ const PORTFOLIO_LABEL := {
 ## told there is no investiture vote instead of reading
 ## "presidential_appointment".
 const METHOD_LABEL := {
-	"presidential_appointment": "appointed by the President; no investiture vote",
-	"chancellor_election": "elected by the chamber on an absolute majority",
-	"investiture": "confirmed by an investiture vote",
-	"coalition_negotiation": "formed by coalition negotiation",
-	"largest_party": "formed by the largest party; no investiture vote",
-	"directorial": "seated by formula; the executive cannot fall",
+	"presidential_appointment": "appointed by the President; no investiture vote",  # i18n: msgid
+	"chancellor_election": "elected by the chamber on an absolute majority",  # i18n: msgid
+	"investiture": "confirmed by an investiture vote",  # i18n: msgid
+	"coalition_negotiation": "formed by coalition negotiation",  # i18n: msgid
+	"largest_party": "formed by the largest party; no investiture vote",  # i18n: msgid
+	"directorial": "seated by formula; the executive cannot fall",  # i18n: msgid
 }
 
 const CENSURE_LABEL := {
-	"absolute_members": "an absolute majority of all members",
-	"constructive_absolute": "an absolute majority, naming a successor",
-	"simple_present": "a simple majority of those voting",
-	"none": "no censure motion exists",
+	"absolute_members": "an absolute majority of all members",  # i18n: msgid
+	"constructive_absolute": "an absolute majority, naming a successor",  # i18n: msgid
+	"simple_present": "a simple majority of those voting",  # i18n: msgid
+	"none": "no censure motion exists",  # i18n: msgid
 }
 
 const DISSOLUTION_LABEL := {
-	"executive_discretion": "may be dissolved at will",
-	"head_of_state_limited": "may be dissolved, except near the head of state's own term limit",
-	"confidence_failure": "may be dissolved only after a lost confidence vote",
-	"self_dissolution": "may only dissolve itself, by simple law",
-	"none": "cannot be dissolved",
+	"executive_discretion": "may be dissolved at will",  # i18n: msgid
+	"head_of_state_limited": "may be dissolved, except near the head of state's own term limit",  # i18n: msgid
+	"confidence_failure": "may be dissolved only after a lost confidence vote",  # i18n: msgid
+	"self_dissolution": "may only dissolve itself, by simple law",  # i18n: msgid
+	"none": "cannot be dissolved",  # i18n: msgid
 }
 
 const AMENDMENT_LABEL := {
-	"ordinary_law": "an ordinary majority, like any other law",
-	"three_fifths": "3/5 of the assembly",
-	"two_thirds": "2/3 of the assembly",
-	"three_quarters": "3/4 of the assembly",
-	"referendum_required": "an ordinary majority of the assembly, and then a referendum",
+	"ordinary_law": "an ordinary majority, like any other law",  # i18n: msgid
+	"three_fifths": "3/5 of the assembly",  # i18n: msgid
+	"two_thirds": "2/3 of the assembly",  # i18n: msgid
+	"three_quarters": "3/4 of the assembly",  # i18n: msgid
+	"referendum_required": "an ordinary majority of the assembly, and then a referendum",  # i18n: msgid
 }
 
 ## V1.7c. Silent under `none`, which is six of the ten: a line saying a country has
@@ -87,14 +87,14 @@ const AMENDMENT_LABEL := {
 ## procedure: `suspensive` reads as a delay because that is what it costs, and
 ## `absolute` reads as a veto because that is what it is.
 const VERDICT_LABEL := {
-	ChambersK.VERDICT_NONE: "does not see",
-	ChambersK.VERDICT_SUSPENSIVE: "can delay",
-	ChambersK.VERDICT_ABSOLUTE: "can block",
+	ChambersK.VERDICT_NONE: "does not see",  # i18n: msgid
+	ChambersK.VERDICT_SUSPENSIVE: "can delay",  # i18n: msgid
+	ChambersK.VERDICT_ABSOLUTE: "can block",  # i18n: msgid
 }
 
 const REFERENDUM_LABEL := {
-	"optional": "The head of state may put an amendment to the country instead, on an ordinary majority here.",
-	"mandatory": "Every amendment goes to the country; there is no path through the assembly alone.",
+	"optional": "The head of state may put an amendment to the country instead, on an ordinary majority here.",  # i18n: msgid
+	"mandatory": "Every amendment goes to the country; there is no path through the assembly alone.",  # i18n: msgid
 }
 
 ## V1.7c, and this line exists because the SCREENSHOT PASS found it missing. The
@@ -108,11 +108,11 @@ const REFERENDUM_LABEL := {
 ## a constitution that most nations simply do not have, where every assembly in the
 ## world is elected somehow. What it says is how, not whether.
 const ELECTION_SYSTEM_LABEL := {
-	"pr_dhondt": "proportional representation, D'Hondt",
-	"pr_national": "national proportional representation",
-	"fptp": "single-member seats, one round",
-	"two_round": "single-member seats over two rounds",
-	"parallel": "a parallel mix of list and single-member seats",
+	"pr_dhondt": "proportional representation, D'Hondt",  # i18n: msgid
+	"pr_national": "national proportional representation",  # i18n: msgid
+	"fptp": "single-member seats, one round",  # i18n: msgid
+	"two_round": "single-member seats over two rounds",  # i18n: msgid
+	"parallel": "a parallel mix of list and single-member seats",  # i18n: msgid
 }
 
 var _state
@@ -163,7 +163,7 @@ func _ready() -> void:
 
 	_portfolio_option = OptionButton.new()
 	for f in CK.PORTFOLIO_KEYS:
-		_portfolio_option.add_item(PORTFOLIO_LABEL.get(f, f))
+		_portfolio_option.add_item(tr(PORTFOLIO_LABEL.get(f, f)))
 	reassign_row.add_child(_portfolio_option)
 
 	_party_option = OptionButton.new()
@@ -234,11 +234,11 @@ func _refresh() -> void:
 	if ns.term_limit > 0:
 		PanelKit.line(_body, tr("Term limit: %d of %d served.") % [ns.terms_served, ns.term_limit], PanelKit.Tone.PLAIN)
 
-	var standing := "Majority government"
+	var standing := tr("Majority government")
 	if ns.is_cohabitation:
-		standing = "COHABITATION — the assembly majority is against you"
+		standing = tr("COHABITATION — the assembly majority is against you")
 	elif ns.is_minority:
-		standing = "MINORITY GOVERNMENT"
+		standing = tr("MINORITY GOVERNMENT")
 	PanelKit.line(_body, standing, PanelKit.Tone.PLAIN)
 
 	var majority := Government.majority_seats(ns)
@@ -255,12 +255,12 @@ func _refresh() -> void:
 		], PanelKit.Tone.PLAIN)
 
 	if ns.censure_rule == "none":
-		PanelKit.line(_body, tr("Censure: %s.") % CENSURE_LABEL[ns.censure_rule], PanelKit.Tone.PLAIN)
+		PanelKit.line(_body, tr("Censure: %s.") % tr(CENSURE_LABEL[ns.censure_rule]), PanelKit.Tone.PLAIN)
 	else:
 		var needed := Government.censure_seats(ns)
 		var against: int = int(ns.assembly_seats) - int(ns.coalition_seats)
 		PanelKit.line(_body, tr("Censure needs %d seats — %s. The opposition holds %d.") % [
-			needed, CENSURE_LABEL.get(ns.censure_rule, ns.censure_rule), against
+			needed, tr(CENSURE_LABEL.get(ns.censure_rule, ns.censure_rule)), against
 		], PanelKit.Tone.PLAIN)
 		# The honest reading of a French minority government: the opposition can
 		# only ever remove you if it votes together, which is why so few do.
@@ -286,7 +286,7 @@ func _refresh() -> void:
 			rebels += int(forced["party_rebels"][pid])
 		PanelKit.line(_body, tr("Under Article 49.3 today: %d seats would move to censure%s.") % [
 			forced["for_seats"],
-			", %d of them against their own party's line" % rebels if rebels > 0 else "",
+			tr(", %d of them against their own party's line") % rebels if rebels > 0 else "",
 		], PanelKit.Tone.PLAIN)
 		if ns.formation_method == "presidential_appointment":
 			if ns.force_cooldown_months > 0:
@@ -300,7 +300,7 @@ func _refresh() -> void:
 		PanelKit.line(_body, tr("Governments censured out of office this run: %d.") % ns.governments_fallen, PanelKit.Tone.PLAIN)
 
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "%s %s." % [n.chamber_name, DISSOLUTION_LABEL.get(ns.dissolution_rule, ns.dissolution_rule)], PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, "%s %s." % [n.chamber_name, tr(DISSOLUTION_LABEL.get(ns.dissolution_rule, ns.dissolution_rule))], PanelKit.Tone.PLAIN)
 	if ns.dissolution_rule == "executive_discretion" or ns.dissolution_rule == "head_of_state_limited":
 		PanelKit.line(_body, tr("Costs public patience on every call, and locks out further use for %d months once the new assembly is seated.") % ns.dissolution_lockout_months, PanelKit.Tone.PLAIN)
 	if ns.dissolutions_called > 0:
@@ -315,14 +315,14 @@ func _refresh() -> void:
 		_dissolve_button.tooltip_text = tr("Call a snap election. No seat forecast -- read the polls, not a projection.")
 
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Formation: %s.") % METHOD_LABEL.get(ns.formation_method, ns.formation_method), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("Formation: %s.") % tr(METHOD_LABEL.get(ns.formation_method, ns.formation_method)), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Agreed position: economic %+.2f, social %+.2f.") % [
 		ns.coalition_position["economic"], ns.coalition_position["social"]
 	], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("A constitutional amendment needs %s.") % AMENDMENT_LABEL.get(ns.amendment_rule, ns.amendment_rule), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("A constitutional amendment needs %s.") % tr(AMENDMENT_LABEL.get(ns.amendment_rule, ns.amendment_rule)), PanelKit.Tone.PLAIN)
 	if REFERENDUM_LABEL.has(ns.referendum_mode):
-		PanelKit.line(_body, REFERENDUM_LABEL[ns.referendum_mode], PanelKit.Tone.PLAIN)
-	var method: String = String(ELECTION_SYSTEM_LABEL.get(ns.election_system, ns.election_system))
+		PanelKit.line(_body, tr(REFERENDUM_LABEL[ns.referendum_mode]), PanelKit.Tone.PLAIN)
+	var method: String = tr(String(ELECTION_SYSTEM_LABEL.get(ns.election_system, ns.election_system)))
 	if ns.election_threshold_pct > 0.0:
 		PanelKit.line(_body, tr("The assembly is elected by %s, with a %.1f%% threshold.") % [
 			method, ns.election_threshold_pct
@@ -356,7 +356,7 @@ func _refresh() -> void:
 				if party.id == String(last.get("party_id", "")):
 					last_party = party.party_name
 		PanelKit.line(_body, tr("Ministers resigned this run: %d (last: %s over %s)") % [
-			ns.resignations_count, last_party, PORTFOLIO_LABEL.get(last.get("portfolio", ""), last.get("portfolio", ""))
+			ns.resignations_count, last_party, tr(PORTFOLIO_LABEL.get(last.get("portfolio", ""), last.get("portfolio", "")))
 		], PanelKit.Tone.PLAIN)
 	_refresh_party_option(ns)
 
@@ -382,23 +382,23 @@ func _refresh() -> void:
 ## between second chambers -- France's Senat delays the first under Art. 45 and cannot
 ## be overridden on the second under Art. 89.
 func _upper_phrase(ns) -> String:
-	var ordinary: String = VERDICT_LABEL.get(ns.upper_ordinary, ns.upper_ordinary)
-	var amendment: String = VERDICT_LABEL.get(ns.upper_amendment, ns.upper_amendment)
+	var ordinary: String = tr(VERDICT_LABEL.get(ns.upper_ordinary, ns.upper_ordinary))
+	var amendment: String = tr(VERDICT_LABEL.get(ns.upper_amendment, ns.upper_amendment))
 	if ns.upper_ordinary == ns.upper_amendment:
-		return "%s any bill" % ordinary
-	return "%s an ordinary bill and %s an amendment" % [ordinary, amendment]
+		return tr("%s any bill") % ordinary
+	return tr("%s an ordinary bill and %s an amendment") % [ordinary, amendment]
 
 
 ## The court, with the ARITHMETIC and not just the label. A rule the player cannot read
 ## is not a check on their power, it is a trap -- docs/judiciary-model.md.
 func _court_phrase(ns) -> String:
 	if ns.judicial_review == JudiciaryK.REVIEW_NONE:
-		return "No court may strike down an Act of the legislature."
+		return tr("No court may strike down an Act of the legislature.")
 	var drift: float = Judiciary.independence_deviation(ns)
-	var text := "Rule of law %.1f; the court strikes a bill reaching past %.2f." % [
+	var text := tr("Rule of law %.1f; the court strikes a bill reaching past %.2f.") % [
 		ns.judicial_independence, Judiciary.tolerance(ns)]
 	if absf(drift) >= 0.05:
-		text += "  %+.1f since the start." % drift
+		text += tr("  %+.1f since the start.") % drift
 	return text
 
 
@@ -491,7 +491,7 @@ func _build_cabinet_table(ns) -> Control:
 			held[pid] = int(held.get(pid, 0)) + 1
 
 	for f in CK.PORTFOLIO_KEYS:
-		PanelKit.line(grid, PORTFOLIO_LABEL.get(f, f), PanelKit.Tone.PLAIN)
+		PanelKit.line(grid, tr(PORTFOLIO_LABEL.get(f, f)), PanelKit.Tone.PLAIN)
 
 		var pid: String = String(ns.cabinet.get(f, ""))
 		var holder_label := Label.new()

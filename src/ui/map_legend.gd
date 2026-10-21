@@ -144,7 +144,7 @@ func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
 		prod_even = MapLayers.production_even_share(state)
 		stops = MapLayers.production_stops(prod_even)
 	for stop in stops:
-		_stops.add_child(_stop_row(float(stop["at"]), String(stop["text"]), even, prod_even))
+		_stops.add_child(_stop_row(float(stop["at"]), tr(String(stop["text"])), even, prod_even))
 
 	_caption.text = MapLayers.caption(_layer)
 	show_hover("", null, "")

@@ -62,7 +62,7 @@ static func capital_errors(loader) -> Array[String]:
 				if want != "" and Capital.fold(city.city_name) == want:
 					n += 1
 		if n > 1:
-			out.append("%s: capital '%s' matches %d cities" % [nid, loader.nations[nid].capital, n])
+			out.append("%s: capital '%s' matches %d cities" % [nid, loader.nations[nid].capital, n])  # i18n: ok
 	return out
 
 

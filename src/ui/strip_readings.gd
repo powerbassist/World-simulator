@@ -34,6 +34,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## Strip order: standing, money, the economy, the country, the assembly, the clock,
 ## the desk, the world. People left at V4.8b: a count of people the term has moved is
@@ -141,10 +142,10 @@ static func _approval(state, ns) -> Dictionary:
 		PollNoise.poll_id(state.year, state.month), PollingPanel.HEADLINE_KEY, ns.overall_approval_pct)
 	var change := Trends.approval_delta(state, WINDOW)
 	var lines: Array = [
-		_line("Polled approval, %s over %d months." % [Trends.change_text(change), WINDOW]),
+		_line(Strings.t("Polled approval, %s over %d months.") % [Trends.change_text(change), WINDOW]),
 	]
 	for row in Elections.attribution(ns):
-		lines.append(_line("%s: %.0f%% of minds, satisfaction %+.2f" % [
+		lines.append(_line(Strings.t("%s: %.0f%% of minds, satisfaction %+.2f") % [
 			OpinionK.ISSUE_LABEL.get(row["issue"], String(row["issue"])),
 			float(row["salience"]) * 100.0, float(row["satisfaction"]),
 		], "issue:%s" % row["issue"]))
@@ -157,8 +158,8 @@ static func _approval(state, ns) -> Dictionary:
 static func _deficit(state, ns) -> Dictionary:
 	var debt_change := Trends.delta(state, "debt_to_gdp_pct", WINDOW)
 	var lines: Array = [
-		_line("Surplus is +, deficit is −."),
-		_line("Debt %.0f Bn, %.0f%% of GDP, %s over %d months." % [
+		_line(Strings.t("Surplus is +, deficit is −.")),
+		_line(Strings.t("Debt %.0f Bn, %.0f%% of GDP, %s over %d months.") % [
 			ns.debt_eur_bn, ns.debt_to_gdp_pct(), Trends.change_text(debt_change), WINDOW,
 		], "debt"),
 	]
@@ -169,15 +170,15 @@ static func _deficit(state, ns) -> Dictionary:
 ## "this figure, over Trends' window", so one glyph never means two things (the
 ## review caught a rate-sign arrow beside approval's change arrow).
 static func _gdp(state, ns) -> Dictionary:
-	var tip := "Growth %.2f%% a year, %s over %d months." % [
+	var tip := Strings.t("Growth %.2f%% a year, %s over %d months.") % [
 		ns.growth_annual_pct,
 		Trends.change_text(Trends.delta(state, "growth_annual_pct", WINDOW)), WINDOW,
 	]
-	return _reading("%.0f Bn%s" % [ns.gdp_eur_bn, _arrow(Trends.delta(state, "gdp_eur_bn", WINDOW))], tip)
+	return _reading(Strings.t("%.0f Bn%s") % [ns.gdp_eur_bn, _arrow(Trends.delta(state, "gdp_eur_bn", WINDOW))], tip)
 
 
 static func _unemployment(state, ns) -> Dictionary:
-	var tip := "Unemployment, %s over %d months." % [
+	var tip := Strings.t("Unemployment, %s over %d months.") % [
 		Trends.change_text(Trends.delta(state, "unemployment_pct", WINDOW)), WINDOW,
 	]
 	return _reading("%.2f%%" % ns.unemployment_pct, tip)
@@ -188,7 +189,7 @@ static func _unemployment(state, ns) -> Dictionary:
 ## prints "+0.0" against a live, moved figure.
 static func _inflation(ns) -> Dictionary:
 	return _reading("%.1f%%" % ns.inflation_pct,
-		"Inflation, %+.2f points since the start." % Inflation.inflation_deviation(ns))
+		Strings.t("Inflation, %+.2f points since the start.") % Inflation.inflation_deviation(ns))
 
 
 ## Zero is a real level here (nobody is angry), not an absence, so it prints. The
@@ -196,7 +197,7 @@ static func _inflation(ns) -> Dictionary:
 ## it the unions organise, which is the alert.
 static func _unrest(ns) -> Dictionary:
 	var striking: bool = ns.unrest_pct >= UnrestK.UNREST_THRESHOLD_PCT
-	var tip := "Grievance %.0f of 100. Organised action at %.0f." % [
+	var tip := Strings.t("Grievance %.0f of 100. Organised action at %.0f.") % [
 		ns.unrest_pct, UnrestK.UNREST_THRESHOLD_PCT,
 	]
 	return _reading("%.0f" % ns.unrest_pct, tip, true, "economy" if striking else "")
@@ -209,15 +210,15 @@ static func _unrest(ns) -> Dictionary:
 ## read "+0" for a government one seat short.
 static func _assembly(ns) -> Dictionary:
 	if ns.assembly_seats <= 0:
-		return _reading("—", "No assembly arithmetic for this nation.")
+		return _reading("—", Strings.t("No assembly arithmetic for this nation."))
 	var majority := Government.majority_seats(ns)
 	var margin: int = ns.coalition_seats - (majority + 1)
-	var standing := "Majority government"
+	var standing := Strings.t("Majority government")
 	if ns.is_cohabitation:
-		standing = "Cohabitation — the assembly majority is against you"
+		standing = Strings.t("Cohabitation — the assembly majority is against you")
 	elif ns.is_minority:
-		standing = "Minority government"
-	var tip := "%s. %d of %d seats; a majority needs more than %d." % [
+		standing = Strings.t("Minority government")
+	var tip := Strings.t("%s. %d of %d seats; a majority needs more than %d.") % [
 		standing, ns.coalition_seats, ns.assembly_seats, majority,
 	]
 	var troubled: bool = ns.is_cohabitation or ns.is_minority
@@ -249,15 +250,15 @@ static func _election(state, ns, loader) -> Dictionary:
 static func _election_tooltip(ns, loader, months: int) -> String:
 	if months < 0:
 		# No "Win it." here: the vote the player was supposed to win is over.
-		return "The vote that ends your term has been held."
+		return Strings.t("The vote that ends your term has been held.")
 	var what := "vote"
 	if loader != null and loader.nations.has(ns.id):
 		var nation = loader.nations[ns.id]
 		if bool(ns.has_executive):
-			what = "vote for %s" % nation.executive_title
+			what = Strings.t("vote for %s") % nation.executive_title
 		else:
-			what = "vote for the %s" % nation.chamber_name
-	return "The %s that ends your term -- %s. Win it." % [what, Trends.months_text(months)]
+			what = Strings.t("vote for the %s") % nation.chamber_name
+	return Strings.t("The %s that ends your term -- %s. Win it.") % [what, Trends.months_text(months)]
 
 
 ## V4.1. The chosen programme's name (as the caption) and its nearest-deadline
@@ -275,7 +276,7 @@ static func _programme(ns, loader) -> Dictionary:
 	var progress: Dictionary = Programme.progress_of(ns, terms)
 	var fraction := PanelKit.progress_fraction(
 		float(progress["current_value"]), float(progress["goal_value"]), String(progress["progressbar"]))
-	var tip := "%s -- %.2f against a %.2f goal" % [
+	var tip := Strings.t("%s -- %.2f against a %.2f goal") % [
 		name_text, float(progress["current_value"]), float(progress["goal_value"]),
 	]
 	var clock_text := programme_clock_text(terms, live)
@@ -314,8 +315,8 @@ static func programme_clock_text(terms: Dictionary, live: Dictionary) -> String:
 		return ""
 	var left := timeout - int(live["months_live"])
 	if left <= 0:
-		return "its deadline is now"
-	return "%s to its deadline" % ("1 month" if left == 1 else "%d months" % left)
+		return Strings.t("its deadline is now")
+	return Strings.t("%s to its deadline") % ("1 month" if left == 1 else Strings.t("%d months") % left)
 
 
 ## V4.4. The desk, read straight off the queue register -- the same read
@@ -328,13 +329,13 @@ static func _desk(ns) -> Dictionary:
 	if desk.is_empty():
 		# Em dash, not "0 pending": a confident zero here would be V1.6d's lie in
 		# the strip's own handwriting.
-		return _reading("— clear", "Nothing awaits an answer.")
+		return _reading(Strings.t("— clear"), Strings.t("Nothing awaits an answer."))
 	var by_severity := {}
 	for entry in desk:
 		var severity := int(entry.get("severity", 1))
 		by_severity[severity] = int(by_severity.get(severity, 0)) + 1
 	var critical := int(by_severity.get(3, 0)) > 0
-	return _reading_lines("%d pending" % desk.size(), [_line(_desk_tooltip(by_severity), "queue")], true,
+	return _reading_lines(Strings.t("%d pending") % desk.size(), [_line(_desk_tooltip(by_severity), "queue")], true,
 		"events" if critical else "")
 
 
@@ -347,7 +348,7 @@ static func _desk_tooltip(by_severity: Dictionary) -> String:
 		var count := int(by_severity.get(severity, 0))
 		if count > 0:
 			parts.append("%d %s" % [count, EventsK.SEVERITY_NAMES[severity - 1]])
-	return " · ".join(parts) if not parts.is_empty() else "On the desk."
+	return " · ".join(parts) if not parts.is_empty() else Strings.t("On the desk.")
 
 
 ## V4.5b2. The council standing off the registers: the treaty awaiting the
@@ -385,22 +386,22 @@ static func _europe(state, ns) -> Dictionary:
 			if treaty_left < 0 or left < treaty_left:
 				treaty_left = left
 				treaty_text = "%s, %s" % [String(r.get("name", "")),
-					"1 month left" if left == 1 else "%d months left" % left]
+					Strings.t("1 month left") if left == 1 else Strings.t("%d months left") % left]
 
-	var text := "— clear"
+	var text := Strings.t("— clear")
 	if treaty_left >= 0:
-		text = "Treaty: %dm" % treaty_left
+		text = Strings.t("Treaty: %dm") % treaty_left
 	elif burden > 0.0:
-		text = "Burden %.2f" % burden
+		text = Strings.t("Burden %.2f") % burden
 
 	var lines: Array = [
-		_line("The councils you sit on."),
-		_line("Burden %.2f" % burden),
-		_line(("1 rule in force binds you, %d breached" % breached) if rules.size() == 1 \
-			else ("%d rules in force bind you, %d breached" % [rules.size(), breached]),
+		_line(Strings.t("The councils you sit on.")),
+		_line(Strings.t("Burden %.2f") % burden),
+		_line((Strings.t("1 rule in force binds you, %d breached") % breached) if rules.size() == 1 \
+			else (Strings.t("%d rules in force bind you, %d breached") % [rules.size(), breached]),
 			"rules" if not rules.is_empty() else ""),
-		_line("%d %s owed" % [owed, "IOU" if owed == 1 else "IOUs"]),
-		_line(("Treaty awaiting your assembly: %s" % treaty_text) if treaty_left >= 0 else "No treaty awaiting you"),
+		_line(Strings.t("%d %s owed") % [owed, "IOU" if owed == 1 else "IOUs"]),
+		_line((Strings.t("Treaty awaiting your assembly: %s") % treaty_text) if treaty_left >= 0 else Strings.t("No treaty awaiting you")),
 	]
 	return _reading_lines(text, lines, true, "orgs" if treaty_left >= 0 else "")
 
@@ -415,13 +416,13 @@ static func _commodities(ns, loader) -> Dictionary:
 	var short: Array = CommoditiesPanel.shortages(ns, loader.commodity_goods.keys())
 	var bar := CommoditiesPanel.SHORTAGE_COVERAGE * 100.0
 	if short.is_empty():
-		return _reading("— covered", "Every good above %.0f%% of the month's demand." % bar)
+		return _reading(Strings.t("— covered"), Strings.t("Every good above %.0f%% of the month's demand.") % bar)
 	var worst_id := String(short[0]["id"])
 	var worst := float(short[0]["coverage"])
 	var good = loader.commodity_goods.get(worst_id)
 	var name := String(good.name) if good != null else worst_id
 	return _reading_lines("%s %.0f%%" % [name, worst * 100.0], [_line(
-		"%s covers %.0f%% of the month's demand -- the shortage line is %.0f%%." % [name, worst * 100.0, bar],
+		Strings.t("%s covers %.0f%% of the month's demand -- the shortage line is %.0f%%.") % [name, worst * 100.0, bar],
 		"short")], true, "commodities")
 
 

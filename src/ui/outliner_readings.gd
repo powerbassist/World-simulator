@@ -63,7 +63,7 @@ static func read(section: String, state, loader) -> Dictionary:
 			rows = _goods(ns, loader)
 		"people":
 			rows = _people(ns, loader)
-			title = "%s · %d moved" % [title, moved_count(ns)]
+			title = Strings.t("%s · %d moved") % [title, moved_count(ns)]
 	return {"title": title, "rows": _capped(rows), "visible": not rows.is_empty()}
 
 
@@ -88,7 +88,7 @@ static func _capped(rows: Array) -> Array:
 	if rows.size() <= ROW_CAP:
 		return rows
 	var out: Array = rows.slice(0, ROW_CAP)
-	out.append(_row("+%d more" % (rows.size() - ROW_CAP), PanelKit.Tone.DIM, String(rows[0]["window"])))
+	out.append(_row(Strings.t("+%d more") % (rows.size() - ROW_CAP), PanelKit.Tone.DIM, String(rows[0]["window"])))
 	return out
 
 
@@ -119,12 +119,12 @@ static func _firms(state, ns, loader) -> Array:
 		return rows
 	var bid: Dictionary = Industry.pending_bid(state, ns, loader)
 	if not bid.is_empty():
-		rows.append(_row("%s bids %.1f bn for %s — %d months left" % [
+		rows.append(_row(Strings.t("%s bids %.1f bn for %s — %d months left") % [
 			loader.nation_name(String(bid["bidder_nation"])), float(bid["price_eur_bn"]),
 			loader.firm_name(ns.id, String(bid["company_id"])), int(bid["months_left"])],
 			PanelKit.Tone.BAD, "companies"))
 	for failure in Industry.failing(state, ns, loader):
-		rows.append(_row("%s failing — rescue window, %d months left" % [
+		rows.append(_row(Strings.t("%s failing — rescue window, %d months left") % [
 			loader.firm_name(ns.id, String(failure["company_id"])), int(failure["months_left"])],
 			PanelKit.Tone.BAD, "companies"))
 	return rows
@@ -138,7 +138,7 @@ static func _goods(ns, loader) -> Array:
 		return rows
 	for item in CommoditiesPanel.shortages(ns, loader.commodity_goods.keys()):
 		var good = loader.commodity_goods.get(item["id"])
-		rows.append(_row("%s — %.0f%% of demand" % [
+		rows.append(_row(Strings.t("%s — %.0f%% of demand") % [
 			String(good.name) if good != null else String(item["id"]), float(item["coverage"]) * 100.0],
 			PanelKit.Tone.BAD, "commodities"))
 	return rows
@@ -155,11 +155,11 @@ static func _people(ns, loader) -> Array:
 	for pid in ns.person_grudges.keys():
 		var grudge := float(ns.person_grudges[pid])
 		if grudge >= MOVED_AT:
-			worried.append({"id": String(pid), "weight": grudge, "text": "grudge %.2f" % grudge})
+			worried.append({"id": String(pid), "weight": grudge, "text": Strings.t("grudge %.2f") % grudge})
 	for pid in ns.person_loyalty.keys():
 		var loyalty := float(ns.person_loyalty[pid])
 		if loyalty <= -MOVED_AT and float(ns.person_grudges.get(pid, 0.0)) < MOVED_AT:
-			worried.append({"id": String(pid), "weight": -loyalty, "text": "loyalty %.2f" % loyalty})
+			worried.append({"id": String(pid), "weight": -loyalty, "text": Strings.t("loyalty %.2f") % loyalty})
 	worried.sort_custom(func(a, b) -> bool:
 		if not is_equal_approx(float(a["weight"]), float(b["weight"])):
 			return float(a["weight"]) > float(b["weight"])

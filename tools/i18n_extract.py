@@ -16,8 +16,9 @@ THE SOURCES are the ENGLISH itself, in two places:
          English by design), plus the literals on a line that ends `# i18n: msgid`
          -- the way a const table of prose is marked, since a const cannot call tr().
          On a marked line a literal that is a dictionary KEY (followed by `:`) is not a
-         msgid; `# i18n: msgid label` lists only the values of the key "label" (a table
-         whose rows also hold ids and numbers). The table is data/i18n/<lang>/ui.json:
+         msgid; `# i18n: msgid label caption` lists only the values of the keys named (a table
+         whose rows also hold ids and numbers); `# i18n: msgid last` only the last literal of
+         the line (a ["id", "Text"] pair). The table is data/i18n/<lang>/ui.json:
          {msgid: translation}.
   ROWS   the translatable fields of the rows in data/<kind>/*.json (TRANSLATABLE below),
          keyed `<id>.<field>`; nested choices as `<event id>.choices.<choice id>.label`.
@@ -37,7 +38,8 @@ Fill the "fr" slots and run --apply on the file: every filled slot is written in
 data/i18n/fr/ui.json or data/i18n/fr/<kind>.json (existing entries are kept, a filled slot
 overwrites its key); an empty slot is skipped; a slot whose placeholders (%d %s %.1f ...)
 differ from the English in kind or order is REFUSED and named; a key whose English has
-gone away is refused as stale.
+gone away is refused as stale. A msgid with leading or trailing spaces (a fragment joined
+to another string) gets the same spaces on its translation.
 """
 import glob
 import json
@@ -49,7 +51,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BS = chr(92)
 # tr( or Strings.t( ending the text before a literal; not str( / substr(.
 WRAPPED = re.compile(r"(?<![A-Za-z0-9_])(?:tr|Strings\.t)\($")
-MARKER = re.compile(r"# i18n: msgid(?: (\w+))?\s*$")
+MARKER = re.compile(r"# i18n: msgid((?: \w+)*)\s*$")
 PLACEHOLDER = re.compile(r"%[-+ #0]*\d*(?:\.\d+)?[sdfxXc%]")
 
 # data directory -> the fields of a row (dotted for nested) that a player reads as
@@ -102,18 +104,22 @@ def unescape(text):
     return text.replace(BS + "n", "\n").replace(BS + "t", "\t").replace(BS + '"', '"').replace(BS + BS, BS)
 
 
-def _marked_msgids(line, field):
-    """The literals of a `# i18n: msgid` line that are msgids: not dictionary keys, and
-    with a field named, only the values of that key."""
+def _marked_msgids(line, fields):
+    """The literals of a `# i18n: msgid` line that are msgids: not dictionary keys; with
+    field names after the marker, only the values of those keys; with `last`, only the
+    last literal of the line (a [id, "Text"] pair)."""
     out = []
     lits = literals(line)
     for index, (start, end, text) in enumerate(lits):
         if re.match(r"\s*:", line[end + 1:]):
             continue  # a key
-        if field:
+        if fields == ["last"]:
+            if index != len(lits) - 1:
+                continue
+        elif fields:
             before = line[:start].rstrip()
             key = lits[index - 1][2] if index > 0 and before.endswith(":") else None
-            if key != field:
+            if key not in fields:
                 continue
         out.append(text)
     return out
@@ -129,7 +135,7 @@ def ui_msgids():
             marker = MARKER.search(line)
             texts = []
             if marker:
-                texts = _marked_msgids(line, marker.group(1))
+                texts = _marked_msgids(line, marker.group(1).split())
             else:
                 for start, _end, text in literals(line):
                     if WRAPPED.search(line[:start]):
@@ -263,6 +269,10 @@ def apply_worklist(path):
             text = str(entry.get(lang, "")).strip()
             if not text:
                 continue
+            # A msgid built to be joined to another string keeps its edge spaces
+            # (" -- kept only if %s is ratified"); so does the translation.
+            en = source.get(key, "")
+            text = en[:len(en) - len(en.lstrip())] + text + en[len(en.rstrip()):]
             if key not in source:
                 print("refused (stale, its English is gone): %s/%s" % (name, key))
                 refused += 1

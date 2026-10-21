@@ -169,10 +169,7 @@ func _build_ledger(ns) -> void:
 	PanelKit.row(_body, tr("Construction bill"), tr("%.3f %% of GDP") % ns.project_bill_pct_gdp)
 	PanelKit.row(_body, tr("Trend bought"), tr("%+.3f %%/yr") % ns.project_potential_target_pct)
 	if ns.project_potential_target_pct > 0.0:
-		PanelKit.line(_body,
-			"Bought, not yet delivered: completed works raise the trend the economy is"
-			+ " heading for, and it takes about five years to arrive."
-		)
+		PanelKit.line(_body, tr("Bought, not yet delivered: completed works raise the trend the economy is heading for, and it takes about five years to arrive."))
 
 
 func _build_building(ns) -> void:
@@ -250,7 +247,7 @@ func _build_available(ns) -> void:
 		# under way. A player who cannot tell which will think the lever is broken.
 		if Projects.building_count(ns) > 0:
 			PanelKit.line(_body,
-				"Nothing can begin while %d are under construction. Finish or abandon one."
+				tr("Nothing can begin while %d are under construction. Finish or abandon one.")
 				% Projects.building_count(ns)
 			)
 		else:

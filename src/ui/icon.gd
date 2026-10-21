@@ -38,7 +38,7 @@ static func load_icon(path: String, tint: Color, px: int) -> ImageTexture:
 	if svg.contains(SOURCE_FILL):
 		svg = svg.replace(SOURCE_FILL, hex)
 	else:
-		svg = svg.insert(svg.find("<svg ") + 5, "fill=\"%s\" " % hex)
+		svg = svg.insert(svg.find("<svg ") + 5, "fill=\"%s\" " % hex)  # i18n: ok
 
 	var native := 16.0
 	var found := _width.search(svg)

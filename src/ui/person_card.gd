@@ -21,17 +21,18 @@ extends PanelContainer
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 const KIND_LABEL := {
-	"politician": "Politician", "regional_figure": "Regional figure",
-	"union_leader": "Union leader", "press_owner": "Press owner",
-	"judge": "Judge", "activist": "Activist",
+	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
+	"union_leader": "Union leader", "press_owner": "Press owner",  # i18n: msgid
+	"judge": "Judge", "activist": "Activist",  # i18n: msgid
 }
 
 const TRAIT_LABEL := {
-	"ambitious": "Ambitious", "loyal": "Loyal", "principled": "Principled",
-	"pragmatic": "Pragmatic", "vain": "Vain", "stubborn": "Stubborn",
-	"networked": "Networked", "fervent": "Fervent",
+	"ambitious": "Ambitious", "loyal": "Loyal", "principled": "Principled",  # i18n: msgid
+	"pragmatic": "Pragmatic", "vain": "Vain", "stubborn": "Stubborn",  # i18n: msgid
+	"networked": "Networked", "fervent": "Fervent",  # i18n: msgid
 }
 
 ## The want voice, SHARED with the People panel (the panel calls these, not
@@ -46,8 +47,8 @@ const STANCE_LABEL := {
 }
 
 const PORTFOLIO_LABEL := {
-	"health": "Health", "education": "Education", "defence": "Defence",
-	"pensions": "Pensions", "infrastructure": "Infrastructure",
+	"health": "Health", "education": "Education", "defence": "Defence",  # i18n: msgid
+	"pensions": "Pensions", "infrastructure": "Infrastructure",  # i18n: msgid
 }
 
 
@@ -66,19 +67,19 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 				return String(entry["name"])
 		return entry_id
 	if object == "office:premiership":
-		return "the premiership"
+		return Strings.t("the premiership")
 	if object.begins_with("office:portfolio:"):
 		var key := object.substr("office:portfolio:".length())
-		return "%s" % String(PORTFOLIO_LABEL.get(key, key)).to_lower()
+		return "%s" % Strings.t(String(PORTFOLIO_LABEL.get(key, key))).to_lower()
 	if object.begins_with("office:party_leadership:"):
 		var pid := object.substr("office:party_leadership:".length())
 		for p in loader.parties.get(ns.id, []):
 			if p.id == pid:
-				return "the leadership of %s" % String(p.party_name)
-		return "a party leadership"
+				return Strings.t("the leadership of %s") % String(p.party_name)
+		return Strings.t("a party leadership")
 	if object.begins_with("meter:"):
 		var meter := object.substr("meter:".length())
-		var direction := "below" if want.has("below") else "above"
+		var direction := Strings.t("below") if want.has("below") else Strings.t("above")
 		var threshold := float(want.get("below", want.get("above", 0.0)))
 		return "%s %s %.1f" % [meter.replace("_", " "), direction, threshold]
 	return object
@@ -121,7 +122,7 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 	title.text = person.person_name
 	_body.add_child(title)
 
-	PanelKit.line(_body, KIND_LABEL.get(person.kind, person.kind), PanelKit.Tone.DIM)
+	PanelKit.line(_body, tr(KIND_LABEL.get(person.kind, person.kind)), PanelKit.Tone.DIM)
 
 	var party_id: String = String(ns.person_party_override.get(person.id, person.party_id))
 	if party_id != "":
@@ -133,7 +134,7 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 	if not person.traits.is_empty():
 		var traits: Array[String] = []
 		for t in person.traits:
-			traits.append(String(TRAIT_LABEL.get(t, t)))
+			traits.append(tr(String(TRAIT_LABEL.get(t, t))))
 		PanelKit.line(_body, ", ".join(traits), PanelKit.Tone.DIM)
 
 	# The live state, one line each: what the player's term has done to them.

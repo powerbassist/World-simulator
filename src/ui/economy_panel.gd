@@ -191,8 +191,8 @@ func _refresh() -> void:
 			# `protest` at this intensity, `strike` higher up -- and the screenshot pass
 			# caught the panel saying "the unions are out" beside a card reading
 			# DEMONSTRATIONS. This line owns the LEVEL; the card owns the event.
-			"Organised action at %.0f." % UnrestK.UNREST_THRESHOLD_PCT if not striking
-				else "Past the point where the unions organise.",
+			tr("Organised action at %.0f.") % UnrestK.UNREST_THRESHOLD_PCT if not striking
+				else tr("Past the point where the unions organise."),
 		], PanelKit.Tone.BAD if striking else PanelKit.Tone.DIM)
 
 		# V2.6b1. WHERE the grievance is, on its own line and only once there is a
@@ -271,8 +271,8 @@ func _anchor_rating() -> String:
 ## real quantity to zero and then still asserting a direction reads as a bug.
 func _gap_sentence(gap: float) -> String:
 	if absf(gap) < 0.05:
-		return "Output is running at potential."
-	return "Output is %s potential by %.1f%%." % ["above" if gap > 0.0 else "below", absf(gap)]
+		return tr("Output is running at potential.")
+	return tr("Output is %s potential by %.1f%%.") % [tr("above") if gap > 0.0 else tr("below"), absf(gap)]
 
 
 ## Largest first, as a share, because the question a sector list answers is
@@ -384,7 +384,7 @@ func _trend(body: VBoxContainer, key: String) -> void:
 			return
 		PanelKit.line(
 			body,
-			"%s over %d months." % [Trends.change_text(float(row["change"])), Trends.TREND_MONTHS],
+			tr("%s over %d months.") % [Trends.change_text(float(row["change"])), Trends.TREND_MONTHS],
 			PanelKit.Tone.BAD if float(row["severity"]) > 0.0 else PanelKit.Tone.GOOD,
 		)
 		return

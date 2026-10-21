@@ -52,7 +52,7 @@ static func warm(force: bool = false) -> void:
 	_warm_task = WorkerThreadPool.add_task(func():
 		for id in todo:
 			_warmed[id] = Synth.one_shot(recipe(id))
-	, false, "sound set")
+	, false, "sound set")  # i18n: ok
 
 
 ## Waits for a warm still running: a task the pool was given must be waited on.

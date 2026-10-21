@@ -29,8 +29,8 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 const MONTH_NAMES: Array[String] = [
-	"January", "February", "March", "April", "May", "June",
-	"July", "August", "September", "October", "November", "December",
+	"January", "February", "March", "April", "May", "June",  # i18n: msgid
+	"July", "August", "September", "October", "November", "December",  # i18n: msgid
 ]
 
 ## An election closer than this is the story, whatever else is happening.
@@ -105,10 +105,10 @@ func _ready() -> void:
 	root.add_child(row)
 
 	for spec in [
-		["government", "GOVERNMENT"],
-		["election", "NEXT ELECTION"],
-		["issues", "WHAT THE COUNTRY WANTS"],
-		["moving", "MOVING, LAST %d MONTHS" % Trends.TREND_MONTHS],
+		["government", tr("GOVERNMENT")],
+		["election", tr("NEXT ELECTION")],
+		["issues", tr("WHAT THE COUNTRY WANTS")],
+		["moving", tr("MOVING, LAST %d MONTHS") % Trends.TREND_MONTHS],
 	]:
 		# PanelKit.section() IS this panel's column: a tracked heading, a body under
 		# it at the kit's own separations, and the body handed back. The four
@@ -236,7 +236,7 @@ func _censure_probe(ns) -> Dictionary:
 ## worse than no lead line.
 func _lead_text(ns, censure: Dictionary, months: int, top: Array, worst: Dictionary) -> String:
 	if not censure.is_empty() and bool(censure["carried"]):
-		return "The assembly would bring this government down today — %d of the %d seats a censure motion needs." % [
+		return tr("The assembly would bring this government down today — %d of the %d seats a censure motion needs.") % [
 			int(censure["for_seats"]), int(censure["threshold"])
 		]
 
@@ -244,18 +244,18 @@ func _lead_text(ns, censure: Dictionary, months: int, top: Array, worst: Diction
 		var approval := _polled_approval(ns)
 		var change := Trends.approval_delta(_state, Trends.TREND_MONTHS)
 		if is_nan(change):
-			return "Election %s. You are polling %.0f%%." % [_when(months), approval]
-		return "Election %s. You are polling %.0f%%, %s since %s." % [
+			return tr("Election %s. You are polling %.0f%%.") % [_when(months), approval]
+		return tr("Election %s. You are polling %.0f%%, %s since %s.") % [
 			_when(months), approval, _moved(change), _month_name_ago(Trends.TREND_MONTHS)
 		]
 
 	if not worst.is_empty():
-		var sentence := "%s is %s since %s." % [
+		var sentence := tr("%s is %s since %s.") % [
 			String(worst["label"]), _moved(float(worst["change"])), _month_name_ago(Trends.TREND_MONTHS)
 		]
 		var issue: String = ISSUE_FOR_FIGURE.get(worst["key"], "")
 		if issue != "" and not top.is_empty() and top[0][0] == issue:
-			sentence += " It is also what the country cares about most."
+			sentence += tr(" It is also what the country cares about most.")
 		return sentence
 
 	if _state.history.is_empty():
@@ -264,10 +264,10 @@ func _lead_text(ns, censure: Dictionary, months: int, top: Array, worst: Diction
 		# ends at the vote, so months served is the remainder of the same
 		# subtraction the countdown already did.
 		var months_served := maxi(0, int(ns.term_months) - months)
-		return "%s, %d months into a %d-month term. Nothing to compare against yet." % [
+		return tr("%s, %d months into a %d-month term. Nothing to compare against yet.") % [
 			_standing_sentence(ns), months_served, int(ns.term_months)
 		]
-	return "%s, and nothing is moving sharply. Election %s." % [
+	return tr("%s, and nothing is moving sharply. Election %s.") % [
 		_standing_sentence(ns), _when(months)
 	]
 
@@ -303,7 +303,7 @@ func _fill_government(ns, censure: Dictionary) -> void:
 func _fill_election(ns, months: int, vote_year: int, vote_month: int) -> void:
 	PanelKit.figure(_columns["election"], Trends.months_text(months), tr("until the vote"))
 	PanelKit.line(_columns["election"], "%s %d." % [
-		MONTH_NAMES[vote_month - 1], vote_year
+		tr(MONTH_NAMES[vote_month - 1]), vote_year
 	])
 	# The date and the count come from the same clock (the executive's where the
 	# nation has one, the assembly's otherwise), which is what U3's old
@@ -378,7 +378,7 @@ func _fill_services(ns) -> void:
 		# thing they caused. Short, because this column is ~110px wide and the
 		# capability line above it already wraps to four lines.
 		var label: String = K.ISSUE_LABEL.get(key, key)
-		var text := "%s delivery %+.2f on baseline." % [label, deviation]
+		var text := tr("%s delivery %+.2f on baseline.") % [label, deviation]
 		if deviation < 0.0:
 			PanelKit.line(_columns["government"], text, PanelKit.Tone.BAD)
 		else:
@@ -390,7 +390,7 @@ func _fill_services(ns) -> void:
 	if is_zero_approx(ns.corruption):
 		return
 	var delivery: float = Society.delivery_factor(ns)
-	var text := "Administration delivers %.0f%% of funding." % (delivery * 100.0)
+	var text := tr("Administration delivers %.0f%% of funding.") % (delivery * 100.0)
 	if delivery < 1.0:
 		PanelKit.line(_columns["government"], text, PanelKit.Tone.BAD)
 	else:
@@ -462,7 +462,7 @@ func _fill_programme(ns) -> void:
 	if this_term.is_empty():
 		if Programme.is_term_start(ns):
 			PanelKit.line(_programme_box,
-				"The term's programme is unset -- the Agenda (K) holds the offer.")
+				tr("The term's programme is unset -- the Agenda (K) holds the offer."))
 		else:
 			PanelKit.line(_programme_box, tr("No programme was set this term."))
 		return
@@ -521,15 +521,15 @@ func _entry_fraction(ns, terms: Dictionary) -> float:
 
 func _entry_tooltip(ns, terms: Dictionary, entry: Dictionary) -> String:
 	if terms.is_empty():
-		return "No content behind this entry; it concludes on the next tick."
+		return tr("No content behind this entry; it concludes on the next tick.")
 	var read: Dictionary = Programme.progress_of(ns, terms)
-	var tip := "%.2f against a %.2f goal" % [
+	var tip := tr("%.2f against a %.2f goal") % [
 		float(read["current_value"]), float(read["goal_value"]),
 	]
 	var timeout := int(terms.get("timeout_months", 0))
 	if timeout > 0:
 		var left := timeout - int(entry["months_live"])
-		tip += " · %s to its deadline" % ("1 month" if left <= 1 else "%d months" % left)
+		tip += tr(" · %s to its deadline") % ("1 month" if left <= 1 else tr("%d months") % left)
 	return tip
 
 
@@ -551,7 +551,7 @@ func _build_effect_row(effect: Dictionary) -> Control:
 	row.add_theme_constant_override("separation", 12)
 
 	var label := Label.new()
-	label.text = "%s — %s %d:" % [String(effect["label"]), MONTH_NAMES[int(effect["month"]) - 1], int(effect["year"])]
+	label.text = "%s — %s %d:" % [String(effect["label"]), tr(MONTH_NAMES[int(effect["month"]) - 1]), int(effect["year"])]
 	label.theme_type_variation = UiTheme.CAPTION
 	row.add_child(label)
 
@@ -579,8 +579,8 @@ func _standing_word(ns) -> String:
 	if ns.is_cohabitation:
 		return "cohabitation"
 	if ns.is_minority:
-		return "minority government"
-	return "majority government"
+		return tr("minority government")
+	return tr("majority government")
 
 
 ## Not String.capitalize(), which title-cases every word and would render
@@ -595,7 +595,7 @@ func _satisfaction_word(sat: float) -> String:
 		return "satisfied"
 	if sat < -SATISFACTION_BAND:
 		return "dissatisfied"
-	return "neither pleased nor angry"
+	return tr("neither pleased nor angry")
 
 
 ## Three tones, not two. An electorate that is neither pleased nor angry is not
@@ -613,7 +613,7 @@ func _satisfaction_tone(sat: float) -> PanelKit.Tone:
 
 func _when(months: int) -> String:
 	if months <= 0:
-		return "this month"
+		return tr("this month")
 	return "in %s" % Trends.months_text(months)
 
 
@@ -629,9 +629,9 @@ func _polled_approval(ns) -> float:
 
 func _moved(change: float) -> String:
 	if absf(change) < 0.05:
-		return "flat"
-	var direction := "up" if change > 0.0 else "down"
-	return "%s %.1f points" % [direction, absf(change)]
+		return tr("flat")
+	var direction := tr("up") if change > 0.0 else tr("down")
+	return tr("%s %.1f points") % [direction, absf(change)]
 
 
 func _month_name_ago(months: int) -> String:
@@ -641,5 +641,5 @@ func _month_name_ago(months: int) -> String:
 		index += 12
 		year -= 1
 	if year == int(_state.year):
-		return MONTH_NAMES[index]
-	return "%s %d" % [MONTH_NAMES[index], year]
+		return tr(MONTH_NAMES[index])
+	return "%s %d" % [tr(MONTH_NAMES[index]), year]

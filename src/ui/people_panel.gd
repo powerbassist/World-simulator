@@ -54,12 +54,12 @@ const GROUP_HEAD := 8
 ## from closest to power (politicians, regional figures) outward (press,
 ## unions, courts, activism).
 const KIND_ORDER := [
-	["politician", "The politicians"],
-	["regional_figure", "Regional figures"],
-	["press_owner", "Press owners"],
-	["union_leader", "Union leaders"],
-	["judge", "The bench"],
-	["activist", "Activists"],
+	["politician", "The politicians"],  # i18n: msgid last
+	["regional_figure", "Regional figures"],  # i18n: msgid last
+	["press_owner", "Press owners"],  # i18n: msgid last
+	["union_leader", "Union leaders"],  # i18n: msgid last
+	["judge", "The bench"],  # i18n: msgid last
+	["activist", "Activists"],  # i18n: msgid last
 ]
 
 ## The want voice lives on person_card.gd (STANCE_LABEL / object_text) -- the
@@ -191,9 +191,9 @@ func _build_cabinet(ns) -> void:
 	for f in CK.PORTFOLIO_KEYS:
 		var pid: String = String(ns.cabinet.get(f, ""))
 		if pid == "" or not by_id.has(pid):
-			PanelKit.row(_body, PersonCard.PORTFOLIO_LABEL.get(f, f), tr("VACANT"), PanelKit.Tone.BAD)
+			PanelKit.row(_body, tr(PersonCard.PORTFOLIO_LABEL.get(f, f)), tr("VACANT"), PanelKit.Tone.BAD)
 		else:
-			PanelKit.row(_body, PersonCard.PORTFOLIO_LABEL.get(f, f), String(by_id[pid].party_name))
+			PanelKit.row(_body, tr(PersonCard.PORTFOLIO_LABEL.get(f, f)), String(by_id[pid].party_name))
 
 
 func _build_parties(ns) -> void:
@@ -201,7 +201,7 @@ func _build_parties(ns) -> void:
 	for p in _loader.parties.get(ns.id, []):
 		var seats := int(ns.seats_by_party.get(p.id, 0))
 		var leader: String = String(ns.party_leader_override.get(p.id, p.leader_person_id))
-		_face_row(leader, String(p.party_name), "%s · %d seats" % [_name_of(leader), seats])
+		_face_row(leader, String(p.party_name), tr("%s · %d seats") % [_name_of(leader), seats])
 
 
 ## V4.3's body: the character register, grouped by kind, sorted by standing,
@@ -218,7 +218,7 @@ func _build_character_groups(ns) -> void:
 
 	for entry in KIND_ORDER:
 		var kind: String = entry[0]
-		var label: String = entry[1]
+		var label: String = tr(entry[1])
 		var group: Array = by_kind.get(kind, [])
 		if group.is_empty():
 			continue
@@ -244,7 +244,7 @@ func _person_row(ns, person) -> void:
 	var right := _party_or_kind_line(ns, person)
 	var standing := float(ns.person_standing.get(person.id, 0.0))
 	if standing >= 0.05:
-		right += " · standing %.2f" % standing
+		right += tr(" · standing %.2f") % standing
 	_face_row(person.id, person.person_name, right)
 	for want in person.wants:
 		_want_row(ns, person, want)
@@ -276,7 +276,7 @@ func _want_row(ns, person, want: Dictionary) -> void:
 	var tone := PanelKit.Tone.DIM
 	if stance == "oppose":
 		served = not served
-	var mark := "served" if served else "denied"
+	var mark := tr("served") if served else tr("denied")
 	if not served:
 		tone = PanelKit.Tone.BAD
 	PanelKit.line(_body, "    %s — %s" % [text, mark], tone)

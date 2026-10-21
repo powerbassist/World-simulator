@@ -198,31 +198,31 @@ func _build_result_summary(result: Dictionary) -> Control:
 	# assembly said yes and the country has not been asked. Reading "FAILED" against a
 	# referendum the player just called is the em-dash-against-a-live-figure bug
 	# docs/defence-model.md's screenshot pass found, one block on.
-	var verdict := "PASSED" if result["passed"] else "FAILED"
+	var verdict := tr("PASSED") if result["passed"] else tr("FAILED")
 	if result.get("referendum_called", false):
-		verdict = "PUT TO THE COUNTRY"
+		verdict = tr("PUT TO THE COUNTRY")
 	# V1.1e. Three more outcomes that are not `FAILED`, for the same reason route B
 	# is not: a bill the second chamber is holding has not been beaten, a bill it
 	# blocked was beaten somewhere the tally below does not show, and a bill the court
 	# struck was carried by both chambers and stopped afterwards. One word for four
 	# different things is the readout bug this project keeps finding.
 	elif result.get("held_by_upper", false):
-		verdict = "HELD BY THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
+		verdict = tr("HELD BY THE %s") % result.get("upper_chamber", tr("SECOND CHAMBER")).to_upper()
 	elif result.get("blocked_by_upper", false):
-		verdict = "BLOCKED BY THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
+		verdict = tr("BLOCKED BY THE %s") % result.get("upper_chamber", tr("SECOND CHAMBER")).to_upper()
 	elif result.get("struck_down", false):
-		verdict = "STRUCK DOWN"
+		verdict = tr("STRUCK DOWN")
 	# THE MOOT RELEASE (the ultra pass-6 finding), and it is the same one-word-
 	# per-outcome rule as the four above: a repeal releasing from its hold into
 	# an empty book did not come into force over anybody -- its target was
 	# already gone, nothing followed, and no override price was charged. The
 	# released branch below is the release that DID apply.
 	elif result.get("target_already_gone", false):
-		verdict = "MOOT — its target was already gone from the book."
+		verdict = tr("MOOT — its target was already gone from the book.")
 	# A LAPSED release (V5.0d) is a release too: the hold ran out under a
 	# constitution the bill was not written for, and nothing came into force.
 	elif result.get("released", false):
-		verdict = "LAPSED — the constitution it amended is gone." if result.get("lapsed", false) else "IN FORCE, OVER THE %s" % result.get("upper_chamber", "SECOND CHAMBER").to_upper()
+		verdict = tr("LAPSED — the constitution it amended is gone.") if result.get("lapsed", false) else tr("IN FORCE, OVER THE %s") % result.get("upper_chamber", tr("SECOND CHAMBER")).to_upper()
 	PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN)
 
 	# V2.8 review. Two more outcomes with no division behind them, and the tally
@@ -276,7 +276,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 	# beside it, because the two are the same division read twice.
 	if result.has("upper_passed"):
 		PanelKit.line(box, tr("%s: Yes %d · No %d · Abstain %d, of %d seats") % [
-			result.get("upper_chamber", "Second chamber"),
+			result.get("upper_chamber", tr("Second chamber")),
 			result["upper_yes_seats"], result["upper_no_seats"],
 			result["upper_abstain_seats"], result["upper_seats_total"],
 		], PanelKit.Tone.PLAIN)
@@ -386,7 +386,7 @@ func _rebellion_text(party_rebels: Dictionary) -> String:
 		parts.append("%d %s" % [rebels, party.party_name])
 	if parts.is_empty():
 		return ""
-	return "%d seats broke ranks: %s." % [total, ", ".join(parts)]
+	return tr("%d seats broke ranks: %s.") % [total, ", ".join(parts)]
 
 
 ## A constitutional amendment reads its OWN nation's real threshold rather
@@ -395,13 +395,13 @@ func _rebellion_text(party_rebels: Dictionary) -> String:
 ## does the same lookup. See docs/amendment-model.md.
 func _majority_phrase(ns, law) -> String:
 	if not law.constitutional:
-		return "%s majority" % law.majority
+		return tr("%s majority") % law.majority
 	match ns.amendment_rule:
-		"ordinary_law": return "ordinary majority"
+		"ordinary_law": return tr("ordinary majority")
 		"three_fifths": return "3/5 majority"
 		"two_thirds": return "2/3 majority"
 		"three_quarters": return "3/4 majority"
-		"referendum_required": return "ordinary majority, then a referendum"
+		"referendum_required": return tr("ordinary majority, then a referendum")
 		_: return ns.amendment_rule
 
 
@@ -468,10 +468,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 	if Legislature.can_put_to_referendum(ns, law):
 		var ref_btn := Button.new()
 		ref_btn.text = tr("Referendum")
-		ref_btn.tooltip_text = (
-			"Pass it by an ordinary majority here, then put it to the country in %d months. "
-			+ "Winning is a mandate and losing is a rebuke, and it cannot be called off for free."
-		) % ReferendumK.REFERENDUM_DELAY_MONTHS
+		ref_btn.tooltip_text = tr("Pass it by an ordinary majority here, then put it to the country in %d months. Winning is a mandate and losing is a rebuke, and it cannot be called off for free.") % ReferendumK.REFERENDUM_DELAY_MONTHS
 		ref_btn.pressed.connect(_on_referendum.bind(law))
 		_offer(ref_btn)
 		row.add_child(ref_btn)
@@ -497,7 +494,7 @@ func _build_pending_referendum(ns) -> Control:
 	var months := Referendum.months_left(ns)
 	var share := Referendum.yes_share(ns, ns.referendum_pending.get("position", {}))
 	PanelKit.line(box, tr("The country votes in %d %s. If it voted today: %.1f%% yes, %.1f%% no.") % [
-		months, "month" if months == 1 else "months", share * 100.0, (1.0 - share) * 100.0
+		months, tr("month") if months == 1 else tr("months"), share * 100.0, (1.0 - share) * 100.0
 	], PanelKit.Tone.PLAIN)
 
 	var row := HBoxContainer.new()
@@ -510,10 +507,7 @@ func _build_pending_referendum(ns) -> Control:
 
 	var withdraw_btn := Button.new()
 	withdraw_btn.text = tr("Call it off")
-	withdraw_btn.tooltip_text = (
-		"The same %.2f against every bloc a lost vote would charge, and the same cooldown. "
-		+ "What it buys is the slot back now rather than in %d months."
-	) % [ReferendumK.REFERENDUM_RESULT_OFFSET, months]
+	withdraw_btn.tooltip_text = tr("The same %.2f against every bloc a lost vote would charge, and the same cooldown. What it buys is the slot back now rather than in %d months.") % [ReferendumK.REFERENDUM_RESULT_OFFSET, months]
 	withdraw_btn.pressed.connect(_on_withdraw)
 	_offer(withdraw_btn)
 	row.add_child(withdraw_btn)
@@ -565,9 +559,9 @@ static func forecast_text(ns, party_list: Array, law, band: float) -> String:
 		else:
 			undecided += broke
 
-	var text := "%d for · %d against · %d undecided" % [yes, no, undecided]
+	var text := Strings.t("%d for · %d against · %d undecided") % [yes, no, undecided]
 	if rebels > 0:
-		text += "  (%d expected to break ranks)" % rebels
+		text += Strings.t("  (%d expected to break ranks)") % rebels
 	return text
 
 
@@ -597,22 +591,22 @@ func _after_the_division(ns, party_list: Array, law) -> String:
 		var upper := Legislature.resolve_upper(ns, party_list, law)
 		var margin: int = int(upper["yes_seats"]) - int(upper["no_seats"])
 		if absi(margin) <= int(float(upper["seats_total"]) * FORECAST_UNCERTAIN_BAND):
-			parts.append("%s: too close to call." % ns.upper_chamber_name)
+			parts.append(tr("%s: too close to call.") % ns.upper_chamber_name)
 		elif bool(upper["passed"]):
-			parts.append("%s: expected to agree." % ns.upper_chamber_name)
+			parts.append(tr("%s: expected to agree.") % ns.upper_chamber_name)
 		elif power == ChambersK.VERDICT_ABSOLUTE:
-			parts.append("%s: expected to refuse, and it cannot be overridden." % ns.upper_chamber_name)
+			parts.append(tr("%s: expected to refuse, and it cannot be overridden.") % ns.upper_chamber_name)
 		else:
-			parts.append("%s: expected to refuse, holding it %d months." % [
+			parts.append(tr("%s: expected to refuse, holding it %d months.") % [
 				ns.upper_chamber_name, ChambersK.UPPER_HOLD_MONTHS])
 
 	if Judiciary.reviews(ns, law):
 		var tolerance: float = Judiciary.tolerance(ns)
 		if Judiciary.strikes_down(ns, law):
-			parts.append("The court would strike it down: it reaches %.2f against %.2f." % [
+			parts.append(tr("The court would strike it down: it reaches %.2f against %.2f.") % [
 				law.reach, tolerance])
 		elif law.reach > 0.0:
-			parts.append("The court would let it stand: it reaches %.2f against %.2f." % [
+			parts.append(tr("The court would let it stand: it reaches %.2f against %.2f.") % [
 				law.reach, tolerance])
 
 	return " ".join(parts)
@@ -637,10 +631,10 @@ func _build_held_bill(ns, law_id: String) -> Control:
 	# never pays.
 	if String(ns.held_bills.get(law_id, {}).get("origin", "player")) == "assembly":
 		PanelKit.line(box, tr("The Assembly carried it and the second chamber refused. It comes into force in %s.") % [
-			"one month" if months == 1 else "%d months" % months], PanelKit.Tone.PLAIN)
+			tr("one month") if months == 1 else tr("%d months") % months], PanelKit.Tone.PLAIN)
 	else:
 		PanelKit.line(box, tr("The Assembly carried it and the second chamber refused. It comes into force in %s, and overriding them costs %.2f with every bloc.") % [
-			"one month" if months == 1 else "%d months" % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
+			tr("one month") if months == 1 else tr("%d months") % months, ChambersK.UPPER_OVERRIDE_OFFSET], PanelKit.Tone.PLAIN)
 	return box
 
 
@@ -670,7 +664,7 @@ func _build_assembly_section(ns) -> void:
 		box.add_theme_constant_override("separation", 2)
 		PanelKit.line(box, tr("%s — before the assembly, divides in %d %s.") % [
 			Strings.law_name(law) if law != null else String(entry.get("law_id", "")),
-			months, "month" if months == 1 else "months"], PanelKit.Tone.PLAIN)
+			months, tr("month") if months == 1 else tr("months")], PanelKit.Tone.PLAIN)
 		var firm_id := String(entry.get("backer_firm", ""))
 		if firm_id != "":
 			# The B3 person_name idiom: the chief resolves through the loader
@@ -679,7 +673,7 @@ func _build_assembly_section(ns) -> void:
 			var chief: String = _loader.person_name(String(entry.get("backer_chief", "")))
 			PanelKit.line(box, tr("%s's chief %s backs this bill.") % [
 				_loader.firm_name(ns.id, firm_id),
-				chief if chief != "" else "the chief"], PanelKit.Tone.PLAIN)
+				chief if chief != "" else tr("the chief")], PanelKit.Tone.PLAIN)
 		if float(entry.get("endorse_bonus", 0.0)) != 0.0:
 			PanelKit.line(box, tr("Endorsed — the president's stand is on the record."), PanelKit.Tone.PLAIN)
 		else:
@@ -697,10 +691,7 @@ func _build_endorse_button(bill_id: String) -> Control:
 		price_bits.append("%s %+.2f" % [String(bloc).capitalize(), float(StatuteK.PMB_ENDORSE_PRICE[bloc])])
 	var endorse_btn := Button.new()
 	endorse_btn.text = tr("Endorse")
-	endorse_btn.tooltip_text = (
-		"Stand behind the bill publicly: %+.2f on every party's support line at its division, "
-		+ "priced now as executive activism (%s). One stand per bill."
-	) % [StatuteK.PMB_ENDORSE_SUPPORT, ", ".join(price_bits)]
+	endorse_btn.tooltip_text = tr("Stand behind the bill publicly: %+.2f on every party's support line at its division, priced now as executive activism (%s). One stand per bill.") % [StatuteK.PMB_ENDORSE_SUPPORT, ", ".join(price_bits)]
 	endorse_btn.pressed.connect(_on_endorse.bind(bill_id))
 	_offer(endorse_btn)
 	row.add_child(endorse_btn)
@@ -714,7 +705,7 @@ func _build_endorse_button(bill_id: String) -> Control:
 func _on_endorse(bill_id: String) -> void:
 	var result: Dictionary = Statute.endorse(_state, _state.player(), _loader, bill_id)
 	_endorse_refusal = "" if bool(result.get("ok", false)) \
-		else String(result.get("refusal", "The assembly refused the stand."))
+		else String(result.get("refusal", tr("The assembly refused the stand.")))
 	_dirty = true
 
 
