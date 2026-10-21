@@ -17,6 +17,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
@@ -273,6 +274,7 @@ var _cluster := ""
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
 var _lang := ""  ## --lang CODE: the interface language of the staged game (default English)
+var _play := ""  ## --play ID: the played nation of the staged game (default France)
 var _defence := false
 
 ## U6a, and --coerce's argument a sixth time. A new game's diary is EMPTY inside
@@ -698,6 +700,8 @@ func _init() -> void:
 			_nation = args[i + 1].to_upper()
 		elif args[i] == "--lang" and i + 1 < args.size():
 			_lang = args[i + 1]
+		elif args[i] == "--play" and i + 1 < args.size():
+			_play = args[i + 1].to_upper()
 
 	# Before anything is built: tr() text is the language it was built in.
 	if _lang != "" and not Strings.set_language(_lang):
@@ -706,6 +710,8 @@ func _init() -> void:
 		_main = load("res://src/ui/menu.tscn").instantiate()
 	else:
 		_main = load("res://src/ui/main.tscn").instantiate()
+		if _play != "":
+			_main.pending_player_id = _play
 	root.add_child(_main)
 
 

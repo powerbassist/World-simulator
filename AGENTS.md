@@ -265,12 +265,12 @@ accent or drops an edge. The U5a brass hairline is gone; do not bring it back as
 a "signature".
 
 The accent is chosen by a **rule over the flag's bands** (`src/ui/accent_rule.gd`,
-`data/nations/*.json`), never by nation id: the first band with enough chroma
-whose hue, **shifted** if it falls within 24° of a state tone (alert red,
+`data/nations/*.json`), never by nation id: of the bands with enough chroma, the one
+that needs the **smallest** hue shift (ties to file order), its hue **shifted** if it falls within 24° of a state tone (alert red,
 good-news green, attention amber) to the nearest clear edge of that zone, and
 lifted in HSL lightness to WCAG AA (4.5:1) on the lightest graphite surface
 (SLATE, where the accent is read as text), still qualifies. Polish crimson
-becomes raspberry; the flag's colour family survives and is never mistaken for a
+becomes raspberry, German gold a bright yellow; the flag's colour family survives and is never mistaken for a
 state. `UiTheme.ACCENT_FALLBACK` is for a flag with no chroma at all, and for the
 menu. **Two kinds of colour, never mixed:** IDENTITY follows the nation
 (`UiTheme.accent()` -- the open cluster's bar, focus, fills, today's mark, the
