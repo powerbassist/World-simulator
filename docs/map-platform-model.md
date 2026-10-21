@@ -537,7 +537,9 @@ takes the playable colour at full alpha instead of white, the weakest line there
 rest; the mark changes (a capital is ringed, tier 3 is thinner), the size stays `radius_of()`.
 Capitals are a folded name match against `data/nations/*.json` — 39 of 41 matched exactly, MDA's
 "Chișinău" folds onto the city "Chisinau", and **MLT is a bound**: Valletta is below the city
-register's cut, so Malta's largest city carries the ring.
+register's cut, so Malta's largest city carries the ring. Since V5.1-0d the rule is
+`src/core/capital.gd`, and the diary's travel pricing and the campaign's tour read the same one:
+they matched exactly and priced MDA and MLT at the travel ceiling (the test audit's G1).
 
 ### Names: the placer and the band
 

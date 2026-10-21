@@ -396,10 +396,16 @@ these were measured and left.
 - **A test can print "all checks passed" over a subject that never compiled.** Mid-build,
   a parse error in `budget_panel.gd` left `tests/test_budget_panel.gd` reporting all checks
   passed (exit 0) over six SCRIPT ERRORs: its panel was Nil, every check's guard
-  short-circuited, and `suite_runner.py` judges by exit code alone. A sibling test that
+  short-circuited. A sibling test that
   `preload`s the broken file hangs instead (the SceneTree never quits) until the runner's
-  timeout. **Owner:** the next block that touches `tools/`. **Fix shape:** the runner
-  fails a test whose log carries `Parse Error` or `Compilation failed`, whatever its exit.
+  timeout. **Corrected by the test audit (2026-10-21), closed in part at V5.1-0d:** the
+  runner never judged by exit code alone -- its verdict has failed on `SCRIPT ERROR` /
+  `Parse Error` since V2.1c, and the audit's repro went red through it; the lie is a test
+  run by hand with `godot --script`. Since V5.1-0d (S7) the runner also fails a test on
+  any `ERROR:` line it did not declare (`## expects-error: <regex>`), the engine's exit
+  leak report excepted. **Still open:** the hang -- a frame-driven test should
+  `_finish()` when its scene failed to load (test_shell's guard) rather than read through
+  a Nil scene until the 1 800 s timeout.
 - **An OPEN panel's own refresh is still a frame at the month's end.** The visible-only
   gate makes a closed window free; an open one redraws on the month's sweep, and some
   are slow: law 174 ms, commodities ~60, city ~57, people ~52 (the fix pass's figures).

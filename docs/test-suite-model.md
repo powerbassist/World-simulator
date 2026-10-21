@@ -25,9 +25,10 @@ Gate semantics — the table the whole suite stands on:
 
 | child outcome | verdict |
 |---|---|
-| exit 0, no `SCRIPT ERROR`/`Parse Error` in output | pass |
+| exit 0, no `SCRIPT ERROR`/`Parse Error` and no undeclared `ERROR:` line in output | pass |
 | non-zero exit | fail |
 | exit 0 **with** a script error in output | fail — quit(0) over a broken parse is V2.1c's silent-red class, and the gate exists because of it |
+| exit 0 **with** a line starting `ERROR:` / `USER ERROR:`, or the save path's `WARNING: ... NaN ... JSON.stringify` | fail (S7, V5.1-0d) — test_diplomacy passed for months over G1's two capital errors. Not counted: the engine's exit report `ERROR: N resources still in use at exit`, and any line matching a regex the test declares in its own source, `## expects-error: <regex>` (beside the call that provokes it) |
 | exceeds `--timeout` (default 1800 s) | child killed, status `timeout`, red — a hang is red, not silent |
 | `[MCPRuntimeServer]`/`[MCPRegistry]` lines | filtered from DISPLAY, never from the verdict scan — V1.7c's rule: filter the bridge noise, do not let the filter hide a third line |
 
