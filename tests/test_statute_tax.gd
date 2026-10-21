@@ -140,6 +140,7 @@ func _test_commit_yield_gate() -> void:
 		return
 	# The crank: 100 points on a 4.0 base is 400 of GDP. Refused, and the
 	# register keeps the birth rate -- the rate the books actually price.
+	## expects-error: budget: base .* rate for 'windfall' refused
 	Budget.commit(gs, {"tax_rates_pct": {"windfall": 100.0}})
 	if not is_equal_approx(float(ns.tax_rates_pct.get("windfall", -1.0)), 3.0):
 		_fail("an over-ceiling commit applied the rate -- refuse, never clamp, got %s" % ns.tax_rates_pct.get("windfall"))
@@ -353,6 +354,7 @@ func _test_commit_sees_custom_keys() -> void:
 	Budget.commit(gs, {"tax_rates_pct": {KEY: 30.0}})
 	if not is_equal_approx(float(ns.tax_rates_pct.get(KEY, -1.0)), 30.0):
 		_fail("commit must apply a pending CUSTOM rate, got %s" % ns.tax_rates_pct.get(KEY))
+	## expects-error: budget: pending rate for tax key 'not_a_tax' with no params on the register
 	Budget.commit(gs, {"tax_rates_pct": {"not_a_tax": 5.0}})
 	if ns.tax_rates_pct.has("not_a_tax"):
 		_fail("a pending rate with no params on the register must be refused -- the silent half-tax")
@@ -555,6 +557,7 @@ func _test_yield_cap_gates_the_reoffer() -> void:
 		_fail("the anchor birth's re-passage was offered -- it would price 24 of GDP")
 	# The commit backstop still holds: a direct crank is refused, the live
 	# birth rate kept.
+	## expects-error: budget: base .* rate for 'windfall' refused
 	Budget.commit(gs, {"tax_rates_pct": {"windfall": 100.0}})
 	if not is_equal_approx(float(ns.tax_rates_pct.get("windfall", -1.0)), 3.0):
 		_fail("the yield backstop no longer keeps the birth rate")

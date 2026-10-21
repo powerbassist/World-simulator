@@ -2,7 +2,8 @@
 """The suite's one execution core (V3.6 tooling, 2026-09-11 spec).
 
 tools/run_tests.sh keeps the registry and delegates here so the gate's
-semantics live in exactly one place: non-zero exit or a SCRIPT ERROR in the
+semantics live in exactly one place: non-zero exit, a SCRIPT ERROR, or an
+`ERROR:` line the test did not declare (`## expects-error: <regex>`) in the
 output is a failure, MCP bridge noise is filtered from display but never
 from the verdict, any failure exits 1. Agents run `--ci`; the cockpit reads
 the same events. Stdlib only -- a cold clone needs nothing installed.
@@ -38,6 +39,17 @@ REPORTS = REPO / "reports"
 # lesson: filter the bridge noise, never let it hide a real line).
 MCP_NOISE = re.compile(r"^\[MCP(RuntimeServer|Registry)\]")
 SCRIPT_ERROR = re.compile(r"SCRIPT ERROR|Parse Error")
+# S7 (V5.1-0d, the test audit's proposal): a test that exits 0 over an engine or
+# push_error line used to pass -- test_diplomacy carried G1's two capital errors
+# on every run. Now any line that STARTS with ERROR:, or the save path's
+# NaN-in-JSON warning, fails it, unless it is the engine's exit-time leak report
+# (printed by the engine after the script is done, nothing a test can own) or it
+# matches a regex the test declares in its own source with `## expects-error:`.
+ERROR_LINE = re.compile(r"^(?:USER )?ERROR:.*$|^WARNING:.*NaN.*JSON\.stringify.*$",
+                        re.MULTILINE)
+EXIT_LEAK = re.compile(r"^ERROR: \d+ resources still in use at exit")
+EXPECTS_TAG = re.compile(r"^[ \t]*## expects-(?:error|warning): *(.+?)\s*$",
+                         re.MULTILINE)
 # Tags read from the test's own source -- run_tests.sh counts the directory
 # the same way rather than keeping a second list.
 EXCLUSIVE_TAG = re.compile(r"^## suite-exclusive: *(.+)$", re.MULTILINE)
@@ -93,10 +105,47 @@ def filter_noise(lines: list[str]) -> list[str]:
     return [ln for ln in lines if not MCP_NOISE.match(ln)]
 
 
-def child_verdict(out: str, rc: int) -> str:
-    if rc == 0 and not SCRIPT_ERROR.search(out):
-        return "pass"
-    return "fail"
+def child_verdict(out: str, rc: int, expected=()) -> str:
+    if rc != 0 or SCRIPT_ERROR.search(out):
+        return "fail"
+    for m in ERROR_LINE.finditer(out):
+        line = m.group(0)
+        # A tag matches as a regex or, failing that, as literal text: an engine
+        # line full of parentheses is easier to paste than to escape.
+        if EXIT_LEAK.match(line) or any(p.search(line) or p.pattern in line
+                                        for p in expected):
+            continue
+        return "fail"
+    return "pass"
+
+
+def read_expected_from(src: str) -> list:
+    """The `## expects-error: <regex>` tags (`## expects-warning:` is the same tag,
+    for the NaN warning) in a test's source, compiled. A tag
+    that is not a valid regex is matched literally rather than crashing the run."""
+    out = []
+    for text in EXPECTS_TAG.findall(src):
+        try:
+            out.append(re.compile(text))
+        except re.error:
+            out.append(re.compile(re.escape(text)))
+    return out
+
+
+def read_expected(test: str) -> list:
+    try:
+        return read_expected_from((REPO / test).read_text(encoding="utf-8"))
+    except OSError:
+        return []
+
+
+def tolerant_console(stream):
+    """A console that cannot encode a character prints '?' rather than raising:
+    a cp1252 Windows console died on G1's 'ș' printing a failing log, before
+    results.json was written. Returns the stream, reconfigured in place."""
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(errors="replace")
+    return stream
 
 
 def read_tags_from(src: str) -> tuple[bool, list[str]]:
@@ -124,7 +173,7 @@ def _kill_live_children() -> None:
             pass
 
 
-def run_child(cmd: list[str], timeout: float) -> tuple[str, int, str]:
+def run_child(cmd: list[str], timeout: float, expected=()) -> tuple[str, int, str]:
     """Returns (filtered output, exit code, status)."""
     proc = subprocess.Popen(
         cmd, cwd=str(REPO), stdout=subprocess.PIPE,
@@ -135,7 +184,7 @@ def run_child(cmd: list[str], timeout: float) -> tuple[str, int, str]:
         _LIVE_CHILDREN.add(proc)
     try:
         out, _ = proc.communicate(timeout=timeout)
-        rc, status = proc.returncode, child_verdict(out or "", proc.returncode)
+        rc, status = proc.returncode, child_verdict(out or "", proc.returncode, expected)
     except subprocess.TimeoutExpired as e:
         proc.kill()  # subprocess.run's own timeout path does the same
         out = e.stdout if isinstance(e.stdout, str) else ""
@@ -205,6 +254,7 @@ def run_parallel(tests: list[str], jobs: list[tuple[str, str | None, list[str]]]
     tags = {t: read_tags(t) for t in tests}
     exclusive_tests = {t for t, (ex, _c) in tags.items() if ex}
     shard_checks = {t: c for t, (_ex, c) in tags.items()}
+    expected = {t: read_expected(t) for t in tests}
 
     # Children complete out of order; the log is assembled LATER, in the
     # tag's listed order, so the sharded artifact stays byte-identical to
@@ -216,7 +266,7 @@ def run_parallel(tests: list[str], jobs: list[tuple[str, str | None, list[str]]]
         t0 = time.monotonic()
         if check is not None:
             writer.event({"event": "child_start", "test": test, "check": check})
-        out, rc, status = run_child(cmd, timeout)
+        out, rc, status = run_child(cmd, timeout, expected[test])
         rec = {"out": out, "status": status, "start": t0,
                "end": time.monotonic()}
         if check is None:
@@ -387,6 +437,47 @@ def _selftest() -> int:
            "exit 0 over a script error must fail (V2.1c)")
     expect(child_verdict("x", 1) == "fail", "non-zero exit must fail")
 
+    # S7 (V5.1-0d): an engine or push_error line fails a test that exits 0,
+    # unless it is the engine's exit-time leak report or the test declared it.
+    expect(child_verdict("ERROR: boom\n   at: f (res://x.gd:1)", 0) == "fail",
+           "exit 0 over an ERROR line must fail")
+    expect(child_verdict("USER ERROR: boom", 0) == "fail",
+           "exit 0 over a USER ERROR line must fail")
+    expect(child_verdict("WARNING: `NaN` (\"Not a Number\") found in argument "
+                         "passed to JSON.stringify(). `NaN` cannot be represented",
+                         0) == "fail",
+           "exit 0 over a NaN-in-save warning must fail")
+    expect(child_verdict("ERROR: 28 resources still in use at exit (run with "
+                         "--verbose for details).", 0) == "pass",
+           "the engine's exit leak report must not fail a test")
+    expect(child_verdict("note: an ERROR: mid-line is not the engine's", 0) == "pass",
+           "only a line that STARTS with ERROR: counts")
+    declared = read_expected_from("extends SceneTree\n"
+                                  "\t## expects-error: test_x: expected .*\n"
+                                  "## expects-error: Parse JSON failed\n")
+    expect([d.pattern for d in declared] == ["test_x: expected .*", "Parse JSON failed"],
+           "expects-error tag parse: %r" % [d.pattern for d in declared])
+    expect(child_verdict("ERROR: test_x: expected error", 0, declared) == "pass",
+           "a declared ERROR line must pass")
+    expect(child_verdict("ERROR: test_x: expected error\nERROR: other", 0,
+                         declared) == "fail",
+           "a declared line must not excuse an undeclared one")
+    nan_tag = read_expected_from('\t## expects-warning: `NaN` ("Not a Number") found\n')
+    expect(child_verdict('WARNING: `NaN` ("Not a Number") found in argument passed '
+                         'to JSON.stringify().', 0, nan_tag) == "pass",
+           "an expects-warning tag with parentheses must match its line literally")
+
+    # The cp1252 crash: a failing log printed to a Windows console met 'ș' in
+    # G1's capital line and died before results.json was written.
+    import io
+    console = tolerant_console(io.TextIOWrapper(io.BytesIO(), encoding="cp1252",
+                                                errors="strict"))
+    try:
+        console.write("capital 'Chișinău'\n")
+        console.flush()
+    except UnicodeEncodeError as e:
+        expect(False, "a cp1252 console still dies on a log line: %s" % e)
+
     # Shard normalization: the green collapse and the red order (Task 4), plus
     # the banner rule the baselines forced -- a shard child is its own godot
     # process, so the concat carries the banner once per child while the
@@ -466,6 +557,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    tolerant_console(sys.stdout)
+    tolerant_console(sys.stderr)
 
     if args.selftest:
         return _selftest()

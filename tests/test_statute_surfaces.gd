@@ -144,6 +144,7 @@ func _run() -> void:
 	# (push_error + skip, never a silent clamp), and the register keeps the
 	# birth rate.
 	var heavy_rate: float = float(ns.tax_rates_pct["heavy"])
+	## expects-error: budget: base .* rate for 'heavy' refused
 	Budget.commit(state, {"tax_rates_pct": {"heavy": 100.0}})
 	if not is_equal_approx(float(ns.tax_rates_pct["heavy"]), heavy_rate):
 		_fail("an over-ceiling commit applied the rate -- it must refuse, not clamp")

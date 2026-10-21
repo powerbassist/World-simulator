@@ -84,6 +84,7 @@ func _check_missing_key_is_not_a_zero() -> void:
 	# The next call pushes an error ON PURPOSE -- that is the whole mechanism. Said
 	# out loud so a green suite carrying an ERROR line does not read as a failure.
 	print("test_panel_kit: the ERROR below is the assertion, not a fault")
+	## expects-error: panel_kit: no 'gini_effective' in this snapshot
 	var missing := PanelKit.figure_text(snap, "gini_effective")
 	if missing != PanelKit.MISSING:
 		_fail("a key that is not in the snapshot printed '%s' rather than an em dash" % missing)

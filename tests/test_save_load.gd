@@ -1532,6 +1532,7 @@ func _check_referendum_fields(loader) -> void:
 	var no_system: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
 	(no_system["nations"]["FRA"] as Dictionary).erase("election_system")
 	var dropped_system = GameState.from_dict(no_system)
+	## expects-error: electoral_systems: unknown system ''
 	var seats := ElectoralSystems.allocate(
 		dropped_system.player().election_system,
 		{"a": 0.6, "b": 0.4}, 100, 0.0
