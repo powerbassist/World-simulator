@@ -75,8 +75,10 @@ const CONTINUED_MONTHS := 12
 const FLOAT_EPS := 1e-6
 const FLOAT_REL_EPS := 1e-12
 ## Check 5's floor on the floats that come back bit-exact, set between the two
-## writers' measured shares on this fixture (see _check_fidelity()).
-const EXACT_SHARE_FLOOR := 0.0
+## writers' measured shares on this fixture: 0.414 with the 15-digit writer
+## (12 678 of 30 609), 0.883 with full_precision (27 034) -- what is left is the
+## parser's, so the floor sits clear of both rather than at 1.0.
+const EXACT_SHARE_FLOOR := 0.75
 
 var _failures: Array[String] = []
 var _loader

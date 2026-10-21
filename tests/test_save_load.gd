@@ -84,10 +84,15 @@ const FLOAT_EPS := 1e-6
 ## And a RELATIVE partner, because the absolute bound above is unsatisfiable at
 ## the commodity register's own scale -- measured, not assumed. `capacity` holds
 ## figures up to ~2e11 (transport_services), where one double ULP is 3.05e-5, so
-## JSON's ~15-significant-digit form comes back up to 3.7e-4 different: 370x the
-## absolute bound, and no `JSON.stringify` setting removes it (full_precision
-## shrinks it to 1 ULP, still 30x over). This clause is not a loosening of the
-## absolute one: it only accepts what the magnitude's own representation error
+## JSON's ~15-significant-digit form came back up to 3.7e-4 different: 370x the
+## absolute bound. The save now writes full_precision (shortest exact digits),
+## which shrinks that to a few ULP, still over the absolute bound -- and what is
+## left is Godot's parser, not the text: JSON.parse_string reads numbers through
+## built_in_strtod, which is not correctly rounded, so no `JSON.stringify`
+## setting removes it. test_save_continuity.gd check 5 pins the writer's half
+## (no float moves past this relative bound, small ones included). This clause
+## is not a loosening of the absolute one: it only accepts what the magnitude's
+## own representation error
 ## can explain, and the margin is measured -- worst realised relative error is
 ## 7.3e-14 (a gdp residual), so 1e-12 carries ~14x slack while a genuinely lost
 ## or re-derived figure moves by orders more. The floor stays 1e-6 so every
