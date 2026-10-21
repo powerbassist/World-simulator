@@ -30,6 +30,7 @@ const Trade = preload("res://src/sim/trade.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const DisciplineK = preload("res://src/sim/discipline_constants.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 
 ## The harnesses that run the real month. Each must call WorldMonth.tick_month in
 ## code (a comment naming it is not a call).
@@ -86,6 +87,7 @@ func _init() -> void:
 	_check_every_harness_runs_the_month()
 	_check_no_hand_copy_is_left()
 	_check_each_step_runs_its_system()
+	_check_every_step_has_an_arm()
 	_finish()
 
 
@@ -198,8 +200,16 @@ func _check_each_step_runs_its_system() -> void:
 	# Calendar: a resolved booking older than the strip keeps is pruned.
 	var stale := {"kind": "stale", "year": 2000, "month": 1, "day": 1, "status": CalendarK.STATUS_DONE}
 	state.appointments.append(stale)
-	# Discipline: a party knocked to the floor converges back toward its target.
-	var party = _loader.parties["FRA"][0]
+	# Discipline: a party knocked to the floor converges back toward its target --
+	# a party whose target is above the floor, or a running step could leave it.
+	var party = null
+	for candidate in _loader.parties["FRA"]:
+		if Discipline.target(state, ns, candidate) > DisciplineK.DISCIPLINE_MIN + 0.01:
+			party = candidate
+			break
+	if party == null:
+		_fail("no FRA party has a discipline target above the floor to stage the Discipline step")
+		return
 	ns.party_discipline[party.id] = DisciplineK.DISCIPLINE_MIN
 	# Dissolution: the lockout after a dissolution counts down.
 	ns.dissolution_lockout_remaining = 5
@@ -232,6 +242,31 @@ func _check_each_step_runs_its_system() -> void:
 		_fail("Investment: capital at 0 under intensity 1 did not move in a month -- the step did not run")
 	if float(ns.campaign_saturation.get("probe_region", 0.0)) >= 1.0:
 		_fail("Campaign: saturation 1.0 did not decay in a month -- the step did not run")
+
+
+## The other half of (4), for the steps no fingerprint covers: _step() matches on
+## the step's NAME and has no default arm, so a STEPS entry renamed without its
+## arm, or an arm renamed without its entry, runs nothing and the hook still
+## records the name in order. Read off the source, as the harness scan is.
+func _check_every_step_has_an_arm() -> void:
+	var src := FileAccess.get_file_as_string("res://src/sim/world_month.gd")
+	var start := src.find("static func _step(")
+	if start < 0:
+		_fail("world_month.gd has no _step() to read the step arms from")
+		return
+	var stop := src.find("\nstatic func ", start + 1)
+	var body := src.substr(start, stop - start if stop > start else -1)
+	var arms := {}
+	for line in body.split("\n"):
+		var stripped := line.strip_edges()
+		if stripped.begins_with("\"") and stripped.ends_with("\":"):
+			arms[stripped.trim_prefix("\"").trim_suffix("\":")] = true
+	for step in WorldMonth.STEPS:
+		if not arms.has(step):
+			_fail("STEPS names '%s' and _step() has no arm for it -- the step runs nothing" % step)
+	for arm in arms.keys():
+		if not WorldMonth.STEPS.has(arm):
+			_fail("_step() has an arm for '%s', which STEPS does not name -- it never runs" % arm)
 
 
 func _check_every_harness_runs_the_month() -> void:

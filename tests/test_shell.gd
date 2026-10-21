@@ -625,6 +625,9 @@ func _check_a_closed_window_costs_nothing() -> void:
 ## hidden both fail here.
 func _begin_a_month_with_every_window_shut() -> bool:
 	_main._windows.close_all()
+	# Nothing in flight before the month: the forecast's projection is drained,
+	# so a job found after it began with its window shut.
+	_main._budget_panel._forecast.drain()
 	for id in _main._windows.panel_ids():
 		var panel = _main._windows.frame(id)._content
 		if "_dirty" in panel:
@@ -645,13 +648,19 @@ func _check_the_month_left_every_closed_panel_dirty() -> void:
 	var checked := 0
 	for id in _main._windows.panel_ids():
 		var panel = _main._windows.frame(id)._content
-		if not ("_dirty" in panel):
+		if not ("_dirty" in panel) or _main._windows.is_open(id):
 			continue
 		if not panel._dirty:
 			_fail("after a month with every window shut, the '%s' panel is clean -- it refreshed hidden, or the month never marked it" % id)
 		checked += 1
 	if checked < 20:
 		_fail("only %d registered panels were read after the shut month" % checked)
+	# The budget's forecast has a gate of its own (budget_forecast.gd's
+	# is_visible_in_tree()), and the forecast test reaches it only through the
+	# panel's own hide(), which a `visible` gate passes too -- P2's exact trap.
+	# The month made "now" due; with the window shut it must not begin.
+	if not _main._windows.is_open("budget") and _main._budget_panel._forecast._job != null:
+		_fail("the budget forecast began a projection with its window shut")
 
 
 ## V5.1-0a review pass 1: the Tax Code window commits through Budget.commit()

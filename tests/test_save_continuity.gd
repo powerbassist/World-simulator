@@ -116,15 +116,7 @@ func _play_commands(state) -> void:
 		_fail("the state visit to %s was refused" % PARTNER)
 	var treaty = _diplomatic_by_effect("agreement", "enter")
 	if treaty != null and not bool(Diplomacy.execute(state, _loader.diplomatic_actions, treaty, PLAYER, PARTNER)["applied"]):
-		# Diplomacy's own gate (relations, the partner's verdict) decides whether
-		# a treaty is on offer; the register is what this test needs, so the verb's
-		# own writer is called with the real action when the gate says no.
-		state.agreements[Relations.key(PLAYER, PARTNER)] = {
-			"action_id": treaty.id, "action_name": treaty.action_name,
-			"since_year": state.year, "since_month": state.month,
-			"weight_multiplier": float(treaty.effects["agreement"].get("weight_multiplier", 1.0)),
-			"sector_shift": (treaty.effects["agreement"].get("sector_shift", {}) as Dictionary).duplicate(true),
-		}
+		_fail("the treaty with %s was refused" % PARTNER)
 	var tariff = _diplomatic_by_effect("measure", "impose")
 	if tariff != null and not bool(Diplomacy.execute(state, _loader.diplomatic_actions, tariff, PLAYER, RIVAL)["applied"]):
 		_fail("the tariff on %s was refused" % RIVAL)

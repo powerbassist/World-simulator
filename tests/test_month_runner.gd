@@ -81,8 +81,10 @@ func _check_the_budget_slices_the_month(loader) -> void:
 		s.year = 2026
 		s.month = 2
 	var units := 0
+	var keys := {}
 	var cursor = WorldMonth.begin(twin, loader)
 	while not WorldMonth.done(cursor):
+		keys[WorldMonth.unit_key(cursor)] = true
 		WorldMonth.run_unit(cursor)
 		units += 1
 
@@ -91,9 +93,8 @@ func _check_the_budget_slices_the_month(loader) -> void:
 	var held := Node.new()
 	var finished := [false]
 	runner.run(watched, loader, Callable(), func(_report: Dictionary) -> void: finished[0] = true, clock, held)
-	for step in range(WorldMonth.STEPS.size()):
-		for unit in range(256):
-			runner._cost["%d:%d" % [step, unit]] = MonthRunner.FRAME_BUDGET_USEC + 1
+	for key in keys.keys():
+		runner._cost[key] = MonthRunner.FRAME_BUDGET_USEC + 1
 	var frames := 0
 	while runner.running() and frames <= units + 1:
 		runner._process(0.0)
