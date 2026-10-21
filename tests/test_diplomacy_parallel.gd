@@ -11,6 +11,8 @@ extends SceneTree
 ##
 ##   1. The pool really fans out: one fan-out's elements run on more than one
 ##      thread, and the memo phase is `active` inside it and clear after it.
+##      And element 0 runs first, alone, on the calling thread (parallel.gd
+##      rule 5, G2): every other element starts after it has finished.
 ##   2. Each memo is read-only while `active`: a miss computes the same value and
 ##      stores nothing (Org.shared_bonus, the trade turn memo, Cycle's two); and a
 ##      vector built from Trade's masses table is the vector pow() builds.
@@ -67,12 +69,14 @@ func _check_pool_fans_out() -> void:
 	var slots: Array = Parallel.slots(n)
 	Parallel.each(n, func(i: int) -> void:
 		var slot: Dictionary = slots[i]
+		slot["start"] = Time.get_ticks_usec()
 		var spin := 0.0
 		for k in 20000:
 			spin += sqrt(float(k + i))
 		slot["thread"] = OS.get_thread_caller_id()
 		slot["active"] = Parallel.active
-		slot["spin"] = spin)
+		slot["spin"] = spin
+		slot["end"] = Time.get_ticks_usec())
 	var threads := {}
 	for slot in slots:
 		threads[slot["thread"]] = true
@@ -82,6 +86,13 @@ func _check_pool_fans_out() -> void:
 		_fail("64 elements ran on %d thread(s) -- the pool did not fan out" % threads.size())
 	if Parallel.active:
 		_fail("the memo phase is still active after the join")
+	# Rule 5: the elements' code is first executed on the calling thread, alone.
+	if int(slots[0]["thread"]) != OS.get_main_thread_id():
+		_fail("element 0 ran on thread %d, not the calling thread -- the pool's first run of the path is concurrent (G2)" % int(slots[0]["thread"]))
+	for i in range(1, n):
+		if int(slots[i]["start"]) < int(slots[0]["end"]):
+			_fail("element %d started before element 0 finished -- the path was not primed alone (G2)" % i)
+			break
 
 
 func _check_memos_read_only(state) -> void:
