@@ -112,6 +112,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[vault]] — how this vault is set up: excluded folders, what each plugin is for, the templates
 - [[vault-dashboard]] — live views over the docs (Dataview) and the open author calls (Tasks)
 - [[architecture.excalidraw|architecture]] — the `data → sim → ui` rule as a drawing
+- [[shell]] — the BUREAU shell as a canvas (map, workspace, HUD, screen stack) and the sidebar's domains and tabs, generated from `domains.gd`
 - [[2026-09-07-v3.3-roster-eu27]] — the one committed build plan (the others are gitignored scratch)
 
 ## Brainstorm

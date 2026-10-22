@@ -1,0 +1,229 @@
+{
+	"nodes": [
+		{
+			"id": "4659230b9bb79185",
+			"type": "group",
+			"x": -40,
+			"y": -70,
+			"width": 2240,
+			"height": 330,
+			"label": "The screen, back to front (src/ui/main.gd:255-295)",
+			"color": "5"
+		},
+		{
+			"id": "37745ed7a0f005fb",
+			"type": "text",
+			"x": 0,
+			"y": 0,
+			"width": 400,
+			"height": 220,
+			"text": "## 1 Map\n`MapView`, full rect, the world. Everything else draws over it.\n\n`src/ui/map_view.gd`"
+		},
+		{
+			"id": "a279fe916f63b016",
+			"type": "text",
+			"x": 480,
+			"y": 0,
+			"width": 400,
+			"height": 220,
+			"text": "## 2 Workspace\n`WindowManager`: one tab open at a time, docked left, back and forward walk the player's path. 23 panels registered, none edited when the shell changed.\n\n`src/ui/window_manager.gd`"
+		},
+		{
+			"id": "6a8e2399923d653e",
+			"type": "text",
+			"x": 960,
+			"y": 0,
+			"width": 400,
+			"height": 220,
+			"text": "## 3 HUD\n`Hud`: title bar, sidebar, figure strip, legend, inbox, ribbon, portrait card and clock. A layout only: it owns no state.\n\n`src/ui/hud.gd`"
+		},
+		{
+			"id": "b26dc72d261a92c1",
+			"type": "text",
+			"x": 1440,
+			"y": 0,
+			"width": 400,
+			"height": 220,
+			"text": "## 4 Screen stack\n`ScreenStack`: what owns the screen above the HUD. Ranks MAP -1, WORKSPACE 0, INBOX 1, PLACEMENT 2, SCENE 3, SYSTEM 4; the glossary tooltips are its last child.\n\n`src/ui/screen_stack.gd`"
+		},
+		{
+			"id": "e2346381bb8eb382",
+			"type": "text",
+			"x": 1920,
+			"y": 0,
+			"width": 240,
+			"height": 220,
+			"text": "## 5 Dev console\nF12, debug builds only, above everything.\n\n`src/ui/dev_console.gd`",
+			"color": "1"
+		},
+		{
+			"id": "e8a42c4c4a198b06",
+			"type": "text",
+			"x": 480,
+			"y": 340,
+			"width": 400,
+			"height": 240,
+			"text": "### Domains\nWhich tab sits under which heading is one table: `TABLE` in `src/ui/domains.gd`. 22 tabs in 14 rows; a window in no row becomes its own one-tab domain. A scene (the summit) is in no domain. Drawn on [[shell]]."
+		},
+		{
+			"id": "fbe6e9cfe1f5a245",
+			"type": "text",
+			"x": 480,
+			"y": 620,
+			"width": 400,
+			"height": 150,
+			"text": "### Tab page\nA scroll around a panel that knows nothing about it, plus the fold mark: `src/ui/tab_page.gd`."
+		},
+		{
+			"id": "b90d94578d1a5275",
+			"type": "text",
+			"x": 960,
+			"y": 340,
+			"width": 400,
+			"height": 430,
+			"text": "### The chrome\n- `src/ui/title_bar.gd`: back, forward, where you are, why the clock is held, date, speeds, save, menu\n- `src/ui/sidebar.gd`: portrait card, Inbox, Agenda, then the domains\n- `src/ui/top_bar.gd`: the figure strip, folds into +N\n- `src/ui/inbox.gd`: Decisions, Requests, Notes; a decision is never evicted\n- `src/ui/map_legend.gd`\n- `src/ui/ribbon.gd`: the day ribbon"
+		},
+		{
+			"id": "0f04d28cd522179c",
+			"type": "text",
+			"x": 1440,
+			"y": 340,
+			"width": 400,
+			"height": 240,
+			"text": "### Glossary tooltips\nA term is `[g=id]word[/g]`, drawn by `src/ui/term_text.gd`; the chain of tooltips is `src/ui/glossary_tip.gd`, three deep with locks. Ids are `data/glossary/terms.json`."
+		},
+		{
+			"id": "e7d7e9cf72e69c7d",
+			"type": "file",
+			"x": 480,
+			"y": 860,
+			"width": 400,
+			"height": 180,
+			"file": "docs/panel-system.md"
+		},
+		{
+			"id": "d2bc14cede183012",
+			"type": "file",
+			"x": 1440,
+			"y": 680,
+			"width": 400,
+			"height": 180,
+			"file": "docs/design/glossary-tooltips.md"
+		},
+		{
+			"id": "016b6dad2ffefe7d",
+			"type": "file",
+			"x": 960,
+			"y": 860,
+			"width": 400,
+			"height": 180,
+			"file": "docs/design/decision-surfaces.md"
+		},
+		{
+			"id": "a4097e080c550462",
+			"type": "text",
+			"x": 0,
+			"y": 340,
+			"width": 400,
+			"height": 240,
+			"text": "### Reading this\nLeft to right is back to front. A box names the node and its file. Documents are the grey cards below: [[panel-system]] section 25 is the shell in prose; the two design notes belong to the Gameplay session and are only linked here."
+		}
+	],
+	"edges": [
+		{
+			"id": "9cd78ea3b7343a3d",
+			"fromNode": "37745ed7a0f005fb",
+			"fromSide": "right",
+			"toNode": "a279fe916f63b016",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "drawn over"
+		},
+		{
+			"id": "196d2780a434382e",
+			"fromNode": "a279fe916f63b016",
+			"fromSide": "right",
+			"toNode": "6a8e2399923d653e",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "drawn over"
+		},
+		{
+			"id": "32d9ae5788de1583",
+			"fromNode": "6a8e2399923d653e",
+			"fromSide": "right",
+			"toNode": "b26dc72d261a92c1",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "drawn over"
+		},
+		{
+			"id": "cd26a63c45129b54",
+			"fromNode": "b26dc72d261a92c1",
+			"fromSide": "right",
+			"toNode": "e2346381bb8eb382",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "drawn over"
+		},
+		{
+			"id": "67b597254d794edd",
+			"fromNode": "a279fe916f63b016",
+			"fromSide": "bottom",
+			"toNode": "e8a42c4c4a198b06",
+			"toSide": "top",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "92ba27923e51614d",
+			"fromNode": "a279fe916f63b016",
+			"fromSide": "bottom",
+			"toNode": "fbe6e9cfe1f5a245",
+			"toSide": "top",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "16c7e2bb4aadfb5d",
+			"fromNode": "6a8e2399923d653e",
+			"fromSide": "bottom",
+			"toNode": "b90d94578d1a5275",
+			"toSide": "top",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "29b5a98b1e90c1d6",
+			"fromNode": "b26dc72d261a92c1",
+			"fromSide": "bottom",
+			"toNode": "0f04d28cd522179c",
+			"toSide": "top",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "14d5e127b2b9cbb8",
+			"fromNode": "a279fe916f63b016",
+			"fromSide": "bottom",
+			"toNode": "e7d7e9cf72e69c7d",
+			"toSide": "top",
+			"toEnd": "arrow",
+			"label": "described in"
+		},
+		{
+			"id": "9820aa97c621fe48",
+			"fromNode": "b90d94578d1a5275",
+			"fromSide": "bottom",
+			"toNode": "016b6dad2ffefe7d",
+			"toSide": "top",
+			"toEnd": "arrow",
+			"label": "what the player is asked"
+		},
+		{
+			"id": "842bbd1d5b733b91",
+			"fromNode": "0f04d28cd522179c",
+			"fromSide": "bottom",
+			"toNode": "d2bc14cede183012",
+			"toSide": "top",
+			"toEnd": "arrow",
+			"label": "designed in"
+		}
+	]
+}

@@ -202,7 +202,7 @@ Every term but the first is against the member's **own books**, and every one of
 > [!warning] The probe's third correction, and a test caught it: constructive abstention has a window nobody had measured
 > Abstaining differs from opposing **only** when the other eight land in [172, 216) of 393 seats — a window 11 % of the range wide, because abstaining removes the player from the denominator and nothing else. V1.3d swept only the first three columns, so its own constructive-abstention property came out of the shipped content by luck. At threshold 0.20 that window is **empty**: three vote options, two outcomes, which is the decorative-verb failure with entirely correct arithmetic.
 >
-> `tests/test_bloc.gd` now **scans** the content for a proposal in the window rather than naming one — V1.3d hardcoded `stability_pact`, and a test naming a proposal is a test about the content rather than about the mechanism.
+> `tests/test_bloc.gd` (now `tests/test_orgs.gd`, V3.2a) now **scans** the content for a proposal in the window rather than naming one — V1.3d hardcoded `stability_pact`, and a test naming a proposal is a test about the content rather than about the mechanism.
 
 0.15 also has the better first three columns. At 0.00 France is pivotal on **nothing**, which is V1.3d's own failure mirrored: that session found six of seven proposals decided by France and called it a legislature the player controlled, and a council the player can never move is the same fault from the other side.
 

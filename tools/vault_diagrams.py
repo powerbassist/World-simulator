@@ -7,6 +7,8 @@ Two diagrams live in the vault as Mermaid between marker comments:
 
 * tick-order     docs/tick-order.md       -- src/sim/world_month.gd's STEPS, in run order
 * layers         docs/data-architecture.md -- data -> core -> sim -> ui, real module names
+* roadmap        docs/tiers/v5.md         -- V5's blocks, drawn from its block table and `state:`
+* domains        docs/shell.md            -- the sidebar's domains and tabs, from src/ui/domains.gd
 
     python tools/vault_diagrams.py            # check (exit 1 on any drift)
     python tools/vault_diagrams.py --write    # regenerate the blocks in place
@@ -19,6 +21,13 @@ fails on, and why each exists:
 * A step in STEPS has no group, or a group names a step STEPS no longer has. The
   step-to-group table below is authored -- a grouping is a judgement, not
   something the code states -- so it is the one thing a new system must be told.
+* The roadmap's block table and the frontmatter `state:` map disagree: a block with
+  no state, or a state for a block the table does not have. The states are the one
+  thing a person keeps true (closing sessions update them at each block close).
+* The hand-written counts (panels registered, tabs, rows) in docs/shell.canvas and
+  docs/panel-system.md section 25 differ from domains.gd and main.gd.
+* A tab in src/ui/domains.gd's TABLE that main.gd never registers as a window, or a
+  canvas file node / backticked path in docs/shell.canvas that is not on disk.
 * A module the layers diagram names is not on disk (a renamed file cannot stay
   drawn).
 * A file under src/sim or src/core loads anything under res://src/ui, or reaches
@@ -139,16 +148,187 @@ def render_layers():
     return "\n".join(out)
 
 
+V5_FILE = "docs/tiers/v5.md"
+DOMAINS_FILE = "src/ui/domains.gd"
+MAIN_FILE = "src/ui/main.gd"
+CANVAS_FILE = "docs/shell.canvas"
+STATES = ("closed", "built", "in-progress", "planned")
+STATE_STYLE = (("closed", "#cdebd3", ""), ("built", "#cfe3f7", ""),
+               ("inprogress", "#f3e7b5", ""), ("planned", "#ececec", ",stroke-dasharray:4 3"))
+
+
+def parse_roadmap():
+    """Return (blocks, state): blocks = [(id, name, [depends])] from the block table,
+    state = {key: (state, label)} from the frontmatter `state:` map."""
+    text = read(V5_FILE)
+    blocks = []
+    for m in re.finditer(r"^\| (V5\.\d) \| ([^|]+?) \| [^|]* \| ([^|]+?) \|", text, re.M):
+        name = re.split(r"\s\u2014\s", m.group(2).strip())[0]
+        dep = m.group(3).strip()
+        blocks.append((m.group(1), name, [] if dep in ("\u2014", "-") else
+                       ["all"] if dep == "all" else re.findall(r"V5\.\d", dep)))
+    fm = re.match(r"---\n(.*?)\n---", text, re.S)
+    state = {}
+    if fm:
+        m = re.search(r"^state:\n((?:[ \t]+\S.*\n?)+)", fm.group(1) + "\n", re.M)
+        for line in (m.group(1).splitlines() if m else []):
+            k, _, v = line.strip().partition(":")
+            st, _, label = v.partition("|")
+            state[k.strip()] = (st.strip(), label.strip())
+    return blocks, state
+
+
+def roadmap_problems(blocks, state):
+    ids = [b[0] for b in blocks]
+    out = [] if blocks else [f"{V5_FILE}: no block table rows found"]
+    out += [f"{V5_FILE}: block {i} has no entry in the frontmatter `state:` map" for i in ids
+            if i not in state]
+    for k, (st, _) in state.items():
+        if k.split("-")[0] not in ids:
+            out.append(f"{V5_FILE}: `state:` names {k}, which the block table does not have")
+        if st not in STATES:
+            out.append(f"{V5_FILE}: `state: {k}` is {st!r}, not one of {', '.join(STATES)}")
+    return out
+
+
+def _nid(i):
+    return i.replace(".", "").replace("-", "_")
+
+
+def _state_node(nid, title, st, label):
+    text = f"{title}<br/>{label}<br/>{st}" if label else f"{title}<br/>{st}"
+    return f'  {nid}["{text}"]:::{st.replace("-", "")}'
+
+
+def render_roadmap(blocks, state):
+    ids = [b[0] for b in blocks]
+    out = ["```mermaid", "flowchart LR"]
+    for bid, name, _ in blocks:
+        out.append(_state_node(_nid(bid), f"{bid} {name}", *state[bid]))
+    deps = {bid: d for bid, _, d in blocks}
+    depended = {x for d in deps.values() for x in d if x != "all"}
+    for bid, d in deps.items():
+        sources = [i for i in ids if i != bid and i not in depended] if d == ["all"] else d
+        out += [f"  {_nid(src)} --> {_nid(bid)}" for src in sources]
+    out += [f"  classDef {n} fill:{f},stroke:#555,color:#1a1a1a{d}" for n, f, d in STATE_STYLE]
+    out.append("```")
+    subs = [(k, v) for k, v in state.items() if "-" in k]
+    if subs:
+        out += ["", "The sub-blocks that have a state of their own:", "", "```mermaid", "flowchart LR"]
+        out += [_state_node(_nid(k), k, *v) for k, v in subs]
+        out.append("  " + " --> ".join(_nid(k) for k, _ in subs))
+        out += [f"  classDef {n} fill:{f},stroke:#555,color:#1a1a1a{d}" for n, f, d in STATE_STYLE]
+        out.append("```")
+    out += ["", "Each box says its state in words, so colour is never the only signal. "
+            "`closed`: the play gate is scored and recorded. `built`: merged, not yet closed by a play "
+            "gate. The states live in this page's frontmatter `state:` map and are updated by the "
+            "session that closes a block; the diagram is generated from them and from the block table."]
+    return "\n".join(out)
+
+
+def parse_domains():
+    """Return (rows, scenes): rows = [(id, title, [tabs])] from TABLE in domains.gd."""
+    text = read(DOMAINS_FILE)
+    rows = [(m.group(1), m.group(2), re.findall(r'"([a-z_]+)"', m.group(3)))
+            for m in re.finditer(r'\{"id": "([a-z_]+)", "title": "([^"]+)", "icon": "[^"]*", '
+                                 r'"tabs": \[([^\]]*)\]\}', text)]
+    scenes = re.search(r"const SCENES := \[([^\]]*)\]", text)
+    return rows, re.findall(r'"([a-z_]+)"', scenes.group(1) if scenes else "")
+
+
+def _registered():
+    return set(re.findall(r'_windows\.register\("([a-z_]+)"', read(MAIN_FILE)))
+
+
+def domain_problems(rows, scenes):
+    if not rows:
+        return [f"{DOMAINS_FILE}: no TABLE rows found"]
+    registered = _registered()
+    tabs = [t for _, _, ts in rows for t in ts]
+    out = [f"{DOMAINS_FILE}: tab {t!r} is not registered as a window in {MAIN_FILE}"
+           for t in tabs + scenes if t not in registered]
+    # parse_domains() reads one row shape; a row written another way would be skipped
+    # silently, and the diagram would quietly lose a domain.
+    block = re.search(r"const TABLE := \[(.*?)\n\]", read(DOMAINS_FILE), re.S)
+    n = block.group(1).count('"id":') if block else 0
+    if n != len(rows):
+        out.append(f"{DOMAINS_FILE}: TABLE has {n} rows but only {len(rows)} match the shape "
+                   "tools/vault_diagrams.py parse_domains() reads (id, title, icon, tabs, in that order)")
+    return out
+
+
+def render_domains(rows, scenes):
+    own = sorted(_registered() - {t for _, _, ts in rows for t in ts} - set(scenes))
+    out = ["```mermaid", "flowchart LR", '  sb["Sidebar"]']
+    for did, title, ts in rows:
+        if ts:
+            out.append(f'  sb --> d_{did}["{title}"]')
+            out += [f'  d_{did} --> t_{t}["{t}"]' for t in ts]
+        else:
+            out.append(f'  sb -.-> d_{did}["{title}<br/>hidden until a tab registers"]:::hidden')
+    out += [f'  sb -.-> s_{t}["{t}<br/>a scene, in no domain"]:::hidden' for t in scenes]
+    out += [f'  sb --> o_{t}["{t}<br/>its own one-tab domain"]' for t in own]
+    out += ["  classDef hidden stroke-dasharray:4 3,fill:#ececec,stroke:#555,color:#1a1a1a", "```"]
+    return "\n".join(out)
+
+
+# Counts that prose states by hand. They are the cheapest thing to forget when a tab is
+# added, so the check compares each with what domains.gd and main.gd say now.
+COUNT_SITES = [
+    ("docs/shell.canvas", r"(\d+) panels registered", "panels"),
+    ("docs/shell.canvas", r"(\d+) tabs in \d+ rows", "tabs"),
+    ("docs/shell.canvas", r"\d+ tabs in (\d+) rows", "rows"),
+    ("docs/panel-system.md", r"registers (\d+) panels", "panels"),
+    ("docs/panel-system.md", r"(\d+) tabs in \d+ rows", "tabs"),
+    ("docs/panel-system.md", r"\d+ tabs in (\d+) rows", "rows"),
+]
+
+
+def count_problems(rows):
+    want = {"panels": len(_registered()), "tabs": sum(len(ts) for _, _, ts in rows),
+            "rows": len(rows)}
+    out = []
+    for rel, pat, key in COUNT_SITES:
+        found = re.findall(pat, read(rel))
+        if not found:
+            out.append(f"{rel}: no longer says its {key} count (pattern {pat!r})")
+        out += [f"{rel}: says {n} {key}, domains.gd and main.gd say {want[key]}"
+                for n in found if int(n) != want[key]]
+    return out
+
+
+def canvas_problems():
+    import json
+    try:
+        data = json.loads(read(CANVAS_FILE))
+    except (OSError, ValueError) as e:
+        return [f"{CANVAS_FILE}: {e}"]
+    out = []
+    for n in data.get("nodes", []):
+        refs = [n["file"]] if n.get("type") == "file" else \
+            re.findall(r"`((?:src|tests|tools|data|docs)/[\w./\-]+)`", n.get("text", ""))
+        out += [f"{CANVAS_FILE}: node {n['id']} names {r}, which is not on disk" for r in refs
+                if not os.path.exists(os.path.join(ROOT, r.split("#")[0]))]
+    ids = [n["id"] for n in data.get("nodes", [])] + [e["id"] for e in data.get("edges", [])]
+    out += [f"{CANVAS_FILE}: duplicate id {i}" for i in set(ids) if ids.count(i) > 1]
+    nodes = {n["id"] for n in data.get("nodes", [])}
+    out += [f"{CANVAS_FILE}: edge {e['id']} points at a missing node" for e in data.get("edges", [])
+            if e["fromNode"] not in nodes or e["toNode"] not in nodes]
+    return out
+
+
 def block(name, body):
     return (f"<!-- vault-diagram:{name} begin (generated by tools/vault_diagrams.py --write; "
             f"do not edit) -->\n{body}\n<!-- vault-diagram:{name} end -->")
 
 
-TARGETS = {"tick-order": "docs/tick-order.md", "layers": "docs/data-architecture.md"}
+TARGETS = {"tick-order": "docs/tick-order.md", "layers": "docs/data-architecture.md",
+           "roadmap": V5_FILE, "domains": "docs/shell.md"}
 
 
-def expected(steps):
-    return {"tick-order": render_tick(steps), "layers": render_layers()}
+def expected(steps, roadmap, domains):
+    return {"tick-order": render_tick(steps), "layers": render_layers(),
+            "roadmap": render_roadmap(*roadmap), "domains": render_domains(*domains)}
 
 
 def splice(text, name, body):
@@ -181,14 +361,16 @@ def layer_problems():
 def main(argv):
     write = "--write" in argv
     steps = parse_steps()
-    problems = group_problems(steps) + layer_problems()
+    roadmap, domains = parse_roadmap(), parse_domains()
+    problems = (group_problems(steps) + layer_problems() + roadmap_problems(*roadmap)
+                + domain_problems(*domains) + count_problems(domains[0]) + canvas_problems())
     if problems:
         print("vault diagrams: " + str(len(problems)) + " problem(s)")
         for p in problems:
             print("  " + p)
         return 1
     stale = []
-    for name, body in expected(steps).items():
+    for name, body in expected(steps, roadmap, domains).items():
         rel = TARGETS[name]
         text = read(rel)
         new, n = splice(text, name, body)
@@ -205,7 +387,7 @@ def main(argv):
     for s in stale:
         print("vault diagrams: " + s)
     if not stale:
-        print(f"vault diagrams: {len(TARGETS)} diagrams match the code ({len(steps)} steps)")
+        print(f"vault diagrams: {len(TARGETS)} diagrams match their sources ({len(steps)} steps)")
     return 1 if stale else 0
 
 
