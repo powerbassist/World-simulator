@@ -133,7 +133,8 @@
    "tests/test_inbox_stays.gd",
    "tests/test_person_links.gd",
    "tests/test_effects_ledger.gd",
-   "tests/test_no_raw_tags.gd"
+   "tests/test_no_raw_tags.gd",
+   "tests/test_glossary_panel.gd"
   ],
   [
    "tests/test_political_systems.gd",

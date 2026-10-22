@@ -163,7 +163,6 @@ var _nation_panel
 var _orgs_panel
 var _calendar_panel
 var _people_panel
-var _outliner_panel
 var _companies_panel
 var _projects_panel
 var _region_panel
@@ -509,11 +508,12 @@ func _ready() -> void:
 	# who are against the term -- as one register-driven list. A window rather
 	# than a HUD plate (moving a plate moves the frames the 826 px band is
 	# measured against); a row opens the window that answers it.
-	_outliner_panel = OutlinerPanel.new()
-	_windows.register("outliner", tr("Outliner"), _outliner_panel, KEY_Q, ICONS + "checklist.svg")
-	_outliner_panel.setup(_state, _loader)
-	_outliner_panel.hide_close_button()
-	_outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
+	var outliner_panel := OutlinerPanel.new()  # local: nothing else reads it
+	_windows.register("outliner", tr("Outliner"), outliner_panel, KEY_Q, ICONS + "checklist.svg")
+	outliner_panel.setup(_state, _loader)
+	outliner_panel.hide_close_button()
+	outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
+	_windows.register("glossary", tr("Glossary"), preload("res://src/ui/glossary_panel.gd").new(), KEY_NONE, ICONS + "menu_book.svg")  # V5.1-d3: reads Glossary alone, no setup
 
 	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
 	# actor and the verb pointed at it is a spending decision, which is why the bill

@@ -125,7 +125,23 @@ static func heading(parent: Control, text: String) -> Label:
 ## that could only print small and dim would have silently shrunk and dimmed the
 ## two panels this project's record names most often. Prose that really is
 ## secondary keeps the default.
-static func line(parent: Control, text: String, tone := Tone.DIM) -> Label:
+##
+## V5.1-d3, the sweep: a line that MARKS a term or a person ([g=id]word[/g],
+## [p=id]Name[/p]) is drawn by rich() -- a TermText, the one place a mark renders --
+## and any other line stays the Label it was, so the ~300 sites that mark nothing
+## are untouched (a RichTextLabel reports its height differently, and every fit and
+## fold test measures these). That makes the result a Control: a site that needs a
+## Label (a ticker whose text changes, a row that takes clicks, a tooltip's lines)
+## calls plain_line(). A Button's text or a tooltip never goes through either; a
+## mark in a string headed there is dropped by TermText.plain().
+static func line(parent: Control, text: String, tone := Tone.DIM) -> Control:
+	if TermText.has_marks(text):
+		return rich(parent, text, tone)
+	return plain_line(parent, text, tone)
+
+
+## line() as it was before d3: always a Label, so its text can be set again.
+static func plain_line(parent: Control, text: String, tone := Tone.DIM) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD

@@ -165,7 +165,7 @@ func show_results(results: Array) -> void:
 	_title.text = _verdict_title
 
 	_night = ElectionNight.new(_state, results)
-	_ticker = PanelKit.line(_sections, "", PanelKit.Tone.DIM)
+	_ticker = PanelKit.plain_line(_sections, "", PanelKit.Tone.DIM)
 
 	# A termed-out notice carries no vote, so there is no table to draw -- see
 	# elections.gd. It still gets a sentence: a plate carrying nothing but a title

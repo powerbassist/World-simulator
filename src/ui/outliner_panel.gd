@@ -100,7 +100,7 @@ func _refresh() -> void:
 ## A row is a Label that takes the pointer: the tone is the label's own (what
 ## PanelKit.line sets), and a Button would have replaced it with the button look.
 func _draw_row(parent: Control, row: Dictionary) -> void:
-	var label := PanelKit.line(parent, String(row["text"]), int(row["tone"]))
+	var label := PanelKit.plain_line(parent, String(row["text"]), int(row["tone"]))
 	label.mouse_filter = Control.MOUSE_FILTER_STOP
 	label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var window := String(row["window"])
