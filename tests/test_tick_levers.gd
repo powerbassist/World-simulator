@@ -344,7 +344,8 @@ func _check_memo_invariants() -> void:
 	for path in ["res://src/sim/diplomacy.gd", "res://src/sim/foreign_policy.gd", "res://src/sim/defence.gd",
 			"res://src/sim/diplomacy_verbs.gd", "res://src/sim/coercion.gd", "res://src/core/relations.gd",
 			"res://src/sim/trade.gd", "res://src/core/org.gd", "res://src/sim/diplomacy_agenda.gd",
-			"res://src/core/parallel.gd"]:
+			"res://src/core/parallel.gd", "res://src/sim/diplomacy_cooldowns.gd",
+			"res://src/sim/diplomacy_embassies.gd"]:
 		var code := _code_only(FileAccess.get_file_as_string(path))
 		for forbidden in ["orgs.gd\")", ".orgs = ", ".orgs.append(", ".orgs.push_back(", ".orgs.erase(",
 				".orgs.remove_at(", ".orgs.clear(", ".orgs.sort(", "org_effects = ", "org_effects[org"]:
