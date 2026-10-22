@@ -10,7 +10,10 @@ tags:
 
 The supranational bloc: what the council votes on, what a rule in force requires, what defying it costs, and what membership charges. Built at V1.3d, the fourth session of the V1.3 block.
 
-Files: `src/sim/bloc.gd` (the rules) · `src/sim/bloc_constants.gd` (the numbers) · `src/core/bloc_proposal.gd` (the content type) · `data/bloc-proposals/*.json` (the content) · `GameState.bloc` (the register) · `tools/bloc_probe.gd` (the measurement).
+> [!warning] Moved at V3.2a: the bloc machine is `orgs.gd` now
+> V3.2a (`9a8994f2`) generalised this machine into the org register ([[orgs-model]]): `src/sim/bloc.gd` became `src/sim/orgs.gd`, `tests/test_bloc.gd` became `tests/test_orgs.gd`, `tools/bloc_probe.gd` became `tools/orgs_probe.gd`, `src/ui/bloc_panel.gd` became `src/ui/orgs_panel.gd`, and `GameState.bloc` became `GameState.orgs` (`game_state.gd:721`). The file names in this page are V1.3d's; the rules are the ones `orgs.gd` generalised.
+
+Files at V1.3d: `src/sim/bloc.gd` (the rules) · `src/sim/bloc_constants.gd` (the numbers) · `src/core/bloc_proposal.gd` (the content type) · `data/bloc-proposals/*.json` (the content) · `GameState.bloc` (the register) · `tools/bloc_probe.gd` (the measurement).
 
 > [!important] Comply and you pay in policy; defy and you pay in politics
 > This is the session's central call and everything below follows from it. A rule in force does **not** refuse a budget — the player is head of state and sovereignty means they *can* break it. Complying costs the spending they could not run, which lands on the issues that were already there. Defying costs a penalty on the budget line and a share of the national agenda under a new issue. Both directions cost, which is what makes it a decision rather than a wall.

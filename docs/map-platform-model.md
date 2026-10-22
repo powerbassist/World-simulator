@@ -89,7 +89,7 @@ single vintage owns it, so no vintage-swap fixes it; only drawing fewer of them 
   zoom and the monthly tick — never per frame), and statelessness buys the absence of a
   V2.6b1-shaped staleness class for free.
 
-**Minimap redraws on change, not every frame** (`src/ui/minimap.gd`): the `_process`
+**Minimap redraws on change, not every frame** (`src/ui/minimap.gd`, **deleted in `7667b1a2`**, V5.1-c2.3a+b, with the rest of U5a's furniture — a dated finding): the `_process`
 poll compares `visible_lonlat_rect()` and redraws only on change — the same poll the
 control already made, with no signal added, so the map view still knows nothing
 downstream of it. **Honest note:** the attribution delta only moved 0.35 → 0.27 ms —
@@ -99,7 +99,7 @@ saving is small.
 
 **Tests and tools:**
 
-- `tests/test_map_cull.gd` — the predicate must agree with a naive bbox test over every
+- `tests/test_map_cull.gd` (**deleted in `a599e711`**, V4.10c; see "V3.1's ring cull is retired" below) — the predicate must agree with a naive bbox test over every
   region and world ring at two framings (Paris max zoom, opening fit), the region under
   the view centre must never cull, something must cull at each framing, and a two-point
   ring never reaches. **No fixed "far region" id**: the headless window is square
