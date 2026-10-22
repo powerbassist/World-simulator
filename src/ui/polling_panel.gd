@@ -32,7 +32,7 @@ var _loader = null
 ## (ns.next_election_*), named off the loader's nation data when one is wired in.
 var _chamber := "assembly"
 var _title: Label
-var _headline: Label
+var _headline: RichTextLabel
 var _election_countdown: Label
 ## V2.1b. Both tables were RETAINED -- built once in _ready() and updated cell by
 ## cell through two dictionaries of Label references -- and both are now rebuilt
@@ -68,7 +68,7 @@ func _ready() -> void:
 	_title = Label.new()
 	root.add_child(_title)
 
-	_headline = Label.new()
+	_headline = PanelKit.TermText.new()
 	root.add_child(_headline)
 
 	_election_countdown = Label.new()
@@ -156,7 +156,7 @@ func _refresh() -> void:
 		_shown = current
 		_shown_poll_id = id
 
-	_headline.text = tr("Approval  %.0f%%") % current[HEADLINE_KEY]
+	_headline.set_marked(tr("[g=approval]Approval[/g]  %.0f%%") % current[HEADLINE_KEY])
 	_election_countdown.text = tr("Next %s election: %s") % [_chamber, _months_until_text(ns)]
 
 	for child in _body.get_children():

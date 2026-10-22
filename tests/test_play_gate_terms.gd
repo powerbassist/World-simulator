@@ -4,10 +4,12 @@ extends SceneTree
 ## Non-zero exit on any failure.
 ##
 ## The V5.1 play gate's terms, on the screens a first term reaches: "Article 49.3"
-## in the Politics window and "approval" in the Diplomacy window a map click
-## opens. Each must draw as a hoverable term (a TermText carrying term:<id>), and
-## no line in either window may print a raw [g=...] tag -- what a UI line marked
-## in its msgid but left a Label would show.
+## in the Politics window and "approval" on the Society window's polling headline
+## -- the one approval line whose figure is the glossary's live value (the
+## headline poll); the Diplomacy window's true figure for any nation would sit
+## beside a plate quoting the player's poll. Each must draw as a hoverable term
+## (a TermText carrying term:<id>), and no line in either window may print a raw
+## [g=...] tag -- what a UI line marked in its msgid but left a Label would show.
 ##
 ## Driven through the real game: a panel builds its body in _process once it is
 ## visible, so a check on a panel that was never opened would read nothing.
@@ -30,9 +32,9 @@ func _process(_delta: float) -> bool:
 		_main._windows.open("politics")
 	elif _frame == 5:
 		_check(_main._government_panel, "article_49_3", "Politics")
-		_main._on_nation_clicked(String(_main._state.player().id))
+		_main._windows.open("society")
 	elif _frame == 8:
-		_check(_main._nation_panel, "approval", "Diplomacy")
+		_check(_main._polling_panel, "approval", "Society")
 		_finish()
 		return true
 	return false
