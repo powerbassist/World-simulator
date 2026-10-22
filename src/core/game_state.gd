@@ -856,7 +856,7 @@ var recent_effects: Array[Dictionary] = []
 ## > tests/test_foreign_policy.gd asserts no reader in src/sim/ rather than
 ## > trusting this comment.
 ## The cap is foreign_policy_constants.AGENDA_ACTS_KEPT, held by the writer rather
-## than here -- the shape main.gd's RECENT_EFFECTS_KEPT already has for
+## than here -- the shape src/ui/effects_ledger.gd's EffectsLedger.KEPT already has for
 ## recent_effects, and the reason src/core/ cannot hold it is that game_state.gd
 ## preloads diplomacy.gd, so the dependency only runs one way.
 var foreign_acts: Array[Dictionary] = []

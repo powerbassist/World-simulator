@@ -6,6 +6,7 @@
       "name": "State Visit",
       "summary": "A formal visit, photographed and reciprocated. Costs nothing at home and buys a little goodwill abroad -- and it is the one act that puts the two leaders in one room, opening the window in which the treaty-class verbs below can be used.",
       "cooldown_months": 12,
+      "host_interval_months": 6,
       "opens_meeting": true,
       "preconditions": [],
       "effects": {

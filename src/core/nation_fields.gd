@@ -241,6 +241,7 @@ const FIELDS := [
 	["assembly_bills", DEEP, ASSEMBLY_BILLS, {}, false],  # bump 38
 	["last_law_result", DEEP, COPIED, {}, false],
 	["diplo_cooldown_months", DEEP, COPIED, {}, false],
+	["diplo_hosted_months", DEEP, COPIED, {}, true],  # empty = nothing hosted recently
 	["last_diplomatic_result", DEEP, COPIED, {}, false],
 	["diplo_months_to_act", SCALAR, VALUE, 0, false],  # bump 12
 	["military_capability", SCALAR, VALUE, 0.0, false],  # bump 13

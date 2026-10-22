@@ -860,6 +860,14 @@ var last_law_result := {}
 ## per-nation. See docs/diplomacy-model.md.
 var diplo_cooldown_months := {}
 
+## The HOST's side of a cooldown (the V5.1 play gate's state-visit cadence):
+## {action_id: months left} for each verb carrying host_interval_months that this
+## nation RECEIVED, from anyone. While an entry stands, no nation is offered that
+## verb against this one. Written by src/sim/diplomacy_cooldowns.gd's stamp(), counted down
+## beside diplo_cooldown_months. Empty reads correctly for any older save --
+## nothing hosted recently -- so it carries no SAVE_VERSION bump.
+var diplo_hosted_months := {}
+
 ## The most recent diplomatic action, for the nation panel to read after acting.
 ## Empty until the first one resolves.
 var last_diplomatic_result := {}

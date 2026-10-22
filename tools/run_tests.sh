@@ -30,6 +30,10 @@ tests=(
   tests/test_scenario.gd
   tests/test_diplomacy.gd
   tests/test_embassies.gd
+  # The V5.1 play gate's state-visit cadence: a host receives a state visit at
+  # most once per host_interval_months, the idle player is one partner among
+  # many, on every playable, through WorldMonth.
+  tests/test_visit_cadence.gd
   tests/test_trade.gd
   tests/test_coercion.gd
   tests/test_orgs.gd

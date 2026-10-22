@@ -53,7 +53,7 @@ const DFK = preload("res://src/sim/defence_constants.gd")
 ## this nation has recently DONE, not the relations themselves, which are
 ## pair-keyed on GameState.
 static func init_nation(ns) -> void:
-	ns.diplo_cooldown_months = {}
+	Cooldowns.reset(ns)
 	ns.last_diplomatic_result = {}
 	ns.diplo_months_to_act = 0
 
@@ -357,7 +357,7 @@ static func _actor_turn(state, loader, actor_id: String, ids: Array) -> void:
 ## available() only through the callable handed to it here.
 static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary:
 	return Agenda.best_act(state, actor_id, ids, func(target_id: String) -> Array:
-		return available(state, loader.diplomatic_actions, actor_id, target_id))
+		return Cooldowns.unreserved(state, target_id, available(state, loader.diplomatic_actions, actor_id, target_id)))
 
 
 ## The cooldown key for one verb pointed at one counterparty. Per pair, not per
@@ -417,6 +417,9 @@ static func available(state, all_actions: Array, actor_id: String, target_id: St
 	# V5.0c: no key is built while nothing is cooling down -- an empty register
 	# answers "no" to every key, so the result is the same list.
 	var cooling: bool = not ns.diplo_cooldown_months.is_empty()
+	# The host's side (the state-visit cadence): a verb the TARGET received within
+	# its host_interval_months is offered by nobody, the player included.
+	var hosted: Dictionary = Cooldowns.hosted(state, target_id)
 	# Each field read once per call, however many verbs name it (met_recently gates
 	# five): since G2b this loop runs on the calling thread for every target, which
 	# #44's tick A/B priced at +6.7 ms a month before this memo. _read_field() only
@@ -429,7 +432,7 @@ static func available(state, all_actions: Array, actor_id: String, target_id: St
 	for action in all_actions:
 		if action.id == "":
 			continue
-		if cooling and ns.diplo_cooldown_months.has(cooldown_key(action.id, target_id)):
+		if (cooling and ns.diplo_cooldown_months.has(cooldown_key(action.id, target_id))) or hosted.has(action.id):
 			continue
 		if _preconditions_met(state, ns, action, target_id, reads):
 			out.append(action)
@@ -663,8 +666,8 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 		"withdraw":
 			Defence.close_deployment(state, actor_id, target_id)
 
-	if action.cooldown_months > 0:
-		ns.diplo_cooldown_months[cooldown_key(action.id, target_id)] = action.cooldown_months
+	# The actor's cooldown against this target, and the target's host interval.
+	Cooldowns.stamp(state, ns, action, target_id, cooldown_key(action.id, target_id))
 
 	# V5.1-0d, the sixth effect channel (src/sim/diplomacy_embassies.gd).
 	Embassies.apply(ns, action.effects, target_id)

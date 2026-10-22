@@ -156,6 +156,21 @@ static func refusal_reason(state, entry: Dictionary) -> String:
 		# month, and an overlap is not priced against legality -- two blocks
 		# cannot share a day for the same reason two presidents cannot share a
 		# train. This, not a constant, is what makes the day a resource.
+		# The host's side of a verb (diplomacy_cooldowns.gd): Diplomacy refuses an
+		# act whose target received it within its host interval, so the diary
+		# refuses it here and names the first day it would carry. A plain-field
+		# read -- this file still preloads nothing. The register is counted down in
+		# the month tick, which runs before that month's first day resolves, so a
+		# host with N months left is free from the 1st of the month N on.
+		if String(entry.get("kind", "")) == K.KIND_DIPLOMATIC:
+			var host = state.nations.get(String(entry.get("target_id", "")))
+			var left: int = int(host.diplo_hosted_months.get(String(entry.get("action_id", "")), 0)) if host != null else 0
+			if left > 0:
+				var free := _add_months(state.year, state.month, left)
+				var first := {"year": int(free["year"]), "month": int(free["month"]), "day": 1}
+				if when < entry_ordinal(first):
+					return "the host received this too recently -- it carries from %s" % _date_text(first)
+
 		var start_dn := meet_dn - int(entry.get("travel_days", 0))
 		var end_dn := meet_dn + int(entry.get("travel_days", 0))
 		for e in state.appointments:
