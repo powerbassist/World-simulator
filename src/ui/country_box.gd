@@ -24,6 +24,9 @@ const ForeignReading = preload("res://src/ui/foreign_reading.gd")
 
 ## How far from the pointer the box opens, so the click's own country stays in view.
 const OFFSET := Vector2(14, 14)
+## A width for the figures: the lines wrap, and with no width of its own the box
+## shrank to one word a line (the first frame).
+const WIDTH := 300.0
 
 var _main
 var _body: VBoxContainer
@@ -37,6 +40,7 @@ func attach(main) -> void:
 	theme_type_variation = UiTheme.PLATE
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
+	custom_minimum_size = Vector2(WIDTH, 0)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_%s" % side, 12)
@@ -168,7 +172,13 @@ func _show_by_pointer() -> void:
 	_keep_on_screen.call_deferred()
 
 
+## A frame later: a wrapping line reports the height it needs at its PREVIOUS width
+## (PanelKit's own finding), so the box is fitted once its width has landed.
 func _keep_on_screen() -> void:
+	await get_tree().process_frame
+	if not visible:
+		return
+	size = Vector2(WIDTH, 0)
 	reset_size()
 	var screen: Vector2 = get_viewport_rect().size
 	position = Vector2(clampf(position.x, 0.0, maxf(screen.x - size.x, 0.0)),
