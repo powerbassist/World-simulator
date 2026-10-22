@@ -57,6 +57,7 @@ func _init() -> void:
 	_check_projection_matches_under_unrest()
 	_check_projection_matches_under_defence_and_companies()
 	_check_projection_drifts_discipline()
+	_check_projection_rolls_the_election()
 
 	_finish()
 
@@ -246,6 +247,28 @@ func _check_projection_drifts_discipline() -> void:
 		_fail("the projection moved %s's discipline to %.6f, one real tick moves it to %.6f" % [party.id, projected, expected])
 	if not is_equal_approx(float(ns.party_discipline[party.id]), 0.30):
 		_fail("project() moved the live state's discipline")
+
+
+## QA on #77: the projection runs no Elections, so a legislative election inside
+## the window used to leave the copy's date behind its clock and discipline falling
+## toward the pre-election floor. Projected across the player's election, the copy's
+## next election is a term on and still ahead of its clock.
+func _check_projection_rolls_the_election() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	state.year = ns.next_election_year
+	state.month = ns.next_election_month
+	var before: int = ns.next_election_year
+	var job = Budget.projection(state, {}, 3, _loader)
+	while not Budget.projection_done(job):
+		Budget.projection_step(job)
+	var term: int = int(_loader.nations[ns.id].term_years)
+	if int(job.sim.player().next_election_year) != before + term:
+		_fail("the projection did not roll the election: next %d, expected %d" % [int(job.sim.player().next_election_year), before + term])
+	if Discipline.months_to_legislative(job.sim, job.sim.player()) <= 0:
+		_fail("past the election the projection still reads it as due -- discipline keeps falling toward the floor")
+	if ns.next_election_year != before:
+		_fail("project() moved the live state's election date")
 
 
 func _check_projection_matches() -> void:
@@ -439,6 +462,7 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		if state.month > 12:
 			state.month = 1
 			state.year += 1
+		Budget.roll_election_clock(state, _loader)
 		# V2.8 review. Energy leads, in project()'s own slot and for its own stated
 		# reason: economy.gd READS ns.energy_impulse_pct rather than computing it, so
 		# an energy tick after the economy prices this month's mix against last
