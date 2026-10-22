@@ -122,24 +122,24 @@ func setup(state, loader) -> void:
 ## door runs it -- and nothing is dismissed until the verdict has been shown.
 ## The month end calls this; show_results() stays the count itself.
 func show_polls_closed(results: Array) -> void:
-	_night_id += 1
-	Motion.finish(self)
-	_cells.clear()
-	_verdict_nodes.clear()
-	_revealed = false
-	for child in _sections.get_children():
-		child.queue_free()
-	for child in _footer.get_children():
-		child.queue_free()
+	_clear_plate()
 	_title.text = tr("POLLS CLOSED")
 	PanelKit.line(_sections, tr("The polls have closed. The count is about to begin."), PanelKit.Tone.PLAIN)
 	_cont = Button.new()
 	_cont.text = tr("Continue")
-	_cont.pressed.connect(show_results.bind(results))
+	_cont.pressed.connect(_begin_count.bind(results))
 	_footer.add_child(_cont)
 
 
-func show_results(results: Array) -> void:
+## The beat's Continue. The count's own button takes its place, so a double
+## click's second half lands on it: guarded as a skip is (QA on #70).
+func _begin_count(results: Array) -> void:
+	_guard_until = Time.get_ticks_msec() + SKIP_GUARD_MS
+	show_results(results)
+
+
+## A plate emptied for a new night: the last one's count, verdict and buttons gone.
+func _clear_plate() -> void:
 	_night_id += 1
 	Motion.finish(self)
 	_cells.clear()
@@ -149,6 +149,10 @@ func show_results(results: Array) -> void:
 		child.queue_free()
 	for child in _footer.get_children():
 		child.queue_free()
+
+
+func show_results(results: Array) -> void:
+	_clear_plate()
 
 	var ns = _state.player()
 	var read: Dictionary = ElectionVerdict.read(results, ns)
@@ -320,11 +324,11 @@ func _gui_input(event: InputEvent) -> void:
 ## SKIP_GUARD_MS of a skip, so the second half of a double click on Skip count
 ## cannot dismiss a verdict that has been on screen for a tenth of a second.
 func _on_footer_pressed() -> void:
+	if Time.get_ticks_msec() < _guard_until:
+		return
 	if not _revealed:
 		skip()
 		_guard_until = Time.get_ticks_msec() + SKIP_GUARD_MS
-		return
-	if Time.get_ticks_msec() < _guard_until:
 		return
 	hide()
 	dismissed.emit()

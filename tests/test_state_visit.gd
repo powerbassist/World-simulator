@@ -93,7 +93,14 @@ func _check_the_row_books_a_visit() -> void:
 	diary._month_pick.selected = 1
 	diary._clamp_day_spin()
 	diary._day_spin.value = 15
+	# QA on #70 (TAKE 3): the refusal goes once the day is valid...
+	if String(diary._status.text).contains("cannot be booked") or diary._book_button.disabled:
+		_fail("a valid day kept the refusal line (Book %s, '%s')" % ["held" if diary._book_button.disabled else "live", diary._status.text])
 	diary._on_book()
+	# ...and a booking's confirmation stands over the refresh that follows it.
+	diary._process(0.0)
+	if not String(diary._status.text).begins_with("Booked:"):
+		_fail("a successful booking reads '%s', not its confirmation" % diary._status.text)
 	var booked: Dictionary = _booked(visit)
 	if booked.is_empty():
 		_fail("Book in the Diary's form booked nothing")
@@ -179,6 +186,21 @@ func _check_visits_to_you_roll() -> void:
 	elif not (last.contains("Germany") and last.contains("Austria") and last.contains("Italy")):
 		_fail("the rolling note does not keep the year's visitors: %s" % last.replace("
 ", " | "))
+	# QA on #70 (TAKE 2): a load is a different game -- its tally starts afresh, not
+	# on top of the discarded game's visitors. setup() is what a load runs.
+	news.setup(state, _main._loader, inbox)
+	state.foreign_acts.push_front({
+		"year": int(state.year), "month": 4, "actor_id": "ESP",
+		"target_id": state.player_nation_id, "action_id": String(visit.id),
+		"action_name": visit.action_name, "reason": "",
+	})
+	news.card_foreign_acts(int(state.year), 4)
+	var newest := ""
+	for id in inbox._cards:
+		if _text_of(inbox._cards[id]).to_lower().contains("visits to you"):
+			newest = inbox._bodies[id].get_parsed_text()
+	if newest.contains("Germany") or not newest.begins_with("1 visit"):
+		_fail("the tally carried the discarded game's visitors across a load: %s" % newest)
 
 
 func _text_of(node: Node) -> String:

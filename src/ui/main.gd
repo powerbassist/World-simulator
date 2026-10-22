@@ -916,6 +916,8 @@ func _wire_hud() -> void:
 	)
 	# The legend is the map's, so it goes while a tab covers the map.
 	_windows.closed.connect(func(_id: String):
+		# A summit concluded or walked out of: the hold its opening took goes.
+		if _id == "summit" and not _decision_holds_clock(): _clock.paused = false
 		if _windows.open_ids().is_empty():
 			_hud.sidebar.select("")
 			_hud.show_map_furniture(true)
@@ -1720,8 +1722,7 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 ## not from the last beat of dialogue.
 func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 	var summit := Summits.draw(_state, _loader, target_id)
-	if summit.is_empty():
-		return
+	if summit.is_empty(): return
 	_summit_before = arrival_before
 	# OPENED BEFORE show_summit(), because show_summit() can conclude SYNCHRONOUSLY --
 	# a missing DialogueManager or a scene that does not compile both push_error and
@@ -1731,6 +1732,9 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 	# to prevent. Opening first makes the close land, and an ordinary summit is
 	# unaffected: the frame is up either way before the first beat is drawn.
 	_windows.open("summit")
+	# V5.1-d1b2 (QA on #70, the parent's ruling): a booked scene is modal, so the
+	# clock holds while it is open; the summit window's close lets it go.
+	_clock.paused = true
 	_summit_panel.show_summit(summit)
 
 
@@ -1741,12 +1745,10 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 ## fork) applies nothing and says nothing: a conversation happened, and it
 ## changed nothing, which is the honest outcome for one of those.
 func _resolve_summit(choice_label: String) -> void:
-	if choice_label.is_empty():
-		return
+	if choice_label.is_empty(): return
 	var ns = _state.player()
 	var effects: Dictionary = _summit_panel._effects.get(choice_label, {})
-	if effects.is_empty():
-		return
+	if effects.is_empty(): return
 	Legislature.apply_effects(_state, ns, effects, _loader)
 	_queue_effect(tr("Summit: %s") % choice_label, _summit_before)
 	_update_top_bar()

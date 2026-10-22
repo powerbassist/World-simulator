@@ -82,6 +82,9 @@ var _day_spin: SpinBox
 var _travel_note: Label
 var _book_button: Button
 var _status: Label
+## The form's last refusal line and the entry just booked (_refresh_travel_note).
+var _refused := ""
+var _booked := {}
 var _dirty := true
 var _close_button: Button
 
@@ -519,8 +522,12 @@ func _refresh_travel_note() -> void:
 	var entry := _entry_from_form()
 	var note: Dictionary = VisitBooking.form_note(_state, entry)
 	_travel_note.text = String(note["travel"])
-	if String(note["refusal"]) != "":
-		_status.text = String(note["refusal"])
+	# QA on #70: the refusal is the player's while choosing -- cleared when the day
+	# turns valid, and never written over the booking just made ("Booked: ...").
+	var refusal := String(note["refusal"]) if entry != _booked else ""
+	if refusal != "" or _status.text == _refused:
+		_status.text = refusal
+	_refused = refusal
 	_book_button.disabled = entry.is_empty() or String(note["refusal"]) != ""
 
 
@@ -576,6 +583,7 @@ func _on_book() -> void:
 		return
 	var result: Dictionary = Calendar.book(_state, entry)
 	if bool(result["ok"]):
+		_booked = entry
 		_status.text = tr("Booked: %s, %s.") % [_booking_text(entry), DateText.day_month_year(int(entry["day"]), int(entry["month"]), int(entry["year"]))]
 		mark_dirty()
 		diary_changed.emit()
@@ -594,8 +602,7 @@ func _on_cancel(key: String) -> void:
 
 
 func _entry_from_form() -> Dictionary:
-	if _act_pick.selected < 0:
-		return {}
+	if _act_pick.selected < 0: return {}
 	var kind := _selected_kind()
 	var when := _month_at(maxi(_month_pick.selected, 0))
 	var day := int(_day_spin.value)
@@ -633,9 +640,7 @@ func _selected_kind() -> String:
 
 
 func _selected_subject() -> String:
-	if _subject_pick.selected < 0:
-		return ""
-	return String(_subject_pick.get_item_metadata(_subject_pick.selected))
+	return "" if _subject_pick.selected < 0 else String(_subject_pick.get_item_metadata(_subject_pick.selected))
 
 
 func _month_at(offset: int) -> Dictionary:
@@ -660,10 +665,8 @@ func _leader_person_id(nation_id: String) -> String:
 
 
 func _action_name(id: String) -> String:
-	for action in _loader.diplomatic_actions:
-		if String(action.id) == id:
-			return Strings.row_name("diplomatic-actions", action)
-	return id
+	var action = _action_by_id(id)
+	return Strings.row_name("diplomatic-actions", action) if action != null else id
 
 
 func _law_name(id: String) -> String:

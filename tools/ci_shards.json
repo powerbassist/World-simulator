@@ -84,7 +84,8 @@
    "tests/test_date_text.gd",
    "tests/test_i18n_rows.gd",
    "tests/test_clock_doors.gd",
-   "tests/test_polls_closed.gd"
+   "tests/test_polls_closed.gd",
+   "tests/test_summit_flow.gd"
   ],
   [
    "tests/test_data.gd",

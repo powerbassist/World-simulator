@@ -75,6 +75,11 @@ func _check_the_beat_holds_and_hides() -> void:
 		_fail("a click on the plate skipped the polls-closed beat")
 
 	panel._cont.pressed.emit()
+	# QA on #70 (TAKE 4): a double-click's second half lands on the button the
+	# count put in Continue's place; it must not skip the count, nor dismiss.
+	panel._cont.pressed.emit()
+	if not panel.visible or dismissed[0] != 0:
+		_fail("a double-click on the beat's Continue went past the count (dismissed %d)" % dismissed[0])
 	var after := _text_of(panel)
 	if after.contains("POLLS CLOSED"):
 		_fail("Continue on the beat did not start the count")

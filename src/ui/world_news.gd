@@ -35,6 +35,11 @@ func setup(state, loader, stack) -> void:
 	_state = state
 	_loader = loader
 	_stack = stack
+	# A new game or a load is a different game: its visits are counted afresh (QA
+	# on #70 -- a load kept the discarded game's visitors in the tally).
+	_visits_year = -1
+	_visitors = []
+	_visits_card = ""
 
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
