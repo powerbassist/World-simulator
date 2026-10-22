@@ -122,6 +122,9 @@ tests=(
   # in-flight guard, determinism, the has_budget gate, round-trip. Registered
   # at authoring time per the pass-5 fleet's find.
   tests/test_statute_assembly.gd
+  # G8 (V5.1 play gate): a commissioned poll's price -- flat euros, the same
+  # for every nation, and exactly what buy_poll() charges the debt.
+  tests/test_poll_cost.gd
   # V4.2 T7: the grown book's content shape -- counts, theme and per-bloc sign
   # coverage, spread bands -- re-derived from JSON beside tools/law_lint.py.
   tests/test_law_content.gd
