@@ -94,6 +94,13 @@ The vault check: unresolved wikilinks, docs the index does not reach, orphans, m
 frontmatter -- over tracked files only. What each Obsidian plugin is for: [docs/vault.md](docs/vault.md).
 
 ```bash
+python tools/check_uids.py
+```
+
+Fails on a tracked `X.uid` whose `X` is not tracked: Godot never deletes a script's `.uid`
+when the script goes, so a deletion commit has to `git rm` it too. CI runs it.
+
+```bash
 reuse lint
 ```
 
