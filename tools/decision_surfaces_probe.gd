@@ -99,6 +99,9 @@ func _row(state, ns, year: int, month: int, seen: Dictionary, report: Dictionary
 		"elections": (report.get("election_results", []) as Array).size(),
 		"desk_size": ns.event_queue.size(),
 	}
+	# An arrival is an id on the desk now that was not on it before the Events
+	# step. An event that defaults and re-arrives in the same month is on both
+	# sides and is missed: rare under today's cooldowns, and the note says so.
 	var before: Dictionary = seen["desk_before"]
 	for entry in ns.event_queue:
 		var event_id := String(entry.get("event_id", ""))

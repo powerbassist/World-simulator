@@ -65,7 +65,7 @@ noise around them.
 | **"Decided for you"** | a decision defaulted | no | a note | `main.gd:1464` |
 | **Election result** | a vote resolved | yes, until the player moves on | cannot pass unread | `main.gd:1282` |
 | **Summit scene** | the player's own state visit, when the partner has a scene pool | yes, while open | the player is in it | `main.gd:1740` `_open_summit`; [[summits-model]] |
-| **Programme offer** | the first day of a term | yes, until chosen or declined | the offer lapses when the clock first runs | `main.gd`, `_enforce_term_start_programme`; [[programme-model]] |
+| **Programme offer** | the first day of a term | yes, until chosen or declined | the offer lapses when the clock first runs | `main.gd:2029` `_enforce_term_start_programme`; [[programme-model]] |
 | **Programme conclusions** | delivered, missed or overtaken | no | notes | `main.gd:2111` |
 | **Foreign acts to the player** (state visits, sanctions, treaties) | an AI nation acts on France | no | notes, grouped by action per month | `src/ui/world_news.gd:88` `card_foreign_acts` |
 | **Acts between two other nations** | an AI acts on a third | no | off by default | same; [[v5.0-replay]] P11 |
@@ -80,7 +80,8 @@ noise around them.
 `tools/decision_surfaces_probe.gd` is committed because V5.2 adds requests to the
 same inbox, and the budget must be re-measured then. It drives
 `WorldMonth.tick_month()` with its reads in the step hook, runs isolated, and
-answers nothing. The run: France, 24 months from January 2026, default
+answers nothing. The run: France, 24 months (the rows run from February 2026
+to January 2028, as `tools/balance_probe.gd`'s do), default
 settings, `main` at `52f286c2`.
 
 **MEASURED, over 24 months:**
@@ -112,7 +113,7 @@ settings, `main` at `52f286c2`.
   3 a year runs in about 52 seconds (`src/core/clock.gd:12`, 7 days a second),
   so this is one stop every 15 seconds of running at speed 3. At the author's
   pace of about 74 seconds a game month ([[bands-v5.2]], "The frame"), it is one
-  stop every 3.5 minutes.
+  stop every 4.2 minutes (a year is 12 × 74 = 888 seconds).
 
 ## The triage
 
@@ -172,6 +173,10 @@ that ask nothing, and more decisions that matter.
 - The probe measures the sim's half. Which arrival pauses, cards or holds in its
   last month is read from `main.gd` and `message_settings.gd` at the default
   settings, not observed in a running window.
+- The probe counts an arrival as an id on the desk after the Events step that
+  was not on it before, so an event that defaults and re-arrives in the same
+  month is missed. Today's cooldowns make that rare; none occurred in this run
+  as far as the counts show (6 arrivals, 4 defaults, 2 left on the desk).
 - One run, one nation, one seed (the hazard is deterministic). Other nations,
   and a player who acts, would see other counts.
 - "Plausibly never seen: 0" assumes the player does not unpause past a hold.
