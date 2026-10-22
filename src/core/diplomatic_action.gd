@@ -32,6 +32,14 @@ var summary: String = ""
 ## again. Zero is legal and means no cooldown.
 var cooldown_months: int = 0
 
+## The HOST's side of the same idea (the V5.1 play gate's state-visit cadence):
+## months during which a nation that received this action is not offered it by
+## anyone. Zero, the default, is no limit. cooldown_months paces what one actor
+## does to one target; this paces what one target receives from everyone, which
+## is what kept every AI's visit from landing on the one partner it could still
+## warm to -- an idle player (tests/test_visit_cadence.gd).
+var host_interval_months: int = 0
+
 ## V2.4a. True on the one verb that is literally "go and meet the other leader"
 ## -- the state visit. execute() stamps GameState.met_months for the pair, which
 ## is what the `met_recently` precondition reads, so treaty-class verbs authored
@@ -81,6 +89,9 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], bl
 	a.cooldown_months = int(d.get("cooldown_months", 0))
 	if a.cooldown_months < 0:
 		errors.append("%s: %s cooldown_months must be >= 0" % [filename, a.id])
+	a.host_interval_months = int(d.get("host_interval_months", 0))
+	if a.host_interval_months < 0:
+		errors.append("%s: %s host_interval_months must be >= 0" % [filename, a.id])
 
 	# V2.4a. Read leniently rather than type-checked hard, because the content
 	# convention across data/ is booleans written bare -- a non-bool here is a

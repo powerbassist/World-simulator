@@ -376,13 +376,16 @@ cursor; the name returns when the cursor leaves). The rest are parked:
 
 The embassies, the capitals and the runner's verdict; two items measured and left.
 
-- **The hands-off AI aims ~95% of its state visits at the player.** The 0d attribution
+- ~~**The hands-off AI aims ~95% of its state visits at the player.**~~ The 0d attribution
   (scratch act counter, hands-off FRA, 168 months through WorldMonth): base 338 of 354
-  state visits target France, tip 353 of 375; the 33 embassies the base AI opened were
-  all in Paris too. Thirty-seven AI nations talk almost only to the president, not to each
-  other -- which is also why the test audit found no AI-to-AI agreement in 168 months.
-  **Owner:** the V5.2 / V5.4 plan gate (people who talk, the real network). Not 0d's: the
-  embassies only removed one of the verbs the skew was spent on.
+  state visits target France, tip 353 of 375. **The cadence is answered at the V5.1 play
+  gate (author's call, 2026-10-22):** a host receives a state visit at most once every six
+  months ([[diplomacy-model]], "The host's cadence"); the player now gets 2 a year and the
+  AIs visit each other. **Still open, owner V5.4 (the real network):** the cause it
+  starves but does not remove -- third-party judgement credits the ACTOR of every friendly
+  act with every observer holding a stake in the target, so AI-AI amity saturates (0.5-1.0
+  within two years) and an idle player, who never collects that credit, stays the one
+  partner with room. Also why the test audit found no AI-to-AI agreement in 168 months.
 - **`Capital.city()` refolds the nation's city list on every call.** Microseconds today:
   its callers are a booking, the campaign panel's rows and the campaign's factor. **When a
   per-month caller appears,** the right shape is a fold table the loader builds once

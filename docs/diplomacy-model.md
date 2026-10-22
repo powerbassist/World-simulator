@@ -99,6 +99,21 @@ Preconditions may test `relations` (against the action's own target) or the acti
 
 **Bounds, recorded.** The rule errs toward too many missions: Malta, Luxembourg, Iceland, Montenegro and Kosovo in truth accredit many ambassadors from a neighbouring capital. A Wikidata list was tried first and refused because its gaps were the bug itself (an embassy offered where one stands) -- [[data-sources]]. And on a pair without relations the verb is refused: the exceptions are copied to `NationState.no_relations` at the same seed and the verb asks the eighth pair field, `relations_exist`, for 1 (review pass 2: before it, Serbia at relations 50 could have opened an embassy in Pristina). Recognition itself is not modelled, so nothing opens those pairs during a game.
 
+## The host's cadence (V5.1 play gate)
+
+A hands-off world sent **~26 state visits a year to the player** and almost none anywhere else: 53 of 75 AI acts in 24 idle months. With Germany as the player, 61 of 71 went to Germany, so the bias is towards the player, not towards France. The cause is two rules meeting:
+
+- The agenda's only friendly motive is `deepen` = stake × warmth × room, where room = `AGENDA_AMITY_TARGET − amity` ([[foreign-policy-model]]).
+- Third-party judgement credits the **actor** of every friendly act with every observer that has a stake in the target.
+
+So AI-AI amity climbed from 0.0–0.2 at new game to 0.5–1.0 within two years, and the AIs' room with each other closed. An idle player never acts and never collects that credit, so it stayed the one target with room, and every AI visited it once per 12-month cooldown. A controlled run with the judgement at zero kept AI-AI amity at 0.0–0.3 and cut the player's share of acts from 72 % to 27 %.
+
+**The rule is the host's, read off the action.** `host_interval_months` on a verb means that a nation which received it is offered it by nobody, the player included, until the interval has run. The register is `NationState.diplo_hosted_months` `{action_id: months}`: stamped on the target by `DiplomacyCooldowns.stamp()` and counted down beside `diplo_cooldown_months` in `_settle()`, before any actor's turn. A host stamped with N in month m is therefore offered the verb again from month m + N.
+
+`state_visit` carries **6**: the UK's convention is two incoming state visits a year, and 2025's three was the first time in 37 years. The default is 0, so no other verb changes. An empty register reads as "nothing hosted recently", so the field carries no SAVE_VERSION bump.
+
+Measured on all four playables over three to four idle years through `WorldMonth`: exactly 2 visits a year to the player, and 82–93 AI-to-AI visits over 4 years (`tests/test_visit_cadence.gd`). The judgement inflation itself is not touched; the cap only starves it ([[someday]]).
+
 ## The measurement, run before the content existed
 
 `tools/diplomacy_probe.gd`. The plan named it and named what would count as a failure, which is the discipline [[amendment-model]], [[dissolution-model]] and [[scenario-model]] each established.
