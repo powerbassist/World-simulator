@@ -15,6 +15,12 @@ extends SceneTree
 ## visible, so a check on a panel that was never opened would read nothing.
 
 const TermText = preload("res://src/ui/term_text.gd")
+const GameState = preload("res://src/core/game_state.gd")
+const GovernmentPanel = preload("res://src/ui/government_panel.gd")
+
+## The line exists only under a constitution with Article 49.3 (FRA's), and
+## must not show for the parliamentary systems the author plays.
+const FORCE_LINE := {"FRA": true, "DEU": false, "GBR": false, "POL": false}
 
 var _failures: Array[String] = []
 var _main
@@ -35,6 +41,7 @@ func _process(_delta: float) -> bool:
 		_main._windows.open("society")
 	elif _frame == 8:
 		_check(_main._polling_panel, "approval", "Society")
+		_check_force_line_follows_the_constitution()
 		_finish()
 		return true
 	return false
@@ -49,6 +56,25 @@ func _check(panel: Node, id: String, window: String) -> void:
 			_fail("%s prints a raw tag: %s" % [window, node.get("text")])
 	if terms == 0:
 		_fail("the %s window draws no %s term" % [window, id])
+
+
+## The Politics window of a game played as each nation: the 49.3 tally is the
+## French constitution's, so it follows the formation method the system carries,
+## never the nation id.
+func _check_force_line_follows_the_constitution() -> void:
+	for nation_id in FORCE_LINE:
+		var state = GameState.new_game(_main._loader, nation_id)
+		var panel = GovernmentPanel.new()
+		root.add_child(panel)
+		panel.setup(state, _main._loader)
+		panel._refresh()
+		var shown := false
+		for node in _all(panel):
+			if node.get_script() == TermText and String(node.text).contains(TermText.META_PREFIX + "article_49_3"):
+				shown = true
+		if shown != FORCE_LINE[nation_id]:
+			_fail("%s: the Article 49.3 line %s" % [nation_id, "is missing" if FORCE_LINE[nation_id] else "shows, with no 49.3 in its constitution"])
+		panel.free()
 
 
 func _all(node: Node) -> Array:
