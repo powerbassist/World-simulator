@@ -87,6 +87,8 @@ static func section(parent: Control, heading: String) -> VBoxContainer:
 
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", ROW_SEPARATION)
+	# A section for N1: a term is marked at its first line in it (term_text.gd).
+	body.set_meta(TermText.SECTION_META, {})
 	group.add_child(body)
 	return body
 
