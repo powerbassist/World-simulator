@@ -26,7 +26,7 @@
 			"y": 0,
 			"width": 400,
 			"height": 220,
-			"text": "## 2 Workspace\n`WindowManager`: one tab open at a time, docked left, back and forward walk the player's path. 22 panels registered, none edited when the shell changed.\n\n`src/ui/window_manager.gd`"
+			"text": "## 2 Workspace\n`WindowManager`: one tab open at a time, docked left, back and forward walk the player's path. 23 panels registered, none edited when the shell changed.\n\n`src/ui/window_manager.gd`"
 		},
 		{
 			"id": "6a8e2399923d653e",
@@ -63,7 +63,7 @@
 			"y": 340,
 			"width": 400,
 			"height": 240,
-			"text": "### Domains\nWhich tab sits under which heading is one table: `TABLE` in `src/ui/domains.gd`. 21 tabs in 13 rows; a window in no row becomes its own one-tab domain. A scene (the summit) is in no domain. Drawn on [[shell]]."
+			"text": "### Domains\nWhich tab sits under which heading is one table: `TABLE` in `src/ui/domains.gd`. 22 tabs in 14 rows; a window in no row becomes its own one-tab domain. A scene (the summit) is in no domain. Drawn on [[shell]]."
 		},
 		{
 			"id": "fbe6e9cfe1f5a245",

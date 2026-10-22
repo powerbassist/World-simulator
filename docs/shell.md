@@ -59,6 +59,8 @@ flowchart LR
   d_opinion --> t_campaign["campaign"]
   sb -.-> d_social["Social<br/>hidden until a tab registers"]:::hidden
   sb -.-> d_defence["Defence<br/>hidden until a tab registers"]:::hidden
+  sb --> d_glossary["Glossary"]
+  d_glossary --> t_glossary["glossary"]
   sb -.-> s_summit["summit<br/>a scene, in no domain"]:::hidden
   classDef hidden stroke-dasharray:4 3,fill:#ececec,stroke:#555,color:#1a1a1a
 ```
