@@ -219,9 +219,15 @@ const LAYERS: Array[Dictionary] = [
 ## than the GOOD/BAD red-to-green the theme already owns, because those two are
 ## the game's semantic pair for a *delta* and this is a level, and because
 ## red-green is the one diverging ramp a colour-blind player cannot read.
-const REL_COLD := Color(0.851, 0.267, 0.298)
-const REL_NEUTRAL := Color(0.847, 0.827, 0.729)
-const REL_WARM := Color(0.196, 0.722, 0.678)
+##
+## V5.1-d2 ("no map layer reads by colour alone"): it diverges in HUE but rises in
+## LIGHTNESS, dark red through a mid neutral to pale teal. The first ramp went red,
+## PALE neutral, teal -- both ends darker than the middle, so "53 border only" and
+## "68 bloc and border" were one lightness apart from a hue; a player who cannot
+## tell the hues apart now still reads warmer as lighter (tests/test_map_layers.gd).
+const REL_COLD := Color(0.55, 0.12, 0.16)
+const REL_NEUTRAL := Color(0.62, 0.60, 0.54)
+const REL_WARM := Color(0.55, 0.92, 0.85)
 
 ## Trade: sequential along the brass axis, dark to pale gold. Quantity, so one
 ## hue rather than two directions -- the same reasoning ui_theme.gd's ProgressBar
@@ -243,7 +249,9 @@ const TRADE_HIGH := Color(0.976, 0.898, 0.639)
 ## wrong -- which on this layer is exactly what the colour means.
 const COERCE_NONE := Color(0.129, 0.196, 0.310)
 const COERCE_MID := Color(0.706, 0.325, 0.180)
-const COERCE_HIGH := Color(0.918, 0.243, 0.208)
+## Lifted toward coral at V5.1-d2: the first hot red sat barely above the ember in
+## lightness (1.24:1), so "mutual embargo" read from "tariffs answered" by hue alone.
+const COERCE_HIGH := Color(0.96, 0.42, 0.36)
 
 ## Production: sequential, and deliberately the TEAL axis the relations ramp's warm
 ## end already uses, because it answers the inverse question about the same kind of
@@ -271,9 +279,14 @@ const PROD_HIGH := Color(0.694, 0.949, 0.925)
 ## the theme's SLATE toward brass rather than from NO_VALUE's navy, so the two
 ## "empty" ends of the two commodity ramps are distinct colours as well as distinct
 ## from the no-data colour.
+##
+## V5.1-d2: the middle was brass gold, LIGHTER than the red above it, so the top of
+## the ramp darkened as dependency rose -- "dependent" read as less than "a quarter
+## bought in" to anyone reading lightness. The middle is a darker ember now and the
+## top is the coercion ramp's own coral, so both read as rising.
 const DEP_LOW := Color(0.231, 0.243, 0.337)
-const DEP_MID := Color(0.788, 0.635, 0.153)
-const DEP_HIGH := Color(0.918, 0.243, 0.208)
+const DEP_MID := Color(0.66, 0.40, 0.09)
+const DEP_HIGH := COERCE_HIGH
 
 ## Ten land tones for the political layer, cycled by hash so neighbours rarely
 ## collide. Moved here from map_view.gd at U5c with its argument intact.
