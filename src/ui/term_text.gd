@@ -36,6 +36,7 @@ var exclude := PackedStringArray()
 var _hovered := ""
 
 static var _tag: RegEx
+static var _plain_tag: RegEx
 
 
 func _init() -> void:
@@ -77,6 +78,15 @@ static func markup(source: String, skip := PackedStringArray()) -> String:
 			out += "[url=%s%s][hint=]%s[/hint][/url]" % [META_PREFIX, id, word]
 		at = m.get_end()
 	return out + escaped.substr(at)
+
+
+## The same prose with its marks dropped and their words kept, for a sink that
+## cannot draw a term: a Button's tooltip_text is a plain string. Silent on an
+## unknown id -- markup() is the loud reader, and P1 fails the id before it ships.
+static func plain(source: String) -> String:
+	if _plain_tag == null:
+		_plain_tag = RegEx.create_from_string("\\[g=[A-Za-z0-9_]+\\](.*?)\\[/g\\]")
+	return _plain_tag.sub(source, "$1", true)
 
 
 func _gui_input(event: InputEvent) -> void:

@@ -588,7 +588,7 @@ func _charged_so_far(entry: Dictionary) -> float:
 func _pledge_button(ns, action) -> Button:
 	var button := Button.new()
 	button.text = Strings.row_name("pledges", action)
-	button.tooltip_text = Strings.row_summary("pledges", action)
+	button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("pledges", action))
 	button.pressed.connect(func(): _on_promise(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button

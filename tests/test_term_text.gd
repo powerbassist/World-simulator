@@ -143,6 +143,32 @@ func _check_the_sinks_mark_terms() -> void:
 			'PanelKit.rich(block, Strings.choice_summary(ev.id, choice))']:
 		if not source.contains(sink):
 			_fail("events_panel.gd no longer prints its text through a rich line: %s" % sink)
+	_check_the_row_sinks()
+
+
+## The data rows Content marks next (the tooltip-sinks PR): each summary a panel
+## prints goes through a rich line, read off the source as above -- each panel
+## needs a whole game to draw. A Button's tooltip_text cannot carry a term, so a
+## summary shown there reads its words without the tags.
+func _check_the_row_sinks() -> void:
+	var sinks := {
+		"res://src/ui/events_panel.gd": ["PanelKit.rich(block, what)"],
+		"res://src/ui/law_panel.gd": ["PanelKit.rich(box, Strings.law_summary(law), PanelKit.Tone.PLAIN)"],
+		"res://src/ui/agenda_panel.gd": [
+			'PanelKit.rich(block, Strings.row_summary("programme", terms))',
+			'button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("programme", terms))',
+		],
+		"res://src/ui/campaign_panel.gd": ['button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("pledges", action))'],
+		"res://src/ui/council_section.gd": ['PanelKit.rich(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "summary", String(pending.get("summary", ""))))'],
+	}
+	for path in sinks:
+		var source := FileAccess.get_file_as_string(path)
+		for sink in sinks[path]:
+			if not source.contains(sink):
+				_fail("%s does not print its row's text through the term path: %s" % [path.get_file(), sink])
+	var plain: String = TermText.plain("Your [g=approval]approval[/g] and [b]the [g=no_such_term]rest[/g][/b].")
+	if plain != "Your approval and [b]the rest[/b].":
+		_fail("TermText.plain gave '%s'" % plain)
 
 
 ## A stand-in for the tooltip layer: the label finds whatever is in the group

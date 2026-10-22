@@ -422,7 +422,7 @@ func _build_law_row(ns, party_list: Array, law) -> Control:
 		var target_label: String = target.display_name if target != null else target_system_id
 		PanelKit.line(box, tr("Rewrites the constitution to a %s.") % target_label, PanelKit.Tone.PLAIN)
 
-	PanelKit.line(box, Strings.law_summary(law), PanelKit.Tone.PLAIN)
+	PanelKit.rich(box, Strings.law_summary(law), PanelKit.Tone.PLAIN)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)

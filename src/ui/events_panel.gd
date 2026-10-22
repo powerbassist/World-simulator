@@ -402,11 +402,7 @@ func _build_record(record: Dictionary) -> void:
 	# U6c's "the site belongs to the nation" one surface on.
 	var what := _choice_summary(record)
 	if what != "":
-		var meant := Label.new()
-		meant.text = what
-		meant.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		meant.theme_type_variation = UiTheme.MICRO
-		block.add_child(meant)
+		PanelKit.rich(block, what)
 
 	_body.add_child(block)
 
