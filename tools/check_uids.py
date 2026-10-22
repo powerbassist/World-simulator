@@ -36,8 +36,9 @@ def main():
         return selftest()
     root = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True,
                           text=True, check=True).stdout.strip()
-    out = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True, check=True)
-    bad = orphans([p for p in out.stdout.splitlines() if p])
+    # -z: without it git quotes a non-ASCII path, and the quote hides its .uid suffix.
+    out = subprocess.run(["git", "ls-files", "-z"], cwd=root, capture_output=True, text=True, check=True)
+    bad = orphans([p for p in out.stdout.split(chr(0)) if p])
     for p in bad:
         print("orphan .uid (its %s is not tracked): %s" % (p[:-len(".uid")], p))
     if bad:
