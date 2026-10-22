@@ -191,7 +191,9 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
   [docs/data-sources.md](docs/data-sources.md)'s `road-generator` callout — read it
   before the name tempts a future session to re-open the question. It is still parked
   rather than stripped; what changed is that nothing on any tier is now waiting for
-  it. **`dialogue_manager` is no longer parked: V2.4b adopted it**,
+  it. **`limboai` is parked the same way** (behaviour trees, on disk and gitignored with the
+  rest): installed for a planned use, unreferenced by `src/` and absent from
+  `[editor_plugins]`, not junk. **`dialogue_manager` is no longer parked: V2.4b adopted it**,
   and it is the project's STATED EXCEPTION to the no-autoloads rule — taken knowingly
   at plan time, gated on a headless smoke test (it must init under
   `--headless --script`, which is what `tools/run_tests.sh` is), committed whole into

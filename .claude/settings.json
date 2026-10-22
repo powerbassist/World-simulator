@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__godot-mcp-toolkit__runtime_screenshot",
+      "mcp__ccd_session_mgmt__list_events",
+      "mcp__ccd_pr__get_status",
+      "Bash(tasklist *)",
+      "Bash(tasklist)",
+      "mcp__godot-mcp-toolkit__debugger_get_log",
+      "mcp__godot-mcp-toolkit__editor_get_console",
+      "mcp__ccd_session_mgmt__get_usage",
+      "mcp__ccd_session_mgmt__get_session",
+      "mcp__Claude_Browser__tabs_context",
+      "mcp__Windows-MCP__Screenshot",
+      "mcp__godot-mcp-toolkit__script_check",
+      "mcp__context7__query-docs",
+      "mcp__ccd_session_mgmt__list_sessions"
+    ]
+  }
+}
