@@ -168,6 +168,7 @@ tests=(
   tests/test_strip_readings.gd
   tests/test_tip_popup.gd
   tests/test_glossary.gd
+  tests/test_term_text.gd
   tests/test_outliner.gd
   tests/test_geography.gd
   # V2.5: the partition closes, the deviation is zero-mean, and the register still

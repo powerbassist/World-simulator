@@ -100,6 +100,11 @@ const FIGURE_LABEL := "FigureLabel"  ## the caption above a large number
 const CAPTION := "Caption"           ## dim secondary text  # i18n: ok
 const GOOD_TEXT := "GoodText"        ## a delta that is good news
 const BAD_TEXT := "BadText"          ## a delta that is bad news
+## V5.1-c. The same tones for a RichTextLabel (term_text.gd), which reads
+## default_color and normal_font_size where a Label reads font_color and font_size.
+const RICH_CAPTION := "RichCaption"
+const RICH_GOOD := "RichGood"
+const RICH_BAD := "RichBad"
 const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
 
 # -- Container and button variations -------------------------------------------
@@ -186,6 +191,7 @@ static func build() -> Theme:
 
 	_panels(theme)
 	_labels(theme)
+	_rich(theme)
 	_buttons(theme)
 	_progress(theme)
 	_scrollbars(theme)
@@ -362,6 +368,16 @@ static func _labels(theme: Theme) -> void:
 
 	theme.set_color("font_color", GOOD_TEXT, GOOD)
 	theme.set_color("font_color", BAD_TEXT, BAD)
+
+
+static func _rich(theme: Theme) -> void:
+	theme.set_color("default_color", "RichTextLabel", TEXT)  # i18n: ok
+	for variation in [RICH_CAPTION, RICH_GOOD, RICH_BAD]:
+		theme.set_type_variation(variation, "RichTextLabel")  # i18n: ok
+	theme.set_font_size("normal_font_size", RICH_CAPTION, _px(SIZE_SMALL))
+	theme.set_color("default_color", RICH_CAPTION, TEXT_DIM)
+	theme.set_color("default_color", RICH_GOOD, GOOD)
+	theme.set_color("default_color", RICH_BAD, BAD)
 
 
 static func _buttons(theme: Theme) -> void:

@@ -38,6 +38,7 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Num = preload("res://src/ui/num.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const TermText = preload("res://src/ui/term_text.gd")
 
 ## What a panel prints when it does not know. An em dash is not a small number:
 ## it says the figure is absent, where `0.00` says the figure is zero, and the
@@ -128,6 +129,18 @@ static func line(parent: Control, text: String, tone := Tone.DIM) -> Label:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	label.theme_type_variation = _variation(tone, "")
 	parent.add_child(label)
+	return label
+
+
+## V5.1-c. line()'s twin for prose that can mark a glossary term ([g=id]word[/g],
+## docs/design/glossary-tooltips.md): a TermText, the one place a term is marked,
+## wearing the same tone. The inbox's body and the event text use it in c; d moves
+## line() itself over.
+static func rich(parent: Control, text: String, tone := Tone.DIM) -> RichTextLabel:
+	var label := TermText.new()
+	label.theme_type_variation = _rich_variation(tone)
+	parent.add_child(label)
+	label.set_marked(text)
 	return label
 
 
@@ -312,6 +325,18 @@ static func tone_for(value: float, worse_when_rising: bool) -> Tone:
 		return Tone.PLAIN
 	var bad := (value > 0.0) == worse_when_rising
 	return Tone.BAD if bad else Tone.GOOD
+
+
+static func _rich_variation(tone: Tone) -> String:
+	match tone:
+		Tone.GOOD:
+			return UiTheme.RICH_GOOD
+		Tone.BAD:
+			return UiTheme.RICH_BAD
+		Tone.DIM:
+			return UiTheme.RICH_CAPTION
+		_:
+			return ""
 
 
 static func _variation(tone: Tone, fallback: String) -> String:

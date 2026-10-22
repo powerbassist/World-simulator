@@ -82,17 +82,17 @@ static func problems(terms: Array, live_names: PackedStringArray) -> PackedStrin
 		var id := String(row.get("id", ""))
 		for other in row.get("see_also", []):
 			if not known.has(String(other)):
-				out.append("%s: see_also names '%s', which is no entry" % [id, other])
+				out.append("%s: see_also names '%s', which is no entry" % [id, other])  # i18n: ok a load error for the developer
 		var live := String(row.get("live", ""))
 		if not live.is_empty() and not live_names.has(live):
-			out.append("%s: live '%s' is not in the UI's closed table" % [id, live])
+			out.append("%s: live '%s' is not in the UI's closed table" % [id, live])  # i18n: ok a load error for the developer
 		var cited := anchors(row.get("model"))
 		if cited.is_empty():
-			out.append("%s: no model section cited" % id)
+			out.append("%s: no model section cited" % id)  # i18n: ok a load error for the developer
 		for anchor in cited:
 			var parts := anchor.split("#")
 			if parts.size() != 2 or parts[0].is_empty() or parts[1].is_empty():
-				out.append("%s: model anchor '%s' is not <doc>#<heading>" % [id, anchor])
+				out.append("%s: model anchor '%s' is not <doc>#<heading>" % [id, anchor])  # i18n: ok a load error for the developer
 	return out
 
 
