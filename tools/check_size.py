@@ -36,7 +36,7 @@ BASELINE = REPO / "tools" / "size_baseline.json"
 NEW_FILE_MAX = 300
 TOTAL_MAX = 2000
 # The single named exception, until V5.1c dissolves it (docs/tiers/v5.md).
-TOTAL_EXCEPTIONS = {"src/ui/main.gd": "V5.1c dissolves main.gd"}
+TOTAL_EXCEPTIONS: dict[str, str] = {}  # main.gd's closed at V5.1-d2 (the desk cards moved out)
 
 
 def code_lines(text: str) -> int:
