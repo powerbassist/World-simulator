@@ -10,8 +10,9 @@ extends SceneTree
 ## the first panel to redraw, drawn on the loaded game.
 ##
 ## The defect it pins: a decision's figure with no "before" reading (the
-## projects panel's baseline is Budget.snapshot(), which carries no approval)
-## moves by NAN, "no data", and the Overview filters it with is_nan(). The save
+## projects panel's baseline was Budget.snapshot(), which carried no approval,
+## until the pre-gate fix -- a save written before it still holds those) moves by
+## NAN, "no data", and the Overview filters it with is_nan(). The save
 ## wrote that NAN as JSON null, the load handed it back as Nil, and is_nan(Nil)
 ## is a SCRIPT ERROR -- which the editor's debugger stops on: the author's
 ## "crash" on loading their save (2026-10-20). tools/suite_runner.py fails a run
@@ -116,13 +117,14 @@ func _play_and_save() -> bool:
 		return false
 	var entry: Dictionary = state.recent_effects[0]
 	_label = String(entry["label"])
-	var has_nan := false
-	for m in entry["movements"]:
-		if is_nan(float(m["severity"])):
-			has_nan = true
-	if not has_nan:
-		_fail("premise: '%s' moved no figure by NAN, so the save carries nothing the load can drop" % _label)
+	# Every baseline carries approval since the pre-gate fix, so the figure with no
+	# reading is staged: one movement made "no data", as a save written before the
+	# fix holds it.
+	if (entry["movements"] as Array).is_empty():
+		_fail("premise: '%s' moved no figure, so the save carries nothing the load can drop" % _label)
 		return false
+	entry["movements"][0]["change"] = NAN
+	entry["movements"][0]["severity"] = NAN
 
 	for m in entry["movements"]:
 		_saved_changes.append(float(m["change"]))

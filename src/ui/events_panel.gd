@@ -28,7 +28,7 @@ signal acted(before, label)
 
 const Events = preload("res://src/sim/events.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
-const Budget = preload("res://src/sim/budget.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const Government = preload("res://src/sim/government.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -289,7 +289,7 @@ func _build_choice(ns, ev, choice: Dictionary) -> void:
 ## BEFORE the command, so the delta measures the month the choice was made against the
 ## month before it.
 func _on_choose(ev, choice: Dictionary) -> void:
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	# answer() by id, not choose() on the head: with several entries on the desk
 	# the button must answer ITS row -- a panel whose buttons resolved whatever
 	# sat on top would be a panel that answered the wrong crisis on purpose.

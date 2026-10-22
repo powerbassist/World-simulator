@@ -42,6 +42,10 @@ var _held: Node = null
 ## WorldMonth.unit_key() -> that unit's cost last month, usec: the estimate that
 ## keeps a unit known to be long out of a frame already part spent.
 var _cost := {}
+## True while the input deferred during the month is replayed: those presses were
+## made against the running clock of a closing month, before anything its end
+## raised (main.gd reads it to make a replayed pause mean "paused").
+var replaying := false
 ## V5.1-0b. The last month's cost per step, microseconds -- step name -> usec,
 ## summed over the step's units: the perf overlay's numbers (src/ui/dev_perf.gd).
 ## Timed here, per UNIT, because Economy and Diplomacy come in slices that can span
@@ -104,8 +108,10 @@ func _process(_delta: float) -> void:
 	_clock.release()
 	var events := _deferred
 	_deferred = []
+	replaying = true
 	for event in events:
 		get_viewport().push_input(event, true)
+	replaying = false
 
 
 func _input(event: InputEvent) -> void:

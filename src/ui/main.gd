@@ -16,7 +16,6 @@ const Energy = preload("res://src/sim/energy.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Net = preload("res://src/sim/network.gd")
 const Region = preload("res://src/core/region.gd")
-const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
@@ -842,6 +841,14 @@ func _build_sidebar() -> void:
 ## _unseen_events (the cards stay unseen) and an interrupt on the desk, which
 ## holds the clock on its own account.
 func _toggle_pause_by_hand() -> void:
+	# QA pre-gate. A press deferred while a month closed is replayed after its end
+	# (month_runner.gd), which may have held the clock for a decision; a toggle
+	# would resume it and the decision would lapse unanswered. A month closes only
+	# on a running clock, so the press meant pause: on a clock already paused (a
+	# hold it predates) it does nothing, otherwise it pauses below. Rejected:
+	# replaying input before the month-end hooks, which would act every deferred
+	# click on the pre-month UI and state.
+	if _month_runner.replaying and _clock.paused: return
 	# V5.1-0c. The offer lives only until the clock first runs in a term, so the
 	# press that would forfeit it opens the Agenda instead -- once: when the Agenda
 	# has shown the offer, the next press is the player declining, and runs.
@@ -949,7 +956,7 @@ func _wire_hud() -> void:
 		var ev = Events.event_by_id(_loader, event_id) if event_id != "" else null
 		if ev == null or index >= ev.choices.size():
 			return
-		var before := Budget.snapshot(_state)
+		var before := Trends.snapshot_now(_state)
 		var record := Events.answer(_state, _loader, event_id, String(ev.choices[index]["id"]))
 		if record.is_empty():
 			return
@@ -1197,7 +1204,7 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 	# neither this nor the top-bar refresh until the V2.8 review, so the one energy
 	# verb the player reaches through the MAP was missing from Overview's recent
 	# decisions while the panel's own decommission route was not.
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	var result := Energy.execute(_state, ns, _loader, _loader.energy_actions, action,
 		Vector2(lon, lat), region_id, "", access, pop_weights)
 	if bool(result.get("applied", false)):
@@ -1308,7 +1315,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 				# button pressed -- the class _card_appointment() already covers, and
 				# the one case where the player did not even know a decision was
 				# being made on their behalf.
-				_month_capture["event_before"] = Budget.snapshot(_state)
+				_month_capture["event_before"] = Trends.snapshot_now(_state)
 				# V4.4: the before-state is the desk's CONTENT, not its emptiness -- a
 				# resolve-and-replace month (one answered, another arrived) is
 				# ordinary now, and the boolean edge detector fired neither branch on
@@ -2050,7 +2057,7 @@ func _on_programme_chosen(entry_id: String) -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	var result: Dictionary = Programme.choose(_state, ns, entry_id, _loader)
 	if bool(result.get("refused", false)):
 		_hud.inbox.push(tr("Programme refused"), _programme_refusal_text(String(result.get("reason", ""))))

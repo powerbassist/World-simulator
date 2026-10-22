@@ -16,7 +16,7 @@ extends RefCounted
 ## `on_outcome`, called per entry before the next one fires, so the order of a
 ## day with two appointments is the one main.gd had.
 
-const Budget = preload("res://src/sim/budget.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
@@ -42,7 +42,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 		# deferred act would report the movements of a month in which it did not
 		# happen. _pending_effects is also documented as not persisted, so a save
 		# across a booking would lose a baseline taken at the press entirely.
-		var before := Budget.snapshot(state)
+		var before := Trends.snapshot_now(state)
 		before.merge(Opinion.snapshot(state))
 
 		var label := ""

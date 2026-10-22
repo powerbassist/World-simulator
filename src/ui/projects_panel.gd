@@ -33,7 +33,7 @@ signal acted(before, label)
 const Projects = preload("res://src/sim/projects.gd")
 const ProjectsK = preload("res://src/sim/projects_constants.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
-const Budget = preload("res://src/sim/budget.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -280,7 +280,7 @@ func _button(ns, action) -> Button:
 ## captured BEFORE the command, so the delta measures the month the work began
 ## against the month before it.
 func _on_act(ns, action) -> void:
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	var result := Projects.execute(_state, ns, _loader.project_actions, action)
 	if not result.get("applied", false):
 		return
