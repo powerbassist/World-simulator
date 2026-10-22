@@ -33,7 +33,7 @@ const BAR_HEIGHT := 40
 ## width is the same with or without one running.
 const PROGRAMME_CAPTION_PX := 104
 ## Caption-to-value gap inside a stacked figure; negative pulls the two lines
-## together so the bar stays inside window_frame.gd's TOP_MARGIN.
+## together so the bar stays above the workspace dock (window_manager's DOCK_TOP).
 const FIGURE_LINE_GAP := -4
 
 var _figure_values := {}
@@ -107,7 +107,7 @@ func _ready() -> void:
 ## Caption above value. U5a put them on one line to get the strip to 40px; at
 ## V4.8a's thirteen readings one line needed 2219 px of a 1920 screen, so they
 ## stack again -- with a negative separation so the two lines sit inside the
-## frames' TOP_MARGIN, which is what keeps the 826px window band unchanged.
+## dock's DOCK_TOP, which is what keeps the 826px workspace band unchanged.
 func _build_figure(key: String, title: String) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", FIGURE_LINE_GAP)

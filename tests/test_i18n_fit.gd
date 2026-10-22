@@ -20,9 +20,9 @@ const WindowManager = preload("res://src/ui/window_manager.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Companies = preload("res://src/sim/companies.gd")
 
-## 1920x1080 is the layout base (stretch canvas_items); this is the width
-## window_manager._place() gives a window.
-const BAND := 1920.0 - WindowManager.LEFT_RESERVE - WindowManager.SIDE_MARGIN
+## 1920x1080 is the layout base (stretch canvas_items); this is the width of the
+## docked workspace a tab fills (V5.1-c2.2).
+const BAND := WindowManager.DOCK_WIDTH
 const EXPANSION := 0.35
 ## The HUD's lower row (legend + portrait, the command bar with its drawer, the clock)
 ## and the top bar sit in the 1920 px layout less the HUD's 14 px edge margins.
@@ -138,7 +138,9 @@ func _check_briefing(main, language: String) -> void:
 ## the same failure. Read after the growth, on each window's first open, with a
 ## bid on the desk.
 func _check_right_edge(windows, frame, id: String, language: String) -> void:
-	var right: float = frame.position.x + frame.size.x
+	# Global: a page sits at the origin of the dock's body, so its own position
+	# says nothing about where it ends on screen.
+	var right: float = frame.get_global_rect().end.x
 	if id == "companies":
 		print("i18n_fit: companies %-6s right edge %4.0f of %4.0f" % [language, right, windows.size.x])
 		# The other half of the fix: the verbs wrap rather than widen the window.
@@ -146,7 +148,7 @@ func _check_right_edge(windows, frame, id: String, language: String) -> void:
 			if button.get_parent() is HBoxContainer:
 				_fail("a row of verbs in Companies is a box that cannot wrap ('%s' under %s)" % [button.text, language])
 	if right > windows.size.x + 0.5:
-		_fail("window '%s' under %s ends at x=%.0f after growing to its content, past the %.0f px screen" % [id, language, right, windows.size.x])
+		_fail("tab '%s' under %s ends at x=%.0f, past the %.0f px screen" % [id, language, right, windows.size.x])
 
 
 ## A pending bid on the player's largest major, in the three scalars industry.gd

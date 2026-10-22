@@ -102,7 +102,7 @@ func _ready() -> void:
 	root.add_child(_close_button)
 
 
-## Docked in a WindowFrame, whose X is the real close control. Without this the
+## Docked in the workspace, whose way back to the map is the real close. Without this the
 ## panel's own Close hides the CONTENT while window_manager.open() only ever shows
 ## the FRAME, so the window reopens permanently empty -- docs/playability-audit.md
 ## V3. The four panels that already had this method never had the bug.
@@ -434,7 +434,7 @@ func _on_act(action) -> void:
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.
 ##
-## Duck-typed: window_frame.gd asks through has_method(), so a panel with nothing
+## Duck-typed: tab_page.gd asks through has_method(), so a panel with nothing
 ## to press simply does not implement this and never draws the fold mark. The
 ## FIRST enabled action is the answer rather than the last, because a panel whose
 ## first verb has scrolled off is already a panel whose verbs are hidden.

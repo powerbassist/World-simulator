@@ -72,10 +72,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Hud = preload("res://src/ui/hud.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
-## The registered windows that are scenes, not domains: a summit is something
-## that happens to the player, and owns the screen while it does. A list here
-## until the domain table (V5.1-c2.2) carries the flag.
-const SCENE_WINDOWS := ["summit"]
+const Domains = preload("res://src/ui/domains.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Sound = preload("res://src/ui/sound.gd")
@@ -714,7 +711,7 @@ func _ready() -> void:
 		# V5.1-c2.1. Every window is on the stack -- a domain at WORKSPACE, a
 		# scene above it -- so Escape puts it away and a hotkey cannot reach past
 		# a scene. Read here for the strip's reason: every window is registered.
-		var layer: int = ScreenStack.SCENE if SCENE_WINDOWS.has(id) else ScreenStack.WORKSPACE
+		var layer: int = ScreenStack.SCENE if Domains.is_scene(id) else ScreenStack.WORKSPACE
 		_stack.watch(layer, _windows.frame(id), _windows.close.bind(id))
 
 	# Four panels stay modal, not docked: election results and censure land on

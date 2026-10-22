@@ -22,7 +22,7 @@
    "tests/test_people_panel.gd",
    "tests/test_map_markers.gd",
    "tests/test_map_cities.gd",
-   "tests/test_window_frame.gd",
+   "tests/test_workspace.gd",
    "tests/test_panel_kit.gd",
    "tests/test_balance.gd",
    "tests/test_world_month.gd",

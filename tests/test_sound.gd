@@ -362,13 +362,15 @@ func _check_window_gestures() -> void:
 	wm.close("b")
 	if _players(wm, "close") != 1:
 		_fail("closing a window played %d close cues, expected 1" % _players(wm, "close"))
-	wm.frame("a").pinned = true
+	# V5.1-c2.2: one tab is open at a time (the pin went with the floating
+	# windows), so close_all() puts away one tab -- with one cue, not a cue and a
+	# second for the way back to the map.
 	wm.open("a")
 	wm.open("c")
 	var closes := _players(wm, "close")
 	wm.close_all()
 	if _players(wm, "close") != closes + 1:
-		_fail("close_all() over two windows played %d close cues, expected 1" % (_players(wm, "close") - closes))
+		_fail("close_all() over an open tab played %d close cues, expected 1" % (_players(wm, "close") - closes))
 	wm.queue_free()
 
 

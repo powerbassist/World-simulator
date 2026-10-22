@@ -241,7 +241,7 @@ tests=(
   tests/test_map_flows.gd
   tests/test_shell.gd
   tests/test_shell_stack.gd
-  tests/test_window_frame.gd
+  tests/test_workspace.gd
   tests/test_panel_kit.gd
   tests/test_hud.gd
   tests/test_ui_theme.gd

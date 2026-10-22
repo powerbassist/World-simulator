@@ -224,8 +224,8 @@ static func _panels(theme: Theme) -> void:
 	panel.border_color = EDGE
 	theme.set_stylebox("panel", "PanelContainer", panel)
 
-	# HUD furniture over the map and every floating window's outer frame -- see
-	# hud.gd and window_frame.gd. The same panel, a touch translucent and with
+	# HUD furniture over the map and every workspace tab's plate -- see
+	# hud.gd and the workspace. The same panel, a touch translucent and with
 	# room inside; it carries no accent, because the accent is reserved for what
 	# marks where you are.
 	var plate := StyleBoxFlat.new()
@@ -276,7 +276,7 @@ static func _panels(theme: Theme) -> void:
 	bar.content_margin_left = 16
 	bar.content_margin_right = 16
 	# 3, down from 6 at V4.8a: the figures stack caption over value now, and the
-	# strip must stay inside window_frame.gd's 44px TOP_MARGIN (it drew 50 at 6).
+	# strip must stay above the dock's 44px DOCK_TOP (it drew 50 at 6).
 	bar.content_margin_top = 3
 	bar.content_margin_bottom = 3
 	theme.set_type_variation(TOP_BAR_PANEL, "PanelContainer")

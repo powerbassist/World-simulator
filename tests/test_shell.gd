@@ -90,6 +90,7 @@ func _run() -> void:
 	_check_the_pause_menu_still_opens_and_closes()
 	_check_map_is_the_background()
 	_check_hud_lets_the_map_through()
+	_check_the_map_is_reachable_beside_a_domain()
 	_check_every_panel_registered_and_reachable()
 	_check_panel_content()
 	_check_action_bar_routes_to_windows()
@@ -186,6 +187,27 @@ func _check_map_is_the_background() -> void:
 		_fail("floating windows draw over the HUD furniture")
 
 
+## V5.1-c2.2. The workspace docks left and leaves the map uncovered to its right
+## -- the strip the inbox slides over. Asked as the player asks it: point there
+## with a domain open and see what the pointer reaches. A dock that grew across
+## the screen, or a holder behind it that eats clicks, fails silently.
+func _check_the_map_is_reachable_beside_a_domain() -> void:
+	_main._windows.open("budget")
+	var viewport: Viewport = _main.get_viewport()
+	var size: Vector2 = viewport.get_visible_rect().size
+	var point := Vector2(size.x * 0.9, size.y * 0.5)
+	var motion := InputEventMouseMotion.new()
+	motion.position = point
+	motion.global_position = point
+	viewport.push_input(motion, true)
+	var hit: Control = viewport.gui_get_hovered_control()
+	if hit != null and hit != _main._map_view and not _main._map_view.is_ancestor_of(hit):
+		_fail("with a domain open, a click at %s lands on %s (%s), not the map" % [str(point), hit.name, hit.get_class()])
+	if _main._windows.dock().get_global_rect().has_point(point):
+		_fail("the dock covers %s, the map's strip beside it" % str(point))
+	_main._windows.close_all()
+
+
 ## Fails silently in the real game -- the map just stops responding -- so it is
 ## asserted rather than looked at. The structural boxes that arrange the
 ## furniture cover the whole screen; only the plates themselves may be solid.
@@ -244,7 +266,7 @@ const FOUNDING_PANELS: Array[String] = [
 
 
 ## The rail's exclusivity rule, restated for windows: opening one closes the
-## open unpinned one. test_window_frame.gd proves the manager does this on
+## open one. test_workspace.gd proves the manager does this on
 ## synthetic panels; this proves main.gd registered the real ones under it.
 ##
 ## V2.1a: iterates the REGISTRY rather than a hand-written list. The list this

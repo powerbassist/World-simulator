@@ -110,7 +110,7 @@ func _ready() -> void:
 	root.add_child(_close_button)
 
 
-## Docked in a WindowFrame, whose X is the real close control. Without this the
+## Docked in the workspace, whose way back to the map is the real close. Without this the
 ## panel's own Close hides the CONTENT while window_manager.open() only ever shows
 ## the FRAME, so the window reopens permanently empty -- docs/playability-audit.md
 ## V3. The four panels that already had this method never had the bug.

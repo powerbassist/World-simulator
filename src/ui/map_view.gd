@@ -996,7 +996,7 @@ func _gui_input(event: InputEvent) -> void:
 								if id != "":
 									nation_clicked.emit(id)
 				# CLEARED UNCONDITIONALLY, outside the click branch above --
-				# window_frame.gd's own release does the same. Nested one tab deeper
+				# U5a's window frame did the same with its drag. Nested one tab deeper
 				# until the V2.8 review, it ran only when the press had been short
 				# enough to count as a click, so a real pan left _dragging true on
 				# release and the motion branch below kept calling pan_by() with no
