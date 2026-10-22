@@ -177,6 +177,8 @@ tests=(
   tests/test_effect_baselines.gd
   tests/test_inbox_stays.gd
   tests/test_clock_doors.gd
+  tests/test_consequence_card.gd
+  tests/test_dead_ends.gd
   tests/test_glossary_tip.gd
   tests/test_outliner.gd
   tests/test_geography.gd

@@ -78,6 +78,7 @@ const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const Num = preload("res://src/ui/num.gd")
 const WorldNews = preload("res://src/ui/world_news.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
@@ -101,12 +102,6 @@ var pending_player_id := DEFAULT_PLAYER_NATION_ID
 ## pending_player_id. Empty is the standard start, which is what a direct scene
 ## load (tests, tools) gets and what every save written before V1.2e reads as.
 var pending_scenario_id := ""
-
-## How many decisions Overview's recent-effects list keeps -- U4. Not
-## GameState.recent_effects.size(), which is unbounded in the array itself;
-## trimmed here so a long session's save file does not grow one entry per
-## commit forever.
-const RECENT_EFFECTS_KEPT := 5
 
 ## Set by menu.gd before this scene enters the tree. Empty means a new game;
 ## a slot name means load that save once the new game has been built and every
@@ -1347,21 +1342,9 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 			# priced on.
 			_card_programme_conclusions()
 		"History":
-			# The stamped entry (year/month added), so movements_between() reads the
-			# same "now" for approval's poll-noise lookup that the rest of the UI does.
-			var dated_entry: Dictionary = (report["history_entry"] as Dictionary).duplicate(true)
-			dated_entry["year"] = year
-			dated_entry["month"] = month
-			for pending in _pending_effects:
-				_state.recent_effects.push_front({
-					"label": pending["label"],  # i18n: row-ok an effect's label, routed when queued
-					"year": year,
-					"month": month,
-					"movements": Trends.movements_between(pending["before"], dated_entry),
-				})
-			_pending_effects.clear()
-			while _state.recent_effects.size() > RECENT_EFFECTS_KEPT:
-				_state.recent_effects.remove_at(_state.recent_effects.size() - 1)
+			# The month's measurement of the player's decisions, for the Overview and,
+			# since V5.1-d1b (G10), as a card each in the inbox.
+			EffectsLedger.record(_state, _pending_effects, report["history_entry"], year, month, _hud.inbox)
 		"Legislature":
 			# The ultra pass-4 finding: a held bill releasing writes
 			# ns.last_law_result in Legislature's tick, and the assembly's own tick

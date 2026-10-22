@@ -33,6 +33,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --failing --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open energy --arm-energy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --consequence
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
@@ -404,6 +405,9 @@ var _invest := false
 var _build := false
 ## V5.1-d1a (G6): the energy tab's first order armed, through the panel's own signal.
 var _arm_energy := false
+## V5.1-d1b (G10): a quiet event answered through the Events window, then its month
+## closed by the clock, so the consequence card is in the inbox.
+var _consequence := false
 
 ## V2.2b, and a pair of flags that photograph a VIEW rather than a mutation: the
 ## register is static content, so there is no state to stage and the frame is the
@@ -667,6 +671,8 @@ func _init() -> void:
 			_build = true
 		elif args[i] == "--arm-energy":
 			_arm_energy = true
+		elif args[i] == "--consequence":
+			_consequence = true
 		elif args[i] == "--campaign":
 			_campaign = true
 		elif args[i] == "--pledge":
@@ -1040,6 +1046,8 @@ func _apply_view() -> void:
 		_stage_an_interrupt()
 	if _arm_energy and not _main._loader.energy_actions.is_empty():
 		_main._energy_panel.order_armed.emit(String(_main._loader.energy_actions[0].id))
+	if _consequence:
+		_answer_and_close_the_month()
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		# WITH the state and the viewer, exactly as main.gd:733 calls it. Without
@@ -3000,6 +3008,19 @@ func _put_a_sited_crisis_on_the_desk() -> void:
 ## the ledger shows both kinds of row -- a decision the player made and a decision the
 ## clock made for them. A frame of one kind would leave the "No answer given" styling as
 ## dead code, which is exactly what U6a's own pass caught on the diary strip.
+func _answer_and_close_the_month() -> void:
+	var ns = _main._state.player()
+	for ev in _main._loader.events:
+		if not bool(ev.interrupt) and not ev.choices.is_empty():
+			Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
+				Events.region_names(ns, _main._loader))
+			_main._events_panel._on_choose(ev, ev.choices[0])
+			break
+	var month: int = _main._clock.month
+	while _main._clock.month == month:
+		_main._clock.advance_one_day()
+
+
 func _answer_a_crisis() -> void:
 	var state = _main._state
 	if state == null:

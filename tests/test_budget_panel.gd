@@ -109,10 +109,11 @@ func _move_a_lever() -> void:
 	# panel still owns is a spending one, and the test's shape is unchanged:
 	# move it, watch the proposed column move and the live state hold still.
 	# The figure is read off the state rather than named -- France's authored
-	# health line is not a round thirty, and the move is a RISE of six so the
-	# demand-impulse assertion below has a known sign.
+	# health line is not a round thirty, and the move is a RISE of four so the
+	# demand-impulse assertion below has a known sign -- four, inside the lever's
+	# span of LEVER_SPAN either side (V5.1-d1b; it was six).
 	var start: float = float(_state.player().spending_pct_gdp["health"])
-	_health_after = start + 6.0
+	_health_after = start + 4.0
 	_panel._sliders["health"].value = _health_after
 	_panel._refresh()
 

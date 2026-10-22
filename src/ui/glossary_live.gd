@@ -48,7 +48,10 @@ static func value(live: String, state, loader) -> String:
 	if live.is_empty() or state == null or state.player() == null:
 		return ""
 	if _STRIP.has(live):
-		return String(StripReadings.read(_STRIP[live], state, loader)["text"])
+		# A dash is the strip saying "nothing yet" (no programme on a term's first
+		# day): on a plate it would read as a value, so the line is left out.
+		var text := String(StripReadings.read(_STRIP[live], state, loader)["text"])
+		return "" if text == "—" else text
 	var ns = state.player()
 	match live:
 		"debt_pct":

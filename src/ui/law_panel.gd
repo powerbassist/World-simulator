@@ -36,6 +36,7 @@ const Statute = preload("res://src/sim/statute.gd")
 const StatuteK = preload("res://src/sim/statute_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const LawVerdict = preload("res://src/ui/law_verdict.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -195,35 +196,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 	var law: Law = _find_law(result["law_id"])
 	var law_label: String = Strings.law_name(law) if law != null else result["law_id"]
 
-	# A carried division on route B is a THIRD outcome and neither word fits it: the
-	# assembly said yes and the country has not been asked. Reading "FAILED" against a
-	# referendum the player just called is the em-dash-against-a-live-figure bug
-	# docs/defence-model.md's screenshot pass found, one block on.
-	var verdict := tr("PASSED") if result["passed"] else tr("FAILED")
-	if result.get("referendum_called", false):
-		verdict = tr("PUT TO THE COUNTRY")
-	# V1.1e. Three more outcomes that are not `FAILED`, for the same reason route B
-	# is not: a bill the second chamber is holding has not been beaten, a bill it
-	# blocked was beaten somewhere the tally below does not show, and a bill the court
-	# struck was carried by both chambers and stopped afterwards. One word for four
-	# different things is the readout bug this project keeps finding.
-	elif result.get("held_by_upper", false):
-		verdict = tr("HELD BY THE %s") % result.get("upper_chamber", tr("SECOND CHAMBER")).to_upper()
-	elif result.get("blocked_by_upper", false):
-		verdict = tr("BLOCKED BY THE %s") % result.get("upper_chamber", tr("SECOND CHAMBER")).to_upper()
-	elif result.get("struck_down", false):
-		verdict = tr("STRUCK DOWN")
-	# THE MOOT RELEASE (the ultra pass-6 finding), and it is the same one-word-
-	# per-outcome rule as the four above: a repeal releasing from its hold into
-	# an empty book did not come into force over anybody -- its target was
-	# already gone, nothing followed, and no override price was charged. The
-	# released branch below is the release that DID apply.
-	elif result.get("target_already_gone", false):
-		verdict = tr("MOOT — its target was already gone from the book.")
-	# A LAPSED release (V5.0d) is a release too: the hold ran out under a
-	# constitution the bill was not written for, and nothing came into force.
-	elif result.get("released", false):
-		verdict = tr("LAPSED — the constitution it amended is gone.") if result.get("lapsed", false) else tr("IN FORCE, OVER THE %s") % result.get("upper_chamber", tr("SECOND CHAMBER")).to_upper()
+	var verdict: String = LawVerdict.word(result, _state.player() if _state != null else null)
 	PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN)
 
 	# V2.8 review. Two more outcomes with no division behind them, and the tally
