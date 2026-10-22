@@ -19,6 +19,8 @@ must never overlap each other.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import re
@@ -329,9 +331,14 @@ def run_parallel(tests: list[str], jobs: list[tuple[str, str | None, list[str]]]
                           "duration": round(rec["end"] - t0, 3), "log": rel})
         else:
             children[test][check] = rec
+            # Raw, un-normalised, and on disk the moment the child ends, as a
+            # plain test's log is: the merged log is assembled only after the
+            # whole pool drains, so a failed shard of a run that is then
+            # interrupted, killed or outlived by a hung sibling left nothing.
+            rel = writer.write_shard_log(test, check, out + ("\n" if out else ""))
             writer.event({"event": "child_done", "test": test, "check": check,
                           "status": status,
-                          "duration": round(rec["end"] - t0, 3)})
+                          "duration": round(rec["end"] - t0, 3), "log": rel})
 
     def _build(test: str) -> TestResult | None:
         """The finished result for one test, or None if it never completed
@@ -433,6 +440,13 @@ class RunWriter:
     def write_log(self, result: TestResult) -> str:
         return self.write_log_text(result.name, result.log_text)
 
+    def write_shard_log(self, test: str, check: str, text: str) -> str:
+        """One shard child's own output, beside (never over) the merged log."""
+        rel = "tests/%s.shards/%s.log" % (test.removeprefix("tests/"), check)
+        (self.dir / rel).parent.mkdir(parents=True, exist_ok=True)
+        (self.dir / rel).write_text(text, encoding="utf-8")
+        return rel
+
     def write_log_text(self, name: str, text: str) -> str:
         rel = "tests/%s.log" % name.removeprefix("tests/")
         (self.dir / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -466,6 +480,50 @@ class RunWriter:
 
 
 # ---------------------------------------------------------------- selftest
+
+def _selftest_shard_logs(expect) -> None:
+    """A failed shard child's log is on disk when the child ends, not only after
+    the pool drains (an interrupted or killed run left a sharded failure with no
+    log at all, where a plain test's log had already landed). Two fake children,
+    run one after the other: the second looks for the first's log while the run
+    is still going."""
+    global run_child, read_tags, read_expected
+    saved = run_child, read_tags, read_expected
+    seen: dict = {}
+
+    def fake_child(cmd, timeout, expected=()):
+        if cmd[-1] == "_check_a":
+            return "FAIL: boom in a", 1, "fail"
+        seen["during"] = (writer.dir / "tests/test_x.gd.shards/_check_a.log").is_file()
+        return "", 0, "pass"
+
+    run_child = fake_child
+    read_tags = lambda test: (False, ["_check_a", "_check_b"])
+    read_expected = lambda test: []
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            writer = RunWriter(Path(tmp))
+            jobs = [("tests/test_x.gd", c, ["godot", "--", c])
+                    for c in ("_check_a", "_check_b")]
+            with contextlib.redirect_stdout(io.StringIO()), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                results = run_parallel(["tests/test_x.gd"], jobs, 5.0, False, writer, 1)
+            writer.finish(results, interrupted=False, jobs=1)
+            expect(seen.get("during") is True,
+                   "a shard child's log must exist before the run ends")
+            log_a = writer.dir / "tests/test_x.gd.shards/_check_a.log"
+            expect(log_a.is_file() and "boom in a" in log_a.read_text(encoding="utf-8"),
+                   "the failed shard's log must hold its own output")
+            expect((writer.dir / "tests/test_x.gd.log").is_file(),
+                   "the merged log must still be written")
+            events = [json.loads(l) for l in
+                      (writer.dir / "events.ndjson").read_text(encoding="utf-8").splitlines()]
+            done = [e for e in events if e.get("event") == "child_done"]
+            expect(len(done) == 2 and all("log" in e for e in done),
+                   "each child_done must name its log: %r" % done)
+    finally:
+        run_child, read_tags, read_expected = saved
+
 
 def _selftest() -> int:
     failures: list[str] = []
@@ -606,6 +664,8 @@ def _selftest() -> int:
     env = isolated_env({"PATH": "p", "APPDATA": "real"}, "tmp")
     expect(env == {"PATH": "p", "APPDATA": "tmp", "XDG_DATA_HOME": "tmp"},
            "isolated env: %r" % env)
+
+    _selftest_shard_logs(expect)
 
     if failures:
         for f in failures:
