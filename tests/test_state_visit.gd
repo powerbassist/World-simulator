@@ -251,6 +251,15 @@ func _check_a_hosted_visit_says_until_when() -> void:
 		_fail("Book on a hosted visit opened the Diary on '%s', not the visit" % picked.get("action_id", ""))
 	# Booked through the form, the visit carries on its day once the host is free.
 	_main._calendar_panel._on_book()
+	# QA on #76 (TAKE 3): the refresh after the booking rebuilt the act list without
+	# the visit -- its own booking now refuses every later day -- so the form fell to
+	# its first verb and the confirmation became "this day cannot be booked".
+	_main._calendar_panel._process(0.0)
+	var after: Dictionary = _main._calendar_panel._entry_from_form()
+	if String(after.get("action_id", "")) != String(visit.id):
+		_fail("after booking the hosted visit the Diary's form names '%s'" % after.get("action_id", ""))
+	if not String(_main._calendar_panel._status.text).begins_with("Booked"):
+		_fail("after booking the hosted visit the Diary reads '%s', not its confirmation" % _main._calendar_panel._status.text)
 	var entry: Dictionary = {}
 	for e in state.appointments:
 		if String(e.get("action_id", "")) == String(visit.id) and String(e.get("target_id", "")) == "ITA" 				and String(e.get("status", "")) == CalendarK.STATUS_BOOKED:

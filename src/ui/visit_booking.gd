@@ -71,7 +71,8 @@ static func host_free_day(state, action, target_id: String) -> Dictionary:
 ## (#76, the parent's call "choisir la date dans l'agenda"): a meeting verb with no
 ## precondition of its own (the one in the data; one with preconditions would need a
 ## sim query that reads them), off the player's own cooldown, proposing no agreement
-## or pact a partner could refuse, that the Diary can book on a later day. Both the
+## or pact a partner could refuse, that the Diary can book on a later day (or has
+## booked already). Both the
 ## Diplomacy row and the Diary's act list read it, so they offer the same verbs.
 static func held_only_by_host(state, loader, action, target_id: String) -> bool:
 	if not action.opens_meeting or not action.preconditions.is_empty():
@@ -83,6 +84,10 @@ static func held_only_by_host(state, loader, action, target_id: String) -> bool:
 		return false
 	if host_free_day(state, action, target_id).is_empty():
 		return false
+	# Its own booking refuses every other day, and must not take the visit off the
+	# list it was booked from (QA on #76: the form fell to its first verb).
+	if not booked(state, action, target_id).is_empty():
+		return true
 	return not earliest_entry(state, loader, action, target_id).is_empty()
 
 
