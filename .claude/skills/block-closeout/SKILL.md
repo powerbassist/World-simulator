@@ -33,12 +33,16 @@ A new `.gd` gets no `.uid` until something imports it. List the new scripts, run
 the import once, then confirm each has a sibling:
 
 ```bash
-{ git status --short -uall | cut -c4-; git diff --name-only --diff-filter=A main...HEAD; } | grep '\.gd$' | sort -u
+git fetch -q origin
+{ git status --short -uall | cut -c4-; git diff --name-only --diff-filter=A origin/main...HEAD; } | grep '\.gd$' | sort -u
 godot --path . --headless --import
 ```
 
 (`-uall` lists files inside a new directory; the second command catches scripts
-already committed on this branch.)
+already committed on this branch. It diffs against `origin/main`, not local
+`main`, which can be far behind and would list scripts this branch never added.)
+The opposite direction, a `.uid` left behind by a deleted script, is gate 4's
+`check_uids.py`.
 
 For each new `path/x.gd`, `path/x.gd.uid` must exist. Report any that do not.
 Do not run the import while another Godot holds the checkout.
@@ -57,21 +61,44 @@ row in `tools/run_tests.sh`'s `tests=()`.
 
 ## 4. The cheap gates
 
-Run all four; report each separately.
+Run all five; report each separately.
 
 ```bash
 bash tools/check_names.sh
 python tools/check_size.py
 python tools/check_vault.py
+python tools/check_uids.py
 reuse lint
 ```
+
+`bash tools/check_mcp.sh` is AGENTS.md's sixth. It needs the editor and the
+per-machine bridge, so CI never runs it: run it when the block touched the MCP
+setup or `.mcp.json`, and otherwise list it under "not run".
 
 - `check_size.py`: a file that shrank lowers its row in `tools/size_baseline.json`
   (`--update`) in the same change.
 - `check_vault.py`: exit 1 means an unresolved wikilink. Orphans and unindexed
   docs are reported, not failed; say which are new.
+- `check_uids.py`: exit 1 means a tracked `X.uid` whose `X` is not tracked.
 - `reuse lint`: a new asset, data source or third-party file needs an annotation
   in `REUSE.toml`.
+
+## 4b. A change to what the game delivers
+
+**Green is not measured** (AGENTS.md, "Review loops"). If the block touched
+`src/sim/`, `src/core/` or `data/`, a green suite is not enough: run the game's
+own tick order and report numbers. It saturates the CPU, so nothing timed runs
+beside it.
+
+```bash
+python tools/balance_parallel.py --json=PATH
+python tools/balance_diff.py base.json tip.json
+```
+
+Capture `base.json` from the base commit in a detached clean worktree, before the
+first edit, never under a running probe. When the block claims byte-identity,
+`cmp base.json tip.json` instead of reading the diff. If the block did not touch
+those folders, say so.
 
 ## 5. A UI change
 

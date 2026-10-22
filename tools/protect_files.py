@@ -29,7 +29,8 @@ ASK_SUFFIXES = (".import",)
 
 
 def relative_path(payload):
-    path = str((payload.get("tool_input") or {}).get("file_path") or "")
+    tool_input = payload.get("tool_input")
+    path = str(tool_input.get("file_path") or "") if isinstance(tool_input, dict) else ""
     if not path:
         return None
     root = os.environ.get("CLAUDE_PROJECT_DIR") or str(payload.get("cwd") or "")
@@ -75,6 +76,8 @@ def main():
     try:
         payload = json.load(sys.stdin)
     except Exception:
+        return 0
+    if not isinstance(payload, dict):  # valid JSON, but a list or a number
         return 0
     rel = relative_path(payload)
     if rel is None:

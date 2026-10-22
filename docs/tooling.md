@@ -273,7 +273,7 @@ and `src/ui/budget_panel.gd` are the same.
 Two pieces are committed under `.claude/` so a worktree session and a fresh clone get them; the rest of that folder is per-machine (see `.gitignore`).
 
 - **`tools/protect_files.py`**, a PreToolUse hook on `Edit|Write|MultiEdit` (wired in `.claude/settings.json`). It *denies* an edit to `.godot/**`, `reports/suite_runs/**` and `*.uid` (the engine or the runner writes them) and *asks* before `project.godot` or a `*.import` (a deliberate edit is sometimes right: an engine bump, an autoload fix). Paths are judged relative to the project root, so a `.claude/worktrees/` checkout is guarded the same way. The *staging* half of the same footgun is guarded at user level, not here.
-- **`/block-closeout`** (`.claude/skills/block-closeout/SKILL.md`, user-invoked only). The gates AGENTS.md names, in order: tree state, `.uid` pairs, the suite, the four cheap checks, the windowed screenshot for UI, scratch.
+- **`/block-closeout`** (`.claude/skills/block-closeout/SKILL.md`, user-invoked only). The gates AGENTS.md names, in order: tree state, `.uid` pairs, the suite, the cheap checks (names, size, vault, uids, reuse), the balance probe for a sim or data change, the windowed screenshot for UI, scratch.
 
 Hooks are read when a session starts, so a change to either takes effect in the next session. Test the script by piping it a payload: `echo '{"tool_input":{"file_path":"project.godot"},"cwd":"."}' | python tools/protect_files.py`.
 
