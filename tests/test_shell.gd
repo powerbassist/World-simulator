@@ -426,9 +426,14 @@ func _check_sidebar_routes_to_every_domain() -> void:
 		sidebar.navigate.emit(domain)
 		if not _main._windows.is_open(String(tabs[0])):
 			_fail("the '%s' entry did not open its first tab '%s' (open: %s)" % [domain, tabs[0], str(_main._windows.open_ids())])
+	# V5.1-c3.2: with a tab open (the last loop left one), the Inbox entry slides
+	# the inbox over it, and again slides it back.
 	sidebar.navigate.emit(sidebar.INBOX)
-	if not _main._windows.is_open("events"):
-		_fail("the Inbox entry did not open Dispatches")
+	if not _main._hud.inbox.visible or _main._windows.open_ids().is_empty():
+		_fail("the Inbox entry did not slide the inbox over the open tab")
+	sidebar.navigate.emit(sidebar.INBOX)
+	if _main._hud.inbox.visible:
+		_fail("the Inbox entry did not slide the inbox back")
 	_main._windows.close_all()
 
 

@@ -31,6 +31,8 @@ signal card_activated(id: String)
 ## V2.9: a decision row's choice buttons. Index is the action's position in the
 ## array push() was given; the consumer owns what answering means.
 signal card_action(id: String, index: int)
+## V5.1-c3.2: the inbox came over an open tab (true) or went back (false).
+signal slid(shown: bool)
 
 ## The board's dock, beside the 1240 px workspace in the 1920 reference.
 const WIDTH := 440
@@ -46,6 +48,7 @@ var _cards := {}     # id -> PanelContainer
 var _bodies := {}    # id -> Label, so a body can be rewritten in place
 var _lane_of := {}   # id -> lane
 var _next_id := 0
+var _slid := false
 
 
 ## Built in _init, not _ready: U5a's column worked before it was in a tree (the
@@ -160,7 +163,11 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			var index := i
-			button.pressed.connect(func(): card_action.emit(id, index))
+			button.pressed.connect(func():
+				card_action.emit(id, index)
+				# Answered: the tab it slid over is the player's again.
+				slide_out()
+			)
 			answers.add_child(button)
 		column.add_child(answers)
 
@@ -203,6 +210,47 @@ func dismiss(id: String) -> void:
 	card.queue_free()
 	_empty[lane].visible = _rows[lane].get_child_count() == 0
 	card_dismissed.emit(id)
+
+
+## V5.1-c3.2, the author's call 4: a decision that holds the clock while a tab
+## is open slides the inbox over the strip of map beside it. On the map it is
+## already there, and this does nothing.
+func slide_in() -> void:
+	if visible:
+		return
+	show()
+	Motion.arrive(self)
+	_slid = true
+	slid.emit(true)
+
+
+func slide_out() -> void:
+	if not _slid:
+		return
+	_slid = false
+	hide()
+	slid.emit(false)
+
+
+## The sidebar's Inbox entry.
+func toggle_slide() -> void:
+	if _slid:
+		slide_out()
+	else:
+		slide_in()
+
+
+func is_slid() -> bool:
+	return _slid
+
+
+## On the map the inbox is furniture; over a tab it is away unless slid in. A
+## move between the two ends a slide.
+func dock_on_map(on_map: bool) -> void:
+	if _slid:
+		_slid = false
+		slid.emit(false)
+	visible = on_map
 
 
 func card_count() -> int:

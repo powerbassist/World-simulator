@@ -12,6 +12,7 @@ extends PanelContainer
 ## bar does not know what a scene is.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Domains = preload("res://src/ui/domains.gd")
 
 signal back_requested
 signal forward_requested
@@ -25,6 +26,9 @@ var _forward: Button
 var _crumb: Label
 var _held: Label
 var _clock_slot: HBoxContainer
+var _windows
+var _nation := ""
+var _where := ""
 
 
 func _ready() -> void:
@@ -73,6 +77,40 @@ func _ready() -> void:
 ## as `_hud.clock_cluster`.
 func add_clock(cluster: Control) -> void:
 	_clock_slot.add_child(cluster)
+
+
+## The bar follows the window manager itself: every open and every close moves
+## the breadcrumb and the history buttons. Reading, never commanding.
+func follow(windows, nation_name: String) -> void:
+	_windows = windows
+	_nation = nation_name
+	windows.opened.connect(show_where)
+	windows.closed.connect(func(_id: String):
+		if windows.open_ids().is_empty():
+			show_where("")
+	)
+	show_where("")
+
+
+## A loaded game may be another nation.
+func set_nation(nation_name: String) -> void:
+	_nation = nation_name
+	show_where(_where)
+
+
+## The nation, then the domain and the tab -- or the map.
+func show_where(id: String) -> void:
+	_where = id
+	var parts: Array = [_nation]
+	if id.is_empty():
+		parts.append(tr("Map"))
+	else:
+		var domain := Domains.domain_of(id)
+		if not domain.is_empty():
+			parts.append(tr(Domains.title(domain)))
+		parts.append(_windows.title(id))
+	set_crumb(parts)
+	set_history(_windows.can_back(), _windows.can_forward())
 
 
 func set_history(can_back: bool, can_forward: bool) -> void:

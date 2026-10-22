@@ -820,7 +820,7 @@ func _build_sidebar() -> void:
 		if not _stack.accepts_hotkeys():
 			return
 		if domain_id == _hud.sidebar.INBOX:
-			_windows.open("events")
+			_hud.inbox.toggle_slide()
 		else:
 			_windows.open(String(Domains.tabs(domain_id, _windows.panel_ids())[0]))
 	)
@@ -901,16 +901,20 @@ func _wire_hud() -> void:
 	_windows.opened.connect(func(id: String):
 		_hud.sidebar.select(Domains.domain_of(id))
 		_hud.show_map_furniture(false)
-		_show_where(id)
 	)
 	# The legend is the map's, so it goes while a tab covers the map.
 	_windows.closed.connect(func(_id: String):
 		if _windows.open_ids().is_empty():
 			_hud.sidebar.select("")
 			_hud.show_map_furniture(true)
-			_show_where("")
 	)
-	_show_where("")
+	_hud.title_bar.follow(_windows, _loader.nations[_state.player_nation_id].nation_name)
+	# A slid inbox is a layer: Escape slides it back, and the keys still work.
+	_hud.inbox.slid.connect(func(shown: bool):
+		if shown:
+			_stack.hold(ScreenStack.INBOX, _hud.inbox.slide_out)
+		else:
+			_stack.release(ScreenStack.INBOX))
 
 	# V1.8, and the first thing ever to connect this signal. inbox.gd has
 	# emitted card_activated since U5a and nothing has listened, because until now every
@@ -1086,21 +1090,6 @@ func _unhandled_input(event: InputEvent) -> void:
 					_save_from_menu = false
 					_save_load_panel.show()
 					_save_load_panel.mark_dirty()
-
-
-## V5.1-c2.3. The title bar after any move: the nation, then the domain and the
-## tab, or the map -- and whether back and forward have anywhere to go.
-func _show_where(id: String) -> void:
-	var parts: Array = [String(_loader.nations[_state.player_nation_id].nation_name)]
-	if id.is_empty():
-		parts.append(tr("Map"))
-	else:
-		var domain := Domains.domain_of(id)
-		if not domain.is_empty():
-			parts.append(tr(Domains.title(domain)))
-		parts.append(_windows.title(id))
-	_hud.title_bar.set_crumb(parts)
-	_hud.title_bar.set_history(_windows.can_back(), _windows.can_forward())
 
 
 ## A fiscal command landed -- the Budget window's or the Tax Code's, both through
@@ -1883,6 +1872,7 @@ func _on_load_requested(slot: String) -> void:
 	# the ribbon's month title were both frozen at the pre-load game's values.
 	_election_panel.setup(_state, _loader)
 	_hud.ribbon.setup(_state, _loader)
+	_hud.title_bar.set_nation(_loader.nations[_state.player_nation_id].nation_name)
 	_hud.portrait_card.setup(_state, _loader)
 	_setup_news()
 	# The mirror is re-established here rather than waiting for the first day to
@@ -1936,12 +1926,11 @@ func _enforce_interrupt() -> void:
 	# _resume_if_decision_settled() release it; without it a re-raised interrupt
 	# stayed paused after being answered.
 	_paused_for_decision = true
-	# V5.1-c2.1. Not behind a scene or a system screen: open() would close a
-	# summit to show Dispatches under it. The clock holds all the same, and
-	# _on_stack_top_changed() opens Dispatches when that screen goes.
-	if _events_panel != null and _stack.top() < ScreenStack.SCENE:
-		# Quiet (V4.9c): the arrival's sound is the event sting.
-		_windows.open("events", true)
+	# V5.1-c3.2 (the author's call 4): the inbox, where the decision is
+	# answered, slides over an open tab -- not behind a scene or a system screen,
+	# and _on_stack_top_changed() slides it in when that screen goes.
+	if _stack.top() < ScreenStack.SCENE:
+		_hud.inbox.slide_in()
 	_hud.clock_cluster.refresh(_clock)
 
 

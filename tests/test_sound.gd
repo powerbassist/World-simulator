@@ -435,10 +435,11 @@ func _check_event_sting() -> void:
 		_main._enforce_interrupt()
 		if _sting_count() != before + 1:
 			_fail("notify OFF silenced an interrupt -- the register must not apply to it")
-		if not _main._windows.is_open("events"):
-			_fail("the staged interrupt did not open Dispatches")
+		# V5.1-c3.2: the inbox shows the decision, silently -- the sting is the sound.
+		if not _main._hud.inbox.visible:
+			_fail("the staged interrupt left the inbox away")
 		elif _players(_main._windows, "open") != opens:
-			_fail("the interrupt's Dispatches played an open tick over the sting")
+			_fail("the interrupt played an open tick over the sting")
 	_reset_desk()
 	_main._messages = MessageSettings.defaults()
 

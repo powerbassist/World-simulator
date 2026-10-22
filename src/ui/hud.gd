@@ -125,7 +125,7 @@ func is_over_furniture(point: Vector2) -> bool:
 ## decision holds the clock (V5.1-c3.2).
 func show_map_furniture(shown: bool) -> void:
 	map_legend.visible = shown
-	inbox.visible = shown
+	inbox.dock_on_map(shown)
 
 
 func _margins(box: MarginContainer) -> void:

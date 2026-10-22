@@ -48,6 +48,9 @@ func _process(_delta: float) -> bool:
 	_check_hotkeys_only_below_scenes()
 	_check_placement_is_a_layer()
 	_check_arrival_under_a_scene()
+	_check_holding_arrival_slides_in()
+	_check_a_note_does_not_slide_in()
+	_check_answer_slides_back()
 	_finish()
 	return false
 
@@ -163,10 +166,10 @@ func _check_placement_is_a_layer() -> void:
 
 
 ## Review focus 1: a clock-holding decision that arrives while a scene is up.
-## The scene stays on top, Dispatches does not open behind it (open() would
-## close a summit), and the clock stays held. When the scene goes, Dispatches
-## opens: a paused clock with nothing on screen saying why is the silent
-## failure this pins.
+## The scene stays on top, nothing opens behind it (open() would close a
+## summit), and the clock stays held. When the scene goes, the inbox is up: a
+## paused clock with nothing on screen saying why is the silent failure this
+## pins.
 func _check_arrival_under_a_scene() -> void:
 	var Events := load("res://src/sim/events.gd")
 	var stack = _main._stack
@@ -189,18 +192,92 @@ func _check_arrival_under_a_scene() -> void:
 	_main._enforce_interrupt()
 	if not clock.paused or not _main._paused_for_decision:
 		_fail("an interrupt under a scene did not hold the clock")
-	if _main._windows.is_open("events"):
-		_fail("an interrupt under a scene opened Dispatches")
+	if _main._windows.is_open("events") or _main._hud.inbox.is_slid():
+		_fail("an interrupt under a scene opened Dispatches or slid the inbox under it")
 	if not _main._windows.is_open("summit") or stack.top() != ScreenStack.SCENE:
 		_fail("an interrupt under a scene took the scene off the top")
 
 	_main._windows.close("summit")
-	if not _main._windows.is_open("events"):
-		_fail("the scene closed over a held interrupt and Dispatches did not open")
+	if not _main._hud.inbox.visible:
+		_fail("the scene closed over a held interrupt and the inbox is not up")
 
 	ns.event_queue.clear()
 	_main._paused_for_decision = false
 	clock.paused = false
+	_main._windows.close_all()
+
+
+## V5.1-c3.2, the author's call 4: a decision that holds the clock while a tab is
+## open slides the inbox over the strip of map beside it; the tab stays, the
+## keys still work, and Escape slides it back before it closes the tab.
+func _check_holding_arrival_slides_in() -> void:
+	var stack = _main._stack
+	var inbox = _main._hud.inbox
+	_stage_interrupt_with("budget")
+	if not _main._windows.is_open("budget"):
+		_fail("a holding arrival closed the open tab")
+	if not inbox.visible or not inbox.is_slid():
+		_fail("a holding arrival over a tab did not slide the inbox in")
+	if stack.top() != ScreenStack.INBOX or not stack.accepts_hotkeys():
+		_fail("a slid inbox is not the INBOX layer (top %d) with the keys live" % stack.top())
+	_press(KEY_ESCAPE)
+	if inbox.visible or not _main._windows.is_open("budget"):
+		_fail("Escape did not slide the inbox back over the open tab")
+	_clear_interrupt()
+
+
+## A note is news, not a question: it waits in the inbox, which stays away.
+func _check_a_note_does_not_slide_in() -> void:
+	_main._windows.open("budget")
+	_main._hud.inbox.push("A note", "body")
+	if _main._hud.inbox.visible:
+		_fail("a note slid the inbox over the open tab")
+	_main._windows.close_all()
+
+
+## Answering slides the inbox back: the tab it came over is the player's again.
+func _check_answer_slides_back() -> void:
+	var inbox = _main._hud.inbox
+	var card: String = _stage_interrupt_with("budget")
+	var answer: Button = null
+	for button in inbox._cards[card].find_children("*", "Button", true, false):
+		if button.text != "X":
+			answer = button
+			break
+	if answer == null:
+		_fail("the decision row has no answer to press")
+	else:
+		answer.pressed.emit()
+		if inbox.visible or not _main._windows.is_open("budget"):
+			_fail("answering did not slide the inbox back over the open tab")
+	_clear_interrupt()
+
+
+## An interrupt staged on the desk with `tab` open; returns its row's id.
+func _stage_interrupt_with(tab: String) -> String:
+	var Events := load("res://src/sim/events.gd")
+	var ns = _main._state.player()
+	var interrupt_ev = Events.event_by_id(_main._loader, "blackout_night")
+	_main._windows.close_all()
+	ns.event_queue.clear()
+	_main._unseen_events.clear()
+	_main._event_cards.clear()
+	_main._windows.open(tab)
+	var month: int = Events._absolute_month(int(_main._state.year), int(_main._state.month))
+	Events.announce(ns, interrupt_ev, month, Events.region_names(ns, _main._loader))
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	_main._enforce_interrupt()
+	for id in _main._event_cards:
+		return String(id)
+	return ""
+
+
+func _clear_interrupt() -> void:
+	_main._state.player().event_queue.clear()
+	_main._unseen_events.clear()
+	_main._paused_for_decision = false
+	_main.get_node("Clock").paused = false
+	_main._hud.inbox.slide_out()
 	_main._windows.close_all()
 
 
