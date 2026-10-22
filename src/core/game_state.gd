@@ -844,7 +844,7 @@ var recent_effects: Array[Dictionary] = []
 
 ## What the other nine did on their own initiative — V1.3f. Newest first, each
 ## {year, month, actor_id, target_id, action_id, action_name, reason}, appended by
-## src/sim/diplomacy.gd's _tick_agenda() and capped at FOREIGN_ACTS_KEPT.
+## src/sim/diplomacy.gd's _tick_agenda() and capped at AGENDA_ACTS_KEPT.
 ## recent_effects' shape and bound, for the same reason: a column of cards is a
 ## window on the recent past, not an archive.
 ##
@@ -857,7 +857,7 @@ var recent_effects: Array[Dictionary] = []
 ## > tests/test_foreign_policy.gd asserts no reader in src/sim/ rather than
 ## > trusting this comment.
 ## The cap is foreign_policy_constants.AGENDA_ACTS_KEPT, held by the writer rather
-## than here -- the shape src/sim/recent_effects.gd's RecentEffects.KEPT already has for
+## than here -- the shape recent_effects_constants.KEPT, read by its writer, already has for
 ## recent_effects, and the reason src/core/ cannot hold it is that game_state.gd
 ## preloads diplomacy.gd, so the dependency only runs one way.
 var foreign_acts: Array[Dictionary] = []
