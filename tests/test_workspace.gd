@@ -75,6 +75,7 @@ func _process(_delta: float) -> bool:
 	_check_tab_switch_never_shows_the_map()
 	_check_a_window_in_no_row_is_its_own_domain()
 	_check_a_scene_takes_the_dock()
+	_check_a_tab_cannot_displace_a_scene()
 	_check_history_back_forward()
 	_check_history_is_twenty_deep()
 	_check_content_survives_close()
@@ -176,6 +177,28 @@ func _check_a_scene_takes_the_dock() -> void:
 	_manager.back()
 	if _manager.is_open("summit"):
 		_fail("back returned to a scene")
+	_manager.close_all()
+
+
+## QA #54, TAKE 1: a map marker clicked beside a docked summit opened its tab
+## and hid the summit, losing its dialogue and its priced choice. A scene leaves
+## the dock only by its own close (its Continue, Escape, Back to the map); a tab
+## open -- from any caller, gated or not -- and back/forward wait for it.
+func _check_a_tab_cannot_displace_a_scene() -> void:
+	_manager.open("budget")
+	_manager.open("tax")
+	_manager.open("summit")
+	_manager.open("economy")
+	if _manager.open_ids() != ["summit"]:
+		_fail("opening a tab beside the summit left %s open" % str(_manager.open_ids()))
+	_manager.back()
+	_manager.forward()
+	if _manager.open_ids() != ["summit"]:
+		_fail("back/forward beside the summit left %s open" % str(_manager.open_ids()))
+	_manager.close("summit")
+	_manager.back()
+	if _manager.open_ids() != ["tax"]:
+		_fail("back after the summit reached %s, not the tab before it" % str(_manager.open_ids()))
 	_manager.close_all()
 
 

@@ -160,8 +160,13 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 ## The new page shows BEFORE the old one hides, so nothing that follows
 ## visibility (the screen stack, the sidebar's mark) ever sees the bare map in
 ## the middle of a switch.
+##
+## A scene in the dock (the summit) is displaced by nothing: it leaves by its own
+## close. Refused here, where pages are hidden, rather than at each caller -- QA
+## #54 found three map-marker handlers that opened a tab beside a summit, hid it
+## and lost its dialogue, after the hotkeys and the nation click had been gated.
 func open(id: String, quiet: bool = false) -> void:
-	if not _pages.has(id):
+	if not _pages.has(id) or (not Domains.is_scene(id) and _scene_shown()):
 		return
 	var page: TabPage = _pages[id]
 	var already_open: bool = page.visible
@@ -196,8 +201,9 @@ func close(id: String, quiet: bool = false) -> void:
 	if not _pages.has(id) or not _pages[id].visible:
 		return
 	# Recorded before the page hides, so a listener on `closed` reads the step.
-	if not Domains.is_scene(id):
-		_record("")
+	# A scene's close records the map too: the scene is never a step, but the
+	# map it leaves is, so back returns to the tab the scene displaced.
+	_record("")
 	_hide_page(id)
 	_dock.hide()
 	if not quiet:
@@ -323,6 +329,8 @@ func forward() -> void:
 
 
 func _go(index: int) -> void:
+	if _scene_shown():
+		return  # open() would refuse, and the cursor must not move without it
 	_navigating = true
 	_cursor = index
 	var to: String = _history[index]
@@ -398,3 +406,10 @@ func _mark_tabs(open_id: String) -> void:
 func _mark_content_dirty(page: TabPage) -> void:
 	if page._content != null and page._content.has_method("mark_dirty"):
 		page._content.mark_dirty()
+
+
+func _scene_shown() -> bool:
+	for id in _pages.keys():
+		if Domains.is_scene(id) and _pages[id].visible:
+			return true
+	return false
