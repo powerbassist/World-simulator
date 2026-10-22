@@ -87,6 +87,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[v5.0-replay]] — the V5.0 play gate's twenty complaints checked against main, and the author's 10-minute replay script
 - [[glossary-tooltips]] — the instructive layer: 48 ranked terms with definitions tied to their models, underlined terms with tooltips that nest and lock, the noise rules and the proof
 - [[v5.1-gate-triage]] — the V5.1 play gate's design items (G2, G5, G7, G10, G11, G14, Q1, Q2, Q4): what d can take cheaply, what V5.2 and V5.3 own, and the author's calls
+- [[decision-surfaces]] — every surface that asks the player something, measured over 24 idle months, with a triage and an interruption budget
 
 ## Scope tiers
 
