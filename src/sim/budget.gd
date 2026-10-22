@@ -499,6 +499,21 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 	return job.path
 
 
+## The projection's stand-in for Elections' date push, the date only and no vote
+## (QA on #77). The projection runs no Elections, so past an in-window legislative
+## election months_to_legislative went negative and Discipline.target() kept reading
+## the pre-election floor for the rest of the horizon. Once the election month is
+## behind the copy's clock, the next one is a term on -- Elections' own rule. The
+## election month itself still reads 0, as in the real month, where Elections runs
+## after Discipline. Shared with tests/test_budget.gd's mirror.
+static func roll_election_clock(state, loader) -> void:
+	var ns = state.player()
+	if ns == null or ns.next_election_year <= 0:
+		return
+	if state.year * 12 + state.month > ns.next_election_year * 12 + ns.next_election_month:
+		ns.next_election_year += int(loader.nations[ns.id].term_years)
+
+
 ## V5.1-0a. project() as a cursor, so the budget window's forecast can run off the
 ## frame (src/ui/budget_forecast.gd): ~5 s a projection at 41 nations, which the
 ## panel ran inside one frame on every lever move -- the V5.0 play gate's "budget
@@ -568,6 +583,9 @@ static func _projected_month(job: ProjectionJob) -> Array:
 		if sim.month > 12:
 			sim.month = 1
 			sim.year += 1
+		# QA on #77: no Elections here, so the copy's legislative date is rolled the
+		# way Elections rolls it (roll_election_clock(), below).
+		roll_election_clock(sim, loader)
 		# V2.8. The accessibility index per nation, built here because energy.gd never
 		# learns that a graph exists. Same index Regions already computes, so the
 		# Dijkstra rows are served from network.gd's own per-graph cache and this
