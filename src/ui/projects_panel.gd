@@ -12,8 +12,7 @@ extends PanelContainer
 ## nothing on it: it is a dated national commitment, not a sectoral one, and the
 ## Industry panel is already 434 lines whose body is guaranteed to overflow --
 ## V1.6e's own screenshot pass paid for that fold. Registering a window is one
-## `_windows.register()` call plus one line in main.gd's `_build_action_bar()`, which
-## is what U5a's shell was for.
+## `_windows.register()` call plus a row in domains.gd.
 ##
 ## THE WHOLE BODY SCROLLS FROM THE FIRST LINE, companies_panel.gd's answer to the
 ## fold nation_panel.gd has paid for three times. Ten actions and up to five live

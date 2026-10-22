@@ -29,9 +29,9 @@ extends SceneTree
 ##     pause state logged. If a healthy time-based clock ever reads materially
 ##     under 1.00 day/sec, the record says so together with what was paused.
 ##
-## Attribution: samples with the minimap hidden and then the whole map hidden.
-## Minimap._process() queues a redraw of itself EVERY frame (its own comment
-## says why), so its cost must be measured rather than assumed into "the map".
+## Attribution: samples with the whole map hidden. The rows with the minimap
+## hidden went with the minimap (V5.1-c2.3), whose every-frame redraw was the
+## reason they existed.
 
 const MainScene := "res://src/ui/main.tscn"
 
@@ -107,31 +107,30 @@ func _build_configs() -> void:
 	# Sweep 1: the project window at 1080p device pixels, vsync off, so frame
 	# ms is the real render cost and not the refresh interval.
 	_configs = [
-		{"label": "1080 min_zoom", "zoom": mv.min_zoom(), "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
-		{"label": "1080 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
-		{"label": "1080 crosses 2.98", "zoom": 2.98, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
-		{"label": "1080 zoom 4.0", "zoom": 4.0, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
-		{"label": "1080 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BASE, "vsync": false},
-		{"label": "1080 max, no minimap", "zoom": mv.MAX_ZOOM, "map": true, "minimap": false, "size": SIZE_BASE, "vsync": false},
-		{"label": "1080 max, no map", "zoom": mv.MAX_ZOOM, "map": false, "minimap": true, "size": SIZE_BASE, "vsync": false},
-		{"label": "1080 HUD only", "zoom": mv.MAX_ZOOM, "map": false, "minimap": false, "size": SIZE_BASE, "vsync": false},
+		{"label": "1080 min_zoom", "zoom": mv.min_zoom(), "map": true, "size": SIZE_BASE, "vsync": false},
+		{"label": "1080 opening fit", "zoom": 2.08, "map": true, "size": SIZE_BASE, "vsync": false},
+		{"label": "1080 crosses 2.98", "zoom": 2.98, "map": true, "size": SIZE_BASE, "vsync": false},
+		{"label": "1080 zoom 4.0", "zoom": 4.0, "map": true, "size": SIZE_BASE, "vsync": false},
+		{"label": "1080 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BASE, "vsync": false},
+		{"label": "1080 max, no map", "zoom": mv.MAX_ZOOM, "map": false, "size": SIZE_BASE, "vsync": false},
+		{"label": "1080 HUD only", "zoom": mv.MAX_ZOOM, "map": false, "size": SIZE_BASE, "vsync": false},
 		# Sweep 2: the playtest's device resolution, same logical canvas.
-		{"label": "1440 min_zoom", "zoom": mv.min_zoom(), "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
-		{"label": "1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
-		{"label": "1440 crosses 2.98", "zoom": 2.98, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
-		{"label": "1440 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false},
-		{"label": "1440 max, no map", "zoom": mv.MAX_ZOOM, "map": false, "minimap": true, "size": SIZE_BIG, "vsync": false},
+		{"label": "1440 min_zoom", "zoom": mv.min_zoom(), "map": true, "size": SIZE_BIG, "vsync": false},
+		{"label": "1440 opening fit", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false},
+		{"label": "1440 crosses 2.98", "zoom": 2.98, "map": true, "size": SIZE_BIG, "vsync": false},
+		{"label": "1440 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false},
+		{"label": "1440 max, no map", "zoom": mv.MAX_ZOOM, "map": false, "size": SIZE_BIG, "vsync": false},
 	]
 	# V3.4's four gates, declared in the plan before any draw landed.
 	# G3: the map's own event-driven band with the spine pass live. The
 	# everything-visible band is the case with no headroom to spare, so it is
 	# measured at the opening fit and at the crosses zoom, not at max.
-	_configs.append({"label": "G3 1440 opening fit, roads", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false})
-	_configs.append({"label": "G3 1440 crosses 2.98, roads", "zoom": 2.98, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false})
+	_configs.append({"label": "G3 1440 opening fit, roads", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false})
+	_configs.append({"label": "G3 1440 crosses 2.98, roads", "zoom": 2.98, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false})
 	# G4: the overlay alone. Measured as the difference between these two rows,
-	# which is the attribution method the minimap rows above already use.
-	_configs.append({"label": "G4 1440 max_zoom, convoys off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false})
-	_configs.append({"label": "G4 1440 max_zoom, convoys on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true})
+	# which is the attribution method the map-hidden rows above already use.
+	_configs.append({"label": "G4 1440 max_zoom, convoys off", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false})
+	_configs.append({"label": "G4 1440 max_zoom, convoys on", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "flows": true})
 	# G5: the worst frame the game can actually show -- everything visible AND
 	# the overlay animating over it.
 	#
@@ -142,17 +141,17 @@ func _build_configs() -> void:
 	# cull to remove -- which is what makes this row the worst frame rather than a
 	# corner case. The arc branch gets its own row below, at min_zoom, so the
 	# cheap half of the overlay is measured instead of assumed.
-	_configs.append({"label": "G5 1440 opening fit, convoys", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true})
+	_configs.append({"label": "G5 1440 opening fit, convoys", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": true})
 	# The five rows above hold the clock, so the overlay draws ONCE and the rows
 	# price its pixels, not its animation. The four below run the clock, which is
 	# the only state in which map_flows queues a redraw at all -- the cost G4 and
 	# G5 are actually declared against. Both halves are kept because the
 	# difference between them IS the re-record, and naming it separates a fill
 	# problem from a script problem for whoever reads this next.
-	_configs.append({"label": "G4 max_zoom off, clock run", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true})
-	_configs.append({"label": "G4 max_zoom convoys, clock run", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
-	_configs.append({"label": "G5 1440 fit convoys, clock run", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
-	_configs.append({"label": "G5 1440 min_zoom arcs, run", "zoom": mv.min_zoom(), "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
+	_configs.append({"label": "G4 max_zoom off, clock run", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true})
+	_configs.append({"label": "G4 max_zoom convoys, clock run", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
+	_configs.append({"label": "G5 1440 fit convoys, clock run", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
+	_configs.append({"label": "G5 1440 min_zoom arcs, run", "zoom": mv.min_zoom(), "map": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true})
 	# THE PAN TRIPLE -- the case the cap does not cover. The rows above sample the
 	# capped regime, which is only what a player sees while the camera is STILL.
 	# A drag makes the view rect differ on every frame, and _redraw_due()'s camera
@@ -167,34 +166,34 @@ func _build_configs() -> void:
 	# more per re-record than the political one does. Two rows would hand the
 	# overlay the bill for both. The steps are therefore taken one at a time: the
 	# map alone, then the layer, then the overlay.
-	_configs.append({"label": "PAN fit, political, no flows", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
-	_configs.append({"label": "PAN fit, TRADE, no flows", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "trade": true, "run": true, "pan": true})
-	_configs.append({"label": "PAN fit, TRADE, convoys on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true, "pan": true})
+	_configs.append({"label": "PAN fit, political, no flows", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
+	_configs.append({"label": "PAN fit, TRADE, no flows", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "trade": true, "run": true, "pan": true})
+	_configs.append({"label": "PAN fit, TRADE, convoys on", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": true, "run": true, "pan": true})
 	# V4.10a, THE GROUND -- each row paired with its ground-off twin in the same
 	# run. Max zoom is the gate (G2's row and its delta); 1.9 is mid-band, where
 	# BOTH quads draw, the block's worst still frame; the opening fit is what the
 	# game opens on (alpha ~0.8, both quads); the max-zoom drag prices the one
 	# extra quad a re-record now carries.
-	_configs.append({"label": "V4.10a 1440 max_zoom, ground off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
-	_configs.append({"label": "V4.10a 1440 max_zoom, ground on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
-	_configs.append({"label": "V4.10a 1440 mid-band 1.9, ground off", "zoom": 1.9, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
-	_configs.append({"label": "V4.10a 1440 mid-band 1.9, ground on", "zoom": 1.9, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
-	_configs.append({"label": "V4.10a 1440 opening fit, ground off", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
-	_configs.append({"label": "V4.10a 1440 opening fit, ground on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
-	_configs.append({"label": "V4.10a PAN max, ground off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "ground_off": true})
-	_configs.append({"label": "V4.10a PAN max, ground on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
+	_configs.append({"label": "V4.10a 1440 max_zoom, ground off", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
+	_configs.append({"label": "V4.10a 1440 max_zoom, ground on", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10a 1440 mid-band 1.9, ground off", "zoom": 1.9, "map": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
+	_configs.append({"label": "V4.10a 1440 mid-band 1.9, ground on", "zoom": 1.9, "map": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10a 1440 opening fit, ground off", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "ground_off": true})
+	_configs.append({"label": "V4.10a 1440 opening fit, ground on", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10a PAN max, ground off", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "ground_off": true})
+	_configs.append({"label": "V4.10a PAN max, ground on", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
 	# V4.10b, THE NAMES -- the label pass (nation names + tier 1-2 city names
 	# through MapLabels.place()) paired with its labels_off twin. Still rows price
 	# what a held camera replays; the PAN rows price the placement itself, which
 	# runs on every re-record and so on every frame of a drag.
-	_configs.append({"label": "V4.10b 1440 max_zoom, labels off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "labels_off": true})
-	_configs.append({"label": "V4.10b 1440 max_zoom, labels on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
-	_configs.append({"label": "V4.10b 1440 opening fit, labels off", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "labels_off": true})
-	_configs.append({"label": "V4.10b 1440 opening fit, labels on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false})
-	_configs.append({"label": "V4.10b PAN max, labels off", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "labels_off": true})
-	_configs.append({"label": "V4.10b PAN max, labels on", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
-	_configs.append({"label": "V4.10b PAN fit, labels off", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "labels_off": true})
-	_configs.append({"label": "V4.10b PAN fit, labels on", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
+	_configs.append({"label": "V4.10b 1440 max_zoom, labels off", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "labels_off": true})
+	_configs.append({"label": "V4.10b 1440 max_zoom, labels on", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10b 1440 opening fit, labels off", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "labels_off": true})
+	_configs.append({"label": "V4.10b 1440 opening fit, labels on", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false})
+	_configs.append({"label": "V4.10b PAN max, labels off", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "labels_off": true})
+	_configs.append({"label": "V4.10b PAN max, labels on", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
+	_configs.append({"label": "V4.10b PAN fit, labels off", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "labels_off": true})
+	_configs.append({"label": "V4.10b PAN fit, labels on", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true})
 	# V4.10c, ATTRIBUTION -- the map's cost by pass, each pass turned off alone
 	# (map_view._pass_off) against an all-on row, in ONE run. Max zoom still is
 	# G2's frame (what the GPU replays); the opening-fit drag is the re-record
@@ -203,30 +202,30 @@ func _build_configs() -> void:
 	for pass_name in ["", "raster", "world", "roster", "roster_fill", "roster_line", "spines", "cities", "labels", "markers", "plants", ""]:
 		var off: Array = [] if pass_name == "" else [pass_name]
 		var tag: String = "all" if pass_name == "" else "-" + pass_name
-		_configs.append({"label": "C max %s" % tag, "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "off": off})
+		_configs.append({"label": "C max %s" % tag, "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": false, "off": off})
 	for pass_name in ["", "raster", "world", "roster", "roster_fill", "roster_line", "spines", "cities", "labels", "markers", "plants", ""]:
 		var off: Array = [] if pass_name == "" else [pass_name]
 		var tag: String = "all" if pass_name == "" else "-" + pass_name
-		_configs.append({"label": "C PAN fit %s" % tag, "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "off": off})
+		_configs.append({"label": "C PAN fit %s" % tag, "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": false, "flows": false, "run": true, "pan": true, "off": off})
 	# V4.10c, THE MATERIALS -- map_fill.gdshader's band and pattern off (the fill
 	# as it was) against on, paired in this run: still at max zoom (G2's frame),
 	# still at the opening fit (the most fill on screen), and the fit drag.
 	for pair in [["C materials max", mv.MAX_ZOOM, false], ["C materials fit", 2.08, false], ["C materials PAN fit", 2.08, true]]:
 		for off in [true, false]:
-			var row := {"label": "%s, %s" % [pair[0], "off" if off else "on"], "zoom": pair[1], "map": true, "minimap": true, "size": SIZE_BIG, "vsync": false, "off": ["materials_off"] if off else []}
+			var row := {"label": "%s, %s" % [pair[0], "off" if off else "on"], "zoom": pair[1], "map": true, "size": SIZE_BIG, "vsync": false, "off": ["materials_off"] if off else []}
 			if pair[2]:
 				row.merge({"flows": false, "run": true, "pan": true})
 			_configs.append(row)
 	# The clock-health windows reproduce P4's own regime: vsync ON, 1440p,
 	# clock unpaused at speed 1.
-	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
-	_configs.append({"label": "CLOCK-WINDOW @ 1440 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true})
+	_configs.append({"label": "CLOCK-WINDOW @ 1440 opening fit", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": true, "clock": true})
+	_configs.append({"label": "CLOCK-WINDOW @ 1440 max_zoom", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": true, "clock": true})
 	# G6: the one that matters most. V3's own opening complaint is that map
 	# render cost eats the clock (0.50 days/sec at max zoom, pre-cull). An
 	# always-running 60 Hz redraw is that failure mode's exact shape returning,
 	# so it is measured under the same regime rather than argued about.
-	_configs.append({"label": "G6 CLOCK-WINDOW @ 1440 fit convoys", "zoom": 2.08, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true, "flows": true})
-	_configs.append({"label": "G6 CLOCK-WINDOW @ 1440 max convoys", "zoom": mv.MAX_ZOOM, "map": true, "minimap": true, "size": SIZE_BIG, "vsync": true, "clock": true, "flows": true})
+	_configs.append({"label": "G6 CLOCK-WINDOW @ 1440 fit convoys", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": true, "clock": true, "flows": true})
+	_configs.append({"label": "G6 CLOCK-WINDOW @ 1440 max convoys", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": true, "clock": true, "flows": true})
 
 
 ## Absolute day count for one clock date -- clock.gd's own month lengths, so a
@@ -290,7 +289,6 @@ func _apply_config(cfg: Dictionary) -> void:
 	for pass_name in cfg.get("off", []):
 		_main._map_view._pass_off[String(pass_name)] = true
 	_main._map_view.queue_redraw()
-	_main._minimap.visible = bool(cfg["minimap"])
 	# V3.4. Roads ride map_view's own pass, so they are toggled by the layer
 	# gate rather than by a node; the flows overlay is its own control and is
 	# toggled by visibility AND by the layer, because it only animates on TRADE.
@@ -361,7 +359,6 @@ func _finish_sample() -> void:
 
 func _restore_toggles() -> void:
 	_main._map_view.visible = true
-	_main._minimap.visible = true
 
 
 func _process(delta: float) -> bool:

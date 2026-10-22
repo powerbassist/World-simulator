@@ -77,20 +77,12 @@ func _check_registered_and_reachable() -> void:
 	if _main._windows.frame("calendar") == null:
 		_fail("no window frame registered under the id 'calendar'")
 
-	# The sub-row is built when a cluster opens, so the entry does not exist until
-	# then -- the same reason tests/test_hud.gd drives _toggle_cluster() rather
-	# than walking the bar cold.
-	var bar = _main._hud.action_bar
-	bar._toggle_cluster("state")
-	var found := false
-	for node in _walk(bar):
-		# Upper-cased by add_cluster()'s own sub-row build, so match what the bar
-		# actually draws rather than what main.gd passed it.
-		if node is Button and String(node.text) == "DIARY":
-			found = true
-	bar.close_subrow()
-	if not found:
-		_fail("the State cluster has no Diary entry -- the panel is unreachable without one")
+	# V5.1-c2.3: the sidebar's route, the only one -- the domain that holds the
+	# tab is listed, and the tab is one of its tabs.
+	var Domains = load("res://src/ui/domains.gd")
+	var domain: String = Domains.domain_of("calendar")
+	if not _main._hud.sidebar.entry_ids().has(domain) or not Domains.tabs(domain, _main._windows.panel_ids()).has("calendar"):
+		_fail("the sidebar does not reach 'calendar' (domain '%s') -- the panel is unreachable without it" % domain)
 
 
 func _check_fits_the_band(panel) -> void:

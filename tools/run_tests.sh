@@ -229,7 +229,6 @@ tests=(
   tests/test_sound.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd
-  tests/test_minimap.gd
   tests/test_map_markers.gd
   tests/test_map_cities.gd
   tests/test_map_ground.gd

@@ -91,12 +91,15 @@ func _run() -> void:
 	_check_map_is_the_background()
 	_check_hud_lets_the_map_through()
 	_check_the_map_is_reachable_beside_a_domain()
+	_check_breadcrumb_follows_the_tab()
+	_check_title_bar_walks_the_history()
+	_check_chrome_is_inert_under_a_scene()
 	_check_every_panel_registered_and_reachable()
 	_check_panel_content()
-	_check_action_bar_routes_to_windows()
+	_check_sidebar_routes_to_every_domain()
 	_check_keyboard_still_reaches_every_panel()
-	_check_the_bar_marks_the_open_window()
-	_check_the_bar_marks_what_awaits_the_player()
+	_check_sidebar_marks_the_open_domain()
+	_check_sidebar_marks_what_awaits()
 	_check_headline_figures_move_with_nothing_open()
 	_check_save_dialog_traps_hotkeys()
 	_check_term_card_refresh()
@@ -206,6 +209,57 @@ func _check_the_map_is_reachable_beside_a_domain() -> void:
 	if _main._windows.dock().get_global_rect().has_point(point):
 		_fail("the dock covers %s, the map's strip beside it" % str(point))
 	_main._windows.close_all()
+
+
+## V5.1-c2.3. Where the player is, said in the title bar: the nation, the domain
+## and the tab, or the nation and the map.
+func _check_breadcrumb_follows_the_tab() -> void:
+	var bar = _main._hud.title_bar
+	_main._windows.open("tax")
+	var crumb: String = bar.crumb()
+	for part in [_main._loader.nations[_main._state.player_nation_id].nation_name, _main.tr("Finances"), _main._windows.title("tax")]:
+		if not crumb.contains(part):
+			_fail("with the tax tab open the breadcrumb reads '%s', missing '%s'" % [crumb, part])
+	_main._windows.close_all()
+	crumb = bar.crumb()
+	if not crumb.ends_with(_main.tr("Map")) or crumb.contains(_main.tr("Finances")):
+		_fail("back on the map the breadcrumb still reads '%s'" % crumb)
+
+
+## Back and forward are the title bar's, and they walk the window manager's path.
+func _check_title_bar_walks_the_history() -> void:
+	var bar = _main._hud.title_bar
+	_main._windows.open("budget")
+	_main._windows.open("economy")
+	if not bar._back.visible or bar._back.disabled:
+		_fail("with a step behind, the title bar's back is not live")
+	bar.back_requested.emit()
+	if not _main._windows.is_open("budget"):
+		_fail("the title bar's back did not return to the budget (open: %s)" % str(_main._windows.open_ids()))
+	if bar._forward.disabled:
+		_fail("after a step back, forward is not live")
+	bar.forward_requested.emit()
+	if not _main._windows.is_open("economy"):
+		_fail("the title bar's forward did not return to the economy (open: %s)" % str(_main._windows.open_ids()))
+	_main._windows.close_all()
+
+
+## The mouse routes to a window are refused under a scene, as the keys are
+## (V5.1-c2.1): back, a click on a nation or a sidebar entry under a summit would
+## open a tab and close the summit.
+func _check_chrome_is_inert_under_a_scene() -> void:
+	_main._windows.open("budget")
+	_main._windows.open("summit")
+	_main._hud.title_bar.back_requested.emit()
+	if not _main._windows.is_open("summit"):
+		_fail("the title bar's back closed the summit")
+	_main._on_nation_clicked("DEU")
+	if not _main._windows.is_open("summit"):
+		_fail("a click on a nation closed the summit")
+	_main._hud.sidebar.navigate.emit("finances")
+	if not _main._windows.is_open("summit"):
+		_fail("a sidebar entry closed the summit")
+	_main._windows.close("summit")
 
 
 ## Fails silently in the real game -- the map just stops responding -- so it is
@@ -343,35 +397,38 @@ func _check_panel_content() -> void:
 	windows.close_all()
 
 
-## The bottom bar is the rail's replacement, so the thing the rail guaranteed --
-## every panel has a way in that does not require knowing a keyboard shortcut --
-## has to hold. Every registered panel must be named by exactly one cluster.
-func _check_action_bar_routes_to_windows() -> void:
-	var bar = _main._hud.action_bar
-	var listed: Array = []
-	for cluster_id in bar._entries.keys():
-		for entry in bar._entries[cluster_id]:
-			listed.append(str(entry["id"]))
-
-	for id in _main._windows.panel_ids():
-		# A window with NO KEY is a self-opening surface by definition -- it is
-		# not navigated to, it happens (V2.4b's summit is the first: the scene
-		# a meeting lands into, reachable by booking a visit and nothing else).
-		# The drawer guarantee therefore binds exactly the keyed windows, which
-		# keeps the rule structural instead of naming exceptions in a list --
-		# the failure class V2.1a spent a whole block deleting.
+## V5.1-c2.3: every keyed window is reached through the sidebar -- its domain is
+## listed and holds it -- every listed domain has a registered tab, the hidden
+## ones (no tab yet: the author's call 1) are not listed, and an entry opens its
+## domain's first tab. A window with NO KEY is a self-opening surface (the
+## summit), so the guarantee binds exactly the keyed windows.
+func _check_sidebar_routes_to_every_domain() -> void:
+	var sidebar = _main._hud.sidebar
+	var Domains = load("res://src/ui/domains.gd")
+	var ids: Array = _main._windows.panel_ids()
+	var listed: Array = sidebar.entry_ids()
+	for id in ids:
 		if _main._windows.shortcut(id) == KEY_NONE:
 			continue
-		if not listed.has(id):
-			_fail("no cluster on the bottom bar opens '%s'" % id)
-	for id in listed:
-		if _main._windows.frame(id) == null:
-			_fail("the bottom bar offers '%s', which is not a registered panel" % id)
-
-	# And the routing itself is connected, not merely listed.
-	bar.panel_requested.emit("budget")
-	if not _main._windows.is_open("budget"):
-		_fail("the bottom bar's panel_requested is not wired to the window manager")
+		var domain: String = Domains.domain_of(id)
+		if not listed.has(domain):
+			_fail("no sidebar entry reaches '%s' (its domain '%s' is not listed)" % [id, domain])
+	for domain in ["social", "defence"]:
+		if Domains.tabs(domain, ids).is_empty() and listed.has(domain):
+			_fail("the sidebar lists '%s', which has no tab yet" % domain)
+	for domain in listed:
+		if domain == sidebar.INBOX:
+			continue
+		var tabs: Array = Domains.tabs(domain, ids)
+		if tabs.is_empty():
+			_fail("the sidebar lists '%s', which holds no registered tab" % domain)
+			continue
+		sidebar.navigate.emit(domain)
+		if not _main._windows.is_open(String(tabs[0])):
+			_fail("the '%s' entry did not open its first tab '%s' (open: %s)" % [domain, tabs[0], str(_main._windows.open_ids())])
+	sidebar.navigate.emit(sidebar.INBOX)
+	if not _main._windows.is_open("events"):
+		_fail("the Inbox entry did not open Dispatches")
 	_main._windows.close_all()
 
 
@@ -427,34 +484,24 @@ func _check_keyboard_still_reaches_every_panel() -> void:
 		_fail("M left panels open: %s" % str(_main._windows.open_ids()))
 
 
-## The bar marks the window that is open WHATEVER OPENED IT -- V2.1c. Three of the
-## four routes (a keypress, a map marker, a message card) left the bar saying
-## nothing, because `WindowManager.opened` had no consumer from U5a until now.
-func _check_the_bar_marks_the_open_window() -> void:
-	var bar = _main._hud.action_bar
+## The sidebar marks the domain that is open WHATEVER OPENED IT -- V2.1c's rule
+## for the bar, kept: a keypress, a map marker and a message card all open a tab
+## through the window manager, and the mark follows `opened`, not the click.
+func _check_sidebar_marks_the_open_domain() -> void:
+	var sidebar = _main._hud.sidebar
 	var windows = _main._windows
 	windows.close_all()
-
-	if bar._cluster_buttons["economy"].button_pressed:
-		_fail("the Economy cluster is marked with nothing open")
-
-	# By key, not by button: the route that had no mark at all.
+	if sidebar.selected() != "":
+		_fail("the sidebar marks '%s' with nothing open" % sidebar.selected())
 	_press(KEY_B)
-	if bar.cluster_of("budget") != "economy":
-		_fail("the bar does not place 'budget' under the Economy cluster")
-	if not bar._cluster_buttons["economy"].button_pressed:
-		_fail("opening budget by keypress did not mark its cluster")
-
-	# And by the message card's route, which is a plain open() on another cluster.
+	if sidebar.selected() != "finances":
+		_fail("opening budget by keypress marked '%s', not Finances" % sidebar.selected())
 	windows.open("events")
-	if not bar._cluster_buttons["state"].button_pressed:
-		_fail("opening dispatches did not mark the State cluster")
-	if bar._cluster_buttons["economy"].button_pressed:
-		_fail("the Economy cluster stayed marked after another window opened")
-
+	if sidebar.selected() != "presidency":
+		_fail("opening Dispatches marked '%s', not the Presidency" % sidebar.selected())
 	windows.close_all()
-	if bar._cluster_buttons["state"].button_pressed:
-		_fail("closing the last window left its cluster marked")
+	if sidebar.selected() != "":
+		_fail("closing the last tab left '%s' marked" % sidebar.selected())
 
 
 ## What the resting screen says while nothing is open -- V2.1c.
@@ -465,24 +512,25 @@ func _check_the_bar_marks_the_open_window() -> void:
 ## closes it). A council vote and an open campaign window were silent in 100 % of
 ## their months, having no card path at all.
 ##
-## The response is a mark on the cluster where the answer is given, and this
-## asserts the machinery both ways round -- an id that is pending marks its
-## cluster, and nothing pending marks nothing. Whether a given month has anything
+## The response is a count on the domain where the answer is given (V5.1-c2.3's
+## sidebar; the action bar's cluster before it), and this asserts the machinery
+## both ways round -- an id that is pending marks its domain, and nothing
+## pending marks nothing. Whether a given month has anything
 ## pending is the simulation's business, not this test's.
-func _check_the_bar_marks_what_awaits_the_player() -> void:
-	var bar = _main._hud.action_bar
+func _check_sidebar_marks_what_awaits() -> void:
+	var sidebar = _main._hud.sidebar
 
-	bar.show_pending([])
-	if not bar.pending_clusters().is_empty():
-		_fail("the bar reports a pending cluster with nothing pending")
+	sidebar.show_pending([])
+	if not sidebar.pending_domains().is_empty():
+		_fail("the sidebar reports a pending domain with nothing pending")
 
-	bar.show_pending(["events", "orgs"])
-	var marked: Array = bar.pending_clusters()
-	if not marked.has("state") or not marked.has("world"):
-		_fail("a pending dispatch and a pending council vote did not mark State and World: %s"
+	sidebar.show_pending(["events", "orgs"])
+	var marked: Array = sidebar.pending_domains()
+	if not marked.has("presidency") or not marked.has("diplomacy") or not marked.has(sidebar.INBOX):
+		_fail("a pending dispatch and a pending council vote did not mark the Presidency, Diplomacy and the Inbox: %s"
 			% str(marked))
-	if marked.has("economy"):
-		_fail("a cluster with nothing pending was marked: %s" % str(marked))
+	if marked.has("finances"):
+		_fail("a domain with nothing pending was marked: %s" % str(marked))
 
 	# And the reader itself: with nothing pending in the simulation it must return
 	# an empty list rather than everything or nothing-shaped garbage.
@@ -491,7 +539,7 @@ func _check_the_bar_marks_what_awaits_the_player() -> void:
 		if _main._windows.frame(String(id)) == null:
 			_fail("pending.gd named '%s', which is not a registered window" % id)
 
-	bar.show_pending(Pending.window_ids(_main._state, _main._loader))
+	sidebar.show_pending(Pending.window_ids(_main._state, _main._loader))
 
 
 func _press(keycode: int) -> void:
@@ -552,7 +600,7 @@ func _check_save_dialog_traps_hotkeys() -> void:
 		_fail("closing a pause-menu-opened save dialog left the pause menu hidden -- the player is stranded outside the flow that paused the clock")
 	_main._close_pause_menu()
 
-	_main._hud.top_bar.save_load_requested.emit()
+	_main._hud.title_bar.save_load_requested.emit()
 	if not panel.visible:
 		_fail("the top bar's save route did not open the dialog")
 	_press(KEY_ESCAPE)

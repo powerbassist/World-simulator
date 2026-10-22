@@ -1,12 +1,10 @@
-extends PanelContainer
+extends HBoxContainer
 
-## Date, pause and speed, bottom-right -- U5a. Moved out of top_bar.gd, where
-## U2 put them because there was nowhere else, and down to the corner the
-## reference puts them in.
-##
-## The move is not only cosmetic. The clock is the one control the player touches
-## constantly, and it now sits next to the mouse's resting position on the map
-## rather than diagonally opposite the thing being watched.
+## Date, pause and speed -- U5a's bottom-right cluster, in the title bar since
+## V5.1-c2.3 (the BUREAU board's place for it, beside save and the menu). The
+## minimap it held went with the move: the map is the whole screen behind the
+## workspace now, and a second, smaller map of it in a corner was the floating
+## shell's answer to windows covering it.
 ##
 ## Proposes, never commands: pause and speed go back to main.gd as signals, the
 ## same shape Budget.commit() uses. main.gd is the one holding the Clock.
@@ -22,78 +20,53 @@ signal speed_selected(speed: int)
 ## months through DateText, which translates them.
 const MONTH_NAMES := DateText.SHORT
 
-## Reserved for U5b's minimap. Held open as a sized, empty box rather than left
-## out, because a corner cluster that changes height the session the minimap
-## arrives moves every control above it.
-const MINIMAP_SIZE := Vector2(176, 104)
-
 var _date_label: Label
 var _pause_button: Button
 var _speed_buttons := {}
-var _minimap_slot: Control
 ## The clock last drawn, and whether it was held -- see _process().
 var _clock: Node = null
 var _shown_held := false
 
 
 func _ready() -> void:
-	theme_type_variation = UiTheme.PLATE
-
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 5)
-	add_child(column)
+	add_theme_constant_override("separation", 3)
+	alignment = BoxContainer.ALIGNMENT_CENTER
 
 	_date_label = Label.new()
 	_date_label.theme_type_variation = UiTheme.FIGURE
-	_date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	column.add_child(_date_label)
+	_date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_date_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(_date_label)
 
-	var controls := HBoxContainer.new()
-	controls.alignment = BoxContainer.ALIGNMENT_CENTER
-	controls.add_theme_constant_override("separation", 3)
-	column.add_child(controls)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(10, 0)
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(gap)
 
-	_pause_button = Button.new()
-	_pause_button.theme_type_variation = UiTheme.SUBROW_BUTTON
-	_pause_button.tooltip_text = tr("Pause (Space)")
+	_pause_button = _button(tr("Pause (Space)"))
 	_pause_button.pressed.connect(func(): pause_toggled.emit())
-	controls.add_child(_pause_button)
 
 	# One triangle, two, three -- the speed is legible without reading a number,
 	# and the labels stay in the built-in glyph range rather than needing an
 	# icon each.
 	var glyphs := {1: ">", 2: ">>", 3: ">>>"}
 	for s in [1, 2, 3]:
-		var button := Button.new()
-		button.theme_type_variation = UiTheme.SUBROW_BUTTON
+		var button := _button(tr("Speed %d (%d)") % [s, s])
 		button.text = glyphs[s]
 		button.toggle_mode = true
-		button.tooltip_text = tr("Speed %d (%d)") % [s, s]
 		button.pressed.connect(func(): speed_selected.emit(s))
-		controls.add_child(button)
 		_speed_buttons[s] = button
 
-	_minimap_slot = PanelContainer.new()
-	_minimap_slot.custom_minimum_size = MINIMAP_SIZE
-	column.add_child(_minimap_slot)
 
-	var placeholder := Label.new()
-	placeholder.text = tr("MAP OVERVIEW")
-	placeholder.theme_type_variation = UiTheme.MICRO
-	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_minimap_slot.add_child(placeholder)
-
-
-## U5b fills the reserved box. Public rather than reaching into the node from
-## outside, so the slot's construction stays this file's business.
-func set_minimap(minimap: Control) -> void:
-	for child in _minimap_slot.get_children():
-		_minimap_slot.remove_child(child)
-		child.queue_free()
-	minimap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	minimap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_minimap_slot.add_child(minimap)
+## No focus, as on every piece of chrome: a clicked button that kept the focus
+## would take Space, the pause key, for itself (V5.1-0c's forfeited Agenda).
+func _button(tip: String) -> Button:
+	var button := Button.new()
+	button.theme_type_variation = UiTheme.SUBROW_BUTTON
+	button.tooltip_text = tip
+	button.focus_mode = Control.FOCUS_NONE
+	add_child(button)
+	return button
 
 
 ## V5.1-0a. A month closing across frames holds the clock (month_runner.gd),

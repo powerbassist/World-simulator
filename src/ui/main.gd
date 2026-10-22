@@ -1,9 +1,8 @@
 extends Control
 
-## The Material Symbols Rounded set (Apache-2.0, filled) every window glyph and
-## cluster glyph comes from -- V2.3 lifted this out of _build_action_bar() because
-## register() now names each window's icon too, and the same path constant serves
-## both. Plain SVG text, read and rasterised by icon.gd, so a fresh clone works
+## The Material Symbols Rounded set (Apache-2.0, filled) every window glyph
+## comes from -- V2.3 lifted this out of the action bar's builder because
+## register() names each window's icon too. Plain SVG text, read and rasterised by icon.gd, so a fresh clone works
 ## headless with no import cache.
 const Labels = preload("res://src/ui/labels.gd")
 const ICONS := "res://assets/icons/material/"
@@ -59,7 +58,6 @@ const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const MapView = preload("res://src/ui/map_view.gd")
-const Minimap = preload("res://src/ui/minimap.gd")
 const MapFlows = preload("res://src/ui/map_flows.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
 const OrgsPanel = preload("res://src/ui/orgs_panel.gd")
@@ -166,7 +164,6 @@ var _polling_panel
 var _election_panel
 var _law_panel
 var _map_view
-var _minimap
 var _map_flows
 var _nation_panel
 var _orgs_panel
@@ -310,13 +307,6 @@ func _ready() -> void:
 	Sound.warm()
 	_top_bar = _hud.top_bar
 	_hud.ribbon.setup(_state, _loader)
-
-	# set_minimap() puts it in the tree, so setup() comes after -- the same
-	# register()-before-setup() ordering every window below follows, and for the
-	# same reason: a Control outside the tree has not run _ready().
-	_minimap = Minimap.new()
-	_hud.clock_cluster.set_minimap(_minimap)
-	_minimap.setup(_map_view, _loader, _state)
 
 	# register() before setup(), every time. register() is what puts the panel in
 	# the tree, and a Control outside the tree has not run _ready(), so every
@@ -541,7 +531,7 @@ func _ready() -> void:
 	# V1.6e renames the WINDOW and not the id: the panel now carries the state's own
 	# sector programmes beside the firm register, so "Companies" had stopped being
 	# what the surface is about. The id stays "companies" because it is what
-	# _build_action_bar() and tools/screenshot.gd --open both address.
+	# domains.gd and tools/screenshot.gd --open both address.
 	_windows.register("companies", tr("Industry"), _companies_panel, KEY_I, ICONS + "factory.svg")
 	_companies_panel.setup(_state, _loader)
 	_companies_panel.hide_close_button()
@@ -556,8 +546,7 @@ func _ready() -> void:
 	# V1.6f. In the Economy cluster beside Industry, and its OWN window rather than
 	# more rows on that one: a project is a dated national commitment and that panel
 	# is grouped by sector, with a body already guaranteed to overflow. Registering a
-	# window is one call plus one line in _build_action_bar(), which is what U5a's
-	# shell was for.
+	# window is one call plus a row in domains.gd.
 	_projects_panel = ProjectsPanel.new()
 	_windows.register("projects", tr("Public Works"), _projects_panel, KEY_W, ICONS + "construction.svg")
 	_projects_panel.setup(_state, _loader)
@@ -643,10 +632,9 @@ func _ready() -> void:
 	)
 
 	# V1.8. In the State cluster beside the Diary, and its own window rather than rows
-	# on any existing panel. Registering one is one call plus one line in
-	# _build_action_bar(), which is what U5a's shell was for -- and the reason it is a
-	# window rather than a modal is in the panel's own header: a crisis the player can
-	# ignore and pay for is the whole of the deadline.
+	# on any existing panel. Registering one is one call plus a row in domains.gd --
+	# and the reason it is a window rather than a modal is in the panel's own header:
+	# a crisis the player can ignore and pay for is the whole of the deadline.
 	_events_panel = EventsPanel.new()
 	_windows.register("events", tr("Dispatches"), _events_panel, KEY_N, ICONS + "mail.svg")
 	_events_panel.setup(_state, _loader)
@@ -697,7 +685,7 @@ func _ready() -> void:
 		_windows.close("summit")
 	)
 
-	_build_action_bar()
+	_build_sidebar()
 	_wire_hud()
 	# V4.8a: an alert on the strip names the window that answers it by the title
 	# its frame shows and the shortcut the window manager binds -- read here, once
@@ -821,93 +809,21 @@ func _ready() -> void:
 	_update_top_bar()
 
 
-## Screen-filling CenterContainer per panel, which is the one placement mechanism
-## that works before a panel's children exist — an anchor preset computed in
-## _ready() reads a minimum size of zero and lands in the corner. One container
-## each, so hiding one panel does not move the other. Only the four modal
-## panels use this now; the rest are docked by dashboard.gd.
-##
-## Placement only, since U3: the opaque background these panels need is the
-## theme's PanelContainer style, inherited from this scene's root.
-## The four clusters, in the order a president spends a day in rather than
-## alphabetically. Every entry names a panel already registered above; the bar
-## itself never sees a panel, so adding V1.3c's tariffs or U6's calendar is one
-## register() and one line in this list.
-func _build_action_bar() -> void:
-	_hud.action_bar.add_cluster("state", tr("State"), ICONS + "account_balance.svg", [
-		_entry("overview", tr("Overview")),
-		# V4.1. The term's programme, right after the Overview it frames -- a
-		# president deals with what the term is for before the machinery.
-		_entry("agenda", tr("Agenda")),
-		_entry("politics", tr("Politics")),
-		_entry("legislature", tr("Legislature")),
-		# A president's diary is state. One line, exactly as the comment above
-		# this function predicted three sessions ago.
-		_entry("calendar", tr("Diary")),
-		# A president's people are state too, by the same argument the diary took.
-		_entry("people", tr("People")),
-		# V4.8b. The pinned things -- one line, the streak this function's comment
-		# keeps predicting.
-		_entry("outliner", tr("Outliner")),
-		# V1.7a. One line, exactly as this function's own comment has now correctly
-		# predicted for six sessions running.
-		_entry("campaign", tr("Campaign")),
-		# V1.8, and the seventh session running. What arrives on a president's desk
-		# without being asked for is state, by the same argument the diary and the
-		# people took.
-		_entry("events", tr("Dispatches")),
-	])
-	_hud.action_bar.add_cluster("economy", tr("Economy"), ICONS + "payments.svg", [
-		_entry("economy", tr("Economy")),
-		_entry("budget", tr("Budget")),
-		# V4.2 T5. Beside Budget, its own window rather than rows on it: the
-		# tier moved tax out of the Budget panel, and the cluster grammar puts
-		# the surface where its decision lives.
-		_entry("tax", tr("Tax Code")),
-		# V1.4a. One line, exactly as this function's own comment has now correctly
-		# predicted for four sessions running.
-		_entry("companies", tr("Companies")),
-		# V1.6f. One line, exactly as this function's own comment has now correctly
-		# predicted for five sessions running.
-		_entry("projects", tr("Public Works")),
-		# V2.2b, and two lines where the streak said one: the register's two
-		# surfaces land together because they are one partition seen from two
-		# heights, and Economy is their home because §5 is about to make the
-		# economy regional.
-		_entry("region", tr("Regions")),
-		_entry("city", tr("Cities")),
-		# V4.6 Task 4, and the fourth line this function's streak has predicted.
-		# The tier's own grammar puts it here: what the country makes and buys in
-		# is the same domain of decision as the two registers beside it.
-		_entry("commodities", tr("Commodities")),
-		# V2.8, and the grammar is V2.1c's: a cluster is the domain of the decision
-		# rather than the shape of the object, and AGENTS.md already carries the
-		# ruling -- region, city and energy are Economy.
-		_entry("energy", tr("Energy")),
-	])
-	_hud.action_bar.add_cluster("society", tr("Society"), ICONS + "diversity_3.svg", [
-		_entry("society", tr("Polling")),
-	])
-	_hud.action_bar.add_cluster("world", tr("World"), ICONS + "public.svg", [
-		_entry("diplomacy", tr("Diplomacy")),
-		_entry("orgs", tr("Organisations")),
-	])
-	_hud.action_bar.panel_requested.connect(func(id: String): _windows.open(id))
-
-
-## One entry in a cluster's drawer. The shortcut AND the icon are READ OFF THE
-## REGISTRY rather than written here -- V2.1c and V2.3 -- so the letter on the
-## tooltip, the letter the key press uses and the glyph beside the name cannot
-## disagree with the window's own registration, which is the same reason
-## `bloc_offset` is read from the content rather than restated in the agenda.
-func _entry(id: String, label: String) -> Dictionary:
-	var key: int = _windows.shortcut(id)
-	return {
-		"id": id,
-		"label": label,
-		"key": "" if key == KEY_NONE else OS.get_keycode_string(key),
-		"icon": _windows.icon_path(id),
-	}
+## V5.1-c2.3. The sidebar replaces U5a's action bar: one entry per domain with a
+## registered tab, from domains.gd's table, so adding a surface is a register()
+## call and a row there -- the drawer lists this function used to keep are gone.
+## An entry opens its domain's first tab; the Inbox opens Dispatches until c3
+## builds the inbox. Refused under a scene, as the keys are.
+func _build_sidebar() -> void:
+	_hud.sidebar.build(_windows.panel_ids())
+	_hud.sidebar.navigate.connect(func(domain_id: String):
+		if not _stack.accepts_hotkeys():
+			return
+		if domain_id == _hud.sidebar.INBOX:
+			_windows.open("events")
+		else:
+			_windows.open(String(Domains.tabs(domain_id, _windows.panel_ids())[0]))
+	)
 
 
 ## The player's own pause/play (Space, the clock cluster's button) -- the ONLY
@@ -957,12 +873,22 @@ func _wire_hud() -> void:
 		_clock.set_speed(s)
 		_update_top_bar()
 	)
-	_hud.top_bar.save_load_requested.connect(func():
+	_hud.title_bar.save_load_requested.connect(func():
 		_save_from_menu = false
 		_save_load_panel.show()
 		_save_load_panel.mark_dirty()
 	)
-	_hud.top_bar.settings_requested.connect(_open_pause_menu)
+	_hud.title_bar.settings_requested.connect(_open_pause_menu)
+	# V5.1-c2.3. Back and forward walk the window manager's path -- refused under
+	# a scene, as the keys are, or back under a summit would open a tab over it.
+	_hud.title_bar.back_requested.connect(func():
+		if _stack.accepts_hotkeys():
+			_windows.back()
+	)
+	_hud.title_bar.forward_requested.connect(func():
+		if _stack.accepts_hotkeys():
+			_windows.forward()
+	)
 	_hud.portrait_card.setup(_state, _loader)
 	_setup_news()
 
@@ -972,14 +898,19 @@ func _wire_hud() -> void:
 	# control that says where you are went on saying nothing. On close the mark
 	# moves to whatever is still open rather than clearing, because a pinned
 	# window is still where the player is.
-	_windows.opened.connect(func(id: String): _hud.action_bar.show_active(id))
-	_windows.closed.connect(func(_id: String):
-		var still_open: Array = _windows.open_ids()
-		if still_open.is_empty():
-			_hud.action_bar.clear_active()
-		else:
-			_hud.action_bar.show_active(String(still_open[0]))
+	_windows.opened.connect(func(id: String):
+		_hud.sidebar.select(Domains.domain_of(id))
+		_hud.map_legend.hide()
+		_show_where(id)
 	)
+	# The legend is the map's, so it goes while a tab covers the map.
+	_windows.closed.connect(func(_id: String):
+		if _windows.open_ids().is_empty():
+			_hud.sidebar.select("")
+			_hud.map_legend.show()
+			_show_where("")
+	)
+	_show_where("")
 
 	# V1.8, and the first thing ever to connect this signal. message_stack.gd has
 	# emitted card_activated since U5a and nothing has listened, because until now every
@@ -1147,8 +1078,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 			if _windows != null:
 				_windows.close_all()
-			if _hud != null:
-				_hud.action_bar.close_subrow()
 		KEY_S:
 			if _save_load_panel != null:
 				if _save_load_panel.visible:
@@ -1157,6 +1086,21 @@ func _unhandled_input(event: InputEvent) -> void:
 					_save_from_menu = false
 					_save_load_panel.show()
 					_save_load_panel.mark_dirty()
+
+
+## V5.1-c2.3. The title bar after any move: the nation, then the domain and the
+## tab, or the map -- and whether back and forward have anywhere to go.
+func _show_where(id: String) -> void:
+	var parts: Array = [String(_loader.nations[_state.player_nation_id].nation_name)]
+	if id.is_empty():
+		parts.append(tr("Map"))
+	else:
+		var domain := Domains.domain_of(id)
+		if not domain.is_empty():
+			parts.append(tr(Domains.title(domain)))
+		parts.append(_windows.title(id))
+	_hud.title_bar.set_crumb(parts)
+	_hud.title_bar.set_history(_windows.can_back(), _windows.can_forward())
 
 
 ## A fiscal command landed -- the Budget window's or the Tax Code's, both through
@@ -1188,6 +1132,10 @@ func _toggle_window(id: String) -> void:
 
 func _on_nation_clicked(nation_id: String) -> void:
 	if _nation_panel == null or _windows == null:
+		return
+	# V5.1-c2.3. The mouse's route to a tab is refused under a scene, as the
+	# keys are (V5.1-c2.1): a click on Germany under a summit closed the summit.
+	if _stack != null and not _stack.accepts_hotkeys():
 		return
 	# Content before the window opens: open() places the frame by centring its
 	# size, and a nation panel that has not been told which nation it is showing
@@ -1901,7 +1849,6 @@ func _on_load_requested(slot: String) -> void:
 	_paused_for_programme = false
 
 	_map_view.setup(_loader, _state)
-	_minimap.setup(_map_view, _loader, _state)
 	# A loaded game is a different _state, and an overlay left holding the
 	# throwaway one built at _ready() is the same five-panel drift the V2.8
 	# review found below -- setup(), not refresh(), because the reference itself
@@ -2181,4 +2128,7 @@ func _update_top_bar() -> void:
 		# also STOPS pending when the player answers it, and every command in this
 		# file already ends by calling this function -- so the mark clears on the
 		# press rather than a month later.
-		_hud.action_bar.show_pending(Pending.window_ids(_state, _loader, _messages))
+		_hud.sidebar.show_pending(Pending.window_ids(_state, _loader, _messages))
+		# V5.1-c2.3. Why the clock is not running, in the title bar: a decision
+		# holding it is the case a player must not have to guess.
+		_hud.title_bar.set_held(tr("A decision is waiting") if _decision_holds_clock() else "")

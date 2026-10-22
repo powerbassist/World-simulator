@@ -13,7 +13,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --council-treaty
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --council-ratify
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --council-chair
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --cluster state
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --domain presidency
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --open budget
@@ -263,9 +263,9 @@ var _mood := -1.0
 ## --mid-term: seven months into the term with nothing chosen, the page a loaded
 ## game shows (the Agenda's "when can I choose" line).
 var _mid_term := false
-## V2.1c: pull a cluster's drawer open, so a frame can show the mark on the entry
-## the player is looking at as well as the mark on the cluster it lives in.
-var _cluster := ""
+## V5.1-c2.3: open a domain through its sidebar entry (its first tab), so a frame
+## shows the entry marked and the tab open -- V2.1c's --cluster, for the sidebar.
+var _domain := ""
 
 ## V1.3e, and --orgs's argument a third time. The nation panel's refusal line only
 ## renders for a partner who actually refuses, and which partners refuse is the
@@ -688,8 +688,8 @@ func _init() -> void:
 			_mood = float(args[i + 1])
 		elif args[i] == "--perf":
 			_perf_overlay = true
-		elif args[i] == "--cluster" and i + 1 < args.size():
-			_cluster = args[i + 1]
+		elif args[i] == "--domain" and i + 1 < args.size():
+			_domain = args[i + 1]
 		elif args[i] == "--defeated":
 			_defeated = true
 		elif args[i] == "--termlimit":
@@ -979,10 +979,9 @@ func _apply_view() -> void:
 			push_error("screenshot: --open '%s' matched no registered window; valid ids: %s" % [
 				_open, ", ".join(PackedStringArray(_main._windows.panel_ids())),
 			])
-	# After --open, because opening a window marks its own entry in whatever
-	# drawer is showing and the drawer has to exist first.
-	if _cluster != "":
-		_main._hud.action_bar.show_cluster(_cluster)
+	# After --open: the domain's first tab replaces whatever --open opened.
+	if _domain != "":
+		_main._hud.sidebar.navigate.emit(_domain)
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		# WITH the state and the viewer, exactly as main.gd:733 calls it. Without

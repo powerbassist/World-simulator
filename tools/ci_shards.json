@@ -143,7 +143,6 @@
    "tests/test_migration.gd",
    "tests/test_law_panel.gd",
    "tests/test_calendar_panel.gd",
-   "tests/test_minimap.gd",
    "tests/test_map_flows.gd",
    "tests/test_overview_panel.gd",
    "tests/test_save_load.gd",

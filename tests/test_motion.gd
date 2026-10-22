@@ -231,9 +231,10 @@ func _check_window_manager_opens_through_motion() -> void:
 	content.custom_minimum_size = Vector2(300, 200)
 	_manager.register("motion_probe", "Motion probe", content)
 	_manager.open("motion_probe")
-	var frame: Control = _manager._frames["motion_probe"]
+	# The dock rises from the map since V5.1-c2.2, not a frame per window.
+	var frame: Control = _manager.dock()
 	if frame.modulate.a > 0.01:
-		_fail("window_manager.open() did not open through Motion (frame alpha %.2f)" % frame.modulate.a)
+		_fail("window_manager.open() did not open through Motion (dock alpha %.2f)" % frame.modulate.a)
 	Motion.finish(frame)
 	# Raising a window that is already open must not re-run the opening.
 	_manager.open("motion_probe")

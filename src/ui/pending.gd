@@ -15,7 +15,7 @@ extends RefCounted
 ## were silent in **100 %** of their months, having no card at all.
 ##
 ## **What this is NOT.** It is not a dashboard and it is not a second readout: it
-## returns ids, and `action_bar.gd` turns them into a mark on the cluster where
+## returns ids, and `sidebar.gd` turns them into a count on the domain where
 ## the answer is given. U5a deleted `dashboard.gd` on purpose and the map is still
 ## the resting screen.
 ##

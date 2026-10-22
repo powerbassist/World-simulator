@@ -82,7 +82,7 @@ func _check_escape_pops_the_top() -> void:
 	if not _main._windows.is_open("budget"):
 		_main._windows.open("budget")
 	_main._briefing.show()
-	_main._hud.top_bar.save_load_requested.emit()
+	_main._hud.title_bar.save_load_requested.emit()
 	if stack.top() != ScreenStack.SYSTEM:
 		_fail("save dialog over a briefing over the budget: top is %d, not SYSTEM" % stack.top())
 

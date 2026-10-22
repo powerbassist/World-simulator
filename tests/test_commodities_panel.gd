@@ -119,21 +119,12 @@ func _check_registered_and_reachable() -> void:
 				_fail("the commodities window shares key %s with '%s'" % [
 					OS.get_keycode_string(key), id])
 
-	# The drawer route, which is the only one: this panel has no map marker and no
-	# message card, so an unregistered cluster entry is an unreachable panel.
-	var bar = _main._hud.action_bar
-	var found := false
-	for cluster in ["economy", "state", "society", "world"]:
-		bar._toggle_cluster(cluster)
-		for node in _walk(bar):
-			# The drawer drops to icons when its labels do not fit the row; the label is metadata then.
-			if node is Button and String(node.get_meta("label", node.text)).to_upper() == "COMMODITIES":
-				found = true
-		bar.close_subrow()
-		if found:
-			break
-	if not found:
-		_fail("no cluster on the bottom bar offers Commodities -- the panel is unreachable without one")
+	# V5.1-c2.3: the sidebar's route, the only one -- the domain that holds the
+	# tab is listed, and the tab is one of its tabs.
+	var Domains = load("res://src/ui/domains.gd")
+	var domain: String = Domains.domain_of("commodities")
+	if not _main._hud.sidebar.entry_ids().has(domain) or not Domains.tabs(domain, _main._windows.panel_ids()).has("commodities"):
+		_fail("the sidebar does not reach 'commodities' (domain '%s') -- the panel is unreachable without it" % domain)
 
 
 func _check_fits_the_band(panel) -> void:

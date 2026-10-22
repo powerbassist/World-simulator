@@ -80,31 +80,24 @@ func _sweep(language: String) -> void:
 	await process_frame
 
 
-## The HUD pieces that share the screen's width, in every state of the command bar:
-## the lower row needs the sum of its pieces and the drawer of the open cluster is the
-## widest of them, so each cluster is opened in turn. Also after a live language
-## switch -- the pieces already built keep their language, the drawer is rebuilt in
-## the new one, and the row must still fit.
+## The chrome that shares the screen's width -- V5.1-c2.3's sidebar, title bar and
+## strip. The sidebar is a fixed 232 px: its entries trim with an ellipsis (the
+## full name is the tooltip), so what is measured is that nothing ELSE in it -- the
+## portrait card, the heading -- asks for more; the bars must fit the screen. Also
+## after a live language switch, the sidebar rebuilt in the new language.
 func _check_hud(main, language: String) -> void:
 	var hud = main._hud
-	var bar = hud.action_bar
-	var lower: Control = bar.get_parent()
-	for cluster in bar._entries.keys():
-		bar.show_cluster(cluster)
-		await process_frame
-		_hud_width("lower row with '%s' open" % cluster, lower.get_combined_minimum_size().x, language)
-	bar.close_subrow()
+	var Sidebar = load("res://src/ui/sidebar.gd")
+	_hud_width("sidebar", hud.sidebar.get_combined_minimum_size().x, language, float(Sidebar.WIDTH))
+	_hud_width("title bar", hud.title_bar.get_combined_minimum_size().x, language, 1920.0)
 	_hud_width("top bar", hud.top_bar.get_combined_minimum_size().x, language, 1920.0)
 	_hud_width("map legend", hud.map_legend.get_combined_minimum_size().x, language)
-	# The switch: English pieces, French drawer; then the reverse.
 	if language == "en":
 		for other in ["fr", "en"]:
 			Strings.set_language(other)
-			for cluster in bar._entries.keys():
-				bar.close_subrow()
-				bar.show_cluster(cluster)
-				await process_frame
-				_hud_width("lower row with '%s' open after a switch to %s" % [cluster, other], lower.get_combined_minimum_size().x, "en>" + other)
+			hud.sidebar.build(main._windows.panel_ids())
+			await process_frame
+			_hud_width("sidebar after a switch to %s" % other, hud.sidebar.get_combined_minimum_size().x, "en>" + other, float(Sidebar.WIDTH))
 
 
 ## The bill briefing is a popup with a fixed width over a scroll view (V5.1a's

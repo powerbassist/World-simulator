@@ -81,15 +81,12 @@ func _check_registered_and_reachable() -> void:
 	if _main._windows.frame("people") == null:
 		_fail("no window frame registered under the id 'people'")
 
-	var bar = _main._hud.action_bar
-	bar._toggle_cluster("state")
-	var found := false
-	for node in _walk(bar):
-		if node is Button and String(node.text) == "PEOPLE":
-			found = true
-	bar.close_subrow()
-	if not found:
-		_fail("the State cluster has no People entry -- the panel is unreachable without one")
+	# V5.1-c2.3: the sidebar's route, the only one -- the domain that holds the
+	# tab is listed, and the tab is one of its tabs.
+	var Domains = load("res://src/ui/domains.gd")
+	var domain: String = Domains.domain_of("people")
+	if not _main._hud.sidebar.entry_ids().has(domain) or not Domains.tabs(domain, _main._windows.panel_ids()).has("people"):
+		_fail("the sidebar does not reach 'people' (domain '%s') -- the panel is unreachable without it" % domain)
 
 
 func _check_fits_the_band(panel) -> void:

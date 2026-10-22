@@ -22,13 +22,13 @@ const Motion = preload("res://src/ui/motion.gd")
 ## second tooltip beside ours); tip_of(id) is the plain text a test or a reader
 ## can still get.
 ##
-## Reads state, never writes it. The gear and save buttons emit; main.gd decides
-## what they open, the same shape as every other panel here.
+## Reads state, never writes it. Save and the menu moved to the title bar
+## (V5.1-c2.3), so the strip is the figures alone.
 
-signal settings_requested
-signal save_load_requested
-
-const BAR_HEIGHT := 40
+## The strip's slot under the title bar: the 44 px the floating windows kept
+## clear of it (their TOP_MARGIN) until V5.1-c2.2 docked them, so the stacked
+## figures keep the room they were fitted to. The workspace starts below it.
+const BAR_HEIGHT := 44
 ## The programme caption's width: "PROGRAMME" itself, so the strip's measured
 ## width is the same with or without one running.
 const PROGRAMME_CAPTION_PX := 104
@@ -59,7 +59,6 @@ var _figures: HBoxContainer
 ## The gap between the figures as last set, so a day that changes nothing does not
 ## re-lay the bar.
 var _gap := FIGURE_GAP
-var _tools: HBoxContainer
 
 
 func _ready() -> void:
@@ -82,26 +81,8 @@ func _ready() -> void:
 
 	row.add_child(_spacer())
 
-	_tools = HBoxContainer.new()
-	_tools.add_theme_constant_override("separation", 4)
-	row.add_child(_tools)
-
 	_popup = TipPopup.new()
 	add_child(_popup)
-
-	var save := Button.new()
-	save.text = tr("SAVE")
-	save.theme_type_variation = UiTheme.SUBROW_BUTTON
-	save.tooltip_text = tr("Save and load (S)")
-	save.pressed.connect(func(): save_load_requested.emit())
-	_tools.add_child(save)
-
-	var settings := Button.new()
-	settings.text = tr("MENU")
-	settings.theme_type_variation = UiTheme.SUBROW_BUTTON
-	settings.tooltip_text = tr("Pause menu (Esc)")
-	settings.pressed.connect(func(): settings_requested.emit())
-	_tools.add_child(settings)
 
 
 ## Caption above value. U5a put them on one line to get the strip to 40px; at

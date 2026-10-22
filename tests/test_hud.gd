@@ -38,12 +38,10 @@ func _process(_delta: float) -> bool:
 	_check_flag_data_reaches_the_card()
 	_check_mood_reads_the_polled_figure()
 	_check_face_is_fixed_and_mood_is_an_icon()
-	_check_action_bar_subrow()
 	_check_message_stack()
 	_check_set_body()
 	_check_card_is_an_answer_surface()
 	_check_foreign_acts_reach_the_column()
-	_check_minimap_slot_reserved()
 	_stage_tall_cards()
 	return false
 
@@ -90,23 +88,20 @@ func _check_icons_load() -> void:
 		elif off_tint > 0:
 			_fail("icon '%s' has %d opaque pixels that are not the tint" % [name, off_tint])
 
-	# The pending-mark glyph is a STATUS tone (something waits on you), the
-	# attention colour, and does NOT follow the played nation's accent: a nation
-	# whose accent were gold would otherwise mark "pending" in its own identity.
-	var bar = _main._hud.action_bar
+	# The pending count is a STATUS tone (something waits on you), the attention
+	# colour, and does NOT follow the played nation's accent: a nation whose accent
+	# were gold would otherwise mark "pending" in its own identity. V5.1-c2.3: the
+	# sidebar's count, where the action bar's glyph was.
 	var host := Control.new()
 	UiTheme.apply(host, Color("#2596FF"))
-	var mark: Image = bar._cluster_icons["state"]["marked"].get_image()
-	var seen_warn := false
-	for y in mark.get_height():
-		for x in mark.get_width():
-			var px := mark.get_pixel(x, y)
-			if px.a > 0.95:
-				seen_warn = true
-				if absf(px.r - UiTheme.WARN.r) > 0.06 or absf(px.g - UiTheme.WARN.g) > 0.06 or absf(px.b - UiTheme.WARN.b) > 0.06:
-					_fail("the pending-mark glyph has an opaque pixel %s that is not the attention tone" % px.to_html(false))
-	if not seen_warn:
-		_fail("the pending-mark glyph has no opaque pixel")
+	var sidebar = _main._hud.sidebar
+	sidebar.show_pending(["budget"])
+	var pill: Label = sidebar._pills["finances"]
+	if not pill.visible:
+		_fail("a pending budget did not show a count on Finances")
+	if pill.get_theme_color("font_color") != UiTheme.WARN:
+		_fail("the pending count is %s, not the attention tone" % pill.get_theme_color("font_color").to_html(false))
+	sidebar.show_pending([])
 
 	# The mood icon's WORRIED band sits between GOOD and BAD: a status tone, not the
 	# nation's accent (which could be any hue), and the accent is still the odd one
@@ -117,10 +112,10 @@ func _check_icons_load() -> void:
 	UiTheme.apply(host)
 	host.free()
 
-	# And the bar is actually using them, not merely able to.
-	for cluster_id in _main._hud.action_bar._cluster_buttons.keys():
-		if _main._hud.action_bar._cluster_buttons[cluster_id].icon == null:
-			_fail("the '%s' cluster has no icon" % cluster_id)
+	# And the sidebar is actually using them, not merely able to.
+	for id in _main._hud.sidebar.entry_ids():
+		if _main._hud.sidebar._entries[id].icon == null:
+			_fail("the '%s' sidebar entry has no icon" % id)
 
 
 ## The point of the whole session: the player is a person, not a country.
@@ -219,35 +214,6 @@ func _check_face_is_fixed_and_mood_is_an_icon() -> void:
 		_fail("three approvals drew %d distinct moods, want 3" % seen.size())
 	ns.overall_approval_pct = original
 	card.refresh()
-
-
-func _check_action_bar_subrow() -> void:
-	var bar = _main._hud.action_bar
-	if bar.open_cluster() != "":
-		_fail("a cluster is already open before anything is clicked")
-
-	bar._toggle_cluster("economy")
-	if bar.open_cluster() != "economy":
-		_fail("opening the economy cluster did not record it as open")
-	# The drawer drops to icons when its labels do not fit the row; each entry keeps its
-	# label as metadata, which is what it is named by here.
-	var labels := ""
-	for button in bar._subrow.get_children():
-		labels += String(button.get_meta("label", "")).to_upper() + "\n"
-	for entry in ["ECONOMY", "BUDGET"]:
-		if not labels.contains(entry):
-			_fail("the economy sub-row has no '%s' entry: %s" % [entry, labels])
-
-	# One drawer at a time, or the bar grows a row per cluster.
-	bar._toggle_cluster("state")
-	if bar.open_cluster() != "state":
-		_fail("opening a second cluster did not replace the first")
-	if _collect_text(bar._subrow).contains("BUDGET"):
-		_fail("the previous cluster's entries are still in the sub-row")
-
-	bar._toggle_cluster("state")
-	if bar.open_cluster() != "":
-		_fail("clicking the open cluster again did not close the drawer")
 
 
 ## Furniture only this session -- nothing calls push(). The API is tested anyway,
@@ -477,7 +443,7 @@ var _bar_y_before := 0.0
 func _stage_tall_cards() -> void:
 	var hud = _main._hud
 	_portrait_y_before = hud.portrait_card.global_position.y
-	_bar_y_before = hud.action_bar.global_position.y
+	_bar_y_before = hud.ribbon.global_position.y
 	hud.message_stack.clear()
 	var essay := "A long notification body that keeps going. ".repeat(14)
 	for n in 6:
@@ -491,21 +457,12 @@ func _check_cards_do_not_push_the_ui_down() -> void:
 	if absf(hud.portrait_card.global_position.y - _portrait_y_before) > 0.5:
 		_fail("six tall cards moved the portrait card from y=%.1f to y=%.1f" % [
 			_portrait_y_before, hud.portrait_card.global_position.y])
-	if absf(hud.action_bar.global_position.y - _bar_y_before) > 0.5:
-		_fail("six tall cards moved the action bar from y=%.1f to y=%.1f" % [
-			_bar_y_before, hud.action_bar.global_position.y])
+	if absf(hud.ribbon.global_position.y - _bar_y_before) > 0.5:
+		_fail("six tall cards moved the day ribbon from y=%.1f to y=%.1f" % [
+			_bar_y_before, hud.ribbon.global_position.y])
 	if hud.message_stack.get_parent() is BoxContainer:
 		_fail("the message column is still in a box container -- its height is layout again")
 	hud.message_stack.clear()
-
-
-func _check_minimap_slot_reserved() -> void:
-	var cluster = _main._hud.clock_cluster
-	if cluster._minimap_slot == null:
-		_fail("the clock cluster reserves no minimap slot")
-		return
-	if cluster._minimap_slot.custom_minimum_size != cluster.MINIMAP_SIZE:
-		_fail("the minimap slot is not held at its reserved size")
 
 
 func _collect_text(node) -> String:

@@ -21,6 +21,10 @@ extends Control
 ## Holds no game state. main.gd registers panels it has already built and wired.
 
 const TabPage = preload("res://src/ui/tab_page.gd")
+const TitleBar = preload("res://src/ui/title_bar.gd")
+const TopBar = preload("res://src/ui/top_bar.gd")
+const Sidebar = preload("res://src/ui/sidebar.gd")
+const Ribbon = preload("res://src/ui/ribbon.gd")
 const Domains = preload("res://src/ui/domains.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
@@ -32,12 +36,13 @@ signal closed(id: String)
 
 ## The board's geometry at the 1920x1080 reference: the dock starts at the
 ## sidebar's right edge and is 1240 wide, which leaves the 448px strip of map
-## the inbox slides over (V5.1-c3). Top and bottom are today's strip and
-## bottom furniture; c2.3's title bar and sidebar move them.
-const DOCK_LEFT := 232.0
+## the inbox slides over (V5.1-c3); it sits under the title bar and the figure
+## strip and above the day ribbon. Every edge is read from the piece it meets,
+## so the chrome and the dock cannot drift apart.
+const DOCK_LEFT := Sidebar.WIDTH
 const DOCK_WIDTH := 1240.0
-const DOCK_TOP := 44.0
-const DOCK_BOTTOM := 150.0
+const DOCK_TOP := TitleBar.HEIGHT + TopBar.BAR_HEIGHT
+const DOCK_BOTTOM := Ribbon.STRIP_HEIGHT
 
 ## How many destinations back and forward remember -- a session's worth of
 ## wandering, not its whole history.
@@ -190,12 +195,13 @@ func open(id: String, quiet: bool = false) -> void:
 func close(id: String, quiet: bool = false) -> void:
 	if not _pages.has(id) or not _pages[id].visible:
 		return
+	# Recorded before the page hides, so a listener on `closed` reads the step.
+	if not Domains.is_scene(id):
+		_record("")
 	_hide_page(id)
 	_dock.hide()
 	if not quiet:
 		Sound.cue(self, "close")
-	if not Domains.is_scene(id):
-		_record("")
 
 
 func toggle(id: String) -> void:
