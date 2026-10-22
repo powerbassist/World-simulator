@@ -16,6 +16,28 @@ and proposes a triage with an interruption budget.
 Labels as in [[v5.0-replay]]: **MEASURED**, **INFERRED**, **OPINION**. Source lines
 are as of `main` at `52f286c2`.
 
+## The author's answers (2026-10-22)
+
+The four calls below, and one more the parent added, went to the author
+through the parent session's question tool. The picks are verbatim, with what
+each settles.
+
+1. **The interruption budget:** "Au plus 4 + 6 par an (Recommandé)". At most
+   4 uninvited modal stops and 6 holding cards a year; notes never hold; scenes
+   the player books do not count.
+2. **V5.2's requests:** "Carte qui ne bloque pas (Recommandé)". A request is a
+   card that never holds the clock, and its lapse is a decline.
+3. **A foreign leader's visit:** "Une note (Recommandé)". One note a month at
+   most, and a request card from V5.2 when the visitor wants something.
+4. **The minor decision's last-month stop:** "Garder (Recommandé)". The lapse
+   guard stays.
+5. **The AI's visit cadence (about 26 a year to France):** "Oui, maintenant
+   (Recommandé)". Systems makes the rate real now, with a declared re-baseline.
+
+Where they land: the "requests waiting" mark goes to d2 (the parent's routing).
+The budget (1) and the request rule (2) are folded into [[v5.2-spec]] at V5.2's
+plan gate, not now.
+
 ## The author's calls, first
 
 Each has the recommendation first.
