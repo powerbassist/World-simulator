@@ -254,7 +254,9 @@ func _build_levers() -> Control:
 		# (The fine-grained rows moved to the Tax Code window with the rates.)
 		slider.max_value = float(LEVER_MAX[key])
 		slider.step = 0.1
-		slider.custom_minimum_size.x = 220
+		# 200, not 220: G11's caption size took the window's last 20 px under +35%
+		# pseudo, and since d1b3 the span, not the track's width, guards a drag.
+		slider.custom_minimum_size.x = 200
 		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.draw.connect(_draw_span.bind(key))
