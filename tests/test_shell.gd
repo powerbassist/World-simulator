@@ -807,6 +807,8 @@ func _collect_text(node) -> String:
 	var out := ""
 	if node is Label or node is Button:
 		out += node.text + "\n"
+	elif node is RichTextLabel:
+		out += node.get_parsed_text() + "\n"
 	for child in node.get_children():
 		out += _collect_text(child)
 	return out

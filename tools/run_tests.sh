@@ -169,6 +169,7 @@ tests=(
   tests/test_tip_popup.gd
   tests/test_glossary.gd
   tests/test_term_text.gd
+  tests/test_play_gate_terms.gd
   tests/test_glossary_tip.gd
   tests/test_outliner.gd
   tests/test_geography.gd
