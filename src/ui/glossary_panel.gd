@@ -3,6 +3,7 @@ extends PanelContainer
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const TermText = preload("res://src/ui/term_text.gd")
 const Glossary = preload("res://src/ui/glossary.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## The A-Z Glossary tab -- V5.1-d3. The tooltips explain a word where it is read;
 ## this is where the words are found without having been read first: every term of
@@ -26,6 +27,10 @@ var _bar: HFlowContainer
 var _body: VBoxContainer
 ## letter -> its heading, for the bar's jump.
 var _headings := {}
+## The language the list was built in: a month's sweep marks every panel dirty, and a
+## rebuild would put a reader back at the top, so only a change of language (the one
+## thing that moves a word here) rebuilds it.
+var _built_in := ""
 
 
 func _ready() -> void:
@@ -61,7 +66,8 @@ func _process(_delta: float) -> void:
 	if not _dirty or not is_visible_in_tree():
 		return
 	_dirty = false
-	_refresh()
+	if _built_in != Strings.language():
+		_refresh()
 
 
 ## Every term id, ordered by its shown word, case-insensitively. The shown word, so
@@ -71,7 +77,10 @@ static func entry_ids() -> Array:
 	for id in Glossary.ids():
 		words[String(id)] = Glossary.term(String(id))
 	var ids: Array = words.keys()
-	ids.sort_custom(func(a, b) -> bool: return String(words[a]).naturalnocasecmp_to(String(words[b])) < 0)
+	# The id breaks a tie: sort_custom is not stable, and two calls must agree.
+	ids.sort_custom(func(a, b) -> bool:
+		var order := String(words[a]).naturalnocasecmp_to(String(words[b]))
+		return order < 0 if order != 0 else String(a) < String(b))
 	return ids
 
 
@@ -98,6 +107,7 @@ func _refresh() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 	_headings.clear()
+	_built_in = Strings.language()
 
 	var current := ""
 	for id in entry_ids():
@@ -139,5 +149,9 @@ func _entry(id: String, term: String) -> void:
 
 func _jump(letter: String) -> void:
 	var heading: Control = _headings.get(letter)
-	if heading != null:
+	if heading == null or heading.is_queued_for_deletion():
+		return
+	# A frame's layout may be pending after a rebuild: the offset is read once it lands.
+	await get_tree().process_frame
+	if is_instance_valid(heading) and heading.is_inside_tree():
 		_scroll.scroll_vertical = int(heading.global_position.y - _body.global_position.y)

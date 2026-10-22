@@ -38,6 +38,9 @@ func _process(_delta: float) -> bool:
 		_check_a_letter_jumps()
 	elif _frame == 9:
 		_check_the_jump_scrolled()
+		_check_a_month_sweep_keeps_the_reader_place()
+	elif _frame == 12:
+		_check_the_place_was_kept()
 		_finish()
 		return true
 	return false
@@ -57,6 +60,8 @@ func _check_the_order() -> void:
 	for i in range(1, ids.size()):
 		if Glossary.term(ids[i - 1]).naturalnocasecmp_to(Glossary.term(ids[i])) > 0:
 			_fail("'%s' is listed before '%s'" % [Glossary.term(ids[i - 1]), Glossary.term(ids[i])])
+	if GlossaryPanel.entry_ids() != ids:
+		_fail("two calls to entry_ids() disagree")
 	var letters: Array = GlossaryPanel.letters()
 	for i in range(1, letters.size()):
 		if String(letters[i - 1]).naturalnocasecmp_to(String(letters[i])) >= 0:
@@ -108,6 +113,30 @@ func _check_a_letter_jumps() -> void:
 func _check_the_jump_scrolled() -> void:
 	if int(_panel._scroll.scroll_vertical) <= 0:
 		_fail("the last letter's button did not scroll the list")
+
+
+## Review pass 1: the month's sweep marks every panel dirty, and a rebuild put the
+## reader back at the top of a tab they were reading at speed 3. Nothing in the
+## glossary moved, so only a change of language rebuilds it.
+var _place := 0
+
+
+var _first_entry: Node
+
+
+func _check_a_month_sweep_keeps_the_reader_place() -> void:
+	_place = int(_panel._scroll.scroll_vertical)
+	_first_entry = _panel._body.get_child(1)
+	_main._windows.mark_all_dirty()
+
+
+func _check_the_place_was_kept() -> void:
+	if int(_panel._scroll.scroll_vertical) != _place or _place <= 0:
+		_fail("a month's sweep moved the reader from %d to %d" % [_place, int(_panel._scroll.scroll_vertical)])
+	# Nothing in the glossary moved: the sweep must not free and rebuild its entries
+	# (a plate anchored on a term would lose its anchor with them).
+	if not is_instance_valid(_first_entry) or _first_entry.is_queued_for_deletion() or _first_entry.get_parent() != _panel._body:
+		_fail("a month's sweep rebuilt the glossary list")
 
 
 func _fail(message: String) -> void:
