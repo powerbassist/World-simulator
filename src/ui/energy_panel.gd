@@ -27,7 +27,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
-const Budget = preload("res://src/sim/budget.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -221,7 +221,7 @@ func _on_decommission(ns, plant_id: String) -> void:
 			action = a
 	if action == null or not ns.plants.has(plant_id):
 		return
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	var entry: Dictionary = ns.plants[plant_id]
 	# A close reads no geography: the connection was a build-time fact and the
 	# siting price was charged once, when the station was ordered.

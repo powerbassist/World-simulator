@@ -39,7 +39,7 @@ const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
-const Budget = preload("res://src/sim/budget.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -405,7 +405,7 @@ func _button(ns, action) -> Button:
 ## BEFORE the command, so the delta measures the month the effort began against the
 ## month before it.
 func _on_act(ns, action) -> void:
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	var result := Campaign.execute(_state, ns, _loader.campaign_actions, action, _site_region)
 	if not result.get("applied", false):
 		return
@@ -596,7 +596,7 @@ func _pledge_button(ns, action) -> Button:
 
 
 func _on_promise(ns, action) -> void:
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	var result := Pledges.execute(_state, ns, _loader.pledges, action)
 	if not result.get("applied", false):
 		return

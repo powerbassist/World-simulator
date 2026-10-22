@@ -31,7 +31,7 @@ const DevRegistry = preload("res://src/ui/dev_registry.gd")
 const DevLog = preload("res://src/ui/dev_log.gd")
 const DevPerf = preload("res://src/ui/dev_perf.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-const Budget = preload("res://src/sim/budget.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 
 const FLAG := "--dev-console"
@@ -345,7 +345,7 @@ class MainHost extends DevRegistry.Host:
 	## The way an arrival from the month's tick is noticed: the card, the sting, the
 	## pause the message settings ask for.
 	func event_staged(desk_before: Dictionary) -> void:
-		main._card_events(main._clock.year, main._clock.month, desk_before, Budget.snapshot(main._state))
+		main._card_events(main._clock.year, main._clock.month, desk_before, Trends.snapshot_now(main._state))
 		# The month's own arrival path ends here too: an interrupt event holds the
 		# clock and opens Dispatches.
 		main._enforce_interrupt()

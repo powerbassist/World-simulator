@@ -38,7 +38,7 @@ const Labels = preload("res://src/ui/labels.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
-const Budget = preload("res://src/sim/budget.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -425,7 +425,7 @@ func _investment_button(ns, action) -> Button:
 ## command, so the delta measures the month the programme started against the month
 ## before it.
 func _on_invest(ns, action) -> void:
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	var result := Investment.execute(_state, ns, _loader.investment_actions, action)
 	if not result.get("applied", false):
 		return
@@ -520,7 +520,7 @@ func _action_button(ns, company, action) -> Button:
 ## month the subsidy started against the month before it -- U4's contract, and the
 ## reason `acted` carries a snapshot rather than a label alone.
 func _on_act(ns, company, action) -> void:
-	var before := Budget.snapshot(_state)
+	var before := Trends.snapshot_now(_state)
 	var result := Companies.execute(_state, ns, _loader.company_actions, action, company.id, _loader)
 	if not result.get("applied", false):
 		# The refusal is the panel's to show -- the verb arms' own words. The
