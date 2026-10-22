@@ -70,6 +70,15 @@ func _check_a_replayed_speed_keeps_the_hold() -> void:
 	if not clock.paused or not _main._paused_for_decision:
 		_fail("a speed key replayed after a month close resumed the clock a decision held")
 	_main._paused_for_decision = false
+	# QA RECORD on #63: two presses made while one month closed are both "pause" --
+	# the first pauses the running clock, the second must not resume it.
+	clock.paused = false
+	_main._month_runner.replaying = true
+	_key(KEY_SPACE)
+	_key(KEY_SPACE)
+	_main._month_runner.replaying = false
+	if not clock.paused:
+		_fail("a second press replayed after one month close resumed the clock the first paused")
 
 
 func _check_the_election_holds() -> void:
