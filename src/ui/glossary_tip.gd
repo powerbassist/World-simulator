@@ -44,8 +44,10 @@ const GAP := 2.0
 const FILL_HEIGHT := 2.0
 
 var _state = null
-## Where the keyboard's walk through the marked terms is (next_term).
+## Where the keyboard's walk through the marked terms is (next_term), and the
+## terms it walked: a changed screen starts the walk again.
 var _cycle := -1
+var _cycle_terms := PackedStringArray()
 var _loader = null
 ## V5.1-d1b2 (G9): a marked person's card, the layer's second kind of tip.
 var _people
@@ -181,15 +183,35 @@ func plate_exited(n: int) -> void:
 ## press would open. Escape closes, as for the mouse. F1, as no window takes it.
 func next_term() -> void:
 	var terms: Array = []
+	var keys := PackedStringArray()
 	for label in get_tree().root.find_children("*", "RichTextLabel", true, false):
-		if label.get_script() == TermText and int(label.level) == 0 and label.is_visible_in_tree():
+		if label.get_script() == TermText and int(label.level) == 0 and label.is_visible_in_tree() and _on_screen(label):
 			for id in TermText.term_ids(label):
 				terms.append([label, id])
+				keys.append("%d:%s" % [label.get_instance_id(), id])
 	if terms.is_empty():
 		return
+	if keys != _cycle_terms:
+		_cycle_terms = keys
+		_cycle = -1
 	_cycle = (_cycle + 1) % terms.size()
 	close_all()
 	click(String(terms[_cycle][1]), (terms[_cycle][0] as Control).get_global_rect(), 0)
+
+
+## Whether `label` is on screen: inside every ScrollContainer it sits in and the
+## viewport (QA on #76: F1 opened plates for lines scrolled out of view, clamped to
+## the screen's edge), and not in rows a rebuild has queued for deletion.
+static func _on_screen(label: Control) -> bool:
+	var clip := label.get_viewport_rect()
+	var node: Node = label
+	while node != null:
+		if node.is_queued_for_deletion():
+			return false
+		if node is ScrollContainer:
+			clip = clip.intersection((node as Control).get_global_rect())
+		node = node.get_parent()
+	return clip.intersects(label.get_global_rect(), true)
 
 
 func close_all() -> void:

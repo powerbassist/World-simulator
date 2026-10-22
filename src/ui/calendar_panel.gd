@@ -462,9 +462,11 @@ func _refresh_form() -> void:
 ## The act list is what the SIM says is available, not the content's full
 ## catalogue: a verb the player could not fire today is a verb they should not be
 ## able to book, and re-deriving that rule here would be the second copy of it.
+## One exception, shared with the Diplomacy row (VisitBooking.bookable_acts, QA on
+## #76): a meeting the host refuses only until its free day -- the day check below
+## refuses the days before it.
 func _refresh_acts() -> void:
 	var kind := _selected_kind()
-	var player_id: String = _state.player_nation_id
 	var ns = _state.player()
 	var keep := String(_act_pick.get_item_metadata(_act_pick.selected)) if _act_pick.selected >= 0 else ""
 	_act_pick.clear()
@@ -474,7 +476,7 @@ func _refresh_acts() -> void:
 			var target := _selected_subject()
 			if target.is_empty():
 				return
-			for action in Diplomacy.available(_state, _loader.diplomatic_actions, player_id, target):
+			for action in VisitBooking.bookable_acts(_state, _loader, target):
 				_act_pick.add_item(Strings.row_name("diplomatic-actions", action))
 				_act_pick.set_item_metadata(_act_pick.item_count - 1, String(action.id))
 		K.KIND_LAW:

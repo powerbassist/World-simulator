@@ -350,7 +350,7 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	# refuses only TODAY is still booked here -- the form opens on the first day that
 	# carries, and the line says when. Diplomacy.available() stays the AI's gate.
 	var later := ""
-	if not is_available and booking.is_empty() and _books_later(action, player_id):
+	if not is_available and booking.is_empty() and VisitBooking.held_only_by_host(_state, _loader, action, _nation_id):
 		is_available = true
 		later = _unavailable_reason(action, player_id)
 	var names := VBoxContainer.new()
@@ -388,21 +388,6 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	row.add_child(button)
 
 	return row
-
-
-## Whether the host register is all that holds `action` back: a meeting verb with
-## no precondition of its own (the one in the data; one with preconditions waits for
-## a sim query that reads them), off the player's own cooldown, that the partner
-## would accept and that the Diary can book on some later day.
-func _books_later(action, player_id: String) -> bool:
-	if not action.opens_meeting or not action.preconditions.is_empty():
-		return false
-	var ns = _state.nations.get(player_id)
-	if ns == null or ns.diplo_cooldown_months.has(Diplomacy.cooldown_key(action.id, _nation_id)):
-		return false
-	if VisitBooking.host_free_day(_state, action, _nation_id).is_empty() or not _partner_would_accept(action, player_id):
-		return false
-	return not VisitBooking.earliest_entry(_state, _loader, action, _nation_id).is_empty()
 
 
 func _unavailable_reason(action, player_id: String) -> String:

@@ -19,6 +19,8 @@ extends SceneTree
 const Calendar = preload("res://src/sim/calendar.gd")
 const RK = preload("res://src/core/relations.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 
 var _failures: Array[String] = []
@@ -243,6 +245,32 @@ func _check_a_hosted_visit_says_until_when() -> void:
 	var first_day: int = Calendar.entry_ordinal({"year": at / 12, "month": at % 12 + 1, "day": 1})
 	if not _main._windows.is_open("calendar") or Calendar.entry_ordinal(picked) < first_day 			or not Calendar.can_book(state, picked):
 		_fail("Book on a hosted visit did not open the Diary on a day that carries: %s" % str(picked))
+	# QA on #76 (TAKE 1): the Diary's act list offered only what Diplomacy.available()
+	# does, so the form fell back to its first verb and booked an Industrial Compact.
+	if String(picked.get("action_id", "")) != String(visit.id):
+		_fail("Book on a hosted visit opened the Diary on '%s', not the visit" % picked.get("action_id", ""))
+	# Booked through the form, the visit carries on its day once the host is free.
+	_main._calendar_panel._on_book()
+	var entry: Dictionary = {}
+	for e in state.appointments:
+		if String(e.get("action_id", "")) == String(visit.id) and String(e.get("target_id", "")) == "ITA" 				and String(e.get("status", "")) == CalendarK.STATUS_BOOKED:
+			entry = e
+	if entry.is_empty():
+		_fail("Book it on the hosted visit's form booked no visit to Italy")
+	else:
+		var was := [int(state.year), int(state.month), int(state.day)]
+		host.diplo_hosted_months.erase(String(visit.id))  # the month ticks counted it down
+		state.year = int(entry["year"])
+		state.month = int(entry["month"])
+		state.day = int(entry["day"])
+		DiaryDriver.resolve(state, _main._loader, state.year, state.month, state.day, func(_o): pass)
+		if String(entry.get("status", "")) != CalendarK.STATUS_DONE:
+			_fail("the hosted visit, booked for its free day, resolved '%s', not done" % entry.get("status", ""))
+		state.year = was[0]
+		state.month = was[1]
+		state.day = was[2]
+		state.appointments.erase(entry)
+		host.diplo_hosted_months[String(visit.id)] = 4
 	_main._windows.close_all()
 	# A visit with no day that carries -- the player's own cooldown -- greys out.
 	var key := String(Diplomacy.cooldown_key(String(visit.id), "ITA"))

@@ -74,9 +74,58 @@ func _process(_delta: float) -> bool:
 	elif _frame == 10:
 		_check_p2()
 		TranslationServer.pseudolocalization_enabled = false
+		_stage_scrolled_walk()
+	elif _frame == 12:
+		_check_scrolled_walk()
 		_finish()
 		return true
 	return false
+
+
+## QA on #76 (TAKE 2): F1 walked lines scrolled out of view -- the plate clamped to
+## the screen's edge over a row that does not say the word. And a new screen resumed
+## the walk mid-list. Laid out over two frames, so the scroll has clipped its rows.
+var _scroll_box: ScrollContainer
+
+
+func _stage_scrolled_walk() -> void:
+	_tip.close_all()
+	_scroll_box = ScrollContainer.new()
+	_scroll_box.position = Vector2(0, 0)
+	_scroll_box.size = Vector2(600, 100)
+	root.add_child(_scroll_box)
+	var rows := VBoxContainer.new()
+	rows.custom_minimum_size = Vector2(580, 0)
+	_scroll_box.add_child(rows)
+	PanelKit.rich(rows, "Your [g=approval]approval[/g] and the [g=deficit]deficit[/g].")
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 600)
+	rows.add_child(gap)
+	PanelKit.rich(rows, "Far below, the [g=debt]debt[/g].")
+
+
+func _check_scrolled_walk() -> void:
+	var f1 := InputEventKey.new()
+	f1.keycode = KEY_F1
+	f1.pressed = true
+	var seen: Array[String] = []
+	for i in 3:
+		_tip._input(f1)
+		seen.append(String(_tip._plates[0]["id"]) if _tip.depth() > 0 else "")
+	if seen.has("debt"):
+		_fail("F1 opened a plate for a line scrolled out of view: %s" % [seen])
+	# A changed screen starts the walk again, at its first term.
+	_tip._input(f1)  # the walk now sits on the box's first term again (approval)
+	_scroll_box.queue_free()
+	var box := VBoxContainer.new()
+	box.size = Vector2(600, 200)
+	root.add_child(box)
+	PanelKit.rich(box, "The [g=salience]salience[/g] and the [g=debt]debt[/g].")
+	_tip._input(f1)
+	if _tip.depth() == 0 or String(_tip._plates[0]["id"]) != "salience":
+		_fail("F1 on a new screen resumed the old walk instead of starting at its first term")
+	_tip.close_all()
+	box.queue_free()
 
 
 func _check_open_delay() -> void:
