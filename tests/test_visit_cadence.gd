@@ -28,6 +28,10 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Cooldowns = preload("res://src/sim/diplomacy_cooldowns.gd")
 
 const VERB := "state_visit"
 const YEARS := 3
@@ -50,6 +54,8 @@ func _init() -> void:
 	else:
 		for player in _playables():
 			_check_player(player, interval)
+		_check_booking(interval)
+		_check_reservation(interval)
 	_finish()
 
 
@@ -112,6 +118,65 @@ func _check_player(player: String, interval: int) -> void:
 	if ai_to_ai <= to_player:
 		_fail("%s game: %d AI-to-AI state visits against %d to the player -- the player is still the default partner" % [player, ai_to_ai, to_player])
 	print("%s: %d state visits to the player in %d years %s, %d AI-to-AI" % [player, to_player, YEARS, to_player_by_year, ai_to_ai])
+
+
+## The rule holds for the player too (the author, 2026-10-22), so the diary must
+## not book what the rule will refuse on the day ("It did not carry.", QA on #74):
+## a state visit inside the host's window is refused with the first day it would
+## carry, that day books, and -- through the game's own months, AI turns included
+## -- it is still on offer when it comes.
+func _check_booking(interval: int) -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	state.year = START_YEAR
+	state.month = 3
+	state.day = 10
+	var host = state.nations["DEU"]
+	host.diplo_hosted_months[VERB] = 2
+	var travel: int = Diplomacy.travel_days(_loader, "FRA", "DEU")
+	var inside: Dictionary = Calendar.make_entry(CalendarK.KIND_DIPLOMATIC, START_YEAR, 4, 20, VERB, "DEU", "", "", "", "", travel)
+	var reason: String = Calendar.refusal_reason(state, inside)
+	if not reason.contains("01/05/%d" % START_YEAR):
+		_fail("a visit inside the host's window was not refused with its first day: '%s'" % reason)
+	var first: Dictionary = Calendar.make_entry(CalendarK.KIND_DIPLOMATIC, START_YEAR, 5, 1, VERB, "DEU", "", "", "", "", travel)
+	if not bool(Calendar.book(state, first)["ok"]):
+		_fail("the first day out of the host's window did not book: '%s'" % Calendar.refusal_reason(state, first))
+	var elsewhere: Dictionary = Calendar.make_entry(CalendarK.KIND_DIPLOMATIC, START_YEAR, 4, 20, VERB, "ITA", "", "", "", "", 0)
+	if Calendar.refusal_reason(state, elsewhere).contains("too recently"):
+		_fail("another host was refused on Germany's window")
+	for m in [4, 5]:
+		state.month = m
+		WorldMonth.tick_month(state, _loader)
+	var offered: Array = Diplomacy.available(state, _loader.diplomatic_actions, "FRA", "DEU")
+	var carries := false
+	for action in offered:
+		if action.id == VERB:
+			carries = true
+	if not carries:
+		_fail("the booked visit would not carry on its day: Germany's register reads %s" % [host.diplo_hosted_months])
+
+
+## The agenda leaves a booked host alone: an AI act now would still stand on the
+## booked day. Inside the interval the booked verb is withheld; outside it, kept.
+func _check_reservation(interval: int) -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	state.year = START_YEAR
+	state.month = 3
+	var visit = null
+	for action in _loader.diplomatic_actions:
+		if action.id == VERB:
+			visit = action
+	var offers: Array = [visit]
+	if Cooldowns.unreserved(state, "DEU", offers).size() != 1:
+		_fail("an empty diary withheld a visit")
+	state.appointments.append(Calendar.make_entry(CalendarK.KIND_DIPLOMATIC, START_YEAR, 3 + interval - 1, 1, VERB, "DEU"))
+	if not Cooldowns.unreserved(state, "DEU", offers).is_empty():
+		_fail("an AI could visit a host the player has booked inside the interval")
+	if Cooldowns.unreserved(state, "ITA", offers).size() != 1:
+		_fail("a booking with Germany withheld a visit to Italy")
+	state.appointments.clear()
+	state.appointments.append(Calendar.make_entry(CalendarK.KIND_DIPLOMATIC, START_YEAR, 3 + interval, 1, VERB, "DEU"))
+	if Cooldowns.unreserved(state, "DEU", offers).size() != 1:
+		_fail("a booking a whole interval away withheld the visit -- it would have expired by then")
 
 
 func _fail(message: String) -> void:

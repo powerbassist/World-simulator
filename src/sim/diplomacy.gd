@@ -357,7 +357,7 @@ static func _actor_turn(state, loader, actor_id: String, ids: Array) -> void:
 ## available() only through the callable handed to it here.
 static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary:
 	return Agenda.best_act(state, actor_id, ids, func(target_id: String) -> Array:
-		return available(state, loader.diplomatic_actions, actor_id, target_id))
+		return Cooldowns.unreserved(state, target_id, available(state, loader.diplomatic_actions, actor_id, target_id)))
 
 
 ## The cooldown key for one verb pointed at one counterparty. Per pair, not per
