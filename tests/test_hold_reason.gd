@@ -29,6 +29,7 @@ func _process(_delta: float) -> bool:
 		return false
 	_check_a_hold_says_why()
 	_check_an_arrival_says_why()
+	_check_a_summit_says_why()
 	_finish()
 	return true
 
@@ -119,6 +120,27 @@ func _check_an_arrival_says_why() -> void:
 	var reason: String = _main._hud.clock_cluster.hold_reason()
 	if not reason.contains(Strings.row_name("events", loud)):
 		_fail("an arrival hold names '%s', not the arrival '%s'" % [reason, Strings.row_name("events", loud)])
+
+
+## The seam #70 and #73 left: a state visit holds the clock while its scene is
+## open (#70), so it says so where the clock is, as every other hold does.
+func _check_a_summit_says_why() -> void:
+	var clock = _main._clock
+	_main._windows.close_all()
+	_main._unseen_events.clear()
+	_main._paused_for_decision = false
+	_main._paused_for_programme = false
+	_main._state.player().event_queue.clear()
+	clock.paused = false
+	_main._open_summit("DEU", {})
+	if not _main._windows.is_open("summit"):
+		_fail("premise: the summit did not open")
+		return
+	var name := String(_main._loader.nations["DEU"].nation_name)
+	var reason: String = _main._hud.clock_cluster.hold_reason()
+	if not reason.contains(name):
+		_fail("a state visit holds the clock and says '%s', not the visit to %s" % [reason, name])
+	_main._windows.close("summit")
 
 
 func _fail(message: String) -> void:

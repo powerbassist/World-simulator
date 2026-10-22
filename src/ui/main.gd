@@ -1739,6 +1739,7 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 	# clock holds while it is open; the summit window's close lets it go.
 	_clock.paused = true
 	_summit_panel.show_summit(summit)
+	_hud.clock_cluster.refresh(_clock, preload("res://src/ui/hold_reason.gd").show(self))
 
 
 ## The panel's verdict. The effects ride Legislature.apply_effects() -- the
@@ -1749,14 +1750,11 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 ## changed nothing, which is the honest outcome for one of those.
 func _resolve_summit(choice_label: String) -> void:
 	if choice_label.is_empty(): return
-	var ns = _state.player()
 	var effects: Dictionary = _summit_panel._effects.get(choice_label, {})
 	if effects.is_empty(): return
-	Legislature.apply_effects(_state, ns, effects, _loader)
+	Legislature.apply_effects(_state, _state.player(), effects, _loader)
 	_queue_effect(tr("Summit: %s") % choice_label, _summit_before)
 	_update_top_bar()
-
-
 
 
 func _on_save_requested(slot: String) -> void:
