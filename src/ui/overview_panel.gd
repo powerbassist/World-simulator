@@ -25,6 +25,7 @@ const K = preload("res://src/sim/opinion_constants.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const DateText = preload("res://src/ui/date_text.gd")
@@ -554,9 +555,9 @@ func _build_effect_row(effect: Dictionary) -> Control:
 	label.theme_type_variation = UiTheme.CAPTION
 	row.add_child(label)
 
-	var ranked: Array = (effect["movements"] as Array).duplicate()
-	ranked = ranked.filter(func(m): return not is_nan(m["severity"]))
-	ranked.sort_custom(func(a, b): return float(a["severity"]) > float(b["severity"]))
+	# The consequence card's own ranking (V5.1-d1b3): one close is one row, its
+	# biggest moves first, a change that prints as 0.0 left out.
+	var ranked: Array = EffectsLedger.moved(effect)
 
 	if ranked.is_empty():
 		PanelKit.line(row, tr("nothing moved"))

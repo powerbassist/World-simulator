@@ -19,6 +19,9 @@ extends RefCounted
 ## Only readings with a threshold the game already holds can alert -- an alert on
 ## a line this file drew would be taste, not the machine.
 
+## A reading with nothing to show yet. A constant, so a reader (glossary_live.gd)
+## asks for it by name rather than comparing to the glyph.
+const NOTHING := "—"  # i18n: ok a glyph
 const Trends = preload("res://src/ui/trends.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
@@ -104,7 +107,7 @@ static func read(id: String, state, loader) -> Dictionary:
 			return _europe(state, ns)
 		"commodities":
 			return _commodities(ns, loader)
-	return _reading("—", "")
+	return _reading(NOTHING, "")
 
 
 ## A reading whose tip is plain text: one level-1 line per row of it, none opening
@@ -211,7 +214,7 @@ static func _unrest(ns) -> Dictionary:
 ## read "+0" for a government one seat short.
 static func _assembly(ns) -> Dictionary:
 	if ns.assembly_seats <= 0:
-		return _reading("—", Strings.t("No assembly arithmetic for this nation."))
+		return _reading(NOTHING, Strings.t("No assembly arithmetic for this nation."))
 	var majority := Government.majority_seats(ns)
 	var margin: int = ns.coalition_seats - (majority + 1)
 	var standing := Strings.t("Majority government")
@@ -235,7 +238,7 @@ static func _assembly(ns) -> Dictionary:
 ## "NEXT VOTE -44 mo" in two ten-year captures. The figure clamps to a dash.
 static func _election(state, ns, loader) -> Dictionary:
 	var months := Trends.months_to_vote(state, ns)
-	var text := "—"
+	var text := NOTHING
 	if months > 0:
 		text = Strings.t("%d mo") % months
 	elif months == 0:
@@ -269,7 +272,7 @@ static func _election_tooltip(ns, loader, months: int) -> String:
 static func _programme(ns, loader) -> Dictionary:
 	var programme := _nearest_programme(ns, loader)
 	if programme.is_empty():
-		return _reading("—", "", false)
+		return _reading(NOTHING, "", false)
 	var terms: Dictionary = programme["terms"]
 	var live: Dictionary = programme["entry"]
 	var name_text := Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"]))))
@@ -362,7 +365,7 @@ static func _europe(state, ns) -> Dictionary:
 		if ns.orgs.has(org_id):
 			mine.append(org_id)
 	if mine.is_empty():
-		return _reading("—", "", false)
+		return _reading(NOTHING, "", false)
 
 	var burden := Orgs.burden(state, ns, council)
 	var rules: Array = Orgs.rules_in_force(state, ns)
@@ -410,7 +413,7 @@ static func _europe(state, ns) -> Dictionary:
 ## total order. Hidden before the first month has any commodity state.
 static func _commodities(ns, loader) -> Dictionary:
 	if ns.commodity_state.is_empty() or loader == null:
-		return _reading("—", "", false)
+		return _reading(NOTHING, "", false)
 	var short: Array = CommoditiesPanel.shortages(ns, loader.commodity_goods.keys())
 	var bar := CommoditiesPanel.SHORTAGE_COVERAGE * 100.0
 	if short.is_empty():

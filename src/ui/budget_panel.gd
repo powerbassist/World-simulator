@@ -39,11 +39,16 @@ const LEVER_MAX := {
 	"pensions": 30.0,
 	"infrastructure": 30.0,
 }
-## How far a lever reaches either side of its committed value, in points of GDP.
-## The whole 0-30 range on a 220 px slider was 7 px a point: QA's pre-gate drag
-## moved Health 5.3 points in 38 px. Five either side is 22 px a point, and a
-## move bigger than five is a second commit -- the lever re-centres on each one.
+## How far a lever reaches either side of its committed value, in points of GDP
+## (QA's pre-gate drag moved Health 5.3 points in 38 px; the author approved five
+## either side). V5.1-d1b3, the parent's call on QA's #69 finding: the track keeps
+## the line's whole range, so the knob reads as the LEVEL -- the first build gave the
+## slider only the span, and Education 5.5 and Pensions 14.5 sat in one place. The
+## span's ends are marked on the track, and a drag past one stops there with a cue.
+## A move bigger than five is a second commit; the span re-centres on each one.
 const LEVER_SPAN := 5.0
+## How long a span end shows the stop it just made.
+const CUE_MS := 700
 
 const FIGURE_ROWS := [
 	["revenue", "Revenue"],  # i18n: msgid last
@@ -166,6 +171,9 @@ var _pending := {"spending_pct_gdp": {}}
 ## Cleared by _on_revert(), which both the Revert button and a commit go through.
 var _edited_keys := {}
 var _sliders := {}
+## Per lever: the value its span is centred on, and when its last stop's cue ends.
+var _span_at := {}
+var _cue_until := {}
 var _lever_values := {}
 ## key -> [now text, proposed text] for the CURRENT refresh, cleared and refilled
 ## each time. It held a pair of live Labels until V2.1b; the table is a
@@ -244,9 +252,12 @@ func _build_levers() -> Control:
 		# A tenth of a point everywhere: the spending levers all run to
 		# thirty, where one decimal prints three hundred distinct positions.
 		# (The fine-grained rows moved to the Tax Code window with the rates.)
+		slider.max_value = float(LEVER_MAX[key])
 		slider.step = 0.1
 		slider.custom_minimum_size.x = 220
+		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		slider.draw.connect(_draw_span.bind(key))
 		slider.value_changed.connect(_on_lever_changed.bind(key))
 		grid.add_child(slider)
 		_sliders[key] = slider
@@ -365,6 +376,12 @@ func _on_commit() -> void:
 
 
 func _on_lever_changed(value: float, key: String) -> void:
+	var span := lever_span(key)
+	if value < span.x or value > span.y:
+		_set_lever(key, clampf(value, span.x, span.y), false)
+		value = _sliders[key].value
+		_cue_until[key] = Time.get_ticks_msec() + CUE_MS
+		get_tree().create_timer(CUE_MS / 1000.0).timeout.connect(_sliders[key].queue_redraw)
 	_pending["spending_pct_gdp"][key] = value
 	# This lever is now the player's; mark_dirty() must stop re-syncing THIS one.
 	_edited_keys[key] = true
@@ -430,13 +447,35 @@ func _resync_untouched() -> void:
 
 ## A lever set from the state, without firing its edit: its span re-centred on the
 ## value (LEVER_SPAN), never past 0 or the line's ceiling.
-func _set_lever(key: String, value: float) -> void:
+func _set_lever(key: String, value: float, recentre := true) -> void:
 	var slider: HSlider = _sliders[key]
+	if recentre:
+		_span_at[key] = value
 	slider.set_block_signals(true)
-	slider.min_value = maxf(0.0, value - LEVER_SPAN)
-	slider.max_value = minf(float(LEVER_MAX[key]), value + LEVER_SPAN)
 	slider.value = value
 	slider.set_block_signals(false)
+	slider.queue_redraw()
+
+
+## [low, high] a lever may reach this commit: LEVER_SPAN either side of its value
+## when last set from the state, inside 0 and the line's ceiling.
+func lever_span(key: String) -> Vector2:
+	var at: float = float(_span_at.get(key, 0.0))
+	return Vector2(maxf(0.0, at - LEVER_SPAN), minf(float(LEVER_MAX[key]), at + LEVER_SPAN))
+
+
+func lever_cued(key: String) -> bool:
+	return Time.get_ticks_msec() < int(_cue_until.get(key, 0))
+
+
+## The span's two ends, hairlines across the track: a caption tone, the attention
+## tone for CUE_MS after a drag stopped at one.
+func _draw_span(key: String) -> void:
+	var slider: HSlider = _sliders[key]
+	var tone: Color = PanelKit.UiTheme.WARN if lever_cued(key) else PanelKit.UiTheme.TEXT_DIM
+	for v in [lever_span(key).x, lever_span(key).y]:
+		var x: float = slider.size.x * v / slider.max_value
+		slider.draw_line(Vector2(x, 0.0), Vector2(x, slider.size.y), tone, 1.0)
 
 
 ## Two decimals, chosen against the reachable range rather than copied from the row
@@ -499,17 +538,17 @@ func _refresh() -> void:
 	var proposed: Dictionary = Budget.preview(_state, pending) if edited else now
 
 	_set_figure("revenue", _pct_and_eur(now, "total_revenue_pct_gdp"), _pct_and_eur(proposed, "total_revenue_pct_gdp"))
-	_set_figure("tariffs", _tariff_text(now), _tariff_text(proposed))
-	_set_figure("dividends", _dividend_text(now), _dividend_text(proposed))
+	_set_figure("tariffs", _line_text(now, "tariff_revenue_pct_gdp"), _line_text(proposed, "tariff_revenue_pct_gdp"))
+	_set_figure("dividends", _line_text(now, "dividend_revenue_pct_gdp"), _line_text(proposed, "dividend_revenue_pct_gdp"))
 	_set_figure("spending", _pct_and_eur(now, "total_spending_pct_gdp"), _pct_and_eur(proposed, "total_spending_pct_gdp"))
 	_set_figure("debt_service", _pct_and_eur(now, "debt_service_pct_gdp"), _pct_and_eur(proposed, "debt_service_pct_gdp"))
 	_set_figure("bloc_transfer", _bloc_text(now), _bloc_text(proposed))
-	_set_figure("deployments", _deployment_text(now), _deployment_text(proposed))
-	_set_figure("subsidies", _subsidy_text(now), _subsidy_text(proposed))
-	_set_figure("investment", _investment_text(now), _investment_text(proposed))
-	_set_figure("projects", _projects_text(now), _projects_text(proposed))
-	_set_figure("campaign", _campaign_text(now), _campaign_text(proposed))
-	_set_figure("energy", _energy_text(now), _energy_text(proposed))
+	_set_figure("deployments", _line_text(now, "deployment_bill_pct_gdp"), _line_text(proposed, "deployment_bill_pct_gdp"))
+	_set_figure("subsidies", _line_text(now, "subsidy_bill_pct_gdp"), _line_text(proposed, "subsidy_bill_pct_gdp"))
+	_set_figure("investment", _bill_text(now, "investment_bill_pct_gdp"), _bill_text(proposed, "investment_bill_pct_gdp"))
+	_set_figure("projects", _bill_text(now, "project_bill_pct_gdp"), _bill_text(proposed, "project_bill_pct_gdp"))
+	_set_figure("campaign", _bill_text(now, "campaign_bill_pct_gdp"), _bill_text(proposed, "campaign_bill_pct_gdp"))
+	_set_figure("energy", _bill_text(now, "energy_bill_pct_gdp"), _bill_text(proposed, "energy_bill_pct_gdp"))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", tr("%s%% GDP") % PanelKit.Num.f(now["debt_to_gdp_pct"], 1), tr("%s%% GDP") % PanelKit.Num.f(proposed["debt_to_gdp_pct"], 1))
 	# NOT `.get(key, 0.0)`, and the screenshot pass is why. The first version defaulted,
@@ -544,104 +583,41 @@ func _bloc_text(snap: Dictionary) -> String:
 	return tr("%s%% GDP") % PanelKit.Num.fs(pct, 2)
 
 
-## The same em dash again. Unsigned, unlike the Union line: a deployment only ever
-## costs, and there is no receiving side of one.
-func _deployment_text(snap: Dictionary) -> String:
-	var pct: float = float(snap.get("deployment_bill_pct_gdp", 0.0))
-	if is_zero_approx(pct):
+## A line that is an em dash at zero, its percentage and euros otherwise -- one
+## function since V5.1-d1b3 for the four that were copies: a deployment and a
+## subsidy (unsigned: they only ever cost, and there is no receiving side of a
+## deployment, and the money a firm makes with a subsidy is private), and on the
+## revenue side the dividends and the tariffs (unsigned: a holding pays or the state
+## does not have one -- a firm that loses money still hands over nothing rather
+## than billing the treasury, docs/companies-model.md section 13).
+func _line_text(snap: Dictionary, key: String) -> String:
+	if is_zero_approx(float(snap.get(key, 0.0))):
 		return "—"
-	return _pct_and_eur(snap, "deployment_bill_pct_gdp")
+	return _pct_and_eur(snap, key)
 
 
-## The same em dash a fourth time. Unsigned like the deployment line: a subsidy only
-## ever costs, and the money the firm makes with it is private.
-func _subsidy_text(snap: Dictionary) -> String:
-	var pct: float = float(snap.get("subsidy_bill_pct_gdp", 0.0))
-	if is_zero_approx(pct):
-		return "—"
-	return _pct_and_eur(snap, "subsidy_bill_pct_gdp")
-
-
-## The same em dash a fifth time. Unsigned like the two lines above it: an
-## investment programme only ever costs, and what it buys is trend growth rather
-## than money.
+## The four bills that only ever cost and buy something other than money -- an
+## investment programme and a building (trend growth), a campaign (turnout), the
+## energy fleet -- each an em dash while nothing runs. One function since V5.1-d1b3;
+## they were four copies differing only in the key.
 ##
 ## THE MISSING-KEY BRANCH IS SEPARATE FROM THE ZERO BRANCH, and V1.6d is why. That
 ## session's row read a missing snapshot key with `.get(key, 0.0)` and printed a
 ## confident "0.00" against a live figure. Both branches print an em dash here, so
 ## the display is the same either way -- what is not the same is that a key vanishing
 ## from Budget.snapshot() cannot be quietly absorbed into "nothing is running".
-func _investment_text(snap: Dictionary) -> String:
-	if not snap.has("investment_bill_pct_gdp"):
-		return "—"
-	if is_zero_approx(float(snap["investment_bill_pct_gdp"])):
-		return "—"
-	return _pct_and_eur(snap, "investment_bill_pct_gdp")
-
-
-## *** THE COUNT OF LIVE BUILDS WAS HERE AND THE FIFTEENTH SCREENSHOT PASS TOOK IT OUT,
-## WHICH IS THIS SESSION'S ONE UI BUG AND IT WAS THIS FILE'S. *** The first version
-## printed "0.19% (6 bn) (1 building)", and that cell is WIDER THAN ANY OTHER ON THE
-## PANEL -- twenty-four characters against "46.10% (1473 bn)"'s sixteen. Both value
-## columns size to their widest row, so one extra clause on one row pushed the whole
-## `proposed` column past the window edge and put the panel on a horizontal scroll bar
-## it had never needed. Nothing was wrong with the number; the frame simply showed a
-## budget the player could not read without dragging.
 ##
-## The count belongs on Public Works, which is where it now is, and that is this row's
-## own comment used as a rule rather than as a decoration: three surfaces for one
-## register only works if each says a DIFFERENT thing. The budget says what is being
-## paid, the diary says when it lands, and Public Works says what and how many.
-##
-## The same em dash a sixth time, and the missing-key branch is separate for V1.6d's
-## reason exactly as the line above it. Unsigned like the three lines above: building
-## something only ever costs, and what it buys is trend growth rather than money.
-func _projects_text(snap: Dictionary) -> String:
-	if not snap.has("project_bill_pct_gdp"):
+## THE COUNT OF LIVE BUILDS WAS ONCE ON THE PROJECTS ROW and the fifteenth screenshot
+## pass took it out: "0.19% (6 bn) (1 building)" was wider than any other cell, and
+## both value columns size to their widest row, so the panel grew a horizontal scroll
+## bar. The count belongs on Public Works: the budget says what is being paid, the
+## diary says when it lands, and Public Works says what and how many.
+func _bill_text(snap: Dictionary, key: String) -> String:
+	if not snap.has(key):
 		return "—"
-	if is_zero_approx(float(snap["project_bill_pct_gdp"])):
+	if is_zero_approx(float(snap[key])):
 		return "—"
-	return _pct_and_eur(snap, "project_bill_pct_gdp")
-
-
-## The same em dash a seventh time, and the missing-key branch is separate for V1.6d's
-## reason exactly as the two above it. Unsigned like them: a campaign only ever costs,
-## and what it buys is turnout rather than money.
-## The fleet's bill, silent at zero like the campaign's: a country that has
-## ordered nothing is not paying anything, and a permanent "energy 0.000" row
-## under a total it does not move would be a number with no consequence attached.
-func _energy_text(snap: Dictionary) -> String:
-	if not snap.has("energy_bill_pct_gdp"):
-		return "—"
-	if is_zero_approx(float(snap["energy_bill_pct_gdp"])):
-		return "—"
-	return _pct_and_eur(snap, "energy_bill_pct_gdp")
-
-
-func _campaign_text(snap: Dictionary) -> String:
-	if not snap.has("campaign_bill_pct_gdp"):
-		return "—"
-	if is_zero_approx(float(snap["campaign_bill_pct_gdp"])):
-		return "—"
-	return _pct_and_eur(snap, "campaign_bill_pct_gdp")
-
-
-## The same em dash an eighth time, on the revenue side. Unsigned: a holding pays or
-## the state does not have one, and a firm that loses money still hands over nothing
-## rather than billing the treasury -- there is no margin quantity here for it to
-## lose, which is docs/companies-model.md section 13's call showing up on a panel.
-func _dividend_text(snap: Dictionary) -> String:
-	var pct: float = float(snap.get("dividend_revenue_pct_gdp", 0.0))
-	if is_zero_approx(pct):
-		return "—"
-	return _pct_and_eur(snap, "dividend_revenue_pct_gdp")
-
-
-func _tariff_text(snap: Dictionary) -> String:
-	var pct: float = float(snap.get("tariff_revenue_pct_gdp", 0.0))
-	if is_zero_approx(pct):
-		return "—"
-	return _pct_and_eur(snap, "tariff_revenue_pct_gdp")
+	return _pct_and_eur(snap, key)
 
 
 func _pct_and_eur(snap: Dictionary, key: String) -> String:
