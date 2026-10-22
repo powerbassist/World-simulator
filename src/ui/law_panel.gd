@@ -80,11 +80,6 @@ var _endorse_refusal := ""
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(760, 560)
-	# QA #54 RECORD: the list scrolls inside the panel, so the panel fills the
-	# dock's height rather than stopping at its 560 px minimum -- the tab page lays
-	# a panel at its minimum (tab_page.gd), which left the list two thirds tall.
-	# Set here, after TabPage.setup() has set FILL, because _ready runs at the add.
-	size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

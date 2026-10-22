@@ -67,20 +67,20 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme prog_jobs_first --open agenda
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defence --open defence
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defence --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --summit --open summit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --subsidy --open companies
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --regulate --open industry
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --regulate --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nationalise --open companies
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --corrupt --open society
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --migrate --open society
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --unrest --open society
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --press --open society
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --corrupt --open overview
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --migrate --open economy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --unrest --open economy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --press --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --cycle --open economy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --inflate --open economy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --downgrade --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --redistribute --open tax
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --invest --open industry
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --invest --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tally
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --network
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --energy
