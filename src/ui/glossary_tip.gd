@@ -50,6 +50,11 @@ var _plates: Array = []
 var _term_at := {}
 var _pending := {}
 var _grace := -1.0
+## Frames left to re-place the plates. A wrapping rich line reports its height for
+## the width it had BEFORE layout (a word a line), so a plate placed on the frame it
+## was built is far too tall and flips to the wrong place: tip_popup.gd's lesson,
+## two frames. A new plate stays transparent until they pass, so it never shows
+## where it does not belong.
 var _refit := 0
 
 
@@ -146,6 +151,8 @@ func _process(delta: float) -> void:
 		_refit -= 1
 		for n in range(1, _plates.size() + 1):
 			_place(n)
+			if _refit == 0:
+				(_plates[n - 1]["panel"] as Control).modulate.a = 1.0
 
 
 func tick(delta: float) -> void:
@@ -202,6 +209,7 @@ func _open(id: String, anchor: Rect2, level: int, held: float) -> void:
 	var panel := PanelContainer.new()
 	panel.theme_type_variation = UiTheme.PLATE
 	panel.custom_minimum_size = Vector2(WIDTH, 0)
+	panel.modulate.a = 0.0
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	panel.add_child(box)

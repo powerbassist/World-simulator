@@ -58,6 +58,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --cards 6 --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mood 35
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -101,6 +103,7 @@ const Industry = preload("res://src/sim/industry.gd")
 const IndustryK = preload("res://src/sim/industry_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Glossary = preload("res://src/ui/glossary.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
@@ -261,6 +264,10 @@ var _perf_overlay := false
 ## layout and its overlap with windows are the point); --mood A sets the player's
 ## approval to A so the portrait card's mood icon can be read at each band.
 var _cards := 0
+## V5.1-c, --term id[:lock[:nested id]]: a glossary term hovered, or its plate
+## locked, or a second level locked inside it (the spec's P3).
+var _term := ""
+var _term_card := ""
 var _mood := -1.0
 ## --mid-term: seven months into the term with nothing chosen, the page a loaded
 ## game shows (the Agenda's "when can I choose" line).
@@ -522,6 +529,31 @@ func _stage_tip() -> void:
 		bar._popup.line_entered(int(parts[1]))
 
 
+## V5.1-c, for --term. The hover and the locks go through the calls the rich line
+## makes (glossary_tip.gd's enter / click), at the card body's first word, so the
+## frame is the chain a pointer opens there.
+func _stage_term() -> void:
+	var parts := _term.split(":")
+	var body: Control = _main._hud.inbox._bodies[_term_card]
+	var at := Rect2(body.get_global_rect().position + Vector2(12, 9), Vector2(1, 18))
+	var tips = _main._stack.tips
+	if parts.size() < 2:
+		tips.enter(parts[0], at, 0)
+		tips.tick(tips.OPEN_DELAY_S + 0.01)
+		return
+	tips.click(parts[0], at, 0)
+	tips.plate_entered(1)
+
+
+## The second level, two frames later: the first plate has been placed by then
+## (glossary_tip.gd's refit), as it has when a pointer reaches a term inside it.
+func _stage_term_nested() -> void:
+	var tips = _main._stack.tips
+	var first: Rect2 = tips.plate(1).get_global_rect()
+	tips.click(_term.split(":")[2], Rect2(first.position + Vector2(40, 60), Vector2(1, 18)), 1)
+	tips.plate_entered(2)
+
+
 func _stage_outline_hover() -> void:
 	var map = _main._map_view
 	var view: Rect2 = map.visible_lonlat_rect()
@@ -687,6 +719,8 @@ func _init() -> void:
 			_mid_term = true
 		elif args[i] == "--cards" and i + 1 < args.size():
 			_cards = int(args[i + 1])
+		elif args[i] == "--term" and i + 1 < args.size():
+			_term = args[i + 1]
 		elif args[i] == "--mood" and i + 1 < args.size():
 			_mood = float(args[i + 1])
 		elif args[i] == "--perf":
@@ -786,6 +820,8 @@ func _process(_delta: float) -> bool:
 		clock._process(1.0 / clock.SPEED_DAYS_PER_SECOND[clock.speed - 1])
 	if (_console != "" or _perf_overlay) and not _menu:
 		_stage_console()
+	if _term.split(":").size() > 2 and _frame == _frames_wanted - 2 and not _menu:
+		_stage_term_nested()
 	if _frame == 3 and not _menu:
 		for n in _cards:
 			_main._hud.inbox.push("Card %d" % (n + 1), "A notification body long enough to wrap onto a second line in the column.")
@@ -796,6 +832,12 @@ func _process(_delta: float) -> bool:
 		if _mood >= 0.0:
 			_main._state.player().overall_approval_pct = _mood
 			_main._hud.portrait_card.refresh()
+		if _term != "":
+			# No row of data/ marks a term yet (Content's step 4), so the frame's
+			# card does, with the term first: the anchor is the body's first word.
+			var word := Glossary.term(_term.split(":")[0])
+			_term_card = _main._hud.inbox.push("The glossary", "[g=%s]%s[/g] is underlined: point at it for what it means." % [
+				_term.split(":")[0], word.left(1).to_upper() + word.substr(1)])
 	if _frame < _frames_wanted:
 		return false
 
@@ -1024,6 +1066,8 @@ func _apply_view() -> void:
 		_stage_outline_hover()
 	if _tip != "":
 		_stage_tip()
+	if _term_card != "":
+		_stage_term()
 	if _blank != "":
 		_blank_a_window()
 	if _termlimit:
