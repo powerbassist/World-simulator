@@ -63,6 +63,7 @@ func _process(_delta: float) -> bool:
 	_check_a_state_change_keeps_the_last_forecast(forecast)
 	_check_a_closed_panel_waits(forecast)
 	_check_a_commit_marks_the_forecast_due(forecast)
+	_check_a_revert_projects_nothing(forecast)
 	_check_proposed_lands_while_months_keep_closing(forecast)
 	_check_a_new_game_drops_the_job(forecast)
 	_check_a_dropped_projection_is_freed()
@@ -159,6 +160,16 @@ func _check_a_commit_marks_the_forecast_due(forecast) -> void:
 	_panel._refresh()
 	if not String(_panel._figures["proj_growth"][0]).ends_with(Forecast.UPDATING):
 		_fail("after a commit the old forecast is shown as '%s', not marked as updating" % _panel._figures["proj_growth"][0])
+
+
+## V5.1-d2 (D14, someday's "Revert re-projects now on an unchanged state"): Revert
+## throws the edit away and moves no state, so the forecast on screen stands --
+## it cost ~5 s of background work at 41 nations to re-project the same future.
+func _check_a_revert_projects_nothing(forecast) -> void:
+	forecast.drain()
+	_panel._on_revert()
+	if forecast.busy():
+		_fail("Revert, with no state moved, set the forecast projecting again")
 
 
 ## Review pass 1: at speed 3 a month closes faster than a projection does, so
