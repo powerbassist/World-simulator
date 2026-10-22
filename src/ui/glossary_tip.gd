@@ -274,7 +274,7 @@ func _open(id: String, anchor: Rect2, level: int, held: float) -> void:
 	for other in Glossary.see_also(id):
 		others.append("[g=%s]%s[/g]" % [other, Glossary.term(other)])
 	if not others.is_empty():
-		_rich(box, tr("See also: %s") % ", ".join(others), PanelKit.Tone.DIM, n)
+		_rich(box, tr("See also: %s") % ", ".join(others), PanelKit.Tone.DIM, n, others.size())
 	var fill := ColorRect.new()
 	fill.color = UiTheme.accent()
 	fill.custom_minimum_size = Vector2(0, FILL_HEIGHT)
@@ -305,9 +305,10 @@ func _lock(n: int) -> void:
 
 ## A rich line at plate n: its terms open plate n + 1, and every id open up to
 ## and including this plate reads plain (N5).
-func _rich(box: Control, text: String, tone: PanelKit.Tone, n: int) -> RichTextLabel:
+func _rich(box: Control, text: String, tone: PanelKit.Tone, n: int, cap := TermText.MAX_MARKED) -> RichTextLabel:
 	var label = PanelKit.rich(box, "", tone)
 	label.level = n
+	label.cap = cap
 	for i in n:
 		label.exclude.append(String(_plates[i]["id"]))
 	label.set_marked(text)

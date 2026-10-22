@@ -80,6 +80,11 @@ func _check_noise_rules() -> void:
 		_fail("N2: %d of four terms marked, the cap is %d" % [four.count("[url="), TermText.MAX_MARKED])
 	if not four.ends_with(" d"):
 		_fail("N2: the term past the cap did not read as its word: %s" % four)
+	# V5.1-d2 (QA RECORD on #60): a See-also line is a LIST of terms, not prose, so
+	# it lifts the cap -- APPROVAL's fourth, "salience", was drawn plain.
+	var listed: String = TermText.markup("[g=debt]a[/g] [g=gdp]b[/g] [g=poll]c[/g] [g=growth]d[/g]", PackedStringArray(), 4)
+	if listed.count("[url=") != 4:
+		_fail("a list with its cap lifted marked %d of four terms" % listed.count("[url="))
 	var open: String = TermText.markup("[g=poll]poll[/g] and [g=debt]debt[/g]", PackedStringArray(["poll"]))
 	if open.contains("term:poll") or not open.contains("term:debt"):
 		_fail("N5: an id open up the chain was marked, or the other was not: %s" % open)

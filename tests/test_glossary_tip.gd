@@ -181,6 +181,12 @@ func _check_escape_and_click_away() -> void:
 func _check_live_line() -> void:
 	_tip.close_all()
 	_tip.click("approval", AT, 0)
+	# V5.1-d2: the See-also line marks every entry -- a list, not prose (N2's cap
+	# drew APPROVAL's fourth, "salience", plain).
+	var see_also: Array = Glossary.see_also("approval")
+	for other in see_also:
+		if not _tip.plate_markup(1).contains("term:%s]" % other):
+			_fail("APPROVAL's See-also line draws '%s' plain" % other)
 	var shown := String(StripReadings.read("approval", _state, _loader)["text"])
 	if not _tip.plate_text(1).contains(shown):
 		_fail("approval's plate does not show the strip's %s" % shown)

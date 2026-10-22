@@ -35,6 +35,9 @@ const PERSON_PREFIX := "person:"
 var level := 0
 ## Ids open up the chain (N5): drawn plain here.
 var exclude := PackedStringArray()
+## N2's cap for this text. A LIST of terms (a plate's See-also line) lifts it: it
+## is not prose, and every entry in it is the reason it is there (V5.1-d2).
+var cap := MAX_MARKED
 
 var _hovered := ""
 var _person := ""
@@ -56,14 +59,14 @@ func _init() -> void:
 
 ## The only writer of `text`: prose in, the engine's markup out.
 func set_marked(source: String) -> void:
-	text = markup(source, exclude)
+	text = markup(source, exclude, cap)
 
 
 ## Every "[" of the prose escaped first -- prose is not BBCode -- then each
 ## [g=id]word[/g] made a term, under N1 (once an id), N2 (MAX_MARKED a block) and
 ## N5 (`skip`). An unknown id reads as its word, loudly: the table is the list.
 ## Last, each [p=id]Name[/p] made a person link (no cap: a name is not a term).
-static func markup(source: String, skip := PackedStringArray()) -> String:
+static func markup(source: String, skip := PackedStringArray(), limit := MAX_MARKED) -> String:
 	if _tag == null:
 		_tag = RegEx.create_from_string("\\[lb\\]g=([A-Za-z0-9_]+)\\](.*?)\\[lb\\]/g\\]")
 	var escaped := source.replace("[", "[lb]")
@@ -77,7 +80,7 @@ static func markup(source: String, skip := PackedStringArray()) -> String:
 		if not Glossary.has(id):
 			push_error("glossary: text marks '%s', which is no entry" % id)
 			out += word
-		elif marked.has(id) or skip.has(id) or marked.size() >= MAX_MARKED:
+		elif marked.has(id) or skip.has(id) or marked.size() >= limit:
 			out += word
 		else:
 			marked[id] = true
