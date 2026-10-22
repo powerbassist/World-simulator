@@ -17,6 +17,7 @@ extends SceneTree
 ## worse -- the Overview coloured a growing deficit good, and worst() never chose it.
 
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
+const RecentEffects = preload("res://src/sim/recent_effects.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
 
@@ -38,6 +39,8 @@ func _process(_delta: float) -> bool:
 	_check_a_flat_month()
 	_check_defaults_are_not_decisions()
 	_check_the_deficit_sign()
+	_check_the_bound()
+	_check_one_writer()
 	_finish()
 	return true
 
@@ -121,6 +124,58 @@ func _check_the_deficit_sign() -> void:
 	var worst := Trends.worst_of(rows)
 	if String(worst.get("key", "")) != "deficit_pct_gdp":
 		_fail("the worst of a month whose only move is a growing deficit is '%s'" % worst.get("key", ""))
+
+
+## The register keeps the newest RecentEffects.KEPT, newest first.
+func _check_the_bound() -> void:
+	var state := FakeState.new()
+	for i in RecentEffects.KEPT + 2:
+		RecentEffects.record(state, {"label": "close %d" % i, "year": 2026, "month": i + 1, "movements": []})
+	if state.recent_effects.size() != RecentEffects.KEPT:
+		_fail("the register kept %d closes, not %d" % [state.recent_effects.size(), RecentEffects.KEPT])
+	elif String(state.recent_effects[0]["label"]) != "close %d" % (RecentEffects.KEPT + 1):
+		_fail("the newest close is not first: %s" % state.recent_effects[0]["label"])
+
+
+## AGENTS.md rule 2: the UI never writes GameState. recent_effects has ONE writer,
+## src/sim/recent_effects.gd's record(); game_state.gd's from_dict() rebuilds it on
+## load. Any other file under src/ that writes it -- src/ui above all -- fails here.
+## Scanned over comment-stripped code, so a comment cannot trip or satisfy it.
+const WRITERS_ALLOWED := ["res://src/sim/recent_effects.gd", "res://src/core/game_state.gd"]
+const WRITE := "recent_effects\\s*(\\.\\s*(push_front|push_back|append|append_array|insert|remove_at|erase|clear|resize|pop_front|pop_back|pop_at|sort|sort_custom|reverse|fill|shuffle|assign)\\s*\\(|\\[[^\\]]*\\]\\s*[-+*/]?=(?!=)|\\s*[-+*/]?=(?!=))"
+
+func _check_one_writer() -> void:
+	var write := RegEx.create_from_string(WRITE)
+	var files: Array = []
+	_gd_files("res://src", files)
+	if files.size() < 100:
+		_fail("the writer scan found %d files under src/ -- it is not reading the tree" % files.size())
+	var seen_writer := false
+	for path in files:
+		var code := ""
+		for line in FileAccess.get_file_as_string(path).split("\n"):
+			var cut := line.find("#")
+			code += (line if cut < 0 else line.substr(0, cut)) + "\n"
+		var found := write.search(code)
+		if found == null:
+			continue
+		if WRITERS_ALLOWED.has(path):
+			seen_writer = seen_writer or path == WRITERS_ALLOWED[0]
+			continue
+		_fail("%s writes recent_effects (`%s`) -- RecentEffects.record() is the one writer" % [path, found.get_string().strip_edges()])
+	if not seen_writer:
+		_fail("src/sim/recent_effects.gd no longer writes the register -- the scan lost its positive control")
+
+
+func _gd_files(dir_path: String, out: Array) -> void:
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return
+	for name in dir.get_files():
+		if name.ends_with(".gd"):
+			out.append(dir_path + "/" + name)
+	for sub in dir.get_directories():
+		_gd_files(dir_path + "/" + sub, out)
 
 
 func _last_card_text() -> String:
