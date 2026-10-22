@@ -116,6 +116,17 @@ func hold(layer: int, cancel: Callable) -> void:
 	_moved(before)
 
 
+## A mode another node switches on and off through a `toggled(on: bool)` signal
+## -- the inbox sliding over a tab.
+func follow_mode(layer: int, toggled: Signal, cancel: Callable) -> void:
+	toggled.connect(func(on: bool):
+		if on:
+			hold(layer, cancel)
+		else:
+			release(layer)
+	)
+
+
 func release(layer: int) -> void:
 	var before := top()
 	_drop_mode(layer)

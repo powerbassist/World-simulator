@@ -9,6 +9,10 @@ extends SceneTree
 ##   - its cards. The load path reset the announce MEMORIES and dismissed the
 ##     decision cards, but every other card stayed up -- "You hold Germany until
 ##     FEB 2029" over a loaded France game. A load drops the whole stack.
+##   - its desk, put back. V5.1-c3.2: the inbox is where a decision is answered,
+##     so a load that drops every row must rebuild the Decisions lane from the
+##     LOADED desk -- a pending question with no row could be answered only from
+##     Dispatches (Review focus 2).
 ##   - the ribbon's caption. The ribbon redraws only when marked dirty and
 ##     setup() did not mark it, so after a load it kept the old game's month while
 ##     the clock showed the loaded one (MAR 2026 over 20 APR 2026).
@@ -24,6 +28,7 @@ var _failures: Array[String] = []
 var _main
 var _frame := 0
 var _stale_ids: Array[String] = []
+var _desk_event := ""
 
 
 func _init() -> void:
@@ -41,6 +46,7 @@ func _process(_delta: float) -> bool:
 			_main._on_load_requested(SLOT)
 		9:
 			_check_cards()
+			_check_load_rebuilds_the_decisions_lane()
 			_check_ribbon()
 			_cleanup()
 			_finish()
@@ -53,7 +59,18 @@ func _save_in_april_then_wander_to_march() -> void:
 	state.day = 20
 	_main._clock.month = 4
 	_main._clock.day = 20
+	# One quiet question on the saved desk (not an interrupt: the lane must come
+	# back for any decision, not only the one that re-raises the pause).
+	var Events := load("res://src/sim/events.gd")
+	var ns = state.player()
+	ns.event_queue.clear()
+	for ev in _main._loader.events:
+		if not bool(ev.interrupt):
+			_desk_event = String(ev.id)
+			Events.announce(ns, ev, Events._absolute_month(4, 4), Events.region_names(ns, _main._loader))
+			break
 	_main._on_save_requested(SLOT)
+	ns.event_queue.clear()
 	# The "other game": a different month, and cards that only it would have shown.
 	state.month = 3
 	_main._clock.month = 3
@@ -86,6 +103,21 @@ func _check_cards() -> void:
 		for id in left:
 			if _stale_ids.has(id):
 				_fail("stale card %s is still in the stack" % id)
+
+
+func _check_load_rebuilds_the_decisions_lane() -> void:
+	var inbox = _main._hud.inbox
+	if _desk_event.is_empty():
+		_fail("premise: no quiet event to stage on the saved desk")
+		return
+	var found := ""
+	for card_id in _main._event_cards.keys():
+		if String(_main._event_cards[card_id]) == _desk_event:
+			found = String(card_id)
+	if found.is_empty():
+		_fail("the loaded desk's '%s' has no row in the inbox" % _desk_event)
+	elif inbox.lane_of(found) != "decisions":
+		_fail("the loaded desk's row sits in '%s', not Decisions" % inbox.lane_of(found))
 
 
 func _check_ribbon() -> void:

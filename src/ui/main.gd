@@ -910,11 +910,7 @@ func _wire_hud() -> void:
 	)
 	_hud.title_bar.follow(_windows, _loader.nations[_state.player_nation_id].nation_name)
 	# A slid inbox is a layer: Escape slides it back, and the keys still work.
-	_hud.inbox.slid.connect(func(shown: bool):
-		if shown:
-			_stack.hold(ScreenStack.INBOX, _hud.inbox.slide_out)
-		else:
-			_stack.release(ScreenStack.INBOX))
+	_stack.follow_mode(ScreenStack.INBOX, _hud.inbox.slid, _hud.inbox.slide_out)
 
 	# V1.8, and the first thing ever to connect this signal. inbox.gd has
 	# emitted card_activated since U5a and nothing has listened, because until now every
@@ -1547,6 +1543,8 @@ func _guard_lapses(ns) -> void:
 ## place in the title for a sited event, the plate beside it. One builder for the
 ## arrival and the lapse guard, so the guard's card is the arrival's card.
 func _push_decision_card(ev, entry: Dictionary) -> void:
+	if ev == null:
+		return  # a desk entry whose event the content no longer has (a load)
 	var event_id := String(entry.get("event_id", ""))
 	var left := int(entry.get("months_left", 0))
 	# The card itself is the answer surface. Since V4.8c a quiet arrival's card
@@ -1883,6 +1881,11 @@ func _on_load_requested(slot: String) -> void:
 
 	_windows.mark_all_dirty()
 
+	# V5.1-c3.2. The loaded desk back in the inbox's Decisions lane: the clear
+	# above took the discarded game's rows, and a pending question with no row
+	# could be answered only from Dispatches (Review focus 2).
+	for entry in _state.player().event_queue:
+		_push_decision_card(Events.event_by_id(_loader, String(entry.get("event_id", ""))), entry)
 	# V2.4b: the reload re-raise. An interrupt crisis pending in the save stops
 	# the clock again and is put back in front of the player -- a save made mid-
 	# crisis and reloaded is still mid-crisis, and the pause is the only thing
