@@ -19,6 +19,7 @@ extends SceneTree
 const Calendar = preload("res://src/sim/calendar.gd")
 const RK = preload("res://src/core/relations.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -227,7 +228,42 @@ func _check_a_hosted_visit_says_until_when() -> void:
 	var text := _text_of(panel)
 	if not text.contains(expected):
 		_fail("a hosted visit's row does not say from when: wanted '%s' in %s" % [expected, text])
+	# The parent's call on #76 ("choisir la date dans l'agenda"): the host refuses
+	# TODAY, a later day carries, so Book stays live and opens the Diary's form on
+	# the first day that carries -- past the 62 days the earliest-day search used.
+	var book: Button = null
+	for b in panel.find_children("*", "Button", true, false):
+		if (b as Button).text == "Book" and _alive(b):
+			book = b
+	if book == null or book.disabled:
+		_fail("a visit the host refuses only today greys its Book out")
+	panel._on_act(visit)
+	_main._calendar_panel._process(0.0)
+	var picked: Dictionary = _main._calendar_panel._entry_from_form()
+	var first_day: int = Calendar.entry_ordinal({"year": at / 12, "month": at % 12 + 1, "day": 1})
+	if not _main._windows.is_open("calendar") or Calendar.entry_ordinal(picked) < first_day 			or not Calendar.can_book(state, picked):
+		_fail("Book on a hosted visit did not open the Diary on a day that carries: %s" % str(picked))
+	_main._windows.close_all()
+	# A visit with no day that carries -- the player's own cooldown -- greys out.
+	var key := String(Diplomacy.cooldown_key(String(visit.id), "ITA"))
+	state.player().diplo_cooldown_months[key] = 12
+	_main._on_nation_clicked("ITA")
+	panel.mark_dirty()
+	panel._process(0.0)
+	for b in panel.find_children("*", "Button", true, false):
+		if (b as Button).text == "Book" and not (b as Button).disabled and _alive(b):
+			_fail("a visit on the player's own cooldown kept its Book live")
+	state.player().diplo_cooldown_months.erase(key)
 	host.diplo_hosted_months.erase(String(visit.id))
+
+
+## Not in a row the last rebuild queued for deletion (its buttons are not queued).
+func _alive(node: Node) -> bool:
+	while node != null:
+		if node.is_queued_for_deletion():
+			return false
+		node = node.get_parent()
+	return true
 
 
 func _text_of(node: Node) -> String:

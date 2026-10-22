@@ -21,7 +21,6 @@ const Strings = preload("res://src/ui/strings.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
-const Cooldowns = preload("res://src/sim/diplomacy_cooldowns.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Roster = preload("res://src/core/roster.gd")
@@ -347,6 +346,13 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	var booking: Dictionary = VisitBooking.booked(_state, action, _nation_id) if action.opens_meeting else {}
 	if not booking.is_empty():
 		is_available = false
+	# The parent's call on #76 ("choisir la date dans l'agenda"): a meeting the host
+	# refuses only TODAY is still booked here -- the form opens on the first day that
+	# carries, and the line says when. Diplomacy.available() stays the AI's gate.
+	var later := ""
+	if not is_available and booking.is_empty() and _books_later(action, player_id):
+		is_available = true
+		later = _unavailable_reason(action, player_id)
 	var names := VBoxContainer.new()
 	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(names)
@@ -361,7 +367,9 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	# on -- a booking, a cooldown, a partner's refusal -- is a line, not a hover.
 	# The generic "conditions not met" stays on the button: under every row it
 	# would be noise.
-	var reason := _booked_text(booking) if not booking.is_empty() else (_unavailable_reason(action, player_id) if not is_available else "")
+	var reason := _booked_text(booking) if not booking.is_empty() else later
+	if reason == "" and not is_available:
+		reason = _unavailable_reason(action, player_id)
 	if reason != "" and reason != tr("Conditions for this action are not met."):
 		PanelKit.line(names, reason)
 
@@ -382,6 +390,21 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	return row
 
 
+## Whether the host register is all that holds `action` back: a meeting verb with
+## no precondition of its own (the one in the data; one with preconditions waits for
+## a sim query that reads them), off the player's own cooldown, that the partner
+## would accept and that the Diary can book on some later day.
+func _books_later(action, player_id: String) -> bool:
+	if not action.opens_meeting or not action.preconditions.is_empty():
+		return false
+	var ns = _state.nations.get(player_id)
+	if ns == null or ns.diplo_cooldown_months.has(Diplomacy.cooldown_key(action.id, _nation_id)):
+		return false
+	if VisitBooking.host_free_day(_state, action, _nation_id).is_empty() or not _partner_would_accept(action, player_id):
+		return false
+	return not VisitBooking.earliest_entry(_state, _loader, action, _nation_id).is_empty()
+
+
 func _unavailable_reason(action, player_id: String) -> String:
 	var ns = _state.nations.get(player_id)
 	if ns == null:
@@ -394,15 +417,13 @@ func _unavailable_reason(action, player_id: String) -> String:
 		# began (playtest 2026-09-05).
 		return tr("Cooldown: available again in %d months.") % int(ns.diplo_cooldown_months[key])
 	# V5.1-d2, the host's side (#74): the target received this verb within its host
-	# interval, from anyone. The register counts down in the month tick, so N months
-	# left is free from the 1st of the month N on -- Calendar.refusal_reason's day.
-	var left: int = int(Cooldowns.hosted(_state, _nation_id).get(String(action.id), 0))
-	if left > 0:
-		var at: int = int(_state.year) * 12 + int(_state.month) - 1 + left
+	# interval, from anyone, and says from when it may again.
+	var free := VisitBooking.host_free_day(_state, action, _nation_id)
+	if not free.is_empty():
 		var host = _loader.nations.get(_nation_id)
 		return tr("%s receives another from %s.") % [
 			String(host.nation_name) if host != null else _nation_id,
-			DateText.day_month_year(1, at % 12 + 1, at / 12),
+			DateText.day_month_year(1, int(free["month"]), int(free["year"])),
 		]
 	# Named ahead of the generic reason: "they will not sign" is a different
 	# problem from "you cannot propose", and it is the one the player can fix.

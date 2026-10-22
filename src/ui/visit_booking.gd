@@ -17,6 +17,7 @@ extends RefCounted
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Cooldowns = preload("res://src/sim/diplomacy_cooldowns.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -34,6 +35,13 @@ static func earliest_entry(state, loader, action, target_id: String) -> Dictiona
 	var y := int(state.year)
 	var m := int(state.month)
 	var d := int(state.day)
+	# A host that received this verb too recently refuses every day before its free
+	# one, which may be months out: the search starts there (#76, the parent's call).
+	var free := host_free_day(state, action, target_id)
+	if not free.is_empty():
+		y = int(free["year"])
+		m = int(free["month"])
+		d = 0
 	for _i in range(SEARCH_DAYS):
 		d += 1
 		if d > Calendar.days_in_month(y, m):
@@ -46,6 +54,17 @@ static func earliest_entry(state, loader, action, target_id: String) -> Dictiona
 		if Calendar.can_book(state, entry):
 			return entry
 	return {}
+
+
+## The first day `target_id` may receive `action` again, {year, month, day}, or {}
+## while nothing holds it -- Calendar.refusal_reason's day: the host register (#74)
+## counts down in the month tick, so N months left is free from the 1st of month N.
+static func host_free_day(state, action, target_id: String) -> Dictionary:
+	var left := int(Cooldowns.hosted(state, target_id).get(String(action.id), 0))
+	if left <= 0:
+		return {}
+	var at: int = int(state.year) * 12 + int(state.month) - 1 + left
+	return {"year": at / 12, "month": at % 12 + 1, "day": 1}
 
 
 ## The player's booking of `action` with `target_id` still in the diary, or {}.
