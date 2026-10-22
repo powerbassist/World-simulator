@@ -26,7 +26,10 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
 
-const CARD_SIZE := Vector2(268, 96)
+## Its height only since V5.1-c2.3: the card heads the sidebar and takes the
+## sidebar's width, and its 268 px floor would have widened the sidebar past the
+## workspace's edge. The leader's line wraps instead.
+const CARD_SIZE := Vector2(0, 96)
 const FLAG_SIZE := Vector2(30, 20)
 
 var _state
@@ -82,6 +85,7 @@ func _ready() -> void:
 
 	_leader_label = Label.new()
 	_leader_label.theme_type_variation = UiTheme.CAPTION
+	_leader_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(_leader_label)
 
 	var nation_row := HBoxContainer.new()

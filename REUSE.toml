@@ -221,14 +221,6 @@ SPDX-FileCopyrightText = "Google LLC"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = [
-  "addons/at-icons/**",
-]
-precedence = "override"
-SPDX-FileCopyrightText = "2026-present Valentin Fossati (Voxybuns) and contributors"
-SPDX-License-Identifier = "MIT"
-
-[[annotations]]
 # Unmodified third-party Obsidian plugin bundle; source: https://github.com/blacksmithgu/obsidian-dataview
 path = [
   ".obsidian/plugins/dataview/**",

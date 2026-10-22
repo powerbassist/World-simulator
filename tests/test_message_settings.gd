@@ -125,7 +125,7 @@ func _check_foreign_news_switch() -> void:
 ## aimed at the player cards regardless.
 func _check_news_between_other_nations() -> void:
 	var state = _main._state
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	var player_id: String = state.player_nation_id
 	var floor_share: float = ForeignPolicy.even_share(state, player_id) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
 	# The partner the player has the largest stake in, so the stake filter passes.
@@ -162,7 +162,7 @@ func _check_news_between_other_nations() -> void:
 			"actor_id": actor, "target_id": target,
 			"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
 		})
-		_main._card_foreign_acts(state.year, state.month)
+		_main._world_news.card_foreign_acts(state.year, state.month)
 		var want := 1 if on else 0
 		if stack.card_count() != want:
 			_fail("foreign news %s: an act between two other nations made %d cards, want %d" % [
@@ -175,7 +175,7 @@ func _check_news_between_other_nations() -> void:
 			"actor_id": actor, "target_id": player_id,
 			"action_id": "state_visit", "action_name": "State Visit", "reason": "interest",
 		})
-		_main._card_foreign_acts(state.year, state.month)
+		_main._world_news.card_foreign_acts(state.year, state.month)
 		if stack.card_count() != 1:
 			_fail("foreign news %s: an act aimed at the player made %d cards, want 1" % [
 				"On" if on else "Off", stack.card_count()])
@@ -248,7 +248,7 @@ func _reset_desk() -> void:
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
 	for leftover in _main._event_cards.keys().duplicate():
-		_main._hud.message_stack.dismiss(leftover)
+		_main._hud.inbox.dismiss(leftover)
 	_main._event_cards.clear()
 	_main._paused_for_decision = false
 	_main._paused_for_programme = false
@@ -329,7 +329,7 @@ func _check_quiet_arrival_and_lapse_guard() -> void:
 		return
 	# Answering through the guard's card releases the clock: the card is the
 	# arrival's card, wired to the same door.
-	_main._hud.message_stack.card_action.emit(card_id, 0)
+	_main._hud.inbox.card_action.emit(card_id, 0)
 	if _main._clock.paused:
 		_fail("lapse guard: answering the guard's card left the clock stopped")
 	if _main._unseen_events.has(event_id):
@@ -387,7 +387,7 @@ func _check_quiet_card_deadline_ages() -> void:
 			if String(entry.get("event_id", "")) == event_id:
 				left = int(entry.get("months_left", 0))
 		var want := "You have %d %s to answer." % [left, "month" if left == 1 else "months"]
-		var body: String = _main._hud.message_stack._bodies[card_id].text
+		var body: String = _main._hud.inbox._bodies[card_id].get_parsed_text()
 		if not body.ends_with(want):
 			_fail("deadline: the card reads '%s' with %d months left" % [body, left])
 			break

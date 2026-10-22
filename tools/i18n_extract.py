@@ -77,6 +77,8 @@ TRANSLATABLE = {
     # An org's name is translated where the language has a usual form ("Commission
     # europeenne") and left as it is where it is a true proper noun: Content's call, row by row.
     "orgs": ["name", "summary"],
+    # V5.1-c, the glossary the tooltips read (docs/design/glossary-tooltips.md).
+    "glossary": ["term", "definition", "body"],
 }
 
 # How src/ui displays a row field (V5.1b3): the Strings accessors, read off the source
@@ -95,7 +97,7 @@ CALLER_ANY = re.compile(r"Strings\.(\w+)\(")
 LEADING_LITERAL = re.compile(r"^\s*\"([^\"]*)\"")
 # The list a kind's rows sit in, per file: laws.json holds {"laws": [...]}; a file
 # whose top level is a single row (orgs) is read as one.
-ROW_LISTS = {"laws": "laws", "events": "events", "programme": "programme"}
+ROW_LISTS = {"laws": "laws", "events": "events", "programme": "programme", "glossary": "terms"}
 
 
 def literals(line):

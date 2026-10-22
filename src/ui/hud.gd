@@ -1,12 +1,14 @@
 extends Control
 
-## The instrument furniture laid over the map -- U5a's arrangement, and nothing
-## else. Builds the six pieces, places them, and hands them to main.gd to wire.
+## The chrome around the map -- V5.1-c2.3's BUREAU shell: the title bar across
+## the top, the sidebar down the left, the figure strip under the title bar, and
+## over the map area the legend and the message column, with the day ribbon at
+## the bottom. The workspace (window_manager.gd) docks beside the sidebar,
+## under the strip and above the ribbon; this file only arranges the chrome.
 ##
 ## It owns no game state and no behaviour: every signal these pieces emit is
 ## connected by main.gd, which is the node holding the Clock and the GameState.
-## That keeps this file readable as what it is -- a layout -- and means moving
-## the clock cluster to the other corner is an edit here and nowhere else.
+## That keeps this file readable as what it is -- a layout.
 ##
 ## **Everything structural is MOUSE_FILTER_IGNORE.** The map is underneath, and
 ## the boxes that arrange this furniture cover the whole screen; left at the
@@ -15,26 +17,23 @@ extends Control
 ## default -- are meant to be solid.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const TitleBar = preload("res://src/ui/title_bar.gd")
 const TopBar = preload("res://src/ui/top_bar.gd")
+const Sidebar = preload("res://src/ui/sidebar.gd")
 const PortraitCard = preload("res://src/ui/portrait_card.gd")
-const ActionBar = preload("res://src/ui/action_bar.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
-const MessageStack = preload("res://src/ui/message_stack.gd")
+const Inbox = preload("res://src/ui/inbox.gd")
 const MapLegend = preload("res://src/ui/map_legend.gd")
 const Ribbon = preload("res://src/ui/ribbon.gd")
 
 const EDGE_MARGIN := 14
 
-## Between the legend and the portrait card under it. Wider than a container
-## separation so the two read as two plates stacked, not as one plate with a
-## seam -- the same distinction the action bar's sub-row makes.
-const LEFT_STACK_GAP := 8
-
+var title_bar
 var top_bar
+var sidebar
 var portrait_card
-var action_bar
 var clock_cluster
-var message_stack
+var inbox
 var map_legend
 var ribbon
 
@@ -44,88 +43,68 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var column := _ignore(VBoxContainer.new())
+	column.add_theme_constant_override("separation", 0)
 	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(column)
 
+	# The title bar across the top: history, where you are, the clock, save and
+	# the menu.
+	title_bar = TitleBar.new()
+	column.add_child(title_bar)
+	clock_cluster = ClockCluster.new()
+	title_bar.add_clock(clock_cluster)
+
+	var row := _ignore(HBoxContainer.new())
+	row.add_theme_constant_override("separation", 0)
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(row)
+
+	# The sidebar down the left, the portrait card at its head.
+	sidebar = Sidebar.new()
+	row.add_child(sidebar)
+	portrait_card = PortraitCard.new()
+	sidebar.add_portrait(portrait_card)
+
+	var right := _ignore(VBoxContainer.new())
+	right.add_theme_constant_override("separation", 0)
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(right)
+
+	# The figure strip, under the title bar and beside the sidebar.
 	top_bar = TopBar.new()
-	column.add_child(top_bar)
+	right.add_child(top_bar)
 
-	var body := _ignore(MarginContainer.new())
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	for side in ["left", "right", "top", "bottom"]:
-		body.add_theme_constant_override("margin_%s" % side, EDGE_MARGIN)
-	column.add_child(body)
+	# The map area: a plain Control, so nothing drawn over it -- the legend, a
+	# column of tall cards -- can change its size and push the ribbon off the
+	# bottom (V5.1-0c's "notifications push the UI down").
+	var map_area := _ignore(Control.new())
+	map_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.add_child(map_area)
 
-	var rows := _ignore(VBoxContainer.new())
-	body.add_child(rows)
-
-	# Upper band: empty, and deliberately so -- that is the map, and it is the thing
-	# the player is meant to be looking at. It only takes the leftover height so the
-	# lower band sits on the bottom edge.
-	var upper := _ignore(Control.new())
-	upper.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	rows.add_child(upper)
-
-	# Lower band: portrait left, commands centre, clock right. Each pinned to the
-	# bottom of the band rather than stretched, so a taller cluster grows upward
-	# into the map instead of dragging the others' baselines around.
-	var lower := _ignore(HBoxContainer.new())
-	lower.size_flags_vertical = Control.SIZE_SHRINK_END
-	rows.add_child(lower)
-
-	# The left stack: U5c's map legend above U5a's portrait card. Both are about
-	# the map rather than about a panel -- who you are, and what the colours under
-	# you mean -- so they share a corner. Shrink-end so the pair grows upward into
-	# the map and the portrait's baseline never moves.
-	var left := _ignore(VBoxContainer.new())
-	left.size_flags_vertical = Control.SIZE_SHRINK_END
-	left.alignment = BoxContainer.ALIGNMENT_END
-	left.add_theme_constant_override("separation", LEFT_STACK_GAP)
-	lower.add_child(left)
-
+	# The legend, bottom-left of the map. Hidden by main.gd while a tab covers it.
+	var legend_box := _ignore(MarginContainer.new())
+	legend_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_margins(legend_box)
+	map_area.add_child(legend_box)
+	var legend_column := _ignore(VBoxContainer.new())
+	legend_column.alignment = BoxContainer.ALIGNMENT_END
+	legend_box.add_child(legend_column)
 	map_legend = MapLegend.new()
 	map_legend.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	left.add_child(map_legend)
+	legend_column.add_child(map_legend)
 
-	portrait_card = PortraitCard.new()
-	left.add_child(portrait_card)
+	# V5.1-c3.1. The inbox, docked at the map area's right edge: the strip of map
+	# beside the workspace, which is where the board puts it. Its own height is
+	# the map area's, and its lanes scroll inside it.
+	inbox = Inbox.new()
+	map_area.add_child(inbox)
+	inbox.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
+	inbox.offset_left = -Inbox.WIDTH
 
-	lower.add_child(_spacer())
-
-	action_bar = ActionBar.new()
-	action_bar.size_flags_vertical = Control.SIZE_SHRINK_END
-	lower.add_child(action_bar)
-
-	lower.add_child(_spacer())
-
-	clock_cluster = ClockCluster.new()
-	clock_cluster.size_flags_vertical = Control.SIZE_SHRINK_END
-	lower.add_child(clock_cluster)
-
-	# V5.1-0c. The message column is an OVERLAY, not a row of the layout above: it
-	# sat in the upper band, so a column of tall cards raised the HUD's minimum
-	# height and shoved the lower band off the bottom ("notification push the UI
-	# down"). Here its height is nobody's business but its own. Hard left, growing
-	# downward from under the top strip, as before.
-	var overlay := _ignore(MarginContainer.new())
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.add_theme_constant_override("margin_left", EDGE_MARGIN)
-	overlay.add_theme_constant_override("margin_top", TopBar.BAR_HEIGHT + EDGE_MARGIN)
-	add_child(overlay)
-	message_stack = MessageStack.new()
-	message_stack.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	message_stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	overlay.add_child(message_stack)
-
-	# V2.4a: the day ribbon, the bottom-most plate and the full width of the
-	# screen. Under the action bar and everything else in the lower band, so it
-	# reads as the line the month sits on rather than as another cluster's plate
-	# -- the author's placement call at plan time, and the one surface V2.1c
-	# reserved this slot for when it ruled the agenda "a ribbon, not a drawer
-	# entry".
+	# V2.4a: the day ribbon, the bottom-most plate, the line the month sits on.
 	ribbon = Ribbon.new()
 	ribbon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rows.add_child(ribbon)
+	right.add_child(ribbon)
 
 
 ## True when the point is over a solid piece of furniture. main.gd asks before
@@ -133,7 +112,7 @@ func _ready() -> void:
 ## HUD rect, so without this a drag started on the portrait card would pan
 ## Europe.
 func is_over_furniture(point: Vector2) -> bool:
-	for plate in [top_bar, portrait_card, action_bar, clock_cluster, message_stack, map_legend, ribbon]:
+	for plate in [title_bar, top_bar, sidebar, inbox, map_legend, ribbon]:
 		if plate == null or not plate.visible:
 			continue
 		if Rect2(plate.global_position, plate.size).has_point(point):
@@ -141,10 +120,17 @@ func is_over_furniture(point: Vector2) -> bool:
 	return false
 
 
-func _spacer() -> Control:
-	var spacer := _ignore(Control.new())
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return spacer
+## The map's own furniture -- the legend and the inbox -- shown on the map and
+## put away while a tab covers it. The inbox comes back over a tab when a
+## decision holds the clock (V5.1-c3.2).
+func show_map_furniture(shown: bool) -> void:
+	map_legend.visible = shown
+	inbox.dock_on_map(shown)
+
+
+func _margins(box: MarginContainer) -> void:
+	for side in ["left", "right", "top", "bottom"]:
+		box.add_theme_constant_override("margin_%s" % side, EDGE_MARGIN)
 
 
 static func _ignore(node: Control) -> Control:

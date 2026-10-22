@@ -548,7 +548,7 @@ func _thousands(value: float) -> String:
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.
 ##
-## Duck-typed: window_frame.gd asks through has_method(), so a panel with nothing
+## Duck-typed: tab_page.gd asks through has_method(), so a panel with nothing
 ## to press simply does not implement this and never draws the fold mark. The
 ## FIRST enabled action is the answer rather than the last, because a panel whose
 ## first verb has scrolled off is already a panel whose verbs are hidden.

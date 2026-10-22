@@ -208,11 +208,12 @@ func _arm(keep_open: bool) -> void:
 	_main._windows.open("energy")
 	_main._energy_panel.order_armed.emit("order_nuclear_epr")
 	if keep_open:
-		var frame: Control = _main._windows.frame("energy")
-		frame.position.x = _main._windows.size.x - frame.size.x
+		# V5.1-c2.2: the Energy tab is docked left and cannot move, so the map
+		# moves instead -- centred on the point 0.35 of a view west of the site,
+		# which puts the site at 0.85 of the width, in the strip right of the dock.
 		var view: Vector2 = mv.size
-		var left: Vector2 = mv._screen_to_lonlat(Vector2(view.x * 0.25, view.y * 0.5))
-		mv.center_on_lonlat(SITE_LON + (SITE_LON - left.x), SITE_LAT)
+		var west: Vector2 = mv._screen_to_lonlat(Vector2(view.x * 0.15, view.y * 0.5))
+		mv.center_on_lonlat(west.x, SITE_LAT)
 	else:
 		_main._windows.close_all()
 	_site = mv._lonlat_to_screen(SITE_LON, SITE_LAT)

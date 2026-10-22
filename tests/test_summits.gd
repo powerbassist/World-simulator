@@ -228,7 +228,11 @@ func _check_arrival_chain_by_source() -> void:
 	var file := FileAccess.open("res://src/ui/main.gd", FileAccess.READ)
 	var text := file.get_as_text()
 	file.close()
-	if not text.contains("action2.opens_meeting"):
+	# V5.1c: the dispatch moved to diary_driver.gd; main.gd keeps the summit's opening.
+	var driver := FileAccess.open("res://src/ui/diary_driver.gd", FileAccess.READ)
+	var driver_text := driver.get_as_text()
+	driver.close()
+	if not driver_text.contains("action2.opens_meeting"):
 		_fail("the arrival chain does not read opens_meeting -- the summit would fire on acts that are not meetings")
 	if not text.contains("_open_summit("):
 		_fail("main.gd never opens a summit")

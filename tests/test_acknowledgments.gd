@@ -45,11 +45,11 @@ func _run() -> void:
 
 ## Committing a real lever change must answer with a card naming the deficit.
 func _check_budget_commit_answers() -> void:
-	var before_count: int = _main._hud.message_stack.card_count()
+	var before_count: int = _main._hud.inbox.card_count()
 	var panel = _main._budget_panel
 	panel._pending["income_tax"] = 25.0
 	panel._on_commit()
-	if _main._hud.message_stack.card_count() != before_count + 1:
+	if _main._hud.inbox.card_count() != before_count + 1:
 		_fail("a committed budget pushed no acknowledgment card")
 		return
 	var text := _stack_text()
@@ -63,7 +63,7 @@ func _check_budget_commit_answers() -> void:
 ## division -- the outcome is deterministic for a fixed seed, so this asserts
 ## the shape (law name + passed/failed + numbers) and not which way it goes.
 func _check_law_proposal_answers() -> void:
-	var before_count: int = _main._hud.message_stack.card_count()
+	var before_count: int = _main._hud.inbox.card_count()
 	var law = _main._law_panel._find_law("workplace_safety_act")
 	if law == null:
 		_fail("the law fixture workplace_safety_act is not in the loader")
@@ -72,7 +72,7 @@ func _check_law_proposal_answers() -> void:
 	# card this test pins -- is run_proposal(), the verb the briefing's own
 	# button routes into.
 	_main._law_panel.run_proposal(law)
-	if _main._hud.message_stack.card_count() != before_count + 1:
+	if _main._hud.inbox.card_count() != before_count + 1:
 		_fail("a proposed law pushed no acknowledgment card")
 		return
 	var text := _stack_text()
@@ -88,7 +88,7 @@ func _check_law_proposal_answers() -> void:
 ## finding. State visit at month one is behind the meeting precondition, so the
 ## refusal branch is the deterministic one to assert on.
 func _check_diplomatic_act_answers() -> void:
-	var before_count: int = _main._hud.message_stack.card_count()
+	var before_count: int = _main._hud.inbox.card_count()
 	var panel = _main._nation_panel
 	panel.show_nation("DEU")
 	var action = null
@@ -99,7 +99,7 @@ func _check_diplomatic_act_answers() -> void:
 		_fail("the state_visit action is not in the loader")
 		return
 	panel._on_act(action)
-	if _main._hud.message_stack.card_count() != before_count + 1:
+	if _main._hud.inbox.card_count() != before_count + 1:
 		_fail("a diplomatic act pushed no acknowledgment card, refused or not")
 		return
 	var text := _stack_text()
@@ -112,7 +112,7 @@ func _check_diplomatic_act_answers() -> void:
 ## Every Label under the stack. Cards are freed only on dismiss, so on this
 ## fresh boot the texts present are the ones the verbs just pushed.
 func _stack_text() -> String:
-	return _collect_labels(_main._hud.message_stack).to_upper()
+	return _collect_labels(_main._hud.inbox).to_upper()
 
 
 func _collect_labels(node: Node) -> String:
@@ -120,6 +120,8 @@ func _collect_labels(node: Node) -> String:
 	for child in node.get_children():
 		if child is Label:
 			out += child.text + " "
+		elif child is RichTextLabel:  # V5.1-c: the inbox body is a rich line
+			out += child.get_parsed_text() + " "
 		out += _collect_labels(child)
 	return out
 

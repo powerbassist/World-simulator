@@ -13,7 +13,7 @@ extends SceneTree
 const Grade = preload("res://src/ui/grade.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
-const MessageStack = preload("res://src/ui/message_stack.gd")
+const Inbox = preload("res://src/ui/inbox.gd")
 
 var _failures: Array[String] = []
 
@@ -89,7 +89,7 @@ func _check_event_art_surfaces() -> void:
 	rect.free()
 
 	# The arrival card's plate, through the real stack.
-	var stack := MessageStack.new()
+	var stack := Inbox.new()
 	root.add_child(stack)
 	stack.push("Crisis", "A body.", [], tex)
 	var plates := _rects_in(stack)

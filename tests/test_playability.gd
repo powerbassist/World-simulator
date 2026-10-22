@@ -137,7 +137,7 @@ func _check_interrupt_card_x_keeps_the_clock() -> void:
 	if card_id == "":
 		_fail("interrupt arrival did not create linked card")
 	else:
-		_main._hud.message_stack.dismiss(card_id)
+		_main._hud.inbox.dismiss(card_id)
 		if not clock.paused or ns.event_queue.is_empty():
 			_fail("X dismissal released clock or removed interrupt still on desk")
 		# And the ANSWER must still let the clock go: the X dropped the card, not
@@ -173,7 +173,7 @@ func _check_interrupt_card_x_keeps_the_clock() -> void:
 		if card_id == "":
 			_fail("non-interrupt arrival did not create linked card")
 		else:
-			_main._hud.message_stack.dismiss(card_id)
+			_main._hud.inbox.dismiss(card_id)
 			if not clock.paused:
 				_fail("X dismissal released programme-owned clock")
 	# The programme's own release (choosing the term's programme) must not run the
@@ -213,7 +213,7 @@ func _check_interrupt_card_x_keeps_the_clock() -> void:
 	# Dismiss only the cards this check pushed: clear() would also take the boot's
 	# "YOUR TERM" opening card, which a later check reads.
 	for leftover in _main._event_cards.keys().duplicate():
-		_main._hud.message_stack.dismiss(leftover)
+		_main._hud.inbox.dismiss(leftover)
 	_main._event_cards.clear()
 	_main._unseen_events.clear()
 	_main._paused_for_decision = false
@@ -292,7 +292,7 @@ func _check_manual_toggle_takes_the_clock() -> void:
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
 	for leftover in _main._event_cards.keys().duplicate():
-		_main._hud.message_stack.dismiss(leftover)
+		_main._hud.inbox.dismiss(leftover)
 	_main._event_cards.clear()
 	_main._paused_for_decision = false
 	_main._paused_for_programme = false
@@ -342,7 +342,7 @@ func _check_manual_toggle_takes_the_clock() -> void:
 	_main._windows.close("agenda")
 	if not _main._unseen_events.has(String(ev.id)):
 		_fail("a manual toggle erased the unseen mark (the card is still unseen)")
-	_main._hud.message_stack.dismiss(card_id)
+	_main._hud.inbox.dismiss(card_id)
 	if not clock.paused:
 		_fail("closing the last unseen card unpaused a clock the player had paused by hand")
 
@@ -365,7 +365,7 @@ func _check_manual_toggle_takes_the_clock() -> void:
 		var saved_stock: float = float(ns.programme_stock)
 		var saved_applied: Dictionary = _snapshot_apply_effects_registers(ns)
 		var effects_before: int = _main._pending_effects.size()
-		var cards_before: Array = _main._hud.message_stack._cards.keys()
+		var cards_before: Array = _main._hud.inbox._cards.keys()
 		_main._enforce_term_start_programme()  # the hold and card a real term start raises
 		_main._windows.open("agenda")  # V5.1-0c: a player who has seen the offer declining it
 		_main._agenda_panel._process(0.0)
@@ -391,57 +391,49 @@ func _check_manual_toggle_takes_the_clock() -> void:
 			_fail("the teardown left the programme's immediate bloc_offset on the nation")
 		while _main._pending_effects.size() > effects_before:
 			_main._pending_effects.pop_back()
-		for card in _main._hud.message_stack._cards.keys().duplicate():
+		for card in _main._hud.inbox._cards.keys().duplicate():
 			if not cards_before.has(card):
-				_main._hud.message_stack.dismiss(card)
+				_main._hud.inbox.dismiss(card)
 		_main._programme_card_id = ""
 
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
 	for leftover in _main._event_cards.keys().duplicate():
-		_main._hud.message_stack.dismiss(leftover)
+		_main._hud.inbox.dismiss(leftover)
 	_main._event_cards.clear()
 	_main._paused_for_decision = false
 	_main._paused_for_programme = false
 	clock.paused = false
 
 
-## Pass 19 (item 2): a plain card pushed with `protect` survives MAX_CARDS plain
-## pushes (the term-start programme card explains a live clock hold and used to be
-## the oldest plain card, so a few pushes evicted it), and main.gd pushes the
-## programme card protected. Fresh stack for the generic leg so the boot's "YOUR
-## TERM" card is not consumed.
+## Pass 19 (item 2): a plain card pushed with `protect` survives any number of
+## plain pushes (the term-start programme card explains a live clock hold and
+## used to be the oldest plain card, so a few pushes evicted it), and main.gd
+## pushes the programme card protected. V5.1-c3.1: protected means the DECISIONS
+## lane, which nothing evicts. Fresh inbox for the generic leg so the boot's
+## "YOUR TERM" card is not consumed.
 func _check_protected_plain_card_survives_eviction() -> void:
-	var stack = load("res://src/ui/message_stack.gd").new()
+	var Inbox = load("res://src/ui/inbox.gd")
+	var stack = Inbox.new()
 	root.add_child(stack)
 	var kept: String = stack.push("kept", "body", [], null, true)
-	var plain: Array[String] = []
-	for i in range(stack.MAX_CARDS * 2):
-		plain.append(stack.push("plain %d" % i, "body"))
+	for i in range(Inbox.NOTES_MAX * 2):
+		stack.push("plain %d" % i, "body")
 	if not stack._cards.has(kept):
 		_fail("a protected plain card was evicted by plain pushes")
-	if stack.card_count() != stack.MAX_CARDS:
-		_fail("the protected stack holds %d cards, expected MAX_CARDS" % stack.card_count())
-	# All protected: nothing to spare, the oldest of all is the net.
-	var wall = load("res://src/ui/message_stack.gd").new()
-	root.add_child(wall)
-	var first: String = wall.push("p0", "body", [], null, true)
-	for i in range(wall.MAX_CARDS):
-		wall.push("p%d" % (i + 1), "body", [], null, true)
-	if wall._cards.has(first) or wall.card_count() != wall.MAX_CARDS:
-		_fail("with every card protected the oldest should be the fallback eviction")
+	if stack.card_count() != Inbox.NOTES_MAX + 1:
+		_fail("the inbox holds %d cards, expected the protected one and NOTES_MAX notes" % stack.card_count())
 	stack.queue_free()
-	wall.queue_free()
 
 	# The real wiring: the programme card main.gd pushes is protected.
 	var clock: Node = _main.get_node("Clock")
 	_main._enforce_term_start_programme()
 	if String(_main._programme_card_id).is_empty():
 		_fail("the term start staged no programme card (nothing to pin the protection on)")
-	elif not _main._hud.message_stack._protected.has(_main._programme_card_id):
-		_fail("main.gd pushed the programme card unprotected")
+	elif _main._hud.inbox.lane_of(_main._programme_card_id) != "decisions":
+		_fail("main.gd pushed the programme card unprotected (lane '%s')" % _main._hud.inbox.lane_of(_main._programme_card_id))
 	if not String(_main._programme_card_id).is_empty():
-		_main._hud.message_stack.dismiss(_main._programme_card_id)
+		_main._hud.inbox.dismiss(_main._programme_card_id)
 		_main._programme_card_id = ""
 	_main._paused_for_programme = false
 	_main._paused_for_decision = false
@@ -462,13 +454,13 @@ func _check_stale_programme_hold_clears() -> void:
 	ns.programme_chosen_term = int(ns.terms_served)
 	if not Programme.available(_main._state, ns, _main._loader).is_empty():
 		_fail("the staged state still offers a programme (nothing to pin the stale hold on)")
-	_main._programme_card_id = _main._hud.message_stack.push("stale programme", "body", [], null, true)
+	_main._programme_card_id = _main._hud.inbox.push("stale programme", "body", [], null, true)
 	var stale_card: String = _main._programme_card_id
 	_main._paused_for_programme = true
 	_main._enforce_term_start_programme()
 	if _main._paused_for_programme:
 		_fail("the stale programme hold survived a month end with no offer")
-	if _main._hud.message_stack._cards.has(stale_card):
+	if _main._hud.inbox._cards.has(stale_card):
 		_fail("the stale programme card survived a month end with no offer")
 	if not String(_main._programme_card_id).is_empty():
 		_fail("the stale programme card id was not cleared")
@@ -478,59 +470,38 @@ func _check_stale_programme_hold_clears() -> void:
 	clock.paused = false
 
 
-## Pass 16: the MAX_CARDS eviction is not the player dismissing a decision. A
-## paused player who triggers a crowd of plain cards (budget, tax, law results)
-## must not lose the decision card -- main.gd reads every card_dismissed as "the
-## card is gone" and would restart the clock over the unanswered crisis. Run on a
-## FRESH stack so the boot's "YOUR TERM" card, which a later check reads, is not
-## consumed by the eviction.
+## Pass 16: an eviction is not the player dismissing a decision. A paused player
+## who triggers a crowd of plain cards (budget, tax, law results) must not lose
+## the decision card -- main.gd reads every card_dismissed as "the card is gone"
+## and would restart the clock over the unanswered crisis. V5.1-c3.1: decisions
+## are never evicted at all; the notes' cap takes the oldest note. Run on a FRESH
+## inbox so the boot's "YOUR TERM" card, which a later check reads, is not
+## consumed.
 func _check_eviction_spares_decision_cards() -> void:
-	var stack = load("res://src/ui/message_stack.gd").new()
+	var Inbox = load("res://src/ui/inbox.gd")
+	var stack = Inbox.new()
 	root.add_child(stack)  # in the tree: _ready() must have run
 	var dismissed: Array[String] = []
 	stack.card_dismissed.connect(func(id: String): dismissed.append(id))
 	var decision: String = stack.push("A decision", "body", [{"label": "Yes"}, {"label": "No"}])
 	var plain: Array[String] = []
-	for i in range(stack.MAX_CARDS):
+	for i in range(Inbox.NOTES_MAX + 1):
 		plain.append(stack.push("plain %d" % i, "body"))
-	if stack.card_count() != stack.MAX_CARDS:
-		_fail("the stack holds %d cards, expected MAX_CARDS" % stack.card_count())
 	if dismissed.has(decision) or not stack._cards.has(decision):
-		_fail("the MAX_CARDS eviction took the decision card (a card carrying answer buttons)")
+		_fail("the notes' cap took the decision card (a card carrying answer buttons)")
 	if dismissed.size() != 1 or dismissed[0] != plain[0]:
-		_fail("the eviction should have taken exactly the oldest plain card, took %s" % [dismissed])
+		_fail("the cap should have taken exactly the oldest plain card, took %s" % [dismissed])
 	if not stack._cards.has(plain[1]):
 		_fail("a newer plain card was evicted instead of the oldest")
-	# Answer buttons on every card: nothing to spare, so the oldest of all goes.
-	var all_actions = load("res://src/ui/message_stack.gd").new()
+	# Answer buttons on every card: none goes, however many.
+	var all_actions = Inbox.new()
 	root.add_child(all_actions)
-	var first: String = all_actions.push("d0", "body", [{"label": "Yes"}])
-	for i in range(all_actions.MAX_CARDS):
-		all_actions.push("d%d" % (i + 1), "body", [{"label": "Yes"}])
-	if all_actions._cards.has(first):
-		_fail("with every card carrying buttons the oldest should be the fallback eviction")
-	if all_actions.card_count() != all_actions.MAX_CARDS:
-		_fail("the all-decisions stack exceeded MAX_CARDS")
-	# A PLAIN newcomer into a stack of nothing but decisions evicts itself: the
-	# newcomer is a candidate, so no decision card is taken and none is "dismissed".
-	var crowded = load("res://src/ui/message_stack.gd").new()
-	root.add_child(crowded)
-	var crowded_dismissed: Array[String] = []
-	crowded.card_dismissed.connect(func(id: String): crowded_dismissed.append(id))
-	var decisions: Array[String] = []
-	for i in range(crowded.MAX_CARDS):
-		decisions.append(crowded.push("d%d" % i, "body", [{"label": "Yes"}]))
-	var newcomer: String = crowded.push("plain", "body")
-	for d in decisions:
-		if not crowded._cards.has(d):
-			_fail("a plain push into an all-decision stack evicted decision card %s" % d)
-	if crowded._cards.has(newcomer):
-		_fail("the plain newcomer should have evicted itself from an all-decision stack")
-	if crowded_dismissed.size() != 1 or crowded_dismissed[0] != newcomer:
-		_fail("only the plain newcomer should have been dismissed, got %s" % [crowded_dismissed])
+	for i in range(Inbox.NOTES_MAX + 5):
+		all_actions.push("d%d" % i, "body", [{"label": "Yes"}])
+	if all_actions.card_count() != Inbox.NOTES_MAX + 5:
+		_fail("an inbox of decisions evicted some: %d of %d" % [all_actions.card_count(), Inbox.NOTES_MAX + 5])
 	stack.queue_free()
 	all_actions.queue_free()
-	crowded.queue_free()
 
 
 ## Pass 16 (item 3): two defaults in one tick share ONE pre-tick snapshot, so a
@@ -542,7 +513,7 @@ func _check_same_month_defaults_queue_one_effect() -> void:
 	var month: int = int(_main._state.month)
 	var history_size: int = ns.event_history.size()
 	var effects_before: int = _main._pending_effects.size()
-	var cards_before: Array = _main._hud.message_stack._cards.keys()
+	var cards_before: Array = _main._hud.inbox._cards.keys()
 	# The live queue is snapshotted and put back below: this check stages on an
 	# empty desk but must hand the player's real queue to later checks intact.
 	var queue_before: Array = ns.event_queue.duplicate(true)
@@ -559,10 +530,10 @@ func _check_same_month_defaults_queue_one_effect() -> void:
 	elif not String(_main._pending_effects[effects_before]["label"]).contains("; "):
 		_fail("the merged ledger entry should name both events joined by '; ', got '%s'" % _main._pending_effects[effects_before]["label"])
 	var new_cards := 0
-	for card_id in _main._hud.message_stack._cards.keys().duplicate():
+	for card_id in _main._hud.inbox._cards.keys().duplicate():
 		if not cards_before.has(card_id):
 			new_cards += 1
-			_main._hud.message_stack.dismiss(card_id)
+			_main._hud.inbox.dismiss(card_id)
 	if new_cards != 2:
 		_fail("each default should still earn its own card, got %d" % new_cards)
 	# Clean up: only what this check added.
@@ -608,7 +579,7 @@ func _check_decision_arrival_stops_the_clock() -> void:
 	# Task 6: the card itself answers, and the clock resumes. Pressed through the
 	# real button, so the whole chain is exercised -- card_action, Events.answer,
 	# the unpause rule's single writer.
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	var action_buttons: Array = []
 	for card in stack.get_children():
 		for b in card.find_children("*", "Button", true, false):
@@ -686,9 +657,10 @@ func _check_departed_and_dismissed_events_leave_the_unseen_set() -> void:
 	if not clock.paused or not _main._unseen_events.has(String(ev.id)):
 		_fail("the second staged arrival did not re-arm the pause")
 		return
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	var x_button: Button = null
-	for card in stack.get_children():
+	# The inbox's rows, oldest first (its lanes show them newest first).
+	for card in stack._cards.values():
 		var has_actions := false
 		var card_x: Button = null
 		for b in card.find_children("*", "Button", true, false):
@@ -697,8 +669,8 @@ func _check_departed_and_dismissed_events_leave_the_unseen_set() -> void:
 			else:
 				has_actions = true
 		# LAST match, not first: door 1's default pushes a "Decided for you" card
-		# (no actions) and this second arrival pushes a fresh decision card, and
-		# push() appends -- so the newest action-carrying card is the last child.
+		# (no actions) and this second arrival pushes a fresh decision card, so
+		# the newest action-carrying card is the last row pushed.
 		# The defaulted event's OWN arrival card no longer lingers here: V4.4 wave
 		# 4 dismisses it at the departure door (_dismiss_event_cards), so this
 		# loop is choosing among live cards, not routing around a stale one.
@@ -725,7 +697,7 @@ func _check_departed_and_dismissed_events_leave_the_unseen_set() -> void:
 func _check_event_cards_follow_their_event() -> void:
 	var Events := load("res://src/sim/events.gd")
 	var ns = _main._state.player()
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	# Sweep the desk of entries prior tests left pending, so each pin stages on a
 	# clean slate -- an id in the queue twice confuses the arrival loop and the
 	# answer() search (duplicate events are not the test's subject).
@@ -802,7 +774,7 @@ func _check_opening_card_states_the_goal() -> void:
 	var when: Vector2i = Trends.vote_date(ns)
 	var months: int = Trends.months_to_vote(_main._state, ns)
 
-	var stack_text := _collect_labels(_main._hud.message_stack)
+	var stack_text := _collect_labels(_main._hud.inbox)
 	if not stack_text.contains("YOUR TERM"):
 		_fail("the opening card is missing -- a new game never states its goal (stack: '%s')" % stack_text)
 		return
@@ -817,6 +789,8 @@ func _collect_labels(node: Node) -> String:
 	for child in node.get_children():
 		if child is Label:
 			out += child.text + " "
+		elif child is RichTextLabel:  # V5.1-c: the inbox body is a rich line
+			out += child.get_parsed_text() + " "
 		out += _collect_labels(child)
 	return out
 
@@ -867,7 +841,7 @@ func _check_term_limit_reports_itself() -> void:
 
 # V2. The Continue button used to be built only in the not-defeated branch, and
 # main.gd unpauses only on `dismissed`. That left a plate with nothing to press
-# over a HUD that stayed live -- _add_centered() defaults to non-blocking, so the
+# over a HUD that stayed live -- the centred holder (now ScreenStack.add()) was not dimmed, so the
 # holder is MOUSE_FILTER_IGNORE -- and Space resumed a run the player had lost.
 func _check_defeat_can_be_dismissed() -> void:
 	var panel = _main._election_panel

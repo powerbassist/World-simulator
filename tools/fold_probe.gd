@@ -26,7 +26,7 @@ extends SceneTree
 ## 2, 3, 4 lines as the column narrows, every height an exact multiple of the line.
 ##
 ## So the rule is one sentence, and tests/test_panel_kit.gd and
-## tests/test_window_frame.gd are both staged around it: **impose a width, let a
+## tests/test_workspace.gd are both staged around it: **impose a width, let a
 ## frame pass, then read.** Which is what a multi-frame harness does anyway --
 ## test_nation_panel.gd runs two frames and imposes nothing, and that is the whole
 ## of why it could not see one.

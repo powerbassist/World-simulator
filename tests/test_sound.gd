@@ -362,13 +362,15 @@ func _check_window_gestures() -> void:
 	wm.close("b")
 	if _players(wm, "close") != 1:
 		_fail("closing a window played %d close cues, expected 1" % _players(wm, "close"))
-	wm.frame("a").pinned = true
+	# V5.1-c2.2: one tab is open at a time (the pin went with the floating
+	# windows), so close_all() puts away one tab -- with one cue, not a cue and a
+	# second for the way back to the map.
 	wm.open("a")
 	wm.open("c")
 	var closes := _players(wm, "close")
 	wm.close_all()
 	if _players(wm, "close") != closes + 1:
-		_fail("close_all() over two windows played %d close cues, expected 1" % (_players(wm, "close") - closes))
+		_fail("close_all() over an open tab played %d close cues, expected 1" % (_players(wm, "close") - closes))
 	wm.queue_free()
 
 
@@ -433,10 +435,11 @@ func _check_event_sting() -> void:
 		_main._enforce_interrupt()
 		if _sting_count() != before + 1:
 			_fail("notify OFF silenced an interrupt -- the register must not apply to it")
-		if not _main._windows.is_open("events"):
-			_fail("the staged interrupt did not open Dispatches")
+		# V5.1-c3.2: the inbox shows the decision, silently -- the sting is the sound.
+		if not _main._hud.inbox.visible:
+			_fail("the staged interrupt left the inbox away")
 		elif _players(_main._windows, "open") != opens:
-			_fail("the interrupt's Dispatches played an open tick over the sting")
+			_fail("the interrupt played an open tick over the sting")
 	_reset_desk()
 	_main._messages = MessageSettings.defaults()
 
@@ -467,7 +470,7 @@ func _reset_desk() -> void:
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
 	for leftover in _main._event_cards.keys().duplicate():
-		_main._hud.message_stack.dismiss(leftover)
+		_main._hud.inbox.dismiss(leftover)
 	_main._event_cards.clear()
 	_main._paused_for_decision = false
 	_main._clock.paused = false

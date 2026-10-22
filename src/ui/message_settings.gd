@@ -3,7 +3,7 @@ extends RefCounted
 ## V4.8c. Message settings -- Victoria 3's shape, wired to severity.
 ##
 ## Per event category, four switches: NOTIFY (the action-bar mark, pending.gd),
-## FEED (the Dispatches ledger's record), POPUP (the message_stack decision card)
+## FEED (the Dispatches ledger's record), POPUP (the inbox decision card)
 ## and PAUSE (the arrival pause). Each switch holds a SEVERITY THRESHOLD, not a
 ## boolean: it fires for an event at or above it. A category carries no severity of
 ## its own -- its events do (`ev.severity`, 1..3) -- so a per-category on/off could

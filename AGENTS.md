@@ -82,7 +82,8 @@ The size ratchet, on CODE lines (no blank, no comment-only line) over `src/`:
 a new file stays at or under 300; a file in `tools/size_baseline.json` may
 shrink, never grow, and the change that shrinks it lowers the baseline
 (`--update`); no `src/` file past 2 000 total lines, `src/ui/main.gd` the
-named exception until V5.1c. `tools/` and `tests/` past 2 000 are printed,
+named exception until its clock holds and desk cards move out (V5.1c took it from
+2 705 to 2 124). `tools/` and `tests/` past 2 000 are printed,
 not failed. CI runs it.
 
 ```bash
@@ -179,9 +180,9 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
   `godot_mcp_toolkit` is the one this project already uses — it is what
   `runtime_screenshot` and `input_simulate` reach a running game through. **The other
-  four are parked on purpose, not junk** — `at-icons` is now unreferenced (V2.3 committed
-  the icons `src/` named; V5.1a replaced them with Material Symbols, and the committed files are a
-  c/d cleanup) and `materialLayers` and `road-generator` are each installed
+  four are parked on purpose, not junk** — `at-icons` is unreferenced (V5.1a replaced its
+  icons with Material Symbols, and V5.1-c removed its committed files; the editor plugin may
+  stay installed) and `materialLayers` and `road-generator` are each installed
   ahead of a planned use, so do not strip any of them on the reasoning that nothing in
   `src/` reads them yet. **`road-generator`'s planned use is now spent and it was not
   this one**: V3.4 drew the road layer and did NOT reach for the addon, because it
@@ -241,7 +242,7 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 **V4 — THE WORLD WANTS THINGS — IS CLOSED (2026-10-18; last merge PR #12, `d3953709`; tag `v4-end`).** Twelve blocks merged in the signed order V4.0 → V4.1 → V4.3 → V4.6 → V4.7 → V4.2 → V4.4 → V4.5 → V4.11 → V4.8 → V4.9 → V4.10: the programme and its credit channel, 1,595 people who want things, 2,737 firms that act, 60 goods (a layer beside the growth model, not yet feeding GDP), 120 laws with composition and repeal, 102 events on a severity-ordered desk, the contested council, a 41-nation roster with four playable, the reading surface, motion and synthesized sound, and the map at depth (G2 0.26 / 0.58 ms against 2.0). Suite 120/120. The record: the close-out section of [docs/tiers/v4.md](docs/tiers/v4.md) (merge table, promised against shipped, gates, lessons); per-block detail, including the V4 rows this section used to carry, in [docs/history.md](docs/history.md); open items and the author's open calls in [docs/someday.md](docs/someday.md). **The UI is fully reworked in V5** (author, 2026-10-17).
 
-**V5 — THE WORLD TALKS BACK — SIGNED 2026-10-19** ([docs/tiers/v5.md](docs/tiers/v5.md); the reflection behind it, with the author's asks and calls: [docs/v5-reflection.md](docs/v5-reflection.md)). Order V5.0 foundations (the audit) → V5.1 the shell → V5.2 people who talk → V5.3 domains and decisions → V5.4 the real network → V5.5 close-out; war, espionage and regimes are V6. **Every V5 block closes with the author playing it for thirty minutes, the verdict a done-when** (author, 2026-10-19). **V5.0a0 (engine 4.7.2) and V5.0a (the field table) merged; V5.0b (the loader split, the size ratchet, isolated runs) merged; V5.0c0 (the balance probe sharded) merged; V5.0c (the tick: 424 → 316 ms mean, byte-identical levers) merged; V5.0c2 (the author's A + B: micro-levers and Diplomacy on worker threads, 241 ms mean / 304 ms worst, both bands met, still byte-identical) merged; V5.0d (the pre-review hotspots: seven findings fixed byte-identical, three recorded) merged — V5.0 built; the play gate scored 1/5 (a load crash, an 11-second month end); the V5.0 fix pass (both fixed, byte-identical) merged — **V5.0 closed 2026-10-20, play gate 1/5 ("not ready to be played"); V5.1 in progress, opening with "playable first" (0a the freezes, 0b the dev console, 0c the UI fixes, 0d the embassies) before the signed a–d; V5.1-0a (the month across frames, the forecast off the frame: month boundary 632–720 → 45 ms, lever drag ~10 s → 37 ms, byte-identical) built; V5.1-0b (the in-game dev console: F12, error log, perf overlay, a command table, agents through `run_command` -- docs/tooling.md) built; V5.1-0c (the author's UI fixes: F11 and a resizable window, the Agenda not forfeited by Space, a fixed portrait with a mood icon, the legend's dev rows gone, other nations' news off, the message column an overlay) built; V5.1-0d (the embassies that already exist as a rule in data, every capital resolved by one shared rule, the runner failing undeclared ERROR lines; a save-version bump; re-baseline 0 flips, |vote share| moves <= 0.0004, accepted by the author) merged; V5.1-a (the charter: the author picked BUREAU from the board -- this block builds its grammar: graphite tokens, Archivo, Material Symbols Rounded, the flag-colour accent by rule, the press grade; the docked workspace is c's) built; V5.1-b (localisation plumbing) and b2 (every prose literal wrapped, figures and dates by language) merged; V5.1-b3 (every data row through `Strings`, ids through `Labels`, a lint and an on-screen test for both) built**, through the version session (`.superpowers/sdd/v5-version-session.md`: one child session per block, sub-blocks inside it; the tier-end review is built from the `v4-end` tag).
+**V5 — THE WORLD TALKS BACK — SIGNED 2026-10-19** ([docs/tiers/v5.md](docs/tiers/v5.md); the reflection behind it, with the author's asks and calls: [docs/v5-reflection.md](docs/v5-reflection.md)). Order V5.0 foundations (the audit) → V5.1 the shell → V5.2 people who talk → V5.3 domains and decisions → V5.4 the real network → V5.5 close-out; war, espionage and regimes are V6. **Every V5 block closes with the author playing it for thirty minutes, the verdict a done-when** (author, 2026-10-19). **V5.0a0 (engine 4.7.2) and V5.0a (the field table) merged; V5.0b (the loader split, the size ratchet, isolated runs) merged; V5.0c0 (the balance probe sharded) merged; V5.0c (the tick: 424 → 316 ms mean, byte-identical levers) merged; V5.0c2 (the author's A + B: micro-levers and Diplomacy on worker threads, 241 ms mean / 304 ms worst, both bands met, still byte-identical) merged; V5.0d (the pre-review hotspots: seven findings fixed byte-identical, three recorded) merged — V5.0 built; the play gate scored 1/5 (a load crash, an 11-second month end); the V5.0 fix pass (both fixed, byte-identical) merged — **V5.0 closed 2026-10-20, play gate 1/5 ("not ready to be played"); V5.1 in progress, opening with "playable first" (0a the freezes, 0b the dev console, 0c the UI fixes, 0d the embassies) before the signed a–d; V5.1-0a (the month across frames, the forecast off the frame: month boundary 632–720 → 45 ms, lever drag ~10 s → 37 ms, byte-identical) built; V5.1-0b (the in-game dev console: F12, error log, perf overlay, a command table, agents through `run_command` -- docs/tooling.md) built; V5.1-0c (the author's UI fixes: F11 and a resizable window, the Agenda not forfeited by Space, a fixed portrait with a mood icon, the legend's dev rows gone, other nations' news off, the message column an overlay) built; V5.1-0d (the embassies that already exist as a rule in data, every capital resolved by one shared rule, the runner failing undeclared ERROR lines; a save-version bump; re-baseline 0 flips, |vote share| moves <= 0.0004, accepted by the author) merged; V5.1-a (the charter: the author picked BUREAU from the board -- this block builds its grammar: graphite tokens, Archivo, Material Symbols Rounded, the flag-colour accent by rule, the press grade; the docked workspace is c's) built; V5.1-b (localisation plumbing) and b2 (every prose literal wrapped, figures and dates by language) merged; V5.1-b3 (every data row through `Strings`, ids through `Labels`, a lint and an on-screen test for both) built; V5.1-c (the shell: the screen stack, the docked workspace under a domain sidebar, the title bar and the folding figure strip, text size, the inbox that slides over a tab, the glossary tooltips' mechanism) built**, through the version session (`.superpowers/sdd/v5-version-session.md`: one child session per block, sub-blocks inside it; the tier-end review is built from the `v4-end` tag).
 
 **Save format** is at the version above. The rule for a bump is not "a new field bumps" but "a missing field would read as something wrong": an absent value that reads correctly for every older save (a register that was "nothing yet", a stamp at -1) earns no bump and is pinned by `tests/test_save_load.gd`; a content-derived static that `from_dict()` cannot re-derive does. Since V5.0a the verdict for a NationState field is a column — `absent_ok` in `src/core/nation_fields.gd` — and `tests/test_nation_fields.gd` pins its false set against `SAVE_VERSION`. There has never been a migration — a superseded save is refused outright. The version history is in `game_state.gd` and `docs/history.md`; do not copy the current number into prose that nothing keeps in step with the code.
 
@@ -296,11 +297,25 @@ headless from a fresh clone — never `load()` an icon path.
 
 **Text a player reads goes through `tr("English")`** (V5.1b, [docs/localisation.md](docs/localisation.md)): the English is the msgid, French is `data/i18n/fr/ui.json`, a row of `data/` is shown through a `Strings` row accessor (`row_name`, `row_summary`, `choice_label`, `record_event_name`, `noun`, ... over `Strings.row(kind, id, field, english)`; `tests/test_i18n_rows_lint.gd` fails a raw read of a row's English) and an id made into a word through `Labels` (never `id.capitalize()`). The caller wraps, helpers never translate, a `static func` uses `Strings.t()`, and never use a `tr()` result as a key or compare shown text to an English literal. `tests/test_i18n_lint.gd` fails a bare literal at a text sink or anywhere it reads as prose (a const table of prose carries `# i18n: msgid`) and a ternary of short fragments inside a format argument -- a sentence is whole, a count picks its form with `tr_n` / `Strings.tn`; a figure with decimals goes through `Num.f` / `Num.fs` (the language's decimal separator, never a raw `%.2f`) and a date through `DateText`; `tests/test_i18n_fit.gd` opens every window under +35% pseudolocalization. Map place names are the one exception to the body width: `UiTheme.map_face()` at `UiTheme.SIZE_MAP`, the narrow end of Archivo's width axis, because the label packer drops a name that does not fit.
 
-The shell is: `map_view` full-rect at the back, `window_manager` over it, `hud`
-on top. There is no tab rail. A panel is registered with
-`_windows.register(id, title, panel)` **before** its `setup()` is called, because
-`register()` is what puts it in the tree. Adding a surface is that one call plus
-one line in `main.gd`'s `_build_action_bar()`.
+The shell is (V5.1-c, the BUREAU board): `map_view` full-rect at the back;
+`window_manager` over it, a workspace docked left that shows one tab at a time
+under its domain (`src/ui/domains.gd` is the table of domains and their tabs;
+back and forward walk the player's path); `hud` on top -- the title bar, the
+sidebar, the figure strip (it folds its lowest-priority figures into "+N" when
+its slot is short), the legend, the message column and the day ribbon; and
+`screen_stack` above them, which ranks what owns the screen (workspace, inbox,
+placement, scene, system) for the keys, Escape and the game's own arrivals. A
+panel is registered with `_windows.register(id, title, panel)` **before** its
+`setup()` is called, because `register()` is what puts it in the tree. Adding a
+surface is that one call plus its row in `domains.gd`; a modal is
+`_stack.add(layer, panel, dim, cancel)`.
+
+**Glossary terms** (V5.1-c, [docs/design/glossary-tooltips.md](docs/design/glossary-tooltips.md)):
+a writer marks a term as `[g=id]word[/g]` in prose shown through `PanelKit.rich()` -- a
+`TermText` (`src/ui/term_text.gd`), the one place a term is drawn; the ids are
+`data/glossary/terms.json`'s, read by `src/ui/glossary.gd`, and the tooltip chain is
+`glossary_tip.gd`, the screen stack's last child. Rich prose is not BBCode: every other
+`[` is escaped. `PanelKit.line()` stays a Label until V5.1d.
 
 
 ## Workflow

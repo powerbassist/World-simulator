@@ -1,9 +1,8 @@
 extends Control
 
-## The Material Symbols Rounded set (Apache-2.0, filled) every window glyph and
-## cluster glyph comes from -- V2.3 lifted this out of _build_action_bar() because
-## register() now names each window's icon too, and the same path constant serves
-## both. Plain SVG text, read and rasterised by icon.gd, so a fresh clone works
+## The Material Symbols Rounded set (Apache-2.0, filled) every window glyph
+## comes from -- V2.3 lifted this out of the action bar's builder because
+## register() names each window's icon too. Plain SVG text, read and rasterised by icon.gd, so a fresh clone works
 ## headless with no import cache.
 const Labels = preload("res://src/ui/labels.gd")
 const ICONS := "res://assets/icons/material/"
@@ -35,7 +34,6 @@ const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const MonthRunner = preload("res://src/ui/month_runner.gd")
-const DevConsole = preload("res://src/ui/dev_console.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
@@ -59,7 +57,6 @@ const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const MapView = preload("res://src/ui/map_view.gd")
-const Minimap = preload("res://src/ui/minimap.gd")
 const MapFlows = preload("res://src/ui/map_flows.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
 const OrgsPanel = preload("res://src/ui/orgs_panel.gd")
@@ -71,6 +68,9 @@ const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Hud = preload("res://src/ui/hud.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
+const ScreenStack = preload("res://src/ui/screen_stack.gd")
+const DEV_CONSOLE := "res://src/ui/dev_console.gd"
+const Domains = preload("res://src/ui/domains.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Sound = preload("res://src/ui/sound.gd")
@@ -80,6 +80,10 @@ const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Num = preload("res://src/ui/num.gd")
+const WorldNews = preload("res://src/ui/world_news.gd")
+const DiaryDriver = preload("res://src/ui/diary_driver.gd")
+const IndustryNews = preload("res://src/ui/industry_news.gd")
+const AssemblyNews = preload("res://src/ui/assembly_news.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
@@ -125,6 +129,7 @@ var _state
 var _loader: DataLoader
 var _hud
 var _windows
+var _stack
 var _top_bar
 var _paused_for_decision := false
 ## V4.4: the desk is a queue, so the decision-card machinery tracks a SET. Card id
@@ -159,7 +164,6 @@ var _polling_panel
 var _election_panel
 var _law_panel
 var _map_view
-var _minimap
 var _map_flows
 var _nation_panel
 var _orgs_panel
@@ -198,6 +202,11 @@ var _pending_effects: Array[Dictionary] = []
 ## V5.1-0a. The month across frames, the clock and the windows held while it
 ## closes -- src/ui/month_runner.gd. A child of this node, added in _ready().
 var _month_runner := MonthRunner.new()
+## The news-card writers, out of this file at V5.1c (D2); `_setup_news()` hands them
+## the live state, at the start and again on a load.
+var _world_news := WorldNews.new()
+var _industry_news := IndustryNews.new()
+var _assembly_news := AssemblyNews.new()
 
 
 func _ready() -> void:
@@ -286,6 +295,11 @@ func _ready() -> void:
 
 	_hud = Hud.new()
 	add_child(_hud)
+	# V5.1-c2.1. Where the centred panels' holders were added, so they draw where
+	# they drew: over the HUD, under the dev console.
+	_stack = ScreenStack.new()
+	add_child(_stack)
+	_stack.top_changed.connect(_on_stack_top_changed)
 	# V4.9c. The desk's bed, rendered on a worker and swelling in once it is,
 	# and the one-shot set on another (sound.gd's warm()): nothing in this
 	# _ready() waits for either.
@@ -293,13 +307,6 @@ func _ready() -> void:
 	Sound.warm()
 	_top_bar = _hud.top_bar
 	_hud.ribbon.setup(_state, _loader)
-
-	# set_minimap() puts it in the tree, so setup() comes after -- the same
-	# register()-before-setup() ordering every window below follows, and for the
-	# same reason: a Control outside the tree has not run _ready().
-	_minimap = Minimap.new()
-	_hud.clock_cluster.set_minimap(_minimap)
-	_minimap.setup(_map_view, _loader, _state)
 
 	# register() before setup(), every time. register() is what puts the panel in
 	# the tree, and a Control outside the tree has not run _ready(), so every
@@ -368,7 +375,7 @@ func _ready() -> void:
 	# (The law panel's own brief_requested lands beside its proposed handler
 	# below -- the panel does not exist yet at this point in _ready().)
 	_briefing = Briefing.new()
-	_add_centered(_briefing)
+	_stack.add(ScreenStack.SCENE, _briefing, false, _briefing.hide)
 	_briefing.hide()
 	_briefing.propose_requested.connect(func(law):
 		_briefing.hide()
@@ -427,7 +434,7 @@ func _ready() -> void:
 			body = (tr("Passed. Yes %d, No %d.") if bool(result.get("passed", false)) else tr("Failed. Yes %d, No %d.")) % [
 				int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
 			]
-		_hud.message_stack.push(String(law_name), body)
+		_hud.inbox.push(String(law_name), body)
 		_update_top_bar()
 	)
 
@@ -450,7 +457,7 @@ func _ready() -> void:
 			body = tr("Refused.") if reason.is_empty() else tr("Refused. %s") % reason
 		else:
 			body = tr("Agreed.")
-		_hud.message_stack.push(String(label), body)
+		_hud.inbox.push(String(label), body)
 		_update_top_bar()
 		# A diplomatic action moves relations, and on the relations layer that is a
 		# colour change the player should see the moment they act rather than at
@@ -524,7 +531,7 @@ func _ready() -> void:
 	# V1.6e renames the WINDOW and not the id: the panel now carries the state's own
 	# sector programmes beside the firm register, so "Companies" had stopped being
 	# what the surface is about. The id stays "companies" because it is what
-	# _build_action_bar() and tools/screenshot.gd --open both address.
+	# domains.gd and tools/screenshot.gd --open both address.
 	_windows.register("companies", tr("Industry"), _companies_panel, KEY_I, ICONS + "factory.svg")
 	_companies_panel.setup(_state, _loader)
 	_companies_panel.hide_close_button()
@@ -539,8 +546,7 @@ func _ready() -> void:
 	# V1.6f. In the Economy cluster beside Industry, and its OWN window rather than
 	# more rows on that one: a project is a dated national commitment and that panel
 	# is grouped by sector, with a body already guaranteed to overflow. Registering a
-	# window is one call plus one line in _build_action_bar(), which is what U5a's
-	# shell was for.
+	# window is one call plus a row in domains.gd.
 	_projects_panel = ProjectsPanel.new()
 	_windows.register("projects", tr("Public Works"), _projects_panel, KEY_W, ICONS + "construction.svg")
 	_projects_panel.setup(_state, _loader)
@@ -626,10 +632,9 @@ func _ready() -> void:
 	)
 
 	# V1.8. In the State cluster beside the Diary, and its own window rather than rows
-	# on any existing panel. Registering one is one call plus one line in
-	# _build_action_bar(), which is what U5a's shell was for -- and the reason it is a
-	# window rather than a modal is in the panel's own header: a crisis the player can
-	# ignore and pay for is the whole of the deadline.
+	# on any existing panel. Registering one is one call plus a row in domains.gd --
+	# and the reason it is a window rather than a modal is in the panel's own header:
+	# a crisis the player can ignore and pay for is the whole of the deadline.
 	_events_panel = EventsPanel.new()
 	_windows.register("events", tr("Dispatches"), _events_panel, KEY_N, ICONS + "mail.svg")
 	_events_panel.setup(_state, _loader)
@@ -680,7 +685,7 @@ func _ready() -> void:
 		_windows.close("summit")
 	)
 
-	_build_action_bar()
+	_build_sidebar()
 	_wire_hud()
 	# V4.8a: an alert on the strip names the window that answers it by the title
 	# its frame shows and the shortcut the window manager binds -- read here, once
@@ -691,12 +696,17 @@ func _ready() -> void:
 		if key != KEY_NONE:
 			hint += " (%s)" % OS.get_keycode_string(key)
 		_top_bar.window_hints[id] = hint
+		# V5.1-c2.1. Every window is on the stack -- a domain at WORKSPACE, a
+		# scene above it -- so Escape puts it away and a hotkey cannot reach past
+		# a scene. Read here for the strip's reason: every window is registered.
+		var layer: int = ScreenStack.SCENE if Domains.is_scene(id) else ScreenStack.WORKSPACE
+		_stack.watch(layer, _windows.frame(id), _windows.close.bind(id))
 
 	# Four panels stay modal, not docked: election results and censure land on
 	# the player regardless of which tab is open, and settings/save-load are
 	# reached through the pause menu rather than the rail.
 	_election_panel = ElectionPanel.new()
-	_add_centered(_election_panel, true)
+	_stack.add(ScreenStack.SCENE, _election_panel, true)
 	_election_panel.setup(_state, _loader)
 	_election_panel.hide()
 	# V1.6 audit, V2. Dismissing a WON election resumes play; dismissing a LOST one
@@ -717,7 +727,7 @@ func _ready() -> void:
 	)
 
 	_save_load_panel = SaveLoadPanel.new()
-	_add_centered(_save_load_panel)
+	_stack.add(ScreenStack.SYSTEM, _save_load_panel, false, _save_load_panel.close)
 	_save_load_panel.hide()
 	_save_load_panel.save_requested.connect(_on_save_requested)
 	_save_load_panel.load_requested.connect(_on_load_requested)
@@ -732,7 +742,7 @@ func _ready() -> void:
 	)
 
 	_settings_panel = SettingsPanel.new()
-	_add_centered(_settings_panel)
+	_stack.add(ScreenStack.SYSTEM, _settings_panel, false, _settings_panel.close)
 	_settings_panel.hide()
 	_settings_panel.closed.connect(func():
 		# V4.8c: the settings screen is the register's only writer, so closing it
@@ -746,7 +756,7 @@ func _ready() -> void:
 	# Blocking, unlike every other panel: a pause menu you can click past into
 	# the map underneath is not paused in any sense the player recognises.
 	_pause_menu = PauseMenu.new()
-	_add_centered(_pause_menu, true)
+	_stack.add(ScreenStack.SYSTEM, _pause_menu, true, _close_pause_menu)
 	_set_pause_menu_visible(false)
 	_pause_menu.resumed.connect(_close_pause_menu)
 	_pause_menu.save_load_requested.connect(func():
@@ -768,7 +778,9 @@ func _ready() -> void:
 	add_child(_month_runner)
 	# V5.1-0b. Dev only, and the last child so it draws over everything: a debug
 	# build or --dev-console gets F12's console, a release build gets nothing.
-	DevConsole.install(self)
+	# V5.1-c4.2: a guarded load(), not a preload, so an export filter can leave
+	# the dev scripts out of a release entirely; install() gates the rest.
+	if ResourceLoader.exists(DEV_CONSOLE): load(DEV_CONSOLE).install(self)
 
 	# Loading reuses the whole existing load path rather than a separate
 	# start-from-save branch: a new game is built first, then replaced. That
@@ -783,7 +795,7 @@ func _ready() -> void:
 	# Trends query the top bar and the Overview count by. It sits AFTER the load
 	# branch and inside the new-game case, so a loaded save never receives it.
 	if pending_load_slot.is_empty():
-		_term_card_id = _hud.message_stack.push(tr("Your term"), _term_card_body())
+		_term_card_id = _hud.inbox.push(tr("Your term"), _term_card_body())
 
 	# V4.1, after the opening card so the two land together: a new game IS an
 	# unchosen term start, so the clock sits still behind the programme choice
@@ -799,93 +811,21 @@ func _ready() -> void:
 	_update_top_bar()
 
 
-## Screen-filling CenterContainer per panel, which is the one placement mechanism
-## that works before a panel's children exist — an anchor preset computed in
-## _ready() reads a minimum size of zero and lands in the corner. One container
-## each, so hiding one panel does not move the other. Only the four modal
-## panels use this now; the rest are docked by dashboard.gd.
-##
-## Placement only, since U3: the opaque background these panels need is the
-## theme's PanelContainer style, inherited from this scene's root.
-## The four clusters, in the order a president spends a day in rather than
-## alphabetically. Every entry names a panel already registered above; the bar
-## itself never sees a panel, so adding V1.3c's tariffs or U6's calendar is one
-## register() and one line in this list.
-func _build_action_bar() -> void:
-	_hud.action_bar.add_cluster("state", tr("State"), ICONS + "account_balance.svg", [
-		_entry("overview", tr("Overview")),
-		# V4.1. The term's programme, right after the Overview it frames -- a
-		# president deals with what the term is for before the machinery.
-		_entry("agenda", tr("Agenda")),
-		_entry("politics", tr("Politics")),
-		_entry("legislature", tr("Legislature")),
-		# A president's diary is state. One line, exactly as the comment above
-		# this function predicted three sessions ago.
-		_entry("calendar", tr("Diary")),
-		# A president's people are state too, by the same argument the diary took.
-		_entry("people", tr("People")),
-		# V4.8b. The pinned things -- one line, the streak this function's comment
-		# keeps predicting.
-		_entry("outliner", tr("Outliner")),
-		# V1.7a. One line, exactly as this function's own comment has now correctly
-		# predicted for six sessions running.
-		_entry("campaign", tr("Campaign")),
-		# V1.8, and the seventh session running. What arrives on a president's desk
-		# without being asked for is state, by the same argument the diary and the
-		# people took.
-		_entry("events", tr("Dispatches")),
-	])
-	_hud.action_bar.add_cluster("economy", tr("Economy"), ICONS + "payments.svg", [
-		_entry("economy", tr("Economy")),
-		_entry("budget", tr("Budget")),
-		# V4.2 T5. Beside Budget, its own window rather than rows on it: the
-		# tier moved tax out of the Budget panel, and the cluster grammar puts
-		# the surface where its decision lives.
-		_entry("tax", tr("Tax Code")),
-		# V1.4a. One line, exactly as this function's own comment has now correctly
-		# predicted for four sessions running.
-		_entry("companies", tr("Companies")),
-		# V1.6f. One line, exactly as this function's own comment has now correctly
-		# predicted for five sessions running.
-		_entry("projects", tr("Public Works")),
-		# V2.2b, and two lines where the streak said one: the register's two
-		# surfaces land together because they are one partition seen from two
-		# heights, and Economy is their home because §5 is about to make the
-		# economy regional.
-		_entry("region", tr("Regions")),
-		_entry("city", tr("Cities")),
-		# V4.6 Task 4, and the fourth line this function's streak has predicted.
-		# The tier's own grammar puts it here: what the country makes and buys in
-		# is the same domain of decision as the two registers beside it.
-		_entry("commodities", tr("Commodities")),
-		# V2.8, and the grammar is V2.1c's: a cluster is the domain of the decision
-		# rather than the shape of the object, and AGENTS.md already carries the
-		# ruling -- region, city and energy are Economy.
-		_entry("energy", tr("Energy")),
-	])
-	_hud.action_bar.add_cluster("society", tr("Society"), ICONS + "diversity_3.svg", [
-		_entry("society", tr("Polling")),
-	])
-	_hud.action_bar.add_cluster("world", tr("World"), ICONS + "public.svg", [
-		_entry("diplomacy", tr("Diplomacy")),
-		_entry("orgs", tr("Organisations")),
-	])
-	_hud.action_bar.panel_requested.connect(func(id: String): _windows.open(id))
-
-
-## One entry in a cluster's drawer. The shortcut AND the icon are READ OFF THE
-## REGISTRY rather than written here -- V2.1c and V2.3 -- so the letter on the
-## tooltip, the letter the key press uses and the glyph beside the name cannot
-## disagree with the window's own registration, which is the same reason
-## `bloc_offset` is read from the content rather than restated in the agenda.
-func _entry(id: String, label: String) -> Dictionary:
-	var key: int = _windows.shortcut(id)
-	return {
-		"id": id,
-		"label": label,
-		"key": "" if key == KEY_NONE else OS.get_keycode_string(key),
-		"icon": _windows.icon_path(id),
-	}
+## V5.1-c2.3. The sidebar replaces U5a's action bar: one entry per domain with a
+## registered tab, from domains.gd's table, so adding a surface is a register()
+## call and a row there -- the drawer lists this function used to keep are gone.
+## An entry opens its domain's first tab; the Inbox opens Dispatches until c3
+## builds the inbox. Refused under a scene, as the keys are.
+func _build_sidebar() -> void:
+	_hud.sidebar.build(_windows.panel_ids())
+	_hud.sidebar.navigate.connect(func(domain_id: String):
+		if not _stack.accepts_hotkeys():
+			return
+		if domain_id == _hud.sidebar.INBOX:
+			_hud.inbox.toggle_slide()
+		else:
+			_windows.open(String(Domains.tabs(domain_id, _windows.panel_ids())[0]))
+	)
 
 
 ## The player's own pause/play (Space, the clock cluster's button) -- the ONLY
@@ -935,13 +875,24 @@ func _wire_hud() -> void:
 		_clock.set_speed(s)
 		_update_top_bar()
 	)
-	_hud.top_bar.save_load_requested.connect(func():
+	_hud.title_bar.save_load_requested.connect(func():
 		_save_from_menu = false
 		_save_load_panel.show()
 		_save_load_panel.mark_dirty()
 	)
-	_hud.top_bar.settings_requested.connect(_open_pause_menu)
+	_hud.title_bar.settings_requested.connect(_open_pause_menu)
+	# V5.1-c2.3. Back and forward walk the window manager's path -- refused under
+	# a scene, as the keys are, or back under a summit would open a tab over it.
+	_hud.title_bar.back_requested.connect(func():
+		if _stack.accepts_hotkeys():
+			_windows.back()
+	)
+	_hud.title_bar.forward_requested.connect(func():
+		if _stack.accepts_hotkeys():
+			_windows.forward()
+	)
 	_hud.portrait_card.setup(_state, _loader)
+	_setup_news()
 
 	# V2.1c, and the FIRST CONSUMERS of two signals window_manager.gd has emitted
 	# since U5a. The bar was the only route that marked itself: a keypress, a map
@@ -949,16 +900,21 @@ func _wire_hud() -> void:
 	# control that says where you are went on saying nothing. On close the mark
 	# moves to whatever is still open rather than clearing, because a pinned
 	# window is still where the player is.
-	_windows.opened.connect(func(id: String): _hud.action_bar.show_active(id))
-	_windows.closed.connect(func(_id: String):
-		var still_open: Array = _windows.open_ids()
-		if still_open.is_empty():
-			_hud.action_bar.clear_active()
-		else:
-			_hud.action_bar.show_active(String(still_open[0]))
+	_windows.opened.connect(func(id: String):
+		_hud.sidebar.select(Domains.domain_of(id))
+		_hud.show_map_furniture(false)
 	)
+	# The legend is the map's, so it goes while a tab covers the map.
+	_windows.closed.connect(func(_id: String):
+		if _windows.open_ids().is_empty():
+			_hud.sidebar.select("")
+			_hud.show_map_furniture(true)
+	)
+	_hud.title_bar.follow(_windows, _loader.nations[_state.player_nation_id].nation_name)
+	# A slid inbox is a layer: Escape slides it back, and the keys still work.
+	_stack.follow_mode(ScreenStack.INBOX, _hud.inbox.slid, _hud.inbox.slide_out)
 
-	# V1.8, and the first thing ever to connect this signal. message_stack.gd has
+	# V1.8, and the first thing ever to connect this signal. inbox.gd has
 	# emitted card_activated since U5a and nothing has listened, because until now every
 	# card was a NOTIFICATION -- a foreign act, an obligation opening, a strike, a kept
 	# appointment -- and there was nowhere for a click to go. An event card is a
@@ -966,7 +922,7 @@ func _wire_hud() -> void:
 	# here and the window is right for all of them: whatever the player clicked, what
 	# they wanted was the decision on their desk. V4.1's programme card routes to the
 	# window where that choice is made instead -- the same rule, one card earlier.
-	_hud.message_stack.card_activated.connect(func(id: String):
+	_hud.inbox.card_activated.connect(func(id: String):
 		if not _programme_card_id.is_empty() and id == _programme_card_id:
 			_windows.open("agenda")
 			return
@@ -976,7 +932,7 @@ func _wire_hud() -> void:
 		# the click gets the player to the register, whose autonomy sections
 		# surface the pending bid or failing firm. Recorded per the plan's
 		# own rule, that a deferral is a decision and not a discovery.)
-		if _industry_card_firms.has(id):
+		if _industry_news.has_card(id):
 			_windows.open("companies")
 			return
 		_windows.open("events")
@@ -987,7 +943,7 @@ func _wire_hud() -> void:
 	# contract -- and the clock the arrival paused resumes only when nothing the
 	# player has not seen is still on the desk. Only decision cards carry
 	# buttons, so any card_action is a decision answer by construction.
-	_hud.message_stack.card_action.connect(func(id: String, index: int):
+	_hud.inbox.card_action.connect(func(id: String, index: int):
 		var ns = _state.player()
 		var event_id := String(_event_cards.get(id, ""))
 		var ev = Events.event_by_id(_loader, event_id) if event_id != "" else null
@@ -1000,8 +956,10 @@ func _wire_hud() -> void:
 		_queue_effect("%s: %s" % [Strings.row_name("events", ev), Strings.choice_label(ev.id, ev.choices[index])], before)
 		_event_cards.erase(id)
 		_unseen_events.erase(event_id)
-		_hud.message_stack.dismiss(id)
+		_hud.inbox.dismiss(id)
 		_resume_if_decision_settled()
+		# Nothing holds now: the tab is the player's again.
+		if not _decision_holds_clock(): _hud.inbox.slide_out()
 		_update_top_bar()
 		_windows.mark_all_dirty()
 	)
@@ -1009,19 +967,19 @@ func _wire_hud() -> void:
 	# The unseen set's second door. An X on a decision card used to strand the
 	# event's id in _unseen_events: only an ANSWER erased it, so the arrival
 	# pause could outlive every answer and hold the clock over an empty set. The
-	# MAX_CARDS eviction is NOT a door: it takes the oldest UNPROTECTED card (no
-	# answer buttons, not pushed with `protect`), the newcomer included
-	# (message_stack's _eviction_victim), so a crowd of plain cards cannot
+	# inbox's notes cap is NOT a door: it takes only the oldest NOTE (V5.1-c3.1;
+	# a row with answers, or pushed with `protect`, is a decision and is never
+	# evicted), so a crowd of plain cards cannot
 	# "dismiss" a decision and restart the clock over it -- it reaches this
-	# handler only for a plain card, whose id maps to no event. Only a stack of
-	# nothing but protected cards (decisions past the desk's 4, plus the
-	# programme card) falls back to the oldest. The
+	# handler only for a plain card, whose id maps to no event. U5a's stack of
+	# nothing but protected cards fell back to evicting the oldest; the inbox
+	# has no such fallback, decisions are not capped. The
 	# invariant, stated once across all its doors: AN ID LEAVES _unseen_events
 	# WHEN IT LEAVES THE DESK OR ITS CARD IS DISMISSED. An id already taken off
 	# the maps (the answer path above dismisses its own card after erasing)
 	# falls through as "": both erases are no-ops and the resume is idempotent,
 	# so this re-entry is harmless by construction.
-	_hud.message_stack.card_dismissed.connect(func(id: String):
+	_hud.inbox.card_dismissed.connect(func(id: String):
 		var event_id := String(_event_cards.get(id, ""))
 		_event_cards.erase(id)
 		_unseen_events.erase(event_id)
@@ -1040,48 +998,7 @@ func _wire_hud() -> void:
 	)
 
 
-func _add_centered(panel: Control, blocking := false) -> void:
-	var holder := CenterContainer.new()
-	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	if not blocking:
-		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	else:
-		# A term result is the one modal moment: dim the world behind it so the
-		# verdict owns the screen, and eat clicks -- the election already paused
-		# the clock; the backdrop makes the map agree (V2.9). The dim is a
-		# SIBLING of the holder, not a child: a CenterContainer collapses a
-		# full-rect child to its minimum size. Added before the holder so it
-		# draws below the panel and above everything added earlier (the map,
-		# the windows), with the HUD -- added later -- still readable above it.
-		# It follows the panel's visibility, so every existing show()/hide()
-		# call site keeps working unchanged.
-		var dim := ColorRect.new()
-		dim.color = Color(0.02, 0.03, 0.05, 0.55)
-		dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		dim.mouse_filter = Control.MOUSE_FILTER_STOP
-		dim.visible = false
-		add_child(dim)
-		# The HOLDER follows the panel too, not just the dim. A Container
-		# defaults to MOUSE_FILTER_PASS, so a full-rect blocking holder goes on
-		# taking every click on the screen while the panel inside it is
-		# invisible -- which is exactly what V2.9 shipped when it made the
-		# election panel blocking: `_election_panel.hide()` hid the panel, the
-		# holder stayed up, and a new game was dead to the mouse from its first
-		# frame. `_set_pause_menu_visible()` had been hiding its own holder by
-		# hand for that reason since U5a; doing it here means the next blocking
-		# panel cannot forget -- and that call site now sets the PANEL only,
-		# because a second writer would be reverted by this one: hiding the
-		# holder re-emits visibility_changed on the panel while the panel's own
-		# flag is still true, and this handler would put the holder back.
-		panel.visibility_changed.connect(func():
-			dim.visible = panel.visible
-			holder.visible = panel.visible
-		)
-	holder.add_child(panel)
-	add_child(holder)
-
-
-## The panel alone -- `_add_centered()`'s blocking branch owns the holder and the
+## The panel alone -- `ScreenStack.add()`'s dimmed branch owns the holder and the
 ## dim, and it is the ONLY owner. Setting the holder here as well used to be the
 ## fix for a blocking CenterContainer that goes on swallowing map clicks while
 ## the panel inside it is invisible; now it would be a write the panel's own
@@ -1090,7 +1007,7 @@ func _add_centered(panel: Control, blocking := false) -> void:
 ## so the two cannot disagree and the order of two lines cannot decide whether
 ## the screen is clickable.
 ##
-## `_unhandled_input()` still reads the HOLDER to ask whether the menu is open.
+## `tests/test_shell.gd` still reads the HOLDER to ask whether the menu is open.
 ## That stays true: the holder now mirrors the panel by construction.
 func _set_pause_menu_visible(shown: bool) -> void:
 	_pause_menu.visible = shown
@@ -1117,13 +1034,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed:
 		return
 
-	# B16 (playtest): with the save dialog open, every letter here was routed
-	# straight at the windows behind it -- or typed into the dialog's name field
-	# once it held focus -- and Escape did nothing. While the dialog is visible
-	# the panel-hotkey branch is skipped (the toggle in the match below still
-	# runs, so S keeps closing it) and Escape closes the dialog first, before
-	# anything else in the match can eat the key.
-	var save_dialog_open: bool = _save_load_panel != null and _save_load_panel.visible
+	# V5.1-c2.1. One question decides whether a letter may open a window: is the
+	# screen still the player's to navigate -- the map, a domain, the inbox -- or
+	# does a scene, a system screen or an armed reticle own it? B16's trap (with
+	# the save dialog open, every letter was routed at the windows behind it) is
+	# now one case of that rule rather than a flag of its own; S keeps its toggle
+	# in the match below, so it can still close the dialog it opened.
+	var navigable: bool = _stack == null or _stack.accepts_hotkeys()
 
 	# V2.1c. The six letters U2 bound to tabs still open the six panels they
 	# opened, and the other eight windows have a letter now -- but the map from
@@ -1132,7 +1049,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# A key TOGGLES rather than selects, because with no rail there is nothing
 	# showing which panel is "current": pressing B twice puts the player back on
 	# the map.
-	if not save_dialog_open and _windows != null:
+	if navigable and _windows != null:
 		var by_key: String = _windows.id_for_key(event.keycode)
 		if not by_key.is_empty():
 			_toggle_window(by_key)
@@ -1140,33 +1057,20 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	match event.keycode:
 		KEY_ESCAPE:
-			# B16: the open save dialog is the topmost thing Escape can mean.
-			# Checked before the armed placement and the pause menu. A placement
-			# CAN be armed with the dialog open (its holder is
-			# MOUSE_FILTER_IGNORE, so the map under it stays clickable) -- the
-			# ordering is a choice, not an impossibility: this press closes the
-			# dialog, the reticle survives it and dies on the next Escape.
-			if save_dialog_open:
-				# close() rather than a bare hide: the pause-menu restore hangs
-				# off `closed`, and this path must not strand the menu behind.
-				_save_load_panel.close()
+			# V5.1-c2.1. The stack puts away what is on top: the save dialog
+			# before the armed reticle (B16 -- a reticle CAN be armed with the
+			# dialog open, its holder lets the map through), the reticle before
+			# the pause menu (V2.8 -- Escape ending the thing it was offered for
+			# is the mode's own contract), then a scene, then the domain. The
+			# pause menu opens only when nothing there would go: the bare map,
+			# or a term result, which only its own button dismisses.
+			if _stack.cancel():
 				return
-			# V2.8. An armed placement cancels FIRST and the pause menu never
-			# opens -- Escape ending the thing it was offered for is the mode's
-			# own contract, and a pause menu over a waiting reticle is a second
-			# modal answering for the first.
-			if _armed_energy_action != "":
-				_armed_energy_action = ""
-				_energy_panel.clear_armed()
-				_map_view.end_placement()
-				return
-			if _pause_menu == null:
-				return
-			if _pause_menu.get_parent().visible:
-				_close_pause_menu()
-			else:
+			if _pause_menu != null:
 				_open_pause_menu()
 		KEY_SPACE:
+			# A scene owns the keyboard (QA on #54: the clock ran behind "RE-ELECTED").
+			if not navigable: return
 			_toggle_pause_by_hand()
 			_update_top_bar()
 		KEY_1, KEY_2, KEY_3:
@@ -1174,11 +1078,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_top_bar()
 		KEY_M:
 			# M was the Europe tab. The map is now always underneath, so the
-			# useful thing that key can do is clear everything off it.
+			# useful thing that key can do is clear everything off it -- a
+			# navigation key, so not under a scene (it swept the summit away).
+			if not navigable:
+				return
 			if _windows != null:
 				_windows.close_all()
-			if _hud != null:
-				_hud.action_bar.close_subrow()
 		KEY_S:
 			if _save_load_panel != null:
 				if _save_load_panel.visible:
@@ -1194,7 +1099,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## in the game used to answer with one corner number changing (F3).
 func _fiscal_committed(label: String, title: String, before: Dictionary) -> void:
 	_queue_effect(label, before)
-	_hud.message_stack.push(title, tr("Deficit now %s%% of GDP.") % Num.f(float(_state.player().deficit_pct_gdp), 2))
+	_hud.inbox.push(title, tr("Deficit now %s%% of GDP.") % Num.f(float(_state.player().deficit_pct_gdp), 2))
 	_update_top_bar()
 
 
@@ -1219,6 +1124,10 @@ func _toggle_window(id: String) -> void:
 func _on_nation_clicked(nation_id: String) -> void:
 	if _nation_panel == null or _windows == null:
 		return
+	# V5.1-c2.3. The mouse's route to a tab is refused under a scene, as the
+	# keys are (V5.1-c2.1): a click on Germany under a summit closed the summit.
+	if _stack != null and not _stack.accepts_hotkeys():
+		return
 	# Content before the window opens: open() places the frame by centring its
 	# size, and a nation panel that has not been told which nation it is showing
 	# reports the size of an empty one.
@@ -1233,6 +1142,15 @@ var _armed_energy_action: String = ""
 func _on_energy_order_armed(action_id: String) -> void:
 	_armed_energy_action = action_id
 	_map_view.begin_placement()
+	_stack.hold(ScreenStack.PLACEMENT, _cancel_placement)
+
+
+## Escape's end of the armed mode, through the stack.
+func _cancel_placement() -> void:
+	_armed_energy_action = ""
+	_energy_panel.clear_armed()
+	_map_view.end_placement()
+	_stack.release(ScreenStack.PLACEMENT)
 
 
 ## THE POINT MUST LAND IN THE PLAYER'S OWN COUNTRY, and the refusal is loud rather
@@ -1245,6 +1163,7 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 	var action_id := _armed_energy_action
 	_armed_energy_action = ""
 	_energy_panel.clear_armed()
+	_stack.release(ScreenStack.PLACEMENT)
 	var region_id := Region.region_at_lonlat(_loader.region_rings, lon, lat)
 	var ns = _state.nations[_state.player_nation_id]
 	var mine := false
@@ -1252,13 +1171,13 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 		if region.id == region_id:
 			mine = true
 	if not mine:
-		# push(title, body) -- MessageStack has never had a push_card(), so until the
+		# push(title, body) -- Inbox has never had a push_card(), so until the
 		# V2.8 review this line raised instead of speaking, and the refusal the
 		# comment above calls "loud rather than silent" reached the player as a
 		# console error. The order is already consumed by here (the arm was cleared
 		# above and map_view ended placement), so with nothing on screen the player
 		# had to re-arm without being told why.
-		_hud.message_stack.push(tr("Not your ground"), tr("That point is not in %s.") % ns.nation_name)
+		_hud.inbox.push(tr("Not your ground"), tr("That point is not in %s.") % ns.nation_name)
 		return
 
 	var access: Dictionary = Regions.accessibility_for(ns, _state.regions.get(ns.id, []), _state.region_graph)
@@ -1382,7 +1301,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 				# here rather than serialised, which is the same call V1.3f made for
 				# foreign_acts in reverse: that one is state the sim already writes,
 				# this one is a difference the UI can see for itself.
-				_month_capture["obliged_before"] = _obliged_count()
+				_month_capture["obliged_before"] = _world_news.obliged_count()
 			"Events":
 				# `before` is captured for the U4 decision delta, because a default
 				# arriving is a thing that happened to the player's budget with no
@@ -1444,22 +1363,22 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 					assembly_release = release_result.duplicate(true)
 			_month_capture["assembly_release"] = assembly_release
 		"Statute":
-			_announce_assembly_events(_month_capture.get("assembly_release", {}))
+			_assembly_news.announce(_month_capture.get("assembly_release", {}))
 		"Defence":
-			_card_obligations(int(_month_capture.get("obliged_before", 0)))
+			_world_news.card_obligations(int(_month_capture.get("obliged_before", 0)))
 			# V1.3f: and now the nine act on their own initiative inside that tick,
 			# so whatever they just did is read off the record and put in front of
 			# the player.
-			_card_foreign_acts(year, month)
+			_world_news.card_foreign_acts(year, month)
 		"Industry":
-			_announce_industry_events()
+			_industry_news.announce()
 		"Unrest":
 			# V1.5c: the unions act inside that tick, and whatever they just did is
 			# read off the record and put in front of the player.
-			# _card_foreign_acts()'s split exactly -- the sim writes the record, the
+			# _world_news.card_foreign_acts()'s split exactly -- the sim writes the record, the
 			# UI decides what earns a card, and src/sim/ never reads the list back,
 			# which tests/test_unrest.gd asserts over the whole directory.
-			_card_unrest_acts(year, month)
+			_world_news.card_unrest_acts(year, month)
 		"Events":
 			_card_events(year, month, _month_capture.get("desk_before", {}),
 				_month_capture.get("event_before", {}))
@@ -1467,421 +1386,11 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 		"Characters":
 			# T5's surface: the acts go to the message stack as cards; the record is
 			# not state.
-			_card_character_acts(report["character_acts"])
-
-
-## V4.7b: the autonomy machine's two player-facing events, as cards. The
-## announced-state memory is main-side (UI): the sim stays free of the card
-## stack, and a dismissed card is remembered as announced -- DISMISSAL NEVER
-## ANSWERS, the bid and the window lapse on their own clocks; the card only
-## has to stop repeating.
-var _announced_bids := {}
-var _announced_failures := {}
-var _industry_card_firms := {}   # card id -> company_id; the route opens the
-# companies window whole -- no focus-by-firm yet (the open deferral above) --
-# so the value is carried for the day that lands, not read today.
-var _bid_cards := {}             # company_id -> its LIVE bid card, taken away when the bid resolves
-var _failure_cards := {}         # company_id -> its LIVE failure card, same contract
-
-func _announce_industry_events() -> void:
-	var ns = _state.player()
-	if ns == null:
-		return
-	var bid: Dictionary = Industry.pending_bid(_state, ns, _loader)
-	# The memory clears PER FIRM, when that firm's own bid ends -- the
-	# failure branch's design below, and the pass-6 fleet's find that the
-	# bid branch was still the all-clear its own comment forswore: with two
-	# bids pending, answering A kept A's entry (pending_bid only shows the
-	# FIRST bid), and a re-bid on A announced nothing.
-	var live_bid_ids := {}
-	for company_id in ns.companies.keys():
-		if String(ns.companies[company_id].get("bid_bidder", "")) != "":
-			live_bid_ids[company_id] = true
-	for announced_id in _announced_bids.keys():
-		if not live_bid_ids.has(announced_id):
-			_announced_bids.erase(announced_id)
-	# A resolved card is TAKEN AWAY -- PR 43's B4 contract, which these two
-	# cards dishonoured until the pass-8 fleet caught it: after block, allow
-	# or lapse the column still asserted an offer that no longer existed.
-	for firm_id in _bid_cards.keys():
-		if not live_bid_ids.has(firm_id):
-			_hud.message_stack.dismiss(String(_bid_cards[firm_id]))
-			_bid_cards.erase(firm_id)
-	if bid.is_empty():
-		_announced_bids.clear()
-	else:
-		var bid_firm := String(bid["company_id"])
-		if not _announced_bids.has(bid_firm):
-			_announced_bids[bid_firm] = true
-			var card_id: String = _hud.message_stack.push(
-				tr("Foreign takeover bid"),
-				tr("%s has offered %s bn for %s. The offer lapses in %d months.") % [
-					_loader.nation_name(String(bid["bidder_nation"])), Num.f(float(bid["price_eur_bn"]), 1),
-					_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])])
-			_bid_cards[bid_firm] = card_id
-			_industry_card_firms[card_id] = bid_firm
-	# The window counts down on EVERY live card, read from the register --
-	# not only pending_bid's first (the pass-9 fleet's find: with two bids
-	# pending, the second firm's card froze at its announce-time months and
-	# could lapse on stale text). The body ages IN PLACE -- the set_body
-	# law, because dismiss-then-push moves the card to the bottom and the
-	# position IS the card's age. A player-dismissed id is a clean no-op:
-	# DISMISSAL NEVER ANSWERS, and never resurrects.
-	for firm_id in _bid_cards.keys():
-		if not live_bid_ids.has(firm_id):
-			continue
-		var entry: Dictionary = ns.companies[firm_id]
-		var parts: PackedStringArray = String(entry.get("bid_bidder", "")).split("|")
-		_hud.message_stack.set_body(String(_bid_cards[firm_id]),
-			tr("%s has offered %s bn for %s. The offer lapses in %d months.") % [
-				_loader.nation_name(parts[0] if parts.size() > 0 else ""),
-				Num.f(float(entry.get("bid_price_eur_bn", 0.0)), 1),
-				_loader.firm_name(ns.id, String(firm_id)),
-				int(entry.get("bid_months_left", 0))])
-	var failing_now := Industry.failing(_state, ns, _loader)
-	# The memory clears PER FIRM, when that firm's own window closes -- the
-	# bid branch's design, not the all-clear the first draft used. Clearing
-	# only when NO firm failed would keep a rescued firm's entry alive while
-	# another window stood, and its RE-failure inside that window would then
-	# be card-silent: the write-once class the comment above names.
-	var failing_ids := {}
-	for failure in failing_now:
-		failing_ids[String(failure["company_id"])] = true
-	for announced_id in _announced_failures.keys():
-		if not failing_ids.has(announced_id):
-			_announced_failures.erase(announced_id)
-	for firm_id in _failure_cards.keys():
-		if not failing_ids.has(firm_id):
-			_hud.message_stack.dismiss(String(_failure_cards[firm_id]))
-			_failure_cards.erase(firm_id)
-	for failure in failing_now:
-		var company_id := String(failure["company_id"])
-		var failure_body := tr("%s is failing. The rescue window stands for %d months; past it the collapse is committed.") % [
-			_loader.firm_name(ns.id, company_id), int(failure["months_left"])]
-		if _announced_failures.has(company_id):
-			if _failure_cards.has(company_id):
-				_hud.message_stack.set_body(String(_failure_cards[company_id]), failure_body)
-			continue
-		_announced_failures[company_id] = true
-		var card_id: String = _hud.message_stack.push(tr("Firm in difficulty"), failure_body)
-		_failure_cards[company_id] = card_id
-		_industry_card_firms[card_id] = company_id
-
-## V4.2 T6: the assembly's own events, as cards -- _announce_industry_events's
-## idiom whole. The announced-state memory is main-side (the sim stays free of
-## the card stack); dismissal never answers (an unendorsed bill still divides);
-## and a tabling card is TAKEN AWAY when its bill resolves, its replacement
-## being the division card and not a stale offer to endorse a bill the house
-## has already settled.
-var _announced_assembly_bills := {}
-var _assembly_cards := {}         # bill_id -> its LIVE tabling card
-var _assembly_result_month := -1  # absolute month whose division card was pushed
-var _assembly_release_month := -1  # absolute month whose release card was pushed
-
-func _announce_assembly_events(assembly_release: Dictionary = {}) -> void:
-	var ns = _state.player()
-	if ns == null:
-		return
-	var live_ids := {}
-	for bill_id in ns.assembly_bills.keys():
-		live_ids[bill_id] = true
-	for announced_id in _announced_assembly_bills.keys():
-		if not live_ids.has(announced_id):
-			_announced_assembly_bills.erase(announced_id)
-	for bill_id in _assembly_cards.keys():
-		if not live_ids.has(bill_id):
-			_hud.message_stack.dismiss(String(_assembly_cards[bill_id]))
-			_assembly_cards.erase(bill_id)
-	for bill_id in ns.assembly_bills.keys():
-		var entry: Dictionary = ns.assembly_bills[bill_id]
-		var body := _assembly_bill_body(entry)
-		if _announced_assembly_bills.has(bill_id):
-			if _assembly_cards.has(bill_id):
-				_hud.message_stack.set_body(String(_assembly_cards[bill_id]), body)
-			continue
-		_announced_assembly_bills[bill_id] = true
-		var backed := String(entry.get("backer_firm", "")) != ""
-		var card_id: String = _hud.message_stack.push(
-			tr("A chief before the assembly") if backed else tr("Private member's bill"), body)
-		_assembly_cards[bill_id] = card_id
-	# The release card, handed in from _on_month_step. The capture there is
-	# what lets a COLLISION month -- a PMB dividing the same tick an
-	# assembly-origin hold releases -- push both cards: the register read
-	# below holds only the last writer. The release keeps its OWN memory slot
-	# because both results of a collision carry the same
-	# assembly_division_month stamp; one shared var would swallow the second
-	# card of the pair exactly as the shared register did.
-	if not assembly_release.is_empty() \
-			and int(assembly_release.get("assembly_division_month", -1)) != _assembly_release_month:
-		_assembly_release_month = int(assembly_release.get("assembly_division_month", -1))
-		_hud.message_stack.push(tr("The assembly divides"), _assembly_result_body(assembly_release))
-	# The division card. The assembly_bill marker on ns.last_law_result says
-	# the last division was the assembly's; the memory keys the DIVISION'S OWN
-	# MONTH -- the assembly_division_month stamp the machine writes into the
-	# result -- and not the current month, which is what made a quiet month
-	# whose tick merely found the old result still on the register re-announce
-	# it every month until a new law event overwrote it. The released flag is
-	# excluded since the pass-4 capture: a release that stayed on the register
-	# (a month where the assembly's tick divided nothing) arrives through the
-	# parameter above, and firing here too would push the same card twice.
-	# The in-tray keeps no history, so the stamp is the one per-division fact
-	# left once the entry is erased.
-	var result: Dictionary = ns.last_law_result
-	if bool(result.get("assembly_bill", false)) \
-			and not bool(result.get("released", false)) \
-			and int(result.get("assembly_division_month", -1)) != _assembly_result_month:
-		_assembly_result_month = int(result.get("assembly_division_month", -1))
-		_hud.message_stack.push(tr("The assembly divides"), _assembly_result_body(result))
-
-func _assembly_bill_body(entry: Dictionary) -> String:
-	var law_name := _law_title(String(entry.get("law_id", "")))
-	var months := int(entry.get("months_left", 0))
-	var firm_id := String(entry.get("backer_firm", ""))
-	# The endorsement transition inside the bill's life -- the card must not
-	# keep offering a stand the sim now refuses (the panel drops its button
-	# for the same reason).
-	if float(entry.get("endorse_bonus", 0.0)) > 0.0:
-		return tr_n("%s reaches the floor in %d month. The president's stand is on the record -- endorsed.", "%s reaches the floor in %d months. The president's stand is on the record -- endorsed.", months) % [
-			law_name, months]
-	if firm_id != "":
-		var chief := _loader.person_name(String(entry.get("backer_chief", "")))
-		var firm := _loader.firm_name(_state.player_nation_id, firm_id)
-		if chief == "":
-			return tr_n("%s's chief backs %s. The assembly divides in %d month; whether the president stands behind it is the president's to take.", "%s's chief backs %s. The assembly divides in %d months; whether the president stands behind it is the president's to take.", months) % [
-				firm, law_name, months]
-		return tr_n("%s's chief %s backs %s. The assembly divides in %d month; whether the president stands behind it is the president's to take.", "%s's chief %s backs %s. The assembly divides in %d months; whether the president stands behind it is the president's to take.", months) % [
-			firm, chief, law_name, months]
-	return tr_n("%s reaches the floor in %d month. Endorse it, or let the backbench stand alone.", "%s reaches the floor in %d months. Endorse it, or let the backbench stand alone.", months) % [
-		law_name, months]
-
-func _assembly_result_body(result: Dictionary) -> String:
-	var law_name := _law_title(String(result.get("law_id", "")))
-	# A COURT STRIKE outranks every other wording, and it is checked FIRST
-	# (law_panel's own order) because it fires on BOTH paths that reach this
-	# builder: a release the court stopped still carries released/assembly_bill,
-	# and a struck division still carries its tally. "Comes into force" and
-	# "defeated, N ayes" against a bill the court stopped are both the card
-	# contradicting the state it announces; the court sentence prints alone.
-	if bool(result.get("struck_down", false)):
-		return tr("The court has struck %s down.") % law_name
-	# A SUSPENSIVE REFUSAL IS A HOLD, not a defeat (law_panel's own reading --
-	# one word for different things is the readout bug this project keeps
-	# finding), and a blocked one was beaten somewhere the lower-house tally
-	# below does not show. Both wordings come off the outcome keys the result
-	# actually carries; only the bare false reads "defeated".
-	if bool(result.get("held_by_upper", false)):
-		return tr("The assembly carried %s and the %s has suspended it — it comes into force in %d months.") % [
-			law_name, String(result.get("upper_chamber", tr("second chamber"))), int(result.get("held_months", 0))]
-	if bool(result.get("blocked_by_upper", false)):
-		return tr("The assembly carried %s and the %s has blocked it.") % [
-			law_name, String(result.get("upper_chamber", tr("second chamber")))]
-	# The held bill's release: the coming-into-force event, not a division --
-	# the release result carries no seat tally, and printing zeroes beside
-	# "carried" would contradict its own numbers.
-	if bool(result.get("released", false)):
-		return tr("The %s's hold has run out — %s comes into force.") % [
-			String(result.get("upper_chamber", tr("second chamber"))), law_name]
-	return (tr("The assembly has carried %s, %d ayes to %d noes.") if bool(result.get("passed", false)) else tr("The assembly has defeated %s, %d ayes to %d noes.")) % [
-		law_name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))]
-
-func _law_title(law_id: String) -> String:
-	return Strings.law_name(_law_by_id(law_id), law_id)
-
-## The player's obliged deployments, right now. Only the obliged ones: a chosen
-## deployment is a command the player just issued and does not need a card telling
-## them they issued it.
-func _obliged_count() -> int:
-	if _state == null:
-		return 0
-	var n := 0
-	for ally_id in Defence.deployments_of(_state, _state.player_nation_id).keys():
-		if Defence.deployment_kind(_state, _state.player_nation_id, String(ally_id)) == DefenceK.DEPLOYMENT_OBLIGED:
-			n += 1
-	return n
-
-
-## V1.3g. An alliance obligation opening is the one thing in this game that puts a
-## standing charge on the player's budget with no command behind it, so it is
-## exactly the thing that must not arrive silently -- the player would otherwise see
-## a deficit move for a reason nothing on screen names, which is the class of
-## failure docs/trade-model.md's unread `refused_by_partner` belongs to.
-func _card_obligations(before: int) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-	var now := _obliged_count()
-	if now <= before:
-		return
-
-	var ns = _state.player()
-	_hud.message_stack.push(
-		tr("Alliance obligation"),
-		tr("Forces are committed under a defensive pact. The budget carries %s%% of GDP for as long as it stands, and only abandoning the pact ends it.") % Num.f((
-			0.0 if ns == null else ns.deployment_bill_pct_gdp
-		), 2),
-	)
-
-
-## Put this month's foreign acts in the message column. V1.3f, and the first thing
-## in the game that ever calls message_stack.push().
-##
-## U5a shipped that column as furniture with a stated reason -- the thing that
-## fills it is events, which docs/tiers/v1.md schedules at V1.8, and wiring it to
-## invented content would have cost that argument. An act by a simulated nation is
-## not invented content; it is state src/sim/ just wrote. So this spends nothing:
-## V1.8 still adds calls rather than a column.
-##
-## The sim writes the record and the UI decides what is worth showing, which is the
-## data -> sim -> ui direction engine-decision.md rule 2 states. src/sim/ never
-## touches this file and GameState.foreign_acts is never read back inside src/sim/
-## -- tests/test_foreign_policy.gd asserts that, because a decision consulting it
-## would be the grievance ledger docs/foreign-policy-model.md is built without.
-##
-## Filtered, and it has to be: nine nations on a cadence produce more acts than the
-## column's six slots, and an unfiltered feed would push a sanction aimed at the
-## player off the bottom before they read it. Anything aimed AT the player always
-## cards; anything between two other nations needs the player to have a real stake
-## in the actor. The threshold reuses the model's own stake vector rather than
-## inventing a second notion of "relevant".
-func _card_foreign_acts(year: int, month: int) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-
-	var player_id: String = _state.player_nation_id
-	var floor_share: float = ForeignPolicy.even_share(_state, player_id) * ForeignPolicyK.CARD_MIN_STAKE_SHARE
-	var news_of_others := SettingsPanel.foreign_news()
-
-	# Oldest first, so the newest act ends up at the top of the column: push()
-	# appends and the stack drops from the front when it overflows.
-	var fresh: Array = []
-	for act in _state.foreign_acts:
-		if int(act["year"]) != year or int(act["month"]) != month:
-			break
-		fresh.push_front(act)
-
-	# Grouped by action, V2.9: four allies state-visiting in one month is ONE
-	# piece of news, not four cards -- five near-identical cards were pushing
-	# decisions off a six-slot column (playtest 2026-09-05). The filters below
-	# are the original stake-floor gates, unchanged; only the carding is grouped.
-	var by_action: Dictionary = {}
-	for act in fresh:
-		var actor_id := String(act["actor_id"])
-		var target_id := String(act["target_id"])
-		if actor_id == player_id:
-			continue
-		# V5.1-0c: news between two other nations is the player's to ask for.
-		if target_id != player_id and (not news_of_others or ForeignPolicy.stake(_state, player_id, actor_id) < floor_share):
-			continue
-
-		var key := Strings.record_action_name(act)
-		if not by_action.has(key):
-			by_action[key] = {"aimed": [], "elsewhere": []}
-		if target_id == player_id:
-			by_action[key]["aimed"].append({
-				"actor": _nation_name(actor_id),
-				"reason": String(act["reason"]),
-			})
-		else:
-			by_action[key]["elsewhere"].append({
-				"actor": _nation_name(actor_id),
-				"body": "%s: %s." % [key, _nation_name(target_id)],
-			})
-
-	for action_name in by_action:
-		var slot: Dictionary = by_action[action_name]
-		var aimed: Array = slot["aimed"]
-		if not aimed.is_empty():
-			# An act aimed at the player names the player in the TITLE and not
-			# again in the body: "Austria -> you / State Visit: France" reads as
-			# though France were a third country involved somehow.
-			var title: String = (
-				tr("%s → you") % String(aimed[0]["actor"]) if aimed.size() == 1
-				else tr("%d× %s → you") % [aimed.size(), action_name]
-			)
-			var who: String = (
-				"%s." % String(aimed[0]["actor"]) if aimed.size() == 1
-				else "%s." % ", ".join(aimed.map(func(a): return String(a["actor"])))
-			)
-			# The model computes a reason and this is the only place it is ever
-			# read. Shipping the key unread would be V1.3b's `refused_by_partner`
-			# a third time -- a field src/sim/ fills in and no surface shows,
-			# which this block has now recorded twice and fixed once. The first
-			# act's reason stands for the group: same action, same month.
-			_hud.message_stack.push(title, "%s %s %s" % [
-				action_name, who, _act_reason_text(String(aimed[0]["reason"])),
-			])
-		else:
-			for line in slot["elsewhere"]:
-				_hud.message_stack.push(String(line["actor"]), String(line["body"]))
-
-
-## V1.5c. What the unions did this month, as a card.
-##
-## No filter, unlike _card_foreign_acts() above, and the asymmetry is the content rather
-## than an oversight: nine nations on a cadence produce more acts than the column has
-## slots, where the player's own country strikes at most once a year. Every act is
-## aimed at the player by definition, so there is nothing to be relevant ABOUT.
-##
-## The LABEL is read here and nowhere in src/sim/ -- unrest_constants.ACT_LABELS carries
-## `protest` and `strike`, the sim picks one off the stock, and this file owns the
-## wording. That is the same split nation_panel.gd has for a refusal and
-## _act_reason_text() below has for a reason, and it is what makes one machine with two
-## names honest rather than two machines wearing the row's vocabulary.
-func _card_unrest_acts(year: int, month: int) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-	for act in _state.unrest_acts:
-		if int(act["year"]) != year or int(act["month"]) != month:
-			continue
-		if String(act["nation_id"]) != _state.player_nation_id:
-			continue
-		# V2.6b1. The card names the PLACE, and it reads it off the act's own record
-		# rather than re-deriving it: a past act's site cannot be recovered once the
-		# shares have moved, which is why unrest.gd writes it down at the moment it
-		# happens. Absent -- every act on a version-29 save, and every nation with no
-		# site -- the sentence falls back to the national wording it has always had,
-		# so an old save reads correctly rather than printing an empty place.
-		var city := String(act.get("city_name", ""))
-		var region := String(act.get("region_name", ""))
-		var body := tr("Grievance stands at %.0f of 100. Output will carry it for months.") % float(act["unrest_pct"])
-		if city != "" and region != "":
-			body = tr("%s, %s. Grievance stands at %.0f of 100. Output will carry it for months.") % [
-				city, region, float(act["unrest_pct"]),
-			]
-		_hud.message_stack.push(_unrest_title(String(act["label"])), body)  # i18n: row-ok a key the title maps
-
-
-## V4.3's interim surface: one card per act, named off the act's own record --
-## the person's NAME is resolved here in the UI, never in src/sim/ (the
-## re-key's law, still). T5's People-panel and hover-card surfaces build on
-## the same records; this column's card exists so an act is never silent.
-func _card_character_acts(acts: Array) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-	for act in acts:
-		var who := _loader.person_name(String(act["person_id"]))
-		var kind := String(act["act"])
-		var detail: Dictionary = act.get("detail", {})
-		var title := tr("The bench stirs")
-		var body := tr("%s acts.") % who if who != "" else tr("Someone acts.")
-		match kind:
-			"resign":
-				title = tr("A resignation")
-				body = tr("%s resigns the premiership. The party holds the office; the government pays in standing.") % who
-			"defect":
-				title = tr("A defection")
-				body = tr("%s crosses the floor. The seat stays with the whip.") % who
-			"challenge":
-				var deposed := _loader.person_name(String(detail.get("deposed", "")))
-				title = tr("A leadership challenge")
-				body = tr("%s takes the leadership. %s stands down.") % [who, deposed] if deposed != "" else tr("%s takes the leadership. The incumbent stands down.") % who
-			"brief_against":
-				title = tr("A leak")
-				body = tr("%s briefs against the government.") % who
-		_hud.message_stack.push(title, body)
+			_world_news.card_character_acts(report["character_acts"])
 
 
 ## V1.8. What arrived on the desk this month, and what the clock decided when the
-## player said nothing. The fifth caller of message_stack.push() and the FIRST EVER
+## player said nothing. The fifth caller of inbox.push() and the FIRST EVER
 ## CONSUMER of its card_activated signal, which U5a emitted and connected to nothing.
 ##
 ## U5a's call 3 said the column ships as furniture because the thing that fills it is
@@ -1894,7 +1403,7 @@ func _card_character_acts(acts: Array) -> void:
 ## the player's government with no button pressed -- _card_appointment()'s class exactly,
 ## and the sharper case, because with an appointment the player at least booked it.
 func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictionary) -> void:
-	if _hud == null or _hud.message_stack == null or _state == null:
+	if _hud == null or _hud.inbox == null or _state == null:
 		return
 	var ns = _state.player()
 	if ns == null:
@@ -1935,7 +1444,7 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		var where := String(record.get("region_name", ""))
 		if where != "":
 			named = "%s — %s" % [named, where]
-		_hud.message_stack.push(tr("Decided for you"),
+		_hud.inbox.push(tr("Decided for you"),
 			tr("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)])
 		defaulted_names.append(Strings.record_event_name(record))
 
@@ -1982,9 +1491,7 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 			sting_severity = maxi(sting_severity, severity)
 		var holds := MessageSettings.allows(_messages, ev.category, severity, "pause")
 		if holds:
-			_paused_for_decision = true
-			_clock.paused = true
-			_hud.clock_cluster.refresh(_clock)
+			_hold_for_decision()
 		_unseen_events[event_id] = holds
 		if MessageSettings.allows(_messages, ev.category, severity, "popup"):
 			_push_decision_card(ev, entry)
@@ -2029,9 +1536,7 @@ func _guard_lapses(ns) -> void:
 		if ev == null:
 			continue
 		_unseen_events[event_id] = true
-		_paused_for_decision = true
-		_clock.paused = true
-		_hud.clock_cluster.refresh(_clock)
+		_hold_for_decision()
 		if not _event_cards.values().has(event_id):
 			_push_decision_card(ev, entry)
 
@@ -2040,6 +1545,8 @@ func _guard_lapses(ns) -> void:
 ## place in the title for a sited event, the plate beside it. One builder for the
 ## arrival and the lapse guard, so the guard's card is the arrival's card.
 func _push_decision_card(ev, entry: Dictionary) -> void:
+	if ev == null:
+		return  # a desk entry whose event the content no longer has (a load)
 	var event_id := String(entry.get("event_id", ""))
 	var left := int(entry.get("months_left", 0))
 	# The card itself is the answer surface. Since V4.8c a quiet arrival's card
@@ -2063,7 +1570,7 @@ func _push_decision_card(ev, entry: Dictionary) -> void:
 	# one crisis, one image, in both places it is read. Null (no art yet)
 	# draws the card exactly as before -- missing art is silent.
 	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
-	var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions, art)
+	var card_id: String = _hud.inbox.push(title, _decision_body(ev, left), actions, art)
 	_event_cards[card_id] = event_id
 
 
@@ -2080,7 +1587,7 @@ func _refresh_decision_bodies(ns) -> void:
 			continue
 		var ev = Events.event_by_id(_loader, event_id)
 		if ev != null:
-			_hud.message_stack.set_body(String(card_id), _decision_body(ev, int(left_by_id[event_id])))
+			_hud.inbox.set_body(String(card_id), _decision_body(ev, int(left_by_id[event_id])))
 
 
 ## Whether any unseen id holds the clock -- V4.8c's reading of what used to be
@@ -2143,11 +1650,11 @@ func _decision_holds_clock() -> bool:
 ## handler erases from _event_cards -- re-entry is harmless; the handler also
 ## erases from _unseen_events, which is a no-op when the caller already erased it.
 func _dismiss_event_cards(event_id: String) -> void:
-	if _hud == null or _hud.message_stack == null:
+	if _hud == null or _hud.inbox == null:
 		return
 	for card_id in _event_cards.keys().duplicate():
 		if String(_event_cards.get(card_id, "")) == event_id:
-			_hud.message_stack.dismiss(card_id)
+			_hud.inbox.dismiss(card_id)
 
 
 ## The decision card's body: the event's summary line, then the deadline -- the
@@ -2159,27 +1666,10 @@ func _decision_body(ev, left: int) -> String:
 	]
 
 
-func _unrest_title(label: String) -> String:
-	match label:
-		"protest": return tr("Demonstrations")
-		"strike": return tr("General strike")
-	return tr("Industrial action")
-
-
-## The sentence for a ForeignPolicy.ACT_REASON_* key. src/sim/ returns keys and
-## src/ui/ owns the wording, the same split nation_panel.gd has for a refusal and
-## orgs_panel.gd for a vote.
-func _act_reason_text(key: String) -> String:
-	match key:
-		ForeignPolicy.ACT_REASON_INTEREST: return tr("Their interests run this way.")
-		ForeignPolicy.ACT_REASON_GOODWILL: return tr("Mending what had soured.")
-		ForeignPolicy.ACT_REASON_GRIEVANCE: return tr("Answering a grievance.")
-	return ""
-
-
-func _nation_name(nation_id: String) -> String:
-	var n = _loader.nations.get(nation_id)
-	return String(n.nation_name) if n != null else nation_id
+func _setup_news() -> void:
+	for writer in [_world_news, _industry_news, _assembly_news]:
+		writer.setup(_state, _loader, _hud.inbox)
+	_stack.tips.setup(_state, _loader)
 
 
 ## U6a, and the first time anything but the top bar has cared what day it is.
@@ -2202,76 +1692,19 @@ func _on_day_advanced(year: int, month: int, day: int) -> void:
 	_update_top_bar()
 
 
-## The dispatcher. src/sim/calendar.gd hands back entries and knows nothing about
-## what they mean; this fires the command. Every system named here was already
-## preloaded by this file, so the diary added no dependency to it -- and composing
-## two systems' effects is the orchestrator's job, which is the call
-## docs/cabinet-model.md records for Cabinet.seat() and the reason a scheduler
-## reaching into three systems was refused.
-##
-## The `match` is a fixed, small set of system verbs -- the same class as
-## _act_reason_text()'s key-to-wording map -- not per-nation or per-law content,
-## so docs/engine-decision.md Rule 1 holds.
+## The diary's due appointments, fired by DiaryDriver (src/ui/diary_driver.gd) in the
+## diary's order; each outcome's UI half lands here before the next entry fires.
 func _resolve_appointments(year: int, month: int, day: int) -> void:
-	var due: Array = Calendar.due(_state, year, month, day)
-	if due.is_empty():
-		return
-
-	var ns = _state.player()
-	var party_list: Array = _loader.parties.get(_state.player_nation_id, [])
-
-	for entry in due:
-		# THE BASELINE IS TAKEN HERE, not when the player booked. U4's decision
-		# delta measures a command against the next history entry, and a booking
-		# commits nothing in the month it is made -- measured from the press, a
-		# deferred act would report the movements of a month in which it did not
-		# happen. _pending_effects is also documented as not persisted, so a save
-		# across a booking would lose a baseline taken at the press entirely.
-		var before := Budget.snapshot(_state)
-		before.merge(Opinion.snapshot(_state))
-
-		var label := ""
-		var ok := false
-		match String(entry.get("kind", "")):
-			CalendarK.KIND_DIPLOMATIC:
-				var action = _action_by_id(String(entry.get("action_id", "")))
-				if action != null:
-					var result := Diplomacy.execute(
-						_state, _loader.diplomatic_actions, action,
-						_state.player_nation_id, String(entry.get("target_id", "")),
-					)
-					# execute()'s contract is `applied`, not `ok` -- V2.4a found
-					# this read as false on every arrival, so a kept visit fired
-					# its effects and was recorded as refused anyway.
-					ok = bool(result.get("applied", false))
-					label = Strings.row_name("diplomatic-actions", action)
-			CalendarK.KIND_LAW:
-				var law = _law_by_id(String(entry.get("law_id", "")))
-				if law != null:
-					var result := Legislature.propose(_state, _loader, law)
-					ok = bool(result.get("passed", false))
-					label = Strings.law_name(law)
-			CalendarK.KIND_RESHUFFLE:
-				var portfolio := String(entry.get("portfolio", ""))
-				var party_id := String(entry.get("party_id", ""))
-				if ns != null and Cabinet.can_assign(ns, portfolio, party_id):
-					Cabinet.assign(_state, portfolio, party_id, party_list)
-					ok = true
-				label = Labels.portfolio(portfolio)
-
-		Calendar.resolve(_state, Calendar.verb_key(entry), ok)
+	var any := DiaryDriver.resolve(_state, _loader, year, month, day, func(outcome: Dictionary):
+		var label := String(outcome["label"])  # i18n: row-ok DiaryDriver hands back a translated label
 		if not label.is_empty():
-			_queue_effect(label, before)
-		_card_appointment(entry, label, ok)
-
-		# V2.4b: a meeting that LANDED is the summit's trigger. Only the verb
-		# that opens a meeting brings a scene; a refused arrival is a journey
-		# home, and day-only acts were never journeys.
-		if ok and String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
-			var action2 = _action_by_id(String(entry.get("action_id", "")))
-			if action2 != null and action2.opens_meeting:
-				_open_summit(String(entry.get("target_id", "")), before)
-
+			_queue_effect(label, outcome["before"])
+		_world_news.card_appointment(outcome["entry"], label, bool(outcome["ok"]))
+		if String(outcome["summit_target"]) != "":
+			_open_summit(String(outcome["summit_target"]), outcome["before"])
+	)
+	if not any:
+		return
 	_windows.mark_all_dirty()
 	# A booked diplomatic act moves relations, and on that map layer it is a
 	# colour change the player should see the day it happens -- the same reason
@@ -2281,37 +1714,6 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 		_map_view.queue_redraw()
 		if _map_flows != null:
 			_map_flows.refresh()
-
-
-## A kept appointment is something that happened to the player's government with
-## no button pressed that day, so it is exactly the class of event the message
-## column exists for -- alongside an alliance obligation opening and a foreign
-## act. An act that REFUSED on arrival matters more, not less: it is the one
-## outcome the player could not have predicted when they booked it.
-func _card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
-	if _hud == null or _hud.message_stack == null:
-		return
-	if label.is_empty():
-		_hud.message_stack.push(
-			tr("Appointment lapsed"),
-			tr("Something booked for today no longer exists to be done."),
-		)
-		return
-
-	# One whole sentence per shape, the failure a sentence of its own.
-	var booked := tr("%s, as booked.") % label
-	if String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
-		booked = tr("%s with %s, as booked.") % [label, _nation_name(String(entry.get("target_id", "")))]
-	if not ok:
-		booked += " " + tr("It did not carry.")
-	_hud.message_stack.push(tr("Kept: %s") % label, booked)
-
-
-func _action_by_id(id: String):
-	for action in _loader.diplomatic_actions:
-		if String(action.id) == id:
-			return action
-	return null
 
 
 ## V2.4b. The scene itself. Drawn as data from the leaf sim, handed to the
@@ -2354,13 +1756,6 @@ func _resolve_summit(choice_label: String) -> void:
 
 
 
-func _law_by_id(id: String):
-	for law in _loader.laws:
-		if String(law.id) == id:
-			return law
-	return null
-
-
 func _on_save_requested(slot: String) -> void:
 	var error := SaveManager.save_game(_state, _clock, slot)
 	if error.is_empty():
@@ -2392,11 +1787,7 @@ func _on_load_requested(slot: String) -> void:
 	# be card-silent behind this session's carried entries -- the pass-15
 	# fleet's reproduced find. The stack's ids are monotonic, so a card id never
 	# collides across the load; the cards themselves are cleared just below.
-	_announced_bids.clear()
-	_announced_failures.clear()
-	_bid_cards.clear()
-	_failure_cards.clear()
-	_industry_card_firms.clear()
+	_industry_news.forget()
 	# The assembly's four beside them, the same rule: bill ids collide only
 	# within a run, so those two maps belong to the discarded game. The two
 	# month memories are NOT simply reset to -1 (the ultra pass-7 finding):
@@ -2407,8 +1798,7 @@ func _on_load_requested(slot: String) -> void:
 	# for ITS OWN shape of result and -1 otherwise: a stale memory inherited
 	# from the discarded game could swallow a real card whose stamp it
 	# happened to match.
-	_announced_assembly_bills.clear()
-	_assembly_cards.clear()
+	_assembly_news.forget(_state.player().last_law_result)
 	# The V4.4 desk's three ride the same rule -- a stale unseen id would hold
 	# the clock past the load and a discarded game's decision card would route
 	# Events.answer against the loaded state (the decision pause beside the
@@ -2418,7 +1808,7 @@ func _on_load_requested(slot: String) -> void:
 	# nothing (card_action finds no event for the id and returns silently), and
 	# the plain ones -- "You hold Germany until FEB 2029" over a loaded France game
 	# (V5.1-a2) -- were never in any map to begin with.
-	_hud.message_stack.clear()
+	_hud.inbox.clear()
 	_term_card_id = ""
 	_event_cards.clear()
 	_unseen_events.clear()
@@ -2430,12 +1820,6 @@ func _on_load_requested(slot: String) -> void:
 	# left queued, the loaded game's next History step wrote it into its own
 	# recent_effects against the old game's baseline (the V5.0 fix-pass review).
 	_pending_effects.clear()
-	var loaded_result: Dictionary = _state.player().last_law_result
-	var carries_bill := bool(loaded_result.get("assembly_bill", false))
-	var released_load := bool(loaded_result.get("released", false))
-	var loaded_stamp := int(loaded_result.get("assembly_division_month", -1))
-	_assembly_result_month = loaded_stamp if carries_bill and not released_load else -1
-	_assembly_release_month = loaded_stamp if carries_bill and released_load else -1
 	_clock.year = _state.year
 	_clock.month = _state.month
 	_clock.day = int(result["day"])
@@ -2450,7 +1834,6 @@ func _on_load_requested(slot: String) -> void:
 	_paused_for_programme = false
 
 	_map_view.setup(_loader, _state)
-	_minimap.setup(_map_view, _loader, _state)
 	# A loaded game is a different _state, and an overlay left holding the
 	# throwaway one built at _ready() is the same five-panel drift the V2.8
 	# review found below -- setup(), not refresh(), because the reference itself
@@ -2485,7 +1868,9 @@ func _on_load_requested(slot: String) -> void:
 	# the ribbon's month title were both frozen at the pre-load game's values.
 	_election_panel.setup(_state, _loader)
 	_hud.ribbon.setup(_state, _loader)
+	_hud.title_bar.set_nation(_loader.nations[_state.player_nation_id].nation_name)
 	_hud.portrait_card.setup(_state, _loader)
+	_setup_news()
 	# The mirror is re-established here rather than waiting for the first day to
 	# elapse, because a loaded game opens PAUSED: without this the diary would
 	# refuse a booking for today as "that date has passed" until the player
@@ -2494,6 +1879,11 @@ func _on_load_requested(slot: String) -> void:
 
 	_windows.mark_all_dirty()
 
+	# V5.1-c3.2. The loaded desk back in the inbox's Decisions lane: the clear
+	# above took the discarded game's rows, and a pending question with no row
+	# could be answered only from Dispatches (Review focus 2).
+	for entry in _state.player().event_queue:
+		_push_decision_card(Events.event_by_id(_loader, String(entry.get("event_id", ""))), entry)
 	# V2.4b: the reload re-raise. An interrupt crisis pending in the save stops
 	# the clock again and is put back in front of the player -- a save made mid-
 	# crisis and reloaded is still mid-crisis, and the pause is the only thing
@@ -2531,16 +1921,32 @@ func _enforce_interrupt() -> void:
 		return
 	if not Events.interrupt_pending(ns):
 		return
-	_clock.paused = true
 	# The interrupt pause IS a decision pause: raising the flag here (the load
 	# path and a month's re-pause both reach this) is what lets the answer's
 	# _resume_if_decision_settled() release it; without it a re-raised interrupt
 	# stayed paused after being answered.
+	_hold_for_decision()
+
+
+## Every decision that holds the clock -- an arrival the pause band stops, the
+## lapse guard's last month, an interrupt -- raises the decision pause and slides
+## the inbox, where it is answered, over an open tab (the author's call 4 is "a
+## decision that holds the clock", not only an interrupt: QA on #54). Not behind
+## a scene or a system screen; _on_stack_top_changed() slides it when that goes.
+func _hold_for_decision() -> void:
 	_paused_for_decision = true
-	if _events_panel != null:
-		# Quiet (V4.9c): the arrival's sound is the event sting.
-		_windows.open("events", true)
+	_clock.paused = true
+	if _stack != null and _stack.top() < ScreenStack.SCENE:
+		_hud.inbox.slide_in()
 	_hud.clock_cluster.refresh(_clock)
+
+
+## The other half of the deferral above: a scene or a system screen went with an
+## interrupt still on the desk, so the player now sees where it is answered -- a
+## held clock with nothing on screen saying why is the failure this prevents.
+func _on_stack_top_changed(from: int, to: int) -> void:
+	if from >= ScreenStack.SCENE and to < ScreenStack.SCENE and _decision_holds_clock():
+		_hold_for_decision()
 
 
 ## V4.1, the term-start enforcement -- the arrival-pause precedent pointed at
@@ -2568,7 +1974,7 @@ func _enforce_interrupt() -> void:
 func _term_card_body() -> String:
 	var ns = _state.player()
 	var when := Trends.vote_date(ns)
-	return tr("You hold %s until %s %d -- %s. Win the vote.") % [_nation_name(_state.player_nation_id), DateText.month(when.y), when.x, Trends.months_text(Trends.months_to_vote(_state, ns))]
+	return tr("You hold %s until %s %d -- %s. Win the vote.") % [_loader.nation_name(_state.player_nation_id), DateText.month(when.y), when.x, Trends.months_text(Trends.months_to_vote(_state, ns))]
 
 
 ## The monthly refresh of the opening card, from _on_month_elapsed(). The body
@@ -2576,29 +1982,29 @@ func _term_card_body() -> String:
 ## re-push would jump the stack) while there is still a vote ahead, and the
 ## card is TAKEN AWAY once there is not -- a "Win the vote" card standing next
 ## to a verdict that already held it is the same stale class B4 photographed.
-## A gone id (evicted by MAX_CARDS, or never pushed on a load) no-ops through
+## A gone id (evicted by the notes' cap, or never pushed on a load) no-ops through
 ## set_body and the empty-id guards here.
 func _refresh_term_card() -> void:
-	if _term_card_id.is_empty() or _hud == null or _hud.message_stack == null:
+	if _term_card_id.is_empty() or _hud == null or _hud.inbox == null:
 		return
 	var ns = _state.player()
 	if ns == null:
 		# Out of office: the verdict surface took over, the same dismiss as the
 		# no-vote-left branch below, without reading a null nation.
-		_hud.message_stack.dismiss(_term_card_id)
+		_hud.inbox.dismiss(_term_card_id)
 		_term_card_id = ""
 		return
 	if Trends.months_to_vote(_state, ns) <= 0:
-		_hud.message_stack.dismiss(_term_card_id)
+		_hud.inbox.dismiss(_term_card_id)
 		_term_card_id = ""
 		return
-	_hud.message_stack.set_body(_term_card_id, _term_card_body())
+	_hud.inbox.set_body(_term_card_id, _term_card_body())
 
 
 ## The term-start card and its id go together; every door that retires one retires both.
 func _drop_programme_card() -> void:
 	if not _programme_card_id.is_empty():
-		_hud.message_stack.dismiss(_programme_card_id)
+		_hud.inbox.dismiss(_programme_card_id)
 		_programme_card_id = ""
 
 
@@ -2622,7 +2028,7 @@ func _enforce_term_start_programme() -> void:
 		_drop_programme_card()
 		return
 	_drop_programme_card()
-	_programme_card_id = _hud.message_stack.push(
+	_programme_card_id = _hud.inbox.push(
 		tr("The term's programme"),
 		tr("The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise."),
 		[], null,
@@ -2647,14 +2053,14 @@ func _on_programme_chosen(entry_id: String) -> void:
 	var before := Budget.snapshot(_state)
 	var result: Dictionary = Programme.choose(_state, ns, entry_id, _loader)
 	if bool(result.get("refused", false)):
-		_hud.message_stack.push(tr("Programme refused"), _programme_refusal_text(String(result.get("reason", ""))))
+		_hud.inbox.push(tr("Programme refused"), _programme_refusal_text(String(result.get("reason", ""))))
 		return
 
 	# Entry open, as a card -- the register now holds the term's programme,
 	# and the pulse it will pay lives on its conclusion, not here.
 	var name_text := Strings.row("programme", entry_id, "name", String(result.get("name", entry_id)))
 	_queue_effect(tr("Programme set: %s") % name_text, before)
-	_hud.message_stack.push(name_text, tr("This term's programme. Deliver it and the credit lands on the record; miss its deadline and the miss pays the same shape back."))
+	_hud.inbox.push(name_text, tr("This term's programme. Deliver it and the credit lands on the record; miss its deadline and the miss pays the same shape back."))
 	_drop_programme_card()
 	if _paused_for_programme:
 		_paused_for_programme = false
@@ -2679,13 +2085,13 @@ func _programme_refusal_text(reason: String) -> String:
 
 
 ## V4.1. What concluded this month, as a card -- complete, fail and invalid
-## alike, concluded_this_month()'s one read. _card_foreign_acts()'s split: the
+## alike, concluded_this_month()'s one read. _world_news.card_foreign_acts()'s split: the
 ## sim writes the record, the UI decides what earns a card, and src/sim/ never
 ## reads the list back. Called from _on_month_step() INSIDE the tick window
 ## the pulse is priced in -- see the Programme.tick_month call site in
 ## src/sim/world_month.gd.
 func _card_programme_conclusions() -> void:
-	if _hud == null or _hud.message_stack == null or _state == null:
+	if _hud == null or _hud.inbox == null or _state == null:
 		return
 	var ns = _state.player()
 	if ns == null:
@@ -2695,13 +2101,13 @@ func _card_programme_conclusions() -> void:
 		var name_text := Strings.row("programme", String(entry["entry_id"]), "name", String(terms.get("name", String(entry["entry_id"]))))
 		match String(entry["status"]):
 			ProgrammeK.STATUS_COMPLETE:
-				_hud.message_stack.push(tr("Delivered: %s") % name_text,
+				_hud.inbox.push(tr("Delivered: %s") % name_text,
 					tr("The goal is met, and the register marks it complete."))
 			ProgrammeK.STATUS_FAIL:
-				_hud.message_stack.push(tr("Missed: %s") % name_text,
+				_hud.inbox.push(tr("Missed: %s") % name_text,
 					tr("The goal was not met in time, and the register marks the miss."))
 			_:
-				_hud.message_stack.push(tr("Overtaken: %s") % name_text,
+				_hud.inbox.push(tr("Overtaken: %s") % name_text,
 					tr("The world moved on and the entry no longer applies. It concludes without a verdict."))
 
 
@@ -2718,4 +2124,7 @@ func _update_top_bar() -> void:
 		# also STOPS pending when the player answers it, and every command in this
 		# file already ends by calling this function -- so the mark clears on the
 		# press rather than a month later.
-		_hud.action_bar.show_pending(Pending.window_ids(_state, _loader, _messages))
+		_hud.sidebar.show_pending(Pending.window_ids(_state, _loader, _messages))
+		# V5.1-c2.3. Why the clock is not running, in the title bar: a decision
+		# holding it is the case a player must not have to guess.
+		_hud.title_bar.set_held(tr("A decision is waiting") if _decision_holds_clock() else "")

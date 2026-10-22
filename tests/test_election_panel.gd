@@ -424,12 +424,12 @@ func _set_sound(enabled: bool) -> void:
 ## STOP filter sits beside the holder when the panel is visible, and follows
 ## its visibility, so the map cannot be played behind a verdict.
 func _check_modal_blocks_the_world() -> void:
-	# Two modals are blocking now, so two dims sit among main's children; the
-	# election's is the last one BEFORE its own holder in tree order -- the
-	# pause menu's dim comes later and reads hidden.
+	# The dim is the holder's sibling, in the screen stack's scene layer since
+	# V5.1-c2.1 (main's own children until then); the election's is the last
+	# one BEFORE its own holder in tree order.
 	var holder: Node = _main._election_panel.get_parent()
 	var dim: ColorRect = null
-	for child in _main.get_children():
+	for child in holder.get_parent().get_children():
 		if child == holder:
 			break
 		if child is ColorRect:

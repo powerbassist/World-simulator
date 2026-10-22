@@ -343,6 +343,10 @@ func _fit_every_window_to_the_band() -> void:
 	_main._nation_panel.mark_dirty()
 	_main._nation_panel._process(0.0)
 
+	# The pages live in the workspace dock since V5.1-c2.2, so the dock comes up
+	# with them: a page in a hidden dock is not in the visible tree, and a panel
+	# builds only while it is (V5.1-0a).
+	_main._windows.dock().show()
 	for id in _main._windows.panel_ids():
 		var frame = _main._windows.frame(id)
 		frame.show()

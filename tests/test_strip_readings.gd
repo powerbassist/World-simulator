@@ -27,7 +27,7 @@ const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
-const WindowFrame = preload("res://src/ui/window_frame.gd")
+const TopBar = preload("res://src/ui/top_bar.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Government = preload("res://src/sim/government.gd")
 const StripChildren = preload("res://src/ui/strip_children.gd")
@@ -369,13 +369,14 @@ func _check_the_strip_fits() -> void:
 		value.theme_type_variation = "FigureAlert"
 	var programme: Label = _bar._figure_captions["programme"]
 	programme.text = "A PROGRAMME NAME FAR LONGER THAN ANY STRIP COULD HOLD"
-	# The height half: the stacked figures must sit inside the frames' TOP_MARGIN,
-	# or every window loses band height (the 826px fold arithmetic).
+	# The height half: the stacked figures must fit the strip's slot (the floating
+	# frames' TOP_MARGIN until V5.1-c2.2), or the strip covers the workspace's tabs.
 	var height: float = _bar.get_combined_minimum_size().y
-	if height > WindowFrame.TOP_MARGIN:
-		_fail("the strip is %.0f px tall; windows start at %.0f" % [height, WindowFrame.TOP_MARGIN])
+	if height > TopBar.BAR_HEIGHT:
+		_fail("the strip is %.0f px tall; its slot is %.0f" % [height, TopBar.BAR_HEIGHT])
 	var figures: float = _bar._figures.get_combined_minimum_size().x
-	var tools: float = _bar._tools.get_combined_minimum_size().x
+	# Save and the menu are the title bar's since V5.1-c2.3: the strip is figures.
+	var tools := 0.0
 	if figures + tools > SCREEN_WIDTH:
 		_fail("the strip needs %.0f px (figures %.0f + tools %.0f) on a %.0f px screen" % [
 			figures + tools, figures, tools, SCREEN_WIDTH])

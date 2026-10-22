@@ -21,6 +21,7 @@ const SaveManager = preload("res://src/core/save_manager.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const Clock = preload("res://src/core/clock.gd")
 const LoadingScreen = preload("res://src/ui/loading_screen.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 const SLOT := "__test_menu_continue__"
 const SAVED_YEAR := 2031
@@ -256,26 +257,30 @@ func _check_settings() -> void:
 	if had_config:
 		backup = FileAccess.get_file_as_string(SettingsPanel.CONFIG_PATH)
 
-	const SCALE_INDEX := 3
+	# V5.1-c2.4: the text size replaced the interface scale, which left the
+	# window's content scale at 1.
+	const TEXT_INDEX := 3
 	const RESOLUTION_INDEX := 2
 	panel._fullscreen_button.select(0)
 	panel._resolution_button.select(RESOLUTION_INDEX)
-	panel._scale_button.select(SCALE_INDEX)
+	panel._text_button.select(TEXT_INDEX)
 	panel._save_and_apply()
 
-	var expected: float = SettingsPanel.UI_SCALES[SCALE_INDEX]
-	if not is_equal_approx(root.content_scale_factor, expected):
-		_fail("interface scale saved but not applied: window is at %s, expected %s" % [
-			root.content_scale_factor, expected
+	var expected: float = SettingsPanel.TEXT_SCALES[TEXT_INDEX]
+	if not is_equal_approx(UiTheme.text_scale(), expected):
+		_fail("text size saved but not applied: the type scale is at %s, expected %s" % [
+			UiTheme.text_scale(), expected
 		])
+	if not is_equal_approx(root.content_scale_factor, 1.0):
+		_fail("the retired interface scale left the window at %s" % root.content_scale_factor)
 
 	# A second panel reads the file, not the first panel's memory -- which is
 	# what the next launch will do.
 	var reloaded = SettingsPanel.new()
 	root.add_child(reloaded)
-	if reloaded._scale_button.selected != SCALE_INDEX or reloaded._resolution_button.selected != RESOLUTION_INDEX:
-		_fail("settings did not survive a reload: scale %d, resolution %d" % [
-			reloaded._scale_button.selected, reloaded._resolution_button.selected
+	if reloaded._text_button.selected != TEXT_INDEX or reloaded._resolution_button.selected != RESOLUTION_INDEX:
+		_fail("settings did not survive a reload: text size %d, resolution %d" % [
+			reloaded._text_button.selected, reloaded._resolution_button.selected
 		])
 	reloaded.queue_free()
 
@@ -287,6 +292,7 @@ func _check_settings() -> void:
 	else:
 		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 		root.content_scale_factor = 1.0
+	UiTheme.set_text_scale(1.0)
 
 
 ## V3.6: the Sound row persists, and sound_enabled() reads the file rather than

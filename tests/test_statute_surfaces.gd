@@ -417,7 +417,7 @@ func _run() -> void:
 	# CURRENT month, so every quiet month re-announced the last division until
 	# a new law event overwrote it. Driven on the real announcer: push once,
 	# advance the clock, call again, and the card count must not move.
-	var cards_before: int = _main._hud.message_stack._cards.size()
+	var cards_before: int = _main._hud.inbox._cards.size()
 	var stamp: int = int(state.year) * 12 + int(state.month)
 	# The FULL division shape resolve_vote() writes -- the law panel's result
 	# summary reads the tally and party_votes off this same dictionary on the
@@ -429,18 +429,18 @@ func _run() -> void:
 		"party_votes": {}, "party_support": {}, "party_rebels": {},
 		"assembly_division_month": stamp,
 	}
-	_main._announce_assembly_events()
-	if int(_main._assembly_result_month) != stamp:
+	_main._assembly_news.announce()
+	if int(_main._assembly_news._assembly_result_month) != stamp:
 		_fail("the card memory did not take the division's own month stamp")
-	var after_first: int = _main._hud.message_stack._cards.size()
+	var after_first: int = _main._hud.inbox._cards.size()
 	if after_first != cards_before + 1:
 		_fail("the division card did not push exactly once (%d -> %d)" % [cards_before, after_first])
 	state.month = int(state.month) + 1
 	if int(state.month) > 12:
 		state.month = 1
 		state.year = int(state.year) + 1
-	_main._announce_assembly_events()
-	if _main._hud.message_stack._cards.size() != after_first:
+	_main._assembly_news.announce()
+	if _main._hud.inbox._cards.size() != after_first:
 		_fail("a quiet month re-announced the division -- the memory must key the stamp, not the clock")
 
 	# --- (k) The load boundary honours the stamp, not a reset ---------------
@@ -455,28 +455,28 @@ func _run() -> void:
 	if err2 != "":
 		_fail("the load leg's save failed: %s" % err2)
 	else:
-		_main._announced_assembly_bills["ghost_bill"] = true
-		_main._assembly_cards["ghost_bill"] = "card_ghost"
-		_main._assembly_result_month = 42
-		_main._assembly_release_month = 43
+		_main._assembly_news._announced_assembly_bills["ghost_bill"] = true
+		_main._assembly_news._assembly_cards["ghost_bill"] = "card_ghost"
+		_main._assembly_news._assembly_result_month = 42
+		_main._assembly_news._assembly_release_month = 43
 		_main._on_load_requested(POLL_SLOT)
 		SaveManager.delete_slot(POLL_SLOT)
 		# The load drops the discarded game's whole stack (V5.1-a2), so the count the
 		# first month must NOT move is the one the load itself left, not the count
 		# before it.
-		var cards_after_load: int = _main._hud.message_stack._cards.size()
-		if not _main._announced_assembly_bills.is_empty() or not _main._assembly_cards.is_empty():
+		var cards_after_load: int = _main._hud.inbox._cards.size()
+		if not _main._assembly_news._announced_assembly_bills.is_empty() or not _main._assembly_news._assembly_cards.is_empty():
 			_fail("the load path left the bill-id memories behind -- they belong to the discarded game")
 		# THE SEED: the saved register carries leg (j)'s division fixture, so
 		# the division memory must land on ITS stamp and the release memory on
 		# none -- a reset to -1 here is the stale re-announce below.
 		var reloaded_ns = _main._state.player()
 		var loaded_stamp := int(reloaded_ns.last_law_result.get("assembly_division_month", -1))
-		if loaded_stamp < 0 or int(_main._assembly_result_month) != loaded_stamp:
+		if loaded_stamp < 0 or int(_main._assembly_news._assembly_result_month) != loaded_stamp:
 			_fail("the load path did not seed the division memory from the loaded stamp (memory %s, register %s) -- the next month re-announces it" % [
-				_main._assembly_result_month, loaded_stamp])
-		if int(_main._assembly_release_month) != -1:
-			_fail("a loaded DIVISION seeded the release memory (%s)" % _main._assembly_release_month)
+				_main._assembly_news._assembly_result_month, loaded_stamp])
+		if int(_main._assembly_news._assembly_release_month) != -1:
+			_fail("a loaded DIVISION seeded the release memory (%s)" % _main._assembly_news._assembly_release_month)
 		# The live-repro month: one month elapsed on the loaded game, and the
 		# stale card must NOT fire. The announcer is driven directly, the
 		# collision leg's quiet-month precedent -- a full _on_month_elapsed
@@ -490,8 +490,8 @@ func _run() -> void:
 			y += 1
 		_main._state.year = y
 		_main._state.month = m
-		_main._announce_assembly_events()
-		if _main._hud.message_stack._cards.size() != cards_after_load:
+		_main._assembly_news.announce()
+		if _main._hud.inbox._cards.size() != cards_after_load:
 			_fail("the first month after load re-announced the loaded division -- the load boundary must honour the stamp")
 		# THE RELEASE VARIANT, by symmetry: the release stamp rides the same
 		# register (legislature.gd writes it there), so a loaded RELEASE seeds
@@ -511,11 +511,11 @@ func _run() -> void:
 		else:
 			_main._on_load_requested(POLL_SLOT)
 			SaveManager.delete_slot(POLL_SLOT)
-			if int(_main._assembly_release_month) != loaded_stamp:
+			if int(_main._assembly_news._assembly_release_month) != loaded_stamp:
 				_fail("the load path did not seed the release memory from the loaded release (memory %s, register %s)" % [
-					_main._assembly_release_month, loaded_stamp])
-			if int(_main._assembly_result_month) != -1:
-				_fail("a loaded RELEASE seeded the division memory (%s)" % _main._assembly_result_month)
+					_main._assembly_news._assembly_release_month, loaded_stamp])
+			if int(_main._assembly_news._assembly_result_month) != -1:
+				_fail("a loaded RELEASE seeded the division memory (%s)" % _main._assembly_news._assembly_result_month)
 
 	# --- (l) The reversal preview's dual company shape ----------------------
 	# A negated ledger keys the burden channel BY SECTOR ({sector: delta},

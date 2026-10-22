@@ -167,6 +167,9 @@ tests=(
   tests/test_top_bar_desk.gd
   tests/test_strip_readings.gd
   tests/test_tip_popup.gd
+  tests/test_glossary.gd
+  tests/test_term_text.gd
+  tests/test_glossary_tip.gd
   tests/test_outliner.gd
   tests/test_geography.gd
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
@@ -229,7 +232,6 @@ tests=(
   tests/test_sound.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd
-  tests/test_minimap.gd
   tests/test_map_markers.gd
   tests/test_map_cities.gd
   tests/test_map_ground.gd
@@ -240,7 +242,9 @@ tests=(
   tests/test_map_network.gd
   tests/test_map_flows.gd
   tests/test_shell.gd
-  tests/test_window_frame.gd
+  tests/test_shell_stack.gd
+  tests/test_shell_fit.gd
+  tests/test_workspace.gd
   tests/test_panel_kit.gd
   tests/test_hud.gd
   tests/test_ui_theme.gd

@@ -22,11 +22,6 @@ Committed at `assets/map/blue_marble_5400x2700.jpg`. NASA imagery requires no at
 
 Interface and window icons from Material Symbols (Rounded, filled) by Google, Apache License 2.0 -- the licence text is committed at `LICENSES/Apache-2.0.txt`. Unmodified SVGs from https://github.com/google/material-design-icons, committed under `assets/icons/material/`; only the glyphs the game draws are included.
 
-## @icons
-
-Interface icons from the @icons addon — icons by Voxy (Valentin Fossati), in-editor picker by SuperDuperSword and Voxy. MIT License; the full text is committed at `addons/at-icons/LICENSE.txt`.
-
-Only the icon files the game actually references are committed, so this credit covers a subset of the pack rather than all of it. Listed here from the moment the first one ships, not at ship time — an attribution obligation you remember late is one you have already breached, the same rule [docs/data-sources.md](docs/data-sources.md) states for the datasets.
 
 ## MapCamera2D
 

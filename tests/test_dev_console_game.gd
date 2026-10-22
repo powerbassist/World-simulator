@@ -198,8 +198,9 @@ func _check_interrupt_event_holds_the_clock(console) -> void:
 		_fail("premise: no interrupt event in the data")
 		return
 	console.run_command("event %s" % id)
-	if not _a._clock.paused or not _a._windows.is_open("events"):
-		_fail("a staged interrupt event did not pause the clock and open Dispatches")
+	# V5.1-c3.2: the decision is answered in the inbox, which is up on the map.
+	if not _a._clock.paused or not _a._hud.inbox.visible:
+		_fail("a staged interrupt event did not pause the clock with the inbox up")
 	ns.event_queue.clear()
 	_a._unseen_events.clear()
 	_a._paused_for_decision = false

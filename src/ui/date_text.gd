@@ -41,6 +41,13 @@ static func month_year(month_number: int, year: int) -> String:
 	return "%s %d" % [month(month_number), year]
 
 
+## "2026-10-21 22:35": a real-world moment (a save's file time), in the player's
+## local time -- `bias_minutes` is the offset from UTC, as the OS reports it.
+static func local_stamp(unix: int, bias_minutes: int) -> String:
+	var dt := Time.get_datetime_dict_from_unix_time(unix + bias_minutes * 60)
+	return "%04d-%02d-%02d %02d:%02d" % [dt.year, dt.month, dt.day, dt.hour, dt.minute]
+
+
 ## "01 JAN".
 static func day_month(day: int, month_number: int) -> String:
 	return "%02d %s" % [day, month(month_number)]

@@ -324,7 +324,7 @@ class MainHost extends DevRegistry.Host:
 		if not ids.has(id):
 			return "no panel '%s' -- the ids are %s" % [id, ", ".join(PackedStringArray(ids))]
 		main._windows.open(id)
-		return ""
+		return "" if main._windows.is_open(id) else "'%s' waits: a scene holds the dock until it closes" % id
 
 	func save_game(slot: String) -> String:
 		if not SaveManager.valid_slot_name(slot):

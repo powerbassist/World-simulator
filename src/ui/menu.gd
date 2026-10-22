@@ -198,12 +198,11 @@ func _add_entry(column: VBoxContainer, text: String, action: Callable) -> Button
 ## that is shown and hidden rather than the panel -- a hidden holder cannot eat
 ## clicks meant for the menu buttons underneath it.
 ##
-## main.gd's _add_centered() does nearly the same thing and is deliberately not
-## shared. U2 docked five of main.gd's nine overlays as dashboard tabs, but the
-## other four -- election results, pause, settings, save/load -- are genuinely
-## modal and still use _add_centered(), so both this copy and that one keep a
-## caller. Extracting ten lines of node plumbing into a module shared by two
-## call sites is not worth the indirection.
+## The game's ScreenStack.add() (V5.1-c2.1, once main.gd's _add_centered()) does
+## nearly the same thing and is deliberately not shared: the stack also ranks its
+## panels and follows them for Escape and the keys, and the menu has one modal
+## and no hotkeys to rank it against. Ten lines of node plumbing are not worth
+## the stack on a screen that has no stack.
 func _add_overlay(panel: Control) -> void:
 	var holder := CenterContainer.new()
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

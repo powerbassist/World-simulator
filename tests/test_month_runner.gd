@@ -240,16 +240,15 @@ func _watch() -> bool:
 	return false
 
 
-## The seventh month. The budget window is pinned top-right and the briefing for
-## a bill is open, both in reach of the pointer; then real time reaches the 1st
+## The seventh month. The budget tab is open in the workspace and the briefing
+## for a bill is open over it, both in reach of the pointer (V5.1-c2.2: the
+## budget is docked and its Commit sits at its right end, clear of the centred
+## briefing); then real time reaches the 1st
 ## and, while the month closes, the player commits the budget, proposes the
 ## bill, pauses, picks speed 3 and asks for the save/load dialog -- in that order,
 ## the clicks first so no dialog they summon covers them on the replay.
 func _prepare_under_fire() -> void:
 	_b._windows.open("budget")
-	var budget_frame: Control = _b._windows.frame("budget")
-	budget_frame.set_pinned(true)
-	budget_frame.position = Vector2(_b._windows.size.x - budget_frame.size.x - 30.0, 70.0)
 	var law = _b._loader.laws[0]
 	_law_name = String(law.law_name)
 	_b._briefing.open_for_law(law, _b._state, _b._loader)
