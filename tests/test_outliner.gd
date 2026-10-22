@@ -427,8 +427,10 @@ func _check_main_registers_the_window() -> void:
 	var src := FileAccess.get_file_as_string("res://src/ui/main.gd")
 	if not src.contains("_windows.register(\"outliner\""):
 		_fail("main.gd registers no 'outliner' window")
-	if not src.contains("_entry(\"outliner\""):
-		_fail("the action bar does not list the outliner")
+	# V5.1-c2.3: the sidebar's domain table is the route that replaced the action
+	# bar's drawer entry.
+	if load("res://src/ui/domains.gd").domain_of("outliner").is_empty():
+		_fail("no domain in domains.gd holds the outliner tab")
 	if not src.contains("window_requested.connect"):
 		_fail("main.gd does not connect the outliner's window_requested -- a row click opens nothing")
 
