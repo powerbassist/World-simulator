@@ -108,7 +108,7 @@ A hands-off world sent **~26 state visits a year to the player** and almost none
 
 So AI-AI amity climbed from 0.0–0.2 at new game to 0.5–1.0 within two years, and the AIs' room with each other closed. An idle player never acts and never collects that credit, so it stayed the one target with room, and every AI visited it once per 12-month cooldown. A controlled run with the judgement at zero kept AI-AI amity at 0.0–0.3 and cut the player's share of acts from 72 % to 27 %.
 
-**The rule is the host's, read off the action.** `host_interval_months` on a verb means that a nation which received it is offered it by nobody, the player included, until the interval has run. The register is `NationState.diplo_hosted_months` `{action_id: months}`: stamped on the target by `DiplomacyCooldowns.stamp()` and counted down beside `diplo_cooldown_months` in `_settle()`, before any actor's turn. A host stamped with N in month m is therefore offered the verb again from month m + N.
+**The rule is the host's, read off the action.** `host_interval_months` on a verb means that a nation which received it is offered it by nobody, the player included, until the interval has run. The register is `NationState.diplo_hosted_months` `{action_id: months}`: stamped on the target by `stamp()` in `src/sim/diplomacy_cooldowns.gd` and counted down beside `diplo_cooldown_months` in `_settle()`, before any actor's turn. A host stamped with N in month m is therefore offered the verb again from month m + N.
 
 `state_visit` carries **6**: the UK's convention is two incoming state visits a year, and 2025's three was the first time in 37 years. The default is 0, so no other verb changes. An empty register reads as "nothing hosted recently", so the field carries no SAVE_VERSION bump.
 
