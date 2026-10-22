@@ -92,18 +92,21 @@ func _check_diplomatic_act_answers() -> void:
 	var panel = _main._nation_panel
 	panel.show_nation("DEU")
 	var action = null
+	# Not a meeting verb: since V5.1-d1b2 (G13) those book a visit through the Diary
+	# rather than act, and their acknowledgment is the diary's own.
 	for candidate in _main._loader.diplomatic_actions:
-		if candidate.id == "state_visit":
+		if not candidate.opens_meeting:
 			action = candidate
+			break
 	if action == null:
-		_fail("the state_visit action is not in the loader")
+		_fail("no instant diplomatic action in the loader")
 		return
 	panel._on_act(action)
 	if _main._hud.inbox.card_count() != before_count + 1:
 		_fail("a diplomatic act pushed no acknowledgment card, refused or not")
 		return
 	var text := _stack_text()
-	if not text.contains("STATE VISIT"):
+	if not text.contains(String(action.action_name).to_upper()):
 		_fail("the diplomacy card is not titled with the action: '%s'" % text)
 	if not text.contains("REFUSED") and not text.contains("AGREED"):
 		_fail("the diplomacy card carries no outcome: '%s'" % text)

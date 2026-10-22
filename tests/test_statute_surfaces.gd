@@ -241,9 +241,9 @@ func _run() -> void:
 	else:
 		_press(assembly_btn)
 	var poll_cost: float = ns.debt_eur_bn - debt_before
-	var expected_cost: float = float(ns.gdp_eur_bn) * float(StatuteK.POLL_COSTS["assembly"]) / 100.0
+	var expected_cost: float = StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_ASSEMBLY)
 	if absf(poll_cost - expected_cost) > 1e-9:
-		_fail("the assembly poll charged %.4f, expected %.4f (%%GDP through the level)" % [poll_cost, expected_cost])
+		_fail("the assembly poll charged %.6f, expected %.6f (the flat price, G8)" % [poll_cost, expected_cost])
 	var bought: Dictionary = ns.poll_purchases.get("high_earner_surtax", {})
 	if not bought.has("assembly"):
 		_fail("the assembly purchase is not on the register")
@@ -269,7 +269,7 @@ func _run() -> void:
 			if not String(popular_btn.text).contains("Commission a popular poll"):
 				_fail("the popular poll button's article is wrong: '%s'" % popular_btn.text)
 			_press(popular_btn)
-		var expected2: float = float(ns.gdp_eur_bn) * float(StatuteK.POLL_COSTS["popular"]) / 100.0
+		var expected2: float = StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_POPULAR)
 		if absf(ns.debt_eur_bn - (debt2 + expected2)) > 1e-9:
 			_fail("the popular poll charged the wrong one-off")
 		if not ns.poll_purchases.get("carbon_levy", {}).has("popular"):
@@ -357,7 +357,7 @@ func _run() -> void:
 	# displayed() is untouched.
 	if absf(PollNoise.offset(1234, "x")) > PollNoise.NOISE_MAX_PCT + 1e-9:
 		_fail("the ordinary poll noise moved")
-	if StatuteK.POLL_COSTS.size() != 2:
+	if StatuteK.POLL_COSTS_EUR_BN.size() != 2:
 		_fail("the price list grew without a commission button to match")
 
 	# --- (i) The assembly-bills section: the endorse verb is reachable ------

@@ -41,8 +41,16 @@ func _process(_delta: float) -> bool:
 		_main._windows.close_all()
 		_main._windows.open("budget")
 		return false
+	if _frame == 3:
+		_click_commit()
+		return false
 	if _frame < 4:
 		return false  # the budget builds its levers on its first visible frame
+	if _frame == 5:
+		_check_code_focus_after_a_click_stays()
+		_finish()
+		return false
+	_check_a_click_parks_no_focus_on_a_button()
 	_check_focus_returns_below()
 	_check_escape_pops_the_top()
 	_check_hotkeys_only_below_scenes()
@@ -54,8 +62,46 @@ func _process(_delta: float) -> bool:
 	_check_an_ordinary_hold_slides_in()
 	_check_answer_keeps_the_inbox_while_one_holds()
 	_check_space_waits_under_a_scene()
-	_finish()
+	# Review pass 1: a grab_focus after the click's release is code's, and holds.
+	_click_commit()
+	_main._budget_panel._commit_button.grab_focus()
 	return false
+
+
+## QA #54 RECORD: Commit kept the keyboard after a click, so the next Space -- the
+## pause key -- pressed Commit again instead of reaching main.gd's unhandled input.
+## A click leaves no focus on the button it pressed; a button the KEYBOARD reached
+## keeps it (Tab, the arrow keys), because that is how the keyboard path works.
+func _click_commit() -> void:
+	var commit: Button = _main._budget_panel._commit_button
+	var point: Vector2 = commit.get_global_rect().get_center()
+	for pressed in [true, false]:
+		var click := InputEventMouseButton.new()
+		click.button_index = MOUSE_BUTTON_LEFT
+		click.pressed = pressed
+		click.position = point
+		click.global_position = point
+		_main.get_viewport().push_input(click, true)
+
+
+func _check_code_focus_after_a_click_stays() -> void:
+	var commit: Button = _main._budget_panel._commit_button
+	if _main.get_viewport().gui_get_focus_owner() != commit:
+		_fail("a grab_focus made after a click's release was taken away as if the click had made it")
+	commit.release_focus()
+
+
+## (A frame after _click_commit(): the release is deferred out of the focus signal.)
+func _check_a_click_parks_no_focus_on_a_button() -> void:
+	var commit: Button = _main._budget_panel._commit_button
+	var viewport: Viewport = _main.get_viewport()
+	var owner := viewport.gui_get_focus_owner()
+	if owner == commit:
+		_fail("a click on Commit left it holding the keyboard: the next Space presses it again")
+	commit.grab_focus()
+	if viewport.gui_get_focus_owner() != commit:
+		_fail("a button the keyboard reached lost its focus")
+	commit.release_focus()
 
 
 ## Review focus 1's neighbour: a system screen over a domain takes the keyboard
@@ -85,8 +131,11 @@ func _check_focus_returns_below() -> void:
 ## meaning when there is nothing to put away.
 func _check_escape_pops_the_top() -> void:
 	var stack = _main._stack
-	if not _main._windows.is_open("budget"):
-		_main._windows.open("budget")
+	_main._windows.close_all()
+	_main._windows.open("budget")
+	# V5.1-d1a (G1): the inbox the map showed rides over the tab, a layer of its own.
+	if not _main._hud.inbox.is_slid() or stack.top() != ScreenStack.INBOX:
+		_fail("the inbox did not ride over the budget as the INBOX layer (top %d)" % stack.top())
 	_main._briefing.show()
 	_main._hud.title_bar.save_load_requested.emit()
 	if stack.top() != ScreenStack.SYSTEM:
@@ -101,14 +150,20 @@ func _check_escape_pops_the_top() -> void:
 	_press(KEY_ESCAPE)
 	if _main._briefing.visible:
 		_fail("second Escape did not close the briefing")
-	if not _main._windows.is_open("budget") or stack.top() != ScreenStack.WORKSPACE:
+	if not _main._windows.is_open("budget") or stack.top() != ScreenStack.INBOX:
 		_fail("second Escape reached below the briefing (top %d)" % stack.top())
 
 	_press(KEY_ESCAPE)
+	if _main._hud.inbox.visible or not _main._windows.is_open("budget"):
+		_fail("third Escape did not put the inbox away, the budget kept")
+	if stack.top() != ScreenStack.WORKSPACE:
+		_fail("third Escape reached below the inbox (top %d)" % stack.top())
+
+	_press(KEY_ESCAPE)
 	if _main._windows.is_open("budget"):
-		_fail("third Escape did not put the budget away")
+		_fail("fourth Escape did not put the budget away")
 	if stack.top() != ScreenStack.MAP:
-		_fail("three Escapes over three layers left top %d, not the map" % stack.top())
+		_fail("four Escapes over four layers left top %d, not the map" % stack.top())
 	if _main._pause_menu.visible:
 		_fail("an Escape that closed something also opened the pause menu")
 
@@ -163,8 +218,9 @@ func _check_placement_is_a_layer() -> void:
 	_press(KEY_ESCAPE)
 	if _main._armed_energy_action != "":
 		_fail("Escape did not cancel the armed placement")
-	if stack.top() != ScreenStack.WORKSPACE:
-		_fail("cancelling the placement did not drop to the energy window (top %d)" % stack.top())
+	# V5.1-d1a (G6): arming put the workspace away, so the map is what is left.
+	if stack.top() != ScreenStack.MAP:
+		_fail("cancelling the placement did not drop to the map (top %d)" % stack.top())
 	_main._windows.close_all()
 
 
@@ -232,6 +288,7 @@ func _check_holding_arrival_slides_in() -> void:
 ## A note is news, not a question: it waits in the inbox, which stays away.
 func _check_a_note_does_not_slide_in() -> void:
 	_main._windows.open("budget")
+	_main._hud.inbox.slide_out()  # put away (G1: it rode over the tab)
 	_main._hud.inbox.push("A note", "body")
 	if _main._hud.inbox.visible:
 		_fail("a note slid the inbox over the open tab")

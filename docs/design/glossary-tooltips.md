@@ -193,6 +193,24 @@ A table in `data/` (Content's), proposed as `data/glossary/terms.json`:
   matcher; P1's test reads the tags; the i18n lint learns `[g=…]`; and Content
   re-keys the French row of every string it marks, in the same PR.
 
+### Where a mark renders (V5.1-d3)
+
+- **`PanelKit.line()` renders marks.** A line whose text carries `[g=id]` or
+  `[p=id]` is drawn by `PanelKit.rich()` -- a `TermText` -- and any other line stays
+  the `Label` it was, so the ~300 sites that mark nothing do not move (a
+  `RichTextLabel` reports its height differently, and every fit and fold test
+  measures these lines). The result is a `Control`; a site that sets the text again,
+  takes clicks or fills a tooltip calls `PanelKit.plain_line()`, which is always a
+  `Label`.
+- **Buttons and tooltips stay plain.** A mark in a string headed for a `Button`'s
+  text or a `tooltip_text` is dropped by `TermText.plain()`; the rendered
+  no-raw-tag sweep (`tests/test_no_raw_tags.gd`) fails a window that shows a raw tag.
+- **The A-Z tab.** `src/ui/glossary_panel.gd`, the sidebar's Glossary domain: every
+  term of `terms.json` in alphabetical order under its letter, each a marked term
+  (hover or click for its plate) with its definition, body and See-also line, and a
+  letter bar that jumps. It reads `Glossary` alone, and N1 is per entry. French is
+  parked: the order is by the raw first character.
+
 ## The noise rules
 
 - **N1 — First occurrence only.** A term is marked once per text block (a card,

@@ -3,13 +3,16 @@
 Reports unresolved wikilinks, docs/ files the index does not reach, docs nothing
 links to, and docs/ files without frontmatter. Exit 1 when a wikilink is
 unresolved; the other three are reported, not failed, because each can be a
-deliberate call (a plan kept out of the index, say).
+deliberate call (a plan kept out of the index, say). It also runs the generated-
+diagram check (tools/vault_diagrams.py): exit 1 when a diagram no longer matches
+the code it draws.
 
 Obsidian resolves a bare [[name]] by basename anywhere in the vault, so this
 does too; reading the tracked files rather than the disk is the point --
 gitignored reports/ would otherwise resolve links a fresh clone cannot.
 
     python tools/check_vault.py
+    python tools/check_vault.py --diagrams     # only the diagram check
 """
 import os
 import re
@@ -32,6 +35,9 @@ def git_files(root):
 
 
 def main():
+    import vault_diagrams
+    if "--diagrams" in sys.argv[1:]:
+        return vault_diagrams.main([])
     root = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True,
                           text=True, check=True).stdout.strip()
     files = git_files(root)
@@ -99,7 +105,8 @@ def main():
         print(f"{label}: {len(items)}")
         for p in items:
             print(f"  {p}")
-    return 1 if unresolved else 0
+    diagrams = vault_diagrams.main([])
+    return 1 if unresolved or diagrams else 0
 
 
 if __name__ == "__main__":

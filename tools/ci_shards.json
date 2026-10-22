@@ -40,7 +40,9 @@
    "tests/test_dev_commands.gd",
    "tests/test_dev_console.gd",
    "tests/test_save_continuity.gd",
-   "tests/test_i18n_lint.gd"
+   "tests/test_i18n_lint.gd",
+   "tests/test_dead_ends.gd",
+   "tests/test_findable_terms.gd"
   ],
   [
    "tests/test_clock.gd",
@@ -58,6 +60,7 @@
    "tests/test_industry.gd",
    "tests/test_statute_surfaces.gd",
    "tests/test_statute_assembly.gd",
+   "tests/test_poll_cost.gd",
    "tests/test_tax.gd",
    "tests/test_sectors.gd",
    "tests/test_campaign.gd",
@@ -80,7 +83,10 @@
    "tests/test_month_runner.gd",
    "tests/test_settings_language.gd",
    "tests/test_date_text.gd",
-   "tests/test_i18n_rows.gd"
+   "tests/test_i18n_rows.gd",
+   "tests/test_clock_doors.gd",
+   "tests/test_polls_closed.gd",
+   "tests/test_summit_flow.gd"
   ],
   [
    "tests/test_data.gd",
@@ -90,6 +96,7 @@
    "tests/test_discipline.gd",
    "tests/test_diplomacy.gd",
    "tests/test_embassies.gd",
+   "tests/test_visit_cadence.gd",
    "tests/test_foreign_policy.gd",
    "tests/test_people.gd",
    "tests/test_cabinet.gd",
@@ -122,7 +129,12 @@
    "tests/test_save_cycle.gd",
    "tests/test_budget_forecast.gd",
    "tests/test_num.gd",
-   "tests/test_i18n_rows_lint.gd"
+   "tests/test_i18n_rows_lint.gd",
+   "tests/test_inbox_stays.gd",
+   "tests/test_person_links.gd",
+   "tests/test_effects_ledger.gd",
+   "tests/test_no_raw_tags.gd",
+   "tests/test_glossary_panel.gd"
   ],
   [
    "tests/test_political_systems.gd",
@@ -159,7 +171,10 @@
    "tests/test_i18n_fit.gd",
    "tests/test_strings.gd",
    "tests/test_month_close_pause.gd",
-   "tests/test_effect_baselines.gd"
+   "tests/test_effect_baselines.gd",
+   "tests/test_consequence_card.gd",
+   "tests/test_state_visit.gd",
+   "tests/test_hold_reason.gd"
   ]
  ]
 }

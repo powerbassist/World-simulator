@@ -30,6 +30,10 @@ tests=(
   tests/test_scenario.gd
   tests/test_diplomacy.gd
   tests/test_embassies.gd
+  # The V5.1 play gate's state-visit cadence: a host receives a state visit at
+  # most once per host_interval_months, the idle player is one partner among
+  # many, on every playable, through WorldMonth.
+  tests/test_visit_cadence.gd
   tests/test_trade.gd
   tests/test_coercion.gd
   tests/test_orgs.gd
@@ -122,6 +126,9 @@ tests=(
   # in-flight guard, determinism, the has_budget gate, round-trip. Registered
   # at authoring time per the pass-5 fleet's find.
   tests/test_statute_assembly.gd
+  # G8 (V5.1 play gate): a commissioned poll's price -- flat euros, the same
+  # for every nation, and exactly what buy_poll() charges the debt.
+  tests/test_poll_cost.gd
   # V4.2 T7: the grown book's content shape -- counts, theme and per-bloc sign
   # coverage, spread bands -- re-derived from JSON beside tools/law_lint.py.
   tests/test_law_content.gd
@@ -170,8 +177,21 @@ tests=(
   tests/test_glossary.gd
   tests/test_term_text.gd
   tests/test_play_gate_terms.gd
+  tests/test_no_raw_tags.gd
+  tests/test_glossary_panel.gd
   tests/test_month_close_pause.gd
   tests/test_effect_baselines.gd
+  tests/test_inbox_stays.gd
+  tests/test_clock_doors.gd
+  tests/test_consequence_card.gd
+  tests/test_dead_ends.gd
+  tests/test_polls_closed.gd
+  tests/test_person_links.gd
+  tests/test_state_visit.gd
+  tests/test_summit_flow.gd
+  tests/test_findable_terms.gd
+  tests/test_effects_ledger.gd
+  tests/test_hold_reason.gd
   tests/test_glossary_tip.gd
   tests/test_outliner.gd
   tests/test_geography.gd

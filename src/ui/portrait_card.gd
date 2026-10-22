@@ -25,6 +25,7 @@ const Portrait = preload("res://src/ui/portrait.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 ## Its height only since V5.1-c2.3: the card heads the sidebar and takes the
 ## sidebar's width, and its 268 px floor would have widened the sidebar past the
@@ -39,7 +40,7 @@ var _emotion: int = -1  # Portrait.Emotion; -1 forces the first swap
 
 var _bust: Control
 var _approval_label: Label
-var _leader_label: Label
+var _leader_label: RichTextLabel
 var _nation_label: Label
 var _flag: Control
 var _mood_icon: Control
@@ -83,9 +84,9 @@ func _ready() -> void:
 	approval_caption.theme_type_variation = UiTheme.MICRO
 	column.add_child(approval_caption)
 
-	_leader_label = Label.new()
-	_leader_label.theme_type_variation = UiTheme.CAPTION
-	_leader_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# A rich line since V5.1-d1b2 (G9): the president's own name opens their card.
+	_leader_label = PanelKit.TermText.new()
+	_leader_label.theme_type_variation = UiTheme.RICH_CAPTION
 	column.add_child(_leader_label)
 
 	var nation_row := HBoxContainer.new()
@@ -114,7 +115,7 @@ func setup(state, loader) -> void:
 	if nation == null:
 		return
 	_nation_label.text = nation.nation_name
-	_leader_label.text = "%s, %s" % [loader.person_name(nation.leader_person_id), nation.leader_title]
+	_leader_label.set_marked("%s, %s" % [PanelKit.person(nation.leader_person_id, loader.person_name(nation.leader_person_id)), nation.leader_title])
 	_flag.setup(nation.flag_bands, nation.flag_layout)
 	_leader_id = nation.leader_person_id
 	_emotion = -1

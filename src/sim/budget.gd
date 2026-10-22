@@ -42,6 +42,7 @@ const StatuteK = preload("res://src/sim/statute_constants.gd")
 ## closes (statute -> legislature -> here) is the one budget -> events ->
 ## legislature -> here already runs.
 const Statute = preload("res://src/sim/statute.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 
 
 static func tick_month(state) -> void:
@@ -498,6 +499,21 @@ static func project(state, pending: Dictionary, months: int, loader) -> Array[Di
 	return job.path
 
 
+## The projection's stand-in for Elections' date push, the date only and no vote
+## (QA on #77). The projection runs no Elections, so past an in-window legislative
+## election months_to_legislative went negative and Discipline.target() kept reading
+## the pre-election floor for the rest of the horizon. Once the election month is
+## behind the copy's clock, the next one is a term on -- Elections' own rule. The
+## election month itself still reads 0, as in the real month, where Elections runs
+## after Discipline. Shared with tests/test_budget.gd's mirror.
+static func roll_election_clock(state, loader) -> void:
+	var ns = state.player()
+	if ns == null or ns.next_election_year <= 0:
+		return
+	if state.year * 12 + state.month > ns.next_election_year * 12 + ns.next_election_month:
+		ns.next_election_year += int(loader.nations[ns.id].term_years)
+
+
 ## V5.1-0a. project() as a cursor, so the budget window's forecast can run off the
 ## frame (src/ui/budget_forecast.gd): ~5 s a projection at 41 nations, which the
 ## panel ran inside one frame on every lever move -- the V5.0 play gate's "budget
@@ -567,6 +583,9 @@ static func _projected_month(job: ProjectionJob) -> Array:
 		if sim.month > 12:
 			sim.month = 1
 			sim.year += 1
+		# QA on #77: no Elections here, so the copy's legislative date is rolled the
+		# way Elections rolls it (roll_election_clock(), below).
+		roll_election_clock(sim, loader)
 		# V2.8. The accessibility index per nation, built here because energy.gd never
 		# learns that a graph exists. Same index Regions already computes, so the
 		# Dijkstra rows are served from network.gd's own per-graph cache and this
@@ -621,6 +640,12 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# projection -- so a hold rides out the window and a failed bill's
 	# cooldown does not count down inside it; both are recorded bounds of
 	# this loop, not omissions to patch by symmetry.
+	# D14 (V5.0d's record): discipline drifts toward Discipline.target() in the real
+	# month -- down by up to 0.20 in the year before a legislative election -- and a
+	# projection that only let rebellions lower it carried close backbench bills
+	# the real month fails, or the reverse. In WorldMonth's relative slot, before
+	# Statute's divisions read it. Player-gated, so it costs one nation's parties.
+	units.append(func() -> void: Discipline.tick_month(sim, loader))
 	units.append(func() -> void: Statute.tick_month(sim, loader))
 	units.append(func() -> void: Companies.tick_month(sim, loader))
 	# In main.gd's slot again -- Companies, then the autonomy machine, then

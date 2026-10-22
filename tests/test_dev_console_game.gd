@@ -157,6 +157,24 @@ func _check_commands_land_where_the_players_do(console) -> void:
 	console.run_command("pause off")
 	if _a._clock.paused:
 		_fail("pause off did not resume the clock")
+	# V5.1-d1b3 (QA: the clock ran, or re-paused, with no cause it saw). The
+	# console is how QA drives the game: its pause must take under a scene (since
+	# d1a the player's door refuses there) and survive the pause menu closing (the
+	# menu restored the clock it found open, over a "pause on" given under it).
+	console.run_command("pause off")
+	_a._open_pause_menu()
+	console.run_command("pause on")
+	_a._close_pause_menu()
+	if not _a._clock.paused:
+		_fail("pause on under the pause menu was undone when the menu closed")
+	_a._election_panel.show()
+	console.run_command("pause off")
+	if _a._clock.paused:
+		_fail("pause off did not take with a scene up")
+	console.run_command("pause on")
+	if not _a._clock.paused:
+		_fail("pause on did not take with a scene up")
+	_a._election_panel.hide()
 	console.run_command("open budget")
 	if not _a._windows.is_open("budget"):
 		_fail("open budget did not open the window")

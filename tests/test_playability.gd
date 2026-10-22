@@ -529,6 +529,9 @@ func _check_same_month_defaults_queue_one_effect() -> void:
 		_fail("two same-month defaults queued %d ledger entries, expected exactly 1" % (_main._pending_effects.size() - effects_before))
 	elif not String(_main._pending_effects[effects_before]["label"]).contains("; "):
 		_fail("the merged ledger entry should name both events joined by '; ', got '%s'" % _main._pending_effects[effects_before]["label"])
+	# V5.1-d1b3 (QA on #73): flagged, so the close says "decided for you", not "you decided".
+	elif not bool(_main._pending_effects[effects_before].get("defaulted", false)):
+		_fail("the defaults' ledger entry is not flagged as decided for the player")
 	var new_cards := 0
 	for card_id in _main._hud.inbox._cards.keys().duplicate():
 		if not cards_before.has(card_id):

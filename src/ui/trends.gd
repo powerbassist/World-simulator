@@ -32,7 +32,9 @@ const TREND_MONTHS := 6
 const WATCHED: Array[Dictionary] = [
 	{"key": "unemployment_pct", "label": "Unemployment", "worse_when_rising": true, "scale": 1.0, "unit": "pp"},  # i18n: msgid label
 	{"key": "overall_approval_pct", "label": "Approval", "worse_when_rising": false, "scale": 5.0, "unit": "pp"},  # i18n: msgid label
-	{"key": "deficit_pct_gdp", "label": "Deficit", "worse_when_rising": false, "scale": 1.0, "unit": "pp"},  # i18n: msgid label
+	# Rising is worse: deficit_pct_gdp is spending - revenue (budget.gd). It read
+	# false until V5.1-d1b3 (QA on #69), and a growing deficit was coloured good.
+	{"key": "deficit_pct_gdp", "label": "Deficit", "worse_when_rising": true, "scale": 1.0, "unit": "pp"},  # i18n: msgid label
 	{"key": "growth_annual_pct", "label": "Growth", "worse_when_rising": false, "scale": 0.5, "unit": "pp"},  # i18n: msgid label
 	{"key": "debt_to_gdp_pct", "label": "Debt", "worse_when_rising": true, "scale": 3.0, "unit": "pp"},  # i18n: msgid label
 ]

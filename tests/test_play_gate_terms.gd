@@ -18,9 +18,11 @@ const TermText = preload("res://src/ui/term_text.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const GovernmentPanel = preload("res://src/ui/government_panel.gd")
 
-## The line exists only under a constitution with Article 49.3 (FRA's), and
-## must not show for the parliamentary systems the author plays.
-const FORCE_LINE := {"FRA": true, "DEU": false, "GBR": false, "POL": false}
+## The playable nations whose Politics window is read. Whether each shows the 49.3
+## line is read off its formation method -- the data, not a table here (QA RECORD on
+## #61) -- and the check needs at least one of each kind to mean anything.
+const PLAYED := ["FRA", "DEU", "GBR", "POL"]
+const FORCE_METHOD := "presidential_appointment"
 
 var _failures: Array[String] = []
 var _main
@@ -62,8 +64,11 @@ func _check(panel: Node, id: String, window: String) -> void:
 ## French constitution's, so it follows the formation method the system carries,
 ## never the nation id.
 func _check_force_line_follows_the_constitution() -> void:
-	for nation_id in FORCE_LINE:
+	var kinds := {}
+	for nation_id in PLAYED:
 		var state = GameState.new_game(_main._loader, nation_id)
+		var expected: bool = String(state.player().formation_method) == FORCE_METHOD
+		kinds[expected] = true
 		var panel = GovernmentPanel.new()
 		root.add_child(panel)
 		panel.setup(state, _main._loader)
@@ -72,9 +77,11 @@ func _check_force_line_follows_the_constitution() -> void:
 		for node in _all(panel):
 			if node.get_script() == TermText and String(node.text).contains(TermText.META_PREFIX + "article_49_3"):
 				shown = true
-		if shown != FORCE_LINE[nation_id]:
-			_fail("%s: the Article 49.3 line %s" % [nation_id, "is missing" if FORCE_LINE[nation_id] else "shows, with no 49.3 in its constitution"])
+		if shown != expected:
+			_fail("%s: the Article 49.3 line %s" % [nation_id, "is missing" if expected else "shows, with no 49.3 in its constitution"])
 		panel.free()
+	if kinds.size() != 2:
+		_fail("premise: the played nations do not include both a 49.3 constitution and one without")
 
 
 func _all(node: Node) -> Array:

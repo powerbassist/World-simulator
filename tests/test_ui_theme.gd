@@ -38,8 +38,24 @@ func _process(_delta: float) -> bool:
 	_check_scenes_carry_it()
 	_check_no_panel_overrides()
 	_check_text_scale()
+	_check_type_steps()
 	_finish()
 	return false
+
+
+## V5.1-d2, G11 (the play gate's "text proportions odd"; author: "Oui, dans d"):
+## the scale ran 11/12/15/18/20/30 -- two steps a reader cannot tell apart (11/12,
+## 18/20) and two that jump (12 to 15, 20 to 30). Each step now differs from the
+## last by a ratio a reader sees and none leaps; the body stays at 15.
+func _check_type_steps() -> void:
+	var steps := [UiTheme.SIZE_MICRO, UiTheme.SIZE_SMALL, UiTheme.SIZE_BASE, UiTheme.SIZE_LEAD,
+		UiTheme.SIZE_FIGURE, UiTheme.SIZE_HERO]
+	if UiTheme.SIZE_BASE != 15:
+		_fail("the body moved off 15: %d" % UiTheme.SIZE_BASE)
+	for i in range(1, steps.size()):
+		var ratio := float(steps[i]) / float(steps[i - 1])
+		if ratio < 1.13 or ratio > 1.3:
+			_fail("the type step %d -> %d is %.2f, outside 1.13-1.30" % [steps[i - 1], steps[i], ratio])
 
 
 ## V5.1-c2.4. The text-size option scales the whole type scale -- every size the

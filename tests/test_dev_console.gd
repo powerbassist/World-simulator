@@ -29,7 +29,7 @@ const DevPerf = preload("res://src/ui/dev_perf.gd")
 const DevConsole = preload("res://src/ui/dev_console.gd")
 
 const COMMANDS := ["help", "get", "set", "person", "skip", "speed", "pause", "term_start",
-	"event", "save", "load", "open", "errors", "perf", "clear"]
+	"event", "save", "load", "open", "errors", "perf", "clear", "hint"]
 const CONSOLE_FILES := ["res://src/ui/dev_registry.gd", "res://src/ui/dev_console.gd",
 	"res://src/ui/dev_log.gd", "res://src/ui/dev_perf.gd"]
 

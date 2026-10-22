@@ -300,7 +300,7 @@ step     passing interval        midpoint
 0.0001   [0.0081, 0.0123]        0.0102   <- SHIPPED
 ```
 
-**`MIGRATION_RATE` is 0.0102**: interior to all four grids with candidates
+**`MIGRATION_RATE` is 0.0102** *(at V2.6a; V2.6c's re-sweep moved it to **0.0003**, commit `5d2925d4`, because natural change dominates — `src/sim/migration_constants.gd:256`, and [[natural-change-model]] §6)*: interior to all four grids with candidates
 failing on BOTH sides of each, and stable at the two finest resolutions — the
 answer has stopped being a statement about the grid (V1.5b's diagnostic). The
 response is linear in the rate, so both crossings are smooth and neither edge

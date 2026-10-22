@@ -429,7 +429,7 @@ the digit** — §4's claim visible in the harness rather than only in a test.
 Two surfaces, no new window. `companies_panel.gd` already grouped by sector and already
 carried a `SECTOR_LABEL` table, so the readout and both verbs hang under the heading they
 point at. The window's **title** changed — "Companies" → "Industry" — because the panel is no
-longer only about firms; the id stays `companies`, which is what the action bar and
+longer only about firms; the id stays `companies`, which is what the action bar (now the sidebar's domain table, `domains.gd`) and
 `--open` address.
 
 Three figures per sector and not one, because they are three different times: the standing

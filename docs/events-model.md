@@ -213,7 +213,7 @@ Events.tick_month(state, loader):          # every nation now, player AND the 28
 ```
 
 **The desk replaced the slot**, severity-ordered and bounded at `QUEUE_MAX` 4 (the
-message column holds six cards — the old ceiling argument, one size up) — the bound
+message column held six cards — the old ceiling argument, one size up; since V5.1-c3.1 the inbox keeps every decision and 40 notes, `inbox.gd:44`) — the bound
 lives at DELIVERY, where all three doors pass, and a chain that finds the desk full
 waits a month while a hook or a draw skips (next happening, next month). `answer()`
 answers a NAMED entry; `choose()` remains the head-answering read kept for harnesses. The
@@ -644,7 +644,7 @@ same as being better off a term later.**
 
 ## 10. The surfaces
 
-**The card is `message_stack.gd`'s fifth caller and the FIRST EVER CONSUMER of its
+**The card is `message_stack.gd`'s (became `inbox.gd`, V5.1-c3.1, same calls) fifth caller and the FIRST EVER CONSUMER of its
 `card_activated` signal**, emitted since U5a and connected to nothing. U5a's call 3 said
 the column ships as furniture because the thing that fills it is events, and that *"V1.8
 adds calls rather than a layout"*. It held: nothing on screen moved to make room, and the

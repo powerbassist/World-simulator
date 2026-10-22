@@ -32,6 +32,11 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --settings
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --failing --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open energy --arm-energy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --consequence
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --election --polls-closed
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation DEU --book-visit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
@@ -60,6 +65,34 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme prog_jobs_first --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defence --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --summit --open summit
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --subsidy --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --regulate --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nationalise --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --corrupt --open overview
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --migrate --open economy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --unrest --open economy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --press --open overview
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --cycle --open economy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --inflate --open economy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --downgrade --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --redistribute --open tax
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --invest --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tally
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --network
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --energy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --place
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --site
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --event-answered
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --interrupt --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --menu
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open glossary
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --termlimit
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -401,6 +434,11 @@ var _downgrade := false
 var _redistribute := false
 var _invest := false
 var _build := false
+## V5.1-d1a (G6): the energy tab's first order armed, through the panel's own signal.
+var _arm_energy := false
+## V5.1-d1b (G10): a quiet event answered through the Events window, then its month
+## closed by the clock, so the consequence card is in the inbox.
+var _consequence := false
 
 ## V2.2b, and a pair of flags that photograph a VIEW rather than a mutation: the
 ## register is static content, so there is no state to stage and the frame is the
@@ -417,6 +455,13 @@ var _city := false
 ## data/regions/ says. Ten years is what makes the moved column readable.
 var _diverge := false
 var _election := false
+## V5.1-d1b2 (G4): an election reached through the month end stops on the polls
+## closing; --election and --tally press its Continue unless this keeps the beat.
+var _polls_closed := false
+## V5.1-d1b2 (G9): the head of government's card, pinned as a click on the name pins it.
+var _person_card := false
+## V5.1-d1b2 (G13): the clicked nation's meeting verb pressed, so the row is booked.
+var _book_visit := false
 
 ## V3.6, the thirty-first flag: the front door. Boots menu.tscn instead of
 ## main.tscn and photographs the plate -- the real MapView over its month-0
@@ -662,6 +707,10 @@ func _init() -> void:
 			_invest = true
 		elif args[i] == "--build":
 			_build = true
+		elif args[i] == "--arm-energy":
+			_arm_energy = true
+		elif args[i] == "--consequence":
+			_consequence = true
 		elif args[i] == "--campaign":
 			_campaign = true
 		elif args[i] == "--pledge":
@@ -698,6 +747,12 @@ func _init() -> void:
 			_move = true
 		elif args[i] == "--election":
 			_election = true
+		elif args[i] == "--polls-closed":
+			_polls_closed = true
+		elif args[i] == "--person-card":
+			_person_card = true
+		elif args[i] == "--book-visit":
+			_book_visit = true
 		elif args[i] == "--menu":
 			_menu = true
 		elif args[i] == "--tally":
@@ -1033,6 +1088,19 @@ func _apply_view() -> void:
 	# staged before it, the tab's opening put the slid inbox away again.
 	if _interrupt:
 		_stage_an_interrupt()
+	if _book_visit:
+		for action in _main._loader.diplomatic_actions:
+			if action.opens_meeting:
+				_main._nation_panel._on_act(action)
+				_main._nation_panel.mark_dirty()
+				break
+	if _person_card:
+		var pm := String(_main._state.player().pm_person_id)
+		_main._stack.tips.person_click(pm, Rect2(640, 220, 1, 16))
+	if _arm_energy and not _main._loader.energy_actions.is_empty():
+		_main._energy_panel.order_armed.emit(String(_main._loader.energy_actions[0].id))
+	if _consequence:
+		_answer_and_close_the_month()
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		# WITH the state and the viewer, exactly as main.gd:733 calls it. Without
@@ -1832,6 +1900,14 @@ func _stage_the_election() -> void:
 	while _main._clock.year * 12 + _main._clock.month < target:
 		_main._clock.advance_one_day()
 	_main._update_top_bar()
+	_through_the_polls()
+
+
+## The polls-closed beat's Continue, as the player presses it -- unless the frame
+## is of the beat itself (--polls-closed).
+func _through_the_polls() -> void:
+	if not _polls_closed and _main._election_panel.visible and _main._election_panel._title.text == tr("POLLS CLOSED"):
+		_main._election_panel._cont.pressed.emit()
 
 
 ## V3.6: 41 months, the June 2029 double election -- the first plate with seat
@@ -1845,6 +1921,7 @@ func _stage_the_tally() -> void:
 	while _main._clock.year * 12 + _main._clock.month < target:
 		_main._clock.advance_one_day()
 	_main._update_top_bar()
+	_through_the_polls()
 
 
 func _impose_a_spread() -> void:
@@ -2980,6 +3057,21 @@ func _put_a_sited_crisis_on_the_desk() -> void:
 			if entry.has("region_id"):
 				return
 	printerr("--climate: no sited event drew inside %d months" % horizon)
+
+
+## --consequence (V5.1-d1b): a quiet event answered through the Events window, then
+## its month closed by the clock, so the close's consequence card is in the inbox.
+func _answer_and_close_the_month() -> void:
+	var ns = _main._state.player()
+	for ev in _main._loader.events:
+		if not bool(ev.interrupt) and not ev.choices.is_empty():
+			Events.announce(ns, ev, Events._absolute_month(int(_main._state.year), int(_main._state.month)),
+				Events.region_names(ns, _main._loader))
+			_main._events_panel._on_choose(ev, ev.choices[0])
+			break
+	var month: int = _main._clock.month
+	while _main._clock.month == month:
+		_main._clock.advance_one_day()
 
 
 ## The other end of the same panel, and it wants the opposite scroll.

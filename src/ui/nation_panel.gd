@@ -28,6 +28,8 @@ const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const DFK = preload("res://src/sim/defence_constants.gd")
 const Num = preload("res://src/ui/num.gd")
+const VisitBooking = preload("res://src/ui/visit_booking.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 signal closed
 
@@ -35,6 +37,9 @@ signal closed
 ## (_queue_effect, a baseline measured against the next history entry) takes it
 ## with no change of its own.
 signal acted(before, label, result)
+## V5.1-d1b2 (G13): a meeting verb asks for the Diary's booking form on this
+## visit; the player picks the day there (VisitBooking).
+signal book_requested(action_id: String, target_id: String)
 
 var _state
 var _loader
@@ -175,7 +180,7 @@ func _refresh() -> void:
 	# and Spain as much as the twelve (the V4.11 review caught the first wording).
 	if Roster.grade(_loader, _nation_id) == "simulated":
 		PanelKit.line(_body, tr("Simulated nation — not playable"), PanelKit.Tone.DIM)
-	PanelKit.line(_body, tr("Leader: %s (%s)") % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
+	PanelKit.rich(_body, tr("Leader: %s (%s)") % [PanelKit.person(n.leader_person_id, _loader.person_name(n.leader_person_id)), n.leader_title], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)
@@ -336,20 +341,43 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 
+	# V5.1-d1b2 (G13). A meeting verb books a visit (VisitBooking); one already in
+	# the diary says when, and the row waits for it.
+	var booking: Dictionary = VisitBooking.booked(_state, action, _nation_id) if action.opens_meeting else {}
+	if not booking.is_empty():
+		is_available = false
+	# The parent's call on #76 ("choisir la date dans l'agenda"): a meeting the host
+	# refuses only TODAY is still booked here -- the form opens on the first day that
+	# carries, and the line says when. Diplomacy.available() stays the AI's gate.
+	var later := ""
+	if not is_available and booking.is_empty() and VisitBooking.held_only_by_host(_state, _loader, action, _nation_id):
+		is_available = true
+		later = _unavailable_reason(action, player_id)
+	var names := VBoxContainer.new()
+	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(names)
 	var summary := Label.new()
 	summary.text = Strings.row_name("diplomatic-actions", action)
 	summary.tooltip_text = Strings.row_summary("diplomatic-actions", action)
-	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD
 	if not is_available:
 		summary.theme_type_variation = UiTheme.CAPTION
-	row.add_child(summary)
+	names.add_child(summary)
+	# G13 (c), the author's "Bouton grisé sans raison": a reason the player can act
+	# on -- a booking, a cooldown, a partner's refusal -- is a line, not a hover.
+	# The generic "conditions not met" stays on the button: under every row it
+	# would be noise.
+	var reason := _booked_text(booking) if not booking.is_empty() else later
+	if reason == "" and not is_available:
+		reason = _unavailable_reason(action, player_id)
+	if reason != "" and reason != tr("Conditions for this action are not met."):
+		PanelKit.line(names, reason)
 
 	var button := Button.new()
-	button.text = tr("Act")
+	button.text = tr("Book") if action.opens_meeting else tr("Act")
 	button.disabled = not is_available
 	if not is_available:
-		button.tooltip_text = _unavailable_reason(action, player_id)
+		button.tooltip_text = reason if reason != "" else _unavailable_reason(action, player_id)
 	else:
 		button.tooltip_text = tr("%+.0f relations with %s.") % [
 			float(action.effects.get("relations", 0.0)), _nation_id,
@@ -373,6 +401,15 @@ func _unavailable_reason(action, player_id: String) -> String:
 		# again in 12 months" read like a lock left over from before the game
 		# began (playtest 2026-09-05).
 		return tr("Cooldown: available again in %d months.") % int(ns.diplo_cooldown_months[key])
+	# V5.1-d2, the host's side (#74): the target received this verb within its host
+	# interval, from anyone, and says from when it may again.
+	var free := VisitBooking.host_free_day(_state, action, _nation_id)
+	if not free.is_empty():
+		var host = _loader.nations.get(_nation_id)
+		return tr("%s receives another from %s.") % [
+			String(host.nation_name) if host != null else _nation_id,
+			DateText.day_month_year(1, int(free["month"]), int(free["year"])),
+		]
 	# Named ahead of the generic reason: "they will not sign" is a different
 	# problem from "you cannot propose", and it is the one the player can fix.
 	var terms: Dictionary = action.effects.get("agreement", {})
@@ -416,7 +453,20 @@ func _refusal_text(key: String) -> String:
 	return tr("%s will not sign.") % _nation_id
 
 
+## When a booked visit happens, in the diary's words.
+func _booked_text(entry: Dictionary) -> String:
+	var days := int(entry.get("travel_days", 0))
+	return tr_n("Booked for %s, %d day's travel each way.", "Booked for %s, %d days' travel each way.", days) % [
+		DateText.day_month_year(int(entry["day"]), int(entry["month"]), int(entry["year"])), days]
+
+
 func _on_act(action) -> void:
+	# G13 (b): a visit takes its travel days, as the Diary prices them -- booked
+	# there, on the day the player picks, not run on the spot. Its decision delta is
+	# measured on the day it happens.
+	if action.opens_meeting:
+		book_requested.emit(String(action.id), _nation_id)
+		return
 	var before := Trends.snapshot_now(_state)
 	var result := Diplomacy.execute(
 		_state, _loader.diplomatic_actions, action, _state.player_nation_id, _nation_id

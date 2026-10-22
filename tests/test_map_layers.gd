@@ -46,6 +46,7 @@ func _run() -> void:
 	_check_registry_drives_the_switcher()
 	_check_political_caption()
 	_check_ramps_are_monotone()
+	_check_no_layer_reads_by_colour_alone()
 	_check_viewer_relative()
 	_check_the_viewer_has_no_value()
 	_check_unknown_layer_falls_back()
@@ -163,6 +164,62 @@ func _check_ramps_are_monotone() -> void:
 	var below := MapLayers.ramp(MapLayers.RELATIONS, 0.0)
 	if not _close(bottom, below):
 		_fail("relations ramp is not clamped below its domain: %s vs %s" % [bottom, below])
+
+
+## V5.1-d2, the tier's done-when "no map layer that reads by colour alone": every
+## data layer's fill also reads by LIGHTNESS, so a player who cannot tell its hues
+## apart -- colour-blind, a washed-out screen, a greyscale frame -- still reads
+## more from less. Relative luminance rises along the whole shown domain, and each
+## legend stop sits at least MIN_STOP_CONTRAST (the WCAG ratio) above the one
+## before it, since the stops are the keys the legend names. Political is
+## categorical (a nation's own tone) and reads by the names drawn on it.
+const MIN_STOP_CONTRAST := 1.4
+
+func _check_no_layer_reads_by_colour_alone() -> void:
+	var state = _main._state
+	var trade_even := MapLayers.trade_even_share(state, "FRA")
+	var prod_even := MapLayers.production_even_share(state)
+	var ramps := {
+		MapLayers.RELATIONS: [func(v: float) -> Color: return MapLayers.ramp(MapLayers.RELATIONS, v),
+			MapLayers.stops(MapLayers.RELATIONS), MapLayers.RELATIONS_MIN_SHOWN, MapLayers.RELATIONS_MAX_SHOWN],
+		MapLayers.TRADE: [func(v: float) -> Color: return MapLayers.ramp_trade(v, trade_even),
+			MapLayers.trade_stops(trade_even), 0.0, 3.0 * trade_even],
+		MapLayers.COERCION: [func(v: float) -> Color: return MapLayers.ramp(MapLayers.COERCION, v),
+			MapLayers.stops(MapLayers.COERCION), 0.0, MapLayers.COERCION_MAX_SHOWN],
+		MapLayers.PRODUCTION: [func(v: float) -> Color: return MapLayers.ramp_production(v, prod_even),
+			MapLayers.production_stops(prod_even), 0.0, MapLayers.PRODUCTION_MAX_SHOWN],
+		MapLayers.IMPORT_DEPENDENCY: [func(v: float) -> Color: return MapLayers.ramp(MapLayers.IMPORT_DEPENDENCY, v),
+			MapLayers.stops(MapLayers.IMPORT_DEPENDENCY), 0.0, MapLayers.IMPORT_MAX_SHOWN],
+	}
+	for id in MapLayers.ids():
+		if id == MapLayers.POLITICAL:
+			continue
+		if not ramps.has(id):
+			_fail("layer '%s' has no lightness check -- add its ramp here" % id)
+			continue
+		var entry: Array = ramps[id]
+		var colour_at: Callable = entry[0]
+		var low: float = entry[2]
+		var high: float = entry[3]
+		var previous := _luminance(colour_at.call(low))
+		for step in range(1, 41):
+			var current := _luminance(colour_at.call(low + (high - low) * float(step) / 40.0))
+			if current < previous - 0.002:
+				_fail("%s ramp darkens as its value rises (%.3f -> %.3f at step %d): it reads by hue alone there" % [id, previous, current, step])
+				break
+			previous = current
+		var stops: Array = entry[1]
+		for i in range(1, stops.size()):
+			var a := _luminance(colour_at.call(float(stops[i - 1]["at"])))
+			var b := _luminance(colour_at.call(float(stops[i]["at"])))
+			var ratio := (b + 0.05) / (a + 0.05)
+			if ratio < MIN_STOP_CONTRAST:
+				_fail("%s: the stops '%s' and '%s' differ by %.2f:1 in lightness, under %.1f" % [
+					id, stops[i - 1]["text"], stops[i]["text"], ratio, MIN_STOP_CONTRAST])
+
+
+func _luminance(c: Color) -> float:
+	return c.srgb_to_linear().get_luminance()
 
 
 func _check_ramp_spread_trade(even: float) -> void:

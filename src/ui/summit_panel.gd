@@ -30,6 +30,14 @@ var _resource: Resource
 var _effects: Dictionary
 var _summit_id: String
 var _choice: String = ""
+## The line after the spoken one on screen -- what Continue walks to. V5.1-d1b2 (QA
+## on #70): Continue called _advance() with no key, which is the dialogue's START,
+## so every path's closing line looped back to the opening and no summit ever
+## concluded or applied its choice.
+var _next := ""
+## The nation visited while a scene runs, "" otherwise -- the clock's hold line
+## names it (hold_reason.gd).
+var visiting := ""
 
 var _title: Label
 var _leader_box: Control
@@ -90,7 +98,7 @@ func _ready() -> void:
 
 	_continue_button = Button.new()
 	_continue_button.text = tr("Continue")
-	_continue_button.pressed.connect(func(): _advance())
+	_continue_button.pressed.connect(func(): _advance(_next))
 	root.add_child(_continue_button)
 
 
@@ -109,6 +117,7 @@ func mark_dirty() -> void:
 ## pushes loudly and closes rather than shipping an empty scene.
 func show_summit(summit: Dictionary) -> void:
 	_summit_id = String(summit.get("id", ""))
+	visiting = String(summit.get("nation_name", ""))
 	_effects = summit.get("effects", {})
 	_choice = ""
 	_title.text = String(summit.get("title", tr("A meeting")))
@@ -182,6 +191,7 @@ func _advance(from_key: String = "") -> void:
 	else:
 		_speaker_label.text = String(line.character)
 		_line_label.text = String(line.text)
+		_next = String(line.next_id)
 		_continue_button.show()
 		_continue_button.grab_focus()
 
@@ -196,6 +206,7 @@ func _conclude() -> void:
 	var choice := _choice
 	_resource = null
 	_summit_id = ""
+	visiting = ""
 	_line_label.text = ""
 	_speaker_label.text = ""
 	_clear_choices()

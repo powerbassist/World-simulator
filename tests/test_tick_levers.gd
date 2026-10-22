@@ -359,7 +359,8 @@ func _check_memo_invariants() -> void:
 		_fail("execute() no longer closes the turn memo")
 		return
 	for write in ["RK.adjust(", "ns.bloc_offset[", "state.agreements[", "state.agreements.erase(",
-			"state.measures[", "state.measures.erase(", "Defence.", "ns.diplo_cooldown_months[", "state.met_months["]:
+			"state.measures[", "state.measures.erase(", "Defence.", "ns.diplo_cooldown_months[", "state.met_months[",
+			"Cooldowns.stamp("]:
 		var at := dip.find(write, start)
 		if at >= 0 and at < close_at:
 			_fail("execute() writes '%s' before it closes the turn memo" % write)

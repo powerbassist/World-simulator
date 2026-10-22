@@ -143,6 +143,9 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 	_keys[id] = key
 	_icons[id] = icon_path
 	_titles[id] = title
+	# A window is the widest section N1 knows (term_text.gd): a panel built with
+	# headings rather than PanelKit.section bodies marks a term once in all of it.
+	content.set_meta(&"term_section", {})
 
 	var page := TabPage.new()
 	_body.add_child(page)

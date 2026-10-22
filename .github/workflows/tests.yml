@@ -111,6 +111,10 @@ jobs:
         run: bash tools/check_names.sh
       - name: Vault links
         run: python tools/check_vault.py
+      - name: No orphan .uid files
+        run: |
+          python tools/check_uids.py --selftest
+          python tools/check_uids.py
       - name: Size ratchet (code lines; tools/size_baseline.json)
         run: python tools/check_size.py
       - name: Translation tables (stale keys, empty values, placeholders)

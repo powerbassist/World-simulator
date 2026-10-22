@@ -197,6 +197,9 @@ func _check_map_is_the_background() -> void:
 ## the screen, or a holder behind it that eats clicks, fails silently.
 func _check_the_map_is_reachable_beside_a_domain() -> void:
 	_main._windows.open("budget")
+	# The inbox that rode over the tab (V5.1-d1a, G1) is put away: the claim is
+	# that the dock and its holder leave the strip to the map.
+	_main._hud.inbox.slide_out()
 	var viewport: Viewport = _main.get_viewport()
 	var size: Vector2 = viewport.get_visible_rect().size
 	var point := Vector2(size.x * 0.9, size.y * 0.5)
@@ -439,7 +442,9 @@ func _check_sidebar_routes_to_every_domain() -> void:
 		if not _main._windows.is_open(String(tabs[0])):
 			_fail("the '%s' entry did not open its first tab '%s' (open: %s)" % [domain, tabs[0], str(_main._windows.open_ids())])
 	# V5.1-c3.2: with a tab open (the last loop left one), the Inbox entry slides
-	# the inbox over it, and again slides it back.
+	# the inbox over it, and again slides it back. Put away first: since V5.1-d1a
+	# (G1) the inbox rides over a tab opened from the map.
+	_main._hud.inbox.slide_out()
 	sidebar.navigate.emit(sidebar.INBOX)
 	if not _main._hud.inbox.visible or _main._windows.open_ids().is_empty():
 		_fail("the Inbox entry did not slide the inbox over the open tab")

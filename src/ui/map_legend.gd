@@ -150,6 +150,12 @@ func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
 	show_hover("", null, "")
 
 
+## V5.1-d1a (G6): arming a placement puts the energy tab away, and its status
+## line with it, so the caption is where the armed order says what it waits for.
+func show_placing(on: bool) -> void:
+	_caption.text = tr("Click a point in your own country to build there. Escape cancels.") if on else MapLayers.caption(_layer)
+
+
 ## One row per legend stop. The swatch is MapLayers.ramp() at that stop's value
 ## rather than a colour typed here, so a ramp edit cannot leave the legend
 ## showing the old one.

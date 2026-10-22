@@ -67,6 +67,7 @@ func _process(_delta: float) -> bool:
 	_check_a_ledger_is_one_measurement()
 	_check_the_fold_is_visible_to_this_harness()
 	_check_a_panel_reports_the_height_it_draws()
+	_check_the_legislature_list_fills_the_dock()
 	_report_the_fold_contract()
 	_finish()
 	return false
@@ -399,9 +400,28 @@ func _check_a_panel_reports_the_height_it_draws() -> void:
 		var panel: Control = _main._windows.frame(id)._content
 		var reported := panel.get_combined_minimum_size().y
 		var drawn := _drawn_extent(panel, panel.global_position.y)
+		# A panel that scrolls inside itself (legislature) fills the page instead,
+		# so what it must draw is the page's visible height (QA #54 RECORD).
+		if panel.size_flags_vertical & Control.SIZE_EXPAND:
+			var band: float = maxf(reported, _main._windows.frame(id)._scroll.size.y)
+			if absf(drawn - band) > 1.0:
+				_fail("%s fills its page but draws %.0fpx of a %.0fpx band" % [id, drawn, band])
+			continue
 		if absf(reported - drawn) > 1.0:
 			_fail("%s reports %.0fpx and draws %.0fpx -- a window sized from that leaves %.0fpx of the difference somewhere"
 				% [id, reported, drawn, absf(reported - drawn)])
+
+
+## QA #54 RECORD: the bill list stopped two thirds down the dock, at the panel's
+## 560 px minimum, with the plate empty below it.
+func _check_the_legislature_list_fills_the_dock() -> void:
+	var frame = _main._windows.frame("legislature")
+	var panel: Control = frame._content
+	if frame._scroll.size.y <= panel.custom_minimum_size.y + 1.0:
+		_fail("premise: the band (%.0fpx) is no taller than legislature's minimum" % frame._scroll.size.y)
+		return
+	if panel.size.y < frame._scroll.size.y - 1.0:
+		_fail("legislature draws %.0fpx of a %.0fpx page: its list stops short of the dock" % [panel.size.y, frame._scroll.size.y])
 
 
 ## The bottom of the lowest thing the panel draws, NOT descending into a scroll of

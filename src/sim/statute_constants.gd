@@ -62,21 +62,37 @@ const NEW_TAX_YIELD_CEILING := 12.0
 ## default.
 const CUSTOM_TAX_MULT_DEMAND := 0.25
 
-## V4.2 T5. The two commissioned polls, priced as a ONE-OFF cost of GDP. The
-## conversion to euros happens once, in statute.buy_poll(), through the GDP
-## level -- the same route companies.gd's bailout takes -- so this table stays
-## a price list and never a second place that knows the debt arithmetic. An
-## assembly poll buys the whip count down to ABSTAIN_BAND for that one bill; a
-## popular poll buys the country's bloc read at the precise margin. Each kind
-## is bought ONCE per bill -- the register keys purchases by bill AND kind
-## (poll_noise's fixed-forecast rule: a poll is a published figure, and a
-## second commission would be a re-roll of the same number).
+## V4.2 T5. The two commissioned polls, priced as a ONE-OFF purchase in EUR bn,
+## FLAT -- G8 (the V5.1 play gate). V4.2 priced them as a share of GDP, 0.05 %
+## and 0.04 %: EUR 1.45 bn and 1.16 bn for France, about ten thousand times the
+## fieldwork, and a share of GDP is the wrong shape besides, since a sample
+## costs Luxembourg what it costs France. The popular poll is a national sample
+## of about ten thousand, which is what src/ui/poll_noise.gd's one-point
+## PRECISE_MAX_PCT needs (EUR 150 k); the assembly poll is a whip count of one
+## chamber (EUR 50 k). At these prices a poll is free in budget terms, and
+## buying each kind ONCE per bill is what limits it. Read through
+## poll_cost_eur_bn() below, by Statute.buy_poll()'s charge and the briefing's
+## button alike.
+##
+## An assembly poll buys the whip count down to ABSTAIN_BAND for that one bill;
+## a popular poll buys the country's bloc read at the precise margin. The
+## register keys purchases by bill AND kind (poll_noise's fixed-forecast rule:
+## a poll is a published figure, and a second commission would be a re-roll of
+## the same number).
 const POLL_KIND_ASSEMBLY := "assembly"
 const POLL_KIND_POPULAR := "popular"
-const POLL_COSTS := {
-	"assembly": 0.05,
-	"popular": 0.04,
+const POLL_COSTS_EUR_BN := {
+	"assembly": 0.00005,
+	"popular": 0.00015,
 }
+
+
+## A poll's price in EUR bn, or 0.0 for a kind that does not exist: the one
+## source the charge and the button read. Beside its table rather than in
+## statute.gd, which sits at its size baseline (economy_constants.gd's pure
+## readers are the precedent).
+static func poll_cost_eur_bn(kind: String) -> float:
+	return float(POLL_COSTS_EUR_BN.get(kind, 0.0))
 
 ## V4.2 T6. The assembly's own life: private members' bills and the chiefs'
 ## lobbying. Both hazards are per PLAYER nation per month -- has_budget is the

@@ -28,6 +28,7 @@ const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Events = preload("res://src/sim/events.gd")
 const Statute = preload("res://src/sim/statute.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
@@ -55,6 +56,8 @@ func _init() -> void:
 	_check_projection_matches_after_diplomacy()
 	_check_projection_matches_under_unrest()
 	_check_projection_matches_under_defence_and_companies()
+	_check_projection_drifts_discipline()
+	_check_projection_rolls_the_election()
 
 	_finish()
 
@@ -219,6 +222,55 @@ func _check_debt_moves_by_the_deficit() -> void:
 ## Done-when: the projection shown before committing matches what happens.
 ## It holds by construction — project() runs the same two tick functions on a
 ## deep copy — and this is the test that keeps it that way.
+## D14 (V5.0d's record): the projection ran Statute's divisions but never let
+## discipline drift toward its target, so a close backbench bill could carry in
+## the forecast and fail in play. Displaced off its target, a party's discipline
+## must move in the projection's own copy exactly as one real tick moves it.
+func _check_projection_drifts_discipline() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	state.year = 2026
+	state.month = 1
+	var ns = state.player()
+	var party = _loader.parties.get(ns.id, [])[0]
+	ns.party_discipline[party.id] = 0.30
+	var job = Budget.projection(state, {}, 1, _loader)
+	while not Budget.projection_done(job):
+		Budget.projection_step(job)
+	var projected: float = float(job.sim.player().party_discipline[party.id])
+	var real = state.duplicate_state()
+	real.month = 2
+	Discipline.tick_month(real, _loader)
+	var expected: float = float(real.player().party_discipline[party.id])
+	if is_equal_approx(projected, 0.30):
+		_fail("the projection held %s's discipline at 0.30 -- Discipline does not tick in project()" % party.id)
+	elif absf(projected - expected) > 1e-9:
+		_fail("the projection moved %s's discipline to %.6f, one real tick moves it to %.6f" % [party.id, projected, expected])
+	if not is_equal_approx(float(ns.party_discipline[party.id]), 0.30):
+		_fail("project() moved the live state's discipline")
+
+
+## QA on #77: the projection runs no Elections, so a legislative election inside
+## the window used to leave the copy's date behind its clock and discipline falling
+## toward the pre-election floor. Projected across the player's election, the copy's
+## next election is a term on and still ahead of its clock.
+func _check_projection_rolls_the_election() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	state.year = ns.next_election_year
+	state.month = ns.next_election_month
+	var before: int = ns.next_election_year
+	var job = Budget.projection(state, {}, 3, _loader)
+	while not Budget.projection_done(job):
+		Budget.projection_step(job)
+	var term: int = int(_loader.nations[ns.id].term_years)
+	if int(job.sim.player().next_election_year) != before + term:
+		_fail("the projection did not roll the election: next %d, expected %d" % [int(job.sim.player().next_election_year), before + term])
+	if Discipline.months_to_legislative(job.sim, job.sim.player()) <= 0:
+		_fail("past the election the projection still reads it as due -- discipline keeps falling toward the floor")
+	if ns.next_election_year != before:
+		_fail("project() moved the live state's election date")
+
+
 func _check_projection_matches() -> void:
 	var pending := {
 		"tax_rates_pct": {"income": 28.0, "vat": 17.0},
@@ -410,6 +462,7 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		if state.month > 12:
 			state.month = 1
 			state.year += 1
+		Budget.roll_election_clock(state, _loader)
 		# V2.8 review. Energy leads, in project()'s own slot and for its own stated
 		# reason: economy.gd READS ns.energy_impulse_pct rather than computing it, so
 		# an energy tick after the economy prices this month's mix against last
@@ -435,6 +488,8 @@ func _run(state, pending: Dictionary, months: int) -> Array[Dictionary]:
 		# project() moved Statute before Companies -- a division's
 		# company-channel burden is priced by the same month's Companies/
 		# Industry passes, so both legs must write it before they run.
+		# D14: discipline drifts in project() before Statute divides, as in the month.
+		Discipline.tick_month(state, _loader)
 		Statute.tick_month(state, _loader)
 		Companies.tick_month(state, _loader)
 		# V4.7b. The autonomy machine, in project()'s slot between Companies and

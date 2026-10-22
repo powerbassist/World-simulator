@@ -156,7 +156,7 @@ func _refresh() -> void:
 func _build_order(ns) -> void:
 	var group := PanelKit.section(_body, tr("Order"))
 
-	_status = PanelKit.line(group, _armed_line(), PanelKit.Tone.PLAIN)
+	_status = PanelKit.plain_line(group, _armed_line(), PanelKit.Tone.PLAIN)
 
 	var offered := 0
 	for action in Energy.available(_state, ns, _loader.energy_actions):

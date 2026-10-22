@@ -69,14 +69,16 @@ const BAR_WIDTH_PX := 10.0
 ## One family, Archivo (variable, SIL OFL), cut by axis rather than by file: the
 ## width axis runs 62-125 and 88 is the condensed cut the tables need -- French
 ## runs about a fifth longer than English -- while headings may open it up. The
-## base size stays at U5a's 15.
+## base size stays at U5a's 15. V5.1-d2 (G11) retuned the steps round it: 11/12
+## and 18/20 read as one size, 12 to 15 and 20 to 30 as leaps; each step is now
+## about a fifth over the last (tests/test_ui_theme.gd holds the ratios).
 const SIZE_MICRO := 11   ## tracked uppercase cluster and section labels
-const SIZE_SMALL := 12
+const SIZE_SMALL := 13
 const SIZE_BASE := 15
 const SIZE_LEAD := 18
-const SIZE_FIGURE := 20
+const SIZE_FIGURE := 22
 const SIZE_MAP := 10     ## the map's place names, drawn in map_face() -- see WIDTH_MAP
-const SIZE_HERO := 30    ## the portrait card's approval figure, and only that
+const SIZE_HERO := 27    ## the portrait card's approval figure, and only that
 
 const FONT_ARCHIVO := "res://assets/fonts/Archivo-Variable.ttf"
 const WIDTH_CONDENSED := 88
@@ -100,6 +102,7 @@ const FIGURE_LABEL := "FigureLabel"  ## the caption above a large number
 const CAPTION := "Caption"           ## dim secondary text  # i18n: ok
 const GOOD_TEXT := "GoodText"        ## a delta that is good news
 const BAD_TEXT := "BadText"          ## a delta that is bad news
+const WARN_TEXT := "WarnText"        ## something waits on the player (V5.1-d1b3: why the clock holds)
 ## V5.1-c. The same tones for a RichTextLabel (term_text.gd), which reads
 ## default_color and normal_font_size where a Label reads font_color and font_size.
 const RICH_CAPTION := "RichCaption"
@@ -313,7 +316,7 @@ static func _panels(theme: Theme) -> void:
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT]:
+	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
@@ -368,10 +371,15 @@ static func _labels(theme: Theme) -> void:
 
 	theme.set_color("font_color", GOOD_TEXT, GOOD)
 	theme.set_color("font_color", BAD_TEXT, BAD)
+	theme.set_color("font_color", WARN_TEXT, WARN)
+	theme.set_font_size("font_size", WARN_TEXT, _px(SIZE_SMALL))
 
 
 static func _rich(theme: Theme) -> void:
 	theme.set_color("default_color", "RichTextLabel", TEXT)  # i18n: ok
+	# V5.1-d1c (G12, the author never saw a term): the dashes under a term, and a
+	# name's underline, at the text's full opacity -- the engine draws them at half.
+	theme.set_constant("underline_alpha", "RichTextLabel", 100)  # i18n: ok
 	for variation in [RICH_CAPTION, RICH_GOOD, RICH_BAD]:
 		theme.set_type_variation(variation, "RichTextLabel")  # i18n: ok
 	theme.set_font_size("normal_font_size", RICH_CAPTION, _px(SIZE_SMALL))

@@ -355,7 +355,8 @@ clock.day_advanced         (emitted SECOND)
   → main.gd fires the verb            Diplomacy / Legislature / Cabinet
   → Calendar.resolve(state, key, ok)  records what happened
   → _queue_effect(label, before)      the U4 baseline, taken HERE not at the press
-  → message_stack.push(...)           a kept appointment earns a card
+  → message_stack.push(...)           a kept appointment earns a card (now inbox.push(),
+                                      V5.1-c3.1: message_stack.gd is gone)
 ```
 
 ## 11. What is deliberately not built
@@ -445,7 +446,7 @@ cycle.
 
 ### The ribbon
 
-`src/ui/ribbon.gd` sits under the action bar as the bottom-most plate -- the
+`src/ui/ribbon.gd` sits at the bottom of the screen as the bottom-most plate (it sat under the action bar; that became the sidebar in V5.1-c2.3, `src/ui/sidebar.gd`, and the ribbon still closes the HUD, `hud.gd:1-10`) -- the
 author's placement, and the slot V2.1c reserved when it ruled the surface "a
 ribbon, not a drawer entry". One row of days for the current month: an open
 baseline with a tick per day, **travel hatched**, **the meeting solid brass**,

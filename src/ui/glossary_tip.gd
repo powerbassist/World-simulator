@@ -30,6 +30,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Glossary = preload("res://src/ui/glossary.gd")
 const GlossaryLive = preload("res://src/ui/glossary_live.gd")
 const TermText = preload("res://src/ui/term_text.gd")
+const PersonTip = preload("res://src/ui/person_tip.gd")
 
 ## The spec's felt numbers (OPINION there, no simulation meaning, so here).
 const OPEN_DELAY_S := 0.4
@@ -43,7 +44,13 @@ const GAP := 2.0
 const FILL_HEIGHT := 2.0
 
 var _state = null
+## Where the keyboard's walk through the marked terms is (next_term), and the
+## terms it walked: a changed screen starts the walk again.
+var _cycle := -1
+var _cycle_terms := PackedStringArray()
 var _loader = null
+## V5.1-d1b2 (G9): a marked person's card, the layer's second kind of tip.
+var _people
 ## Level n's plate at index n - 1: {id, panel, box, fill, locked, over, hold, anchor}.
 var _plates: Array = []
 ## The term under the pointer at each level: 0 is prose, n is plate n's text.
@@ -65,10 +72,42 @@ func _ready() -> void:
 	set_process(false)
 
 
+## Built here, not in _ready: setup() may run before the layer is in the tree.
+func _init() -> void:
+	_people = PersonTip.new()
+	add_child(_people)
+
+
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	close_all()
+	_people.setup(state, loader)
+
+
+## A marked name (term_text.gd): hovered, clicked, left -- person_tip.gd's card.
+func person_enter(person_id: String, anchor: Rect2) -> void:
+	_people.enter(person_id, anchor)
+
+
+func person_leave() -> void:
+	_people.leave()
+
+
+func person_click(person_id: String, anchor: Rect2) -> void:
+	_people.click(person_id, anchor)
+
+
+func person_card_visible() -> bool:
+	return _people.is_open()
+
+
+func person_card_text() -> String:
+	var out := ""
+	for node in _people.find_children("*", "Label", true, false):  # i18n: ok a class name
+		out += String(node.text) + "
+"
+	return out
 
 
 func depth() -> int:
@@ -138,6 +177,43 @@ func plate_exited(n: int) -> void:
 		_plates[n - 1]["over"] = false
 
 
+## V5.1-d2, the keyboard path (the design's "glossary_next"; RichTextLabel has no
+## per-tag focus): each press opens the NEXT marked term on screen, in reading
+## order, locked at its line -- the keys' Enter, since a locked plate is the one a
+## press would open. Escape closes, as for the mouse. F1, as no window takes it.
+func next_term() -> void:
+	var terms: Array = []
+	var keys := PackedStringArray()
+	for label in get_tree().root.find_children("*", "RichTextLabel", true, false):
+		if label.get_script() == TermText and int(label.level) == 0 and label.is_visible_in_tree() and _on_screen(label):
+			for id in TermText.term_ids(label):
+				terms.append([label, id])
+				keys.append("%d:%s" % [label.get_instance_id(), id])
+	if terms.is_empty():
+		return
+	if keys != _cycle_terms:
+		_cycle_terms = keys
+		_cycle = -1
+	_cycle = (_cycle + 1) % terms.size()
+	close_all()
+	click(String(terms[_cycle][1]), (terms[_cycle][0] as Control).get_global_rect(), 0)
+
+
+## Whether `label` is on screen: inside every ScrollContainer it sits in and the
+## viewport (QA on #76: F1 opened plates for lines scrolled out of view, clamped to
+## the screen's edge), and not in rows a rebuild has queued for deletion.
+static func _on_screen(label: Control) -> bool:
+	var clip := label.get_viewport_rect()
+	var node: Node = label
+	while node != null:
+		if node.is_queued_for_deletion():
+			return false
+		if node is ScrollContainer:
+			clip = clip.intersection((node as Control).get_global_rect())
+		node = node.get_parent()
+	return clip.intersects(label.get_global_rect(), true)
+
+
 func close_all() -> void:
 	_truncate(0)
 	_pending = {}
@@ -190,6 +266,18 @@ func tick(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	var f1 := event as InputEventKey
+	if f1 != null and f1.pressed and not f1.echo and f1.keycode == KEY_F1:
+		next_term()
+		get_viewport().set_input_as_handled()
+		return
+	# A pinned card goes on Escape or on any press: a press on another name pins
+	# that one next (term_text.gd runs after this, in the GUI pass).
+	if _people.is_pinned() and event.is_pressed() and (event is InputEventMouseButton or (event is InputEventKey and event.keycode == KEY_ESCAPE)):
+		_people.close()
+		if event is InputEventKey:
+			get_viewport().set_input_as_handled()
+			return
 	if _plates.is_empty():
 		return
 	var key := event as InputEventKey
@@ -232,7 +320,7 @@ func _open(id: String, anchor: Rect2, level: int, held: float) -> void:
 	for other in Glossary.see_also(id):
 		others.append("[g=%s]%s[/g]" % [other, Glossary.term(other)])
 	if not others.is_empty():
-		_rich(box, tr("See also: %s") % ", ".join(others), PanelKit.Tone.DIM, n)
+		_rich(box, tr("See also: %s") % ", ".join(others), PanelKit.Tone.DIM, n, others.size())
 	var fill := ColorRect.new()
 	fill.color = UiTheme.accent()
 	fill.custom_minimum_size = Vector2(0, FILL_HEIGHT)
@@ -263,9 +351,10 @@ func _lock(n: int) -> void:
 
 ## A rich line at plate n: its terms open plate n + 1, and every id open up to
 ## and including this plate reads plain (N5).
-func _rich(box: Control, text: String, tone: PanelKit.Tone, n: int) -> RichTextLabel:
+func _rich(box: Control, text: String, tone: PanelKit.Tone, n: int, cap := TermText.MAX_MARKED) -> RichTextLabel:
 	var label = PanelKit.rich(box, "", tone)
 	label.level = n
+	label.cap = cap
 	for i in n:
 		label.exclude.append(String(_plates[i]["id"]))
 	label.set_marked(text)

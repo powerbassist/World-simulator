@@ -376,13 +376,16 @@ cursor; the name returns when the cursor leaves). The rest are parked:
 
 The embassies, the capitals and the runner's verdict; two items measured and left.
 
-- **The hands-off AI aims ~95% of its state visits at the player.** The 0d attribution
+- ~~**The hands-off AI aims ~95% of its state visits at the player.**~~ The 0d attribution
   (scratch act counter, hands-off FRA, 168 months through WorldMonth): base 338 of 354
-  state visits target France, tip 353 of 375; the 33 embassies the base AI opened were
-  all in Paris too. Thirty-seven AI nations talk almost only to the president, not to each
-  other -- which is also why the test audit found no AI-to-AI agreement in 168 months.
-  **Owner:** the V5.2 / V5.4 plan gate (people who talk, the real network). Not 0d's: the
-  embassies only removed one of the verbs the skew was spent on.
+  state visits target France, tip 353 of 375. **The cadence is answered at the V5.1 play
+  gate (author's call, 2026-10-22):** a host receives a state visit at most once every six
+  months ([[diplomacy-model]], "The host's cadence"); the player now gets 2 a year and the
+  AIs visit each other. **Still open, owner V5.4 (the real network):** the cause it
+  starves but does not remove -- third-party judgement credits the ACTOR of every friendly
+  act with every observer holding a stake in the target, so AI-AI amity saturates (0.5-1.0
+  within two years) and an idle player, who never collects that credit, stays the one
+  partner with room. Also why the test audit found no AI-to-AI agreement in 168 months.
 - **`Capital.city()` refolds the nation's city list on every call.** Microseconds today:
   its callers are a booking, the campaign panel's rows and the campaign's factor. **When a
   per-month caller appears,** the right shape is a fold table the loader builds once
@@ -412,7 +415,7 @@ Localisation plumbing's edge, from the build and `code-review high`; see [[local
 
 - **The at-icons files are orphaned.** After the Material Symbols swap nothing in `src/` reads `addons/at-icons`; the 24 committed SVGs, the `.gitignore` exception, the REUSE/ATTRIBUTION entries and the docs/tooling.md "committing rule" are dead weight. Delete them in c or d (they touch docs, not code). **Done in V5.1-c (`2f025178`).**
 - **Plates are wider with Archivo.** The map-layer legend and the portrait card went from 506 to 628 px, covering more map; c's re-layout (the docked workspace, no minimap) is where it gets absorbed, not a font tweak.
-- **The map's data colours stay brass.** Trade and dependency ramps, road/ferry spines, project arcs and the legend's key rows are data colours on the map's own scale, not the interface accent, and are untouched. A retune (and "no layer reads by colour alone") is V5.4's map work.
+- **The map's data colours stay brass.** Trade and dependency ramps, road/ferry spines, project arcs and the legend's key rows are data colours on the map's own scale, not the interface accent, and are untouched. "No layer reads by colour alone" landed at V5.1-d2 as a lightness rule (every data ramp rises in luminance, each legend stop 1.4:1 over the last; tests/test_map_layers.gd), which retuned the relations, coercion-top and dependency ramps; a wider retune of the map's palette is still V5.4's map work.
 - **`events_panel.gd`'s header plate is graded but not unit-tested** (the portrait, the scene backdrop and the arrival card are, in `test_grade.gd`): building the panel needs a state. A silent regression there looks like an ungraded plate.
 - **Sliders still wear the engine default** (the budget levers): the theme never styled `HSlider`. A Bureau slider (graphite track, accent fill) is d's, with the dense-table kit.
 - **The accent rule shifts hues, and a shift can read as a different colour than the flag.** Resolved in V5.1-a3 for the pick (the band whose hue moves least wins, ties to file order: DEU gold `#e4ff00`, ITA raspberry, IRL turquoise), but the shift itself stays: ITA's green nearest edge is a yellow-green (125), not the turquoise the author's option text promised, and ITA now takes its red as a raspberry like POL and TUR. Forcing the cool edge for greens would be a rule change.
