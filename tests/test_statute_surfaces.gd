@@ -417,7 +417,7 @@ func _run() -> void:
 	# CURRENT month, so every quiet month re-announced the last division until
 	# a new law event overwrote it. Driven on the real announcer: push once,
 	# advance the clock, call again, and the card count must not move.
-	var cards_before: int = _main._hud.message_stack._cards.size()
+	var cards_before: int = _main._hud.inbox._cards.size()
 	var stamp: int = int(state.year) * 12 + int(state.month)
 	# The FULL division shape resolve_vote() writes -- the law panel's result
 	# summary reads the tally and party_votes off this same dictionary on the
@@ -432,7 +432,7 @@ func _run() -> void:
 	_main._assembly_news.announce()
 	if int(_main._assembly_news._assembly_result_month) != stamp:
 		_fail("the card memory did not take the division's own month stamp")
-	var after_first: int = _main._hud.message_stack._cards.size()
+	var after_first: int = _main._hud.inbox._cards.size()
 	if after_first != cards_before + 1:
 		_fail("the division card did not push exactly once (%d -> %d)" % [cards_before, after_first])
 	state.month = int(state.month) + 1
@@ -440,7 +440,7 @@ func _run() -> void:
 		state.month = 1
 		state.year = int(state.year) + 1
 	_main._assembly_news.announce()
-	if _main._hud.message_stack._cards.size() != after_first:
+	if _main._hud.inbox._cards.size() != after_first:
 		_fail("a quiet month re-announced the division -- the memory must key the stamp, not the clock")
 
 	# --- (k) The load boundary honours the stamp, not a reset ---------------
@@ -464,7 +464,7 @@ func _run() -> void:
 		# The load drops the discarded game's whole stack (V5.1-a2), so the count the
 		# first month must NOT move is the one the load itself left, not the count
 		# before it.
-		var cards_after_load: int = _main._hud.message_stack._cards.size()
+		var cards_after_load: int = _main._hud.inbox._cards.size()
 		if not _main._assembly_news._announced_assembly_bills.is_empty() or not _main._assembly_news._assembly_cards.is_empty():
 			_fail("the load path left the bill-id memories behind -- they belong to the discarded game")
 		# THE SEED: the saved register carries leg (j)'s division fixture, so
@@ -491,7 +491,7 @@ func _run() -> void:
 		_main._state.year = y
 		_main._state.month = m
 		_main._assembly_news.announce()
-		if _main._hud.message_stack._cards.size() != cards_after_load:
+		if _main._hud.inbox._cards.size() != cards_after_load:
 			_fail("the first month after load re-announced the loaded division -- the load boundary must honour the stamp")
 		# THE RELEASE VARIANT, by symmetry: the release stamp rides the same
 		# register (legislature.gd writes it there), so a loaded RELEASE seeds

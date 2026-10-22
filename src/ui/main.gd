@@ -434,7 +434,7 @@ func _ready() -> void:
 			body = (tr("Passed. Yes %d, No %d.") if bool(result.get("passed", false)) else tr("Failed. Yes %d, No %d.")) % [
 				int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
 			]
-		_hud.message_stack.push(String(law_name), body)
+		_hud.inbox.push(String(law_name), body)
 		_update_top_bar()
 	)
 
@@ -457,7 +457,7 @@ func _ready() -> void:
 			body = tr("Refused.") if reason.is_empty() else tr("Refused. %s") % reason
 		else:
 			body = tr("Agreed.")
-		_hud.message_stack.push(String(label), body)
+		_hud.inbox.push(String(label), body)
 		_update_top_bar()
 		# A diplomatic action moves relations, and on the relations layer that is a
 		# colour change the player should see the moment they act rather than at
@@ -793,7 +793,7 @@ func _ready() -> void:
 	# Trends query the top bar and the Overview count by. It sits AFTER the load
 	# branch and inside the new-game case, so a loaded save never receives it.
 	if pending_load_slot.is_empty():
-		_term_card_id = _hud.message_stack.push(tr("Your term"), _term_card_body())
+		_term_card_id = _hud.inbox.push(tr("Your term"), _term_card_body())
 
 	# V4.1, after the opening card so the two land together: a new game IS an
 	# unchosen term start, so the clock sits still behind the programme choice
@@ -900,19 +900,19 @@ func _wire_hud() -> void:
 	# window is still where the player is.
 	_windows.opened.connect(func(id: String):
 		_hud.sidebar.select(Domains.domain_of(id))
-		_hud.map_legend.hide()
+		_hud.show_map_furniture(false)
 		_show_where(id)
 	)
 	# The legend is the map's, so it goes while a tab covers the map.
 	_windows.closed.connect(func(_id: String):
 		if _windows.open_ids().is_empty():
 			_hud.sidebar.select("")
-			_hud.map_legend.show()
+			_hud.show_map_furniture(true)
 			_show_where("")
 	)
 	_show_where("")
 
-	# V1.8, and the first thing ever to connect this signal. message_stack.gd has
+	# V1.8, and the first thing ever to connect this signal. inbox.gd has
 	# emitted card_activated since U5a and nothing has listened, because until now every
 	# card was a NOTIFICATION -- a foreign act, an obligation opening, a strike, a kept
 	# appointment -- and there was nowhere for a click to go. An event card is a
@@ -920,7 +920,7 @@ func _wire_hud() -> void:
 	# here and the window is right for all of them: whatever the player clicked, what
 	# they wanted was the decision on their desk. V4.1's programme card routes to the
 	# window where that choice is made instead -- the same rule, one card earlier.
-	_hud.message_stack.card_activated.connect(func(id: String):
+	_hud.inbox.card_activated.connect(func(id: String):
 		if not _programme_card_id.is_empty() and id == _programme_card_id:
 			_windows.open("agenda")
 			return
@@ -941,7 +941,7 @@ func _wire_hud() -> void:
 	# contract -- and the clock the arrival paused resumes only when nothing the
 	# player has not seen is still on the desk. Only decision cards carry
 	# buttons, so any card_action is a decision answer by construction.
-	_hud.message_stack.card_action.connect(func(id: String, index: int):
+	_hud.inbox.card_action.connect(func(id: String, index: int):
 		var ns = _state.player()
 		var event_id := String(_event_cards.get(id, ""))
 		var ev = Events.event_by_id(_loader, event_id) if event_id != "" else null
@@ -954,7 +954,7 @@ func _wire_hud() -> void:
 		_queue_effect("%s: %s" % [Strings.row_name("events", ev), Strings.choice_label(ev.id, ev.choices[index])], before)
 		_event_cards.erase(id)
 		_unseen_events.erase(event_id)
-		_hud.message_stack.dismiss(id)
+		_hud.inbox.dismiss(id)
 		_resume_if_decision_settled()
 		_update_top_bar()
 		_windows.mark_all_dirty()
@@ -963,19 +963,19 @@ func _wire_hud() -> void:
 	# The unseen set's second door. An X on a decision card used to strand the
 	# event's id in _unseen_events: only an ANSWER erased it, so the arrival
 	# pause could outlive every answer and hold the clock over an empty set. The
-	# MAX_CARDS eviction is NOT a door: it takes the oldest UNPROTECTED card (no
-	# answer buttons, not pushed with `protect`), the newcomer included
-	# (message_stack's _eviction_victim), so a crowd of plain cards cannot
+	# inbox's notes cap is NOT a door: it takes only the oldest NOTE (V5.1-c3.1;
+	# a row with answers, or pushed with `protect`, is a decision and is never
+	# evicted), so a crowd of plain cards cannot
 	# "dismiss" a decision and restart the clock over it -- it reaches this
-	# handler only for a plain card, whose id maps to no event. Only a stack of
-	# nothing but protected cards (decisions past the desk's 4, plus the
-	# programme card) falls back to the oldest. The
+	# handler only for a plain card, whose id maps to no event. U5a's stack of
+	# nothing but protected cards fell back to evicting the oldest; the inbox
+	# has no such fallback, decisions are not capped. The
 	# invariant, stated once across all its doors: AN ID LEAVES _unseen_events
 	# WHEN IT LEAVES THE DESK OR ITS CARD IS DISMISSED. An id already taken off
 	# the maps (the answer path above dismisses its own card after erasing)
 	# falls through as "": both erases are no-ops and the resume is idempotent,
 	# so this re-entry is harmless by construction.
-	_hud.message_stack.card_dismissed.connect(func(id: String):
+	_hud.inbox.card_dismissed.connect(func(id: String):
 		var event_id := String(_event_cards.get(id, ""))
 		_event_cards.erase(id)
 		_unseen_events.erase(event_id)
@@ -1108,7 +1108,7 @@ func _show_where(id: String) -> void:
 ## in the game used to answer with one corner number changing (F3).
 func _fiscal_committed(label: String, title: String, before: Dictionary) -> void:
 	_queue_effect(label, before)
-	_hud.message_stack.push(title, tr("Deficit now %s%% of GDP.") % Num.f(float(_state.player().deficit_pct_gdp), 2))
+	_hud.inbox.push(title, tr("Deficit now %s%% of GDP.") % Num.f(float(_state.player().deficit_pct_gdp), 2))
 	_update_top_bar()
 
 
@@ -1180,13 +1180,13 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 		if region.id == region_id:
 			mine = true
 	if not mine:
-		# push(title, body) -- MessageStack has never had a push_card(), so until the
+		# push(title, body) -- Inbox has never had a push_card(), so until the
 		# V2.8 review this line raised instead of speaking, and the refusal the
 		# comment above calls "loud rather than silent" reached the player as a
 		# console error. The order is already consumed by here (the arm was cleared
 		# above and map_view ended placement), so with nothing on screen the player
 		# had to re-arm without being told why.
-		_hud.message_stack.push(tr("Not your ground"), tr("That point is not in %s.") % ns.nation_name)
+		_hud.inbox.push(tr("Not your ground"), tr("That point is not in %s.") % ns.nation_name)
 		return
 
 	var access: Dictionary = Regions.accessibility_for(ns, _state.regions.get(ns.id, []), _state.region_graph)
@@ -1399,7 +1399,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 
 
 ## V1.8. What arrived on the desk this month, and what the clock decided when the
-## player said nothing. The fifth caller of message_stack.push() and the FIRST EVER
+## player said nothing. The fifth caller of inbox.push() and the FIRST EVER
 ## CONSUMER of its card_activated signal, which U5a emitted and connected to nothing.
 ##
 ## U5a's call 3 said the column ships as furniture because the thing that fills it is
@@ -1412,7 +1412,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 ## the player's government with no button pressed -- _card_appointment()'s class exactly,
 ## and the sharper case, because with an appointment the player at least booked it.
 func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictionary) -> void:
-	if _hud == null or _hud.message_stack == null or _state == null:
+	if _hud == null or _hud.inbox == null or _state == null:
 		return
 	var ns = _state.player()
 	if ns == null:
@@ -1453,7 +1453,7 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 		var where := String(record.get("region_name", ""))
 		if where != "":
 			named = "%s — %s" % [named, where]
-		_hud.message_stack.push(tr("Decided for you"),
+		_hud.inbox.push(tr("Decided for you"),
 			tr("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)])
 		defaulted_names.append(Strings.record_event_name(record))
 
@@ -1581,7 +1581,7 @@ func _push_decision_card(ev, entry: Dictionary) -> void:
 	# one crisis, one image, in both places it is read. Null (no art yet)
 	# draws the card exactly as before -- missing art is silent.
 	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
-	var card_id: String = _hud.message_stack.push(title, _decision_body(ev, left), actions, art)
+	var card_id: String = _hud.inbox.push(title, _decision_body(ev, left), actions, art)
 	_event_cards[card_id] = event_id
 
 
@@ -1598,7 +1598,7 @@ func _refresh_decision_bodies(ns) -> void:
 			continue
 		var ev = Events.event_by_id(_loader, event_id)
 		if ev != null:
-			_hud.message_stack.set_body(String(card_id), _decision_body(ev, int(left_by_id[event_id])))
+			_hud.inbox.set_body(String(card_id), _decision_body(ev, int(left_by_id[event_id])))
 
 
 ## Whether any unseen id holds the clock -- V4.8c's reading of what used to be
@@ -1661,11 +1661,11 @@ func _decision_holds_clock() -> bool:
 ## handler erases from _event_cards -- re-entry is harmless; the handler also
 ## erases from _unseen_events, which is a no-op when the caller already erased it.
 func _dismiss_event_cards(event_id: String) -> void:
-	if _hud == null or _hud.message_stack == null:
+	if _hud == null or _hud.inbox == null:
 		return
 	for card_id in _event_cards.keys().duplicate():
 		if String(_event_cards.get(card_id, "")) == event_id:
-			_hud.message_stack.dismiss(card_id)
+			_hud.inbox.dismiss(card_id)
 
 
 ## The decision card's body: the event's summary line, then the deadline -- the
@@ -1679,7 +1679,7 @@ func _decision_body(ev, left: int) -> String:
 
 func _setup_news() -> void:
 	for writer in [_world_news, _industry_news, _assembly_news]:
-		writer.setup(_state, _loader, _hud.message_stack)
+		writer.setup(_state, _loader, _hud.inbox)
 
 
 func _nation_name(nation_id: String) -> String:
@@ -1823,7 +1823,7 @@ func _on_load_requested(slot: String) -> void:
 	# nothing (card_action finds no event for the id and returns silently), and
 	# the plain ones -- "You hold Germany until FEB 2029" over a loaded France game
 	# (V5.1-a2) -- were never in any map to begin with.
-	_hud.message_stack.clear()
+	_hud.inbox.clear()
 	_term_card_id = ""
 	_event_cards.clear()
 	_unseen_events.clear()
@@ -1986,29 +1986,29 @@ func _term_card_body() -> String:
 ## re-push would jump the stack) while there is still a vote ahead, and the
 ## card is TAKEN AWAY once there is not -- a "Win the vote" card standing next
 ## to a verdict that already held it is the same stale class B4 photographed.
-## A gone id (evicted by MAX_CARDS, or never pushed on a load) no-ops through
+## A gone id (evicted by the notes' cap, or never pushed on a load) no-ops through
 ## set_body and the empty-id guards here.
 func _refresh_term_card() -> void:
-	if _term_card_id.is_empty() or _hud == null or _hud.message_stack == null:
+	if _term_card_id.is_empty() or _hud == null or _hud.inbox == null:
 		return
 	var ns = _state.player()
 	if ns == null:
 		# Out of office: the verdict surface took over, the same dismiss as the
 		# no-vote-left branch below, without reading a null nation.
-		_hud.message_stack.dismiss(_term_card_id)
+		_hud.inbox.dismiss(_term_card_id)
 		_term_card_id = ""
 		return
 	if Trends.months_to_vote(_state, ns) <= 0:
-		_hud.message_stack.dismiss(_term_card_id)
+		_hud.inbox.dismiss(_term_card_id)
 		_term_card_id = ""
 		return
-	_hud.message_stack.set_body(_term_card_id, _term_card_body())
+	_hud.inbox.set_body(_term_card_id, _term_card_body())
 
 
 ## The term-start card and its id go together; every door that retires one retires both.
 func _drop_programme_card() -> void:
 	if not _programme_card_id.is_empty():
-		_hud.message_stack.dismiss(_programme_card_id)
+		_hud.inbox.dismiss(_programme_card_id)
 		_programme_card_id = ""
 
 
@@ -2032,7 +2032,7 @@ func _enforce_term_start_programme() -> void:
 		_drop_programme_card()
 		return
 	_drop_programme_card()
-	_programme_card_id = _hud.message_stack.push(
+	_programme_card_id = _hud.inbox.push(
 		tr("The term's programme"),
 		tr("The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise."),
 		[], null,
@@ -2057,14 +2057,14 @@ func _on_programme_chosen(entry_id: String) -> void:
 	var before := Budget.snapshot(_state)
 	var result: Dictionary = Programme.choose(_state, ns, entry_id, _loader)
 	if bool(result.get("refused", false)):
-		_hud.message_stack.push(tr("Programme refused"), _programme_refusal_text(String(result.get("reason", ""))))
+		_hud.inbox.push(tr("Programme refused"), _programme_refusal_text(String(result.get("reason", ""))))
 		return
 
 	# Entry open, as a card -- the register now holds the term's programme,
 	# and the pulse it will pay lives on its conclusion, not here.
 	var name_text := Strings.row("programme", entry_id, "name", String(result.get("name", entry_id)))
 	_queue_effect(tr("Programme set: %s") % name_text, before)
-	_hud.message_stack.push(name_text, tr("This term's programme. Deliver it and the credit lands on the record; miss its deadline and the miss pays the same shape back."))
+	_hud.inbox.push(name_text, tr("This term's programme. Deliver it and the credit lands on the record; miss its deadline and the miss pays the same shape back."))
 	_drop_programme_card()
 	if _paused_for_programme:
 		_paused_for_programme = false
@@ -2095,7 +2095,7 @@ func _programme_refusal_text(reason: String) -> String:
 ## the pulse is priced in -- see the Programme.tick_month call site in
 ## src/sim/world_month.gd.
 func _card_programme_conclusions() -> void:
-	if _hud == null or _hud.message_stack == null or _state == null:
+	if _hud == null or _hud.inbox == null or _state == null:
 		return
 	var ns = _state.player()
 	if ns == null:
@@ -2105,13 +2105,13 @@ func _card_programme_conclusions() -> void:
 		var name_text := Strings.row("programme", String(entry["entry_id"]), "name", String(terms.get("name", String(entry["entry_id"]))))
 		match String(entry["status"]):
 			ProgrammeK.STATUS_COMPLETE:
-				_hud.message_stack.push(tr("Delivered: %s") % name_text,
+				_hud.inbox.push(tr("Delivered: %s") % name_text,
 					tr("The goal is met, and the register marks it complete."))
 			ProgrammeK.STATUS_FAIL:
-				_hud.message_stack.push(tr("Missed: %s") % name_text,
+				_hud.inbox.push(tr("Missed: %s") % name_text,
 					tr("The goal was not met in time, and the register marks the miss."))
 			_:
-				_hud.message_stack.push(tr("Overtaken: %s") % name_text,
+				_hud.inbox.push(tr("Overtaken: %s") % name_text,
 					tr("The world moved on and the entry no longer applies. It concludes without a verdict."))
 
 

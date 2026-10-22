@@ -469,7 +469,7 @@ func _reset_desk() -> void:
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
 	for leftover in _main._event_cards.keys().duplicate():
-		_main._hud.message_stack.dismiss(leftover)
+		_main._hud.inbox.dismiss(leftover)
 	_main._event_cards.clear()
 	_main._paused_for_decision = false
 	_main._clock.paused = false

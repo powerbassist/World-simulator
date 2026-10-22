@@ -477,9 +477,9 @@ class _StubStack:
 
 
 class _StubHUD:
-	var message_stack
+	var inbox
 	func _init() -> void:
-		message_stack = _StubStack.new()
+		inbox = _StubStack.new()
 
 
 func _test_release_and_division_same_month() -> void:
@@ -531,7 +531,7 @@ func _test_release_and_division_same_month() -> void:
 	main_ui._hud = _StubHUD.new()
 	main_ui._setup_news()
 	main_ui._assembly_news.announce(assembly_release)
-	var pushed: Array = main_ui._hud.message_stack.pushed
+	var pushed: Array = main_ui._hud.inbox.pushed
 	if pushed.size() != 2:
 		_fail("a collision month pushed %d cards -- the release and the division must BOTH land" % pushed.size())
 	else:
@@ -547,7 +547,7 @@ func _test_release_and_division_same_month() -> void:
 	# would legitimately push its own tabling card and spoil the count).
 	ns.assembly_bills.clear()
 	main_ui._assembly_news.announce({})
-	if main_ui._hud.message_stack.pushed.size() != 2:
+	if main_ui._hud.inbox.pushed.size() != 2:
 		_fail("a quiet month re-announced a collision card")
 	# And the SOURCE: the capture must sit between the two ticks it guards --
 	# main.gd's step hook takes it AFTER Legislature and spends it AFTER Statute,

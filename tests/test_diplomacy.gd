@@ -568,7 +568,7 @@ func _expect_fixture_error(actions_dir: String, needle: String, message: String)
 
 ## Every one of the nine starts on a different month of the cycle, and none starts
 ## ready to fire. Without the spread they all act in the same month and
-## message_stack.gd's six slots drop most of it unread.
+## inbox.gd's six slots drop most of it unread.
 func _check_agenda_stagger_is_seeded() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var seen := {}

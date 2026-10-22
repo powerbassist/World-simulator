@@ -180,9 +180,9 @@ func _check_plates_reach_a_surface() -> void:
 	for path in ["res://src/ui/events_panel.gd", "res://src/ui/main.gd"]:
 		if not FileAccess.get_file_as_string(path).contains("EventArt.plate_texture("):
 			_fail("%s no longer asks EventArt for a plate -- the desk or the arrival card draws none" % path)
-	var stack := FileAccess.get_file_as_string("res://src/ui/message_stack.gd")
+	var stack := FileAccess.get_file_as_string("res://src/ui/inbox.gd")
 	if not stack.contains("art: Texture2D") or not stack.contains("TextureRect"):
-		_fail("message_stack.gd push() no longer turns its art argument into a TextureRect")
+		_fail("inbox.gd push() no longer turns its art argument into a TextureRect")
 
 	var tool := FileAccess.get_file_as_string("res://tools/event_art.gd")
 	var start := tool.find("const CATEGORIES := [")

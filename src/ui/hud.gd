@@ -22,7 +22,7 @@ const TopBar = preload("res://src/ui/top_bar.gd")
 const Sidebar = preload("res://src/ui/sidebar.gd")
 const PortraitCard = preload("res://src/ui/portrait_card.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
-const MessageStack = preload("res://src/ui/message_stack.gd")
+const Inbox = preload("res://src/ui/inbox.gd")
 const MapLegend = preload("res://src/ui/map_legend.gd")
 const Ribbon = preload("res://src/ui/ribbon.gd")
 
@@ -33,7 +33,7 @@ var top_bar
 var sidebar
 var portrait_card
 var clock_cluster
-var message_stack
+var inbox
 var map_legend
 var ribbon
 
@@ -93,17 +93,13 @@ func _ready() -> void:
 	map_legend.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	legend_column.add_child(map_legend)
 
-	# The message column, top-right of the map: the strip of map beside the
-	# workspace, where V5.1-c3's inbox docks. It sat hard left until the sidebar
-	# took that edge.
-	var cards_box := _ignore(MarginContainer.new())
-	cards_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_margins(cards_box)
-	map_area.add_child(cards_box)
-	message_stack = MessageStack.new()
-	message_stack.size_flags_horizontal = Control.SIZE_SHRINK_END
-	message_stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	cards_box.add_child(message_stack)
+	# V5.1-c3.1. The inbox, docked at the map area's right edge: the strip of map
+	# beside the workspace, which is where the board puts it. Its own height is
+	# the map area's, and its lanes scroll inside it.
+	inbox = Inbox.new()
+	map_area.add_child(inbox)
+	inbox.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
+	inbox.offset_left = -Inbox.WIDTH
 
 	# V2.4a: the day ribbon, the bottom-most plate, the line the month sits on.
 	ribbon = Ribbon.new()
@@ -116,12 +112,20 @@ func _ready() -> void:
 ## HUD rect, so without this a drag started on the portrait card would pan
 ## Europe.
 func is_over_furniture(point: Vector2) -> bool:
-	for plate in [title_bar, top_bar, sidebar, message_stack, map_legend, ribbon]:
+	for plate in [title_bar, top_bar, sidebar, inbox, map_legend, ribbon]:
 		if plate == null or not plate.visible:
 			continue
 		if Rect2(plate.global_position, plate.size).has_point(point):
 			return true
 	return false
+
+
+## The map's own furniture -- the legend and the inbox -- shown on the map and
+## put away while a tab covers it. The inbox comes back over a tab when a
+## decision holds the clock (V5.1-c3.2).
+func show_map_furniture(shown: bool) -> void:
+	map_legend.visible = shown
+	inbox.visible = shown
 
 
 func _margins(box: MarginContainer) -> void:

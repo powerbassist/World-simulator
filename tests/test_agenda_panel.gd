@@ -174,7 +174,7 @@ func _check_the_choice_is_a_command(panel, state, ns, loader) -> void:
 		_fail("pending.gd still marks the agenda after the term's programme is chosen")
 
 	var named := false
-	for node in _walk(_main._hud.message_stack):
+	for node in _walk(_main._hud.inbox):
 		if node is Label and String(node.text).contains(String(terms["name"]).to_upper()):
 			named = true
 	if not named:
@@ -189,11 +189,11 @@ func _check_a_second_choice_refuses(panel, state, ns, loader) -> void:
 	if not bool(direct.get("refused", false)):
 		_fail("a second Programme.choose() in one term was not refused")
 
-	var cards_before: int = _main._hud.message_stack.card_count()
+	var cards_before: int = _main._hud.inbox.card_count()
 	panel.programme_chosen.emit(String(loader.programme[0]["id"]))
 	if ns.programme.size() != register_size:
 		_fail("a refused second choice still reached the register")
-	if _main._hud.message_stack.card_count() != cards_before + 1:
+	if _main._hud.inbox.card_count() != cards_before + 1:
 		_fail("a refused choice did not answer with a card -- the verb went silent")
 
 
@@ -285,10 +285,10 @@ func _check_a_conclusion_pushes_a_card(panel, state, ns, loader) -> void:
 	if String(ns.programme[0]["status"]) != "complete":
 		_fail("the fixture did not conclude complete -- the write missed the trigger")
 
-	var cards_before: int = _main._hud.message_stack.card_count()
+	var cards_before: int = _main._hud.inbox.card_count()
 	_main._card_programme_conclusions()
-	if _main._hud.message_stack.card_count() != cards_before + 1:
-		_fail("a concluded entry pushed %d cards, expected exactly one" % (_main._hud.message_stack.card_count() - cards_before))
+	if _main._hud.inbox.card_count() != cards_before + 1:
+		_fail("a concluded entry pushed %d cards, expected exactly one" % (_main._hud.inbox.card_count() - cards_before))
 
 	_refresh(panel)
 	var delivered := false

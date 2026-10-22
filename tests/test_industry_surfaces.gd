@@ -51,7 +51,7 @@ func _run() -> void:
 	var loader = _main._loader
 	var ns = state.player()
 	var panel = _main._companies_panel
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 
 	var majors := Companies.majors_of(loader, ns.id)
 	var major = majors[0]

@@ -65,7 +65,7 @@ func card_obligations(before: int) -> void:
 
 
 ## Put this month's foreign acts in the message column. V1.3f, and the first thing
-## in the game that ever calls message_stack.push().
+## in the game that ever calls inbox.push().
 ##
 ## U5a shipped that column as furniture with a stated reason -- the thing that
 ## fills it is events, which docs/tiers/v1.md schedules at V1.8, and wiring it to

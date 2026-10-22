@@ -58,7 +58,7 @@ func _save_in_april_then_wander_to_march() -> void:
 	state.month = 3
 	_main._clock.month = 3
 	_main._hud.ribbon.mark_dirty()
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	_stale_ids.append(stack.push("Your term", "You hold Germany until FEB 2029 -- 37 months."))
 	_stale_ids.append(stack.push("Firm in difficulty", "A firm of the discarded game."))
 	_stale_ids.append(stack.push("A decision", "Decide.", [{"label": "Do it", "id": "x"}]))
@@ -69,12 +69,12 @@ func _premise() -> void:
 	var title: String = _main._hud.ribbon._title.text
 	if not title.begins_with("MAR"):
 		_fail("premise: the ribbon shows '%s' before the load, not MAR" % title)
-	if _main._hud.message_stack.card_count() < _stale_ids.size():
-		_fail("premise: the stack holds %d cards, fewer than the %d staged" % [_main._hud.message_stack.card_count(), _stale_ids.size()])
+	if _main._hud.inbox.card_count() < _stale_ids.size():
+		_fail("premise: the stack holds %d cards, fewer than the %d staged" % [_main._hud.inbox.card_count(), _stale_ids.size()])
 
 
 func _check_cards() -> void:
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	for id in _stale_ids:
 		if stack._cards.has(id):
 			_fail("card '%s' of the discarded game survived the load" % id)

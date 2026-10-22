@@ -14,7 +14,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
-const MessageStack = preload("res://src/ui/message_stack.gd")
+const Inbox = preload("res://src/ui/inbox.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -38,7 +38,11 @@ func _process(_delta: float) -> bool:
 	_check_flag_data_reaches_the_card()
 	_check_mood_reads_the_polled_figure()
 	_check_face_is_fixed_and_mood_is_an_icon()
-	_check_message_stack()
+	_check_inbox()
+	_check_lanes_by_kind()
+	_check_decisions_are_never_evicted()
+	_check_choice_row_wraps()
+	_check_requests_lane_empty_state()
 	_check_set_body()
 	_check_card_is_an_answer_surface()
 	_check_foreign_acts_reach_the_column()
@@ -216,11 +220,10 @@ func _check_face_is_fixed_and_mood_is_an_icon() -> void:
 	card.refresh()
 
 
-## Furniture only this session -- nothing calls push(). The API is tested anyway,
-## because V1.8 is the session that will call it and the surface it finds should
-## be one that already works.
-func _check_message_stack() -> void:
-	var stack = _main._hud.message_stack
+## The inbox's own API, and its lanes -- V5.1-c3.1, U5a's card column docked
+## right behind the same calls.
+func _check_inbox() -> void:
+	var stack = _main._hud.inbox
 	stack.clear()
 
 	var id: String = stack.push("Missile shortage", "The defence minister wants a word.")
@@ -228,28 +231,90 @@ func _check_message_stack() -> void:
 		_fail("push() did not add a card")
 	if not _collect_text(stack).contains("MISSILE SHORTAGE"):
 		_fail("the pushed card does not show its title")
-
 	stack.dismiss(id)
 	if stack.card_count() != 0:
 		_fail("dismiss() did not remove the card")
-
-	# The column runs into the portrait card past its cap, so the oldest is
-	# dropped rather than the newest refused.
-	for i in range(MessageStack.MAX_CARDS + 3):
-		stack.push("Card %d" % i, "body")
-	if stack.card_count() != MessageStack.MAX_CARDS:
-		_fail("the stack holds %d cards, expected a cap of %d" % [stack.card_count(), MessageStack.MAX_CARDS])
-	if _collect_text(stack).contains("CARD 0"):
-		_fail("the stack dropped a newer card instead of the oldest")
-
 	stack.clear()
+
+
+## A row's lane is what it asks of the player: answers, or a protected plain row,
+## are DECISIONS; a named lane is honoured; the rest are NOTES.
+func _check_lanes_by_kind() -> void:
+	var stack = _main._hud.inbox
+	stack.clear()
+	var answer: String = stack.push("A choice", "body", [{"label": "Yes"}])
+	var kept: String = stack.push("The programme", "body", [], null, true)
+	var asked: String = stack.push("An audience", "body", [], null, false, Inbox.REQUESTS)
+	var note: String = stack.push("A note", "body")
+	if stack.lane_of(answer) != Inbox.DECISIONS or stack.lane_of(kept) != Inbox.DECISIONS:
+		_fail("an answerable or protected row is not a decision (%s, %s)" % [stack.lane_of(answer), stack.lane_of(kept)])
+	if stack.lane_of(asked) != Inbox.REQUESTS:
+		_fail("a row pushed to REQUESTS sits in '%s'" % stack.lane_of(asked))
+	if stack.lane_of(note) != Inbox.NOTES:
+		_fail("a plain row sits in '%s', not NOTES" % stack.lane_of(note))
+	stack.clear()
+
+
+## The cap is the NOTES lane's alone: five decisions and sixty notes leave five
+## decisions and the forty newest notes. An evicted question would read as
+## dismissed and restart a held clock (Pass 16).
+func _check_decisions_are_never_evicted() -> void:
+	var stack = _main._hud.inbox
+	stack.clear()
+	var dismissed: Array = []
+	var watch := func(id: String): dismissed.append(id)
+	stack.card_dismissed.connect(watch)
+	var decisions: Array = []
+	for i in 5:
+		decisions.append(stack.push("Decision %d" % i, "body", [{"label": "Yes"}]))
+	var first_note: String = stack.push("Note 0", "body")
+	for i in range(1, 60):
+		stack.push("Note %d" % i, "body")
+	stack.card_dismissed.disconnect(watch)
+	if stack.lane_count(Inbox.DECISIONS) != 5:
+		_fail("%d decisions survive five decisions and sixty notes, want 5" % stack.lane_count(Inbox.DECISIONS))
+	if stack.lane_count(Inbox.NOTES) != Inbox.NOTES_MAX:
+		_fail("%d notes survive sixty, want %d" % [stack.lane_count(Inbox.NOTES), Inbox.NOTES_MAX])
+	for d in decisions:
+		if dismissed.has(d):
+			_fail("the notes' cap evicted decision %s" % d)
+	if not dismissed.has(first_note):
+		_fail("the oldest note was not the first to go")
+	stack.clear()
+
+
+## QA #45's fit take: a long answer wraps inside the 440 px dock instead of
+## widening it (U5a's unwrapped row reached ~705 px in English, ~1075 in French).
+func _check_choice_row_wraps() -> void:
+	var stack = _main._hud.inbox
+	stack.clear()
+	var long := "Answer with a sentence long enough to need a second line in the dock"
+	stack.push("A choice", "body", [{"label": long}, {"label": long}, {"label": long}])
+	if stack.get_combined_minimum_size().x > Inbox.WIDTH + 0.5:
+		_fail("three %d-character answers widen the inbox to %.0f px of %d" % [long.length(), stack.get_combined_minimum_size().x, Inbox.WIDTH])
+	stack.clear()
+
+
+## V5.2's lane (C9) is in place before its rows: empty, it says so.
+func _check_requests_lane_empty_state() -> void:
+	var stack = _main._hud.inbox
+	stack.clear()
+	var empty: Label = stack._empty[Inbox.REQUESTS]
+	if not empty.visible or empty.text.is_empty():
+		_fail("an empty REQUESTS lane shows no empty state")
+	var id: String = stack.push("An audience", "body", [], null, false, Inbox.REQUESTS)
+	if empty.visible:
+		_fail("the REQUESTS lane kept its empty state with a row in it")
+	stack.dismiss(id)
+	if not empty.visible:
+		_fail("the REQUESTS lane emptied and did not say so")
 
 
 ## B4's machine: a standing card whose content ages must be rewritable in
 ## place -- and an unknown or evicted id must be a silent no-op, because the
 ## caller that tracked a card cannot tell eviction from survival.
 func _check_set_body() -> void:
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	stack.clear()
 
 	var id: String = stack.push("Your term", "You hold France until some month -- 16 months. Win the vote.")
@@ -269,15 +334,15 @@ func _check_set_body() -> void:
 	if _collect_text(stack).contains("ghost text"):
 		_fail("set_body on an unknown id materialised a card")
 
-	# An id the MAX_CARDS eviction has dropped: no-op, and no resurrection.
+	# An id the notes' cap has dropped: no-op, and no resurrection.
 	stack.clear()
 	var first: String = stack.push("First", "first body")
-	for i in range(MessageStack.MAX_CARDS + 1):
+	for i in range(Inbox.NOTES_MAX):
 		stack.push("Filler %d" % i, "body")
 	stack.set_body(first, "resurrected text")
 	if _collect_text(stack).contains("resurrected text"):
 		_fail("set_body wrote through an evicted card's id")
-	if stack.card_count() != MessageStack.MAX_CARDS:
+	if stack.card_count() != Inbox.NOTES_MAX:
 		_fail("set_body on an evicted id changed the card count to %d" % stack.card_count())
 
 	stack.clear()
@@ -301,7 +366,7 @@ func _check_set_body() -> void:
 ## click where the news is instead of a route through Dispatches. A card pushed
 ## with no actions renders none -- every existing caller is unchanged.
 func _check_card_is_an_answer_surface() -> void:
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	stack.clear()
 
 	var seen: Array = []
@@ -335,7 +400,7 @@ func _check_card_is_an_answer_surface() -> void:
 
 
 func _check_foreign_acts_reach_the_column() -> void:
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	var state = _main._state
 	if stack == null or state == null:
 		_fail("no message stack or no state to card foreign acts into")
@@ -366,7 +431,7 @@ func _check_foreign_acts_reach_the_column() -> void:
 
 	# And it must NAME the player as the one acted on, or the column says something
 	# happened without saying it happened to you.
-	# Case-insensitive: message_stack.push() upper-cases the title.
+	# Case-insensitive: inbox.push() upper-cases the title.
 	var text := _collect_text(stack).to_lower()
 	if not text.contains("you"):
 		_fail("a card for an act aimed at the player does not say so: '%s'" % text)
@@ -444,25 +509,25 @@ func _stage_tall_cards() -> void:
 	var hud = _main._hud
 	_portrait_y_before = hud.portrait_card.global_position.y
 	_bar_y_before = hud.ribbon.global_position.y
-	hud.message_stack.clear()
+	hud.inbox.clear()
 	var essay := "A long notification body that keeps going. ".repeat(14)
 	for n in 6:
-		hud.message_stack.push("Tall card %d" % n, essay, [{"label": "Answer"}])
+		hud.inbox.push("Tall card %d" % n, essay, [{"label": "Answer"}])
 
 
 func _check_cards_do_not_push_the_ui_down() -> void:
 	var hud = _main._hud
-	if hud.message_stack.card_count() != 6:
-		_fail("the tall-card fixture holds %d cards, want 6" % hud.message_stack.card_count())
+	if hud.inbox.card_count() != 6:
+		_fail("the tall-card fixture holds %d cards, want 6" % hud.inbox.card_count())
 	if absf(hud.portrait_card.global_position.y - _portrait_y_before) > 0.5:
 		_fail("six tall cards moved the portrait card from y=%.1f to y=%.1f" % [
 			_portrait_y_before, hud.portrait_card.global_position.y])
 	if absf(hud.ribbon.global_position.y - _bar_y_before) > 0.5:
 		_fail("six tall cards moved the day ribbon from y=%.1f to y=%.1f" % [
 			_bar_y_before, hud.ribbon.global_position.y])
-	if hud.message_stack.get_parent() is BoxContainer:
+	if hud.inbox.get_parent() is BoxContainer:
 		_fail("the message column is still in a box container -- its height is layout again")
-	hud.message_stack.clear()
+	hud.inbox.clear()
 
 
 func _collect_text(node) -> String:

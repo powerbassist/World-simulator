@@ -615,7 +615,7 @@ func _check_save_dialog_traps_hotkeys() -> void:
 ## body must change as the months pass. Two months is enough for the months
 ## text to move, well inside a term.
 func _check_term_card_refresh() -> void:
-	var stack = _main._hud.message_stack
+	var stack = _main._hud.inbox
 	var card_id: String = _main.get("_term_card_id")
 	if card_id.is_empty():
 		_fail("a new game pushed no 'Your term' card id")

@@ -46,7 +46,7 @@ const MSGID_MARK := "# i18n: msgid"
 ## Builders whose first argument is text, and builders whose first argument is an id
 ## (the drawer's _entry(id, label) and add_cluster(id, label, ...)): the lint reads
 ## every argument of the first kind and every one after the first of the second.
-const TEXT_FIRST := r"(?:PanelKit\.\w+|_add_row|_add_entry|message_stack\.push|_param_slider)"
+const TEXT_FIRST := r"(?:PanelKit\.\w+|_add_row|_add_entry|inbox\.push|_param_slider)"
 ## Helpers whose FIRST argument is text and the rest are ids, numbers or flags.
 const FIRST_ONLY := r"(?:(?<![\w.])_line|(?<![\w.])_reading|(?<![\w.])_reading_lines|(?<![\w.])_out|(?<![\w.])_row|_queue_effect|_fiscal_committed|\.report)"
 const ID_FIRST := r"(?:\.add_cluster|(?<![\w.])_entry)"
@@ -195,7 +195,7 @@ func _self_check() -> void:
 		"label.text = \"Hello\"": 1,
 		"label.text = \"Hello world\"": 1,
 		"tip.tooltip_text = x if y else \"closed\"": 1,
-		"_hud.message_stack.push(\"Your term\", body)": 1,
+		"_hud.inbox.push(\"Your term\", body)": 1,
 		"_entry(\"overview\", \"Overview\")": 1,
 		"PanelKit.line(_body, \"no deadline yet\")": 1,
 		"return \"no deadline\"": 1,

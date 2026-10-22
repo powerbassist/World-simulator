@@ -788,7 +788,7 @@ func _process(_delta: float) -> bool:
 		_stage_console()
 	if _frame == 3 and not _menu:
 		for n in _cards:
-			_main._hud.message_stack.push("Card %d" % (n + 1), "A notification body long enough to wrap onto a second line in the column.")
+			_main._hud.inbox.push("Card %d" % (n + 1), "A notification body long enough to wrap onto a second line in the column.")
 		if _mid_term:
 			_main._state.player().months_in_term = 7
 			_main._enforce_term_start_programme()
