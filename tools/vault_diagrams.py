@@ -49,17 +49,17 @@ ROW = 8
 
 # Authored: the modules worth naming per layer. Each must exist (checked).
 LAYERS = [
-    ("data", "data/ -- content, read once, never mutated",
+    ("data", "data/",
      ["data/nations", "data/parties", "data/laws", "data/events", "data/commodities",
       "data/companies", "data/people", "data/orgs", "data/glossary", "data/i18n"]),
-    ("core", "src/core/ -- state, clock, save, loaders",
+    ("core", "src/core/",
      ["src/core/game_state.gd", "src/core/nation_state.gd", "src/core/nation_fields.gd",
       "src/core/data_loader.gd", "src/core/loaders", "src/core/clock.gd", "src/core/save_manager.gd"]),
-    ("sim", "src/sim/ -- one file per system, no UI knowledge",
+    ("sim", "src/sim/",
      ["src/sim/world_month.gd", "src/sim/economy.gd", "src/sim/budget.gd", "src/sim/opinion.gd",
       "src/sim/legislature.gd", "src/sim/diplomacy.gd", "src/sim/orgs.gd", "src/sim/events.gd",
       "src/sim/elections.gd"]),
-    ("ui", "src/ui/ -- scenes and panels, read-only over state",
+    ("ui", "src/ui/",
      ["src/ui/main.gd", "src/ui/month_runner.gd", "src/ui/window_manager.gd",
       "src/ui/screen_stack.gd", "src/ui/hud.gd", "src/ui/map_view.gd", "src/ui/panel_kit.gd",
       "src/ui/ui_theme.gd"]),
@@ -118,19 +118,22 @@ def render_tick(steps):
 
 
 def render_layers():
-    out = ["```mermaid", "flowchart LR"]
+    out = ["```mermaid", '%%{init: {"flowchart": {"rankSpacing": 12, "nodeSpacing": 30}}}%%', "flowchart LR"]
     for key, title, mods in LAYERS:
         out.append(f'  subgraph {key}["{title}"]')
         out.append("    direction TB")
         for i, mod in enumerate(mods):
             out.append(f'    {key}{i}["{os.path.basename(mod.rstrip("/"))}"]')
+        # Unlinked nodes lay out as one wide row; invisible links make a column, which
+        # is what keeps four layers legible side by side (QA, PR 80).
+        out.append("    " + " ~~~ ".join(f"{key}{i}" for i in range(len(mods))))
         out.append("  end")
     out += ['  data -->|"read once at startup"| core',
             '  core -->|"GameState"| sim',
             '  sim -->|"GameState, read"| ui',
             '  ui -.->|"player intent: explicit commands, e.g. Budget.commit()"| sim',
             "```", "",
-            "Dependencies point one way: a file in `src/sim` or `src/core` never loads anything "
+            "`data/` is content, read once and never mutated; `src/core/` is state, clock, save and the loaders; `src/sim/` is one file per system with no UI knowledge; `src/ui/` is scenes and panels, read-only over state. Dependencies point one way: a file in `src/sim` or `src/core` never loads anything "
             "under `src/ui` and never reaches the scene tree. `python tools/vault_diagrams.py` "
             "fails on a violation, and on a module drawn above that no longer exists."]
     return "\n".join(out)
