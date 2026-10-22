@@ -8,8 +8,9 @@ extends SceneTree
 ## call on the proposal: 1 + 2 + 3):
 ##   1. the engine's dashes under a term draw at full opacity (underline_alpha
 ##      100, was the engine's 50), still the text's own colour, no accent;
-##   2. the pointer says it: a help cursor over a term, a pointing hand over a
-##      person's name, and back off them;
+##   2. (the cursor half is not built: RichTextLabel draws the pointing hand over
+##      any [url] meta whatever mouse_default_cursor_shape says -- QA measured it on
+##      #72 -- so a term and a name both show the engine's hand);
 ##   3. a first-use hint: one note on the first game a profile plays, whose own
 ##      body marks a term to try on the spot; never a second time (a settings flag).
 
@@ -40,7 +41,6 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame == 3:
 		_check_the_underline()
-		_check_the_cursor()
 		_check_the_first_use_hint()
 		# QA on #72: a profile's first session that begins with a LOAD. Saved here,
 		# then a fresh profile boots a game with the save pending.
@@ -64,25 +64,6 @@ func _check_the_underline() -> void:
 	var theme: Theme = UiTheme.build()
 	if theme.get_constant("underline_alpha", "RichTextLabel") != 100:
 		_fail("a term's dashes draw at %d%% opacity, not 100" % theme.get_constant("underline_alpha", "RichTextLabel"))
-
-
-func _check_the_cursor() -> void:
-	var label = TermText.new()
-	root.add_child(label)
-	label.set_marked("[g=approval]approval[/g] and [p=FRA_aumont]Cécile Aumont[/p]")
-	label.meta_hover_started.emit("term:approval")
-	if label.mouse_default_cursor_shape != Control.CURSOR_HELP:
-		_fail("over a term the pointer is shape %d, not the help cursor" % label.mouse_default_cursor_shape)
-	label.meta_hover_ended.emit("term:approval")
-	if label.mouse_default_cursor_shape != Control.CURSOR_ARROW:
-		_fail("off a term the pointer stayed shape %d" % label.mouse_default_cursor_shape)
-	label.meta_hover_started.emit("person:FRA_aumont")
-	if label.mouse_default_cursor_shape != Control.CURSOR_POINTING_HAND:
-		_fail("over a name the pointer is shape %d, not the pointing hand" % label.mouse_default_cursor_shape)
-	label.meta_hover_ended.emit("person:FRA_aumont")
-	if label.mouse_default_cursor_shape != Control.CURSOR_ARROW:
-		_fail("off a name the pointer stayed shape %d" % label.mouse_default_cursor_shape)
-	label.queue_free()
 
 
 func _hints(inbox) -> int:

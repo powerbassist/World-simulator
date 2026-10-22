@@ -123,10 +123,7 @@ func _notification(what: int) -> void:
 
 func _on_hover_started(meta) -> void:
 	var meta_text := String(meta)
-	# V5.1-d1c (G12): the pointer says what is under it -- a hand on a name (a
-	# card to open), the help cursor on a term (an explanation).
 	if meta_text.begins_with(PERSON_PREFIX):
-		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		_person = meta_text.substr(PERSON_PREFIX.length())
 		var host := _tip()
 		if host != null:
@@ -134,7 +131,6 @@ func _on_hover_started(meta) -> void:
 		return
 	if not meta_text.begins_with(META_PREFIX):
 		return
-	mouse_default_cursor_shape = Control.CURSOR_HELP
 	_hovered = meta_text.substr(META_PREFIX.length())
 	var tip := _tip()
 	if tip != null:
@@ -143,7 +139,6 @@ func _on_hover_started(meta) -> void:
 
 func _on_hover_ended(meta) -> void:
 	if not _person.is_empty() and String(meta) == PERSON_PREFIX + _person:
-		mouse_default_cursor_shape = Control.CURSOR_ARROW
 		_person = ""
 		var host := _tip()
 		if host != null:
@@ -151,7 +146,6 @@ func _on_hover_ended(meta) -> void:
 		return
 	if String(meta) != META_PREFIX + _hovered:
 		return
-	mouse_default_cursor_shape = Control.CURSOR_ARROW
 	_hovered = ""
 	var tip := _tip()
 	if tip != null:
