@@ -1170,7 +1170,7 @@ Sections 1 to 24 describe the panel system as it was built, and each is a dated 
 
 **The inbox** (`inbox.gd:1-24`) replaces the card column and `message_stack.gd`: the same calls (`push`, `set_body`, `dismiss`, `card_count`, `clear`), three lanes (Decisions, Requests, Notes), `NOTES_MAX` 40 notes, and a decision is never evicted, because an evicted question read as dismissed would restart a held clock. Section 20's `MAX_CARDS` of six is the old column's bound.
 
-**The screen stack** (`screen_stack.gd:1-22, 35-40`) answers "what is on top" in one place. Ranks, lowest first: `MAP` -1, `WORKSPACE` 0, `INBOX` 1, `PLACEMENT` 2, `SCENE` 3, `SYSTEM` 4. The top is the highest rank on screen, not the last thing shown; visibility is the one writer; `accepts_hotkeys()` (`screen_stack.gd:174`) is what the panel hotkeys ask. A modal is `_stack.add(layer, panel, dim, cancel)` (`screen_stack.gd:91`).
+**The screen stack** (`screen_stack.gd:1-22, 31-36`) answers "what is on top" in one place. Ranks, lowest first: `MAP` -1, `WORKSPACE` 0, `INBOX` 1, `PLACEMENT` 2, `SCENE` 3, `SYSTEM` 4. The top is the highest rank on screen, not the last thing shown; visibility is the one writer; `accepts_hotkeys()` (`screen_stack.gd:174`) is what the panel hotkeys ask. A modal is `_stack.add(layer, panel, dim, cancel)` (`screen_stack.gd:91`).
 
 **What the earlier sections name that is gone**, so a reader meeting the path does not look for it:
 

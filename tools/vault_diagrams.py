@@ -243,8 +243,16 @@ def domain_problems(rows, scenes):
         return [f"{DOMAINS_FILE}: no TABLE rows found"]
     registered = _registered()
     tabs = [t for _, _, ts in rows for t in ts]
-    return [f"{DOMAINS_FILE}: tab {t!r} is not registered as a window in {MAIN_FILE}"
-            for t in tabs + scenes if t not in registered]
+    out = [f"{DOMAINS_FILE}: tab {t!r} is not registered as a window in {MAIN_FILE}"
+           for t in tabs + scenes if t not in registered]
+    # parse_domains() reads one row shape; a row written another way would be skipped
+    # silently, and the diagram would quietly lose a domain.
+    block = re.search(r"const TABLE := \[(.*?)\n\]", read(DOMAINS_FILE), re.S)
+    n = block.group(1).count('"id":') if block else 0
+    if n != len(rows):
+        out.append(f"{DOMAINS_FILE}: TABLE has {n} rows but only {len(rows)} match the shape "
+                   "tools/vault_diagrams.py parse_domains() reads (id, title, icon, tabs, in that order)")
+    return out
 
 
 def render_domains(rows, scenes):
