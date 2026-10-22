@@ -41,7 +41,8 @@
    "tests/test_dev_console.gd",
    "tests/test_save_continuity.gd",
    "tests/test_i18n_lint.gd",
-   "tests/test_dead_ends.gd"
+   "tests/test_dead_ends.gd",
+   "tests/test_findable_terms.gd"
   ],
   [
    "tests/test_clock.gd",

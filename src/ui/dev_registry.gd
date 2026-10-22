@@ -20,6 +20,7 @@ extends RefCounted
 ## MCP bridge, `execute_code` on the runtime channel (node_call_method is editor-only
 ## and cannot reach a running game -- docs/tooling.md).
 
+const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
 const DevCommands = preload("res://src/sim/dev_commands.gd")
 const DevLog = preload("res://src/ui/dev_log.gd")
 
@@ -108,6 +109,7 @@ func _init(host: Host) -> void:
 	_add("errors", "[n]", "the latest errors and warnings, with script and line", false, _cmd_errors)
 	_add("perf", "[on|off]", "show or hide the frame-time and month-cost overlay", false, _cmd_perf)
 	_add("clear", "", "clear the console's output", false, _cmd_clear)
+	_add("hint", "reset", "re-arm the one-time glossary note (a run on a real profile spends it)", false, _cmd_hint)
 
 
 func command_names() -> Array:
@@ -322,6 +324,16 @@ func _cmd_perf(args: Array) -> String:
 	if args.size() > 1 or not mode in ["", "on", "off"]:
 		return _usage("perf")
 	return _host.perf(mode)
+
+
+## V5.1-d1c (the parent, on QA's #72 review): any run of the game on a real profile
+## -- a smoke, a dev run, a windowed frame without its APPDATA line -- spends the
+## one-time glossary note; this gives it back.
+func _cmd_hint(args: Array) -> String:
+	if args.size() != 1 or String(args[0]).to_lower() != "reset":
+		return _usage("hint")
+	GlossaryHint.reset()
+	return "the glossary note shows again on the next game"
 
 
 func _cmd_clear(_args: Array) -> String:
