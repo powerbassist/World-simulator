@@ -94,6 +94,7 @@ func _run() -> void:
 	_check_breadcrumb_follows_the_tab()
 	_check_title_bar_walks_the_history()
 	_check_chrome_is_inert_under_a_scene()
+	_check_no_dev_preload()
 	_check_every_panel_registered_and_reachable()
 	_check_panel_content()
 	_check_sidebar_routes_to_every_domain()
@@ -260,6 +261,17 @@ func _check_chrome_is_inert_under_a_scene() -> void:
 	if not _main._windows.is_open("summit"):
 		_fail("a sidebar entry closed the summit")
 	_main._windows.close("summit")
+
+
+## V5.1-c4.2 (someday, carried from V5.1-0b): a preload keeps the dev scripts in
+## every export, inert but present. main.gd reaches the console by a guarded
+## load(), so an export filter can leave them out entirely.
+func _check_no_dev_preload() -> void:
+	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
+	if text.contains('preload("res://src/ui/dev_'):
+		_fail("main.gd preloads a dev script, which ships it in every export")
+	if _main.get_node_or_null("DevConsole") == null and OS.is_debug_build():
+		_fail("a debug build has no dev console after the load() route")
 
 
 ## Fails silently in the real game -- the map just stops responding -- so it is

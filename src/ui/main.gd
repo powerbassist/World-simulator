@@ -34,7 +34,6 @@ const Summits = preload("res://src/sim/summits.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const MonthRunner = preload("res://src/ui/month_runner.gd")
-const DevConsole = preload("res://src/ui/dev_console.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
@@ -70,6 +69,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Hud = preload("res://src/ui/hud.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
+const DEV_CONSOLE := "res://src/ui/dev_console.gd"
 const Domains = preload("res://src/ui/domains.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
@@ -778,7 +778,9 @@ func _ready() -> void:
 	add_child(_month_runner)
 	# V5.1-0b. Dev only, and the last child so it draws over everything: a debug
 	# build or --dev-console gets F12's console, a release build gets nothing.
-	DevConsole.install(self)
+	# V5.1-c4.2: a guarded load(), not a preload, so an export filter can leave
+	# the dev scripts out of a release entirely; install() gates the rest.
+	if ResourceLoader.exists(DEV_CONSOLE): load(DEV_CONSOLE).install(self)
 
 	# Loading reuses the whole existing load path rather than a separate
 	# start-from-save branch: a new game is built first, then replaced. That
