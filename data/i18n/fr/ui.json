@@ -834,7 +834,7 @@
   "Leave office": "Quitter ses fonctions",
   "European Parliament election": "Élections au Parlement européen",
   "Snap legislative election": "Élections législatives anticipées",
-  "%s holds the office on %s%% of the vote.": "%s occupe la fonction avec %s %% des voix.",
+  "%s holds the office, first in the vote with %s%%.": "%s garde la fonction, en tête du scrutin avec %s %%.",
   "%s takes the office; you polled %s%%.": "%s prend la fonction ; vous avez recueilli %s %%.",
   "%s remains the largest party: %d of %d seats.": "%s reste le premier parti : %d sièges sur %d.",
   "%s is no longer the largest party: %d of %d seats.": "%s n'est plus le premier parti : %d sièges sur %d.",

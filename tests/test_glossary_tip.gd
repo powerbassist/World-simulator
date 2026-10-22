@@ -188,6 +188,9 @@ func _check_live_line() -> void:
 		_fail("approval's live line does not say it is a poll")
 	for live in GlossaryLive._STRIP:
 		var strip := String(StripReadings.read(GlossaryLive._STRIP[live], _state, _loader)["text"])
+		# The strip's "nothing yet" dash is left off a plate (V5.1-d1b, QA's C item).
+		if strip == "—":
+			strip = ""
 		if GlossaryLive.value(live, _state, _loader) != strip:
 			_fail("live %s reads '%s'; the strip prints '%s'" % [live, GlossaryLive.value(live, _state, _loader), strip])
 	for live in ["debt_pct", "credit_yield", "credit_rating", "growth_and_trend", "article_49_3_available"]:

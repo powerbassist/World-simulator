@@ -367,7 +367,7 @@ func _build_section(result: Dictionary, index: int, chamber_label: String, verdi
 	if result["kind"] == "executive":
 		var winner_name := _party_name(result["largest_party_id"])
 		_verdict_nodes.append(PanelKit.line(box, (
-			tr("%s holds the office on %s%% of the vote.") if result["incumbent_largest"]
+			tr("%s holds the office, first in the vote with %s%%.") if result["incumbent_largest"]
 			else tr("%s takes the office; you polled %s%%.")
 		) % [winner_name, PanelKit.Num.f(float(result["incumbent_vote_share"]) * 100.0, 1)], PanelKit.Tone.PLAIN))
 

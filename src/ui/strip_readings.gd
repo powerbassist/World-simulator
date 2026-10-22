@@ -260,11 +260,12 @@ static func _election_tooltip(ns, loader, months: int) -> String:
 	return Strings.t("The vote that ends your term -- %s. Win it.") % Trends.months_text(months)
 
 
-## V4.1. The chosen programme's name (as the caption) and its nearest-deadline
-## entry's progress. Hidden while nothing runs, the defence-allies rule: a
-## permanent "no programme" slot says nothing in every game that never opens the
-## Agenda, which is most of them. Derived off the same read the Agenda window
-## draws, so the panel and the strip cannot print two answers to one question.
+## V4.1. The chosen programme's nearest-deadline entry's progress, its name in the
+## tip (V5.1-d1b: as the caption the strip cut it, "THE THREE PER ..."). Hidden
+## while nothing runs, the defence-allies rule: a permanent "no programme" slot
+## says nothing in every game that never opens the Agenda, which is most of them.
+## Derived off the same read the Agenda window draws, so the panel and the strip
+## cannot print two answers to one question.
 static func _programme(ns, loader) -> Dictionary:
 	var programme := _nearest_programme(ns, loader)
 	if programme.is_empty():
@@ -282,7 +283,6 @@ static func _programme(ns, loader) -> Dictionary:
 	if not clock_text.is_empty():
 		tip += " · %s" % clock_text
 	var out := _reading_lines("%.0f%%" % (fraction * 100.0), [_line(tip, "entries")])
-	out["caption"] = name_text
 	return out
 
 

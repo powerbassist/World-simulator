@@ -237,9 +237,12 @@ func _check_the_other_surfaces_read_the_register(panel, state, ns, loader) -> vo
 	if not _main._top_bar._figure_values["programme"].get_parent().visible:
 		_fail("the top bar's programme figure is hidden with a live programme on the register")
 	var terms: Dictionary = Programme.terms_of(loader, String(ns.programme[0]["entry_id"]))
-	var name_text := String(terms["name"]).to_upper()
-	if not String(_main._top_bar._figure_captions["programme"].text).contains(name_text):
-		_fail("the top-bar strip does not name the chosen programme: '%s'" % _main._top_bar._figure_captions["programme"].text)
+	# The name is in the reading's tip since V5.1-d1b: as its caption the strip cut it.
+	var tip := ""
+	for line in _main._top_bar._tips["programme"]:
+		tip += String(line["text"]) + " "
+	if not tip.contains(String(terms["name"])):
+		_fail("the top-bar strip's programme tip does not name the chosen programme: '%s'" % tip)
 	if not String(_main._top_bar._figure_values["programme"].text).ends_with("%"):
 		_fail("the top-bar strip carries no progress percentage: '%s'" % _main._top_bar._figure_values["programme"].text)
 

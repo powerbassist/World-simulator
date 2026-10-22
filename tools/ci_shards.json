@@ -40,7 +40,8 @@
    "tests/test_dev_commands.gd",
    "tests/test_dev_console.gd",
    "tests/test_save_continuity.gd",
-   "tests/test_i18n_lint.gd"
+   "tests/test_i18n_lint.gd",
+   "tests/test_dead_ends.gd"
   ],
   [
    "tests/test_clock.gd",
@@ -162,7 +163,8 @@
    "tests/test_i18n_fit.gd",
    "tests/test_strings.gd",
    "tests/test_month_close_pause.gd",
-   "tests/test_effect_baselines.gd"
+   "tests/test_effect_baselines.gd",
+   "tests/test_consequence_card.gd"
   ]
  ]
 }

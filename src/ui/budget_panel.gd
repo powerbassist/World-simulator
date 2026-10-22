@@ -39,6 +39,11 @@ const LEVER_MAX := {
 	"pensions": 30.0,
 	"infrastructure": 30.0,
 }
+## How far a lever reaches either side of its committed value, in points of GDP.
+## The whole 0-30 range on a 220 px slider was 7 px a point: QA's pre-gate drag
+## moved Health 5.3 points in 38 px. Five either side is 22 px a point, and a
+## move bigger than five is a second commit -- the lever re-centres on each one.
+const LEVER_SPAN := 5.0
 
 const FIGURE_ROWS := [
 	["revenue", "Revenue"],  # i18n: msgid last
@@ -236,8 +241,6 @@ func _build_levers() -> Control:
 		grid.add_child(name_label)
 
 		var slider := HSlider.new()
-		slider.min_value = 0.0
-		slider.max_value = float(LEVER_MAX[key])
 		# A tenth of a point everywhere: the spending levers all run to
 		# thirty, where one decimal prints three hundred distinct positions.
 		# (The fine-grained rows moved to the Tax Code window with the rates.)
@@ -343,10 +346,7 @@ func _on_revert() -> void:
 		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(true),
 	}
 	for key in _lever_keys():
-		var slider: HSlider = _sliders[key]
-		slider.set_block_signals(true)
-		slider.value = _pending_value(key)
-		slider.set_block_signals(false)
+		_set_lever(key, _pending_value(key))
 	_edited_keys.clear()
 	# mark_dirty(), not just _dirty (V5.1-0a review pass 1): a commit comes through
 	# here, and the forecast keeps its projection until told the state moved.
@@ -425,10 +425,18 @@ func _resync_untouched() -> void:
 			continue
 		var live: float = float(ns.spending_pct_gdp.get(key, 0.0))
 		_pending["spending_pct_gdp"][key] = live
-		var slider: HSlider = _sliders[key]
-		slider.set_block_signals(true)
-		slider.value = live
-		slider.set_block_signals(false)
+		_set_lever(key, live)
+
+
+## A lever set from the state, without firing its edit: its span re-centred on the
+## value (LEVER_SPAN), never past 0 or the line's ceiling.
+func _set_lever(key: String, value: float) -> void:
+	var slider: HSlider = _sliders[key]
+	slider.set_block_signals(true)
+	slider.min_value = maxf(0.0, value - LEVER_SPAN)
+	slider.max_value = minf(float(LEVER_MAX[key]), value + LEVER_SPAN)
+	slider.value = value
+	slider.set_block_signals(false)
 
 
 ## Two decimals, chosen against the reachable range rather than copied from the row

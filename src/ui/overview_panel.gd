@@ -366,7 +366,9 @@ func _fill_defence(ns) -> void:
 func _fill_services(ns) -> void:
 	for key in SocietyK.QUALITY_KEYS:
 		var deviation: float = Society.quality_deviation(ns, key)
-		if is_zero_approx(deviation):
+		# Under half a hundredth prints as 0.00 -- signed and red, "-0.00" (QA's
+		# pre-gate C item): a change too small to print is not a line.
+		if absf(deviation) < 0.005:
 			continue
 		# Leads with the DEVIATION and not the level, which is _fill_defence()'s lesson
 		# applied rather than restated: the stock's absolute value is a number in no
