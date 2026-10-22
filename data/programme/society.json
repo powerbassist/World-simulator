@@ -4,7 +4,7 @@
     {
       "id": "prog_the_hospital_year",
       "name": "The Hospital Year",
-      "summary": "Eight tenths of GDP onto the health line the day the [g=programme]programme[/g] is chosen, and the term's verdict taken from the only [g=poll]poll[/g] that prices it. A hospital service is judged in confidence and in waiting lists; the register keeps the confidence.",
+      "summary": "Eight tenths of GDP onto the health line the day the programme is chosen, and the term's verdict taken from the only [g=poll]poll[/g] that prices it. A hospital service is judged in confidence and in waiting lists; the register keeps the confidence.",
       "group": "society",
       "activation": "player",
       "immediate": {
@@ -121,7 +121,7 @@
     {
       "id": "prog_the_open_door",
       "name": "The Open Door",
-      "summary": "A migration stance opened at choice and argued for a term -- the [g=programme]programme[/g] concludes when the country is persuaded, not when the decree is signed. The streets at thirty overtake the argument: a country on strike is not debating.",
+      "summary": "A migration stance opened at choice and argued for a term -- the programme concludes when the country is persuaded, not when the decree is signed. The streets at thirty overtake the argument: a country on strike is not debating.",
       "group": "society",
       "activation": "player",
       "immediate": {
@@ -235,7 +235,7 @@
     {
       "id": "prog_the_growing_towns",
       "name": "The Growing Towns",
-      "summary": "Half a point of GDP into the towns' roads and rails at choice, and a year's growth at one point eight as the proof the money went somewhere. A recession is the world overtaking the [g=programme]programme[/g], not the programme failing.",
+      "summary": "Half a point of GDP into the towns' roads and rails at choice, and a year's growth at one point eight as the proof the money went somewhere. A recession is the world overtaking the programme, not the programme failing.",
       "group": "society",
       "activation": "player",
       "immediate": {

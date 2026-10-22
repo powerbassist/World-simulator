@@ -71,7 +71,7 @@
     {
       "id": "pledge_balanced_books",
       "name": "Promise to Balance the Books",
-      "summary": "A deficit under three per cent of output, which is the figure Brussels uses and therefore the figure the newspapers already know. Nothing forbids the [g=spending]spending[/g]; what it forbids is spending it without finding the money.",
+      "summary": "A deficit under three per cent of output, which is the figure Brussels uses and therefore the figure the newspapers already know. Nothing forbids the spending; what it forbids is spending it without finding the money.",
       "preconditions": [
         {
           "field": "pledge_count",

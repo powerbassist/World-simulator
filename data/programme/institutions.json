@@ -4,7 +4,7 @@
     {
       "id": "prog_confidence_majority",
       "name": "A Governing Majority of Opinion",
-      "summary": "Fifty-five per cent, and the register holds you to the number -- a governing majority in the [g=poll]polls[/g], where every other [g=programme]programme[/g] this term will have to be paid for. The fail line is the forties: an opinion the country has withdrawn.",
+      "summary": "Fifty-five per cent, and the register holds you to the number -- a governing majority in the [g=poll]polls[/g], where every other programme this term will have to be paid for. The fail line is the forties: an opinion the country has withdrawn.",
       "group": "institutions",
       "activation": "player",
       "complete": {
@@ -33,7 +33,7 @@
     {
       "id": "prog_clean_hands",
       "name": "Clean Hands",
-      "summary": "An anti-corruption drive filed as the term's institutional work and priced on the only verdict that matters: the country's confidence. The agency is created on the day the [g=programme]programme[/g] is chosen; the judgement waits for the number.",
+      "summary": "An anti-corruption drive filed as the term's institutional work and priced on the only verdict that matters: the country's confidence. The agency is created on the day the programme is chosen; the judgement waits for the number.",
       "group": "institutions",
       "activation": "player",
       "immediate": {
@@ -145,7 +145,7 @@
     {
       "id": "prog_sworn_offices",
       "name": "The Sworn Offices",
-      "summary": "The courts settled beyond a government's reach, and a [g=programme]programme[/g] for a second mandate only -- a first-term president who promises judicial independence is announcing a fight, not a programme.",
+      "summary": "The courts settled beyond a government's reach, and a programme for a second mandate only -- a first-term president who promises judicial independence is announcing a fight, not a programme.",
       "group": "institutions",
       "activation": "player",
       "possible": [
