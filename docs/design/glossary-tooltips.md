@@ -245,6 +245,11 @@ author would see first.
 - **Chosen: path 2** (the author's call, 2026-10-21, answer 1): the engine's `[hint]` dashes in the
   text's own colour. Step 0's prototype must prove its two unknowns (the tags
   nest; an empty custom tooltip suppresses the engine's).
+- **Step 0 result (V5.1-c, 2026-10-22, windowed on 4.7.2): both unknowns hold.**
+  The empty hint alone suppresses the engine's tooltip (an override is not
+  needed, and one returning a visible control draws an empty plate); the tags
+  nest and the meta hover signals fire for the real cursor. The record is in
+  [[history]], V5.1-c.
 - **If the prototype fails,** path 3 draws the **same look** (dashes in the
   text colour), so the author's choice stands and only the cost changes.
   Interface reports the failure and the cost to the parent before building

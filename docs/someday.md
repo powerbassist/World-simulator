@@ -267,7 +267,7 @@ Decision cards (up to `QUEUE_MAX` 4) and the term-start programme card are prote
 one tick ("Decided for you", a takeover bid, an assembly division) evict each other before
 the frame draws, and an already-marked-announced notice is never re-shown. **Trigger:** a
 playtest note of a missing "Decided for you" card, or `MAX_CARDS` changing. **Fix shape:**
-a larger column, or one-tick coalescing of plain cards.
+a larger column, or one-tick coalescing of plain cards. **Paid by V5.1-c's inbox (`ae802108`):** decisions are never evicted and the notes have their own lane of 40.
 
 ### Hook events are rare by construction
 
@@ -359,6 +359,18 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from V5.1-c (2026-10-22)
+
+- **`main.gd` keeps its total-lines exception** (2 124 lines, 1 090 code): the decision and programme holds and the desk cards (~130 lines) still live there; moving them out (a `clock_holds.gd`, the plan's) removes the `TOTAL_EXCEPTIONS` entry in `tools/check_size.py`. **Owner:** V5.1d.
+- **The panels' fit at text size 130 %** is unchecked: the chrome fits (`test_shell_fit`), the 22 panels were not swept. Text size also leaves the map labels and code-drawn sizes alone. **Owner:** V5.1d, which re-homes every window.
+- **The accent casing on the map ramps** (a ramp drawn in the player's accent): a G2 risk. **Owner:** V5.4.
+- **`src/sim/` and `src/core/` comments still name `src/ui/message_stack.gd` and its "six card slots"** (diplomacy, foreign_policy_constants, unrest, unrest_constants, nation_state); the inbox keeps every decision and 40 notes. Systems' files.
+- **Interface scale is gone**, replaced by Text size; a settings file's old `ui_scale_index` is ignored and the content scale reset to 1. Say so at the play gate.
+- **A load keeps the open tab** (c3.2b): the plan's "the stack resets to the map" was not done; the rows and the Decisions lane are rebuilt. One `close_all()` in the load path if a play gate minds.
+- **The shell's frame cost**, outside G2: +32 draw calls a frame, 0.2–0.3 ms on the no-map rows; boot's "enter" stage +~106 ms (the shell's `_ready`), the stage sum flat.
+- **Glossary tooltips, left for later:** the keyboard path (a `glossary_next` action; RichTextLabel has no per-tag focus) and the 309 `PanelKit.line()` sites go to V5.1d (the parent's call Q4); the six live values that need a context (a partner, a firm, a budget line, a tax, a portfolio, a bloc) and the rest of the closed table read nothing yet (Q2); P1's second half (every entry marked somewhere or in a see_also) waits for Content's markup step; N2 is enforced per block (3), not per paragraph (2); a long body clamps rather than scrolls (the longest locked plate is ~260 px); `TermText` passes the mouse (a card's body stays clickable), so an ancestor with `tooltip_text` would show its tip over a term -- none of c's sinks has one, d's must be checked; the event record's "what it meant" line is still a Label; the French glossary is parked.
+- **`tools/screenshot.gd --open summit` frames an empty summit window**; `--summit` stages one.
+
 ## Carried from V5.1-0d (2026-10-21)
 
 The embassies, the capitals and the runner's verdict; two items measured and left.
@@ -388,7 +400,7 @@ Below the V5.1 bar, from `code-review 33 high` (none met it):
 
 Localisation plumbing's edge, from the build and `code-review high`; see [[localisation]].
 
-- **A live language switch in game is not done.** `tr()` text is the language a Control was built in; the Settings screen rebuilds itself and says windows opened afterwards follow. Making every open window follow is the shell's work (V5.1c re-homes the windows and can rebuild them on a change). **Trigger:** V5.1c's plan.
+- **A live language switch in game is not done.** `tr()` text is the language a Control was built in; the Settings screen rebuilds itself and says windows opened afterwards follow. Making every open window follow is the shell's work (V5.1c re-homes the windows and can rebuild them on a change). **Trigger:** V5.1c's plan. **Not done in c** (French parked, author 2026-10-21); the trigger is now French un-parked.
 - **V5.1b2 wrapped the rest** (about 550 prose literals the b lint could not see: the lint now reads prose anywhere, see [[localisation]]). What stays: single lowercase words away from a sink, fragments of sentences joined at runtime (the French word order of `"%s the %s stance"` will be English-shaped until a whole sentence per case), plurals as two msgids instead of `tr_n`. **Trigger:** the content child reading French in game.
 - **Un-wrapped dynamic text that equals a msgid is translated anyway** (Godot auto-translates a Control's text): an issue name "Unemployment" shows French because the top bar's caption is a msgid. Harmless, and a homonym (one English word, two French ones) needs `tr(msg, context)` first.
 - **`tools/screenshot.gd -- --menu` ignores `--lang`:** the menu applies the saved language when it comes up. A frame of the French menu needs the setting written to the (isolated) user dir.
@@ -397,7 +409,7 @@ Localisation plumbing's edge, from the build and `code-review high`; see [[local
 
 ## Carried from V5.1-a (2026-10-21)
 
-- **The at-icons files are orphaned.** After the Material Symbols swap nothing in `src/` reads `addons/at-icons`; the 24 committed SVGs, the `.gitignore` exception, the REUSE/ATTRIBUTION entries and the docs/tooling.md "committing rule" are dead weight. Delete them in c or d (they touch docs, not code).
+- **The at-icons files are orphaned.** After the Material Symbols swap nothing in `src/` reads `addons/at-icons`; the 24 committed SVGs, the `.gitignore` exception, the REUSE/ATTRIBUTION entries and the docs/tooling.md "committing rule" are dead weight. Delete them in c or d (they touch docs, not code). **Done in V5.1-c (`2f025178`).**
 - **Plates are wider with Archivo.** The map-layer legend and the portrait card went from 506 to 628 px, covering more map; c's re-layout (the docked workspace, no minimap) is where it gets absorbed, not a font tweak.
 - **The map's data colours stay brass.** Trade and dependency ramps, road/ferry spines, project arcs and the legend's key rows are data colours on the map's own scale, not the interface accent, and are untouched. A retune (and "no layer reads by colour alone") is V5.4's map work.
 - **`events_panel.gd`'s header plate is graded but not unit-tested** (the portrait, the scene backdrop and the arrival card are, in `test_grade.gd`): building the panel needs a state. A silent regression there looks like an ungraded plate.
@@ -421,7 +433,7 @@ Recorded from QA's pass on PR #32 (`.superpowers/sdd/qa-report.md`), not fixed:
 ## Carried from V5.1-0c (2026-10-21)
 
 - **A programme can only be chosen on the first day of a term.** V5.1-0c stops one keypress from forfeiting it and says when the next opens, but a player who loads a mid-term save still has no programme until the vote. A grace window (the first months of a term) or a "choose later at a cost" is a V5.3 decision-model call, not a UI one.
-- **The minimap leaving its frame when menus open, and the UI shifting on a category click** (P5, P6) did not reproduce at 1920x1080 or 1280x1024 with the State drawer, a window and cards open. Ask the author for the window size and the click; V5.1c rebuilds the shell either way.
+- **The minimap leaving its frame when menus open, and the UI shifting on a category click** (P5, P6) did not reproduce at 1920x1080 or 1280x1024 with the State drawer, a window and cards open. Ask the author for the window size and the click; V5.1c rebuilds the shell either way. **Gone with the minimap and the action bar (V5.1-c2.3).**
 - **A window dragged left still goes under the message column** (an overlay above windows). New windows open to its right (`WindowManager.LEFT_RESERVE`); the author's drag is theirs. Measured by the parent in 0a: six cards covered the budget window's lever column until dismissed -- fixed for placement, not for a drag. V5.1d (windows).
 - **Which foreign cards a month pushes now depends on the machine's settings file** (the "News of other countries" switch). Tests that read cards are fine while runs stay isolated (a fresh user dir reads Off); a non-isolated run with the switch On would see more cards.
 - **`AgendaPanel.offer_seen` is per panel instance and per `terms_served`**: loading a different save mid-session at the same `terms_served` inherits the seen mark, so the first Space after that load runs without the nudge. Reset it on load if that ever matters.
@@ -429,7 +441,7 @@ Recorded from QA's pass on PR #32 (`.superpowers/sdd/qa-report.md`), not fixed:
 
 Below the V5.1 bar, from `code-review 30 high` (the four that met it -- the Settings rows resetting a dragged window, the panel's stale rows after F11, the un-maximizing mode write, the unguarded Agenda date -- were fixed test-first):
 
-- **The overlay message column has no bound.** Five or six tall decision cards from y=54 cover the legend and portrait and, at the extreme, run their last buttons off the bottom; before this PR the same column pushed the HUD down instead. A ScrollContainer or a max height belongs to V5.1c's shell.
+- **The overlay message column has no bound.** Five or six tall decision cards from y=54 cover the legend and portrait and, at the extreme, run their last buttons off the bottom; before this PR the same column pushed the HUD down instead. A ScrollContainer or a max height belongs to V5.1c's shell. **Done in V5.1-c: the inbox's lanes scroll inside the dock (`ae802108`).**
 - **The dev console's `pause off` goes through the Agenda guard** (`_toggle_pause_by_hand`) and answers "clock paused" at an unchosen term start; an agent sends it twice. The guard is a player nag; `set_paused` could set `Clock.paused` itself. Cheap, but the console file belongs to 0b's surface.
 - **The maximized-window case is not unit-tested** (the headless root has no OS window); the fix is one condition in `SettingsPanel._apply`.
 
@@ -437,7 +449,7 @@ Below the V5.1 bar, from `code-review 30 high` (the four that met it -- the Sett
 
 Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed test-first in `7cd07ad9`):
 
-- **The dev scripts ship in a release export.** `main.gd`'s preload keeps `dev_console.gd` and what it preloads in the PCK; `install()` builds nothing there (and `--dev-console` turns it on), so it is inert, not absent. Fully absent means a `load()` behind the build check and an export filter -- V5.1c, when `main.gd` is rebuilt anyway.
+- **The dev scripts ship in a release export.** `main.gd`'s preload keeps `dev_console.gd` and what it preloads in the PCK; `install()` builds nothing there (and `--dev-console` turns it on), so it is inert, not absent. Fully absent means a `load()` behind the build check and an export filter -- V5.1c, when `main.gd` is rebuilt anyway. **Half done in V5.1-c (`254254f9`): a guarded `load()`, no preload; the export filter waits for an export preset.**
 - **`skip 120` is one synchronous call**: ~0.3 s a month, so ~40 s of an unresponsive window (and an MCP call that may time out). A frame-sliced skip would reuse `month_runner.gd`'s cursor; the cap is 120 until someone needs a year-long skip that does not freeze.
 - **Clicking the console's log takes focus off the input**, so a key typed next reaches `main.gd`'s hotkeys (S opens the save dialog). Fixing it costs text selection in the log; click the input first.
 - **The overlay's per-system month cost includes the step hooks' UI work** (cards built in a step's before/after, inside the timed unit).
@@ -445,7 +457,7 @@ Below the V5.1 bar, from `code-review 28 high` (the two that met it were fixed t
 Pass 2 (`code-review 28 xhigh`, the parent's), recorded and not fixed:
 
 - **`tests/test_dev_console_game.gd` writes `user://saves` with no `## suite-exclusive:` tag** (the test audit's S11 class). Harmless under isolation, which every run is; tag it if a run ever shares a user dir.
-- **The Logger installs in the console's `_ready`, late in `main._ready`, and `menu.tscn` has no console**, so errors raised at boot (the data load, the menu) never reach the counter. Installing it from the menu too, or earlier, is a V5.1c shell decision. **First concrete case (V5.1-0c, found by the parent's smoke run):** the menu's `_ready` called `WindowMode.install()`, whose `add_child()` on the still-busy root window failed with "Parent node is busy setting up children" -- F11 was dead and no counter showed it, because the menu has no console. Fixed by a deferred add; the error was only in the game log.
+- **The Logger installs in the console's `_ready`, late in `main._ready`, and `menu.tscn` has no console**, so errors raised at boot (the data load, the menu) never reach the counter. Installing it from the menu too, or earlier, is a V5.1c shell decision. **First concrete case (V5.1-0c, found by the parent's smoke run):** the menu's `_ready` called `WindowMode.install()`, whose `add_child()` on the still-busy root window failed with "Parent node is busy setting up children" -- F11 was dead and no counter showed it, because the menu has no console. Fixed by a deferred add; the error was only in the game log. **V5.1-c left it:** it needs `DevLog` to outlive the menu-to-game scene change (a static shared log), a design change to `dev_log.gd`.
 
 ## Carried from V5.1-0a (2026-10-21)
 
