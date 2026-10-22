@@ -734,23 +734,28 @@ func _check_click_opens_panel_with_live_values(map) -> void:
 	map._gui_input(_mouse_event(MOUSE_BUTTON_LEFT, true, screen_point))
 	map._gui_input(_mouse_event(MOUSE_BUTTON_LEFT, false, screen_point))
 
-	if not _main._nation_panel.visible:
-		_fail("clicking a nation on the map did not open the nation panel")
+	# V5.1-d4 (G2): a click on a nation opens its country box, not the file; the box
+	# is what must show the live figures now (the file is one press further).
+	var box = null
+	for child in _main._stack.get_children():
+		if child.has_method("show_verbs"):
+			box = child
+	if box == null or not box.visible:
+		_fail("clicking a nation on the map did not open its country box")
 		return
+	var text := _collect_text(box)
 
-	_main._nation_panel._process(0.0)
-	var text := _collect_text(_main._nation_panel)
-
-	if not text.contains(n.nation_name):
-		_fail("nation panel does not show the clicked nation's name: %s" % text)
+	# The box's heading is set in capitals (PanelKit.heading).
+	if not text.to_lower().contains(String(n.nation_name).to_lower()):
+		_fail("the country box does not show the clicked nation's name: %s" % text)
 
 	var live_gdp_text := "%.0f" % ns.gdp_eur_bn
 	if not text.contains(live_gdp_text):
-		_fail("nation panel does not show the live GDP figure (%s): %s" % [live_gdp_text, text])
+		_fail("the country box does not show the live GDP figure (%s): %s" % [live_gdp_text, text])
 
 	var static_gdp_text := "%.0f" % n.gdp_eur_bn
 	if static_gdp_text != live_gdp_text and text.contains(static_gdp_text):
-		_fail("nation panel shows the static data GDP figure instead of the live one: %s" % text)
+		_fail("the country box shows the static data GDP figure instead of the live one: %s" % text)
 
 
 ## V3.4. Two properties, each needing its own settled frame.

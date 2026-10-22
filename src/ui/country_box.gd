@@ -10,9 +10,10 @@ extends PanelContainer
 ##
 ## Owns nothing of the game: the figures are read from GameState, the verbs are
 ## nation_panel.gd's own (offered_actions(), act()), so the box and the file cannot
-## disagree, and a press goes down the row's command path. On the screen stack at
-## WORKSPACE, so Escape puts it away and a scene above refuses it, as it refuses the
-## file. attach() wires it from main.gd in one line.
+## disagree, and a press goes down the row's command path. A child of the screen
+## stack (under the tooltip chain) but holding no rank: Escape puts it away, and a
+## scene above refuses it, as it refuses the file. attach() wires it from main.gd in
+## one line.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -20,7 +21,6 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const ForeignReading = preload("res://src/ui/foreign_reading.gd")
-const ScreenStack = preload("res://src/ui/screen_stack.gd")
 
 ## How far from the pointer the box opens, so the click's own country stays in view.
 const OFFSET := Vector2(14, 14)
@@ -48,9 +48,19 @@ func attach(main) -> void:
 	var stack = main._stack
 	stack.add_child(self)
 	stack.move_child(self, stack.tips.get_index())  # the tooltip chain stays the last child
-	stack.watch(ScreenStack.WORKSPACE, self, hide)
 	main._map_view.nation_clicked.connect(show_box)
 	main._map_view.gui_input.connect(_on_map_input)
+
+
+## Escape puts the box away. Not through the stack: a rank there would make the box
+## a "tab" -- the top moving to WORKSPACE slides the inbox over it while a decision
+## holds -- and it is a note by the pointer, not a surface (the tooltip chain, the
+## stack's last child, takes its own Escape the same way).
+func _input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if visible and key != null and key.pressed and not key.echo and key.keycode == KEY_ESCAPE:
+		hide()
+		get_viewport().set_input_as_handled()
 
 
 ## The left click: the nation's figures, by the pointer.

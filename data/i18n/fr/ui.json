@@ -385,7 +385,6 @@
   "Click a country on the map to open its file. The coloured ones are the nations the game simulates.": "Cliquez sur un pays de la carte pour ouvrir sa fiche. Les pays colorés sont les nations simulées par le jeu.",
   "Simulated nation — not playable": "Nation simulée — non jouable",
   "Leader: %s (%s)": "Dirigeant : %s (%s)",
-  "Approval: %.0f%%": "Popularité : %.0f %%",
   "Term %d of %d months, next election %d/%d": "Mandat de %d mois sur %d, prochaine élection en %d/%d",
   "RELATIONS": "RELATIONS",
   "Trade: %.0f%% of %s's external demand": "Commerce : %.0f %% de la demande extérieure (%s)",

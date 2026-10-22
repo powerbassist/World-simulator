@@ -104,8 +104,15 @@ func _check_the_box() -> void:
 		_fail("Germany's box lacks the relationship or the approval range: %s" % text)
 	if _main._windows.is_open("diplomacy"):
 		_fail("a left click still opened the Diplomacy file instead of the box")
-	# Escape puts it away, through the stack.
-	_main._stack.cancel()
+	# The box holds no rank on the stack: it is not a tab, and a rank would slide
+	# the inbox over it while the term's programme holds the clock.
+	if _main._stack.top() != ScreenStack.MAP:
+		_fail("the country box raised the screen stack's top to %d" % _main._stack.top())
+	# Escape puts it away.
+	var escape := InputEventKey.new()
+	escape.keycode = KEY_ESCAPE
+	escape.pressed = true
+	_box._input(escape)
 	if _box.visible:
 		_fail("Escape did not put the country box away")
 	# The player's own: no relationship with itself.
