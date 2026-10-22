@@ -33,6 +33,9 @@ var _body: VBoxContainer
 ## The nation shown, and whether as the box ("box") or the menu ("verbs").
 var nation_id := ""
 var mode := ""
+## The month the figures were read in: a box left open across a month close is
+## rebuilt, not left printing last month's figures (review pass 1).
+var _built_month := -1
 
 
 func attach(main) -> void:
@@ -54,6 +57,8 @@ func attach(main) -> void:
 	stack.move_child(self, stack.tips.get_index())  # the tooltip chain stays the last child
 	main._map_view.nation_clicked.connect(show_box)
 	main._map_view.gui_input.connect(_on_map_input)
+	# A tab opening owns the screen: the note by the pointer goes (review pass 1).
+	main._windows.opened.connect(func(_id: String): hide())
 
 
 ## Escape puts the box away. Not through the stack: a rank there would make the box
@@ -101,8 +106,7 @@ func show_verbs(id: String) -> void:
 	PanelKit.heading(_body, n.nation_name)
 	var offered: Array = []
 	if id != String(_main._state.player_nation_id):
-		_main._nation_panel.show_nation(id)
-		offered = _main._nation_panel.offered_actions()
+		offered = _main._nation_panel.offered_actions(id)
 	for action in offered:
 		var press := Button.new()
 		press.text = Strings.row_name("diplomatic-actions", action)
@@ -127,7 +131,11 @@ func _file_button() -> void:
 	file.text = tr("Open the file")
 	file.pressed.connect(func():
 		hide()
-		_main._on_nation_clicked(nation_id))
+		# The player's own file is their Overview; another nation's is Diplomacy.
+		if nation_id == String(_main._state.player_nation_id):
+			_main._windows.open("overview")
+		else:
+			_main._on_nation_clicked(nation_id))
 	_body.add_child(file)
 
 
@@ -157,7 +165,19 @@ func _ready_for(id: String) -> bool:
 	return true
 
 
+func _process(_delta: float) -> void:
+	if not visible or _main == null or _main._state == null:
+		return
+	if int(_main._state.year) * 12 + int(_main._state.month) == _built_month:
+		return
+	if mode == "box":
+		show_box(nation_id)
+	elif mode == "verbs":
+		show_verbs(nation_id)
+
+
 func _clear(as_mode: String, id: String) -> void:
+	_built_month = int(_main._state.year) * 12 + int(_main._state.month)
 	for child in _body.get_children():
 		_body.remove_child(child)
 		child.queue_free()

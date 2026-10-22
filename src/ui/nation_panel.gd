@@ -273,17 +273,17 @@ func _refresh_actions() -> void:
 
 
 ## V5.1-d4, the country box's right-click menu: the verbs this panel's rows offer
-## for the nation it shows -- Diplomacy's, with the partner's consent, or a meeting
+## for `target`, without retargeting the file (review pass 1) -- Diplomacy's, with the partner's consent, or a meeting
 ## the host refuses only until its free day; none already booked. The rows' rule,
 ## read once, so the menu and the file never disagree.
-func offered_actions() -> Array:
+func offered_actions(target: String) -> Array:
 	var player_id: String = _state.player_nation_id
-	var available: Array = Diplomacy.available(_state, _loader.diplomatic_actions, player_id, _nation_id)
+	var available: Array = Diplomacy.available(_state, _loader.diplomatic_actions, player_id, target)
 	var out: Array = []
 	for action in _loader.diplomatic_actions:
-		if action.opens_meeting and not VisitBooking.booked(_state, action, _nation_id).is_empty():
+		if action.opens_meeting and not VisitBooking.booked(_state, action, target).is_empty():
 			continue
-		if (available.has(action) and _partner_would_accept(action, player_id)) 				or VisitBooking.held_only_by_host(_state, _loader, action, _nation_id):
+		if (available.has(action) and _partner_would_accept(action, player_id, target)) 				or VisitBooking.held_only_by_host(_state, _loader, action, target):
 			out.append(action)
 	return out
 
@@ -295,16 +295,17 @@ func act(action) -> void:
 
 ## Whether the counterparty would sign, for an action that proposes an agreement.
 ## True for every action that does not, so the caller can treat it as one gate.
-func _partner_would_accept(action, player_id: String) -> bool:
+func _partner_would_accept(action, player_id: String, target := "") -> bool:
+	var partner := _nation_id if target.is_empty() else target
 	var terms: Dictionary = action.effects.get("agreement", {})
 	if String(terms.get("op", "")) == "enter":
-		return Diplomacy.would_accept_agreement(_state, player_id, _nation_id, terms)
+		return Diplomacy.would_accept_agreement(_state, player_id, partner, terms)
 
 	# V1.3g's gate, folded into the same one. Only "sign" is asked: abandoning is
 	# unilateral, and deploying happens under a pact already agreed to.
 	var pact: Dictionary = action.effects.get("pact", {})
 	if String(pact.get("op", "")) == "sign":
-		return ForeignPolicy.would_accept_pact(_state, player_id, _nation_id)
+		return ForeignPolicy.would_accept_pact(_state, player_id, partner)
 
 	return true
 

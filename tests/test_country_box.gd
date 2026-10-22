@@ -43,6 +43,7 @@ func _process(_delta: float) -> bool:
 		_check_the_file_reads_the_fog()
 	elif _frame == 5:
 		_check_the_verbs()
+		_check_review_pass_1()
 	elif _frame == 7:
 		_finish()
 		return true
@@ -155,7 +156,7 @@ func _check_the_verbs() -> void:
 		_fail("the verb menu did not open")
 		return
 	var expected: Array = []
-	for action in _main._nation_panel.offered_actions():
+	for action in _main._nation_panel.offered_actions("DEU"):
 		expected.append(Strings.row_name("diplomatic-actions", action))
 	var shown: Array = []
 	var visit: Button = null
@@ -173,6 +174,41 @@ func _check_the_verbs() -> void:
 	visit.pressed.emit()
 	if _box.visible or not _main._windows.is_open("calendar"):
 		_fail("State Visit from the menu did not open the Diary's form, as the file's Book does")
+	_main._windows.close_all()
+
+
+## Review pass 1 on #85: reading the verbs left an open file on another nation; a
+## tab opening left the box over it; a month closing left last month's figures; the
+## player's own file button opened Diplomacy on itself.
+func _check_review_pass_1() -> void:
+	_main._on_nation_clicked("ITA")
+	_box.show_verbs("DEU")
+	if String(_main._nation_panel._nation_id) != "ITA":
+		_fail("a right click on Germany retargeted the open file on Italy to %s" % _main._nation_panel._nation_id)
+	_main._windows.close_all()
+	_main._map_view.nation_clicked.emit("DEU")
+	_main._windows.open("budget")
+	if _box.visible:
+		_fail("opening a tab left the country box over it")
+	_main._windows.close_all()
+	var state = _main._state
+	var de = state.nations["DEU"]
+	_main._map_view.nation_clicked.emit("DEU")
+	var was_month: int = int(state.month)
+	de.gdp_eur_bn += 777.0
+	state.month = was_month % 12 + 1
+	_box._process(0.0)
+	if not _text_of(_box).contains("%.0f" % de.gdp_eur_bn):
+		_fail("the box kept last month's figures after the month moved")
+	state.month = was_month
+	de.gdp_eur_bn -= 777.0
+	_box.hide()
+	_main._map_view.nation_clicked.emit(state.player_nation_id)
+	for b in _box.find_children("*", "Button", true, false):
+		if not b.is_queued_for_deletion() and (b as Button).text == "Open the file":
+			(b as Button).pressed.emit()
+	if not _main._windows.is_open("overview"):
+		_fail("the player's own file button did not open the Overview")
 	_main._windows.close_all()
 
 
