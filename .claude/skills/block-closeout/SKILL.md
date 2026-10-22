@@ -22,8 +22,9 @@ git status --short
 - `M project.godot` must be present and must stay **unstaged**. It is the editor's,
   never yours (AGENTS.md "Gotchas").
 - **A clean `git status` is itself the alarm.** The per-machine lines have been
-  committed into HEAD before. If `project.godot` is not modified, run
-  `git diff HEAD~5 -- project.godot` and look for `MCPRuntimeServer` in `[autoload]`.
+  committed into HEAD before. Check the committed file directly, whatever the
+  status says: `git show HEAD:project.godot | grep -n MCPRuntimeServer` must print
+  nothing (the committed `[autoload]` names only DialogueManager).
 - Stage by explicit path only. Never `git add -A`, `.`, `-u` or `commit -a`.
 
 ## 2. Every new script has its `.uid`
@@ -32,9 +33,12 @@ A new `.gd` gets no `.uid` until something imports it. List the new scripts, run
 the import once, then confirm each has a sibling:
 
 ```bash
-git status --short | grep -E '^(\?\?|A)' | grep '\.gd$'
+{ git status --short -uall | cut -c4-; git diff --name-only --diff-filter=A main...HEAD; } | grep '\.gd$' | sort -u
 godot --path . --headless --import
 ```
+
+(`-uall` lists files inside a new directory; the second command catches scripts
+already committed on this branch.)
 
 For each new `path/x.gd`, `path/x.gd.uid` must exist. Report any that do not.
 Do not run the import while another Godot holds the checkout.
@@ -45,10 +49,11 @@ Do not run the import while another Godot holds the checkout.
 python tools/suite_runner.py --ci
 ```
 
-Never hand-roll a godot invocation. It also checks that every `tests/test_*.gd`
-is registered in `tools/run_tests.sh`. For a small block, name the test files
-instead: `python tools/suite_runner.py --ci tests/test_x.gd`, and say that the
-full suite was not run.
+Never hand-roll a godot invocation. The no-argument run also checks that every
+`tests/test_*.gd` is registered in `tools/run_tests.sh`. For a small block, name
+the test files instead: `python tools/suite_runner.py --ci tests/test_x.gd`, say
+that the full suite was not run, and check by eye that each new test file has its
+row in `tools/run_tests.sh`'s `tests=()`.
 
 ## 4. The cheap gates
 

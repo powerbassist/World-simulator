@@ -9,8 +9,9 @@ at user level (repo-guards, godot-stage-guard.py); nothing guarded the EDIT.
           fix, the committed icon imports), so the human decides:
           project.godot, *.import
 
-Paths are judged relative to the project root, so a session in a
-.claude/worktrees/<name> checkout is guarded the same way. A file outside the
+Paths are judged relative to the project root (or, under
+.claude/worktrees/<name>/, to that worktree's root), so every checkout is
+guarded the same way. A file outside the
 root, or a payload this script cannot read, passes: a guard that fails closed
 would block every edit on a malformed event.
 
@@ -41,7 +42,13 @@ def relative_path(payload):
     except ValueError:  # another drive on Windows
         return None
     rel = rel.replace("\\", "/").lower()
-    return None if rel.startswith("../") or rel == ".." else rel
+    if rel.startswith("../") or rel == "..":
+        return None
+    # A session in the main checkout can edit a worktree's files; judge them
+    # by their own root, as the worktree's own session would.
+    if rel.startswith(".claude/worktrees/"):
+        rel = "/".join(rel.split("/")[3:])
+    return rel
 
 
 def decide(rel):
