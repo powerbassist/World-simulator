@@ -1938,7 +1938,8 @@ func _hold_for_decision() -> void:
 	_clock.paused = true
 	if _stack != null and _stack.top() < ScreenStack.SCENE:
 		_hud.inbox.slide_in()
-	_hud.clock_cluster.refresh(_clock)
+	# V5.1-d1b3: every hold says why, where the clock is, and raises its card.
+	_hud.clock_cluster.refresh(_clock, preload("res://src/ui/hold_reason.gd").show(self))
 
 
 ## The other half of the deferral above: a scene or a system screen went with an
@@ -2039,7 +2040,7 @@ func _enforce_term_start_programme() -> void:
 	)
 	_paused_for_programme = true
 	_clock.paused = true
-	_hud.clock_cluster.refresh(_clock)
+	_hud.clock_cluster.refresh(_clock, preload("res://src/ui/hold_reason.gd").show(self))
 
 
 ## The panel emits; main performs. Programme.choose() refuses rather than

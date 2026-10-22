@@ -21,6 +21,9 @@ signal speed_selected(speed: int)
 const MONTH_NAMES := DateText.SHORT
 
 var _date_label: Label
+## V5.1-d1b3: why the clock holds, beside the date -- every hold says so, whether
+## or not the inbox moved (hold_reason.gd). Gone when the clock runs.
+var _reason: Label
 var _pause_button: Button
 var _speed_buttons := {}
 ## The clock last drawn, and whether it was held -- see _process().
@@ -31,6 +34,11 @@ var _shown_held := false
 func _ready() -> void:
 	add_theme_constant_override("separation", 3)
 	alignment = BoxContainer.ALIGNMENT_CENTER
+
+	_reason = Label.new()
+	_reason.theme_type_variation = UiTheme.WARN_TEXT
+	_reason.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(_reason)
 
 	_date_label = Label.new()
 	_date_label.theme_type_variation = UiTheme.FIGURE
@@ -77,9 +85,19 @@ func _process(_delta: float) -> void:
 		refresh(_clock)
 
 
-func refresh(clock: Node) -> void:
+func hold_reason() -> String:
+	return _reason.text
+
+
+## `reason`: why the clock holds, from a hold (hold_reason.gd); left as it was when
+## not given. A running clock has none.
+func refresh(clock: Node, reason = null) -> void:
 	if clock == null:
 		return
+	if reason != null:
+		_reason.text = String(reason)
+	if not clock.paused:
+		_reason.text = ""
 	_clock = clock
 	_shown_held = bool(clock.held)
 	# The month closing: the date dims as a paused one does and keeps last

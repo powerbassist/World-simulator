@@ -211,6 +211,16 @@ func dismiss(id: String) -> void:
 	card_dismissed.emit(id)
 
 
+## V5.1-d1b3: the card a hold is about, to the top of its lane and pulsed -- the
+## inbox may already be up, and then nothing else on screen moves when the clock
+## stops.
+func raise_card(id: String) -> void:
+	if not _cards.has(id):
+		return
+	_rows[_lane_of[id]].move_child(_cards[id], 0)
+	Motion.pulse(_cards[id])
+
+
 ## V5.1-c3.2, the author's call 4: a decision that holds the clock while a tab
 ## is open slides the inbox over the strip of map beside it. On the map it is
 ## already there, and this does nothing.
