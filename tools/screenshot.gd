@@ -65,6 +65,33 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme prog_jobs_first --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defence --open defence
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --summit --open summit
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --subsidy --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --regulate --open industry
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nationalise --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --corrupt --open society
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --migrate --open society
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --unrest --open society
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --press --open society
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --cycle --open economy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --inflate --open economy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --downgrade --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --redistribute --open tax
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --invest --open industry
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tally
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --network
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --energy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --place
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --site
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --event-answered
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --interrupt --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --menu
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --termlimit
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
