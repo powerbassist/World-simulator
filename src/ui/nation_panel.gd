@@ -30,6 +30,7 @@ const DFK = preload("res://src/sim/defence_constants.gd")
 const Num = preload("res://src/ui/num.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const ForeignReading = preload("res://src/ui/foreign_reading.gd")
 
 signal closed
 
@@ -185,11 +186,10 @@ func _refresh() -> void:
 	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)
 
-	# The player's own approval is polled elsewhere with noise applied (see
-	# polling_panel.gd) — this panel shows every nation including rivals the
-	# player has no poll for, so it reports the true figure plainly rather
-	# than reusing a noise model built around one nation's published polls.
-	PanelKit.line(_body, tr("Approval: %.0f%%") % ns.overall_approval_pct, PanelKit.Tone.PLAIN)
+	# V5.1-d4, the author's fog call ("Une fourchette + source"): another nation's
+	# approval is a range and where it comes from, never the true figure -- the
+	# panel used to print it plainly. The player's own is their poll.
+	PanelKit.line(_body, ForeignReading.approval_text(_state, _nation_id), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Term %d of %d months, next election %d/%d") % [
 		ns.months_in_term, ns.term_months, ns.next_election_month, ns.next_election_year
