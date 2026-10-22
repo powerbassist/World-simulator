@@ -25,10 +25,11 @@ const Motion = preload("res://src/ui/motion.gd")
 ## Reads state, never writes it. Save and the menu moved to the title bar
 ## (V5.1-c2.3), so the strip is the figures alone.
 
-## The strip's slot under the title bar: the 44 px the floating windows kept
-## clear of it (their TOP_MARGIN) until V5.1-c2.2 docked them, so the stacked
-## figures keep the room they were fitted to. The workspace starts below it.
-const BAR_HEIGHT := 44
+## The strip's slot under the title bar: the BUREAU board's 58 px, which holds
+## the stacked figures up to the largest text size (they need 54 at 130 %,
+## V5.1-c2.4; the floating windows had kept 44 clear). The workspace starts
+## below it. The figures sit centred in it.
+const BAR_HEIGHT := 58
 ## The programme caption's width: "PROGRAMME" itself, so the strip's measured
 ## width is the same with or without one running.
 const PROGRAMME_CAPTION_PX := 104
@@ -85,7 +86,7 @@ func _ready() -> void:
 	_more = Label.new()
 	_more.theme_type_variation = UiTheme.FIGURE
 	_more.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	_more.size_flags_vertical = Control.SIZE_SHRINK_END
+	_more.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_more.mouse_filter = Control.MOUSE_FILTER_PASS
 	_more.hide()
 	_figures.add_child(_more)
@@ -105,6 +106,7 @@ func _ready() -> void:
 ## dock's DOCK_TOP, which is what keeps the 826px workspace band unchanged.
 func _build_figure(key: String, title: String) -> Control:
 	var box := VBoxContainer.new()
+	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	box.add_theme_constant_override("separation", FIGURE_LINE_GAP)
 
 	var label := Label.new()
@@ -245,6 +247,13 @@ func refit() -> void:
 	if gap != _gap:
 		_gap = gap
 		_figures.add_theme_constant_override("separation", gap)
+
+
+## A new theme -- the text size changed -- resizes every figure, so the fold is
+## decided again once the sizes have settled.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_THEME_CHANGED and _more != null:
+		refit.call_deferred()
 
 
 ## The figures held back, lowest priority last, in ORDER.

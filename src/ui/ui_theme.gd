@@ -115,6 +115,10 @@ const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-r
 ## that draws "you are here" -- the theme below, the map's own marks. Static
 ## because a Theme is built once per scene root and the map is not a theme.
 static var _accent: Color = ACCENT_FALLBACK
+## V5.1-c2.4, the text-size option: every size of the type scale times this, and
+## nothing else -- margins and separations are layout, and the shell's slots are
+## sized at 100 %. Set from settings.cfg before the first theme is built.
+static var _text_scale := 1.0
 static var _archivo: FontFile
 static var _map_face: Font
 
@@ -150,9 +154,28 @@ static func apply(root: Control, accent_color := ACCENT_FALLBACK) -> void:
 	root.theme = build()
 
 
+## The theme again, with the accent already chosen and the text size now set:
+## the settings row's live change, on whichever scene is up.
+static func rebuild(root: Control) -> void:
+	root.theme = build()
+
+
+static func set_text_scale(scale: float) -> void:
+	_text_scale = scale
+
+
+static func text_scale() -> float:
+	return _text_scale
+
+
+## A size of the type scale at the chosen text size.
+static func _px(size: int) -> int:
+	return roundi(size * _text_scale)
+
+
 static func build() -> Theme:
 	var theme := Theme.new()
-	theme.default_font_size = SIZE_BASE
+	theme.default_font_size = _px(SIZE_BASE)
 
 	var body := _face(WEIGHT_BODY)
 	if body != null:
@@ -291,7 +314,7 @@ static func _labels(theme: Theme) -> void:
 	var figures := _face(WEIGHT_BOLD, 0, true)
 	var tracked := _face(WEIGHT_MEDIUM, 1)
 
-	theme.set_font_size("font_size", LEAD, SIZE_LEAD)
+	theme.set_font_size("font_size", LEAD, _px(SIZE_LEAD))
 	theme.set_color("font_color", LEAD, TEXT)
 	if bold != null:
 		theme.set_font("font", LEAD, bold)
@@ -300,12 +323,12 @@ static func _labels(theme: Theme) -> void:
 	# uppercase label naming a group. Micro is for chrome the player reads once
 	# and then recognises by position (cluster names), Heading for sections
 	# inside a panel they read every time.
-	theme.set_font_size("font_size", HEADING, SIZE_SMALL)
+	theme.set_font_size("font_size", HEADING, _px(SIZE_SMALL))
 	theme.set_color("font_color", HEADING, TEXT)  # neutral: the accent is where-you-are, not a heading
 	if tracked != null:
 		theme.set_font("font", HEADING, tracked)
 
-	theme.set_font_size("font_size", MICRO, SIZE_MICRO)
+	theme.set_font_size("font_size", MICRO, _px(SIZE_MICRO))
 	theme.set_color("font_color", MICRO, TEXT_DIM)
 	if tracked != null:
 		theme.set_font("font", MICRO, tracked)
@@ -313,7 +336,7 @@ static func _labels(theme: Theme) -> void:
 	# Figures carry the tabular-figures feature so a ticking number stops
 	# shifting its own column every month -- unemployment going 7.33 -> 7.4 used
 	# to move the decimal. (Archivo's default digits are proportional.)
-	theme.set_font_size("font_size", FIGURE, SIZE_FIGURE)
+	theme.set_font_size("font_size", FIGURE, _px(SIZE_FIGURE))
 	theme.set_color("font_color", FIGURE, TEXT)
 	if figures != null:
 		theme.set_font("font", FIGURE, figures)
@@ -321,20 +344,20 @@ static func _labels(theme: Theme) -> void:
 	# V4.8a. The strip's alert tone: the figure's own face and size, BAD's colour,
 	# so a reading in trouble changes colour and nothing else -- a figure that
 	# changed size when it went bad would shove its neighbours along the strip.
-	theme.set_font_size("font_size", FIGURE_ALERT, SIZE_FIGURE)
+	theme.set_font_size("font_size", FIGURE_ALERT, _px(SIZE_FIGURE))
 	theme.set_color("font_color", FIGURE_ALERT, BAD)
 	if figures != null:
 		theme.set_font("font", FIGURE_ALERT, figures)
 
-	theme.set_font_size("font_size", HERO, SIZE_HERO)
+	theme.set_font_size("font_size", HERO, _px(SIZE_HERO))
 	theme.set_color("font_color", HERO, TEXT)
 	if figures != null:
 		theme.set_font("font", HERO, figures)
 
-	theme.set_font_size("font_size", FIGURE_LABEL, SIZE_SMALL)
+	theme.set_font_size("font_size", FIGURE_LABEL, _px(SIZE_SMALL))
 	theme.set_color("font_color", FIGURE_LABEL, TEXT_DIM)
 
-	theme.set_font_size("font_size", CAPTION, SIZE_SMALL)
+	theme.set_font_size("font_size", CAPTION, _px(SIZE_SMALL))
 	theme.set_color("font_color", CAPTION, TEXT_DIM)
 
 	theme.set_color("font_color", GOOD_TEXT, GOOD)

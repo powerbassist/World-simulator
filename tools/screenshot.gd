@@ -17,6 +17,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --domain finances
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
@@ -69,6 +70,7 @@ extends SceneTree
 
 const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
@@ -274,6 +276,7 @@ var _domain := ""
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
 var _lang := ""  ## --lang CODE: the interface language of the staged game (default English)
+var _text := 100  ## --text PCT: the text size (V5.1-c2.4), 90 / 100 / 115 / 130
 var _play := ""  ## --play ID: the played nation of the staged game (default France)
 var _defence := false
 
@@ -700,12 +703,16 @@ func _init() -> void:
 			_nation = args[i + 1].to_upper()
 		elif args[i] == "--lang" and i + 1 < args.size():
 			_lang = args[i + 1]
+		elif args[i] == "--text" and i + 1 < args.size():
+			_text = int(args[i + 1])
 		elif args[i] == "--play" and i + 1 < args.size():
 			_play = args[i + 1].to_upper()
 
 	# Before anything is built: tr() text is the language it was built in.
 	if _lang != "" and not Strings.set_language(_lang):
 		push_error("screenshot: language '%s' is not offered" % _lang)
+	# Before the first theme is built, as the settings file sets it at boot.
+	UiTheme.set_text_scale(_text / 100.0)
 	if _menu:
 		_main = load("res://src/ui/menu.tscn").instantiate()
 	else:

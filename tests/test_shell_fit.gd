@@ -11,12 +11,19 @@ extends SceneTree
 ## re-folds when the window changes shape, not only on the next day's refresh
 ## (Review focus 5: a window gone 21:9 mid-game).
 ##
+## And at the largest text size (V5.1-c2.4, Review focus 4): at 130 % on the 1920
+## reference the title bar, the strip and the sidebar keep their slots -- the
+## strip folds rather than grows, nothing pushes the workspace's top down.
+##
 ## Driven a frame at a time: a size change reaches the strip through the
 ## viewport's size_changed and a layout pass, and a check that called the fit
 ## itself would assert only that the test can call it.
 
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Sidebar = preload("res://src/ui/sidebar.gd")
+const TitleBar = preload("res://src/ui/title_bar.gd")
+const TopBar = preload("res://src/ui/top_bar.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -61,6 +68,19 @@ func _process(_delta: float) -> bool:
 			if _wait > 0:
 				return false
 			_check_refit_on_resize()
+			# Back to the reference, at the largest text size, through the same
+			# path the settings row takes.
+			root.size = Vector2i(1920, 1080)
+			UiTheme.set_text_scale(1.3)
+			UiTheme.rebuild(_main)
+			_phase = "text"
+			_wait = 4
+		"text":
+			_wait -= 1
+			if _wait > 0:
+				return false
+			_check_chrome_at_130()
+			UiTheme.set_text_scale(1.0)
 			_finish()
 	return false
 
@@ -113,6 +133,26 @@ func _check_refit_on_resize() -> void:
 	if folded.size() >= _folded_at_narrow.size():
 		_fail("a window 600 px wider still folds %d figures (it folded %d) -- the strip did not refit on resize"
 			% [folded.size(), _folded_at_narrow.size()])
+
+
+func _check_chrome_at_130() -> void:
+	var hud = _main._hud
+	var view: Vector2 = _main.get_viewport().get_visible_rect().size
+	var title: Vector2 = hud.title_bar.get_combined_minimum_size()
+	if title.y > TitleBar.HEIGHT + 0.5:
+		_fail("at 130 %% the title bar is %.0f px tall; its slot is %d" % [title.y, TitleBar.HEIGHT])
+	if title.x > view.x + 0.5:
+		_fail("at 130 %% the title bar needs %.0f px of a %.0f px screen" % [title.x, view.x])
+	var strip: Vector2 = hud.top_bar.get_combined_minimum_size()
+	if strip.y > TopBar.BAR_HEIGHT + 0.5:
+		_fail("at 130 %% the strip is %.0f px tall; its slot is %d" % [strip.y, TopBar.BAR_HEIGHT])
+	if strip.x > view.x - Sidebar.WIDTH + 0.5:
+		_fail("at 130 %% the strip needs %.0f px of its %.0f px slot -- it did not fold" % [strip.x, view.x - Sidebar.WIDTH])
+	var side: Vector2 = hud.sidebar.get_combined_minimum_size()
+	if side.x > Sidebar.WIDTH + 0.5:
+		_fail("at 130 %% the sidebar needs %.0f px; it is %d wide" % [side.x, Sidebar.WIDTH])
+	if side.y > view.y - TitleBar.HEIGHT + 0.5:
+		_fail("at 130 %% the sidebar needs %.0f px of %.0f under the title bar" % [side.y, view.y - TitleBar.HEIGHT])
 
 
 func _fail(message: String) -> void:

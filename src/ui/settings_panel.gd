@@ -25,6 +25,7 @@ extends PanelContainer
 signal closed
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -60,6 +61,10 @@ const DEFAULT_FULLSCREEN := true
 ## the readability knob is worth having before any other polish.
 const UI_SCALES: Array[float] = [0.85, 1.0, 1.15, 1.3]
 const DEFAULT_SCALE_INDEX := 1
+## V5.1-c2.4. The text size: the type scale alone, so the shell keeps its slots
+## at the 1920 reference where the interface scale above shrinks the reference.
+const TEXT_SCALES: Array[float] = [0.9, 1.0, 1.15, 1.3]
+const DEFAULT_TEXT_INDEX := 1
 
 ## Sound on a first launch. Audible rather than muted by default: a sting that
 ## ships silent is scope nobody will ever notice shipped (V3.6).
@@ -89,6 +94,7 @@ var _foreign_news_button: OptionButton
 var _applied_resolution := -1
 var _resolution_button: OptionButton
 var _scale_button: OptionButton
+var _text_button: OptionButton
 var _ambient_button: OptionButton
 var _sound_button: OptionButton
 var _motion_button: OptionButton
@@ -119,6 +125,8 @@ static func apply_saved(window: Window) -> void:
 	# not offer is English rather than a blank interface.
 	if not Strings.set_language(String(cfg.get_value("display", "language", Strings.DEFAULT))):
 		Strings.set_language(Strings.DEFAULT)
+	# Before the first theme is built, for the language's reason.
+	UiTheme.set_text_scale(TEXT_SCALES[_text_index(cfg)])
 	_apply(
 		window,
 		bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN)),
@@ -225,6 +233,7 @@ func _save_and_apply() -> void:
 	cfg.set_value("display", "fullscreen", fullscreen)
 	cfg.set_value("display", "resolution_index", resolution_index)
 	cfg.set_value("display", "ui_scale_index", scale_index)
+	cfg.set_value("display", "text_scale_index", _text_button.selected)
 	cfg.set_value("audio", "enabled", sound_on)
 	cfg.set_value("audio", "ambient", ambient_on)
 	cfg.set_value("display", "motion", motion_on)
@@ -239,6 +248,12 @@ func _save_and_apply() -> void:
 	_resolution_button.disabled = fullscreen
 	if language != Strings.language() and Strings.set_language(language):
 		_rebuild()
+	# Applied at once, on whichever scene is up -- the menu or the game.
+	var text_scale: float = TEXT_SCALES[_text_button.selected]
+	if not is_equal_approx(text_scale, UiTheme.text_scale()):
+		UiTheme.set_text_scale(text_scale)
+		if get_tree().current_scene is Control:
+			UiTheme.rebuild(get_tree().current_scene)
 
 
 # --- construction ------------------------------------------------------------
@@ -299,6 +314,7 @@ func _build() -> void:
 	_fullscreen_button = _add_row(grid, tr("Window (F11)"), [tr("Windowed"), tr("Fullscreen")])
 	_resolution_button = _add_row(grid, tr("Resolution"), _resolution_labels())
 	_scale_button = _add_row(grid, tr("Interface scale"), _scale_labels())
+	_text_button = _add_row(grid, tr("Text size"), _percent_labels(TEXT_SCALES))
 	_sound_button = _add_row(grid, tr("Sound"), [tr("Off"), tr("On")])
 	_ambient_button = _add_row(grid, tr("Ambience"), [tr("Off"), tr("On")])
 	_motion_button = _add_row(grid, tr("Motion"), [tr("Off"), tr("On")])
@@ -406,10 +422,18 @@ func _resolution_labels() -> Array:
 
 
 func _scale_labels() -> Array:
+	return _percent_labels(UI_SCALES)
+
+
+func _percent_labels(scales: Array[float]) -> Array:
 	var labels: Array = []
-	for scale in UI_SCALES:
+	for scale in scales:
 		labels.append("%d%%" % roundi(scale * 100.0))
 	return labels
+
+
+static func _text_index(cfg: ConfigFile) -> int:
+	return clampi(int(cfg.get_value("display", "text_scale_index", DEFAULT_TEXT_INDEX)), 0, TEXT_SCALES.size() - 1)
 
 
 ## Reads the file rather than the live window, so the controls show what will be
@@ -426,6 +450,7 @@ func _load_into_controls() -> void:
 	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)), 0, RESOLUTIONS.size() - 1))
 	_applied_resolution = _resolution_button.selected
 	_scale_button.select(clampi(int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX)), 0, UI_SCALES.size() - 1))
+	_text_button.select(_text_index(cfg))
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_ambient_button.select(1 if bool(cfg.get_value("audio", "ambient", DEFAULT_AMBIENT)) else 0)
 	_motion_button.select(1 if bool(cfg.get_value("display", "motion", DEFAULT_MOTION)) else 0)
