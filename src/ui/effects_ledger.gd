@@ -14,11 +14,9 @@ extends RefCounted
 
 const Trends = preload("res://src/ui/trends.gd")
 const Strings = preload("res://src/ui/strings.gd")
+## The register's one writer, and its bound (AGENTS.md rule 2).
+const RecentEffects = preload("res://src/sim/recent_effects.gd")
 
-## How many decisions the Overview's list keeps -- U4. Not the array's own size,
-## which is unbounded; trimmed so a long session's save does not grow one entry
-## per commit forever.
-const KEPT := 5
 ## Figures on a consequence card: the biggest movements, by severity's size.
 const CARD_FIGURES := 3
 
@@ -54,7 +52,7 @@ static func record(state, pending: Array, history_entry: Dictionary, year: int, 
 		"month": month,
 		"movements": Trends.movements_between(pending[0]["before"], dated_entry),
 	}
-	state.recent_effects.push_front(effect)
+	RecentEffects.record(state, effect)
 	if inbox != null:
 		var body := card_body(effect)
 		if not names.is_empty() and not defaults.is_empty():
@@ -62,8 +60,6 @@ static func record(state, pending: Array, history_entry: Dictionary, year: int, 
 		var title := Strings.t("This month you decided: %s") % ", ".join(names) if not names.is_empty() 			else Strings.t("This month, decided for you: %s") % ", ".join(defaults)  # i18n: row-ok effects' labels, routed when queued
 		inbox.push(title, body)
 	pending.clear()
-	while state.recent_effects.size() > KEPT:
-		state.recent_effects.remove_at(state.recent_effects.size() - 1)
 
 
 ## What moved, biggest first: the figures with a reading and a change that prints

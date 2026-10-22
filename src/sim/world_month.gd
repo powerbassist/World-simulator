@@ -10,7 +10,7 @@ extends RefCounted
 ## not measured"). Now main.gd, the balance harnesses and the probes call this,
 ## so a system added here is added everywhere at once.
 ##
-## The UI side of the month (cards, the pause, mark_all_dirty, recent_effects)
+## The UI side of the month (cards, the pause, mark_all_dirty, measuring recent_effects)
 ## stays in main.gd and runs through `on_step`, called before and after every
 ## step as `on_step.call(step, after, report)`: `step` is a name from STEPS,
 ## `after` is false before the step and true after it, and `report` is the

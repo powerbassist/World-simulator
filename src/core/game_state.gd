@@ -836,9 +836,10 @@ var history: Array[Dictionary] = []
 
 ## What the player's last few commands actually did -- U4. Newest first, each
 ## {label, year, month, movements}, movements in Trends.movements_between()
-## shape. Appended by main.gd's month hook, at the step src/sim/world_month.gd
-## writes the history entry -- the one place a committed decision's baseline
-## meets the history entry it is measured against.
+## shape. Measured by the UI's month close (src/ui/effects_ledger.gd) at the step
+## src/sim/world_month.gd writes the history entry -- the one place a committed
+## decision's baseline meets the history entry it is measured against -- and
+## written by src/sim/recent_effects.gd's record(), its one writer (AGENTS.md rule 2).
 var recent_effects: Array[Dictionary] = []
 
 ## What the other nine did on their own initiative — V1.3f. Newest first, each
@@ -856,7 +857,7 @@ var recent_effects: Array[Dictionary] = []
 ## > tests/test_foreign_policy.gd asserts no reader in src/sim/ rather than
 ## > trusting this comment.
 ## The cap is foreign_policy_constants.AGENDA_ACTS_KEPT, held by the writer rather
-## than here -- the shape src/ui/effects_ledger.gd's EffectsLedger.KEPT already has for
+## than here -- the shape src/sim/recent_effects.gd's RecentEffects.KEPT already has for
 ## recent_effects, and the reason src/core/ cannot hold it is that game_state.gd
 ## preloads diplomacy.gd, so the dependency only runs one way.
 var foreign_acts: Array[Dictionary] = []
