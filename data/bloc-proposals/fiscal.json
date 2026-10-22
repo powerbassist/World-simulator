@@ -129,7 +129,7 @@
       "decision": "qmr",
       "sponsor": "NLD",
       "name": "Expenditure Ceiling",
-      "summary": "Total public spending held under 50% of GDP. The ceiling does not touch what a government spends on; it touches how much, which is the argument the frugal members have always wanted to have.",
+      "summary": "Total public [g=spending]spending[/g] held under 50% of GDP. The ceiling does not touch what a government spends on; it touches how much, which is the argument the frugal members have always wanted to have.",
       "position": {
         "economic": 0.4,
         "social": 0.0

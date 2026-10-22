@@ -34,7 +34,7 @@
       "id": "health_service_reform",
       "name": "Health Service Reform Act",
       "theme": "social",
-      "summary": "Expand health spending, funded by a small rise in income tax.",
+      "summary": "Expand health [g=spending]spending[/g], funded by a small rise in income tax.",
       "position": { "economic": -0.3, "social": -0.1 },
       "majority": "absolute",
       "cooldown_months": 0,

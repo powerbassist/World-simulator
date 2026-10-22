@@ -90,7 +90,7 @@
         {
           "id": "recall_yours_to_match",
           "label": "Recall yours to match",
-          "summary": "Symmetry is a policy. The embassies run on chargés, the treaties run on hold, and the members who cast the vote pay for the minister's plane and call it spine.",
+          "summary": "Symmetry is a policy. The [g=embassy]embassies[/g] run on chargés, the treaties run on hold, and the members who cast the vote pay for the minister's plane and call it spine.",
           "effects": {
             "bloc_offset": {
               "rural": 0.03,
@@ -578,7 +578,7 @@
     {
       "id": "for_diaspora_petition",
       "name": "The petition from the old country",
-      "summary": "Two hundred thousand of your citizens hold opinions as well as passports, and the homeland's new press law has given them a petition that gains a page a day. The marches are outside your embassies by Wednesday, which is three days faster than the homeland expected.",
+      "summary": "Two hundred thousand of your citizens hold opinions as well as passports, and the homeland's new press law has given them a petition that gains a page a day. The marches are outside your [g=embassy]embassies[/g] by Wednesday, which is three days faster than the homeland expected.",
       "likelihood": 0.0024,
       "category": "foreign",
       "severity": 1,

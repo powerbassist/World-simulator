@@ -33,7 +33,7 @@
     {
       "id": "prog_rhine_axis",
       "name": "The Rhine Axis",
-      "summary": "Two per cent alongside the continent's strongest economy, within the year -- convergence filed as a programme rather than a press release. A eurozone recession overtakes the entry rather than failing it; a merely slow year fails it on the clock.",
+      "summary": "Two per cent alongside the continent's strongest economy, within the year -- convergence filed as a [g=programme]programme[/g] rather than a press release. A eurozone recession overtakes the entry rather than failing it; a merely slow year fails it on the clock.",
       "group": "europe",
       "activation": "player",
       "complete": {
@@ -102,7 +102,7 @@
     {
       "id": "prog_the_tariff_line",
       "name": "The Tariff Line",
-      "summary": "Credibility for the trade fight, priced on the ledger: the deficit under four and a half inside eight months, with a corporate levy raised the day the programme opens. The markets read budgets before they read communiques. Offered where the four and a half is still ahead and the seven has not already arrived.",
+      "summary": "Credibility for the trade fight, priced on the ledger: the deficit under four and a half inside eight months, with a corporate levy raised the day the [g=programme]programme[/g] opens. The markets read budgets before they read communiques. Offered where the four and a half is still ahead and the seven has not already arrived.",
       "group": "europe",
       "activation": "player",
       "possible": [
@@ -192,7 +192,7 @@
     {
       "id": "prog_the_border_fund",
       "name": "The Border Fund",
-      "summary": "Cross-border infrastructure, paid for at choice and judged like every other programme -- on whether the country ends the term more persuaded than it began. The fund is the act; the confidence is the verdict.",
+      "summary": "Cross-border infrastructure, paid for at choice and judged like every other [g=programme]programme[/g] -- on whether the country ends the term more persuaded than it began. The fund is the act; the confidence is the verdict.",
       "group": "europe",
       "activation": "player",
       "immediate": {

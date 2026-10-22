@@ -19,7 +19,7 @@
       "id": "corporate_tax_cut",
       "name": "Corporate Tax Relief Act",
       "theme": "tax",
-      "summary": "Cut the corporate tax rate by five points to attract investment.",
+      "summary": "Cut the corporate [g=tax_rate]tax rate[/g] by five points to attract investment.",
       "position": { "economic": 0.6, "social": 0.0 },
       "majority": "simple",
       "cooldown_months": 24,

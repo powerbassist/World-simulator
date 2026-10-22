@@ -146,7 +146,7 @@
     {
       "id": "prog_the_presidents_ledger",
       "name": "The President's Ledger",
-      "summary": "The ratio two points under where the decade found it, left there on purpose: a second-mandate programme, because the first mandate spends and the second one answers for it.",
+      "summary": "The ratio two points under where the decade found it, left there on purpose: a second-mandate [g=programme]programme[/g], because the first mandate spends and the second one answers for it.",
       "group": "office",
       "activation": "player",
       "possible": [
@@ -181,7 +181,7 @@
     {
       "id": "prog_the_full_term",
       "name": "The Full Term",
-      "summary": "Carry the office to its next mandate -- the one programme whose conclusion arrives by calendar rather than by achievement, offerable only to a first term because a second-term player has already lived it. The fail line is not a number a government plans against; it is the register keeping a record anyway.",
+      "summary": "Carry the office to its next mandate -- the one [g=programme]programme[/g] whose conclusion arrives by calendar rather than by achievement, offerable only to a first term because a second-term player has already lived it. The fail line is not a number a government plans against; it is the register keeping a record anyway.",
       "group": "office",
       "activation": "player",
       "possible": [

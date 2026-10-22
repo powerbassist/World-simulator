@@ -52,7 +52,7 @@
     {
       "id": "prog_maastricht_letter",
       "name": "The Three Per Cent Letter",
-      "summary": "Bring the deficit under the old Maastricht line within the year and file it as a programme rather than an accident of the cycle. The deadline is the point: a goal without a clock is a mood.",
+      "summary": "Bring the deficit under the old Maastricht line within the year and file it as a [g=programme]programme[/g] rather than an accident of the cycle. The deadline is the point: a goal without a clock is a mood.",
       "group": "economy",
       "activation": "player",
       "complete": {
@@ -75,7 +75,7 @@
     {
       "id": "prog_industrial_renewal",
       "name": "The Industrial Renewal",
-      "summary": "Two per cent growth, sustained, as the term's economic project. The goal the world can overtake: if the country is on the streets at forty per cent unrest, the programme stops ticking rather than failing a president who never got to play it.",
+      "summary": "Two per cent growth, sustained, as the term's economic project. The goal the world can overtake: if the country is on the streets at forty per cent unrest, the [g=programme]programme[/g] stops ticking rather than failing a president who never got to play it.",
       "group": "economy",
       "activation": "player",
       "complete": {
@@ -143,7 +143,7 @@
     {
       "id": "prog_turn_the_debt",
       "name": "Turning the Tide on the Debt",
-      "summary": "Take the ratio down a full point -- the first honest digit any government has turned in a decade. The debt only moves for a surplus kept, so this is the austerity programme with the register watching; the fail line stands where the drift alone would deliver the verdict. Offered only where the point is still there to turn.",
+      "summary": "Take the ratio down a full point -- the first honest digit any government has turned in a decade. The debt only moves for a surplus kept, so this is the austerity [g=programme]programme[/g] with the register watching; the fail line stands where the drift alone would deliver the verdict. Offered only where the point is still there to turn.",
       "group": "economy",
       "activation": "player",
       "possible": [
@@ -347,7 +347,7 @@
     {
       "id": "prog_office_honour",
       "name": "A Second Mandate's Economy",
-      "summary": "Three per cent growth as the work of a third term -- offerable only to a president two terms in, because a programme is also a statement about the mandate behind it.",
+      "summary": "Three per cent growth as the work of a third term -- offerable only to a president two terms in, because a [g=programme]programme[/g] is also a statement about the mandate behind it.",
       "group": "office",
       "activation": "player",
       "possible": [
