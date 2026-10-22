@@ -528,8 +528,8 @@
     "En rédaction : %d mois avant l'inscription à l'ordre du jour.",
     "En rédaction : %d mois avant l'inscription à l'ordre du jour."
   ],
-  "Commission an assembly poll — %s%% of GDP (€%s bn)": "Commander un sondage à l'assemblée — %s %% du PIB (%s Md€)",
-  "Commission a popular poll — %s%% of GDP (€%s bn)": "Commander un sondage populaire — %s %% du PIB (%s Md€)",
+  "Commission an assembly poll — €%s k": "Commander un sondage à l'assemblée — %s k€",
+  "Commission a popular poll — €%s k": "Commander un sondage populaire — %s k€",
   "Commissioned an assembly poll: %s": "Sondage à l'assemblée commandé : %s",
   "Commissioned a popular poll: %s": "Sondage populaire commandé : %s",
   "Diary — %s": "Calendrier — %s",

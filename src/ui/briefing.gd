@@ -300,11 +300,11 @@ func _build_polls() -> void:
 		# A translated sentence on one line is the widest thing in the briefing: it wraps
 		# (two lines in a longer language) rather than push the figures out of the view.
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		var cost_pct: float = float(StatuteK.POLL_COSTS[kind])
-		var cost_bn: float = float(_ns.gdp_eur_bn) * cost_pct / 100.0
+		# The sim's own price (G8: a flat fee, thousands of euros, not a share of GDP).
+		var cost_k: float = StatuteK.poll_cost_eur_bn(kind) * 1.0e6
 		# One whole sentence per kind (the article and the kind are the sentence's own).
-		btn.text = (tr("Commission an assembly poll — %s%% of GDP (€%s bn)") if kind == StatuteK.POLL_KIND_ASSEMBLY
-			else tr("Commission a popular poll — %s%% of GDP (€%s bn)")) % [Num.f(cost_pct, 2), Num.f(cost_bn, 1)]
+		btn.text = (tr("Commission an assembly poll — €%s k") if kind == StatuteK.POLL_KIND_ASSEMBLY
+			else tr("Commission a popular poll — €%s k")) % Num.f(cost_k, 0)
 		if bought.has(kind):
 			# The fixed-forecast rule, made visible: a bought poll is a
 			# published figure, and the second commission is refused by the

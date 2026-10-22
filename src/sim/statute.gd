@@ -393,8 +393,9 @@ static func custom_laws(ns) -> Array:
 ## restated here because the next sim author will meet this register before
 ## that comment:
 ##
-## A POLL FEE IS A ONE-OFF PURCHASE, not income. The cost lands on the debt
-## STOCK (`debt_eur_bn`) through the GDP level, and it moves
+## A POLL FEE IS A ONE-OFF PURCHASE, not income. The cost, the flat price
+## statute_constants.poll_cost_eur_bn() reads (G8), lands on the debt STOCK
+## (`debt_eur_bn`), and it moves
 ## `deficit_pct_gdp` by exactly zero in the month it happens -- the deficit is
 ## a precondition field, and a one-off on the revenue side would close the
 ## loop the subsidy bill's one-month lag exists to avoid. The interest on it
@@ -413,7 +414,7 @@ static func custom_laws(ns) -> Array:
 ## not display, and the surfaces reach it directly (tests/test_statute_surfaces.gd
 ## scans the directory for the single-writer pin).
 static func buy_poll(state, ns, bill_key: String, kind: String) -> Dictionary:
-	if not SK.POLL_COSTS.has(kind):
+	if not SK.POLL_COSTS_EUR_BN.has(kind):
 		return {"ok": false, "refused": true, "refusal": "There is no such poll.", "cost_eur_bn": 0.0}
 	if String(bill_key) == "":
 		return {"ok": false, "refused": true, "refusal": "A poll is commissioned on a named bill.", "cost_eur_bn": 0.0}
@@ -423,7 +424,7 @@ static func buy_poll(state, ns, bill_key: String, kind: String) -> Dictionary:
 		return {"ok": false, "refused": true,
 			"refusal": "That poll was commissioned already (month %d) -- the figures it bought are fixed." % when,
 			"cost_eur_bn": 0.0}
-	var cost := float(ns.gdp_eur_bn) * float(SK.POLL_COSTS[kind]) / 100.0
+	var cost := SK.poll_cost_eur_bn(kind)
 	if not ns.poll_purchases.has(bill_key):
 		ns.poll_purchases[bill_key] = {}
 	ns.poll_purchases[bill_key][kind] = {

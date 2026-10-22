@@ -58,6 +58,7 @@
    "tests/test_industry.gd",
    "tests/test_statute_surfaces.gd",
    "tests/test_statute_assembly.gd",
+   "tests/test_poll_cost.gd",
    "tests/test_tax.gd",
    "tests/test_sectors.gd",
    "tests/test_campaign.gd",
