@@ -41,8 +41,16 @@ func _process(_delta: float) -> bool:
 		_main._windows.close_all()
 		_main._windows.open("budget")
 		return false
+	if _frame == 3:
+		_click_commit()
+		return false
 	if _frame < 4:
 		return false  # the budget builds its levers on its first visible frame
+	if _frame == 5:
+		_check_code_focus_after_a_click_stays()
+		_finish()
+		return false
+	_check_a_click_parks_no_focus_on_a_button()
 	_check_focus_returns_below()
 	_check_escape_pops_the_top()
 	_check_hotkeys_only_below_scenes()
@@ -54,8 +62,46 @@ func _process(_delta: float) -> bool:
 	_check_an_ordinary_hold_slides_in()
 	_check_answer_keeps_the_inbox_while_one_holds()
 	_check_space_waits_under_a_scene()
-	_finish()
+	# Review pass 1: a grab_focus after the click's release is code's, and holds.
+	_click_commit()
+	_main._budget_panel._commit_button.grab_focus()
 	return false
+
+
+## QA #54 RECORD: Commit kept the keyboard after a click, so the next Space -- the
+## pause key -- pressed Commit again instead of reaching main.gd's unhandled input.
+## A click leaves no focus on the button it pressed; a button the KEYBOARD reached
+## keeps it (Tab, the arrow keys), because that is how the keyboard path works.
+func _click_commit() -> void:
+	var commit: Button = _main._budget_panel._commit_button
+	var point: Vector2 = commit.get_global_rect().get_center()
+	for pressed in [true, false]:
+		var click := InputEventMouseButton.new()
+		click.button_index = MOUSE_BUTTON_LEFT
+		click.pressed = pressed
+		click.position = point
+		click.global_position = point
+		_main.get_viewport().push_input(click, true)
+
+
+func _check_code_focus_after_a_click_stays() -> void:
+	var commit: Button = _main._budget_panel._commit_button
+	if _main.get_viewport().gui_get_focus_owner() != commit:
+		_fail("a grab_focus made after a click's release was taken away as if the click had made it")
+	commit.release_focus()
+
+
+## (A frame after _click_commit(): the release is deferred out of the focus signal.)
+func _check_a_click_parks_no_focus_on_a_button() -> void:
+	var commit: Button = _main._budget_panel._commit_button
+	var viewport: Viewport = _main.get_viewport()
+	var owner := viewport.gui_get_focus_owner()
+	if owner == commit:
+		_fail("a click on Commit left it holding the keyboard: the next Space presses it again")
+	commit.grab_focus()
+	if viewport.gui_get_focus_owner() != commit:
+		_fail("a button the keyboard reached lost its focus")
+	commit.release_focus()
 
 
 ## Review focus 1's neighbour: a system screen over a domain takes the keyboard

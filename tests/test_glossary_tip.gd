@@ -24,6 +24,7 @@ extends SceneTree
 ## Driven through enter/leave/click/tick, the calls the label makes: a pushed mouse
 ## event does not move RichTextLabel's hover on a windowed root viewport (step 0).
 
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const GlossaryTip = preload("res://src/ui/glossary_tip.gd")
@@ -65,6 +66,7 @@ func _process(_delta: float) -> bool:
 		_check_depth_and_n5()
 		_check_escape_and_click_away()
 		_check_live_line()
+		_check_keyboard_path()
 		_stage_p2(0)
 	elif _frame == 6:
 		_check_p2()
@@ -72,9 +74,58 @@ func _process(_delta: float) -> bool:
 	elif _frame == 10:
 		_check_p2()
 		TranslationServer.pseudolocalization_enabled = false
+		_stage_scrolled_walk()
+	elif _frame == 12:
+		_check_scrolled_walk()
 		_finish()
 		return true
 	return false
+
+
+## QA on #76 (TAKE 2): F1 walked lines scrolled out of view -- the plate clamped to
+## the screen's edge over a row that does not say the word. And a new screen resumed
+## the walk mid-list. Laid out over two frames, so the scroll has clipped its rows.
+var _scroll_box: ScrollContainer
+
+
+func _stage_scrolled_walk() -> void:
+	_tip.close_all()
+	_scroll_box = ScrollContainer.new()
+	_scroll_box.position = Vector2(0, 0)
+	_scroll_box.size = Vector2(600, 100)
+	root.add_child(_scroll_box)
+	var rows := VBoxContainer.new()
+	rows.custom_minimum_size = Vector2(580, 0)
+	_scroll_box.add_child(rows)
+	PanelKit.rich(rows, "Your [g=approval]approval[/g] and the [g=deficit]deficit[/g].")
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 600)
+	rows.add_child(gap)
+	PanelKit.rich(rows, "Far below, the [g=debt]debt[/g].")
+
+
+func _check_scrolled_walk() -> void:
+	var f1 := InputEventKey.new()
+	f1.keycode = KEY_F1
+	f1.pressed = true
+	var seen: Array[String] = []
+	for i in 3:
+		_tip._input(f1)
+		seen.append(String(_tip._plates[0]["id"]) if _tip.depth() > 0 else "")
+	if seen.has("debt"):
+		_fail("F1 opened a plate for a line scrolled out of view: %s" % [seen])
+	# A changed screen starts the walk again, at its first term.
+	_tip._input(f1)  # the walk now sits on the box's first term again (approval)
+	_scroll_box.queue_free()
+	var box := VBoxContainer.new()
+	box.size = Vector2(600, 200)
+	root.add_child(box)
+	PanelKit.rich(box, "The [g=salience]salience[/g] and the [g=debt]debt[/g].")
+	_tip._input(f1)
+	if _tip.depth() == 0 or String(_tip._plates[0]["id"]) != "salience":
+		_fail("F1 on a new screen resumed the old walk instead of starting at its first term")
+	_tip.close_all()
+	box.queue_free()
 
 
 func _check_open_delay() -> void:
@@ -178,9 +229,46 @@ func _check_escape_and_click_away() -> void:
 		_fail("a click away from every plate left %d levels open" % _tip.depth())
 
 
+## V5.1-d2, the keyboard path the design asked for (RichTextLabel has no per-tag
+## focus): F1 cycles the marked terms on screen in reading order, opening each one's
+## plate locked at its line; Escape closes, as for the mouse.
+func _check_keyboard_path() -> void:
+	_tip.close_all()
+	var box := VBoxContainer.new()
+	box.size = Vector2(600, 200)
+	root.add_child(box)
+	var first = PanelKit.rich(box, "Your [g=approval]approval[/g] and the [g=deficit]deficit[/g].")
+	PanelKit.rich(box, "Then the [g=debt]debt[/g].")
+	var f1 := InputEventKey.new()
+	f1.keycode = KEY_F1
+	f1.pressed = true
+	var seen: Array[String] = []
+	for i in 3:
+		_tip._input(f1)
+		if _tip.depth() != 1 or not _tip.is_locked(1):
+			_fail("F1 press %d did not open a locked plate (depth %d)" % [i + 1, _tip.depth()])
+			break
+		seen.append(String(_tip._plates[0]["id"]))
+	if seen != ["approval", "deficit", "debt"]:
+		_fail("F1 did not walk the terms in reading order: %s" % [seen])
+	var escape := InputEventKey.new()
+	escape.keycode = KEY_ESCAPE
+	escape.pressed = true
+	_tip._input(escape)
+	if _tip.depth() != 0:
+		_fail("Escape did not close the plate F1 opened")
+	box.queue_free()
+
+
 func _check_live_line() -> void:
 	_tip.close_all()
 	_tip.click("approval", AT, 0)
+	# V5.1-d2: the See-also line marks every entry -- a list, not prose (N2's cap
+	# drew APPROVAL's fourth, "salience", plain).
+	var see_also: Array = Glossary.see_also("approval")
+	for other in see_also:
+		if not _tip.plate_markup(1).contains("term:%s]" % other):
+			_fail("APPROVAL's See-also line draws '%s' plain" % other)
 	var shown := String(StripReadings.read("approval", _state, _loader)["text"])
 	if not _tip.plate_text(1).contains(shown):
 		_fail("approval's plate does not show the strip's %s" % shown)

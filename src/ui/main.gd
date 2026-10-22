@@ -34,7 +34,7 @@ const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const MonthRunner = preload("res://src/ui/month_runner.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
-const EventArt = preload("res://src/ui/event_art.gd")
+const DeskCards = preload("res://src/ui/desk_cards.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const OutlinerPanel = preload("res://src/ui/outliner_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
@@ -650,7 +650,7 @@ func _ready() -> void:
 			for unseen_id in _unseen_events.keys().duplicate():
 				if not still_on.has(unseen_id):
 					_unseen_events.erase(unseen_id)
-					_dismiss_event_cards(unseen_id)
+					DeskCards.dismiss(self, unseen_id)
 		_resume_if_decision_settled()
 		_windows.mark_all_dirty()
 	)
@@ -1390,207 +1390,14 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 			_world_news.card_character_acts(report["character_acts"])
 
 
-## V1.8. What arrived on the desk this month, and what the clock decided when the
-## player said nothing. The fifth caller of inbox.push() and the FIRST EVER
-## CONSUMER of its card_activated signal, which U5a emitted and connected to nothing.
-##
-## U5a's call 3 said the column ships as furniture because the thing that fills it is
-## events, and that "V1.8 adds calls rather than a layout". It held: nothing on screen
-## moved to make room, and the one piece of machinery this needed -- a card the player
-## can click through to the decision -- was already there waiting.
-##
-## Two cards and they are opposite in kind. An ARRIVAL is a question, and clicking it
-## opens the window where it is answered. A DEFAULT is a thing that already happened to
-## the player's government with no button pressed -- _card_appointment()'s class exactly,
-## and the sharper case, because with an appointment the player at least booked it.
+## V1.8's desk cards, the arrivals and the defaults: desk_cards.gd.
 func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictionary) -> void:
-	if _hud == null or _hud.inbox == null or _state == null:
-		return
-	var ns = _state.player()
-	if ns == null:
-		return
-
-	# What LEFT the desk this month: ids that were on it before the tick and are
-	# not now. Each is a resolution, and each earns its own card -- two crises the
-	# clock answered in one month is twice the news, not the same news twice.
-	var after := {}
-	for entry in ns.event_queue:
-		after[String(entry.get("event_id", ""))] = true
-	var defaulted_names: Array[String] = []
-	for event_id in desk_before.keys():
-		if after.has(event_id):
-			continue
-		# The unseen set's first door, and the invariant's desk half: an id that
-		# has left the desk is not unseen, whether it left by the machine's own
-		# default (_tick_countdowns answered it a moment ago), the player's card
-		# answer or a Dispatches answer -- and its arrival card goes with it.
-		# An erase of _unseen_events missed here used to strand the id and hold
-		# the clock past every later answer; a missing card purge left decision
-		# buttons with no event to answer.
-		_dismiss_event_cards(event_id)
-		_unseen_events.erase(event_id)
-		var record := {}
-		for row in ns.event_history:
-			if String(row.get("event_id", "")) == event_id:
-				record = row
-				break
-		if record.is_empty():
-			continue
-		if not bool(record.get("defaulted", false)) or int(record.get("year", 0)) != year or int(record.get("month", 0)) != month:
-			continue
-		# A sited crisis names its place here too: this card and the Dispatches
-		# ledger print the same record, and two readouts of one record that
-		# disagree is the failure class this column keeps catching.
-		var named := Strings.record_event_name(record)
-		var where := String(record.get("region_name", ""))
-		if where != "":
-			named = "%s — %s" % [named, where]
-		_hud.inbox.push(tr("Decided for you"),
-			tr("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)])
-		defaulted_names.append(Strings.record_event_name(record))
-
-	# The delta is queued HERE and not at the choice, because this is the one case
-	# where the player made no decision -- U4's baseline still belongs against it,
-	# or a budget that moved by default moves for no reason the ledger names. ONE
-	# entry for the whole tick: every departure shares the same pre-tick snapshot,
-	# so a queue entry per default would each claim the joint movement of all of
-	# them (the cards stay one per event -- only the ledger line is merged).
-	if not defaulted_names.is_empty():
-		_queue_effect("; ".join(defaulted_names), before, true)
-
-	# What ARRIVED: ids on the desk now that were not before. Each gets its own
-	# decision card, answering its own row.
-	# V4.9c: and ONE sting for the month, at the worst severity that arrived --
-	# two crises in one tick are one piece of news to the ear, and two stings on
-	# one frame would only be louder, not clearer. Gated on NOTIFY (author's
-	# call, 2026-10-17): the sting is a notification, so a category the player
-	# has told not to notify stays silent too.
-	var sting_severity := 0
-	for entry in ns.event_queue:
-		var event_id := String(entry.get("event_id", ""))
-		if desk_before.has(event_id):
-			continue
-		var ev = Events.event_by_id(_loader, event_id)
-		if ev == null:
-			continue
-		# A decision the player has not seen must not expire behind their back:
-		# "3 months to answer" at speed 3 is thirteen seconds, and both playtest
-		# runs produced "Decided for you" records no player answered (2026-09-05).
-		# Arrival pauses; the interrupt flag (V2.4b) still opens Dispatches on
-		# top -- non-modal, per events-model's argument, but the clock waits
-		# until everything unseen has been answered.
-		# V4.8c: arrival pauses when the category's PAUSE band says so (default
-		# Major+). A quiet arrival is still unseen -- it enters the set as false,
-		# and _guard_lapses() holds the clock for it in its last month, so the
-		# contract above is kept by name rather than by the arrival pause.
-		var severity := int(entry.get("severity", 1))
-		# An interrupt ignores the register entirely (message_settings.gd's
-		# header; pending.gd's notify read does the same): the content says
-		# "until answered", and a preference does not silence it (review pass 1).
-		if bool(entry.get("interrupt", false)) \
-				or MessageSettings.allows(_messages, ev.category, severity, "notify"):
-			sting_severity = maxi(sting_severity, severity)
-		var holds := MessageSettings.allows(_messages, ev.category, severity, "pause")
-		# Recorded and carded BEFORE the hold (QA on #73): the hold names its cause
-		# from the unseen set and raises its card (hold_reason.gd).
-		_unseen_events[event_id] = holds
-		if MessageSettings.allows(_messages, ev.category, severity, "popup"):
-			_push_decision_card(ev, entry)
-		if holds:
-			_hold_for_decision()
-	if sting_severity > 0:
-		Sound.event_sting(self, sting_severity)
-
-	# A quiet arrival's card stays up while the clock runs, so every live
-	# decision card's deadline is re-read here, before the guard: a card saying
-	# "3 months" beside a desk saying one is two readouts of one entry
-	# disagreeing (review pass 2). Before V4.8c the arrival stopped the clock
-	# and the sentence could not age under the player.
-	_refresh_decision_bodies(ns)
-
-	# After the arrivals, so a quiet arrival with one month to answer is caught
-	# in the month it lands.
-	_guard_lapses(ns)
-
-	# The unseen set's third door re-check: the pause is re-judged AFTER the
-	# arrivals, not beside the departure erase above -- a same-month
-	# resolve-and-replace (one default fires, another crisis lands) must not
-	# resume past the fresh arrival. The same three lines the card-answer path
-	# runs.
-	_resume_if_decision_settled()
+	DeskCards.card_events(self, year, month, desk_before, before)
 
 
-## V4.8c, THE LAPSE GUARD -- the arrival pause's contract, kept for a quiet
-## arrival. Every unanswered entry the pause band let through (false in the unseen
-## set) whose countdown is down to its last month -- Events._tick_countdowns
-## answers it by default on the NEXT tick -- now holds the clock, and gets its
-## decision card if the popup band suppressed one: a clock stopped with nothing on
-## screen saying why is the silent failure this column exists to catch. Runs every
-## month, right after the tick moved the countdowns. An interrupt is not its
-## business: _enforce_interrupt() holds those whatever the settings say.
+## V4.8c's lapse guard: desk_cards.gd.
 func _guard_lapses(ns) -> void:
-	for entry in ns.event_queue:
-		var event_id := String(entry.get("event_id", ""))
-		if not _unseen_events.has(event_id) or bool(_unseen_events[event_id]):
-			continue
-		if int(entry.get("months_left", 0)) > 1:
-			continue
-		var ev = Events.event_by_id(_loader, event_id)
-		if ev == null:
-			continue
-		_unseen_events[event_id] = true
-		_hold_for_decision()
-		if not _event_cards.values().has(event_id):
-			_push_decision_card(ev, entry)
-
-
-## The decision card for one desk entry: the event's choices as buttons, the
-## place in the title for a sited event, the plate beside it. One builder for the
-## arrival and the lapse guard, so the guard's card is the arrival's card.
-func _push_decision_card(ev, entry: Dictionary) -> void:
-	if ev == null:
-		return  # a desk entry whose event the content no longer has (a load)
-	var event_id := String(entry.get("event_id", ""))
-	var left := int(entry.get("months_left", 0))
-	# The card itself is the answer surface. Since V4.8c a quiet arrival's card
-	# can be answered with the clock running -- Events.answer is the same chain
-	# either way; only the arrival pause used to guarantee a stopped world. The
-	# default-choice marker is events_panel's own wording.
-	var actions: Array = []
-	for choice in ev.choices:
-		actions.append({"label": "%s%s" % [
-			Strings.choice_label(ev.id, choice),
-			tr("   (happens if you say nothing)") if bool(choice.get("is_default", false)) else "",
-		]})
-	# The title names the place for a sited event -- read straight off the
-	# entry, `event_name` untouched (V3.5). The name is already in the
-	# register because every reader of it is a leaf over pending state.
-	var title: String = Strings.row_name("events", ev)
-	var where := String(entry.get("region_name", ""))
-	if where != "":
-		title = "%s — %s" % [title, where]
-	# The same plate the Dispatches desk entry carries, on the title's side:
-	# one crisis, one image, in both places it is read. Null (no art yet)
-	# draws the card exactly as before -- missing art is silent.
-	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
-	var card_id: String = _hud.inbox.push(title, _decision_body(ev, left), actions, art)
-	_event_cards[card_id] = event_id
-
-
-## Every live decision card's deadline sentence, re-read off the desk. A card
-## whose event has left the desk was dismissed above; one the eviction dropped is
-## a set_body() no-op.
-func _refresh_decision_bodies(ns) -> void:
-	var left_by_id := {}
-	for entry in ns.event_queue:
-		left_by_id[String(entry.get("event_id", ""))] = int(entry.get("months_left", 0))
-	for card_id in _event_cards.keys():
-		var event_id := String(_event_cards[card_id])
-		if not left_by_id.has(event_id):
-			continue
-		var ev = Events.event_by_id(_loader, event_id)
-		if ev != null:
-			_hud.inbox.set_body(String(card_id), _decision_body(ev, int(left_by_id[event_id])))
+	DeskCards.guard_lapses(self, ns)
 
 
 ## Whether any unseen id holds the clock -- V4.8c's reading of what used to be
@@ -1645,28 +1452,6 @@ func _decision_holds_clock() -> bool:
 		return true
 	var ns = _state.player() if _state != null else null
 	return ns != null and Events.interrupt_pending(ns)
-
-
-## Dismiss every message-stack card keyed to an event that has left the desk.
-## Finds card ids in _event_cards mapping to `event_id`, dismisses each, and
-## iterates a copy of the keys because `dismiss()` emits `card_dismissed` whose
-## handler erases from _event_cards -- re-entry is harmless; the handler also
-## erases from _unseen_events, which is a no-op when the caller already erased it.
-func _dismiss_event_cards(event_id: String) -> void:
-	if _hud == null or _hud.inbox == null:
-		return
-	for card_id in _event_cards.keys().duplicate():
-		if String(_event_cards.get(card_id, "")) == event_id:
-			_hud.inbox.dismiss(card_id)
-
-
-## The decision card's body: the event's summary line, then the deadline -- the
-## same two sentences the arrival card has always carried, now beside buttons
-## that answer it (V2.9).
-func _decision_body(ev, left: int) -> String:
-	return tr_n("%s  You have %d month to answer.", "%s  You have %d months to answer.", left) % [
-		Strings.row_summary("events", ev), left,
-	]
 
 
 func _setup_news() -> void:
@@ -1884,7 +1669,7 @@ func _on_load_requested(slot: String) -> void:
 	# above took the discarded game's rows, and a pending question with no row
 	# could be answered only from Dispatches (Review focus 2).
 	for entry in _state.player().event_queue:
-		_push_decision_card(Events.event_by_id(_loader, String(entry.get("event_id", ""))), entry)
+		DeskCards.push(self, Events.event_by_id(_loader, String(entry.get("event_id", ""))), entry)
 	# V2.4b: the reload re-raise. An interrupt crisis pending in the save stops
 	# the clock again and is put back in front of the player -- a save made mid-
 	# crisis and reloaded is still mid-crisis, and the pause is the only thing

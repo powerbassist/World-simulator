@@ -254,7 +254,9 @@ func _build_levers() -> Control:
 		# (The fine-grained rows moved to the Tax Code window with the rates.)
 		slider.max_value = float(LEVER_MAX[key])
 		slider.step = 0.1
-		slider.custom_minimum_size.x = 220
+		# 200, not 220: G11's caption size took the window's last 20 px under +35%
+		# pseudo, and since d1b3 the span, not the track's width, guards a drag.
+		slider.custom_minimum_size.x = 200
 		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.draw.connect(_draw_span.bind(key))
@@ -347,21 +349,21 @@ func setup(state, loader) -> void:
 	_on_revert()
 
 
-func _on_revert() -> void:
+func _on_revert(state_moved := false) -> void:
 	var ns = _state.player()
 	# Guarded because this is on the generic mark_all_dirty() sweep now, not just on
 	# setup() and two button presses -- every other panel guards the same way.
 	if ns == null:
 		return
-	_pending = {
-		"spending_pct_gdp": ns.spending_pct_gdp.duplicate(true),
-	}
+	_pending = {"spending_pct_gdp": ns.spending_pct_gdp.duplicate(true)}
 	for key in _lever_keys():
 		_set_lever(key, _pending_value(key))
 	_edited_keys.clear()
-	# mark_dirty(), not just _dirty (V5.1-0a review pass 1): a commit comes through
-	# here, and the forecast keeps its projection until told the state moved.
-	mark_dirty()
+	# mark_dirty() for a commit (V5.1-0a review pass 1): the forecast keeps its
+	# projection until told the state moved. A plain Revert moved none, so the
+	# forecast on screen stands -- re-projecting it was ~5 s of work (D14, V5.1-d2).
+	if state_moved: mark_dirty()
+	_dirty = true
 
 
 func _on_commit() -> void:
@@ -371,7 +373,7 @@ func _on_commit() -> void:
 	# reverted zero.
 	var pending := _pending.duplicate()
 	Budget.commit(_state, _pending)
-	_on_revert()
+	_on_revert(true)
 	committed.emit(before, pending)
 
 

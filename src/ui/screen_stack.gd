@@ -48,6 +48,8 @@ var _hosts := {}  # rank -> the full-rect Control its panels are added to
 ## scene and a system screen. Not a rank -- a held rank would turn the hotkeys off
 ## under every hover; the chain eats its own Escape (glossary_tip.gd).
 var tips := GlossaryTip.new()
+## Where the last mouse press landed, or null after a key: QA #54's Commit focus.
+var _press_at = null
 
 
 func _ready() -> void:
@@ -60,6 +62,26 @@ func _ready() -> void:
 		add_child(host)
 		_hosts[rank] = host
 	add_child(tips)
+	get_viewport().gui_focus_changed.connect(_on_focus_changed)
+
+
+## QA #54 RECORD: a click left the keyboard on the button it pressed, so the next
+## Space -- main.gd's pause, an UNHANDLED key -- was ui_accept on that button and
+## pressed Commit again. _input runs before the GUI takes focus on the same press.
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		# Focus moves on the press; after the release a grab_focus is code's, not a
+		# click's (review pass 1).
+		_press_at = event.position if event.pressed else null
+	elif event is InputEventKey:
+		_press_at = null
+
+
+## A button that took focus from a click under the pointer gives it up; one the
+## keyboard reached (Tab, arrows, a panel's own grab_focus) keeps it.
+func _on_focus_changed(control: Control) -> void:
+	if _press_at != null and control is BaseButton and control.get_global_rect().has_point(_press_at):
+		control.release_focus.call_deferred()
 
 
 ## A panel centred on the screen at `layer` (SCENE or SYSTEM), hidden by its

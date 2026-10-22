@@ -69,14 +69,16 @@ const BAR_WIDTH_PX := 10.0
 ## One family, Archivo (variable, SIL OFL), cut by axis rather than by file: the
 ## width axis runs 62-125 and 88 is the condensed cut the tables need -- French
 ## runs about a fifth longer than English -- while headings may open it up. The
-## base size stays at U5a's 15.
+## base size stays at U5a's 15. V5.1-d2 (G11) retuned the steps round it: 11/12
+## and 18/20 read as one size, 12 to 15 and 20 to 30 as leaps; each step is now
+## about a fifth over the last (tests/test_ui_theme.gd holds the ratios).
 const SIZE_MICRO := 11   ## tracked uppercase cluster and section labels
-const SIZE_SMALL := 12
+const SIZE_SMALL := 13
 const SIZE_BASE := 15
 const SIZE_LEAD := 18
-const SIZE_FIGURE := 20
+const SIZE_FIGURE := 22
 const SIZE_MAP := 10     ## the map's place names, drawn in map_face() -- see WIDTH_MAP
-const SIZE_HERO := 30    ## the portrait card's approval figure, and only that
+const SIZE_HERO := 27    ## the portrait card's approval figure, and only that
 
 const FONT_ARCHIVO := "res://assets/fonts/Archivo-Variable.ttf"
 const WIDTH_CONDENSED := 88

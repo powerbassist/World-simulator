@@ -346,6 +346,13 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	var booking: Dictionary = VisitBooking.booked(_state, action, _nation_id) if action.opens_meeting else {}
 	if not booking.is_empty():
 		is_available = false
+	# The parent's call on #76 ("choisir la date dans l'agenda"): a meeting the host
+	# refuses only TODAY is still booked here -- the form opens on the first day that
+	# carries, and the line says when. Diplomacy.available() stays the AI's gate.
+	var later := ""
+	if not is_available and booking.is_empty() and VisitBooking.held_only_by_host(_state, _loader, action, _nation_id):
+		is_available = true
+		later = _unavailable_reason(action, player_id)
 	var names := VBoxContainer.new()
 	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(names)
@@ -360,7 +367,9 @@ func _action_row(action, is_available: bool, player_id: String) -> Control:
 	# on -- a booking, a cooldown, a partner's refusal -- is a line, not a hover.
 	# The generic "conditions not met" stays on the button: under every row it
 	# would be noise.
-	var reason := _booked_text(booking) if not booking.is_empty() else (_unavailable_reason(action, player_id) if not is_available else "")
+	var reason := _booked_text(booking) if not booking.is_empty() else later
+	if reason == "" and not is_available:
+		reason = _unavailable_reason(action, player_id)
 	if reason != "" and reason != tr("Conditions for this action are not met."):
 		PanelKit.line(names, reason)
 
@@ -392,6 +401,15 @@ func _unavailable_reason(action, player_id: String) -> String:
 		# again in 12 months" read like a lock left over from before the game
 		# began (playtest 2026-09-05).
 		return tr("Cooldown: available again in %d months.") % int(ns.diplo_cooldown_months[key])
+	# V5.1-d2, the host's side (#74): the target received this verb within its host
+	# interval, from anyone, and says from when it may again.
+	var free := VisitBooking.host_free_day(_state, action, _nation_id)
+	if not free.is_empty():
+		var host = _loader.nations.get(_nation_id)
+		return tr("%s receives another from %s.") % [
+			String(host.nation_name) if host != null else _nation_id,
+			DateText.day_month_year(1, int(free["month"]), int(free["year"])),
+		]
 	# Named ahead of the generic reason: "they will not sign" is a different
 	# problem from "you cannot propose", and it is the one the player can fix.
 	var terms: Dictionary = action.effects.get("agreement", {})

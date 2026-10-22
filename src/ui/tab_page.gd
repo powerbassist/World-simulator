@@ -19,6 +19,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 var _scroll: ScrollContainer
 var _content: Control
 var _folded := false
+var _fill_decided := false
 
 
 func setup(content: Control) -> void:
@@ -54,11 +55,32 @@ func setup(content: Control) -> void:
 func _process(_delta: float) -> void:
 	if not visible:
 		return
+	if not _fill_decided:
+		_fill_decided = true
+		if _scrolls_inside(_content):
+			_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var now := primary_action_below_fold()
 	if now == _folded:
 		return
 	_folded = now
 	theme_type_variation = UiTheme.PLATE_FOLDED if now else UiTheme.PLATE
+
+
+## QA #54 RECORD, the Legislature list that stopped two thirds down the dock -- and
+## the frames showed Dispatches, the Agenda, Industry, Organisations, Regions and
+## Energy doing the same: a panel whose own ScrollContainer is built to take the
+## height left (EXPAND) was laid at its minimum, so its list ended mid-plate. Such
+## a panel fills the page; every other one keeps its own height, as above. Asked
+## on the first visible frame, after the panel's _ready has built its tree.
+static func _scrolls_inside(node: Node) -> bool:
+	for child in node.get_children():
+		if child is ScrollContainer:
+			if (child as Control).size_flags_vertical & Control.SIZE_EXPAND:
+				return true
+			continue
+		if _scrolls_inside(child):
+			return true
+	return false
 
 
 ## Whether the panel's primary control is currently outside the visible band --

@@ -52,6 +52,7 @@ func _process(_delta: float) -> bool:
 	_check_routes_hover_and_click()
 	_check_rich_carries_the_tone()
 	_check_the_sinks_mark_terms()
+	_check_once_per_section()
 	_finish()
 	return true
 
@@ -80,6 +81,11 @@ func _check_noise_rules() -> void:
 		_fail("N2: %d of four terms marked, the cap is %d" % [four.count("[url="), TermText.MAX_MARKED])
 	if not four.ends_with(" d"):
 		_fail("N2: the term past the cap did not read as its word: %s" % four)
+	# V5.1-d2 (QA RECORD on #60): a See-also line is a LIST of terms, not prose, so
+	# it lifts the cap -- APPROVAL's fourth, "salience", was drawn plain.
+	var listed: String = TermText.markup("[g=debt]a[/g] [g=gdp]b[/g] [g=poll]c[/g] [g=growth]d[/g]", PackedStringArray(), 4)
+	if listed.count("[url=") != 4:
+		_fail("a list with its cap lifted marked %d of four terms" % listed.count("[url="))
 	var open: String = TermText.markup("[g=poll]poll[/g] and [g=debt]debt[/g]", PackedStringArray(["poll"]))
 	if open.contains("term:poll") or not open.contains("term:debt"):
 		_fail("N5: an id open up the chain was marked, or the other was not: %s" % open)
@@ -169,6 +175,39 @@ func _check_the_row_sinks() -> void:
 	var plain: String = TermText.plain("Your [g=approval]approval[/g] and [b]the [g=no_such_term]rest[/g][/b].")
 	if plain != "Your approval and [b]the rest[/b].":
 		_fail("TermText.plain gave '%s'" % plain)
+
+
+## V5.1-d2, N1 per section, in code (it was Content's hand cut): a term is marked at
+## its first occurrence in a section -- a PanelKit.section body, or the whole window
+## a panel is registered in -- and drawn plain after that. A rebuilt section starts
+## afresh: a line queued for deletion no longer holds its marks.
+func _check_once_per_section() -> void:
+	var box := VBoxContainer.new()
+	root.add_child(box)
+	var body: VBoxContainer = PanelKit.section(box, "A section")
+	var first: RichTextLabel = PanelKit.rich(body, "Your [g=approval]approval[/g] is up.")
+	var second: RichTextLabel = PanelKit.rich(body, "And [g=approval]approval[/g] again, with [g=debt]debt[/g].")
+	if not String(first.text).contains("term:approval"):
+		_fail("N1 per section: the first occurrence was not marked")
+	if String(second.text).contains("term:approval"):
+		_fail("N1 per section: a term was marked twice in one section")
+	if not String(second.text).contains("term:debt"):
+		_fail("N1 per section: another term in the same line lost its mark")
+	var elsewhere: VBoxContainer = PanelKit.section(box, "Another section")
+	var third: RichTextLabel = PanelKit.rich(elsewhere, "Its own [g=approval]approval[/g].")
+	if not String(third.text).contains("term:approval"):
+		_fail("N1 per section: a term was not marked in a second section")
+	first.queue_free()
+	second.queue_free()
+	var rebuilt: RichTextLabel = PanelKit.rich(body, "Rebuilt [g=approval]approval[/g].")
+	if not String(rebuilt.text).contains("term:approval"):
+		_fail("N1 per section: a rebuilt section kept the old lines' marks")
+	# Review pass 1: a live line re-set without the term gives it up.
+	rebuilt.set_marked("Rebuilt, with nothing to explain.")
+	var later: RichTextLabel = PanelKit.rich(body, "Later [g=approval]approval[/g].")
+	if not String(later.text).contains("term:approval"):
+		_fail("N1 per section: a line that stopped marking a term still held it")
+	box.queue_free()
 
 
 ## A stand-in for the tooltip layer: the label finds whatever is in the group

@@ -18,6 +18,10 @@ extends SceneTree
 
 const Calendar = preload("res://src/sim/calendar.gd")
 const RK = preload("res://src/core/relations.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const DiaryDriver = preload("res://src/ui/diary_driver.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -39,6 +43,7 @@ func _process(_delta: float) -> bool:
 		_check_the_row_books_a_visit()
 		_check_a_kept_visit_reads_right()
 		_check_visits_to_you_roll()
+		_check_a_hosted_visit_says_until_when()
 		_finish()
 		return true
 	return false
@@ -201,6 +206,101 @@ func _check_visits_to_you_roll() -> void:
 			newest = inbox._bodies[id].get_parsed_text()
 	if newest.contains("Germany") or not newest.begins_with("1 visit"):
 		_fail("the tally carried the discarded game's visitors across a load: %s" % newest)
+
+
+## V5.1-d2, the host rule's reason line (#74; author: "Oui, pour tous"): a nation
+## that received a state visit within its host interval is offered none, and the
+## disabled row says from when it can be -- not the generic "conditions not met",
+## which the row hides.
+func _check_a_hosted_visit_says_until_when() -> void:
+	var state = _main._state
+	var panel = _main._nation_panel
+	var visit = _visit()
+	var host = state.nations.get("ITA")
+	if host == null or visit.host_interval_months <= 0:
+		_fail("premise: Italy on the roster and the visit carrying a host interval")
+		return
+	host.diplo_hosted_months[String(visit.id)] = 4
+	var at: int = int(state.year) * 12 + int(state.month) - 1 + 4
+	var expected: String = "Italy receives another from %s." % DateText.day_month_year(1, at % 12 + 1, at / 12)
+	_main._windows.close_all()
+	_main._on_nation_clicked("ITA")
+	panel.mark_dirty()
+	panel._process(0.0)
+	var text := _text_of(panel)
+	if not text.contains(expected):
+		_fail("a hosted visit's row does not say from when: wanted '%s' in %s" % [expected, text])
+	# The parent's call on #76 ("choisir la date dans l'agenda"): the host refuses
+	# TODAY, a later day carries, so Book stays live and opens the Diary's form on
+	# the first day that carries -- past the 62 days the earliest-day search used.
+	var book: Button = null
+	for b in panel.find_children("*", "Button", true, false):
+		if (b as Button).text == "Book" and _alive(b):
+			book = b
+	if book == null or book.disabled:
+		_fail("a visit the host refuses only today greys its Book out")
+	panel._on_act(visit)
+	_main._calendar_panel._process(0.0)
+	var picked: Dictionary = _main._calendar_panel._entry_from_form()
+	var first_day: int = Calendar.entry_ordinal({"year": at / 12, "month": at % 12 + 1, "day": 1})
+	if not _main._windows.is_open("calendar") or Calendar.entry_ordinal(picked) < first_day 			or not Calendar.can_book(state, picked):
+		_fail("Book on a hosted visit did not open the Diary on a day that carries: %s" % str(picked))
+	# QA on #76 (TAKE 1): the Diary's act list offered only what Diplomacy.available()
+	# does, so the form fell back to its first verb and booked an Industrial Compact.
+	if String(picked.get("action_id", "")) != String(visit.id):
+		_fail("Book on a hosted visit opened the Diary on '%s', not the visit" % picked.get("action_id", ""))
+	# Booked through the form, the visit carries on its day once the host is free.
+	_main._calendar_panel._on_book()
+	# QA on #76 (TAKE 3): the refresh after the booking rebuilt the act list without
+	# the visit -- its own booking now refuses every later day -- so the form fell to
+	# its first verb and the confirmation became "this day cannot be booked".
+	_main._calendar_panel._process(0.0)
+	var after: Dictionary = _main._calendar_panel._entry_from_form()
+	if String(after.get("action_id", "")) != String(visit.id):
+		_fail("after booking the hosted visit the Diary's form names '%s'" % after.get("action_id", ""))
+	if not String(_main._calendar_panel._status.text).begins_with("Booked"):
+		_fail("after booking the hosted visit the Diary reads '%s', not its confirmation" % _main._calendar_panel._status.text)
+	var entry: Dictionary = {}
+	for e in state.appointments:
+		if String(e.get("action_id", "")) == String(visit.id) and String(e.get("target_id", "")) == "ITA" 				and String(e.get("status", "")) == CalendarK.STATUS_BOOKED:
+			entry = e
+	if entry.is_empty():
+		_fail("Book it on the hosted visit's form booked no visit to Italy")
+	else:
+		var was := [int(state.year), int(state.month), int(state.day)]
+		host.diplo_hosted_months.erase(String(visit.id))  # the month ticks counted it down
+		state.year = int(entry["year"])
+		state.month = int(entry["month"])
+		state.day = int(entry["day"])
+		DiaryDriver.resolve(state, _main._loader, state.year, state.month, state.day, func(_o): pass)
+		if String(entry.get("status", "")) != CalendarK.STATUS_DONE:
+			_fail("the hosted visit, booked for its free day, resolved '%s', not done" % entry.get("status", ""))
+		state.year = was[0]
+		state.month = was[1]
+		state.day = was[2]
+		state.appointments.erase(entry)
+		host.diplo_hosted_months[String(visit.id)] = 4
+	_main._windows.close_all()
+	# A visit with no day that carries -- the player's own cooldown -- greys out.
+	var key := String(Diplomacy.cooldown_key(String(visit.id), "ITA"))
+	state.player().diplo_cooldown_months[key] = 12
+	_main._on_nation_clicked("ITA")
+	panel.mark_dirty()
+	panel._process(0.0)
+	for b in panel.find_children("*", "Button", true, false):
+		if (b as Button).text == "Book" and not (b as Button).disabled and _alive(b):
+			_fail("a visit on the player's own cooldown kept its Book live")
+	state.player().diplo_cooldown_months.erase(key)
+	host.diplo_hosted_months.erase(String(visit.id))
+
+
+## Not in a row the last rebuild queued for deletion (its buttons are not queued).
+func _alive(node: Node) -> bool:
+	while node != null:
+		if node.is_queued_for_deletion():
+			return false
+		node = node.get_parent()
+	return true
 
 
 func _text_of(node: Node) -> String:

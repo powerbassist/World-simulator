@@ -177,7 +177,7 @@ func _check_one_reader() -> void:
 ## table, the post-pass's name check, is held equal to the vocabulary it mirrors
 ## (its header used to claim a pin this file did not carry).
 func _check_plates_reach_a_surface() -> void:
-	for path in ["res://src/ui/events_panel.gd", "res://src/ui/main.gd"]:
+	for path in ["res://src/ui/events_panel.gd", "res://src/ui/desk_cards.gd"]:
 		if not FileAccess.get_file_as_string(path).contains("EventArt.plate_texture("):
 			_fail("%s no longer asks EventArt for a plate -- the desk or the arrival card draws none" % path)
 	var stack := FileAccess.get_file_as_string("res://src/ui/inbox.gd")

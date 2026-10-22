@@ -29,12 +29,17 @@ const META_PREFIX := "term:"
 ## V5.1-d1b2 (G9): a person's name, marked [p=id]Name[/p], links to their card --
 ## a solid underline, so a name never reads as a dashed glossary term.
 const PERSON_PREFIX := "person:"
+## The meta a section carries: term id -> WeakRef of the line that marks it (N1).
+const SECTION_META := &"term_section"
 
 ## The tooltip level this text sits in: 0 for prose on a panel or a card, n for
 ## the body of the n-th plate, whose terms open plate n + 1.
 var level := 0
 ## Ids open up the chain (N5): drawn plain here.
 var exclude := PackedStringArray()
+## N2's cap for this text. A LIST of terms (a plate's See-also line) lifts it: it
+## is not prose, and every entry in it is the reason it is there (V5.1-d2).
+var cap := MAX_MARKED
 
 var _hovered := ""
 var _person := ""
@@ -42,6 +47,7 @@ var _person := ""
 static var _tag: RegEx
 static var _plain_tag: RegEx
 static var _person_tag: RegEx
+static var _marked_ids: RegEx = RegEx.create_from_string("\\[url=term:([A-Za-z0-9_]+)\\]")
 
 
 func _init() -> void:
@@ -56,14 +62,52 @@ func _init() -> void:
 
 ## The only writer of `text`: prose in, the engine's markup out.
 func set_marked(source: String) -> void:
-	text = markup(source, exclude)
+	# N1 per SECTION (V5.1-d2, in code where Content cut by hand): an id another
+	# live line of this section already marks is drawn plain here.
+	var section := _section()
+	var taken := exclude.duplicate()
+	if section != null:
+		var marks: Dictionary = section.get_meta(SECTION_META)
+		for id in marks:
+			var holder = (marks[id] as WeakRef).get_ref()
+			if holder != null and holder != self and not holder.is_queued_for_deletion():
+				taken.append(id)
+	text = markup(source, taken, cap)
+	if section != null:
+		# What this line marked before and no longer does is free again (review pass 1).
+		var marks: Dictionary = section.get_meta(SECTION_META)
+		for id in marks.keys():
+			if (marks[id] as WeakRef).get_ref() == self:
+				marks.erase(id)
+		for m in _marked_ids.search_all(text):
+			marks[m.get_string(1)] = weakref(self)
+
+
+## The term ids `label` marks, in reading order.
+static func term_ids(label: RichTextLabel) -> PackedStringArray:
+	var ids := PackedStringArray()
+	for m in _marked_ids.search_all(label.text):
+		ids.append(m.get_string(1))
+	return ids
+
+
+## The nearest ancestor that is a section for N1: a PanelKit.section body, or the
+## panel a window is registered with (window_manager.gd). None for a card or a plate:
+## each is its own block.
+func _section() -> Node:
+	var node := get_parent()
+	while node != null:
+		if node.has_meta(SECTION_META):
+			return node
+		node = node.get_parent()
+	return null
 
 
 ## Every "[" of the prose escaped first -- prose is not BBCode -- then each
 ## [g=id]word[/g] made a term, under N1 (once an id), N2 (MAX_MARKED a block) and
 ## N5 (`skip`). An unknown id reads as its word, loudly: the table is the list.
 ## Last, each [p=id]Name[/p] made a person link (no cap: a name is not a term).
-static func markup(source: String, skip := PackedStringArray()) -> String:
+static func markup(source: String, skip := PackedStringArray(), limit := MAX_MARKED) -> String:
 	if _tag == null:
 		_tag = RegEx.create_from_string("\\[lb\\]g=([A-Za-z0-9_]+)\\](.*?)\\[lb\\]/g\\]")
 	var escaped := source.replace("[", "[lb]")
@@ -77,7 +121,7 @@ static func markup(source: String, skip := PackedStringArray()) -> String:
 		if not Glossary.has(id):
 			push_error("glossary: text marks '%s', which is no entry" % id)
 			out += word
-		elif marked.has(id) or skip.has(id) or marked.size() >= MAX_MARKED:
+		elif marked.has(id) or skip.has(id) or marked.size() >= limit:
 			out += word
 		else:
 			marked[id] = true
