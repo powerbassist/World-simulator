@@ -846,7 +846,7 @@ func _gbr_table(loader) -> void:
 		print("%-6s %10.3f %10.3f %10.3f   %d" % [actor, hi, lo, hi - lo, signs])
 
 	print("")
-	print("An even share is %.3f. A nation whose max and min both sit on it has no" % ForeignPolicy.even_share(state, "GBR"))
+	print("An even share is %.3f. A nation whose max and min both sit on it has no" % FP.even_share(state, "GBR"))
 	print("foreign policy at all -- that is the inert reading this table exists to catch.")
 	_accept_sweep(loader)
 
@@ -859,7 +859,7 @@ func _gbr_table(loader) -> void:
 		var s: float = FP.accept_score(state, "GBR", String(id), terms)
 		var f: float = FP.retaliation_fraction(state, String(id), "GBR", CK.RETALIATION_FRACTION)
 		print("  GBR->%-4s stake %.3f (%.2fx even)  accept %+.3f %-8s  answers %s at %.3f" % [
-			id, float(gbr[id]), float(gbr[id]) / ForeignPolicy.even_share(state, "GBR"), s,
+			id, float(gbr[id]), float(gbr[id]) / FP.even_share(state, "GBR"), s,
 			"signs" if s >= K.ACCEPT_MIN else "refuses", id, f,
 		])
 
@@ -926,11 +926,14 @@ func _council_table(loader) -> void:
 	print("")
 
 	var state = GameState.new_game(loader, "FRA")
-	var members: Array = Bloc.members(state, loader)
+	# v3.2a folded bloc.gd into orgs.gd: the council is the "eu" org's, and its
+	# proposals are the ones that org tables.
+	var members: Array = Orgs.members(state, "eu")
+	var proposals: Array = loader.bloc_proposals.filter(func(p) -> bool: return p.org_id == "eu")
 	var seats_total := 0
 	for id in members:
-		seats_total += loader.eu.ep_seats(id)
-	var player_seats: int = loader.eu.ep_seats("FRA")
+		seats_total += Orgs.ep_seats(state, loader, id)
+	var player_seats: int = Orgs.ep_seats(state, loader, "FRA")
 
 	print("France holds %d of %d member seats. %.0f%% of seats CAST carries." % [
 		player_seats, seats_total, BK.PASS_SEAT_FRACTION * 100.0,
@@ -953,13 +956,13 @@ func _council_table(loader) -> void:
 		var decides := 0
 		var lost := 0
 		var abstain_hits := 0
-		for p in loader.bloc_proposals:
+		for p in proposals:
 			var others_for := 0
 			for id in members:
 				if id == "FRA":
 					continue
-				if Bloc.support(state, state.nations[id], p) >= threshold:
-					others_for += loader.eu.ep_seats(id)
+				if Orgs.support(state, state.nations[id], p) >= threshold:
+					others_for += Orgs.ep_seats(state, loader, id)
 			if float(others_for) >= bar_abstain_s and float(others_for) < bar_full_s:
 				abstain_hits += 1
 			# The threshold is a share of the seats CAST. There is no abstention
@@ -989,29 +992,29 @@ func _council_table(loader) -> void:
 	print("")
 	print("%-26s %10s   %s" % ["proposal", "others for", "in the window?"])
 	print("-".repeat(56))
-	for p in loader.bloc_proposals:
+	for p in proposals:
 		var others_for := 0
 		for id in members:
 			if id == "FRA":
 				continue
-			if Bloc.support(state, state.nations[id], p) >= BK.SUPPORT_THRESHOLD:
-				others_for += loader.eu.ep_seats(id)
+			if Orgs.support(state, state.nations[id], p) >= BK.SUPPORT_THRESHOLD:
+				others_for += Orgs.ep_seats(state, loader, id)
 		var inside: bool = float(others_for) >= bar_abstain and float(others_for) < bar_full
 		print("%-26s %10d   %s" % [p.id, others_for, "YES" if inside else "no"])
 
 	print("")
 	print("Per-member appraisal at the shipped threshold %.2f, which is what V1.3d" % BK.SUPPORT_THRESHOLD)
 	print("could not print: the SAME proposal priced by each member's own books.")
-	for p in loader.bloc_proposals:
+	for p in proposals:
 		print("")
 		print("  %s (transfer %+.2f%% GDP, constraint %s)" % [
 			p.id, p.transfer_pct_gdp,
 			"none" if p.constraint.is_empty() else String(p.constraint["field"]),
 		])
 		for id in members:
-			var s: float = Bloc.support(state, state.nations[id], p)
+			var s: float = Orgs.support(state, state.nations[id], p)
 			print("    %-4s %+.3f  %-18s %s" % [
-				id, s, Bloc.vote_reason(state, state.nations[id], p),
+				id, s, Orgs.vote_reason(state, state.nations[id], p),
 				"FOR" if s >= BK.SUPPORT_THRESHOLD else "against",
 			])
 
