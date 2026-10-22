@@ -4,8 +4,8 @@
     {
       "id": "programme",
       "term": "programme",
-      "definition": "The plan you choose for a term: a set of measures with a goal and a deadline. It is offered only on the first day of a term, before the clock runs; completing it pays, failing it costs.",
-      "body": "Progress is read from a live figure, never stored. An entry can have no deadline at all.",
+      "definition": "The plan you choose for a term: a set of measures, each with a goal and sometimes a deadline. It is offered only on the first day of a term, before the clock runs; completing it pays, failing it costs.",
+      "body": "Progress is read from a live figure, never stored. Most entries have no deadline at all.",
       "see_also": [
         "approval",
         "pledge"
