@@ -6,7 +6,7 @@
   "src/core/nation.gd": 546,
   "src/sim/commodities.gd": 338,
   "src/sim/companies.gd": 442,
-  "src/sim/diplomacy.gd": 329,
+  "src/sim/diplomacy.gd": 325,
   "src/sim/government.gd": 324,
   "src/sim/legislature.gd": 682,
   "src/sim/orgs.gd": 747,

@@ -180,7 +180,8 @@ static func turn_close() -> void:
 
 static func _raw_turn(state, actor_id: String, with_agreements: bool, with_measures: bool) -> Dictionary:
 	# is_same(), not an untyped `!=`: a utility call has no first-run cache to
-	# race on (parallel.gd rule 5). `state` is never null here.
+	# race on (parallel.gd rule 5). `state` is never null here, the one input
+	# where is_same(null, null) would part from the old null guard.
 	if not is_same(state, _turn_state):
 		return _raw(state, actor_id, with_agreements, with_measures)
 	var bites_a: bool = with_agreements and not state.agreements.is_empty()

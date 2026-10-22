@@ -34,10 +34,10 @@ mechanic that did not exist. **The same is true here, and one of them says so ou
 So V1.1e discharges a **declared stopgap in the data** rather than in the code, which is
 new on this project's record. Germany's note is rewritten to say what was built.
 
-## 2. Not one of the ten is elected by the national electorate
+## 2. Few are elected by the national electorate, and the model elects none
 
 The design that suggests itself — run `Elections.vote_share()` again with a different
-weighting — is wrong for eight of the ten, and the reason is a fact rather than a
+weighting — is wrong for eight of V1.1e's ten, and the reason is a fact rather than a
 preference:
 
 | Chamber | How it is returned |
@@ -53,8 +53,25 @@ preference:
 | Senato (ITA) | **Directly elected, same electorate, same day** — which is exactly why Italian bicameralism is called *perfect* and reproduces the Camera's majority |
 | — (LUX) | **There is no second chamber.** The Chambre des Députés is unicameral |
 
+The 41-nation roster added six more, and two of them are the Italian case rather than the
+French one:
+
+| Chamber | How it is returned |
+|---|---|
+| Senat (POL) | **Directly elected on the same polling day**, but first-past-the-post in 100 single-member districts where the Sejm is proportional |
+| Senatul (ROU) | **The same closed-list vote** and the same 5 % threshold as the Deputies |
+| Senate (CZE) | Directly elected in two-round constituency contests, one third every two years |
+| Seanad Éireann (IRL) | Vocational panels of councillors and MPs, university graduates, eleven nominated |
+| House of Peoples (BIH) | Delegated by the entity parliaments, five per constituent people |
+| Council of the Republic (BLR) | 56 chosen by the regional councils, 8 appointed by the President |
+
 So a second chamber is the **lower chamber, lagged**, and `vote_share()` is never called
-with a different weighting.
+with a different weighting — for the same-day chambers too. Italy, Poland and Romania
+return their whole upper house on the lower house's polling day; the model renews it by
+`UPPER_RENEWAL` like every other, the legibility trade V1.1e made for Italy, now made for
+three. Poland's is where the trade costs most: first-past-the-post can hand the Senat to
+the side that lost the Sejm, as in 2019, and the lag reproduces a divergence only through
+timing. Neither a same-day renewal nor an upper-house seat rule is built (§11).
 
 ## 3. An ideological tilt was designed, measured and deleted — twice
 
@@ -238,8 +255,9 @@ the bill outright.
 
 ## 11. What is deliberately not built
 
-**A second chamber's own election.** Only two of the ten are directly elected and one of
-those returns the same result as the lower house. §2.
+**A second chamber's own election.** Only two of V1.1e's ten are directly elected and one
+of those returns the same result as the lower house; the 41-nation roster adds Poland's,
+Romania's and the Czech Senate, and the same-day ones are lagged like the rest. §2.
 
 **An ideological tilt.** Designed twice, measured twice, deleted twice. §3.
 
@@ -252,7 +270,7 @@ votes cast in the second chamber on every nation and every class of bill. A **re
 reduction**, the shape [[electoral-systems]] uses per method, and bounded in practice
 because Germany's Bundestag bar is already unreachable.
 
-**A per-nation second-chamber term.** The renewal is one rate for all ten, stepped at each
+**A per-nation second-chamber term.** The renewal is one rate for every chamber, stepped at each
 legislative election. France's six-year half-renewal is what `UPPER_RENEWAL` abstracts;
 Britain's appointed peers have no term at all.
 

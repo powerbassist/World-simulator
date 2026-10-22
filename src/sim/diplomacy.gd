@@ -41,6 +41,7 @@ const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
 const Agenda = preload("res://src/sim/diplomacy_agenda.gd")
 const Travel = preload("res://src/sim/diplomacy_travel.gd")
 const Embassies = preload("res://src/sim/diplomacy_embassies.gd")
+const Cooldowns = preload("res://src/sim/diplomacy_cooldowns.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const FPK = preload("res://src/sim/foreign_policy_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
@@ -185,19 +186,8 @@ static func _settle(state, loader) -> void:
 
 	_tick_retaliation(state)
 
-	# Cooldowns tick for every nation, not just the player's -- V1.3e will have
-	# the other nine acting through this same path, and a counter that only
-	# counts down for one nation would be a bug that only surfaced then.
-	for ns in state.nations.values():
-		var expired: Array = []
-		for cooldown_key in ns.diplo_cooldown_months:
-			var remaining: int = int(ns.diplo_cooldown_months[cooldown_key]) - 1
-			if remaining <= 0:
-				expired.append(cooldown_key)
-			else:
-				ns.diplo_cooldown_months[cooldown_key] = remaining
-		for cooldown_key in expired:
-			ns.diplo_cooldown_months.erase(cooldown_key)
+	# Every nation's cooldowns, not just the player's (diplomacy_cooldowns.gd).
+	Cooldowns.tick(state)
 
 	# LAST, and both halves of that placement are load-bearing.
 	#
@@ -437,19 +427,27 @@ static func available(state, all_actions: Array, actor_id: String, target_id: St
 	# V5.0c: no key is built while nothing is cooling down -- an empty register
 	# answers "no" to every key, so the result is the same list.
 	var cooling: bool = not ns.diplo_cooldown_months.is_empty()
+	# Each field read once per call, however many verbs name it (met_recently gates
+	# five): since G2b this loop runs on the calling thread for every target, and
+	# the tick probe priced it at +6.7 ms a month. _read_field() only reads, so a
+	# memo for one (actor, target) returns the list it always did.
+	var reads: Dictionary = {}
 	for action in all_actions:
 		if action.id == "":
 			continue
 		if cooling and ns.diplo_cooldown_months.has(cooldown_key(action.id, target_id)):
 			continue
-		if _preconditions_met(state, ns, action, target_id):
+		if _preconditions_met(state, ns, action, target_id, reads):
 			out.append(action)
 	return out
 
 
-static func _preconditions_met(state, ns, action, target_id: String) -> bool:
+static func _preconditions_met(state, ns, action, target_id: String, reads: Dictionary) -> bool:
 	for cond in action.preconditions:
-		var actual: float = _read_field(state, ns, cond["field"], target_id)
+		var field: String = cond["field"]
+		if not reads.has(field):
+			reads[field] = _read_field(state, ns, field, target_id)
+		var actual: float = reads[field]
 		var value: float = cond["value"]
 		var ok: bool
 		match cond["op"]:

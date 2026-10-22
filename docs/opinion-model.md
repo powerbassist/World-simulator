@@ -111,23 +111,31 @@ honest. Cross-cutting membership is [[someday]] tier along with regional opinion
 
 ## Issues
 
-Twelve, each a satisfaction `s ∈ [−1, +1]`, each computed from state the economy
-and budget already maintain.
+Fifteen (`ISSUE_KEYS` in `src/sim/opinion_constants.gd`), each a satisfaction
+`s ∈ [−1, +1]`, each computed from state the economy and budget already maintain.
+The first eleven are the original set and `europe` is V1.3d's twelfth;
+`inflation` is V1.6b's thirteenth (its section is below), and
+`tax_capital_gains` and `tax_wealth` are V1.6d's fourteenth and fifteenth (their
+argument is in `opinion_constants.gd` and [[tax-model]] section 2). The tax and
+spending scales are V3.0's fiscal re-weight, also below.
 
 | Issue | Formula | Scale |
 |---|---|---|
 | `jobs` | `(start_u − u) / JOBS_SCALE` | 3.0 pp of unemployment |
 | `growth` | `(growth − trend) / GROWTH_SCALE` | 4.0 pp of growth |
-| `tax_income` | `−Δrate / TAX_SCALE` | 8.0 pp of the rate |
-| `tax_corporate` | " | " |
-| `tax_vat` | " | " |
-| `health` | `Δspend / SPEND_SCALE` | 3.0 pp of GDP |
+| `tax_income` | `−Δrate / TAX_SCALE` | 24.0 pp of the rate (`TAX_SCALE_PP_BY_KEY`) |
+| `tax_corporate` | " | 16.0 pp of the rate (the shared `TAX_SCALE_PP`) |
+| `tax_vat` | " | 16.0 pp of the rate |
+| `tax_capital_gains` | " | 4.80 pp of the rate (`TAX_SCALE_PP_BY_KEY`) |
+| `tax_wealth` | " | 0.48 pp of the rate (`TAX_SCALE_PP_BY_KEY`) |
+| `health` | `Δspend / SPEND_SCALE` | 6.0 pp of GDP |
 | `education` | " | " |
 | `defence` | " | " |
 | `pensions` | " | " |
 | `infrastructure` | " | " |
 | `public_finances` | `−Δdeficit / DEFICIT_SCALE` | 6.0 pp of GDP |
 | `europe` | `−Δbloc_burden / EUROPE_SCALE` | 0.80 of the burden |
+| `inflation` | `−(π − π_start) / INFLATION_SCALE` | 0.275 pp of inflation |
 
 All clamped to [−1, +1] after scaling.
 
