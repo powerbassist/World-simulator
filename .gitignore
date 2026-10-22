@@ -8,15 +8,13 @@
 # if the addon is absent, which is non-fatal.
 addons/*
 
-# The exception, and why it has to exist: an *asset* a scene preloads is not
+# The rule an exception would follow: an *asset* a scene preloads is not
 # tooling. A missing addon plugin is a warning; a missing icon a panel preloads
 # is a hard load failure on a fresh clone, and tools/run_tests.sh runs headless
-# straight from the repo. So every at-icons file src/ actually references is
-# committed at its res:// path with `git add -f`, and the licence travels with
-# it. Nothing under src/ may reference an addon file that is not committed.
-!addons/at-icons/
-addons/at-icons/*
-!addons/at-icons/LICENSE.txt
+# straight from the repo. So any addon file src/ references is committed at its
+# res:// path with `git add -f`, its licence with it. Nothing under src/ may
+# reference an addon file that is not committed. (at-icons was the first such
+# carve-out; V5.1a's Material Symbols replaced its icons and V5.1-c removed it.)
 
 # The second exception, V2.4b, and it is a different KIND: dialogue_manager is
 # not an asset reference but the project's FIRST GAME RUNTIME dependency. The

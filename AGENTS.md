@@ -179,9 +179,9 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
   `godot_mcp_toolkit` is the one this project already uses — it is what
   `runtime_screenshot` and `input_simulate` reach a running game through. **The other
-  four are parked on purpose, not junk** — `at-icons` is now unreferenced (V2.3 committed
-  the icons `src/` named; V5.1a replaced them with Material Symbols, and the committed files are a
-  c/d cleanup) and `materialLayers` and `road-generator` are each installed
+  four are parked on purpose, not junk** — `at-icons` is unreferenced (V5.1a replaced its
+  icons with Material Symbols, and V5.1-c removed its committed files; the editor plugin may
+  stay installed) and `materialLayers` and `road-generator` are each installed
   ahead of a planned use, so do not strip any of them on the reasoning that nothing in
   `src/` reads them yet. **`road-generator`'s planned use is now spent and it was not
   this one**: V3.4 drew the road layer and did NOT reach for the addon, because it

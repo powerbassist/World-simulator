@@ -81,7 +81,7 @@ MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
 ```
 
 **That line must not be committed**, and this is the one step of the install that a
-clone cannot inherit. `addons/` is gitignored except `at-icons/`, so on any other
+clone cannot inherit. `addons/` is gitignored except `dialogue_manager/`, so on any other
 machine the path does not exist and Godot logs three errors *per startup* — including
 every `tools/run_tests.sh` run, which still exits 0, which is exactly why it went
 unnoticed for a year. That was **V5** in [[playability-audit]], the one finding a new
@@ -218,7 +218,7 @@ Only `godot_mcp_toolkit` is **enabled** — `project.godot`'s `[editor_plugins]`
 
 | Addon | What it is | Where it could land |
 |---|---|---|
-| `at-icons` | Icon pack, MIT, icons by Voxy | **Now.** The tab rail is text-only. See below for the committing rule |
+| `at-icons` | Icon pack, MIT, icons by Voxy | **Retired.** V5.1a's Material Symbols replaced its icons; V5.1-c removed the committed files |
 | `dialogue_manager` | Branching dialogue trees with choices | Plausibly [[v1\|V1.8]] Events. Nothing before it has dialogue |
 | `limboai` | Behaviour trees and hierarchical state machines | Would be V1.3 nation AI — but see the collision below |
 | `materialLayers` | Layered PBR material authoring, 3D | Nowhere, unless [[scope]]'s "no 3D" constraint changes |
@@ -235,17 +235,11 @@ One more is **not** in `addons/` at all, because it is not an addon: `MapCamera2
 > the repo root after any Asset Library install — `road_demos/`, `demo/` and the
 > `@icons` picker page all landed there too, and are gitignored.
 
-### The committing rule, and why `at-icons` is special
+### The committing rule (at-icons was its first case)
 
 `addons/` is ignored, but an **asset a scene preloads is not tooling**. A missing plugin is a warning Godot skips; a missing icon a panel preloads is a hard load failure on a fresh clone, and `tools/run_tests.sh` runs headless straight from the repo.
 
-So `.gitignore` carves out `at-icons`, and each icon `src/` actually references is committed at its `res://` path:
-
-```bash
-git add -f addons/at-icons/control/<icon>.svg
-```
-
-Its MIT licence is committed alongside, and `ATTRIBUTION.md` credits it. **Nothing under `src/` may reference an addon file that is not committed** — that is the whole rule, and it replaced a vaguer "no plugins in the game code" line in [AGENTS.md](../AGENTS.md).
+So an addon file `src/` references is committed at its `res://` path (`git add -f addons/<addon>/<file>`), its licence alongside and credited in `ATTRIBUTION.md`. `at-icons` was the first case, until V5.1a's Material Symbols replaced its icons and V5.1-c removed the files. **Nothing under `src/` may reference an addon file that is not committed** — that is the whole rule, and it replaced a vaguer "no plugins in the game code" line in [AGENTS.md](../AGENTS.md).
 
 > [!warning] LimboAI cannot hold the nation AI, and the reason is structural
 > Behaviour trees are the obvious tool for [[v1|V1.3]]'s AI foreign policy, which
