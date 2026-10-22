@@ -64,6 +64,9 @@ Thumbs.db
 
 # Obsidian editor UI state -- churns every session, no design content
 .obsidian/workspace.json
+# Written by the obsidian-git plugin on first load -- it was ignored only by one
+# clone's .git/info/exclude, so every other clone that opened the vault grew it as dirt.
+.obsidian/plugins/obsidian-git/obsidian_askpass.sh
 
 # The vault exception, stated (the ultra pass-7 finding): the repo ROOT is the
 # documentation vault -- AGENTS.md's own opening instruction; the [[ROADMAP]]
@@ -96,6 +99,13 @@ docs/superpowers/
 
 # Agent vision scratch (godot-agent-vision skill) — captures never stage
 .gdskills/
+
+# Claude Code's per-machine state under .claude/: the session checkouts and the
+# local permission overrides. Both were ignored only by one clone's
+# .git/info/exclude and the author's global ignore, which a fresh clone gets
+# neither of -- so they showed as dirt the moment .claude/ held anything else.
+.claude/worktrees/
+.claude/settings.local.json
 
 # Session dev reports (playtests, probes, reviews) — local working record, never staged
 reports/
