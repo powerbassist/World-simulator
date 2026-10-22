@@ -18,6 +18,7 @@ extends SceneTree
 
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const RecentEffects = preload("res://src/sim/recent_effects.gd")
+const RecentEffectsK = preload("res://src/sim/recent_effects_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
 
@@ -126,26 +127,32 @@ func _check_the_deficit_sign() -> void:
 		_fail("the worst of a month whose only move is a growing deficit is '%s'" % worst.get("key", ""))
 
 
-## The register keeps the newest RecentEffects.KEPT, newest first.
+## The register keeps the newest RecentEffectsK.KEPT, newest first.
 func _check_the_bound() -> void:
 	var state := FakeState.new()
-	for i in RecentEffects.KEPT + 2:
+	for i in RecentEffectsK.KEPT + 2:
 		RecentEffects.record(state, {"label": "close %d" % i, "year": 2026, "month": i + 1, "movements": []})
-	if state.recent_effects.size() != RecentEffects.KEPT:
-		_fail("the register kept %d closes, not %d" % [state.recent_effects.size(), RecentEffects.KEPT])
-	elif String(state.recent_effects[0]["label"]) != "close %d" % (RecentEffects.KEPT + 1):
+	if state.recent_effects.size() != RecentEffectsK.KEPT:
+		_fail("the register kept %d closes, not %d" % [state.recent_effects.size(), RecentEffectsK.KEPT])
+	elif String(state.recent_effects[0]["label"]) != "close %d" % (RecentEffectsK.KEPT + 1):
 		_fail("the newest close is not first: %s" % state.recent_effects[0]["label"])
 
 
 ## AGENTS.md rule 2: the UI never writes GameState. recent_effects has ONE writer,
 ## src/sim/recent_effects.gd's record(); game_state.gd's from_dict() rebuilds it on
-## load. Any other file under src/ that writes it -- src/ui above all -- fails here.
-## Scanned over comment-stripped code, so a comment cannot trip or satisfy it.
+## load. What the scan catches, in any other .gd under src/ (src/ui above all): a
+## mutating call on the name (push_front, append, insert, remove_at, erase, clear,
+## resize, the pops, the sorts, reverse, fill, shuffle, assign), an indexed store
+## (`recent_effects[i] = ...`), and an assignment or compound assignment to it.
+## What it does not: a write through an alias (`var r = state.recent_effects` then
+## `r.clear()`), which a writer would have to go out of its way to hide. Scanned
+## over code with string literals and comments removed, so neither can trip it.
 const WRITERS_ALLOWED := ["res://src/sim/recent_effects.gd", "res://src/core/game_state.gd"]
 const WRITE := "recent_effects\\s*(\\.\\s*(push_front|push_back|append|append_array|insert|remove_at|erase|clear|resize|pop_front|pop_back|pop_at|sort|sort_custom|reverse|fill|shuffle|assign)\\s*\\(|\\[[^\\]]*\\]\\s*[-+*/]?=(?!=)|\\s*[-+*/]?=(?!=))"
 
 func _check_one_writer() -> void:
 	var write := RegEx.create_from_string(WRITE)
+	var strings := RegEx.create_from_string("\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'")
 	var files: Array = []
 	_gd_files("res://src", files)
 	if files.size() < 100:
@@ -154,8 +161,11 @@ func _check_one_writer() -> void:
 	for path in files:
 		var code := ""
 		for line in FileAccess.get_file_as_string(path).split("\n"):
-			var cut := line.find("#")
-			code += (line if cut < 0 else line.substr(0, cut)) + "\n"
+			# Strings out first, so a `#` inside one (a colour, a hint) is not read
+			# as the start of a comment and does not hide the code after it.
+			var bare := strings.sub(line, "\"\"", true)
+			var cut := bare.find("#")
+			code += (bare if cut < 0 else bare.substr(0, cut)) + "\n"
 		var found := write.search(code)
 		if found == null:
 			continue

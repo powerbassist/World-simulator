@@ -8,16 +8,13 @@ extends RefCounted
 ## commit() takes a plan the panel built. tests/test_effects_ledger.gd fails if
 ## anything else under src/ writes the register.
 ##
-## No state of its own, nothing preloaded.
+## No state of its own; its bound is recent_effects_constants.gd's.
 
-## How many decisions the Overview's list keeps -- U4. The array's own size is
-## unbounded; trimmed so a long session's save does not grow one entry per commit
-## forever. The writer owns the bound, so it moved here with the write.
-const KEPT := 5
+const K = preload("res://src/sim/recent_effects_constants.gd")
 
 
-## Record one measured close, newest first, and keep the last KEPT.
+## Record one measured close, newest first, and keep the last K.KEPT.
 static func record(state, effect: Dictionary) -> void:
 	state.recent_effects.push_front(effect)
-	while state.recent_effects.size() > KEPT:
+	while state.recent_effects.size() > K.KEPT:
 		state.recent_effects.remove_at(state.recent_effects.size() - 1)

@@ -579,7 +579,7 @@ const CARD_MIN_STAKE_SHARE := 0.90
 ## How many acts GameState.foreign_acts keeps before dropping the oldest.
 ##
 ## Held here rather than on GameState because the writer owns the bound -- the
-## shape src/sim/recent_effects.gd's RecentEffects.KEPT already has, and forced anyway, since
+## shape recent_effects_constants.KEPT, read by its writer, already has, and forced anyway, since
 ## game_state.gd preloads diplomacy.gd and the dependency runs one way.
 ##
 ## Above message_stack.gd's six card slots on purpose: the stack shows what is

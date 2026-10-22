@@ -42,6 +42,7 @@ const StatuteK = preload("res://src/sim/statute_constants.gd")
 ## closes (statute -> legislature -> here) is the one budget -> events ->
 ## legislature -> here already runs.
 const Statute = preload("res://src/sim/statute.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 
 
 static func tick_month(state) -> void:
@@ -621,6 +622,12 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# projection -- so a hold rides out the window and a failed bill's
 	# cooldown does not count down inside it; both are recorded bounds of
 	# this loop, not omissions to patch by symmetry.
+	# D14 (V5.0d's record): discipline drifts toward Discipline.target() in the real
+	# month -- down by up to 0.20 in the year before a legislative election -- and a
+	# projection that only let rebellions lower it carried close backbench bills
+	# the real month fails, or the reverse. In WorldMonth's relative slot, before
+	# Statute's divisions read it. Player-gated, so it costs one nation's parties.
+	units.append(func() -> void: Discipline.tick_month(sim, loader))
 	units.append(func() -> void: Statute.tick_month(sim, loader))
 	units.append(func() -> void: Companies.tick_month(sim, loader))
 	# In main.gd's slot again -- Companies, then the autonomy machine, then
