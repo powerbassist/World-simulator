@@ -9,6 +9,13 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V5.1-d3 — the term-text sweep and the A-Z Glossary tab (2026-10-22)
+
+- **The sweep.** `PanelKit.line()` draws a line that marks a term or a person (`[g=id]word[/g]`, `[p=id]Name[/p]`) through `TermText` and any other line as the `Label` it always was, so the ~300 unmarked sites keep their fit (a `RichTextLabel` reports its height differently, and every fit and fold test measures these) and a mark Content adds simply renders. The result is a `Control`; the five sites that assign into a `Label` (the election ticker, the energy status, the outliner rows, the tip popup's lines) call the new `PanelKit.plain_line()`. Buttons and tooltips stay plain: a mark in a string headed there goes through `TermText.plain()`. The parent accepted the conditional routing for that reason.
+- **The A-Z Glossary tab** (`src/ui/glossary_panel.gd`, the sidebar's Glossary domain, no hotkey): every term of `terms.json` alphabetically under its letter, each a marked term (hover or click for its plate) with its definition, body and See-also line, and a letter bar that jumps; N1 per entry; it reads `Glossary` alone. French is parked: the order is by the raw first character. The icon is Material Symbols' `menu_book` (the author's yes, 1 037 bytes, plain SVG, Apache-2.0 under the existing REUSE glob).
+- `main.gd` held its ratchet line count: the outliner panel became a local (nothing else read the member).
+- Tests: `test_term_text._check_line_routes_marks` and `tests/test_glossary_panel.gd`, both mutation-checked; full suite 168/168. `tools/placement_probe.gd` is the G6 placement-lag probe, written, not yet run (the machine was not quiet).
+
 ## V5.1-d2 — the signed d and the carried items (2026-10-22)
 
 The second numbered group of d, after the author's 2/5 play gate (d1 took the gate's B items). One branch, one PR.
