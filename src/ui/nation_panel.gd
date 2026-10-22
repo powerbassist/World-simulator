@@ -21,6 +21,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
+const Cooldowns = preload("res://src/sim/diplomacy_cooldowns.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Roster = preload("res://src/core/roster.gd")
@@ -392,6 +393,17 @@ func _unavailable_reason(action, player_id: String) -> String:
 		# again in 12 months" read like a lock left over from before the game
 		# began (playtest 2026-09-05).
 		return tr("Cooldown: available again in %d months.") % int(ns.diplo_cooldown_months[key])
+	# V5.1-d2, the host's side (#74): the target received this verb within its host
+	# interval, from anyone. The register counts down in the month tick, so N months
+	# left is free from the 1st of the month N on -- Calendar.refusal_reason's day.
+	var left: int = int(Cooldowns.hosted(_state, _nation_id).get(String(action.id), 0))
+	if left > 0:
+		var at: int = int(_state.year) * 12 + int(_state.month) - 1 + left
+		var host = _loader.nations.get(_nation_id)
+		return tr("%s receives another from %s.") % [
+			String(host.nation_name) if host != null else _nation_id,
+			DateText.day_month_year(1, at % 12 + 1, at / 12),
+		]
 	# Named ahead of the generic reason: "they will not sign" is a different
 	# problem from "you cannot propose", and it is the one the player can fix.
 	var terms: Dictionary = action.effects.get("agreement", {})

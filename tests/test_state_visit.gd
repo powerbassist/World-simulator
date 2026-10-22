@@ -18,6 +18,7 @@ extends SceneTree
 
 const Calendar = preload("res://src/sim/calendar.gd")
 const RK = preload("res://src/core/relations.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -39,6 +40,7 @@ func _process(_delta: float) -> bool:
 		_check_the_row_books_a_visit()
 		_check_a_kept_visit_reads_right()
 		_check_visits_to_you_roll()
+		_check_a_hosted_visit_says_until_when()
 		_finish()
 		return true
 	return false
@@ -201,6 +203,31 @@ func _check_visits_to_you_roll() -> void:
 			newest = inbox._bodies[id].get_parsed_text()
 	if newest.contains("Germany") or not newest.begins_with("1 visit"):
 		_fail("the tally carried the discarded game's visitors across a load: %s" % newest)
+
+
+## V5.1-d2, the host rule's reason line (#74; author: "Oui, pour tous"): a nation
+## that received a state visit within its host interval is offered none, and the
+## disabled row says from when it can be -- not the generic "conditions not met",
+## which the row hides.
+func _check_a_hosted_visit_says_until_when() -> void:
+	var state = _main._state
+	var panel = _main._nation_panel
+	var visit = _visit()
+	var host = state.nations.get("ITA")
+	if host == null or visit.host_interval_months <= 0:
+		_fail("premise: Italy on the roster and the visit carrying a host interval")
+		return
+	host.diplo_hosted_months[String(visit.id)] = 4
+	var at: int = int(state.year) * 12 + int(state.month) - 1 + 4
+	var expected: String = "Italy receives another from %s." % DateText.day_month_year(1, at % 12 + 1, at / 12)
+	_main._windows.close_all()
+	_main._on_nation_clicked("ITA")
+	panel.mark_dirty()
+	panel._process(0.0)
+	var text := _text_of(panel)
+	if not text.contains(expected):
+		_fail("a hosted visit's row does not say from when: wanted '%s' in %s" % [expected, text])
+	host.diplo_hosted_months.erase(String(visit.id))
 
 
 func _text_of(node: Node) -> String:
