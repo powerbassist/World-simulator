@@ -86,7 +86,7 @@ noise around them.
 | **Minor event card** (severity 1) | arrival on the desk | not on arrival; **yes in its last month** (the lapse guard), with its card | as above | `main.gd:1545` `_guard_lapses` |
 | **"Decided for you"** | a decision defaulted | no | a note | `main.gd:1464` |
 | **Election result** | a vote resolved | yes, until the player moves on | cannot pass unread | `main.gd:1282` |
-| **Summit scene** | the player's own state visit, when the partner has a scene pool | yes, while open | the player is in it | `main.gd:1740` `_open_summit`; [[summits-model]] |
+| **Summit scene** | the player's own state visit, when the partner has a scene pool | **no, today**: `_open_summit` opens the window at the SCENE layer without pausing, and since d1a a pause by hand is refused under a scene, so the clock runs on (QA saw a summit open on 5 January at speed 3 and the clock reach 1 October under it). PR #70's TAKE 5 makes it hold | the player is in it | `main.gd:1740` `_open_summit`; [[summits-model]] |
 | **Programme offer** | the first day of a term | yes, until chosen or declined | the offer lapses when the clock first runs | `main.gd:2029` `_enforce_term_start_programme`; [[programme-model]] |
 | **Programme conclusions** | delivered, missed or overtaken | no | notes | `main.gd:2111` |
 | **Foreign acts to the player** (state visits, sanctions, treaties) | an AI nation acts on France | no | notes, grouped by action per month | `src/ui/world_news.gd:88` `card_foreign_acts` |
