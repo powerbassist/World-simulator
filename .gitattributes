@@ -1,3 +1,6 @@
 *.json    text eol=lf
 *.geojson text eol=lf
 *.gd      text eol=lf
+# Godot rewrites every .import with LF; on an autocrlf checkout the CRLF copy then differs in size
+# and git status lists each one as modified forever, though the content is identical.
+*.import  text eol=lf
