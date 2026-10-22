@@ -285,7 +285,7 @@ func _refresh() -> void:
 		var rebels := 0
 		for pid in forced["party_rebels"]:
 			rebels += int(forced["party_rebels"][pid])
-		PanelKit.line(_body, tr("Under Article 49.3 today: %d seats would move to censure%s.") % [
+		PanelKit.rich(_body, tr("Under [g=article_49_3]Article 49.3[/g] today: %d seats would move to censure%s.") % [
 			forced["for_seats"],
 			tr(", %d of them against their own party's line") % rebels if rebels > 0 else "",
 		], PanelKit.Tone.PLAIN)

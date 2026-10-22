@@ -184,7 +184,7 @@ func _refresh() -> void:
 	# polling_panel.gd) — this panel shows every nation including rivals the
 	# player has no poll for, so it reports the true figure plainly rather
 	# than reusing a noise model built around one nation's published polls.
-	PanelKit.line(_body, tr("Approval: %.0f%%") % ns.overall_approval_pct, PanelKit.Tone.PLAIN)
+	PanelKit.rich(_body, tr("[g=approval]Approval[/g]: %.0f%%") % ns.overall_approval_pct, PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Term %d of %d months, next election %d/%d") % [
 		ns.months_in_term, ns.term_months, ns.next_election_month, ns.next_election_year
