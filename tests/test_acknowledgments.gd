@@ -120,6 +120,8 @@ func _collect_labels(node: Node) -> String:
 	for child in node.get_children():
 		if child is Label:
 			out += child.text + " "
+		elif child is RichTextLabel:  # V5.1-c: the inbox body is a rich line
+			out += child.get_parsed_text() + " "
 		out += _collect_labels(child)
 	return out
 

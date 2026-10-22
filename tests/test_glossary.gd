@@ -30,6 +30,7 @@ func _init() -> void:
 	_check_live_names_are_closed()
 	_check_model_anchors_cite_real_headings()
 	_check_text_reads_through_strings()
+	_check_marks_in_data_resolve()
 	_finish()
 
 
@@ -95,6 +96,32 @@ func _check_text_reads_through_strings() -> void:
 		_fail("definition() did not return the row's English in English")
 	if Glossary.body("no_such_entry") != "":
 		_fail("an unknown id has a body")
+
+
+## P1, first half: every [g=id] a writer put in data/ (rows and the i18n tables)
+## names an entry. Vacuous until Content marks text (the spec's step 4); the
+## second half -- every entry marked somewhere or in a see_also -- waits for it.
+func _check_marks_in_data_resolve() -> void:
+	if _unresolved("a [g=approval]x[/g] and a [g=not_an_entry]y[/g]") != PackedStringArray(["not_an_entry"]):
+		_fail("the P1 scan does not find an unknown id")
+	_scan("res://data")
+
+
+func _scan(dir: String) -> void:
+	for sub in DirAccess.get_directories_at(dir):
+		_scan(dir.path_join(sub))
+	for file in DirAccess.get_files_at(dir):
+		if file.ends_with(".json"):
+			for id in _unresolved(FileAccess.get_file_as_string(dir.path_join(file))):
+				_fail("P1: %s marks [g=%s], which is no glossary entry" % [dir.path_join(file), id])
+
+
+func _unresolved(text: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	for m in RegEx.create_from_string("\\[g=([A-Za-z0-9_]+)\\]").search_all(text):
+		if not Glossary.has(m.get_string(1)):
+			out.append(m.get_string(1))
+	return out
 
 
 func _headings(path: String) -> PackedStringArray:

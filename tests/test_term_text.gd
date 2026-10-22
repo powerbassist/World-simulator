@@ -21,6 +21,7 @@ extends SceneTree
 const TermText = preload("res://src/ui/term_text.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Inbox = preload("res://src/ui/inbox.gd")
 
 var _failures: Array[String] = []
 var _calls: Array = []
@@ -50,6 +51,7 @@ func _process(_delta: float) -> bool:
 	_check_unknown_id_reads_plain()
 	_check_routes_hover_and_click()
 	_check_rich_carries_the_tone()
+	_check_the_sinks_mark_terms()
 	_finish()
 	return true
 
@@ -121,6 +123,26 @@ func _check_rich_carries_the_tone() -> void:
 		_fail("a PLAIN rich line wore '%s'; PLAIN sets no variation" % plain.theme_type_variation)
 	if dim.get_script() != TermText:
 		_fail("PanelKit.rich did not build a TermText")
+
+
+## c's two sinks (the spec's step 2): the inbox body, pushed and rewritten, and
+## the event text -- read off the source, as the event window needs a whole game.
+func _check_the_sinks_mark_terms() -> void:
+	var inbox = Inbox.new()
+	root.add_child(inbox)
+	var id: String = inbox.push("A title", "Your [g=approval]approval[/g] fell.")
+	var body = inbox._bodies[id]
+	if body.get_script() != TermText or not String(body.text).contains("term:approval"):
+		_fail("the inbox body is not a marked rich line: %s" % body.text)
+	inbox.set_body(id, "The [g=deficit]deficit[/g] grew.")
+	if not String(body.text).contains("term:deficit") or body.get_parsed_text() != "The deficit grew.":
+		_fail("set_body bypassed the marking: %s" % body.text)
+	inbox.queue_free()
+	var source := FileAccess.get_file_as_string("res://src/ui/events_panel.gd")
+	for sink in ['PanelKit.rich(_body, Strings.row_summary("events", ev))',
+			'PanelKit.rich(block, Strings.choice_summary(ev.id, choice))']:
+		if not source.contains(sink):
+			_fail("events_panel.gd no longer prints its text through a rich line: %s" % sink)
 
 
 ## A stand-in for the tooltip layer: the label finds whatever is in the group

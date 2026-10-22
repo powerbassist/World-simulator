@@ -236,7 +236,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 		who_label.theme_type_variation = UiTheme.MICRO
 		_body.add_child(who_label)
 
-	PanelKit.line(_body, Strings.row_summary("events", ev))
+	PanelKit.rich(_body, Strings.row_summary("events", ev))
 
 	# The deadline in the same units the register holds and the diary prints. Two
 	# surfaces reporting one fact in two units is how they come to disagree -- U6c's
@@ -267,7 +267,7 @@ func _build_choice(ns, ev, choice: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, Strings.choice_summary(ev.id, choice))
+	PanelKit.rich(block, Strings.choice_summary(ev.id, choice))
 
 	var button := Button.new()
 	# The default is named as such on its own button. Without it the one option that

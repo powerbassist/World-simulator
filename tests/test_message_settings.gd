@@ -387,7 +387,7 @@ func _check_quiet_card_deadline_ages() -> void:
 			if String(entry.get("event_id", "")) == event_id:
 				left = int(entry.get("months_left", 0))
 		var want := "You have %d %s to answer." % [left, "month" if left == 1 else "months"]
-		var body: String = _main._hud.inbox._bodies[card_id].text
+		var body: String = _main._hud.inbox._bodies[card_id].get_parsed_text()
 		if not body.ends_with(want):
 			_fail("deadline: the card reads '%s' with %d months left" % [body, left])
 			break

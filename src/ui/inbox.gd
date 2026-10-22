@@ -25,6 +25,7 @@ extends PanelContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const Grade = preload("res://src/ui/grade.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 signal card_dismissed(id: String)
 signal card_activated(id: String)
@@ -144,11 +145,9 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	close.pressed.connect(func(): dismiss(id))
 	header.add_child(close)
 
-	var body_label := Label.new()
-	body_label.text = body
-	body_label.theme_type_variation = UiTheme.CAPTION
-	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(body_label)
+	# V5.1-c. A rich line, so a term marked in the body opens its glossary plate;
+	# it passes clicks through to the card as the Label did (term_text.gd).
+	var body_label := PanelKit.rich(column, body)
 
 	# V2.9: the answers, a decision answered where the news is. Stacked, one per
 	# line, each wrapping: a row of unwrapped buttons widened U5a's column to the
@@ -195,7 +194,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 ## it. A gone id is a clean no-op.
 func set_body(id: String, body: String) -> void:
 	if _bodies.has(id):
-		_bodies[id].text = body
+		_bodies[id].set_marked(body)
 
 
 func dismiss(id: String) -> void:
