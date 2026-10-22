@@ -529,6 +529,8 @@ func _test_release_and_division_same_month() -> void:
 	main_ui._loader = _loader
 	main_ui._state = gs
 	main_ui._hud = _StubHUD.new()
+	# V5.1-c: _setup_news() also hands the glossary's tooltip chain its state.
+	main_ui._stack = load("res://src/ui/screen_stack.gd").new()
 	main_ui._setup_news()
 	main_ui._assembly_news.announce(assembly_release)
 	var pushed: Array = main_ui._hud.inbox.pushed
