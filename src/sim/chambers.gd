@@ -26,7 +26,7 @@ extends RefCounted
 ## ============================================================================
 ## NOT A SECOND ELECTION, AND THE NATION FILES ARE WHY
 ## ============================================================================
-## NOT ONE of the ten upper houses is elected by the national electorate. France's Senat
+## NOT ONE of V1.1e's upper houses but Italy's is elected nationally. France's Senat
 ## is returned by about 162 000 grands electeurs who are overwhelmingly councillors of
 ## small communes; Germany's Bundesrat is delegated by Land governments; the Lords are
 ## appointed; the Dutch Eerste Kamer is chosen by provincial councils; Spain's Senado
@@ -34,6 +34,10 @@ extends RefCounted
 ## per canton. Only Italy's Senato is elected by the same electorate on the same day
 ## as its lower house -- which is why Italian bicameralism is called "perfect" and
 ## reproduces the Camera's majority.
+##
+## The 41-nation roster adds Poland's Senat (same day, first-past-the-post) and Romania's
+## Senatul (the same list vote), and they are lagged like Italy's: the trade and its cost
+## are docs/upper-house-model.md section 2.
 ##
 ## So a second chamber is the LOWER CHAMBER, LAGGED, and Elections.vote_share() is
 ## never called with a different weighting. An ideological tilt on top of the lag was

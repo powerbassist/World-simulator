@@ -37,6 +37,12 @@ extends RefCounted
 ##      nothing, so a worker-only branch compares TYPED values, which compile to
 ##      the validated opcode and carry no cache, and a state's identity goes
 ##      through is_same() (tests/test_diplomacy_parallel.gd scans for `==`).
+##      is_same(null, null) is true where the `x != null and state == x` it
+##      replaced was false: every site passes a live state, so the two agree,
+##      and a site that could see a null state keeps the null check.
+##      Narrowed, not closed: score_targets()' element 0 primes only the KINDS
+##      of offer its own target has, so a kind only a later target is offered
+##      runs its own branches in _score_target() first on a worker.
 ##
 ## `enabled` false runs every fan-out as the plain serial loop with the memos
 ## writable -- the reference tests/test_diplomacy_parallel.gd compares the

@@ -98,6 +98,10 @@ static func score_targets(state, actor_id: String, targets: Array, offers_of: Ca
 ## One target's half of best_act(), on whichever thread runs it: its pair terms
 ## and every eligible offer's score, into `slot` and nowhere else. `offers` is
 ## never empty: score_targets() fans out only the targets that have one.
+## Element 0 primes only the kinds of offer ITS target has (parallel.gd rule 5).
+## Code that FP.desire_from() runs for one kind of effect, when only a later
+## target is offered that kind, runs first on a worker, so a branch added here
+## or in desire_from() compares typed values only.
 static func _score_target(state, actor_id: String, target_id: String, offers: Array, sv: Dictionary,
 		wbm: Dictionary, even: float, factor: float, slot: Dictionary) -> void:
 	var terms := FP.target_terms(state, actor_id, target_id, sv, wbm, even, factor)
