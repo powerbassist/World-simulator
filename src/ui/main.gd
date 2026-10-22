@@ -255,7 +255,6 @@ func _ready() -> void:
 	_map_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_map_view)
 	_map_view.setup(_loader, _state)
-	_map_view.nation_clicked.connect(_on_nation_clicked)
 	# U6c. A marker opens Public Works rather than saying anything itself: the map
 	# says *where* a project is, and the panel already says everything else about
 	# it. Registered further down, so this connects to a window that exists by the
@@ -693,6 +692,9 @@ func _ready() -> void:
 		# a scene. Read here for the strip's reason: every window is registered.
 		var layer: int = ScreenStack.SCENE if Domains.is_scene(id) else ScreenStack.WORKSPACE
 		_stack.watch(layer, _windows.frame(id), _windows.close.bind(id))
+	# V5.1-d4 (G2): a left click on a nation shows its box, a right click its verbs;
+	# the file (_on_nation_clicked) is the box's button. country_box.gd wires both.
+	preload("res://src/ui/country_box.gd").new().attach(self)
 
 	# Four panels stay modal, not docked: election results and censure land on
 	# the player regardless of which tab is open, and settings/save-load are

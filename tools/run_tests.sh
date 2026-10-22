@@ -179,6 +179,7 @@ tests=(
   tests/test_play_gate_terms.gd
   tests/test_no_raw_tags.gd
   tests/test_glossary_panel.gd
+  tests/test_country_box.gd
   tests/test_month_close_pause.gd
   tests/test_effect_baselines.gd
   tests/test_inbox_stays.gd

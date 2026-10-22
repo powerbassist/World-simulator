@@ -272,6 +272,27 @@ func _refresh_actions() -> void:
 		_actions.add_child(_action_row(action, offered, player_id))
 
 
+## V5.1-d4, the country box's right-click menu: the verbs this panel's rows offer
+## for the nation it shows -- Diplomacy's, with the partner's consent, or a meeting
+## the host refuses only until its free day; none already booked. The rows' rule,
+## read once, so the menu and the file never disagree.
+func offered_actions() -> Array:
+	var player_id: String = _state.player_nation_id
+	var available: Array = Diplomacy.available(_state, _loader.diplomatic_actions, player_id, _nation_id)
+	var out: Array = []
+	for action in _loader.diplomatic_actions:
+		if action.opens_meeting and not VisitBooking.booked(_state, action, _nation_id).is_empty():
+			continue
+		if (available.has(action) and _partner_would_accept(action, player_id)) 				or VisitBooking.held_only_by_host(_state, _loader, action, _nation_id):
+			out.append(action)
+	return out
+
+
+## A verb pressed from outside the file (the country box): the row's own press.
+func act(action) -> void:
+	_on_act(action)
+
+
 ## Whether the counterparty would sign, for an action that proposes an agreement.
 ## True for every action that does not, so the caller can treat it as one gate.
 func _partner_would_accept(action, player_id: String) -> bool:
