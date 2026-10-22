@@ -243,13 +243,22 @@ func is_slid() -> bool:
 	return _slid
 
 
-## On the map the inbox is furniture; over a tab it is away unless slid in. A
-## move between the two ends a slide.
-func dock_on_map(on_map: bool) -> void:
-	if _slid:
-		_slid = false
-		slid.emit(false)
-	visible = on_map
+## On the map the inbox is furniture; over a tab it is slid in or away. The map
+## takes it back from a slide. V5.1-d1a (G1, the play gate: "the inbox disapear as
+## soon as i click something on the left panel"): leaving the map no longer puts
+## it away -- the inbox the player had in front of them rides over the tab, from
+## tab to tab, until they put it away or answer what held it; once away it stays
+## away until the map has it back. A scene does not carry it (`carry` false): the
+## inbox goes away under a scene, as it always did.
+func dock_on_map(on_map: bool, carry := true) -> void:
+	if on_map or not carry:
+		if _slid:
+			_slid = false
+			slid.emit(false)
+		visible = on_map
+	elif visible and not _slid:
+		_slid = true
+		slid.emit(true)
 
 
 func card_count() -> int:
