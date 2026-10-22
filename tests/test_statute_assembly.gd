@@ -531,6 +531,15 @@ func _test_release_and_division_same_month() -> void:
 	main_ui._hud = _StubHUD.new()
 	# V5.1-c: _setup_news() also hands the glossary's tooltip chain its state.
 	main_ui._stack = load("res://src/ui/screen_stack.gd").new()
+	# The glossary's first-use note (glossary_hint.gd) is once per PROFILE, and a
+	# run's tests share one user dir: after a game had booted in the run it was
+	# spent, but alone (or first in a CI shard) _setup_news() offered it here as a
+	# third card. Its own flag file, already shown, so only the assembly's count.
+	var hint = load("res://src/ui/glossary_hint.gd")
+	hint.config_path = "user://test_statute_assembly_hint.cfg"
+	var shown := ConfigFile.new()
+	shown.set_value(hint.SECTION, hint.KEY, true)
+	shown.save(hint.config_path)
 	main_ui._setup_news()
 	main_ui._assembly_news.announce(assembly_release)
 	var pushed: Array = main_ui._hud.inbox.pushed
