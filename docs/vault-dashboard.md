@@ -42,6 +42,10 @@ WHERE length(file.inlinks) = 0 AND !contains(file.folder, "templates") AND !cont
 
 ## Models
 
+The same list as a Base (two views: by last edit, least linked), which needs no plugin beyond core Bases; the Dataview table below stays for its `tags` filter.
+
+![[models.base]]
+
 ```dataview
 TABLE WITHOUT ID file.link AS "Model", length(file.inlinks) AS "Linked from", file.mtime AS "Last edited"
 FROM "docs"

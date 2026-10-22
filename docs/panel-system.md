@@ -20,7 +20,7 @@ by the measurement that answered it, sections 8–12 are V2.1b's, and sections
 Related: [[v2]] · [[engine-decision]]
 
 > [!warning] Superseded in V5.1-c: the shell sections describe U5a's floating windows
-> The panel kit, the registry and the fold contract stand. The **floating windows, the bottom action bar and the card column do not exist any more**: `window_frame.gd`, `action_bar.gd`, `message_stack.gd` and `minimap.gd` were deleted in V5.1-c (`be8a9ac5`, `7667b1a2`, `ae802108`). Where a section below names one of them it is a dated finding, not a description of the game. Section 25 at the end of this page describes the shell as it is, with the code lines.
+> The panel kit, the registry and the fold contract stand. The **floating windows, the bottom action bar and the card column do not exist any more**: `window_frame.gd`, `action_bar.gd`, `message_stack.gd` and `minimap.gd` were deleted in V5.1-c (`be8a9ac5`, `7667b1a2`, `ae802108`). Where a section below names one of them it is a dated finding, not a description of the game. Section 25 at the end of this page describes the shell as it is, with the code lines, and [[shell]] draws it.
 
 ## 1. Why a system rather than another round of fixes
 
@@ -1183,4 +1183,4 @@ Sections 1 to 24 describe the panel system as it was built, and each is a dated 
 | `src/ui/minimap.gd`, `tests/test_minimap.gd` | [[map-platform-model]] | `7667b1a2` |
 | `tools/nav_probe.gd` | section 15 (the resting-screen measurement) | `7667b1a2` |
 
-The "14 registered windows" and "41 `.gd` files" of section 1 were true of V2.1a and are not today's numbers.
+The "14 registered windows" and "41 `.gd` files" of section 1 were true of V2.1a and are not today's numbers. The domain table is drawn on [[shell]].

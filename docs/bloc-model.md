@@ -98,7 +98,7 @@ sat["europe"] = −(burden − start_burden) / EUROPE_SCALE
 `tolerance` is the breach at which a rule counts in full, floored at load — a tolerance near zero turns a continuous quantity into a step, and the panel would show a cliff where the model claims a slope.
 
 > [!warning] The probe's correction: the severities must sum to exactly the ceiling
-> They were authored at 0.45 / 0.35 / 0.30 / 0.25 — **1.35 against a `BURDEN_MAX` of 1.0**. The clamp then removed 0.35 of real burden, so a player already defying three rules got **nothing** from breaching the fourth: the strictly-dominated shape [[coercion-model|the coercion probe caught]] for high tariff severity, in a new place. Rescaled to 0.33 / 0.26 / 0.22 / 0.19, summing to exactly 1.0, so the clamp *touches* at total defiance and never bites before. `tests/test_bloc.gd` asserts the sum, which is what stops a fifth rule reintroducing it silently.
+> They were authored at 0.45 / 0.35 / 0.30 / 0.25 — **1.35 against a `BURDEN_MAX` of 1.0**. The clamp then removed 0.35 of real burden, so a player already defying three rules got **nothing** from breaching the fourth: the strictly-dominated shape [[coercion-model|the coercion probe caught]] for high tariff severity, in a new place. Rescaled to 0.33 / 0.26 / 0.22 / 0.19, summing to exactly 1.0, so the clamp *touches* at total defiance and never bites before. `tests/test_bloc.gd` (now `tests/test_orgs.gd`, V3.2a) asserts the sum, which is what stops a fifth rule reintroducing it silently.
 
 **Zero for a member that complies**, and that is the point rather than an omission: a complying player pays in the policy they could not run, and that shows up on the spending lines they had to cut.
 
@@ -154,7 +154,7 @@ A proposal reaches the council every `PROPOSAL_INTERVAL_MONTHS`, divides `VOTE_D
 **The threshold is a share of the seats actually cast**, not of the council's whole strength, and that is the one thing making abstention a third option.
 
 > [!warning] Under a whole-council denominator, abstaining and opposing are the same act
-> `seats_for` is identical either way, so the outcome is identical, always — abstention would be a slower way of voting no. `tests/test_bloc.gd` caught it before it shipped. Against cast seats the three genuinely differ: backing it adds to the numerator, opposing it adds to the denominator and blocks, abstaining removes the player from both and lets it through on a smaller base. That is constructive abstention, and it is what the real Council does.
+> `seats_for` is identical either way, so the outcome is identical, always — abstention would be a slower way of voting no. `tests/test_bloc.gd` (now `tests/test_orgs.gd`, V3.2a) caught it before it shipped. Against cast seats the three genuinely differ: backing it adds to the numerator, opposing it adds to the denominator and blocks, abstaining removes the player from both and lets it through on a smaller base. That is constructive abstention, and it is what the real Council does.
 
 ### The sweep that set `SUPPORT_SIGMA`, and the fix that was content
 
@@ -186,11 +186,11 @@ This is also what GBR and CHE get. They are not members, carry no burden and pay
 > [!success] Discharged at V1.3e
 > ~~The other eight members vote on their `coalition_position` and **nothing else**.~~ They now appraise a proposal against their **own books**: what the rule would cost them given their current deficit, what the transfer would cost or pay them, what an external measure would cost their own trade, with ideology retained as one weak term among four. `cohesion_fund` is now voted down by every member and `recovery_facility` carried by every member -- the two proposals the old rule could not tell apart. They still never propose, which is V1.3f's.
 >
-> `tests/test_bloc.gd` asserted the old rule by mutation and **died at parse time**, because `support()` grew a `state` parameter. See [[foreign-policy-model]].
+> `tests/test_bloc.gd` (now `tests/test_orgs.gd`, V3.2a) asserted the old rule by mutation and **died at parse time**, because `support()` grew a `state` parameter. See [[foreign-policy-model]].
 
 Fourth on V1.3e's checklist, behind [[diplomacy-model|V1.3a's no-reaction]], [[trade-model|V1.3b's accept-gate]] and [[coercion-model|V1.3c's fixed retaliation]]. The four compose rather than conflict: the others say the target does not react, does not decide, and reacts by a fixed rule — this one says the council votes its priors.
 
-`tests/test_bloc.gd` asserts it **by mutation** — the member's GDP cut 100×, unemployment at 39 %, growth at −11 %, sectors gutted, two relations pairs moved and a full sanction imposed on it — and the answer must not move. **That test must fail and be rewritten at V1.3e.**
+`tests/test_bloc.gd` (now `tests/test_orgs.gd`, V3.2a) asserts it **by mutation** — the member's GDP cut 100×, unemployment at 39 %, growth at −11 %, sectors gutted, two relations pairs moved and a full sanction imposed on it — and the answer must not move. **That test must fail and be rewritten at V1.3e.**
 
 ## The balance re-run
 
@@ -240,7 +240,7 @@ All three are `eu_member`/`neighbours`' case, not `agreements`' case. `tests/tes
 | A nation's burden | `BURDEN_MAX` = 1.0, reached exactly at total maximal breach and never before. |
 | A constraint's tolerance | `MIN_CONSTRAINT_TOLERANCE` = 0.10, floored at load. |
 | One proposal's transfer | `MAX_PROPOSAL_TRANSFER_PCT_GDP` = 0.60 % of GDP. |
-| The standing net position | `[−0.60, +1.20]` % of GDP. Luxembourg's 1.179 is the closest to a bound in the roster and `tests/test_bloc.gd` asserts nothing sits **on** one. |
+| The standing net position | `[−0.60, +1.20]` % of GDP. Luxembourg's 1.179 is the closest to a bound in the roster and `tests/test_bloc.gd` (now `tests/test_orgs.gd`, V3.2a) asserts nothing sits **on** one. |
 | A collective external measure | `MAX_PROPOSAL_EXTERNAL_SEVERITY` = 0.50, below `MAX_MEASURE_SEVERITY` — a bloc acting as one is slower and more compromised than a nation acting alone. |
 | Rules binding policy at once | `MAX_RULES_IN_FORCE` = 4. Transfer-only and external-measure proposals are not capped, or the council falls silent with content unused. |
 
