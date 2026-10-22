@@ -69,8 +69,10 @@ func _ready() -> void:
 ## Space -- main.gd's pause, an UNHANDLED key -- was ui_accept on that button and
 ## pressed Commit again. _input runs before the GUI takes focus on the same press.
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		_press_at = event.position
+	if event is InputEventMouseButton:
+		# Focus moves on the press; after the release a grab_focus is code's, not a
+		# click's (review pass 1).
+		_press_at = event.position if event.pressed else null
 	elif event is InputEventKey:
 		_press_at = null
 

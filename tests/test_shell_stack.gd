@@ -46,6 +46,10 @@ func _process(_delta: float) -> bool:
 		return false
 	if _frame < 4:
 		return false  # the budget builds its levers on its first visible frame
+	if _frame == 5:
+		_check_code_focus_after_a_click_stays()
+		_finish()
+		return false
 	_check_a_click_parks_no_focus_on_a_button()
 	_check_focus_returns_below()
 	_check_escape_pops_the_top()
@@ -58,7 +62,9 @@ func _process(_delta: float) -> bool:
 	_check_an_ordinary_hold_slides_in()
 	_check_answer_keeps_the_inbox_while_one_holds()
 	_check_space_waits_under_a_scene()
-	_finish()
+	# Review pass 1: a grab_focus after the click's release is code's, and holds.
+	_click_commit()
+	_main._budget_panel._commit_button.grab_focus()
 	return false
 
 
@@ -76,6 +82,13 @@ func _click_commit() -> void:
 		click.position = point
 		click.global_position = point
 		_main.get_viewport().push_input(click, true)
+
+
+func _check_code_focus_after_a_click_stays() -> void:
+	var commit: Button = _main._budget_panel._commit_button
+	if _main.get_viewport().gui_get_focus_owner() != commit:
+		_fail("a grab_focus made after a click's release was taken away as if the click had made it")
+	commit.release_focus()
 
 
 ## (A frame after _click_commit(): the release is deferred out of the focus signal.)

@@ -74,8 +74,13 @@ func set_marked(source: String) -> void:
 				taken.append(id)
 	text = markup(source, taken, cap)
 	if section != null:
+		# What this line marked before and no longer does is free again (review pass 1).
+		var marks: Dictionary = section.get_meta(SECTION_META)
+		for id in marks.keys():
+			if (marks[id] as WeakRef).get_ref() == self:
+				marks.erase(id)
 		for m in _marked_ids.search_all(text):
-			section.get_meta(SECTION_META)[m.get_string(1)] = weakref(self)
+			marks[m.get_string(1)] = weakref(self)
 
 
 ## The term ids `label` marks, in reading order.

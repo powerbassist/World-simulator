@@ -202,6 +202,11 @@ func _check_once_per_section() -> void:
 	var rebuilt: RichTextLabel = PanelKit.rich(body, "Rebuilt [g=approval]approval[/g].")
 	if not String(rebuilt.text).contains("term:approval"):
 		_fail("N1 per section: a rebuilt section kept the old lines' marks")
+	# Review pass 1: a live line re-set without the term gives it up.
+	rebuilt.set_marked("Rebuilt, with nothing to explain.")
+	var later: RichTextLabel = PanelKit.rich(body, "Later [g=approval]approval[/g].")
+	if not String(later.text).contains("term:approval"):
+		_fail("N1 per section: a line that stopped marking a term still held it")
 	box.queue_free()
 
 
