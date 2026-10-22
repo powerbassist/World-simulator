@@ -513,7 +513,7 @@ func _ready() -> void:
 	outliner_panel.setup(_state, _loader)
 	outliner_panel.hide_close_button()
 	outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
-	_windows.register("glossary", tr("Glossary"), preload("res://src/ui/glossary_panel.gd").new(), KEY_NONE, ICONS + "checklist.svg")  # V5.1-d3: reads Glossary alone, no setup
+	_windows.register("glossary", tr("Glossary"), preload("res://src/ui/glossary_panel.gd").new(), KEY_NONE, ICONS + "menu_book.svg")  # V5.1-d3: reads Glossary alone, no setup
 
 	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
 	# actor and the verb pointed at it is a spending decision, which is why the bill
