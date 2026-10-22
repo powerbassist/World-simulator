@@ -44,6 +44,8 @@ const GAP := 2.0
 const FILL_HEIGHT := 2.0
 
 var _state = null
+## Where the keyboard's walk through the marked terms is (next_term).
+var _cycle := -1
 var _loader = null
 ## V5.1-d1b2 (G9): a marked person's card, the layer's second kind of tip.
 var _people
@@ -173,6 +175,23 @@ func plate_exited(n: int) -> void:
 		_plates[n - 1]["over"] = false
 
 
+## V5.1-d2, the keyboard path (the design's "glossary_next"; RichTextLabel has no
+## per-tag focus): each press opens the NEXT marked term on screen, in reading
+## order, locked at its line -- the keys' Enter, since a locked plate is the one a
+## press would open. Escape closes, as for the mouse. F1, as no window takes it.
+func next_term() -> void:
+	var terms: Array = []
+	for label in get_tree().root.find_children("*", "RichTextLabel", true, false):
+		if label.get_script() == TermText and int(label.level) == 0 and label.is_visible_in_tree():
+			for id in TermText.term_ids(label):
+				terms.append([label, id])
+	if terms.is_empty():
+		return
+	_cycle = (_cycle + 1) % terms.size()
+	close_all()
+	click(String(terms[_cycle][1]), (terms[_cycle][0] as Control).get_global_rect(), 0)
+
+
 func close_all() -> void:
 	_truncate(0)
 	_pending = {}
@@ -225,6 +244,11 @@ func tick(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	var f1 := event as InputEventKey
+	if f1 != null and f1.pressed and not f1.echo and f1.keycode == KEY_F1:
+		next_term()
+		get_viewport().set_input_as_handled()
+		return
 	# A pinned card goes on Escape or on any press: a press on another name pins
 	# that one next (term_text.gd runs after this, in the GUI pass).
 	if _people.is_pinned() and event.is_pressed() and (event is InputEventMouseButton or (event is InputEventKey and event.keycode == KEY_ESCAPE)):

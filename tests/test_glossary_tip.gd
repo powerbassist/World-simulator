@@ -24,6 +24,7 @@ extends SceneTree
 ## Driven through enter/leave/click/tick, the calls the label makes: a pushed mouse
 ## event does not move RichTextLabel's hover on a windowed root viewport (step 0).
 
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const GlossaryTip = preload("res://src/ui/glossary_tip.gd")
@@ -65,6 +66,7 @@ func _process(_delta: float) -> bool:
 		_check_depth_and_n5()
 		_check_escape_and_click_away()
 		_check_live_line()
+		_check_keyboard_path()
 		_stage_p2(0)
 	elif _frame == 6:
 		_check_p2()
@@ -176,6 +178,37 @@ func _check_escape_and_click_away() -> void:
 	_tip._input(away)
 	if _tip.depth() != 0:
 		_fail("a click away from every plate left %d levels open" % _tip.depth())
+
+
+## V5.1-d2, the keyboard path the design asked for (RichTextLabel has no per-tag
+## focus): F1 cycles the marked terms on screen in reading order, opening each one's
+## plate locked at its line; Escape closes, as for the mouse.
+func _check_keyboard_path() -> void:
+	_tip.close_all()
+	var box := VBoxContainer.new()
+	box.size = Vector2(600, 200)
+	root.add_child(box)
+	var first = PanelKit.rich(box, "Your [g=approval]approval[/g] and the [g=deficit]deficit[/g].")
+	PanelKit.rich(box, "Then the [g=debt]debt[/g].")
+	var f1 := InputEventKey.new()
+	f1.keycode = KEY_F1
+	f1.pressed = true
+	var seen: Array[String] = []
+	for i in 3:
+		_tip._input(f1)
+		if _tip.depth() != 1 or not _tip.is_locked(1):
+			_fail("F1 press %d did not open a locked plate (depth %d)" % [i + 1, _tip.depth()])
+			break
+		seen.append(String(_tip._plates[0]["id"]))
+	if seen != ["approval", "deficit", "debt"]:
+		_fail("F1 did not walk the terms in reading order: %s" % [seen])
+	var escape := InputEventKey.new()
+	escape.keycode = KEY_ESCAPE
+	escape.pressed = true
+	_tip._input(escape)
+	if _tip.depth() != 0:
+		_fail("Escape did not close the plate F1 opened")
+	box.queue_free()
 
 
 func _check_live_line() -> void:

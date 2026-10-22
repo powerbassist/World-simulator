@@ -78,6 +78,14 @@ func set_marked(source: String) -> void:
 			section.get_meta(SECTION_META)[m.get_string(1)] = weakref(self)
 
 
+## The term ids `label` marks, in reading order.
+static func term_ids(label: RichTextLabel) -> PackedStringArray:
+	var ids := PackedStringArray()
+	for m in _marked_ids.search_all(label.text):
+		ids.append(m.get_string(1))
+	return ids
+
+
 ## The nearest ancestor that is a section for N1: a PanelKit.section body, or the
 ## panel a window is registered with (window_manager.gd). None for a card or a plate:
 ## each is its own block.
