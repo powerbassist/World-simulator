@@ -285,7 +285,7 @@
         "censure",
         "majority"
       ],
-      "live": "dissolution_lockout_months",
+      "live": "dissolution_months_left",
       "model": "dissolution-model#What the command does"
     },
     {
