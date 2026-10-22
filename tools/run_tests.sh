@@ -183,6 +183,7 @@ tests=(
   tests/test_person_links.gd
   tests/test_state_visit.gd
   tests/test_summit_flow.gd
+  tests/test_findable_terms.gd
   tests/test_glossary_tip.gd
   tests/test_outliner.gd
   tests/test_geography.gd

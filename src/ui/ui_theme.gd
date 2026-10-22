@@ -372,6 +372,9 @@ static func _labels(theme: Theme) -> void:
 
 static func _rich(theme: Theme) -> void:
 	theme.set_color("default_color", "RichTextLabel", TEXT)  # i18n: ok
+	# V5.1-d1c (G12, the author never saw a term): the dashes under a term, and a
+	# name's underline, at the text's full opacity -- the engine draws them at half.
+	theme.set_constant("underline_alpha", "RichTextLabel", 100)  # i18n: ok
 	for variation in [RICH_CAPTION, RICH_GOOD, RICH_BAD]:
 		theme.set_type_variation(variation, "RichTextLabel")  # i18n: ok
 	theme.set_font_size("normal_font_size", RICH_CAPTION, _px(SIZE_SMALL))

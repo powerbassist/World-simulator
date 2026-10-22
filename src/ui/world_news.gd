@@ -18,6 +18,7 @@ const Num = preload("res://src/ui/num.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
+const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
 
 var _state
 var _loader: DataLoader
@@ -40,6 +41,8 @@ func setup(state, loader, stack) -> void:
 	_visits_year = -1
 	_visitors = []
 	_visits_card = ""
+	# V5.1-d1c (G12): a teaching note is news too, and this is the notes writer.
+	GlossaryHint.offer(stack)
 
 
 ## The player's obliged deployments, right now. Only the obliged ones: a chosen
