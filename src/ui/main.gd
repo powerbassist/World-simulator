@@ -440,18 +440,16 @@ func _ready() -> void:
 	_windows.register("diplomacy", tr("Diplomacy"), _nation_panel, KEY_D, ICONS + "handshake.svg")
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide_close_button()
+	# V5.1-d1b2 (G13): a visit is booked in the Diary, on the day the player picks.
+	_nation_panel.book_requested.connect(func(action_id: String, target: String): _calendar_panel.fill_booking(action_id, target, _windows))
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
 	# player command with a domestic price, so it earns a U4 decision delta on
 	# exactly the same terms a law does.
 	_nation_panel.acted.connect(func(before, label, result):
 		_queue_effect(String(label), before)
-		var body: String
-		if bool(result.get("refused", false)):
-			var reason := String(result.get("reason", ""))
-			body = tr("Refused.") if reason.is_empty() else tr("Refused. %s") % reason
-		else:
-			body = tr("Agreed.")
-		_hud.inbox.push(String(label), body)
+		var reason := String(result.get("reason", ""))
+		var refused := tr("Refused.") if reason.is_empty() else tr("Refused. %s") % reason
+		_hud.inbox.push(String(label), refused if bool(result.get("refused", false)) else tr("Agreed."))
 		_update_top_bar()
 		# A diplomatic action moves relations, and on the relations layer that is a
 		# colour change the player should see the moment they act rather than at
@@ -918,6 +916,8 @@ func _wire_hud() -> void:
 	)
 	# The legend is the map's, so it goes while a tab covers the map.
 	_windows.closed.connect(func(_id: String):
+		# A summit concluded or walked out of: the hold its opening took goes.
+		if _id == "summit" and not _decision_holds_clock(): _clock.paused = false
 		if _windows.open_ids().is_empty():
 			_hud.sidebar.select("")
 			_hud.show_map_furniture(true)
@@ -1274,7 +1274,7 @@ func _finish_month(report: Dictionary) -> void:
 	var results: Array = report["election_results"]
 	if not results.is_empty() and _election_panel != null:
 		_clock.paused = true
-		_election_panel.show_results(results)
+		_election_panel.show_polls_closed(results)
 		_election_panel.show()
 
 	# B4: the opening card's countdown is rewritten (or taken) against the state
@@ -1722,8 +1722,7 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 ## not from the last beat of dialogue.
 func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 	var summit := Summits.draw(_state, _loader, target_id)
-	if summit.is_empty():
-		return
+	if summit.is_empty(): return
 	_summit_before = arrival_before
 	# OPENED BEFORE show_summit(), because show_summit() can conclude SYNCHRONOUSLY --
 	# a missing DialogueManager or a scene that does not compile both push_error and
@@ -1733,6 +1732,9 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 	# to prevent. Opening first makes the close land, and an ordinary summit is
 	# unaffected: the frame is up either way before the first beat is drawn.
 	_windows.open("summit")
+	# V5.1-d1b2 (QA on #70, the parent's ruling): a booked scene is modal, so the
+	# clock holds while it is open; the summit window's close lets it go.
+	_clock.paused = true
 	_summit_panel.show_summit(summit)
 
 
@@ -1743,12 +1745,10 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 ## fork) applies nothing and says nothing: a conversation happened, and it
 ## changed nothing, which is the honest outcome for one of those.
 func _resolve_summit(choice_label: String) -> void:
-	if choice_label.is_empty():
-		return
+	if choice_label.is_empty(): return
 	var ns = _state.player()
 	var effects: Dictionary = _summit_panel._effects.get(choice_label, {})
-	if effects.is_empty():
-		return
+	if effects.is_empty(): return
 	Legislature.apply_effects(_state, ns, effects, _loader)
 	_queue_effect(tr("Summit: %s") % choice_label, _summit_before)
 	_update_top_bar()

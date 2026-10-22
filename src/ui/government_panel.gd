@@ -118,7 +118,7 @@ const ELECTION_SYSTEM_LABEL := {
 
 var _state
 var _loader
-var _title: Label
+var _title: RichTextLabel
 var _body: VBoxContainer
 var _dirty := true
 var _close_button: Button
@@ -142,7 +142,8 @@ func _ready() -> void:
 	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
 
-	_title = Label.new()
+	# A rich line since V5.1-d1b2 (G9): the head of government's name opens their card.
+	_title = PanelKit.TermText.new()
 	root.add_child(_title)
 
 	# THE VERBS COME BEFORE THE READOUT -- V2.1b, and it is the fold contract's own
@@ -223,7 +224,7 @@ func _refresh() -> void:
 	if n == null:
 		return
 
-	_title.text = "%s %s — %s" % [ns.head_of_government_title, _loader.person_name(ns.pm_person_id), n.chamber_name]
+	_title.set_marked("%s %s — %s" % [ns.head_of_government_title, PanelKit.person(ns.pm_person_id, _loader.person_name(ns.pm_person_id)), n.chamber_name])
 
 	for child in _body.get_children():
 		child.queue_free()
@@ -231,7 +232,7 @@ func _refresh() -> void:
 	var system = _loader.political_systems.get(ns.system_id)
 	PanelKit.line(_body, "%s." % (system.display_name if system != null else ns.system_id), PanelKit.Tone.PLAIN)
 	if ns.head_of_state_kind != "executive_president":
-		PanelKit.line(_body, tr("Head of state: %s %s.") % [ns.head_of_state_title, _loader.person_name(ns.head_of_state_person_id)], PanelKit.Tone.PLAIN)
+		PanelKit.rich(_body, tr("Head of state: %s %s.") % [ns.head_of_state_title, PanelKit.person(ns.head_of_state_person_id, _loader.person_name(ns.head_of_state_person_id))], PanelKit.Tone.PLAIN)
 	if ns.term_limit > 0:
 		PanelKit.line(_body, tr("Term limit: %d of %d served.") % [ns.terms_served, ns.term_limit], PanelKit.Tone.PLAIN)
 

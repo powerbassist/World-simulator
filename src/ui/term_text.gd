@@ -26,6 +26,9 @@ const GROUP := &"glossary_tip"
 ## N2: a block marks at most this many terms; past the cap they read as words.
 const MAX_MARKED := 3
 const META_PREFIX := "term:"
+## V5.1-d1b2 (G9): a person's name, marked [p=id]Name[/p], links to their card --
+## a solid underline, so a name never reads as a dashed glossary term.
+const PERSON_PREFIX := "person:"
 
 ## The tooltip level this text sits in: 0 for prose on a panel or a card, n for
 ## the body of the n-th plate, whose terms open plate n + 1.
@@ -34,9 +37,11 @@ var level := 0
 var exclude := PackedStringArray()
 
 var _hovered := ""
+var _person := ""
 
 static var _tag: RegEx
 static var _plain_tag: RegEx
+static var _person_tag: RegEx
 
 
 func _init() -> void:
@@ -57,6 +62,7 @@ func set_marked(source: String) -> void:
 ## Every "[" of the prose escaped first -- prose is not BBCode -- then each
 ## [g=id]word[/g] made a term, under N1 (once an id), N2 (MAX_MARKED a block) and
 ## N5 (`skip`). An unknown id reads as its word, loudly: the table is the list.
+## Last, each [p=id]Name[/p] made a person link (no cap: a name is not a term).
 static func markup(source: String, skip := PackedStringArray()) -> String:
 	if _tag == null:
 		_tag = RegEx.create_from_string("\\[lb\\]g=([A-Za-z0-9_]+)\\](.*?)\\[lb\\]/g\\]")
@@ -77,7 +83,10 @@ static func markup(source: String, skip := PackedStringArray()) -> String:
 			marked[id] = true
 			out += "[url=%s%s][hint=]%s[/hint][/url]" % [META_PREFIX, id, word]
 		at = m.get_end()
-	return out + escaped.substr(at)
+	out += escaped.substr(at)
+	if _person_tag == null:
+		_person_tag = RegEx.create_from_string("\\[lb\\]p=([A-Za-z0-9_]+)\\](.*?)\\[lb\\]/p\\]")
+	return _person_tag.sub(out, "[url=%s$1][u]$2[/u][/url]" % PERSON_PREFIX, true)
 
 
 ## The same prose with its marks dropped and their words kept, for a sink that
@@ -85,31 +94,41 @@ static func markup(source: String, skip := PackedStringArray()) -> String:
 ## unknown id -- markup() is the loud reader, and P1 fails the id before it ships.
 static func plain(source: String) -> String:
 	if _plain_tag == null:
-		_plain_tag = RegEx.create_from_string("\\[g=[A-Za-z0-9_]+\\](.*?)\\[/g\\]")
-	return _plain_tag.sub(source, "$1", true)
+		_plain_tag = RegEx.create_from_string("\\[([gp])=[A-Za-z0-9_]+\\](.*?)\\[/\\1\\]")
+	return _plain_tag.sub(source, "$2", true)
 
 
 func _gui_input(event: InputEvent) -> void:
-	if _hovered.is_empty():
+	if _hovered.is_empty() and _person.is_empty():
 		return
 	var button := event as InputEventMouseButton
 	if button != null and button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
 		accept_event()
 		var tip := _tip()
-		if tip != null:
+		if tip != null and not _person.is_empty():
+			tip.person_click(_person, _anchor())
+		elif tip != null:
 			tip.click(_hovered, _anchor(), level)
 
 
 func _notification(what: int) -> void:
 	# A card dismissed or a window closed under the pointer: the term is gone,
 	# so it is no longer hovered.
-	if (what == NOTIFICATION_EXIT_TREE or (what == NOTIFICATION_VISIBILITY_CHANGED and not visible)) \
-			and not _hovered.is_empty():
-		_on_hover_ended(META_PREFIX + _hovered)
+	if what == NOTIFICATION_EXIT_TREE or (what == NOTIFICATION_VISIBILITY_CHANGED and not visible):
+		if not _hovered.is_empty():
+			_on_hover_ended(META_PREFIX + _hovered)
+		if not _person.is_empty():
+			_on_hover_ended(PERSON_PREFIX + _person)
 
 
 func _on_hover_started(meta) -> void:
 	var meta_text := String(meta)
+	if meta_text.begins_with(PERSON_PREFIX):
+		_person = meta_text.substr(PERSON_PREFIX.length())
+		var host := _tip()
+		if host != null:
+			host.person_enter(_person, _anchor())
+		return
 	if not meta_text.begins_with(META_PREFIX):
 		return
 	_hovered = meta_text.substr(META_PREFIX.length())
@@ -119,6 +138,12 @@ func _on_hover_started(meta) -> void:
 
 
 func _on_hover_ended(meta) -> void:
+	if not _person.is_empty() and String(meta) == PERSON_PREFIX + _person:
+		_person = ""
+		var host := _tip()
+		if host != null:
+			host.person_leave()
+		return
 	if String(meta) != META_PREFIX + _hovered:
 		return
 	_hovered = ""

@@ -30,6 +30,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Glossary = preload("res://src/ui/glossary.gd")
 const GlossaryLive = preload("res://src/ui/glossary_live.gd")
 const TermText = preload("res://src/ui/term_text.gd")
+const PersonTip = preload("res://src/ui/person_tip.gd")
 
 ## The spec's felt numbers (OPINION there, no simulation meaning, so here).
 const OPEN_DELAY_S := 0.4
@@ -44,6 +45,8 @@ const FILL_HEIGHT := 2.0
 
 var _state = null
 var _loader = null
+## V5.1-d1b2 (G9): a marked person's card, the layer's second kind of tip.
+var _people
 ## Level n's plate at index n - 1: {id, panel, box, fill, locked, over, hold, anchor}.
 var _plates: Array = []
 ## The term under the pointer at each level: 0 is prose, n is plate n's text.
@@ -65,10 +68,42 @@ func _ready() -> void:
 	set_process(false)
 
 
+## Built here, not in _ready: setup() may run before the layer is in the tree.
+func _init() -> void:
+	_people = PersonTip.new()
+	add_child(_people)
+
+
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	close_all()
+	_people.setup(state, loader)
+
+
+## A marked name (term_text.gd): hovered, clicked, left -- person_tip.gd's card.
+func person_enter(person_id: String, anchor: Rect2) -> void:
+	_people.enter(person_id, anchor)
+
+
+func person_leave() -> void:
+	_people.leave()
+
+
+func person_click(person_id: String, anchor: Rect2) -> void:
+	_people.click(person_id, anchor)
+
+
+func person_card_visible() -> bool:
+	return _people.is_open()
+
+
+func person_card_text() -> String:
+	var out := ""
+	for node in _people.find_children("*", "Label", true, false):  # i18n: ok a class name
+		out += String(node.text) + "
+"
+	return out
 
 
 func depth() -> int:
@@ -190,6 +225,13 @@ func tick(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	# A pinned card goes on Escape or on any press: a press on another name pins
+	# that one next (term_text.gd runs after this, in the GUI pass).
+	if _people.is_pinned() and event.is_pressed() and (event is InputEventMouseButton or (event is InputEventKey and event.keycode == KEY_ESCAPE)):
+		_people.close()
+		if event is InputEventKey:
+			get_viewport().set_input_as_handled()
+			return
 	if _plates.is_empty():
 		return
 	var key := event as InputEventKey

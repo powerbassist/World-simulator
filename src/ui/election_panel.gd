@@ -17,6 +17,7 @@ const Sting = preload("res://src/ui/sting.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const ElectionNight = preload("res://src/ui/election_night.gd")
+const ElectionVerdict = preload("res://src/ui/election_verdict.gd")
 
 signal dismissed
 
@@ -113,7 +114,32 @@ func setup(state, loader) -> void:
 ## one or two Dictionaries, each shaped by Elections.resolve(). Builds the whole
 ## panel fresh; there is no partial-refresh path because this only ever shows
 ## once per election, not every frame like the other two panels.
-func show_results(results: Array) -> void:
+## V5.1-d1b2 (G4, the play gate: "when this is election time, the time should be
+## paused, with a continue button to make suspense"; the author's answer on where:
+## "Oui, un temps avant"). Election day stops on the polls closing, BEFORE the
+## count: the plate says so and shows nothing of the result, and its Continue is
+## what starts the night. It holds the clock as the result does -- a scene, so no
+## door runs it -- and nothing is dismissed until the verdict has been shown.
+## The month end calls this; show_results() stays the count itself.
+func show_polls_closed(results: Array) -> void:
+	_clear_plate()
+	_title.text = tr("POLLS CLOSED")
+	PanelKit.line(_sections, tr("The polls have closed. The count is about to begin."), PanelKit.Tone.PLAIN)
+	_cont = Button.new()
+	_cont.text = tr("Continue")
+	_cont.pressed.connect(_begin_count.bind(results))
+	_footer.add_child(_cont)
+
+
+## The beat's Continue. The count's own button takes its place, so a double
+## click's second half lands on it: guarded as a skip is (QA on #70).
+func _begin_count(results: Array) -> void:
+	_guard_until = Time.get_ticks_msec() + SKIP_GUARD_MS
+	show_results(results)
+
+
+## A plate emptied for a new night: the last one's count, verdict and buttons gone.
+func _clear_plate() -> void:
 	_night_id += 1
 	Motion.finish(self)
 	_cells.clear()
@@ -124,52 +150,18 @@ func show_results(results: Array) -> void:
 	for child in _footer.get_children():
 		child.queue_free()
 
+
+func show_results(results: Array) -> void:
+	_clear_plate()
+
 	var ns = _state.player()
-	var national = null
-	var eu_result = null
-	var executive = null
-	for r in results:
-		if r["kind"] == "national":
-			national = r
-		elif r["kind"] == "eu_parliament":
-			eu_result = r
-		elif r["kind"] == "executive":
-			executive = r
-		elif r["kind"] == "termed_out":
-			# Read as the executive verdict for every purpose on this screen -- it
-			# ends the term exactly as a lost election does -- while staying a
-			# distinct kind everywhere else. See elections.gd.
-			executive = r
-
-	# Only an executive election can end the player's term. Where the executive
-	# is drawn from the chamber there is no separate executive result and the
-	# national one carries the verdict, exactly as before V1.1a.
-	var verdict_result = executive if executive != null else national
-	var defeated: bool = verdict_result != null and not verdict_result["incumbent_largest"] and not ns.in_government
-	# V1.6 audit, V1. A term limit ends the run whatever the vote said, so the
-	# defeat test above misses it -- the incumbent's PARTY may well have won.
-	var termed_out: bool = verdict_result != null and bool(verdict_result.get("termed_out", false))
-	if termed_out:
-		defeated = true
-
-	var snap: bool = national != null and bool(national.get("snap", false))
-
-	if executive != null:
-		_verdict_title = tr("TERM LIMIT") if termed_out else (tr("DEFEATED") if defeated else tr("RE-ELECTED"))
-	elif national != null:
-		# A legislative election under a separately elected executive does not
-		# end the term. It decides whether the player still commands a majority.
-		if ns.has_executive:
-			if ns.is_cohabitation:
-				_verdict_title = tr("COHABITATION")
-			elif snap:
-				_verdict_title = tr("SNAP ELECTION")
-			else:
-				_verdict_title = tr("NEW ASSEMBLY")
-		else:
-			_verdict_title = tr("DEFEATED") if defeated else tr("RE-ELECTED")
-	else:
-		_verdict_title = tr("EUROPEAN PARLIAMENT ELECTION")
+	var read: Dictionary = ElectionVerdict.read(results, ns)
+	var national = read["national"]
+	var eu_result = read["eu_result"]
+	var executive = read["executive"]
+	var defeated: bool = read["defeated"]
+	var termed_out: bool = read["termed_out"]
+	_verdict_title = read["title"]
 	_title.text = _verdict_title
 
 	_night = ElectionNight.new(_state, results)
@@ -199,17 +191,17 @@ func show_results(results: Array) -> void:
 		var gov := ""
 		if ns.is_cohabitation:
 			gov = tr("The new Assembly is against you. %s %s leads a government you did not choose.") % [
-				ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
+				ns.head_of_government_title, PanelKit.person(ns.pm_person_id, _loader.person_name(ns.pm_person_id))
 			]
 		elif ns.is_minority:
 			gov = tr("%s %s heads a minority government: %d of %d seats.") % [
-				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
+				ns.head_of_government_title, PanelKit.person(ns.pm_person_id, _loader.person_name(ns.pm_person_id)), ns.coalition_seats, ns.assembly_seats
 			]
 		else:
 			gov = tr("%s %s forms a government with %d of %d seats.") % [
-				ns.head_of_government_title, _loader.person_name(ns.pm_person_id), ns.coalition_seats, ns.assembly_seats
+				ns.head_of_government_title, PanelKit.person(ns.pm_person_id, _loader.person_name(ns.pm_person_id)), ns.coalition_seats, ns.assembly_seats
 			]
-		_verdict_nodes.append(PanelKit.line(_sections, gov, PanelKit.Tone.PLAIN))
+		_verdict_nodes.append(PanelKit.rich(_sections, gov, PanelKit.Tone.PLAIN))
 
 	# V1.6 audit, V2. The footer gets a control in BOTH branches. It used to build
 	# the button only on the winning side, and main.gd unpauses only on `dismissed`
@@ -332,11 +324,11 @@ func _gui_input(event: InputEvent) -> void:
 ## SKIP_GUARD_MS of a skip, so the second half of a double click on Skip count
 ## cannot dismiss a verdict that has been on screen for a tenth of a second.
 func _on_footer_pressed() -> void:
+	if Time.get_ticks_msec() < _guard_until:
+		return
 	if not _revealed:
 		skip()
 		_guard_until = Time.get_ticks_msec() + SKIP_GUARD_MS
-		return
-	if Time.get_ticks_msec() < _guard_until:
 		return
 	hide()
 	dismissed.emit()

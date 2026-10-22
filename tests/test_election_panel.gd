@@ -498,6 +498,11 @@ func _advance(clock: Node, months: int) -> void:
 				# drive that answered-and-unpaused over the visible result would
 				# run the clock straight past the vote the reading frames own.
 				if _main._election_panel.visible:
+					# V5.1-d1b2 (G4): election day stops on the polls closing first;
+					# the player the loop pretends to be presses its Continue, and
+					# the count and verdict the reading frames own come up.
+					if _collect_text(_main._election_panel).contains("POLLS CLOSED"):
+						_main._election_panel._cont.pressed.emit()
 					return
 				if Events.is_pending(ns) and not Events.pending_event(ns, _main._loader).choices.is_empty():
 					Events.choose(_main._state, _main._loader, String(Events.pending_event(ns, _main._loader).choices[0]["id"]))
@@ -515,6 +520,8 @@ func _collect_text(node) -> String:
 	var out := ""
 	if node is Label or node is Button:
 		out += node.text + "\n"
+	elif node is RichTextLabel:  # a name is a person link since V5.1-d1b2
+		out += node.get_parsed_text() + "\n"
 	for child in node.get_children():
 		out += _collect_text(child)
 	return out

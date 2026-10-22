@@ -132,6 +132,13 @@ static func line(parent: Control, text: String, tone := Tone.DIM) -> Label:
 	return label
 
 
+## V5.1-d1b2 (G9). A person's name, marked for a rich line: hovered it shows their
+## card, clicked it pins it (term_text.gd, person_tip.gd). A name with no person
+## behind it is just the name.
+static func person(person_id: String, name: String) -> String:
+	return name if person_id.is_empty() or name.is_empty() else "[p=%s]%s[/p]" % [person_id, name]  # i18n: ok markup
+
+
 ## V5.1-c. line()'s twin for prose that can mark a glossary term ([g=id]word[/g],
 ## docs/design/glossary-tooltips.md): a TermText, the one place a term is marked,
 ## wearing the same tone. The inbox's body and the event text use it in c; d moves
