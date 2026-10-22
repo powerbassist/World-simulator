@@ -179,6 +179,8 @@ tests=(
   tests/test_clock_doors.gd
   tests/test_consequence_card.gd
   tests/test_dead_ends.gd
+  tests/test_polls_closed.gd
+  tests/test_person_links.gd
   tests/test_glossary_tip.gd
   tests/test_outliner.gd
   tests/test_geography.gd

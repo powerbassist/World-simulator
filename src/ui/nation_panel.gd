@@ -175,7 +175,7 @@ func _refresh() -> void:
 	# and Spain as much as the twelve (the V4.11 review caught the first wording).
 	if Roster.grade(_loader, _nation_id) == "simulated":
 		PanelKit.line(_body, tr("Simulated nation — not playable"), PanelKit.Tone.DIM)
-	PanelKit.line(_body, tr("Leader: %s (%s)") % [_loader.person_name(n.leader_person_id), n.leader_title], PanelKit.Tone.PLAIN)
+	PanelKit.rich(_body, tr("Leader: %s (%s)") % [PanelKit.person(n.leader_person_id, _loader.person_name(n.leader_person_id)), n.leader_title], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)

@@ -1274,7 +1274,7 @@ func _finish_month(report: Dictionary) -> void:
 	var results: Array = report["election_results"]
 	if not results.is_empty() and _election_panel != null:
 		_clock.paused = true
-		_election_panel.show_results(results)
+		_election_panel.show_polls_closed(results)
 		_election_panel.show()
 
 	# B4: the opening card's countdown is rewritten (or taken) against the state
