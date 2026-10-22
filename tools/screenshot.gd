@@ -90,6 +90,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --interrupt --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --menu
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open glossary
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --box DEU
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --box FRA
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --verbs DEU
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --termlimit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
@@ -460,6 +463,10 @@ var _election := false
 var _polls_closed := false
 ## V5.1-d1b2 (G9): the head of government's card, pinned as a click on the name pins it.
 var _person_card := false
+## V5.1-d4, --box ID / --verbs ID: the country box a left click opens on ID, or the
+## verb menu a right click opens -- through the map's own signal / the box itself.
+var _box := ""
+var _verbs := ""
 ## V5.1-d1b2 (G13): the clicked nation's meeting verb pressed, so the row is booked.
 var _book_visit := false
 
@@ -751,6 +758,10 @@ func _init() -> void:
 			_polls_closed = true
 		elif args[i] == "--person-card":
 			_person_card = true
+		elif args[i] == "--box" and i + 1 < args.size():
+			_box = args[i + 1].to_upper()
+		elif args[i] == "--verbs" and i + 1 < args.size():
+			_verbs = args[i + 1].to_upper()
 		elif args[i] == "--book-visit":
 			_book_visit = true
 		elif args[i] == "--menu":
@@ -1094,6 +1105,14 @@ func _apply_view() -> void:
 				_main._nation_panel._on_act(action)
 				_main._nation_panel.mark_dirty()
 				break
+	if _box != "" or _verbs != "":
+		for child in _main._stack.get_children():
+			if child.has_method("show_verbs"):
+				Input.warp_mouse(Vector2(900, 380))
+				if _box != "":
+					_main._map_view.nation_clicked.emit(_box)
+				else:
+					child.show_verbs(_verbs)
 	if _person_card:
 		var pm := String(_main._state.player().pm_person_id)
 		_main._stack.tips.person_click(pm, Rect2(640, 220, 1, 16))

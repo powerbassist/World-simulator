@@ -30,6 +30,7 @@ const DFK = preload("res://src/sim/defence_constants.gd")
 const Num = preload("res://src/ui/num.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const ForeignReading = preload("res://src/ui/foreign_reading.gd")
 
 signal closed
 
@@ -185,11 +186,10 @@ func _refresh() -> void:
 	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)
 
-	# The player's own approval is polled elsewhere with noise applied (see
-	# polling_panel.gd) — this panel shows every nation including rivals the
-	# player has no poll for, so it reports the true figure plainly rather
-	# than reusing a noise model built around one nation's published polls.
-	PanelKit.line(_body, tr("Approval: %.0f%%") % ns.overall_approval_pct, PanelKit.Tone.PLAIN)
+	# V5.1-d4, the author's fog call ("Une fourchette + source"): another nation's
+	# approval is a range and where it comes from, never the true figure -- the
+	# panel used to print it plainly. The player's own is their poll.
+	PanelKit.line(_body, ForeignReading.approval_text(_state, _nation_id), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Term %d of %d months, next election %d/%d") % [
 		ns.months_in_term, ns.term_months, ns.next_election_month, ns.next_election_year
@@ -272,18 +272,40 @@ func _refresh_actions() -> void:
 		_actions.add_child(_action_row(action, offered, player_id))
 
 
+## V5.1-d4, the country box's right-click menu: the verbs this panel's rows offer
+## for `target`, without retargeting the file (review pass 1) -- Diplomacy's, with the partner's consent, or a meeting
+## the host refuses only until its free day; none already booked. The rows' rule,
+## read once, so the menu and the file never disagree.
+func offered_actions(target: String) -> Array:
+	var player_id: String = _state.player_nation_id
+	var available: Array = Diplomacy.available(_state, _loader.diplomatic_actions, player_id, target)
+	var out: Array = []
+	for action in _loader.diplomatic_actions:
+		if action.opens_meeting and not VisitBooking.booked(_state, action, target).is_empty():
+			continue
+		if (available.has(action) and _partner_would_accept(action, player_id, target)) 				or VisitBooking.held_only_by_host(_state, _loader, action, target):
+			out.append(action)
+	return out
+
+
+## A verb pressed from outside the file (the country box): the row's own press.
+func act(action) -> void:
+	_on_act(action)
+
+
 ## Whether the counterparty would sign, for an action that proposes an agreement.
 ## True for every action that does not, so the caller can treat it as one gate.
-func _partner_would_accept(action, player_id: String) -> bool:
+func _partner_would_accept(action, player_id: String, target := "") -> bool:
+	var partner := _nation_id if target.is_empty() else target
 	var terms: Dictionary = action.effects.get("agreement", {})
 	if String(terms.get("op", "")) == "enter":
-		return Diplomacy.would_accept_agreement(_state, player_id, _nation_id, terms)
+		return Diplomacy.would_accept_agreement(_state, player_id, partner, terms)
 
 	# V1.3g's gate, folded into the same one. Only "sign" is asked: abandoning is
 	# unilateral, and deploying happens under a pact already agreed to.
 	var pact: Dictionary = action.effects.get("pact", {})
 	if String(pact.get("op", "")) == "sign":
-		return ForeignPolicy.would_accept_pact(_state, player_id, _nation_id)
+		return ForeignPolicy.would_accept_pact(_state, player_id, partner)
 
 	return true
 
