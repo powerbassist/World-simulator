@@ -89,6 +89,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --event --event-answered
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --interrupt --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --menu
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open glossary
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --termlimit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy

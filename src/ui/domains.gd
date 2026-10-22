@@ -31,6 +31,7 @@ const TABLE := [
 	{"id": "opinion", "title": "Opinion", "icon": "campaign.svg", "tabs": ["society", "campaign"]},  # i18n: msgid title
 	{"id": "social", "title": "Social", "icon": "diversity_3.svg", "tabs": []},  # i18n: msgid title
 	{"id": "defence", "title": "Defence", "icon": "", "tabs": []},  # i18n: msgid title
+	{"id": "glossary", "title": "Glossary", "icon": "checklist.svg", "tabs": ["glossary"]},  # i18n: msgid title
 ]
 
 ## Windows that are scenes, not tabs: something that happens to the player and
