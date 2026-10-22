@@ -370,6 +370,7 @@ cursor; the name returns when the cursor leaves). The rest are parked:
 - **The shell's frame cost**, outside G2: +32 draw calls a frame, 0.2–0.3 ms on the no-map rows; boot's "enter" stage +~106 ms (the shell's `_ready`), the stage sum flat.
 - **Glossary tooltips, left for later:** the keyboard path (a `glossary_next` action; RichTextLabel has no per-tag focus) and the 309 `PanelKit.line()` sites go to V5.1d (the parent's call Q4); the six live values that need a context (a partner, a firm, a budget line, a tax, a portfolio, a bloc) and the rest of the closed table read nothing yet (Q2); P1's second half (every entry marked somewhere or in a see_also) waits for Content's markup step; N2 is enforced per block (3), not per paragraph (2); a long body clamps rather than scrolls (the longest locked plate is ~260 px); `TermText` passes the mouse (a card's body stays clickable), so an ancestor with `tooltip_text` would show its tip over a term -- none of c's sinks has one, d's must be checked; the event record's "what it meant" line is still a Label; the French glossary is parked.
 - **`tools/screenshot.gd --open summit` frames an empty summit window**; `--summit` stages one.
+- **QA's record on #54, routed to V5.1d by the parent:** the programme plate's "—", the history cursor drift, the Legislature window's scroll, and the Commit button's focus. The details are in QA's #54 verdict.
 
 ## Carried from V5.1-0d (2026-10-21)
 

@@ -163,9 +163,9 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			var index := i
 			button.pressed.connect(func():
+				# main.gd slides the inbox back once no decision holds the clock:
+				# a second one still holding keeps it out (QA on #54).
 				card_action.emit(id, index)
-				# Answered: the tab it slid over is the player's again.
-				slide_out()
 			)
 			answers.add_child(button)
 		column.add_child(answers)

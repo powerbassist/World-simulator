@@ -51,6 +51,9 @@ func _process(_delta: float) -> bool:
 	_check_holding_arrival_slides_in()
 	_check_a_note_does_not_slide_in()
 	_check_answer_slides_back()
+	_check_an_ordinary_hold_slides_in()
+	_check_answer_keeps_the_inbox_while_one_holds()
+	_check_space_waits_under_a_scene()
 	_finish()
 	return false
 
@@ -251,6 +254,82 @@ func _check_answer_slides_back() -> void:
 		if inbox.visible or not _main._windows.is_open("budget"):
 			_fail("answering did not slide the inbox back over the open tab")
 	_clear_interrupt()
+
+
+## The parent's ruling on #54: the author's call 4 is "a decision that holds
+## the clock", not only an interrupt. QA's smoke: `event ratings_letter` with the
+## budget open held the clock and the inbox stayed hidden -- 56 of the 102 events
+## hold at the default pause band.
+func _check_an_ordinary_hold_slides_in() -> void:
+	var clock: Node = _main.get_node("Clock")
+	_stage_with("budget", ["ratings_letter"])
+	if not clock.paused:
+		_fail("ratings_letter did not hold the clock at the default pause band")
+	if not _main._hud.inbox.is_slid():
+		_fail("an ordinary holding arrival over a tab did not slide the inbox in")
+	_clear_interrupt()
+
+
+## QA's record on #54: answering one decision slid the inbox back while a second
+## still held the clock. It stays until nothing holds.
+func _check_answer_keeps_the_inbox_while_one_holds() -> void:
+	var inbox = _main._hud.inbox
+	var cards: Dictionary = _stage_with("budget", ["blackout_night", "ratings_letter"])
+	_answer(String(cards.get("blackout_night", "")))
+	if not inbox.is_slid():
+		_fail("answering one decision slid the inbox away while another holds the clock")
+	_answer(String(cards.get("ratings_letter", "")))
+	if inbox.visible or not _main._windows.is_open("budget"):
+		_fail("answering the last holding decision did not slide the inbox back")
+	_clear_interrupt()
+
+
+## The parent's ruling on #54: the clock ran behind "RE-ELECTED" -- Space toggled
+## it under a modal scene. A scene owns the keyboard (c2.1's claim), Space too.
+func _check_space_waits_under_a_scene() -> void:
+	var clock: Node = _main.get_node("Clock")
+	# Pausing, not starting: a new game sits at a term start with no programme,
+	# where the Agenda guard refuses a start by hand whatever the stack says.
+	_main._windows.close_all()
+	clock.paused = false
+	_main._windows.open("summit")
+	_press(KEY_SPACE)
+	if clock.paused:
+		_fail("Space toggled the clock under a scene")
+	_main._windows.close("summit")
+	clock.paused = false
+
+
+## Events staged on the desk with `tab` open, through the month's arrival path
+## (no _enforce_interrupt); returns event id -> its row's id.
+func _stage_with(tab: String, event_ids: Array) -> Dictionary:
+	var Events := load("res://src/sim/events.gd")
+	var ns = _main._state.player()
+	_main._windows.close_all()
+	ns.event_queue.clear()
+	_main._unseen_events.clear()
+	_main._event_cards.clear()
+	_main._windows.open(tab)
+	var month: int = Events._absolute_month(int(_main._state.year), int(_main._state.month))
+	for event_id in event_ids:
+		Events.announce(ns, Events.event_by_id(_main._loader, String(event_id)), month,
+			Events.region_names(ns, _main._loader))
+	_main._card_events(_main._state.year, _main._state.month, {}, {})
+	var out := {}
+	for card in _main._event_cards:
+		out[String(_main._event_cards[card])] = String(card)
+	return out
+
+
+func _answer(card: String) -> void:
+	var inbox = _main._hud.inbox
+	if not inbox._cards.has(card):
+		_fail("no decision row %s to answer" % card)
+		return
+	for button in inbox._cards[card].find_children("*", "Button", true, false):
+		if button.text != "X":
+			button.pressed.emit()
+			return
 
 
 ## An interrupt staged on the desk with `tab` open; returns its row's id.

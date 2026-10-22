@@ -958,6 +958,8 @@ func _wire_hud() -> void:
 		_unseen_events.erase(event_id)
 		_hud.inbox.dismiss(id)
 		_resume_if_decision_settled()
+		# Nothing holds now: the tab is the player's again.
+		if not _decision_holds_clock(): _hud.inbox.slide_out()
 		_update_top_bar()
 		_windows.mark_all_dirty()
 	)
@@ -1067,6 +1069,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			if _pause_menu != null:
 				_open_pause_menu()
 		KEY_SPACE:
+			# A scene owns the keyboard (QA on #54: the clock ran behind "RE-ELECTED").
+			if not navigable: return
 			_toggle_pause_by_hand()
 			_update_top_bar()
 		KEY_1, KEY_2, KEY_3:
@@ -1487,9 +1491,7 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 			sting_severity = maxi(sting_severity, severity)
 		var holds := MessageSettings.allows(_messages, ev.category, severity, "pause")
 		if holds:
-			_paused_for_decision = true
-			_clock.paused = true
-			_hud.clock_cluster.refresh(_clock)
+			_hold_for_decision()
 		_unseen_events[event_id] = holds
 		if MessageSettings.allows(_messages, ev.category, severity, "popup"):
 			_push_decision_card(ev, entry)
@@ -1534,9 +1536,7 @@ func _guard_lapses(ns) -> void:
 		if ev == null:
 			continue
 		_unseen_events[event_id] = true
-		_paused_for_decision = true
-		_clock.paused = true
-		_hud.clock_cluster.refresh(_clock)
+		_hold_for_decision()
 		if not _event_cards.values().has(event_id):
 			_push_decision_card(ev, entry)
 
@@ -1921,16 +1921,22 @@ func _enforce_interrupt() -> void:
 		return
 	if not Events.interrupt_pending(ns):
 		return
-	_clock.paused = true
 	# The interrupt pause IS a decision pause: raising the flag here (the load
 	# path and a month's re-pause both reach this) is what lets the answer's
 	# _resume_if_decision_settled() release it; without it a re-raised interrupt
 	# stayed paused after being answered.
+	_hold_for_decision()
+
+
+## Every decision that holds the clock -- an arrival the pause band stops, the
+## lapse guard's last month, an interrupt -- raises the decision pause and slides
+## the inbox, where it is answered, over an open tab (the author's call 4 is "a
+## decision that holds the clock", not only an interrupt: QA on #54). Not behind
+## a scene or a system screen; _on_stack_top_changed() slides it when that goes.
+func _hold_for_decision() -> void:
 	_paused_for_decision = true
-	# V5.1-c3.2 (the author's call 4): the inbox, where the decision is
-	# answered, slides over an open tab -- not behind a scene or a system screen,
-	# and _on_stack_top_changed() slides it in when that screen goes.
-	if _stack.top() < ScreenStack.SCENE:
+	_clock.paused = true
+	if _stack != null and _stack.top() < ScreenStack.SCENE:
 		_hud.inbox.slide_in()
 	_hud.clock_cluster.refresh(_clock)
 
@@ -1939,8 +1945,8 @@ func _enforce_interrupt() -> void:
 ## interrupt still on the desk, so the player now sees where it is answered -- a
 ## held clock with nothing on screen saying why is the failure this prevents.
 func _on_stack_top_changed(from: int, to: int) -> void:
-	if from >= ScreenStack.SCENE and to < ScreenStack.SCENE:
-		_enforce_interrupt()
+	if from >= ScreenStack.SCENE and to < ScreenStack.SCENE and _decision_holds_clock():
+		_hold_for_decision()
 
 
 ## V4.1, the term-start enforcement -- the arrival-pause precedent pointed at
