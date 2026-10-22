@@ -40,3 +40,5 @@ as a path in backticks instead.
 `python tools/check_vault.py` reports unresolved wikilinks, docs the
 [[index]] does not reach, orphans and missing frontmatter, from the tracked
 files alone (what a fresh clone sees).
+
+It also checks the **generated diagrams** (`tools/vault_diagrams.py`): [[tick-order]] is drawn from `STEPS` in `src/sim/world_month.gd` and the layers on [[data-architecture]] from a curated module list, each between `<!-- vault-diagram:NAME begin/end -->` markers. The check fails when a diagram no longer matches the code, when a new tick step has no domain in the generator's `GROUPS` table, when a drawn module is renamed, and when a file in `src/sim` or `src/core` loads `src/ui` (AGENTS.md rule 2). After adding a system to `STEPS`, add its step to `GROUPS` and run `python tools/vault_diagrams.py --write`. `python tools/check_vault.py --diagrams` runs only this check.

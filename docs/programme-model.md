@@ -33,7 +33,7 @@ guarantee) · the credit site in `src/sim/opinion.gd` · this file (the argument
 
 Nothing tells the player what they are for. Every verb this game ships is reactive —
 a budget to set, a law to pick from a menu, a crisis that arrives as a card — and the
-resting screen probe (V2.1c, `tools/nav_probe.gd`) measured the consequence: 42 of 74
+resting screen probe (V2.1c, `tools/nav_probe.gd`, removed in V5.1-c2.3a+b; its finding stands) measured the consequence: 42 of 74
 decision months said nothing at all to a president who never touched a card. The only
 forward-looking commitment anywhere in the project is [[pledge-model]]'s campaign
 promise — one file, made in a run-up window, priced on `bloc_offset` — and it is a

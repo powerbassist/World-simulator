@@ -19,6 +19,9 @@ by the measurement that answered it, sections 8–12 are V2.1b's, and sections
 
 Related: [[v2]] · [[engine-decision]]
 
+> [!warning] Superseded in V5.1-c: the shell sections describe U5a's floating windows
+> The panel kit, the registry and the fold contract stand. The **floating windows, the bottom action bar and the card column do not exist any more**: `window_frame.gd`, `action_bar.gd`, `message_stack.gd` and `minimap.gd` were deleted in V5.1-c (`be8a9ac5`, `7667b1a2`, `ae802108`). Where a section below names one of them it is a dated finding, not a description of the game. Section 25 at the end of this page describes the shell as it is, with the code lines.
+
 ## 1. Why a system rather than another round of fixes
 
 `src/ui/` is **41 `.gd` files and 11 701 lines**, of which **19 are `*_panel.gd`**
@@ -231,8 +234,8 @@ Monotone in the width, every height an exact multiple of its own line height.
 **So the rule is one sentence: impose a width, let a frame pass, then read.**
 Which is what a multi-frame harness does anyway — `test_nation_panel.gd` runs two
 frames and imposes no width, and that is the whole of why it could not see one.
-`tests/test_panel_kit.gd` and `tests/test_window_frame.gd` are both staged around
-it. What that file recorded stands as a description of *itself*; it is not a
+`tests/test_panel_kit.gd` and `tests/test_window_frame.gd` (removed with the floating
+window, V5.1-c2.2) were both staged around it. What that file recorded stands as a description of *itself*; it is not a
 property of the engine.
 
 ### The contract is measured before it is enforced
@@ -510,10 +513,9 @@ rule** — so `tests/test_ui_theme.gd` is untouched.
 
 ## 15. THE RESTING SCREEN, MEASURED — and it ships one mark and no plate
 
-`tools/nav_probe.gd` ran the real game for fourteen years with **nothing ever opened**,
+`tools/nav_probe.gd` (removed in V5.1-c2.3a+b; its finding stands) ran the real game for fourteen years with **nothing ever opened**,
 counting months in which a decision was in front of the player against months in which
-anything on screen said so. The message column is the only route a pending thing has
-ever had: `MAX_CARDS` is 6, the **oldest unprotected card** is dropped (a card is protected when it carries answer buttons or was pushed with `protect`, as the term-start programme card is; the oldest of all goes only when every card is protected), the player can dismiss any of
+anything on screen said so. The message column (since V5.1-c3.1 the inbox, §25) was the only route a pending thing had: `MAX_CARDS` is 6, the **oldest unprotected card** is dropped (a card is protected when it carries answer buttons or was pushed with `protect`, as the term-start programme card is; the oldest of all goes only when every card is protected), the player can dismiss any of
 them, and nothing is ever re-pushed.
 
 | pending | months | unseen, never touching a card | unseen, dismissing each card once read |
@@ -1146,3 +1148,39 @@ baked in, each bed twice so the seam is inside the file) were sent for listening
 **Refused:** voice, licensed music, a composed score (the tier's refusal); a click
 on every button; a volume ladder in settings (two switches are every level the set
 needs today); per-category sting toggles beyond the message bands that already exist.
+
+## 25. The shell today (V5.1-c): a docked workspace, a sidebar, a screen stack
+
+Sections 1 to 24 describe the panel system as it was built, and each is a dated finding. **This section is the one that describes the shell the game ships now.** V5.1-c replaced U5a's floating windows, its bottom action bar and its card column in four steps (`be8a9ac5` the docked workspace, `7667b1a2` the title bar and the sidebar, `ae802108` the inbox, plus the screen stack before them). The panel kit (`panel_kit.gd`), the registry and the fold contract of sections 1 to 12 are untouched: a panel was not edited to move into the dock, which is the point of the design.
+
+**The layers, back to front**, as `main.gd` adds them at `src/ui/main.gd:255-295` (and the dev console above them, `main.gd:71`):
+
+| # | Node | File | Job |
+|---|---|---|---|
+| 1 | `MapView`, full rect | `map_view.gd` | the world; everything else draws over it |
+| 2 | `WindowManager` | `window_manager.gd` | the workspace: one tab open at a time, docked left |
+| 3 | `Hud` | `hud.gd` | the chrome: title bar, sidebar, figure strip, legend, inbox, ribbon, portrait card, clock |
+| 4 | `ScreenStack` | `screen_stack.gd` | what owns the screen above those: scenes and system screens, and the glossary tooltips as its last child |
+
+**The workspace** (`window_manager.gd:1-13`). One tab is open at a time, under its domain's title and beside that domain's other tabs; back and forward walk the player's own path (`HISTORY_DEPTH` 20, `window_manager.gd:49`). The floating window's drag, pin and cascade are gone. The dock sits at `DOCK_LEFT` (the sidebar's right edge), is `DOCK_WIDTH` 1240 wide at the 1920 x 1080 reference and sits between the title bar plus figure strip and the day ribbon (`window_manager.gd:42-45`). The public calls are the ones the U-era code already made (`register`, `open`, `close`, `toggle`, `is_open`, `frame`, `panel_ids`, `panels`, `mark_all_dirty`, `close_all`), so no panel changed; `frame(id)` now returns the tab's page, `tab_page.gd`, which took over what `window_frame.gd` did for the scroll and the fold mark (`tab_page.gd:1-12`). `main.gd` registers 22 panels (`grep -c "_windows.register(" src/ui/main.gd`), each **before** its `setup()`, because `register()` is what puts the panel in the tree.
+
+**Domains** (`src/ui/domains.gd:20`). Which tab sits under which heading is one table, `TABLE`, in the sidebar's order: 21 tabs in 13 rows, two of them (Social, Defence) empty and hidden until V5.3 and V6 register a tab under them; the summit is the one scene (`SCENES`, `domains.gd:39`), in no domain. A window in no row becomes its own one-tab domain, so a surface added without a row stays reachable. Adding a surface is one `register()` call plus one row there.
+
+**The sidebar** (`sidebar.gd:1-14`) replaces the action bar: the portrait card, the Inbox and the Agenda, then the domains filtered by what is registered. It proposes and never commands: an entry emits `navigate` and `main.gd` decides, refusing under a scene. **The title bar** (`title_bar.gd:1-12`) holds back and forward, where the player is, why the clock is held, the date and speeds, save and menu. **The figure strip** is still `top_bar.gd`, a host over `strip_readings.gd` (section 19).
+
+**The inbox** (`inbox.gd:1-24`) replaces the card column and `message_stack.gd`: the same calls (`push`, `set_body`, `dismiss`, `card_count`, `clear`), three lanes (Decisions, Requests, Notes), `NOTES_MAX` 40 notes, and a decision is never evicted, because an evicted question read as dismissed would restart a held clock. Section 20's `MAX_CARDS` of six is the old column's bound.
+
+**The screen stack** (`screen_stack.gd:1-22, 35-40`) answers "what is on top" in one place. Ranks, lowest first: `MAP` -1, `WORKSPACE` 0, `INBOX` 1, `PLACEMENT` 2, `SCENE` 3, `SYSTEM` 4. The top is the highest rank on screen, not the last thing shown; visibility is the one writer; `accepts_hotkeys()` (`screen_stack.gd:174`) is what the panel hotkeys ask. A modal is `_stack.add(layer, panel, dim, cancel)` (`screen_stack.gd:91`).
+
+**What the earlier sections name that is gone**, so a reader meeting the path does not look for it:
+
+| Path | Where it appears above | Removed |
+|---|---|---|
+| `src/ui/window_frame.gd` | sections 6, 7, 8 and 19 (its `fit_within`, `TOP_MARGIN`, re-fit) | `be8a9ac5`, V5.1-c2.2 |
+| `tests/test_window_frame.gd` | section 5 | `be8a9ac5` |
+| `src/ui/action_bar.gd` and `_build_action_bar()` | sections 4 and 13 | `7667b1a2`, V5.1-c2.3a+b |
+| `src/ui/message_stack.gd` and the card column | section 15 and [[events-model]], [[calendar-model]] | `ae802108`, V5.1-c3.1 |
+| `src/ui/minimap.gd`, `tests/test_minimap.gd` | [[map-platform-model]] | `7667b1a2` |
+| `tools/nav_probe.gd` | section 15 (the resting-screen measurement) | `7667b1a2` |
+
+The "14 registered windows" and "41 `.gd` files" of section 1 were true of V2.1a and are not today's numbers.

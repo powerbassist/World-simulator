@@ -20,6 +20,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 
 - [[engine-decision]] — Godot 4 + GDScript, and why not Unity or Unreal
 - [[data-architecture]] — static content vs live state, and why there is no database
+- [[tick-order]] — the month's steps in the one order the game runs them, and the data → core → sim → ui layers drawn (generated, checked)
 - [[economy-model]] — the economy and budget formulas, and why nothing diverges
 - [[cycle-model]] — the business cycle: a deterministic shock, measured off thirty-four years of growth
 - [[inflation-model]] — inflation as a stock on the unemployment gap, and the thirteenth issue
@@ -96,7 +97,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[v2]] — the world becomes visible and located: geography, faces, a calendar that costs something, motion
 - [[v3]] — Europe, whole: the map as a platform, the alliance system, the EU-27 roster, roads and climate. Signed 2026-09-06; V3.0–V3.7 built, V3.7's portrait generation left incomplete by the author's call (2026-09-14)
 - [[v4]] — the world wants things: agency settled, a player agenda, characters, events at scale, industry, the reading surface. Signed 2026-09-13; closed 2026-10-18, twelve blocks merged
-- [[v5]] — the world talks back: the audit, a new shell and charter, people who talk, decisions in real units, the real network. Signed 2026-10-19; V5.0 next
+- [[v5]] — the world talks back: the audit, a new shell and charter, people who talk, decisions in real units, the real network. Signed 2026-10-19; V5.0 closed 2026-10-20, V5.1 (the shell) in progress, each block's state in [[tiers/v5]]
 - [[v5-reflection]] — what V4 left and what the author asked for: load-bearing debts, design tensions, three candidate themes with verdicts
 - [[v5.2-spec]] — V5.2's design: every audience, lever and shadow decision with its trade-off, the dominance matrix, the conflicts with earlier rulings, a pre-mortem
 - [[bands-v5.2]] — V5.2's player-outcome bands, declared before the build, each with its probe and what a failure looks like

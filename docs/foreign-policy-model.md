@@ -18,7 +18,7 @@ Files: `src/sim/foreign_policy.gd` (the rules) · `src/sim/foreign_policy_consta
 > §7 is V1.3f: the agenda. A nation choosing a target and a verb unprompted, which needs a scheduler, and a scheduler is state. That is the entire reason `SAVE_VERSION` moves to 12.
 
 > [!important] Interest is material. Ideology is one weak term.
-> This is the session's central call and everything below follows from it. `tools/bloc_probe.gd` table (d) prints the eight non-player members' `coalition_position` and they are **clustered** — economic spans −0.54..+0.33, social −0.50..+0.63. An interest function resting on that is [[trade-model|the `GRAVITY_EXPONENT = 1.0` finding]] in a new place: nine vectors that are arithmetically one vector. So the spine of every function here is the directed trade weight, which spans 0.007 to 0.421 with 13.1× asymmetries, plus the pair's own history, plus each nation's own books.
+> This is the session's central call and everything below follows from it. `tools/bloc_probe.gd` (now `tools/orgs_probe.gd`, V3.2a `9a8994f2`) table (d) prints the eight non-player members' `coalition_position` and they are **clustered** — economic spans −0.54..+0.33, social −0.50..+0.63. An interest function resting on that is [[trade-model|the `GRAVITY_EXPONENT = 1.0` finding]] in a new place: nine vectors that are arithmetically one vector. So the spine of every function here is the directed trade weight, which spans 0.007 to 0.421 with 13.1× asymmetries, plus the pair's own history, plus each nation's own books.
 
 ## The session that pays four debts at once
 

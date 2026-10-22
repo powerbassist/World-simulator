@@ -263,13 +263,13 @@ whose *worst* relative slack is largest.
 Stable under refinement (both slacks are continuous in `d`), stable under widening (a
 candidate outside the region has negative slack), and it degrades correctly: where one
 criterion is far looser than the other it returns the edge of the tighter one, which is
-what a bound should do. **`CAMPAIGN_WINDOW_MONTHS` = 8.**
+what a bound should do. **`CAMPAIGN_WINDOW_MONTHS` = 8** at V1.7a. *Superseded: V2.6b2 (`3f93e9c5`) moved it to **10** when the anchor moved before the window; see §18 and `src/sim/campaign_constants.gd:90`.*
 
 ## 9. The constants
 
 | constant | value | how it was set |
 |---|---|---|
-| `CAMPAIGN_WINDOW_MONTHS` | 8 | Two-sided; **maximin slack** over the feasible set, §8 |
+| `CAMPAIGN_WINDOW_MONTHS` | 8 (V1.7a; **10 since V2.6b2**, §18) | Two-sided; **maximin slack** over the feasible set, §8 |
 | `MOBILISATION_MAX` | 0.90 | Guard rail, declared not a selector. Reachable peak 0.6800, slack 0.2200 |
 | `MAX_MOBILISATION_PER_MONTH` | 0.10 | Content ceiling; largest authored rate 0.055 |
 | `MAX_CAMPAIGN_COST_PCT_GDP` | 0.20 | Content ceiling; dearest allowed pair 0.1750 against 0.2039 of headroom |
@@ -392,7 +392,7 @@ this harness is exercised at something a president would plausibly do.
 ## 15. Where it sits
 
 One window, `campaign`, in the State cluster beside the Diary — one
-`_windows.register()` and one line in `main.gd`'s `_build_action_bar()`.
+`_windows.register()` and one line in `main.gd`'s `_build_action_bar()` (since V5.1-c2.3 a tab in `domains.gd`'s `TABLE`, under Opinion).
 
 **Not rows on the Polling panel**, which is the closer thematic fit and the wrong one:
 that panel's contract is that every figure on it has been through `poll_noise.gd`, and a
@@ -470,7 +470,7 @@ turns the tour into an allocation.
 
 That counter is a **new accumulator with its own accrual and decay**, so it bumps
 `SAVE_VERSION`, needs one constant with a band, and **re-baselines this page's own
-harness** — §8's `CAMPAIGN_WINDOW_MONTHS = 8` was chosen by maximin slack over a
+harness** — §8's `CAMPAIGN_WINDOW_MONTHS = 8` (V1.7a's value; V2.6b2 shipped 10) was chosen by maximin slack over a
 feasible set of [7, 10], and total reach falling moves that set. A machine, and a
 different conservation law from unrest siting's, which is the axis V2.6 split on.
 
