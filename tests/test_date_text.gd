@@ -34,8 +34,23 @@ func _init() -> void:
 	if DateText.month(0) != "JAN" or DateText.month(13) != "DEC":
 		_fail("a month outside 1-12 should clamp")
 	_check_no_private_month_tables()
+	_check_local_stamp()
 	_finish()
 	quit(1 if not _failures.is_empty() else 0)
+
+
+## V5.1-c4.1 (QA #48): the save list printed a save's time in UTC -- 20:35 for a
+## save made at 22:35 in Paris. The stamp is local: UTC plus the bias in minutes,
+## rolling the date when the hour does.
+func _check_local_stamp() -> void:
+	var at := int(Time.get_unix_time_from_datetime_string("2026-10-21T20:35:00"))
+	if DateText.local_stamp(at, 120) != "2026-10-21 22:35":
+		_fail("20:35 UTC at +120 min should read 2026-10-21 22:35, got %s" % DateText.local_stamp(at, 120))
+	var late := int(Time.get_unix_time_from_datetime_string("2026-10-21T23:30:00"))
+	if DateText.local_stamp(late, 120) != "2026-10-22 01:30":
+		_fail("23:30 UTC at +120 min should roll to 2026-10-22 01:30, got %s" % DateText.local_stamp(late, 120))
+	if DateText.local_stamp(at, -300) != "2026-10-21 15:35":
+		_fail("20:35 UTC at -300 min should read 2026-10-21 15:35, got %s" % DateText.local_stamp(at, -300))
 
 
 ## The English table lives in date_text.gd (and clock_cluster.gd aliases it for callers

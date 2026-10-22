@@ -21,6 +21,7 @@ signal closed
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 var _name_field: LineEdit
 var _status: Label
@@ -153,9 +154,10 @@ func _build_slot_row(slot: String) -> Control:
 	if mtime <= 0:
 		stamp.text = "--"
 	else:
-		var dt := Time.get_datetime_dict_from_unix_time(mtime)
-		stamp.text = "%04d-%02d-%02d %02d:%02d" % [
-			dt.year, dt.month, dt.day, dt.hour, dt.minute]
+		# Local time (QA #48: UTC read two hours early in Paris). Today's bias, so
+		# a save from the other side of a summer-time change reads an hour off --
+		# the OS gives the current offset, not the one the file was written under.
+		stamp.text = DateText.local_stamp(mtime, int(Time.get_time_zone_from_system()["bias"]))
 	row.add_child(stamp)
 
 	var load_btn := Button.new()
