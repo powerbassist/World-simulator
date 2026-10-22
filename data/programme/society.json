@@ -4,7 +4,7 @@
     {
       "id": "prog_the_hospital_year",
       "name": "The Hospital Year",
-      "summary": "Eight tenths of GDP onto the health line the day the programme is chosen, and the term's verdict taken from the only poll that prices it. A hospital service is judged in confidence and in waiting lists; the register keeps the confidence.",
+      "summary": "Eight tenths of GDP onto the health line the day the programme is chosen, and the term's verdict taken from the only [g=poll]poll[/g] that prices it. A hospital service is judged in confidence and in waiting lists; the register keeps the confidence.",
       "group": "society",
       "activation": "player",
       "immediate": {
@@ -38,7 +38,7 @@
     {
       "id": "prog_the_classroom_ledger",
       "name": "The Classroom Ledger",
-      "summary": "The schools line raised at choice, the judgement due within the year -- education is the spending the country audits fastest. Miss the clock and the students' bloc keeps the score.",
+      "summary": "The schools line raised at choice, the judgement due within the year -- education is the [g=spending]spending[/g] the country audits fastest. Miss the clock and the students' bloc keeps the score.",
       "group": "society",
       "activation": "player",
       "immediate": {

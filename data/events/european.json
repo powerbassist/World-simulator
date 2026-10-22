@@ -663,7 +663,7 @@
         {
           "id": "defy_the_letter",
           "label": "Defy the letter",
-          "summary": "The bill stands, the infringement meter starts and the flag has a good month in the polls it does well in. The meter is not political and does not do months.",
+          "summary": "The bill stands, the infringement meter starts and the flag has a good month in the [g=poll]polls[/g] it does well in. The meter is not political and does not do months.",
           "effects": {
             "bloc_offset": {
               "rural": 0.03,

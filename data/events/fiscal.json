@@ -709,7 +709,7 @@
         {
           "id": "rebuild_the_levy",
           "label": "Raise the income rate",
-          "summary": "The income tax rate goes up four-tenths of a point to cover what the repeal left open. The repeal's majority is asked to explain why the government is now collecting money to fix the hole it voted to dig.",
+          "summary": "The income [g=tax_rate]tax rate[/g] goes up four-tenths of a point to cover what the repeal left open. The repeal's majority is asked to explain why the government is now collecting money to fix the hole it voted to dig.",
           "effects": {
             "tax_rates_pct": {
               "income": 0.4
@@ -867,7 +867,7 @@
         {
           "id": "raise",
           "label": "Raise the rate instead",
-          "summary": "Consumption carries it. Quieter than a spending cut and it lands on everybody.",
+          "summary": "Consumption carries it. Quieter than a [g=spending]spending[/g] cut and it lands on everybody.",
           "effects": {
             "tax_rates_pct": {
               "vat": 2.0
