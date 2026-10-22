@@ -24,6 +24,8 @@ fails on, and why each exists:
 * The roadmap's block table and the frontmatter `state:` map disagree: a block with
   no state, or a state for a block the table does not have. The states are the one
   thing a person keeps true (closing sessions update them at each block close).
+* The hand-written counts (panels registered, tabs, rows) in docs/shell.canvas and
+  docs/panel-system.md section 25 differ from domains.gd and main.gd.
 * A tab in src/ui/domains.gd's TABLE that main.gd never registers as a window, or a
   canvas file node / backticked path in docs/shell.canvas that is not on disk.
 * A module the layers diagram names is not on disk (a renamed file cannot stay
@@ -270,6 +272,31 @@ def render_domains(rows, scenes):
     return "\n".join(out)
 
 
+# Counts that prose states by hand. They are the cheapest thing to forget when a tab is
+# added, so the check compares each with what domains.gd and main.gd say now.
+COUNT_SITES = [
+    ("docs/shell.canvas", r"(\d+) panels registered", "panels"),
+    ("docs/shell.canvas", r"(\d+) tabs in \d+ rows", "tabs"),
+    ("docs/shell.canvas", r"\d+ tabs in (\d+) rows", "rows"),
+    ("docs/panel-system.md", r"registers (\d+) panels", "panels"),
+    ("docs/panel-system.md", r"(\d+) tabs in \d+ rows", "tabs"),
+    ("docs/panel-system.md", r"\d+ tabs in (\d+) rows", "rows"),
+]
+
+
+def count_problems(rows):
+    want = {"panels": len(_registered()), "tabs": sum(len(ts) for _, _, ts in rows),
+            "rows": len(rows)}
+    out = []
+    for rel, pat, key in COUNT_SITES:
+        found = re.findall(pat, read(rel))
+        if not found:
+            out.append(f"{rel}: no longer says its {key} count (pattern {pat!r})")
+        out += [f"{rel}: says {n} {key}, domains.gd and main.gd say {want[key]}"
+                for n in found if int(n) != want[key]]
+    return out
+
+
 def canvas_problems():
     import json
     try:
@@ -336,7 +363,7 @@ def main(argv):
     steps = parse_steps()
     roadmap, domains = parse_roadmap(), parse_domains()
     problems = (group_problems(steps) + layer_problems() + roadmap_problems(*roadmap)
-                + domain_problems(*domains) + canvas_problems())
+                + domain_problems(*domains) + count_problems(domains[0]) + canvas_problems())
     if problems:
         print("vault diagrams: " + str(len(problems)) + " problem(s)")
         for p in problems:
