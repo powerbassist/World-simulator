@@ -930,8 +930,6 @@ func _apply_view() -> void:
 		_fill_the_diary()
 	if _summit:
 		_stage_a_summit()
-	if _interrupt:
-		_stage_an_interrupt()
 	if _subsidy:
 		_subsidise_a_firm()
 	if _regulate:
@@ -1031,6 +1029,10 @@ func _apply_view() -> void:
 	# After --open: the domain's first tab replaces whatever --open opened.
 	if _domain != "":
 		_main._hud.sidebar.navigate.emit(_domain)
+	# After the domain: a decision arrives over a tab already open, as in play --
+	# staged before it, the tab's opening put the slid inbox away again.
+	if _interrupt:
+		_stage_an_interrupt()
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		# WITH the state and the viewer, exactly as main.gd:733 calls it. Without
@@ -2230,10 +2232,12 @@ func _stage_a_summit() -> void:
 
 
 ## V2.4b. The one crisis that stops the clock: announced through the real
-## register, then the same enforce call the load path and the month tick use,
-## so the frame shows the Dispatches window OPEN and the clock PAUSED -- a
-## capture of a pending event with the clock still running would prove the
-## opposite of the flag's name.
+## register, then the month's own card path and the same enforce call the load
+## path and the month tick use, so the frame shows the decision in the inbox --
+## slid over the open tab since V5.1-c -- and the clock PAUSED. A capture of a
+## pending event with the clock still running would prove the opposite of the
+## flag's name. (Before V5.1-c's frame pass the card path was missing: the desk
+## held the crisis and no card said so.)
 func _stage_an_interrupt() -> void:
 	var state = _main._state
 	var loader = _main._loader
@@ -2247,9 +2251,14 @@ func _stage_an_interrupt() -> void:
 		return
 	# The announce signature grew the month and the name map at V3.5; blackout_night
 	# is non-sited, so both are inert -- filled exactly as tick_month fills them.
+	var desk_before := {}
+	for entry in ns.event_queue:
+		desk_before[String(entry.get("event_id", ""))] = true
 	Events.announce(ns, crisis, Events._absolute_month(int(state.year), int(state.month)),
 		Events.region_names(ns, loader))
+	_main._card_events(int(state.year), int(state.month), desk_before, Budget.snapshot(state))
 	_main._enforce_interrupt()
+	_main._update_top_bar()
 	_main._windows.mark_all_dirty()
 
 
