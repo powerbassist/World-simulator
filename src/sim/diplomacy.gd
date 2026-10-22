@@ -197,7 +197,7 @@ static func _settle(state, loader) -> void:
 	# docs/trade-model.md records the trade probe catching in the impulse.
 	#
 	# After the cooldown countdown, because execute() sets a cooldown and running
-	# the agenda first would have this same loop decrement it immediately -- an AI
+	# the agenda first would have Cooldowns.tick() decrement it immediately -- an AI
 	# verb locked for eleven months where the player's identical verb is locked for
 	# twelve. A silent one-month asymmetry between the player and the nine, in a
 	# session whose whole subject is that they use the same verbs -- which is why
@@ -428,9 +428,9 @@ static func available(state, all_actions: Array, actor_id: String, target_id: St
 	# answers "no" to every key, so the result is the same list.
 	var cooling: bool = not ns.diplo_cooldown_months.is_empty()
 	# Each field read once per call, however many verbs name it (met_recently gates
-	# five): since G2b this loop runs on the calling thread for every target, and
-	# the tick probe priced it at +6.7 ms a month. _read_field() only reads, so a
-	# memo for one (actor, target) returns the list it always did.
+	# five): since G2b this loop runs on the calling thread for every target, which
+	# #44's tick A/B priced at +6.7 ms a month before this memo. _read_field() only
+	# reads, so a memo for one (actor, target) returns the list it always did.
 	var reads: Dictionary = {}
 	for action in all_actions:
 		if action.id == "":

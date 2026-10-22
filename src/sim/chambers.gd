@@ -26,7 +26,7 @@ extends RefCounted
 ## ============================================================================
 ## NOT A SECOND ELECTION, AND THE NATION FILES ARE WHY
 ## ============================================================================
-## NOT ONE of V1.1e's ten upper houses but Italy's is elected nationally. France's Senat
+## NOT ONE of V1.1e's upper houses but Italy's is elected nationally. France's Senat
 ## is returned by about 162 000 grands electeurs who are overwhelmingly councillors of
 ## small communes; Germany's Bundesrat is delegated by Land governments; the Lords are
 ## appointed; the Dutch Eerste Kamer is chosen by provincial councils; Spain's Senado
