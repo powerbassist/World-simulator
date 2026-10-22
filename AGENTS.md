@@ -296,11 +296,18 @@ headless from a fresh clone — never `load()` an icon path.
 
 **Text a player reads goes through `tr("English")`** (V5.1b, [docs/localisation.md](docs/localisation.md)): the English is the msgid, French is `data/i18n/fr/ui.json`, a row of `data/` is shown through a `Strings` row accessor (`row_name`, `row_summary`, `choice_label`, `record_event_name`, `noun`, ... over `Strings.row(kind, id, field, english)`; `tests/test_i18n_rows_lint.gd` fails a raw read of a row's English) and an id made into a word through `Labels` (never `id.capitalize()`). The caller wraps, helpers never translate, a `static func` uses `Strings.t()`, and never use a `tr()` result as a key or compare shown text to an English literal. `tests/test_i18n_lint.gd` fails a bare literal at a text sink or anywhere it reads as prose (a const table of prose carries `# i18n: msgid`) and a ternary of short fragments inside a format argument -- a sentence is whole, a count picks its form with `tr_n` / `Strings.tn`; a figure with decimals goes through `Num.f` / `Num.fs` (the language's decimal separator, never a raw `%.2f`) and a date through `DateText`; `tests/test_i18n_fit.gd` opens every window under +35% pseudolocalization. Map place names are the one exception to the body width: `UiTheme.map_face()` at `UiTheme.SIZE_MAP`, the narrow end of Archivo's width axis, because the label packer drops a name that does not fit.
 
-The shell is: `map_view` full-rect at the back, `window_manager` over it, `hud`
-on top. There is no tab rail. A panel is registered with
-`_windows.register(id, title, panel)` **before** its `setup()` is called, because
-`register()` is what puts it in the tree. Adding a surface is that one call plus
-one line in `main.gd`'s `_build_action_bar()`.
+The shell is (V5.1-c, the BUREAU board): `map_view` full-rect at the back;
+`window_manager` over it, a workspace docked left that shows one tab at a time
+under its domain (`src/ui/domains.gd` is the table of domains and their tabs;
+back and forward walk the player's path); `hud` on top -- the title bar, the
+sidebar, the figure strip (it folds its lowest-priority figures into "+N" when
+its slot is short), the legend, the message column and the day ribbon; and
+`screen_stack` above them, which ranks what owns the screen (workspace, inbox,
+placement, scene, system) for the keys, Escape and the game's own arrivals. A
+panel is registered with `_windows.register(id, title, panel)` **before** its
+`setup()` is called, because `register()` is what puts it in the tree. Adding a
+surface is that one call plus its row in `domains.gd`; a modal is
+`_stack.add(layer, panel, dim, cancel)`.
 
 
 ## Workflow

@@ -59,6 +59,10 @@ var _figures: HBoxContainer
 ## The gap between the figures as last set, so a day that changes nothing does not
 ## re-lay the bar.
 var _gap := FIGURE_GAP
+## V5.1-c2.3. The "+N" the lowest-priority figures fold behind when the strip's
+## slot cannot hold them all, and their ids, in ORDER.
+var _more: Label
+var _folded: Array = []
 
 
 func _ready() -> void:
@@ -78,8 +82,18 @@ func _ready() -> void:
 	row.add_child(_figures)
 	for id in StripReadings.ORDER:
 		_figures.add_child(_build_figure(id, tr(String(StripReadings.CAPTIONS[id]))))
+	_more = Label.new()
+	_more.theme_type_variation = UiTheme.FIGURE
+	_more.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_more.size_flags_vertical = Control.SIZE_SHRINK_END
+	_more.mouse_filter = Control.MOUSE_FILTER_PASS
+	_more.hide()
+	_figures.add_child(_more)
 
 	row.add_child(_spacer())
+	# A window that changes shape refits the strip at once, not on the next day's
+	# refresh (V5.1-c Review focus 5: a window gone 21:9 mid-game).
+	get_viewport().size_changed.connect(refit)
 
 	_popup = TipPopup.new()
 	add_child(_popup)
@@ -167,6 +181,9 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		return
 	_state = state
 	_loader = loader
+	# The readings set every figure's visibility afresh, so nothing is folded
+	# until refit() decides again below.
+	_folded.clear()
 	for id in StripReadings.ORDER:
 		var r: Dictionary = StripReadings.read(id, state, loader)
 		var value: Label = _figure_values[id]
@@ -186,22 +203,71 @@ func refresh(state, _clock: Node, loader = null) -> void:
 			lines.append({"text": tr("Open %s.") % _window_hint(alert), "child_id": ""})
 		_tips[id] = lines
 		_popup.update_lines(id, lines)
-	_fit_figures()
+	refit()
 
 
-## The gaps between the figures give way before the screen does. At 26 px they are
-## 286 px of the bar; a longer language's captions and values would otherwise push SAVE
-## and MENU off the right edge (V5.1b; the shell in V5.1c re-lays the bar).
-func _fit_figures() -> void:
-	var gaps := maxi(_figures.get_child_count() - 1, 1)
-	# Over by how much at the NATURAL gap, whatever the gap is now.
-	var over := get_combined_minimum_size().x - get_viewport_rect().size.x + (FIGURE_GAP - _gap) * gaps
+## The strip in its slot -- the screen right of the sidebar. The gaps between the
+## figures give way first (at 26 px they are 286 px of the bar; V5.1b); then the
+## LOWEST-PRIORITY figures, the tail of StripReadings.ORDER, fold behind a "+N"
+## whose tip names them (V5.1-c2.3), until what is left fits. A longer language,
+## a larger text size or a game whose every reading speaks at once can ask for
+## more than the slot, and a strip that grew past it would push the chrome off
+## the screen.
+##
+## Measured off each figure's own minimum rather than the row's, because the
+## row's cached minimum lags a visibility change by a frame.
+func refit() -> void:
+	for id in _folded:
+		_figure_values[id].get_parent().show()
+	_folded.clear()
+	_more.hide()
+	var available: float = get_viewport_rect().size.x - global_position.x 		- get_theme_stylebox("panel").get_minimum_size().x
+	var shown: Array = []
+	for id in StripReadings.ORDER:
+		if _figure_values[id].get_parent().visible:
+			shown.append(id)
 	var gap := FIGURE_GAP
+	var over := _width_of(shown, FIGURE_GAP, 0.0) - available
 	if over > 0.0:
-		gap = maxi(FIGURE_GAP_MIN, FIGURE_GAP - ceili(over / gaps) - 1)
+		gap = maxi(FIGURE_GAP_MIN, FIGURE_GAP - ceili(over / maxi(shown.size() - 1, 1)) - 1)
+	while shown.size() > 1 and _width_of(shown, gap, _more_width(_folded.size())) > available:
+		var id: String = shown.pop_back()
+		_figure_values[id].get_parent().hide()
+		_folded.push_front(id)
+	if not _folded.is_empty():
+		var tip: Array[String] = []
+		for id in _folded:
+			tip.append("%s %s" % [_figure_captions[id].text, _figure_values[id].text])
+		_more.text = "+%d" % _folded.size()
+		_more.tooltip_text = "
+".join(tip)
+		_more.show()
 	if gap != _gap:
 		_gap = gap
 		_figures.add_theme_constant_override("separation", gap)
+
+
+## The figures held back, lowest priority last, in ORDER.
+func folded_ids() -> Array:
+	return _folded.duplicate()
+
+
+func _width_of(ids: Array, gap: int, more: float) -> float:
+	var total := 0.0
+	for id in ids:
+		total += _figure_values[id].get_parent().get_combined_minimum_size().x
+	total += gap * maxi(ids.size() - 1, 0)
+	if more > 0.0:
+		total += gap + more
+	return total
+
+
+## The "+N" label's width for `count` folded figures, 0 for none.
+func _more_width(count: int) -> float:
+	if count == 0:
+		return 0.0
+	_more.text = "+%d" % count
+	return _more.get_combined_minimum_size().x
 
 
 ## "Economy (E)" -- the hint main.gd read off the window manager; the bare id only
