@@ -61,7 +61,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 		PanelKit.line(body, Strings.t("Nothing before the council. The presidency brings the next proposal forward in due course."))
 	else:
 		PanelKit.line(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "name", String(pending.get("name", ""))), PanelKit.Tone.PLAIN)
-		PanelKit.line(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "summary", String(pending.get("summary", ""))))
+		PanelKit.rich(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "summary", String(pending.get("summary", ""))))
 		_sponsor_row(body, state, loader, ns, org, pending)
 		_decision_line(body, loader, org, pending)
 		_lobbying_line(body, loader, pending)

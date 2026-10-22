@@ -171,7 +171,7 @@ func _offer_block(ns, terms: Dictionary) -> Control:
 	block.add_theme_constant_override("separation", 2)
 
 	PanelKit.line(block, Strings.row_name("programme", terms), PanelKit.Tone.PLAIN)
-	PanelKit.line(block, Strings.row_summary("programme", terms))
+	PanelKit.rich(block, Strings.row_summary("programme", terms))
 	PanelKit.line(block, "%s · %s" % [
 		_read_text(ns, terms), _clock_text(terms, 0, false),
 	], PanelKit.Tone.DIM)
@@ -182,7 +182,7 @@ func _offer_block(ns, terms: Dictionary) -> Control:
 func _choose_button(terms: Dictionary) -> Button:
 	var button := Button.new()
 	button.text = tr("Choose")
-	button.tooltip_text = Strings.row_summary("programme", terms)
+	button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("programme", terms))
 	var entry_id := String(terms["id"])
 	# The verb is a SIGNAL, not a call: the panel names what was chosen and
 	# main.gd performs the command. The panel never writes GameState.
