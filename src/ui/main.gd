@@ -440,18 +440,16 @@ func _ready() -> void:
 	_windows.register("diplomacy", tr("Diplomacy"), _nation_panel, KEY_D, ICONS + "handshake.svg")
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide_close_button()
+	# V5.1-d1b2 (G13): a visit booked from Diplomacy is the Diary's to show.
+	_nation_panel.booked.connect(_windows.mark_all_dirty)
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
 	# player command with a domestic price, so it earns a U4 decision delta on
 	# exactly the same terms a law does.
 	_nation_panel.acted.connect(func(before, label, result):
 		_queue_effect(String(label), before)
-		var body: String
-		if bool(result.get("refused", false)):
-			var reason := String(result.get("reason", ""))
-			body = tr("Refused.") if reason.is_empty() else tr("Refused. %s") % reason
-		else:
-			body = tr("Agreed.")
-		_hud.inbox.push(String(label), body)
+		var reason := String(result.get("reason", ""))
+		var refused := tr("Refused.") if reason.is_empty() else tr("Refused. %s") % reason
+		_hud.inbox.push(String(label), refused if bool(result.get("refused", false)) else tr("Agreed."))
 		_update_top_bar()
 		# A diplomatic action moves relations, and on the relations layer that is a
 		# colour change the player should see the moment they act rather than at

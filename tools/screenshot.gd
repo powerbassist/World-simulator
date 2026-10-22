@@ -36,6 +36,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --consequence
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --election --polls-closed
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation DEU --book-visit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
@@ -431,6 +432,8 @@ var _election := false
 var _polls_closed := false
 ## V5.1-d1b2 (G9): the head of government's card, pinned as a click on the name pins it.
 var _person_card := false
+## V5.1-d1b2 (G13): the clicked nation's meeting verb pressed, so the row is booked.
+var _book_visit := false
 
 ## V3.6, the thirty-first flag: the front door. Boots menu.tscn instead of
 ## main.tscn and photographs the plate -- the real MapView over its month-0
@@ -720,6 +723,8 @@ func _init() -> void:
 			_polls_closed = true
 		elif args[i] == "--person-card":
 			_person_card = true
+		elif args[i] == "--book-visit":
+			_book_visit = true
 		elif args[i] == "--menu":
 			_menu = true
 		elif args[i] == "--tally":
@@ -1055,6 +1060,12 @@ func _apply_view() -> void:
 	# staged before it, the tab's opening put the slid inbox away again.
 	if _interrupt:
 		_stage_an_interrupt()
+	if _book_visit:
+		for action in _main._loader.diplomatic_actions:
+			if action.opens_meeting:
+				_main._nation_panel._on_act(action)
+				_main._nation_panel.mark_dirty()
+				break
 	if _person_card:
 		var pm := String(_main._state.player().pm_person_id)
 		_main._stack.tips.person_click(pm, Rect2(640, 220, 1, 16))

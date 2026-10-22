@@ -331,6 +331,8 @@ func _check_cooldown_names_itself(panel, state) -> void:
 		for child in row.get_children():
 			if child is Label:
 				label = child.text
+			elif child is VBoxContainer and child.get_child_count() > 0 and child.get_child(0) is Label:
+				label = child.get_child(0).text  # V5.1-d1b2: the name above its reason line
 			elif child is Button:
 				row_button = child
 		if label == "State Visit" and row_button != null:

@@ -22,6 +22,13 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 var _state
 var _loader: DataLoader
 var _stack
+## V5.1-d1b2 (G13 (a), the author's "Trop de notes reçues"): visits to the player
+## are ONE rolling note a year, replaced rather than stacked -- the AI aims most of
+## its visits at the player (docs/someday.md, V5.1-0d), and a note each month buried
+## the decisions. The behaviour is the AI's (V5.2/V5.4); the noise was the inbox's.
+var _visits_year := -1
+var _visitors: PackedStringArray = []
+var _visits_card := ""
 
 
 func setup(state, loader, stack) -> void:
@@ -117,7 +124,7 @@ func card_foreign_acts(year: int, month: int) -> void:
 
 		var key := Strings.record_action_name(act)
 		if not by_action.has(key):
-			by_action[key] = {"aimed": [], "elsewhere": []}
+			by_action[key] = {"aimed": [], "elsewhere": [], "action_id": String(act.get("action_id", ""))}
 		if target_id == player_id:
 			by_action[key]["aimed"].append({
 				"actor": _loader.nation_name(actor_id),
@@ -132,7 +139,9 @@ func card_foreign_acts(year: int, month: int) -> void:
 	for action_name in by_action:
 		var slot: Dictionary = by_action[action_name]
 		var aimed: Array = slot["aimed"]
-		if not aimed.is_empty():
+		if not aimed.is_empty() and _opens_meeting(String(slot["action_id"])):
+			_roll_visits(year, aimed)
+		elif not aimed.is_empty():
 			# An act aimed at the player names the player in the TITLE and not
 			# again in the body: "Austria -> you / State Visit: France" reads as
 			# though France were a third country involved somehow.
@@ -155,6 +164,28 @@ func card_foreign_acts(year: int, month: int) -> void:
 		else:
 			for line in slot["elsewhere"]:
 				_stack.push(String(line["actor"]), String(line["body"]))
+
+
+## The year's visits to the player as one note, the last one replaced.
+func _roll_visits(year: int, aimed: Array) -> void:
+	if year != _visits_year:
+		_visits_year = year
+		_visitors = []
+	for a in aimed:
+		_visitors.append(String(a["actor"]))
+	if _visits_card != "" and _stack.lane_of(_visits_card) != "":
+		_stack.dismiss(_visits_card)
+	# The latest visit's reason stays: this card is the only reader of the key.
+	_visits_card = _stack.push(tr("Visits to you, %d") % year, "%s %s" % [
+		tr_n("%d visit this year: %s.", "%d visits this year: %s.", _visitors.size()) % [_visitors.size(), ", ".join(_visitors)],
+		_act_reason_text(String(aimed[aimed.size() - 1]["reason"]))])
+
+
+func _opens_meeting(action_id: String) -> bool:
+	for action in _loader.diplomatic_actions:
+		if String(action.id) == action_id:
+			return bool(action.opens_meeting)
+	return false
 
 
 ## V1.5c. What the unions did this month, as a card.
@@ -260,6 +291,10 @@ func card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
 	var booked := tr("%s, as booked.") % label
 	if String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
 		booked = tr("%s with %s, as booked.") % [label, _loader.nation_name(String(entry.get("target_id", "")))]
+		# G13 (d): "Agreed." read wrong for a visit; a visit that happened was received.
+		var host = _loader.nations.get(String(entry.get("target_id", "")))
+		if ok and _opens_meeting(String(entry.get("action_id", ""))) and host != null and host.capital != "":
+			booked = tr("Received in %s.") % host.capital
 	if not ok:
 		booked += " " + tr("It did not carry.")
 	_stack.push(tr("Kept: %s") % label, booked)
