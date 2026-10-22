@@ -60,6 +60,12 @@ func _init() -> void:
 	meta_hover_ended.connect(_on_hover_ended)
 
 
+## Whether `source` marks a term or a person -- the one question PanelKit.line() asks
+## to choose between a Label and this class (V5.1-d3).
+static func has_marks(source: String) -> bool:
+	return source.contains("[g=") or source.contains("[p=")
+
+
 ## The only writer of `text`: prose in, the engine's markup out.
 func set_marked(source: String) -> void:
 	# N1 per SECTION (V5.1-d2, in code where Content cut by hand): an id another

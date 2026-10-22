@@ -239,7 +239,7 @@ func _build_level1() -> void:
 		var has_child := not String(line["child_id"]).is_empty()
 		# A line that opens something is plain (bright), one that does not is dim --
 		# the affordance a ▸ alone would leave to the glyph.
-		var label := PanelKit.line(_l1_body, _line_text(line), PanelKit.Tone.PLAIN if has_child else PanelKit.Tone.DIM)
+		var label := PanelKit.plain_line(_l1_body, _line_text(line), PanelKit.Tone.PLAIN if has_child else PanelKit.Tone.DIM)
 		label.mouse_filter = Control.MOUSE_FILTER_PASS
 		label.mouse_entered.connect(line_entered.bind(i))
 		_l1_labels.append(label)
@@ -250,7 +250,7 @@ func _show_level2(child: Dictionary, index: int) -> void:
 	_clear(_l2_body)
 	PanelKit.heading(_l2_body, String(child["title"]))
 	for text in (child["lines"] as Array):
-		var label := PanelKit.line(_l2_body, String(text), PanelKit.Tone.PLAIN)
+		var label := PanelKit.plain_line(_l2_body, String(text), PanelKit.Tone.PLAIN)
 		label.mouse_filter = Control.MOUSE_FILTER_PASS
 	_l2.reset_size()
 	_l2.visible = true

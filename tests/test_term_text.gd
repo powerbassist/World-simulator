@@ -53,6 +53,7 @@ func _process(_delta: float) -> bool:
 	_check_rich_carries_the_tone()
 	_check_the_sinks_mark_terms()
 	_check_once_per_section()
+	_check_line_routes_marks()
 	_finish()
 	return true
 
@@ -207,6 +208,33 @@ func _check_once_per_section() -> void:
 	var later: RichTextLabel = PanelKit.rich(body, "Later [g=approval]approval[/g].")
 	if not String(later.text).contains("term:approval"):
 		_fail("N1 per section: a line that stopped marking a term still held it")
+	box.queue_free()
+
+
+## V5.1-d3, the sweep: PanelKit.line() draws a marked line through TermText and an
+## unmarked one as the Label it always was, so the ~300 unmarked sites do not move
+## and a mark Content adds to a msgid renders. plain_line() stays a Label for the
+## sites that assign into one (a ticker, a clickable row, a tooltip's lines).
+func _check_line_routes_marks() -> void:
+	var box := VBoxContainer.new()
+	root.add_child(box)
+	var plain: Control = PanelKit.line(box, "no marks here")
+	if not plain is Label:
+		_fail("an unmarked line is not a Label: %s" % plain.get_class())
+	var bracket: Control = PanelKit.line(box, "a literal [x] stays text")
+	if not bracket is Label or (bracket as Label).text != "a literal [x] stays text":
+		_fail("an unmarked line with a literal bracket was changed")
+	var marked: Control = PanelKit.line(box, "an [g=approval]approval[/g] line")
+	if not marked is TermText or not String((marked as TermText).text).contains("term:approval"):
+		_fail("a marked line did not render its term")
+	var person: Control = PanelKit.line(box, "see [p=anyone]Someone[/p]")
+	if not person is TermText:
+		_fail("a line with a person mark did not go through TermText")
+	var kept: Control = PanelKit.plain_line(box, "a [g=approval]approval[/g] row")
+	if not kept is Label or (kept as Label).text != "a [g=approval]approval[/g] row":
+		_fail("plain_line did not keep the raw Label")
+	if not TermText.has_marks("x [g=debt]debt[/g]") or TermText.has_marks("x [y]"):
+		_fail("has_marks misreads a mark")
 	box.queue_free()
 
 
