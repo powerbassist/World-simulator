@@ -100,6 +100,7 @@ const FIGURE_LABEL := "FigureLabel"  ## the caption above a large number
 const CAPTION := "Caption"           ## dim secondary text  # i18n: ok
 const GOOD_TEXT := "GoodText"        ## a delta that is good news
 const BAD_TEXT := "BadText"          ## a delta that is bad news
+const WARN_TEXT := "WarnText"        ## something waits on the player (V5.1-d1b3: why the clock holds)
 ## V5.1-c. The same tones for a RichTextLabel (term_text.gd), which reads
 ## default_color and normal_font_size where a Label reads font_color and font_size.
 const RICH_CAPTION := "RichCaption"
@@ -313,7 +314,7 @@ static func _panels(theme: Theme) -> void:
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT]:
+	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
@@ -368,6 +369,8 @@ static func _labels(theme: Theme) -> void:
 
 	theme.set_color("font_color", GOOD_TEXT, GOOD)
 	theme.set_color("font_color", BAD_TEXT, BAD)
+	theme.set_color("font_color", WARN_TEXT, WARN)
+	theme.set_font_size("font_size", WARN_TEXT, _px(SIZE_SMALL))
 
 
 static func _rich(theme: Theme) -> void:

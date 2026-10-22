@@ -184,6 +184,8 @@ tests=(
   tests/test_state_visit.gd
   tests/test_summit_flow.gd
   tests/test_findable_terms.gd
+  tests/test_effects_ledger.gd
+  tests/test_hold_reason.gd
   tests/test_glossary_tip.gd
   tests/test_outliner.gd
   tests/test_geography.gd

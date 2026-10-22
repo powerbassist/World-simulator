@@ -130,7 +130,8 @@
    "tests/test_num.gd",
    "tests/test_i18n_rows_lint.gd",
    "tests/test_inbox_stays.gd",
-   "tests/test_person_links.gd"
+   "tests/test_person_links.gd",
+   "tests/test_effects_ledger.gd"
   ],
   [
    "tests/test_political_systems.gd",
@@ -169,7 +170,8 @@
    "tests/test_month_close_pause.gd",
    "tests/test_effect_baselines.gd",
    "tests/test_consequence_card.gd",
-   "tests/test_state_visit.gd"
+   "tests/test_state_visit.gd",
+   "tests/test_hold_reason.gd"
   ]
  ]
 }

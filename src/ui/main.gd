@@ -1119,8 +1119,9 @@ func _fiscal_committed(label: String, title: String, before: Dictionary) -> void
 ## through here, and half of them swept nothing -- the budget window then kept its
 ## "now" books and forecast past a law or a subsidy, and credited the next lever
 ## move with the command's effect. A closed window's mark costs nothing.
-func _queue_effect(label: String, before: Dictionary) -> void:
-	_pending_effects.append({"label": label, "before": before})
+## `defaulted`: the clock answered it, not the player (EffectsLedger words it apart).
+func _queue_effect(label: String, before: Dictionary, defaulted := false) -> void:
+	_pending_effects.append({"label": label, "before": before, "defaulted": defaulted})
 	_windows.mark_all_dirty()
 
 
@@ -1455,7 +1456,7 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 	# so a queue entry per default would each claim the joint movement of all of
 	# them (the cards stay one per event -- only the ledger line is merged).
 	if not defaulted_names.is_empty():
-		_queue_effect("; ".join(defaulted_names), before)
+		_queue_effect("; ".join(defaulted_names), before, true)
 
 	# What ARRIVED: ids on the desk now that were not before. Each gets its own
 	# decision card, answering its own row.
@@ -1490,11 +1491,13 @@ func _card_events(year: int, month: int, desk_before: Dictionary, before: Dictio
 				or MessageSettings.allows(_messages, ev.category, severity, "notify"):
 			sting_severity = maxi(sting_severity, severity)
 		var holds := MessageSettings.allows(_messages, ev.category, severity, "pause")
-		if holds:
-			_hold_for_decision()
+		# Recorded and carded BEFORE the hold (QA on #73): the hold names its cause
+		# from the unseen set and raises its card (hold_reason.gd).
 		_unseen_events[event_id] = holds
 		if MessageSettings.allows(_messages, ev.category, severity, "popup"):
 			_push_decision_card(ev, entry)
+		if holds:
+			_hold_for_decision()
 	if sting_severity > 0:
 		Sound.event_sting(self, sting_severity)
 
@@ -1736,6 +1739,7 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 	# clock holds while it is open; the summit window's close lets it go.
 	_clock.paused = true
 	_summit_panel.show_summit(summit)
+	_hud.clock_cluster.refresh(_clock, preload("res://src/ui/hold_reason.gd").show(self))
 
 
 ## The panel's verdict. The effects ride Legislature.apply_effects() -- the
@@ -1746,14 +1750,11 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 ## changed nothing, which is the honest outcome for one of those.
 func _resolve_summit(choice_label: String) -> void:
 	if choice_label.is_empty(): return
-	var ns = _state.player()
 	var effects: Dictionary = _summit_panel._effects.get(choice_label, {})
 	if effects.is_empty(): return
-	Legislature.apply_effects(_state, ns, effects, _loader)
+	Legislature.apply_effects(_state, _state.player(), effects, _loader)
 	_queue_effect(tr("Summit: %s") % choice_label, _summit_before)
 	_update_top_bar()
-
-
 
 
 func _on_save_requested(slot: String) -> void:
@@ -1938,7 +1939,8 @@ func _hold_for_decision() -> void:
 	_clock.paused = true
 	if _stack != null and _stack.top() < ScreenStack.SCENE:
 		_hud.inbox.slide_in()
-	_hud.clock_cluster.refresh(_clock)
+	# V5.1-d1b3: every hold says why, where the clock is, and raises its card.
+	_hud.clock_cluster.refresh(_clock, preload("res://src/ui/hold_reason.gd").show(self))
 
 
 ## The other half of the deferral above: a scene or a system screen went with an
@@ -2039,7 +2041,7 @@ func _enforce_term_start_programme() -> void:
 	)
 	_paused_for_programme = true
 	_clock.paused = true
-	_hud.clock_cluster.refresh(_clock)
+	_hud.clock_cluster.refresh(_clock, preload("res://src/ui/hold_reason.gd").show(self))
 
 
 ## The panel emits; main performs. Programme.choose() refuses rather than

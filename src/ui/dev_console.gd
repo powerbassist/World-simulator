@@ -313,9 +313,18 @@ class MainHost extends DevRegistry.Host:
 		main._update_top_bar()
 		return "speed %d" % n
 
+	## The state the command names, not a toggle (V5.1-d1b3, QA's clock that ran or
+	## re-paused with no cause): through the player's door where it is open, set
+	## outright where a scene or a system screen has shut it since d1a, and written
+	## into the pause menu's snapshot too, which closing the menu restores.
 	func set_paused(mode: String) -> String:
-		if mode.is_empty() or (mode == "on") != main._clock.paused:
+		var want: bool = not main._clock.paused if mode.is_empty() else mode == "on"
+		if want != main._clock.paused and main._stack.accepts_hotkeys():
 			main._toggle_pause_by_hand()
+		if want != main._clock.paused:
+			main._clock.paused = want
+		if main._pause_menu != null and main._pause_menu.visible:
+			main._paused_before_menu = want
 		main._update_top_bar()
 		return "clock paused" if main._clock.paused else "clock running"
 

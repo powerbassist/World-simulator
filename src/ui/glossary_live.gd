@@ -51,7 +51,7 @@ static func value(live: String, state, loader) -> String:
 		# A dash is the strip saying "nothing yet" (no programme on a term's first
 		# day): on a plate it would read as a value, so the line is left out.
 		var text := String(StripReadings.read(_STRIP[live], state, loader)["text"])
-		return "" if text == "—" else text
+		return "" if text == StripReadings.NOTHING else text
 	var ns = state.player()
 	match live:
 		"debt_pct":

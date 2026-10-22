@@ -35,6 +35,9 @@ var _choice: String = ""
 ## so every path's closing line looped back to the opening and no summit ever
 ## concluded or applied its choice.
 var _next := ""
+## The nation visited while a scene runs, "" otherwise -- the clock's hold line
+## names it (hold_reason.gd).
+var visiting := ""
 
 var _title: Label
 var _leader_box: Control
@@ -114,6 +117,7 @@ func mark_dirty() -> void:
 ## pushes loudly and closes rather than shipping an empty scene.
 func show_summit(summit: Dictionary) -> void:
 	_summit_id = String(summit.get("id", ""))
+	visiting = String(summit.get("nation_name", ""))
 	_effects = summit.get("effects", {})
 	_choice = ""
 	_title.text = String(summit.get("title", tr("A meeting")))
@@ -202,6 +206,7 @@ func _conclude() -> void:
 	var choice := _choice
 	_resource = null
 	_summit_id = ""
+	visiting = ""
 	_line_label.text = ""
 	_speaker_label.text = ""
 	_clear_choices()

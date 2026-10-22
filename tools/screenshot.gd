@@ -3031,17 +3031,8 @@ func _put_a_sited_crisis_on_the_desk() -> void:
 	printerr("--climate: no sited event drew inside %d months" % horizon)
 
 
-## The other end of the same panel, and it wants the opposite scroll.
-##
-## V1.6e's screenshot correction says to scroll to where the flag's own claim is, and
-## V1.7b sharpened it to a direction PER FLAG rather than per panel. This is that a
-## second time on one surface: the pending block is at the top and the ledger is at the
-## bottom, so `--event` opens on the question and `--event-answered` opens on the record.
-##
-## Answers the crisis rather than letting it lapse, and then lets a SECOND one lapse, so
-## the ledger shows both kinds of row -- a decision the player made and a decision the
-## clock made for them. A frame of one kind would leave the "No answer given" styling as
-## dead code, which is exactly what U6a's own pass caught on the diary strip.
+## --consequence (V5.1-d1b): a quiet event answered through the Events window, then
+## its month closed by the clock, so the close's consequence card is in the inbox.
 func _answer_and_close_the_month() -> void:
 	var ns = _main._state.player()
 	for ev in _main._loader.events:
@@ -3055,6 +3046,17 @@ func _answer_and_close_the_month() -> void:
 		_main._clock.advance_one_day()
 
 
+## The other end of the same panel, and it wants the opposite scroll.
+##
+## V1.6e's screenshot correction says to scroll to where the flag's own claim is, and
+## V1.7b sharpened it to a direction PER FLAG rather than per panel. This is that a
+## second time on one surface: the pending block is at the top and the ledger is at the
+## bottom, so `--event` opens on the question and `--event-answered` opens on the record.
+##
+## Answers the crisis rather than letting it lapse, and then lets a SECOND one lapse, so
+## the ledger shows both kinds of row -- a decision the player made and a decision the
+## clock made for them. A frame of one kind would leave the "No answer given" styling as
+## dead code, which is exactly what U6a's own pass caught on the diary strip.
 func _answer_a_crisis() -> void:
 	var state = _main._state
 	if state == null:
