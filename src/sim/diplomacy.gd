@@ -153,6 +153,20 @@ static func tick_month(state, loader) -> void:
 ## tick_month() runs the same units in the same order. The memo stays open ACROSS
 ## them (V5.0c's reason, below) and a unit run between two frames cannot change
 ## membership either; anything else asking Org meanwhile misses its identity check.
+##
+## Every actor's turn comes AFTER _settle(), and both halves of that placement are
+## load-bearing.
+##
+## After the retaliations, because an answer is not an initiative: a nation
+## weighing an act should be looking at a world that already contains this
+## month's answers rather than last month's, which is the ordering failure
+## docs/trade-model.md records the trade probe catching in the impulse.
+##
+## After the cooldown countdown, because execute() sets a cooldown and running
+## the agenda first would have Cooldowns.tick() decrement it immediately -- an AI
+## verb locked for eleven months where the player's identical verb is locked for
+## twelve. A silent one-month asymmetry between the player and the nine, in a
+## session whose whole subject is that they use the same verbs.
 static func month_units(state, loader) -> Array:
 	var ids: Array = state.nations.keys()
 	ids.sort()
@@ -188,20 +202,6 @@ static func _settle(state, loader) -> void:
 
 	# Every nation's cooldowns, not just the player's (diplomacy_cooldowns.gd).
 	Cooldowns.tick(state)
-
-	# LAST, and both halves of that placement are load-bearing.
-	#
-	# After the retaliations, because an answer is not an initiative: a nation
-	# weighing an act should be looking at a world that already contains this
-	# month's answers rather than last month's, which is the ordering failure
-	# docs/trade-model.md records the trade probe catching in the impulse.
-	#
-	# After the cooldown countdown, because execute() sets a cooldown and running
-	# the agenda first would have Cooldowns.tick() decrement it immediately -- an AI
-	# verb locked for eleven months where the player's identical verb is locked for
-	# twelve. A silent one-month asymmetry between the player and the nine, in a
-	# session whose whole subject is that they use the same verbs -- which is why
-	# month_units() puts every actor's turn after this one.
 
 
 ## Answer every measure that has been in force long enough and has not yet been
@@ -360,16 +360,6 @@ static func _best_act(state, loader, actor_id: String, ids: Array) -> Dictionary
 		return available(state, loader.diplomatic_actions, actor_id, target_id))
 
 
-## The kind of measure `actor` has in force against `target`, or "" for none.
-## The register's own read, kept in one place so the three precondition fields
-## above cannot drift apart.
-static func _measure_kind(state, actor_id: String, target_id: String) -> String:
-	var terms = state.measures.get(RK.directed_key(actor_id, target_id))
-	if terms == null:
-		return ""
-	return String(terms.get("kind", ""))
-
-
 ## The cooldown key for one verb pointed at one counterparty. Per pair, not per
 ## action: condemning Germany is no reason to be unable to condemn Italy.
 static func cooldown_key(action_id: String, target_id: String) -> String:
@@ -430,7 +420,11 @@ static func available(state, all_actions: Array, actor_id: String, target_id: St
 	# Each field read once per call, however many verbs name it (met_recently gates
 	# five): since G2b this loop runs on the calling thread for every target, which
 	# #44's tick A/B priced at +6.7 ms a month before this memo. _read_field() only
-	# reads, so a memo for one (actor, target) returns the list it always did.
+	# reads, so a memo for one (actor, target) returns the list it always did. Keyed
+	# by the field ALONE, which holds because a precondition is exactly {field, op,
+	# value} (DiplomaticAction._extract_preconditions() builds nothing else) and the
+	# read depends on (state, actor, field, target) only: a precondition that
+	# carried a parameter of its own would have to join the key.
 	var reads: Dictionary = {}
 	for action in all_actions:
 		if action.id == "":
@@ -445,9 +439,12 @@ static func available(state, all_actions: Array, actor_id: String, target_id: St
 static func _preconditions_met(state, ns, action, target_id: String, reads: Dictionary) -> bool:
 	for cond in action.preconditions:
 		var field: String = cond["field"]
-		if not reads.has(field):
-			reads[field] = _read_field(state, ns, field, target_id)
-		var actual: float = reads[field]
+		# One lookup on a hit. NAN marks a miss: no field reads as NaN, and one that
+		# did would only be read again, to the same value.
+		var actual: float = reads.get(field, NAN)
+		if is_nan(actual):
+			actual = _read_field(state, ns, field, target_id)
+			reads[field] = actual
 		var value: float = cond["value"]
 		var ok: bool
 		match cond["op"]:
@@ -479,9 +476,9 @@ static func _read_field(state, ns, field: String, target_id: String) -> float:
 		# asks measure_active for 0; a lift verb asks its OWN kind for 1, because
 		# one measure per pair means "something is in force" cannot tell a tariff
 		# from an embargo and a single field would let either lift clear either.
-		"measure_active": return 1.0 if _measure_kind(state, ns.id, target_id) != "" else 0.0
-		"tariff_active": return 1.0 if _measure_kind(state, ns.id, target_id) == "tariff" else 0.0
-		"sanction_active": return 1.0 if _measure_kind(state, ns.id, target_id) == "sanction" else 0.0
+		"measure_active": return 1.0 if Verbs.measure_kind(state, ns.id, target_id) != "" else 0.0
+		"tariff_active": return 1.0 if Verbs.measure_kind(state, ns.id, target_id) == "tariff" else 0.0
+		"sanction_active": return 1.0 if Verbs.measure_kind(state, ns.id, target_id) == "sanction" else 0.0
 		# V1.3g's five, over its two registers. FOUR of them are about the pair for
 		# the reason the three measure fields above are three: `deployment_active`
 		# cannot tell a commitment the player chose from one an alliance imposed, so

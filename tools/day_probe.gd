@@ -41,6 +41,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Travel = preload("res://src/sim/diplomacy_travel.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
@@ -101,9 +102,9 @@ func _travel_table(loader) -> void:
 	print(header)
 
 	for target in others:
-		var from_v: Variant = Diplomacy._capital_lonlat(loader, PLAYER)
-		var to_v: Variant = Diplomacy._capital_lonlat(loader, target)
-		var km: float = Diplomacy._haversine_km(from_v, to_v)
+		var from_v: Variant = Travel.capital_lonlat(loader, PLAYER)
+		var to_v: Variant = Travel.capital_lonlat(loader, target)
+		var km: float = Travel.haversine_km(from_v, to_v)
 		var row := "%-6s %8.0f" % ["FRA-" + target, km]
 		for rate in RATE_SWEEP:
 			var days := clampi(int(ceil(km / rate)), DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX)
@@ -111,18 +112,18 @@ func _travel_table(loader) -> void:
 		print(row)
 
 	var anchor_days := clampi(
-		int(ceil(Diplomacy._haversine_km(
-			Diplomacy._capital_lonlat(loader, PLAYER),
-			Diplomacy._capital_lonlat(loader, "ITA")
+		int(ceil(Travel.haversine_km(
+			Travel.capital_lonlat(loader, PLAYER),
+			Travel.capital_lonlat(loader, "ITA")
 		) / DK.TRAVEL_KM_PER_DAY)),
 		DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX
 	)
 	var candidates := 0
 	for rate in RATE_SWEEP:
 		var d := clampi(
-			int(ceil(Diplomacy._haversine_km(
-				Diplomacy._capital_lonlat(loader, PLAYER),
-				Diplomacy._capital_lonlat(loader, "ITA")
+			int(ceil(Travel.haversine_km(
+				Travel.capital_lonlat(loader, PLAYER),
+				Travel.capital_lonlat(loader, "ITA")
 			) / rate)),
 			DK.TRAVEL_DAYS_MIN, DK.TRAVEL_DAYS_MAX
 		)

@@ -2,10 +2,22 @@ extends RefCounted
 
 ## What kind of act a diplomatic action is, and who refused it: three leaf
 ## reads moved verbatim out of diplomacy.gd (V5.0c) so that file could take the
-## month-tick lever without growing past its size baseline. Pure functions of the
-## action and the state; diplomacy.gd is the caller.
+## month-tick lever without growing past its size baseline, and a fourth,
+## measure_kind(), for the same reason when available() took its read memo.
+## Pure functions of the action and the state; diplomacy.gd is the caller.
 
 const FP = preload("res://src/sim/foreign_policy.gd")
+const RK = preload("res://src/core/relations.gd")
+
+
+## The kind of measure `actor` has in force against `target`, or "" for none.
+## The register's own read, kept in one place so Diplomacy._read_field()'s three
+## measure fields cannot drift apart.
+static func measure_kind(state, actor_id: String, target_id: String) -> String:
+	var terms = state.measures.get(RK.directed_key(actor_id, target_id))
+	if terms == null:
+		return ""
+	return String(terms.get("kind", ""))
 
 
 ## Which counterparty said no, and why. One place rather than a ternary at the call
