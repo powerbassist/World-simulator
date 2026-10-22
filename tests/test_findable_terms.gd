@@ -22,20 +22,42 @@ var _main
 var _frame := 0
 
 
+## A private settings file: tests in one run share a user dir, and every main that
+## boots offers the hint, so the shared file's flag is anyone's.
+const HINT_CFG := "user://test_findable_terms_hint.cfg"
+const SLOT := "__test_findable_terms__"
+const SaveManager = preload("res://src/core/save_manager.gd")
+
+
 func _init() -> void:
+	GlossaryHint.config_path = HINT_CFG
+	DirAccess.remove_absolute(HINT_CFG)
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
 
 
 func _process(_delta: float) -> bool:
 	_frame += 1
-	if _frame < 3:
-		return false
-	_check_the_underline()
-	_check_the_cursor()
-	_check_the_first_use_hint()
-	_finish()
-	return true
+	if _frame == 3:
+		_check_the_underline()
+		_check_the_cursor()
+		_check_the_first_use_hint()
+		# QA on #72: a profile's first session that begins with a LOAD. Saved here,
+		# then a fresh profile boots a game with the save pending.
+		_main._on_save_requested(SLOT)
+		GlossaryHint.reset()
+		_main.queue_free()
+		_main = load("res://src/ui/main.tscn").instantiate()
+		_main.pending_load_slot = SLOT
+		root.add_child(_main)
+	elif _frame == 7:
+		_check_a_load_keeps_the_hint()
+		_check_hint_reset()
+		SaveManager.delete_slot(SLOT)
+		DirAccess.remove_absolute(HINT_CFG)
+		_finish()
+		return true
+	return false
 
 
 func _check_the_underline() -> void:
@@ -63,33 +85,49 @@ func _check_the_cursor() -> void:
 	label.queue_free()
 
 
-## On a private settings file: tests in one run share a user dir, and every main
-## that boots offers the hint, so the shared file's flag is anyone's.
-const HINT_CFG := "user://test_findable_terms_hint.cfg"
+func _hints(inbox) -> int:
+	var hints := 0
+	for id in inbox._bodies:
+		var body = inbox._bodies[id]
+		if String(body.text).contains("term:") and body.get_parsed_text().to_lower().contains("dotted"):
+			hints += 1
+	return hints
 
 
+## A fresh (private) profile's first game shows the note once, with a term to try;
+## the same inbox is not offered it twice.
 func _check_the_first_use_hint() -> void:
 	var source := FileAccess.get_file_as_string("res://src/ui/world_news.gd")
 	if not source.contains("GlossaryHint.offer(stack)"):
 		_fail("a game's setup does not offer the glossary hint")
-	DirAccess.remove_absolute(HINT_CFG)
 	var inbox = _main._hud.inbox
-	var before: Array = inbox._bodies.keys()
-	GlossaryHint.offer(inbox, HINT_CFG)
-	var hints := 0
-	for id in inbox._bodies:
-		if before.has(id):
-			continue
-		var body = inbox._bodies[id]
-		if String(body.text).contains("term:") and body.get_parsed_text().to_lower().contains("dotted"):
-			hints += 1
-	if hints != 1:
-		_fail("a profile's first offer shows %d glossary hints with a term to try, not one" % hints)
+	if _hints(inbox) != 1:
+		_fail("a profile's first game shows %d glossary hints with a term to try, not one" % _hints(inbox))
 	var count: int = inbox.card_count()
-	GlossaryHint.offer(inbox, HINT_CFG)
+	GlossaryHint.offer(inbox)
 	if inbox.card_count() != count:
 		_fail("the glossary hint came back a second time")
-	DirAccess.remove_absolute(HINT_CFG)
+
+
+func _check_a_load_keeps_the_hint() -> void:
+	if _hints(_main._hud.inbox) != 1:
+		_fail("a profile's first session that began with a load shows %d glossary hints, not one" % _hints(_main._hud.inbox))
+
+
+## `hint reset`: the dev console re-arms the note (any run on a real profile spends it).
+func _check_hint_reset() -> void:
+	var console = null
+	for child in _main.get_children():
+		if child.has_method("run_command"):
+			console = child
+	if console == null:
+		_fail("the game scene has no dev console")
+		return
+	console.run_command("hint reset")
+	var cfg := ConfigFile.new()
+	cfg.load(HINT_CFG)
+	if bool(cfg.get_value(GlossaryHint.SECTION, GlossaryHint.KEY, false)):
+		_fail("hint reset left the glossary hint flagged as seen")
 
 
 func _fail(message: String) -> void:
