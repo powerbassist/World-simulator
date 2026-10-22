@@ -25,6 +25,8 @@ extends Control
 
 signal top_changed(from: int, to: int)
 
+const GlossaryTip = preload("res://src/ui/glossary_tip.gd")
+
 ## Ranks, lowest first. MAP is the bare map: nothing on the stack.
 const MAP := -1
 const WORKSPACE := 0
@@ -42,6 +44,10 @@ const _HOSTED := [SCENE, SYSTEM]
 ## "focus": Control (what held the keyboard below, or null)}, in arrival order.
 var _entries: Array = []
 var _hosts := {}  # rank -> the full-rect Control its panels are added to
+## V5.1-c. The glossary's tooltip chain: the last child, so a plate draws over a
+## scene and a system screen. Not a rank -- a held rank would turn the hotkeys off
+## under every hover; the chain eats its own Escape (glossary_tip.gd).
+var tips := GlossaryTip.new()
 
 
 func _ready() -> void:
@@ -53,6 +59,7 @@ func _ready() -> void:
 		host.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(host)
 		_hosts[rank] = host
+	add_child(tips)
 
 
 ## A panel centred on the screen at `layer` (SCENE or SYSTEM), hidden by its

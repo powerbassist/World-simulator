@@ -18,6 +18,7 @@
    "tests/test_tip_popup.gd",
    "tests/test_glossary.gd",
    "tests/test_term_text.gd",
+   "tests/test_glossary_tip.gd",
    "tests/test_outliner.gd",
    "tests/test_regions.gd",
    "tests/test_siting.gd",

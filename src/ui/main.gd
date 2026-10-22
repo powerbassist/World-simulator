@@ -1669,11 +1669,7 @@ func _decision_body(ev, left: int) -> String:
 func _setup_news() -> void:
 	for writer in [_world_news, _industry_news, _assembly_news]:
 		writer.setup(_state, _loader, _hud.inbox)
-
-
-func _nation_name(nation_id: String) -> String:
-	var n = _loader.nations.get(nation_id)
-	return String(n.nation_name) if n != null else nation_id
+	_stack.tips.setup(_state, _loader)
 
 
 ## U6a, and the first time anything but the top bar has cared what day it is.
@@ -1972,7 +1968,7 @@ func _on_stack_top_changed(from: int, to: int) -> void:
 func _term_card_body() -> String:
 	var ns = _state.player()
 	var when := Trends.vote_date(ns)
-	return tr("You hold %s until %s %d -- %s. Win the vote.") % [_nation_name(_state.player_nation_id), DateText.month(when.y), when.x, Trends.months_text(Trends.months_to_vote(_state, ns))]
+	return tr("You hold %s until %s %d -- %s. Win the vote.") % [_loader.nation_name(_state.player_nation_id), DateText.month(when.y), when.x, Trends.months_text(Trends.months_to_vote(_state, ns))]
 
 
 ## The monthly refresh of the opening card, from _on_month_elapsed(). The body

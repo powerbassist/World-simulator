@@ -474,8 +474,8 @@ func _check_foreign_acts_reach_the_column() -> void:
 		_fail("four same-action visits produced %d cards, not 1" % stack.card_count())
 		return
 	var grouped := _collect_text(stack)
-	var name_a: String = _main._nation_name(visitors[0])
-	var name_b: String = _main._nation_name(visitors[1])
+	var name_a: String = _main._loader.nation_name(visitors[0])
+	var name_b: String = _main._loader.nation_name(visitors[1])
 	if not grouped.contains(name_a) or not grouped.contains(name_b):
 		_fail("the grouped visit card does not name its actors (%s, %s): '%s'" % [name_a, name_b, grouped])
 
@@ -534,6 +534,8 @@ func _collect_text(node) -> String:
 	var out := ""
 	if node is Label or node is Button:
 		out += node.text + "\n"
+	elif node is RichTextLabel:  # V5.1-c: the inbox body is a rich line
+		out += node.get_parsed_text() + "\n"
 	for child in node.get_children():
 		out += _collect_text(child)
 	return out
