@@ -274,22 +274,24 @@ func _refresh() -> void:
 		else:
 			PanelKit.line(_body, tr("The opposition cannot reach that threshold on its own, even united."), PanelKit.Tone.PLAIN)
 
-		# What a censure motion would actually do right now, at the hostility a
-		# forced bill would provoke. This is the number Article 49.3 gambles on,
-		# so it is shown before the player gambles rather than after.
-		#
-		# Resolved through the real resolver rather than counted party by party:
-		# since V1.1b a motion collects seats from parties whose line is against
-		# it, and a tally that missed those would read safer than the vote is.
-		var forced := Government.resolve_censure(ns, _loader.parties.get(ns.id, []), true)
-		var rebels := 0
-		for pid in forced["party_rebels"]:
-			rebels += int(forced["party_rebels"][pid])
-		PanelKit.rich(_body, tr("Under [g=article_49_3]Article 49.3[/g] today: %d seats would move to censure%s.") % [
-			forced["for_seats"],
-			tr(", %d of them against their own party's line") % rebels if rebels > 0 else "",
-		], PanelKit.Tone.PLAIN)
+		# Only a constitution with Article 49.3 has this tally to show: the same
+		# formation-method gate as Government.can_force and the Force button.
 		if ns.formation_method == "presidential_appointment":
+			# What a censure motion would actually do right now, at the hostility a
+			# forced bill would provoke. This is the number Article 49.3 gambles on,
+			# so it is shown before the player gambles rather than after.
+			#
+			# Resolved through the real resolver rather than counted party by party:
+			# since V1.1b a motion collects seats from parties whose line is against
+			# it, and a tally that missed those would read safer than the vote is.
+			var forced := Government.resolve_censure(ns, _loader.parties.get(ns.id, []), true)
+			var rebels := 0
+			for pid in forced["party_rebels"]:
+				rebels += int(forced["party_rebels"][pid])
+			PanelKit.rich(_body, tr("Under [g=article_49_3]Article 49.3[/g] today: %d seats would move to censure%s.") % [
+				forced["for_seats"],
+				tr(", %d of them against their own party's line") % rebels if rebels > 0 else "",
+			], PanelKit.Tone.PLAIN)
 			if ns.force_cooldown_months > 0:
 				PanelKit.line(_body, tr("Article 49.3 unavailable for %d months.") % ns.force_cooldown_months, PanelKit.Tone.PLAIN)
 			elif forced["carried"]:
