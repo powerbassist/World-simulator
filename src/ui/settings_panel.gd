@@ -57,12 +57,11 @@ const DEFAULT_RESOLUTION_INDEX := 2
 ## game rather than as the game.
 const DEFAULT_FULLSCREEN := true
 
-## Interface scale. This game is a wall of small numbers in dense tables, so
-## the readability knob is worth having before any other polish.
-const UI_SCALES: Array[float] = [0.85, 1.0, 1.15, 1.3]
-const DEFAULT_SCALE_INDEX := 1
 ## V5.1-c2.4. The text size: the type scale alone, so the shell keeps its slots
-## at the 1920 reference where the interface scale above shrinks the reference.
+## at the 1920 reference. It REPLACED the interface scale (content_scale_factor
+## 85-130 %; the parent's call, 2026-10-22): at 130 % that shrank the reference
+## to 1477 px and the docked workspace left 5 px of map. An old `ui_scale_index`
+## in settings.cfg is ignored; 85 % ("more map") may come back if it is missed.
 const TEXT_SCALES: Array[float] = [0.9, 1.0, 1.15, 1.3]
 const DEFAULT_TEXT_INDEX := 1
 
@@ -93,7 +92,6 @@ var _foreign_news_button: OptionButton
 ## to any other row.
 var _applied_resolution := -1
 var _resolution_button: OptionButton
-var _scale_button: OptionButton
 var _text_button: OptionButton
 var _ambient_button: OptionButton
 var _sound_button: OptionButton
@@ -130,8 +128,7 @@ static func apply_saved(window: Window) -> void:
 	_apply(
 		window,
 		bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN)),
-		int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)),
-		int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX))
+		int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX))
 	)
 	# F11, on the root window so it works in the menu and in the game (V5.1-0c).
 	WindowMode.install(window, toggle_fullscreen)
@@ -150,12 +147,11 @@ static func toggle_fullscreen(window: Window) -> void:
 	_apply(
 		window,
 		fullscreen,
-		int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)),
-		int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX))
+		int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX))
 	)
 
 
-static func _apply(window: Window, fullscreen: bool, resolution_index: int, scale_index: int, force_size := false) -> void:
+static func _apply(window: Window, fullscreen: bool, resolution_index: int, force_size := false) -> void:
 	if window == null:
 		return
 	# Everything goes through the Window node, not DisplayServer: the node caches
@@ -176,7 +172,8 @@ static func _apply(window: Window, fullscreen: bool, resolution_index: int, scal
 	if bool(plan["set_size"]):
 		window.size = RESOLUTIONS[clampi(resolution_index, 0, RESOLUTIONS.size() - 1)]
 	WindowMode.note_applied()
-	window.content_scale_factor = UI_SCALES[clampi(scale_index, 0, UI_SCALES.size() - 1)]
+	# The retired interface scale's factor, back to 1 for a player who had set it.
+	window.content_scale_factor = 1.0
 
 
 ## The "news of other countries" switch, read once per settings revision rather
@@ -221,7 +218,6 @@ static func ambient_enabled() -> bool:
 func _save_and_apply() -> void:
 	var fullscreen := _fullscreen_button.selected == 1
 	var resolution_index := _resolution_button.selected
-	var scale_index := _scale_button.selected
 	var sound_on := _sound_button.selected == 1
 	var motion_on := _motion_button.selected == 1
 	var ambient_on := _ambient_button.selected == 1
@@ -232,7 +228,6 @@ func _save_and_apply() -> void:
 	cfg.set_value("display", "language", language)
 	cfg.set_value("display", "fullscreen", fullscreen)
 	cfg.set_value("display", "resolution_index", resolution_index)
-	cfg.set_value("display", "ui_scale_index", scale_index)
 	cfg.set_value("display", "text_scale_index", _text_button.selected)
 	cfg.set_value("audio", "enabled", sound_on)
 	cfg.set_value("audio", "ambient", ambient_on)
@@ -243,7 +238,7 @@ func _save_and_apply() -> void:
 
 	# The size is the player's to drag: only a resolution picked HERE asks for the
 	# preset, not Sound or Motion changing beside it.
-	_apply(get_window(), fullscreen, resolution_index, scale_index, resolution_index != _applied_resolution)
+	_apply(get_window(), fullscreen, resolution_index, resolution_index != _applied_resolution)
 	_applied_resolution = resolution_index
 	_resolution_button.disabled = fullscreen
 	if language != Strings.language() and Strings.set_language(language):
@@ -313,7 +308,6 @@ func _build() -> void:
 	_language_button = _add_row(grid, tr("Language"), language_names)
 	_fullscreen_button = _add_row(grid, tr("Window (F11)"), [tr("Windowed"), tr("Fullscreen")])
 	_resolution_button = _add_row(grid, tr("Resolution"), _resolution_labels())
-	_scale_button = _add_row(grid, tr("Interface scale"), _scale_labels())
 	_text_button = _add_row(grid, tr("Text size"), _percent_labels(TEXT_SCALES))
 	_sound_button = _add_row(grid, tr("Sound"), [tr("Off"), tr("On")])
 	_ambient_button = _add_row(grid, tr("Ambience"), [tr("Off"), tr("On")])
@@ -421,10 +415,6 @@ func _resolution_labels() -> Array:
 	return labels
 
 
-func _scale_labels() -> Array:
-	return _percent_labels(UI_SCALES)
-
-
 func _percent_labels(scales: Array[float]) -> Array:
 	var labels: Array = []
 	for scale in scales:
@@ -449,7 +439,6 @@ func _load_into_controls() -> void:
 	_fullscreen_button.select(1 if fullscreen else 0)
 	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)), 0, RESOLUTIONS.size() - 1))
 	_applied_resolution = _resolution_button.selected
-	_scale_button.select(clampi(int(cfg.get_value("display", "ui_scale_index", DEFAULT_SCALE_INDEX)), 0, UI_SCALES.size() - 1))
 	_text_button.select(_text_index(cfg))
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_ambient_button.select(1 if bool(cfg.get_value("audio", "ambient", DEFAULT_AMBIENT)) else 0)
