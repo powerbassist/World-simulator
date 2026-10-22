@@ -40,19 +40,27 @@ static func record(state, pending: Array, history_entry: Dictionary, year: int, 
 	var dated_entry: Dictionary = history_entry.duplicate(true)
 	dated_entry["year"] = year
 	dated_entry["month"] = month
+	# What the player decided, and what the clock decided for them (a default, QA on
+	# #73) -- named apart, each name once.
 	var names: PackedStringArray = []
+	var defaults: PackedStringArray = []
 	for queued in pending:
-		if not names.has(String(queued["label"])):  # i18n: row-ok an effect's label, routed when queued
-			names.append(String(queued["label"]))  # i18n: row-ok an effect's label, routed when queued
+		var into: PackedStringArray = defaults if bool(queued.get("defaulted", false)) else names
+		if not into.has(String(queued["label"])):  # i18n: row-ok an effect's label, routed when queued
+			into.append(String(queued["label"]))  # i18n: row-ok an effect's label, routed when queued
 	var effect := {
-		"label": "; ".join(names),  # i18n: row-ok effects' labels, routed when queued
+		"label": "; ".join(names + defaults),  # i18n: row-ok effects' labels, routed when queued
 		"year": year,
 		"month": month,
 		"movements": Trends.movements_between(pending[0]["before"], dated_entry),
 	}
 	state.recent_effects.push_front(effect)
 	if inbox != null:
-		inbox.push(Strings.t("This month you decided: %s") % ", ".join(names), card_body(effect))  # i18n: row-ok effects' labels, routed when queued
+		var body := card_body(effect)
+		if not names.is_empty() and not defaults.is_empty():
+			body = "%s %s" % [Strings.t("Decided for you: %s.") % ", ".join(defaults), body]  # i18n: row-ok effects' labels, routed when queued
+		var title := Strings.t("This month you decided: %s") % ", ".join(names) if not names.is_empty() 			else Strings.t("This month, decided for you: %s") % ", ".join(defaults)  # i18n: row-ok effects' labels, routed when queued
+		inbox.push(title, body)
 	pending.clear()
 	while state.recent_effects.size() > KEPT:
 		state.recent_effects.remove_at(state.recent_effects.size() - 1)

@@ -28,6 +28,7 @@ func _process(_delta: float) -> bool:
 	if _frame < 3:
 		return false
 	_check_a_hold_says_why()
+	_check_an_arrival_says_why()
 	_finish()
 	return true
 
@@ -75,6 +76,49 @@ func _check_a_hold_says_why() -> void:
 	if _main._hud.clock_cluster.hold_reason() != "":
 		_fail("the hold's reason stayed after the clock ran again")
 	_main._windows.close_all()
+
+
+## QA on #73: an ARRIVAL hold (the path _card_events runs). The line was empty
+## when the desk was otherwise empty -- the hold came before the arrival was
+## recorded -- and named a quiet event already on the desk when there was one.
+func _check_an_arrival_says_why() -> void:
+	var clock = _main._clock
+	var ns = _main._state.player()
+	_main._windows.close_all()
+	_main._unseen_events.clear()
+	_main._event_cards.clear()
+	_main._paused_for_decision = false
+	_main._paused_for_programme = false
+	ns.event_queue.clear()
+	var quiet = null
+	var loud = null
+	for candidate in _main._loader.events:
+		if candidate.choices.is_empty():
+			continue
+		if quiet == null and not bool(candidate.interrupt):
+			quiet = candidate
+		elif loud == null and not bool(candidate.interrupt) and candidate != quiet:
+			loud = candidate
+	var month: int = Events._absolute_month(int(_main._state.year), int(_main._state.month))
+	# A quiet event on the desk, unseen and not holding.
+	Events.announce(ns, quiet, month, Events.region_names(ns, _main._loader))
+	_main._unseen_events[String(quiet.id)] = false
+	var desk := {String(quiet.id): true}
+	# The arrival, set to hold whatever its band says.
+	_main._messages = {}
+	Events.announce(ns, loud, month, Events.region_names(ns, _main._loader))
+	for entry in ns.event_queue:
+		if String(entry.get("event_id", "")) == String(loud.id):
+			entry["interrupt"] = false
+			entry["severity"] = 3
+	clock.paused = false
+	_main._card_events(_main._state.year, _main._state.month, desk, {})
+	if not clock.paused:
+		_fail("premise: the arrival did not hold the clock")
+		return
+	var reason: String = _main._hud.clock_cluster.hold_reason()
+	if not reason.contains(Strings.row_name("events", loud)):
+		_fail("an arrival hold names '%s', not the arrival '%s'" % [reason, Strings.row_name("events", loud)])
 
 
 func _fail(message: String) -> void:

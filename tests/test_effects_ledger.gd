@@ -36,6 +36,7 @@ func _process(_delta: float) -> bool:
 		return false
 	_check_one_card_per_close()
 	_check_a_flat_month()
+	_check_defaults_are_not_decisions()
 	_check_the_deficit_sign()
 	_finish()
 	return true
@@ -89,6 +90,27 @@ func _check_a_flat_month() -> void:
 	var card := _last_card_text()
 	if not card.contains("nothing moved") or card.contains("0.0"):
 		_fail("a flat month does not say 'nothing moved': %s" % card)
+
+
+## QA on #73: a month whose only entry is a default ("Decided for you") is not a
+## month the player decided anything; a mixed month names the two apart.
+func _check_defaults_are_not_decisions() -> void:
+	var state := FakeState.new()
+	EffectsLedger.record(state, [{"label": "The harvest that failed over there", "before": _snap(50.0, 5.0, 1.0), "defaulted": true}],
+		_snap(52.0, 5.0, 1.0), 2026, 4, _inbox)
+	var card := _last_card_text().to_lower()
+	if card.contains("you decided") or not card.contains("decided for you"):
+		_fail("a month of defaults reads as the player's decisions: %s" % card)
+	EffectsLedger.record(state, [
+		{"label": "Budget change", "before": _snap(50.0, 5.0, 1.0)},
+		{"label": "The harvest that failed over there", "before": _snap(50.0, 5.0, 1.0), "defaulted": true},
+	], _snap(52.0, 5.0, 1.0), 2026, 5, _inbox)
+	card = _last_card_text().to_lower()
+	var title_line: String = card.split(char(10))[0]
+	if title_line.contains("harvest"):
+		_fail("a default is listed with what the player decided: %s" % title_line)
+	if not card.contains("decided for you"):
+		_fail("a mixed month does not name its default apart: %s" % card)
 
 
 func _check_the_deficit_sign() -> void:

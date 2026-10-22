@@ -25,9 +25,12 @@ static func show(main) -> String:
 		var ev = Events.pending_event(ns, main._loader)
 		held = String(ev.id) if ev != null else ""
 	if held.is_empty():
+		# The unseen event that HOLDS (true): a quiet one on the desk is unseen too,
+		# and is not why the clock stopped (QA on #73).
 		for event_id in main._unseen_events:
-			held = String(event_id)
-			break
+			if bool(main._unseen_events[event_id]):
+				held = String(event_id)
+				break
 	if not held.is_empty():
 		for card_id in main._event_cards:
 			if String(main._event_cards[card_id]) == held:
