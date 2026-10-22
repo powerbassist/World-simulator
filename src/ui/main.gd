@@ -440,8 +440,8 @@ func _ready() -> void:
 	_windows.register("diplomacy", tr("Diplomacy"), _nation_panel, KEY_D, ICONS + "handshake.svg")
 	_nation_panel.setup(_state, _loader)
 	_nation_panel.hide_close_button()
-	# V5.1-d1b2 (G13): a visit booked from Diplomacy is the Diary's to show.
-	_nation_panel.booked.connect(_windows.mark_all_dirty)
+	# V5.1-d1b2 (G13): a visit is booked in the Diary, on the day the player picks.
+	_nation_panel.book_requested.connect(func(action_id: String, target: String): _calendar_panel.fill_booking(action_id, target, _windows))
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
 	# player command with a domestic price, so it earns a U4 decision delta on
 	# exactly the same terms a law does.

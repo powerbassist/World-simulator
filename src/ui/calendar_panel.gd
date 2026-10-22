@@ -34,6 +34,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const VisitBooking = preload("res://src/ui/visit_booking.gd")
 
 signal closed
 
@@ -396,21 +397,7 @@ func _booking_text(entry: Dictionary) -> String:
 			# V2.4a: the block, not just the meeting. The row is anchored on the
 			# meeting day but the act occupies the journey either side, and a
 			# diary that hid the legs would disagree with the ribbon.
-			var travel := int(entry.get("travel_days", 0))
-			if travel > 0:
-				var depart: Dictionary = Calendar.departure(entry)
-				var home: Dictionary = Calendar.arrival_home(entry)
-				# One month prints once -- "MAR–MAR" is always a duplicate, and the
-				# playtest read it as broken text. Two months keep the span form.
-				var dm := DateText.month(int(depart["month"]))
-				var hm := DateText.month(int(home["month"]))
-				if dm == hm:
-					line += tr("  (away %02d–%02d %s)") % [int(depart["day"]), int(home["day"]), dm]
-				else:
-					line += tr("  (away %02d–%02d, %s–%s)") % [
-						int(depart["day"]), int(home["day"]), dm, hm,
-					]
-			return line
+			return line + VisitBooking.away_text(entry)
 		K.KIND_LAW:
 			return tr("Propose %s") % _law_name(String(entry.get("law_id", "")))
 		K.KIND_RESHUFFLE:
@@ -436,6 +423,10 @@ func _refresh_form() -> void:
 	var kind := _selected_kind()
 	var player_id: String = _state.player_nation_id
 	var ns = _state.player()
+	# V5.1-d1b2: a refresh keeps what the player picked. The form was rebuilt on
+	# every refresh -- a day ticking with the Diary open -- and fell back to the
+	# first partner and the first act, a visit filled in from Diplomacy included.
+	var keep := _selected_subject()
 
 	_subject_pick.clear()
 	match kind:
@@ -461,6 +452,7 @@ func _refresh_form() -> void:
 				_subject_pick.set_item_metadata(_subject_pick.item_count - 1, String(party_id))
 
 	_subject_pick.disabled = _subject_pick.item_count <= 1
+	_select_meta(_subject_pick, keep)
 	_refresh_acts()
 
 
@@ -471,6 +463,7 @@ func _refresh_acts() -> void:
 	var kind := _selected_kind()
 	var player_id: String = _state.player_nation_id
 	var ns = _state.player()
+	var keep := String(_act_pick.get_item_metadata(_act_pick.selected)) if _act_pick.selected >= 0 else ""
 	_act_pick.clear()
 
 	match kind:
@@ -492,10 +485,18 @@ func _refresh_acts() -> void:
 					_act_pick.add_item(PanelKit.Labels.portfolio(String(portfolio)))
 					_act_pick.set_item_metadata(_act_pick.item_count - 1, String(portfolio))
 
+	_select_meta(_act_pick, keep)
 	_book_button.disabled = _act_pick.item_count == 0
 	if _act_pick.item_count == 0:
 		_status.text = tr("Nothing of that kind is available to book today.")
 	_refresh_travel_note()
+
+
+## The item whose metadata is `value`, selected; the selection stands when none is.
+func _select_meta(pick: OptionButton, value: String) -> void:
+	for i in pick.item_count:
+		if String(pick.get_item_metadata(i)) == value:
+			pick.selected = i
 
 
 ## The day picker never offers a day the chosen month does not have. Called on
@@ -507,33 +508,42 @@ func _clamp_day_spin() -> void:
 	_refresh_travel_note()
 
 
-## V2.4a. Only the go-there verbs occupy travel days — the ones whose action
-## carries opens_meeting, which today is the state visit and is whatever later
-## content says it is. A treaty is signed in the wake of a meeting the window
-## already required, and a condemnation is delivered from Paris: neither books a
-## train. The note states the block before it is made, in the ribbon's own terms,
-## so the player agrees to the days they are about to see hatched.
+## V2.4a. Only the go-there verbs occupy travel days -- the ones whose action
+## carries opens_meeting. The note states the block before it is made, in the
+## ribbon's own terms, so the player agrees to the days they are about to see
+## hatched. V5.1-d1b2: and a day that cannot be booked says why, Book held, so an
+## invalid day reads as one before the press (VisitBooking.form_note).
 func _refresh_travel_note() -> void:
-	if _travel_note == null:
+	if _travel_note == null or _state == null:
 		return
-	var travel := _selected_travel_days()
-	if travel == 0:
-		_travel_note.text = ""
-		return
-	var meeting := _form_date()
-	var depart: Dictionary = Calendar.departure({
-		"year": int(meeting["year"]), "month": int(meeting["month"]),
-		"day": int(meeting["day"]), "travel_days": travel,
-	})
-	var home: Dictionary = Calendar.arrival_home({
-		"year": int(meeting["year"]), "month": int(meeting["month"]),
-		"day": int(meeting["day"]), "travel_days": travel,
-	})
-	_travel_note.text = tr("Away %d %s – %d %s (%d days' travel each way).") % [
-		int(depart["day"]), DateText.month(int(depart["month"])),
-		int(home["day"]), DateText.month(int(home["month"])),
-		travel,
-	]
+	var entry := _entry_from_form()
+	var note: Dictionary = VisitBooking.form_note(_state, entry)
+	_travel_note.text = String(note["travel"])
+	if String(note["refusal"]) != "":
+		_status.text = String(note["refusal"])
+	_book_button.disabled = entry.is_empty() or String(note["refusal"]) != ""
+
+
+## V5.1-d1b2 (G13, the author: "on ne peut pas choisir la date dans l'agenda"). A
+## meeting verb pressed on the Diplomacy window opens this form on that visit --
+## partner, act and travel filled in, the earliest open day offered -- and the
+## player picks the day and books it here. Nothing is booked until they do.
+func fill_booking(action_id: String, target_id: String, windows) -> void:
+	windows.open("calendar")
+	# Built now, not on the next frame's refresh: the month is picked below.
+	_refresh_months()
+	_kind_pick.selected = K.KINDS.find(K.KIND_DIPLOMATIC)
+	_refresh_form()
+	_select_meta(_subject_pick, target_id)
+	_refresh_acts()
+	_select_meta(_act_pick, action_id)
+	var first := VisitBooking.earliest_entry(_state, _loader, _action_by_id(action_id), target_id)
+	if not first.is_empty():
+		_month_pick.selected = (int(first["year"]) * 12 + int(first["month"])) - (int(_state.year) * 12 + int(_state.month))
+		_clamp_day_spin()
+		_day_spin.value = int(first["day"])
+	_status.text = ""
+	_refresh_travel_note()
 
 
 func _form_date() -> Dictionary:

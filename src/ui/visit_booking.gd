@@ -3,25 +3,31 @@ extends RefCounted
 ## A meeting verb pressed on the Diplomacy window, booked the way the Diary books
 ## it -- V5.1-d1b2, G13 of the play gate. The author's call on the two ways to
 ## visit ("Deux façons différentes"): one rule for the player, "comme dans la vraie
-## vie" -- a state visit takes its travel days. So the Diplomacy row no longer runs
-## the verb on the spot; it books it through the Diary's own command
-## (Calendar.book), priced and placed exactly as calendar_panel.gd prices and
-## places a booking, on the earliest day the scheduler accepts. The AI's instant
-## verb is untouched: this is the player's door only, and it writes nothing the
-## Diary would not.
+## vie" -- a state visit takes its travel days. And then, on the first build: "je ne
+## comprends pas pourquoi quand on clique sur visite d'état, on ne peut pas choisir
+## la date dans l'agenda". So the Diplomacy row does not book on its own: it opens
+## the Diary's booking form (calendar_panel.gd) on that visit -- partner, act and
+## travel filled in, the earliest open day offered -- and the player picks the day
+## and books it there, through the Diary's own command (Calendar.book). The AI's
+## instant verb is untouched: this is the player's door only.
+##
+## Also the form's live note, for every kind it books: the days away for a journey,
+## and why a day cannot be booked, so an invalid day reads as one before the press.
 
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## How far ahead the earliest open day is looked for: two months covers the
 ## longest journey and a diary already holding a trip.
 const SEARCH_DAYS := 62
 
 
-## Book `action` with `target_id` on the earliest day the scheduler accepts after
-## today. The booked entry, or {} when no day in SEARCH_DAYS is open.
-static func book_earliest(state, loader, action, target_id: String) -> Dictionary:
+## The earliest day after today the scheduler would accept `action` with
+## `target_id` on, as the entry the Diary would book; {} when none in SEARCH_DAYS.
+static func earliest_entry(state, loader, action, target_id: String) -> Dictionary:
 	var nation = loader.nations.get(target_id)
 	var person := String(nation.leader_person_id) if nation != null else ""
 	var travel: int = Diplomacy.travel_days(loader, state.player_nation_id, target_id)
@@ -38,7 +44,6 @@ static func book_earliest(state, loader, action, target_id: String) -> Dictionar
 				y += 1
 		var entry := Calendar.make_entry(CalendarK.KIND_DIPLOMATIC, y, m, d, String(action.id), target_id, "", "", "", person, travel)
 		if Calendar.can_book(state, entry):
-			Calendar.book(state, entry)
 			return entry
 	return {}
 
@@ -49,3 +54,39 @@ static func booked(state, action, target_id: String) -> Dictionary:
 		if String(entry.get("action_id", "")) == String(action.id) and String(entry.get("target_id", "")) == target_id:
 			return entry
 	return {}
+
+
+## A booked journey's days away, appended to its diary row: "  (away 03–07 MAR)",
+## or "" for a verb that does not travel. Moved from calendar_panel.gd at V5.1-d1b2.
+static func away_text(entry: Dictionary) -> String:
+	if int(entry.get("travel_days", 0)) <= 0:
+		return ""
+	var depart: Dictionary = Calendar.departure(entry)
+	var home: Dictionary = Calendar.arrival_home(entry)
+	# One month prints once -- "MAR–MAR" is always a duplicate, and the playtest
+	# read it as broken text. Two months keep the span form.
+	var dm := DateText.month(int(depart["month"]))
+	var hm := DateText.month(int(home["month"]))
+	if dm == hm:
+		return Strings.t("  (away %02d–%02d %s)") % [int(depart["day"]), int(home["day"]), dm]
+	return Strings.t("  (away %02d–%02d, %s–%s)") % [int(depart["day"]), int(home["day"]), dm, hm]
+
+
+## The form's note for `entry`: "travel", the days away (empty for a verb that does
+## not travel), and "refusal", why that day cannot be booked (empty when it can).
+static func form_note(state, entry: Dictionary) -> Dictionary:
+	var note := {"travel": "", "refusal": ""}
+	if state == null or entry.is_empty():
+		return note
+	var travel := int(entry.get("travel_days", 0))
+	if travel > 0:
+		var depart: Dictionary = Calendar.departure(entry)
+		var home: Dictionary = Calendar.arrival_home(entry)
+		note["travel"] = Strings.t("Away %d %s – %d %s (%d days' travel each way).") % [
+			int(depart["day"]), DateText.month(int(depart["month"])),
+			int(home["day"]), DateText.month(int(home["month"])),
+			travel,
+		]
+	if not Calendar.can_book(state, entry):
+		note["refusal"] = Strings.t("This day cannot be booked: %s.") % Calendar.refusal_reason(state, entry)
+	return note

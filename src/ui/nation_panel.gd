@@ -37,8 +37,9 @@ signal closed
 ## (_queue_effect, a baseline measured against the next history entry) takes it
 ## with no change of its own.
 signal acted(before, label, result)
-## V5.1-d1b2 (G13): a meeting verb was booked into the diary rather than acted.
-signal booked
+## V5.1-d1b2 (G13): a meeting verb asks for the Diary's booking form on this
+## visit; the player picks the day there (VisitBooking).
+signal book_requested(action_id: String, target_id: String)
 
 var _state
 var _loader
@@ -442,12 +443,11 @@ func _booked_text(entry: Dictionary) -> String:
 
 
 func _on_act(action) -> void:
-	# G13 (b): a visit takes its travel days, as the Diary prices them -- booked,
-	# not run on the spot. Its decision delta is measured on the day it happens.
+	# G13 (b): a visit takes its travel days, as the Diary prices them -- booked
+	# there, on the day the player picks, not run on the spot. Its decision delta is
+	# measured on the day it happens.
 	if action.opens_meeting:
-		if not VisitBooking.book_earliest(_state, _loader, action, _nation_id).is_empty():
-			booked.emit()
-		_dirty = true
+		book_requested.emit(String(action.id), _nation_id)
 		return
 	var before := Trends.snapshot_now(_state)
 	var result := Diplomacy.execute(
