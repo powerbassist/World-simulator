@@ -85,8 +85,11 @@ func _check_focus_returns_below() -> void:
 ## meaning when there is nothing to put away.
 func _check_escape_pops_the_top() -> void:
 	var stack = _main._stack
-	if not _main._windows.is_open("budget"):
-		_main._windows.open("budget")
+	_main._windows.close_all()
+	_main._windows.open("budget")
+	# V5.1-d1a (G1): the inbox the map showed rides over the tab, a layer of its own.
+	if not _main._hud.inbox.is_slid() or stack.top() != ScreenStack.INBOX:
+		_fail("the inbox did not ride over the budget as the INBOX layer (top %d)" % stack.top())
 	_main._briefing.show()
 	_main._hud.title_bar.save_load_requested.emit()
 	if stack.top() != ScreenStack.SYSTEM:
@@ -101,14 +104,20 @@ func _check_escape_pops_the_top() -> void:
 	_press(KEY_ESCAPE)
 	if _main._briefing.visible:
 		_fail("second Escape did not close the briefing")
-	if not _main._windows.is_open("budget") or stack.top() != ScreenStack.WORKSPACE:
+	if not _main._windows.is_open("budget") or stack.top() != ScreenStack.INBOX:
 		_fail("second Escape reached below the briefing (top %d)" % stack.top())
 
 	_press(KEY_ESCAPE)
+	if _main._hud.inbox.visible or not _main._windows.is_open("budget"):
+		_fail("third Escape did not put the inbox away, the budget kept")
+	if stack.top() != ScreenStack.WORKSPACE:
+		_fail("third Escape reached below the inbox (top %d)" % stack.top())
+
+	_press(KEY_ESCAPE)
 	if _main._windows.is_open("budget"):
-		_fail("third Escape did not put the budget away")
+		_fail("fourth Escape did not put the budget away")
 	if stack.top() != ScreenStack.MAP:
-		_fail("three Escapes over three layers left top %d, not the map" % stack.top())
+		_fail("four Escapes over four layers left top %d, not the map" % stack.top())
 	if _main._pause_menu.visible:
 		_fail("an Escape that closed something also opened the pause menu")
 
@@ -163,8 +172,9 @@ func _check_placement_is_a_layer() -> void:
 	_press(KEY_ESCAPE)
 	if _main._armed_energy_action != "":
 		_fail("Escape did not cancel the armed placement")
-	if stack.top() != ScreenStack.WORKSPACE:
-		_fail("cancelling the placement did not drop to the energy window (top %d)" % stack.top())
+	# V5.1-d1a (G6): arming put the workspace away, so the map is what is left.
+	if stack.top() != ScreenStack.MAP:
+		_fail("cancelling the placement did not drop to the map (top %d)" % stack.top())
 	_main._windows.close_all()
 
 
@@ -232,6 +242,7 @@ func _check_holding_arrival_slides_in() -> void:
 ## A note is news, not a question: it waits in the inbox, which stays away.
 func _check_a_note_does_not_slide_in() -> void:
 	_main._windows.open("budget")
+	_main._hud.inbox.slide_out()  # put away (G1: it rode over the tab)
 	_main._hud.inbox.push("A note", "body")
 	if _main._hud.inbox.visible:
 		_fail("a note slid the inbox over the open tab")

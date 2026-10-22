@@ -827,8 +827,8 @@ func _build_sidebar() -> void:
 	)
 
 
-## The player's own pause/play (Space, the clock cluster's button) -- the ONLY
-## two manual toggles; speed changes never touch `paused`, and the pause menu,
+## The player's own pause/play (Space, the clock cluster's button, and since
+## V5.1-d1a a speed picked on a paused clock) -- the only manual doors; the pause menu,
 ## the election dismissal and the holds below set it through their own paths.
 ## A manual toggle means the player has taken ownership of the clock, so the
 ## arrival flag drops: left up, a later answer or X on the last unseen card would
@@ -849,6 +849,10 @@ func _toggle_pause_by_hand() -> void:
 	# replaying input before the month-end hooks, which would act every deferred
 	# click on the pre-month UI and state.
 	if _month_runner.replaying and _clock.paused: return
+	# A scene owns the clock (QA on #54: the clock ran behind "RE-ELECTED"): the
+	# election result holds until its Continue, by every door -- Space, the
+	# cluster's play, a speed (V5.1-d1a, G4) -- not only by the key.
+	if _stack != null and not _stack.accepts_hotkeys(): return
 	# V5.1-0c. The offer lives only until the clock first runs in a term, so the
 	# press that would forfeit it opens the Agenda instead -- once: when the Agenda
 	# has shown the offer, the next press is the player declining, and runs.
@@ -862,6 +866,18 @@ func _toggle_pause_by_hand() -> void:
 	Sound.cue(self, "pause" if _clock.paused else "resume")
 	_paused_for_decision = false
 	_paused_for_programme = false
+	_update_top_bar()
+
+
+## V5.1-d1a (G3, the play gate: "click on speed selection should unpause the
+## game"). A speed picked on a paused clock is the player asking for time at that
+## speed, so it plays -- through the same door as Space, and so with its gates:
+## the programme offer, a scene that owns the clock (the election result), and a
+## press replayed after a month close (#63: a deferred press never resumes).
+func _set_speed_by_hand(speed: int) -> void:
+	_clock.set_speed(speed)
+	if _clock.paused: _toggle_pause_by_hand()
+	_update_top_bar()
 
 
 ## V4.9c. The sound set's warm-up is a worker task, and a task the pool was
@@ -874,14 +890,8 @@ func _exit_tree() -> void:
 ## places the pieces and deliberately wires none of them -- it has no clock and
 ## no GameState, and giving it either would put game control in a layout file.
 func _wire_hud() -> void:
-	_hud.clock_cluster.pause_toggled.connect(func():
-		_toggle_pause_by_hand()
-		_update_top_bar()
-	)
-	_hud.clock_cluster.speed_selected.connect(func(s: int):
-		_clock.set_speed(s)
-		_update_top_bar()
-	)
+	_hud.clock_cluster.pause_toggled.connect(_toggle_pause_by_hand)
+	_hud.clock_cluster.speed_selected.connect(_set_speed_by_hand)
 	_hud.title_bar.save_load_requested.connect(func():
 		_save_from_menu = false
 		_save_load_panel.show()
@@ -909,7 +919,7 @@ func _wire_hud() -> void:
 	# window is still where the player is.
 	_windows.opened.connect(func(id: String):
 		_hud.sidebar.select(Domains.domain_of(id))
-		_hud.show_map_furniture(false)
+		_hud.show_map_furniture(false, not Domains.is_scene(id))
 	)
 	# The legend is the map's, so it goes while a tab covers the map.
 	_windows.closed.connect(func(_id: String):
@@ -1076,13 +1086,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			if _pause_menu != null:
 				_open_pause_menu()
 		KEY_SPACE:
-			# A scene owns the keyboard (QA on #54: the clock ran behind "RE-ELECTED").
-			if not navigable: return
 			_toggle_pause_by_hand()
-			_update_top_bar()
 		KEY_1, KEY_2, KEY_3:
-			_clock.set_speed(event.keycode - KEY_0)
-			_update_top_bar()
+			_set_speed_by_hand(event.keycode - KEY_0)
 		KEY_M:
 			# M was the Europe tab. The map is now always underneath, so the
 			# useful thing that key can do is clear everything off it -- a
@@ -1148,6 +1154,10 @@ var _armed_energy_action: String = ""
 
 func _on_energy_order_armed(action_id: String) -> void:
 	_armed_energy_action = action_id
+	# V5.1-d1a (G6, the play gate: "as soon as placement time is enabled, the panel
+	# should close to let the player put something on the map"). The order lives
+	# here and on the map's reticle, so the workspace goes and the map is clear.
+	_windows.close_all()
 	_map_view.begin_placement()
 	_stack.hold(ScreenStack.PLACEMENT, _cancel_placement)
 
@@ -1952,6 +1962,7 @@ func _hold_for_decision() -> void:
 ## interrupt still on the desk, so the player now sees where it is answered -- a
 ## held clock with nothing on screen saying why is the failure this prevents.
 func _on_stack_top_changed(from: int, to: int) -> void:
+	_hud.map_legend.show_placing(to == ScreenStack.PLACEMENT)
 	if from >= ScreenStack.SCENE and to < ScreenStack.SCENE and _decision_holds_clock():
 		_hold_for_decision()
 

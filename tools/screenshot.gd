@@ -32,6 +32,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --settings
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --failing --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open energy --arm-energy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
@@ -401,6 +402,8 @@ var _downgrade := false
 var _redistribute := false
 var _invest := false
 var _build := false
+## V5.1-d1a (G6): the energy tab's first order armed, through the panel's own signal.
+var _arm_energy := false
 
 ## V2.2b, and a pair of flags that photograph a VIEW rather than a mutation: the
 ## register is static content, so there is no state to stage and the frame is the
@@ -662,6 +665,8 @@ func _init() -> void:
 			_invest = true
 		elif args[i] == "--build":
 			_build = true
+		elif args[i] == "--arm-energy":
+			_arm_energy = true
 		elif args[i] == "--campaign":
 			_campaign = true
 		elif args[i] == "--pledge":
@@ -1033,6 +1038,8 @@ func _apply_view() -> void:
 	# staged before it, the tab's opening put the slid inbox away again.
 	if _interrupt:
 		_stage_an_interrupt()
+	if _arm_energy and not _main._loader.energy_actions.is_empty():
+		_main._energy_panel.order_armed.emit(String(_main._loader.energy_actions[0].id))
 	if _layer != "":
 		_main._map_view.set_layer(_layer)
 		# WITH the state and the viewer, exactly as main.gd:733 calls it. Without

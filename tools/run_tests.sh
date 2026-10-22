@@ -172,6 +172,8 @@ tests=(
   tests/test_play_gate_terms.gd
   tests/test_month_close_pause.gd
   tests/test_effect_baselines.gd
+  tests/test_inbox_stays.gd
+  tests/test_clock_doors.gd
   tests/test_glossary_tip.gd
   tests/test_outliner.gd
   tests/test_geography.gd

@@ -123,9 +123,9 @@ func is_over_furniture(point: Vector2) -> bool:
 ## The map's own furniture -- the legend and the inbox -- shown on the map and
 ## put away while a tab covers it. The inbox comes back over a tab when a
 ## decision holds the clock (V5.1-c3.2).
-func show_map_furniture(shown: bool) -> void:
+func show_map_furniture(shown: bool, carry_inbox := true) -> void:
 	map_legend.visible = shown
-	inbox.dock_on_map(shown)
+	inbox.dock_on_map(shown, carry_inbox)
 
 
 func _margins(box: MarginContainer) -> void:
