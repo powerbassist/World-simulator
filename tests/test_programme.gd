@@ -38,6 +38,9 @@ const COMPLETE_ENTRY := "prog_jobs_first"
 const TIMEOUT_ENTRY := "prog_maastricht_letter"
 const INVALID_ENTRY := "prog_industrial_renewal"
 const GATED_ENTRY := "prog_office_honour"
+## V5.2a: a no-deadline entry with an authored on_fail, so the term-end verdict's
+## price is visible in bloc_offset.
+const NO_DEADLINE_ENTRY := "prog_in_the_black"
 
 var _failures: Array[String] = []
 var _loader
@@ -63,6 +66,9 @@ func _init() -> void:
 	_test_progress_is_derived()
 	_test_a_met_complete_trigger_concludes_complete()
 	_test_timeout_concludes_fail()
+	_test_no_deadline_is_judged_at_the_term_end()
+	_test_no_deadline_met_at_the_term_end_completes()
+	_test_the_term_end_needs_a_clock()
 	_test_an_invalid_trigger_concludes_silent()
 	_test_the_register_carries_no_content()
 	_test_the_register_round_trips_through_json()
@@ -493,6 +499,71 @@ func _test_timeout_concludes_fail() -> void:
 		_fail("a timeout did not pay the fail pulse")
 	if not is_equal_approx(float(ns.bloc_offset.get("business", 0.0)), -0.05):
 		_fail("on_timeout did not reach bloc_offset through the one applier")
+
+
+## V5.2a, the author's rule (2026-10-23): a no-deadline entry "se juge à la fin
+## du mandat" -- judged at the end of the term, then ended. The term's end is the
+## month the executive verdict falls due, read as Elections reads it; Programme
+## runs before Elections, so the verdict lands in the month of the vote. Not met
+## by then, it is a FAIL priced like a timeout (on_timeout, else on_fail).
+func _test_no_deadline_is_judged_at_the_term_end() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	if int(_entry(NO_DEADLINE_ENTRY).get("timeout_months", -1)) != 0:
+		_fail("%s carries a deadline -- the fixture no longer tests the no-deadline rule" % NO_DEADLINE_ENTRY)
+		return
+	Programme.choose(state, ns, NO_DEADLINE_ENTRY, _loader)
+	ns.deficit_pct_gdp = 4.0  # between the complete (<= 0) and fail (>= 8) lines
+	var before: float = float(ns.bloc_offset.get("business", 0.0))
+	_set_month(state, _verdict_month(ns) - 1)
+	Programme.tick_month(state, _loader)
+	if Programme.is_term_end(state, ns) or String(ns.programme[0]["status"]) != "active":
+		_fail("a no-deadline entry concluded '%s' before the term's last month" % str(ns.programme[0]["status"]))
+	_advance(state)
+	if not Programme.is_term_end(state, ns):
+		_fail("the verdict month is not read as the term's end")
+	Programme.tick_month(state, _loader)
+	if String(ns.programme[0]["status"]) != "fail":
+		_fail("an unmet no-deadline entry concluded '%s' at the term's end, not fail" % str(ns.programme[0]["status"]))
+	if not is_equal_approx(Programme.programme_pulse(ns), -ProgrammeK.PROGRAMME_PULSE_FAIL):
+		_fail("the term-end verdict did not pay the fail pulse")
+	if not is_equal_approx(float(ns.bloc_offset.get("business", 0.0)) - before, -0.04):
+		_fail("the term-end verdict did not land on_fail through the one applier")
+
+
+func _test_no_deadline_met_at_the_term_end_completes() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	Programme.choose(state, ns, NO_DEADLINE_ENTRY, _loader)
+	_set_month(state, _verdict_month(ns))
+	ns.deficit_pct_gdp = -0.5
+	Programme.tick_month(state, _loader)
+	if String(ns.programme[0]["status"]) != "complete":
+		_fail("a no-deadline entry met in the verdict month concluded '%s', not complete" % str(ns.programme[0]["status"]))
+
+
+## A NationState whose executive clock was never set (a bare fixture) has no term
+## to end: the rule must not judge every month.
+func _test_the_term_end_needs_a_clock() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	Programme.choose(state, ns, NO_DEADLINE_ENTRY, _loader)
+	ns.deficit_pct_gdp = 4.0
+	ns.next_executive_year = 0
+	ns.next_executive_month = 0
+	Programme.tick_month(state, _loader)
+	if Programme.is_term_end(state, ns) or String(ns.programme[0]["status"]) != "active":
+		_fail("a nation with no executive clock judged its programme as '%s'" % str(ns.programme[0]["status"]))
+
+
+func _verdict_month(ns) -> int:
+	return int(ns.next_executive_year) * 12 + int(ns.next_executive_month)
+
+
+## Absolute month (year * 12 + month, month 1..12) onto the state's clock.
+func _set_month(state, absolute: int) -> void:
+	state.year = (absolute - 1) / 12
+	state.month = absolute - state.year * 12
 
 
 ## (g): the world moved on and the entry stops ticking -- priced at ZERO pulse
