@@ -189,6 +189,8 @@ tests=(
   tests/test_chart_kit.gd
   tests/test_chart_series.gd
   tests/test_panel_charts.gd
+  tests/test_prose_budget.gd
+  tests/test_law_list.gd
   tests/test_clock_doors.gd
   tests/test_consequence_card.gd
   tests/test_dead_ends.gd
