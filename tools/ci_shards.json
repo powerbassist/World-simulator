@@ -178,7 +178,8 @@
    "tests/test_effect_baselines.gd",
    "tests/test_consequence_card.gd",
    "tests/test_state_visit.gd",
-   "tests/test_hold_reason.gd"
+   "tests/test_hold_reason.gd",
+   "tests/test_president.gd"
   ]
  ]
 }
