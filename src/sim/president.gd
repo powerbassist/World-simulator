@@ -1,0 +1,228 @@
+extends RefCounted
+
+## The president's registers -- V5.2a. What has passed between this nation's
+## leader and a person: how well they know each other, how they get on, the
+## bond between them, the money, the promises in flight and the evidence left
+## behind. The model is docs/people-model.md section 14.9; the design and the
+## bands are docs/design/v5.2-spec.md and docs/design/bands-v5.2.md.
+##
+## THE ONLY WRITER of the seven NationState registers, and the only reader that
+## combines them with content (tests/test_president.gd scans src/ for a second).
+## A leaf: it preloads its constants and nothing else, and it rolls nothing --
+## the seeded odds a lever reads are V5.2b's, the hazard evidence feeds V5.2c's.
+##
+## EVERY EDGE STARTS AT THE PRESIDENT (spec C1): there is no person-to-person
+## register, and gossip about a third person writes the president's knowledge
+## of that person. WHOM THE EDGES REACH is the author's call (2026-10-21,
+## answer 1): the played nation's people plus the foreign heads of state and
+## government -- covers() refuses everyone else, so a writer handed a stray id
+## leaves every register untouched rather than growing an edge to 2 147 people.
+##
+## Nothing on the tick path calls a writer yet. The registers are V5.2a's; the
+## audiences (b) and the shadows (c) are what write them.
+
+const K = preload("res://src/sim/president_constants.gd")
+
+
+## Whether an edge from this nation's president to the person may exist: an
+## authored person of this nation (the loader's id-prefix rule), or another
+## nation's current head of state or of government -- the president meets
+## heads, not their benches. Never the president themself: an edge needs two
+## ends. Read at write time; an edge to a head who has since left office stays,
+## because what passed between them still did.
+static func covers(state, ns, loader, person_id: String) -> bool:
+	if person_id == leader_id(ns):
+		return false
+	if _own(ns, loader, person_id):
+		return true
+	if not loader.person_by_id.has(person_id):
+		return false
+	for nation_id in state.nations:
+		if nation_id == ns.id:
+			continue
+		var other = state.nations[nation_id]
+		if person_id == String(other.head_of_state_person_id) or person_id == String(other.pm_person_id):
+			return true
+	return false
+
+
+## Who "the president" is on this nation's register: the separately elected
+## executive where there is one (France's head of state), else the head of
+## government -- the office Elections' verdict decides.
+static func leader_id(ns) -> String:
+	return String(ns.head_of_state_person_id if ns.has_executive else ns.pm_person_id)
+
+
+# --- Reads --------------------------------------------------------------------------
+
+static func knowledge(ns, person_id: String) -> float:
+	return float(ns.person_knowledge.get(person_id, 0.0))
+
+
+## stranger | acquaintance | known, on B4's edges.
+static func knowledge_band(ns, person_id: String) -> String:
+	var k := knowledge(ns, person_id)
+	if k >= K.KNOWLEDGE_KNOWN:
+		return "known"
+	if k >= K.KNOWLEDGE_ACQUAINTANCE:
+		return "acquaintance"
+	return "stranger"
+
+
+static func rapport(ns, person_id: String) -> float:
+	return float(ns.person_rapport.get(person_id, 0.0))
+
+
+## The spec's relationship ladder, one answer: the stored bond where there is
+## one, else stranger or acquaintance read off knowledge. A well-known person
+## with no bond is an acquaintance -- knowing someone is not friendship.
+static func relationship(ns, person_id: String) -> String:
+	var bond := String(ns.person_bond.get(person_id, ""))
+	if bond != "":
+		return bond
+	return "stranger" if knowledge(ns, person_id) < K.KNOWLEDGE_ACQUAINTANCE else "acquaintance"
+
+
+## The authored start plus what the register moved. Unbounded below on purpose:
+## whether the president can spend money they do not have is the spending
+## verb's gate, not the register's.
+static func wealth_eur_m(ns, loader, person_id: String) -> float:
+	var person = loader.person_by_id.get(person_id)
+	var start: float = person.wealth_eur_m if person != null else 0.0
+	return start + float(ns.person_wealth_delta_eur_m.get(person_id, 0.0))
+
+
+## This nation's parties only. Another id is an error and a zero, never a
+## silent zero (V1.6d's confident-zero rule).
+static func party_money_eur_m(ns, loader, party_id: String) -> float:
+	var party = _party(ns, loader, party_id)
+	if party == null:
+		push_error("president: '%s' is not a party of %s" % [party_id, ns.id])
+		return 0.0
+	return party.funds_eur_m + float(ns.party_money_delta_eur_m.get(party_id, 0.0))
+
+
+## Every commitment in flight to a person, months cast to int: the rows come
+## back from a JSON save with every number a float (the pledges precedent --
+## cast on every read), and the ROWS reader whitelists no key, so a key a
+## hand-edited save dropped reads its empty value rather than erroring.
+static func commitments_with(ns, person_id: String) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row in ns.commitments:
+		if String(row.get("person_id", "")) != person_id:
+			continue
+		out.append({
+			"kind": String(row.get("kind", "")),
+			"person_id": person_id,
+			"object": String(row.get("object", "")),
+			"made_month": int(row.get("made_month", 0)),
+			"due_month": int(row.get("due_month", 0)),
+		})
+	return out
+
+
+## The evidence held against the president, summed -- what V5.2c's exposure
+## hazard rises with.
+static func evidence_size(ns) -> float:
+	var total := 0.0
+	for row in ns.exposure_evidence:
+		total += float(row.get("size", 0.0))
+	return total
+
+
+# --- Writers (the only ones) ----------------------------------------------------------
+
+## Knowledge moves both ways: a lie caught collapses it (spec, the lies table).
+static func learn(state, ns, loader, person_id: String, amount: float) -> bool:
+	if not covers(state, ns, loader, person_id):
+		return false
+	ns.person_knowledge[person_id] = clampf(knowledge(ns, person_id) + amount, 0.0, 1.0)
+	return true
+
+
+static func adjust_rapport(state, ns, loader, person_id: String, amount: float) -> bool:
+	if not covers(state, ns, loader, person_id):
+		return false
+	ns.person_rapport[person_id] = clampf(rapport(ns, person_id) + amount, -1.0, 1.0)
+	return true
+
+
+## One of K.BONDS, or "" to clear back to the knowledge-read relationship.
+static func set_bond(state, ns, loader, person_id: String, bond: String) -> bool:
+	if not covers(state, ns, loader, person_id):
+		return false
+	if bond == "":
+		ns.person_bond.erase(person_id)
+		return true
+	if not K.BONDS.has(bond):
+		return false
+	ns.person_bond[person_id] = bond
+	return true
+
+
+## The president's own money is keyed by person rather than held as one scalar,
+## so a successor never inherits a deposed leader's gains. This nation's people
+## only: a foreign head's fortune is not on this register.
+static func adjust_wealth_eur_m(ns, loader, person_id: String, amount: float) -> bool:
+	if not _own(ns, loader, person_id):
+		return false
+	ns.person_wealth_delta_eur_m[person_id] = float(ns.person_wealth_delta_eur_m.get(person_id, 0.0)) + amount
+	return true
+
+
+static func adjust_party_money_eur_m(ns, loader, party_id: String, amount: float) -> bool:
+	if _party(ns, loader, party_id) == null:
+		return false
+	ns.party_money_delta_eur_m[party_id] = float(ns.party_money_delta_eur_m.get(party_id, 0.0)) + amount
+	return true
+
+
+## A promise or an IOU to a covered person, due in a LATER month: a date already
+## reached could not be kept, so it is refused rather than broken on arrival.
+## `object` is what was promised, in the want grammar's own words
+## ("programme:<id>", "office:<...>") so a keeper can judge it against the want.
+static func commit(state, ns, loader, kind: String, person_id: String, object: String, due_month: int) -> bool:
+	if not K.COMMITMENT_KINDS.has(kind) or object == "" or due_month <= _now(state):
+		return false
+	if not covers(state, ns, loader, person_id):
+		return false
+	ns.commitments.append({
+		"kind": kind,
+		"person_id": person_id,
+		"object": object,
+		"made_month": _now(state),
+		"due_month": due_month,
+	})
+	return true
+
+
+static func leave_evidence(state, ns, loader, kind: String, person_id: String, size: float) -> bool:
+	if not K.EVIDENCE_KINDS.has(kind) or size <= 0.0:
+		return false
+	if not covers(state, ns, loader, person_id):
+		return false
+	ns.exposure_evidence.append({
+		"kind": kind,
+		"person_id": person_id,
+		"size": size,
+		"month": _now(state),
+	})
+	return true
+
+
+# --- Helpers ----------------------------------------------------------------------------
+
+## An authored person of this nation: the loader's id-prefix rule.
+static func _own(ns, loader, person_id: String) -> bool:
+	return loader.person_by_id.has(person_id) and person_id.begins_with("%s_" % ns.id)
+
+
+static func _party(ns, loader, party_id: String):
+	for party in loader.parties.get(ns.id, []):
+		if party.id == party_id:
+			return party
+	return null
+
+
+static func _now(state) -> int:
+	return int(state.year) * 12 + int(state.month)

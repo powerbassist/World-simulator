@@ -32,6 +32,12 @@ var competence: float = 0.0
 ## it. Validated against the same nation's roster by data_loader.gd.
 var excluded_partners: Array[String] = []
 
+## V5.2a. The party's funds at game start, EUR millions -- the START only: what
+## is raised or spent is NationState.party_money_delta_eur_m (the author's call,
+## 2026-10-21: party money is its own register, not the president's wealth).
+## Optional; absent reads 0, which is every party before Content authors one.
+var funds_eur_m: float = 0.0
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var p := new()
@@ -86,5 +92,12 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 				errors.append("%s: %s excluded_partners holds a non-string entry" % [filename, path])
 			else:
 				p.excluded_partners.append(entry)
+
+	if d.has("funds_eur_m"):
+		var funds = d["funds_eur_m"]
+		if typeof(funds) in [TYPE_FLOAT, TYPE_INT] and float(funds) >= 0.0:
+			p.funds_eur_m = float(funds)
+		else:
+			errors.append("%s: %s field 'funds_eur_m' must be a number >= 0" % [filename, path])
 
 	return p

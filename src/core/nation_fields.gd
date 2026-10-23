@@ -325,4 +325,11 @@ const FIELDS := [
 	["start_judicial_independence", SCALAR, VALUE, 0.0, true],  # content (its declaration: earns nothing)
 	["embassies", DEEP, COPIED, [], false],  # bump 41
 	["no_relations", DEEP, COPIED, [], false],  # bump 41
+	["person_knowledge", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2a: absent is a stranger
+	["person_rapport", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2a: absent is neutral
+	["person_bond", DEEP, STRING_MAP_TYPED, {}, true],  # V5.2a: absent is no bond
+	["person_wealth_delta_eur_m", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2a: absent is no change
+	["party_money_delta_eur_m", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2a: absent is no change
+	["commitments", DEEP, ROWS, [], true],  # V5.2a: absent is nothing promised
+	["exposure_evidence", DEEP, ROWS, [], true],  # V5.2a: absent is nothing left behind
 ]

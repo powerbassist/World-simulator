@@ -47,6 +47,7 @@ func _process(_delta: float) -> bool:
 		9:
 			_check_cards()
 			_check_load_rebuilds_the_decisions_lane()
+			_check_load_restores_the_consequence_card()
 			_check_ribbon()
 			_cleanup()
 			_finish()
@@ -69,7 +70,13 @@ func _save_in_april_then_wander_to_march() -> void:
 			_desk_event = String(ev.id)
 			Events.announce(ns, ev, Events._absolute_month(4, 4), Events.region_names(ns, _main._loader))
 			break
+	# someday.md C6 (the parent's ruling): the latest consequence is saved state,
+	# so a load puts its card back; the discarded game's register is emptied first.
+	state.recent_effects.clear()
+	state.recent_effects.append({"label": "The saved decision", "year": 2026, "month": 3,
+		"movements": [{"label": "Approval", "change": -2.0, "unit": "pp", "severity": -0.4}]})
 	_main._on_save_requested(SLOT)
+	state.recent_effects.clear()
 	ns.event_queue.clear()
 	# The "other game": a different month, and cards that only it would have shown.
 	state.month = 3
@@ -118,6 +125,26 @@ func _check_load_rebuilds_the_decisions_lane() -> void:
 		_fail("the loaded desk's '%s' has no row in the inbox" % _desk_event)
 	elif inbox.lane_of(found) != "decisions":
 		_fail("the loaded desk's row sits in '%s', not Decisions" % inbox.lane_of(found))
+
+
+func _check_load_restores_the_consequence_card() -> void:
+	var inbox = _main._hud.inbox
+	for id in inbox._cards.keys():
+		if _text(inbox._cards[id]).to_lower().contains("the saved decision"):
+			if not _text(inbox._cards[id]).contains("Approval"):
+				_fail("the restored consequence card does not say what moved")
+			return
+	_fail("after a load the inbox has no card for the latest consequence (recent_effects[0])")
+
+
+func _text(node: Node) -> String:
+	var out := ""
+	if node is Label or node is RichTextLabel:
+		out += String(node.text) + "
+"
+	for child in node.get_children():
+		out += _text(child)
+	return out
 
 
 func _check_ribbon() -> void:

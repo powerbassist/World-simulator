@@ -8,6 +8,7 @@ extends RefCounted
 ## the registers stay where the clock doors and the tests read them.
 
 const Events = preload("res://src/sim/events.gd")
+const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
@@ -171,6 +172,15 @@ static func guard_lapses(main, ns) -> void:
 ## The decision card for one desk entry: the event's choices as buttons, the
 ## place in the title for a sited event, the plate beside it. One builder for the
 ## arrival and the lapse guard, so the guard's card is the arrival's card.
+## After a load: the loaded desk back in the inbox's Decisions lane (V5.1-c3.2: the
+## clear took the discarded game's rows, and a pending question with no row could be
+## answered only from Dispatches), and the latest consequence card (C6).
+static func restore_after_load(main) -> void:
+	for entry in main._state.player().event_queue:
+		push(main, Events.event_by_id(main._loader, String(entry.get("event_id", ""))), entry)
+	EffectsLedger.restore_card(main._state, main._hud.inbox)
+
+
 static func push(main, ev, entry: Dictionary) -> void:
 	if ev == null:
 		return  # a desk entry whose event the content no longer has (a load)

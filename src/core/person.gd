@@ -55,6 +55,19 @@ var wants: Array[Dictionary] = []
 ## content, it is an art-logistics marker, which is also why it defaults to
 ## false: every person of the pre-V4.3 register is met cast.
 var bench: bool = false
+## V5.2a, three more facts about who a person IS, none of which moves -- so the
+## character layer's content/state line holds (people-model 14.9). How well
+## they read others and hide themselves, in [0, 1]: a lie's catch and a
+## flatterer's backfire both read it. 0.5 absent, a middling reader, which is
+## the honest default for a person Content has not yet characterised.
+var social_skill: float = 0.5
+## The person record they are married to, "" for none. A content field on the
+## leader, not a marriage system: nothing in src/sim/ makes or ends a marriage
+## (spec C2), and the affair reads it.
+var spouse_id: String = ""
+## Personal wealth at game start, EUR millions. The START only: what the
+## president gains or loses is NationState.person_wealth_delta_eur_m.
+var wealth_eur_m: float = 0.0
 
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
@@ -126,6 +139,28 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 			p.bench = bool(d["bench"])
 		else:
 			errors.append("%s: %s field 'bench' must be a boolean" % [filename, path])
+
+	# V5.2a. Shape only; spouse_id resolves in PeopleLoader.validate_people(),
+	# where every nation's register is in hand (a spouse may be authored after).
+	if d.has("social_skill"):
+		var skill = d["social_skill"]
+		if typeof(skill) in [TYPE_FLOAT, TYPE_INT] and float(skill) >= 0.0 and float(skill) <= 1.0:
+			p.social_skill = float(skill)
+		else:
+			errors.append("%s: %s field 'social_skill' must be a number in [0, 1]" % [filename, path])
+
+	if d.has("spouse_id"):
+		if typeof(d["spouse_id"]) == TYPE_STRING:
+			p.spouse_id = String(d["spouse_id"])
+		else:
+			errors.append("%s: %s field 'spouse_id' must be a string" % [filename, path])
+
+	if d.has("wealth_eur_m"):
+		var wealth = d["wealth_eur_m"]
+		if typeof(wealth) in [TYPE_FLOAT, TYPE_INT] and float(wealth) >= 0.0:
+			p.wealth_eur_m = float(wealth)
+		else:
+			errors.append("%s: %s field 'wealth_eur_m' must be a number >= 0" % [filename, path])
 
 	if d.has("wants"):
 		if typeof(d["wants"]) != TYPE_ARRAY:

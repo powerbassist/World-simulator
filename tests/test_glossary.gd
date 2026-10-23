@@ -36,8 +36,8 @@ func _init() -> void:
 
 func _check_the_merged_table_is_clean() -> void:
 	var ids: PackedStringArray = Glossary.ids()
-	if ids.size() != 48:
-		_fail("the glossary holds %d entries; the merged table has 48" % ids.size())
+	if ids.size() != 54:
+		_fail("the glossary holds %d entries; the merged table has 54" % ids.size())
 	var problems: PackedStringArray = Glossary.problems(Glossary.rows(), GlossaryLive.NAMES)
 	if not problems.is_empty():
 		_fail("the merged table has problems: %s" % [problems])

@@ -55,7 +55,7 @@ does not carry it and refuses an entry that carries an unknown field beside it.
 | `activation` | how it opens: authored, event-opened, player-chosen, or forced |
 | `immediate` | effects on activation |
 | `complete` / `fail` / `invalid` | the three conclusions, on [[referendum-model]]'s own three-outcome precedent |
-| `timeout_months` | 0 = no deadline |
+| `timeout_months` | 0 = no deadline: judged at the end of the term (§11) |
 | `current_value`, `goal_value`, `progressbar` | the progress read, DERIVED from a live figure rather than stored |
 | `on_complete` / `on_fail` / `on_timeout` | `Law.extract_shared_effects()` — the one applier events already use, not a second |
 | `weight`, `pinned` | ordering, and whether it rides the outliner by default |
@@ -74,7 +74,8 @@ entry and applies its authored `on_invalid`-style effects through the ONE applie
 (`Law.extract_shared_effects()` → `Legislature.apply_effects()`, the same route
 complete and fail take); what it does not do is move the competence stock.
 `timeout_months` 0 means no deadline, deliberately: some goals are the
-term's character, not its clock. `current_value`/`goal_value`/`progressbar` are
+term's character, not its clock — and since V5.2a the term IS their clock: they are
+judged at its end (§11). `current_value`/`goal_value`/`progressbar` are
 **derived, never stored** (the region-share discipline — a cached progress field can
 disagree with the live figure it reads, and then the panel lies); they earn no
 `SAVE_VERSION` room of their own. `on_*` route through the ONE applier because a
@@ -609,6 +610,40 @@ Recorded limitations, known and tolerated rather than fixed:
   The fix would be a reference-counted pause stack — a second pause mechanism,
   which is the flag-lifting class defence-model's V1.3g rule exists to
   prevent — refused for that reason.
+
+## 11. A no-deadline entry is judged at the end of the term (V5.2a)
+
+The author's rule, at V5.1's closing pre-gate (2026-10-23): a no-deadline entry
+"se juge à la fin du mandat" — it is judged at the end of the term, then it ends.
+Until then such an entry ran on into the next term with nothing to conclude it but
+its own triggers, which `available()` read as "still running" and so never offered
+again.
+
+- **The term's end** is the month the executive verdict falls due:
+  `Programme.is_term_end()` reads `next_executive_year/month` exactly as
+  `Elections` does (`>=` in absolute months). A level read of a clock `Elections`
+  owns, the `is_term_start()` pattern; a clock never set reads false.
+- **The verdict** is the timeout branch's, after the triggers: complete > fail >
+  invalid > term end. Met by then, the entry has already completed; unmet, it
+  concludes `fail` with `on_timeout`, else `on_fail`, and pays the fail pulse.
+- **When it lands.** Programme runs before Opinion and Elections in the month, so
+  the conclusion and its pulse land in the month of the vote: part of the price
+  reaches that month's approval through the inertia, the rest carries into the
+  next term's stock. That is the literal reading of "judged at the end"; judging
+  the month before the vote would put the whole price on the ballot instead.
+- **Its sponsors.** A `programme:` want is served only while its entry is active
+  this term ([[people-model]] §14.8), and Characters runs before Elections, so a
+  sponsor's want turns denied in the verdict month itself — one month earlier
+  than when the term counter alone ended it.
+- **Only the no-deadline entry.** An entry with its own clock is judged on it,
+  even across a verdict month; and an entry chosen in a game that opens months
+  before its first verdict (on today's roster HUN and SVN in 2026-04, CYP in
+  2026-05, none of them playable) is judged at that vote. The literal rule;
+  recorded so a later playable nation does not meet it as a surprise.
+- **What it does not move.** No balance regime chooses a programme, so the
+  51-regime table is byte-identical. `tools/programme_probe.gd`'s P1–P5 read month
+  6; its `chosen` arm (a no-deadline entry never met) concludes `fail` in the
+  verdict month when its window reaches it.
 
 Related: [[agency-model]] · [[pledge-model]] · [[tiers/v4]] · [[opinion-model]] ·
 [[campaign-model]] · [[referendum-model]] · [[decision-log]]

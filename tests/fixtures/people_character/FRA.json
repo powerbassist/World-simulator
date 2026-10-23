@@ -18,6 +18,7 @@
     { "id": "FRA_okwant", "name": "Rémi Okwant", "kind": "politician",
       "party_id": "renouveau_civique",
       "traits": ["ambitious", "pragmatic"], "ambition": 0.7,
+      "social_skill": 0.8, "spouse_id": "FRA_legrain", "wealth_eur_m": 2.5,
       "wants": [
         { "object": "programme:prog_the_hospital_year", "stance": "sponsor" },
         { "object": "office:portfolio:health", "stance": "want" },
@@ -106,6 +107,16 @@
       ]
     },
     { "id": "FRA_badparty", "name": "Wandrille Badparty",
-      "party_id": "not_a_party" }
+      "party_id": "not_a_party" },
+    { "id": "FRA_badskill", "name": "Sidonie Badskill", "kind": "judge",
+      "social_skill": 1.5 },
+    { "id": "FRA_badwealth", "name": "Anatole Badwealth", "kind": "judge",
+      "wealth_eur_m": -1 },
+    { "id": "FRA_badspousetype", "name": "Clovis Badspousetype", "kind": "judge",
+      "spouse_id": 7 },
+    { "id": "FRA_ghostspouse", "name": "Ernestine Ghostspouse", "kind": "judge",
+      "spouse_id": "FRA_nobody_at_all" },
+    { "id": "FRA_selfspouse", "name": "Narcisse Selfspouse", "kind": "judge",
+      "spouse_id": "FRA_selfspouse" }
   ]
 }

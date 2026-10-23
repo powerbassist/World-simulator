@@ -14,6 +14,7 @@ extends RefCounted
 
 const Trends = preload("res://src/ui/trends.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 ## The register's one writer, and its bound (AGENTS.md rule 2).
 const RecentEffects = preload("res://src/sim/recent_effects.gd")
 
@@ -60,6 +61,18 @@ static func record(state, pending: Array, history_entry: Dictionary, year: int, 
 		var title := Strings.t("This month you decided: %s") % ", ".join(names) if not names.is_empty() 			else Strings.t("This month, decided for you: %s") % ", ".join(defaults)  # i18n: row-ok effects' labels, routed when queued
 		inbox.push(title, body)
 	pending.clear()
+
+
+## After a load (someday.md C6, the parent's ruling): the inbox puts back what the
+## saved state can show. The latest consequence is saved -- recent_effects, newest
+## first -- so its card returns, dated, since "this month" would no longer be true;
+## the pure notes it rode beside were never saved and stay gone.
+static func restore_card(state, inbox) -> void:
+	if state.recent_effects.is_empty() or inbox == null:
+		return
+	var effect: Dictionary = state.recent_effects[0]
+	inbox.push(Strings.t("Decided in %s: %s") % [DateText.month_year(int(effect.get("month", 1)), int(effect.get("year", 0))),
+		String(effect.get("label", ""))], card_body(effect))  # i18n: row-ok an effect's label, routed when queued
 
 
 ## What moved, biggest first: the figures with a reading and a change that prints
