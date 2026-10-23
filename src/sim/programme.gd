@@ -28,7 +28,8 @@ extends RefCounted
 ## world-changed entry stops ticking rather than failing a player who never got to
 ## play it, not to erase a delivery that already landed. Timeout is not a trigger
 ## but the clock: the deadline month is the entry's LAST month to land the goal,
-## and the same tick concludes `fail` if it did not.
+## and the same tick concludes `fail` if it did not. A no-deadline entry's clock is
+## the term (V5.2a): it is judged in the month the executive verdict falls due.
 ##
 ## ============================================================================
 ## THE PRICE IS A PULSE INTO A STOCK THIS FILE DOES NOT OWN
@@ -86,6 +87,18 @@ static func is_term_start(ns) -> bool:
 	return ns.months_in_term == 0
 
 
+## The term's last month: the month the executive verdict falls due, read exactly
+## as Elections reads it (`>=` in absolute months, Calendar.due()'s rule, so a
+## stepped-over date still counts). A level read of Elections' clock, which this
+## file never writes; Programme runs before Elections, so the month it reads true
+## is the month of the vote, and a won election moves the clock past it. A clock
+## never set (year 0, a bare fixture) has no term to end.
+static func is_term_end(state, ns) -> bool:
+	if int(ns.next_executive_year) <= 0:
+		return false
+	return int(state.year) * 12 + int(state.month) 		>= int(ns.next_executive_year) * 12 + int(ns.next_executive_month)
+
+
 ## One month of every live register: advance the clocks, judge the triggers,
 ## conclude what concluded. Runs for all ten nations the way Pledges.tick_month()
 ## does -- an empty register returns before any work, so the nine cost nothing.
@@ -127,12 +140,16 @@ static func _tick_nation(state, ns, loader) -> void:
 			_conclude(state, ns, loader, entry, terms.get("on_invalid", {}), K.STATUS_INVALID)
 			continue
 
+		# A no-deadline entry is judged at the end of the term, then ends (the
+		# author, 2026-10-23: "il se juge à la fin du mandat"). Before V5.2a it
+		# ran on into the next term with nothing to conclude it but a trigger.
 		var timeout := int(terms.get("timeout_months", 0))
-		if timeout > 0 and int(entry["months_live"]) >= timeout:
+		if (timeout > 0 and int(entry["months_live"]) >= timeout) 				or (timeout == 0 and is_term_end(state, ns)):
 			# Timeout IS a fail (the brief's own wording and the pulse's sign),
 			# but the table's `on_timeout` slot is its effects: an entry the clock
 			# killed may price differently from one a trigger did. Unauthored, a
-			# timeout falls to on_fail -- a missed goal is a missed goal.
+			# timeout falls to on_fail -- a missed goal is a missed goal. The
+			# term's end is the same verdict for an entry whose clock is the term.
 			var effects: Dictionary = terms.get("on_timeout", {})
 			if effects.is_empty():
 				effects = terms.get("on_fail", {})

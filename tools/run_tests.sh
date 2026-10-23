@@ -53,6 +53,7 @@ tests=(
   # appears to.
   tests/test_summits.gd
   tests/test_people.gd
+  tests/test_president.gd
   # V4.11: the derived grade (playable / simulated / outline) and its scanner.
   tests/test_roster.gd
   # V4.11b: the real endowments and the outline register, as content.
