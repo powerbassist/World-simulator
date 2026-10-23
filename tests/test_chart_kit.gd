@@ -60,6 +60,8 @@ func _check_nice_range() -> void:
 	var mid := ChartStyle.nice_range(40.0, 60.0, false)
 	if mid.x > 40.0 or mid.y < 60.0:
 		_fail("40..60 is not inside its range %s" % mid)
+	if ChartStyle.ticks(Vector2(116, 124)).size() < 3:
+		_fail("116..124 drew fewer than three ticks: %s" % [ChartStyle.ticks(Vector2(116, 124))])
 	for t in ChartStyle.ticks(Vector2(0, 100)):
 		if fmod(t, 10.0) != 0.0:
 			_fail("a tick on 0..100 is not round: %s" % t)
@@ -96,6 +98,7 @@ var _two: VBoxContainer
 var _signed: VBoxContainer
 var _bars: VBoxContainer
 var _stack: VBoxContainer
+var _spark: Control
 
 
 func _build_charts() -> void:
@@ -108,6 +111,7 @@ func _build_charts() -> void:
 	_signed = ChartKit.line(_box, "Signed", [{"label": "g", "values": PackedFloat64Array([-1.0, 2.0])}],
 		[[2026, 1], [2026, 2]], {"zero": true})
 	_bars = ChartKit.bars(_box, "Bars", [{"label": "x", "value": 3.0}, {"label": "y", "value": 9.0}])
+	_spark = ChartKit.spark(_box, PackedFloat64Array([1.0, 3.0, 2.0]), months)
 	_stack = ChartKit.stack(_box, "Stack", [{"label": "a", "value": 1.0}, {"label": "b", "value": 3.0}], {"marker": 0.5})
 
 
@@ -158,6 +162,8 @@ func _check_charts() -> void:
 		_fail("the hover over the second segment does not name it")
 	if _stack.get_node_or_null("Legend") == null:
 		_fail("a stack has no legend")
+	if not _spark.has_line() or _spark.size.y > 40.0:
+		_fail("a sparkline drew no line or is %.0f px tall" % _spark.size.y)
 
 
 func _fail(message: String) -> void:

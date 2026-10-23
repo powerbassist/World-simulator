@@ -18,12 +18,14 @@ const MAX_PARTS := 8
 var _parts: Array = []
 var _unit := ""
 var _marker := -1.0
+var _places := -1
 
 
 func setup(parts: Array, opts := {}) -> void:
 	_parts = parts
 	_unit = String(opts.get("unit", ""))
 	_marker = float(opts.get("marker", -1.0))
+	_places = int(opts.get("places", -1))
 	custom_minimum_size = Vector2(0.0, BAR + 8.0)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	queue_redraw()
@@ -83,5 +85,5 @@ func _get_tooltip(at: Vector2) -> String:
 	for i in _parts.size():
 		var r: Rect2 = rects[i]
 		if r.size.x > 0.0 and at.x >= r.position.x and at.x <= r.end.x + GAP:
-			return "%s  %s%s" % [String(_parts[i]["label"]), ChartStyle.figure(float(_parts[i]["value"])), _unit]
+			return "%s  %s%s" % [String(_parts[i]["label"]), ChartStyle.figure(float(_parts[i]["value"]), _places), _unit]
 	return ""

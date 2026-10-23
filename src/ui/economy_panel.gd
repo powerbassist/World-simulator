@@ -29,6 +29,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -72,6 +73,7 @@ func _ready() -> void:
 	root.add_child(_headline_note)
 
 	root.add_child(HSeparator.new())
+	root.add_child(PanelCharts.new(self, PanelCharts.ECONOMY))
 
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 28)

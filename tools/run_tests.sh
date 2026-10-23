@@ -188,6 +188,7 @@ tests=(
   tests/test_button_sizes.gd
   tests/test_chart_kit.gd
   tests/test_chart_series.gd
+  tests/test_panel_charts.gd
   tests/test_clock_doors.gd
   tests/test_consequence_card.gd
   tests/test_dead_ends.gd

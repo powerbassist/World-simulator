@@ -28,6 +28,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -77,14 +78,7 @@ var _dirty := true
 
 
 func _ready() -> void:
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 12)
-	margin.add_child(root)
+	var root := PanelKit.padded(self, 16, 12)
 
 	_title = Label.new()
 	_title.text = tr("OVERVIEW")
@@ -95,6 +89,7 @@ func _ready() -> void:
 	_lead.theme_type_variation = UiTheme.LEAD
 	_lead.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_lead)
+	root.add_child(PanelCharts.new(self, PanelCharts.OVERVIEW))
 
 	root.add_child(HSeparator.new())
 

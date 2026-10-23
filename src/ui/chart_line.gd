@@ -18,6 +18,7 @@ var _months: Array = []
 var _unit := ""
 var _zero := false
 var _range := Vector2(0.0, 1.0)
+var _spark := false
 
 
 func setup(series: Array, months: Array, opts := {}) -> void:
@@ -25,6 +26,7 @@ func setup(series: Array, months: Array, opts := {}) -> void:
 	_months = months
 	_unit = String(opts.get("unit", ""))
 	_zero = bool(opts.get("zero", false))
+	_spark = bool(opts.get("spark", false))
 	if opts.has("fixed"):
 		_range = opts["fixed"]
 	else:
@@ -37,8 +39,12 @@ func setup(series: Array, months: Array, opts := {}) -> void:
 		if lo > hi:
 			lo = 0.0
 			hi = 1.0
-		_range = ChartStyle.nice_range(lo, hi, _zero)
-	custom_minimum_size = Vector2(0.0, ChartStyle.HEIGHT * UiTheme.text_scale())
+		_range = ChartStyle.nice_range(lo, hi, _zero, float(opts.get("min_span", 1.0)))
+	# No line, no plot: an empty grid with an invented scale reads as data. The
+	# builder's caption says the chart fills in.
+	custom_minimum_size = Vector2(0.0, ChartStyle.HEIGHT * UiTheme.text_scale() if has_line() else 0.0)
+	if _spark:
+		custom_minimum_size = Vector2(ChartStyle.SPARK.x, ChartStyle.SPARK.y * UiTheme.text_scale())
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	queue_redraw()
 
@@ -77,11 +83,13 @@ func _font_size() -> int:
 ## The plot inside the tick labels (left), the month band (below) and the end
 ## value (right), measured off the text rather than guessed.
 func plot_rect() -> Rect2:
+	if _spark:
+		return Rect2(DOT_R, DOT_R, maxf(size.x - DOT_R * 2.0, 1.0), maxf(size.y - DOT_R * 2.0, 1.0))
 	var font := get_theme_default_font()
 	var fs := _font_size()
 	var left := 0.0
 	for t in ChartStyle.ticks(_range):
-		left = maxf(left, font.get_string_size(ChartStyle.figure(t), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x)
+		left = maxf(left, font.get_string_size(ChartStyle.tick_text(t, _range), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x)
 	var right := 0.0
 	for s in _series:
 		var values: PackedFloat64Array = s["values"]
@@ -93,6 +101,11 @@ func plot_rect() -> Rect2:
 
 
 func _draw() -> void:
+	if not has_line():
+		return
+	if _spark:
+		_draw_spark()
+		return
 	var font := get_theme_default_font()
 	var fs := _font_size()
 	var plot := plot_rect()
@@ -101,7 +114,7 @@ func _draw() -> void:
 		var y := plot.position.y + plot.size.y * (1.0 - (t - _range.x) / span)
 		var grid := UiTheme.TEXT_DIM if (_zero and absf(t) < 1e-9) else UiTheme.EDGE
 		draw_line(Vector2(plot.position.x, y), Vector2(plot.end.x, y), grid, 1.0)
-		draw_string(font, Vector2(0.0, y + fs * 0.35), ChartStyle.figure(t), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
+		draw_string(font, Vector2(0.0, y + fs * 0.35), ChartStyle.tick_text(t, _range), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
 	if _months.size() >= 1:
 		var base := plot.end.y + font.get_ascent(fs) + PAD * 0.5
 		draw_string(font, Vector2(plot.position.x, base), _month_text(0), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
@@ -121,6 +134,15 @@ func _draw() -> void:
 		draw_circle(end, DOT_R, color)
 		draw_string(font, Vector2(end.x + PAD, end.y + fs * 0.35), ChartStyle.figure(values[-1]) + _unit,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)
+
+
+## The trend beside a figure: the line in the de-emphasis grey, only the current
+## month in the series colour -- no grid, no labels; the figure beside it is the value.
+func _draw_spark() -> void:
+	var values: PackedFloat64Array = _series[0]["values"]
+	var pts := points(values, plot_rect(), _range)
+	draw_polyline(pts, UiTheme.TEXT_DIM, 2.0, true)
+	draw_circle(pts[-1], DOT_R - 1.0, ChartStyle.SERIES[0])
 
 
 func _month_text(i: int) -> String:

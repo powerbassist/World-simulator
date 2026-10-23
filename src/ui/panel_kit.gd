@@ -169,6 +169,20 @@ static func rich(parent: Control, text: String, tone := Tone.DIM) -> RichTextLab
 	return label
 
 
+## A panel's frame: a margin on all four sides and the one column the panel builds
+## into. The same seven lines opened nearly every panel's _ready (V5.2-0a moved
+## them here when three panels at their size ratchet each needed room for charts).
+static func padded(owner: Control, margin_px: int, separation: int) -> VBoxContainer:
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_%s" % side, margin_px)
+	owner.add_child(margin)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", separation)
+	margin.add_child(column)
+	return column
+
+
 ## A row of verbs that wraps onto a second line rather than widening its window.
 ## A flow container's minimum width is its widest button, not the sum of them: a
 ## firm's seven actions in French were one 1302 px row, and the Companies window

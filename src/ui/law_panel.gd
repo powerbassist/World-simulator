@@ -16,6 +16,7 @@ extends PanelContainer
 ## random number. src/sim/ never learns a forecast exists.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Government = preload("res://src/sim/government.gd")
@@ -81,17 +82,11 @@ var _endorse_refusal := ""
 func _ready() -> void:
 	custom_minimum_size = Vector2(760, 560)
 
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 12)
-	margin.add_child(root)
+	var root := PanelKit.padded(self, 16, 12)
 
 	_title = Label.new()
 	root.add_child(_title)
+	root.add_child(PanelCharts.new(self, PanelCharts.SEATS))
 
 	_result_box = VBoxContainer.new()
 	root.add_child(_result_box)
