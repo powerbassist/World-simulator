@@ -14,9 +14,9 @@ extends SceneTree
 ##     edge) -- the judge nobody slots is LEGAL, the partyless backbencher
 ##     politician is not, and both halves are pinned.
 ##   - A PERSON IS A WANT CARRIER, NOT A MECHANISM CARRIER. Person has exactly
-##     seven fields, checked by reading the file: what someone IS and WANTS is
-##     content, and every number that MOVES lives on NationState. The moment an
-##     eighth field appears, this turns red and a later session has to say why.
+##     eleven fields, checked by reading the file: what someone IS and WANTS is
+##     content, and every number that MOVES lives on NationState. The moment a
+##     twelfth field appears, this turns red and a later session has to say why.
 ##   - EVERY KIND PLUGS IN. A kind in KIND_KEYS is a politician shape (wants +
 ##     standing) or carries a meter in KIND_METERS -- a kind with neither is
 ##     content that cannot act, refused here rather than loading inert.
