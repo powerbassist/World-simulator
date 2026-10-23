@@ -1419,6 +1419,43 @@ var person_party_override: Dictionary[String, String] = {}
 ## about what the save's last month saw.
 var person_want_state: Dictionary[String, bool] = {}
 
+# --- The president's registers (V5.2a) ------------------------------------------
+## SEVEN REGISTERS OF WHAT HAS PASSED BETWEEN THIS NATION'S LEADER AND A PERSON,
+## each an edge from the president to one person (theirs, or a foreign head met)
+## or a figure of the president alone -- never person to person (spec C1).
+## src/sim/president.gd is the only writer and the only reader that combines
+## them with content (people-model 14.9). EVERY ONE IS absent_ok, no bump: each
+## is a delta over content, so an absent register is "nothing has happened yet"
+## -- a stranger, neutral, no bond, no money moved, nothing promised, nothing
+## left behind -- which is the truth about every save made before V5.2a.
+
+## person id -> how well the president knows them, [0, 1].
+var person_knowledge: Dictionary[String, float] = {}
+
+## person id -> how they feel about the president personally, [-1, 1]. Not
+## loyalty, which is political: a rival can be loyal to the line.
+var person_rapport: Dictionary[String, float] = {}
+
+## person id -> an explicit bond (friend, close, rival, enemy, affair). Stranger
+## and acquaintance are never stored: they are read off knowledge.
+var person_bond: Dictionary[String, String] = {}
+
+## person id -> personal wealth gained or lost, EUR millions, over the authored
+## Person.wealth_eur_m.
+var person_wealth_delta_eur_m: Dictionary[String, float] = {}
+
+## party id -> party funds gained or spent, EUR millions, over the authored
+## Party.funds_eur_m.
+var party_money_delta_eur_m: Dictionary[String, float] = {}
+
+## The president's promises and IOUs in flight, one row each:
+## {kind, person_id, object, made_month, due_month}, months absolute.
+var commitments: Array[Dictionary] = []
+
+## The hidden evidence a corrupt act or an affair left, one row each:
+## {kind, person_id, size, month}, month absolute.
+var exposure_evidence: Array[Dictionary] = []
+
 # --- The commodity layer (V4.6) -------------------------------------------------
 ## The nation's commodity state: what it can make, what it wants, what it made,
 ## what it bought and sold, and the ONE world price vector. Written by
