@@ -486,7 +486,6 @@
     "%d mois au compteur",
     "%d mois au compteur"
   ],
-  "No programme was set this term. A programme can only be chosen on the first day of a term, before the clock runs.": "Aucun programme n'a été fixé ce mandat. Un programme ne peut être choisi que le premier jour d'un mandat, avant que l'horloge ne tourne.",
   "In drafting: %d month before it reaches the order paper.": [
     "En rédaction : %d mois avant l'inscription à l'ordre du jour.",
     "En rédaction : %d mois avant l'inscription à l'ordre du jour."
@@ -621,7 +620,6 @@
   "November": "novembre",
   "December": "décembre",
   "Nothing is offerable this term -- every gate in the book is shut.": "Rien n'est proposable ce mandat — toutes les conditions d'accès sont fermées.",
-  "The next term starts after the vote in %s %d, and its programme can be chosen then.": "Le prochain mandat commence après le scrutin prévu en %s %d, et son programme pourra alors être choisi.",
   "Repeals: %s.": "Abroge : %s.",
   "  (priced %s, lands clamped)": "  (chiffré %s, atterrissage plafonné)",
   "the country": "le pays",

@@ -133,8 +133,9 @@ func _refresh() -> void:
 	_offer_seen_term = int(ns.terms_served)
 	# The frame contract, in the model's own terms: a choice pays nothing
 	# (programme-model §8), the delivery is what the register prices.
-	# V5.2-0b: one line; the pricing rule is the [g=programme] term's plate.
-	PanelKit.line(_body, tr("Pick the term's programme. Delivery is judged when it lands or its deadline passes."))
+	# V5.2-0b: one line; the pricing rule (choosing costs nothing, the delivery is
+	# priced, no choice runs the term with none) is the programme term's plate.
+	PanelKit.line(_body, tr("Pick the term's [g=programme]programme[/g]. Delivery is judged when it lands or its deadline passes."))
 	_build_offer(ns, offer)
 	_build_register(ns)
 
@@ -293,11 +294,11 @@ func _clock_text(terms: Dictionary, live_months: int, is_live: bool) -> String:
 func _unset_text(ns) -> String:
 	if Programme.is_term_start(ns):
 		return tr("Nothing is offerable this term -- every gate in the book is shut.")
-	var rule := tr("No programme was set this term. A programme can only be chosen on the first day of a term, before the clock runs.")
+	var rule := tr("No programme was set this term: one is chosen on a term's first day.")
 	var when := Trends.vote_date(ns)
 	if when.y < 1 or when.y > DateText.SHORT.size():
 		return rule  # no vote scheduled: say the rule, not a date that does not exist
-	return rule + " " + tr("The next term starts after the vote in %s %d, and its programme can be chosen then.") % [
+	return rule + " " + tr("The next term starts after the vote in %s %d.") % [
 		DateText.month(when.y), when.x,
 	]
 

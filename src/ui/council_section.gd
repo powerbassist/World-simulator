@@ -182,7 +182,11 @@ static func _why(body: VBoxContainer, loader, last: Dictionary) -> void:
 	for key in keys:
 		var camp: Dictionary = camps[key]
 		var line: Control = PanelKit.line(body, Strings.t("%s: %d for, %d against") % [_vote_reason_text(String(key)), camp["for"].size(), camp["against"].size()])
-		var names := PackedStringArray([Strings.t("For: %s") % ", ".join(camp["for"]), Strings.t("Against: %s") % ", ".join(camp["against"])])
+		var names := PackedStringArray()
+		if not camp["for"].is_empty():
+			names.append(Strings.t("For: %s") % ", ".join(camp["for"]))
+		if not camp["against"].is_empty():
+			names.append(Strings.t("Against: %s") % ", ".join(camp["against"]))
 		line.tooltip_text = "
 ".join(names)
 		line.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -264,9 +268,9 @@ static func _decision_line(body: VBoxContainer, loader, org, pending: Dictionary
 	var p = Orgs.proposal_by_id(loader, org.id, String(pending.get("proposal_id", "")))
 	var rule: String = Council.decision_of(loader, p) if p != null else String(org.decision_rule)
 	if rule == CouncilK.DECISION_UNANIMITY:
-		PanelKit.line(body, Strings.t("A treaty: one veto kills it, then %d months to ratify.") % CouncilK.RATIFY_WINDOW_MONTHS)
+		PanelKit.line(body, Strings.t("A [g=treaty]treaty[/g]: one [g=veto]veto[/g] kills it, then %d months to [g=ratification]ratify[/g].") % CouncilK.RATIFY_WINDOW_MONTHS)
 	else:
-		PanelKit.line(body, Strings.t("Qualified majority: %d %% of the seats cast.") % roundi(BK.PASS_SEAT_FRACTION * 100.0))
+		PanelKit.line(body, Strings.t("[g=qualified_majority]Qualified majority[/g]: %d %% of the seats cast; abstaining lowers the bar.") % roundi(BK.PASS_SEAT_FRACTION * 100.0))
 
 
 static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> void:
@@ -277,7 +281,7 @@ static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> 
 	for id in lobbied.keys():
 		names.append(loader.nation_name(String(id)))
 	names.sort()
-	var line: Control = PanelKit.line(body, Strings.t("%s lobbied %d members.") % [loader.nation_name(String(pending.get("sponsor", ""))), names.size()])
+	var line: Control = PanelKit.line(body, Strings.tn("%s lobbied %d member.", "%s lobbied %d members.", names.size()) % [loader.nation_name(String(pending.get("sponsor", ""))), names.size()])
 	line.tooltip_text = ", ".join(names)
 	line.mouse_filter = Control.MOUSE_FILTER_PASS
 

@@ -279,7 +279,7 @@ static func _programme(ns, loader) -> Dictionary:
 	var progress: Dictionary = Programme.progress_of(ns, terms)
 	var fraction := PanelKit.progress_fraction(
 		float(progress["current_value"]), float(progress["goal_value"]), String(progress["progressbar"]))
-	var tip := Strings.t("%s -- %s against a %s goal") % [
+	var tip := Strings.t("%s -- now %s · goal %s") % [
 		name_text, Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2),
 	]
 	var clock_text := programme_clock_text(terms, live)

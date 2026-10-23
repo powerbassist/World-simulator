@@ -164,7 +164,7 @@ static func _programme(ns, loader) -> Dictionary:
 		if terms.is_empty():
 			continue
 		var progress: Dictionary = Programme.progress_of(ns, terms)
-		var line := Strings.t("%s -- %s against a %s goal") % [
+		var line := Strings.t("%s -- now %s · goal %s") % [
 			Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"])))),
 			Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2)]
 		var clock := StripReadings.programme_clock_text(terms, live)

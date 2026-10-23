@@ -520,7 +520,7 @@ func _entry_tooltip(ns, terms: Dictionary, entry: Dictionary) -> String:
 	if terms.is_empty():
 		return tr("No content behind this entry; it concludes on the next tick.")
 	var read: Dictionary = Programme.progress_of(ns, terms)
-	var tip := tr("%s against a %s goal") % [
+	var tip := tr("now %s · goal %s") % [
 		Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2),
 	]
 	# The strip's own clock text, so the overview and the strip cannot word one

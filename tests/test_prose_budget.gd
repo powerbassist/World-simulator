@@ -145,13 +145,16 @@ func _key(words: PackedStringArray, at: int) -> String:
 
 
 ## Every five-word run of every English string under data/ (the i18n tree, the
-## French, skipped).
+## French, and the glossary skipped).
 func _load_data_shingles(path: String) -> void:
 	var dir := DirAccess.open(path)
 	if dir == null:
 		return
 	for sub in dir.get_directories():
-		if sub != "i18n":
+		# The glossary's definitions are not a panel's voice: a five-word run of a
+		# sentence a panel prints ("on the first day of") could match one and count
+		# the sentence as content (QA on #99).
+		if sub != "i18n" and sub != "glossary":
 			_load_data_shingles(path.path_join(sub))
 	for file in dir.get_files():
 		if file.ends_with(".json"):
