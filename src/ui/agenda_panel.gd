@@ -180,7 +180,7 @@ func _offer_block(ns, terms: Dictionary) -> Control:
 
 
 func _choose_button(terms: Dictionary) -> Button:
-	var button := Button.new()
+	var button := PanelKit.sized(Button.new())
 	button.text = tr("Choose")
 	button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("programme", terms))
 	var entry_id := String(terms["id"])

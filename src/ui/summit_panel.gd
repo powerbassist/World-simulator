@@ -96,7 +96,7 @@ func _ready() -> void:
 	_choices_box.add_theme_constant_override("separation", 6)
 	root.add_child(_choices_box)
 
-	_continue_button = Button.new()
+	_continue_button = PanelKit.sized(Button.new())
 	_continue_button.text = tr("Continue")
 	_continue_button.pressed.connect(func(): _advance(_next))
 	root.add_child(_continue_button)
