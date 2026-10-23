@@ -55,7 +55,9 @@ static func bars(parent: Control, title: String, rows: Array, opts := {}) -> VBo
 
 ## One bar split into its parts, in the caller's fixed order (the colour follows
 ## the part, never its rank). Past seven parts the tail folds into "Others", the
-## eighth slot. `opts.marker` (a 0-1 share) draws a tick across it -- a majority;
+## eighth slot. `opts.marker` (a 0-1 share) draws a tick across it -- a majority --
+## and `opts.markers` several; `opts.colors` gives each part its colour when the
+## order is not the parts' identity order (the colour still follows the entity);
 ## `opts.places` fixes the decimals of every value (0 for a count).
 static func stack(parent: Control, title: String, parts: Array, opts := {}) -> VBoxContainer:
 	var box := _titled(parent, title)
@@ -63,7 +65,7 @@ static func stack(parent: Control, title: String, parts: Array, opts := {}) -> V
 	var chart := ChartStack.new()
 	chart.setup(folded, opts)
 	box.add_child(chart)
-	_legend(box, folded, true, String(opts.get("unit", "")), int(opts.get("places", -1)))
+	_legend(box, folded, true, String(opts.get("unit", "")), int(opts.get("places", -1)), opts.get("colors", ChartStyle.SERIES))
 	return box
 
 
@@ -88,7 +90,7 @@ static func _caption(text: String) -> Label:
 ## Swatch and label per entry, the label in a text token. A single line needs none
 ## (the title names it); a stack always has one, with each part's value, because
 ## its segments carry no labels of their own.
-static func _legend(box: VBoxContainer, entries: Array, always := false, unit := "", places := -1) -> void:
+static func _legend(box: VBoxContainer, entries: Array, always := false, unit := "", places := -1, colors: Array = ChartStyle.SERIES) -> void:
 	if entries.size() < 2 and not always:
 		return
 	var flow := HFlowContainer.new()
@@ -99,7 +101,7 @@ static func _legend(box: VBoxContainer, entries: Array, always := false, unit :=
 		var item := HBoxContainer.new()
 		item.add_theme_constant_override("separation", 5)
 		var swatch := ColorRect.new()
-		swatch.color = ChartStyle.SERIES[mini(i, ChartStyle.SERIES.size() - 1)]
+		swatch.color = colors[mini(i, colors.size() - 1)]
 		swatch.custom_minimum_size = Vector2(ChartStyle.SWATCH, ChartStyle.SWATCH)
 		swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		item.add_child(swatch)

@@ -10,6 +10,8 @@ extends SceneTree
 const Main = preload("res://src/ui/main.tscn")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+
 var _failures: Array[String] = []
 var _frame: int = 0
 var _main: Node = null
@@ -47,6 +49,10 @@ const ROUTE_FRAMES := 5
 
 func _start_the_fleet_route() -> void:
 	_main._windows.close_all()
+	# V5.2-0b trimmed the Energy body to fit a 1080 dock, so the route is staged at
+	# the largest text size, where it no longer fits and there is something to scroll.
+	UiTheme.set_text_scale(1.6)
+	UiTheme.rebuild(_main)
 	_main._map_view.plant_clicked.emit("")
 	_main._windows.frame("energy").fit_within(Vector2(900, 260))
 
@@ -54,7 +60,7 @@ func _start_the_fleet_route() -> void:
 func _check_the_fleet_route() -> void:
 	var scroll: ScrollContainer = _main._energy_panel._scroll
 	if scroll.get_v_scroll_bar().max_value <= scroll.size.y:
-		_fail("premise: the Energy window's body fits its band, so the fleet route has nothing to scroll")
+		_fail("premise: the Energy window's body fits its band, so the fleet route has nothing to scroll (max %s, band %s)" % [scroll.get_v_scroll_bar().max_value, scroll.size.y])
 		return
 	if scroll.scroll_vertical <= 0:
 		_fail("a plant's route opened the Energy window at the top, not at the fleet section")

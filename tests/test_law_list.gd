@@ -101,8 +101,8 @@ func _check_markers(ns, rows: Array) -> void:
 		elif String(law.majority) == "amendment":
 			want = float(LK.AMENDMENT_RULE_FRACTIONS[String(ns.amendment_rule)])
 		for child in rows[i].get_children():
-			if child is ChartStack and absf(float(child._marker) - want) > 1e-9:
-				_fail("%s marks its majority at %.3f; the division needs %.3f" % [law.id, child._marker, want])
+			if child is ChartStack and absf(float(child._markers[0]) - want) > 1e-9:
+				_fail("%s marks its majority at %.3f; the division needs %.3f" % [law.id, child._markers[0], want])
 
 
 func _press(down: bool) -> void:

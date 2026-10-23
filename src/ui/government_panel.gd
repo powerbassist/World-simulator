@@ -35,6 +35,9 @@ const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const RepublicPlate = preload("res://src/ui/republic_plate.gd")
+const ChartKit = preload("res://src/ui/chart_kit.gd")
+const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -116,6 +119,10 @@ const ELECTION_SYSTEM_LABEL := {
 	"parallel": "a parallel mix of list and single-member seats",  # i18n: msgid
 }
 
+## The constitution plate's label tables (republic_plate.gd reads them, no copy).
+const PLATE_LABELS := {"censure": CENSURE_LABEL, "dissolution": DISSOLUTION_LABEL, "method": METHOD_LABEL,
+	"amendment": AMENDMENT_LABEL, "referendum": REFERENDUM_LABEL, "election": ELECTION_SYSTEM_LABEL}
+
 var _state
 var _loader
 var _title: RichTextLabel
@@ -128,19 +135,14 @@ var _party_option: OptionButton
 var _reassign_button: Button
 var _reassign_status: Label
 var _party_option_ids: Array[String] = []
+## The constitution's folded plate (V5.2-0b); kept across refreshes so it stays open.
+var _plate := RepublicPlate.new()
 
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(560, 420)
 
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	margin.add_child(root)
+	var root := PanelKit.padded(self, 16, 10)
 
 	# A rich line since V5.1-d1b2 (G9): the head of government's name opens their card.
 	_title = PanelKit.TermText.new()
@@ -227,64 +229,31 @@ func _refresh() -> void:
 	_title.set_marked("%s %s — %s" % [ns.head_of_government_title, PanelKit.person(ns.pm_person_id, _loader.person_name(ns.pm_person_id)), n.chamber_name])
 
 	for child in _body.get_children():
-		child.queue_free()
+		if child == _plate:
+			_body.remove_child(_plate)
+		else:
+			child.queue_free()
 
-	var system = _loader.political_systems.get(ns.system_id)
-	PanelKit.line(_body, "%s." % (system.display_name if system != null else ns.system_id), PanelKit.Tone.PLAIN)
-	if ns.head_of_state_kind != "executive_president":
-		PanelKit.rich(_body, tr("Head of state: %s %s.") % [ns.head_of_state_title, PanelKit.person(ns.head_of_state_person_id, _loader.person_name(ns.head_of_state_person_id))], PanelKit.Tone.PLAIN)
-	if ns.term_limit > 0:
-		PanelKit.line(_body, tr("Term limit: %d of %d served.") % [ns.terms_served, ns.term_limit], PanelKit.Tone.PLAIN)
-
-	var standing := tr("Majority government")
-	if ns.is_cohabitation:
-		standing = tr("COHABITATION — the assembly majority is against you")
-	elif ns.is_minority:
-		standing = tr("MINORITY GOVERNMENT")
-	PanelKit.line(_body, standing, PanelKit.Tone.PLAIN)
-
-	var majority := Government.majority_seats(ns)
-	PanelKit.line(_body, tr("%d of %d seats; a majority needs more than %d.") % [
-		ns.coalition_seats, ns.assembly_seats, majority
-	], PanelKit.Tone.PLAIN)
-
-	# The V1.1b reading, and the one that makes the line above less comforting
-	# than it looks: seats a party holds are not seats it necessarily delivers.
+	# V5.2-0b (docs/design/v5.2-legibility.md): the live arithmetic, short, under
+	# the seat bar it reads; the constitution folds into its plate (the author's
+	# "Une plaque repliée"); the tables get real headings.
+	_seat_bar(ns)
+	PanelKit.line(_body, tr("COHABITATION — the assembly majority is against you") if ns.is_cohabitation 		else (tr("MINORITY GOVERNMENT") if ns.is_minority else tr("Majority government")), PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("%d of %d seats · a majority needs %d") % [ns.coalition_seats, ns.assembly_seats, Government.majority_seats(ns) + 1], PanelKit.Tone.PLAIN)
+	# Seats a party holds are not seats it necessarily delivers (V1.1b).
 	var breakable := _worst_case_rebels(ns)
 	if breakable > 0:
-		PanelKit.line(_body, tr("Up to %d of those break ranks on a bill their own party dislikes, leaving %d.") % [
-			breakable, ns.coalition_seats - breakable
-		], PanelKit.Tone.PLAIN)
-
-	if ns.censure_rule == "none":
-		PanelKit.line(_body, tr("Censure: %s.") % tr(CENSURE_LABEL[ns.censure_rule]), PanelKit.Tone.PLAIN)
-	else:
+		PanelKit.line(_body, tr("Up to %d may break ranks, leaving %d") % [breakable, ns.coalition_seats - breakable], PanelKit.Tone.PLAIN)
+	if ns.censure_rule != "none":
 		var needed := Government.censure_seats(ns)
 		var against: int = int(ns.assembly_seats) - int(ns.coalition_seats)
-		PanelKit.line(_body, tr("Censure needs %d seats — %s. The opposition holds %d.") % [
-			needed, tr(CENSURE_LABEL.get(ns.censure_rule, ns.censure_rule)), against
-		], PanelKit.Tone.PLAIN)
-		# The honest reading of a French minority government: the opposition can
-		# only ever remove you if it votes together, which is why so few do.
-		#
-		# Both phrasings say "on its own" since V1.1b, because coalition seats
-		# move too now -- without that, this line and the 49.3 tally below read
-		# as a flat contradiction whenever discipline has eroded.
+		PanelKit.line(_body, tr("Censure needs %d · the opposition holds %d") % [needed, against], PanelKit.Tone.PLAIN)
 		if against >= needed:
 			PanelKit.line(_body, tr("The opposition could bring this government down on its own."), PanelKit.Tone.PLAIN)
-		else:
-			PanelKit.line(_body, tr("The opposition cannot reach that threshold on its own, even united."), PanelKit.Tone.PLAIN)
-
-		# Only a constitution with Article 49.3 has this tally to show: the same
-		# formation-method gate as Government.can_force and the Force button.
+		# Only a constitution with Article 49.3 has this tally: the same gate as
+		# Government.can_force. Resolved through the real resolver (V1.1b: a motion
+		# collects seats from parties whose line is against it).
 		if ns.formation_method == "presidential_appointment":
-			# What a censure motion would actually do right now, at the hostility a
-			# forced bill would provoke. This is the number Article 49.3 gambles on,
-			# so it is shown before the player gambles rather than after.
-			#
-			# Resolved through the real resolver rather than counted party by party:
-			# since V1.1b a motion collects seats from parties whose line is against
-			# it, and a tally that missed those would read safer than the vote is.
 			var forced := Government.resolve_censure(ns, _loader.parties.get(ns.id, []), true)
 			var rebels := 0
 			for pid in forced["party_rebels"]:
@@ -299,16 +268,8 @@ func _refresh() -> void:
 				PanelKit.line(_body, tr("Forcing a bill now would bring the government down."), PanelKit.Tone.PLAIN)
 			else:
 				PanelKit.line(_body, tr("A forced bill would survive censure."), PanelKit.Tone.PLAIN)
-
 	if ns.governments_fallen > 0:
 		PanelKit.line(_body, tr("Governments censured out of office this run: %d.") % ns.governments_fallen, PanelKit.Tone.PLAIN)
-
-	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, "%s %s." % [n.chamber_name, tr(DISSOLUTION_LABEL.get(ns.dissolution_rule, ns.dissolution_rule))], PanelKit.Tone.PLAIN)
-	if ns.dissolution_rule == "executive_discretion" or ns.dissolution_rule == "head_of_state_limited":
-		PanelKit.line(_body, tr("Costs public patience on every call, and locks out further use for %d months once the new assembly is seated.") % ns.dissolution_lockout_months, PanelKit.Tone.PLAIN)
-	if ns.dissolutions_called > 0:
-		PanelKit.line(_body, tr("Dissolutions called this run: %d.") % ns.dissolutions_called, PanelKit.Tone.PLAIN)
 
 	var can_dissolve := Dissolution.can_dissolve(_state, ns)
 	_dissolve_button.visible = ns.dissolution_rule != "none" and ns.dissolution_rule != "confidence_failure" and ns.dissolution_rule != "self_dissolution"
@@ -316,39 +277,19 @@ func _refresh() -> void:
 	if not can_dissolve:
 		_dissolve_button.tooltip_text = Dissolution.refusal_reason(_state, ns)
 	else:
-		_dissolve_button.tooltip_text = tr("Call a snap election. No seat forecast -- read the polls, not a projection.")
+		# The price rides the verb, where the decision is made (Gameplay's move).
+		var price := tr("Costs public patience on every call, and locks out further use for %d months once the new assembly is seated.") % ns.dissolution_lockout_months
+		var lines := PackedStringArray([tr("Call a snap election. No seat forecast -- read the polls, not a projection."), price])
+		_dissolve_button.tooltip_text = "
+".join(lines)
 
-	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Formation: %s.") % tr(METHOD_LABEL.get(ns.formation_method, ns.formation_method)), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Agreed position: economic %s, social %s.") % [
-		Num.fs(ns.coalition_position["economic"], 2), Num.fs(ns.coalition_position["social"], 2)
-	], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("A constitutional amendment needs %s.") % tr(AMENDMENT_LABEL.get(ns.amendment_rule, ns.amendment_rule)), PanelKit.Tone.PLAIN)
-	if REFERENDUM_LABEL.has(ns.referendum_mode):
-		PanelKit.line(_body, tr(REFERENDUM_LABEL[ns.referendum_mode]), PanelKit.Tone.PLAIN)
-	var method: String = tr(String(ELECTION_SYSTEM_LABEL.get(ns.election_system, ns.election_system)))
-	if ns.election_threshold_pct > 0.0:
-		PanelKit.line(_body, tr("The assembly is elected by %s, with a %s%% threshold.") % [method, Num.f(ns.election_threshold_pct, 1)], PanelKit.Tone.PLAIN)
-	else:
-		PanelKit.line(_body, tr("The assembly is elected by %s, with no threshold.") % method, PanelKit.Tone.PLAIN)
+	_body.add_child(_plate)
+	_plate.fill(ns, _loader, PLATE_LABELS, _upper_phrase(ns), _court_phrase(ns))
 
-	# V1.1e. The second chamber and the court, and both are NEVER SILENT for a nation
-	# that has them -- docs/referendum-model.md's V1.7c finding, that a lever whose only
-	# feedback is a wait has no readout at all. A player who passes a court-weakening Act
-	# must be able to read what it did on the frame it did it, not three years later.
-	if ns.has_upper_house:
-		PanelKit.line(_body, tr("The %s holds %d seats and %s.") % [
-			ns.upper_chamber_name, ns.upper_seats, _upper_phrase(ns)], PanelKit.Tone.PLAIN)
-	else:
-		PanelKit.line(_body, tr("There is no second chamber."), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, _court_phrase(ns), PanelKit.Tone.PLAIN)
-
-	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("In government"), PanelKit.Tone.PLAIN)
+	PanelKit.heading(_body, tr("In government"))
 	_body.add_child(_build_partner_table(ns))
 
-	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Cabinet"), PanelKit.Tone.PLAIN)
+	PanelKit.heading(_body, tr("Cabinet"))
 	_body.add_child(_build_cabinet_table(ns))
 	if ns.resignations_count > 0:
 		var last: Dictionary = ns.last_resignation
@@ -367,8 +308,27 @@ func _refresh() -> void:
 		if not ns.coalition_party_ids.has(party.id) and int(ns.seats_by_party.get(party.id, 0)) > 0:
 			outside.append("%s (%d)" % [party.party_name, int(ns.seats_by_party.get(party.id, 0))])
 	if not outside.is_empty():
-		PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
-		PanelKit.line(_body, tr("In opposition: %s") % ", ".join(outside), PanelKit.Tone.PLAIN)
+		PanelKit.heading(_body, tr("In opposition"))
+		PanelKit.line(_body, ", ".join(outside), PanelKit.Tone.PLAIN)
+
+
+## The assembly as one bar (V5.2-0b): the government's parties, then the
+## opposition's, each in the slot the Legislature's bar gives it (the colour follows
+## the party, never its side), the majority and the censure threshold marked.
+func _seat_bar(ns) -> void:
+	var parties: Array = _loader.parties.get(ns.id, [])
+	var parts: Array = []
+	var colors: Array = []
+	for in_government in [true, false]:
+		for i in parties.size():
+			if ns.coalition_party_ids.has(parties[i].id) == in_government:
+				parts.append({"label": String(parties[i].party_name), "value": float(ns.seats_by_party.get(parties[i].id, 0))})
+				colors.append(ChartStyle.SERIES[mini(i, ChartStyle.SERIES.size() - 1)])
+	var marks := [float(Government.majority_seats(ns) + 1) / maxf(float(ns.assembly_seats), 1.0)]
+	if ns.censure_rule != "none":
+		marks.append(float(Government.censure_seats(ns)) / maxf(float(ns.assembly_seats), 1.0))
+	ChartKit.stack(_body, tr("Government, then opposition — the lines mark a majority and censure"), parts,
+		{"markers": marks, "colors": colors, "places": 0, "unit": tr(" seats")})
 
 
 ## One row per coalition partner: seats, distance from the agreed position, the
