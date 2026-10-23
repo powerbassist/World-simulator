@@ -32,13 +32,15 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame == 3:
 		_main._on_nation_clicked("DEU")
+	elif _frame == 8:
+		_check_the_card_is_tight()
+		_finish()
+		return true
 	elif _frame == 5:
 		_check_markup()
 		_check_surfaces()
 		_check_the_card()
 		_check_the_card_does_not_grow()
-		_finish()
-		return true
 	return false
 
 
@@ -105,6 +107,18 @@ func _check_the_card_does_not_grow() -> void:
 	var again: float = card.get_combined_minimum_size().y
 	if once <= 0.0 or again > once + 1.0:
 		_fail("showing the card again grew it from %.0f to %.0f px" % [once, again])
+	# Left up: _check_the_card_is_tight reads it a few frames on.
+
+
+## PRE-GATE 2 B2 round 2: in the frame of a show the rows are measured before their
+## width is known, the panel grows to that minimum and never shrinks -- 312 px for
+## 177 px of content on screen. A few frames after a show it must be as tall as its
+## content.
+func _check_the_card_is_tight() -> void:
+	var card = _main._stack.tips._people._card
+	var need: float = card.get_combined_minimum_size().y
+	if not card.visible or card.size.y > need + 1.0:
+		_fail("the card is %.0f px tall for %.0f px of content (visible %s)" % [card.size.y, need, card.visible])
 	card.hide()
 
 
