@@ -131,6 +131,13 @@ static func validate_people(loader) -> void:
 				)
 			for want in person.wants:
 				resolve_want(loader, want, nation_id, person.id, party_ids, programme_ids)
+			# V5.2a. Any nation's register: a marriage need not stop at a border.
+			if person.spouse_id == person.id:
+				loader.errors.append("people/%s.json: person '%s' spouse_id names the person themself"
+					% [nation_id, person.id])
+			elif person.spouse_id != "" and not loader.person_by_id.has(person.spouse_id):
+				loader.errors.append("people/%s.json: person '%s' spouse_id '%s' resolves to no person"
+					% [nation_id, person.id, person.spouse_id])
 
 			if referenced.has(person.id):
 				continue

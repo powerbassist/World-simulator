@@ -60,6 +60,7 @@ func _init() -> void:
 	_check_kind_meter_coverage()
 	_check_character_fields_in_band()
 	_check_character_fixture_refusals()
+	_check_v52a_fields_default()
 	_check_sim_moves_ids_not_names()
 	_check_no_name_is_authored_twice()
 	_check_restored_monarch_is_per_nation()
@@ -178,8 +179,8 @@ func _expect_fixture_error(people_dir: String, needle: String, what: String) -> 
 	_fail("%s did not fail to load, or did not name the problem: %s" % [what, fixture.errors])
 
 
-## Person has EIGHT fields -- id, person_name, kind, traits, ambition,
-## party_id, wants, bench -- read off the file rather than asserted about an
+## Person has ELEVEN fields -- id, person_name, kind, traits, ambition,
+## party_id, wants, bench, social_skill, spouse_id, wealth_eur_m -- read off the file rather than asserted about an
 ## instance, because the failure this guards against is a later session ADDING
 ## one (an `age`, a `competence`, a `loyalty`) and an instance check would
 ## still pass with a ninth field sitting there unused. The character layer's
@@ -187,6 +188,10 @@ func _expect_fixture_error(people_dir: String, needle: String, what: String) -> 
 ## is what makes that enforceable rather than aspirational. `bench` is the
 ## portrait tiering flag -- an art-logistics marker, not character content,
 ## and the one field a person carries for the pipeline rather than the model.
+## V5.2a's three, argued at their declarations in person.gd: a reading skill
+## and a spouse are who someone IS and do not move, and the wealth is the
+## authored START -- what the president gains or loses is a delta on
+## NationState (people-model 14.9), so the law above still holds.
 func _check_person_field_contract() -> void:
 	var src := FileAccess.get_file_as_string("res://src/core/person.gd")
 	if src.is_empty():
@@ -203,10 +208,11 @@ func _check_person_field_contract() -> void:
 	for f in fields:
 		names.append(f.replace("var ", "").get_slice(":", 0).strip_edges())
 	var expected: Array[String] = []
-	for n in ["id", "person_name", "kind", "traits", "ambition", "party_id", "wants", "bench"]:
+	for n in ["id", "person_name", "kind", "traits", "ambition", "party_id", "wants", "bench",
+			"social_skill", "spouse_id", "wealth_eur_m"]:
 		expected.append(String(n))
 	if names != expected:
-		_fail("Person declares %s, expected exactly [id, person_name, kind, traits, ambition, party_id, wants, bench] -- a ninth field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names)])
+		_fail("Person declares %s, expected exactly %s -- a twelfth field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names), str(expected)])
 
 
 ## Every kind plugs in or is refused: a politician shape acts through wants +
@@ -252,6 +258,13 @@ func _check_character_fields_in_band() -> void:
 			for t in person.traits:
 				if not CharacterK.TRAIT_KEYS.has(t):
 					_fail("person '%s' carries trait '%s' outside the set" % [person.id, t])
+			if person.social_skill < 0.0 or person.social_skill > 1.0:
+				_fail("person '%s' has social_skill %.2f outside [0, 1]" % [person.id, person.social_skill])
+			if person.wealth_eur_m < 0.0:
+				_fail("person '%s' has wealth_eur_m %.2f below zero" % [person.id, person.wealth_eur_m])
+			if person.spouse_id != "" and (person.spouse_id == person.id
+					or not _loader.person_by_id.has(person.spouse_id)):
+				_fail("person '%s' has spouse_id '%s', which names no one else" % [person.id, person.spouse_id])
 
 
 ## One fixture, every refusal class, both halves of the orphan rule. The clean
@@ -287,6 +300,11 @@ func _check_character_fixture_refusals() -> void:
 		"not a party of this nation",
 		"not premiership, a portfolio or a party leadership",
 		"not one of this nation's parties",
+		"field 'social_skill' must be a number in [0, 1]",
+		"field 'wealth_eur_m' must be a number >= 0",
+		"field 'spouse_id' must be a string",
+		"resolves to no person",
+		"names the person themself",
 	]
 	var missing: Array[String] = []
 	for needle in needles:
@@ -303,6 +321,19 @@ func _check_character_fixture_refusals() -> void:
 		for e in fixture.errors:
 			if e.find(pid) != -1:
 				_fail("clean bench person '%s' was named in a load error: %s" % [pid, e])
+
+
+## V5.2a. A record that authors none of the three reads the defaults with no
+## error -- 0.5 a middling reader, no spouse, no authored wealth -- which is
+## the truth about all 2 147 people before Content authors them.
+func _check_v52a_fields_default() -> void:
+	var errors: Array[String] = []
+	var p = Person.from_dict({"id": "FRA_plain", "name": "Plain Person"}, 0, "inline", errors)
+	if not errors.is_empty():
+		_fail("a record without the V5.2a fields did not load clean: %s" % [errors])
+	if not is_equal_approx(p.social_skill, 0.5) or p.spouse_id != "" or p.wealth_eur_m != 0.0:
+		_fail("absent V5.2a fields read %.2f / '%s' / %.2f, wanted 0.5 / '' / 0.0" % [
+			p.social_skill, p.spouse_id, p.wealth_eur_m])
 
 
 ## The prize of the re-key, and the property that keeps a display string out of a
