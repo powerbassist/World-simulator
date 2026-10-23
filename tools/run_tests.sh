@@ -183,6 +183,7 @@ tests=(
   tests/test_month_close_pause.gd
   tests/test_effect_baselines.gd
   tests/test_inbox_stays.gd
+  tests/test_real_click.gd
   tests/test_clock_doors.gd
   tests/test_consequence_card.gd
   tests/test_dead_ends.gd

@@ -50,6 +50,7 @@ var _hosts := {}  # rank -> the full-rect Control its panels are added to
 var tips := GlossaryTip.new()
 ## Where the last mouse press landed, or null after a key: QA #54's Commit focus.
 var _press_at = null
+var _clicked = null  # the button this press focused, released after its up
 
 
 func _ready() -> void:
@@ -73,15 +74,23 @@ func _input(event: InputEvent) -> void:
 		# Focus moves on the press; after the release a grab_focus is code's, not a
 		# click's (review pass 1).
 		_press_at = event.position if event.pressed else null
+		# The release, never the press: BaseButton cancels its press on FOCUS_EXIT and
+		# fires on the up, so letting go of focus mid-click made no button fire for a
+		# hand. _input runs before the button sees the up; the deferred call runs
+		# after it has fired.
+		if not event.pressed and _clicked != null:
+			_release_if_alive.call_deferred(_clicked)
+			_clicked = null
 	elif event is InputEventKey:
 		_press_at = null
+		_clicked = null
 
 
 ## A button that took focus from a click under the pointer gives it up; one the
 ## keyboard reached (Tab, arrows, a panel's own grab_focus) keeps it.
 func _on_focus_changed(control: Control) -> void:
 	if _press_at != null and control is BaseButton and control.get_global_rect().has_point(_press_at):
-		_release_if_alive.call_deferred(control)
+		_clicked = control
 
 
 ## The press may have removed the button's card (an inbox answer does), and by the
