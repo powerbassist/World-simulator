@@ -14,6 +14,7 @@ extends SceneTree
 
 const LawList = preload("res://src/ui/law_list.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 var _failures: Array[String] = []
@@ -78,6 +79,7 @@ func _check_rows() -> void:
 			break
 	if with_after == 0:
 		_fail("no row carries a second-chamber or court glyph with its sentence on hover")
+	_check_markers(ns, rows)
 	# The third row's name button is the one the click will land on.
 	_target = rows[2].get_child(0)
 	for law in _main._loader.laws:
@@ -85,6 +87,22 @@ func _check_rows() -> void:
 			_target_id = String(law.id)
 	if _target_id == "":
 		_fail("the third row's button does not name a law: %s" % _target.text)
+
+
+## QA on #96: each row's majority line is the fraction the division itself uses
+## (legislature.gd reads law.majority), not a half for every ordinary law.
+func _check_markers(ns, rows: Array) -> void:
+	var shown: Array = _laws()._shown
+	for i in rows.size():
+		var law = shown[i]
+		var want := LK.ABSOLUTE_MAJORITY_FRACTION
+		if String(law.majority) == "two_thirds":
+			want = LK.TWO_THIRDS_MAJORITY_FRACTION
+		elif String(law.majority) == "amendment":
+			want = float(LK.AMENDMENT_RULE_FRACTIONS[String(ns.amendment_rule)])
+		for child in rows[i].get_children():
+			if child is ChartStack and absf(float(child._marker) - want) > 1e-9:
+				_fail("%s marks its majority at %.3f; the division needs %.3f" % [law.id, child._marker, want])
 
 
 func _press(down: bool) -> void:

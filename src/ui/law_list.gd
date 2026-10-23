@@ -24,6 +24,7 @@ const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
@@ -40,13 +41,16 @@ const NAME_WIDTH := 190.0
 ## The row's fixed columns, px at text size 100 %: theme, majority, the second
 ## chamber's glyph, the court's.
 const COLUMNS := [80.0, 104.0, 118.0, 82.0]
-## The share a law needs, by its amendment rule; an ordinary law needs a half.
-const RULE_SHARE := {"three_fifths": 0.6, "two_thirds": 2.0 / 3.0, "three_quarters": 0.75}
 
 var _panel
 var _rows: VBoxContainer
 var _detail: VBoxContainer
 var _selected := ""
+## The last fill's inputs, so a selection rebuilds the detail alone (QA on #96: a
+## click that rebuilt all 105 rows and their forecasts cost ~100 ms).
+var _shown: Array = []
+var _ns
+var _party_list: Array = []
 
 
 func _init(panel) -> void:
@@ -83,7 +87,18 @@ func selected_id() -> String:
 ## left the list hands the selection back to the first one.
 func select(law_id: String) -> void:
 	_selected = law_id
-	_panel.mark_dirty()
+	for i in _rows.get_child_count():
+		if i < _shown.size():
+			var pick: Button = _rows.get_child(i).get_child(0)
+			pick.flat = _shown[i].id != law_id
+			pick.set_pressed_no_signal(_shown[i].id == law_id)
+	for child in _detail.get_children():
+		_detail.remove_child(child)
+		child.queue_free()
+	for law in _shown:
+		if law.id == law_id:
+			_panel._primary = null
+			_build_detail(_ns, _party_list, law)
 
 
 func fill(ns, party_list: Array, laws: Array) -> void:
@@ -94,6 +109,9 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 	if laws.is_empty():
 		PanelKit.line(_rows, tr("No law is currently proposable."), PanelKit.Tone.PLAIN)
 		return
+	_shown = laws
+	_ns = ns
+	_party_list = party_list
 	var chosen = laws[0]
 	for law in laws:
 		if law.id == _selected:
@@ -115,6 +133,7 @@ func _row(ns, party_list: Array, law, selected: bool) -> Control:
 	pick.button_pressed = selected
 	pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pick.clip_text = true
+	pick.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	pick.custom_minimum_size.x = NAME_WIDTH * UiTheme.text_scale()
 	pick.pressed.connect(select.bind(String(law.id)))
 	row.add_child(pick)
@@ -159,10 +178,16 @@ func _forecast_bar(ns, party_list: Array, law, width: float) -> Control:
 	return bar
 
 
+## The share of the seats the line marks, read the way legislature.gd's division
+## reads law.majority (QA on #96: a two-thirds ordinary law drew its line at half).
+## A simple majority needs more yes than no; half the seats is where that is sure.
 static func majority_share(ns, law) -> float:
-	if not law.constitutional:
-		return 0.5
-	return float(RULE_SHARE.get(String(ns.amendment_rule), 0.5))
+	match String(law.majority):
+		"two_thirds":
+			return LK.TWO_THIRDS_MAJORITY_FRACTION
+		"amendment":
+			return float(LK.AMENDMENT_RULE_FRACTIONS.get(String(ns.amendment_rule), LK.ABSOLUTE_MAJORITY_FRACTION))
+	return LK.ABSOLUTE_MAJORITY_FRACTION
 
 
 ## What waits after the Assembly: a glyph for the row and the sentence for the
