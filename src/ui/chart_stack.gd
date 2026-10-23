@@ -85,5 +85,5 @@ func _get_tooltip(at: Vector2) -> String:
 	for i in _parts.size():
 		var r: Rect2 = rects[i]
 		if r.size.x > 0.0 and at.x >= r.position.x and at.x <= r.end.x + GAP:
-			return "%s  %s%s" % [String(_parts[i]["label"]), ChartStyle.figure(float(_parts[i]["value"]), _places), _unit]
+			return "%s  %s%s" % [String(_parts[i]["label"]), ChartStyle.figure(float(_parts[i]["value"]), _places), _unit]  # i18n: row-ok chart data, the caller passes shown text
 	return ""

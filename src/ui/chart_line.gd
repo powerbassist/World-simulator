@@ -161,5 +161,5 @@ func _get_tooltip(at: Vector2) -> String:
 	for s in _series:
 		var values: PackedFloat64Array = s["values"]
 		if i < values.size():
-			lines.append("%s  %s%s" % [String(s["label"]), ChartStyle.figure(values[i]), _unit])
+			lines.append("%s  %s%s" % [String(s["label"]), ChartStyle.figure(values[i]), _unit])  # i18n: row-ok chart data, the caller passes shown text
 	return "\n".join(lines)

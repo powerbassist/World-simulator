@@ -38,7 +38,7 @@ func bar_rects() -> Array[Rect2]:
 	var value_w := 0.0
 	var top := 0.0
 	for r in _rows:
-		label_w = maxf(label_w, font.get_string_size(String(r["label"]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x)
+		label_w = maxf(label_w, font.get_string_size(String(r["label"]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x)  # i18n: row-ok chart data, the caller passes shown text
 		value_w = maxf(value_w, font.get_string_size(ChartStyle.figure(float(r["value"])) + _unit, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x)
 		top = maxf(top, float(r["value"]))
 	var x0 := label_w + PAD
@@ -58,7 +58,7 @@ func _draw() -> void:
 	for i in _rows.size():
 		var r: Rect2 = rects[i]
 		var mid := r.position.y + r.size.y * 0.5 + fs * 0.35
-		draw_string(font, Vector2(0.0, mid), String(_rows[i]["label"]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)
+		draw_string(font, Vector2(0.0, mid), String(_rows[i]["label"]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)  # i18n: row-ok chart data, the caller passes shown text
 		if r.size.x > 0.0:
 			var box := StyleBoxFlat.new()
 			box.bg_color = ChartStyle.SERIES[0]
@@ -73,4 +73,4 @@ func _get_tooltip(at: Vector2) -> String:
 	if _rows.is_empty():
 		return ""
 	var i := clampi(int(at.y / (size.y / float(_rows.size()))), 0, _rows.size() - 1)
-	return "%s  %s%s" % [String(_rows[i]["label"]), ChartStyle.figure(float(_rows[i]["value"])), _unit]
+	return "%s  %s%s" % [String(_rows[i]["label"]), ChartStyle.figure(float(_rows[i]["value"])), _unit]  # i18n: row-ok chart data, the caller passes shown text

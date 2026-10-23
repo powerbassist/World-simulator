@@ -103,7 +103,7 @@ static func _legend(box: VBoxContainer, entries: Array, always := false, unit :=
 		swatch.custom_minimum_size = Vector2(ChartStyle.SWATCH, ChartStyle.SWATCH)
 		swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		item.add_child(swatch)
-		var text := String(entries[i]["label"])
+		var text := String(entries[i]["label"])  # i18n: row-ok chart data, the caller passes shown text
 		if entries[i].has("value") and always:
 			text = "%s  %s%s" % [text, ChartStyle.figure(float(entries[i]["value"]), places), unit]
 		var label := _caption(text)
