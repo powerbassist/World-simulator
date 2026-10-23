@@ -429,7 +429,11 @@ func _check_the_legislature_list_fills_the_dock() -> void:
 ## than clipped, and counting it reported legislature 3070px short of itself.
 func _drawn_extent(node: Node, top: float) -> float:
 	var out := 0.0
-	if node is Control and node.visible:
+	# A hidden subtree draws nothing, its children included (V5.2-0b: a folded
+	# plate keeps its lines, hidden, under a hidden body).
+	if node is CanvasItem and not (node as CanvasItem).visible:
+		return out
+	if node is Control:
 		var c: Control = node
 		out = c.global_position.y + c.size.y - top
 	if node is ScrollContainer:

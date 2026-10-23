@@ -66,8 +66,28 @@ func _process(_delta: float) -> bool:
 			_check_cabinet_vacant_reading()
 		8:
 			_check_dissolve_button()
+			_check_the_republic_plate()
 			_finish()
 	return false
+
+
+## V5.2-0b, the author's "Une plaque repliée": the constitution folds into "How
+## this republic works", closed by default and remembered open across a refresh; the
+## live arithmetic stays outside it, and the dissolution's price rides the button.
+func _check_the_republic_plate() -> void:
+	_refresh_text()
+	var plate = _panel._plate
+	if plate.is_open() or plate.body().visible:
+		_fail("the constitution plate is open by default")
+	if not _collect_text(plate.body()).contains("elected by"):
+		_fail("the plate does not carry the electoral rule: %s" % _collect_text(plate.body()))
+	plate.set_open(true)
+	_refresh_text()
+	if not _panel._plate.is_open() or not _panel._plate.body().visible:
+		_fail("a refresh folded the plate the player had opened")
+	plate.set_open(false)
+	if _panel._dissolve_button.visible and not _panel._dissolve_button.disabled 			and not _panel._dissolve_button.tooltip_text.contains("locks out"):
+		_fail("the dissolution's price is not on the Dissolve button: %s" % _panel._dissolve_button.tooltip_text)
 
 
 func _refresh_text() -> String:
@@ -99,7 +119,7 @@ func _check_majority() -> void:
 	for party in _loader.parties["FRA"]:
 		if not text.contains(party.party_name):
 			_fail("panel omits '%s' entirely" % party.party_name)
-	if not text.contains("In opposition"):
+	if not text.to_lower().contains("in opposition"):
 		_fail("panel does not list the opposition")
 
 
@@ -191,7 +211,7 @@ func _check_cabinet_entitled_reading() -> void:
 	Cabinet.seat(ns, party_list)
 
 	var text := _refresh_text()
-	if not text.contains("Cabinet"):
+	if not text.to_lower().contains("cabinet"):
 		_fail("panel has no Cabinet section: %s" % text)
 	for f in CK.PORTFOLIO_KEYS:
 		var label: String = _panel.PORTFOLIO_LABEL.get(f, f)

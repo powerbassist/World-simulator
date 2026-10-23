@@ -119,6 +119,10 @@ const ELECTION_SYSTEM_LABEL := {
 	"parallel": "a parallel mix of list and single-member seats",  # i18n: msgid
 }
 
+## The constitution plate's label tables (republic_plate.gd reads them, no copy).
+const PLATE_LABELS := {"censure": CENSURE_LABEL, "dissolution": DISSOLUTION_LABEL, "method": METHOD_LABEL,
+	"amendment": AMENDMENT_LABEL, "referendum": REFERENDUM_LABEL, "election": ELECTION_SYSTEM_LABEL}
+
 var _state
 var _loader
 var _title: RichTextLabel
@@ -234,12 +238,7 @@ func _refresh() -> void:
 	# the seat bar it reads; the constitution folds into its plate (the author's
 	# "Une plaque repliée"); the tables get real headings.
 	_seat_bar(ns)
-	var standing := tr("Majority government")
-	if ns.is_cohabitation:
-		standing = tr("COHABITATION — the assembly majority is against you")
-	elif ns.is_minority:
-		standing = tr("MINORITY GOVERNMENT")
-	PanelKit.line(_body, standing, PanelKit.Tone.PLAIN)
+	PanelKit.line(_body, tr("COHABITATION — the assembly majority is against you") if ns.is_cohabitation 		else (tr("MINORITY GOVERNMENT") if ns.is_minority else tr("Majority government")), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("%d of %d seats · a majority needs %d") % [ns.coalition_seats, ns.assembly_seats, Government.majority_seats(ns) + 1], PanelKit.Tone.PLAIN)
 	# Seats a party holds are not seats it necessarily delivers (V1.1b).
 	var breakable := _worst_case_rebels(ns)
@@ -279,13 +278,13 @@ func _refresh() -> void:
 		_dissolve_button.tooltip_text = Dissolution.refusal_reason(_state, ns)
 	else:
 		# The price rides the verb, where the decision is made (Gameplay's move).
-		_dissolve_button.tooltip_text = tr("Call a snap election. No seat forecast -- read the polls, not a projection.") + "
-" + 			tr("Costs public patience on every call, and locks out further use for %d months once the new assembly is seated.") % ns.dissolution_lockout_months
+		var price := tr("Costs public patience on every call, and locks out further use for %d months once the new assembly is seated.") % ns.dissolution_lockout_months
+		var lines := PackedStringArray([tr("Call a snap election. No seat forecast -- read the polls, not a projection."), price])
+		_dissolve_button.tooltip_text = "
+".join(lines)
 
 	_body.add_child(_plate)
-	_plate.fill(ns, _loader, {"censure": CENSURE_LABEL, "dissolution": DISSOLUTION_LABEL, "method": METHOD_LABEL,
-		"amendment": AMENDMENT_LABEL, "referendum": REFERENDUM_LABEL, "election": ELECTION_SYSTEM_LABEL},
-		_upper_phrase(ns), _court_phrase(ns))
+	_plate.fill(ns, _loader, PLATE_LABELS, _upper_phrase(ns), _court_phrase(ns))
 
 	PanelKit.heading(_body, tr("In government"))
 	_body.add_child(_build_partner_table(ns))
@@ -325,11 +324,10 @@ func _seat_bar(ns) -> void:
 			if ns.coalition_party_ids.has(parties[i].id) == in_government:
 				parts.append({"label": String(parties[i].party_name), "value": float(ns.seats_by_party.get(parties[i].id, 0))})
 				colors.append(ChartStyle.SERIES[mini(i, ChartStyle.SERIES.size() - 1)])
-	var total := maxf(float(ns.assembly_seats), 1.0)
-	var marks := [float(Government.majority_seats(ns) + 1) / total]
+	var marks := [float(Government.majority_seats(ns) + 1) / maxf(float(ns.assembly_seats), 1.0)]
 	if ns.censure_rule != "none":
-		marks.append(float(Government.censure_seats(ns)) / total)
-	ChartKit.stack(_body, tr("Government, then opposition -- the lines mark a majority and censure"), parts,
+		marks.append(float(Government.censure_seats(ns)) / maxf(float(ns.assembly_seats), 1.0))
+	ChartKit.stack(_body, tr("Government, then opposition — the lines mark a majority and censure"), parts,
 		{"markers": marks, "colors": colors, "places": 0, "unit": tr(" seats")})
 
 
