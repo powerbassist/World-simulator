@@ -17,7 +17,7 @@ const MAX_PARTS := 8
 
 var _parts: Array = []
 var _unit := ""
-var _marker := -1.0
+var _markers: Array = []
 var _places := -1
 var _colors: Array = ChartStyle.SERIES
 
@@ -25,7 +25,7 @@ var _colors: Array = ChartStyle.SERIES
 func setup(parts: Array, opts := {}) -> void:
 	_parts = parts
 	_unit = String(opts.get("unit", ""))
-	_marker = float(opts.get("marker", -1.0))
+	_markers = opts.get("markers", [opts["marker"]] if opts.has("marker") else [])
 	_places = int(opts.get("places", -1))
 	_colors = opts.get("colors", ChartStyle.SERIES)
 	custom_minimum_size = Vector2(0.0, BAR + 8.0)
@@ -73,13 +73,17 @@ func _draw() -> void:
 		var r: Rect2 = rects[i]
 		if r.size.x > 0.0:
 			draw_rect(Rect2(r.position + Vector2(0.0, 4.0), r.size), _colors[mini(i, _colors.size() - 1)])
-	if _marker >= 0.0:
-		var x := size.x * _marker
+	for share in _markers:
+		var x := size.x * float(share)
 		draw_line(Vector2(x, 0.0), Vector2(x, BAR + 8.0), UiTheme.TEXT, 1.0)
 
 
 func has_marker() -> bool:
-	return _marker >= 0.0
+	return not _markers.is_empty()
+
+
+func marker_count() -> int:
+	return _markers.size()
 
 
 func _get_tooltip(at: Vector2) -> String:

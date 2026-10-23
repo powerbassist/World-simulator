@@ -35,8 +35,8 @@ const BUDGET := {
 ## (dc515826 + #93) so they cannot grow while they wait; each PR that trims one
 ## deletes its line, and the tab then answers to BUDGET.
 const PENDING := {
-	"agenda": 123, "budget": 14, "politics": 106, "orgs": 491, "projects": 45,
-	"region": 104, "commodities": 82, "city": 17, "energy": 154, "campaign": 217,
+	"agenda": 123, "budget": 14, "orgs": 491, "projects": 45,
+	"region": 104, "commodities": 82, "city": 17, "campaign": 217,
 }
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit"]
