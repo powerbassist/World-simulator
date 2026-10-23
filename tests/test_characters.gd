@@ -21,6 +21,8 @@ const GameState = preload("res://src/core/game_state.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const Government = preload("res://src/sim/government.gd")
+const NationState = preload("res://src/core/nation_state.gd")
+const Person = preload("res://src/core/person.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -39,6 +41,8 @@ func _init() -> void:
 	_check_idle_nation_is_silent()
 	_check_programme_want_is_term_scoped_and_alive_only()
 	_check_challenge_reaches_the_premiership()
+	_check_refusal_price_reads_the_traits()
+	_check_want_served_is_stance_aware()
 
 	if _failures.is_empty():
 		print("test_characters: all checks passed")
@@ -289,6 +293,57 @@ func _sim_files() -> Array[String]:
 		f = da.get_next()
 	da.list_dir_end()
 	return out
+
+
+## V5.2b. A refusal (a declined or lapsed request, a failed lever) prices on the
+## two registers 14.1 names, through this file -- the trait intake as for a
+## denied want: loyal halves the grudge taken, principled doubles it, both
+## multiply. What it returns is what it applied, which the card prints.
+func _check_refusal_price_reads_the_traits() -> void:
+	for case in [[[], 1.0], [["loyal"], 0.5], [["principled"], 2.0], [["loyal", "principled"], 1.0]]:
+		var ns = NationState.new()
+		var person = Person.new()
+		person.id = "FRA_case"
+		for t in case[0]:
+			person.traits.append(String(t))
+		if not is_equal_approx(Characters.grudge_intake(person), float(case[1])):
+			_fail("grudge_intake(%s) read %.2f, wanted %.2f" % [case[0], Characters.grudge_intake(person), case[1]])
+		var applied: Dictionary = Characters.price_refusal(ns, person, 0.1, -0.05)
+		if not is_equal_approx(float(ns.person_grudges.get("FRA_case", 0.0)), 0.1 * float(case[1])):
+			_fail("a refusal priced %s at grudge %.3f, wanted %.3f" % [case[0], float(ns.person_grudges.get("FRA_case", 0.0)), 0.1 * float(case[1])])
+		if not is_equal_approx(float(ns.person_loyalty.get("FRA_case", 0.0)), -0.05):
+			_fail("a refusal's loyalty did not land: %.3f" % float(ns.person_loyalty.get("FRA_case", 0.0)))
+		if not is_equal_approx(float(applied["grudge"]), float(ns.person_grudges["FRA_case"])) \
+				or not is_equal_approx(float(applied["loyalty"]), -0.05):
+			_fail("price_refusal returned %s, not what it applied" % [applied])
+	# The clamp: a grudge near the top takes only the room left, and says so.
+	var full = NationState.new()
+	var p = Person.new()
+	p.id = "FRA_full"
+	full.person_grudges["FRA_full"] = 0.95
+	var near_top: Dictionary = Characters.price_refusal(full, p, 0.2, 0.0)
+	if not is_equal_approx(float(full.person_grudges["FRA_full"]), 1.0) or not is_equal_approx(float(near_top["grudge"]), 0.05):
+		_fail("a refusal past the top did not clamp, or reported %s" % [near_top])
+
+
+## The stance-aware read the request trigger asks: a sponsor is served when the
+## entry is alive, an opposer when it is not -- the one door, so the trigger and
+## the edge-trigger cannot read a want two ways.
+func _check_want_served_is_stance_aware() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	var person = Person.new()
+	person.id = "FRA_case"
+	var meters := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
+	var entry := "prog_in_the_black"
+	var sponsor := {"object": "programme:%s" % entry, "stance": "sponsor"}
+	var oppose := {"object": "programme:%s" % entry, "stance": "oppose"}
+	if Characters.want_served(ns, person, sponsor, meters, {}) or not Characters.want_served(ns, person, oppose, meters, {}):
+		_fail("with nothing chosen, a sponsor read served or an opposer read denied")
+	ns.programme.append({"entry_id": entry, "chosen_term": int(ns.terms_served), "months_live": 0,
+		"status": "active", "concluded_term": -1, "concluded_term_month": -1})
+	if not Characters.want_served(ns, person, sponsor, meters, {}) or Characters.want_served(ns, person, oppose, meters, {}):
+		_fail("with the entry alive, a sponsor read denied or an opposer read served")
 
 
 ## Assignment-shaped write detection: a line that indexes the register AND

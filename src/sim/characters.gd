@@ -188,8 +188,7 @@ static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dict
 	for want in person.wants:
 		var stance := String(want["stance"])
 		var object := String(want["object"])
-		var satisfied := _want_satisfied(ns, person, want, meters, authored_leaders)
-		var served: bool = satisfied if stance != "oppose" else not satisfied
+		var served := want_served(ns, person, want, meters, authored_leaders)
 		var key: String = String(person.id) + "|" + object
 		var prev: bool = ns.person_want_state.get(key, served)
 		ns.person_want_state[key] = served
@@ -233,6 +232,14 @@ static func _denial_factor(person, object: String) -> float:
 ## authored_leaders are handed in exactly as tick_month hands them.
 static func want_satisfied(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
 	return _want_satisfied(ns, person, want, meters, authored_leaders)
+
+
+## The stance-aware half: an `oppose` want is served when its object is NOT
+## satisfied. V5.2b's request trigger asks it, so the trigger and the
+## edge-trigger above cannot read one want two ways.
+static func want_served(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
+	var satisfied := _want_satisfied(ns, person, want, meters, authored_leaders)
+	return satisfied if String(want["stance"]) != "oppose" else not satisfied
 
 
 static func _want_satisfied(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
@@ -569,13 +576,39 @@ static func _adjust_loyalty(ns, person_id: String, amount: float) -> void:
 static func _adjust_grudge(ns, person, amount: float) -> void:
 	var delta := amount
 	if amount > 0.0:
-		if person.traits.has("loyal"):
-			delta *= CK.LOYAL_GRUDGE_FACTOR
-		if person.traits.has("principled"):
-			delta *= CK.PRINCIPLED_GRUDGE_FACTOR
+		delta *= grudge_intake(person)
 	ns.person_grudges[person.id] = clampf(
 		float(ns.person_grudges.get(person.id, 0.0)) + delta, 0.0, 1.0
 	)
+
+
+## The trait table's intake factor on a grudge TAKEN: loyal halves it,
+## principled doubles it, both multiply. Public since V5.2b, for the request
+## card's price; both factors are powers of two, so folding them into one
+## product changed no float the old in-line pair wrote.
+static func grudge_intake(person) -> float:
+	var factor := 1.0
+	if person.traits.has("loyal"):
+		factor *= CK.LOYAL_GRUDGE_FACTOR
+	if person.traits.has("principled"):
+		factor *= CK.PRINCIPLED_GRUDGE_FACTOR
+	return factor
+
+
+## V5.2b. The price of a refusal -- a declined, delegated or lapsed request, a
+## failed lever -- on the two registers people-model 14.1 names, the grudge
+## through the trait intake above. The one door for a writer outside this file:
+## Audiences and Levers price here, so this file stays the one writer of both
+## registers. Returns what was applied, after the clamps, for the card.
+static func price_refusal(ns, person, grudge: float, loyalty: float) -> Dictionary:
+	var grudge_before := float(ns.person_grudges.get(person.id, 0.0))
+	var loyalty_before := float(ns.person_loyalty.get(person.id, 0.0))
+	_adjust_grudge(ns, person, grudge)
+	_adjust_loyalty(ns, person.id, loyalty)
+	return {
+		"grudge": float(ns.person_grudges[person.id]) - grudge_before,
+		"loyalty": float(ns.person_loyalty[person.id]) - loyalty_before,
+	}
 
 
 ## The act record the card reads. act is one of CK.ACT_KEYS; person_id names
