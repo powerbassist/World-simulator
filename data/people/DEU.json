@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "DEU_vogler",
+      "social_skill": 0.62,
+      "wealth_eur_m": 21.0,
+      "spouse_id": "DEU_isenberg",
       "name": "Matthias Vogler",
       "kind": "politician",
       "traits": [
@@ -24,6 +27,8 @@
     },
     {
       "id": "DEU_bohlen",
+      "social_skill": 0.53,
+      "wealth_eur_m": 5.3,
       "name": "Katrin Bohlen",
       "kind": "politician",
       "traits": [
@@ -45,6 +50,8 @@
     },
     {
       "id": "DEU_ruppert",
+      "social_skill": 0.79,
+      "wealth_eur_m": 6.5,
       "name": "Jens Ruppert",
       "kind": "politician",
       "traits": [
@@ -66,6 +73,8 @@
     },
     {
       "id": "DEU_seibold",
+      "social_skill": 0.5,
+      "wealth_eur_m": 3.6,
       "name": "Annika Seibold",
       "kind": "politician",
       "traits": [
@@ -90,6 +99,8 @@
     },
     {
       "id": "DEU_falk",
+      "social_skill": 0.7,
+      "wealth_eur_m": 3.7,
       "name": "Dietrich Falk",
       "kind": "politician",
       "traits": [
@@ -114,6 +125,8 @@
     },
     {
       "id": "DEU_grotholt",
+      "social_skill": 0.51,
+      "wealth_eur_m": 4.9,
       "name": "Marlene Grotholt",
       "kind": "politician",
       "traits": [
@@ -131,6 +144,8 @@
     },
     {
       "id": "DEU_emmerich",
+      "social_skill": 0.62,
+      "wealth_eur_m": 4.8,
       "name": "Wolfgang Emmerich",
       "kind": "politician",
       "traits": [
@@ -341,6 +356,7 @@
     },
     {
       "id": "DEU_isenberg",
+      "spouse_id": "DEU_vogler",
       "name": "Achim Isenberg",
       "kind": "press_owner",
       "traits": [

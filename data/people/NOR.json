@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "NOR_solvang",
+      "social_skill": 0.74,
+      "wealth_eur_m": 11.0,
+      "spouse_id": "NOR_chief_skarstein_landbruk",
       "name": "Eirik Solvang",
       "kind": "politician",
       "traits": [
@@ -27,6 +30,8 @@
     },
     {
       "id": "NOR_haugland",
+      "social_skill": 0.56,
+      "wealth_eur_m": 3.3,
       "name": "Silje Haugland",
       "kind": "politician",
       "traits": [
@@ -52,6 +57,8 @@
     },
     {
       "id": "NOR_ekeland",
+      "social_skill": 0.59,
+      "wealth_eur_m": 1.9,
       "name": "Trond Ekeland",
       "kind": "politician",
       "traits": [
@@ -73,6 +80,8 @@
     },
     {
       "id": "NOR_brekke",
+      "social_skill": 0.43,
+      "wealth_eur_m": 1.7,
       "name": "Marit Brekke",
       "kind": "politician",
       "traits": [
@@ -94,6 +103,8 @@
     },
     {
       "id": "NOR_tveit",
+      "social_skill": 0.44,
+      "wealth_eur_m": 2.1,
       "name": "Ola Tveit",
       "kind": "politician",
       "traits": [
@@ -115,6 +126,8 @@
     },
     {
       "id": "NOR_lunde",
+      "social_skill": 0.4,
+      "wealth_eur_m": 0.56,
       "name": "Ingrid Lunde",
       "kind": "politician",
       "traits": [
@@ -132,6 +145,8 @@
     },
     {
       "id": "NOR_olav_vi",
+      "social_skill": 0.48,
+      "wealth_eur_m": 400.0,
       "name": "Olav VI",
       "kind": "politician",
       "traits": [
@@ -240,6 +255,7 @@
     },
     {
       "id": "NOR_chief_skarstein_landbruk",
+      "spouse_id": "NOR_solvang",
       "name": "Rune Skarstein",
       "kind": "executive",
       "traits": [

@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "POL_zawadzki",
+      "social_skill": 0.65,
+      "wealth_eur_m": 14.0,
+      "spouse_id": "POL_holowinski",
       "name": "Marek Zawadzki",
       "kind": "politician",
       "traits": [
@@ -23,6 +26,8 @@
     },
     {
       "id": "POL_wilk",
+      "social_skill": 0.74,
+      "wealth_eur_m": 4.5,
       "name": "Grzegorz Wilk",
       "kind": "politician",
       "traits": [
@@ -44,6 +49,8 @@
     },
     {
       "id": "POL_grabowski",
+      "social_skill": 0.58,
+      "wealth_eur_m": 1.3,
       "name": "Szymon Grabowski",
       "kind": "politician",
       "traits": [
@@ -61,6 +68,8 @@
     },
     {
       "id": "POL_piasecki",
+      "social_skill": 0.49,
+      "wealth_eur_m": 3.0,
       "name": "Robert Piasecki",
       "kind": "politician",
       "traits": [
@@ -86,6 +95,8 @@
     },
     {
       "id": "POL_wilczynski",
+      "social_skill": 0.53,
+      "wealth_eur_m": 1.8,
       "name": "Tomasz Wilczyński",
       "kind": "politician",
       "traits": [
@@ -107,6 +118,8 @@
     },
     {
       "id": "POL_kalinowska",
+      "social_skill": 0.41,
+      "wealth_eur_m": 1.6,
       "name": "Ewa Kalinowska",
       "kind": "politician",
       "traits": [
@@ -128,6 +141,8 @@
     },
     {
       "id": "POL_ostrowski",
+      "social_skill": 0.71,
+      "wealth_eur_m": 5.2,
       "name": "Bogdan Ostrowski",
       "kind": "politician",
       "traits": [
@@ -1095,6 +1110,7 @@
     },
     {
       "id": "POL_holowinski",
+      "spouse_id": "POL_zawadzki",
       "name": "Bronisław Hołowiński",
       "kind": "regional_figure",
       "traits": [

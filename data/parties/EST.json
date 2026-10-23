@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "uuendusliit",
+      "funds_eur_m": 4.1,
       "name": "Uuendusliit",
       "ideology_slot": "liberal",
       "seat_share": 0.3,
@@ -12,6 +13,7 @@
     },
     {
       "id": "rahva_koda",
+      "funds_eur_m": 3.3,
       "name": "Rahva Koda",
       "ideology_slot": "centrist",
       "seat_share": 0.23,
@@ -22,6 +24,7 @@
     },
     {
       "id": "rahvuslik_parand",
+      "funds_eur_m": 2.6,
       "name": "Rahvuslik Pärand",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.19,
@@ -34,6 +37,7 @@
     },
     {
       "id": "kodumaa_liit",
+      "funds_eur_m": 2.4,
       "name": "Kodumaa Liit",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.14,
@@ -46,6 +50,7 @@
     },
     {
       "id": "uhiskondlik_kaitse",
+      "funds_eur_m": 3.2,
       "name": "Ühiskondlik Kaitse",
       "ideology_slot": "social_democratic",
       "seat_share": 0.14,

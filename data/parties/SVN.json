@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "gibanje_naprej",
+      "funds_eur_m": 8.9,
       "name": "Gibanje Naprej",
       "ideology_slot": "centrist_liberal",
       "seat_share": 0.32,
@@ -12,6 +13,7 @@
     },
     {
       "id": "demokratska_zveza",
+      "funds_eur_m": 5.5,
       "name": "Demokratska Zveza",
       "ideology_slot": "centre_right",
       "seat_share": 0.26,
@@ -22,6 +24,7 @@
     },
     {
       "id": "solidarnost",
+      "funds_eur_m": 3.4,
       "name": "Solidarnost",
       "ideology_slot": "social_democratic",
       "seat_share": 0.13,
@@ -32,6 +35,7 @@
     },
     {
       "id": "krcanska_unija",
+      "funds_eur_m": 3.2,
       "name": "Krščanska Unija",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.11,
@@ -42,6 +46,7 @@
     },
     {
       "id": "delavska_levica",
+      "funds_eur_m": 2.6,
       "name": "Delavska Skupnost",
       "ideology_slot": "left_populist",
       "seat_share": 0.09,
@@ -52,6 +57,7 @@
     },
     {
       "id": "stranka_zelenih",
+      "funds_eur_m": 2.2,
       "name": "Stranka Zelenih",
       "ideology_slot": "green",
       "seat_share": 0.09,

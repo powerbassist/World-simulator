@@ -2,11 +2,11 @@
   "_source": "authored",
   "_note": "Fictionalised on docs/fictionalization.md: six parties echo the Storting elected 8 September 2025 (169 seats). Seat shares are that result folded to the register's six: the social-democratic party 53/169; the populist right 48; the conservatives with the small liberal party they govern beside 24+3; the socialist left and the far left together 9+9; the agrarian centre with the Christian democrats 9+7; the greens 7. The folds are recorded rather than hidden: two left parties and two centre parties each read as one bloc here.",
   "parties": [
-    {"id": "samhaldspartiet", "name": "Samhaldspartiet", "ideology_slot": "social_democratic", "seat_share": 0.313, "leader_person": "NOR_solvang", "discipline": 0.9, "competence": 0.75, "excluded_partners": ["heimlandspartiet"]},
-    {"id": "heimlandspartiet", "name": "Heimlandspartiet", "ideology_slot": "nationalist_right", "seat_share": 0.284, "leader_person": "NOR_haugland", "discipline": 0.75, "competence": 0.6, "excluded_partners": []},
-    {"id": "borgarlaget", "name": "Borgarlaget", "ideology_slot": "centre_right", "seat_share": 0.16, "leader_person": "NOR_ekeland", "discipline": 0.85, "competence": 0.75, "excluded_partners": []},
-    {"id": "folkefronten", "name": "Folkefronten", "ideology_slot": "left_populist", "seat_share": 0.107, "leader_person": "NOR_brekke", "discipline": 0.75, "competence": 0.55, "excluded_partners": ["heimlandspartiet"]},
-    {"id": "bygdepartiet", "name": "Bygdepartiet", "ideology_slot": "centrist", "seat_share": 0.095, "leader_person": "NOR_tveit", "discipline": 0.8, "competence": 0.65, "excluded_partners": []},
-    {"id": "gron_framtid", "name": "Grøn Framtid", "ideology_slot": "green", "seat_share": 0.041, "leader_person": "NOR_lunde", "discipline": 0.8, "competence": 0.6, "excluded_partners": ["heimlandspartiet"]}
+    {"id": "samhaldspartiet", "funds_eur_m": 26.0, "name": "Samhaldspartiet", "ideology_slot": "social_democratic", "seat_share": 0.313, "leader_person": "NOR_solvang", "discipline": 0.9, "competence": 0.75, "excluded_partners": ["heimlandspartiet"]},
+    {"id": "heimlandspartiet", "funds_eur_m": 13.0, "name": "Heimlandspartiet", "ideology_slot": "nationalist_right", "seat_share": 0.284, "leader_person": "NOR_haugland", "discipline": 0.75, "competence": 0.6, "excluded_partners": []},
+    {"id": "borgarlaget", "funds_eur_m": 12.0, "name": "Borgarlaget", "ideology_slot": "centre_right", "seat_share": 0.16, "leader_person": "NOR_ekeland", "discipline": 0.85, "competence": 0.75, "excluded_partners": []},
+    {"id": "folkefronten", "funds_eur_m": 7.5, "name": "Folkefronten", "ideology_slot": "left_populist", "seat_share": 0.107, "leader_person": "NOR_brekke", "discipline": 0.75, "competence": 0.55, "excluded_partners": ["heimlandspartiet"]},
+    {"id": "bygdepartiet", "funds_eur_m": 8.5, "name": "Bygdepartiet", "ideology_slot": "centrist", "seat_share": 0.095, "leader_person": "NOR_tveit", "discipline": 0.8, "competence": 0.65, "excluded_partners": []},
+    {"id": "gron_framtid", "funds_eur_m": 2.9, "name": "Grøn Framtid", "ideology_slot": "green", "seat_share": 0.041, "leader_person": "NOR_lunde", "discipline": 0.8, "competence": 0.6, "excluded_partners": ["heimlandspartiet"]}
   ]
 }

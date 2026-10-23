@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "hnuti_pro_budoucnost",
+      "funds_eur_m": 14.0,
       "name": "Hnutí pro budoucnost",
       "ideology_slot": "centrist",
       "seat_share": 0.34,
@@ -12,6 +13,7 @@
     },
     {
       "id": "obcanska_aliance",
+      "funds_eur_m": 7.9,
       "name": "Občanská aliance",
       "ideology_slot": "centre_right",
       "seat_share": 0.18,
@@ -24,6 +26,7 @@
     },
     {
       "id": "meststi_liberalove",
+      "funds_eur_m": 4.7,
       "name": "Městští liberálové",
       "ideology_slot": "progressive_liberal",
       "seat_share": 0.12,
@@ -36,6 +39,7 @@
     },
     {
       "id": "tradice_a_odpovednost",
+      "funds_eur_m": 5.1,
       "name": "Tradice a odpovědnost",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.09,
@@ -48,6 +52,7 @@
     },
     {
       "id": "suverenita_a_rad",
+      "funds_eur_m": 9.7,
       "name": "Suverenita a řád",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.14,
@@ -58,6 +63,7 @@
     },
     {
       "id": "leva_alternativa",
+      "funds_eur_m": 7.5,
       "name": "Levá alternativa",
       "ideology_slot": "left_populist",
       "seat_share": 0.13,

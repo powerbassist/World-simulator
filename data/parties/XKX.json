@@ -1,10 +1,10 @@
 {
   "parties": [
-    {"id": "levizja_liria", "name": "Lëvizja Liria", "ideology_slot": "left_populist", "seat_share": 0.4, "leader_person": "XKX_berisha_a", "discipline": 0.9, "competence": 0.6, "excluded_partners": []},
-    {"id": "partia_e_bashkimit", "name": "Partia e Bashkimit", "ideology_slot": "centre_right", "seat_share": 0.2, "leader_person": "XKX_hyseni", "discipline": 0.85, "competence": 0.6, "excluded_partners": []},
-    {"id": "lidhja_qytetare", "name": "Lidhja Qytetare", "ideology_slot": "liberal", "seat_share": 0.125, "leader_person": "XKX_morina", "discipline": 0.8, "competence": 0.6, "excluded_partners": []},
-    {"id": "koalicija_manjina", "name": "Koalicija manjina", "ideology_slot": "regionalist", "seat_share": 0.142, "leader_person": "XKX_demiri", "discipline": 0.75, "competence": 0.55, "excluded_partners": []},
-    {"id": "srpska_zajednica", "name": "Srpska zajednica", "ideology_slot": "regionalist", "seat_share": 0.075, "leader_person": "XKX_jovanovic", "discipline": 0.95, "competence": 0.5, "excluded_partners": ["levizja_liria"]},
-    {"id": "aleanca_arbere", "name": "Aleanca Arbëre", "ideology_slot": "nationalist_right", "seat_share": 0.058, "leader_person": "XKX_zeqiri", "discipline": 0.8, "competence": 0.55, "excluded_partners": []}
+    {"id": "levizja_liria", "funds_eur_m": 3.7, "name": "Lëvizja Liria", "ideology_slot": "left_populist", "seat_share": 0.4, "leader_person": "XKX_berisha_a", "discipline": 0.9, "competence": 0.6, "excluded_partners": []},
+    {"id": "partia_e_bashkimit", "funds_eur_m": 1.5, "name": "Partia e Bashkimit", "ideology_slot": "centre_right", "seat_share": 0.2, "leader_person": "XKX_hyseni", "discipline": 0.85, "competence": 0.6, "excluded_partners": []},
+    {"id": "lidhja_qytetare", "funds_eur_m": 1.0, "name": "Lidhja Qytetare", "ideology_slot": "liberal", "seat_share": 0.125, "leader_person": "XKX_morina", "discipline": 0.8, "competence": 0.6, "excluded_partners": []},
+    {"id": "koalicija_manjina", "funds_eur_m": 1.4, "name": "Koalicija manjina", "ideology_slot": "regionalist", "seat_share": 0.142, "leader_person": "XKX_demiri", "discipline": 0.75, "competence": 0.55, "excluded_partners": []},
+    {"id": "srpska_zajednica", "funds_eur_m": 0.81, "name": "Srpska zajednica", "ideology_slot": "regionalist", "seat_share": 0.075, "leader_person": "XKX_jovanovic", "discipline": 0.95, "competence": 0.5, "excluded_partners": ["levizja_liria"]},
+    {"id": "aleanca_arbere", "funds_eur_m": 0.51, "name": "Aleanca Arbëre", "ideology_slot": "nationalist_right", "seat_share": 0.058, "leader_person": "XKX_zeqiri", "discipline": 0.8, "competence": 0.55, "excluded_partners": []}
   ]
 }

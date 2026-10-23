@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "LVA_kreituss",
+      "social_skill": 0.75,
+      "wealth_eur_m": 6.7,
+      "spouse_id": "LVA_jansonis",
       "name": "Jānis Kreituss",
       "kind": "politician",
       "traits": [
@@ -20,6 +23,8 @@
     },
     {
       "id": "LVA_liepina",
+      "social_skill": 0.52,
+      "wealth_eur_m": 0.48,
       "name": "Māra Liepiņa",
       "kind": "politician",
       "traits": [
@@ -42,6 +47,8 @@
     },
     {
       "id": "LVA_krumins",
+      "social_skill": 0.58,
+      "wealth_eur_m": 1.2,
       "name": "Ojārs Krūmiņš",
       "kind": "politician",
       "traits": [
@@ -63,6 +70,8 @@
     },
     {
       "id": "LVA_veismane",
+      "social_skill": 0.42,
+      "wealth_eur_m": 0.76,
       "name": "Elīna Veismane",
       "kind": "politician",
       "traits": [
@@ -83,6 +92,8 @@
     },
     {
       "id": "LVA_ozolins",
+      "social_skill": 0.56,
+      "wealth_eur_m": 0.72,
       "name": "Viktors Ozoliņš",
       "kind": "politician",
       "traits": [
@@ -100,6 +111,8 @@
     },
     {
       "id": "LVA_kalns",
+      "social_skill": 0.57,
+      "wealth_eur_m": 1.2,
       "name": "Andrejs Kalns",
       "kind": "politician",
       "traits": [
@@ -121,6 +134,8 @@
     },
     {
       "id": "LVA_vitola",
+      "social_skill": 0.52,
+      "wealth_eur_m": 0.82,
       "name": "Ineta Vītola",
       "kind": "politician",
       "traits": [
@@ -687,6 +702,7 @@
     },
     {
       "id": "LVA_jansonis",
+      "spouse_id": "LVA_kreituss",
       "name": "Imants Jansonis",
       "kind": "activist",
       "traits": [

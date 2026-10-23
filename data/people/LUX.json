@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "LUX_everling",
+      "social_skill": 0.76,
+      "wealth_eur_m": 9.3,
+      "spouse_id": "LUX_junge",
       "name": "Marc Everling",
       "kind": "politician",
       "traits": [
@@ -23,6 +26,8 @@
     },
     {
       "id": "LUX_weiler",
+      "social_skill": 0.72,
+      "wealth_eur_m": 1.8,
       "name": "Nathalie Weiler",
       "kind": "politician",
       "traits": [
@@ -44,6 +49,8 @@
     },
     {
       "id": "LUX_hoffmann",
+      "social_skill": 0.69,
+      "wealth_eur_m": 1.3,
       "name": "Serge Hoffmann",
       "kind": "politician",
       "traits": [
@@ -62,6 +69,8 @@
     },
     {
       "id": "LUX_reiland",
+      "social_skill": 0.57,
+      "wealth_eur_m": 1.0,
       "name": "Anouk Reiland",
       "kind": "politician",
       "traits": [
@@ -87,6 +96,8 @@
     },
     {
       "id": "LUX_steichen",
+      "social_skill": 0.69,
+      "wealth_eur_m": 1.7,
       "name": "Jean-Paul Steichen",
       "kind": "politician",
       "traits": [
@@ -112,6 +123,8 @@
     },
     {
       "id": "LUX_adolphe_iii",
+      "social_skill": 0.47,
+      "wealth_eur_m": 310.0,
       "name": "Adolphe III",
       "kind": "politician",
       "traits": [
@@ -1140,6 +1153,7 @@
     },
     {
       "id": "LUX_junge",
+      "spouse_id": "LUX_everling",
       "name": "Félix Junge",
       "kind": "press_owner",
       "traits": [

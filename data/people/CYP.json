@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "CYP_hadjipavlou",
+      "social_skill": 0.48,
+      "wealth_eur_m": 0.94,
+      "spouse_id": "CYP_georgiou",
       "name": "Stavros Hadjipavlou",
       "kind": "politician",
       "traits": [
@@ -19,6 +22,8 @@
     },
     {
       "id": "CYP_petrou",
+      "social_skill": 0.69,
+      "wealth_eur_m": 2.5,
       "name": "Charalambos Petrou",
       "kind": "politician",
       "traits": [
@@ -36,6 +41,8 @@
     },
     {
       "id": "CYP_zachariou",
+      "social_skill": 0.78,
+      "wealth_eur_m": 1.1,
       "name": "Michalis Zachariou",
       "kind": "politician",
       "traits": [
@@ -61,6 +68,8 @@
     },
     {
       "id": "CYP_christofi",
+      "social_skill": 0.56,
+      "wealth_eur_m": 0.87,
       "name": "Andreas Christofi",
       "kind": "politician",
       "traits": [
@@ -83,6 +92,8 @@
     },
     {
       "id": "CYP_adamidis",
+      "social_skill": 0.7,
+      "wealth_eur_m": 1.9,
       "name": "Giorgos Adamidis",
       "kind": "politician",
       "traits": [
@@ -103,6 +114,8 @@
     },
     {
       "id": "CYP_giallouridou",
+      "social_skill": 0.59,
+      "wealth_eur_m": 1.3,
       "name": "Eleni Giallouridou",
       "kind": "politician",
       "traits": [
@@ -219,6 +232,7 @@
     },
     {
       "id": "CYP_georgiou",
+      "spouse_id": "CYP_hadjipavlou",
       "name": "Andreas Georgiou",
       "kind": "activist",
       "traits": [

@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "SVK_vozar",
+      "social_skill": 0.59,
+      "wealth_eur_m": 13.0,
       "name": "Marián Vozár",
       "kind": "politician",
       "traits": [
@@ -27,6 +29,9 @@
     },
     {
       "id": "SVK_petrik",
+      "social_skill": 0.59,
+      "wealth_eur_m": 1.4,
+      "spouse_id": "SVK_chief_hruska_skupina",
       "name": "Vladimír Petrík",
       "kind": "politician",
       "traits": [
@@ -45,6 +50,8 @@
     },
     {
       "id": "SVK_baran",
+      "social_skill": 0.73,
+      "wealth_eur_m": 3.2,
       "name": "Peter Barán",
       "kind": "politician",
       "traits": [
@@ -62,6 +69,8 @@
     },
     {
       "id": "SVK_hruskova",
+      "social_skill": 0.74,
+      "wealth_eur_m": 3.4,
       "name": "Zuzana Hrušková",
       "kind": "politician",
       "traits": [
@@ -83,6 +92,8 @@
     },
     {
       "id": "SVK_dankova",
+      "social_skill": 0.73,
+      "wealth_eur_m": 3.6,
       "name": "Alena Danková",
       "kind": "politician",
       "traits": [
@@ -104,6 +115,8 @@
     },
     {
       "id": "SVK_hraska",
+      "social_skill": 0.48,
+      "wealth_eur_m": 0.8,
       "name": "Tomáš Hraška",
       "kind": "politician",
       "traits": [
@@ -1164,6 +1177,7 @@
     },
     {
       "id": "SVK_chief_hruska_skupina",
+      "spouse_id": "SVK_petrik",
       "name": "Andrej Hruška",
       "kind": "executive",
       "traits": [

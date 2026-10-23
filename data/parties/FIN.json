@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "tyovaen_liitto",
+      "funds_eur_m": 15.0,
       "name": "Työväen Liitto",
       "ideology_slot": "social_democratic",
       "seat_share": 0.23,
@@ -14,6 +15,7 @@
     },
     {
       "id": "kansallinen_liitto",
+      "funds_eur_m": 13.0,
       "name": "Kansallinen Liitto",
       "ideology_slot": "centre_right",
       "seat_share": 0.235,
@@ -24,6 +26,7 @@
     },
     {
       "id": "kansallismieli",
+      "funds_eur_m": 11.0,
       "name": "Kansallismieli",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.23,
@@ -34,6 +37,7 @@
     },
     {
       "id": "maaseudun_voima",
+      "funds_eur_m": 7.3,
       "name": "Maaseudun Voima",
       "ideology_slot": "centrist",
       "seat_share": 0.135,
@@ -44,6 +48,7 @@
     },
     {
       "id": "vihrea_liike",
+      "funds_eur_m": 5.1,
       "name": "Vihreä Liike",
       "ideology_slot": "green",
       "seat_share": 0.085,
@@ -56,6 +61,7 @@
     },
     {
       "id": "svenska_liberalforbundet",
+      "funds_eur_m": 3.7,
       "name": "Svenska Liberalförbundet",
       "ideology_slot": "progressive_liberal",
       "seat_share": 0.085,

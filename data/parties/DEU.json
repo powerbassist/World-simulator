@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "buergerunion",
+      "funds_eur_m": 60.0,
       "name": "Bürgerunion",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.28,
@@ -15,6 +16,7 @@
     },
     {
       "id": "sozialer_fortschritt",
+      "funds_eur_m": 58.0,
       "name": "Sozialer Fortschritt",
       "ideology_slot": "social_democratic",
       "seat_share": 0.24,
@@ -27,6 +29,7 @@
     },
     {
       "id": "freiheitliche_mitte",
+      "funds_eur_m": 17.0,
       "name": "Freiheitliche Mitte",
       "ideology_slot": "liberal",
       "seat_share": 0.1,
@@ -39,6 +42,7 @@
     },
     {
       "id": "gruene_zukunft",
+      "funds_eur_m": 24.0,
       "name": "Grüne Zukunft",
       "ideology_slot": "green",
       "seat_share": 0.13,
@@ -51,6 +55,7 @@
     },
     {
       "id": "nationale_erneuerung",
+      "funds_eur_m": 29.0,
       "name": "Nationale Erneuerung",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.16,
@@ -61,6 +66,7 @@
     },
     {
       "id": "linke_allianz",
+      "funds_eur_m": 16.0,
       "name": "Linke Allianz",
       "ideology_slot": "left_populist",
       "seat_share": 0.09,

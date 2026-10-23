@@ -1,10 +1,10 @@
 {
   "parties": [
-    {"id": "stranka_stabilnosti", "name": "Stranka stabilnosti", "ideology_slot": "centre_right", "seat_share": 0.516, "leader_person": "SRB_radovanovic", "discipline": 0.95, "competence": 0.7, "excluded_partners": []},
-    {"id": "gradjanski_front", "name": "Građanski front", "ideology_slot": "progressive_liberal", "seat_share": 0.26, "leader_person": "SRB_lazic", "discipline": 0.7, "competence": 0.65, "excluded_partners": ["stranka_stabilnosti"]},
-    {"id": "socijalni_savez", "name": "Socijalni savez", "ideology_slot": "social_democratic", "seat_share": 0.072, "leader_person": "SRB_nikolic", "discipline": 0.85, "competence": 0.6, "excluded_partners": []},
-    {"id": "kraljevski_blok", "name": "Kraljevski blok", "ideology_slot": "nationalist_right", "seat_share": 0.052, "leader_person": "SRB_markovic", "discipline": 0.75, "competence": 0.55, "excluded_partners": []},
-    {"id": "narodna_rec", "name": "Narodna reč", "ideology_slot": "centrist", "seat_share": 0.052, "leader_person": "SRB_stankovic", "discipline": 0.65, "competence": 0.5, "excluded_partners": []},
-    {"id": "savez_vojvodjanskih_manjina", "name": "Savez vojvođanskih manjina", "ideology_slot": "regionalist", "seat_share": 0.048, "leader_person": "SRB_kovacs", "discipline": 0.85, "competence": 0.65, "excluded_partners": []}
+    {"id": "stranka_stabilnosti", "funds_eur_m": 17.0, "name": "Stranka stabilnosti", "ideology_slot": "centre_right", "seat_share": 0.516, "leader_person": "SRB_radovanovic", "discipline": 0.95, "competence": 0.7, "excluded_partners": []},
+    {"id": "gradjanski_front", "funds_eur_m": 8.4, "name": "Građanski front", "ideology_slot": "progressive_liberal", "seat_share": 0.26, "leader_person": "SRB_lazic", "discipline": 0.7, "competence": 0.65, "excluded_partners": ["stranka_stabilnosti"]},
+    {"id": "socijalni_savez", "funds_eur_m": 2.7, "name": "Socijalni savez", "ideology_slot": "social_democratic", "seat_share": 0.072, "leader_person": "SRB_nikolic", "discipline": 0.85, "competence": 0.6, "excluded_partners": []},
+    {"id": "kraljevski_blok", "funds_eur_m": 1.7, "name": "Kraljevski blok", "ideology_slot": "nationalist_right", "seat_share": 0.052, "leader_person": "SRB_markovic", "discipline": 0.75, "competence": 0.55, "excluded_partners": []},
+    {"id": "narodna_rec", "funds_eur_m": 1.5, "name": "Narodna reč", "ideology_slot": "centrist", "seat_share": 0.052, "leader_person": "SRB_stankovic", "discipline": 0.65, "competence": 0.5, "excluded_partners": []},
+    {"id": "savez_vojvodjanskih_manjina", "funds_eur_m": 1.8, "name": "Savez vojvođanskih manjina", "ideology_slot": "regionalist", "seat_share": 0.048, "leader_person": "SRB_kovacs", "discipline": 0.85, "competence": 0.65, "excluded_partners": []}
   ]
 }

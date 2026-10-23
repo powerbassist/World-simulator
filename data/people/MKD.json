@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "MKD_trajkovski",
+      "social_skill": 0.53,
+      "wealth_eur_m": 6.0,
       "name": "Goran Trajkovski",
       "kind": "politician",
       "traits": [
@@ -23,6 +25,8 @@
     },
     {
       "id": "MKD_stojanov",
+      "social_skill": 0.64,
+      "wealth_eur_m": 1.0,
       "name": "Vesna Stojanova",
       "kind": "politician",
       "traits": [
@@ -40,6 +44,8 @@
     },
     {
       "id": "MKD_selimi",
+      "social_skill": 0.69,
+      "wealth_eur_m": 1.0,
       "name": "Arbër Selimi",
       "kind": "politician",
       "traits": [
@@ -61,6 +67,8 @@
     },
     {
       "id": "MKD_bajrami",
+      "social_skill": 0.52,
+      "wealth_eur_m": 1.3,
       "name": "Driton Bajrami",
       "kind": "politician",
       "traits": [
@@ -78,6 +86,8 @@
     },
     {
       "id": "MKD_ristovski",
+      "social_skill": 0.44,
+      "wealth_eur_m": 0.61,
       "name": "Aleksandar Ristovski",
       "kind": "politician",
       "traits": [
@@ -99,6 +109,8 @@
     },
     {
       "id": "MKD_nikolovski",
+      "social_skill": 0.63,
+      "wealth_eur_m": 1.8,
       "name": "Marko Nikolovski",
       "kind": "politician",
       "traits": [
@@ -116,6 +128,9 @@
     },
     {
       "id": "MKD_angelovska",
+      "social_skill": 0.49,
+      "wealth_eur_m": 0.97,
+      "spouse_id": "MKD_chief_spasovski",
       "name": "Elena Angelovska",
       "kind": "politician",
       "traits": [
@@ -240,6 +255,7 @@
     },
     {
       "id": "MKD_chief_spasovski",
+      "spouse_id": "MKD_angelovska",
       "name": "Zoran Spasovski",
       "kind": "executive",
       "traits": [

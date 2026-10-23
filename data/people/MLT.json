@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "MLT_cassar",
+      "social_skill": 0.54,
+      "wealth_eur_m": 2.5,
       "name": "Adrian Cassar",
       "kind": "politician",
       "traits": [
@@ -27,6 +29,8 @@
     },
     {
       "id": "MLT_zahra",
+      "social_skill": 0.5,
+      "wealth_eur_m": 0.89,
       "name": "Bernard Zahra",
       "kind": "politician",
       "traits": [
@@ -47,6 +51,8 @@
     },
     {
       "id": "MLT_camilleri",
+      "social_skill": 0.45,
+      "wealth_eur_m": 0.41,
       "name": "Sandra Camilleri",
       "kind": "politician",
       "traits": [
@@ -69,6 +75,8 @@
     },
     {
       "id": "MLT_portelli",
+      "social_skill": 0.69,
+      "wealth_eur_m": 1.0,
       "name": "Michael Portelli",
       "kind": "politician",
       "traits": [
@@ -94,6 +102,9 @@
     },
     {
       "id": "MLT_attard",
+      "social_skill": 0.69,
+      "wealth_eur_m": 0.99,
+      "spouse_id": "MLT_chief_azzopardi_construction",
       "name": "Marie-Louise Attard",
       "kind": "politician",
       "traits": [
@@ -1252,6 +1263,7 @@
     },
     {
       "id": "MLT_chief_azzopardi_construction",
+      "spouse_id": "MLT_attard",
       "name": "Patrick Azzopardi",
       "kind": "executive",
       "traits": [

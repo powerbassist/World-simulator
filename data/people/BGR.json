@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "BGR_marinkov",
+      "social_skill": 0.62,
+      "wealth_eur_m": 4.7,
+      "spouse_id": "BGR_bodurov",
       "name": "Красимир Маринков",
       "kind": "politician",
       "traits": [
@@ -25,6 +28,9 @@
     },
     {
       "id": "BGR_kishev",
+      "social_skill": 0.61,
+      "wealth_eur_m": 0.78,
+      "spouse_id": "BGR_mihov",
       "name": "Богдан Кисьов",
       "kind": "politician",
       "traits": [
@@ -51,6 +57,8 @@
     },
     {
       "id": "BGR_halilov",
+      "social_skill": 0.74,
+      "wealth_eur_m": 1.6,
       "name": "Осман Халилов",
       "kind": "politician",
       "traits": [
@@ -68,6 +76,8 @@
     },
     {
       "id": "BGR_tsonev",
+      "social_skill": 0.52,
+      "wealth_eur_m": 0.71,
       "name": "Пламен Цонев",
       "kind": "politician",
       "traits": [
@@ -85,6 +95,8 @@
     },
     {
       "id": "BGR_ganeva",
+      "social_skill": 0.72,
+      "wealth_eur_m": 2.3,
       "name": "Емилия Ганева",
       "kind": "politician",
       "traits": [
@@ -102,6 +114,8 @@
     },
     {
       "id": "BGR_rangelov",
+      "social_skill": 0.62,
+      "wealth_eur_m": 1.1,
       "name": "Димитър Рангелов",
       "kind": "politician",
       "traits": [
@@ -126,6 +140,8 @@
     },
     {
       "id": "BGR_koleva",
+      "social_skill": 0.63,
+      "wealth_eur_m": 2.0,
       "name": "Румяна Колева",
       "kind": "politician",
       "traits": [
@@ -191,6 +207,7 @@
     },
     {
       "id": "BGR_bodurov",
+      "spouse_id": "BGR_marinkov",
       "name": "Martin Bodurov",
       "kind": "union_leader",
       "traits": [
@@ -780,6 +797,7 @@
     },
     {
       "id": "BGR_mihov",
+      "spouse_id": "BGR_kishev",
       "name": "Georgi Mihov",
       "kind": "press_owner",
       "traits": [

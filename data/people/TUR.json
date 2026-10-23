@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "TUR_karaman",
+      "social_skill": 0.68,
+      "wealth_eur_m": 9.0,
+      "spouse_id": "TUR_chief_ticaret_kaplan",
       "name": "Hakan Karaman",
       "kind": "politician",
       "traits": [
@@ -28,6 +31,8 @@
     },
     {
       "id": "TUR_aydin",
+      "social_skill": 0.62,
+      "wealth_eur_m": 3.2,
       "name": "Selin Aydın",
       "kind": "politician",
       "traits": [
@@ -49,6 +54,8 @@
     },
     {
       "id": "TUR_kaya",
+      "social_skill": 0.4,
+      "wealth_eur_m": 2.9,
       "name": "Rojda Kaya",
       "kind": "politician",
       "traits": [
@@ -70,6 +77,8 @@
     },
     {
       "id": "TUR_ozturk",
+      "social_skill": 0.45,
+      "wealth_eur_m": 3.2,
       "name": "Bülent Öztürk",
       "kind": "politician",
       "traits": [
@@ -87,6 +96,8 @@
     },
     {
       "id": "TUR_celik",
+      "social_skill": 0.64,
+      "wealth_eur_m": 3.8,
       "name": "Ayten Çelik",
       "kind": "politician",
       "traits": [
@@ -216,6 +227,7 @@
     },
     {
       "id": "TUR_chief_ticaret_kaplan",
+      "spouse_id": "TUR_karaman",
       "name": "Burak Kaplan",
       "kind": "executive",
       "traits": [

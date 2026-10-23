@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "FIN_rautio",
+      "social_skill": 0.51,
+      "wealth_eur_m": 1.3,
       "name": "Eero Rautio",
       "kind": "politician",
       "traits": [
@@ -18,6 +20,8 @@
     },
     {
       "id": "FIN_viitanen",
+      "social_skill": 0.51,
+      "wealth_eur_m": 6.3,
       "name": "Juho Viitanen",
       "kind": "politician",
       "traits": [
@@ -36,6 +40,8 @@
     },
     {
       "id": "FIN_salmela",
+      "social_skill": 0.69,
+      "wealth_eur_m": 3.5,
       "name": "Anni Salmela",
       "kind": "politician",
       "traits": [
@@ -62,6 +68,8 @@
     },
     {
       "id": "FIN_koiranen",
+      "social_skill": 0.67,
+      "wealth_eur_m": 2.3,
       "name": "Teemu Koiranen",
       "kind": "politician",
       "traits": [
@@ -88,6 +96,8 @@
     },
     {
       "id": "FIN_nummela",
+      "social_skill": 0.66,
+      "wealth_eur_m": 2.7,
       "name": "Sirkka Nummela",
       "kind": "politician",
       "traits": [
@@ -108,6 +118,8 @@
     },
     {
       "id": "FIN_peltomaa",
+      "social_skill": 0.67,
+      "wealth_eur_m": 2.2,
       "name": "Outi Peltomaa",
       "kind": "politician",
       "traits": [
@@ -126,6 +138,8 @@
     },
     {
       "id": "FIN_nordlund",
+      "social_skill": 0.61,
+      "wealth_eur_m": 2.5,
       "name": "Jonas Nordlund",
       "kind": "politician",
       "traits": [

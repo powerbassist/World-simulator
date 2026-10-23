@@ -1,9 +1,9 @@
 {
   "parties": [
-    {"id": "partidul_reformei", "name": "Partidul Reformei", "ideology_slot": "centre_right", "seat_share": 0.546, "leader_person": "MDA_ciobanu", "discipline": 0.9, "competence": 0.65, "excluded_partners": ["blocul_estic"]},
-    {"id": "blocul_estic", "name": "Blocul Estic", "ideology_slot": "left_populist", "seat_share": 0.257, "leader_person": "MDA_rotaru", "discipline": 0.85, "competence": 0.5, "excluded_partners": ["partidul_reformei"]},
-    {"id": "alternativa_noua", "name": "Alternativa Nouă", "ideology_slot": "centrist", "seat_share": 0.079, "leader_person": "MDA_moraru", "discipline": 0.75, "competence": 0.55, "excluded_partners": []},
-    {"id": "partidul_satelor", "name": "Partidul Satelor", "ideology_slot": "centrist", "seat_share": 0.059, "leader_person": "MDA_cebotari", "discipline": 0.7, "competence": 0.5, "excluded_partners": []},
-    {"id": "casa_unirii", "name": "Casa Unirii", "ideology_slot": "nationalist_right", "seat_share": 0.059, "leader_person": "MDA_rusu", "discipline": 0.8, "competence": 0.5, "excluded_partners": ["blocul_estic"]}
+    {"id": "partidul_reformei", "funds_eur_m": 6.4, "name": "Partidul Reformei", "ideology_slot": "centre_right", "seat_share": 0.546, "leader_person": "MDA_ciobanu", "discipline": 0.9, "competence": 0.65, "excluded_partners": ["blocul_estic"]},
+    {"id": "blocul_estic", "funds_eur_m": 2.2, "name": "Blocul Estic", "ideology_slot": "left_populist", "seat_share": 0.257, "leader_person": "MDA_rotaru", "discipline": 0.85, "competence": 0.5, "excluded_partners": ["partidul_reformei"]},
+    {"id": "alternativa_noua", "funds_eur_m": 0.82, "name": "Alternativa Nouă", "ideology_slot": "centrist", "seat_share": 0.079, "leader_person": "MDA_moraru", "discipline": 0.75, "competence": 0.55, "excluded_partners": []},
+    {"id": "partidul_satelor", "funds_eur_m": 0.95, "name": "Partidul Satelor", "ideology_slot": "centrist", "seat_share": 0.059, "leader_person": "MDA_cebotari", "discipline": 0.7, "competence": 0.5, "excluded_partners": []},
+    {"id": "casa_unirii", "funds_eur_m": 0.9, "name": "Casa Unirii", "ideology_slot": "nationalist_right", "seat_share": 0.059, "leader_person": "MDA_rusu", "discipline": 0.8, "competence": 0.5, "excluded_partners": ["blocul_estic"]}
   ]
 }

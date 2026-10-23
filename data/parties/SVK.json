@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "socialna_unia",
+      "funds_eur_m": 13.0,
       "name": "Sociálna únia",
       "ideology_slot": "social_democratic",
       "seat_share": 0.29,
@@ -12,6 +13,7 @@
     },
     {
       "id": "vlastenecka_koalicia",
+      "funds_eur_m": 9.6,
       "name": "Vlastenecká koalícia",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.23,
@@ -22,6 +24,7 @@
     },
     {
       "id": "krestanska_republika",
+      "funds_eur_m": 9.0,
       "name": "Kresťanská republika",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.19,
@@ -32,6 +35,7 @@
     },
     {
       "id": "slobodne_slovensko",
+      "funds_eur_m": 4.8,
       "name": "Slobodné Slovensko",
       "ideology_slot": "liberal",
       "seat_share": 0.16,
@@ -42,6 +46,7 @@
     },
     {
       "id": "moderne_centrum",
+      "funds_eur_m": 6.0,
       "name": "Moderné centrum",
       "ideology_slot": "centrist",
       "seat_share": 0.13,

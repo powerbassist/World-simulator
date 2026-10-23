@@ -1,10 +1,10 @@
 {
   "parties": [
-    {"id": "narodna_sluzhba", "name": "Narodna Sluzhba", "ideology_slot": "centrist", "seat_share": 0.52, "leader_person": "UKR_levchuk", "discipline": 0.75, "competence": 0.6, "excluded_partners": ["platforma_vidnovlennia"]},
-    {"id": "yevropeiskyi_vybir", "name": "Yevropeiskyi Vybir", "ideology_slot": "centre_right", "seat_share": 0.12, "leader_person": "UKR_kravets", "discipline": 0.8, "competence": 0.6, "excluded_partners": ["platforma_vidnovlennia"]},
-    {"id": "platforma_vidnovlennia", "name": "Platforma Vidnovlennia", "ideology_slot": "regionalist", "seat_share": 0.12, "leader_person": "UKR_ostapchuk", "discipline": 0.7, "competence": 0.5, "excluded_partners": ["narodna_sluzhba", "yevropeiskyi_vybir"]},
-    {"id": "ridna_zemlia", "name": "Ridna Zemlia", "ideology_slot": "left_populist", "seat_share": 0.1, "leader_person": "UKR_ostrovska", "discipline": 0.85, "competence": 0.55, "excluded_partners": []},
-    {"id": "hromadska_dumka", "name": "Hromadska Dumka", "ideology_slot": "liberal", "seat_share": 0.07, "leader_person": "UKR_savchuk", "discipline": 0.75, "competence": 0.65, "excluded_partners": []},
-    {"id": "dovirchyi_blok", "name": "Dovirchyi Blok", "ideology_slot": "centrist", "seat_share": 0.07, "leader_person": "UKR_bondar", "discipline": 0.6, "competence": 0.5, "excluded_partners": []}
+    {"id": "narodna_sluzhba", "funds_eur_m": 21.0, "name": "Narodna Sluzhba", "ideology_slot": "centrist", "seat_share": 0.52, "leader_person": "UKR_levchuk", "discipline": 0.75, "competence": 0.6, "excluded_partners": ["platforma_vidnovlennia"]},
+    {"id": "yevropeiskyi_vybir", "funds_eur_m": 4.4, "name": "Yevropeiskyi Vybir", "ideology_slot": "centre_right", "seat_share": 0.12, "leader_person": "UKR_kravets", "discipline": 0.8, "competence": 0.6, "excluded_partners": ["platforma_vidnovlennia"]},
+    {"id": "platforma_vidnovlennia", "funds_eur_m": 3.5, "name": "Platforma Vidnovlennia", "ideology_slot": "regionalist", "seat_share": 0.12, "leader_person": "UKR_ostapchuk", "discipline": 0.7, "competence": 0.5, "excluded_partners": ["narodna_sluzhba", "yevropeiskyi_vybir"]},
+    {"id": "ridna_zemlia", "funds_eur_m": 3.9, "name": "Ridna Zemlia", "ideology_slot": "left_populist", "seat_share": 0.1, "leader_person": "UKR_ostrovska", "discipline": 0.85, "competence": 0.55, "excluded_partners": []},
+    {"id": "hromadska_dumka", "funds_eur_m": 3.7, "name": "Hromadska Dumka", "ideology_slot": "liberal", "seat_share": 0.07, "leader_person": "UKR_savchuk", "discipline": 0.75, "competence": 0.65, "excluded_partners": []},
+    {"id": "dovirchyi_blok", "funds_eur_m": 2.1, "name": "Dovirchyi Blok", "ideology_slot": "centrist", "seat_share": 0.07, "leader_person": "UKR_bondar", "discipline": 0.6, "competence": 0.5, "excluded_partners": []}
   ]
 }

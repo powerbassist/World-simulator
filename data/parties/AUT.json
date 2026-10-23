@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "buergerliche_mitte",
+      "funds_eur_m": 21.0,
       "name": "Bürgerliche Mitte",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.26,
@@ -12,6 +13,7 @@
     },
     {
       "id": "arbeiterbund",
+      "funds_eur_m": 10.0,
       "name": "Arbeiterbund",
       "ideology_slot": "social_democratic",
       "seat_share": 0.21,
@@ -24,6 +26,7 @@
     },
     {
       "id": "nationale_sammlung",
+      "funds_eur_m": 13.0,
       "name": "Nationale Sammlung",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.19,
@@ -34,6 +37,7 @@
     },
     {
       "id": "oekologische_liste",
+      "funds_eur_m": 9.8,
       "name": "Ökologische Liste",
       "ideology_slot": "green",
       "seat_share": 0.15,
@@ -46,6 +50,7 @@
     },
     {
       "id": "neues_zentrum",
+      "funds_eur_m": 13.0,
       "name": "Neues Zentrum",
       "ideology_slot": "liberal",
       "seat_share": 0.19,

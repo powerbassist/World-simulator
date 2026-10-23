@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "ESP_bustamante",
+      "social_skill": 0.63,
+      "wealth_eur_m": 6.4,
       "name": "Álvaro Bustamante",
       "kind": "politician",
       "traits": [
@@ -19,6 +21,9 @@
     },
     {
       "id": "ESP_larranaga",
+      "social_skill": 0.73,
+      "wealth_eur_m": 11.0,
+      "spouse_id": "ESP_chief_aranda_seguros",
       "name": "Mateo Larrañaga",
       "kind": "politician",
       "traits": [
@@ -45,6 +50,8 @@
     },
     {
       "id": "ESP_sanchis",
+      "social_skill": 0.66,
+      "wealth_eur_m": 5.0,
       "name": "Rocío Sanchís",
       "kind": "politician",
       "traits": [
@@ -67,6 +74,8 @@
     },
     {
       "id": "ESP_mendiola",
+      "social_skill": 0.71,
+      "wealth_eur_m": 3.2,
       "name": "Iker Mendiola",
       "kind": "politician",
       "traits": [
@@ -92,6 +101,8 @@
     },
     {
       "id": "ESP_palomares",
+      "social_skill": 0.61,
+      "wealth_eur_m": 3.9,
       "name": "Nuria Palomares",
       "kind": "politician",
       "traits": [
@@ -110,6 +121,9 @@
     },
     {
       "id": "ESP_alfonso_vii",
+      "social_skill": 0.62,
+      "wealth_eur_m": 140.0,
+      "spouse_id": "ESP_barcelo",
       "name": "Alfonso VII",
       "kind": "politician",
       "traits": [
@@ -946,6 +960,7 @@
     },
     {
       "id": "ESP_barcelo",
+      "spouse_id": "ESP_alfonso_vii",
       "name": "Javier Barceló",
       "kind": "union_leader",
       "traits": [
@@ -1148,6 +1163,7 @@
     },
     {
       "id": "ESP_chief_aranda_seguros",
+      "spouse_id": "ESP_larranaga",
       "name": "Borja Aranda",
       "kind": "executive",
       "traits": [

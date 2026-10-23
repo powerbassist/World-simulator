@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "NLD_kuiperink",
+      "social_skill": 0.78,
+      "wealth_eur_m": 4.7,
       "name": "Sander Kuiperink",
       "kind": "politician",
       "traits": [
@@ -19,6 +21,8 @@
     },
     {
       "id": "NLD_terborg",
+      "social_skill": 0.75,
+      "wealth_eur_m": 21.0,
       "name": "Willem Terborg",
       "kind": "politician",
       "traits": [
@@ -40,6 +44,8 @@
     },
     {
       "id": "NLD_bosveld",
+      "social_skill": 0.67,
+      "wealth_eur_m": 6.4,
       "name": "Ellen Bosveld",
       "kind": "politician",
       "traits": [
@@ -57,6 +63,8 @@
     },
     {
       "id": "NLD_aalders",
+      "social_skill": 0.65,
+      "wealth_eur_m": 5.4,
       "name": "Ruben Aalders",
       "kind": "politician",
       "traits": [
@@ -75,6 +83,8 @@
     },
     {
       "id": "NLD_stoffels",
+      "social_skill": 0.57,
+      "wealth_eur_m": 3.9,
       "name": "Marijke Stoffels",
       "kind": "politician",
       "traits": [
@@ -100,6 +110,8 @@
     },
     {
       "id": "NLD_wielinga",
+      "social_skill": 0.53,
+      "wealth_eur_m": 2.4,
       "name": "Fenna Wielinga",
       "kind": "politician",
       "traits": [
@@ -121,6 +133,9 @@
     },
     {
       "id": "NLD_maurits_iii",
+      "social_skill": 0.66,
+      "wealth_eur_m": 220.0,
+      "spouse_id": "NLD_fiers",
       "name": "Maurits III",
       "kind": "politician",
       "traits": [
@@ -696,6 +711,7 @@
     },
     {
       "id": "NLD_fiers",
+      "spouse_id": "NLD_maurits_iii",
       "name": "Lodewijk Fiers",
       "kind": "activist",
       "traits": [

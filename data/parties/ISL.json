@@ -1,10 +1,10 @@
 {
   "parties": [
-    {"id": "jafnadarbandalagid", "name": "Jafnaðarbandalagið", "ideology_slot": "social_democratic", "seat_share": 0.238, "leader_person": "ISL_ragnarsdottir", "discipline": 0.85, "competence": 0.75, "excluded_partners": []},
-    {"id": "landsflokkurinn", "name": "Landsflokkurinn", "ideology_slot": "centre_right", "seat_share": 0.222, "leader_person": "ISL_bergsson", "discipline": 0.85, "competence": 0.75, "excluded_partners": []},
-    {"id": "opna_island", "name": "Opna Ísland", "ideology_slot": "liberal", "seat_share": 0.175, "leader_person": "ISL_hrafnsdottir", "discipline": 0.85, "competence": 0.7, "excluded_partners": []},
-    {"id": "althyduhreyfingin", "name": "Alþýðuhreyfingin", "ideology_slot": "left_populist", "seat_share": 0.159, "leader_person": "ISL_eyjolfsson", "discipline": 0.7, "competence": 0.55, "excluded_partners": []},
-    {"id": "aettjardarflokkurinn", "name": "Ættjarðarflokkurinn", "ideology_slot": "nationalist_right", "seat_share": 0.127, "leader_person": "ISL_steinsson", "discipline": 0.75, "competence": 0.6, "excluded_partners": []},
-    {"id": "byggdaflokkurinn", "name": "Byggðaflokkurinn", "ideology_slot": "centrist", "seat_share": 0.079, "leader_person": "ISL_magnusdottir", "discipline": 0.85, "competence": 0.7, "excluded_partners": []}
+    {"id": "jafnadarbandalagid", "funds_eur_m": 4.0, "name": "Jafnaðarbandalagið", "ideology_slot": "social_democratic", "seat_share": 0.238, "leader_person": "ISL_ragnarsdottir", "discipline": 0.85, "competence": 0.75, "excluded_partners": []},
+    {"id": "landsflokkurinn", "funds_eur_m": 4.4, "name": "Landsflokkurinn", "ideology_slot": "centre_right", "seat_share": 0.222, "leader_person": "ISL_bergsson", "discipline": 0.85, "competence": 0.75, "excluded_partners": []},
+    {"id": "opna_island", "funds_eur_m": 2.4, "name": "Opna Ísland", "ideology_slot": "liberal", "seat_share": 0.175, "leader_person": "ISL_hrafnsdottir", "discipline": 0.85, "competence": 0.7, "excluded_partners": []},
+    {"id": "althyduhreyfingin", "funds_eur_m": 1.9, "name": "Alþýðuhreyfingin", "ideology_slot": "left_populist", "seat_share": 0.159, "leader_person": "ISL_eyjolfsson", "discipline": 0.7, "competence": 0.55, "excluded_partners": []},
+    {"id": "aettjardarflokkurinn", "funds_eur_m": 1.7, "name": "Ættjarðarflokkurinn", "ideology_slot": "nationalist_right", "seat_share": 0.127, "leader_person": "ISL_steinsson", "discipline": 0.75, "competence": 0.6, "excluded_partners": []},
+    {"id": "byggdaflokkurinn", "funds_eur_m": 1.6, "name": "Byggðaflokkurinn", "ideology_slot": "centrist", "seat_share": 0.079, "leader_person": "ISL_magnusdottir", "discipline": 0.85, "competence": 0.7, "excluded_partners": []}
   ]
 }

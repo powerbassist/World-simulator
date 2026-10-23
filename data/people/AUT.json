@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "AUT_kettler",
+      "social_skill": 0.45,
+      "wealth_eur_m": 7.6,
+      "spouse_id": "AUT_doppler",
       "name": "Bernhard Kettler",
       "kind": "politician",
       "traits": [
@@ -22,6 +25,8 @@
     },
     {
       "id": "AUT_haslinger",
+      "social_skill": 0.64,
+      "wealth_eur_m": 1.9,
       "name": "Ingrid Haslinger",
       "kind": "politician",
       "traits": [
@@ -44,6 +49,8 @@
     },
     {
       "id": "AUT_prantl",
+      "social_skill": 0.76,
+      "wealth_eur_m": 5.1,
       "name": "Wolfgang Prantl",
       "kind": "politician",
       "traits": [
@@ -70,6 +77,8 @@
     },
     {
       "id": "AUT_aichinger",
+      "social_skill": 0.53,
+      "wealth_eur_m": 2.2,
       "name": "Theresa Aichinger",
       "kind": "politician",
       "traits": [
@@ -91,6 +100,8 @@
     },
     {
       "id": "AUT_steinhauser",
+      "social_skill": 0.6,
+      "wealth_eur_m": 2.5,
       "name": "Lukas Steinhauser",
       "kind": "politician",
       "traits": [
@@ -109,6 +120,8 @@
     },
     {
       "id": "AUT_kranzler",
+      "social_skill": 0.76,
+      "wealth_eur_m": 5.5,
       "name": "Elisabeth Kranzler",
       "kind": "politician",
       "traits": [
@@ -997,6 +1010,7 @@
     },
     {
       "id": "AUT_doppler",
+      "spouse_id": "AUT_kettler",
       "name": "Balthasar Doppler",
       "kind": "activist",
       "traits": [

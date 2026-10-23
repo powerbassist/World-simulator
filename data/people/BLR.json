@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "BLR_karpovich",
+      "social_skill": 0.59,
+      "wealth_eur_m": 5.2,
       "name": "Viktar Karpovich",
       "kind": "politician",
       "traits": [
@@ -28,6 +30,8 @@
     },
     {
       "id": "BLR_dubovik",
+      "social_skill": 0.62,
+      "wealth_eur_m": 3.4,
       "name": "Siarhei Dubovik",
       "kind": "politician",
       "traits": [
@@ -45,6 +49,8 @@
     },
     {
       "id": "BLR_zhukovsky",
+      "social_skill": 0.47,
+      "wealth_eur_m": 0.86,
       "name": "Aliaksandr Zhukovsky",
       "kind": "politician",
       "traits": [
@@ -62,6 +68,8 @@
     },
     {
       "id": "BLR_savitsky",
+      "social_skill": 0.41,
+      "wealth_eur_m": 1.2,
       "name": "Dzmitry Savitsky",
       "kind": "politician",
       "traits": [
@@ -79,6 +87,8 @@
     },
     {
       "id": "BLR_ivanova",
+      "social_skill": 0.62,
+      "wealth_eur_m": 1.6,
       "name": "Natallia Ivanova",
       "kind": "politician",
       "traits": [
