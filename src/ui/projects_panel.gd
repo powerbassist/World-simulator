@@ -267,7 +267,7 @@ func _build_offer(ns, action, terms: Dictionary) -> void:
 
 
 func _button(ns, action) -> Button:
-	var button := Button.new()
+	var button := PanelKit.sized(Button.new())
 	button.text = Strings.row_name("project-actions", action)
 	button.tooltip_text = Strings.row_summary("project-actions", action)
 	button.pressed.connect(func(): _on_act(ns, action))

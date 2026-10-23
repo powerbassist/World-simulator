@@ -154,7 +154,7 @@ func _ready() -> void:
 	# exactly. Ordering can, and it fixes it structurally -- the verb stays reachable
 	# whatever the body grows to, where 39px of headroom would have been one added
 	# row from failing again.
-	_dissolve_button = Button.new()
+	_dissolve_button = PanelKit.sized(Button.new())
 	_dissolve_button.text = tr("Dissolve")
 	_dissolve_button.pressed.connect(_on_dissolve)
 	root.add_child(_dissolve_button)

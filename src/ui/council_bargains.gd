@@ -215,7 +215,7 @@ static func build_agenda(body: VBoxContainer, panel, state, loader, ns, org, cha
 		if not Orgs._eligible(state, org.id, p) or String(pending.get("proposal_id", "")) == p.id:
 			continue
 		listed += 1
-		var button := Button.new()
+		var button := PanelKit.sized(Button.new())
 		button.text = (Strings.t("Put first: %s") if chairing else Strings.t("Table: %s")) % Strings.row_name("bloc-proposals", p)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		if chairing:

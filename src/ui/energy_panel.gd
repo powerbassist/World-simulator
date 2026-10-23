@@ -171,7 +171,7 @@ func _build_order(ns) -> void:
 			source.source_name, source.branch, source.build_months,
 			Num.f(source.build_cost_pct_gdp, 3), Num.f(source.run_cost_pct_gdp, 3),
 		])
-		var button := Button.new()
+		var button := PanelKit.sized(Button.new())
 		button.text = Strings.row_name("energy-actions", action)
 		button.tooltip_text = Strings.row_summary("energy-actions", action)
 		button.pressed.connect(func(): _on_order(action.id))

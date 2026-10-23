@@ -67,7 +67,7 @@ func _ready() -> void:
 	_body.add_theme_constant_override("separation", 4)
 	scroll.add_child(_body)
 
-	_back_button = Button.new()
+	_back_button = PanelKit.sized(Button.new())
 	_back_button.text = tr("All cities")
 	_back_button.pressed.connect(func(): _city_id = ""; _dirty = true)
 	_back_button.hide()

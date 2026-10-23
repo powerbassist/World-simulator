@@ -414,7 +414,7 @@ func _build_investment(ns, sector: String) -> void:
 
 
 func _investment_button(ns, action) -> Button:
-	var button := Button.new()
+	var button := PanelKit.sized(Button.new())
 	button.text = Strings.row_name("investment-actions", action)
 	button.tooltip_text = Strings.row_summary("investment-actions", action)
 	button.pressed.connect(func(): _on_invest(ns, action))
@@ -507,7 +507,7 @@ func _build_firm(ns, company) -> void:
 
 
 func _action_button(ns, company, action) -> Button:
-	var button := Button.new()
+	var button := PanelKit.sized(Button.new())
 	button.text = Strings.row_name("company-actions", action)
 	button.tooltip_text = Strings.row_summary("company-actions", action)
 	button.pressed.connect(func(): _on_act(ns, company, action))

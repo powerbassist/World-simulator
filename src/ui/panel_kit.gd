@@ -181,6 +181,16 @@ static func buttons(parent: Control) -> HFlowContainer:
 	return flow
 
 
+## An action button the size of its label. A Button added straight to a vertical
+## box FILLS the box's width -- the V5.1 gate's "le boutton est super large": Dissolve
+## and every energy order were 1 200 px slabs. Shrinking to the start keeps it a
+## button; in a row or a flow it changes nothing. `test_button_sizes` opens every
+## window and fails the one that forgot.
+static func sized(button: Button) -> Button:
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	return button
+
+
 ## Caption left, value right, the value carrying the tone. The single commonest
 ## shape in this interface: eleven panels build it, and until now each built it
 ## itself.

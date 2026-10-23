@@ -210,7 +210,7 @@ func _build_form(root: VBoxContainer) -> void:
 	_travel_note.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_travel_note)
 
-	_book_button = Button.new()
+	_book_button = PanelKit.sized(Button.new())
 	_book_button.text = tr("Book it")
 	_book_button.pressed.connect(_on_book)
 	root.add_child(_book_button)

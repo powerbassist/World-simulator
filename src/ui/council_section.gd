@@ -71,7 +71,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		for choice in Orgs.VOTE_CHOICES:
-			var button := Button.new()
+			var button := PanelKit.sized(Button.new())
 			button.text = Labels.vote(choice)
 			button.disabled = choice == current
 			# An abstention is in the denominator and neither numerator, so sitting
@@ -143,7 +143,7 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 	if r_sponsor != "" and r_sponsor != ns.id:
 		falls += Strings.t("; %s will not forget it") % loader.nation_name(r_sponsor)
 	PanelKit.line(body, falls + ".")
-	var button := Button.new()
+	var button := PanelKit.sized(Button.new())
 	button.text = Strings.t("Put it to the assembly")
 	button.pressed.connect(panel._on_ratify.bind(org.id))
 	panel.claim_primary(button)

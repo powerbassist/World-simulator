@@ -389,7 +389,7 @@ func _reach_text(terms: Dictionary) -> String:
 
 
 func _button(ns, action) -> Button:
-	var button := Button.new()
+	var button := PanelKit.sized(Button.new())
 	button.text = Strings.row_name("campaign-actions", action)
 	button.tooltip_text = Strings.row_summary("campaign-actions", action)
 	if String(action.effects.get("campaign", {}).get("op", "")) == "start" and _site_region == "":
@@ -586,7 +586,7 @@ func _charged_so_far(entry: Dictionary) -> float:
 	return per_month * float(entry["breach_months"])
 
 func _pledge_button(ns, action) -> Button:
-	var button := Button.new()
+	var button := PanelKit.sized(Button.new())
 	button.text = Strings.row_name("pledges", action)
 	button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("pledges", action))
 	button.pressed.connect(func(): _on_promise(ns, action))
