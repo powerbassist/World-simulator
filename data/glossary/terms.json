@@ -570,7 +570,7 @@
     {
       "id": "import_dependency",
       "term": "import dependency",
-      "definition": "The share of the energy the country uses that it buys abroad. A high share costs growth; building your own plants lowers it.",
+      "definition": "The share of the energy the country uses that it buys abroad. Raising it above where it started costs growth; building your own plants brings it down, and below the start it adds some.",
       "body": "It is read from the energy mix, against what the nation consumes: imports above consumption are possible for a country that re-exports, so Luxembourg reads above 100 %. In reality this is what makes a nation exposed to a fuel supplier's price or politics. Here the cost is a drag on annual growth, and it grows with how far the dependency has moved from where it started, so a sustained fossil build-out is paid for in growth, not only in emissions.",
       "see_also": [
         "power_grid",
@@ -633,7 +633,7 @@
     {
       "id": "campaign_effort",
       "term": "campaign effort",
-      "definition": "Money and time spent mobilising voters before the presidential vote. It accrues and is billed every month it runs, so starting early buys more and costs more.",
+      "definition": "Money and time spent mobilising voters before your own election. It accrues and is billed every month it runs, so starting early buys more and costs more.",
       "body": "An effort does not change what voters think of your record: it changes who bothers to turn out. It can only run inside the window before the vote (ten months), and stopping it early saves the bill but gives back nothing already bought. Its bill is a spending line that widens the deficit in the months when every bloc is looking, and the lasting offset it leaves on the blocs outlives the campaign, so a heavy early effort can help in one election and hurt in the next.",
       "see_also": [
         "pledge",
