@@ -9,6 +9,17 @@ tags:
 
 The per-block record that used to be AGENTS.md's "Current focus": what each version built, what each probe measured, each refused alternative and each instance of a stale row. Moved here verbatim at the end of V4.4 (2026-10-14) because AGENTS.md is loaded into every session and this part was ~340 KB of it. Newest block first; nothing was rewritten in the move, so a sentence saying "this file" or "this row" means AGENTS.md as it was. Start at [index](index.md); the parking lot is [someday](someday.md).
 
+## V5.1 closing play gate and fix pass (2026-10-23)
+
+The author's closing gate on the d build, scored 2/5 -- the same as gate 1: "the game lack soul; some panels are really monolithic and uneasy to read, oversized buttons (politics button disolve for example), i think i need graph, diagrams, to make data more digest". Gate 2a (on `2a7db7dd`, 1/5) is voided: no real mouse click fired any button. The tier rule gives one bounded fix pass; its four merges:
+
+- **#87, QA's pre-gate B items.** Answering an inbox card logged an engine ERROR (the stack released the pressed button's focus after the press removed its card), the person card kept 2-2.6x its content's height from the second show (rows `queue_free`d but still children, then a minimum inflated in the frame of the show; `reset_size` two frames on), and a bill the Assembly carried and the second chamber held read "Failed" in the inbox (`proposal_note.gd` says carried, held or blocked).
+- **#88, the dead clicks (class A, gate 2a).** d2's "a click parks no focus" released focus on the PRESS; `BaseButton` cancels its press on focus exit and fires on the up, so a click held for frames fired nothing. Every earlier test and smoke pushed the down and the up in one frame. The stack now releases the clicked button's focus after the release; `tests/test_real_click.gd` holds the button down for four frames (red on the old code).
+- **#89, placement (gate 2b).** A point outside the player's country read `ns.nation_name` on a `NationState`, which has no such field: the editor's debugger broke and the game froze (a wind farm in the Gulf of Lion); it reads the loader's `nation_name(id)`. The reticle now follows the pointer as its own child node (`placement_reticle.gd`) instead of waiting for a map redraw. `tests/test_placement_points.gd`.
+- **#90, oversized buttons (N10).** A `Button` added straight to a vertical box fills its width: Dissolve and every energy order were 1 200 px slabs. `PanelKit.sized()` at the sites; `tests/test_button_sizes.gd` opens every window and fails a slab (21 before, 0 after).
+
+Left for V5.2 and later, from the gate's own list ([[someday]] and the gate report): less text per panel, graphs and diagrams, the Legislature tab's weight, a summit offering few choices, and "soul" itself.
+
 ## V5.1-d4 — the country box, and the fog on another nation's approval (2026-10-22)
 
 G2 of the play gate (the author: "diplomacy panel when clicking a country is useless, should be a small box resuming basic stats [...] a right click should open fast actions"), Interface only, no sim change. PR #85.
