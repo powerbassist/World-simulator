@@ -83,6 +83,7 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 	return object
 
 var _body: VBoxContainer
+var _shows := 0
 
 
 func _ready() -> void:
@@ -112,7 +113,11 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 		visible = false
 		return
 
+	# remove_child first: a queue_free'd row stays a child, and so in the minimum
+	# size, until the frame ends -- the card kept 2-2.6x its content's height from
+	# the second show on.
 	for child in _body.get_children():
+		_body.remove_child(child)
 		child.queue_free()
 
 	var title := Label.new()
@@ -152,6 +157,20 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 				object_text(loader, ns, String(want["object"]), want)])
 
 	visible = true
+	# In the frame of the show the rows are measured before their width is known, so
+	# the minimum (and the panel, which grows to it and never shrinks) comes out ~1.7x
+	# the content. A frame later the minimum is right; reset_size takes the panel to it.
+	_shows += 1
+	if is_inside_tree():
+		_settle(_shows)
+
+
+## Two frames, not one: the first still reads the inflated minimum.
+func _settle(show_no: int) -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if visible and show_no == _shows:
+		reset_size()
 
 
 func hide_card() -> void:

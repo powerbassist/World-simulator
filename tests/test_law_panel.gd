@@ -10,6 +10,7 @@ extends SceneTree
 
 const Legislature = preload("res://src/sim/legislature.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -96,6 +97,7 @@ func _run() -> void:
 		_fail("expected the hostile assembly to reject the law, but ns.last_law_result says it passed")
 
 	_check_referendum_verbs_refresh_the_panel(loader, ns)
+	_check_proposal_note_names_a_held_bill()
 
 
 ## V5.0d. The two referendum verbs did not mark the panel dirty, so after "Call it
@@ -181,6 +183,25 @@ func _check_rebellion_is_forecast_and_named(loader, ns) -> void:
 			_fail("'%s' lost %d seats to a rebellion and is not named: %s" % [
 				party.party_name, int(rebels[party.id]), after
 			])
+
+
+## PRE-GATE 2 B3: a bill the Assembly carried and the second chamber only holds said
+## "Failed." in the inbox. The note must say carried and held, with the months.
+func _check_proposal_note_names_a_held_bill() -> void:
+	var held: String = ProposalNote.body({"passed": false, "yes_seats": 311, "no_seats": 266,
+		"held_by_upper": true, "held_months": 12, "upper_chamber": "Sénat"})
+	if held.contains("Failed") or not held.contains("311") or not held.contains("Sénat") or not held.contains("12"):
+		_fail("a held bill's note reads '%s', not carried, held by the chamber, in force in 12 months" % held)
+	var blocked: String = ProposalNote.body({"passed": false, "yes_seats": 311, "no_seats": 266,
+		"blocked_by_upper": true, "upper_chamber": "Sénat"})
+	if blocked.contains("Failed") or not blocked.contains("blocked"):
+		_fail("a blocked bill's note reads '%s'" % blocked)
+	var beaten: String = ProposalNote.body({"passed": false, "yes_seats": 100, "no_seats": 400})
+	if not beaten.begins_with("Failed"):
+		_fail("a beaten bill's note reads '%s', not Failed" % beaten)
+	var passed: String = ProposalNote.body({"passed": true, "yes_seats": 400, "no_seats": 100})
+	if not passed.begins_with("Passed"):
+		_fail("a passed bill's note reads '%s'" % passed)
 
 
 func _find_law(loader, law_id: String):

@@ -81,7 +81,15 @@ func _input(event: InputEvent) -> void:
 ## keyboard reached (Tab, arrows, a panel's own grab_focus) keeps it.
 func _on_focus_changed(control: Control) -> void:
 	if _press_at != null and control is BaseButton and control.get_global_rect().has_point(_press_at):
-		control.release_focus.call_deferred()
+		_release_if_alive.call_deferred(control)
+
+
+## The press may have removed the button's card (an inbox answer does), and by the
+## deferred call the control is out of the tree -- release_focus() on it logged an
+## engine ERROR on every answer. `control` is a Variant so a freed one can arrive.
+func _release_if_alive(control: Variant) -> void:
+	if is_instance_valid(control) and (control as Control).is_inside_tree():
+		(control as Control).release_focus()
 
 
 ## A panel centred on the screen at `layer` (SCENE or SYSTEM), hidden by its
