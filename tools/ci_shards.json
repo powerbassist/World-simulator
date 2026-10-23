@@ -137,6 +137,8 @@
    "tests/test_chart_kit.gd",
    "tests/test_chart_series.gd",
    "tests/test_panel_charts.gd",
+   "tests/test_prose_budget.gd",
+   "tests/test_law_list.gd",
    "tests/test_person_links.gd",
    "tests/test_effects_ledger.gd",
    "tests/test_no_raw_tags.gd",

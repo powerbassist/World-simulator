@@ -19,14 +19,11 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
-const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Law = preload("res://src/core/law.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
-const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
-const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 ## V4.2. The composed register reaches the list through statute.custom_laws()
 ## -- the same read the sim's legality scan makes, so the panel can never
@@ -38,6 +35,7 @@ const StatuteK = preload("res://src/sim/statute_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const LawVerdict = preload("res://src/ui/law_verdict.gd")
+const LawList = preload("res://src/ui/law_list.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -62,6 +60,7 @@ var _state
 var _loader
 var _title: Label
 var _list: VBoxContainer
+var _laws: LawList
 var _result_box: VBoxContainer
 var _dirty := true
 var _close_button: Button
@@ -91,14 +90,14 @@ func _ready() -> void:
 	_result_box = VBoxContainer.new()
 	root.add_child(_result_box)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(scroll)
-
+	# V5.2-0b: what is in flight (a referendum, a held bill, the assembly's own
+	# bills) above, then the catalogue -- one row per law, the selected one's
+	# detail beside it (law_list.gd), each half scrolling on its own.
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 14)
-	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_list)
+	root.add_child(_list)
+	_laws = LawList.new(self)
+	root.add_child(_laws)
 
 	root.add_child(_build_footer())
 
@@ -175,13 +174,7 @@ func _refresh() -> void:
 	var party_list: Array = _loader.parties.get(ns.id, [])
 	# V4.2. Authored laws plus the composed register -- the same concat the
 	# legality scan runs, so a draft the player finished is on this list.
-	var available: Array = Legislature.available(ns, _loader.laws + Statute.custom_laws(ns))
-	if available.is_empty():
-		PanelKit.line(_list, tr("No law is currently proposable."), PanelKit.Tone.PLAIN)
-		return
-
-	for law in available:
-		_list.add_child(_build_law_row(ns, party_list, law))
+	_laws.fill(ns, party_list, Legislature.available(ns, _loader.laws + Statute.custom_laws(ns)))
 
 
 func _build_result_summary(result: Dictionary) -> Control:
@@ -373,78 +366,6 @@ func _majority_phrase(ns, law) -> String:
 		_: return ns.amendment_rule
 
 
-func _build_law_row(ns, party_list: Array, law) -> Control:
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
-
-	PanelKit.line(box, "%s  (%s, %s)" % [Strings.law_name(law), PanelKit.Labels.law_theme(law.theme), _majority_phrase(ns, law)], PanelKit.Tone.PLAIN)
-
-	# A system transition rewrites the whole constitution, not one field --
-	# named here structurally, off the loaded template's own display_name,
-	# rather than left to the law's own summary prose to stay accurate. See
-	# docs/transition-model.md.
-	if law.changes_system:
-		var target_system_id: String = law.effects.get("institutional", {}).get("system_id", "")
-		var target = _loader.political_systems.get(target_system_id)
-		var target_label: String = target.display_name if target != null else target_system_id
-		PanelKit.line(box, tr("Rewrites the constitution to a %s.") % target_label, PanelKit.Tone.PLAIN)
-
-	PanelKit.rich(box, Strings.law_summary(law), PanelKit.Tone.PLAIN)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-
-	var forecast := Label.new()
-	forecast.text = tr("Forecast: %s") % _forecast_text(ns, party_list, law)
-	forecast.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(forecast)
-
-	# V1.1e. What waits AFTER the division, and the two are shown differently on
-	# purpose. The second chamber's line is a FORECAST like the one above it and is
-	# blurred by the same band, because a chamber is people. The court's line is not
-	# blurred at all, because a court is a RULE -- see docs/judiciary-model.md.
-	var after := _after_the_division(ns, party_list, law)
-	if after != "":
-		PanelKit.line(box, after, PanelKit.Tone.PLAIN)
-
-	var propose_btn := Button.new()
-	propose_btn.text = tr("Propose")
-	propose_btn.pressed.connect(_on_propose.bind(law))
-	_offer(propose_btn)
-	row.add_child(propose_btn)
-
-	# Article 49.3 exists only under a constitution that has it, and cannot force
-	# a constitutional amendment through -- Art. 89's revision procedure has no
-	# executive bypass. See docs/amendment-model.md.
-	if ns.formation_method == "presidential_appointment" and not law.constitutional:
-		var force_btn := Button.new()
-		force_btn.text = tr("Force (49.3)")
-		force_btn.disabled = not Government.can_force(ns)
-		if force_btn.disabled:
-			force_btn.tooltip_text = tr("Cooldown: available again in %d months.") % ns.force_cooldown_months
-		else:
-			force_btn.tooltip_text = tr("Adopt without a vote. The assembly may censure the government instead.")
-		force_btn.pressed.connect(_on_force.bind(law))
-		_offer(force_btn)
-		row.add_child(force_btn)
-
-	# Route B. Offered only where the constitution has one and only for an
-	# entrenched change -- Legislature.can_put_to_referendum() is the single
-	# authority and this asks it rather than re-deriving the rule. A nation whose
-	# route is MANDATORY gets no button, because there is nothing to choose: the
-	# Propose button already goes to the country.
-	if Legislature.can_put_to_referendum(ns, law):
-		var ref_btn := Button.new()
-		ref_btn.text = tr("Referendum")
-		ref_btn.tooltip_text = tr("Pass it by an ordinary majority here, then put it to the country in %d months. Winning is a mandate and losing is a rebuke, and it cannot be called off for free.") % ReferendumK.REFERENDUM_DELAY_MONTHS
-		ref_btn.pressed.connect(_on_referendum.bind(law))
-		_offer(ref_btn)
-		row.add_child(ref_btn)
-
-	box.add_child(row)
-	return box
-
-
 ## What the country has been asked, when it answers, and what the polls say it
 ## would answer if it answered today.
 ##
@@ -496,6 +417,15 @@ func _build_pending_referendum(ns) -> Control:
 ## split is deterministic and the government panel already publishes it per
 ## party, so hiding it here would make the forecast lie in one direction only.
 static func forecast_text(ns, party_list: Array, law, band: float) -> String:
+	var c := forecast_counts(ns, party_list, law, band)
+	var text := Strings.t("%d for · %d against · %d undecided") % [c["yes"], c["no"], c["undecided"]]
+	if int(c["rebels"]) > 0:
+		text += Strings.t("  (%d expected to break ranks)") % c["rebels"]
+	return text
+
+
+## The same walk, as the counts (V5.2-0b: the catalogue's forecast bar).
+static func forecast_counts(ns, party_list: Array, law, band: float) -> Dictionary:
 	var yes := 0
 	var no := 0
 	var undecided := 0
@@ -525,10 +455,7 @@ static func forecast_text(ns, party_list: Array, law, band: float) -> String:
 		else:
 			undecided += broke
 
-	var text := Strings.t("%d for · %d against · %d undecided") % [yes, no, undecided]
-	if rebels > 0:
-		text += Strings.t("  (%d expected to break ranks)") % rebels
-	return text
+	return {"yes": yes, "no": no, "undecided": undecided, "rebels": rebels}
 
 
 func _forecast_text(ns, party_list: Array, law) -> String:
@@ -544,38 +471,6 @@ static func forecast_band(ns, bill_key: String) -> float:
 	if ns.poll_purchases.get(bill_key, {}).has(StatuteK.POLL_KIND_ASSEMBLY):
 		return LK.ABSTAIN_BAND
 	return FORECAST_UNCERTAIN_BAND
-
-
-## What the second chamber and the court will do to a bill that carries the Assembly.
-## Empty when neither has anything to say, so a bill nobody can stop shows no line at
-## all and the ones that do stand out.
-func _after_the_division(ns, party_list: Array, law) -> String:
-	var parts := PackedStringArray()
-
-	var power: String = Chambers.power_over(ns, law)
-	if power != ChambersK.VERDICT_NONE:
-		var upper := Legislature.resolve_upper(ns, party_list, law)
-		var margin: int = int(upper["yes_seats"]) - int(upper["no_seats"])
-		if absi(margin) <= int(float(upper["seats_total"]) * FORECAST_UNCERTAIN_BAND):
-			parts.append(tr("%s: too close to call.") % ns.upper_chamber_name)
-		elif bool(upper["passed"]):
-			parts.append(tr("%s: expected to agree.") % ns.upper_chamber_name)
-		elif power == ChambersK.VERDICT_ABSOLUTE:
-			parts.append(tr("%s: expected to refuse, and it cannot be overridden.") % ns.upper_chamber_name)
-		else:
-			parts.append(tr("%s: expected to refuse, holding it %d months.") % [
-				ns.upper_chamber_name, ChambersK.UPPER_HOLD_MONTHS])
-
-	if Judiciary.reviews(ns, law):
-		var tolerance: float = Judiciary.tolerance(ns)
-		if Judiciary.strikes_down(ns, law):
-			parts.append(tr("The court would strike it down: it reaches %s against %s.") % [
-				Num.f(law.reach, 2), Num.f(tolerance, 2)])
-		elif law.reach > 0.0:
-			parts.append(tr("The court would let it stand: it reaches %s against %s.") % [
-				Num.f(law.reach, 2), Num.f(tolerance, 2)])
-
-	return " ".join(parts)
 
 
 ## A bill the second chamber is holding. Its own block at the top of the page, the way
