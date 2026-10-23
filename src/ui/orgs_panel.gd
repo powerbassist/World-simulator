@@ -204,7 +204,7 @@ func _refresh_rules(ns, org) -> void:
 		if String(rule.get("org_id", "")) == org.id:
 			org_rules.append(rule)
 	if org_rules.is_empty():
-		PanelKit.line(_body, tr("None. Nothing this council has adopted constrains domestic policy."))
+		PanelKit.line(_body, tr("None adopted."))
 	for rule in org_rules:
 		var field: String = String(rule.get("field", ""))
 		if field == "":
@@ -228,7 +228,6 @@ func _refresh_rules(ns, org) -> void:
 	# once rather than repeated under each org's rules.
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Standing: %s of a possible %s, across every organisation") % [Num.f(ns.bloc_burden, 2), Num.f(BK.BURDEN_MAX, 2)], PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("What the electorate weighs under 'Europe'. Zero while you comply — a rule you keep costs you the policy you could not run, not this."))
 	PanelKit.line(_body, "", PanelKit.Tone.PLAIN)
 
 
@@ -244,7 +243,7 @@ func _refresh_contribution(ns, org) -> void:
 	if not is_zero_approx(float(per_org.get("aid", 0.0))):
 		PanelKit.line(_body, tr("Side-payments (aid): %s%% of GDP") % Num.fs(float(per_org.get("aid", 0.0)), 3), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("All organisations, total: %s%% of GDP") % Num.fs(float(parts.get("total", 0.0)), 3), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("Charged on the spending side of the budget panel. One point of VAT is worth about 0.53% of GDP."))
+	PanelKit.line(_body, tr("Charged as spending in the Budget."))
 
 
 ## A non-member's view of one org. The done-when V1.2d's cold read would have

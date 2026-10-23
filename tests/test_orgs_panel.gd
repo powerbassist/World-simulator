@@ -195,8 +195,8 @@ func _check_sponsor_and_decision_lines() -> void:
 
 		if not text.contains("Sponsored by %s" % _loader.nation_name(SPONSOR)):
 			_fail("the pending proposal's sponsor line is missing: %s" % text)
-		var treaty_line := text.contains("A treaty: one vote against vetoes it")
-		var qmr_line := text.contains("Decided by qualified majority")
+		var treaty_line := text.contains("A treaty: one veto kills it")
+		var qmr_line := text.contains("Qualified majority:")
 		if rule == CouncilK.DECISION_UNANIMITY and (not treaty_line or qmr_line):
 			_fail("a unanimity proposal does not read as a treaty alone")
 		if rule == CouncilK.DECISION_QMR and (treaty_line or not qmr_line):

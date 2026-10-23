@@ -23,9 +23,10 @@ extends SceneTree
 
 const WorldMonth = preload("res://src/sim/world_month.gd")
 
-## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column).
+## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column). Orgs is
+## the note's 60 per organisation, for France's five.
 const BUDGET := {
-	"legislature": 80, "orgs": 120, "agenda": 40, "campaign": 40, "energy": 20,
+	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
 	"politics": 30, "region": 20, "commodities": 10, "projects": 20, "economy": 40,
 	"overview": 30, "diplomacy": 20, "city": 0, "budget": 0, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10, "tax": 10,
@@ -34,10 +35,7 @@ const BUDGET := {
 ## The tabs 0b has not reached yet, held at what they measured before it started
 ## (dc515826 + #93) so they cannot grow while they wait; each PR that trims one
 ## deletes its line, and the tab then answers to BUDGET.
-const PENDING := {
-	"agenda": 123, "budget": 14, "orgs": 491, "projects": 45,
-	"region": 104, "commodities": 82, "city": 17, "campaign": 217,
-}
+const PENDING := {}
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit"]
 ## No single authored text runs longer than this on a list (the blurbs are shown

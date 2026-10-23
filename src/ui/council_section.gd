@@ -58,7 +58,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 
 	var pending: Dictionary = Orgs.pending(state, org.id)
 	if pending.is_empty():
-		PanelKit.line(body, Strings.t("Nothing before the council. The presidency brings the next proposal forward in due course."))
+		PanelKit.line(body, Strings.t("Nothing before the council."))
 	else:
 		PanelKit.line(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "name", String(pending.get("name", ""))), PanelKit.Tone.PLAIN)
 		PanelKit.rich(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "summary", String(pending.get("summary", ""))))
@@ -85,11 +85,11 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 				panel.offer_primary(button)
 			row.add_child(button)
 		body.add_child(row)
-		var standing := Strings.t("Currently: voting against. %s holds %d of the council's seats.")
+		var standing := Strings.t("You vote against · %s holds %d seats")
 		if current == Orgs.VOTE_ABSTAIN:
-			standing = Strings.t("Currently: abstaining. %s holds %d of the council's seats.")
+			standing = Strings.t("You abstain · %s holds %d seats")
 		elif current == Orgs.VOTE_FOR:
-			standing = Strings.t("Currently: voting for. %s holds %d of the council's seats.")
+			standing = Strings.t("You vote for · %s holds %d seats")
 		PanelKit.line(body, standing % [loader.nation_name(ns.id), org.seats(ns.id)])
 		_sponsor_reaction_line(body, state, loader, ns, pending)
 		Bargains.build_table(body, panel, state, loader, ns, org, pending)
@@ -165,19 +165,27 @@ static func _why(body: VBoxContainer, loader, last: Dictionary) -> void:
 		return
 	var votes: Dictionary = last.get("votes", {})
 
+	# V5.2-0b: each camp is one counted line, its members named on the hover --
+	# the roll call ran to 57 words a line (Gameplay's worst repeat on the tab).
 	var camps: Dictionary = {}
 	var order: Array = reasons.keys()
 	order.sort()
 	for id in order:
 		var key := String(reasons[id])
 		if not camps.has(key):
-			camps[key] = []
-		camps[key].append((Strings.t("%s for") if String(votes.get(id, "")) == Orgs.VOTE_FOR else Strings.t("%s against")) % loader.nation_name(String(id)))
+			camps[key] = {"for": [], "against": []}
+		var side := "for" if String(votes.get(id, "")) == Orgs.VOTE_FOR else "against"
+		camps[key][side].append(loader.nation_name(String(id)))
 
 	var keys: Array = camps.keys()
 	keys.sort()
 	for key in keys:
-		PanelKit.line(body, "%s: %s" % [_vote_reason_text(String(key)), ", ".join(camps[key])])
+		var camp: Dictionary = camps[key]
+		var line: Control = PanelKit.line(body, Strings.t("%s: %d for, %d against") % [_vote_reason_text(String(key)), camp["for"].size(), camp["against"].size()])
+		var names := PackedStringArray([Strings.t("For: %s") % ", ".join(camp["for"]), Strings.t("Against: %s") % ", ".join(camp["against"])])
+		line.tooltip_text = "
+".join(names)
+		line.mouse_filter = Control.MOUSE_FILTER_PASS
 
 
 ## The model returns a key; the wording lives here, because src/sim/ does not know
@@ -256,9 +264,9 @@ static func _decision_line(body: VBoxContainer, loader, org, pending: Dictionary
 	var p = Orgs.proposal_by_id(loader, org.id, String(pending.get("proposal_id", "")))
 	var rule: String = Council.decision_of(loader, p) if p != null else String(org.decision_rule)
 	if rule == CouncilK.DECISION_UNANIMITY:
-		PanelKit.line(body, Strings.t("A treaty: one vote against vetoes it. If it carries, your assembly must ratify it within %d months \u2014 one rejection anywhere kills it for every member.") % CouncilK.RATIFY_WINDOW_MONTHS)
+		PanelKit.line(body, Strings.t("A treaty: one veto kills it, then %d months to ratify.") % CouncilK.RATIFY_WINDOW_MONTHS)
 	else:
-		PanelKit.line(body, Strings.t("Decided by qualified majority: %d %% of the seats cast. Abstaining lowers the bar instead of blocking.") % roundi(BK.PASS_SEAT_FRACTION * 100.0))
+		PanelKit.line(body, Strings.t("Qualified majority: %d %% of the seats cast.") % roundi(BK.PASS_SEAT_FRACTION * 100.0))
 
 
 static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> void:
@@ -269,9 +277,9 @@ static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> 
 	for id in lobbied.keys():
 		names.append(loader.nation_name(String(id)))
 	names.sort()
-	PanelKit.line(body, Strings.t("%s has spent goodwill to bring round: %s.") % [
-		loader.nation_name(String(pending.get("sponsor", ""))), ", ".join(names),
-	])
+	var line: Control = PanelKit.line(body, Strings.t("%s lobbied %d members.") % [loader.nation_name(String(pending.get("sponsor", ""))), names.size()])
+	line.tooltip_text = ", ".join(names)
+	line.mouse_filter = Control.MOUSE_FILTER_PASS
 
 
 ## The presidency: who chairs now, until when, and the next few. Evaluated by
@@ -280,7 +288,7 @@ static func _lobbying_line(body: VBoxContainer, loader, pending: Dictionary) -> 
 static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 	if org.presidency.is_empty():
 		if org.decision_rule == CouncilK.DECISION_UNANIMITY:
-			PanelKit.line(body, Strings.t("No rotating chair: the Secretary General convenes, decisions by consensus."))
+			PanelKit.line(body, Strings.t("Chair: the Secretary General · by consensus."))
 		return
 	var current := Council.presiding_nation(state, loader, org.id)
 	if current == "":
@@ -306,7 +314,7 @@ static func _chair_line(body: VBoxContainer, state, loader, ns, org) -> void:
 			next.append(loader.nation_name(id))
 	var text := Strings.t("Presidency: %s (to %s %d)") % [loader.nation_name(current), DateText.month(end_idx % 12 + 1), end_idx / 12]
 	if not next.is_empty():
-		text += Strings.t(", then %s") % ", ".join(next)
+		text += Strings.t(", then %s") % next[0]
 	PanelKit.line(body, text + ".")
 
 

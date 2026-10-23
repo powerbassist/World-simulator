@@ -314,7 +314,8 @@ static func _nearest_programme(ns, loader) -> Dictionary:
 static func programme_clock_text(terms: Dictionary, live: Dictionary) -> String:
 	var timeout := int(terms.get("timeout_months", 0))
 	if timeout <= 0:
-		return ""
+		# The author's rule: a goal without a clock is judged at the term's end.
+		return Strings.t("judged at the end of the term")
 	var left := timeout - int(live["months_live"])
 	if left <= 0:
 		return Strings.t("its deadline is now")

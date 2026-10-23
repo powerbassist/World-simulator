@@ -162,7 +162,6 @@ func _build_list() -> void:
 	PanelKit.heading(_body, tr("The named places"))
 	PanelKit.row(_body, tr("Cities"), str(entries.size()))
 	PanelKit.row(_body, tr("Living in a named city"), "%s%%" % Num.f((named * 100.0), 1))
-	PanelKit.line(_body, tr("Everyone else lives in the towns under the cut and the countryside -- the unnamed residual, never stored."))
 
 	PanelKit.heading(_body, tr("By population"))
 	var rows: Array = []

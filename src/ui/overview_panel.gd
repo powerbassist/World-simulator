@@ -25,6 +25,7 @@ const K = preload("res://src/sim/opinion_constants.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -295,7 +296,9 @@ func _fill_government(ns, censure: Dictionary) -> void:
 
 
 func _fill_election(ns, months: int, vote_year: int, vote_month: int) -> void:
-	PanelKit.figure(_columns["election"], Trends.months_text(months), tr("until the vote"))
+	# V5.2-0b (Gameplay's "two elections, two answers"): name which vote this is --
+	# Society counts the assembly's, and two unnamed counts read as a contradiction.
+	PanelKit.figure(_columns["election"], Trends.months_text(months), tr("until the presidential vote") if bool(ns.has_executive) else tr("until the assembly vote"))
 	PanelKit.line(_columns["election"], "%s %d." % [
 		DateText.month_long(vote_month), vote_year
 	])
@@ -456,7 +459,7 @@ func _fill_programme(ns) -> void:
 	if this_term.is_empty():
 		if Programme.is_term_start(ns):
 			PanelKit.line(_programme_box,
-				tr("The term's programme is unset -- the Agenda (K) holds the offer."))
+				tr("No programme yet: see the Agenda (K)."))
 		else:
 			PanelKit.line(_programme_box, tr("No programme was set this term."))
 		return
@@ -520,11 +523,9 @@ func _entry_tooltip(ns, terms: Dictionary, entry: Dictionary) -> String:
 	var tip := tr("%s against a %s goal") % [
 		Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2),
 	]
-	var timeout := int(terms.get("timeout_months", 0))
-	if timeout > 0:
-		var left := timeout - int(entry["months_live"])
-		# A deadline at or past now still reads "1 month", as it did.
-		tip += tr_n(" · %d month to its deadline", " · %d months to its deadline", maxi(left, 1)) % maxi(left, 1)
+	# The strip's own clock text, so the overview and the strip cannot word one
+	# deadline two ways (V5.2-0b, with the author's end-of-term rule).
+	tip += " · " + StripReadings.programme_clock_text(terms, entry)
 	return tip
 
 

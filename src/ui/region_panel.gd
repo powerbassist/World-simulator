@@ -195,7 +195,7 @@ func _build_partition(ns, regions: Array) -> void:
 		if int(degrees[region.id]) < least_degree:
 			least_degree = int(degrees[region.id])
 			least = region.region_name
-	PanelKit.line(_body, tr("On the transport graph: %d land links and %d sea links touch these regions; %s is the least connected, with %d.") % [land, sea, least, least_degree])
+	PanelKit.line(_body, tr("%d land links · %d sea links · least connected: %s (%d)") % [land, sea, least, least_degree])
 
 
 ## The league table. The payroll column is the register's one live quantity:
@@ -210,7 +210,9 @@ func _build_table(ns, regions: Array) -> void:
 	# unemployment figure. The argument is required -- regions.gd's own rule.
 	var access: Dictionary = Regions.accessibility_for(ns, regions, _state.region_graph)
 	var sites: Dictionary = _state.project_sited_pct.get(ns.id, {})
-	var rows: Array = []
+	# V5.2-0b: the columns are named by their headers, not by a sentence under the
+	# table; the model notes that followed it live in docs/region-economy-model.md.
+	var rows: Array = [[tr("region"), tr("output"), tr("people"), tr("per head"), tr("reach"), tr("jobless"), tr("main sector"), tr("named jobs")]]
 	for region in regions:
 		var jobs := 0.0
 		for city in region.cities:
@@ -230,9 +232,6 @@ func _build_table(ns, regions: Array) -> void:
 			PanelKit.pop_text(jobs) if jobs > 0.0 else "0",
 		])
 	PanelKit.ledger(_body, rows)
-	PanelKit.line(_body, tr("Columns: share of output · people · output per head against the national average · accessibility against the national average · unemployment · dominant sector · named jobs."))
-	PanelKit.line(_body, tr("National GDP is the sum of these regions. A region grows at the national rate plus what its own sector mix is worth, and those differences cancel across the country — so a region's mix moves its share and never the level."))
-	PanelKit.line(_body, tr("Position moves output too: what a region makes, times how far its market reaches — also cancelling across the country, also never the level."))
 
 
 ## The mix, as one word. The three shares are on the region and the panel has one
