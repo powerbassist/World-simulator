@@ -1,5 +1,5 @@
 {
-  "_note": "The glossary table (docs/design/glossary-tooltips.md): 48 ranked terms, English only. `definition` is one line (about 200 characters at most); `body` is shown under it when the tooltip is locked. `see_also` lists entry ids; the loader refuses an unknown one. `live` names a SHOWN value in the table the UI owns (rule L1: the headline poll, never the hidden approval; Credit.yield_pct and Credit.rating are reads, never stored fields). `model` is `<doc>#<heading>` of the docs/*-model.md section the definition summarises (P4); a LIST of such anchors where a definition draws on several sections. A PR that changes a cited section re-reads its entries in the same PR (P4b); state_stake and programme are known to go stale in V5.3. French is parked.",
+  "_note": "The glossary table (docs/design/glossary-tooltips.md): 54 terms (48 ranked, 6 added for V5.2-0b), English only. `definition` is one line (about 200 characters at most); `body` is shown under it when the tooltip is locked. `see_also` lists entry ids; the loader refuses an unknown one. `live` names a SHOWN value in the table the UI owns (rule L1: the headline poll, never the hidden approval; Credit.yield_pct and Credit.rating are reads, never stored fields). `model` is `<doc>#<heading>` of the docs/*-model.md section the definition summarises (P4); a LIST of such anchors where a definition draws on several sections. A PR that changes a cited section re-reads its entries in the same PR (P4b); state_stake and programme are known to go stale in V5.3. French is parked.",
   "terms": [
     {
       "id": "programme",
@@ -550,6 +550,100 @@
       ],
       "live": "office_holders",
       "model": "government-model#Two clocks"
+    },
+    {
+      "id": "constitutional_court",
+      "term": "constitutional court",
+      "definition": "The court that can strike down a law as unconstitutional. A bill whose reach exceeds what the court tolerates is blocked, and a more independent court tolerates less.",
+      "body": "In reality such courts (France's Conseil constitutionnel, Germany's Bundesverfassungsgericht) review laws against the constitution. Here the court is a rule you can read, not a hidden dice roll: a bill the court would strike stays on the law list with the verdict and both numbers beside it. Tolerance falls as the court's independence rises, so the same bill can pass in one nation and fail in another. Raising or lowering independence is itself a law, which is the key to that lock.",
+      "see_also": [
+        "judicial_independence",
+        "amendment",
+        "unrest"
+      ],
+      "live": "judicial_independence",
+      "model": [
+        "judiciary-model#4. The tolerance form, and why the linear one died",
+        "judiciary-model#6. The gate is a lock with a key you can buy"
+      ]
+    },
+    {
+      "id": "import_dependency",
+      "term": "import dependency",
+      "definition": "The share of the energy the country uses that it buys abroad. A high share costs growth; building your own plants lowers it.",
+      "body": "It is read from the energy mix, against what the nation consumes: imports above consumption are possible for a country that re-exports, so Luxembourg reads above 100 %. In reality this is what makes a nation exposed to a fuel supplier's price or politics. Here the cost is a drag on annual growth, and it grows with how far the dependency has moved from where it started, so a sustained fossil build-out is paid for in growth, not only in emissions.",
+      "see_also": [
+        "power_grid",
+        "emissions",
+        "growth"
+      ],
+      "model": [
+        "energy-model#2. The denominator",
+        "energy-model#7. `DEP_BETA` — what dependency costs"
+      ]
+    },
+    {
+      "id": "emissions",
+      "term": "emissions",
+      "definition": "The greenhouse gases the nation emits, in tonnes of CO2-equivalent, per head. Your plants shift them: clean output displaces the fossil share it replaces.",
+      "body": "The starting figure is each nation's measured footprint per head. It is a read off the energy mix, never a stored number: every plant you finish changes the mix, and each source is weighted by its own lifecycle emissions, from mine to grid. Coal and gas weigh heavily, nuclear, wind, hydro and solar lightly. The Union's climate accord sets a per-head ceiling that some members start above, which is what makes its council vote a real division.",
+      "see_also": [
+        "power_grid",
+        "import_dependency",
+        "council"
+      ],
+      "model": [
+        "climate-model#1. The partition — a measured baseline and a share displacement",
+        "climate-model#2. The intensities — physical constants, not a dial"
+      ]
+    },
+    {
+      "id": "qualified_majority",
+      "term": "qualified majority",
+      "definition": "A decision rule that needs more than half: in the council, a proposal carries when at least 55 % of the seats cast back it. Abstaining removes your seats from the count.",
+      "body": "The real Council of the EU counts both member states and population; this game counts seats, weighted roughly by population. The 55 % is taken from the seats cast, not the whole council, so an abstention is a third option, different from opposing: opposing adds to the other side's weight, abstaining only shrinks the base. Treaty-class proposals use unanimity instead, where a single vote against is a veto.",
+      "see_also": [
+        "council",
+        "veto",
+        "bargain",
+        "ratification"
+      ],
+      "live": "next_division",
+      "model": [
+        "bloc-model#4. The council",
+        "orgs-model#V4.5 — the council, contested (clauses declared BEFORE the machine, 2026-10-14)"
+      ]
+    },
+    {
+      "id": "veto",
+      "term": "veto",
+      "definition": "The power to stop a decision outright. In the council, one vote against blocks a unanimity proposal; an upper house with an absolute veto cannot be overridden.",
+      "body": "Two vetoes appear in the game. In the council, a unanimity proposal carries only if nobody votes against, so a single member can block it, and a bargain may buy that member's vote. In the second chamber, a suspensive veto only delays a bill for a time (and releasing it has a price in approval), while an absolute one ends it. Which a nation has depends on its constitution and on whether the bill is an ordinary law or an amendment.",
+      "see_also": [
+        "second_chamber",
+        "qualified_majority",
+        "article_49_3",
+        "council"
+      ],
+      "model": [
+        "upper-house-model#7. Two rows, because the distinction is between CLASSES of bill",
+        "orgs-model#V4.5 — the council, contested (clauses declared BEFORE the machine, 2026-10-14)"
+      ]
+    },
+    {
+      "id": "campaign_effort",
+      "term": "campaign effort",
+      "definition": "Money and time spent mobilising voters before the presidential vote. It accrues and is billed every month it runs, so starting early buys more and costs more.",
+      "body": "An effort does not change what voters think of your record: it changes who bothers to turn out. It can only run inside the window before the vote (ten months), and stopping it early saves the bill but gives back nothing already bought. Its bill is a spending line that widens the deficit in the months when every bloc is looking, and the lasting offset it leaves on the blocs outlives the campaign, so a heavy early effort can help in one election and hurt in the next.",
+      "see_also": [
+        "pledge",
+        "approval",
+        "deficit"
+      ],
+      "model": [
+        "campaign-model#5. An effort is a standing rate with a deadline",
+        "campaign-model#6. The bill"
+      ]
     }
   ]
 }
