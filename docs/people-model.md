@@ -508,6 +508,14 @@ grievance/press/court meter, per-person relations graphs — loyalty is to the
 player, one edge, not a matrix ([[v4]] §V4.5 owns the nation-to-nation
 relations channel).
 
+**Two reversals, V5.2a (§14.9).** The leader's personal wealth is back, by the
+author's call ([[v5]], the calls table): it exists only through the shadows
+(V5.2c), where exposure is its lose condition, which meets the decision log's
+reason for refusing it rather than overturning it ([[v5.2-spec]] C3). The
+spouse is back as a CONTENT field on a person (`spouse_id`), not marriage: no
+system makes or ends one ([[v5.2-spec]] C2). The relations-graph refusal
+stands: every V5.2 register is a president-to-person edge ([[v5.2-spec]] C1).
+
 ### 14.8 As built (2026-09-18) — shipped, harvested, and what owes an eye
 
 The block shipped on `v4.3-people` (9236f48 → c52c7a7): the schema, the six
@@ -585,6 +593,47 @@ the tests), and the want voice moved to `person_card.gd`'s shared `STANCE_LABEL`
 `object_text` so the panel and the card cannot print two renderings of one want (the
 panel's private copies deleted). `tools/characters_probe.gd.uid` staged (the U5b gotcha).
 Suite 87/87 with the two new checks.
+
+### 14.9 The president's registers (V5.2a)
+
+V5.2 makes people talk to the president; V5.2a is what a conversation leaves
+behind. Each register is an edge FROM the president TO one person, or a figure
+of the president alone; never person to person (§14.7). The design is
+[[v5.2-spec]] "The registers (V5.2a)"; the bands that judge their use are
+[[bands-v5.2]].
+
+| Register | Where | Absent reads |
+|---|---|---|
+| Knowledge, `[0, 1]` | `ns.person_knowledge` | 0, a stranger |
+| Rapport, `[-1, 1]` (not "affinity": [[cabinet-model]]'s `affinity()` is a party's fit to a portfolio) | `ns.person_rapport` | 0, neutral |
+| Bond: friend, close, rival, enemy, affair | `ns.person_bond` | none |
+| Social skill, `[0, 1]`, reading and deceiving | `Person.social_skill` (content) | 0.5 |
+| Spouse | `Person.spouse_id` (content) | none |
+| Personal wealth, EUR m | `Person.wealth_eur_m` + `ns.person_wealth_delta_eur_m` | the authored start |
+| Party money, EUR m | `Party.funds_eur_m` + `ns.party_money_delta_eur_m` | the authored start |
+| Commitments: promises and IOUs in flight | `ns.commitments` | none |
+| Exposure risk: the evidence an act left | `ns.exposure_evidence` | none |
+
+- **Content and state, as in §14.1.** What a person IS (a reading skill, a
+  spouse, a starting fortune) is content and never moves; what passed between
+  them and the president is state, a delta over that content. So every state
+  register is `absent_ok` and a save from before V5.2a reads as "nothing has
+  happened yet" — no `SAVE_VERSION` bump.
+- **Whom the edges reach** (the author's call, 2026-10-21): the played nation's
+  people and the foreign heads of state and government. `President.covers()`
+  refuses everyone else, so a stray id cannot grow an edge to the other 2 000.
+- **One relationship, not two.** Only the explicit bonds are stored; stranger
+  and acquaintance are read off knowledge (`President.relationship()`), so the
+  ladder and the knowledge cannot disagree. A well-known person with no bond is
+  an acquaintance: knowing someone is not friendship.
+- **Rapport is not loyalty.** Loyalty is political (does the person follow the
+  player); rapport is personal (does the person like the president). A rival can
+  be loyal to the line, and a friend can vote against the bill.
+- **One writer.** `src/sim/president.gd` is the only writer of the seven fields
+  and the only reader that combines them with content; `tests/test_president.gd`
+  scans `src/` for a second. In V5.2a nothing on the tick path calls it: the
+  audiences (V5.2b) and the shadows (V5.2c) are the writers, so the balance table
+  could not move.
 
 ---
 

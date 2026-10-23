@@ -118,7 +118,11 @@ func _check_coverage() -> void:
 			_fail("%s has an empty head slot -- the fixture lost its foreign head" % FOREIGN)
 		elif not President.covers(state, ns, _loader, pid):
 			_fail("'%s' is not covered, and the author's call covers it" % pid)
-	for pid in [backbencher, "%s_nobody_authored" % PLAYER]:
+	# The president themself: an edge needs two ends.
+	var leader := President.leader_id(ns)
+	if leader == "" or not leader.begins_with("%s_" % PLAYER):
+		_fail("leader_id read '%s' for %s" % [leader, PLAYER])
+	for pid in [backbencher, "%s_nobody_authored" % PLAYER, leader]:
 		if President.covers(state, ns, _loader, pid):
 			_fail("'%s' is covered, and it is outside the author's call" % pid)
 		var wrote: bool = President.learn(state, ns, _loader, pid, 0.5) \
@@ -277,9 +281,14 @@ func _gd_files(dir_path: String, out: Array) -> void:
 		_gd_files(dir_path + "/" + sub, out)
 
 
-## The first of the played nation's people: any one will do, every read is per id.
+## The first of the played nation's people who is not the president: any one
+## will do, every read is per id, and the president has no edge to themself.
 func _own_person() -> String:
-	return String(_loader.people[PLAYER][0].id)
+	var nation = _loader.nations[PLAYER]
+	for person in _loader.people[PLAYER]:
+		if person.id != nation.head_of_state_person_id and person.id != nation.head_of_government_person_id:
+			return String(person.id)
+	return ""
 
 
 func _now(state) -> int:

@@ -69,6 +69,7 @@ func _init() -> void:
 	_test_no_deadline_is_judged_at_the_term_end()
 	_test_no_deadline_met_at_the_term_end_completes()
 	_test_the_term_end_needs_a_clock()
+	_test_the_term_end_leaves_a_deadline_entry_alone()
 	_test_an_invalid_trigger_concludes_silent()
 	_test_the_register_carries_no_content()
 	_test_the_register_round_trips_through_json()
@@ -554,6 +555,21 @@ func _test_the_term_end_needs_a_clock() -> void:
 	Programme.tick_month(state, _loader)
 	if Programme.is_term_end(state, ns) or String(ns.programme[0]["status"]) != "active":
 		_fail("a nation with no executive clock judged its programme as '%s'" % str(ns.programme[0]["status"]))
+
+
+## The rule is for the no-deadline entry only: an entry with its own clock is
+## judged on that clock, even when the verdict month falls inside it (a nation
+## whose first vote is three months in).
+func _test_the_term_end_leaves_a_deadline_entry_alone() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	Programme.choose(state, ns, TIMEOUT_ENTRY, _loader)
+	ns.deficit_pct_gdp = 5.0  # above the goal, below any fail line: only a clock can end it
+	_set_month(state, _verdict_month(ns))
+	Programme.tick_month(state, _loader)
+	if String(ns.programme[0]["status"]) != "active":
+		_fail("the term end concluded a %d-month entry in its first month as '%s'" % [
+			int(_entry(TIMEOUT_ENTRY).get("timeout_months", 0)), str(ns.programme[0]["status"])])
 
 
 func _verdict_month(ns) -> int:

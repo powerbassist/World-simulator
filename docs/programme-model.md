@@ -631,6 +631,15 @@ again.
   reaches that month's approval through the inertia, the rest carries into the
   next term's stock. That is the literal reading of "judged at the end"; judging
   the month before the vote would put the whole price on the ballot instead.
+- **Its sponsors.** A `programme:` want is served only while its entry is active
+  this term ([[people-model]] §14.8), and Characters runs before Elections, so a
+  sponsor's want turns denied in the verdict month itself — one month earlier
+  than when the term counter alone ended it.
+- **Only the no-deadline entry.** An entry with its own clock is judged on it,
+  even across a verdict month; and an entry chosen in a game that opens months
+  before its first verdict (on today's roster HUN and SVN in 2026-04, CYP in
+  2026-05, none of them playable) is judged at that vote. The literal rule;
+  recorded so a later playable nation does not meet it as a surprise.
 - **What it does not move.** No balance regime chooses a programme, so the
   51-regime table is byte-identical. `tools/programme_probe.gd`'s P1–P5 read month
   6; its `chosen` arm (a no-deadline entry never met) concludes `fail` in the

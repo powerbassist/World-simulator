@@ -27,13 +27,16 @@ const K = preload("res://src/sim/president_constants.gd")
 ## Whether an edge from this nation's president to the person may exist: an
 ## authored person of this nation (the loader's id-prefix rule), or another
 ## nation's current head of state or of government -- the president meets
-## heads, not their benches. Read at write time; an edge to a head who has since
-## left office stays, because what passed between them still did.
+## heads, not their benches. Never the president themself: an edge needs two
+## ends. Read at write time; an edge to a head who has since left office stays,
+## because what passed between them still did.
 static func covers(state, ns, loader, person_id: String) -> bool:
+	if person_id == leader_id(ns):
+		return false
+	if _own(ns, loader, person_id):
+		return true
 	if not loader.person_by_id.has(person_id):
 		return false
-	if person_id.begins_with("%s_" % ns.id):
-		return true
 	for nation_id in state.nations:
 		if nation_id == ns.id:
 			continue
@@ -41,6 +44,13 @@ static func covers(state, ns, loader, person_id: String) -> bool:
 		if person_id == String(other.head_of_state_person_id) or person_id == String(other.pm_person_id):
 			return true
 	return false
+
+
+## Who "the president" is on this nation's register: the separately elected
+## executive where there is one (France's head of state), else the head of
+## government -- the office Elections' verdict decides.
+static func leader_id(ns) -> String:
+	return String(ns.head_of_state_person_id if ns.has_executive else ns.pm_person_id)
 
 
 # --- Reads --------------------------------------------------------------------------
@@ -82,26 +92,31 @@ static func wealth_eur_m(ns, loader, person_id: String) -> float:
 	return start + float(ns.person_wealth_delta_eur_m.get(person_id, 0.0))
 
 
+## This nation's parties only. Another id is an error and a zero, never a
+## silent zero (V1.6d's confident-zero rule).
 static func party_money_eur_m(ns, loader, party_id: String) -> float:
 	var party = _party(ns, loader, party_id)
-	var start: float = party.funds_eur_m if party != null else 0.0
-	return start + float(ns.party_money_delta_eur_m.get(party_id, 0.0))
+	if party == null:
+		push_error("president: '%s' is not a party of %s" % [party_id, ns.id])
+		return 0.0
+	return party.funds_eur_m + float(ns.party_money_delta_eur_m.get(party_id, 0.0))
 
 
 ## Every commitment in flight to a person, months cast to int: the rows come
 ## back from a JSON save with every number a float (the pledges precedent --
-## cast on every read).
+## cast on every read), and the ROWS reader whitelists no key, so a key a
+## hand-edited save dropped reads its empty value rather than erroring.
 static func commitments_with(ns, person_id: String) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for row in ns.commitments:
 		if String(row.get("person_id", "")) != person_id:
 			continue
 		out.append({
-			"kind": String(row["kind"]),
+			"kind": String(row.get("kind", "")),
 			"person_id": person_id,
-			"object": String(row["object"]),
-			"made_month": int(row["made_month"]),
-			"due_month": int(row["due_month"]),
+			"object": String(row.get("object", "")),
+			"made_month": int(row.get("made_month", 0)),
+			"due_month": int(row.get("due_month", 0)),
 		})
 	return out
 
@@ -149,7 +164,7 @@ static func set_bond(state, ns, loader, person_id: String, bond: String) -> bool
 ## so a successor never inherits a deposed leader's gains. This nation's people
 ## only: a foreign head's fortune is not on this register.
 static func adjust_wealth_eur_m(ns, loader, person_id: String, amount: float) -> bool:
-	if not loader.person_by_id.has(person_id) or not person_id.begins_with("%s_" % ns.id):
+	if not _own(ns, loader, person_id):
 		return false
 	ns.person_wealth_delta_eur_m[person_id] = float(ns.person_wealth_delta_eur_m.get(person_id, 0.0)) + amount
 	return true
@@ -196,6 +211,11 @@ static func leave_evidence(state, ns, loader, kind: String, person_id: String, s
 
 
 # --- Helpers ----------------------------------------------------------------------------
+
+## An authored person of this nation: the loader's id-prefix rule.
+static func _own(ns, loader, person_id: String) -> bool:
+	return loader.person_by_id.has(person_id) and person_id.begins_with("%s_" % ns.id)
+
 
 static func _party(ns, loader, party_id: String):
 	for party in loader.parties.get(ns.id, []):
