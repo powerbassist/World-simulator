@@ -21,6 +21,7 @@ const C = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
 
 const PROJECTION_MONTHS := 24
@@ -206,14 +207,7 @@ func _ready() -> void:
 	# headlessly.
 	custom_minimum_size = Vector2(820, 520)
 
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 12)
-	margin.add_child(root)
+	var root := PanelKit.padded(self, 16, 12)
 
 	_title = Label.new()
 	root.add_child(_title)
@@ -226,6 +220,7 @@ func _ready() -> void:
 	columns.add_child(_build_levers())
 	columns.add_child(_build_figures())
 
+	root.add_child(PanelCharts.new(self, PanelCharts.BUDGET))
 	root.add_child(_build_buttons())
 	add_child(_forecast)
 	_forecast.settled.connect(func(): _dirty = true)

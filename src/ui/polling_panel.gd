@@ -19,6 +19,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Trends = preload("res://src/ui/trends.gd")
 
 const TOP_ISSUE_COUNT := 4
@@ -73,6 +74,7 @@ func _ready() -> void:
 
 	_election_countdown = Label.new()
 	root.add_child(_election_countdown)
+	root.add_child(PanelCharts.new(self, PanelCharts.SOCIETY))
 
 	_body = VBoxContainer.new()
 	_body.add_theme_constant_override("separation", 12)

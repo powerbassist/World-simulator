@@ -63,6 +63,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --cards 6 --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mood 35
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 18 --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
@@ -308,6 +309,9 @@ var _mood := -1.0
 ## --mid-term: seven months into the term with nothing chosen, the page a loaded
 ## game shows (the Agenda's "when can I choose" line).
 var _mid_term := false
+## V5.2-0a, --months N: N real months on the clock first, so the charts have a
+## history to draw.
+var _months := 0
 ## V5.1-c2.3: open a domain through its sidebar entry (its first tab), so a frame
 ## shows the entry marked and the tab open -- V2.1c's --cluster, for the sidebar.
 var _domain := ""
@@ -783,6 +787,8 @@ func _init() -> void:
 			_console = "errors"
 		elif args[i] == "--mid-term":
 			_mid_term = true
+		elif args[i] == "--months" and i + 1 < args.size():
+			_months = int(args[i + 1])
 		elif args[i] == "--cards" and i + 1 < args.size():
 			_cards = int(args[i + 1])
 		elif args[i] == "--term" and i + 1 < args.size():
@@ -891,6 +897,9 @@ func _process(_delta: float) -> bool:
 	if _frame == 3 and not _menu:
 		for n in _cards:
 			_main._hud.inbox.push("Card %d" % (n + 1), "A notification body long enough to wrap onto a second line in the column.")
+		if _months > 0:
+			_tick_months(_months)
+			_main._windows.mark_all_dirty()
 		if _mid_term:
 			_main._state.player().months_in_term = 7
 			_main._enforce_term_start_programme()
