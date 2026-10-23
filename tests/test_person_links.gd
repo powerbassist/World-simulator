@@ -36,6 +36,7 @@ func _process(_delta: float) -> bool:
 		_check_markup()
 		_check_surfaces()
 		_check_the_card()
+		_check_the_card_does_not_grow()
 		_finish()
 		return true
 	return false
@@ -88,6 +89,23 @@ func _check_the_card() -> void:
 	tip._input(escape)
 	if tip.person_card_visible():
 		_fail("Escape did not put a pinned card away")
+
+
+## PRE-GATE 2 B2: show_for queue_free'd the old rows without removing them, so a
+## second show in the same frame (a hover moving between names) counted both
+## sets in the card's minimum size -- 2-2.6x the content's height.
+func _check_the_card_does_not_grow() -> void:
+	var card = _main._stack.tips._people._card
+	var ns = _main._state.player()
+	var id := String(ns.pm_person_id)
+	card.show_for(id, _main._loader, ns, Vector2(400, 300))
+	var once: float = card.get_combined_minimum_size().y
+	card.show_for(id, _main._loader, ns, Vector2(400, 300))
+	card.show_for(id, _main._loader, ns, Vector2(400, 300))
+	var again: float = card.get_combined_minimum_size().y
+	if once <= 0.0 or again > once + 1.0:
+		_fail("showing the card again grew it from %.0f to %.0f px" % [once, again])
+	card.hide()
 
 
 func _expect_link(root_node: Node, person_id: String, where: String) -> void:

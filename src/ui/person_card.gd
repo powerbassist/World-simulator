@@ -112,7 +112,11 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 		visible = false
 		return
 
+	# remove_child first: a queue_free'd row stays a child, and so in the minimum
+	# size, until the frame ends -- the card kept 2-2.6x its content's height from
+	# the second show on.
 	for child in _body.get_children():
+		_body.remove_child(child)
 		child.queue_free()
 
 	var title := Label.new()

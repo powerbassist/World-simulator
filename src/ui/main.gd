@@ -84,6 +84,7 @@ const WorldNews = preload("res://src/ui/world_news.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 const IndustryNews = preload("res://src/ui/industry_news.gd")
 const AssemblyNews = preload("res://src/ui/assembly_news.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
@@ -412,21 +413,7 @@ func _ready() -> void:
 	)
 	_law_panel.proposed.connect(func(before, law_name, result):
 		_queue_effect(String(law_name), before)
-		var body: String
-		if bool(result.get("refused", false)):
-			if bool(result.get("referendum_in_flight", false)):
-				body = tr("A referendum is already in flight.")
-			else:
-				body = tr("The assembly would not take it.")
-		elif bool(result.get("withdrawn", false)):
-			body = tr("Withdrawn.")
-		elif bool(result.get("referendum_route", false)):
-			body = tr("To the country -- the vote is scheduled.")
-		else:
-			body = (tr("Passed. Yes %d, No %d.") if bool(result.get("passed", false)) else tr("Failed. Yes %d, No %d.")) % [
-				int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
-			]
-		_hud.inbox.push(String(law_name), body)
+		_hud.inbox.push(String(law_name), ProposalNote.body(result))
 		_update_top_bar()
 	)
 

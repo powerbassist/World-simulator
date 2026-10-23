@@ -13,6 +13,7 @@ extends SceneTree
 var _failures: Array[String] = []
 var _main
 var _frame := 0
+var _orphan: Button
 
 
 func _init() -> void:
@@ -24,9 +25,14 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 3:
 		return false
-	_check()
-	_finish()
-	return true
+	if _frame == 3:
+		_check()
+		_arm_focus_release()
+	elif _frame == 5:
+		_orphan.free()
+		_finish()
+		return true
+	return false
 
 
 func _check() -> void:
@@ -60,6 +66,24 @@ func _check() -> void:
 	if inbox.visible or inbox.is_slid():
 		_fail("a scene carried the inbox under it (visible %s, slid %s)" % [inbox.visible, inbox.is_slid()])
 	windows.close_all()
+
+
+## PRE-GATE 2 B1: answering an inbox card removes the button the press focused; the
+## stack's deferred release_focus() then ran on a control outside the tree and the
+## engine logged `Condition "!is_inside_tree()"` -- one ERROR per answer, which turns
+## the title bar's counter red. The runner fails a test that prints an undeclared
+## ERROR line, so reaching this state is the assertion.
+func _arm_focus_release() -> void:
+	var button := Button.new()
+	button.text = "answer"
+	button.position = Vector2(200, 200)
+	button.size = Vector2(80, 30)
+	_main.add_child(button)
+	_main._stack._press_at = Vector2(220, 210)
+	button.grab_focus()
+	# Out of the tree but alive, as a card a press removed is until its queue_free.
+	button.get_parent().remove_child(button)
+	_orphan = button
 
 
 func _fail(message: String) -> void:
