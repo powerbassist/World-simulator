@@ -11,7 +11,7 @@ The per-block record that used to be AGENTS.md's "Current focus": what each vers
 
 ## V5.1-d4 — the country box, and the fog on another nation's approval (2026-10-22)
 
-G2 of the play gate (the author: "diplomacy panel when clicking a country is useless, should be a small box resuming basic stats [...] a right click should open fast actions"), Interface only, no sim change.
+G2 of the play gate (the author: "diplomacy panel when clicking a country is useless, should be a small box resuming basic stats [...] a right click should open fast actions"), Interface only, no sim change. PR #85.
 
 - **The country box** (`src/ui/country_box.gd`): a left click on a nation shows a plate by the pointer with its figures -- leader, GDP and growth, unemployment, debt, approval -- and, abroad, the relationship; a right click shows the verbs the Diplomacy file offers for it (`nation_panel.offered_actions()`, the rows' own rule, so the menu and the file cannot disagree), each a press down the row's path (`act()`: a meeting opens the Diary's form). The file is the box's button. It holds no rank on the screen stack: a rank made it a "tab" and slid the inbox over it while a decision held; it takes its own Escape. `main.gd` stayed at its ratchet count (the map's click connect moved into `attach()`).
 - **The fog** (the author's "Une fourchette + source", `src/ui/foreign_reading.gd`): another nation's approval is a range with its source -- an embassy's estimate (±5) where the player holds one in its capital, the foreign press (±10) where not -- around a noised centre, so neither the middle nor the edges give the truth away; the player's own is their poll. The Diplomacy file printed the true figure (`nation_panel.gd`'s approval line); it reads the range now.
@@ -19,14 +19,25 @@ G2 of the play gate (the author: "diplomacy panel when clicking a country is use
 
 ## V5.1-d3 — the term-text sweep and the A-Z Glossary tab (2026-10-22)
 
+PR #83.
+
 - **The sweep.** `PanelKit.line()` draws a line that marks a term or a person (`[g=id]word[/g]`, `[p=id]Name[/p]`) through `TermText` and any other line as the `Label` it always was, so the ~300 unmarked sites keep their fit (a `RichTextLabel` reports its height differently, and every fit and fold test measures these) and a mark Content adds simply renders. The result is a `Control`; the five sites that assign into a `Label` (the election ticker, the energy status, the outliner rows, the tip popup's lines) call the new `PanelKit.plain_line()`. Buttons and tooltips stay plain: a mark in a string headed there goes through `TermText.plain()`. The parent accepted the conditional routing for that reason.
 - **The A-Z Glossary tab** (`src/ui/glossary_panel.gd`, the sidebar's Glossary domain, no hotkey): every term of `terms.json` alphabetically under its letter, each a marked term (hover or click for its plate) with its definition, body and See-also line, and a letter bar that jumps; N1 per entry; it reads `Glossary` alone. French is parked: the order is by the raw first character. The icon is Material Symbols' `menu_book` (the author's yes, 1 037 bytes, plain SVG, Apache-2.0 under the existing REUSE glob).
 - `main.gd` held its ratchet line count: the outliner panel became a local (nothing else read the member).
 - Tests: `test_term_text._check_line_routes_marks` and `tests/test_glossary_panel.gd`, both mutation-checked; full suite 168/168. `tools/placement_probe.gd` is the G6 placement-lag probe, written, not yet run (the machine was not quiet).
 
+## V5.1-d1 — the first play gate's B items (2026-10-22)
+
+The author's gate 1 on the c build scored 2/5; d1 took the B items in three PRs before d2's signed list. Interface; QA verified each windowed.
+
+- **d1a, the flow (#67)**: G1 the inbox is carried beside a tab opened from it and Escape walks tab, then inbox; G3 a speed click plays; G4 the election result holds the clock against Space, the cluster and a speed (and the console's `pause off`) until Continue; G6 arming a placement closes the windows, puts the hint in the legend and puts them back on the map. Before it, #63 fixed the pre-gate's two B issues: a pause pressed while a month closes was replayed after the month-end hooks and resumed a clock the lapse guard had held (`MonthRunner.replaying`), and 13 effect baselines used `Budget.snapshot()`, which has no approval, so most decisions showed Approval as NaN (`Trends.snapshot_now()`, and `test_effect_baselines` scans `src/ui` for the old call).
+- **d1b, dead ends (#69, #70, #73)**: G10 one consequence card per month close, "This month you decided: A, B, C" with the month's movement (`effects_ledger.gd`; a default is worded apart, "decided for you"), the Overview grouping alike; the six C items of the pre-gate (the withdrawn referendum's header, the Health lever's ±5-point span re-centred on a commit, the strip's truncated programme caption removed, "first in the vote" for a two-round election, a signed zero no longer shown as a loss); G4's "polls closed" beat before the reveal; G9 person cards pinned by a click; G13 all four (the state-visit notes flood one rolling note a year, the Diplomacy click books through the Diary's travel-day form, the reason of a greyed row is a visible line, "Agreed." is a visit line); a booked summit holds the clock and `hold_reason.gd` says why every hold holds.
+- **d1c, findable terms (#72)**: a marked term draws a full-opacity dashed underline, a first-run hint names it once per profile (`GlossaryHint`; `hint reset` in the console), and the help cursor was tried and dropped: `RichTextLabel` draws the pointing hand over any meta and ignores the cursor shape.
+- Companions the same day: Systems' G8 (#66, a poll at a flat price), the AI's state-visit cadence (#74, the host rule holds for the player too) and Gameplay's triage and decision-surfaces notes (#65, #71).
+
 ## V5.1-d2 — the signed d and the carried items (2026-10-22)
 
-The second numbered group of d, after the author's 2/5 play gate (d1 took the gate's B items). One branch, one PR.
+The second numbered group of d, after the author's 2/5 play gate (d1 took the gate's B items). One branch, one PR (#76).
 
 - **The glossary** (d2's carried design items): the See-also line marks every entry it lists (a list lifts N2's three-mark cap, `TermText.cap`); N1, one mark per term per section, is decided in code (a `PanelKit.section` body or a registered window is a section), replacing Content's hand cut; a rendered sweep over every window in English and French fails a raw `[g=` on screen (`tests/test_no_raw_tags.gd`); **F1 walks the marked terms on screen** in reading order and opens each locked, Escape closes (the keyboard path to a term).
 - **G11, the type scale** (author: "Oui, dans d", then "garde-la"): 11/12/15/18/20/30 → **11/13/15/18/22/27**, base 15 unchanged, each step 1.13–1.30 over the last (`test_ui_theme._check_type_steps`). The ledger's caption column grew 22 px and took Budget to 1 258 px under +35 % pseudo against the 1 240 px dock; the lever track gave 20 px back (220 → 200; the span clamp guards a drag since d1b3), 1 238 px.

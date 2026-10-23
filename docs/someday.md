@@ -359,6 +359,42 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Carried from the V5.1 close-out (2026-10-23)
+
+The QA record on #61 to #85, what is still open in the tree on 89dddf4a (the ones a later PR fixed are gone: #77, #81, #82 and #84 closed their own predecessors' items). The detail is in each PR's QA section. All of them sit below the V5.1 bar -- a player does not meet one in thirty minutes -- and they are cleanup, not blockers. Items marked † were QA findings on code no later PR touched; they were not re-read at the close-out.
+
+**Interface**
+
+- **The country box** (#85): the month rebuild re-centres the box on the pointer; a scene refusing the rebuild leaves a stale box up; its Escape is taken before the console and the stack; its nation and capital names are raw (`country_box.gd`). †
+- **Raw names, one family**: the Diplomacy host line (`nation_panel.gd:432`), the box's headings, the "Received in %s." capital (`world_news.gd:305`), and the hold line's `visiting` carry a raw `nation_name` or capital id; no nation accessor exists. The visit tally appends a nation twice if it hosts twice (`world_news.gd:183`).
+- **`PanelKit.line()` changes class with the text's marks** (#83): a translation that drops a mark changes the line's minimum size and wrap; `TermText.has_marks()` is a raw substring test; the A-Z tab does not rebuild on a text-size change, nor fold accents (French, parked).
+- **Term marks** (#76): N1's holder check ignores visibility and reads `_section()` at set time, so a hidden or detached holder keeps or misses a section's mark; `next_term` keys the walk by instance id, so a panel that rebuilds its rows restarts it; `screen_stack`'s `_press_at` releases a code `grab_focus()` made during a held click; `window_manager.gd:148` spells `&"term_section"` instead of `TermText.SECTION_META`. †
+- **Clocks**: a second press deferred inside one month close is a no-op (fails safe, #63); a summit's close resumes the clock unless a decision holds, and an election scene on the same 1st is not checked (#70); the cluster lags up to one game day after a summit closes (#73). †
+- **Design calls left to the author**: the Energy tab is not restored after a placement (#67); polls are now free in game terms and limited only to once per bill per kind (#66).
+- **Tests**: `law_verdict.gd:27`'s `pending_law_id` guard can be removed with test_dead_ends, test_law_panel and test_referendum green (#69); `test_play_gate_terms` keys FRA/DEU/GBR/POL by id (`PLAYED`) instead of deriving from `formation_method` (#61); `GlossaryHint._shown_in` is a static, so a leg that boots a main earlier in the same process spends `test_statute_assembly`'s private flag (#78); the cross-month away range reads "(away 28–05, MAR–APR)" beside the travel note's "Away 28 MAR – 5 APR" (#76 †).
+- **`tools/screenshot_all.py`** (#76): the target PNG is not deleted before a run, so a stale frame passes a staging that wrote nothing; `args.split()` ignores quoting (`shlex.split`).
+
+**Systems**
+
+- **`recent_effects`** (#75): the command takes an entry the UI built, and `Trends` lives in `src/ui`; the deeper fix moves the measurement under `src/sim` or `src/core`.
+- **The budget projection** (#77, #81): the order "Discipline before Statute" is not pinned; the projection reads an approval it never moves (a recorded bound of the subset); the election month reading 0 is not pinned (a `>=` mutation passes); the election-roll rule is written twice (`budget.gd:514`, `elections.gd:157`); only the player's clock rolls while Discipline ticks every nation with a budget.
+- **The k-format** of a poll price has no range guard (#66, cosmetic).
+
+**Health**
+
+- **Test walkers**: `_gd_files` is written five times (`test_effects_ledger`, `test_geography`, `test_panel_kit`, `test_programme`, `test_world_month`), and `test_effects_ledger`'s comment strip works line by line, so a triple-quoted string's body is scanned as code (#75, #77).
+- **`.claude/.gdignore`** is kept only through `.git/info/exclude` in the author's checkout; whether it belongs committed beside `settings.json` is Health's call (#64). †
+
+**The author's automation session (#79)**
+
+- **`tools/protect_files.py` under bypass or auto mode**: the author's call (2026-10-22, "refuser en mode auto") is that the hook reads `permission_mode` and denies with its reason there, asking otherwise; `protect_files.py` does not read it yet. The hook command is Bash syntax (`$CLAUDE_PROJECT_DIR`, `||`): on a machine without Git Bash it is a PowerShell parse error, a non-blocking failure (fail-open). †
+
+**Gameplay**
+
+- `docs/design/v5.1-gate-triage.md` lists the `SIZE_*` constants without `SIZE_MAP = 10` (#65, harmless). †
+
+**Parked with French** (translation is not a priority, the author, 2026-10-21): the placement hint, the briefing's assembly forecast line and the A-Z tab's order have no French yet.
+
 ## Carried from V5.1-c (2026-10-22)
 
 - **`main.gd` keeps its total-lines exception** (2 124 lines, 1 090 code): the decision and programme holds and the desk cards (~130 lines) still live there; moving them out (a `clock_holds.gd`, the plan's) removes the `TOTAL_EXCEPTIONS` entry in `tools/check_size.py`. **Owner:** V5.1d.
