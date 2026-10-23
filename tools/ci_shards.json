@@ -132,6 +132,7 @@
    "tests/test_i18n_rows_lint.gd",
    "tests/test_inbox_stays.gd",
    "tests/test_real_click.gd",
+   "tests/test_placement_points.gd",
    "tests/test_person_links.gd",
    "tests/test_effects_ledger.gd",
    "tests/test_no_raw_tags.gd",

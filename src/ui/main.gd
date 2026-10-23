@@ -1179,7 +1179,7 @@ func _on_map_point_picked(lon: float, lat: float) -> void:
 		# console error. The order is already consumed by here (the arm was cleared
 		# above and map_view ended placement), so with nothing on screen the player
 		# had to re-arm without being told why.
-		_hud.inbox.push(tr("Not your ground"), tr("That point is not in %s.") % ns.nation_name)
+		_hud.inbox.push(tr("Not your ground"), tr("That point is not in %s.") % _loader.nation_name(ns.id))
 		return
 
 	var access: Dictionary = Regions.accessibility_for(ns, _state.regions.get(ns.id, []), _state.region_graph)
