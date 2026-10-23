@@ -397,6 +397,20 @@ The QA record on #61 to #85, what is still open in the tree on 89dddf4a (the one
 
 **Parked with French** (translation is not a priority, the author, 2026-10-21): the placement hint, the briefing's assembly forecast line and the A-Z tab's order have no French yet.
 
+## Carried from the V5.1 closing gate (2026-10-23)
+
+The author's closing gate scored 2/5; N1, N2 and N10 (the placement freeze and reticle, the oversized buttons) were fixed in #89 and #90. The rest are class C or D, found at the gate and not fixed in V5.1; the numbers are the gate report's. Each has the tier that should take it.
+
+- **N3, "still a lot of useless text everywhere".** Less text per panel. **Owner:** Interface and Content; partly V5.3b (`docs/design/v5.1-gate-triage.md` G14).
+- **N4, "what is the point of notes?"** Notes ask nothing and carry no action. **Owner:** Gameplay and Interface; V5.2's requests replace asking-notes (`docs/design/decision-surfaces.md`: notes never hold the clock).
+- **N5, "legislature tab is clunky and heavy".** A 140 ms frame on opening it; see "An OPEN panel's own refresh" (law 174 ms) in this page. **Owner:** Interface (`src/ui/legislature_panel*`).
+- **N6, a state visit has no scene for any partner but DEU and ITA.** `data/summits/` holds two scene pools; for any other partner the day resolves to a note ("KEPT: STATE VISIT", `main.gd`'s `card_appointment`) with no scene and no hold, so a visit to Spain booked at speed 3 did not stop the game. By design today, not a bug. **Owner:** Content and Gameplay; V5.2 (people who talk, audiences).
+- **N7, a summit offers few choices.** "tres peu de choix se sont offert a moi": the Germany summit has two choices and Continue (`data/summits/DEU_ruhr_dinner.json`). **Owner:** Content and Gameplay; V5.2.
+- **N8, "the game lack soul".** **Owner:** Gameplay; V5.2 (people who talk).
+- **N9, "some panels are really monolithic and uneasy to read".** The Legislature is the one named. **Owner:** Interface; partly V5.3b (G14).
+- **N11, "i need graph, diagrams, to make data more digest".** A feature, not planned in V5.1. **Owner:** Interface and Systems; V5.3b's statistics service.
+- **N12, a hydro plant can be placed anywhere in France, with no river check.** Unverified in code (`src/sim/energy.gd` placement). **Owner:** Gameplay and Systems; V5.3c's construction register and siting (`docs/tiers/v5.md`, V5.3 c).
+
 ## Carried from V5.1-c (2026-10-22)
 
 - **`main.gd` keeps its total-lines exception** (2 124 lines, 1 090 code): the decision and programme holds and the desk cards (~130 lines) still live there; moving them out (a `clock_holds.gd`, the plan's) removes the `TOTAL_EXCEPTIONS` entry in `tools/check_size.py`. **Owner:** V5.1d.
