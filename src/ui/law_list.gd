@@ -34,6 +34,12 @@ const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 ## a grey for the undecided between them (the dataviz method's diverging rule).
 const FORECAST_COLORS := [Color("#3987e5"), Color(0.557, 0.596, 0.624), Color("#d95926")]
 const BAR_WIDTH := 120.0
+## A law's name never squeezes below this (px at 100 %); past it the name clips
+## and its tooltip carries it whole.
+const NAME_WIDTH := 190.0
+## The row's fixed columns, px at text size 100 %: theme, majority, the second
+## chamber's glyph, the court's.
+const COLUMNS := [80.0, 104.0, 118.0, 82.0]
 ## The share a law needs, by its amendment rule; an ordinary law needs a half.
 const RULE_SHARE := {"three_fifths": 0.6, "two_thirds": 2.0 / 3.0, "three_quarters": 0.75}
 
@@ -48,15 +54,18 @@ func _init(panel) -> void:
 	name = "Laws"  # i18n: ok
 	add_theme_constant_override("separation", 20)
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_rows = _column(self, 0.55)
+	_rows = _column(self, 0.6)
 	_rows.add_theme_constant_override("separation", 2)
-	_detail = _column(self, 0.45)
+	_detail = _column(self, 0.4)
 	_detail.add_theme_constant_override("separation", 8)
 
 
 func _column(parent: Control, ratio: float) -> VBoxContainer:
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# EXPAND, so the tab page lets the panel fill the dock (tab_page.gd's
+	# _scrolls_inside, QA #54's list that stopped two thirds down).
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_stretch_ratio = ratio
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	parent.add_child(scroll)
@@ -106,23 +115,32 @@ func _row(ns, party_list: Array, law, selected: bool) -> Control:
 	pick.button_pressed = selected
 	pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pick.clip_text = true
+	pick.custom_minimum_size.x = NAME_WIDTH * UiTheme.text_scale()
 	pick.pressed.connect(select.bind(String(law.id)))
 	row.add_child(pick)
-	row.add_child(_chip(PanelKit.Labels.law_theme(law.theme)))
-	row.add_child(_chip(_panel._majority_phrase(ns, law)))
+	pick.tooltip_text = pick.text
+	# Fixed widths, so every row's chips, bar and glyphs stand in the same columns
+	# whatever the law's name -- a list read down a column, not row by row.
+	row.add_child(_chip(PanelKit.Labels.law_theme(law.theme), UiTheme.CAPTION, COLUMNS[0]))
+	row.add_child(_chip(_panel._majority_phrase(ns, law), UiTheme.CAPTION, COLUMNS[1]))
 	row.add_child(_forecast_bar(ns, party_list, law, BAR_WIDTH))
+	var slots := {"upper": _chip("", UiTheme.CAPTION, COLUMNS[2]), "court": _chip("", UiTheme.CAPTION, COLUMNS[3])}
 	for part in after_parts(ns, party_list, law, _panel.FORECAST_UNCERTAIN_BAND):
-		var glyph := _chip(String(part["glyph"]), String(part["tone"]))
+		var glyph: Label = slots[part["slot"]]
+		glyph.text = String(part["glyph"])
+		glyph.theme_type_variation = String(part["tone"])
 		glyph.tooltip_text = String(part["text"])
 		glyph.mouse_filter = Control.MOUSE_FILTER_PASS
-		row.add_child(glyph)
+	row.add_child(slots["upper"])
+	row.add_child(slots["court"])
 	return row
 
 
-func _chip(text: String, tone := UiTheme.CAPTION) -> Label:
+func _chip(text: String, tone := UiTheme.CAPTION, width := 0.0) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.theme_type_variation = tone
+	label.custom_minimum_size.x = width * UiTheme.text_scale()
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return label
 
@@ -159,24 +177,24 @@ static func after_parts(ns, party_list: Array, law, band: float) -> Array:
 		var upper := Legislature.resolve_upper(ns, party_list, law)
 		var margin: int = int(upper["yes_seats"]) - int(upper["no_seats"])
 		if absi(margin) <= int(float(upper["seats_total"]) * band):
-			parts.append({"glyph": Strings.t("%s ?") % chamber, "tone": UiTheme.WARN_TEXT,
+			parts.append({"slot": "upper", "glyph": Strings.t("%s ?") % chamber, "tone": UiTheme.WARN_TEXT,
 				"text": Strings.t("%s: too close to call.") % chamber})
 		elif bool(upper["passed"]):
-			parts.append({"glyph": Strings.t("%s agrees") % chamber, "tone": UiTheme.CAPTION,
+			parts.append({"slot": "upper", "glyph": Strings.t("%s agrees") % chamber, "tone": UiTheme.CAPTION,
 				"text": Strings.t("%s: expected to agree.") % chamber})
 		elif power == ChambersK.VERDICT_ABSOLUTE:
-			parts.append({"glyph": Strings.t("%s blocks") % chamber, "tone": UiTheme.BAD_TEXT,
+			parts.append({"slot": "upper", "glyph": Strings.t("%s blocks") % chamber, "tone": UiTheme.BAD_SMALL,
 				"text": Strings.t("%s: expected to refuse, and it cannot be overridden.") % chamber})
 		else:
-			parts.append({"glyph": Strings.t("%s holds %d mo") % [chamber, ChambersK.UPPER_HOLD_MONTHS], "tone": UiTheme.WARN_TEXT,
+			parts.append({"slot": "upper", "glyph": Strings.t("%s holds %d mo") % [chamber, ChambersK.UPPER_HOLD_MONTHS], "tone": UiTheme.WARN_TEXT,
 				"text": Strings.t("%s: expected to refuse, holding it %d months.") % [chamber, ChambersK.UPPER_HOLD_MONTHS]})
 	if Judiciary.reviews(ns, law):
 		var tolerance: float = Judiciary.tolerance(ns)
 		if Judiciary.strikes_down(ns, law):
-			parts.append({"glyph": Strings.t("court strikes"), "tone": UiTheme.BAD_TEXT,
+			parts.append({"slot": "court", "glyph": Strings.t("court strikes"), "tone": UiTheme.BAD_SMALL,
 				"text": Strings.t("The court would strike it down: it reaches %s against %s.") % [Num.f(law.reach, 2), Num.f(tolerance, 2)]})
 		elif law.reach > 0.0:
-			parts.append({"glyph": Strings.t("court stands"), "tone": UiTheme.CAPTION,
+			parts.append({"slot": "court", "glyph": Strings.t("court stands"), "tone": UiTheme.CAPTION,
 				"text": Strings.t("The court would let it stand: it reaches %s against %s.") % [Num.f(law.reach, 2), Num.f(tolerance, 2)]})
 	return parts
 

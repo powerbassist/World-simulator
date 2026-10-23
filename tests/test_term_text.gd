@@ -160,7 +160,7 @@ func _check_the_sinks_mark_terms() -> void:
 func _check_the_row_sinks() -> void:
 	var sinks := {
 		"res://src/ui/events_panel.gd": ["PanelKit.rich(block, what)"],
-		"res://src/ui/law_panel.gd": ["PanelKit.rich(box, Strings.law_summary(law), PanelKit.Tone.PLAIN)"],
+		"res://src/ui/law_list.gd": ["PanelKit.rich(_detail, Strings.law_summary(law), PanelKit.Tone.PLAIN)"],
 		"res://src/ui/agenda_panel.gd": [
 			'PanelKit.rich(block, Strings.row_summary("programme", terms))',
 			'button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("programme", terms))',
