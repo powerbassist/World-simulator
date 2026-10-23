@@ -1456,6 +1456,19 @@ var commitments: Array[Dictionary] = []
 ## {kind, person_id, size, month}, month absolute.
 var exposure_evidence: Array[Dictionary] = []
 
+# --- Audience requests (V5.2b) ----------------------------------------------------
+## The REQUESTS lane: every request a person of this nation made to the
+## president, pending and recently resolved, one row each --
+## {id, person_id, object, stance, arrived_month, deadline_month, status, date,
+## resolved_month}, months absolute. Written by src/sim/audiences.gd alone; the
+## lane the inbox shows IS this register, so nothing between them can drop one.
+## absent_ok, no bump: before V5.2b nobody asked, which is what absent reads.
+var audience_requests: Array[Dictionary] = []
+
+## person id -> the absolute month they last asked (the per-person cooldown).
+## absent_ok for the same reason: nobody has asked yet.
+var audience_asked_month := {}
+
 # --- The commodity layer (V4.6) -------------------------------------------------
 ## The nation's commodity state: what it can make, what it wants, what it made,
 ## what it bought and sold, and the ONE world price vector. Written by
