@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "ifju_polgarok_szovetsege",
+      "funds_eur_m": 27.0,
       "name": "Ifjú Polgárok Szövetsége",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.52,
@@ -12,6 +13,7 @@
     },
     {
       "id": "kereszteny_nepszovetseg",
+      "funds_eur_m": 2.9,
       "name": "Keresztény Népszövetség",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.09,
@@ -22,6 +24,7 @@
     },
     {
       "id": "duna_szovetseg",
+      "funds_eur_m": 7.7,
       "name": "Duna Szövetség",
       "ideology_slot": "centrist",
       "seat_share": 0.155,
@@ -35,6 +38,7 @@
     },
     {
       "id": "halado_koalicio",
+      "funds_eur_m": 4.0,
       "name": "Haladó Koalíció",
       "ideology_slot": "progressive_liberal",
       "seat_share": 0.09,
@@ -48,6 +52,7 @@
     },
     {
       "id": "szocialista_unio",
+      "funds_eur_m": 2.8,
       "name": "Szocialista Unió",
       "ideology_slot": "social_democratic",
       "seat_share": 0.065,
@@ -61,6 +66,7 @@
     },
     {
       "id": "anyafold_mozgalom",
+      "funds_eur_m": 3.5,
       "name": "Anyaföld Mozgalom",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.08,

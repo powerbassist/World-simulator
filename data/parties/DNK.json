@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "socialdemokratisk_union",
+      "funds_eur_m": 25.0,
       "name": "Socialdemokratisk Union",
       "ideology_slot": "social_democratic",
       "seat_share": 0.36,
@@ -14,6 +15,7 @@
     },
     {
       "id": "liberalt_centrum",
+      "funds_eur_m": 10.0,
       "name": "Liberalt Centrum",
       "ideology_slot": "liberal",
       "seat_share": 0.17,
@@ -24,6 +26,7 @@
     },
     {
       "id": "dansk_folkefront",
+      "funds_eur_m": 5.6,
       "name": "Dansk Folkefront",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.1,
@@ -34,6 +37,7 @@
     },
     {
       "id": "det_borgerlige_samling",
+      "funds_eur_m": 12.0,
       "name": "Det Borgerlige Samling",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.15,
@@ -44,6 +48,7 @@
     },
     {
       "id": "frie_radikale",
+      "funds_eur_m": 8.0,
       "name": "Frie Radikale",
       "ideology_slot": "centrist_liberal",
       "seat_share": 0.11,
@@ -56,6 +61,7 @@
     },
     {
       "id": "gron_fremtid",
+      "funds_eur_m": 5.3,
       "name": "Grøn Fremtid",
       "ideology_slot": "green",
       "seat_share": 0.11,

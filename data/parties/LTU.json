@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "socialine_pazanga",
+      "funds_eur_m": 7.2,
       "name": "Socialinė Pažanga",
       "ideology_slot": "social_democratic",
       "seat_share": 0.26,
@@ -14,6 +15,7 @@
     },
     {
       "id": "krikscioniu_tautos_sajunga",
+      "funds_eur_m": 7.0,
       "name": "Krikščionių Tautos Sąjunga",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.24,
@@ -26,6 +28,7 @@
     },
     {
       "id": "tautos_ausra",
+      "funds_eur_m": 4.1,
       "name": "Tautos Aušra",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.19,
@@ -36,6 +39,7 @@
     },
     {
       "id": "kaimo_sajunga",
+      "funds_eur_m": 4.0,
       "name": "Kaimo Sąjunga",
       "ideology_slot": "centrist",
       "seat_share": 0.16,
@@ -46,6 +50,7 @@
     },
     {
       "id": "pazangos_liberalai",
+      "funds_eur_m": 3.0,
       "name": "Pažangos Liberalai",
       "ideology_slot": "liberal",
       "seat_share": 0.15,

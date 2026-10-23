@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "HUN_balogh",
+      "social_skill": 0.52,
+      "wealth_eur_m": 0.6,
+      "spouse_id": "HUN_chief_bank_egressy",
       "name": "Zsolt Balogh",
       "kind": "politician",
       "traits": [
@@ -20,6 +23,8 @@
     },
     {
       "id": "HUN_cser",
+      "social_skill": 0.58,
+      "wealth_eur_m": 2.4,
       "name": "Gábor Cser",
       "kind": "politician",
       "traits": [
@@ -37,6 +42,8 @@
     },
     {
       "id": "HUN_daroczi",
+      "social_skill": 0.7,
+      "wealth_eur_m": 3.2,
       "name": "Réka Daróczi",
       "kind": "politician",
       "traits": [
@@ -59,6 +66,8 @@
     },
     {
       "id": "HUN_kallai",
+      "social_skill": 0.73,
+      "wealth_eur_m": 3.8,
       "name": "Marcell Kállai",
       "kind": "politician",
       "traits": [
@@ -77,6 +86,8 @@
     },
     {
       "id": "HUN_molnar",
+      "social_skill": 0.45,
+      "wealth_eur_m": 0.6,
       "name": "Ildikó Molnár",
       "kind": "politician",
       "traits": [
@@ -98,6 +109,8 @@
     },
     {
       "id": "HUN_nagy",
+      "social_skill": 0.74,
+      "wealth_eur_m": 3.2,
       "name": "Bence Nagy",
       "kind": "politician",
       "traits": [
@@ -115,6 +128,8 @@
     },
     {
       "id": "HUN_szekely",
+      "social_skill": 0.67,
+      "wealth_eur_m": 1.8,
       "name": "Tünde Székely",
       "kind": "politician",
       "traits": [
@@ -1286,6 +1301,7 @@
     },
     {
       "id": "HUN_chief_bank_egressy",
+      "spouse_id": "HUN_balogh",
       "name": "László Egressy",
       "kind": "executive",
       "traits": [

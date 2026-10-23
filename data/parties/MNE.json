@@ -1,10 +1,10 @@
 {
   "parties": [
-    {"id": "pokret_novi_talas", "name": "Pokret Novi talas", "ideology_slot": "centrist_liberal", "seat_share": 0.296, "leader_person": "MNE_vujosevic", "discipline": 0.8, "competence": 0.65, "excluded_partners": []},
-    {"id": "gradjanska_stranka", "name": "Građanska stranka Crne Gore", "ideology_slot": "social_democratic", "seat_share": 0.21, "leader_person": "MNE_vukcevic", "discipline": 0.85, "competence": 0.7, "excluded_partners": ["srpski_narodni_blok"]},
-    {"id": "srpski_narodni_blok", "name": "Srpski narodni blok", "ideology_slot": "nationalist_right", "seat_share": 0.16, "leader_person": "MNE_jovicevic", "discipline": 0.8, "competence": 0.55, "excluded_partners": ["gradjanska_stranka"]},
-    {"id": "pokret_centra", "name": "Pokret centra", "ideology_slot": "centrist", "seat_share": 0.136, "leader_person": "MNE_raicevic", "discipline": 0.8, "competence": 0.6, "excluded_partners": []},
-    {"id": "savez_manjina", "name": "Savez manjina", "ideology_slot": "regionalist", "seat_share": 0.148, "leader_person": "MNE_kurpejovic", "discipline": 0.85, "competence": 0.6, "excluded_partners": []},
-    {"id": "socijalni_front", "name": "Socijalni front", "ideology_slot": "social_democratic", "seat_share": 0.05, "leader_person": "MNE_bojovic", "discipline": 0.8, "competence": 0.5, "excluded_partners": []}
+    {"id": "pokret_novi_talas", "funds_eur_m": 2.2, "name": "Pokret Novi talas", "ideology_slot": "centrist_liberal", "seat_share": 0.296, "leader_person": "MNE_vujosevic", "discipline": 0.8, "competence": 0.65, "excluded_partners": []},
+    {"id": "gradjanska_stranka", "funds_eur_m": 1.5, "name": "Građanska stranka Crne Gore", "ideology_slot": "social_democratic", "seat_share": 0.21, "leader_person": "MNE_vukcevic", "discipline": 0.85, "competence": 0.7, "excluded_partners": ["srpski_narodni_blok"]},
+    {"id": "srpski_narodni_blok", "funds_eur_m": 1.7, "name": "Srpski narodni blok", "ideology_slot": "nationalist_right", "seat_share": 0.16, "leader_person": "MNE_jovicevic", "discipline": 0.8, "competence": 0.55, "excluded_partners": ["gradjanska_stranka"]},
+    {"id": "pokret_centra", "funds_eur_m": 1.4, "name": "Pokret centra", "ideology_slot": "centrist", "seat_share": 0.136, "leader_person": "MNE_raicevic", "discipline": 0.8, "competence": 0.6, "excluded_partners": []},
+    {"id": "savez_manjina", "funds_eur_m": 1.1, "name": "Savez manjina", "ideology_slot": "regionalist", "seat_share": 0.148, "leader_person": "MNE_kurpejovic", "discipline": 0.85, "competence": 0.6, "excluded_partners": []},
+    {"id": "socijalni_front", "funds_eur_m": 0.37, "name": "Socijalni front", "ideology_slot": "social_democratic", "seat_share": 0.05, "leader_person": "MNE_bojovic", "discipline": 0.8, "competence": 0.5, "excluded_partners": []}
   ]
 }

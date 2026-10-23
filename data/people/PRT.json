@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "PRT_salgueiro",
+      "social_skill": 0.57,
+      "wealth_eur_m": 2.7,
+      "spouse_id": "PRT_chief_aguiar_agricultura",
       "name": "Marta Salgueiro",
       "kind": "politician",
       "traits": [
@@ -27,6 +30,8 @@
     },
     {
       "id": "PRT_vasconcelos",
+      "social_skill": 0.59,
+      "wealth_eur_m": 5.4,
       "name": "Duarte Vasconcelos",
       "kind": "politician",
       "traits": [
@@ -53,6 +58,8 @@
     },
     {
       "id": "PRT_sequeira",
+      "social_skill": 0.6,
+      "wealth_eur_m": 2.7,
       "name": "Rui Sequeira",
       "kind": "politician",
       "traits": [
@@ -70,6 +77,8 @@
     },
     {
       "id": "PRT_amaral",
+      "social_skill": 0.56,
+      "wealth_eur_m": 2.2,
       "name": "Tiago Amaral",
       "kind": "politician",
       "traits": [
@@ -92,6 +101,8 @@
     },
     {
       "id": "PRT_pacheco",
+      "social_skill": 0.55,
+      "wealth_eur_m": 2.3,
       "name": "Filipa Pacheco",
       "kind": "politician",
       "traits": [
@@ -114,6 +125,8 @@
     },
     {
       "id": "PRT_loureiro",
+      "social_skill": 0.66,
+      "wealth_eur_m": 1.9,
       "name": "Vasco Loureiro",
       "kind": "politician",
       "traits": [
@@ -136,6 +149,8 @@
     },
     {
       "id": "PRT_beja",
+      "social_skill": 0.81,
+      "wealth_eur_m": 3.3,
       "name": "Beatriz Beja",
       "kind": "politician",
       "traits": [
@@ -1250,6 +1265,7 @@
     },
     {
       "id": "PRT_chief_aguiar_agricultura",
+      "spouse_id": "PRT_salgueiro",
       "name": "Elvira Aguiar",
       "kind": "executive",
       "traits": [

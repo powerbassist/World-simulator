@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "GRC_vlachos",
+      "social_skill": 0.64,
+      "wealth_eur_m": 1.4,
+      "spouse_id": "GRC_sakellaropoulos",
       "name": "Nikiforos Vlachos",
       "kind": "politician",
       "traits": [
@@ -26,6 +29,9 @@
     },
     {
       "id": "GRC_stavrou",
+      "social_skill": 0.59,
+      "wealth_eur_m": 8.3,
+      "spouse_id": "GRC_triantafyllou",
       "name": "Iason Stavrou",
       "kind": "politician",
       "traits": [
@@ -51,6 +57,8 @@
     },
     {
       "id": "GRC_iliopoulos",
+      "social_skill": 0.61,
+      "wealth_eur_m": 3.4,
       "name": "Takis Iliopoulos",
       "kind": "politician",
       "traits": [
@@ -67,6 +75,8 @@
     },
     {
       "id": "GRC_petraki",
+      "social_skill": 0.53,
+      "wealth_eur_m": 1.9,
       "name": "Sofia Petraki",
       "kind": "politician",
       "traits": [
@@ -89,6 +99,8 @@
     },
     {
       "id": "GRC_nikolaidis",
+      "social_skill": 0.54,
+      "wealth_eur_m": 1.8,
       "name": "Georgios Nikolaidis",
       "kind": "politician",
       "traits": [
@@ -110,6 +122,8 @@
     },
     {
       "id": "GRC_markou",
+      "social_skill": 0.65,
+      "wealth_eur_m": 3.4,
       "name": "Lefteris Markou",
       "kind": "politician",
       "traits": [
@@ -132,6 +146,8 @@
     },
     {
       "id": "GRC_zervos",
+      "social_skill": 0.62,
+      "wealth_eur_m": 1.3,
       "name": "Eleni Zervos",
       "kind": "politician",
       "traits": [
@@ -860,6 +876,7 @@
     },
     {
       "id": "GRC_sakellaropoulos",
+      "spouse_id": "GRC_vlachos",
       "name": "Evangelos Sakellaropoulos",
       "kind": "regional_figure",
       "traits": [
@@ -882,6 +899,7 @@
     },
     {
       "id": "GRC_triantafyllou",
+      "spouse_id": "GRC_stavrou",
       "name": "Ioannis Triantafyllou",
       "kind": "activist",
       "traits": [

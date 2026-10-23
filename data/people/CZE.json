@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "CZE_svehlik",
+      "social_skill": 0.55,
+      "wealth_eur_m": 5.0,
+      "spouse_id": "CZE_havlicek",
       "name": "Martin Švehlík",
       "kind": "politician",
       "traits": [
@@ -23,6 +26,8 @@
     },
     {
       "id": "CZE_kraus",
+      "social_skill": 0.58,
+      "wealth_eur_m": 1.3,
       "name": "Miloš Kraus",
       "kind": "politician",
       "traits": [
@@ -45,6 +50,8 @@
     },
     {
       "id": "CZE_siska",
+      "social_skill": 0.34,
+      "wealth_eur_m": 1.1,
       "name": "Radek Šiška",
       "kind": "politician",
       "traits": [
@@ -62,6 +69,8 @@
     },
     {
       "id": "CZE_dobesova",
+      "social_skill": 0.64,
+      "wealth_eur_m": 3.8,
       "name": "Klára Doběšová",
       "kind": "politician",
       "traits": [
@@ -87,6 +96,8 @@
     },
     {
       "id": "CZE_strnad",
+      "social_skill": 0.51,
+      "wealth_eur_m": 3.4,
       "name": "Jakub Strnad",
       "kind": "politician",
       "traits": [
@@ -112,6 +123,8 @@
     },
     {
       "id": "CZE_holub",
+      "social_skill": 0.64,
+      "wealth_eur_m": 2.5,
       "name": "Karel Holub",
       "kind": "politician",
       "traits": [
@@ -130,6 +143,8 @@
     },
     {
       "id": "CZE_krejcova",
+      "social_skill": 0.62,
+      "wealth_eur_m": 5.1,
       "name": "Milena Krejčová",
       "kind": "politician",
       "traits": [
@@ -974,6 +989,7 @@
     },
     {
       "id": "CZE_havlicek",
+      "spouse_id": "CZE_svehlik",
       "name": "Luboš Havlíček",
       "kind": "judge",
       "traits": [

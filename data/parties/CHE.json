@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "alliance_nationale_suisse",
+      "funds_eur_m": 19.0,
       "name": "Alliance Nationale Suisse",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.25,
@@ -12,6 +13,7 @@
     },
     {
       "id": "parti_radical_liberal",
+      "funds_eur_m": 16.0,
       "name": "Parti Radical Libéral",
       "ideology_slot": "liberal",
       "seat_share": 0.18,
@@ -22,6 +24,7 @@
     },
     {
       "id": "union_ouvriere_helvetique",
+      "funds_eur_m": 13.0,
       "name": "Union Ouvrière Helvétique",
       "ideology_slot": "social_democratic",
       "seat_share": 0.17,
@@ -32,6 +35,7 @@
     },
     {
       "id": "centre_federal",
+      "funds_eur_m": 15.0,
       "name": "Centre Fédéral",
       "ideology_slot": "centrist",
       "seat_share": 0.15,
@@ -42,6 +46,7 @@
     },
     {
       "id": "verts_helvetiques",
+      "funds_eur_m": 9.1,
       "name": "Verts Helvétiques",
       "ideology_slot": "green",
       "seat_share": 0.13,
@@ -52,6 +57,7 @@
     },
     {
       "id": "ligue_populaire",
+      "funds_eur_m": 10.0,
       "name": "Ligue Populaire",
       "ideology_slot": "left_populist",
       "seat_share": 0.12,

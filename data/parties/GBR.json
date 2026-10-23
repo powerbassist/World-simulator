@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "national_unity_party",
+      "funds_eur_m": 64.0,
       "name": "National Unity Party",
       "ideology_slot": "centre_right",
       "seat_share": 0.3,
@@ -14,6 +15,7 @@
     },
     {
       "id": "progress_alliance",
+      "funds_eur_m": 70.0,
       "name": "Progress Alliance",
       "ideology_slot": "social_democratic",
       "seat_share": 0.32,
@@ -26,6 +28,7 @@
     },
     {
       "id": "liberal_union",
+      "funds_eur_m": 22.0,
       "name": "Liberal Union",
       "ideology_slot": "liberal",
       "seat_share": 0.12,
@@ -36,6 +39,7 @@
     },
     {
       "id": "patriot_front",
+      "funds_eur_m": 20.0,
       "name": "Patriot Front",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.14,
@@ -46,6 +50,7 @@
     },
     {
       "id": "ecology_alliance",
+      "funds_eur_m": 7.6,
       "name": "Ecology Alliance",
       "ideology_slot": "green",
       "seat_share": 0.06,
@@ -56,6 +61,7 @@
     },
     {
       "id": "home_nations_bloc",
+      "funds_eur_m": 14.0,
       "name": "Home Nations Bloc",
       "ideology_slot": "regionalist",
       "seat_share": 0.06,

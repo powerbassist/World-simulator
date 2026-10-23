@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "vlaamse_toekomst",
+      "funds_eur_m": 10.0,
       "name": "Vlaamse Toekomst",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.17,
@@ -12,6 +13,7 @@
     },
     {
       "id": "burgerforum",
+      "funds_eur_m": 12.0,
       "name": "Burgerforum",
       "ideology_slot": "liberal",
       "seat_share": 0.2,
@@ -24,6 +26,7 @@
     },
     {
       "id": "sociale_vooruitgang",
+      "funds_eur_m": 18.0,
       "name": "Sociale Vooruitgang",
       "ideology_slot": "social_democratic",
       "seat_share": 0.19,
@@ -36,6 +39,7 @@
     },
     {
       "id": "federaal_herstel",
+      "funds_eur_m": 14.0,
       "name": "Federaal Herstel",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.16,
@@ -48,6 +52,7 @@
     },
     {
       "id": "groen_front",
+      "funds_eur_m": 11.0,
       "name": "Groen Front",
       "ideology_slot": "green",
       "seat_share": 0.13,
@@ -60,6 +65,7 @@
     },
     {
       "id": "linkse_eenheid",
+      "funds_eur_m": 8.9,
       "name": "Linkse Eenheid",
       "ideology_slot": "left_populist",
       "seat_share": 0.15,

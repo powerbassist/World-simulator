@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "nea_politiki",
+      "funds_eur_m": 25.0,
       "name": "Nea Politiki",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.42,
@@ -15,6 +16,7 @@
     },
     {
       "id": "sosialistiko_kinima",
+      "funds_eur_m": 5.5,
       "name": "Sosialistiko Kinima",
       "ideology_slot": "social_democratic",
       "seat_share": 0.145,
@@ -27,6 +29,7 @@
     },
     {
       "id": "laiki_rizospastiki",
+      "funds_eur_m": 13.0,
       "name": "Laiki Rizospastiki",
       "ideology_slot": "left_populist",
       "seat_share": 0.2,
@@ -37,6 +40,7 @@
     },
     {
       "id": "elliniki_poreia",
+      "funds_eur_m": 3.1,
       "name": "Elliniki Poreia",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.06,
@@ -47,6 +51,7 @@
     },
     {
       "id": "ergatiko_kommounistiko_komma",
+      "funds_eur_m": 3.8,
       "name": "Ergatiko Kommounistiko Komma",
       "ideology_slot": "left_populist",
       "seat_share": 0.095,
@@ -57,6 +62,7 @@
     },
     {
       "id": "poreia_eleftherias",
+      "funds_eur_m": 2.7,
       "name": "Poreia Eleftherias",
       "ideology_slot": "progressive_liberal",
       "seat_share": 0.08,

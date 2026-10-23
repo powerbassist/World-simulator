@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "MNE_vujosevic",
+      "social_skill": 0.65,
+      "wealth_eur_m": 2.9,
       "name": "Luka Vujošević",
       "kind": "politician",
       "traits": [
@@ -23,6 +25,8 @@
     },
     {
       "id": "MNE_vukcevic",
+      "social_skill": 0.65,
+      "wealth_eur_m": 1.3,
       "name": "Dragana Vukčević",
       "kind": "politician",
       "traits": [
@@ -44,6 +48,8 @@
     },
     {
       "id": "MNE_jovicevic",
+      "social_skill": 0.53,
+      "wealth_eur_m": 0.61,
       "name": "Nebojša Jovićević",
       "kind": "politician",
       "traits": [
@@ -61,6 +67,8 @@
     },
     {
       "id": "MNE_raicevic",
+      "social_skill": 0.52,
+      "wealth_eur_m": 0.83,
       "name": "Ivana Raičević",
       "kind": "politician",
       "traits": [
@@ -78,6 +86,8 @@
     },
     {
       "id": "MNE_kurpejovic",
+      "social_skill": 0.55,
+      "wealth_eur_m": 1.6,
       "name": "Senad Kurpejović",
       "kind": "politician",
       "traits": [
@@ -95,6 +105,8 @@
     },
     {
       "id": "MNE_bojovic",
+      "social_skill": 0.42,
+      "wealth_eur_m": 0.46,
       "name": "Rade Bojović",
       "kind": "politician",
       "traits": [
@@ -112,6 +124,9 @@
     },
     {
       "id": "MNE_radonjic",
+      "social_skill": 0.59,
+      "wealth_eur_m": 0.99,
+      "spouse_id": "MNE_chief_boskovic_gradevina",
       "name": "Petar Radonjić",
       "kind": "politician",
       "traits": [
@@ -280,6 +295,7 @@
     },
     {
       "id": "MNE_chief_boskovic_gradevina",
+      "spouse_id": "MNE_radonjic",
       "name": "Danilo Bošković",
       "kind": "executive",
       "traits": [
