@@ -49,6 +49,7 @@ extends Control
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const PlacementReticle = preload("res://src/ui/placement_reticle.gd")
 const MapRaster = preload("res://src/ui/map_raster.gd")
 const MapGround = preload("res://src/ui/map_ground.gd")
 const Roster = preload("res://src/core/roster.gd")
@@ -106,12 +107,14 @@ var _placing: bool = false
 
 func begin_placement() -> void:
 	_placing = true
+	$Reticle.show()
 	mouse_default_cursor_shape = Control.CURSOR_CROSS
 	queue_redraw()
 
 
 func end_placement() -> void:
 	_placing = false
+	$Reticle.hide()
 	mouse_default_cursor_shape = Control.CURSOR_ARROW
 	queue_redraw()
 
@@ -456,6 +459,7 @@ func _ready() -> void:
 	# photograph has no mipmaps and falls back to plain linear, as before.
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_ensure_layers()
+	add_child(PlacementReticle.new())
 
 
 ## The projected layers, built on first need: menu.gd calls setup() BEFORE
@@ -1090,14 +1094,6 @@ func _draw() -> void:
 			return _lonlat_to_screen(lon, lat))
 	# Frontmost: a readout is text the player asked for with the cursor.
 	_draw_outline_readout()
-	if _placing:
-		# The attention reticle at the cursor -- a STATUS tone, the same one that marks
-		# a cluster with something waiting (V2.1c's rule: one visual language for "we
-		# are waiting on you"), not the nation's accent.
-		var at := get_local_mouse_position()
-		draw_arc(at, 14.0, 0.0, TAU, 32, UiTheme.WARN, 1.5)
-		draw_line(at - Vector2(20, 0), at + Vector2(20, 0), UiTheme.WARN, 1.0)
-		draw_line(at - Vector2(0, 20), at + Vector2(0, 20), UiTheme.WARN, 1.0)
 
 
 ## V4.10a. How much of the ground is drawn over the photograph at this zoom: 0
