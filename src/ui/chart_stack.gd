@@ -19,6 +19,7 @@ var _parts: Array = []
 var _unit := ""
 var _marker := -1.0
 var _places := -1
+var _colors: Array = ChartStyle.SERIES
 
 
 func setup(parts: Array, opts := {}) -> void:
@@ -26,6 +27,7 @@ func setup(parts: Array, opts := {}) -> void:
 	_unit = String(opts.get("unit", ""))
 	_marker = float(opts.get("marker", -1.0))
 	_places = int(opts.get("places", -1))
+	_colors = opts.get("colors", ChartStyle.SERIES)
 	custom_minimum_size = Vector2(0.0, BAR + 8.0)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	queue_redraw()
@@ -70,7 +72,7 @@ func _draw() -> void:
 	for i in _parts.size():
 		var r: Rect2 = rects[i]
 		if r.size.x > 0.0:
-			draw_rect(Rect2(r.position + Vector2(0.0, 4.0), r.size), ChartStyle.SERIES[mini(i, ChartStyle.SERIES.size() - 1)])
+			draw_rect(Rect2(r.position + Vector2(0.0, 4.0), r.size), _colors[mini(i, _colors.size() - 1)])
 	if _marker >= 0.0:
 		var x := size.x * _marker
 		draw_line(Vector2(x, 0.0), Vector2(x, BAR + 8.0), UiTheme.TEXT, 1.0)
