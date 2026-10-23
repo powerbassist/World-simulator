@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "movimento_reformista",
+      "funds_eur_m": 19.0,
       "name": "Movimento Reformista",
       "ideology_slot": "centre_right",
       "seat_share": 0.34,
@@ -12,6 +13,7 @@
     },
     {
       "id": "partido_solidarista",
+      "funds_eur_m": 15.0,
       "name": "Partido Solidarista",
       "ideology_slot": "social_democratic",
       "seat_share": 0.27,
@@ -24,6 +26,7 @@
     },
     {
       "id": "frente_patria",
+      "funds_eur_m": 7.3,
       "name": "Frente Pátria",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.19,
@@ -34,6 +37,7 @@
     },
     {
       "id": "iniciativa_civica",
+      "funds_eur_m": 4.2,
       "name": "Iniciativa Cívica",
       "ideology_slot": "liberal",
       "seat_share": 0.09,
@@ -46,6 +50,7 @@
     },
     {
       "id": "esquerda_popular",
+      "funds_eur_m": 4.4,
       "name": "Esquerda Popular",
       "ideology_slot": "left_populist",
       "seat_share": 0.07,
@@ -58,6 +63,7 @@
     },
     {
       "id": "uniao_do_centro",
+      "funds_eur_m": 1.8,
       "name": "União do Centro",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.04,

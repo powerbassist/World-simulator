@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "DNK_valdemar_vi",
+      "social_skill": 0.58,
+      "wealth_eur_m": 570.0,
       "name": "Valdemar VI",
       "kind": "politician",
       "traits": [
@@ -24,6 +26,8 @@
     },
     {
       "id": "DNK_sorensen",
+      "social_skill": 0.68,
+      "wealth_eur_m": 7.2,
       "name": "Birte Sørensen",
       "kind": "politician",
       "traits": [
@@ -45,6 +49,8 @@
     },
     {
       "id": "DNK_lindberg",
+      "social_skill": 0.55,
+      "wealth_eur_m": 1.5,
       "name": "Torkil Lindberg",
       "kind": "politician",
       "traits": [
@@ -70,6 +76,8 @@
     },
     {
       "id": "DNK_krogh",
+      "social_skill": 0.49,
+      "wealth_eur_m": 2.0,
       "name": "Jens Erik Krogh",
       "kind": "politician",
       "traits": [
@@ -88,6 +96,8 @@
     },
     {
       "id": "DNK_dahl",
+      "social_skill": 0.68,
+      "wealth_eur_m": 1.6,
       "name": "Astrid Dahl",
       "kind": "politician",
       "traits": [
@@ -113,6 +123,8 @@
     },
     {
       "id": "DNK_brandt",
+      "social_skill": 0.53,
+      "wealth_eur_m": 1.4,
       "name": "Rikke Brandt",
       "kind": "politician",
       "traits": [
@@ -135,6 +147,8 @@
     },
     {
       "id": "DNK_skovgaard",
+      "social_skill": 0.52,
+      "wealth_eur_m": 1.0,
       "name": "Esben Skovgaard",
       "kind": "politician",
       "traits": [

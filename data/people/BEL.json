@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "BEL_van_craen",
+      "social_skill": 0.71,
+      "wealth_eur_m": 2.4,
       "name": "Joris Van Craen",
       "kind": "politician",
       "traits": [
@@ -28,6 +30,9 @@
     },
     {
       "id": "BEL_vandekerckhove",
+      "social_skill": 0.73,
+      "wealth_eur_m": 8.0,
+      "spouse_id": "BEL_peeters",
       "name": "Bram Vandekerckhove",
       "kind": "politician",
       "traits": [
@@ -46,6 +51,8 @@
     },
     {
       "id": "BEL_dewilde",
+      "social_skill": 0.65,
+      "wealth_eur_m": 4.2,
       "name": "Naima Dewilde",
       "kind": "politician",
       "traits": [
@@ -71,6 +78,8 @@
     },
     {
       "id": "BEL_coussement",
+      "social_skill": 0.48,
+      "wealth_eur_m": 3.3,
       "name": "Pieter Coussement",
       "kind": "politician",
       "traits": [
@@ -97,6 +106,8 @@
     },
     {
       "id": "BEL_vanhamme",
+      "social_skill": 0.53,
+      "wealth_eur_m": 2.5,
       "name": "Lore Vanhamme",
       "kind": "politician",
       "traits": [
@@ -122,6 +133,8 @@
     },
     {
       "id": "BEL_segers",
+      "social_skill": 0.53,
+      "wealth_eur_m": 2.6,
       "name": "Tom Segers",
       "kind": "politician",
       "traits": [
@@ -147,6 +160,8 @@
     },
     {
       "id": "BEL_baudouin_iii",
+      "social_skill": 0.65,
+      "wealth_eur_m": 330.0,
       "name": "Baudouin III",
       "kind": "politician",
       "traits": [
@@ -417,6 +432,7 @@
     },
     {
       "id": "BEL_peeters",
+      "spouse_id": "BEL_vandekerckhove",
       "name": "Elke Peeters",
       "kind": "regional_figure",
       "traits": [

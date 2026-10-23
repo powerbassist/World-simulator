@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "EST_lepik",
+      "social_skill": 0.77,
+      "wealth_eur_m": 3.0,
+      "spouse_id": "EST_gerassimov",
       "name": "Madis Lepik",
       "kind": "politician",
       "traits": [
@@ -23,6 +26,8 @@
     },
     {
       "id": "EST_kirus",
+      "social_skill": 0.61,
+      "wealth_eur_m": 0.84,
       "name": "Jaan Kirus",
       "kind": "politician",
       "traits": [
@@ -41,6 +46,8 @@
     },
     {
       "id": "EST_soova",
+      "social_skill": 0.67,
+      "wealth_eur_m": 1.9,
       "name": "Maret Soova",
       "kind": "politician",
       "traits": [
@@ -59,6 +66,8 @@
     },
     {
       "id": "EST_luik",
+      "social_skill": 0.71,
+      "wealth_eur_m": 1.1,
       "name": "Urmas Luik",
       "kind": "politician",
       "traits": [
@@ -84,6 +93,8 @@
     },
     {
       "id": "EST_randma",
+      "social_skill": 0.71,
+      "wealth_eur_m": 0.95,
       "name": "Tiit Randma",
       "kind": "politician",
       "traits": [
@@ -110,6 +121,8 @@
     },
     {
       "id": "EST_talivee",
+      "social_skill": 0.81,
+      "wealth_eur_m": 1.5,
       "name": "Marju Talivee",
       "kind": "politician",
       "traits": [
@@ -1135,6 +1148,7 @@
     },
     {
       "id": "EST_gerassimov",
+      "spouse_id": "EST_lepik",
       "name": "Kadri Gerassimov",
       "kind": "judge",
       "traits": [

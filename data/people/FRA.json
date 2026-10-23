@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "FRA_moucron",
+      "social_skill": 0.53,
+      "wealth_eur_m": 4.3,
       "name": "Daniel Moucron",
       "kind": "politician",
       "traits": [
@@ -19,6 +21,8 @@
     },
     {
       "id": "FRA_vasseur",
+      "social_skill": 0.66,
+      "wealth_eur_m": 4.8,
       "name": "Hélène Vasseur",
       "kind": "politician",
       "traits": [
@@ -44,6 +48,8 @@
     },
     {
       "id": "FRA_lachapelle",
+      "social_skill": 0.49,
+      "wealth_eur_m": 1.6,
       "name": "Bruno Lachapelle",
       "kind": "politician",
       "traits": [
@@ -60,6 +66,8 @@
     },
     {
       "id": "FRA_ferrand",
+      "social_skill": 0.67,
+      "wealth_eur_m": 8.2,
       "name": "Camille Ferrand",
       "kind": "politician",
       "traits": [
@@ -78,6 +86,8 @@
     },
     {
       "id": "FRA_aubertin",
+      "social_skill": 0.47,
+      "wealth_eur_m": 2.1,
       "name": "Gilles Aubertin",
       "kind": "politician",
       "traits": [
@@ -103,6 +113,8 @@
     },
     {
       "id": "FRA_perrault",
+      "social_skill": 0.59,
+      "wealth_eur_m": 2.8,
       "name": "Nadia Perrault",
       "kind": "politician",
       "traits": [
@@ -123,6 +135,8 @@
     },
     {
       "id": "FRA_aumont",
+      "social_skill": 0.65,
+      "wealth_eur_m": 10.0,
       "name": "Cécile Aumont",
       "kind": "politician",
       "traits": [
@@ -141,6 +155,8 @@
     },
     {
       "id": "FRA_charles_xi",
+      "social_skill": 0.42,
+      "wealth_eur_m": 1.3,
       "name": "Charles XI",
       "kind": "politician",
       "traits": [
@@ -158,6 +174,8 @@
     },
     {
       "id": "FRA_verchere",
+      "social_skill": 0.7,
+      "wealth_eur_m": 2.4,
       "name": "Élise Verchère",
       "kind": "politician",
       "traits": [
@@ -180,6 +198,8 @@
     },
     {
       "id": "FRA_tassigny",
+      "social_skill": 0.66,
+      "wealth_eur_m": 82.0,
       "name": "Manon Tassigny",
       "kind": "press_owner",
       "traits": [
@@ -202,6 +222,8 @@
     },
     {
       "id": "FRA_moulinet",
+      "social_skill": 0.71,
+      "wealth_eur_m": 3.5,
       "name": "Élise Moulinet",
       "kind": "politician",
       "traits": [
@@ -225,6 +247,8 @@
     },
     {
       "id": "FRA_beaumanoir",
+      "social_skill": 0.71,
+      "wealth_eur_m": 2.2,
       "name": "Thibault Beaumanoir",
       "kind": "politician",
       "traits": [
@@ -251,6 +275,8 @@
     },
     {
       "id": "FRA_rivalland",
+      "social_skill": 0.35,
+      "wealth_eur_m": 0.51,
       "name": "Émeric Rivalland",
       "kind": "union_leader",
       "traits": [
@@ -263,6 +289,8 @@
     },
     {
       "id": "FRA_chassignol",
+      "social_skill": 0.47,
+      "wealth_eur_m": 0.61,
       "name": "Diane Chassignol",
       "kind": "activist",
       "traits": [
@@ -282,6 +310,8 @@
     },
     {
       "id": "FRA_perecourt",
+      "social_skill": 0.55,
+      "wealth_eur_m": 0.96,
       "name": "Sylvain Pérecourt",
       "kind": "politician",
       "traits": [
@@ -305,6 +335,8 @@
     },
     {
       "id": "FRA_vaugelas",
+      "social_skill": 0.43,
+      "wealth_eur_m": 3.0,
       "name": "Gaspard Vaugelas",
       "kind": "judge",
       "traits": [
@@ -322,6 +354,8 @@
     },
     {
       "id": "FRA_delcour",
+      "social_skill": 0.6,
+      "wealth_eur_m": 3.4,
       "name": "Apolline Delcour",
       "kind": "regional_figure",
       "traits": [
@@ -343,6 +377,8 @@
     },
     {
       "id": "FRA_briandais",
+      "social_skill": 0.55,
+      "wealth_eur_m": 44.0,
       "name": "Émeric Briandais",
       "kind": "press_owner",
       "traits": [
@@ -364,6 +400,8 @@
     },
     {
       "id": "FRA_montcharvin",
+      "social_skill": 0.55,
+      "wealth_eur_m": 3.3,
       "name": "Margaux Montcharvin",
       "kind": "judge",
       "traits": [
@@ -380,6 +418,8 @@
     },
     {
       "id": "FRA_sauvageot",
+      "social_skill": 0.69,
+      "wealth_eur_m": 2.8,
       "name": "Bastien Sauvageot",
       "kind": "politician",
       "traits": [
@@ -402,6 +442,8 @@
     },
     {
       "id": "FRA_lariviere",
+      "social_skill": 0.41,
+      "wealth_eur_m": 2.3,
       "name": "Apolline Larivière",
       "kind": "judge",
       "traits": [
@@ -424,6 +466,8 @@
     },
     {
       "id": "FRA_poncharal",
+      "social_skill": 0.48,
+      "wealth_eur_m": 1.6,
       "name": "Étienne Poncharal",
       "kind": "judge",
       "traits": [
@@ -446,6 +490,8 @@
     },
     {
       "id": "FRA_fermont",
+      "social_skill": 0.53,
+      "wealth_eur_m": 1.5,
       "name": "Étienne Fermont",
       "kind": "regional_figure",
       "traits": [
@@ -469,6 +515,8 @@
     },
     {
       "id": "FRA_griveau",
+      "social_skill": 0.56,
+      "wealth_eur_m": 0.83,
       "name": "Adèle Griveau",
       "kind": "politician",
       "traits": [
@@ -488,6 +536,8 @@
     },
     {
       "id": "FRA_chalandre",
+      "social_skill": 0.76,
+      "wealth_eur_m": 2.3,
       "name": "Thibault Chalandre",
       "kind": "politician",
       "traits": [
@@ -510,6 +560,8 @@
     },
     {
       "id": "FRA_ollivier",
+      "social_skill": 0.66,
+      "wealth_eur_m": 3.5,
       "name": "Diane Ollivier",
       "kind": "politician",
       "traits": [
@@ -531,6 +583,8 @@
     },
     {
       "id": "FRA_marchenay",
+      "social_skill": 0.55,
+      "wealth_eur_m": 3.5,
       "name": "Sylvain Marchenay",
       "kind": "judge",
       "traits": [
@@ -550,6 +604,8 @@
     },
     {
       "id": "FRA_trebosc",
+      "social_skill": 0.55,
+      "wealth_eur_m": 1.0,
       "name": "Aurélien Trébosc",
       "kind": "politician",
       "traits": [
@@ -573,6 +629,8 @@
     },
     {
       "id": "FRA_aubarede",
+      "social_skill": 0.74,
+      "wealth_eur_m": 140.0,
       "name": "Émeric Aubarède",
       "kind": "press_owner",
       "traits": [
@@ -590,6 +648,8 @@
     },
     {
       "id": "FRA_clapiers",
+      "social_skill": 0.59,
+      "wealth_eur_m": 0.95,
       "name": "Loïc Clapiers",
       "kind": "union_leader",
       "traits": [
@@ -611,6 +671,8 @@
     },
     {
       "id": "FRA_nogaret",
+      "social_skill": 0.8,
+      "wealth_eur_m": 160.0,
       "name": "Loïc Nogaret",
       "kind": "press_owner",
       "traits": [
@@ -633,6 +695,8 @@
     },
     {
       "id": "FRA_besombes",
+      "social_skill": 0.4,
+      "wealth_eur_m": 0.9,
       "name": "Anaëlle Bésombes",
       "kind": "activist",
       "traits": [
@@ -651,6 +715,8 @@
     },
     {
       "id": "FRA_vairon",
+      "social_skill": 0.71,
+      "wealth_eur_m": 75.0,
       "name": "Corentin Vairon",
       "kind": "press_owner",
       "traits": [
@@ -672,6 +738,8 @@
     },
     {
       "id": "FRA_madelaine",
+      "social_skill": 0.65,
+      "wealth_eur_m": 130.0,
       "name": "Clarisse Madelaine",
       "kind": "press_owner",
       "traits": [
@@ -690,6 +758,8 @@
     },
     {
       "id": "FRA_rochecotte",
+      "social_skill": 0.62,
+      "wealth_eur_m": 1.4,
       "name": "Romane Rochecotte",
       "kind": "politician",
       "traits": [
@@ -717,6 +787,8 @@
     },
     {
       "id": "FRA_sarrand",
+      "social_skill": 0.58,
+      "wealth_eur_m": 3.2,
       "name": "Corentin Sarrand",
       "kind": "politician",
       "traits": [
@@ -735,6 +807,8 @@
     },
     {
       "id": "FRA_villedieu",
+      "social_skill": 0.54,
+      "wealth_eur_m": 0.94,
       "name": "Émeric Villedieu",
       "kind": "politician",
       "traits": [
@@ -761,6 +835,8 @@
     },
     {
       "id": "FRA_perier",
+      "social_skill": 0.71,
+      "wealth_eur_m": 2.5,
       "name": "Loïc Périer",
       "kind": "politician",
       "traits": [
@@ -788,6 +864,8 @@
     },
     {
       "id": "FRA_ambroise",
+      "social_skill": 0.5,
+      "wealth_eur_m": 1.3,
       "name": "Aurélien Ambroise",
       "kind": "politician",
       "traits": [
@@ -805,6 +883,8 @@
     },
     {
       "id": "FRA_chauvire",
+      "social_skill": 0.54,
+      "wealth_eur_m": 1.2,
       "name": "Sylvain Chauviré",
       "kind": "activist",
       "traits": [
@@ -821,6 +901,8 @@
     },
     {
       "id": "FRA_forgues",
+      "social_skill": 0.48,
+      "wealth_eur_m": 1.2,
       "name": "Apolline Forgues",
       "kind": "politician",
       "traits": [
@@ -848,6 +930,8 @@
     },
     {
       "id": "FRA_lantier",
+      "social_skill": 0.63,
+      "wealth_eur_m": 3.1,
       "name": "Étienne Lantier",
       "kind": "politician",
       "traits": [
@@ -867,6 +951,8 @@
     },
     {
       "id": "FRA_morlaix",
+      "social_skill": 0.64,
+      "wealth_eur_m": 3.1,
       "name": "Thibault Morlaix",
       "kind": "politician",
       "traits": [
@@ -885,6 +971,8 @@
     },
     {
       "id": "FRA_saint_leger",
+      "social_skill": 0.64,
+      "wealth_eur_m": 3.6,
       "name": "Loïc Saint-Léger",
       "kind": "politician",
       "traits": [
@@ -907,6 +995,8 @@
     },
     {
       "id": "FRA_turcy",
+      "social_skill": 0.56,
+      "wealth_eur_m": 0.99,
       "name": "Clarisse Turcy",
       "kind": "union_leader",
       "traits": [
@@ -928,6 +1018,8 @@
     },
     {
       "id": "FRA_vincendon",
+      "social_skill": 0.59,
+      "wealth_eur_m": 0.73,
       "name": "Corentin Vincendon",
       "kind": "politician",
       "traits": [
@@ -954,6 +1046,8 @@
     },
     {
       "id": "FRA_yvrard",
+      "social_skill": 0.63,
+      "wealth_eur_m": 2.5,
       "name": "Loïc Yvrard",
       "kind": "politician",
       "traits": [
@@ -979,6 +1073,8 @@
     },
     {
       "id": "FRA_zuber",
+      "social_skill": 0.57,
+      "wealth_eur_m": 2.6,
       "name": "Gaspard Zuber",
       "kind": "politician",
       "traits": [
@@ -1002,6 +1098,8 @@
     },
     {
       "id": "FRA_valsergent",
+      "social_skill": 0.76,
+      "wealth_eur_m": 1.9,
       "name": "Aurélien Valsergent",
       "kind": "politician",
       "traits": [
@@ -1029,6 +1127,8 @@
     },
     {
       "id": "FRA_pradelles",
+      "social_skill": 0.51,
+      "wealth_eur_m": 1.9,
       "name": "Sidonie Pradelles",
       "kind": "judge",
       "traits": [
@@ -1050,6 +1150,8 @@
     },
     {
       "id": "FRA_montfaucon",
+      "social_skill": 0.51,
+      "wealth_eur_m": 2.4,
       "name": "Aurélien Montfaucon",
       "kind": "regional_figure",
       "traits": [
@@ -1069,6 +1171,8 @@
     },
     {
       "id": "FRA_richebourg",
+      "social_skill": 0.59,
+      "wealth_eur_m": 70.0,
       "name": "Gaspard Richebourg",
       "kind": "press_owner",
       "traits": [
@@ -1080,6 +1184,8 @@
     },
     {
       "id": "FRA_chantereau",
+      "social_skill": 0.62,
+      "wealth_eur_m": 0.67,
       "name": "Margaux Chantereau",
       "kind": "activist",
       "traits": [
@@ -1097,6 +1203,8 @@
     },
     {
       "id": "FRA_villedary",
+      "social_skill": 0.51,
+      "wealth_eur_m": 1.3,
       "name": "Diane Villedary",
       "kind": "politician",
       "traits": [
@@ -1123,6 +1231,8 @@
     },
     {
       "id": "FRA_beaufour",
+      "social_skill": 0.48,
+      "wealth_eur_m": 2.0,
       "name": "Corentin Beaufour",
       "kind": "politician",
       "traits": [
@@ -1140,6 +1250,8 @@
     },
     {
       "id": "FRA_chief_verdelis",
+      "social_skill": 0.58,
+      "wealth_eur_m": 27.0,
       "name": "Hélène Verdelis",
       "kind": "executive",
       "traits": [
@@ -1152,6 +1264,8 @@
     },
     {
       "id": "FRA_chief_grainval",
+      "social_skill": 0.6,
+      "wealth_eur_m": 17.0,
       "name": "Mathilde Grainval",
       "kind": "executive",
       "traits": [
@@ -1163,6 +1277,8 @@
     },
     {
       "id": "FRA_chief_aurignac",
+      "social_skill": 0.7,
+      "wealth_eur_m": 92.0,
       "name": "Philippe Dalcourt",
       "kind": "executive",
       "traits": [
@@ -1175,6 +1291,8 @@
     },
     {
       "id": "FRA_chief_sevrenne",
+      "social_skill": 0.6,
+      "wealth_eur_m": 25.0,
       "name": "Inès Sévrenne",
       "kind": "executive",
       "traits": [
@@ -1186,6 +1304,8 @@
     },
     {
       "id": "FRA_chief_meridienne",
+      "social_skill": 0.51,
+      "wealth_eur_m": 13.0,
       "name": "Arnaud Vasseur",
       "kind": "executive",
       "traits": [
@@ -1197,6 +1317,8 @@
     },
     {
       "id": "FRA_chief_halbert",
+      "social_skill": 0.41,
+      "wealth_eur_m": 26.0,
       "name": "Bernard Flament",
       "kind": "executive",
       "traits": [

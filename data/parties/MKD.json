@@ -1,10 +1,10 @@
 {
   "parties": [
-    {"id": "vnatresna_obnova", "name": "Vnatrešna obnova", "ideology_slot": "centre_right", "seat_share": 0.492, "leader_person": "MKD_trajkovski", "discipline": 0.9, "competence": 0.65, "excluded_partners": []},
-    {"id": "sojuz_za_napredok", "name": "Sojuz za napredok", "ideology_slot": "social_democratic", "seat_share": 0.15, "leader_person": "MKD_stojanov", "discipline": 0.8, "competence": 0.65, "excluded_partners": []},
-    {"id": "lidhja_evropiane", "name": "Lidhja Evropiane", "ideology_slot": "regionalist", "seat_share": 0.15, "leader_person": "MKD_selimi", "discipline": 0.85, "competence": 0.6, "excluded_partners": []},
-    {"id": "fronti_kombetar", "name": "Fronti Kombëtar", "ideology_slot": "regionalist_right", "seat_share": 0.108, "leader_person": "MKD_bajrami", "discipline": 0.8, "competence": 0.6, "excluded_partners": []},
-    {"id": "rabotnicka_partija", "name": "Rabotnička partija", "ideology_slot": "left_populist", "seat_share": 0.05, "leader_person": "MKD_ristovski", "discipline": 0.8, "competence": 0.5, "excluded_partners": ["vnatresna_obnova"]},
-    {"id": "glas_na_gragjanite", "name": "Glas na građanite", "ideology_slot": "centrist", "seat_share": 0.05, "leader_person": "MKD_nikolovski", "discipline": 0.7, "competence": 0.55, "excluded_partners": []}
+    {"id": "vnatresna_obnova", "funds_eur_m": 7.9, "name": "Vnatrešna obnova", "ideology_slot": "centre_right", "seat_share": 0.492, "leader_person": "MKD_trajkovski", "discipline": 0.9, "competence": 0.65, "excluded_partners": []},
+    {"id": "sojuz_za_napredok", "funds_eur_m": 2.1, "name": "Sojuz za napredok", "ideology_slot": "social_democratic", "seat_share": 0.15, "leader_person": "MKD_stojanov", "discipline": 0.8, "competence": 0.65, "excluded_partners": []},
+    {"id": "lidhja_evropiane", "funds_eur_m": 2.3, "name": "Lidhja Evropiane", "ideology_slot": "regionalist", "seat_share": 0.15, "leader_person": "MKD_selimi", "discipline": 0.85, "competence": 0.6, "excluded_partners": []},
+    {"id": "fronti_kombetar", "funds_eur_m": 1.6, "name": "Fronti Kombëtar", "ideology_slot": "regionalist_right", "seat_share": 0.108, "leader_person": "MKD_bajrami", "discipline": 0.8, "competence": 0.6, "excluded_partners": []},
+    {"id": "rabotnicka_partija", "funds_eur_m": 0.69, "name": "Rabotnička partija", "ideology_slot": "left_populist", "seat_share": 0.05, "leader_person": "MKD_ristovski", "discipline": 0.8, "competence": 0.5, "excluded_partners": ["vnatresna_obnova"]},
+    {"id": "glas_na_gragjanite", "funds_eur_m": 0.6, "name": "Glas na građanite", "ideology_slot": "centrist", "seat_share": 0.05, "leader_person": "MKD_nikolovski", "discipline": 0.7, "competence": 0.55, "excluded_partners": []}
   ]
 }

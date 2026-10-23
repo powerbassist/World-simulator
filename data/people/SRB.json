@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "SRB_petrovic",
+      "social_skill": 0.61,
+      "wealth_eur_m": 1.3,
+      "spouse_id": "SRB_chief_drustvo_simic",
       "name": "Dragan Petrović",
       "kind": "politician",
       "traits": [
@@ -23,6 +26,8 @@
     },
     {
       "id": "SRB_radovanovic",
+      "social_skill": 0.81,
+      "wealth_eur_m": 5.9,
       "name": "Nenad Radovanović",
       "kind": "politician",
       "traits": [
@@ -49,6 +54,8 @@
     },
     {
       "id": "SRB_lazic",
+      "social_skill": 0.38,
+      "wealth_eur_m": 0.33,
       "name": "Jelena Lazić",
       "kind": "politician",
       "traits": [
@@ -70,6 +77,8 @@
     },
     {
       "id": "SRB_nikolic",
+      "social_skill": 0.73,
+      "wealth_eur_m": 2.0,
       "name": "Zoran Nikolić",
       "kind": "politician",
       "traits": [
@@ -87,6 +96,8 @@
     },
     {
       "id": "SRB_markovic",
+      "social_skill": 0.45,
+      "wealth_eur_m": 0.88,
       "name": "Vuk Marković",
       "kind": "politician",
       "traits": [
@@ -108,6 +119,8 @@
     },
     {
       "id": "SRB_stankovic",
+      "social_skill": 0.52,
+      "wealth_eur_m": 0.69,
       "name": "Milan Stanković",
       "kind": "politician",
       "traits": [
@@ -125,6 +138,8 @@
     },
     {
       "id": "SRB_kovacs",
+      "social_skill": 0.61,
+      "wealth_eur_m": 1.2,
       "name": "Ferenc Kovács",
       "kind": "politician",
       "traits": [
@@ -205,6 +220,7 @@
     },
     {
       "id": "SRB_chief_drustvo_simic",
+      "spouse_id": "SRB_petrovic",
       "name": "Goran Simić",
       "kind": "executive",
       "traits": [

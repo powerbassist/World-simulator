@@ -2,6 +2,9 @@
   "people": [
     {
       "id": "BIH_jelavic",
+      "social_skill": 0.75,
+      "wealth_eur_m": 5.2,
+      "spouse_id": "BIH_chief_zukic_materijali",
       "name": "Marija Jelavić",
       "kind": "politician",
       "traits": [
@@ -23,6 +26,8 @@
     },
     {
       "id": "BIH_mehmedovic",
+      "social_skill": 0.66,
+      "wealth_eur_m": 1.4,
       "name": "Edin Mehmedović",
       "kind": "politician",
       "traits": [
@@ -44,6 +49,8 @@
     },
     {
       "id": "BIH_vukmanovic",
+      "social_skill": 0.64,
+      "wealth_eur_m": 1.1,
       "name": "Dragan Vukmanović",
       "kind": "politician",
       "traits": [
@@ -66,6 +73,8 @@
     },
     {
       "id": "BIH_hodzic",
+      "social_skill": 0.57,
+      "wealth_eur_m": 0.73,
       "name": "Amra Hodžić",
       "kind": "politician",
       "traits": [
@@ -83,6 +92,8 @@
     },
     {
       "id": "BIH_karabegovic",
+      "social_skill": 0.47,
+      "wealth_eur_m": 0.33,
       "name": "Dino Karabegović",
       "kind": "politician",
       "traits": [
@@ -100,6 +111,8 @@
     },
     {
       "id": "BIH_stojanovic",
+      "social_skill": 0.43,
+      "wealth_eur_m": 1.5,
       "name": "Mirko Stojanović",
       "kind": "politician",
       "traits": [
@@ -117,6 +130,9 @@
     },
     {
       "id": "BIH_mujkic",
+      "social_skill": 0.48,
+      "wealth_eur_m": 0.56,
+      "spouse_id": "BIH_chief_mehic_poljoprivreda",
       "name": "Kenan Mujkić",
       "kind": "politician",
       "traits": [
@@ -174,6 +190,7 @@
     },
     {
       "id": "BIH_chief_mehic_poljoprivreda",
+      "spouse_id": "BIH_mujkic",
       "name": "Haris Mehić",
       "kind": "executive",
       "traits": [
@@ -186,6 +203,7 @@
     },
     {
       "id": "BIH_chief_zukic_materijali",
+      "spouse_id": "BIH_jelavic",
       "name": "Nermina Zukić",
       "kind": "executive",
       "traits": [

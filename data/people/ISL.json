@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "ISL_ragnarsdottir",
+      "social_skill": 0.66,
+      "wealth_eur_m": 3.4,
       "name": "Sólveig Ragnarsdóttir",
       "kind": "politician",
       "traits": [
@@ -23,6 +25,8 @@
     },
     {
       "id": "ISL_bergsson",
+      "social_skill": 0.64,
+      "wealth_eur_m": 1.7,
       "name": "Hallgrímur Bergsson",
       "kind": "politician",
       "traits": [
@@ -44,6 +48,8 @@
     },
     {
       "id": "ISL_hrafnsdottir",
+      "social_skill": 0.57,
+      "wealth_eur_m": 0.75,
       "name": "Ásdís Hrafnsdóttir",
       "kind": "politician",
       "traits": [
@@ -61,6 +67,8 @@
     },
     {
       "id": "ISL_eyjolfsson",
+      "social_skill": 0.56,
+      "wealth_eur_m": 1.2,
       "name": "Kristján Eyjólfsson",
       "kind": "politician",
       "traits": [
@@ -82,6 +90,8 @@
     },
     {
       "id": "ISL_steinsson",
+      "social_skill": 0.57,
+      "wealth_eur_m": 2.4,
       "name": "Bjarki Steinsson",
       "kind": "politician",
       "traits": [
@@ -103,6 +113,8 @@
     },
     {
       "id": "ISL_magnusdottir",
+      "social_skill": 0.63,
+      "wealth_eur_m": 1.2,
       "name": "Unnur Magnúsdóttir",
       "kind": "politician",
       "traits": [
@@ -120,6 +132,9 @@
     },
     {
       "id": "ISL_olafsdottir",
+      "social_skill": 0.41,
+      "wealth_eur_m": 0.63,
+      "spouse_id": "ISL_chief_verslunarhus_finnsson",
       "name": "Ragnheiður Ólafsdóttir",
       "kind": "politician",
       "traits": [
@@ -166,6 +181,7 @@
     },
     {
       "id": "ISL_chief_verslunarhus_finnsson",
+      "spouse_id": "ISL_olafsdottir",
       "name": "Einar Finnsson",
       "kind": "executive",
       "traits": [

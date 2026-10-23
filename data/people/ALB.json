@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "ALB_dushku",
+      "social_skill": 0.8,
+      "wealth_eur_m": 9.4,
       "name": "Erion Dushku",
       "kind": "politician",
       "traits": [
@@ -24,6 +26,8 @@
     },
     {
       "id": "ALB_kola",
+      "social_skill": 0.47,
+      "wealth_eur_m": 0.62,
       "name": "Arben Kola",
       "kind": "politician",
       "traits": [
@@ -45,6 +49,8 @@
     },
     {
       "id": "ALB_shkurti",
+      "social_skill": 0.58,
+      "wealth_eur_m": 0.76,
       "name": "Besnik Shkurti",
       "kind": "politician",
       "traits": [
@@ -62,6 +68,8 @@
     },
     {
       "id": "ALB_kryeziu",
+      "social_skill": 0.56,
+      "wealth_eur_m": 0.81,
       "name": "Mimoza Kryeziu",
       "kind": "politician",
       "traits": [
@@ -79,6 +87,8 @@
     },
     {
       "id": "ALB_dervishi",
+      "social_skill": 0.49,
+      "wealth_eur_m": 0.75,
       "name": "Fatmir Dervishi",
       "kind": "politician",
       "traits": [

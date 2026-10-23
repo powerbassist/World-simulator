@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "IRL_lavelle",
+      "social_skill": 0.65,
+      "wealth_eur_m": 2.3,
       "name": "Aoife Lavelle",
       "kind": "politician",
       "traits": [
@@ -20,6 +22,9 @@
     },
     {
       "id": "IRL_kinsella",
+      "social_skill": 0.48,
+      "wealth_eur_m": 3.0,
+      "spouse_id": "IRL_mulvihill",
       "name": "Declan Kinsella",
       "kind": "politician",
       "traits": [
@@ -41,6 +46,8 @@
     },
     {
       "id": "IRL_hession",
+      "social_skill": 0.48,
+      "wealth_eur_m": 1.7,
       "name": "Rory Hession",
       "kind": "politician",
       "traits": [
@@ -57,6 +64,8 @@
     },
     {
       "id": "IRL_tarrant",
+      "social_skill": 0.58,
+      "wealth_eur_m": 2.6,
       "name": "Niamh Tarrant",
       "kind": "politician",
       "traits": [
@@ -81,6 +90,8 @@
     },
     {
       "id": "IRL_mcelhinney",
+      "social_skill": 0.58,
+      "wealth_eur_m": 2.7,
       "name": "Colm McElhinney",
       "kind": "politician",
       "traits": [
@@ -98,6 +109,8 @@
     },
     {
       "id": "IRL_nolan",
+      "social_skill": 0.63,
+      "wealth_eur_m": 3.1,
       "name": "Saoirse Nolan",
       "kind": "politician",
       "traits": [
@@ -120,6 +133,8 @@
     },
     {
       "id": "IRL_goggins",
+      "social_skill": 0.75,
+      "wealth_eur_m": 5.6,
       "name": "Cian Goggins",
       "kind": "politician",
       "traits": [
@@ -413,6 +428,7 @@
     },
     {
       "id": "IRL_mulvihill",
+      "spouse_id": "IRL_kinsella",
       "name": "Sinead Mulvihill",
       "kind": "activist",
       "traits": [

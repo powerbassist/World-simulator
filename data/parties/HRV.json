@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "krscanska_unija",
+      "funds_eur_m": 7.6,
       "name": "Kršćanska unija",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.34,
@@ -12,6 +13,7 @@
     },
     {
       "id": "socijalna_koalicija",
+      "funds_eur_m": 9.2,
       "name": "Socijalna koalicija",
       "ideology_slot": "social_democratic",
       "seat_share": 0.27,
@@ -24,6 +26,7 @@
     },
     {
       "id": "slobodna_alijansa",
+      "funds_eur_m": 3.9,
       "name": "Slobodna alijansa",
       "ideology_slot": "liberal",
       "seat_share": 0.15,
@@ -36,6 +39,7 @@
     },
     {
       "id": "domoljubni_blok",
+      "funds_eur_m": 3.1,
       "name": "Domoljubni blok",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.14,
@@ -46,6 +50,7 @@
     },
     {
       "id": "regionalni_savez",
+      "funds_eur_m": 3.5,
       "name": "Regionalni savez",
       "ideology_slot": "regionalist_right",
       "seat_share": 0.1,

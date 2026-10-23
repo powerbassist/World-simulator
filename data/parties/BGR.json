@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "grazhdansko_razvitie",
+      "funds_eur_m": 8.1,
       "name": "Гражданско развитие",
       "ideology_slot": "centre_right",
       "seat_share": 0.28,
@@ -12,6 +13,7 @@
     },
     {
       "id": "promyana_sega",
+      "funds_eur_m": 6.0,
       "name": "Промяна сега",
       "ideology_slot": "progressive_liberal",
       "seat_share": 0.16,
@@ -24,6 +26,7 @@
     },
     {
       "id": "obshtinski_saiuz",
+      "funds_eur_m": 4.0,
       "name": "Общински съюз",
       "ideology_slot": "regionalist",
       "seat_share": 0.16,
@@ -34,6 +37,7 @@
     },
     {
       "id": "otechestven_saiuz",
+      "funds_eur_m": 6.3,
       "name": "Отечествен съюз",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.15,
@@ -46,6 +50,7 @@
     },
     {
       "id": "sotsialna_alternativa",
+      "funds_eur_m": 3.1,
       "name": "Социална алтернатива",
       "ideology_slot": "social_democratic",
       "seat_share": 0.13,
@@ -58,6 +63,7 @@
     },
     {
       "id": "naroden_glas",
+      "funds_eur_m": 2.6,
       "name": "Народен глас",
       "ideology_slot": "centrist",
       "seat_share": 0.12,

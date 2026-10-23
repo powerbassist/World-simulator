@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "fratelli_della_nazione",
+      "funds_eur_m": 27.0,
       "name": "Fratelli della Nazione",
       "ideology_slot": "nationalist_right",
       "seat_share": 0.27,
@@ -12,6 +13,7 @@
     },
     {
       "id": "alleanza_settentrionale",
+      "funds_eur_m": 17.0,
       "name": "Alleanza Settentrionale",
       "ideology_slot": "regionalist_right",
       "seat_share": 0.11,
@@ -22,6 +24,7 @@
     },
     {
       "id": "forza_patria",
+      "funds_eur_m": 16.0,
       "name": "Forza Patria",
       "ideology_slot": "centre_right",
       "seat_share": 0.1,
@@ -32,6 +35,7 @@
     },
     {
       "id": "democrazia_popolare",
+      "funds_eur_m": 40.0,
       "name": "Democrazia Popolare",
       "ideology_slot": "social_democratic",
       "seat_share": 0.22,
@@ -44,6 +48,7 @@
     },
     {
       "id": "movimento_cittadino",
+      "funds_eur_m": 31.0,
       "name": "Movimento Cittadino",
       "ideology_slot": "left_populist",
       "seat_share": 0.23,
@@ -54,6 +59,7 @@
     },
     {
       "id": "verdi_italiani",
+      "funds_eur_m": 7.6,
       "name": "Verdi Italiani",
       "ideology_slot": "green",
       "seat_share": 0.07,

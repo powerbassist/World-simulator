@@ -2,6 +2,7 @@
   "parties": [
     {
       "id": "partit_gustizzja_socjali",
+      "funds_eur_m": 10.0,
       "name": "Partit Ġustizzja Soċjali",
       "ideology_slot": "social_democratic",
       "seat_share": 0.55,
@@ -14,6 +15,7 @@
     },
     {
       "id": "partit_kristjan_malti",
+      "funds_eur_m": 6.8,
       "name": "Partit Kristjan Malti",
       "ideology_slot": "christian_democrat",
       "seat_share": 0.43,
@@ -24,6 +26,7 @@
     },
     {
       "id": "alternattiva_hadra",
+      "funds_eur_m": 0.12,
       "name": "Alternattiva Ħadra",
       "ideology_slot": "green",
       "seat_share": 0.01,
@@ -34,6 +37,7 @@
     },
     {
       "id": "partit_tas_centru",
+      "funds_eur_m": 0.14,
       "name": "Partit tas-Centru",
       "ideology_slot": "centrist",
       "seat_share": 0.01,

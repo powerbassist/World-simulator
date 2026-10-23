@@ -2,6 +2,8 @@
   "people": [
     {
       "id": "ITA_bagnasco",
+      "social_skill": 0.66,
+      "wealth_eur_m": 9.7,
       "name": "Lorenzo Bagnasco",
       "kind": "politician",
       "traits": [
@@ -24,6 +26,8 @@
     },
     {
       "id": "ITA_ronchi",
+      "social_skill": 0.56,
+      "wealth_eur_m": 3.0,
       "name": "Piergiorgio Ronchi",
       "kind": "politician",
       "traits": [
@@ -41,6 +45,8 @@
     },
     {
       "id": "ITA_lambertini",
+      "social_skill": 0.78,
+      "wealth_eur_m": 7.9,
       "name": "Vittorio Lambertini",
       "kind": "politician",
       "traits": [
@@ -62,6 +68,8 @@
     },
     {
       "id": "ITA_fossati",
+      "social_skill": 0.46,
+      "wealth_eur_m": 2.0,
       "name": "Chiara Fossati",
       "kind": "politician",
       "traits": [
@@ -83,6 +91,8 @@
     },
     {
       "id": "ITA_trevisan",
+      "social_skill": 0.51,
+      "wealth_eur_m": 1.2,
       "name": "Enzo Trevisan",
       "kind": "politician",
       "traits": [
@@ -99,6 +109,8 @@
     },
     {
       "id": "ITA_caputo",
+      "social_skill": 0.61,
+      "wealth_eur_m": 4.6,
       "name": "Serena Caputo",
       "kind": "politician",
       "traits": [
@@ -121,6 +133,9 @@
     },
     {
       "id": "ITA_salvagno",
+      "social_skill": 0.56,
+      "wealth_eur_m": 6.6,
+      "spouse_id": "ITA_gentileschi",
       "name": "Umberto Salvagno",
       "kind": "politician",
       "traits": [
@@ -657,6 +672,7 @@
     },
     {
       "id": "ITA_gentileschi",
+      "spouse_id": "ITA_salvagno",
       "name": "Amerigo Gentileschi",
       "kind": "activist",
       "traits": [
