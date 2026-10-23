@@ -60,15 +60,19 @@ func _process(_delta: float) -> void:
 	_build(state)
 
 
-## What the drawing depends on, cheap to take every visible frame.
+## What the drawing depends on, cheap to take every visible frame. The game itself
+## leads it: a load swaps the panel's state for another game (main.gd keeps the
+## panels), and a save of the same length at the same date would otherwise keep the
+## discarded game's lines up until a month passed (QA on #93).
 func _signature_of(state) -> String:
 	var ns = state.player()
+	var game := "%d/" % state.get_instance_id()
 	match _kind:
 		BUDGET:
-			return str(ns.spending_pct_gdp, ns.total_spending_pct_gdp, ns.debt_service_pct_gdp)
+			return game + str(ns.spending_pct_gdp, ns.total_spending_pct_gdp, ns.debt_service_pct_gdp)
 		SEATS:
-			return str(ns.seats_by_party)
-	return "%d/%d" % [state.history.size(), int(ns.months_in_term)]
+			return game + str(ns.seats_by_party)
+	return game + "%d/%d" % [state.history.size(), int(ns.months_in_term)]
 
 
 func _build(state) -> void:
@@ -106,7 +110,7 @@ func _build(state) -> void:
 				_line(grid, Labels.bloc(bloc), lines[bloc], term, {"unit": "%", "fixed": shared})
 		SEATS:
 			var ns = state.player()
-			ChartKit.stack(self, Strings.t("The assembly, by party -- the line is a majority"), _seat_parts(ns, _panel.get("_loader")),
+			ChartKit.stack(self, Strings.t("The assembly, by party — the line is a majority"), _seat_parts(ns, _panel.get("_loader")),
 				{"marker": 0.5, "unit": Strings.t(" seats"), "places": 0})
 
 

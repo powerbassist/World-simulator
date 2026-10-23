@@ -55,6 +55,9 @@ func _process(_delta: float) -> bool:
 			_main._windows.open("legislature")
 		15:
 			_check_seats()
+			_load_a_twin()
+		18:
+			_check_the_twin()
 			_finish()
 			return true
 	return false
@@ -149,6 +152,29 @@ func _check_seats() -> void:
 		seats += float(p["value"])
 	if int(seats) != int(ns.assembly_seats):
 		_fail("the seat share counts %d seats, the assembly has %d" % [int(seats), ns.assembly_seats])
+
+
+## QA on #93: a load swaps the panel's state for another game; one with the same
+## history length and term month must still redraw. A twin of this game, its
+## unemployment set to 30 in every month, loaded the way main.gd does (setup() on the
+## kept panel), must show 30 at the line's end.
+func _load_a_twin() -> void:
+	var twin = _main._state.get_script().from_dict(_main._state.to_dict())
+	for entry in twin.history:
+		entry["unemployment_pct"] = 30.0
+	_main._overview_panel.setup(twin, _main._loader)
+	_main._windows.open("overview")
+
+
+func _check_the_twin() -> void:
+	var charts := _charts("overview")
+	for line in _all(charts, ChartLine):
+		if String(line._series[0]["label"]) == "Unemployment":
+			var values: PackedFloat64Array = line._series[0]["values"]
+			if values.is_empty() or absf(values[-1] - 30.0) > 1e-9:
+				_fail("after loading a game of the same length the Unemployment line still ends at %s, not the loaded 30" % [values[-1] if not values.is_empty() else "nothing"])
+			return
+	_fail("the overview has no Unemployment line after a load")
 
 
 func _fail(message: String) -> void:
