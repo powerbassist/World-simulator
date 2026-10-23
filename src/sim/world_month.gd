@@ -23,6 +23,7 @@ extends RefCounted
 ## `report` keys, each present once its step has run:
 ##   history_entry     Budget.snapshot merged with Opinion.snapshot, undated
 ##   character_acts    Characters.tick_month's acts (Array)
+##   audience_requests Audiences.tick_month's {arrived, lapsed} (V5.2b)
 ##   election_results  Elections.tick_month's results (Array)
 ##
 ## The caller sets state.year and state.month first: the clock is the caller's,
@@ -72,6 +73,7 @@ const Events = preload("res://src/sim/events.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
 const Elections = preload("res://src/sim/elections.gd")
 
 ## The step names `on_step` receives, in run order. tests/test_world_month.gd
@@ -83,7 +85,7 @@ const STEPS: Array[String] = [
 	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Companies",
 	"Industry", "Migration", "Investment", "Projects", "Campaign", "Pledges",
 	"Demography", "Society", "Unrest", "Events", "Cabinet", "Characters",
-	"Elections",
+	"Audiences", "Elections",
 ]
 
 
@@ -148,6 +150,17 @@ static func run_unit(month: Month) -> void:
 		month.running = false
 		_after(month.on_step, step, month.report)
 		month.step += 1
+
+
+## The three meters the people read, off the player's nation: Characters and
+## Audiences read the same values in the same month.
+static func _character_meters(state) -> Dictionary:
+	var player = state.player()
+	return {
+		"grievance": float(player.unrest_pct),
+		"press_freedom": float(player.press_freedom),
+		"judicial_independence": Judiciary.independence_deviation(player),
+	}
 
 
 ## One step. Run whole here, returning [] -- or, for a step that comes in
@@ -389,12 +402,12 @@ static func _step(month: Month, step: String) -> Array:
 		# unrest.gd/media.gd/judiciary.gd un-preloaded in characters.gd. The acts
 		# are a record for the caller, not state.
 		"Characters":
-			var player = state.player()
-			month.report["character_acts"] = Characters.tick_month(state, loader, {
-				"grievance": float(player.unrest_pct),
-				"press_freedom": float(player.press_freedom),
-				"judicial_independence": Judiciary.independence_deviation(player),
-			})
+			month.report["character_acts"] = Characters.tick_month(state, loader, _character_meters(state))
+		# V5.2b, after Characters (wants read the same settled meters, and a lapse's
+		# grudge is read by next month's acts rather than this one's) and before
+		# Elections, which still runs last.
+		"Audiences":
+			month.report["audience_requests"] = Audiences.tick_month(state, loader, _character_meters(state))
 		# Elections run last, on the already-settled history entry, and can fire a
 		# national and an EP result in the same month (France and Belgium, June 2029).
 		"Elections":

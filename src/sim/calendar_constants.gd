@@ -56,8 +56,14 @@ const STATUS_CANCELLED := "cancelled"
 const KIND_DIPLOMATIC := "diplomatic"
 const KIND_LAW := "law"
 const KIND_RESHUFFLE := "reshuffle"
+## V5.2b. An audience a person asked for (src/sim/audiences.gd): the entry's
+## action_id is the request id, its target the person, and its day is the one
+## thing the president does that day -- no travel, the person comes to them.
+## The fourth kind is a request's answer rather than a deferred verb: it
+## exists only because someone asked, and the scene it opens is the verb.
+const KIND_AUDIENCE := "audience"
 
-const KINDS := [KIND_DIPLOMATIC, KIND_LAW, KIND_RESHUFFLE]
+const KINDS := [KIND_DIPLOMATIC, KIND_LAW, KIND_RESHUFFLE, KIND_AUDIENCE]
 
 ## Kinds of fixed date the diary reads off state the game already carries. These
 ## are labels for a surface, not behaviour: nothing in src/sim/ branches on them.
