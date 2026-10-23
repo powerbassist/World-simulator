@@ -1654,11 +1654,9 @@ func _on_load_requested(slot: String) -> void:
 
 	_windows.mark_all_dirty()
 
-	# V5.1-c3.2. The loaded desk back in the inbox's Decisions lane: the clear
-	# above took the discarded game's rows, and a pending question with no row
-	# could be answered only from Dispatches (Review focus 2).
-	for entry in _state.player().event_queue:
-		DeskCards.push(self, Events.event_by_id(_loader, String(entry.get("event_id", ""))), entry)
+	# What the saved state can show, back in the inbox: the desk's rows and the
+	# latest consequence card (DeskCards.restore_after_load).
+	DeskCards.restore_after_load(self)
 	# V2.4b: the reload re-raise. An interrupt crisis pending in the save stops
 	# the clock again and is put back in front of the player -- a save made mid-
 	# crisis and reloaded is still mid-crisis, and the pause is the only thing
