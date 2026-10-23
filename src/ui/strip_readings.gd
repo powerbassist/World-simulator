@@ -279,7 +279,7 @@ static func _programme(ns, loader) -> Dictionary:
 	var progress: Dictionary = Programme.progress_of(ns, terms)
 	var fraction := PanelKit.progress_fraction(
 		float(progress["current_value"]), float(progress["goal_value"]), String(progress["progressbar"]))
-	var tip := Strings.t("%s -- %s against a %s goal") % [
+	var tip := Strings.t("%s -- now %s · goal %s") % [
 		name_text, Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2),
 	]
 	var clock_text := programme_clock_text(terms, live)
@@ -314,7 +314,8 @@ static func _nearest_programme(ns, loader) -> Dictionary:
 static func programme_clock_text(terms: Dictionary, live: Dictionary) -> String:
 	var timeout := int(terms.get("timeout_months", 0))
 	if timeout <= 0:
-		return ""
+		# The author's rule: a goal without a clock is judged at the term's end.
+		return Strings.t("judged at the end of the term")
 	var left := timeout - int(live["months_live"])
 	if left <= 0:
 		return Strings.t("its deadline is now")

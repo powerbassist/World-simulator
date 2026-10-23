@@ -231,7 +231,7 @@ func _build_balance(ns) -> void:
 		if goods.is_empty():
 			PanelKit.line(body, tr("No good carries this category."))
 			continue
-		var rows: Array = []
+		var rows: Array = [[tr("good"), tr("made"), tr("bought (+) / sold (-)"), tr("price vs base"), tr("demand covered")]]
 		for good_id in goods:
 			var base := _base_price(good_id)
 			var price := float(prices.get(good_id, base))
@@ -249,7 +249,6 @@ func _build_balance(ns) -> void:
 				"%.0f%%" % (100.0 * coverage(ns, good_id)),
 			])
 		PanelKit.ledger(body, rows)
-	PanelKit.line(_body, tr("Columns: units made · net units bought (positive) or sold (negative) · price against its base · the share of this month's demand covered. Prices are the one world vector; every nation's copy reads the same."))
 
 
 ## The tree, as lines. Grouped by the OUTPUT's category, in the loader's category
@@ -269,7 +268,7 @@ func _build_balance(ns) -> void:
 ## ignores would be presenting a lever the game does not have.
 func _build_tree() -> void:
 	PanelKit.heading(_body, tr("The industrial tree"))
-	PanelKit.line(_body, tr("What makes what. A good with no line is a primary producer: raw materials, crops and services are not made from anything."))
+	PanelKit.heading(_body, tr("What makes what"))
 
 	var by_output: Dictionary = {}
 	for recipe_id in _recipe_ids():
@@ -288,7 +287,7 @@ func _build_tree() -> void:
 				lines.append("%s  <-  %s" % [_good_name(good_id), _inputs_text(recipe)])
 		var body := PanelKit.section(_body, String(category))
 		if lines.is_empty():
-			PanelKit.line(body, tr("Made from nothing -- produced from the country's own endowment."))
+			PanelKit.line(body, tr("Primary: made from the country's own endowment."))
 			continue
 		for text in lines:
 			PanelKit.line(body, text)

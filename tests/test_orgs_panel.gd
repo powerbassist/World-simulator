@@ -26,6 +26,7 @@ const Ratification = preload("res://src/sim/ratification.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const RK = preload("res://src/core/relations.gd")
+const TermText = preload("res://src/ui/term_text.gd")
 
 const PLAYER := "FRA"
 const EU_ORG := "eu"
@@ -119,6 +120,8 @@ func _text(node: Node) -> String:
 		return out
 	if node is Label or node is Button:
 		out += node.text + "\n"
+	elif node is RichTextLabel:
+		out += (node as RichTextLabel).get_parsed_text() + "\n"
 	for child in node.get_children():
 		out += _text(child)
 	return out
@@ -177,6 +180,15 @@ func _listed_target(panel: Node, state) -> String:
 	return ""
 
 
+func _term_ids(node: Node) -> PackedStringArray:
+	var out := PackedStringArray()
+	if node.get_script() == TermText:
+		out.append_array(TermText.term_ids(node))
+	for child in node.get_children():
+		out.append_array(_term_ids(child))
+	return out
+
+
 # -- Checks -------------------------------------------------------------------
 
 ## The sponsor line and the decision line reach the screen, for BOTH decision
@@ -195,12 +207,18 @@ func _check_sponsor_and_decision_lines() -> void:
 
 		if not text.contains("Sponsored by %s" % _loader.nation_name(SPONSOR)):
 			_fail("the pending proposal's sponsor line is missing: %s" % text)
-		var treaty_line := text.contains("A treaty: one vote against vetoes it")
-		var qmr_line := text.contains("Decided by qualified majority")
+		var treaty_line := text.contains("A treaty: one veto kills it")
+		var qmr_line := text.contains("Qualified majority:")
 		if rule == CouncilK.DECISION_UNANIMITY and (not treaty_line or qmr_line):
 			_fail("a unanimity proposal does not read as a treaty alone")
 		if rule == CouncilK.DECISION_QMR and (treaty_line or not qmr_line):
 			_fail("a qualified-majority proposal does not read as a majority alone")
+		# QA on #99: the trim cut the rule's explanation, so the line must carry the
+		# term that explains it -- one hover away.
+		var marks := _term_ids(panel)
+		for id in (["treaty", "veto", "ratification"] if rule == CouncilK.DECISION_UNANIMITY else ["qualified_majority"]):
+			if not marks.has(id):
+				_fail("the %s decision line carries no [g=%s] mark: %s" % [rule, id, marks])
 		_drop(panel)
 	p.decision = kept
 
