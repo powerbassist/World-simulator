@@ -55,9 +55,10 @@ static func ownership(state, ns, loader, company_id: String) -> Array:
 	if company == null:
 		return out
 	for action in Companies.available(state, ns, loader.company_actions, company_id, loader, true):
-		var bill = _bill(action, company)
-		if bill != null:
-			out.append(bill)
+		# A failing major answers only the rescue, an executive verb, whichever door
+		# asks (Companies.available's failed gate): never a bill.
+		if action.requires_law:
+			out.append(_bill(action, company))
 	return out
 
 

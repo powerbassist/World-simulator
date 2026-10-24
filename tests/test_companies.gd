@@ -91,6 +91,7 @@ func _init() -> void:
 	_test_a_ready_bill_per_eligible_firm()
 	_test_an_adopted_bill_buys_and_is_found_by_id()
 	_test_an_ineligible_bill_adopted_buys_nothing()
+	_test_a_failing_firm_offers_no_bill()
 	_test_a_rescue_never_overfills_its_sector()
 	_finish()
 
@@ -842,6 +843,22 @@ func _test_an_ineligible_bill_adopted_buys_nothing() -> void:
 		_fail("an ineligible ownership bill still bought the firm")
 	if not bool(ns.last_company_result.get("refused", false)):
 		_fail("the refused purchase left no record on last_company_result")
+
+
+
+## A failing major answers one door, the rescue -- an executive verb -- even when the
+## law's door asks; no ownership bill may be built from it, and the legality scan
+## propose() runs over every open bill must not trip on it.
+func _test_a_failing_firm_offers_no_bill() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	ns.companies[BIG]["failed"] = true
+	ns.companies[BIG]["rescue_months_left"] = 3
+	if not Bills.ownership(state, ns, _loader, BIG).is_empty():
+		_fail("a failing firm was offered an ownership bill")
+	for law in Bills.open(state, ns, _loader):
+		if String(law.id).ends_with(":" + BIG):
+			_fail("Bills.open() listed %s for a failing firm" % law.id)
 
 
 func _company(company_id: String):
