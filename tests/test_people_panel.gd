@@ -19,6 +19,10 @@ extends SceneTree
 ##   - IT AGREES WITH THE POLITICS PANEL about who holds a portfolio. The two
 ##     surfaces overlap on exactly one column and both read ns.cabinet, so a
 ##     disagreement means one of them has started deriving it separately.
+##   - V5.2 b+ (R5, gate b: "people panel is messy and unreadable"): A ROW READS
+##     AS ONE LINE. A person's cells sit side by side, never a label at one edge
+##     and its value 900px away, and the wants are a count on the row (their text
+##     is on the hover card), not a red line per want under every name.
 ##   - IT HAS NO BUTTON except Close. nation_panel.gd has paid for the fold twice
 ##     (V1.3e, V1.3g) because a second button narrows an autowrapping label and
 ##     grows the row; a read-only panel cannot make that mistake, and this pins it
@@ -41,12 +45,22 @@ func _init() -> void:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
+	if _frame == 1:
+		# The reference screen: headless starts on a 64px window, too small for the
+		# dock to lay a row out at the width a player reads it.
+		root.size = Vector2i(1920, 1080)
 	if _frame < 2:
 		return false  # let the scene's _ready() run
-
-	_run()
+	if _frame == 2:
+		_run()
+		# The checks above opened Politics beside it; the layout check reads People.
+		_main._windows.open("people")
+		return false
+	if _frame < 5:
+		return false  # laid out
+	_check_rows_read_as_lines(_main._people_panel)
 	_finish()
-	return false
+	return true
 
 
 func _run() -> void:
@@ -210,6 +224,50 @@ func _check_read_only(panel) -> void:
 	for label in buttons:
 		if label != "Close":
 			_fail("the people panel carries a '%s' button -- it is read-only by design, and a second button in a row with an autowrapping label is the fold nation_panel.gd has paid for twice" % label)
+
+
+## Every row with a face is one line: no gap wider than ROW_GAP_PX between two of
+## its cells -- a column's own slack, never the 900px of a label at one edge and
+## its value at the other -- and no line of its own per want.
+const ROW_GAP_PX := 240.0
+
+
+func _check_rows_read_as_lines(panel) -> void:
+	var rows := 0
+	for node in _walk(panel._body):
+		if node is Label and (String(node.text).ends_with("— denied") or String(node.text).ends_with("— served")):
+			_fail("a want prints as its own line: '%s'" % node.text)
+			break
+	for node in _walk(panel._body):
+		if not node is HBoxContainer or node.get_child_count() < 3:
+			continue
+		var cells: Array = []
+		for child in node.get_children():
+			if child is Label and child.visible:
+				cells.append(child)
+		if cells.size() < 2:
+			continue
+		rows += 1
+		for i in range(1, cells.size()):
+			var gap: float = _span(cells[i]).x - _span(cells[i - 1]).y
+			if gap > ROW_GAP_PX:
+				_fail("'%s' and '%s' sit %.0fpx apart on one row" % [cells[i - 1].text, cells[i].text, gap])
+				return
+	if rows < 10:
+		_fail("premise: only %d person rows found" % rows)
+
+
+## Where a label's TEXT runs on screen, (start, end) in x: a label stretched to fill
+## its row puts its words at one edge and the box's width says nothing about them.
+func _span(label: Label) -> Vector2:
+	var font := label.get_theme_font("font")
+	var width: float = font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, label.get_theme_font_size("font_size")).x
+	var x0: float = label.global_position.x
+	if label.horizontal_alignment == HORIZONTAL_ALIGNMENT_RIGHT:
+		x0 += label.size.x - width
+	elif label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER:
+		x0 += (label.size.x - width) / 2.0
+	return Vector2(x0, x0 + minf(width, label.size.x))
 
 
 ## Walks the whole panel rather than its scrolling body, because the title sits
