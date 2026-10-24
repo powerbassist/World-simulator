@@ -661,6 +661,11 @@ three-attempt audience):**
   - The knowledge an audience teaches is not priced, which leans it the same
     way. On PR #113 the gain is `President.learn_from`'s 0.05 × (1 −
     knowledge) per audience; on main's b1 it is `KNOW_AUDIENCE` 0.12.
+  - The derivation sets indifference against delegation's immediate cost
+    (-0.07). It was written before delegation's commitment (below) existed.
+    With the commitment, delegation is about 0 when the want is kept and about
+    -0.39 when it is broken (at base g). The price stays as declared; it is not
+    re-derived for the commitment.
   - The 0.95 is kept, not re-derived, once the run has read anything. A miss
     with delegation over 50 % is the likely failure, and it is reported as a
     design result.
