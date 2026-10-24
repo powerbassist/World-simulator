@@ -64,7 +64,10 @@ func _ready() -> void:
 func open(view: Dictionary) -> void:
 	_view = view
 	_resource = DialogueLines.resource_for(String(view.get("stance", "")))
+	# Hidden until a line is said: an empty Label still takes its row, a blank
+	# line under the title on a call with nothing to ask (QA's RECORD 9).
 	_line.text = ""
+	_line.hide()
 	if String(view.get("ask", "")) != "" and String(view.get("why_not", "")) == "":
 		speak(["phone_opening"], {})
 	_title.text = tr("Call %s") % String(view.get("name", ""))  # i18n: row-ok the person's shown name, resolved by the wiring
@@ -107,6 +110,7 @@ func speak(titles: Array, extra: Dictionary) -> void:
 		if one != "":
 			said.append(one)
 	_line.text = " ".join(said)
+	_line.visible = not said.is_empty()
 
 
 ## Escape's door, the stack's cancel: the same as Close.

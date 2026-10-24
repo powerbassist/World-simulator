@@ -122,7 +122,7 @@ func hide_close_button() -> void:
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
-	_title.text = tr("LEGISLATURE — %s") % _state.player().id
+	_title.text = tr("LEGISLATURE — %s") % _loader.nation_name(_state.player().id)
 	_dirty = true
 
 

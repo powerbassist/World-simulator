@@ -119,6 +119,7 @@ const PLATE_FOLDED := "PlateFolded"       ## a plate whose primary action is bel
 const TITLE_BAR := "TitleBar"             ## a floating window's grab handle
 const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
 const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-row
+const REQUESTS_BUTTON := "RequestsButton" ## the title bar's "requests waiting" mark (V5.2 pre-gate)
 
 ## The accent in force: the played nation's, set by apply() and read by everything
 ## that draws "you are here" -- the theme below, the map's own marks. Static
@@ -430,6 +431,22 @@ static func _buttons(theme: Theme) -> void:
 	theme.set_color("font_color", SUBROW_BUTTON, TEXT_DIM)
 	theme.set_color("font_hover_color", SUBROW_BUTTON, TEXT)
 	theme.set_color("font_pressed_color", SUBROW_BUTTON, _accent)
+	# A refused answer on a card (a spent call, a Book with every day taken): it
+	# fell back to Button's HULL fill, invisible on a plate, and TEXT_DIM, this
+	# variation's own live colour -- so only the hover told it from a live one
+	# (QA's pre-gate B RECORD 8). No fill, and the text half gone.
+	theme.set_stylebox("disabled", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0)))
+	theme.set_color("font_disabled_color", SUBROW_BUTTON, Color(TEXT_DIM, 0.45))
+
+	# The requests mark is a STATUS tone, not identity: something waits on the
+	# player, the one place WARN outlines a control (the author: "clearly visible").
+	theme.set_type_variation(REQUESTS_BUTTON, "Button")  # i18n: ok
+	theme.set_stylebox("normal", REQUESTS_BUTTON, _button_box(SLATE, WARN))
+	theme.set_stylebox("hover", REQUESTS_BUTTON, _button_box(SLATE.lightened(0.10), WARN))
+	theme.set_stylebox("pressed", REQUESTS_BUTTON, _button_box(SLATE.lightened(0.16), WARN))
+	theme.set_stylebox("focus", REQUESTS_BUTTON, _button_box(Color(0, 0, 0, 0), WARN))
+	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
+		theme.set_color(state, REQUESTS_BUTTON, WARN)
 
 
 ## Used for share-of-a-whole bars (Economy's sector split). The engine default

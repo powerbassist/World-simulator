@@ -340,7 +340,7 @@ func setup(state, loader) -> void:
 	_loader = loader
 	_forecast.setup(state, loader, PROJECTION_MONTHS)
 	var ns = _state.player()
-	_title.text = tr("BUDGET — %s") % ns.id
+	_title.text = tr("BUDGET — %s") % _loader.nation_name(ns.id)
 	_on_revert()
 
 

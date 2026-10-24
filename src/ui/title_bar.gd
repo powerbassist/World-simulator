@@ -13,11 +13,13 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Domains = preload("res://src/ui/domains.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 signal back_requested
 signal forward_requested
 signal save_load_requested
 signal settings_requested
+signal requests_pressed
 
 const HEIGHT := 58
 
@@ -25,7 +27,7 @@ var _back: Button
 var _forward: Button
 var _crumb: Label
 var _held: Label
-var _requests: Label
+var _requests: Button
 var _clock_slot: HBoxContainer
 var _windows
 var _nation := ""
@@ -58,11 +60,12 @@ func _ready() -> void:
 
 	# V5.2b: the "requests waiting" mark by the clock. A request never holds the
 	# clock, so the mark is the clock's only word about them (decision-surfaces.md).
-	_requests = Label.new()
-	_requests.theme_type_variation = UiTheme.WARN_TEXT
-	_requests.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# A button since the pre-gate (the author's call, 2026-10-24): a small amber
+	# line was missed while requests lapsed, and the click opens the oldest.
+	_requests = _button(row, "", tr("Open the oldest request"))
+	_requests.theme_type_variation = UiTheme.REQUESTS_BUTTON
+	_requests.pressed.connect(func(): requests_pressed.emit())
 	_requests.hide()
-	row.add_child(_requests)
 
 	_held = Label.new()
 	_held.theme_type_variation = UiTheme.BAD_TEXT
@@ -144,6 +147,12 @@ func set_requests(count: int) -> void:
 
 func requests_text() -> String:
 	return _requests.text if _requests.visible else ""
+
+
+## A month brought a request: the mark says so as the clock slows.
+func pulse_requests() -> void:
+	if _requests.visible:
+		Motion.pulse(_requests)
 
 
 ## Why the clock is not running, or "" when nothing holds it.

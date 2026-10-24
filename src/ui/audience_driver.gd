@@ -15,7 +15,6 @@ const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const RequestLane = preload("res://src/ui/request_lane.gd")
 const AudienceScene = preload("res://src/ui/audience_scene.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
-const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const Words = preload("res://src/ui/lever_words.gd")
@@ -64,6 +63,7 @@ static func register(main) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
 	main._people_panel.call_requested.connect(func(pid: String) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
+	main._hud.title_bar.requests_pressed.connect(func() -> void: open_oldest(main))
 
 
 static func lane_of(main) -> RequestLane:
@@ -107,14 +107,16 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 	var loader = main._loader
 	var id := String(request["id"])
 	var answers := Audiences.answers(main._state, ns, loader, id)
-	var deadline := int(request["deadline_month"])
-	var year := floori((deadline - 1) / 12.0)
+	# The last month an answer is taken: the sim lapses a pending request AS its
+	# deadline month begins (Audiences._overdue), so the card names the month
+	# before (QA's pre-gate B TAKE 1: "Answer by AUG" lapsed on 1 AUG).
+	var last := int(request["deadline_month"]) - 1
 	return {"id": id, "person_id": String(request["person_id"]), "stance": String(request["stance"]), "object": String(request["object"]),
 		"person": loader.person_name(String(request["person_id"])),
 		"ask": PersonCard.object_text(loader, ns, String(request["object"]), request),
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
-		"by": DateText.month_year(deadline - year * 12, year),
+		"by": Words.when(last),
 		"price": Words.price_text(Audiences.decline_price(ns, loader, id)),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
 
@@ -152,6 +154,32 @@ static func open_scene(main, request_id: String) -> void:
 static func after_month(main, report: Dictionary) -> void:
 	refresh(main)
 	AudienceTalks.card_verdicts(main, report)
+	# The author's "Ralentir à l'arrivée" (2026-10-24): a month that brings a
+	# request drops the clock to speed 1. Not a stop -- a request never holds --
+	# but at speed 3 its two months were ten seconds, gone while the player read
+	# another panel (QA's pre-gate B CALL 1). A lapse alone does not slow it.
+	if not (report.get("audience_requests", {}).get("arrived", []) as Array).is_empty():
+		main._clock.set_speed(1)
+		main._hud.clock_cluster.refresh(main._clock)
+		main._hud.title_bar.pulse_requests()
+
+
+## The "requests waiting" mark's click: the inbox back over a tab, and the
+## OLDEST request -- the first to lapse -- raised to the top of its lane. By
+## arrival month, not the register's order: an invitation can be appended after
+## a younger ask. Refused under a scene, as the sidebar's Inbox entry is.
+static func open_oldest(main) -> void:
+	var ns = main._state.player() if main._state != null else null
+	if ns == null or not main._stack.accepts_hotkeys():
+		return
+	var oldest := {}
+	for request in Audiences.pending(ns):
+		if oldest.is_empty() or int(request["arrived_month"]) < int(oldest["arrived_month"]):
+			oldest = request
+	if oldest.is_empty():
+		return
+	main._hud.inbox.slide_in()
+	main._hud.inbox.raise_card(lane_of(main).card_of(String(oldest["id"])))
 
 
 ## Every promise and IOU in flight, worded, soonest due first (the sim's order).

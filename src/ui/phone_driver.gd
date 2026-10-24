@@ -20,6 +20,7 @@ const Phone = preload("res://src/sim/phone.gd")
 const President = preload("res://src/sim/president.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
+const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 
 static var _games := {}
 
@@ -65,7 +66,8 @@ static func open_call(main, person_id: String, people: Array) -> void:
 		"levers": o["levers"] if String(o["request_id"]) != "" else [], "topics": o["topics"],
 		"stance": String(request.get("stance", "")), "president": main._loader.person_name(President.leader_id(ns)),
 		"ask": PersonCard.object_text(main._loader, ns, String(request["object"]), request) if not request.is_empty() else "",
-		"choices": {"now": int(state.year) * 12 + int(state.month), "people": people}})
+		"choices": {"now": int(state.year) * 12 + int(state.month), "people": people,
+			"given_due": AudienceVerbs.given_due(ns, person_id, String(request.get("object", "")))}})
 	main._hud.clock_cluster.refresh(main._clock, HoldReason.show(main))
 
 
