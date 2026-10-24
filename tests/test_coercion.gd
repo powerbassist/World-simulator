@@ -22,9 +22,16 @@ const Budget = preload("res://src/sim/budget.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
+const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
 
 const PLAYER := "FRA"
 const TARGET := "DEU"
+## R10 (gate b): FRA and DEU share the EU's customs union, so the tariff VERB is
+## refused between them. The checks that go through execute() with a tariff aim at
+## a partner outside every customs union FRA belongs to; the register checks that
+## write it directly keep TARGET.
+const OUTSIDER := "GBR"
 
 var _failures: Array[String] = []
 var _loader
@@ -50,6 +57,7 @@ func _init() -> void:
 	_check_impose_writes_the_directed_entry()
 	_check_lift_clears_only_its_own_kind()
 	_check_lift_never_clears_an_org_levy()
+	_check_no_tariff_inside_a_customs_union()
 	_check_measure_cuts_trade_both_ways()
 	_check_measure_lowers_openness()
 	_check_damage_reads_the_directed_weight()
@@ -120,15 +128,15 @@ func _check_impose_writes_the_directed_entry() -> void:
 		_failures.append("no impose/tariff action is authored")
 		return
 
-	Diplomacy.execute(state, _loader.diplomatic_actions, action, PLAYER, TARGET)
+	Diplomacy.execute(state, _loader.diplomatic_actions, action, PLAYER, OUTSIDER)
 
-	if not state.measures.has(Relations.directed_key(PLAYER, TARGET)):
-		_failures.append("impose did not write %s>%s" % [PLAYER, TARGET])
+	if not state.measures.has(Relations.directed_key(PLAYER, OUTSIDER)):
+		_failures.append("impose did not write %s>%s" % [PLAYER, OUTSIDER])
 		return
-	if state.measures.has(Relations.directed_key(TARGET, PLAYER)):
+	if state.measures.has(Relations.directed_key(OUTSIDER, PLAYER)):
 		_failures.append("impose wrote the REVERSE direction too -- the register is not directed")
 
-	var terms: Dictionary = state.measures[Relations.directed_key(PLAYER, TARGET)]
+	var terms: Dictionary = state.measures[Relations.directed_key(PLAYER, OUTSIDER)]
 	if String(terms.get("kind", "")) != "tariff":
 		_failures.append("the register did not carry the action's kind")
 	if bool(terms.get("retaliated", true)):
@@ -146,9 +154,9 @@ func _check_lift_clears_only_its_own_kind() -> void:
 		_failures.append("missing impose/tariff or lift-for-sanction content")
 		return
 
-	Diplomacy.execute(state, _loader.diplomatic_actions, impose, PLAYER, TARGET)
+	Diplomacy.execute(state, _loader.diplomatic_actions, impose, PLAYER, OUTSIDER)
 	var available: Array = Diplomacy.available(
-		state, _loader.diplomatic_actions, PLAYER, TARGET
+		state, _loader.diplomatic_actions, PLAYER, OUTSIDER
 	)
 	if available.has(lift_other):
 		_failures.append("the sanction lift is offered against a TARIFF -- one lift can clear the other kind")
@@ -157,8 +165,8 @@ func _check_lift_clears_only_its_own_kind() -> void:
 	if lift_own == null or not available.has(lift_own):
 		_failures.append("the tariff lift is not offered against a tariff in force")
 		return
-	Diplomacy.execute(state, _loader.diplomatic_actions, lift_own, PLAYER, TARGET)
-	if state.measures.has(Relations.directed_key(PLAYER, TARGET)):
+	Diplomacy.execute(state, _loader.diplomatic_actions, lift_own, PLAYER, OUTSIDER)
+	if state.measures.has(Relations.directed_key(PLAYER, OUTSIDER)):
 		_failures.append("lift did not clear the directed entry")
 
 
@@ -169,10 +177,10 @@ func _check_lift_clears_only_its_own_kind() -> void:
 ## occupied for an impose -- one measure per directed pair.
 func _check_lift_never_clears_an_org_levy() -> void:
 	var state = _fresh()
-	var directed := Relations.directed_key(PLAYER, TARGET)
-	_impose(state, PLAYER, TARGET, "tariff", 0.3)
+	var directed := Relations.directed_key(PLAYER, OUTSIDER)
+	_impose(state, PLAYER, OUTSIDER, "tariff", 0.3)
 	state.measures[directed]["org"] = "climate_accord"
-	var available: Array = Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, TARGET)
+	var available: Array = Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, OUTSIDER)
 	for kind in ["tariff", "sanction"]:
 		if _lift_action_for(kind) == null:
 			_failures.append("no %s lift in the content -- the org-levy check would pass vacuously" % kind)
@@ -180,9 +188,67 @@ func _check_lift_never_clears_an_org_levy() -> void:
 			_failures.append("a %s lift is offered against an org's levy" % kind)
 	if available.has(_measure_action("impose", "tariff")):
 		_failures.append("an impose is offered on a pair an org's levy occupies")
-	var r: Dictionary = Diplomacy.execute(state, _loader.diplomatic_actions, _lift_action_for("tariff"), PLAYER, TARGET)
+	var r: Dictionary = Diplomacy.execute(state, _loader.diplomatic_actions, _lift_action_for("tariff"), PLAYER, OUTSIDER)
 	if not bool(r.get("refused", false)) or not state.measures.has(directed):
 		_failures.append("a lift was carried out against an org's levy: %s" % r)
+
+
+## R10 (gate b): no tariff between members of a customs union. The gate is the
+## org's `customs_union` field read through the verb's precondition -- never an id
+## check -- so flipping the field, or leaving the union, reopens the verb. Sanctions
+## are not a customs duty and stay offered (R10's scope).
+func _check_no_tariff_inside_a_customs_union() -> void:
+	var state = _fresh()
+	var tariff = _measure_action("impose", "tariff")
+	if tariff == null:
+		_failures.append("no impose/tariff action is authored")
+		return
+	if Verbs.customs_union_with(state, PLAYER, TARGET) != "eu":
+		_failures.append("FRA and DEU do not read as sharing the EU's customs union")
+	if Verbs.customs_union_with(state, PLAYER, OUTSIDER) != "":
+		_failures.append("FRA and %s read as sharing a customs union" % OUTSIDER)
+	var offered: Array = Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, TARGET)
+	if offered.has(tariff):
+		_failures.append("a tariff is offered between two members of a customs union")
+	if not offered.has(_measure_action("impose", "sanction")):
+		_failures.append("a sanction is no longer offered between customs-union members (out of R10's scope)")
+	if not Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, OUTSIDER).has(tariff):
+		_failures.append("a tariff on a partner outside the union is not offered")
+	var r: Dictionary = Diplomacy.execute(state, _loader.diplomatic_actions, tariff, PLAYER, TARGET)
+	if not bool(r.get("refused", false)) or state.measures.has(Relations.directed_key(PLAYER, TARGET)):
+		_failures.append("execute() carried out a tariff inside a customs union: %s" % r)
+	# The AI's side of the same gate: no nation offers a tariff to a fellow member.
+	for a in state.nations.keys():
+		for b in ["FRA", "DEU", "ITA"]:
+			if a == b or Verbs.customs_union_with(state, a, b) == "":
+				continue
+			if Diplomacy.available(state, _loader.diplomatic_actions, a, b).has(tariff):
+				_failures.append("%s is offered a tariff on fellow member %s" % [a, b])
+				return
+
+	# The field decides, not the org's id.
+	var unflagged = _fresh()
+	unflagged.org_effects["eu"]["customs_union"] = false
+	if not Diplomacy.available(unflagged, _loader.diplomatic_actions, PLAYER, TARGET).has(tariff):
+		_failures.append("the gate holds with the EU's customs_union field off -- it is not reading the field")
+	# Live membership decides: DEU outside the EU may be tariffed again.
+	var left = _fresh()
+	left.nations[TARGET].orgs.erase("eu")
+	if not Diplomacy.available(left, _loader.diplomatic_actions, PLAYER, TARGET).has(tariff):
+		_failures.append("the gate still holds after DEU left the EU")
+	# And an accession turns it on: GBR inside the EU may no longer be tariffed.
+	var joined = _fresh()
+	joined.nations[OUTSIDER].orgs.append("eu")
+	joined.nations[OUTSIDER].orgs.sort()
+	if Diplomacy.available(joined, _loader.diplomatic_actions, PLAYER, OUTSIDER).has(tariff):
+		_failures.append("a nation that joined the EU may still be tariffed by a fellow member")
+	# org_effects is not saved: the load re-derive must carry the field.
+	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(_fresh().to_dict())))
+	Orgs.rebuild_static(back, _loader)
+	if not Diplomacy.available(back, _loader.diplomatic_actions, PLAYER, OUTSIDER).has(tariff):
+		_failures.append("a reloaded game offers no tariff at all -- the reload check below is vacuous")
+	if Diplomacy.available(back, _loader.diplomatic_actions, PLAYER, TARGET).has(tariff):
+		_failures.append("a reloaded game offers a tariff inside the customs union")
 
 
 # --- trade --------------------------------------------------------------------------

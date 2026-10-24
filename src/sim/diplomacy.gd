@@ -474,17 +474,10 @@ static func _read_field(state, ns, field: String, target_id: String) -> float:
 		# gate themselves with no trade knowledge in this module at all: an enter
 		# verb asks for 0, an exit verb asks for 1.
 		"agreement_active": return 1.0 if state.agreements.has(RK.key(ns.id, target_id)) else 0.0
-		# The third piece of pair state and the first DIRECTED one: this nation's own
-		# measure against this target, not the target's against it. An impose verb
-		# asks measure_active for 0; a lift verb asks its OWN kind for 1, because
-		# one measure per pair means "something is in force" cannot tell a tariff
-		# from an embargo and a single field would let either lift clear either.
-		# A lift reads the nation's OWN measure only (pre-gate B, RECORD 11): an
-		# org's levy on the same key is the org's to end, and a lift offered
-		# against it let one member dissolve a common tariff.
-		"measure_active": return 1.0 if Verbs.measure_kind(state, ns.id, target_id) != "" else 0.0
-		"tariff_active": return 1.0 if Verbs.own_measure_kind(state, ns.id, target_id) == "tariff" else 0.0
-		"sanction_active": return 1.0 if Verbs.own_measure_kind(state, ns.id, target_id) == "sanction" else 0.0
+		# The third piece of pair state and the first DIRECTED one, plus R10's
+		# customs union: read beside the measure register in diplomacy_verbs.gd.
+		"measure_active", "tariff_active", "sanction_active", "customs_union_shared":
+			return Verbs.pair_field(state, ns.id, field, target_id)
 		# V1.3g's five, over its two registers. FOUR of them are about the pair for
 		# the reason the three measure fields above are three: `deployment_active`
 		# cannot tell a commitment the player chose from one an alliance imposed, so

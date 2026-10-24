@@ -48,6 +48,12 @@ var relations_bonus: float = 0.0
 ## trade_constants.EU_TRADE_BONUS held before this register existed.
 var trade_bonus: float = 0.0
 
+## R10 (gate b): a customs union -- no tariff between members. The eu carries it;
+## a currency union, a border area, an alliance and an accord do not. A FLAG, not
+## a price, so it rides GameState.org_effects beside the prices but never enters
+## shared_bonus()'s sum: shared_flag() below reads it.
+var customs_union: bool = false
+
 ## Negotiation countdowns, in months, after the referendum has passed. Authored
 ## per org: joining or leaving the EU is a two-year process, the others are
 ## shorter. 0 would mean "flips immediately", which no authored org carries.
@@ -141,6 +147,13 @@ static func from_dict(raw: Dictionary, fname: String, errors: Array[String]):
 
 	org.council = bool(raw.get("council", false))
 	org.net_transfers = bool(raw.get("net_transfers", false))
+	# Type-checked rather than bool()'d: bool("false") is true, so a quoted flag
+	# would gate tariffs the content meant to leave open.
+	var raw_union = raw.get("customs_union", false)
+	if typeof(raw_union) == TYPE_BOOL:
+		org.customs_union = raw_union
+	else:
+		errors.append("%s: %s customs_union must be true or false" % [fname, org.id])
 
 	for key in OrgK.ORG_EFFECT_KEYS:
 		var v = raw.get(key, 0.0)
@@ -293,6 +306,21 @@ static func shared_bonus(state, a_id: String, b_id: String, key: String) -> floa
 			by_a[b_id] = value
 		return value
 	return _shared_bonus(state, a_id, b_id, key)
+
+
+## R10. The first org both nations belong to whose snapshot sets the flag `key`,
+## or "" when none does. Live membership (NationState.orgs, kept sorted), so an
+## accession turns it on and a withdrawal off; read-only and unmemoised, so a
+## Diplomacy worker may call it (src/core/parallel.gd's rules).
+static func shared_flag(state, a_id: String, b_id: String, key: String) -> String:
+	var a = state.nations.get(a_id)
+	var b = state.nations.get(b_id)
+	if a == null or b == null:
+		return ""
+	for org_id in a.orgs:
+		if b.orgs.has(org_id) and bool(state.org_effects.get(org_id, {}).get(key, false)):
+			return org_id
+	return ""
 
 
 ## V5.0c. shared_bonus() memoised for the length of ONE Diplomacy tick, the
