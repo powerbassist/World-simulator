@@ -46,6 +46,16 @@ const MASK_ROOT := "res://sources/portraits/mask"
 const SCENE_RAW_DIR := "res://sources/backgrounds/raw"
 const OUT_DIR := "res://assets/portraits"
 const SCENE_OUT_DIR := "res://assets/portrait_scenes"
+## V5.2a: the audience window's 16:9 library. Rendered at 1344x768 (SDXL's
+## bucket), shipped 1280x720: the frame is CENTRE-CROPPED to 16:9 first (1344
+## x 756) and resized, never squashed -- 1344:768 is 1.750 and 16:9 is 1.778,
+## and a 1.6 % stretch on a room is a bent doorframe. Its own directory,
+## because assets/portrait_scenes/ is the 432x632 bust-backdrop library whose
+## names, sizes and tests the bust display owns.
+const WIDE_RAW_DIR := "res://sources/backgrounds/wide"
+const WIDE_OUT_DIR := "res://assets/portrait_scenes_wide"
+const WIDE_OUT_W := 1280
+const WIDE_OUT_H := 720
 
 ## Source frames are 832x1216 (the workflow's EmptyLatentImage). The crop takes
 ## the full width and the upper 1140px -- 432:592's aspect -- starting below a
@@ -142,6 +152,12 @@ func _init() -> void:
 			scenes += 1
 			bytes_total += FileAccess.get_file_as_bytes(out_path).size()
 
+	var wide := _write_wide_scenes()
+	if wide < 0:
+		quit(1)
+		return
+	scenes += wide
+
 	if written > 0:
 		_write_sheets(per_emotion, loader)
 
@@ -152,6 +168,32 @@ func _init() -> void:
 	print("portraits: %d busts (%d without neutral art, falls back to the silhouette), %d backdrops, %.1f MB total, largest single file %.1f KB"
 		% [written, missing, scenes, bytes_total / 1048576.0, _largest_kb(OUT_DIR)])
 	quit(0)
+
+
+## The 16:9 audience backdrops: raw PNG -> 1280x720 WebP + keep .import.
+## Returns the count written, or -1 on a failure (already printed).
+func _write_wide_scenes() -> int:
+	if not DirAccess.dir_exists_absolute(WIDE_RAW_DIR):
+		return 0
+	DirAccess.make_dir_recursive_absolute(WIDE_OUT_DIR)
+	var count := 0
+	for f in DirAccess.get_files_at(WIDE_RAW_DIR):
+		if not f.ends_with(".png"):
+			continue
+		var img := _load_frame(WIDE_RAW_DIR.path_join(f))
+		if img == null:
+			return -1
+		var target_h := int(round(img.get_width() * 9.0 / 16.0))
+		var top := maxi(0, (img.get_height() - target_h) / 2)
+		var backdrop := img.get_region(Rect2i(0, top, img.get_width(), mini(target_h, img.get_height())))
+		backdrop.resize(WIDE_OUT_W, WIDE_OUT_H, Image.INTERPOLATE_LANCZOS)
+		var out_path := WIDE_OUT_DIR.path_join(f.get_basename() + ".webp")
+		if backdrop.save_webp(out_path, true, 0.90) != OK:
+			printerr("FAIL: could not write %s" % out_path)
+			return -1
+		_write_keep_import(out_path)
+		count += 1
+	return count
 
 
 ## emotion -> {person_id: true}, only ids with BOTH a raw and a mask present.
@@ -179,7 +221,7 @@ func _load_frame(path: String) -> Image:
 		return null
 	# 832x1216 is the generated frame; photo-route renders carry the Commons
 	# photo's own dimensions by design -- _crop_and_resize centre-crops those.
-	if img.get_size() != SOURCE_FRAME:
+	if img.get_size() != SOURCE_FRAME and not path.begins_with(WIDE_RAW_DIR):
 		print("note: %s is %s (photo route) -- centre-cropping" % [path.get_file(), img.get_size()])
 	return img
 

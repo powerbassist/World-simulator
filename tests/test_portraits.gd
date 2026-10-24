@@ -48,6 +48,7 @@ const Summit = preload("res://src/core/summit.gd")
 
 const PORTRAITS_DIR := "res://assets/portraits"
 const SCENES_DIR := "res://assets/portrait_scenes"
+const WIDE_DIR := "res://assets/portrait_scenes_wide"
 const EMOTIONS := ["neutral", "pleased", "stern", "worried", "weary"]
 
 var _failures: Array[String] = []
@@ -100,9 +101,11 @@ func _run() -> void:
 	_check_card_shows_art()
 	_check_emotion_completeness()
 	_check_every_executive_has_a_face(loader)
+	_check_every_met_cast_has_a_face(loader)
 	_check_emotion_axis()
 	_check_alpha_is_real()
 	_check_scene_files()
+	_check_wide_scene_files()
 	_check_scene_set_pin()
 	_check_python_teeth()
 
@@ -230,6 +233,21 @@ func _check_every_executive_has_a_face(loader) -> void:
 		_fail("the register holds no executives -- this check is looking at nothing")
 
 
+## V5.2a: the met cast (bench: false) are the people the president actually
+## faces, and the silhouette fallback is for the deep bench only. The 88 the
+## V4.3 harvest left bare (the generated nations' majors) now carry all five
+## moods; _check_emotion_completeness holds the "all five" half once any art
+## exists, this holds the "has art at all" half.
+func _check_every_met_cast_has_a_face(loader) -> void:
+	for nation_id in loader.people.keys():
+		for person in loader.people[nation_id]:
+			if person.bench:
+				continue
+			var path := PORTRAITS_DIR.path_join("neutral").path_join(person.id + ".webp")
+			if not FileAccess.file_exists(path):
+				_fail("met-cast person '%s' has no neutral portrait at %s" % [person.id, path])
+
+
 ## The emotion vocabulary is hand-carried in tools/ and src/ -- the scene
 ## lists got a two-sources pin, so the emotion axis gets its own: the
 ## display's directory list is exactly the five names in enum order, and this
@@ -272,6 +290,31 @@ func _check_alpha_is_real() -> void:
 ## V3.7: src/ names a scene file for every Scene value, so every one of those
 ## files must be committed -- the window-icon rule for the new asset class.
 ## Until assets/portrait_scenes/ exists (Phase A) there is nothing to demand.
+## V5.2a: the 16:9 audience backdrops. The four rooms the first audiences are
+## held in must each carry their pool of three, every file must be a scene
+## name plus a variant, and every file must decode at exactly 1280x720 -- a
+## wrong-sized backdrop is a letterboxed audience window nobody notices in a
+## headless run. Absent directory = the batch has not landed (Phase A rule).
+func _check_wide_scene_files() -> void:
+	if not DirAccess.dir_exists_absolute(WIDE_DIR) or DirAccess.get_files_at(WIDE_DIR).is_empty():
+		return
+	for scene_name in ["office", "cabinet_room", "corridor", "press_room"]:
+		for variant in 3:
+			if not FileAccess.file_exists(WIDE_DIR.path_join("%s_%d.webp" % [scene_name, variant])):
+				_fail("wide backdrop '%s_%d' is missing -- the audience window would have no room" % [scene_name, variant])
+	for f in DirAccess.get_files_at(WIDE_DIR):
+		if not f.ends_with(".webp"):
+			continue
+		var scene_name := f.get_basename().rsplit("_", true, 1)[0]
+		if not Portrait.SCENE_NAMES.values().has(scene_name):
+			_fail("wide backdrop '%s' names no scene the display knows" % f)
+		var img := Image.new()
+		if img.load_webp_from_buffer(FileAccess.get_file_as_bytes(WIDE_DIR.path_join(f))) != OK:
+			_fail("wide backdrop '%s' is not a decodable WebP" % f)
+		elif img.get_size() != Vector2i(1280, 720):
+			_fail("wide backdrop '%s' is %s, expected 1280x720" % [f, img.get_size()])
+
+
 func _check_scene_files() -> void:
 	# The class arrives when its FILES arrive: the post-pass can leave an empty
 	# directory behind (it ran on a tree with no raws), and an empty dir is
