@@ -116,3 +116,15 @@ const RAPPORT_GOSSIP := 0.02
 const SALT_ROLL := "lever"
 const SALT_FOG := "fog"
 const SALT_TRAIT := "trait"
+
+## A promise and an IOU are judged at their date, with no roll (spec, the lies
+## table: "a broken dated promise IS a lie revealed at its date"). Kept, a promise
+## buys rapport; broken, it is a lie -- rapport and knowledge collapse and a grudge
+## pulses. An IOU unpaid is a betrayal, not a lie: rapport and a grudge, and the
+## president's knowledge of the person stands.
+const PROMISE_KEPT_RAPPORT := 0.10
+const LIE_RAPPORT := 0.5
+const LIE_KNOWLEDGE_KEEP := 0.5
+const LIE_GRUDGE := 0.15
+const IOU_BETRAYAL_RAPPORT := 0.2
+const IOU_BETRAYAL_GRUDGE := 0.08

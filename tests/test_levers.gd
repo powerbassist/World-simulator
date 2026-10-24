@@ -14,6 +14,7 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
+const NationState = preload("res://src/core/nation_state.gd")
 const Person = preload("res://src/core/person.gd")
 const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
@@ -53,6 +54,9 @@ func _init() -> void:
 	_check_topics_teach_and_spend_an_attempt()
 	_check_gossip_writes_only_the_third_person()
 	_check_flirt_waits_for_the_shadows()
+	_check_a_kept_promise_and_a_broken_one()
+	_check_an_unpaid_iou_is_a_betrayal()
+	_check_a_promise_survives_a_save()
 
 	_finish()
 
@@ -455,6 +459,124 @@ func _check_flirt_waits_for_the_shadows() -> void:
 		_fail("flirting was offered before V5.2c")
 	if bool(Levers.talk(c["state"], c["ns"], _loader, c["session"], "flirt").get("ok", true)):
 		_fail("a flirt was accepted before V5.2c")
+
+
+## A promise is judged at its date with no roll: kept if the want is served then,
+## else a lie revealed -- rapport and knowledge collapse and a grudge pulses. Each
+## row is judged once and leaves the register.
+func _check_a_kept_promise_and_a_broken_one() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var kept := _person_with_want(ns, true)
+	var broken := _person_with_want(ns, false, String(kept.get("id", "")))
+	if kept.is_empty() or broken.is_empty():
+		_fail("no France person has a served and an unserved want to stage the promises")
+		return
+	var due := _now(state) + LK.PROMISE_MIN_MONTHS
+	President.commit(state, ns, _loader, "promise", kept["id"], kept["object"], due)
+	President.commit(state, ns, _loader, "promise", broken["id"], broken["object"], due)
+	President.learn(state, ns, _loader, broken["id"], 0.6)
+	var r_kept := President.rapport(ns, kept["id"])
+	var r_broken := President.rapport(ns, broken["id"])
+	var g_broken := float(ns.person_grudges.get(broken["id"], 0.0))
+	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+	if not ns.commitments.size() == 2 or not (report["kept"] as Array).is_empty():
+		_fail("a promise was judged before its date (%d rows left, report %s)" % [ns.commitments.size(), report])
+	_set_month(state, due)
+	report = Levers.tick_month(state, _loader, METERS)
+	if (report["kept"] as Array).size() != 1 or (report["broken"] as Array).size() != 1 or not ns.commitments.is_empty():
+		_fail("at its date: kept %s, broken %s, %d rows left" % [report["kept"], report["broken"], ns.commitments.size()])
+	if absf(President.rapport(ns, kept["id"]) - r_kept - LK.PROMISE_KEPT_RAPPORT) > 0.000001:
+		_fail("a kept promise moved rapport by %.4f" % (President.rapport(ns, kept["id"]) - r_kept))
+	if absf(President.rapport(ns, broken["id"]) - (r_broken - LK.LIE_RAPPORT)) > 0.000001:
+		_fail("a broken promise left rapport at %.4f" % President.rapport(ns, broken["id"]))
+	if absf(President.knowledge(ns, broken["id"]) - 0.6 * LK.LIE_KNOWLEDGE_KEEP) > 0.000001:
+		_fail("a broken promise left knowledge at %.4f, not %.4f" % [President.knowledge(ns, broken["id"]), 0.6 * LK.LIE_KNOWLEDGE_KEEP])
+	if not float(ns.person_grudges.get(broken["id"], 0.0)) > g_broken:
+		_fail("a broken promise wrote no grudge")
+	var after := _snapshot(ns, broken["id"])
+	Levers.tick_month(state, _loader, METERS)
+	if _snapshot(ns, broken["id"]) != after:
+		_fail("a judged promise was judged again")
+
+
+## An IOU the want did not repay by its date is a betrayal: rapport and a grudge,
+## but the president is not caught lying, so knowledge stands.
+func _check_an_unpaid_iou_is_a_betrayal() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var owed := _person_with_want(ns, false)
+	if owed.is_empty():
+		return
+	var due := _now(state) + LK.IOU_MONTHS
+	President.commit(state, ns, _loader, "iou", owed["id"], owed["object"], due)
+	President.learn(state, ns, _loader, owed["id"], 0.5)
+	var r0 := President.rapport(ns, owed["id"])
+	var g0 := float(ns.person_grudges.get(owed["id"], 0.0))
+	_set_month(state, due)
+	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+	if (report["broken"] as Array).size() != 1 or not ns.commitments.is_empty():
+		_fail("an unpaid IOU was not judged broken: %s" % [report])
+	if absf(President.rapport(ns, owed["id"]) - (r0 - LK.IOU_BETRAYAL_RAPPORT)) > 0.000001:
+		_fail("an unpaid IOU left rapport at %.4f" % President.rapport(ns, owed["id"]))
+	if not float(ns.person_grudges.get(owed["id"], 0.0)) > g0:
+		_fail("an unpaid IOU wrote no grudge")
+	if President.knowledge(ns, owed["id"]) != 0.5:
+		_fail("an unpaid IOU collapsed knowledge as a lie does")
+
+
+## A promise saved before its date comes back with int months and is judged once.
+func _check_a_promise_survives_a_save() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var owed := _person_with_want(ns, false)
+	if owed.is_empty():
+		return
+	var due := _now(state) + LK.PROMISE_MIN_MONTHS
+	President.commit(state, ns, _loader, "promise", owed["id"], owed["object"], due)
+	var loaded = NationState.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
+	state.nations[PLAYER] = loaded
+	_set_month(state, due)
+	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+	if (report["broken"] as Array).size() != 1 or not loaded.commitments.is_empty():
+		_fail("a promise loaded from a save was not judged at its date: %s" % [report])
+	var after := _snapshot(loaded, owed["id"])
+	Levers.tick_month(state, _loader, METERS)
+	if _snapshot(loaded, owed["id"]) != after:
+		_fail("a loaded promise was judged twice")
+
+
+func _plain_game():
+	var state = GameState.new_game(_loader, PLAYER)
+	state.year = 2026
+	state.month = 1
+	state.day = 1
+	return state
+
+
+## A person of the played nation with a want that is (or is not) served in a new
+## game: {id, object}, or {}.
+func _person_with_want(ns, served: bool, not_id := "") -> Dictionary:
+	var leaders := {}
+	for party in _loader.parties[PLAYER]:
+		leaders[party.id] = party.leader_person_id
+	for person in _loader.people[PLAYER]:
+		if person.id == President.leader_id(ns) or person.id == not_id:
+			continue
+		for want in person.wants:
+			if Characters.want_served(ns, person, want, METERS, leaders) == served:
+				return {"id": person.id, "object": String(want["object"])}
+	return {}
+
+
+func _set_month(state, absolute: int) -> void:
+	state.year = floori((absolute - 1) / 12.0)
+	state.month = absolute - state.year * 12
+	state.day = 1
+
+
+func _now(state) -> int:
+	return int(state.year) * 12 + int(state.month)
 
 
 func _expect_refused(state, ns, s: Dictionary, pid: String, when: String) -> void:

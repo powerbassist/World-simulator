@@ -18,8 +18,9 @@ extends RefCounted
 ## government -- covers() refuses everyone else, so a writer handed a stray id
 ## leaves every register untouched rather than growing an edge to 2 147 people.
 ##
-## Nothing on the tick path calls a writer yet. The registers are V5.2a's; the
-## audiences (b) and the shadows (c) are what write them.
+## The registers are V5.2a's; the audiences (b) and the shadows (c) write them.
+## On the tick path since V5.2b b2: the audience held (Audiences.hold) and the
+## commitments judged at their date (Levers.tick_month).
 
 const K = preload("res://src/sim/president_constants.gd")
 
@@ -194,6 +195,27 @@ static func commit(state, ns, loader, kind: String, person_id: String, object: S
 		"due_month": due_month,
 	})
 	return true
+
+
+## V5.2b b2. Every commitment due by `now`, taken off the register in its order
+## and cast the way commitments_with() casts: the judge (Levers.tick_month)
+## prices each once, so no row outlives its date and none is judged twice.
+static func take_commitments_due(ns, now: int) -> Array[Dictionary]:
+	var due: Array[Dictionary] = []
+	var later: Array[Dictionary] = []
+	for row in ns.commitments:
+		if int(row.get("due_month", 0)) > now:
+			later.append(row)
+			continue
+		due.append({
+			"kind": String(row.get("kind", "")),
+			"person_id": String(row.get("person_id", "")),
+			"object": String(row.get("object", "")),
+			"made_month": int(row.get("made_month", 0)),
+			"due_month": int(row.get("due_month", 0)),
+		})
+	ns.commitments = later
+	return due
 
 
 static func leave_evidence(state, ns, loader, kind: String, person_id: String, size: float) -> bool:

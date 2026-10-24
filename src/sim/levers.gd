@@ -203,6 +203,45 @@ static func close(state, ns, loader, session: Dictionary) -> Dictionary:
 	return {"ok": bool(r.get("ok", false)), "error": String(r.get("error", "")), "outcome": outcome, "price": r.get("price", {})}
 
 
+## The month's half of the audience: every promise and IOU due is judged once,
+## with no roll -- kept (or paid) if the person's want is served now, else a lie
+## revealed (a promise) or a betrayal (an IOU). {kept, broken}, the rows judged.
+## The played nation only: the AI nations hold no audiences (spec C12). A person
+## who has since defected or left office is judged on the same want.
+static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
+	var out := {"kept": [], "broken": []}
+	var ns = state.player()
+	if ns == null or ns.commitments.is_empty():
+		return out
+	var leaders := {}
+	for party in loader.parties.get(ns.id, []):
+		leaders[party.id] = party.leader_person_id
+	for row in President.take_commitments_due(ns, _now(state)):
+		var person = loader.person_by_id.get(String(row["person_id"]))
+		if person == null:
+			continue
+		var pid := String(person.id)
+		var promise := String(row["kind"]) == "promise"
+		var served := false
+		for want in person.wants:
+			if String(want["object"]) == String(row["object"]):
+				served = Characters.want_served(ns, person, want, meters, leaders)
+		if served:
+			if promise:
+				_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT)
+			out["kept"].append(row)
+			continue
+		if promise:
+			_rapport(state, ns, loader, pid, -K.LIE_RAPPORT)
+			President.learn(state, ns, loader, pid, -President.knowledge(ns, pid) * (1.0 - K.LIE_KNOWLEDGE_KEEP))
+			Characters.price_refusal(ns, person, K.LIE_GRUDGE, 0.0)
+		else:
+			_rapport(state, ns, loader, pid, -K.IOU_BETRAYAL_RAPPORT)
+			Characters.price_refusal(ns, person, K.IOU_BETRAYAL_GRUDGE, 0.0)
+		out["broken"].append(row)
+	return out
+
+
 ## The phone (b3): one lever attempt or one topic, no diary day. Named `phone`,
 ## not `call`: a static `call` overrides Object.call() and does not parse.
 static func phone(state, ns, loader, person_id: String, lever_or_topic: String, args := {}) -> Dictionary:
