@@ -19,6 +19,7 @@ extends RefCounted
 signal book_requested(request_id: String)
 signal delegate_requested(request_id: String)
 signal decline_requested(request_id: String)
+signal call_requested(request_id: String)
 
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -26,10 +27,12 @@ const Strings = preload("res://src/ui/strings.gd")
 const BOOK := 0
 const DELEGATE := 1
 const DECLINE := 2
+const CALL := 3
 
 var _inbox
 var _card_of := {}     # request id -> card id
 var _request_of := {}  # card id -> request id
+var _answers_of := {}  # request id -> the answers its card was put up with
 
 
 func attach(inbox) -> void:
@@ -51,16 +54,23 @@ func show_requests(rows: Array) -> void:
 			_inbox.dismiss(String(_card_of[request_id]))
 	for row in rows:
 		var request_id := String(row["id"])
-		if _card_of.has(request_id):
-			_inbox.set_body(String(_card_of[request_id]), _body(row))
-			continue
-		var card_id: String = _inbox.push(Strings.t("%s asks to see you") % String(row["person"]), _body(row), [
+		var answers: Array = [
 			_answer(Strings.t("Book a day…"), row.get("book", {})),
 			_answer(Strings.t("Delegate"), row.get("delegate", {})),
 			_answer(Strings.t("Decline"), row.get("decline", {})),
-		], null, false, _inbox.REQUESTS)
+		] + ([_answer(Strings.t("Call them…"), row["call"])] if row.has("call") else [])
+		# Same answers: the body is rewritten in place. Changed (a day now taken, the
+		# month's call spent): the card is put up again, since the inbox rewrites a
+		# body but not its buttons.
+		if _card_of.has(request_id) and _answers_of.get(request_id) == answers:
+			_inbox.set_body(String(_card_of[request_id]), _body(row))
+			continue
+		if _card_of.has(request_id):
+			_inbox.dismiss(String(_card_of[request_id]))
+		var card_id: String = _inbox.push(Strings.t("%s asks to see you") % String(row["person"]), _body(row), answers, null, false, _inbox.REQUESTS)
 		_card_of[request_id] = card_id
 		_request_of[card_id] = request_id
+		_answers_of[request_id] = answers
 
 
 func request_ids() -> Array:
@@ -96,9 +106,12 @@ func _on_action(card_id: String, index: int) -> void:
 			delegate_requested.emit(request_id)
 		DECLINE:
 			decline_requested.emit(request_id)
+		CALL:
+			call_requested.emit(request_id)
 
 
 func _forget(card_id: String) -> void:
 	if _request_of.has(card_id):
 		_card_of.erase(_request_of[card_id])
+		_answers_of.erase(_request_of[card_id])
 		_request_of.erase(card_id)
