@@ -61,7 +61,9 @@ const SLOT := "__test_save_continuity__"
 const BILL := "emissions_standards"
 const PLAYER := "FRA"
 const PARTNER := "DEU"
-const RIVAL := "ITA"
+## The tariff's target: outside FRA's customs union, since R10 refuses the verb
+## between members (ITA, the rival here before, shares the EU).
+const RIVAL := "GBR"
 ## The flood defences build in 30 months (data/project-actions/projects.json),
 ## and a COMPLETED sited work is what puts a payoff on the derived map the load
 ## path rebuilds. Two months over, so the completion is not on the save's month.
