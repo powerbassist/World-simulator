@@ -4,6 +4,12 @@
   "geo_id": "FRA",
   "capital": "Paris",
   "playable": true,
+  "party_funding": {
+    "_source": "authored",
+    "_note": "Public funding of French parties, 2024 (the pots are fixed each year by decree and shared out). Vote pot EUR 32.25 m, shared by first-round votes at the last legislative election; seat pot EUR 34.19 m, shared by parliamentarians (about EUR 37 000 each a year; 925 seats, 577 deputies and 348 senators). Total EUR 66.44 m. Sources: Le Grand Continent, 9 July 2024, an article on public party funding after the 2024 legislative election; LCP, first-round analysis of the 2024 legislative election and the public money it brings. Dropped as refinements: the 1 % in 50 constituencies threshold, the parity deduction and the Senate's own composition.",
+    "vote_pot_eur_m_year": 32.25,
+    "seat_pot_eur_m_year": 34.19
+  },
   "leader": {
     "person": "FRA_moucron",
     "title": "President of the Republic",

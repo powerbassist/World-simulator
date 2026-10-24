@@ -4,6 +4,12 @@
   "geo_id": "GBR",
   "capital": "London",
   "playable": true,
+  "party_funding": {
+    "_source": "authored",
+    "_note": "United Kingdom: no general party funding. The state pays OPPOSITION parties Short Money (the Commons resolution of 26 May 1999): in 2023/24, GBP 21 438.33 for each seat won and GBP 42.82 for every 200 votes (House of Commons Library, 'Short Money', SN01663; Wikipedia, 'Short Money'), plus the Leader of the Opposition's Office (GBP 998 817.35, not shared by the pots), and Policy Development Grants through the Electoral Commission (about GBP 2 m a year, older figure). The governing party receives nothing, so its pots here are ESTIMATES, not sourced totals: seat pot EUR 7.0 m (the per-seat rate over about 285 opposition seats, at about EUR 1.17 a pound) and vote pot EUR 4.3 m (the per-200-votes rate over about 17.5 m opposition votes). The seat and vote counts are from memory of the 2019 election and unchecked. The loader still shares the pots among every party of the played nation, so the governing party is paid a share the real law denies it; flagged to Systems.",
+    "vote_pot_eur_m_year": 4.3,
+    "seat_pot_eur_m_year": 7.0
+  },
   "leader": {
     "person": "GBR_marchbanks",
     "title": "Prime Minister",

@@ -4,6 +4,12 @@
   "geo_id": "POL",
   "capital": "Warsaw",
   "playable": true,
+  "party_funding": {
+    "_source": "authored",
+    "_note": "Polish party subsidy (subwencja), paid for a four-year term from the Sejm election result to parties with at least 3 % alone or 6 % in a coalition: PLN 5.77 a valid vote up to 5 % of the vote, 4.61 above 5 to 10 %, 4.04 above 10 to 20 %, 2.31 above 20 to 30 %, 0.87 above 30 % (Demagog, an explainer on party subsidies, for the 2019 election). After the 2023 election the national electoral commission put the annual subsidy at over PLN 84 m (Demagog quoting the commission; Rzeczpospolita via Infor for the split between parties). At PLN 4.31 to the euro (the 2024 average) that is EUR 19.5 m, entered as the vote pot; Poland pays nothing by seats. The tiered rate is not modelled: the pot is shared by vote share.",
+    "vote_pot_eur_m_year": 19.5,
+    "seat_pot_eur_m_year": 0.0
+  },
   "leader": {
     "person": "POL_zawadzki",
     "title": "Prime Minister",
