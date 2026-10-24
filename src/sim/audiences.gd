@@ -200,9 +200,11 @@ static func decline(state, ns, loader, request_id: String) -> Dictionary:
 	return {"ok": true, "error": "", "price": price}
 
 
-## The booked day has come and the scene opens (Levers.open calls this): the
-## president learns the person a little whatever is said -- less the better they
-## already know them, the curve every knowledge gain of the audience takes.
+## The booked day has come and the scene opens (Levers.open calls this): whatever
+## is said, the president learns the person a little -- less the better they
+## already know them, the curve every knowledge gain of the audience takes -- and
+## being received earns RECEIVED_RAPPORT (b2.2), so an audience that ends in a
+## refusal nets no rapport where a refusal by letter costs DECLINE_RAPPORT.
 static func hold(state, ns, loader, request_id: String) -> Dictionary:
 	var row := _row(ns, request_id)
 	if row.is_empty() or String(row["status"]) != K.STATUS_BOOKED:

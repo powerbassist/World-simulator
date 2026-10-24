@@ -294,7 +294,7 @@ func _b5_table(requests: Array, mix: bool) -> Dictionary:
 		shares["all"][answer] = (float(best["will_serve"][answer]) + float(best["wont_serve"][answer])) / maxf(1.0, float(cases["will_serve"]) + float(cases["wont_serve"]))
 	var out := {"shares": shares, "cases": float(cases["will_serve"]) + float(cases["wont_serve"])}
 	if not mix:
-		out["book_levers"] = levers
+		out["book_levers"] = levers  # Book's best lever in every case, whether or not Book was the best answer
 	return out
 
 
@@ -438,7 +438,7 @@ func _print(out: Dictionary) -> void:
 		print("   highest refused grudges: %s" % [r["refused_peak_grudges"]])
 	if out.has("b5_answers"):
 		var b5: Dictionary = out["b5_answers"]
-		print("A2F B5 answers over %d requests x 2 intents (day %.2f, realized kept %.3f): %s | book levers %s" % [
+		print("A2F B5 answers over %d requests x 2 intents (day %.2f, realized kept %.3f): %s | Book's best lever per case, won or not: %s" % [
 			b5["requests"], b5["diary_day"], b5["realized_kept_share"], b5["shares"], b5["book_levers"]])
 		print("   declared mix (information): %s" % [b5["mix_info"]["shares"]])
 	for band in out["bands"]:
