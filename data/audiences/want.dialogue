@@ -1,0 +1,20 @@
+~ opening
+% {{name}}: {{president}}, you know what I am after. {{ask}} is not a favour for me alone, but I will not pretend it does not matter to me.
+% {{name}}: I will be honest, since I think you prefer it. I want {{ask}}, and I have waited longer than I should have.
+=> END
+
+~ lever_flatter_success
+% {{name}}: Nobody has said it that way in years. I admit it does me good, and I admit you know it.
+=> END
+
+~ lever_bargain_success
+% {{name}}: You understand what I need, and what I can give back. That is a rarer gift than money.
+=> END
+
+~ close_settled
+% {{name}}: You will not regret it, {{president}}. I keep what I am given, and I return what I owe.
+=> END
+
+~ close_declined
+% {{name}}: I see. I will remember that I asked, and that you answered.
+=> END

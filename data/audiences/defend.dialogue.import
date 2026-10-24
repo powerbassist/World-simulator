@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://bx4e85oidlh4j"
+path="res://.godot/imported/defend.dialogue-ded09ae1b92caf31381de762cc02239c.tres"
+
+[deps]
+
+source_file="res://data/audiences/defend.dialogue"
+dest_files=["res://.godot/imported/defend.dialogue-ded09ae1b92caf31381de762cc02239c.tres"]
+
+[params]
+
+defaults=true

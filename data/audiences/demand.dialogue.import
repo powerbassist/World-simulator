@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://bhl80k505f806"
+path="res://.godot/imported/demand.dialogue-15df13d7e5d2449d1255143b5cc8501b.tres"
+
+[deps]
+
+source_file="res://data/audiences/demand.dialogue"
+dest_files=["res://.godot/imported/demand.dialogue-15df13d7e5d2449d1255143b5cc8501b.tres"]
+
+[params]
+
+defaults=true
