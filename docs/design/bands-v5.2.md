@@ -1312,12 +1312,23 @@ ladder, not two.
 - **Reach (INFERRED, from the constants):**
   - A decline costs 0.10 rapport (`DECLINE_RAPPORT`, `audience_constants.gd:64`),
     so from 0 the fourth decline makes a rival (−0.30 itself is still *wary*).
+    That holds only under the comparison rule below: in doubles, three declines
+    from 0 sum to −0.30000000000000004, under the cut (QA, on 71009167).
   - One caught lie or broken date costs 0.50 (`LIE_RAPPORT`), so from anything
     under +0.20 it makes a rival at once.
   - At the interim −0.5 it took five declines; at −0.8, eight.
   - So the turned route opens sooner than the plan assumed. `shadows_probe` S2
     sets the `RATE`s after this, and B6's "each route at least 10 %" is read at
     these thresholds.
+- **One comparison for every cut (declared):** a register value is snapped to
+  1e-6 (`snappedf(value, 0.000001)`) before it is compared with any cut, for
+  R11's words and for these bonds alike, in one shared helper that Systems
+  and Interface both call. So exact sums of the authored steps (0.05, 0.10,
+  0.15, ...) land on the declared side of a cut: three declines read −0.30,
+  *wary*, not a rival. The raw value is stored and saved unchanged; only the
+  comparison snaps. 1e-6 is far below every authored step (the smallest is the
+  grudge decay, 0.008 a month) and far above a double's rounding error at
+  these magnitudes (about 1e-16).
 - **Failure looks like:** a person shown *cold* who is not a rival, or a rival
   shown *wary* or warmer (the two ladders disagree); the turned route under
   10 % in S2 because no one reaches rival (it should not, at these cuts).
