@@ -79,6 +79,111 @@ they built and where, and say what they do not know and why" ([[v5]], head).
   V5.0 silence again); more than 48 (an inbox the player cannot read); one or two
   people asking for everything (a cast of two).
 
+### B1 amendment (2026-10-24): no silent year, and a per-game seed
+
+Declared before Systems adds the seed and runs it (QA's pre-gate B, CALL 2, in
+`.superpowers/sdd/v5.2-pregate-b-report.md`).
+
+**Why (MEASURED, QA, on a played run, not an idle A1 term: answers, a
+reshuffle and a re-election):** domestic arrivals were 21 in months 1–20, then
+**1 in months 21–38**. No gate was closed. The draw `Cycle.unit_pair(person_id,
+"audience_request", month)` has no per-game seed, so every France game draws
+the same sparse months. B1 counted per 60 months and floored only months 1–20,
+so the band passed while the author would meet a silent year.
+
+**The rows** (an idle term, `audience_probe` A1, read over **20 seeds**):
+
+| | Declared |
+|---|---|
+| Every 12-month window of the 60-month run (France's first term, 16 months, and part of the second; 49 sliding windows) holds at least **1** arrival | in at least **95 %** of seeds (19 of 20) |
+| Every 12-month window holds at least **2** arrivals | in at least **80 %** of seeds (16 of 20) |
+| The first request by month 3, by the guarantee below | **100 %** of seeds, and of every played nation |
+| B1's other existing rows (24 to 48 a term, at least 8 in months 1–20, at least 12 people, no one over 25 %), each read per seed | each in at least **90 %** of seeds (18 of 20) |
+| B2's rows (`audience_probe` A2) and B3's act rows (A1 and A3), each read per seed over the same 20 seeds | each in at least **90 %** of seeds (18 of 20) |
+
+**The guarantee (the parent's decision, 2026-10-24, on QA's call).** Q1,
+"someone asked you something", is the tier's gate question, and the author plays
+one game. A one-in-twenty miss could land on the gate, so the first request is
+guaranteed by a stated mechanism, not left to sampling luck:
+
+- If the draw has brought no request by the end of month 2, then in month 3 one
+  candidate asks, about their unserved want.
+  - **The candidates are the draw's own:** people for whom `Audiences._may_ask()`
+    holds (not the leader, past the 8-month cooldown, no open request) and who
+    carry a want that is not served (the draw's `_unserved`). A want of any
+    kind counts, programme stances included. A request asks; whether the
+    president can serve it now is the player's answer, not the trigger's.
+  - **The one who asks** is the candidate with the highest standing, the
+    hazard's own weight (0.5 + standing). Ties go to id order, so the choice is
+    deterministic (I1). No want carries a weight of its own, so the want asked
+    about is the one `_unserved` returns, as in the draw.
+  - **No candidate:** the guarantee needs at least one, so its 100 % holds by
+    mechanism only while the set is non-empty in month 3. Systems' test checks
+    it for each of the four playable nations at a forced empty draw. A nation
+    with no candidate would read as a miss on this row, and it is reported to
+    the author, not hidden by a fallback.
+- It fires at most once a game, only in month 3, and only when the draw gave
+  nothing.
+- **Re-baseline (INFERRED, before Systems' run):** at seed 0, France's first
+  request arrives in month 2 (MEASURED by QA: February 2026), so the guarantee
+  does not fire, and the France regimes stay ZERO. The one other played run,
+  `managed_abolishes_the_monarchy` (GBR), may fire it; if it does, its rows
+  move. That is predicted here, and the author accepts it.
+
+**Why these numbers (OPINION, with INFERRED arithmetic on a model of the draw):**
+
+- I simulated a Poisson arrival process (only a monthly rate enters it), 60
+  months and the 49 sliding windows, 4 000 trials per cell. It gives the share of
+  games whose emptiest year still holds N arrivals:
+
+  | Rate | A term | N ≥ 1 | N ≥ 2 | N ≥ 3 |
+  |---|---|---|---|---|
+  | 0.4 a month | 24, B1's floor | 87 % | 51 % | 18 % |
+  | 0.5 a month | 30 | 95 % | 77 % | 43 % |
+  | 0.6 a month | 36, B1's middle | 98 % | 90 % | 69 % |
+
+- **The model's limits:** it leaves out the game's gates (an 8-month cooldown
+  per person, at most 4 pending, a standing floor) and the invitation triggers
+  (a programme going live at a term's start, the month after a reshuffle),
+  which bunch arrivals at term starts outside the hazard. So the real process
+  may be more regular or more clumped. The percentages show the order of magnitude;
+  they are not measurements of the game.
+- **Sampling noise:** with 20 seeds, a process that truly meets 98 % (B1's
+  middle rate, N ≥ 1) passes the 19-of-20 row with probability 0.94. One that
+  meets 90 % (N ≥ 2) passes the 16-of-20 row with probability 0.96. One that
+  meets exactly 95 % passes only 0.74 of the time. A miss by a single seed is
+  therefore reported as such, beside the per-seed minimums, when it goes to the
+  author.
+- **A floor of 3 a year is not declared:** even at B1's middle rate, the
+  draw's luck would fail it in a third of games. The design would not be what
+  decided it.
+- **What the declared floors do:** they rule out QA's silent year (one arrival
+  in eighteen months) in nearly every game.
+- **They also bind B1's lower end.** A term near 24 a term fails them
+  (INFERRED). That is intended: B1's floor with clustered months is exactly
+  the silent year. The window rows ask for a rate of at least about 0.5 a
+  month, spread across the term.
+
+**The seed's re-baseline, expected before the run:**
+
+- **`balance_probe` and the 51-regime table: ZERO**, provided seed 0
+  reproduces today's draw exactly. The seed enters the salt only when it is
+  non-zero, so `cmp` against the accepted table is identical. The balance
+  regimes run at seed 0. A table that moves means seed 0 is not today's draw,
+  and that is a bug to fix, not a re-baseline to accept.
+- **`audience_probe`: it moves, by design**, because it now reads 20 seeds
+  instead of one draw. Every B1–B3 row it reads is read per seed against
+  the 90 % rows above. B3's 2027 rows stay on `balance_probe` at seed 0, and
+  B3's per-request price equality (`tests/test_audiences.gd`) is
+  seed-independent. Neither moves.
+- **The game:** a new game draws a fresh seed, and a save carries it. An
+  older save without a seed reads seed 0 (today's draw), which is absent-ok,
+  so no `SAVE_VERSION` bump.
+
+**Probe:** `tools/audience_probe.gd` A1 over seeds 1–20, with the 49 windows'
+minimum per seed. **Stop rule:** one run. A miss goes to the author, and the
+floors are not re-tuned to the run.
+
 ## B2 — The diary makes time scarce, and does not become a wall (Q1)
 
 | | Declared |
@@ -558,6 +663,58 @@ Knowledge bands: **stranger** `[0, 0.33)`, **acquaintance** `[0.33, 0.67)`,
   cannot choose from because every lever shows the same wide range (the
   V5.0 Q4 answer "je ne sais pas"); a true value outside its printed range.
 
+### B4 amendment (2026-10-24): the shown window only narrows
+
+Declared before Systems builds it (QA's pre-gate B, RECORD 6).
+
+**Why (MEASURED, QA):** Turcy's Promise read 47–83 % before a friendly topic
+("Their opinion", rapport +0.04, knowledge +0.07) and 32–68 % after. The width
+stayed at 36 points, and the window fell by 15 points while the true odds can
+only have risen. `src/sim/lever_odds.gd`'s `shown_range` re-draws the fog offset
+at each knowledge step (the fix for QA's R1 on #113, so that two readings at
+different widths could not be solved for the truth). The re-draw also lets
+the window jump anywhere, including downward.
+
+**The rule:** between two readings of the same person and lever, the window
+measured from the true odds is nested.
+
+- With p the true odds and [lo, hi] the shown window, then from an old reading
+  to a new one: lo_new − p_new ≥ lo_old − p_old, and hi_new − p_new ≤
+  hi_old − p_old.
+- **The window moves with the truth and only shrinks around it.** A friendly
+  topic that raises the odds raises the window; one that teaches knowledge
+  narrows it.
+- **It still never lies:** the truth stays inside, 100 %.
+- **The new offset is seeded inside the old one.** The new window is a seeded
+  sub-window of the old window (shifted by Δp) that still contains p. Repeated
+  readings therefore only intersect. No pair of readings recovers the truth,
+  because the latest window is all a player can learn. That keeps #113's
+  honesty, which was the reason for the re-draw.
+- **Stateless, as the code is today (a proposal, Systems' choice):** the window
+  at knowledge step n is computed from step 0 forward. Step 0 is the stranger's
+  seeded window. Each step's window is a seeded sub-window of the previous
+  one, of the next width, and it contains p. So no register is needed.
+
+**The rows:**
+
+| | Declared |
+|---|---|
+| Two readings, the same person and lever, knowledge not lower: the window measured from the truth is nested (both inequalities above) | **100 %** |
+| After a topic that raised the true odds by Δp: the shown window's lower edge rises by at least Δp (lo_new − lo_old ≥ Δp, which follows from the nesting; QA's Turcy case breaks it) | **100 %** |
+| The truth inside the window | **100 %** (unchanged) |
+
+- **The edges:** a shifted window that would leave [0, 1] is moved back
+  inside, as `shown_range` does today, and never narrowed for it. The nested
+  inequality is then read only on the side away from the edge. The truth
+  stays inside either way.
+- **One known leak, accepted:** the window's shift reveals the change in the
+  true odds between two readings. The scene's "What changed" line already names
+  the rapport and knowledge change, so this adds little.
+- **Probe:** a unit test over `shown_range` (Systems'), checking every person
+  and lever across knowledge steps, at fixed and rising p.
+- **Failure looks like:** a window that falls after a friendly topic (QA's
+  Turcy case), or one that widens.
+
 ## B5 — No lever dominates
 
 The grid: France's 61 people with their authored traits × the three knowledge
@@ -1008,6 +1165,27 @@ the ones declared here.
   returns.
 - **Delegate under 5 % within "will serve":** a dead answer.
 - **Refuse under 5 % within "won't serve":** a dead answer.
+
+### B5's re-read, measured and accepted (2026-10-24)
+
+The single re-read under the player model above (MEASURED, Systems; rows in
+`.superpowers/sdd/systems-b22/b5_answers_rows_b22.txt`):
+
+| Row | Measured | Floor |
+|---|---|---|
+| Book within "will serve", strangers (the run's own mix) | **0 %** | at least 5 % |
+| Book within "will serve", the declared one-third mix (information) | 7.2 % | — |
+| Book over all cases | 18.9 % | at most 50 % |
+| Refuse within "won't serve" | 62.2 % | at least 5 % |
+
+- **The author's call, verbatim: "Accepter tel quel".** The within-intent book
+  floor misses on the run's stranger mix, and it is accepted as it stands.
+- **What the author accepted:** the diary is for people the player knows or
+  must turn, and the ministers take the yeses to strangers. That was this
+  note's own earlier reading (the red-team before the read), now accepted after
+  the measurement.
+- **Since then (#122, a sim fix):** a promise can no longer stack within one
+  audience.
 
 ## B6 — Corruption is tempting, and it is found out
 
