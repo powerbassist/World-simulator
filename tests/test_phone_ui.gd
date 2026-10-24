@@ -31,6 +31,7 @@ var _request := ""
 var _asker := ""
 var _target: Control
 var _rang := ""
+var _opening := ""
 
 
 func _init() -> void:
@@ -121,6 +122,13 @@ func _check_dialog() -> void:
 		_fail("a call does not hold the clock")
 	if not HoldReason.show(_main).contains(name):
 		_fail("the hold line does not name who is on the phone: '%s'" % HoldReason.show(_main))
+	# Content's phone_opening (#126): every variant names the ask.
+	var ns = _main._state.player()
+	var request := Audiences.request(ns, _request)
+	var ask := PersonCard.object_text(_main._loader, ns, String(request["object"]), request)
+	if not dialog._line.text.contains(ask):
+		_fail("the call does not open on the person's phone line about '%s': '%s'" % [ask, dialog._line.text])
+	_opening = dialog._line.text
 
 
 ## The first offered lever, else a topic: what the sim lets this call try.
@@ -143,6 +151,8 @@ func _check_dialed() -> void:
 		_fail("pressing %s did not reach Phone.dial(): %s" % [_rang, ns.phone_calls])
 	if dialog._result.text == "" or dialog.verbs.visible:
 		_fail("the call's result is not said, or its verbs stayed up: '%s'" % dialog._result.text)
+	if dialog._line.text == "" or dialog._line.text == _opening:
+		_fail("the call does not end in the person's own words: '%s'" % dialog._line.text)
 
 
 func _check_hung_up() -> void:

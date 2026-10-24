@@ -19,6 +19,7 @@ extends SceneTree
 ##     file, every stance has one.
 
 const AudienceScene = preload("res://src/ui/audience_scene.gd")
+const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
@@ -94,6 +95,7 @@ func _process(_delta: float) -> bool:
 		15:
 			_check_closed()
 			_check_blocks()
+			_check_titles()
 			_check_stance_files()
 			_check_files_compile()
 			_finish()
@@ -204,9 +206,23 @@ func _check_closed() -> void:
 		_fail("Leave emitted %s, not closed" % [_emitted])
 
 
+## Which opening and closing a request speaks (dialogue_lines.gd).
+func _check_titles() -> void:
+	var ns := {"reshuffle_month": 24300}
+	var cases := [
+		[{"object": "measure:FRA>ALB", "arrived_month": 24301}, "visitor_opening", "visitor_close_declined"],
+		[{"object": "office:portfolio:interior", "arrived_month": 24301}, "reshuffle_opening", "close_declined"],
+		[{"object": "office:portfolio:interior", "arrived_month": 24305}, "opening", "close_declined"],
+		[{"object": "programme:prog_x", "arrived_month": 24301}, "opening", "close_declined"],
+	]
+	for c in cases:
+		if DialogueLines.opening_title(ns, c[0]) != c[1] or DialogueLines.close_title(c[0], "declined") != c[2]:
+			_fail("%s opens %s / closes %s, not %s / %s" % [c[0], DialogueLines.opening_title(ns, c[0]), DialogueLines.close_title(c[0], "declined"), c[1], c[2]])
+
+
 func _check_blocks() -> void:
-	var base := AudienceScene.titled_blocks("~ opening\nA: one\n=> END\n~ close_settled\nA: bye\n=> END\n")
-	var own := AudienceScene.titled_blocks("~ opening\nA: mine\n=> END\n")
+	var base := DialogueLines.titled_blocks("~ opening\nA: one\n=> END\n~ close_settled\nA: bye\n=> END\n")
+	var own := DialogueLines.titled_blocks("~ opening\nA: mine\n=> END\n")
 	base.merge(own, true)
 	if base.size() != 2 or not String(base["opening"]).contains("mine") or not String(base["close_settled"]).contains("bye"):
 		_fail("a stance's title does not replace the default's alone: %s" % [base])
@@ -220,7 +236,11 @@ func _check_files_compile() -> void:
 	if manager == null:
 		_fail("no DialogueManager autoload to compile with")
 		return
-	var titles := ["opening", "close_settled", "close_promised", "close_declined"]
+	var titles := ["opening", "close_settled", "close_promised", "close_declined",
+		# b3 (Content's #126): the phone, the visitor and the reshuffle ask.
+		"phone_opening", "phone_close_settled", "phone_close_promised", "phone_close_unresolved",
+		"visitor_opening", "visitor_close_settled", "visitor_close_promised", "visitor_close_declined",
+		"reshuffle_opening"]
 	for lever in Words.LEVER_LABEL.keys():
 		titles.append("lever_%s_success" % lever)
 		titles.append("lever_%s_failure" % lever)
@@ -234,7 +254,7 @@ func _check_files_compile() -> void:
 		if manager.create_resource_from_text(text) == null:
 			_fail("data/audiences/%s does not compile" % file)
 		if file == "default.dialogue":
-			var blocks := AudienceScene.titled_blocks(text)
+			var blocks := DialogueLines.titled_blocks(text)
 			if blocks.size() > 1:
 				for t in titles:
 					if not blocks.has(t):

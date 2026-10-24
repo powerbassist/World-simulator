@@ -18,6 +18,8 @@ const Words = preload("res://src/ui/lever_words.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
 const Capital = preload("res://src/core/capital.gd")
+const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
 
 const WINDOW := "audience"
 
@@ -36,6 +38,7 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 	view.merge(row)
 	view["president"] = main._loader.person_name(String(ns.head_of_state_person_id if ns.head_of_state_kind == "executive_president" else ns.pm_person_id))
 	view["name"] = row["person"]  # i18n: row-ok the person's shown name, from the loader
+	view["opening_title"] = DialogueLines.opening_title(ns, Audiences.request(ns, String(row["id"])))
 	main._windows.open(WINDOW)
 	main._clock.paused = true
 	game["scene"].open(view)

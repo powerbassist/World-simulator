@@ -17,6 +17,9 @@ const Strings = preload("res://src/ui/strings.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
 const Phone = preload("res://src/sim/phone.gd")
+const President = preload("res://src/sim/president.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
+const PersonCard = preload("res://src/ui/person_card.gd")
 
 static var _games := {}
 
@@ -50,7 +53,9 @@ static func open_call(main, person_id: String, people: Array) -> void:
 	if game.is_empty() or main._state == null:
 		return
 	var state = main._state
-	var o := Phone.options(state, state.player(), main._loader, person_id)
+	var ns = state.player()
+	var o := Phone.options(state, ns, main._loader, person_id)
+	var request := Audiences.request(ns, String(o["request_id"]))
 	game["person_id"] = person_id
 	game["was_paused"] = main._clock.paused
 	main._clock.paused = true
@@ -58,6 +63,8 @@ static func open_call(main, person_id: String, people: Array) -> void:
 	# repeat "nothing to ask about"), and the dialog says why there are none.
 	game["dialog"].open({"name": main._loader.person_name(person_id), "why_not": String(o["why_not"]),
 		"levers": o["levers"] if String(o["request_id"]) != "" else [], "topics": o["topics"],
+		"stance": String(request.get("stance", "")), "president": main._loader.person_name(President.leader_id(ns)),
+		"ask": PersonCard.object_text(main._loader, ns, String(request["object"]), request) if not request.is_empty() else "",
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": people}})
 	main._hud.clock_cluster.refresh(main._clock, HoldReason.show(main))
 
@@ -68,17 +75,23 @@ static func _dial(main, game: Dictionary, what: String, args: Dictionary) -> voi
 	var state = main._state
 	var r := Phone.dial(state, state.player(), main._loader, String(game["person_id"]), what, args)
 	var text := ""
+	var titles: Array = []
 	if not bool(r.get("ok", false)):
 		text = Words.reason(String(r.get("error", "")))
 	else:
 		var paid := Words.paid_text(r.get("spent", {}), r.get("effects", {}), main._loader.person_name)
 		if LK.LEVERS.has(what):
-			text = Strings.t("They agree: the request is answered by phone.") if bool(r.get("success", false)) else Strings.t("They are not moved. The request stays open.")
+			var won := bool(r.get("success", false))
+			text = Strings.t("They agree: the request is answered by phone.") if won else Strings.t("They are not moved. The request stays open.")
 			if paid != "":
 				text += " " + Words.changed(paid)
+			# The lever's own line, then the call's close (Content's #126).
+			titles = ["lever_" + what + ("_success" if won else "_failure"),
+				("phone_close_promised" if what == "promise_date" else "phone_close_settled") if won else "phone_close_unresolved"]
 		else:
 			text = Words.changed(paid)
-	game["dialog"].show_result(text)
+			titles = ["topic_" + what]
+	game["dialog"].show_result(text, titles, {"lever": Words.lever(what), "topic": Words.topic(what)})
 	game["on_change"].call()
 	main._windows.mark_all_dirty()
 

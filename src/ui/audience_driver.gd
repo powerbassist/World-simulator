@@ -109,7 +109,7 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 	var answers := Audiences.answers(main._state, ns, loader, id)
 	var deadline := int(request["deadline_month"])
 	var year := floori((deadline - 1) / 12.0)
-	return {"id": id, "person_id": String(request["person_id"]), "stance": String(request["stance"]),
+	return {"id": id, "person_id": String(request["person_id"]), "stance": String(request["stance"]), "object": String(request["object"]),
 		"person": loader.person_name(String(request["person_id"])),
 		"ask": PersonCard.object_text(loader, ns, String(request["object"]), request),
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
