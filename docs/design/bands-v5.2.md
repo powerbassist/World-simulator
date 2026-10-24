@@ -495,6 +495,40 @@ instead of banded.
   row.
 - `tools/audience_probe.gd`, for B3's act row.
 
+### B3 brief price, measured and accepted (2026-10-24)
+
+The run at -0.15 (MEASURED, Systems' PR #104 at `97079bec`, against this section's
+rows at `2078b63d`). Sources: `.superpowers/sdd/systems-104-brief015/` and
+`band_rows.txt`. The table is `bal_b1_brief015.json`, byte-identical to QA's
+`qa/tip-104-2027e227.json`.
+
+| Row | Measured | Status |
+|---|---|---|
+| Half-life | `test_characters` passes | PASS |
+| Act-written part of `bloc_offset` ≤ 0.50, months in office | max 0.355 (2031-08, workers) | PASS |
+| No new clamp, months in office | one: run 16 (the captured court), students, from 2029-11 | MISS, **accepted** |
+| 2027 executive | 50 of 50 rows, delta 0.0000 | PASS |
+| 2029 legislative | standing unchanged in 41 of 41; mean -0.0061, worst -0.0067 | PASS |
+| B3's act row | `audience_probe` 12 of 12 | PASS |
+| 2032 executive (reported) | 25 of the 28 held rows flip to LOST; mean -0.0272, worst -0.1135 | **accepted** |
+| GBR 2039 (reported) | HELD, 0.116 to 0.089 | **accepted** |
+
+**The author's calls**, verbatim, through the parent's question tool:
+
+1. **"Accepter ce cas".** The one clamp miss is accepted as a named exception.
+   - It is run 16, the captured court, on students from 2029-11.
+   - There the base alone already holds students at -0.79, which leaves 0.209 of
+     headroom. A brief's full share in that run is 0.356 (MEASURED, read from
+     workers, who carry the same price and never clamp).
+   - The permanent channels, not the acts, own most of that room.
+   - Clearing it would have taken a price of about -0.08 in every run (INFERRED,
+     Systems' scaling). That is a third of V4.3's price, and it would make a
+     brief nearly invisible.
+   - The no-new-clamp row stays a band for every other run, and for any later
+     price.
+2. **"Oui, fusionner".** The re-baseline is accepted: `bal_b1_brief015.json` is
+   the table the next sim PR compares against (invariant I4).
+
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
 
 Knowledge bands: **stranger** `[0, 0.33)`, **acquaintance** `[0.33, 0.67)`,
@@ -537,7 +571,7 @@ want, against one) × the channel (audience, phone call).
 | Share of cells in which each lever has the best net value | **at least 5 %** for every lever |
 | The denominator of both shares, per lever | the cells **in which that lever is offered**: the whole grid for five levers, and only the friend-or-closer half for appeal to friendship, which is not offered below friend |
 | A phone call's odds against an audience's, same lever, same cell | **at least 0.10 lower** |
-| The answers to a request — book, delegate, decline, and leaving it unanswered — any one of them the best net value over all requests | **at most 50 %** of requests |
+| The answers to a request — book, delegate, decline, and leaving it unanswered — any one of them the best net value over all requests, a diary day priced at 0.50 of one ask won ("B5 amendment" below) | **at most 50 %** of requests |
 
 - **Net value** is success × the ask's gain minus the expected cost, in the
   registers the lever spends. The probe's header states the exchange weights
@@ -555,6 +589,92 @@ want, against one) × the channel (audience, phone call).
   passes), this row is expected to pass: leaving a request unanswered is a
   decline that arrives later, so it can be the best answer only where declining
   is. A failure here now means the lapse is priced below the decline (B3).
+
+### B5 amendment (2026-10-24): the price of a diary day
+
+Declared before `audience_probe` or `lever_probe` reads anything for this row, at
+the parent's request (Systems' PR #113, call 2). The answers row above needs a
+diary day's price, and no band stated one. This subsection states it, with its
+reason. It is declared, not read off a run.
+
+**The price: 0.50 of one ask won, per diary day.** An audience takes one day
+(`Audiences._entry`, `src/sim/audiences.gd:347-349` at `2c3262ea`, no travel
+days). The unit is `tools/lever_probe.gd`'s: one ask won = 1.0, a grudge point
+1.0, a rapport point 0.5 (its header, declared before its run).
+
+**Each answer's net value for one request, in those units:**
+
+| Answer | Net value |
+|---|---|
+| Book | the picked lever's net value in that person's cell (L2's own computation), minus **0.50** |
+| Delegate | minus (0.25 × the refusal grudge, plus 0.5 × the snub rapport for a `vain` person or an office want). This is `Audiences.delegate`: `DELEGATE_GRUDGE_SHARE` 0.25, `DELEGATE_SNUB_RAPPORT` -0.05 |
+| Decline | minus (the refusal grudge, plus 0.5 × 0.1 rapport). This is `decline_price`: `DECLINE_GRUDGE` 0.18 through `Characters.refusal_grudge`, and `DECLINE_RAPPORT` -0.1 |
+| Unanswered | equal to Decline by construction (a lapse costs exactly a decline; `tests/test_audiences.gd` pins it per request) |
+
+The best answer for a request is the one with the highest net value. The row is
+unchanged: **no answer is the best in more than 50 % of requests.**
+
+**Why 0.50 (OPINION, derived from DECLARED bands, not from a run):**
+
+- The spec's trade-off table says booking is best "when the person carries a
+  want the player can serve or needs served", and delegation is best when "the
+  person matters but not personally" ([[v5.2-spec]], "An audience request"). The
+  day's price is set so that this sentence is true for the middle person.
+- B4 declares the picked lever's success by knowledge band. The midpoints are
+  0.40 for a stranger, 0.55 for an acquaintance and 0.70 for the known.
+  Delegation's base cost is 0.25 × 0.18 + 0.5 × 0.05 ≈ 0.07 at most, before
+  traits.
+- Making the acquaintance the indifferent case gives 0.55 − 0.07 ≈ 0.48,
+  rounded to 0.50. On the ask alone, then:
+  - booking the known pays: 0.70 − 0.50 = +0.20, against -0.07 for delegating;
+  - a stranger's audience loses to delegation: 0.40 − 0.50 = -0.10, against
+    -0.07;
+  - the diary goes to the people the president knows or needs, and the
+    ministers take the rest.
+- **Two leans, stated and not corrected:**
+  - Lever costs lower the booking value below these gross odds, which leans the
+    row toward delegation.
+  - The knowledge an audience teaches (`KNOW_AUDIENCE` 0.12, B4's stranger to
+    acquaintance in 2 to 5 audiences) is not priced, which leans it the same way.
+  - A miss with delegation over 50 % is therefore the likely failure. It is
+    reported as a design result, not fixed by re-tuning the price.
+
+**Expected before the run (INFERRED, read from the code, not run):** decline is
+never the best answer as built.
+
+- With these weights, delegation costs 0.25 g plus at most 0.025, while decline
+  costs g plus 0.05, for every refusal grudge g > 0.
+- Delegation therefore Pareto-dominates decline, and leaving a request
+  unanswered with it.
+- The answers row (at most 50 %) still passes on decline. But a decline that is
+  never best is the B5 failure "a lever never best (dead)" in the answers'
+  column.
+- The spec gives delegation "a fixed, middling outcome" as its cost. As built,
+  delegation carries no outcome and no cost beyond the reduced grudge, so the
+  spec's cost is missing.
+- This is a call for the parent, not a band change here.
+
+**The stop rule:**
+
+1. The row is read once, at 0.50.
+2. If booking or delegation is the best answer in more than 50 % of requests,
+   the price is **not** re-tuned to the run. It is the author's call:
+   - give delegation its spec cost;
+   - change the price, with a new reason declared before a new read;
+   - accept the result.
+
+**Probe:** the per-request net values above, over `tools/audience_probe.gd`
+regime A2's requests, with each person's cell from `tools/lever_probe.gd` L2.
+Which file runs it is Systems' choice, as long as the weights and the price are
+the ones declared here.
+
+**Failure looks like:**
+
+- **Delegation best in most requests:** the diary empties of scenes, and V5.0's
+  and V5.1's "nobody asked me anything" returns through the ministers.
+- **Booking best in most:** the diary is the wall, and B2's R5 complaint
+  returns.
+- **Decline never best:** a dead answer.
 
 ## B6 — Corruption is tempting, and it is found out
 
