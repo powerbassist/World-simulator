@@ -22,6 +22,7 @@
     },
     {
       "id": "GBR_marchbanks",
+      "spouse_id": "GBR_julian_marchbanks",
       "social_skill": 0.62,
       "wealth_eur_m": 7.0,
       "name": "Edward Marchbanks",
@@ -1211,6 +1212,20 @@
         "networked"
       ],
       "ambition": 0.69,
+      "bench": true
+    },
+    {
+      "id": "GBR_julian_marchbanks",
+      "name": "Julian Marchbanks",
+      "kind": "regional_figure",
+      "traits": [
+        "loyal",
+        "principled"
+      ],
+      "ambition": 0.3,
+      "spouse_id": "GBR_marchbanks",
+      "social_skill": 0.4,
+      "wealth_eur_m": 1.5,
       "bench": true
     }
   ]

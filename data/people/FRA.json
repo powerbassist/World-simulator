@@ -2,6 +2,7 @@
   "people": [
     {
       "id": "FRA_moucron",
+      "spouse_id": "FRA_helene_moucron",
       "social_skill": 0.53,
       "wealth_eur_m": 4.3,
       "name": "Daniel Moucron",
@@ -1326,6 +1327,20 @@
         "loyal"
       ],
       "ambition": 0.42,
+      "bench": true
+    },
+    {
+      "id": "FRA_helene_moucron",
+      "name": "Hélène Moucron",
+      "kind": "regional_figure",
+      "traits": [
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.45,
+      "spouse_id": "FRA_moucron",
+      "social_skill": 0.68,
+      "wealth_eur_m": 0.9,
       "bench": true
     }
   ]
