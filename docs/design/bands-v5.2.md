@@ -98,7 +98,7 @@ so the band passed while the author would meet a silent year.
 | Every 12-month window holds at least **2** arrivals | in at least **80 %** of seeds (16 of 20) |
 | B1's existing rows (24 to 48 a term, the first by month 3, at least 8 in months 1–20, at least 12 people, no one over 25 %), each read per seed | each in at least **90 %** of seeds (18 of 20) |
 
-**Why these numbers (OPINION, with MEASURED arithmetic):**
+**Why these numbers (OPINION, with INFERRED arithmetic on a model of the draw):**
 
 - I simulated a Poisson arrival process with France's 61 people, 60 months
   and the 49 sliding windows, 4 000 trials per cell. It gives the share of
@@ -110,6 +110,16 @@ so the band passed while the author would meet a silent year.
   | 0.5 a month | 30 | 95 % | 77 % | 43 % |
   | 0.6 a month | 36, B1's middle | 98 % | 90 % | 69 % |
 
+- **The model's limits:** it leaves out the game's gates (an 8-month cooldown
+  per person, at most 4 pending, a standing floor), so the real process may be
+  more regular or more clumped. The percentages show the order of magnitude;
+  they are not measurements of the game.
+- **Sampling noise:** with 20 seeds, a process that truly meets 98 % (B1's
+  middle rate, N ≥ 1) passes the 19-of-20 row with probability 0.94. One that
+  meets 90 % (N ≥ 2) passes the 16-of-20 row with probability 0.96. One that
+  meets exactly 95 % passes only 0.74 of the time. A miss by a single seed is
+  therefore reported as such, beside the per-seed minimums, when it goes to the
+  author.
 - **A floor of 3 a year is not declared:** even at B1's middle rate, the
   draw's luck would fail it in a third of games. The design would not be what
   decided it.
@@ -655,7 +665,7 @@ measured from the true odds is nested.
 | | Declared |
 |---|---|
 | Two readings, the same person and lever, knowledge not lower: the window measured from the truth is nested (both inequalities above) | **100 %** |
-| A topic that raised rapport and knowledge: the shown midpoint's change is at least the true odds' change | **100 %** |
+| After a topic that raised the true odds by Δp: the shown window's lower edge rises by at least Δp (lo_new − lo_old ≥ Δp, which follows from the nesting; QA's Turcy case breaks it) | **100 %** |
 | The truth inside the window | **100 %** (unchanged) |
 
 - **The edges:** a shifted window that would leave [0, 1] is moved back
