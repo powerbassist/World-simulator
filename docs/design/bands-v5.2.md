@@ -606,7 +606,7 @@ days). The unit is `tools/lever_probe.gd`'s: one ask won = 1.0, a grudge point
 
 | Answer | Net value |
 |---|---|
-| Book | the picked lever's net value in that person's cell (L2's own computation), minus **0.50** |
+| Book | the picked lever's net value in that person's cell (L2's own computation), minus the expected settle cost (the chance the audience ends without the person's want served, times Decline's cost, since an audience that does not serve the want settles as a refusal), minus **0.50** |
 | Delegate | minus (0.25 × the refusal grudge, plus 0.5 × the snub rapport for a `vain` person or an office want). This is `Audiences.delegate`: `DELEGATE_GRUDGE_SHARE` 0.25, `DELEGATE_SNUB_RAPPORT` -0.05 |
 | Decline | minus (the refusal grudge, plus 0.5 × 0.1 rapport). This is `decline_price`: `DECLINE_GRUDGE` 0.18 through `Characters.refusal_grudge`, and `DECLINE_RAPPORT` -0.1 |
 | Unanswered | equal to Decline by construction (a lapse costs exactly a decline; `tests/test_audiences.gd` pins it per request) |
@@ -636,6 +636,9 @@ unchanged: **no answer is the best in more than 50 % of requests.**
     row toward delegation.
   - The knowledge an audience teaches (`KNOW_AUDIENCE` 0.12, B4's stranger to
     acquaintance in 2 to 5 audiences) is not priced, which leans it the same way.
+  - The expected settle cost (an audience that leaves the want unserved settles
+    as a refusal) leans it the same way again. The 0.50 was derived from gross
+    odds before any of these, and it is kept, not re-derived.
   - A miss with delegation over 50 % is therefore the likely failure. It is
     reported as a design result, not fixed by re-tuning the price.
 
@@ -664,14 +667,18 @@ never the best answer as built.
    - accept the result.
 
 **Probe:** the per-request net values above, over `tools/audience_probe.gd`
-regime A2's requests, with each person's cell from `tools/lever_probe.gd` L2.
+regime A2's requests. Each request's cell is the person's ACTUAL state in the
+month it arrives: their knowledge band, their relationship (below friend, or
+friend or closer), and whether the ask is aligned with one of their wants. The
+lever values come from `tools/lever_probe.gd` L2's computation for that cell.
 Which file runs it is Systems' choice, as long as the weights and the price are
 the ones declared here.
 
 **Failure looks like:**
 
-- **Delegation best in most requests:** the diary empties of scenes, and V5.0's
-  and V5.1's "nobody asked me anything" returns through the ministers.
+- **Delegation best in most requests:** people ask, and the player never meets
+  them. The diary empties of scenes, and the soul V5.2 exists to add stays with
+  the ministers.
 - **Booking best in most:** the diary is the wall, and B2's R5 complaint
   returns.
 - **Decline never best:** a dead answer.
