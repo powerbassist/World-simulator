@@ -34,6 +34,9 @@ const INBOX := 1
 const PLACEMENT := 2
 const SCENE := 3
 const SYSTEM := 4
+## The stack's group: a card that asks (confirm_card.gd) finds the stack here
+## rather than through main.gd.
+const GROUP := "screen_stack"
 
 ## The ranks that hold panels of their own, in draw order: a system screen's dim
 ## covers a scene, never the reverse. WORKSPACE is the window manager's, below
@@ -54,6 +57,7 @@ var _clicked = null  # the button this press focused, released after its up
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for rank in _HOSTED:

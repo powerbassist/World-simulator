@@ -9,17 +9,24 @@ extends Button
 ## outright, disabled with the sim's reason where it does not apply right now, and
 ## live with its price on the hover. The owner calls sync() from its refresh and
 ## relays `dissolved`, which main.gd turns into the effect card.
+##
+## A press asks first (the #135 follow-up, the parent's call): the dissolution
+## cannot be taken back, so a card names the election's date and the command runs
+## only on its Dissolve. Player-initiated, so outside the 4+6 budget of holds.
 
 signal dissolved(before: Dictionary)
 
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ConfirmCard = preload("res://src/ui/confirm_card.gd")
+const Words = preload("res://src/ui/lever_words.gd")
 
 ## The rules with no executive command behind them: no button at all.
 const NO_COMMAND := ["none", "confidence_failure", "self_dissolution"]
 
 var _state
+var _confirm  # the card this button asks on, made at the first press
 
 
 func _init() -> void:
@@ -41,11 +48,30 @@ func sync(state, ns) -> void:
 	tooltip_text = "\n".join(PackedStringArray([tr("Call a snap election. No seat forecast -- read the polls, not a projection."), price]))
 
 
-## The player's command: the sim's, with the state before it for the effect card.
+## The question first: the election falls `dissolution_notice_months` on, the date
+## Dissolution.dissolve() will set.
 func _on_pressed() -> void:
 	var ns = _state.player() if _state != null else null
 	if ns == null:
 		return
+	if _confirm == null:
+		_confirm = ConfirmCard.on_stack(self)
+		if _confirm == null:
+			return
+		_confirm.confirmed.connect(_on_confirmed)
+	var due := int(_state.year) * 12 + int(_state.month) + int(ns.dissolution_notice_months)
+	_confirm.ask(tr("Dissolve the Assembly? An election follows on %s.") % Words.when(due), tr("Dissolve"))
+
+
+## The player's command: the sim's, with the state before it for the effect card --
+## announced only when the sim took it (QA's #135-1: a month may have turned the
+## rule against it while the card was up, and dissolve() refuses silently).
+func _on_confirmed() -> void:
+	var ns = _state.player() if _state != null else null
+	if ns == null:
+		return
+	var called := int(ns.dissolutions_called)
 	var before := Trends.snapshot_now(_state)
 	Dissolution.dissolve(_state, ns)
-	dissolved.emit(before)
+	if int(ns.dissolutions_called) > called:
+		dissolved.emit(before)

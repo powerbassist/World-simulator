@@ -168,7 +168,7 @@ func _build_order(ns) -> void:
 		var source = _loader.energy_sources.get(String(terms.get("source_id", "")))
 		if String(terms.get("op", "")) != "order" or source == null:
 			continue
-		rows.append([source.source_name, Labels.energy_branch(source.branch), tr("%d mo") % source.build_months,
+		rows.append([Strings.row_name("energy-sources", source), Labels.energy_branch(source.branch), tr("%d mo") % source.build_months,
 			Num.f(source.build_cost_pct_gdp, 3), Num.f(source.run_cost_pct_gdp, 3)])
 		var button := Button.new()
 		button.text = Strings.row_name("energy-actions", action)
@@ -321,7 +321,7 @@ func _build_fleet(ns) -> void:
 static func plant_label(ns, plant_id: String, loader) -> String:
 	var entry: Dictionary = ns.plants.get(plant_id, {})
 	var source = loader.energy_sources.get(String(entry.get("source_id", "")))
-	var name: String = source.source_name if source != null else String(plant_id)
+	var name: String = Strings.row_name("energy-sources", source) if source != null else String(plant_id)
 	var seq: int = int(String(plant_id).get_slice("#", 1)) if String(plant_id).contains("#") else 0
 	return "%s #%d" % [name, seq] if seq > 0 else name
 
