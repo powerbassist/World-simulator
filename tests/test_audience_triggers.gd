@@ -35,6 +35,7 @@ const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Levers = preload("res://src/sim/levers.gd")
+const Phone = preload("res://src/sim/phone.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 
 const METERS := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
@@ -63,6 +64,7 @@ func _init() -> void:
 	_check_a_visitor_costs_rapport_only()
 	_check_visitors_have_their_own_cap()
 	_check_a_promise_to_lift_is_judged_on_the_measure()
+	_check_a_lever_on_a_visitor_writes_no_grudge()
 	_check_invite_is_the_lanes_door()
 
 	_finish()
@@ -303,6 +305,25 @@ func _check_a_promise_to_lift_is_judged_on_the_measure() -> void:
 			_fail("a promise to lift (lifted %s) moved rapport by %.3f, not %.3f" % [lifted, President.rapport(ns, head) - r0, want])
 		if ns.person_grudges.has(head):
 			_fail("a broken promise to a foreign head wrote a grudge")
+
+
+## A lever on a visitor's request -- pressure by phone, whose spend is a grudge pulse
+## and rapport -- moves the head's rapport and writes no grudge or loyalty.
+func _check_a_lever_on_a_visitor_writes_no_grudge() -> void:
+	var state = _game()
+	var ns = state.player()
+	var head := President.leader_id(state.nations["DEU"])
+	_impose(state, "DEU")
+	state.met_months[RK.key(PLAYER, "DEU")] = _now(state)
+	Audiences.tick_month(state, _loader, METERS)
+	var r: Dictionary = Phone.dial(state, ns, _loader, head, "pressure")
+	if not bool(r.get("ok", false)):
+		_fail("pressure by phone on a visitor's request was refused: %s" % [r])
+		return
+	if ns.person_grudges.has(head) or ns.person_loyalty.has(head):
+		_fail("a lever on a visitor wrote grudge or loyalty for %s: %s" % [head, r])
+	if not President.rapport(ns, head) < 0.0:
+		_fail("pressure on a visitor spent no rapport")
 
 
 ## Audiences.invite() puts a request in the lane on the caller's object, under the

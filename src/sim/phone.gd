@@ -80,7 +80,8 @@ static func dial(state, ns, loader, person_id: String, lever_or_topic: String, a
 		if String(r.get("lever", r.get("topic", ""))) == lever_or_topic:
 			row = r
 	if row.is_empty() or not bool(row["offered"]):
-		refused["error"] = String(row.get("why_not", "not something to say on the phone"))
+		var why := String(row.get("why_not", shown["why_not"]))
+		refused["error"] = why if why != "" else "not something to say on the phone"
 		return refused
 	var now := _now(state)
 	if row.has("topic"):
