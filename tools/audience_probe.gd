@@ -50,10 +50,8 @@ extends SceneTree
 ## VISITORS (b3) ARE COUNTED APART. A visiting head's request waits in a place of its
 ## own (MAX_PENDING_FOREIGN), outside the domestic lane B1-B3 were declared on, so
 ## every band field above counts this nation's people only; `visitors` reports the
-## heads' requests beside them. A2 and A4 fire the player's own state visits BEFORE
-## the month's tick (the packer's order), so a head the player visited reads as a
-## visitor there -- in the game the player's visit lands on a day after the tick and
-## is read a month later as a meeting -- and their visitor counts run high.
+## heads' requests beside them. Since b3 the diary fires AFTER the month's tick, the
+## game's order: before, a head the player visited read as a head visiting France.
 ##
 ## Months are numbered from 1, the first month the game ticks (January 2026).
 
@@ -174,9 +172,13 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 						if bool(answers["delegate"]["ok"]) and bool(answers["decline"]["ok"]):
 							unplaceable_offered += 1
 					Audiences.delegate(state, ns, _loader, id)
+		# The game's order (b3): the month's tick, then its days -- main.gd sets the
+		# month and ticks before the diary's days run, as balance_probe's day loop
+		# does. The diary used to fire before the tick, which read the player's own
+		# visits as heads visiting France once visitors existed.
+		var report: Dictionary = WorldMonth.tick_month(state, _loader)
 		if book_all:
 			_fire_month(state, fire, held, month, refused_at, visitors)
-		var report: Dictionary = WorldMonth.tick_month(state, _loader)
 		for row in report["audience_requests"]["arrived"]:
 			if _visitor(String(row["person_id"])):
 				visitors["arrivals"] += 1
