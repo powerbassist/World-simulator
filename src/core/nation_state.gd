@@ -1419,6 +1419,14 @@ var person_party_override: Dictionary[String, String] = {}
 ## about what the save's last month saw.
 var person_want_state: Dictionary[String, bool] = {}
 
+## bloc id -> the part of bloc_offset that character acts wrote and that has not
+## yet faded (V5.2b, "le cout s'efface"). Written by characters.gd alone: an act
+## adds what it actually wrote, and each month the part shrinks by
+## ACT_OFFSET_MONTHLY_KEEP and bloc_offset gets the difference back. absent_ok,
+## no bump: a save from before V5.2b holds acts priced as permanent, and absent
+## reads them that way -- nothing fades that was never recorded as fading.
+var act_bloc_offset: Dictionary[String, float] = {}
+
 # --- The president's registers (V5.2a) ------------------------------------------
 ## SEVEN REGISTERS OF WHAT HAS PASSED BETWEEN THIS NATION'S LEADER AND A PERSON,
 ## each an edge from the president to one person (theirs, or a foreign head met)
@@ -1455,6 +1463,19 @@ var commitments: Array[Dictionary] = []
 ## The hidden evidence a corrupt act or an affair left, one row each:
 ## {kind, person_id, size, month}, month absolute.
 var exposure_evidence: Array[Dictionary] = []
+
+# --- Audience requests (V5.2b) ----------------------------------------------------
+## The REQUESTS lane: every request a person of this nation made to the
+## president, pending and recently resolved, one row each --
+## {id, person_id, object, stance, arrived_month, deadline_month, status, date,
+## resolved_month}, months absolute. Written by src/sim/audiences.gd alone; the
+## lane the inbox shows IS this register, so nothing between them can drop one.
+## absent_ok, no bump: before V5.2b nobody asked, which is what absent reads.
+var audience_requests: Array[Dictionary] = []
+
+## person id -> the absolute month they last asked (the per-person cooldown).
+## absent_ok for the same reason: nobody has asked yet.
+var audience_asked_month := {}
 
 # --- The commodity layer (V4.6) -------------------------------------------------
 ## The nation's commodity state: what it can make, what it wants, what it made,

@@ -52,7 +52,7 @@ GROUPS = [
     ("The world", "#cdebd3", ["Diplomacy", "Defence", "Companies", "Industry", "Migration",
                               "Investment", "Projects"]),
     ("Campaign and society", "#f3e7b5", ["Campaign", "Pledges", "Demography", "Society", "Unrest"]),
-    ("People and the vote", "#f2cfd3", ["Events", "Cabinet", "Characters", "Elections"]),
+    ("People and the vote", "#f2cfd3", ["Events", "Cabinet", "Characters", "Audiences", "Elections"]),
 ]
 ROW = 8
 

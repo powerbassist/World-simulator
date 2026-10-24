@@ -102,8 +102,10 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 	# Decay first, so a settled grudge halves before this month's want settles
 	# -- the same sub-ordering opinion.gd uses for the honeymoon, where
 	# decaying the old stock before the new pulse lands is what makes the
-	# half-life mean the same thing in every month of a term.
+	# half-life mean the same thing in every month of a term. The acts' old
+	# cost fades in the same place, before this month's acts add to it.
 	_decay_grudges(ns, by_id)
+	_fade_act_offsets(ns)
 
 	# Wants settle, priced on satisfaction the DERIVED reads give. Only an
 	# UNSATISFIED want moves a person, and only by the amount the band allows.
@@ -115,13 +117,42 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 	# does not also brief against the government in the same month, which is
 	# as much a legibility rule as a balance one.
 	var acted: Dictionary = {}
+	var before: Dictionary = ns.bloc_offset.duplicate()
 	for act_key in CK.ACT_KEYS:
 		for person in people:
 			if acted.has(person.id):
 				continue
 			if _fire_act(state, ns, loader, person, act_key, meters, acts, authored_leaders):
 				acted[person.id] = true
+	_record_act_offsets(ns, before)
 	return acts
+
+
+## V5.2b, "le cout s'efface": what this month's acts wrote on bloc_offset --
+## the real delta, after the clamp, since nothing else in this tick writes it --
+## joins the share that fades. The acts price through two doors (the applier for
+## a brief, Government.penalise_blocs for the rest), so the record reads the
+## result rather than either door.
+static func _record_act_offsets(ns, before: Dictionary) -> void:
+	for bloc in ns.bloc_offset:
+		var wrote := float(ns.bloc_offset[bloc]) - float(before.get(bloc, 0.0))
+		if wrote != 0.0:
+			ns.act_bloc_offset[bloc] = float(ns.act_bloc_offset.get(bloc, 0.0)) + wrote
+
+
+## The acts' share shrinks by ACT_OFFSET_MONTHLY_KEEP and bloc_offset gets back
+## what faded, so a leak hurts the next vote and is then forgotten. A share too
+## small to read is dropped, so the register does not grow a tail of zeros.
+static func _fade_act_offsets(ns) -> void:
+	for bloc in ns.act_bloc_offset.keys():
+		var part := float(ns.act_bloc_offset[bloc])
+		var kept := part * CK.ACT_OFFSET_MONTHLY_KEEP
+		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + (kept - part),
+			Legislature.LK.BLOC_OFFSET_MIN, Legislature.LK.BLOC_OFFSET_MAX)
+		if absf(kept) < 0.000001:
+			ns.act_bloc_offset.erase(bloc)
+		else:
+			ns.act_bloc_offset[bloc] = kept
 
 
 ## The grudge half-life, with the two decay traits applied where the person is
@@ -188,8 +219,7 @@ static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dict
 	for want in person.wants:
 		var stance := String(want["stance"])
 		var object := String(want["object"])
-		var satisfied := _want_satisfied(ns, person, want, meters, authored_leaders)
-		var served: bool = satisfied if stance != "oppose" else not satisfied
+		var served := want_served(ns, person, want, meters, authored_leaders)
 		var key: String = String(person.id) + "|" + object
 		var prev: bool = ns.person_want_state.get(key, served)
 		ns.person_want_state[key] = served
@@ -233,6 +263,14 @@ static func _denial_factor(person, object: String) -> float:
 ## authored_leaders are handed in exactly as tick_month hands them.
 static func want_satisfied(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
 	return _want_satisfied(ns, person, want, meters, authored_leaders)
+
+
+## The stance-aware half: an `oppose` want is served when its object is NOT
+## satisfied. V5.2b's request trigger asks it, so the trigger and the
+## edge-trigger above cannot read one want two ways.
+static func want_served(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
+	var satisfied := _want_satisfied(ns, person, want, meters, authored_leaders)
+	return satisfied if String(want["stance"]) != "oppose" else not satisfied
 
 
 static func _want_satisfied(ns, person, want: Dictionary, meters: Dictionary, authored_leaders: Dictionary) -> bool:
@@ -569,13 +607,50 @@ static func _adjust_loyalty(ns, person_id: String, amount: float) -> void:
 static func _adjust_grudge(ns, person, amount: float) -> void:
 	var delta := amount
 	if amount > 0.0:
-		if person.traits.has("loyal"):
-			delta *= CK.LOYAL_GRUDGE_FACTOR
-		if person.traits.has("principled"):
-			delta *= CK.PRINCIPLED_GRUDGE_FACTOR
+		delta *= grudge_intake(person)
 	ns.person_grudges[person.id] = clampf(
 		float(ns.person_grudges.get(person.id, 0.0)) + delta, 0.0, 1.0
 	)
+
+
+## The trait table's intake factor on a grudge TAKEN: loyal halves it,
+## principled doubles it, both multiply. Public since V5.2b, for the request
+## card's price; both factors are powers of two, so folding them into one
+## product changed no float the old in-line pair wrote.
+static func grudge_intake(person) -> float:
+	var factor := 1.0
+	if person.traits.has("loyal"):
+		factor *= CK.LOYAL_GRUDGE_FACTOR
+	if person.traits.has("principled"):
+		factor *= CK.PRINCIPLED_GRUDGE_FACTOR
+	return factor
+
+
+## V5.2b. The grudge a refusal of `grudge` would write on this person now: the
+## trait intake above, and never past GRUDGE_REFUSAL_CEILING -- a refusal brings
+## a person to the leak, never past it. The card's price and the price paid read
+## this one function.
+static func refusal_grudge(ns, person, grudge: float) -> float:
+	if grudge <= 0.0:
+		return grudge
+	var room := maxf(0.0, CK.GRUDGE_REFUSAL_CEILING - float(ns.person_grudges.get(person.id, 0.0)))
+	return minf(grudge * grudge_intake(person), room)
+
+
+## V5.2b. The price of a refusal -- a declined, delegated or lapsed request, a
+## failed lever -- on the two registers people-model 14.1 names, the grudge
+## through refusal_grudge() above. The one door for a writer outside this file:
+## Audiences and Levers price here, so this file stays the one writer of both
+## registers. Returns what was applied, after the clamps, for the card.
+static func price_refusal(ns, person, grudge: float, loyalty: float) -> Dictionary:
+	var grudge_before := float(ns.person_grudges.get(person.id, 0.0))
+	var loyalty_before := float(ns.person_loyalty.get(person.id, 0.0))
+	ns.person_grudges[person.id] = clampf(grudge_before + refusal_grudge(ns, person, grudge), 0.0, 1.0)
+	_adjust_loyalty(ns, person.id, loyalty)
+	return {
+		"grudge": float(ns.person_grudges[person.id]) - grudge_before,
+		"loyalty": float(ns.person_loyalty[person.id]) - loyalty_before,
+	}
 
 
 ## The act record the card reads. act is one of CK.ACT_KEYS; person_id names

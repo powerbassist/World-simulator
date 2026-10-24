@@ -58,6 +58,7 @@ func _init() -> void:
 	_check_person_is_a_label_not_an_identity()
 	_check_travel_block_spans()
 	_check_overlap_refused()
+	_check_a_stale_day_reads_as_the_months_last()
 	_check_past_departure_refused()
 	_check_absent_travel_days_round_trips()
 	_check_december_rollover()
@@ -256,6 +257,24 @@ func _check_past_departure_refused() -> void:
 	)
 	if not Calendar.can_book(state, same_day):
 		_fail("a same-day booking without travel was refused -- there is no journey to leave late")
+
+
+## V5.2b, Interface's find. The month can advance before the day does: main.gd
+## moves state.month at the close and sets state.day on the next day tick, so a
+## read made during the close sees April with day 31. The day number of an
+## impossible date is an engine ERROR (the runner fails on it) and a wrong
+## answer; the stale day reads as the month's last day instead.
+func _check_a_stale_day_reads_as_the_months_last() -> void:
+	var state = _fresh()
+	state.year = 2026
+	state.month = 4
+	state.day = 31
+	var last_day := Calendar.make_entry(K.KIND_LAW, 2026, 4, 30, "", "", "income_tax_cut")
+	if not Calendar.can_book(state, last_day):
+		_fail("with a stale day 31 in April, the 30th read as %s rather than today" % Calendar.refusal_reason(state, last_day))
+	var next_month := Calendar.make_entry(K.KIND_DIPLOMATIC, 2026, 5, 3, "state_visit", PARTNER, "", "", "", "", 3)
+	if not Calendar.can_book(state, next_month):
+		_fail("with a stale day 31 in April, a visit leaving on 30 April read as %s" % Calendar.refusal_reason(state, next_month))
 
 
 ## V2.4a. The back-compat half of the no-bump argument, pinned the way

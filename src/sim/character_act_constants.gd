@@ -190,6 +190,30 @@ const CHALLENGE_VAIN_DISCOUNT := 0.1
 ## because leaking is what a frustrated ally does on the way out.
 const GRUDGE_BRIEF_THRESHOLD := 0.45
 
+## V5.2b, the author's call (2026-10-24, verbatim: "Le cout s'efface"): the
+## bloc_offset an act writes -- a brief, a resignation, a defection, a challenge
+## -- fades with this half-life, so a leak hurts the next vote and is then
+## forgotten. Laws, events, the programme and campaigns stay permanent; only the
+## acts' share (NationState.act_bloc_offset) fades. Before V5.2b acts were rare
+## (0 in an idle term) and a permanent price did no harm; once refused audiences
+## feed the ladder, fourteen years of permanent briefs pinned the workers' and
+## students' offsets on the clamp (tests/test_balance.gd).
+const ACT_OFFSET_HALF_LIFE_MONTHS := 24
+
+## The monthly multiplier, 0.5^(1/24), written out: GDScript folds no pow() into a
+## constant, and test_characters pins the literal against the half-life.
+const ACT_OFFSET_MONTHLY_KEEP := 0.9715319411536059
+
+## V5.2b. The highest a REFUSAL (a declined, delegated or lapsed audience
+## request) can lift a grudge: one month's decay and one brief's relief above the
+## brief gate. Next month's decay leaves the person at the gate, one brief fires,
+## and its relief takes them under it -- a refusal brings a person to the leak,
+## never past it. MEASURED (the b1 re-baseline, 2026-10-24): uncapped, a
+## principled person refused once sat 0.25 over the gate and leaked every month
+## for a year, and refusing everyone for a term flipped France's 2032 vote in 28
+## of 41 regimes. The rungs above the brief stay the wants' own.
+const GRUDGE_REFUSAL_CEILING := GRUDGE_BRIEF_THRESHOLD + GRUDGE_BRIEF_RELIEF + GRUDGE_DECAY_MONTHLY
+
 # --- Prices ----------------------------------------------------------------------------
 
 ## All prices are POINTS of bloc_offset, NEGATIVE (convention 1 above), weighted
@@ -199,7 +223,14 @@ const GRUDGE_BRIEF_THRESHOLD := 0.45
 const PRICE_RESIGN := -0.8
 const PRICE_DEFECT := -0.5
 const PRICE_CHALLENGE := -0.6
-const PRICE_BRIEF := -0.25
+## The brief, -0.25 until V5.2b: the author's call on PR #104 (2026-10-24,
+## verbatim "Fuite 40 % moins chere", Gameplay's option A). Once refused audiences
+## feed the ladder, a brief is routine rather than rare -- three a term in a
+## decline-everything France -- and at -0.25 x (0.5 + standing) one brief alone
+## was about 0.31 of a bloc, two thirds of the 0.50 act-share band
+## (docs/design/bands-v5.2.md, B3 amendment). The count comes from grudges, not
+## from this price, so the share scales with it.
+const PRICE_BRIEF := -0.15
 
 ## The blocs a leak lands on. Grievance-carrying blocs: unrest_constants'
 ## UNREST_BLOCS are the same two, and a leak about a government failure travels
