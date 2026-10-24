@@ -112,19 +112,24 @@ static func offered_dates(state, ns, request_id: String) -> Array[Dictionary]:
 	return out
 
 
-## The card's three answers. Booking needs an offered day the diary can place;
-## delegation and decline are always open on a waiting request (B2's 100 %).
+## The card's three answers. Booking needs a waiting request and an offered day
+## the diary can place; delegation and decline are open on every open request,
+## booked included -- the commands accept both, and a booked day is given back
+## (B2's 100 %).
 static func answers(state, ns, loader, request_id: String) -> Dictionary:
 	var row := _row(ns, request_id)
-	if row.is_empty() or String(row["status"]) != K.STATUS_PENDING:
+	if row.is_empty() or not K.OPEN.has(String(row["status"])):
 		var closed := {"ok": false, "reason": "this request is no longer waiting"}
 		return {"book": closed, "delegate": closed, "decline": closed}
+	var open := {"ok": true, "reason": ""}
+	if String(row["status"]) == K.STATUS_BOOKED:
+		return {"book": {"ok": false, "reason": "already booked"}, "delegate": open, "decline": open}
 	var book := {"ok": false, "reason": "none of the days offered is free"}
 	for date in offered_dates(state, ns, request_id):
 		if bool(date["free"]):
 			book = {"ok": true, "reason": ""}
 			break
-	return {"book": book, "delegate": {"ok": true, "reason": ""}, "decline": {"ok": true, "reason": ""}}
+	return {"book": book, "delegate": open, "decline": open}
 
 
 ## What a decline -- or the lapse, or a no-show -- writes on the person's card
@@ -258,7 +263,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 		var want := _unserved(ns, person, meters, leaders)
 		if want.is_empty():
 			continue
-		var hazard := K.REQUEST_HAZARD * (0.5 + float(ns.person_standing.get(person.id, 0.0)))
+		var hazard := K.REQUEST_HAZARD * (K.REQUEST_STANDING_FLOOR + float(ns.person_standing.get(person.id, 0.0)))
 		if Cycle.unit_pair(person.id, K.SALT_REQUEST, now) < hazard:
 			_arrive(ns, person, want, now, arrived)
 			open += 1

@@ -14,6 +14,10 @@ extends RefCounted
 ## asker most months.
 const REQUEST_HAZARD := 0.025
 
+## The hazard's scale is (this + standing): a person with no standing still asks
+## at half the rate, the weightiest at one and a half times it.
+const REQUEST_STANDING_FLOOR := 0.5
+
 ## One person asks at most once in this many months. B1 caps any one person at
 ## 25 % of a term's requests: at eight months a person asks at most 8 times in
 ## 60, under a quarter of a 36-request term.

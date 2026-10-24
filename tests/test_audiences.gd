@@ -55,6 +55,8 @@ func _init() -> void:
 	_check_delegation_costs_a_share()
 	_check_booking_takes_an_offered_day()
 	_check_an_unplaceable_request_still_offers_the_rest()
+	_check_a_booked_request_can_still_be_declined()
+	_check_a_decline_at_the_ceiling_still_costs()
 	_check_a_no_show_is_a_decline()
 	_check_rows_round_trip_with_int_months()
 
@@ -292,6 +294,44 @@ func _check_an_unplaceable_request_still_offers_the_rest() -> void:
 		_fail("with every offered day taken, book still read %s" % [answers["book"]])
 	if not bool(answers["delegate"]["ok"]) or not bool(answers["decline"]["ok"]):
 		_fail("an unplaceable request did not offer delegation and decline: %s" % [answers])
+
+
+## A booked audience can still be declined from the card, and the day goes back.
+func _check_a_booked_request_can_still_be_declined() -> void:
+	var case = _game_with_request()
+	if case.is_empty():
+		return
+	var state = case["state"]
+	var ns = state.player()
+	var id := String(case["row"]["id"])
+	for d in Audiences.offered_dates(state, ns, id):
+		if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, id, d)["ok"]):
+			break
+	var answers: Dictionary = Audiences.answers(state, ns, _loader, id)
+	if bool(answers["book"]["ok"]) or not bool(answers["decline"]["ok"]) or not bool(answers["delegate"]["ok"]):
+		_fail("a booked request's card read %s -- decline and delegate stay open, book does not" % [answers])
+	Audiences.decline(state, ns, _loader, id)
+	for e in state.appointments:
+		if String(e["action_id"]) == id and String(e["status"]) == CalendarK.STATUS_BOOKED:
+			_fail("a declined audience kept its day in the diary")
+
+
+## B3's 100 % row at the edge: a person already at the refusal ceiling takes no
+## more grudge, and the decline still writes a change the card can name.
+func _check_a_decline_at_the_ceiling_still_costs() -> void:
+	var case = _game_with_request()
+	if case.is_empty():
+		return
+	var ns = case["state"].player()
+	var pid := String(case["row"]["person_id"])
+	ns.person_grudges[pid] = 0.95
+	var before := _person_registers(ns, pid)
+	Audiences.decline(case["state"], ns, _loader, String(case["row"]["id"]))
+	var after := _person_registers(ns, pid)
+	if after["grudge"] != before["grudge"]:
+		_fail("a refusal lifted a grudge already past the ceiling: %.3f -> %.3f" % [before["grudge"], after["grudge"]])
+	if after["rapport"] == before["rapport"] and after["loyalty"] == before["loyalty"]:
+		_fail("a decline at the ceiling wrote no change at all -- B3's 100 % row")
 
 
 func _check_a_no_show_is_a_decline() -> void:
