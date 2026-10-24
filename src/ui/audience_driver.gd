@@ -119,13 +119,10 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
 
 
-## The card's fourth answer when the phone exists: the sim's own refusal on it
-## (called this month), never a guess here.
+## The card's fourth answer: the sim's own refusal on it (spoken this month
+## already), never a guess here.
 static func _call_answer(main, pid: String) -> Dictionary:
-	var phone = PhoneDriver.phone()
-	if phone == null:
-		return {}
-	var why := String(phone.options(main._state, main._state.player(), main._loader, pid).get("why_not", ""))
+	var why := String(PhoneDriver.Phone.options(main._state, main._state.player(), main._loader, pid)["why_not"])
 	return {"call": {"ok": why == "", "reason": why}}
 
 

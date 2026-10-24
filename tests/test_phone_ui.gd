@@ -3,59 +3,34 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_phone_ui.gd
 ## Non-zero exit on any failure.
 ##
-## V5.2b b3, the phone's UI, against the plan's two commands (v5.2b3-plan.md
-## section 1: Phone.options / Phone.dial). Systems' module is not in yet, so a
-## STAND-IN lives here, in the test only, and is handed to phone_driver.gd:
-##   - with no phone module the request card offers no call;
-##   - with one, the card's "Call them" (a real click, press and release frames
-##     apart) opens the dialog on the sim's rows: a range on an offered lever, a
-##     lever below the call's floor refused "too long a shot for a call", dinner
-##     refused "not by phone"; the clock is held and the hold line names them;
-##   - a lever dials once and says the result; Close lets the clock go, and the
-##     card's Call is then refused with the sim's reason (one call a month);
-##   - a right click on a person in People opens a call too, topics only when they
-##     have asked for nothing.
+## V5.2b b3, the phone's UI over Systems' src/sim/phone.gd (the UI writes nothing):
+##   - a request card's "Call them" (a real click, press and release frames apart)
+##     opens the call on Phone.options()'s rows, row for row: each lever live or
+##     refused with the sim's reason (the call's floor among them), dinner refused
+##     by phone; the clock is held and the hold line names them;
+##   - a lever pressed reaches Phone.dial() once (the month's call is spent) and its
+##     result is said; Close lets the clock go, and the card's Call is then refused
+##     with the sim's reason;
+##   - a right click on a person in People opens a call too; with no open request
+##     the levers are left off and the dialog says why;
+##   - a visiting head's ask reads "wants your measure on <nation> lifted".
 
 const Audiences = preload("res://src/sim/audiences.gd")
+const Phone = preload("res://src/sim/phone.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
-
-
-## The plan's shapes, nothing more: options() says what may be tried, dial()
-## records the try and spends the month's call.
-class StandIn:
-	var asker := ""
-	var called := {}
-	var dialed := []
-
-	func options(state, _ns, _loader, person_id: String) -> Dictionary:
-		var now: int = int(state.year) * 12 + int(state.month)
-		if int(called.get(person_id, -1)) == now:
-			return {"why_not": "you have called them this month", "request_id": "", "levers": [], "topics": []}
-		var levers: Array = []
-		if person_id == asker:
-			levers = [
-				{"lever": "argue", "offered": true, "why_not": "", "odds_lo": 0.2, "odds_hi": 0.5, "fog": "stranger", "spends": {}},
-				{"lever": "pressure", "offered": false, "why_not": "too long a shot for a call", "odds_lo": 0.0, "odds_hi": 0.0, "fog": "stranger", "spends": {"rapport": -0.06}},
-			]
-		return {"why_not": "", "request_id": "", "levers": levers, "topics": [
-			{"topic": "family", "offered": true, "why_not": "", "spends": {"attempt": 1}},
-			{"topic": "dinner", "offered": false, "why_not": "not by phone", "spends": {"attempt": 1}},
-		]}
-
-	func dial(state, _ns, _loader, person_id: String, what: String, args := {}) -> Dictionary:
-		called[person_id] = int(state.year) * 12 + int(state.month)
-		dialed.append([person_id, what, args])
-		return {"ok": true, "error": "", "success": false, "spent": {}, "effects": {"rapport": 0.04}}
-
+const PersonCard = preload("res://src/ui/person_card.gd")
+const Relations = preload("res://src/core/relations.gd")
+const Words = preload("res://src/ui/lever_words.gd")
 
 var _failures: Array[String] = []
 var _main
 var _frame := 0
-var _stand_in := StandIn.new()
 var _request := ""
+var _asker := ""
 var _target: Control
+var _rang := ""
 
 
 func _init() -> void:
@@ -68,10 +43,8 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		3:
 			_stage_a_request()
-			_check_no_phone()
-			PhoneDriver.backend = _stand_in
+			_check_visitor_words()
 			_main._clock.paused = false
-			AudienceDriver.refresh(_main)
 		5:
 			_target = _answer("Call them…")
 			_click(true, MOUSE_BUTTON_LEFT)
@@ -79,7 +52,7 @@ func _process(_delta: float) -> bool:
 			_click(false, MOUSE_BUTTON_LEFT)
 		11:
 			_check_dialog()
-			PhoneDriver.dialog_of(_main).verbs.lever_button("argue").pressed.emit()
+			_press_a_verb()
 		13:
 			_check_dialed()
 			PhoneDriver.dialog_of(_main)._close.pressed.emit()
@@ -93,7 +66,6 @@ func _process(_delta: float) -> bool:
 			_click(false, MOUSE_BUTTON_RIGHT)
 		25:
 			_check_people_call()
-			PhoneDriver.backend = null
 			_finish()
 			return true
 	return false
@@ -107,16 +79,24 @@ func _stage_a_request() -> void:
 			continue
 		Audiences._arrive(ns, person, person.wants[0], now, [])
 		_request = String(ns.audience_requests[-1]["id"])
-		_stand_in.asker = String(person.id)
+		_asker = String(person.id)
 		break
 	AudienceDriver.refresh(_main)
 
 
-func _check_no_phone() -> void:
-	if ResourceLoader.exists(PhoneDriver.PHONE):
-		return  # Systems' module has landed: the stand-in's premise is spent
-	if _answer("Call them…") != null:
-		_fail("with no phone module the request card still offers a call")
+## Audiences' visitor grammar (audience_triggers.gd): "measure:<directed key>".
+func _check_visitor_words() -> void:
+	var ns = _main._state.player()
+	var other := ""
+	for id in _main._loader.nations.keys():
+		if String(id) != String(ns.id):
+			other = String(id)
+			break
+	var object := "measure:%s" % Relations.directed_key(String(ns.id), other)
+	var line := "%s %s" % [PersonCard.stance_label("want"), PersonCard.object_text(_main._loader, ns, object, {"object": object})]
+	var want := "wants your measure on %s lifted" % String(_main._loader.nations[other].nation_name)
+	if line != want:
+		_fail("a visitor's ask reads '%s', not '%s'" % [line, want])
 
 
 func _check_dialog() -> void:
@@ -124,29 +104,44 @@ func _check_dialog() -> void:
 	if dialog == null or not dialog.visible:
 		_fail("Call them did not open the phone")
 		return
-	var name: String = _main._loader.person_name(_stand_in.asker)
+	var name: String = _main._loader.person_name(_asker)
 	if not dialog._title.text.contains(name):
 		_fail("the call does not name the person: '%s'" % dialog._title.text)
-	var argue: Button = dialog.verbs.lever_button("argue")
-	if argue == null or argue.disabled:
-		_fail("the offered lever is not live on the phone")
-	var pressure: Button = dialog.verbs.lever_button("pressure")
-	if pressure == null or not pressure.disabled or pressure.tooltip_text != "too long a shot for a call":
-		_fail("a lever below the call's floor is not refused with its reason")
+	var o := Phone.options(_main._state, _main._state.player(), _main._loader, _asker)
+	for row in o["levers"]:
+		var b: Button = dialog.verbs.lever_button(String(row["lever"]))
+		if b == null:
+			_fail("lever %s has no button on the phone" % row["lever"])
+		elif b.disabled == bool(row["offered"]) or (not bool(row["offered"]) and b.tooltip_text != Words.reason(String(row["why_not"]))):
+			_fail("lever %s shows %s '%s', the sim says offered=%s '%s'" % [row["lever"], "down" if b.disabled else "live", b.tooltip_text, row["offered"], row["why_not"]])
 	var dinner: Button = dialog.verbs.topic_button("dinner")
-	if dinner == null or not dinner.disabled or dinner.tooltip_text != "not by phone":
-		_fail("dinner is not refused by phone")
+	if dinner == null or not dinner.disabled or not dinner.tooltip_text.begins_with("not by phone"):
+		_fail("dinner is not refused by phone: '%s'" % (dinner.tooltip_text if dinner != null else "none"))
 	if not _main._clock.paused:
 		_fail("a call does not hold the clock")
 	if not HoldReason.show(_main).contains(name):
 		_fail("the hold line does not name who is on the phone: '%s'" % HoldReason.show(_main))
 
 
+## The first offered lever, else a topic: what the sim lets this call try.
+func _press_a_verb() -> void:
+	var dialog = PhoneDriver.dialog_of(_main)
+	for row in Phone.options(_main._state, _main._state.player(), _main._loader, _asker)["levers"]:
+		if bool(row["offered"]):
+			_rang = String(row["lever"])
+			dialog.verbs.lever_button(_rang).pressed.emit()
+			return
+	_rang = "family"
+	dialog.verbs.topic_button("family").pressed.emit()
+
+
 func _check_dialed() -> void:
 	var dialog = PhoneDriver.dialog_of(_main)
-	if _stand_in.dialed.size() != 1 or _stand_in.dialed[0][1] != "argue":
-		_fail("the lever did not reach Phone.dial once: %s" % [_stand_in.dialed])
-	if not dialog._result.text.contains("not moved") or dialog.verbs.visible:
+	var ns = _main._state.player()
+	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
+	if int(ns.phone_calls.get(_asker, -1)) != now:
+		_fail("pressing %s did not reach Phone.dial(): %s" % [_rang, ns.phone_calls])
+	if dialog._result.text == "" or dialog.verbs.visible:
 		_fail("the call's result is not said, or its verbs stayed up: '%s'" % dialog._result.text)
 
 
@@ -155,12 +150,19 @@ func _check_hung_up() -> void:
 		_fail("Close left the phone up")
 	if _main._clock.paused and not _main._decision_holds_clock():
 		_fail("hanging up did not let the clock go")
+	# A lever that worked answers the request by phone: the card goes. Otherwise
+	# it stays, and its Call is refused with the sim's own reason.
+	if String(Audiences.request(_main._state.player(), _request).get("status", "")) != "pending":
+		if AudienceDriver.lane_of(_main).card_of(_request) != "":
+			_fail("a request answered by phone kept its card")
+		return
 	var call := _answer("Call them…") as Button
-	if call == null or not call.disabled or call.tooltip_text != "you have called them this month":
-		_fail("after the month's call the card's Call is not refused with the sim's reason")
+	var why := String(Phone.options(_main._state, _main._state.player(), _main._loader, _asker)["why_not"])
+	if why == "" or call == null or not call.disabled or call.tooltip_text != Words.reason(why):
+		_fail("after the month's call the card's Call is not refused with the sim's reason: '%s'" % why)
 
 
-## The second face row (the first is the president, whom the real module refuses).
+## The second face row (the first is the president, whom the sim does not cover).
 func _people_row() -> Control:
 	var rows: Array = _main._people_panel._body.get_children().filter(func(c): return c is HBoxContainer)
 	return rows[1] if rows.size() > 1 else null
@@ -171,10 +173,14 @@ func _check_people_call() -> void:
 	if dialog == null or not dialog.visible:
 		_fail("a right click on a person in People did not open a call")
 		return
-	if not dialog.verbs.find_children("Lever_*", "Button", true, false).is_empty():
-		_fail("a call to someone who asked nothing offers levers")
-	if not dialog._why.text.contains("asked you for nothing"):
-		_fail("the call does not say why there are no levers: '%s'" % dialog._why.text)
+	var pid := String(PhoneDriver._games[_main.get_instance_id()]["person_id"])
+	var o := Phone.options(_main._state, _main._state.player(), _main._loader, pid)
+	if String(o["why_not"]) != "":
+		if dialog._why.text != Words.reason(String(o["why_not"])):
+			_fail("a refused call does not open on the sim's reason: '%s'" % dialog._why.text)
+	elif String(o["request_id"]) == "":
+		if not dialog.verbs.find_children("Lever_*", "Button", true, false).is_empty() or not dialog._why.text.contains("asked you for nothing"):
+			_fail("a call to someone with no open request shows levers, or does not say why: '%s'" % dialog._why.text)
 	dialog._close.pressed.emit()
 
 

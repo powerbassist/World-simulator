@@ -330,7 +330,6 @@ var _request := ""
 var _audience_step := ""
 ## V5.2b b3: --phone open | dialed | people -- the call dialog on a request's asker
 ## (open), after its one try (dialed), or on someone who asked nothing (people).
-## Until Systems' src/sim/phone.gd lands the frame runs on PhoneStandIn below.
 var _phone := ""
 ## V5.1-c2.3: open a domain through its sidebar entry (its first tab), so a frame
 ## shows the entry marked and the tab open -- V2.1c's --cluster, for the sidebar.
@@ -1987,42 +1986,11 @@ func _stage_a_verdict() -> void:
 	_main._on_month_elapsed(year, next - year * 12)
 
 
-## The plan's two commands (v5.2b3-plan.md section 1), for a frame only: the
-## lever rows Levers.offered() prints, the floor and dinner refused as the plan
-## words them. Dropped once the module is in.
-class PhoneStandIn:
-	var asker := ""
-
-	func options(state, ns, loader, person_id: String) -> Dictionary:
-		var levers: Array = []
-		if person_id == asker:
-			var session := {"request_id": "", "person_id": person_id, "object": "", "attempts_left": 1, "won": "", "closed": false}
-			# Levers' rows read this ad hoc session as closed; a frame wants them live,
-			# with the floor's refusal where the odds are nil.
-			for row in load("res://src/sim/levers.gd").offered(state, ns, loader, session):
-				row["offered"] = float(row["odds_hi"]) > 0.0
-				row["why_not"] = "" if row["offered"] else "too long a shot for a call"
-				levers.append(row)
-		return {"why_not": "", "request_id": "", "levers": levers, "topics": [
-			{"topic": "family", "offered": true, "why_not": "", "spends": {"attempt": 1}},
-			{"topic": "opinion", "offered": true, "why_not": "", "spends": {"attempt": 1}},
-			{"topic": "gossip", "offered": true, "why_not": "", "spends": {"attempt": 1}},
-			{"topic": "dinner", "offered": false, "why_not": "not by phone", "spends": {"attempt": 1}},
-		]}
-
-	func dial(_state, _ns, _loader, _person_id: String, _what: String, _args := {}) -> Dictionary:
-		return {"ok": true, "error": "", "success": false, "spent": {}, "effects": {"rapport": 0.04, "knowledge": 0.07}}
-
-
 func _stage_phone() -> void:
 	var Phone := load("res://src/ui/phone_driver.gd")
 	var talks := load("res://src/ui/audience_talks.gd")
-	if not ResourceLoader.exists(Phone.PHONE):
-		Phone.backend = PhoneStandIn.new()
 	var ns = _main._state.player()
 	var asker := String(load("res://src/sim/audiences.gd").pending(ns)[0]["person_id"])
-	if Phone.backend != null:
-		Phone.backend.asker = asker
 	var pid := asker if _phone != "people" else String(ns.pm_person_id)
 	Phone.open_call(_main, pid, talks.gossip_people(_main, pid))
 	if _phone == "dialed":

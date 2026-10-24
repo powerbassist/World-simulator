@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## The phone's wiring -- V5.2b b3: the call dialog to Systems' Phone.options() /
-## Phone.dial() (v5.2b3-plan.md section 1). Two doors open it: a request card's
+## Phone.dial() (src/sim/phone.gd). Two doors open it: a request card's
 ## "Call" answer, and a right click on a person in the People panel (that panel
 ## keeps no button, by its own rule). Static over main, as audience_driver.gd is.
 ##
@@ -16,21 +16,9 @@ const Words = preload("res://src/ui/lever_words.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
+const Phone = preload("res://src/sim/phone.gd")
 
-## Systems' module, resolved when it is there: the plan names its two commands
-## and the UI is built against them before the module lands. No module, no call
-## offered anywhere.
-const PHONE := "res://src/sim/phone.gd"
-
-## A test's stand-in for the module (tests/test_phone_ui.gd); null in the game.
-static var backend = null
 static var _games := {}
-
-
-static func phone():
-	if backend != null:
-		return backend
-	return load(PHONE) if ResourceLoader.exists(PHONE) else null
 
 
 ## `on_change` redraws what a call can move (the request lane, its mark).
@@ -59,26 +47,26 @@ static func calling(main) -> String:
 ## The dialog for one person, on what the sim offers them now.
 static func open_call(main, person_id: String, people: Array) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
-	var p = phone()
-	if game.is_empty() or p == null or main._state == null:
+	if game.is_empty() or main._state == null:
 		return
 	var state = main._state
-	var o: Dictionary = p.options(state, state.player(), main._loader, person_id)
+	var o := Phone.options(state, state.player(), main._loader, person_id)
 	game["person_id"] = person_id
 	game["was_paused"] = main._clock.paused
 	main._clock.paused = true
-	game["dialog"].open({"name": main._loader.person_name(person_id), "why_not": String(o.get("why_not", "")),
-		"levers": o.get("levers", []), "topics": o.get("topics", []),
+	# No open request, nothing to ask: the levers are left off (each would only
+	# repeat "nothing to ask about"), and the dialog says why there are none.
+	game["dialog"].open({"name": main._loader.person_name(person_id), "why_not": String(o["why_not"]),
+		"levers": o["levers"] if String(o["request_id"]) != "" else [], "topics": o["topics"],
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": people}})
 	main._hud.clock_cluster.refresh(main._clock, HoldReason.show(main))
 
 
 static func _dial(main, game: Dictionary, what: String, args: Dictionary) -> void:
-	var p = phone()
-	if p == null or String(game["person_id"]).is_empty():
+	if String(game["person_id"]).is_empty():
 		return
 	var state = main._state
-	var r: Dictionary = p.dial(state, state.player(), main._loader, String(game["person_id"]), what, args)
+	var r := Phone.dial(state, state.player(), main._loader, String(game["person_id"]), what, args)
 	var text := ""
 	if not bool(r.get("ok", false)):
 		text = Words.reason(String(r.get("error", "")))
