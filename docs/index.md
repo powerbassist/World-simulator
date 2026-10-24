@@ -48,6 +48,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[programme-model]] — the government's programme: an agenda the player chooses at term start, judged on what it was for (V4.1)
 - [[defence-model]] — capability derived from sustained spending, defensive pacts, and the alliance obligation that bills you at home
 - [[calendar-model]] — the president's diary: dated state put on a timeline, optional booking, and the currency a probe deleted
+- [[audiences-model]] — people ask to see the president: the request lane, its own trigger, book / delegate / decline, and a lapse that is a decline (V5.2b)
 - [[people-model]] — the named-individual register: one record per person, ids in state, and the minister bench a probe cut before it was authored
 - [[companies-model]] — named firms as a partition of a sector, subsidies as the first verb pointed at something that is not a nation, and the two channels that read exactly zero until the player acts
 - [[society-model]] — service quality as a stock the project had already built three times under other names, corruption as the factor that decides what a spending line buys, and the double count that had to be resolved rather than avoided
