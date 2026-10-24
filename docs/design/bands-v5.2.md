@@ -1226,6 +1226,102 @@ Over 200 seeded runs (salts), France, otherwise idle.
   [[v5.2-spec]] C7, and the easiest to leave unbuilt; a turned person needs the
   relationship register to reach rival or enemy).
 
+### B5 amendment (2026-10-24, before c1 is built): the shadows enter the grid
+
+Systems' c1 plan (`.superpowers/sdd/v5.2c-plan.md`, "Calls", call 1) adds two
+corrupt bargain currencies, `backroom` (evidence `favour`) and `aid` (evidence
+`diverted_budget`), each with an odds bonus, and a lie variant on argue and
+promise a date (`LIE_ODDS`). Declared before `lever_probe` L2 reads them.
+
+- **They enter B5's grid as four rows of their own:** bargain (backroom),
+  bargain (aid), argue (lie), promise a date (lie). Each is scored at its
+  **expected cost**, beside what it spends openly:
+  - **A corrupt currency:** P(exposed) × the exposure's price. P(exposed) is
+    `shadows_probe` S1's exposed-by-month-60 rate for that currency, at the
+    evidence size the lever writes; Systems reports S1 **per currency** for
+    this (B6 reads it over all currencies). The price is the mean, over the
+    scandal events that route arms, of each event's cheapest choice under
+    the probe's exchange weights, since the player picks the cheapest answer.
+    So `shadows_probe` runs before `lever_probe` L2, and L2's header states
+    both numbers before its run.
+  - **A lie on argue:** P(caught) × the reveal's price. P(caught) is
+    `Lies.catch_chance()` at the cell's listener skill and the president's;
+    the price is `Lies.reveal()`'s (`LIE_RAPPORT` 0.5, `LIE_GRUDGE` 0.15 at
+    `lever_constants.gd:162-164`, and the knowledge kept) under the same
+    weights.
+  - **A lie on promise a date:** caught now at the same P; if not caught, the
+    date reveals it with certainty (B8's third row). So the expected cost is
+    the full reveal price whenever the date falls inside the term, and
+    P(caught) × the price only when it falls after the term ends.
+- **Denominators:** each shadow row counts only the cells where it is offered.
+  The phone offers none (the c1 plan's call 8), so no phone cell counts for
+  them, which is friendship's rule again.
+- **The rows, with the shadows in:**
+
+| | Declared |
+|---|---|
+| Pareto-dominated pairs, the four shadow rows included | **0** |
+| Best net value, any row, a shadow row included | **at most 40 %** of its cells |
+| Best net value, bargain in any currency taken together | **at most 40 %** |
+| Best net value, each of the **six honest levers**, measured with the shadows in the grid | **at least 5 %** (unchanged) |
+| Best net value, each shadow row | **reported**, no floor |
+
+- **Why (OPINION):**
+  - Pricing at the expected cost is what keeps the check honest. Scored at their
+    open cost alone, a bribe and a lie would be "better odds for nothing", the
+    Pareto row would flag them by construction, and the check would measure the
+    pricing rather than the game.
+  - The 40 % ceiling applies to each shadow row and to bargain as a whole,
+    because a player who always bribes is the failure this block most needs to
+    catch.
+  - The honest floors stay, measured with the shadows in the grid: the shadows
+    must not make an honest lever dead.
+  - A shadow row has no floor. Corruption is a temptation, not required
+    content. B6 already measures that offers reach the president (2 to 6 a
+    term).
+- **Failure looks like:** a shadow row best in more than 40 % of its cells (the
+  player learns to cheat by default); bargain, all currencies together, over
+  40 %; an honest lever under 5 % once the shadows are in (crowded out); a
+  dominated pair (a shadow priced below its honest twin on every register).
+- **Not in the grid:** accepting an offer. It is the person's proposal, not a
+  lever the president picks, and B6 bands it.
+
+### B6 amendment (2026-10-24, before c1 is built): rival and enemy on R11's cuts
+
+The c1 plan's bond rule writes `rival` and `enemy` from rapport, with interim
+thresholds −0.5 and −0.8 and a hysteresis to clear (call 2). They are aligned
+with R11's feeling bands ([[v5.2-bplus-spec]], R11), so the game has one
+ladder, not two.
+
+| Bond | Declared | R11's word at that point |
+|---|---|---|
+| `rival` | rapport **< −0.30** | *cold*, `[−1, −0.30)`: the same closed side, so a person is a rival exactly when the card says *cold* |
+| `enemy` | a rival **and** grudge **≥ 0.45** | *hostile, may leak*, `[0.45, 0.60)` and above; 0.45 is `GRUDGE_BRIEF_THRESHOLD` (`character_act_constants.gd:191`) |
+| cleared | the condition fails at the month's check | the word changes in the same month |
+
+- **No hysteresis (OPINION).** With one, the card could read *wary* while the
+  bond still says rival. Rapport does not decay, so nothing makes it flicker
+  but the player's own acts. The grudge decays slowly (0.008 a month), and an
+  enemy turns back into a rival in the same month the grudge word drops from
+  *hostile* to *resentful*.
+- **Why enemy reads the grudge (OPINION):** R11 has no rapport cut below −0.30,
+  and a new one would be the second ladder this amendment exists to avoid. The
+  grudge cut at 0.45 is the word that already promises a leak, and a turned
+  person is the route where "a rival or an enemy talks" ([[v5.2-spec]], the
+  currencies table).
+- **Reach (INFERRED, from the constants):**
+  - A decline costs 0.10 rapport (`DECLINE_RAPPORT`, `audience_constants.gd:64`),
+    so from 0 the fourth decline makes a rival (−0.30 itself is still *wary*).
+  - One caught lie or broken date costs 0.50 (`LIE_RAPPORT`), so from anything
+    under +0.20 it makes a rival at once.
+  - At the interim −0.5 it took five declines; at −0.8, eight.
+  - So the turned route opens sooner than the plan assumed. `shadows_probe` S2
+    sets the `RATE`s after this, and B6's "each route at least 10 %" is read at
+    these thresholds.
+- **Failure looks like:** a person shown *cold* who is not a rival, or a rival
+  shown *wary* or warmer (the two ladders disagree); the turned route under
+  10 % in S2 because no one reaches rival (it should not, at these cuts).
+
 ## B7 — The affair is dangerous
 
 | | Declared |
@@ -1290,12 +1386,10 @@ author-accepted base current when C6 is built (today
   push); over 9 months, ground game with broadcast and town halls with digital
   push fit as well. `late` (month 14) pays 3 or 4 months, and every pair fits.
   `tour` changes pair at month 12, so its total is Systems' to compute. If the
-  harness's pair does not fit:
-  - under a hard ceiling it stops early, the mobilisation falls, and 2027 may
-    fall: Systems reports it, and the row is the author's to accept;
-  - under a soft ceiling it overspends, which writes party-money evidence:
-    Systems reports the evidence, and an exposure that moves 2029 or 2032
-    through B6's hazard is reported, not failed.
+  harness's pair does not fit, it overspends under the soft ceiling (decided,
+  [[v5.2-c6-party-campaigns]] "The decisions"), which writes party-money
+  evidence: Systems reports the evidence, and an exposure that moves 2029 or
+  2032 through B6's hazard is reported, not failed.
   The campaign added +0.0009 (`tour`) to +0.0026 (`late`) of vote share in 2027
   over `managed` (the base: 0.2629; `early` 0.2648, `late` 0.2655, `tour`
   0.2638), with the fiscal hit inside it, so 0.005 bounds the fiscal half with
