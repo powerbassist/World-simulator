@@ -223,6 +223,20 @@ static func agree(ns, request_id: String, outcome: String) -> bool:
 	return true
 
 
+## b3: a request answered by phone (Phone.dial) -- a lever that worked on a call
+## settles it, a promise as promised, with no price and nothing learned (a call is
+## not a hold); a booked day is given back.
+static func answer(state, ns, request_id: String, outcome: String) -> Dictionary:
+	var row := _row(ns, request_id)
+	if row.is_empty() or not K.OPEN.has(String(row["status"])):
+		return {"ok": false, "error": "this request is no longer waiting"}
+	if not [K.STATUS_SETTLED, K.STATUS_PROMISED].has(outcome):
+		return {"ok": false, "error": "not an outcome"}
+	_unbook(state, row)
+	_close(row, outcome, _now(state))
+	return {"ok": true, "error": ""}
+
+
 ## How a held audience ended: settled, promised, or declined (priced as one).
 static func settle(state, ns, loader, request_id: String, outcome: String) -> Dictionary:
 	var row := _row(ns, request_id)

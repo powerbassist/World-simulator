@@ -1483,6 +1483,11 @@ var audience_requests: Array[Dictionary] = []
 ## absent_ok for the same reason: nobody has asked yet.
 var audience_asked_month := {}
 
+## V5.2b b3. person id -> the absolute month the president last phoned them: one
+## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no
+## bump: before b3 nobody was called, which is what absent reads.
+var phone_calls := {}
+
 # --- The commodity layer (V4.6) -------------------------------------------------
 ## The nation's commodity state: what it can make, what it wants, what it made,
 ## what it bought and sold, and the ONE world price vector. Written by
