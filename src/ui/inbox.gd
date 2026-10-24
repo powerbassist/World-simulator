@@ -161,6 +161,9 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 			button.theme_type_variation = UiTheme.SUBROW_BUTTON
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			# V5.2b: a request's refused answer stays, disabled, its reason on hover.
+			button.disabled = bool(actions[i].get("disabled", false))
+			button.tooltip_text = String(actions[i].get("tooltip", ""))
 			var index := i
 			button.pressed.connect(func():
 				# main.gd slides the inbox back once no decision holds the clock:
