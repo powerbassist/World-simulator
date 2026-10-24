@@ -56,8 +56,9 @@ static func close(state, ns, loader, session: Dictionary) -> Dictionary:
 	return {"ok": false, "error": NOT_BUILT, "outcome": "", "price": {}}
 
 
-## The phone (b3): one lever attempt or one topic, no diary day.
-static func call(state, ns, loader, person_id: String, lever_or_topic: String, args := {}) -> Dictionary:
+## The phone (b3): one lever attempt or one topic, no diary day. Named `phone`,
+## not `call`: a static `call` overrides Object.call() and does not parse.
+static func phone(state, ns, loader, person_id: String, lever_or_topic: String, args := {}) -> Dictionary:
 	return {"ok": false, "error": NOT_BUILT}
 
 
