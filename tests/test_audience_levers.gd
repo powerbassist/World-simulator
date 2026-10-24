@@ -30,6 +30,7 @@ var _frame := 0
 var _request := ""
 var _person := ""
 var _due_person := ""
+var _delegated_person := ""
 var _promised_due := -1
 
 
@@ -197,10 +198,14 @@ func _run_a_month_with_a_promise_due() -> void:
 		var id := String(person.id)
 		if person.wants.is_empty() or id == _person or id == String(ns.head_of_state_person_id):
 			continue
-		if President.commit(state, ns, _main._loader, "promise", id, String(person.wants[0]["object"]), next):
+		if _due_person == "" and President.commit(state, ns, _main._loader, "promise", id, String(person.wants[0]["object"]), next):
 			_due_person = id
+		elif _due_person != "" and id != _due_person 				and President.commit(state, ns, _main._loader, "delegated", id, String(person.wants[0]["object"]), next):
+			_delegated_person = id
 			break
 	AudienceDriver.refresh(_main)
+	if _delegated_person == "" or not _diary_has(_main._loader.person_name(_delegated_person), "minister"):
+		_fail("premise: no delegation staged due next month, or the Diary does not list it as a minister's")
 	if _due_person == "" or not _diary_has(_main._loader.person_name(_due_person), Words.when(next)):
 		_fail("premise: no promise staged due next month, or the Diary does not list it")
 	var year := floori((next - 1) / 12.0)
@@ -217,8 +222,26 @@ func _check_verdict() -> void:
 		_fail("the promise judged at the month has no verdict card naming %s" % name)
 	if not President.commitments_with(_main._state.player(), _due_person).is_empty():
 		_fail("the judged promise is still in the register")
-	if _diary_has(name, ""):
-		_fail("the Diary still lists the judged promise as given: %s" % [_diary()])
+	# Given, it read "Your word to X, due ..."; judged, it is a verdict, dated.
+	var judged_on := Words.when(int(_main._state.year) * 12 + int(_main._state.month))
+	var verdict := false
+	for line in _diary():
+		if line.contains(name) and line.contains(", due "):
+			_fail("the Diary still lists the judged promise as given: %s" % [_diary()])
+		verdict = verdict or (line.contains(name) and line.begins_with(judged_on)
+			and (line.contains("kept your word") or line.contains("revealed a lie")))
+	if not verdict:
+		_fail("the Diary does not show the promise's verdict, dated %s: %s" % [judged_on, _diary()])
+	# A delegation judged is a minister's verdict, never the president's lie (QA on
+	# #121: it fell into the promise's wording).
+	var delegated := false
+	for line in _diary():
+		if line.contains(_main._loader.person_name(_delegated_person)) and line.begins_with(judged_on):
+			delegated = true
+			if line.contains("lie") or not line.contains("minister"):
+				_fail("a judged delegation reads as the president's word: %s" % line)
+	if not delegated:
+		_fail("the Diary does not show the delegation's verdict: %s" % [_diary()])
 
 
 func _diary() -> PackedStringArray:
