@@ -217,8 +217,16 @@ func _check_verdict() -> void:
 		_fail("the promise judged at the month has no verdict card naming %s" % name)
 	if not President.commitments_with(_main._state.player(), _due_person).is_empty():
 		_fail("the judged promise is still in the register")
-	if _diary_has(name, ""):
-		_fail("the Diary still lists the judged promise as given: %s" % [_diary()])
+	# Given, it read "Your word to X, due ..."; judged, it is a verdict, dated.
+	var judged_on := Words.when(int(_main._state.year) * 12 + int(_main._state.month))
+	var verdict := false
+	for line in _diary():
+		if line.contains(name) and line.contains(", due "):
+			_fail("the Diary still lists the judged promise as given: %s" % [_diary()])
+		verdict = verdict or (line.contains(name) and line.begins_with(judged_on)
+			and (line.contains("kept your word") or line.contains("revealed a lie")))
+	if not verdict:
+		_fail("the Diary does not show the promise's verdict, dated %s: %s" % [judged_on, _diary()])
 
 
 func _diary() -> PackedStringArray:

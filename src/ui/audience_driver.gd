@@ -148,11 +148,20 @@ static func given_lines(main) -> Array:
 	return out
 
 
-## The judged ones with their verdicts -- PENDING Systems' read: the register
-## drops a row once judged (President.take_commitments_due), so nothing durable
-## is left to read until the sim keeps them. The one place that read lands.
-static func judged_rows(_main) -> Array:
-	return []
+## The judged ones with their verdicts, newest first, each dated by the month it
+## was judged: kept (or paid), or a lie revealed (a betrayal, for an IOU). A void
+## row -- a want the content no longer carries -- was never priced and is not
+## the president's word to answer for.
+static func judged_rows(main) -> Array:
+	var out: Array = []
+	for row in President.judged_commitments(main._state.player()):
+		if String(row["verdict"]) == "void":
+			continue
+		var pid := String(row["person_id"])
+		var text := Words.verdict_text(String(row["kind"]), String(row["verdict"]) == "kept", main._loader.person_name(pid),
+			AudienceTalks.want_words(main, pid, String(row["object"])))
+		out.push_front({"text": "%s — %s" % [Words.when(int(row["judged_month"])), text], "kept": String(row["verdict"]) == "kept"})
+	return out
 
 
 ## After a load: an audience open in the discarded game is closed there (Levers'
