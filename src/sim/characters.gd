@@ -265,6 +265,16 @@ static func want_satisfied(ns, person, want: Dictionary, meters: Dictionary, aut
 	return _want_satisfied(ns, person, want, meters, authored_leaders)
 
 
+## Whether any presidential verb can serve this want -- the gate on a want becoming
+## a request (pre-gate B, RECORD 10). A party's leader is made only by a challenge
+## (_fire_act), never by the president, own party included: a leadership want drives
+## the challenge machine (_challenge_target reads it, and most name ANOTHER party by
+## V4.3's design), but it never asks. QA met three people asking the president for
+## another party's leadership.
+static func servable(want: Dictionary) -> bool:
+	return not String(want["object"]).begins_with("office:party_leadership:")
+
+
 ## The stance-aware half: an `oppose` want is served when its object is NOT
 ## satisfied. V5.2b's request trigger asks it, so the trigger and the
 ## edge-trigger above cannot read one want two ways.

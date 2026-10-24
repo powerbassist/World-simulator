@@ -39,6 +39,11 @@ const MAX_PENDING_FOREIGN := 1
 ## Resolved rows the lane remembers, for the person card's history.
 const RESOLVED_KEPT_MONTHS := 12
 
+## Pre-gate B, the month-3 guarantee (B1's amendment): the lane month by which the
+## nation's own people have asked at least once, the draw failing. 3 is B1's own
+## "the first by month 3", now held in every game rather than most.
+const FIRST_REQUEST_BY_MONTH := 3
+
 ## How many days a person offers inside the window. Scarcity is occupancy (the
 ## diary's U6a / V2.4a rule), so an offered day the diary has taken is a day
 ## lost; B2 wants 20-50 % of requests unplaceable for a player who books all.

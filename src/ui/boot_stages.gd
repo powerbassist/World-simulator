@@ -22,6 +22,7 @@ extends RefCounted
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
+const President = preload("res://src/sim/president.gd")
 const Net = preload("res://src/sim/network.gd")
 
 const GAME_SCENE := "res://src/ui/main.tscn"
@@ -131,6 +132,7 @@ func step(budget_usec: int) -> bool:
 			# passes no nation, and main.gd's default is what a direct boot
 			# would have built the throwaway state around.
 			_state = GameState.new_game(_loader, game.pending_player_id, scenario_id)
+			President.seed_draws(_state, randi())
 			_advance()
 			if not _state.errors.is_empty():
 				_skip_to_enter()

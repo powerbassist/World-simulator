@@ -29,6 +29,7 @@ const Characters = preload("res://src/sim/characters.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 
 const PLAYER := "FRA"
 const METERS := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
@@ -47,6 +48,9 @@ func _init() -> void:
 
 	_check_idle_term_first_request()
 	_check_determinism()
+	_check_a_seed_is_a_game_of_its_own()
+	_check_no_one_asks_for_what_no_verb_serves()
+	_check_a_first_request_by_month_3_in_every_playable_nation()
 	_check_cooldown_cap_and_the_president()
 	_check_cooldown_silences_a_recent_asker()
 	_check_a_full_lane_takes_no_one()
@@ -85,6 +89,153 @@ func _check_determinism() -> void:
 		_fail("two identical states produced different requests")
 	if a.player().audience_requests.is_empty():
 		_fail("24 idle months produced no request at all -- the determinism check compared nothing")
+
+
+## Pre-gate B, CALL 2: the draws carry a per-game seed. Seed 0 -- the default every
+## probe and test takes -- is the unseeded draw, so the balance table cannot move;
+## another seed is another game (QA's run met a silent year because every France
+## game drew the same months), the same seed the same game, and a save keeps it.
+func _check_a_seed_is_a_game_of_its_own() -> void:
+	var seeded = _game()
+	President.seed_draws(seeded, 7)
+	if int(seeded.player().draw_seed) != 7 or int(seeded.nations["DEU"].draw_seed) != 0:
+		_fail("seed_draws() did not land on the played nation alone")
+	if int(_game().player().draw_seed) != 0:
+		_fail("a new game is not the unseeded draw")
+	var a = _game()
+	var b = _game()
+	var c = _game()
+	President.seed_draws(b, 7)
+	President.seed_draws(c, 7)
+	_run(a, 36)
+	_run(b, 36)
+	_run(c, 36)
+	if _arrival_months(a) == _arrival_months(b):
+		_fail("seed 7 drew the same request months as the unseeded game: %s" % [_arrival_months(a)])
+	if _arrival_months(b) != _arrival_months(c):
+		_fail("the same seed drew two different games")
+	var loaded = NationState.from_dict(JSON.parse_string(JSON.stringify(b.player().to_dict())))
+	if int(loaded.draw_seed) != 7:
+		_fail("a save did not keep the seed (%d)" % int(loaded.draw_seed))
+	var old: Dictionary = JSON.parse_string(JSON.stringify(b.player().to_dict()))
+	old.erase("draw_seed")
+	if int(NationState.from_dict(old).draw_seed) != 0:
+		_fail("a save without a seed did not read the unseeded draw")
+
+
+## Pre-gate B, RECORD 10: a want the president cannot serve never becomes a request.
+## A party's leader is made only by a challenge, so a leadership want -- most name
+## ANOTHER party, by V4.3's design, because the challenge machine reads them -- is
+## never what a person asks for; they ask about their next servable want, or not at
+## all. QA met three people asking for another party's leadership.
+func _check_no_one_asks_for_what_no_verb_serves() -> void:
+	var state = _game()
+	var ns = state.player()
+	var leaders := {}
+	for party in _loader.parties[PLAYER]:
+		leaders[party.id] = party.leader_person_id
+	var unserved_leaderships := 0
+	for person in _loader.people[PLAYER]:
+		for want in person.wants:
+			if String(want["object"]).begins_with("office:party_leadership:") \
+					and not Characters.want_served(ns, person, want, METERS, leaders):
+				unserved_leaderships += 1
+		var asked: Dictionary = Audiences._unserved(ns, person, METERS, leaders)
+		if not asked.is_empty() and String(asked["object"]).begins_with("office:party_leadership:"):
+			_fail("%s would ask the president for %s" % [person.id, asked["object"]])
+			return
+	if unserved_leaderships == 0:
+		_fail("no France person holds an unserved leadership want -- the check tested nothing")
+
+
+## Pre-gate B, the month-3 guarantee (B1's amendment, #128): when the draw brought
+## none of the nation's own people by the lane's second month, the candidate the
+## hazard weighs most -- the highest standing, ties by id -- asks in the third. For
+## every playable nation, at a seed whose draw is empty in months 1-3 (found by
+## scanning, the month-3 draw read off the rule itself), so the request that comes
+## in month 3 can only be the guarantee's.
+func _check_a_first_request_by_month_3_in_every_playable_nation() -> void:
+	for nation_id in ["DEU", "FRA", "GBR", "POL"]:
+		var base = GameState.new_game(_loader, nation_id)
+		base.year = 2026
+		base.month = 1
+		base.day = 1
+		var found := false
+		for draw_seed in range(1, 400):
+			var s = base.duplicate_state()
+			President.seed_draws(s, draw_seed)
+			if not _own_arrivals(s, Audiences.tick_month(s, _loader, METERS)).is_empty():
+				continue
+			_advance(s)
+			if not _own_arrivals(s, Audiences.tick_month(s, _loader, METERS)).is_empty():
+				continue
+			_advance(s)
+			var top := _guarantee_choice(s)
+			if top == "" or _draw_fires(s):
+				continue
+			var third: Array = _own_arrivals(s, Audiences.tick_month(s, _loader, METERS))
+			if third.size() != 1 or String(third[0]["person_id"]) != top:
+				_fail("%s seed %d: an empty draw in months 1-3, then %s in month 3, not %s's guaranteed request" % [
+					nation_id, draw_seed, third.map(func(r): return r["person_id"]), top])
+				return
+			found = true
+			break
+		if not found:
+			_fail("%s: no seed in 1-399 left months 1-3 empty -- the guarantee was never tested" % nation_id)
+
+
+## Who the guarantee picks: of the people who may ask and have an unserved want,
+## the highest standing, ties by id; "" for none.
+func _guarantee_choice(state) -> String:
+	var ns = state.player()
+	var leaders := _leaders(state)
+	var best := ""
+	var best_st := -INF
+	for person in _loader.people[state.player_nation_id]:
+		if not Audiences._may_ask(ns, person, President.leader_id(ns), _now(state)) 				or Audiences._unserved(ns, person, METERS, leaders).is_empty():
+			continue
+		var st := float(ns.person_standing.get(person.id, 0.0))
+		if st > best_st or (st == best_st and String(person.id) < best):
+			best = String(person.id)
+			best_st = st
+	return best
+
+
+## Whether this month's seeded draw would bring anyone -- the rule read directly,
+## only to choose a seed where the guarantee is the one asking.
+func _draw_fires(state) -> bool:
+	var ns = state.player()
+	var leaders := _leaders(state)
+	for person in _loader.people[state.player_nation_id]:
+		if not Audiences._may_ask(ns, person, President.leader_id(ns), _now(state)) 				or Audiences._unserved(ns, person, METERS, leaders).is_empty():
+			continue
+		var hazard := K.REQUEST_HAZARD * (K.REQUEST_STANDING_FLOOR + float(ns.person_standing.get(person.id, 0.0)))
+		if Cycle.unit_pair(person.id, Cycle.salted(K.SALT_REQUEST, ns.draw_seed), _now(state)) < hazard:
+			return true
+	return false
+
+
+func _leaders(state) -> Dictionary:
+	var leaders := {}
+	for party in _loader.parties[state.player_nation_id]:
+		leaders[party.id] = party.leader_person_id
+	return leaders
+
+
+## The rows of `report` that are the played nation's own people's.
+func _own_arrivals(state, report: Dictionary) -> Array:
+	var out := []
+	for row in report["arrived"]:
+		if String(row["person_id"]).begins_with("%s_" % state.player_nation_id):
+			out.append(row)
+	return out
+
+
+func _arrival_months(state) -> Array:
+	var out := []
+	for row in state.player().audience_requests:
+		out.append(int(row["arrived_month"]))
+	return out
 
 
 func _check_cooldown_cap_and_the_president() -> void:

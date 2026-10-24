@@ -58,6 +58,14 @@ extends SceneTree
 ##      three band midpoints, a third each). Off by default, so A1-A3's table
 ##      stays comparable.
 ##
+## SEEDS (`-- --seeds=1-20`, pre-gate B, CALL 2; bands-v5.2.md's B1 amendment, #128).
+##      A1, A2 and A3 again under each per-game draw seed (President.seed_draws),
+##      the seed-0 table above untouched. Per seed: the fewest arrivals in any
+##      12-month window of A1's term (49 sliding windows), B1's rows (A1), B2's (A2)
+##      and B3's act rows (A1, A3). The bands: every window >= 1 in at least 19 of 20
+##      seeds, >= 2 in at least 16 of 20, the first request by month 3 in all of
+##      them (the guarantee), and every other row in at least 18 of 20.
+##
 ## VISITORS (b3) ARE COUNTED APART. A visiting head's request waits in a place of its
 ## own (MAX_PENDING_FOREIGN), outside the domestic lane B1-B3 were declared on, so
 ## every band field above counts this nation's people only; `visitors` reports the
@@ -99,11 +107,15 @@ var _loader
 func _init() -> void:
 	var json_path := ""
 	var b5 := false
+	var seeds: Array = []
 	for arg in OS.get_cmdline_user_args():
 		if String(arg).begins_with("--json="):
 			json_path = String(arg).substr(7)
 		elif String(arg) == "--b5-answers":
 			b5 = true
+		elif String(arg).begins_with("--seeds="):
+			var span := String(arg).substr(8).split("-")
+			seeds = range(int(span[0]), int(span[span.size() - 1]) + 1)
 	_loader = DataLoader.new()
 	_loader.load_all()
 	if not _loader.errors.is_empty():
@@ -121,6 +133,10 @@ func _init() -> void:
 		out["bands"]["B5_answers_will_serve_book_5pct"] = float(shares["will_serve"]["book"]) >= 0.05
 		out["bands"]["B5_answers_will_serve_delegate_5pct"] = float(shares["will_serve"]["delegate"]) >= 0.05
 		out["bands"]["B5_answers_wont_serve_refuse_5pct"] = float(shares["wont_serve"]["refuse"]) >= 0.05
+	if not seeds.is_empty():
+		out["b1_seeds"] = _b1_seeds(seeds)
+		for band in out["b1_seeds"]["bands"]:
+			out["bands"][band] = out["b1_seeds"]["bands"][band]
 	_print(out)
 	if json_path != "":
 		var f := FileAccess.open(json_path, FileAccess.WRITE)
@@ -129,13 +145,15 @@ func _init() -> void:
 	quit(0)
 
 
-func _run(regime: String, months := MONTHS) -> Dictionary:
+func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 	var book_all := regime == "A2" or regime == "A2F" or regime == "A4"
 	var calls := 0
 	var answered_by_phone := 0
 	var b5_requests: Array = []
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.player()
+	if draw_seed != 0:
+		President.seed_draws(state, draw_seed)
 	var arrivals: Array = []      # [month, person_id]
 	var refused_at := {}          # person_id -> first month refused
 	var acts_by_refused: Array = []
@@ -258,7 +276,10 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 	if regime == "A4":
 		result["calls"] = calls
 		result["answered_by_phone"] = answered_by_phone
-	# Only A2F carries its rows, so A1-A3's table stays byte-comparable.
+	# Only a seeded run carries its months, and only A2F its rows, so the seed-0
+	# A1-A3 table stays byte-comparable.
+	if draw_seed != 0:
+		result["arrival_months"] = arrivals.map(func(a) -> int: return int(a[0]))
 	if regime == "A2F":
 		result["b5_requests"] = b5_requests
 	return result
@@ -495,6 +516,54 @@ func _bands(r: Dictionary) -> Dictionary:
 	}
 
 
+## B1's amendment over `seeds`: A1 under each, the emptiest 12-month window and the
+## five B1 rows per seed, and the share of seeds each row holds in.
+func _b1_seeds(seeds: Array) -> Dictionary:
+	var rows := {}
+	var per_seed := []
+	var ge1 := 0
+	var ge2 := 0
+	for s in seeds:
+		var a1 := _run("A1", MONTHS, int(s))
+		var a2 := _run("A2", MONTHS, int(s))
+		var a3 := _run("A3", MONTHS, int(s))
+		var months: Array = a1["arrival_months"]
+		var fewest := 1 << 30
+		for start in range(1, MONTHS - 11 + 1):
+			var n := 0
+			for m in months:
+				if int(m) >= start and int(m) <= start + 11:
+					n += 1
+			fewest = mini(fewest, n)
+		ge1 += 1 if fewest >= 1 else 0
+		ge2 += 1 if fewest >= 2 else 0
+		# _bands() reads A4 too; A1 stands in, and its B5 rows are not kept.
+		var all := _bands({"A1": a1, "A2": a2, "A3": a3, "A4": a1})
+		var b1 := {}
+		for band in all:
+			if not String(band).begins_with("B5_"):
+				b1[band] = all[band]
+				rows[band] = int(rows.get(band, 0)) + (1 if b1[band] else 0)
+		per_seed.append({"seed": int(s), "arrivals": int(a1["arrivals"]), "fewest_in_12": fewest,
+			"first_month": int(a1["first_month"]), "m1_20": int(a1["arrivals_m1_20"]),
+			"people": int(a1["distinct_people"]), "top_share": float(a1["top_person_share"]),
+			"a2_held": int(a2["held"]), "a2_held_m1_20": int(a2["held_m1_20"]),
+			"a2_unplaceable_share": float(a2["unplaceable_share"]), "a2_arrivals": int(a2["arrivals"]),
+			"acts_by_refused_a1": (a1["acts_by_refused"] as Array).size(),
+			"acts_by_refused_a3": (a3["acts_by_refused"] as Array).size(), "b1": b1})
+	var n_seeds := seeds.size()
+	var bands := {
+		"B1_seeds_window_ge1_95pct": ge1 * 20 >= 19 * n_seeds,
+		"B1_seeds_window_ge2_80pct": ge2 * 20 >= 16 * n_seeds,
+	}
+	for band in rows:
+		if band == "B1_first_by_month_3":
+			bands["B1_first_by_month_3_seeds_100pct"] = int(rows[band]) == n_seeds
+		else:
+			bands["%s_seeds_90pct" % band] = int(rows[band]) * 20 >= 18 * n_seeds
+	return {"seeds": n_seeds, "window_ge1": ge1, "window_ge2": ge2, "rows_held": rows, "per_seed": per_seed, "bands": bands}
+
+
 func _print(out: Dictionary) -> void:
 	print("=== AUDIENCE PROBE (FRA, %d months) ===" % MONTHS)
 	for regime in out["regimes"]:
@@ -512,5 +581,14 @@ func _print(out: Dictionary) -> void:
 		print("A2F B5 answers over %d requests x 2 intents (day %.2f, realized kept %.3f): %s | Book's best lever per case, won or not: %s" % [
 			b5["requests"], b5["diary_day"], b5["realized_kept_share"], b5["shares"], b5["book_levers"]])
 		print("   declared mix (information): %s" % [b5["mix_info"]["shares"]])
+	if out.has("b1_seeds"):
+		var b: Dictionary = out["b1_seeds"]
+		print("A1 over %d seeds: emptiest 12-month window >= 1 in %d, >= 2 in %d; B1 rows held %s" % [
+			b["seeds"], b["window_ge1"], b["window_ge2"], b["rows_held"]])
+		for row in b["per_seed"]:
+			print("   seed %2d: arrivals %d, emptiest year %d, first %d, m1-20 %d, people %d, top %.2f | A2 arrivals %d held %d (m1-20 %d) unplaceable %.2f | acts by refused A1 %d A3 %d" % [
+				row["seed"], row["arrivals"], row["fewest_in_12"], row["first_month"], row["m1_20"], row["people"], row["top_share"],
+				row["a2_arrivals"], row["a2_held"], row["a2_held_m1_20"], row["a2_unplaceable_share"],
+				row["acts_by_refused_a1"], row["acts_by_refused_a3"]])
 	for band in out["bands"]:
 		print("%-32s %s" % [band, "PASS" if out["bands"][band] else "FAIL"])

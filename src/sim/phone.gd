@@ -107,7 +107,7 @@ static func dial(state, ns, loader, person_id: String, lever_or_topic: String, a
 		refused["error"] = "the promise could not be made"
 		return refused
 	ns.phone_calls[person_id] = now
-	var success := Cycle.unit_pair(person_id, "%s:%s" % [K.SALT_PHONE, lever_or_topic], now) < p
+	var success := Cycle.unit_pair(person_id, Cycle.salted("%s:%s" % [K.SALT_PHONE, lever_or_topic], ns.draw_seed), now) < p
 	if success:
 		Audiences.answer(state, ns, String(request["id"]), AK.STATUS_PROMISED if lever_or_topic == "promise_date" else AK.STATUS_SETTLED)
 	return {"ok": true, "error": "", "success": success, "spent": spent,

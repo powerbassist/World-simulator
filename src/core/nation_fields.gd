@@ -338,5 +338,7 @@ const FIELDS := [
 	["audience_requests", DEEP, ROWS, [], true],  # V5.2b: absent is nobody has asked
 	["audience_asked_month", DEEP, INT_MAP, {}, true],  # V5.2b: absent is nobody has asked
 	["phone_calls", DEEP, INT_MAP, {}, true],  # V5.2b b3: absent is nobody called
+	["draw_seed", SCALAR, VALUE, 0, true],  # pre-gate B: absent is the unseeded draw
+	["audience_lane_start", SCALAR, VALUE, -1, true],  # pre-gate B: absent stamps at the next tick
 	["act_bloc_offset", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2b: absent is acts priced as permanent
 ]

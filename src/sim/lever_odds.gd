@@ -90,14 +90,52 @@ static func fog_width(knowledge: float) -> float:
 ## THE OFFSET IS SEEDED BY THE KNOWLEDGE TOO (QA's R1 on #113). With one offset
 ## per (person, lever), two readings at different widths -- a topic taught
 ## something between them -- gave the truth back exactly:
-## offset = (lo2 - lo1) / (w1 - w2). Re-drawn at every FOG_SEED_STEP of knowledge,
-## repeated readings can only intersect, which is honest narrowing.
-static func shown_range(person_id: String, lever: String, p: float, knowledge: float) -> Vector2:
+## offset = (lo2 - lo1) / (w1 - w2).
+##
+## AND EACH STEP'S WINDOW SITS INSIDE THE LAST (pre-gate B, RECORD 6; B4's
+## amendment). A fresh offset per knowledge step let the window jump anywhere,
+## down included: Turcy's Promise read 47-83 % before a friendly topic and 32-68 %
+## after, while the true odds could only have risen. So the distance below the
+## truth is a seeded CHAIN over the FOG_SEED_STEP grid (below()): each step draws
+## the next one inside the previous window, measured from the truth, and between
+## grid points the window moves continuously toward the next step's. Below the
+## truth and above it therefore never grow with knowledge; the window rides the
+## odds and only shrinks around them. Repeated readings still only intersect, and
+## the latest window is all they tell.
+static func shown_range(person_id: String, lever: String, p: float, knowledge: float, draw_seed: int = 0) -> Vector2:
 	var w := fog_width(knowledge)
-	var step := roundi(knowledge / K.FOG_SEED_STEP)
-	var offset := Cycle.unit_pair(person_id, "%s:%s" % [K.SALT_FOG, lever], step)
-	var lo := clampf(p - w * offset, 0.0, 1.0 - w)
+	var lo := clampf(p - below(person_id, lever, knowledge, draw_seed), 0.0, 1.0 - w)
 	return Vector2(lo, lo + w)
+
+
+## How far below the truth the window's lower edge sits at `knowledge`, before the
+## [0, 1] shift, in [0, fog_width(knowledge)]. Stateless: the chain is walked from
+## the stranger's draw at step 0 every time, and a step where the width does not
+## move (below acquaintance, above known) draws nothing.
+static func below(person_id: String, lever: String, knowledge: float, draw_seed: int = 0) -> float:
+	var salt := Cycle.salted("%s:%s" % [K.SALT_FOG, lever], draw_seed)
+	var w_prev := fog_width(0.0)
+	var a := w_prev * Cycle.unit_pair(person_id, salt, 0)
+	var steps := floori(knowledge / K.FOG_SEED_STEP)
+	for j in range(1, steps + 1):
+		var w_j := fog_width(j * K.FOG_SEED_STEP)
+		if w_j < w_prev:
+			a = _inside(a, w_prev, w_j, Cycle.unit_pair(person_id, salt, j))
+		w_prev = w_j
+	var w := fog_width(knowledge)
+	if w < w_prev:
+		a = _inside(a, w_prev, w, Cycle.unit_pair(person_id, salt, steps + 1))
+	return a
+
+
+## The next distance below the truth for a window narrowing from `w_old` to
+## `w_new`, inside the old one: at most `a` (the lower edge does not fall further
+## below) and at least a - (w_old - w_new) (the upper edge does not rise further
+## above), within [0, w_new]; `u` places it.
+static func _inside(a: float, w_old: float, w_new: float, u: float) -> float:
+	var lo := maxf(0.0, a - (w_old - w_new))
+	var hi := minf(a, w_new)
+	return lo + u * (hi - lo)
 
 
 ## The person's traits the president can see: each shows once knowledge reaches
@@ -108,7 +146,7 @@ static func known_traits(ns, person) -> Array[String]:
 	var out: Array[String] = []
 	var k := President.knowledge(ns, person.id)
 	for t in person.traits:
-		var at := lerpf(K.TRAIT_REVEAL_FLOOR, 1.0, Cycle.unit_pair(person.id, "%s:%s" % [K.SALT_TRAIT, t], 0))
+		var at := lerpf(K.TRAIT_REVEAL_FLOOR, 1.0, Cycle.unit_pair(person.id, Cycle.salted("%s:%s" % [K.SALT_TRAIT, t], ns.draw_seed), 0))
 		if k >= at * PK.KNOWLEDGE_KNOWN:
 			out.append(String(t))
 	return out

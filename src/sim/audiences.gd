@@ -34,6 +34,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
+const Dates = preload("res://src/sim/audience_dates.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -82,40 +83,9 @@ static func request(ns, request_id: String) -> Dictionary:
 
 
 ## The days the person offers, in date order, each with whether the diary can
-## place it. Drawn from the request's id, so the card is the same every time it
-## is opened; a day that has passed reads not free, with Calendar's reason.
+## place it (audience_dates.gd: the same days every time the card opens).
 static func offered_dates(state, ns, request_id: String) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	var row := _row(ns, request_id)
-	if row.is_empty():
-		return out
-	var spans := []
-	var total := 0
-	for m in range(int(row["arrived_month"]) + 1, int(row["deadline_month"]) + 1):
-		var ym := _ym(m)
-		var days := Calendar.days_in_month(int(ym["year"]), int(ym["month"]))
-		spans.append([ym, days])
-		total += days
-	var picks: Array[int] = []
-	var k := 0
-	while picks.size() < K.OFFERED_DATES and k < K.OFFERED_DATES * 8:
-		var pick := int(Cycle.unit_pair(request_id, K.SALT_DATE, k) * float(total))
-		if not picks.has(pick):
-			picks.append(pick)
-		k += 1
-	picks.sort()
-	for pick in picks:
-		var left := pick
-		for span in spans:
-			if left < int(span[1]):
-				var date := {"year": int(span[0]["year"]), "month": int(span[0]["month"]), "day": left + 1}
-				var reason := Calendar.refusal_reason(state, _entry(row, date))
-				date["free"] = reason.is_empty()
-				date["reason"] = reason
-				out.append(date)
-				break
-			left -= int(span[1])
-	return out
+	return Dates.offered(state, ns, _row(ns, request_id))
 
 
 ## The card's three answers. Booking needs a waiting request and an offered day
@@ -163,7 +133,7 @@ static func book(state, ns, loader, request_id: String, date: Dictionary) -> Dic
 	if not offered:
 		return {"ok": false, "error": "not a day the person offered"}
 	var day := {"year": int(date["year"]), "month": int(date["month"]), "day": int(date["day"])}
-	var result: Dictionary = Calendar.book(state, _entry(row, day))
+	var result: Dictionary = Calendar.book(state, Dates.entry(row, day))
 	if bool(result.get("ok", false)):
 		row["status"] = K.STATUS_BOOKED
 		row["date"] = day
@@ -288,6 +258,8 @@ static func _overdue(row: Dictionary, now: int) -> bool:
 ## gone live, the month after a reshuffle) -- then the seeded monthly ask. The
 ## lane's cap and each person's cooldown bound both.
 static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: Array) -> void:
+	if int(ns.audience_lane_start) < 0:
+		ns.audience_lane_start = now
 	var people: Array = loader.people.get(state.player_nation_id, [])
 	var leader := President.leader_id(ns)
 	var open := _open_count(ns, true)
@@ -314,9 +286,36 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 		if want.is_empty():
 			continue
 		var hazard := K.REQUEST_HAZARD * (K.REQUEST_STANDING_FLOOR + float(ns.person_standing.get(person.id, 0.0)))
-		if Cycle.unit_pair(person.id, K.SALT_REQUEST, now) < hazard:
+		if Cycle.unit_pair(person.id, Cycle.salted(K.SALT_REQUEST, ns.draw_seed), now) < hazard:
 			_arrive(ns, person, want, now, arrived)
 			open += 1
+	# THE MONTH-3 GUARANTEE (pre-gate B: the parent's decision on QA's call; B1's
+	# amendment in #128). "Someone asked you something" is the tier's gate question
+	# and the author plays one game, so a draw that brought none of the nation's
+	# people by the lane's second month is answered in its third by the candidate
+	# the hazard weighs most -- the highest standing, ties by id -- about the want
+	# the draw would have asked. Once a game: the month comes once.
+	if now != int(ns.audience_lane_start) + K.FIRST_REQUEST_BY_MONTH - 1 or _asked_ever(ns):
+		return
+	var best = null
+	for person in people:
+		if not _may_ask(ns, person, leader, now) or _unserved(ns, person, meters, leaders).is_empty():
+			continue
+		var st := float(ns.person_standing.get(person.id, 0.0))
+		var best_st := -INF if best == null else float(ns.person_standing.get(best.id, 0.0))
+		if st > best_st or (st == best_st and String(person.id) < String(best.id)):
+			best = person
+	if best != null:
+		_arrive(ns, best, _unserved(ns, best, meters, leaders), now, arrived)
+
+
+## Whether any of the played nation's own people has ever asked (a visiting head
+## is not the draw's).
+static func _asked_ever(ns) -> bool:
+	for pid in ns.audience_asked_month:
+		if String(pid).begins_with("%s_" % ns.id):
+			return true
+	return false
 
 
 ## The open requests of this nation's people (`own`), or of the visiting heads.
@@ -340,11 +339,12 @@ static func _may_ask(ns, person, leader: String, now: int) -> bool:
 	return true
 
 
-## The first want the government does not serve, read through the same door the
-## edge trigger uses, or {}.
+## The first want the government does not serve and could (Characters.servable():
+## no request for a party's leadership), read through the same door the edge
+## trigger uses, or {}.
 static func _unserved(ns, person, meters: Dictionary, leaders: Dictionary) -> Dictionary:
 	for want in person.wants:
-		if not Characters.want_served(ns, person, want, meters, leaders):
+		if Characters.servable(want) and not Characters.want_served(ns, person, want, meters, leaders):
 			return want
 	return {}
 
@@ -400,12 +400,7 @@ static func _close(row: Dictionary, status: String, now: int) -> void:
 ## A booked request answered another way gives its day back to the diary.
 static func _unbook(state, row: Dictionary) -> void:
 	if String(row["status"]) == K.STATUS_BOOKED:
-		Calendar.cancel(state, Calendar.verb_key(_entry(row, row["date"])))
-
-
-static func _entry(row: Dictionary, date: Dictionary) -> Dictionary:
-	return Calendar.make_entry(CalendarK.KIND_AUDIENCE, int(date["year"]), int(date["month"]), int(date["day"]),
-		String(row["id"]), String(row["person_id"]), "", "", "", String(row["person_id"]), 0)
+		Calendar.cancel(state, Calendar.verb_key(Dates.entry(row, row["date"])))
 
 
 static func _row(ns, request_id: String) -> Dictionary:
@@ -435,8 +430,3 @@ static func _view(row: Dictionary) -> Dictionary:
 
 static func _now(state) -> int:
 	return int(state.year) * 12 + int(state.month)
-
-
-static func _ym(absolute: int) -> Dictionary:
-	var year := floori((absolute - 1) / 12.0)
-	return {"year": year, "month": absolute - year * 12}
