@@ -1,12 +1,12 @@
 extends RefCounted
 
-## The roster reads -- which firms content names for a nation, and which of them
-## the share pool may move. Split out of companies.gd at D14 (A'), when the
-## speedups below met that file's size baseline; companies.gd keeps the public
-## names and delegates here, so no caller moved.
+## The roster reads -- which firms content names for a nation. Split out of
+## companies.gd at D14 (A'), when the majors memo below met that file's size
+## baseline; companies.gd keeps the public names and delegates here, so no
+## caller moved.
 ##
-## A leaf: it reads the loader's lists and, for the pool, one fact of the live
-## register (the failed flag), and preloads nothing from src/sim.
+## A leaf: it reads the loader's lists and nothing else, and preloads nothing
+## from src/sim.
 
 
 static func firms_of(loader, nation_id: String) -> Array:
@@ -58,32 +58,3 @@ static func firms_in_sector(loader, nation_id: String, sector: String) -> Array:
 			out.append(company)
 	return out
 
-
-## Companies._tick_shares()'s pool in ONE pass over the roster, where
-## firms_in_sector() made one per sector (D14 (A')): [sector -> firm count,
-## sector -> live majors in roster order] -- the lists the per-sector scans built.
-## The failed flags read up front are the ones the sector loop would read: it
-## writes shares, never a flag.
-static func share_pool(ns, loader) -> Array:
-	var counts := {}
-	var live_majors := {}
-	for company in firms_of(loader, ns.id):
-		counts[company.sector] = int(counts.get(company.sector, 0)) + 1
-		# A failed firm is OUT of the pool: its share is 0.0 and stays 0.0.
-		# With a retained subsidy it would otherwise regrow share from its
-		# rivals' spare every month -- output through the live share,
-		# headcount 0 through the failed flag, one register read two ways
-		# (the pass-2 ultra's second Important). A rescued firm re-enters
-		# here: the flag clears and the next tick prices it alive again.
-		# The flag is read as the raw register fact companies.gd's other
-		# reads use -- industry.gd's reader is private to the machine,
-		# and a sim module preloading its sibling machine for one
-		# predicate inverts the two-writers arrangement.
-		if not is_major(company):
-			continue
-		var entry = ns.companies.get(company.id)
-		if entry == null or not bool(entry.get("failed", false)):
-			if not live_majors.has(company.sector):
-				live_majors[company.sector] = []
-			live_majors[company.sector].append(company)
-	return [counts, live_majors]

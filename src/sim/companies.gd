@@ -360,13 +360,9 @@ static func live_city_of(ns, company) -> String:
 ## weight table, and it exists here for the same reason: two subsidised firms in
 ## one sector would otherwise see different rivals depending on who moved first.
 static func _tick_shares(ns, loader) -> void:
-	# Each sector's firm count and its live majors (a failed firm is out of the
-	# pool), from one pass over the roster -- Roster.share_pool().
-	var pool: Array = Roster.share_pool(ns, loader)
-	var counts: Dictionary = pool[0]
-	var live_majors: Dictionary = pool[1]
 	for sector in EK.SECTOR_TREND.keys():
-		if int(counts.get(sector, 0)) < 2:
+		var firms := firms_in_sector(loader, ns.id, sector)
+		if firms.size() < 2:
 			continue
 
 		# MAJORS ONLY, snapshot and deltas alike: the pool is the verb plane
@@ -377,7 +373,20 @@ static func _tick_shares(ns, loader) -> void:
 		# firm once per sector and let one sector's subsidy drain another's
 		# majors -- the bug the conservation test caught within a tick of the
 		# refactor.
-		var majors: Array = live_majors.get(sector, [])
+		var majors: Array = []
+		for company in firms:
+			# A failed firm is OUT of the pool: its share is 0.0 and stays 0.0.
+			# With a retained subsidy it would otherwise regrow share from its
+			# rivals' spare every month -- output through the live share,
+			# headcount 0 through the failed flag, one register read two ways
+			# (the pass-2 ultra's second Important). A rescued firm re-enters
+			# here: the flag clears and the next tick prices it alive again.
+			# The flag is read as the raw register fact this file's other
+			# reads use -- industry.gd's reader is private to the machine,
+			# and a sim module preloading its sibling machine for one
+			# predicate inverts the two-writers arrangement.
+			if is_major(company) and not bool(ns.companies.get(company.id, {}).get("failed", false)):
+				majors.append(company)
 		var before := {}
 		for company in majors:
 			before[company.id] = share_of_company(ns, company)
