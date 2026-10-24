@@ -138,11 +138,14 @@ func _init() -> void:
 		return
 
 	# V3.3 scratch: -- check-name runs ONE check (the crash isolation harness).
+	# A `--` argument is a flag (--bands-reads), not a check name: read as one,
+	# it ran nothing and failed the run as an unknown check.
 	var _matched := 0
 	var only := ""
-	var args := OS.get_cmdline_user_args()
-	if args.size() > 0:
-		only = args[0]
+	for arg: String in OS.get_cmdline_user_args():
+		if not arg.begins_with("--"):
+			only = arg
+			break
 
 	if only == "" or only == "_check_ten_years_stay_off_every_clamp":
 		_matched += 1
