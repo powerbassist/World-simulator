@@ -13,6 +13,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 
 const LEVER_LABEL := {
 	"argue": "Argue", "bargain": "Bargain", "promise_date": "Promise a date",  # i18n: msgid
@@ -73,14 +74,11 @@ static func when(absolute: int) -> String:
 
 
 ## What a lever will cost, BEFORE the click: Levers' `spends` row (register ->
-## amount; a commitment and a bond step are counts). `due` names the promise's
+## amount; a commitment and a bond step are counts), a register's in the word it
+## lands in (R11) from `feel`, Feelings.of() the person. `due` names the promise's
 ## date once one is picked.
-static func spends_text(spends: Dictionary, due := -1) -> String:
-	var parts := PackedStringArray()
-	if spends.has("rapport"):
-		parts.append(Strings.t("rapport with them %s") % Num.fs(float(spends["rapport"]), 2))
-	if spends.has("grudge"):
-		parts.append(Strings.t("a grudge %s") % Num.fs(float(spends["grudge"]), 2))
+static func spends_text(spends: Dictionary, feel: Dictionary, due := -1) -> String:
+	var parts := Feelings.promised(feel, spends)
 	if spends.has("iou"):
 		parts.append(Strings.tn("an IOU: their vote, owed back in %d month", "an IOU: their vote, owed back in %d months", LK.IOU_MONTHS) % LK.IOU_MONTHS)
 	if spends.has("promise"):
@@ -91,16 +89,14 @@ static func spends_text(spends: Dictionary, due := -1) -> String:
 
 
 ## What a try wrote, AFTER it: the attempt's `spent` (an IOU's and a promise's
-## value is the month due) and `effects`, the deltas the registers took.
-static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable) -> String:
-	var parts := PackedStringArray()
-	for d in [spent, effects]:
-		if absf(float(d.get("rapport", 0.0))) >= 0.005:
-			parts.append(Strings.t("rapport with them %s") % Num.fs(float(d["rapport"]), 2))
-		if absf(float(d.get("grudge", 0.0))) >= 0.005:
-			parts.append(Strings.t("a grudge %s") % Num.fs(float(d["grudge"]), 2))
-		if absf(float(d.get("loyalty", 0.0))) >= 0.005:
-			parts.append(Strings.t("loyalty %s") % Num.fs(float(d["loyalty"]), 2))
+## value is the month due) and `effects`, the deltas the registers took -- each
+## register they moved in the word it now reads, off `feel` (Feelings.of() the
+## person after the try).
+static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable, feel: Dictionary) -> String:
+	var moved := {}
+	for register in Feelings.BANDS:
+		moved[register] = float(spent.get(register, 0.0)) + float(effects.get(register, 0.0))
+	var parts := Feelings.stands(feel, moved)
 	if spent.has("iou"):
 		parts.append(Strings.t("you owe them a vote by %s") % when(int(spent["iou"])))
 	if spent.has("promise"):
@@ -115,16 +111,11 @@ static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable)
 	return "; ".join(parts)
 
 
-## What saying no writes on the person, the parts that move only (QA on #105:
-## "loyalty +0.00" is noise on a card).
-static func price_text(price: Dictionary) -> String:
-	var parts := PackedStringArray()
-	if absf(float(price.get("grudge", 0.0))) >= 0.005:
-		parts.append(Strings.t("a grudge %s") % Num.fs(float(price["grudge"]), 2))
-	if absf(float(price.get("loyalty", 0.0))) >= 0.005:
-		parts.append(Strings.t("loyalty %s") % Num.fs(float(price["loyalty"]), 2))
-	if absf(float(price.get("rapport", 0.0))) >= 0.005:
-		parts.append(Strings.t("rapport with you %s") % Num.fs(float(price["rapport"]), 2))
+## What saying no writes on the person, the parts that move only, in the words
+## they land in (R11): `feel` is Feelings.of() the person -- BEFORE the answer for
+## the card's promise, AFTER it (`paid`) for what was told, the same words.
+static func price_text(price: Dictionary, feel: Dictionary, paid := false) -> String:
+	var parts := Feelings.stands(feel, price) if paid else Feelings.promised(feel, price)
 	return ", ".join(parts) if not parts.is_empty() else Strings.t("nothing")
 
 

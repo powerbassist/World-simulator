@@ -21,6 +21,7 @@ const Capital = preload("res://src/core/capital.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 
 const WINDOW := "audience"
 
@@ -63,7 +64,12 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": gossip_people(main, pid),
-			"given_due": AudienceVerbs.given_due(ns, pid, String(session["object"]))}}
+			"given_due": AudienceVerbs.given_due(ns, pid, String(session["object"])), "feel": Feelings.of(ns, pid)}}
+
+
+## The person spoken to, as the registers stand now (R11's words).
+static func _feel(main, session: Dictionary) -> Dictionary:
+	return Feelings.of(main._state.player(), String(session["person_id"]))
 
 
 ## Whom a gossip may name: everyone the president covers but the person spoken
@@ -94,7 +100,7 @@ static func attempt(main, game: Dictionary, lever: String, args: Dictionary) -> 
 		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "")
 		return
 	var said := Strings.t("They agree.") if bool(r["success"]) else Strings.t("They are not moved.")
-	var paid := Words.paid_text(r["spent"], r["effects"], main._loader.person_name)
+	var paid := Words.paid_text(r["spent"], r["effects"], main._loader.person_name, _feel(main, session))
 	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
 		"lever_%s_%s" % [lever, "success" if bool(r["success"]) else "failure"], {"lever": Words.lever(lever)})
 	main._windows.mark_all_dirty()
@@ -108,7 +114,7 @@ static func talk(main, game: Dictionary, topic: String, args: Dictionary) -> voi
 	if not bool(r["ok"]):
 		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "")
 		return
-	game["scene"].show_result(Words.changed(Words.paid_text({}, r["effects"], main._loader.person_name)), view_of(main, game),
+	game["scene"].show_result(Words.changed(Words.paid_text({}, r["effects"], main._loader.person_name, _feel(main, session))), view_of(main, game),
 		"topic_" + topic, {"topic": Words.topic(topic)})
 
 
@@ -121,7 +127,7 @@ static func end(main, game: Dictionary) -> void:
 	var r := Levers.close(main._state, main._state.player(), main._loader, session)
 	var text := Words.outcome(String(r["outcome"]))
 	if String(r["outcome"]) == "declined":
-		text += " " + Strings.t("Declining: %s.") % Words.price_text(r.get("price", {}))
+		text += " " + Strings.t("Declining: %s.") % Words.price_text(r.get("price", {}), _feel(main, session), true)
 	game["scene"].show_close(String(r["outcome"]), text)
 	main._windows.mark_all_dirty()
 

@@ -26,6 +26,9 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const Relations = preload("res://src/core/relations.gd")
 const President = preload("res://src/sim/president.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
+const Words = preload("res://src/ui/lever_words.gd")
+const AK = preload("res://src/sim/audience_constants.gd")
 
 const KIND_LABEL := {
 	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
@@ -55,6 +58,40 @@ const PORTFOLIO_LABEL := Labels.PORTFOLIO
 
 static func stance_label(stance: String) -> String:
 	return String(STANCE_LABEL.get(stance, stance))
+
+
+## The card's row label for each feeling.
+const FEELING_LABEL := {
+	"loyalty": "Loyalty",  # i18n: msgid
+	"grudge": "Grudge",  # i18n: msgid
+	"rapport": "Rapport with you",  # i18n: msgid
+}
+
+
+## Q2, the cost of a refusal shown afterwards: one dated line per refusal or lapse
+## of their requests, per delegation in flight (the minister's promise) and per
+## delegation judged -- what Audiences and President still hold for the person.
+static func dated_lines(loader, ns, pid: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	for row in ns.audience_requests:
+		if String(row.get("person_id", "")) != pid:
+			continue
+		var on := Words.when(int(row.get("resolved_month", -1)))
+		match String(row.get("status", "")):
+			AK.STATUS_DECLINED:
+				out.append(Strings.t("%s: you refused them; they took it badly.") % on)
+			AK.STATUS_LAPSED:
+				out.append(Strings.t("%s: their request went unanswered; they took it badly.") % on)
+	for row in President.commitments_with(ns, pid):
+		if String(row["kind"]) == "delegated":
+			out.append(Strings.t("%s: your minister promised them %s by %s.") % [Words.when(int(row["made_month"])),
+				object_text(loader, ns, String(row["object"]), {}), Words.when(int(row["due_month"]))])
+	for row in President.judged_commitments(ns):
+		if String(row["person_id"]) != pid or String(row["kind"]) != "delegated" or String(row["verdict"]) == "void":
+			continue
+		var on := Words.when(int(row["judged_month"]))
+		out.append(Strings.t("%s: your minister's promise was kept.") % on if String(row["verdict"]) == "kept" 			else Strings.t("%s: your minister's promise was broken; they took it badly.") % on)
+	return out
 
 
 ## What a want's object string reads as, in the panel's own voice. `ns` is in
@@ -157,9 +194,18 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 	var rapport := President.rapport(ns, String(person.id))
 	if grudge >= 0.05 or loyalty != 0.0 or standing >= 0.05 or rapport != 0.0:
 		PanelKit.row(_body, tr("Standing"), Num.f(standing, 2))
-		PanelKit.row(_body, tr("Loyalty"), Num.fs(loyalty, 2))
-		PanelKit.row(_body, tr("Grudge"), Num.f(grudge, 2))
-		PanelKit.row(_body, tr("Rapport with you"), Num.fs(rapport, 2))
+		# R11: a feeling, the figure behind it in the tooltip; a band with no word
+		# (no grudge, an unmoved loyalty) is no row.
+		var feel := Feelings.of(ns, String(person.id))
+		var words := Feelings.words(feel)
+		for register in ["loyalty", "grudge", "rapport"]:
+			if words[register] != "":
+				var row := PanelKit.row(_body, tr(FEELING_LABEL[register]), words[register])
+				row.tooltip_text = Feelings.tip(float(feel[register]))
+	# Q2: what the term did to them, dated, while the sim remembers it (twelve
+	# months, Audiences' RESOLVED_KEPT_MONTHS and President's JUDGED_KEPT_MONTHS).
+	for text in dated_lines(loader, ns, String(person.id)):
+		PanelKit.line(_body, text, PanelKit.Tone.DIM)
 
 	if not person.wants.is_empty():
 		PanelKit.line(_body, tr("Wants"), PanelKit.Tone.DIM)
