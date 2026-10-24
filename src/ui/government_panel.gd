@@ -24,7 +24,7 @@ signal reassigned(before: Dictionary)
 
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
-const Dissolution = preload("res://src/sim/dissolution.gd")
+const DissolveButton = preload("res://src/ui/dissolve_button.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
@@ -129,7 +129,7 @@ var _title: RichTextLabel
 var _body: VBoxContainer
 var _dirty := true
 var _close_button: Button
-var _dissolve_button: Button
+var _dissolve_button: DissolveButton
 var _portfolio_option: OptionButton
 var _party_option: OptionButton
 var _reassign_button: Button
@@ -156,9 +156,9 @@ func _ready() -> void:
 	# exactly. Ordering can, and it fixes it structurally -- the verb stays reachable
 	# whatever the body grows to, where 39px of headroom would have been one added
 	# row from failing again.
-	_dissolve_button = PanelKit.sized(Button.new())
-	_dissolve_button.text = tr("Dissolve")
-	_dissolve_button.pressed.connect(_on_dissolve)
+	# V5.2 b+ (R3): the one Dissolve button, the Legislature's too (dissolve_button.gd).
+	_dissolve_button = DissolveButton.new()
+	_dissolve_button.dissolved.connect(_on_dissolved)
 	root.add_child(_dissolve_button)
 
 	var reassign_row := HBoxContainer.new()
@@ -271,17 +271,7 @@ func _refresh() -> void:
 	if ns.governments_fallen > 0:
 		PanelKit.line(_body, tr("Governments censured out of office this run: %d.") % ns.governments_fallen, PanelKit.Tone.PLAIN)
 
-	var can_dissolve := Dissolution.can_dissolve(_state, ns)
-	_dissolve_button.visible = ns.dissolution_rule != "none" and ns.dissolution_rule != "confidence_failure" and ns.dissolution_rule != "self_dissolution"
-	_dissolve_button.disabled = not can_dissolve
-	if not can_dissolve:
-		_dissolve_button.tooltip_text = Dissolution.refusal_reason(_state, ns)
-	else:
-		# The price rides the verb, where the decision is made (Gameplay's move).
-		var price := tr("Costs public patience on every call, and locks out further use for %d months once the new assembly is seated.") % ns.dissolution_lockout_months
-		var lines := PackedStringArray([tr("Call a snap election. No seat forecast -- read the polls, not a projection."), price])
-		_dissolve_button.tooltip_text = "
-".join(lines)
+	_dissolve_button.sync(_state, ns)
 
 	_body.add_child(_plate)
 	_plate.fill(ns, _loader, PLATE_LABELS, _upper_phrase(ns), _court_phrase(ns))
@@ -539,12 +529,7 @@ func _worst_case_rebels(ns) -> int:
 	return total
 
 
-func _on_dissolve() -> void:
-	var ns = _state.player()
-	if ns == null:
-		return
-	var before := Trends.snapshot_now(_state)
-	Dissolution.dissolve(_state, ns)
+func _on_dissolved(before: Dictionary) -> void:
 	dissolved.emit(before)
 	_dirty = true
 
