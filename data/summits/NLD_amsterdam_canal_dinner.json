@@ -1,0 +1,52 @@
+{
+  "name": "Dinner on a Canal Boat",
+  "summary": "A narrow dining boat, a prime minister at the helm, and a talk about who writes the rules for the digital economy.",
+  "effects": {
+    "Back a European digital levy": {},
+    "Back light-touch regulation": {},
+    "Raise the Amsterdam tax rulings": {},
+    "Push for a one percent levy": {
+      "spending_pct_gdp": {
+        "education": 0.02
+      },
+      "bloc_offset": {
+        "students": 0.03,
+        "business": -0.04
+      }
+    },
+    "Push for a smaller, quicker one": {
+      "bloc_offset": {
+        "students": 0.01,
+        "business": -0.02
+      }
+    },
+    "Offer a regulatory sandbox": {
+      "bloc_offset": {
+        "business": 0.03,
+        "students": 0.02
+      }
+    },
+    "Offer an innovation fund": {
+      "spending_pct_gdp": {
+        "education": 0.02
+      },
+      "bloc_offset": {
+        "students": 0.03,
+        "business": 0.01
+      }
+    },
+    "Demand they be ended": {
+      "bloc_offset": {
+        "workers": 0.03,
+        "business": -0.03
+      }
+    },
+    "Accept them if profits are taxed where earned": {
+      "bloc_offset": {
+        "business": -0.01,
+        "workers": 0.02
+      }
+    }
+  },
+  "scene": "state_dinner"
+}

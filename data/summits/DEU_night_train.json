@@ -1,0 +1,47 @@
+{
+  "name": "The Night Train to Dresden",
+  "summary": "A sleeper compartment, a map of rail lines nobody has funded, and a chancellor who wants to be asked about defence by anyone but you.",
+  "effects": {
+    "Offer to co-finance the line": {},
+    "Suggest a freight corridor first": {},
+    "Ask about Berlin's defence spending instead": {},
+    "Commit French money now": {
+      "spending_pct_gdp": {
+        "infrastructure": 0.04
+      },
+      "bloc_offset": {
+        "business": 0.03,
+        "rural": -0.02
+      }
+    },
+    "Insist on a joint operating company": {
+      "spending_pct_gdp": {
+        "infrastructure": 0.02
+      },
+      "bloc_offset": {
+        "business": 0.02
+      }
+    },
+    "Back the freight corridor": {
+      "spending_pct_gdp": {
+        "infrastructure": 0.02
+      },
+      "bloc_offset": {
+        "workers": 0.02,
+        "rural": -0.02
+      }
+    },
+    "Keep it to a feasibility paper": {},
+    "Press for a joint procurement pact": {
+      "spending_pct_gdp": {
+        "defence": 0.03
+      },
+      "bloc_offset": {
+        "business": 0.02,
+        "workers": -0.02
+      }
+    },
+    "Drop it and enjoy the journey": {}
+  },
+  "scene": "corridor"
+}

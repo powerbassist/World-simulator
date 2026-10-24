@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://bp353hsvarxf3"
+path="res://.godot/imported/POL_warsaw_eastern_flank.dialogue-eea683ee76d8ab0cd25d7bc5a627d42c.tres"
+
+[deps]
+
+source_file="res://data/summits/POL_warsaw_eastern_flank.dialogue"
+dest_files=["res://.godot/imported/POL_warsaw_eastern_flank.dialogue-eea683ee76d8ab0cd25d7bc5a627d42c.tres"]
+
+[params]
+
+defaults=true

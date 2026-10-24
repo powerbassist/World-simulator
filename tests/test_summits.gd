@@ -92,8 +92,8 @@ func _check_draw_is_deterministic_and_covering() -> void:
 	elif String(a["id"]) != String(b["id"]):
 		_fail("the same meeting drew two different scenes: %s then %s" % [a["id"], b["id"]])
 
-	if not Summits.draw(_state, _loader, "ESP").is_empty():
-		_fail("ESP has no summit content but drew one -- the empty pool must read as no scene")
+	if not Summits.draw(_state, _loader, "ISL").is_empty():
+		_fail("ISL has no summit content but drew one -- the empty pool must read as no scene")
 
 	# The index over a synthetic pool of two, with the SAME Cycle call draw()
 	# makes: both entries must appear across stamps, or the draw is a constant

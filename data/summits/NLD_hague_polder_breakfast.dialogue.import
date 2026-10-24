@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://cbst760t4ee4d"
+path="res://.godot/imported/NLD_hague_polder_breakfast.dialogue-08519abd128dea1ef398832cbefeca41.tres"
+
+[deps]
+
+source_file="res://data/summits/NLD_hague_polder_breakfast.dialogue"
+dest_files=["res://.godot/imported/NLD_hague_polder_breakfast.dialogue-08519abd128dea1ef398832cbefeca41.tres"]
+
+[params]
+
+defaults=true

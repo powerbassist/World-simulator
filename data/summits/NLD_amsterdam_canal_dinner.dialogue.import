@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://dcl855tsrt720"
+path="res://.godot/imported/NLD_amsterdam_canal_dinner.dialogue-761b7f0ac606e60473115414b3cd9f61.tres"
+
+[deps]
+
+source_file="res://data/summits/NLD_amsterdam_canal_dinner.dialogue"
+dest_files=["res://.godot/imported/NLD_amsterdam_canal_dinner.dialogue-761b7f0ac606e60473115414b3cd9f61.tres"]
+
+[params]
+
+defaults=true

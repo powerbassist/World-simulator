@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://uv7e1wsbpqlv"
+path="res://.godot/imported/ESP_sevilla_courtyard.dialogue-3e59dc01309140e5d317df5c89689040.tres"
+
+[deps]
+
+source_file="res://data/summits/ESP_sevilla_courtyard.dialogue"
+dest_files=["res://.godot/imported/ESP_sevilla_courtyard.dialogue-3e59dc01309140e5d317df5c89689040.tres"]
+
+[params]
+
+defaults=true

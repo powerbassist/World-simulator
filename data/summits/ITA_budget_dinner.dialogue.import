@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://c84ajgr1kpqo6"
+path="res://.godot/imported/ITA_budget_dinner.dialogue-8e7f12335090690d4d4c9de4d45cb9b1.tres"
+
+[deps]
+
+source_file="res://data/summits/ITA_budget_dinner.dialogue"
+dest_files=["res://.godot/imported/ITA_budget_dinner.dialogue-8e7f12335090690d4d4c9de4d45cb9b1.tres"]
+
+[params]
+
+defaults=true

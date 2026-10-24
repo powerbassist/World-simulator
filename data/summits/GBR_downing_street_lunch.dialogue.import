@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://bofrt0jpgksiv"
+path="res://.godot/imported/GBR_downing_street_lunch.dialogue-73781a929dfe31587441231067fb0190.tres"
+
+[deps]
+
+source_file="res://data/summits/GBR_downing_street_lunch.dialogue"
+dest_files=["res://.godot/imported/GBR_downing_street_lunch.dialogue-73781a929dfe31587441231067fb0190.tres"]
+
+[params]
+
+defaults=true
