@@ -47,6 +47,14 @@ extends SceneTree
 ##      B5: no answer the best in more than 50 % of requests (a tie counts for
 ##      each answer it ties). Off by default, so A1-A3's table stays comparable.
 ##
+## VISITORS (b3) ARE COUNTED APART. A visiting head's request waits in a place of its
+## own (MAX_PENDING_FOREIGN), outside the domestic lane B1-B3 were declared on, so
+## every band field above counts this nation's people only; `visitors` reports the
+## heads' requests beside them. A2 and A4 fire the player's own state visits BEFORE
+## the month's tick (the packer's order), so a head the player visited reads as a
+## visitor there -- in the game the player's visit lands on a day after the tick and
+## is read a month later as a meeting -- and their visitor counts run high.
+##
 ## Months are numbered from 1, the first month the game ticks (January 2026).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
@@ -123,6 +131,7 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 	var decline_grudge := 0.0
 	var declines := 0
 	var peak := {}                # person_id -> highest grudge seen after a refusal
+	var visitors := {"arrivals": 0, "booked": 0, "unplaceable": 0, "held": 0}
 	for i in range(months):
 		var month := i + 1
 		state.year = 2026 + i / 12
@@ -139,28 +148,39 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 					answered_by_phone += 1 if bool(call.get("success", false)) else 0
 		for row in Audiences.pending(ns):
 			var id := String(row["id"])
+			var visitor := _visitor(String(row["person_id"]))
 			if regime == "A3":
 				var r: Dictionary = Audiences.decline(state, ns, _loader, id)
-				decline_grudge += float(r["price"]["grudge"])
-				declines += 1
-				refused_at[String(row["person_id"])] = refused_at.get(String(row["person_id"]), month)
+				if not visitor:
+					decline_grudge += float(r["price"]["grudge"])
+					declines += 1
+					refused_at[String(row["person_id"])] = refused_at.get(String(row["person_id"]), month)
 			elif book_all:
 				var placed := false
 				for d in Audiences.offered_dates(state, ns, id):
 					if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, id, d)["ok"]):
 						placed = true
-						booked += 1
+						if visitor:
+							visitors["booked"] += 1
+						else:
+							booked += 1
 						break
 				if not placed:
-					unplaceable += 1
 					var answers: Dictionary = Audiences.answers(state, ns, _loader, id)
-					if bool(answers["delegate"]["ok"]) and bool(answers["decline"]["ok"]):
-						unplaceable_offered += 1
+					if visitor:
+						visitors["unplaceable"] += 1
+					else:
+						unplaceable += 1
+						if bool(answers["delegate"]["ok"]) and bool(answers["decline"]["ok"]):
+							unplaceable_offered += 1
 					Audiences.delegate(state, ns, _loader, id)
 		if book_all:
-			_fire_month(state, fire, held, month, refused_at)
+			_fire_month(state, fire, held, month, refused_at, visitors)
 		var report: Dictionary = WorldMonth.tick_month(state, _loader)
 		for row in report["audience_requests"]["arrived"]:
+			if _visitor(String(row["person_id"])):
+				visitors["arrivals"] += 1
+				continue
 			arrivals.append([month, String(row["person_id"])])
 			if regime == "A2F" and month <= B5_ARRIVALS_UPTO:
 				b5_requests.append(_b5_capture(ns, row, month))
@@ -168,7 +188,8 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 			if int(r["due_loop_month"]) == month:
 				r["kept"] = bool(ns.person_want_state.get("%s|%s" % [r["person_id"], r["object"]], false))
 		for row in report["audience_requests"]["lapsed"]:
-			refused_at[String(row["person_id"])] = refused_at.get(String(row["person_id"]), month)
+			if not _visitor(String(row["person_id"])):
+				refused_at[String(row["person_id"])] = refused_at.get(String(row["person_id"]), month)
 		for act in report.get("character_acts", []):
 			var pid := String(act["person_id"])
 			if refused_at.has(pid) and int(refused_at[pid]) <= month:
@@ -213,6 +234,7 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 		"mean_decline_grudge": decline_grudge / maxf(1.0, float(declines)),
 		"refused_peak_grudges": _top(peak, per_person),
 	}
+	result["visitors"] = visitors
 	if regime == "A4":
 		result["calls"] = calls
 		result["answered_by_phone"] = answered_by_phone
@@ -288,6 +310,11 @@ func _b5_answers(requests: Array) -> Dictionary:
 	return {"requests": requests.size(), "best_share": shares, "top_share": top_share, "diary_day": LW.DIARY_DAY, "rows": requests}
 
 
+## A visiting head (b3), not one of this nation's people.
+func _visitor(pid: String) -> bool:
+	return not pid.begins_with("%s_" % PLAYER)
+
+
 ## A4's call: the offered phone lever with the highest shown midpoint (a promise
 ## names the nearest month it may), or no call when none is offered.
 func _phone_first(state, ns, pid: String) -> Dictionary:
@@ -359,7 +386,7 @@ func _pack(state) -> Array:
 
 
 ## The month happens: the packer's acts and the month's audiences, in day order.
-func _fire_month(state, fire: Array, held: Array, month: int, refused_at: Dictionary) -> void:
+func _fire_month(state, fire: Array, held: Array, month: int, refused_at: Dictionary, visitors: Dictionary) -> void:
 	var ns = state.player()
 	var dim := Calendar.days_in_month(state.year, state.month)
 	for e in Calendar.due(state, state.year, state.month, dim):
@@ -382,10 +409,13 @@ func _fire_month(state, fire: Array, held: Array, month: int, refused_at: Dictio
 			CalK.KIND_AUDIENCE:
 				var id := String(e["action_id"])
 				if bool(Audiences.hold(state, ns, _loader, id)["ok"]):
-					held.append(month)
-					Audiences.settle(state, ns, _loader, id, AK.STATUS_DECLINED)
 					var pid := String(e["target_id"])
-					refused_at[pid] = refused_at.get(pid, month)
+					Audiences.settle(state, ns, _loader, id, AK.STATUS_DECLINED)
+					if _visitor(pid):
+						visitors["held"] += 1
+					else:
+						held.append(month)
+						refused_at[pid] = refused_at.get(pid, month)
 		Calendar.resolve(state, Calendar.verb_key(e), true)
 
 
@@ -427,6 +457,7 @@ func _print(out: Dictionary) -> void:
 			r["booked"], r["unplaceable"], r["unplaceable_share"], r["unplaceable_offered_share"], r["held"], r["held_m1_20"],
 			(r["acts_by_refused"] as Array).size(), r["named_grudges_m20"], r["mean_decline_grudge"]])
 		print("   highest refused grudges: %s" % [r["refused_peak_grudges"]])
+		print("   visitors (apart from the bands): %s" % [r["visitors"]])
 		if r.has("calls"):
 			print("   phoned first: %d calls, %d requests answered by phone" % [r["calls"], r["answered_by_phone"]])
 	if out.has("b5_answers"):
