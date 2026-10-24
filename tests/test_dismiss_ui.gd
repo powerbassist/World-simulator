@@ -68,6 +68,13 @@ func _process(_delta: float) -> bool:
 				_fail("the card does not name the party, its leader and their feeling after: %s" % text)
 			if String(ns.cabinet[_portfolio]) != _party:
 				_fail("the click dismissed before the card was answered")
+			# The clock runs behind the card: the leader's feeling changes under it
+			# (here a grudge that crosses into the next band), so its price is stale
+			# and Dismiss asks again rather than pay what it did not show.
+			ns.person_grudges[_leader] = 0.5
+			card.confirmed.emit()
+			if not card.is_visible_in_tree() or String(ns.cabinet[_portfolio]) != _party or not _text(card).contains("bitter"):
+				_fail("a stale price was paid, not asked again: %s" % _text(card))
 			_target = card.find_child("Confirm", true, false) as Control
 			_press(true)
 		15:

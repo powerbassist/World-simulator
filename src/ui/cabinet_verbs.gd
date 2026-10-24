@@ -23,6 +23,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
 const Removal = preload("res://src/sim/removal.gd")
+const President = preload("res://src/sim/president.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
@@ -35,7 +36,7 @@ var _status: Label
 var _state
 var _loader
 var _confirm
-var _asked := Callable()  # the command the open card runs on its yes
+var _asked := {}  # the open card's {portfolio, question, yes, run, text}
 
 
 ## The Diary's booking of a Reassign: refused at booking when Removal would refuse
@@ -146,9 +147,20 @@ func _ask(portfolio: String, party_id: String, question: String, yes: String, ru
 		_confirm = ConfirmCard.on_stack(self)
 		if _confirm == null:
 			return
-		_confirm.confirmed.connect(func() -> void: _act(_asked))
-	_asked = run
-	_confirm.ask("%s %s" % [question, _price(portfolio)], yes)
+		_confirm.confirmed.connect(_on_yes)
+	_asked = {"portfolio": portfolio, "question": question, "yes": yes, "run": run, "text": "%s %s" % [question, _price(portfolio)]}
+	_confirm.ask(String(_asked["text"]), yes)
+
+
+## The clock runs behind the card: a price that changed under it (a leader
+## replaced, a grudge that moved bands) is asked again, never paid unseen.
+func _on_yes() -> void:
+	var now := "%s %s" % [_asked["question"], _price(String(_asked["portfolio"]))]
+	if now != String(_asked["text"]):
+		_asked["text"] = now
+		_confirm.ask(now, String(_asked["yes"]))
+		return
+	_act(_asked["run"])
 
 
 ## The leader's feeling after the pulse (R11's words) and the party's loyalty.
@@ -160,10 +172,11 @@ func _price(portfolio: String) -> String:
 	var parts := PackedStringArray()
 	var leader := String(price["leader_id"])
 	var pulse := float(price["grudge_after"]) - float(price["grudge_before"])
+	# No pulse: the leader is the president's own, or unknown (then nothing is said).
 	if pulse >= Feelings.MOVED:
 		var feel := Feelings.promised(Feelings.of(ns, leader), {"grudge": pulse})
 		parts.append(Strings.t("%s, its leader: %s.") % [_loader.person_name(leader), ", ".join(feel)])
-	else:
+	elif leader == President.leader_id(ns):
 		parts.append(Strings.t("Its leader is your own: no grudge, but the party still feels the loss."))
 	if float(price["loyalty_after"]) < float(price["loyalty_before"]) - 1e-9:
 		parts.append(Strings.t("%s grows less loyal to the government: more of its seats may break ranks.") % _name(String(price["party_id"])))
