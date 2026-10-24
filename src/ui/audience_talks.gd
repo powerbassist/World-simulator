@@ -61,7 +61,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	# The people the president knows first, then by name (QA on #117: in loader
 	# order the list was a screen of strangers before anyone useful).
 	people.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return a["know"] > b["know"] or (a["know"] == b["know"] and String(a["name"]).naturalnocasecmp_to(String(b["name"])) < 0))
+		return a["know"] > b["know"] or (a["know"] == b["know"] and String(a["name"]).naturalnocasecmp_to(String(b["name"])) < 0))  # i18n: row-ok a shown name from the loader, compared for order
 	return {"fog": President.knowledge_band(ns, pid), "traits": traits,
 		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
