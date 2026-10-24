@@ -315,7 +315,9 @@ static func shared_bonus(state, a_id: String, b_id: String, key: String) -> floa
 static func shared_flag(state, a_id: String, b_id: String, key: String) -> String:
 	var a = state.nations.get(a_id)
 	var b = state.nations.get(b_id)
-	if a == null or b == null:
+	# is_same(), not an untyped `==` (parallel.gd rule 5; QA's RECORD on #134): safe
+	# on a worker if the offers ever move into the pool.
+	if is_same(a, null) or is_same(b, null):
 		return ""
 	for org_id in a.orgs:
 		if b.orgs.has(org_id) and bool(state.org_effects.get(org_id, {}).get(key, false)):
