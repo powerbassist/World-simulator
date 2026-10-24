@@ -11,7 +11,8 @@ extends SceneTree
 ##     the parent's call): "Dissolve the Assembly? An election follows on <date>."
 ##     with Dissolve and Cancel; Cancel calls nothing;
 ##   - Dissolve on the card calls the dissolution in the sim and reaches main's
-##     effect queue, as the Politics button does;
+##     effect queue, as the Politics button does -- and asks again, with the new
+##     date, when a month turned under the open card;
 ##   - then both buttons read the refusal (a dissolution already under way), and a
 ##     confirm the sim refuses announces nothing (QA's #135-1).
 
@@ -73,11 +74,22 @@ func _process(_delta: float) -> bool:
 		21:
 			_press(false)
 		24:
+			# A month turns under the open card (the clock runs behind it): its date
+			# is stale, so Dissolve asks again with the new one (review pass 1).
+			_main._state.month += 1
 			_target = _card().find_child("Confirm", true, false) as Control
 			_press(true)
 		27:
 			_press(false)
 		30:
+			var ns = _main._state.player()
+			var due: int = int(_main._state.year) * 12 + int(_main._state.month) + int(ns.dissolution_notice_months)
+			if ns.dissolution_pending or not _card().is_visible_in_tree() or not _text(_card()).contains(Words.when(due)):
+				_fail("a confirm after the month turned did not ask again with %s: pending %s, '%s'" % [Words.when(due), ns.dissolution_pending, _text(_card())])
+			_press(true)
+		33:
+			_press(false)
+		36:
 			var ns = _main._state.player()
 			if _card().is_visible_in_tree():
 				_fail("the card stays up after Dissolve")

@@ -27,6 +27,7 @@ const NO_COMMAND := ["none", "confidence_failure", "self_dissolution"]
 
 var _state
 var _confirm  # the card this button asks on, made at the first press
+var _asked_due := 0  # the election month the open question named
 
 
 func _init() -> void:
@@ -59,8 +60,12 @@ func _on_pressed() -> void:
 		if _confirm == null:
 			return
 		_confirm.confirmed.connect(_on_confirmed)
-	var due := int(_state.year) * 12 + int(_state.month) + int(ns.dissolution_notice_months)
-	_confirm.ask(tr("Dissolve the Assembly? An election follows on %s.") % Words.when(due), tr("Dissolve"))
+	_asked_due = _due(ns)
+	_confirm.ask(tr("Dissolve the Assembly? An election follows on %s.") % Words.when(_asked_due), tr("Dissolve"))
+
+
+func _due(ns) -> int:
+	return int(_state.year) * 12 + int(_state.month) + int(ns.dissolution_notice_months)
 
 
 ## The player's command: the sim's, with the state before it for the effect card --
@@ -69,6 +74,11 @@ func _on_pressed() -> void:
 func _on_confirmed() -> void:
 	var ns = _state.player() if _state != null else null
 	if ns == null:
+		return
+	# The clock runs behind the card: a month turned under it moved the date, so
+	# the player is asked again rather than held to a date the card did not name.
+	if _due(ns) != _asked_due:
+		_on_pressed()
 		return
 	var called := int(ns.dissolutions_called)
 	var before := Trends.snapshot_now(_state)
