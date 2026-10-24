@@ -570,7 +570,7 @@ want, against one) × the channel (audience, phone call).
 | Share of cells in which one lever has the best net value | **at most 40 %** for any lever |
 | Share of cells in which each lever has the best net value | **at least 5 %** for every lever |
 | The denominator of both shares, per lever | the cells **in which that lever is offered**: the whole grid for five levers, and only the friend-or-closer half for appeal to friendship, which is not offered below friend |
-| A phone call's odds against an audience's, same lever, same cell | **at least 0.10 lower** |
+| The channel (amended 2026-10-24, see below): audiences held by a player who phones every open request once a month before booking (`audience_probe` regime A4) | **B2's audiences row still holds**: 12 to 30 held a term, at least 4 in months 1–20 |
 | The answers to a request — book, delegate, decline, and leaving it unanswered — any one of them the best net value over all requests, a diary day priced at 1.05 of one ask won, on the real three-attempt audience ("B5 amendment" below) | **at most 50 %** of requests |
 
 - **Net value** is success × the ask's gain minus the expected cost, in the
@@ -582,13 +582,37 @@ want, against one) × the channel (audience, phone call).
   from being dead content.
 - **Probe:** `tools/lever_probe.gd`, regime L2.
 - **Failure looks like:** one lever best in most cells (the player stops
-  reading people and presses it); a lever never best (dead); calls as good as
-  audiences (the diary becomes optional); leaving requests unanswered the best
+  reading people and presses it); a lever never best (dead); a player who phones
+  first holds fewer audiences than B2 asks (the diary becomes optional); leaving requests unanswered the best
   answer to most of them (the player learns never to open the inbox). Since the
   author's call of 2026-10-21 (an unanswered request is a decline once its window
   passes), this row is expected to pass: leaving a request unanswered is a
   decline that arrives later, so it can be the best answer only where declining
   is. A failure here now means the lapse is priced below the decline (B3).
+- **The channel row, amended (2026-10-24, before b3 is built).**
+  - **Why the old row was replaced:** "a call at least 0.10 below an audience"
+    holds by construction once the phone subtracts exactly 0.10 and withholds a
+    lever under 0.15 (Systems' b3 plan, call C). A row that holds by
+    construction measures nothing, so the offset moves to the invariants (I5),
+    where a test pins it.
+  - **What the row now measures** is what the old row's failure line was
+    about: whether calls make the diary optional. A call costs no diary day,
+    and a failed call leaves the request open. One call per person per month
+    across a two-month window gives two rolls per request. So the row reads
+    B2's own audiences row for a player who phones every open request first
+    and books what the phone does not answer. B2's numbers are declared, and
+    nothing new is invented.
+  - **Expected (INFERRED, from the formulas, not run):** the chance a request
+    is answered by phone over two calls is 1 − (1 − (p − 0.10))². At B4's
+    midpoints, that is 0.51 for a stranger, 0.70 for an acquaintance and 0.84
+    for the known. On A2's stranger-heavy mix, about half the audiences would
+    go to the phone, so B2's floor of 12 is likely to fail. That would make
+    the phone too strong as planned. The read decides, and a miss goes to the
+    author.
+  - **L2's denominators with the phone:** phone cells enter L2's 40 % and 5 %
+    shares. Each lever's denominator is the cells, in each channel, where that
+    lever is offered: a lever withheld by phone under 0.15 is not counted
+    there. This is friendship's rule, applied to the floor.
 
 ### B5 amendment (2026-10-24): the price of a diary day
 
@@ -1019,6 +1043,10 @@ Over 200 seeded runs (salts), France, otherwise idle.
   `absent_ok` verdict per register is proposed in [[v5.2-spec]];
   `tests/test_nation_fields.gd` pins the false set.
 - **I3 — A scene holds the clock** while it is open ([[v5-reflection]] T11).
+- **I5 — A call's odds are an audience's less 0.10** (b3; moved here from B5's
+  channel row, 2026-10-24). Same lever, same cell, exactly 0.10 lower. A lever
+  whose audience odds are under `ODDS_MIN` + 0.10 = 0.15 is not offered by
+  phone. `tests/test_phone.gd` pins both.
 - **I4 — The re-baseline is predicted, not discovered.** Since the author's call
   of 2026-10-21, an unanswered request is a decline, so the 51-regime table
   may move on the played nation's rows, and the campaign regimes also through
@@ -1031,7 +1059,7 @@ Over 200 seeded runs (salts), France, otherwise idle.
 
 | Probe | Regimes | Bands |
 |---|---|---|
-| `tools/audience_probe.gd` | A1 idle, A2 book everything, A3 decline everything | B1, B2, B3 (all but the 2027 rows) |
+| `tools/audience_probe.gd` | A1 idle, A2 book everything, A3 decline everything, A4 phone first then book (b3) | B1, B2, B3 (all but the 2027 rows), B5's channel row |
 | `tools/balance_probe.gd` (exists) + `tools/balance_diff.py` | `hands_off` at the build tip against the accepted base | B3's 2027 verdict and margin |
 | `tools/lever_probe.gd` | L1 by knowledge band, L2 the grid | B4, B5 |
 | `tools/shadows_probe.gd` | S1 once, S2 always, S3 affair, S4 lies | B6, B7, B8 |
