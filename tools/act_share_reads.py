@@ -10,8 +10,9 @@ the first month out of office, an executive loss or the term limit (bands-v5.2.m
 "Correction: the read window"). The act share is the tip's own: its largest
 act-written share of bloc_offset over the months the tip run governed. The clamp row
 compares each tip run with the base run of the same number over the months BOTH
-governed, the intersection of their MONTH lines: a base clamp after that window does
-not excuse the tip, and a tip clamp after it does not count against the tip. A tip
+governed, the intersection of their MONTH lines: a tip clamp is new unless the base run
+had that bloc on the clamp at or before the same month, so a base clamp that comes later
+does not excuse the tip, and a tip clamp after the window does not count against it. A tip
 clamp in months only the tip governed has no base to be read against; it is listed
 apart, not counted.
 """
@@ -54,12 +55,18 @@ def main() -> int:
         worst_all = max(worst_all, best)
         if managed[r]:
             worst_managed = max(worst_managed, best)
-        base_on = {bloc for at, bloc in b_clamps[r] if at in both}
+        # A base clamp excuses the tip's only if it came at or before the tip's month
+        # (QA's TAKE on #104): a base that clamps later does not excuse an earlier tip.
+        base_first = {}
+        for at, bloc in b_clamps[r]:  # month order, so the first hit is the first month
+            if at in both:
+                base_first.setdefault(bloc, at)
         first, first_apart = {}, {}
-        for at, bloc in clamps[r]:  # month order, so the first hit is the first month
-            if at in both and bloc not in base_on:
-                first.setdefault(bloc, at)
-            elif at in months[r] and at not in both:
+        for at, bloc in clamps[r]:
+            if at in both:
+                if bloc not in base_first or base_first[bloc] > at:
+                    first.setdefault(bloc, at)
+            elif at in months[r]:
                 first_apart.setdefault(bloc, at)
         new += [(r, bloc, at) for bloc, at in sorted(first.items())]
         apart += [(r, bloc, at) for bloc, at in sorted(first_apart.items())]
