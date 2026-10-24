@@ -45,6 +45,8 @@ func _process(_delta: float) -> bool:
 			_check_marks()
 			_check_today()
 			_check_paging()
+			_check_month_turn()
+			_check_travel_days()
 			_grid.show_month(int(_offered["year"]), int(_offered["month"]))
 		8:
 			var cell := _cell(int(_offered["day"]))
@@ -153,6 +155,38 @@ func _check_paging() -> void:
 		_grid.page_by(-1)
 	if _grid.page() != 0:
 		_fail("paging back passed this month: page %d" % _grid.page())
+
+
+## The page is a month, not an offset from today: when the month turns, the
+## picked month and day stay (review pass 1 on #153).
+func _check_month_turn() -> void:
+	var state = _main._state
+	var at := _month(2)
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	_grid._pick(14)
+	state.month += 1
+	_main._calendar_panel._refresh()
+	if _grid.page() != 1 or _grid._selected != 14:
+		_fail("the month turned and the grid moved: page %d (expected 1), day %d" % [_grid.page(), _grid._selected])
+	state.month -= 1
+	_main._calendar_panel._refresh()
+
+
+## A visit's journey days are taken (the diary refuses them): each carries a mark
+## (review pass 1 on #153).
+func _check_travel_days() -> void:
+	var state = _main._state
+	var at := _month(4)
+	var visit := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), 14, "state_visit", "DEU", "", "", "", "", 2)
+	state.appointments.append(visit)
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	for d in [12, 13, 15, 16]:
+		var cell := _cell(d)
+		if cell == null or cell.marks.is_empty():
+			_fail("the visit's travel day %d carries no mark" % d)
+	state.appointments.erase(visit)
+	_main._calendar_panel._refresh()
 
 
 func _count(want: Dictionary, y: int, mo: int, d: int) -> void:

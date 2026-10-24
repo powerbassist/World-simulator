@@ -39,7 +39,9 @@ var day_list := VBoxContainer.new()
 var _state
 var _loader
 var _items: Array = []  # the panel's: {year, month, day, text, mark, cancel}
-var _page := 0
+## The shown month, absolute (year x 12 + month), not an offset from today: when
+## the month turns, the page and the picked day stay where the player left them.
+var _month_abs := 0
 var _selected := 0  # the picked day of the shown month, 0 for none
 var _title: Label
 var _days: GridContainer
@@ -90,23 +92,26 @@ func show_items(state, loader, items: Array) -> void:
 	_state = state
 	_loader = loader
 	_items = items
-	_page = clampi(_page, 0, K.BOOKING_HORIZON_MONTHS)
+	var kept := clampi(_month_abs, _now(), _now() + K.BOOKING_HORIZON_MONTHS)
+	if kept != _month_abs:
+		_selected = 0
+	_month_abs = kept
 	_render()
 
 
 func page() -> int:
-	return _page
+	return _month_abs - _now()
 
 
 func page_by(delta: int) -> void:
-	_page = clampi(_page + delta, 0, K.BOOKING_HORIZON_MONTHS)
+	_month_abs = clampi(_month_abs + delta, _now(), _now() + K.BOOKING_HORIZON_MONTHS)
 	_selected = 0
 	_render()
 
 
 ## The page that holds (year, month), clamped to the horizon.
 func show_month(year: int, month: int) -> void:
-	_page = clampi(year * 12 + month - _now(), 0, K.BOOKING_HORIZON_MONTHS)
+	_month_abs = clampi(year * 12 + month, _now(), _now() + K.BOOKING_HORIZON_MONTHS)
 	_selected = 0
 	_render()
 
@@ -116,9 +121,8 @@ func _now() -> int:
 
 
 func _shown() -> Vector2i:
-	var abs_month := _now() + _page
-	var year := floori((abs_month - 1) / 12.0)
-	return Vector2i(year, abs_month - year * 12)
+	var year := floori((_month_abs - 1) / 12.0)
+	return Vector2i(year, _month_abs - year * 12)
 
 
 func _render() -> void:
@@ -139,7 +143,7 @@ func _render() -> void:
 		gap.custom_minimum_size = DiaryDay.SIZE * UiTheme.text_scale()
 		gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_days.add_child(gap)
-	var is_now := _page == 0
+	var is_now := _month_abs == _now()
 	for d in range(1, Calendar.days_in_month(ym.x, ym.y) + 1):
 		var cell := DiaryDay.new()
 		cell.name = "Day_%d" % d
@@ -168,6 +172,11 @@ func _entries(year: int, month: int) -> Dictionary:
 	for e in _items:
 		if int(e["year"]) == year and int(e["month"]) == month:
 			_add(out, int(e["day"]), e)
+	# A visit's journey either side of its meeting: the diary refuses those days
+	# too (Calendar.day_cells, the ribbon's own read).
+	for cell in Calendar.day_cells(_state, year, month):
+		if bool(cell["travel"]):
+			_add(out, int(cell["day"]), {"text": Strings.t("Away: travelling to or from a visit"), "mark": "away", "cancel": ""})
 	var ns = _state.player()
 	var abs_month := year * 12 + month
 	# A commitment is judged as its month begins (Levers.tick_month), so its mark
