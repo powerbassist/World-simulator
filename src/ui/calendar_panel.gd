@@ -340,7 +340,9 @@ func _entry_row(entry: Dictionary) -> Control:
 	if entry.has("status"):
 		var status := String(entry["status"])
 		text.text = "    %02d — %s" % [int(entry.get("day", 1)), _booking_text(entry)]
-		if status == K.STATUS_BOOKED:
+		# An audience is the asker's day, kept through Audiences: the Diary's own
+		# cancel would drop the entry and leave the request booked for no day.
+		if status == K.STATUS_BOOKED and String(entry.get("kind", "")) != K.KIND_AUDIENCE:
 			var cancel := Button.new()
 			cancel.text = tr("Cancel")
 			cancel.pressed.connect(_on_cancel.bind(Calendar.verb_key(entry)))
@@ -406,7 +408,7 @@ func _booking_text(entry: Dictionary) -> String:
 				PanelKit.Labels.portfolio(String(entry.get("portfolio", ""))),
 				_party_name(String(entry.get("party_id", ""))),
 			]
-	return String(entry.get("kind", ""))
+	return tr("Audience: %s") % _loader.person_name(String(entry.get("target_id", ""))) if String(entry.get("kind", "")) == K.KIND_AUDIENCE else String(entry.get("kind", ""))
 
 
 ## --- the form --------------------------------------------------------------

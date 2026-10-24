@@ -190,6 +190,7 @@ tests=(
   tests/test_request_lane.gd
   tests/test_audience_scene.gd
   tests/test_audience_flow.gd
+  tests/test_audience_levers.gd
   tests/test_placement_points.gd
   tests/test_button_sizes.gd
   tests/test_chart_kit.gd

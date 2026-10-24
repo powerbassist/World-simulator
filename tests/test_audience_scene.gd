@@ -3,30 +3,44 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_audience_scene.gd
 ## Non-zero exit on any failure.
 ##
-## V5.2b, the audience scene, on Levers' row shapes (.superpowers/sdd/v5.2b-plan.md):
+## V5.2b, the audience scene, on Levers' row shapes (src/sim/levers.gd):
 ##   - the levers print their odds as a range ("35–60 %"), never a point, and say
-##     why the range is wide (the fog word); a lever the sim does not offer is
-##     disabled with its reason;
+##     why the range is wide (the fog word) and which traits are known; a lever the
+##     sim does not offer is disabled with its reason;
+##   - every spend reads BEFORE the click: bargain's currency (a favour, a vote
+##     trade, aid refused with its reason), the promise's date and that it binds;
 ##   - a real click on a lever (press and release frames apart) emits that lever;
-##   - three attempts spent disable every lever, and the scene says to end it;
+##     the promise emits its picked date, the gossip its third person;
+##   - attempts spent leave the levers down and the scene says to end it;
+##   - End and Leave are two steps: after the sim closes it, the button leaves;
 ##   - the person's opening line comes through DialogueManager from
-##     data/audiences/default.dialogue ({{ask}} in their mouth), and a title no
-##     file has falls back without stopping the scene;
-##   - a stance's file replaces the default title by title (a title twice would not
-##     compile), and once Content ships any stance file, every stance has one.
+##     data/audiences/default.dialogue ({{ask}} in their mouth); a stance's file
+##     replaces the default title by title, and once Content ships any stance
+##     file, every stance has one.
 
 const AudienceScene = preload("res://src/ui/audience_scene.gd")
+const Words = preload("res://src/ui/lever_words.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
 
 var _failures: Array[String] = []
 var _scene
 var _frame := 0
-var _pressed := []
+var _emitted := []
 
+const NOW := 24310
 const OFFERED := [
 	{"lever": "argue", "offered": true, "why_not": "", "odds_lo": 0.35, "odds_hi": 0.6, "fog": "stranger", "spends": {}},
-	{"lever": "friendship", "offered": false, "why_not": "You are not friends.", "odds_lo": 0.0, "odds_hi": 0.0, "fog": "stranger", "spends": {}},
+	{"lever": "bargain", "offered": true, "why_not": "", "odds_lo": 0.2, "odds_hi": 0.56, "fog": "stranger",
+		"spends": {"rapport": -0.1, "iou": 1.0}, "currencies": [
+			{"currency": "favour", "offered": true, "why_not": "", "spends": {"rapport": -0.1}},
+			{"currency": "vote_trade", "offered": true, "why_not": "", "spends": {"iou": 1.0}},
+			{"currency": "aid", "offered": false, "why_not": "aid is not open yet", "spends": {}}]},
+	{"lever": "promise_date", "offered": true, "why_not": "", "odds_lo": 0.25, "odds_hi": 0.61, "fog": "stranger", "spends": {"promise": 1.0}},
+	{"lever": "friendship", "offered": false, "why_not": "you are not friends", "odds_lo": 0.0, "odds_hi": 0.0, "fog": "stranger", "spends": {"bond": -1.0}},
 ]
+const TOPICS := [{"topic": "family", "offered": true, "why_not": ""}, {"topic": "gossip", "offered": true, "why_not": ""},
+	{"topic": "flirt", "offered": false, "why_not": "not yet: the shadows come later"}]
 
 
 func _init() -> void:
@@ -35,27 +49,42 @@ func _init() -> void:
 	root.add_child(_scene)
 
 
+func _view(offered: Array, attempts: int) -> Dictionary:
+	return {"request_id": "req_1", "person_id": "", "name": "Cécile Aumont", "ask": "the pension age held",
+		"stance": "defend", "president": "Daniel Moucron", "fog": "stranger", "traits": ["Vain"],
+		"offered": offered, "topics": TOPICS, "attempts_left": attempts,
+		"choices": {"now": NOW, "people": [{"id": "p_x", "name": "Paul Ixe"}]}}
+
+
 func _process(_delta: float) -> bool:
 	_frame += 1
 	match _frame:
 		2:
-			_scene.attempted.connect(func(lever: String) -> void: _pressed.append(lever))
-			_scene.open({"request_id": "req_1", "person_id": "", "name": "Cécile Aumont",
-				"ask": "the pension age held", "stance": "defend", "president": "Daniel Moucron",
-				"fog": "stranger", "offered": OFFERED,
-				"topics": [{"topic": "family", "offered": true}, {"topic": "flirt", "offered": false, "why_not": "Not with her."}],
-				"attempts_left": 3})
+			_scene.attempted.connect(func(lever: String, args: Dictionary) -> void: _emitted.append([lever, args]))
+			_scene.talked.connect(func(topic: String, args: Dictionary) -> void: _emitted.append([topic, args]))
+			_scene.ended.connect(func() -> void: _emitted.append(["ended"]))
+			_scene.closed.connect(func() -> void: _emitted.append(["closed"]))
+			_scene.open(_view(OFFERED, 3))
 		5:
 			_check_open()
+			_check_spends()
 			_press(true)
 		9:
 			_press(false)
 		11:
-			if _pressed != ["argue"]:
-				_fail("a held click on Argue emitted %s" % [_pressed])
-			_scene.show_result("She will not move.", OFFERED, 0, "lever_argue_failure")
+			_check_clicks()
+			var spent := []
+			for row in OFFERED:
+				var r: Dictionary = row.duplicate()
+				r["offered"] = false
+				r["why_not"] = "no attempts left"
+				spent.append(r)
+			_scene.show_result("She will not move.", _view(spent, 0), "lever_argue_failure")
 		13:
 			_check_spent()
+			_scene.show_close("declined", Words.outcome("declined"))
+		15:
+			_check_closed()
 			_check_blocks()
 			_check_stance_files()
 			_check_files_compile()
@@ -65,42 +94,99 @@ func _process(_delta: float) -> bool:
 
 
 func _argue() -> Button:
-	for b in _scene._levers.get_children():
-		if b is Button and (b as Button).text == "Argue":
-			return b
-	return null
+	return _scene.verbs.lever_button("argue")
 
 
 func _check_open() -> void:
 	var labels: Array = []
-	for c in _scene._levers.get_children():
-		if c is Label:
-			labels.append((c as Label).text)
+	for c in _scene.verbs.find_children("*", "Label", true, false):
+		labels.append((c as Label).text)
 	if not labels.has("35–60 %"):
 		_fail("the argue lever's odds are not the range 35–60 %%: %s" % [labels])
-	var friendship: Button = null
-	for b in _scene._levers.get_children():
-		if b is Button and (b as Button).text == "Appeal to friendship":
-			friendship = b
-	if friendship == null or not friendship.disabled or friendship.tooltip_text != "You are not friends.":
+	var friendship: Button = _scene.verbs.lever_button("friendship")
+	if friendship == null or not friendship.disabled or friendship.tooltip_text != "you are not friends":
 		_fail("a lever the sim does not offer is not disabled with its reason")
 	if not _scene._fog.text.contains("stranger"):
 		_fail("the scene does not say why the odds are wide: %s" % _scene._fog.text)
+	if not _scene._traits.text.contains("Vain"):
+		_fail("the known traits are not shown: %s" % _scene._traits.text)
 	# Content's lines frame the want in a sentence; the placeholder says it bare.
 	if not _scene._line.text.contains("the pension age held"):
 		_fail("the opening line does not carry the asker's want through the dialogue: '%s'" % _scene._line.text)
 	if _scene.visiting != "Cécile Aumont":
 		_fail("the hold line's seam does not name the person")
+	var flirt: Button = _scene.verbs.topic_button("flirt")
+	if flirt == null or not flirt.disabled or flirt.tooltip_text == "":
+		_fail("flirting is not listed, refused, with its reason")
+
+
+## The spends, read before any click.
+func _check_spends() -> void:
+	var bargain: Button = _scene.verbs.lever_button("bargain")
+	var pick: OptionButton = bargain.get_parent().find_child("Currency", false, false) if bargain != null else null
+	if pick == null or pick.item_count != 3:
+		_fail("bargain has no currency choice of three")
+		return
+	var spend := _spend_of("bargain")
+	if not spend.contains("rapport with them -0.10"):
+		_fail("the favour's spend is not shown before the click: '%s'" % spend)
+	pick.select(1)
+	pick.item_selected.emit(1)
+	if not _spend_of("bargain").contains("IOU"):
+		_fail("choosing a vote trade does not show the IOU it costs: '%s'" % _spend_of("bargain"))
+	if not pick.is_item_disabled(2) or pick.get_item_tooltip(2) != "aid is not open yet":
+		_fail("aid is not refused with the sim's reason")
+	var promise: Button = _scene.verbs.lever_button("promise_date")
+	var due: OptionButton = promise.get_parent().find_child("Due", false, false) if promise != null else null
+	if due == null or due.item_count != LK.PROMISE_MAX_MONTHS - LK.PROMISE_MIN_MONTHS + 1:
+		_fail("the promise has no date choice over the sim's window")
+		return
+	if not _spend_of("promise_date").contains(Words.when(NOW + 12)) or not _spend_of("promise_date").contains("binds"):
+		_fail("the promise's date and that it binds are not shown: '%s'" % _spend_of("promise_date"))
+
+
+func _spend_of(lever: String) -> String:
+	var button: Button = _scene.verbs.lever_button(lever)
+	var cell := button.get_parent()
+	var grid := cell.get_parent()
+	return (grid.get_child(cell.get_index() + 2) as Label).text
+
+
+func _check_clicks() -> void:
+	if _emitted.size() != 1 or _emitted[0][0] != "argue":
+		_fail("a held click on Argue emitted %s" % [_emitted])
+	_emitted.clear()
+	_scene.verbs.lever_button("promise_date").pressed.emit()
+	_scene.verbs.lever_button("bargain").pressed.emit()
+	_scene.verbs.topic_button("gossip").pressed.emit()
+	if _emitted.size() != 3:
+		_fail("the verbs did not emit: %s" % [_emitted])
+		return
+	if int(_emitted[0][1].get("due_month", -1)) != NOW + 12:
+		_fail("the promise did not carry its picked date: %s" % [_emitted[0]])
+	if String(_emitted[1][1].get("currency", "")) != "vote_trade":
+		_fail("the bargain did not carry its picked currency: %s" % [_emitted[1]])
+	if String(_emitted[2][1].get("about", "")) != "p_x":
+		_fail("the gossip did not carry its third person: %s" % [_emitted[2]])
+	_emitted.clear()
 
 
 func _check_spent() -> void:
 	var argue := _argue()
-	if argue == null or not argue.disabled:
-		_fail("three attempts spent left Argue live")
-	if not _scene._attempts.text.contains("end the audience"):
-		_fail("no attempts left, and the scene does not say to end it: %s" % _scene._attempts.text)
+	if argue == null or not argue.disabled or argue.tooltip_text != "no attempts left":
+		_fail("attempts spent left Argue live, or without the sim's reason")
+	if not _scene.verbs._attempts.text.contains("end the audience"):
+		_fail("no attempts left, and the scene does not say to end it: %s" % _scene.verbs._attempts.text)
 	if _scene._result.text != "She will not move.":
 		_fail("the result is not shown")
+
+
+func _check_closed() -> void:
+	if _scene._end.text != "Leave" or _scene.verbs.visible:
+		_fail("after the sim closed it, the scene does not offer only Leave")
+	_scene._end.pressed.emit()
+	if _emitted != [["closed"]]:
+		_fail("Leave emitted %s, not closed" % [_emitted])
 
 
 func _check_blocks() -> void:
@@ -120,10 +206,10 @@ func _check_files_compile() -> void:
 		_fail("no DialogueManager autoload to compile with")
 		return
 	var titles := ["opening", "close_settled", "close_promised", "close_declined"]
-	for lever in AudienceScene.LEVER_LABEL.keys():
+	for lever in Words.LEVER_LABEL.keys():
 		titles.append("lever_%s_success" % lever)
 		titles.append("lever_%s_failure" % lever)
-	for topic in AudienceScene.TOPIC_LABEL.keys():
+	for topic in Words.TOPIC_LABEL.keys():
 		titles.append("topic_%s" % topic)
 	var dir := DirAccess.open("res://data/audiences")
 	for file in dir.get_files():

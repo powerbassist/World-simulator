@@ -67,6 +67,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
+##     (also promise, spent, closed, diary; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
@@ -320,6 +322,11 @@ var _months := 0
 ## first one's offered days; --audience books its first free day and reaches it, so
 ## the scene is up.
 var _request := ""
+## V5.2b b2: --audience-step plays the scene on: argue (one lever tried), promise (a
+## promise made), spent (three attempts gone), closed (End pressed), diary (a
+## promise made, the audience left, the Diary open on "Your word"); bargain, dates
+## and gossip open that verb's choice.
+var _audience_step := ""
 ## V5.1-c2.3: open a domain through its sidebar entry (its first tab), so a frame
 ## shows the entry marked and the tab open -- V2.1c's --cluster, for the sidebar.
 var _domain := ""
@@ -797,6 +804,9 @@ func _init() -> void:
 			_mid_term = true
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
+		elif args[i] == "--audience-step" and i + 1 < args.size():
+			_audience_step = args[i + 1]
+			_request = "--audience"
 		elif args[i] == "--months" and i + 1 < args.size():
 			_months = int(args[i + 1])
 		elif args[i] == "--cards" and i + 1 < args.size():
@@ -904,6 +914,8 @@ func _process(_delta: float) -> bool:
 		_stage_console()
 	if _term.split(":").size() > 2 and _frame == _frames_wanted - 2 and not _menu:
 		_stage_term_nested()
+	if _audience_step in ["bargain", "dates", "gossip"] and _frame == _frames_wanted - 2 and not _menu:
+		_open_audience_pick()
 	if _frame == 3 and not _menu:
 		for n in _cards:
 			_main._hud.inbox.push("Card %d" % (n + 1), "A notification body long enough to wrap onto a second line in the column.")
@@ -912,6 +924,8 @@ func _process(_delta: float) -> bool:
 			_main._windows.mark_all_dirty()
 		if _request != "":
 			_stage_requests()
+		if _audience_step != "":
+			_stage_audience_step()
 		if _mid_term:
 			_main._state.player().months_in_term = 7
 			_main._enforce_term_start_programme()
@@ -1915,8 +1929,42 @@ func _stage_requests() -> void:
 	for date in Audiences.offered_dates(_main._state, ns, String(first["id"])):
 		if bool(date["free"]):
 			Audiences.book(_main._state, ns, _main._loader, String(first["id"]), date)
-			_main._resolve_appointments(int(date["year"]), int(date["month"]), int(date["day"]))
+			# The booked day through the day's own door, its month set as the
+			# month handler sets it: Levers.open() refuses a day still ahead.
+			_main._state.year = int(date["year"])
+			_main._state.month = int(date["month"])
+			_main._clock.year = int(date["year"])
+			_main._clock.month = int(date["month"])
+			_main._on_day_advanced(int(date["year"]), int(date["month"]), int(date["day"]))
 			break
+
+
+func _stage_audience_step() -> void:
+	var scene = load("res://src/ui/audience_driver.gd").scene_of(_main)
+	var verbs = scene.verbs
+	match _audience_step:
+		"argue", "closed":
+			verbs.lever_button("argue").pressed.emit()
+		"promise", "diary":
+			verbs.lever_button("promise_date").pressed.emit()
+		"spent":
+			verbs.lever_button("argue").pressed.emit()
+			verbs.topic_button("family").pressed.emit()
+			verbs.topic_button("opinion").pressed.emit()
+	if _audience_step == "closed" or _audience_step == "diary":
+		scene._end.pressed.emit()
+	if _audience_step == "diary":
+		scene._end.pressed.emit()
+		_main._windows.open("calendar")
+
+
+func _open_audience_pick() -> void:
+	var verbs = load("res://src/ui/audience_driver.gd").scene_of(_main).verbs
+	var host: Control = verbs.lever_button("bargain") if _audience_step == "bargain" else (
+		verbs.lever_button("promise_date") if _audience_step == "dates" else verbs.topic_button("gossip"))
+	var pick := host.get_parent().find_child({"bargain": "Currency", "dates": "Due", "gossip": "About"}[_audience_step], false, false) as OptionButton
+	if pick != null:
+		pick.show_popup()
 
 
 func _tick_months(months: int) -> void:
