@@ -28,6 +28,8 @@ var _status: Label
 var _slot_list: VBoxContainer
 var _save_row: HBoxContainer
 var _dirty := true
+var _save_btn: Button
+var _blocked := ""
 
 
 func _ready() -> void:
@@ -54,14 +56,15 @@ func _ready() -> void:
 	_name_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_save_row.add_child(_name_field)
 
-	var save_btn := Button.new()
-	save_btn.text = tr("Save")
-	save_btn.pressed.connect(_on_save_pressed)
-	_save_row.add_child(save_btn)
+	_save_btn = Button.new()
+	_save_btn.text = tr("Save")
+	_save_btn.pressed.connect(_on_save_pressed)
+	_save_row.add_child(_save_btn)
 
 	_status = Label.new()
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_status)
+	block_save(_blocked)
 
 	PanelKit.line(root, tr("Saved games:"), PanelKit.Tone.PLAIN)
 
@@ -193,7 +196,28 @@ func _build_delete_button(slot: String) -> Button:
 	return del_btn
 
 
+## V5.2b: why saving is refused right now, "" when it is not. An open audience's
+## session is never saved (spec C11), so a save made mid-audience would load as a
+## no-show priced as a decline -- and a save and a load must never cost the player
+## (the parent's call, 2026-10-24). The audience's wiring sets and clears it.
+func block_save(reason: String) -> void:
+	# Said on the panel, not only on the hover: a dimmed Save alone does not say why.
+	if _status != null and (reason != "" or _status.text == _blocked):
+		_status.text = reason
+	_blocked = reason
+	if _save_btn != null:
+		_save_btn.disabled = reason != ""
+		_save_btn.tooltip_text = reason
+
+
+func save_blocked() -> String:
+	return _blocked
+
+
 func _on_save_pressed() -> void:
+	if _blocked != "":
+		_status.text = _blocked
+		return
 	var slot := _name_field.text.strip_edges()
 	if slot.is_empty():
 		_status.text = tr("enter a save name first")

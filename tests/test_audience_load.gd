@@ -3,12 +3,15 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_audience_load.gd
 ## Non-zero exit on any failure.
 ##
-## V5.2b b2, a load while an audience is open (QA's R3 on #117). Levers' rule is
-## that a session is never left unclosed (Systems' R3 on #113):
-##   - the audience is closed in the game it was opened in, the discarded one;
-##   - the scene comes down and the hold line no longer names the person;
-##   - the loaded game is the save's: a save made mid-audience holds the request,
-##     and the sim's no-show prices it -- the UI opens no session on it.
+## V5.2b b2, saving and loading around an open audience.
+##   - SAVING IS REFUSED while the scene is open (the parent's call, 2026-10-24: a
+##     save made mid-audience reloaded as a no-show priced as a decline, and a save
+##     and a load must never cost the player): the panel's Save is disabled with the
+##     reason, a press anyway writes no slot, the dev console's save refuses too;
+##   - a load while it is open (QA's R3 on #117), of a save made before the day:
+##     the audience is closed in the discarded game (Levers' rule: never left
+##     unclosed), the scene comes down, the hold line no longer names the person,
+##     the loaded request is booked again, and saving is open again.
 ## The gossip picker (QA's R1 on #117) lists the people the president knows
 ## first, then by name.
 
@@ -20,6 +23,7 @@ const HoldReason = preload("res://src/ui/hold_reason.gd")
 const Capital = preload("res://src/core/capital.gd")
 
 const SLOT := "audience_load_test"
+const MID := "audience_mid_test"
 
 var _failures: Array[String] = []
 var _main
@@ -42,7 +46,8 @@ func _process(_delta: float) -> bool:
 			_open_an_audience()
 		5:
 			_check_picker()
-			_save_and_load()
+			_check_save_refused()
+			_load()
 		8:
 			_check_loaded()
 			_finish()
@@ -74,6 +79,9 @@ func _open_an_audience() -> void:
 	for date in Audiences.offered_dates(state, ns, _request):
 		if bool(date["free"]):
 			Audiences.book(state, ns, loader, _request, date)
+			# Saved while booked, before the day: the load below goes back to it.
+			if SaveManager.save_game(state, _main._clock, SLOT) != "":
+				_fail("premise: the save before the day failed")
 			state.year = int(date["year"])
 			state.month = int(date["month"])
 			_main._on_day_advanced(int(date["year"]), int(date["month"]), int(date["day"]))
@@ -107,12 +115,33 @@ func _check_picker() -> void:
 		_fail("premise: no name with an accented capital in the picker to pin the fold")
 
 
-func _save_and_load() -> void:
+func _check_save_refused() -> void:
+	var panel = _main._save_load_panel
+	var reason := "Finish the audience first"
+	if panel.save_blocked() != reason or not panel._save_btn.disabled or panel._save_btn.tooltip_text != reason 			or panel._status.text != reason:
+		_fail("Save is not refused with its reason while the audience is open: '%s'" % panel.save_blocked())
+	panel._name_field.text = MID
+	panel._save_btn.pressed.emit()
+	var console = _console()
+	if console == null:
+		_fail("premise: the game scene has no dev console in a debug build")
+	var said: String = console.run_command("save " + MID) if console != null else ""
+	if SaveManager.list_slots().has(MID):
+		_fail("a save was written while the audience was open")
+		SaveManager.delete_slot(MID)
+	if console != null and not said.contains(reason):
+		_fail("the dev console's save did not refuse with the reason: '%s'" % said)
+
+
+func _console():
+	for child in _main.get_children():
+		if child.has_method("run_command"):
+			return child
+	return null
+
+
+func _load() -> void:
 	_before = _main._state
-	var error := SaveManager.save_game(_main._state, _main._clock, SLOT)
-	if error != "":
-		_fail("premise: the save failed: %s" % error)
-		return
 	_main._on_load_requested(SLOT)
 
 
@@ -128,8 +157,10 @@ func _check_loaded() -> void:
 		_fail("the discarded game's session survived the load")
 	if HoldReason.show(_main).contains(_name):
 		_fail("the hold line still names the person after the load: '%s'" % HoldReason.show(_main))
-	if String(Audiences.request(_main._state.player(), _request).get("status", "")) != "held":
-		_fail("the save made mid-audience did not keep the request held: %s" % Audiences.request(_main._state.player(), _request))
+	if String(Audiences.request(_main._state.player(), _request).get("status", "")) != "booked":
+		_fail("the load did not bring back the booked request: %s" % Audiences.request(_main._state.player(), _request))
+	if _main._save_load_panel.save_blocked() != "" or _main._save_load_panel._save_btn.disabled:
+		_fail("saving stayed refused after the audience came down")
 
 
 func _fail(message: String) -> void:
@@ -137,6 +168,7 @@ func _fail(message: String) -> void:
 
 
 func _finish() -> void:
+	SaveManager.delete_slot(SLOT)
 	if _failures.is_empty():
 		print("test_audience_load: all checks passed")
 		quit(0)
