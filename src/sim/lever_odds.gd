@@ -86,9 +86,16 @@ static func fog_width(knowledge: float) -> float:
 ## The printed range around the true odds `p`, as (lo, hi). The seeded offset
 ## puts the truth anywhere inside; a range that would leave [0, 1] is shifted
 ## back, never narrowed, so the width is always B4's and the truth stays inside.
+##
+## THE OFFSET IS SEEDED BY THE KNOWLEDGE TOO (QA's R1 on #113). With one offset
+## per (person, lever), two readings at different widths -- a topic taught
+## something between them -- gave the truth back exactly:
+## offset = (lo2 - lo1) / (w1 - w2). Re-drawn at every FOG_SEED_STEP of knowledge,
+## repeated readings can only intersect, which is honest narrowing.
 static func shown_range(person_id: String, lever: String, p: float, knowledge: float) -> Vector2:
 	var w := fog_width(knowledge)
-	var offset := Cycle.unit_pair(person_id, "%s:%s" % [K.SALT_FOG, lever], 0)
+	var step := roundi(knowledge / K.FOG_SEED_STEP)
+	var offset := Cycle.unit_pair(person_id, "%s:%s" % [K.SALT_FOG, lever], step)
 	var lo := clampf(p - w * offset, 0.0, 1.0 - w)
 	return Vector2(lo, lo + w)
 

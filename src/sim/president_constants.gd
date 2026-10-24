@@ -17,9 +17,17 @@ const KNOWLEDGE_KNOWN := 0.67
 const BONDS := ["friend", "close", "rival", "enemy", "affair"]
 
 ## What the president can owe: a dated promise (broken, it is a lie revealed at
-## its date) or an IOU, the council's vote trade extended to people.
-const COMMITMENT_KINDS := ["promise", "iou"]
+## its date), an IOU, the council's vote trade extended to people, or -- V5.2b
+## b2.1 -- a delegation, a minister's word in the president's name that the want
+## is served (bands-v5.2.md "Delegation's commitment"; broken, a betrayal, not a lie).
+const COMMITMENT_KINDS := ["promise", "iou", "delegated"]
 
 ## What an act leaves behind: the author's four corruption currencies, ordered
 ## by how much evidence each leaves, and the affair (spec, the currencies table).
 const EVIDENCE_KINDS := ["favour", "party_money", "personal_wealth", "diverted_budget", "affair"]
+
+## The judged commitments the Diary shows (V5.2b b2.1): a verdict, and how long it
+## is remembered -- Audiences' RESOLVED_KEPT_MONTHS, so a promise's end and the
+## request it answered leave the record together.
+const VERDICTS := ["kept", "broken", "void"]
+const JUDGED_KEPT_MONTHS := 12

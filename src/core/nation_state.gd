@@ -1460,6 +1460,12 @@ var party_money_delta_eur_m: Dictionary[String, float] = {}
 ## {kind, person_id, object, made_month, due_month}, months absolute.
 var commitments: Array[Dictionary] = []
 
+## V5.2b b2.1. The commitments judged at their date, remembered for the Diary:
+## {kind, person_id, object, made_month, due_month, verdict, judged_month},
+## pruned after president_constants' JUDGED_KEPT_MONTHS. absent_ok, no bump: an
+## older save had judged nothing, which is what absent reads.
+var commitments_judged: Array[Dictionary] = []
+
 ## The hidden evidence a corrupt act or an affair left, one row each:
 ## {kind, person_id, size, month}, month absolute.
 var exposure_evidence: Array[Dictionary] = []

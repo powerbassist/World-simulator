@@ -23,6 +23,8 @@ const President = preload("res://src/sim/president.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const PK = preload("res://src/sim/president_constants.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
 
 const PLAYER := "FRA"
 const BANDS := [0.165, 0.5, 0.835]
@@ -62,6 +64,13 @@ func _init() -> void:
 	_check_a_paid_iou_costs_nothing()
 	_check_a_vanished_want_is_void()
 	_check_the_diary_can_read_every_commitment()
+	_check_delegation_commits_the_government()
+	_check_a_delegated_commitment_is_judged()
+	_check_judged_rows_are_kept_and_pruned()
+	_check_bargain_lists_its_currencies()
+	_check_the_fog_does_not_leak_across_readings()
+	_check_an_agreed_audience_left_open_settles()
+	_check_a_lever_tried_again_rolls_afresh()
 
 	_finish()
 
@@ -693,6 +702,198 @@ func _check_the_diary_can_read_every_commitment() -> void:
 		_fail("the earliest commitment is not the lever's promise: %s" % [rows[0]])
 	if typeof(rows[1]["due_month"]) != TYPE_INT or String(rows[1]["kind"]) != "iou":
 		_fail("the later commitment came back %s" % [rows[1]])
+
+
+## b2.1 (bands-v5.2.md "Delegation's commitment"): to delegate is to have a
+## minister answer in the president's name, a commitment that the want is served
+## by BOOKING_HORIZON_MONTHS on.
+func _check_delegation_commits_the_government() -> void:
+	var c := _pending()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var row: Dictionary = Audiences.request(ns, String(c["id"]))
+	var r: Dictionary = Audiences.delegate(state, ns, _loader, String(c["id"]))
+	var rows: Array[Dictionary] = President.commitments_with(ns, String(row["person_id"]))
+	if not bool(r.get("ok", false)) or rows.size() != 1:
+		_fail("a delegation left %d commitments, not 1 (%s)" % [rows.size(), r])
+		return
+	if String(rows[0]["kind"]) != "delegated" or String(rows[0]["object"]) != String(row["object"]) \
+			or int(rows[0]["due_month"]) != _now(state) + CalendarK.BOOKING_HORIZON_MONTHS:
+		_fail("the delegation's commitment is %s" % [rows[0]])
+
+
+## At its date a delegated commitment is kept (rapport +PROMISE_KEPT_RAPPORT) or
+## broken: the deferred share of the decline's grudge lands, plus the IOU's
+## betrayal -- and it is not a lie, so knowledge stands.
+func _check_a_delegated_commitment_is_judged() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var kept := _person_with_want(ns, true)
+	var broken := _person_with_want(ns, false, String(kept.get("id", "")))
+	if kept.is_empty() or broken.is_empty():
+		return
+	var due := _now(state) + CalendarK.BOOKING_HORIZON_MONTHS
+	President.commit(state, ns, _loader, "delegated", kept["id"], kept["object"], due)
+	President.commit(state, ns, _loader, "delegated", broken["id"], broken["object"], due)
+	President.learn(state, ns, _loader, broken["id"], 0.4)
+	var r_kept := President.rapport(ns, kept["id"])
+	var r_broken := President.rapport(ns, broken["id"])
+	var g_broken := float(ns.person_grudges.get(broken["id"], 0.0))
+	var person = _loader.person_by_id[broken["id"]]
+	var deferred := Characters.refusal_grudge(ns, person, AK.DECLINE_GRUDGE * (1.0 - AK.DELEGATE_GRUDGE_SHARE))
+	_set_month(state, due)
+	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+	if (report["kept"] as Array).size() != 1 or (report["broken"] as Array).size() != 1:
+		_fail("delegated commitments at their date: %s" % [report])
+	if absf(President.rapport(ns, kept["id"]) - r_kept - LK.PROMISE_KEPT_RAPPORT) > 0.000001:
+		_fail("a kept delegation moved rapport by %.4f" % (President.rapport(ns, kept["id"]) - r_kept))
+	if absf(President.rapport(ns, broken["id"]) - (r_broken - LK.IOU_BETRAYAL_RAPPORT)) > 0.000001:
+		_fail("a broken delegation left rapport at %.4f" % President.rapport(ns, broken["id"]))
+	if float(ns.person_grudges.get(broken["id"], 0.0)) < g_broken + deferred - 0.000001:
+		_fail("a broken delegation's grudge rose by %.4f, under the deferred %.4f" % [float(ns.person_grudges.get(broken["id"], 0.0)) - g_broken, deferred])
+	if President.knowledge(ns, broken["id"]) != 0.4:
+		_fail("a broken delegation collapsed knowledge as a lie does")
+
+
+## Every judged commitment is kept for the Diary with its verdict, months as int,
+## through a save, and pruned after JUDGED_KEPT_MONTHS.
+func _check_judged_rows_are_kept_and_pruned() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var owed := _person_with_want(ns, false)
+	if owed.is_empty():
+		return
+	var due := _now(state) + LK.PROMISE_MIN_MONTHS
+	President.commit(state, ns, _loader, "promise", owed["id"], owed["object"], due)
+	President.commit(state, ns, _loader, "promise", owed["id"], "programme:no_such_entry", due)
+	_set_month(state, due)
+	Levers.tick_month(state, _loader, METERS)
+	var loaded = NationState.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
+	var rows: Array[Dictionary] = President.judged_commitments(loaded)
+	if rows.size() != 2:
+		_fail("the judged register holds %d rows, not 2: %s" % [rows.size(), rows])
+		return
+	var verdicts := [String(rows[0]["verdict"]), String(rows[1]["verdict"])]
+	verdicts.sort()
+	if verdicts != ["broken", "void"] or typeof(rows[0]["judged_month"]) != TYPE_INT or int(rows[0]["judged_month"]) != due:
+		_fail("the judged rows came back %s" % [rows])
+	state.nations[PLAYER] = loaded
+	_set_month(state, due + PK.JUDGED_KEPT_MONTHS + 1)
+	Levers.tick_month(state, _loader, METERS)
+	if not President.judged_commitments(loaded).is_empty():
+		_fail("judged rows older than %d months were not pruned" % PK.JUDGED_KEPT_MONTHS)
+
+
+## The bargain row names each currency it can pay in, aid offered false with its
+## reason, and its own spends are the favour's alone (QA's R2: one is paid); the
+## promise row carries its window as absolute months.
+func _check_bargain_lists_its_currencies() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var shown: Array[Dictionary] = Levers.offered(c["state"], c["ns"], _loader, c["session"])
+	var bargain := _row(shown, "bargain")
+	var by := {}
+	for cur in bargain.get("currencies", []):
+		by[String(cur["currency"])] = cur
+	if not by.has("favour") or not by.has("vote_trade") or not by.has("aid"):
+		_fail("the bargain row's currencies are %s" % [bargain.get("currencies", [])])
+		return
+	if not bool(by["favour"]["offered"]) or not bool(by["vote_trade"]["offered"]) or bool(by["aid"]["offered"]) or String(by["aid"]["why_not"]) == "":
+		_fail("the currencies' offers are %s" % [by])
+	if (bargain["spends"] as Dictionary).has("iou") or float(by["vote_trade"]["spends"].get("iou", 0.0)) != 1.0:
+		_fail("the bargain's spends %s overstate what one bargain pays" % [bargain["spends"]])
+	var now := _now(c["state"])
+	var dates: Dictionary = _row(shown, "promise_date").get("dates", {})
+	if int(dates.get("earliest", -1)) != now + LK.PROMISE_MIN_MONTHS or int(dates.get("latest", -1)) != now + LK.PROMISE_MAX_MONTHS:
+		_fail("the promise row's dates are %s" % [dates])
+
+
+## QA's R1: two readings of one lever at different widths must not solve the true
+## odds. With one offset for every width, offset = (lo2 - lo1) / (w1 - w2) gives the
+## truth back exactly.
+func _check_the_fog_does_not_leak_across_readings() -> void:
+	var p := 0.5
+	var k1 := 0.40
+	var k2 := 0.47
+	var w1 := LeverOdds.fog_width(k1)
+	var w2 := LeverOdds.fog_width(k2)
+	var solved := 0
+	var pairs := 0
+	for person in _loader.people[PLAYER]:
+		for lever in LK.LEVERS:
+			var a: Vector2 = LeverOdds.shown_range(person.id, lever, p, k1)
+			var b: Vector2 = LeverOdds.shown_range(person.id, lever, p, k2)
+			pairs += 1
+			var offset := (b.x - a.x) / (w1 - w2)
+			if absf(a.x + w1 * offset - p) < 0.000001:
+				solved += 1
+	if solved * 20 > pairs:
+		_fail("two readings at knowledge %.2f and %.2f give the true odds back in %d of %d cases" % [k1, k2, solved, pairs])
+
+
+## QA's R3: an audience that reached an agreement and was never closed settles as
+## that agreement at the month's end -- not as a no-show, and with no decline price.
+func _check_an_agreed_audience_left_open_settles() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	var pid := String(s["person_id"])
+	President.learn(state, ns, _loader, pid, 1.0)
+	President.adjust_rapport(state, ns, _loader, pid, 1.0)
+	President.set_bond(state, ns, _loader, pid, "close")
+	if not bool(Levers.attempt(state, ns, _loader, s, "friendship").get("success", false)):
+		_fail("friendship at its ceiling did not work; the staging needs another seed")
+		return
+	var grudge := float(ns.person_grudges.get(pid, 0.0))
+	_advance(state)
+	Audiences.tick_month(state, _loader, METERS)
+	var status := String(Audiences.request(ns, String(c["id"]))["status"])
+	if status != AK.STATUS_SETTLED or float(ns.person_grudges.get(pid, 0.0)) != grudge:
+		_fail("an agreed audience left open closed as '%s' with grudge %.4f -> %.4f" % [status, grudge, float(ns.person_grudges.get(pid, 0.0))])
+
+
+## QA's R4: the same lever tried again rolls afresh -- the attempt is in the
+## roll's salt, so a failure can be followed by a success.
+func _check_a_lever_tried_again_rolls_afresh() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var pid := ""
+	for person in _loader.people[PLAYER]:
+		if person.id != President.leader_id(ns) and not person.traits.has("stubborn"):
+			pid = person.id
+			break
+	var turned := 0
+	for n in range(1, 40):
+		var s := _stage(state, ns, pid, "again%d" % n)
+		ns.person_knowledge[pid] = 0.5
+		ns.person_rapport[pid] = 1.0
+		var first: Dictionary = Levers.attempt(state, ns, _loader, s, "argue")
+		var second: Dictionary = Levers.attempt(state, ns, _loader, s, "argue")
+		Levers.close(state, ns, _loader, s)
+		if not bool(first.get("success", true)) and bool(second.get("success", false)):
+			turned += 1
+	if turned == 0:
+		_fail("in 39 audiences no failed argue was followed by a success: the attempt is not in the roll")
+
+
+## A France game with its first request still pending: {state, ns, id}, or {}.
+func _pending() -> Dictionary:
+	var state = _plain_game()
+	var ns = state.player()
+	for m in range(24):
+		Audiences.tick_month(state, _loader, METERS)
+		var lane: Array[Dictionary] = Audiences.pending(ns)
+		if not lane.is_empty():
+			return {"state": state, "ns": ns, "id": String(lane[0]["id"])}
+		_advance(state)
+	_fail("no request arrived in 24 months")
+	return {}
 
 
 func _plain_game():

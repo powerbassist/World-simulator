@@ -55,9 +55,7 @@ const AK = preload("res://src/sim/audience_constants.gd")
 const PLAYER := "FRA"
 const WARM_MONTHS := 12
 const BANDS := {"stranger": 0.165, "acquaintance": 0.5, "known": 0.835}
-const GAIN := 1.0
-const GAIN_FLATTER := 0.7
-const WEIGHTS := {"grudge": 1.0, "rapport": 0.5, "commitment": 0.15, "bond": 0.30}
+const LW = preload("res://tools/lever_weights.gd")
 
 var _loader
 
@@ -85,7 +83,7 @@ func _init() -> void:
 		if person.id != President.leader_id(ns):
 			people.append(person)
 	var out := {"schema": 1, "warm_months": WARM_MONTHS, "approval": float(ns.overall_approval_pct),
-		"weights": WEIGHTS, "gain_flatter": GAIN_FLATTER}
+		"weights": LW.WEIGHTS, "gain_flatter": LW.GAIN_FLATTER}
 	out["L1"] = _l1(ns, people)
 	out["L2"] = _l2(ns, people)
 	out["bands"] = _bands(out)
@@ -195,11 +193,9 @@ func _l2(ns, people: Array) -> Dictionary:
 						if p < 0.0:
 							continue
 						odds[lever] = p
-						cost[lever] = _spend(person, lever, p)
+						cost[lever] = LW.spend(person, lever, p)
 						offered[lever] += 1
-						var value := p * (GAIN_FLATTER if lever == "flatter" else GAIN)
-						for r in cost[lever]:
-							value -= float(WEIGHTS[r]) * float(cost[lever][r])
+						var value := LW.net(person, lever, p)
 						if value > top_value:
 							top_value = value
 							top = lever
@@ -222,26 +218,8 @@ func _l2(ns, people: Array) -> Dictionary:
 	return {"best_share": shares, "offered_cells": offered, "dominated_pairs": pairs}
 
 
-## The expected spend of one attempt, per register (the levers table, paid win or
-## lose; flatter's backfire only on a failure).
-func _spend(person, lever: String, p: float) -> Dictionary:
-	match lever:
-		"bargain":
-			return {"rapport": K.BARGAIN_FAVOUR_RAPPORT}
-		"promise_date":
-			return {"commitment": 1.0}
-		"pressure":
-			return {"rapport": K.PRESSURE_RAPPORT, "grudge": K.PRESSURE_GRUDGE * Characters.grudge_intake(person)}
-		"flatter":
-			if person.traits.has("principled") and float(person.social_skill) > K.FLATTER_BACKFIRE_SKILL:
-				return {"rapport": (1.0 - p) * K.FLATTER_BACKFIRE_RAPPORT}
-		"friendship":
-			return {"bond": 1.0}
-	return {}
-
-
 func _no_costlier(a: Dictionary, b: Dictionary) -> bool:
-	for r in WEIGHTS:
+	for r in LW.WEIGHTS:
 		if float(a.get(r, 0.0)) > float(b.get(r, 0.0)) + 0.000000001:
 			return false
 	return true

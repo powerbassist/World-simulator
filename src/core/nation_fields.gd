@@ -331,6 +331,7 @@ const FIELDS := [
 	["person_wealth_delta_eur_m", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2a: absent is no change
 	["party_money_delta_eur_m", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2a: absent is no change
 	["commitments", DEEP, ROWS, [], true],  # V5.2a: absent is nothing promised
+	["commitments_judged", DEEP, ROWS, [], true],  # V5.2b b2.1: absent is nothing judged yet
 	["exposure_evidence", DEEP, ROWS, [], true],  # V5.2a: absent is nothing left behind
 	["audience_requests", DEEP, ROWS, [], true],  # V5.2b: absent is nobody has asked
 	["audience_asked_month", DEEP, INT_MAP, {}, true],  # V5.2b: absent is nobody has asked
