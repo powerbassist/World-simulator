@@ -23,6 +23,7 @@ const CharacterK = preload("res://src/sim/character_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const Person = preload("res://src/core/person.gd")
+const CharacterK_Act = preload("res://src/sim/character_act_constants.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -316,14 +317,21 @@ func _check_refusal_price_reads_the_traits() -> void:
 		if not is_equal_approx(float(applied["grudge"]), float(ns.person_grudges["FRA_case"])) \
 				or not is_equal_approx(float(applied["loyalty"]), -0.05):
 			_fail("price_refusal returned %s, not what it applied" % [applied])
-	# The clamp: a grudge near the top takes only the room left, and says so.
-	var full = NationState.new()
-	var p = Person.new()
-	p.id = "FRA_full"
-	full.person_grudges["FRA_full"] = 0.95
-	var near_top: Dictionary = Characters.price_refusal(full, p, 0.2, 0.0)
-	if not is_equal_approx(float(full.person_grudges["FRA_full"]), 1.0) or not is_equal_approx(float(near_top["grudge"]), 0.05):
-		_fail("a refusal past the top did not clamp, or reported %s" % [near_top])
+	# The ceiling: a refusal brings a person to the brief's leak, never past it --
+	# near the ceiling it takes only the room left and says so, at or over it
+	# nothing, and refusal_grudge() (the card's price) agrees with what is paid.
+	var ceiling: float = CharacterK_Act.GRUDGE_REFUSAL_CEILING
+	for start in [ceiling - 0.05, ceiling, 0.95]:
+		var near = NationState.new()
+		var p = Person.new()
+		p.id = "FRA_near"
+		near.person_grudges["FRA_near"] = start
+		var promised: float = Characters.refusal_grudge(near, p, 0.2)
+		var paid: Dictionary = Characters.price_refusal(near, p, 0.2, 0.0)
+		var want := maxf(0.0, ceiling - start)
+		if not is_equal_approx(float(paid["grudge"]), want) or not is_equal_approx(promised, want):
+			_fail("a refusal from %.3f wrote %.3f (promised %.3f), wanted %.3f -- the ceiling is %.3f" % [
+				start, float(paid["grudge"]), promised, want, ceiling])
 
 
 ## The stance-aware read the request trigger asks: a sponsor is served when the

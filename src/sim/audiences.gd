@@ -127,13 +127,13 @@ static func answers(state, ns, loader, request_id: String) -> Dictionary:
 	return {"book": book, "delegate": {"ok": true, "reason": ""}, "decline": {"ok": true, "reason": ""}}
 
 
-## What a decline -- or the lapse, or a no-show -- writes on the person's card,
-## before any clamp: the card names it (B3).
+## What a decline -- or the lapse, or a no-show -- writes on the person's card
+## now, through the same ceiling the price pays: the card names it (B3).
 static func decline_price(ns, loader, request_id: String) -> Dictionary:
 	var row := _row(ns, request_id)
 	var person = loader.person_by_id.get(String(row.get("person_id", "")))
-	var intake: float = Characters.grudge_intake(person) if person != null else 1.0
-	return {"grudge": K.DECLINE_GRUDGE * intake, "loyalty": K.DECLINE_LOYALTY, "rapport": K.DECLINE_RAPPORT}
+	var grudge: float = Characters.refusal_grudge(ns, person, K.DECLINE_GRUDGE) if person != null else K.DECLINE_GRUDGE
+	return {"grudge": grudge, "loyalty": K.DECLINE_LOYALTY, "rapport": K.DECLINE_RAPPORT}
 
 
 # --- Commands -------------------------------------------------------------------------

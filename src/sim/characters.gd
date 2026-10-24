@@ -595,15 +595,26 @@ static func grudge_intake(person) -> float:
 	return factor
 
 
+## V5.2b. The grudge a refusal of `grudge` would write on this person now: the
+## trait intake above, and never past GRUDGE_REFUSAL_CEILING -- a refusal brings
+## a person to the leak, never past it. The card's price and the price paid read
+## this one function.
+static func refusal_grudge(ns, person, grudge: float) -> float:
+	if grudge <= 0.0:
+		return grudge
+	var room := maxf(0.0, CK.GRUDGE_REFUSAL_CEILING - float(ns.person_grudges.get(person.id, 0.0)))
+	return minf(grudge * grudge_intake(person), room)
+
+
 ## V5.2b. The price of a refusal -- a declined, delegated or lapsed request, a
 ## failed lever -- on the two registers people-model 14.1 names, the grudge
-## through the trait intake above. The one door for a writer outside this file:
+## through refusal_grudge() above. The one door for a writer outside this file:
 ## Audiences and Levers price here, so this file stays the one writer of both
 ## registers. Returns what was applied, after the clamps, for the card.
 static func price_refusal(ns, person, grudge: float, loyalty: float) -> Dictionary:
 	var grudge_before := float(ns.person_grudges.get(person.id, 0.0))
 	var loyalty_before := float(ns.person_loyalty.get(person.id, 0.0))
-	_adjust_grudge(ns, person, grudge)
+	ns.person_grudges[person.id] = clampf(grudge_before + refusal_grudge(ns, person, grudge), 0.0, 1.0)
 	_adjust_loyalty(ns, person.id, loyalty)
 	return {
 		"grudge": float(ns.person_grudges[person.id]) - grudge_before,

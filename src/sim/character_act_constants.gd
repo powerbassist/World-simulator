@@ -190,6 +190,16 @@ const CHALLENGE_VAIN_DISCOUNT := 0.1
 ## because leaking is what a frustrated ally does on the way out.
 const GRUDGE_BRIEF_THRESHOLD := 0.45
 
+## V5.2b. The highest a REFUSAL (a declined, delegated or lapsed audience
+## request) can lift a grudge: one month's decay and one brief's relief above the
+## brief gate. Next month's decay leaves the person at the gate, one brief fires,
+## and its relief takes them under it -- a refusal brings a person to the leak,
+## never past it. MEASURED (the b1 re-baseline, 2026-10-24): uncapped, a
+## principled person refused once sat 0.25 over the gate and leaked every month
+## for a year, and refusing everyone for a term flipped France's 2032 vote in 28
+## of 41 regimes. The rungs above the brief stay the wants' own.
+const GRUDGE_REFUSAL_CEILING := GRUDGE_BRIEF_THRESHOLD + GRUDGE_BRIEF_RELIEF + GRUDGE_DECAY_MONTHLY
+
 # --- Prices ----------------------------------------------------------------------------
 
 ## All prices are POINTS of bloc_offset, NEGATIVE (convention 1 above), weighted
