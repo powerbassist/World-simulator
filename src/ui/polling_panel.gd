@@ -48,8 +48,6 @@ var _close_button: Button
 
 ## What the previous poll said, so the change column compares like with like:
 ## two noised figures, not a noised one against a true one.
-var _shown_poll_id := -1
-var _shown := {}
 var _previous := {}
 
 
@@ -122,7 +120,7 @@ func setup(state, loader = null) -> void:
 	_chamber = "assembly"
 	if loader != null and loader.nations.has(state.player().id):
 		_chamber = String(loader.nations[state.player().id].chamber_name)
-	_title.text = tr("POLLING — %s") % _state.player().id
+	_title.text = tr("POLLING — %s") % (loader.nation_name(state.player().id) if loader != null else state.player().id)
 	_dirty = true
 
 
@@ -146,17 +144,12 @@ func _refresh() -> void:
 		return
 
 	var id := PollNoise.poll_id(_state.year, _state.month)
-	var fresh_poll := id != _shown_poll_id
 
 	var current := {}
 	current[HEADLINE_KEY] = PollNoise.displayed(id, HEADLINE_KEY, ns.overall_approval_pct)
 	for bloc in K.BLOC_KEYS:
 		current[bloc] = PollNoise.displayed(id, bloc, float(ns.bloc_approval.get(bloc, 0.0)))
-
-	if fresh_poll:
-		_previous = _shown
-		_shown = current
-		_shown_poll_id = id
+	_previous = _poll_before(id)
 
 	_headline.set_marked(tr("[g=approval]Approval[/g]  %.0f%%") % current[HEADLINE_KEY])
 	_election_countdown.text = tr("Next %s election: %s") % [_chamber, _months_until_text(ns)]
@@ -178,6 +171,24 @@ func _refresh() -> void:
 	for entry in Opinion.top_issues(ns, TOP_ISSUE_COUNT):
 		issue_rows.append([K.ISSUE_LABEL[entry[0]], "%.0f%%" % (float(entry[1]) * 100.0)])
 	PanelKit.ledger(PanelKit.section(_body, tr("What the country is thinking about")), issue_rows)
+
+
+## The poll published before `id`, off the history the Society charts draw
+## (ChartSeries.polled): each entry is stamped with the month whose poll it is.
+## Remembering the last poll this panel showed read only within one viewing, so
+## the column was all dashes on a panel opened once a month (QA's pre-gate B
+## RECORD 2).
+func _poll_before(id: int) -> Dictionary:
+	for i in range(_state.history.size() - 1, -1, -1):
+		var entry: Dictionary = _state.history[i]
+		var then := PollNoise.poll_id(int(entry.get("year", 0)), int(entry.get("month", 0)))
+		if then < id:
+			var blocs: Dictionary = entry.get("bloc_approval", {})
+			var out := {}
+			for bloc in blocs:
+				out[bloc] = PollNoise.displayed(then, bloc, float(blocs[bloc]))
+			return out
+	return {}
 
 
 func _change_text(key: String, value: float) -> String:

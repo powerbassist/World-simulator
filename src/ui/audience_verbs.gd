@@ -18,6 +18,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
+const President = preload("res://src/sim/president.gd")
 
 var _levers: GridContainer
 var _attempts: Label
@@ -40,14 +41,15 @@ func _ready() -> void:
 
 ## `offered` / `topics`: Levers' rows (or Phone.options()'s, the same shape).
 ## `choices`: {now: the absolute month a promise counts from, people: [{id, name,
-## know, key}] a gossip may name, quiet: no attempts line}.
+## know, key}] a gossip may name, quiet: no attempts line, given_due: a promise
+## already given on this want (given_due() below), 0 for none}.
 func show_verbs(offered: Array, topics: Array, attempts_left: int, choices: Dictionary) -> void:
 	for box in [_levers, _topics]:
 		for child in box.get_children():
 			box.remove_child(child)
 			child.queue_free()
 	for row in offered:
-		_lever_row(row, int(choices.get("now", 0)))
+		_lever_row(row, int(choices.get("now", 0)), int(choices.get("given_due", 0)))
 	# The phone says its one try itself (`quiet`, phone_dialog.gd).
 	_attempts.visible = not bool(choices.get("quiet", false))
 	# No levers offered at all (none fit): the audience is heard, not argued --
@@ -63,6 +65,17 @@ func show_verbs(offered: Array, topics: Array, attempts_left: int, choices: Dict
 		_topic(row, choices.get("people", []))
 
 
+## The month a promise already given to `pid` on `object` falls due, or 0 -- the
+## `given_due` choice both views pass: the greyed Promise row shows it rather than
+## the picker's default a year out (QA's pre-gate B RECORD 7: "due DEC 2027" after
+## a word given for MAR 2027).
+static func given_due(ns, pid: String, object: String) -> int:
+	for row in President.commitments_with(ns, pid):
+		if String(row["kind"]) == "promise" and String(row["object"]) == object:
+			return int(row["due_month"])
+	return 0
+
+
 func lever_button(lever: String) -> Button:
 	return _levers.find_child("Lever_" + lever, true, false) as Button
 
@@ -71,7 +84,7 @@ func topic_button(topic: String) -> Button:
 	return _topics.find_child("Topic_" + topic, true, false) as Button
 
 
-func _lever_row(row: Dictionary, now: int) -> void:
+func _lever_row(row: Dictionary, now: int, given: int) -> void:
 	var lever := String(row["lever"])
 	var cell := HBoxContainer.new()
 	var button := PanelKit.sized(Button.new())
@@ -95,7 +108,7 @@ func _lever_row(row: Dictionary, now: int) -> void:
 		"bargain":
 			cell.add_child(_currency_pick(row, spend, args))
 		"promise_date":
-			cell.add_child(_date_pick(row, now, spend, args))
+			cell.add_child(_date_pick(row, now, spend, args, given))
 	# A choice beside a lever that cannot be tried is down with it.
 	for pick in cell.get_children():
 		if pick is OptionButton:
@@ -135,8 +148,10 @@ func _currency_pick(row: Dictionary, spend: Label, args: Dictionary) -> OptionBu
 
 
 ## The promise's date, inside the window the sim takes (the row's `dates`, or the
-## constants from today until the row carries them); a year out by default.
-func _date_pick(row: Dictionary, now: int, spend: Label, args: Dictionary) -> OptionButton:
+## constants from today until the row carries them); a year out by default. A
+## word already given (`given`, the row refused) shows its own date instead:
+## the picker's window has moved on with today, so the date goes in by name.
+func _date_pick(row: Dictionary, now: int, spend: Label, args: Dictionary, given := 0) -> OptionButton:
 	var spends: Dictionary = row.get("spends", {})
 	var window: Dictionary = row.get("dates", {"earliest": now + LK.PROMISE_MIN_MONTHS, "latest": now + LK.PROMISE_MAX_MONTHS})
 	var pick := OptionButton.new()
@@ -148,6 +163,13 @@ func _date_pick(row: Dictionary, now: int, spend: Label, args: Dictionary) -> Op
 		args["due_month"] = int(pick.get_item_metadata(i))
 		spend.text = Words.spends_text(spends, int(args["due_month"]))
 	pick.item_selected.connect(chosen)
+	if given > 0 and not bool(row.get("offered", false)):
+		pick.clear()
+		pick.add_item(Words.when(given))
+		pick.set_item_metadata(0, given)
+		pick.select(0)
+		chosen.call(0)
+		return pick
 	var year_out := clampi(now + 12 - int(window["earliest"]), 0, pick.item_count - 1)
 	pick.select(year_out)
 	chosen.call(year_out)

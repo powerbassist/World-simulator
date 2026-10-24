@@ -1413,17 +1413,16 @@ func _unseen_holds() -> bool:
 ## choice then left the interrupt held with no flag, and answering the interrupt
 ## found nothing to release. Interrupt pending keeps the flag whatever else holds.
 func _resume_if_decision_settled() -> void:
-	if not _paused_for_decision or _unseen_holds():
-		return
 	var ns = _state.player() if _state != null else null
-	if ns != null and Events.interrupt_pending(ns):
-		return
-	if _paused_for_programme:
+	# Settled: no unseen hold and no interrupt. The programme's own pause keeps
+	# the clock stopped; otherwise the decision pause lets it go.
+	if _paused_for_decision and not _unseen_holds() and not (ns != null and Events.interrupt_pending(ns)):
 		_paused_for_decision = false
-		return
-	_paused_for_decision = false
-	_clock.paused = false
-	_hud.clock_cluster.refresh(_clock)
+		_clock.paused = _paused_for_programme
+	# Every answer re-reads why the clock holds, settled or not: an answer on a
+	# clock the player paused left the answered event's line up until another
+	# hold replaced it (QA's pre-gate B RECORD 4). A running clock clears it.
+	_hud.clock_cluster.refresh(_clock, preload("res://src/ui/hold_reason.gd").show(self))
 
 
 ## A load through the pause menu re-raises its holds AFTER the menu took its

@@ -25,6 +25,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const Relations = preload("res://src/core/relations.gd")
+const President = preload("res://src/sim/president.gd")
 
 const KIND_LABEL := {
 	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
@@ -151,10 +152,14 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 	var grudge := float(ns.person_grudges.get(person.id, 0.0))
 	var loyalty := float(ns.person_loyalty.get(person.id, 0.0))
 	var standing := float(ns.person_standing.get(person.id, 0.0))
-	if grudge >= 0.05 or loyalty != 0.0 or standing >= 0.05:
+	# Rapport too (QA's pre-gate B RECORD 5): the register a decline, a lapse and
+	# a call write, priced on the request card and shown nowhere after it.
+	var rapport := President.rapport(ns, String(person.id))
+	if grudge >= 0.05 or loyalty != 0.0 or standing >= 0.05 or rapport != 0.0:
 		PanelKit.row(_body, tr("Standing"), Num.f(standing, 2))
 		PanelKit.row(_body, tr("Loyalty"), Num.fs(loyalty, 2))
 		PanelKit.row(_body, tr("Grudge"), Num.f(grudge, 2))
+		PanelKit.row(_body, tr("Rapport with you"), Num.fs(rapport, 2))
 
 	if not person.wants.is_empty():
 		PanelKit.line(_body, tr("Wants"), PanelKit.Tone.DIM)

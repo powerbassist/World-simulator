@@ -20,6 +20,7 @@ const HoldReason = preload("res://src/ui/hold_reason.gd")
 const Capital = preload("res://src/core/capital.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 
 const WINDOW := "audience"
 
@@ -61,7 +62,8 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	return {"fog": President.knowledge_band(ns, pid), "traits": traits,
 		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
-		"choices": {"now": int(state.year) * 12 + int(state.month), "people": gossip_people(main, pid)}}
+		"choices": {"now": int(state.year) * 12 + int(state.month), "people": gossip_people(main, pid),
+			"given_due": AudienceVerbs.given_due(ns, pid, String(session["object"]))}}
 
 
 ## Whom a gossip may name: everyone the president covers but the person spoken
