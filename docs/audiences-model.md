@@ -70,6 +70,18 @@ person refused once sat 0.25 over the gate and leaked a brief every month for a 
 and the balance table's idle-on-requests regimes lost France's 2032 vote in 28 of 41
 regimes (section 4).
 
+**An act's cost fades** (the author's call on this PR, verbatim "Le cout s'efface").
+The `bloc_offset` a character act writes -- a brief, a resignation, a defection, a
+challenge, V4.3's acts included -- now decays with a half-life of
+`ACT_OFFSET_HALF_LIFE_MONTHS` (24): `NationState.act_bloc_offset` holds the acts' share,
+recorded as what the acts actually wrote, and each month it shrinks by 0.5^(1/24) and
+gives the difference back. Laws, events, the programme and campaigns stay permanent.
+Before V5.2b the idle term fired no act, and a permanent price did no harm; once
+refused audiences feed the ladder, fourteen years of permanent briefs pinned the
+workers' and students' offsets on their clamp (`tests/test_balance.gd`). **Both halves
+are needed, measured:** with the fade and no refusal ceiling, test_balance still hit
+the clamp, because a refusal's monthly leak comes in bursts; with both, it passes.
+
 **Scarcity is occupancy, never a ceiling.** The diary refuses a day already
 taken (the U6a / V2.4a rule); the person offers two days; a request whose two days
 are both taken cannot be booked, and its card offers delegation and decline.
