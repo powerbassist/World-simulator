@@ -223,7 +223,14 @@ const GRUDGE_REFUSAL_CEILING := GRUDGE_BRIEF_THRESHOLD + GRUDGE_BRIEF_RELIEF + G
 const PRICE_RESIGN := -0.8
 const PRICE_DEFECT := -0.5
 const PRICE_CHALLENGE := -0.6
-const PRICE_BRIEF := -0.25
+## The brief, -0.25 until V5.2b: the author's call on PR #104 (2026-10-24,
+## verbatim "Fuite 40 % moins chere", Gameplay's option A). Once refused audiences
+## feed the ladder, a brief is routine rather than rare -- three a term in a
+## decline-everything France -- and at -0.25 x (0.5 + standing) one brief alone
+## was about 0.31 of a bloc, two thirds of the 0.50 act-share band
+## (docs/design/bands-v5.2.md, B3 amendment). The count comes from grudges, not
+## from this price, so the share scales with it.
+const PRICE_BRIEF := -0.15
 
 ## The blocs a leak lands on. Grievance-carrying blocs: unrest_constants'
 ## UNREST_BLOCS are the same two, and a leak about a government failure travels
