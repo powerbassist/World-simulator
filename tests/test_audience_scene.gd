@@ -41,7 +41,7 @@ func _process(_delta: float) -> bool:
 		2:
 			_scene.attempted.connect(func(lever: String) -> void: _pressed.append(lever))
 			_scene.open({"request_id": "req_1", "person_id": "", "name": "Cécile Aumont",
-				"ask": "I want the pension age held.", "stance": "defend", "president": "Daniel Moucron",
+				"ask": "the pension age held", "stance": "defend", "president": "Daniel Moucron",
 				"fog": "stranger", "offered": OFFERED,
 				"topics": [{"topic": "family", "offered": true}, {"topic": "flirt", "offered": false, "why_not": "Not with her."}],
 				"attempts_left": 3})
@@ -86,8 +86,9 @@ func _check_open() -> void:
 		_fail("a lever the sim does not offer is not disabled with its reason")
 	if not _scene._fog.text.contains("stranger"):
 		_fail("the scene does not say why the odds are wide: %s" % _scene._fog.text)
-	if _scene._line.text != "I want the pension age held.":
-		_fail("the opening line is not the asker's want through the dialogue: '%s'" % _scene._line.text)
+	# Content's lines frame the want in a sentence; the placeholder says it bare.
+	if not _scene._line.text.contains("the pension age held"):
+		_fail("the opening line does not carry the asker's want through the dialogue: '%s'" % _scene._line.text)
 	if _scene.visiting != "Cécile Aumont":
 		_fail("the hold line's seam does not name the person")
 
