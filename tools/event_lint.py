@@ -55,6 +55,7 @@ SUBJECT_OFFICES = ["head_of_government", "head_of_state", "largest_party_leader"
 ON_ACTIONS = [
     "law_passed", "law_repealed", "member_bill_passed", "minister_resigned",
     "takeover_bid", "firm_failed", "commodity_price_high", "accession_won",
+    "exposure",
 ]
 # events_constants bounds
 LIKELIHOOD_MIN, LIKELIHOOD_MAX = 0.002, 0.50
@@ -69,7 +70,7 @@ MIN_CHOICES, MAX_CHOICES = 2, 4
 KNOWN_KEYS = [
     "id", "name", "summary", "subject_office", "likelihood", "respond_months",
     "once", "preconditions", "choices", "interrupt", "sited",
-    "category", "weight", "severity", "on_action", "cooldown_months",
+    "category", "weight", "severity", "on_action", "cooldown_months", "exposure",
 ]
 CHOICE_KEYS = ["id", "label", "summary", "effects", "default", "arms"]
 # law.gd SCALAR_EFFECT_KEYS, and its SHARED_EFFECT_CHANNELS minus `institutional`

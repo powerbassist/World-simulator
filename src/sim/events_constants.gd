@@ -163,6 +163,9 @@ const ARMS_DELAY_MAX_MONTHS := 18
 const ON_ACTIONS := [
 	"law_passed", "law_repealed", "member_bill_passed", "minister_resigned",
 	"takeover_bid", "firm_failed", "commodity_price_high", "accession_won",
+	# V5.2c: delivered ONLY when the exposure machine arms it (Events.arm); the hook
+	# door never fires it and the standing hazard skips every on_action event.
+	"exposure",
 ]
 
 ## How many months after a delivery or resolution a CATEGORY may draw again. The

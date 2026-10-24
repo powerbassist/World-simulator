@@ -176,6 +176,7 @@
    "tests/test_commodities.gd",
    "tests/test_referendum.gd",
    "tests/test_events.gd",
+   "tests/test_event_arm.gd",
    "tests/test_migration.gd",
    "tests/test_law_panel.gd",
    "tests/test_calendar_panel.gd",
