@@ -99,6 +99,7 @@ func _run() -> void:
 	_check_window_icons()
 	_check_card_shows_art()
 	_check_emotion_completeness()
+	_check_every_executive_has_a_face(loader)
 	_check_emotion_axis()
 	_check_alpha_is_real()
 	_check_scene_files()
@@ -207,6 +208,26 @@ func _check_emotion_completeness() -> void:
 		if per_person[pid] < required:
 			_fail("'%s' carries %d of %d emotions -- one mood would fall back mid-session"
 				% [pid, per_person[pid], required])
+
+
+## V5.2a: an executive is someone the president sits across from in an
+## audience (the builder's price talk is one), and a chief with no face draws
+## the silhouette on the one card a scene is built around. The silhouette
+## fallback stays lenient for the deep bench; it is not for them. Checked off
+## the register's own `kind`, never a list here, so a fifth hundred firms
+## cannot ship faceless.
+func _check_every_executive_has_a_face(loader) -> void:
+	var seen := 0
+	for nation_id in loader.people.keys():
+		for person in loader.people[nation_id]:
+			if person.kind != "executive":
+				continue
+			seen += 1
+			var path := PORTRAITS_DIR.path_join("neutral").path_join(person.id + ".webp")
+			if not FileAccess.file_exists(path):
+				_fail("executive '%s' has no neutral portrait at %s" % [person.id, path])
+	if seen == 0:
+		_fail("the register holds no executives -- this check is looking at nothing")
 
 
 ## The emotion vocabulary is hand-carried in tools/ and src/ -- the scene

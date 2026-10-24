@@ -86,6 +86,26 @@ def djb2(s):
     return h
 
 
+SALTS_PATH = Path(__file__).resolve().parent / "portraits_salts.json"
+
+
+def load_salts() -> dict:
+    """The reroll memory, shared by the portrait and the backdrop generators
+    (V5.2a): an id -- a person id, or "scene:<file stem>" for a backdrop -- to
+    the number of times the author rejected it. Absent = 0 = the original
+    seed, so nothing already shipped re-renders."""
+    if SALTS_PATH.exists():
+        return json.loads(_confined(SALTS_PATH, SALTS_PATH.parent).read_text(encoding="utf-8"))
+    return {}
+
+
+def bump_salt(key: str) -> int:
+    salts = load_salts()
+    salts[key] = int(salts.get(key, 0)) + 1
+    SALTS_PATH.write_text(json.dumps(dict(sorted(salts.items())), indent=1) + "\n", encoding="utf-8")
+    return salts[key]
+
+
 def queue(workflow: dict) -> str:
     """POST one API-format workflow, return the server's prompt id. Every
     top-level key of the workflow must be a node the server knows -- a stray

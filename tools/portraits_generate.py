@@ -64,6 +64,7 @@ EXPRESSION_WORKFLOW = TOOLS / "portraits_expression_workflow.json"
 PHOTO_WORKFLOW = TOOLS / "portraits_photo_workflow.json"
 REFERENCE_DIR = REPO / "sources" / "portraits" / "reference"
 TRAITS_PATH = TOOLS / "portraits_traits.json"
+FIRST_NAMES = TOOLS / "portraits_first_names.json"
 BANNED_NAMES = TOOLS / "banned_names.txt"
 PEOPLE_DIR = REPO / "data" / "people"
 RAW_DIR = REPO / "sources" / "portraits" / "raw"
@@ -108,6 +109,11 @@ STYLE = (
 ## plan-time default the author signed off, applied as a hash pick so it is
 ## deterministic per person and hand-editable in the sidecar after.
 FEMALE_PROBABILITY = 0.35
+## The register kinds whose face follows the first name (V5.2a). The politician
+## wall's sex came from the real counterpart's photo (B2); executives and the
+## generated nations' majors have no counterpart, so the name is the only
+## truth there is.
+NAME_SEXED_KINDS = ("executive", "politician")
 
 ## 4a. Region look, keyed off the nation prefix already in the person id --
 ## the single biggest missing variety axis (a Finnish and a Greek minister
@@ -270,6 +276,73 @@ _traits = {}
 _roles = {}
 
 
+_name_sex = None
+
+
+def sex_for_name(name: str):
+    """"female" / "male" from the person's first name, or None when the table
+    does not know it. V5.2a: the sex of a seeded face follows the name Content
+    wrote -- a hash-picked sex put a woman's face beside "Nanni Laudomi" on 45
+    of the first 60 chiefs it called women (QA, PR 106). The table is the
+    first names in data/people for people the sidecar seeds from scratch,
+    classified by hand once; an unknown name is an error, never a guess,
+    because a guess is the bug."""
+    global _name_sex
+    if _name_sex is None:
+        d = json.loads(comfy._confined(FIRST_NAMES, TOOLS).read_text(encoding="utf-8"))
+        _name_sex = {n: sex for sex in ("female", "male") for n in d[sex]}
+    return _name_sex.get(name.split()[0])
+
+
+def seed_for(person_id: str, emotion: str, salts=None) -> int:
+    """The one place a portrait's seed is made. Salt 0 keeps the historical
+    key (id:emotion) byte for byte; a reroll appends :r<N>, so the five
+    emotions of a rerolled person stay one identity (the expression workflow
+    locks on seed_for(pid, "neutral"))."""
+    n = int((comfy.load_salts() if salts is None else salts).get(person_id, 0))
+    key = person_id + ":" + emotion
+    return comfy.djb2(key + ":r%d" % n if n > 0 else key)
+
+
+def reseed(slice_people, people) -> int:
+    """--reseed (with --kind / --missing-art / --only): drop the slice's sidecar
+    entries and renders, then seed them again -- from their names now. For a
+    slice whose first batch was seeded before the name rule; only the slice is
+    touched, and a slice is never a person with hand-edited traits."""
+    traits = json.loads(comfy._confined(TRAITS_PATH, TOOLS).read_text(encoding="utf-8"))
+    for pid, _name in slice_people:
+        traits.pop(pid, None)
+        for emotion in EMOTIONS:
+            for path in (RAW_DIR / emotion / (pid + ".png"), MASK_DIR / emotion / (pid + ".png"),
+                         REPO / "assets" / "portraits" / emotion / (pid + ".webp"),
+                         REPO / "assets" / "portraits" / emotion / (pid + ".webp.import")):
+                if path.exists():
+                    comfy._confined(path, REPO).unlink()
+    TRAITS_PATH.write_text(json.dumps(dict(sorted(traits.items())), indent=1, ensure_ascii=False) + "\n",
+                           encoding="utf-8")
+    fresh = load_traits(people)
+    women = sum(1 for pid, _n in slice_people if fresh[pid]["sex"] == "female")
+    print("reseeded %d people from their names: %d women, %d men" % (len(slice_people), women, len(slice_people) - women))
+    return 0
+
+
+def reroll(person_ids) -> int:
+    """--reroll <id> (repeatable): bump the person's salt and clear their
+    raws, masks and shipped WebPs, so the next pass draws a new face. Clears
+    only what the person owns; a missing file is fine."""
+    for pid in person_ids:
+        salt = comfy.bump_salt(comfy._checked_id(pid))
+        cleared = 0
+        for emotion in EMOTIONS:
+            for path in (RAW_DIR / emotion / (pid + ".png"), MASK_DIR / emotion / (pid + ".png"),
+                         REPO / "assets" / "portraits" / emotion / (pid + ".webp")):
+                if path.exists():
+                    comfy._confined(path, REPO).unlink()
+                    cleared += 1
+        print("reroll %s: salt %d, %d files cleared" % (pid, salt, cleared))
+    return 0
+
+
 def _pick(person_id: str, category: str, options) -> str:
     """One decorrelated pick per category: hash the id WITH the category name,
     so two categories never read the same slice of the seed."""
@@ -335,7 +408,12 @@ def load_traits(people) -> dict:
     for pid, _name in people:
         if pid in traits:
             continue
-        female = comfy.djb2(pid + ":sex") % 10000 < int(FEMALE_PROBABILITY * 10000)
+        named = sex_for_name(_name)
+        if named is None and _kinds.get(pid) in NAME_SEXED_KINDS:
+            raise RuntimeError("%s: first name of '%s' is not in portraits_first_names.json -- "
+                               "classify it, do not let a hash pick the face's sex" % (pid, _name))
+        female = (named == "female") if named else (
+            comfy.djb2(pid + ":sex") % 10000 < int(FEMALE_PROBABILITY * 10000))
         role = role_map.get(pid, "figure")
         lo, hi = AGE_BAND[role]
         age = lo + comfy.djb2(pid + ":age") % (hi - lo + 1)
@@ -404,7 +482,7 @@ def prompt_for(person_id, name, emotion="neutral"):
     ]
     subject = ", ".join(parts)
     text = "professional studio headshot portrait photograph of %s, %s" % (subject, STYLE)
-    seed = comfy.djb2(person_id + ":" + emotion)
+    seed = seed_for(person_id, emotion)
     return seed, text, []
 
 
@@ -421,12 +499,14 @@ def _load_people():
         for person in data["people"]:
             pid = comfy._checked_id(person["id"])
             people.append((pid, person["name"]))
+            _kinds[pid] = person.get("kind", "")
             if bool(person.get("bench", False)):
                 _bench_ids.add(pid)
     return people
 
 
 _bench_ids = set()
+_kinds = {}
 
 
 def _banned_pattern():
@@ -465,6 +545,23 @@ def self_check(people) -> int:
     if hits:
         failures.append("banned names in prompts: %s" % "; ".join(hits[:5]))
 
+    # 2b. the face follows the name (V5.2a): an executive has no counterpart
+    # photo, so the first name Content wrote is the only truth about the
+    # face's sex, and the table must agree with the sidecar. (Politicians'
+    # faces took the real counterpart's sex by design at B2, and the 88 met
+    # cast seeded from scratch were re-seeded by name once, with --reseed.)
+    clash = [pid for pid, name in people
+             if _kinds.get(pid) == "executive"
+             and sex_for_name(name) not in (None, _traits.get(pid, {}).get("sex"))]
+    unknown = [pid for pid, name in people
+               if _kinds.get(pid) == "executive" and sex_for_name(name) is None]
+    if clash:
+        failures.append("%d executives' faces contradict their first name, first: %s (run --reseed --kind executive)"
+                        % (len(clash), clash[0]))
+    if unknown:
+        failures.append("%d executives' first names are not in portraits_first_names.json, first: %s"
+                        % (len(unknown), unknown[0]))
+
     # 3. role derivation covers every person the content points at
     role_map = roles()
     uncovered = [pid for pid, _slot in _sweep_slots() if pid not in role_map]
@@ -501,6 +598,16 @@ def self_check(people) -> int:
         if prompt_for(golden_pid, golden_name, "neutral")[0] != golden_seed:
             failures.append("golden seed for %s moved (expected %d) -- every portrait would re-render"
                             % (golden_pid, golden_seed))
+    # The salt's own teeth (V5.2a): salt 0 is the historical key, a salt
+    # moves the seed, and the expression workflow still locks to the salted
+    # neutral seed -- so a rerolled person keeps one identity across moods.
+    for emotion in EMOTIONS:
+        if seed_for(golden_pid, emotion, {}) != comfy.djb2(golden_pid + ":" + emotion):
+            failures.append("salt 0 changed the %s seed -- every portrait would re-render" % emotion)
+        if seed_for(golden_pid, emotion, {golden_pid: 1}) == seed_for(golden_pid, emotion, {}):
+            failures.append("a salt did not move the %s seed -- a reroll would redraw the same face" % emotion)
+    if seed_for(golden_pid, "neutral", {golden_pid: 2}) == seed_for(golden_pid, "neutral", {golden_pid: 1}):
+        failures.append("salts 1 and 2 collide")
     for pid, name in people[:3]:
         for emotion in EMOTIONS:
             if prompt_for(pid, name, emotion)[:2] != prompt_for(pid, name, emotion)[:2]:
@@ -569,7 +676,7 @@ def generate_expression(person_id, emotion, seed, text):
     face's expression is the part the fragment moves. Identity comes from
     the seed lock; no matting/upload/taps needed."""
     workflow = json.loads(comfy._confined(EXPRESSION_WORKFLOW, TOOLS).read_text(encoding="utf-8"))
-    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = comfy.djb2(person_id + ":neutral")
+    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = seed_for(person_id, "neutral")
     workflow[EXPR_TEXT_NODE]["inputs"]["text"] = text
     prompt_id = comfy.queue(workflow)
     out = comfy.outputs(prompt_id, timeout_s=900)
@@ -628,9 +735,21 @@ def _only_filter(people):
     for i, a in enumerate(args):
         if a == "--only" and i + 1 < len(args):
             pids.add(comfy._checked_id(args[i + 1]))
-    if not pids:
-        return people
-    return [(pid, name) for pid, name in people if pid in pids]
+    if pids:
+        people = [(pid, name) for pid, name in people if pid in pids]
+    # V5.2a: the two filters the faces batches are cut by -- a register
+    # kind (the 464 executives) and "no shipped neutral yet" (executives and
+    # the met cast the V4.3 harvest left without art), so a batch is a flag,
+    # not a 464-id command line.
+    for i, a in enumerate(args):
+        if a == "--kind" and i + 1 < len(args):
+            people = [(pid, name) for pid, name in people if _kinds.get(pid) == args[i + 1]]
+    if "--missing-art" in args:
+        people = [(pid, name) for pid, name in people
+                  if not (REPO / "assets" / "portraits" / "neutral" / (pid + ".webp")).exists()]
+    if "--limit" in args:
+        people = people[:int(args[args.index("--limit") + 1])]
+    return people
 
 
 def main():
@@ -638,6 +757,13 @@ def main():
     global _traits, _roles
     _traits = load_traits(people)
     _roles = roles()
+
+    if "--reseed" in sys.argv:
+        return reseed(_only_filter(people), people)
+
+    if "--reroll" in sys.argv:
+        return reroll([a for i, a in enumerate(sys.argv[1:], 1)
+                       if sys.argv[i - 1] == "--reroll"])
 
     if "--self-check" in sys.argv:
         return self_check(people)

@@ -27,6 +27,7 @@ which the machine already carries beside the Hyper one the portraits use.
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -37,9 +38,23 @@ TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parent
 WORKFLOW = TOOLS / "portraits_background_workflow.json"
 RAW_DIR = REPO / "sources" / "backgrounds" / "raw"
+WIDE_DIR = REPO / "sources" / "backgrounds" / "wide"
 
 ## Node ids in the background template -- prompt in, seed in, image out.
 TEXT_NODE, SEED_NODE, IMAGE_NODE = "2", "5", "7"
+LATENT_NODE = "4"
+
+## V5.2a: the audience scene is a window over the map (layout B), 16:9, not
+## the portrait crop the busts sit in. --wide renders the scenes below at
+## 1344x768 (SDXL's own 16:9 bucket, a multiple of 64, fits the 8 GB card);
+## tools/portraits.gd resizes to 1280x720 and ships them under
+## assets/portrait_scenes_wide/ -- a separate directory, because
+## assets/portrait_scenes/ is the 432x632 library the bust display and its
+## tests own. Only the rooms an audience, a call or a summit scene is held in.
+WIDE_SIZE = (1344, 768)
+WIDE_SCENES = ["office", "office_night", "cabinet_room", "corridor", "press_room",
+               "tv_studio", "podium_flags", "summit_hall", "state_dinner",
+               "parliament_chamber"]
 
 VARIANTS = 3
 
@@ -151,12 +166,18 @@ CONSTRAINTS = ("shallow depth of field, strong bokeh, no people, no discernible 
                "soft light from camera-left, photorealistic, 35mm lens")
 
 
-def prompt_for(scene: str, n: int, nation: str = ""):
+def prompt_for(scene: str, n: int, nation: str = "", wide: bool = False):
     """The prompt for one backdrop. With `nation` set (nation scenes only),
     the file becomes <scene>_<NATION>_<n> and the room carries what the
     generic library cannot: the flag the person actually serves and the view
     from the actual capital's window."""
-    seed = comfy.djb2(scene + (":" + nation if nation else "") + ":" + str(n))
+    key = scene + (":" + nation if nation else "") + ":" + str(n)
+    # The wide set is its own library: its own seeds, so a 16:9 room is not a
+    # re-crop of the portrait one. A reroll (salt) moves only that file.
+    seed_key = ("wide:" if wide else "") + key
+    stem = scene + ("_" + nation if nation else "") + "_" + str(n)
+    salt = int(comfy.load_salts().get(("wide:" if wide else "scene:") + stem, 0))
+    seed = comfy.djb2(seed_key + ":r%d" % salt if salt > 0 else seed_key)
     dressing = SCENES[scene]
     if nation:
         dressing = _nation_dressing(scene, nation)
@@ -178,8 +199,10 @@ def _nation_dressing(scene: str, nation: str) -> str:
     raise RuntimeError("scene '%s' carries no nation variant" % scene)
 
 
-def generate(scene: str, n: int, seed: int, text: str) -> bytes:
+def generate(scene: str, n: int, seed: int, text: str, wide: bool = False) -> bytes:
     workflow = json.loads(comfy._confined(WORKFLOW, TOOLS).read_text(encoding="utf-8"))
+    if wide:
+        workflow[LATENT_NODE]["inputs"]["width"], workflow[LATENT_NODE]["inputs"]["height"] = WIDE_SIZE
     workflow[SEED_NODE]["inputs"]["seed"] = seed
     workflow[TEXT_NODE]["inputs"]["text"] = text
     prompt_id = comfy.queue(workflow)
@@ -207,38 +230,63 @@ def _args() -> tuple:
     return only, nations
 
 
+def reroll(stems, wide: bool) -> int:
+    """--reroll <scene[_NATION]_n> (repeatable), with --wide for the 16:9
+    library: bump that file's salt and delete its raw and shipped WebP, so the
+    next pass draws a new backdrop (the streaked ones the author rejects)."""
+    prefix = "wide:" if wide else "scene:"
+    raw_dir = WIDE_DIR if wide else RAW_DIR
+    out_dir = REPO / "assets" / ("portrait_scenes_wide" if wide else "portrait_scenes")
+    for stem in stems:
+        if not re.fullmatch(r"[a-z_]+(_[A-Z]{3})?_[0-9]", stem):
+            raise RuntimeError("'%s' is not a <scene>[_NATION]_<n> backdrop name" % stem)
+        salt = comfy.bump_salt(prefix + stem)
+        gone = 0
+        for path in (raw_dir / (stem + ".png"), out_dir / (stem + ".webp")):
+            if path.exists():
+                comfy._confined(path, REPO).unlink()
+                gone += 1
+        print("reroll %s%s: salt %d, %d files cleared" % (prefix, stem, salt, gone))
+    return 0
+
+
 def main() -> int:
     only, nations = _args()
+    wide = "--wide" in sys.argv
+    if "--reroll" in sys.argv:
+        return reroll([a for i, a in enumerate(sys.argv[1:], 1) if sys.argv[i - 1] == "--reroll"], wide)
     if "--dry-run" in sys.argv:
-        for scene, nation in _jobs(only, nations):
+        for scene, nation in _jobs(only, nations, wide):
             for n in range(VARIANTS):
-                seed, text = prompt_for(scene, n, nation)
+                seed, text = prompt_for(scene, n, nation, wide)
                 label = "%s_%s" % (scene, nation) if nation else scene
                 print("%s_%d (seed %d)\n  %s" % (label, n, seed, text))
         print("dry-run, nothing contacted")
         return 0
 
-    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    raw_dir = WIDE_DIR if wide else RAW_DIR
+    raw_dir.mkdir(parents=True, exist_ok=True)
     todo = []
-    for scene, nation in _jobs(only, nations):
+    for scene, nation in _jobs(only, nations, wide):
         for n in range(VARIANTS):
             label = "%s_%s" % (scene, nation) if nation else scene
-            if not (RAW_DIR / ("%s_%d.png" % (label, n))).exists():
+            if not (raw_dir / ("%s_%d.png" % (label, n))).exists():
                 todo.append((scene, nation, n, label))
     print("%d backdrops to generate" % len(todo))
     for i, (scene, nation, n, label) in enumerate(todo):
-        seed, text = prompt_for(scene, n, nation)
-        out = comfy._confined(RAW_DIR / ("%s_%d.png" % (label, n)), RAW_DIR)
-        out.write_bytes(generate(scene, n, seed, text))
+        seed, text = prompt_for(scene, n, nation, wide)
+        out = comfy._confined(raw_dir / ("%s_%d.png" % (label, n)), raw_dir)
+        out.write_bytes(generate(scene, n, seed, text, wide))
         print("  [%d/%d] %s_%d (seed %d)" % (i + 1, len(todo), label, n, seed))
-    print("done: backdrops under sources/backgrounds/raw")
+    print("done: backdrops under sources/backgrounds/%s" % ("wide" if wide else "raw"))
     return 0
 
 
-def _jobs(only, nations):
+def _jobs(only, nations, wide: bool = False):
     """The (scene, nation) work list: the generic library (nation="") plus one
-    nation-dressed entry per --nation for each scene in NATION_SCENES."""
-    jobs = [(s, "") for s in SCENES if not only or s in only]
+    nation-dressed entry per --nation for each scene in NATION_SCENES. --wide
+    keeps to WIDE_SCENES."""
+    jobs = [(s, "") for s in SCENES if (not only or s in only) and (not wide or s in WIDE_SCENES)]
     for nation in sorted(nations):
         for scene in NATION_SCENES:
             if not only or scene in only:
