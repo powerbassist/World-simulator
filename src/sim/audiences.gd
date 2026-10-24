@@ -209,6 +209,7 @@ static func hold(state, ns, loader, request_id: String) -> Dictionary:
 		return {"ok": false, "error": "this audience is not booked"}
 	row["status"] = K.STATUS_HELD
 	President.learn_from(state, ns, loader, String(row["person_id"]), K.KNOW_AUDIENCE)
+	President.adjust_rapport(state, ns, loader, String(row["person_id"]), K.RECEIVED_RAPPORT)
 	return {"ok": true, "error": ""}
 
 

@@ -261,7 +261,7 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 	var kind := String(row["kind"])
 	if Characters.want_served(ns, person, want, meters, leaders):
 		if kind != "iou":
-			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT)
+			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT if kind == "promise" else K.DELEGATED_KEPT_RAPPORT)
 		return "kept"
 	if kind == "promise":
 		_rapport(state, ns, loader, pid, -K.LIE_RAPPORT)

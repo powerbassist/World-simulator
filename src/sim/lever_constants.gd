@@ -138,7 +138,12 @@ const SALT_TRAIT := "trait"
 ## buys rapport; broken, it is a lie -- rapport and knowledge collapse and a grudge
 ## pulses. An IOU unpaid is a betrayal, not a lie: rapport and a grudge, and the
 ## president's knowledge of the person stands.
-const PROMISE_KEPT_RAPPORT := 0.10
+## b2.2 (bands-v5.2.md "The in-person gains"): a promise kept IN PERSON is worth
+## 2.5 times a minister's kept word -- the ratio the broken side already carries
+## (a lie revealed -0.5 against a betrayal -0.2). A delegated commitment kept stays
+## at the minister's +0.10 (QA's R2 on #119).
+const PROMISE_KEPT_RAPPORT := 0.25
+const DELEGATED_KEPT_RAPPORT := 0.10
 const LIE_RAPPORT := 0.5
 const LIE_KNOWLEDGE_KEEP := 0.5
 const LIE_GRUDGE := 0.15

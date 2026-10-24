@@ -192,6 +192,10 @@ func _check_open_holds_and_teaches() -> void:
 		_fail("opening an audience did not hold the request")
 	if not President.knowledge(ns, pid) > float(c["k0"]):
 		_fail("holding an audience taught the president nothing about %s" % pid)
+	# b2.2 (bands-v5.2.md "The in-person gains"): being received is worth what a
+	# refusal to the face costs, whatever is said.
+	if absf(President.rapport(ns, pid) - float(c["r0"]) - AK.RECEIVED_RAPPORT) > 0.000001 or AK.RECEIVED_RAPPORT != -AK.DECLINE_RAPPORT:
+		_fail("being received moved rapport by %.4f, not %.4f" % [President.rapport(ns, pid) - float(c["r0"]), AK.RECEIVED_RAPPORT])
 	if int(s.get("attempts_left", 0)) != LK.ATTEMPTS:
 		_fail("a session opened with %d attempts, not %d" % [int(s.get("attempts_left", 0)), LK.ATTEMPTS])
 	if not Levers.open(c["state"], ns, _loader, String(c["id"])).is_empty():
@@ -725,7 +729,8 @@ func _check_delegation_commits_the_government() -> void:
 		_fail("the delegation's commitment is %s" % [rows[0]])
 
 
-## At its date a delegated commitment is kept (rapport +PROMISE_KEPT_RAPPORT) or
+## At its date a delegated commitment is kept (rapport +DELEGATED_KEPT_RAPPORT, a
+## minister's word, below a promise kept in person -- b2.2) or
 ## broken: the deferred share of the decline's grudge lands, plus the IOU's
 ## betrayal -- and it is not a lie, so knowledge stands.
 func _check_a_delegated_commitment_is_judged() -> void:
@@ -748,8 +753,10 @@ func _check_a_delegated_commitment_is_judged() -> void:
 	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
 	if (report["kept"] as Array).size() != 1 or (report["broken"] as Array).size() != 1:
 		_fail("delegated commitments at their date: %s" % [report])
-	if absf(President.rapport(ns, kept["id"]) - r_kept - LK.PROMISE_KEPT_RAPPORT) > 0.000001:
-		_fail("a kept delegation moved rapport by %.4f" % (President.rapport(ns, kept["id"]) - r_kept))
+	if absf(President.rapport(ns, kept["id"]) - r_kept - LK.DELEGATED_KEPT_RAPPORT) > 0.000001 \
+			or not LK.PROMISE_KEPT_RAPPORT > LK.DELEGATED_KEPT_RAPPORT:
+		_fail("a kept delegation moved rapport by %.4f, not %.4f below a promise kept in person (%.2f)" % [
+			President.rapport(ns, kept["id"]) - r_kept, LK.DELEGATED_KEPT_RAPPORT, LK.PROMISE_KEPT_RAPPORT])
 	if absf(President.rapport(ns, broken["id"]) - (r_broken - LK.IOU_BETRAYAL_RAPPORT)) > 0.000001:
 		_fail("a broken delegation left rapport at %.4f" % President.rapport(ns, broken["id"]))
 	if float(ns.person_grudges.get(broken["id"], 0.0)) < g_broken + deferred - 0.000001:
@@ -981,11 +988,12 @@ func _booked() -> Dictionary:
 					state.day = int(d["day"])
 					var pid := String(lane[0]["person_id"])
 					var k0 := President.knowledge(ns, pid)
+					var r0 := President.rapport(ns, pid)
 					var session: Dictionary = Levers.open(state, ns, _loader, id)
 					if session.is_empty():
 						_fail("a booked audience on its day did not open")
 						return {}
-					return {"state": state, "ns": ns, "id": id, "k0": k0, "session": session}
+					return {"state": state, "ns": ns, "id": id, "k0": k0, "r0": r0, "session": session}
 			_fail("the first request had no free offered day in an empty diary")
 			return {}
 		_advance(state)
