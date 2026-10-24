@@ -213,13 +213,38 @@ censure.
 
 ## The player command
 
-`Cabinet.assign(state, portfolio, party_id, party_list)` — the
+Since V5.2 b+ R4 the command is `src/sim/removal.gd` (below); this section's
+primitive is `Cabinet.seat_party(state, portfolio, party_id, party_list)` — the
 `Budget.commit()` / `Legislature.propose()` shape. Coalition parties only,
 refused through `can_assign()` / `refusal_reason()`, the pair
 `dissolution.gd` established so the panel does not re-derive the rule. Costs
 `RESHUFFLE_BLOC_PENALTY` on every call, win or lose — the same "cost on use"
 shape Article 49.3 has, so a President who reshuffles constantly reads as
 unstable regardless of whether the new assignment is better.
+
+## Dismissing a minister, and the price of every removal (V5.2 b+ R4)
+
+The author: "i cant revoke ministers". The design and every number are
+[[v5.2-bplus-spec]] "R4". `Removal.dismiss(state, loader, portfolio)` vacates
+the portfolio at once (`Cabinet.vacate()`, the reshuffle's bloc cost, the office at
+`VACANT_EFFECTIVENESS` until a Reassign); `Removal.reassign(state, loader,
+portfolio, party_id)` is the Reassign. Every REMOVAL -- a Dismiss, or a Reassign
+that takes the office from another party -- prices the same: the party's
+loyalty through its shortfall (`loyalty()` reads the seat count, so nothing is
+written), and `REMOVAL_GRUDGE` (0.25) on the party's current leader through
+`Characters.price_removal()`, the removal door: the trait intake and the [0, 1]
+clamp, without the refusal ceiling, so a principled leader (0.50) crosses the
+brief gate (0.45) and an ordinary one does not. None when that leader is the
+president. Filling a vacancy removes nobody. A resignation vacancy is not a
+removal. One removal per portfolio per `REMOVAL_LIMIT_MONTHS` (12),
+`ns.portfolio_removed_month` its register; `Removal.why_not()` names the refusal
+and `Removal.price()` is the confirmation's preview, nothing written.
+
+**Why a file of its own:** the pulse is `characters.gd`'s to write, and
+`cabinet.gd` cannot preload it (Characters -> Legislature -> Cabinet is a
+cycle). `Cabinet.assign()` was renamed to the primitive `seat_party()` so a stale
+caller fails to parse instead of skipping the price; nothing outside
+`removal.gd` and the tests calls the primitives.
 
 ## Why `Cabinet.seat()` is not called from inside `government.gd`
 

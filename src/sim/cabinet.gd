@@ -145,11 +145,14 @@ static func entitlement(ns, party_list: Array) -> Dictionary:
 ## to at least one portfolio and holding none. This is the term that makes
 ## resignation attributable to the player's own assignment rather than to
 ## general unpopularity -- see docs/cabinet-model.md.
-static func shortfall(ns, party_id: String) -> float:
+##
+## `removed` reads the shortfall as if that many more portfolios were taken from
+## the party -- R4's preview, so a price shown is never a state written.
+static func shortfall(ns, party_id: String, removed := 0) -> float:
 	var ent := int(ns.cabinet_entitlement.get(party_id, 0))
 	if ent <= 0:
 		return 0.0
-	var held := 0
+	var held := -removed
 	for f in ns.cabinet:
 		if String(ns.cabinet[f]) == party_id:
 			held += 1
@@ -160,10 +163,10 @@ static func shortfall(ns, party_id: String) -> float:
 ## entitlement. Both Discipline.of() and Government.cohesion() already exist;
 ## shortfall is the one new term. See docs/cabinet-model.md for why this term
 ## and not a second equation inside hostility() carries loyalty.
-static func loyalty(ns, party) -> float:
+static func loyalty(ns, party, removed := 0) -> float:
 	var d := Discipline.of(ns, party)
 	var coh := Government.cohesion(ns, party)
-	var sf := shortfall(ns, party.id)
+	var sf := shortfall(ns, party.id, removed)
 	return clampf(d * coh - CK.SHORTFALL_PENALTY * sf, 0.0, 1.0)
 
 
@@ -240,13 +243,17 @@ static func refusal_reason(ns, portfolio: String, party_id: String) -> String:
 	return ""
 
 
-## The player command -- the Budget.commit()/Legislature.propose() shape.
+## The SEAT PRIMITIVE. Since V5.2 b+ R4 the player's command is
+## src/sim/removal.gd (Removal.reassign), which prices taking a portfolio from a
+## party; this primitive and vacate() below are called by it and by tests only, so
+## no caller moves a portfolio without paying for it (renamed from assign() so a
+## stale call fails to parse rather than skip the price).
 ## Coalition parties only, refused through can_assign()/refusal_reason() above.
 ## Costs RESHUFFLE_BLOC_PENALTY through the same accumulator Article 49.3, a
 ## fallen government, a dissolution and a resignation all move, so
 ## opinion_constants.INERTIA_RATE and every bound in docs/opinion-model.md
 ## still apply -- approval does not move in the commit month.
-static func assign(state, portfolio: String, party_id: String, party_list: Array) -> void:
+static func seat_party(state, portfolio: String, party_id: String, party_list: Array) -> void:
 	var ns = state.player()
 	if ns == null:
 		return
@@ -266,6 +273,22 @@ static func assign(state, portfolio: String, party_id: String, party_list: Array
 		ns.reshuffle_portfolio = portfolio
 	ns.cabinet[portfolio] = party_id
 	ns.cabinet_effectiveness[portfolio] = _effectiveness_for(by_id[party_id], portfolio)
+	ns.reshuffles_called += 1
+	Government.penalise_blocs(ns, CK.RESHUFFLE_BLOC_PENALTY)
+
+
+## V5.2 b+ R4's other primitive: the holder out, the office vacant at
+## VACANT_EFFECTIVENESS until a Reassign, at the reshuffle's own price. It stamps
+## the reshuffle like seat_party() -- the office changed hands, to nobody, so its
+## wanters ask next month (audience_triggers.gd). Removal.dismiss() is the command.
+static func vacate(state, portfolio: String) -> void:
+	var ns = state.player()
+	if ns == null or String(ns.cabinet.get(portfolio, "")) == "":
+		return
+	ns.reshuffle_month = int(state.year) * 12 + int(state.month)
+	ns.reshuffle_portfolio = portfolio
+	ns.cabinet[portfolio] = ""
+	ns.cabinet_effectiveness[portfolio] = CK.VACANT_EFFECTIVENESS
 	ns.reshuffles_called += 1
 	Government.penalise_blocs(ns, CK.RESHUFFLE_BLOC_PENALTY)
 
