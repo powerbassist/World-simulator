@@ -308,6 +308,66 @@ term):
 - a GBR verdict flip in `managed_abolishes_the_monarchy`;
 - a half-life that is not 50 % at H months (the constant is wrong).
 
+### B3 amendment, measured, and the author's call (2026-10-24)
+
+**The author's call** (step 3 of the stop rule, through the parent's question
+tool), verbatim: "Accepter : il perd 2032". H = 22 still missed, so the 2032
+losses are accepted as the price of declining every request for six years. The
+half-life that ships is **H = 24**. The amendment's rows above stay as declared;
+this subsection records what they measured and what the author accepted.
+
+**Measured** (MEASURED; QA's re-score of Systems' runs against `base-19ff21fc.json`):
+
+- At H = 24: Systems' `bal_b1_fade.json` at `f2653c3a`, which is cmp-identical to
+  QA's own run of PR #104 at `dadbdf68`.
+- At H = 22: Systems' `bal_b1_fade22.json`.
+- The act-share and clamp rows: an instrumented `tests/test_balance.gd`, not
+  committed.
+- Sources: `.superpowers/sdd/v5.2b-fade-bands-result.md` and `qa-report.md`,
+  sections "PR #104 @ dadbdf68" and "PR #104 @ c92f0846".
+
+| Row | H = 24 | H = 22 | Status |
+|---|---|---|---|
+| Half-life, one act: 50 % at H, 25 % at 2H | PASS (`test_characters`) | — | holds |
+| 2027 executive: verdict and \|Δ margin\| ≤ 0.017 | PASS, all 50 rows unchanged | PASS | holds |
+| 2029 standing unchanged | PASS, majority in 41 of 41 | PASS | holds |
+| 2029 \|Δ margin\| ≤ 0.017 | PASS: mean -0.0102, worst -0.0112; incumbent seats -4 to -10 | PASS: worst -0.0108 | holds |
+| 2032 \|Δ margin\| ≤ 0.017 | MISS: 41 of 41 past; smallest move -0.0271, mean -0.0478, worst -0.1154 | MISS: smallest -0.0257, mean -0.0460 | **accepted** by the author's call |
+| The seven regimes stay HELD in 2032 | MISS: all seven LOST (tip margins -0.0035 to -0.0195) | MISS | **accepted** |
+| 2032 flips | 28, HELD to LOST | the same 28 | **accepted** |
+| 2034 legislative (reported) | the 28 rows are gone: no 2034 vote follows a 2032 loss | the same | reported |
+| GBR `managed_abolishes_the_monarchy` verdict unchanged | MISS: 2039 HELD to LOST (0.116 to -0.0157); 2034 held (0.1612 to 0.1416); 2029 unchanged | MISS: 2039 LOST at -0.0104 | **open**: waits for Systems' explanation of the -0.13 move |
+| Act-written part of `bloc_offset` ≤ 0.50 | MISS: -0.576 (FRA ten-year run), -0.594 (GBR ten-year run), and breaches in seven other MANAGED runs | MISS | see below |
+| No new clamp | MISS: runs 1 and 18 (workers, students, 2032-08), run 16 (students, 2029-11) | MISS | see below |
+
+**The two health rows.** The act-share ceiling and the no-new-clamp row were not
+named in the author's words. The call was put to the author with an explicit
+alternative: cut the brief price and keep both rows (Gameplay's option A). The
+author chose to accept rather than cut. So this note reads the call as accepting
+the table as measured, both health rows included. That reading is INFERRED; the
+parent confirms it.
+
+Read under that call, the 0.50 ceiling and the clamp row stay declared, as the
+bound a future price change is measured against. They no longer gate V5.2b.
+
+**What the half-life changed** (MEASURED, from the two runs): almost nothing.
+The 2032 mean moved -0.0478 at H = 24 and -0.0460 at H = 22. The 2032 harm comes
+from briefs in the term's years four to six, which no half-life near two years
+clears before that vote. The fade does its job on the vote after next (2029
+passes, 2027 is untouched). Against #104's permanent cost, all 83 changed rows
+move up (MEASURED, against `tip-104-e32c19cb.json`). What it cannot do is make a
+president who answers no one for six years safe in 2032. The author chose that
+this is the honest price.
+
+**Prediction against result** (MEASURED, QA): Systems predicted 0 to 15 flips in
+2032 and a mean between -0.005 and -0.05. The mean landed inside that range;
+the flip count, 28, did not.
+
+**The re-baseline.** Accepting the loss accepts `bal_b1_fade.json`
+(= `tip-104-dadbdf68.json`) as the table the next sim PR compares against, as
+invariant I4 requires. The exception is the GBR row, which stays open until
+Systems explains it.
+
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
 
 Knowledge bands: **stranger** `[0, 0.33)`, **acquaintance** `[0.33, 0.67)`,
