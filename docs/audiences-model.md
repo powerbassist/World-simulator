@@ -7,11 +7,12 @@ tags:
 
 # Audiences Model
 
-People ask to see the president. V5.2b's first half, the request: who asks, when,
-what the three answers cost, and why a request left unanswered is a decline. The
-second half, the audience itself (the levers, the odds and their fog), is b2's.
-The design is [[v5.2-spec]] "An audience request (V5.2b)"; the bands are
-[[bands-v5.2]] B1-B3; the registers it prices on are [[people-model]] §14.1 (grudge,
+People ask to see the president. V5.2b's first half (sections 1-4), the request:
+who asks, when, what the three answers cost, and why a request left unanswered is a
+decline. Its second half (sections 5-8), the audience itself: the levers, the odds and
+their fog, the topics, and the promises judged at their date. The design is
+[[v5.2-spec]] "An audience request (V5.2b)" and "The influence levers"; the bands are
+[[bands-v5.2]] B1-B5; the registers it prices on are [[people-model]] §14.1 (grudge,
 loyalty) and §14.9 (rapport, knowledge).
 
 ## 1. The request is the lane
@@ -51,7 +52,7 @@ Characters (`WorldMonth`'s "Audiences" step):
 
 | Answer | Costs | What it buys |
 |---|---|---|
-| **Book** | one of the `OFFERED_DATES` (2) days the person offers, inside the window, if the diary can place it ([[calendar-model]] §12: one thing at a time) | the audience: the scene, and `KNOW_AUDIENCE` (0.12) knowledge whatever is said |
+| **Book** | one of the `OFFERED_DATES` (2) days the person offers, inside the window, if the diary can place it ([[calendar-model]] §12: one thing at a time) | the audience: the scene (section 5), and `KNOW_AUDIENCE` (0.05) times what is left to learn, whatever is said |
 | **Delegate** | `DELEGATE_GRUDGE_SHARE` (0.25) of a decline's grudge; a snub (`DELEGATE_SNUB_RAPPORT`) for a `vain` person or an office want | the request answered, most of the grudge avoided, no diary day, no knowledge |
 | **Decline** | `DECLINE_GRUDGE` (0.18, x the trait intake: loyal 0.5, principled 2) and `DECLINE_RAPPORT` (-0.1) | the days, and no commitment |
 | *(lapse)* | exactly a decline (the author's answer 3, 2026-10-21) | nothing |
@@ -116,5 +117,114 @@ starting values.
 The balance re-baseline this moves -- every request in every regime lapses -- is in
 the PR that shipped it, measured against the prediction written before the run.
 
+## 5. The audience (b2)
+
+The booked day comes and the diary opens the scene: `Levers.open()` holds the request
+and returns a **session**, a Dictionary the scene holds and hands back on every call. It
+is never saved ([[summits-model]] §2, spec C11); what it changes lands in the registers.
+The session offers **three attempts** (the author's answer 2), each a lever or a topic. A
+scene left open past its month is section 3's no-show, priced as one decline.
+
+| Lever | Odds (clamped to [0.05, 0.95], + 0.20 x rapport) | Spends, win or lose |
+|---|---|---|
+| **Argue** | 0.08 + 0.62 x knowledge, +-0.15 for an ask aligned with the want or against it, stubborn -0.14 | nothing |
+| **Bargain** | 0.28 + 0.25 x knowledge, pragmatic +0.22, principled -0.22 | a favour (rapport -0.10), or a vote trade (an IOU due in 12 months) |
+| **Promise a date** | 0.30 + 0.25 x knowledge, ambitious +0.22, -0.30 x (skill - 0.5) x 2 above a middling reader | a dated promise 3 to 24 months out (section 7) |
+| **Pressure** | 0.48 + 0.25 x knowledge, -0.50 x (standing - 0.5), +0.20 x (approval - 50) / 50, networked -0.16, stubborn -0.12 | rapport -0.06 and a grudge pulse of 0.04 |
+| **Flatter** | 0.48 + 0.20 x knowledge - 0.40 x skill, vain +0.40 | nothing; a failure on a principled reader above a middling one (skill 0.5) costs rapport -0.08 |
+| **Friendship** | a friend or a close person only: 0.60 + 0.25 x knowledge, close +0.10 | the bond, a step down |
+
+- **Why argue is so weak at first.** Argue costs nothing, so it Pareto-dominates any
+  priced lever that never beats its odds. Its strength is knowledge, picking the right
+  argument (the dominance matrix: "low odds without knowledge"), so it is a known
+  person's lever, not a stranger's.
+- **What a success buys:** the request settles without the decline price, loyalty
+  +0.05 and a grudge's relief of 0.05, through `Characters.price_refusal()`. A flatter
+  buys only the settle: its effect is small and does not hold. After a success the
+  remaining attempts are topics only.
+- **No success,** and closing is a decline, priced once through `Audiences.settle()`.
+- **The roll** is `Cycle.unit_pair` over the request, the lever and the attempt index,
+  and the month (I1).
+- **Aid is not in b2.** A budget line of its own, a register and a draining tick are a
+  later block's; the bargain refuses it.
+
+**The other topics** each spend one attempt and buy knowledge and rapport, never a vote:
+
+- family and opinion: `KNOW_TOPIC` 0.07 and rapport +0.04;
+- dinner, once an audience: 0.10 and +0.08;
+- gossip about a named third person: the president's knowledge of THAT person, 0.05
+  (spec C1: every edge starts at the president);
+- flirting: listed, not offered; the affair is V5.2c's (B7).
+
+## 6. The fog, and knowing someone
+
+The scene never shows the true odds. `Levers.offered()` prints a range around them:
+
+- 0.36 wide below the acquaintance edge (0.33), narrowing linearly to 0.08 at the known
+  edge (0.67);
+- placed by a seeded offset, so the truth is always inside and not always centred (a
+  centred range would print the answer);
+- shifted back inside [0, 1], never narrowed.
+
+A trait shows once knowledge passes its seeded reveal point, between a tenth of the
+known edge and the edge itself. So a stranger sees none and a known person all; a trait
+never shows wrong.
+
+**Every knowledge gain has diminishing returns**: `amount x (1 - knowledge)`, the
+audience's own `KNOW_AUDIENCE` and every topic alike.
+
+- On b1's linear 0.12, six audiences alone made a person "known", which B4's "at least
+  8" forbids.
+- At 0.05 with one topic an audience, each audience keeps 0.95 x 0.93 of what is left
+  to learn. A stranger becomes an acquaintance after 4 audiences and known after 9.
+- So a term cannot come to know all of France's 61 people, and the player chooses whom
+  to learn.
+
+## 7. Promises and IOUs
+
+A promise names a date the president controls. A vote trade is an IOU due 12 months on.
+Both are a's `ns.commitments`, written by `President.commit()`.
+
+`Levers.tick_month()`, run in the month's Audiences step after the lane, on the same
+meters, judges each one due, once, with no roll:
+
+| | The person's want served at the date | Not served |
+|---|---|---|
+| **Promise** | kept: rapport +0.10 | **a lie revealed**: rapport -0.5, knowledge halved, a grudge pulse of 0.15 |
+| **IOU** | paid | **a betrayal**: rapport -0.2, a grudge pulse of 0.08; knowledge stands, since no lie was told |
+
+`President.take_commitments_due()` takes each judged row off the register, so none is
+judged twice, and a row loaded from a save is judged at its date like any other. A
+person who has defected or left office meanwhile is judged on the same want. No balance
+regime makes a promise, so the tick has nothing to do there.
+
+## 8. The levers' bands, measured (2026-10-24)
+
+`tools/lever_probe.gd` runs on a France game warmed 12 idle months through
+`WorldMonth.tick_month()` (approval 48.8). Its exchange weights were declared in its
+header before the first run, in asks won: gain 1.0 (flatter 0.7), a grudge point 1.0, a
+rapport point 0.5, a commitment 0.15, a bond step 0.30.
+
+| Band | Declared | Measured |
+|---|---|---|
+| B4 the picked lever's success: stranger / acquaintance / known | 0.30-0.50 / 0.45-0.65 / 0.60-0.80, rising >= 0.08 | 0.471 / 0.586 / 0.701 |
+| B4 the printed width: stranger / known | >= 0.30 / <= 0.10 | 0.36 / 0.08 |
+| B4 the truth inside the range | 100 % | 100 % |
+| B4 audiences with a topic: to acquaintance / to known | 2-5 / >= 8 | 4 / 9 |
+| B5 Pareto-dominated pairs | 0 | 0 |
+| B5 best net value, any lever | <= 40 % | bargain 30.3 % (argue 26.0, friendship 18.6 of its half, pressure 18.3, promise 10.0) |
+| B5 best net value, every lever | >= 5 % | flatter 6.1 % |
+
+- **Where the constants came from.** They were the starting values, tuned in a
+  prototype over France's 61 people before the probe existed. The probe met every row
+  with them, so none was moved.
+- **Flatter has the thinnest margin.** It is best only for the vain who read poorly and
+  whom no other lever suits.
+- **Not measured here:**
+  - B5's channel row (a call at least 0.10 below an audience): the phone is b3's.
+  - B5's answers row (book, delegate, decline, unanswered): it needs a diary day's price,
+    which no band states. Its lapse half holds by construction: a lapse costs exactly a
+    decline.
+
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
-[[decision-surfaces]] · [[programme-model]]
+[[decision-surfaces]] · [[programme-model]] · [[summits-model]]

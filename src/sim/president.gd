@@ -18,8 +18,9 @@ extends RefCounted
 ## government -- covers() refuses everyone else, so a writer handed a stray id
 ## leaves every register untouched rather than growing an edge to 2 147 people.
 ##
-## Nothing on the tick path calls a writer yet. The registers are V5.2a's; the
-## audiences (b) and the shadows (c) are what write them.
+## The registers are V5.2a's; the audiences (b) and the shadows (c) write them.
+## On the tick path since V5.2b b2: the audience held (Audiences.hold) and the
+## commitments judged at their date (Levers.tick_month).
 
 const K = preload("res://src/sim/president_constants.gd")
 
@@ -109,16 +110,25 @@ static func party_money_eur_m(ns, loader, party_id: String) -> float:
 static func commitments_with(ns, person_id: String) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for row in ns.commitments:
-		if String(row.get("person_id", "")) != person_id:
-			continue
-		out.append({
-			"kind": String(row.get("kind", "")),
-			"person_id": person_id,
-			"object": String(row.get("object", "")),
-			"made_month": int(row.get("made_month", 0)),
-			"due_month": int(row.get("due_month", 0)),
-		})
+		if String(row.get("person_id", "")) == person_id:
+			out.append(_commitment(row))
 	return out
+
+
+## V5.2b b2. Every commitment in flight, cast as above, earliest due first (ties
+## in the order they were made) -- the Diary's read: the author's "Oui, parole
+## donnée" (2026-10-24) keeps a failed promise binding, and the player sees it.
+static func commitments(ns) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row in ns.commitments:
+		out.append(_commitment(row))
+	var order := range(out.size())
+	order.sort_custom(func(a: int, b: int) -> bool:
+		return out[a]["due_month"] < out[b]["due_month"] or (out[a]["due_month"] == out[b]["due_month"] and a < b))
+	var sorted: Array[Dictionary] = []
+	for i in order:
+		sorted.append(out[i])
+	return sorted
 
 
 ## The evidence held against the president, summed -- what V5.2c's exposure
@@ -138,6 +148,16 @@ static func learn(state, ns, loader, person_id: String, amount: float) -> bool:
 		return false
 	ns.person_knowledge[person_id] = clampf(knowledge(ns, person_id) + amount, 0.0, 1.0)
 	return true
+
+
+## V5.2b b2. What the audience teaches: `amount` times what is left to learn, so
+## a well-known person teaches less (B4: acquaintance in 2-5 audiences, known in
+## at least 8). The one door for the curve -- the audience held and each topic --
+## so the two cannot drift. What it wrote.
+static func learn_from(state, ns, loader, person_id: String, amount: float) -> float:
+	var before := knowledge(ns, person_id)
+	learn(state, ns, loader, person_id, amount * (1.0 - before))
+	return knowledge(ns, person_id) - before
 
 
 static func adjust_rapport(state, ns, loader, person_id: String, amount: float) -> bool:
@@ -196,6 +216,21 @@ static func commit(state, ns, loader, kind: String, person_id: String, object: S
 	return true
 
 
+## V5.2b b2. Every commitment due by `now`, taken off the register in its order
+## and cast the way commitments_with() casts: the judge (Levers.tick_month)
+## prices each once, so no row outlives its date and none is judged twice.
+static func take_commitments_due(ns, now: int) -> Array[Dictionary]:
+	var due: Array[Dictionary] = []
+	var later: Array[Dictionary] = []
+	for row in ns.commitments:
+		if int(row.get("due_month", 0)) > now:
+			later.append(row)
+		else:
+			due.append(_commitment(row))
+	ns.commitments = later
+	return due
+
+
 static func leave_evidence(state, ns, loader, kind: String, person_id: String, size: float) -> bool:
 	if not K.EVIDENCE_KINDS.has(kind) or size <= 0.0:
 		return false
@@ -213,6 +248,18 @@ static func leave_evidence(state, ns, loader, kind: String, person_id: String, s
 # --- Helpers ----------------------------------------------------------------------------
 
 ## An authored person of this nation: the loader's id-prefix rule.
+## A commitment row as every reader gets it: the months cast to int, a dropped
+## key read as its empty value.
+static func _commitment(row: Dictionary) -> Dictionary:
+	return {
+		"kind": String(row.get("kind", "")),
+		"person_id": String(row.get("person_id", "")),
+		"object": String(row.get("object", "")),
+		"made_month": int(row.get("made_month", 0)),
+		"due_month": int(row.get("due_month", 0)),
+	}
+
+
 static func _own(ns, loader, person_id: String) -> bool:
 	return loader.person_by_id.has(person_id) and person_id.begins_with("%s_" % ns.id)
 

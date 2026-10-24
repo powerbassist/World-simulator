@@ -189,13 +189,14 @@ static func decline(state, ns, loader, request_id: String) -> Dictionary:
 
 
 ## The booked day has come and the scene opens (Levers.open calls this): the
-## president learns the person a little whatever is said.
+## president learns the person a little whatever is said -- less the better they
+## already know them, the curve every knowledge gain of the audience takes.
 static func hold(state, ns, loader, request_id: String) -> Dictionary:
 	var row := _row(ns, request_id)
 	if row.is_empty() or String(row["status"]) != K.STATUS_BOOKED:
 		return {"ok": false, "error": "this audience is not booked"}
 	row["status"] = K.STATUS_HELD
-	President.learn(state, ns, loader, String(row["person_id"]), K.KNOW_AUDIENCE)
+	President.learn_from(state, ns, loader, String(row["person_id"]), K.KNOW_AUDIENCE)
 	return {"ok": true, "error": ""}
 
 

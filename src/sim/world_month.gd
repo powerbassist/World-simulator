@@ -24,6 +24,7 @@ extends RefCounted
 ##   history_entry     Budget.snapshot merged with Opinion.snapshot, undated
 ##   character_acts    Characters.tick_month's acts (Array)
 ##   audience_requests Audiences.tick_month's {arrived, lapsed} (V5.2b)
+##   commitments       Levers.tick_month's {kept, broken} (V5.2b b2)
 ##   election_results  Elections.tick_month's results (Array)
 ##
 ## The caller sets state.year and state.month first: the clock is the caller's,
@@ -74,6 +75,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const Levers = preload("res://src/sim/levers.gd")
 const Elections = preload("res://src/sim/elections.gd")
 
 ## The step names `on_step` receives, in run order. tests/test_world_month.gd
@@ -406,8 +408,13 @@ static func _step(month: Month, step: String) -> Array:
 		# V5.2b, after Characters (wants read the same settled meters, and a lapse's
 		# grudge is read by next month's acts rather than this one's) and before
 		# Elections, which still runs last.
+		# V5.2b b2: the promises and IOUs due are judged on the same meters, after
+		# the lane, so a request lapsing this month and a promise falling due read
+		# one settled world.
 		"Audiences":
-			month.report["audience_requests"] = Audiences.tick_month(state, loader, _character_meters(state))
+			var meters := _character_meters(state)
+			month.report["audience_requests"] = Audiences.tick_month(state, loader, meters)
+			month.report["commitments"] = Levers.tick_month(state, loader, meters)
 		# Elections run last, on the already-settled history entry, and can fire a
 		# national and an EP result in the same month (France and Belgium, June 2029).
 		"Elections":

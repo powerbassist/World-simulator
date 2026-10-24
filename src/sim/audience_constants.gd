@@ -59,9 +59,13 @@ const DECLINE_RAPPORT := -0.1
 const DELEGATE_GRUDGE_SHARE := 0.25
 const DELEGATE_SNUB_RAPPORT := -0.05
 
-## What holding an audience teaches the president about the person: a stranger
-## becomes an acquaintance in about three (B4: 2-5 interactions).
-const KNOW_AUDIENCE := 0.12
+## What holding an audience teaches the president about the person, times what is
+## left to learn (1 - knowledge). V5.2b b2 moved it from a linear 0.12, on which
+## six audiences alone made a person "known" and B4's "at least 8" could not
+## hold: at 0.05 with one topic (lever_constants KNOW_TOPIC 0.07) each audience
+## keeps 0.95 * 0.93 of the unknown, so a stranger is an acquaintance after 4
+## and known after 9 (B4: 2-5, and at least 8).
+const KNOW_AUDIENCE := 0.05
 
 const STATUS_PENDING := "pending"
 const STATUS_BOOKED := "booked"

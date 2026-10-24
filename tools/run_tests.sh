@@ -55,6 +55,7 @@ tests=(
   tests/test_people.gd
   tests/test_president.gd
   tests/test_audiences.gd
+  tests/test_levers.gd
   # V4.11: the derived grade (playable / simulated / outline) and its scanner.
   tests/test_roster.gd
   # V4.11b: the real endowments and the outline register, as content.
