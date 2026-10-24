@@ -106,13 +106,22 @@ so the band passed while the author would meet a silent year.
 one game. A one-in-twenty miss could land on the gate, so the first request is
 guaranteed by a stated mechanism, not left to sampling luck:
 
-- If the draw has brought no request by the end of month 2, then in month 3 the
-  eligible person with the strongest servable want asks.
-  - Eligible means past the request gates: the standing floor, the cooldown,
-    no request pending.
-  - Servable means a want the president has a verb to serve.
-  - Strongest means the want's own weight. Ties go to id order, so it is
-    deterministic (I1).
+- If the draw has brought no request by the end of month 2, then in month 3 one
+  candidate asks, about their unserved want.
+  - **The candidates are the draw's own:** people for whom `Audiences._may_ask()`
+    holds (not the leader, past the 8-month cooldown, no open request) and who
+    carry a want that is not served (the draw's `_unserved`). A want of any
+    kind counts, programme stances included. A request asks; whether the
+    president can serve it now is the player's answer, not the trigger's.
+  - **The one who asks** is the candidate with the highest standing, the
+    hazard's own weight (0.5 + standing). Ties go to id order, so the choice is
+    deterministic (I1). No want carries a weight of its own, so the want asked
+    about is the one `_unserved` returns, as in the draw.
+  - **No candidate:** the guarantee needs at least one, so its 100 % holds by
+    mechanism only while the set is non-empty in month 3. Systems' test checks
+    it for each of the four playable nations at a forced empty draw. A nation
+    with no candidate would read as a miss on this row, and it is reported to
+    the author, not hidden by a fallback.
 - It fires at most once a game, only in month 3, and only when the draw gave
   nothing.
 - **Re-baseline (INFERRED, before Systems' run):** at seed 0, France's first
