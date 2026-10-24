@@ -49,7 +49,8 @@ static var _matrix_rows: Dictionary = {}
 ## call whose graph is not the cached instance -- which is every call on
 ## Budget.project()'s copy (a deep duplicate, by the state-copy contract), twice per
 ## accessibility() miss (the table, then the foreign part), 41 nations x two systems
-## a projected month: ~280 ms of a two-projection forecast refresh. Sound on the
+## a projected month: ~320 ms of a two-projection forecast refresh, measured (the
+## clock unit 337 -> 191 ms, Migration's accessibility 366 -> 189). Sound on the
 ## promise the caches above already rest on: content is never mutated, so two
 ## instances found equal stay equal.
 static var _equal_a: Dictionary = {}

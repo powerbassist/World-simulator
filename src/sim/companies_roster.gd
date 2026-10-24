@@ -18,8 +18,9 @@ static func firms_of(loader, nation_id: String) -> Array:
 ## D14 (A'): the filtered list is remembered per nation against the roster ARRAY it
 ## came from (is_same) and that array's size, and handed out as a copy.
 ## companies.gd's seeding and industry.gd's machine each asked for it per nation
-## per month, and Industry._bids() for every nation per bid: ~200 ms of a forecast
-## refresh in a scan of ~95 firms for ~6 majors. Content is never mutated; the size
+## per month, and Industry._bids() for every nation per bid: ~190 ms of a forecast
+## refresh measured (the seeding 112 -> 20 ms, the machine's own read 103 -> 7) in a
+## scan of ~95 firms for ~6 majors. Content is never mutated; the size
 ## covers the one fixture that appends a firm to a loaded roster
 ## (test_companies_tiers), and the copy keeps a caller that sorts or appends from
 ## writing into the memo.
