@@ -84,8 +84,9 @@ they built and where, and say what they do not know and why" ([[v5]], head).
 Declared before Systems adds the seed and runs it (QA's pre-gate B, CALL 2, in
 `.superpowers/sdd/v5.2-pregate-b-report.md`).
 
-**Why (MEASURED, QA):** domestic arrivals were 21 in months 1–20, then **1 in
-months 21–38**. No gate was closed. The draw `Cycle.unit_pair(person_id,
+**Why (MEASURED, QA, on a played run, not an idle A1 term: answers, a
+reshuffle and a re-election):** domestic arrivals were 21 in months 1–20, then
+**1 in months 21–38**. No gate was closed. The draw `Cycle.unit_pair(person_id,
 "audience_request", month)` has no per-game seed, so every France game draws
 the same sparse months. B1 counted per 60 months and floored only months 1–20,
 so the band passed while the author would meet a silent year.
@@ -94,14 +95,15 @@ so the band passed while the author would meet a silent year.
 
 | | Declared |
 |---|---|
-| Every 12-month window of the 60-month term (49 sliding windows) holds at least **1** arrival | in at least **95 %** of seeds (19 of 20) |
+| Every 12-month window of the 60-month run (France's first term, 16 months, and part of the second; 49 sliding windows) holds at least **1** arrival | in at least **95 %** of seeds (19 of 20) |
 | Every 12-month window holds at least **2** arrivals | in at least **80 %** of seeds (16 of 20) |
 | B1's existing rows (24 to 48 a term, the first by month 3, at least 8 in months 1–20, at least 12 people, no one over 25 %), each read per seed | each in at least **90 %** of seeds (18 of 20) |
+| B2's rows (`audience_probe` A2) and B3's act rows (A1 and A3), each read per seed over the same 20 seeds | each in at least **90 %** of seeds (18 of 20) |
 
 **Why these numbers (OPINION, with INFERRED arithmetic on a model of the draw):**
 
-- I simulated a Poisson arrival process with France's 61 people, 60 months
-  and the 49 sliding windows, 4 000 trials per cell. It gives the share of
+- I simulated a Poisson arrival process (only a monthly rate enters it), 60
+  months and the 49 sliding windows, 4 000 trials per cell. It gives the share of
   games whose emptiest year still holds N arrivals:
 
   | Rate | A term | N ≥ 1 | N ≥ 2 | N ≥ 3 |
@@ -111,8 +113,10 @@ so the band passed while the author would meet a silent year.
   | 0.6 a month | 36, B1's middle | 98 % | 90 % | 69 % |
 
 - **The model's limits:** it leaves out the game's gates (an 8-month cooldown
-  per person, at most 4 pending, a standing floor), so the real process may be
-  more regular or more clumped. The percentages show the order of magnitude;
+  per person, at most 4 pending, a standing floor) and the invitation triggers
+  (a programme going live at a term's start, the month after a reshuffle),
+  which bunch arrivals at term starts outside the hazard. So the real process
+  may be more regular or more clumped. The percentages show the order of magnitude;
   they are not measurements of the game.
 - **Sampling noise:** with 20 seeds, a process that truly meets 98 % (B1's
   middle rate, N ≥ 1) passes the 19-of-20 row with probability 0.94. One that
@@ -138,9 +142,10 @@ so the band passed while the author would meet a silent year.
   regimes run at seed 0. A table that moves means seed 0 is not today's draw,
   and that is a bug to fix, not a re-baseline to accept.
 - **`audience_probe`: it moves, by design**, because it now reads 20 seeds
-  instead of one draw. Every B1–B3 row is read per seed against the 90 % rule
-  above. B3's per-request price equality (`tests/test_audiences.gd`) is
-  seed-independent and must not move.
+  instead of one draw. Every B1–B3 row it reads is read per seed against
+  the 90 % rows above. B3's 2027 rows stay on `balance_probe` at seed 0, and
+  B3's per-request price equality (`tests/test_audiences.gd`) is
+  seed-independent. Neither moves.
 - **The game:** a new game draws a fresh seed, and a save carries it. An
   older save without a seed reads seed 0 (today's draw), which is absent-ok,
   so no `SAVE_VERSION` bump.
