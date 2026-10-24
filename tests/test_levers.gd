@@ -57,6 +57,7 @@ func _init() -> void:
 	_check_a_kept_promise_and_a_broken_one()
 	_check_an_unpaid_iou_is_a_betrayal()
 	_check_a_promise_survives_a_save()
+	_check_knowing_someone_takes_time()
 
 	_finish()
 
@@ -544,6 +545,42 @@ func _check_a_promise_survives_a_save() -> void:
 	Levers.tick_month(state, _loader, METERS)
 	if _snapshot(loaded, owed["id"]) != after:
 		_fail("a loaded promise was judged twice")
+
+
+## B4's interaction rows, through the real commands: from a stranger, audiences
+## that each hold one topic make an acquaintance in 2 to 5 and a known person in
+## no fewer than 8 -- so a term cannot know all of France's 61 people.
+func _check_knowing_someone_takes_time() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var pid := ""
+	for person in _loader.people[PLAYER]:
+		if person.id != President.leader_id(ns):
+			pid = person.id
+			break
+	var to_acquaintance := -1
+	var to_known := -1
+	for n in range(1, 30):
+		var row := {"id": "%s|test%d" % [pid, n], "person_id": pid, "object": "programme:none", "stance": "sponsor",
+			"arrived_month": _now(state), "deadline_month": _now(state) + 2, "status": AK.STATUS_BOOKED,
+			"date": {"year": int(state.year), "month": int(state.month), "day": 1}, "resolved_month": -1}
+		ns.audience_requests.append(row)
+		var s: Dictionary = Levers.open(state, ns, _loader, String(row["id"]))
+		if s.is_empty():
+			_fail("a staged booking did not open")
+			return
+		Levers.talk(state, ns, _loader, s, "opinion")
+		Levers.close(state, ns, _loader, s)
+		var k := President.knowledge(ns, pid)
+		if to_acquaintance < 0 and k >= 0.33:
+			to_acquaintance = n
+		if k >= 0.67:
+			to_known = n
+			break
+	if to_acquaintance < 2 or to_acquaintance > 5:
+		_fail("a stranger became an acquaintance in %d audiences with a topic, not 2 to 5" % to_acquaintance)
+	if to_known >= 0 and to_known < 8:
+		_fail("a stranger became known in %d audiences with a topic, under 8" % to_known)
 
 
 func _plain_game():
