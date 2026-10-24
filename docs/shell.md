@@ -62,6 +62,7 @@ flowchart LR
   sb --> d_glossary["Glossary"]
   d_glossary --> t_glossary["glossary"]
   sb -.-> s_summit["summit<br/>a scene, in no domain"]:::hidden
+  sb -.-> s_audience["audience<br/>a scene, in no domain"]:::hidden
   classDef hidden stroke-dasharray:4 3,fill:#ececec,stroke:#555,color:#1a1a1a
 ```
 <!-- vault-diagram:domains end -->

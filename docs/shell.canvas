@@ -26,7 +26,7 @@
 			"y": 0,
 			"width": 400,
 			"height": 220,
-			"text": "## 2 Workspace\n`WindowManager`: one tab open at a time, docked left, back and forward walk the player's path. 23 panels registered, none edited when the shell changed.\n\n`src/ui/window_manager.gd`"
+			"text": "## 2 Workspace\n`WindowManager`: one tab open at a time, docked left, back and forward walk the player's path. 24 panels registered (V5.2b: the audience scene, in audience_driver.gd), none edited when the shell changed.\n\n`src/ui/window_manager.gd`"
 		},
 		{
 			"id": "6a8e2399923d653e",

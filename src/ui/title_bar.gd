@@ -25,6 +25,7 @@ var _back: Button
 var _forward: Button
 var _crumb: Label
 var _held: Label
+var _requests: Label
 var _clock_slot: HBoxContainer
 var _windows
 var _nation := ""
@@ -54,6 +55,14 @@ func _ready() -> void:
 	_crumb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_crumb.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	row.add_child(_crumb)
+
+	# V5.2b: the "requests waiting" mark by the clock. A request never holds the
+	# clock, so the mark is the clock's only word about them (decision-surfaces.md).
+	_requests = Label.new()
+	_requests.theme_type_variation = UiTheme.WARN_TEXT
+	_requests.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_requests.hide()
+	row.add_child(_requests)
 
 	_held = Label.new()
 	_held.theme_type_variation = UiTheme.BAD_TEXT
@@ -125,6 +134,16 @@ func set_crumb(parts: Array) -> void:
 
 func crumb() -> String:
 	return _crumb.text
+
+
+## How many audience requests wait for an answer; none hides the mark.
+func set_requests(count: int) -> void:
+	_requests.text = tr_n("%d request waiting", "%d requests waiting", count) % count
+	_requests.visible = count > 0
+
+
+func requests_text() -> String:
+	return _requests.text if _requests.visible else ""
 
 
 ## Why the clock is not running, or "" when nothing holds it.

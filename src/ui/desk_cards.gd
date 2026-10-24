@@ -9,6 +9,7 @@ extends RefCounted
 
 const Events = preload("res://src/sim/events.gd")
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
@@ -179,6 +180,7 @@ static func restore_after_load(main) -> void:
 	for entry in main._state.player().event_queue:
 		push(main, Events.event_by_id(main._loader, String(entry.get("event_id", ""))), entry)
 	EffectsLedger.restore_card(main._state, main._hud.inbox)
+	AudienceDriver.refresh(main)
 
 
 static func push(main, ev, entry: Dictionary) -> void:

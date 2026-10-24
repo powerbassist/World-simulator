@@ -12,6 +12,7 @@ extends RefCounted
 
 const Events = preload("res://src/sim/events.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 
 
 ## The line for the clock cluster, "" when nothing the player can answer holds it;
@@ -23,6 +24,10 @@ static func show(main) -> String:
 	# A state visit's scene is modal and holds the clock while it runs (#70).
 	if main._windows.is_open("summit") and not String(main._summit_panel.visiting).is_empty():
 		return Strings.t("Paused: the state visit to %s.") % main._summit_panel.visiting
+	# V5.2b: an audience is modal too, and names the person in the chair.
+	var audience = AudienceDriver.scene_of(main)
+	if audience != null and main._windows.is_open("audience") and not String(audience.visiting).is_empty():
+		return Strings.t("Paused: the audience with %s.") % audience.visiting
 	var held := ""
 	if Events.interrupt_pending(ns):
 		var ev = Events.pending_event(ns, main._loader)

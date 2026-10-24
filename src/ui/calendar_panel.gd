@@ -35,6 +35,7 @@ const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
+const AudienceBooking = preload("res://src/ui/audience_booking.gd")
 
 signal closed
 
@@ -42,6 +43,9 @@ signal closed
 ## NOT in shape: a booking commits nothing this month, so there is no baseline to
 ## measure and no U4 decision delta to queue. main.gd listens only to repaint.
 signal diary_changed
+
+## V5.2b: an audience request's days, booked here (audience_booking.gd).
+var audience := AudienceBooking.new()
 
 ## What each fixed-date kind is called on screen. Presentation, so it lives here
 ## rather than in calendar_constants.gd — src/sim/ names the kind, the panel says
@@ -97,14 +101,7 @@ func _ready() -> void:
 	# that takes the slack. Everything below it is a fixed number of rows.
 	custom_minimum_size = Vector2(520, 700)
 
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	margin.add_child(root)
+	var root := PanelKit.padded(self, 16, 10)
 
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
@@ -131,6 +128,7 @@ func _ready() -> void:
 	scroll.add_child(_body)
 
 	root.add_child(HSeparator.new())
+	root.add_child(audience)
 	_build_form(root)
 
 	_close_button = Button.new()
@@ -161,7 +159,7 @@ func _build_form(root: VBoxContainer) -> void:
 	PanelKit.line(grid, tr("Kind"), PanelKit.Tone.PLAIN)
 	_kind_pick = OptionButton.new()
 	_kind_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for kind in K.KINDS:
+	for kind in K.KINDS.filter(func(k): return k != K.KIND_AUDIENCE):  # an audience is booked from its request
 		_kind_pick.add_item(tr(String(KIND_LABEL.get(kind, kind))))
 	_kind_pick.item_selected.connect(func(_i: int): _refresh_form())
 	grid.add_child(_kind_pick)
