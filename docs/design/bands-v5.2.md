@@ -1323,8 +1323,12 @@ ladder, not two.
 - **One comparison for every cut (declared):** a register value within
   **1e-9** of a cut counts as ON the cut, and the cut's declared bracket
   decides its side. For R11's words and for these bonds alike, in one shared
-  helper that Systems and Interface both call: "below a cut" is
-  `value < cut - 1e-9`, "at or above" is `value >= cut - 1e-9`. So exact sums of
+  helper that Systems and Interface both call. For a cut whose lower side is
+  closed, `[cut, ...)` (cold's −0.30, the grudge cuts): "below" is
+  `value < cut - 1e-9` and "at or above" is `value >= cut - 1e-9`. For a cut
+  whose upper side is closed, `(..., cut]` (rapport's +0.05 and +0.30,
+  loyalty's +0.10 and +0.40): "above" is `value > cut + 1e-9` and "at or below"
+  is `value <= cut + 1e-9`. (The second pair added on QA's RECORD on #138.) So exact sums of
   the authored steps land on the declared side: three declines read −0.30,
   *wary*, not a rival. A tolerance and not a rounding of the value, because
   `snappedf()` multiplies back by a step that is not exact in binary and can
