@@ -24,6 +24,7 @@ const Government = preload("res://src/sim/government.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const Person = preload("res://src/core/person.gd")
 const CharacterK_Act = preload("res://src/sim/character_act_constants.gd")
+const CK_Act = CharacterK_Act
 
 var _failures: Array[String] = []
 var _loader
@@ -43,6 +44,9 @@ func _init() -> void:
 	_check_programme_want_is_term_scoped_and_alive_only()
 	_check_challenge_reaches_the_premiership()
 	_check_refusal_price_reads_the_traits()
+	_check_an_act_cost_halves_in_two_years()
+	_check_an_act_records_what_it_wrote()
+	_check_fourteen_years_of_acts_leave_the_clamp()
 	_check_want_served_is_stance_aware()
 
 	if _failures.is_empty():
@@ -112,6 +116,7 @@ func _check_single_writers() -> void:
 	var register_writers: Array[String] = [
 		"person_loyalty", "person_standing", "person_grudges",
 		"party_leader_override", "person_party_override", "person_want_state",
+		"act_bloc_offset",
 	]
 	for file in _sim_files():
 		var src := FileAccess.get_file_as_string("res://src/sim/%s" % file)
@@ -332,6 +337,83 @@ func _check_refusal_price_reads_the_traits() -> void:
 		if not is_equal_approx(float(paid["grudge"]), want) or not is_equal_approx(promised, want):
 			_fail("a refusal from %.3f wrote %.3f (promised %.3f), wanted %.3f -- the ceiling is %.3f" % [
 				start, float(paid["grudge"]), promised, want, ceiling])
+
+
+## V5.2b, the author's call "le cout s'efface": the bloc_offset a character act
+## wrote fades with a half-life of ACT_OFFSET_HALF_LIFE_MONTHS, and only the act's
+## share does -- a law's cost beside it stays where it was.
+func _check_an_act_cost_halves_in_two_years() -> void:
+	if not is_equal_approx(CK_Act.ACT_OFFSET_MONTHLY_KEEP, pow(0.5, 1.0 / float(CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS))):
+		_fail("ACT_OFFSET_MONTHLY_KEEP %.10f is not 0.5^(1/%d)" % [CK_Act.ACT_OFFSET_MONTHLY_KEEP, CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS])
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	var base := float(ns.bloc_offset.get("workers", 0.0))
+	ns.bloc_offset["workers"] = base - 0.3 - 0.2   # a law's -0.3, an act's -0.2
+	ns.act_bloc_offset["workers"] = -0.2
+	for m in range(CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS):
+		if not Characters.tick_month(state, _loader, _idle_meters(ns)).is_empty():
+			_fail("the fade fixture fired an act -- it measures the act's fade, not a new one")
+			return
+	if not is_equal_approx(float(ns.act_bloc_offset.get("workers", 0.0)), -0.1):
+		_fail("after %d months an act's -0.2 reads %.4f, not -0.1" % [CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS, float(ns.act_bloc_offset.get("workers", 0.0))])
+	if not is_equal_approx(float(ns.bloc_offset["workers"]), base - 0.3 - 0.1):
+		_fail("bloc_offset reads %.4f, not the law's -0.3 plus the act's faded -0.1 over %.4f" % [float(ns.bloc_offset["workers"]), base])
+
+
+## The act's share is what the act actually wrote: a brief's delta on each bloc it
+## priced, recorded the month it fires.
+func _check_an_act_records_what_it_wrote() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	var pid := _plain_politician(ns)
+	ns.person_grudges[pid] = 0.47   # over the brief gate after the month's decay, under defect
+	var before: Dictionary = ns.bloc_offset.duplicate()
+	var acts: Array = Characters.tick_month(state, _loader, _idle_meters(ns))
+	var briefed := false
+	for act in acts:
+		briefed = briefed or (String(act["act"]) == "brief_against" and String(act["person_id"]) == pid)
+	if not briefed:
+		_fail("the fixture's brief did not fire: %s" % [acts])
+		return
+	for bloc in ns.bloc_offset:
+		var wrote := float(ns.bloc_offset[bloc]) - float(before.get(bloc, 0.0))
+		if not is_equal_approx(float(ns.act_bloc_offset.get(bloc, 0.0)), wrote):
+			_fail("bloc %s: the act wrote %.4f and the register recorded %.4f" % [bloc, wrote, float(ns.act_bloc_offset.get(bloc, 0.0))])
+
+
+## Fourteen years of acts no longer pin the clamp: one brief a year from a person
+## of middling standing -- fourteen of them, 3.5 points permanent before the fade,
+## settle near 0.85 with it.
+func _check_fourteen_years_of_acts_leave_the_clamp() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	var pid := _plain_politician(ns)
+	ns.person_standing[pid] = 0.5
+	var briefs := 0
+	for m in range(168):
+		if m % 12 == 0:
+			ns.person_grudges[pid] = 0.47
+		for act in Characters.tick_month(state, _loader, _idle_meters(ns)):
+			briefs += 1 if String(act["act"]) == "brief_against" else 0
+		ns.person_grudges[pid] = minf(float(ns.person_grudges[pid]), 0.3)   # one brief per year, no more
+	if briefs < 14:
+		_fail("the fourteen-year fixture fired %d briefs, not one a year" % briefs)
+	for bloc in ns.bloc_offset:
+		if absf(float(ns.bloc_offset[bloc])) >= 1.0 - 0.000001:
+			_fail("after fourteen years of yearly briefs bloc_offset['%s'] sits on its clamp" % bloc)
+
+
+func _idle_meters(ns) -> Dictionary:
+	return {"grievance": float(ns.unrest_pct), "press_freedom": float(ns.press_freedom), "judicial_independence": 0.0}
+
+
+## A FRA politician with no trait that bends the brief (networked) or the grudge.
+func _plain_politician(ns) -> String:
+	for person in _loader.people["FRA"]:
+		if person.kind == "politician" and not person.traits.has("networked") \
+				and not person.traits.has("loyal") and not person.traits.has("principled"):
+			return String(person.id)
+	return ""
 
 
 ## The stance-aware read the request trigger asks: a sponsor is served when the

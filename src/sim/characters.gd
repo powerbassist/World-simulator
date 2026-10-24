@@ -102,8 +102,10 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 	# Decay first, so a settled grudge halves before this month's want settles
 	# -- the same sub-ordering opinion.gd uses for the honeymoon, where
 	# decaying the old stock before the new pulse lands is what makes the
-	# half-life mean the same thing in every month of a term.
+	# half-life mean the same thing in every month of a term. The acts' old
+	# cost fades in the same place, before this month's acts add to it.
 	_decay_grudges(ns, by_id)
+	_fade_act_offsets(ns)
 
 	# Wants settle, priced on satisfaction the DERIVED reads give. Only an
 	# UNSATISFIED want moves a person, and only by the amount the band allows.
@@ -115,13 +117,42 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 	# does not also brief against the government in the same month, which is
 	# as much a legibility rule as a balance one.
 	var acted: Dictionary = {}
+	var before: Dictionary = ns.bloc_offset.duplicate()
 	for act_key in CK.ACT_KEYS:
 		for person in people:
 			if acted.has(person.id):
 				continue
 			if _fire_act(state, ns, loader, person, act_key, meters, acts, authored_leaders):
 				acted[person.id] = true
+	_record_act_offsets(ns, before)
 	return acts
+
+
+## V5.2b, "le cout s'efface": what this month's acts wrote on bloc_offset --
+## the real delta, after the clamp, since nothing else in this tick writes it --
+## joins the share that fades. The acts price through two doors (the applier for
+## a brief, Government.penalise_blocs for the rest), so the record reads the
+## result rather than either door.
+static func _record_act_offsets(ns, before: Dictionary) -> void:
+	for bloc in ns.bloc_offset:
+		var wrote := float(ns.bloc_offset[bloc]) - float(before.get(bloc, 0.0))
+		if wrote != 0.0:
+			ns.act_bloc_offset[bloc] = float(ns.act_bloc_offset.get(bloc, 0.0)) + wrote
+
+
+## The acts' share shrinks by ACT_OFFSET_MONTHLY_KEEP and bloc_offset gets back
+## what faded, so a leak hurts the next vote and is then forgotten. A share too
+## small to read is dropped, so the register does not grow a tail of zeros.
+static func _fade_act_offsets(ns) -> void:
+	for bloc in ns.act_bloc_offset.keys():
+		var part := float(ns.act_bloc_offset[bloc])
+		var kept := part * CK.ACT_OFFSET_MONTHLY_KEEP
+		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + (kept - part),
+			Legislature.LK.BLOC_OFFSET_MIN, Legislature.LK.BLOC_OFFSET_MAX)
+		if absf(kept) < 0.000001:
+			ns.act_bloc_offset.erase(bloc)
+		else:
+			ns.act_bloc_offset[bloc] = kept
 
 
 ## The grudge half-life, with the two decay traits applied where the person is

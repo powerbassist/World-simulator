@@ -190,6 +190,20 @@ const CHALLENGE_VAIN_DISCOUNT := 0.1
 ## because leaking is what a frustrated ally does on the way out.
 const GRUDGE_BRIEF_THRESHOLD := 0.45
 
+## V5.2b, the author's call (2026-10-24, verbatim: "Le cout s'efface"): the
+## bloc_offset an act writes -- a brief, a resignation, a defection, a challenge
+## -- fades with this half-life, so a leak hurts the next vote and is then
+## forgotten. Laws, events, the programme and campaigns stay permanent; only the
+## acts' share (NationState.act_bloc_offset) fades. Before V5.2b acts were rare
+## (0 in an idle term) and a permanent price did no harm; once refused audiences
+## feed the ladder, fourteen years of permanent briefs pinned the workers' and
+## students' offsets on the clamp (tests/test_balance.gd).
+const ACT_OFFSET_HALF_LIFE_MONTHS := 24
+
+## The monthly multiplier, 0.5^(1/24), written out: GDScript folds no pow() into a
+## constant, and test_characters pins the literal against the half-life.
+const ACT_OFFSET_MONTHLY_KEEP := 0.9715319411536059
+
 ## V5.2b. The highest a REFUSAL (a declined, delegated or lapsed audience
 ## request) can lift a grudge: one month's decay and one brief's relief above the
 ## brief gate. Next month's decay leaves the person at the gate, one brief fires,

@@ -1419,6 +1419,14 @@ var person_party_override: Dictionary[String, String] = {}
 ## about what the save's last month saw.
 var person_want_state: Dictionary[String, bool] = {}
 
+## bloc id -> the part of bloc_offset that character acts wrote and that has not
+## yet faded (V5.2b, "le cout s'efface"). Written by characters.gd alone: an act
+## adds what it actually wrote, and each month the part shrinks by
+## ACT_OFFSET_MONTHLY_KEEP and bloc_offset gets the difference back. absent_ok,
+## no bump: a save from before V5.2b holds acts priced as permanent, and absent
+## reads them that way -- nothing fades that was never recorded as fading.
+var act_bloc_offset: Dictionary[String, float] = {}
+
 # --- The president's registers (V5.2a) ------------------------------------------
 ## SEVEN REGISTERS OF WHAT HAS PASSED BETWEEN THIS NATION'S LEADER AND A PERSON,
 ## each an edge from the president to one person (theirs, or a foreign head met)
