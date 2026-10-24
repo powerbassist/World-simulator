@@ -53,6 +53,10 @@ const OFFERED_DATES := 2
 const DECLINE_GRUDGE := 0.18
 const DECLINE_LOYALTY := 0.0
 const DECLINE_RAPPORT := -0.1
+## b2.2 (bands-v5.2.md "The in-person gains", the parent's decision 2): being
+## received earns what a refusal to the face costs, whatever is said -- the mirror
+## of DECLINE_RAPPORT, written when the audience is held.
+const RECEIVED_RAPPORT := 0.1
 
 ## Delegation (spec): a minister answers, most of the grudge avoided, no
 ## knowledge gained; a vain person or one who wanted an office is snubbed.
