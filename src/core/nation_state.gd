@@ -692,12 +692,19 @@ var cabinet_entitlement := {}
 var reshuffles_called: int = 0
 
 ## V5.2b b3. The absolute month of the player's last reshuffle that handed a
-## portfolio to another party (Cabinet.assign()), -1 for none, and that portfolio:
+## portfolio to another party (Cabinet.seat_party(), or vacated it), -1 for none,
+## and that portfolio:
 ## the month after, whoever wanted it and did not get it asks for an audience
 ## (src/sim/audience_triggers.gd). absent_ok, no bump: an older save had invited
 ## nobody, and -1 / "" read exactly that.
 var reshuffle_month: int = -1
 var reshuffle_portfolio: String = ""
+
+## V5.2 b+ R4. portfolio -> the absolute month a party last lost it (a Dismiss, or
+## a Reassign away), the twelve-month limit's register. Written by
+## src/sim/removal.gd alone; a resignation is not a removal and writes nothing.
+## absent_ok, no bump: an older save had removed nobody, which is what absent reads.
+var portfolio_removed_month := {}
 
 ## How many ministers have resigned this run. Never reset.
 var resignations_count: int = 0

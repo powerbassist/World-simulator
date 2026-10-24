@@ -82,8 +82,22 @@ const RESIGNATION_THRESHOLD := 0.20
 ## government itself falling.
 const RESIGNATION_BLOC_PENALTY := -0.06
 
-## Charged on every Cabinet.assign() call, win or lose. A President who
+## Charged on every Cabinet.seat_party() and Cabinet.vacate() call, win or lose. A President who
 ## reshuffles constantly reads as unstable regardless of whether the new
 ## assignment is an improvement -- the same "cost on use" shape
 ## government_constants.FORCE_BLOC_PENALTY gives Article 49.3.
 const RESHUFFLE_BLOC_PENALTY := -0.04
+
+## V5.2 b+ R4 (docs/design/v5.2-bplus-spec.md). The grudge a removal writes on the
+## party's current leader: above a refusal (0.18), because losing an office is felt
+## more than a denied request; below the brief gate (0.45), so one dismissal alone
+## never makes an ordinary leader leak; doubled for a principled one it is 0.50,
+## past the gate -- the consequence the author asked for, on the person most
+## likely to take it personally.
+const REMOVAL_GRUDGE := 0.25
+
+## One removal (Dismiss, or a Reassign away) per portfolio per this many months: a
+## government that changes the same office twice in a year reads as chaos, and the
+## limit keeps the verb from being a free loop. A purge of all five in one month
+## stays possible, at five times the price.
+const REMOVAL_LIMIT_MONTHS := 12

@@ -57,6 +57,7 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const OK_C = preload("res://src/sim/opinion_constants.gd")
 
@@ -486,11 +487,9 @@ func _take(state, loader, want: Dictionary) -> void:
 			Legislature.propose(state, loader, want["law"])
 		"reshuffle":
 			var ns = state.player()
-			var party_list: Array = loader.parties.get(PLAYER, [])
 			var portfolio := String(ns.cabinet.keys()[0])
 			var party_id := String(ns.coalition_party_ids[0])
-			if Cabinet.can_assign(ns, portfolio, party_id):
-				Cabinet.assign(state, portfolio, party_id, party_list)
+			Removal.reassign(state, loader, portfolio, party_id)
 
 
 ## (P4) -----------------------------------------------------------------------

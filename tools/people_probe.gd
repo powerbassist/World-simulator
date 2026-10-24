@@ -33,7 +33,7 @@ extends SceneTree
 ##
 ##   (P2b) IDENTITY CHURN -- the escalation trigger the plan named first. A
 ##        derived minister is a function of (portfolio, party, bench order), so
-##        Cabinet.assign() moving a portfolio between parties can make a person
+##        Removal.reassign() moving a portfolio between parties can make a person
 ##        appear to change department mid-term with no election. If that is
 ##        common the derived model produces a nonsense career and the response is
 ##        to STORE the assignment after all -- a model change, declared in
@@ -50,6 +50,7 @@ extends SceneTree
 ## balance_probe.gd, calendar_probe.gd, bloc_probe.gd and the rest.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -370,7 +371,7 @@ func _run(loader, nation_id: String, regime_name: String) -> Dictionary:
 			last_election_seen = le.duplicate()
 
 		if i > 0 and i % RESHUFFLE_EVERY == 0:
-			_reshuffle(state, ns, party_list)
+			_reshuffle(state, loader, ns, party_list)
 
 		var pm_id := _pm_id(ns, bench_by_party)
 		var hos_id := _hos_id(loader, ns, bench_by_party)
@@ -424,7 +425,7 @@ func _run(loader, nation_id: String, regime_name: String) -> Dictionary:
 ## The largest coalition partner takes a portfolio it does not already hold --
 ## the cheapest legal way to move one between parties, and the only thing in the
 ## game that can produce P2b's churn.
-func _reshuffle(state, ns, party_list: Array) -> void:
+func _reshuffle(state, loader, ns, party_list: Array) -> void:
 	if ns.coalition_party_ids.is_empty():
 		return
 	var taker := String(ns.coalition_party_ids[0])
@@ -432,7 +433,7 @@ func _reshuffle(state, ns, party_list: Array) -> void:
 		if String(ns.cabinet.get(f, "")) == taker:
 			continue
 		if Cabinet.can_assign(ns, String(f), taker):
-			Cabinet.assign(state, String(f), taker, party_list)
+			Removal.reassign(state, loader, String(f), taker)
 			return
 
 

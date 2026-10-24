@@ -12,8 +12,9 @@ extends RefCounted
 ## (the cooldown, one open request each, MAX_PENDING) and writes the request. So an
 ## invitation is a candidate, never a guaranteed card.
 ##
-## THE RESHUFFLE IS THE PLAYER'S, AND IT MOVED A PORTFOLIO. Cabinet.assign() stamps
-## the month and the portfolio when the portfolio changes hands; a no-op assign and
+## THE RESHUFFLE IS THE PLAYER'S, AND IT MOVED A PORTFOLIO. Cabinet.seat_party() (and,
+## since R4, Cabinet.vacate()) stamps the month and the portfolio when the portfolio
+## changes hands; a no-op assign and
 ## a government seated by an election or a formation (Cabinet.seat) stamp nothing --
 ## nobody's office moved, or a new government is another moment the want ladder
 ## already reads. A portfolio reshuffle never moves the premiership, so only that
