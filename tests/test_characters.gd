@@ -44,7 +44,7 @@ func _init() -> void:
 	_check_programme_want_is_term_scoped_and_alive_only()
 	_check_challenge_reaches_the_premiership()
 	_check_refusal_price_reads_the_traits()
-	_check_an_act_cost_halves_in_two_years()
+	_check_act_price_fades()
 	_check_an_act_records_what_it_wrote()
 	_check_fourteen_years_of_acts_leave_the_clamp()
 	_check_want_served_is_stance_aware()
@@ -339,10 +339,11 @@ func _check_refusal_price_reads_the_traits() -> void:
 				start, float(paid["grudge"]), promised, want, ceiling])
 
 
-## V5.2b, the author's call "le cout s'efface": the bloc_offset a character act
-## wrote fades with a half-life of ACT_OFFSET_HALF_LIFE_MONTHS, and only the act's
-## share does -- a law's cost beside it stays where it was.
-func _check_an_act_cost_halves_in_two_years() -> void:
+## V5.2b, the author's call "le cout s'efface", banded by Gameplay (bands-v5.2.md,
+## "B3 amendment (2026-10-24)"): one act, then nothing -- 50 % of its price remains
+## at 24 months and 25 % at 48, each within a point, never crossing zero; and only
+## the act's share fades -- a law's cost beside it stays where it was.
+func _check_act_price_fades() -> void:
 	if not is_equal_approx(CK_Act.ACT_OFFSET_MONTHLY_KEEP, pow(0.5, 1.0 / float(CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS))):
 		_fail("ACT_OFFSET_MONTHLY_KEEP %.10f is not 0.5^(1/%d)" % [CK_Act.ACT_OFFSET_MONTHLY_KEEP, CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS])
 	var state = GameState.new_game(_loader, "FRA")
@@ -350,14 +351,20 @@ func _check_an_act_cost_halves_in_two_years() -> void:
 	var base := float(ns.bloc_offset.get("workers", 0.0))
 	ns.bloc_offset["workers"] = base - 0.3 - 0.2   # a law's -0.3, an act's -0.2
 	ns.act_bloc_offset["workers"] = -0.2
-	for m in range(CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS):
+	for m in range(48):
 		if not Characters.tick_month(state, _loader, _idle_meters(ns)).is_empty():
 			_fail("the fade fixture fired an act -- it measures the act's fade, not a new one")
 			return
-	if not is_equal_approx(float(ns.act_bloc_offset.get("workers", 0.0)), -0.1):
-		_fail("after %d months an act's -0.2 reads %.4f, not -0.1" % [CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS, float(ns.act_bloc_offset.get("workers", 0.0))])
-	if not is_equal_approx(float(ns.bloc_offset["workers"]), base - 0.3 - 0.1):
-		_fail("bloc_offset reads %.4f, not the law's -0.3 plus the act's faded -0.1 over %.4f" % [float(ns.bloc_offset["workers"]), base])
+		var left := float(ns.act_bloc_offset.get("workers", 0.0)) / -0.2
+		if left < 0.0 or left > 1.0:
+			_fail("month %d: the act's price crossed zero or grew (%.4f of it left)" % [m + 1, left])
+			return
+		if m + 1 == 24 and absf(left - 0.50) > 0.01:
+			_fail("at 24 months %.3f of the act's price remains, not 0.50 +- 0.01" % left)
+		if m + 1 == 48 and absf(left - 0.25) > 0.01:
+			_fail("at 48 months %.3f of the act's price remains, not 0.25 +- 0.01" % left)
+		if m + 1 == 24 and not is_equal_approx(float(ns.bloc_offset["workers"]), base - 0.3 - 0.2 * left):
+			_fail("bloc_offset reads %.4f, not the law's -0.3 plus the act's faded share over %.4f" % [float(ns.bloc_offset["workers"]), base])
 
 
 ## The act's share is what the act actually wrote: a brief's delta on each bloc it
