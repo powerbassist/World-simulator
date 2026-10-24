@@ -51,6 +51,12 @@ Characters (`WorldMonth`'s "Audiences" step):
    `REQUEST_HAZARD x (0.5 + standing)`, drawn from
    `Cycle.unit_pair(person, "audience_request", month)`. A grudge silences no one:
    the declined go on asking.
+4. **The month-3 guarantee** (pre-gate B, the parent's decision on QA's call; B1's
+   amendment). If the draw has brought none of the nation's own people by the lane's
+   second month (`NationState.audience_lane_start` stamps the first), then in the third
+   the candidate the hazard weighs most -- the highest standing, ties by id -- asks
+   about the want the draw would have asked. Once a game; a visiting head is not the
+   draw's and does not count.
 
 **The per-game seed (pre-gate B, CALL 2).** Every per-person draw -- the ask, the
 offered dates, the lever and phone rolls, the fog, the trait reveals -- is salted by
@@ -60,7 +66,7 @@ is the unseeded draw (the probes, the tests, the balance table, and any save mad
 before the seed); the UI seeds a new game through `President.seed_draws()`, and a save
 keeps it. The world's draws (events, industry, statute, summits, companies) are still
 the same every game: recorded, not in this fix.
-4. Resolved rows older than `RESOLVED_KEPT_MONTHS` (12) are pruned.
+5. Resolved rows older than `RESOLVED_KEPT_MONTHS` (12) are pruned.
 
 ## 3. The three answers, and the lapse
 
