@@ -1187,6 +1187,19 @@ The single re-read under the player model above (MEASURED, Systems; rows in
 - **Since then (#122, a sim fix):** a promise can no longer stack within one
   audience.
 
+### #131 over seeds 1–20, accepted (2026-10-24)
+
+Systems' #131 read the seeded bands over seeds 1–20 (MEASURED, #131's PR body):
+
+- B2's audiences held went above 30 in 6 of 20 seeds (31 to 39, the busy seeds),
+  against 18 of 20 required;
+- B2's unplaceable share fell below 20 % in 4 of 20 seeds (0.13 to 0.17);
+- B5's phone-first channel row (A4) read 11 at seed 0, under 12, because
+  RECORD 10 removed one requester.
+
+**The author's call, verbatim: "Accepter les trois".** All three misses are
+accepted as they stand.
+
 ## B6 — Corruption is tempting, and it is found out
 
 Over 200 seeded runs (salts), France, otherwise idle.
