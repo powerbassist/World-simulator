@@ -144,10 +144,18 @@ static func _pull_at(output_share: float, share: float, unemployment: float) -> 
 ## the relocation boundary companies-model section 33 records), so the
 ## equivalence is exact only while no relocation stands.
 static func city_pull(ns, region, city_id: String, jobs_by_city: Dictionary) -> float:
-	var heads: float = city_population(ns, region.id, city_id)
+	return _city_pull_at(float(ns.population) * region_share(ns, region.id), city_share(ns, city_id), float(jobs_by_city.get(city_id, 0.0)))
+
+
+## city_pull() with the region's heads in hand -- D14 (A'): the tick reads the
+## region's share once per region rather than once per city, ~1,370 cities a
+## month. heads is city_population()'s own product in its own order,
+## (population * region share) * city share, so the same float.
+static func _city_pull_at(region_heads: float, share: float, jobs: float) -> float:
+	var heads: float = region_heads * share
 	if heads <= 0.0:
 		return 0.0
-	return float(jobs_by_city.get(city_id, 0.0)) / heads
+	return jobs / heads
 
 
 ## Named jobs per city, one pass over the nation's whole firm roster -- the
@@ -290,9 +298,10 @@ static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, 
 		var city_shares: Dictionary = {}
 		var city_weighted: float = 0.0
 		var city_total: float = 0.0
+		var region_heads: float = float(ns.population) * region_share(ns, region.id)
 		for city in region.cities:
-			var pull: float = city_pull(ns, region, city.id, jobs_by_city)
 			var share: float = city_share(ns, city.id)
+			var pull: float = _city_pull_at(region_heads, share, float(jobs_by_city.get(city.id, 0.0)))
 			city_pulls[city.id] = pull
 			city_shares[city.id] = share
 			city_weighted += share * pull
