@@ -690,7 +690,8 @@ static func available(state, ns, all_actions: Array, company_id: String, loader,
 		# preconditions cannot demand `failing` without losing its V1.4
 		# healthy-firm form, so the door names the verb. Renaming the id in
 		# data/ needs the same rename here and in the tests, which pin it.
-		if int(failed_entry.get("rescue_months_left", 0)) > 0:
+		# The rescue is an executive verb: the law's door (by_law, R14) offers it never.
+		if not by_law and int(failed_entry.get("rescue_months_left", 0)) > 0:
 			for action in all_actions:
 				if String(action.id) == "strategic_rescue":
 					out.append(action)

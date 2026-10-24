@@ -95,8 +95,9 @@ static func _extract_bill(raw, action_id: String, filename: String, errors: Arra
 		return {}
 	var pos = raw.get("position", null)
 	var cooldown = raw.get("cooldown_months", null)
-	if typeof(pos) != TYPE_DICTIONARY or typeof(cooldown) != TYPE_INT and typeof(cooldown) != TYPE_FLOAT or int(cooldown) < 0:
-		errors.append("%s: %s bill needs a position and a cooldown_months >= 0" % [filename, action_id])
+	var whole: bool = typeof(cooldown) == TYPE_INT or typeof(cooldown) == TYPE_FLOAT and float(cooldown) == floorf(float(cooldown))
+	if typeof(pos) != TYPE_DICTIONARY or not whole or int(cooldown) < 0:
+		errors.append("%s: %s bill needs a position and a whole cooldown_months >= 0" % [filename, action_id])
 		return {}
 	var out := {"position": {}, "cooldown_months": int(cooldown)}
 	for axis in ["economic", "social"]:

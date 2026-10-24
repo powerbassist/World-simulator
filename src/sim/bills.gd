@@ -47,19 +47,10 @@ static func by_id(loader, law_id: String):
 ## The ready bills for one firm: one per `requires_law` verb whose preconditions
 ## hold for it now.
 static func ownership(state, ns, loader, company_id: String) -> Array:
-	var out: Array = []
-	var company = null
-	for c in Companies.firms_of(loader, ns.id):
-		if String(c.id) == company_id:
-			company = c
-	if company == null:
-		return out
-	for action in Companies.available(state, ns, loader.company_actions, company_id, loader, true):
-		# A failing major answers only the rescue, an executive verb, whichever door
-		# asks (Companies.available's failed gate): never a bill.
-		if action.requires_law:
-			out.append(_bill(action, company))
-	return out
+	for company in Companies.firms_of(loader, ns.id):
+		if String(company.id) == company_id:
+			return _bills_for(state, ns, loader, company)
+	return []
 
 
 ## Every bill `ns` may table now -- what Legislature.propose()'s legality scan reads,
@@ -67,7 +58,14 @@ static func ownership(state, ns, loader, company_id: String) -> Array:
 static func open(state, ns, loader) -> Array:
 	var out: Array = loader.laws + Law.composed_register(ns)
 	for company in Companies.majors_of(loader, ns.id):
-		out.append_array(ownership(state, ns, loader, String(company.id)))
+		out.append_array(_bills_for(state, ns, loader, company))
+	return out
+
+
+static func _bills_for(state, ns, loader, company) -> Array:
+	var out: Array = []
+	for action in Companies.available(state, ns, loader.company_actions, String(company.id), loader, true):
+		out.append(_bill(action, company))
 	return out
 
 
