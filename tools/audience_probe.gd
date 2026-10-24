@@ -19,7 +19,7 @@ extends SceneTree
 ##      a reshuffle, each at the 15th and scanned outward -- and then every waiting
 ##      request is booked on its first free offered day; an unplaceable one is
 ##      delegated, its card checked for the other two answers. The month's diary
-##      fires at month end in day order; an audience held with no lever settles as
+##      fires after the month's tick in day order; an audience held with no lever settles as
 ##      a refusal (the levers are V5.2b's second half).
 ##      B2: 20-50 % of requests unplaceable; 12-30 audiences held in 60 months
 ##      and >= 4 in months 1-20; 100 % of unplaceable requests offer delegate and
