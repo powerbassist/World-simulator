@@ -8,6 +8,7 @@ extends RefCounted
 
 const FP = preload("res://src/sim/foreign_policy.gd")
 const RK = preload("res://src/core/relations.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 
 
 ## The kind of measure `actor` has in force against `target`, or "" for none.
@@ -15,6 +16,16 @@ const RK = preload("res://src/core/relations.gd")
 ## measure fields cannot drift apart.
 static func measure_kind(state, actor_id: String, target_id: String) -> String:
 	var terms = state.measures.get(RK.directed_key(actor_id, target_id))
+	if terms == null:
+		return ""
+	return String(terms.get("kind", ""))
+
+
+## measure_kind() for the measure `actor` holds by its OWN act -- an org's levy on
+## the same key reads "" (Coercion.own_measure()). What the lift verbs gate on; the
+## impose gate keeps measure_kind(), because the org's entry still occupies the pair.
+static func own_measure_kind(state, actor_id: String, target_id: String) -> String:
+	var terms = Coercion.own_measure(state, RK.directed_key(actor_id, target_id))
 	if terms == null:
 		return ""
 	return String(terms.get("kind", ""))

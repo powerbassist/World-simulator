@@ -479,9 +479,12 @@ static func _read_field(state, ns, field: String, target_id: String) -> float:
 		# asks measure_active for 0; a lift verb asks its OWN kind for 1, because
 		# one measure per pair means "something is in force" cannot tell a tariff
 		# from an embargo and a single field would let either lift clear either.
+		# A lift reads the nation's OWN measure only (pre-gate B, RECORD 11): an
+		# org's levy on the same key is the org's to end, and a lift offered
+		# against it let one member dissolve a common tariff.
 		"measure_active": return 1.0 if Verbs.measure_kind(state, ns.id, target_id) != "" else 0.0
-		"tariff_active": return 1.0 if Verbs.measure_kind(state, ns.id, target_id) == "tariff" else 0.0
-		"sanction_active": return 1.0 if Verbs.measure_kind(state, ns.id, target_id) == "sanction" else 0.0
+		"tariff_active": return 1.0 if Verbs.own_measure_kind(state, ns.id, target_id) == "tariff" else 0.0
+		"sanction_active": return 1.0 if Verbs.own_measure_kind(state, ns.id, target_id) == "sanction" else 0.0
 		# V1.3g's five, over its two registers. FOUR of them are about the pair for
 		# the reason the three measure fields above are three: `deployment_active`
 		# cannot tell a commitment the player chose from one an alliance imposed, so

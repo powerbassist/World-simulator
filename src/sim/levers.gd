@@ -28,6 +28,7 @@ const AK = preload("res://src/sim/audience_constants.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 
 ## The six levers and the other topics, in the order the scene lists them.
 const LEVERS := K.LEVERS
@@ -244,14 +245,15 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 			if String(w["object"]) == object:
 				want = w
 	# b3: a visitor's ask names a measure the played nation holds, not a want in
-	# content; it is served once the measure is lifted.
+	# content; it is served once the measure is lifted -- France's own, so an org's
+	# levy written on the emptied pair later does not undo the kept word.
 	if person != null and object.begins_with("measure:"):
 		want = {"measure": object.substr("measure:".length())}
 	if want.is_empty():
 		return "void"
 	var pid := String(person.id)
 	var kind := String(row["kind"])
-	var served: bool = not state.measures.has(want["measure"]) if want.has("measure") \
+	var served: bool = Coercion.own_measure(state, want["measure"]) == null if want.has("measure") \
 		else Characters.want_served(ns, person, want, meters, leaders)
 	if served:
 		if kind != "iou":

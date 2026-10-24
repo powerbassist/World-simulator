@@ -49,6 +49,7 @@ func _init() -> void:
 	_check_nothing_in_force_at_new_game()
 	_check_impose_writes_the_directed_entry()
 	_check_lift_clears_only_its_own_kind()
+	_check_lift_never_clears_an_org_levy()
 	_check_measure_cuts_trade_both_ways()
 	_check_measure_lowers_openness()
 	_check_damage_reads_the_directed_weight()
@@ -159,6 +160,27 @@ func _check_lift_clears_only_its_own_kind() -> void:
 	Diplomacy.execute(state, _loader.diplomatic_actions, lift_own, PLAYER, TARGET)
 	if state.measures.has(Relations.directed_key(PLAYER, TARGET)):
 		_failures.append("lift did not clear the directed entry")
+
+
+## RECORD 11 (pre-gate B): an org's collective levy (Orgs._apply_external_measure,
+## tagged "org") sits on each member's directed key, but it is the org's measure, not
+## the member's: no lift is offered against it and execute() refuses one, so one
+## member cannot dissolve a common tariff through the bilateral verb. The pair stays
+## occupied for an impose -- one measure per directed pair.
+func _check_lift_never_clears_an_org_levy() -> void:
+	var state = _fresh()
+	var directed := Relations.directed_key(PLAYER, TARGET)
+	_impose(state, PLAYER, TARGET, "tariff", 0.3)
+	state.measures[directed]["org"] = "climate_accord"
+	var available: Array = Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, TARGET)
+	for kind in ["tariff", "sanction"]:
+		if available.has(_lift_action_for(kind)):
+			_failures.append("a %s lift is offered against an org's levy" % kind)
+	if available.has(_measure_action("impose", "tariff")):
+		_failures.append("an impose is offered on a pair an org's levy occupies")
+	var r: Dictionary = Diplomacy.execute(state, _loader.diplomatic_actions, _lift_action_for("tariff"), PLAYER, TARGET)
+	if not bool(r.get("refused", false)) or not state.measures.has(directed):
+		_failures.append("a lift was carried out against an org's levy: %s" % r)
 
 
 # --- trade --------------------------------------------------------------------------
