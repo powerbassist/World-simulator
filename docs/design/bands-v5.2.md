@@ -398,8 +398,8 @@ from -0.0478 to -0.0460 (MEASURED, the subsection above).
 **Two readings above are replaced.** The second answer replaces the reading in
 "B3 amendment, measured, and the author's call", where the two health rows were
 "read as accepted" and "no longer gate V5.2b". From now on, they gate again: the
-price exists to bring them back inside the band. The 2032 row and the 2034 row
-become reported.
+price exists to bring them back inside the band. The 2032 row becomes reported;
+the 2034 row was reported already.
 
 | Row, at the new price, against `base-19ff21fc.json` | Declared |
 |---|---|
@@ -411,7 +411,7 @@ become reported.
 | B3's act row: at least 1 act by month 60 in a decline-everything term | **unchanged**, a band |
 | The 2032 executive: the margins and the flips | **reported**; they go to the author's acceptance (invariant I4) |
 | The 2034 legislative rows | **reported** |
-| GBR, `managed_abolishes_the_monarchy` (2029, 2034, 2039): the verdicts and the margins | **reported**, and **shown to the author before the merge** |
+| GBR, `managed_abolishes_the_monarchy` (2029, 2034, 2039): the verdicts and the margins | **reported**, and **shown to the author before #104 merges** |
 | P4 (approval movement from acts within ±3.0 points a year) | still binds |
 
 **Why the health rows can come back (INFERRED):**
@@ -429,15 +429,17 @@ become reported.
   above), and it is now reported rather than banded.
 
 **Why 2029 stays a band.** It passed at the old price (worst -0.0112, MEASURED).
-A cheaper brief can only make each brief cost less, and the briefs' count does
-not change (INFERRED, the same argument as above). So a 2029 miss at the new
-price would mean something else moved, and that has to be found before the merge.
+A cheaper brief makes each brief cost less, and its count comes from grudges, not
+from its price (INFERRED, the same argument as above). A second-order path
+remains possible: a different approval path can change other events and the
+requests behind grudges. So a 2029 miss at the new price is explained before
+#104 merges, either as such a path or as a bug.
 
 **Why 2032 and GBR are reported, not banded.** The author has accepted the 2032
 loss as the price of declining everything (answer 1). GBR's 2039 move (-0.13 at
 the old price) still waits for Systems' explanation. The parent shows it to the
-author with the measured table before the merge, so it is reported here instead
-of banded.
+author with the measured table before #104 merges, so it is reported here
+instead of banded.
 
 **The stop rule for this run, fixed before it:**
 
@@ -446,8 +448,10 @@ of banded.
    not a third patch. The options:
    - a smaller price again, and by how much;
    - accepting the health misses.
-3. If a 2027 or 2029 row misses, report it before anything else. It is not
-   expected to happen.
+3. If a 2027 or 2029 row misses, stop and report it to the parent before
+   anything else. It is not expected to happen. #104 does not merge until it is
+   explained (see "Why 2029 stays a band"), and the author accepts it or a fix
+   lands.
 
 **Probes:**
 
