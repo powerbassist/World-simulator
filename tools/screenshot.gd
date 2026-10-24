@@ -20,6 +20,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --domain finances
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --notes
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
@@ -178,6 +179,9 @@ var _frame := 0
 ## checked by looking, and there are four frames to look at rather than one.
 var _layer := ""
 var _hover := ""
+## V5.2 b+ (R13/R12), --notes: six identical leaks, a second person's, and a long
+## dispatch -- the inbox's grouping and fold.
+var _notes := false
 var _site := false
 var _hover_project := ""  ## U6c, a project marker rather than a nation
 ## V4.11c, an outline (a country drawn but not simulated). Its own flag for
@@ -660,6 +664,8 @@ func _init() -> void:
 			_out_path = args[i + 1]
 		elif args[i] == "--layer" and i + 1 < args.size():
 			_layer = args[i + 1]
+		elif args[i] == "--notes":
+			_notes = true
 		elif args[i] == "--hover" and i + 1 < args.size():
 			_hover = args[i + 1].to_upper()
 		elif args[i] == "--hover-project" and i + 1 < args.size():
@@ -1204,6 +1210,12 @@ func _apply_view() -> void:
 		_main._map_view.queue_redraw()
 	if _hover_outline != "":
 		_stage_outline_hover()
+	if _notes:
+		var inbox = _main._hud.inbox
+		for n in 6:
+			inbox.push("A leak", "Apolline Delcour briefs against the government.")
+		inbox.push("A leak", "Gilles Aubertin briefs against the government.")
+		inbox.push("Industrial action", "Grievance stands at 40 of 100 after the strike in the north. Output will carry it for months, and the unions say they will be back. The ministry expects the next round before the summer recess.")
 	if _tip != "":
 		_stage_tip()
 	if _term_card != "":

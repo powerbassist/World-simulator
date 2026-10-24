@@ -258,6 +258,7 @@ func _show_note(id: String) -> void:
 		more.name = "More"  # i18n: ok a node name, found by tests
 		more.theme_type_variation = UiTheme.SUBROW_BUTTON
 		more.focus_mode = Control.FOCUS_NONE
+		more.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		more.pressed.connect(func(): _toggle(id))
 		_bodies[id].add_sibling(more)
 		note["more"] = more
