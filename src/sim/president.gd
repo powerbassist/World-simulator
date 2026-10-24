@@ -216,6 +216,13 @@ static func adjust_party_money_eur_m(ns, loader, party_id: String, amount: float
 ## reached could not be kept, so it is refused rather than broken on arrival.
 ## `object` is what was promised, in the want grammar's own words
 ## ("programme:<id>", "office:<...>") so a keeper can judge it against the want.
+## Pre-gate B, CALL 2: the command that seeds the played nation's people's draws
+## (NationState.draw_seed, its one writer). The UI calls it once at a new game with
+## a fresh seed; a loaded game keeps the one it was saved with.
+static func seed_draws(state, draw_seed: int) -> void:
+	state.player().draw_seed = draw_seed
+
+
 static func commit(state, ns, loader, kind: String, person_id: String, object: String, due_month: int) -> bool:
 	if not K.COMMITMENT_KINDS.has(kind) or object == "" or due_month <= _now(state):
 		return false

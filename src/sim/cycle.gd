@@ -137,6 +137,13 @@ static func unit(seed_key: String, index: int) -> float:
 	return _unit_from_seed(_key_seed(seed_key), index)
 
 
+## A draw's salt under a per-game seed (pre-gate B, CALL 2): the salt itself at
+## seed 0, so an unseeded game draws exactly what it always drew, and
+## "<salt>#<seed>" otherwise -- a different stream per game for the same person.
+static func salted(salt: String, seed: int) -> String:
+	return salt if seed == 0 else "%s#%d" % [salt, seed]
+
+
 ## unit("a|b", index) without building the string on a hit -- V5.0c2. The seed is
 ## memoised by the key's two parts, and a miss seeds from exactly the string
 ## unit() would have hashed, so the draw is the same float. Events' hazard asks it

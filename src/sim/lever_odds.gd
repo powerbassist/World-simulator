@@ -92,10 +92,10 @@ static func fog_width(knowledge: float) -> float:
 ## something between them -- gave the truth back exactly:
 ## offset = (lo2 - lo1) / (w1 - w2). Re-drawn at every FOG_SEED_STEP of knowledge,
 ## repeated readings can only intersect, which is honest narrowing.
-static func shown_range(person_id: String, lever: String, p: float, knowledge: float) -> Vector2:
+static func shown_range(person_id: String, lever: String, p: float, knowledge: float, draw_seed: int = 0) -> Vector2:
 	var w := fog_width(knowledge)
 	var step := roundi(knowledge / K.FOG_SEED_STEP)
-	var offset := Cycle.unit_pair(person_id, "%s:%s" % [K.SALT_FOG, lever], step)
+	var offset := Cycle.unit_pair(person_id, Cycle.salted("%s:%s" % [K.SALT_FOG, lever], draw_seed), step)
 	var lo := clampf(p - w * offset, 0.0, 1.0 - w)
 	return Vector2(lo, lo + w)
 
@@ -108,7 +108,7 @@ static func known_traits(ns, person) -> Array[String]:
 	var out: Array[String] = []
 	var k := President.knowledge(ns, person.id)
 	for t in person.traits:
-		var at := lerpf(K.TRAIT_REVEAL_FLOOR, 1.0, Cycle.unit_pair(person.id, "%s:%s" % [K.SALT_TRAIT, t], 0))
+		var at := lerpf(K.TRAIT_REVEAL_FLOOR, 1.0, Cycle.unit_pair(person.id, Cycle.salted("%s:%s" % [K.SALT_TRAIT, t], ns.draw_seed), 0))
 		if k >= at * PK.KNOWLEDGE_KNOWN:
 			out.append(String(t))
 	return out

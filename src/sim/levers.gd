@@ -95,7 +95,7 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 ## One lever's card row from its true odds `p` (-1.0 when not offered): the range
 ## that holds them, never `p` itself. The audience's and the phone's (b3) alike.
 static func lever_row(ns, person, lever: String, p: float, why_not: String, knowledge: float, now: int) -> Dictionary:
-	var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, p, knowledge)
+	var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, p, knowledge, ns.draw_seed)
 	var row := {
 		"lever": lever,
 		"offered": why_not == "",
@@ -159,7 +159,7 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 		refused["error"] = "the promise could not be made"
 		return refused
 	var index := K.ATTEMPTS - int(session["attempts_left"])
-	var success := Cycle.unit_pair(String(session["request_id"]), "%s:%s:%d" % [K.SALT_ROLL, lever, index], now) < p
+	var success := Cycle.unit_pair(String(session["request_id"]), Cycle.salted("%s:%s:%d" % [K.SALT_ROLL, lever, index], ns.draw_seed), now) < p
 	session["attempts_left"] = int(session["attempts_left"]) - 1
 	(session["attempts"] as Array).append({"lever": lever, "success": success})
 	if success:

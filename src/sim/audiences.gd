@@ -99,7 +99,7 @@ static func offered_dates(state, ns, request_id: String) -> Array[Dictionary]:
 	var picks: Array[int] = []
 	var k := 0
 	while picks.size() < K.OFFERED_DATES and k < K.OFFERED_DATES * 8:
-		var pick := int(Cycle.unit_pair(request_id, K.SALT_DATE, k) * float(total))
+		var pick := int(Cycle.unit_pair(request_id, Cycle.salted(K.SALT_DATE, ns.draw_seed), k) * float(total))
 		if not picks.has(pick):
 			picks.append(pick)
 		k += 1
@@ -314,7 +314,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 		if want.is_empty():
 			continue
 		var hazard := K.REQUEST_HAZARD * (K.REQUEST_STANDING_FLOOR + float(ns.person_standing.get(person.id, 0.0)))
-		if Cycle.unit_pair(person.id, K.SALT_REQUEST, now) < hazard:
+		if Cycle.unit_pair(person.id, Cycle.salted(K.SALT_REQUEST, ns.draw_seed), now) < hazard:
 			_arrive(ns, person, want, now, arrived)
 			open += 1
 

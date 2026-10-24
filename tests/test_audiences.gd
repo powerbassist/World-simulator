@@ -47,6 +47,7 @@ func _init() -> void:
 
 	_check_idle_term_first_request()
 	_check_determinism()
+	_check_a_seed_is_a_game_of_its_own()
 	_check_cooldown_cap_and_the_president()
 	_check_cooldown_silences_a_recent_asker()
 	_check_a_full_lane_takes_no_one()
@@ -85,6 +86,45 @@ func _check_determinism() -> void:
 		_fail("two identical states produced different requests")
 	if a.player().audience_requests.is_empty():
 		_fail("24 idle months produced no request at all -- the determinism check compared nothing")
+
+
+## Pre-gate B, CALL 2: the draws carry a per-game seed. Seed 0 -- the default every
+## probe and test takes -- is the unseeded draw, so the balance table cannot move;
+## another seed is another game (QA's run met a silent year because every France
+## game drew the same months), the same seed the same game, and a save keeps it.
+func _check_a_seed_is_a_game_of_its_own() -> void:
+	var seeded = _game()
+	President.seed_draws(seeded, 7)
+	if int(seeded.player().draw_seed) != 7 or int(seeded.nations["DEU"].draw_seed) != 0:
+		_fail("seed_draws() did not land on the played nation alone")
+	if int(_game().player().draw_seed) != 0:
+		_fail("a new game is not the unseeded draw")
+	var a = _game()
+	var b = _game()
+	var c = _game()
+	President.seed_draws(b, 7)
+	President.seed_draws(c, 7)
+	_run(a, 36)
+	_run(b, 36)
+	_run(c, 36)
+	if _arrival_months(a) == _arrival_months(b):
+		_fail("seed 7 drew the same request months as the unseeded game: %s" % [_arrival_months(a)])
+	if _arrival_months(b) != _arrival_months(c):
+		_fail("the same seed drew two different games")
+	var loaded = NationState.from_dict(JSON.parse_string(JSON.stringify(b.player().to_dict())))
+	if int(loaded.draw_seed) != 7:
+		_fail("a save did not keep the seed (%d)" % int(loaded.draw_seed))
+	var old: Dictionary = JSON.parse_string(JSON.stringify(b.player().to_dict()))
+	old.erase("draw_seed")
+	if int(NationState.from_dict(old).draw_seed) != 0:
+		_fail("a save without a seed did not read the unseeded draw")
+
+
+func _arrival_months(state) -> Array:
+	var out := []
+	for row in state.player().audience_requests:
+		out.append(int(row["arrived_month"]))
+	return out
 
 
 func _check_cooldown_cap_and_the_president() -> void:
