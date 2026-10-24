@@ -16,41 +16,30 @@ extends PanelContainer
 ## the scene plays while the lines are being written.
 ##
 ## The panel never touches state: each verb is a signal, and the wiring calls the
-## sim (Levers.attempt / talk / close) and hands the result back to `show_result`.
+## sim (Levers.attempt / talk / close) and hands the result back. Ending is two
+## clicks apart on purpose: End closes the audience in the sim and shows its
+## outcome in the person's mouth; Leave takes the scene down.
 
-signal attempted(lever: String)
-signal talked(topic: String)
+signal attempted(lever: String, args: Dictionary)
+signal talked(topic: String, args: Dictionary)
+signal ended
 signal closed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const Num = preload("res://src/ui/num.gd")
+const Words = preload("res://src/ui/lever_words.gd")
+const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 
 const DIALOGUE_DIR := "res://data/audiences/"
 ## 16:9, the board's scene window over the map.
 const SIZE := Vector2(1120, 630)
 
-const LEVER_LABEL := {
-	"argue": "Argue", "bargain": "Bargain", "promise_date": "Promise a date",  # i18n: msgid
-	"pressure": "Pressure", "flatter": "Flatter", "friendship": "Appeal to friendship",  # i18n: msgid
-}
-const TOPIC_LABEL := {
-	"family": "Family", "opinion": "Their opinion", "gossip": "Gossip",  # i18n: msgid
-	"dinner": "Dinner", "flirt": "Flirt",  # i18n: msgid
-}
-## The fog the scene assumes when the sim names none: the widest.
-const FOG_DEFAULT := "stranger"
-const FOG_LABEL := {
-	"stranger": "a stranger -- the odds are a wide guess",  # i18n: msgid
-	"acquaintance": "an acquaintance -- the odds are a rough guess",  # i18n: msgid
-	"known": "known to you -- the odds are close",  # i18n: msgid
-}
-
 ## The person in the chair while a scene runs, "" otherwise: the clock's hold line
 ## names them (hold_reason.gd, the summit's `visiting` seam).
 var visiting := ""
+var verbs := AudienceVerbs.new()
 
 var _view: Dictionary = {}
 var _resource = null
@@ -58,11 +47,10 @@ var _face: Control
 var _speaker: Label
 var _line: Label
 var _fog: Label
-var _levers: GridContainer
-var _topics: HFlowContainer
-var _attempts: Label
+var _traits: Label
 var _result: Label
-var _talk_heading: Label
+var _end: Button
+var _over := false
 
 
 func _ready() -> void:
@@ -88,29 +76,31 @@ func _ready() -> void:
 	_fog = Label.new()
 	_fog.theme_type_variation = UiTheme.CAPTION
 	talk.add_child(_fog)
-	_levers = GridContainer.new()
-	_levers.columns = 3
-	_levers.add_theme_constant_override("h_separation", 16)
-	talk.add_child(_levers)
-	_attempts = Label.new()
-	_attempts.theme_type_variation = UiTheme.CAPTION
-	talk.add_child(_attempts)
-	_talk_heading = PanelKit.heading(talk, tr("Or talk"))
-	_topics = PanelKit.buttons(talk)
+	_traits = Label.new()
+	_traits.theme_type_variation = UiTheme.CAPTION
+	talk.add_child(_traits)
+	talk.add_child(verbs)
+	verbs.attempted.connect(func(lever: String, args: Dictionary) -> void: attempted.emit(lever, args))
+	verbs.talked.connect(func(topic: String, args: Dictionary) -> void: talked.emit(topic, args))
 	_result = Label.new()
 	_result.autowrap_mode = TextServer.AUTOWRAP_WORD
 	talk.add_child(_result)
-	var close := PanelKit.sized(Button.new())
-	close.text = tr("End the audience")
-	close.pressed.connect(func() -> void: closed.emit())
-	root.add_child(close)
+	_end = PanelKit.sized(Button.new())
+	_end.pressed.connect(func() -> void:
+		if _over:
+			closed.emit()
+		else:
+			ended.emit())
+	root.add_child(_end)
 
 
 ## `view`: {request_id, person_id, name, ask, stance, president, fog ("stranger" |
-## "acquaintance" | "known"), offered (Levers.offered()'s rows), topics
-## (Levers.topics()'s rows, each {topic, offered, why_not}), attempts_left}.
+## "acquaintance" | "known"), traits (shown words), offered (Levers.offered()'s
+## rows), topics (Levers.topics()'s), attempts_left, choices (audience_verbs')}.
 func open(view: Dictionary) -> void:
 	_view = view
+	_over = false
+	_end.text = tr("End the audience")
 	visiting = String(view.get("name", ""))  # i18n: row-ok the person's shown name, resolved by the wiring
 	_resource = _load_dialogue(String(view.get("stance", "")))
 	for child in _face.get_children():
@@ -119,74 +109,41 @@ func open(view: Dictionary) -> void:
 	if person_id != "":
 		_face.add_child(Portrait.framed_for(person_id, _face.custom_minimum_size, Portrait.Emotion.NEUTRAL,
 			Portrait.scene_from_name("office")))
-	_fog.text = tr("They are %s.") % tr(String(FOG_LABEL.get(String(view.get("fog", FOG_DEFAULT)), "")))
 	_result.text = ""
-	_fill_verbs(view.get("offered", []), view.get("topics", []), int(view.get("attempts_left", 3)))
+	_show_state(view)
 	say("opening", {})
 
 
-## After a verb: the sim's result in words, the levers' new odds, what is left.
-func show_result(text: String, offered: Array, attempts_left: int, title: String, extra := {}) -> void:
+## After a verb: the sim's result in words, the levers' new ranges, what is left.
+## `view` carries the fresh fog, traits, offered, topics and attempts_left.
+func show_result(text: String, view: Dictionary, title: String, extra := {}) -> void:
 	_result.text = text
-	_fill_verbs(offered, _view.get("topics", []), attempts_left)
-	say(title, extra)
+	_show_state(view)
+	if title != "":
+		say(title, extra)
+
+
+## The sim has closed the audience: its outcome, said; every verb down; one way out.
+func show_close(outcome: String, text: String) -> void:
+	_over = true
+	_result.text = text
+	verbs.show_verbs([], [], 0, {})
+	verbs.visible = false
+	_end.text = tr("Leave")
+	say("close_" + outcome, {})
 
 
 func close_scene() -> void:
 	visiting = ""
 	_view = {}
+	verbs.visible = true
 
 
-func _fill_verbs(offered: Array, topics: Array, attempts_left: int) -> void:
-	for box in [_levers, _topics]:
-		for child in box.get_children():
-			box.remove_child(child)
-			child.queue_free()
-	for row in offered:
-		var button := PanelKit.sized(Button.new())
-		button.text = tr(String(LEVER_LABEL.get(String(row["lever"]), String(row["lever"]))))
-		button.disabled = attempts_left <= 0 or not bool(row.get("offered", false))
-		button.tooltip_text = String(row.get("why_not", "")) if not bool(row.get("offered", false)) else ""
-		var lever := String(row["lever"])
-		button.pressed.connect(func() -> void: attempted.emit(lever))
-		_levers.add_child(button)
-		var odds := Label.new()
-		odds.text = odds_text(float(row.get("odds_lo", 0.0)), float(row.get("odds_hi", 0.0)))
-		_levers.add_child(odds)
-		_levers.add_child(_spends_label(row.get("spends", {})))
-	# No levers offered at all (before the sim's levers exist, or none fit): the
-	# audience is heard, not argued -- saying "no attempts left" would be a lie.
-	if offered.is_empty():
-		_attempts.text = tr("Hear them out, then end the audience.")
-	elif attempts_left > 0:
-		_attempts.text = tr_n("%d attempt left", "%d attempts left", attempts_left) % attempts_left
-	else:
-		_attempts.text = tr("No attempts left: end the audience.")
-	_talk_heading.visible = not topics.is_empty()
-	for row in topics:
-		var button := Button.new()
-		button.text = tr(String(TOPIC_LABEL.get(String(row["topic"]), String(row["topic"]))))
-		button.disabled = not bool(row.get("offered", true))
-		button.tooltip_text = String(row.get("why_not", ""))
-		var topic := String(row["topic"])
-		button.pressed.connect(func() -> void: talked.emit(topic))
-		_topics.add_child(button)
-
-
-## A range, never a point: what the president cannot know about the person is the
-## width (B4). Text tokens only -- odds are no good or bad news.
-static func odds_text(lo: float, hi: float) -> String:
-	return Strings.t("%s–%s %%") % [Num.f(lo * 100.0, 0), Num.f(hi * 100.0, 0)]
-
-
-func _spends_label(spends: Dictionary) -> Label:
-	var label := Label.new()
-	label.theme_type_variation = UiTheme.CAPTION
-	var parts := PackedStringArray()
-	for key in spends.keys():
-		parts.append("%s %s" % [String(key).replace("_", " "), Num.fs(float(spends[key]), 2)])  # i18n: row-ok a register key, shown as is until its label lands
-	label.text = ", ".join(parts)
-	return label
+func _show_state(view: Dictionary) -> void:
+	_fog.text = Words.fog(String(view.get("fog", Words.FOG_DEFAULT)))
+	var traits: Array = view.get("traits", [])
+	_traits.text = tr("What you know of them: %s.") % ", ".join(PackedStringArray(traits)) if not traits.is_empty() else tr("You know nothing of their character yet.")
+	verbs.show_verbs(view.get("offered", []), view.get("topics", []), int(view.get("attempts_left", 0)), view.get("choices", {}))
 
 
 ## One title of the person's lines, through the addon; a title the files lack is

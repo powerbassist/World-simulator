@@ -58,6 +58,8 @@ func _process(_delta: float) -> bool:
 			_reach_the_day()
 		17:
 			_check_scene()
+			# End closes it in the sim; Leave takes the scene down (b2's two steps).
+			AudienceDriver.scene_of(_main).ended.emit()
 			AudienceDriver.scene_of(_main).closed.emit()
 		19:
 			_check_ended()
@@ -127,8 +129,31 @@ func _book_a_free_day() -> void:
 func _reach_the_day() -> void:
 	if _booked_on.is_empty():
 		return
+	_check_diary_row()
 	_main._clock.paused = false
-	_main._resolve_appointments(int(_booked_on["year"]), int(_booked_on["month"]), int(_booked_on["day"]))
+	# The day's own door: it sets the state's day before the diary fires, and
+	# Levers.open() refuses a day still ahead of the booking. The month is the
+	# month handler's to set (the booked month is a later one); its tick is not
+	# this test's subject.
+	_main._state.year = int(_booked_on["year"])
+	_main._state.month = int(_booked_on["month"])
+	_main._on_day_advanced(int(_booked_on["year"]), int(_booked_on["month"]), int(_booked_on["day"]))
+
+
+## The booked audience in the Diary: named for the person, and with no Cancel (the
+## Diary's own cancel would leave the request booked for no day).
+func _check_diary_row() -> void:
+	_main._calendar_panel._refresh()
+	var who: String = _main._loader.person_name(String(Audiences.request(_main._state.player(), _second)["person_id"]))
+	var row: Control = null
+	for label in _main._calendar_panel.find_children("*", "Label", true, false):
+		if (label as Label).text.contains("Audience: %s" % who) and label.get_parent() is HBoxContainer:
+			row = label.get_parent()
+	if row == null:
+		_fail("the Diary does not name the booked audience's person")
+		return
+	for b in row.find_children("*", "Button", true, false):
+		_fail("the booked audience's Diary row offers '%s'" % (b as Button).text)
 
 
 func _check_scene() -> void:

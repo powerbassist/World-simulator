@@ -6,8 +6,9 @@ extends RefCounted
 ## register() and one routing call; everything a request does goes through here.
 ##
 ## The UI never writes a register (AGENTS.md rule 2): it reads Audiences, calls its
-## commands (book, delegate, decline, hold, settle) and redraws from what they
-## leave. A request card never holds the clock; the scene does, as a summit does.
+## commands (book, delegate, decline) and redraws from what they leave. A request
+## card never holds the clock; the scene does, as a summit does -- and the scene's
+## session, Levers', is audience_talks.gd's.
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -16,12 +17,14 @@ const AudienceScene = preload("res://src/ui/audience_scene.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const Num = preload("res://src/ui/num.gd")
-const HoldReason = preload("res://src/ui/hold_reason.gd")
+const AudienceTalks = preload("res://src/ui/audience_talks.gd")
+const Words = preload("res://src/ui/lever_words.gd")
+const PromiseList = preload("res://src/ui/promise_list.gd")
+const President = preload("res://src/sim/president.gd")
 
 const WINDOW := "audience"
 
-## Per game scene (tests run several): {lane, scene, request_id}.
+## Per game scene (tests run several): {lane, scene, session, answered}.
 static var _games := {}
 
 
@@ -30,7 +33,11 @@ static func register(main) -> void:
 	lane.attach(main._hud.inbox)
 	var scene := AudienceScene.new()
 	main._windows.register("audience", Strings.t("Audience"), scene, KEY_NONE, main.ICONS + "account_balance.svg")
-	_games[main.get_instance_id()] = {"lane": lane, "scene": scene, "request_id": "", "answered": {}}
+	# The president's word sits in the Diary under the audience's booking block.
+	var promises := PromiseList.new()
+	main._calendar_panel.audience.add_sibling(promises)
+	var game := {"lane": lane, "scene": scene, "session": {}, "answered": {}, "promises": promises}
+	_games[main.get_instance_id()] = game
 	lane.book_requested.connect(func(id: String) -> void: _open_booking(main, id))
 	lane.delegate_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
 	lane.decline_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
@@ -38,11 +45,17 @@ static func register(main) -> void:
 		var result := Audiences.book(main._state, main._state.player(), main._loader, id, date)
 		main._calendar_panel.audience.close()
 		_answer(main, id, result))
-	scene.closed.connect(func() -> void: _end(main))
+	# Each verb redraws the lane's side too: a promise made is in the Diary at once.
+	scene.attempted.connect(func(lever: String, args: Dictionary) -> void:
+		AudienceTalks.attempt(main, game, lever, args)
+		refresh(main))
+	scene.talked.connect(func(topic: String, args: Dictionary) -> void: AudienceTalks.talk(main, game, topic, args))
+	scene.ended.connect(func() -> void: AudienceTalks.end(main, game))
+	scene.closed.connect(func() -> void: _leave(main, game))
 	# The frame's X ends it too: the hold the opening took goes with the window.
 	main._windows.closed.connect(func(id: String) -> void:
 		if id == WINDOW:
-			_end(main))
+			_leave(main, game))
 
 
 static func lane_of(main) -> RequestLane:
@@ -71,8 +84,13 @@ static func refresh(main) -> void:
 			var gone := Audiences.request(ns, id)
 			if String(gone.get("status", "")) == "lapsed":
 				main._hud.inbox.push(Strings.t("Unanswered"), Strings.t("%s's request lapsed: they take it as a refusal.") % main._loader.person_name(String(gone.get("person_id", ""))))
+	# A booking block left open on a request no longer waiting (answered from its
+	# card, lapsed, booked elsewhere) comes down with it.
+	if not live.has(main._calendar_panel.audience.request_id()):
+		main._calendar_panel.audience.close()
 	game["lane"].show_requests(rows)
 	main._hud.title_bar.set_requests(Audiences.waiting_count(ns))
+	game["promises"].show_rows(given_lines(main), judged_rows(main))
 
 
 ## A request read off the sim, in the words the card shows.
@@ -89,21 +107,8 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
 		"by": DateText.month_year(deadline - year * 12, year),
-		"price": price_text(Audiences.decline_price(ns, loader, id)),
+		"price": Words.price_text(Audiences.decline_price(ns, loader, id)),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}
-
-
-## What saying no writes on the person, in words, the parts that move only (QA on
-## #105: "loyalty +0.00" is noise on a card).
-static func price_text(price: Dictionary) -> String:
-	var parts := PackedStringArray()
-	if absf(float(price.get("grudge", 0.0))) >= 0.005:
-		parts.append(Strings.t("a grudge %s") % Num.fs(float(price["grudge"]), 2))
-	if absf(float(price.get("loyalty", 0.0))) >= 0.005:
-		parts.append(Strings.t("loyalty %s") % Num.fs(float(price["loyalty"]), 2))
-	if absf(float(price.get("rapport", 0.0))) >= 0.005:
-		parts.append(Strings.t("rapport with you %s") % Num.fs(float(price["rapport"]), 2))
-	return ", ".join(parts) if not parts.is_empty() else Strings.t("nothing")
 
 
 ## The diary's outcome, its UI half: the scene for an audience, else the news card
@@ -118,41 +123,51 @@ static func on_appointment(main, outcome: Dictionary) -> void:
 		main._open_summit(String(outcome["summit_target"]), outcome["before"])
 
 
-## The booked day: the sim holds it, the scene owns the screen and the clock.
+## The booked day: the audience opens (audience_talks.gd).
 static func open_scene(main, request_id: String) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
-	var ns = main._state.player()
-	var request := Audiences.request(ns, request_id)
-	if game.is_empty() or request.is_empty() or not bool(Audiences.hold(main._state, ns, main._loader, request_id).get("ok", false)):
-		return
-	game["request_id"] = request_id
-	var row := row_of(main, request)
-	row["president"] = main._loader.person_name(String(ns.head_of_state_person_id if ns.head_of_state_kind == "executive_president" else ns.pm_person_id))
-	row["name"] = row["person"]  # i18n: row-ok the person's shown name, from the loader
-	row["fog"] = "stranger"
-	row["offered"] = []
-	row["topics"] = []
-	row["attempts_left"] = 0
-	main._windows.open(WINDOW)
-	main._clock.paused = true
-	game["scene"].open(row)
-	main._hud.clock_cluster.refresh(main._clock, HoldReason.show(main))
+	var request := Audiences.request(main._state.player(), request_id)
+	if not game.is_empty() and not request.is_empty() and AudienceTalks.open(main, game, row_of(main, request)):
+		refresh(main)
+
+
+## The month's UI half of the audiences, after their step: the lane and its mark
+## (QA on #105: read at Events, the lane was a month behind the register), and the
+## promises the month judged, a card each.
+static func after_month(main, report: Dictionary) -> void:
 	refresh(main)
+	AudienceTalks.card_verdicts(main, report)
 
 
-## The scene is over. Until b2's levers decide it, an audience with no lever won
-## ends as the sim's A2 regime holds one: a refusal, priced as a decline.
-static func _end(main) -> void:
+## Every promise and IOU in flight, worded, soonest due first (the sim's order).
+static func given_lines(main) -> Array:
+	var out: Array = []
+	for row in President.commitments(main._state.player()):
+		out.append(Words.commitment_text(String(row["kind"]), main._loader.person_name(String(row["person_id"])),
+			AudienceTalks.want_words(main, String(row["person_id"]), String(row["object"])), int(row["due_month"])))
+	return out
+
+
+## The judged ones with their verdicts -- PENDING Systems' read: the register
+## drops a row once judged (President.take_commitments_due), so nothing durable
+## is left to read until the sim keeps them. The one place that read lands.
+static func judged_rows(_main) -> Array:
+	return []
+
+
+## After a load: an audience open in the discarded game is closed there (Levers'
+## rule: never let a session go unclosed) and the scene comes down; the lane and
+## the Diary are redrawn off the loaded registers.
+static func after_load(main) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
-	if game.is_empty() or String(game["request_id"]).is_empty():
-		return
-	Audiences.settle(main._state, main._state.player(), main._loader, String(game["request_id"]), "declined")
-	game["request_id"] = ""
-	game["scene"].close_scene()
-	main._windows.close(WINDOW)
-	if not main._decision_holds_clock():
-		main._clock.paused = false
+	if not game.is_empty():
+		AudienceTalks.leave(main, game)
 	refresh(main)
+
+
+static func _leave(main, game: Dictionary) -> void:
+	if AudienceTalks.leave(main, game):
+		refresh(main)
 
 
 static func _open_booking(main, request_id: String) -> void:
