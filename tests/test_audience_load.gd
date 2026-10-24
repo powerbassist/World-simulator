@@ -17,6 +17,7 @@ const President = preload("res://src/sim/president.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
+const Capital = preload("res://src/core/capital.gd")
 
 const SLOT := "audience_load_test"
 
@@ -89,10 +90,21 @@ func _check_picker() -> void:
 		return
 	if String(pick.get_item_metadata(0)) != _known:
 		_fail("the person the president knows is not first in the gossip picker: %s" % pick.get_item_text(0))
-	for i in range(2, pick.item_count):
-		if pick.get_item_text(i).naturalnocasecmp_to(pick.get_item_text(i - 1)) < 0:
+	# Name order folds case and accents (QA on #120): an "É" name sorts among
+	# the E's, between the D's and the F's, not after every Z.
+	var accented := 0
+	for i in range(1, pick.item_count):
+		var here := Capital.fold(pick.get_item_text(i))
+		if i >= 2 and here < Capital.fold(pick.get_item_text(i - 1)):
 			_fail("the strangers are not in name order: '%s' after '%s'" % [pick.get_item_text(i), pick.get_item_text(i - 1)])
 			return
+		if pick.get_item_text(i).begins_with("É"):
+			accented += 1
+			var after := Capital.fold(pick.get_item_text(i + 1)) if i + 1 < pick.item_count else "f"
+			if not (Capital.fold(pick.get_item_text(i - 1)) <= here and after.substr(0, 1) >= "e"):
+				_fail("'%s' does not sort among the E's" % pick.get_item_text(i))
+	if accented == 0:
+		_fail("premise: no name with an accented capital in the picker to pin the fold")
 
 
 func _save_and_load() -> void:
