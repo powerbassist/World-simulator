@@ -546,7 +546,11 @@ func _b1_seeds(seeds: Array) -> Dictionary:
 				rows[band] = int(rows.get(band, 0)) + (1 if b1[band] else 0)
 		per_seed.append({"seed": int(s), "arrivals": int(a1["arrivals"]), "fewest_in_12": fewest,
 			"first_month": int(a1["first_month"]), "m1_20": int(a1["arrivals_m1_20"]),
-			"people": int(a1["distinct_people"]), "top_share": float(a1["top_person_share"]), "b1": b1})
+			"people": int(a1["distinct_people"]), "top_share": float(a1["top_person_share"]),
+			"a2_held": int(a2["held"]), "a2_held_m1_20": int(a2["held_m1_20"]),
+			"a2_unplaceable_share": float(a2["unplaceable_share"]), "a2_arrivals": int(a2["arrivals"]),
+			"acts_by_refused_a1": (a1["acts_by_refused"] as Array).size(),
+			"acts_by_refused_a3": (a3["acts_by_refused"] as Array).size(), "b1": b1})
 	var n_seeds := seeds.size()
 	var bands := {
 		"B1_seeds_window_ge1_95pct": ge1 * 20 >= 19 * n_seeds,
@@ -582,7 +586,9 @@ func _print(out: Dictionary) -> void:
 		print("A1 over %d seeds: emptiest 12-month window >= 1 in %d, >= 2 in %d; B1 rows held %s" % [
 			b["seeds"], b["window_ge1"], b["window_ge2"], b["rows_held"]])
 		for row in b["per_seed"]:
-			print("   seed %2d: arrivals %d, emptiest year %d, first %d, m1-20 %d, people %d, top %.2f" % [
-				row["seed"], row["arrivals"], row["fewest_in_12"], row["first_month"], row["m1_20"], row["people"], row["top_share"]])
+			print("   seed %2d: arrivals %d, emptiest year %d, first %d, m1-20 %d, people %d, top %.2f | A2 arrivals %d held %d (m1-20 %d) unplaceable %.2f | acts by refused A1 %d A3 %d" % [
+				row["seed"], row["arrivals"], row["fewest_in_12"], row["first_month"], row["m1_20"], row["people"], row["top_share"],
+				row["a2_arrivals"], row["a2_held"], row["a2_held_m1_20"], row["a2_unplaceable_share"],
+				row["acts_by_refused_a1"], row["acts_by_refused_a3"]])
 	for band in out["bands"]:
 		print("%-32s %s" % [band, "PASS" if out["bands"][band] else "FAIL"])
