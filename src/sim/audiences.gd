@@ -340,11 +340,12 @@ static func _may_ask(ns, person, leader: String, now: int) -> bool:
 	return true
 
 
-## The first want the government does not serve, read through the same door the
-## edge trigger uses, or {}.
+## The first want the government does not serve and could (Characters.servable():
+## no request for a party's leadership), read through the same door the edge
+## trigger uses, or {}.
 static func _unserved(ns, person, meters: Dictionary, leaders: Dictionary) -> Dictionary:
 	for want in person.wants:
-		if not Characters.want_served(ns, person, want, meters, leaders):
+		if Characters.servable(want) and not Characters.want_served(ns, person, want, meters, leaders):
 			return want
 	return {}
 

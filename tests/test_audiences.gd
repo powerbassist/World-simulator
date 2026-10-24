@@ -48,6 +48,7 @@ func _init() -> void:
 	_check_idle_term_first_request()
 	_check_determinism()
 	_check_a_seed_is_a_game_of_its_own()
+	_check_no_one_asks_for_what_no_verb_serves()
 	_check_cooldown_cap_and_the_president()
 	_check_cooldown_silences_a_recent_asker()
 	_check_a_full_lane_takes_no_one()
@@ -118,6 +119,31 @@ func _check_a_seed_is_a_game_of_its_own() -> void:
 	old.erase("draw_seed")
 	if int(NationState.from_dict(old).draw_seed) != 0:
 		_fail("a save without a seed did not read the unseeded draw")
+
+
+## Pre-gate B, RECORD 10: a want the president cannot serve never becomes a request.
+## A party's leader is made only by a challenge, so a leadership want -- most name
+## ANOTHER party, by V4.3's design, because the challenge machine reads them -- is
+## never what a person asks for; they ask about their next servable want, or not at
+## all. QA met three people asking for another party's leadership.
+func _check_no_one_asks_for_what_no_verb_serves() -> void:
+	var state = _game()
+	var ns = state.player()
+	var leaders := {}
+	for party in _loader.parties[PLAYER]:
+		leaders[party.id] = party.leader_person_id
+	var unserved_leaderships := 0
+	for person in _loader.people[PLAYER]:
+		for want in person.wants:
+			if String(want["object"]).begins_with("office:party_leadership:") \
+					and not Characters.want_served(ns, person, want, METERS, leaders):
+				unserved_leaderships += 1
+		var asked: Dictionary = Audiences._unserved(ns, person, METERS, leaders)
+		if not asked.is_empty() and String(asked["object"]).begins_with("office:party_leadership:"):
+			_fail("%s would ask the president for %s" % [person.id, asked["object"]])
+			return
+	if unserved_leaderships == 0:
+		_fail("no France person holds an unserved leadership want -- the check tested nothing")
 
 
 func _arrival_months(state) -> Array:
