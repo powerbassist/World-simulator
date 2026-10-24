@@ -37,11 +37,16 @@ const RESOLVED_KEPT_MONTHS := 12
 const OFFERED_DATES := 2
 
 ## The price of a refusal, on the registers people-model 14.1 names plus a's
-## rapport. 0.12 is six months of a standing want's denial pulse (0.02): a
-## refusal to your face is felt more than a policy that drifts. Four lapses,
-## net of the 0.008 monthly decay, cross the brief threshold (0.45) -- so a
-## decline-everything term produces an act (B3) and a single refusal does not.
-const DECLINE_GRUDGE := 0.12
+## rapport. 0.18 is nine months of a standing want's denial pulse (0.02): a
+## refusal to your face is felt more than a policy that drifts. MEASURED
+## (tools/audience_probe.gd, 2026-10-24), against B3's act row: 0.12 and 0.16
+## left every refused person under the brief gate (0.45) for 60 months -- the
+## highest peaked at 0.30 -- so refusing everything cost no act at all; 0.18 is
+## the smallest that crosses it, through two principled people refused twice,
+## with the first brief at month 22 idle (20 declining) -- after France's 2027
+## vote, so a refusal prices the relationship and does not decide that election
+## on its own; 0.2 doubled the briefs. A single refusal never crosses alone.
+const DECLINE_GRUDGE := 0.18
 const DECLINE_LOYALTY := 0.0
 const DECLINE_RAPPORT := -0.1
 
