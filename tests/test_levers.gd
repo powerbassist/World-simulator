@@ -17,10 +17,15 @@ const GameState = preload("res://src/core/game_state.gd")
 const Person = preload("res://src/core/person.gd")
 const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
+const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
+const AK = preload("res://src/sim/audience_constants.gd")
+const Characters = preload("res://src/sim/characters.gd")
 
 const PLAYER := "FRA"
 const BANDS := [0.165, 0.5, 0.835]
+const METERS := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
 
 var _failures: Array[String] = []
 var _loader
@@ -37,6 +42,17 @@ func _init() -> void:
 	_check_odds_follow_the_traits()
 	_check_the_fog_narrows_and_never_lies()
 	_check_known_traits_never_lie()
+	_check_open_holds_and_teaches()
+	_check_offered_reads_the_registers()
+	_check_three_attempts_then_no_more()
+	_check_a_success_settles_without_the_decline_price()
+	_check_failures_close_as_one_decline()
+	_check_each_lever_pays_its_spend()
+	_check_the_rolls_are_seeded()
+	_check_a_stale_session_is_refused()
+	_check_topics_teach_and_spend_an_attempt()
+	_check_gossip_writes_only_the_third_person()
+	_check_flirt_waits_for_the_shadows()
 
 	_finish()
 
@@ -142,6 +158,383 @@ func _check_known_traits_never_lie() -> void:
 			if k >= 0.67 and shown.size() != person.traits.size():
 				_fail("%s at knowledge %.2f still hides traits (%s of %s)" % [person.id, k, shown, person.traits])
 			before = shown
+
+
+## The booked day comes and the scene opens: the request is held, the president
+## learns the person a little, and the session has three attempts.
+func _check_open_holds_and_teaches() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	var pid := String(s.get("person_id", ""))
+	if String(Audiences.request(ns, String(c["id"]))["status"]) != AK.STATUS_HELD:
+		_fail("opening an audience did not hold the request")
+	if not President.knowledge(ns, pid) > float(c["k0"]):
+		_fail("holding an audience taught the president nothing about %s" % pid)
+	if int(s.get("attempts_left", 0)) != LK.ATTEMPTS:
+		_fail("a session opened with %d attempts, not %d" % [int(s.get("attempts_left", 0)), LK.ATTEMPTS])
+	if not Levers.open(c["state"], ns, _loader, String(c["id"])).is_empty():
+		_fail("a held audience opened a second time")
+
+
+## The shown levers read the registers: friendship waits for a friend, the fog is
+## the knowledge band, and the truth sits inside every printed range.
+func _check_offered_reads_the_registers() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	var pid := String(s["person_id"])
+	var person = _loader.person_by_id[pid]
+	if _row(Levers.offered(state, ns, _loader, s), "friendship").get("offered", true):
+		_fail("friendship was offered to someone who is not a friend")
+	President.set_bond(state, ns, _loader, pid, "friend")
+	var shown: Array[Dictionary] = Levers.offered(state, ns, _loader, s)
+	if shown.size() != LK.LEVERS.size() or not bool(_row(shown, "friendship").get("offered", false)):
+		_fail("a friend was not offered friendship, or the list is not the six levers (%d)" % shown.size())
+	var cell: Dictionary = Levers.cell(state, ns, _loader, s)
+	for r in shown:
+		if String(r["fog"]) != President.knowledge_band(ns, pid):
+			_fail("%s's fog '%s' is not the knowledge band" % [r["lever"], r["fog"]])
+		var p := LeverOdds.odds(person, String(r["lever"]), cell)
+		if p >= 0.0 and (p < float(r["odds_lo"]) - 0.000001 or p > float(r["odds_hi"]) + 0.000001):
+			_fail("%s's true odds %.3f are outside the shown [%.3f, %.3f]" % [r["lever"], p, r["odds_lo"], r["odds_hi"]])
+
+
+## Three attempts an audience, shared by levers and topics; the fourth is refused
+## and writes nothing.
+func _check_three_attempts_then_no_more() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	for i in range(LK.ATTEMPTS):
+		if not bool(Levers.talk(state, ns, _loader, s, "opinion").get("ok", false)):
+			_fail("topic %d of %d was refused" % [i + 1, LK.ATTEMPTS])
+			return
+	var before := _snapshot(ns, String(s["person_id"]))
+	if bool(Levers.attempt(state, ns, _loader, s, "argue").get("ok", true)) or bool(Levers.talk(state, ns, _loader, s, "family").get("ok", true)):
+		_fail("a fourth attempt was accepted")
+	if _snapshot(ns, String(s["person_id"])) != before:
+		_fail("a refused fourth attempt wrote the registers")
+
+
+## A lever that works settles the request with no decline price, and buys loyalty
+## and a grudge's relief; friendship spends a step of the bond.
+func _check_a_success_settles_without_the_decline_price() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	var pid := String(s["person_id"])
+	President.learn(state, ns, _loader, pid, 1.0)
+	President.adjust_rapport(state, ns, _loader, pid, 1.0)
+	President.set_bond(state, ns, _loader, pid, "close")
+	ns.person_grudges[pid] = 0.3
+	var loyalty0 := float(ns.person_loyalty.get(pid, 0.0))
+	var r: Dictionary = Levers.attempt(state, ns, _loader, s, "friendship")
+	if not bool(r.get("ok", false)) or not bool(r.get("success", false)):
+		_fail("friendship at odds %.2f with a close friend did not work: %s" % [LK.ODDS_MAX, r])
+		return
+	if absf(float(ns.person_loyalty[pid]) - loyalty0 - LK.LOYALTY_ACCEPT) > 0.000001:
+		_fail("a success moved loyalty by %.4f, not %.4f" % [float(ns.person_loyalty[pid]) - loyalty0, LK.LOYALTY_ACCEPT])
+	if absf(float(ns.person_grudges[pid]) - (0.3 - LK.GRUDGE_ACCEPT_RELIEF)) > 0.000001:
+		_fail("a success left the grudge at %.4f" % float(ns.person_grudges[pid]))
+	if President.relationship(ns, pid) != "friend":
+		_fail("an appeal to a close friend left the bond at '%s', not friend" % President.relationship(ns, pid))
+	if bool(Levers.attempt(state, ns, _loader, s, "argue").get("ok", true)):
+		_fail("a lever was tried after the person had already agreed")
+	var grudge := float(ns.person_grudges[pid])
+	var closed: Dictionary = Levers.close(state, ns, _loader, s)
+	if String(closed.get("outcome", "")) != AK.STATUS_SETTLED or String(Audiences.request(ns, String(c["id"]))["status"]) != AK.STATUS_SETTLED:
+		_fail("a won audience closed as '%s'" % closed.get("outcome", ""))
+	if float(ns.person_grudges[pid]) != grudge:
+		_fail("closing a won audience priced a decline")
+
+
+## No lever works: closing is ONE decline, priced as Audiences prices it, and a
+## second close is refused and writes nothing.
+func _check_failures_close_as_one_decline() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	var pid := String(s["person_id"])
+	President.adjust_rapport(state, ns, _loader, pid, -1.0)
+	var person = _loader.person_by_id[pid]
+	var cell: Dictionary = Levers.cell(state, ns, _loader, s)
+	var weakest := "argue"
+	for lever in ["bargain", "pressure", "flatter"]:
+		var p := LeverOdds.odds(person, lever, cell)
+		if p < LeverOdds.odds(person, weakest, cell):
+			weakest = lever
+	for i in range(LK.ATTEMPTS):
+		var r: Dictionary = Levers.attempt(state, ns, _loader, s, weakest, {"currency": "favour"})
+		if bool(r.get("success", false)):
+			_fail("%s at odds %.2f worked on attempt %d; the seed needs another case" % [weakest, LeverOdds.odds(person, weakest, cell), i + 1])
+			return
+	var expected := float(Audiences.decline_price(ns, _loader, String(c["id"]))["grudge"])
+	var grudge0 := float(ns.person_grudges.get(pid, 0.0))
+	var closed: Dictionary = Levers.close(state, ns, _loader, s)
+	if String(closed.get("outcome", "")) != AK.STATUS_DECLINED:
+		_fail("an audience with no success closed as '%s'" % closed.get("outcome", ""))
+	if absf(float(ns.person_grudges.get(pid, 0.0)) - grudge0 - expected) > 0.000000001:
+		_fail("the failed audience cost %.4f of grudge, the decline price is %.4f" % [float(ns.person_grudges.get(pid, 0.0)) - grudge0, expected])
+	var before := _snapshot(ns, pid)
+	if bool(Levers.close(state, ns, _loader, s).get("ok", true)) or _snapshot(ns, pid) != before:
+		_fail("a closed audience closed again, or the second close wrote the registers")
+
+
+## Each lever's own spend, paid win or lose (the spec's levers table).
+func _check_each_lever_pays_its_spend() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var pid := String(c["session"]["person_id"])
+	var r0 := President.rapport(ns, pid)
+	Levers.attempt(state, ns, _loader, c["session"], "bargain", {"currency": "favour"})
+	if absf(President.rapport(ns, pid) - r0 + LK.BARGAIN_FAVOUR_RAPPORT) > 0.000001:
+		_fail("a favour moved rapport by %.4f, not -%.2f" % [President.rapport(ns, pid) - r0, LK.BARGAIN_FAVOUR_RAPPORT])
+	c = _booked()
+	state = c["state"]
+	ns = c["ns"]
+	pid = String(c["session"]["person_id"])
+	var before := _snapshot(ns, pid)
+	if bool(Levers.attempt(state, ns, _loader, c["session"], "bargain", {"currency": "aid"}).get("ok", true)) or _snapshot(ns, pid) != before:
+		_fail("aid was accepted, or its refusal wrote the registers")
+	Levers.attempt(state, ns, _loader, c["session"], "bargain", {"currency": "vote_trade"})
+	if _count(ns, pid, "iou") != 1:
+		_fail("a vote trade left %d IOUs, not 1" % _count(ns, pid, "iou"))
+	c = _booked()
+	state = c["state"]
+	ns = c["ns"]
+	pid = String(c["session"]["person_id"])
+	before = _snapshot(ns, pid)
+	var now := int(state.year) * 12 + int(state.month)
+	for bad in [now, now + LK.PROMISE_MIN_MONTHS - 1, now + LK.PROMISE_MAX_MONTHS + 1, -1]:
+		if bool(Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": bad}).get("ok", true)):
+			_fail("a promise due at month %d (now %d) was accepted" % [bad, now])
+	if _snapshot(ns, pid) != before:
+		_fail("refused promises wrote the registers")
+	Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS})
+	var rows: Array[Dictionary] = President.commitments_with(ns, pid)
+	if rows.size() != 1 or rows[0]["kind"] != "promise" or int(rows[0]["due_month"]) != now + LK.PROMISE_MIN_MONTHS:
+		_fail("a promise left %s" % [rows])
+	c = _booked()
+	state = c["state"]
+	ns = c["ns"]
+	pid = String(c["session"]["person_id"])
+	r0 = President.rapport(ns, pid)
+	var g0 := float(ns.person_grudges.get(pid, 0.0))
+	var pressed: Dictionary = Levers.attempt(state, ns, _loader, c["session"], "pressure")
+	var relief := LK.GRUDGE_ACCEPT_RELIEF if bool(pressed.get("success", false)) else 0.0
+	var person = _loader.person_by_id[pid]
+	var pulse := LK.PRESSURE_GRUDGE * Characters.grudge_intake(person)
+	if absf(President.rapport(ns, pid) - r0 + LK.PRESSURE_RAPPORT) > 0.000001:
+		_fail("pressure moved rapport by %.4f" % (President.rapport(ns, pid) - r0))
+	if absf(float(ns.person_grudges.get(pid, 0.0)) - maxf(0.0, g0 + pulse - relief)) > 0.000001:
+		_fail("pressure left the grudge at %.4f (pulse %.4f, relief %.4f)" % [float(ns.person_grudges.get(pid, 0.0)), pulse, relief])
+
+
+## Two identical states, the same three attempts: the same rolls and the same
+## printed ranges (I1).
+func _check_the_rolls_are_seeded() -> void:
+	var a := _booked()
+	var b := _booked()
+	if a.is_empty() or b.is_empty():
+		return
+	if Levers.offered(a["state"], a["ns"], _loader, a["session"]) != Levers.offered(b["state"], b["ns"], _loader, b["session"]):
+		_fail("two identical states showed different ranges")
+	var ra: Array = []
+	var rb: Array = []
+	for lever in ["argue", "pressure", "flatter"]:
+		ra.append(Levers.attempt(a["state"], a["ns"], _loader, a["session"], lever).get("success", null))
+		rb.append(Levers.attempt(b["state"], b["ns"], _loader, b["session"], lever).get("success", null))
+	if ra != rb:
+		_fail("two identical states rolled differently: %s vs %s" % [ra, rb])
+
+
+## A session handed back after its audience ended -- closed, or lapsed as a
+## no-show -- is refused everywhere and writes nothing.
+func _check_a_stale_session_is_refused() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	var pid := String(s["person_id"])
+	Levers.close(state, ns, _loader, s)
+	_expect_refused(state, ns, s, pid, "after close")
+	c = _booked()
+	state = c["state"]
+	ns = c["ns"]
+	s = c["session"]
+	pid = String(s["person_id"])
+	_advance(state)
+	Audiences.tick_month(state, _loader, METERS)
+	if String(Audiences.request(ns, String(c["id"]))["status"]) == AK.STATUS_HELD:
+		_fail("an audience held across a month boundary was not closed as a no-show")
+	_expect_refused(state, ns, s, pid, "after a no-show")
+
+
+## A topic spends an attempt and buys knowledge and rapport; dinner is once.
+func _check_topics_teach_and_spend_an_attempt() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	var pid := String(s["person_id"])
+	var k0 := President.knowledge(ns, pid)
+	var r0 := President.rapport(ns, pid)
+	var r: Dictionary = Levers.talk(state, ns, _loader, s, "opinion")
+	if not bool(r.get("ok", false)) or int(s["attempts_left"]) != LK.ATTEMPTS - 1:
+		_fail("an opinion topic was refused or did not spend an attempt: %s" % [r])
+	if absf(President.knowledge(ns, pid) - k0 - LK.KNOW_TOPIC * (1.0 - k0)) > 0.000001:
+		_fail("a topic taught %.4f, not %.4f" % [President.knowledge(ns, pid) - k0, LK.KNOW_TOPIC * (1.0 - k0)])
+	if absf(President.rapport(ns, pid) - r0 - LK.RAPPORT_TOPIC) > 0.000001:
+		_fail("a topic moved rapport by %.4f, not %.4f" % [President.rapport(ns, pid) - r0, LK.RAPPORT_TOPIC])
+	if not bool(Levers.talk(state, ns, _loader, s, "dinner").get("ok", false)):
+		_fail("a first dinner was refused")
+	if bool(Levers.talk(state, ns, _loader, s, "dinner").get("ok", true)):
+		_fail("a second dinner in one audience was accepted")
+
+
+## Gossip writes the president's knowledge of the third person and nothing else:
+## every edge starts at the president (spec C1).
+func _check_gossip_writes_only_the_third_person() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var s: Dictionary = c["session"]
+	var pid := String(s["person_id"])
+	var about := ""
+	for person in _loader.people[PLAYER]:
+		if person.id != pid and person.id != President.leader_id(ns):
+			about = person.id
+			break
+	var before := _snapshot(ns, pid)
+	for bad in [{}, {"about": pid}, {"about": President.leader_id(ns)}, {"about": "DEU_nobody_at_all"}]:
+		if bool(Levers.talk(state, ns, _loader, s, "gossip", bad).get("ok", true)):
+			_fail("gossip with %s was accepted" % [bad])
+	if _snapshot(ns, pid) != before or int(s["attempts_left"]) != LK.ATTEMPTS:
+		_fail("refused gossip wrote a register or spent an attempt")
+	var k_room := President.knowledge(ns, pid)
+	var k_about := President.knowledge(ns, about)
+	Levers.talk(state, ns, _loader, s, "gossip", {"about": about})
+	if absf(President.knowledge(ns, about) - k_about - LK.KNOW_GOSSIP * (1.0 - k_about)) > 0.000001:
+		_fail("gossip about %s taught %.4f" % [about, President.knowledge(ns, about) - k_about])
+	if President.knowledge(ns, pid) != k_room:
+		_fail("gossip taught the president about the person telling it")
+	for key in ns.person_knowledge:
+		if not _loader.person_by_id.has(key):
+			_fail("a knowledge register is keyed by '%s', not a person" % key)
+
+
+func _check_flirt_waits_for_the_shadows() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	if bool(_row(Levers.topics(c["state"], c["ns"], _loader, c["session"]), "flirt", "topic").get("offered", true)):
+		_fail("flirting was offered before V5.2c")
+	if bool(Levers.talk(c["state"], c["ns"], _loader, c["session"], "flirt").get("ok", true)):
+		_fail("a flirt was accepted before V5.2c")
+
+
+func _expect_refused(state, ns, s: Dictionary, pid: String, when: String) -> void:
+	var before := _snapshot(ns, pid)
+	if bool(Levers.attempt(state, ns, _loader, s, "argue").get("ok", true)):
+		_fail("an attempt was accepted %s" % when)
+	if bool(Levers.talk(state, ns, _loader, s, "opinion").get("ok", true)):
+		_fail("a topic was accepted %s" % when)
+	if bool(Levers.close(state, ns, _loader, s).get("ok", true)):
+		_fail("a close was accepted %s" % when)
+	if _snapshot(ns, pid) != before:
+		_fail("a refused session wrote the registers %s" % when)
+
+
+## A France game with its first request booked on an offered free day and the
+## scene opened on that day: {state, ns, id, k0, session}, or {} with a failure.
+func _booked() -> Dictionary:
+	var state = GameState.new_game(_loader, PLAYER)
+	state.year = 2026
+	state.month = 1
+	state.day = 1
+	var ns = state.player()
+	for m in range(24):
+		Audiences.tick_month(state, _loader, METERS)
+		var lane: Array[Dictionary] = Audiences.pending(ns)
+		if not lane.is_empty():
+			var id := String(lane[0]["id"])
+			_advance(state)
+			for d in Audiences.offered_dates(state, ns, id):
+				if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, id, d).get("ok", false)):
+					state.year = int(d["year"])
+					state.month = int(d["month"])
+					state.day = int(d["day"])
+					var pid := String(lane[0]["person_id"])
+					var k0 := President.knowledge(ns, pid)
+					var session: Dictionary = Levers.open(state, ns, _loader, id)
+					if session.is_empty():
+						_fail("a booked audience on its day did not open")
+						return {}
+					return {"state": state, "ns": ns, "id": id, "k0": k0, "session": session}
+			_fail("the first request had no free offered day in an empty diary")
+			return {}
+		_advance(state)
+	_fail("no request arrived in 24 months")
+	return {}
+
+
+func _row(rows: Array, key: String, field := "lever") -> Dictionary:
+	for r in rows:
+		if String(r.get(field, "")) == key:
+			return r
+	return {}
+
+
+func _count(ns, pid: String, kind: String) -> int:
+	var n := 0
+	for row in President.commitments_with(ns, pid):
+		if String(row["kind"]) == kind:
+			n += 1
+	return n
+
+
+func _snapshot(ns, pid: String) -> Dictionary:
+	return {
+		"knowledge": ns.person_knowledge.duplicate(),
+		"rapport": ns.person_rapport.duplicate(),
+		"bond": ns.person_bond.duplicate(),
+		"grudge": float(ns.person_grudges.get(pid, 0.0)),
+		"loyalty": float(ns.person_loyalty.get(pid, 0.0)),
+		"commitments": ns.commitments.duplicate(true),
+		"requests": ns.audience_requests.duplicate(true),
+	}
+
+
+func _advance(state) -> void:
+	state.month += 1
+	if state.month > 12:
+		state.month = 1
+		state.year += 1
+	state.day = 1
 
 
 func _cell(over := {}) -> Dictionary:

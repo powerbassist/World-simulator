@@ -75,6 +75,44 @@ const FOG_KNOWN := 0.08
 ## the edge itself: a stranger sees none, a known person all of them.
 const TRAIT_REVEAL_FLOOR := 0.1
 
+## What a lever that works buys, in the two channels people-model 14.1 names (no
+## third number): the request settles without the decline price, plus loyalty
+## and a grudge's relief. Flatter buys only the settle -- its effect is small and
+## does not hold (the spec's dominance matrix).
+const LOYALTY_ACCEPT := 0.05
+const GRUDGE_ACCEPT_RELIEF := 0.05
+
+## The spends, paid win or lose (the spec's levers table). A favour is rapport
+## spent; a vote trade is an IOU due IOU_MONTHS on; AID is not in b2 (it needs a
+## budget line of its own -- the parent's call).
+const BARGAIN_FAVOUR_RAPPORT := 0.10
+const IOU_MONTHS := 12
+const CURRENCY_FAVOUR := "favour"
+const CURRENCY_VOTE_TRADE := "vote_trade"
+const CURRENCY_AID := "aid"
+## A promised date the president names, inside this window from now: too near is
+## not a promise, too far is not a date.
+const PROMISE_MIN_MONTHS := 3
+const PROMISE_MAX_MONTHS := 24
+## Pressure spends rapport, and writes a grudge pulse on success as on failure.
+const PRESSURE_RAPPORT := 0.06
+const PRESSURE_GRUDGE := 0.04
+## A failed flatter backfires on a principled reader above this skill.
+const FLATTER_BACKFIRE_SKILL := 0.6
+const FLATTER_BACKFIRE_RAPPORT := 0.08
+
+## The other topics buy knowledge and rapport, never a vote. Every knowledge gain
+## is amount * (1 - knowledge), so knowing someone well takes many evenings (B4:
+## acquaintance in 2-5 audiences with a topic, known in at least 8). Dinner is the
+## richest and once an audience; gossip teaches the president about the THIRD
+## person only (spec C1).
+const KNOW_TOPIC := 0.07
+const RAPPORT_TOPIC := 0.04
+const KNOW_DINNER := 0.10
+const RAPPORT_DINNER := 0.08
+const KNOW_GOSSIP := 0.05
+const RAPPORT_GOSSIP := 0.02
+
 const SALT_ROLL := "lever"
 const SALT_FOG := "fog"
 const SALT_TRAIT := "trait"
