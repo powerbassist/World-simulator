@@ -35,7 +35,6 @@ static func card_events(main, year: int, month: int, desk_before: Dictionary, be
 	var ns = main._state.player()
 	if ns == null:
 		return
-	AudienceDriver.refresh(main)  # V5.2b: the month's requests, its lapses as notes
 
 	# What LEFT the desk this month: ids that were on it before the tick and are
 	# not now. Each is a resolution, and each earns its own card -- two crises the

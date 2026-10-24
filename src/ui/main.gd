@@ -1372,13 +1372,15 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 			# which tests/test_unrest.gd asserts over the whole directory.
 			_world_news.card_unrest_acts(year, month)
 		"Events":
-			_card_events(year, month, _month_capture.get("desk_before", {}),
-				_month_capture.get("event_before", {}))
+			_card_events(year, month, _month_capture.get("desk_before", {}), _month_capture.get("event_before", {}))
 			_enforce_interrupt()
 		"Characters":
 			# T5's surface: the acts go to the message stack as cards; the record is
 			# not state.
 			_world_news.card_character_acts(report["character_acts"])
+		# V5.2b: after the step that writes the month's arrivals and lapses (QA on
+		# #105: read at Events, the lane was a month behind the register).
+		"Audiences": AudienceDriver.refresh(self)
 
 
 ## V1.8's desk cards, the arrivals and the defaults: desk_cards.gd.

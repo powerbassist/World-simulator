@@ -11,7 +11,10 @@ extends SceneTree
 ##   - Book opens the Diary on the person's offered days; a free one books it;
 ##   - on the booked day the diary opens the audience: a scene that holds the
 ##     clock and names the person on the hold line; ending it settles the request
-##     and lets the clock go.
+##     and lets the clock go;
+##   - a month run through main's own month runner and step hook leaves the lane
+##     equal to the register: that month's lapse gone, its arrivals carded, the
+##     count current (QA on #105: refreshed at Events, it was a month behind).
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -23,6 +26,7 @@ var _first := ""
 var _second := ""
 var _target: Button
 var _booked_on := {}
+var _lapsing := ""
 
 
 func _init() -> void:
@@ -57,6 +61,9 @@ func _process(_delta: float) -> bool:
 			AudienceDriver.scene_of(_main).closed.emit()
 		19:
 			_check_ended()
+			_run_a_month()
+		_ when _frame > 19 and not _main._month_runner.running():
+			_check_month()
 			_finish()
 			return true
 	return false
@@ -146,6 +153,44 @@ func _check_ended() -> void:
 		_fail("an audience ended with no lever won did not settle as a refusal: %s" % Audiences.request(ns, _second))
 	if _main._clock.paused and not _main._decision_holds_clock():
 		_fail("ending the audience did not let the clock go")
+
+
+## A third person's request staged to fall due next month, then that month run
+## the way the clock runs one (main's handler, its runner, its step hook).
+func _run_a_month() -> void:
+	var ns = _main._state.player()
+	var next: int = int(_main._state.year) * 12 + int(_main._state.month) + 1
+	for person in _main._loader.people.get(String(ns.id), []):
+		var id := String(person.id)
+		if person.wants.is_empty() or id == String(ns.head_of_state_person_id) or ns.audience_asked_month.has(id):
+			continue
+		Audiences._arrive(ns, person, person.wants[0], next - Audiences.K.REQUEST_WINDOW_MONTHS, [])
+		_lapsing = String(ns.audience_requests[-1]["id"])
+		break
+	AudienceDriver.refresh(_main)
+	if _lapsing == "" or AudienceDriver.lane_of(_main).card_of(_lapsing) == "":
+		_fail("premise: no request staged to lapse next month")
+	var year := floori((next - 1) / 12.0)
+	_main._on_month_elapsed(year, next - year * 12)
+
+
+func _check_month() -> void:
+	var ns = _main._state.player()
+	var lane = AudienceDriver.lane_of(_main)
+	if String(Audiences.request(ns, _lapsing).get("status", "")) != "lapsed":
+		_fail("premise: the staged request did not lapse at the month: %s" % Audiences.request(ns, _lapsing))
+	if lane.card_of(_lapsing) != "":
+		_fail("the month's lapse kept its card after the month ran")
+	var live: Array = []
+	for row in Audiences.pending(ns):
+		live.append(String(row["id"]))
+		if lane.card_of(String(row["id"])) == "":
+			_fail("request %s (arrived %d) is pending and has no card after the month" % [row["id"], int(row["arrived_month"])])
+	for id in lane.request_ids():
+		if not live.has(id):
+			_fail("card for %s stayed though the register no longer holds it" % id)
+	if Audiences.waiting_count(ns) > 0 and not String(_main._hud.title_bar.requests_text()).contains(str(Audiences.waiting_count(ns))):
+		_fail("the title bar's count is not the register's after the month: '%s'" % _main._hud.title_bar.requests_text())
 
 
 func _answer(request_id: String, index: int) -> Button:
