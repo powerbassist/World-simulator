@@ -186,6 +186,7 @@ static func after_load(main) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	if not game.is_empty():
 		AudienceTalks.leave(main, game)
+	PhoneDriver.after_load(main)
 	refresh(main)
 
 

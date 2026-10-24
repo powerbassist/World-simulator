@@ -13,7 +13,9 @@ extends SceneTree
 ##     with the sim's reason;
 ##   - a right click on a person in People opens a call too; with no open request
 ##     the levers are left off and the dialog says why;
-##   - a visiting head's ask reads "wants your measure on <nation> lifted".
+##   - a visiting head's ask reads "wants your measure on <nation> lifted";
+##   - a load during a call puts the call down (QA on #125): the dialog goes, no
+##     one is on the line, the hold line no longer names them.
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const Phone = preload("res://src/sim/phone.gd")
@@ -23,6 +25,9 @@ const HoldReason = preload("res://src/ui/hold_reason.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Words = preload("res://src/ui/lever_words.gd")
+const SaveManager = preload("res://src/core/save_manager.gd")
+
+const SLOT := "phone_ui_test"
 
 var _failures: Array[String] = []
 var _main
@@ -67,6 +72,9 @@ func _process(_delta: float) -> bool:
 			_click(false, MOUSE_BUTTON_RIGHT)
 		25:
 			_check_people_call()
+			_call_then_load()
+		27:
+			_check_loaded()
 			_finish()
 			return true
 	return false
@@ -194,6 +202,24 @@ func _check_people_call() -> void:
 	dialog._close.pressed.emit()
 
 
+func _call_then_load() -> void:
+	if SaveManager.save_game(_main._state, _main._clock, SLOT) != "":
+		_fail("premise: the save failed")
+		return
+	PhoneDriver.open_call(_main, _asker, [])
+	if not PhoneDriver.dialog_of(_main).visible:
+		_fail("premise: the call did not open before the load")
+	_main._on_load_requested(SLOT)
+
+
+func _check_loaded() -> void:
+	var name: String = _main._loader.person_name(_asker)
+	if PhoneDriver.dialog_of(_main).visible or PhoneDriver.calling(_main) != "":
+		_fail("a load left the call up over the loaded game")
+	if HoldReason.show(_main).contains(name):
+		_fail("the hold line still names the caller after the load: '%s'" % HoldReason.show(_main))
+
+
 func _answer(label: String) -> Control:
 	var card = _main._hud.inbox._cards.get(AudienceDriver.lane_of(_main).card_of(_request))
 	if card == null:
@@ -222,6 +248,7 @@ func _fail(message: String) -> void:
 
 
 func _finish() -> void:
+	SaveManager.delete_slot(SLOT)
 	if _failures.is_empty():
 		print("test_phone_ui: all checks passed")
 		quit(0)

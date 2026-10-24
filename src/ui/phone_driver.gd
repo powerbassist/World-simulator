@@ -69,6 +69,18 @@ static func open_call(main, person_id: String, people: Array) -> void:
 	main._hud.clock_cluster.refresh(main._clock, HoldReason.show(main))
 
 
+## After a load: a call up over the discarded game is put down -- its rows were
+## that game's, and a press would dial the loaded one (QA on #125). The clock is
+## left to the load, which owns it now.
+static func after_load(main) -> void:
+	var game: Dictionary = _games.get(main.get_instance_id(), {})
+	if game.is_empty() or String(game["person_id"]).is_empty():
+		return
+	game["dialog"].hide()
+	game["person_id"] = ""
+	main._hud.clock_cluster.refresh(main._clock, HoldReason.show(main))
+
+
 static func _dial(main, game: Dictionary, what: String, args: Dictionary) -> void:
 	if String(game["person_id"]).is_empty():
 		return
