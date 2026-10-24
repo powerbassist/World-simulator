@@ -57,7 +57,11 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	for p in loader.people.get(String(ns.id), []):
 		var id := String(p.id)
 		if id != pid and President.covers(state, ns, loader, id):
-			people.append({"id": id, "name": loader.person_name(id)})
+			people.append({"id": id, "name": loader.person_name(id), "know": President.knowledge(ns, id)})
+	# The people the president knows first, then by name (QA on #117: in loader
+	# order the list was a screen of strangers before anyone useful).
+	people.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return a["know"] > b["know"] or (a["know"] == b["know"] and String(a["name"]).naturalnocasecmp_to(String(b["name"])) < 0))
 	return {"fog": President.knowledge_band(ns, pid), "traits": traits,
 		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
