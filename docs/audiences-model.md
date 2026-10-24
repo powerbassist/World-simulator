@@ -320,11 +320,15 @@ card.
 3. **A visiting head under a measure of the played nation** (the author's answer,
    2026-10-24, "Lever une mesure française"): the head of a nation that state-visited
    the played nation this tick asks for the measure on their nation to be lifted
-   (object `measure:<directed key>`), only when one stands. It waits in a place of its
+   (object `measure:<directed key>`), only when one stands -- the played nation's OWN
+   measure (`Coercion.own_measure()`: imposed, or the retaliation written in its name),
+   never an org's collective levy on the same key, which is the org's to end (pre-gate
+   B, RECORD 11: every visitor in QA's run asked about the Climate Accord's levy, and
+   France's own tariff on Germany brought none). It waits in a place of its
    own (`MAX_PENDING_FOREIGN`, 1), outside the domestic lane and its bands. A refusal
    costs **rapport only**: grudge and loyalty are this nation's people's, so
    `Characters.price_refusal()` writes nothing for a foreign head. A promise or a
-   delegation to lift is judged on the measure at its date.
+   delegation to lift is judged on France's own measure at its date.
 
 - **The G7 hook.** `Audiences.invite(state, ns, loader, person_id, object, stance)` is a
   door into the lane under its rules, for V5.3c's builder: a private firm's chief
@@ -343,7 +347,7 @@ card.
 - `audience_probe`:
   - A1 and A3: identical to b2.1 on every band field. Beside them, 5 visitor requests
     in 60 months (Albania's and Switzerland's heads, under measures France applies
-    through an org's external measure).
+    through an org's external measure -- the defect RECORD 11 fixed; see below).
   - A2 holds no visitor in the game's order (the diary after the tick).
 
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
