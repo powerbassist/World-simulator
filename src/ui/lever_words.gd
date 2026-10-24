@@ -141,11 +141,18 @@ static func outcome(id: String) -> String:
 static func commitment_text(kind: String, person: String, want: String, due: int) -> String:
 	if kind == "iou":
 		return Strings.t("You owe %s a vote by %s (their want: %s).") % [person, when(due), want]
+	# A delegated request is a minister's word, not the president's: broken, it is
+	# a betrayal and never a lie (levers.gd _judge; bands-v5.2.md).
+	if kind == "delegated":
+		return Strings.t("Delegated to a minister for %s, due %s (their want: %s).") % [person, when(due), want]
 	return Strings.t("Your word to %s, due %s (their want: %s).") % [person, when(due), want]
 
 
-## A judged one: kept, or a lie revealed (a promise) / a betrayal (an IOU).
+## A judged one: kept, or a lie revealed (a promise) / a betrayal (an IOU, or a
+## delegation the minister did not deliver).
 static func verdict_text(kind: String, kept: bool, person: String, want: String) -> String:
 	if kind == "iou":
 		return Strings.t("You paid %s the vote you owed.") % person if kept else Strings.t("You did not pay %s the vote you owed: a betrayal.") % person
+	if kind == "delegated":
+		return Strings.t("Your minister delivered for %s (their want: %s).") % [person, want] if kept else Strings.t("Your minister failed %s: a betrayal (their want: %s).") % [person, want]
 	return Strings.t("You kept your word to %s (their want: %s).") % [person, want] if kept else Strings.t("Your word to %s is revealed a lie (their want: %s).") % [person, want]

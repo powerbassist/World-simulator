@@ -570,8 +570,8 @@ want, against one) × the channel (audience, phone call).
 | Share of cells in which one lever has the best net value | **at most 40 %** for any lever |
 | Share of cells in which each lever has the best net value | **at least 5 %** for every lever |
 | The denominator of both shares, per lever | the cells **in which that lever is offered**: the whole grid for five levers, and only the friend-or-closer half for appeal to friendship, which is not offered below friend |
-| A phone call's odds against an audience's, same lever, same cell | **at least 0.10 lower** |
-| The answers to a request — book, delegate, decline, and leaving it unanswered — any one of them the best net value over all requests, a diary day priced at 1.05 of one ask won, on the real three-attempt audience ("B5 amendment" below) | **at most 50 %** of requests |
+| The channel (amended 2026-10-24, see below): audiences held by a player who phones every open request once a month before booking (`audience_probe` regime A4) | **B2's audiences row still holds**: 12 to 30 held a term, at least 4 in months 1–20 |
+| The answers to a request — book, delegate, refuse (decline and unanswered, one answer by the tie rule) — scored under the declared player model ("B5 amendment" below: two intents per request, a diary day at 1.05 of one ask won, the real three-attempt audience) | book **at most 50 %** of all scored cases; within "will serve", book and delegate **each at least 5 %**; within "won't serve", refuse **at least 5 %** |
 
 - **Net value** is success × the ask's gain minus the expected cost, in the
   registers the lever spends. The probe's header states the exchange weights
@@ -582,13 +582,37 @@ want, against one) × the channel (audience, phone call).
   from being dead content.
 - **Probe:** `tools/lever_probe.gd`, regime L2.
 - **Failure looks like:** one lever best in most cells (the player stops
-  reading people and presses it); a lever never best (dead); calls as good as
-  audiences (the diary becomes optional); leaving requests unanswered the best
+  reading people and presses it); a lever never best (dead); a player who phones
+  first holds fewer audiences than B2 asks (the diary becomes optional); leaving requests unanswered the best
   answer to most of them (the player learns never to open the inbox). Since the
   author's call of 2026-10-21 (an unanswered request is a decline once its window
   passes), this row is expected to pass: leaving a request unanswered is a
   decline that arrives later, so it can be the best answer only where declining
   is. A failure here now means the lapse is priced below the decline (B3).
+- **The channel row, amended (2026-10-24, before b3 is built).**
+  - **Why the old row was replaced:** "a call at least 0.10 below an audience"
+    holds by construction once the phone subtracts exactly 0.10 and withholds a
+    lever under 0.15 (Systems' b3 plan, call C). A row that holds by
+    construction measures nothing, so the offset moves to the invariants (I5),
+    where a test pins it.
+  - **What the row now measures** is what the old row's failure line was
+    about: whether calls make the diary optional. A call costs no diary day,
+    and a failed call leaves the request open. One call per person per month
+    across a two-month window gives two rolls per request. So the row reads
+    B2's own audiences row for a player who phones every open request first
+    and books what the phone does not answer. B2's numbers are declared, and
+    nothing new is invented.
+  - **Expected (INFERRED, from the formulas, not run):** the chance a request
+    is answered by phone over two calls is 1 − (1 − (p − 0.10))². At B4's
+    midpoints, that is 0.51 for a stranger, 0.70 for an acquaintance and 0.84
+    for the known. On A2's stranger-heavy mix, about half the audiences would
+    go to the phone, so B2's floor of 12 is likely to fail. That would make
+    the phone too strong as planned. The read decides, and a miss goes to the
+    author.
+  - **L2's denominators with the phone:** phone cells enter L2's 40 % and 5 %
+    shares. Each lever's denominator is the cells, in each channel, where that
+    lever is offered: a lever withheld by phone under 0.15 is not counted
+    there. This is friendship's rule, applied to the floor.
 
 ### B5 amendment (2026-10-24): the price of a diary day
 
@@ -620,7 +644,7 @@ is that lever's single-attempt odds, s its spend in the weights, and q = 1 − p
 
 | Answer | Net value |
 |---|---|
-| Book | (1 − q³) × 1, the chance of an agreement in three attempts; minus s × (1 + q + q²), the expected spends; minus q³ × Decline's cost, the settle when no agreement comes; minus **1.05** |
+| Book | (1 − q³) × 1, the chance of an agreement in three attempts; minus s × (1 + q + q²), the expected spends; minus q³ × Decline's cost, the settle when no agreement comes; plus the in-person gains ("The in-person gains" below: being received, the knowledge gained, and, when the want is served, the promise kept in person); minus **1.05** |
 | Delegate | minus (0.25 × the refusal grudge, plus 0.5 × the snub rapport for a `vain` person or an office want), then delegation's commitment at its due month: plus 0.5 × 0.10 if kept, minus (0.75 × the refusal grudge + 0.08 + 0.5 × 0.2) if broken ("Delegation's commitment" below). The first part is `Audiences.delegate` as built: `DELEGATE_GRUDGE_SHARE` 0.25, `DELEGATE_SNUB_RAPPORT` -0.05 |
 | Decline | minus (the refusal grudge, plus 0.5 × 0.1 rapport). This is `decline_price`: `DECLINE_GRUDGE` 0.18 through `Characters.refusal_grudge`, and `DECLINE_RAPPORT` -0.1 |
 | Unanswered | equal to Decline by construction (a lapse costs exactly a decline; `tests/test_audiences.gd` pins it per request) |
@@ -628,8 +652,16 @@ is that lever's single-attempt odds, s its spend in the weights, and q = 1 − p
 The best answer for a request is the one with the highest net value. The row is
 unchanged: **no answer is the best in more than 50 % of requests.**
 
+**The tie rule** (declared with the price): Decline and Unanswered cost the same
+by construction, so they tie whenever either is best. For the share they count
+as ONE answer, "refuse". The row therefore reads: **none of book, delegate and
+refuse is the best in more than 50 % of requests.** Without the rule, a tie
+would either count twice or let the inbox's silence pass as its own answer.
+
 **Why 1.05 (OPINION, derived from DECLARED bands, not from a run, on the same
-three-attempt audience, against delegation WITH its commitment):**
+three-attempt audience, against delegation WITH its commitment).** The book
+values in this block come before the in-person gains. "The in-person gains"
+below re-checks 1.05 with them, and that check is the declared expectation.
 
 - The spec's trade-off table says booking is best "when the person carries a
   want the player can serve or needs served", and delegation is best when "the
@@ -747,25 +779,220 @@ from the prices above):**
   delegated commitment as the president's own, so delegating a trap carries
   c's exposure risk, and decline is the safe answer. c declares that price.
 - **A want the player will serve anyway, from a person not worth a day:**
-  delegation costs 0.045 − 0.05 ≈ 0 at base g. That beats both booking (−0.16
-  for an acquaintance at 1.05) and decline (−0.23). That is the case the spec
-  calls "the person matters but not personally".
+  delegation costs 0.045 − 0.05 ≈ 0 at base g. That beats decline (−0.23), and
+  beats booking a stranger (−0.13 with the in-person gains below). That is the
+  case the spec calls "the person matters but not personally". An acquaintance
+  books instead (leg A below).
 - **Neither answer dominates the other any longer.** Which one is best depends
   on whether the want is served, so decline has cells of its own.
 
+**Red-team before the read** (GLM 5.3 drafted the attack, at the author's
+2026-10-24 instruction; every claim below was re-derived here and is labelled):
+
+- **Where each answer wins, BEFORE the in-person gains** (MEASURED arithmetic
+  on the declared formulas, D = 1.05, spends left out). Here K = P(kept). This
+  is the table that prompted decision 2. "The in-person gains" below supersedes
+  it.
+
+  | g | p | K = 0 | K = 0.5 | K = 1 |
+  |---|---|---|---|---|
+  | 0.18 | 0.40 | refuse (−0.23) | delegate (−0.178) | delegate (+0.005) |
+  | 0.18 | 0.55 | book (−0.162) | book (−0.162) | delegate |
+  | 0.18 | 0.70 | book (−0.083) | book | delegate |
+  | 0.36 (principled) | 0.40 | book (−0.355) | delegate (−0.29) | delegate (−0.04) |
+  | 0.36 | 0.55 to 0.95 | book | book | delegate |
+
+- **No answer is dominated.** Each one has cells of its own.
+- **Refuse never wins for a principled person.** Booking even a stranger
+  (−0.355) beats refusing (−0.41). This agrees with the spec's Decline row,
+  which is worst "when the person is principled (grudge ×2)", so it is the
+  design, not a defect.
+- **Delegation won every K = 1 cell, at any p**, before the in-person gains
+  were priced. With D above one ask won and Book flat in K, a minister's kept
+  promise (about 0) beat any audience (at most −0.05). That ran against the
+  spec's Book row. The parent's decision (2026-10-24, decision 2) is to build
+  the spec as written: the in-person gains are priced below, and the spec's
+  wording stays.
+- **Traps:** the model carries no trap price, so it cannot say where refuse wins
+  against a trap. c declares that price (the proposal above).
+- **Likely result (INFERRED):** the row turns on the realized K. In
+  `audience_probe` A2, the player serves no wants by policy, so K is mostly
+  low, and book and refuse should split most requests.
+
+**The in-person gains** (the parent's decision 2, 2026-10-24; declared before
+the read). The spec's Book row names what an audience buys: "the scene: levers,
+topics, knowledge gained". The 1.05 left those gains unpriced. Each one is
+priced from a primitive that already exists:
+
+| Gain | Price | From | Slope in K | Built? |
+|---|---|---|---|---|
+| **Being received** | rapport **+0.10** when the audience is held, whatever is said (value 0.05) | the mirror of `DECLINE_RAPPORT` −0.1 (`src/sim/audience_constants.gd:55`): a refusal to your face costs 0.1, and being heard earns the same | flat | **no**: Systems writes it at `Audiences.hold` |
+| **Knowledge gained** | `President.learn_from`'s 0.05 × (1 − k), valued at B4's slope (0.448 odds per knowledge unit, from B4's declared midpoints) × 3q², the person's own three-attempt sensitivity (1.08 for a stranger, 0.61 for an acquaintance, 0.27 for the known) × 2 further encounters with the person this term (OPINION, from B1's 24–48 requests from at least 12 people) | as built on #113 | flat | yes |
+| **A promise kept in person** | rapport **+0.25** when a promise the president made in the audience (`promise_date`, outcome `promised`) is judged kept (value 0.125, times the chance A of an agreement) | 2.5 × the minister's kept +0.10 (delegation's commitment). The broken side already carries that ratio: a lie revealed costs rapport −0.5 against the IOU betrayal's −0.2 (`lever_constants.gd:141-145` at `dde0a133`). | **carries K** | **no**: Systems raises `PROMISE_KEPT_RAPPORT` from 0.10 to 0.25 for kind `promise`; a delegated commitment keeps +0.10 |
+
+The knowledge values (INFERRED arithmetic) are 0.040 for a stranger, 0.014 for
+an acquaintance and 0.002 for the known. A RECORD from QA: the book value's
+full sensitivity to p also carries the settle term, 3q² × 1.23. With it, leg A
+needs D ≤ 1.063 and leg C needs D ≥ 1.064, so the window is empty and leg C
+misses by 0.014 at 1.05. The 1.05 stands as declared, and the band reads the
+probe's cells, not these midpoints: small, and largest for the person the
+president knows least, as expected. **Only the kept
+promise carries K.** That is why it is the one gain that can hold K = 1:
+delegation's value moves 0.365 across K, and a flat gain only shifts the point
+where delegation overtakes.
+
+**The partition the spec asks for** (four legs, written before any number was
+chosen):
+
+- **A.** At K = 1, an acquaintance books, beating delegation.
+- **B.** At K = 1, a stranger delegates, beating booking.
+- **C.** At K = 0, a stranger is refused, beating both.
+- **D.** At K = 0, an acquaintance books, beating refusal.
+
+**Solved at base g and the B4 midpoints** (the arithmetic is MEASURED, re-derived
+here; the values are OPINION, as declared):
+
+| Leg | Book | The rival | Holds at 1.05? | Bound on D |
+|---|---|---|---|---|
+| A | +0.015 | delegate +0.005 | yes, by 0.010 | D ≤ 1.060 |
+| B | −0.127 | delegate +0.005 | yes, by 0.132 | D ≥ 0.918 |
+| C | −0.225 | refuse −0.23 | **no, by 0.005** | D ≥ 1.055 |
+| D | −0.098 | refuse −0.23 | yes, by 0.132 | D ≤ 1.182 |
+
+- **The window for D is [1.055, 1.060], 0.005 wide, and the declared 1.05 lies
+  just outside it.** Leg C misses by 0.005: at the stranger midpoint, with an
+  opposed want, booking (−0.225) edges out refusal (−0.23). That is a tie in
+  practice. At base g, refusal wins for strangers with p below 0.40.
+- **The price stands at 1.05, as declared.** Moving it to about 1.06 to fit a
+  0.005 window would be tuning to the derivation's own midpoints, which is
+  what declaring before the read forbids. The miss leans toward booking, the
+  answer V5.2 exists to make win.
+- **The window is narrow, and that is a structural fact, not a tuning target.**
+  The stranger and the acquaintance differ by only about 0.15 in book value on
+  B4's midpoints, and refusal's edge is within 0.005 of the stranger's book value. In real requests,
+  traits, relationship and standing move p and g by more than that, so the row
+  is decided case by case.
+- **Legs A and C are the thin ones.** A first draft valued knowledge at the
+  acquaintance's sensitivity for everyone, and passed leg C by 0.013. With each
+  person's own sensitivity, leg C misses (review pass 1). Leg A fails without being received
+  (−0.035 against +0.005), and it fails if the promise kept in person stays at
+  the minister's +0.10 (−0.053). Both gains are therefore needed. Neither can be
+  dropped to save a build.
+- **The known person books at every K** (−0.031 at K = 0, +0.030 at K = 0.5
+  with the kept promise carrying K, and +0.090 at K = 1). That is the spec's "book the people you know". Delegation and refusal
+  win only for people the president does not know well, which is the spec's
+  "the person matters but not personally".
+- **Side effects:**
+  - `lever_probe`'s B4 and B5 grids price a commitment as a spend (0.15) and
+    never read the kept reward, so the higher kept price does not move them
+    (INFERRED).
+  - The balance regimes hold no audiences, so the table does not move either
+    (INFERRED; Systems confirms with the re-baseline).
+- **GLM 5.3 drafted the attack on these numbers** (the author's instruction).
+  Every value, bound and sensitivity above was recomputed here before it was
+  written down.
+
+**The first read, and the player model the row reads (2026-10-24, declared
+before the re-read).**
+
+*The timeline, stated plainly:*
+
+1. The price 1.05 was declared, and its re-derivation merged with #116.
+2. GLM's red-team, re-derived here, found that delegation won every request
+   whose want the player will serve, against the spec's Book row. The parent
+   decided to price the in-person gains (decision 2) on that red-team call,
+   before any result arrived.
+3. Before this declaration landed, Systems read the row once at 1.05
+   (MEASURED: `.superpowers/sdd/systems-b21/b5_answers_rows.txt`). Over 37
+   requests, decline was best in 83.8 %, book in 13.5 % and delegate in 2.7 %.
+   All 37 were strangers (A2 uses no lever and no topic). One of the 37 wants
+   was served by its due date.
+4. That read is a band-definition gap, not a miss. The derivation assumed a
+   coin, P(kept) = 0.5, while the probe's world is a passive player who serves
+   one want in 37. The row's player model and the derivation's disagree.
+   This subsection closes the gap. No shares were computed on the first
+   read's rows before this was written.
+
+*The player model the row reads:*
+
+- **Two intents, equal weight.** Each request is scored twice: once as
+  "will serve" (K = 1, the commitment kept, and the promise made in person
+  kept) and once as "won't serve" (K = 0). Each case weighs one half, so the
+  population is 2 × N. The run's own K is not used, because the passive
+  probe's serve rate is not a player the band means. The equal weight is the
+  derivation's own coin, now stated for the read as well.
+- **Knowledge mix: the run's actual one.** Each person is scored at their
+  knowledge at the request month in A2. MEASURED at this build: 37 of 37
+  strangers. That matches the game: B1's people ask two to four times a term,
+  so most requests come from people the president barely knows. A second
+  table at a declared mix (a third each of stranger, acquaintance and known)
+  is reported beside it, for information only. The band reads the first.
+- **The cells as the probe builds them:** the person's levers, their odds p
+  and spends s, and their grudge g, all from the run. The spends are included
+  (the derivation left them out, a lean it stated). Being received and the
+  knowledge value are included in every booked case.
+- **The promise's basis is the game's.** The kept-promise gain is paid only
+  when the winning lever is `promise_date`; every other lever settles with no
+  commitment (`src/sim/levers.gd`, `close`). At K = 0, an agreement won on
+  `promise_date` is a dated promise broken at its date, with no roll: the lie
+  revealed costs rapport −0.5, a grudge pulse of 0.15, and half the person's
+  knowledge, valued with the knowledge formula above.
+- **The player picks the lever per intent.** In each case the player takes
+  the offered lever with the best three-attempt net value under that intent.
+  At K = 1, `promise_date`'s net includes its kept gain (0.125 × A). At K = 0,
+  it includes the lie's price. So a player who will serve may promise, and a
+  player who won't does not.
+- **Ties:** decline and unanswered count as one answer, "refuse" (the tie
+  rule).
+
+*Expected (INFERRED, from the legs, not from the first read's rows):*
+
+- A stranger-heavy population sends "won't serve" mostly to refuse, and
+  "will serve" mostly to delegate. Strangers with high odds (a vain person
+  open to flattery, for example) book.
+- **What the model does to a single cap (MEASURED arithmetic, QA's TAKE 1).**
+  At K = 1, delegate minus refuse = 0.75 g + 0.10 − 0.5 × snub, which is at
+  least 0.075. At K = 0, refuse minus delegate = 0.13 + 0.5 × snub, at least
+  0.13. So refuse wins only "won't serve" cases and delegate only "will serve"
+  ones. A 50 % cap can never fail on either. The world decision 2 was meant to
+  prevent (book 0, delegate 50, refuse 50) would PASS a single cap.
+- **So the row carries floors within each intent** (declared with the model,
+  before the re-read; see the row in B5's table). Within each intent only two
+  answers compete:
+  - within "will serve": book at least 5 % (decision 2's failure, book dead)
+    and delegate at least 5 % (delegation dead);
+  - within "won't serve": refuse at least 5 % (decline dead);
+  - overall: book at most 50 % (the diary is the wall).
+  - The 5 % is B5's own no-dead-lever floor (OPINION, the same reason: every
+    answer earns its place in at least one case in twenty). No book floor is
+    set within "won't serve": on a stranger-heavy mix, refusal is the spec's
+    answer there.
+- **Expected (INFERRED):** "won't serve" goes mostly to refuse, and "will
+  serve" mostly to delegate on a stranger mix. Book's floor within "will
+  serve" turns on `promise_date`: leg A holds only where the acquaintance's
+  best lever is `promise_date` with its kept gain (QA: otherwise book −0.0985
+  against delegate +0.005). The read decides.
+
+*After the re-read:* the row is re-read once, on the build with delegation's
+commitment and both in-person gains. A miss goes to the author, with no
+further re-declaration (the parent's rule, 2026-10-24).
+
 **The stop rule:**
 
-1. The row is read once, at 1.05, on the build that has delegation's
-   commitment.
-2. If booking or delegation is the best answer in more than 50 % of requests,
-   the price is **not** re-tuned to the run. It is the author's call:
-   - re-price delegation's commitment, with a new reason declared before a
-     new read;
-   - change the price, with a new reason declared before a new read;
+1. The row is re-read once, at 1.05, under the player model above, on the
+   build that has delegation's commitment AND the in-person gains (being
+   received; the promise kept in person).
+2. If book is best in more than 50 % of the scored cases, or any within-intent
+   floor is missed,
+   the price is **not** re-tuned to the run, and the band is not re-declared.
+   It is the author's call:
+   - re-price delegation's commitment;
+   - change the price;
    - accept the result.
 
 **Probe:** the per-request net values above, over `tools/audience_probe.gd`
-regime A2's requests, each delegated commitment followed to its due month. Each request's cell is the person's ACTUAL state in the
+regime A2's requests, each scored under both intents as the player model
+above declares (the run's own K is not read). Each request's cell is the person's ACTUAL state in the
 month it arrives: their knowledge band, their relationship (below friend, or
 friend or closer), and whether the ask is aligned with one of their wants. The
 lever values come from `tools/lever_probe.gd` L2's computation for that cell.
@@ -774,12 +1001,13 @@ the ones declared here.
 
 **Failure looks like:**
 
-- **Delegation best in most requests:** people ask, and the player never meets
-  them. The diary empties of scenes, and the soul V5.2 exists to add stays with
-  the ministers.
-- **Booking best in most:** the diary is the wall, and B2's R5 complaint
+- **Book under 5 % within "will serve":** people ask, the player would grant
+  their wants, and still never meets them. The diary empties of scenes, and the
+  soul V5.2 exists to add stays with the ministers (decision 2's failure).
+- **Book over 50 % overall:** the diary is the wall, and B2's R5 complaint
   returns.
-- **Decline never best:** a dead answer.
+- **Delegate under 5 % within "will serve":** a dead answer.
+- **Refuse under 5 % within "won't serve":** a dead answer.
 
 ## B6 — Corruption is tempting, and it is found out
 
@@ -845,6 +1073,10 @@ Over 200 seeded runs (salts), France, otherwise idle.
   `absent_ok` verdict per register is proposed in [[v5.2-spec]];
   `tests/test_nation_fields.gd` pins the false set.
 - **I3 — A scene holds the clock** while it is open ([[v5-reflection]] T11).
+- **I5 — A call's odds are an audience's less 0.10** (b3; moved here from B5's
+  channel row, 2026-10-24). Same lever, same cell, exactly 0.10 lower. A lever
+  whose audience odds are under `ODDS_MIN` + 0.10 = 0.15 is not offered by
+  phone. `tests/test_phone.gd` pins both.
 - **I4 — The re-baseline is predicted, not discovered.** Since the author's call
   of 2026-10-21, an unanswered request is a decline, so the 51-regime table
   may move on the played nation's rows, and the campaign regimes also through
@@ -857,7 +1089,7 @@ Over 200 seeded runs (salts), France, otherwise idle.
 
 | Probe | Regimes | Bands |
 |---|---|---|
-| `tools/audience_probe.gd` | A1 idle, A2 book everything, A3 decline everything | B1, B2, B3 (all but the 2027 rows) |
+| `tools/audience_probe.gd` | A1 idle, A2 book everything, A3 decline everything, A4 phone first then book (b3) | B1, B2, B3 (all but the 2027 rows), B5's channel row |
 | `tools/balance_probe.gd` (exists) + `tools/balance_diff.py` | `hands_off` at the build tip against the accepted base | B3's 2027 verdict and margin |
 | `tools/lever_probe.gd` | L1 by knowledge band, L2 the grid | B4, B5 |
 | `tools/shadows_probe.gd` | S1 once, S2 always, S3 affair, S4 lies | B6, B7, B8 |

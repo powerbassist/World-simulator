@@ -17,6 +17,7 @@ const PersonCard = preload("res://src/ui/person_card.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
+const Capital = preload("res://src/core/capital.gd")
 
 const WINDOW := "audience"
 
@@ -30,6 +31,7 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 		return false
 	game["session"] = session
 	game["state"] = main._state
+	main._save_load_panel.block_save(Strings.t("Finish the audience first"))
 	var view := view_of(main, game)
 	view.merge(row)
 	view["president"] = main._loader.person_name(String(ns.head_of_state_person_id if ns.head_of_state_kind == "executive_president" else ns.pm_person_id))
@@ -57,7 +59,13 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	for p in loader.people.get(String(ns.id), []):
 		var id := String(p.id)
 		if id != pid and President.covers(state, ns, loader, id):
-			people.append({"id": id, "name": loader.person_name(id)})
+			var shown: String = loader.person_name(id)
+			people.append({"id": id, "name": shown, "know": President.knowledge(ns, id), "key": Capital.fold(shown)})
+	# The people the president knows first, then by name (QA on #117: in loader
+	# order the list was a screen of strangers before anyone useful). The key is
+	# folded for case AND accents: a code-point compare puts "Élise" after "Zoé".
+	people.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return a["know"] > b["know"] or (a["know"] == b["know"] and String(a["key"]) < String(b["key"])))
 	return {"fog": President.knowledge_band(ns, pid), "traits": traits,
 		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
@@ -117,6 +125,7 @@ static func leave(main, game: Dictionary) -> bool:
 	if not bool(session.get("closed", false)):
 		Levers.close(state, state.player(), main._loader, session)
 	game["session"] = {}
+	main._save_load_panel.block_save("")
 	game["scene"].close_scene()
 	main._windows.close(WINDOW)
 	if state == main._state and not main._decision_holds_clock():

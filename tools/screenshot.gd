@@ -68,7 +68,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
-##     (also promise, spent, closed, diary; and bargain, dates, gossip open a choice)
+##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
@@ -1947,6 +1947,8 @@ func _stage_audience_step() -> void:
 			verbs.lever_button("argue").pressed.emit()
 		"promise", "diary":
 			verbs.lever_button("promise_date").pressed.emit()
+		"save":
+			_main._hud.title_bar.save_load_requested.emit()
 		"spent":
 			verbs.lever_button("argue").pressed.emit()
 			verbs.topic_button("family").pressed.emit()
@@ -1955,7 +1957,24 @@ func _stage_audience_step() -> void:
 		scene._end.pressed.emit()
 	if _audience_step == "diary":
 		scene._end.pressed.emit()
+		_stage_a_verdict()
 		_main._windows.open("calendar")
+
+
+## A second person promised something due next month, through the sim's writer,
+## and that month run through main's own handler: the Diary then shows a verdict
+## beside the promise still in flight.
+func _stage_a_verdict() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var next: int = int(state.year) * 12 + int(state.month) + 1
+	for person in _main._loader.people.get(String(ns.id), []):
+		if person.wants.is_empty() or String(person.id) == String(ns.head_of_state_person_id):
+			continue
+		if load("res://src/sim/president.gd").commit(state, ns, _main._loader, "promise", String(person.id), String(person.wants[0]["object"]), next):
+			break
+	var year := floori((next - 1) / 12.0)
+	_main._on_month_elapsed(year, next - year * 12)
 
 
 func _open_audience_pick() -> void:
