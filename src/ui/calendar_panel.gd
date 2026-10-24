@@ -594,7 +594,7 @@ func _on_book() -> void:
 		# The refusal reason, printed rather than swallowed. A booking that
 		# refuses silently is docs/trade-model.md's unread `refused_by_partner`,
 		# which this project has now shipped twice.
-		_status.text = tr("Refused: %s.") % String(result["error"])
+		_status.text = tr("Refused: %s.") % Strings.t(String(result["error"]))  # i18n: row-ok the sim's reason, its English the msgid
 
 
 func _on_cancel(key: String) -> void:

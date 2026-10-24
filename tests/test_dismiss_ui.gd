@@ -20,6 +20,7 @@ const CK = preload("res://src/sim/cabinet_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
 const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
+const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -135,6 +136,16 @@ func _check_diary_booking() -> void:
 	var result: Dictionary = CabinetVerbs.book(state, entry)
 	if bool(result.get("ok", false)) or String(result.get("error", "")) != Removal.why_not(state, ns, _portfolio, _party):
 		_fail("the Diary booked a Reassign the limit refuses: %s" % [result])
+	# Booked before the limit applied, refused on its day: the outcome and the day's
+	# card carry the sim's reason (QA's R4 RECORD: "It did not carry." alone).
+	state.appointments.append(entry)
+	var outcomes: Array = []
+	DiaryDriver.resolve(state, _main._loader, int(entry["year"]), int(entry["month"]), int(entry["day"]), func(o: Dictionary) -> void: outcomes.append(o))
+	var why := Removal.why_not(state, ns, _portfolio, _party)
+	if outcomes.size() != 1 or bool(outcomes[0]["ok"]) or String(outcomes[0].get("reason", "")) != why:
+		_fail("a Reassign refused on its day carries no reason: %s" % [outcomes])
+	elif not _main._world_news.appointment_text(entry, "Defence", false, why).contains(why):
+		_fail("the day's card does not say why the Reassign did not carry")
 
 
 func _card() -> Control:
