@@ -110,16 +110,25 @@ static func party_money_eur_m(ns, loader, party_id: String) -> float:
 static func commitments_with(ns, person_id: String) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for row in ns.commitments:
-		if String(row.get("person_id", "")) != person_id:
-			continue
-		out.append({
-			"kind": String(row.get("kind", "")),
-			"person_id": person_id,
-			"object": String(row.get("object", "")),
-			"made_month": int(row.get("made_month", 0)),
-			"due_month": int(row.get("due_month", 0)),
-		})
+		if String(row.get("person_id", "")) == person_id:
+			out.append(_commitment(row))
 	return out
+
+
+## V5.2b b2. Every commitment in flight, cast as above, earliest due first (ties
+## in the order they were made) -- the Diary's read: the author's "Oui, parole
+## donnée" (2026-10-24) keeps a failed promise binding, and the player sees it.
+static func commitments(ns) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row in ns.commitments:
+		out.append(_commitment(row))
+	var order := range(out.size())
+	order.sort_custom(func(a: int, b: int) -> bool:
+		return out[a]["due_month"] < out[b]["due_month"] or (out[a]["due_month"] == out[b]["due_month"] and a < b))
+	var sorted: Array[Dictionary] = []
+	for i in order:
+		sorted.append(out[i])
+	return sorted
 
 
 ## The evidence held against the president, summed -- what V5.2c's exposure
@@ -216,14 +225,8 @@ static func take_commitments_due(ns, now: int) -> Array[Dictionary]:
 	for row in ns.commitments:
 		if int(row.get("due_month", 0)) > now:
 			later.append(row)
-			continue
-		due.append({
-			"kind": String(row.get("kind", "")),
-			"person_id": String(row.get("person_id", "")),
-			"object": String(row.get("object", "")),
-			"made_month": int(row.get("made_month", 0)),
-			"due_month": int(row.get("due_month", 0)),
-		})
+		else:
+			due.append(_commitment(row))
 	ns.commitments = later
 	return due
 
@@ -245,6 +248,18 @@ static func leave_evidence(state, ns, loader, kind: String, person_id: String, s
 # --- Helpers ----------------------------------------------------------------------------
 
 ## An authored person of this nation: the loader's id-prefix rule.
+## A commitment row as every reader gets it: the months cast to int, a dropped
+## key read as its empty value.
+static func _commitment(row: Dictionary) -> Dictionary:
+	return {
+		"kind": String(row.get("kind", "")),
+		"person_id": String(row.get("person_id", "")),
+		"object": String(row.get("object", "")),
+		"made_month": int(row.get("made_month", 0)),
+		"due_month": int(row.get("due_month", 0)),
+	}
+
+
 static func _own(ns, loader, person_id: String) -> bool:
 	return loader.person_by_id.has(person_id) and person_id.begins_with("%s_" % ns.id)
 

@@ -61,6 +61,7 @@ func _init() -> void:
 	_check_flatter_backfires_on_a_sharp_principled_reader()
 	_check_a_paid_iou_costs_nothing()
 	_check_a_vanished_want_is_void()
+	_check_the_diary_can_read_every_commitment()
 
 	_finish()
 
@@ -665,6 +666,33 @@ func _stage(state, ns, pid: String, tag: String) -> Dictionary:
 		"date": {"year": int(state.year), "month": int(state.month), "day": int(state.day)}, "resolved_month": -1}
 	ns.audience_requests.append(row)
 	return Levers.open(state, ns, _loader, String(row["id"]))
+
+
+## The Diary shows the promises in flight (the author's "Oui, parole donnée",
+## 2026-10-24: a failed promise still binds, and the player sees it): one read
+## lists every commitment, months cast to int, in date order -- including the
+## one a lever made and lost.
+func _check_the_diary_can_read_every_commitment() -> void:
+	var c := _booked()
+	if c.is_empty():
+		return
+	var state = c["state"]
+	var ns = c["ns"]
+	var pid := String(c["session"]["person_id"])
+	var now := _now(state)
+	var other := _person_with_want(ns, false, pid)
+	if other.is_empty():
+		return
+	President.commit(state, ns, _loader, "iou", other["id"], other["object"], now + LK.PROMISE_MAX_MONTHS)
+	Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS})
+	var rows: Array[Dictionary] = President.commitments(ns)
+	if rows.size() != 2:
+		_fail("the diary's read lists %d commitments, not 2: %s" % [rows.size(), rows])
+		return
+	if String(rows[0]["kind"]) != "promise" or String(rows[0]["person_id"]) != pid or int(rows[0]["due_month"]) != now + LK.PROMISE_MIN_MONTHS:
+		_fail("the earliest commitment is not the lever's promise: %s" % [rows[0]])
+	if typeof(rows[1]["due_month"]) != TYPE_INT or String(rows[1]["kind"]) != "iou":
+		_fail("the later commitment came back %s" % [rows[1]])
 
 
 func _plain_game():
