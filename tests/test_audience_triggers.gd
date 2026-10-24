@@ -11,7 +11,7 @@ extends SceneTree
 ##     stamps GameState.met_months; the month after, the president knows and likes
 ##     the other nation's head a little more. Any other stamp teaches nothing.
 ##   - AN OFFICE WANT ASKS AT A RESHUFFLE (the pre-mortem's third trigger): the
-##     player's Cabinet.assign() that hands a portfolio to another party stamps the
+##     player's Cabinet.seat_party() that hands a portfolio to another party stamps the
 ##     month and the portfolio -- never a no-op assign, never a government's seating;
 ##     the month after, whoever wanted THAT portfolio and did not get it asks,
 ##     outside the hazard and under the lane's rules.
@@ -123,7 +123,7 @@ func _check_the_month_runs_the_meetings() -> void:
 		_fail("the month met %s and taught nothing" % head)
 
 
-## Cabinet.assign() -- the player's reshuffle -- stamps the month; a government
+## Cabinet.seat_party() -- the player's reshuffle -- stamps the month; a government
 ## seated by an election or a formation (Cabinet.seat) does not.
 func _check_only_the_players_reshuffle_is_stamped() -> void:
 	var state = _game()
@@ -146,10 +146,10 @@ func _check_only_the_players_reshuffle_is_stamped() -> void:
 	if portfolio == "" or other == "":
 		_fail("France's cabinet has no portfolio to hand to a second coalition party")
 		return
-	Cabinet.assign(state, portfolio, String(ns.cabinet[portfolio]), party_list)
+	Cabinet.seat_party(state, portfolio, String(ns.cabinet[portfolio]), party_list)
 	if int(ns.reshuffle_month) != -1:
 		_fail("handing a portfolio to the party that holds it stamped a reshuffle")
-	Cabinet.assign(state, portfolio, other, party_list)
+	Cabinet.seat_party(state, portfolio, other, party_list)
 	if int(ns.reshuffle_month) != _now(state) or String(ns.reshuffle_portfolio) != portfolio:
 		_fail("a reshuffle stamped %d / '%s', not %d / '%s'" % [int(ns.reshuffle_month), ns.reshuffle_portfolio, _now(state), portfolio])
 

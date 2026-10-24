@@ -18,6 +18,9 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
+const Removal = preload("res://src/sim/removal.gd")
+const Characters = preload("res://src/sim/characters.gd")
+const ActK = preload("res://src/sim/character_act_constants.gd")
 
 var _failures: Array[String] = []
 var _loader: DataLoader
@@ -44,6 +47,17 @@ func _init() -> void:
 	_check_shortfall_is_zero_when_entitled_and_positive_when_shorted()
 	_check_a_resignation_vacates_exactly_one_portfolio()
 	_check_save_round_trip_preserves_cabinet_state()
+	# V5.2 b+ R4: the price of a removal.
+	_check_dismiss_vacates_prices_and_stamps()
+	_check_reassign_away_carries_the_same_pulse()
+	_check_filling_a_vacancy_writes_no_pulse()
+	_check_no_pulse_when_the_president_leads_the_party()
+	_check_principled_crosses_the_brief_gate_and_ordinary_does_not()
+	_check_second_removal_within_twelve_months_refused()
+	_check_a_resignation_vacancy_stamps_no_removal()
+	_check_refusals_keep_their_ceiling()
+	_check_price_preview_writes_nothing()
+	_check_a_refused_seat_prices_nothing()
 
 	_finish()
 
@@ -200,7 +214,7 @@ func _check_assign_refuses_a_non_coalition_party() -> void:
 		_fail("refusal_reason() gave no reason for a non-coalition party")
 
 	var before: String = String(ns.cabinet.get(f, ""))
-	Cabinet.assign(state, f, outsider, party_list)
+	Cabinet.seat_party(state, f, outsider, party_list)
 	if String(ns.cabinet.get(f, "")) != before:
 		_fail("assign() seated a non-coalition party despite refusing it")
 
@@ -234,7 +248,7 @@ func _check_assign_succeeds_and_charges_the_reshuffle_penalty() -> void:
 	if not Cabinet.can_assign(ns, f, member):
 		_fail("can_assign() refused a coalition party for a real portfolio: %s" % Cabinet.refusal_reason(ns, f, member))
 		return
-	Cabinet.assign(state, f, member, party_list)
+	Cabinet.seat_party(state, f, member, party_list)
 
 	if String(ns.cabinet.get(f, "")) != member:
 		_fail("assign() did not seat '%s' in '%s'" % [member, f])
@@ -255,7 +269,7 @@ func _check_assign_does_not_move_approval_in_the_commit_month() -> void:
 	var member: String = ns.coalition_party_ids[0]
 
 	var before: float = ns.overall_approval_pct
-	Cabinet.assign(state, f, member, party_list)
+	Cabinet.seat_party(state, f, member, party_list)
 	if not is_equal_approx(ns.overall_approval_pct, before):
 		_fail("assign() moved overall_approval_pct directly, bypassing inertia: %.2f -> %.2f" % [
 			before, ns.overall_approval_pct
@@ -377,6 +391,228 @@ func _check_save_round_trip_preserves_cabinet_state() -> void:
 		_fail("resignations_count changed from %d to %s over a save" % [ns.resignations_count, round_tripped.resignations_count])
 	if round_tripped.last_resignation.get("portfolio") != ns.last_resignation.get("portfolio"):
 		_fail("last_resignation changed over a save: %s -> %s" % [ns.last_resignation, round_tripped.last_resignation])
+
+
+
+# --- V5.2 b+ R4: dismissing a minister ---------------------------------------------------
+
+## A politician of `nation` whose grudge intake is exactly `intake` (1.0 ordinary,
+## 2.0 principled and not loyal), or "" -- never the nation's leader, who takes no
+## pulse.
+func _person_with_intake(nation: String, intake: float) -> String:
+	var leader := String(_loader.nations[nation].leader_person_id)
+	for person in _loader.people.get(nation, []):
+		if person.id != leader and String(person.kind) == "politician" and is_equal_approx(Characters.grudge_intake(person), intake):
+			return String(person.id)
+	return ""
+
+
+## Seat a coalition party that the president does not lead in the first portfolio,
+## with `leader_id` as its current leader. {portfolio, party_id} or {}.
+func _holder(state, leader_id: String) -> Dictionary:
+	var ns = state.player()
+	var president: String = String(ns.head_of_state_person_id if ns.has_executive else ns.pm_person_id)
+	for party in _loader.parties.get(ns.id, []):
+		if String(party.leader_person_id) == president:
+			continue
+		if not ns.coalition_party_ids.has(party.id):
+			ns.coalition_party_ids.append(party.id)
+		var f: String = CK.PORTFOLIO_KEYS[0]
+		ns.cabinet[f] = party.id
+		ns.party_leader_override[party.id] = leader_id
+		return {"portfolio": f, "party_id": party.id}
+	_fail("no FRA party is led by someone other than the president")
+	return {}
+
+
+func _now(state) -> int:
+	return int(state.year) * 12 + int(state.month)
+
+
+func _check_dismiss_vacates_prices_and_stamps() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var leader := _person_with_intake("FRA", 1.0)
+	var h := _holder(state, leader)
+	if h.is_empty() or leader == "":
+		_fail("R4 fixture: no ordinary leader or no holder")
+		return
+	var f: String = h["portfolio"]
+	var offsets_before: Dictionary = ns.bloc_offset.duplicate()
+	var reshuffles: int = ns.reshuffles_called
+	var r: Dictionary = Removal.dismiss(state, _loader, f)
+	if not bool(r.get("ok", false)):
+		_fail("dismiss() refused a held portfolio: %s" % r)
+		return
+	if String(ns.cabinet.get(f, "x")) != "" or not is_equal_approx(float(ns.cabinet_effectiveness.get(f, 0.0)), CK.VACANT_EFFECTIVENESS):
+		_fail("dismiss() did not leave %s vacant at VACANT_EFFECTIVENESS" % f)
+	if not is_equal_approx(float(ns.person_grudges.get(leader, 0.0)), CK.REMOVAL_GRUDGE):
+		_fail("dismiss() wrote %.3f on the leader, expected the 0.25 pulse" % float(ns.person_grudges.get(leader, 0.0)))
+	if int(ns.portfolio_removed_month.get(f, -1)) != _now(state):
+		_fail("dismiss() did not stamp the removal month")
+	if ns.reshuffles_called != reshuffles + 1:
+		_fail("dismiss() did not count as a reshuffle")
+	var cheaper := false
+	for bloc in ns.bloc_offset:
+		if float(ns.bloc_offset[bloc]) < float(offsets_before.get(bloc, 0.0)):
+			cheaper = true
+	if not cheaper:
+		_fail("dismiss() charged no bloc cost")
+
+
+func _check_reassign_away_carries_the_same_pulse() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var leader := _person_with_intake("FRA", 1.0)
+	var h := _holder(state, leader)
+	if h.is_empty():
+		return
+	var to := ""
+	for pid in ns.coalition_party_ids:
+		if pid != String(h["party_id"]):
+			to = pid
+			break
+	var r: Dictionary = Removal.reassign(state, _loader, String(h["portfolio"]), to)
+	if not bool(r.get("ok", false)) or String(ns.cabinet[h["portfolio"]]) != to:
+		_fail("reassign() away did not seat the new party: %s" % r)
+	if not is_equal_approx(float(ns.person_grudges.get(leader, 0.0)), CK.REMOVAL_GRUDGE):
+		_fail("a Reassign away wrote no pulse -- it would dominate Dismiss")
+	if int(ns.portfolio_removed_month.get(String(h["portfolio"]), -1)) != _now(state):
+		_fail("a Reassign away did not stamp the removal month")
+
+
+func _check_filling_a_vacancy_writes_no_pulse() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var f: String = CK.PORTFOLIO_KEYS[1]
+	Cabinet.vacate(state, f)
+	var grudges: Dictionary = ns.person_grudges.duplicate()
+	var r: Dictionary = Removal.reassign(state, _loader, f, String(ns.coalition_party_ids[0]))
+	if not bool(r.get("ok", false)):
+		_fail("filling a vacancy was refused: %s" % r)
+	if ns.person_grudges != grudges or ns.portfolio_removed_month.has(f):
+		_fail("filling a vacancy priced or stamped a removal")
+
+
+func _check_no_pulse_when_the_president_leads_the_party() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var president: String = String(ns.head_of_state_person_id)
+	var f := ""
+	for pf in CK.PORTFOLIO_KEYS:
+		var holder := String(ns.cabinet.get(pf, ""))
+		for party in _loader.parties.get("FRA", []):
+			if party.id == holder and String(party.leader_person_id) == president:
+				f = pf
+	if f == "":
+		_fail("R4 fixture: the president's party holds no portfolio at new game")
+		return
+	var grudges: Dictionary = ns.person_grudges.duplicate()
+	if not bool(Removal.dismiss(state, _loader, f).get("ok", false)):
+		_fail("dismiss() refused the president's own party's portfolio")
+	if ns.person_grudges != grudges:
+		_fail("a removal from the president's own party wrote a personal grudge")
+	if int(ns.portfolio_removed_month.get(f, -1)) != _now(state):
+		_fail("a removal from the president's party is still a removal (the limit)")
+
+
+func _check_principled_crosses_the_brief_gate_and_ordinary_does_not() -> void:
+	var principled := _person_with_intake("FRA", 2.0)
+	var ordinary := _person_with_intake("FRA", 1.0)
+	if principled == "" or ordinary == "":
+		_fail("R4 fixture: no principled or no ordinary FRA politician")
+		return
+	for case in [[principled, true], [ordinary, false]]:
+		var state = _new_state("FRA")
+		var ns = state.player()
+		var h := _holder(state, String(case[0]))
+		Removal.dismiss(state, _loader, String(h["portfolio"]))
+		var grudge := float(ns.person_grudges.get(String(case[0]), 0.0))
+		if (grudge > ActK.GRUDGE_BRIEF_THRESHOLD) != bool(case[1]):
+			_fail("one dismissal took %s to %.2f (brief gate %.2f)" % [case[0], grudge, ActK.GRUDGE_BRIEF_THRESHOLD])
+
+
+func _check_second_removal_within_twelve_months_refused() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var h := _holder(state, _person_with_intake("FRA", 1.0))
+	var f: String = h["portfolio"]
+	Removal.dismiss(state, _loader, f)
+	Removal.reassign(state, _loader, f, String(h["party_id"]))
+	state.month += CK.REMOVAL_LIMIT_MONTHS - 1
+	var why := Removal.why_not(state, ns, f, "")
+	var r: Dictionary = Removal.dismiss(state, _loader, f)
+	if why == "" or bool(r.get("ok", false)) or String(r.get("error", "")) != why:
+		_fail("a second removal within 12 months was not refused with its reason: %s / %s" % [why, r])
+	state.month += 1
+	if not bool(Removal.dismiss(state, _loader, f).get("ok", false)):
+		_fail("a removal 12 months after the last one was refused")
+
+
+func _check_a_resignation_vacancy_stamps_no_removal() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	for bloc in ns.bloc_approval.keys():
+		ns.bloc_approval[bloc] = 10.0
+	ns.overall_approval_pct = 10.0
+	var before: int = ns.resignations_count
+	# Shorted parties at the approval floor: the existing resignation check's setup.
+	for pid in ns.coalition_party_ids:
+		ns.cabinet_entitlement[pid] = CK.PORTFOLIO_KEYS.size()
+	Cabinet.tick_month(state, _loader)
+	if ns.resignations_count == before:
+		_fail("R4 fixture: no resignation fired, the stamp check would be vacuous")
+	if not ns.portfolio_removed_month.is_empty():
+		_fail("a resignation vacancy stamped a removal")
+
+
+## The door's ceiling parameter defaults to the refusal ceiling, so every refusal
+## prices exactly as before; the removal door has none.
+func _check_refusals_keep_their_ceiling() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var person = _loader.person_by_id[_person_with_intake("FRA", 1.0)]
+	ns.person_grudges[person.id] = ActK.GRUDGE_BRIEF_THRESHOLD
+	Characters.price_refusal(ns, person, 0.18, 0.0)
+	if not is_equal_approx(float(ns.person_grudges[person.id]), ActK.GRUDGE_REFUSAL_CEILING):
+		_fail("a refusal went past GRUDGE_REFUSAL_CEILING: %.4f" % float(ns.person_grudges[person.id]))
+	Characters.price_removal(ns, person, CK.REMOVAL_GRUDGE)
+	if not is_equal_approx(float(ns.person_grudges[person.id]), ActK.GRUDGE_REFUSAL_CEILING + CK.REMOVAL_GRUDGE):
+		_fail("the removal door stopped at the refusal ceiling: %.4f" % float(ns.person_grudges[person.id]))
+
+
+func _check_price_preview_writes_nothing() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var leader := _person_with_intake("FRA", 2.0)
+	var h := _holder(state, leader)
+	var before := JSON.stringify(state.to_dict())
+	var price: Dictionary = Removal.price(state, ns, _loader, String(h["portfolio"]))
+	if JSON.stringify(state.to_dict()) != before:
+		_fail("Removal.price() wrote to the state")
+	if String(price.get("party_id", "")) != String(h["party_id"]) or String(price.get("leader_id", "")) != leader:
+		_fail("Removal.price() named the wrong party or leader: %s" % price)
+	if not is_equal_approx(float(price.get("grudge_after", 0.0)), 2.0 * CK.REMOVAL_GRUDGE):
+		_fail("Removal.price() grudge_after %.3f, expected the principled 0.50" % float(price.get("grudge_after", 0.0)))
+	if float(price.get("loyalty_after", 1.0)) > float(price.get("loyalty_before", 0.0)):
+		_fail("Removal.price() shows loyalty rising on a removal: %s" % price)
+
+
+
+## Review pass 1: a party the coalition names but the loader does not know is
+## refused by the seat primitive -- the command must report it and price nothing.
+func _check_a_refused_seat_prices_nothing() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var leader := _person_with_intake("FRA", 1.0)
+	var h := _holder(state, leader)
+	ns.coalition_party_ids.append("no_such_party")
+	var grudge := float(ns.person_grudges.get(leader, 0.0))
+	var r: Dictionary = Removal.reassign(state, _loader, String(h["portfolio"]), "no_such_party")
+	if bool(r.get("ok", true)) or String(ns.cabinet[h["portfolio"]]) != String(h["party_id"]):
+		_fail("a seat the primitive refused was reported as done: %s" % r)
+	if float(ns.person_grudges.get(leader, 0.0)) != grudge or ns.portfolio_removed_month.has(String(h["portfolio"])):
+		_fail("a refused seat priced or stamped a removal")
 
 
 func _fail(message: String) -> void:

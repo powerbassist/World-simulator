@@ -312,7 +312,7 @@ static func _want_satisfied(ns, person, want: Dictionary, meters: Dictionary, au
 		return String(ns.cabinet.get(key, "")) == party
 	if object.begins_with("office:party_leadership:"):
 		var pid := object.substr("office:party_leadership:".length())
-		return _party_leader(ns, pid, authored_leaders) == person.id
+		return party_leader(ns, pid, authored_leaders) == person.id
 	if object.begins_with("meter:"):
 		var meter_key := object.substr("meter:".length())
 		var value := float(meters.get(meter_key, 0.0))
@@ -384,7 +384,7 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 			var target_party := _challenge_target(ns, loader, person, authored_leaders)
 			if target_party == "":
 				return false
-			var incumbent := _party_leader(ns, target_party, authored_leaders)
+			var incumbent := party_leader(ns, target_party, authored_leaders)
 			if incumbent == person.id:
 				return false
 			# A challenge needs GRIEVANCE as well as standing: standing alone
@@ -535,7 +535,7 @@ static func _clear_office(ns, office: String) -> void:
 ## The authored map is built once per tick by the caller -- the leaf law
 ## keeps party.gd un-preloaded here, and the loader's Party objects are
 ## walked where the loader is already in hand.
-static func _party_leader(ns, party_id: String, authored_leaders: Dictionary) -> String:
+static func party_leader(ns, party_id: String, authored_leaders: Dictionary) -> String:
 	if ns.party_leader_override.has(party_id):
 		return String(ns.party_leader_override[party_id])
 	return String(authored_leaders.get(party_id, ""))
@@ -575,13 +575,13 @@ static func _largest_other_party(loader, nation_id: String, not_this: String) ->
 ## want for.
 static func _challenge_target(ns, loader, person, authored_leaders: Dictionary) -> String:
 	var own := _party_of(ns, person)
-	if own != "" and _party_leader(ns, own, authored_leaders) != person.id:
+	if own != "" and party_leader(ns, own, authored_leaders) != person.id:
 		return own
 	for want in person.wants:
 		var object := String(want["object"])
 		if object.begins_with("office:party_leadership:"):
 			var pid := object.substr("office:party_leadership:".length())
-			if _party_leader(ns, pid, authored_leaders) != person.id:
+			if party_leader(ns, pid, authored_leaders) != person.id:
 				return pid
 	return ""
 
@@ -639,11 +639,12 @@ static func grudge_intake(person) -> float:
 ## V5.2b. The grudge a refusal of `grudge` would write on this person now: the
 ## trait intake above, and never past GRUDGE_REFUSAL_CEILING -- a refusal brings
 ## a person to the leak, never past it. The card's price and the price paid read
-## this one function.
-static func refusal_grudge(ns, person, grudge: float) -> float:
+## this one function. V5.2 b+ R4: `ceiling` is that ceiling unless a door says
+## otherwise -- price_removal() below passes the register's own 1.0.
+static func refusal_grudge(ns, person, grudge: float, ceiling: float = CK.GRUDGE_REFUSAL_CEILING) -> float:
 	if grudge <= 0.0 or not _of_nation(ns, person):
 		return 0.0 if grudge > 0.0 else grudge
-	var room := maxf(0.0, CK.GRUDGE_REFUSAL_CEILING - float(ns.person_grudges.get(person.id, 0.0)))
+	var room := maxf(0.0, ceiling - float(ns.person_grudges.get(person.id, 0.0)))
 	return minf(grudge * grudge_intake(person), room)
 
 
@@ -655,17 +656,25 @@ static func refusal_grudge(ns, person, grudge: float) -> float:
 ## head (b3: a visitor's request) carries neither register -- loyalty is to this
 ## nation's leader, and the want ladder acts only for this nation's people -- so a
 ## refusal of one writes nothing here; its price is the president's rapport.
-static func price_refusal(ns, person, grudge: float, loyalty: float) -> Dictionary:
+static func price_refusal(ns, person, grudge: float, loyalty: float, ceiling: float = CK.GRUDGE_REFUSAL_CEILING) -> Dictionary:
 	if not _of_nation(ns, person):
 		return {"grudge": 0.0, "loyalty": 0.0}
 	var grudge_before := float(ns.person_grudges.get(person.id, 0.0))
 	var loyalty_before := float(ns.person_loyalty.get(person.id, 0.0))
-	ns.person_grudges[person.id] = clampf(grudge_before + refusal_grudge(ns, person, grudge), 0.0, 1.0)
+	ns.person_grudges[person.id] = clampf(grudge_before + refusal_grudge(ns, person, grudge, ceiling), 0.0, 1.0)
 	_adjust_loyalty(ns, person.id, loyalty)
 	return {
 		"grudge": float(ns.person_grudges[person.id]) - grudge_before,
 		"loyalty": float(ns.person_loyalty[person.id]) - loyalty_before,
 	}
+
+
+## V5.2 b+ R4. The removal door: a portfolio taken from the person's party is an
+## act against them, not a refusal, so the trait intake and the register's clamp
+## apply and the refusal ceiling does not -- a dismissal may carry a leader past
+## the leak (src/sim/removal.gd is its caller).
+static func price_removal(ns, person, grudge: float) -> Dictionary:
+	return price_refusal(ns, person, grudge, 0.0, 1.0)
 
 
 ## The act record the card reads. act is one of CK.ACT_KEYS; person_id names

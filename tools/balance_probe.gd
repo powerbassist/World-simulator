@@ -33,6 +33,7 @@ const Characters = preload("res://src/sim/characters.gd")
 const Government = preload("res://src/sim/government.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const TK = preload("res://src/sim/trade_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
@@ -1069,7 +1070,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 					])
 
 			if i + 1 == cabinet_shortfall_month:
-				_short_the_largest_partner(state, ns, party_list, regime_name, year, month)
+				_short_the_largest_partner(state, loader, ns, party_list, regime_name, year, month)
 
 			if i + 1 == amend_month and amendment_id != "":
 				var law = _find_law(loader, amendment_id)
@@ -1223,7 +1224,7 @@ func _answer_event(state, loader, ns, mode: String, regime_name: String, year: i
 		])
 
 
-func _short_the_largest_partner(state, ns, party_list: Array, regime_name: String, year: int, month: int) -> void:
+func _short_the_largest_partner(state, loader, ns, party_list: Array, regime_name: String, year: int, month: int) -> void:
 	var by_id := {}
 	for p in party_list:
 		by_id[p.id] = p
@@ -1258,7 +1259,7 @@ func _short_the_largest_partner(state, ns, party_list: Array, regime_name: Strin
 	if weakest_fit == "":
 		return
 
-	Cabinet.assign(state, target_portfolio, weakest_fit, party_list)
+	Removal.reassign(state, loader, target_portfolio, weakest_fit)
 	print("  %d-%02d %s: reassigned %s from %s to %s (shortfall %.2f)" % [
 		year, month, regime_name, target_portfolio, largest, weakest_fit,
 		Cabinet.shortfall(ns, largest),
@@ -1984,9 +1985,7 @@ func _keep_appointment(state, loader, entry: Dictionary, regime_name: String) ->
 		CalendarK.KIND_RESHUFFLE:
 			var portfolio := String(entry.get("portfolio", ""))
 			var party_id := String(entry.get("party_id", ""))
-			if Cabinet.can_assign(ns, portfolio, party_id):
-				Cabinet.assign(state, portfolio, party_id, party_list)
-				ok = true
+			ok = bool(Removal.reassign(state, loader, portfolio, party_id).get("ok", false))
 			label = portfolio
 
 	Calendar.resolve(state, Calendar.verb_key(entry), ok)

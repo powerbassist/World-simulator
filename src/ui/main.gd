@@ -386,9 +386,7 @@ func _ready() -> void:
 	_windows.register("politics", tr("Politics"), _government_panel, KEY_G, ICONS + "groups.svg")
 	_government_panel.setup(_state, _loader)
 	_government_panel.hide_close_button()
-	_government_panel.dissolved.connect(func(before):
-		_queue_effect(tr("Dissolution called"), before)
-	)
+	_government_panel.dissolved.connect(func(before): _queue_effect(tr("Dissolution called"), before))
 	_government_panel.reassigned.connect(func(before):
 		_queue_effect(tr("Cabinet reassigned"), before)
 	)
@@ -404,6 +402,7 @@ func _ready() -> void:
 	_law_panel = LawPanel.new()
 	_windows.register("legislature", tr("Legislature"), _law_panel, KEY_L, ICONS + "gavel.svg")
 	_law_panel.setup(_state, _loader)
+	_law_panel.dissolved.connect(_government_panel.dissolved.emit)
 	_law_panel.hide_close_button()
 	# V4.2 T5. Propose opens the briefing; the division comes back through
 	# run_proposal() from the briefing's own verb, so the path below is still

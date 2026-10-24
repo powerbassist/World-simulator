@@ -84,6 +84,7 @@ const CalK = preload("res://src/sim/calendar_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 
 const LeverOdds = preload("res://src/sim/lever_odds.gd")
@@ -471,9 +472,7 @@ func _fire_month(state, fire: Array, held: Array, month: int, refused_at: Dictio
 						Legislature.propose(state, _loader, law)
 						break
 			CalK.KIND_RESHUFFLE:
-				var party_list: Array = _loader.parties.get(PLAYER, [])
-				if Cabinet.can_assign(ns, String(e["portfolio"]), String(e["party_id"])):
-					Cabinet.assign(state, String(e["portfolio"]), String(e["party_id"]), party_list)
+				Removal.reassign(state, _loader, String(e["portfolio"]), String(e["party_id"]))
 			CalK.KIND_AUDIENCE:
 				var id := String(e["action_id"])
 				if bool(Audiences.hold(state, ns, _loader, id)["ok"]):

@@ -338,7 +338,8 @@ card.
    want naming it.
 2. **The month after the player's reshuffle** (the [[v5.2-spec]] pre-mortem's third
    trigger): the unserved wanters of the portfolio that changed hands.
-   `Cabinet.assign()` stamps `ns.reshuffle_month` and `ns.reshuffle_portfolio`
+   `Cabinet.seat_party()` (and, since V5.2 b+ R4, `Cabinet.vacate()`, a dismissal)
+   stamps `ns.reshuffle_month` and `ns.reshuffle_portfolio`
    (`absent_ok`) only when the portfolio goes to another party. A no-op assign and a
    government seated by an election or a formation (`Cabinet.seat()`) stamp nothing,
    and a portfolio reshuffle never moves the premiership.

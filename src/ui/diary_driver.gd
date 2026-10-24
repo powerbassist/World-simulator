@@ -20,6 +20,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -33,7 +34,6 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 		return false
 
 	var ns = state.player()
-	var party_list: Array = loader.parties.get(state.player_nation_id, [])
 
 	for entry in due:
 		# THE BASELINE IS TAKEN HERE, not when the player booked. U4's decision
@@ -73,9 +73,9 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 			CalendarK.KIND_RESHUFFLE:
 				var portfolio := String(entry.get("portfolio", ""))
 				var party_id := String(entry.get("party_id", ""))
-				if ns != null and Cabinet.can_assign(ns, portfolio, party_id):
-					Cabinet.assign(state, portfolio, party_id, party_list)
-					ok = true
+				# V5.2 b+ R4: the command that prices a removal (Removal.why_not refuses
+				# a second removal of one office within the year, on the day as at booking).
+				ok = ns != null and bool(Removal.reassign(state, loader, portfolio, party_id).get("ok", false))
 				label = Labels.portfolio(portfolio)
 
 		Calendar.resolve(state, Calendar.verb_key(entry), ok)
