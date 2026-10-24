@@ -295,7 +295,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 	# people by the lane's second month is answered in its third by the candidate
 	# the hazard weighs most -- the highest standing, ties by id -- about the want
 	# the draw would have asked. Once a game: the month comes once.
-	if now != int(ns.audience_lane_start) + 2 or _asked_ever(ns):
+	if now != int(ns.audience_lane_start) + K.FIRST_REQUEST_BY_MONTH - 1 or _asked_ever(ns):
 		return
 	var best = null
 	for person in people:
