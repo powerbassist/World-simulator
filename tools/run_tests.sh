@@ -187,6 +187,7 @@ tests=(
   tests/test_inbox_stays.gd
   tests/test_real_click.gd
   tests/test_request_lane.gd
+  tests/test_audience_scene.gd
   tests/test_placement_points.gd
   tests/test_button_sizes.gd
   tests/test_chart_kit.gd
