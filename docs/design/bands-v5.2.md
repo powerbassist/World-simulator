@@ -495,6 +495,40 @@ instead of banded.
   row.
 - `tools/audience_probe.gd`, for B3's act row.
 
+### B3 brief price, measured and accepted (2026-10-24)
+
+The run at -0.15 (MEASURED, Systems' PR #104 at `97079bec`, against this section's
+rows at `2078b63d`). Sources: `.superpowers/sdd/systems-104-brief015/` and
+`band_rows.txt`. The table is `bal_b1_brief015.json`, byte-identical to QA's
+`qa/tip-104-2027e227.json`.
+
+| Row | Measured | Status |
+|---|---|---|
+| Half-life | `test_characters` passes | PASS |
+| Act-written part of `bloc_offset` ≤ 0.50, months in office | max 0.355 (2031-08, workers) | PASS |
+| No new clamp, months in office | one: run 16 (the captured court), students, from 2029-11 | MISS, **accepted** |
+| 2027 executive | 50 of 50 rows, delta 0.0000 | PASS |
+| 2029 legislative | standing unchanged in 41 of 41; mean -0.0061, worst -0.0067 | PASS |
+| B3's act row | `audience_probe` 12 of 12 | PASS |
+| 2032 executive (reported) | 25 of the 28 held rows flip to LOST; mean -0.0272, worst -0.1135 | **accepted** |
+| GBR 2039 (reported) | HELD, 0.116 to 0.089 | **accepted** |
+
+**The author's calls**, verbatim, through the parent's question tool:
+
+1. **"Accepter ce cas".** The one clamp miss is accepted as a named exception.
+   - It is run 16, the captured court, on students from 2029-11.
+   - There the base alone already holds students at -0.79, which leaves 0.209 of
+     headroom. A brief's full share in that run is 0.356 (MEASURED, read from
+     workers, who carry the same price and never clamp).
+   - The permanent channels, not the acts, own most of that room.
+   - Clearing it would have taken a price of about -0.08 in every run (INFERRED,
+     Systems' scaling). That is a third of V4.3's price, and it would make a
+     brief nearly invisible.
+   - The no-new-clamp row stays a band for every other run, and for any later
+     price.
+2. **"Oui, fusionner".** The re-baseline is accepted: `bal_b1_brief015.json` is
+   the table the next sim PR compares against (invariant I4).
+
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
 
 Knowledge bands: **stranger** `[0, 0.33)`, **acquaintance** `[0.33, 0.67)`,
@@ -537,7 +571,7 @@ want, against one) × the channel (audience, phone call).
 | Share of cells in which each lever has the best net value | **at least 5 %** for every lever |
 | The denominator of both shares, per lever | the cells **in which that lever is offered**: the whole grid for five levers, and only the friend-or-closer half for appeal to friendship, which is not offered below friend |
 | A phone call's odds against an audience's, same lever, same cell | **at least 0.10 lower** |
-| The answers to a request — book, delegate, decline, and leaving it unanswered — any one of them the best net value over all requests | **at most 50 %** of requests |
+| The answers to a request — book, delegate, decline, and leaving it unanswered — any one of them the best net value over all requests, a diary day priced at 0.95 of one ask won, on the real three-attempt audience ("B5 amendment" below) | **at most 50 %** of requests |
 
 - **Net value** is success × the ask's gain minus the expected cost, in the
   registers the lever spends. The probe's header states the exchange weights
@@ -555,6 +589,182 @@ want, against one) × the channel (audience, phone call).
   passes), this row is expected to pass: leaving a request unanswered is a
   decline that arrives later, so it can be the best answer only where declining
   is. A failure here now means the lapse is priced below the decline (B3).
+
+### B5 amendment (2026-10-24): the price of a diary day
+
+Declared before `audience_probe` or `lever_probe` reads anything for this row, at
+the parent's request (Systems' PR #113, call 2). The answers row above needs a
+diary day's price, and no band stated one. This subsection states it, with its
+reason. It is declared, not read off a run.
+
+**The price: 0.95 of one ask won, per diary day.** An audience takes one day
+(`Audiences._entry`, `src/sim/audiences.gd:347-349` at `2c3262ea`, no travel
+days). The unit is `tools/lever_probe.gd`'s: one ask won = 1.0, a grudge point
+1.0, a rapport point 0.5 (its header, declared before its run).
+
+**The audience the row reads is the real one** (PR #113's `src/sim/levers.gd`):
+
+- up to `ATTEMPTS` = 3 lever attempts (`lever_constants.gd:15`);
+- the same lever may be tried again, with a fresh roll each time (the attempt
+  index is in the roll's salt);
+- the audience stops at the first agreement ("they have already agreed");
+- every attempt pays its lever's spend, win or lose;
+- an audience that ends without an agreement settles as a refusal
+  (`Levers.close`).
+
+The player is modelled as repeating the lever with the best single-attempt net
+value in the person's cell, and spending no attempt on a topic.
+
+**Each answer's net value for one request, in those units.** In the Book row, p
+is that lever's single-attempt odds, s its spend in the weights, and q = 1 − p.
+
+| Answer | Net value |
+|---|---|
+| Book | (1 − q³) × 1, the chance of an agreement in three attempts; minus s × (1 + q + q²), the expected spends; minus q³ × Decline's cost, the settle when no agreement comes; minus **0.95** |
+| Delegate | minus (0.25 × the refusal grudge, plus 0.5 × the snub rapport for a `vain` person or an office want), then delegation's commitment at its due month: plus 0.5 × 0.10 if kept, minus (0.75 × the refusal grudge + 0.08 + 0.5 × 0.2) if broken ("Delegation's commitment" below). The first part is `Audiences.delegate` as built: `DELEGATE_GRUDGE_SHARE` 0.25, `DELEGATE_SNUB_RAPPORT` -0.05 |
+| Decline | minus (the refusal grudge, plus 0.5 × 0.1 rapport). This is `decline_price`: `DECLINE_GRUDGE` 0.18 through `Characters.refusal_grudge`, and `DECLINE_RAPPORT` -0.1 |
+| Unanswered | equal to Decline by construction (a lapse costs exactly a decline; `tests/test_audiences.gd` pins it per request) |
+
+The best answer for a request is the one with the highest net value. The row is
+unchanged: **no answer is the best in more than 50 % of requests.**
+
+**Why 0.95 (OPINION, derived from DECLARED bands, not from a run, on the same
+three-attempt audience):**
+
+- The spec's trade-off table says booking is best "when the person carries a
+  want the player can serve or needs served", and delegation is best when "the
+  person matters but not personally" ([[v5.2-spec]], "An audience request"). The
+  day's price is set so that this sentence is true for the middle person.
+- B4 declares the picked lever's single-attempt success by knowledge band. The
+  midpoints are 0.40 for a stranger, 0.55 for an acquaintance and 0.70 for the
+  known.
+- Delegation's base cost is 0.25 × 0.18 + 0.5 × 0.05 ≈ 0.07 at most, before
+  traits. Decline's base cost is 0.18 + 0.05 = 0.23.
+- **The acquaintance as the indifferent case, spends left out:** at p = 0.55,
+  q³ = 0.091, so booking is worth 0.909 − 0.091 × 0.23 = 0.888 before the day.
+  Indifference with delegation needs 0.888 − D = −0.07, which gives D ≈ 0.96.
+  On the 0.05 grid that is **0.95**.
+- **On the same basis:**
+  - the known (p = 0.70): 0.973 − 0.006 − 0.95 = +0.017, against −0.07, so
+    booking pays;
+  - a stranger (p = 0.40): 0.784 − 0.050 − 0.95 = −0.216, against −0.07, so
+    delegation wins;
+  - the diary goes to the people the president knows or needs, and the
+    ministers take the rest.
+- **Three attempts flatten the curve.** The known's margin over delegation is
+  0.087 and the stranger's deficit is 0.146. A person's traits and relationship
+  move p enough to cross that, so the row is a real choice, not a sort by
+  knowledge band (INFERRED).
+- **Two leans, stated and not corrected:**
+  - The spends (s, left out of the derivation) lower the booking value, which
+    leans the row toward delegation.
+  - The knowledge an audience teaches is not priced, which leans it the same
+    way. On PR #113 the gain is `President.learn_from`'s 0.05 × (1 −
+    knowledge) per audience; on main's b1 it is `KNOW_AUDIENCE` 0.12.
+  - The derivation sets indifference against delegation's immediate cost
+    (-0.07). It was written before delegation's commitment (below) existed.
+    With the commitment, delegation is about 0 when the want is kept and about
+    -0.36 when it is broken (-0.39 with a snub, at base g). The price stays as declared; it is not
+    re-derived for the commitment.
+  - The 0.95 is kept, not re-derived, once the run has read anything. A miss
+    with delegation over 50 % is the likely failure, and it is reported as a
+    design result.
+
+**Found before the run (INFERRED, read from the code at `2c3262ea`):** as first
+built, decline is never the best answer.
+
+- With these weights, delegation costs 0.25 g plus at most 0.025, while decline
+  costs g plus 0.05, for every refusal grudge g > 0.
+- Delegation therefore Pareto-dominates decline, and leaving a request
+  unanswered with it. A decline that is never best is the B5 failure "a lever
+  never best (dead)" in the answers' column.
+- The spec gives delegation "a fixed, middling outcome", and gives decline the
+  gain "no commitment made" ([[v5.2-spec]], "An audience request"). As built,
+  delegation carries neither, so the signed design is not yet in the code.
+- **The parent's decision (2026-10-24): build the spec as written.** Systems
+  builds the commitment below in a small PR after #113, before this row is
+  read. The row is not read on the first build.
+
+**Delegation's commitment** (declared here, before Systems builds it):
+
+- **The shape:** to delegate is to have a minister answer in the president's
+  name. The minister commits that the person's want will be served by a due
+  date. This is a row in the commitments register (V5.2a), kind `delegated`,
+  for the person and the request's object.
+  - It is due **12 months** after the delegation. That is
+    `BOOKING_HORIZON_MONTHS`: the delegate cannot promise past what the
+    president can see (OPINION).
+- **At delegation (unchanged):** 0.25 × the refusal grudge, the snub for a
+  `vain` person or an office want, and no knowledge.
+- **At the due month, kept** if the want is served then: rapport +0.10. That is
+  the price a kept promise already carries (#113's commitments).
+- **At the due month, broken** if the want is not served:
+  - the remaining 0.75 × the refusal grudge lands, the share delegation
+    deferred, not avoided;
+  - plus the unpaid-IOU betrayal: rapport -0.2 and a grudge pulse of 0.08
+    (#113's existing primitive).
+  - It is not a lie revealed (rapport -0.5, knowledge halved): the president did
+    not give their own word.
+- **What it makes delegation:** a conditional deferral, which is the spec's
+  "middling outcome". It is cheap when the want will be served anyway, and
+  dearer than an honest no when it will not.
+
+**Delegate's net value (the table's row above, spelled out):**
+
+- At delegation: minus (0.25 g + 0.5 × the snub).
+- At the due month, kept: plus 0.5 × 0.10.
+- At the due month, broken: minus (0.75 g + 0.08 + 0.5 × 0.2).
+- Kept or broken is the run's own outcome: whether the person's want is served
+  at the due month in the run, whichever answer the regime actually gave that
+  request. The answers are compared counterfactually, per request. Decline is
+  unchanged.
+
+**Why decline is then the best answer for an opposed want or a trap (OPINION,
+from the prices above):**
+
+- **An opposed want** is one the player will not serve, because it runs against
+  the programme or a law they keep. A delegated promise to serve it is broken
+  at its date, so delegation costs g + 0.18 (+ the snub), against decline's
+  g + 0.05. Decline wins by 0.13. Booking still wins where the audience can
+  turn the person (B4 and B5's levers).
+- **A trap** (a corrupt offer, V5.2c) is a commitment to the deal itself, made in
+  the president's name. Proposed for c's bands: the exposure register reads a
+  delegated commitment as the president's own, so delegating a trap carries
+  c's exposure risk, and decline is the safe answer. c declares that price.
+- **A want the player will serve anyway, from a person not worth a day:**
+  delegation costs 0.045 − 0.05 ≈ 0 at base g. That beats both booking (−0.06
+  for an acquaintance at 0.95) and decline (−0.23). That is the case the spec
+  calls "the person matters but not personally".
+- **Neither answer dominates the other any longer.** Which one is best depends
+  on whether the want is served, so decline has cells of its own.
+
+**The stop rule:**
+
+1. The row is read once, at 0.95, on the build that has delegation's
+   commitment.
+2. If booking or delegation is the best answer in more than 50 % of requests,
+   the price is **not** re-tuned to the run. It is the author's call:
+   - re-price delegation's commitment, with a new reason declared before a
+     new read;
+   - change the price, with a new reason declared before a new read;
+   - accept the result.
+
+**Probe:** the per-request net values above, over `tools/audience_probe.gd`
+regime A2's requests, each delegated commitment followed to its due month. Each request's cell is the person's ACTUAL state in the
+month it arrives: their knowledge band, their relationship (below friend, or
+friend or closer), and whether the ask is aligned with one of their wants. The
+lever values come from `tools/lever_probe.gd` L2's computation for that cell.
+Which file runs it is Systems' choice, as long as the weights and the price are
+the ones declared here.
+
+**Failure looks like:**
+
+- **Delegation best in most requests:** people ask, and the player never meets
+  them. The diary empties of scenes, and the soul V5.2 exists to add stays with
+  the ministers.
+- **Booking best in most:** the diary is the wall, and B2's R5 complaint
+  returns.
+- **Decline never best:** a dead answer.
 
 ## B6 — Corruption is tempting, and it is found out
 
