@@ -174,11 +174,12 @@ grudges #104 feeds into briefs:
 | The fade's half-life (the constant) | **24 months**, inside a band of **[22, 30]** |
 | One act, then no further act: the act-written share at 24 months, then at 48 | **50 %, then 25 %**, each to within 1 point; never past zero |
 | The act-written share of `bloc_offset`, any bloc, any month, every `tests/test_balance.gd` MANAGED regime (168 months) | **at most 0.50** in absolute value |
-| The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it before #104 | **none** |
+| The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc` (the main behind `base-19ff21fc.json`, before #104; Systems runs it once as the base) | **none** |
 | The 2027 executive (B3's rows above) | **unchanged:** verdict held, \|Δ margin\| ≤ 0.017 |
 | The 2029 legislative, every regime with a FRA 2029 row (41): the government's standing (`majority` / `MINORITY` / `COHABITATION`) | **unchanged** in every row |
 | The same rows: the change in the 2029 margin | **at most 0.017** in absolute value, every row |
 | The 2032 executive, every regime with a FRA 2032 row (41): the change in the margin | **at most 0.017** in absolute value, every row |
+| The 2034 legislative, every regime with a FRA 2034 row (28): the standing and the margin | **reported**, not banded (the end of the 168-month window) |
 
 **The comparison base.** Every row above that compares two tables compares the
 build tip (#104 with the fade) against **`base-19ff21fc.json`**, the accepted
@@ -193,9 +194,9 @@ and the flips beside each row. The rows bound each row's move, not the mean.
 - France's votes in the base table are 25 months apart (2027-05 to 2029-06) and
   35 months apart (2029-06 to 2032-05), so the vote after next comes about 60
   months after an act.
-- "Hurts the next vote": at least a third of the price must remain at the
-  longest gap to the next vote, 35 months. That needs H ≥ 35 · ln 2 / ln 3, so
-  H ≥ 22.1.
+- "Hurts the next vote": at least 0.33 of the price must remain at the
+  longest gap to the next vote, 35 months. That needs H ≥ 35 · ln 2 / ln(1/0.33),
+  so H ≥ 21.9, and the band's lower end, 22, keeps 0.332.
 - "Then it is forgotten": at most a quarter may remain at the vote after next,
   60 months. That needs H ≤ 30.
 - The author's 24 sits inside the band. The band is the stop rule's room, not a
@@ -211,8 +212,9 @@ and the flips beside each row. The rows bound each row's move, not the mean.
   bounds the act register alone, at half the clamp. The other half of the room
   is left to everything that does not fade.
 - At the measured 10.0 approval points per point of offset
-  ([[referendum-model]], `REFERENDUM_RESULT_OFFSET`'s row), 0.50 is 5 points of
-  a bloc's approval held by acts alone.
+  ([[referendum-model]], `REFERENDUM_RESULT_OFFSET`'s row, measured on the approval
+  response), 0.50 is about 5 points of approval held by acts alone (INFERRED: a
+  unit conversion, not a run).
 - P4, the existing readability bound (total approval movement from acts within
   ±3.0 points a year, `src/sim/character_act_constants.gd:195-197`), still binds
   and is not redeclared here.
@@ -446,11 +448,14 @@ regimes are fixed here so the build cannot choose its own test.
   reaches the inbox by month 3 (B1's first cut, fast enough for the suite).
 - **`_check_decline_shows_its_price`** — decline a request: the person's card
   names the change in words (B3's card half).
+
+## Proposed register tests (Systems)
+
 - **`_check_act_price_fades`** (B3 amendment, 2026-10-24) — one act, then no
   further act: the act-written share of `bloc_offset` is 50 % at 24 months and
   25 % at 48, each to within 1 point, and never crosses zero. For
-  `tests/test_characters.gd` or wherever Systems keeps the register's tests,
-  rather than the playability file.
+  Systems' register tests (`tests/test_characters.gd` or beside the register),
+  not the playability file.
 
 ## What could not be verified
 
