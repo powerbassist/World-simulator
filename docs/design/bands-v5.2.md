@@ -1265,7 +1265,7 @@ author-accepted base current when C6 is built (today
 | Row | Declared |
 |---|---|
 | **B9.1** France's ceiling splits the menu: of the 10 allowed pairs, the number that fit a full 10-month window under EUR 22.509 m | **3 to 7** (5 at the declared prices) |
-| **B9.2** Every regime except `managed_campaigns_early`, `_late` and `_tour`, against the base | **identical** (every election row, every run row) |
+| **B9.2** Every regime except `managed_campaigns_early`, `_late` and `_tour`, against the base | **identical** on every column the base already has (every election row, every run row); B9.4's new money column is new, not a move |
 | **B9.3** The three campaign regimes, France: flips against the base | **0** |
 | **B9.3** The same, 2027 vote share, `early` and `late` | **Δ in [0, +0.005]**, and the margin does not fall |
 | **B9.3** The same, 2027 for `tour`, and 2029 and 2032 for all three | **\|Δ\| ≤ 0.005** |
@@ -1288,7 +1288,7 @@ author-accepted base current when C6 is built (today
   (Systems reads which). Over 10 months, five pairs fit the ceiling (ground game
   with donor, town halls or digital push; donor with town halls or digital
   push); over 9 months, ground game with broadcast and town halls with digital
-  push fit as well. `late` (month 14) pays at most 3 months, and every pair fits.
+  push fit as well. `late` (month 14) pays 3 or 4 months, and every pair fits.
   `tour` changes pair at month 12, so its total is Systems' to compute. If the
   harness's pair does not fit:
   - under a hard ceiling it stops early, the mobilisation falls, and 2027 may
@@ -1296,9 +1296,10 @@ author-accepted base current when C6 is built (today
   - under a soft ceiling it overspends, which writes party-money evidence:
     Systems reports the evidence, and an exposure that moves 2029 or 2032
     through B6's hazard is reported, not failed.
-  The campaign added +0.0019 to +0.0026 of vote share in 2027 over `managed`
-  (the base), with the fiscal hit inside it, so 0.005 bounds the fiscal half
-  with room.
+  The campaign added +0.0009 (`tour`) to +0.0026 (`late`) of vote share in 2027
+  over `managed` (the base: 0.2629; `early` 0.2648, `late` 0.2655, `tour`
+  0.2638), with the fiscal hit inside it, so 0.005 bounds the fiscal half with
+  room.
 - **Why B9.4 (INFERRED):** it pins the running-cost rule. Money that moves
   before an election means running costs differ from the start funding; money
   below zero in a regime that never campaigns means the income is mis-shared.
