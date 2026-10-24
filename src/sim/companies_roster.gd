@@ -78,7 +78,10 @@ static func share_pool(ns, loader) -> Array:
 		# reads use -- industry.gd's reader is private to the machine,
 		# and a sim module preloading its sibling machine for one
 		# predicate inverts the two-writers arrangement.
-		if is_major(company) and not bool(ns.companies.get(company.id, {}).get("failed", false)):
+		if not is_major(company):
+			continue
+		var entry = ns.companies.get(company.id)
+		if entry == null or not bool(entry.get("failed", false)):
 			if not live_majors.has(company.sector):
 				live_majors[company.sector] = []
 			live_majors[company.sector].append(company)

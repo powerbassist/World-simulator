@@ -45,13 +45,13 @@ const K = preload("res://src/sim/network_constants.gd")
 static var _matrix_graph: Dictionary = {}
 static var _matrix_rows: Dictionary = {}
 ## D14 (A'). The last two graph instances PROVEN equal, so the next test of that
-## pair is by identity. The "~90 us" above is paid by every call whose graph is not
-## the cached instance -- which is every call on Budget.project()'s copy (a deep
-## duplicate, by the state-copy contract), twice per accessibility() miss (the
-## table, then the foreign part), 41 nations x two systems a projected month:
-## about 700 ms of a two-projection forecast refresh. Sound on the promise the
-## caches above already rest on: content is never mutated, so two instances found
-## equal stay equal.
+## pair is by identity. The compare above (37 us measured at D14) is paid by every
+## call whose graph is not the cached instance -- which is every call on
+## Budget.project()'s copy (a deep duplicate, by the state-copy contract), twice per
+## accessibility() miss (the table, then the foreign part), 41 nations x two systems
+## a projected month: ~280 ms of a two-projection forecast refresh. Sound on the
+## promise the caches above already rest on: content is never mutated, so two
+## instances found equal stay equal.
 static var _equal_a: Dictionary = {}
 static var _equal_b: Dictionary = {}
 ## ONE ENTRY PER DISTINCT WEIGHTS VECTOR, not one slot. A single slot could never
