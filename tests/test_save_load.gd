@@ -2736,7 +2736,7 @@ func _run_ownership_roundtrip(loader) -> void:
 
 	var debt_before: float = ns.debt_eur_bn
 	var deficit_before: float = ns.deficit_pct_gdp
-	Companies.execute(state, ns, loader.company_actions, buy, target, loader)
+	Companies.execute(state, ns, loader.company_actions, buy, target, loader, true)
 
 	# The price is derived and lands on the debt stock in the same instant, while the
 	# deficit does not move at all. Checked here rather than only in

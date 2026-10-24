@@ -653,7 +653,7 @@ static func _recompute_prices(ns, loader) -> void:
 ## pinned) -- but if a later block's body market writes one, its existence
 ## must not make the tier a verb target. The gate stands for the register the
 ## design does not yet have.
-static func available(state, ns, all_actions: Array, company_id: String, loader) -> Array:
+static func available(state, ns, all_actions: Array, company_id: String, loader, by_law := false) -> Array:
 	var out: Array = []
 	if not ns.companies.has(company_id):
 		return out
@@ -697,7 +697,9 @@ static func available(state, ns, all_actions: Array, company_id: String, loader)
 					break
 		return out
 	for action in all_actions:
-		if action.id == "":
+		# V5.2 b+ R14: a requires_law verb is offered only through the law's door
+		# (src/sim/bills.gd, `by_law`), and the law's door offers nothing else.
+		if action.id == "" or action.requires_law != by_law:
 			continue
 		if _preconditions_met(state, ns, action, company_id, loader):
 			out.append(action)
@@ -795,8 +797,8 @@ static func state_owned_count(ns) -> int:
 ## Takes the loader, last, as every content-reading function in this file does. It
 ## is required rather than defaulted: a null loader would silently value every firm
 ## at zero and hand the player a free nationalisation.
-static func execute(state, ns, all_actions: Array, action, company_id: String, loader) -> Dictionary:
-	if not available(state, ns, all_actions, company_id, loader).has(action):
+static func execute(state, ns, all_actions: Array, action, company_id: String, loader, by_law := false) -> Dictionary:
+	if not available(state, ns, all_actions, company_id, loader, by_law).has(action):
 		var refused := {
 			"action_id": action.id,
 			"company_id": company_id,

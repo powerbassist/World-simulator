@@ -44,6 +44,14 @@ var preconditions: Array = []
 ## legible is a measurement, and whether one must exist is not.
 var effects: Dictionary = {}
 
+## V5.2 b+ R14. An act only an adopted law may carry (in France, the Constitution's
+## Art. 34: nationalisations and transfers of ownership are matters for the law).
+## Companies.available() never offers it as an executive verb; src/sim/bills.gd
+## builds the ready bill from `bill` -- {position: {economic, social}, cooldown_months}
+## -- the point the parties vote on and the wait after a defeat.
+var requires_law: bool = false
+var bill: Dictionary = {}
+
 const EFFECT_CHANNELS := ["company", "bloc_offset"]
 
 
@@ -68,7 +76,36 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], bl
 	a.preconditions = _extract_preconditions(d, a.id, filename, errors)
 	a.effects = _extract_effects(d, a.id, filename, errors, bloc_keys)
 
+	var raw_law = d.get("requires_law", false)
+	if typeof(raw_law) != TYPE_BOOL:
+		errors.append("%s: %s requires_law must be true or false" % [filename, a.id])
+	elif raw_law:
+		a.requires_law = true
+		a.bill = _extract_bill(d.get("bill", null), a.id, filename, errors)
+
 	return a
+
+
+## The bill a requires_law act becomes: a position inside the [-1, 1] square every
+## party and law already lives in, and a non-negative cooldown. Refused rather than
+## defaulted -- a bill with no position would divide the assembly on nothing.
+static func _extract_bill(raw, action_id: String, filename: String, errors: Array[String]) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s requires_law needs a 'bill' object" % [filename, action_id])
+		return {}
+	var pos = raw.get("position", null)
+	var cooldown = raw.get("cooldown_months", null)
+	if typeof(pos) != TYPE_DICTIONARY or typeof(cooldown) != TYPE_INT and typeof(cooldown) != TYPE_FLOAT or int(cooldown) < 0:
+		errors.append("%s: %s bill needs a position and a cooldown_months >= 0" % [filename, action_id])
+		return {}
+	var out := {"position": {}, "cooldown_months": int(cooldown)}
+	for axis in ["economic", "social"]:
+		var v = pos.get(axis, null)
+		if not (typeof(v) == TYPE_INT or typeof(v) == TYPE_FLOAT) or absf(float(v)) > 1.0:
+			errors.append("%s: %s bill.position.%s must be a number in [-1, 1]" % [filename, action_id, axis])
+			return {}
+		out["position"][axis] = float(v)
+	return out
 
 
 static func _extract_preconditions(d: Dictionary, action_id: String, filename: String, errors: Array[String]) -> Array:
