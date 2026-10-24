@@ -341,7 +341,8 @@ func _check_refusal_price_reads_the_traits() -> void:
 
 ## V5.2b, the author's call "le cout s'efface", banded by Gameplay (bands-v5.2.md,
 ## "B3 amendment (2026-10-24)"): one act, then nothing -- 50 % of its price remains
-## at 24 months and 25 % at 48, each within a point, never crossing zero; and only
+## at H months and 25 % at 2H (H the shipped half-life), each within a point, never
+## crossing zero; and only
 ## the act's share fades -- a law's cost beside it stays where it was.
 func _check_act_price_fades() -> void:
 	if not is_equal_approx(CK_Act.ACT_OFFSET_MONTHLY_KEEP, pow(0.5, 1.0 / float(CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS))):
@@ -351,7 +352,8 @@ func _check_act_price_fades() -> void:
 	var base := float(ns.bloc_offset.get("workers", 0.0))
 	ns.bloc_offset["workers"] = base - 0.3 - 0.2   # a law's -0.3, an act's -0.2
 	ns.act_bloc_offset["workers"] = -0.2
-	for m in range(48):
+	var h: int = CK_Act.ACT_OFFSET_HALF_LIFE_MONTHS
+	for m in range(2 * h):
 		if not Characters.tick_month(state, _loader, _idle_meters(ns)).is_empty():
 			_fail("the fade fixture fired an act -- it measures the act's fade, not a new one")
 			return
@@ -359,16 +361,18 @@ func _check_act_price_fades() -> void:
 		if left < 0.0 or left > 1.0:
 			_fail("month %d: the act's price crossed zero or grew (%.4f of it left)" % [m + 1, left])
 			return
-		if m + 1 == 24 and absf(left - 0.50) > 0.01:
-			_fail("at 24 months %.3f of the act's price remains, not 0.50 +- 0.01" % left)
-		if m + 1 == 48 and absf(left - 0.25) > 0.01:
-			_fail("at 48 months %.3f of the act's price remains, not 0.25 +- 0.01" % left)
-		if m + 1 == 24 and not is_equal_approx(float(ns.bloc_offset["workers"]), base - 0.3 - 0.2 * left):
+		if m + 1 == h and absf(left - 0.50) > 0.01:
+			_fail("at %d months %.3f of the act's price remains, not 0.50 +- 0.01" % [h, left])
+		if m + 1 == 2 * h and absf(left - 0.25) > 0.01:
+			_fail("at %d months %.3f of the act's price remains, not 0.25 +- 0.01" % [2 * h, left])
+		if m + 1 == h and not is_equal_approx(float(ns.bloc_offset["workers"]), base - 0.3 - 0.2 * left):
 			_fail("bloc_offset reads %.4f, not the law's -0.3 plus the act's faded share over %.4f" % [float(ns.bloc_offset["workers"]), base])
 
 
-## The act's share is what the act actually wrote: a brief's delta on each bloc it
-## priced, recorded the month it fires.
+## The act's share is what the act wrote: a brief's price on the two blocs it
+## prices and nothing on the rest, computed from the price constants rather than
+## read back from bloc_offset -- so a non-act write inside the act loop, booked as
+## act cost, fails here (QA's R2 on PR #104).
 func _check_an_act_records_what_it_wrote() -> void:
 	var state = GameState.new_game(_loader, "FRA")
 	var ns = state.player()
@@ -382,10 +386,11 @@ func _check_an_act_records_what_it_wrote() -> void:
 	if not briefed:
 		_fail("the fixture's brief did not fire: %s" % [acts])
 		return
+	var price: float = CK_Act.PRICE_BRIEF * (CK_Act.STANDING_WEIGHT_BASE + float(ns.person_standing.get(pid, 0.0)))
 	for bloc in ns.bloc_offset:
-		var wrote := float(ns.bloc_offset[bloc]) - float(before.get(bloc, 0.0))
-		if not is_equal_approx(float(ns.act_bloc_offset.get(bloc, 0.0)), wrote):
-			_fail("bloc %s: the act wrote %.4f and the register recorded %.4f" % [bloc, wrote, float(ns.act_bloc_offset.get(bloc, 0.0))])
+		var want: float = price if CK_Act.BRIEF_BLOCS.has(bloc) else 0.0
+		if not is_equal_approx(float(ns.act_bloc_offset.get(bloc, 0.0)), want):
+			_fail("bloc %s: the brief's price is %.4f and the register recorded %.4f" % [bloc, want, float(ns.act_bloc_offset.get(bloc, 0.0))])
 
 
 ## Fourteen years of acts no longer pin the clamp: one brief a year from a person
