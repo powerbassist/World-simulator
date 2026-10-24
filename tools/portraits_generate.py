@@ -335,7 +335,8 @@ def reroll(person_ids) -> int:
         cleared = 0
         for emotion in EMOTIONS:
             for path in (RAW_DIR / emotion / (pid + ".png"), MASK_DIR / emotion / (pid + ".png"),
-                         REPO / "assets" / "portraits" / emotion / (pid + ".webp")):
+                         REPO / "assets" / "portraits" / emotion / (pid + ".webp"),
+                         REPO / "assets" / "portraits" / emotion / (pid + ".webp.import")):
                 if path.exists():
                     comfy._confined(path, REPO).unlink()
                     cleared += 1
