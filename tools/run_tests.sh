@@ -192,6 +192,7 @@ tests=(
   tests/test_audience_flow.gd
   tests/test_audience_levers.gd
   tests/test_audience_load.gd
+  tests/test_phone_ui.gd
   tests/test_placement_points.gd
   tests/test_button_sizes.gd
   tests/test_chart_kit.gd

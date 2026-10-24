@@ -78,6 +78,14 @@ func _process(_delta: float) -> bool:
 				var r: Dictionary = row.duplicate()
 				r["offered"] = false
 				r["why_not"] = "no attempts left"
+				# The sim refuses every currency too once no attempt is left.
+				if r.has("currencies"):
+					var refused: Array = []
+					for c in r["currencies"]:
+						var cr: Dictionary = c.duplicate()
+						cr["offered"] = false
+						refused.append(cr)
+					r["currencies"] = refused
 				spent.append(r)
 			_scene.show_result("She will not move.", _view(spent, 0), "lever_argue_failure")
 		13:
@@ -127,6 +135,8 @@ func _check_spends() -> void:
 	if pick == null or pick.item_count != 3:
 		_fail("bargain has no currency choice of three")
 		return
+	if pick.selected != 0 or pick.get_item_text(pick.selected) != Words.currency("favour"):
+		_fail("the currency shown is not the favour the cost is read from: '%s'" % pick.get_item_text(pick.selected))
 	var spend := _spend_of("bargain")
 	if not spend.contains("rapport with them -0.10"):
 		_fail("the favour's spend is not shown before the click: '%s'" % spend)
@@ -179,6 +189,11 @@ func _check_spent() -> void:
 		_fail("no attempts left, and the scene does not say to end it: %s" % _scene.verbs._attempts.text)
 	if _scene._result.text != "She will not move.":
 		_fail("the result is not shown")
+	# Every currency refused: the picker still shows the favour its cost is read
+	# from, not whichever item the OptionButton fell back to (it showed "Aid").
+	var pick: OptionButton = _scene.verbs.lever_button("bargain").get_parent().find_child("Currency", false, false)
+	if pick == null or pick.get_item_text(pick.selected) != Words.currency("favour"):
+		_fail("a refused bargain's picker does not show the favour: '%s'" % (pick.get_item_text(pick.selected) if pick != null else "none"))
 
 
 func _check_closed() -> void:

@@ -20,6 +20,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const PromiseList = preload("res://src/ui/promise_list.gd")
+const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 const President = preload("res://src/sim/president.gd")
 
 const WINDOW := "audience"
@@ -56,6 +57,13 @@ static func register(main) -> void:
 	main._windows.closed.connect(func(id: String) -> void:
 		if id == WINDOW:
 			_leave(main, game))
+	# V5.2b b3, the phone: a request's "Call them" and a right click in People.
+	PhoneDriver.register(main, func() -> void: refresh(main))
+	lane.call_requested.connect(func(id: String) -> void:
+		var pid := String(Audiences.request(main._state.player(), id).get("person_id", ""))
+		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
+	main._people_panel.call_requested.connect(func(pid: String) -> void:
+		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
 
 
 static func lane_of(main) -> RequestLane:
@@ -108,7 +116,17 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
 		"by": DateText.month_year(deadline - year * 12, year),
 		"price": Words.price_text(Audiences.decline_price(ns, loader, id)),
-		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}
+		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
+
+
+## The card's fourth answer when the phone exists: the sim's own refusal on it
+## (called this month), never a guess here.
+static func _call_answer(main, pid: String) -> Dictionary:
+	var phone = PhoneDriver.phone()
+	if phone == null:
+		return {}
+	var why := String(phone.options(main._state, main._state.player(), main._loader, pid).get("why_not", ""))
+	return {"call": {"ok": why == "", "reason": why}}
 
 
 ## The diary's outcome, its UI half: the scene for an audience, else the news card
