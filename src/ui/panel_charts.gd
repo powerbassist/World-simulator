@@ -102,7 +102,7 @@ func _build(state) -> void:
 			# The gap between the two lines is the deficit, month by month: the one
 			# figure the strip prints, drawn as what makes it.
 			var term := ChartSeries.term_window(state)
-			var box := ChartKit.line(self, Strings.t("Revenue and spending over the term, % of GDP"), [
+			var box := ChartKit.line(self, Strings.t("Revenue and spending, % of GDP"), [
 				{"label": Strings.t("Revenue"), "values": ChartSeries.values(term, "total_revenue_pct_gdp")},
 				{"label": Strings.t("Spending"), "values": ChartSeries.values(term, "total_spending_pct_gdp")}],
 				ChartSeries.months(term), {"unit": "%"})
