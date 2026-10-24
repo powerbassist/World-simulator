@@ -1253,6 +1253,71 @@ Over 200 seeded runs (salts), France, otherwise idle.
 - **Failure looks like:** the same catch rate at both skills (skill is
   decorative); a broken date that is not revealed.
 
+## B9 — Campaigns are paid by the party (C6, declared 2026-10-24)
+
+The design is [[v5.2-c6-party-campaigns]]: the efforts re-priced per inhabitant,
+paid monthly from the governing party's money, a public-funding income with
+running costs equal to the start funding, and the state line
+`campaign_bill_pct_gdp` retired. Declared before Systems' run. The base is the
+author-accepted base current when C6 is built (today
+`.superpowers/sdd/qa/base-b3ede2e3.json`).
+
+| Row | Declared |
+|---|---|
+| **B9.1** France's ceiling splits the menu: of the 10 allowed pairs, the number that fit a full 10-month window under EUR 22.509 m | **3 to 7** (5 at the declared prices) |
+| **B9.2** Every regime except `managed_campaigns_early`, `_late` and `_tour`, against the base | **identical** (every election row, every run row) |
+| **B9.3** The three campaign regimes, France: flips against the base | **0** |
+| **B9.3** The same, 2027 vote share, `early` and `late` | **Δ in [0, +0.005]**, and the margin does not fall |
+| **B9.3** The same, 2027 for `tour`, and 2029 and 2032 for all three | **\|Δ\| ≤ 0.005** |
+| **B9.4** France's governing party's money in `hands_off` | **exactly 48.0 until the first legislative election (2029-06)**, then moved only by net funding, and inside [0, 96] over the run |
+
+- **Why B9.1 (OPINION):** the ceiling is what makes the campaign a choice in
+  France. If every pair fits a full window, the ceiling is decorative; if
+  almost none does, there is one answer.
+- **Why B9.2 (INFERRED):** no regime but the three campaigns spends party
+  money, and no vote reads it. Running costs equal the start funding, so the net
+  income is exactly zero until an election changes a party's shares, and after
+  that it still writes only party money. A moved row means party money leaked
+  into something a vote reads.
+- **Why B9.3, and the prediction (INFERRED):** the mobilisation is unchanged
+  (the same efforts, the same accrual); what goes is the deficit the bill added
+  in the months before the vote. So 2027 should rise or stay, provided the
+  harness's own pair fits. `early` opens at the hook of month 8
+  (`tools/balance_probe.gd`'s `campaign_month`) and pays 9 or 10 months to the
+  vote, depending on whether the hook runs before or after that month's tick
+  (Systems reads which). Over 10 months, five pairs fit the ceiling (ground game
+  with donor, town halls or digital push; donor with town halls or digital
+  push); over 9 months, ground game with broadcast and town halls with digital
+  push fit as well. `late` (month 14) pays at most 3 months, and every pair fits.
+  `tour` changes pair at month 12, so its total is Systems' to compute. If the
+  harness's pair does not fit:
+  - under a hard ceiling it stops early, the mobilisation falls, and 2027 may
+    fall: Systems reports it, and the row is the author's to accept;
+  - under a soft ceiling it overspends, which writes party-money evidence:
+    Systems reports the evidence, and an exposure that moves 2029 or 2032
+    through B6's hazard is reported, not failed.
+  The campaign added +0.0019 to +0.0026 of vote share in 2027 over `managed`
+  (the base), with the fiscal hit inside it, so 0.005 bounds the fiscal half
+  with room.
+- **Why B9.4 (INFERRED):** it pins the running-cost rule. Money that moves
+  before an election means running costs differ from the start funding; money
+  below zero in a regime that never campaigns means the income is mis-shared.
+- **Clause (ii) of `tools/campaign_probe.gd` retires.** It measured the
+  campaign's deficit against what was left of `DEFICIT_SCALE_PP`
+  ([[campaign-model]] §7b); there is no deficit now, and B9.1 takes its place as
+  the affordability clause. Clauses (i) (worth one point of approval, at most
+  the poll floor) and (iii) (at most a fifth of a term) read the mobilisation
+  and the window, which C6 does not touch: no re-run needed.
+- **Reported, not gated:** where the money binds for the other three playable
+  nations ([[v5.2-c6-party-campaigns]], section 7), once Content has sourced
+  their ceilings and pots.
+- **Probes:** `tools/campaign_probe.gd` (B9.1, a table replacing clause (ii));
+  `tools/balance_probe.gd` + `tools/balance_diff.py` (B9.2, B9.3), with the
+  governing party's money added to each election row for B9.4.
+- **Failure looks like:** a regime other than the three campaigns moves; a 2027
+  campaign row falls with the harness's pair under the ceiling; a flip; money
+  that moves before 2029-06 in `hands_off`.
+
 ## Invariants (pass or fail, not bands)
 
 - **I1 — Determinism.** Two identical states produce the same requests, the same
@@ -1284,6 +1349,7 @@ Over 200 seeded runs (salts), France, otherwise idle.
 | `tools/balance_probe.gd` (exists) + `tools/balance_diff.py` | `hands_off` at the build tip against the accepted base | B3's 2027 verdict and margin |
 | `tools/lever_probe.gd` | L1 by knowledge band, L2 the grid | B4, B5 |
 | `tools/shadows_probe.gd` | S1 once, S2 always, S3 affair, S4 lies | B6, B7, B8 |
+| `tools/campaign_probe.gd` (exists) + `tools/balance_probe.gd` | the ceiling table; `managed_campaigns_*` and every other regime against the base | B9 |
 
 Each one drives `WorldMonth.tick_month()` through its step hook
 (`tests/test_world_month.gd` fails a copy of the tick order), runs isolated, and
