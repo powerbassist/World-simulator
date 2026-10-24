@@ -27,6 +27,7 @@ extends RefCounted
 const Characters = preload("res://src/sim/characters.gd")
 const President = preload("res://src/sim/president.gd")
 const RK = preload("res://src/core/relations.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 
 
 ## [[person, want], ...] in the order they are invited: the programme's people in
@@ -60,7 +61,9 @@ static func invitations(state, ns, loader, meters: Dictionary, leaders: Dictiona
 ## a nation that state-visited the played nation in this tick -- only an AI turn
 ## stamps met_months inside the tick, and only by a verb that opens a meeting --
 ## asks to have the played nation's measure on their nation lifted, and only when
-## one stands. [[head, want], ...]; Audiences gives them a place of their own.
+## one stands -- the played nation's OWN (pre-gate B, RECORD 11): an org's levy on
+## the same key is not France's to lift, and QA's run had every visitor asking about
+## the Climate Accord's. [[head, want], ...]; Audiences gives them a place of their own.
 static func visitors(state, ns, loader, now: int) -> Array:
 	var out := []
 	for nation_id in state.nations:
@@ -68,6 +71,6 @@ static func visitors(state, ns, loader, now: int) -> Array:
 			continue
 		var directed := RK.directed_key(ns.id, nation_id)
 		var head = loader.person_by_id.get(President.leader_id(state.nations[nation_id]))
-		if state.measures.has(directed) and head != null:
+		if Coercion.own_measure(state, directed) != null and head != null:
 			out.append([head, {"object": "measure:%s" % directed, "stance": "want"}])
 	return out

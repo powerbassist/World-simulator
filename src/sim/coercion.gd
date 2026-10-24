@@ -51,6 +51,19 @@ static func imposed_by(state, actor_id: String) -> Dictionary:
 	return out
 
 
+## The measure on `directed` that its imposer holds by ITS OWN act, or null: one it
+## imposed, or the retaliation the sim wrote in its name -- not an org's collective
+## levy, which Orgs._apply_external_measure() writes on the same key for every
+## member and tags "org". That levy is the org's to end (an accession, a
+## withdrawal), never one member's to lift (pre-gate B, RECORD 11): this is what a
+## lift verb may clear and what a visitor may ask the played nation to lift.
+static func own_measure(state, directed: String):
+	var terms = state.measures.get(directed)
+	if terms == null or String(terms.get("org", "")) != "":
+		return null
+	return terms
+
+
 ## Whether anything is in force on the pair, in either direction. What the trade
 ## weight cares about: goods stop moving both ways whichever side imposed.
 static func severity_on_pair(state, a: String, b: String) -> float:

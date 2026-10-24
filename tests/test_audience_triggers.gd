@@ -64,6 +64,8 @@ func _init() -> void:
 	_check_a_visitor_costs_rapport_only()
 	_check_visitors_have_their_own_cap()
 	_check_a_promise_to_lift_is_judged_on_the_measure()
+	_check_an_org_levy_brings_no_visitor()
+	_check_a_promise_to_lift_ignores_an_org_levy()
 	_check_a_lever_on_a_visitor_writes_no_grudge()
 	_check_invite_is_the_lanes_door()
 
@@ -307,6 +309,43 @@ func _check_a_promise_to_lift_is_judged_on_the_measure() -> void:
 			_fail("a broken promise to a foreign head wrote a grudge")
 
 
+## RECORD 11 (pre-gate B): an org's collective levy sits on the same directed key as
+## France's own tariff (Orgs._apply_external_measure writes one per member, tagged
+## "org"), but it is the org's to lift, not France's -- so a visitor under it asks
+## for nothing. QA's run had every visitor asking about the Climate Accord's levy
+## and none about the tariff France imposed itself.
+func _check_an_org_levy_brings_no_visitor() -> void:
+	var state = _game()
+	var head := President.leader_id(state.nations["DEU"])
+	_levy(state, "DEU")
+	state.met_months[RK.key(PLAYER, "DEU")] = _now(state)
+	if _arrived_about(state, head) != "":
+		_fail("a visitor asked France to lift an org's levy on their nation")
+
+
+## The visitor's want is France's OWN measure lifted: with it gone, the promise is
+## kept even if an org's levy now stands on the pair -- the order it happens in,
+## since an org writes its levy only on a pair that holds no measure.
+func _check_a_promise_to_lift_ignores_an_org_levy() -> void:
+	var state = _game()
+	var ns = state.player()
+	var head := President.leader_id(state.nations["DEU"])
+	var directed := RK.directed_key(PLAYER, "DEU")
+	_impose(state, "DEU")
+	President.learn(state, ns, _loader, head, 0.6)
+	var due := _now(state) + LK.PROMISE_MIN_MONTHS
+	if not President.commit(state, ns, _loader, "promise", head, "measure:%s" % directed, due):
+		_fail("a promise to the German head was refused")
+		return
+	state.measures.erase(directed)
+	_levy(state, "DEU")
+	state.year = floori((due - 1) / 12.0)
+	state.month = due - state.year * 12
+	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+	if (report["kept"] as Array).size() != 1:
+		_fail("a promise to lift France's own measure, lifted, was not kept under an org's levy: %s" % report)
+
+
 ## A lever on a visitor's request -- pressure by phone, whose spend is a grudge pulse
 ## and rapport -- moves the head's rapport and writes no grudge or loyalty.
 func _check_a_lever_on_a_visitor_writes_no_grudge() -> void:
@@ -354,6 +393,13 @@ func _check_invite_is_the_lanes_door() -> void:
 func _impose(state, nation_id: String) -> void:
 	state.measures[RK.directed_key(PLAYER, nation_id)] = {"action_id": "impose_tariffs", "action_name": "Tariffs",
 		"kind": "tariff", "severity": 0.625, "since_year": state.year, "since_month": state.month, "retaliated": false}
+
+
+## The Climate Accord's levy as Orgs._apply_external_measure() writes it.
+func _levy(state, nation_id: String) -> void:
+	state.measures[RK.directed_key(PLAYER, nation_id)] = {"action_id": "accord_levy", "action_name": "Levy",
+		"kind": "tariff", "severity": 0.3, "since_year": state.year, "since_month": state.month,
+		"org": "climate_accord", "retaliated": true}
 
 
 ## One tick of the lane; what `pid` asked about, or "".

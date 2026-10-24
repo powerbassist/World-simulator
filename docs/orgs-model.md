@@ -98,6 +98,10 @@ same way losing an amendment vote does. What is new is only the countdown
 - Withdrawal stops the ex-member levying the org's collective measures; the
   measures aimed AT it stand — the common external tariff working as designed
   the day after exit.
+- A member cannot lift the org's levy on its own (pre-gate B, RECORD 11): the
+  bilateral lift verbs gate on the member's OWN measure (`Coercion.own_measure()`,
+  which skips an entry tagged `org`), so they are not offered against the levy, and
+  a visitor never asks a member to lift it. The levy ends only by a membership flip.
 - A transfer org's net positions re-derive for every REMAINING member, because
   the mean the formula divides by moved with the roster. The re-derive writes
   live members only: `net_positions()` derives from the AUTHORED table, which
