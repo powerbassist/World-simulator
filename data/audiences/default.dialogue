@@ -269,7 +269,7 @@
 
 ~ lie_uncaught
 % {{name}}: If you say so. You would know better than I, I am sure.
-% {{name}}: Of course. That is, I had heard otherwise, but your version has the advantage of coming from you. We will leave it there.
+% {{name}}: Of course. Your version has the advantage of coming from you, and that is enough for me. We will leave it there.
 % {{name}}: I believe you, {{president}}, or at least I will act exactly as if I did. In politics that amounts to the same courtesy.
 => END
 
@@ -288,7 +288,7 @@
 ~ lever_bargain_aid_success
 % {{name}}: So the line stays in the budget, but bends in our direction. I have always admired how flexible public money becomes in determined hands.
 % {{name}}: A programme for one purpose, quietly serving another. The auditors will see devotion, and I will see results. We are agreed.
-% {{name}}: That will do nicely. Nothing illegal, nothing traceable, merely a sum that wanders off its intended path. Consider my support secured.
+% {{name}}: That will do nicely. Nothing announced, nothing signed, merely a sum that wanders off its intended path. Consider my support secured.
 => END
 
 ~ lever_bargain_aid_failure
