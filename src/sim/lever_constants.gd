@@ -106,6 +106,11 @@ const AID_CLOSED := "aid is not open yet"
 ## A promised date the president names, inside this window from now: too near is
 ## not a promise, too far is not a date.
 const PROMISE_MIN_MONTHS := 3
+## b2.2 (the parent's decision on #122): a word given stands. One promise in flight
+## per person and want -- a promise not believed still binds ("Oui, parole donnee"),
+## so a second date would break the first; stacked promises were an exploit, each
+## kept for PROMISE_KEPT_RAPPORT. The one text for the card and the command (a msgid).
+const WORD_GIVEN := "you have given your word on this already"
 const PROMISE_MAX_MONTHS := 24
 ## Pressure spends rapport, and writes a grudge pulse on success as on failure.
 const PRESSURE_RAPPORT := 0.06

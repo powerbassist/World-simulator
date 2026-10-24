@@ -72,6 +72,7 @@ func _init() -> void:
 	_check_an_agreed_audience_left_open_settles()
 	_check_a_lever_tried_again_rolls_afresh()
 	_check_agree_takes_only_an_agreement_on_a_held_audience()
+	_check_a_word_is_given_once()
 
 	_finish()
 
@@ -906,6 +907,48 @@ func _check_agree_takes_only_an_agreement_on_a_held_audience() -> void:
 			_fail("a held audience was stamped '%s'" % bad)
 	if not Audiences.agree(b["ns"], String(b["id"]), AK.STATUS_PROMISED):
 		_fail("a held audience refused the stamp 'promised'")
+
+
+## b2.2, the parent's decision on #122: a word given stands. A promise not believed
+## still binds ("Oui, parole donnee"), so a second date on the same want -- in the
+## same audience or a later one -- is refused with its reason and writes nothing;
+## stacked promises were an exploit (each kept for PROMISE_KEPT_RAPPORT).
+func _check_a_word_is_given_once() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var pid := ""
+	for person in _loader.people[PLAYER]:
+		if person.id != President.leader_id(ns):
+			pid = person.id
+			break
+	var now := _now(state)
+	var refused_twice := false
+	for n in range(1, 30):
+		ns.commitments.clear()
+		var s := _stage(state, ns, pid, "word%d" % n)
+		var first: Dictionary = Levers.attempt(state, ns, _loader, s, "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS})
+		if bool(first.get("success", true)):
+			Levers.close(state, ns, _loader, s)
+			continue
+		var before := _snapshot(ns, pid)
+		var left := int(s["attempts_left"])
+		var again: Dictionary = Levers.attempt(state, ns, _loader, s, "promise_date", {"due_month": now + LK.PROMISE_MAX_MONTHS})
+		if bool(again.get("ok", true)) or String(again.get("error", "")) != LK.WORD_GIVEN:
+			_fail("a second date on the same want was not refused with its reason: %s" % [again])
+		if _snapshot(ns, pid) != before or int(s["attempts_left"]) != left:
+			_fail("a refused second promise wrote a register or spent an attempt")
+		var row := _row(Levers.offered(state, ns, _loader, s), "promise_date")
+		if bool(row.get("offered", true)) or String(row.get("why_not", "")) != LK.WORD_GIVEN:
+			_fail("the card still offers a second date: %s" % [row])
+		Levers.close(state, ns, _loader, s)
+		var later := _stage(state, ns, pid, "word_later%d" % n)
+		if bool(Levers.attempt(state, ns, _loader, later, "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS}).get("ok", true)):
+			_fail("a later audience took a second date on a want already promised")
+		Levers.close(state, ns, _loader, later)
+		refused_twice = true
+		break
+	if not refused_twice:
+		_fail("a first promise was believed in 29 audiences; the staging needs another person")
 
 
 ## A France game with its first request still pending: {state, ns, id}, or {}.

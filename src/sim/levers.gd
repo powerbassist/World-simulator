@@ -87,7 +87,7 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 	for lever in K.LEVERS:
 		var p := LeverOdds.odds(person, lever, c)
 		var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, p, float(c["knowledge"]))
-		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else "")
+		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else _word_given(ns, person.id, lever, String(session["object"])))
 		var row := {
 			"lever": lever,
 			"offered": why_not == "",
@@ -139,6 +139,9 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	var p := LeverOdds.odds(person, lever, c) if K.LEVERS.has(lever) else -1.0
 	if p < 0.0:
 		refused["error"] = "not a lever offered here"
+		return refused
+	refused["error"] = _word_given(ns, pid, lever, String(session["object"]))
+	if refused["error"] != "":
 		return refused
 	var now := _now(state)
 	var currency := String(args.get("currency", K.CURRENCY_FAVOUR))
@@ -315,6 +318,17 @@ static func _why_not(ns, session: Dictionary) -> String:
 	if why == "" and String(session.get("won", "")) != "":
 		why = "they have already agreed"
 	return why
+
+
+## WORD_GIVEN when `lever` is a promise and one is already in flight to this person
+## on this want (made in this audience or an earlier one), else "".
+static func _word_given(ns, pid: String, lever: String, object: String) -> String:
+	if lever != "promise_date":
+		return ""
+	for row in President.commitments_with(ns, pid):
+		if String(row["kind"]) == "promise" and String(row["object"]) == object:
+			return K.WORD_GIVEN
+	return ""
 
 
 ## The lever's own spend, paid win or lose; what it wrote, after the clamps. A
