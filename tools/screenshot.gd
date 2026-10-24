@@ -68,7 +68,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
@@ -486,6 +487,8 @@ var _election := false
 var _polls_closed := false
 ## V5.1-d1b2 (G9): the head of government's card, pinned as a click on the name pins it.
 var _person_card := false
+## V5.2 pre-gate B (RECORD 5), --rapport X: the card's person carries rapport X.
+var _rapport := 0.0
 ## V5.1-d4, --box ID / --verbs ID: the country box a left click opens on ID, or the
 ## verb menu a right click opens -- through the map's own signal / the box itself.
 var _box := ""
@@ -781,6 +784,8 @@ func _init() -> void:
 			_polls_closed = true
 		elif args[i] == "--person-card":
 			_person_card = true
+		elif args[i] == "--rapport" and i + 1 < args.size():
+			_rapport = float(args[i + 1])
 		elif args[i] == "--box" and i + 1 < args.size():
 			_box = args[i + 1].to_upper()
 		elif args[i] == "--verbs" and i + 1 < args.size():
@@ -1159,6 +1164,8 @@ func _apply_view() -> void:
 					child.show_verbs(_verbs)
 	if _person_card:
 		var pm := String(_main._state.player().pm_person_id)
+		if _rapport != 0.0:
+			_main._state.player().person_rapport[pm] = _rapport
 		_main._stack.tips.person_click(pm, Rect2(640, 220, 1, 16))
 	if _arm_energy and not _main._loader.energy_actions.is_empty():
 		_main._energy_panel.order_armed.emit(String(_main._loader.energy_actions[0].id))
@@ -1992,6 +1999,11 @@ func _stage_phone() -> void:
 	var ns = _main._state.player()
 	var asker := String(load("res://src/sim/audiences.gd").pending(ns)[0]["person_id"])
 	var pid := asker if _phone != "people" else String(ns.pm_person_id)
+	# "spent": the month's call to the asker made, so the card's Call is refused.
+	if _phone == "spent":
+		ns.phone_calls[pid] = int(_main._state.year) * 12 + int(_main._state.month)
+		load("res://src/ui/audience_driver.gd").refresh(_main)
+		return
 	Phone.open_call(_main, pid, talks.gossip_people(_main, pid))
 	if _phone == "dialed":
 		Phone.dialog_of(_main).verbs.topic_button("family").pressed.emit()
