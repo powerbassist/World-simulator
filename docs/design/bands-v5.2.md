@@ -1303,6 +1303,12 @@ author-accepted base current when C6 is built (today
 - **Why B9.4 (INFERRED):** it pins the running-cost rule. Money that moves
   before an election means running costs differ from the start funding; money
   below zero in a regime that never campaigns means the income is mis-shared.
+  **Expected: France's first legislative election can cut the purse even when
+  the incumbent gains seats.** Before it, both shares are the authored 0.28; in
+  the base `hands_off` 2029 row the incumbent takes 0.2408 of the vote and 178
+  of 577 seats (0.3085), so the net income becomes 32.25 × (0.2408 − 0.28) +
+  34.19 × (0.3085 − 0.28) = about −0.29 m a year (INFERRED). A small drop after
+  that election is the rule working, not a failure.
 - **Clause (ii) of `tools/campaign_probe.gd` retires.** It measured the
   campaign's deficit against what was left of `DEFICIT_SCALE_PP`
   ([[campaign-model]] §7b); there is no deficit now, and B9.1 takes its place as
@@ -1338,7 +1344,8 @@ author-accepted base current when C6 is built (today
   of 2026-10-21, an unanswered request is a decline, so the 51-regime table
   may move on the played nation's rows, and the campaign regimes also through
   party money ([[v5.2-spec]], "The re-baseline: the table WILL move", which
-  lists the rows that cannot move). Systems writes the predicted re-baseline before the run, measures
+  lists the rows that cannot move; for the campaign regimes B9 now declares the
+  move, the state line being retired by [[v5.2-c6-party-campaigns]]). Systems writes the predicted re-baseline before the run, measures
   it, and the author accepts it before the merge; B3's ceiling bounds it. The AI
   nations book no audiences and receive no requests.
 
