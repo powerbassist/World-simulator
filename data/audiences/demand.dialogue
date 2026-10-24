@@ -1,6 +1,6 @@
 ~ opening
 % {{name}}: {{president}}, I am not here to ask. I am here to tell you that {{ask}} cannot be put off again, and that I speak for more people than myself.
-% {{name}}: Let us be clear from the start. {{ask}} is not a request. It is a condition, and I would like to hear your answer today.
+% {{name}}: Let us be clear from the start. This is not a request about {{ask}}. It is a condition, and I would like to hear your answer today.
 => END
 
 ~ lever_pressure_success
