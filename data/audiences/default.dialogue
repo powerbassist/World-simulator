@@ -170,3 +170,129 @@
 % {{name}}: The portfolios moved, the speeches were made, and my people noticed where nothing moved. I come to raise {{ask}}.
 % {{name}}: Patience has its season, {{president}}, and ours is ripening. I am here about {{ask}}, and I would rather ask than hint.
 => END
+
+~ offer_executive_party_money
+% {{name}}: There is also a material side to my request, {{president}}. My firm wishes to make a substantial contribution to your party's accounts. Entirely above board, of course.
+% {{name}}: Parties cost money, and ours has never been cheap to run. I am prepared to show my support for yours in a manner the treasurer will find agreeable.
+% {{name}}: My request concerns {{ask}}, and I come with more than arguments. A generous gesture toward your party's finances could be arranged before the end of the quarter.
+=> END
+
+~ offer_accept_executive_party_money
+% {{name}}: Sensible. The treasurer will hear from my office tomorrow. I trust we understand each other well enough to spare ourselves further ceremony.
+% {{name}}: I am glad practical people can settle practical matters. You will find my firm remembers its friends, and forgets to remember anything else.
+% {{name}}: You have my gratitude, and the wire transfer will follow. It has been a pleasure doing this in person, away from the noise.
+=> END
+
+~ offer_refuse_executive_party_money
+% {{name}}: Of course. Forget I raised the matter. I would hate a clumsy gesture to spoil what was, until now, a civil conversation.
+% {{name}}: I misjudged the room, it seems. My firm will pursue its interests through the usual channels. Forgive the habits of an old trader.
+% {{name}}: As you wish. I shall say I never mentioned money, and you may believe I never did. Good day, {{president}}.
+=> END
+
+~ offer_executive_personal_wealth
+% {{name}}: Beyond my request, there is a personal matter. My board is establishing an advisory arrangement, and your name would honour it. The fees are, frankly, generous.
+% {{name}}: People in your position are not in office forever. A small investment opportunity exists, and I would be pleased to reserve a place in it for you.
+% {{name}}: Consider it a token between people who ought to be allies. My firm values counsel such as yours, and it pays for what it values.
+=> END
+
+~ offer_accept_executive_personal_wealth
+% {{name}}: Then the papers will be drawn up quietly. No one need ever connect them to this conversation, and no one will.
+% {{name}}: I confess I hoped you would see the sense of it. The arrangement will be discreet, regular, and entirely yours.
+% {{name}}: Very good. You will find us punctual payers and silent partners. Which, in my trade, is the highest of compliments.
+=> END
+
+~ offer_refuse_executive_personal_wealth
+% {{name}}: A principled president. How refreshing, and how inconvenient. My apologies for presuming upon your time.
+% {{name}}: Then we shall speak only of my original request, and never again of arrangements. Some doors are best left unopened.
+% {{name}}: I withdraw the suggestion entirely, and my admiration for your reputation survives intact. Barely.
+=> END
+
+~ offer_press_owner_personal_wealth
+% {{name}}: My editors are thorough people, {{president}}. A paper's judgment benefits from friendship, and friendship benefits from, let us say, mutual investment.
+% {{name}}: I own newspapers, and I own them for a living. A private arrangement between us would let my columnists write with, shall we say, better judgment about {{ask}}.
+% {{name}}: Coverage follows climate, and climate is something two reasonable people can arrange. A gesture toward your personal foundation would go far in that direction.
+=> END
+
+~ offer_accept_press_owner_personal_wealth
+% {{name}}: Then the weather over your affairs will be mild. My readers will barely recognize the change, which is rather the point.
+% {{name}}: Wise. You will find the morning editions gentler than the season has led you to expect. Consider it a standing arrangement.
+% {{name}}: I am pleased we could settle this like publishers and statesmen. The news cycle, I promise, will show its gratitude.
+=> END
+
+~ offer_refuse_press_owner_personal_wealth
+% {{name}}: A pity. Then my journalists must simply follow their instincts, wherever those may lead them. We shall see what they find.
+% {{name}}: I offered friendship, nothing more, and I shall not insult you by insisting. The presses run regardless, as you know.
+% {{name}}: As you wish. I misjudged you, and one rarely misjudges twice. Do enjoy the Sunday edition.
+=> END
+
+~ affair_why_unmarried
+% {{name}}: Secrecy? For what, exactly? You have no spouse to spare any blushes, {{president}}, and I have no patience for theatre. Dinner on Friday, in public, like honest people.
+% {{name}}: You keep bracing for scandal, and there is none to be had. You are unattached and so am I. We may simply be ordinary about this.
+% {{name}}: If you were married, this whispering might have some charm. As it stands, I see only someone fumbling to ask me to dinner. So ask properly.
+=> END
+
+~ affair_why_spouse
+% {{name}}: An affair, with the person you married. That would be a novelty. Perhaps you should court me again, {{president}}, instead of negotiating with me.
+% {{name}}: Whatever you are proposing, I already have it, ring and certificate included. Though I confess I miss being pursued. You may bring flowers.
+% {{name}}: You want discretion from your own spouse. That is either very sad or very flattering, and tonight I choose flattering. Come home early.
+=> END
+
+~ affair_why_no_spark
+% {{name}}: You are not unattractive, and I am not offended. But whatever this is supposed to feel like, I do not feel it, and I doubt you do either.
+% {{name}}: Let us be kind and be done with it. I admire you, I enjoy your company, and nothing more will come of standing this close. That is simply how it is.
+% {{name}}: There is no version of this that works. Not for lack of courage, only for lack of warmth on both sides. I would rather keep your friendship than pretend.
+=> END
+
+~ affair_why_too_cold
+% {{name}}: I think we both know better. There has been nothing between us but formal words for ages, and formal words do not lead where you imagine.
+% {{name}}: Whatever this was once, it has since cooled past reviving. I will thank you not to embarrass us both by trying.
+% {{name}}: You mistake courtesy for interest, {{president}}. They are distant cousins at best. Let us keep this audience official.
+=> END
+
+~ affair_begin
+% {{name}}: Very well. But we will be careful, and we will be dull about it. No notes, no telephones, and never the same place twice.
+% {{name}}: Then it is understood between us, and understood nowhere else. I find I do not need persuading, only assurances.
+% {{name}}: I accept, on condition that we are neither of us sentimental about it. Whatever happens in this room stays outside history.
+=> END
+
+~ affair_end
+% {{name}}: I will not make a scene, and I will not ask twice. But you might have spared me the speech. That part was unnecessary.
+% {{name}}: So it ends the way it began, with you deciding and me agreeing. I would say I regret it, and on most days I nearly would.
+% {{name}}: I understand, and understanding is the worst part. You will find me correct at every function. Correct is all I intend to be.
+=> END
+
+~ lie_caught
+% {{name}}: The figures I was shown this morning say otherwise. I will assume you were misinformed, and leave it there, for now.
+% {{name}}: You have never lied to me before, and I did not enjoy the novelty. Shall we try the question again, or is my time being spent for nothing?
+% {{name}}: I came here with trust and a folder. The folder proved better company. Tell me, was any of today true?
+=> END
+
+~ lie_uncaught
+% {{name}}: If you say so. You would know better than I, I am sure.
+% {{name}}: Of course. That is, I had heard otherwise, but your version has the advantage of coming from you. We will leave it there.
+% {{name}}: I believe you, {{president}}, or at least I will act exactly as if I did. In politics that amounts to the same courtesy.
+=> END
+
+~ lever_bargain_backroom_success
+% {{name}}: Now that is a language I understand. A quiet word from you, and suddenly committees discover their conscience. Nothing on paper, naturally.
+% {{name}}: Elegant. The right person finds themselves on the right board, the right file moves to the right desk, and no one can point to a thing. I accept.
+% {{name}}: No money changes hands and nothing is asked in the open. That is how real business is done. You have my full agreement.
+=> END
+
+~ lever_bargain_backroom_failure
+% {{name}}: A favour in the shadows is still a debt, and debts in the dark cost double. I would rather have less, in daylight, than that.
+% {{name}}: You are offering me an arrangement I could not survive being seen holding. So no, {{president}}. It is too clever for me.
+% {{name}}: If it went wrong, it would go wrong for both of us, and I would fall further. Find another currency or find another buyer.
+=> END
+
+~ lever_bargain_aid_success
+% {{name}}: So the line stays in the budget, but bends in our direction. I have always admired how flexible public money becomes in determined hands.
+% {{name}}: A programme for one purpose, quietly serving another. The auditors will see devotion, and I will see results. We are agreed.
+% {{name}}: That will do nicely. Nothing illegal, nothing traceable, merely a sum that wanders off its intended path. Consider my support secured.
+=> END
+
+~ lever_bargain_aid_failure
+% {{name}}: Diverted money leaves a trail, and trails end in hearings. I will not build my cause on your bookkeeping.
+% {{name}}: You are asking me to be grateful for funds that could hang us both. Too thin, {{president}}, and far too risky.
+% {{name}}: I have watched better people than you fall over redirected budget lines. Offer me nothing rather than that.
+=> END

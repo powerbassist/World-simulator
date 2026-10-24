@@ -539,6 +539,9 @@ func _run_trade_roundtrip(loader) -> void:
 ## right because nothing was in force. Contrast the two fields that DID earn 9->10
 ## above, both of which read as an actively wrong model.
 func _run_coercion_roundtrip(loader) -> void:
+	# R10: the verb is refused between customs-union members (FRA and DEU share the
+	# EU), so the measure is imposed on a partner outside the union.
+	const TARGET_OUTSIDE_UNION := "GBR"
 	var state = GameState.new_game(loader, "FRA")
 	if not state.errors.is_empty():
 		_fail("new_game reported %s" % [state.errors])
@@ -553,7 +556,7 @@ func _run_coercion_roundtrip(loader) -> void:
 		_fail("no 'impose' measure action to act with")
 		return
 
-	if not Diplomacy.execute(state, loader.diplomatic_actions, action, "FRA", "DEU")["applied"]:
+	if not Diplomacy.execute(state, loader.diplomatic_actions, action, "FRA", TARGET_OUTSIDE_UNION)["applied"]:
 		_fail("could not impose a measure to save")
 		return
 	Economy.tick_month(state)
@@ -574,7 +577,7 @@ func _run_coercion_roundtrip(loader) -> void:
 		return
 
 	var loaded = loaded_result["state"]
-	var directed := Relations.directed_key("FRA", "DEU")
+	var directed := Relations.directed_key("FRA", TARGET_OUTSIDE_UNION)
 	if not loaded.measures.has(directed):
 		_fail("a save round trip dropped the %s measure" % directed)
 		return
@@ -589,14 +592,14 @@ func _run_coercion_roundtrip(loader) -> void:
 
 	# The directed key must survive as a DIRECTED key. JSON keys are strings, so a
 	# separator collision would show up here as a measure readable from both sides.
-	if loaded.measures.has(Relations.directed_key("DEU", "FRA")):
+	if loaded.measures.has(Relations.directed_key(TARGET_OUTSIDE_UNION, "FRA")):
 		_fail("a round trip made the measure readable in both directions")
 
 	# And the effects have to survive with it, or a reloaded game is running a
 	# different model from the one that saved it.
 	if not is_equal_approx(
-		Coercion.trade_multiplier(loaded, "FRA", "DEU"),
-		Coercion.trade_multiplier(state, "FRA", "DEU")
+		Coercion.trade_multiplier(loaded, "FRA", TARGET_OUTSIDE_UNION),
+		Coercion.trade_multiplier(state, "FRA", TARGET_OUTSIDE_UNION)
 	):
 		_fail("the coercion trade multiplier does not survive a save round trip")
 	if not is_equal_approx(Trade.openness_index(loaded, "FRA"), Trade.openness_index(state, "FRA")):
@@ -615,7 +618,7 @@ func _run_coercion_roundtrip(loader) -> void:
 	for id in (no_impulse["nations"] as Dictionary).keys():
 		(no_impulse["nations"][id] as Dictionary).erase("coercion_impulse_pct")
 	var zeroed = GameState.from_dict(no_impulse)
-	if zeroed.nations["DEU"].coercion_impulse_pct != 0.0:
+	if zeroed.nations[TARGET_OUTSIDE_UNION].coercion_impulse_pct != 0.0:
 		_fail("an absent coercion_impulse_pct did not read as exactly 0.0")
 
 	# V1.3c left an assertion here that SAVE_VERSION was STILL 10, so that a later

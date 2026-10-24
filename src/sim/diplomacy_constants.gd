@@ -108,6 +108,8 @@ const PRECONDITION_FIELDS := [
 	# V5.1-0d: the actor's own embassy in the target's capital (open_embassy asks 0),
 	# and whether the pair has diplomatic relations at all (it asks 1).
 	"embassy_held", "relations_exist",
+	# R10 (gate b): the pair shares a customs union (impose_tariffs asks 0).
+	"customs_union_shared",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]

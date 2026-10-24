@@ -1187,6 +1187,19 @@ The single re-read under the player model above (MEASURED, Systems; rows in
 - **Since then (#122, a sim fix):** a promise can no longer stack within one
   audience.
 
+### #131 over seeds 1–20, accepted (2026-10-24)
+
+Systems' #131 read the seeded bands over seeds 1–20 (MEASURED, #131's PR body):
+
+- B2's audiences held went above 30 in 6 of 20 seeds (31 to 39, the busy seeds),
+  against 18 of 20 required;
+- B2's unplaceable share fell below 20 % in 4 of 20 seeds (0.13 to 0.17);
+- B5's phone-first channel row (A4) read 11 at seed 0, under 12, because
+  RECORD 10 removed one requester.
+
+**The author's call, verbatim: "Accepter les trois".** All three misses are
+accepted as they stand.
+
 ## B6 — Corruption is tempting, and it is found out
 
 Over 200 seeded runs (salts), France, otherwise idle.
@@ -1212,6 +1225,116 @@ Over 200 seeded runs (salts), France, otherwise idle.
   "exposure through the press and the courts" is a new trigger,
   [[v5.2-spec]] C7, and the easiest to leave unbuilt; a turned person needs the
   relationship register to reach rival or enemy).
+
+### B5 amendment (2026-10-24, before c1 is built): the shadows enter the grid
+
+Systems' c1 plan (`.superpowers/sdd/v5.2c-plan.md`, "Calls", call 1) adds two
+corrupt bargain currencies, `backroom` (evidence `favour`) and `aid` (evidence
+`diverted_budget`), each with an odds bonus, and a lie variant on argue and
+promise a date (`LIE_ODDS`). Declared before `lever_probe` L2 reads them.
+
+- **They enter B5's grid as four rows of their own:** bargain (backroom),
+  bargain (aid), argue (lie), promise a date (lie). Each is scored at its
+  **expected cost**, beside what it spends openly:
+  - **A corrupt currency:** P(exposed) × the exposure's price. P(exposed) is
+    `shadows_probe` S1's exposed-by-month-60 rate for that currency, at the
+    evidence size the lever writes; Systems reports S1 **per currency** for
+    this (B6 reads it over all currencies). The price is the mean, over the
+    scandal events that route arms, of each event's cheapest choice under
+    the probe's exchange weights, since the player picks the cheapest answer.
+    So `shadows_probe` runs before `lever_probe` L2, and L2's header states
+    both numbers before its run.
+  - **A lie on argue:** P(caught) × the reveal's price. P(caught) is
+    `Lies.catch_chance()` at the cell's listener skill and the president's;
+    the price is `Lies.reveal()`'s (`LIE_RAPPORT` 0.5, `LIE_GRUDGE` 0.15 at
+    `lever_constants.gd:162-164`, and the knowledge kept) under the same
+    weights.
+  - **A lie on promise a date:** caught now at the same P; if not caught, the
+    date reveals it with certainty (B8's third row). So the expected cost is
+    the full reveal price whenever the date falls inside the term, and
+    P(caught) × the price only when it falls after the term ends.
+- **Denominators:** each shadow row counts only the cells where it is offered.
+  The phone offers none (the c1 plan's call 8), so no phone cell counts for
+  them, which is friendship's rule again.
+- **The rows, with the shadows in:**
+
+| | Declared |
+|---|---|
+| Pareto-dominated pairs, the four shadow rows included | **0** |
+| Best net value, any row, a shadow row included | **at most 40 %** of its cells |
+| Best net value, bargain in any currency taken together | **at most 40 %** |
+| Best net value, each of the **six honest levers**, measured with the shadows in the grid | **at least 5 %** (unchanged) |
+| Best net value, each shadow row | **reported**, no floor |
+
+- **Why (OPINION):**
+  - Pricing at the expected cost is what keeps the check honest. Scored at their
+    open cost alone, a bribe and a lie would be "better odds for nothing", the
+    Pareto row would flag them by construction, and the check would measure the
+    pricing rather than the game.
+  - The 40 % ceiling applies to each shadow row and to bargain as a whole,
+    because a player who always bribes is the failure this block most needs to
+    catch.
+  - The honest floors stay, measured with the shadows in the grid: the shadows
+    must not make an honest lever dead.
+  - A shadow row has no floor. Corruption is a temptation, not required
+    content. B6 already measures that offers reach the president (2 to 6 a
+    term).
+- **Failure looks like:** a shadow row best in more than 40 % of its cells (the
+  player learns to cheat by default); bargain, all currencies together, over
+  40 %; an honest lever under 5 % once the shadows are in (crowded out); a
+  dominated pair (a shadow priced below its honest twin on every register).
+- **Not in the grid:** accepting an offer. It is the person's proposal, not a
+  lever the president picks, and B6 bands it.
+
+### B6 amendment (2026-10-24, before c1 is built): rival and enemy on R11's cuts
+
+The c1 plan's bond rule writes `rival` and `enemy` from rapport, with interim
+thresholds −0.5 and −0.8 and a hysteresis to clear (call 2). They are aligned
+with R11's feeling bands ([[v5.2-bplus-spec]], R11), so the game has one
+ladder, not two.
+
+| Bond | Declared | R11's word at that point |
+|---|---|---|
+| `rival` | rapport **< −0.30** | *cold*, `[−1, −0.30)`: the same closed side, so a person is a rival exactly when the card says *cold* |
+| `enemy` | a rival **and** grudge **≥ 0.45** | *hostile, may leak*, `[0.45, 0.60)` and above; 0.45 is `GRUDGE_BRIEF_THRESHOLD` (`character_act_constants.gd:191`) |
+| cleared | the condition fails at the month's check | the word changes in the same month |
+
+- **No hysteresis (OPINION).** With one, the card could read *wary* while the
+  bond still says rival. Rapport does not decay, so nothing makes it flicker
+  but the player's own acts. The grudge decays slowly (0.008 a month), and an
+  enemy turns back into a rival in the same month the grudge word drops from
+  *hostile* to *resentful*.
+- **Why enemy reads the grudge (OPINION):** R11 has no rapport cut below −0.30,
+  and a new one would be the second ladder this amendment exists to avoid. The
+  grudge cut at 0.45 is the word that already promises a leak, and a turned
+  person is the route where "a rival or an enemy talks" ([[v5.2-spec]], the
+  currencies table).
+- **Reach (INFERRED, from the constants):**
+  - A decline costs 0.10 rapport (`DECLINE_RAPPORT`, `audience_constants.gd:64`),
+    so from 0 the fourth decline makes a rival (−0.30 itself is still *wary*).
+    That holds only under the comparison rule below: in doubles, three declines
+    from 0 sum to −0.30000000000000004, under the cut (QA, on 71009167).
+  - One caught lie or broken date costs 0.50 (`LIE_RAPPORT`), so from anything
+    under +0.20 it makes a rival at once.
+  - At the interim −0.5 it took five declines; at −0.8, eight.
+  - So the turned route opens sooner than the plan assumed. `shadows_probe` S2
+    sets the `RATE`s after this, and B6's "each route at least 10 %" is read at
+    these thresholds.
+- **One comparison for every cut (declared):** a register value within
+  **1e-9** of a cut counts as ON the cut, and the cut's declared bracket
+  decides its side. For R11's words and for these bonds alike, in one shared
+  helper that Systems and Interface both call: "below a cut" is
+  `value < cut - 1e-9`, "at or above" is `value >= cut - 1e-9`. So exact sums of
+  the authored steps land on the declared side: three declines read −0.30,
+  *wary*, not a rival. A tolerance and not a rounding of the value, because
+  `snappedf()` multiplies back by a step that is not exact in binary and can
+  miss the cut's own double by one unit. The stored and saved value is
+  unchanged. 1e-9 is far below every authored step (the smallest is the grudge
+  decay, 0.008 a month) and far above a double's error at these magnitudes
+  (about 1e-16).
+- **Failure looks like:** a person shown *cold* who is not a rival, or a rival
+  shown *wary* or warmer (the two ladders disagree); the turned route under
+  10 % in S2 because no one reaches rival (it should not, at these cuts).
 
 ## B7 — The affair is dangerous
 
@@ -1240,6 +1363,80 @@ Over 200 seeded runs (salts), France, otherwise idle.
 - **Failure looks like:** the same catch rate at both skills (skill is
   decorative); a broken date that is not revealed.
 
+## B9 — Campaigns are paid by the party (C6, declared 2026-10-24)
+
+The design is [[v5.2-c6-party-campaigns]]: the efforts re-priced per inhabitant,
+paid monthly from the governing party's money, a public-funding income with
+running costs equal to the start funding, and the state line
+`campaign_bill_pct_gdp` retired. Declared before Systems' run. The base is the
+author-accepted base current when C6 is built (today
+`.superpowers/sdd/qa/base-b3ede2e3.json`).
+
+| Row | Declared |
+|---|---|
+| **B9.1** France's ceiling splits the menu: of the 10 allowed pairs, the number that fit a full 10-month window under EUR 22.509 m | **3 to 7** (5 at the declared prices) |
+| **B9.2** Every regime except `managed_campaigns_early`, `_late` and `_tour`, against the base | **identical** on every column the base already has (every election row, every run row); B9.4's new money column is new, not a move |
+| **B9.3** The three campaign regimes, France: flips against the base | **0** |
+| **B9.3** The same, 2027 vote share, `early` and `late` | **Δ in [0, +0.005]**, and the margin does not fall |
+| **B9.3** The same, 2027 for `tour`, and 2029 and 2032 for all three | **\|Δ\| ≤ 0.005** |
+| **B9.4** France's governing party's money in `hands_off` | **exactly 48.0 until the first legislative election (2029-06)**, then moved only by net funding, and inside [0, 96] over the run |
+
+- **Why B9.1 (OPINION):** the ceiling is what makes the campaign a choice in
+  France. If every pair fits a full window, the ceiling is decorative; if
+  almost none does, there is one answer.
+- **Why B9.2 (INFERRED):** no regime but the three campaigns spends party
+  money, and no vote reads it. Running costs equal the start funding, so the net
+  income is exactly zero until an election changes a party's shares, and after
+  that it still writes only party money. A moved row means party money leaked
+  into something a vote reads.
+- **Why B9.3, and the prediction (INFERRED):** the mobilisation is unchanged
+  (the same efforts, the same accrual); what goes is the deficit the bill added
+  in the months before the vote. So 2027 should rise or stay, provided the
+  harness's own pair fits. The probe's hook runs at the Elections step, after
+  that month's Campaign step (`tools/balance_probe.gd:950-953`; the order is
+  `src/sim/world_month.gd`'s `STEPS`), and `Campaign.execute()` only appends to
+  `campaign_running`, without accruing. So `early` (`campaign_month` 8, the
+  loop's index 7, September 2026) pays and accrues October 2026 to May 2027:
+  **8 months**. Over 8 months, 8 of the 10 pairs fit the ceiling; only town halls
+  with broadcast (EUR 22.9 m) and digital push with broadcast (EUR 25.8 m) do
+  not. `late` (month 14, March 2027) pays **2 months**, April and May, and every
+  pair fits. `tour` changes pair at month 12 (January 2027), so its total is
+  Systems' to compute. (Corrected by QA's round on 400541da: an earlier draft
+  said 9 or 10 and 3 or 4 months. This is the same hook-inside-the-tick fact as
+  #132's first TAKE.) If the
+  harness's pair does not fit, it overspends under the soft ceiling (decided,
+  [[v5.2-c6-party-campaigns]] "The decisions"), which writes party-money
+  evidence: Systems reports the evidence, and an exposure that moves 2029 or
+  2032 through B6's hazard is reported, not failed.
+  The campaign added +0.0009 (`tour`) to +0.0026 (`late`) of vote share in 2027
+  over `managed` (the base: 0.2629; `early` 0.2648, `late` 0.2655, `tour`
+  0.2638), with the fiscal hit inside it, so 0.005 bounds the fiscal half with
+  room.
+- **Why B9.4 (INFERRED):** it pins the running-cost rule. Money that moves
+  before an election means running costs differ from the start funding; money
+  below zero in a regime that never campaigns means the income is mis-shared.
+  **Expected: France's first legislative election can cut the purse even when
+  the incumbent gains seats.** Before it, both shares are the authored 0.28; in
+  the base `hands_off` 2029 row the incumbent takes 0.2408 of the vote and 178
+  of 577 seats (0.3085), so the net income becomes 32.25 × (0.2408 − 0.28) +
+  34.19 × (0.3085 − 0.28) = about −0.29 m a year (INFERRED). A small drop after
+  that election is the rule working, not a failure.
+- **Clause (ii) of `tools/campaign_probe.gd` retires.** It measured the
+  campaign's deficit against what was left of `DEFICIT_SCALE_PP`
+  ([[campaign-model]] §7b); there is no deficit now, and B9.1 takes its place as
+  the affordability clause. Clauses (i) (worth one point of approval, at most
+  the poll floor) and (iii) (at most a fifth of a term) read the mobilisation
+  and the window, which C6 does not touch: no re-run needed.
+- **Reported, not gated:** where the money binds for the other three playable
+  nations ([[v5.2-c6-party-campaigns]], section 7), once Content has sourced
+  their ceilings and pots.
+- **Probes:** `tools/campaign_probe.gd` (B9.1, a table replacing clause (ii));
+  `tools/balance_probe.gd` + `tools/balance_diff.py` (B9.2, B9.3), with the
+  governing party's money added to each election row for B9.4.
+- **Failure looks like:** a regime other than the three campaigns moves; a 2027
+  campaign row falls with the harness's pair under the ceiling; a flip; money
+  that moves before 2029-06 in `hands_off`.
+
 ## Invariants (pass or fail, not bands)
 
 - **I1 — Determinism.** Two identical states produce the same requests, the same
@@ -1259,7 +1456,8 @@ Over 200 seeded runs (salts), France, otherwise idle.
   of 2026-10-21, an unanswered request is a decline, so the 51-regime table
   may move on the played nation's rows, and the campaign regimes also through
   party money ([[v5.2-spec]], "The re-baseline: the table WILL move", which
-  lists the rows that cannot move). Systems writes the predicted re-baseline before the run, measures
+  lists the rows that cannot move; for the campaign regimes B9 now declares the
+  move, the state line being retired by [[v5.2-c6-party-campaigns]]). Systems writes the predicted re-baseline before the run, measures
   it, and the author accepts it before the merge; B3's ceiling bounds it. The AI
   nations book no audiences and receive no requests.
 
@@ -1271,6 +1469,7 @@ Over 200 seeded runs (salts), France, otherwise idle.
 | `tools/balance_probe.gd` (exists) + `tools/balance_diff.py` | `hands_off` at the build tip against the accepted base | B3's 2027 verdict and margin |
 | `tools/lever_probe.gd` | L1 by knowledge band, L2 the grid | B4, B5 |
 | `tools/shadows_probe.gd` | S1 once, S2 always, S3 affair, S4 lies | B6, B7, B8 |
+| `tools/campaign_probe.gd` (exists) + `tools/balance_probe.gd` | the ceiling table; `managed_campaigns_*` and every other regime against the base | B9 |
 
 Each one drives `WorldMonth.tick_month()` through its step hook
 (`tests/test_world_month.gd` fails a copy of the tick order), runs isolated, and

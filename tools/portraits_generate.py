@@ -113,7 +113,7 @@ FEMALE_PROBABILITY = 0.35
 ## wall's sex came from the real counterpart's photo (B2); executives and the
 ## generated nations' majors have no counterpart, so the name is the only
 ## truth there is.
-NAME_SEXED_KINDS = ("executive", "politician")
+NAME_SEXED_KINDS = ("executive", "politician", "regional_figure")
 
 ## 4a. Region look, keyed off the nation prefix already in the person id --
 ## the single biggest missing variety axis (a Finnish and a Greek minister
@@ -508,6 +508,7 @@ def _load_people():
 
 _bench_ids = set()
 _kinds = {}
+_people_names = []
 
 
 def _banned_pattern():
@@ -725,6 +726,46 @@ def generate_photo(person_id, emotion, seed, text):
     return comfy.fetch(first_meta(PHOTO_IMAGE_NODE_OUT)), comfy.fetch(first_meta(PHOTO_MASK_NODE_OUT))
 
 
+def generate_from_bust(person_id, emotion, seed, text):
+    """One mood re-rendered by img2img over the person's OWN neutral bust --
+    the same plain-node workflow as the photo route, with the bust standing in
+    for the photograph. V5.2a: on the photo route identity comes from the
+    photograph at 0.55 denoise, and two moods of a leader came back as a
+    different man (the author's likeness sheet). Anchoring to the neutral
+    bust keeps all five moods one person without moving the face toward the
+    photograph. The neutral raw is the 832x1216 frame, so the output is too."""
+    workflow = json.loads(comfy._confined(PHOTO_WORKFLOW, TOOLS).read_text(encoding="utf-8"))
+    base = comfy._confined(RAW_DIR / "neutral" / (person_id + ".png"), RAW_DIR)
+    workflow[PHOTO_IMAGE_NODE]["inputs"]["image"] = comfy.upload_image(
+        base.read_bytes(), person_id + "_bust.png")
+    workflow[PHOTO_TEXT_NODE]["inputs"]["text"] = text
+    workflow[PHOTO_SEED_NODE]["inputs"]["seed"] = seed
+    prompt_id = comfy.queue(workflow)
+    out = comfy.outputs(prompt_id, timeout_s=900)
+    for node in (PHOTO_IMAGE_NODE_OUT, PHOTO_MASK_NODE_OUT):
+        if not out.get(node):
+            raise RuntimeError("no output at node %s for %s/%s" % (node, person_id, emotion))
+    return comfy.fetch(out[PHOTO_IMAGE_NODE_OUT][0]), comfy.fetch(out[PHOTO_MASK_NODE_OUT][0])
+
+
+def remood(pairs, seed_add) -> int:
+    """--remood <id>:<emotion> (repeatable) [--seed-add N]: redraw those moods
+    from the person's neutral bust. N lets a rejected redraw try another seed
+    without touching the salt (the neutral and the other moods stay put).
+    Run tools/portraits.gd afterwards to ship the WebP."""
+    for pair in pairs:
+        pid, emotion = pair.split(":")
+        comfy._checked_id(pid)
+        if emotion not in EMOTIONS[1:]:
+            raise RuntimeError("--remood takes a non-neutral mood, got '%s'" % emotion)
+        seed, text, _ = prompt_for(pid, dict(_people_names)[pid], emotion)
+        image, mask = generate_from_bust(pid, emotion, seed + seed_add, text)
+        comfy._confined(RAW_DIR / emotion / (pid + ".png"), RAW_DIR).write_bytes(image)
+        comfy._confined(MASK_DIR / emotion / (pid + ".png"), MASK_DIR).write_bytes(mask)
+        print("remood %s %s (seed %d)" % (pid, emotion, seed + seed_add))
+    return 0
+
+
 def _only_filter(people):
     """--only <person_id> (repeatable): generate a slice, not the wall. This is
     Phase B's own verification shape -- a three-person slice (three nations,
@@ -758,6 +799,12 @@ def main():
     global _traits, _roles
     _traits = load_traits(people)
     _roles = roles()
+
+    if "--remood" in sys.argv:
+        global _people_names
+        _people_names = people
+        add = int(sys.argv[sys.argv.index("--seed-add") + 1]) if "--seed-add" in sys.argv else 0
+        return remood([a for i, a in enumerate(sys.argv[1:], 1) if sys.argv[i - 1] == "--remood"], add)
 
     if "--reseed" in sys.argv:
         return reseed(_only_filter(people), people)

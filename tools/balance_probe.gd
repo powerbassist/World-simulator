@@ -1376,10 +1376,16 @@ func _impose_tariffs(state, loader, ns, regime_name: String, year: int, month: i
 		printerr("  no impose/tariff action is authored")
 		return
 
+	# The heaviest partner the verb is OFFERED against: since R10 a fellow member of
+	# a customs union is refused (FRA's heaviest, DEU, shares the EU), and a refused
+	# verb would quietly turn this regime into `managed` -- a run that measures no
+	# coercion at all while the table still names it.
 	var best := ""
 	var best_weight := -1.0
 	var weights := Trade.weights(state, ns.id)
 	for id in weights.keys():
+		if not Diplomacy.available(state, loader.diplomatic_actions, ns.id, id).has(action):
+			continue
 		if float(weights[id]) > best_weight:
 			best_weight = float(weights[id])
 			best = id

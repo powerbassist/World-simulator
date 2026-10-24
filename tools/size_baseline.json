@@ -6,10 +6,10 @@
   "src/core/nation.gd": 546,
   "src/sim/commodities.gd": 338,
   "src/sim/companies.gd": 437,
-  "src/sim/diplomacy.gd": 321,
+  "src/sim/diplomacy.gd": 320,
   "src/sim/government.gd": 324,
   "src/sim/legislature.gd": 682,
-  "src/sim/orgs.gd": 747,
+  "src/sim/orgs.gd": 743,
   "src/sim/statute.gd": 512,
   "src/ui/budget_panel.gd": 304,
   "src/ui/calendar_panel.gd": 447,
@@ -18,7 +18,7 @@
   "src/ui/government_panel.gd": 382,
   "src/ui/law_panel.gd": 351,
   "src/ui/main.gd": 948,
-  "src/ui/map_view.gd": 887,
+  "src/ui/map_view.gd": 879,
   "src/ui/overview_panel.gd": 380,
   "src/ui/tax_panel.gd": 344
  }
