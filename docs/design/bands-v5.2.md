@@ -379,6 +379,85 @@ against, as invariant I4 requires. The acceptance is not complete until Systems
 explains GBR 2039's -0.13 move and the parent records the author's word on it.
 If that explanation changes the sim, the table is re-measured and accepted again.
 
+### B3 amendment, the brief price (2026-10-24)
+
+The author made two calls on 2026-10-24, through the parent's question tool.
+Both are quoted verbatim, and this subsection declares the rows for the run that
+follows them, before Systems runs it.
+
+1. **"Accepter : il perd 2032"**: a president who declines every request for six
+   years may lose 2032.
+2. **"Fuite 40 % moins chère"**: this is Gameplay's option A. A brief's price
+   (`PRICE_BRIEF`, `src/sim/character_act_constants.gd:202`) goes from **-0.25
+   to -0.15**. The other act prices are unchanged (resign -0.8, defect -0.5,
+   challenge -0.6).
+
+The half-life stays at **H = 24**. The re-run at H = 22 moved the 2032 mean only
+from -0.0478 to -0.0460 (MEASURED, the subsection above).
+
+**Two readings above are replaced.** The second answer replaces the reading in
+"B3 amendment, measured, and the author's call", where the two health rows were
+"read as accepted" and "no longer gate V5.2b". From now on, they gate again: the
+price exists to bring them back inside the band. The 2032 row and the 2034 row
+become reported.
+
+| Row, at the new price, against `base-19ff21fc.json` | Declared |
+|---|---|
+| The half-life, one act: 50 % at H, 25 % at 2H | **unchanged**, a band |
+| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime played to month 168 with `stop_on_loss = false` | **at most 0.50**, a band |
+| The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc`, also played to month 168 with `stop_on_loss = false` | **none**, a band |
+| The 2027 executive | **unchanged** (B3's rows), a band |
+| The 2029 legislative: the standing, and \|Δ margin\| ≤ 0.017 in every row | **unchanged**, a band |
+| B3's act row: at least 1 act by month 60 in a decline-everything term | **unchanged**, a band |
+| The 2032 executive: the margins and the flips | **reported**; they go to the author's acceptance (invariant I4) |
+| The 2034 legislative rows | **reported** |
+| GBR, `managed_abolishes_the_monarchy` (2029, 2034, 2039): the verdicts and the margins | **reported**, and **shown to the author before the merge** |
+| P4 (approval movement from acts within ±3.0 points a year) | still binds |
+
+**Why the health rows can come back (INFERRED):**
+
+- A brief's count comes from grudges crossing `GRUDGE_BRIEF_THRESHOLD`, not from
+  its price, so cutting the price leaves the number of briefs where it was.
+- The new clamps are on workers and students, which are `BRIEF_BLOCS`, the blocs
+  a brief lands on.
+- If briefs carry most of the act-written part, a price at 0.6 of the old one
+  takes the measured peaks (-0.592 for FRA, -0.615 for GBR) to about -0.36. That
+  is inside 0.50 with room to spare.
+- Resignations, defections and challenges keep their price. Where they carry a
+  large part of the peak, the share falls less than that.
+- No figure is predicted for 2032. Its growth is not linear (the subsection
+  above), and it is now reported rather than banded.
+
+**Why 2029 stays a band.** It passed at the old price (worst -0.0112, MEASURED).
+A cheaper brief can only make each brief cost less, and the briefs' count does
+not change (INFERRED, the same argument as above). So a 2029 miss at the new
+price would mean something else moved, and that has to be found before the merge.
+
+**Why 2032 and GBR are reported, not banded.** The author has accepted the 2032
+loss as the price of declining everything (answer 1). GBR's 2039 move (-0.13 at
+the old price) still waits for Systems' explanation. The parent shows it to the
+author with the measured table before the merge, so it is reported here instead
+of banded.
+
+**The stop rule for this run, fixed before it:**
+
+1. Run once at -0.15.
+2. If the act-share row or the clamp row misses, it is the author's call again,
+   not a third patch. The options:
+   - a smaller price again, and by how much;
+   - accepting the health misses.
+3. If a 2027 or 2029 row misses, report it before anything else. It is not
+   expected to happen.
+
+**Probes:**
+
+- `tools/balance_probe.gd` at the tip, then
+  `balance_diff.py base-19ff21fc.json tip.json`. This covers the 2027, 2029 and
+  2032 rows, the 2034 rows and the GBR rows.
+- The instrumented `tests/test_balance.gd` reads, with `stop_on_loss = false` in
+  both the base run and the tip run, for the act-share row and the clamp row.
+- `tools/audience_probe.gd`, for B3's act row.
+
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
 
 Knowledge bands: **stranger** `[0, 0.33)`, **acquaintance** `[0.33, 0.67)`,
