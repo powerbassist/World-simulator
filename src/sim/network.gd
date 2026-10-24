@@ -44,6 +44,16 @@ const K = preload("res://src/sim/network_constants.gd")
 ## reads it once and nothing in src/ writes through it.
 static var _matrix_graph: Dictionary = {}
 static var _matrix_rows: Dictionary = {}
+## D14 (A'). The last two graph instances PROVEN equal, so the next test of that
+## pair is by identity. The "~90 us" above is paid by every call whose graph is not
+## the cached instance -- which is every call on Budget.project()'s copy (a deep
+## duplicate, by the state-copy contract), twice per accessibility() miss (the
+## table, then the foreign part), 41 nations x two systems a projected month:
+## about 700 ms of a two-projection forecast refresh. Sound on the promise the
+## caches above already rest on: content is never mutated, so two instances found
+## equal stay equal.
+static var _equal_a: Dictionary = {}
+static var _equal_b: Dictionary = {}
 ## ONE ENTRY PER DISTINCT WEIGHTS VECTOR, not one slot. A single slot could never
 ## hit the case the paragraph above describes: accessibility() is called once per
 ## nation per system, so between Migration's call for FRA and Unrest's call for FRA
@@ -136,7 +146,7 @@ static func distances_from(graph: Dictionary, from_id: String) -> Dictionary:
 ## own rule one module over.
 static func accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
 	for entry in _memo:
-		if entry["weights"] == weights and entry["graph"] == graph:
+		if entry["weights"] == weights and _same_graph(graph, entry["graph"]):
 			return entry["index"]
 	var raw: Dictionary = {}
 	var ids: Array = weights.keys()
@@ -215,7 +225,7 @@ static func distance_row(graph: Dictionary, from_id: String) -> Dictionary:
 ## cache comment above the constants for why this is a cache and not a computation
 ## the caller schedules.
 static func _distance_rows(graph: Dictionary) -> Dictionary:
-	if graph == _matrix_graph and not _matrix_rows.is_empty():
+	if not _matrix_rows.is_empty() and _same_graph(graph, _matrix_graph):
 		return _matrix_rows
 	var rows: Dictionary = {}
 	for region_id in graph.get("endowment", {}).keys():
@@ -223,6 +233,18 @@ static func _distance_rows(graph: Dictionary) -> Dictionary:
 	_matrix_graph = graph
 	_matrix_rows = rows
 	return rows
+
+
+## The caches' graph test: `==` (by value, see the cache comment above the
+## constants), remembered by identity once it has held for a pair.
+static func _same_graph(a: Dictionary, b: Dictionary) -> bool:
+	if is_same(a, b) or (is_same(a, _equal_a) and is_same(b, _equal_b)):
+		return true
+	if a != b:
+		return false
+	_equal_a = a
+	_equal_b = b
+	return true
 
 
 ## region id -> sum over EVERY OTHER region k of endowment_k * exp(-d/decay),
@@ -234,7 +256,7 @@ static var _foreign_graph: Dictionary = {}
 static var _foreign_rows: Dictionary = {}
 
 static func _foreign_part(graph: Dictionary) -> Dictionary:
-	if graph == _foreign_graph and not _foreign_rows.is_empty():
+	if not _foreign_rows.is_empty() and _same_graph(graph, _foreign_graph):
 		return _foreign_rows
 	var endowment: Dictionary = graph.get("endowment", {})
 	var rows: Dictionary = _distance_rows(graph)
