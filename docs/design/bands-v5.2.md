@@ -864,16 +864,78 @@ here; the values are OPINION, as declared):
   Every value, bound and sensitivity above was recomputed here before it was
   written down.
 
+**The first read, and the player model the row reads (2026-10-24, declared
+before the re-read).**
+
+*The timeline, stated plainly:*
+
+1. The price 1.05 was declared, and its re-derivation merged with #116.
+2. GLM's red-team, re-derived here, found that delegation won every request
+   whose want the player will serve, against the spec's Book row. The parent
+   decided to price the in-person gains (decision 2) on that red-team call,
+   before any result arrived.
+3. Before this declaration landed, Systems read the row once at 1.05
+   (MEASURED: `.superpowers/sdd/systems-b21/b5_answers_rows.txt`). Over 37
+   requests, decline was best in 83.8 %, book in 13.5 % and delegate in 2.7 %.
+   All 37 were strangers (A2 uses no lever and no topic). One of the 37 wants
+   was served by its due date.
+4. That read is a band-definition gap, not a miss. The derivation assumed a
+   coin, P(kept) = 0.5, while the probe's world is a passive player who serves
+   one want in 37. The row's player model and the derivation's disagree.
+   This subsection closes the gap. No shares were computed on the first
+   read's rows before this was written.
+
+*The player model the row reads:*
+
+- **Two intents, equal weight.** Each request is scored twice: once as
+  "will serve" (K = 1, the commitment kept, and the promise made in person
+  kept) and once as "won't serve" (K = 0). Each case weighs one half, so the
+  population is 2 × N. The run's own K is not used, because the passive
+  probe's serve rate is not a player the band means. The equal weight is the
+  derivation's own coin, now stated for the read as well.
+- **Knowledge mix: the run's actual one.** Each person is scored at their
+  knowledge at the request month in A2. MEASURED at this build: 37 of 37
+  strangers. That matches the game: B1's people ask two to four times a term,
+  so most requests come from people the president barely knows. A second
+  table at a declared mix (a third each of stranger, acquaintance and known)
+  is reported beside it, for information only. The band reads the first.
+- **The cells as the probe builds them:** the person's lever, its odds p and
+  spend s, and their grudge g, all from the run. The spends are included (the
+  derivation left them out, a lean it stated). The in-person gains are
+  included at their declared prices.
+- **Ties:** decline and unanswered count as one answer, "refuse" (the tie
+  rule).
+
+*Expected (INFERRED, from the legs, not from the first read's rows):*
+
+- A stranger-heavy population sends "won't serve" mostly to refuse, and
+  "will serve" mostly to delegate. Strangers with high odds (a vain person
+  open to flattery, for example) book.
+- Refuse and delegate should each be near or under half, and book a minority.
+- **What the model makes of the row (INFERRED, from the formulas).** Refuse
+  cannot win a "will serve" case, because delegation then costs about 0
+  against refuse's −0.23 or worse. Delegation cannot win a "won't serve" case
+  either: it costs at least −0.36 against refuse's −0.23. Refuse and delegate
+  are therefore each capped at 50 % by construction, and the row binds only on
+  book. It catches the failure "the diary is the wall" (book best in both
+  intents for most people), not "everyone delegates" or "everyone refuses".
+  Those two are reported as information: refuse's share within "won't serve",
+  and delegate's share within "will serve".
+
+*After the re-read:* the row is re-read once, on the build with delegation's
+commitment and both in-person gains. A miss goes to the author, with no
+further re-declaration (the parent's rule, 2026-10-24).
+
 **The stop rule:**
 
-1. The row is read once, at 1.05, on the build that has delegation's
-   commitment AND the in-person gains (being received; the promise kept in
-   person).
+1. The row is re-read once, at 1.05, under the player model above, on the
+   build that has delegation's commitment AND the in-person gains (being
+   received; the promise kept in person).
 2. If book, delegate or refuse is the best answer in more than 50 % of requests,
-   the price is **not** re-tuned to the run. It is the author's call:
-   - re-price delegation's commitment, with a new reason declared before a
-     new read;
-   - change the price, with a new reason declared before a new read;
+   the price is **not** re-tuned to the run, and the band is not re-declared.
+   It is the author's call:
+   - re-price delegation's commitment;
+   - change the price;
    - accept the result.
 
 **Probe:** the per-request net values above, over `tools/audience_probe.gd`
