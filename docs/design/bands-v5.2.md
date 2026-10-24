@@ -328,7 +328,7 @@ this subsection records what they measured and what the author accepted.
 
 | Row | H = 24 | H = 22 | Status |
 |---|---|---|---|
-| Half-life, one act: 50 % at H, 25 % at 2H | PASS (`test_characters`) | — | holds |
+| Half-life, one act: 50 % at H, 25 % at 2H | PASS (`test_characters`) | — | holds; QA RECORD: the test pins the literals 24 and 48, not the shipped constant (Systems' to fix) |
 | 2027 executive: verdict and \|Δ margin\| ≤ 0.017 | PASS, all 50 rows unchanged | PASS | holds |
 | 2029 standing unchanged | PASS, majority in 41 of 41 | PASS | holds |
 | 2029 \|Δ margin\| ≤ 0.017 | PASS: mean -0.0102, worst -0.0112; incumbent seats -4 to -10 | PASS: worst -0.0108 | holds |
@@ -347,15 +347,23 @@ author chose to accept rather than cut. So this note reads the call as accepting
 the table as measured, both health rows included. That reading is INFERRED; the
 parent confirms it.
 
+Both were read from an instrumented `test_balance` that kept `_play`'s default
+`stop_on_loss = true`, not the declared runs to month 168. QA notes that this
+leaves the misses standing: a longer run can only add to a breach, and the base
+runs that held 2032 reached month 168 without these clamps. A future price change
+is measured with the declared 168-month runs.
+
 Read under that call, the 0.50 ceiling and the clamp row stay declared, as the
 bound a future price change is measured against. They no longer gate V5.2b.
 
 **What the half-life changed** (MEASURED, from the two runs): almost nothing.
 The 2032 mean moved -0.0478 at H = 24 and -0.0460 at H = 22. The 2032 harm comes
 from briefs in the term's years four to six, which no half-life near two years
-clears before that vote. The fade does its job on the vote after next (2029
-passes, 2027 is untouched). Against #104's permanent cost, all 83 changed rows
-move up (MEASURED, against `tip-104-e32c19cb.json`). What it cannot do is make a
+clears before that vote. For those briefs 2032 is the NEXT vote, not the vote
+after next, so the fade's purpose ('forgotten by the vote after next') is not
+what failed. What the fade did do: the 2029 cost fell from #104's mean -0.0164
+to -0.0102, and against #104's permanent cost every one of the 83 rows that
+changed past tolerance moved up (MEASURED, against `tip-104-e32c19cb.json`). What it cannot do is make a
 president who answers no one for six years safe in 2032. The author chose that
 this is the honest price.
 
@@ -363,10 +371,11 @@ this is the honest price.
 2032 and a mean between -0.005 and -0.05. The mean landed inside that range;
 the flip count, 28, did not.
 
-**The re-baseline.** Accepting the loss accepts `bal_b1_fade.json`
-(= `tip-104-dadbdf68.json`) as the table the next sim PR compares against, as
-invariant I4 requires. The exception is the GBR row, which stays open until
-Systems explains it.
+**The re-baseline.** Accepting the loss makes `bal_b1_fade.json`
+(= `tip-104-dadbdf68.json`) the candidate table for the next sim PR to compare
+against, as invariant I4 requires. The acceptance is not complete until Systems
+explains GBR 2039's -0.13 move and the parent records the author's word on it.
+If that explanation changes the sim, the table is re-measured and accepted again.
 
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
 
