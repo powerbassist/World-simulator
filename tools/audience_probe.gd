@@ -44,7 +44,8 @@ extends SceneTree
 ##               promise_date adds A x 0.5 x 0.25 at K=1 (kept in person) and
 ##               subtracts A x (0.5 x 0.5 + 0.15 x intake + KV(0.5 k')) at K=0 (the
 ##               lie at its date, k' = k + 0.05 (1 - k));
-##        KV(dk) = dk x B5_SLOPE x 3q^2 x B5_ENCOUNTERS, the knowledge valued.
+##        KV(dk) = dk x KNOW_SLOPE x 3q^2 x ENCOUNTERS, the knowledge valued
+##        (the arithmetic is tools/lever_weights.gd's, checked on the declared legs).
 ##      B5: book <= 50 % of all cases; within "will serve" book >= 5 % and delegate
 ##      >= 5 %; within "won't serve" refuse >= 5 % (a tie counts for each answer it
 ##      ties). For information: the same at a declared mix (each request at the
@@ -76,11 +77,7 @@ const MONTHS := 60
 const B5_ARRIVALS_UPTO := 60
 const B5_MONTHS := B5_ARRIVALS_UPTO + 1 + CalK.BOOKING_HORIZON_MONTHS
 const NAMED_GRUDGE := 0.05
-## B5's answers row (bands-v5.2.md "The in-person gains"): B4's slope, odds per unit
-## of knowledge from its declared midpoints; the further encounters a term holds
-## with one person (B1); the declared mix's knowledge, a third each.
-const B5_SLOPE := 0.448
-const B5_ENCOUNTERS := 2.0
+## B5's answers row: the declared mix's knowledge, a third each (information).
 const B5_MIX := [0.165, 0.5, 0.835]
 
 var _loader
@@ -278,20 +275,20 @@ func _b5_table(requests: Array, mix: bool) -> Dictionary:
 		for k in ks:
 			var cell: Dictionary = (r["cell"] as Dictionary).duplicate()
 			cell["knowledge"] = float(k)
-			for intent in cases:
+			for intent in ["will_serve", "wont_serve"]:
 				var v := _b5_values(person, cell, float(r["g"]), float(r["snub"]), intent == "will_serve")
 				cases[intent] += w
 				var top := maxf(maxf(float(v["book"]), float(v["delegate"])), float(v["refuse"]))
-				for answer in best[intent]:
+				for answer in ["book", "delegate", "refuse"]:
 					if float(v[answer]) >= top - 0.000000001:
 						best[intent][answer] += w
 				if not mix:
 					r[intent] = v
 					levers[v["lever"]] = int(levers.get(v["lever"], 0)) + 1
 	var shares := {"all": {}}
-	for intent in best:
+	for intent in ["will_serve", "wont_serve"]:
 		shares[intent] = {}
-		for answer in best[intent]:
+		for answer in ["book", "delegate", "refuse"]:
 			shares[intent][answer] = float(best[intent][answer]) / maxf(1.0, float(cases[intent]))
 	for answer in ["book", "delegate", "refuse"]:
 		shares["all"][answer] = (float(best["will_serve"][answer]) + float(best["wont_serve"][answer])) / maxf(1.0, float(cases["will_serve"]) + float(cases["wont_serve"]))
@@ -304,13 +301,6 @@ func _b5_table(requests: Array, mix: bool) -> Dictionary:
 ## One case's three answers, as bands-v5.2.md's table and player model declare
 ## them; book is the best offered lever's three-attempt net under the intent.
 func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool) -> Dictionary:
-	var r_w := float(LW.WEIGHTS["rapport"])
-	var refuse := -(g + r_w * -AK.DECLINE_RAPPORT)
-	var delegate := -(AK.DELEGATE_GRUDGE_SHARE * g + r_w * snub)
-	if serve:
-		delegate += r_w * LK.DELEGATED_KEPT_RAPPORT
-	else:
-		delegate -= (1.0 - AK.DELEGATE_GRUDGE_SHARE) * g + LK.IOU_BETRAYAL_GRUDGE + r_w * LK.IOU_BETRAYAL_RAPPORT
 	var k := float(cell["knowledge"])
 	var book := -INF
 	var pick := ""
@@ -318,26 +308,11 @@ func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool) ->
 		var p := LeverOdds.odds(person, lever, cell)
 		if p < 0.0:
 			continue
-		var q := 1.0 - p
-		var a := 1.0 - q * q * q
-		var v := a - LW.cost(LW.spend(person, lever, p)) * (1.0 + q + q * q) + q * q * q * refuse - LW.DIARY_DAY \
-			+ r_w * AK.RECEIVED_RAPPORT + _b5_kv(AK.KNOW_AUDIENCE * (1.0 - k), q)
-		if lever == "promise_date":
-			if serve:
-				v += a * r_w * LK.PROMISE_KEPT_RAPPORT
-			else:
-				var k_then := k + AK.KNOW_AUDIENCE * (1.0 - k)
-				v -= a * (r_w * LK.LIE_RAPPORT + LK.LIE_GRUDGE * Characters.grudge_intake(person) + _b5_kv((1.0 - LK.LIE_KNOWLEDGE_KEEP) * k_then, q))
+		var v := LW.book_value(p, LW.cost(LW.spend(person, lever, p)), g, k, serve, lever == "promise_date", Characters.grudge_intake(person))
 		if v > book:
 			book = v
 			pick = lever
-	return {"book": book, "delegate": delegate, "refuse": refuse, "lever": pick}
-
-
-## Knowledge `dk` valued in asks: B4's slope x the person's three-attempt
-## sensitivity 3q^2 x the further encounters this term.
-func _b5_kv(dk: float, q: float) -> float:
-	return dk * B5_SLOPE * 3.0 * q * q * B5_ENCOUNTERS
+	return {"book": book, "delegate": LW.delegate_value(g, snub, serve), "refuse": LW.refuse_value(g), "lever": pick}
 
 
 ## The five refused people whose grudge climbed highest, for the act row's
