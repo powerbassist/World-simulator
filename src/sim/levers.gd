@@ -234,16 +234,23 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 ## One commitment at its date: its verdict, its price written.
 static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leaders: Dictionary) -> String:
 	var person = loader.person_by_id.get(String(row["person_id"]))
+	var object := String(row["object"])
 	var want := {}
 	if person != null:
 		for w in person.wants:
-			if String(w["object"]) == String(row["object"]):
+			if String(w["object"]) == object:
 				want = w
+	# b3: a visitor's ask names a measure the played nation holds, not a want in
+	# content; it is served once the measure is lifted.
+	if person != null and object.begins_with("measure:"):
+		want = {"measure": object.substr("measure:".length())}
 	if want.is_empty():
 		return "void"
 	var pid := String(person.id)
 	var kind := String(row["kind"])
-	if Characters.want_served(ns, person, want, meters, leaders):
+	var served: bool = not state.measures.has(want["measure"]) if want.has("measure") \
+		else Characters.want_served(ns, person, want, meters, leaders)
+	if served:
 		if kind != "iou":
 			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT)
 		return "kept"

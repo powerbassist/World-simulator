@@ -25,6 +25,8 @@ extends RefCounted
 ## judges for a portfolio -- the request promises no person-level appointment.
 
 const Characters = preload("res://src/sim/characters.gd")
+const President = preload("res://src/sim/president.gd")
+const RK = preload("res://src/core/relations.gd")
 
 
 ## [[person, want], ...] in the order they are invited: the programme's people in
@@ -51,4 +53,21 @@ static func invitations(state, ns, loader, meters: Dictionary, leaders: Dictiona
 			if String(want["object"]) == moved and not Characters.want_served(ns, person, want, meters, leaders):
 				out.append([person, want])
 				break
+	return out
+
+
+## b3, the author's answer (2026-10-24, "Lever une mesure francaise"): the head of
+## a nation that state-visited the played nation in this tick -- only an AI turn
+## stamps met_months inside the tick, and only by a verb that opens a meeting --
+## asks to have the played nation's measure on their nation lifted, and only when
+## one stands. [[head, want], ...]; Audiences gives them a place of their own.
+static func visitors(state, ns, loader, now: int) -> Array:
+	var out := []
+	for nation_id in state.nations:
+		if nation_id == ns.id or int(state.met_months.get(RK.key(ns.id, nation_id), -1)) != now:
+			continue
+		var directed := RK.directed_key(ns.id, nation_id)
+		var head = loader.person_by_id.get(President.leader_id(state.nations[nation_id]))
+		if state.measures.has(directed) and head != null:
+			out.append([head, {"object": "measure:%s" % directed, "stance": "want"}])
 	return out

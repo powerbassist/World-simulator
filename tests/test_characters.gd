@@ -308,6 +308,7 @@ func _sim_files() -> Array[String]:
 func _check_refusal_price_reads_the_traits() -> void:
 	for case in [[[], 1.0], [["loyal"], 0.5], [["principled"], 2.0], [["loyal", "principled"], 1.0]]:
 		var ns = NationState.new()
+		ns.id = "FRA"  # b3: grudge and loyalty are this nation's people's (price_refusal's gate)
 		var person = Person.new()
 		person.id = "FRA_case"
 		for t in case[0]:
@@ -328,6 +329,7 @@ func _check_refusal_price_reads_the_traits() -> void:
 	var ceiling: float = CharacterK_Act.GRUDGE_REFUSAL_CEILING
 	for start in [ceiling - 0.05, ceiling, 0.95]:
 		var near = NationState.new()
+		near.id = "FRA"
 		var p = Person.new()
 		p.id = "FRA_near"
 		near.person_grudges["FRA_near"] = start

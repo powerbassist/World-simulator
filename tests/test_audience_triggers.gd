@@ -15,6 +15,13 @@ extends SceneTree
 ##     month and the portfolio -- never a no-op assign, never a government's seating;
 ##     the month after, whoever wanted THAT portfolio and did not get it asks,
 ##     outside the hazard and under the lane's rules.
+##   - A VISITOR UNDER A FRENCH MEASURE ASKS TO HAVE IT LIFTED (the author's answer,
+##     2026-10-24, "Lever une mesure francaise"): only when the played nation holds
+##     a measure against the visiting nation; priced in rapport only (a foreign head
+##     carries no grudge or loyalty on this register); its own cap, outside the
+##     domestic lane's; a promise to lift is judged on the measure itself.
+##   - THE G7 HOOK: Audiences.invite() is a door into the lane under its rules, for
+##     V5.3c's builder (a private firm's chief executive on a "price:" object).
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -27,6 +34,8 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const Levers = preload("res://src/sim/levers.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
 
 const METERS := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
 
@@ -50,6 +59,11 @@ func _init() -> void:
 	_check_only_the_players_reshuffle_is_stamped()
 	_check_an_office_want_asks_after_a_reshuffle()
 	_check_a_served_office_want_does_not_ask()
+	_check_a_visitor_under_a_french_measure_asks()
+	_check_a_visitor_costs_rapport_only()
+	_check_visitors_have_their_own_cap()
+	_check_a_promise_to_lift_is_judged_on_the_measure()
+	_check_invite_is_the_lanes_door()
 
 	_finish()
 
@@ -188,7 +202,157 @@ func _check_a_served_office_want_does_not_ask() -> void:
 		_fail("a served portfolio want was invited")
 
 
+## A head whose nation state-visited France this tick asks to have France's measure
+## on their nation lifted -- and only then: no measure, or a visit stamped last
+## month, and nobody asks.
+func _check_a_visitor_under_a_french_measure_asks() -> void:
+	var state = _game()
+	var ns = state.player()
+	var head := President.leader_id(state.nations["DEU"])
+	var object := "measure:%s" % RK.directed_key(PLAYER, "DEU")
+	state.met_months[RK.key(PLAYER, "DEU")] = _now(state)
+	if _arrived_about(state, head) != "":
+		_fail("a visitor with no French measure on their nation asked")
+	state = _game()
+	_impose(state, "DEU")
+	state.met_months[RK.key(PLAYER, "DEU")] = _now(state) - 1
+	if _arrived_about(state, head) != "":
+		_fail("a visit stamped last month sent a request")
+	state = _game()
+	_impose(state, "DEU")
+	state.met_months[RK.key(PLAYER, "DEU")] = _now(state)
+	if _arrived_about(state, head) != object:
+		_fail("the visiting %s under a French measure did not ask about %s" % [head, object])
+
+
+## Declining a visitor -- or letting the request lapse -- costs rapport only: no
+## grudge, no loyalty for a foreign head, and the card says so.
+func _check_a_visitor_costs_rapport_only() -> void:
+	var state = _game()
+	var ns = state.player()
+	var head := President.leader_id(state.nations["DEU"])
+	_impose(state, "DEU")
+	state.met_months[RK.key(PLAYER, "DEU")] = _now(state)
+	Audiences.tick_month(state, _loader, METERS)
+	var id := _request_of(ns, head)
+	if id == "":
+		_fail("no visitor request to decline")
+		return
+	if float(Audiences.decline_price(ns, _loader, id)["grudge"]) != 0.0:
+		_fail("a visitor's card names a grudge price")
+	var r: Dictionary = Audiences.decline(state, ns, _loader, id)
+	if ns.person_grudges.has(head) or ns.person_loyalty.has(head):
+		_fail("declining a visitor wrote grudge or loyalty for %s" % head)
+	if absf(President.rapport(ns, head) - AK_DECLINE()) > 0.000001 or not bool(r.get("ok", false)):
+		_fail("declining a visitor left rapport %.3f (%s)" % [President.rapport(ns, head), r])
+
+
+## A visitor does not queue behind a full domestic lane, and a second visitor waits
+## while one is open.
+func _check_visitors_have_their_own_cap() -> void:
+	var state = _game()
+	var ns = state.player()
+	var n := 0
+	for person in _loader.people[PLAYER]:
+		if n >= K.MAX_PENDING:
+			break
+		if person.id == President.leader_id(ns):
+			continue
+		ns.audience_requests.append({"id": "%s|full" % person.id, "person_id": person.id, "object": "programme:none",
+			"stance": "sponsor", "arrived_month": _now(state), "deadline_month": _now(state) + 2,
+			"status": K.STATUS_PENDING, "date": {}, "resolved_month": -1})
+		n += 1
+	for nation_id in ["DEU", "ITA"]:
+		_impose(state, nation_id)
+		state.met_months[RK.key(PLAYER, nation_id)] = _now(state)
+	Audiences.tick_month(state, _loader, METERS)
+	var visitors := 0
+	for row in ns.audience_requests:
+		if String(row["object"]).begins_with("measure:"):
+			visitors += 1
+	if visitors != K.MAX_PENDING_FOREIGN:
+		_fail("%d visitor requests arrived beside a full domestic lane, not %d" % [visitors, K.MAX_PENDING_FOREIGN])
+
+
+## A promise to lift the measure is judged on the measure at its date: lifted, it
+## is kept; still standing, it is a lie -- rapport and knowledge fall, and no
+## grudge lands on a foreign head.
+func _check_a_promise_to_lift_is_judged_on_the_measure() -> void:
+	for lifted in [true, false]:
+		var state = _game()
+		var ns = state.player()
+		var head := President.leader_id(state.nations["DEU"])
+		var directed := RK.directed_key(PLAYER, "DEU")
+		_impose(state, "DEU")
+		President.learn(state, ns, _loader, head, 0.6)
+		var due := _now(state) + LK.PROMISE_MIN_MONTHS
+		if not President.commit(state, ns, _loader, "promise", head, "measure:%s" % directed, due):
+			_fail("a promise to the German head was refused")
+			return
+		if lifted:
+			state.measures.erase(directed)
+		var r0 := President.rapport(ns, head)
+		state.year = floori((due - 1) / 12.0)
+		state.month = due - state.year * 12
+		var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+		var verdict := "kept" if lifted else "broken"
+		if (report[verdict] as Array).size() != 1:
+			_fail("a promise to lift (lifted %s) was judged %s" % [lifted, report])
+		var want := LK.PROMISE_KEPT_RAPPORT if lifted else -LK.LIE_RAPPORT
+		if absf(President.rapport(ns, head) - r0 - want) > 0.000001:
+			_fail("a promise to lift (lifted %s) moved rapport by %.3f, not %.3f" % [lifted, President.rapport(ns, head) - r0, want])
+		if ns.person_grudges.has(head):
+			_fail("a broken promise to a foreign head wrote a grudge")
+
+
+## Audiences.invite() puts a request in the lane on the caller's object, under the
+## lane's rules: a person of this nation, not twice while one is open, never past
+## the cap, never a foreign id.
+func _check_invite_is_the_lanes_door() -> void:
+	var state = _game()
+	var ns = state.player()
+	var chief := ""
+	for person in _loader.people[PLAYER]:
+		if String(person.kind) == "executive":
+			chief = person.id
+			break
+	var r: Dictionary = Audiences.invite(state, ns, _loader, chief, "price:a_project", "want")
+	if not bool(r.get("ok", false)) or String(r["request"].get("object", "")) != "price:a_project" \
+			or Audiences.request(ns, String(r["request"].get("id", ""))).is_empty():
+		_fail("inviting the chief executive %s on a price failed: %s" % [chief, r])
+	if bool(Audiences.invite(state, ns, _loader, chief, "price:another", "want").get("ok", true)):
+		_fail("a person with a request open was invited again")
+	var head := President.leader_id(state.nations["DEU"])
+	if bool(Audiences.invite(state, ns, _loader, head, "price:a_project", "want").get("ok", true)):
+		_fail("a foreign head was invited into the domestic lane")
+
+
 # --- Helpers ------------------------------------------------------------------------
+
+## The played nation imposes a tariff on `nation_id` (the measure register's shape).
+func _impose(state, nation_id: String) -> void:
+	state.measures[RK.directed_key(PLAYER, nation_id)] = {"action_id": "impose_tariffs", "action_name": "Tariffs",
+		"kind": "tariff", "severity": 0.625, "since_year": state.year, "since_month": state.month, "retaliated": false}
+
+
+## One tick of the lane; what `pid` asked about, or "".
+func _arrived_about(state, pid: String) -> String:
+	for row in Audiences.tick_month(state, _loader, METERS)["arrived"]:
+		if String(row["person_id"]) == pid:
+			return String(row["object"])
+	return ""
+
+
+func _request_of(ns, pid: String) -> String:
+	for row in Audiences.pending(ns):
+		if String(row["person_id"]) == pid:
+			return String(row["id"])
+	return ""
+
+
+func AK_DECLINE() -> float:
+	return K.DECLINE_RAPPORT
+
 
 ## person id -> the object they are invited about this month.
 func _invited(state, ns) -> Dictionary:

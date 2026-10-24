@@ -31,6 +31,10 @@ const REQUEST_WINDOW_MONTHS := 2
 ## The lane's ceiling, held in the sim so the inbox can never drop one: a
 ## request that would be a fifth waits for a free place next month.
 const MAX_PENDING := 4
+## b3: a visiting head's request waits in a place of its own (one at a time), so a
+## head of state never queues behind a mayor and never pushes one out -- the
+## domestic lane, and the bands measured on it, are untouched by visitors.
+const MAX_PENDING_FOREIGN := 1
 
 ## Resolved rows the lane remembers, for the person card's history.
 const RESOLVED_KEPT_MONTHS := 12
