@@ -174,7 +174,9 @@ func _check_lift_never_clears_an_org_levy() -> void:
 	state.measures[directed]["org"] = "climate_accord"
 	var available: Array = Diplomacy.available(state, _loader.diplomatic_actions, PLAYER, TARGET)
 	for kind in ["tariff", "sanction"]:
-		if available.has(_lift_action_for(kind)):
+		if _lift_action_for(kind) == null:
+			_failures.append("no %s lift in the content -- the org-levy check would pass vacuously" % kind)
+		elif available.has(_lift_action_for(kind)):
 			_failures.append("a %s lift is offered against an org's levy" % kind)
 	if available.has(_measure_action("impose", "tariff")):
 		_failures.append("an impose is offered on a pair an org's levy occupies")
