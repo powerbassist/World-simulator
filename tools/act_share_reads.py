@@ -9,12 +9,11 @@ Usage:
 the first month out of office, an executive loss or the term limit (bands-v5.2.md,
 "Correction: the read window"). The act share is the tip's own: its largest
 act-written share of bloc_offset over the months the tip run governed. The clamp row
-compares each tip run with the base run of the same number over the months BOTH
-governed, the intersection of their MONTH lines: a tip clamp is new unless the base run
-had that bloc on the clamp at or before the same month, so a base clamp that comes later
-does not excuse the tip, and a tip clamp after the window does not count against it. A tip
-clamp in months only the tip governed has no base to be read against; it is listed
-apart, not counted.
+reads the same months: a tip clamp is new unless the base run of the same number had
+that bloc on the clamp at or before that month, while the base governed. So a base clamp
+that comes later does not excuse the tip, a month the base no longer governed has no
+base clamp to excuse it (the base "was not at it"), and a tip clamp after the tip left
+office does not count.
 """
 import collections
 import sys
@@ -44,7 +43,7 @@ def main() -> int:
     if set(b_managed) != set(managed):
         print("WARNING: the logs ran different runs: base %s, tip %s" % (sorted(b_managed, key=int), sorted(managed, key=int)))
     print("run managed  tip-last  base-last  both-last  share (where)")
-    worst_managed, worst_all, new, apart = 0.0, 0.0, [], []
+    worst_managed, worst_all, new = 0.0, 0.0, []
     for r in sorted(managed, key=int):
         both = months[r] & b_months[r]
         best, where = 0.0, ""
@@ -56,27 +55,20 @@ def main() -> int:
         if managed[r]:
             worst_managed = max(worst_managed, best)
         # A base clamp excuses the tip's only if it came at or before the tip's month
-        # (QA's TAKE on #104): a base that clamps later does not excuse an earlier tip.
+        # (QA's TAKE and R4 on #104). The base prints CLAMP lines only while it
+        # governs, so a month past its loss has nothing to excuse the tip with.
         base_first = {}
         for at, bloc in b_clamps[r]:  # month order, so the first hit is the first month
-            if at in both:
-                base_first.setdefault(bloc, at)
-        first, first_apart = {}, {}
+            base_first.setdefault(bloc, at)
+        first = {}
         for at, bloc in clamps[r]:
-            if at in both:
-                if bloc not in base_first or base_first[bloc] > at:
-                    first.setdefault(bloc, at)
-            elif at in months[r]:
-                first_apart.setdefault(bloc, at)
+            if at in months[r] and (bloc not in base_first or base_first[bloc] > at):
+                first.setdefault(bloc, at)
         new += [(r, bloc, at) for bloc, at in sorted(first.items())]
-        apart += [(r, bloc, at) for bloc, at in sorted(first_apart.items())]
     print("max act share over the tip's governed months: %.3f in the MANAGED runs (the band's row), %.3f in all" % (worst_managed, worst_all))
-    print("blocs newly on the clamp over the months both governed (vs the base run of the same number): %d" % len(new))
+    print("blocs newly on the clamp over the tip's governed months (vs the base run of the same number): %d" % len(new))
     for r, bloc, at in new:
-        print("  run %s %s from %s" % (r, bloc, at))
-    print("tip clamps in months only the tip governed (no base to read against; not counted): %d" % len(apart))
-    for r, bloc, at in apart:
-        print("  run %s %s from %s" % (r, bloc, at))
+        print("  run %s %s from %s%s" % (r, bloc, at, "  (after the base left office)" if at not in b_months[r] else ""))
     return 0
 
 
