@@ -20,6 +20,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --domain finances
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --plant --zoom 5 --center 2.5 44.5
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
@@ -178,6 +179,9 @@ var _frame := 0
 ## checked by looking, and there are four frames to look at rather than one.
 var _layer := ""
 var _hover := ""
+## V5.2 b+ (R1), --plant: the player's reactor in Occitanie a third built, a running
+## German one, and the cursor on the player's glyph.
+var _plant := false
 var _site := false
 var _hover_project := ""  ## U6c, a project marker rather than a nation
 ## V4.11c, an outline (a country drawn but not simulated). Its own flag for
@@ -632,6 +636,33 @@ func _stage_term_nested() -> void:
 	tips.plate_entered(2)
 
 
+## Written into the register the order verb writes (energy.gd's "order" entry),
+## at a city of the region, then hovered the way --hover-outline hovers.
+func _stage_plants() -> void:
+	var map = _main._map_view
+	var state = _main._state
+	var mine := ""
+	for nation_id in [String(state.player_nation_id), "DEU"]:
+		var ns = state.nations[nation_id]
+		var region = _main._loader.regions[nation_id][0]
+		for candidate in _main._loader.regions[nation_id]:
+			if candidate.region_name == "Occitanie":
+				region = candidate
+		var at: Vector2 = region.cities[0].lonlat
+		var own: bool = nation_id == String(state.player_nation_id)
+		ns.plant_seq += 1
+		var id := "nuclear_epr#%d" % ns.plant_seq
+		ns.plants[id] = {"source_id": "nuclear_epr", "region_id": region.id, "lon": at.x, "lat": at.y,
+			"months_left": 80 if own else 0, "done": not own, "connection": 1.0}
+		if own:
+			mine = id
+	if "_hovered_plant" in map:
+		var entry: Dictionary = state.player().plants[mine]
+		map._hovered_plant = [String(state.player_nation_id), mine]
+		map._hover_screen = map._lonlat_to_screen(float(entry["lon"]), float(entry["lat"]))
+	map.queue_redraw()
+
+
 func _stage_outline_hover() -> void:
 	var map = _main._map_view
 	var view: Rect2 = map.visible_lonlat_rect()
@@ -660,6 +691,8 @@ func _init() -> void:
 			_out_path = args[i + 1]
 		elif args[i] == "--layer" and i + 1 < args.size():
 			_layer = args[i + 1]
+		elif args[i] == "--plant":
+			_plant = true
 		elif args[i] == "--hover" and i + 1 < args.size():
 			_hover = args[i + 1].to_upper()
 		elif args[i] == "--hover-project" and i + 1 < args.size():
@@ -1204,6 +1237,8 @@ func _apply_view() -> void:
 		_main._map_view.queue_redraw()
 	if _hover_outline != "":
 		_stage_outline_hover()
+	if _plant:
+		_stage_plants()
 	if _tip != "":
 		_stage_tip()
 	if _term_card != "":
