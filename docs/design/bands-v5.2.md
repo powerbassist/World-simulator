@@ -620,7 +620,7 @@ is that lever's single-attempt odds, s its spend in the weights, and q = 1 − p
 
 | Answer | Net value |
 |---|---|
-| Book | (1 − q³) × 1, the chance of an agreement in three attempts; minus s × (1 + q + q²), the expected spends; minus q³ × Decline's cost, the settle when no agreement comes; minus **1.05** |
+| Book | (1 − q³) × 1, the chance of an agreement in three attempts; minus s × (1 + q + q²), the expected spends; minus q³ × Decline's cost, the settle when no agreement comes; plus the in-person gains ("The in-person gains" below: being received, the knowledge gained, and, when the want is served, the promise kept in person); minus **1.05** |
 | Delegate | minus (0.25 × the refusal grudge, plus 0.5 × the snub rapport for a `vain` person or an office want), then delegation's commitment at its due month: plus 0.5 × 0.10 if kept, minus (0.75 × the refusal grudge + 0.08 + 0.5 × 0.2) if broken ("Delegation's commitment" below). The first part is `Audiences.delegate` as built: `DELEGATE_GRUDGE_SHARE` 0.25, `DELEGATE_SNUB_RAPPORT` -0.05 |
 | Decline | minus (the refusal grudge, plus 0.5 × 0.1 rapport). This is `decline_price`: `DECLINE_GRUDGE` 0.18 through `Characters.refusal_grudge`, and `DECLINE_RAPPORT` -0.1 |
 | Unanswered | equal to Decline by construction (a lapse costs exactly a decline; `tests/test_audiences.gd` pins it per request) |
@@ -778,26 +778,83 @@ from the prices above):**
   (−0.355) beats refusing (−0.41). This agrees with the spec's Decline row,
   which is worst "when the person is principled (grudge ×2)", so it is the
   design, not a defect.
-- **Delegation wins every K = 1 cell, at any p.** With D above one ask won, a
-  booked audience is never net positive. A minister's kept promise nets about
-  0, so a want the player will serve anyway always goes to the minister. That
-  reads against the spec's Book row, "best when the person carries a want the
-  player can serve". In this model, the diary is for the people the player
-  must turn (K low) or needs, and the ministers handle the wants the player
-  will serve. Whether to accept that reading is a call for the parent; the
-  price is not changed here.
+- **Delegation won every K = 1 cell, at any p**, before the in-person gains
+  were priced. With D above one ask won and Book flat in K, a minister's kept
+  promise (about 0) beat any audience (at most −0.05). That ran against the
+  spec's Book row. The parent's decision (2026-10-24, decision 2) is to build
+  the spec as written: the in-person gains are priced below, and the spec's
+  wording stays.
 - **Traps:** the model carries no trap price, so it cannot say where refuse wins
   against a trap. c declares that price (the proposal above).
 - **Likely result (INFERRED):** the row turns on the realized K. In
   `audience_probe` A2, the player serves no wants by policy, so K is mostly
-  low, and book and refuse should split most requests. In a play where most
-  wants are served, delegation would pass 50 %.
+  low, and book and refuse should split most requests.
 
+**The in-person gains** (the parent's decision 2, 2026-10-24; declared before
+the read). The spec's Book row names what an audience buys: "the scene: levers,
+topics, knowledge gained". The 1.05 left those gains unpriced. Each one is
+priced from a primitive that already exists:
+
+| Gain | Price | From | Slope in K | Built? |
+|---|---|---|---|---|
+| **Being received** | rapport **+0.10** when the audience is held, whatever is said (value 0.05) | the mirror of `DECLINE_RAPPORT` −0.1 (`src/sim/audience_constants.gd:55`): a refusal to your face costs 0.1, and being heard earns the same | flat | **no**: Systems writes it at `Audiences.hold` |
+| **Knowledge gained** | `President.learn_from`'s 0.05 × (1 − k), valued at B4's slope (0.448 odds per knowledge unit, from B4's declared midpoints) × 3q² (the three-attempt sensitivity, 0.61 at p = 0.55) × 2 further encounters with the person this term (OPINION, from B1's 24–48 requests from at least 12 people) | as built on #113 | flat | yes |
+| **A promise kept in person** | rapport **+0.25** when a promise the president made in the audience (`promise_date`, outcome `promised`) is judged kept (value 0.125, times the chance A of an agreement) | 2.5 × the minister's kept +0.10 (delegation's commitment). The broken side already carries that ratio: a lie revealed costs rapport −0.5 against the IOU betrayal's −0.2 (`lever_constants.gd:136-140`). | **carries K** | **no**: Systems raises `PROMISE_KEPT_RAPPORT` from 0.10 to 0.25 for kind `promise`; a delegated commitment keeps +0.10 |
+
+The knowledge values (INFERRED arithmetic) are 0.023 for a stranger, 0.014 for
+an acquaintance and 0.005 for the known: small, as expected. **Only the kept
+promise carries K.** That is why it is the one gain that can hold K = 1:
+delegation's value moves 0.365 across K, and a flat gain only shifts the point
+where delegation overtakes.
+
+**The partition the spec asks for** (four legs, written before any number was
+chosen):
+
+- **A.** At K = 1, an acquaintance books, beating delegation.
+- **B.** At K = 1, a stranger delegates, beating booking.
+- **C.** At K = 0, a stranger is refused, beating both.
+- **D.** At K = 0, an acquaintance books, beating refusal.
+
+**Solved at base g and the B4 midpoints** (the arithmetic is MEASURED, re-derived
+here; the values are OPINION, as declared):
+
+| Leg | Book | The rival | Holds at 1.05? | Bound on D |
+|---|---|---|---|---|
+| A | +0.015 | delegate +0.005 | yes, by 0.010 | D ≤ 1.060 |
+| B | −0.145 | delegate +0.005 | yes, by 0.150 | D ≥ 0.900 |
+| C | −0.243 | refuse −0.23 | yes, by 0.013 | D ≥ 1.037 |
+| D | −0.098 | refuse −0.23 | yes, by 0.132 | D ≤ 1.182 |
+
+- **The window for D is [1.037, 1.060], 0.023 wide.** The declared 1.05 lies
+  inside it, so the price stands as declared.
+- **The window is narrow, and that is a structural fact, not a tuning target.**
+  The stranger and the acquaintance differ by only about 0.15 in book value on
+  B4's midpoints, and refuse's edge is about 0.01 away. In real requests,
+  traits, relationship and standing move p and g by more than that, so the row
+  is decided case by case.
+- **Legs A and C are the thin ones.** Leg A fails without being received
+  (−0.035 against +0.005), and it fails if the promise kept in person stays at
+  the minister's +0.10 (−0.053). Both gains are therefore needed. Neither can be
+  dropped to save a build.
+- **The known person books at every K** (−0.029 at K = 0 and K = 0.5, +0.093 at
+  K = 1). That is the spec's "book the people you know". Delegation and refusal
+  win only for people the president does not know well, which is the spec's
+  "the person matters but not personally".
+- **Side effects:**
+  - `lever_probe`'s B4 and B5 grids price a commitment as a spend (0.15) and
+    never read the kept reward, so the higher kept price does not move them
+    (INFERRED).
+  - The balance regimes hold no audiences, so the table does not move either
+    (INFERRED; Systems confirms with the re-baseline).
+- **GLM 5.3 drafted the attack on these numbers** (the author's instruction).
+  Every value, bound and sensitivity above was recomputed here before it was
+  written down.
 
 **The stop rule:**
 
 1. The row is read once, at 1.05, on the build that has delegation's
-   commitment.
+   commitment AND the in-person gains (being received; the promise kept in
+   person).
 2. If book, delegate or refuse is the best answer in more than 50 % of requests,
    the price is **not** re-tuned to the run. It is the author's call:
    - re-price delegation's commitment, with a new reason declared before a
