@@ -337,7 +337,7 @@ this subsection records what they measured and what the author accepted.
 | 2032 flips | 28, HELD to LOST | the same 28 | **accepted** |
 | 2034 legislative (reported) | the 28 rows are gone: no 2034 vote follows a 2032 loss | the same | reported |
 | GBR `managed_abolishes_the_monarchy` verdict unchanged | MISS: 2039 HELD to LOST (0.116 to -0.0157); 2034 held (0.1612 to 0.1416); 2029 unchanged | MISS: 2039 LOST at -0.0104 | **open**: waits for Systems' explanation of the -0.13 move |
-| Act-written part of `bloc_offset` ≤ 0.50 | MISS: -0.576 (FRA ten-year run), -0.594 (GBR ten-year run), and breaches in seven other MANAGED runs | MISS | see below |
+| Act-written part of `bloc_offset` ≤ 0.50 | MISS: -0.592 in every FRA run, -0.615 in the GBR ten-year run; all nine other instrumented runs breach (termed-out, subsidised, regulated, redistributive, nuclear, nationalised, gas, dissolution, captured-court) | MISS: -0.576 (FRA), -0.594 (GBR) | see below |
 | No new clamp | MISS: runs 1 and 18 (workers, students, 2032-08), run 16 (students, 2029-11) | MISS | see below |
 
 **The two health rows.** The act-share ceiling and the no-new-clamp row were not
@@ -348,7 +348,8 @@ the table as measured, both health rows included. That reading is INFERRED; the
 parent confirms it.
 
 Both were read from an instrumented `test_balance` that kept `_play`'s default
-`stop_on_loss = true`, not the declared runs to month 168. QA notes that this
+`stop_on_loss = true` for most runs (runs 1 and 18 played past the 2032-05 loss,
+which is where they clamp), not the declared runs to month 168. QA notes that this
 leaves the misses standing: a longer run can only add to a breach, and the base
 runs that held 2032 reached month 168 without these clamps. A future price change
 is measured with the declared 168-month runs.
@@ -358,7 +359,8 @@ bound a future price change is measured against. They no longer gate V5.2b.
 
 **What the half-life changed** (MEASURED, from the two runs): almost nothing.
 The 2032 mean moved -0.0478 at H = 24 and -0.0460 at H = 22. The 2032 harm comes
-from briefs in the term's years four to six, which no half-life near two years
+(INFERRED, Systems' reading; no run attributes the cost by year) from briefs in
+the term's years four to six, which no half-life near two years
 clears before that vote. For those briefs 2032 is the NEXT vote, not the vote
 after next, so the fade's purpose ('forgotten by the vote after next') is not
 what failed. What the fade did do: the 2029 cost fell from #104's mean -0.0164
