@@ -111,7 +111,11 @@ static func refusal_reason(state, entry: Dictionary) -> String:
 	if not K.KINDS.has(String(entry.get("kind", ""))):
 		return "not a bookable kind of act"
 
-	var now := ordinal(state.year, state.month, int(state.day))
+	# The month can advance before the day does (main.gd moves the month at the
+	# close and the day on the next tick), so a stale day past this month's end
+	# reads as its last day -- the date the player is actually on.
+	var today := mini(int(state.day), days_in_month(int(state.year), int(state.month)))
+	var now := ordinal(state.year, state.month, today)
 	var when := entry_ordinal(entry)
 	if when < now:
 		return "that date has passed"
@@ -144,7 +148,7 @@ static func refusal_reason(state, entry: Dictionary) -> String:
 		# actually choose. Day numbers rather than raw ordinals, because
 		# subtracting from an ordinal is a decimal lie the day it crosses a
 		# month boundary.
-		var now_dn := _to_day_number(state.year, state.month, int(state.day))
+		var now_dn := _to_day_number(state.year, state.month, today)
 		var meet_dn := _to_day_number(
 			int(entry.get("year", 0)), int(entry.get("month", 0)), int(entry.get("day", 1))
 		)
