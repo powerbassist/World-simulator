@@ -628,6 +628,12 @@ is that lever's single-attempt odds, s its spend in the weights, and q = 1 − p
 The best answer for a request is the one with the highest net value. The row is
 unchanged: **no answer is the best in more than 50 % of requests.**
 
+**The tie rule** (declared with the price): Decline and Unanswered cost the same
+by construction, so they tie whenever either is best. For the share they count
+as ONE answer, "refuse". The row therefore reads: **none of book, delegate and
+refuse is the best in more than 50 % of requests.** Without the rule, a tie
+would either count twice or let the inbox's silence pass as its own answer.
+
 **Why 1.05 (OPINION, derived from DECLARED bands, not from a run, on the same
 three-attempt audience, against delegation WITH its commitment):**
 
@@ -753,11 +759,46 @@ from the prices above):**
 - **Neither answer dominates the other any longer.** Which one is best depends
   on whether the want is served, so decline has cells of its own.
 
+**Red-team before the read** (GLM 5.3 drafted the attack, at the author's
+2026-10-24 instruction; every claim below was re-derived here and is labelled):
+
+- **Where each answer wins** (MEASURED arithmetic on the declared formulas, D =
+  1.05, spends left out). Here K = P(kept).
+
+  | g | p | K = 0 | K = 0.5 | K = 1 |
+  |---|---|---|---|---|
+  | 0.18 | 0.40 | refuse (−0.23) | delegate (−0.178) | delegate (+0.005) |
+  | 0.18 | 0.55 | book (−0.162) | book (−0.162) | delegate |
+  | 0.18 | 0.70 | book (−0.083) | book | delegate |
+  | 0.36 (principled) | 0.40 | book (−0.355) | delegate (−0.29) | delegate (−0.04) |
+  | 0.36 | 0.55 to 0.95 | book | book | delegate |
+
+- **No answer is dominated.** Each one has cells of its own.
+- **Refuse never wins for a principled person.** Booking even a stranger
+  (−0.355) beats refusing (−0.41). This agrees with the spec's Decline row,
+  which is worst "when the person is principled (grudge ×2)", so it is the
+  design, not a defect.
+- **Delegation wins every K = 1 cell, at any p.** With D above one ask won, a
+  booked audience is never net positive. A minister's kept promise nets about
+  0, so a want the player will serve anyway always goes to the minister. That
+  reads against the spec's Book row, "best when the person carries a want the
+  player can serve". In this model, the diary is for the people the player
+  must turn (K low) or needs, and the ministers handle the wants the player
+  will serve. Whether to accept that reading is a call for the parent; the
+  price is not changed here.
+- **Traps:** the model carries no trap price, so it cannot say where refuse wins
+  against a trap. c declares that price (the proposal above).
+- **Likely result (INFERRED):** the row turns on the realized K. In
+  `audience_probe` A2, the player serves no wants by policy, so K is mostly
+  low, and book and refuse should split most requests. In a play where most
+  wants are served, delegation would pass 50 %.
+
+
 **The stop rule:**
 
 1. The row is read once, at 1.05, on the build that has delegation's
    commitment.
-2. If booking or delegation is the best answer in more than 50 % of requests,
+2. If book, delegate or refuse is the best answer in more than 50 % of requests,
    the price is **not** re-tuned to the run. It is the author's call:
    - re-price delegation's commitment, with a new reason declared before a
      new read;
