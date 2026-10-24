@@ -270,6 +270,33 @@ _traits = {}
 _roles = {}
 
 
+def seed_for(person_id: str, emotion: str, salts=None) -> int:
+    """The one place a portrait's seed is made. Salt 0 keeps the historical
+    key (id:emotion) byte for byte; a reroll appends :r<N>, so the five
+    emotions of a rerolled person stay one identity (the expression workflow
+    locks on seed_for(pid, "neutral"))."""
+    n = int((comfy.load_salts() if salts is None else salts).get(person_id, 0))
+    key = person_id + ":" + emotion
+    return comfy.djb2(key + ":r%d" % n if n > 0 else key)
+
+
+def reroll(person_ids) -> int:
+    """--reroll <id> (repeatable): bump the person's salt and clear their
+    raws, masks and shipped WebPs, so the next pass draws a new face. Clears
+    only what the person owns; a missing file is fine."""
+    for pid in person_ids:
+        salt = comfy.bump_salt(comfy._checked_id(pid))
+        cleared = 0
+        for emotion in EMOTIONS:
+            for path in (RAW_DIR / emotion / (pid + ".png"), MASK_DIR / emotion / (pid + ".png"),
+                         REPO / "assets" / "portraits" / emotion / (pid + ".webp")):
+                if path.exists():
+                    comfy._confined(path, REPO).unlink()
+                    cleared += 1
+        print("reroll %s: salt %d, %d files cleared" % (pid, salt, cleared))
+    return 0
+
+
 def _pick(person_id: str, category: str, options) -> str:
     """One decorrelated pick per category: hash the id WITH the category name,
     so two categories never read the same slice of the seed."""
@@ -404,7 +431,7 @@ def prompt_for(person_id, name, emotion="neutral"):
     ]
     subject = ", ".join(parts)
     text = "professional studio headshot portrait photograph of %s, %s" % (subject, STYLE)
-    seed = comfy.djb2(person_id + ":" + emotion)
+    seed = seed_for(person_id, emotion)
     return seed, text, []
 
 
@@ -421,12 +448,14 @@ def _load_people():
         for person in data["people"]:
             pid = comfy._checked_id(person["id"])
             people.append((pid, person["name"]))
+            _kinds[pid] = person.get("kind", "")
             if bool(person.get("bench", False)):
                 _bench_ids.add(pid)
     return people
 
 
 _bench_ids = set()
+_kinds = {}
 
 
 def _banned_pattern():
@@ -501,6 +530,16 @@ def self_check(people) -> int:
         if prompt_for(golden_pid, golden_name, "neutral")[0] != golden_seed:
             failures.append("golden seed for %s moved (expected %d) -- every portrait would re-render"
                             % (golden_pid, golden_seed))
+    # The salt's own teeth (V5.2a): salt 0 is the historical key, a salt
+    # moves the seed, and the expression workflow still locks to the salted
+    # neutral seed -- so a rerolled person keeps one identity across moods.
+    for emotion in EMOTIONS:
+        if seed_for(golden_pid, emotion, {}) != comfy.djb2(golden_pid + ":" + emotion):
+            failures.append("salt 0 changed the %s seed -- every portrait would re-render" % emotion)
+        if seed_for(golden_pid, emotion, {golden_pid: 1}) == seed_for(golden_pid, emotion, {}):
+            failures.append("a salt did not move the %s seed -- a reroll would redraw the same face" % emotion)
+    if seed_for(golden_pid, "neutral", {golden_pid: 2}) == seed_for(golden_pid, "neutral", {golden_pid: 1}):
+        failures.append("salts 1 and 2 collide")
     for pid, name in people[:3]:
         for emotion in EMOTIONS:
             if prompt_for(pid, name, emotion)[:2] != prompt_for(pid, name, emotion)[:2]:
@@ -569,7 +608,7 @@ def generate_expression(person_id, emotion, seed, text):
     face's expression is the part the fragment moves. Identity comes from
     the seed lock; no matting/upload/taps needed."""
     workflow = json.loads(comfy._confined(EXPRESSION_WORKFLOW, TOOLS).read_text(encoding="utf-8"))
-    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = comfy.djb2(person_id + ":neutral")
+    workflow[EXPR_SEED_NODE]["inputs"]["seed"] = seed_for(person_id, "neutral")
     workflow[EXPR_TEXT_NODE]["inputs"]["text"] = text
     prompt_id = comfy.queue(workflow)
     out = comfy.outputs(prompt_id, timeout_s=900)
@@ -628,9 +667,21 @@ def _only_filter(people):
     for i, a in enumerate(args):
         if a == "--only" and i + 1 < len(args):
             pids.add(comfy._checked_id(args[i + 1]))
-    if not pids:
-        return people
-    return [(pid, name) for pid, name in people if pid in pids]
+    if pids:
+        people = [(pid, name) for pid, name in people if pid in pids]
+    # V5.2a: the two filters the faces batches are cut by -- a register
+    # kind (the 464 executives) and "no shipped neutral yet" (executives and
+    # the met cast the V4.3 harvest left without art), so a batch is a flag,
+    # not a 464-id command line.
+    for i, a in enumerate(args):
+        if a == "--kind" and i + 1 < len(args):
+            people = [(pid, name) for pid, name in people if _kinds.get(pid) == args[i + 1]]
+    if "--missing-art" in args:
+        people = [(pid, name) for pid, name in people
+                  if not (REPO / "assets" / "portraits" / "neutral" / (pid + ".webp")).exists()]
+    if "--limit" in args:
+        people = people[:int(args[args.index("--limit") + 1])]
+    return people
 
 
 def main():
@@ -638,6 +689,10 @@ def main():
     global _traits, _roles
     _traits = load_traits(people)
     _roles = roles()
+
+    if "--reroll" in sys.argv:
+        return reroll([a for i, a in enumerate(sys.argv[1:], 1)
+                       if sys.argv[i - 1] == "--reroll"])
 
     if "--self-check" in sys.argv:
         return self_check(people)
