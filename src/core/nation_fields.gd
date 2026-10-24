@@ -224,6 +224,8 @@ const FIELDS := [
 	["cabinet_effectiveness", DEEP, COPIED, {}, false],
 	["cabinet_entitlement", DEEP, COPIED, {}, false],
 	["reshuffles_called", SCALAR, VALUE, 0, false],
+	["reshuffle_month", SCALAR, VALUE, -1, true],  # V5.2b b3: a stamp: absent is 'not yet'
+	["reshuffle_portfolio", SCALAR, VALUE, "", true],  # V5.2b b3: absent is no portfolio moved
 	["resignations_count", SCALAR, VALUE, 0, false],
 	["last_resignation", DEEP, COPIED, {}, false],
 	["party_discipline", DEEP, COPIED, {}, false],
@@ -335,5 +337,6 @@ const FIELDS := [
 	["exposure_evidence", DEEP, ROWS, [], true],  # V5.2a: absent is nothing left behind
 	["audience_requests", DEEP, ROWS, [], true],  # V5.2b: absent is nobody has asked
 	["audience_asked_month", DEEP, INT_MAP, {}, true],  # V5.2b: absent is nobody has asked
+	["phone_calls", DEEP, INT_MAP, {}, true],  # V5.2b b3: absent is nobody called
 	["act_bloc_offset", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2b: absent is acts priced as permanent
 ]

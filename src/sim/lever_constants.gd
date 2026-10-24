@@ -129,7 +129,17 @@ const RAPPORT_DINNER := 0.08
 const KNOW_GOSSIP := 0.05
 const RAPPORT_GOSSIP := 0.02
 
+## THE PHONE (b3): the same lever at lower odds (B5's channel row: "at least 0.10
+## lower", the spec's "the cheap option, not the strong one"). A lever whose
+## audience odds sit under ODDS_MIN + this is not offered by phone at all, so every
+## offered call is exactly this far below the audience and never clamped -- the band
+## holds by construction, not by luck at the floor.
+const CALL_ODDS_PENALTY := 0.10
+
 const SALT_ROLL := "lever"
+## The phone's roll is its own (b3): keyed on the person and this salt, never on the
+## audience's request + SALT_ROLL, so a failed call predicts no audience attempt.
+const SALT_PHONE := "phone"
 const SALT_FOG := "fog"
 const SALT_TRAIT := "trait"
 

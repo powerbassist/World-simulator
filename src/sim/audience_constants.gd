@@ -31,6 +31,10 @@ const REQUEST_WINDOW_MONTHS := 2
 ## The lane's ceiling, held in the sim so the inbox can never drop one: a
 ## request that would be a fifth waits for a free place next month.
 const MAX_PENDING := 4
+## b3: a visiting head's request waits in a place of its own (one at a time), so a
+## head of state never queues behind a mayor and never pushes one out -- the
+## domestic lane, and the bands measured on it, are untouched by visitors.
+const MAX_PENDING_FOREIGN := 1
 
 ## Resolved rows the lane remembers, for the person card's history.
 const RESOLVED_KEPT_MONTHS := 12
@@ -66,6 +70,12 @@ const DELEGATE_SNUB_RAPPORT := -0.05
 ## keeps 0.95 * 0.93 of the unknown, so a stranger is an acquaintance after 4
 ## and known after 9 (B4: 2-5, and at least 8).
 const KNOW_AUDIENCE := 0.05
+
+## b3, the meetings (src/sim/meetings.gd): a state visit or a summit teaches what an
+## audience's hold does, on the same curve, and leaves a topic's warmth (lever
+## constants RAPPORT_TOPIC) -- a courtesy, not a friendship.
+const KNOW_MEETING := KNOW_AUDIENCE
+const RAPPORT_MEETING := 0.04
 
 const STATUS_PENDING := "pending"
 const STATUS_BOOKED := "booked"

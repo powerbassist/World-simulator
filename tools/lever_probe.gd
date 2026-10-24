@@ -31,10 +31,16 @@ extends SceneTree
 ##      costlier on every register in every cell both are offered); no lever best
 ##      in more than 40 % of the cells it is offered in; every lever best in at
 ##      least 5 % of them (friendship's denominator is the friend half).
+##   L2 WITH THE PHONE (b3). The same grid x the channel {audience, phone}, the
+##      band's own grid: a phone cell reads Phone.odds() -- the audience's minus
+##      CALL_ODDS_PENALTY, not offered under ODDS_MIN + it -- at the same spends.
+##      The three B5 rows above again over both channels (a lever not offered by
+##      phone leaves that cell out of its denominator, as friendship's half does),
+##      and B5's channel row: in every cell a lever is offered by phone, the
+##      audience's odds at least 0.10 above the call's. "L2" stays the audience's
+##      alone, so b2's numbers read on.
 ##
 ## NOT HERE, and why:
-##   - B5's channel row (a call at least 0.10 below an audience) is b3's: the
-##     phone is not built (Levers.phone).
 ##   - B5's answers row (book, delegate, decline, unanswered: none best in more
 ##     than half the requests) needs the price of a diary day, which no band
 ##     states. The lapse half holds by construction -- a lapse costs exactly a
@@ -51,6 +57,7 @@ const PK = preload("res://src/sim/president_constants.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
+const Phone = preload("res://src/sim/phone.gd")
 
 const PLAYER := "FRA"
 const WARM_MONTHS := 12
@@ -85,7 +92,8 @@ func _init() -> void:
 	var out := {"schema": 1, "warm_months": WARM_MONTHS, "approval": float(ns.overall_approval_pct),
 		"weights": LW.WEIGHTS, "gain_flatter": LW.GAIN_FLATTER}
 	out["L1"] = _l1(ns, people)
-	out["L2"] = _l2(ns, people)
+	out["L2"] = _l2(ns, people, ["audience"])
+	out["L2_with_phone"] = _l2(ns, people, ["audience", "phone"])
 	out["bands"] = _bands(out)
 	_print(out)
 	if json_path != "":
@@ -165,7 +173,7 @@ func _interactions(people: Array) -> Dictionary:
 	return {"to_acquaintance": acq, "to_known": known}
 
 
-func _l2(ns, people: Array) -> Dictionary:
+func _l2(ns, people: Array, channels: Array) -> Dictionary:
 	var best := {}
 	var offered := {}
 	var dominated := {}
@@ -179,35 +187,41 @@ func _l2(ns, people: Array) -> Dictionary:
 			if a != b:
 				dominated["%s>%s" % [a, b]] = true
 				strictly["%s>%s" % [a, b]] = false
+	var phone_cells := 0
+	var gap_min := INF
 	for person in people:
 		for band in BANDS:
 			for rel in ["acquaintance", "friend"]:
 				for aligned in [true, false]:
-					var cell := _cell(ns, person, BANDS[band], rel, aligned)
-					var odds := {}
-					var cost := {}
-					var top := ""
-					var top_value := -INF
-					for lever in K.LEVERS:
-						var p := LeverOdds.odds(person, lever, cell)
-						if p < 0.0:
-							continue
-						odds[lever] = p
-						cost[lever] = LW.spend(person, lever, p)
-						offered[lever] += 1
-						var value := LW.net(person, lever, p)
-						if value > top_value:
-							top_value = value
-							top = lever
-					best[top] += 1
-					for key in dominated:
-						var pair: PackedStringArray = String(key).split(">")
-						if not odds.has(pair[0]) or not odds.has(pair[1]):
-							continue
-						if float(odds[pair[0]]) < float(odds[pair[1]]) or not _no_costlier(cost[pair[0]], cost[pair[1]]):
-							dominated[key] = false
-						elif float(odds[pair[0]]) > float(odds[pair[1]]) or not _no_costlier(cost[pair[1]], cost[pair[0]]):
-							strictly[key] = true
+					for channel in channels:
+						var cell := _cell(ns, person, BANDS[band], rel, aligned)
+						var odds := {}
+						var cost := {}
+						var top := ""
+						var top_value := -INF
+						for lever in K.LEVERS:
+							var p := LeverOdds.odds(person, lever, cell) if channel == "audience" else Phone.odds(person, lever, cell)
+							if p < 0.0:
+								continue
+							if channel == "phone":
+								phone_cells += 1
+								gap_min = minf(gap_min, LeverOdds.odds(person, lever, cell) - p)
+							odds[lever] = p
+							cost[lever] = LW.spend(person, lever, p)
+							offered[lever] += 1
+							var value := LW.net(person, lever, p)
+							if value > top_value:
+								top_value = value
+								top = lever
+						best[top] += 1
+						for key in dominated:
+							var pair: PackedStringArray = String(key).split(">")
+							if not odds.has(pair[0]) or not odds.has(pair[1]):
+								continue
+							if float(odds[pair[0]]) < float(odds[pair[1]]) or not _no_costlier(cost[pair[0]], cost[pair[1]]):
+								dominated[key] = false
+							elif float(odds[pair[0]]) > float(odds[pair[1]]) or not _no_costlier(cost[pair[1]], cost[pair[0]]):
+								strictly[key] = true
 	var shares := {}
 	for lever in K.LEVERS:
 		shares[lever] = float(best[lever]) / float(maxi(1, offered[lever]))
@@ -215,7 +229,11 @@ func _l2(ns, people: Array) -> Dictionary:
 	for key in dominated:
 		if dominated[key] and strictly[key]:
 			pairs.append(key)
-	return {"best_share": shares, "offered_cells": offered, "dominated_pairs": pairs}
+	var out := {"best_share": shares, "offered_cells": offered, "dominated_pairs": pairs}
+	if channels.has("phone"):
+		out["phone_lever_cells"] = phone_cells
+		out["phone_gap_min"] = gap_min
+	return out
 
 
 func _no_costlier(a: Dictionary, b: Dictionary) -> bool:
@@ -240,6 +258,12 @@ func _bands(out: Dictionary) -> Dictionary:
 	for lever in shares:
 		top = maxf(top, float(shares[lever]))
 		floor_ = minf(floor_, float(shares[lever]))
+	var l2p: Dictionary = out["L2_with_phone"]
+	var top_p := 0.0
+	var floor_p := 1.0
+	for lever in l2p["best_share"]:
+		top_p = maxf(top_p, float(l2p["best_share"][lever]))
+		floor_p = minf(floor_p, float(l2p["best_share"][lever]))
 	return {
 		"B4_stranger_30_50": float(m["stranger"]) >= 0.30 and float(m["stranger"]) <= 0.50,
 		"B4_acquaintance_45_65": float(m["acquaintance"]) >= 0.45 and float(m["acquaintance"]) <= 0.65,
@@ -253,6 +277,10 @@ func _bands(out: Dictionary) -> Dictionary:
 		"B5_no_dominated_pair": (l2["dominated_pairs"] as Array).is_empty(),
 		"B5_none_best_over_40pct": top <= 0.40,
 		"B5_each_best_5pct": floor_ >= 0.05,
+		"B5_with_phone_no_dominated_pair": (l2p["dominated_pairs"] as Array).is_empty(),
+		"B5_with_phone_none_best_over_40pct": top_p <= 0.40,
+		"B5_with_phone_each_best_5pct": floor_p >= 0.05,
+		"B5_phone_at_least_0.10_below": int(l2p["phone_lever_cells"]) > 0 and float(l2p["phone_gap_min"]) >= 0.10 - 0.000000001,
 	}
 
 
@@ -264,5 +292,8 @@ func _print(out: Dictionary) -> void:
 		l1["mean_picked"], l1["width_stranger_edge"], l1["width_known_edge"], l1["inside_share"],
 		l1["to_acquaintance"], l1["to_known"]])
 	print("L2 best share %s | dominated pairs %s" % [l2["best_share"], l2["dominated_pairs"]])
+	var l2p: Dictionary = out["L2_with_phone"]
+	print("L2 with the phone: best share %s | dominated pairs %s | phone lever cells %d, smallest gap %.4f" % [
+		l2p["best_share"], l2p["dominated_pairs"], l2p["phone_lever_cells"], l2p["phone_gap_min"]])
 	for band in out["bands"]:
 		print("%-28s %s" % [band, "PASS" if out["bands"][band] else "FAIL"])
