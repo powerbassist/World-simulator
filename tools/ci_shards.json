@@ -191,7 +191,9 @@
    "tests/test_hold_reason.gd",
    "tests/test_president.gd",
    "tests/test_audiences.gd",
-   "tests/test_levers.gd"
+   "tests/test_levers.gd",
+   "tests/test_phone.gd",
+   "tests/test_audience_triggers.gd"
   ]
  ]
 }

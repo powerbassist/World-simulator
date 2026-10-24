@@ -10,7 +10,8 @@ tags:
 People ask to see the president. V5.2b's first half (sections 1-4), the request:
 who asks, when, what the three answers cost, and why a request left unanswered is a
 decline. Its second half (sections 5-8), the audience itself: the levers, the odds and
-their fog, the topics, and the promises judged at their date. The design is
+their fog, the topics, and the promises judged at their date. b3 (sections 9-11) adds
+the phone, the heads met on a visit, and the asks a reshuffle invites. The design is
 [[v5.2-spec]] "An audience request (V5.2b)" and "The influence levers"; the bands are
 [[bands-v5.2]] B1-B5; the registers it prices on are [[people-model]] §14.1 (grudge,
 loyalty) and §14.9 (rapport, knowledge).
@@ -38,8 +39,10 @@ Characters (`WorldMonth`'s "Audiences" step):
 
 1. **Overdue requests lapse.** Pending past its window, or booked or held in an
    earlier month and never closed (a no-show): each costs a decline, once.
-2. **Invitations.** A programme entry that went live this month calls the people
-   whose wants name it (sponsors and opposers), outside the hazard.
+2. **Invitations** (`src/sim/audience_triggers.gd`, section 11). A programme entry
+   that went live this month calls the people whose wants name it (sponsors and
+   opposers), and the month after the player's reshuffle every unserved office want
+   is invited -- both outside the hazard, under the lane's rules.
 3. **The seeded ask.** A person of the played nation, not the president, off a
    `REQUEST_COOLDOWN_MONTHS` (8) cooldown, with no open request and a want the
    government does not serve (`Characters.want_served()`, the edge trigger's own
@@ -234,10 +237,114 @@ rapport point 0.5, a commitment 0.15, a bond step 0.30.
 - **Flatter has the thinnest margin.** It is best only for the vain who read poorly and
   whom no other lever suits.
 - **Not measured here:**
-  - B5's channel row (a call at least 0.10 below an audience): the phone is b3's.
+  - B5's channel row (a call at least 0.10 below an audience): section 9.
   - B5's answers row (book, delegate, decline, unanswered): it needs a diary day's price,
     which no band states. Its lapse half holds by construction: a lapse costs exactly a
     decline.
+
+## 9. The phone (b3)
+
+`src/sim/phone.gd`: `Phone.options(state, ns, loader, person_id)` is the call card --
+`{why_not, request_id, levers, topics}`, each lever row `Levers.lever_row()`'s shape --
+and `Phone.dial(state, ns, loader, person_id, lever_or_topic, args)` makes the call,
+`{ok, error, success, spent, effects}`. (Not `call`: a static `call` overrides
+`Object.call()`.)
+
+| | A call | Against an audience |
+|---|---|---|
+| Costs | no diary day; one call per person per month (`ns.phone_calls`, `absent_ok`) | an offered day the diary can place |
+| A lever | one attempt, on the person's **open request** (pending or booked); none open, no lever | three attempts, on the booked request |
+| Odds | the audience's on the same cell **minus `CALL_ODDS_PENALTY` (0.10)**; not offered where that falls under 0.05 ("too long a shot for a call") | the cell's |
+| A win | the request answered (`Audiences.answer`: settled, or promised), the win's relief and loyalty, **no knowledge** (a call is not a hold), a booked day given back | settled at close, plus `KNOW_AUDIENCE` at the hold |
+| A loss | the request stays open: book, delegate and decline stand | after the third, a decline |
+| A topic | family, opinion or gossip, at the audience's values; not dinner ("a dinner needs an evening") | any, three at most |
+
+- **The same matrix at lower odds** ([[v5.2-spec]], the dominance matrix). Because a
+  lever too long a shot is not offered by phone, every offered call is exactly 0.10
+  below the audience and never clamped: B5's channel row holds by construction.
+- **The fog reads the audience's seed**, so a call's range is the audience's shifted by
+  0.10 and reading both narrows nothing.
+- **The roll is the phone's own**, `Cycle.unit_pair(person, "phone:<lever>", month)`:
+  a failed call predicts no audience attempt.
+- **One rule, two channels.** The spend (`Levers.pay`), the win's relief and the flatter
+  backfire (`Levers.outcome`) and a topic's lesson (`Levers.teach`) are shared, so the
+  phone cannot drift from the audience. A refused call writes nothing and spends no
+  month. **Not built:** taking an incoming call.
+
+**Measured (2026-10-24, b3):**
+- `lever_probe`'s L2 over both channels (the band's own grid, with per-channel
+  denominators):
+  - Pareto-dominated pairs: 0.
+  - Best net value: bargain 30.4 %, argue 28.7 %, friendship 18.6 % (of its half),
+    pressure 18.3 %, promise 10.0 %, flatter 7.2 %.
+  - 3 768 phone lever cells, each exactly 0.10 below its audience (invariant I5, pinned
+    by `tests/test_phone.gd`).
+- `audience_probe` A4 (phone every open request once a month, then book): 48 calls,
+  14 requests answered by phone, 13 audiences held (8 in months 1-20). That is inside
+  B2's 12-30 and at least 4. The bands had expected a miss: two calls per request
+  answer about half on a stranger mix, but a call needs an offered lever, and the
+  person must be reachable that month.
+
+## 10. The meetings (b3)
+
+`src/sim/meetings.gd`, first in the WorldMonth "Audiences" step: a pair of the played
+nation stamped in `GameState.met_months` in the month that just ended -- a state visit
+either way, or a summit, which is a state visit with a scene -- teaches the other
+nation's head (`President.leader_id()`): `KNOW_MEETING` (0.05, the audience's hold, on
+the same curve) and `RAPPORT_MEETING` (0.04). The report names them
+(`report["meetings"]`).
+
+- **It reads Diplomacy's stamp, a month late on purpose.** The player's visit lands on a
+  day of the month, the AI's in the month's Diplomacy step; both read `now - 1` at the
+  next tick, so each meeting is met once and no register is added. A pair stamped again
+  the very next month is met once for the two.
+- The summit's scene stays [[summits-model]]'s pure read and `main.gd`'s applier: a
+  scene and a plain visit teach alike. Nothing in a vote reads knowledge or rapport, so
+  the balance table cannot move through this section.
+
+## 11. The triggers (b3)
+
+`src/sim/audience_triggers.gd` names who is invited to ask before the seeded ask runs,
+as `[person, want]` pairs; `Audiences` keeps the lane's rules (the cooldown, one open
+request each, the caps) and writes the request, so an invitation is a candidate, not a
+card.
+
+1. **A programme entry gone live** (b1's rule, moved here verbatim): each person's first
+   want naming it.
+2. **The month after the player's reshuffle** (the [[v5.2-spec]] pre-mortem's third
+   trigger): the unserved wanters of the portfolio that changed hands.
+   `Cabinet.assign()` stamps `ns.reshuffle_month` and `ns.reshuffle_portfolio`
+   (`absent_ok`) only when the portfolio goes to another party. A no-op assign and a
+   government seated by an election or a formation (`Cabinet.seat()`) stamp nothing,
+   and a portfolio reshuffle never moves the premiership.
+3. **A visiting head under a measure of the played nation** (the author's answer,
+   2026-10-24, "Lever une mesure française"): the head of a nation that state-visited
+   the played nation this tick asks for the measure on their nation to be lifted
+   (object `measure:<directed key>`), only when one stands. It waits in a place of its
+   own (`MAX_PENDING_FOREIGN`, 1), outside the domestic lane and its bands. A refusal
+   costs **rapport only**: grudge and loyalty are this nation's people's, so
+   `Characters.price_refusal()` writes nothing for a foreign head. A promise or a
+   delegation to lift is judged on the measure at its date.
+
+- **The G7 hook.** `Audiences.invite(state, ns, loader, person_id, object, stance)` is a
+  door into the lane under its rules, for V5.3c's builder: a private firm's chief
+  executive on a `price:<project>` object. Nothing in b3 calls it.
+- **Spec C10, decided at b3:** an office want is about the party's seat, which is what
+  `Characters.want_served()` judges for a portfolio. The request promises no
+  person-level appointment.
+- **Why the reshuffle rule is narrow.** The first build invited every unserved office
+  want at every assign. `audience_probe` A2 books a reshuffle every month (mostly
+  no-ops), and re-invited the same four people all term: B2's held row failed (35 held
+  against 12-30). A no-op moves nobody's office.
+
+**Measured (2026-10-24, b3):**
+- The balance table: identical in every regime. The two `*_cabinet_shorted` regimes
+  hand over a portfolio nobody in France wants.
+- `audience_probe`:
+  - A1 and A3: identical to b2.1 on every band field. Beside them, 5 visitor requests
+    in 60 months (Albania's and Switzerland's heads, under measures France applies
+    through an org's external measure).
+  - A2 holds no visitor in the game's order (the diary after the tick).
 
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
 [[decision-surfaces]] · [[programme-model]] · [[summits-model]]

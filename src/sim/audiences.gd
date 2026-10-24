@@ -33,6 +33,7 @@ const President = preload("res://src/sim/president.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -226,6 +227,35 @@ static func agree(ns, request_id: String, outcome: String) -> bool:
 	return true
 
 
+## b3, the G7 hook (V5.3c's builder calls it; nothing in b3 does): a person of this
+## nation asks outside the hazard, about the object the caller names -- a private
+## firm's chief executive on "price:<project>" -- under the lane's own rules.
+static func invite(state, ns, loader, person_id: String, object: String, stance: String) -> Dictionary:
+	var person = loader.person_by_id.get(person_id)
+	var now := _now(state)
+	if person == null or not person_id.begins_with("%s_" % ns.id) or object == "":
+		return {"ok": false, "error": "not someone of this nation", "request": {}}
+	if _open_count(ns, true) >= K.MAX_PENDING or not _may_ask(ns, person, President.leader_id(ns), now):
+		return {"ok": false, "error": "they cannot ask now", "request": {}}
+	var arrived := []
+	_arrive(ns, person, {"object": object, "stance": stance}, now, arrived)
+	return {"ok": true, "error": "", "request": arrived[0]}
+
+
+## b3: a request answered by phone (Phone.dial) -- a lever that worked on a call
+## settles it, a promise as promised, with no price and nothing learned (a call is
+## not a hold); a booked day is given back.
+static func answer(state, ns, request_id: String, outcome: String) -> Dictionary:
+	var row := _row(ns, request_id)
+	if row.is_empty() or not K.OPEN.has(String(row["status"])):
+		return {"ok": false, "error": "this request is no longer waiting"}
+	if not [K.STATUS_SETTLED, K.STATUS_PROMISED].has(outcome):
+		return {"ok": false, "error": "not an outcome"}
+	_unbook(state, row)
+	_close(row, outcome, _now(state))
+	return {"ok": true, "error": ""}
+
+
 ## How a held audience ended: settled, promised, or declined (priced as one).
 static func settle(state, ns, loader, request_id: String, outcome: String) -> Dictionary:
 	var row := _row(ns, request_id)
@@ -254,34 +284,27 @@ static func _overdue(row: Dictionary, now: int) -> bool:
 	return false
 
 
-## Invitations first -- an entry gone live this month calls the people whose
-## wants name it, outside the hazard -- then the seeded monthly ask. The lane's
-## cap and each person's cooldown bound both.
+## Invitations first -- the asks outside the hazard (AudienceTriggers: an entry
+## gone live, the month after a reshuffle) -- then the seeded monthly ask. The
+## lane's cap and each person's cooldown bound both.
 static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: Array) -> void:
 	var people: Array = loader.people.get(state.player_nation_id, [])
 	var leader := President.leader_id(ns)
-	var open := 0
-	for row in ns.audience_requests:
-		if K.OPEN.has(String(row.get("status", ""))):
-			open += 1
-	var live := {}
-	for entry in ns.programme:
-		if int(entry.get("chosen_term", -1)) == int(ns.terms_served) and int(entry.get("months_live", 0)) == 1 \
-				and String(entry.get("status", "")) == "active":
-			live["programme:%s" % String(entry["entry_id"])] = true
-	for person in people:
-		if open >= K.MAX_PENDING:
-			return
-		if not _may_ask(ns, person, leader, now):
-			continue
-		for want in person.wants:
-			if live.has(String(want["object"])):
-				_arrive(ns, person, want, now, arrived)
-				open += 1
-				break
+	var open := _open_count(ns, true)
+	var visiting := _open_count(ns, false)
+	for invited in AudienceTriggers.visitors(state, ns, loader, now):
+		if visiting < K.MAX_PENDING_FOREIGN and _may_ask(ns, invited[0], leader, now):
+			_arrive(ns, invited[0], invited[1], now, arrived)
+			visiting += 1
 	var leaders := {}
 	for party in loader.parties.get(state.player_nation_id, []):
 		leaders[party.id] = party.leader_person_id
+	for invited in AudienceTriggers.invitations(state, ns, loader, meters, leaders, now):
+		if open >= K.MAX_PENDING:
+			return
+		if _may_ask(ns, invited[0], leader, now):
+			_arrive(ns, invited[0], invited[1], now, arrived)
+			open += 1
 	for person in people:
 		if open >= K.MAX_PENDING:
 			return
@@ -294,6 +317,15 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 		if Cycle.unit_pair(person.id, K.SALT_REQUEST, now) < hazard:
 			_arrive(ns, person, want, now, arrived)
 			open += 1
+
+
+## The open requests of this nation's people (`own`), or of the visiting heads.
+static func _open_count(ns, own: bool) -> int:
+	var n := 0
+	for row in ns.audience_requests:
+		if K.OPEN.has(String(row.get("status", ""))) and String(row.get("person_id", "")).begins_with("%s_" % ns.id) == own:
+			n += 1
+	return n
 
 
 static func _may_ask(ns, person, leader: String, now: int) -> bool:

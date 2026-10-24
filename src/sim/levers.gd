@@ -15,7 +15,8 @@ extends RefCounted
 ## a decline once.
 ##
 ## THE ODDS ARE LeverOdds.odds() on a cell built here from the registers, so the
-## scene shows the numbers the probe judges. A roll is Cycle.unit_pair over the
+## scene shows the numbers the probe judges. The phone (b3, src/sim/phone.gd) reads
+## the same cell and shares the spend, the outcome and the topics below. A roll is Cycle.unit_pair over the
 ## request, the lever and the attempt index, and the month (I1).
 ##
 ## A refusal writes nothing: every command checks before it spends.
@@ -83,32 +84,37 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 		return out
 	var c := cell(state, ns, loader, session)
 	var why := _why_not(ns, session)
-	var now := _now(state)
 	for lever in K.LEVERS:
 		var p := LeverOdds.odds(person, lever, c)
-		var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, p, float(c["knowledge"]))
-		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else _word_given(ns, person.id, lever, String(session["object"])))
-		var row := {
-			"lever": lever,
-			"offered": why_not == "",
-			"why_not": why_not,
-			"odds_lo": r.x,
-			"odds_hi": r.y,
-			"fog": President.knowledge_band(ns, person.id),
-			"spends": _spends(lever),
-		}
-		# b2.1, for the scene: a bargain names what it can pay in (one, chosen), and
-		# a promise its window, so the UI restates no sim rule.
-		if lever == "bargain":
-			row["currencies"] = [
-				{"currency": K.CURRENCY_FAVOUR, "offered": why_not == "", "why_not": why_not, "spends": {"rapport": -K.BARGAIN_FAVOUR_RAPPORT}},
-				{"currency": K.CURRENCY_VOTE_TRADE, "offered": why_not == "", "why_not": why_not, "spends": {"iou": 1.0}},
-				{"currency": K.CURRENCY_AID, "offered": false, "why_not": K.AID_CLOSED, "spends": {}},
-			]
-		elif lever == "promise_date":
-			row["dates"] = {"earliest": now + K.PROMISE_MIN_MONTHS, "latest": now + K.PROMISE_MAX_MONTHS}
-		out.append(row)
+		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else word_given(ns, person.id, lever, String(session["object"])))
+		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state)))
 	return out
+
+
+## One lever's card row from its true odds `p` (-1.0 when not offered): the range
+## that holds them, never `p` itself. The audience's and the phone's (b3) alike.
+static func lever_row(ns, person, lever: String, p: float, why_not: String, knowledge: float, now: int) -> Dictionary:
+	var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, p, knowledge)
+	var row := {
+		"lever": lever,
+		"offered": why_not == "",
+		"why_not": why_not,
+		"odds_lo": r.x,
+		"odds_hi": r.y,
+		"fog": President.knowledge_band(ns, person.id),
+		"spends": spends(lever),
+	}
+	# b2.1, for the scene: a bargain names what it can pay in (one, chosen), and
+	# a promise its window, so the UI restates no sim rule.
+	if lever == "bargain":
+		row["currencies"] = [
+			{"currency": K.CURRENCY_FAVOUR, "offered": why_not == "", "why_not": why_not, "spends": {"rapport": -K.BARGAIN_FAVOUR_RAPPORT}},
+			{"currency": K.CURRENCY_VOTE_TRADE, "offered": why_not == "", "why_not": why_not, "spends": {"iou": 1.0}},
+			{"currency": K.CURRENCY_AID, "offered": false, "why_not": K.AID_CLOSED, "spends": {}},
+		]
+	elif lever == "promise_date":
+		row["dates"] = {"earliest": now + K.PROMISE_MIN_MONTHS, "latest": now + K.PROMISE_MAX_MONTHS}
+	return row
 
 
 ## [{topic, offered: bool, why_not: String, spends: Dictionary}]
@@ -140,19 +146,14 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	if p < 0.0:
 		refused["error"] = "not a lever offered here"
 		return refused
-	refused["error"] = _word_given(ns, pid, lever, String(session["object"]))
+	refused["error"] = word_given(ns, pid, lever, String(session["object"]))
 	if refused["error"] != "":
 		return refused
 	var now := _now(state)
-	var currency := String(args.get("currency", K.CURRENCY_FAVOUR))
-	var due := int(args.get("due_month", -1))
-	if lever == "bargain" and currency != K.CURRENCY_FAVOUR and currency != K.CURRENCY_VOTE_TRADE:
-		refused["error"] = K.AID_CLOSED if currency == K.CURRENCY_AID else "not a currency"
+	refused["error"] = arg_error(lever, args, now)
+	if refused["error"] != "":
 		return refused
-	if lever == "promise_date" and (due < now + K.PROMISE_MIN_MONTHS or due > now + K.PROMISE_MAX_MONTHS):
-		refused["error"] = "that date is too near or too far for a promise"
-		return refused
-	var spent := _pay(state, ns, loader, person, session, lever, currency, due, now)
+	var spent := pay(state, ns, loader, person, String(session["object"]), lever, args, now)
 	if spent.has("refused"):
 		refused["error"] = "the promise could not be made"
 		return refused
@@ -160,15 +161,10 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	var success := Cycle.unit_pair(String(session["request_id"]), "%s:%s:%d" % [K.SALT_ROLL, lever, index], now) < p
 	session["attempts_left"] = int(session["attempts_left"]) - 1
 	(session["attempts"] as Array).append({"lever": lever, "success": success})
-	var effects := {}
 	if success:
 		session["won"] = lever
 		Audiences.agree(ns, String(session["request_id"]), AK.STATUS_PROMISED if lever == "promise_date" else AK.STATUS_SETTLED)
-		if lever != "flatter":
-			effects = Characters.price_refusal(ns, person, -K.GRUDGE_ACCEPT_RELIEF, K.LOYALTY_ACCEPT)
-	elif lever == "flatter" and person.traits.has("principled") and float(person.social_skill) > K.FLATTER_BACKFIRE_SKILL:
-		effects["rapport"] = _rapport(state, ns, loader, pid, -K.FLATTER_BACKFIRE_RAPPORT)
-	return {"ok": true, "error": "", "success": success, "spent": spent, "effects": effects}
+	return {"ok": true, "error": "", "success": success, "spent": spent, "effects": outcome(state, ns, loader, person, lever, success)}
 
 
 ## One topic: an attempt spent for knowledge and rapport. {ok, error, effects}.
@@ -183,22 +179,10 @@ static func talk(state, ns, loader, session: Dictionary, topic: String, args := 
 	if offer.is_empty() or not bool(offer["offered"]):
 		refused["error"] = String(offer.get("why_not", "not a topic"))
 		return refused
-	var pid := String(session["person_id"])
-	var effects := {}
-	match topic:
-		"gossip":
-			var about := String(args.get("about", ""))
-			if about == "" or about == pid or not President.covers(state, ns, loader, about):
-				refused["error"] = "gossip needs someone else to talk about"
-				return refused
-			effects["knowledge_of"] = {about: _learn(state, ns, loader, about, K.KNOW_GOSSIP)}
-			effects["rapport"] = _rapport(state, ns, loader, pid, K.RAPPORT_GOSSIP)
-		"dinner":
-			effects["knowledge"] = _learn(state, ns, loader, pid, K.KNOW_DINNER)
-			effects["rapport"] = _rapport(state, ns, loader, pid, K.RAPPORT_DINNER)
-		_:
-			effects["knowledge"] = _learn(state, ns, loader, pid, K.KNOW_TOPIC)
-			effects["rapport"] = _rapport(state, ns, loader, pid, K.RAPPORT_TOPIC)
+	var effects := teach(state, ns, loader, String(session["person_id"]), topic, args)
+	if effects.has("error"):
+		refused["error"] = String(effects["error"])
+		return refused
 	session["attempts_left"] = int(session["attempts_left"]) - 1
 	(session["used_topics"] as Array).append(topic)
 	return {"ok": true, "error": "", "effects": effects}
@@ -253,16 +237,23 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 ## One commitment at its date: its verdict, its price written.
 static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leaders: Dictionary) -> String:
 	var person = loader.person_by_id.get(String(row["person_id"]))
+	var object := String(row["object"])
 	var want := {}
 	if person != null:
 		for w in person.wants:
-			if String(w["object"]) == String(row["object"]):
+			if String(w["object"]) == object:
 				want = w
+	# b3: a visitor's ask names a measure the played nation holds, not a want in
+	# content; it is served once the measure is lifted.
+	if person != null and object.begins_with("measure:"):
+		want = {"measure": object.substr("measure:".length())}
 	if want.is_empty():
 		return "void"
 	var pid := String(person.id)
 	var kind := String(row["kind"])
-	if Characters.want_served(ns, person, want, meters, leaders):
+	var served: bool = not state.measures.has(want["measure"]) if want.has("measure") \
+		else Characters.want_served(ns, person, want, meters, leaders)
+	if served:
 		if kind != "iou":
 			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT if kind == "promise" else K.DELEGATED_KEPT_RAPPORT)
 		return "kept"
@@ -279,15 +270,106 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 	return "broken"
 
 
-## The phone (b3): one lever attempt or one topic, no diary day. Named `phone`,
-## not `call`: a static `call` overrides Object.call() and does not parse.
-static func phone(state, ns, loader, person_id: String, lever_or_topic: String, args := {}) -> Dictionary:
-	return {"ok": false, "error": "not built yet"}
-
-
 ## The traits the president knows; a hidden trait is absent, never wrong.
 static func known_traits(ns, person) -> Array[String]:
 	return LeverOdds.known_traits(ns, person)
+
+
+# --- Shared with the phone (src/sim/phone.gd, b3): one rule, two channels ----------
+
+## WORD_GIVEN when `lever` is a promise and one is already in flight to this person
+## on this want (made in this audience, an earlier one, or on the phone), else "".
+static func word_given(ns, pid: String, lever: String, object: String) -> String:
+	if lever != "promise_date":
+		return ""
+	for row in President.commitments_with(ns, pid):
+		if String(row["kind"]) == "promise" and String(row["object"]) == object:
+			return K.WORD_GIVEN
+	return ""
+
+
+## Why a lever's arguments are refused, or "": a bargain pays in a currency that is
+## open, a promise names a month inside its window.
+static func arg_error(lever: String, args: Dictionary, now: int) -> String:
+	var currency := String(args.get("currency", K.CURRENCY_FAVOUR))
+	var due := int(args.get("due_month", -1))
+	if lever == "bargain" and currency != K.CURRENCY_FAVOUR and currency != K.CURRENCY_VOTE_TRADE:
+		return K.AID_CLOSED if currency == K.CURRENCY_AID else "not a currency"
+	if lever == "promise_date" and (due < now + K.PROMISE_MIN_MONTHS or due > now + K.PROMISE_MAX_MONTHS):
+		return "that date is too near or too far for a promise"
+	return ""
+
+
+## What a roll writes beyond the lever's spend: a win relieves the grudge and buys
+## loyalty (not flatter: its effect is small and does not hold); a failed flatter
+## backfires on a principled reader above a middling one.
+static func outcome(state, ns, loader, person, lever: String, success: bool) -> Dictionary:
+	if success:
+		return {} if lever == "flatter" else Characters.price_refusal(ns, person, -K.GRUDGE_ACCEPT_RELIEF, K.LOYALTY_ACCEPT)
+	if lever == "flatter" and person.traits.has("principled") and float(person.social_skill) > K.FLATTER_BACKFIRE_SKILL:
+		return {"rapport": _rapport(state, ns, loader, String(person.id), -K.FLATTER_BACKFIRE_RAPPORT)}
+	return {}
+
+
+## A topic's lesson, what it wrote; {error} when gossip names nobody it may (spec
+## C1: gossip teaches the president about the THIRD person only).
+static func teach(state, ns, loader, pid: String, topic: String, args := {}) -> Dictionary:
+	match topic:
+		"gossip":
+			var about := String(args.get("about", ""))
+			if about == "" or about == pid or not President.covers(state, ns, loader, about):
+				return {"error": "gossip needs someone else to talk about"}
+			return {"knowledge_of": {about: _learn(state, ns, loader, about, K.KNOW_GOSSIP)},
+				"rapport": _rapport(state, ns, loader, pid, K.RAPPORT_GOSSIP)}
+		"dinner":
+			return {"knowledge": _learn(state, ns, loader, pid, K.KNOW_DINNER), "rapport": _rapport(state, ns, loader, pid, K.RAPPORT_DINNER)}
+	return {"knowledge": _learn(state, ns, loader, pid, K.KNOW_TOPIC), "rapport": _rapport(state, ns, loader, pid, K.RAPPORT_TOPIC)}
+
+
+## The lever's own spend, paid win or lose; what it wrote, after the clamps. A
+## commitment the register refuses comes back {refused}, with nothing written --
+## the commitment is each of those levers' only spend.
+static func pay(state, ns, loader, person, object: String, lever: String, args: Dictionary, now: int) -> Dictionary:
+	var pid := String(person.id)
+	var due := int(args.get("due_month", -1))
+	match lever:
+		"bargain":
+			if String(args.get("currency", K.CURRENCY_FAVOUR)) == K.CURRENCY_VOTE_TRADE:
+				if not President.commit(state, ns, loader, "iou", pid, object, now + K.IOU_MONTHS):
+					return {"refused": true}
+				return {"iou": now + K.IOU_MONTHS}
+			return {"rapport": _rapport(state, ns, loader, pid, -K.BARGAIN_FAVOUR_RAPPORT)}
+		"promise_date":
+			if not President.commit(state, ns, loader, "promise", pid, object, due):
+				return {"refused": true}
+			return {"promise": due}
+		"pressure":
+			var spent: Dictionary = Characters.price_refusal(ns, person, K.PRESSURE_GRUDGE, 0.0)
+			spent["rapport"] = _rapport(state, ns, loader, pid, -K.PRESSURE_RAPPORT)
+			return spent
+		"friendship":
+			var bond := President.relationship(ns, pid)
+			President.set_bond(state, ns, loader, pid, "friend" if bond == "close" else "")
+			return {"bond": "%s -> %s" % [bond, President.relationship(ns, pid)]}
+	return {}
+
+
+## What a lever costs, for the card: register -> amount, every value a number --
+## rapport and grudge in their own points, a commitment (promise) and a bond step
+## as counts. A bargain's is its default currency's, the favour; the row's
+## `currencies` lists each one it can pay in instead (QA's R2 on #113: one is
+## paid, so the card shows one).
+static func spends(lever: String) -> Dictionary:
+	match lever:
+		"bargain":
+			return {"rapport": -K.BARGAIN_FAVOUR_RAPPORT}
+		"promise_date":
+			return {"promise": 1.0}
+		"pressure":
+			return {"rapport": -K.PRESSURE_RAPPORT, "grudge": K.PRESSURE_GRUDGE}
+		"friendship":
+			return {"bond": -1.0}
+	return {}
 
 
 # --- Helpers ------------------------------------------------------------------------
@@ -318,63 +400,6 @@ static func _why_not(ns, session: Dictionary) -> String:
 	if why == "" and String(session.get("won", "")) != "":
 		why = "they have already agreed"
 	return why
-
-
-## WORD_GIVEN when `lever` is a promise and one is already in flight to this person
-## on this want (made in this audience or an earlier one), else "".
-static func _word_given(ns, pid: String, lever: String, object: String) -> String:
-	if lever != "promise_date":
-		return ""
-	for row in President.commitments_with(ns, pid):
-		if String(row["kind"]) == "promise" and String(row["object"]) == object:
-			return K.WORD_GIVEN
-	return ""
-
-
-## The lever's own spend, paid win or lose; what it wrote, after the clamps. A
-## commitment the register refuses comes back {refused}, with nothing written --
-## the commitment is each of those levers' only spend.
-static func _pay(state, ns, loader, person, session: Dictionary, lever: String, currency: String, due: int, now: int) -> Dictionary:
-	var pid := String(person.id)
-	var object := String(session["object"])
-	match lever:
-		"bargain":
-			if currency == K.CURRENCY_VOTE_TRADE:
-				if not President.commit(state, ns, loader, "iou", pid, object, now + K.IOU_MONTHS):
-					return {"refused": true}
-				return {"iou": now + K.IOU_MONTHS}
-			return {"rapport": _rapport(state, ns, loader, pid, -K.BARGAIN_FAVOUR_RAPPORT)}
-		"promise_date":
-			if not President.commit(state, ns, loader, "promise", pid, object, due):
-				return {"refused": true}
-			return {"promise": due}
-		"pressure":
-			var spent: Dictionary = Characters.price_refusal(ns, person, K.PRESSURE_GRUDGE, 0.0)
-			spent["rapport"] = _rapport(state, ns, loader, pid, -K.PRESSURE_RAPPORT)
-			return spent
-		"friendship":
-			var bond := President.relationship(ns, pid)
-			President.set_bond(state, ns, loader, pid, "friend" if bond == "close" else "")
-			return {"bond": "%s -> %s" % [bond, President.relationship(ns, pid)]}
-	return {}
-
-
-## What a lever costs, for the card: register -> amount, every value a number --
-## rapport and grudge in their own points, a commitment (promise) and a bond step
-## as counts. A bargain's is its default currency's, the favour; the row's
-## `currencies` lists each one it can pay in instead (QA's R2 on #113: one is
-## paid, so the card shows one).
-static func _spends(lever: String) -> Dictionary:
-	match lever:
-		"bargain":
-			return {"rapport": -K.BARGAIN_FAVOUR_RAPPORT}
-		"promise_date":
-			return {"promise": 1.0}
-		"pressure":
-			return {"rapport": -K.PRESSURE_RAPPORT, "grudge": K.PRESSURE_GRUDGE}
-		"friendship":
-			return {"bond": -1.0}
-	return {}
 
 
 static func _learn(state, ns, loader, pid: String, amount: float) -> float:

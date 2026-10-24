@@ -691,6 +691,14 @@ var cabinet_entitlement := {}
 ## the same shape dissolutions_called and governments_fallen already use.
 var reshuffles_called: int = 0
 
+## V5.2b b3. The absolute month of the player's last reshuffle that handed a
+## portfolio to another party (Cabinet.assign()), -1 for none, and that portfolio:
+## the month after, whoever wanted it and did not get it asks for an audience
+## (src/sim/audience_triggers.gd). absent_ok, no bump: an older save had invited
+## nobody, and -1 / "" read exactly that.
+var reshuffle_month: int = -1
+var reshuffle_portfolio: String = ""
+
 ## How many ministers have resigned this run. Never reset.
 var resignations_count: int = 0
 
@@ -1482,6 +1490,11 @@ var audience_requests: Array[Dictionary] = []
 ## person id -> the absolute month they last asked (the per-person cooldown).
 ## absent_ok for the same reason: nobody has asked yet.
 var audience_asked_month := {}
+
+## V5.2b b3. person id -> the absolute month the president last phoned them: one
+## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no
+## bump: before b3 nobody was called, which is what absent reads.
+var phone_calls := {}
 
 # --- The commodity layer (V4.6) -------------------------------------------------
 ## The nation's commodity state: what it can make, what it wants, what it made,

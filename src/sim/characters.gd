@@ -631,8 +631,8 @@ static func grudge_intake(person) -> float:
 ## a person to the leak, never past it. The card's price and the price paid read
 ## this one function.
 static func refusal_grudge(ns, person, grudge: float) -> float:
-	if grudge <= 0.0:
-		return grudge
+	if grudge <= 0.0 or not _of_nation(ns, person):
+		return 0.0 if grudge > 0.0 else grudge
 	var room := maxf(0.0, CK.GRUDGE_REFUSAL_CEILING - float(ns.person_grudges.get(person.id, 0.0)))
 	return minf(grudge * grudge_intake(person), room)
 
@@ -641,8 +641,13 @@ static func refusal_grudge(ns, person, grudge: float) -> float:
 ## failed lever -- on the two registers people-model 14.1 names, the grudge
 ## through refusal_grudge() above. The one door for a writer outside this file:
 ## Audiences and Levers price here, so this file stays the one writer of both
-## registers. Returns what was applied, after the clamps, for the card.
+## registers. Returns what was applied, after the clamps, for the card. A foreign
+## head (b3: a visitor's request) carries neither register -- loyalty is to this
+## nation's leader, and the want ladder acts only for this nation's people -- so a
+## refusal of one writes nothing here; its price is the president's rapport.
 static func price_refusal(ns, person, grudge: float, loyalty: float) -> Dictionary:
+	if not _of_nation(ns, person):
+		return {"grudge": 0.0, "loyalty": 0.0}
 	var grudge_before := float(ns.person_grudges.get(person.id, 0.0))
 	var loyalty_before := float(ns.person_loyalty.get(person.id, 0.0))
 	ns.person_grudges[person.id] = clampf(grudge_before + refusal_grudge(ns, person, grudge), 0.0, 1.0)
@@ -670,3 +675,8 @@ static func _act(state, act: String, person_id: String, detail: Dictionary) -> D
 		"year": int(state.year),
 		"month": int(state.month),
 	}
+
+
+## An authored person of this nation, by the loader's id-prefix rule.
+static func _of_nation(ns, person) -> bool:
+	return String(person.id).begins_with("%s_" % ns.id)

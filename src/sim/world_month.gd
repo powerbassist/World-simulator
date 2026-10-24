@@ -25,6 +25,7 @@ extends RefCounted
 ##   character_acts    Characters.tick_month's acts (Array)
 ##   audience_requests Audiences.tick_month's {arrived, lapsed} (V5.2b)
 ##   commitments       Levers.tick_month's {kept, broken} (V5.2b b2)
+##   meetings          Meetings.tick_month's heads met last month (V5.2b b3)
 ##   election_results  Elections.tick_month's results (Array)
 ##
 ## The caller sets state.year and state.month first: the clock is the caller's,
@@ -75,6 +76,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const Meetings = preload("res://src/sim/meetings.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const Elections = preload("res://src/sim/elections.gd")
 
@@ -411,7 +413,10 @@ static func _step(month: Month, step: String) -> Array:
 		# V5.2b b2: the promises and IOUs due are judged on the same meters, after
 		# the lane, so a request lapsing this month and a promise falling due read
 		# one settled world.
+		# V5.2b b3: the heads met last month first, so a request this month reads
+		# what the meeting taught.
 		"Audiences":
+			month.report["meetings"] = Meetings.tick_month(state, loader)
 			var meters := _character_meters(state)
 			month.report["audience_requests"] = Audiences.tick_month(state, loader, meters)
 			month.report["commitments"] = Levers.tick_month(state, loader, meters)
