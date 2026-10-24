@@ -48,6 +48,9 @@ static func pair_field(state, actor_id: String, field: String, target_id: String
 		"tariff_active": return 1.0 if own_measure_kind(state, actor_id, target_id) == "tariff" else 0.0
 		"sanction_active": return 1.0 if own_measure_kind(state, actor_id, target_id) == "sanction" else 0.0
 		"customs_union_shared": return 0.0 if customs_union_with(state, actor_id, target_id) == "" else 1.0
+	# _read_field() routes a field here by name; one it routes and this match lacks
+	# is a bug to see, not a silent 0.0 (its own default push_errors the same way).
+	push_error("diplomacy_verbs: unknown pair field '%s'" % field)
 	return 0.0
 
 

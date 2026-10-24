@@ -236,6 +236,12 @@ func _check_no_tariff_inside_a_customs_union() -> void:
 	left.nations[TARGET].orgs.erase("eu")
 	if not Diplomacy.available(left, _loader.diplomatic_actions, PLAYER, TARGET).has(tariff):
 		_failures.append("the gate still holds after DEU left the EU")
+	# And an accession turns it on: GBR inside the EU may no longer be tariffed.
+	var joined = _fresh()
+	joined.nations[OUTSIDER].orgs.append("eu")
+	joined.nations[OUTSIDER].orgs.sort()
+	if Diplomacy.available(joined, _loader.diplomatic_actions, PLAYER, OUTSIDER).has(tariff):
+		_failures.append("a nation that joined the EU may still be tariffed by a fellow member")
 	# org_effects is not saved: the load re-derive must carry the field.
 	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(_fresh().to_dict())))
 	Orgs.rebuild_static(back, _loader)

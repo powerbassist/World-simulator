@@ -147,7 +147,13 @@ static func from_dict(raw: Dictionary, fname: String, errors: Array[String]):
 
 	org.council = bool(raw.get("council", false))
 	org.net_transfers = bool(raw.get("net_transfers", false))
-	org.customs_union = bool(raw.get("customs_union", false))
+	# Type-checked rather than bool()'d: bool("false") is true, so a quoted flag
+	# would gate tariffs the content meant to leave open.
+	var raw_union = raw.get("customs_union", false)
+	if typeof(raw_union) == TYPE_BOOL:
+		org.customs_union = raw_union
+	else:
+		errors.append("%s: %s customs_union must be true or false" % [fname, org.id])
 
 	for key in OrgK.ORG_EFFECT_KEYS:
 		var v = raw.get(key, 0.0)
