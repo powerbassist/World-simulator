@@ -141,6 +141,13 @@ func _check_exposure_events_are_chain_only() -> void:
 	var d := _exposure("press", ["personal_wealth", "affair"])
 	d["likelihood"] = K.LIKELIHOOD_MAX
 	var ev = GameEvent.from_dict(d, "probe.json", errors, [], [], OpinionK.BLOC_KEYS, [])
+	# The shipped exposure scandals (data/events/shadows.json) come first in content
+	# order and would win the lookup, so the probe stands alone while it runs.
+	var shipped: Array = []
+	for existing in _loader.events.duplicate():
+		if String(existing.on_action) == "exposure":
+			shipped.append(existing)
+			_loader.events.erase(existing)
 	_loader.events.append(ev)
 	if Events.exposure_event(_loader, "press", "affair") != ev or Events.exposure_event(_loader, "courts", "affair") != null:
 		_failures.append("exposure_event() did not find the event by route and kind")
@@ -151,6 +158,7 @@ func _check_exposure_events_are_chain_only() -> void:
 			_failures.append("an exposure event reached the desk without being armed")
 			break
 	_loader.events.erase(ev)
+	_loader.events.append_array(shipped)
 
 
 func _finish() -> void:
