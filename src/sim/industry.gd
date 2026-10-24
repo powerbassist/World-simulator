@@ -66,6 +66,11 @@ static var _dist_memo_graph := 0
 ## pass-14 perf find -- the argmin over the nation's regions re-ran per
 ## major per month (~317 scans/tick) and x48 on the budget-refresh path.
 static var _best_region_memo: Dictionary = {}
+## D14 (A'): each nation's city -> region map and its set of regions, which
+## _relocate() rebuilt from ~33 cities and ~13 regions every nation-month. Content,
+## remembered against the region list it came from (is_same) and that list's size,
+## so a different loader's list is a miss; nothing writes a loaded region or city.
+static var _region_maps: Dictionary = {}
 
 
 static func tick_month(state, loader) -> void:
@@ -235,12 +240,9 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 ## nearest region: a firm relocates next door when it relocates at all. The
 ## register's `city` is the override; the authored city stays content.
 static func _relocate(ns, loader, majors: Array, month: int, graph_key: int) -> void:
-	var city_region := {}
-	var region_cities := {}
-	for region in loader.regions.get(ns.id, []):
-		region_cities[region.id] = true
-		for city in region.cities:
-			city_region[city.id] = region.id
+	var maps: Array = _maps_of(loader, ns.id)
+	var city_region: Dictionary = maps[0]
+	var region_cities: Dictionary = maps[1]
 	var graph: Dictionary = loader.region_graph
 	if _dist_memo_graph != graph_key:
 		_dist_memo.clear()
@@ -314,6 +316,23 @@ static func _relocate(ns, loader, majors: Array, month: int, graph_key: int) -> 
 		if target == "":
 			continue
 		entry["city"] = target
+
+
+## [city -> region, region -> true] for one nation; read-only to its caller.
+static func _maps_of(loader, nation_id: String) -> Array:
+	var regions: Array = loader.regions.get(nation_id, [])
+	var hit = _region_maps.get(nation_id)
+	if hit != null and is_same(hit[0], regions) and int(hit[1]) == regions.size():
+		return hit[2]
+	var city_region := {}
+	var region_cities := {}
+	for region in regions:
+		region_cities[region.id] = true
+		for city in region.cities:
+			city_region[city.id] = region.id
+	var maps: Array = [city_region, region_cities]
+	_region_maps[nation_id] = [regions, regions.size(), maps]
+	return maps
 
 
 # --- Failure --------------------------------------------------------------------
@@ -514,4 +533,7 @@ static func pending_bid(state, ns, loader = null) -> Dictionary:
 ## pass-13 hoist moved the LIVE-city read to companies.live_city_of, where
 ## headcount_in_city, the machine and the city panel share it.)
 static func _failed(ns, company_id: String) -> bool:
-	return bool(ns.companies.get(company_id, {}).get("failed", false))
+	# D14 (A'): no default Dictionary -- one was allocated per call, four calls a
+	# major a month.
+	var entry = ns.companies.get(company_id)
+	return entry != null and bool(entry.get("failed", false))
