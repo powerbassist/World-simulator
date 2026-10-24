@@ -46,9 +46,20 @@ Characters (`WorldMonth`'s "Audiences" step):
 3. **The seeded ask.** A person of the played nation, not the president, off a
    `REQUEST_COOLDOWN_MONTHS` (8) cooldown, with no open request and a want the
    government does not serve (`Characters.want_served()`, the edge trigger's own
-   read), asks with probability `REQUEST_HAZARD x (0.5 + standing)`, drawn from
+   read) and COULD (`Characters.servable()`: never a party's leadership, which only
+   a challenge makes -- pre-gate B, RECORD 10), asks with probability
+   `REQUEST_HAZARD x (0.5 + standing)`, drawn from
    `Cycle.unit_pair(person, "audience_request", month)`. A grudge silences no one:
    the declined go on asking.
+
+**The per-game seed (pre-gate B, CALL 2).** Every per-person draw -- the ask, the
+offered dates, the lever and phone rolls, the fog, the trait reveals -- is salted by
+`NationState.draw_seed` through `Cycle.salted()`. Without one, every France game drew
+the same months, and QA's run met a silent year (one request in months 21-38). Seed 0
+is the unseeded draw (the probes, the tests, the balance table, and any save made
+before the seed); the UI seeds a new game through `President.seed_draws()`, and a save
+keeps it. The world's draws (events, industry, statute, summits, companies) are still
+the same every game: recorded, not in this fix.
 4. Resolved rows older than `RESOLVED_KEPT_MONTHS` (12) are pruned.
 
 ## 3. The three answers, and the lapse
@@ -168,9 +179,17 @@ The scene never shows the true odds. `Levers.offered()` prints a range around th
 - 0.36 wide below the acquaintance edge (0.33), narrowing linearly to 0.08 at the known
   edge (0.67);
 - placed by a seeded offset, so the truth is always inside and not always centred (a
-  centred range would print the answer). The offset is re-drawn at every 0.01 of
-  knowledge (b2.1, QA's R1 on #113). With one offset for every width, two readings
-  either side of a topic gave the truth back exactly; now they can only intersect;
+  centred range would print the answer). With one offset for every width, two readings
+  either side of a topic gave the truth back exactly (b2.1, QA's R1 on #113);
+- **nested around the truth** (pre-gate B, RECORD 6; B4's amendment). The distance
+  below the truth is a seeded chain over the 0.01 knowledge grid (`LeverOdds.below()`):
+  each step draws the next inside the previous window, measured from the truth, and
+  between grid points the window moves continuously toward the next. So the lower
+  edge never sits further below the truth than before and the upper never further
+  above: a friendly topic that raises the odds raises the window by at least as much,
+  and knowledge only narrows it. QA's Turcy read 47-83 % and then 32-68 % after a
+  friendly topic under the per-step re-draw this replaced. Readings still only
+  intersect, and the latest window is all they tell;
 - shifted back inside [0, 1], never narrowed.
 
 A trait shows once knowledge passes its seeded reveal point, between a tenth of the
