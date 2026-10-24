@@ -62,6 +62,7 @@ var _levers: GridContainer
 var _topics: HFlowContainer
 var _attempts: Label
 var _result: Label
+var _talk_heading: Label
 
 
 func _ready() -> void:
@@ -94,7 +95,7 @@ func _ready() -> void:
 	_attempts = Label.new()
 	_attempts.theme_type_variation = UiTheme.CAPTION
 	talk.add_child(_attempts)
-	PanelKit.heading(talk, tr("Or talk"))
+	_talk_heading = PanelKit.heading(talk, tr("Or talk"))
 	_topics = PanelKit.buttons(talk)
 	_result = Label.new()
 	_result.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -153,8 +154,15 @@ func _fill_verbs(offered: Array, topics: Array, attempts_left: int) -> void:
 		odds.text = odds_text(float(row.get("odds_lo", 0.0)), float(row.get("odds_hi", 0.0)))
 		_levers.add_child(odds)
 		_levers.add_child(_spends_label(row.get("spends", {})))
-	_attempts.text = tr_n("%d attempt left", "%d attempts left", attempts_left) % attempts_left if attempts_left > 0 \
-		else tr("No attempts left: end the audience.")
+	# No levers offered at all (before the sim's levers exist, or none fit): the
+	# audience is heard, not argued -- saying "no attempts left" would be a lie.
+	if offered.is_empty():
+		_attempts.text = tr("Hear them out, then end the audience.")
+	elif attempts_left > 0:
+		_attempts.text = tr_n("%d attempt left", "%d attempts left", attempts_left) % attempts_left
+	else:
+		_attempts.text = tr("No attempts left: end the audience.")
+	_talk_heading.visible = not topics.is_empty()
 	for row in topics:
 		var button := Button.new()
 		button.text = tr(String(TOPIC_LABEL.get(String(row["topic"]), String(row["topic"]))))

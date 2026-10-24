@@ -64,6 +64,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mood 35
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 18 --open overview
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --book
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
@@ -312,6 +315,11 @@ var _mid_term := false
 ## V5.2-0a, --months N: N real months on the clock first, so the charts have a
 ## history to draw.
 var _months := 0
+## V5.2b: --request stages two audience requests through the sim's own arrival
+## (Audiences._arrive; the register is the sim's); --book opens the Diary on the
+## first one's offered days; --audience books its first free day and reaches it, so
+## the scene is up.
+var _request := ""
 ## V5.1-c2.3: open a domain through its sidebar entry (its first tab), so a frame
 ## shows the entry marked and the tab open -- V2.1c's --cluster, for the sidebar.
 var _domain := ""
@@ -787,6 +795,8 @@ func _init() -> void:
 			_console = "errors"
 		elif args[i] == "--mid-term":
 			_mid_term = true
+		elif args[i] == "--request" or args[i] == "--book" or args[i] == "--audience":
+			_request = args[i] if _request != "--audience" else _request
 		elif args[i] == "--months" and i + 1 < args.size():
 			_months = int(args[i + 1])
 		elif args[i] == "--cards" and i + 1 < args.size():
@@ -900,6 +910,8 @@ func _process(_delta: float) -> bool:
 		if _months > 0:
 			_tick_months(_months)
 			_main._windows.mark_all_dirty()
+		if _request != "":
+			_stage_requests()
 		if _mid_term:
 			_main._state.player().months_in_term = 7
 			_main._enforce_term_start_programme()
@@ -1883,6 +1895,30 @@ func _firm_by_id(loader, nation_id: String, firm_id: String):
 ## second widget: main.gd connects both clock signals in `_ready()`, so this is the
 ## path a played game takes, day resolution and all. U6a's dispatch runs here too,
 ## which no hand-rolled month loop ever exercised.
+func _stage_requests() -> void:
+	var Audiences := load("res://src/sim/audiences.gd")
+	var Driver := load("res://src/ui/audience_driver.gd")
+	var ns = _main._state.player()
+	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
+	var asked := 0
+	for person in _main._loader.people.get(String(ns.id), []):
+		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
+			Audiences._arrive(ns, person, person.wants[0], now, [])
+			asked += 1
+	Driver.refresh(_main)
+	var first: Dictionary = Audiences.pending(ns)[0] if not Audiences.pending(ns).is_empty() else {}
+	if first.is_empty() or _request == "--request":
+		return
+	Driver._open_booking(_main, String(first["id"]))
+	if _request != "--audience":
+		return
+	for date in Audiences.offered_dates(_main._state, ns, String(first["id"])):
+		if bool(date["free"]):
+			Audiences.book(_main._state, ns, _main._loader, String(first["id"]), date)
+			_main._resolve_appointments(int(date["year"]), int(date["month"]), int(date["day"]))
+			break
+
+
 func _tick_months(months: int) -> void:
 	if _main == null or _main._clock == null:
 		return

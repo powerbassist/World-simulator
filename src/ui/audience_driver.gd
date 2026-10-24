@@ -86,6 +86,8 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 	return {"id": id, "person_id": String(request["person_id"]), "stance": String(request["stance"]),
 		"person": loader.person_name(String(request["person_id"])),
 		"ask": PersonCard.object_text(loader, ns, String(request["object"]), request),
+		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
+			PersonCard.object_text(loader, ns, String(request["object"]), request)],
 		"by": DateText.month_year(deadline - year * 12, year),
 		"price": price_text(Audiences.decline_price(ns, loader, id)),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}
@@ -127,6 +129,7 @@ static func open_scene(main, request_id: String) -> void:
 	main._clock.paused = true
 	game["scene"].open(row)
 	main._hud.clock_cluster.refresh(main._clock, HoldReason.show(main))
+	refresh(main)
 
 
 ## The scene is over. Until b2's levers decide it, an audience with no lever won

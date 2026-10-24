@@ -80,7 +80,7 @@ static func _answer(label: String, answer: Dictionary) -> Dictionary:
 
 
 static func _body(row: Dictionary) -> String:
-	return "%s\n%s\n%s" % [String(row.get("ask", "")),
+	return "%s\n%s\n%s" % [String(row.get("wants", row.get("ask", ""))),
 		Strings.t("Answer by %s; unanswered, it counts as a refusal.") % String(row.get("by", "")),
 		Strings.t("Declining: %s.") % String(row.get("price", ""))]
 
