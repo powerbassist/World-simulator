@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://bpsj42u5q4uwo"
+path="res://.godot/imported/ESP_palacio_audience.dialogue-c7b7448e1115294b809524dfa1123518.tres"
+
+[deps]
+
+source_file="res://data/summits/ESP_palacio_audience.dialogue"
+dest_files=["res://.godot/imported/ESP_palacio_audience.dialogue-c7b7448e1115294b809524dfa1123518.tres"]
+
+[params]
+
+defaults=true

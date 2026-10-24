@@ -1,0 +1,47 @@
+{
+  "name": "A Working Lunch in Downing Street",
+  "summary": "Sandwiches at a cabinet table, a prime minister with a very polite list, and the Channel between two grudges.",
+  "effects": {
+    "Raise the fishing quotas": {},
+    "Raise the cross-Channel crossings": {},
+    "Raise the defence cooperation treaty": {},
+    "Offer a staggered quota deal": {
+      "bloc_offset": {
+        "rural": -0.03,
+        "business": 0.02
+      }
+    },
+    "Warn of retaliation on energy": {
+      "bloc_offset": {
+        "rural": 0.03,
+        "business": -0.03
+      }
+    },
+    "Offer joint patrols and funding": {
+      "spending_pct_gdp": {
+        "defence": 0.02
+      },
+      "bloc_offset": {
+        "urban": 0.02,
+        "workers": -0.01
+      }
+    },
+    "Insist on a returns agreement": {
+      "bloc_offset": {
+        "workers": 0.02,
+        "urban": -0.02
+      }
+    },
+    "Propose a joint carrier group": {
+      "spending_pct_gdp": {
+        "defence": 0.04
+      },
+      "bloc_offset": {
+        "business": 0.02,
+        "students": -0.02
+      }
+    },
+    "Propose shared intelligence only": {}
+  },
+  "scene": "cabinet_room"
+}

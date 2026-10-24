@@ -1,0 +1,35 @@
+~ start
+Prime Minister Zawadzki: Mr President, in Warsaw we do not do small talk before the map. The map is the small talk.
+- Offer a French brigade on rotation => brigade
+- Offer a joint arms purchase => arms
+- Ask how Poland sees the Union's future => future
+~ brigade
+Prime Minister Zawadzki: A brigade. For the first time in a hundred years France would stand where we stand. I will see that it is photographed.
+- Make it permanent => permanent
+- Make it a one-year rotation => rotation
+~ permanent
+Prime Minister Zawadzki: Permanent. My opposition will call it a gift and my generals a miracle.
+=> END
+~ rotation
+Prime Minister Zawadzki: A rotation is respectable. The troops rotate, the gratitude should not.
+=> END
+~ arms
+Prime Minister Zawadzki: A joint purchase. Our factories and yours could build in tandem, and our generals could swap their catalogues for once.
+- Choose French artillery => artillery
+- Choose a shared design => shared
+~ artillery
+Prime Minister Zawadzki: French artillery, a respectable choice, and my Americans will frown into their coffee.
+=> END
+~ shared
+Prime Minister Zawadzki: A shared design takes five years. We have, I should say, two.
+=> END
+~ future
+Prime Minister Zawadzki: Poland wants a union that defends, that trades, and that does not lecture us on the sequence.
+- Say France wants a stronger union => stronger
+- Say France wants a looser union => looser
+~ stronger
+Prime Minister Zawadzki: Stronger, then. We shall see whether you mean it when the bill arrives.
+=> END
+~ looser
+Prime Minister Zawadzki: A looser union is easy to promise. Whether it would hold in winter is another matter.
+=> END

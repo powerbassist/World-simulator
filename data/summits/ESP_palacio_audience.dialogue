@@ -1,0 +1,35 @@
+~ start
+President Larrañaga: His Majesty will receive you at four. Before that, ten minutes with me, so that we do not contradict each other in front of him.
+- Ask about the Catalan question => catalan
+- Ask about the new Spanish budget => budget
+- Ask about Spain's role in the council => council
+~ catalan
+President Larrañaga: An internal matter, Mr President, and I say that with the tenderness one reserves for the subject.
+- Offer discretion and silence => silence
+- Say Europe will watch => watch
+~ silence
+President Larrañaga: Silence is the diplomacy of grown-ups. I will remember it when I am asked to do the same.
+=> END
+~ watch
+President Larrañaga: Europe watches everything, and says nothing for as long as it is convenient. I would ask for convenience.
+=> END
+~ budget
+President Larrañaga: We hold a fragile majority. A budget is a ten-month negotiation with nine friends who each want something different.
+- Back their pension reform => pensions
+- Back their defence line => defence_line
+~ pensions
+President Larrañaga: The pension reform is the hardest chapter. Your support will be quoted by both the left and the right, each wrongly.
+=> END
+~ defence_line
+President Larrañaga: Defence, from Spain? A rare thing. My generals will be flattered and my partners will frown.
+=> END
+~ council
+President Larrañaga: We hold three votes in the council and use them like a tapestry, slowly, and all at once.
+- Ask them to back your file => back_file
+- Offer to back theirs => their_file
+~ back_file
+President Larrañaga: Your file. I will weigh it with the wisdom of a man who has seen four presidents of France come and go.
+=> END
+~ their_file
+President Larrañaga: You would back ours? Then I owe you a favour, and Spaniards pay their debts, usually in dinner.
+=> END

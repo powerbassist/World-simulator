@@ -133,7 +133,9 @@ func _refresh() -> void:
 	_offer_seen_term = int(ns.terms_served)
 	# The frame contract, in the model's own terms: a choice pays nothing
 	# (programme-model §8), the delivery is what the register prices.
-	PanelKit.line(_body, tr("One of these becomes the term's programme. Choosing it costs nothing; the register prices the delivery, on the month it lands or the deadline it misses. Pressing play without choosing runs the term with none."))
+	# V5.2-0b: one line; the pricing rule (choosing costs nothing, the delivery is
+	# priced, no choice runs the term with none) is the programme term's plate.
+	PanelKit.line(_body, tr("Pick the term's [g=programme]programme[/g]. Delivery is judged when it lands or its deadline passes."))
 	_build_offer(ns, offer)
 	_build_register(ns)
 
@@ -262,7 +264,7 @@ func _build_live_read(ns, terms: Dictionary, entry: Dictionary, block: VBoxConta
 ## disagree about where the figure stands.
 func _read_text(ns, terms: Dictionary) -> String:
 	var read: Dictionary = Programme.progress_of(ns, terms)
-	return tr("%s now against a %s goal") % [Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2)]
+	return tr("now %s · goal %s") % [Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2)]
 
 
 ## The deadline, from the authored timeout and the register's own months-live
@@ -271,13 +273,15 @@ func _read_text(ns, terms: Dictionary) -> String:
 func _clock_text(terms: Dictionary, live_months: int, is_live: bool) -> String:
 	var timeout := int(terms.get("timeout_months", 0))
 	if timeout <= 0:
-		return tr("no deadline")
+		# The author's rule (2026-10-23, Systems' #97): a goal without a clock is
+		# judged when the term ends, then ends.
+		return tr("judged at the end of the term")
 	if not is_live:
 		return tr_n("%d month on the clock", "%d months on the clock", timeout) % timeout
 	var left := timeout - live_months
 	if left <= 0:
-		return tr("month %d of %d -- its deadline is now") % [live_months, timeout]
-	return tr_n("month %d of %d · %d month to its deadline", "month %d of %d · %d months to its deadline", left) % [
+		return tr("month %d of %d · due now") % [live_months, timeout]
+	return tr_n("month %d of %d · %d month left", "month %d of %d · %d months left", left) % [
 		live_months, timeout, left,
 	]
 
@@ -290,11 +294,11 @@ func _clock_text(terms: Dictionary, live_months: int, is_live: bool) -> String:
 func _unset_text(ns) -> String:
 	if Programme.is_term_start(ns):
 		return tr("Nothing is offerable this term -- every gate in the book is shut.")
-	var rule := tr("No programme was set this term. A programme can only be chosen on the first day of a term, before the clock runs.")
+	var rule := tr("No programme was set this term: one is chosen on a term's first day.")
 	var when := Trends.vote_date(ns)
 	if when.y < 1 or when.y > DateText.SHORT.size():
 		return rule  # no vote scheduled: say the rule, not a date that does not exist
-	return rule + " " + tr("The next term starts after the vote in %s %d, and its programme can be chosen then.") % [
+	return rule + " " + tr("The next term starts after the vote in %s %d.") % [
 		DateText.month(when.y), when.x,
 	]
 

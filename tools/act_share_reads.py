@@ -1,0 +1,76 @@
+"""The act-share and clamp reads of docs/design/bands-v5.2.md's B3 amendment (V5.2b).
+
+Usage:
+    APPDATA="$(mktemp -d)" godot --headless --path <checkout> --script res://tests/test_balance.gd -- --bands-reads > tip.log
+    (the same at the base checkout, with this tip's tests/test_balance.gd copied in)
+    python tools/act_share_reads.py base.log tip.log
+
+`--bands-reads` prints only the months the player governs: its read window closes at
+the first month out of office, an executive loss or the term limit (bands-v5.2.md,
+"Correction: the read window"). The act share is the tip's own: its largest
+act-written share of bloc_offset over the months the tip run governed. The clamp row
+reads the same months: a tip clamp is new unless the base run of the same number had
+that bloc on the clamp at or before that month, while the base governed. So a base clamp
+that comes later does not excuse the tip, a month the base no longer governed has no
+base clamp to excuse it (the base "was not at it"), and a tip clamp after the tip left
+office does not count.
+"""
+import collections
+import sys
+
+
+def read(path):
+    managed, months = {}, collections.defaultdict(set)
+    shares, clamps = collections.defaultdict(list), collections.defaultdict(list)
+    for line in open(path, encoding="utf-8", errors="replace"):
+        p = line.split()
+        if len(p) < 3 or p[0] != "BANDREAD":
+            continue
+        if p[1] == "RUN":
+            managed[p[2]] = p[3] == "managed=true"
+        elif p[1] == "MONTH":
+            months[p[2]].add(p[3])
+        elif p[1] == "SHARE":
+            shares[p[2]].append((p[3], p[4], abs(float(p[5]))))
+        elif p[1] == "CLAMP":
+            clamps[p[2]].append((p[3], p[4]))
+    return managed, months, shares, clamps
+
+
+def main() -> int:
+    b_managed, b_months, _, b_clamps = read(sys.argv[1])
+    managed, months, shares, clamps = read(sys.argv[2])
+    if set(b_managed) != set(managed):
+        print("WARNING: the logs ran different runs: base %s, tip %s" % (sorted(b_managed, key=int), sorted(managed, key=int)))
+    print("run managed  tip-last  base-last  both-last  share (where)")
+    worst_managed, worst_all, new = 0.0, 0.0, []
+    for r in sorted(managed, key=int):
+        both = months[r] & b_months[r]
+        best, where = 0.0, ""
+        for at, bloc, v in shares[r]:
+            if at in months[r] and v > best:
+                best, where = v, "%s %s" % (at, bloc)
+        print("%3s %-7s  %8s  %9s  %9s  %.3f %s" % (r, managed[r], max(months[r], default="-"), max(b_months[r], default="-"), max(both, default="-"), best, where))
+        worst_all = max(worst_all, best)
+        if managed[r]:
+            worst_managed = max(worst_managed, best)
+        # A base clamp excuses the tip's only if it came at or before the tip's month
+        # (QA's TAKE and R4 on #104). The base prints CLAMP lines only while it
+        # governs, so a month past its loss has nothing to excuse the tip with.
+        base_first = {}
+        for at, bloc in b_clamps[r]:  # month order, so the first hit is the first month
+            base_first.setdefault(bloc, at)
+        first = {}
+        for at, bloc in clamps[r]:
+            if at in months[r] and (bloc not in base_first or base_first[bloc] > at):
+                first.setdefault(bloc, at)
+        new += [(r, bloc, at) for bloc, at in sorted(first.items())]
+    print("max act share over the tip's governed months: %.3f in the MANAGED runs (the band's row), %.3f in all" % (worst_managed, worst_all))
+    print("blocs newly on the clamp over the tip's governed months (vs the base run of the same number): %d" % len(new))
+    for r, bloc, at in new:
+        print("  run %s %s from %s%s" % (r, bloc, at, "  (after the base left office)" if at not in b_months[r] else ""))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,20 @@
+~ opening
+% {{name}}: {{president}}, I have put my name to {{ask}}, and I would like to see it carried. I came to ask for your weight behind it.
+% {{name}}: You know I have backed {{ask}} since before it was fashionable. Now I need it to be more than a speech.
+=> END
+
+~ lever_argue_success
+% {{name}}: You have shown me why it cannot all happen at once. I will take the half that does, and call it a start.
+=> END
+
+~ lever_argue_failure
+% {{name}}: I have given years to this. A neat argument will not undo them.
+=> END
+
+~ close_settled
+% {{name}}: Then it moves. You have my gratitude, and my vote when you need it.
+=> END
+
+~ close_declined
+% {{name}}: I put my name to this, {{president}}. You will understand if my name is less available to you in future.
+=> END

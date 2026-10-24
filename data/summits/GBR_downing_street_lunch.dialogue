@@ -1,0 +1,35 @@
+~ start
+Prime Minister Marchbanks: Mr President. I have asked for sandwiches, which in this building counts as a state banquet. Shall we begin with the fishing, or the fishing?
+- Raise the fishing quotas => fishing
+- Raise the cross-Channel crossings => crossings
+- Raise the defence cooperation treaty => defence
+~ fishing
+Prime Minister Marchbanks: Fisheries are two percent of our economy and ninety percent of our speeches. I cannot concede, but I can be reasonable in public.
+- Offer a staggered quota deal => quota
+- Warn of retaliation on energy => retaliate
+~ quota
+Prime Minister Marchbanks: A staggered deal I can defend in the House. Every trawler will still say it was robbed.
+=> END
+~ retaliate
+Prime Minister Marchbanks: Threats over sandwiches. I admire the stamina. I will not move an inch, but I will remember the lunch.
+=> END
+~ crossings
+Prime Minister Marchbanks: The crossings are a tragedy and a headline in equal parts, and I would like fewer of both.
+- Offer joint patrols and funding => patrols
+- Insist on a returns agreement => returns
+~ patrols
+Prime Minister Marchbanks: Joint patrols we can sign this month. My Home Secretary will call it a breakthrough, and so will yours.
+=> END
+~ returns
+Prime Minister Marchbanks: A returns agreement is a longer road. We will walk some of it together, and then argue about the milestones.
+=> END
+~ defence
+Prime Minister Marchbanks: The Lancaster House treaty has aged better than most marriages. Shall we put a new coat of paint on it?
+- Propose a joint carrier group => carrier
+- Propose shared intelligence only => intel
+~ carrier
+Prime Minister Marchbanks: A joint carrier group. Admirals on both sides will ask who commands, and we will say, at length, both.
+=> END
+~ intel
+Prime Minister Marchbanks: Intelligence sharing is the quiet form of friendship. Neither of us will advertise it, which is its charm.
+=> END

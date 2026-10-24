@@ -1,0 +1,35 @@
+~ start
+President Larrañaga: Forgive the heat, Mr President. In Spain we hold our summits in courtyards because it is the only room with a roof that breathes.
+- Raise the Pyrenees power link => pyrenees
+- Raise the drought and water => water
+- Raise tourism and housing => tourism
+~ pyrenees
+President Larrañaga: The link under the mountains. We could light half of Europe with our sun if only the cable existed.
+- Commit to the cable => cable
+- Ask for guarantees on prices => prices
+~ cable
+President Larrañaga: A cable, then. It will cost more than promised, and arrive late, and be wonderful.
+=> END
+~ prices
+President Larrañaga: Guarantees on prices. You want the sun to stay cheap. So do we, naturally.
+=> END
+~ water
+President Larrañaga: The rivers are thinner each year, and the farmers' unions louder. Neither of those is a coincidence.
+- Offer French desalination expertise => desal
+- Offer a joint water charter => charter
+~ desal
+President Larrañaga: Desalination, yes. The coast will take it, the interior will ask what about us.
+=> END
+~ charter
+President Larrañaga: A charter. A very European answer, with a preamble longer than the river.
+=> END
+~ tourism
+President Larrañaga: Fourteen million of yours come every year and half of them break something. I say this with great affection.
+- Propose a joint housing programme => housing
+- Propose a tourist levy => levy
+~ housing
+President Larrañaga: Housing is the quiet crisis. A joint programme would give my mayors something to point at other than the beach.
+=> END
+~ levy
+President Larrañaga: A levy, applied to your people and mine alike. The hotels will protest, and the cities will frame the first bill.
+=> END

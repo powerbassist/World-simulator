@@ -1,0 +1,46 @@
+{
+  "name": "An Audience at the Zarzuela",
+  "summary": "A formal drawing room, a monarch with opinions the constitution does not let him voice, and a head of government hovering at the door.",
+  "effects": {
+    "Ask about the Catalan question": {},
+    "Ask about the new Spanish budget": {},
+    "Ask about Spain's role in the council": {},
+    "Offer discretion and silence": {
+      "bloc_offset": {
+        "business": 0.01
+      }
+    },
+    "Say Europe will watch": {
+      "bloc_offset": {
+        "urban": 0.01,
+        "business": -0.01
+      }
+    },
+    "Back their pension reform": {
+      "spending_pct_gdp": {
+        "pensions": 0.02
+      },
+      "bloc_offset": {
+        "pensioners": 0.03,
+        "business": -0.02
+      }
+    },
+    "Back their defence line": {
+      "spending_pct_gdp": {
+        "defence": 0.02
+      },
+      "bloc_offset": {
+        "workers": -0.02,
+        "business": 0.02
+      }
+    },
+    "Ask them to back your file": {},
+    "Offer to back theirs": {
+      "bloc_offset": {
+        "business": -0.01,
+        "urban": 0.02
+      }
+    }
+  },
+  "scene": "office"
+}

@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://bstsl3n43b1k2"
+path="res://.godot/imported/DEU_state_aid_garden.dialogue-ce1fbae1f69e14fd54b201d61851d97d.tres"
+
+[deps]
+
+source_file="res://data/summits/DEU_state_aid_garden.dialogue"
+dest_files=["res://.godot/imported/DEU_state_aid_garden.dialogue-ce1fbae1f69e14fd54b201d61851d97d.tres"]
+
+[params]
+
+defaults=true

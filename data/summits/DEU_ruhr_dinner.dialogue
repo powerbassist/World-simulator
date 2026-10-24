@@ -1,24 +1,24 @@
 ~ start
-Chancellor Vogel: Herr President. The Chancellery kitchen makes a venison you cannot get in Paris, and I paid for it out of my own pocket, so you may trust the compliment.
+Chancellor Vogler: Herr President. The Chancellery kitchen makes a venison you cannot get in Paris, and I paid for it out of my own pocket, so you may trust the compliment.
 - Raise the Rhine shipping tolls => raise_tolls
 - Offer a joint grid study => grid_study
 ~ raise_tolls
-Chancellor Vogel: Straight to business over the venison. My inland fleet will scream, but a toll we set together is a toll Bonn cannot be blamed for alone.
+Chancellor Vogler: Straight to business over the venison. My inland fleet will scream, but a toll we set together is a toll Bonn cannot be blamed for alone.
 - Shake on the joint toll => shake
 - Leave it for the officials => officials
 ~ shake
-Chancellor Vogel: Then it is done, and we are both poorer in friends and richer in revenue.
+Chancellor Vogler: Then it is done, and we are both poorer in friends and richer in revenue.
 => END
 ~ officials
-Chancellor Vogel: The officials will bury it, of course. But they will bury it together, which is its own kind of treaty.
+Chancellor Vogler: The officials will bury it, of course. But they will bury it together, which is its own kind of treaty.
 => END
 ~ grid_study
-Chancellor Vogel: A study! The most honest word in European politics: it costs little, commits nothing, and reads well in both parliaments.
+Chancellor Vogler: A study! The most honest word in European politics: it costs little, commits nothing, and reads well in both parliaments.
 - Fund it generously => fund_big
 - Fund it modestly => fund_small
 ~ fund_big
-Chancellor Vogel: Generosity, from a French budget? My finance ministry will not believe the cable.
+Chancellor Vogler: Generosity, from a French budget? My finance ministry will not believe the cable.
 => END
 ~ fund_small
-Chancellor Vogel: Modest it is. The study will conclude exactly what we paid for it to conclude, as studies do.
+Chancellor Vogler: Modest it is. The study will conclude exactly what we paid for it to conclude, as studies do.
 => END

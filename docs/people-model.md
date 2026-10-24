@@ -452,6 +452,7 @@ whichever block builds the dismissal/endorsement surfaces.
 | Demand a portfolio | want + grudge (feeds resign/challenge) | cabinet.gd's assignment rule |
 | Endorse / refuse (election) | bloc_offset-priced, campaign-visible card | elections.gd internals |
 | Sponsor / oppose a programme entry | reads `Programme`; a conclusion pays through the on_* effects ([[programme-model]] §V4.1's lobbying channel) | a new channel |
+| *(every act's cost, since V5.2b)* | its `bloc_offset` share (`act_bloc_offset`) fades with a 24-month half-life -- the author's "le cout s'efface"; laws, events, the programme and campaigns stay permanent ([[audiences-model]] section 3) | a permanent scar from one leak |
 | Ask for an audience (V5.2b) | the request lane; a refusal prices grudge and loyalty through `Characters.price_refusal()` and rapport through `President` ([[audiences-model]]) | a third register |
 
 `characters.gd` is a leaf: character_constants + legislature (the applier) +

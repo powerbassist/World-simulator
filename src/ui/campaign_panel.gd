@@ -216,10 +216,10 @@ func _build_clock(ns) -> void:
 	PanelKit.row(_body, tr("Months to the vote"), "%d" % months)
 	if Campaign.is_open(_state, ns):
 		PanelKit.row(_body, tr("Campaign bill"), tr("%s %% of GDP") % Num.f(ns.campaign_bill_pct_gdp, 3))
-		PanelKit.line(_body, tr("The run-up is open. Every effort in the field reaches more voters each month it runs and costs its price each month it runs, and all of it ends at the vote whatever happens."))
+		PanelKit.line(_body, tr("The run-up is open until the vote: each effort reaches and costs every month."))
 	else:
-		PanelKit.line(_body, tr("The run-up opens %d months from now, %d months before the vote. Nothing can be put in the field until then.")
-			% [months - CampaignK.CAMPAIGN_WINDOW_MONTHS, CampaignK.CAMPAIGN_WINDOW_MONTHS])
+		PanelKit.line(_body, tr_n("The run-up opens in %d month.", "The run-up opens in %d months.", months - CampaignK.CAMPAIGN_WINDOW_MONTHS)
+			% (months - CampaignK.CAMPAIGN_WINDOW_MONTHS))
 
 
 ## Who is going to turn out, bloc by bloc, against who would have without a campaign.
@@ -243,7 +243,7 @@ func _build_turnout(ns) -> void:
 			"%s %%   %s" % [Num.f(now * 100.0, 1), "—" if is_zero_approx(delta) else Num.fs((delta * 100.0), 1)],
 		)
 	if not moved:
-		PanelKit.line(_body, tr("Nobody has been mobilised. These are the figures an ordinary election gets."))
+		PanelKit.line(_body, tr("Nobody mobilised yet."))
 
 
 func _build_running(ns) -> void:
@@ -262,7 +262,7 @@ func _build_live(ns, effort_id: String) -> void:
 
 	PanelKit.line(block, Strings.noun("campaign-actions", _loader.campaign_actions, "campaign", "effort_id", effort_id, "effort_name", Campaign.name_of(_loader, effort_id)), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("%s %% of GDP a year · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)], PanelKit.Tone.GOOD)
+	PanelKit.line(block, tr("%s %% GDP/yr · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)], PanelKit.Tone.GOOD)
 
 	PanelKit.line(block, _site_text(ns, effort_id), PanelKit.Tone.PLAIN)
 
@@ -295,7 +295,7 @@ func _build_site(ns) -> void:
 	_body.add_child(picker)
 
 	if _site_region == "":
-		PanelKit.line(_body, tr("Choose where the meetings are held. Reach falls with the journey's travel days, and a region already spoken to gives less the second time."))
+		PanelKit.line(_body, tr("Pick a region. Travel and repeat visits cut the reach."))
 		return
 	var days := Campaign.travel_days_to(ns, _loader, _site_region)
 	PanelKit.line(_body, tr_n("%d day's travel · reach ×%s a month · %d%% spoken to", "%d days' travel · reach ×%s a month · %d%% spoken to", days) % [
@@ -357,7 +357,7 @@ func _build_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 
 	PanelKit.line(block, Strings.row("campaign-actions", String(action.id), "effects.campaign.effort_name", String(terms.get("effort_name", ""))), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("%s %% of GDP a year · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)])
+	PanelKit.line(block, tr("%s %% GDP/yr · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)])
 
 	if can_act:
 		block.add_child(_button(ns, action))
@@ -431,7 +431,7 @@ func _build_promises(ns) -> void:
 
 	var books: Array = Pledges.on_the_books(ns)
 	if books.is_empty():
-		PanelKit.line(_body, tr("Nothing has been promised. A promise is made in the run-up and binds the whole of the term it wins: the blocs that want to hear it pay you for saying it now, and every month it stands broken costs you more."))
+		PanelKit.line(_body, tr("Nothing promised yet."))
 	for entry in books:
 		_build_promise_row(ns, entry)
 
@@ -456,7 +456,7 @@ func _build_programme(ns) -> void:
 	var this_term: Array = Programme.this_term(ns)
 	if this_term.is_empty():
 		if Programme.is_term_start(ns):
-			PanelKit.line(_body, tr("The term's programme is unset -- the Agenda (K) holds the offer."), PanelKit.Tone.DIM)
+			PanelKit.line(_body, tr("No programme yet: see the Agenda (K)."), PanelKit.Tone.DIM)
 		else:
 			PanelKit.line(_body, tr("No programme was set this term."), PanelKit.Tone.DIM)
 		return
@@ -473,7 +473,7 @@ func _build_programme(ns) -> void:
 				var read: Dictionary = Programme.progress_of(ns, terms)
 				var fraction: float = PanelKit.progress_fraction(
 					float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
-				PanelKit.line(_body, tr("%s · %s now against a %s goal · %d%% there") % [
+				PanelKit.line(_body, tr("%s · now %s · goal %s · %d%% there") % [
 					name_text, Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2), roundi(fraction * 100.0),
 				], PanelKit.Tone.PLAIN)
 			ProgrammeK.STATUS_COMPLETE:
@@ -522,10 +522,8 @@ func _build_promise_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 
 	PanelKit.line(block, Strings.row("pledges", String(action.id), "effects.pledge.pledge_name", String(terms.get("pledge_name", ""))), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, "%s · %s" % [
-		_promise_text({"field": terms.get("field", ""), "op": terms.get("op", ""), "value": terms.get("value", 0.0)}),
-		_breach_text(terms),
-	])
+	PanelKit.line(block, _promise_text({"field": terms.get("field", ""), "op": terms.get("op", ""), "value": terms.get("value", 0.0)}))
+	PanelKit.line(block, _breach_text(terms))
 
 	if can_act:
 		block.add_child(_pledge_button(ns, action))
@@ -568,7 +566,7 @@ func _breach_text(terms: Dictionary) -> String:
 	# Signed and with the unit named ONCE at the end. The first captured frame printed
 	# "a month broken: Pensioners 0.14, Rural 0.10" -- four bare numbers in no unit,
 	# against an effort row two lines above printing points of TURNOUT in the same shape.
-	return tr("each month broken: %s approval") % ", ".join(parts)
+	return tr("broken: %s approval/mo") % ", ".join(parts)
 
 
 ## What a promise has taken off the headline so far, in points of approval: the months

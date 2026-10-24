@@ -1,0 +1,35 @@
+~ start
+Prime Minister Zawadzki: You should know that in Silesia a French president is either a guest or a bailiff. Tonight you are a guest. Keep it that way.
+- Offer a just-transition fund => transition
+- Offer a French nuclear partnership => nuclear
+- Offer to defend Poland's pace at the council => pace
+~ transition
+Prime Minister Zawadzki: A just-transition fund. The miners' union has heard the word before, and still it is a good word to hear from a visitor.
+- Fund it from the French budget => french_budget
+- Fund it from a European line => european_line
+~ french_budget
+Prime Minister Zawadzki: From Paris? The miners will drink to you. My finance minister will check the cheque twice.
+=> END
+~ european_line
+Prime Minister Zawadzki: A European line is a longer wait, but nobody here will say I took French money to close a mine.
+=> END
+~ nuclear
+Prime Minister Zawadzki: Nuclear is the future in the cities and the past in the villages. We will build, but you will not decide where.
+- Offer reactor technology => reactor
+- Offer only training and expertise => training
+~ reactor
+Prime Minister Zawadzki: Reactors. We will argue about the site, the cost, and the fuel. But we will build.
+=> END
+~ training
+Prime Minister Zawadzki: Training. Cheap, honest, and eventually necessary. I accept.
+=> END
+~ pace
+Prime Minister Zawadzki: Poland's pace is its own. Brussels dictates the year, we negotiate the decade, and the miners keep the lamp.
+- Say the pace should be Poland's => poland_pace
+- Say the pace should be Europe's => europe_pace
+~ poland_pace
+Prime Minister Zawadzki: A friend. In Warsaw we remember who says what to which crowd.
+=> END
+~ europe_pace
+Prime Minister Zawadzki: Europe's pace. Well. At least you said it to my face.
+=> END

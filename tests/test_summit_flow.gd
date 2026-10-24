@@ -53,9 +53,9 @@ func _process(_delta: float) -> bool:
 			if not _main._clock.paused:
 				_fail("an open summit left the clock running behind it")
 		1:
-			_press_choice(panel, "Raise the Rhine shipping tolls")
+			_press_first_choice(panel)
 		2:
-			_press_choice(panel, "Shake on the joint toll")
+			_press_first_choice(panel)
 		3:
 			if not panel._continue_button.visible:
 				_fail("the closing line offers no Continue")
@@ -75,12 +75,15 @@ func _process(_delta: float) -> bool:
 	return false
 
 
-func _press_choice(panel, label: String) -> void:
+## The first offered choice. The German pool holds several scenes now and the
+## draw picks one, so the flow is walked by position, not by one scene's labels:
+## every scene's first branch ends on a priced response, so the effect lands.
+func _press_first_choice(panel) -> void:
 	for button in panel._choices_box.get_children():
-		if button is Button and button.text == label:
+		if button is Button:
 			button.pressed.emit()
 			return
-	_fail("no choice '%s' on the summit's line '%s'" % [label, panel._line_label.text])
+	_fail("no choice on the summit's line '%s'" % panel._line_label.text)
 
 
 func _fail(message: String) -> void:

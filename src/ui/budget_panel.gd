@@ -230,7 +230,7 @@ func _build_levers() -> Control:
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	PanelKit.line(box, tr("Levers (spending % of GDP — the tax rates live on the Tax Code window, X)"), PanelKit.Tone.PLAIN)
+	PanelKit.heading(box, tr("Spending, % of GDP"))
 
 	var grid := GridContainer.new()
 	grid.columns = 3

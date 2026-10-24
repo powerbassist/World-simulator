@@ -183,7 +183,9 @@ func _refresh() -> void:
 func _change_text(key: String, value: float) -> String:
 	if not _previous.has(key):
 		return "—"
-	return "%+.0f" % (value - float(_previous[key]))
+	# Rounded first: a -0.3 change printed "-0" (Gameplay's "found on the way").
+	var moved := roundf(value - float(_previous[key]))
+	return "0" if moved == 0.0 else "%+.0f" % moved
 
 
 ## B3: one shared query -- Trends.months_text carries the plural and the clamp,

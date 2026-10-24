@@ -55,6 +55,19 @@ const START_YEAR := 2026
 ## 2039. 168 months reaches the third, so a run that survives it has played two
 ## consecutive full terms after the one it started mid-way through.
 const MONTHS := 168
+## bands-v5.2.md, "B3 amendment (2026-10-24): the cost fades": the acts' fading
+## share of any bloc's offset, in any month of any run.
+const ACT_SHARE_MAX := 0.50
+## `-- --bands-reads` (QA's TAKE 2 on PR #104): each month the player governs
+## prints a MONTH line, its act share and any bloc on the clamp, for
+## tools/act_share_reads.py to compare a base run with a tip run. The read window
+## is bands-v5.2.md's "Correction: the read window": it closes at the first month
+## out of office -- an executive loss or the term limit, where main.gd sends the
+## player to the menu -- because the months after it are a world the game never
+## plays. Off by default; the runs and the checks below are unchanged by it.
+var _bands_reads := "--bands-reads" in OS.get_cmdline_user_args()
+var _run_no := 0
+var _band_open := false
 const TEN_YEARS := 120
 ## How often one event may reach the player's desk in a ten-year do-nothing run.
 ## Measured by the test audit (2026-10-21) over 168 months of the same regime: the
@@ -125,11 +138,14 @@ func _init() -> void:
 		return
 
 	# V3.3 scratch: -- check-name runs ONE check (the crash isolation harness).
+	# A `--` argument is a flag (--bands-reads), not a check name: read as one,
+	# it ran nothing and failed the run as an unknown check.
 	var _matched := 0
 	var only := ""
-	var args := OS.get_cmdline_user_args()
-	if args.size() > 0:
-		only = args[0]
+	for arg: String in OS.get_cmdline_user_args():
+		if not arg.begins_with("--"):
+			only = arg
+			break
 
 	if only == "" or only == "_check_ten_years_stay_off_every_clamp":
 		_matched += 1
@@ -441,6 +457,10 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 	var year := START_YEAR
 	var month := 1
 	var played := 0
+	_run_no += 1
+	_band_open = _bands_reads
+	if _bands_reads:
+		print("BANDREAD RUN %d managed=%s" % [_run_no, str(pending == MANAGED)])
 
 	for i in range(months):
 		month += 1
@@ -894,6 +914,32 @@ func _problems(ns, year: int, month: int) -> Array[String]:
 		var v: float = float(ns.bloc_approval[bloc])
 		if is_nan(v) or is_inf(v):
 			out.append("%s bloc %s approval is %s" % [at, bloc, v])
+
+	# The read window closes for good at the first month out of office: a run that
+	# keeps ticking (stop_on_loss = false) may be handed office back by a later
+	# vote, but the game ended at the loss and never plays that month.
+	if not ns.in_government:
+		_band_open = false
+	if _band_open:
+		print("BANDREAD MONTH %d %s" % [_run_no, at])
+
+	# The acts' fading share stays inside its band every month the player governs
+	# (V5.2b). A run kept ticking past a lost office -- stop_on_loss = false, which
+	# the game itself never plays -- bursts with acts against a government the
+	# player no longer leads; those months are outside the band's read window and
+	# not asserted. A base checkout has no such register, which is why the read is
+	# guarded.
+	if "act_bloc_offset" in ns:
+		for bloc in ns.act_bloc_offset:
+			var share := float(ns.act_bloc_offset[bloc])
+			if absf(share) > ACT_SHARE_MAX and ns.in_government:
+				out.append("%s the acts' share of bloc_offset[%s] is %.3f, over %.2f" % [at, bloc, share, ACT_SHARE_MAX])
+			if _band_open:
+				print("BANDREAD SHARE %d %s %s %.4f" % [_run_no, at, bloc, share])
+	if _band_open:
+		for bloc in ns.bloc_offset:
+			if absf(float(ns.bloc_offset[bloc])) >= 1.0 - 0.000001:
+				print("BANDREAD CLAMP %d %s %s" % [_run_no, at, bloc])
 
 	if ns.gdp_eur_bn <= 0.0:
 		out.append("%s GDP pinned at %.3f" % [at, ns.gdp_eur_bn])

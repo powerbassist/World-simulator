@@ -1,0 +1,35 @@
+~ start
+Premier Bagnasco: You came in harvest week, Mr President, so everyone here is too tired to be anything but honest. Ask what you came to ask.
+- Ask about the migration compact => migration
+- Ask about the southern railway => railway
+- Ask about the vintage => vintage
+~ migration
+Premier Bagnasco: Rome has carried that compact alone for a decade. We will talk about a compact when someone else's coast is as long as ours.
+- Offer shared reception centres => centres
+- Offer funding without centres => funding
+~ centres
+Premier Bagnasco: Centres in France as well? That would be a first. My interior minister will ask to see it in writing, twice.
+=> END
+~ funding
+Premier Bagnasco: Money is welcome and does not fight the tide. But it is a start, and I have learned to take starts.
+=> END
+~ railway
+Premier Bagnasco: The Messina bridge, the Salerno line, the one near Foggia that has been a promise since my grandfather. Pick one.
+- Pledge French engineering for the Salerno line => salerno
+- Pledge nothing, only interest => interest
+~ salerno
+Premier Bagnasco: Salerno. The south will hang your portrait in the station, next to the saint's.
+=> END
+~ interest
+Premier Bagnasco: Interest is how the south has been paid for a hundred years. Still, your sincerity is noted.
+=> END
+~ vintage
+Premier Bagnasco: A fair year. Not a great one, which is the kind that makes better wine than a great year makes politicians.
+- Propose a wine and olive oil pact => pact
+- Raise a glass and say nothing more => glass
+~ pact
+Premier Bagnasco: A pact on appellations. Between us we make half the wine on earth, and we have never agreed on what it is called.
+=> END
+~ glass
+Premier Bagnasco: To the harvest. Politics will still be there on Monday, regrettably.
+=> END

@@ -1,0 +1,24 @@
+~ opening
+% {{name}}: {{president}}, I am not here to ask. I am here to tell you that {{ask}} cannot be put off again, and that I speak for more people than myself.
+% {{name}}: Let us be clear from the start. {{ask}} is not a request. It is a condition, and I would like to hear your answer today.
+=> END
+
+~ lever_pressure_success
+% {{name}}: Then we have both made our point. I will take the concession and put my banner away for now.
+=> END
+
+~ lever_pressure_failure
+% {{name}}: If you want a fight, {{president}}, you will have a long one. I have the stamina and I have the people.
+=> END
+
+~ lever_promise_date_success
+% {{name}}: A date, written down, and witnessed. Then I can tell them to wait, and mean it.
+=> END
+
+~ close_settled
+% {{name}}: Good. I will tell them the president listened. See that I am not made a liar.
+=> END
+
+~ close_declined
+% {{name}}: Then I have nothing left to hold back. You have made your choice, {{president}}, and so shall I.
+=> END

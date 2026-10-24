@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://idr2cuie2txt"
+path="res://.godot/imported/oppose.dialogue-dac76c6554df8a22edd1e5dfc43f888e.tres"
+
+[deps]
+
+source_file="res://data/audiences/oppose.dialogue"
+dest_files=["res://.godot/imported/oppose.dialogue-dac76c6554df8a22edd1e5dfc43f888e.tres"]
+
+[params]
+
+defaults=true

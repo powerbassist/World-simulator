@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://dwtpul8tkush8"
+path="res://.godot/imported/DEU_night_train.dialogue-1b887cf6f57043802bc286abc300be4d.tres"
+
+[deps]
+
+source_file="res://data/summits/DEU_night_train.dialogue"
+dest_files=["res://.godot/imported/DEU_night_train.dialogue-1b887cf6f57043802bc286abc300be4d.tres"]
+
+[params]
+
+defaults=true

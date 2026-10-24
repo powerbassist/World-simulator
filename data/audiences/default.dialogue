@@ -1,3 +1,105 @@
 ~ opening
-{{name}}: {{ask}}
+% {{name}}: Thank you for seeing me, {{president}}. I will be brief, because I know what your days are like. It is about {{ask}}.
+% {{name}}: {{president}}, I asked for ten minutes and I will try to use eight. The matter is {{ask}}, and it will not wait for the next term.
+% {{name}}: I will not pretend this is a social call, {{president}}. I came to talk about {{ask}}, and to hear what you intend to do.
+=> END
+
+~ lever_argue_success
+% {{name}}: I came with an answer ready, and you have taken it apart in a quarter of an hour. I can live with that.
+% {{name}}: Put that way, I cannot find the hole in it. I may not like it, but I will not stand in your way.
+=> END
+
+~ lever_argue_failure
+% {{name}}: You argue well, {{president}}, and I am no closer to agreeing. A good argument is not the same as a good reason.
+% {{name}}: I have heard all of that before, from people who also believed it. It does not change what I have to say about {{ask}}.
+=> END
+
+~ lever_bargain_success
+% {{name}}: A fair trade is a trade I can explain to my own people. Very well, we have a deal.
+% {{name}}: You drive a hard bargain, but I would have thought less of you if you had not. Done.
+=> END
+
+~ lever_bargain_failure
+% {{name}}: That is not enough for what you ask of me, and you know it. Come back with a better offer.
+% {{name}}: I do not sell what I cannot buy back. Not at that price.
+=> END
+
+~ lever_promise_date_success
+% {{name}}: A date. That I can work with, {{president}}. I will hold you to it, and I will hold my tongue until then.
+% {{name}}: Then I will wait, until the day you have named. Do not let it slip, I beg you.
+=> END
+
+~ lever_promise_date_failure
+% {{name}}: I have heard dates before. Some of them even arrived. I cannot wait on a promise this thin.
+% {{name}}: A date is only a word, {{president}}. I need more than a word.
+=> END
+
+~ lever_pressure_success
+% {{name}}: You have made your point, and I will remember how you made it. But I will not fight you on this.
+% {{name}}: Very well. I yield, though I would rather have been persuaded than pushed.
+=> END
+
+~ lever_pressure_failure
+% {{name}}: Threats do not become you, {{president}}, and they do not move me. Be careful what you start.
+% {{name}}: If that was meant to frighten me, it has had the opposite effect.
+=> END
+
+~ lever_flatter_success
+% {{name}}: You are kind to say so, {{president}}. I will not pretend it did not land. What would you have of me?
+% {{name}}: Flattery from a head of state is a rare coin. I will spend it carefully, in your favour.
+=> END
+
+~ lever_flatter_failure
+% {{name}}: I am not so easily charmed, {{president}}. Kind words are cheap, and I notice what they are covering.
+% {{name}}: That was well said, and quite beside the point.
+=> END
+
+~ lever_friendship_success
+% {{name}}: You are asking as a friend, and I cannot refuse a friend. Very well, {{president}}.
+% {{name}}: We have known each other too long for me to say no. You have it.
+=> END
+
+~ lever_friendship_failure
+% {{name}}: I value your friendship, I truly do. But I will not trade it for this, and you should not ask me to.
+% {{name}}: Please do not put our friendship on the table, {{president}}. It deserves better than this.
+=> END
+
+~ topic_family
+% {{name}}: My daughter has just started at the lycee. She wants to be a magistrate, which should alarm both of us.
+% {{name}}: Family is well, thank you, {{president}}. My father is eighty and still complains about every government since the war, including mine.
+=> END
+
+~ topic_opinion
+% {{name}}: You asked what I think, so I will tell you. This country does not lack ideas, {{president}}. It lacks people willing to be blamed for them.
+% {{name}}: I think the next two years will be decided by a handful of votes, and by whoever sleeps less.
+=> END
+
+~ topic_gossip
+% {{name}}: I will tell you this much, and you did not hear it from me. There is more unhappiness in some quarters than the polls admit.
+% {{name}}: People talk, {{president}}. Some of what they say is about you, and the kindest of it is that you are underestimated.
+=> END
+
+~ topic_dinner
+% {{name}}: A dinner would be very welcome. Somewhere quiet, with a good table and no cameras.
+% {{name}}: I accept with pleasure, {{president}}. I will bring the wine, since I know what the Elysee cellar thinks of its own.
+=> END
+
+~ topic_flirt
+% {{name}}: You are charming, {{president}}, and I am too old to be flustered and too polite to say so. Shall we talk about {{topic}} instead?
+% {{name}}: I will take that as a compliment, and leave it exactly where it is.
+=> END
+
+~ close_settled
+% {{name}}: Then we are agreed, and I leave satisfied. Thank you for your time, {{president}}.
+% {{name}}: That is more than I hoped for. I will not forget it.
+=> END
+
+~ close_promised
+% {{name}}: I will take you at your word, {{president}}. I hope we do not have to meet on this again.
+% {{name}}: A promise, then. I shall be counting the days, and so, I am afraid, will others.
+=> END
+
+~ close_declined
+% {{name}}: I see. I came for an answer, and I have one. I will not say it is the one I wanted.
+% {{name}}: Then there is nothing more to say. Good day, {{president}}.
 => END

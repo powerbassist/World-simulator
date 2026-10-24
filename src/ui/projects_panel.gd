@@ -257,7 +257,7 @@ func _build_offer(ns, action, terms: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
 
-	PanelKit.line(block, tr("%d months · %s %% of GDP a year · %s %%/yr when it opens") % [
+	PanelKit.line(block, tr("%d mo · %s %% GDP/yr · growth %s %%/yr once open") % [
 		int(terms.get("build_months", 0)), Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3),
 		Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
 	])
