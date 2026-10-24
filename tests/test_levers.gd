@@ -69,6 +69,7 @@ func _init() -> void:
 	_check_judged_rows_are_kept_and_pruned()
 	_check_bargain_lists_its_currencies()
 	_check_the_fog_does_not_leak_across_readings()
+	_check_the_fog_only_narrows_around_the_truth()
 	_check_an_agreed_audience_left_open_settles()
 	_check_a_lever_tried_again_rolls_afresh()
 	_check_agree_takes_only_an_agreement_on_a_held_audience()
@@ -818,6 +819,54 @@ func _check_bargain_lists_its_currencies() -> void:
 	var dates: Dictionary = _row(shown, "promise_date").get("dates", {})
 	if int(dates.get("earliest", -1)) != now + LK.PROMISE_MIN_MONTHS or int(dates.get("latest", -1)) != now + LK.PROMISE_MAX_MONTHS:
 		_fail("the promise row's dates are %s" % [dates])
+
+
+## B4's amendment (pre-gate B, RECORD 6; bands-v5.2.md): between two readings of one
+## person and lever, knowledge not lower, the window MEASURED FROM THE TRUTH is
+## nested -- the lower edge never sits further below the truth than before, the
+## upper never further above -- so a topic that raises the odds raises the window by
+## at least as much, and one that teaches knowledge only narrows it. QA's case:
+## Turcy's Promise read 47-83 % before a friendly topic and 32-68 % after. Odds kept
+## inside [0.37, 0.62], where no window meets [0, 1] and the shift never applies.
+func _check_the_fog_only_narrows_around_the_truth() -> void:
+	# Vector2 is single precision: the edges carry ~1e-7 of rounding.
+	var eps := 0.000001
+	var readings := 0
+	for person in _loader.people[PLAYER]:
+		for lever in LK.LEVERS:
+			for draw_seed in [0, 7]:
+				var prev := Vector2(-1.0, -1.0)
+				var prev_p := 0.0
+				var k := 0.0
+				var p := 0.37
+				while k <= 1.0:
+					var r: Vector2 = LeverOdds.shown_range(person.id, lever, p, k, draw_seed)
+					readings += 1
+					if p < r.x - eps or p > r.y + eps:
+						_fail("%s %s at %.3f: the truth %.3f is outside [%.3f, %.3f]" % [person.id, lever, k, p, r.x, r.y])
+						return
+					if prev.x >= 0.0:
+						if p - r.x > prev_p - prev.x + eps:
+							_fail("%s %s at %.3f: the lower edge fell further below the truth (%.4f -> %.4f)" % [
+								person.id, lever, k, prev_p - prev.x, p - r.x])
+							return
+						if r.y - p > prev.y - prev_p + eps:
+							_fail("%s %s at %.3f: the upper edge rose further above the truth (%.4f -> %.4f)" % [
+								person.id, lever, k, prev.y - prev_p, r.y - p])
+							return
+						if r.x - prev.x < (p - prev_p) - eps:
+							_fail("%s %s at %.3f: odds up %.4f, the lower edge up only %.4f" % [
+								person.id, lever, k, p - prev_p, r.x - prev.x])
+							return
+					prev = r
+					prev_p = p
+					# An irregular step, so readings fall between the seed grid's
+					# points as well as on them; and the odds rise as a friendly
+					# topic would make them.
+					k += 0.013
+					p = minf(p + 0.004, 0.62)
+	if readings < 1000:
+		_fail("the nesting check read only %d windows" % readings)
 
 
 ## QA's R1: two readings of one lever at different widths must not solve the true
