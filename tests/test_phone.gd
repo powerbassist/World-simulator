@@ -54,6 +54,7 @@ func _init() -> void:
 	_check_topics_teach_the_topic_only()
 	_check_who_can_be_called()
 	_check_twin_states_ring_alike()
+	_check_a_word_given_holds_on_the_phone()
 
 	_finish()
 
@@ -218,6 +219,7 @@ func _check_a_promise_by_phone_is_a_promise() -> void:
 	var pid := _someone(ns)
 	for n in range(1, 30):
 		ns.audience_requests.clear()
+		ns.commitments.clear()  # a promise not believed binds, and a word is given once (#122)
 		var id := _ask(state, ns, pid, "promise%d" % n)
 		_warm(state, ns, pid)
 		var due := _now(state) + LK.PROMISE_MIN_MONTHS
@@ -335,6 +337,25 @@ func _check_twin_states_ring_alike() -> void:
 		registers.append([ns.person_rapport.duplicate(), ns.person_grudges.duplicate(), ns.audience_requests.duplicate(true)])
 	if outcomes[0] != outcomes[1] or registers[0] != registers[1]:
 		_fail("two identical states rang differently")
+
+
+## A word given stands on the phone too (#122's rule): with a promise in flight to
+## the person on the request's want, a promise by phone is refused with WORD_GIVEN,
+## shown on the card, writes nothing and spends no call.
+func _check_a_word_given_holds_on_the_phone() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var pid := _someone(ns)
+	_ask(state, ns, pid, "word")
+	President.commit(state, ns, _loader, "promise", pid, "programme:none", _now(state) + LK.PROMISE_MIN_MONTHS)
+	_warm(state, ns, pid)
+	var row := _row(Phone.options(state, ns, _loader, pid).get("levers", []), "promise_date")
+	if bool(row.get("offered", true)) or String(row.get("why_not", "")) != LK.WORD_GIVEN:
+		_fail("the call card offers a second date: %s" % [row])
+	var before := _snapshot(ns, pid)
+	var r: Dictionary = Phone.dial(state, ns, _loader, pid, "promise_date", {"due_month": _now(state) + LK.PROMISE_MAX_MONTHS})
+	if bool(r.get("ok", true)) or String(r.get("error", "")) != LK.WORD_GIVEN or _snapshot(ns, pid) != before:
+		_fail("a second date by phone was taken, or wrote a register: %s" % [r])
 
 
 # --- Helpers ------------------------------------------------------------------------

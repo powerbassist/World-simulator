@@ -86,7 +86,7 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 	var why := _why_not(ns, session)
 	for lever in K.LEVERS:
 		var p := LeverOdds.odds(person, lever, c)
-		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else "")
+		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else word_given(ns, person.id, lever, String(session["object"])))
 		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state)))
 	return out
 
@@ -145,6 +145,9 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	var p := LeverOdds.odds(person, lever, c) if K.LEVERS.has(lever) else -1.0
 	if p < 0.0:
 		refused["error"] = "not a lever offered here"
+		return refused
+	refused["error"] = word_given(ns, pid, lever, String(session["object"]))
+	if refused["error"] != "":
 		return refused
 	var now := _now(state)
 	refused["error"] = arg_error(lever, args, now)
@@ -252,7 +255,7 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 		else Characters.want_served(ns, person, want, meters, leaders)
 	if served:
 		if kind != "iou":
-			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT)
+			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT if kind == "promise" else K.DELEGATED_KEPT_RAPPORT)
 		return "kept"
 	if kind == "promise":
 		_rapport(state, ns, loader, pid, -K.LIE_RAPPORT)
@@ -273,6 +276,17 @@ static func known_traits(ns, person) -> Array[String]:
 
 
 # --- Shared with the phone (src/sim/phone.gd, b3): one rule, two channels ----------
+
+## WORD_GIVEN when `lever` is a promise and one is already in flight to this person
+## on this want (made in this audience, an earlier one, or on the phone), else "".
+static func word_given(ns, pid: String, lever: String, object: String) -> String:
+	if lever != "promise_date":
+		return ""
+	for row in President.commitments_with(ns, pid):
+		if String(row["kind"]) == "promise" and String(row["object"]) == object:
+			return K.WORD_GIVEN
+	return ""
+
 
 ## Why a lever's arguments are refused, or "": a bargain pays in a currency that is
 ## open, a promise names a month inside its window.

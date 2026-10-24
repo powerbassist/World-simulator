@@ -33,19 +33,30 @@ extends SceneTree
 ##   A3 DECLINE EVERYTHING on arrival. B3's act row again, under explicit declines,
 ##      and the per-request price beside A1's lapse (tests/test_audiences.gd pins
 ##      the equality per request; this reports the means).
-##   A2F (`-- --b5-answers`, V5.2b b2.1) B5's ANSWERS ROW: A2's machine run
-##      B5_MONTHS, so every request of months 1-B5_ARRIVALS_UPTO is followed to its
-##      due month (answered the month after it arrives, due BOOKING_HORIZON_MONTHS
-##      on). Per request, bands-v5.2.md "B5 amendment"'s net values, in
-##      tools/lever_weights.gd's units, the diary day at its DIARY_DAY:
-##        Book = (1 - q^3) - s(1 + q + q^2) - q^3 x Decline's cost - DIARY_DAY, for
-##               the lever with the best single attempt in the person's cell at
-##               arrival (p its odds, q = 1 - p, s its spend);
-##        Delegate = -(0.25 g + 0.5 x snub) + (0.5 x 0.10 kept | -(0.75 g + 0.08 +
-##               0.5 x 0.2) broken), kept = the want served at the due month;
-##        Decline = Unanswered = -(g + 0.5 x 0.1), g the refusal grudge at arrival.
-##      B5: no answer the best in more than 50 % of requests (a tie counts for
-##      each answer it ties). Off by default, so A1-A3's table stays comparable.
+##   A2F (`-- --b5-answers`, V5.2b b2.1; b2.2 reads #119's player model) B5's
+##      ANSWERS ROW over A2's machine: every request of months 1-B5_ARRIVALS_UPTO,
+##      its cell taken at arrival (knowledge, rapport, relationship, aligned,
+##      standing, approval), g its refusal grudge, the snub. bands-v5.2.md "The
+##      first read, and the player model the row reads": each request scored TWICE,
+##      equal weight -- "will serve" (K = 1) and "won't serve" (K = 0); the run's
+##      own K is reported, never read. In tools/lever_weights.gd's units:
+##        Refuse (decline = unanswered, one answer) = -(g + 0.5 x 0.1);
+##        Delegate = -(0.25 g + 0.5 x snub) + (K=1: 0.5 x 0.10 | K=0: -(0.75 g +
+##               0.08 + 0.5 x 0.2));
+##        Book = the best offered lever's three-attempt net under that intent: A -
+##               s(1 + q + q^2) + q^3 x Refuse - DIARY_DAY + 0.5 x 0.10 (received) +
+##               KV(0.05 (1 - k)), A = 1 - q^3, q = 1 - p, s the weighted spend, the
+##               agreement at 1 as the row's table declares (flatter too);
+##               promise_date adds A x 0.5 x 0.25 at K=1 (kept in person) and
+##               subtracts A x (0.5 x 0.5 + 0.15 x intake + KV(0.5 k')) at K=0 (the
+##               lie at its date, k' = k + 0.05 (1 - k));
+##        KV(dk) = dk x KNOW_SLOPE x 3q^2 x ENCOUNTERS, the knowledge valued
+##        (the arithmetic is tools/lever_weights.gd's, checked on the declared legs).
+##      B5: book <= 50 % of all cases; within "will serve" book >= 5 % and delegate
+##      >= 5 %; within "won't serve" refuse >= 5 % (a tie counts for each answer it
+##      ties). For information: the same at a declared mix (each request at the
+##      three band midpoints, a third each). Off by default, so A1-A3's table
+##      stays comparable.
 ##
 ## VISITORS (b3) ARE COUNTED APART. A visiting head's request waits in a place of its
 ## own (MAX_PENDING_FOREIGN), outside the domestic lane B1-B3 were declared on, so
@@ -71,6 +82,7 @@ const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const LW = preload("res://tools/lever_weights.gd")
 const President = preload("res://src/sim/president.gd")
+const Characters = preload("res://src/sim/characters.gd")
 const Phone = preload("res://src/sim/phone.gd")
 
 const PLAYER := "FRA"
@@ -78,6 +90,8 @@ const MONTHS := 60
 const B5_ARRIVALS_UPTO := 60
 const B5_MONTHS := B5_ARRIVALS_UPTO + 1 + CalK.BOOKING_HORIZON_MONTHS
 const NAMED_GRUDGE := 0.05
+## B5's answers row: the declared mix's knowledge, a third each (information).
+const B5_MIX := [0.165, 0.5, 0.835]
 
 var _loader
 
@@ -102,7 +116,11 @@ func _init() -> void:
 	out["bands"] = _bands(out["regimes"])
 	if b5:
 		out["b5_answers"] = _b5_answers(_run("A2F", B5_MONTHS)["b5_requests"])
-		out["bands"]["B5_answers_none_over_50pct"] = float(out["b5_answers"]["top_share"]) <= 0.50
+		var shares: Dictionary = out["b5_answers"]["shares"]
+		out["bands"]["B5_answers_book_at_most_50pct"] = float(shares["all"]["book"]) <= 0.50
+		out["bands"]["B5_answers_will_serve_book_5pct"] = float(shares["will_serve"]["book"]) >= 0.05
+		out["bands"]["B5_answers_will_serve_delegate_5pct"] = float(shares["will_serve"]["delegate"]) >= 0.05
+		out["bands"]["B5_answers_wont_serve_refuse_5pct"] = float(shares["wont_serve"]["refuse"]) >= 0.05
 	_print(out)
 	if json_path != "":
 		var f := FileAccess.open(json_path, FileAccess.WRITE)
@@ -247,69 +265,96 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 
 
 ## One arriving request, as B5's answers row reads it: the person's cell, the
-## refusal grudge g and the snub now; whether the want is served is read at the
-## due month (the answer the month after arrival, plus the diary's horizon).
+## refusal grudge g and the snub, all at arrival. Whether the want was served at
+## the due month is kept for information only (#119: the run's own K is not read).
 func _b5_capture(ns, row: Dictionary, month: int) -> Dictionary:
 	var pid := String(row["person_id"])
 	var person = _loader.person_by_id[pid]
-	var cell := {
-		"knowledge": President.knowledge(ns, pid),
-		"rapport": President.rapport(ns, pid),
-		"relationship": President.relationship(ns, pid),
-		"aligned": bool(ns.person_want_state.get("%s|%s" % [pid, String(row["object"])], false)),
-		"standing": float(ns.person_standing.get(pid, LK.STANDING_NEUTRAL)),
-		"approval": float(ns.overall_approval_pct),
-	}
-	var best := ""
-	var best_net := -INF
-	for lever in LK.LEVERS:
-		var p := LeverOdds.odds(person, lever, cell)
-		if p >= 0.0 and LW.net(person, lever, p) > best_net:
-			best_net = LW.net(person, lever, p)
-			best = lever
-	var p := LeverOdds.odds(person, best, cell)
 	var snub: bool = person.traits.has("vain") or String(row["object"]).begins_with("office:")
 	return {
 		"person_id": pid, "object": String(row["object"]), "arrival_month": month,
 		"due_loop_month": month + 1 + CalK.BOOKING_HORIZON_MONTHS,
-		"band": President.knowledge_band(ns, pid), "lever": best, "p": p,
-		"s": LW.cost(LW.spend(person, best, p)),
+		"band": President.knowledge_band(ns, pid),
+		"cell": {
+			"knowledge": President.knowledge(ns, pid),
+			"rapport": President.rapport(ns, pid),
+			"relationship": President.relationship(ns, pid),
+			"aligned": bool(ns.person_want_state.get("%s|%s" % [pid, String(row["object"])], false)),
+			"standing": float(ns.person_standing.get(pid, LK.STANDING_NEUTRAL)),
+			"approval": float(ns.overall_approval_pct),
+		},
 		"g": float(Audiences.decline_price(ns, _loader, String(row["id"]))["grudge"]),
 		"snub": -AK.DELEGATE_SNUB_RAPPORT if snub else 0.0,
 		"kept": false,
 	}
 
 
-## bands-v5.2.md "B5 amendment"'s net values per request, and each answer's
-## share of the requests it is the best answer to.
+## The row under #119's player model: the run's mix (the band) and the declared
+## mix (information), each a share table over both intents.
 func _b5_answers(requests: Array) -> Dictionary:
-	var best := {"book": 0, "delegate": 0, "decline": 0, "unanswered": 0}
-	var r_w := float(LW.WEIGHTS["rapport"])
+	var kept := 0
 	for r in requests:
-		var p := float(r["p"])
-		var q := 1.0 - p
-		var g := float(r["g"])
-		var decline := -(g + r_w * -AK.DECLINE_RAPPORT)
-		var book := (1.0 - q * q * q) - float(r["s"]) * (1.0 + q + q * q) + q * q * q * decline - LW.DIARY_DAY
-		var deferred := 1.0 - AK.DELEGATE_GRUDGE_SHARE
-		var delegate := -(AK.DELEGATE_GRUDGE_SHARE * g + r_w * float(r["snub"]))
-		if bool(r["kept"]):
-			delegate += r_w * LK.PROMISE_KEPT_RAPPORT
-		else:
-			delegate -= deferred * g + LK.IOU_BETRAYAL_GRUDGE + r_w * LK.IOU_BETRAYAL_RAPPORT
-		var values := {"book": book, "delegate": delegate, "decline": decline, "unanswered": decline}
-		var top := maxf(maxf(book, delegate), decline)
-		for answer in values:
-			if float(values[answer]) >= top - 0.000000001:
-				best[answer] += 1
-		r["values"] = values
-	var n := maxi(1, requests.size())
-	var shares := {}
-	var top_share := 0.0
-	for answer in best:
-		shares[answer] = float(best[answer]) / float(n)
-		top_share = maxf(top_share, float(shares[answer]))
-	return {"requests": requests.size(), "best_share": shares, "top_share": top_share, "diary_day": LW.DIARY_DAY, "rows": requests}
+		kept += 1 if bool(r["kept"]) else 0
+	var out := _b5_table(requests, false)
+	out["mix_info"] = _b5_table(requests, true)
+	out["requests"] = requests.size()
+	out["diary_day"] = LW.DIARY_DAY
+	out["realized_kept_share"] = float(kept) / maxf(1.0, float(requests.size()))
+	out["rows"] = requests
+	return out
+
+
+## {shares: {all, will_serve, wont_serve}: {book, delegate, refuse}} -- each the
+## share of that set's cases the answer is best in (a tie counts for each).
+func _b5_table(requests: Array, mix: bool) -> Dictionary:
+	var best := {"will_serve": {"book": 0.0, "delegate": 0.0, "refuse": 0.0}, "wont_serve": {"book": 0.0, "delegate": 0.0, "refuse": 0.0}}
+	var cases := {"will_serve": 0.0, "wont_serve": 0.0}
+	var levers := {}
+	for r in requests:
+		var person = _loader.person_by_id[String(r["person_id"])]
+		var ks: Array = B5_MIX if mix else [float(r["cell"]["knowledge"])]
+		var w := 1.0 / float(ks.size())
+		for k in ks:
+			var cell: Dictionary = (r["cell"] as Dictionary).duplicate()
+			cell["knowledge"] = float(k)
+			for intent in ["will_serve", "wont_serve"]:
+				var v := _b5_values(person, cell, float(r["g"]), float(r["snub"]), intent == "will_serve")
+				cases[intent] += w
+				var top := maxf(maxf(float(v["book"]), float(v["delegate"])), float(v["refuse"]))
+				for answer in ["book", "delegate", "refuse"]:
+					if float(v[answer]) >= top - 0.000000001:
+						best[intent][answer] += w
+				if not mix:
+					r[intent] = v
+					levers[v["lever"]] = int(levers.get(v["lever"], 0)) + 1
+	var shares := {"all": {}}
+	for intent in ["will_serve", "wont_serve"]:
+		shares[intent] = {}
+		for answer in ["book", "delegate", "refuse"]:
+			shares[intent][answer] = float(best[intent][answer]) / maxf(1.0, float(cases[intent]))
+	for answer in ["book", "delegate", "refuse"]:
+		shares["all"][answer] = (float(best["will_serve"][answer]) + float(best["wont_serve"][answer])) / maxf(1.0, float(cases["will_serve"]) + float(cases["wont_serve"]))
+	var out := {"shares": shares, "cases": float(cases["will_serve"]) + float(cases["wont_serve"])}
+	if not mix:
+		out["book_levers"] = levers  # Book's best lever in every case, whether or not Book was the best answer
+	return out
+
+
+## One case's three answers, as bands-v5.2.md's table and player model declare
+## them; book is the best offered lever's three-attempt net under the intent.
+func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool) -> Dictionary:
+	var k := float(cell["knowledge"])
+	var book := -INF
+	var pick := ""
+	for lever in LK.LEVERS:
+		var p := LeverOdds.odds(person, lever, cell)
+		if p < 0.0:
+			continue
+		var v := LW.book_value(p, LW.cost(LW.spend(person, lever, p)), g, k, serve, lever == "promise_date", Characters.grudge_intake(person))
+		if v > book:
+			book = v
+			pick = lever
+	return {"book": book, "delegate": LW.delegate_value(g, snub, serve), "refuse": LW.refuse_value(g), "lever": pick}
 
 
 ## A visiting head (b3), not one of this nation's people.
@@ -463,6 +508,9 @@ func _print(out: Dictionary) -> void:
 		if r.has("calls"):
 			print("   phoned first: %d calls, %d requests answered by phone" % [r["calls"], r["answered_by_phone"]])
 	if out.has("b5_answers"):
-		print("A2F B5 answers over %d requests (day %.2f): best share %s" % [out["b5_answers"]["requests"], out["b5_answers"]["diary_day"], out["b5_answers"]["best_share"]])
+		var b5: Dictionary = out["b5_answers"]
+		print("A2F B5 answers over %d requests x 2 intents (day %.2f, realized kept %.3f): %s | Book's best lever per case, won or not: %s" % [
+			b5["requests"], b5["diary_day"], b5["realized_kept_share"], b5["shares"], b5["book_levers"]])
+		print("   declared mix (information): %s" % [b5["mix_info"]["shares"]])
 	for band in out["bands"]:
 		print("%-32s %s" % [band, "PASS" if out["bands"][band] else "FAIL"])

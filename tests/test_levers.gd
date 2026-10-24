@@ -72,6 +72,7 @@ func _init() -> void:
 	_check_an_agreed_audience_left_open_settles()
 	_check_a_lever_tried_again_rolls_afresh()
 	_check_agree_takes_only_an_agreement_on_a_held_audience()
+	_check_a_word_is_given_once()
 
 	_finish()
 
@@ -192,6 +193,10 @@ func _check_open_holds_and_teaches() -> void:
 		_fail("opening an audience did not hold the request")
 	if not President.knowledge(ns, pid) > float(c["k0"]):
 		_fail("holding an audience taught the president nothing about %s" % pid)
+	# b2.2 (bands-v5.2.md "The in-person gains"): being received is worth what a
+	# refusal to the face costs, whatever is said.
+	if absf(President.rapport(ns, pid) - float(c["r0"]) - AK.RECEIVED_RAPPORT) > 0.000001 or AK.RECEIVED_RAPPORT != -AK.DECLINE_RAPPORT:
+		_fail("being received moved rapport by %.4f, not %.4f" % [President.rapport(ns, pid) - float(c["r0"]), AK.RECEIVED_RAPPORT])
 	if int(s.get("attempts_left", 0)) != LK.ATTEMPTS:
 		_fail("a session opened with %d attempts, not %d" % [int(s.get("attempts_left", 0)), LK.ATTEMPTS])
 	if not Levers.open(c["state"], ns, _loader, String(c["id"])).is_empty():
@@ -725,7 +730,8 @@ func _check_delegation_commits_the_government() -> void:
 		_fail("the delegation's commitment is %s" % [rows[0]])
 
 
-## At its date a delegated commitment is kept (rapport +PROMISE_KEPT_RAPPORT) or
+## At its date a delegated commitment is kept (rapport +DELEGATED_KEPT_RAPPORT, a
+## minister's word, below a promise kept in person -- b2.2) or
 ## broken: the deferred share of the decline's grudge lands, plus the IOU's
 ## betrayal -- and it is not a lie, so knowledge stands.
 func _check_a_delegated_commitment_is_judged() -> void:
@@ -748,8 +754,10 @@ func _check_a_delegated_commitment_is_judged() -> void:
 	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
 	if (report["kept"] as Array).size() != 1 or (report["broken"] as Array).size() != 1:
 		_fail("delegated commitments at their date: %s" % [report])
-	if absf(President.rapport(ns, kept["id"]) - r_kept - LK.PROMISE_KEPT_RAPPORT) > 0.000001:
-		_fail("a kept delegation moved rapport by %.4f" % (President.rapport(ns, kept["id"]) - r_kept))
+	if absf(President.rapport(ns, kept["id"]) - r_kept - LK.DELEGATED_KEPT_RAPPORT) > 0.000001 \
+			or not LK.PROMISE_KEPT_RAPPORT > LK.DELEGATED_KEPT_RAPPORT:
+		_fail("a kept delegation moved rapport by %.4f, not %.4f below a promise kept in person (%.2f)" % [
+			President.rapport(ns, kept["id"]) - r_kept, LK.DELEGATED_KEPT_RAPPORT, LK.PROMISE_KEPT_RAPPORT])
 	if absf(President.rapport(ns, broken["id"]) - (r_broken - LK.IOU_BETRAYAL_RAPPORT)) > 0.000001:
 		_fail("a broken delegation left rapport at %.4f" % President.rapport(ns, broken["id"]))
 	if float(ns.person_grudges.get(broken["id"], 0.0)) < g_broken + deferred - 0.000001:
@@ -901,6 +909,48 @@ func _check_agree_takes_only_an_agreement_on_a_held_audience() -> void:
 		_fail("a held audience refused the stamp 'promised'")
 
 
+## b2.2, the parent's decision on #122: a word given stands. A promise not believed
+## still binds ("Oui, parole donnee"), so a second date on the same want -- in the
+## same audience or a later one -- is refused with its reason and writes nothing;
+## stacked promises were an exploit (each kept for PROMISE_KEPT_RAPPORT).
+func _check_a_word_is_given_once() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var pid := ""
+	for person in _loader.people[PLAYER]:
+		if person.id != President.leader_id(ns):
+			pid = person.id
+			break
+	var now := _now(state)
+	var refused_twice := false
+	for n in range(1, 30):
+		ns.commitments.clear()
+		var s := _stage(state, ns, pid, "word%d" % n)
+		var first: Dictionary = Levers.attempt(state, ns, _loader, s, "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS})
+		if bool(first.get("success", true)):
+			Levers.close(state, ns, _loader, s)
+			continue
+		var before := _snapshot(ns, pid)
+		var left := int(s["attempts_left"])
+		var again: Dictionary = Levers.attempt(state, ns, _loader, s, "promise_date", {"due_month": now + LK.PROMISE_MAX_MONTHS})
+		if bool(again.get("ok", true)) or String(again.get("error", "")) != LK.WORD_GIVEN:
+			_fail("a second date on the same want was not refused with its reason: %s" % [again])
+		if _snapshot(ns, pid) != before or int(s["attempts_left"]) != left:
+			_fail("a refused second promise wrote a register or spent an attempt")
+		var row := _row(Levers.offered(state, ns, _loader, s), "promise_date")
+		if bool(row.get("offered", true)) or String(row.get("why_not", "")) != LK.WORD_GIVEN:
+			_fail("the card still offers a second date: %s" % [row])
+		Levers.close(state, ns, _loader, s)
+		var later := _stage(state, ns, pid, "word_later%d" % n)
+		if bool(Levers.attempt(state, ns, _loader, later, "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS}).get("ok", true)):
+			_fail("a later audience took a second date on a want already promised")
+		Levers.close(state, ns, _loader, later)
+		refused_twice = true
+		break
+	if not refused_twice:
+		_fail("a first promise was believed in 29 audiences; the staging needs another person")
+
+
 ## A France game with its first request still pending: {state, ns, id}, or {}.
 func _pending() -> Dictionary:
 	var state = _plain_game()
@@ -981,11 +1031,12 @@ func _booked() -> Dictionary:
 					state.day = int(d["day"])
 					var pid := String(lane[0]["person_id"])
 					var k0 := President.knowledge(ns, pid)
+					var r0 := President.rapport(ns, pid)
 					var session: Dictionary = Levers.open(state, ns, _loader, id)
 					if session.is_empty():
 						_fail("a booked audience on its day did not open")
 						return {}
-					return {"state": state, "ns": ns, "id": id, "k0": k0, "session": session}
+					return {"state": state, "ns": ns, "id": id, "k0": k0, "r0": r0, "session": session}
 			_fail("the first request had no free offered day in an empty diary")
 			return {}
 		_advance(state)

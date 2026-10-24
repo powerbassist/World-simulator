@@ -55,7 +55,7 @@ Characters (`WorldMonth`'s "Audiences" step):
 
 | Answer | Costs | What it buys |
 |---|---|---|
-| **Book** | one of the `OFFERED_DATES` (2) days the person offers, inside the window, if the diary can place it ([[calendar-model]] §12: one thing at a time) | the audience: the scene (section 5), and `KNOW_AUDIENCE` (0.05) times what is left to learn, whatever is said |
+| **Book** | one of the `OFFERED_DATES` (2) days the person offers, inside the window, if the diary can place it ([[calendar-model]] §12: one thing at a time) | the audience: the scene (section 5), and, whatever is said, `KNOW_AUDIENCE` (0.05) times what is left to learn and, since b2.2, rapport `+RECEIVED_RAPPORT` (0.10, the mirror of a refusal to the face) |
 | **Delegate** | `DELEGATE_GRUDGE_SHARE` (0.25) of a decline's grudge; a snub (`DELEGATE_SNUB_RAPPORT`) for a `vain` person or an office want | the request answered, most of the grudge avoided, no diary day, no knowledge -- and since b2.1 a minister's word that the want is served within `BOOKING_HORIZON_MONTHS` (12), judged at that date (section 7) |
 | **Decline** | `DECLINE_GRUDGE` (0.18, x the trait intake: loyal 0.5, principled 2) and `DECLINE_RAPPORT` (-0.1) | the days, and no commitment |
 | *(lapse)* | exactly a decline (the author's answer 3, 2026-10-21) | nothing |
@@ -197,7 +197,7 @@ meters, judges each one due, once, with no roll:
 
 | | The person's want served at the date | Not served |
 |---|---|---|
-| **Promise** | kept: rapport +0.10 | **a lie revealed**: rapport -0.5, knowledge halved, a grudge pulse of 0.15 |
+| **Promise** | kept: rapport +0.25 (b2.2: a promise kept in person, 2.5 times a minister's word -- the ratio the broken side already carries) | **a lie revealed**: rapport -0.5, knowledge halved, a grudge pulse of 0.15 |
 | **IOU** | paid | **a betrayal**: rapport -0.2, a grudge pulse of 0.08; knowledge stands, since no lie was told |
 | **Delegated** (b2.1) | kept: rapport +0.10 | the deferred 0.75 of the decline's grudge lands, plus the IOU's betrayal; not a lie, since the president did not give their own word |
 

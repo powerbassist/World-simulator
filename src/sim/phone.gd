@@ -17,8 +17,8 @@ extends RefCounted
 ## three answers stand. A topic needs no request and teaches only itself.
 ##
 ## The rules are Levers' -- the spend (pay), the win's relief and the flatter
-## backfire (outcome), a topic's lesson (teach) -- so the two channels cannot
-## drift. The month's stamp, ns.phone_calls, is this file's alone. A refusal
+## backfire (outcome), a topic's lesson (teach), a word given once (word_given) --
+## so the two channels cannot drift. The month's stamp, ns.phone_calls, is this file's alone. A refusal
 ## writes nothing and spends no month. Named `dial`, not `call`: a static `call`
 ## overrides Object.call() and does not parse.
 
@@ -59,6 +59,8 @@ static func options(state, ns, loader, person_id: String) -> Dictionary:
 			why_not = "nothing to ask about: they have no request open"
 		elif why_not == "" and p < 0.0:
 			why_not = "you are not friends" if LeverOdds.odds(person, lever, c) < 0.0 else "too long a shot for a call"
+		elif why_not == "":
+			why_not = Levers.word_given(ns, person_id, lever, String(request["object"]))
 		(out["levers"] as Array).append(Levers.lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state)))
 	for topic in K.TOPICS:
 		var why_not := why
