@@ -73,6 +73,7 @@ const Relations = preload("res://src/core/relations.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Walk = preload("res://src/sim/companies_walk.gd")
+const Roster = preload("res://src/sim/companies_roster.gd")
 
 
 ## Seeds the live register from content: every MAJOR starts at its authored share
@@ -147,56 +148,32 @@ static func _seed_missing_majors(ns, loader) -> void:
 
 
 # --- Content -------------------------------------------------------------------
+# The roster reads live in companies_roster.gd since D14 (A'); these names stay
+# so that no caller moved.
 
 static func firms_of(loader, nation_id: String) -> Array:
-	if loader == null:
-		return []
-	return loader.companies.get(nation_id, [])
+	return Roster.firms_of(loader, nation_id)
 
 
-## D14 (A'): the filtered list is remembered per nation against the roster ARRAY it
-## came from (is_same) and that array's size, and handed out as a copy. This file's
-## seeding and industry.gd's machine each asked for it per nation per month, and
-## Industry._bids() for every nation per bid: ~200 ms of a forecast refresh in a
-## scan of ~95 firms for ~6 majors. Content is never mutated; the size covers the
-## one fixture that appends a firm to a loaded roster (test_companies_tiers), and a
-## copy keeps a caller that sorts or appends from writing into the memo.
-static var _majors_memo: Dictionary = {}
-
+## The nation's majors in roster order, a fresh copy per call (remembered: see
+## companies_roster.gd).
 static func majors_of(loader, nation_id: String) -> Array:
-	var firms: Array = firms_of(loader, nation_id)
-	var hit = _majors_memo.get(nation_id)
-	if hit != null and is_same(hit[0], firms) and int(hit[1]) == firms.size():
-		return (hit[2] as Array).duplicate()
-	var out: Array = []
-	for company in firms:
-		if is_major(company): out.append(company)
-	_majors_memo[nation_id] = [firms, firms.size(), out.duplicate()]
-	return out
+	return Roster.majors_of(loader, nation_id)
 
 
 static func body_of(loader, nation_id: String) -> Array:
-	var out: Array = []
-	for company in firms_of(loader, nation_id):
-		if not is_major(company): out.append(company)
-	return out
+	return Roster.body_of(loader, nation_id)
 
 
 static func is_major(company) -> bool:
-	# Company.tier defaults "major" (from_dict sets it only when the field is
-	# present), so the legacy files read as majors through the typed default.
-	return String(company.tier) == "major"
+	return Roster.is_major(company)
 
 
 ## The firms of one nation in one sector, in authored order. The draw below is
 ## pro-rata by share, so order changes nothing -- but the panel reads this too,
 ## and there authored order is the order the player sees.
 static func firms_in_sector(loader, nation_id: String, sector: String) -> Array:
-	var out: Array = []
-	for company in firms_of(loader, nation_id):
-		if company.sector == sector:
-			out.append(company)
-	return out
+	return Roster.firms_in_sector(loader, nation_id, sector)
 
 
 # --- Reading one firm ----------------------------------------------------------
@@ -383,28 +360,11 @@ static func live_city_of(ns, company) -> String:
 ## weight table, and it exists here for the same reason: two subsidised firms in
 ## one sector would otherwise see different rivals depending on who moved first.
 static func _tick_shares(ns, loader) -> void:
-	# D14 (A'): ONE pass over the roster, where firms_in_sector() made one per
-	# sector: each sector's firm count and its live majors, in roster order -- the
-	# lists the per-sector scans built. The failed flags read up front are the
-	# ones the sector loop would read: it writes shares, never a flag.
-	var counts := {}
-	var live_majors := {}
-	for company in firms_of(loader, ns.id):
-		counts[company.sector] = int(counts.get(company.sector, 0)) + 1
-		# A failed firm is OUT of the pool: its share is 0.0 and stays 0.0.
-		# With a retained subsidy it would otherwise regrow share from its
-		# rivals' spare every month -- output through the live share,
-		# headcount 0 through the failed flag, one register read two ways
-		# (the pass-2 ultra's second Important). A rescued firm re-enters
-		# here: the flag clears and the next tick prices it alive again.
-		# The flag is read as the raw register fact this file's other
-		# reads use -- industry.gd's reader is private to the machine,
-		# and a sim module preloading its sibling machine for one
-		# predicate inverts the two-writers arrangement.
-		if is_major(company) and not bool(ns.companies.get(company.id, {}).get("failed", false)):
-			if not live_majors.has(company.sector):
-				live_majors[company.sector] = []
-			live_majors[company.sector].append(company)
+	# Each sector's firm count and its live majors (a failed firm is out of the
+	# pool), from one pass over the roster -- Roster.share_pool().
+	var pool: Array = Roster.share_pool(ns, loader)
+	var counts: Dictionary = pool[0]
+	var live_majors: Dictionary = pool[1]
 	for sector in EK.SECTOR_TREND.keys():
 		if int(counts.get(sector, 0)) < 2:
 			continue
