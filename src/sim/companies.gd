@@ -73,6 +73,7 @@ const Relations = preload("res://src/core/relations.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Walk = preload("res://src/sim/companies_walk.gd")
+const Roster = preload("res://src/sim/companies_roster.gd")
 
 
 ## Seeds the live register from content: every MAJOR starts at its authored share
@@ -147,42 +148,32 @@ static func _seed_missing_majors(ns, loader) -> void:
 
 
 # --- Content -------------------------------------------------------------------
+# The roster reads live in companies_roster.gd since D14 (A'); these names stay
+# so that no caller moved.
 
 static func firms_of(loader, nation_id: String) -> Array:
-	if loader == null:
-		return []
-	return loader.companies.get(nation_id, [])
+	return Roster.firms_of(loader, nation_id)
 
 
+## The nation's majors in roster order, a fresh copy per call (remembered: see
+## companies_roster.gd).
 static func majors_of(loader, nation_id: String) -> Array:
-	var out: Array = []
-	for company in firms_of(loader, nation_id):
-		if is_major(company): out.append(company)
-	return out
+	return Roster.majors_of(loader, nation_id)
 
 
 static func body_of(loader, nation_id: String) -> Array:
-	var out: Array = []
-	for company in firms_of(loader, nation_id):
-		if not is_major(company): out.append(company)
-	return out
+	return Roster.body_of(loader, nation_id)
 
 
 static func is_major(company) -> bool:
-	# Company.tier defaults "major" (from_dict sets it only when the field is
-	# present), so the legacy files read as majors through the typed default.
-	return String(company.tier) == "major"
+	return Roster.is_major(company)
 
 
 ## The firms of one nation in one sector, in authored order. The draw below is
 ## pro-rata by share, so order changes nothing -- but the panel reads this too,
 ## and there authored order is the order the player sees.
 static func firms_in_sector(loader, nation_id: String, sector: String) -> Array:
-	var out: Array = []
-	for company in firms_of(loader, nation_id):
-		if company.sector == sector:
-			out.append(company)
-	return out
+	return Roster.firms_in_sector(loader, nation_id, sector)
 
 
 # --- Reading one firm ----------------------------------------------------------
@@ -276,8 +267,20 @@ static func headcount(ns, company) -> float:
 	# industry.gd's header keeps -- the machine commits failures, execute()
 	# commits rescues and break-ups -- and this read is the payroll's own
 	# arithmetic on the register both systems already meet in.
-	if bool(ns.companies.get(company.id, {}).get("failed", false)):
-		return 0.0
+	#
+	# D14 (A'): ONE register read, where this was four and an empty Dictionary
+	# allocated for every body firm (which has no entry) -- the leaf runs for every
+	# firm of every nation in Migration's jobs map and in firm_jobs_offset_pct(),
+	# each month of the game and of every projection. `live` and `held` are exactly
+	# what share_of_company() and state_share_of() return, so the floats are theirs.
+	var entry = ns.companies.get(company.id)
+	var live: float = float(company.share)
+	var held: float = 0.0
+	if entry != null:
+		if bool(entry.get("failed", false)):
+			return 0.0
+		live = float(entry.get("share", company.share))
+		held = float(entry.get("state_share", 0.0))
 	# The RATIO is computed first, deliberately: (h * s) / s is not exactly h
 	# for every float pair -- the A3 roster's generated headcounts found the
 	# unlucky ones, and the residue showed up as a 1e-18 drift in
@@ -286,13 +289,13 @@ static func headcount(ns, company) -> float:
 	# file's own invariant -- the deviation channels read EXACTLY 0.0 while
 	# every firm sits at its authored share -- by construction rather than by
 	# bit luck.
-	var reallocated: float = company.headcount * (share_of_company(ns, company) / company.share)
+	var reallocated: float = company.headcount * (live / company.share)
 	# Signed, so a deregulation law lets the same firms carry more staff. Floored at
 	# zero rather than trusted to the burden clamp: a later session raising
 	# REGULATION_JOBS_BETA past 1/REGULATION_BURDEN_MAX would otherwise produce a
 	# negative headcount and a positive employment effect from a rule that closed
 	# the sector.
-	var exposure: float = 1.0 - state_share_of(ns, company.id)
+	var exposure: float = 1.0 - held
 	var compliance: float = maxf(
 		1.0 - K.REGULATION_JOBS_BETA * regulation_burden_of(ns, company.sector) * exposure, 0.0
 	)

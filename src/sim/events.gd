@@ -236,6 +236,10 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 	# winner per pulsing category. Sorted category order so the iteration is
 	# reproducible from state alone -- dictionary order is not.
 	var fired_by_category := {}
+	# D14 (A'): the draw's month index once per nation, where hazard_passes()
+	# rebuilt it from year and month for every event (four calls an event, 102
+	# events, every nation, every month of the game and of the projection).
+	var hazard_index: int = _hazard_index(month_index)
 	for ev in loader.events:
 		if ev.on_action != "":
 			continue
@@ -257,7 +261,7 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 		# a cooling or once-fired event no longer pays for a draw it cannot use.
 		if not _cooldown_ok(ns, ev, month_index) or _once_blocks(ns, ev):
 			continue
-		if not hazard_passes(ns.id, ev.id, _year_of(month_index), _month_of(month_index), float(ev.likelihood)):
+		if not _hazard_passes_at(ns.id, ev.id, hazard_index, float(ev.likelihood)):
 			continue
 		if not _gates_pass(ns, ev, month_index):
 			continue
@@ -320,12 +324,19 @@ static func _tick_countdowns(state, ns, loader, month_index: int) -> void:
 
 
 static func hazard_passes(nation_id: String, event_id: String, year: int, month: int, likelihood: float) -> bool:
+	return _hazard_passes_at(nation_id, event_id, _hazard_index(_absolute_month(year, month)), likelihood)
+
+
+## The draw's index: months since the epoch. _absolute_month(_year_of(m),
+## _month_of(m)) is m itself (December's 12 carries into the year), so a tick
+## holding the month index passes it straight through.
+static func _hazard_index(month_index: int) -> int:
+	return month_index - _absolute_month(K.EVENT_EPOCH_YEAR, K.EVENT_EPOCH_MONTH)
+
+
+static func _hazard_passes_at(nation_id: String, event_id: String, index: int, likelihood: float) -> bool:
 	if likelihood <= 0.0:
 		return false
-	var index: int = (
-		_absolute_month(year, month)
-		- _absolute_month(K.EVENT_EPOCH_YEAR, K.EVENT_EPOCH_MONTH)
-	)
 	return Cycle.unit_pair(nation_id, event_id, index) < likelihood
 
 

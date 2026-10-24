@@ -105,14 +105,17 @@ static func region_pull(ns, region_list: Array, region_id: String, access: Dicti
 	var share: float = region_share(ns, region_id)
 	if share <= 0.0:
 		return 0.0
-	return _pull_at(ns, region_id, share, Regions.unemployment_pct(ns, region_list, region_id, access, sites))
+	return _pull_at(Regions.share_of(ns, region_id), share, Regions.unemployment_pct(ns, region_list, region_id, access, sites))
 
 
 ## region_pull() with the region's unemployment already in hand -- the tick asks
 ## Regions.unemployment_by_region() once per nation rather than once per region
-## (V5.0c), and this is the same arithmetic on the same float.
-static func _pull_at(ns, region_id: String, share: float, unemployment: float) -> float:
-	var per_head: float = Regions.share_of(ns, region_id) / share
+## (V5.0c), and this is the same arithmetic on the same float. The output share
+## comes in too (D14 (A')): the tick takes Regions.shares_of() once, where
+## share_of() re-summed the nation's whole region register for every region --
+## the same total over an unchanged register, so the same quotient.
+static func _pull_at(output_share: float, share: float, unemployment: float) -> float:
+	var per_head: float = output_share / share
 	var employed: float = 1.0 - unemployment / 100.0
 	return per_head * employed
 
@@ -141,10 +144,18 @@ static func _pull_at(ns, region_id: String, share: float, unemployment: float) -
 ## the relocation boundary companies-model section 33 records), so the
 ## equivalence is exact only while no relocation stands.
 static func city_pull(ns, region, city_id: String, jobs_by_city: Dictionary) -> float:
-	var heads: float = city_population(ns, region.id, city_id)
+	return _city_pull_at(float(ns.population) * region_share(ns, region.id), city_share(ns, city_id), float(jobs_by_city.get(city_id, 0.0)))
+
+
+## city_pull() with the region's heads in hand -- D14 (A'): the tick reads the
+## region's share once per region rather than once per city, ~1,370 cities a
+## month. heads is city_population()'s own product in its own order,
+## (population * region share) * city share, so the same float.
+static func _city_pull_at(region_heads: float, share: float, jobs: float) -> float:
+	var heads: float = region_heads * share
 	if heads <= 0.0:
 		return 0.0
-	return float(jobs_by_city.get(city_id, 0.0)) / heads
+	return jobs / heads
 
 
 ## Named jobs per city, one pass over the nation's whole firm roster -- the
@@ -287,9 +298,10 @@ static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, 
 		var city_shares: Dictionary = {}
 		var city_weighted: float = 0.0
 		var city_total: float = 0.0
+		var region_heads: float = float(ns.population) * region_share(ns, region.id)
 		for city in region.cities:
-			var pull: float = city_pull(ns, region, city.id, jobs_by_city)
 			var share: float = city_share(ns, city.id)
+			var pull: float = _city_pull_at(region_heads, share, float(jobs_by_city.get(city.id, 0.0)))
 			city_pulls[city.id] = pull
 			city_shares[city.id] = share
 			city_weighted += share * pull
@@ -307,9 +319,10 @@ static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, 
 	var weighted: float = 0.0
 	var total: float = 0.0
 	var unemployment: Dictionary = Regions.unemployment_by_region(ns, region_list, access, sites)
+	var output_shares: Dictionary = Regions.shares_of(ns, region_list)
 	for region in region_list:
 		var share: float = region_share(ns, region.id)
-		var pull: float = 0.0 if share <= 0.0 else _pull_at(ns, region.id, share, float(unemployment[region.id]))
+		var pull: float = 0.0 if share <= 0.0 else _pull_at(float(output_shares[region.id]), share, float(unemployment[region.id]))
 		pulls[region.id] = pull
 		shares[region.id] = share
 		weighted += share * pull

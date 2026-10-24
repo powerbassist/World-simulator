@@ -57,6 +57,7 @@
    "tests/test_characters.gd",
    "tests/test_companies.gd",
    "tests/test_companies_tiers.gd",
+   "tests/test_content_memos.gd",
    "tests/test_industry.gd",
    "tests/test_statute_surfaces.gd",
    "tests/test_statute_assembly.gd",

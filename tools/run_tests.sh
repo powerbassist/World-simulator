@@ -88,6 +88,7 @@ tests=(
   # V4.7a: the two-tier register -- tiers, sparse fallback reads, and the
   # from_dict alias fix's mutation + lossless-roundtrip pins.
   tests/test_companies_tiers.gd
+  tests/test_content_memos.gd
   tests/test_society.gd
   tests/test_demography.gd
   tests/test_unrest.gd
