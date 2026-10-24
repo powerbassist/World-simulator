@@ -25,8 +25,9 @@ measurement).
 
 `data/orgs/<id>.json` carries: `id`, `name`, `summary`; `members` (nation id →
 `seats`); optional `parliament` (next election, term); `council`, `net_transfers`;
-the standing prices `relations_bonus` and `trade_bonus`; the fight content
-`accession_months`, `withdrawal_months`, `accession_position`,
+the standing prices `relations_bonus` and `trade_bonus`; the flag
+`customs_union` (V5.2 R10: no tariff between members -- only eu sets it); the
+fight content `accession_months`, `withdrawal_months`, `accession_position`,
 `withdrawal_position`.
 
 Four orgs ship: **eu** (8 members, parliament, council, transfers, bonuses
@@ -67,6 +68,12 @@ won.
   `relations_bonus`; gravity weights multiply by `1 + Σ shared trade_bonus`.
   eu carries the values the old constants held, UNCHANGED — that, and the
   preserved per-org agenda order, is what the bit-identity run proves.
+- **A customs union refuses the tariff verb (V5.2 R10).** `customs_union` rides
+  `GameState.org_effects` beside the prices (`Orgs.static_effects`, re-derived
+  on load) but is a flag, never summed: `Org.shared_flag` names the first live
+  shared org that sets it, and `impose_tariffs` asks the pair field
+  `customs_union_shared` for 0. The AI and the player meet the same precondition;
+  leaving the union reopens the verb. A sanction is not a customs duty and stays.
 - **Council limits are per org**: `MAX_RULES_IN_FORCE` counts each council's own
   binding rules; each council runs its own two-integer scheduler and agenda
   index.

@@ -211,6 +211,11 @@ func _check_malformed_orgs_refused() -> void:
 	Org.from_dict({"id": "x", "name": "X", "members": {"FRA": {}}, "trade_bonus": 5.0}, "bad6.json", errs)
 	_ok(not errs.is_empty(), "a trade_bonus above the bound is refused")
 
+	# R10: a flag the loader refuses by name, not one bool() guesses at.
+	errs = []
+	Org.from_dict({"id": "x", "name": "X", "members": {"FRA": {}}, "customs_union": "false"}, "bad7.json", errs)
+	_ok(not errs.is_empty(), "a customs_union that is not a boolean is refused")
+
 
 func _check_proposals_name_orgs() -> void:
 	var per_org := {}

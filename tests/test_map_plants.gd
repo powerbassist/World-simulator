@@ -11,6 +11,7 @@ const Main = preload("res://src/ui/main.tscn")
 const MapLayers = preload("res://src/ui/map_layers.gd")
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const MapPlants = preload("res://src/ui/map_plants.gd")
 
 var _failures: Array[String] = []
 var _frame: int = 0
@@ -30,6 +31,7 @@ func _process(_delta: float) -> bool:
 		_check_source_purity()
 		_check_layers_unchanged()
 		_check_placement_exclusive()
+		_check_plant_readout()
 		_start_the_fleet_route()
 		return false
 	if _frame < 3 + ROUTE_FRAMES:
@@ -65,6 +67,48 @@ func _check_the_fleet_route() -> void:
 	if scroll.scroll_vertical <= 0:
 		_fail("a plant's route opened the Energy window at the top, not at the fleet section")
 	_main._windows.close_all()
+
+
+## V5.2 b+ (R1, gate b: "i cant check how far the work is done, no infobulle"). A
+## plant under construction says how far it is, on the map: the glyph fills as an
+## arc, and the cursor on it reads its name, region and progress. Another nation's
+## plant says what it is and whether it runs, never its schedule.
+func _check_plant_readout() -> void:
+	var state = _main._state
+	var map = _main._map_view
+	var ns = state.player()
+	var region = _main._loader.regions[ns.id][0]
+	var at: Vector2 = region.cities[0].lonlat
+	ns.plants["nuclear_epr#91"] = {"source_id": "nuclear_epr", "region_id": region.id, "lon": at.x, "lat": at.y,
+		"months_left": 80, "done": false, "connection": 1.0}
+	var built := MapPlants.progress(ns.plants["nuclear_epr#91"], _main._loader)
+	if absf(built - 40.0 / 120.0) > 1e-6:
+		_fail("a reactor 80 of 120 months from done reads %.3f built, not a third" % built)
+	var motion := InputEventMouseMotion.new()
+	motion.position = map._lonlat_to_screen(at.x, at.y)
+	map._gui_input(motion)
+	if map._hovered_plant != [String(ns.id), "nuclear_epr#91"]:
+		_fail("the cursor on the player's plant glyph did not hover it: %s" % [map._hovered_plant])
+	var mine := " ".join(_texts(MapPlants.readout_lines(state, _main._loader, String(ns.id), "nuclear_epr#91")))
+	for want in [String(region.region_name), "33 % built", "80 months left"]:
+		if not mine.contains(want):
+			_fail("the plant readout '%s' does not say '%s'" % [mine, want])
+	var deu = state.nations["DEU"]
+	deu.plants["nuclear_epr#92"] = {"source_id": "nuclear_epr", "region_id": "", "lon": 10.0, "lat": 50.0,
+		"months_left": 30, "done": false, "connection": 1.0}
+	var theirs := " ".join(_texts(MapPlants.readout_lines(state, _main._loader, "DEU", "nuclear_epr#92")))
+	if theirs.contains("month") or theirs.contains("%") or not theirs.contains("Under construction"):
+		_fail("another nation's plant readout gives its schedule or not its state: '%s'" % theirs)
+	ns.plants.erase("nuclear_epr#91")
+	deu.plants.erase("nuclear_epr#92")
+	map._hovered_plant = []
+
+
+func _texts(lines: Array) -> Array:
+	var out: Array = []
+	for line in lines:
+		out.append(String(line[0]))
+	return out
 
 
 ## THE HIT TEST DOES NOT GO THROUGH THE ROSTER, read from the source rather than

@@ -87,10 +87,7 @@ static func init_state(state, loader) -> void:
 				"aid": [],
 				"debts": [],
 			}
-		state.org_effects[org.id] = {
-			"relations_bonus": org.relations_bonus,
-			"trade_bonus": org.trade_bonus,
-		}
+		state.org_effects[org.id] = static_effects(org)
 
 	for ns in state.nations.values():
 		ns.orgs = []
@@ -158,10 +155,14 @@ static func reconcile_on_load(state, loader) -> void:
 static func rebuild_static(state, loader) -> void:
 	state.org_effects = {}
 	for org in loader.orgs:
-		state.org_effects[org.id] = {
-			"relations_bonus": org.relations_bonus,
-			"trade_bonus": org.trade_bonus,
-		}
+		state.org_effects[org.id] = static_effects(org)
+
+
+## One org's entry in GameState.org_effects, built in ONE place for new-game and
+## the load re-derive alike: a key added to one copy and not the other would make
+## a reloaded game read differently from the one that was saved (R10's flag).
+static func static_effects(org) -> Dictionary:
+	return {"relations_bonus": org.relations_bonus, "trade_bonus": org.trade_bonus, "customs_union": org.customs_union}
 
 
 ## Each member's standing net contribution as a percent of its own GDP,

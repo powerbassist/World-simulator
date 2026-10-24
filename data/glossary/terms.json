@@ -1,5 +1,5 @@
 {
-  "_note": "The glossary table (docs/design/glossary-tooltips.md): 54 terms (48 ranked, 6 added for V5.2-0b), English only. `definition` is one line (about 200 characters at most); `body` is shown under it when the tooltip is locked. `see_also` lists entry ids; the loader refuses an unknown one. `live` names a SHOWN value in the table the UI owns (rule L1: the headline poll, never the hidden approval; Credit.yield_pct and Credit.rating are reads, never stored fields). `model` is `<doc>#<heading>` of the docs/*-model.md section the definition summarises (P4); a LIST of such anchors where a definition draws on several sections. A PR that changes a cited section re-reads its entries in the same PR (P4b); state_stake and programme are known to go stale in V5.3. French is parked.",
+  "_note": "The glossary table (docs/design/glossary-tooltips.md): 58 terms (48 ranked, 6 added for V5.2-0b, 4 for V5.2c), English only. `definition` is one line (about 200 characters at most); `body` is shown under it when the tooltip is locked. `see_also` lists entry ids; the loader refuses an unknown one. `live` names a SHOWN value in the table the UI owns (rule L1: the headline poll, never the hidden approval; Credit.yield_pct and Credit.rating are reads, never stored fields). `model` is `<doc>#<heading>` of the docs/*-model.md section the definition summarises (P4); a LIST of such anchors where a definition draws on several sections. A PR that changes a cited section re-reads its entries in the same PR (P4b); state_stake and programme are known to go stale in V5.3. French is parked.",
   "terms": [
     {
       "id": "programme",
@@ -643,6 +643,60 @@
       "model": [
         "campaign-model#5. An effort is a standing rate with a deadline",
         "campaign-model#6. The bill"
+      ]
+    },
+    {
+      "id": "evidence",
+      "term": "evidence",
+      "definition": "What a corrupt act or an affair leaves behind. It is hidden from you, it grows with the act, and the more it holds the likelier it is to come out.",
+      "body": "Every shady deal leaves a trace of its own size. A favour leaves the least, a bribe paid into your party's accounts more, your own money more again, and a diverted budget line or an affair the most. Evidence is never shown as a figure: you learn how much there was when it surfaces as an exposure. An uncaught lie leaves none; the risk of a lie is being caught or a date passing.",
+      "see_also": [
+        "exposure",
+        "exposure_route",
+        "corruption"
+      ],
+      "model": "design/v5.2-spec#Corruption, in the author's four currencies (V5.2c)"
+    },
+    {
+      "id": "exposure",
+      "term": "exposure",
+      "definition": "The moment hidden evidence surfaces. It arrives as a scandal on your desk, and your answer to it decides what it costs.",
+      "body": "Each month, each exposure route may reach one piece of evidence it can see, and the more evidence it can reach, the likelier it is. A hit becomes a scandal event the following month, waiting for a free place on the desk if the desk is full. What you pay is set by the choice you make on it, and no choice is free.",
+      "see_also": [
+        "evidence",
+        "exposure_route",
+        "desk",
+        "approval"
+      ],
+      "model": "design/v5.2-spec#Corruption, in the author's four currencies (V5.2c)"
+    },
+    {
+      "id": "exposure_route",
+      "term": "exposure route",
+      "definition": "How hidden evidence reaches the public: the press, the courts, the auditors, or a person who has turned against you.",
+      "body": "The press follows personal wealth and affairs, and is likelier to when outlet owners dislike you. The courts follow personal wealth and diverted budget, and a court you have captured prosecutes nobody. The auditors follow party money and diverted budget. A turned person can give up anything they know. Each route sees only some kinds of evidence, which is why the currency you choose changes who can catch you.",
+      "see_also": [
+        "evidence",
+        "exposure",
+        "turned_person",
+        "press_freedom",
+        "judicial_independence"
+      ],
+      "model": "design/v5.2-spec#Corruption, in the author's four currencies (V5.2c)"
+    },
+    {
+      "id": "turned_person",
+      "term": "turned person",
+      "definition": "Someone who knew about a deal or an affair and has become your rival or your enemy. They are the one route that can reveal anything they were told.",
+      "body": "A person turns when their rapport with you falls far enough, and can come back if it recovers. Favours are the currency that leaves the least evidence, but a favour is only as safe as the loyalty of the person who did it for you. Ending an affair can turn the lover.",
+      "see_also": [
+        "exposure_route",
+        "evidence",
+        "exposure"
+      ],
+      "model": [
+        "design/v5.2-spec#Corruption, in the author's four currencies (V5.2c)",
+        "people-model#14.9 The president's registers (V5.2a)"
       ]
     }
   ]

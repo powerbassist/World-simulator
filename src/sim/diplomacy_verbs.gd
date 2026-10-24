@@ -9,6 +9,7 @@ extends RefCounted
 const FP = preload("res://src/sim/foreign_policy.gd")
 const RK = preload("res://src/core/relations.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Org = preload("res://src/core/org.gd")
 
 
 ## The kind of measure `actor` has in force against `target`, or "" for none.
@@ -27,6 +28,37 @@ static func own_measure_kind(state, actor_id: String, target_id: String) -> Stri
 
 static func _kind(terms) -> String:
 	return "" if terms == null else String(terms.get("kind", ""))
+
+
+## Diplomacy._read_field()'s pair fields over the coercion register, moved here
+## beside the reads they share. This nation's own measure against this target,
+## not the target's against it: an impose verb asks measure_active for 0; a lift
+## verb asks its OWN kind for 1, because one measure per pair means "something is
+## in force" cannot tell a tariff from an embargo and a single field would let
+## either lift clear either. A lift reads the nation's OWN measure only (pre-gate
+## B, RECORD 11): an org's levy on the same key is the org's to end, and a lift
+## offered against it let one member dissolve a common tariff.
+##
+## R10 (gate b): customs_union_shared is 1 when the pair shares a customs union,
+## and impose_tariffs asks for 0 -- the gate is content, read by the general
+## precondition rule, so the AI and the player meet the same refusal.
+static func pair_field(state, actor_id: String, field: String, target_id: String) -> float:
+	match field:
+		"measure_active": return 1.0 if measure_kind(state, actor_id, target_id) != "" else 0.0
+		"tariff_active": return 1.0 if own_measure_kind(state, actor_id, target_id) == "tariff" else 0.0
+		"sanction_active": return 1.0 if own_measure_kind(state, actor_id, target_id) == "sanction" else 0.0
+		"customs_union_shared": return 0.0 if customs_union_with(state, actor_id, target_id) == "" else 1.0
+	# _read_field() routes a field here by name; one it routes and this match lacks
+	# is a bug to see, not a silent 0.0 (its own default push_errors the same way).
+	push_error("diplomacy_verbs: unknown pair field '%s'" % field)
+	return 0.0
+
+
+## The customs union (an org whose `customs_union` field is set) both nations
+## belong to, or "". What refuses a tariff between them, and what the refusal
+## names.
+static func customs_union_with(state, a_id: String, b_id: String) -> String:
+	return Org.shared_flag(state, a_id, b_id, "customs_union")
 
 
 ## Which counterparty said no, and why. One place rather than a ternary at the call

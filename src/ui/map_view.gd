@@ -276,6 +276,9 @@ var _hovered_city := ""
 ## entered it -- the readout draws there rather than at a centroid, which for
 ## Russia or Canada can sit off-screen.
 var _hovered_outline := ""
+## V5.2 b+ (R1): the plant under the cursor, [nation id, plant id], read out like an
+## outline (MapPlants.readout_lines) at the point the cursor entered it.
+var _hovered_plant: Array = []
 var _hover_screen := Vector2.ZERO
 
 ## Built once in setup() from content that never mutates -- the graph, and each
@@ -506,12 +509,13 @@ func _notification(what: int) -> void:
 		_zoom = clampf(_zoom, min_zoom(), MAX_ZOOM)
 		_clamp_pan()
 		queue_redraw()
-	elif what == NOTIFICATION_MOUSE_EXIT and _hovered_outline != "":
+	elif what == NOTIFICATION_MOUSE_EXIT and (_hovered_outline != "" or not _hovered_plant.is_empty()):
 		# V4.11c. The readout is a plate of text, not a brighter stroke: when the
 		# cursor leaves for a window or the HUD no further motion reaches this
 		# control, so without this it stays on screen until the cursor comes back
 		# (the V4.11 review). Godot 4 sends the exit when a window occludes the map.
 		_hovered_outline = ""
+		_hovered_plant = []
 		queue_redraw()
 
 
@@ -818,22 +822,8 @@ func _refresh_markers() -> void:
 ## fixed number of pixels at every zoom, so a degree-radius target would shrink as
 ## the player zoomed out to look for it.
 func _plant_at_screen_point(screen_pos: Vector2) -> String:
-	var best: String = ""
-	var best_d: float = MapPlants.RADIUS + 3.0
-	var nation_ids: Array = _state.nations.keys()
-	nation_ids.sort()
-	for nation_id in nation_ids:
-		var ns = _state.nations[nation_id]
-		var plant_ids: Array = ns.plants.keys()
-		plant_ids.sort()
-		for plant_id in plant_ids:
-			var entry: Dictionary = ns.plants[plant_id]
-			var at := _lonlat_to_screen(float(entry.get("lon", 0.0)), float(entry.get("lat", 0.0)))
-			var d := at.distance_to(screen_pos)
-			if d <= best_d:
-				best_d = d
-				best = String(plant_id)
-	return best
+	var hit := MapPlants.hit(_state, _lonlat_to_screen, screen_pos)
+	return String(hit[1]) if not hit.is_empty() else ""
 
 
 func _project_at_screen_point(screen_pos: Vector2) -> String:
@@ -1022,6 +1012,7 @@ func _gui_input(event: InputEvent) -> void:
 			# The readout sits at a screen point, so a pan would leave it floating
 			# over whatever slid under it; it returns on the next free move.
 			_hovered_outline = ""
+			_hovered_plant = []
 		else:
 			var id := nation_at_screen_point(event.position)
 			if id != _hovered_id:
@@ -1048,8 +1039,10 @@ func _gui_input(event: InputEvent) -> void:
 			# Redrawn on a CHANGE only, as the nation hover is: a readout that
 			# followed the cursor would re-record the whole map on every move
 			# (~73 ms at the opening fit), so it anchors where the cursor entered.
-			if outline != _hovered_outline:
+			var plant := MapPlants.hit(_state, _lonlat_to_screen, event.position)
+			if outline != _hovered_outline or plant != _hovered_plant:
 				_hovered_outline = outline
+				_hovered_plant = plant
 				_hover_screen = event.position
 				queue_redraw()
 
@@ -1090,8 +1083,7 @@ func _draw() -> void:
 	if _on("markers"):
 		_draw_markers()
 	if _on("plants"):
-		MapPlants.draw_plants(self, _state, func(lon: float, lat: float) -> Vector2:
-			return _lonlat_to_screen(lon, lat))
+		MapPlants.draw_plants(self, _state, _lonlat_to_screen, _loader)
 	# Frontmost: a readout is text the player asked for with the cursor.
 	_draw_outline_readout()
 
@@ -1246,16 +1238,19 @@ func _draw_world_borders(canvas: CanvasItem) -> void:
 ## the city label's bare shadowed text and the windowed screenshot showed why a
 ## plate: over snow and the roster's own labels the line could not be read.
 ## Clamped inside the control so a hover near the right edge still reads.
+## V5.2 b+ (R1): a hovered plant reads out on the same plate, its lines first.
 func _draw_outline_readout() -> void:
-	if _hovered_outline == "" or _loader == null:
-		return
 	var font := UiTheme.map_face()
-	if font == null:
+	if _loader == null or font == null:
 		return
 	var lines := [
 		[MapOutlines.name_of(_loader, _hovered_outline), UiTheme.SIZE_SMALL],
 		[MapOutlines.profile_of(_loader, _hovered_outline), UiTheme.SIZE_MICRO],
-	]
+	] if _hovered_outline != "" else []
+	if not _hovered_plant.is_empty():
+		lines = MapPlants.readout_lines(_state, _loader, String(_hovered_plant[0]), String(_hovered_plant[1]))
+	if lines.is_empty():
+		return
 	var width := 0.0
 	for line in lines:
 		width = maxf(width, font.get_string_size(String(line[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, int(line[1])).x)

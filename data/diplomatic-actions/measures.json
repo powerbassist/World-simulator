@@ -14,6 +14,11 @@
           "field": "measure_active",
           "op": "==",
           "value": 0
+        },
+        {
+          "field": "customs_union_shared",
+          "op": "==",
+          "value": 0
         }
       ],
       "effects": {
