@@ -58,6 +58,7 @@ func _process(_delta: float) -> bool:
 			_check_spent()
 			_check_blocks()
 			_check_stance_files()
+			_check_files_compile()
 			_finish()
 			return true
 	return false
@@ -107,6 +108,35 @@ func _check_blocks() -> void:
 	base.merge(own, true)
 	if base.size() != 2 or not String(base["opening"]).contains("mine") or not String(base["close_settled"]).contains("bye"):
 		_fail("a stance's title does not replace the default's alone: %s" % [base])
+
+
+## Every file under data/audiences compiles through the addon (Content's #103
+## suggestion, test_summits' shape), and once the default carries more than the
+## placeholder's opening it carries every title the scene asks for.
+func _check_files_compile() -> void:
+	var manager = root.get_node_or_null("/root/DialogueManager")
+	if manager == null:
+		_fail("no DialogueManager autoload to compile with")
+		return
+	var titles := ["opening", "close_settled", "close_promised", "close_declined"]
+	for lever in AudienceScene.LEVER_LABEL.keys():
+		titles.append("lever_%s_success" % lever)
+		titles.append("lever_%s_failure" % lever)
+	for topic in AudienceScene.TOPIC_LABEL.keys():
+		titles.append("topic_%s" % topic)
+	var dir := DirAccess.open("res://data/audiences")
+	for file in dir.get_files():
+		if not file.ends_with(".dialogue"):
+			continue
+		var text := FileAccess.get_file_as_string("res://data/audiences/" + file)
+		if manager.create_resource_from_text(text) == null:
+			_fail("data/audiences/%s does not compile" % file)
+		if file == "default.dialogue":
+			var blocks := AudienceScene.titled_blocks(text)
+			if blocks.size() > 1:
+				for t in titles:
+					if not blocks.has(t):
+						_fail("default.dialogue lacks the title %s" % t)
 
 
 ## Content's PR ships the stance files (the parent's call): until then only the
