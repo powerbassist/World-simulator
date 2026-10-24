@@ -141,6 +141,16 @@ static func learn(state, ns, loader, person_id: String, amount: float) -> bool:
 	return true
 
 
+## V5.2b b2. What the audience teaches: `amount` times what is left to learn, so
+## a well-known person teaches less (B4: acquaintance in 2-5 audiences, known in
+## at least 8). The one door for the curve -- the audience held and each topic --
+## so the two cannot drift. What it wrote.
+static func learn_from(state, ns, loader, person_id: String, amount: float) -> float:
+	var before := knowledge(ns, person_id)
+	learn(state, ns, loader, person_id, amount * (1.0 - before))
+	return knowledge(ns, person_id) - before
+
+
 static func adjust_rapport(state, ns, loader, person_id: String, amount: float) -> bool:
 	if not covers(state, ns, loader, person_id):
 		return false

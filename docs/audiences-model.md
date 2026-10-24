@@ -131,7 +131,7 @@ scene left open past its month is section 3's no-show, priced as one decline.
 | **Bargain** | 0.28 + 0.25 x knowledge, pragmatic +0.22, principled -0.22 | a favour (rapport -0.10), or a vote trade (an IOU due in 12 months) |
 | **Promise a date** | 0.30 + 0.25 x knowledge, ambitious +0.22, -0.30 x (skill - 0.5) x 2 above a middling reader | a dated promise 3 to 24 months out (section 7) |
 | **Pressure** | 0.48 + 0.25 x knowledge, -0.50 x (standing - 0.5), +0.20 x (approval - 50) / 50, networked -0.16, stubborn -0.12 | rapport -0.06 and a grudge pulse of 0.04 |
-| **Flatter** | 0.48 + 0.20 x knowledge - 0.40 x skill, vain +0.40 | nothing; a failure on a principled reader above skill 0.6 costs rapport -0.08 |
+| **Flatter** | 0.48 + 0.20 x knowledge - 0.40 x skill, vain +0.40 | nothing; a failure on a principled reader above a middling one (skill 0.5) costs rapport -0.08 |
 | **Friendship** | a friend or a close person only: 0.60 + 0.25 x knowledge, close +0.10 | the bond, a step down |
 
 - **Why argue is so weak at first.** Argue costs nothing, so it Pareto-dominates any

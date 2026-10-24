@@ -68,7 +68,7 @@ static func cell(state, ns, loader, session: Dictionary) -> Dictionary:
 		"rapport": President.rapport(ns, pid),
 		"relationship": President.relationship(ns, pid),
 		"aligned": bool(ns.person_want_state.get("%s|%s" % [pid, String(session.get("object", ""))], false)),
-		"standing": float(ns.person_standing.get(pid, 0.5)),
+		"standing": float(ns.person_standing.get(pid, K.STANDING_NEUTRAL)),
 		"approval": float(ns.overall_approval_pct),
 	}
 
@@ -135,9 +135,12 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 		refused["error"] = "aid is not open yet" if currency == K.CURRENCY_AID else "not a currency"
 		return refused
 	if lever == "promise_date" and (due < now + K.PROMISE_MIN_MONTHS or due > now + K.PROMISE_MAX_MONTHS):
-		refused["error"] = "a promise needs a date between %d and %d months away" % [K.PROMISE_MIN_MONTHS, K.PROMISE_MAX_MONTHS]
+		refused["error"] = "that date is too near or too far for a promise"
 		return refused
 	var spent := _pay(state, ns, loader, person, session, lever, currency, due, now)
+	if spent.has("refused"):
+		refused["error"] = "the promise could not be made"
+		return refused
 	var index := K.ATTEMPTS - int(session["attempts_left"])
 	var success := Cycle.unit_pair(String(session["request_id"]), "%s:%s:%d" % [K.SALT_ROLL, lever, index], now) < p
 	session["attempts_left"] = int(session["attempts_left"]) - 1
@@ -205,11 +208,13 @@ static func close(state, ns, loader, session: Dictionary) -> Dictionary:
 
 ## The month's half of the audience: every promise and IOU due is judged once,
 ## with no roll -- kept (or paid) if the person's want is served now, else a lie
-## revealed (a promise) or a betrayal (an IOU). {kept, broken}, the rows judged.
-## The played nation only: the AI nations hold no audiences (spec C12). A person
-## who has since defected or left office is judged on the same want.
+## revealed (a promise) or a betrayal (an IOU). {kept, broken, void}, the rows
+## judged. The played nation only: the AI nations hold no audiences (spec C12). A
+## person who has since defected or left office is judged on the same want; one
+## whose content no longer carries the want (an older save) is VOID, dropped
+## unpriced -- there is nothing left to break.
 static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
-	var out := {"kept": [], "broken": []}
+	var out := {"kept": [], "broken": [], "void": []}
 	var ns = state.player()
 	if ns == null or ns.commitments.is_empty():
 		return out
@@ -222,11 +227,14 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 			continue
 		var pid := String(person.id)
 		var promise := String(row["kind"]) == "promise"
-		var served := false
-		for want in person.wants:
-			if String(want["object"]) == String(row["object"]):
-				served = Characters.want_served(ns, person, want, meters, leaders)
-		if served:
+		var want := {}
+		for w in person.wants:
+			if String(w["object"]) == String(row["object"]):
+				want = w
+		if want.is_empty():
+			out["void"].append(row)
+			continue
+		if Characters.want_served(ns, person, want, meters, leaders):
 			if promise:
 				_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT)
 			out["kept"].append(row)
@@ -283,18 +291,22 @@ static func _why_not(ns, session: Dictionary) -> String:
 	return why
 
 
-## The lever's own spend, paid win or lose; what it wrote, after the clamps.
+## The lever's own spend, paid win or lose; what it wrote, after the clamps. A
+## commitment the register refuses comes back {refused}, with nothing written --
+## the commitment is each of those levers' only spend.
 static func _pay(state, ns, loader, person, session: Dictionary, lever: String, currency: String, due: int, now: int) -> Dictionary:
 	var pid := String(person.id)
 	var object := String(session["object"])
 	match lever:
 		"bargain":
 			if currency == K.CURRENCY_VOTE_TRADE:
-				President.commit(state, ns, loader, "iou", pid, object, now + K.IOU_MONTHS)
+				if not President.commit(state, ns, loader, "iou", pid, object, now + K.IOU_MONTHS):
+					return {"refused": true}
 				return {"iou": now + K.IOU_MONTHS}
 			return {"rapport": _rapport(state, ns, loader, pid, -K.BARGAIN_FAVOUR_RAPPORT)}
 		"promise_date":
-			President.commit(state, ns, loader, "promise", pid, object, due)
+			if not President.commit(state, ns, loader, "promise", pid, object, due):
+				return {"refused": true}
 			return {"promise": due}
 		"pressure":
 			var spent: Dictionary = Characters.price_refusal(ns, person, K.PRESSURE_GRUDGE, 0.0)
@@ -307,26 +319,24 @@ static func _pay(state, ns, loader, person, session: Dictionary, lever: String, 
 	return {}
 
 
-## What a lever costs, for the card: register keys, the amount where it is fixed.
+## What a lever costs, for the card: register -> amount, every value a number --
+## rapport and grudge in their own points, a commitment (promise, iou) and a bond
+## step as counts. A bargain pays ONE currency: the favour's rapport, or one IOU.
 static func _spends(lever: String) -> Dictionary:
 	match lever:
 		"bargain":
-			return {"rapport": -K.BARGAIN_FAVOUR_RAPPORT, "or": "an IOU"}
+			return {"rapport": -K.BARGAIN_FAVOUR_RAPPORT, "iou": 1.0}
 		"promise_date":
-			return {"promise": "a dated promise"}
+			return {"promise": 1.0}
 		"pressure":
 			return {"rapport": -K.PRESSURE_RAPPORT, "grudge": K.PRESSURE_GRUDGE}
 		"friendship":
-			return {"bond": "a step down"}
+			return {"bond": -1.0}
 	return {}
 
 
-## Knowledge with diminishing returns: the better known, the less there is to
-## learn. What it wrote.
 static func _learn(state, ns, loader, pid: String, amount: float) -> float:
-	var before := President.knowledge(ns, pid)
-	President.learn(state, ns, loader, pid, amount * (1.0 - before))
-	return President.knowledge(ns, pid) - before
+	return President.learn_from(state, ns, loader, pid, amount)
 
 
 static func _rapport(state, ns, loader, pid: String, amount: float) -> float:

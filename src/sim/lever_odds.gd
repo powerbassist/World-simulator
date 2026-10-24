@@ -46,11 +46,11 @@ static func odds(person, lever: String, cell: Dictionary) -> float:
 			v = K.PROMISE_BASE + K.PROMISE_KNOW * k
 			if traits.has("ambitious"):
 				v += K.PROMISE_AMBITIOUS
-			v += K.PROMISE_SKILL * maxf(0.0, float(person.social_skill) - 0.5) * 2.0
+			v += K.PROMISE_SKILL * maxf(0.0, float(person.social_skill) - K.SKILL_MIDDLING) / (1.0 - K.SKILL_MIDDLING)
 		"pressure":
 			v = K.PRESSURE_BASE + K.PRESSURE_KNOW * k
-			v += K.PRESSURE_STANDING * (float(cell.get("standing", 0.5)) - 0.5)
-			v += K.PRESSURE_APPROVAL * (float(cell.get("approval", 50.0)) - 50.0) / 50.0
+			v += K.PRESSURE_STANDING * (float(cell.get("standing", K.STANDING_NEUTRAL)) - K.STANDING_NEUTRAL)
+			v += K.PRESSURE_APPROVAL * (float(cell.get("approval", K.APPROVAL_NEUTRAL)) - K.APPROVAL_NEUTRAL) / K.APPROVAL_NEUTRAL
 			if traits.has("networked"):
 				v += K.PRESSURE_NETWORKED
 			if traits.has("stubborn"):

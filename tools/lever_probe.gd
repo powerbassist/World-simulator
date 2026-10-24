@@ -171,12 +171,16 @@ func _l2(ns, people: Array) -> Dictionary:
 	var best := {}
 	var offered := {}
 	var dominated := {}
+	# Pareto: never worse in any shared cell AND strictly better in at least one --
+	# two levers equal everywhere dominate neither.
+	var strictly := {}
 	for a in K.LEVERS:
 		best[a] = 0
 		offered[a] = 0
 		for b in K.LEVERS:
 			if a != b:
 				dominated["%s>%s" % [a, b]] = true
+				strictly["%s>%s" % [a, b]] = false
 	for person in people:
 		for band in BANDS:
 			for rel in ["acquaintance", "friend"]:
@@ -206,12 +210,14 @@ func _l2(ns, people: Array) -> Dictionary:
 							continue
 						if float(odds[pair[0]]) < float(odds[pair[1]]) or not _no_costlier(cost[pair[0]], cost[pair[1]]):
 							dominated[key] = false
+						elif float(odds[pair[0]]) > float(odds[pair[1]]) or not _no_costlier(cost[pair[1]], cost[pair[0]]):
+							strictly[key] = true
 	var shares := {}
 	for lever in K.LEVERS:
 		shares[lever] = float(best[lever]) / float(maxi(1, offered[lever]))
 	var pairs: Array = []
 	for key in dominated:
-		if dominated[key]:
+		if dominated[key] and strictly[key]:
 			pairs.append(key)
 	return {"best_share": shares, "offered_cells": offered, "dominated_pairs": pairs}
 

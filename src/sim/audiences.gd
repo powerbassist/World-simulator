@@ -196,8 +196,7 @@ static func hold(state, ns, loader, request_id: String) -> Dictionary:
 	if row.is_empty() or String(row["status"]) != K.STATUS_BOOKED:
 		return {"ok": false, "error": "this audience is not booked"}
 	row["status"] = K.STATUS_HELD
-	var pid := String(row["person_id"])
-	President.learn(state, ns, loader, pid, K.KNOW_AUDIENCE * (1.0 - President.knowledge(ns, pid)))
+	President.learn_from(state, ns, loader, String(row["person_id"]), K.KNOW_AUDIENCE)
 	return {"ok": true, "error": ""}
 
 

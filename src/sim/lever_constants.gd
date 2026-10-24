@@ -37,8 +37,16 @@ const BARGAIN_KNOW := 0.25
 const BARGAIN_PRAGMATIC := 0.22
 const BARGAIN_PRINCIPLED := -0.22
 
+## The neutral points the odds measure from: a middling reader (person.gd's own
+## absent social_skill), middling standing, and an approval of half -- the levels
+## at which a reader's doubt, a person's weight and the president's popularity
+## move nothing.
+const SKILL_MIDDLING := 0.5
+const STANDING_NEUTRAL := 0.5
+const APPROVAL_NEUTRAL := 50.0
+
 ## PROMISE A DATE: ambition takes a date; a good reader doubts one. The skill
-## term only bites above a middling reader (0.5).
+## term only bites above a middling reader, and is PROMISE_SKILL at a perfect one.
 const PROMISE_BASE := 0.30
 const PROMISE_KNOW := 0.25
 const PROMISE_AMBITIOUS := 0.22
@@ -97,8 +105,11 @@ const PROMISE_MAX_MONTHS := 24
 ## Pressure spends rapport, and writes a grudge pulse on success as on failure.
 const PRESSURE_RAPPORT := 0.06
 const PRESSURE_GRUDGE := 0.04
-## A failed flatter backfires on a principled reader above this skill.
-const FLATTER_BACKFIRE_SKILL := 0.6
+## A failed flatter backfires on a principled reader above a middling one. Not
+## 0.6, the first draft: France's sixteen principled people read at 0.35-0.59, so
+## at 0.6 the backfire could never fire in the played nation; above the middle,
+## ten of them see through it.
+const FLATTER_BACKFIRE_SKILL := SKILL_MIDDLING
 const FLATTER_BACKFIRE_RAPPORT := 0.08
 
 ## The other topics buy knowledge and rapport, never a vote. Every knowledge gain

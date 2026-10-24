@@ -58,6 +58,9 @@ func _init() -> void:
 	_check_an_unpaid_iou_is_a_betrayal()
 	_check_a_promise_survives_a_save()
 	_check_knowing_someone_takes_time()
+	_check_flatter_backfires_on_a_sharp_principled_reader()
+	_check_a_paid_iou_costs_nothing()
+	_check_a_vanished_want_is_void()
 
 	_finish()
 
@@ -581,6 +584,87 @@ func _check_knowing_someone_takes_time() -> void:
 		_fail("a stranger became an acquaintance in %d audiences with a topic, not 2 to 5" % to_acquaintance)
 	if to_known >= 0 and to_known < 8:
 		_fail("a stranger became known in %d audiences with a topic, under 8" % to_known)
+
+
+## A failed flatter backfires on a principled reader above a middling one, and
+## costs nothing for anyone else (the spec: "principled, high skill: it backfires").
+func _check_flatter_backfires_on_a_sharp_principled_reader() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var sharp := ""
+	var plain := ""
+	for person in _loader.people[PLAYER]:
+		if person.id == President.leader_id(ns):
+			continue
+		var principled: bool = person.traits.has("principled")
+		if sharp == "" and principled and float(person.social_skill) > LK.FLATTER_BACKFIRE_SKILL:
+			sharp = person.id
+		elif plain == "" and not principled:
+			plain = person.id
+	if sharp == "" or plain == "":
+		_fail("no principled reader above %.2f (or no plain person) in France to stage the backfire" % LK.FLATTER_BACKFIRE_SKILL)
+		return
+	for pid in [sharp, plain]:
+		var failed := false
+		for n in range(1, 20):
+			var s := _stage(state, ns, pid, "flatter%d" % n)
+			var r0 := President.rapport(ns, pid)
+			var r: Dictionary = Levers.attempt(state, ns, _loader, s, "flatter")
+			var moved := President.rapport(ns, pid) - r0
+			Levers.close(state, ns, _loader, s)
+			if bool(r.get("success", true)):
+				continue
+			failed = true
+			var want := -LK.FLATTER_BACKFIRE_RAPPORT if pid == sharp else 0.0
+			if absf(moved - want) > 0.000001:
+				_fail("a failed flatter on %s moved rapport by %.4f, not %.4f" % [pid, moved, want])
+			break
+		if not failed:
+			_fail("flatter never failed on %s in 19 staged audiences" % pid)
+
+
+## An IOU whose want is served by its date is paid: nothing is priced.
+func _check_a_paid_iou_costs_nothing() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var owed := _person_with_want(ns, true)
+	if owed.is_empty():
+		return
+	var due := _now(state) + LK.IOU_MONTHS
+	President.commit(state, ns, _loader, "iou", owed["id"], owed["object"], due)
+	var before := _snapshot(ns, owed["id"])
+	_set_month(state, due)
+	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+	before["commitments"] = []
+	if (report["kept"] as Array).size() != 1 or _snapshot(ns, owed["id"]) != before:
+		_fail("a paid IOU was not kept, or it wrote a register: %s" % [report])
+
+
+## A commitment on a want the person's content no longer carries (an older save)
+## is void at its date: dropped, priced nothing.
+func _check_a_vanished_want_is_void() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var owed := _person_with_want(ns, false)
+	if owed.is_empty():
+		return
+	var due := _now(state) + LK.PROMISE_MIN_MONTHS
+	President.commit(state, ns, _loader, "promise", owed["id"], "programme:no_such_entry", due)
+	var before := _snapshot(ns, owed["id"])
+	_set_month(state, due)
+	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+	before["commitments"] = []
+	if (report["void"] as Array).size() != 1 or _snapshot(ns, owed["id"]) != before:
+		_fail("a promise on a vanished want was priced, or not dropped: %s" % [report])
+
+
+## A booking staged straight onto today for `pid`, opened: the session.
+func _stage(state, ns, pid: String, tag: String) -> Dictionary:
+	var row := {"id": "%s|%s" % [pid, tag], "person_id": pid, "object": "programme:none", "stance": "sponsor",
+		"arrived_month": _now(state), "deadline_month": _now(state) + 2, "status": AK.STATUS_BOOKED,
+		"date": {"year": int(state.year), "month": int(state.month), "day": int(state.day)}, "resolved_month": -1}
+	ns.audience_requests.append(row)
+	return Levers.open(state, ns, _loader, String(row["id"]))
 
 
 func _plain_game():
