@@ -84,6 +84,25 @@ def _pages(items, title, cols, rows, cell_w, cell_h):
     return names
 
 
+def _page_html(title, cell_w, img_w, cells) -> str:
+    """The click-to-reject page: a click toggles a red REJECT mark, the sticky
+    button copies the marked ids -- the author's whole reply."""
+    return (
+        "<!doctype html><meta charset=utf-8><title>%s</title><style>"
+        "body{background:#181c28;color:#eee;font:13px sans-serif;margin:12px}"
+        ".g{display:grid;grid-template-columns:repeat(auto-fill,%dpx);gap:6px}"
+        ".c{background:#4a4e56;cursor:pointer;border:3px solid transparent;position:relative}"
+        ".c img{width:%dpx;display:block}.c span{display:block;background:#181c28;padding:2px}"
+        ".c.x{border-color:#e33}.c.x::after{content:'REJECT';position:absolute;top:4px;left:4px;"
+        "background:#e33;padding:1px 4px}"
+        "button{position:sticky;top:0;font-size:15px;padding:6px 12px}</style>"
+        "<button onclick=\"navigator.clipboard.writeText([...document.querySelectorAll('.x')]"
+        ".map(e=>e.dataset.id).join(' '))\">copy rejected ids</button> "
+        "<span id=n></span><div class=g>%s</div><script>document.querySelectorAll('.c').forEach("
+        "c=>c.onclick=()=>{c.classList.toggle('x');n.textContent=document.querySelectorAll('.x').length"
+        "+' rejected'})</script>" % (title, cell_w, img_w, cells))
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     args = sys.argv[1:]
@@ -94,6 +113,11 @@ def main() -> int:
             items = sorted(items, key=lambda t: -streak.get(t[0], -9))
             items = [(i, p, "streak %.2f" % streak.get(i, 0)) for i, p, _ in items]
         print(len(_pages(items, "scenes", 4, 3, 360, 300)), "scene pages ->", OUT)
+        cells = "".join(
+            '<div class="c" data-id="%s"><img loading="lazy" src="../../../assets/portrait_scenes/%s.webp">'
+            "<span>%s %s</span></div>" % (html.escape(i), html.escape(i), html.escape(i), html.escape(n))
+            for i, _p, n in items)
+        (OUT / "scene_wall.html").write_text(_page_html("backdrop wall", 230, 220, cells), encoding="utf-8")
         return 0
     kinds = _kinds()
     faces = {p.stem: p for p in sorted(PORTRAITS.glob("*.webp"))}
@@ -113,20 +137,7 @@ def main() -> int:
         '<div class="c" data-id="%s"><img loading="lazy" src="../../../assets/portraits/neutral/%s.webp">'
         "<span>%s</span></div>" % (html.escape(pid), html.escape(pid), html.escape(pid))
         for pid, _p in sorted(faces.items()))
-    (OUT / "wall.html").write_text(
-        "<!doctype html><meta charset=utf-8><title>portrait wall</title><style>"
-        "body{background:#181c28;color:#eee;font:13px sans-serif;margin:12px}"
-        ".g{display:grid;grid-template-columns:repeat(auto-fill,150px);gap:6px}"
-        ".c{background:#4a4e56;cursor:pointer;border:3px solid transparent;position:relative}"
-        ".c img{width:144px;display:block}.c span{display:block;background:#181c28;padding:2px}"
-        ".c.x{border-color:#e33}.c.x::after{content:'REJECT';position:absolute;top:4px;left:4px;"
-        "background:#e33;padding:1px 4px}"
-        "button{position:sticky;top:0;font-size:15px;padding:6px 12px}</style>"
-        "<button onclick=\"navigator.clipboard.writeText([...document.querySelectorAll('.x')]"
-        ".map(e=>e.dataset.id).join(' '))\">copy rejected ids</button> "
-        "<span id=n></span><div class=g>%s</div><script>document.querySelectorAll('.c').forEach("
-        "c=>c.onclick=()=>{c.classList.toggle('x');n.textContent=document.querySelectorAll('.x').length"
-        "+' rejected'})</script>" % rows, encoding="utf-8")
+    (OUT / "wall.html").write_text(_page_html("portrait wall", 150, 144, rows), encoding="utf-8")
     print("%d faces -> %d pages + wall.html in %s" % (len(faces), len(written), OUT))
     return 0
 
