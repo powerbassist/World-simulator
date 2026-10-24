@@ -175,7 +175,7 @@ grudges #104 feeds into briefs:
 |---|---|
 | The fade's half-life (the constant) | **24 months**, inside a band of **[22, 30]** |
 | One act, then no further act: the fraction of that act's price left at H months, then at 2H, H the shipped constant inside [22, 30] | **50 %, then 25 %**, each to within 1 point; never past zero |
-| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime, over the months the game plays (to the player's executive loss, or month 168 if there is none; see "Correction: the read window" below) | **at most 0.50** in absolute value |
+| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime, over the months the player is in office (while `in_government` holds: to an executive loss, the term limit, or month 168; see "Correction: the read window" below) | **at most 0.50** in absolute value |
 | The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc` (the main behind `base-19ff21fc.json`, before #104), read over the same months as the tip run (Systems runs it once as the base; see "Correction: the read window" below) | **none** |
 | The 2027 executive (B3's rows above) | **unchanged:** verdict held, \|Δ margin\| ≤ 0.017 |
 | The 2029 legislative, every regime with a FRA 2029 row (41): the government's standing (`majority` / `MINORITY` / `COHABITATION`) | **unchanged** in every row |
@@ -385,7 +385,7 @@ follows them, before Systems runs it.
 1. **"Accepter : il perd 2032"**: a president who declines every request for six
    years may lose 2032.
 2. **"Fuite 40 % moins chère"**: this is Gameplay's option A. A brief's price
-   (`PRICE_BRIEF`, `src/sim/character_act_constants.gd:202`) goes from **-0.25
+   (`PRICE_BRIEF`, `src/sim/character_act_constants.gd:202` on main; `:226` at #104's head) goes from **-0.25
    to -0.15**. The other act prices are unchanged (resign -0.8, defect -0.5,
    challenge -0.6).
 
@@ -400,7 +400,7 @@ reported already.
 | Row, at the new price, against `base-19ff21fc.json` | Declared |
 |---|---|
 | The half-life, one act: 50 % at H, 25 % at 2H | **unchanged**, a band |
-| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime, over the months the game plays | **at most 0.50**, a band |
+| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime, over the months the player is in office | **at most 0.50**, a band |
 | The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc`, read over the same months | **none**, a band |
 | The 2027 executive | **unchanged** (B3's rows), a band |
 | The 2029 legislative: the standing, and \|Δ margin\| ≤ 0.017 in every row | **unchanged**, a band |
@@ -416,23 +416,31 @@ This replaces the earlier wording "played to month 168 with
 band values do not change:
 
 - **The window:** the act-share row and the clamp row read only the months the
-  game plays, in base and tip alike. That means up to the player's executive
-  loss, or month 168 if there is none.
+  player is in office, in base and tip alike: while `in_government` holds
+  (`tests/test_balance.gd:279-284`). Office ends at an executive loss or at the
+  term limit: a France run that holds 2032 is termed out at 2037-05, and
+  `main.gd:697-700` then sends the player to the menu. A run that is never
+  out of office is read to month 168. This is `_play`'s default
+  `stop_on_loss = true`.
 - **The base comparison:** a tip run is compared with its base run over the same
   months. A clamp the base reaches only after the tip run's last month does not
-  excuse the tip. A clamp the tip would reach after its loss does not count
-  against it.
+  excuse the tip. A clamp the tip would reach after it leaves office does not
+  count against it.
 
 **The reason:**
 
-- The game ends when the president loses. Months after that loss are a world the
-  player never sees, and a band that measures them judges a sim the game does
+- The game ends when the president leaves office, whether by a lost election or
+  by the term limit. Months after that are a world the player never sees, where
+  out-of-office acts burst; a band that measures them judges a sim the game does
   not run. This is the AGENTS.md lesson "green is not measured", read from the
   other side.
 - QA measured the old wording's cost (MEASURED, QA's call 2 to the parent):
-  - In 17 of the 18 clamping runs, the clamp landed after the 2032 loss, in
-    months the game never plays.
-  - Two base clamps came years earlier.
+  - 17 of the 18 runs clamp, every one of them after the 2032 loss, in months the
+    game never plays.
+  - Two clamps the base also reaches come years earlier at the tip: run 16
+    (students, 2029-11 at the tip, 2036-10 in the base) and run 9 (workers,
+    2031-08). Under the new window these count as NEW clamps at the old price,
+    which is the point of the window.
   - "Same length" therefore compared a tip that clamps only in unplayed months
     with a base that clamps in played ones.
 - QA's TAKE 3 asked that the base and tip runs cover the same span. Comparing
@@ -482,8 +490,9 @@ instead of banded.
 - `tools/balance_probe.gd` at the tip, then
   `balance_diff.py base-19ff21fc.json tip.json`. This covers the 2027, 2029 and
   2032 rows, the 2034 rows and the GBR rows.
-- The instrumented `tests/test_balance.gd` reads, over the read window below,
-  for the act-share row and the clamp row.
+- The instrumented `tests/test_balance.gd` reads, over the read window above
+  (`_play`'s default `stop_on_loss = true`), for the act-share row and the clamp
+  row.
 - `tools/audience_probe.gd`, for B3's act row.
 
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
