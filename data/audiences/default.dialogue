@@ -65,7 +65,7 @@
 => END
 
 ~ topic_family
-% {{name}}: My daughter has just started at the lycee. She wants to be a magistrate, which should alarm both of us.
+% {{name}}: My daughter has just started at university. She wants to be a magistrate, which should alarm both of us.
 % {{name}}: Family is well, thank you, {{president}}. My father is eighty and still complains about every government since the war, including mine.
 => END
 
@@ -81,7 +81,7 @@
 
 ~ topic_dinner
 % {{name}}: A dinner would be very welcome. Somewhere quiet, with a good table and no cameras.
-% {{name}}: I accept with pleasure, {{president}}. I will bring the wine, since I know what the Elysee cellar thinks of its own.
+% {{name}}: I accept with pleasure, {{president}}. I will bring the wine, since I know what your cellar thinks of its own.
 => END
 
 ~ topic_flirt
@@ -143,7 +143,7 @@
 => END
 
 ~ visitor_close_settled
-% {{name}}: Then I leave Paris lighter than I arrived. You have my thanks, {{president}}, and my country's.
+% {{name}}: Then I leave lighter than I arrived. You have my thanks, {{president}}, and my country's.
 % {{name}}: That is gracious, and I will not forget it. The measure will be remembered as wisdom, not concession.
 % {{name}}: I accept with genuine relief. This will read well in both our capitals, I promise you.
 % {{name}}: So it is done, and done well. Allow me to thank you before my plane does it for me.
@@ -153,7 +153,7 @@
 % {{name}}: I take note, and I take you at your word. A date, when it comes, will suit me.
 % {{name}}: Later is acceptable, provided it arrives. I will trust your calendar, {{president}}.
 % {{name}}: Then we have a promise rather than a signature, which is often the better collateral. I will wait.
-% {{name}}: Understood. I will say at home that France has heard us, and that hearing precedes acting.
+% {{name}}: Understood. I will say at home that your country has heard us, and that hearing precedes acting.
 => END
 
 ~ visitor_close_declined
