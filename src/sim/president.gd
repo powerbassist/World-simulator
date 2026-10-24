@@ -131,6 +131,21 @@ static func commitments(ns) -> Array[Dictionary]:
 	return sorted
 
 
+## V5.2b b2.1. The commitments judged at their date and still remembered, in
+## judging order (oldest first): the Diary's record of a promise kept or a lie
+## revealed after the month's report is gone. Cast like commitments(), plus
+## {verdict, judged_month}. A "void" row may name a person content no longer
+## carries -- the reason it was void -- so a reader resolves the id with care.
+static func judged_commitments(ns) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row in ns.commitments_judged:
+		var view := _commitment(row)
+		view["verdict"] = String(row.get("verdict", ""))
+		view["judged_month"] = int(row.get("judged_month", 0))
+		out.append(view)
+	return out
+
+
 ## The evidence held against the president, summed -- what V5.2c's exposure
 ## hazard rises with.
 static func evidence_size(ns) -> float:
@@ -231,6 +246,29 @@ static func take_commitments_due(ns, now: int) -> Array[Dictionary]:
 	return due
 
 
+## V5.2b b2.1. A commitment taken off by take_commitments_due(), remembered with
+## its verdict -- one of K.VERDICTS -- for the Diary.
+static func record_judged(ns, row: Dictionary, verdict: String, now: int) -> bool:
+	if not K.VERDICTS.has(verdict):
+		return false
+	var judged := _commitment(row)
+	judged["verdict"] = verdict
+	judged["judged_month"] = now
+	ns.commitments_judged.append(judged)
+	return true
+
+
+## The judged commitments older than JUDGED_KEPT_MONTHS are forgotten.
+static func prune_judged(ns, now: int) -> void:
+	if ns.commitments_judged.is_empty() or now - int(ns.commitments_judged[0].get("judged_month", 0)) <= K.JUDGED_KEPT_MONTHS:
+		return
+	var kept: Array[Dictionary] = []
+	for row in ns.commitments_judged:
+		if now - int(row.get("judged_month", 0)) <= K.JUDGED_KEPT_MONTHS:
+			kept.append(row)
+	ns.commitments_judged = kept
+
+
 static func leave_evidence(state, ns, loader, kind: String, person_id: String, size: float) -> bool:
 	if not K.EVIDENCE_KINDS.has(kind) or size <= 0.0:
 		return false
@@ -247,7 +285,6 @@ static func leave_evidence(state, ns, loader, kind: String, person_id: String, s
 
 # --- Helpers ----------------------------------------------------------------------------
 
-## An authored person of this nation: the loader's id-prefix rule.
 ## A commitment row as every reader gets it: the months cast to int, a dropped
 ## key read as its empty value.
 static func _commitment(row: Dictionary) -> Dictionary:
@@ -260,6 +297,7 @@ static func _commitment(row: Dictionary) -> Dictionary:
 	}
 
 
+## An authored person of this nation: the loader's id-prefix rule.
 static func _own(ns, loader, person_id: String) -> bool:
 	return loader.person_by_id.has(person_id) and person_id.begins_with("%s_" % ns.id)
 

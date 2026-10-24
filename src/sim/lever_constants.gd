@@ -78,6 +78,9 @@ const FRIEND_BONDS := ["friend", "close"]
 ## edges are president_constants.gd's, so B4's bands and the fog cannot drift.
 const FOG_STRANGER := 0.36
 const FOG_KNOWN := 0.08
+## The fog's offset is re-drawn at every step of this much knowledge (QA's R1):
+## the smallest gain a topic gives a well-known person is about 0.01.
+const FOG_SEED_STEP := 0.01
 
 ## A trait shows at a seeded point between this fraction of the known edge and
 ## the edge itself: a stranger sees none, a known person all of them.
@@ -98,6 +101,8 @@ const IOU_MONTHS := 12
 const CURRENCY_FAVOUR := "favour"
 const CURRENCY_VOTE_TRADE := "vote_trade"
 const CURRENCY_AID := "aid"
+## The one text for aid's refusal: the card and the command say the same (a msgid).
+const AID_CLOSED := "aid is not open yet"
 ## A promised date the president names, inside this window from now: too near is
 ## not a promise, too far is not a date.
 const PROMISE_MIN_MONTHS := 3

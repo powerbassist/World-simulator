@@ -27,6 +27,19 @@ extends SceneTree
 ##   A3 DECLINE EVERYTHING on arrival. B3's act row again, under explicit declines,
 ##      and the per-request price beside A1's lapse (tests/test_audiences.gd pins
 ##      the equality per request; this reports the means).
+##   A2F (`-- --b5-answers`, V5.2b b2.1) B5's ANSWERS ROW: A2's machine run
+##      B5_MONTHS, so every request of months 1-B5_ARRIVALS_UPTO is followed to its
+##      due month (answered the month after it arrives, due BOOKING_HORIZON_MONTHS
+##      on). Per request, bands-v5.2.md "B5 amendment"'s net values, in
+##      tools/lever_weights.gd's units, the diary day at its DIARY_DAY:
+##        Book = (1 - q^3) - s(1 + q + q^2) - q^3 x Decline's cost - DIARY_DAY, for
+##               the lever with the best single attempt in the person's cell at
+##               arrival (p its odds, q = 1 - p, s its spend);
+##        Delegate = -(0.25 g + 0.5 x snub) + (0.5 x 0.10 kept | -(0.75 g + 0.08 +
+##               0.5 x 0.2) broken), kept = the want served at the due month;
+##        Decline = Unanswered = -(g + 0.5 x 0.1), g the refusal grudge at arrival.
+##      B5: no answer the best in more than 50 % of requests (a tie counts for
+##      each answer it ties). Off by default, so A1-A3's table stays comparable.
 ##
 ## Months are numbered from 1, the first month the game ticks (January 2026).
 
@@ -42,8 +55,15 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 
+const LeverOdds = preload("res://src/sim/lever_odds.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
+const LW = preload("res://tools/lever_weights.gd")
+const President = preload("res://src/sim/president.gd")
+
 const PLAYER := "FRA"
 const MONTHS := 60
+const B5_ARRIVALS_UPTO := 60
+const B5_MONTHS := B5_ARRIVALS_UPTO + 1 + CalK.BOOKING_HORIZON_MONTHS
 const NAMED_GRUDGE := 0.05
 
 var _loader
@@ -51,9 +71,12 @@ var _loader
 
 func _init() -> void:
 	var json_path := ""
+	var b5 := false
 	for arg in OS.get_cmdline_user_args():
 		if String(arg).begins_with("--json="):
 			json_path = String(arg).substr(7)
+		elif String(arg) == "--b5-answers":
+			b5 = true
 	_loader = DataLoader.new()
 	_loader.load_all()
 	if not _loader.errors.is_empty():
@@ -64,6 +87,9 @@ func _init() -> void:
 	for regime in ["A1", "A2", "A3"]:
 		out["regimes"][regime] = _run(regime)
 	out["bands"] = _bands(out["regimes"])
+	if b5:
+		out["b5_answers"] = _b5_answers(_run("A2F", B5_MONTHS)["b5_requests"])
+		out["bands"]["B5_answers_none_over_50pct"] = float(out["b5_answers"]["top_share"]) <= 0.50
 	_print(out)
 	if json_path != "":
 		var f := FileAccess.open(json_path, FileAccess.WRITE)
@@ -72,7 +98,9 @@ func _init() -> void:
 	quit(0)
 
 
-func _run(regime: String) -> Dictionary:
+func _run(regime: String, months := MONTHS) -> Dictionary:
+	var book_all := regime == "A2" or regime == "A2F"
+	var b5_requests: Array = []
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.player()
 	var arrivals: Array = []      # [month, person_id]
@@ -86,13 +114,13 @@ func _run(regime: String) -> Dictionary:
 	var decline_grudge := 0.0
 	var declines := 0
 	var peak := {}                # person_id -> highest grudge seen after a refusal
-	for i in range(MONTHS):
+	for i in range(months):
 		var month := i + 1
 		state.year = 2026 + i / 12
 		state.month = i % 12 + 1
 		state.day = 1
 		var fire: Array = []
-		if regime == "A2":
+		if book_all:
 			fire = _pack(state)
 		for row in Audiences.pending(ns):
 			var id := String(row["id"])
@@ -101,7 +129,7 @@ func _run(regime: String) -> Dictionary:
 				decline_grudge += float(r["price"]["grudge"])
 				declines += 1
 				refused_at[String(row["person_id"])] = refused_at.get(String(row["person_id"]), month)
-			elif regime == "A2":
+			elif book_all:
 				var placed := false
 				for d in Audiences.offered_dates(state, ns, id):
 					if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, id, d)["ok"]):
@@ -114,11 +142,16 @@ func _run(regime: String) -> Dictionary:
 					if bool(answers["delegate"]["ok"]) and bool(answers["decline"]["ok"]):
 						unplaceable_offered += 1
 					Audiences.delegate(state, ns, _loader, id)
-		if regime == "A2":
+		if book_all:
 			_fire_month(state, fire, held, month, refused_at)
 		var report: Dictionary = WorldMonth.tick_month(state, _loader)
 		for row in report["audience_requests"]["arrived"]:
 			arrivals.append([month, String(row["person_id"])])
+			if regime == "A2F" and month <= B5_ARRIVALS_UPTO:
+				b5_requests.append(_b5_capture(ns, row, month))
+		for r in b5_requests:
+			if int(r["due_loop_month"]) == month:
+				r["kept"] = bool(ns.person_want_state.get("%s|%s" % [r["person_id"], r["object"]], false))
 		for row in report["audience_requests"]["lapsed"]:
 			refused_at[String(row["person_id"])] = refused_at.get(String(row["person_id"]), month)
 		for act in report.get("character_acts", []):
@@ -148,7 +181,7 @@ func _run(regime: String) -> Dictionary:
 	for m in held:
 		if int(m) <= 20:
 			held_by_20 += 1
-	return {
+	var result := {
 		"arrivals": arrivals.size(),
 		"first_month": first,
 		"arrivals_m1_20": by_20,
@@ -165,6 +198,76 @@ func _run(regime: String) -> Dictionary:
 		"mean_decline_grudge": decline_grudge / maxf(1.0, float(declines)),
 		"refused_peak_grudges": _top(peak, per_person),
 	}
+	# Only A2F carries its rows, so A1-A3's table stays byte-comparable.
+	if regime == "A2F":
+		result["b5_requests"] = b5_requests
+	return result
+
+
+## One arriving request, as B5's answers row reads it: the person's cell, the
+## refusal grudge g and the snub now; whether the want is served is read at the
+## due month (the answer the month after arrival, plus the diary's horizon).
+func _b5_capture(ns, row: Dictionary, month: int) -> Dictionary:
+	var pid := String(row["person_id"])
+	var person = _loader.person_by_id[pid]
+	var cell := {
+		"knowledge": President.knowledge(ns, pid),
+		"rapport": President.rapport(ns, pid),
+		"relationship": President.relationship(ns, pid),
+		"aligned": bool(ns.person_want_state.get("%s|%s" % [pid, String(row["object"])], false)),
+		"standing": float(ns.person_standing.get(pid, LK.STANDING_NEUTRAL)),
+		"approval": float(ns.overall_approval_pct),
+	}
+	var best := ""
+	var best_net := -INF
+	for lever in LK.LEVERS:
+		var p := LeverOdds.odds(person, lever, cell)
+		if p >= 0.0 and LW.net(person, lever, p) > best_net:
+			best_net = LW.net(person, lever, p)
+			best = lever
+	var p := LeverOdds.odds(person, best, cell)
+	var snub: bool = person.traits.has("vain") or String(row["object"]).begins_with("office:")
+	return {
+		"person_id": pid, "object": String(row["object"]), "arrival_month": month,
+		"due_loop_month": month + 1 + CalK.BOOKING_HORIZON_MONTHS,
+		"band": President.knowledge_band(ns, pid), "lever": best, "p": p,
+		"s": LW.cost(LW.spend(person, best, p)),
+		"g": float(Audiences.decline_price(ns, _loader, String(row["id"]))["grudge"]),
+		"snub": -AK.DELEGATE_SNUB_RAPPORT if snub else 0.0,
+		"kept": false,
+	}
+
+
+## bands-v5.2.md "B5 amendment"'s net values per request, and each answer's
+## share of the requests it is the best answer to.
+func _b5_answers(requests: Array) -> Dictionary:
+	var best := {"book": 0, "delegate": 0, "decline": 0, "unanswered": 0}
+	var r_w := float(LW.WEIGHTS["rapport"])
+	for r in requests:
+		var p := float(r["p"])
+		var q := 1.0 - p
+		var g := float(r["g"])
+		var decline := -(g + r_w * -AK.DECLINE_RAPPORT)
+		var book := (1.0 - q * q * q) - float(r["s"]) * (1.0 + q + q * q) + q * q * q * decline - LW.DIARY_DAY
+		var deferred := 1.0 - AK.DELEGATE_GRUDGE_SHARE
+		var delegate := -(AK.DELEGATE_GRUDGE_SHARE * g + r_w * float(r["snub"]))
+		if bool(r["kept"]):
+			delegate += r_w * LK.PROMISE_KEPT_RAPPORT
+		else:
+			delegate -= deferred * g + LK.IOU_BETRAYAL_GRUDGE + r_w * LK.IOU_BETRAYAL_RAPPORT
+		var values := {"book": book, "delegate": delegate, "decline": decline, "unanswered": decline}
+		var top := maxf(maxf(book, delegate), decline)
+		for answer in values:
+			if float(values[answer]) >= top - 0.000000001:
+				best[answer] += 1
+		r["values"] = values
+	var n := maxi(1, requests.size())
+	var shares := {}
+	var top_share := 0.0
+	for answer in best:
+		shares[answer] = float(best[answer]) / float(n)
+		top_share = maxf(top_share, float(shares[answer]))
+	return {"requests": requests.size(), "best_share": shares, "top_share": top_share, "diary_day": LW.DIARY_DAY, "rows": requests}
 
 
 ## The five refused people whose grudge climbed highest, for the act row's
@@ -288,5 +391,7 @@ func _print(out: Dictionary) -> void:
 			r["booked"], r["unplaceable"], r["unplaceable_share"], r["unplaceable_offered_share"], r["held"], r["held_m1_20"],
 			(r["acts_by_refused"] as Array).size(), r["named_grudges_m20"], r["mean_decline_grudge"]])
 		print("   highest refused grudges: %s" % [r["refused_peak_grudges"]])
+	if out.has("b5_answers"):
+		print("A2F B5 answers over %d requests (day %.2f): best share %s" % [out["b5_answers"]["requests"], out["b5_answers"]["diary_day"], out["b5_answers"]["best_share"]])
 	for band in out["bands"]:
 		print("%-32s %s" % [band, "PASS" if out["bands"][band] else "FAIL"])

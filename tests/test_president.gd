@@ -240,7 +240,7 @@ func _check_rows_refuse_and_round_trip_with_int_months() -> void:
 ## access (`ns.commitments.append(`, `ns.person_bond[id] =`). What it does not
 ## catch: a write through a local alias, which a writer would have to go out of
 ## its way to hide. Code only -- strings and comments are stripped first.
-const FIELDS := "person_knowledge|person_rapport|person_bond|person_wealth_delta_eur_m|party_money_delta_eur_m|commitments|exposure_evidence"
+const FIELDS := "person_knowledge|person_rapport|person_bond|person_wealth_delta_eur_m|party_money_delta_eur_m|commitments|commitments_judged|exposure_evidence"
 const WRITE := "\\.(%s)\\s*(\\.\\s*(push_front|push_back|append|append_array|insert|remove_at|erase|clear|resize|pop_front|pop_back|pop_at|sort|sort_custom|reverse|fill|shuffle|assign|merge|set)\\s*\\(|\\[[^\\]]*\\]\\s*[-+*/]?=(?!=)|\\s*[-+*/]?=(?!=))"
 const WRITER := "res://src/sim/president.gd"
 

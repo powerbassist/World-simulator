@@ -45,11 +45,16 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 		return out
 	var now := _now(state)
 	for row in ns.audience_requests:
-		if _overdue(row, now):
-			_unbook(state, row)
-			_price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT)
-			_close(row, K.STATUS_LAPSED, now)
-			out["lapsed"].append(_view(row))
+		if not _overdue(row, now):
+			continue
+		var agreed := String(row.get("agreed", ""))
+		if agreed != "":
+			_close(row, agreed, now)
+			continue
+		_unbook(state, row)
+		_price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT)
+		_close(row, K.STATUS_LAPSED, now)
+		out["lapsed"].append(_view(row))
 	_arrivals(state, ns, loader, meters, now, out["arrived"])
 	_prune(ns, now)
 	return out
@@ -174,6 +179,13 @@ static func delegate(state, ns, loader, request_id: String) -> Dictionary:
 	if person != null and (person.traits.has("vain") or String(row["object"]).begins_with("office:")):
 		snub = K.DELEGATE_SNUB_RAPPORT
 	var price := _price(state, ns, loader, row, K.DELEGATE_GRUDGE_SHARE, snub)
+	# b2.1 (bands-v5.2.md "Delegation's commitment"): the minister answers in the
+	# president's name that the want is served by the diary's horizon. Levers
+	# judges it at its date: kept, a kindness; broken, the deferred share of the
+	# grudge and a betrayal. That is the spec's "fixed, middling outcome".
+	if not President.commit(state, ns, loader, "delegated", String(row["person_id"]), String(row["object"]),
+			_now(state) + CalendarK.BOOKING_HORIZON_MONTHS):
+		push_error("audiences: the delegation of '%s' wrote no commitment" % String(row["id"]))
 	_close(row, K.STATUS_DELEGATED, _now(state))
 	return {"ok": true, "error": "", "price": price}
 
@@ -198,6 +210,17 @@ static func hold(state, ns, loader, request_id: String) -> Dictionary:
 	row["status"] = K.STATUS_HELD
 	President.learn_from(state, ns, loader, String(row["person_id"]), K.KNOW_AUDIENCE)
 	return {"ok": true, "error": ""}
+
+
+## b2.1 (QA's R3 on #113): a lever worked in the held audience, so the request
+## carries its agreement -- settled or promised -- and an audience the scene never
+## closed ends as that agreement, not as a no-show.
+static func agree(ns, request_id: String, outcome: String) -> bool:
+	var row := _row(ns, request_id)
+	if row.is_empty() or String(row["status"]) != K.STATUS_HELD or not [K.STATUS_SETTLED, K.STATUS_PROMISED].has(outcome):
+		return false
+	row["agreed"] = outcome
+	return true
 
 
 ## How a held audience ended: settled, promised, or declined (priced as one).

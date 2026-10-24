@@ -53,7 +53,7 @@ Characters (`WorldMonth`'s "Audiences" step):
 | Answer | Costs | What it buys |
 |---|---|---|
 | **Book** | one of the `OFFERED_DATES` (2) days the person offers, inside the window, if the diary can place it ([[calendar-model]] §12: one thing at a time) | the audience: the scene (section 5), and `KNOW_AUDIENCE` (0.05) times what is left to learn, whatever is said |
-| **Delegate** | `DELEGATE_GRUDGE_SHARE` (0.25) of a decline's grudge; a snub (`DELEGATE_SNUB_RAPPORT`) for a `vain` person or an office want | the request answered, most of the grudge avoided, no diary day, no knowledge |
+| **Delegate** | `DELEGATE_GRUDGE_SHARE` (0.25) of a decline's grudge; a snub (`DELEGATE_SNUB_RAPPORT`) for a `vain` person or an office want | the request answered, most of the grudge avoided, no diary day, no knowledge -- and since b2.1 a minister's word that the want is served within `BOOKING_HORIZON_MONTHS` (12), judged at that date (section 7) |
 | **Decline** | `DECLINE_GRUDGE` (0.18, x the trait intake: loyal 0.5, principled 2) and `DECLINE_RAPPORT` (-0.1) | the days, and no commitment |
 | *(lapse)* | exactly a decline (the author's answer 3, 2026-10-21) | nothing |
 
@@ -143,6 +143,8 @@ scene left open past its month is section 3's no-show, priced as one decline.
   buys only the settle: its effect is small and does not hold. After a success the
   remaining attempts are topics only.
 - **No success,** and closing is a decline, priced once through `Audiences.settle()`.
+  A success stamps the request with its agreement (`Audiences.agree`, b2.1). So a scene
+  the UI never closed ends as that agreement at the month's end, not as a no-show.
 - **The roll** is `Cycle.unit_pair` over the request, the lever and the attempt index,
   and the month (I1).
 - **Aid is not in b2.** A budget line of its own, a register and a draining tick are a
@@ -163,7 +165,9 @@ The scene never shows the true odds. `Levers.offered()` prints a range around th
 - 0.36 wide below the acquaintance edge (0.33), narrowing linearly to 0.08 at the known
   edge (0.67);
 - placed by a seeded offset, so the truth is always inside and not always centred (a
-  centred range would print the answer);
+  centred range would print the answer). The offset is re-drawn at every 0.01 of
+  knowledge (b2.1, QA's R1 on #113). With one offset for every width, two readings
+  either side of a topic gave the truth back exactly; now they can only intersect;
 - shifted back inside [0, 1], never narrowed.
 
 A trait shows once knowledge passes its seeded reveal point, between a tenth of the
@@ -192,9 +196,18 @@ meters, judges each one due, once, with no roll:
 |---|---|---|
 | **Promise** | kept: rapport +0.10 | **a lie revealed**: rapport -0.5, knowledge halved, a grudge pulse of 0.15 |
 | **IOU** | paid | **a betrayal**: rapport -0.2, a grudge pulse of 0.08; knowledge stands, since no lie was told |
+| **Delegated** (b2.1) | kept: rapport +0.10 | the deferred 0.75 of the decline's grudge lands, plus the IOU's betrayal; not a lie, since the president did not give their own word |
 
 `President.take_commitments_due()` takes each judged row off the register, so none is
-judged twice, and a row loaded from a save is judged at its date like any other. A
+judged twice, and a row loaded from a save is judged at its date like any other.
+
+- Each judged row is remembered with its verdict in `ns.commitments_judged` (b2.1),
+  read by `President.judged_commitments()` and forgotten after 12 months. So the Diary
+  still shows a promise kept or a lie revealed after the month's report is gone. The
+  register is `absent_ok`: an older save had judged nothing.
+- **The author's call (2026-10-24), verbatim: "Oui, parole donnée".** A promise binds
+  win or lose, so the president who promised a date and was not believed still owes
+  it. A
 person who has defected or left office meanwhile is judged on the same want. No balance
 regime makes a promise, so the tick has nothing to do there.
 
