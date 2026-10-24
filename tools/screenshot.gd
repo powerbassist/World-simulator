@@ -68,7 +68,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
-##     (also promise, spent, closed, diary; and bargain, dates, gossip open a choice)
+##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
@@ -1947,6 +1947,8 @@ func _stage_audience_step() -> void:
 			verbs.lever_button("argue").pressed.emit()
 		"promise", "diary":
 			verbs.lever_button("promise_date").pressed.emit()
+		"save":
+			_main._hud.title_bar.save_load_requested.emit()
 		"spent":
 			verbs.lever_button("argue").pressed.emit()
 			verbs.topic_button("family").pressed.emit()

@@ -336,6 +336,9 @@ class MainHost extends DevRegistry.Host:
 		return "" if main._windows.is_open(id) else "'%s' waits: a scene holds the dock until it closes" % id
 
 	func save_game(slot: String) -> String:
+		# The player's own refusal, kept here too (an open audience, V5.2b).
+		if main._save_load_panel.save_blocked() != "":
+			return main._save_load_panel.save_blocked()
 		if not SaveManager.valid_slot_name(slot):
 			return "'%s' is not a usable slot name" % slot
 		var error: String = SaveManager.save_game(main._state, main._clock, slot)

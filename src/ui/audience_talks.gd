@@ -31,6 +31,7 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 		return false
 	game["session"] = session
 	game["state"] = main._state
+	main._save_load_panel.block_save(Strings.t("Finish the audience first"))
 	var view := view_of(main, game)
 	view.merge(row)
 	view["president"] = main._loader.person_name(String(ns.head_of_state_person_id if ns.head_of_state_kind == "executive_president" else ns.pm_person_id))
@@ -124,6 +125,7 @@ static func leave(main, game: Dictionary) -> bool:
 	if not bool(session.get("closed", false)):
 		Levers.close(state, state.player(), main._loader, session)
 	game["session"] = {}
+	main._save_load_panel.block_save("")
 	game["scene"].close_scene()
 	main._windows.close(WINDOW)
 	if state == main._state and not main._decision_holds_clock():
