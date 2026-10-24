@@ -635,7 +635,9 @@ refuse is the best in more than 50 % of requests.** Without the rule, a tie
 would either count twice or let the inbox's silence pass as its own answer.
 
 **Why 1.05 (OPINION, derived from DECLARED bands, not from a run, on the same
-three-attempt audience, against delegation WITH its commitment):**
+three-attempt audience, against delegation WITH its commitment).** The book
+values in this block come before the in-person gains. "The in-person gains"
+below re-checks 1.05 with them, and that check is the declared expectation.
 
 - The spec's trade-off table says booking is best "when the person carries a
   want the player can serve or needs served", and delegation is best when "the
@@ -753,17 +755,20 @@ from the prices above):**
   delegated commitment as the president's own, so delegating a trap carries
   c's exposure risk, and decline is the safe answer. c declares that price.
 - **A want the player will serve anyway, from a person not worth a day:**
-  delegation costs 0.045 − 0.05 ≈ 0 at base g. That beats both booking (−0.16
-  for an acquaintance at 1.05) and decline (−0.23). That is the case the spec
-  calls "the person matters but not personally".
+  delegation costs 0.045 − 0.05 ≈ 0 at base g. That beats decline (−0.23), and
+  beats booking a stranger (−0.13 with the in-person gains below). That is the
+  case the spec calls "the person matters but not personally". An acquaintance
+  books instead (leg A below).
 - **Neither answer dominates the other any longer.** Which one is best depends
   on whether the want is served, so decline has cells of its own.
 
 **Red-team before the read** (GLM 5.3 drafted the attack, at the author's
 2026-10-24 instruction; every claim below was re-derived here and is labelled):
 
-- **Where each answer wins** (MEASURED arithmetic on the declared formulas, D =
-  1.05, spends left out). Here K = P(kept).
+- **Where each answer wins, BEFORE the in-person gains** (MEASURED arithmetic
+  on the declared formulas, D = 1.05, spends left out). Here K = P(kept). This
+  is the table that prompted decision 2. "The in-person gains" below supersedes
+  it.
 
   | g | p | K = 0 | K = 0.5 | K = 1 |
   |---|---|---|---|---|
@@ -798,11 +803,12 @@ priced from a primitive that already exists:
 | Gain | Price | From | Slope in K | Built? |
 |---|---|---|---|---|
 | **Being received** | rapport **+0.10** when the audience is held, whatever is said (value 0.05) | the mirror of `DECLINE_RAPPORT` −0.1 (`src/sim/audience_constants.gd:55`): a refusal to your face costs 0.1, and being heard earns the same | flat | **no**: Systems writes it at `Audiences.hold` |
-| **Knowledge gained** | `President.learn_from`'s 0.05 × (1 − k), valued at B4's slope (0.448 odds per knowledge unit, from B4's declared midpoints) × 3q² (the three-attempt sensitivity, 0.61 at p = 0.55) × 2 further encounters with the person this term (OPINION, from B1's 24–48 requests from at least 12 people) | as built on #113 | flat | yes |
+| **Knowledge gained** | `President.learn_from`'s 0.05 × (1 − k), valued at B4's slope (0.448 odds per knowledge unit, from B4's declared midpoints) × 3q², the person's own three-attempt sensitivity (1.08 for a stranger, 0.61 for an acquaintance, 0.27 for the known) × 2 further encounters with the person this term (OPINION, from B1's 24–48 requests from at least 12 people) | as built on #113 | flat | yes |
 | **A promise kept in person** | rapport **+0.25** when a promise the president made in the audience (`promise_date`, outcome `promised`) is judged kept (value 0.125, times the chance A of an agreement) | 2.5 × the minister's kept +0.10 (delegation's commitment). The broken side already carries that ratio: a lie revealed costs rapport −0.5 against the IOU betrayal's −0.2 (`lever_constants.gd:136-140`). | **carries K** | **no**: Systems raises `PROMISE_KEPT_RAPPORT` from 0.10 to 0.25 for kind `promise`; a delegated commitment keeps +0.10 |
 
-The knowledge values (INFERRED arithmetic) are 0.023 for a stranger, 0.014 for
-an acquaintance and 0.005 for the known: small, as expected. **Only the kept
+The knowledge values (INFERRED arithmetic) are 0.040 for a stranger, 0.014 for
+an acquaintance and 0.002 for the known: small, and largest for the person the
+president knows least, as expected. **Only the kept
 promise carries K.** That is why it is the one gain that can hold K = 1:
 delegation's value moves 0.365 across K, and a flat gain only shifts the point
 where delegation overtakes.
@@ -821,22 +827,30 @@ here; the values are OPINION, as declared):
 | Leg | Book | The rival | Holds at 1.05? | Bound on D |
 |---|---|---|---|---|
 | A | +0.015 | delegate +0.005 | yes, by 0.010 | D ≤ 1.060 |
-| B | −0.145 | delegate +0.005 | yes, by 0.150 | D ≥ 0.900 |
-| C | −0.243 | refuse −0.23 | yes, by 0.013 | D ≥ 1.037 |
+| B | −0.127 | delegate +0.005 | yes, by 0.132 | D ≥ 0.918 |
+| C | −0.225 | refuse −0.23 | **no, by 0.005** | D ≥ 1.055 |
 | D | −0.098 | refuse −0.23 | yes, by 0.132 | D ≤ 1.182 |
 
-- **The window for D is [1.037, 1.060], 0.023 wide.** The declared 1.05 lies
-  inside it, so the price stands as declared.
+- **The window for D is [1.055, 1.060], 0.005 wide, and the declared 1.05 lies
+  just outside it.** Leg C misses by 0.005: at the stranger midpoint, with an
+  opposed want, booking (−0.225) edges out refusal (−0.23). That is a tie in
+  practice. At base g, refusal wins for strangers with p below 0.40.
+- **The price stands at 1.05, as declared.** Moving it to about 1.06 to fit a
+  0.005 window would be tuning to the derivation's own midpoints, which is
+  what declaring before the read forbids. The miss leans toward booking, the
+  answer V5.2 exists to make win.
 - **The window is narrow, and that is a structural fact, not a tuning target.**
   The stranger and the acquaintance differ by only about 0.15 in book value on
-  B4's midpoints, and refuse's edge is about 0.01 away. In real requests,
+  B4's midpoints, and refusal's edge is within 0.005 of the stranger's book value. In real requests,
   traits, relationship and standing move p and g by more than that, so the row
   is decided case by case.
-- **Legs A and C are the thin ones.** Leg A fails without being received
+- **Legs A and C are the thin ones.** A first draft valued knowledge at the
+  acquaintance's sensitivity for everyone, and passed leg C by 0.013. With each
+  person's own sensitivity, leg C misses (review pass 1). Leg A fails without being received
   (−0.035 against +0.005), and it fails if the promise kept in person stays at
   the minister's +0.10 (−0.053). Both gains are therefore needed. Neither can be
   dropped to save a build.
-- **The known person books at every K** (−0.029 at K = 0 and K = 0.5, +0.093 at
+- **The known person books at every K** (−0.031 at K = 0 and K = 0.5, +0.090 at
   K = 1). That is the spec's "book the people you know". Delegation and refusal
   win only for people the president does not know well, which is the spec's
   "the person matters but not personally".
