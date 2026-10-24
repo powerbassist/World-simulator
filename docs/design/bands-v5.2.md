@@ -97,8 +97,29 @@ so the band passed while the author would meet a silent year.
 |---|---|
 | Every 12-month window of the 60-month run (France's first term, 16 months, and part of the second; 49 sliding windows) holds at least **1** arrival | in at least **95 %** of seeds (19 of 20) |
 | Every 12-month window holds at least **2** arrivals | in at least **80 %** of seeds (16 of 20) |
-| B1's existing rows (24 to 48 a term, the first by month 3, at least 8 in months 1–20, at least 12 people, no one over 25 %), each read per seed | each in at least **90 %** of seeds (18 of 20) |
+| The first request by month 3, by the guarantee below | **100 %** of seeds, and of every played nation |
+| B1's other existing rows (24 to 48 a term, at least 8 in months 1–20, at least 12 people, no one over 25 %), each read per seed | each in at least **90 %** of seeds (18 of 20) |
 | B2's rows (`audience_probe` A2) and B3's act rows (A1 and A3), each read per seed over the same 20 seeds | each in at least **90 %** of seeds (18 of 20) |
+
+**The guarantee (the parent's decision, 2026-10-24, on QA's call).** Q1,
+"someone asked you something", is the tier's gate question, and the author plays
+one game. A one-in-twenty miss could land on the gate, so the first request is
+guaranteed by a stated mechanism, not left to sampling luck:
+
+- If the draw has brought no request by the end of month 2, then in month 3 the
+  eligible person with the strongest servable want asks.
+  - Eligible means past the request gates: the standing floor, the cooldown,
+    no request pending.
+  - Servable means a want the president has a verb to serve.
+  - Strongest means the want's own weight. Ties go to id order, so it is
+    deterministic (I1).
+- It fires at most once a game, only in month 3, and only when the draw gave
+  nothing.
+- **Re-baseline (INFERRED, before Systems' run):** at seed 0, France's first
+  request arrives in month 2 (MEASURED by QA: February 2026), so the guarantee
+  does not fire, and the France regimes stay ZERO. The one other played run,
+  `managed_abolishes_the_monarchy` (GBR), may fire it; if it does, its rows
+  move. That is predicted here, and the author accepts it.
 
 **Why these numbers (OPINION, with INFERRED arithmetic on a model of the draw):**
 
