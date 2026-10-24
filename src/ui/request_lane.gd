@@ -63,6 +63,10 @@ func show_requests(rows: Array) -> void:
 		_request_of[card_id] = request_id
 
 
+func request_ids() -> Array:
+	return _card_of.keys()
+
+
 func card_of(request_id: String) -> String:
 	return String(_card_of.get(request_id, ""))
 

@@ -96,7 +96,9 @@ func _check_cards() -> void:
 
 
 func _check_booking() -> void:
-	var booking = _main._calendar_panel.audience
+	# A booking block of its own: the game's is wired to the sim (audience_driver).
+	var booking = preload("res://src/ui/audience_booking.gd").new()
+	_main.add_child(booking)
 	booking.booked.connect(func(id: String, date: Dictionary) -> void: _booked.append([id, date]))
 	booking.open_for({"id": "req_2", "person": "Daniel Moucron", "ask": "He wants a portfolio."}, [
 		{"year": 2026, "month": 2, "day": 3, "free": false, "reason": "This day is taken."},

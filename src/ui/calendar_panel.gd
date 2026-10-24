@@ -159,7 +159,7 @@ func _build_form(root: VBoxContainer) -> void:
 	PanelKit.line(grid, tr("Kind"), PanelKit.Tone.PLAIN)
 	_kind_pick = OptionButton.new()
 	_kind_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for kind in K.KINDS:
+	for kind in K.KINDS.filter(func(k): return k != K.KIND_AUDIENCE):  # an audience is booked from its request
 		_kind_pick.add_item(tr(String(KIND_LABEL.get(kind, kind))))
 	_kind_pick.item_selected.connect(func(_i: int): _refresh_form())
 	grid.add_child(_kind_pick)

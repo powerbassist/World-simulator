@@ -39,7 +39,7 @@ const PENDING := {
 	"region": 104, "commodities": 82, "city": 17, "campaign": 217,
 }
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
-const EXEMPT := ["glossary", "summit"]
+const EXEMPT := ["glossary", "summit", "audience"]
 ## No single authored text runs longer than this on a list (the blurbs are shown
 ## whole, but one at a time).
 const CONTENT_NODE_MAX := 120

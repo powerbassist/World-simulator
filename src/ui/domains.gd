@@ -37,7 +37,7 @@ const TABLE := [
 ## Windows that are scenes, not tabs: something that happens to the player and
 ## owns the screen while it does. The summit opens over the workspace, in no
 ## domain (board 5).
-const SCENES := ["summit"]
+const SCENES := ["summit", "audience"]
 
 
 static func is_scene(window_id: String) -> bool:

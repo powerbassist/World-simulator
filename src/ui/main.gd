@@ -35,6 +35,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const MonthRunner = preload("res://src/ui/month_runner.gd")
 const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const DeskCards = preload("res://src/ui/desk_cards.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const OutlinerPanel = preload("res://src/ui/outliner_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
@@ -663,6 +664,7 @@ func _ready() -> void:
 		_windows.close("summit")
 	)
 
+	AudienceDriver.register(self)  # V5.2b: the request lane, the Diary's days, the audience scene
 	_build_sidebar()
 	_wire_hud()
 	# V4.8a: an alert on the strip names the window that answers it by the title
@@ -1476,9 +1478,7 @@ func _resolve_appointments(year: int, month: int, day: int) -> void:
 		var label := String(outcome["label"])  # i18n: row-ok DiaryDriver hands back a translated label
 		if not label.is_empty():
 			_queue_effect(label, outcome["before"])
-		_world_news.card_appointment(outcome["entry"], label, bool(outcome["ok"]))
-		if String(outcome["summit_target"]) != "":
-			_open_summit(String(outcome["summit_target"]), outcome["before"])
+		AudienceDriver.on_appointment(self, outcome)  # the card, the summit, or V5.2b's audience
 	)
 	if not any:
 		return

@@ -66,6 +66,10 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 					var result := Legislature.propose(state, loader, law)
 					ok = bool(result.get("passed", false))
 					label = Strings.law_name(law)
+			# V5.2b: the booked audience happens -- the scene opens (audience_driver.gd)
+			# and the sim holds it; what it settles is the scene's, not the diary's.
+			CalendarK.KIND_AUDIENCE:
+				ok = true
 			CalendarK.KIND_RESHUFFLE:
 				var portfolio := String(entry.get("portfolio", ""))
 				var party_id := String(entry.get("party_id", ""))

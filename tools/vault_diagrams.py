@@ -237,7 +237,13 @@ def parse_domains():
 
 
 def _registered():
-    return set(re.findall(r'_windows\.register\("([a-z_]+)"', read(MAIN_FILE)))
+    # main.gd registers most windows; a driver that owns its scene registers its own
+    # (V5.2b: audience_driver.gd), so every src/ui file is read.
+    found = set()
+    for name in sorted(os.listdir(os.path.join(ROOT, "src", "ui"))):
+        if name.endswith(".gd"):
+            found |= set(re.findall(r'_windows\.register\("([a-z_]+)"', read("src/ui/" + name)))
+    return found
 
 
 def domain_problems(rows, scenes):
