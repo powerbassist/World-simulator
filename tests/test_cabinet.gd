@@ -57,6 +57,7 @@ func _init() -> void:
 	_check_a_resignation_vacancy_stamps_no_removal()
 	_check_refusals_keep_their_ceiling()
 	_check_price_preview_writes_nothing()
+	_check_a_refused_seat_prices_nothing()
 
 	_finish()
 
@@ -595,6 +596,23 @@ func _check_price_preview_writes_nothing() -> void:
 		_fail("Removal.price() grudge_after %.3f, expected the principled 0.50" % float(price.get("grudge_after", 0.0)))
 	if float(price.get("loyalty_after", 1.0)) > float(price.get("loyalty_before", 0.0)):
 		_fail("Removal.price() shows loyalty rising on a removal: %s" % price)
+
+
+
+## Review pass 1: a party the coalition names but the loader does not know is
+## refused by the seat primitive -- the command must report it and price nothing.
+func _check_a_refused_seat_prices_nothing() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var leader := _person_with_intake("FRA", 1.0)
+	var h := _holder(state, leader)
+	ns.coalition_party_ids.append("no_such_party")
+	var grudge := float(ns.person_grudges.get(leader, 0.0))
+	var r: Dictionary = Removal.reassign(state, _loader, String(h["portfolio"]), "no_such_party")
+	if bool(r.get("ok", true)) or String(ns.cabinet[h["portfolio"]]) != String(h["party_id"]):
+		_fail("a seat the primitive refused was reported as done: %s" % r)
+	if float(ns.person_grudges.get(leader, 0.0)) != grudge or ns.portfolio_removed_month.has(String(h["portfolio"])):
+		_fail("a refused seat priced or stamped a removal")
 
 
 func _fail(message: String) -> void:

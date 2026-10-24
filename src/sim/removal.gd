@@ -45,6 +45,10 @@ static func reassign(state, loader, portfolio: String, party_id: String) -> Dict
 		return {"ok": false, "error": why}
 	var from := String(ns.cabinet.get(portfolio, ""))
 	Cabinet.seat_party(state, portfolio, party_id, loader.parties.get(ns.id, []))
+	# The primitive refuses silently (a coalition id the loader does not know):
+	# nothing moved, so nothing is priced.
+	if String(ns.cabinet.get(portfolio, "")) != party_id:
+		return {"ok": false, "error": "the party could not be seated"}
 	if from == "" or from == party_id:
 		return {"ok": true, "error": "", "party_id": "", "pulse": 0.0}
 	return _removed(state, ns, loader, portfolio, from)
@@ -68,7 +72,7 @@ static func why_not(state, ns, portfolio: String, party_id: String) -> String:
 			return reason
 	var last = ns.portfolio_removed_month.get(portfolio)
 	if last != null and _now(state) - int(last) < CK.REMOVAL_LIMIT_MONTHS:
-		return "this portfolio changed hands less than a year ago"
+		return "this portfolio changed hands too recently to change again"
 	return ""
 
 
