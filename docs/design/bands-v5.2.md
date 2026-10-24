@@ -1378,14 +1378,18 @@ author-accepted base current when C6 is built (today
 - **Why B9.3, and the prediction (INFERRED):** the mobilisation is unchanged
   (the same efforts, the same accrual); what goes is the deficit the bill added
   in the months before the vote. So 2027 should rise or stay, provided the
-  harness's own pair fits. `early` opens at the hook of month 8
-  (`tools/balance_probe.gd`'s `campaign_month`) and pays 9 or 10 months to the
-  vote, depending on whether the hook runs before or after that month's tick
-  (Systems reads which). Over 10 months, five pairs fit the ceiling (ground game
-  with donor, town halls or digital push; donor with town halls or digital
-  push); over 9 months, ground game with broadcast and town halls with digital
-  push fit as well. `late` (month 14) pays 3 or 4 months, and every pair fits.
-  `tour` changes pair at month 12, so its total is Systems' to compute. If the
+  harness's own pair fits. The probe's hook runs at the Elections step, after
+  that month's Campaign step (`tools/balance_probe.gd:950-953`; the order is
+  `src/sim/world_month.gd`'s `STEPS`), and `Campaign.execute()` only appends to
+  `campaign_running`, without accruing. So `early` (`campaign_month` 8, the
+  loop's index 7, September 2026) pays and accrues October 2026 to May 2027:
+  **8 months**. Over 8 months, 8 of the 10 pairs fit the ceiling; only town halls
+  with broadcast (EUR 22.9 m) and digital push with broadcast (EUR 25.8 m) do
+  not. `late` (month 14, March 2027) pays **2 months**, April and May, and every
+  pair fits. `tour` changes pair at month 12 (January 2027), so its total is
+  Systems' to compute. (Corrected by QA's round on 400541da: an earlier draft
+  said 9 or 10 and 3 or 4 months. This is the same hook-inside-the-tick fact as
+  #132's first TAKE.) If the
   harness's pair does not fit, it overspends under the soft ceiling (decided,
   [[v5.2-c6-party-campaigns]] "The decisions"), which writes party-money
   evidence: Systems reports the evidence, and an exposure that moves 2029 or
