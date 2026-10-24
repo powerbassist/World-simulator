@@ -21,6 +21,7 @@ path = [
   ".obsidian/*.json",
   "assets/portraits/**",
   "assets/portrait_scenes/**",
+  "assets/portrait_scenes_wide/**",
   "assets/event_art/**",
 ]
 precedence = "override"
