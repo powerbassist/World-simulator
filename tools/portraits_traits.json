@@ -11132,6 +11132,16 @@
   "eyes": "hazel eyes",
   "bust": "average bust"
  },
+ "FRA_helene_moucron": {
+  "sex": "female",
+  "age": 47,
+  "build": "slim",
+  "hair": "short bob",
+  "glasses": "round wire-frame glasses",
+  "face": "narrow, angular face",
+  "quirk": "widow's peak",
+  "wardrobe": "grey suit, plain blouse"
+ },
  "FRA_lachapelle": {
   "sex": "male",
   "age": 57,
@@ -12053,6 +12063,17 @@
   "skin": "fair skin",
   "eyes": "brown eyes",
   "bust": "average bust"
+ },
+ "GBR_julian_marchbanks": {
+  "sex": "male",
+  "age": 47,
+  "build": "broad-shouldered",
+  "hair": "sandy blond hair, receding",
+  "glasses": "dark-framed glasses",
+  "facial": "neat stubble",
+  "face": "square face with heavy brows",
+  "quirk": "deep-set eyes",
+  "wardrobe": "dark jacket, open collar"
  },
  "GBR_kelsall": {
   "sex": "female",
