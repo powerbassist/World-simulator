@@ -15,7 +15,7 @@
   "src/ui/calendar_panel.gd": 447,
   "src/ui/campaign_panel.gd": 362,
   "src/ui/election_panel.gd": 308,
-  "src/ui/government_panel.gd": 367,
+  "src/ui/government_panel.gd": 317,
   "src/ui/law_panel.gd": 345,
   "src/ui/main.gd": 947,
   "src/ui/map_view.gd": 879,

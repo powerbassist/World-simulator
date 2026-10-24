@@ -199,6 +199,7 @@ tests=(
   tests/test_request_arrival.gd
   tests/test_pregate_records.gd
   tests/test_legislature_dissolve.gd
+  tests/test_dismiss_ui.gd
   tests/test_feelings.gd
   tests/test_placement_points.gd
   tests/test_button_sizes.gd

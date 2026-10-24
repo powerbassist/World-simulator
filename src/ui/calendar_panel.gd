@@ -583,7 +583,8 @@ func _on_book() -> void:
 	var entry := _entry_from_form()
 	if entry.is_empty():
 		return
-	var result: Dictionary = Calendar.book(_state, entry)
+	# V5.2 b+ R4: a Reassign the limit will refuse on its day is refused now (Removal.why_not).
+	var result: Dictionary = preload("res://src/ui/cabinet_verbs.gd").book(_state, entry)
 	if bool(result["ok"]):
 		_booked = entry
 		_status.text = tr("Booked: %s, %s.") % [_booking_text(entry), DateText.day_month_year(int(entry["day"]), int(entry["month"]), int(entry["year"]))]
