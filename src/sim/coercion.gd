@@ -36,7 +36,7 @@ static func clear_union_tariffs(state) -> void:
 	var doomed := []
 	for directed in state.measures.keys():
 		var parts := RK.directed_parts(String(directed))
-		if parts.size() == 2 and _kind_of(state.measures[directed]) == "tariff" \
+		if parts.size() == 2 and String(state.measures[directed].get("kind", "")) == "tariff" \
 				and Org.shared_flag(state, parts[0], parts[1], "customs_union") != "":
 			doomed.append(directed)
 	for directed in doomed:
@@ -58,10 +58,6 @@ static func clear_on_accession(state, org_id: String, joiner: String) -> void:
 	for directed in doomed:
 		state.measures.erase(directed)
 	clear_union_tariffs(state)
-
-
-static func _kind_of(terms) -> String:
-	return String(terms.get("kind", ""))
 
 
 ## Every measure in force pointed AT `target_id`, as {imposer_id: terms}. The
