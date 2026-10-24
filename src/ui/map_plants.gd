@@ -65,6 +65,8 @@ static func progress(entry: Dictionary, loader) -> float:
 ## target would shrink as the player zoomed out to look for it. Nearest wins.
 static func hit(state, to_screen: Callable, pos: Vector2) -> Array:
 	var best: Array = []
+	if state == null:
+		return best
 	var best_d: float = RADIUS + 3.0
 	var nation_ids: Array = state.nations.keys()
 	nation_ids.sort()
