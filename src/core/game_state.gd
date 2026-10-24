@@ -720,7 +720,8 @@ var measures := {}  # directed key, e.g. "FRA>DEU" -> Dictionary of measure term
 ## wrong rather than empty.
 var orgs := {}
 
-## Each org's standing prices, org_id -> {relations_bonus, trade_bonus}. A
+## Each org's standing prices, org_id -> {relations_bonus, trade_bonus}, and
+## R10's customs_union flag (Orgs.static_effects builds the entry). A
 ## snapshot of STATIC content taken at new-game and re-derived on load
 ## (Orgs.rebuild_static), so src/sim/foreign_policy.gd and src/sim/trade.gd can
 ## price co-membership without a loader on their hot paths. NOT serialised --

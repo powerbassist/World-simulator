@@ -304,8 +304,14 @@ const REGULATION_REGIMES := {
 ## case for both new numbers at once: the debt jump the bloc's own `debt_to_gdp_pct`
 ## rule reads, and the dividend line the clamp is measured against. Left standing
 ## for the same reason the subsidy and the burden are.
+##
+## V5.2 b+ R14: the nationalisation is a bill. `managed_nationalises` tables it and
+## the Assembly may refuse it -- the honest record of what an ordinary bill meets.
+## `managed_nationalises_493` carries the same bill by Article 49.3 (`force`), so
+## the ownership channel stays measured whatever the Assembly thinks of it.
 const OWNERSHIP_REGIMES := {
 	"managed_nationalises": {"budget": REGIMES["managed"], "nationalise_month": 6},
+	"managed_nationalises_493": {"budget": REGIMES["managed"], "nationalise_month": 6, "force": true},
 }
 
 
@@ -1377,10 +1383,16 @@ func _impose_tariffs(state, loader, ns, regime_name: String, year: int, month: i
 		printerr("  no impose/tariff action is authored")
 		return
 
+	# The heaviest partner the verb is OFFERED against: since R10 a fellow member of
+	# a customs union is refused (FRA's heaviest, DEU, shares the EU), and a refused
+	# verb would quietly turn this regime into `managed` -- a run that measures no
+	# coercion at all while the table still names it.
 	var best := ""
 	var best_weight := -1.0
 	var weights := Trade.weights(state, ns.id)
 	for id in weights.keys():
+		if not Diplomacy.available(state, loader.diplomatic_actions, ns.id, id).has(action):
+			continue
 		if float(weights[id]) > best_weight:
 			best_weight = float(weights[id])
 			best = id
@@ -1516,9 +1528,10 @@ func _nationalise(state, loader, ns, regime_name: String, year: int, month: int)
 		printerr("  no ownership bill is offered for %s" % best)
 		return
 	var debt_before: float = ns.debt_eur_bn
-	var result: Dictionary = Legislature.propose(state, loader, bills[0])
-	print("  %d-%02d %s: nationalisation bill for %s %s (yes %d / no %d), stake %.2f (%.1f bn, debt %+.1f bn)" % [
-		year, month, regime_name, best, "CARRIED" if bool(result.get("passed", false)) else ("HELD" if bool(result.get("held_by_upper", false)) else "DEFEATED"),
+	var forced := bool(OWNERSHIP_REGIMES.get(regime_name, {}).get("force", false))
+	var result: Dictionary = Legislature.propose(state, loader, bills[0], forced)
+	print("  %d-%02d %s: nationalisation bill for %s%s %s (yes %d / no %d), stake %.2f (%.1f bn, debt %+.1f bn)" % [
+		year, month, regime_name, best, " by 49.3" if forced else "", "CARRIED" if bool(result.get("passed", false)) else ("HELD" if bool(result.get("held_by_upper", false)) else "DEFEATED"),
 		int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
 		Companies.state_share_of(ns, best), best_output, ns.debt_eur_bn - debt_before,
 	])

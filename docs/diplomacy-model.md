@@ -99,6 +99,8 @@ Preconditions may test `relations` (against the action's own target) or the acti
 
 **Bounds, recorded.** The rule errs toward too many missions: Malta, Luxembourg, Iceland, Montenegro and Kosovo in truth accredit many ambassadors from a neighbouring capital. A Wikidata list was tried first and refused because its gaps were the bug itself (an embassy offered where one stands) -- [[data-sources]]. And on a pair without relations the verb is refused: the exceptions are copied to `NationState.no_relations` at the same seed and the verb asks the eighth pair field, `relations_exist`, for 1 (review pass 2: before it, Serbia at relations 50 could have opened an embassy in Pristina). Recognition itself is not modelled, so nothing opens those pairs during a game.
 
+**The ninth pair field, `customs_union_shared` (V5.2 R10, the author's gate b).** 1 when the actor and the target share an org whose `customs_union` field is set (only the EU), read from live membership by `Org.shared_flag` through `diplomacy_verbs.gd`'s `pair_field`. `impose_tariffs` asks it for 0, so no member is offered a tariff on another, the AI included; leaving the union reopens the verb. A sanction is not a customs duty and is not gated ([[orgs-model]]).
+
 ## The host's cadence (V5.1 play gate)
 
 A hands-off world sent **~26 state visits a year to the player** and almost none anywhere else: 53 of 75 AI acts in 24 idle months. With Germany as the player, 61 of 71 went to Germany, so the bias is towards the player, not towards France. The cause is two rules meeting:
