@@ -48,7 +48,7 @@ static func seats(n: int) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	if n <= 0:
 		return out
-	var rows := clampi(ceili(sqrt(float(n)) / 2.0), 1, 16)
+	var rows := ring_count(n)
 	var radii: Array[float] = []
 	var total := 0.0
 	for i in rows:
@@ -75,6 +75,12 @@ static func seats(n: int) -> PackedVector2Array:
 	for p in placed:
 		out.append(p[2])
 	return out
+
+
+## The rings for `n` seats: grows with the square root so a dot stays about as
+## wide as a ring is deep.
+static func ring_count(n: int) -> int:
+	return clampi(ceili(sqrt(float(n)) / 2.0), 1, 16)
 
 
 ## The part each seat belongs to, in order: the first part's seats first.
@@ -107,7 +113,7 @@ func _draw() -> void:
 		return
 	var radius := _radius()
 	var center := _center()
-	var rows := clampi(ceili(sqrt(float(_seats.size())) / 2.0), 1, 16)
+	var rows := ring_count(_seats.size())
 	var ring := (0.94 - INNER) * radius / maxf(float(rows - 1), 1.0)
 	var dot := clampf(ring * 0.42, 1.2, 6.0)
 	for i in _seats.size():
@@ -124,10 +130,11 @@ func _get_tooltip(at: Vector2) -> String:
 	var local := (at - _center()) / _radius()
 	if local.y > 0.05 or local.length() > 1.05 or local.length() < INNER - 0.08:
 		return ""
-	var angle := atan2(-local.y, local.x)
+	# The nearest dot, not the nearest angle: at a wedge's edge two rings' seats
+	# at one angle belong to two parties.
 	var nearest := 0
 	for i in _seats.size():
-		if absf(atan2(-_seats[i].y, _seats[i].x) - angle) < absf(atan2(-_seats[nearest].y, _seats[nearest].x) - angle):
+		if _seats[i].distance_squared_to(local) < _seats[nearest].distance_squared_to(local):
 			nearest = i
 	var p: Dictionary = _parts[_owners[nearest]]
 	return "%s  %s%s" % [String(p["label"]), ChartStyle.figure(float(p["value"]), _places), _unit]  # i18n: row-ok chart data, the caller passes shown text
