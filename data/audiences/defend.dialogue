@@ -1,0 +1,24 @@
+~ opening
+% {{name}}: {{president}}, I have come to defend {{ask}}. Those who depend on it are watching to see whether anyone in this building will.
+% {{name}}: You may think I protect my own corner. I protect what others cannot, and that is {{ask}}.
+=> END
+
+~ lever_argue_success
+% {{name}}: You have shown me a way to keep what matters and give up what does not. That is not a defeat, it is a rescue.
+=> END
+
+~ lever_argue_failure
+% {{name}}: Everything you said was true, and none of it was the point. People are living on this, {{president}}.
+=> END
+
+~ lever_friendship_success
+% {{name}}: You ask it as a friend, and I will answer as one. I will protect what I can and bend where I must.
+=> END
+
+~ close_settled
+% {{name}}: Then what we feared is spared. Thank you, {{president}}, truly.
+=> END
+
+~ close_declined
+% {{name}}: I will go back and tell them that the door was closed. I do not look forward to the conversation.
+=> END

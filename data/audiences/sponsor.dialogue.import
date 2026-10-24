@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://dicrjm8xg7hr4"
+path="res://.godot/imported/sponsor.dialogue-9435163be7a8357eeccb847de489cf3b.tres"
+
+[deps]
+
+source_file="res://data/audiences/sponsor.dialogue"
+dest_files=["res://.godot/imported/sponsor.dialogue-9435163be7a8357eeccb847de489cf3b.tres"]
+
+[params]
+
+defaults=true

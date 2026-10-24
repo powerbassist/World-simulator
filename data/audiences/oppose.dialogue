@@ -1,0 +1,24 @@
+~ opening
+% {{name}}: {{president}}, I will say it plainly. I cannot support {{ask}}, and I would rather tell you to your face than vote against you in the dark.
+% {{name}}: I asked to see you because I think you are making a mistake over {{ask}}, and I would like to be wrong in private first.
+=> END
+
+~ lever_argue_success
+% {{name}}: You have not changed my mind, but you have moved my doubts. That is how it usually begins.
+=> END
+
+~ lever_argue_failure
+% {{name}}: You are answering the question I asked last year. I am asking a different one now.
+=> END
+
+~ lever_pressure_failure
+% {{name}}: I have been threatened by better. And I have been right more often than most of them.
+=> END
+
+~ close_settled
+% {{name}}: I will not like it, but I will not fight it. That is as far as my conscience goes.
+=> END
+
+~ close_declined
+% {{name}}: Then I will vote as I said I would, {{president}}, and you will not be able to say I did not warn you.
+=> END
