@@ -59,11 +59,12 @@ extends SceneTree
 ##      stays comparable.
 ##
 ## SEEDS (`-- --seeds=1-20`, pre-gate B, CALL 2; bands-v5.2.md's B1 amendment, #128).
-##      A1 again under each per-game draw seed (President.seed_draws), the seed-0
-##      table above untouched. Per seed: the fewest arrivals in any 12-month window
-##      of the term (49 sliding windows) and B1's five rows. The bands: every window
-##      >= 1 in at least 19 of 20 seeds, >= 2 in at least 16 of 20, and each B1 row
-##      in at least 18 of 20.
+##      A1, A2 and A3 again under each per-game draw seed (President.seed_draws),
+##      the seed-0 table above untouched. Per seed: the fewest arrivals in any
+##      12-month window of A1's term (49 sliding windows), B1's rows (A1), B2's (A2)
+##      and B3's act rows (A1, A3). The bands: every window >= 1 in at least 19 of 20
+##      seeds, >= 2 in at least 16 of 20, the first request by month 3 in all of
+##      them (the guarantee), and every other row in at least 18 of 20.
 ##
 ## VISITORS (b3) ARE COUNTED APART. A visiting head's request waits in a place of its
 ## own (MAX_PENDING_FOREIGN), outside the domestic lane B1-B3 were declared on, so
@@ -524,6 +525,8 @@ func _b1_seeds(seeds: Array) -> Dictionary:
 	var ge2 := 0
 	for s in seeds:
 		var a1 := _run("A1", MONTHS, int(s))
+		var a2 := _run("A2", MONTHS, int(s))
+		var a3 := _run("A3", MONTHS, int(s))
 		var months: Array = a1["arrival_months"]
 		var fewest := 1 << 30
 		for start in range(1, MONTHS - 11 + 1):
@@ -534,11 +537,11 @@ func _b1_seeds(seeds: Array) -> Dictionary:
 			fewest = mini(fewest, n)
 		ge1 += 1 if fewest >= 1 else 0
 		ge2 += 1 if fewest >= 2 else 0
-		# _bands() reads A2-A4 too; A1 stands in, and only its B1 rows are kept.
-		var all := _bands({"A1": a1, "A2": a1, "A3": a1, "A4": a1})
+		# _bands() reads A4 too; A1 stands in, and its B5 rows are not kept.
+		var all := _bands({"A1": a1, "A2": a2, "A3": a3, "A4": a1})
 		var b1 := {}
 		for band in all:
-			if String(band).begins_with("B1_"):
+			if not String(band).begins_with("B5_"):
 				b1[band] = all[band]
 				rows[band] = int(rows.get(band, 0)) + (1 if b1[band] else 0)
 		per_seed.append({"seed": int(s), "arrivals": int(a1["arrivals"]), "fewest_in_12": fewest,
@@ -550,7 +553,10 @@ func _b1_seeds(seeds: Array) -> Dictionary:
 		"B1_seeds_window_ge2_80pct": ge2 * 20 >= 16 * n_seeds,
 	}
 	for band in rows:
-		bands["%s_seeds_90pct" % band] = int(rows[band]) * 20 >= 18 * n_seeds
+		if band == "B1_first_by_month_3":
+			bands["B1_first_by_month_3_seeds_100pct"] = int(rows[band]) == n_seeds
+		else:
+			bands["%s_seeds_90pct" % band] = int(rows[band]) * 20 >= 18 * n_seeds
 	return {"seeds": n_seeds, "window_ge1": ge1, "window_ge2": ge2, "rows_held": rows, "per_seed": per_seed, "bands": bands}
 
 
