@@ -691,6 +691,12 @@ var cabinet_entitlement := {}
 ## the same shape dissolutions_called and governments_fallen already use.
 var reshuffles_called: int = 0
 
+## V5.2b b3. The absolute month of the player's last reshuffle (Cabinet.assign()),
+## -1 for none: the month after, the office wants it left unserved ask for an
+## audience (src/sim/audience_triggers.gd). absent_ok, no bump: an older save had
+## invited nobody, and -1 reads exactly that.
+var reshuffle_month: int = -1
+
 ## How many ministers have resigned this run. Never reset.
 var resignations_count: int = 0
 

@@ -67,6 +67,12 @@ const DELEGATE_SNUB_RAPPORT := -0.05
 ## and known after 9 (B4: 2-5, and at least 8).
 const KNOW_AUDIENCE := 0.05
 
+## b3, the meetings (src/sim/meetings.gd): a state visit or a summit teaches what an
+## audience's hold does, on the same curve, and leaves a topic's warmth (lever
+## constants RAPPORT_TOPIC) -- a courtesy, not a friendship.
+const KNOW_MEETING := KNOW_AUDIENCE
+const RAPPORT_MEETING := 0.04
+
 const STATUS_PENDING := "pending"
 const STATUS_BOOKED := "booked"
 const STATUS_HELD := "held"

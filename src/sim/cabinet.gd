@@ -261,6 +261,7 @@ static func assign(state, portfolio: String, party_id: String, party_list: Array
 	ns.cabinet[portfolio] = party_id
 	ns.cabinet_effectiveness[portfolio] = _effectiveness_for(by_id[party_id], portfolio)
 	ns.reshuffles_called += 1
+	ns.reshuffle_month = int(state.year) * 12 + int(state.month)  # V5.2b b3: the office wants ask next month
 	Government.penalise_blocs(ns, CK.RESHUFFLE_BLOC_PENALTY)
 
 

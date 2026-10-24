@@ -33,6 +33,7 @@ const President = preload("res://src/sim/president.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -265,9 +266,9 @@ static func _overdue(row: Dictionary, now: int) -> bool:
 	return false
 
 
-## Invitations first -- an entry gone live this month calls the people whose
-## wants name it, outside the hazard -- then the seeded monthly ask. The lane's
-## cap and each person's cooldown bound both.
+## Invitations first -- the asks outside the hazard (AudienceTriggers: an entry
+## gone live, the month after a reshuffle) -- then the seeded monthly ask. The
+## lane's cap and each person's cooldown bound both.
 static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: Array) -> void:
 	var people: Array = loader.people.get(state.player_nation_id, [])
 	var leader := President.leader_id(ns)
@@ -275,24 +276,15 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 	for row in ns.audience_requests:
 		if K.OPEN.has(String(row.get("status", ""))):
 			open += 1
-	var live := {}
-	for entry in ns.programme:
-		if int(entry.get("chosen_term", -1)) == int(ns.terms_served) and int(entry.get("months_live", 0)) == 1 \
-				and String(entry.get("status", "")) == "active":
-			live["programme:%s" % String(entry["entry_id"])] = true
-	for person in people:
-		if open >= K.MAX_PENDING:
-			return
-		if not _may_ask(ns, person, leader, now):
-			continue
-		for want in person.wants:
-			if live.has(String(want["object"])):
-				_arrive(ns, person, want, now, arrived)
-				open += 1
-				break
 	var leaders := {}
 	for party in loader.parties.get(state.player_nation_id, []):
 		leaders[party.id] = party.leader_person_id
+	for invited in AudienceTriggers.invitations(state, ns, loader, meters, leaders, now):
+		if open >= K.MAX_PENDING:
+			return
+		if _may_ask(ns, invited[0], leader, now):
+			_arrive(ns, invited[0], invited[1], now, arrived)
+			open += 1
 	for person in people:
 		if open >= K.MAX_PENDING:
 			return
