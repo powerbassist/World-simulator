@@ -18,6 +18,8 @@ const Words = preload("res://src/ui/lever_words.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
 const Capital = preload("res://src/core/capital.gd")
+const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
 
 const WINDOW := "audience"
 
@@ -36,6 +38,7 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 	view.merge(row)
 	view["president"] = main._loader.person_name(String(ns.head_of_state_person_id if ns.head_of_state_kind == "executive_president" else ns.pm_person_id))
 	view["name"] = row["person"]  # i18n: row-ok the person's shown name, from the loader
+	view["opening_title"] = DialogueLines.opening_title(ns, Audiences.request(ns, String(row["id"])))
 	main._windows.open(WINDOW)
 	main._clock.paused = true
 	game["scene"].open(view)
@@ -55,21 +58,29 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	if person != null:
 		for t in Levers.known_traits(ns, person):
 			traits.append(Strings.t(String(PersonCard.TRAIT_LABEL.get(t, t))))  # i18n: row-ok a trait id, its label the msgid
+	return {"fog": President.knowledge_band(ns, pid), "traits": traits,
+		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
+		"attempts_left": int(session["attempts_left"]),
+		"choices": {"now": int(state.year) * 12 + int(state.month), "people": gossip_people(main, pid)}}
+
+
+## Whom a gossip may name: everyone the president covers but the person spoken
+## to, the people the president knows first, then by name (QA on #117: in loader
+## order the list was a screen of strangers before anyone useful). The key is
+## folded for case AND accents: a code-point compare puts "Élise" after "Zoé".
+static func gossip_people(main, pid: String) -> Array:
+	var state = main._state
+	var ns = state.player()
+	var loader = main._loader
 	var people: Array = []
 	for p in loader.people.get(String(ns.id), []):
 		var id := String(p.id)
 		if id != pid and President.covers(state, ns, loader, id):
 			var shown: String = loader.person_name(id)
 			people.append({"id": id, "name": shown, "know": President.knowledge(ns, id), "key": Capital.fold(shown)})
-	# The people the president knows first, then by name (QA on #117: in loader
-	# order the list was a screen of strangers before anyone useful). The key is
-	# folded for case AND accents: a code-point compare puts "Élise" after "Zoé".
 	people.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a["know"] > b["know"] or (a["know"] == b["know"] and String(a["key"]) < String(b["key"])))
-	return {"fog": President.knowledge_band(ns, pid), "traits": traits,
-		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
-		"attempts_left": int(session["attempts_left"]),
-		"choices": {"now": int(state.year) * 12 + int(state.month), "people": people}}
+	return people
 
 
 static func attempt(main, game: Dictionary, lever: String, args: Dictionary) -> void:

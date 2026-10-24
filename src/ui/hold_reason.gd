@@ -13,6 +13,7 @@ extends RefCounted
 const Events = preload("res://src/sim/events.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 
 
 ## The line for the clock cluster, "" when nothing the player can answer holds it;
@@ -28,6 +29,8 @@ static func show(main) -> String:
 	var audience = AudienceDriver.scene_of(main)
 	if audience != null and main._windows.is_open("audience") and not String(audience.visiting).is_empty():
 		return Strings.t("Paused: the audience with %s.") % audience.visiting
+	if PhoneDriver.calling(main) != "":
+		return Strings.t("Paused: on the phone with %s.") % PhoneDriver.calling(main)
 	var held := ""
 	if Events.interrupt_pending(ns):
 		var ev = Events.pending_event(ns, main._loader)

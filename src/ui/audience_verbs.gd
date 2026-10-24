@@ -38,8 +38,9 @@ func _ready() -> void:
 	_topics = PanelKit.buttons(self)
 
 
-## `offered` / `topics`: Levers' rows. `choices`: {now: the absolute month a
-## promise counts from, people: [{id, name}] a gossip may name}.
+## `offered` / `topics`: Levers' rows (or Phone.options()'s, the same shape).
+## `choices`: {now: the absolute month a promise counts from, people: [{id, name,
+## know, key}] a gossip may name, quiet: no attempts line}.
 func show_verbs(offered: Array, topics: Array, attempts_left: int, choices: Dictionary) -> void:
 	for box in [_levers, _topics]:
 		for child in box.get_children():
@@ -47,6 +48,8 @@ func show_verbs(offered: Array, topics: Array, attempts_left: int, choices: Dict
 			child.queue_free()
 	for row in offered:
 		_lever_row(row, int(choices.get("now", 0)))
+	# The phone says its one try itself (`quiet`, phone_dialog.gd).
+	_attempts.visible = not bool(choices.get("quiet", false))
 	# No levers offered at all (none fit): the audience is heard, not argued --
 	# saying "no attempts left" would be a lie.
 	if offered.is_empty():
@@ -124,6 +127,9 @@ func _currency_pick(row: Dictionary, spend: Label, args: Dictionary) -> OptionBu
 		args["currency"] = String(c["currency"])
 		spend.text = Words.spends_text(c.get("spends", {}))
 	pick.item_selected.connect(chosen)
+	# Selected outright: an OptionButton left to itself showed the last item (the
+	# refused aid) while the args and the cost were the favour's.
+	pick.select(0)
 	chosen.call(0)
 	return pick
 

@@ -24,6 +24,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const Relations = preload("res://src/core/relations.gd")
 
 const KIND_LABEL := {
 	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
@@ -76,6 +77,12 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 			if p.id == pid:
 				return Strings.t("the leadership of %s") % String(p.party_name)
 		return Strings.t("a party leadership")
+	# V5.2b b3: a visiting head's ask, "measure:<FRA>DEU>" -- the played nation's
+	# measure on their nation, lifted ("wants your measure on Germany lifted").
+	if object.begins_with("measure:"):
+		var parts := Relations.directed_parts(object.substr("measure:".length()))
+		var on = loader.nations.get(String(parts[1])) if parts.size() == 2 else null
+		return Strings.t("your measure on %s lifted") % (String(on.nation_name) if on != null else Strings.t("their nation"))  # i18n: row-ok a nation's shown name
 	if object.begins_with("meter:"):
 		var meter := object.substr("meter:".length())
 		var threshold := float(want.get("below", want.get("above", 0.0)))

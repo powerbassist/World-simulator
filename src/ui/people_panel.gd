@@ -28,6 +28,9 @@ extends PanelContainer
 ## docs/people-model.md.
 
 signal closed
+## V5.2b b3: a right click on a person asks to call them (phone_driver.gd). Not a
+## button: this panel keeps none (above), and a click has no width to fold.
+signal call_requested(person_id: String)
 
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
@@ -339,6 +342,9 @@ func _face_row(person_id: String, left: String, right: String) -> HBoxContainer:
 	# row-sized hover is a target the player keeps missing.
 	row.mouse_entered.connect(_show_person_card.bind(person_id))
 	row.mouse_exited.connect(_hide_person_card)
+	row.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+			call_requested.emit(person_id))
 	return row
 
 

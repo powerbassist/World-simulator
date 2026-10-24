@@ -68,6 +68,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people)
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
@@ -327,6 +328,9 @@ var _request := ""
 ## promise made, the audience left, the Diary open on "Your word"); bargain, dates
 ## and gossip open that verb's choice.
 var _audience_step := ""
+## V5.2b b3: --phone open | dialed | people -- the call dialog on a request's asker
+## (open), after its one try (dialed), or on someone who asked nothing (people).
+var _phone := ""
 ## V5.1-c2.3: open a domain through its sidebar entry (its first tab), so a frame
 ## shows the entry marked and the tab open -- V2.1c's --cluster, for the sidebar.
 var _domain := ""
@@ -807,6 +811,9 @@ func _init() -> void:
 		elif args[i] == "--audience-step" and i + 1 < args.size():
 			_audience_step = args[i + 1]
 			_request = "--audience"
+		elif args[i] == "--phone" and i + 1 < args.size():
+			_phone = args[i + 1]
+			_request = "--request"
 		elif args[i] == "--months" and i + 1 < args.size():
 			_months = int(args[i + 1])
 		elif args[i] == "--cards" and i + 1 < args.size():
@@ -926,6 +933,8 @@ func _process(_delta: float) -> bool:
 			_stage_requests()
 		if _audience_step != "":
 			_stage_audience_step()
+		if _phone != "":
+			_stage_phone()
 		if _mid_term:
 			_main._state.player().months_in_term = 7
 			_main._enforce_term_start_programme()
@@ -1975,6 +1984,17 @@ func _stage_a_verdict() -> void:
 			break
 	var year := floori((next - 1) / 12.0)
 	_main._on_month_elapsed(year, next - year * 12)
+
+
+func _stage_phone() -> void:
+	var Phone := load("res://src/ui/phone_driver.gd")
+	var talks := load("res://src/ui/audience_talks.gd")
+	var ns = _main._state.player()
+	var asker := String(load("res://src/sim/audiences.gd").pending(ns)[0]["person_id"])
+	var pid := asker if _phone != "people" else String(ns.pm_person_id)
+	Phone.open_call(_main, pid, talks.gossip_people(_main, pid))
+	if _phone == "dialed":
+		Phone.dialog_of(_main).verbs.topic_button("family").pressed.emit()
 
 
 func _open_audience_pick() -> void:

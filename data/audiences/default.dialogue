@@ -65,7 +65,7 @@
 => END
 
 ~ topic_family
-% {{name}}: My daughter has just started at the lycee. She wants to be a magistrate, which should alarm both of us.
+% {{name}}: My daughter has just started at university. She wants to be a magistrate, which should alarm both of us.
 % {{name}}: Family is well, thank you, {{president}}. My father is eighty and still complains about every government since the war, including mine.
 => END
 
@@ -81,7 +81,7 @@
 
 ~ topic_dinner
 % {{name}}: A dinner would be very welcome. Somewhere quiet, with a good table and no cameras.
-% {{name}}: I accept with pleasure, {{president}}. I will bring the wine, since I know what the Elysee cellar thinks of its own.
+% {{name}}: I accept with pleasure, {{president}}. I will bring the wine, since I know what your cellar thinks of its own.
 => END
 
 ~ topic_flirt
@@ -102,4 +102,71 @@
 ~ close_declined
 % {{name}}: I see. I came for an answer, and I have one. I will not say it is the one I wanted.
 % {{name}}: Then there is nothing more to say. Good day, {{president}}.
+=> END
+
+~ phone_opening
+% {{name}}: {{president}}, good morning. I will get straight to it. I am calling about {{ask}}.
+% {{name}}: I hope I caught you at a tolerable hour. One matter only, and it is {{ask}}.
+% {{name}}: Thank you for picking up. This concerns {{ask}}, and it cannot wait for paperwork.
+% {{name}}: Straight to business, if you will allow it. The question of the day is {{ask}}.
+% {{name}}: You rang, or I did, and here we are. I want to settle the matter of {{ask}} before we hang up.
+% {{name}}: No preamble, {{president}}. I am calling to see movement on {{ask}}.
+=> END
+
+~ phone_close_settled
+% {{name}}: Good. That is what I hoped to hear, and I will not take more of your morning.
+% {{name}}: Then we are aligned, {{president}}. I will act on your word and say no more about it.
+% {{name}}: Settled, then. A short call, and a productive one.
+% {{name}}: I accept that answer gladly. Consider the matter closed on my end.
+=> END
+
+~ phone_close_promised
+% {{name}}: Very well. I will hold you to that, gently, and wait for your call.
+% {{name}}: A promise noted, {{president}}. I can be patient when the outcome is certain.
+% {{name}}: Then I will wait, and you will deliver. That is the arrangement as I understand it.
+% {{name}}: Understood. I would rather have your word today than your signature next month, so we are well placed.
+=> END
+
+~ phone_close_unresolved
+% {{name}}: So we leave it where we found it. This will need a meeting, and soon, not another call.
+% {{name}}: We have talked past each other, politely. The matter of {{ask}} now wants a table, not a telephone.
+% {{name}}: No agreement, then, and no harm done. But someone must decide, and it will not be the phone.
+% {{name}}: I will not press further today. Sooner or later, though, this must be settled properly.
+=> END
+
+~ visitor_opening
+% {{name}}: I come as a friend, {{president}}, and I come with one request. It is about {{ask}}, and it matters greatly to my people.
+% {{name}}: You have been generous with your welcome, and I will not abuse it. I ask only that you consider {{ask}}.
+% {{name}}: Between partners, one speaks plainly. My request today is to see {{ask}}, and I will tell you why it is just.
+% {{name}}: I know your parliament watches you closely. Even so, I must ask for {{ask}}, and I ask it as a guest, not a creditor.
+% {{name}}: We have built much together, and I would not risk it over one measure. Still, I must ask for {{ask}}.
+=> END
+
+~ visitor_close_settled
+% {{name}}: Then I leave lighter than I arrived. You have my thanks, {{president}}, and my country's.
+% {{name}}: That is gracious, and I will not forget it. The measure will be remembered as wisdom, not concession.
+% {{name}}: I accept with genuine relief. This will read well in both our capitals, I promise you.
+% {{name}}: So it is done, and done well. Allow me to thank you before my plane does it for me.
+=> END
+
+~ visitor_close_promised
+% {{name}}: I take note, and I take you at your word. A date, when it comes, will suit me.
+% {{name}}: Later is acceptable, provided it arrives. I will trust your calendar, {{president}}.
+% {{name}}: Then we have a promise rather than a signature, which is often the better collateral. I will wait.
+% {{name}}: Understood. I will say at home that your country has heard us, and that hearing precedes acting.
+=> END
+
+~ visitor_close_declined
+% {{name}}: I regret that, of course, but I respect your right to refuse. The friendship stands, even where we differ.
+% {{name}}: Then we disagree as partners do, openly and without bitterness. I will not pretend I am pleased.
+% {{name}}: So be it. I asked because asking was proper, and I leave with the answer I was owed.
+% {{name}}: That is your prerogative, {{president}}, and your parliament's shadow behind it. We will raise the matter another season.
+=> END
+
+~ reshuffle_opening
+% {{name}}: A month has passed since the reshuffle, and my party has watched quietly. We are here now to discuss {{ask}}.
+% {{name}}: I congratulate you on the reshuffle, sincerely. What remains undiscussed is {{ask}}, and that is why I came.
+% {{name}}: I watched the changes without complaint. It is time to speak of {{ask}}.
+% {{name}}: The portfolios moved, the speeches were made, and my people noticed where nothing moved. I come to raise {{ask}}.
+% {{name}}: Patience has its season, {{president}}, and ours is ripening. I am here about {{ask}}, and I would rather ask than hint.
 => END

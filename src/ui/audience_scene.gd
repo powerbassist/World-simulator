@@ -31,8 +31,8 @@ const Portrait = preload("res://src/ui/portrait.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
+const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 
-const DIALOGUE_DIR := "res://data/audiences/"
 ## 16:9, the board's scene window over the map.
 const SIZE := Vector2(1120, 630)
 
@@ -102,7 +102,7 @@ func open(view: Dictionary) -> void:
 	_over = false
 	_end.text = tr("End the audience")
 	visiting = String(view.get("name", ""))  # i18n: row-ok the person's shown name, resolved by the wiring
-	_resource = _load_dialogue(String(view.get("stance", "")))
+	_resource = DialogueLines.resource_for(String(view.get("stance", "")))
 	for child in _face.get_children():
 		child.queue_free()
 	var person_id := String(view.get("person_id", ""))
@@ -111,7 +111,7 @@ func open(view: Dictionary) -> void:
 			Portrait.scene_from_name("office")))
 	_result.text = ""
 	_show_state(view)
-	say("opening", {})
+	say(String(view.get("opening_title", "opening")), {})
 
 
 ## After a verb: the sim's result in words, the levers' new ranges, what is left.
@@ -130,7 +130,7 @@ func show_close(outcome: String, text: String) -> void:
 	verbs.show_verbs([], [], 0, {})
 	verbs.visible = false
 	_end.text = tr("Leave")
-	say("close_" + outcome, {})
+	say(DialogueLines.close_title(_view, outcome), {})
 
 
 func close_scene() -> void:
@@ -153,44 +153,6 @@ func say(title: String, extra: Dictionary) -> void:
 		"president": String(_view.get("president", "")), "lever": "", "topic": ""}
 	state.merge(extra, true)
 	_speaker.text = String(state["name"])  # i18n: row-ok the person's shown name, resolved by the wiring
-	var manager = _manager()
-	if _resource != null and manager != null and _resource.titles.has(title):
-		var line = await manager.get_next_dialogue_line(_resource, title, [state])
-		if line != null:
-			_line.text = String(line.text)
-			return
-	_line.text = String(state["ask"]) if title == "opening" else ""
-
-
-## The stance's file over the default, merged title by title (a title twice is a
-## compile error, so the stance's block replaces the default's).
-func _load_dialogue(stance: String):
-	var manager = _manager()
-	if manager == null:
-		return null
-	var blocks := titled_blocks(FileAccess.get_file_as_string(DIALOGUE_DIR + "default.dialogue"))
-	var own := DIALOGUE_DIR + stance + ".dialogue"
-	if stance != "" and FileAccess.file_exists(own):
-		blocks.merge(titled_blocks(FileAccess.get_file_as_string(own)), true)
-	if blocks.is_empty():
-		return null
-	return manager.create_resource_from_text("\n".join(PackedStringArray(blocks.values())))
-
-
-## A .dialogue file cut at its "~ title" lines: title -> its block, title line included.
-static func titled_blocks(text: String) -> Dictionary:
-	var blocks := {}
-	var title := ""
-	for line in text.split("\n"):
-		if line.begins_with("~ "):
-			title = line.substr(2).strip_edges()
-			blocks[title] = ""
-		if title != "":
-			blocks[title] += line + "\n"
-	return blocks
-
-
-func _manager():
-	if Engine.has_singleton("DialogueManager"):
-		return Engine.get_singleton("DialogueManager")
-	return get_node_or_null("/root/DialogueManager")
+	var said: String = await DialogueLines.line(_resource, title, state)
+	# No line for the title: the opening says the ask bare, anything else nothing.
+	_line.text = said if said != "" or not title.ends_with("opening") else String(state["ask"])
