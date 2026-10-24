@@ -1506,6 +1506,13 @@ var phone_calls := {}
 ## a save made before it drew unseeded, which is exactly what 0 reads.
 var draw_seed: int = 0
 
+## Pre-gate B, the month-3 guarantee. The absolute month of the request lane's first
+## tick (Audiences stamps it), -1 before: the guarantee reads "the lane's third
+## month" off it. absent_ok, no bump: a loaded game without it stamps its first
+## tick after the load, and the guarantee then holds from there -- a game whose
+## people have never asked gets the same promise.
+var audience_lane_start: int = -1
+
 # --- The commodity layer (V4.6) -------------------------------------------------
 ## The nation's commodity state: what it can make, what it wants, what it made,
 ## what it bought and sold, and the ONE world price vector. Written by
