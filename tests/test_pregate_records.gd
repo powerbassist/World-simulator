@@ -53,8 +53,11 @@ func _process(_delta: float) -> bool:
 			_check_card()
 			_check_promise_row()
 			_check_refused_answer_looks_refused()
-			if _phone._line.visible:
+			if _phone._line.visible or _phone._result.visible:
 				_fail("RECORD 9: a call with nothing to ask opens on an empty line")
+			_phone.show_result("They agree.")
+			if _phone._why.visible:
+				_fail("RECORD 9: a call's result leaves the cleared reason line as an empty row")
 			_finish()
 			return true
 	return false

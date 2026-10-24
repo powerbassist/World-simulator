@@ -72,7 +72,9 @@ func open(view: Dictionary) -> void:
 		speak(["phone_opening"], {})
 	_title.text = tr("Call %s") % String(view.get("name", ""))  # i18n: row-ok the person's shown name, resolved by the wiring
 	var why := String(view.get("why_not", ""))
+	_why.show()
 	_result.text = ""
+	_result.hide()
 	verbs.visible = why == ""
 	# Without an open request the call has nothing to ask: the sim offers topics
 	# only, and the line says why the levers are absent rather than leaving a gap.
@@ -92,8 +94,10 @@ func open(view: Dictionary) -> void:
 ## ends on, in the person's mouth (a lever's, then the call's close).
 func show_result(text: String, titles: Array = [], extra := {}) -> void:
 	_result.text = text
+	_result.visible = not text.is_empty()
 	verbs.visible = false
 	_why.text = ""
+	_why.hide()
 	if not titles.is_empty():
 		speak(titles, extra)
 

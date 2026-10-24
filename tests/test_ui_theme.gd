@@ -105,7 +105,7 @@ func _check_theme_contents() -> void:
 			_fail("'%s' is not registered as a Label variation" % variation)
 
 	var button_variations := [
-		UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON,
+		UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.REQUESTS_BUTTON,
 	]
 	for variation in button_variations:
 		if theme.get_type_variation_base(variation) != &"Button":
