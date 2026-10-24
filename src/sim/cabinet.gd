@@ -258,10 +258,15 @@ static func assign(state, portfolio: String, party_id: String, party_list: Array
 	if not by_id.has(party_id):
 		return
 
+	# V5.2b b3: a portfolio that changed hands is what its wanters ask about next
+	# month (audience_triggers.gd); handing it to the party that holds it moves
+	# nobody's office, so it stamps nothing (it still costs the reshuffle).
+	if String(ns.cabinet.get(portfolio, "")) != party_id:
+		ns.reshuffle_month = int(state.year) * 12 + int(state.month)
+		ns.reshuffle_portfolio = portfolio
 	ns.cabinet[portfolio] = party_id
 	ns.cabinet_effectiveness[portfolio] = _effectiveness_for(by_id[party_id], portfolio)
 	ns.reshuffles_called += 1
-	ns.reshuffle_month = int(state.year) * 12 + int(state.month)  # V5.2b b3: the office wants ask next month
 	Government.penalise_blocs(ns, CK.RESHUFFLE_BLOC_PENALTY)
 
 

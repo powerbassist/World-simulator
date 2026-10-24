@@ -11,9 +11,10 @@ extends SceneTree
 ##     stamps GameState.met_months; the month after, the president knows and likes
 ##     the other nation's head a little more. Any other stamp teaches nothing.
 ##   - AN OFFICE WANT ASKS AT A RESHUFFLE (the pre-mortem's third trigger): the
-##     player's Cabinet.assign() stamps the month, never a government's seating;
-##     the month after, everyone whose office want is unserved asks, outside the
-##     hazard and under the lane's rules.
+##     player's Cabinet.assign() that hands a portfolio to another party stamps the
+##     month and the portfolio -- never a no-op assign, never a government's seating;
+##     the month after, whoever wanted THAT portfolio and did not get it asks,
+##     outside the hazard and under the lane's rules.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -127,30 +128,43 @@ func _check_only_the_players_reshuffle_is_stamped() -> void:
 	if portfolio == "" or other == "":
 		_fail("France's cabinet has no portfolio to hand to a second coalition party")
 		return
+	Cabinet.assign(state, portfolio, String(ns.cabinet[portfolio]), party_list)
+	if int(ns.reshuffle_month) != -1:
+		_fail("handing a portfolio to the party that holds it stamped a reshuffle")
 	Cabinet.assign(state, portfolio, other, party_list)
-	if int(ns.reshuffle_month) != _now(state):
-		_fail("a reshuffle stamped %d, not %d" % [int(ns.reshuffle_month), _now(state)])
+	if int(ns.reshuffle_month) != _now(state) or String(ns.reshuffle_portfolio) != portfolio:
+		_fail("a reshuffle stamped %d / '%s', not %d / '%s'" % [int(ns.reshuffle_month), ns.reshuffle_portfolio, _now(state), portfolio])
 
 
-## The month after a reshuffle, an unserved office want is invited -- and arrives in
-## the lane through the month -- while a stamp from this month or two months ago
-## invites nobody.
+## The month after a reshuffle of a portfolio, whoever wanted it unserved is
+## invited -- and arrives in the lane through the month -- while a stamp from this
+## month or two months ago, a reshuffle of another portfolio, and a premiership
+## want (a portfolio reshuffle never moves the premiership) invite nobody.
 func _check_an_office_want_asks_after_a_reshuffle() -> void:
 	var state = _game()
 	var ns = state.player()
 	var asker := _office_wanter(ns, false)
 	if asker.is_empty():
-		_fail("no France person has an unserved office want to stage the reshuffle")
+		_fail("no France person has an unserved portfolio want to stage the reshuffle")
 		return
+	var key := String(asker["object"]).substr("office:portfolio:".length())
 	var now := _now(state)
+	ns.reshuffle_portfolio = key
 	for stamp in [now, now - 2]:
 		ns.reshuffle_month = stamp
 		if _invited(state, ns).has(asker["id"]):
 			_fail("a reshuffle stamped %d invited %s at %d" % [stamp, asker["id"], now])
 	ns.reshuffle_month = now - 1
+	ns.reshuffle_portfolio = "no_such_portfolio"
+	if _invited(state, ns).has(asker["id"]):
+		_fail("a reshuffle of another portfolio invited %s" % asker["id"])
+	ns.reshuffle_portfolio = key
 	var invited := _invited(state, ns)
 	if String(invited.get(asker["id"], "")) != asker["object"]:
 		_fail("the reshuffle did not invite %s about %s (%s)" % [asker["id"], asker["object"], invited])
+	for pid in invited:
+		if String(invited[pid]) == "office:premiership":
+			_fail("a portfolio reshuffle invited %s about the premiership" % pid)
 	var report: Dictionary = Audiences.tick_month(state, _loader, METERS)
 	var arrived := false
 	for row in report["arrived"]:
@@ -169,6 +183,7 @@ func _check_a_served_office_want_does_not_ask() -> void:
 		return
 	ns.cabinet["pensions"] = String(person.party_id)
 	ns.reshuffle_month = _now(state) - 1
+	ns.reshuffle_portfolio = "pensions"
 	if _invited(state, ns).has(person.id):
 		_fail("a served portfolio want was invited")
 
@@ -183,16 +198,15 @@ func _invited(state, ns) -> Dictionary:
 	return out
 
 
-## A France person with an office want (portfolio or premiership) that is, or is
-## not, served in this state: {id, object}, or {}.
+## A France person with a portfolio want that is, or is not, served in this state:
+## {id, object}, or {}.
 func _office_wanter(ns, served: bool) -> Dictionary:
 	for person in _loader.people[PLAYER]:
 		if person.id == President.leader_id(ns):
 			continue
 		for want in person.wants:
 			var object := String(want["object"])
-			if (object.begins_with("office:portfolio:") or object == "office:premiership") \
-					and Characters.want_served(ns, person, want, METERS, _leaders()) == served:
+			if object.begins_with("office:portfolio:") and Characters.want_served(ns, person, want, METERS, _leaders()) == served:
 				return {"id": person.id, "object": object}
 	return {}
 
