@@ -29,6 +29,7 @@ const Judiciary = preload("res://src/sim/judiciary.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
@@ -515,14 +516,14 @@ func _on_reassign() -> void:
 
 	var portfolio: String = CK.PORTFOLIO_KEYS[idx]
 	var party_id: String = _party_option_ids[party_idx]
-	if not Cabinet.can_assign(ns, portfolio, party_id):
-		_reassign_status.text = Cabinet.refusal_reason(ns, portfolio, party_id)
+	# V5.2 b+ R4: the command refuses with its reason (Removal.why_not), or prices
+	# the removal and seats the party.
+	var before := Trends.snapshot_now(_state)
+	var result: Dictionary = Removal.reassign(_state, _loader, portfolio, party_id)
+	_reassign_status.text = String(result["error"])
+	if not bool(result["ok"]):
 		_reassign_status.theme_type_variation = UiTheme.BAD_TEXT
 		return
-
-	var before := Trends.snapshot_now(_state)
-	Cabinet.assign(_state, portfolio, party_id, _loader.parties.get(ns.id, []))
-	_reassign_status.text = ""
 	reassigned.emit(before)
 	_dirty = true
 
