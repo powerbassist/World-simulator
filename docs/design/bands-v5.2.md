@@ -146,6 +146,168 @@ they built and where, and say what they do not know and why" ([[v5]], head).
   above 0.017 (refusing is ruinous on its own); a lapse cheaper than a decline
   (ignoring becomes the best answer).
 
+### B3 amendment (2026-10-24): the cost fades
+
+Declared before Systems' run, at Systems' request. The author's call, verbatim:
+"Le coût s'efface". The `bloc_offset` that a character act writes (brief, resign,
+defect, challenge: V4.3's acts, and V5.2b's through them) now fades, with a
+half-life of about 24 months. In Systems' words: a leak hurts the next vote, then
+it is forgotten. Everything but acts stays permanent: laws, events, the
+programme, campaigns, referendum results (`REFERENDUM_RESULT_OFFSET`) and the
+second chamber's overrides. Only acts fade, the old V4.3 acts as well as the
+new ones.
+
+**Why (MEASURED, Systems' run of PR #104, `.superpowers/sdd/qa/tip-104-e32c19cb.json`
+against `base-19ff21fc.json`):** with a permanent accumulator, the refusal
+grudges #104 feeds into briefs:
+
+- saturate workers and students at the clamp in `tests/test_balance.gd`'s
+  168-month MANAGED runs (Systems' report);
+- flip France's 2032 executive from HELD to LOST in 28 of the 41 regimes that
+  reach it;
+- move the 2029 legislative margin by a mean of -0.0164 (worst -0.0181), with
+  the government's standing unchanged in 41 of 41;
+- leave 2027 untouched: every one of the 50 rows has a margin delta of 0.0000.
+
+**The rows:**
+
+| | Declared |
+|---|---|
+| The fade's half-life (the constant) | **24 months**, inside a band of **[22, 30]** |
+| One act, then no further act: the fraction of that act's price left at H months, then at 2H, H the shipped constant inside [22, 30] | **50 %, then 25 %**, each to within 1 point; never past zero |
+| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime played to month 168 with `stop_on_loss = false` | **at most 0.50** in absolute value |
+| The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc` (the main behind `base-19ff21fc.json`, before #104), also played to month 168 with `stop_on_loss = false`, so the two runs are the same length (Systems runs it once as the base) | **none** |
+| The 2027 executive (B3's rows above) | **unchanged:** verdict held, \|Δ margin\| ≤ 0.017 |
+| The 2029 legislative, every regime with a FRA 2029 row (41): the government's standing (`majority` / `MINORITY` / `COHABITATION`) | **unchanged** in every row |
+| The same rows: the change in the 2029 margin | **at most 0.017** in absolute value, every row |
+| The 2032 executive, every regime with a FRA 2032 row (41): the change in the margin | **at most 0.017** in absolute value, every row |
+| The 2034 legislative, every regime with a FRA 2034 row (28): the standing and the margin | **reported**, not banded. A 2034 row exists only where 2032 held (the 28 base rows are exactly the 28 that hold 2032), so each 2032 flip removes one, and `balance_diff.py` prints it as "ONLY base" |
+| The one non-FRA played run, `managed_abolishes_the_monarchy` (GBR, national votes 2029, 2034, 2039): the verdict | **unchanged** in all three (HELD stays HELD); the margins are reported |
+
+**The comparison base.** Every row above that compares two tables compares the
+build tip (#104 with the fade) against **`base-19ff21fc.json`**, the accepted
+table from before requests existed, with `python tools/balance_diff.py`. B3's
+2027 rows already work this way. The comparison must not be against
+`tip-104-e32c19cb.json`: against #104's permanent cost, every delta reads
+positive and says nothing about what declining everything costs. Report the mean
+and the flips beside each row. The rows bound each row's move, not the mean.
+
+**Why 22 to 30 months (OPINION, derived from MEASURED spacings):**
+
+- France's votes in the base table are 25 months apart (2027-05 to 2029-06) and
+  35 months apart (2029-06 to 2032-05), so the vote after next comes about 60
+  months after an act.
+- "Hurts the next vote": at least 0.33 of the price must remain at the
+  longest gap to the next vote, 35 months. That needs H ≥ 35 · ln 2 / ln(1/0.33),
+  so H ≥ 21.9, and the band's lower end, 22, keeps 0.332.
+- "Then it is forgotten": at most a quarter may remain at the vote after next,
+  60 months. That needs H ≤ 30. The 60 months hold for an act just after a
+  vote. An act just before a vote meets the vote after next 25 to 36 months
+  later, with 35 to 49 % left at H = 24, so "forgotten" is true of early-term
+  acts, and a late-term act still reaches two votes (INFERRED from the same
+  arithmetic).
+- The author's 24 sits inside the band. The band is the stop rule's room, not a
+  licence to tune.
+
+**Why 0.50 for the act share, and not the clamp:**
+
+- A band that measures a clamp measures nothing. This is the correction V1.6d
+  and V1.6e both made, recorded in `src/sim/chambers_constants.gd:204-213`
+  (`d6c74b23`).
+- The permanent channels (laws, events, the programme, campaigns) may still
+  approach ±1.00 over fourteen years, as U0's thirteen overrides did. So the row
+  bounds the act register alone, at half the clamp. The other half of the room
+  is left to everything that does not fade.
+- At the measured 10.0 approval points per point of offset
+  ([[referendum-model]], `REFERENDUM_RESULT_OFFSET`'s row, measured on the approval
+  response), 0.50 is about 5 points of approval held by acts alone (INFERRED: a
+  unit conversion, not a run).
+- P4, the existing readability bound (total approval movement from acts within
+  ±3.0 points a year, `src/sim/character_act_constants.gd:195-197`), still binds
+  and is not redeclared here.
+
+**Why 0.017 at 2029 and 2032, by row (OPINION):**
+
+- The fade exists so that the vote after next costs no more than B3 already lets
+  the next one cost. So the bound is B3's own 0.017, half the hands-off 2027
+  margin.
+- **The 2032 base is knife-edge (MEASURED, `base-19ff21fc.json`):** 28 regimes
+  hold 2032, every one of them by less than 0.029, and the hands-off run already
+  loses it (margin -0.0072).
+- **"No flips" is rejected:** a 2032 row held by 0.0023 cannot honestly be
+  guaranteed against any refusal cost.
+- **A doubled bound (0.034) is rejected too:** no held 2032 margin exceeds it, so
+  it would permit every flip.
+- **What 0.017 holds:** at 0.017 per row, seven regimes must stay HELD, since
+  their base margins (0.0184 to 0.0289) exceed the bound:
+  - `managed_keeps_its_word`
+  - `managed_imposes_tariffs`
+  - `public_works`
+  - `managed_then_build`
+  - `managed_settles`
+  - `managed_answers_hard`
+  - `managed_answers_softly`
+- **What it lets flip:** the other 21 held rows are coin tosses that may flip
+  inside the bound. Each flip is reported by regime and goes to the author's
+  acceptance of the re-baseline (invariant I4), not to a new call.
+- **GBR, the one non-FRA played run (MEASURED):** its base margins are wide
+  (0.142, 0.1612, 0.116). Under #104's permanent cost, 2029 did not move, 2034
+  fell to 0.1029 and 2039 flipped to LOST (-0.0907), the hardest move in the
+  table. With margins that wide, the verdict discriminates where FRA 2032's
+  does not, so the row is B3's own "must not decide the election on its own":
+  HELD stays HELD.
+- **2029:** the margin row nearly held even under the permanent cost (worst
+  0.0181). The standing row is the verdict that matters there, because a
+  legislative election cannot remove the president. The incumbent's seats are
+  reported beside it (#104: -6 to -16, mean -14.7) and not banded.
+
+**No prediction of what 24 months yields (INFERRED):** under the permanent cost,
+the margin moved about 5.7 times as much between 2029 and 2032 for twice the
+time. The growth is not linear, so a closed-form estimate of the faded run would
+be invented, and none is given. The run decides.
+
+**The stop rule, fixed before the first run:**
+
+1. Run at H = 24.
+2. If a row misses, one re-run at the short end of the band, H = 22.
+3. If a row still misses, it is the author's call, not a third patch. The
+   options:
+   - a half-life below the band;
+   - smaller act prices (`PRICE_BRIEF` -0.25 and the others,
+     `src/sim/character_act_constants.gd:199-202`);
+   - accepting the loss as the price of declining everything.
+
+**B3's act row stays** ("at least 1 act by month 60" in a decline-everything
+term):
+
+- It is what makes refusing visible, and dropping it fails Q2.
+- Systems reports that it needs `DECLINE_GRUDGE` at 0.18 (in #104): at 0.12,
+  nobody the player refused reaches the brief gate
+  (`GRUDGE_BRIEF_THRESHOLD` 0.45, `src/sim/character_act_constants.gd:191`).
+- The grudge keeps its own decay. The fade touches only the price an act writes.
+- So "a refusal is answered by an act" and "the act does not decide the vote
+  after next" hold together only with the fade. That is the design argument for
+  the mechanic.
+
+**Probes:**
+
+- `tools/balance_probe.gd -- --json=PATH` at the tip, then
+  `balance_diff.py base-19ff21fc.json tip.json`, for the 2027, 2029 and 2032
+  rows.
+- `tests/test_balance.gd`'s MANAGED runs, reading the act register monthly, for
+  the act-share and clamp rows.
+- A new unit test, proposed below, for the half-life row.
+
+**Failure looks like:**
+
+- an act share past 0.50, or a bloc on the clamp it did not reach before #104
+  (the fade is not fading);
+- a seven-regime 2032 flip, or any row past 0.017 (declining everything still
+  decides the vote after next);
+- a 2029 standing change;
+- a GBR verdict flip in `managed_abolishes_the_monarchy`;
+- a half-life that is not 50 % at H months (the constant is wrong).
+
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
 
 Knowledge bands: **stranger** `[0, 0.33)`, **acquaintance** `[0.33, 0.67)`,
@@ -300,6 +462,15 @@ regimes are fixed here so the build cannot choose its own test.
   reaches the inbox by month 3 (B1's first cut, fast enough for the suite).
 - **`_check_decline_shows_its_price`** — decline a request: the person's card
   names the change in words (B3's card half).
+
+## Proposed register tests (Systems)
+
+- **`_check_act_price_fades`** (B3 amendment, 2026-10-24) — one act, then no
+  further act: the fraction of that act's price left is 50 % at H months and
+  25 % at 2H (H the shipped constant, inside [22, 30]), each to within 1 point,
+  and never crosses zero. For
+  Systems' register tests (`tests/test_characters.gd` or beside the register),
+  not the playability file.
 
 ## What could not be verified
 
