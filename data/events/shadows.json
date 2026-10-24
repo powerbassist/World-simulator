@@ -416,7 +416,7 @@
     {
       "id": "exposure_turned_favour",
       "name": "Favour Remembered",
-      "summary": "A businessman the president once quietly helped has fallen out with the palace and is telling the story of that favour to any journalist who will buy the coffee. He keeps receipts and enjoys attention.",
+      "summary": "Someone the president once quietly helped has fallen out with the palace and is telling the story of that favour to any journalist who will buy the coffee. They kept receipts and enjoy the attention.",
       "likelihood": 0.002,
       "category": "scandal",
       "severity": 2,
@@ -434,7 +434,7 @@
         {
           "id": "accountable",
           "label": "Confirm and explain",
-          "summary": "You acknowledge the favour and lay out why it was proper. It admits the story into the record and strips him of exclusivity.",
+          "summary": "You acknowledge the favour and lay out why it was proper. It admits the story into the record and strips the teller of exclusivity.",
           "effects": {
             "society": {
               "corruption": -0.04
@@ -450,8 +450,8 @@
         },
         {
           "id": "deny",
-          "label": "Question his motive",
-          "summary": "You cast him as a scorned contractor trading grudges. True enough, but he has receipts, and grudges with paperwork age well.",
+          "label": "Question their motive",
+          "summary": "You cast them as a scorned associate trading grudges. True enough, but they have receipts, and grudges with paperwork age well.",
           "effects": {
             "society": {
               "corruption": 0.05
@@ -469,7 +469,7 @@
         {
           "id": "silence",
           "label": "Grant no platform",
-          "summary": "You ignore him and hope his audience drifts. His audience grows.",
+          "summary": "You ignore them and hope the audience drifts. The audience grows.",
           "effects": {
             "bloc_offset": {
               "urban": -0.03,
