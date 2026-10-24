@@ -24,6 +24,12 @@ extends SceneTree
 ##      B2: 20-50 % of requests unplaceable; 12-30 audiences held in 60 months
 ##      and >= 4 in months 1-20; 100 % of unplaceable requests offer delegate and
 ##      decline.
+##   A4 PHONE FIRST (V5.2b b3; bands-v5.2.md B5's channel row as amended in #119):
+##      A2's machine, but each month every open request (pending or booked) is
+##      phoned once first -- the offered phone lever with the highest SHOWN midpoint,
+##      the way L1's player reads the card -- and only what the phone does not answer
+##      is booked. B5 (channel): B2's audiences row still holds -- 12-30 held in 60
+##      months, >= 4 in months 1-20.
 ##   A3 DECLINE EVERYTHING on arrival. B3's act row again, under explicit declines,
 ##      and the per-request price beside A1's lapse (tests/test_audiences.gd pins
 ##      the equality per request; this reports the means).
@@ -59,6 +65,7 @@ const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const LW = preload("res://tools/lever_weights.gd")
 const President = preload("res://src/sim/president.gd")
+const Phone = preload("res://src/sim/phone.gd")
 
 const PLAYER := "FRA"
 const MONTHS := 60
@@ -84,7 +91,7 @@ func _init() -> void:
 		quit(1)
 		return
 	var out := {"schema": 1, "months": MONTHS, "regimes": {}}
-	for regime in ["A1", "A2", "A3"]:
+	for regime in ["A1", "A2", "A3", "A4"]:
 		out["regimes"][regime] = _run(regime)
 	out["bands"] = _bands(out["regimes"])
 	if b5:
@@ -99,7 +106,9 @@ func _init() -> void:
 
 
 func _run(regime: String, months := MONTHS) -> Dictionary:
-	var book_all := regime == "A2" or regime == "A2F"
+	var book_all := regime == "A2" or regime == "A2F" or regime == "A4"
+	var calls := 0
+	var answered_by_phone := 0
 	var b5_requests: Array = []
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.player()
@@ -122,6 +131,12 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 		var fire: Array = []
 		if book_all:
 			fire = _pack(state)
+		if regime == "A4":
+			for row in ns.audience_requests.duplicate():
+				if AK.OPEN.has(String(row.get("status", ""))):
+					var call := _phone_first(state, ns, String(row["person_id"]))
+					calls += 1 if bool(call.get("ok", false)) else 0
+					answered_by_phone += 1 if bool(call.get("success", false)) else 0
 		for row in Audiences.pending(ns):
 			var id := String(row["id"])
 			if regime == "A3":
@@ -198,6 +213,9 @@ func _run(regime: String, months := MONTHS) -> Dictionary:
 		"mean_decline_grudge": decline_grudge / maxf(1.0, float(declines)),
 		"refused_peak_grudges": _top(peak, per_person),
 	}
+	if regime == "A4":
+		result["calls"] = calls
+		result["answered_by_phone"] = answered_by_phone
 	# Only A2F carries its rows, so A1-A3's table stays byte-comparable.
 	if regime == "A2F":
 		result["b5_requests"] = b5_requests
@@ -268,6 +286,22 @@ func _b5_answers(requests: Array) -> Dictionary:
 		shares[answer] = float(best[answer]) / float(n)
 		top_share = maxf(top_share, float(shares[answer]))
 	return {"requests": requests.size(), "best_share": shares, "top_share": top_share, "diary_day": LW.DIARY_DAY, "rows": requests}
+
+
+## A4's call: the offered phone lever with the highest shown midpoint (a promise
+## names the nearest month it may), or no call when none is offered.
+func _phone_first(state, ns, pid: String) -> Dictionary:
+	var best := ""
+	var best_mid := -1.0
+	for row in Phone.options(state, ns, _loader, pid)["levers"]:
+		var mid := (float(row["odds_lo"]) + float(row["odds_hi"])) / 2.0
+		if bool(row["offered"]) and mid > best_mid:
+			best_mid = mid
+			best = String(row["lever"])
+	if best == "":
+		return {}
+	var now := int(state.year) * 12 + int(state.month)
+	return Phone.dial(state, ns, _loader, pid, best, {"due_month": now + LK.PROMISE_MIN_MONTHS})
 
 
 ## The five refused people whose grudge climbed highest, for the act row's
@@ -379,6 +413,8 @@ func _bands(r: Dictionary) -> Dictionary:
 		"B3_act_by_refused_m60_A1": (a1["acts_by_refused"] as Array).size() >= 1,
 		"B3_act_by_refused_m60_A3": (a3["acts_by_refused"] as Array).size() >= 1,
 		"B3_named_grudge_m20_A1": int(a1["named_grudges_m20"]) >= 1,
+		"B5_channel_A4_held_12_30": int(r["A4"]["held"]) >= 12 and int(r["A4"]["held"]) <= 30,
+		"B5_channel_A4_held_4_by_m20": int(r["A4"]["held_m1_20"]) >= 4,
 	}
 
 
@@ -391,6 +427,8 @@ func _print(out: Dictionary) -> void:
 			r["booked"], r["unplaceable"], r["unplaceable_share"], r["unplaceable_offered_share"], r["held"], r["held_m1_20"],
 			(r["acts_by_refused"] as Array).size(), r["named_grudges_m20"], r["mean_decline_grudge"]])
 		print("   highest refused grudges: %s" % [r["refused_peak_grudges"]])
+		if r.has("calls"):
+			print("   phoned first: %d calls, %d requests answered by phone" % [r["calls"], r["answered_by_phone"]])
 	if out.has("b5_answers"):
 		print("A2F B5 answers over %d requests (day %.2f): best share %s" % [out["b5_answers"]["requests"], out["b5_answers"]["diary_day"], out["b5_answers"]["best_share"]])
 	for band in out["bands"]:
