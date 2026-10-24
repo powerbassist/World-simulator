@@ -134,7 +134,8 @@ static func commitments(ns) -> Array[Dictionary]:
 ## V5.2b b2.1. The commitments judged at their date and still remembered, in
 ## judging order (oldest first): the Diary's record of a promise kept or a lie
 ## revealed after the month's report is gone. Cast like commitments(), plus
-## {verdict, judged_month}.
+## {verdict, judged_month}. A "void" row may name a person content no longer
+## carries -- the reason it was void -- so a reader resolves the id with care.
 static func judged_commitments(ns) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for row in ns.commitments_judged:
@@ -259,6 +260,8 @@ static func record_judged(ns, row: Dictionary, verdict: String, now: int) -> boo
 
 ## The judged commitments older than JUDGED_KEPT_MONTHS are forgotten.
 static func prune_judged(ns, now: int) -> void:
+	if ns.commitments_judged.is_empty() or now - int(ns.commitments_judged[0].get("judged_month", 0)) <= K.JUDGED_KEPT_MONTHS:
+		return
 	var kept: Array[Dictionary] = []
 	for row in ns.commitments_judged:
 		if now - int(row.get("judged_month", 0)) <= K.JUDGED_KEPT_MONTHS:

@@ -103,7 +103,7 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 			row["currencies"] = [
 				{"currency": K.CURRENCY_FAVOUR, "offered": why_not == "", "why_not": why_not, "spends": {"rapport": -K.BARGAIN_FAVOUR_RAPPORT}},
 				{"currency": K.CURRENCY_VOTE_TRADE, "offered": why_not == "", "why_not": why_not, "spends": {"iou": 1.0}},
-				{"currency": K.CURRENCY_AID, "offered": false, "why_not": "aid is not open yet", "spends": {}},
+				{"currency": K.CURRENCY_AID, "offered": false, "why_not": K.AID_CLOSED, "spends": {}},
 			]
 		elif lever == "promise_date":
 			row["dates"] = {"earliest": now + K.PROMISE_MIN_MONTHS, "latest": now + K.PROMISE_MAX_MONTHS}
@@ -144,7 +144,7 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	var currency := String(args.get("currency", K.CURRENCY_FAVOUR))
 	var due := int(args.get("due_month", -1))
 	if lever == "bargain" and currency != K.CURRENCY_FAVOUR and currency != K.CURRENCY_VOTE_TRADE:
-		refused["error"] = "aid is not open yet" if currency == K.CURRENCY_AID else "not a currency"
+		refused["error"] = K.AID_CLOSED if currency == K.CURRENCY_AID else "not a currency"
 		return refused
 	if lever == "promise_date" and (due < now + K.PROMISE_MIN_MONTHS or due > now + K.PROMISE_MAX_MONTHS):
 		refused["error"] = "that date is too near or too far for a promise"

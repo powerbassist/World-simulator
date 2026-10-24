@@ -183,8 +183,9 @@ static func delegate(state, ns, loader, request_id: String) -> Dictionary:
 	# president's name that the want is served by the diary's horizon. Levers
 	# judges it at its date: kept, a kindness; broken, the deferred share of the
 	# grudge and a betrayal. That is the spec's "fixed, middling outcome".
-	President.commit(state, ns, loader, "delegated", String(row["person_id"]), String(row["object"]),
-		_now(state) + CalendarK.BOOKING_HORIZON_MONTHS)
+	if not President.commit(state, ns, loader, "delegated", String(row["person_id"]), String(row["object"]),
+			_now(state) + CalendarK.BOOKING_HORIZON_MONTHS):
+		push_error("audiences: the delegation of '%s' wrote no commitment" % String(row["id"]))
 	_close(row, K.STATUS_DELEGATED, _now(state))
 	return {"ok": true, "error": "", "price": price}
 

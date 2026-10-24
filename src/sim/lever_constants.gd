@@ -101,6 +101,8 @@ const IOU_MONTHS := 12
 const CURRENCY_FAVOUR := "favour"
 const CURRENCY_VOTE_TRADE := "vote_trade"
 const CURRENCY_AID := "aid"
+## The one text for aid's refusal: the card and the command say the same (a msgid).
+const AID_CLOSED := "aid is not open yet"
 ## A promised date the president names, inside this window from now: too near is
 ## not a promise, too far is not a date.
 const PROMISE_MIN_MONTHS := 3

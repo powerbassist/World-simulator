@@ -71,6 +71,7 @@ func _init() -> void:
 	_check_the_fog_does_not_leak_across_readings()
 	_check_an_agreed_audience_left_open_settles()
 	_check_a_lever_tried_again_rolls_afresh()
+	_check_agree_takes_only_an_agreement_on_a_held_audience()
 
 	_finish()
 
@@ -880,6 +881,24 @@ func _check_a_lever_tried_again_rolls_afresh() -> void:
 			turned += 1
 	if turned == 0:
 		_fail("in 39 audiences no failed argue was followed by a success: the attempt is not in the roll")
+
+
+## Audiences.agree() stamps only a held audience, and only with an agreement: a
+## decline stamped this way would escape its price at the month's end.
+func _check_agree_takes_only_an_agreement_on_a_held_audience() -> void:
+	var c := _pending()
+	if c.is_empty():
+		return
+	if Audiences.agree(c["ns"], String(c["id"]), AK.STATUS_SETTLED):
+		_fail("a pending request was stamped as agreed")
+	var b := _booked()
+	if b.is_empty():
+		return
+	for bad in [AK.STATUS_DECLINED, AK.STATUS_LAPSED, "anything"]:
+		if Audiences.agree(b["ns"], String(b["id"]), bad):
+			_fail("a held audience was stamped '%s'" % bad)
+	if not Audiences.agree(b["ns"], String(b["id"]), AK.STATUS_PROMISED):
+		_fail("a held audience refused the stamp 'promised'")
 
 
 ## A France game with its first request still pending: {state, ns, id}, or {}.
