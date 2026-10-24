@@ -70,27 +70,37 @@ const FEELING_LABEL := {
 
 ## Q2, the cost of a refusal shown afterwards: one dated line per refusal or lapse
 ## of their requests, per delegation in flight (the minister's promise) and per
-## delegation judged -- what Audiences and President still hold for the person.
+## delegation judged -- what Audiences and President still hold for the person --
+## oldest first across the kinds.
 static func dated_lines(loader, ns, pid: String) -> PackedStringArray:
-	var out := PackedStringArray()
+	var dated: Array = []  # [absolute month, line]
 	for row in ns.audience_requests:
 		if String(row.get("person_id", "")) != pid:
 			continue
-		var on := Words.when(int(row.get("resolved_month", -1)))
+		var month := int(row.get("resolved_month", -1))
 		match String(row.get("status", "")):
 			AK.STATUS_DECLINED:
-				out.append(Strings.t("%s: you refused them; they took it badly.") % on)
+				dated.append([month, Strings.t("%s: you refused them; they took it badly.") % Words.when(month)])
+			# A lapse is a request left unanswered OR a booked audience never held:
+			# the row keeps no difference, so the line names neither.
 			AK.STATUS_LAPSED:
-				out.append(Strings.t("%s: their request went unanswered; they took it badly.") % on)
+				dated.append([month, Strings.t("%s: their request lapsed; they took it badly.") % Words.when(month)])
 	for row in President.commitments_with(ns, pid):
 		if String(row["kind"]) == "delegated":
-			out.append(Strings.t("%s: your minister promised them %s by %s.") % [Words.when(int(row["made_month"])),
-				object_text(loader, ns, String(row["object"]), {}), Words.when(int(row["due_month"]))])
+			dated.append([int(row["made_month"]), Strings.t("%s: your minister promised them %s by %s.") % [Words.when(int(row["made_month"])),
+				object_text(loader, ns, String(row["object"]), {}), Words.when(int(row["due_month"]))]])
 	for row in President.judged_commitments(ns):
 		if String(row["person_id"]) != pid or String(row["kind"]) != "delegated" or String(row["verdict"]) == "void":
 			continue
 		var on := Words.when(int(row["judged_month"]))
-		out.append(Strings.t("%s: your minister's promise was kept.") % on if String(row["verdict"]) == "kept" 			else Strings.t("%s: your minister's promise was broken; they took it badly.") % on)
+		dated.append([int(row["judged_month"]), Strings.t("%s: your minister's promise was kept.") % on if String(row["verdict"]) == "kept" 			else Strings.t("%s: your minister's promise was broken; they took it badly.") % on])
+	# sort_custom is not stable: the index added here keeps a month's own order.
+	for i in dated.size():
+		dated[i].append(i)
+	dated.sort_custom(func(a: Array, b: Array) -> bool: return int(a[0]) < int(b[0]) or (int(a[0]) == int(b[0]) and int(a[2]) < int(b[2])))
+	var out := PackedStringArray()
+	for d in dated:
+		out.append(String(d[1]))
 	return out
 
 

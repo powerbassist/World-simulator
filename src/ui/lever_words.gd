@@ -93,9 +93,13 @@ static func spends_text(spends: Dictionary, feel: Dictionary, due := -1) -> Stri
 ## register they moved in the word it now reads, off `feel` (Feelings.of() the
 ## person after the try).
 static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable, feel: Dictionary) -> String:
+	# The larger write, never the sum: a spend and an effect of opposite signs both
+	# happened, and the word after names where they left the person.
 	var moved := {}
 	for register in Feelings.BANDS:
-		moved[register] = float(spent.get(register, 0.0)) + float(effects.get(register, 0.0))
+		var a := float(spent.get(register, 0.0))
+		var b := float(effects.get(register, 0.0))
+		moved[register] = a if absf(a) >= absf(b) else b
 	var parts := Feelings.stands(feel, moved)
 	if spent.has("iou"):
 		parts.append(Strings.t("you owe them a vote by %s") % when(int(spent["iou"])))

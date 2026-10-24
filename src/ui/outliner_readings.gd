@@ -161,7 +161,7 @@ static func _people(ns, loader) -> Array:
 	for pid in ns.person_loyalty.keys():
 		var loyalty := float(ns.person_loyalty[pid])
 		if loyalty <= -MOVED_AT and float(ns.person_grudges.get(pid, 0.0)) < MOVED_AT:
-			worried.append({"id": String(pid), "weight": -loyalty, "text": Feelings.words(Feelings.of(ns, String(pid)))["loyalty"]})
+			worried.append({"id": String(pid), "weight": -loyalty, "text": Feelings.word("loyalty", loyalty, String(ns.pm_person_id) == String(pid))})
 	worried.sort_custom(func(a, b) -> bool:
 		if not is_equal_approx(float(a["weight"]), float(b["weight"])):
 			return float(a["weight"]) > float(b["weight"])

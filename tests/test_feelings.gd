@@ -45,6 +45,8 @@ func _init() -> void:
 	else:
 		_check_decline()
 		_check_delegation_line()
+		_check_dated_order()
+	_check_paid_opposite_signs()
 	_finish()
 
 
@@ -114,7 +116,8 @@ func _check_decline() -> void:
 	for register in promised:
 		if not told.contains(String(promised[register])):
 			_fail("the words told after the answer '%s' miss '%s'" % [told, promised[register]])
-	if Words.price_text(price, before).contains("0.1") or told.contains("0.1"):
+	var figure := RegEx.create_from_string(r"\d[.,]\d")
+	if figure.search(card) != null or figure.search(told) != null:
 		_fail("a price still prints a figure: '%s' / '%s'" % [card, told])
 	var lines := PersonCard.dated_lines(_loader, ns, pid)
 	if lines.size() != 1 or not lines[0].contains("refused") or not lines[0].contains(Words.when(int(state.year) * 12 + int(state.month))):
@@ -136,6 +139,29 @@ func _check_delegation_line() -> void:
 	var lines := PersonCard.dated_lines(_loader, ns, pid)
 	if lines.size() != 1 or not lines[0].contains("minister"):
 		_fail("a delegation leaves no dated line on the person: %s" % [lines])
+
+
+## A try whose spend and effect move one register in opposite directions still
+## names it: both writes happened (review pass 1 on #151).
+func _check_paid_opposite_signs() -> void:
+	var feel := {"grudge": 0.0, "rapport": 0.0, "loyalty": 0.0, "office": false}
+	var text := Words.paid_text({"rapport": -0.1}, {"rapport": 0.1}, func(id: String) -> String: return id, feel)
+	if not text.contains("rapport"):
+		_fail("a spend and an effect of opposite signs drop the register from the paid line: '%s'" % text)
+
+
+## The dated lines read oldest first across their kinds: a delegation in March
+## above a refusal in June (review pass 1 on #151).
+func _check_dated_order() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.player()
+	var pid := String(_loader.people[PLAYER][1].id)
+	var march := 2026 * 12 + 3
+	ns.audience_requests.append({"id": "r_june", "person_id": pid, "status": "declined", "resolved_month": march + 3})
+	ns.commitments.append({"kind": "delegated", "person_id": pid, "object": "office:premiership", "made_month": march, "due_month": march + 12})
+	var lines := PersonCard.dated_lines(_loader, ns, pid)
+	if lines.size() != 2 or not lines[0].contains("minister"):
+		_fail("the dated lines are not oldest first: %s" % [lines])
 
 
 ## Every line of src/ui that prints a figure (Num.f / Num.fs) and names one of the
