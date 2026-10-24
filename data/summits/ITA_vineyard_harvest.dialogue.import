@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://cjq40ba17hg1"
+path="res://.godot/imported/ITA_vineyard_harvest.dialogue-97628907b31fb5cc3cc220f28f2a8af3.tres"
+
+[deps]
+
+source_file="res://data/summits/ITA_vineyard_harvest.dialogue"
+dest_files=["res://.godot/imported/ITA_vineyard_harvest.dialogue-97628907b31fb5cc3cc220f28f2a8af3.tres"]
+
+[params]
+
+defaults=true

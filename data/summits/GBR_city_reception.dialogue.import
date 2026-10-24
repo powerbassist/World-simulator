@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://er4gbhwt4lpy"
+path="res://.godot/imported/GBR_city_reception.dialogue-b3161869083b17da345d310b38771c2a.tres"
+
+[deps]
+
+source_file="res://data/summits/GBR_city_reception.dialogue"
+dest_files=["res://.godot/imported/GBR_city_reception.dialogue-b3161869083b17da345d310b38771c2a.tres"]
+
+[params]
+
+defaults=true

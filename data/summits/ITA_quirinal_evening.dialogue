@@ -1,24 +1,24 @@
 ~ start
-President Moretti: You are only the second French president to dine at the Quirinal in a decade. The first was remembered mainly for the wine.
+Premier Bagnasco: You are only the second French president to dine at the Quirinal in a decade. The first was remembered mainly for the wine.
 - Ask for their support in the council => council_support
 - Speak only of culture => culture_only
 ~ council_support
-President Moretti: Rome's vote is old, patient, and rarely free. Name the file, and name what France can do for the Mezzogiorno.
+Premier Bagnasco: Rome's vote is old, patient, and rarely free. Name the file, and name what France can do for the Mezzogiorno.
 - Promise the infrastructure package => promise_package
 - Offer only goodwill => goodwill
 ~ promise_package
-President Moretti: Then Italy will look kindly on your file, and the south will have its railway, or the renderings of one.
+Premier Bagnasco: Then Italy will look kindly on your file, and the south will have its railway, or the renderings of one.
 => END
 ~ goodwill
-President Moretti: Goodwill is welcome at this table, but it does not move votes. We will drink to it anyway.
+Premier Bagnasco: Goodwill is welcome at this table, but it does not move votes. We will drink to it anyway.
 => END
 ~ culture_only
-President Moretti: A wise choice. The treaties that last are the ones nobody had to vote on.
+Premier Bagnasco: A wise choice. The treaties that last are the ones nobody had to vote on.
 - Propose a restorations fund => restorations
 - Let the evening end => evening_ends
 ~ restorations
-President Moretti: For the abbeys and the aqueducts both. Europe began as a culture and only later learned to file paperwork.
+Premier Bagnasco: For the abbeys and the aqueducts both. Europe began as a culture and only later learned to file paperwork.
 => END
 ~ evening_ends
-President Moretti: In that case: to the friendship, and to the wine, which tonight at least is entirely Italian.
+Premier Bagnasco: In that case: to the friendship, and to the wine, which tonight at least is entirely Italian.
 => END

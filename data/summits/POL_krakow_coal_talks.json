@@ -1,0 +1,54 @@
+{
+  "name": "Kraków, the Coal Talks",
+  "summary": "A university hall, the smell of old coal smoke through the windows, and a prime minister who has promised miners they will not be forgotten.",
+  "effects": {
+    "Offer a just-transition fund": {},
+    "Offer a French nuclear partnership": {},
+    "Offer to defend Poland's pace at the council": {},
+    "Fund it from the French budget": {
+      "spending_pct_gdp": {
+        "infrastructure": 0.03
+      },
+      "bloc_offset": {
+        "workers": 0.02,
+        "business": -0.02
+      }
+    },
+    "Fund it from a European line": {
+      "bloc_offset": {
+        "workers": 0.01,
+        "business": 0.01
+      }
+    },
+    "Offer reactor technology": {
+      "spending_pct_gdp": {
+        "infrastructure": 0.03
+      },
+      "bloc_offset": {
+        "business": 0.03,
+        "urban": -0.01
+      }
+    },
+    "Offer only training and expertise": {
+      "spending_pct_gdp": {
+        "education": 0.01
+      },
+      "bloc_offset": {
+        "students": 0.02
+      }
+    },
+    "Say the pace should be Poland's": {
+      "bloc_offset": {
+        "rural": 0.02,
+        "urban": -0.02
+      }
+    },
+    "Say the pace should be Europe's": {
+      "bloc_offset": {
+        "urban": 0.02,
+        "rural": -0.02
+      }
+    }
+  },
+  "scene": "summit_hall"
+}

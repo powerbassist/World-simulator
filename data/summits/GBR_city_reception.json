@@ -1,0 +1,46 @@
+{
+  "name": "The Reception at the Guildhall",
+  "summary": "Gilded halls, a financial centre that wants Paris to be gracious, and a prime minister who wants it to be quiet.",
+  "effects": {
+    "Ask for equivalence for French banks": {},
+    "Ask about the student exchange": {},
+    "Ask about the trade in services": {},
+    "Offer reciprocal market access": {
+      "bloc_offset": {
+        "business": 0.04,
+        "workers": -0.02
+      }
+    },
+    "Propose a joint regulators forum": {
+      "bloc_offset": {
+        "business": 0.01
+      }
+    },
+    "Offer a fee waiver for exchange students": {
+      "spending_pct_gdp": {
+        "education": 0.02
+      },
+      "bloc_offset": {
+        "students": 0.04
+      }
+    },
+    "Offer a scholarship fund": {
+      "spending_pct_gdp": {
+        "education": 0.03
+      },
+      "bloc_offset": {
+        "students": 0.03,
+        "business": -0.01
+      }
+    },
+    "Propose mutual recognition of professions": {
+      "bloc_offset": {
+        "business": 0.02,
+        "urban": 0.02,
+        "workers": -0.01
+      }
+    },
+    "Propose nothing and thank them": {}
+  },
+  "scene": "summit_hall"
+}

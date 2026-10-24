@@ -1,0 +1,35 @@
+~ start
+Premier Bagnasco: The Commission has opened a file on our deficit. I would rather discuss it over dinner than over a spreadsheet.
+- Offer to speak for Italy in Brussels => speak_for
+- Warn that the rules apply to everyone => rules
+- Suggest an investment exemption => exemption
+~ speak_for
+Premier Bagnasco: From Paris, that would carry weight. And, I admit, a debt I would carry in return.
+- Make it a favour, no strings => favour
+- Ask for Italian votes on your file => votes
+~ favour
+Premier Bagnasco: A favour freely given. I will remember it, and so will my bankers, which is rarer.
+=> END
+~ votes
+Premier Bagnasco: An honest trade. Rome will look at your file with great attention, which is not quite the same as a yes.
+=> END
+~ rules
+Premier Bagnasco: The rules, yes. They are very good rules, and they were written by countries that did not need them.
+- Hold your line on the rules => hold
+- Offer help with the reform plan => reform
+~ hold
+Premier Bagnasco: Then I will hold mine as well. We will find, around the cheese, that we agree on the ceiling.
+=> END
+~ reform
+Premier Bagnasco: Reform I can sell at home if the money looks like a loan and not a lecture.
+=> END
+~ exemption
+Premier Bagnasco: An exemption for investment. The northern states will call it a loophole and the southern ones a lifeline.
+- Back it as a loophole worth having => loophole
+- Back it for defence and green only => narrow
+~ loophole
+Premier Bagnasco: A loophole worth having. I will hang that on my wall next to the crucifix.
+=> END
+~ narrow
+Premier Bagnasco: Narrow, then. Narrow is passable, and passable is what Europe has always meant by agreed.
+=> END

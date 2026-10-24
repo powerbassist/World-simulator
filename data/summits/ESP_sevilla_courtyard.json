@@ -1,0 +1,50 @@
+{
+  "name": "A Courtyard in Seville",
+  "summary": "Citrus blossom, a fountain, and a head of government who treats water as the only subject worth three courses.",
+  "effects": {
+    "Raise the Pyrenees power link": {},
+    "Raise the drought and water": {},
+    "Raise tourism and housing": {},
+    "Commit to the cable": {
+      "spending_pct_gdp": {
+        "infrastructure": 0.04
+      },
+      "bloc_offset": {
+        "business": 0.03,
+        "rural": -0.02
+      }
+    },
+    "Ask for guarantees on prices": {
+      "bloc_offset": {
+        "business": 0.02,
+        "urban": 0.01
+      }
+    },
+    "Offer French desalination expertise": {
+      "spending_pct_gdp": {
+        "infrastructure": 0.02
+      },
+      "bloc_offset": {
+        "rural": 0.03,
+        "business": 0.01
+      }
+    },
+    "Offer a joint water charter": {},
+    "Propose a joint housing programme": {
+      "spending_pct_gdp": {
+        "infrastructure": 0.03
+      },
+      "bloc_offset": {
+        "urban": 0.03,
+        "business": -0.02
+      }
+    },
+    "Propose a tourist levy": {
+      "bloc_offset": {
+        "urban": 0.02,
+        "business": -0.03
+      }
+    }
+  },
+  "scene": "garden_park"
+}

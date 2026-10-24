@@ -1,0 +1,35 @@
+~ start
+Prime Minister Marchbanks: The Lord Mayor has put the best silver on show. It is the last thing in the City that nobody has asked Paris about.
+- Ask for equivalence for French banks => equivalence
+- Ask about the student exchange => students
+- Ask about the trade in services => services
+~ equivalence
+Prime Minister Marchbanks: Equivalence is a word that has done more damage to dinners than any wine. But I will take it to the Chancellor.
+- Offer reciprocal market access => reciprocal
+- Propose a joint regulators forum => forum
+~ reciprocal
+Prime Minister Marchbanks: Reciprocal access. The bankers will cheer, the regulators will sulk, and I will take the credit for both.
+=> END
+~ forum
+Prime Minister Marchbanks: A forum. A fine place for good intentions to meet and be minuted.
+=> END
+~ students
+Prime Minister Marchbanks: Fifty thousand students once crossed each year, and now they cross with forms. I should like to put that right.
+- Offer a fee waiver for exchange students => waiver
+- Offer a scholarship fund => scholars
+~ waiver
+Prime Minister Marchbanks: A waiver. The universities will be delighted, and the Treasury will pretend to be.
+=> END
+~ scholars
+Prime Minister Marchbanks: A scholarship fund. Named after someone dead and uncontroversial, I hope.
+=> END
+~ services
+Prime Minister Marchbanks: Services are where we are strong and you are suspicious. A pity, since our strengths complement each other.
+- Propose mutual recognition of professions => recognise
+- Propose nothing and thank them => thanks
+~ recognise
+Prime Minister Marchbanks: Mutual recognition of lawyers, architects, nurses. The chambers will complain, and then they will quietly rejoice.
+=> END
+~ thanks
+Prime Minister Marchbanks: Thanks accepted. A polite no is a very British form of yes.
+=> END
