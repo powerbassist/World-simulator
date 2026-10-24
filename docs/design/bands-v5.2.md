@@ -175,8 +175,8 @@ grudges #104 feeds into briefs:
 |---|---|
 | The fade's half-life (the constant) | **24 months**, inside a band of **[22, 30]** |
 | One act, then no further act: the fraction of that act's price left at H months, then at 2H, H the shipped constant inside [22, 30] | **50 %, then 25 %**, each to within 1 point; never past zero |
-| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime played to month 168 with `stop_on_loss = false` | **at most 0.50** in absolute value |
-| The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc` (the main behind `base-19ff21fc.json`, before #104), also played to month 168 with `stop_on_loss = false`, so the two runs are the same length (Systems runs it once as the base) | **none** |
+| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime, over the months the game plays (to the player's executive loss, or month 168 if there is none; see "Correction: the read window" below) | **at most 0.50** in absolute value |
+| The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc` (the main behind `base-19ff21fc.json`, before #104), read over the same months as the tip run (Systems runs it once as the base; see "Correction: the read window" below) | **none** |
 | The 2027 executive (B3's rows above) | **unchanged:** verdict held, \|Δ margin\| ≤ 0.017 |
 | The 2029 legislative, every regime with a FRA 2029 row (41): the government's standing (`majority` / `MINORITY` / `COHABITATION`) | **unchanged** in every row |
 | The same rows: the change in the 2029 margin | **at most 0.017** in absolute value, every row |
@@ -340,22 +340,19 @@ this subsection records what they measured and what the author accepted.
 | Act-written part of `bloc_offset` ≤ 0.50 | MISS: -0.592 in every FRA run, -0.615 in the GBR ten-year run; all nine other instrumented runs breach (termed-out, subsidised, regulated, redistributive, nuclear, nationalised, gas, dissolution, captured-court) | MISS: -0.576 (FRA), -0.594 (GBR) | see below |
 | No new clamp | MISS: runs 1 and 18 (workers, students, 2032-08), run 16 (students, 2029-11) | MISS | see below |
 
-**The two health rows.** The act-share ceiling and the no-new-clamp row were not
-named in the author's words. The call was put to the author with an explicit
-alternative: cut the brief price and keep both rows (Gameplay's option A). The
-author chose to accept rather than cut. So this note reads the call as accepting
-the table as measured, both health rows included. That reading is INFERRED; the
-parent confirms it.
+**The two health rows.** The author's words did not name the act-share ceiling
+or the no-new-clamp row. The author's second answer settles them: they are NOT
+accepted, and the brief price is cut so that both come back inside their bands
+("B3 amendment, the brief price" below).
 
 Both were read from an instrumented `test_balance` that kept `_play`'s default
 `stop_on_loss = true` for most runs (runs 1 and 18 played past the 2032-05 loss,
 which is where they clamp), not the declared runs to month 168. QA notes that this
 leaves the misses standing: a longer run can only add to a breach, and the base
 runs that held 2032 reached month 168 without these clamps. A future price change
-is measured with the declared 168-month runs.
+is measured over the read window ("Correction: the read window" below).
 
-Read under that call, the 0.50 ceiling and the clamp row stay declared, as the
-bound a future price change is measured against. They no longer gate V5.2b.
+Both rows stay bands, and they gate the run at the new price.
 
 **What the half-life changed** (MEASURED, from the two runs): almost nothing.
 The 2032 mean moved -0.0478 at H = 24 and -0.0460 at H = 22. The 2032 harm comes
@@ -395,17 +392,16 @@ follows them, before Systems runs it.
 The half-life stays at **H = 24**. The re-run at H = 22 moved the 2032 mean only
 from -0.0478 to -0.0460 (MEASURED, the subsection above).
 
-**Two readings above are replaced.** The second answer replaces the reading in
-"B3 amendment, measured, and the author's call", where the two health rows were
-"read as accepted" and "no longer gate V5.2b". From now on, they gate again: the
-price exists to bring them back inside the band. The 2032 row becomes reported;
-the 2034 row was reported already.
+**What the two answers settle.** The 2032 rows are accepted (answer 1). The two
+health rows are not, and they gate again: the price exists to bring them back
+inside the band (answer 2). The 2032 row becomes reported; the 2034 row was
+reported already.
 
 | Row, at the new price, against `base-19ff21fc.json` | Declared |
 |---|---|
 | The half-life, one act: 50 % at H, 25 % at 2H | **unchanged**, a band |
-| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime played to month 168 with `stop_on_loss = false` | **at most 0.50**, a band |
-| The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc`, also played to month 168 with `stop_on_loss = false` | **none**, a band |
+| The act-written part of `bloc_offset`, in offset points, any bloc, any month, every `tests/test_balance.gd` MANAGED regime, over the months the game plays | **at most 0.50**, a band |
+| The same runs: a bloc's whole `bloc_offset` at ±1.00 that was not at it in the same run at `19ff21fc`, read over the same months | **none**, a band |
 | The 2027 executive | **unchanged** (B3's rows), a band |
 | The 2029 legislative: the standing, and \|Δ margin\| ≤ 0.017 in every row | **unchanged**, a band |
 | B3's act row: at least 1 act by month 60 in a decline-everything term | **unchanged**, a band |
@@ -413,6 +409,34 @@ the 2034 row was reported already.
 | The 2034 legislative rows | **reported** |
 | GBR, `managed_abolishes_the_monarchy` (2029, 2034, 2039): the verdicts and the margins | **reported**, and **shown to the author before #104 merges** |
 | P4 (approval movement from acts within ±3.0 points a year) | still binds |
+
+**Correction: the read window (2026-10-24, before the run at the new price).**
+This replaces the earlier wording "played to month 168 with
+`stop_on_loss = false`" (QA's TAKE 3 on PR #109). It is a correction, and the
+band values do not change:
+
+- **The window:** the act-share row and the clamp row read only the months the
+  game plays, in base and tip alike. That means up to the player's executive
+  loss, or month 168 if there is none.
+- **The base comparison:** a tip run is compared with its base run over the same
+  months. A clamp the base reaches only after the tip run's last month does not
+  excuse the tip. A clamp the tip would reach after its loss does not count
+  against it.
+
+**The reason:**
+
+- The game ends when the president loses. Months after that loss are a world the
+  player never sees, and a band that measures them judges a sim the game does
+  not run. This is the AGENTS.md lesson "green is not measured", read from the
+  other side.
+- QA measured the old wording's cost (MEASURED, QA's call 2 to the parent):
+  - In 17 of the 18 clamping runs, the clamp landed after the 2032 loss, in
+    months the game never plays.
+  - Two base clamps came years earlier.
+  - "Same length" therefore compared a tip that clamps only in unplayed months
+    with a base that clamps in played ones.
+- QA's TAKE 3 asked that the base and tip runs cover the same span. Comparing
+  over the same months keeps that.
 
 **Why the health rows can come back (INFERRED):**
 
@@ -458,8 +482,8 @@ instead of banded.
 - `tools/balance_probe.gd` at the tip, then
   `balance_diff.py base-19ff21fc.json tip.json`. This covers the 2027, 2029 and
   2032 rows, the 2034 rows and the GBR rows.
-- The instrumented `tests/test_balance.gd` reads, with `stop_on_loss = false` in
-  both the base run and the tip run, for the act-share row and the clamp row.
+- The instrumented `tests/test_balance.gd` reads, over the read window below,
+  for the act-share row and the clamp row.
 - `tools/audience_probe.gd`, for B3's act row.
 
 ## B4 — Knowing someone matters, and the fog is shown (Q4)
