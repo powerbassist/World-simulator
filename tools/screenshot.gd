@@ -65,7 +65,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 18 --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --book
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
@@ -316,7 +316,7 @@ var _mid_term := false
 ## history to draw.
 var _months := 0
 ## V5.2b: --request stages two audience requests through the sim's own arrival
-## (Audiences._arrive; the register is the sim's); --book opens the Diary on the
+## (Audiences._arrive; the register is the sim's); --request-book opens the Diary on the
 ## first one's offered days; --audience books its first free day and reaches it, so
 ## the scene is up.
 var _request := ""
@@ -795,7 +795,7 @@ func _init() -> void:
 			_console = "errors"
 		elif args[i] == "--mid-term":
 			_mid_term = true
-		elif args[i] == "--request" or args[i] == "--book" or args[i] == "--audience":
+		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
 		elif args[i] == "--months" and i + 1 < args.size():
 			_months = int(args[i + 1])

@@ -93,9 +93,17 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}
 
 
+## What saying no writes on the person, in words, the parts that move only (QA on
+## #105: "loyalty +0.00" is noise on a card).
 static func price_text(price: Dictionary) -> String:
-	return Strings.t("grudge %s, loyalty %s, rapport %s") % [Num.fs(float(price.get("grudge", 0.0)), 2),
-		Num.fs(float(price.get("loyalty", 0.0)), 2), Num.fs(float(price.get("rapport", 0.0)), 2)]
+	var parts := PackedStringArray()
+	if absf(float(price.get("grudge", 0.0))) >= 0.005:
+		parts.append(Strings.t("a grudge %s") % Num.fs(float(price["grudge"]), 2))
+	if absf(float(price.get("loyalty", 0.0))) >= 0.005:
+		parts.append(Strings.t("loyalty %s") % Num.fs(float(price["loyalty"]), 2))
+	if absf(float(price.get("rapport", 0.0))) >= 0.005:
+		parts.append(Strings.t("rapport with you %s") % Num.fs(float(price["rapport"]), 2))
+	return ", ".join(parts) if not parts.is_empty() else Strings.t("nothing")
 
 
 ## The diary's outcome, its UI half: the scene for an audience, else the news card
