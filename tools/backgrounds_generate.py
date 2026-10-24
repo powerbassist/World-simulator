@@ -52,6 +52,20 @@ LATENT_NODE = "4"
 ## assets/portrait_scenes/ is the 432x632 library the bust display and its
 ## tests own. Only the rooms an audience, a call or a summit scene is held in.
 WIDE_SIZE = (1344, 768)
+## A wide room whose dressing differs from the portrait library's. The generic
+## summit hall asked for "many different national flags" and the model drew
+## real flags from every continent (QA, PR 108: a non-European red flag with a
+## star) -- the game is ten European nations, so the wide hall names European
+## flags only. First try added the EU's twelve-star flag and the model answered
+## with a parliament full of seated delegates: faces are what the composite
+## cannot survive, so the hall is EMPTY by name, with no EU banner to invite a
+## session. A bare "European national flags" still drew a Stars and Stripes in
+## one render, so the flags are named: roster nations only.
+WIDE_DRESSING = {
+    "summit_hall": ("empty international summit hall, large round table with empty leather chairs, "
+                    "a row of the French, German, Italian, Spanish and Polish flags on small table "
+                    "stands, blank nameplates, nobody seated"),
+}
 WIDE_SCENES = ["office", "office_night", "cabinet_room", "corridor", "press_room",
                "tv_studio", "podium_flags", "summit_hall", "state_dinner",
                "parliament_chamber"]
@@ -178,7 +192,7 @@ def prompt_for(scene: str, n: int, nation: str = "", wide: bool = False):
     stem = scene + ("_" + nation if nation else "") + "_" + str(n)
     salt = int(comfy.load_salts().get(("wide:" if wide else "scene:") + stem, 0))
     seed = comfy.djb2(seed_key + ":r%d" % salt if salt > 0 else seed_key)
-    dressing = SCENES[scene]
+    dressing = WIDE_DRESSING.get(scene, SCENES[scene]) if wide else SCENES[scene]
     if nation:
         dressing = _nation_dressing(scene, nation)
     text = "%s, %s" % (dressing, CONSTRAINTS)
@@ -242,7 +256,8 @@ def reroll(stems, wide: bool) -> int:
             raise RuntimeError("'%s' is not a <scene>[_NATION]_<n> backdrop name" % stem)
         salt = comfy.bump_salt(prefix + stem)
         gone = 0
-        for path in (raw_dir / (stem + ".png"), out_dir / (stem + ".webp")):
+        for path in (raw_dir / (stem + ".png"), out_dir / (stem + ".webp"),
+                     out_dir / (stem + ".webp.import")):
             if path.exists():
                 comfy._confined(path, REPO).unlink()
                 gone += 1
