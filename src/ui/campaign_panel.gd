@@ -44,6 +44,8 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const CampaignChest = preload("res://src/ui/campaign_chest.gd")
+const Events = preload("res://src/sim/events.gd")
 
 ## The six blocs as a player thinks of them. election_constants.gd and
 ## opinion_constants.gd both key on the bare ids and neither carries a display name;
@@ -187,6 +189,7 @@ func _refresh() -> void:
 		child.queue_free()
 
 	_build_clock(ns)
+	CampaignChest.build(_body, ns, _loader)  # V5.2 C6: the party pays, so its money shows
 	_build_turnout(ns)
 	_build_running(ns)
 	_build_site(ns)
@@ -319,16 +322,9 @@ func _site_text(ns, effort_id: String) -> String:
 	var city := Campaign.site_city_name(_loader, ns, site)
 	var days := Campaign.travel_days_to(ns, _loader, site)
 	return tr_n("meeting in %s (%s) · %d day · %d%% spoken to", "meeting in %s (%s) · %d days · %d%% spoken to", days) % [
-		_region_name(ns, site), city, days,
+		Events.region_names(ns, _loader).get(site, site), city, days,
 		roundi(Campaign.spoken(ns, site) * 100.0),
 	]
-
-
-func _region_name(ns, region_id: String) -> String:
-	for region in _loader.regions.get(ns.id, []):
-		if String(region.id) == region_id:
-			return String(region.region_name)
-	return region_id
 
 
 ## Everything that could be put in the field now. Outside the run-up
@@ -356,7 +352,7 @@ func _build_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 
 	PanelKit.line(block, Strings.row("campaign-actions", String(action.id), "effects.campaign.effort_name", String(terms.get("effort_name", ""))), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("€%s m · %s") % [Num.f(Campaign.price_eur_m(ns, _loader, String(terms.get("effort_id", ""))), 2), _reach_text(terms)])
+	CampaignChest.offer_lines(block, ns, _loader, String(terms.get("effort_id", "")), _reach_text(terms))
 
 	if can_act:
 		block.add_child(_button(ns, action))
@@ -391,9 +387,11 @@ func _button(ns, action) -> Button:
 	var button := PanelKit.sized(Button.new())
 	button.text = Strings.row_name("campaign-actions", action)
 	button.tooltip_text = Strings.row_summary("campaign-actions", action)
-	if String(action.effects.get("campaign", {}).get("op", "")) == "start" and _site_region == "":
+	# The site, then the money (C6): a start the chest cannot pay for says so, figures and all.
+	var why := CampaignChest.why_not(ns, _loader, action, _site_region)
+	if why != "":
 		button.disabled = true
-		button.tooltip_text = tr("choose where the meetings are held first")
+		button.tooltip_text = why
 	button.pressed.connect(func(): _on_act(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button
@@ -407,6 +405,7 @@ func _on_act(ns, action) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result := Campaign.execute(_state, ns, _loader, action, _site_region)
 	if not result.get("applied", false):
+		CampaignChest.tell_refused(self, ns, _loader, action, _site_region)
 		return
 	_dirty = true
 	acted.emit(before, Strings.row_name("campaign-actions", action))
