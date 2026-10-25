@@ -4,15 +4,14 @@ extends PanelContainer
 ## U2: it reads GameState and issues player intent back as an explicit command
 ## (Calendar.book / Calendar.cancel), never writing state itself.
 ##
-## A TWELVE-MONTH STRIP rather than a single month's page, and that is the
-## session's one surface call. U6a's probe measured the density of dates the game
-## already carries and found 31 % of months carrying one — so a classic
-## month-at-a-time grid opens EMPTY seven times in ten, which is a calendar that
-## teaches the player not to open it. The strip shows the year, so a sparse month
-## reads as sparse inside something rather than as an empty screen, and the
-## election eleven months out is visible from here instead of only from the month
-## it happens in. The mitigation the plan named for a thin diary was content or
-## shape rather than a constant; this is the shape.
+## A MONTH GRID since V5.2 b+ R8 (the author: "a full agenda grid";
+## diary_grid.gd), paged across the booking horizon. U6a had chosen a twelve-month
+## strip because a month page opened empty seven times in ten (31 % of months
+## carried a date then); V5.2 filled the diary -- requests offer days, promises
+## and delegations fall due, a request has a last day -- and the grid now marks
+## each on its day. What U6a's measurement still argues for stays: the "Next:"
+## line always on screen and the LATER footer, so a sparse page reads as sparse
+## inside a year rather than as an empty screen.
 ##
 ## Booking lives here and NOWHERE ELSE, which is a deviation from the plan taken
 ## on the plan's own evidence. Every verb row on nation_panel.gd, law_panel.gd and
@@ -36,6 +35,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
 const AudienceBooking = preload("res://src/ui/audience_booking.gd")
+const DiaryGrid = preload("res://src/ui/diary_grid.gd")
 
 signal closed
 
@@ -46,6 +46,7 @@ signal diary_changed
 
 ## V5.2b: an audience request's days, booked here (audience_booking.gd).
 var audience := AudienceBooking.new()
+var _grid := DiaryGrid.new()
 
 ## What each fixed-date kind is called on screen. Presentation, so it lives here
 ## rather than in calendar_constants.gd — src/sim/ names the kind, the panel says
@@ -117,6 +118,12 @@ func _ready() -> void:
 	_next_up.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_next_up)
 
+	# The grid above the scroll, its day list inside it: a list that changes height
+	# moves nothing below (the form's rule further down).
+	root.add_child(_grid)
+	_grid.booked.connect(audience.booked.emit)
+	_grid.cancel_requested.connect(_on_cancel)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -126,6 +133,7 @@ func _ready() -> void:
 	_body.add_theme_constant_override("separation", 4)
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_body)
+	_body.add_child(_grid.day_list)
 
 	root.add_child(HSeparator.new())
 	root.add_child(audience)
@@ -251,39 +259,28 @@ func _refresh() -> void:
 	_refresh_form()
 
 
-## The strip. One block per month over the horizon, each carrying whatever the
-## game already knows falls in it plus whatever the player has booked into it.
-## A month with nothing still gets its heading — an empty month is information,
-## and hiding it would make the year look denser than it is.
+## The grid's entries: the register and the fixed dates over the horizon, each
+## named here (the grid adds what it reads itself). A booking still to come
+## carries its cancel, except an audience: that day is the asker's, kept through
+## Audiences, and the Diary's own cancel would leave the request booked for no day.
 func _refresh_strip() -> void:
 	for child in _body.get_children():
-		child.queue_free()
+		if child != _grid.day_list:
+			child.queue_free()
 
 	_title.text = tr("Diary — %s") % DateText.month_year(_state.month, _state.year)
 
 	var rows := Calendar.upcoming(_state, K.BOOKING_HORIZON_MONTHS)
 	_refresh_next_up(rows)
 
-	var by_month := {}
+	var items := []
 	for row in rows:
-		var key := "%d-%02d" % [int(row["year"]), int(row["month"])]
-		if not by_month.has(key):
-			by_month[key] = []
-		by_month[key].append(row)
-
-	for offset in range(K.BOOKING_HORIZON_MONTHS + 1):
-		var when := _month_at(offset)
-		var key := "%d-%02d" % [int(when["year"]), int(when["month"])]
-		var entries: Array = by_month.get(key, [])
-
-		PanelKit.heading(_body, DateText.month_year(int(when["month"]), int(when["year"])))
-
-		if entries.is_empty():
-			PanelKit.line(_body, "    —")
-			continue
-
-		for entry in entries:
-			_body.add_child(_entry_row(entry))
+		var booking: bool = row.has("status")
+		var live: bool = booking and String(row["status"]) == K.STATUS_BOOKED and String(row.get("kind", "")) != K.KIND_AUDIENCE
+		items.append({"year": int(row["year"]), "month": int(row["month"]), "day": int(row.get("day", 1)),
+			"text": _booking_text(row) if booking else _fixed_text(row), "mark": "booking" if booking else "fixed",
+			"cancel": Calendar.verb_key(row) if live else ""})
+	_grid.show_items(_state, _loader, items)
 
 	_refresh_later()
 
@@ -324,36 +321,6 @@ func _refresh_later() -> void:
 
 	for row in rows:
 		PanelKit.line(_body, "    %s — %s" % [DateText.month_year(int(row["month"]), int(row["year"])), _fixed_text(row)])
-
-
-## A booking carries a cancel button; a fixed date does not, because the game
-## owns it and the player cannot move an election.
-func _entry_row(entry: Dictionary) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-
-	var text := Label.new()
-	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text.autowrap_mode = TextServer.AUTOWRAP_WORD
-	row.add_child(text)
-
-	if entry.has("status"):
-		var status := String(entry["status"])
-		text.text = "    %02d — %s" % [int(entry.get("day", 1)), _booking_text(entry)]
-		# An audience is the asker's day, kept through Audiences: the Diary's own
-		# cancel would drop the entry and leave the request booked for no day.
-		if status == K.STATUS_BOOKED and String(entry.get("kind", "")) != K.KIND_AUDIENCE:
-			var cancel := Button.new()
-			cancel.text = tr("Cancel")
-			cancel.pressed.connect(_on_cancel.bind(Calendar.verb_key(entry)))
-			row.add_child(cancel)
-		else:
-			text.theme_type_variation = UiTheme.CAPTION
-	else:
-		text.theme_type_variation = UiTheme.CAPTION
-		text.text = "    %02d — %s" % [int(entry.get("day", 1)), _fixed_text(entry)]
-
-	return row
 
 
 func _fixed_text(entry: Dictionary) -> String:

@@ -18,6 +18,8 @@ extends SceneTree
 
 const ChartLine = preload("res://src/ui/chart_line.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
+const ChartHemicycle = preload("res://src/ui/chart_hemicycle.gd")
+const ElectionK = preload("res://src/sim/election_constants.gd")
 const ChartBars = preload("res://src/ui/chart_bars.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Regions = preload("res://src/sim/regions.gd")
@@ -194,11 +196,24 @@ func _check_regions() -> void:
 
 func _check_seats() -> void:
 	var charts := _charts("legislature")
-	var stacks := _all(charts, ChartStack) if charts != null else []
+	# R6: the assembly is a hemicycle, one dot per seat.
+	var stacks := _all(charts, ChartHemicycle) if charts != null else []
 	if stacks.size() != 1 or not stacks[0].has_marker():
-		_fail("the legislature has no seat share with its majority marked")
+		_fail("the legislature has no hemicycle with its majority marked")
 		return
 	var ns = _main._state.player()
+	# Seated left to right as an assembly sits: the economic axis plus half the
+	# social one (ElectionK.SLOT_POSITION); a party keeps its colour whatever its seat.
+	var slot := {}
+	for party in _main._loader.parties.get(String(ns.id), []):
+		slot[String(party.party_name)] = String(party.ideology_slot)
+	var last := -INF
+	for p in stacks[0]._parts:
+		var pos: Dictionary = ElectionK.SLOT_POSITION[slot[String(p["label"])]]
+		var x := float(pos["economic"]) + float(pos["social"]) / 2.0
+		if x < last:
+			_fail("the hemicycle seats %s right of a party further right" % p["label"])
+		last = x
 	var seats := 0.0
 	for p in stacks[0]._parts:
 		seats += float(p["value"])

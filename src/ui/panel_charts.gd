@@ -28,6 +28,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
+const ElectionK = preload("res://src/sim/election_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Regions = preload("res://src/sim/regions.gd")
 
@@ -137,8 +138,9 @@ func _build(state) -> void:
 			ChartKit.bars(self, Strings.t("Share of the nation's output, %"), rows, {"unit": "%"})
 		SEATS:
 			var ns = state.player()
-			ChartKit.stack(self, Strings.t("The assembly, by party — the line is a majority"), _seat_parts(ns, _panel.get("_loader")),
-				{"marker": 0.5, "unit": Strings.t(" seats"), "places": 0})
+			var seated := _seat_parts(ns, _panel.get("_loader"))
+			ChartKit.hemicycle(self, Strings.t("The assembly, by party — the line is a majority"), seated[0],
+				{"marker": 0.5, "unit": Strings.t(" seats"), "places": 0, "colors": seated[1]})
 
 
 func _grid(columns: int) -> GridContainer:
@@ -173,8 +175,21 @@ func _spending_parts(ns) -> Array:
 
 ## Parties in the data's order, a party without seats included, so a party keeps
 ## its colour whatever its seats (a segment of zero keeps its slot).
+## [parts, colours]: seated left to right as an assembly sits (V5.2 b+ R6) -- the
+## economic axis plus half the social one, so a nationalist right sits right of the
+## centre right -- each party in its own colour slot (its order in the data).
 func _seat_parts(ns, loader) -> Array:
+	var parties: Array = loader.parties.get(ns.id, [])
+	var order := range(parties.size())
+	order.sort_custom(func(a: int, b: int) -> bool: return _seat_x(parties[a]) < _seat_x(parties[b]) or (_seat_x(parties[a]) == _seat_x(parties[b]) and a < b))
 	var parts: Array = []
-	for party in loader.parties.get(ns.id, []):
-		parts.append({"label": String(party.party_name), "value": float(ns.seats_by_party.get(party.id, 0))})
-	return parts
+	var colors: Array = []
+	for i in order:
+		parts.append({"label": String(parties[i].party_name), "value": float(ns.seats_by_party.get(parties[i].id, 0))})
+		colors.append(ChartStyle.SERIES[mini(i, ChartStyle.SERIES.size() - 1)])
+	return [parts, colors]
+
+
+static func _seat_x(party) -> float:
+	var pos: Dictionary = ElectionK.SLOT_POSITION.get(String(party.ideology_slot), {"economic": 0.0, "social": 0.0})
+	return float(pos["economic"]) + float(pos["social"]) / 2.0
