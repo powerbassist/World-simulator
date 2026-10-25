@@ -1577,6 +1577,12 @@ call.**
   two new kinds (`offer_*`, `offer_accept_*`, `offer_refuse_*` in
   `data/audiences/default.dialogue`, as for the executive and the press
   owner).
+- **Measured at c1b, and the input corrected (#170 @ `8dbe792b`, 200
+  seeds):** the arithmetic above used the wrong input. The 49 offerers make
+  **30.2 requests a term** (`shadows_probe` S1), 0.62 each, not 0.19. At 0.5
+  that was 15.4 offers a term, so Systems set `OFFER_CHANCE` to **0.16**,
+  which measured **4.96 offers a term**. The parent accepted 0.16 as the
+  author's "about 5" (2026-10-25). The row is still 2 to 6, now read at 0.16.
 
 **5. A lie caught in the audience fails the attempt (Systems' call 1).**
 - **The rule:** when the catch roll says caught, the lever fails; the reveal
@@ -1598,6 +1604,224 @@ person, so a successor kept accruing `affair` evidence for an affair they
 never began (Systems' review RECORD). At a change of leader every `affair`
 bond is cleared, with no `AFFAIR_END_RAPPORT`: nobody ended it. The evidence
 stays with the leader who left it (the c1 plan's call 6). A test pins it.
+
+### c1c (2026-10-25, declared before Systems builds it)
+
+c1b (#170 @ `8dbe792b`, 200 seeds) passed every band but two, and QA's TAKE 1
+on that head raised a third case. No constant fixes any of them alone:
+
+- **S2c's turned route read 0 %** (15.5 crossings a run);
+- **L2's honest bargain was best in 0 % of cells**;
+- **a lie was worse than its honest lever in every cell** (the caught-lie rule,
+  call 5 above).
+
+Each fix below is a rule over something that already exists. GLM's red-team
+returned 13 findings, each checked against the tree: 2 kept (the delegation
+loophole, the lie row's margin), 11 dropped with reasons in the PR body.
+Source lines are pinned to `8dbe792b`. Gameplay's prototype runs live in its scratchpad
+(`proto_*`, `p3_*`, `l2*`, `lie.log`) and are labelled as such.
+
+**1. A crossed accomplice is a broken word.**
+- **Why S2c read 0 % (MEASURED and INFERRED).** A decline costs 0.10 rapport
+  (`DECLINE_RAPPORT`), and a rival needs rapport below −0.30, so four
+  declines from 0. An accomplice brings a request about 0.6 times a term
+  (30.2 requests from 49 offerers), so almost no one is crossed four times
+  in 60 months.
+- **The rule.** An accomplice is a person who holds evidence on the sitting
+  president: a row in `exposure_evidence`, not yet exposed, left by the
+  sitting leader, of any kind but `affair`, and written **before the request
+  arrived**. When that person's request ends unserved by the president, the
+  refusal also pays a broken word's price. That covers a decline, a lapse or
+  no-show (`audiences.gd:58`), and an audience settled as declined (`:239`).
+  The price is the two registers `Lies.reveal()` writes (`lies.gd:70-76`):
+  rapport −`LIE_RAPPORT` (0.5) and a `LIE_GRUDGE` (0.15) pulse through the
+  person's intake. Its knowledge loss is not paid, because the president
+  told this person no lie.
+  - **Why a broken word (OPINION):** taking the money or the favour was a
+    promise of service in return, and refusing it is breaking that promise.
+    The game already prices a broken promise, so no new number is needed.
+  - **Why "before the request arrived":** a bargain in a corrupt currency
+    leaves its evidence win or lose. If the same audience ends refused, that
+    is a deal that failed, not one that was betrayed.
+  - **Why the affair is out:** it has its own ending (`AFFAIR_END_RAPPORT`).
+- **What it does, on R11's one ladder.** A decline plus the broken word is
+  −0.6 rapport. An accomplice below +0.30 is cold, so a rival, after one
+  crossing. A close one (above +0.30) survives one. One exactly on +0.30
+  lands on −0.30, which reads *wary* under the 1e-9 rule. The
+  bond rule, the cuts and the turned route's gate (`exposure.gd`,
+  `TURNED_BONDS`) do not change. A turned person is still a rival or an
+  enemy, exactly when the card says *cold*.
+- **Delegation, and the other commitments.**
+  - Delegating is not a crossing in itself (`audiences.gd:153` stays as it
+    is): a minister takes the request on.
+  - A delegated commitment, or an IOU, broken at its date to an accomplice
+    **is** a crossing. It pays the broken word on top of the IOU betrayal it
+    already pays (`levers.gd:279-284`). Here the accomplice is someone whose
+    evidence was written before the commitment was made. Otherwise "delegate
+    and let it lapse" would be the free way to cross an accomplice (GLM's
+    finding 1, kept).
+  - A dated promise broken at its date already pays the revealed lie's
+    price (`levers.gd:276-278`), so it adds nothing.
+  - A request served, by a lever won or an offer taken, is not a crossing.
+- **Where it is read.**
+  - The holder test reads `exposure_evidence` through `President` (a
+    register helper), never through `Shadows`.
+  - `Audiences.decline_price` includes the broken word, so the card prices
+    the refusal before it is made. Interface names the reason on the decline
+    row ("they hold something on you"). Content authors that line.
+- **C6's soft ceiling (Systems' pin, answered 2026-10-25).** Overspending
+  writes `party_money` evidence held by the payer party's leader, so that
+  leader becomes an accomplice. That is intended: the treasurer knows.
+- **S1 keeps its accomplice served (a probe amendment, declared with the
+  rule).**
+  - **The problem.** S1's president is idle, so the act's counterpart is
+    crossed by every lapse. The once band would then measure a president
+    who bribes someone and then ignores them, not a single act that stays
+    hidden. Under the rule, S1's hypothetical row also stops being exact,
+    because Audiences now reads `exposure_evidence`. Gameplay's first
+    prototype measured 9 mismatches in 10 seeds.
+  - **The amendment.** After the act, S1 books each of the counterpart's
+    requests on its first free day and settles it on that day, as it settled
+    the act. Exactness holds again because the counterpart is never crossed,
+    and `--exact` is the evidence (0 mismatches).
+- **Prototype (Gameplay, MEASURED, 60 seeds, seeds 0-59; the rule as
+  declared but without the broken-commitment half, S1 amended):**
+
+| | c1b (200 seeds) | `RATE["turned"]` 0.02 | **0.01** |
+|---|---|---|---|
+| S1 once, per currency (favour / party / personal / diverted) | 3.5 / 10.5 / 23.5 / 28.0 % | 3.3 / 10.0 / 26.7 / 26.7 % | the same |
+| S1 `--exact` mismatches | 0 of 10 | 0 of 10 | 0 of 10 |
+| S2 routes (auditors / courts / press / turned) | 52 / 36 / 12 / 0 % | 39 / 29 / **9.9** / 22 % | 44 / 31 / **10.7** / 14 % |
+| S2c turned | **0 %** | 46 % | **31 %** |
+| S3 affair exposed by 60 (B7, 25 % to 50 %) | 44.5 % | 45 % | 35 % |
+
+  - **S1 does not move:** seeds 0-59 at c1b read the same four rates as the
+    prototype, to the run. The rule and the amendment leave the once band
+    as it was.
+  - **The order row's "MISS" at 60 seeds is a tie** (personal wealth and
+    diverted budget both 16 of 60). It is in c1b's own rows on the same
+    seeds, and the 200-seed run orders them (23.5 < 28.0).
+  - **S2 already crosses accomplices** (crossed 0 counts only S2c's own
+    declines): an audience in S2 that ends unwon with an earlier offerer is
+    a crossing under the rule. That is how turned reaches 14 % to 22 % there.
+  - **What the prototype left out:** the broken delegation (GLM's finding 1,
+    added after the run). It adds crossings, so in the build turned rises a
+    little and the press falls a little.
+- **The knob is `RATE["turned"]`** (0.02 today, set when no one ever turned).
+  A turned witness out-talks every institution: 0.02 is 5.7 times an
+  institution's rate per unit of evidence. In S2, where every audience is
+  corrupt, failed bargains with earlier accomplices now turn them, and the
+  press's share falls. Systems tunes `RATE["turned"]` so that S2's four
+  routes are each at least 10 % (B6's row, unchanged), S2c's turned share
+  is at least 10 %, and B7 stays inside 25 % to 50 %.
+  - **Start at 0.01** (measured above: every row passes, the press at
+    10.7 %).
+  - The press is the narrow row. If the broken-delegation half pushes it
+    under 10 %, step down to 0.008. B7's 35 % and S2c's 31 % leave room for
+    that.
+- **Rows (declared):** B6's rows unchanged, read with S1 amended; S1's
+  `--exact` at 0 mismatches; S2c's turned share at least 10 %; B7 unchanged.
+
+**2. A bribe buys the act, not the person.**
+- **Why the honest bargain was never best (INFERRED from the tree, MEASURED
+  at c1b).** Under B5's weights:
+  - the honest bargain nets p − 0.05 (a favour, rapport 0.10 × 0.5);
+  - backroom nets p + 0.03 − 0.016;
+  - aid nets p + 0.20 − 0.190.
+
+  Each corrupt row beats the honest one by the same 0.06 in every cell below
+  the 0.95 ceiling, so no constant gives them a border. c1b measured backroom
+  best in 37.4 % of cells and the honest bargain in 0 %.
+- **The rule.** A win bought with a corrupt currency settles the request and
+  pays **no** `LOYALTY_ACCEPT` and **no** `GRUDGE_ACCEPT_RELIEF`. That is
+  flatter's rule (`levers.gd:326`, "its effect is small and does not hold"),
+  and an accepted offer already pays neither (`shadows.gd:48-77`). L2 values
+  a corrupt win at `GAIN_FLATTER` (0.7, `lever_weights.gd:16`) for the same
+  reason. A paid person did what they were paid for. They were not won over.
+- **What it does (INFERRED).** Backroom (b, its bonus; c, its expected cost)
+  beats the honest bargain only where 0.7 (p + b) − c > p − 0.05, that is
+  p < (0.7 b − c + 0.05) / 0.3. A bribe is now the play for the hard case,
+  where honesty would fail, and the bonus sets where that border falls.
+- **Prototype (Gameplay, MEASURED, `lever_probe` L2 on c1b's S1 rates, the
+  corrupt gain at 0.7, backroom swept):**
+
+| backroom bonus | honest bargain best | backroom best | B5 shadow rows |
+|---|---|---|---|
+| 0.03 (today) | 31.1 % | 0 % | all pass |
+| 0.10 | 29.9 % | 1.5 % | all pass |
+| 0.15 | 29.1 % | 2.7 % | all pass |
+| 0.17 | 28.7 % | 3.6 % | all pass |
+| 0.20 | 17.8 % | 20.4 % | **fails**: backroom dominates aid (same odds, cheaper) |
+
+- **The knob is `CURRENCY_ODDS["backroom"]`, strictly under aid's 0.20.**
+  - **Why under aid's (declared):** aid buys more odds for more risk, so at
+    equal odds aid is pointless.
+  - **How Systems sets it (OPINION):** the largest value under 0.20 at which
+    all four B5 shadow rows pass and the honest bargain is best in at least
+    5 % of its cells. Corruption should be as tempting as the bands allow.
+    The cliff between 0.17 and 0.20 is the border sweeping through the bulk
+    of bargain odds (0.46 to 0.58), so Systems sweeps 0.17 to 0.19 in 0.01
+    steps.
+- **Rejected, measured:** a principled person refusing a bribe (the
+  advisor's first idea). It covers 180 of 732 bargain cells, but the
+  bargain is weak on the principled (−0.22), so the honest bargain was best
+  in **0.5 %** of cells. Also rejected: re-pricing L2 per cell, which would
+  move the ruler after a miss.
+- **Where it is read.** `levers.gd:326` skips loyalty and relief for a
+  corrupt currency. On the card, the bargain row's corrupt currencies say
+  "buys the act, not the person" beside their odds. Interface writes that
+  line; there is no new field.
+- **Rows (declared):** B5's four shadow rows, unchanged, with the honest
+  bargain at least 5 %. Backroom's and aid's shares are reported.
+
+**3. The lie's corner (QA's TAKE 1 on `8dbe792b`, re-derived from the tree).**
+- **What the tree says (MEASURED, `lever_probe` L2 with each cell printed).**
+  Call 5 above promised that "a lie pays only against a poor reader at low
+  odds". At `LIE_ODDS` 0.10 the tree has no such cell.
+  - Argue with a lie beats honest argue on value in **0 of 732** cells (the
+    best gap is −0.053). It leads on odds in 176, so it is not dominated.
+  - Promise a date with a lie leads its honest lever on odds in only **4 of
+    732** cells, all of one person (`FRA_rivalland`, reading 0.35). Its
+    non-domination, which is a B5 gate, hangs on those four cells.
+- **The fix is the declared knob `LIE_ODDS`, to 0.20 (INFERRED from the
+  cells).** A believed lie is now worth what aid buys. Re-priced from the
+  printed cells:
+
+| `LIE_ODDS` | argue lie leads argue on odds | on value | readers in the value lead | promise lie leads on odds |
+|---|---|---|---|---|
+| 0.10 | 176 of 732 | 0 | — | 4 of 732 |
+| **0.20** | 350 | **6** | 0.35, 0.41 (gaps −0.18, −0.12) | **244** |
+| 0.25 | 454 | 24 | up to 0.47 (gap −0.06) | 364 |
+
+  At 0.20 the lie pays only against B8's low readers, which is the corner
+  call 5 meant. At 0.25 it reaches a middling reader. In L2 the lie is still
+  best in 0 % of cells at both values: where it beats argue, pressure or a
+  bargain beats it. That is accepted, since shadow rows have no floor. B8's
+  catch rates do not read `LIE_ODDS`.
+- **Rows (declared):**
+  - argue with a lie beats honest argue on value in at least one cell, and
+    every such cell's listener reads below the president. A row at "at least
+    0.10 below" would sit 0.02 from the 0.20 cells' nearest reader, so one
+    edit to the president's skill would make it flap (GLM's finding 11,
+    kept). So `LIE_ODDS` may sit anywhere in **[0.20, 0.25]**, and 0.20 is
+    recommended;
+  - each lie row leads its honest lever on odds in at least **5 %** of
+    cells, the margin that keeps the dominance gate off a knife edge;
+  - B5's shadow rows, unchanged.
+- **The card.** Systems is already fixing the shown odds: the card printed
+  p + 0.10, but a caught lie fails. Whatever range it shows reads the new
+  `LIE_ODDS`.
+
+**For the author (the parent decides whether each is the author's):**
+- **Rule 2 changes how corruption plays at the lever.** A backroom deal goes
+  from best in 37 % of cells to the hard case only, about 4 % to 20 % by the
+  knob. Money still knocks about five times a term (the offers), unchanged.
+  Recommended. The alternative is a per-cell price in L2, rejected above.
+- **Rule 1 is unforgiving.** One refusal turns an accomplice who is not
+  close. Recommended, because "a crossed accomplice talks" is the lesson the
+  route teaches (call 2). The alternative, two crossings (the IOU betrayal's
+  −0.2 instead of −0.5), leaves most accomplices never crossed twice, which
+  is the 0 % again.
 
 ## B7 — The affair is dangerous
 
