@@ -47,6 +47,7 @@ func _init() -> void:
 	_check_bond_rule_turns_and_recovers()
 	_check_affair_never_overwritten_by_the_rule()
 	_check_end_affair_can_turn_the_lover()
+	_check_a_new_leader_inherits_no_affair()
 	_finish()
 
 
@@ -441,6 +442,41 @@ func _check_end_affair_can_turn_the_lover() -> void:
 	Shadows.tick_month(state, _loader)
 	if President.relationship(ns, pid) != "rival":
 		_failures.append("a lover left from just past warm did not turn rival: %s" % President.relationship(ns, pid))
+
+
+
+## The parent's call on #170 (review RECORD): person_bond is keyed by person, so an
+## affair would outlive its president and accrue as the successor's. It ends at the
+## successor's first month instead, and the successor's register gains no row.
+func _check_a_new_leader_inherits_no_affair() -> void:
+	var state = _state()
+	var ns = state.player()
+	var pid := _lover(ns)
+	President.adjust_rapport(state, ns, _loader, pid, 0.9)
+	Shadows.begin_affair(state, ns, _loader, pid)
+	for _m in range(2):
+		_advance(state)
+		Shadows.tick_month(state, _loader)
+	var first := President.leader_id(ns)
+	if ns.exposure_evidence.size() != 1:
+		_failures.append("fixture: two months of an affair left %s" % [ns.exposure_evidence])
+		return
+	var successor := ""
+	for person in _loader.people[PLAYER]:
+		if person.id != pid and person.id != first:
+			successor = String(person.id)
+			break
+	ns.head_of_state_person_id = successor
+	ns.pm_person_id = successor
+	_advance(state)
+	Shadows.tick_month(state, _loader)
+	if President.relationship(ns, pid) == "affair":
+		_failures.append("an affair outlived the president who began it")
+	for row in ns.exposure_evidence:
+		if President.evidence_leader(ns, row) == successor:
+			_failures.append("the successor accrued the predecessor's affair: %s" % [row])
+	if ns.exposure_evidence.size() != 1 or not is_equal_approx(float(ns.exposure_evidence[0]["size"]), 2.0 * SC.AFFAIR_EVIDENCE_PER_MONTH):
+		_failures.append("the predecessor's row moved: %s" % [ns.exposure_evidence])
 
 
 func _finish() -> void:

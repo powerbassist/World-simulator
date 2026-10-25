@@ -135,8 +135,16 @@ static func tick_month(state, loader) -> void:
 	if ns == null:
 		return
 	for pid in ns.person_bond.keys():
-		if String(ns.person_bond[pid]) == "affair":
-			President.grow_evidence(state, ns, loader, "affair", String(pid), SC.AFFAIR_EVIDENCE_PER_MONTH)
+		if String(ns.person_bond[pid]) != "affair":
+			continue
+		# person_bond is keyed by person, not by president: an affair whose last row is
+		# a predecessor's ends here rather than accruing as the successor's (#170's
+		# review). One begun in a predecessor's last month, before its first row, is
+		# the edge this cannot see.
+		if _affair_leader(ns, String(pid)) != President.leader_id(ns):
+			President.set_bond(state, ns, loader, String(pid), "")
+			continue
+		President.grow_evidence(state, ns, loader, "affair", String(pid), SC.AFFAIR_EVIDENCE_PER_MONTH)
 	for pid in ns.person_rapport.keys():
 		var bond := String(ns.person_bond.get(pid, ""))
 		if bond == "affair":
@@ -199,6 +207,19 @@ static func end_affair(state, ns, loader, pid: String) -> Dictionary:
 	President.set_bond(state, ns, loader, pid, "")
 	President.adjust_rapport(state, ns, loader, pid, -SC.AFFAIR_END_RAPPORT)
 	return {"ok": true, "error": "", "rapport": President.rapport(ns, pid) - before}
+
+
+## The president an affair's latest row was left by (found or not); the sitting
+## one when it has none yet -- an affair begun this month.
+static func _affair_leader(ns, pid: String) -> String:
+	var who := President.leader_id(ns)
+	for row in President.exposures(ns):
+		if String(row["kind"]) == "affair" and String(row["person_id"]) == pid:
+			who = String(row["leader_id"])
+	for row in ns.exposure_evidence:
+		if String(row.get("kind", "")) == "affair" and String(row.get("person_id", "")) == pid:
+			who = President.evidence_leader(ns, row)
+	return who
 
 
 static func _spouse(ns, loader) -> String:
