@@ -16,6 +16,8 @@ extends SceneTree
 
 const Inbox = preload("res://src/ui/inbox.gd")
 
+const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
+
 var _failures: Array[String] = []
 var _main
 var _frame := 0
@@ -57,6 +59,7 @@ func _process(_delta: float) -> bool:
 			if _body_text(_long).contains("summer recess"):
 				_fail("Less did not fold the note back")
 			_check_marks_whole()
+			_check_hint_whole()
 			_finish()
 			return true
 	return false
@@ -100,6 +103,19 @@ func _check_marks_whole() -> void:
 	var marked: String = _inbox.push("Marked", LONG + " Your [g=approval]approval[/g] moved.")
 	if not _body_text(marked).contains("approval moved"):
 		_fail("the fold hid a glossary mark: '%s'" % _body_text(marked))
+
+
+## QA's #141 RECORD: the first-use hint is an instruction, not news -- its second
+## sentence ("Click it to keep the note open ...") is the half the player needs,
+## and the fold hid it behind More. The hint keeps its whole body.
+func _check_hint_whole() -> void:
+	GlossaryHint.config_path = "user://test_inbox_notes_hint.cfg"
+	GlossaryHint.reset()
+	GlossaryHint.offer(_inbox)
+	var id := String(GlossaryHint._card)
+	if not _body_text(id).contains("Click it to keep") or (_more(id) != null and _more(id).visible):
+		_fail("the first-use hint is folded: '%s'" % _body_text(id))
+	GlossaryHint.reset()
 
 
 func _card(id: String) -> Control:

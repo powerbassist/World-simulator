@@ -20,7 +20,7 @@ signal dissolved(before: Dictionary)
 ## Carries the pre-command baseline for a cabinet reassignment -- the same
 ## shape `dissolved` above uses, so main.gd's effect-queueing treats a
 ## reshuffle the same way it treats any other player command.
-signal reassigned(before: Dictionary)
+signal reassigned(before: Dictionary, title: String)
 
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
@@ -29,7 +29,7 @@ const Judiciary = preload("res://src/sim/judiciary.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
-const Removal = preload("res://src/sim/removal.gd")
+const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
@@ -39,7 +39,6 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const RepublicPlate = preload("res://src/ui/republic_plate.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
-const Trends = preload("res://src/ui/trends.gd")
 const Num = preload("res://src/ui/num.gd")
 
 ## Longest human label for a portfolio -- the panel names the spending line the
@@ -128,14 +127,10 @@ var _state
 var _loader
 var _title: RichTextLabel
 var _body: VBoxContainer
+var _cabinet_verbs := CabinetVerbs.new()
 var _dirty := true
 var _close_button: Button
 var _dissolve_button: DissolveButton
-var _portfolio_option: OptionButton
-var _party_option: OptionButton
-var _reassign_button: Button
-var _reassign_status: Label
-var _party_option_ids: Array[String] = []
 ## The constitution's folded plate (V5.2-0b); kept across refreshes so it stays open.
 var _plate := RepublicPlate.new()
 
@@ -162,26 +157,11 @@ func _ready() -> void:
 	_dissolve_button.dissolved.connect(_on_dissolved)
 	root.add_child(_dissolve_button)
 
-	var reassign_row := HBoxContainer.new()
-	reassign_row.add_theme_constant_override("separation", 8)
-	root.add_child(reassign_row)
-
-	_portfolio_option = OptionButton.new()
-	for f in CK.PORTFOLIO_KEYS:
-		_portfolio_option.add_item(tr(PORTFOLIO_LABEL.get(f, f)))
-	reassign_row.add_child(_portfolio_option)
-
-	_party_option = OptionButton.new()
-	reassign_row.add_child(_party_option)
-
-	_reassign_button = Button.new()
-	_reassign_button.text = tr("Reassign")
-	_reassign_button.pressed.connect(_on_reassign)
-	reassign_row.add_child(_reassign_button)
-
-	_reassign_status = Label.new()
-	_reassign_status.theme_type_variation = UiTheme.CAPTION
-	root.add_child(_reassign_status)
+	# V5.2 b+ R4: Reassign and Dismiss, with the removal's price (cabinet_verbs.gd).
+	_cabinet_verbs.reassigned.connect(func(before: Dictionary, title: String) -> void:
+		reassigned.emit(before, title)
+		_dirty = true)
+	root.add_child(_cabinet_verbs)
 
 
 	_body = VBoxContainer.new()
@@ -292,7 +272,7 @@ func _refresh() -> void:
 		PanelKit.line(_body, tr("Ministers resigned this run: %d (last: %s over %s)") % [
 			ns.resignations_count, last_party, tr(PORTFOLIO_LABEL.get(last.get("portfolio", ""), last.get("portfolio", "")))
 		], PanelKit.Tone.PLAIN)
-	_refresh_party_option(ns)
+	_cabinet_verbs.sync(_state, _loader)
 
 	var outside: Array[String] = []
 	for party in _loader.parties.get(ns.id, []):
@@ -303,7 +283,7 @@ func _refresh() -> void:
 		PanelKit.line(_body, ", ".join(outside), PanelKit.Tone.PLAIN)
 
 
-## The assembly as one bar (V5.2-0b): the government's parties, then the
+## The assembly as a hemicycle (V5.2 b+ R6; a bar since V5.2-0b): the government's parties, then the
 ## opposition's, each in the slot the Legislature's bar gives it (the colour follows
 ## the party, never its side), the majority and the censure threshold marked.
 func _seat_bar(ns) -> void:
@@ -318,7 +298,7 @@ func _seat_bar(ns) -> void:
 	var marks := [float(Government.majority_seats(ns) + 1) / maxf(float(ns.assembly_seats), 1.0)]
 	if ns.censure_rule != "none":
 		marks.append(float(Government.censure_seats(ns)) / maxf(float(ns.assembly_seats), 1.0))
-	ChartKit.stack(_body, tr("Government, then opposition — the lines mark a majority and censure"), parts,
+	ChartKit.hemicycle(_body, tr("Government, then opposition — the lines mark a majority and censure"), parts,
 		{"markers": marks, "colors": colors, "places": 0, "unit": tr(" seats")})
 
 
@@ -475,49 +455,6 @@ func _build_cabinet_table(ns) -> Control:
 	return grid
 
 
-## Coalition parties only -- can_assign() refuses everything else. Rebuilt on
-## every refresh because the coalition itself can change under the panel
-## between one election and the next.
-func _refresh_party_option(ns) -> void:
-	_party_option.clear()
-	_party_option_ids.clear()
-	var by_id := {}
-	for party in _loader.parties.get(ns.id, []):
-		by_id[party.id] = party
-	var ordered: Array = ns.coalition_party_ids.duplicate()
-	ordered.sort_custom(func(a, b): return int(ns.seats_by_party.get(a, 0)) > int(ns.seats_by_party.get(b, 0)))
-	for pid in ordered:
-		if not by_id.has(pid):
-			continue
-		_party_option.add_item(by_id[pid].party_name)
-		_party_option_ids.append(pid)
-
-
-func _on_reassign() -> void:
-	var ns = _state.player()
-	if ns == null:
-		return
-	var idx := _portfolio_option.selected
-	if idx < 0 or idx >= CK.PORTFOLIO_KEYS.size():
-		return
-	var party_idx := _party_option.selected
-	if party_idx < 0 or party_idx >= _party_option_ids.size():
-		return
-
-	var portfolio: String = CK.PORTFOLIO_KEYS[idx]
-	var party_id: String = _party_option_ids[party_idx]
-	# V5.2 b+ R4: the command refuses with its reason (Removal.why_not), or prices
-	# the removal and seats the party.
-	var before := Trends.snapshot_now(_state)
-	var result: Dictionary = Removal.reassign(_state, _loader, portfolio, party_id)
-	_reassign_status.text = String(result["error"])
-	if not bool(result["ok"]):
-		_reassign_status.theme_type_variation = UiTheme.BAD_TEXT
-		return
-	reassigned.emit(before)
-	_dirty = true
-
-
 ## Seats the coalition would lose on the worst bill for it -- one its partners
 ## are whipped hardest to support and like least. The whip's full pull is the
 ## coalition bonus, so that bonus is the strain; see docs/discipline-model.md.
@@ -556,4 +493,4 @@ func _right(text: String) -> Label:
 func primary_action() -> Control:
 	if _dissolve_button != null and _dissolve_button.visible:
 		return _dissolve_button
-	return _reassign_button
+	return _cabinet_verbs.reassign_button

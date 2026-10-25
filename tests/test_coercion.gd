@@ -24,6 +24,8 @@ const CK = preload("res://src/sim/coercion_constants.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
+const SaveManager = preload("res://src/core/save_manager.gd")
+const Clock = preload("res://src/core/clock.gd")
 
 const PLAYER := "FRA"
 const TARGET := "DEU"
@@ -32,6 +34,7 @@ const TARGET := "DEU"
 ## a partner outside every customs union FRA belongs to; the register checks that
 ## write it directly keep TARGET.
 const OUTSIDER := "GBR"
+const UNION_SLOT := "__test_coercion_union__"
 
 var _failures: Array[String] = []
 var _loader
@@ -58,6 +61,8 @@ func _init() -> void:
 	_check_lift_clears_only_its_own_kind()
 	_check_lift_never_clears_an_org_levy()
 	_check_no_tariff_inside_a_customs_union()
+	_check_accession_lifts_union_tariffs()
+	_check_load_clears_union_tariffs()
 	_check_measure_cuts_trade_both_ways()
 	_check_measure_lowers_openness()
 	_check_damage_reads_the_directed_weight()
@@ -249,6 +254,55 @@ func _check_no_tariff_inside_a_customs_union() -> void:
 		_failures.append("a reloaded game offers no tariff at all -- the reload check below is vacuous")
 	if Diplomacy.available(back, _loader.diplomatic_actions, PLAYER, TARGET).has(tariff):
 		_failures.append("a reloaded game offers a tariff inside the customs union")
+
+
+## R10b (the author's "Oui, tout de suite"): joining a customs union lifts every
+## tariff between the joiner and a member, both ways. A tariff on a nation outside
+## the union and a sanction (not a customs duty) stand.
+func _check_accession_lifts_union_tariffs() -> void:
+	var state = _fresh()
+	_impose(state, OUTSIDER, PLAYER, "tariff", 0.625)
+	_impose(state, PLAYER, OUTSIDER, "tariff", 0.4)
+	_impose(state, OUTSIDER, "CHE", "tariff", 0.625)
+	_impose(state, TARGET, OUTSIDER, "sanction", 1.0)
+	if state.nations[OUTSIDER].orgs.has("eu") or state.nations["CHE"].orgs.has("eu"):
+		_failures.append("R10b fixture: %s or CHE already in the EU" % OUTSIDER)
+		return
+	Orgs._flip_membership(state, _loader, state.nations[OUTSIDER], {"org_id": "eu", "kind": Orgs.FIGHT_ACCESSION})
+	for key in [Relations.directed_key(OUTSIDER, PLAYER), Relations.directed_key(PLAYER, OUTSIDER)]:
+		if state.measures.has(key):
+			_failures.append("%s survived %s's accession to the customs union" % [key, OUTSIDER])
+	if not state.measures.has(Relations.directed_key(OUTSIDER, "CHE")):
+		_failures.append("an accession lifted a tariff on a nation outside the union")
+	if not state.measures.has(Relations.directed_key(TARGET, OUTSIDER)):
+		_failures.append("an accession lifted a sanction -- not a customs duty (R10's scope)")
+
+
+## R10b (QA's RECORD): a save made before R10 can hold a tariff between two members
+## that the verb can no longer impose and nothing would ever lift; the load clears it.
+func _check_load_clears_union_tariffs() -> void:
+	var state = _fresh()
+	state.year = 2026
+	state.month = 3
+	_impose(state, PLAYER, TARGET, "tariff", 0.625)
+	_impose(state, PLAYER, OUTSIDER, "tariff", 0.625)
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 1
+	var err := SaveManager.save_game(state, clock, UNION_SLOT)
+	clock.free()
+	if not err.is_empty():
+		_failures.append("R10b fixture: save failed: %s" % err)
+		return
+	var loaded: Dictionary = SaveManager.load_game(UNION_SLOT, _loader)
+	if not bool(loaded.get("ok", false)):
+		_failures.append("R10b fixture: load failed: %s" % loaded.get("error", ""))
+		return
+	if loaded["state"].measures.has(Relations.directed_key(PLAYER, TARGET)):
+		_failures.append("a loaded save kept a tariff between two members of the customs union")
+	if not loaded["state"].measures.has(Relations.directed_key(PLAYER, OUTSIDER)):
+		_failures.append("the load sweep lifted a tariff on a nation outside the union")
 
 
 # --- trade --------------------------------------------------------------------------

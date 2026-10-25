@@ -20,6 +20,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
+const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Trade = preload("res://src/sim/trade.gd")
 const Relations = preload("res://src/core/relations.gd")
@@ -432,6 +433,12 @@ func _unavailable_reason(action, player_id: String) -> String:
 			String(host.nation_name) if host != null else _nation_id,
 			DateText.day_month_year(1, int(free["month"]), int(free["year"])),
 		]
+	# V5.2 b+ R10: a verb whose content asks for no shared customs union is the
+	# union's own rule, not a condition the player can change -- named, with the union.
+	var union := Verbs.customs_union_with(_state, player_id, _nation_id)
+	if union != "" and action.preconditions.any(func(c): return String(c["field"]) == "customs_union_shared"):
+		return tr("No tariffs between members of %s, and %s is one.") % [
+			Strings.row_name("orgs", _loader.orgs_by_id[union]), String(_loader.nations[_nation_id].nation_name)]
 	# Named ahead of the generic reason: "they will not sign" is a different
 	# problem from "you cannot propose", and it is the one the player can fix.
 	var terms: Dictionary = action.effects.get("agreement", {})

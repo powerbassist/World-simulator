@@ -70,8 +70,11 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-offer --audience-step lie
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dismiss-confirm
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
@@ -205,6 +208,12 @@ var _outliner := false
 ## band pickers under the display rows) is judged at 1080 rather than argued.
 var _settings := false
 
+## V5.2 b+ (the #135 follow-up). The Dissolve card up, asked by the Politics button.
+var _dissolve_confirm := false
+
+## V5.2 b+ R4. The Dismiss card up over Politics, its price in R11's words.
+var _dismiss_confirm := false
+
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
 ## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
 ## because the cull pass's acceptance is pixel identity at fixed zooms: the
@@ -335,8 +344,12 @@ var _request := ""
 ## V5.2b b2: --audience-step plays the scene on: argue (one lever tried), promise (a
 ## promise made), spent (three attempts gone), closed (End pressed), diary (a
 ## promise made, the audience left, the Diary open on "Your word"); bargain, dates
-## and gossip open that verb's choice.
+## and gossip open that verb's choice. V5.2c: lie ticks argue's lie toggle, flirt
+## flirts (the affair's proposal shows), backroom picks the corrupt currency.
 var _audience_step := ""
+## V5.2c: --audience-offer asks the audience of a press owner first, whose request
+## comes with money (Offers' draw), so the scene shows the offer and its answers.
+var _audience_offer := false
 ## V5.2b b3: --phone open | dialed | people -- the call dialog on a request's asker
 ## (open), after its one try (dialed), or on someone who asked nothing (people).
 var _phone := ""
@@ -715,6 +728,10 @@ func _init() -> void:
 			_outliner = true
 		elif args[i] == "--settings":
 			_settings = true
+		elif args[i] == "--dissolve-confirm":
+			_dissolve_confirm = true
+		elif args[i] == "--dismiss-confirm":
+			_dismiss_confirm = true
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
 		elif args[i] == "--center" and i + 2 < args.size():
@@ -852,6 +869,9 @@ func _init() -> void:
 			_mid_term = true
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
+		elif args[i] == "--audience-offer":
+			_audience_offer = true
+			_request = "--audience"
 		elif args[i] == "--audience-step" and i + 1 < args.size():
 			_audience_step = args[i + 1]
 			_request = "--audience"
@@ -1094,6 +1114,15 @@ func _apply_view() -> void:
 		_stage_the_outliner()
 	if _settings:
 		_main._settings_panel.show()
+	if _dismiss_confirm:
+		var verbs = _main._government_panel._cabinet_verbs
+		verbs.sync(_main._state, _main._loader)
+		verbs.select_portfolio("defence")
+		verbs._on_dismiss()
+	if _dissolve_confirm:
+		var button = _main._government_panel._dissolve_button
+		button.sync(_main._state, _main._state.player())
+		button._on_pressed()
 	if _bid:
 		_open_a_bid()
 	if _failing:
@@ -1978,7 +2007,10 @@ func _stage_requests() -> void:
 	var ns = _main._state.player()
 	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
 	var asked := 0
-	for person in _main._loader.people.get(String(ns.id), []):
+	var people: Array = _main._loader.people.get(String(ns.id), []).duplicate()
+	if _audience_offer:
+		people.sort_custom(func(a, b) -> bool: return String(a.kind) == "press_owner" and String(b.kind) != "press_owner")
+	for person in people:
 		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
 			Audiences._arrive(ns, person, person.wants[0], now, [])
 			asked += 1
@@ -2012,6 +2044,16 @@ func _stage_audience_step() -> void:
 			verbs.lever_button("promise_date").pressed.emit()
 		"save":
 			_main._hud.title_bar.save_load_requested.emit()
+		"lie":
+			verbs.lever_button("argue").get_parent().find_child("Lie", false, false).button_pressed = true
+		"flirt":
+			verbs.topic_button("flirt").pressed.emit()
+		"backroom":
+			var pick: OptionButton = verbs.lever_button("bargain").get_parent().find_child("Currency", false, false)
+			for i in pick.item_count:
+				if String(pick.get_item_metadata(i).get("currency", "")) == "backroom":
+					pick.select(i)
+					pick.item_selected.emit(i)
 		"spent":
 			verbs.lever_button("argue").pressed.emit()
 			verbs.topic_button("family").pressed.emit()

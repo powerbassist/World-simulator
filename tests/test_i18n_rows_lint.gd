@@ -10,7 +10,7 @@ extends SceneTree
 ## state (#38, #39). This fails, anywhere in src/ui, a read of a row's English that is
 ## not an argument of one of those accessors:
 ##
-##   .law_name  .event_name  .action_name  .proposal_name  .summary   (the loaded rows)
+##   .law_name  .event_name  .action_name  .proposal_name  .source_name  .summary   (the loaded rows)
 ##   Campaign / Pledges / Projects.name_of(                          (the sim's English noun)
 ##   .get("name" | "summary" | "label" | "choice_label" | "event_name" | "effort_name" |
 ##        "pledge_name" | "project_name" | "action_name"  and indexed  (rows and records)
@@ -33,7 +33,7 @@ var _accessor_re: RegEx
 
 func _init() -> void:
 	for pattern in [
-		r"(?<!Strings)\.(?:law_name|event_name|action_name|proposal_name)\b",
+		r"(?<!Strings)\.(?:law_name|event_name|action_name|proposal_name|source_name)\b",
 		r"\.summary\b(?!\.is_empty\(\))",
 		r"\b(?:Campaign|Pledges|Projects)\.name_of\(",
 		r"\.get\(\s*\"(?:" + KEYS + r")\"",

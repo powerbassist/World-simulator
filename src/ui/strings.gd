@@ -37,7 +37,7 @@ static var _rows := {}
 static var _placeholder_regex: RegEx
 ## The property a loaded row object keeps its English name in, by kind; every action
 ## kind uses `action_name`.
-const _NAME_PROPERTY := {"laws": "law_name", "events": "event_name", "bloc-proposals": "proposal_name", "orgs": "name"}
+const _NAME_PROPERTY := {"laws": "law_name", "events": "event_name", "bloc-proposals": "proposal_name", "orgs": "name", "energy-sources": "source_name"}
 
 
 ## `tr()` for a static function, where the instance method does not exist. The same

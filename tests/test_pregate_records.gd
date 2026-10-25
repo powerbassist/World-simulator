@@ -133,8 +133,9 @@ func _check_card() -> void:
 	if _card == null:
 		return
 	var text := _text(_card)
-	if not text.contains("Rapport") or not text.contains("-0.10"):
-		_fail("RECORD 5: the person card does not show a rapport of -0.10:\n%s" % text)
+	# R11 turned the figure into its word: -0.10 reads wary.
+	if not text.contains("Rapport") or not text.contains("wary") or text.contains("-0.10"):
+		_fail("RECORD 5: the person card does not show a rapport of -0.10 as wary:\n%s" % text)
 
 
 ## Given for 15 months on, the row refused ("your word is given"): the window the
