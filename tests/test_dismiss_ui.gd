@@ -123,7 +123,19 @@ func _check_last_minister(ns) -> void:
 		if portfolio != _portfolio and String(ns.cabinet[portfolio]) == _party:
 			ns.cabinet[portfolio] = ""
 	var text: String = _verbs._price(_portfolio)
+	# And the line's own case: entitled to two posts and holding two, the party
+	# loses loyalty with this one (Cabinet.shortfall) and keeps a minister.
+	var entitled: Dictionary = ns.cabinet_entitlement.duplicate()
+	ns.cabinet_entitlement[_party] = 2
+	for portfolio in ns.cabinet.keys():
+		if portfolio != _portfolio:
+			ns.cabinet[portfolio] = _party
+			break
+	var kept: String = _verbs._price(_portfolio)
+	ns.cabinet_entitlement = entitled
 	ns.cabinet = cabinet
+	if not kept.contains("likelier to resign"):
+		_fail("a party that keeps a minister and loses loyalty is not told so: %s" % kept)
 	if text.contains("likelier to resign"):
 		_fail("the card says the ministers of a party with none left are likelier to resign: %s" % text)
 
