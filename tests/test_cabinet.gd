@@ -58,6 +58,7 @@ func _init() -> void:
 	_check_refusals_keep_their_ceiling()
 	_check_price_preview_writes_nothing()
 	_check_a_refused_seat_prices_nothing()
+	_check_a_zero_loyalty_price_writes_no_key()
 
 	_finish()
 
@@ -613,6 +614,22 @@ func _check_a_refused_seat_prices_nothing() -> void:
 		_fail("a seat the primitive refused was reported as done: %s" % r)
 	if float(ns.person_grudges.get(leader, 0.0)) != grudge or ns.portfolio_removed_month.has(String(h["portfolio"])):
 		_fail("a refused seat priced or stamped a removal")
+
+
+## QA's RECORD on #142: the removal door moves no loyalty, so it must not stamp a
+## 0.0 entry for a person who had none (init_nation seeds the played nation's
+## people, so the fixture erases one). A lever's zero-loyalty price shares the door.
+func _check_a_zero_loyalty_price_writes_no_key() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var person = _loader.person_by_id[_person_with_intake("FRA", 1.0)]
+	ns.person_loyalty.erase(person.id)
+	Characters.price_removal(ns, person, CK.REMOVAL_GRUDGE)
+	Characters.price_refusal(ns, person, 0.05, 0.0)
+	if ns.person_loyalty.has(person.id):
+		_fail("a price with no loyalty move stamped a loyalty entry: %s" % ns.person_loyalty[person.id])
+	if float(ns.person_grudges.get(person.id, 0.0)) <= 0.0:
+		_fail("R4 fixture: the removal wrote no grudge, the key check would be vacuous")
 
 
 func _fail(message: String) -> void:
