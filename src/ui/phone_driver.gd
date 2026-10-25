@@ -21,6 +21,7 @@ const President = preload("res://src/sim/president.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 
 static var _games := {}
 
@@ -67,7 +68,7 @@ static func open_call(main, person_id: String, people: Array) -> void:
 		"stance": String(request.get("stance", "")), "president": main._loader.person_name(President.leader_id(ns)),
 		"ask": PersonCard.object_text(main._loader, ns, String(request["object"]), request) if not request.is_empty() else "",
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": people,
-			"given_due": AudienceVerbs.given_due(ns, person_id, String(request.get("object", "")))}})
+			"given_due": AudienceVerbs.given_due(ns, person_id, String(request.get("object", ""))), "feel": Feelings.of(ns, person_id)}})
 	main._hud.clock_cluster.refresh(main._clock, HoldReason.show(main))
 
 
@@ -93,7 +94,7 @@ static func _dial(main, game: Dictionary, what: String, args: Dictionary) -> voi
 	if not bool(r.get("ok", false)):
 		text = Words.reason(String(r.get("error", "")))
 	else:
-		var paid := Words.paid_text(r.get("spent", {}), r.get("effects", {}), main._loader.person_name)
+		var paid := Words.paid_text(r.get("spent", {}), r.get("effects", {}), main._loader.person_name, Feelings.of(state.player(), String(game["person_id"])))
 		if LK.LEVERS.has(what):
 			var won := bool(r.get("success", false))
 			text = Strings.t("They agree: the request is answered by phone.") if won else Strings.t("They are not moved. The request stays open.")

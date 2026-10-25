@@ -20,6 +20,7 @@ const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const PromiseList = preload("res://src/ui/promise_list.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 const President = preload("res://src/sim/president.gd")
 
 const WINDOW := "audience"
@@ -117,7 +118,7 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
 		"by": Words.when(last),
-		"price": Words.price_text(Audiences.decline_price(ns, loader, id)),
+		"price": Words.price_text(Audiences.decline_price(ns, loader, id), Feelings.of(ns, String(request["person_id"]))),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
 
 

@@ -198,8 +198,10 @@ tests=(
   tests/test_phone_ui.gd
   tests/test_request_arrival.gd
   tests/test_pregate_records.gd
+  tests/test_inbox_notes.gd
   tests/test_legislature_dissolve.gd
   tests/test_diary_grid.gd
+  tests/test_feelings.gd
   tests/test_placement_points.gd
   tests/test_button_sizes.gd
   tests/test_chart_kit.gd
