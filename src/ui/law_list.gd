@@ -22,6 +22,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
@@ -107,6 +108,8 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 			box.remove_child(child)
 			child.queue_free()
 	if laws.is_empty():
+		if not ns.tabled_bill.is_empty():
+			PanelKit.line(_rows, tabled_text(ns), PanelKit.Tone.PLAIN)
 		PanelKit.line(_rows, tr("No law is currently proposable."), PanelKit.Tone.PLAIN)
 		return
 	_shown = laws
@@ -227,6 +230,9 @@ static func after_parts(ns, party_list: Array, law, band: float) -> Array:
 ## The selected law in full: the name, its summary never cut, the forecast and what
 ## waits after the division spelled out, then the verbs.
 func _build_detail(ns, party_list: Array, law) -> void:
+	# V5.2 b+ R2: a bill before the Assembly is the page's first fact while it waits.
+	if not ns.tabled_bill.is_empty():
+		PanelKit.line(_detail, tabled_text(ns), PanelKit.Tone.PLAIN)
 	var title := Label.new()
 	title.text = Strings.law_name(law)
 	title.theme_type_variation = UiTheme.LEAD
@@ -250,6 +256,7 @@ func _build_detail(ns, party_list: Array, law) -> void:
 func _verbs(ns, law) -> void:
 	var row := PanelKit.buttons(_detail)
 	var propose := Button.new()
+	propose.name = "Propose"  # i18n: ok a node name
 	propose.text = tr("Propose")
 	propose.pressed.connect(_panel._on_propose.bind(law))
 	_panel._offer(propose)
@@ -258,6 +265,7 @@ func _verbs(ns, law) -> void:
 	# constitutional amendment through (docs/amendment-model.md).
 	if ns.formation_method == "presidential_appointment" and not law.constitutional:
 		var force := Button.new()
+		force.name = "Force"  # i18n: ok a node name
 		force.text = tr("Force (49.3)")
 		force.disabled = not Government.can_force(ns)
 		force.tooltip_text = tr("Cooldown: available again in %d months.") % ns.force_cooldown_months if force.disabled \
@@ -274,3 +282,27 @@ func _verbs(ns, law) -> void:
 		ref.pressed.connect(_panel._on_referendum.bind(law))
 		_panel._offer(ref)
 		row.add_child(ref)
+	# V5.2 b+ R2: one bill before the Assembly at a time -- propose() refuses
+	# `already_tabled` -- so Propose and the referendum route are down with that
+	# reason until it divides, never a press the sim refuses. Article 49.3 adopts
+	# without a vote, is never tabled, and stays open on another bill (the parent's
+	# call on #173): it answers only to its own cooldown -- but not on the tabled
+	# bill itself, which propose() refuses.
+	if not ns.tabled_bill.is_empty():
+		var same := String(ns.tabled_bill.get("law_id", "")) == String(law.id)
+		for verb in row.get_children():
+			if verb.name == "Force" and not same:
+				continue
+			(verb as Button).disabled = true
+			(verb as Button).tooltip_text = tabled_text(ns)
+			if _panel._primary == verb:
+				_panel._primary = null
+
+
+## Which bill is before the Assembly and the day it divides (ns.tabled_bill; its
+## numbers read back as floats after a load).
+func tabled_text(ns) -> String:
+	var id := String(ns.tabled_bill.get("law_id", ""))
+	return tr("%s is before the Assembly: it divides on %s, and no other bill can be put before then.") % [
+		Strings.law_name(_panel._find_law(id), id),
+		DateText.day_month(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))]

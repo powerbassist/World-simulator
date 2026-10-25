@@ -215,8 +215,10 @@ var _dissolve_confirm := false
 ## V5.2 b+ R4. The Dismiss card up over Politics, its price in R11's words.
 var _dismiss_confirm := false
 
-## V5.2 b+ R2. A simple-majority bill proposed through the Legislature's own path,
-## so its card (the verdict, the counts, who broke ranks) is in the inbox.
+## V5.2 b+ R2. A simple-majority bill proposed through the Legislature's own path:
+## since #173 it is TABLED, so its card says when the Assembly votes, the Legislature
+## (`--open legislature`) holds its verbs, and `--dismiss-confirm` beside it prices
+## the dismissal against the bill's division.
 var _propose := false
 
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's

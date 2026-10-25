@@ -285,18 +285,19 @@ func _act_reason_text(key: String) -> String:
 ## column exists for -- alongside an alliance obligation opening and a foreign
 ## act. An act that REFUSED on arrival matters more, not less: it is the one
 ## outcome the player could not have predicted when they booked it.
-func card_appointment(entry: Dictionary, label: String, ok: bool, reason := "") -> void:
+## The card's id ("" with no stack): a bill the day tabled keeps its card for the
+## division's verdict (ProposalNote.remember, V5.2 b+ R2).
+func card_appointment(entry: Dictionary, label: String, ok: bool, reason := "") -> String:
 	if _stack == null:
-		return
+		return ""
 	if label.is_empty():
-		_stack.push(
+		return _stack.push(
 			tr("Appointment lapsed"),
 			tr("Something booked for today no longer exists to be done."),
 		)
-		return
 	# A booked bill's day is its vote (R2): titled so, not "Kept:" over a defeat.
 	var law := String(entry.get("kind", "")) == CalendarK.KIND_LAW
-	_stack.push(tr("Vote: %s") % label if law else tr("Kept: %s") % label, appointment_text(entry, label, ok, reason))
+	return _stack.push(tr("Vote: %s") % label if law else tr("Kept: %s") % label, appointment_text(entry, label, ok, reason))
 
 
 ## The day's card body. One whole sentence per shape, the failure a sentence of

@@ -17,6 +17,12 @@ extends RefCounted
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
+## main's instance id -> {law_id, card}: the card the tabling pushed, which the
+## division's verdict is set on in place (one card follows the bill). A static
+## keyed by the game, AudienceDriver's shape, so main.gd (at its baseline) keeps
+## no field for it.
+static var _tabled := {}
+
 
 ## `parties`: the nation's Party rows, to name who broke ranks.
 static func body(result: Dictionary, parties: Array = []) -> String:
@@ -63,15 +69,36 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 	return " ".join(parts)
 
 
-## V5.2 b+ R2 (Systems): the division at the close, as its own card until the tabled
-## card is updated in place (Interface). Called after WorldMonth's Division step.
+## The proposal's card, pushed at the press; a tabled bill's card is remembered for
+## its division.
+static func push(main, title: String, result: Dictionary) -> void:
+	var card: String = main._hud.inbox.push(title, body(result, main._loader.parties.get(main._state.player().id, [])))
+	if bool(result.get("tabled", false)):
+		remember(main, String(result.get("law_id", "")), card)
+
+
+## The card a tabled bill's verdict goes on: the press's, or the Diary day's.
+static func remember(main, law_id: String, card: String) -> void:
+	_tabled[main.get_instance_id()] = {"law_id": law_id, "card": card}
+
+
+## The division at the close (WorldMonth's Division step): its verdict set in place
+## on the card the tabling pushed, raised as the news it is. A new card only when
+## that one is gone: dismissed, or a load.
 static func card_division(main, report: Dictionary) -> void:
 	var result: Dictionary = report.get("division", {})
 	if result.is_empty():
 		return
 	var law_id := String(result.get("law_id", ""))
-	main._hud.inbox.push(Strings.law_name(main._law_panel._find_law(law_id), law_id),
-		body(result, main._loader.parties.get(main._state.player().id, [])))
+	var text := body(result, main._loader.parties.get(main._state.player().id, []))
+	var tabled: Dictionary = _tabled.get(main.get_instance_id(), {})
+	_tabled.erase(main.get_instance_id())
+	var card := String(tabled.get("card", ""))
+	if String(tabled.get("law_id", "")) == law_id and main._hud.inbox.lane_of(card) != "":
+		main._hud.inbox.set_body(card, text)
+		main._hud.inbox.raise_card(card)
+		return
+	main._hud.inbox.push(Strings.law_name(main._law_panel._find_law(law_id), law_id), text)
 
 
 ## Article 49.3: adopted with no division, then the censure it invites.

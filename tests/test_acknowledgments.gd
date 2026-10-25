@@ -78,8 +78,9 @@ func _check_law_proposal_answers() -> void:
 		_fail("a proposed law pushed no acknowledgment card")
 		return
 	_divide()
-	if _main._hud.inbox.card_count() != before_count + 2:
-		_fail("the tabled law's division pushed no card")
+	# V5.2 b+ R2: the division sets its verdict on the tabling's card, in place.
+	if _main._hud.inbox.card_count() != before_count + 1:
+		_fail("the tabled law's division gave %d cards, not the tabling's one" % (_main._hud.inbox.card_count() - before_count))
 		return
 	var text := _stack_text()
 	if not text.contains(String(law.law_name).to_upper()):

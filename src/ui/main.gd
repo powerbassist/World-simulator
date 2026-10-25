@@ -413,7 +413,7 @@ func _ready() -> void:
 	)
 	_law_panel.proposed.connect(func(before, law_name, result):
 		_queue_effect(String(law_name), before)
-		_hud.inbox.push(String(law_name), ProposalNote.body(result, _loader.parties.get(_state.player().id, [])))
+		ProposalNote.push(self, String(law_name), result)  # V5.2 b+ R2: a tabled bill's card is kept for its division
 		_update_top_bar()
 	)
 
