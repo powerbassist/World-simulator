@@ -73,6 +73,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --front-page   (or: --front-page one)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dismiss-confirm
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --propose
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
@@ -214,6 +215,11 @@ var _dissolve_confirm := false
 
 ## V5.2 b+ R4. The Dismiss card up over Politics, its price in R11's words.
 var _dismiss_confirm := false
+
+## V5.2 d. The front-page card up over a hand-fed entry (the sim's trigger is
+## Systems'): "full" is two papers and two runners-up, "one" a single paper -- the
+## other's headline missing, as a template Content has not written yet would be.
+var _front_page := ""
 
 ## V5.2 b+ R2. A simple-majority bill proposed through the Legislature's own path:
 ## since #173 it is TABLED, so its card says when the Assembly votes, the Legislature
@@ -735,6 +741,8 @@ func _init() -> void:
 			_dissolve_confirm = true
 		elif args[i] == "--dismiss-confirm":
 			_dismiss_confirm = true
+		elif args[i] == "--front-page":
+			_front_page = args[i + 1] if i + 1 < args.size() and not args[i + 1].begins_with("--") else "full"
 		elif args[i] == "--propose":
 			_propose = true
 		elif args[i] == "--zoom" and i + 1 < args.size():
@@ -1130,6 +1138,8 @@ func _apply_view() -> void:
 		var button = _main._government_panel._dissolve_button
 		button.sync(_main._state, _main._state.player())
 		button._on_pressed()
+	if not _front_page.is_empty():
+		_stage_front_page(_front_page)
 	if _bid:
 		_open_a_bid()
 	if _failing:
@@ -3465,3 +3475,36 @@ func _site_the_demonstration() -> void:
 	# one half of this mark a headless suite structurally cannot see.
 	view._hovered_city = String(report["city_id"])
 	view.queue_redraw()
+
+
+## --front-page: the card over a hand-fed entry and hand-fed headlines, worded as
+## Content's drafts word them (data/headlines/ is not on main yet), the played
+## nation's first and last outlets standing for the friendliest and the most hostile.
+## The clock is paused, so the card waits for the frame instead of ageing.
+func _stage_front_page(mode: String) -> void:
+	const Headlines = preload("res://src/ui/headlines.gd")
+	Headlines.set_table("event", {
+		"com_gas_squeeze": {"freeze_the_tariff": {
+			"friendly": "{{president}} shields pensioners from winter tariff rise",
+			"neutral": "Household gas tariff frozen with state loan to utility",
+			"hostile": "{{president}} puts winter bills on debt office tab",
+		}},
+		"rail_strike": {"concede": {"neutral": "Rail unions win pay deal after nine days off the tracks"}},
+		"flood": {"rebuild": {"hostile": "Flood towns still wait for the money {{president}} promised"}},
+	})
+	var outlets: Array = _main._loader.outlets.get(String(_main._state.player_nation_id), [])
+	if outlets.size() < 2:
+		push_error("screenshot: --front-page needs two outlets")
+		return
+	var first := String(outlets[0].id)
+	var last := String(outlets[outlets.size() - 1].id)
+	var papers := [{"outlet": first, "tone": "friendly"}, {"outlet": last, "tone": "hostile"}]
+	if mode == "one":
+		papers = [{"outlet": first, "tone": "friendly"}, {"outlet": last, "tone": "moderate"}]
+	var entry := {"kind": "event", "id": "com_gas_squeeze", "answer": "freeze_the_tariff", "severity": 3,
+		"papers": papers, "also": [] if mode == "one" else [
+			{"kind": "event", "id": "rail_strike", "answer": "concede", "outlet": first, "tone": "neutral"},
+			{"kind": "event", "id": "flood", "answer": "rebuild", "outlet": last, "tone": "hostile"},
+		]}
+	_main._clock.paused = true
+	_main._hud.front_page.show_entry(entry, _main._state, _main._loader, _main._clock)
