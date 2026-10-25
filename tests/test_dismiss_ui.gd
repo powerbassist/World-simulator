@@ -195,16 +195,26 @@ func _text(node: Node) -> String:
 	return out
 
 
+## Windowed, the real OS cursor is an input too: a motion of it between the
+## pushed press and release moves BaseButton's pressing_inside off the button and
+## the release clicks nothing (QA: 1 run in 2 failed windowed). So the cursor is
+## put on the button, and a motion there pushed, before each half of the click.
 func _press(down: bool) -> void:
 	if _target == null:
 		return
 	var at: Vector2 = _target.get_global_rect().get_center()
+	var viewport: Viewport = _main.get_viewport()
+	viewport.warp_mouse(at)
+	var move := InputEventMouseMotion.new()
+	move.position = at
+	move.global_position = at
+	viewport.push_input(move, true)
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = down
 	click.position = at
 	click.global_position = at
-	_main.get_viewport().push_input(click, true)
+	viewport.push_input(click, true)
 
 
 func _fail(message: String) -> void:
