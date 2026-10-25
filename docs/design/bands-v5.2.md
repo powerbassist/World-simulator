@@ -1244,7 +1244,9 @@ promise a date (`LIE_ODDS`). Declared before `lever_probe` L2 reads them.
     the probe's exchange weights, since the player picks the cheapest answer.
     So `shadows_probe` runs before `lever_probe` L2, and L2's header states
     both numbers before its run.
-  - **A lie on argue:** P(caught) × the reveal's price. P(caught) is
+  - **A lie on argue:** (superseded on 2026-10-25 by "#170's calls" below:
+    a lie caught in the audience now fails the attempt) P(caught) × the
+    reveal's price. P(caught) is
     `Lies.catch_chance()` at the cell's listener skill and the president's;
     the price is `Lies.reveal()`'s (`LIE_RAPPORT` 0.5, `LIE_GRUDGE` 0.15 at
     `lever_constants.gd:162-164`, and the knowledge kept) under the same
@@ -1395,7 +1397,9 @@ construction, and B5's 40 % ceiling would measure the content, not the game.
   - affairs: accountable +0.0679 (the cheapest), deny +0.0248, silence
     −0.1147. The exact δ is −0.03296, so −0.033 leaves the cheapest answer at a
     cost of **0.4506**;
-  - severity-2 money: accountable +0.1234, so −0.037 leaves **0.458**;
+  - severity-2 money: accountable +0.1216 from #163's own rows, so −0.037
+    leaves **0.4597** (an exact 1.16 scale would give +0.1234 and 0.458, but
+    Content rounded the scaled offsets to 3 decimals; QA, on #165);
   - severity-3 money: accountable +0.1867, so −0.055 leaves **0.6775**.
   All three meet the floor; the affairs' margin is 0.0006.
   In headline terms that is about −1.5, −2.2 and −1.3 points per exposure,
@@ -1480,6 +1484,110 @@ ladder, not two.
 - **Failure looks like:** a person shown *cold* who is not a rival, or a rival
   shown *wary* or warmer (the two ladders disagree); the turned route under
   10 % in S2 because no one reaches rival (it should not, at these cuts).
+
+### #170's calls (2026-10-25, declared before Systems re-measures c1)
+
+Systems' c1 (#170 @ `40ba6c76`) measured four misses that no constant can fix,
+plus two design questions. Each fix below is declared before the re-run, and
+GLM's red-team was re-derived (the PR body lists what was kept and dropped).
+
+**1. A backroom deal cost nothing: the press now reaches favours.**
+- **Why:** only a turned person reached `favour` evidence, and an accomplice
+  who was served never turns in an idle world. S1's favour rate was 0 %, so
+  L2 priced backroom at 0 and it was best in 61 % of cells, dominating the
+  honest bargain. A zero price cannot be fixed by the odds knob.
+- **The rule:** `ROUTE_KINDS["press"]` gains `"favour"`, at favour's existing
+  weight (0.25). Journalists dig up backroom deals. Content authors one new
+  severity-2 exposure event for the pair (press, favour), with its
+  `on_arrival` floor (−0.037 on all six blocs, as for the other severity-2
+  money events).
+- **Prediction (INFERRED):** press hazard on one act = 0.0035 × 0.25 × (1 +
+  the hostile press share) ≈ 0.00096 a month at a share of 0.1, so about 5 %
+  by month 60 (up to about 9 % with a wholly hostile press). That stays under
+  party money's measured 10.5 %, so the currency order holds. Backroom's
+  expected cost becomes about 0.05 × 0.46 ≈ 0.02 to 0.04 asks.
+- **Then the declared knob applies:** `CURRENCY_ODDS["backroom"]` comes down
+  toward that price. Rows: S1's favour rate **above 0 % and below party
+  money's**; L2's existing B5 rows (each shadow row at most 40 %, no dominated
+  pair).
+- **Known:** a press hit exposes the heaviest row it reaches, so a favour is
+  found by the press only when no personal-wealth or affair row is reachable.
+  That is by design: the bigger story runs first.
+
+**2. B6's routes in S2: the press rises through favours, and "turned" is
+measured where someone is crossed.**
+- **The press:** the hazard sums the reach, so S2's backroom rows (every
+  other bargain) add to the press's hazard. INFERRED, ignoring removals: press
+  ≈ 0.25 × 1.1 = 0.275 per pair of bargains, against courts 0.738 and
+  auditors 1.0 on the diverted rows, so about 13 % of exposures. The row
+  stays **at least 10 %** in S2.
+- **Turned:** by design, an accomplice who is served stays quiet, and the
+  turned route is how crossing one comes back to the president. S2 never
+  crosses anyone, so its 0 % is the design, not a bug. New regime **S2c** = S2
+  plus declining every request from a person who holds evidence on the
+  president. Rows: turned **at least 10 % in S2c**; in S2, reported, not
+  gated.
+- **Dropped from GLM:** "S2c is gameable because a sane player never crosses
+  an accomplice". That is the lesson the route teaches, not an exploit.
+
+**3. B8's low reader, by the gap between listener and president.**
+- **Why:** no person in any nation's data has `social_skill` below 0.33. All
+  324 authored people lie in 0.34 to 0.80, France's 62 in 0.35 to 0.80
+  (MEASURED). Public figures read people well, so the content is right and the
+  absolute row was wrong. No Content work is needed.
+- **The rows** (gap = listener − president; France's president 0.53), read
+  by `shadows_probe` S4:
+
+| Gap | Declared | Formula at France's people |
+|---|---|---|
+| at least +0.14 (12 people) | caught **40 % to 70 %** (the old high row) | 0.435 to 0.53 |
+| at most −0.10 (6 people) | caught **15 % to 30 %** | 0.195 to 0.255 |
+| between the two (44 people) | **between** the other two rows' rates | 0.26 to 0.43 |
+| high minus low | **at least 0.20** | about 0.30 |
+
+- **A broken dated promise:** revealed 100 %, unchanged.
+
+**4. Offers: wider offerers, and the chance off its ceiling. An author
+call.**
+- **Why:** executives and press owners make 2.47 requests a term, so B6's 2
+  to 6 offers were reached only with `OFFER_CHANCE` 1.0, where every one of
+  their requests carries money. That is not corruption as the exception.
+- **Recommended:** `OFFER_KINDS` gains `regional_figure` and `politician`,
+  for `party_money` only. French party-finance scandals ran through
+  regional public works and party intermediaries. `OFFER_CHANCE` is capped at
+  **0.5**.
+- **Arithmetic (INFERRED, at France's 0.19 requests per offerer a term):**
+  - executives, press owners and regional figures alone: (13 + 4) × 0.19 ×
+    0.5 ≈ 1.6 offers, under the band;
+  - with the 32 politicians: (17 + 32) × 0.19 × 0.5 ≈ 4.7 offers, inside it.
+  - GLM's catch, kept: halving the chance without widening the kinds gives
+    1.2.
+- **Rows:** 2 to 6 offers a term (unchanged), at `OFFER_CHANCE` ≤ 0.5.
+- **For the author:** this sets how often money knocks, about 4 to 5 times
+  a term, mostly party money from politicians. The alternatives are (b) the
+  kinds as built and the band lowered to 1 to 3 a term, or (c) `OFFER_CHANCE`
+  1.0 as built.
+
+**5. A lie caught in the audience fails the attempt (Systems' call 1).**
+- **The rule:** when the catch roll says caught, the lever fails; the reveal
+  is paid as today. Being seen through and persuaded at once is the one
+  outcome a player cannot read.
+- **B5's lie rows are re-priced to match:** a lie on argue is worth (1 −
+  P(caught)) × (p + `LIE_ODDS`) − P(caught) × the reveal price, against the
+  honest p. It beats honesty only when 0.10 × (1 − P(caught)) > P(caught) ×
+  (p + reveal price).
+- **Example (INFERRED):** a low reader (P(caught) 0.20) at odds 0.5 with a
+  reveal near 0.4 asks gives 0.08 against 0.18, so honesty wins. A lie pays
+  only against a poor reader at low odds, which is the corner it belongs in.
+  The lie rows keep no floor.
+- **This answers GLM's point** that "a caught lie still persuades" made lying
+  to poor readers nearly free.
+
+**6. An affair ends when the leader changes.** `person_bond` is keyed by
+person, so a successor kept accruing `affair` evidence for an affair they
+never began (Systems' review RECORD). At a change of leader every `affair`
+bond is cleared, with no `AFFAIR_END_RAPPORT`: nobody ended it. The evidence
+stays with the leader who left it (the c1 plan's call 6). A test pins it.
 
 ## B7 — The affair is dangerous
 
