@@ -108,6 +108,8 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 			box.remove_child(child)
 			child.queue_free()
 	if laws.is_empty():
+		if not ns.tabled_bill.is_empty():
+			PanelKit.line(_rows, tabled_text(ns), PanelKit.Tone.PLAIN)
 		PanelKit.line(_rows, tr("No law is currently proposable."), PanelKit.Tone.PLAIN)
 		return
 	_shown = laws

@@ -153,7 +153,9 @@ func _refresh() -> void:
 
 	for child in _result_box.get_children():
 		child.queue_free()
-	if not ns.last_law_result.is_empty():
+	# V5.2 b+ R2: while a bill is before the Assembly the last verdict is history,
+	# and the page opens on the bill that waits (law_list.gd's tabled line).
+	if not ns.last_law_result.is_empty() and ns.tabled_bill.is_empty():
 		_result_box.add_child(_build_result_summary(ns.last_law_result))
 
 	for child in _list.get_children():

@@ -99,7 +99,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 				summit_target = String(entry.get("target_id", ""))
 		# The UI's half, per entry and in the diary's order (main.gd: the measured
 		# effect, the card, the summit), before the next entry fires.
-		on_outcome.call({"entry": entry, "label": label, "ok": ok, "reason": reason, "before": before, "summit_target": summit_target})
+		on_outcome.call({"entry": entry, "label": label, "ok": ok, "reason": reason, "before": before, "summit_target": summit_target, "tabled": tabled})
 	return true
 
 

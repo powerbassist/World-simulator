@@ -74,13 +74,17 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 static func push(main, title: String, result: Dictionary) -> void:
 	var card: String = main._hud.inbox.push(title, body(result, main._loader.parties.get(main._state.player().id, [])))
 	if bool(result.get("tabled", false)):
-		_tabled[main.get_instance_id()] = {"law_id": String(result.get("law_id", "")), "card": card}
+		remember(main, String(result.get("law_id", "")), card)
+
+
+## The card a tabled bill's verdict goes on: the press's, or the Diary day's.
+static func remember(main, law_id: String, card: String) -> void:
+	_tabled[main.get_instance_id()] = {"law_id": law_id, "card": card}
 
 
 ## The division at the close (WorldMonth's Division step): its verdict set in place
 ## on the card the tabling pushed, raised as the news it is. A new card only when
-## that one is gone -- dismissed, a load, or a bill the Diary tabled, whose day's
-## card is the Diary's.
+## that one is gone: dismissed, or a load.
 static func card_division(main, report: Dictionary) -> void:
 	var result: Dictionary = report.get("division", {})
 	if result.is_empty():
