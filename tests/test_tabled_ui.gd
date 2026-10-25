@@ -14,6 +14,7 @@ extends SceneTree
 ##     division (Removal.price's forecast_before / forecast_after, Gameplay #157).
 
 const Legislature = preload("res://src/sim/legislature.gd")
+const Government = preload("res://src/sim/government.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
@@ -116,14 +117,24 @@ func _check_legislature() -> void:
 	var detail: VBoxContainer = laws._detail
 	if not _texts(detail).contains(Strings.law_name(_law)) or not _texts(detail).contains("before the Assembly"):
 		_fail("the Legislature does not say which bill is before the Assembly: %s" % _texts(detail))
+	# Article 49.3 adopts without a vote, so it is never tabled and stays open on
+	# another bill (the parent's call on #173); it answers only to its cooldown.
+	var ns = _main._state.player()
 	var live := 0
 	for b in detail.find_children("*", "Button", true, false):
-		if not (b as Button).disabled:
+		var verb := b as Button
+		if verb.name == "Force":
+			if verb.disabled != not Government.can_force(ns):
+				_fail("49.3 is %s while a bill is tabled" % ("down" if verb.disabled else "live past its cooldown"))
+			continue
+		if not verb.disabled:
 			live += 1
-		elif not (b as Button).tooltip_text.contains("before the Assembly"):
-			_fail("a verb is down without saying a bill is before the Assembly: %s" % (b as Button).text)
+		elif not verb.tooltip_text.contains("before the Assembly"):
+			_fail("a verb is down without saying a bill is before the Assembly: %s" % verb.text)
 	if live > 0:
 		_fail("%d Legislature verbs stay live while a bill is tabled" % live)
+	if detail.find_child("Propose", true, false) == null:
+		_fail("the detail has no Propose to hold")
 
 
 ## A minister of a party other than the president's: dismissing them moves the

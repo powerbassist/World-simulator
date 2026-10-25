@@ -256,6 +256,7 @@ func _build_detail(ns, party_list: Array, law) -> void:
 func _verbs(ns, law) -> void:
 	var row := PanelKit.buttons(_detail)
 	var propose := Button.new()
+	propose.name = "Propose"  # i18n: ok a node name
 	propose.text = tr("Propose")
 	propose.pressed.connect(_panel._on_propose.bind(law))
 	_panel._offer(propose)
@@ -264,6 +265,7 @@ func _verbs(ns, law) -> void:
 	# constitutional amendment through (docs/amendment-model.md).
 	if ns.formation_method == "presidential_appointment" and not law.constitutional:
 		var force := Button.new()
+		force.name = "Force"  # i18n: ok a node name
 		force.text = tr("Force (49.3)")
 		force.disabled = not Government.can_force(ns)
 		force.tooltip_text = tr("Cooldown: available again in %d months.") % ns.force_cooldown_months if force.disabled \
@@ -281,10 +283,14 @@ func _verbs(ns, law) -> void:
 		_panel._offer(ref)
 		row.add_child(ref)
 	# V5.2 b+ R2: one bill before the Assembly at a time -- propose() refuses
-	# `already_tabled`, 49.3 and the referendum route included -- so every verb is
-	# down with that reason until it divides, never a press the sim refuses.
+	# `already_tabled` -- so Propose and the referendum route are down with that
+	# reason until it divides, never a press the sim refuses. Article 49.3 adopts
+	# without a vote, is never tabled, and stays open on another bill (the parent's
+	# call on #173): it answers only to its own cooldown.
 	if not ns.tabled_bill.is_empty():
 		for verb in row.get_children():
+			if verb.name == "Force":
+				continue
 			(verb as Button).disabled = true
 			(verb as Button).tooltip_text = tabled_text(ns)
 			if _panel._primary == verb:
