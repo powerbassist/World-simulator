@@ -58,6 +58,8 @@ func _init() -> void:
 	_check_refusals_keep_their_ceiling()
 	_check_price_preview_writes_nothing()
 	_check_a_refused_seat_prices_nothing()
+	_check_a_zero_loyalty_price_writes_no_key()
+	_check_price_names_rebels_and_the_resignation_risk()
 
 	_finish()
 
@@ -613,6 +615,67 @@ func _check_a_refused_seat_prices_nothing() -> void:
 		_fail("a seat the primitive refused was reported as done: %s" % r)
 	if float(ns.person_grudges.get(leader, 0.0)) != grudge or ns.portfolio_removed_month.has(String(h["portfolio"])):
 		_fail("a refused seat priced or stamped a removal")
+
+
+## QA's RECORD on #142: the removal door moves no loyalty, so it must not stamp a
+## 0.0 entry for a person who had none (init_nation seeds the played nation's
+## people, so the fixture erases one). A lever's zero-loyalty price shares the door.
+func _check_a_zero_loyalty_price_writes_no_key() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var person = _loader.person_by_id[_person_with_intake("FRA", 1.0)]
+	ns.person_loyalty.erase(person.id)
+	Characters.price_removal(ns, person, CK.REMOVAL_GRUDGE)
+	Characters.price_refusal(ns, person, 0.05, 0.0)
+	if ns.person_loyalty.has(person.id):
+		_fail("a price with no loyalty move stamped a loyalty entry: %s" % ns.person_loyalty[person.id])
+	if float(ns.person_grudges.get(person.id, 0.0)) <= 0.0:
+		_fail("R4 fixture: the removal wrote no grudge, the key check would be vacuous")
+
+
+
+## The parent's call on R4's card (2026-10-25): the expected rebels on the
+## reference line -- the worst bill for the party, the government panel's "up to N
+## may break ranks" -- which a removal does not move (the shortfall feeds no
+## division, only resignations), and the true consequence beside it: the
+## resignation signal of the party's ministers who stay, before and after.
+func _check_price_names_rebels_and_the_resignation_risk() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var h := _holder(state, _person_with_intake("FRA", 1.0))
+	var party = null
+	for p in _loader.parties["FRA"]:
+		if p.id == String(h["party_id"]):
+			party = p
+	ns.overall_approval_pct = 30.0
+	var before := JSON.stringify(state.to_dict())
+	var price: Dictionary = Removal.price(state, ns, _loader, String(h["portfolio"]))
+	if JSON.stringify(state.to_dict()) != before:
+		_fail("Removal.price() wrote to the state")
+	var rebels := Discipline.rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0)
+	if int(price.get("rebels", -1)) != rebels:
+		_fail("the price's rebels %s are not the reference line's %d" % [price.get("rebels", null), rebels])
+	var unpop := Discipline.unpopularity(ns)
+	if unpop <= 0.0:
+		_fail("fixture: approval 30 gave no unpopularity, the risk check would be vacuous")
+	if not is_equal_approx(float(price.get("resign_before", -1.0)), unpop * (1.0 - Cabinet.loyalty(ns, party))) \
+			or not is_equal_approx(float(price.get("resign_after", -1.0)), unpop * (1.0 - Cabinet.loyalty(ns, party, 1))) \
+			or float(price["resign_after"]) < float(price["resign_before"]):
+		_fail("the resignation risk is not the cabinet tick's signal before and after: %s" % price)
+	if not is_equal_approx(float(price.get("resign_threshold", -1.0)), CK.RESIGNATION_THRESHOLD):
+		_fail("the price does not name the resignation threshold")
+	var held := 0
+	for f in ns.cabinet:
+		held += 1 if String(ns.cabinet[f]) == String(h["party_id"]) else 0
+	if int(price.get("others", -1)) != held - 1:
+		_fail("the price's ministers who stay %s are not %d" % [price.get("others", null), held - 1])
+	# The count is honest: the dismissal itself leaves the reference line where it was,
+	# and the signal the tick then reads is the price's `resign_after`.
+	Removal.dismiss(state, _loader, String(h["portfolio"]))
+	if Discipline.rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0) != int(price["rebels"]):
+		_fail("a dismissal moved the reference line the price said it would not")
+	if not is_equal_approx(Cabinet.resignation_signal(ns, party), float(price["resign_after"])):
+		_fail("after the dismissal the tick's signal is not the price's resign_after")
 
 
 func _fail(message: String) -> void:
