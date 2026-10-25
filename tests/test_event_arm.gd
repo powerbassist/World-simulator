@@ -135,6 +135,11 @@ func _check_exposure_block_validated() -> void:
 	arrival["exposure"]["on_arrival"] = {"no_such_channel": 1.0}
 	if _errors_of(arrival).is_empty():
 		_failures.append("an on_arrival naming no effect channel loaded")
+	# QA's RECORD: a typo'd key must not drop the scandal floor silently.
+	var typo := _exposure("press", ["affair"])
+	typo["exposure"]["on_arival"] = {"bloc_offset": {"workers": -0.03}}
+	if _errors_of(typo).is_empty():
+		_failures.append("an exposure block with an unknown key (on_arival) loaded")
 	var no_block := _exposure("press", ["affair"])
 	no_block.erase("exposure")
 	if _errors_of(no_block).is_empty():

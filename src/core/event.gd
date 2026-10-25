@@ -295,6 +295,10 @@ static func _extract_exposure(ev, d: Dictionary, filename: String, errors: Array
 		return
 	var route = raw.get("route", "") if typeof(raw) == TYPE_DICTIONARY else ""
 	var kinds = raw.get("kinds", []) if typeof(raw) == TYPE_DICTIONARY else []
+	# A typo'd key (on_arival) would drop the author's scandal floor silently.
+	for key in (raw.keys() if typeof(raw) == TYPE_DICTIONARY else []):
+		if not EXPOSURE_KEYS.has(key):
+			errors.append("%s: %s exposure.%s is not a recognised field (%s)" % [filename, ev.id, str(key), EXPOSURE_KEYS])
 	if typeof(route) != TYPE_STRING or not ShadowK.ROUTES.has(route) or typeof(kinds) != TYPE_ARRAY or kinds.is_empty():
 		errors.append("%s: %s exposure needs a route in %s and a non-empty kinds list" % [filename, ev.id, ShadowK.ROUTES])
 		return
@@ -314,6 +318,7 @@ static func _is_integral(v) -> bool:
 	return float(v) == floorf(float(v))
 
 
+const EXPOSURE_KEYS := ["route", "kinds", "on_arrival"]
 const KNOWN_KEYS := [
 	"id", "name", "summary", "subject_office", "likelihood", "respond_months",
 	"once", "preconditions", "choices", "interrupt", "sited",
