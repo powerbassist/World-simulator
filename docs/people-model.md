@@ -631,11 +631,26 @@ of the president alone; never person to person (§14.7). The design is
 - **Rapport is not loyalty.** Loyalty is political (does the person follow the
   player); rapport is personal (does the person like the president). A rival can
   be loyal to the line, and a friend can vote against the bill.
-- **One writer.** `src/sim/president.gd` is the only writer of the seven fields
+- **One writer.** `src/sim/president.gd` is the only writer of the nine fields (V5.2c added `exposures`; b2.1 `commitments_judged`)
   and the only reader that combines them with content; `tests/test_president.gd`
   scans `src/` for a second. In V5.2a nothing on the tick path calls it: the
   audiences (V5.2b) and the shadows (V5.2c) are the writers, so the balance table
   could not move.
+
+### 14.10 The bonds and the spouse, written (V5.2c)
+
+- **The bond rule** (the B6 amendment, [[bands-v5.2]]): each month a person whose
+  rapport is below -0.30 is a rival, and a rival holding the 0.45 grudge (the brief
+  gate) is an enemy; the bond clears the month the condition fails, with no
+  hysteresis, so it follows the feeling word the card shows (R11's "cold"). The
+  rule never overwrites an affair. Every cut reads through `src/core/cut.gd`, the
+  one helper the feeling words also call. A rival or an enemy is the turned
+  route of [[shadows-model]].
+- **C2's spouse** is content: `Person.spouse_id`, both ways. It gates the affair
+  (a married president only, never with the spouse) and nothing else; §14.7's
+  refusal of a marriage system stands.
+- **C3's condition is met:** personal wealth moves only through the shadows
+  (an accepted offer), and exposure is its lose condition.
 
 ---
 

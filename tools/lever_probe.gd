@@ -39,6 +39,20 @@ extends SceneTree
 ##      and B5's channel row: in every cell a lever is offered by phone, the
 ##      audience's odds at least 0.10 above the call's. "L2" stays the audience's
 ##      alone, so b2's numbers read on.
+##   L2 WITH THE SHADOWS (V5.2c, `-- --shadows=PATH`, PATH a shadows_probe JSON).
+##      The audience grid with four more rows, each at its EXPECTED cost (B5's
+##      amendment): bargain in backroom and in aid (no open spend; P(exposed by
+##      month 60) for its evidence kind, S1's per-currency rate from PATH, times the
+##      mean over the routes that reach the kind of the armed scandal's price --
+##      its arrival plus its cheapest answer, lever_weights.scandal_price); argue
+##      with a lie (Lies.catch_chance at the cell's listener and the president, times
+##      the reveal); promise a date with a lie (its commitment plus the full reveal,
+##      the date inside the term). Each at its raised odds, re-clamped -- and, since
+##      a caught lie fails the attempt (#170's call 5), persuading only uncaught:
+##      worth (1 - P(caught)) x (p + LIE_ODDS) less its shadow. The rows:
+##      0 dominated pairs with the shadow rows in; no row best in more than 40 % of
+##      its cells; bargain in any currency together at most 40 %; each honest lever
+##      at least 5 %; each shadow row reported.
 ##
 ## NOT HERE, and why:
 ##   - B5's answers row (book, delegate, decline, unanswered: none best in more
@@ -58,6 +72,9 @@ const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const Phone = preload("res://src/sim/phone.gd")
+const Events = preload("res://src/sim/events.gd")
+const Lies = preload("res://src/sim/lies.gd")
+const SC = preload("res://src/sim/shadow_constants.gd")
 
 const PLAYER := "FRA"
 const WARM_MONTHS := 12
@@ -69,9 +86,12 @@ var _loader
 
 func _init() -> void:
 	var json_path := ""
+	var shadows_path := ""
 	for arg in OS.get_cmdline_user_args():
 		if String(arg).begins_with("--json="):
 			json_path = String(arg).substr(7)
+		elif String(arg).begins_with("--shadows="):
+			shadows_path = String(arg).substr(10)
 	_loader = DataLoader.new()
 	_loader.load_all()
 	if not _loader.errors.is_empty():
@@ -95,6 +115,11 @@ func _init() -> void:
 	out["L2"] = _l2(ns, people, ["audience"])
 	out["L2_with_phone"] = _l2(ns, people, ["audience", "phone"])
 	out["bands"] = _bands(out)
+	if shadows_path != "":
+		var rates: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(shadows_path))["summary"]["S1"]["exposed_by_60"]
+		out["L2_shadows"] = _l2_shadows(ns, people, rates)
+		for band in out["L2_shadows"]["bands"]:
+			out["bands"][band] = out["L2_shadows"]["bands"][band]
 	_print(out)
 	if json_path != "":
 		var f := FileAccess.open(json_path, FileAccess.WRITE)
@@ -236,6 +261,127 @@ func _l2(ns, people: Array, channels: Array) -> Dictionary:
 	return out
 
 
+const SHADOW_ROWS := ["bargain_backroom", "bargain_aid", "argue_lie", "promise_date_lie"]
+
+
+## L2 with the shadows: the honest six as L2 has them, plus SHADOW_ROWS at their
+## expected cost, in a register of their own ("shadow", in asks) beside the spends.
+func _l2_shadows(ns, people: Array, rates: Dictionary) -> Dictionary:
+	var price := {}
+	for kind in ["favour", "diverted_budget"]:
+		var total := 0.0
+		var n := 0
+		for route in SC.ROUTES:
+			var ev = Events.exposure_event(_loader, route, kind) if SC.ROUTE_KINDS[route].has(kind) else null
+			if ev != null:
+				total += LW.scandal_price(ev)
+				n += 1
+		price[kind] = total / maxf(1.0, float(n))
+	var expected := {"bargain_backroom": float(rates["favour"]) * float(price["favour"]),
+		"bargain_aid": float(rates["diverted_budget"]) * float(price["diverted_budget"])}
+	var names: Array = K.LEVERS + SHADOW_ROWS
+	var best := {}
+	var offered := {}
+	var dominated := {}
+	var strictly := {}
+	for a in names:
+		best[a] = 0
+		offered[a] = 0
+		for b in names:
+			if a != b:
+				dominated["%s>%s" % [a, b]] = true
+				strictly["%s>%s" % [a, b]] = false
+	var bargain_cells := 0
+	var bargain_best := 0
+	var leader = _loader.person_by_id[President.leader_id(ns)]
+	for person in people:
+		for band in BANDS:
+			for rel in ["acquaintance", "friend"]:
+				for aligned in [true, false]:
+					var cell := _cell(ns, person, BANDS[band], rel, aligned)
+					var odds := {}
+					var cost := {}
+					var value := {}
+					for lever in K.LEVERS:
+						var p := LeverOdds.odds(person, lever, cell)
+						if p < 0.0:
+							continue
+						odds[lever] = p
+						cost[lever] = LW.spend(person, lever, p)
+						value[lever] = LW.net(person, lever, p)
+					if odds.has("bargain"):
+						bargain_cells += 1
+						for row in ["bargain_backroom", "bargain_aid"]:
+							var cur: String = K.CURRENCY_BACKROOM if row == "bargain_backroom" else K.CURRENCY_AID
+							var p := clampf(float(odds["bargain"]) + float(SC.CURRENCY_ODDS[cur]), K.ODDS_MIN, K.ODDS_MAX)
+							odds[row] = p
+							cost[row] = {"shadow": expected[row]}
+							value[row] = p * LW.GAIN - float(expected[row])
+					for base in ["argue", "promise_date"]:
+						if not odds.has(base):
+							continue
+						var row := "%s_lie" % base
+						var p := clampf(float(odds[base]) + SC.LIE_ODDS, K.ODDS_MIN, K.ODDS_MAX)
+						var reveal := LW.reveal_price(person, BANDS[band], 1.0 - p)
+						var caught := Lies.catch_chance(float(person.social_skill), float(leader.social_skill))
+						var shadow: float = reveal if base == "promise_date" else caught * reveal
+						var spent: Dictionary = LW.spend(person, base, p).duplicate()
+						spent["shadow"] = shadow
+						# A caught lie fails the attempt: it persuades only uncaught.
+						odds[row] = (1.0 - caught) * p
+						cost[row] = spent
+						value[row] = float(odds[row]) * LW.GAIN - LW.cost(LW.spend(person, base, p)) - shadow
+					var top := ""
+					var top_value := -INF
+					for name in names:
+						if not odds.has(name):
+							continue
+						offered[name] += 1
+						if float(value[name]) > top_value:
+							top_value = float(value[name])
+							top = name
+					best[top] += 1
+					if top == "bargain" or top == "bargain_backroom" or top == "bargain_aid":
+						bargain_best += 1
+					for key in dominated:
+						var pair: PackedStringArray = String(key).split(">")
+						if not odds.has(pair[0]) or not odds.has(pair[1]):
+							continue
+						if float(odds[pair[0]]) < float(odds[pair[1]]) or not _no_costlier_shadow(cost[pair[0]], cost[pair[1]]):
+							dominated[key] = false
+						elif float(odds[pair[0]]) > float(odds[pair[1]]) or not _no_costlier_shadow(cost[pair[1]], cost[pair[0]]):
+							strictly[key] = true
+	var shares := {}
+	for name in names:
+		shares[name] = float(best[name]) / float(maxi(1, offered[name]))
+	var pairs: Array = []
+	for key in dominated:
+		if dominated[key] and strictly[key]:
+			pairs.append(key)
+	var top_share := 0.0
+	var honest_floor := 1.0
+	for name in names:
+		top_share = maxf(top_share, float(shares[name]))
+		if K.LEVERS.has(name):
+			honest_floor = minf(honest_floor, float(shares[name]))
+	var bargain_share := float(bargain_best) / float(maxi(1, bargain_cells))
+	return {"rates": rates, "scandal_price": price, "expected_cost": expected, "best_share": shares,
+		"offered_cells": offered, "dominated_pairs": pairs, "bargain_share": bargain_share,
+		"bands": {
+			"B5_shadows_no_dominated_pair": pairs.is_empty(),
+			"B5_shadows_none_best_over_40pct": top_share <= 0.40,
+			"B5_shadows_bargain_together_40pct": bargain_share <= 0.40,
+			"B5_shadows_honest_each_best_5pct": honest_floor >= 0.05,
+		}}
+
+
+## _no_costlier over the spends and the shadow register (expected asks).
+func _no_costlier_shadow(a: Dictionary, b: Dictionary) -> bool:
+	if float(a.get("shadow", 0.0)) > float(b.get("shadow", 0.0)) + 0.000000001:
+		return false
+	return _no_costlier(a, b)
+
+
 func _no_costlier(a: Dictionary, b: Dictionary) -> bool:
 	for r in LW.WEIGHTS:
 		if float(a.get(r, 0.0)) > float(b.get(r, 0.0)) + 0.000000001:
@@ -295,5 +441,9 @@ func _print(out: Dictionary) -> void:
 	var l2p: Dictionary = out["L2_with_phone"]
 	print("L2 with the phone: best share %s | dominated pairs %s | phone lever cells %d, smallest gap %.4f" % [
 		l2p["best_share"], l2p["dominated_pairs"], l2p["phone_lever_cells"], l2p["phone_gap_min"]])
+	if out.has("L2_shadows"):
+		var l2s: Dictionary = out["L2_shadows"]
+		print("L2 with the shadows: rates %s | scandal price %s | expected %s" % [l2s["rates"], l2s["scandal_price"], l2s["expected_cost"]])
+		print("  best share %s | bargain together %.3f | dominated pairs %s" % [l2s["best_share"], l2s["bargain_share"], l2s["dominated_pairs"]])
 	for band in out["bands"]:
 		print("%-28s %s" % [band, "PASS" if out["bands"][band] else "FAIL"])

@@ -1489,8 +1489,14 @@ var commitments: Array[Dictionary] = []
 var commitments_judged: Array[Dictionary] = []
 
 ## The hidden evidence a corrupt act or an affair left, one row each:
-## {kind, person_id, size, month}, month absolute.
+## {kind, person_id, size, month, leader_id}, month absolute; leader_id (V5.2c)
+## is the president who left it, absent on an older row (read as the sitting one).
 var exposure_evidence: Array[Dictionary] = []
+
+## V5.2c. The evidence found out, one row each: {kind, route, person_id, size,
+## made_month, exposed_month, leader_id}, months absolute. absent_ok, no bump: an
+## older save had exposed nothing, which is what absent reads.
+var exposures: Array[Dictionary] = []
 
 # --- Audience requests (V5.2b) ----------------------------------------------------
 ## The REQUESTS lane: every request a person of this nation made to the

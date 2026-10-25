@@ -22,6 +22,7 @@ const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
 
 const WINDOW := "audience"
 
@@ -64,7 +65,14 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": gossip_people(main, pid),
-			"given_due": AudienceVerbs.given_due(ns, pid, String(session["object"])), "feel": Feelings.of(ns, pid)}}
+			"given_due": AudienceVerbs.given_due(ns, pid, String(session["object"])), "feel": Feelings.of(ns, pid)},
+		# V5.2c: the money on the table and the affair, as Shadows reads them now.
+		"shadow": {"offer": Shadows.offer(ns, session), "kind": String(person.kind) if person != null else "",
+			# Accept's refusals that are the scene's own state (Shadows.accept_offer's
+			# reasons, its sentences): the button is down with them, never a dead press.
+			"offer_why": "they have already agreed" if String(session.get("won", "")) != "" else ("no attempts left" if int(session["attempts_left"]) <= 0 else ""),  # i18n: ok the sim's reasons (shadows.gd), shown through Words.reason
+			"affair_why": Shadows.may_begin_affair(state, ns, loader, pid),
+			"flirted": (session["used_topics"] as Array).has("flirt"), "lovers": President.relationship(ns, pid) == "affair"}}
 
 
 ## The person spoken to, as the registers stand now (R11's words).
@@ -100,9 +108,69 @@ static func attempt(main, game: Dictionary, lever: String, args: Dictionary) -> 
 		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "")
 		return
 	var said := Strings.t("They agree.") if bool(r["success"]) else Strings.t("They are not moved.")
+	if bool(r.get("caught", false)):
+		said += " " + Strings.t("They caught the lie.")
 	var paid := Words.paid_text(r["spent"], r["effects"], main._loader.person_name, _feel(main, session))
 	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
-		"lever_%s_%s" % [lever, "success" if bool(r["success"]) else "failure"], {"lever": Words.lever(lever)})
+		lever_title(lever, args, r), {"lever": Words.lever(lever)})
+	main._windows.mark_all_dirty()
+
+
+## The person's line after a lever: a lie caught or swallowed is answered as one;
+## a corrupt currency has its own lines (Content's lever_bargain_<currency>_*).
+static func lever_title(lever: String, args: Dictionary, r: Dictionary) -> String:
+	if bool(r.get("caught", false)):
+		return "lie_caught"
+	if bool(args.get("lie", false)):
+		return "lie_uncaught"
+	var how := "success" if bool(r.get("success", false)) else "failure"
+	var currency := String(args.get("currency", ""))
+	if lever == "bargain" and Shadows.is_currency(currency):
+		return "lever_bargain_%s_%s" % [currency, how]
+	return "lever_%s_%s" % [lever, how]
+
+
+## The money on the table, answered (Shadows.accept_offer / refuse_offer): the
+## person's reply in Content's offer_accept_ / offer_refuse_ lines, what it wrote.
+static func offer(main, game: Dictionary, accepted: bool) -> void:
+	var session: Dictionary = game.get("session", {})
+	if session.is_empty():
+		return
+	var ns = main._state.player()
+	var o := Shadows.offer(ns, session)
+	var person = main._loader.person_by_id.get(String(session["person_id"]))
+	var title := ("offer_accept_%s_%s" if accepted else "offer_refuse_%s_%s") % [String(person.kind) if person != null else "", String(o.get("currency", ""))]
+	var r := Shadows.accept_offer(main._state, ns, main._loader, session) if accepted else Shadows.refuse_offer(main._state, ns, main._loader, session)
+	if not bool(r["ok"]):
+		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "")
+		return
+	var spent: Dictionary = (r.get("paid", {}) as Dictionary).duplicate()
+	if float(r.get("evidence", 0.0)) > 0.0:
+		spent["evidence"] = float(r["evidence"])
+	var paid := Words.paid_text(spent, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
+	var said := Strings.t("You take it.") if accepted else Strings.t("You turn it down.")
+	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game), title)
+	main._windows.mark_all_dirty()
+
+
+## An affair proposed or ended (Shadows.begin_affair / end_affair). A refused
+## proposal is the person's to explain: their affair_why_<reason> line, and the
+## reason as the result.
+static func affair(main, game: Dictionary, action: String) -> void:
+	var session: Dictionary = game.get("session", {})
+	if session.is_empty():
+		return
+	var pid := String(session["person_id"])
+	var state = main._state
+	var r := Shadows.begin_affair(state, state.player(), main._loader, pid) if action == "propose" else Shadows.end_affair(state, state.player(), main._loader, pid)
+	if not bool(r["ok"]):
+		var why := String(r["error"])
+		game["scene"].show_result(Words.reason(why), view_of(main, game), "affair_why_" + why)
+		return
+	var paid := Words.paid_text({}, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
+	var said := Strings.t("It begins, and no one must know.") if action == "propose" else Strings.t("It is over.")
+	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
+		"affair_begin" if action == "propose" else "affair_end")
 	main._windows.mark_all_dirty()
 
 

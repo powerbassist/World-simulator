@@ -25,6 +25,7 @@ const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
 const MapLegend = preload("res://src/ui/map_legend.gd")
 const Ribbon = preload("res://src/ui/ribbon.gd")
+const FrontPage = preload("res://src/ui/front_page.gd")
 
 const EDGE_MARGIN := 14
 
@@ -36,6 +37,7 @@ var clock_cluster
 var inbox
 var map_legend
 var ribbon
+var front_page
 
 
 func _ready() -> void:
@@ -101,6 +103,20 @@ func _ready() -> void:
 	inbox.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
 	inbox.offset_left = -Inbox.WIDTH
 
+	# V5.2 d. The front pages, at the top of the map area and centred on it: news
+	# laid on the desk, over whatever is open, never on the screen stack -- it
+	# holds nothing and owns no key (front_page.gd). Added after the inbox, so it
+	# draws over the inbox's edge rather than under it.
+	front_page = FrontPage.new()
+	map_area.add_child(front_page)
+	front_page.inbox = inbox
+	front_page.anchor_left = 0.5
+	front_page.anchor_right = 0.5
+	front_page.offset_left = -FrontPage.WIDTH / 2.0
+	front_page.offset_right = FrontPage.WIDTH / 2.0
+	front_page.offset_top = EDGE_MARGIN
+	front_page.grow_horizontal = Control.GROW_DIRECTION_BOTH
+
 	# V2.4a: the day ribbon, the bottom-most plate, the line the month sits on.
 	ribbon = Ribbon.new()
 	ribbon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -112,7 +128,7 @@ func _ready() -> void:
 ## HUD rect, so without this a drag started on the portrait card would pan
 ## Europe.
 func is_over_furniture(point: Vector2) -> bool:
-	for plate in [title_bar, top_bar, sidebar, inbox, map_legend, ribbon]:
+	for plate in [title_bar, top_bar, sidebar, inbox, map_legend, ribbon, front_page]:
 		if plate == null or not plate.visible:
 			continue
 		if Rect2(plate.global_position, plate.size).has_point(point):

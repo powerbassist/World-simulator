@@ -57,6 +57,8 @@ tests=(
   tests/test_audiences.gd
   tests/test_levers.gd
   tests/test_phone.gd
+  tests/test_shadows.gd
+  tests/test_lies.gd
   tests/test_audience_triggers.gd
   # V4.11: the derived grade (playable / simulated / outline) and its scanner.
   tests/test_roster.gd
@@ -170,6 +172,8 @@ tests=(
   tests/test_upper_house.gd
   tests/test_judiciary.gd
   tests/test_events.gd
+  tests/test_event_arm.gd
+  tests/test_exposure.gd
   # V4.4 T11: the event plate library -- the generator's --dry-run pinned
   # set-equal to what the helper can name, every nameable plate bytes-loading
   # once any ships, no orphan art, and the one-reader rule over src/ui.
@@ -194,11 +198,15 @@ tests=(
   tests/test_audience_scene.gd
   tests/test_audience_flow.gd
   tests/test_audience_levers.gd
+  tests/test_audience_shadows.gd
+  tests/test_exposure_desk.gd
   tests/test_audience_load.gd
   tests/test_phone_ui.gd
   tests/test_request_arrival.gd
   tests/test_pregate_records.gd
+  tests/test_headlines.gd
   tests/test_inbox_notes.gd
+  tests/test_front_page.gd
   tests/test_legislature_dissolve.gd
   tests/test_table_bill.gd
   tests/test_tabled_ui.gd

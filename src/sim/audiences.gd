@@ -29,6 +29,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/audience_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const Offers = preload("res://src/sim/offers.gd")
 const President = preload("res://src/sim/president.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -360,6 +361,7 @@ static func _arrive(ns, person, want: Dictionary, now: int, arrived: Array) -> v
 		"status": K.STATUS_PENDING,
 		"date": {},
 		"resolved_month": -1,
+		"offer": Offers.offer_for(ns, person, now),
 	}
 	ns.audience_requests.append(row)
 	ns.audience_asked_month[String(person.id)] = now
@@ -425,6 +427,8 @@ static func _view(row: Dictionary) -> Dictionary:
 		"date": {} if date.is_empty() else {
 			"year": int(date.get("year", 0)), "month": int(date.get("month", 0)), "day": int(date.get("day", 0))},
 		"resolved_month": int(row.get("resolved_month", -1)),
+		# V5.2c: absent on a request from before c, which came with no money.
+		"offer": (row.get("offer", {}) as Dictionary).duplicate(),
 	}
 
 

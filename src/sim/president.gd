@@ -6,7 +6,7 @@ extends RefCounted
 ## behind. The model is docs/people-model.md section 14.9; the design and the
 ## bands are docs/design/v5.2-spec.md and docs/design/bands-v5.2.md.
 ##
-## THE ONLY WRITER of the seven NationState registers, and the only reader that
+## THE ONLY WRITER of the nine NationState registers, and the only reader that
 ## combines them with content (tests/test_president.gd scans src/ for a second).
 ## A leaf: it preloads its constants and nothing else, and it rolls nothing --
 ## the seeded odds a lever reads are V5.2b's, the hazard evidence feeds V5.2c's.
@@ -23,6 +23,7 @@ extends RefCounted
 ## commitments judged at their date (Levers.tick_month).
 
 const K = preload("res://src/sim/president_constants.gd")
+const SC = preload("res://src/sim/shadow_constants.gd")
 
 
 ## Whether an edge from this nation's president to the person may exist: an
@@ -155,6 +156,29 @@ static func evidence_size(ns) -> float:
 	return total
 
 
+## V5.2c. Who left an evidence row: the president it names, or -- a row from
+## before c, which named nobody -- the sitting one.
+static func evidence_leader(ns, row: Dictionary) -> String:
+	var who := String(row.get("leader_id", ""))
+	return who if who != "" else leader_id(ns)
+
+
+## V5.2c. Every exposure, cast the way commitments() casts.
+static func exposures(ns) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row in ns.exposures:
+		out.append({
+			"kind": String(row.get("kind", "")),
+			"route": String(row.get("route", "")),
+			"person_id": String(row.get("person_id", "")),
+			"size": float(row.get("size", 0.0)),
+			"made_month": int(row.get("made_month", 0)),
+			"exposed_month": int(row.get("exposed_month", 0)),
+			"leader_id": String(row.get("leader_id", "")),
+		})
+	return out
+
+
 # --- Writers (the only ones) ----------------------------------------------------------
 
 ## Knowledge moves both ways: a lie caught collapses it (spec, the lies table).
@@ -223,19 +247,35 @@ static func seed_draws(state, draw_seed: int) -> void:
 	state.player().draw_seed = draw_seed
 
 
-static func commit(state, ns, loader, kind: String, person_id: String, object: String, due_month: int) -> bool:
+## V5.2c: `lie` marks a promise the president never meant (src/sim/lies.gd); the
+## key is written only when true, so an honest row is the row b2 wrote.
+static func commit(state, ns, loader, kind: String, person_id: String, object: String, due_month: int, lie := false) -> bool:
 	if not K.COMMITMENT_KINDS.has(kind) or object == "" or due_month <= _now(state):
 		return false
 	if not covers(state, ns, loader, person_id):
 		return false
-	ns.commitments.append({
+	var row := {
 		"kind": kind,
 		"person_id": person_id,
 		"object": object,
 		"made_month": _now(state),
 		"due_month": due_month,
-	})
+	}
+	if lie:
+		row["lie"] = true
+	ns.commitments.append(row)
 	return true
+
+
+## V5.2c. A commitment in flight taken back unjudged -- a promise caught as a lie
+## is no promise (Lies.settle). The first row of that kind, person and object.
+static func withdraw_commitment(ns, kind: String, person_id: String, object: String) -> bool:
+	for index in ns.commitments.size():
+		var row: Dictionary = ns.commitments[index]
+		if String(row.get("kind", "")) == kind and String(row.get("person_id", "")) == person_id and String(row.get("object", "")) == object:
+			ns.commitments.remove_at(index)
+			return true
+	return false
 
 
 ## V5.2b b2. Every commitment due by `now`, taken off the register in its order
@@ -286,8 +326,47 @@ static func leave_evidence(state, ns, loader, kind: String, person_id: String, s
 		"person_id": person_id,
 		"size": size,
 		"month": _now(state),
+		"leader_id": leader_id(ns),
 	})
 	return true
+
+
+## V5.2c. Evidence that accrues -- the affair's monthly share: `amount` onto the
+## sitting president's open row of that kind and person, else a new row. A
+## predecessor's row is theirs and is never grown (the plan's Call 6).
+static func grow_evidence(state, ns, loader, kind: String, person_id: String, amount: float) -> bool:
+	if not K.EVIDENCE_KINDS.has(kind) or amount <= 0.0:
+		return false
+	if not covers(state, ns, loader, person_id):
+		return false
+	for row in ns.exposure_evidence:
+		if String(row.get("kind", "")) == kind and String(row.get("person_id", "")) == person_id 				and evidence_leader(ns, row) == leader_id(ns):
+			row["size"] = float(row.get("size", 0.0)) + amount
+			return true
+	return leave_evidence(state, ns, loader, kind, person_id, amount)
+
+
+## V5.2c. Evidence found out: exposure_evidence[index] moves to `exposures`,
+## stamped with its route and month. {} -- nothing written -- for a bad index, a
+## route outside SC.ROUTES, or one that cannot reach the row's kind.
+static func expose_evidence(ns, index: int, route: String, now: int) -> Dictionary:
+	if index < 0 or index >= ns.exposure_evidence.size():
+		return {}
+	var row: Dictionary = ns.exposure_evidence[index]
+	if not SC.ROUTE_KINDS.get(route, []).has(String(row.get("kind", ""))):
+		return {}
+	var exposed := {
+		"kind": String(row.get("kind", "")),
+		"route": route,
+		"person_id": String(row.get("person_id", "")),
+		"size": float(row.get("size", 0.0)),
+		"made_month": int(row.get("month", 0)),
+		"exposed_month": now,
+		"leader_id": evidence_leader(ns, row),
+	}
+	ns.exposure_evidence.remove_at(index)
+	ns.exposures.append(exposed)
+	return exposed.duplicate()
 
 
 # --- Helpers ----------------------------------------------------------------------------
@@ -295,13 +374,16 @@ static func leave_evidence(state, ns, loader, kind: String, person_id: String, s
 ## A commitment row as every reader gets it: the months cast to int, a dropped
 ## key read as its empty value.
 static func _commitment(row: Dictionary) -> Dictionary:
-	return {
+	var view := {
 		"kind": String(row.get("kind", "")),
 		"person_id": String(row.get("person_id", "")),
 		"object": String(row.get("object", "")),
 		"made_month": int(row.get("made_month", 0)),
 		"due_month": int(row.get("due_month", 0)),
 	}
+	if bool(row.get("lie", false)):
+		view["lie"] = true
+	return view
 
 
 ## An authored person of this nation: the loader's id-prefix rule.

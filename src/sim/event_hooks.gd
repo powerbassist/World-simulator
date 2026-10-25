@@ -101,6 +101,10 @@ static func fired(state, ns, loader, hook: String, month_index: int) -> bool:
 			# parameter nothing else needs.
 			return String(ns.last_accession.get("org", "")) == OrgsK.UNION_ORG_ID \
 				and int(ns.last_accession.get("month_index", -1)) == month_index
+		# V5.2c: an exposure is armed through the chain door (Events.arm), which waits
+		# on a full desk; this door skips for good, so it never fires one.
+		"exposure":
+			return false
 	return false
 
 

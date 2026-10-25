@@ -107,12 +107,14 @@ func _lever_row(row: Dictionary, now: int, given: int, feel: Dictionary) -> void
 	var args := {}
 	match lever:
 		"bargain":
-			cell.add_child(_currency_pick(row, spend, args, feel))
+			cell.add_child(_currency_pick(row, spend, args, feel, odds))
 		"promise_date":
 			cell.add_child(_date_pick(row, now, spend, args, feel, given))
+	if row.has("lie"):
+		cell.add_child(_lie_toggle(row, odds, args, feel))
 	# A choice beside a lever that cannot be tried is down with it.
 	for pick in cell.get_children():
-		if pick is OptionButton:
+		if pick is OptionButton or pick is CheckBox:
 			pick.disabled = button.disabled
 	button.pressed.connect(func() -> void: attempted.emit(lever, args.duplicate()))
 	_levers.add_child(cell)
@@ -120,9 +122,10 @@ func _lever_row(row: Dictionary, now: int, given: int, feel: Dictionary) -> void
 	_levers.add_child(spend)
 
 
-## Bargain pays one currency: a favour (rapport) or a vote trade (an IOU). Aid
-## is listed and refused with the sim's reason until a later block builds it.
-func _currency_pick(row: Dictionary, spend: Label, args: Dictionary, feel: Dictionary) -> OptionButton:
+## Bargain pays one currency: a favour (rapport), a vote trade (an IOU) or, in the
+## audience, a corrupt one (V5.2c: backroom, aid), paid in evidence at better odds
+## -- its own range, which the odds label takes while it is picked.
+func _currency_pick(row: Dictionary, spend: Label, args: Dictionary, feel: Dictionary, odds: Label) -> OptionButton:
 	var pick := OptionButton.new()
 	pick.name = "Currency"
 	var rows: Array = row.get("currencies", [])
@@ -140,6 +143,9 @@ func _currency_pick(row: Dictionary, spend: Label, args: Dictionary, feel: Dicti
 		var c: Dictionary = pick.get_item_metadata(i)
 		args["currency"] = String(c["currency"])
 		spend.text = Words.spends_text(c.get("spends", {}), feel)
+		var own: Dictionary = c if c.has("odds_hi") else row
+		if bool(row.get("offered", false)) or float(row.get("odds_hi", 0.0)) > 0.0:
+			odds.text = Words.odds_text(float(own.get("odds_lo", 0.0)), float(own.get("odds_hi", 0.0)))
 	pick.item_selected.connect(chosen)
 	# Selected outright: an OptionButton left to itself showed the last item (the
 	# refused aid) while the args and the cost were the favour's.
@@ -175,6 +181,21 @@ func _date_pick(row: Dictionary, now: int, spend: Label, args: Dictionary, feel:
 	pick.select(year_out)
 	chosen.call(year_out)
 	return pick
+
+
+## V5.2c: argue and a promise can be told as a lie (Lies) -- the lie's own odds
+## while ticked, and what a caught lie costs on the hover, before the click.
+func _lie_toggle(row: Dictionary, odds: Label, args: Dictionary, feel: Dictionary) -> CheckBox:
+	var told := CheckBox.new()
+	told.name = "Lie"
+	told.text = tr("Lie")
+	told.tooltip_text = Words.lie_text(feel, String(row["lever"]))
+	var honest := odds.text
+	var lie: Dictionary = row["lie"]
+	told.toggled.connect(func(on: bool) -> void:
+		args["lie"] = on
+		odds.text = Words.odds_text(float(lie["odds_lo"]), float(lie["odds_hi"])) if on else honest)
+	return told
 
 
 func _topic(row: Dictionary, people: Array) -> void:

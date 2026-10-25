@@ -27,6 +27,7 @@ extends RefCounted
 ##   audience_requests Audiences.tick_month's {arrived, lapsed} (V5.2b)
 ##   commitments       Levers.tick_month's {kept, broken} (V5.2b b2)
 ##   meetings          Meetings.tick_month's heads met last month (V5.2b b3)
+##   exposures         Exposure.tick_month's exposures made (V5.2c)
 ##   election_results  Elections.tick_month's results (Array)
 ##
 ## The caller sets state.year and state.month first: the clock is the caller's,
@@ -80,6 +81,8 @@ const Characters = preload("res://src/sim/characters.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const Meetings = preload("res://src/sim/meetings.gd")
 const Levers = preload("res://src/sim/levers.gd")
+const Exposure = preload("res://src/sim/exposure.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
 const Elections = preload("res://src/sim/elections.gd")
 
 ## The step names `on_step` receives, in run order. tests/test_world_month.gd
@@ -433,6 +436,10 @@ static func _step(month: Month, step: String) -> Array:
 			var meters := _character_meters(state)
 			month.report["audience_requests"] = Audiences.tick_month(state, loader, meters)
 			month.report["commitments"] = Levers.tick_month(state, loader, meters)
+			# After the judge, the affairs and the bonds, then the exposures: a promise
+			# broken this month can turn its person before the roll.
+			Shadows.tick_month(state, loader)
+			month.report["exposures"] = Exposure.tick_month(state, loader)
 		# Elections run last, on the already-settled history entry, and can fire a
 		# national and an EP result in the same month (France and Belgium, June 2029).
 		"Elections":

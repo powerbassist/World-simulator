@@ -70,9 +70,11 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-offer --audience-step lie
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --front-page   (or: --front-page one)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dismiss-confirm
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --propose
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
@@ -215,6 +217,11 @@ var _dissolve_confirm := false
 ## V5.2 b+ R4. The Dismiss card up over Politics, its price in R11's words.
 var _dismiss_confirm := false
 
+## V5.2 d. The front-page card up over a hand-fed entry (the sim's trigger is
+## Systems'): "full" is two papers and two runners-up, "one" a single paper -- the
+## other's headline missing, as a template Content has not written yet would be.
+var _front_page := ""
+
 ## V5.2 b+ R2. A simple-majority bill proposed through the Legislature's own path:
 ## since #173 it is TABLED, so its card says when the Assembly votes, the Legislature
 ## (`--open legislature`) holds its verbs, and `--dismiss-confirm` beside it prices
@@ -351,8 +358,12 @@ var _request := ""
 ## V5.2b b2: --audience-step plays the scene on: argue (one lever tried), promise (a
 ## promise made), spent (three attempts gone), closed (End pressed), diary (a
 ## promise made, the audience left, the Diary open on "Your word"); bargain, dates
-## and gossip open that verb's choice.
+## and gossip open that verb's choice. V5.2c: lie ticks argue's lie toggle, flirt
+## flirts (the affair's proposal shows), backroom picks the corrupt currency.
 var _audience_step := ""
+## V5.2c: --audience-offer asks the audience of a press owner first, whose request
+## comes with money (Offers' draw), so the scene shows the offer and its answers.
+var _audience_offer := false
 ## V5.2b b3: --phone open | dialed | people -- the call dialog on a request's asker
 ## (open), after its one try (dialed), or on someone who asked nothing (people).
 var _phone := ""
@@ -735,6 +746,8 @@ func _init() -> void:
 			_dissolve_confirm = true
 		elif args[i] == "--dismiss-confirm":
 			_dismiss_confirm = true
+		elif args[i] == "--front-page":
+			_front_page = args[i + 1] if i + 1 < args.size() and not args[i + 1].begins_with("--") else "full"
 		elif args[i] == "--propose":
 			_propose = true
 		elif args[i] == "--zoom" and i + 1 < args.size():
@@ -874,6 +887,9 @@ func _init() -> void:
 			_mid_term = true
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
+		elif args[i] == "--audience-offer":
+			_audience_offer = true
+			_request = "--audience"
 		elif args[i] == "--audience-step" and i + 1 < args.size():
 			_audience_step = args[i + 1]
 			_request = "--audience"
@@ -1130,6 +1146,8 @@ func _apply_view() -> void:
 		var button = _main._government_panel._dissolve_button
 		button.sync(_main._state, _main._state.player())
 		button._on_pressed()
+	if not _front_page.is_empty():
+		_stage_front_page(_front_page)
 	if _bid:
 		_open_a_bid()
 	if _failing:
@@ -2014,7 +2032,10 @@ func _stage_requests() -> void:
 	var ns = _main._state.player()
 	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
 	var asked := 0
-	for person in _main._loader.people.get(String(ns.id), []):
+	var people: Array = _main._loader.people.get(String(ns.id), []).duplicate()
+	if _audience_offer:
+		people.sort_custom(func(a, b) -> bool: return String(a.kind) == "press_owner" and String(b.kind) != "press_owner")
+	for person in people:
 		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
 			Audiences._arrive(ns, person, person.wants[0], now, [])
 			asked += 1
@@ -2048,6 +2069,16 @@ func _stage_audience_step() -> void:
 			verbs.lever_button("promise_date").pressed.emit()
 		"save":
 			_main._hud.title_bar.save_load_requested.emit()
+		"lie":
+			verbs.lever_button("argue").get_parent().find_child("Lie", false, false).button_pressed = true
+		"flirt":
+			verbs.topic_button("flirt").pressed.emit()
+		"backroom":
+			var pick: OptionButton = verbs.lever_button("bargain").get_parent().find_child("Currency", false, false)
+			for i in pick.item_count:
+				if String(pick.get_item_metadata(i).get("currency", "")) == "backroom":
+					pick.select(i)
+					pick.item_selected.emit(i)
 		"spent":
 			verbs.lever_button("argue").pressed.emit()
 			verbs.topic_button("family").pressed.emit()
@@ -3465,3 +3496,36 @@ func _site_the_demonstration() -> void:
 	# one half of this mark a headless suite structurally cannot see.
 	view._hovered_city = String(report["city_id"])
 	view.queue_redraw()
+
+
+## --front-page: the card over a hand-fed entry and hand-fed headlines, worded as
+## Content's drafts word them (data/headlines/ is not on main yet), the played
+## nation's first and last outlets standing for the friendliest and the most hostile.
+## The clock is paused, so the card waits for the frame instead of ageing.
+func _stage_front_page(mode: String) -> void:
+	const Headlines = preload("res://src/ui/headlines.gd")
+	Headlines.set_table("event", {
+		"com_gas_squeeze": {"freeze_the_tariff": {
+			"friendly": "{{president}} shields pensioners from winter tariff rise",
+			"neutral": "Household gas tariff frozen with state loan to utility",
+			"hostile": "{{president}} puts winter bills on debt office tab",
+		}},
+		"rail_strike": {"concede": {"neutral": "Rail unions win pay deal after nine days off the tracks"}},
+		"flood": {"rebuild": {"hostile": "Flood towns still wait for the money {{president}} promised"}},
+	})
+	var outlets: Array = _main._loader.outlets.get(String(_main._state.player_nation_id), [])
+	if outlets.size() < 2:
+		push_error("screenshot: --front-page needs two outlets")
+		return
+	var first := String(outlets[0].id)
+	var last := String(outlets[outlets.size() - 1].id)
+	var papers := [{"outlet": first, "tone": "friendly"}, {"outlet": last, "tone": "hostile"}]
+	if mode == "one":
+		papers = [{"outlet": first, "tone": "friendly"}, {"outlet": last, "tone": "moderate"}]
+	var entry := {"kind": "event", "id": "com_gas_squeeze", "answer": "freeze_the_tariff", "severity": 3,
+		"papers": papers, "also": [] if mode == "one" else [
+			{"kind": "event", "id": "rail_strike", "answer": "concede", "outlet": first, "tone": "neutral"},
+			{"kind": "event", "id": "flood", "answer": "rebuild", "outlet": last, "tone": "hostile"},
+		]}
+	_main._clock.paused = true
+	_main._hud.front_page.show_entry(entry, _main._state, _main._loader, _main._clock)

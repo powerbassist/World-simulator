@@ -212,6 +212,10 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 			if words[register] != "":
 				var row := PanelKit.row(_body, tr(FEELING_LABEL[register]), words[register])
 				row.tooltip_text = Feelings.tip(float(feel[register]))
+	# V5.2c: the bond the term has made of them -- a rival or a lover is news.
+	var bond := Feelings.bond_word(String(ns.person_bond.get(person.id, "")))
+	if bond != "":
+		PanelKit.row(_body, tr("Between you"), bond)
 	# Q2: what the term did to them, dated, while the sim remembers it (twelve
 	# months, Audiences' RESOLVED_KEPT_MONTHS and President's JUDGED_KEPT_MONTHS).
 	for text in dated_lines(loader, ns, String(person.id)):

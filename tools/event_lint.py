@@ -24,6 +24,13 @@ sentence, restated as code; a band moved without a sweep is a band broken):
                 bloc) is the strict worst stays <= 0.30. Holding every mean at
                 zero pushes the cost onto the smallest bloc; this is the
                 constraint with a probe attached (events-model E1b's finding).
+  FLOOR         (V5.2c, bands-v5.2.md B5's scandal floor, the author's "Oui, ce
+                plancher") every exposure event's `exposure.on_arrival` plus its
+                cheapest answer costs the president at least one leak, 0.45 asks
+                (0.675 at severity 3), priced with B5's scandal weights (#161).
+                on_arrival is EXEMPT from MEAN by design: it is the standing price
+                MEAN forbids inside an answer, paid once on arrival whatever the
+                answer, and this band is its own.
   TOTAL         the book carries >= 9 events across data/events/*.json, with NO
                 upper bound -- the content task grows it 9 -> 120+ and the lint
                 must not fight that.
@@ -55,6 +62,7 @@ SUBJECT_OFFICES = ["head_of_government", "head_of_state", "largest_party_leader"
 ON_ACTIONS = [
     "law_passed", "law_repealed", "member_bill_passed", "minister_resigned",
     "takeover_bid", "firm_failed", "commodity_price_high", "accession_won",
+    "exposure",
 ]
 # events_constants bounds
 LIKELIHOOD_MIN, LIKELIHOOD_MAX = 0.002, 0.50
@@ -69,7 +77,7 @@ MIN_CHOICES, MAX_CHOICES = 2, 4
 KNOWN_KEYS = [
     "id", "name", "summary", "subject_office", "likelihood", "respond_months",
     "once", "preconditions", "choices", "interrupt", "sited",
-    "category", "weight", "severity", "on_action", "cooldown_months",
+    "category", "weight", "severity", "on_action", "cooldown_months", "exposure",
 ]
 CHOICE_KEYS = ["id", "label", "summary", "effects", "default", "arms"]
 # law.gd SCALAR_EFFECT_KEYS, and its SHARED_EFFECT_CHANNELS minus `institutional`
@@ -88,6 +96,21 @@ SECTORS = ["agriculture", "industry", "services"]
 BLOC_KEYS = ["workers", "pensioners", "urban", "rural", "business", "students"]
 BLOC_SIZE = {"workers": 0.30, "pensioners": 0.24, "urban": 0.15,
              "rural": 0.13, "business": 0.10, "students": 0.08}
+# V5.2c: event.gd's exposure block and shadow_constants' ROUTE_KINDS.
+EXPOSURE_KEYS = ["route", "kinds", "on_arrival"]
+ROUTE_KINDS = {
+    "press": ["personal_wealth", "affair", "favour"],
+    "courts": ["personal_wealth", "diverted_budget"],
+    "auditors": ["party_money", "diverted_budget"],
+    "turned": ["favour", "party_money", "personal_wealth", "diverted_budget", "affair"],
+}
+# tools/lever_weights.gd's scandal weights (bands-v5.2.md B5, Gameplay #161): a
+# headline point held over the horizon 0.393 asks, so a permanent bloc offset is
+# 0.393 x APPROVAL_SPAN 40 x the bloc's size; corruption 3.27 a unit.
+BLOC_UNIT = 0.393 * 40.0
+CORRUPTION_UNIT = 3.27
+FLOOR_ASKS = {1: 0.45, 2: 0.45, 3: 0.675}
+FLOOR_TOLERANCE = 0.005
 # law.gd SOCIETY_TERMS
 SOCIETY_TERMS = ["corruption", "migration", "settlement", "press_freedom",
                  "judicial_independence"]
@@ -198,6 +221,22 @@ def check_choice(fname: str, ev_id: str, choice: dict, rep: Report) -> None:
     if not isinstance(effects, dict) or not effects:
         rep.fail("%s: %s: names no effect at all -- a choice that costs nothing resolves the deadline for free" % (where, path))
         return
+    check_effects(where, path, effects, rep)
+
+    # THE E1b MEAN, per choice. The default is judged by the same band: it is the
+    # choice the desk charges while the player sleeps, so a mean off zero there
+    # is a standing bribe or a standing tax arriving month after month.
+    off = effects.get("bloc_offset", {})
+    if isinstance(off, dict) and off:
+        mean = sum(BLOC_SIZE.get(b, 0.0) * float(v) for b, v in off.items() if is_number(v))
+        if abs(mean) > MEAN_BAND:
+            rep.fail("%s: %s: bloc_offset size-weighted mean %+.4f outside +-%.3f -- a standing price, not a decision" % (
+                where, path, mean, MEAN_BAND))
+
+
+def check_effects(where: str, path: str, effects: dict, rep: Report) -> None:
+    """An effects dict's channels and values, as from_dict checks them -- a choice's
+    and an exposure's on_arrival alike."""
     for key in effects:
         if key not in EFFECT_CHANNELS and key not in SCALAR_EFFECT_KEYS:
             rep.fail("%s: %s: effects.%s is not a recognised effect channel" % (where, path, key))
@@ -239,15 +278,61 @@ def check_choice(fname: str, ev_id: str, choice: dict, rep: Report) -> None:
                 elif not is_number(value):
                     rep.fail("%s: %s: effects.society.%s is not numeric" % (where, path, term))
 
-    # THE E1b MEAN, per choice. The default is judged by the same band: it is the
-    # choice the desk charges while the player sleeps, so a mean off zero there
-    # is a standing bribe or a standing tax arriving month after month.
-    off = effects.get("bloc_offset", {})
-    if isinstance(off, dict) and off:
-        mean = sum(BLOC_SIZE.get(b, 0.0) * float(v) for b, v in off.items() if is_number(v))
-        if abs(mean) > MEAN_BAND:
-            rep.fail("%s: %s: bloc_offset size-weighted mean %+.4f outside +-%.3f -- a standing price, not a decision" % (
-                where, path, mean, MEAN_BAND))
+
+def effects_value(effects: dict):
+    """What an effects dict is worth to the president, in asks (lever_weights.gd's
+    effects_value); None when it writes a channel B5 does not price."""
+    v = 0.0
+    for key, vals in effects.items():
+        if key == "bloc_offset" and isinstance(vals, dict):
+            v += sum(BLOC_UNIT * BLOC_SIZE.get(b, 0.0) * float(x) for b, x in vals.items() if is_number(x))
+        elif key == "society" and isinstance(vals, dict) and set(vals) <= {"corruption"}:
+            v -= CORRUPTION_UNIT * float(vals.get("corruption", 0.0))
+        else:
+            return None
+    return v
+
+
+def check_exposure(where: str, ev_id: str, ev: dict, rep: Report) -> None:
+    """V5.2c: the exposure block's keys (a typo'd on_arrival must not drop the
+    floor silently), its route and kinds, on_arrival's effects, and the FLOOR."""
+    block = ev.get("exposure")
+    if (block is not None) != (ev.get("on_action") == "exposure"):
+        rep.fail("%s: %s: an 'exposure' block and on_action 'exposure' go together" % (where, ev_id))
+        return
+    if block is None:
+        return
+    if not isinstance(block, dict):
+        rep.fail("%s: %s: exposure must be an object" % (where, ev_id))
+        return
+    for key in block:
+        if key not in EXPOSURE_KEYS:
+            rep.fail("%s: %s: exposure.%s is not a recognised field (%s)" % (where, ev_id, key, EXPOSURE_KEYS))
+    route, kinds = block.get("route"), block.get("kinds")
+    if route not in ROUTE_KINDS or not isinstance(kinds, list) or not kinds:
+        rep.fail("%s: %s: exposure needs a route in %s and a non-empty kinds list" % (where, ev_id, sorted(ROUTE_KINDS)))
+        return
+    for kind in kinds:
+        if kind not in ROUTE_KINDS[route]:
+            rep.fail("%s: %s: exposure route '%s' cannot reach kind '%s'" % (where, ev_id, route, kind))
+    if ev.get("once") or (is_number(ev.get("cooldown_months", 0)) and float(ev.get("cooldown_months", 0)) != 0.0):
+        rep.fail("%s: %s: an exposure event must have cooldown_months 0 and not be once -- the chain door would drop a found scandal" % (where, ev_id))
+    arrival = block.get("on_arrival")
+    if not isinstance(arrival, dict) or not arrival:
+        rep.fail("%s: %s: exposure.on_arrival is missing -- every exposure pays the scandal floor on arrival" % (where, ev_id))
+        return
+    check_effects(where, "%s.exposure.on_arrival" % ev_id, arrival, rep)
+    answers = [effects_value(c.get("effects", {})) for c in ev.get("choices", []) if isinstance(c, dict)]
+    paid = effects_value(arrival)
+    if paid is None or not answers or any(a is None for a in answers):
+        rep.fail("%s: %s: an exposure writes a channel B5's scandal weights do not price" % (where, ev_id))
+        return
+    price = -(paid + max(answers))
+    severity = int(ev.get("severity", 1)) if is_number(ev.get("severity", 1)) else 1
+    floor = FLOOR_ASKS.get(severity, FLOOR_ASKS[3])
+    rep.note("FLOOR: %s pays %.3f asks (arrival %+.3f, cheapest answer %+.3f; floor %.3f)" % (ev_id, price, paid, max(answers), floor))
+    if price < floor - FLOOR_TOLERANCE:
+        rep.fail("%s: %s: arrival plus the cheapest answer costs %.3f asks, under the scandal floor %.3f" % (where, ev_id, price, floor))
 
 
 def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
@@ -268,6 +353,7 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
     for key in ev:
         if key not in KNOWN_KEYS:
             rep.fail("%s: '%s' is not a recognised event field" % (where, key))
+    check_exposure(where, ev_id, ev, rep)
 
     for field in ("name", "summary"):
         if not isinstance(ev.get(field), str) or not ev.get(field):
