@@ -73,6 +73,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dismiss-confirm
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
@@ -208,6 +209,9 @@ var _settings := false
 
 ## V5.2 b+ (the #135 follow-up). The Dissolve card up, asked by the Politics button.
 var _dissolve_confirm := false
+
+## V5.2 b+ R4. The Dismiss card up over Politics, its price in R11's words.
+var _dismiss_confirm := false
 
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
 ## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
@@ -721,6 +725,8 @@ func _init() -> void:
 			_settings = true
 		elif args[i] == "--dissolve-confirm":
 			_dissolve_confirm = true
+		elif args[i] == "--dismiss-confirm":
+			_dismiss_confirm = true
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
 		elif args[i] == "--center" and i + 2 < args.size():
@@ -1100,6 +1106,11 @@ func _apply_view() -> void:
 		_stage_the_outliner()
 	if _settings:
 		_main._settings_panel.show()
+	if _dismiss_confirm:
+		var verbs = _main._government_panel._cabinet_verbs
+		verbs.sync(_main._state, _main._loader)
+		verbs.select_portfolio("defence")
+		verbs._on_dismiss()
 	if _dissolve_confirm:
 		var button = _main._government_panel._dissolve_button
 		button.sync(_main._state, _main._state.player())

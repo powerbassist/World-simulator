@@ -136,7 +136,7 @@ static func on_appointment(main, outcome: Dictionary) -> void:
 	if String(entry.get("kind", "")) == CalendarK.KIND_AUDIENCE:
 		open_scene(main, String(entry.get("action_id", "")))
 		return
-	main._world_news.card_appointment(entry, String(outcome["label"]), bool(outcome["ok"]))  # i18n: row-ok DiaryDriver hands back a translated label
+	main._world_news.card_appointment(entry, String(outcome["label"]), bool(outcome["ok"]), String(outcome.get("reason", "")))  # i18n: row-ok DiaryDriver hands back a translated label
 	if String(outcome["summit_target"]) != "":
 		main._open_summit(String(outcome["summit_target"]), outcome["before"])
 
