@@ -1286,6 +1286,147 @@ promise a date (`LIE_ODDS`). Declared before `lever_probe` L2 reads them.
 - **Not in the grid:** accepting an offer. It is the person's proposal, not a
   lever the president picks, and B6 bands it.
 
+#### The exchange weights for a scandal's answer (declared 2026-10-25, before L2 reads the shadow rows)
+
+`tools/lever_weights.gd` prices grudge, rapport, commitment and bond in asks
+won; a scandal's answers write `bloc_offset`, `society.corruption` and, through
+them, approval. Those three get weights here, by one chain from the weights
+already declared, so no new opinion enters the grid.
+
+- **The anchor: one leak.** The refusal ceiling is built so that a grudge
+  brought to the brief gate fires exactly one brief
+  (`GRUDGE_REFUSAL_CEILING`'s comment, `character_act_constants.gd:207-214`).
+  At the declared `WEIGHTS["grudge"]` = 1.0, that gate, 0.45 of grudge, is
+  **0.45 of an ask**. The brief it fires costs `PRICE_BRIEF` −0.15 × the
+  standing weight on workers and students (`characters.gd:431`,
+  `BRIEF_BLOCS`). France's 62 people have a mean standing weight of **1.058**
+  (0.5 + 0.3 + 0.4 × ambition, + 0.1 if ambitious, over `data/people/`;
+  MEASURED). Through `APPROVAL_SPAN` 40 and `BLOC_SIZE`, that is 40 × (0.30 +
+  0.08) × 0.15 × 1.058 = **2.41 headline points** where it lands.
+- **Fading against permanent.** A brief's offset fades on
+  `ACT_OFFSET_HALF_LIFE_MONTHS` 24; a scandal answer's offset is permanent
+  (the applier's law-and-event channel). Over the term-length horizon B5
+  already uses (60 months), a fading point is worth (1 − 0.5^(60/24)) × 24 /
+  ln 2 / 60 = **0.475** of a permanent one. (The game fades monthly, by
+  `ACT_OFFSET_MONTHLY_KEEP`; summed over the 60 months that gives 0.468 to
+  0.482 by QA's count. That is within 1.5 %
+  of 0.475, with no sign change; QA, on #161.)
+- **So one headline approval point, held over the horizon, is worth 0.45 /
+  (2.41 × 0.475) = 0.393 of an ask.** Everything below follows from that rate:
+
+| Effect | Weight, in asks won | From |
+|---|---|---|
+| Headline approval, a point held over the horizon | **0.393** per point | the anchor |
+| `bloc_offset` (permanent), per unit on a bloc | **0.393 × 40 × the bloc's size**: workers 4.71, pensioners 3.77, urban 2.36, rural 2.04, business 1.57, students 1.26 | `APPROVAL_SPAN`, `BLOC_SIZE` (`opinion_constants.gd:54-61`) |
+| `act_bloc_offset` (fading), per unit | 0.475 of the line above | the fade |
+| `society.corruption`, per unit | **3.27** | a saturated register (1.0) moves the headline −8.32 points at the shipped beta 0.30 (`society_constants.gd:162-164`, MEASURED at V1.5a); 0.393 × 8.32, read as linear |
+
+- **Self-check:** the brief itself, priced back through the table, is 15.71
+  × 0.38 × 0.15 × 1.058 × 0.475 = 0.45 asks, the grudge that fired it.
+- **The probe agrees on the slope (MEASURED):** in events_probe E3 on #150
+  @ `6115474f`, headline approval moved 38.7 points per unit of size-weighted
+  offset after 12 months (the affair rows), against `APPROVAL_SPAN` 40.
+- **Left out, said so:** the networked multiplier (×1.5 on a networked
+  person's brief) and the chooser's corruption weight. The first would raise
+  the rate for a networked briefer only; the second prices AI nations, not the
+  president.
+
+**What the weights show, before any run: every exposure today has an answer
+that pays the player.** INFERRED from the nine events in #150 @ `6115474f`
+(`data/events/shadows.json`):
+
+| Events | accountable | deny | silence (default) | Cheapest answer |
+|---|---|---|---|---|
+| press personal wealth, turned favour (severity 2) | bloc −0.006, corruption +0.131: **+0.125** | −0.011 − 0.164 = −0.175 | −0.079 | accountable, a **gain** of 0.125 |
+| the five severity-3 money events | −0.009 + 0.196 = **+0.187** | −0.017 − 0.245 = −0.262 | −0.119 | accountable, a **gain** of 0.187 |
+| press affair, turned affair (as authored) | −0.082 | **+0.014** | −0.079 | deny, a gain of 0.014 |
+| the same, with the re-tune sent to Content on 2026-10-25 | **+0.041** | +0.014 | −0.079 | accountable, a gain of 0.041 |
+
+So the "price of exposure" B5 multiplies by P(exposed) is negative: owning up
+lowers the national corruption register by more than it costs in blocs. A
+bribe would then carry a negative expected cost, the shadow rows would win by
+construction, and B5's 40 % ceiling would measure the content, not the game.
+
+- **Declared: the scandal floor.** Every answer to an exposure costs at least
+  **one leak, 0.45 asks**, for a severity-2 event, and **1.5 leaks, 0.675
+  asks**, for a severity-3 event. The ratio 1.5 is the one the authored
+  offsets already carry between the two severities. OPINION, anchored: an
+  exposure is a leak with evidence behind it, so it cannot cost less than an
+  anonymous one.
+  **The author's call (2026-10-25, the question tool), verbatim: "Oui, ce
+  plancher".** The floor is accepted as declared: one leak, 0.45 asks, and
+  0.675 at severity 3, about 1.3 to 2.2 headline points per exposure.
+- **The rule: the uniform part is the exposure's own price, paid on arrival.**
+  One uniform `bloc_offset` δ, on all six blocs, is written once when the
+  exposure arrives, whatever the answer. It is authored in the event's
+  `exposure` block (a new key, for example `on_arrival: {"bloc_offset":
+  {...}}`) and applied by Exposure through the applier, so `ns.bloc_offset`
+  keeps its one writer. The answers keep their decision-shaped offsets.
+  - **Why not inside every answer:** that was the first draft. Content
+    measured that it fails `tools/event_lint.py`: an answer's size-weighted
+    offset mean must stay within ±0.008 ("a standing price, not a decision").
+    The band binds every answer, not only the default, and δ would put each
+    answer's mean near δ. When the `on_arrival` key is read, the lint states
+    its own exemption and band for it (QA's RECORD on #161, routed to the
+    parent). The lint is right
+    about answers. An exposure's price is not an answer's: it is what being
+    found out costs, so it belongs to the arrival.
+  - **E2 and E3 are untouched:** E2's spreads and E3's comparisons are taken
+    between answers, and a cost common to all of them moves neither.
+  - **Systems builds the key** (in c1, or after it); **Content authors the
+    values** below.
+  The cost of δ is 15.71 × δ (the sizes sum to 1). From the cheapest answers
+  above:
+  - severity-2 money: δ = −(0.45 + 0.125) / 15.71 = **−0.037**;
+  - severity-3 money: δ = −(0.675 + 0.187) / 15.71 = **−0.055**;
+  - affairs, after the 2026-10-25 re-tune: δ = −(0.45 + 0.041) / 15.71 =
+    **−0.032**.
+  **Re-derived after Content's E2 scale** (each event's bloc offsets × 3.2 /
+  spread: 1.16 for the severity-2 money events, 1.65 for the affairs; the
+  corruption terms are not scaled). The severity-2 accountable becomes
+  −0.0073 + 0.131 = +0.124, so δ stays **−0.037**. The affairs' accountable
+  becomes 0.041 × 1.65 = +0.067, still the cheapest, so δ = −(0.45 + 0.067) /
+  15.71 = **−0.033**. The severity-3 events are not scaled (they pass E2), so
+  δ stays **−0.055**.
+  **Each δ is rounded away from zero**, so the floor holds: the affairs'
+  exact −(0.45 + 0.041) / 15.71 is −0.0313, and −0.031 would leave −0.446.
+  **Re-derived from Content's final rows** (#163, 2026-10-25), at 15.712 asks
+  per unit (mean standing 1.0577):
+  - affairs: accountable +0.0679 (the cheapest), deny +0.0248, silence
+    −0.1147. The exact δ is −0.03296, so −0.033 leaves the cheapest answer at a
+    cost of **0.4506**;
+  - severity-2 money: accountable +0.1234, so −0.037 leaves **0.458**;
+  - severity-3 money: accountable +0.1867, so −0.055 leaves **0.6775**.
+  All three meet the floor; the affairs' margin is 0.0006.
+  In headline terms that is about −1.5, −2.2 and −1.3 points per exposure,
+  above the poll floor. The rows are re-read by `events_probe` E2/E3 and
+  priced again by L2's header before L2 runs.
+- **The floor fixes the sign, not the balance (GLM's red-team, re-derived).**
+  At the floor, a bribe's expected cost is P(exposed) × 0.45 asks: 0.045 to
+  0.135 over B6's "once" band (10 % to 30 %). A currency worth +0.25 of odds
+  still nets +0.115 to +0.205 asks a try. So L2 will likely find a shadow row
+  over its 40 % ceiling (INFERRED). **The knob, declared before the read, is
+  the odds bonus** (`BACKROOM_ODDS`, `AID_ODDS`, `LIE_ODDS`, Systems'
+  constants), not the scandal price. The price is anchored to a leak, while the
+  bonus is a tuning constant with no anchor of its own. A bonus near P × price
+  is where a shadow row stops winning by default: 0.05 to 0.14 at the
+  severity-2 floor (0.45), and about 0.07 to 0.20 at the severity-3 floor
+  (0.675).
+- **Choices made, and why:**
+  - `APPROVAL_SPAN` 40, not the probe's 38.7: the probe reads after 12
+    months, before the approval target is fully reached. At 38.7 every weight
+    is 3 % lower and no sign changes.
+  - No discount: B5's other weights are undiscounted over the term (the
+    knowledge value counts the term's further encounters at par), so these
+    are too. With a discount, a permanent point would be worth less against
+    an ask paid now.
+  - An exposure writes no corruption before its answer: `ns.corruption`'s one
+    writer is the applier ([[v5.2-spec]] C4), and the exposure only arms the
+    event.
+- **Failure looks like:** an exposure answer that prices as a gain under
+  this table; a shadow row best in more than 40 % of its cells because its
+  expected cost is near zero.
+
 ### B6 amendment (2026-10-24, before c1 is built): rival and enemy on R11's cuts
 
 The c1 plan's bond rule writes `rival` and `enemy` from rapport, with interim

@@ -13,6 +13,7 @@ extends RefCounted
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const President = preload("res://src/sim/president.gd")
+const ActK = preload("res://src/sim/character_act_constants.gd")
 
 ## bands-v5.2.md, the B6 amendment: a value within this of a cut counts as ON
 ## it, and the cut's declared bracket decides its side -- three declines from 0
@@ -42,7 +43,10 @@ const BANDS := {
 		[INF, true, "close"],  # i18n: msgid
 	],
 	"loyalty": [
-		[-0.40, false, "disloyal"],  # i18n: msgid
+		# Closed at the floor: the premier resigns AT it (characters.gd, loyalty <=
+		# the floor), so the floor itself reads as the brink. The sim's constant,
+		# never a copy (the parent's call on #151).
+		[ActK.LOYALTY_RESIGN_FLOOR, true, "disloyal"],  # i18n: msgid
 		[-0.10, false, "uncertain"],  # i18n: msgid
 		[0.10, true, ""],
 		[0.40, true, "loyal"],  # i18n: msgid

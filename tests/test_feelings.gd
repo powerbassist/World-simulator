@@ -62,7 +62,10 @@ func _check_cuts() -> void:
 		["rapport", -0.30, false, "wary"], ["rapport", -0.06, false, "wary"], ["rapport", -0.05, false, "neutral"],
 		["rapport", 0.0, false, "neutral"], ["rapport", 0.10 - 0.05, false, "neutral"], ["rapport", 0.051, false, "warm"],
 		["rapport", 0.30, false, "warm"], ["rapport", 0.31, false, "close"], ["rapport", 1.0, false, "close"],
-		["loyalty", -0.5, false, "disloyal"], ["loyalty", -0.5, true, "ready to resign"], ["loyalty", -0.40, false, "uncertain"],
+		["loyalty", -0.5, false, "disloyal"], ["loyalty", -0.5, true, "ready to resign"],
+		# The premier resigns AT the floor (characters.gd: loyalty <= _resign_floor), so
+		# the floor itself reads as the brink (the parent's call on #151).
+		["loyalty", -0.40, true, "ready to resign"], ["loyalty", -0.40, false, "disloyal"], ["loyalty", -0.399, false, "uncertain"],
 		["loyalty", -0.11, false, "uncertain"], ["loyalty", -0.10, false, ""], ["loyalty", 0.0, false, ""],
 		["loyalty", 0.10, false, ""], ["loyalty", 0.11, false, "loyal"], ["loyalty", 0.40, false, "loyal"], ["loyalty", 0.41, false, "devoted"],
 	]

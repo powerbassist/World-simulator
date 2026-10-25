@@ -67,6 +67,18 @@ func _ready() -> void:
 func ask(question: String, yes: String) -> void:
 	_question.text = question
 	_yes.text = yes
+	_yes.show()
+	_no.text = tr("Cancel")
+	show()
+	_no.grab_focus()
+
+
+## The card as a notice: why the asked act cannot happen now, and only Close --
+## a confirm the sim refused must not end in silence (#152's RECORD 1).
+func tell(reason: String) -> void:
+	_question.text = reason
+	_yes.hide()
+	_no.text = tr("Close")
 	show()
 	_no.grab_focus()
 

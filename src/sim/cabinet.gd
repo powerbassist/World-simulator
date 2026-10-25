@@ -170,6 +170,13 @@ static func loyalty(ns, party, removed := 0) -> float:
 	return clampf(d * coh - CK.SHORTFALL_PENALTY * sf, 0.0, 1.0)
 
 
+## A holder's resignation signal, unpopularity x (1 - loyalty), the number
+## tick_month() compares with RESIGNATION_THRESHOLD; `removed` as loyalty()'s, so
+## a removal's price (src/sim/removal.gd) reads the rule the tick applies.
+static func resignation_signal(ns, party, removed := 0) -> float:
+	return Discipline.unpopularity(ns) * (1.0 - loyalty(ns, party, removed))
+
+
 ## Assemble a cabinet against the coalition the nation currently has. Called by
 ## the orchestrator immediately after Government.form()/fall() -- game_state.gd,
 ## elections.gd, legislature.gd -- never from inside government.gd, which would
@@ -320,8 +327,7 @@ static func tick_month(state, loader) -> void:
 			var pid: String = String(ns.cabinet.get(f, ""))
 			if pid == "" or not by_id.has(pid):
 				continue
-			var loy := loyalty(ns, by_id[pid])
-			if unpop * (1.0 - loy) > CK.RESIGNATION_THRESHOLD:
+			if resignation_signal(ns, by_id[pid]) > CK.RESIGNATION_THRESHOLD:
 				to_vacate.append(f)
 
 		for f in to_vacate:

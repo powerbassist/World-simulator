@@ -285,7 +285,7 @@ func _act_reason_text(key: String) -> String:
 ## column exists for -- alongside an alliance obligation opening and a foreign
 ## act. An act that REFUSED on arrival matters more, not less: it is the one
 ## outcome the player could not have predicted when they booked it.
-func card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
+func card_appointment(entry: Dictionary, label: String, ok: bool, reason := "") -> void:
 	if _stack == null:
 		return
 	if label.is_empty():
@@ -294,8 +294,15 @@ func card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
 			tr("Something booked for today no longer exists to be done."),
 		)
 		return
+	# A booked bill's day is its vote (R2): titled so, not "Kept:" over a defeat.
+	var law := String(entry.get("kind", "")) == CalendarK.KIND_LAW
+	_stack.push(tr("Vote: %s") % label if law else tr("Kept: %s") % label, appointment_text(entry, label, ok, reason))
 
-	# One whole sentence per shape, the failure a sentence of its own.
+
+## The day's card body. One whole sentence per shape, the failure a sentence of
+## its own -- with the sim's reason when the act was refused (V5.2 b+ R4, QA: a
+## Reassign the limit refused read "It did not carry." and nothing else).
+func appointment_text(entry: Dictionary, label: String, ok: bool, reason := "") -> String:
 	var booked := tr("%s, as booked.") % label
 	if String(entry.get("kind", "")) == CalendarK.KIND_DIPLOMATIC:
 		booked = tr("%s with %s, as booked.") % [label, _loader.nation_name(String(entry.get("target_id", "")))]
@@ -303,6 +310,9 @@ func card_appointment(entry: Dictionary, label: String, ok: bool) -> void:
 		var host = _loader.nations.get(String(entry.get("target_id", "")))
 		if ok and _opens_meeting(String(entry.get("action_id", ""))) and host != null and host.capital != "":
 			booked = tr("Received in %s.") % host.capital
+	# A booked bill's division (R2): its verdict and counts, carried or not.
+	if String(entry.get("kind", "")) == CalendarK.KIND_LAW and reason != "":
+		return "%s %s" % [booked, reason]
 	if not ok:
-		booked += " " + tr("It did not carry.")
-	_stack.push(tr("Kept: %s") % label, booked)
+		booked += " " + (tr("It did not carry: %s.") % Strings.t(reason) if reason != "" else tr("It did not carry."))  # i18n: row-ok the sim's reason, its English the msgid
+	return booked

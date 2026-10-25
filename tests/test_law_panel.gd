@@ -190,17 +190,18 @@ func _check_rebellion_is_forecast_and_named(loader, ns) -> void:
 func _check_proposal_note_names_a_held_bill() -> void:
 	var held: String = ProposalNote.body({"passed": false, "yes_seats": 311, "no_seats": 266,
 		"held_by_upper": true, "held_months": 12, "upper_chamber": "Sénat"})
-	if held.contains("Failed") or not held.contains("311") or not held.contains("Sénat") or not held.contains("12"):
+	if held.contains("Defeated") or not held.contains("311") or not held.contains("Sénat") or not held.contains("12"):
 		_fail("a held bill's note reads '%s', not carried, held by the chamber, in force in 12 months" % held)
 	var blocked: String = ProposalNote.body({"passed": false, "yes_seats": 311, "no_seats": 266,
 		"blocked_by_upper": true, "upper_chamber": "Sénat"})
-	if blocked.contains("Failed") or not blocked.contains("blocked"):
+	if blocked.contains("Defeated") or not blocked.contains("blocked"):
 		_fail("a blocked bill's note reads '%s'" % blocked)
+	# V5.2 b+ R2: the verdict words are Carried and Defeated (test_bill_card.gd).
 	var beaten: String = ProposalNote.body({"passed": false, "yes_seats": 100, "no_seats": 400})
-	if not beaten.begins_with("Failed"):
-		_fail("a beaten bill's note reads '%s', not Failed" % beaten)
+	if not beaten.begins_with("Defeated"):
+		_fail("a beaten bill's note reads '%s', not Defeated" % beaten)
 	var passed: String = ProposalNote.body({"passed": true, "yes_seats": 400, "no_seats": 100})
-	if not passed.begins_with("Passed"):
+	if not passed.begins_with("Carried"):
 		_fail("a passed bill's note reads '%s'" % passed)
 
 

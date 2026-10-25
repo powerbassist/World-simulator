@@ -44,6 +44,8 @@ static func offer(inbox) -> void:
 		return
 	_card = inbox.push(Strings.t("Dotted words explain themselves"),
 		Strings.t("A word underlined in dots has a note behind it: point at one, as here -- [g=approval]approval[/g]. Click it to keep the note open, and its own dotted words open the next."))
+	# Its second sentence is the instruction: never folded behind More.
+	inbox.keep_whole(_card)
 	_shown_in = inbox
 	cfg.set_value(SECTION, KEY, true)
 	cfg.save(config_path)

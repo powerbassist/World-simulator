@@ -19,6 +19,7 @@ signal dissolved(before: Dictionary)
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 
@@ -74,6 +75,11 @@ func _due(ns) -> int:
 func _on_confirmed() -> void:
 	var ns = _state.player() if _state != null else null
 	if ns == null:
+		return
+	# The month may also have turned the rule against it (a lockout, the election
+	# too close): say so on the card rather than do nothing (#152's RECORD 1).
+	if not Dissolution.can_dissolve(_state, ns):
+		_confirm.tell(Strings.t(Dissolution.refusal_reason(_state, ns)))  # i18n: row-ok the sim's reason, its English the msgid
 		return
 	# The clock runs behind the card: a month turned under it moved the date, so
 	# the player is asked again rather than held to a date the card did not name.
