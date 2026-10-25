@@ -68,6 +68,9 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 			"given_due": AudienceVerbs.given_due(ns, pid, String(session["object"])), "feel": Feelings.of(ns, pid)},
 		# V5.2c: the money on the table and the affair, as Shadows reads them now.
 		"shadow": {"offer": Shadows.offer(ns, session), "kind": String(person.kind) if person != null else "",
+			# Accept's refusals that are the scene's own state (Shadows.accept_offer's
+			# reasons, its sentences): the button is down with them, never a dead press.
+			"offer_why": "they have already agreed" if String(session.get("won", "")) != "" else ("no attempts left" if int(session["attempts_left"]) <= 0 else ""),  # i18n: ok the sim's reasons (shadows.gd), shown through Words.reason
 			"affair_why": Shadows.may_begin_affair(state, ns, loader, pid),
 			"flirted": (session["used_topics"] as Array).has("flirt"), "lovers": President.relationship(ns, pid) == "affair"}}
 
@@ -159,7 +162,7 @@ static func affair(main, game: Dictionary, action: String) -> void:
 		return
 	var pid := String(session["person_id"])
 	var state = main._state
-	var r := Shadows.begin_affair(state, state.player(), main._loader, pid) if action == "propose" 		else Shadows.end_affair(state, state.player(), main._loader, pid)
+	var r := Shadows.begin_affair(state, state.player(), main._loader, pid) if action == "propose" else Shadows.end_affair(state, state.player(), main._loader, pid)
 	if not bool(r["ok"]):
 		var why := String(r["error"])
 		game["scene"].show_result(Words.reason(why), view_of(main, game), "affair_why_" + why)

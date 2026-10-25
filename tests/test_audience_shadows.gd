@@ -121,6 +121,21 @@ func _open_with_offer(kind: String) -> bool:
 
 
 func _check_reason_words() -> void:
+	# The person's line after a lever: a lie is answered as one, a corrupt currency
+	# in its own lines.
+	var titles := [
+		[AudienceTalks.lever_title("argue", {"lie": true}, {"caught": true, "success": true}), "lie_caught"],
+		[AudienceTalks.lever_title("argue", {"lie": true}, {"success": true}), "lie_uncaught"],
+		[AudienceTalks.lever_title("bargain", {"currency": "aid"}, {"success": false}), "lever_bargain_aid_failure"],
+		[AudienceTalks.lever_title("bargain", {"currency": "favour"}, {"success": true}), "lever_bargain_success"],
+	]
+	for t in titles:
+		if t[0] != t[1]:
+			_fail("the line after a lever is '%s', not '%s'" % t)
+	# A promise told as a lie is found out at its date whatever happens (B8): its
+	# hover says so, argue's does not.
+	if Words.lie_text({}, "promise_date") == Words.lie_text({}, "argue"):
+		_fail("a lied promise's hover hides that it is found out at its date")
 	for key in ["not_covered", "unmarried", "spouse", "already", "too_cold", "no_spark", "not_affair"]:
 		var said := Words.reason(key)
 		if said == key or said == "" or said.contains("_"):
@@ -222,6 +237,14 @@ func _check_refuse() -> void:
 		_fail("the press owner's offer shows no Refuse")
 		return
 	var ns = _main._state.player()
+	# No attempt left: the sim refuses the money, so Accept is down with its reason.
+	var attempts := int(_session()["attempts_left"])
+	_session()["attempts_left"] = 0
+	_scene().shadow.show_for(AudienceTalks.view_of(_main, AudienceDriver._games[_main.get_instance_id()]))
+	var accept: Button = _scene().shadow.find_child("OfferAccept", true, false)
+	if not accept.disabled or accept.tooltip_text == "":
+		_fail("with no attempt left Accept is still live, or says no reason")
+	_session()["attempts_left"] = attempts
 	var rapport := President.rapport(ns, _person)
 	var money := _money()
 	refuse.pressed.emit()

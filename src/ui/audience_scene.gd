@@ -167,7 +167,11 @@ func _say_offer(view: Dictionary) -> void:
 		return
 	var state := {"name": String(view.get("name", "")), "ask": String(view.get("ask", "")),  # i18n: row-ok the person's shown name, resolved by the wiring
 		"president": String(view.get("president", "")), "lever": "", "topic": ""}
-	shadow.set_offer_line(await DialogueLines.line(_resource, "offer_%s_%s" % [String(view["shadow"].get("kind", "")), String(offer.get("currency", ""))], state))
+	var asked := String(view.get("request_id", ""))
+	var said: String = await DialogueLines.line(_resource, "offer_%s_%s" % [String(view["shadow"].get("kind", "")), String(offer.get("currency", ""))], state)
+	# The line is awaited: the audience it was asked for may be gone by now.
+	if String(_view.get("request_id", "")) == asked:
+		shadow.set_offer_line(said)
 
 
 ## One title of the person's lines, through the addon; a title the files lack is

@@ -189,7 +189,7 @@ func _lie_toggle(row: Dictionary, odds: Label, args: Dictionary, feel: Dictionar
 	var told := CheckBox.new()
 	told.name = "Lie"
 	told.text = tr("Lie")
-	told.tooltip_text = Words.lie_text(feel)
+	told.tooltip_text = Words.lie_text(feel, String(row["lever"]))
 	var honest := odds.text
 	var lie: Dictionary = row["lie"]
 	told.toggled.connect(func(on: bool) -> void:

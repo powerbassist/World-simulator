@@ -78,6 +78,10 @@ func show_for(view: Dictionary) -> void:
 	_offer.visible = not offer.is_empty()
 	if not offer.is_empty():
 		_terms.text = tr("On the table: %s.") % Words.offer_terms(offer)
+		var accept: Button = _offer.find_child("OfferAccept", true, false)
+		var refusal := String(shadow.get("offer_why", ""))
+		accept.disabled = refusal != ""
+		accept.tooltip_text = Words.reason(refusal) if refusal != "" else tr("Take it: the request is settled and an attempt spent, and it leaves evidence that can be found.")
 	var lovers := bool(shadow.get("lovers", false))
 	var why := String(shadow.get("affair_why", ""))
 	# Proposed only once there has been a flirt: the scene's own order, flirt first.
