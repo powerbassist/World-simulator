@@ -109,6 +109,12 @@ func _process(_delta: float) -> bool:
 			(_card() as Node).confirmed.emit()
 			if str(_main._pending_effects).count("Dissolution called") != queued:
 				_fail("a refused dissolution was announced")
+			# ... and does not fail silently (#152's RECORD 1, the parent's call): the
+			# card stays up with the sim's reason, and no Dissolve to press again.
+			var why := Dissolution.refusal_reason(_main._state, ns)
+			var yes := _card().find_child("Confirm", true, false) as Control
+			if not _card().is_visible_in_tree() or not _text(_card()).contains(why) or (yes != null and yes.visible):
+				_fail("a refused confirm does not say why: '%s' (the sim: '%s')" % [_text(_card()), why])
 			_finish()
 			return true
 	return false
