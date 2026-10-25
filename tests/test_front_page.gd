@@ -87,6 +87,7 @@ func _setup() -> void:
 		"ev_y": {"a": {"neutral": "Second story of the month"}},
 		"ev_z": {"a": {"hostile": "Third story of the month"}},
 		"ev_w": {"a": {"hostile": "Fourth story of the month"}},
+		"ev_p": {"a": {"friendly": "{{party}} carries the day"}},
 	})
 	Headlines.set_table("moment", {})
 
@@ -142,10 +143,29 @@ func _check_missing() -> void:
 	for key in ["{{", "ev_x", "moderate", "minister"]:
 		if all.contains(key):
 			_fail("the card prints '%s', a key or a variable: '%s'" % [key, all])
+	_card.dismiss()
 	if _show(_entry([_paper(0, "neutral")])) or _card.visible:
 		_fail("an entry with no written headline showed a card")
 	if _show({}) or _card.visible:
 		_fail("an empty entry showed a card")
+	# A shape the card does not read (an id where a Dictionary goes) is skipped.
+	if _show(_entry([String(_outlets[0].id), _paper(1, "hostile")])) == false:
+		_fail("a malformed paper beside a good one stopped the card")
+	# An empty month, or one with nothing written, leaves the card being read up:
+	# once wired, the month report hands an empty entry most months.
+	_show_full()
+	if _show({}) or _show(_entry([_paper(0, "neutral")])) or not _card.visible:
+		_fail("a month with no front page put away the card still up")
+	_card.dismiss()
+	# A variable with no value (no incumbent party) drops its headline, not a hole.
+	var ns = _main._state.player()
+	var party: String = ns.incumbent_party_id
+	ns.incumbent_party_id = ""
+	var shown: bool = _show({"kind": "event", "id": "ev_p", "answer": "a", "papers": [_paper(0, "friendly")]})
+	ns.incumbent_party_id = party
+	if shown or _texts(_card).contains(" carries the day"):
+		_fail("a headline whose {{party}} has no value was shown with a hole")
+	_card.dismiss()
 
 
 func _check_one_at_a_time() -> void:

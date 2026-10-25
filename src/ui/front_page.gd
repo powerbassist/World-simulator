@@ -90,49 +90,51 @@ func _ready() -> void:
 
 
 ## Show the month's front page, `entry` as the month report carries it. Replaces a
-## card still up (at most one a month, D8; the older goes to the inbox first).
-## Returns whether anything was shown: an empty entry, or one whose headlines are
-## none of them written, shows nothing.
+## card still up (at most one a month, D8; the older goes to the inbox first) --
+## but only once there is something to show: an empty month, or an entry whose
+## headlines are none of them written, leaves the card the player is reading where
+## it is and returns false.
 func show_entry(entry: Dictionary, state, loader, clock) -> bool:
+	if entry.is_empty() or state == null or loader == null or state.player() == null:
+		return false
+	var vars := _vars(state.player(), loader)
+	var outlets := _outlets(loader, String(state.player_nation_id))
+	var kind := String(entry.get("kind", "event"))
+	var id := String(entry.get("id", ""))
+	var answer := String(entry.get("answer", ""))
+	var papers := []   # [masthead, tone, headline]
+	for paper in _dicts(entry.get("papers", [])):
+		var outlet = outlets.get(String(paper.get("outlet", "")), null)
+		var tone := String(paper.get("tone", ""))
+		var words := Headlines.text(kind, id, answer, tone, vars)
+		if outlet != null and not words.is_empty():
+			papers.append([_masthead(outlet), tone, words])
+	if papers.is_empty():
+		return false
+	var also := PackedStringArray()
+	for story in _dicts(entry.get("also", [])):
+		var outlet = outlets.get(String(story.get("outlet", "")), null)
+		var words := Headlines.text(String(story.get("kind", "event")), String(story.get("id", "")),
+			String(story.get("answer", "")), String(story.get("tone", "")), vars)
+		if outlet != null and not words.is_empty() and also.size() < ALSO_MAX:
+			also.append(tr("%s: %s") % [_masthead(outlet), words])
+
 	dismiss()
 	for box in [_papers, _also]:
 		for child in box.get_children():
 			box.remove_child(child)
 			child.queue_free()
-	_record = PackedStringArray()
-	if entry.is_empty() or state == null or loader == null:
-		return false
-	var ns = state.player()
-	var vars := _vars(ns, loader)
-	var outlets := _outlets(loader, String(state.player_nation_id))
-	var kind := String(entry.get("kind", "event"))
-	var id := String(entry.get("id", ""))
-	var answer := String(entry.get("answer", ""))
-	for paper in entry.get("papers", []):
-		var outlet = outlets.get(String(paper.get("outlet", "")), null)
-		var tone := String(paper.get("tone", ""))
-		var words := Headlines.text(kind, id, answer, tone, vars)
-		if outlet == null or words.is_empty():
-			continue
-		_paper(_masthead(outlet), tone, words)
-	if _papers.get_child_count() == 0:
-		return false
-	var also: Array = entry.get("also", [])
-	for story in also.slice(0, ALSO_MAX):
-		var outlet = outlets.get(String(story.get("outlet", "")), null)
-		var words := Headlines.text(String(story.get("kind", "event")), String(story.get("id", "")),
-			String(story.get("answer", "")), String(story.get("tone", "")), vars)
-		if outlet == null or words.is_empty():
-			continue
-		if _also.get_child_count() == 0:
-			var heading := Label.new()
-			heading.text = tr("ALSO ON THE FRONT PAGE")
-			heading.theme_type_variation = UiTheme.MICRO
-			_also.add_child(heading)
-		var line := tr("%s: %s") % [_masthead(outlet), words]
-		PanelKit.plain_line(_also, line, PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_record.append(line)
-	_also.visible = _also.get_child_count() > 0
+	for paper in papers:
+		_paper(paper[0], paper[1], paper[2])
+	if not also.is_empty():
+		var heading := Label.new()
+		heading.text = tr("ALSO ON THE FRONT PAGE")
+		heading.theme_type_variation = UiTheme.MICRO
+		_also.add_child(heading)
+		for line in also:
+			PanelKit.plain_line(_also, line, PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			_record.append(line)
+	_also.visible = not also.is_empty()
 	_date.text = DateText.month_year(int(state.month), int(state.year))
 	_clock = clock
 	_left = LIFE_SECONDS
@@ -150,11 +152,6 @@ func dismiss() -> void:
 	if inbox != null and not _record.is_empty():
 		inbox.push(tr("Front pages"), "\n".join(_record))
 	_record = PackedStringArray()
-
-
-## The seconds left before the card puts itself away.
-func seconds_left() -> float:
-	return _left if visible else 0.0
 
 
 func _process(delta: float) -> void:
@@ -194,17 +191,34 @@ func _paper(masthead: String, tone: String, words: String) -> void:
 	_record.append(tr("%s: %s") % [masthead, words])
 
 
-## {{president}}, {{party}} and {{nation}}, the three a headline may name.
+## {{president}}, {{party}} and {{nation}}, the three a headline may name. One
+## with no value (no incumbent party, a vacant seat) is left out, so a headline
+## naming it stays unfilled and is dropped rather than printed with a hole.
 static func _vars(ns, loader) -> Dictionary:
 	var party := ""
 	for row in loader.parties.get(String(ns.id), []):
 		if String(row.id) == String(ns.incumbent_party_id):
 			party = String(row.party_name)
-	return {
+	var out := {
 		"president": loader.person_name(President.leader_id(ns)),
 		"party": party,
 		"nation": loader.nation_name(String(ns.id)),
 	}
+	for key in out.keys():
+		if String(out[key]).is_empty():
+			out.erase(key)
+	return out
+
+
+## The Dictionaries of a list from the entry; anything else in it is skipped, as a
+## shape this card does not read.
+static func _dicts(list) -> Array:
+	var out := []
+	if list is Array:
+		for item in list:
+			if item is Dictionary:
+				out.append(item)
+	return out
 
 
 static func _outlets(loader, nation_id: String) -> Dictionary:
