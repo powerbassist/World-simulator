@@ -8,7 +8,7 @@ the bands' arithmetic lives in one place (the probe) and a sharded run and a
 single run read the same numbers.
 
   python tools/shadows_parallel.py --json=PATH [-j N] [--seeds=0-199] [--chunk=25]
-         [--regimes=S1,S2,S3,S4] [--exact=10] [--trace]
+         [--regimes=S1,S2,S2c,S3,S4] [--exact=10] [--trace]
 
 Isolation, the cold import and the pool are balance_parallel.py's: a private
 APPDATA / XDG_DATA_HOME per probe, one checkout read-only, one --import first if
@@ -39,7 +39,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("-j", "--jobs", type=int, default=min(8, os.cpu_count() or 1))
     ap.add_argument("--seeds", default="0-199")
     ap.add_argument("--chunk", type=int, default=25, help="seeds per probe")
-    ap.add_argument("--regimes", default="S1,S2,S3,S4")
+    ap.add_argument("--regimes", default="S1,S2,S2c,S3,S4")
     ap.add_argument("--exact", type=int, default=10, help="S1 seeds re-run with the real act")
     ap.add_argument("--trace", action="store_true", help="S1's roll and pressure rows, for re-pricing RATE")
     args = ap.parse_args(argv)
