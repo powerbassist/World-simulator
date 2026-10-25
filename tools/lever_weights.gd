@@ -9,6 +9,7 @@ extends RefCounted
 const K = preload("res://src/sim/lever_constants.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 const GAIN := 1.0
 ## Flatter's effect is small and does not hold (the spec's dominance matrix).
@@ -98,3 +99,56 @@ static func book_value(p: float, s: float, g: float, k: float, serve: bool, prom
 ## further encounters this term.
 static func knowledge_value(dk: float, q: float) -> float:
 	return dk * KNOW_SLOPE * 3.0 * q * q * ENCOUNTERS
+
+
+# --- B5's shadow rows (bands-v5.2.md, the B5 amendment and "The exchange weights --
+# for a scandal's answer", Gameplay #161, declared 2026-10-25 before L2 read them) --
+
+## One leak, 0.45 asks (the brief gate at the grudge weight), is 2.41 headline points
+## where it lands, fading on a 24-month half-life: so a headline point held over
+## the 60-month horizon is 0.393 of an ask. A permanent bloc offset is that through
+## APPROVAL_SPAN and the bloc's size; a fading one 0.475 of it; corruption through
+## its measured headline slope (-8.32 points at a saturated register).
+const APPROVAL_POINT := 0.393
+const BLOC_UNIT := APPROVAL_POINT * 40.0
+const ACT_FADE := 0.475
+const CORRUPTION_UNIT := 3.27
+
+
+## What an effects dict is worth to the president, in asks: negative is a cost. A
+## channel the weights do not price is an error, never a silent zero.
+static func effects_value(effects: Dictionary) -> float:
+	var v := 0.0
+	for key in effects:
+		match String(key):
+			"bloc_offset":
+				for bloc in effects[key]:
+					v += BLOC_UNIT * float(OpinionK.BLOC_SIZE[bloc]) * float(effects[key][bloc])
+			"act_bloc_offset":
+				for bloc in effects[key]:
+					v += ACT_FADE * BLOC_UNIT * float(OpinionK.BLOC_SIZE[bloc]) * float(effects[key][bloc])
+			"society":
+				for field in effects[key]:
+					if String(field) == "corruption":
+						v -= CORRUPTION_UNIT * float(effects[key][field])
+					else:
+						push_error("lever_weights: society.%s has no B5 weight" % field)
+			_:
+				push_error("lever_weights: the effect channel %s has no B5 weight" % key)
+	return v
+
+
+## A scandal's price: what its arrival costs plus its cheapest answer (the player
+## picks the cheapest), in asks -- positive is a cost.
+static func scandal_price(ev) -> float:
+	var best := -INF
+	for choice in ev.choices:
+		best = maxf(best, effects_value(choice["effects"]))
+	return -(effects_value(ev.exposure_on_arrival) + best)
+
+
+## A lie found out, in asks: Lies.reveal() under the weights -- rapport, the grudge
+## through the person's intake, and the knowledge it takes (book_value's own terms).
+static func reveal_price(person, k: float, q: float) -> float:
+	return float(WEIGHTS["rapport"]) * K.LIE_RAPPORT + K.LIE_GRUDGE * Characters.grudge_intake(person) \
+		+ knowledge_value((1.0 - K.LIE_KNOWLEDGE_KEEP) * k, q)
