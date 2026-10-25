@@ -323,7 +323,8 @@ func _check_grow_evidence_accrues_one_row() -> void:
 
 ## expose_evidence moves one row, stamped with its route and month, and refuses
 ## -- writing nothing -- a bad index, a route outside the list, or a route that
-## cannot reach the row's kind (the press does not read a favour).
+## cannot reach the row's kind (the courts do not read a favour; since #170's call 1
+## the press does).
 func _check_expose_moves_the_row() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.player()
@@ -334,7 +335,7 @@ func _check_expose_moves_the_row() -> void:
 	if not President.expose_evidence(ns, 1, "tv", made + 2).is_empty() \
 			or not President.expose_evidence(ns, 2, "press", made + 2).is_empty() \
 			or not President.expose_evidence(ns, -1, "press", made + 2).is_empty() \
-			or not President.expose_evidence(ns, 0, "press", made + 2).is_empty():
+			or not President.expose_evidence(ns, 0, "courts", made + 2).is_empty():
 		_fail("an exposure by an unknown route, of no row, or by a route that cannot reach the kind was accepted")
 	if ns.exposure_evidence.size() != 2 or not ns.exposures.is_empty():
 		_fail("a refused exposure wrote to a register")
