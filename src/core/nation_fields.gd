@@ -29,11 +29,9 @@ extends RefCounted
 
 const Readers = preload("res://src/core/nation_field_readers.gd")
 
-const COL_NAME := 0
-const COL_COPY := 1
-const COL_READ := 2
-const COL_DEFAULT := 3
-const COL_ABSENT_OK := 4
+# A row's columns, in order (0-4). One enum like the two below: the table outgrew
+# the size ratchet's 300 at V5.2c's `exposures` row, and five consts were four lines.
+enum { COL_NAME, COL_COPY, COL_READ, COL_DEFAULT, COL_ABSENT_OK }
 
 enum { NONE, SCALAR, DEEP }
 enum {
@@ -336,6 +334,7 @@ const FIELDS := [
 	["commitments", DEEP, ROWS, [], true],  # V5.2a: absent is nothing promised
 	["commitments_judged", DEEP, ROWS, [], true],  # V5.2b b2.1: absent is nothing judged yet
 	["exposure_evidence", DEEP, ROWS, [], true],  # V5.2a: absent is nothing left behind
+	["exposures", DEEP, ROWS, [], true],  # V5.2c: absent is nothing exposed
 	["audience_requests", DEEP, ROWS, [], true],  # V5.2b: absent is nobody has asked
 	["audience_asked_month", DEEP, INT_MAP, {}, true],  # V5.2b: absent is nobody has asked
 	["phone_calls", DEEP, INT_MAP, {}, true],  # V5.2b b3: absent is nobody called
