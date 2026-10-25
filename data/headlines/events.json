@@ -972,5 +972,175 @@
       "neutral": "Government rejects union demands on pensions",
       "hostile": "{{president}} gambles on showdown with unions"
     }
+  },
+  "exposure_press_personal_wealth": {
+    "accountable": {
+      "friendly": "{{president}} opens ledgers and takes sting out of tale",
+      "neutral": "{{president}} publishes private accounts after paper traces payments",
+      "hostile": "{{president}} admits bad judgement only once payments exposed"
+    },
+    "deny": {
+      "friendly": "{{president}} names grudge behind Sunday paper's payment story",
+      "neutral": "{{president}} calls payment story vengeance and cites publisher debts",
+      "hostile": "{{president}} attacks publisher instead of answering payment questions"
+    },
+    "silence": {
+      "friendly": "{{president}} keeps calm while newspaper series runs its course",
+      "neutral": "{{president}} offers no reply as payment instalments continue",
+      "hostile": "{{president}} hides as payment story lands blow after blow"
+    }
+  },
+  "exposure_press_affair": {
+    "accountable": {
+      "friendly": "{{president}} faces truth and apologises with candour",
+      "neutral": "{{president}} confirms relationship and apologises for concealment",
+      "hostile": "Two years of lying end in {{president}}'s staged apology"
+    },
+    "deny": {
+      "friendly": "{{president}} stands firm against unverified timeline claims",
+      "neutral": "{{president}} disputes timeline and questions how photos emerged",
+      "hostile": "{{president}} quibbles over photos while dodging concealment"
+    },
+    "silence": {
+      "friendly": "{{president}} refuses to feed media frenzy over private life",
+      "neutral": "{{president}} answers no questions on relationship reports",
+      "hostile": "Silent {{president}} lets affair questions pile unanswered"
+    }
+  },
+  "exposure_press_favour": {
+    "accountable": {
+      "friendly": "{{president}} explains arrangement and sets new rules in writing",
+      "neutral": "{{president}} confirms arrangement and promises records of favours",
+      "hostile": "Caught favour traced to office {{president}} promises paperwork"
+    },
+    "deny": {
+      "friendly": "{{president}} rejects story built on unnamed whisperers",
+      "neutral": "{{president}} calls story smear from anonymous sources",
+      "hostile": "{{president}} smears paper rather than face three sources"
+    },
+    "silence": {
+      "friendly": "{{president}} declines to dignify unsourced favour claims",
+      "neutral": "{{president}} stays silent as paper keeps investigating favour",
+      "hostile": "{{president}} says nothing while diggers keep digging"
+    }
+  },
+  "exposure_courts_personal_wealth": {
+    "accountable": {
+      "friendly": "{{president}} waives privacy and orders accountants to talk",
+      "neutral": "{{president}} cooperates fully with magistrate's payments inquiry",
+      "hostile": "Summoned by courts {{president}} trades privacy for survival"
+    },
+    "deny": {
+      "friendly": "{{president}} defends rights against intrusive court summons",
+      "neutral": "Lawyers contest summons and hint at political motive",
+      "hostile": "{{president}}'s lawyers wage war on investigating magistrate"
+    },
+    "silence": {
+      "friendly": "{{president}} wisely lets proceedings run their legal course",
+      "neutral": "{{president}} makes no comment as court case proceeds",
+      "hostile": "Frozen {{president}} hides behind lawyers as case grows"
+    }
+  },
+  "exposure_courts_diverted_budget": {
+    "accountable": {
+      "friendly": "{{president}} restores budget line and demands accountability",
+      "neutral": "{{president}} returns money and lets minister take blame",
+      "hostile": "{{president}} fixes bent budget line then feeds minister to wolves"
+    },
+    "deny": {
+      "friendly": "{{president}} dismisses fuss over routine budget reallocation",
+      "neutral": "{{president}} calls shift routine and memo misread",
+      "hostile": "{{president}} shrugs off memo blessing redirected public money"
+    },
+    "silence": {
+      "friendly": "{{president}} trusts ministry to answer its own paperwork",
+      "neutral": "{{president}} leaves ministry to explain budget memo",
+      "hostile": "Ministry flounders while {{president}} watches from sidelines"
+    }
+  },
+  "exposure_auditors_party_money": {
+    "accountable": {
+      "friendly": "{{president}} orders clean books and names true donor",
+      "neutral": "{{president}} orders party to restate accounts and name donor",
+      "hostile": "Donor exposed {{president}} scrambles to restate party books"
+    },
+    "deny": {
+      "friendly": "{{president}} hits back at petty bookkeeping complaint",
+      "neutral": "{{president}} calls error clerical and cites opaque opposition books",
+      "hostile": "{{president}} hides behind bookkeeper as auditors stand firm"
+    },
+    "silence": {
+      "friendly": "{{president}} awaits formal reply before judging party books",
+      "neutral": "{{president}} awaits party reply to auditors' finding",
+      "hostile": "{{president}} stalls while auditors wait and wait"
+    }
+  },
+  "exposure_auditors_diverted_budget": {
+    "accountable": {
+      "friendly": "{{president}} orders independent review and pledges repayment",
+      "neutral": "{{president}} commissions review of unexplained spending gap",
+      "hostile": "Gap exposed so {{president}} promises review and repayment"
+    },
+    "deny": {
+      "friendly": "{{president}} mocks court fuss over accounting artefact",
+      "neutral": "{{president}} calls gap accounting artefact not scandal",
+      "hostile": "{{president}} dismisses audit court's unexplained spending hole"
+    },
+    "silence": {
+      "friendly": "{{president}} bides time over minor audit court note",
+      "neutral": "{{president}} lets audit report sit without comment",
+      "hostile": "{{president}} buries report on hole nobody can explain"
+    }
+  },
+  "exposure_turned_favour": {
+    "accountable": {
+      "friendly": "President explains old favour and shows nothing to hide",
+      "neutral": "President confirms past help for a former ally and defends it",
+      "hostile": "President admits quiet favour only after the former ally speaks"
+    },
+    "deny": {
+      "friendly": "President warns of vendetta from spurned former ally",
+      "neutral": "President questions motive of former ally making claims",
+      "hostile": "President smears former friend as grudge trader with receipts"
+    },
+    "silence": {
+      "friendly": "Palace refuses to feed former ally's publicity tour",
+      "neutral": "President offers no response to former ally's claims",
+      "hostile": "President hides as former ally's story finds bigger audience"
+    }
+  },
+  "exposure_turned_money": {
+    "accountable": {
+      "friendly": "President opens books first and welcomes any review",
+      "neutral": "President discloses money arrangement before publication",
+      "hostile": "President confesses to money deal as leak loomed"
+    },
+    "deny": {
+      "friendly": "President rejects forged papers and dishonest courier",
+      "neutral": "President disputes authenticity of documents handed over",
+      "hostile": "President cries forgery as experts vouch for papers"
+    },
+    "silence": {
+      "friendly": "President keeps calm while hostile press runs old papers",
+      "neutral": "President issues no line before documents publish",
+      "hostile": "President frozen as money papers land unchallenged"
+    }
+  },
+  "exposure_turned_affair": {
+    "accountable": {
+      "friendly": "President speaks frankly and asks for privacy ahead",
+      "neutral": "President concedes relationship and secrecy around it",
+      "hostile": "President admits hiding affair behind state machinery"
+    },
+    "deny": {
+      "friendly": "President rejects embittered tale from former partner",
+      "neutral": "President calls former partner's interview embellished",
+      "hostile": "President attacks ex as liar and dares diaries out"
+    },
+    "silence": {
+      "friendly": "President declines to dignify kiss and tell interview",
+      "neutral": "President's office offers no comment on interview",
+      "hostile": "No comment from president as concealment claims spread"
+    }
   }
 }
