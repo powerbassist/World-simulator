@@ -137,6 +137,10 @@ var on_action: String = ""
 ## exposure_event() arms the first event in content order naming both.
 var exposure_route: String = ""
 var exposure_kinds: Array[String] = []
+## B5's scandal floor (Gameplay, #161): effects the exposure itself costs, applied
+## once when it is found, whatever the answer -- the price of being found belongs
+## to the arrival, not to a choice. Optional; the choice-effects schema.
+var exposure_on_arrival: Dictionary = {}
 
 ## V4.4. Months after DELIVERY before this event may draw again -- the machine
 ## writes `month_index + cooldown_months` in Events._deliver(), the one door every
@@ -243,7 +247,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 		else:
 			ev.on_action = hook
 
-	_extract_exposure(ev, d, filename, errors)
+	_extract_exposure(ev, d, filename, errors, [tax_keys, spending_keys, bloc_keys, sector_keys])
 
 	if d.has("cooldown_months"):
 		if not (typeof(d["cooldown_months"]) == TYPE_INT or typeof(d["cooldown_months"]) == TYPE_FLOAT):
@@ -282,7 +286,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 ## itself, naming it. The caller has already checked the type is numeric.
 ## V5.2c. The block and the hook come together: an exposure event without its
 ## route could never be armed, and a route on any other event would never be read.
-static func _extract_exposure(ev, d: Dictionary, filename: String, errors: Array[String]) -> void:
+static func _extract_exposure(ev, d: Dictionary, filename: String, errors: Array[String], keys: Array) -> void:
 	var raw = d.get("exposure", null)
 	if (raw != null) != (ev.on_action == "exposure"):
 		errors.append("%s: %s an 'exposure' block and on_action 'exposure' go together" % [filename, ev.id])
@@ -301,6 +305,9 @@ static func _extract_exposure(ev, d: Dictionary, filename: String, errors: Array
 	ev.exposure_route = route
 	for kind in kinds:
 		ev.exposure_kinds.append(String(kind))
+	if raw.has("on_arrival"):
+		ev.exposure_on_arrival = _extract_effects({"effects": raw["on_arrival"]}, "%s exposure.on_arrival" % ev.id,
+			filename, errors, keys[0], keys[1], keys[2], keys[3])
 
 
 static func _is_integral(v) -> bool:

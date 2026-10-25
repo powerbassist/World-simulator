@@ -19,9 +19,11 @@ extends RefCounted
 ##
 ## A hit moves the heaviest reachable row (ties: the first) to `exposures` and arms
 ## its scandal for next month through the CHAIN door, Events.arm, which waits on a
-## full desk; the hook door would skip it for good. A (route, kind) pair content
-## has no event for is still exposed -- the finding out is the fact -- and its row
-## says event_id "", which the shadows probe counts as a content gap.
+## full desk; the hook door would skip it for good. The event's `on_arrival`
+## effects (B5's scandal floor) land the same month, once, through the applier,
+## whatever the player later answers. A (route, kind) pair content has no event for
+## is still exposed -- the finding out is the fact -- and its row says event_id "",
+## which the shadows probe counts as a content gap.
 ##
 ## The played nation only: the AI nations carry no shadows (spec C12). No rand():
 ## each route rolls Cycle.unit on its own salt and the absolute month, so a month
@@ -32,6 +34,7 @@ const Cut = preload("res://src/core/cut.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Events = preload("res://src/sim/events.gd")
 const JK = preload("res://src/sim/judiciary_constants.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 const President = preload("res://src/sim/president.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
 
@@ -55,6 +58,9 @@ static func tick_month(state, loader) -> Array[Dictionary]:
 		row["event_id"] = "" if ev == null else String(ev.id)
 		if ev != null:
 			Events.arm(ns, loader, String(ev.id), now + 1)
+			# The scandal floor: what being found costs, once, through the applier.
+			if not (ev.exposure_on_arrival as Dictionary).is_empty():
+				Legislature.apply_effects(state, ns, ev.exposure_on_arrival, loader)
 		made.append(row)
 	return made
 
