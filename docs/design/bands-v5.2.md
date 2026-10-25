@@ -1350,6 +1350,9 @@ construction, and B5's 40 % ceiling would measure the content, not the game.
   offsets already carry between the two severities. OPINION, anchored: an
   exposure is a leak with evidence behind it, so it cannot cost less than an
   anonymous one.
+  **The author's call (2026-10-25, the question tool), verbatim: "Oui, ce
+  plancher".** The floor is accepted as declared: one leak, 0.45 asks, and
+  0.675 at severity 3, about 1.3 to 2.2 headline points per exposure.
 - **The rule: the uniform part is the exposure's own price, paid on arrival.**
   One uniform `bloc_offset` δ, on all six blocs, is written once when the
   exposure arrives, whatever the answer. It is authored in the event's
