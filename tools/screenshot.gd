@@ -20,6 +20,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --domain finances
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --notes
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --plant --zoom 5 --center 2.5 44.5
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
@@ -71,6 +72,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
@@ -179,6 +181,9 @@ var _frame := 0
 ## checked by looking, and there are four frames to look at rather than one.
 var _layer := ""
 var _hover := ""
+## V5.2 b+ (R13/R12), --notes: six identical leaks, a second person's, and a long
+## dispatch -- the inbox's grouping and fold.
+var _notes := false
 ## V5.2 b+ (R1), --plant: the player's reactor in Occitanie a third built, a running
 ## German one, and the cursor on the player's glyph.
 var _plant := false
@@ -200,6 +205,9 @@ var _outliner := false
 ## V4.8c. The settings screen up over the game, so the MESSAGES grid (thirty-six
 ## band pickers under the display rows) is judged at 1080 rather than argued.
 var _settings := false
+
+## V5.2 b+ (the #135 follow-up). The Dissolve card up, asked by the Politics button.
+var _dissolve_confirm := false
 
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
 ## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
@@ -691,6 +699,8 @@ func _init() -> void:
 			_out_path = args[i + 1]
 		elif args[i] == "--layer" and i + 1 < args.size():
 			_layer = args[i + 1]
+		elif args[i] == "--notes":
+			_notes = true
 		elif args[i] == "--plant":
 			_plant = true
 		elif args[i] == "--hover" and i + 1 < args.size():
@@ -709,6 +719,8 @@ func _init() -> void:
 			_outliner = true
 		elif args[i] == "--settings":
 			_settings = true
+		elif args[i] == "--dissolve-confirm":
+			_dissolve_confirm = true
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
 		elif args[i] == "--center" and i + 2 < args.size():
@@ -1088,6 +1100,10 @@ func _apply_view() -> void:
 		_stage_the_outliner()
 	if _settings:
 		_main._settings_panel.show()
+	if _dissolve_confirm:
+		var button = _main._government_panel._dissolve_button
+		button.sync(_main._state, _main._state.player())
+		button._on_pressed()
 	if _bid:
 		_open_a_bid()
 	if _failing:
@@ -1237,6 +1253,12 @@ func _apply_view() -> void:
 		_main._map_view.queue_redraw()
 	if _hover_outline != "":
 		_stage_outline_hover()
+	if _notes:
+		var inbox = _main._hud.inbox
+		for n in 6:
+			inbox.push("A leak", "Apolline Delcour briefs against the government.")
+		inbox.push("A leak", "Gilles Aubertin briefs against the government.")
+		inbox.push("Industrial action", "Grievance stands at 40 of 100 after the strike in the north. Output will carry it for months, and the unions say they will be back. The ministry expects the next round before the summer recess.")
 	if _plant:
 		_stage_plants()
 	if _tip != "":

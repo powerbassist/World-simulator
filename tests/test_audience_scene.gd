@@ -140,7 +140,8 @@ func _check_spends() -> void:
 	if pick.selected != 0 or pick.get_item_text(pick.selected) != Words.currency("favour"):
 		_fail("the currency shown is not the favour the cost is read from: '%s'" % pick.get_item_text(pick.selected))
 	var spend := _spend_of("bargain")
-	if not spend.contains("rapport with them -0.10"):
+	# R11: the favour's rapport in the word it lands in (a stranger at 0: -0.10 is wary).
+	if not spend.contains("rapport turns wary"):
 		_fail("the favour's spend is not shown before the click: '%s'" % spend)
 	pick.select(1)
 	pick.item_selected.emit(1)
