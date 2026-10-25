@@ -238,6 +238,14 @@ func _group(id: String) -> void:
 	_show_note(id)
 
 
+## A note shown whole, never folded: an instruction rather than news, whose later
+## sentences are the part the player needs (the first-use hint, QA on #141).
+func keep_whole(id: String) -> void:
+	if _notes.has(id):
+		_notes[id]["whole"] = true
+		_show_note(id)
+
+
 func _toggle(id: String) -> void:
 	_notes[id]["open"] = not bool(_notes[id]["open"])
 	_show_note(id)
@@ -248,7 +256,7 @@ func _toggle(id: String) -> void:
 func _show_note(id: String) -> void:
 	var note: Dictionary = _notes[id]
 	var full := String(note["body"])
-	var folded := full if bool(note["open"]) else fold(full)
+	var folded := full if bool(note["open"]) or bool(note.get("whole", false)) else fold(full)
 	var count := int(note["count"])
 	(note["head"] as Label).text = String(note["title"]).to_upper() if count == 1 else "%s ×%d" % [String(note["title"]).to_upper(), count]
 	_bodies[id].set_marked(folded)

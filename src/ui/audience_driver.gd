@@ -20,6 +20,7 @@ const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const PromiseList = preload("res://src/ui/promise_list.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 const President = preload("res://src/sim/president.gd")
 
 const WINDOW := "audience"
@@ -51,6 +52,8 @@ static func register(main) -> void:
 		refresh(main))
 	scene.talked.connect(func(topic: String, args: Dictionary) -> void: AudienceTalks.talk(main, game, topic, args))
 	scene.ended.connect(func() -> void: AudienceTalks.end(main, game))
+	scene.offer_answered.connect(func(accepted: bool) -> void: AudienceTalks.offer(main, game, accepted))
+	scene.affair.connect(func(action: String) -> void: AudienceTalks.affair(main, game, action))
 	scene.closed.connect(func() -> void: _leave(main, game))
 	# The frame's X ends it too: the hold the opening took goes with the window.
 	main._windows.closed.connect(func(id: String) -> void:
@@ -117,7 +120,7 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
 		"by": Words.when(last),
-		"price": Words.price_text(Audiences.decline_price(ns, loader, id)),
+		"price": Words.price_text(Audiences.decline_price(ns, loader, id), Feelings.of(ns, String(request["person_id"]))),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
 
 
@@ -135,7 +138,7 @@ static func on_appointment(main, outcome: Dictionary) -> void:
 	if String(entry.get("kind", "")) == CalendarK.KIND_AUDIENCE:
 		open_scene(main, String(entry.get("action_id", "")))
 		return
-	main._world_news.card_appointment(entry, String(outcome["label"]), bool(outcome["ok"]))  # i18n: row-ok DiaryDriver hands back a translated label
+	main._world_news.card_appointment(entry, String(outcome["label"]), bool(outcome["ok"]), String(outcome.get("reason", "")))  # i18n: row-ok DiaryDriver hands back a translated label
 	if String(outcome["summit_target"]) != "":
 		main._open_summit(String(outcome["summit_target"]), outcome["before"])
 

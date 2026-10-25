@@ -22,6 +22,7 @@ const TEMP_SUFFIX := ".tmp"
 const GameState = preload("res://src/core/game_state.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 
 
 static func _ensure_dir() -> void:
@@ -164,6 +165,10 @@ static func load_game(slot: String, loader = null) -> Dictionary:
 		# content, re-derived here for the same reason -- membership and the
 		# council registers travel in the save; the bonuses do not.
 		Orgs.rebuild_static(state, loader)
+		# V5.2 b+ R10b: a save made before R10 can hold a tariff between two members
+		# of a customs union -- one the verb can no longer impose and nothing would
+		# ever lift. Read after rebuild_static, whose snapshot carries the flag.
+		Coercion.clear_union_tariffs(state)
 		# The fight machine's save-safety net: referendum-phase fights whose
 		# vote resolved before the save (the result is a display record and
 		# does not travel) end honestly with membership unchanged.

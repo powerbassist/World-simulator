@@ -74,6 +74,10 @@ won.
   shared org that sets it, and `impose_tariffs` asks the pair field
   `customs_union_shared` for 0. The AI and the player meet the same precondition;
   leaving the union reopens the verb. A sanction is not a customs duty and stays.
+  Joining one lifts every tariff between the joiner and a fellow member, both
+  ways (R10b, the author: "Oui, tout de suite"; `Coercion.clear_on_accession`),
+  and a load sweeps any intra-union tariff a save from before R10 carried
+  (`Coercion.clear_union_tariffs`). A new game holds no measure at all.
 - **Council limits are per org**: `MAX_RULES_IN_FORCE` counts each council's own
   binding rules; each council runs its own two-integer scheduler and agenda
   index.

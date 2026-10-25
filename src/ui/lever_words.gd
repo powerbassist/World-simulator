@@ -13,6 +13,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 
 const LEVER_LABEL := {
 	"argue": "Argue", "bargain": "Bargain", "promise_date": "Promise a date",  # i18n: msgid
@@ -23,7 +24,19 @@ const TOPIC_LABEL := {
 	"dinner": "Dinner", "flirt": "Flirt",  # i18n: msgid
 }
 const CURRENCY_LABEL := {
-	"favour": "A favour", "vote_trade": "A vote trade", "aid": "Aid",  # i18n: msgid
+	"favour": "A favour", "vote_trade": "A vote trade",  # i18n: msgid
+	"backroom": "A backroom favour", "aid": "Diverted aid",  # i18n: msgid
+}
+## V5.2c: the shadows answer with a reason KEY (src/sim/shadows.gd), every other
+## lever with an English sentence; a key is said as its sentence here.
+const SHADOW_REASON := {
+	"not_covered": "You have no standing with them for that.",  # i18n: msgid
+	"unmarried": "You have no spouse to deceive: an affair needs a marriage to hide from.",  # i18n: msgid
+	"spouse": "This is your own spouse.",  # i18n: msgid
+	"already": "You are already lovers.",  # i18n: msgid
+	"too_cold": "They are not close enough to you for that.",  # i18n: msgid
+	"no_spark": "There is no spark between you.",  # i18n: msgid
+	"not_affair": "There is no affair to end.",  # i18n: msgid
 }
 ## The fog the scene assumes when the sim names none: the widest.
 const FOG_DEFAULT := "stranger"
@@ -57,7 +70,7 @@ static func fog(band: String) -> String:
 
 ## The sim's own reason, as shown.
 static func reason(why: String) -> String:
-	return Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
+	return Strings.t(String(SHADOW_REASON.get(why, why))) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
 
 
 ## A range, never a point: what the president cannot know about the person is the
@@ -73,40 +86,49 @@ static func when(absolute: int) -> String:
 
 
 ## What a lever will cost, BEFORE the click: Levers' `spends` row (register ->
-## amount; a commitment and a bond step are counts). `due` names the promise's
+## amount; a commitment and a bond step are counts), a register's in the word it
+## lands in (R11) from `feel`, Feelings.of() the person. `due` names the promise's
 ## date once one is picked.
-static func spends_text(spends: Dictionary, due := -1) -> String:
-	var parts := PackedStringArray()
-	if spends.has("rapport"):
-		parts.append(Strings.t("rapport with them %s") % Num.fs(float(spends["rapport"]), 2))
-	if spends.has("grudge"):
-		parts.append(Strings.t("a grudge %s") % Num.fs(float(spends["grudge"]), 2))
+static func spends_text(spends: Dictionary, feel: Dictionary, due := -1) -> String:
+	var parts := Feelings.promised(feel, spends)
 	if spends.has("iou"):
 		parts.append(Strings.tn("an IOU: their vote, owed back in %d month", "an IOU: their vote, owed back in %d months", LK.IOU_MONTHS) % LK.IOU_MONTHS)
 	if spends.has("promise"):
 		parts.append(Strings.t("your word, due %s; it binds even if they doubt it") % when(due) if due > 0 else Strings.t("your word, at a date; it binds even if they doubt it"))
 	if spends.has("bond"):
 		parts.append(Strings.t("your bond, a step looser"))
+	# V5.2c: a corrupt currency is paid in evidence -- nothing now, a scandal if found.
+	if spends.has("evidence"):
+		parts.append(Strings.t("nothing on the books, but it leaves evidence that can be found"))
 	return "; ".join(parts) if not parts.is_empty() else Strings.t("costs nothing")
 
 
 ## What a try wrote, AFTER it: the attempt's `spent` (an IOU's and a promise's
-## value is the month due) and `effects`, the deltas the registers took.
-static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable) -> String:
-	var parts := PackedStringArray()
-	for d in [spent, effects]:
-		if absf(float(d.get("rapport", 0.0))) >= 0.005:
-			parts.append(Strings.t("rapport with them %s") % Num.fs(float(d["rapport"]), 2))
-		if absf(float(d.get("grudge", 0.0))) >= 0.005:
-			parts.append(Strings.t("a grudge %s") % Num.fs(float(d["grudge"]), 2))
-		if absf(float(d.get("loyalty", 0.0))) >= 0.005:
-			parts.append(Strings.t("loyalty %s") % Num.fs(float(d["loyalty"]), 2))
+## value is the month due) and `effects`, the deltas the registers took -- each
+## register they moved in the word it now reads, off `feel` (Feelings.of() the
+## person after the try).
+static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable, feel: Dictionary) -> String:
+	# The larger write, never the sum: a spend and an effect of opposite signs both
+	# happened, and the word after names where they left the person.
+	var moved := {}
+	for register in Feelings.BANDS:
+		var a := float(spent.get(register, 0.0))
+		var b := float(effects.get(register, 0.0))
+		moved[register] = a if absf(a) >= absf(b) else b
+	var parts := Feelings.stands(feel, moved)
 	if spent.has("iou"):
 		parts.append(Strings.t("you owe them a vote by %s") % when(int(spent["iou"])))
 	if spent.has("promise"):
 		parts.append(Strings.t("your word given, due %s") % when(int(spent["promise"])))
 	if spent.has("bond"):
 		parts.append(Strings.t("your bond is looser"))
+	if spent.has("evidence"):
+		parts.append(Strings.t("you left evidence behind"))
+	# The offer's money (Shadows.accept_offer's `paid`): a figure, money being no feeling.
+	if spent.has("wealth_eur_m"):
+		parts.append(offer_terms({"currency": "personal_wealth", "amount_eur_m": spent["wealth_eur_m"]}))
+	if spent.has("party_money_eur_m"):
+		parts.append(offer_terms({"currency": "party_money", "amount_eur_m": spent["party_money_eur_m"]}))
 	if absf(float(effects.get("knowledge", 0.0))) >= 0.005:
 		parts.append(Strings.t("you know them better (%s)") % Num.fs(float(effects["knowledge"]), 2))
 	var of: Dictionary = effects.get("knowledge_of", {})
@@ -115,16 +137,32 @@ static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable)
 	return "; ".join(parts)
 
 
-## What saying no writes on the person, the parts that move only (QA on #105:
-## "loyalty +0.00" is noise on a card).
-static func price_text(price: Dictionary) -> String:
-	var parts := PackedStringArray()
-	if absf(float(price.get("grudge", 0.0))) >= 0.005:
-		parts.append(Strings.t("a grudge %s") % Num.fs(float(price["grudge"]), 2))
-	if absf(float(price.get("loyalty", 0.0))) >= 0.005:
-		parts.append(Strings.t("loyalty %s") % Num.fs(float(price["loyalty"]), 2))
-	if absf(float(price.get("rapport", 0.0))) >= 0.005:
-		parts.append(Strings.t("rapport with you %s") % Num.fs(float(price["rapport"]), 2))
+## An offer's money and where it goes (Offers' {currency, amount_eur_m}), the same
+## words on the table and once taken.
+static func offer_terms(offer: Dictionary) -> String:
+	var amount := Num.f(float(offer.get("amount_eur_m", 0.0)), 1)
+	if String(offer.get("currency", "")) == "party_money":
+		return Strings.t("€%s m to your party's accounts") % amount
+	return Strings.t("€%s m to you, off the books") % amount
+
+
+## What a lie costs if it is caught (Lies.reveal's price), in the words it would
+## leave the person in: before the click, on the toggle. A promise told as a lie
+## is found out at its date whatever happens (Levers._judge, B8), so its price is
+## certain, not a risk.
+static func lie_text(feel: Dictionary, lever := "argue") -> String:
+	var parts := Feelings.promised(feel, {"rapport": -LK.LIE_RAPPORT, "grudge": LK.LIE_GRUDGE})
+	parts.append(Strings.t("they trust what they know of you less"))
+	if lever == "promise_date":
+		return Strings.t("A lie: better odds. They find it out on the day, if not before: %s.") % ", ".join(parts)
+	return Strings.t("A lie: better odds. If they catch it: %s.") % ", ".join(parts)
+
+
+## What saying no writes on the person, the parts that move only, in the words
+## they land in (R11): `feel` is Feelings.of() the person -- BEFORE the answer for
+## the card's promise, AFTER it (`paid`) for what was told, the same words.
+static func price_text(price: Dictionary, feel: Dictionary, paid := false) -> String:
+	var parts := Feelings.stands(feel, price) if paid else Feelings.promised(feel, price)
 	return ", ".join(parts) if not parts.is_empty() else Strings.t("nothing")
 
 
