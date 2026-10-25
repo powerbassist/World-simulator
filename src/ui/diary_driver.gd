@@ -47,6 +47,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 
 		var label := ""
 		var ok := false
+		var reason := ""  # the sim's refusal, for the day's card
 		match String(entry.get("kind", "")):
 			CalendarK.KIND_DIPLOMATIC:
 				var action = _action_by_id(loader, String(entry.get("action_id", "")))
@@ -75,7 +76,9 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 				var party_id := String(entry.get("party_id", ""))
 				# V5.2 b+ R4: the command that prices a removal (Removal.why_not refuses
 				# a second removal of one office within the year, on the day as at booking).
-				ok = ns != null and bool(Removal.reassign(state, loader, portfolio, party_id).get("ok", false))
+				var removal := Removal.reassign(state, loader, portfolio, party_id)  # refuses "no government" itself
+				ok = bool(removal.get("ok", false))
+				reason = String(removal.get("error", ""))
 				label = Labels.portfolio(portfolio)
 
 		Calendar.resolve(state, Calendar.verb_key(entry), ok)
@@ -90,7 +93,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 				summit_target = String(entry.get("target_id", ""))
 		# The UI's half, per entry and in the diary's order (main.gd: the measured
 		# effect, the card, the summit), before the next entry fires.
-		on_outcome.call({"entry": entry, "label": label, "ok": ok, "before": before, "summit_target": summit_target})
+		on_outcome.call({"entry": entry, "label": label, "ok": ok, "reason": reason, "before": before, "summit_target": summit_target})
 	return true
 
 

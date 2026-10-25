@@ -387,8 +387,8 @@ func _ready() -> void:
 	_government_panel.setup(_state, _loader)
 	_government_panel.hide_close_button()
 	_government_panel.dissolved.connect(func(before): _queue_effect(tr("Dissolution called"), before))
-	_government_panel.reassigned.connect(func(before):
-		_queue_effect(tr("Cabinet reassigned"), before)
+	_government_panel.reassigned.connect(func(before, title):
+		_queue_effect(title, before)  # cabinet_verbs.gd names it: reassigned or dismissed
 	)
 
 	_polling_panel = PollingPanel.new()

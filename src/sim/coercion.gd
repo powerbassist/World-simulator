@@ -24,6 +24,40 @@ extends RefCounted
 
 const K = preload("res://src/sim/coercion_constants.gd")
 const RK = preload("res://src/core/relations.gd")
+const Org = preload("res://src/core/org.gd")
+
+
+## R10b. Every tariff between two nations that share a customs union, lifted:
+## the verb refuses one since R10 (Org.shared_flag), so one standing is a
+## tariff from before -- a save made before the rule, or a pair that has just
+## become fellow members -- and nothing else would ever lift it. A sanction is
+## not a customs duty and stands (R10's scope).
+static func clear_union_tariffs(state) -> void:
+	var doomed := []
+	for directed in state.measures.keys():
+		var parts := RK.directed_parts(String(directed))
+		if parts.size() == 2 and String(state.measures[directed].get("kind", "")) == "tariff" \
+				and Org.shared_flag(state, parts[0], parts[1], "customs_union") != "":
+			doomed.append(directed)
+	for directed in doomed:
+		state.measures.erase(directed)
+
+
+## What an accession to `org_id` ends (moved from orgs.gd's membership flip,
+## V3.2): the org's own collective measures aimed AT the joiner -- the common
+## external tariff cannot keep levying on a fellow member, and there is no repeal
+## path that would ever lift it otherwise -- and, R10b (the author, "Oui, tout de
+## suite"), every tariff between the joiner and a fellow member of a customs union,
+## both ways. Called after membership has flipped.
+static func clear_on_accession(state, org_id: String, joiner: String) -> void:
+	var doomed := []
+	for directed in state.measures.keys():
+		var terms: Dictionary = state.measures[directed]
+		if String(terms.get("org", "")) == org_id and String(directed).ends_with(">" + joiner):
+			doomed.append(directed)
+	for directed in doomed:
+		state.measures.erase(directed)
+	clear_union_tariffs(state)
 
 
 ## Every measure in force pointed AT `target_id`, as {imposer_id: terms}. The

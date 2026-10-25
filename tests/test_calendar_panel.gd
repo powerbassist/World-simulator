@@ -128,23 +128,23 @@ func _check_strip_shows_unbooked_dates(panel, state) -> void:
 		_fail("the always-visible next-up line read '%s' -- a new game's only content is below the fold of the strip's own scroll" % panel._next_up.text)
 
 
-## Twelve months plus the current one, not one page. U6a's probe measured 31 %
-## of months carrying a dated event, so a single-month grid opens empty seven
-## times in ten; the strip is the shape that answers that, and a later session
-## quietly shortening it would undo the finding.
+## Twelve months plus the current one. U6a's probe measured 31 % of months
+## carrying a dated event and drew a strip; V5.2 b+ R8 made the Diary a month grid
+## (the author's call) -- paged, so every month of the horizon is still one press
+## away, and a later session quietly shortening the paging would undo the finding.
 func _check_strip_spans_the_horizon(panel, state) -> void:
 	_refresh(panel)
-	var text := _strip_text(panel)
 	var months_shown := 0
 	for offset in range(K.BOOKING_HORIZON_MONTHS + 1):
 		var total: int = state.year * 12 + (state.month - 1) + offset
 		var heading := "%s %d" % [
 			panel.ClockCluster.MONTH_NAMES[total % 12], total / 12,
 		]
-		if text.contains(heading):
+		panel._grid.show_month(total / 12, total % 12 + 1)
+		if panel._grid._title.text == heading:
 			months_shown += 1
 	if months_shown != K.BOOKING_HORIZON_MONTHS + 1:
-		_fail("the strip drew %d month headings, expected %d" % [
+		_fail("the grid paged to %d months, expected %d" % [
 			months_shown, K.BOOKING_HORIZON_MONTHS + 1,
 		])
 
@@ -160,8 +160,11 @@ func _check_booking_appears_on_the_strip(panel, state) -> void:
 		return
 
 	_refresh(panel)
+	# The grid: the booking's day, picked, lists it (R8).
+	panel._grid.show_month(total / 12, total % 12 + 1)
+	panel._grid._pick(11)
 	if not _strip_text(panel).contains("State Visit"):
-		_fail("a booking made it into the register and never appeared on the strip")
+		_fail("a booking made it into the register and never appeared on its day")
 
 	# And it carries a cancel button, which a fixed date must not -- the player
 	# cannot move an election.
@@ -170,7 +173,7 @@ func _check_booking_appears_on_the_strip(panel, state) -> void:
 		if node is Button and String(node.text) == "Cancel":
 			cancels += 1
 	if cancels != 1:
-		_fail("the strip drew %d cancel buttons for one booking and a page of fixed dates" % cancels)
+		_fail("the day list drew %d cancel buttons for one booking" % cancels)
 
 
 ## A refusal must be visible. The same verb again is the refusal that is easiest

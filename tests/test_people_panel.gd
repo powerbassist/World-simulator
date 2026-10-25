@@ -87,6 +87,30 @@ func _run() -> void:
 	_check_agrees_with_politics(panel, state)
 	_check_vacancy_reads_as_vacant(panel, state)
 	_check_read_only(panel)
+	_check_side_words(panel, state)
+
+
+## QA's #143 RECORDs: a party leader the data gives no party_id (Moucron, Ferrand,
+## Aubertin) sits in the party they lead, not under "politician"; a person with no
+## party reads their kind as a word (PersonCard.KIND_LABEL), never the raw id.
+func _check_side_words(panel, state) -> void:
+	var ns = state.player()
+	var leaders := {}
+	for p in _main._loader.parties.get(String(ns.id), []):
+		leaders[String(p.leader_person_id)] = String(p.party_name)
+	var checked := 0
+	for person in _main._loader.people.get(String(ns.id), []):
+		if String(ns.person_party_override.get(person.id, person.party_id)) != "":
+			continue
+		var side: String = panel._party_or_kind_line(ns, person)
+		if leaders.has(String(person.id)):
+			checked += 1
+			if side != leaders[String(person.id)]:
+				_fail("%s leads %s but sits under '%s'" % [person.person_name, leaders[String(person.id)], side])
+		elif side.contains("_") or side == String(person.kind):
+			_fail("%s's side is the raw kind '%s'" % [person.person_name, side])
+	if checked == 0:
+		_fail("premise: no party leader without a party_id")
 
 
 func _check_registered_and_reachable() -> void:

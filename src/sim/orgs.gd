@@ -45,6 +45,7 @@ const RK = preload("res://src/core/relations.gd")
 ## not here. Nothing preloads orgs.gd except budget.gd.
 const FP = preload("res://src/sim/foreign_policy.gd")
 const CK = preload("res://src/sim/coercion_constants.gd")
+const Coercion = preload("res://src/sim/coercion.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 ## V4.5a. A leaf: council.gd preloads nothing of this file's.
 const Council = preload("res://src/sim/council.gd")
@@ -1150,17 +1151,11 @@ static func _flip_membership(state, loader, ns, fight) -> void:
 		# the review's second-class-member finding, fixed at the write rather
 		# than patched at each reader.
 		ns.org_seats[org_id] = org.accession_seats
-		# Membership ends the org's collective measures aimed AT this nation:
-		# the common external tariff cannot keep levying on a fellow member,
-		# and there is no repeal path that would ever lift it otherwise. The
-		# mirror of the withdrawal cleanup below -- one direction each.
-		var doomed := []
-		for directed in state.measures.keys():
-			var terms: Dictionary = state.measures[directed]
-			if String(terms.get("org", "")) == org_id and String(directed).ends_with(">" + ns.id):
-				doomed.append(directed)
-		for directed in doomed:
-			state.measures.erase(directed)
+		# Membership ends the org's collective measures aimed AT this nation and,
+		# inside a customs union, every tariff between it and a fellow member
+		# (Coercion.clear_on_accession, R10b). The mirror of the withdrawal
+		# cleanup below -- one direction each.
+		Coercion.clear_on_accession(state, org_id, ns.id)
 		var parl = parliament(loader)
 		if parl != null and String(parl.id) == org_id:
 			# Joining the parliament org picks up its clock -- rolled forward in

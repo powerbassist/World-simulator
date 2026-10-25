@@ -42,14 +42,15 @@ func _ready() -> void:
 ## `offered` / `topics`: Levers' rows (or Phone.options()'s, the same shape).
 ## `choices`: {now: the absolute month a promise counts from, people: [{id, name,
 ## know, key}] a gossip may name, quiet: no attempts line, given_due: a promise
-## already given on this want (given_due() below), 0 for none}.
+## already given on this want (given_due() below), 0 for none, feel: Feelings.of()
+## the person, the words a spend lands in}.
 func show_verbs(offered: Array, topics: Array, attempts_left: int, choices: Dictionary) -> void:
 	for box in [_levers, _topics]:
 		for child in box.get_children():
 			box.remove_child(child)
 			child.queue_free()
 	for row in offered:
-		_lever_row(row, int(choices.get("now", 0)), int(choices.get("given_due", 0)))
+		_lever_row(row, int(choices.get("now", 0)), int(choices.get("given_due", 0)), choices.get("feel", {}))
 	# The phone says its one try itself (`quiet`, phone_dialog.gd).
 	_attempts.visible = not bool(choices.get("quiet", false))
 	# No levers offered at all (none fit): the audience is heard, not argued --
@@ -84,7 +85,7 @@ func topic_button(topic: String) -> Button:
 	return _topics.find_child("Topic_" + topic, true, false) as Button
 
 
-func _lever_row(row: Dictionary, now: int, given: int) -> void:
+func _lever_row(row: Dictionary, now: int, given: int, feel: Dictionary) -> void:
 	var lever := String(row["lever"])
 	var cell := HBoxContainer.new()
 	var button := PanelKit.sized(Button.new())
@@ -102,13 +103,13 @@ func _lever_row(row: Dictionary, now: int, given: int) -> void:
 	spend.theme_type_variation = UiTheme.CAPTION
 	spend.autowrap_mode = TextServer.AUTOWRAP_WORD
 	spend.custom_minimum_size.x = 300
-	spend.text = Words.spends_text(row.get("spends", {}))
+	spend.text = Words.spends_text(row.get("spends", {}), feel)
 	var args := {}
 	match lever:
 		"bargain":
-			cell.add_child(_currency_pick(row, spend, args))
+			cell.add_child(_currency_pick(row, spend, args, feel))
 		"promise_date":
-			cell.add_child(_date_pick(row, now, spend, args, given))
+			cell.add_child(_date_pick(row, now, spend, args, feel, given))
 	# A choice beside a lever that cannot be tried is down with it.
 	for pick in cell.get_children():
 		if pick is OptionButton:
@@ -121,7 +122,7 @@ func _lever_row(row: Dictionary, now: int, given: int) -> void:
 
 ## Bargain pays one currency: a favour (rapport) or a vote trade (an IOU). Aid
 ## is listed and refused with the sim's reason until a later block builds it.
-func _currency_pick(row: Dictionary, spend: Label, args: Dictionary) -> OptionButton:
+func _currency_pick(row: Dictionary, spend: Label, args: Dictionary, feel: Dictionary) -> OptionButton:
 	var pick := OptionButton.new()
 	pick.name = "Currency"
 	var rows: Array = row.get("currencies", [])
@@ -138,7 +139,7 @@ func _currency_pick(row: Dictionary, spend: Label, args: Dictionary) -> OptionBu
 	var chosen := func(i: int) -> void:
 		var c: Dictionary = pick.get_item_metadata(i)
 		args["currency"] = String(c["currency"])
-		spend.text = Words.spends_text(c.get("spends", {}))
+		spend.text = Words.spends_text(c.get("spends", {}), feel)
 	pick.item_selected.connect(chosen)
 	# Selected outright: an OptionButton left to itself showed the last item (the
 	# refused aid) while the args and the cost were the favour's.
@@ -151,7 +152,7 @@ func _currency_pick(row: Dictionary, spend: Label, args: Dictionary) -> OptionBu
 ## constants from today until the row carries them); a year out by default. A
 ## word already given (`given`, the row refused) shows its own date instead:
 ## the picker's window has moved on with today, so the date goes in by name.
-func _date_pick(row: Dictionary, now: int, spend: Label, args: Dictionary, given := 0) -> OptionButton:
+func _date_pick(row: Dictionary, now: int, spend: Label, args: Dictionary, feel: Dictionary, given := 0) -> OptionButton:
 	var spends: Dictionary = row.get("spends", {})
 	var window: Dictionary = row.get("dates", {"earliest": now + LK.PROMISE_MIN_MONTHS, "latest": now + LK.PROMISE_MAX_MONTHS})
 	var pick := OptionButton.new()
@@ -161,7 +162,7 @@ func _date_pick(row: Dictionary, now: int, spend: Label, args: Dictionary, given
 		pick.set_item_metadata(pick.item_count - 1, due)
 	var chosen := func(i: int) -> void:
 		args["due_month"] = int(pick.get_item_metadata(i))
-		spend.text = Words.spends_text(spends, int(args["due_month"]))
+		spend.text = Words.spends_text(spends, feel, int(args["due_month"]))
 	pick.item_selected.connect(chosen)
 	if given > 0 and not bool(row.get("offered", false)):
 		pick.clear()

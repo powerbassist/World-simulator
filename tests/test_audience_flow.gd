@@ -144,6 +144,10 @@ func _reach_the_day() -> void:
 ## Diary's own cancel would leave the request booked for no day).
 func _check_diary_row() -> void:
 	_main._calendar_panel._refresh()
+	# R8: the Diary is a month grid; the booked day, picked, lists the audience.
+	var grid = _main._calendar_panel._grid
+	grid.show_month(int(_booked_on["year"]), int(_booked_on["month"]))
+	grid._pick(int(_booked_on["day"]))
 	var who: String = _main._loader.person_name(String(Audiences.request(_main._state.player(), _second)["person_id"]))
 	var row: Control = null
 	for label in _main._calendar_panel.find_children("*", "Label", true, false):
