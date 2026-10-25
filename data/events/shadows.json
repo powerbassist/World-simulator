@@ -1,5 +1,5 @@
 {
-  "_note": "V5.2c's exposure scandals (docs/design/v5.2-spec.md, 'Corruption, in the author's four currencies'): nine events, one per exposure route and kind the table reaches. They are delivered only when the exposure machine arms them (on_action 'exposure'; the hazard and the hook never draw them), so likelihood is required by the loader and never read. Text drafted with GLM 5.3 and curated line by line; the numbers are the designer's: a corruption scandal's three answers write society.corruption (accountable -0.04, deny +0.05, silence none) and the bloc offsets, all times 1.5 at severity 3; the two affair scandals write no corruption, only blocs (their silence is balanced so the default is not a standing price, as event_lint requires).",
+  "_note": "V5.2c's exposure scandals (docs/design/v5.2-spec.md, 'Corruption, in the author's four currencies'): nine events, one per exposure route and kind the table reaches. They are delivered only when the exposure machine arms them (on_action 'exposure'; the hazard and the hook never draw them), so likelihood is required by the loader and never read. Text drafted with GLM 5.3 and curated line by line; the numbers are the designer's: a corruption scandal's three answers write society.corruption (accountable -0.04, deny +0.05, silence none) and the bloc offsets, all times 1.5 at severity 3; the two affair scandals write no corruption, only blocs (their silence is balanced so the default is not a standing price, as event_lint requires; the affairs' accountable answer also carries a workers gain and a smaller pensioners cost, so it leads approval while deny leads the worst bloc, as every money scandal does). The four severity-2 events carry their bloc offsets scaled (1.16 for the two money events, 1.65 for the two affairs) to meet events_probe E2's legibility band; the spread is linear in the offsets, so the dominance verdict is unchanged. Each exposure block also carries on_arrival, the exposure's own price paid once when it lands whatever the answer (Gameplay, bands-v5.2.md B5 'the scandal floor'): -0.037 on every bloc for the two severity-2 money events, -0.055 for the five severity-3 events and -0.033 for the two affairs. Systems' Exposure applies it through the applier; the loader ignores the key until then.",
   "events": [
     {
       "id": "exposure_press_personal_wealth",
@@ -16,7 +16,17 @@
         "route": "press",
         "kinds": [
           "personal_wealth"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.037,
+            "pensioners": -0.037,
+            "urban": -0.037,
+            "rural": -0.037,
+            "business": -0.037,
+            "students": -0.037
+          }
+        }
       },
       "choices": [
         {
@@ -28,11 +38,11 @@
               "corruption": -0.04
             },
             "bloc_offset": {
-              "urban": 0.03,
-              "students": 0.03,
-              "rural": -0.03,
-              "business": -0.01,
-              "pensioners": -0.01
+              "urban": 0.035,
+              "students": 0.035,
+              "rural": -0.035,
+              "business": -0.012,
+              "pensioners": -0.012
             }
           }
         },
@@ -45,12 +55,12 @@
               "corruption": 0.05
             },
             "bloc_offset": {
-              "rural": 0.03,
-              "pensioners": 0.02,
-              "business": 0.02,
-              "urban": -0.04,
-              "students": -0.03,
-              "workers": -0.01
+              "rural": 0.035,
+              "pensioners": 0.023,
+              "business": 0.023,
+              "urban": -0.046,
+              "students": -0.035,
+              "workers": -0.012
             }
           }
         },
@@ -60,11 +70,11 @@
           "summary": "You let the instalments run and hope readers tire. They do not tire.",
           "effects": {
             "bloc_offset": {
-              "urban": -0.03,
-              "students": -0.025,
-              "rural": -0.015,
-              "pensioners": 0.01,
-              "business": 0.01
+              "urban": -0.035,
+              "students": -0.029,
+              "rural": -0.017,
+              "pensioners": 0.012,
+              "business": 0.012
             }
           },
           "default": true
@@ -86,7 +96,17 @@
         "route": "press",
         "kinds": [
           "affair"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.033,
+            "pensioners": -0.033,
+            "urban": -0.033,
+            "rural": -0.033,
+            "business": -0.033,
+            "students": -0.033
+          }
+        }
       },
       "choices": [
         {
@@ -95,10 +115,11 @@
           "summary": "You confirm the relationship and the lying, and apologise to those owed apologies. Dignity suffers at home and in cabinet, and trust is partly restored.",
           "effects": {
             "bloc_offset": {
-              "urban": 0.02,
-              "students": 0.02,
-              "pensioners": -0.03,
-              "rural": -0.02
+              "urban": 0.033,
+              "students": 0.033,
+              "workers": 0.017,
+              "pensioners": -0.017,
+              "rural": -0.033
             }
           }
         },
@@ -108,10 +129,10 @@
           "summary": "You dispute the timeline and question how the pictures were obtained. Supporters rally, but a second witness would leave you exposed twice over.",
           "effects": {
             "bloc_offset": {
-              "pensioners": 0.02,
-              "rural": 0.02,
-              "urban": -0.03,
-              "students": -0.025
+              "pensioners": 0.033,
+              "rural": 0.033,
+              "urban": -0.049,
+              "students": -0.041
             }
           }
         },
@@ -121,12 +142,12 @@
           "summary": "You answer no question on the subject, at any podium. The questions do not stop.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.015,
-              "rural": -0.01,
-              "urban": -0.02,
-              "students": -0.02,
-              "business": 0.015,
-              "workers": 0.01
+              "pensioners": -0.025,
+              "rural": -0.017,
+              "urban": -0.033,
+              "students": -0.033,
+              "business": 0.025,
+              "workers": 0.02
             }
           },
           "default": true
@@ -148,7 +169,17 @@
         "route": "courts",
         "kinds": [
           "personal_wealth"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.055,
+            "pensioners": -0.055,
+            "urban": -0.055,
+            "rural": -0.055,
+            "business": -0.055,
+            "students": -0.055
+          }
+        }
       },
       "choices": [
         {
@@ -218,7 +249,17 @@
         "route": "courts",
         "kinds": [
           "diverted_budget"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.055,
+            "pensioners": -0.055,
+            "urban": -0.055,
+            "rural": -0.055,
+            "business": -0.055,
+            "students": -0.055
+          }
+        }
       },
       "choices": [
         {
@@ -288,7 +329,17 @@
         "route": "auditors",
         "kinds": [
           "party_money"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.055,
+            "pensioners": -0.055,
+            "urban": -0.055,
+            "rural": -0.055,
+            "business": -0.055,
+            "students": -0.055
+          }
+        }
       },
       "choices": [
         {
@@ -358,7 +409,17 @@
         "route": "auditors",
         "kinds": [
           "diverted_budget"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.055,
+            "pensioners": -0.055,
+            "urban": -0.055,
+            "rural": -0.055,
+            "business": -0.055,
+            "students": -0.055
+          }
+        }
       },
       "choices": [
         {
@@ -416,7 +477,7 @@
     {
       "id": "exposure_turned_favour",
       "name": "Favour Remembered",
-      "summary": "Someone the president once quietly helped has fallen out with the palace and is telling the story of that favour to any journalist who will buy the coffee. They kept receipts and enjoy the attention.",
+      "summary": "A businessman the president once quietly helped has fallen out with the palace and is telling the story of that favour to any journalist who will buy the coffee. He keeps receipts and enjoys attention.",
       "likelihood": 0.002,
       "category": "scandal",
       "severity": 2,
@@ -428,55 +489,65 @@
         "route": "turned",
         "kinds": [
           "favour"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.037,
+            "pensioners": -0.037,
+            "urban": -0.037,
+            "rural": -0.037,
+            "business": -0.037,
+            "students": -0.037
+          }
+        }
       },
       "choices": [
         {
           "id": "accountable",
           "label": "Confirm and explain",
-          "summary": "You acknowledge the favour and lay out why it was proper. It admits the story into the record and strips the teller of exclusivity.",
+          "summary": "You acknowledge the favour and lay out why it was proper. It admits the story into the record and strips him of exclusivity.",
           "effects": {
             "society": {
               "corruption": -0.04
             },
             "bloc_offset": {
-              "urban": 0.03,
-              "students": 0.03,
-              "rural": -0.03,
-              "business": -0.01,
-              "pensioners": -0.01
+              "urban": 0.035,
+              "students": 0.035,
+              "rural": -0.035,
+              "business": -0.012,
+              "pensioners": -0.012
             }
           }
         },
         {
           "id": "deny",
-          "label": "Question their motive",
-          "summary": "You cast them as a scorned associate trading grudges. True enough, but they have receipts, and grudges with paperwork age well.",
+          "label": "Question his motive",
+          "summary": "You cast him as a scorned contractor trading grudges. True enough, but he has receipts, and grudges with paperwork age well.",
           "effects": {
             "society": {
               "corruption": 0.05
             },
             "bloc_offset": {
-              "rural": 0.03,
-              "pensioners": 0.02,
-              "business": 0.02,
-              "urban": -0.04,
-              "students": -0.03,
-              "workers": -0.01
+              "rural": 0.035,
+              "pensioners": 0.023,
+              "business": 0.023,
+              "urban": -0.046,
+              "students": -0.035,
+              "workers": -0.012
             }
           }
         },
         {
           "id": "silence",
           "label": "Grant no platform",
-          "summary": "You ignore them and hope the audience drifts. The audience grows.",
+          "summary": "You ignore him and hope his audience drifts. His audience grows.",
           "effects": {
             "bloc_offset": {
-              "urban": -0.03,
-              "students": -0.025,
-              "rural": -0.015,
-              "pensioners": 0.01,
-              "business": 0.01
+              "urban": -0.035,
+              "students": -0.029,
+              "rural": -0.017,
+              "pensioners": 0.012,
+              "business": 0.012
             }
           },
           "default": true
@@ -500,7 +571,17 @@
           "party_money",
           "personal_wealth",
           "diverted_budget"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.055,
+            "pensioners": -0.055,
+            "urban": -0.055,
+            "rural": -0.055,
+            "business": -0.055,
+            "students": -0.055
+          }
+        }
       },
       "choices": [
         {
@@ -570,7 +651,17 @@
         "route": "turned",
         "kinds": [
           "affair"
-        ]
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.033,
+            "pensioners": -0.033,
+            "urban": -0.033,
+            "rural": -0.033,
+            "business": -0.033,
+            "students": -0.033
+          }
+        }
       },
       "choices": [
         {
@@ -579,10 +670,11 @@
           "summary": "You concede the relationship and the apparatus of secrecy around it, and ask that private matters stay private going forward. A humbling address, briefly effective.",
           "effects": {
             "bloc_offset": {
-              "urban": 0.02,
-              "students": 0.02,
-              "pensioners": -0.03,
-              "rural": -0.02
+              "urban": 0.033,
+              "students": 0.033,
+              "workers": 0.017,
+              "pensioners": -0.017,
+              "rural": -0.033
             }
           }
         },
@@ -592,10 +684,10 @@
           "summary": "You describe the interview as embellished and embittered. It rallies defenders, and invites a listener with a diary to come forward.",
           "effects": {
             "bloc_offset": {
-              "pensioners": 0.02,
-              "rural": 0.02,
-              "urban": -0.03,
-              "students": -0.025
+              "pensioners": 0.033,
+              "rural": 0.033,
+              "urban": -0.049,
+              "students": -0.041
             }
           }
         },
@@ -605,12 +697,12 @@
           "summary": "Your office issues nothing beyond no comment. The interview circulates.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.015,
-              "rural": -0.01,
-              "urban": -0.02,
-              "students": -0.02,
-              "business": 0.015,
-              "workers": 0.01
+              "pensioners": -0.025,
+              "rural": -0.017,
+              "urban": -0.033,
+              "students": -0.033,
+              "business": 0.025,
+              "workers": 0.02
             }
           },
           "default": true
