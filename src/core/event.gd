@@ -56,6 +56,7 @@ extends RefCounted
 
 const Law = preload("res://src/core/law.gd")
 const K = preload("res://src/sim/events_constants.gd")
+const ShadowK = preload("res://src/sim/shadow_constants.gd")
 
 var id: String = ""
 var event_name: String = ""
@@ -130,6 +131,16 @@ var severity: int = K.SEVERITY_DEFAULT
 ## `repealed_at` and `last_accession`, documented in nation_state.gd) -- and its `likelihood` is the
 ## chance the hooked happening spawns the occasion. The preconditions still gate it.
 var on_action: String = ""
+
+## V5.2c. An `on_action: "exposure"` event's route (one of shadow_constants.ROUTES)
+## and the evidence kinds it answers (each one the route can reach). Events.
+## exposure_event() arms the first event in content order naming both.
+var exposure_route: String = ""
+var exposure_kinds: Array[String] = []
+## B5's scandal floor (Gameplay, #161): effects the exposure itself costs, applied
+## once when it is found, whatever the answer -- the price of being found belongs
+## to the arrival, not to a choice. Optional; the choice-effects schema.
+var exposure_on_arrival: Dictionary = {}
 
 ## V4.4. Months after DELIVERY before this event may draw again -- the machine
 ## writes `month_index + cooldown_months` in Events._deliver(), the one door every
@@ -236,6 +247,8 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 		else:
 			ev.on_action = hook
 
+	_extract_exposure(ev, d, filename, errors, [tax_keys, spending_keys, bloc_keys, sector_keys])
+
 	if d.has("cooldown_months"):
 		if not (typeof(d["cooldown_months"]) == TYPE_INT or typeof(d["cooldown_months"]) == TYPE_FLOAT):
 			errors.append("%s: %s cooldown_months is not numeric" % [filename, ev.id])
@@ -271,14 +284,49 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 ## fractional part. `int()` would load 2.9 as 2 silently (and 0.5 as 0, then
 ## refuse it for a range it was never given); the schema refuses the value
 ## itself, naming it. The caller has already checked the type is numeric.
+## V5.2c. The block and the hook come together: an exposure event without its
+## route could never be armed, and a route on any other event would never be read.
+static func _extract_exposure(ev, d: Dictionary, filename: String, errors: Array[String], keys: Array) -> void:
+	var raw = d.get("exposure", null)
+	if (raw != null) != (ev.on_action == "exposure"):
+		errors.append("%s: %s an 'exposure' block and on_action 'exposure' go together" % [filename, ev.id])
+		return
+	if raw == null:
+		return
+	var route = raw.get("route", "") if typeof(raw) == TYPE_DICTIONARY else ""
+	var kinds = raw.get("kinds", []) if typeof(raw) == TYPE_DICTIONARY else []
+	# A typo'd key (on_arival) would drop the author's scandal floor silently.
+	for key in (raw.keys() if typeof(raw) == TYPE_DICTIONARY else []):
+		if not EXPOSURE_KEYS.has(key):
+			errors.append("%s: %s exposure.%s is not a recognised field (%s)" % [filename, ev.id, str(key), EXPOSURE_KEYS])
+	if typeof(route) != TYPE_STRING or not ShadowK.ROUTES.has(route) or typeof(kinds) != TYPE_ARRAY or kinds.is_empty():
+		errors.append("%s: %s exposure needs a route in %s and a non-empty kinds list" % [filename, ev.id, ShadowK.ROUTES])
+		return
+	for kind in kinds:
+		if not ShadowK.ROUTE_KINDS[route].has(kind):
+			errors.append("%s: %s exposure route '%s' cannot reach kind '%s'" % [filename, ev.id, route, str(kind)])
+			return
+	# The chain door erases an armed entry whose target is cooling down or already
+	# fired, so an exposure event with either would lose a found scandal silently.
+	if bool(d.get("once", false)) or float(d.get("cooldown_months", 0)) != 0.0:
+		errors.append("%s: %s an exposure event must have cooldown_months 0 and not be once -- the chain door would drop a found scandal" % [filename, ev.id])
+	ev.exposure_route = route
+	for kind in kinds:
+		ev.exposure_kinds.append(String(kind))
+	if raw.has("on_arrival"):
+		ev.exposure_on_arrival = _extract_effects({"effects": raw["on_arrival"]}, "%s exposure.on_arrival" % ev.id,
+			filename, errors, keys[0], keys[1], keys[2], keys[3])
+
+
 static func _is_integral(v) -> bool:
 	return float(v) == floorf(float(v))
 
 
+const EXPOSURE_KEYS := ["route", "kinds", "on_arrival"]
 const KNOWN_KEYS := [
 	"id", "name", "summary", "subject_office", "likelihood", "respond_months",
 	"once", "preconditions", "choices", "interrupt", "sited",
-	"category", "weight", "severity", "on_action", "cooldown_months",
+	"category", "weight", "severity", "on_action", "cooldown_months", "exposure",
 ]
 
 const CHOICE_KEYS := ["id", "label", "summary", "effects", "default", "arms"]

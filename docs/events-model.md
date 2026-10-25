@@ -698,6 +698,19 @@ copied in at announcement, so this is the one row on that list needing no lookup
 - **No `renounce` verb.** There is nothing to renounce: an event resolves by being answered
   or by the clock answering.
 
+## 12. The exposure events and `Events.arm` (V5.2c)
+
+- **`on_action: "exposure"`** marks a scandal that only the exposure machine
+  delivers ([[shadows-model]]): the standing hazard never draws it and no hook
+  fires it. Its `exposure` block names one route and the evidence kinds it
+  answers (each in that route's reach, a load error otherwise); the first event in
+  content order naming a (route, kind) pair is the one armed. `likelihood` is
+  still required and unread.
+- **`Events.arm(ns, loader, event_id, due_index)`** is the chain door as a
+  command: the exposure machine arms a scandal for next month, and Events stays
+  `event_armed`'s one writer. The chain door waits on a full desk rather than
+  skipping, so a scandal found is never lost.
+
 ---
 
 Related: [[v1]] · [[legislature-model]] · [[media-model]] · [[pledge-model]] ·

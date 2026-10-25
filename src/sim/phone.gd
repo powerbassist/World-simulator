@@ -67,7 +67,7 @@ static func options(state, ns, loader, person_id: String) -> Dictionary:
 		if why_not == "" and topic == "dinner":
 			why_not = "not by phone: a dinner needs an evening"
 		elif why_not == "" and topic == "flirt":
-			why_not = "not yet: the shadows come later"
+			why_not = "not by phone: a flirt needs the room"
 		(out["topics"] as Array).append({"topic": topic, "offered": why_not == "", "why_not": why_not, "spends": {}})
 	return out
 

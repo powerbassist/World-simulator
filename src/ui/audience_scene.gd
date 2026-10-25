@@ -24,6 +24,9 @@ signal attempted(lever: String, args: Dictionary)
 signal talked(topic: String, args: Dictionary)
 signal ended
 signal closed
+## V5.2c: the money on the table answered, an affair proposed or ended.
+signal offer_answered(accepted: bool)
+signal affair(action: String)
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -31,6 +34,7 @@ const Portrait = preload("res://src/ui/portrait.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
+const AudienceShadow = preload("res://src/ui/audience_shadow.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 
 ## 16:9, the board's scene window over the map.
@@ -40,6 +44,7 @@ const SIZE := Vector2(1120, 630)
 ## names them (hold_reason.gd, the summit's `visiting` seam).
 var visiting := ""
 var verbs := AudienceVerbs.new()
+var shadow := AudienceShadow.new()
 
 var _view: Dictionary = {}
 var _resource = null
@@ -82,6 +87,9 @@ func _ready() -> void:
 	talk.add_child(verbs)
 	verbs.attempted.connect(func(lever: String, args: Dictionary) -> void: attempted.emit(lever, args))
 	verbs.talked.connect(func(topic: String, args: Dictionary) -> void: talked.emit(topic, args))
+	talk.add_child(shadow)
+	shadow.offer_answered.connect(func(accepted: bool) -> void: offer_answered.emit(accepted))
+	shadow.affair.connect(func(action: String) -> void: affair.emit(action))
 	_result = Label.new()
 	_result.autowrap_mode = TextServer.AUTOWRAP_WORD
 	talk.add_child(_result)
@@ -112,6 +120,7 @@ func open(view: Dictionary) -> void:
 	_result.text = ""
 	_show_state(view)
 	say(String(view.get("opening_title", "opening")), {})
+	_say_offer(view)
 
 
 ## After a verb: the sim's result in words, the levers' new ranges, what is left.
@@ -129,6 +138,7 @@ func show_close(outcome: String, text: String) -> void:
 	_result.text = text
 	verbs.show_verbs([], [], 0, {})
 	verbs.visible = false
+	shadow.visible = false
 	_end.text = tr("Leave")
 	say(DialogueLines.close_title(_view, outcome), {})
 
@@ -137,6 +147,7 @@ func close_scene() -> void:
 	visiting = ""
 	_view = {}
 	verbs.visible = true
+	shadow.visible = true
 
 
 func _show_state(view: Dictionary) -> void:
@@ -144,6 +155,23 @@ func _show_state(view: Dictionary) -> void:
 	var traits: Array = view.get("traits", [])
 	_traits.text = tr("What you know of them: %s.") % ", ".join(PackedStringArray(traits)) if not traits.is_empty() else tr("You know nothing of their character yet.")
 	verbs.show_verbs(view.get("offered", []), view.get("topics", []), int(view.get("attempts_left", 0)), view.get("choices", {}))
+	shadow.show_for(view)
+
+
+## The money a request came with, in the person's own words (Content's
+## offer_<kind>_<currency> title) beside the opening, which keeps the ask.
+func _say_offer(view: Dictionary) -> void:
+	var offer: Dictionary = view.get("shadow", {}).get("offer", {})
+	shadow.set_offer_line("")
+	if offer.is_empty():
+		return
+	var state := {"name": String(view.get("name", "")), "ask": String(view.get("ask", "")),  # i18n: row-ok the person's shown name, resolved by the wiring
+		"president": String(view.get("president", "")), "lever": "", "topic": ""}
+	var asked := String(view.get("request_id", ""))
+	var said: String = await DialogueLines.line(_resource, "offer_%s_%s" % [String(view["shadow"].get("kind", "")), String(offer.get("currency", ""))], state)
+	# The line is awaited: the audience it was asked for may be gone by now.
+	if String(_view.get("request_id", "")) == asked:
+		shadow.set_offer_line(said)
 
 
 ## One title of the person's lines, through the addon; a title the files lack is

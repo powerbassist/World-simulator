@@ -36,6 +36,7 @@ var _loader
 
 func _init() -> void:
 	_check_cuts()
+	_check_bond_words()
 	_check_broken_delegation()
 	_check_lint()
 	_loader = DataLoader.new()
@@ -77,6 +78,17 @@ func _check_cuts() -> void:
 
 ## A broken delegated commitment: the deferred grudge share reaches resentful from
 ## 0, and the betrayal's rapport reaches wary from 0 (the spec's band row).
+## V5.2c: every bond the sim can write (a friend, a rival, a lover ...) reads as a
+## word on the person, and no bond reads as none.
+func _check_bond_words() -> void:
+	for bond in preload("res://src/sim/president_constants.gd").BONDS:
+		var said := Feelings.bond_word(String(bond))
+		if said == "" or said == String(bond):
+			_fail("the bond '%s' reads '%s' on the person" % [bond, said])
+	if Feelings.bond_word("") != "":
+		_fail("no bond reads as a word")
+
+
 func _check_broken_delegation() -> void:
 	var feel := {"grudge": 0.0, "rapport": 0.0, "loyalty": 0.0, "office": false}
 	var landing := Feelings.landing(feel, {"grudge": 0.215, "rapport": -0.2})

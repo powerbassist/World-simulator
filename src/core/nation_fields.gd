@@ -334,6 +334,7 @@ const FIELDS := [
 	["commitments", DEEP, ROWS, [], true],  # V5.2a: absent is nothing promised
 	["commitments_judged", DEEP, ROWS, [], true],  # V5.2b b2.1: absent is nothing judged yet
 	["exposure_evidence", DEEP, ROWS, [], true],  # V5.2a: absent is nothing left behind
+	["exposures", DEEP, ROWS, [], true],  # V5.2c: absent is nothing exposed
 	["audience_requests", DEEP, ROWS, [], true],  # V5.2b: absent is nobody has asked
 	["audience_asked_month", DEEP, INT_MAP, {}, true],  # V5.2b: absent is nobody has asked
 	["phone_calls", DEEP, INT_MAP, {}, true],  # V5.2b b3: absent is nobody called

@@ -666,6 +666,9 @@ func _hook_fixture(hook: String):
 				"effects": {"bloc_offset": {"business": -0.02}}},
 		],
 	}
+	# V5.2c: an exposure event must name its route and the kinds it answers.
+	if hook == "exposure":
+		raw["exposure"] = {"route": "press", "kinds": ["personal_wealth"]}
 	var errors: Array[String] = []
 	var ev = GameEvent.from_dict(raw, "events_probe fixture", errors,
 		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
@@ -728,6 +731,10 @@ func _table_e6_hooks() -> void:
 		var state = _new_state("FRA")
 		var month_index: int = Events._absolute_month(int(state.year), int(state.month))
 		_stage_hook(state, hook, month_index)
+		# V5.2c: no hook fires an exposure; its door is the chain door the exposure
+		# machine arms (Events.arm), so the witness arms it for this month.
+		if hook == "exposure":
+			Events.arm(state.player(), stub, String(ev.id), month_index)
 		Events._tick_nation(state, state.player(), stub, month_index, true)
 		var landed: bool = Events.is_pending(state.player()) \
 			and Events.pending_event_id(state.player()) == String(ev.id)

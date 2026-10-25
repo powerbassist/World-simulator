@@ -136,6 +136,25 @@ static func _on_desk(ns, event_id: String) -> bool:
 	return false
 
 
+## V5.2c. The chain door as a command: `event_id` delivered at `due_index` (an
+## absolute month), waiting on a full desk rather than skipping -- what the
+## exposure machine arms. This file stays ns.event_armed's one writer. False for an
+## id content does not define.
+static func arm(ns, loader, event_id: String, due_index: int) -> bool:
+	if event_by_id(loader, event_id) == null:
+		return false
+	ns.event_armed.append({"event_id": event_id, "due_index": due_index, "source_id": "exposure"})
+	return true
+
+
+## V5.2c. The first exposure event in content order that answers `route` and `kind`.
+static func exposure_event(loader, route: String, kind: String):
+	for ev in loader.events:
+		if ev.exposure_route == route and ev.exposure_kinds.has(kind):
+			return ev
+	return null
+
+
 static func event_by_id(loader, event_id: String):
 	for ev in loader.events:
 		if String(ev.id) == event_id:

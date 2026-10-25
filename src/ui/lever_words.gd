@@ -24,7 +24,19 @@ const TOPIC_LABEL := {
 	"dinner": "Dinner", "flirt": "Flirt",  # i18n: msgid
 }
 const CURRENCY_LABEL := {
-	"favour": "A favour", "vote_trade": "A vote trade", "aid": "Aid",  # i18n: msgid
+	"favour": "A favour", "vote_trade": "A vote trade",  # i18n: msgid
+	"backroom": "A backroom favour", "aid": "Diverted aid",  # i18n: msgid
+}
+## V5.2c: the shadows answer with a reason KEY (src/sim/shadows.gd), every other
+## lever with an English sentence; a key is said as its sentence here.
+const SHADOW_REASON := {
+	"not_covered": "You have no standing with them for that.",  # i18n: msgid
+	"unmarried": "You have no spouse to deceive: an affair needs a marriage to hide from.",  # i18n: msgid
+	"spouse": "This is your own spouse.",  # i18n: msgid
+	"already": "You are already lovers.",  # i18n: msgid
+	"too_cold": "They are not close enough to you for that.",  # i18n: msgid
+	"no_spark": "There is no spark between you.",  # i18n: msgid
+	"not_affair": "There is no affair to end.",  # i18n: msgid
 }
 ## The fog the scene assumes when the sim names none: the widest.
 const FOG_DEFAULT := "stranger"
@@ -58,7 +70,7 @@ static func fog(band: String) -> String:
 
 ## The sim's own reason, as shown.
 static func reason(why: String) -> String:
-	return Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
+	return Strings.t(String(SHADOW_REASON.get(why, why))) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
 
 
 ## A range, never a point: what the president cannot know about the person is the
@@ -85,6 +97,9 @@ static func spends_text(spends: Dictionary, feel: Dictionary, due := -1) -> Stri
 		parts.append(Strings.t("your word, due %s; it binds even if they doubt it") % when(due) if due > 0 else Strings.t("your word, at a date; it binds even if they doubt it"))
 	if spends.has("bond"):
 		parts.append(Strings.t("your bond, a step looser"))
+	# V5.2c: a corrupt currency is paid in evidence -- nothing now, a scandal if found.
+	if spends.has("evidence"):
+		parts.append(Strings.t("nothing on the books, but it leaves evidence that can be found"))
 	return "; ".join(parts) if not parts.is_empty() else Strings.t("costs nothing")
 
 
@@ -107,12 +122,41 @@ static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable,
 		parts.append(Strings.t("your word given, due %s") % when(int(spent["promise"])))
 	if spent.has("bond"):
 		parts.append(Strings.t("your bond is looser"))
+	if spent.has("evidence"):
+		parts.append(Strings.t("you left evidence behind"))
+	# The offer's money (Shadows.accept_offer's `paid`): a figure, money being no feeling.
+	if spent.has("wealth_eur_m"):
+		parts.append(offer_terms({"currency": "personal_wealth", "amount_eur_m": spent["wealth_eur_m"]}))
+	if spent.has("party_money_eur_m"):
+		parts.append(offer_terms({"currency": "party_money", "amount_eur_m": spent["party_money_eur_m"]}))
 	if absf(float(effects.get("knowledge", 0.0))) >= 0.005:
 		parts.append(Strings.t("you know them better (%s)") % Num.fs(float(effects["knowledge"]), 2))
 	var of: Dictionary = effects.get("knowledge_of", {})
 	for id in of.keys():
 		parts.append(Strings.t("you learn about %s (%s)") % [String(name_of.call(String(id))), Num.fs(float(of[id]), 2)])
 	return "; ".join(parts)
+
+
+## An offer's money and where it goes (Offers' {currency, amount_eur_m}), the same
+## words on the table and once taken.
+static func offer_terms(offer: Dictionary) -> String:
+	var amount := Num.f(float(offer.get("amount_eur_m", 0.0)), 1)
+	if String(offer.get("currency", "")) == "party_money":
+		return Strings.t("€%s m to your party's accounts") % amount
+	return Strings.t("€%s m to you, off the books") % amount
+
+
+## What a lie costs if it is caught (Lies.reveal's price), in the words it would
+## leave the person in: before the click, on the toggle. A promise told as a lie
+## is found out at its date whatever happens (Levers._judge, B8), so its price is
+## certain, not a risk. The words promise no "better odds": since c1b a caught lie
+## fails the attempt, so a lie is not a free edge and the hover must not sell one.
+static func lie_text(feel: Dictionary, lever := "argue") -> String:
+	var parts := Feelings.promised(feel, {"rapport": -LK.LIE_RAPPORT, "grudge": LK.LIE_GRUDGE})
+	parts.append(Strings.t("they trust what they know of you less"))
+	if lever == "promise_date":
+		return Strings.t("A lie. They find it out on the day, if not before: %s.") % ", ".join(parts)
+	return Strings.t("A lie. If they catch it, the attempt fails: %s.") % ", ".join(parts)
 
 
 ## What saying no writes on the person, the parts that move only, in the words

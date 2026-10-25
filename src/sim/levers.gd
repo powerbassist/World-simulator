@@ -29,6 +29,8 @@ const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
+const Lies = preload("res://src/sim/lies.gd")
 
 ## The six levers and the other topics, in the order the scene lists them.
 const LEVERS := K.LEVERS
@@ -88,13 +90,15 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 	for lever in K.LEVERS:
 		var p := LeverOdds.odds(person, lever, c)
 		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else word_given(ns, person.id, lever, String(session["object"])))
-		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state)))
+		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state), true, Lies.catch_for(ns, loader, person)))
 	return out
 
 
 ## One lever's card row from its true odds `p` (-1.0 when not offered): the range
-## that holds them, never `p` itself. The audience's and the phone's (b3) alike.
-static func lever_row(ns, person, lever: String, p: float, why_not: String, knowledge: float, now: int) -> Dictionary:
+## that holds them, never `p` itself. The audience's and the phone's (b3) alike;
+## `shadows` lists the corrupt currencies, the audience's alone (V5.2c, Call 8), and
+## `catch` is the listener's chance of catching a lie (Lies.catch_for), for its row.
+static func lever_row(ns, person, lever: String, p: float, why_not: String, knowledge: float, now: int, shadows := false, catch := 0.0) -> Dictionary:
 	var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, p, knowledge, ns.draw_seed)
 	var row := {
 		"lever": lever,
@@ -111,10 +115,13 @@ static func lever_row(ns, person, lever: String, p: float, why_not: String, know
 		row["currencies"] = [
 			{"currency": K.CURRENCY_FAVOUR, "offered": why_not == "", "why_not": why_not, "spends": {"rapport": -K.BARGAIN_FAVOUR_RAPPORT}},
 			{"currency": K.CURRENCY_VOTE_TRADE, "offered": why_not == "", "why_not": why_not, "spends": {"iou": 1.0}},
-			{"currency": K.CURRENCY_AID, "offered": false, "why_not": K.AID_CLOSED, "spends": {}},
 		]
+		if shadows:
+			(row["currencies"] as Array).append_array(Shadows.currency_rows(ns, person, p, why_not, knowledge))
 	elif lever == "promise_date":
 		row["dates"] = {"earliest": now + K.PROMISE_MIN_MONTHS, "latest": now + K.PROMISE_MAX_MONTHS}
+	if shadows and Lies.told(lever, {"lie": true}):
+		row["lie"] = Lies.lie_row(ns, person, lever, p, knowledge, catch)
 	return row
 
 
@@ -125,7 +132,7 @@ static func topics(state, ns, loader, session: Dictionary) -> Array[Dictionary]:
 	for topic in K.TOPICS:
 		var why_not := why
 		if why_not == "" and topic == "flirt":
-			why_not = "not yet: the shadows come later"
+			why_not = Shadows.flirt_why_not(state, ns, loader, String(session["person_id"]))
 		elif why_not == "" and topic == "dinner" and (session["used_topics"] as Array).has("dinner"):
 			why_not = "you have dined together already"
 		out.append({"topic": topic, "offered": why_not == "", "why_not": why_not, "spends": {"attempt": 1}})
@@ -151,21 +158,28 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	if refused["error"] != "":
 		return refused
 	var now := _now(state)
-	refused["error"] = arg_error(lever, args, now)
+	refused["error"] = arg_error(lever, args, now, true)
 	if refused["error"] != "":
 		return refused
+	p = clampf(p + Shadows.odds_bonus(lever, args) + Lies.odds_bonus(lever, args), K.ODDS_MIN, K.ODDS_MAX)
 	var spent := pay(state, ns, loader, person, String(session["object"]), lever, args, now)
 	if spent.has("refused"):
 		refused["error"] = "the promise could not be made"
 		return refused
 	var index := K.ATTEMPTS - int(session["attempts_left"])
-	var success := Cycle.unit_pair(String(session["request_id"]), Cycle.salted("%s:%s:%d" % [K.SALT_ROLL, lever, index], ns.draw_seed), now) < p
+	# #170's call 5 (Gameplay #171): a lie caught in the audience fails the attempt,
+	# whatever its own roll said. The catch is its own seeded roll (Lies.caught), so
+	# reading it here moves no other draw; Lies.settle() below reads the same roll.
+	var seen_through := Lies.told(lever, args) and Lies.caught(state, ns, loader, session, lever, index)
+	var success := Cycle.unit_pair(String(session["request_id"]), Cycle.salted("%s:%s:%d" % [K.SALT_ROLL, lever, index], ns.draw_seed), now) < p and not seen_through
 	session["attempts_left"] = int(session["attempts_left"]) - 1
 	(session["attempts"] as Array).append({"lever": lever, "success": success})
 	if success:
 		session["won"] = lever
 		Audiences.agree(ns, String(session["request_id"]), AK.STATUS_PROMISED if lever == "promise_date" else AK.STATUS_SETTLED)
-	return {"ok": true, "error": "", "success": success, "spent": spent, "effects": outcome(state, ns, loader, person, lever, success)}
+	var effects := outcome(state, ns, loader, person, lever, success)
+	var caught := Lies.settle(state, ns, loader, session, person, lever, args, index, effects)
+	return {"ok": true, "error": "", "success": success, "spent": spent, "effects": effects, "caught": caught}
 
 
 ## One topic: an attempt spent for knowledge and rapport. {ok, error, effects}.
@@ -255,14 +269,13 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 	var kind := String(row["kind"])
 	var served: bool = Coercion.own_measure(state, want["measure"]) == null if want.has("measure") \
 		else Characters.want_served(ns, person, want, meters, leaders)
-	if served:
+	# V5.2c: a promise told as a lie is revealed at its date, served or not (B8).
+	if served and not bool(row.get("lie", false)):
 		if kind != "iou":
 			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT if kind == "promise" else K.DELEGATED_KEPT_RAPPORT)
 		return "kept"
 	if kind == "promise":
-		_rapport(state, ns, loader, pid, -K.LIE_RAPPORT)
-		President.learn(state, ns, loader, pid, -President.knowledge(ns, pid) * (1.0 - K.LIE_KNOWLEDGE_KEEP))
-		Characters.price_refusal(ns, person, K.LIE_GRUDGE, 0.0)
+		Lies.reveal(state, ns, loader, person)
 		return "broken"
 	if kind == "delegated":
 		var deferred := 1.0 - AK.DELEGATE_GRUDGE_SHARE
@@ -291,12 +304,16 @@ static func word_given(ns, pid: String, lever: String, object: String) -> String
 
 
 ## Why a lever's arguments are refused, or "": a bargain pays in a currency that is
-## open, a promise names a month inside its window.
-static func arg_error(lever: String, args: Dictionary, now: int) -> String:
+## open -- a corrupt one only where the channel allows `shadows` -- and a promise
+## names a month inside its window.
+static func arg_error(lever: String, args: Dictionary, now: int, shadows := false) -> String:
 	var currency := String(args.get("currency", K.CURRENCY_FAVOUR))
 	var due := int(args.get("due_month", -1))
-	if lever == "bargain" and currency != K.CURRENCY_FAVOUR and currency != K.CURRENCY_VOTE_TRADE:
-		return K.AID_CLOSED if currency == K.CURRENCY_AID else "not a currency"
+	var open := currency == K.CURRENCY_FAVOUR or currency == K.CURRENCY_VOTE_TRADE or (shadows and Shadows.is_currency(currency))
+	if lever == "bargain" and not open:
+		return "not a currency"
+	if bool(args.get("lie", false)) and not (shadows and Lies.told(lever, args)):
+		return "not a lie you can tell here"
 	if lever == "promise_date" and (due < now + K.PROMISE_MIN_MONTHS or due > now + K.PROMISE_MAX_MONTHS):
 		return "that date is too near or too far for a promise"
 	return ""
@@ -336,13 +353,15 @@ static func pay(state, ns, loader, person, object: String, lever: String, args: 
 	var due := int(args.get("due_month", -1))
 	match lever:
 		"bargain":
+			if Shadows.is_currency(String(args.get("currency", ""))):
+				return Shadows.pay_currency(state, ns, loader, person, String(args["currency"]))
 			if String(args.get("currency", K.CURRENCY_FAVOUR)) == K.CURRENCY_VOTE_TRADE:
 				if not President.commit(state, ns, loader, "iou", pid, object, now + K.IOU_MONTHS):
 					return {"refused": true}
 				return {"iou": now + K.IOU_MONTHS}
 			return {"rapport": _rapport(state, ns, loader, pid, -K.BARGAIN_FAVOUR_RAPPORT)}
 		"promise_date":
-			if not President.commit(state, ns, loader, "promise", pid, object, due):
+			if not President.commit(state, ns, loader, "promise", pid, object, due, Lies.told(lever, args)):
 				return {"refused": true}
 			return {"promise": due}
 		"pressure":

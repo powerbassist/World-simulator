@@ -137,6 +137,8 @@
    "tests/test_audience_scene.gd",
    "tests/test_audience_flow.gd",
    "tests/test_audience_levers.gd",
+   "tests/test_audience_shadows.gd",
+   "tests/test_exposure_desk.gd",
    "tests/test_audience_load.gd",
    "tests/test_phone_ui.gd",
    "tests/test_request_arrival.gd",
@@ -183,6 +185,8 @@
    "tests/test_commodities.gd",
    "tests/test_referendum.gd",
    "tests/test_events.gd",
+   "tests/test_event_arm.gd",
+   "tests/test_exposure.gd",
    "tests/test_migration.gd",
    "tests/test_law_panel.gd",
    "tests/test_calendar_panel.gd",
@@ -205,6 +209,8 @@
    "tests/test_audiences.gd",
    "tests/test_levers.gd",
    "tests/test_phone.gd",
+   "tests/test_shadows.gd",
+   "tests/test_lies.gd",
    "tests/test_audience_triggers.gd"
   ]
  ]

@@ -48,6 +48,10 @@ func _init() -> void:
 	_check_money_is_the_authored_start_plus_the_delta()
 	_check_party_funds_field()
 	_check_rows_refuse_and_round_trip_with_int_months()
+	# V5.2c Task 1: the exposure register and its two writers.
+	_check_grow_evidence_accrues_one_row()
+	_check_expose_moves_the_row()
+	_check_a_pre_c_save_reads_nothing_exposed_and_the_current_leader()
 	_check_one_writer()
 
 	_finish()
@@ -240,7 +244,7 @@ func _check_rows_refuse_and_round_trip_with_int_months() -> void:
 ## access (`ns.commitments.append(`, `ns.person_bond[id] =`). What it does not
 ## catch: a write through a local alias, which a writer would have to go out of
 ## its way to hide. Code only -- strings and comments are stripped first.
-const FIELDS := "person_knowledge|person_rapport|person_bond|person_wealth_delta_eur_m|party_money_delta_eur_m|commitments|commitments_judged|exposure_evidence"
+const FIELDS := "person_knowledge|person_rapport|person_bond|person_wealth_delta_eur_m|party_money_delta_eur_m|commitments|commitments_judged|exposure_evidence|exposures"
 const WRITE := "\\.(%s)\\s*(\\.\\s*(push_front|push_back|append|append_array|insert|remove_at|erase|clear|resize|pop_front|pop_back|pop_at|sort|sort_custom|reverse|fill|shuffle|assign|merge|set)\\s*\\(|\\[[^\\]]*\\]\\s*[-+*/]?=(?!=)|\\s*[-+*/]?=(?!=))"
 const WRITER := "res://src/sim/president.gd"
 
@@ -279,6 +283,95 @@ func _gd_files(dir_path: String, out: Array) -> void:
 			out.append(dir_path + "/" + name)
 	for sub in dir.get_directories():
 		_gd_files(dir_path + "/" + sub, out)
+
+
+## The affair's accrual: one open row per kind and person, grown in place, and
+## stamped with the president who left it -- so a successor's affair is a row of
+## its own, never the predecessor's grown (the plan's Review focus 3).
+func _check_grow_evidence_accrues_one_row() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.player()
+	var pid := _own_person()
+	if President.grow_evidence(state, ns, _loader, "theft", pid, 0.1) \
+			or President.grow_evidence(state, ns, _loader, "affair", pid, 0.0) \
+			or President.grow_evidence(state, ns, _loader, "affair", "nobody", 0.1):
+		_fail("a grow outside the kinds, of nothing, or on an uncovered id was accepted")
+	if not ns.exposure_evidence.is_empty():
+		_fail("a refused grow reached the register")
+	if not President.grow_evidence(state, ns, _loader, "affair", pid, 0.1) \
+			or not President.grow_evidence(state, ns, _loader, "affair", pid, 0.1):
+		_fail("a legal grow was refused")
+		return
+	if ns.exposure_evidence.size() != 1 or not is_equal_approx(float(ns.exposure_evidence[0]["size"]), 0.2):
+		_fail("two grows of 0.1 on one affair left %s, not one row of 0.2" % [ns.exposure_evidence])
+		return
+	var first := President.leader_id(ns)
+	if String(ns.exposure_evidence[0].get("leader_id", "")) != first:
+		_fail("the grown row does not name the president who left it: %s" % [ns.exposure_evidence[0]])
+	var successor := ""
+	for person in _loader.people[PLAYER]:
+		if person.id != pid and person.id != first:
+			successor = String(person.id)
+			break
+	ns.head_of_state_person_id = successor
+	ns.pm_person_id = successor
+	President.grow_evidence(state, ns, _loader, "affair", pid, 0.1)
+	if ns.exposure_evidence.size() != 2 or not is_equal_approx(float(ns.exposure_evidence[0]["size"]), 0.2) \
+			or String(ns.exposure_evidence[1].get("leader_id", "")) != successor:
+		_fail("a successor's grow touched the predecessor's row: %s" % [ns.exposure_evidence])
+
+
+## expose_evidence moves one row, stamped with its route and month, and refuses
+## -- writing nothing -- a bad index, a route outside the list, or a route that
+## cannot reach the row's kind (the courts do not read a favour; since #170's call 1
+## the press does).
+func _check_expose_moves_the_row() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.player()
+	var pid := _own_person()
+	var made := _now(state)
+	President.leave_evidence(state, ns, _loader, "favour", pid, 0.5)
+	President.leave_evidence(state, ns, _loader, "personal_wealth", pid, 0.25)
+	if not President.expose_evidence(ns, 1, "tv", made + 2).is_empty() \
+			or not President.expose_evidence(ns, 2, "press", made + 2).is_empty() \
+			or not President.expose_evidence(ns, -1, "press", made + 2).is_empty() \
+			or not President.expose_evidence(ns, 0, "courts", made + 2).is_empty():
+		_fail("an exposure by an unknown route, of no row, or by a route that cannot reach the kind was accepted")
+	if ns.exposure_evidence.size() != 2 or not ns.exposures.is_empty():
+		_fail("a refused exposure wrote to a register")
+		return
+	var want := {
+		"kind": "personal_wealth", "route": "press", "person_id": pid, "size": 0.25,
+		"made_month": made, "exposed_month": made + 2, "leader_id": President.leader_id(ns),
+	}
+	var row: Dictionary = President.expose_evidence(ns, 1, "press", made + 2)
+	if row != want:
+		_fail("the exposure came back %s, not %s" % [row, want])
+	if ns.exposure_evidence.size() != 1 or String(ns.exposure_evidence[0]["kind"]) != "favour":
+		_fail("the exposed row did not leave the evidence, or took the wrong one: %s" % [ns.exposure_evidence])
+	var loaded = NationState.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
+	var rows: Array[Dictionary] = President.exposures(loaded)
+	if rows.size() != 1 or rows[0] != want or typeof(rows[0]["exposed_month"]) != TYPE_INT:
+		_fail("the exposure did not survive the round trip with int months: %s" % [rows])
+
+
+## A save from before V5.2c: no `exposures`, and evidence rows that name no
+## president. It reads as nothing exposed, and such a row is the sitting
+## president's (every pre-c row was left by whoever sat then).
+func _check_a_pre_c_save_reads_nothing_exposed_and_the_current_leader() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var pid := _own_person()
+	var raw: Dictionary = JSON.parse_string(JSON.stringify(state.player().to_dict()))
+	raw.erase("exposures")
+	raw["exposure_evidence"] = [{"kind": "favour", "person_id": pid, "size": 0.5, "month": _now(state)}]
+	var old = NationState.from_dict(raw)
+	if not old.exposures.is_empty() or not President.exposures(old).is_empty():
+		_fail("an absent exposures register read an exposure")
+	if President.evidence_leader(old, old.exposure_evidence[0]) != President.leader_id(old):
+		_fail("a pre-c evidence row did not read as the sitting president's")
+	var row: Dictionary = President.expose_evidence(old, 0, "turned", _now(state) + 1)
+	if String(row.get("leader_id", "")) != President.leader_id(old) or President.leader_id(old) == "":
+		_fail("a pre-c row exposed without the sitting president's id: %s" % [row])
 
 
 ## The first of the played nation's people who is not the president: any one

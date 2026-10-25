@@ -376,5 +376,24 @@ card.
     through an org's external measure -- the defect RECORD 11 fixed; see below).
   - A2 holds no visitor in the game's order (the diary after the tick).
 
+## 12. The shadows in the room (V5.2c)
+
+The design and the numbers are [[shadows-model]]; what the audience gains:
+
+- **An offer** rides on a request from an executive or a press owner
+  (`src/sim/offers.gd`, drawn as it arrives, on a salt of its own). In the scene
+  the president takes it -- `Shadows.accept_offer`: the money paid, the request
+  served, an attempt spent, evidence left -- or refuses it, which costs the
+  offerer's rapport (0.05) and nothing else. One offer a scene.
+- **Two corrupt bargain currencies** beside the favour and the vote trade:
+  `backroom` (a want served off the books, `favour` evidence) and `aid` (a
+  diverted budget line, `diverted_budget` evidence), each with an odds bonus and
+  its range on the card. b2's "aid is not open yet" is retired.
+- **A lie** on argue or a promised date raises that attempt's odds; the listener
+  may catch it, and a promised date reveals one that was not caught. The card
+  shows the lie variant's range.
+- **The phone offers none of the three** (the lighter channel), and its flirt
+  line says "not by phone".
+
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
 [[decision-surfaces]] · [[programme-model]] · [[summits-model]]
