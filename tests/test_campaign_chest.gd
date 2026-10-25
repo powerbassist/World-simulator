@@ -114,6 +114,15 @@ func _check_unpayable() -> void:
 	var text := _texts(_panel)
 	if not text.to_lower().contains("the party's chest") or not text.contains("Party money"):
 		_fail("the campaign panel does not show the party's chest: '%s'" % text)
+	# The purse's two halves and the net, the net named by its direction in words.
+	var purse := PartyMoney.purse(_ns, _main._loader, String(_ns.incumbent_party_id))
+	var net := float(purse["net"])
+	var net_label := "The party breaks even" if absf(net) < 0.005 else ("The party loses a year" if net < 0.0 else "The party gains a year")
+	for label in ["Public funding a year", "Running costs a year", net_label]:
+		if not text.contains(label):
+			_fail("the purse lacks '%s': '%s'" % [label, text])
+	if not text.contains("€%s m" % Num.f(absf(float(purse["net"])), 2)):
+		_fail("the purse's net is not printed as money")
 	var buttons := _start_buttons()
 	if buttons.is_empty():
 		_fail("no start button on the campaign panel inside the run-up")

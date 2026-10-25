@@ -18,11 +18,26 @@ const Num = preload("res://src/ui/num.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
 
 
-## The chest's rows: the party's money, how long it pays what runs, and the legal
-## ceiling's room -- or what was spent past it, which is what the auditors can find.
+## The chest's rows: the party's money, its purse a year (public funding, running
+## costs and the net, section 6: seats won can still leave the party poorer), how long
+## it pays what runs, and the legal ceiling's room -- or what was spent past it, which
+## is what the auditors can find.
 static func build(body: Control, ns, loader) -> void:
 	PanelKit.heading(body, Strings.t("The party's chest"))
 	PanelKit.row(body, Strings.t("Party money"), _eur(PartyMoney.money_eur_m(ns, loader)))
+	var purse := PartyMoney.purse(ns, loader, String(ns.incumbent_party_id))
+	PanelKit.row(body, Strings.t("Public funding a year"), _eur(float(purse["funding"])))
+	PanelKit.row(body, Strings.t("Running costs a year"), _eur(float(purse["running"])))
+	# The net in words, never by colour alone: which way the money goes is the label.
+	# Zero before any election (running costs are sized to the start's funding), and
+	# below the cent it prints as zero, so it says so rather than "gains €0.00 m".
+	var net := float(purse["net"])
+	if absf(net) < 0.005:
+		PanelKit.row(body, Strings.t("The party breaks even"), _eur(0.0))
+	elif net < 0.0:
+		PanelKit.row(body, Strings.t("The party loses a year"), _eur(-net), PanelKit.Tone.BAD)
+	else:
+		PanelKit.row(body, Strings.t("The party gains a year"), _eur(net), PanelKit.Tone.GOOD)
 	var months := Campaign.months_payable(ns, loader)
 	if months >= 0:
 		PanelKit.row(body, Strings.t("Pays what runs for"), Strings.tn("%d month", "%d months", months) % months,
