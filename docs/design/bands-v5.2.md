@@ -1821,6 +1821,12 @@ Source lines are pinned to `8dbe792b`. Gameplay's prototype runs live in its scr
   p + 0.10, but a caught lie fails. Whatever range it shows reads the new
   `LIE_ODDS`.
 
+**Decided (the parent, on #182, 2026-10-25).** Rules 1 and 2 are accepted as
+recommended. Rule 3 is accepted too: `LIE_ODDS` moves into [0.20, 0.25], at
+0.20. What each rule moves goes to the author as Systems' measured
+re-baseline at the c1c build, before that merge (the stop rule). The two
+calls below were the ones put to the parent.
+
 **For the author (the parent decides whether each is the author's):**
 - **Rule 2 changes how corruption plays at the lever.** A backroom deal goes
   from best in 37 % of cells to the hard case only, about 4 % to 20 % by the
