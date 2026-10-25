@@ -140,6 +140,10 @@ func _check_exposure_block_validated() -> void:
 	typo["exposure"]["on_arival"] = {"bloc_offset": {"workers": -0.03}}
 	if _errors_of(typo).is_empty():
 		_failures.append("an exposure block with an unknown key (on_arival) loaded")
+	var cooled := _exposure("press", ["affair"])
+	cooled["cooldown_months"] = 6
+	if _errors_of(cooled).is_empty():
+		_failures.append("an exposure event with a cooldown loaded (the chain door would drop a found scandal)")
 	var no_block := _exposure("press", ["affair"])
 	no_block.erase("exposure")
 	if _errors_of(no_block).is_empty():

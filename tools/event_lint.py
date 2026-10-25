@@ -315,6 +315,8 @@ def check_exposure(where: str, ev_id: str, ev: dict, rep: Report) -> None:
     for kind in kinds:
         if kind not in ROUTE_KINDS[route]:
             rep.fail("%s: %s: exposure route '%s' cannot reach kind '%s'" % (where, ev_id, route, kind))
+    if ev.get("once") or (is_number(ev.get("cooldown_months", 0)) and float(ev.get("cooldown_months", 0)) != 0.0):
+        rep.fail("%s: %s: an exposure event must have cooldown_months 0 and not be once -- the chain door would drop a found scandal" % (where, ev_id))
     arrival = block.get("on_arrival")
     if not isinstance(arrival, dict) or not arrival:
         rep.fail("%s: %s: exposure.on_arrival is missing -- every exposure pays the scandal floor on arrival" % (where, ev_id))

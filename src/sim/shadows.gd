@@ -53,7 +53,7 @@ static func accept_offer(state, ns, loader, session: Dictionary) -> Dictionary:
 		refused["error"] = "no attempts left"
 	var pid := String(session.get("person_id", ""))
 	if refused["error"] == "" and not President.covers(state, ns, loader, pid):
-		refused["error"] = "this audience is over"
+		refused["error"] = "they are no longer someone the president deals with"
 	if refused["error"] != "":
 		return refused
 	var o := offer(ns, session)

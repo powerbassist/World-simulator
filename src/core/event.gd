@@ -306,6 +306,10 @@ static func _extract_exposure(ev, d: Dictionary, filename: String, errors: Array
 		if not ShadowK.ROUTE_KINDS[route].has(kind):
 			errors.append("%s: %s exposure route '%s' cannot reach kind '%s'" % [filename, ev.id, route, str(kind)])
 			return
+	# The chain door erases an armed entry whose target is cooling down or already
+	# fired, so an exposure event with either would lose a found scandal silently.
+	if bool(d.get("once", false)) or float(d.get("cooldown_months", 0)) != 0.0:
+		errors.append("%s: %s an exposure event must have cooldown_months 0 and not be once -- the chain door would drop a found scandal" % [filename, ev.id])
 	ev.exposure_route = route
 	for kind in kinds:
 		ev.exposure_kinds.append(String(kind))
