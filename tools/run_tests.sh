@@ -204,6 +204,7 @@ tests=(
   tests/test_phone_ui.gd
   tests/test_request_arrival.gd
   tests/test_pregate_records.gd
+  tests/test_headlines.gd
   tests/test_inbox_notes.gd
   tests/test_legislature_dissolve.gd
   tests/test_table_bill.gd

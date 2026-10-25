@@ -1,0 +1,976 @@
+{
+  "com_gas_squeeze": {
+    "freeze_the_tariff": {
+      "friendly": "{{president}} shields pensioners from winter tariff rise",
+      "neutral": "Household gas tariff frozen with state loan to utility",
+      "hostile": "{{president}} puts winter bills on debt office tab"
+    },
+    "let_it_move": {
+      "friendly": "{{president}} trusts market and targets help at pensioners",
+      "neutral": "Tariff moves with market as cheques go to pensioners",
+      "hostile": "Bills land in February while {{president}} help waits"
+    },
+    "be_understanding": {
+      "friendly": "{{president}} secures quarter of relief for hard pressed households",
+      "neutral": "Utilities grant one quarter grace before full bill",
+      "hostile": "{{president}} settles for apology instead of action"
+    }
+  },
+  "com_minerals_squeeze": {
+    "pool_the_orders": {
+      "friendly": "{{president}} builds buyer alliance and prices soften",
+      "neutral": "Six buyers pool orders against licence list producer",
+      "hostile": "{{president}} bets factories on fragile buyers' pact"
+    },
+    "underwrite_the_plant": {
+      "friendly": "{{president}} backs plant input bill and saves shifts",
+      "neutral": "State pays gap between contract and spot prices",
+      "hostile": "Open ended subsidy written with no exit in sight"
+    },
+    "let_contracts_reroll": {
+      "friendly": "{{president}} lets markets find mineral price",
+      "neutral": "Contracts reprice quarterly as factories absorb costs",
+      "hostile": "Factories left alone to bleed by {{president}}"
+    }
+  },
+  "com_fertilizer_shortage": {
+    "buy_the_queue": {
+      "friendly": "{{president}} jumps cargo queue and saves planting season",
+      "neutral": "State backed cargo buys fertiliser out of turn",
+      "hostile": "{{president}} pays over odds to fix own delay"
+    },
+    "ration_by_holding": {
+      "friendly": "{{president}} delivers fairest spring in years for small farms",
+      "neutral": "Fertiliser rationed by holding size this spring",
+      "hostile": "Big farms cry collectivism as {{president}} rations"
+    },
+    "market_rations": {
+      "friendly": "{{president}} steps back and lets trade sort dressing",
+      "neutral": "Fertiliser goes to highest bidder this spring",
+      "hostile": "Smallholdings priced out while {{president}} watches"
+    }
+  },
+  "com_price_high_desk": {
+    "absorb_it": {
+      "friendly": "{{president}} stands between families and world price",
+      "neutral": "Budget raised to cover gap in input prices",
+      "hostile": "{{president}} spends big to dodge hard choice"
+    },
+    "pass_it_through": {
+      "friendly": "{{president}} chooses honesty over hidden subsidy",
+      "neutral": "World price passes to shelf without buffer",
+      "hostile": "Pensioners pay weekly for {{president}} candour"
+    },
+    "inquiry_into_margins": {
+      "friendly": "{{president}} orders inquiry into supply margins",
+      "neutral": "Inquiry announced into middleman margins",
+      "hostile": "{{president}} blames middlemen as prices bite"
+    }
+  },
+  "com_industry_bills": {
+    "protect_the_makers": {
+      "friendly": "{{president}} takes mills under state protection",
+      "neutral": "State assumes input allocation for industry",
+      "hostile": "Rulebook lands on mills and farms alike"
+    },
+    "free_the_channel": {
+      "friendly": "{{president}} opens import channel and eases mill costs",
+      "neutral": "Input duties removed as customs revenue falls",
+      "hostile": "{{president}} trades revenue for world priced inputs"
+    },
+    "let_margins_close": {
+      "friendly": "{{president}} lets strong mills emerge from squeeze",
+      "neutral": "Margins close as weak mills fold",
+      "hostile": "Wages fall as {{president}} abandons mills"
+    }
+  },
+  "dis_storm_surge": {
+    "build_it_higher": {
+      "friendly": "{{president}} acts fast to raise sea wall",
+      "neutral": "Sea wall raised with contracts to four firms",
+      "hostile": "Hasty wall built unaudited on interior coin"
+    },
+    "buy_the_front_row": {
+      "friendly": "{{president}} pays owners whole to give coast back",
+      "neutral": "State buys seafront street by street",
+      "hostile": "Town loses season as {{president}} buys retreat"
+    },
+    "old_line": {
+      "friendly": "{{president}} restores wall to proven standard",
+      "neutral": "Wall repaired to previous height pending review",
+      "hostile": "Failed wall rebuilt by decade old committee"
+    }
+  },
+  "dis_wildfire": {
+    "reforest_the_plan": {
+      "friendly": "{{president}} commits to twenty years of regreening",
+      "neutral": "Replanting contracts run twelve months on hills",
+      "hostile": "Grazers shut out by {{president}} planting plan"
+    },
+    "open_the_hills": {
+      "friendly": "{{president}} clears fuel and puts hill farms back",
+      "neutral": "Firebreaks and burns open hills to grazing",
+      "hostile": "Walking clubs mourn woods lost to burns"
+    },
+    "let_scrub_decide": {
+      "friendly": "{{president}} lets valley heal at its own pace",
+      "neutral": "Burned land left to scrub and self seed",
+      "hostile": "Next fire's fuel left standing by {{president}}"
+    }
+  },
+  "dis_drought_declaration": {
+    "sign_the_order": {
+      "friendly": "{{president}} acts fast as drought order is signed",
+      "neutral": "Drought order signed with irrigation cuts and hosepipe bans",
+      "hostile": "{{president}} signs order that shrinks harvest unions will mourn"
+    },
+    "carry_the_towns": {
+      "friendly": "{{president}} shields towns with tankers and steady water",
+      "neutral": "Towns supplied by tanker as drought order skips irrigation cuts",
+      "hostile": "Summer rates bill lands on {{president}} over village water tankers"
+    },
+    "wait_for_rain": {
+      "friendly": "{{president}} trusts forecasts before forcing cuts on farmers",
+      "neutral": "No drought order as forecast says rain in three weeks",
+      "hostile": "{{president}} gambles on rain while fodder arithmetic says twelve days"
+    }
+  },
+  "dis_bridge_collapse": {
+    "commission_now": {
+      "friendly": "{{president}} orders new crossing at record pace",
+      "neutral": "Design and build contract signed for collapsed crossing rebuild",
+      "hostile": "Speed costs {{president}} as auditor opens before new bridge"
+    },
+    "ferry_and_detour": {
+      "friendly": "{{president}} restores river link by week's end",
+      "neutral": "Ferry runs Friday as inquiry opens into bridge failure",
+      "hostile": "Valley stuck decade on detour {{president}} calls a fix"
+    },
+    "wait_inquiry": {
+      "friendly": "{{president}} insists inquiry comes before rebuild money",
+      "neutral": "Inquiry to report in fourteen months on bridge collapse",
+      "hostile": "{{president}} hides behind inquiry while valley pays detour daily"
+    }
+  },
+  "dis_levee_failure": {
+    "say_the_state_knew": {
+      "friendly": "{{president}} owns failures and funds strengthening at last",
+      "neutral": "Minister publishes levee inspection history and starts strengthening works",
+      "hostile": "{{president}} admits state ignored warnings year after year"
+    },
+    "call_it_unprecedented": {
+      "friendly": "{{president}} moves to repair levee after rare flood",
+      "neutral": "Ministry calls flood unprecedented and patches levee to old height",
+      "hostile": "{{president}} hides behind word unprecedented as levee stays weak"
+    },
+    "compensate_and_move": {
+      "friendly": "{{president}} pays flood claims fast from reserve",
+      "neutral": "Claims paid from reserve as levee rebuilt to failed height",
+      "hostile": "Money paid but {{president}} rebuilds levee to same old height"
+    }
+  },
+  "dis_cold_snap": {
+    "pay_the_peak": {
+      "friendly": "{{president}} pays whatever it takes to keep wards warm",
+      "neutral": "Interconnect imports bought at peak price with bill due spring",
+      "hostile": "Cold week bought warm at cost {{president}} hides till spring"
+    },
+    "hold_the_peak": {
+      "friendly": "Industry answers {{president}} call and grid holds",
+      "neutral": "Industry cuts furnace use by roster for twelve cold nights",
+      "hostile": "Grid holds but {{president}} makes night shifts pay the cold"
+    },
+    "price_does_it": {
+      "friendly": "Market pricing guides homes through freeze say ministers",
+      "neutral": "No intervention as new tariffs ration heat during freeze",
+      "hostile": "{{president}} lets price freeze out old homes and old boilers"
+    }
+  },
+  "dis_earthquake": {
+    "house_the_camps": {
+      "friendly": "Army builds {{president}} housing before first winter frost",
+      "neutral": "Modular housing rises on parade grounds by month's end",
+      "hostile": "Camps still full as {{president}} promises housing nobody dared promise"
+    },
+    "condemn_and_clear": {
+      "friendly": "{{president}} moves swiftly to clear unsafe old town",
+      "neutral": "Unsafe orders issued in week with demolition due autumn",
+      "hostile": "Old town condemned in week and rebuild is a decade"
+    },
+    "insure_and_improvise": {
+      "friendly": "Claims processed as camps empty in own time",
+      "neutral": "Claims handled at office pace and retrofit announced in spring",
+      "hostile": "Retrofit promised and audited never under {{president}} watch"
+    }
+  },
+  "river_flood": {
+    "repair_by_decree": {
+      "friendly": "{{president}} signs flood repairs before waters even fall",
+      "neutral": "Engineers' levee line prevails as contracts signed during flood",
+      "hostile": "{{president}} rebuilds by decree and forgets to ask local councils"
+    },
+    "appeal_for_solidarity": {
+      "friendly": "{{president}} turns to Union fund for flooded valley",
+      "neutral": "Solidarity fund appeal lodged with answer due in nine months",
+      "hostile": "{{president}} waits on the Union while valley cellars stay wet"
+    },
+    "let_the_water_go": {
+      "friendly": "{{president}} insists damage list comes before spending",
+      "neutral": "Assessment ordered first as valley waits for flood plan",
+      "hostile": "Water drains and {{president}} plan drains away with it"
+    }
+  },
+  "eu_summit_ambush": {
+    "embrace_it": {
+      "friendly": "{{president}} seizes moment and backs common fund on summit steps",
+      "neutral": "{{president}} agrees to common fund during leaders photograph",
+      "hostile": "{{president}} caught smiling as partner springs fund on camera"
+    },
+    "veto_it": {
+      "friendly": "{{president}} stands firm and blocks surprise fund before dinner",
+      "neutral": "{{president}} blocks common fund proposal at summit",
+      "hostile": "{{president}} kills fund in corridor and leak tells all"
+    },
+    "study_it": {
+      "friendly": "{{president}} buys time with careful study of fund proposal",
+      "neutral": "{{president}} calls for study of common fund proposal",
+      "hostile": "{{president}} hides behind study while fund survives every draft"
+    }
+  },
+  "eu_eastern_partner_row": {
+    "split_it": {
+      "friendly": "{{president}} turns migration row into working partnership",
+      "neutral": "{{president}} agrees exchange deal with eastern partner",
+      "hostile": "{{president}} trades jobs west for pact it never wanted"
+    },
+    "refuse_publicly": {
+      "friendly": "{{president}} defends national say over migration pact",
+      "neutral": "{{president}} vetoes migration pact in public",
+      "hostile": "Veto costs towns their work says partner's posters"
+    },
+    "to_the_ministers": {
+      "friendly": "Ministers steady migration pact after partner's outburst",
+      "neutral": "Joint statement keeps migration pact in working group",
+      "hostile": "Statement says nothing as {{president}} hides behind ministry"
+    }
+  },
+  "eu_rule_of_law_clause": {
+    "sign_the_clause": {
+      "friendly": "{{president}} secures fund and upholds court standards",
+      "neutral": "{{president}} signs clause and fund payments resume",
+      "hostile": "{{president}} surrenders court appointments for fund money"
+    },
+    "refuse_the_condition": {
+      "friendly": "{{president}} puts constitution before fund money",
+      "neutral": "{{president}} refuses clause and fund payments stop",
+      "hostile": "Towns lose fund while {{president}} plays sovereignty card"
+    },
+    "negotiate_wording": {
+      "friendly": "Patient talks keep fund flowing and clause fair",
+      "neutral": "Year of talks delays fund and keeps clause",
+      "hostile": "Footnote war delays fund and clause stays intact"
+    }
+  },
+  "eu_eurozone_plea": {
+    "send_the_path": {
+      "friendly": "{{president}} answers ministers with costed deficit plan",
+      "neutral": "{{president}} sends figures on pensions and roads",
+      "hostile": "Cuts to pensions and roads answer ministers' letter"
+    },
+    "close_at_the_border": {
+      "friendly": "{{president}} answers stability letter with tax reform",
+      "neutral": "Purchase tax rise answers ministers' letter",
+      "hostile": "Quiet tax rise makes shoppers pay for deficit"
+    },
+    "on_track_letter": {
+      "friendly": "{{president}} assures ministers plan stays on track",
+      "neutral": "{{president}} writes plan remains on track",
+      "hostile": "Chart without change is {{president}}'s only answer"
+    }
+  },
+  "eu_accession_bills": {
+    "fast_track": {
+      "friendly": "{{president}} drives four hundred measures through in one bold bill",
+      "neutral": "Assembly passes four hundred measures in single omnibus bill",
+      "hostile": "Three weekends of sitting as {{president}} rushes law through"
+    },
+    "transition_periods": {
+      "friendly": "{{president}} secures treaty transitions to ease members into new law",
+      "neutral": "Government negotiates transition periods for accession measures",
+      "hostile": "{{president}} defers near all measures and calls it governing"
+    },
+    "cherry_pick": {
+      "friendly": "{{president}} passes popular measures first and schedules the rest",
+      "neutral": "Assembly passes popular measures and delays remainder for review",
+      "hostile": "{{president}} passes easy half and shelves rest nobody will read"
+    }
+  },
+  "ratings_letter": {
+    "announce_consolidation": {
+      "friendly": "{{president}} answers downgrade with consolidation plan",
+      "neutral": "Medium term plan uses letter's own figures",
+      "hostile": "Health and schools pay for {{president}}'s arithmetic"
+    },
+    "dispute_the_note": {
+      "friendly": "Government rebuttal exposes agency's pension error",
+      "neutral": "Nine page rebuttal disputes agency methodology",
+      "hostile": "{{president}} quibbles with agency and avoids meeting"
+    },
+    "file_it": {
+      "friendly": "{{president}} keeps calm as rating holds steady",
+      "neutral": "Government files letter and rating holds",
+      "hostile": "Drift ignored as borrowing premium stays high"
+    }
+  },
+  "audit_finding": {
+    "publish_everything": {
+      "friendly": "{{president}} tables audit in full and refers officials",
+      "neutral": "Audit finding tabled and officials referred",
+      "hostile": "Off books guarantee puts named officials under referral"
+    },
+    "bury_it": {
+      "friendly": "Government studies audit before acting on guarantee",
+      "neutral": "Finding kept as working paper by government",
+      "hostile": "Audit buried as guarantee stays off the books"
+    },
+    "implement_quietly": {
+      "friendly": "Government winds down hidden guarantee responsibly",
+      "neutral": "Guarantee wound down on ministry timetable",
+      "hostile": "Quiet wind down hides who knew about guarantee"
+    }
+  },
+  "pension_fund_gap": {
+    "top_up_the_fund": {
+      "friendly": "{{president}} moves to secure pensions to next review",
+      "neutral": "Budget covers pension fund gap in full",
+      "hostile": "Structural budget line hides pension hole for now"
+    },
+    "raise_the_contribution": {
+      "friendly": "Contribution rise stretches fund's horizon soundly",
+      "neutral": "Point added to contributions from both sides",
+      "hostile": "Payslips carry cost of pension hole {{president}} ignored"
+    },
+    "note_and_defer": {
+      "friendly": "Government notes actuary and plans orderly review",
+      "neutral": "Fund gap goes to annexes for later review",
+      "hostile": "Pension hole parked in annexes nobody will read"
+    }
+  },
+  "local_authority_insolvency": {
+    "stand_behind_the_city": {
+      "friendly": "{{president}} stands behind city and protects its workers",
+      "neutral": "State pays city payroll and takes over accounts",
+      "hostile": "{{president}} bails out city that spent beyond means"
+    },
+    "let_it_restructure": {
+      "friendly": "{{president}} lets insolvent city face its own creditors",
+      "neutral": "City restructures as law provides no rescue",
+      "hostile": "President leaves city broke and schools unpaid"
+    },
+    "impose_an_oversight_board": {
+      "friendly": "Oversight board saves city books from council",
+      "neutral": "State board takes charge of city accounts",
+      "hostile": "{{president}} strips elected council of its powers"
+    }
+  },
+  "deficit_ceiling_vote": {
+    "whip_the_vote": {
+      "friendly": "{{president}} wins ceiling vote and holds majority firm",
+      "neutral": "Ceiling passes assembly by four votes",
+      "hostile": "President burns every favour to scrape four votes"
+    },
+    "let_it_bind": {
+      "friendly": "Ceiling binds and disciplines {{party}} spending plans",
+      "neutral": "Ceiling binds without vote being forced",
+      "hostile": "President ducks vote and lets ceiling do cutting"
+    },
+    "load_it_with_taxes": {
+      "friendly": "Assembly fills ceiling with fair revenue measures",
+      "neutral": "Ceiling passes amended with new taxes",
+      "hostile": "President hides cuts behind assembly tax rise"
+    }
+  },
+  "treasury_cash_crunch": {
+    "issue_short_paper": {
+      "friendly": "Treasury raises week's cash at market price",
+      "neutral": "Sixty-day paper issued to cover payroll",
+      "hostile": "{{president}} borrows at premium as cash runs dry"
+    },
+    "slow_the_payments": {
+      "friendly": "Payroll cleared on time as systems migrate",
+      "neutral": "Suppliers paid on sixtieth day, payroll met",
+      "hostile": "Government stalls suppliers to mask cash crunch"
+    },
+    "spend_the_investment_budget": {
+      "friendly": "President sweeps idle funds and saves the week",
+      "neutral": "Unspent works budget moved to current account",
+      "hostile": "{{president}} raids works budget to fix Wednesday"
+    }
+  },
+  "emergency_budget_demand": {
+    "cut": {
+      "friendly": "{{president}} acts fast and restores order to books",
+      "neutral": "Cuts made by decree without assembly vote",
+      "hostile": "President slashes services with no vote taken"
+    },
+    "raise": {
+      "friendly": "President chooses steady revenue over harsh cuts",
+      "neutral": "Consumption rate raised to meet deficit target",
+      "hostile": "President quietly taxes everyone to dodge blame"
+    },
+    "refuse": {
+      "friendly": "{{president}} stands firm against market panic",
+      "neutral": "Government says public books are sound",
+      "hostile": "President denies deficit lenders can read"
+    }
+  },
+  "for_arms_export_row": {
+    "sign_the_licence": {
+      "friendly": "Licence signed and plant jobs are secured",
+      "neutral": "President signs contested export licence",
+      "hostile": "President signs arms deal for embargo listed buyer"
+    },
+    "refuse_and_say_why": {
+      "friendly": "{{president}} puts principle above export profits",
+      "neutral": "Licence refused on embargo grounds",
+      "hostile": "Refusal costs plant shift and buyer finds seller"
+    },
+    "sit_on_the_file": {
+      "friendly": "President weighs licence with proper care",
+      "neutral": "Licence neither issued nor refused",
+      "hostile": "President sits on file until deadline decides"
+    }
+  },
+  "for_spy_file": {
+    "table_the_file": {
+      "friendly": "President puts spy file before open assembly",
+      "neutral": "Briefing page read into assembly record",
+      "hostile": "Government loses control of intelligence file"
+    },
+    "seal_the_page": {
+      "friendly": "President protects service and its vital sources",
+      "neutral": "Page sealed at service request",
+      "hostile": "President buries spy page to shield ally"
+    },
+    "to_the_prosecutors": {
+      "friendly": "President sends spy file to proper prosecutors",
+      "neutral": "File passed to prosecuting office",
+      "hostile": "President dumps spy file into slow process"
+    }
+  },
+  "for_trade_retaliation": {
+    "open_procurement": {
+      "friendly": "President defuses tariff row with one concession",
+      "neutral": "Procurement opened and tariff list withdrawn",
+      "hostile": "President pays off partner to drop tariff threat"
+    },
+    "draft_your_own": {
+      "friendly": "{{president}} answers tariff threat with firm resolve",
+      "neutral": "Government drafts matching tariff list",
+      "hostile": "President starts trade war nobody can win"
+    },
+    "take_the_meeting": {
+      "friendly": "President talks tariffs down by a third",
+      "neutral": "Tariff list trimmed and published after talks",
+      "hostile": "President takes meeting and still gets tariffs"
+    }
+  },
+  "for_hostage_affair": {
+    "send_the_plane": {
+      "friendly": "{{president}} brings detained contractor home on humanitarian grounds",
+      "neutral": "Plane sent and detained contractor returns home",
+      "hostile": "{{president}} yields to partner pressure and flies detainee home"
+    },
+    "ask_the_price": {
+      "friendly": "{{president}} secures contractor's release through patient negotiation",
+      "neutral": "Contractor returns home after talks with partner",
+      "hostile": "{{president}} pays hidden price to free contractor"
+    },
+    "consular_only": {
+      "friendly": "{{president}} keeps consular channel open on detainee case",
+      "neutral": "Consular visits continue while contractor stays detained",
+      "hostile": "{{president}} offers families statements while contractor rots in cell"
+    }
+  },
+  "for_base_renewal": {
+    "sign_the_twenty": {
+      "friendly": "{{president}} secures region's payroll with twenty year base deal",
+      "neutral": "Government signs twenty year base lease renewal",
+      "hostile": "{{president}} signs away generation of sovereignty for one payroll"
+    },
+    "offer_five": {
+      "friendly": "{{president}} drives harder bargain and wins higher rent",
+      "neutral": "Government offers five year term at improved rent",
+      "hostile": "{{president}} haggles over years while debt office pays interest"
+    },
+    "study_the_lease": {
+      "friendly": "{{president}} refuses to rush vital base decision",
+      "neutral": "Base runs month to month while lease is studied",
+      "hostile": "{{president}} delays base decision and fees pile up"
+    }
+  },
+  "plant_closure": {
+    "buy_the_plant": {
+      "friendly": "{{president}} steps in to save historic motor works",
+      "neutral": "State buys motor works at asking price",
+      "hostile": "{{president}} pays group's full price for doomed works"
+    },
+    "retrain_the_town": {
+      "friendly": "{{president}} delivers honest retraining plan for works town",
+      "neutral": "Training campus and transition fund announced for town",
+      "hostile": "{{president}} offers yesterday's answer to plant closure"
+    },
+    "regret_and_review": {
+      "friendly": "{{president}} sets up task force on works closure",
+      "neutral": "Closure proceeds and task force is announced",
+      "hostile": "{{president}} hands town a task force with no budget"
+    }
+  },
+  "plant_accident": {
+    "inquiry_and_rules": {
+      "friendly": "{{president}} orders public inquiry and rewrites safety rules",
+      "neutral": "Inquiry ordered and inspection regime rewritten after deaths",
+      "hostile": "{{president}} rewrites rules only after four workers die"
+    },
+    "the_families_first": {
+      "friendly": "{{president}} puts bereaved families first with compensation fund",
+      "neutral": "Compensation fund opens before inquiry begins",
+      "hostile": "{{president}} pays families fast to slow the inquiry"
+    },
+    "leave_it_to_the_courts": {
+      "friendly": "{{president}} lets due process run its course",
+      "neutral": "Investigation passes to courts and insurers",
+      "hostile": "{{president}} hides behind courts while town waits for answers"
+    }
+  },
+  "energy_price_shock": {
+    "cap_the_industrial_tariff": {
+      "friendly": "{{president}} shields industry from tariff shock until spring",
+      "neutral": "Industrial tariff capped and funded from budget",
+      "hostile": "{{president}} caps tariff for firms and forgets households"
+    },
+    "share_the_shock": {
+      "friendly": "{{president}} spreads energy burden fairly across nation",
+      "neutral": "Surcharge applied to every meter after federation list",
+      "hostile": "{{president}} makes households pay for industry's energy"
+    },
+    "let_the_price_clear": {
+      "friendly": "{{president}} resists panic and lets market adjust",
+      "neutral": "No intervention as prices rise and shutdowns proceed",
+      "hostile": "{{president}} does nothing as shutdown list becomes schedule"
+    }
+  },
+  "carmaker_ultimatum": {
+    "underwrite_the_conversion": {
+      "friendly": "{{president}} saves plants with state backed conversion deal",
+      "neutral": "Public money funds conversion and state takes stake",
+      "hostile": "{{president}} caves to carmaker ultimatum with public money"
+    },
+    "refuse_the_terms": {
+      "friendly": "{{president}} refuses to be blackmailed over public money",
+      "neutral": "Government refuses terms and next platform goes abroad",
+      "hostile": "{{president}} lets carmaker leave over a refusal"
+    },
+    "take_the_plants": {
+      "friendly": "{{president}} takes plants into public hands for workers",
+      "neutral": "State expropriates plants and runs conversion itself",
+      "hostile": "{{president}} seizes plants and books decade of tribunals"
+    }
+  },
+  "steel_crisis": {
+    "take_the_works": {
+      "friendly": "{{president}} keeps last furnace lit for the nation",
+      "neutral": "Steel works taken into public ownership",
+      "hostile": "{{president}} buys a loss and calls it rescue"
+    },
+    "wall_of_tariffs": {
+      "friendly": "{{president}} shields steel sector to save last furnace",
+      "neutral": "Tariff wall gives sector two years to restructure",
+      "hostile": "{{president}} taxes builders to buy furnace two years"
+    },
+    "managed_decline": {
+      "friendly": "{{president}} offers honest transition plan for steel town",
+      "neutral": "State funds pensions and regrades site as transition",
+      "hostile": "{{president}} dresses up surrender as managed decline"
+    }
+  },
+  "fallen_champion": {
+    "take_it_public": {
+      "friendly": "{{president}} moves fast to secure champion group's plants",
+      "neutral": "Government backs public vehicle for stricken group's plants",
+      "hostile": "{{president}} promises rescue with no answer on who pays"
+    },
+    "rescue_the_plants": {
+      "friendly": "{{president}} backs plants and workers over failed parent",
+      "neutral": "Government backs rescue of plants, not wider group",
+      "hostile": "Partial rescue leaves suppliers and payroll waiting in queue"
+    },
+    "let_it_liquidate": {
+      "friendly": "{{president}} refuses to spend public money on failed group",
+      "neutral": "Government says it will not step in",
+      "hostile": "{{president}} abandons town as payroll joins creditor queue"
+    }
+  },
+  "sector_shock": {
+    "deregulate": {
+      "friendly": "{{president}} lifts burden and saves plants from closing",
+      "neutral": "Government strips sector rules after federation warning",
+      "hostile": "Rules scrapped with no plan for those they protected"
+    },
+    "protect": {
+      "friendly": "{{president}} underwrites industry and protects every payslip",
+      "neutral": "Government underwrites plants with conditions attached",
+      "hostile": "Industry takes state money and gives up its freedom"
+    },
+    "let_it_go": {
+      "friendly": "Market decides as {{president}} keeps public money safe",
+      "neutral": "Government declines to act as market decides",
+      "hostile": "{{president}} stands by while federation's warned closures begin"
+    }
+  },
+  "blackout_night": {
+    "ration": {
+      "friendly": "{{president}} orders fair sharing to keep hospitals lit",
+      "neutral": "Government orders rolling cuts across three regions",
+      "hostile": "State rationing returns as grid fails on watch"
+    },
+    "emergency_fuel": {
+      "friendly": "{{president}} pays spot price to end blackouts tonight",
+      "neutral": "Government buys spot fuel as debt takes cost",
+      "hostile": "Blackouts bought off at any price, markets read wire"
+    },
+    "blame_abroad": {
+      "friendly": "{{president}} tells nation truth about failed interconnects",
+      "neutral": "Government blames imports for grid failure",
+      "hostile": "{{president}} points abroad while three regions sit dark"
+    }
+  },
+  "the_profile_briefing": {
+    "confront": {
+      "friendly": "{{president}} moves to end anonymous briefing for good",
+      "neutral": "Warning issued to rival over attributed quotes",
+      "hostile": "President threatens careers but leaks already served purpose"
+    },
+    "open_the_books": {
+      "friendly": "{{president}} publishes record and lets sunlight settle it",
+      "neutral": "Government publishes ministers' votes and interviews in full",
+      "hostile": "Transparency ploy exposes leakers and president's own absences"
+    },
+    "ignore_it": {
+      "friendly": "Office rises above profile and keeps its dignity",
+      "neutral": "Government declines to answer weekend profile",
+      "hostile": "Silence tells every minister that leaks cost nothing"
+    }
+  },
+  "the_defector": {
+    "expel": {
+      "friendly": "{{president}} defends manifesto and rallies party base",
+      "neutral": "Defector expelled and by-election called in seat",
+      "hostile": "Vendetta costs seat while base smells blood"
+    },
+    "woo_back": {
+      "friendly": "Skillful deal brings defector home to government benches",
+      "neutral": "Concessions reach defector through mutual friend",
+      "hostile": "President pays public price to silence one defector"
+    },
+    "let_go": {
+      "friendly": "{{president}} refuses spectacle and keeps eyes on governing",
+      "neutral": "No by-election contested as majority shrinks by one",
+      "hostile": "Government lets seat slip and looks in decay"
+    }
+  },
+  "the_elder_letter": {
+    "change_course": {
+      "friendly": "Listening {{president}} restores programme northern voters wanted",
+      "neutral": "Government reverses programme elder had named",
+      "hostile": "One memoir forces surrender finance ministry had refused"
+    },
+    "platform_him": {
+      "friendly": "{{president}} opens stage to party's elder statesman",
+      "neutral": "Elder given conference stage as hall cheers",
+      "hostile": "President hands microphone to loudest internal critic"
+    },
+    "decline": {
+      "friendly": "Office declines invitation and stays above faction fight",
+      "neutral": "Leader's box left empty as elder speaks anyway",
+      "hostile": "Unanswered ultimatum shows elders answer to no one"
+    }
+  },
+  "the_succession": {
+    "appoint_loyalist": {
+      "friendly": "{{president}} picks steady hands and ends succession race",
+      "neutral": "Loyalist appointed to vacant ministry post",
+      "hostile": "Reward for loyalty beats merit in ministry choice"
+    },
+    "appoint_rival": {
+      "friendly": "Bold {{president}} appoints strongest figure for the job",
+      "neutral": "Strongest rival given vacant ministry portfolio",
+      "hostile": "President arms rival with platform and ministry at once"
+    },
+    "leave_open": {
+      "friendly": "{{president}} keeps portfolio close while candidates cool",
+      "neutral": "Vacant portfolio run from president's own office",
+      "hostile": "Vacancy left open as factions keep counting votes"
+    }
+  },
+  "the_backbench_letters": {
+    "call_contest": {
+      "friendly": "{{president}} settles leadership question with contest win",
+      "neutral": "{{president}} calls contest and wins party vote",
+      "hostile": "{{president}} wages public campaign against own party"
+    },
+    "buy_the_forty": {
+      "friendly": "{{president}} reunites party behind shared programme",
+      "neutral": "Chairs and promises end letters from backbenchers",
+      "hostile": "{{president}} buys silence with jobs and promises"
+    },
+    "ride_out": {
+      "friendly": "{{president}} lets letter campaign run out of air",
+      "neutral": "Letters keep arriving at slower pace",
+      "hostile": "{{president}} hides while party letters pile up"
+    }
+  },
+  "party_finance_case": {
+    "regularise": {
+      "friendly": "{{president}} acts to close party accounts row",
+      "neutral": "Amnesty law lets party close its accounts",
+      "hostile": "{{president}} legalises what auditors refused to sign"
+    },
+    "public_funding": {
+      "friendly": "{{president}} ends private money in politics",
+      "neutral": "Parties to receive fixed sum per vote",
+      "hostile": "Politicians put themselves on public payroll"
+    },
+    "let_it_stand": {
+      "friendly": "{{president}} refuses to bend law for party",
+      "neutral": "Party lawyers to fight accounts law in court",
+      "hostile": "{{president}} stands by while lawyers stall"
+    }
+  },
+  "the_leaked_memo": {
+    "find_the_source": {
+      "friendly": "{{president}} orders leak hunt to protect cabinet",
+      "neutral": "Services examine paperwork in search for leaker",
+      "hostile": "Government sifts pressroom phones after memo leak"
+    },
+    "publish_the_file": {
+      "friendly": "{{president}} publishes file and ends memo row",
+      "neutral": "Full memo released with surrounding papers",
+      "hostile": "{{president}} buries leak under twelve pages"
+    },
+    "ride_it_out": {
+      "friendly": "President rides out winter memo story",
+      "neutral": "Memo story waits on next government move",
+      "hostile": "{{president}} prays for news cycle that never comes"
+    }
+  },
+  "the_leaked_review": {
+    "prosecute": {
+      "friendly": "{{president}} defends state secrets with prosecution",
+      "neutral": "Official faces court over leaked defence review",
+      "hostile": "{{president}} jails messenger to hide overrun"
+    },
+    "protect_disclosure": {
+      "friendly": "{{president}} opens defence file to assembly",
+      "neutral": "Full defence review published unchanged",
+      "hostile": "Publication confirms minister misled assembly for months"
+    },
+    "summary_only": {
+      "friendly": "{{president}} publishes review findings in full view",
+      "neutral": "Government releases review conclusions without tables",
+      "hostile": "Summary hides numbers behind review"
+    }
+  },
+  "expense_abuse": {
+    "publish_all": {
+      "friendly": "{{president}} publishes every claim for all to see",
+      "neutral": "All member expenses published online this week",
+      "hostile": "Government airs its own dirty ledgers"
+    },
+    "recover_and_cap": {
+      "friendly": "{{president}} makes members repay and caps allowance",
+      "neutral": "Twenty repay and treasury sets new cap",
+      "hostile": "Members rage at treasury while taxpayer pays"
+    },
+    "quiet_review": {
+      "friendly": "{{president}} sends expense claims to standards body",
+      "neutral": "Standards body to examine worst claims",
+      "hostile": "Claims buried in body that reports next year"
+    },
+    "bury_it": {
+      "friendly": "Government reviews expense findings in private",
+      "neutral": "Expense review unpublished pending decisions",
+      "hostile": "Review leaks and government owns the cover up"
+    }
+  },
+  "the_wiretap_transcripts": {
+    "independent_inquiry": {
+      "friendly": "{{president}} appoints judge to get full truth",
+      "neutral": "Serving judge to lead wiretap inquiry",
+      "hostile": "{{president}} declares war on own services"
+    },
+    "internal_review": {
+      "friendly": "Services to examine transcripts with full access",
+      "neutral": "Services to review their own conduct",
+      "hostile": "Services mark own homework on wiretaps"
+    },
+    "prosecute_press": {
+      "friendly": "Government charges newspaper over state documents",
+      "neutral": "Newspaper faces charge of receiving documents",
+      "hostile": "{{president}} boosts paper with doomed prosecution"
+    }
+  },
+  "the_access_fees": {
+    "close_the_door": {
+      "friendly": "{{president}} shuts revolving door within two years",
+      "neutral": "Two year ban on lobbying after office",
+      "hostile": "Law arrives only after fees hit front page"
+    },
+    "refer_prosecutors": {
+      "friendly": "{{president}} hands fee file to prosecutors",
+      "neutral": "Prosecutors to examine former minister fees",
+      "hostile": "Year of legal doubt begins over fees"
+    },
+    "no_case": {
+      "friendly": "Law shows no case against former minister",
+      "neutral": "Government says law covers no crime here",
+      "hostile": "Rules written by insiders protect insiders"
+    }
+  },
+  "the_undeclared_loans": {
+    "refer_courts": {
+      "friendly": "{{president}} sends loan file straight to prosecutors",
+      "neutral": "Government hands auditors' loan file to courts",
+      "hostile": "{{president}} dumps loan scandal on courts unread"
+    },
+    "repay_from_purse": {
+      "friendly": "State moves fast to close loan affair",
+      "neutral": "Public purse repays coalition campaign loans",
+      "hostile": "Taxpayers now settle governing party's secret debts"
+    },
+    "dispute_finding": {
+      "friendly": "Government stands firm against audit reading",
+      "neutral": "Government rejects auditors' account of loans",
+      "hostile": "{{president}} denies loans lender will confirm within days"
+    }
+  },
+  "the_captured_rulebook": {
+    "void_and_reform": {
+      "friendly": "{{president}} rewrites rulebook free of industry grip",
+      "neutral": "Draft rulebook voided and panel reformed",
+      "hostile": "New panel misses deadline and markets pay price"
+    },
+    "amend_lightly": {
+      "friendly": "Rules tightened and delivered on time",
+      "neutral": "Rulebook amended in margins and adopted",
+      "hostile": "Industry fingerprints survive {{president}}'s light touch reform"
+    },
+    "adopt_asis": {
+      "friendly": "Regulator adopts finished rulebook without delay",
+      "neutral": "Rulebook adopted as drafted for industry",
+      "hostile": "Regulator passes industry's own text unaltered"
+    }
+  },
+  "rail_strike_wave": {
+    "settle_at_the_table": {
+      "friendly": "Arbitration deal puts trains back on Friday",
+      "neutral": "Pay and roster sent to arbitration jointly",
+      "hostile": "Above inflation rail deal invites every union's claim"
+    },
+    "minimum_service": {
+      "friendly": "Minimum service law keeps trains moving",
+      "neutral": "Law orders one train in three to run",
+      "hostile": "One train in three and grievance banking"
+    },
+    "let_it_run": {
+      "friendly": "{{president}} lets rail dispute settle without coercion",
+      "neutral": "No side moves and rail strike continues",
+      "hostile": "President lets rail strike drift leaderless for weeks"
+    }
+  },
+  "policing_riot": {
+    "curfew_and_sweep": {
+      "friendly": "Curfew restores order by Sunday morning",
+      "neutral": "Curfew imposed with mass weekend arrests",
+      "hostile": "Mass arrests price estate against state for generation"
+    },
+    "pull_back_and_talk": {
+      "friendly": "Patrol pullback opens door to lasting calm",
+      "neutral": "Patrols withdraw to ring for talks",
+      "hostile": "Ministry lets mothers negotiate what it cannot"
+    },
+    "call_it_criminality": {
+      "friendly": "President names unrest plainly as criminality",
+      "neutral": "Ministry calls riots criminality at podium",
+      "hostile": "One word at podium while estate burns"
+    }
+  },
+  "hospital_strike": {
+    "award_the_scale": {
+      "friendly": "Nurses awarded full scale and wards reopen",
+      "neutral": "Pay scale awarded in full and backdated",
+      "hostile": "Blank cheque for nurses lands on deficit"
+    },
+    "arbitration_now": {
+      "friendly": "Arbitration brings nurses back to wards",
+      "neutral": "Hospital dispute goes to arbitration",
+      "hostile": "Nobody owns award that ends nurses' strike"
+    },
+    "hold_the_budget_line": {
+      "friendly": "{{president}} holds firm on health budget",
+      "neutral": "No funds offered and strike continues",
+      "hostile": "Deficit pays agency bills as strike outlasts president"
+    }
+  },
+  "pension_march": {
+    "pledge_the_index": {
+      "friendly": "President pledges indexation to pensioners directly",
+      "neutral": "Indexation pledged from balcony to marchers",
+      "hostile": "Open ended indexation pledge bought cheap applause"
+    },
+    "commission_the_review": {
+      "friendly": "Review ordered to settle pensions properly",
+      "neutral": "Pension review commissioned with index frozen",
+      "hostile": "Index frozen until review lands after election"
+    },
+    "let_it_pass": {
+      "friendly": "March passes peacefully under firm stewardship",
+      "neutral": "Answer on pensions promised after summer",
+      "hostile": "Pensioners fobbed off until after summer"
+    }
+  },
+  "port_slowdown": {
+    "settle_at_the_table": {
+      "friendly": "Mediation deal moves cranes by weekend",
+      "neutral": "Roster and automation sent to mediation",
+      "hostile": "Settlement at ports signals surrender to unions"
+    },
+    "legislate_the_minimums": {
+      "friendly": "Minimum moves law tackles port blockade",
+      "neutral": "Minimum moves bill goes to assembly",
+      "hostile": "Port law provokes national day of action"
+    },
+    "let_the_queues_grow": {
+      "friendly": "Government refuses to panic over port queues",
+      "neutral": "Work to rule enforced to letter at ports",
+      "hostile": "Exporters flee to neighbour's ports for good"
+    }
+  },
+  "union_ultimatum": {
+    "settle": {
+      "friendly": "{{president}} secures industrial peace with pension accord",
+      "neutral": "Government settles pension dispute with unions",
+      "hostile": "{{president}} pays out on pensions to head off strike"
+    },
+    "partial": {
+      "friendly": "{{president}} strikes balanced deal to avert stoppage",
+      "neutral": "Government offers partial pension concessions",
+      "hostile": "Half measure from {{president}} leaves strike threat alive"
+    },
+    "hold_firm": {
+      "friendly": "{{president}} holds firm on pensions in face of threats",
+      "neutral": "Government rejects union demands on pensions",
+      "hostile": "{{president}} gambles on showdown with unions"
+    }
+  }
+}
