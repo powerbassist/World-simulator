@@ -149,13 +149,14 @@ static func offer_terms(offer: Dictionary) -> String:
 ## What a lie costs if it is caught (Lies.reveal's price), in the words it would
 ## leave the person in: before the click, on the toggle. A promise told as a lie
 ## is found out at its date whatever happens (Levers._judge, B8), so its price is
-## certain, not a risk.
+## certain, not a risk. The words promise no "better odds": since c1b a caught lie
+## fails the attempt, so a lie is not a free edge and the hover must not sell one.
 static func lie_text(feel: Dictionary, lever := "argue") -> String:
 	var parts := Feelings.promised(feel, {"rapport": -LK.LIE_RAPPORT, "grudge": LK.LIE_GRUDGE})
 	parts.append(Strings.t("they trust what they know of you less"))
 	if lever == "promise_date":
-		return Strings.t("A lie: better odds. They find it out on the day, if not before: %s.") % ", ".join(parts)
-	return Strings.t("A lie: better odds. If they catch it: %s.") % ", ".join(parts)
+		return Strings.t("A lie. They find it out on the day, if not before: %s.") % ", ".join(parts)
+	return Strings.t("A lie. If they catch it, the attempt fails: %s.") % ", ".join(parts)
 
 
 ## What saying no writes on the person, the parts that move only, in the words
