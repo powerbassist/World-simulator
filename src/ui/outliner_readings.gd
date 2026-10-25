@@ -8,6 +8,7 @@ const Industry = preload("res://src/sim/industry.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Num = preload("res://src/ui/num.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 
 ## V4.8b. The outliner of pinned things as a REGISTER, the shape strip_readings.gd
 ## gave the strip: SECTIONS is the list, CAPTIONS its words, INPUTS the NationState
@@ -156,16 +157,20 @@ static func _people(ns, loader) -> Array:
 	for pid in ns.person_grudges.keys():
 		var grudge := float(ns.person_grudges[pid])
 		if grudge >= MOVED_AT:
-			worried.append({"id": String(pid), "weight": grudge, "text": Strings.t("grudge %s") % Num.f(grudge, 2)})
+			worried.append({"id": String(pid), "weight": grudge, "text": Feelings.word("grudge", grudge)})
 	for pid in ns.person_loyalty.keys():
 		var loyalty := float(ns.person_loyalty[pid])
 		if loyalty <= -MOVED_AT and float(ns.person_grudges.get(pid, 0.0)) < MOVED_AT:
-			worried.append({"id": String(pid), "weight": -loyalty, "text": Strings.t("loyalty %s") % Num.f(loyalty, 2)})
+			worried.append({"id": String(pid), "weight": -loyalty, "text": Feelings.word("loyalty", loyalty, String(ns.pm_person_id) == String(pid))})
 	worried.sort_custom(func(a, b) -> bool:
 		if not is_equal_approx(float(a["weight"]), float(b["weight"])):
 			return float(a["weight"]) > float(b["weight"])
 		return String(a["id"]) < String(b["id"]))
 	for item in worried:
+		# R11: the feeling, not the figure; a loyalty in the band with no word, (-0.10,
+		# -0.05], is moved but names nothing to worry about.
+		if String(item["text"]) == "":
+			continue
 		var who: String = loader.person_name(String(item["id"]))
 		rows.append(_row("%s — %s" % [who if who != "" else "—", item["text"]], PanelKit.Tone.BAD, "people"))
 	return rows
