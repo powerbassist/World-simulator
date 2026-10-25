@@ -16,6 +16,7 @@ const ChartLine = preload("res://src/ui/chart_line.gd")
 const ChartBars = preload("res://src/ui/chart_bars.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
+const ChartHemicycle = preload("res://src/ui/chart_hemicycle.gd")
 
 ## A line over time under a MICRO title. `series` is [{label, values}] with
 ## `values` a PackedFloat64Array aligned with `months` ([[year, month], ...]).
@@ -63,6 +64,19 @@ static func stack(parent: Control, title: String, parts: Array, opts := {}) -> V
 	var box := _titled(parent, title)
 	var folded := ChartStack.fold(parts, Strings.t("Others"))
 	var chart := ChartStack.new()
+	chart.setup(folded, opts)
+	box.add_child(chart)
+	_legend(box, folded, true, String(opts.get("unit", "")), int(opts.get("places", -1)), opts.get("colors", ChartStyle.SERIES))
+	return box
+
+
+## The assembly as a hemicycle, one dot per seat (V5.2 b+ R6): the parts are
+## parties in their fixed order, folded past seven as a stack is, with the same
+## `opts` (markers, colors, unit, places) and the same legend under it.
+static func hemicycle(parent: Control, title: String, parts: Array, opts := {}) -> VBoxContainer:
+	var box := _titled(parent, title)
+	var folded := ChartStack.fold(parts, Strings.t("Others"))
+	var chart := ChartHemicycle.new()
 	chart.setup(folded, opts)
 	box.add_child(chart)
 	_legend(box, folded, true, String(opts.get("unit", "")), int(opts.get("places", -1)), opts.get("colors", ChartStyle.SERIES))

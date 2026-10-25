@@ -202,6 +202,7 @@ tests=(
   tests/test_legislature_dissolve.gd
   tests/test_bill_card.gd
   tests/test_dismiss_ui.gd
+  tests/test_diary_grid.gd
   tests/test_feelings.gd
   tests/test_placement_points.gd
   tests/test_button_sizes.gd

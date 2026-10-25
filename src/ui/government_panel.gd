@@ -283,7 +283,7 @@ func _refresh() -> void:
 		PanelKit.line(_body, ", ".join(outside), PanelKit.Tone.PLAIN)
 
 
-## The assembly as one bar (V5.2-0b): the government's parties, then the
+## The assembly as a hemicycle (V5.2 b+ R6; a bar since V5.2-0b): the government's parties, then the
 ## opposition's, each in the slot the Legislature's bar gives it (the colour follows
 ## the party, never its side), the majority and the censure threshold marked.
 func _seat_bar(ns) -> void:
@@ -298,7 +298,7 @@ func _seat_bar(ns) -> void:
 	var marks := [float(Government.majority_seats(ns) + 1) / maxf(float(ns.assembly_seats), 1.0)]
 	if ns.censure_rule != "none":
 		marks.append(float(Government.censure_seats(ns)) / maxf(float(ns.assembly_seats), 1.0))
-	ChartKit.stack(_body, tr("Government, then opposition — the lines mark a majority and censure"), parts,
+	ChartKit.hemicycle(_body, tr("Government, then opposition — the lines mark a majority and censure"), parts,
 		{"markers": marks, "colors": colors, "places": 0, "unit": tr(" seats")})
 
 

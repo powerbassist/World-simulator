@@ -17,6 +17,7 @@ const ChartStyle = preload("res://src/ui/chart_style.gd")
 const ChartLine = preload("res://src/ui/chart_line.gd")
 const ChartBars = preload("res://src/ui/chart_bars.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
+const ChartHemicycle = preload("res://src/ui/chart_hemicycle.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
@@ -41,6 +42,8 @@ func _process(_delta: float) -> bool:
 		_check_points()
 		_check_segments()
 		_check_fold()
+		_check_hemicycle()
+		_check_hemicycle_hover()
 		_build_charts()
 		return false
 	if _frame == 4:
@@ -65,6 +68,52 @@ func _check_nice_range() -> void:
 	for t in ChartStyle.ticks(Vector2(0, 100)):
 		if fmod(t, 10.0) != 0.0:
 			_fail("a tick on 0..100 is not round: %s" % t)
+
+
+## V5.2 b+ R6: one dot per seat in a half-ring, every seat in the upper half and
+## inside the unit radius, ordered left to right so each party takes one wedge,
+## and the wedges' seat counts are the parts' values.
+func _check_hemicycle() -> void:
+	for n in [0, 1, 3, 31, 577, 650]:
+		var pts := ChartHemicycle.seats(n)
+		if pts.size() != n:
+			_fail("a hemicycle of %d seats lays %d dots" % [n, pts.size()])
+			continue
+		for i in pts.size():
+			if pts[i].y > 1e-6 or pts[i].length() > 1.0 + 1e-6:
+				_fail("seat %d of %d lies outside the upper half-disc: %s" % [i, n, pts[i]])
+				break
+		for i in range(1, pts.size()):
+			# 1e-5: the points are float32 (Vector2), and two seats on one ray differ
+			# by a few 1e-9 once stored.
+			if _angle(pts[i]) > _angle(pts[i - 1]) + 1e-5:
+				_fail("the %d-seat hemicycle is not ordered left to right at seat %d" % [n, i])
+				break
+	var owners := ChartHemicycle.owners([{"label": "a", "value": 300.0}, {"label": "b", "value": 0.0}, {"label": "c", "value": 277.0}])
+	if owners.size() != 577 or owners.count(0) != 300 or owners.count(1) != 0 or owners.count(2) != 277 or owners[0] != 0 or owners[-1] != 2:
+		_fail("577 seats split 300 / 0 / 277 are owned %d / %d / %d" % [owners.count(0), owners.count(1), owners.count(2)])
+
+
+## The hover names the party of the seat under the pointer, on every seat --
+## an angle alone picks a seat of the wrong ring at a wedge's edge (review pass 1
+## on #154).
+func _check_hemicycle_hover() -> void:
+	var chart := ChartHemicycle.new()
+	chart.setup([{"label": "a", "value": 120.0}, {"label": "b", "value": 33.0}, {"label": "c", "value": 200.0}])
+	chart.size = Vector2(420, 170)
+	var wrong := 0
+	for i in chart._seats.size():
+		var at: Vector2 = chart._center() + chart._seats[i] * chart._radius()
+		if not chart._get_tooltip(at).begins_with(["a", "b", "c"][chart._owners[i]] + " "):
+			wrong += 1
+	if wrong > 0:
+		_fail("the hemicycle's hover names the wrong party on %d seats" % wrong)
+	chart.free()
+
+
+## A seat's angle from the left end of the floor: pi on the left, 0 on the right.
+func _angle(p: Vector2) -> float:
+	return atan2(-p.y, p.x)
 
 
 func _check_points() -> void:
