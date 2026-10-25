@@ -19,6 +19,17 @@ extends PanelContainer
 ## off the bottom of the screen (someday: "the overlay message column has no
 ## bound", V5.1-0c). Newest first in every lane.
 ##
+## **A note is grouped and folded** (V5.2 b+, R13 and R12: gate b's "too much
+## clutter in the notes" and "too verbose ... tied into a bubble"). A note pushed
+## again, the same title and the same body, joins the one in the lane: the count
+## goes in the title, so six identical leaks are one row. A new body is new news (a
+## tally, a default, a second person's leak) and keeps its own row. And a note over
+## FOLD_MIN characters shows the whole sentences that fit, the rest behind More,
+## which opens it in place -- a click on the card itself already goes to
+## Dispatches, and the body's TermText takes the hover for its glossary plates, so
+## neither could be the bubble. A short note is never folded: a division or a
+## tally is data, not prose; and a glossary mark is never folded away.
+##
 ## Holds no game state. A row is a title, a body and an id -- whoever pushes it
 ## owns what it means.
 
@@ -42,12 +53,17 @@ const REQUESTS := "requests"
 const NOTES := "notes"
 const LANES := [DECISIONS, REQUESTS, NOTES]
 const NOTES_MAX := 40
+## A note longer than this folds; two sentences of ordinary news fit under it.
+const FOLD_MIN := 160
+## What a folded note ends on, so the player sees there is more.
+const FOLD_MARK := " …"
 
 var _rows := {}      # lane -> VBoxContainer holding its rows
 var _empty := {}     # lane -> the Label it shows with no row
 var _cards := {}     # id -> PanelContainer
 var _bodies := {}    # id -> Label, so a body can be rewritten in place
 var _lane_of := {}   # id -> lane
+var _notes := {}     # id -> {title, body, head, count, open, more}: a NOTES row's group and fold
 var _next_id := 0
 var _slid := false
 
@@ -111,6 +127,11 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	_next_id += 1
 	if lane.is_empty():
 		lane = DECISIONS if protect or not actions.is_empty() else NOTES
+	if lane == NOTES and actions.is_empty():
+		for other in _notes:
+			if _notes[other]["title"] == title and _notes[other]["body"] == body:
+				_group(other)
+				return other
 
 	var card := PanelContainer.new()
 	card.theme_type_variation = UiTheme.PLATE
@@ -148,6 +169,8 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	# V5.1-c. A rich line, so a term marked in the body opens its glossary plate;
 	# it passes clicks through to the card as the Label did (term_text.gd).
 	var body_label := PanelKit.rich(column, body)
+	if lane == NOTES and actions.is_empty():
+		_notes[id] = {"title": title, "body": body, "head": title_label, "count": 1, "open": false, "more": null}
 
 	# V2.9: the answers, a decision answered where the news is. Stacked, one per
 	# line, each wrapping: a row of unwrapped buttons widened U5a's column to the
@@ -183,6 +206,8 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	_bodies[id] = body_label
 	_lane_of[id] = lane
 	_empty[lane].hide()
+	if _notes.has(id):
+		_show_note(id)
 
 	if lane == NOTES:
 		var notes := rows.get_child_count()
@@ -196,8 +221,65 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 ## main.gd's "Your term" countdown -- must not be re-pushed to say so: that moves
 ## it. A gone id is a clean no-op.
 func set_body(id: String, body: String) -> void:
-	if _bodies.has(id):
+	if _notes.has(id):
+		_notes[id]["body"] = body
+		_show_note(id)
+	elif _bodies.has(id):
 		_bodies[id].set_marked(body)
+
+
+## A note pushed again: counted, and the row to the top of the lane, pulsed -- it
+## is the newest news, as a fresh row would have been.
+func _group(id: String) -> void:
+	var note: Dictionary = _notes[id]
+	note["count"] = int(note["count"]) + 1
+	_rows[NOTES].move_child(_cards[id], 0)
+	Motion.pulse(_cards[id])
+	_show_note(id)
+
+
+func _toggle(id: String) -> void:
+	_notes[id]["open"] = not bool(_notes[id]["open"])
+	_show_note(id)
+
+
+## A note as it stands: its title with the count once grouped, its body folded
+## unless opened, and More only where there is more to show.
+func _show_note(id: String) -> void:
+	var note: Dictionary = _notes[id]
+	var full := String(note["body"])
+	var folded := full if bool(note["open"]) else fold(full)
+	var count := int(note["count"])
+	(note["head"] as Label).text = String(note["title"]).to_upper() if count == 1 else "%s ×%d" % [String(note["title"]).to_upper(), count]
+	_bodies[id].set_marked(folded)
+	# Made the first time there is more to show: a short note carries no button.
+	if note["more"] == null and folded != full:
+		var more := Button.new()
+		more.name = "More"  # i18n: ok a node name, found by tests
+		more.theme_type_variation = UiTheme.SUBROW_BUTTON
+		more.focus_mode = Control.FOCUS_NONE
+		more.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		more.pressed.connect(func(): _toggle(id))
+		_bodies[id].add_sibling(more)
+		note["more"] = more
+	if note["more"] != null:
+		(note["more"] as Button).visible = bool(note["open"]) or folded != full
+		(note["more"] as Button).text = tr("Less") if bool(note["open"]) else tr("More")
+
+
+## A long body cut to the whole sentences that fit FOLD_MIN, then the fold mark;
+## the body itself when it is short, is one sentence, or would hide a mark ([g=..]
+## or [p=..]: rich prose escapes every other "[", so a "[" past the cut is one).
+static func fold(text: String) -> String:
+	if text.length() <= FOLD_MIN:
+		return text
+	var cut := -1
+	for i in range(mini(text.length() - 1, FOLD_MIN)):
+		if ".!?".contains(text[i]) and text[i + 1] == " ":
+			cut = i + 1
+	if cut < 0 or text.substr(cut).contains("["):
+		return text
+	return text.substr(0, cut) + FOLD_MARK
 
 
 func dismiss(id: String) -> void:
@@ -208,6 +290,7 @@ func dismiss(id: String) -> void:
 	_cards.erase(id)
 	_bodies.erase(id)
 	_lane_of.erase(id)
+	_notes.erase(id)
 	_rows[lane].remove_child(card)
 	card.queue_free()
 	_empty[lane].visible = _rows[lane].get_child_count() == 0

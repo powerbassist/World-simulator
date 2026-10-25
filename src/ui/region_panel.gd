@@ -26,6 +26,7 @@ signal closed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Region = preload("res://src/core/region.gd")
@@ -65,6 +66,8 @@ func _ready() -> void:
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
 	root.add_child(_title)
+	# V5.2 b+: the output table's first column, drawn (panel_charts.gd).
+	root.add_child(PanelCharts.new(self, PanelCharts.REGIONS))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL

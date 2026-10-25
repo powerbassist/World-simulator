@@ -10,14 +10,22 @@ extends SceneTree
 ## approval point the poll published that month, never the truth -- the Budget one
 ## stacked share that adds up to the whole of spending, and the Legislature the
 ## assembly by party with the majority marked.
+##
+## V5.2 b+ (gate b: "les graphiques m'aident ... pourrai s'etendre a d'autres
+## panneaux"): the Budget also draws revenue against spending over the term, Society
+## what the country is thinking about as bars, and Regions each region's share of
+## output -- every value the history's or the state's, never computed here.
 
 const ChartLine = preload("res://src/ui/chart_line.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
+const ChartBars = preload("res://src/ui/chart_bars.gd")
+const Opinion = preload("res://src/sim/opinion.gd")
+const Regions = preload("res://src/sim/regions.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 
 ## Which of main.gd's panels each window id is.
 const PANELS := {"overview": "_overview_panel", "economy": "_economy_panel", "society": "_polling_panel",
-	"budget": "_budget_panel", "legislature": "_law_panel"}
+	"budget": "_budget_panel", "legislature": "_law_panel", "region": "_region_panel"}
 
 var _failures: Array[String] = []
 var _main
@@ -49,14 +57,18 @@ func _process(_delta: float) -> bool:
 		11:
 			_check_lines("society", 7)
 			_check_society_polls()
+			_check_issues()
 			_main._windows.open("budget")
 		13:
 			_check_budget()
 			_main._windows.open("legislature")
 		15:
 			_check_seats()
+			_main._windows.open("region")
+		17:
+			_check_regions()
 			_load_a_twin()
-		18:
+		20:
 			_check_the_twin()
 			_finish()
 			return true
@@ -128,6 +140,14 @@ func _check_society_polls() -> void:
 
 func _check_budget() -> void:
 	var charts := _charts("budget")
+	var flows := _all(charts, ChartLine) if charts != null else []
+	var last: Dictionary = _main._state.history[-1]
+	if flows.size() != 1 or flows[0]._series.size() != 2:
+		_fail("the budget has no revenue-against-spending line (%d line charts)" % flows.size())
+	else:
+		var ends := [float(flows[0]._series[0]["values"][-1]), float(flows[0]._series[1]["values"][-1])]
+		if absf(ends[0] - float(last["total_revenue_pct_gdp"])) > 1e-9 or absf(ends[1] - float(last["total_spending_pct_gdp"])) > 1e-9:
+			_fail("the budget's line ends at %s, not the history's revenue and spending" % [ends])
 	var stacks := _all(charts, ChartStack) if charts != null else []
 	if stacks.size() != 1:
 		_fail("the budget has %d stacked shares, not one" % stacks.size())
@@ -138,6 +158,38 @@ func _check_budget() -> void:
 		total += float(p["value"])
 	if absf(total - float(ns.total_spending_pct_gdp)) > 0.05:
 		_fail("the spending parts add to %.2f %% of GDP, spending is %.2f" % [total, ns.total_spending_pct_gdp])
+
+
+## Society's bars are the live salience of the issues it lists, in points.
+func _check_issues() -> void:
+	var charts := _charts("society")
+	var bars := _all(charts, ChartBars) if charts != null else []
+	if bars.size() != 1:
+		_fail("society has %d bar charts, not the issues' one" % bars.size())
+		return
+	var top: Array = Opinion.top_issues(_main._state.player(), bars[0]._rows.size())
+	if top.is_empty() or absf(float(bars[0]._rows[0]["value"]) - float(top[0][1]) * 100.0) > 1e-6:
+		_fail("the issues bars do not lead with the most salient issue's share: %s" % [bars[0]._rows])
+
+
+## Regions: one bar per region, each its share of the nation's output -- the named
+## regions, which the panel says carry most but not all of it.
+func _check_regions() -> void:
+	var charts := _charts("region")
+	var bars := _all(charts, ChartBars) if charts != null else []
+	if bars.size() != 1:
+		_fail("regions has %d bar charts, not the output one" % bars.size())
+		return
+	var ns = _main._state.player()
+	var regions: Array = _main._loader.regions.get(ns.id, [])
+	if bars[0]._rows.size() != regions.size():
+		_fail("the output bars hold %d rows, want %d regions" % [bars[0]._rows.size(), regions.size()])
+		return
+	for i in regions.size():
+		var want: float = Regions.share_of(ns, regions[i].id) * 100.0
+		if absf(float(bars[0]._rows[i]["value"]) - want) > 1e-9:
+			_fail("%s's bar reads %.3f %%, its share of output is %.3f" % [regions[i].region_name, float(bars[0]._rows[i]["value"]), want])
+			return
 
 
 func _check_seats() -> void:
