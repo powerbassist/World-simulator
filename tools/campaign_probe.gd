@@ -79,6 +79,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
+const PartyMoney = preload("res://src/sim/party_money.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const K = preload("res://src/sim/campaign_constants.gd")
@@ -88,13 +89,6 @@ const START_YEAR := 2026
 
 ## One presidential term, in months. The (iii) clause below is written against it.
 const TERM_MONTHS := 60
-
-## V1.6d's measured tax swing and V1.6e's / V1.6f's shipped costs, quoted rather than
-## recomputed: each is a published measurement of another session's model, and
-## recomputing one here would be a number with two writers.
-const TAX_SWING_PTS := 4.62
-const INVESTMENT_COST_PTS := 0.8161
-const PROJECT_STACK_PTS := 0.36
 
 const POLL_FLOOR_PTS := 3.0
 
@@ -123,8 +117,10 @@ const POLL_FLOOR_PTS := 3.0
 ##       the published polls can resolve is exactly the swing a campaign may own -- the
 ##       player has spent the term reading blurred figures, and the campaign is what
 ##       decides the race those figures could not call.
-## (ii)  AFFORDABILITY. The peak the campaign adds to deficit_pct_gdp must fit what
-##       V1.6d, V1.6e and V1.6f left of opinion_constants.DEFICIT_SCALE_PP.
+## (ii)  AFFORDABILITY -- RETIRED at V5.2 C6. It held the peak the campaign added to
+##       deficit_pct_gdp inside what V1.6d, V1.6e and V1.6f left of DEFICIT_SCALE_PP;
+##       the governing party pays now and the deficit carries no campaign, so the
+##       clause passed at every candidate. Table (b9) is B9.1, which replaces it.
 ## (iii) PROPORTION. The run-up may not exceed a fifth of a presidential term. Past
 ##       that, "campaigning" is a second name for governing and the timing decision
 ##       the lever exists to pose stops being one.
@@ -155,9 +151,6 @@ func _init() -> void:
 		K.CAMPAIGN_WINDOW_MONTHS, K.MOBILISATION_MAX,
 		K.MAX_CAMPAIGN_COST_EUR_PER_K_POP_MONTH, K.MAX_MOBILISATION_PER_MONTH,
 	])
-	print("headroom: DEFICIT_SCALE_PP %.4f - taxes %.4f - investment %.4f - projects %.4f = %.4f" % [
-		OpinionK.DEFICIT_SCALE_PP, TAX_SWING_PTS, INVESTMENT_COST_PTS, PROJECT_STACK_PTS, _headroom(),
-	])
 	_table_a_no_framing()
 	_table_b_bit_identity()
 	_table_c_room()
@@ -167,20 +160,10 @@ func _init() -> void:
 	_table_d_window()
 	_table_e_dominance()
 	_table_f_guard_rail()
+	_table_b9_ceiling()
 	_table_g_kill_switch()
 	_table_h_share_is_not_winning()
 	quit(0)
-
-
-## What V1.6d's, V1.6e's and V1.6f's lines left of the deficit issue's whole span.
-func _headroom() -> float:
-	# THE FIRST VERSION DIVIDED THE TAX SWING BY 100 and reported 4.7777 points of
-	# headroom where there are 0.2039. Every quantity on this line is already in points
-	# of GDP of deficit -- docs/projects-model.md quotes the same three -- so the
-	# conversion was inventing room the budget does not have, and table (d)'s clause
-	# (ii) passed at every candidate because of it. A band that passes everywhere is a
-	# BOUND, V1.5a; here it was not even that, it was an arithmetic error wearing one.
-	return OpinionK.DEFICIT_SCALE_PP - TAX_SWING_PTS - INVESTMENT_COST_PTS - PROJECT_STACK_PTS
 
 
 # --- (a) B1: the machine that must NOT move -------------------------------------------
@@ -408,11 +391,11 @@ func _gap_of(shares: Dictionary, incumbent: String) -> float:
 func _table_d_window() -> void:
 	print("\n(d) the window, with the ladder FIXED as authored")
 	var control := _run(0, [])
-	print("  control: incumbent %.4f  largest %s  peak deficit %.4f" % [
-		control["incumbent_share"], control["largest"], control["peak_deficit"],
+	print("  control: incumbent %.4f  largest %s" % [
+		control["incumbent_share"], control["largest"],
 	])
-	print("  %4s %10s %10s %10s %10s %8s %8s  %s" % [
-		"d", "move", "fitscale", "peak", "d-deficit", "bill", "pass", "best pair",
+	print("  %4s %10s %10s %10s %8s %8s  %s" % [
+		"d", "move", "fitscale", "peak", "EUR/k", "pass", "best pair",
 	])
 	# V2.6b2: the rail clause reads the run's own MEASURED accumulator peak, not the
 	# rate x d formula -- under siting the two disagree in both directions (the formula
@@ -440,13 +423,11 @@ func _table_d_window() -> void:
 		var r := _run(d, pair)
 		var max_stack: float = stack_rate * float(d)
 		var peak: float = float(r["peak_mobilisation"])
-		var d_deficit: float = r["peak_deficit"] - control["peak_deficit"]
 		var ok_low: bool = move >= _move_min
 		var ok_high: bool = move <= _move_max
 		var ok_stack: bool = peak <= K.MOBILISATION_MAX
-		var ok_deficit: bool = d_deficit <= _headroom()
 		var ok_prop: bool = d <= WINDOW_MAX_MONTHS
-		var ok: bool = ok_low and ok_high and ok_stack and ok_deficit and ok_prop
+		var ok: bool = ok_low and ok_high and ok_stack and ok_prop
 		if ok:
 			passing.append(d)
 			slacks.append({
@@ -454,16 +435,16 @@ func _table_d_window() -> void:
 				"low": (move - _move_min) / _move_min,
 				"stack": (K.MOBILISATION_MAX - peak) / K.MOBILISATION_MAX,
 			})
-		print("  %4d %10.4f %10.4f %10.4f %10.4f %8.4f %8s  %s" % [
-			d, move, _fit_scale(d, pair, control), peak, d_deficit, _pair_cost(pair),
-			("yes" if ok else "no(%s%s%s%s%s)" % [
+		print("  %4d %10.4f %10.4f %10.4f %8.1f %8s  %s" % [
+			d, move, _fit_scale(d, pair, control), peak, _pair_cost(pair),
+			("yes" if ok else "no(%s%s%s%s)" % [
 				"" if ok_low else "lo", "" if ok_high else "hi", "" if ok_stack else "s",
-				"" if ok_deficit else "d", "" if ok_prop else "p",
+				"" if ok_prop else "p",
 			]),
 			str(pair),
 		])
 	if passing.is_empty():
-		print("  NO CANDIDATE PASSES -- record the bound, do not retune DEFICIT_SCALE_PP")
+		print("  NO CANDIDATE PASSES -- record the bound, do not retune the window")
 	else:
 		# *** THE INTERIOR IS TAKEN BY MAXIMIN SLACK, NOT BY LIST POSITION, and that is
 		# this session's own addition to the tiebreaker rules. *** V1.5d established that
@@ -657,10 +638,33 @@ func _table_f_guard_rail() -> void:
 				dearest = sum
 				dearest_pair = "%s + %s" % [ids[i], ids[j]]
 	print("  dearest pair the concurrency gate allows: %.1f EUR per 1 000 a month (%s)" % [dearest, dearest_pair])
-	print("  against the headroom %.4f: %s" % [
-		_headroom(),
-		"INSIDE by %.4f" % (_headroom() - dearest) if dearest <= _headroom() else "OVER by %.4f" % (dearest - _headroom()),
+
+
+# --- (b9) B9.1: the ceiling splits the menu ---------------------------------------------
+
+## bands-v5.2.md B9.1 (V5.2 C6): of the ten pairs the concurrency gate allows, how many
+## fit a full window under France's legal ceiling at the authored prices -- declared 3
+## to 7, 5 at the declared prices. The ceiling is what makes the pair a choice in
+## money; it replaces clause (ii), since the campaign no longer reaches the deficit.
+func _table_b9_ceiling() -> void:
+	var ns = GameState.new_game(_loader, PLAYER).player()
+	var cap := PartyMoney.ceiling_eur_m(ns, _loader)
+	print("\n(b9) B9.1 -- pairs that fit a full %d-month window under %s's ceiling, EUR %.3f m" % [
+		K.CAMPAIGN_WINDOW_MONTHS, PLAYER, cap,
 	])
+	var ids: Array = _starts().keys()
+	ids.sort()
+	var fit := 0
+	var pairs := 0
+	for i in ids.size():
+		for j in range(i + 1, ids.size()):
+			var window: float = (Campaign.price_eur_m(ns, _loader, String(ids[i]))
+				+ Campaign.price_eur_m(ns, _loader, String(ids[j]))) * float(K.CAMPAIGN_WINDOW_MONTHS)
+			pairs += 1
+			if window <= cap:
+				fit += 1
+			print("  %-14s + %-14s EUR %6.2f m  %s" % [ids[i], ids[j], window, "fits" if window <= cap else "over"])
+	print("  B9.1: %d of %d pairs fit (band 3 to 7): %s" % [fit, pairs, "PASS" if fit >= 3 and fit <= 7 else "MISS"])
 
 
 # --- (g) the kill switch -------------------------------------------------------------------
@@ -841,7 +845,6 @@ func _run(d: int, efforts: Array, scale: float = 1.0, site := "") -> Dictionary:
 				scaled[bloc] = float(t["mobilisation"][bloc]) * scale
 			t["mobilisation"] = scaled
 
-	var peak_deficit := 0.0
 	var peak_mobilisation := 0.0
 	var started := d <= 0
 
@@ -875,7 +878,6 @@ func _run(d: int, efforts: Array, scale: float = 1.0, site := "") -> Dictionary:
 			state.year += 1
 		_tick(state, ns)
 
-		peak_deficit = maxf(peak_deficit, ns.deficit_pct_gdp)
 		for bloc in OpinionK.BLOC_KEYS:
 			peak_mobilisation = maxf(peak_mobilisation, absf(float(ns.campaign_mobilisation.get(bloc, 0.0))))
 
@@ -899,7 +901,6 @@ func _run(d: int, efforts: Array, scale: float = 1.0, site := "") -> Dictionary:
 		"incumbent_share": mine,
 		"largest": largest,
 		"gap": mine - best_other,
-		"peak_deficit": peak_deficit,
 		"peak_mobilisation": peak_mobilisation,
 		"framing": ns.framing_gain.duplicate(true),
 		"press_freedom": ns.press_freedom,

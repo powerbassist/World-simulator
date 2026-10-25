@@ -413,7 +413,7 @@ func _campaign_best_site(state, loader, ns, log: Array, year: int, month: int, c
 	for a in loader.campaign_actions:
 		if String(a.effects.get("campaign", {}).get("op", "")) != "start":
 			continue
-		var result := Campaign.execute(state, ns, loader.campaign_actions, a, site)
+		var result := Campaign.execute(state, ns, loader, a, site)
 		var line := "%d-%02d campaign '%s' @ %s: %s" % [
 			year, month, String(a.id), site,
 			"applied" if bool(result.get("applied", false)) else "refused",

@@ -1251,6 +1251,13 @@ var campaign_started: Array = []
 ## player has already paid for and no longer has.
 var campaign_mobilisation := {}
 
+## V5.2 C6. What the governing party has spent on the campaign this window, EUR m,
+## against the nation's legal ceiling (the soft one: the part past it leaves evidence,
+## src/sim/party_money.gd). Cleared with the rest of the register when the window
+## closes. Absent reads 0.0, the truth about every save from before C6, which had no
+## party-paid campaign -- so no bump.
+var campaign_spent_eur_m: float = 0.0
+
 ## V2.6b2. Where each running effort's meetings are held: effort id -> region id,
 ## written at the press, erased at stop, cleared with the rest of the register when the
 ## window closes. Serialised for campaign_running's reason -- a verb writes it and no

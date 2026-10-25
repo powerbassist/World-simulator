@@ -2811,7 +2811,7 @@ func _open_the_campaign() -> void:
 		if next_site < sites.size():
 			site = String(sites[next_site])
 			next_site += 1
-		if Campaign.execute(state, ns, _main._loader.campaign_actions, a2, site).get("applied", false):
+		if Campaign.execute(state, ns, _main._loader, a2, site).get("applied", false):
 			begun += 1
 	if begun == 0:
 		printerr("--campaign: no effort could be started")

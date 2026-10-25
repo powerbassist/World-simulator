@@ -145,6 +145,10 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 ## V5.1-0d (G1): which city is the capital, the map's and the diary's one rule. A
 ## src/core reader rather than a system, so the leaf check lets it through.
 const Capital = preload("res://src/core/capital.gd")
+## V5.2 C6: the governing party pays for the campaign. A leaf of its own (president.gd
+## and constants), so this file stays a leaf in the sense that matters: no path back
+## to elections.gd, which preloads this one.
+const PartyMoney = preload("res://src/sim/party_money.gd")
 
 
 ## Seeds the live register: nothing in the field and nobody mobilised.
@@ -157,31 +161,44 @@ static func init_nation(ns) -> void:
 	ns.campaign_running = []
 	ns.campaign_started = []
 	ns.campaign_mobilisation = {}
+	ns.campaign_spent_eur_m = 0.0
 	ns.campaign_sites = {}
 	ns.campaign_saturation = {}
 
 
-## Accrue -- or clear, if the run-up is over.
+## Pay, then accrue -- or clear, if the run-up is over. Returns the efforts the party
+## could not pay this month, [{nation_id, effort_id}], each stopped as a player's stop
+## is (it keeps what it bought): a NOTE for the UI, never a hold.
 ##
 ## Runs in WorldMonth's order after Budget and before Elections, and Budget.project()
-## runs it in the same slot. V5.2 C6 retired the state's campaign bill (the party pays,
-## docs/design/v5.2-c6-party-campaigns.md section 8), so nothing here reaches the
-## budget any more.
+## runs it in the same slot -- on its copy, where the party's money is a DEEP field, so
+## a forecast never spends real money. V5.2 C6 retired the state's campaign bill (the
+## party pays, docs/design/v5.2-c6-party-campaigns.md), so nothing here reaches the
+## budget any more. The played nation's parties draw their month of public funding
+## first, every month, window or not; it nets to zero until an election.
 ##
 ## Running BEFORE Elections is what makes the month of the vote count: is_open() is
 ## true at zero months to go, so the last month of effort is accrued and read by the
 ## vote it was bought for.
-static func tick_month(state, loader) -> void:
+static func tick_month(state, loader) -> Array:
 	var terms := _terms_by_effort(loader)
+	var stopped: Array = []
 	var ids: Array = state.nations.keys()
 	ids.sort()
 	for id in ids:
 		var ns = state.nations[id]
 		_decay(ns)
+		if id == state.player_nation_id:
+			PartyMoney.tick_month(ns, loader)
 		if not is_open(state, ns):
 			_clear(ns)
 			continue
+		for eid in PartyMoney.pay(state, ns, loader, terms):
+			ns.campaign_running.erase(eid)
+			ns.campaign_sites.erase(eid)
+			stopped.append({"nation_id": String(id), "effort_id": String(eid)})
 		_accrue(ns, terms, loader)
+	return stopped
 
 
 ## One month of forgetting, for every nation whether or not anything is in the field.
@@ -224,8 +241,8 @@ static func _accrue(ns, terms: Dictionary, loader) -> void:
 			)
 
 
-## The run-up is over. Everything goes: the efforts are out of the field and the
-## mobilisation is spent at the ballot box.
+## The run-up is over. Everything goes: the efforts are out of the field, the
+## mobilisation is spent at the ballot box, and the window's spend starts again.
 ##
 ## Assigned rather than cleared in place, because NationState.copy() duplicates these
 ## and a shared reference surviving a Budget.project() would let a projection write
@@ -234,6 +251,7 @@ static func _clear(ns) -> void:
 	ns.campaign_running = []
 	ns.campaign_started = []
 	ns.campaign_mobilisation = {}
+	ns.campaign_spent_eur_m = 0.0
 	ns.campaign_sites = {}
 	## campaign_saturation is deliberately NOT cleared: it is attention, not campaign
 	## state, and it decays on its own half-life whether or not a run-up is on.
@@ -452,6 +470,22 @@ static func running_count(ns) -> int:
 
 # --- The terms -------------------------------------------------------------------------
 
+## EUR m a month for one effort in this nation (party_money.gd's price per inhabitant).
+static func price_eur_m(ns, loader, effort_id: String) -> float:
+	return PartyMoney.price_eur_m(ns, terms_of(loader, effort_id))
+
+
+## Whole months the party's chest pays at the running rate -- plus `extra_effort` when
+## named, the panel's read before a start -- or -1 when the rate is zero.
+static func months_payable(ns, loader, extra_effort := "") -> int:
+	var rate := 0.0 if extra_effort == "" else price_eur_m(ns, loader, extra_effort)
+	for eid in running(ns):
+		rate += price_eur_m(ns, loader, eid)
+	if rate <= 0.0:
+		return -1
+	return maxi(0, int(floor(PartyMoney.money_eur_m(ns, loader) / rate)))
+
+
 ## effort id -> the authored {cost_eur_per_k_pop_month, mobilisation, effort_name} of its `start`
 ## action. Built from the loader on every call rather than cached on NationState,
 ## because caching it would put content in the save -- the property
@@ -571,10 +605,9 @@ static func _read_field(state, ns, field: String) -> float:
 ##
 ## IT DOES NOT GO THROUGH Budget.commit(), AND THAT IS DELIBERATE RATHER THAN
 ## CONVENIENT -- V1.6e's and V1.6f's escape from docs/tax-model.md section 11's live
-## bug, inherited whole. budget_panel.gd refreshes from a `_pending` captured in
-## setup(), so anything committing a budget outside that panel's own sliders leaves it
-## stale and offering to undo the commit. Writing an own register and letting the cost
-## arrive as a computed line means this verb cannot meet that bug at all.
+## bug, inherited whole: this verb writes its own register and never a budget. Since
+## V5.2 C6 the price is the governing party's, paid month by month in tick_month()
+## (src/sim/party_money.gd), and a start needs one month of it in the chest.
 ##
 ## Refuses rather than half-applies when the action is not currently available, so a UI
 ## offering a stale button cannot produce the effect the window exists to prevent.
@@ -584,12 +617,12 @@ static func _read_field(state, ns, field: String) -> float:
 ## `withdraw` rather than src/sim/projects.gd's `abandon`, and the difference is the
 ## model: half a motorway is worth nothing and half a campaign is worth half a
 ## campaign.
-static func execute(state, ns, all_actions: Array, action, region_id := "") -> Dictionary:
+static func execute(state, ns, loader, action, region_id := "") -> Dictionary:
 	var terms: Dictionary = action.effects.get("campaign", {})
 	var eid := String(terms.get("effort_id", ""))
 	var campaign_op := String(terms.get("op", ""))
 
-	if not available(state, ns, all_actions).has(action):
+	if not available(state, ns, loader.campaign_actions).has(action):
 		var refused := {
 			"action_id": action.id,
 			"effort_id": eid,
@@ -610,6 +643,10 @@ static func execute(state, ns, all_actions: Array, action, region_id := "") -> D
 			reason = "choose where the meetings are held"
 		elif not ns.region_pop_share.has(region_id):
 			reason = "no such region in this nation"
+		# V5.2 C6: one month of the new effort alone, in the payer's chest. With another
+		# effort running the chest may pay both for fewer months; months_payable() says.
+		elif PartyMoney.money_eur_m(ns, loader) < PartyMoney.price_eur_m(ns, terms):
+			reason = "the party cannot pay for it"
 		if reason != "":
 			var refused := {
 				"action_id": action.id,

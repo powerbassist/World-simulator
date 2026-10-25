@@ -151,6 +151,8 @@ tests=(
   tests/test_sectors.gd
   tests/test_projects.gd
   tests/test_campaign.gd
+  # V5.2 C6: campaigns paid by the party -- price, income, payment, stop, ceiling.
+  tests/test_party_money.gd
   tests/test_pledges.gd
   # V4.1: the programme register machine -- the offer, the once-only term-start
   # choice, the three conclusions through the ONE applier, the derived progress,

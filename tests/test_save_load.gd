@@ -1232,7 +1232,7 @@ func _check_campaign_fields(loader) -> void:
 	for a in loader.campaign_actions:
 		if String(a.effects.get("campaign", {}).get("op", "")) != "start":
 			continue
-		if Campaign.execute(state, ns, loader.campaign_actions, a, site).get("applied", false):
+		if Campaign.execute(state, ns, loader, a, site).get("applied", false):
 			started += 1
 	if ns.campaign_sites.is_empty():
 		_fail("the started efforts wrote no site, so this check measures nothing")
@@ -1247,6 +1247,9 @@ func _check_campaign_fields(loader) -> void:
 		return
 	if ns.campaign_saturation.is_empty():
 		_fail("two meeting months wrote no saturation, so this check measures nothing")
+		return
+	if ns.campaign_spent_eur_m <= 0.0:
+		_fail("two paid months spent nothing, so the window's spend check measures nothing")
 		return
 
 	var full: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
@@ -1269,6 +1272,10 @@ func _check_campaign_fields(loader) -> void:
 	for rid in ns.campaign_saturation:
 		if float(kept.player().campaign_saturation.get(rid, -1.0)) != float(ns.campaign_saturation[rid]):
 			_fail("the saturation on '%s' did not survive the round trip exactly" % rid)
+	# V5.2 C6: the window's spend round-trips exactly -- the soft ceiling reads it, so
+	# a rounding here would move where the evidence starts.
+	if kept.player().campaign_spent_eur_m != ns.campaign_spent_eur_m:
+		_fail("the window's campaign spend did not survive the round trip exactly")
 
 	# (1) THE RUNNING REGISTER. Absent it reads as nothing in the field, which is correct
 	# for a version-23 save -- so no bump. What it is NOT is free to drop from a
@@ -1309,6 +1316,12 @@ func _check_campaign_fields(loader) -> void:
 	var dropped_sat = GameState.from_dict(no_sat)
 	if Campaign.spoken(dropped_sat.player(), site) != 0.0:
 		_fail("a dropped saturation register did not read as nobody spoken to")
+	# (2c) V5.2 C6's window spend, absent_ok: absent is nothing spent this window, the
+	# truth about every save from before the party paid -- so no bump.
+	var no_window_spend: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(no_window_spend["nations"]["FRA"] as Dictionary).erase("campaign_spent_eur_m")
+	if GameState.from_dict(no_window_spend).player().campaign_spent_eur_m != 0.0:
+		_fail("a dropped window spend did not read as nothing spent")
 
 	# (3) WHAT WAS NOT ADDED. No window flag, no "campaign opened" date, no per-effort
 	# entry -- the window is a LEVEL READ of next_executive_*, which the save has carried

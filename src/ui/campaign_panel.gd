@@ -261,7 +261,7 @@ func _build_live(ns, effort_id: String) -> void:
 
 	PanelKit.line(block, Strings.noun("campaign-actions", _loader.campaign_actions, "campaign", "effort_id", effort_id, "effort_name", Campaign.name_of(_loader, effort_id)), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("€%s per 1,000 people · %s") % [Num.f(float(terms.get("cost_eur_per_k_pop_month", 0.0)), 1), _reach_text(terms)], PanelKit.Tone.GOOD)
+	PanelKit.line(block, tr("€%s m · %s") % [Num.f(Campaign.price_eur_m(ns, _loader, effort_id), 2), _reach_text(terms)], PanelKit.Tone.GOOD)
 
 	PanelKit.line(block, _site_text(ns, effort_id), PanelKit.Tone.PLAIN)
 
@@ -356,7 +356,7 @@ func _build_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 
 	PanelKit.line(block, Strings.row("campaign-actions", String(action.id), "effects.campaign.effort_name", String(terms.get("effort_name", ""))), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("€%s per 1,000 people · %s") % [Num.f(float(terms.get("cost_eur_per_k_pop_month", 0.0)), 1), _reach_text(terms)])
+	PanelKit.line(block, tr("€%s m · %s") % [Num.f(Campaign.price_eur_m(ns, _loader, String(terms.get("effort_id", ""))), 2), _reach_text(terms)])
 
 	if can_act:
 		block.add_child(_button(ns, action))
@@ -405,7 +405,7 @@ func _button(ns, action) -> Button:
 ## month before it.
 func _on_act(ns, action) -> void:
 	var before := Trends.snapshot_now(_state)
-	var result := Campaign.execute(_state, ns, _loader.campaign_actions, action, _site_region)
+	var result := Campaign.execute(_state, ns, _loader, action, _site_region)
 	if not result.get("applied", false):
 		return
 	_dirty = true

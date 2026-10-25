@@ -682,12 +682,10 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# has. V1.3b's repair, made an eighth time rather than rediscovered an eighth
 	# time.
 	units.append(func() -> void: Projects.tick_month(sim, loader))
-	# In main.gd's slot, and required for the reason the seven above it are -- with a
-	# sharper case than any of them. A projection that held the campaign register
-	# frozen would report a run-up as costing nothing AND would never CLOSE the window
-	# inside the projected months, so a president looking at a twenty-four-month
-	# forecast in the month before an election would see a campaign bill they will
-	# stop paying in four weeks charged for two years.
+	# In main.gd's slot. V1.7a needed it for the campaign bill, which V5.2 C6 retired:
+	# the party pays now, on this copy only (party_money_delta_eur_m is DEEP), so the
+	# forecast spends no real money. Kept so the projected register still opens, pays
+	# and closes its window as the real month does.
 	units.append(func() -> void: Campaign.tick_month(sim, loader))
 	# In main.gd's slot a fifth time, and required for the same reason the four
 	# above it are: a projection that held the quality stock frozen would report a

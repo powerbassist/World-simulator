@@ -65,6 +65,7 @@
    "tests/test_tax.gd",
    "tests/test_sectors.gd",
    "tests/test_campaign.gd",
+   "tests/test_party_money.gd",
    "tests/test_pledges.gd",
    "tests/test_upper_house.gd",
    "tests/test_natural_change.gd",

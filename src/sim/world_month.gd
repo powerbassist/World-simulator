@@ -346,10 +346,9 @@ static func _step(month: Month, step: String) -> Array:
 		"Projects":
 			Projects.tick_month(state, loader)
 		# V1.7a: a month of every campaign effort in the field, onto the mobilisation the
-		# vote reads, and the bill recomputed -- or the whole register cleared, if the
-		# run-up is over. In Projects' slot for Projects' reason, and the loop is the
-		# identical one an eighth time: bill -> deficit -> a PRECONDITION_FIELDS entry ->
-		# which campaign actions are available -> a new effort -> bill.
+		# vote reads -- or the whole register cleared, if the run-up is over. In Projects'
+		# slot, where V1.7a's bill (retired at V5.2 C6) broke the bill -> deficit ->
+		# precondition loop an eighth time.
 		#
 		# BEFORE Elections, which is what makes the month of the vote count: the window is
 		# inclusive of it, so the last month of effort is accrued and read by the vote it
@@ -357,8 +356,10 @@ static func _step(month: Month, step: String) -> Array:
 		# month this call finds the window closed and clears the register. That is the
 		# whole of the clearing mechanism: a level read, so campaign.gd needs no hook at
 		# the vote and elections.gd needs no knowledge of the window.
+		# V5.2 C6: the governing party pays each month first, and an effort it cannot
+		# pay stops -- returned for the UI as a note, never a hold.
 		"Campaign":
-			Campaign.tick_month(state, loader)
+			month.report["campaign_stopped"] = Campaign.tick_month(state, loader)
 		# V1.7b: every promise on the books judged against the state it named, and charged
 		# for the month if it is being broken. Immediately after Campaign for the same
 		# reason Campaign sits before Elections -- the last month of a term is judged, and

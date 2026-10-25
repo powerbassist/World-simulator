@@ -49,6 +49,7 @@ const Bills = preload("res://src/sim/bills.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
+const President = preload("res://src/sim/president.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Society = preload("res://src/sim/society.gd")
@@ -461,13 +462,14 @@ const PROJECT_REGIMES := {
 
 ## V1.7a: the campaign phase. TWO regimes and not one, because the whole decision the
 ## lever poses is about TIMING and one regime cannot show a decision. `campaigns_early`
-## puts two efforts in the field the month the run-up opens and pays for all eight;
+## puts two efforts in the field at index 8 and pays for eight of the window's ten
+## months (V5.2 C6: from the governing party's money);
 ## `campaigns_late` puts the same two in with two months to go. Same budget, same
 ## efforts, different month -- so the pair isolates exactly what the window is for.
 ##
 ## France's first executive election is May 2027, index 16 of this loop, and
-## campaign_constants.CAMPAIGN_WINDOW_MONTHS is 8, so the run-up is indices 8 to 16.
-## Early takes the whole eight months; late takes two. A month outside the window would
+## campaign_constants.CAMPAIGN_WINDOW_MONTHS is 10 (it was 8 when this was written), so
+## the run-up is indices 6 to 16. Early takes eight months of it; late takes two. A month outside the window would
 ## report a verb refused, which is a test of the refusal and not of the campaign --
 ## tests/test_campaign.gd owns that one.
 ##
@@ -842,8 +844,10 @@ func _init() -> void:
 
 ## One verdict as a row. `margin` is the incumbent's vote share less the best
 ## rival's, so a HELD verdict reads positive and a LOST one negative, and a
-## shrinking lead shows up before it flips.
-func _outcome_row(regime_name: String, nation_id: String, r: Dictionary, kind: String, verdict: String) -> Dictionary:
+## shrinking lead shows up before it flips. V5.2 C6 (B9.4): `party_money_eur_m` is the
+## incumbent party's money at the vote, a NEW column -- tools/balance_diff.py reads
+## margins and verdicts only, so a base table without it diffs as it did.
+func _outcome_row(regime_name: String, nation_id: String, r: Dictionary, kind: String, verdict: String, money: float) -> Dictionary:
 	var shares: Dictionary = r.get("vote_share", {})
 	var incumbent := String(r["incumbent_party_id"])
 	var own := float(shares.get(incumbent, 0.0))
@@ -857,6 +861,7 @@ func _outcome_row(regime_name: String, nation_id: String, r: Dictionary, kind: S
 		"kind": kind, "verdict": verdict,
 		"vote_share": own, "margin": own - rival,
 		"incumbent_seats": int(r["incumbent_seats"]), "seats_total": int(r["seats_total"]),
+		"party_money_eur_m": money,
 	}
 
 
@@ -1111,7 +1116,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 					ns.coalition_seats, ns.assembly_seats,
 					standing,
 				])
-				_outcomes.append(_outcome_row(regime_name, nation_id, r, "legislative", standing))
+				_outcomes.append(_outcome_row(regime_name, nation_id, r, "legislative", standing,
+					President.party_money_eur_m(ns, loader, String(r["incumbent_party_id"]))))
 				continue
 			var verdict_kind := "executive" if ns.has_executive else "national"
 			if r["kind"] != verdict_kind:
@@ -1130,7 +1136,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 					r["incumbent_vote_share"] * 100.0, r["incumbent_seats"],
 					r["seats_total"], verdict,
 				])
-			_outcomes.append(_outcome_row(regime_name, nation_id, r, String(r["kind"]), verdict))
+			_outcomes.append(_outcome_row(regime_name, nation_id, r, String(r["kind"]), verdict,
+				President.party_money_eur_m(ns, loader, String(r["incumbent_party_id"]))))
 			# What the result screen tells the player. The point of printing it
 			# here is that it must name the number the player actually moved.
 			for a in r["attribution"]:
@@ -2090,7 +2097,7 @@ func _campaign(state, loader, ns, regime_name: String, year: int, month: int) ->
 				break
 		if a2 == null:
 			continue
-		if Campaign.execute(state, ns, loader.campaign_actions, a2, String(site_of_pair[key])).get("applied", false):
+		if Campaign.execute(state, ns, loader, a2, String(site_of_pair[key])).get("applied", false):
 			# The score is the RANKING score -- what a full window of this effort alone
 			# would do to the lead -- and not a prediction of this run. A regime opening
 			# with two months to go collects a fraction of it, which is the whole point
@@ -2114,7 +2121,7 @@ func _campaign_tour(state, loader, ns, regime_name: String, year: int, month: in
 	var stopped := ""
 	for eid in Campaign.running(ns):
 		var action = _campaign_stop_action(loader, String(eid))
-		if action != null and Campaign.execute(state, ns, loader.campaign_actions, action).get("applied", false):
+		if action != null and Campaign.execute(state, ns, loader, action).get("applied", false):
 			stopped = String(eid)
 	if stopped == "":
 		printerr("  %d-%02d %s: tour leg found nothing running to stop" % [year, month, regime_name])

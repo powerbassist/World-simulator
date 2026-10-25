@@ -5,6 +5,7 @@ extends RefCounted
 ## always fails loudly — see docs/data-architecture.md.
 
 const Nation = preload("res://src/core/nation.gd")
+const PartyFunding = preload("res://src/core/party_funding.gd")
 const Party = preload("res://src/core/party.gd")
 const Law = preload("res://src/core/law.gd")
 const PoliticalSystem = preload("res://src/core/political_system.gd")
@@ -45,6 +46,9 @@ const COMMODITY_CATEGORIES = CommoditiesLoader.COMMODITY_CATEGORIES
 const Org = preload("res://src/core/org.gd")
 
 var nations: Dictionary = {}  # String id -> Nation
+## V5.2 C6: nation id -> its public party funding and campaign ceiling
+## (src/core/party_funding.gd); a nation with neither has no entry.
+var party_funding: Dictionary = {}
 var parties: Dictionary = {}  # String id -> Array[Party]
 
 ## nation id -> Array[Person], in authored file order — the order the People
@@ -264,6 +268,7 @@ var label_points: Dictionary = {}
 
 func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world") -> void:
 	nations.clear()
+	party_funding.clear()
 	parties.clear()
 	people.clear()
 	person_by_id.clear()
@@ -326,9 +331,12 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 
 		var per_file_errors: Array[String] = []
 		var nation = Nation.from_dict(parsed, fname, per_file_errors)
+		var purse := PartyFunding.read(parsed, fname, per_file_errors)
 		errors.append_array(per_file_errors)
 		if nation.id != "":
 			nations[nation.id] = nation
+			if not purse.is_empty():
+				party_funding[nation.id] = purse
 
 	# People before parties, because PoliticsLoader.load_parties() resolves each party's
 	# leader_person_id against the register and a reference cannot be checked

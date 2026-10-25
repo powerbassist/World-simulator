@@ -244,7 +244,7 @@ func _test_the_verb_is_refused_outside_the_window() -> void:
 	if not Campaign.available(state, ns, _loader.campaign_actions).is_empty():
 		_fail("actions are available outside the run-up")
 
-	var result := Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
+	var result := Campaign.execute(state, ns, _loader, _action(EFFORT_START))
 	if result.get("applied", false):
 		_fail("execute() applied an effort outside the run-up")
 	if not ns.campaign_running.is_empty():
@@ -255,7 +255,7 @@ func _test_an_effort_accrues_every_month() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
+	Campaign.execute(state, ns, _loader, _action(EFFORT_START), _site(ns))
 
 	# V2.6b2: the accrual runs at the site's factor, and the site saturates under the
 	# meeting it holds every month -- so month 1 is the full fresh rate, month 2 runs
@@ -280,7 +280,7 @@ func _test_the_accumulator_is_clamped() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
+	Campaign.execute(state, ns, _loader, _action(EFFORT_START))
 	ns.campaign_mobilisation["workers"] = K.MOBILISATION_MAX
 	Campaign.tick_month(state, _loader)
 	if float(ns.campaign_mobilisation["workers"]) > K.MOBILISATION_MAX:
@@ -297,7 +297,7 @@ func _test_the_campaign_is_not_on_the_budget() -> void:
 
 	Budget.recompute(state, ns)
 	var quiet: float = ns.total_spending_pct_gdp
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
+	Campaign.execute(state, ns, _loader, _action(EFFORT_START), _site(ns))
 	Campaign.tick_month(state, _loader)
 	if Campaign.running(ns).is_empty():
 		_fail("the effort did not start, so this check measures nothing")
@@ -314,7 +314,7 @@ func _test_the_register_clears_when_the_window_closes() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
+	Campaign.execute(state, ns, _loader, _action(EFFORT_START), _site(ns))
 	Campaign.tick_month(state, _loader)
 	if ns.campaign_running.is_empty():
 		_fail("no effort is running inside the window, so this check measures nothing")
@@ -341,12 +341,12 @@ func _test_stopping_keeps_what_it_bought() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
+	Campaign.execute(state, ns, _loader, _action(EFFORT_START), _site(ns))
 	Campaign.tick_month(state, _loader)
 	Campaign.tick_month(state, _loader)
 	var bought: float = float(ns.campaign_mobilisation.get("workers", 0.0))
 
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_STOP))
+	Campaign.execute(state, ns, _loader, _action(EFFORT_STOP))
 	Campaign.tick_month(state, _loader)
 
 	if not is_equal_approx(float(ns.campaign_mobilisation.get("workers", 0.0)), bought):
@@ -374,11 +374,11 @@ func _test_an_effort_cannot_be_restarted() -> void:
 		_fail("%s no longer carries a positive bloc_offset, so this check measures nothing" % REWARD_START)
 		return
 
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_START), _site(ns))
+	Campaign.execute(state, ns, _loader, _action(REWARD_START), _site(ns))
 	var paid_once: float = float(ns.bloc_offset.get("rural", 0.0))
 
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_STOP))
-	var again: Dictionary = Campaign.execute(state, ns, _loader.campaign_actions, _action(REWARD_START))
+	Campaign.execute(state, ns, _loader, _action(REWARD_STOP))
+	var again: Dictionary = Campaign.execute(state, ns, _loader, _action(REWARD_START))
 
 	if again.get("applied", false):
 		_fail("an effort was restarted inside its own window")
@@ -466,6 +466,11 @@ func _test_campaign_is_a_leaf() -> void:
 		# and the diary, not a system -- it preloads nothing and holds no state.
 		if trimmed.contains("res://src/core/capital.gd"):
 			continue
+		# V5.2 C6: the party's money pays the campaign. party_money.gd is a leaf of its
+		# own (president.gd and constants, pinned by tests/test_party_money.gd), so the
+		# edge reaches no file that preloads this one.
+		if trimmed.contains("res://src/sim/party_money.gd"):
+			continue
 		_fail("campaign.gd preloads a system: `%s`" % trimmed)
 
 
@@ -478,7 +483,7 @@ func _test_the_site_is_required_and_must_be_ones_own() -> void:
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
 
-	var result: Dictionary = Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START))
+	var result: Dictionary = Campaign.execute(state, ns, _loader, _action(EFFORT_START))
 	if result.get("applied", false):
 		_fail("a start without a region was applied")
 	if result.get("reason", "") == "":
@@ -492,11 +497,11 @@ func _test_the_site_is_required_and_must_be_ones_own() -> void:
 	var foreign: String = Campaign.region_ids(deu_state.player(), _loader)[0]
 	if ns.region_pop_share.has(foreign):
 		_fail("test bug: %s is in FRA's register after all" % foreign)
-	var other: Dictionary = Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), foreign)
+	var other: Dictionary = Campaign.execute(state, ns, _loader, _action(EFFORT_START), foreign)
 	if other.get("applied", false):
 		_fail("a start in another nation's region was applied")
 
-	var ok: Dictionary = Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
+	var ok: Dictionary = Campaign.execute(state, ns, _loader, _action(EFFORT_START), _site(ns))
 	if not ok.get("applied", false):
 		_fail("a start at the nation's own region was refused: %s" % str(ok))
 	if String(ns.campaign_sites.get(EFFORT, "")) != _site(ns):
@@ -568,7 +573,7 @@ func _test_the_tour_leaves_the_capital() -> void:
 	if farthest_days <= 1:
 		_fail("no region is more than one day from the capital")
 
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), home)
+	Campaign.execute(state, ns, _loader, _action(EFFORT_START), home)
 	Campaign.tick_month(state, _loader)
 	Campaign.tick_month(state, _loader)
 
@@ -610,8 +615,8 @@ func _test_the_register_carries_no_content() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
-	Campaign.execute(state, ns, _loader.campaign_actions, _action(OTHER_START), _site(ns))
+	Campaign.execute(state, ns, _loader, _action(EFFORT_START), _site(ns))
+	Campaign.execute(state, ns, _loader, _action(OTHER_START), _site(ns))
 	Campaign.tick_month(state, _loader)
 
 	for entry in ns.campaign_running:
