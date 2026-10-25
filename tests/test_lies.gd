@@ -12,6 +12,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const Lies = preload("res://src/sim/lies.gd")
+const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const President = preload("res://src/sim/president.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
@@ -35,6 +36,7 @@ func _init() -> void:
 	_check_lie_raises_odds_by_exactly_LIE_ODDS()
 	_check_caught_lie_priced_once()
 	_check_a_caught_lie_fails_the_attempt()
+	_check_the_lie_row_holds_the_truth()
 	_check_uncaught_lie_leaves_nothing()
 	_check_a_lied_promise_is_revealed_at_its_date_served_or_not()
 	_check_a_caught_promise_is_withdrawn_and_priced_once()
@@ -189,6 +191,38 @@ func _check_a_caught_lie_fails_the_attempt() -> void:
 		_failures.append("fixture: no lie to a 1.0 reader was caught")
 
 
+## QA's TAKE 1 on c1b: since a caught lie fails, the lie's true chance is
+## (1 - P(caught)) x the raised odds, and the card's lie range must hold it (B4: the
+## truth inside the shown range), for every reader the fixture's person can be.
+func _check_the_lie_row_holds_the_truth() -> void:
+	var b := _booked()
+	if b.is_empty():
+		return
+	var ns = b["ns"]
+	var person = _loader.person_by_id[String(b["pid"])]
+	var leader = _loader.person_by_id[President.leader_id(ns)]
+	# Known, so the fog is narrow enough to tell (QA measured at knowledge 0.835).
+	President.learn(b["state"], ns, _loader, String(b["pid"]), 1.0)
+	var checked := 0
+	for listener in [0.35, 0.53, 0.66, 0.80]:
+		var kept := _skills(b, listener, float(leader.social_skill))
+		var cell: Dictionary = Levers.cell(b["state"], ns, _loader, b["session"])
+		for row in Levers.offered(b["state"], ns, _loader, b["session"]):
+			if not row.has("lie") or not bool(row["offered"]):
+				continue
+			var p := LeverOdds.odds(person, String(row["lever"]), cell)
+			var raised := clampf(p + SC.LIE_ODDS, LK.ODDS_MIN, LK.ODDS_MAX)
+			var truth := (1.0 - Lies.catch_chance(listener, float(leader.social_skill))) * raised
+			var lie: Dictionary = row["lie"]
+			checked += 1
+			# 1e-6: the range is a Vector2, float32.
+			if truth < float(lie["odds_lo"]) - 1e-6 or truth > float(lie["odds_hi"]) + 1e-6:
+				_failures.append("the %s lie row shows %.3f-%.3f, the truth is %.3f (listener %.2f)" % [row["lever"], lie["odds_lo"], lie["odds_hi"], truth, listener])
+		_restore(b, kept)
+	if checked == 0:
+		_failures.append("fixture: no lie row was offered to check")
+
+
 ## Uncaught on argue: the odds were raised and nothing else happened.
 func _check_uncaught_lie_leaves_nothing() -> void:
 	var b := _booked()
@@ -278,8 +312,9 @@ func _check_the_phone_takes_no_lie() -> void:
 		_failures.append("arg_error does not keep lies to argue and promise_date in the audience")
 
 
-## The audience's argue and promise rows carry their lie variant at the raised odds;
-## no other lever does.
+## The audience's argue and promise rows carry their lie variant; no other lever does.
+## Since a caught lie fails (#170's call 5) the variant may read BELOW the honest odds
+## -- _check_the_lie_row_holds_the_truth pins what it shows.
 func _check_the_card_shows_the_lie_variant() -> void:
 	var b := _booked()
 	if b.is_empty():
@@ -287,8 +322,6 @@ func _check_the_card_shows_the_lie_variant() -> void:
 	for row in Levers.offered(b["state"], b["ns"], _loader, b["session"]):
 		var lever := String(row["lever"])
 		var lie: Dictionary = row.get("lie", {})
-		if not lie.is_empty() and float(lie["odds_hi"]) < float(row["odds_hi"]) - 1e-9:
-			_failures.append("the %s row's lie variant is %s, below the honest odds" % [lever, lie])
 		if SC.LIE_LEVERS.has(lever) and lie.is_empty():
 			_failures.append("the %s row shows no lie variant" % lever)
 		if not SC.LIE_LEVERS.has(lever) and not lie.is_empty():

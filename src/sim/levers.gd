@@ -90,14 +90,15 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 	for lever in K.LEVERS:
 		var p := LeverOdds.odds(person, lever, c)
 		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else word_given(ns, person.id, lever, String(session["object"])))
-		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state), true))
+		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state), true, Lies.catch_for(ns, loader, person)))
 	return out
 
 
 ## One lever's card row from its true odds `p` (-1.0 when not offered): the range
 ## that holds them, never `p` itself. The audience's and the phone's (b3) alike;
-## `shadows` lists the corrupt currencies, the audience's alone (V5.2c, Call 8).
-static func lever_row(ns, person, lever: String, p: float, why_not: String, knowledge: float, now: int, shadows := false) -> Dictionary:
+## `shadows` lists the corrupt currencies, the audience's alone (V5.2c, Call 8), and
+## `catch` is the listener's chance of catching a lie (Lies.catch_for), for its row.
+static func lever_row(ns, person, lever: String, p: float, why_not: String, knowledge: float, now: int, shadows := false, catch := 0.0) -> Dictionary:
 	var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, p, knowledge, ns.draw_seed)
 	var row := {
 		"lever": lever,
@@ -120,7 +121,7 @@ static func lever_row(ns, person, lever: String, p: float, why_not: String, know
 	elif lever == "promise_date":
 		row["dates"] = {"earliest": now + K.PROMISE_MIN_MONTHS, "latest": now + K.PROMISE_MAX_MONTHS}
 	if shadows and Lies.told(lever, {"lie": true}):
-		row["lie"] = Lies.lie_row(ns, person, lever, p, knowledge)
+		row["lie"] = Lies.lie_row(ns, person, lever, p, knowledge, catch)
 	return row
 
 

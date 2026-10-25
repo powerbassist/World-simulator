@@ -35,20 +35,31 @@ static func odds_bonus(lever: String, args: Dictionary) -> float:
 	return SC.LIE_ODDS if told(lever, args) else 0.0
 
 
-## The card's lie variant of a lever row: the range at the raised odds, B4's fog.
-static func lie_row(ns, person, lever: String, p: float, knowledge: float) -> Dictionary:
-	var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, clampf(p + SC.LIE_ODDS, K.ODDS_MIN, K.ODDS_MAX), knowledge, ns.draw_seed)
+## The card's lie variant of a lever row, under B4's fog like any odds. Since a caught
+## lie fails the attempt (#170's call 5), its true chance is the raised odds times the
+## chance it is NOT caught (QA's TAKE on c1b: the raised odds alone showed a lie as
+## better in 178 of 183 cells where it was worse). `catch` is catch_for()'s.
+static func lie_row(ns, person, lever: String, p: float, knowledge: float, catch: float) -> Dictionary:
+	var truth := (1.0 - catch) * clampf(p + SC.LIE_ODDS, K.ODDS_MIN, K.ODDS_MAX)
+	var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, truth, knowledge, ns.draw_seed)
 	return {"odds_lo": r.x, "odds_hi": r.y}
+
+
+## The chance `person` catches the sitting president in a lie; 0 with either unknown.
+static func catch_for(ns, loader, person) -> float:
+	var leader = loader.person_by_id.get(President.leader_id(ns))
+	if person == null or leader == null:
+		return 0.0
+	return catch_chance(float(person.social_skill), float(leader.social_skill))
 
 
 ## The catch roll for attempt `index`: the request, the lever and the index under
 ## SALT_LIE, and the month -- the lever roll's own shape on a salt of its own.
 static func caught(state, ns, loader, session: Dictionary, lever: String, index: int) -> bool:
 	var person = loader.person_by_id.get(String(session.get("person_id", "")))
-	var leader = loader.person_by_id.get(President.leader_id(ns))
-	if person == null or leader == null:
+	if person == null or loader.person_by_id.get(President.leader_id(ns)) == null:
 		return false
-	var p := catch_chance(float(person.social_skill), float(leader.social_skill))
+	var p := catch_for(ns, loader, person)
 	var key := Cycle.salted("%s:%s:%d" % [SC.SALT_LIE, lever, index], ns.draw_seed)
 	return Cycle.unit_pair(String(session.get("request_id", "")), key, int(state.year) * 12 + int(state.month)) < p
 
