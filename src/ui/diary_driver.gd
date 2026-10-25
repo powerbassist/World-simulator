@@ -25,6 +25,7 @@ const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Bills = preload("res://src/sim/bills.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 
@@ -107,8 +108,6 @@ static func _action_by_id(loader, id: String):
 	return null
 
 
+## Bills.by_id: an authored law or an ownership bill rebuilt from its id (R14).
 static func _law_by_id(loader, id: String):
-	for law in loader.laws:
-		if String(law.id) == id:
-			return law
-	return null
+	return Bills.by_id(loader, id)

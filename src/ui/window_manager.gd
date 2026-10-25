@@ -47,6 +47,9 @@ const DOCK_BOTTOM := Ribbon.STRIP_HEIGHT
 ## How many destinations back and forward remember -- a session's worth of
 ## wandering, not its whole history.
 const HISTORY_DEPTH := 20
+## The manager's group: a panel that hands work to another (the companies panel's
+## "Table a bill" to the Legislature's briefing) finds it here, not through main.gd.
+const GROUP := "window_manager"
 
 var _pages := {}        # id -> TabPage
 var _keys := {}         # id -> keycode, KEY_NONE for a window with no shortcut
@@ -67,6 +70,7 @@ var _navigating := false
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -230,6 +234,11 @@ func open_ids() -> Array:
 		if _pages[id].visible:
 			ids.append(id)
 	return ids
+
+
+## The panel registered as `id`, or null.
+func content(id: String) -> Control:
+	return _pages[id]._content if _pages.has(id) else null
 
 
 ## The tab's page: its scroll, its content and its fold mark.
