@@ -65,6 +65,7 @@ func _run() -> void:
 	# and the new ones both, so only a presence assertion means anything here and
 	# an absence assertion would read the stale row and fail for nothing.
 	_check_cooldown_names_itself(panel, state)
+	_check_customs_union_names_itself(panel, state)
 	_check_trade_rows_before_signing(panel, state)
 	_check_pressing_act_moves_relations(panel, state)
 	_check_acted_signal_carries_a_baseline(panel, state)
@@ -349,6 +350,23 @@ func _check_cooldown_names_itself(panel, state) -> void:
 	# Erased rather than cleared: the checks after this one press whichever verb
 	# is enabled first, and only this key was this check's to set.
 	state.player().diplo_cooldown_months.erase(Diplomacy.cooldown_key("state_visit", TARGET))
+
+
+
+## R10 (the parent's call): a tariff refused inside a customs union names the union
+## on its row -- the reason the player can read, not the generic conditions line.
+func _check_customs_union_names_itself(panel, state) -> void:
+	_show(panel, TARGET)
+	var reason := ""
+	for row in panel._actions.get_children():
+		if not (row is HBoxContainer) or row.is_queued_for_deletion():
+			continue
+		for child in row.get_children():
+			if child is VBoxContainer and child.get_child_count() > 1 and child.get_child(0) is Label \
+					and child.get_child(0).text == "Impose Tariffs":
+				reason = String(child.get_child(1).text)
+	if reason.find("European Union") < 0:
+		_fail("the tariff row against %s does not name the customs union: '%s'" % [TARGET, reason])
 
 
 ## V4.11c. A simulated neighbour says it cannot be played; a playable nation says
