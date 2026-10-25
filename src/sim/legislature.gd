@@ -1282,10 +1282,11 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(ns.id, [])
 
-	# V5.2 b+ R2. ONE PLAYER BILL BEFORE THE ASSEMBLY AT A TIME, and Article 49.3
-	# waits for it too: the sitting that divides the tabled bill ends at the
-	# month's close. Checked first, so the refusal names the real reason.
-	if not ns.tabled_bill.is_empty():
+	# V5.2 b+ R2. ONE PLAYER BILL TABLED AT A TIME, checked first so the refusal
+	# names the real reason. Article 49.3 is never tabled, so it stays open on
+	# another bill, as in the real procedure; a 49.3 on the tabled bill itself is
+	# refused, since it would apply the law and then divide it again at the close.
+	if not ns.tabled_bill.is_empty() and (not force or String(ns.tabled_bill.get("law_id", "")) == law.id):
 		return refused(ns, law.id, law.majority, "already_tabled")
 
 	# THE ACTION MUST STILL BE LEGAL, which the other four player verbs -- the
