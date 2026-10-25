@@ -151,9 +151,9 @@ func _init() -> void:
 		return
 
 	print("=== V1.7a campaign probe ===")
-	print("shipped: CAMPAIGN_WINDOW_MONTHS %d  MOBILISATION_MAX %.2f  cost ceiling %.2f  rate ceiling %.2f" % [
+	print("shipped: CAMPAIGN_WINDOW_MONTHS %d  MOBILISATION_MAX %.2f  cost ceiling %.1f EUR per 1 000 a month  rate ceiling %.2f" % [
 		K.CAMPAIGN_WINDOW_MONTHS, K.MOBILISATION_MAX,
-		K.MAX_CAMPAIGN_COST_PCT_GDP, K.MAX_MOBILISATION_PER_MONTH,
+		K.MAX_CAMPAIGN_COST_EUR_PER_K_POP_MONTH, K.MAX_MOBILISATION_PER_MONTH,
 	])
 	print("headroom: DEFICIT_SCALE_PP %.4f - taxes %.4f - investment %.4f - projects %.4f = %.4f" % [
 		OpinionK.DEFICIT_SCALE_PP, TAX_SWING_PTS, INVESTMENT_COST_PTS, PROJECT_STACK_PTS, _headroom(),
@@ -566,7 +566,7 @@ func _pair_cost(pair: Array) -> float:
 	var starts := _starts()
 	var total := 0.0
 	for eid in pair:
-		total += float(starts.get(String(eid), {}).get("cost_pct_gdp", 0.0))
+		total += float(starts.get(String(eid), {}).get("cost_eur_per_k_pop_month", 0.0))
 	return total
 
 
@@ -588,10 +588,10 @@ func _table_e_dominance() -> void:
 				continue
 			var ta: Dictionary = starts[a]
 			var tb: Dictionary = starts[b]
-			if float(ta["cost_pct_gdp"]) > float(tb["cost_pct_gdp"]):
+			if float(ta["cost_eur_per_k_pop_month"]) > float(tb["cost_eur_per_k_pop_month"]):
 				continue
 			var covers := true
-			var strictly := float(ta["cost_pct_gdp"]) < float(tb["cost_pct_gdp"])
+			var strictly := float(ta["cost_eur_per_k_pop_month"]) < float(tb["cost_eur_per_k_pop_month"])
 			for bloc in OpinionK.BLOC_KEYS:
 				var ma: float = float(ta.get("mobilisation", {}).get(bloc, 0.0))
 				var mb: float = float(tb.get("mobilisation", {}).get(bloc, 0.0))
@@ -607,7 +607,7 @@ func _table_e_dominance() -> void:
 	print("  ladder:")
 	for eid in ids:
 		var t: Dictionary = starts[eid]
-		print("    %-14s %.3f %% of GDP  %s" % [eid, float(t["cost_pct_gdp"]), str(t.get("mobilisation", {}))])
+		print("    %-14s %5.1f EUR per 1 000 a month  %s" % [eid, float(t["cost_eur_per_k_pop_month"]), str(t.get("mobilisation", {}))])
 
 
 # --- (f) the guard rail -------------------------------------------------------------------
@@ -650,13 +650,13 @@ func _table_f_guard_rail() -> void:
 			if i >= j:
 				continue
 			var sum: float = (
-				float(starts2[ids[i]].get("cost_pct_gdp", 0.0))
-				+ float(starts2[ids[j]].get("cost_pct_gdp", 0.0))
+				float(starts2[ids[i]].get("cost_eur_per_k_pop_month", 0.0))
+				+ float(starts2[ids[j]].get("cost_eur_per_k_pop_month", 0.0))
 			)
 			if sum > dearest:
 				dearest = sum
 				dearest_pair = "%s + %s" % [ids[i], ids[j]]
-	print("  dearest pair the concurrency gate allows: %.4f %% of GDP (%s)" % [dearest, dearest_pair])
+	print("  dearest pair the concurrency gate allows: %.1f EUR per 1 000 a month (%s)" % [dearest, dearest_pair])
 	print("  against the headroom %.4f: %s" % [
 		_headroom(),
 		"INSIDE by %.4f" % (_headroom() - dearest) if dearest <= _headroom() else "OVER by %.4f" % (dearest - _headroom()),

@@ -2797,7 +2797,7 @@ func _open_the_campaign() -> void:
 			starts.append(a)
 	starts.sort_custom(func(x, y):
 		return (
-			float(x.effects["campaign"]["cost_pct_gdp"]) < float(y.effects["campaign"]["cost_pct_gdp"])
+			float(x.effects["campaign"]["cost_eur_per_k_pop_month"]) < float(y.effects["campaign"]["cost_eur_per_k_pop_month"])
 		)
 	)
 

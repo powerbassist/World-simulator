@@ -171,22 +171,27 @@ const CAMPAIGN_OPS := ["start", "stop"]
 ## names its terms or names none, so a third op added without a row here fails to
 ## load rather than silently ignoring what it was given.
 ##
-## TWO TERMS, AND NEITHER IS DERIVED FROM THE OTHER. `cost_pct_gdp` is a standing
-## rate for as long as the effort runs; `mobilisation` is what one month of it adds,
-## per bloc. A cheap effort that reaches one bloc and an expensive one that reaches
-## three are different objects, exactly as a cheap fast project and an expensive slow
-## one are, so both are authored and neither is a function of the other.
+## TWO TERMS, AND NEITHER IS DERIVED FROM THE OTHER. `cost_eur_per_k_pop_month` is a
+## standing rate for as long as the effort runs; `mobilisation` is what one month of it
+## adds, per bloc. A cheap effort that reaches one bloc and an expensive one that
+## reaches three are different objects, exactly as a cheap fast project and an
+## expensive slow one are, so both are authored and neither is a function of the other.
+##
+## V5.2 C6 (docs/design/v5.2-c6-party-campaigns.md): the governing PARTY pays, so the
+## price is euros per thousand inhabitants per month rather than points of GDP a year.
+## Per inhabitant because every nation is meant to become playable and their parties
+## hold EUR 0.1-70 m: a flat euro price would charge Poland what it charges France.
 const CAMPAIGN_OP_TERMS := {
-	"start": ["cost_pct_gdp", "mobilisation"],
+	"start": ["cost_eur_per_k_pop_month", "mobilisation"],
 	"stop": [],
 }
 
-## What one authored campaign effort may cost per year while it runs, in points of
-## GDP. A content ceiling and not the ladder: where the ladder sits is measured in
-## tools/campaign_probe.gd against what V1.6d, V1.6e and V1.6f left of
-## opinion_constants.DEFICIT_SCALE_PP, which is 0.2039 points and not a whole budget.
-## The dearest pair the concurrency gate allows costs 0.1750, inside it by 0.0289.
-const MAX_CAMPAIGN_COST_PCT_GDP := 0.20
+## What one authored campaign effort may cost while it runs, in euros per thousand
+## inhabitants per month. A content ceiling set to catch a mistyped digit, not the
+## ladder: the dearest authored effort is 26.9 (broadcast, EUR 1.85 m a month in
+## France), and the ladder itself is anchored on France's EUR 22.509 m legal ceiling
+## for a campaign (the spec's section 2). 60 is a little over twice the dearest.
+const MAX_CAMPAIGN_COST_EUR_PER_K_POP_MONTH := 60.0
 
 ## What one authored effort may add to one bloc's mobilisation in one month, as a
 ## shift in the log-odds of that bloc turning out. A content ceiling, set to catch a

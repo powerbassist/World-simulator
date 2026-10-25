@@ -1193,21 +1193,22 @@ func _check_cycle_fields(loader) -> void:
 			_fail("a save carries %s -- the cycle is a pure function of the clock and stores no phase, counter or accumulated wave, so a third field is a model change that has to be argued" % name)
 
 
-## V1.7a. THREE FIELDS AND NONE OF THEM EARNS A BUMP, which is the answer the plan
+## V1.7a. THE FIELDS AND NONE OF THEM EARNS A BUMP, which is the answer the plan
 ## predicted and this is where it is checked rather than asserted.
 ##
-## All three read as "no campaign" when absent, and that is the TRUTH about every
+## Each reads as "no campaign" when absent, and that is the TRUTH about every
 ## version-23 save because those games had no campaign verb -- `measures` at V1.3c,
 ## `pacts` at V1.3g, `appointments` at U6a, `sector_investment` at V1.6e. They are
-## serialised regardless, and for three DIFFERENT reasons, so the checks below are
+## serialised regardless, and for DIFFERENT reasons, so the checks below are
 ## separate rather than folded together:
 ##
 ##   campaign_running       a verb writes it and no tick recomputes it
 ##   campaign_mobilisation  it is SPENT at the ballot box, so a reload in the last month
 ##                          of a run-up would go to the vote with a campaign already paid
 ##                          for and no longer held
-##   campaign_bill_pct_gdp  recomputed on the first tick, serialised so a save read back
-##                          and never ticked reports the budget it was saved with
+##
+## V1.7a's third, `campaign_bill_pct_gdp`, was retired at V5.2 C6 (the party pays); an
+## older save's key is ignored by Fields.read_into(), so its retirement earns no bump.
 ##
 ## And it ends with V1.3c's device, pointed at the next session for the sixth time: the
 ## version is STILL 23, so V1.7b has to come and say why it moves.
@@ -1241,8 +1242,8 @@ func _check_campaign_fields(loader) -> void:
 		return
 	Campaign.tick_month(state, loader)
 	Campaign.tick_month(state, loader)
-	if ns.campaign_mobilisation.is_empty() or ns.campaign_bill_pct_gdp == 0.0:
-		_fail("the campaign did not accrue or did not bill, so this check measures nothing")
+	if ns.campaign_mobilisation.is_empty():
+		_fail("the campaign did not accrue, so this check measures nothing")
 		return
 	if ns.campaign_saturation.is_empty():
 		_fail("two meeting months wrote no saturation, so this check measures nothing")
@@ -1258,8 +1259,6 @@ func _check_campaign_fields(loader) -> void:
 			float(ns.campaign_mobilisation[bloc])
 		):
 			_fail("the mobilisation on '%s' did not survive the round trip" % bloc)
-	if not is_equal_approx(kept.player().campaign_bill_pct_gdp, ns.campaign_bill_pct_gdp):
-		_fail("the campaign bill did not survive the round trip")
 	# V2.6b2: the two sited registers round-trip exactly -- the site as the region id
 	# the effort meets in, the saturation to the last bit, because a rounding here
 	# would move a tour decision on reload.
@@ -1281,8 +1280,6 @@ func _check_campaign_fields(loader) -> void:
 	if not dropped_running.player().campaign_running.is_empty():
 		_fail("a dropped running register came back non-empty")
 	Campaign.tick_month(state, loader)
-	if Campaign.bill_pct_gdp(dropped_running.player(), loader) != 0.0:
-		_fail("a dropped running register still bills -- then it is not derivable and the version must move")
 
 	# (2) THE MOBILISATION. Absent it reads 0.0 and Campaign.turnout_of() returns the
 	# authored constant BIT-FOR-BIT, which is the whole property this session rests on.

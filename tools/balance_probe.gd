@@ -2096,9 +2096,9 @@ func _campaign(state, loader, ns, regime_name: String, year: int, month: int) ->
 			# with two months to go collects a fraction of it, which is the whole point
 			# of the window, so the label says "full window" rather than leaving a reader
 			# to compare it against a result it was never about.
-			begun.append("%s @ %s (%.3f%%, %+.3f pts over a full window)" % [
+			begun.append("%s @ %s (EUR %.1f per 1 000 a month, %+.3f pts over a full window)" % [
 				a2.id, String(site_of_pair[key]),
-				float(a2.effects["campaign"]["cost_pct_gdp"]), float(score[key]) * 100.0,
+				float(a2.effects["campaign"]["cost_eur_per_k_pop_month"]), float(score[key]) * 100.0,
 			])
 	if begun.is_empty():
 		printerr("  no campaign effort could be started (%d months to the vote)" % Campaign.months_to_election(state, ns))

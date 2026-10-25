@@ -275,7 +275,6 @@ const FIELDS := [
 	["campaign_running", DEEP, COPIED, [], true],  # no verb wrote it before: empty is the truth
 	["campaign_started", DEEP, COPIED, [], false],  # bump 24
 	["campaign_mobilisation", DEEP, COPIED, {}, true],  # no verb wrote it before: empty is the truth
-	["campaign_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
 	["campaign_sites", DEEP, STRING_MAP, {}, false],  # bump 30
 	["campaign_saturation", DEEP, FLOAT_MAP, {}, false],  # bump 30
 	["last_campaign_result", NONE, NOT_SAVED, {}, true],  # display record of the last verb

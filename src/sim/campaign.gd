@@ -157,20 +157,16 @@ static func init_nation(ns) -> void:
 	ns.campaign_running = []
 	ns.campaign_started = []
 	ns.campaign_mobilisation = {}
-	ns.campaign_bill_pct_gdp = 0.0
 	ns.campaign_sites = {}
 	ns.campaign_saturation = {}
 
 
-## Accrue, then price -- or clear, if the run-up is over.
+## Accrue -- or clear, if the run-up is over.
 ##
-## Runs in src/ui/main.gd's order after Budget.tick_month() and before
-## Elections.tick_month(), and Budget.project() runs it in the same slot. The bill
-## therefore lags the economy by a month exactly as the subsidy bill, the deployment
-## bill, the bloc transfer, the investment bill and the project bill do, and for the
-## reason budget.gd's comment gives: `deficit_pct_gdp` is one of this verb's own
-## precondition fields, so a bill that widened the deficit inside the month would
-## close a loop.
+## Runs in WorldMonth's order after Budget and before Elections, and Budget.project()
+## runs it in the same slot. V5.2 C6 retired the state's campaign bill (the party pays,
+## docs/design/v5.2-c6-party-campaigns.md section 8), so nothing here reaches the
+## budget any more.
 ##
 ## Running BEFORE Elections is what makes the month of the vote count: is_open() is
 ## true at zero months to go, so the last month of effort is accrued and read by the
@@ -186,7 +182,6 @@ static func tick_month(state, loader) -> void:
 			_clear(ns)
 			continue
 		_accrue(ns, terms, loader)
-		ns.campaign_bill_pct_gdp = bill_pct_gdp(ns, loader)
 
 
 ## One month of forgetting, for every nation whether or not anything is in the field.
@@ -229,8 +224,8 @@ static func _accrue(ns, terms: Dictionary, loader) -> void:
 			)
 
 
-## The run-up is over. Everything goes: the efforts are out of the field, the
-## mobilisation is spent at the ballot box, and the bill stops.
+## The run-up is over. Everything goes: the efforts are out of the field and the
+## mobilisation is spent at the ballot box.
 ##
 ## Assigned rather than cleared in place, because NationState.copy() duplicates these
 ## and a shared reference surviving a Budget.project() would let a projection write
@@ -239,7 +234,6 @@ static func _clear(ns) -> void:
 	ns.campaign_running = []
 	ns.campaign_started = []
 	ns.campaign_mobilisation = {}
-	ns.campaign_bill_pct_gdp = 0.0
 	ns.campaign_sites = {}
 	## campaign_saturation is deliberately NOT cleared: it is attention, not campaign
 	## state, and it decays on its own half-life whether or not a run-up is on.
@@ -456,36 +450,9 @@ static func running_count(ns) -> int:
 	return ns.campaign_running.size()
 
 
-# --- The bill -------------------------------------------------------------------------
+# --- The terms -------------------------------------------------------------------------
 
-## Points of GDP per year, the sum of every running effort's own authored cost. Read by
-## Budget.recompute() as a computed spending line, NOT as a sixth entry in
-## economy_constants.SPENDING_KEYS -- that list is keyed 1:1 to cabinet portfolios, so a
-## sixth line is a sixth minister, and docs/tiers/v1.md section 6 rules it out. The
-## SIXTH line to take this route, after V1.3d's bloc transfer, V1.3g's deployment bill,
-## V1.4a's subsidy bill, V1.6e's investment bill and V1.6f's project bill.
-##
-## THE SECOND BILL IN THIS PROJECT THAT STOPS, and it stops harder than V1.6f's. A
-## project's bill ends when the work does, on a date the player chose by choosing the
-## project. This one ends on a date the constitution chose, and the player cannot move
-## it -- which is why the decision it poses is about TIMING and the project's is about
-## SIZE.
-##
-## NOT SCALED BY ANYTHING. V1.6e's bill had to be scaled by the sector's share of GDP
-## because one flat fee bought a 63:1 spread across three sectors. It does not transfer:
-## here the price and the reach are BOTH authored per effort, so there is no shared
-## constant that could make one row dominate another by arithmetic rather than by
-## choice. tools/campaign_probe.gd checks that no authored effort is dominated rather
-## than assuming it.
-static func bill_pct_gdp(ns, loader) -> float:
-	var terms := _terms_by_effort(loader)
-	var bill := 0.0
-	for eid in running(ns):
-		bill += float(terms.get(eid, {}).get("cost_pct_gdp", 0.0))
-	return bill
-
-
-## effort id -> the authored {cost_pct_gdp, mobilisation, effort_name} of its `start`
+## effort id -> the authored {cost_eur_per_k_pop_month, mobilisation, effort_name} of its `start`
 ## action. Built from the loader on every call rather than cached on NationState,
 ## because caching it would put content in the save -- the property
 ## tests/test_campaign.gd pins, and V1.4a's, V1.6e's and V1.6f's tests before it.

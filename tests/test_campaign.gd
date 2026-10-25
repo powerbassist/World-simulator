@@ -78,7 +78,7 @@ func _init() -> void:
 	_test_the_verb_is_refused_outside_the_window()
 	_test_an_effort_accrues_every_month()
 	_test_the_accumulator_is_clamped()
-	_test_the_bill_reaches_the_budget()
+	_test_the_campaign_is_not_on_the_budget()
 	_test_the_register_clears_when_the_window_closes()
 	_test_stopping_keeps_what_it_bought()
 	_test_an_effort_cannot_be_restarted()
@@ -162,8 +162,6 @@ func _test_register_seeds_empty() -> void:
 		_fail("a new game starts with efforts in the field")
 	if not ns.campaign_mobilisation.is_empty():
 		_fail("a new game starts with somebody mobilised")
-	if ns.campaign_bill_pct_gdp != 0.0:
-		_fail("a new game starts with a campaign bill of %f" % ns.campaign_bill_pct_gdp)
 	if not ns.campaign_sites.is_empty():
 		_fail("a new game starts with a site already chosen")
 	if not ns.campaign_saturation.is_empty():
@@ -289,34 +287,37 @@ func _test_the_accumulator_is_clamped() -> void:
 		_fail("the accumulator passed MOBILISATION_MAX")
 
 
-func _test_the_bill_reaches_the_budget() -> void:
+## V5.2 C6: the party pays, so the state's budget does not. A running effort leaves
+## total spending exactly where it was -- the campaign line V1.7a added is retired,
+## and a stray reader of it would show here as a spending total that moved.
+func _test_the_campaign_is_not_on_the_budget() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
 
+	Budget.recompute(state, ns)
 	var quiet: float = ns.total_spending_pct_gdp
 	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
 	Campaign.tick_month(state, _loader)
-
-	var cost: float = float(Campaign.terms_of(_loader, EFFORT)["cost_pct_gdp"])
-	if not is_equal_approx(ns.campaign_bill_pct_gdp, cost):
-		_fail("the bill reads %f, expected the authored %f" % [ns.campaign_bill_pct_gdp, cost])
+	if Campaign.running(ns).is_empty():
+		_fail("the effort did not start, so this check measures nothing")
+		return
 
 	Budget.recompute(state, ns)
-	if ns.total_spending_pct_gdp <= quiet:
-		_fail("the campaign bill did not reach total_spending_pct_gdp")
+	if ns.total_spending_pct_gdp != quiet:
+		_fail("a running effort moved total_spending_pct_gdp %f -> %f: the state is paying for the campaign" % [quiet, ns.total_spending_pct_gdp])
 
 
-## The bill STOPS, the mobilisation is spent, and the efforts leave the field -- all
-## three on a level read, with no hook in elections.gd and no flag to lift.
+## The mobilisation is spent and the efforts leave the field -- both on a level read,
+## with no hook in elections.gd and no flag to lift.
 func _test_the_register_clears_when_the_window_closes() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	_wind_to(state, K.CAMPAIGN_WINDOW_MONTHS)
 	Campaign.execute(state, ns, _loader.campaign_actions, _action(EFFORT_START), _site(ns))
 	Campaign.tick_month(state, _loader)
-	if ns.campaign_bill_pct_gdp == 0.0:
-		_fail("the bill is zero inside the window with an effort running")
+	if ns.campaign_running.is_empty():
+		_fail("no effort is running inside the window, so this check measures nothing")
 
 	# What Elections.tick_month() does to a re-elected president: the next vote moves a
 	# full term out, so the window closes on the level read alone.
@@ -327,8 +328,6 @@ func _test_the_register_clears_when_the_window_closes() -> void:
 		_fail("efforts survived the window closing")
 	if not ns.campaign_mobilisation.is_empty():
 		_fail("mobilisation survived the window closing")
-	if ns.campaign_bill_pct_gdp != 0.0:
-		_fail("the bill survived the window closing")
 	if not ns.campaign_sites.is_empty():
 		_fail("a site survived the window closing")
 	if ns.campaign_saturation.is_empty():
@@ -352,8 +351,6 @@ func _test_stopping_keeps_what_it_bought() -> void:
 
 	if not is_equal_approx(float(ns.campaign_mobilisation.get("workers", 0.0)), bought):
 		_fail("stopping an effort took back what it had already bought")
-	if ns.campaign_bill_pct_gdp != 0.0:
-		_fail("a stopped effort is still billing")
 
 
 ## AN EFFORT GETS ONE RUN PER WINDOW, and this is the assertion that makes the one
@@ -603,8 +600,6 @@ func _test_the_nine_never_campaign() -> void:
 		var ns = state.nations[id]
 		if not ns.campaign_running.is_empty():
 			_fail("%s put an effort in the field with no player command" % id)
-		if ns.campaign_bill_pct_gdp != 0.0:
-			_fail("%s is paying a campaign bill of %f" % [id, ns.campaign_bill_pct_gdp])
 		if not ns.campaign_saturation.is_empty():
 			_fail("%s has spoken-to regions with no campaign verb" % id)
 

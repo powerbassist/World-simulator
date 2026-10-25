@@ -163,13 +163,8 @@ static func recompute(state, ns) -> void:
 		# this month bills next month -- `deficit_pct_gdp` is one of that verb's own
 		# precondition fields.
 		+ ns.project_bill_pct_gdp
-		# V1.7a's line, and the sixth to take this route. The same argument a sixth time,
-		# and the one difference is the deadline: V1.6f's bill stops when the work does,
-		# which is a length the player chose, and this one stops at the vote, which is a
-		# date the constitution chose. Campaign.tick_month() runs after this in main.gd's
-		# order, so an effort begun this month bills next month -- `deficit_pct_gdp` is one
-		# of that verb's own precondition fields.
-		+ ns.campaign_bill_pct_gdp
+		# V1.7a's campaign line stood here until V5.2 C6: the governing party pays for a
+		# campaign now, from its own money (docs/design/v5.2-c6-party-campaigns.md).
 		# V2.8. THE EIGHTH COMPUTED SPENDING LINE, and it is the second one that
 		# can STOP -- a project ends when it is built and a campaign when the vote
 		# comes, where a station's run cost lasts until the player closes it. That
@@ -833,13 +828,9 @@ static func snapshot(state) -> Dictionary:
 		# the window. A snapshot key nothing reads is a tuned constant nothing reads:
 		# deleted rather than left, U6a's day budget and V1.3e's AGREEMENT_ACCEPT_MIN.
 		"project_bill_pct_gdp": ns.project_bill_pct_gdp,
-		# ONE KEY AND NOT TWO, V1.6f's correction inherited: the mobilisation belongs on
-		# the Campaign panel, which has the NationState, and a second key here would be a
-		# snapshot entry nothing reads.
-		"campaign_bill_pct_gdp": ns.campaign_bill_pct_gdp,
-		# V2.8, on the snapshot for campaign_bill_pct_gdp's reason one line up: the
-		# panel compares a PROJECTED month against the current one and a projection
-		# has no NationState to read the bill from.
+		# V2.8, on the snapshot for project_bill_pct_gdp's reason: the panel compares a
+		# PROJECTED month against the current one and a projection has no NationState
+		# to read the bill from.
 		"energy_bill_pct_gdp": ns.energy_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}

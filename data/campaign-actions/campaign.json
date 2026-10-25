@@ -22,7 +22,7 @@
           "op": "start",
           "effort_id": "ground_game",
           "effort_name": "The doorstep operation",
-          "cost_pct_gdp": 0.03,
+          "cost_eur_per_k_pop_month": 8.1,
           "mobilisation": {
             "workers": 0.03,
             "urban": 0.025,
@@ -58,7 +58,7 @@
           "op": "start",
           "effort_id": "broadcast",
           "effort_name": "The broadcast campaign",
-          "cost_pct_gdp": 0.1,
+          "cost_eur_per_k_pop_month": 26.9,
           "mobilisation": {
             "pensioners": 0.05,
             "rural": 0.035,
@@ -99,7 +99,7 @@
           "op": "start",
           "effort_id": "town_halls",
           "effort_name": "The town-hall tour",
-          "cost_pct_gdp": 0.055,
+          "cost_eur_per_k_pop_month": 14.8,
           "mobilisation": {
             "rural": 0.05,
             "pensioners": 0.03,
@@ -138,7 +138,7 @@
           "op": "start",
           "effort_id": "digital_push",
           "effort_name": "The digital push",
-          "cost_pct_gdp": 0.075,
+          "cost_eur_per_k_pop_month": 20.2,
           "mobilisation": {
             "students": 0.05,
             "urban": 0.05,
@@ -178,7 +178,7 @@
           "op": "start",
           "effort_id": "donor_circuit",
           "effort_name": "The donor circuit",
-          "cost_pct_gdp": 0.045,
+          "cost_eur_per_k_pop_month": 12.1,
           "mobilisation": {
             "business": 0.055,
             "urban": 0.025,

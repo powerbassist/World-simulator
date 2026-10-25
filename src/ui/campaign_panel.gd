@@ -215,7 +215,6 @@ func _build_clock(ns) -> void:
 
 	PanelKit.row(_body, tr("Months to the vote"), "%d" % months)
 	if Campaign.is_open(_state, ns):
-		PanelKit.row(_body, tr("Campaign bill"), tr("%s %% of GDP") % Num.f(ns.campaign_bill_pct_gdp, 3))
 		PanelKit.line(_body, tr("The run-up is open until the vote: each effort reaches and costs every month."))
 	else:
 		PanelKit.line(_body, tr_n("The run-up opens in %d month.", "The run-up opens in %d months.", months - CampaignK.CAMPAIGN_WINDOW_MONTHS)
@@ -262,7 +261,7 @@ func _build_live(ns, effort_id: String) -> void:
 
 	PanelKit.line(block, Strings.noun("campaign-actions", _loader.campaign_actions, "campaign", "effort_id", effort_id, "effort_name", Campaign.name_of(_loader, effort_id)), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("%s %% GDP/yr · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)], PanelKit.Tone.GOOD)
+	PanelKit.line(block, tr("€%s per 1,000 people · %s") % [Num.f(float(terms.get("cost_eur_per_k_pop_month", 0.0)), 1), _reach_text(terms)], PanelKit.Tone.GOOD)
 
 	PanelKit.line(block, _site_text(ns, effort_id), PanelKit.Tone.PLAIN)
 
@@ -357,7 +356,7 @@ func _build_offer(ns, action, terms: Dictionary, can_act: bool) -> void:
 
 	PanelKit.line(block, Strings.row("campaign-actions", String(action.id), "effects.campaign.effort_name", String(terms.get("effort_name", ""))), PanelKit.Tone.PLAIN)
 
-	PanelKit.line(block, tr("%s %% GDP/yr · %s") % [Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3), _reach_text(terms)])
+	PanelKit.line(block, tr("€%s per 1,000 people · %s") % [Num.f(float(terms.get("cost_eur_per_k_pop_month", 0.0)), 1), _reach_text(terms)])
 
 	if can_act:
 		block.add_child(_button(ns, action))

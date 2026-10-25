@@ -1251,22 +1251,6 @@ var campaign_started: Array = []
 ## player has already paid for and no longer has.
 var campaign_mobilisation := {}
 
-## V1.7a's computed spending line, recomputed once a month by Campaign.tick_month() and
-## read from here rather than called for -- the SIXTH to take this route after the bloc
-## transfer, the deployment bill, the subsidy bill, the investment bill and the project
-## bill, cached for the same reason: budget.gd's recompute() reads it a month late on
-## purpose, because `deficit_pct_gdp` is one of this verb's own precondition fields and
-## a bill that widened the deficit inside the month would close a loop.
-##
-## THE SECOND BILL IN THIS PROJECT THAT STOPS, and it stops on a date the player cannot
-## move. V1.6f's project bill ends when the work does, which is a length the player
-## chose by choosing the project; this one ends at the vote.
-##
-## Earns nothing on the rule -- recomputed from `campaign_running` and the content on
-## the first tick after a load -- and is serialised anyway so a save read back and never
-## ticked reports the budget it was saved with. `project_bill_pct_gdp`'s case.
-var campaign_bill_pct_gdp: float = 0.0
-
 ## V2.6b2. Where each running effort's meetings are held: effort id -> region id,
 ## written at the press, erased at stop, cleared with the rest of the register when the
 ## window closes. Serialised for campaign_running's reason -- a verb writes it and no

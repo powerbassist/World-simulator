@@ -115,19 +115,11 @@ const FIGURE_ROWS := [
 	# than a policy. Reads "—" while nothing is under construction, which is every
 	# game that has not used the verb.
 	["projects", "  of which public works"],  # i18n: msgid last
-	# V1.7a, beside the public-works line and on the same argument a SEVENTH time: money
-	# leaving the budget that the player set with no slider on this panel. It differs
-	# from every line above it in WHEN it appears -- it can only exist inside the months
-	# before an election, and it stops on a date the player cannot move. A president
-	# reading this screen in the run-up is looking at the one line here they will not be
-	# paying next year whatever they decide. Reads "-" outside a run-up and while nothing
-	# is in the field, which is most of every game.
-	["campaign", "  of which the campaign"],  # i18n: msgid last
-	# V2.8, and the argument is the campaign row's one more time: a build in
-	# progress and every running station are on the spending total with no slider
-	# on this panel, so the row is the only place the player can see WHAT the
-	# fleet costs. Unlike the campaign it does not stop on a date -- it stops when
-	# the player closes a station, which is why the off switch is a verb.
+	# V2.8: a build in progress and every running station are on the spending total
+	# with no slider on this panel, so the row is the only place the player can see
+	# WHAT the fleet costs. It stops when the player closes a station, which is why the
+	# off switch is a verb. (V1.7a's campaign row stood above it until V5.2 C6 moved
+	# the campaign's price onto the governing party's money.)
 	["energy", "  of which energy"],  # i18n: msgid last
 	["deficit", "Deficit"],  # i18n: msgid last
 	["debt", "Debt"],  # i18n: msgid last
@@ -544,7 +536,6 @@ func _refresh() -> void:
 	_set_figure("subsidies", _line_text(now, "subsidy_bill_pct_gdp"), _line_text(proposed, "subsidy_bill_pct_gdp"))
 	_set_figure("investment", _bill_text(now, "investment_bill_pct_gdp"), _bill_text(proposed, "investment_bill_pct_gdp"))
 	_set_figure("projects", _bill_text(now, "project_bill_pct_gdp"), _bill_text(proposed, "project_bill_pct_gdp"))
-	_set_figure("campaign", _bill_text(now, "campaign_bill_pct_gdp"), _bill_text(proposed, "campaign_bill_pct_gdp"))
 	_set_figure("energy", _bill_text(now, "energy_bill_pct_gdp"), _bill_text(proposed, "energy_bill_pct_gdp"))
 	_set_figure("deficit", _pct_and_eur(now, "deficit_pct_gdp"), _pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", tr("%s%% GDP") % PanelKit.Num.f(now["debt_to_gdp_pct"], 1), tr("%s%% GDP") % PanelKit.Num.f(proposed["debt_to_gdp_pct"], 1))
