@@ -28,6 +28,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const CK = preload("res://src/sim/chambers_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Division = preload("res://src/sim/division.gd")
 const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
 const Government = preload("res://src/sim/government.gd")
 
@@ -240,7 +241,8 @@ func _test_a_held_bill_is_in_flight() -> void:
 		_fail("no law in the content is both carried by the Assembly and refused by the Senat")
 		return
 
-	var result := Legislature.propose(state, _loader, law)
+	Legislature.propose(state, _loader, law)
+	var result := Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 	if not bool(result.get("held_by_upper", false)):
 		_fail("%s was not held: %s" % [law.id, result])
 		return
@@ -272,6 +274,7 @@ func _test_a_held_bill_arrives_on_its_own() -> void:
 	if law == null:
 		return
 	Legislature.propose(state, _loader, law)
+	Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 
 	# THE LAW'S OWN CHARGE IS SUBTRACTED OUT, which is what isolates the override.
 	# Read on "workers" as a bare before/after until the V2.8 review, and that law
@@ -309,7 +312,8 @@ func _test_a_blocked_bill_is_dead() -> void:
 	if law == null:
 		return
 	ns.upper_ordinary = CK.VERDICT_ABSOLUTE
-	var result := Legislature.propose(state, _loader, law)
+	Legislature.propose(state, _loader, law)
+	var result := Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 	if not bool(result.get("blocked_by_upper", false)):
 		_fail("an absolute chamber did not block: %s" % result)
 		return

@@ -49,6 +49,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 
 		var label := ""
 		var ok := false
+		var tabled := false  # V5.2 b+ R2: a booked law tabled today, settled at its division
 		var reason := ""  # the sim's refusal, for the day's card
 		match String(entry.get("kind", "")):
 			CalendarK.KIND_DIPLOMATIC:
@@ -67,7 +68,8 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 				var law = _law_by_id(loader, String(entry.get("law_id", "")))
 				if law != null:
 					var result := Legislature.propose(state, loader, law)
-					ok = bool(result.get("passed", false))
+					tabled = bool(result.get("tabled", false))
+					ok = tabled or bool(result.get("passed", false))
 					label = Strings.law_name(law)
 					# V5.2 b+ R2: the day's card carries the division, as a proposal's does.
 					reason = ProposalNote.body(result, loader.parties.get(String(state.player_nation_id), []))
@@ -85,7 +87,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 				reason = String(removal.get("error", ""))
 				label = Labels.portfolio(portfolio)
 
-		Calendar.resolve(state, Calendar.verb_key(entry), ok)
+		Calendar.resolve(state, Calendar.verb_key(entry), ok, tabled)
 
 		# V2.4b: a meeting that LANDED is the summit's trigger. Only the verb
 		# that opens a meeting brings a scene; a refused arrival is a journey

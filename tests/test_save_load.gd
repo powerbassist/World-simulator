@@ -50,6 +50,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Division = preload("res://src/sim/division.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Trade = preload("res://src/sim/trade.gd")
@@ -1515,7 +1516,8 @@ func _check_referendum_fields(loader) -> void:
 	if law == null:
 		_fail("single_term_reform is not in the law list, so the referendum round trip measures nothing")
 		return
-	var called := Legislature.propose(state, loader, law, false, true)
+	Legislature.propose(state, loader, law, false, true)
+	var called := Division.divide(state, loader)  # V5.2 b+ R2: tabled, then divided
 	if not bool(called.get("referendum_called", false)):
 		_fail("no referendum was called, so the referendum round trip measures nothing")
 		return
@@ -1876,6 +1878,7 @@ func _check_upper_house_fields(loader) -> void:
 		_fail("no law the Senat refuses, so the held-bill round trip measures nothing")
 		return
 	Legislature.propose(state, loader, law)
+	Division.divide(state, loader)  # V5.2 b+ R2: tabled, then divided
 	if not ns.held_bills.has(law.id):
 		_fail("the bill was not held, so the held-bill round trip measures nothing")
 		return

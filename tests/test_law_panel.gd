@@ -11,6 +11,7 @@ extends SceneTree
 const Legislature = preload("res://src/sim/legislature.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
+const Division = preload("res://src/sim/division.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -78,6 +79,7 @@ func _run() -> void:
 	# V4.2 T5: _on_propose opens the bill briefing; the division itself is
 	# run_proposal(), the verb the briefing's own button routes into.
 	_main._law_panel.run_proposal(law)
+	_divide()
 	_main._law_panel._process(0.0)
 
 	var text_after := _collect_text(_main._law_panel)
@@ -168,6 +170,7 @@ func _check_rebellion_is_forecast_and_named(loader, ns) -> void:
 	# V4.2 T5: _on_propose opens the bill briefing; the division itself is
 	# run_proposal(), the verb the briefing's own button routes into.
 	_main._law_panel.run_proposal(law)
+	_divide()
 	_main._law_panel._process(0.0)
 
 	var after := _collect_text(_main._law_panel)
@@ -223,6 +226,12 @@ func _collect_text(node) -> String:
 	for child in node.get_children():
 		out += _collect_text(child)
 	return out
+
+## V5.2 b+ R2: the tabled bill divides at the month's close -- through main's own
+## Division hook, so the division's card is the one the game pushes.
+func _divide() -> void:
+	var report := {"division": Division.divide(_main._state, _main._loader)}
+	_main._on_month_step("Division", true, report, _main._state.year, _main._state.month)
 
 
 func _fail(message: String) -> void:

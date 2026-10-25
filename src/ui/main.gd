@@ -1323,6 +1323,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 		return
 
 	match step:
+		"Division": ProposalNote.card_division(self, report)  # V5.2 b+ R2: the tabled bill's verdict
 		"Opinion":
 			# V4.1. The conclusions, as cards -- deliberately AFTER Opinion and not
 			# between the pair: the same-month guarantee is world_month.gd's, and
@@ -1353,8 +1354,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 						and bool(release_result.get("released", false)):
 					assembly_release = release_result.duplicate(true)
 			_month_capture["assembly_release"] = assembly_release
-		"Statute":
-			_assembly_news.announce(_month_capture.get("assembly_release", {}))
+		"Statute": _assembly_news.announce(_month_capture.get("assembly_release", {}))
 		"Defence":
 			_world_news.card_obligations(int(_month_capture.get("obliged_before", 0)))
 			# V1.3f: and now the nine act on their own initiative inside that tick,

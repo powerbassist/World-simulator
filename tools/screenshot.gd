@@ -154,6 +154,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Glossary = preload("res://src/ui/glossary.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Division = preload("res://src/sim/division.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -3116,7 +3117,8 @@ func _call_a_referendum() -> void:
 		printerr("--referendum: no amendment could be put to the country")
 		return
 
-	var result := Legislature.propose(state, _main._loader, law, false, true)
+	Legislature.propose(state, _main._loader, law, false, true)
+	var result := Division.divide(state, _main._loader)  # V5.2 b+ R2: tabled, then staged straight to its division
 	if not bool(result.get("referendum_called", false)):
 		printerr("--referendum: the assembly refused %s (%d of %d)" % [
 			law.id, int(result.get("yes_seats", 0)), int(result.get("seats_total", 0))
@@ -3151,7 +3153,8 @@ func _lose_the_senate() -> void:
 			continue
 		if bool(Legislature.resolve_upper(ns, party_list, law)["passed"]):
 			continue
-		var result := Legislature.propose(state, _main._loader, law)
+		Legislature.propose(state, _main._loader, law)
+		var result := Division.divide(state, _main._loader)  # V5.2 b+ R2: tabled, then staged straight to its division
 		if not bool(result.get("held_by_upper", false)) and not bool(result.get("blocked_by_upper", false)):
 			printerr("--senate: %s was not refused: %s" % [law.id, result])
 			return
@@ -3180,7 +3183,8 @@ func _lose_the_court() -> void:
 			continue
 		if not bool(Legislature.resolve_upper(ns, party_list, law)["passed"]):
 			continue
-		var result := Legislature.propose(state, _main._loader, law)
+		Legislature.propose(state, _main._loader, law)
+		var result := Division.divide(state, _main._loader)  # V5.2 b+ R2: tabled, then staged straight to its division
 		if not bool(result.get("struck_down", false)):
 			printerr("--court: %s was not struck down: %s" % [law.id, result])
 		return
@@ -3209,7 +3213,8 @@ func _reform_the_ballot() -> void:
 		return
 
 	var before: String = ns.election_system
-	var result := Legislature.propose(state, _main._loader, law, false)
+	Legislature.propose(state, _main._loader, law, false)
+	var result := Division.divide(state, _main._loader)  # V5.2 b+ R2: tabled, then staged straight to its division
 	if not bool(result.get("passed", false)):
 		printerr("--electoral: the assembly refused %s (%d of %d)" % [
 			law.id, int(result.get("yes_seats", 0)), int(result.get("seats_total", 0))

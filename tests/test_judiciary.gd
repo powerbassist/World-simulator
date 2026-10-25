@@ -27,6 +27,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const JK = preload("res://src/sim/judiciary_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Division = preload("res://src/sim/division.gd")
 const LegislatureK = preload("res://src/sim/legislature_constants.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const Law = preload("res://src/core/law.gd")
@@ -226,7 +227,8 @@ func _test_a_struck_bill_leaves_nothing_behind() -> void:
 
 	var before_offset: float = float(ns.bloc_offset.get("workers", 0.0))
 	var before_structural: float = ns.law_structural_offset_pct
-	var result := Legislature.propose(state, _loader, law)
+	Legislature.propose(state, _loader, law)
+	var result := Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 	if not bool(result.get("struck_down", false)):
 		_fail("%s was not struck: %s" % [law.id, result])
 		return

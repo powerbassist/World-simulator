@@ -13,6 +13,8 @@ extends SceneTree
 ## Driven a frame at a time -- a Control outside the scene tree has not run
 ## _ready(), so everything it builds is null. See docs/engine-decision.md.
 
+const Division = preload("res://src/sim/division.gd")
+
 var _failures: Array[String] = []
 var _main
 var _frame := 0
@@ -75,6 +77,10 @@ func _check_law_proposal_answers() -> void:
 	if _main._hud.inbox.card_count() != before_count + 1:
 		_fail("a proposed law pushed no acknowledgment card")
 		return
+	_divide()
+	if _main._hud.inbox.card_count() != before_count + 2:
+		_fail("the tabled law's division pushed no card")
+		return
 	var text := _stack_text()
 	if not text.contains(String(law.law_name).to_upper()):
 		_fail("the law card is not titled with the law: '%s'" % text)
@@ -128,6 +134,12 @@ func _collect_labels(node: Node) -> String:
 			out += child.get_parsed_text() + " "
 		out += _collect_labels(child)
 	return out
+
+## V5.2 b+ R2: the tabled bill divides at the month's close -- through main's own
+## Division hook, so the division's card is the one the game pushes.
+func _divide() -> void:
+	var report := {"division": Division.divide(_main._state, _main._loader)}
+	_main._on_month_step("Division", true, report, _main._state.year, _main._state.month)
 
 
 func _fail(msg: String) -> void:
