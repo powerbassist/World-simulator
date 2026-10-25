@@ -30,7 +30,7 @@ const President = preload("res://src/sim/president.gd")
 const KIND_LABEL := {
 	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
 	"union_leader": "Union leader", "press_owner": "Press owner",  # i18n: msgid
-	"judge": "Judge", "activist": "Activist",  # i18n: msgid
+	"judge": "Judge", "activist": "Activist", "executive": "Executive",  # i18n: msgid
 }
 
 const TRAIT_LABEL := {

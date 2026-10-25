@@ -291,8 +291,8 @@ func _person_row(ns, person) -> void:
 
 
 ## The affiliation line: the party the person sits in (override first, the
-## authored edge second), or the kind where there is no party -- a judge's
-## row says "judge" and not an empty string.
+## authored edge second), the party they lead, or the kind as a word where there
+## is no party -- a judge's row says "Judge" and not an empty string.
 func _party_or_kind_line(ns, person) -> String:
 	var party_id: String = String(ns.person_party_override.get(person.id, person.party_id))
 	if party_id != "":
@@ -300,7 +300,12 @@ func _party_or_kind_line(ns, person) -> String:
 			if p.id == party_id:
 				return String(p.party_name)
 		return party_id
-	return person.kind.replace("_", " ")
+	# QA on #143: a leader the data gives no party_id sits in the party they lead
+	# (Characters' read: the override, else the authored edge).
+	for p in _loader.parties.get(ns.id, []):
+		if Characters.party_leader(ns, p.id, {p.id: p.leader_person_id}) == String(person.id):
+			return String(p.party_name)
+	return tr(PersonCard.KIND_LABEL.get(person.kind, person.kind))
 
 
 ## One want's DERIVED satisfaction read, the machine's own (Characters.want_satisfied,
