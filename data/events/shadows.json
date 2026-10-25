@@ -155,6 +155,86 @@
       ]
     },
     {
+      "id": "exposure_press_favour",
+      "name": "The Backroom Arrangement",
+      "summary": "A weekend paper has pieced together a quiet arrangement, an appointment steered and a contract softened, and traces the favour to the president's office. It holds no documents, only three sources who agree on the dates and the names.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 2,
+      "cooldown_months": 0,
+      "respond_months": 3,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "press",
+        "kinds": [
+          "favour"
+        ],
+        "on_arrival": {
+          "bloc_offset": {
+            "workers": -0.037,
+            "pensioners": -0.037,
+            "urban": -0.037,
+            "rural": -0.037,
+            "business": -0.037,
+            "students": -0.037
+          }
+        }
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Explain the arrangement",
+          "summary": "You confirm the arrangement, explain why you thought it proper, and promise that such favours will be written down in future. It costs pride and a few allies but takes the secret away from the paper.",
+          "effects": {
+            "society": {
+              "corruption": -0.04
+            },
+            "bloc_offset": {
+              "urban": 0.035,
+              "students": 0.035,
+              "rural": -0.035,
+              "business": -0.012,
+              "pensioners": -0.012
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Call it a smear",
+          "summary": "You call the story a smear built on anonymous sources and question the paper's motives. Supporters rally, though a single document would turn the denial into the second story.",
+          "effects": {
+            "society": {
+              "corruption": 0.05
+            },
+            "bloc_offset": {
+              "rural": 0.035,
+              "pensioners": 0.023,
+              "business": 0.023,
+              "urban": -0.046,
+              "students": -0.035,
+              "workers": -0.012
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Let the sources talk",
+          "summary": "You say nothing and let the paper keep digging. It keeps digging.",
+          "default": true,
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.035,
+              "students": -0.029,
+              "rural": -0.017,
+              "pensioners": 0.012,
+              "business": 0.012
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "exposure_courts_personal_wealth",
       "name": "Magistrate's Summons",
       "summary": "An investigating magistrate has opened a preliminary case into payments made to the president personally and has summoned the president's accountants to testify. The palace learns of it from the court list.",
