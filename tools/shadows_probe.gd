@@ -388,6 +388,10 @@ func _summarize(rows: Array) -> Dictionary:
 			"offerer_requests_per_term": float(offerers) / maxf(1.0, float(s1.size()))}
 		out["bands"]["B6_once_10_30"] = pooled >= 0.10 and pooled <= 0.30
 		for kind in CURRENCIES:
+			if kind == "favour":
+				# #170's call 1 (Gameplay #171): a favour is found, less often than party money.
+				out["bands"]["B6_once_favour_above_0_below_party_money"] = float(rates[kind]) > 0.0 and float(rates[kind]) < float(rates["party_money"])
+				continue
 			out["bands"]["B6_once_%s_10_30" % kind] = float(rates[kind]) >= 0.10 and float(rates[kind]) <= 0.30
 		out["bands"]["B6_order"] = rates["favour"] < rates["party_money"] and rates["party_money"] < rates["personal_wealth"] \
 			and rates["personal_wealth"] < rates["diverted_budget"]

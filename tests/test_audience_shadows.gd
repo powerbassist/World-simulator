@@ -20,6 +20,7 @@ extends SceneTree
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const Levers = preload("res://src/sim/levers.gd")
+const Offers = preload("res://src/sim/offers.gd")
 const President = preload("res://src/sim/president.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
@@ -95,13 +96,21 @@ func _open_with_offer(kind: String) -> bool:
 	for person in _main._loader.people.get(String(ns.id), []):
 		if want.is_empty() and not person.wants.is_empty():
 			want = person.wants[0]
-	for person in _main._loader.people.get(String(ns.id), []):
-		if String(person.kind) != kind or not President.covers(state, ns, _main._loader, String(person.id)):
-			continue
-		Audiences._arrive(ns, person, person.wants[0] if not person.wants.is_empty() else want, now, [])
-		if not (ns.audience_requests[-1].get("offer", {}) as Dictionary).is_empty():
-			request = String(ns.audience_requests[-1]["id"])
-			_person = String(person.id)
+	# The draw is per person and month at OFFER_CHANCE (0.16 since c1b), so the premise
+	# walks forward to the first month one of them draws, and the game's clock with it.
+	for m in range(now, now + 60):
+		for person in _main._loader.people.get(String(ns.id), []):
+			if String(person.kind) != kind or not President.covers(state, ns, _main._loader, String(person.id)) \
+					or Offers.offer_for(ns, person, m).is_empty():
+				continue
+			state.year = (m - 1) / 12
+			state.month = (m - 1) % 12 + 1
+			Audiences._arrive(ns, person, person.wants[0] if not person.wants.is_empty() else want, m, [])
+			if not (ns.audience_requests[-1].get("offer", {}) as Dictionary).is_empty():
+				request = String(ns.audience_requests[-1]["id"])
+				_person = String(person.id)
+			break
+		if request != "":
 			break
 	if request == "":
 		_fail("premise: no %s request came with an offer" % kind)

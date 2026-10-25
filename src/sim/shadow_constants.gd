@@ -68,10 +68,11 @@ const OFFER_KINDS := {
 	"regional_figure": ["party_money"], "politician": ["party_money"],
 }
 ## The chance a request from one of them comes with an offer. B6 wants 2 to 6
-## offers reaching the president a term; at France's 0.19 requests per offerer a
-## term, (17 + 32) offerers x 0.19 x 0.5 is about 4.7 (Gameplay #171, INFERRED).
-## At most 0.5, the author's call: money is the exception, not every request.
-const OFFER_CHANCE := 0.5
+## offers reaching the president a term, the author "about 5" ("Environ 5, sources
+## variées") at a chance of at most 0.5. Gameplay #171 inferred 0.19 requests per
+## offerer a term (4.7 offers at 0.5); the shadows probe measured 30.2 requests a
+## term from the 49 offerers (S1, 200 seeds), 15.4 offers at 0.5 -- so 0.16, about 5.
+const OFFER_CHANCE := 0.16
 ## What an offer is worth, EUR millions, and the evidence each million leaves: one
 ## act of evidence size 1, the size RATE above is set at.
 const OFFER_EUR_M := 1.0
@@ -86,9 +87,12 @@ const SALT_OFFER := "offer"
 ## What each leaves: backroom, a person who knows (the spec's "favours"); aid, a gap
 ## in a spending line (the spec's "diverted budget"), the largest trail.
 const CURRENCY_EVIDENCE := {LK.CURRENCY_BACKROOM: "favour", LK.CURRENCY_AID: "diverted_budget"}
-## What each adds to a bargain's odds, the more exposed buying more. STARTING
-## values: lever_probe L2 prices them at their expected cost (B5's amendment).
-const CURRENCY_ODDS := {LK.CURRENCY_BACKROOM: 0.10, LK.CURRENCY_AID: 0.20}
+## What each adds to a bargain's odds, the more exposed buying more. lever_probe L2
+## prices them at their expected cost (B5's amendment). Backroom came down from 0.10
+## to 0.03 at #170's call 1 (Gameplay #171), once the press made a favour findable:
+## its expected price is 0.016 asks (S1's 3.5 % x the scandal's 0.46), and at 0.03 it
+## is best in 37 % of L2's cells, under B5's 40 % (0.04 and 0.05 gave 45 %).
+const CURRENCY_ODDS := {LK.CURRENCY_BACKROOM: 0.03, LK.CURRENCY_AID: 0.20}
 ## Every corrupt bargain leaves one act of evidence (the S1 size).
 const ACT_EVIDENCE := 1.0
 
