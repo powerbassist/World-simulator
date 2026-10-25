@@ -27,6 +27,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --empty-chest --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip approval:1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open outliner
@@ -297,6 +298,10 @@ var _programme := ""
 ## efforts into the field through Campaign.execute(), and ticks again so the
 ## mobilisation has accrued and the bill has been billed.
 var _campaign := false
+## V5.2 C6, with --campaign: the governing party's chest emptied once the efforts are in
+## the field, then one month run, so the frame shows the efforts stopped for money (the
+## one inbox note) and every start disabled with its reason.
+var _empty_chest := false
 ## V1.7b, and --campaign's argument in its harder form. A pledge register is empty for
 ## every game that has not promised anything, AND a promise that has been made but not
 ## yet broken renders identically to no promise at all on the row that matters. So the
@@ -820,6 +825,8 @@ func _init() -> void:
 			_consequence = true
 		elif args[i] == "--campaign":
 			_campaign = true
+		elif args[i] == "--empty-chest":
+			_empty_chest = true
 		elif args[i] == "--pledge":
 			_pledge = true
 		elif args[i] == "--referendum":
@@ -1199,6 +1206,8 @@ func _apply_view() -> void:
 	# field -- rather than ticking past the staged run-up to find a demonstration.
 	if _campaign:
 		_open_the_campaign()
+		if _empty_chest:
+			_empty_the_chest()
 	if _site:
 		_site_the_demonstration()
 	if _city:
@@ -3529,3 +3538,16 @@ func _stage_front_page(mode: String) -> void:
 		]}
 	_main._clock.paused = true
 	_main._hud.front_page.show_entry(entry, _main._state, _main._loader, _main._clock)
+
+
+## --empty-chest: the governing party's money set just under nothing through the sim's
+## own writer, then a month, so Campaign.tick_month() stops what runs.
+func _empty_the_chest() -> void:
+	const PartyMoney = preload("res://src/sim/party_money.gd")
+	const President = preload("res://src/sim/president.gd")
+	var ns = _main._state.player()
+	President.adjust_party_money_eur_m(ns, _main._loader, String(ns.incumbent_party_id),
+		-0.5 - PartyMoney.money_eur_m(ns, _main._loader))
+	_tick_months(1)
+	_main._clock.paused = true
+	_main._campaign_panel.mark_dirty()

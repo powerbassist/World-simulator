@@ -156,6 +156,11 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 	# setup() after add_child(): _ready() has to have run or everything the page
 	# builds is null and the content lands under nothing. AGENTS.md's gotcha.
 	page.setup(content)
+	# A panel that still builds its own Close (from before U2 docked them) loses it: the
+	# frame's X is the real one, and two on one panel is worse than either. main.gd
+	# called hide_close_button() after each of its 18 registrations until V5.2 C6.
+	if content.has_method("hide_close_button"):
+		content.hide_close_button()
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.hide()
 	_pages[id] = page
