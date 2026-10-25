@@ -40,8 +40,15 @@ static func build(body: Control, ns, loader) -> void:
 ## An offer's price, its reach, and -- before the start -- how many months the chest
 ## pays at the rate with this effort added to what runs (section 3: the start checks one
 ## month of the new effort alone, so this is where the player sees the shorter run).
+## An effort that ran this run-up and stopped, by the player or for money, cannot start
+## again before the vote (Campaign._op_legal(): one run per window), so it gets no
+## forecast -- a months line there read as an invitation to a start that does not exist
+## (QA's TAKE on #184) -- and says why it has no button.
 static func offer_lines(block: Control, ns, loader, effort_id: String, reach: String) -> void:
 	PanelKit.line(block, Strings.t("€%s m · %s") % [Num.f(Campaign.price_eur_m(ns, loader, effort_id), 2), reach])
+	if Campaign.has_started(ns, effort_id) and not Campaign.is_running(ns, effort_id):
+		PanelKit.line(block, Strings.t("Already used: one run per run-up."))
+		return
 	var months := Campaign.months_payable(ns, loader, effort_id)
 	PanelKit.line(block, Strings.tn("With this added, the chest lasts %d month.", "With this added, the chest lasts %d months.", months) % months)
 
@@ -85,7 +92,7 @@ static func note_stopped(inbox, stopped: Array, state, loader) -> String:
 	if names.is_empty() or inbox == null:
 		return ""
 	var ns = state.player()
-	var body := Strings.tn("The party could not pay this month, so one effort stopped: %s. What it bought stays.", "The party could not pay this month, so these efforts stopped: %s. What they bought stays.", names.size()) % "; ".join(names)
+	var body := Strings.tn("The party could not pay this month, so one effort stopped: %s. What it bought stays, but it cannot run again before the vote.", "The party could not pay this month, so these efforts stopped: %s. What they bought stays, but they cannot run again before the vote.", names.size()) % "; ".join(names)
 	body += " " + Strings.t("The party has %s.") % _eur(PartyMoney.money_eur_m(ns, loader))
 	return inbox.push(Strings.t("Campaign stopped"), body)
 

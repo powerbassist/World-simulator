@@ -60,9 +60,11 @@ func _process(_delta: float) -> bool:
 			_check_unpayable()
 			_check_refusal_said()
 			_set_money(1000.0)
+			_run_and_stop(_starts[0])
 			_panel.mark_dirty()
 		9:
 			_check_payable()
+			_check_spent_offer()
 			_check_stopped_note()
 			return _finish()
 	return false
@@ -154,6 +156,29 @@ func _check_payable() -> void:
 			_fail("'%s' is still disabled with a full chest: '%s'" % [pair[0].text, pair[0].tooltip_text])
 	if not _texts(_panel).contains("With this added, the chest lasts"):
 		_fail("an offer does not say how long the chest pays with it added")
+
+
+## One effort put in the field through the sim, then stopped the way a money stop
+## stops it (Campaign.tick_month(): out of campaign_running, still in campaign_started).
+func _run_and_stop(action) -> void:
+	var result: Dictionary = Campaign.execute(_main._state, _ns, _main._loader, action, _panel._site_region)
+	if not result.get("applied", false):
+		_fail("could not start an effort with a full chest: %s" % result)
+		return
+	var eid := String(action.effects["campaign"]["effort_id"])
+	_ns.campaign_running.erase(eid)
+	_ns.campaign_sites.erase(eid)
+
+
+## QA's TAKE on #184: an effort that ran this run-up and stopped can never start again
+## before the vote, so its offer has no months forecast and says it is spent.
+func _check_spent_offer() -> void:
+	var text := _texts(_panel)
+	if text.count("Already used: one run per run-up.") != 1:
+		_fail("the stopped effort does not say it is spent: '%s'" % text)
+	var forecasts := text.count("With this added, the chest lasts")
+	if forecasts != _starts.size() - 1:
+		_fail("%d offers carry a months forecast; the spent one must not (%d starts)" % [forecasts, _starts.size()])
 
 
 func _check_stopped_note() -> void:
