@@ -21,6 +21,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
 const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
+const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -195,26 +196,11 @@ func _text(node: Node) -> String:
 	return out
 
 
-## Windowed, the real OS cursor is an input too: a motion of it between the
-## pushed press and release moves BaseButton's pressing_inside off the button and
-## the release clicks nothing (QA: 1 run in 2 failed windowed). So the cursor is
-## put on the button, and a motion there pushed, before each half of the click.
+## Half a click on the target, the OS cursor pinned to it (tests/click.gd).
 func _press(down: bool) -> void:
 	if _target == null:
 		return
-	var at: Vector2 = _target.get_global_rect().get_center()
-	var viewport: Viewport = _main.get_viewport()
-	viewport.warp_mouse(at)
-	var move := InputEventMouseMotion.new()
-	move.position = at
-	move.global_position = at
-	viewport.push_input(move, true)
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = down
-	click.position = at
-	click.global_position = at
-	viewport.push_input(click, true)
+	Click.half(_main.get_viewport(), _target, down)
 
 
 func _fail(message: String) -> void:

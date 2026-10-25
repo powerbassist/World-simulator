@@ -17,6 +17,7 @@ extends SceneTree
 const Inbox = preload("res://src/ui/inbox.gd")
 
 const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
+const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -144,13 +145,7 @@ func _press(down: bool) -> void:
 	if _target == null or not _target.is_visible_in_tree():
 		_fail("no More button on screen to click")
 		return
-	var at: Vector2 = _target.get_global_rect().get_center()
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = down
-	click.position = at
-	click.global_position = at
-	_main.get_viewport().push_input(click, true)
+	Click.half(_main.get_viewport(), _target, down)
 
 
 func _fail(message: String) -> void:
