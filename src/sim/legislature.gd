@@ -52,6 +52,9 @@ const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
+## V5.2 b+ R14: every bill, one lookup (the authored list, the composed register,
+## the ownership bills built from content).
+const Bills = preload("res://src/sim/bills.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -161,7 +164,7 @@ static func tick_month(state, loader) -> void:
 ## referendum's; what happens to the bill is charged HERE, because a law passing is
 ## this file's job and always has been.
 static func _settle_referendum(state, ns, loader, verdict: Dictionary) -> void:
-	var law = _law_by_id(loader, String(verdict.get("law_id", "")))
+	var law = Bills.by_id(loader, String(verdict.get("law_id", "")))
 	# The constitution can change while the country votes (V5.0d): a law it no
 	# longer allows lapses, the held-bill release's rule below.
 	if law == null or not _constitution_allows(ns, law):
@@ -216,7 +219,7 @@ static func _tick_held_bills(state, ns, loader) -> void:
 		# The origin is read BEFORE the erase -- it is the charge's gate below.
 		var origin: String = String(ns.held_bills[law_id].get("origin", "player"))
 		ns.held_bills.erase(law_id)
-		var law = _law_by_id(loader, String(law_id))
+		var law = Bills.by_id(loader, String(law_id))
 		if law == null:
 			# A composed law is not in loader.laws -- the register it lives on
 			# is ns.custom_laws, rebuilt through the core factory (the same
@@ -413,15 +416,6 @@ static func resolve_upper(ns, party_list: Array, law) -> Dictionary:
 		"abstain_seats": abstain_seats,
 		"seats_total": seats_total,
 	}
-
-
-static func _law_by_id(loader, law_id: String):
-	if loader == null or law_id == "":
-		return null
-	for law in loader.laws:
-		if law.id == law_id:
-			return law
-	return null
 
 
 ## Every law from `all_laws` currently proposable against `ns`: preconditions
@@ -916,7 +910,7 @@ static func ledger_of(ns, law_id: String) -> Dictionary:
 static func repeal_target_legal(ns, loader, law_id: String) -> bool:
 	if not ns.law_ledger.has(law_id):
 		return false
-	var target = _law_by_id(loader, law_id)
+	var target = Bills.by_id(loader, law_id)
 	if target == null:
 		return true
 	return not target.constitutional and not target.effects.has("institutional")
@@ -994,7 +988,7 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 	# apply() header's own rule ("a repealed act sits out its cooldown before
 	# it can be re-proposed") failed for the one class of law this block
 	# introduced.
-	var target = _law_by_id(loader, law_id)
+	var target = Bills.by_id(loader, law_id)
 	if target == null:
 		for composed in Law.composed_register(ns):
 			if String(composed.id) == law_id:
@@ -1107,6 +1101,10 @@ static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 	# removes whole acts or nothing, it never moves a register partway, so easing a
 	# sector stays the signed channel's job. One clamp, on the accumulated value --
 	# the two channels companies.gd reads it through carry their own.
+	# V5.2 b+ R14: an adopted ownership bill runs its verb through the law's door
+	# (src/sim/bills.gd): the price on the debt and the act's own bloc_offset, once.
+	if effects.has("company_ownership"):
+		Bills.adopt(state, ns, loader, effects["company_ownership"])
 	if effects.has("company"):
 		var sector: String = String(effects["company"]["sector"])
 		var burden: float = float(effects["company"]["burden"])
@@ -1299,7 +1297,7 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	# one would refuse the player's own bill as unavailable, which is both a
 	# wrong verdict and the loss of the double-application guard this scan
 	# exists to keep (an unfound law is an unchecked law).
-	for open_law in available(ns, loader.laws + Law.composed_register(ns)):
+	for open_law in available(ns, Bills.open(state, ns, loader)):
 		if open_law.id == law.id:
 			legal = true
 			break
