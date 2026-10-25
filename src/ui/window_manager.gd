@@ -236,12 +236,12 @@ func open_ids() -> Array:
 	return ids
 
 
-## The tab's page: its scroll, its content and its fold mark.
 ## The panel registered as `id`, or null.
 func content(id: String) -> Control:
 	return _pages[id]._content if _pages.has(id) else null
 
 
+## The tab's page: its scroll, its content and its fold mark.
 func frame(id: String):
 	return _pages.get(id, null)
 

@@ -18,6 +18,7 @@ extends PanelContainer
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Bills = preload("res://src/sim/bills.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Law = preload("res://src/core/law.gd")
@@ -605,18 +606,17 @@ func _on_force(law) -> void:
 
 
 func _find_law(law_id: String):
-	for law in _loader.laws:
-		if law.id == law_id:
-			return law
+	# R14: Bills.by_id -- an authored law, or an ownership bill rebuilt from its id.
+	var found = Bills.by_id(_loader, law_id)
 	# V4.2 ultra pass 2: a composed law lives on the register, not the loader --
 	# the briefing's _repeal_line idiom. Without the fallback every held bill,
 	# referendum and result summary for a composed law printed the raw
 	# draft_NNNN id on the panel that lists the laws.
-	if _state != null and _state.player() != null:
+	if found == null and _state != null and _state.player() != null:
 		for law in Statute.custom_laws(_state.player()):
 			if String(law.id) == law_id:
-				return law
-	return null
+				found = law
+	return found
 
 
 ## Remembers the first enabled verb built since the last refresh, in build order.

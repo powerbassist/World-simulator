@@ -32,6 +32,7 @@ const Projects = preload("res://src/sim/projects.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Bills = preload("res://src/sim/bills.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
 const AudienceBooking = preload("res://src/ui/audience_booking.gd")
@@ -620,8 +621,7 @@ func _month_at(offset: int) -> Dictionary:
 ## --- naming ----------------------------------------------------------------
 
 func _nation_name(id: String) -> String:
-	var n = _loader.nations.get(id)
-	return String(n.nation_name) if n != null else id
+	return String(_loader.nations[id].nation_name) if _loader.nations.has(id) else id
 
 
 ## Whom a state visit to `nation_id` actually meets. Resolved at BOOKING time
@@ -639,7 +639,7 @@ func _action_name(id: String) -> String:
 
 
 func _law_name(id: String) -> String:
-	return Strings.law_name(_loader.laws.filter(func(l): return String(l.id) == id).front(), id)
+	return Strings.law_name(Bills.by_id(_loader, id), id)
 
 
 func _party_name(id: String) -> String:

@@ -11,6 +11,15 @@ extends RefCounted
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
+const Bills = preload("res://src/sim/bills.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
+
+
+## The firm's ownership bills the player may table now: Legislature.available's
+## gates (a lost vote's cooldown, a once-only bill) on top of the verb's own, the
+## filter the Legislature's list reads, so no button opens a briefing that refuses.
+static func ready_bills(state, ns, loader, company_id: String) -> Array:
+	return Legislature.available(ns, Bills.ownership(state, ns, loader, company_id))
 
 
 static func make(loader, bill) -> Button:

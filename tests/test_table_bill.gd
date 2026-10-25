@@ -50,6 +50,15 @@ func _process(_delta: float) -> bool:
 			var briefing = _main._briefing
 			if not briefing.is_visible_in_tree() or briefing._law == null or String(briefing._law.id) != String(_bill.id):
 				_fail("'Table a bill' did not open the bill's briefing")
+			briefing.hide()
+			# A lost vote's cooldown: the bill is not proposable, so it is not offered
+			# (the Legislature's own list reads Legislature.available the same way).
+			_main._state.player().law_cooldown_months[String(_bill.id)] = 6
+			_main._companies_panel.mark_dirty()
+		15:
+			for b in _main._companies_panel.find_children("TableBill", "Button", true, false):
+				if String(b.get_meta("law_id", "")) == String(_bill.id):
+					_fail("a bill under its cooldown is still offered as 'Table a bill'")
 			return _end()
 	return false
 
@@ -81,6 +90,12 @@ func _check_names() -> void:
 		_fail("an ownership bill's name under fr reads '%s', not the verb's own row '%s'" % [got, want])
 	if _main._assembly_news._law_by_id(String(_bill.id)) == null or DiaryDriver._law_by_id(_main._loader, String(_bill.id)) == null:
 		_fail("the assembly's cards or the Diary cannot find an ownership bill by its id")
+	# The Legislature (result, held bill, referendum) and the Diary's own rows name
+	# the bill, never its raw id.
+	if _main._law_panel._find_law(String(_bill.id)) == null:
+		_fail("the Legislature cannot find an ownership bill by its id")
+	if _main._calendar_panel._law_name(String(_bill.id)) != Strings.law_name(_bill):
+		_fail("the Diary names an ownership bill '%s'" % _main._calendar_panel._law_name(String(_bill.id)))
 
 
 func _press(down: bool) -> void:

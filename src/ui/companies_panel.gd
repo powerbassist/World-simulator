@@ -37,7 +37,6 @@ signal acted(before, label)
 const Labels = preload("res://src/ui/labels.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const Bills = preload("res://src/sim/bills.gd")
 const BillButton = preload("res://src/ui/bill_button.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -506,7 +505,7 @@ func _build_firm(ns, company) -> void:
 		buttons.add_child(_action_button(ns, company, action))
 	# R14: owning a firm is a law's to decide (Bills): each ready bill is tabled
 	# through the Legislature's briefing, the one propose path (bill_button.gd).
-	for bill in Bills.ownership(_state, ns, _loader, String(company.id)):
+	for bill in BillButton.ready_bills(_state, ns, _loader, String(company.id)):
 		buttons.add_child(BillButton.make(_loader, bill))
 
 	_body.add_child(block)
