@@ -132,7 +132,7 @@ func _run(regime: String, s: int, real_kind := "") -> Dictionary:
 	var revealed_at_date := 0
 	var hook := func(step: String, after: bool, _report: Dictionary) -> void:
 		if step == "Audiences" and after and regime == "S1" and not act.is_empty() and real_kind == "":
-			_roll_hypothetical(state, ns, act, hits, trace, s)
+			_roll_hypothetical(state, ns, act, hits, trace)
 	for i in range(MONTHS):
 		var month := i + 1
 		state.year = 2026 + i / 12
@@ -236,23 +236,27 @@ func _fire_act(state, ns, month: int, booked: String, real_kind: String) -> Dict
 
 
 ## S1: each currency not yet found, as a frozen row, rolled exactly as the machine
-## rolls a lone row -- routes in order, the first hit its exposure.
-func _roll_hypothetical(state, ns, act: Dictionary, hits: Dictionary, trace: Array, s: int) -> void:
+## rolls a lone row -- routes in order, the first hit its exposure. Tracing keeps
+## rolling past the hit, so a lower RATE can be re-priced from the same rows.
+func _roll_hypothetical(state, ns, act: Dictionary, hits: Dictionary, trace: Array) -> void:
 	var now := _now(state)
 	for kind in CURRENCIES:
-		if hits.has(kind):
+		if hits.has(kind) and not _trace:
 			continue
 		var row := {"kind": kind, "person_id": act["person_id"], "size": SC.ACT_EVIDENCE,
 			"month": int(act["month"]), "leader_id": act["leader_id"]}
 		ns.exposure_evidence.append(row)
 		for route in SC.ROUTES:
 			var x := Exposure.pressure(state, ns, _loader, route)
+			if x <= 0.0:
+				continue
 			var u := Exposure.roll(ns, route, now)
-			if _trace and x > 0.0:
+			if _trace:
 				trace.append([kind, now, route, u, x])
-			if x > 0.0 and u < Exposure.hazard(state, ns, _loader, route):
-				hits[kind] = {"month": int(state.month) + (int(state.year) - 2026) * 12, "route": route}
-				break
+			if not hits.has(kind) and u < Exposure.hazard(state, ns, _loader, route):
+				hits[kind] = {"month": now - 2026 * 12, "route": route}
+				if not _trace:
+					break
 		ns.exposure_evidence.pop_back()
 
 
