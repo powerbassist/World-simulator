@@ -38,6 +38,7 @@ func _init() -> void:
 	_check_currency_order()
 	_check_former_leader_rows_not_rolled()
 	_check_arms_the_event()
+	_check_on_arrival_applies_once()
 	_finish()
 
 
@@ -238,6 +239,49 @@ func _check_arms_the_event() -> void:
 			on_desk = on_desk or String(entry.get("event_id", entry.get("id", ""))) == armed_id
 		if not on_desk:
 			_failures.append("the game's month did not deliver the armed scandal")
+	_loader.events.erase(ev)
+
+
+
+## Gameplay's scandal floor (B5, #161): an exposure's price belongs to its arrival,
+## not to an answer -- the block's `on_arrival` effects land once, through the
+## applier, the month the evidence is found, whatever the player later answers.
+func _check_on_arrival_applies_once() -> void:
+	var errors: Array[String] = []
+	var ev = GameEvent.from_dict({
+		"id": "probe_arrival_exposure", "name": "Probe", "summary": "A probe.", "likelihood": 0.002,
+		"respond_months": 2, "category": "scandal", "severity": 2, "on_action": "exposure",
+		"exposure": {"route": "auditors", "kinds": ["party_money"], "on_arrival": {"bloc_offset": {"workers": -0.05}}},
+		"choices": [
+			{"id": "a", "label": "A", "summary": "A.", "default": true, "effects": {"bloc_offset": {"business": -0.02}}},
+			{"id": "b", "label": "B", "summary": "B.", "effects": {"bloc_offset": {"workers": -0.02}}},
+		],
+	}, "probe.json", errors, [], [], OpinionK.BLOC_KEYS, [])
+	if not errors.is_empty() or (ev.exposure_on_arrival as Dictionary).is_empty():
+		_failures.append("an on_arrival block did not load: %s" % [errors])
+		return
+	_loader.events.push_front(ev)
+	var state = _state()
+	var ns = state.player()
+	President.leave_evidence(state, ns, _loader, "party_money", _person(), 400.0)
+	var before := float(ns.bloc_offset.get("workers", 0.0))
+	var hit_month := -1
+	for m in range(60):
+		_advance(state)
+		for row in Exposure.tick_month(state, _loader):
+			if String(row["event_id"]) == "probe_arrival_exposure":
+				hit_month = m
+		if hit_month >= 0:
+			break
+	if hit_month < 0:
+		_failures.append("fixture: 60 months at the auditors' ceiling exposed nothing")
+	elif not is_equal_approx(float(ns.bloc_offset.get("workers", 0.0)) - before, -0.05):
+		_failures.append("on_arrival moved workers by %.3f, not -0.05" % (float(ns.bloc_offset.get("workers", 0.0)) - before))
+	else:
+		_advance(state)
+		Exposure.tick_month(state, _loader)
+		if not is_equal_approx(float(ns.bloc_offset.get("workers", 0.0)) - before, -0.05):
+			_failures.append("on_arrival landed again the month after")
 	_loader.events.erase(ev)
 
 

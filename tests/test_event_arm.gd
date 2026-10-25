@@ -128,6 +128,13 @@ func _check_exposure_block_validated() -> void:
 			_exposure("auditors", []), _exposure("courts", ["diverted_budget"], "law_passed")]:
 		if _errors_of(bad).is_empty():
 			_failures.append("a malformed exposure block loaded: %s" % [bad["exposure"]])
+	var arrival := _exposure("press", ["affair"])
+	arrival["exposure"]["on_arrival"] = {"bloc_offset": {"workers": -0.03}}
+	if not _errors_of(arrival).is_empty():
+		_failures.append("a valid on_arrival block was refused: %s" % [_errors_of(arrival)])
+	arrival["exposure"]["on_arrival"] = {"no_such_channel": 1.0}
+	if _errors_of(arrival).is_empty():
+		_failures.append("an on_arrival naming no effect channel loaded")
 	var no_block := _exposure("press", ["affair"])
 	no_block.erase("exposure")
 	if _errors_of(no_block).is_empty():
