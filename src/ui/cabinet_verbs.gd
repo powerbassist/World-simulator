@@ -179,8 +179,11 @@ func _price(portfolio: String) -> String:
 		parts.append(Strings.t("%s, its leader: %s.") % [_loader.person_name(leader), ", ".join(feel)])
 	elif leader == President.leader_id(ns):
 		parts.append(Strings.t("Its leader is your own: no grudge, but the party still feels the loss."))
+	# Cabinet.loyalty is read by the ministers' resignation check (cabinet.gd), not by
+	# a division: rebels come from the party's discipline (QA on #155). Say what
+	# the sim does; the rebels line waits for Systems' Assembly consequence.
 	if float(price["loyalty_after"]) < float(price["loyalty_before"]) - 1e-9:
-		parts.append(Strings.t("%s grows less loyal to the government: more of its seats may break ranks.") % _name(String(price["party_id"])))
+		parts.append(Strings.t("%s grows less loyal to the government: its ministers are likelier to resign.") % _name(String(price["party_id"])))
 	return " ".join(parts)
 
 
