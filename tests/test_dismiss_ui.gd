@@ -67,6 +67,10 @@ func _process(_delta: float) -> bool:
 					party_name = String(p.party_name)
 			if not text.contains(party_name) or not text.contains(_main._loader.person_name(_leader)) or not text.contains("they will be"):
 				_fail("the card does not name the party, its leader and their feeling after: %s" % text)
+			# QA's TAKE on #155: Cabinet.loyalty feeds the ministers' resignation check,
+			# not a division's rebels (ns.party_discipline does) -- the card says so.
+			if text.contains("break ranks") or not text.contains("likelier to resign"):
+				_fail("the card promises an effect the sim does not have: %s" % text)
 			if String(ns.cabinet[_portfolio]) != _party:
 				_fail("the click dismissed before the card was answered")
 			# The clock runs behind the card: the leader's feeling changes under it
