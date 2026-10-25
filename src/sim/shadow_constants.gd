@@ -59,9 +59,13 @@ const PRESS_GRUDGE_HOSTILE := ActK.GRUDGE_BRIEF_THRESHOLD
 ## Who comes with money, and which (the spec's currencies table): an executive to
 ## the president or to the party; a press owner to the president alone.
 const OFFER_KINDS := {"executive": ["party_money", "personal_wealth"], "press_owner": ["personal_wealth"]}
-## The chance a request from one of them comes with an offer. STARTING value: B6
-## wants 2 to 6 offers reaching the president a term; the shadows probe sets it.
-const OFFER_CHANCE := 0.25
+## The chance a request from one of them comes with an offer. B6 wants 2 to 6
+## offers reaching the president a term, and the shadows probe's first pass
+## (2026-10-25, 50 seeds) measured only 2.26 requests a term from executives and
+## press owners: at the starting 0.25 that was 0.72 offers a term. So every one of
+## their requests comes with money -- the band's own floor, reached only at 1.0;
+## widening OFFER_KINDS instead is Gameplay's call.
+const OFFER_CHANCE := 1.0
 ## What an offer is worth, EUR millions, and the evidence each million leaves: one
 ## act of evidence size 1, the size RATE above is set at.
 const OFFER_EUR_M := 1.0
@@ -110,9 +114,11 @@ const ENEMY_GRUDGE := ActK.GRUDGE_BRIEF_THRESHOLD
 const SPARK_CHANCE := 0.25
 const AFFAIR_RAPPORT_MIN := 0.30
 const SALT_SPARK := "spark"
-## Evidence an affair leaves each month it lasts. STARTING value: B7 wants one kept
-## 24 months exposed by month 60 in 25-50 % of runs; the shadows probe sets it.
-const AFFAIR_EVIDENCE_PER_MONTH := 0.05
+## Evidence an affair leaves each month it lasts. B7 wants one kept 24 months
+## exposed by month 60 in 25-50 % of runs; the first pass measured 62 % at the
+## starting 0.05, most of it the lover turning after it ended, so 0.03 (the turned
+## hazard scales with the size the affair left).
+const AFFAIR_EVIDENCE_PER_MONTH := 0.03
 ## Ending it costs the lover's regard: from just past close, enough to make a rival
 ## who can talk (the turned route). OPINION, a starting value.
 const AFFAIR_END_RAPPORT := 0.70
