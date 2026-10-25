@@ -181,8 +181,9 @@ func _price(portfolio: String) -> String:
 		parts.append(Strings.t("Its leader is your own: no grudge, but the party still feels the loss."))
 	# Cabinet.loyalty is read by the ministers' resignation check (cabinet.gd), not by
 	# a division: rebels come from the party's discipline (QA on #155). Say what
-	# the sim does; the rebels line waits for Systems' Assembly consequence.
-	if float(price["loyalty_after"]) < float(price["loyalty_before"]) - 1e-9:
+	# the sim does; the rebels line waits for Systems' Assembly consequence. A party
+	# with no minister left (`others` 0, QA on #162) has no one left to resign.
+	if float(price["loyalty_after"]) < float(price["loyalty_before"]) - 1e-9 and int(price.get("others", 0)) > 0:
 		parts.append(Strings.t("%s grows less loyal to the government: its ministers are likelier to resign.") % _name(String(price["party_id"])))
 	return " ".join(parts)
 
