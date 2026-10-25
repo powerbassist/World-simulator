@@ -84,8 +84,9 @@ func _process(_delta: float) -> bool:
 			var ns = _main._state.player()
 			if String(ns.cabinet.get(_portfolio, "")) != "":
 				_fail("Dismiss on the card did not vacate %s" % _portfolio)
-			if not str(_main._pending_effects).contains("Cabinet reassigned"):
-				_fail("the dismissal did not reach main's effect queue")
+			# Titled as what happened (the parent's call 3): nothing was reassigned.
+			if not str(_main._pending_effects).contains("Minister dismissed") or str(_main._pending_effects).contains("Cabinet reassigned"):
+				_fail("the dismissal did not reach main's effect queue as a dismissal: %s" % [_main._pending_effects])
 			_verbs.select_portfolio(_portfolio)
 			_target = _verbs.find_child("Dismiss", true, false) as Control
 			_press(true)

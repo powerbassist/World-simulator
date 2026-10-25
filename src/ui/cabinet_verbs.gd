@@ -13,7 +13,8 @@ extends VBoxContainer
 ##
 ## Reads sim state; the commands are Removal's.
 
-signal reassigned(before: Dictionary)
+## `title` names the effect card: what happened, a reassignment or a dismissal.
+signal reassigned(before: Dictionary, title: String)
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -122,7 +123,7 @@ func _on_reassign() -> void:
 	var run := func() -> Dictionary: return Removal.reassign(_state, _loader, portfolio, party_id)
 	var from := String(_state.player().cabinet.get(portfolio, ""))
 	if from == "" or from == party_id:
-		_act(run)
+		_act(run, tr("Cabinet reassigned"))
 		return
 	_ask(portfolio, party_id, Strings.t("Give %s to %s, taking it from %s?") % [Labels.portfolio(portfolio), _name(party_id), _name(from)], tr("Reassign"), run)
 
@@ -148,7 +149,7 @@ func _ask(portfolio: String, party_id: String, question: String, yes: String, ru
 		if _confirm == null:
 			return
 		_confirm.confirmed.connect(_on_yes)
-	_asked = {"portfolio": portfolio, "question": question, "yes": yes, "run": run, "text": "%s %s" % [question, _price(portfolio)]}
+	_asked = {"portfolio": portfolio, "party_id": party_id, "question": question, "yes": yes, "run": run, "text": "%s %s" % [question, _price(portfolio)]}
 	_confirm.ask(String(_asked["text"]), yes)
 
 
@@ -160,7 +161,7 @@ func _on_yes() -> void:
 		_asked["text"] = now
 		_confirm.ask(now, String(_asked["yes"]))
 		return
-	_act(_asked["run"])
+	_act(_asked["run"], tr("Minister dismissed") if String(_asked["party_id"]) == "" else tr("Cabinet reassigned"))
 
 
 ## The leader's feeling after the pulse (R11's words) and the party's loyalty.
@@ -183,7 +184,7 @@ func _price(portfolio: String) -> String:
 	return " ".join(parts)
 
 
-func _act(run: Callable) -> void:
+func _act(run: Callable, title: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result: Dictionary = run.call()
 	if not bool(result.get("ok", false)):
@@ -191,7 +192,7 @@ func _act(run: Callable) -> void:
 		return
 	_status.theme_type_variation = UiTheme.CAPTION
 	_status.text = ""
-	reassigned.emit(before)
+	reassigned.emit(before, title)
 
 
 ## The sim's reason, its English the msgid (#142: tr() on the refusal).

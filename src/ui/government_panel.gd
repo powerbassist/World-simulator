@@ -20,7 +20,7 @@ signal dissolved(before: Dictionary)
 ## Carries the pre-command baseline for a cabinet reassignment -- the same
 ## shape `dissolved` above uses, so main.gd's effect-queueing treats a
 ## reshuffle the same way it treats any other player command.
-signal reassigned(before: Dictionary)
+signal reassigned(before: Dictionary, title: String)
 
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
@@ -158,8 +158,8 @@ func _ready() -> void:
 	root.add_child(_dissolve_button)
 
 	# V5.2 b+ R4: Reassign and Dismiss, with the removal's price (cabinet_verbs.gd).
-	_cabinet_verbs.reassigned.connect(func(before: Dictionary) -> void:
-		reassigned.emit(before)
+	_cabinet_verbs.reassigned.connect(func(before: Dictionary, title: String) -> void:
+		reassigned.emit(before, title)
 		_dirty = true)
 	root.add_child(_cabinet_verbs)
 
