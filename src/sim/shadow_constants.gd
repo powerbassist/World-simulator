@@ -96,7 +96,13 @@ const CURRENCY_EVIDENCE := {LK.CURRENCY_BACKROOM: "favour", LK.CURRENCY_AID: "di
 ## to 0.03 at #170's call 1 (Gameplay #171), once the press made a favour findable:
 ## its expected price is 0.016 asks (S1's 3.5 % x the scandal's 0.46), and at 0.03 it
 ## is best in 37 % of L2's cells, under B5's 40 % (0.04 and 0.05 gave 45 %).
-const CURRENCY_ODDS := {LK.CURRENCY_BACKROOM: 0.03, LK.CURRENCY_AID: 0.20}
+## c1c rule 2 (a bribe buys the act, not the person: a corrupt win holds no loyalty)
+## moved the border, so backroom went back up, to 0.19: the largest value under aid's
+## 0.20 (at equal odds aid would be pointless) at which all four B5 shadow rows pass
+## and the honest bargain is best in at least 5 % of its cells. Swept on c1b's S1
+## rates: 0.17 -> honest bargain best 28.7 %, backroom 3.6 %; 0.18 -> 28.7 / 5.1 %;
+## 0.19 -> 17.8 / 19.7 %, every row passing. Corruption as tempting as the bands allow.
+const CURRENCY_ODDS := {LK.CURRENCY_BACKROOM: 0.19, LK.CURRENCY_AID: 0.20}
 ## Every corrupt bargain leaves one act of evidence (the S1 size).
 const ACT_EVIDENCE := 1.0
 
