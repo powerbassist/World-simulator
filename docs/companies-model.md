@@ -1292,6 +1292,33 @@ ticked capture lapses the very row it exists to show. Frames:
 6 months left", Strategic Rescue Package). The panels drew the machine's
 state without a tick — the sections read the register directly.
 
+## 39. Ownership through a law (V5.2 b+ R14)
+
+The author, at gate b: nationalising and privatising at will is unrealistic. In
+France both are matters for the law (the Constitution, Art. 34), so the full
+nationalisation and the privatisation carry `"requires_law": true` in
+`data/company-actions/ownership.json` and a `bill` block (the position the parties
+vote on, the cooldown after a defeat). `Companies.available()` never offers a
+`requires_law` verb as an executive act; it is offered only through the law's door
+(`by_law`), and the law's door offers nothing else. The minority stake stays an
+executive act, as a state holding agency buys stakes without a law, and it cannot
+stack: `state_owned` reads 1 for any holding, so only a privatisation bill takes a
+firm back to 0 and only a nationalisation bill takes it to 1.0.
+
+`src/sim/bills.gd` builds one ready bill per eligible firm, id
+`ownership:<action_id>:<company_id>`: an ordinary law at a simple majority,
+repeatable, carrying the one effect channel `company_ownership`. It is never stored:
+`Bills.by_id()` rebuilds it from content, which is how a bill the second chamber
+holds is found again on its day and after a load. `Legislature.propose()`'s legality
+scan reads `Bills.open()`, so the bill divides, is held, is forced by Article 49.3 and
+cools down like any law. Adopted, it runs the verb through the law's door: the price
+on the debt and the action's own `bloc_offset`, once. A firm no longer eligible on
+the day (a stake taken while the bill was held) buys nothing, and
+`ns.last_company_result` records the refusal. Not ledgered: an ownership law is not
+repealed, the sale is its own bill. The court's reach reads no ownership channel, so
+the court never strikes one; recorded, not built. The design and the bands:
+[[v5.2-bplus-spec]] "R14".
+
 ---
 
 Related: [[index]] · [[legislature-model]] · [[economy-model]] · [[opinion-model]] ·
