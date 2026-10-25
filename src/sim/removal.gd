@@ -82,17 +82,17 @@ static func why_not(state, ns, portfolio: String, party_id: String) -> String:
 ## grudge before and after the pulse, and the party's loyalty before and after.
 ## The parent's call (2026-10-25): the shortfall's loyalty feeds RESIGNATIONS
 ## (Cabinet.tick_month), not a division -- the division path reads no cabinet -- so
-## `rebels` is the party's reference line (its worst bill, the government panel's
-## "up to N may break ranks"), the same before and after, and the true consequence
-## is the resignation signal of its ministers who stay (`others`), unpopularity x
-## (1 - loyalty) against `resign_threshold`, before and after. {} for a vacancy.
+## `rebels` is the party's own reference line (its seats that break ranks on its
+## worst bill -- the per-party term the government panel sums into "up to N may
+## break ranks"), the same before and after, and the true consequence is the
+## resignation signal of its ministers who stay (`others`), Cabinet's own
+## resignation_signal() against `resign_threshold`, before and after. {} for a vacancy.
 static func price(state, ns, loader, portfolio: String) -> Dictionary:
 	var party = _party(ns, loader, String(ns.cabinet.get(portfolio, "")))
 	if party == null:
 		return {}
 	var leader := _leader(ns, party)
 	var before := float(ns.person_grudges.get(leader, 0.0))
-	var unpop := Discipline.unpopularity(ns)
 	var held := 0
 	for f in ns.cabinet:
 		held += 1 if String(ns.cabinet[f]) == String(party.id) else 0
@@ -105,8 +105,8 @@ static func price(state, ns, loader, portfolio: String) -> Dictionary:
 		"loyalty_after": Cabinet.loyalty(ns, party, 1),
 		"rebels": Discipline.rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0),
 		"others": held - 1,
-		"resign_before": unpop * (1.0 - Cabinet.loyalty(ns, party)),
-		"resign_after": unpop * (1.0 - Cabinet.loyalty(ns, party, 1)),
+		"resign_before": Cabinet.resignation_signal(ns, party),
+		"resign_after": Cabinet.resignation_signal(ns, party, 1),
 		"resign_threshold": CK.RESIGNATION_THRESHOLD,
 	}
 

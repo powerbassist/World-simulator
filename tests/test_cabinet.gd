@@ -669,6 +669,13 @@ func _check_price_names_rebels_and_the_resignation_risk() -> void:
 		held += 1 if String(ns.cabinet[f]) == String(h["party_id"]) else 0
 	if int(price.get("others", -1)) != held - 1:
 		_fail("the price's ministers who stay %s are not %d" % [price.get("others", null), held - 1])
+	# The count is honest: the dismissal itself leaves the reference line where it was,
+	# and the signal the tick then reads is the price's `resign_after`.
+	Removal.dismiss(state, _loader, String(h["portfolio"]))
+	if Discipline.rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0) != int(price["rebels"]):
+		_fail("a dismissal moved the reference line the price said it would not")
+	if not is_equal_approx(Cabinet.resignation_signal(ns, party), float(price["resign_after"])):
+		_fail("after the dismissal the tick's signal is not the price's resign_after")
 
 
 func _fail(message: String) -> void:
