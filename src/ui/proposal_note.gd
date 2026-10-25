@@ -28,9 +28,13 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 	if bool(result.get("referendum_route", false)):
 		return Strings.t("To the country -- the vote is scheduled.")
 	if bool(result.get("forced", false)):
-		return _forced(result.get("censure", {}))
+		return _forced(result.get("censure", {}), bool(result.get("struck_down", false)))
 	var counts := [int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)), int(result.get("abstain_seats", 0))]
-	var carried := bool(result.get("passed", false)) or bool(result.get("held_by_upper", false)) or bool(result.get("blocked_by_upper", false))
+	# The assembly's verdict: a bill it carried and the court then struck down is
+	# carried here, the strike a sentence of its own (QA on #158).
+	var struck := bool(result.get("struck_down", false))
+	var carried := bool(result.get("passed", false)) or bool(result.get("held_by_upper", false)) \
+		or bool(result.get("blocked_by_upper", false)) or struck
 	var verdict := Strings.t("Carried: %d for, %d against, %d abstaining.") % counts if carried \
 		else Strings.t("Defeated: %d for, %d against, %d abstaining.") % counts
 	var parts := PackedStringArray([verdict])
@@ -41,6 +45,8 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 		parts.append(Strings.tn("The %s holds it; it comes into force in %d month.", "The %s holds it; it comes into force in %d months.", months) % [chamber, months])
 	elif bool(result.get("blocked_by_upper", false)):
 		parts.append(Strings.t("The %s has blocked it.") % chamber)
+	if struck:
+		parts.append(Strings.t("The court struck it down."))
 	var rebels := PackedStringArray()
 	var party_rebels: Dictionary = result.get("party_rebels", {})
 	for party in parties:
@@ -52,11 +58,12 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 
 
 ## Article 49.3: adopted with no division, then the censure it invites.
-static func _forced(censure: Dictionary) -> String:
+static func _forced(censure: Dictionary, struck := false) -> String:
 	if censure.is_empty():
-		return Strings.t("Adopted without a vote.")
+		return Strings.t("Adopted without a vote; the court struck it down.") if struck else Strings.t("Adopted without a vote.")
 	var motion := Strings.t("Adopted without a vote; the censure motion that followed had %d for, %d needed.") % [
 		int(censure.get("for_seats", 0)), int(censure.get("threshold", 0))]
 	var outcome := Strings.t("It carried: the government falls.") if bool(censure.get("carried", false)) \
+		else Strings.t("It failed: the government stays, but the court struck the bill down.") if struck \
 		else Strings.t("It failed: the bill stands.")
 	return "%s %s" % [motion, outcome]

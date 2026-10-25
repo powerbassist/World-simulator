@@ -37,6 +37,7 @@ func _process(_delta: float) -> bool:
 		_check_bodies()
 		_check_one_card()
 		_check_booked_bill()
+		_check_struck()
 		_finish()
 		return true
 	return false
@@ -117,6 +118,31 @@ func _check_booked_bill() -> void:
 	_main._world_news.card_appointment(entry, String(outcomes[0]["label"]), bool(outcomes[0]["ok"]), String(outcomes[0]["reason"]))
 	if _titled(_main._hud.inbox, "Vote: %s" % String(outcomes[0]["label"])).is_empty():
 		_fail("the booked bill's card is not titled as its vote")
+
+
+## QA's TAKE on #158: a bill the assembly carries and the court strikes down
+## (legislature.gd: passed false, struck_down true) is not "Defeated", and under
+## 49.3 it does not "stand". farm_standards_act strikes on a new France game.
+func _check_struck() -> void:
+	var forced := ProposalNote.body({"passed": false, "forced": true, "struck_down": true,
+		"censure": {"carried": false, "for_seats": 259, "threshold": 289}}, [])
+	if forced.contains("the bill stands") or not forced.contains("court"):
+		_fail("a forced bill the court struck reads '%s'" % forced)
+	var law = null
+	for l in _main._loader.laws:
+		if String(l.id) == "farm_standards_act":
+			law = l
+	if law == null:
+		_fail("premise: no farm_standards_act")
+		return
+	_main._law_panel.run_proposal(law)
+	var result: Dictionary = _main._state.player().last_law_result
+	if not bool(result.get("struck_down", false)):
+		_fail("premise: farm_standards_act was not struck down (%s)" % [result.keys()])
+		return
+	var text := ProposalNote.body(result, _main._loader.parties[String(_main._state.player().id)])
+	if text.begins_with("Defeated") or not text.begins_with("Carried") or not text.contains("court"):
+		_fail("a bill the court struck reads '%s'" % text)
 
 
 ## The inbox cards whose title reads `title`.
