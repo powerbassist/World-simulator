@@ -36,6 +36,9 @@ const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
 const Dates = preload("res://src/sim/audience_dates.gd")
+## c1c: a crossed accomplice's broken word (Lies.cross) and its price constants.
+const Lies = preload("res://src/sim/lies.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -55,7 +58,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 			_close(row, agreed, now)
 			continue
 		_unbook(state, row)
-		_price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT)
+		_price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT, true)
 		_close(row, K.STATUS_LAPSED, now)
 		out["lapsed"].append(_view(row))
 	_arrivals(state, ns, loader, meters, now, out["arrived"])
@@ -110,12 +113,19 @@ static func answers(state, ns, loader, request_id: String) -> Dictionary:
 
 
 ## What a decline -- or the lapse, or a no-show -- writes on the person's card
-## now, through the same ceiling the price pays: the card names it (B3).
+## now, through the same ceiling the price pays: the card names it (B3). An
+## accomplice's broken word is in it (c1c, rule 1), flagged `broken_word` so the
+## card can say why; one summed pulse under the room clamp is the two pulses exactly.
 static func decline_price(ns, loader, request_id: String) -> Dictionary:
 	var row := _row(ns, request_id)
 	var person = loader.person_by_id.get(String(row.get("person_id", "")))
-	var grudge: float = Characters.refusal_grudge(ns, person, K.DECLINE_GRUDGE) if person != null else K.DECLINE_GRUDGE
-	return {"grudge": grudge, "loyalty": K.DECLINE_LOYALTY, "rapport": K.DECLINE_RAPPORT}
+	var crossed: bool = person != null and President.holds_evidence(ns, String(person.id), int(row.get("arrived_month", 0)))
+	var pulse: float = K.DECLINE_GRUDGE + (LK.LIE_GRUDGE if crossed else 0.0)
+	var grudge: float = Characters.refusal_grudge(ns, person, pulse) if person != null else K.DECLINE_GRUDGE
+	var price := {"grudge": grudge, "loyalty": K.DECLINE_LOYALTY, "rapport": K.DECLINE_RAPPORT - (LK.LIE_RAPPORT if crossed else 0.0)}
+	if crossed:
+		price["broken_word"] = true
+	return price
 
 
 # --- Commands -------------------------------------------------------------------------
@@ -167,7 +177,7 @@ static func decline(state, ns, loader, request_id: String) -> Dictionary:
 	if row.is_empty() or not K.OPEN.has(String(row["status"])):
 		return {"ok": false, "error": "this request is no longer waiting"}
 	_unbook(state, row)
-	var price := _price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT)
+	var price := _price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT, true)
 	_close(row, K.STATUS_DECLINED, _now(state))
 	return {"ok": true, "error": "", "price": price}
 
@@ -236,7 +246,7 @@ static func settle(state, ns, loader, request_id: String, outcome: String) -> Di
 		return {"ok": false, "error": "not an outcome"}
 	var price := {}
 	if outcome == K.STATUS_DECLINED:
-		price = _price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT)
+		price = _price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT, true)
 	_close(row, outcome, _now(state))
 	return {"ok": true, "error": "", "price": price}
 
@@ -381,7 +391,10 @@ static func _prune(ns, now: int) -> void:
 # --- Helpers ------------------------------------------------------------------------------
 
 ## A refusal's price at `share` of a decline's grudge, plus `rapport`.
-static func _price(state, ns, loader, row: Dictionary, share: float, rapport: float) -> Dictionary:
+## `crossed`: the request ends unserved by the president (a decline, a lapse, a
+## no-show, an audience settled as declined), so an accomplice pays a broken word on
+## top (c1c, rule 1). A delegation is not a crossing: a minister takes it on.
+static func _price(state, ns, loader, row: Dictionary, share: float, rapport: float, crossed := false) -> Dictionary:
 	var pid := String(row["person_id"])
 	var person = loader.person_by_id.get(pid)
 	if person == null:
@@ -390,6 +403,8 @@ static func _price(state, ns, loader, row: Dictionary, share: float, rapport: fl
 	var applied: Dictionary = Characters.price_refusal(ns, person, K.DECLINE_GRUDGE * share, K.DECLINE_LOYALTY * share)
 	var before := President.rapport(ns, pid)
 	President.adjust_rapport(state, ns, loader, pid, rapport)
+	if crossed:
+		applied["grudge"] = float(applied["grudge"]) + float(Lies.cross(state, ns, loader, person, int(row.get("arrived_month", 0))).get("grudge", 0.0))
 	applied["rapport"] = President.rapport(ns, pid) - before
 	return applied
 

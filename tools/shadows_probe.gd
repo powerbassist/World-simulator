@@ -17,10 +17,12 @@ extends SceneTree
 ##      president of that month, frozen -- appended inside the Audiences step's
 ##      after-hook, priced with Exposure.hazard and rolled with Exposure.roll (the
 ##      machine's own functions), then removed. EXACT until the first exposure,
-##      because nothing reads exposure_evidence but the exposure machine; so one run
-##      per seed answers all four currencies. The one approximation: the act is a
-##      settled audience, so a bargain's success relief on the counterpart's grudge
-##      is not applied, which can only delay `enemy`, i.e. the turned route.
+##      because the only other reader of exposure_evidence (c1c: Audiences, which
+##      charges a crossed accomplice a broken word) never fires on the counterpart:
+##      after the act S1 books each of their requests on its first free day and
+##      settles it there (the c1c amendment), so one run per seed answers all four
+##      currencies. The act is a settled audience, and since c1c's rule 2 a corrupt
+##      win pays no grudge relief either, so the settle is the bargain's own price.
 ##      `--exact=N` re-runs the first N seeds with the real row written at the act
 ##      and compares first-exposure months (0 mismatches is the evidence).
 ##   S2 ALWAYS. Every request booked on its first free day (else delegated); in each
@@ -150,6 +152,8 @@ func _run(regime: String, s: int, real_kind := "") -> Dictionary:
 			r["crossed"] += _book(state, ns, regime == "S2c")
 		elif regime == "S1" and booked == "" and month >= ACT_MONTH:
 			booked = _book_one(state, ns)
+		elif regime == "S1" and not act.is_empty():
+			_book_person(state, ns, String(act["person_id"]))
 		var report: Dictionary = WorldMonth.tick_month(state, _loader, hook)
 		for row in report["audience_requests"]["arrived"]:
 			if not (row.get("offer", {}) as Dictionary).is_empty():
@@ -168,6 +172,8 @@ func _run(regime: String, s: int, real_kind := "") -> Dictionary:
 			"S1":
 				if act.is_empty() and booked != "":
 					act.merge(_fire_act(state, ns, month, booked, real_kind))
+				elif not act.is_empty():
+					_serve_person(state, ns, String(act["person_id"]))
 			"S2", "S2c", "S4":
 				_fire(state, ns, regime, lies)
 			"S3":
@@ -212,6 +218,28 @@ func _book_one(state, ns) -> String:
 		if not _visitor(String(row["person_id"])) and _book_on_first_day(state, ns, String(row["id"])):
 			return String(row["id"])
 	return ""
+
+
+## c1c's S1 amendment (bands-v5.2.md "c1c", rule 1): after the act its counterpart
+## is never crossed, so the once band measures one hidden act and not a president who
+## bribes someone and then ignores them, and `--exact` stays exact. Each of their
+## requests is booked on its first free day ...
+func _book_person(state, ns, pid: String) -> void:
+	for row in Audiences.pending(ns):
+		if String(row["person_id"]) == pid:
+			_book_on_first_day(state, ns, String(row["id"]))
+
+
+## ... and held and settled on that day, as the act was.
+func _serve_person(state, ns, pid: String) -> void:
+	for e in _due(state):
+		if String(e["target_id"]) != pid:
+			continue
+		var id := String(e["action_id"])
+		state.day = int(e["day"])
+		Calendar.resolve(state, Calendar.verb_key(e), true)
+		if bool(Audiences.hold(state, ns, _loader, id)["ok"]):
+			Audiences.settle(state, ns, _loader, id, AK.STATUS_SETTLED)
 
 
 func _holds_evidence(ns, pid: String) -> bool:

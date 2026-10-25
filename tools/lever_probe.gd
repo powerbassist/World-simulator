@@ -293,6 +293,13 @@ func _l2_shadows(ns, people: Array, rates: Dictionary) -> Dictionary:
 				strictly["%s>%s" % [a, b]] = false
 	var bargain_cells := 0
 	var bargain_best := 0
+	# c1c rule 3's rows: per lie row, the cells it is offered in and leads its honest
+	# lever on odds; argue's value lead, with whether every such listener reads below
+	# the president (the lie pays only against a poorer reader).
+	var lie_cells := {"argue_lie": 0, "promise_date_lie": 0}
+	var lie_odds_lead := {"argue_lie": 0, "promise_date_lie": 0}
+	var argue_value_lead := 0
+	var argue_lead_readers_below := true
 	var leader = _loader.person_by_id[President.leader_id(ns)]
 	for person in people:
 		for band in BANDS:
@@ -316,7 +323,9 @@ func _l2_shadows(ns, people: Array, rates: Dictionary) -> Dictionary:
 							var p := clampf(float(odds["bargain"]) + float(SC.CURRENCY_ODDS[cur]), K.ODDS_MIN, K.ODDS_MAX)
 							odds[row] = p
 							cost[row] = {"shadow": expected[row]}
-							value[row] = p * LW.GAIN - float(expected[row])
+							# c1c rule 2: a bribe buys the act, not the person -- a corrupt win
+							# is valued as flatter's, which also does not hold.
+							value[row] = p * LW.GAIN_FLATTER - float(expected[row])
 					for base in ["argue", "promise_date"]:
 						if not odds.has(base):
 							continue
@@ -331,6 +340,13 @@ func _l2_shadows(ns, people: Array, rates: Dictionary) -> Dictionary:
 						odds[row] = (1.0 - caught) * p
 						cost[row] = spent
 						value[row] = float(odds[row]) * LW.GAIN - LW.cost(LW.spend(person, base, p)) - shadow
+						lie_cells[row] += 1
+						if float(odds[row]) > float(odds[base]):
+							lie_odds_lead[row] += 1
+						if base == "argue" and float(value[row]) > float(value[base]):
+							argue_value_lead += 1
+							if not (float(person.social_skill) < float(leader.social_skill)):
+								argue_lead_readers_below = false
 					var top := ""
 					var top_value := -INF
 					for name in names:
@@ -365,13 +381,22 @@ func _l2_shadows(ns, people: Array, rates: Dictionary) -> Dictionary:
 		if K.LEVERS.has(name):
 			honest_floor = minf(honest_floor, float(shares[name]))
 	var bargain_share := float(bargain_best) / float(maxi(1, bargain_cells))
+	var lie_lead_share := {}
+	var lie_floor := 1.0
+	for row in lie_cells:
+		lie_lead_share[row] = float(lie_odds_lead[row]) / float(maxi(1, lie_cells[row]))
+		lie_floor = minf(lie_floor, float(lie_lead_share[row]))
 	return {"rates": rates, "scandal_price": price, "expected_cost": expected, "best_share": shares,
 		"offered_cells": offered, "dominated_pairs": pairs, "bargain_share": bargain_share,
+		"lie_odds_lead_share": lie_lead_share, "argue_lie_value_lead_cells": argue_value_lead,
 		"bands": {
 			"B5_shadows_no_dominated_pair": pairs.is_empty(),
 			"B5_shadows_none_best_over_40pct": top_share <= 0.40,
 			"B5_shadows_bargain_together_40pct": bargain_share <= 0.40,
 			"B5_shadows_honest_each_best_5pct": honest_floor >= 0.05,
+			# c1c rule 3 (declared on #182): the lie pays only in its corner.
+			"B5_lie_argue_value_corner": argue_value_lead >= 1 and argue_lead_readers_below,
+			"B5_lie_leads_odds_5pct": lie_floor >= 0.05,
 		}}
 
 
@@ -445,5 +470,6 @@ func _print(out: Dictionary) -> void:
 		var l2s: Dictionary = out["L2_shadows"]
 		print("L2 with the shadows: rates %s | scandal price %s | expected %s" % [l2s["rates"], l2s["scandal_price"], l2s["expected_cost"]])
 		print("  best share %s | bargain together %.3f | dominated pairs %s" % [l2s["best_share"], l2s["bargain_share"], l2s["dominated_pairs"]])
+		print("  lie leads on odds %s | argue lie leads argue on value in %d cells" % [l2s["lie_odds_lead_share"], l2s["argue_lie_value_lead_cells"]])
 	for band in out["bands"]:
 		print("%-28s %s" % [band, "PASS" if out["bands"][band] else "FAIL"])

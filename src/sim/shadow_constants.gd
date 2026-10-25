@@ -41,8 +41,12 @@ const EVIDENCE_WEIGHT := {
 ## 10-30 % of runs needs a summed monthly hazard of about 0.002-0.0066; at 0.0035
 ## a route, France's courts (73.8/100) and a neutral press give party money 9 %,
 ## personal wealth 22 % and a diverted budget 28 %. A turned person talks far more
-## readily than an institution digs. The probe tunes all four.
-const RATE := {"press": 0.0035, "courts": 0.0035, "auditors": 0.0035, "turned": 0.02}
+## readily than an institution digs. The probe tunes all four. c1c: `turned` 0.02 ->
+## 0.01. 0.02 was set when no one ever turned (S2c read 0 %); once a crossed
+## accomplice pays a broken word (rule 1) they do turn, and at 0.02 the turned route
+## out-talked the press in S2. 0.01 keeps each S2 route at least 10 % (bands-v5.2.md
+## "c1c", Gameplay's 60-seed prototype; the 200-seed run is in the PR).
+const RATE := {"press": 0.0035, "courts": 0.0035, "auditors": 0.0035, "turned": 0.01}
 
 ## No route finds more than this in a month, however much there is to find: the
 ## "always" regime's pile would otherwise make every month a certainty.
@@ -100,8 +104,12 @@ const ACT_EVIDENCE := 1.0
 
 ## The levers a lie can be told on, and what it adds to that attempt's odds.
 ## STARTING value: lever_probe L2 prices it at P(caught) x the reveal (B5's amendment).
+## c1c rule 3: 0.10 -> 0.20. At 0.10 an argue lie beat honest argue on value in 0 of
+## 732 cells and a promise lie led on odds in only 4, one person's, so its
+## non-domination hung on a knife edge. At 0.20 a believed lie is worth what aid buys,
+## and it pays only against a poorer reader (the band allows [0.20, 0.25]).
 const LIE_LEVERS := ["argue", "promise_date"]
-const LIE_ODDS := 0.10
+const LIE_ODDS := 0.20
 ## The catch: the listener's reading skill against the president's (both
 ## social_skill). At a middling 0.5 president a 0.8 reader catches 55.5 % and a 0.2
 ## reader 10.5 % -- inside B8's two bands, [0.40, 0.70] and [0.05, 0.20].
