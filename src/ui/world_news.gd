@@ -308,6 +308,9 @@ func appointment_text(entry: Dictionary, label: String, ok: bool, reason := "") 
 		var host = _loader.nations.get(String(entry.get("target_id", "")))
 		if ok and _opens_meeting(String(entry.get("action_id", ""))) and host != null and host.capital != "":
 			booked = tr("Received in %s.") % host.capital
+	# A booked bill's division (R2): its verdict and counts, carried or not.
+	if String(entry.get("kind", "")) == CalendarK.KIND_LAW and reason != "":
+		return "%s %s" % [booked, reason]
 	if not ok:
 		booked += " " + (tr("It did not carry: %s.") % Strings.t(reason) if reason != "" else tr("It did not carry."))  # i18n: row-ok the sim's reason, its English the msgid
 	return booked

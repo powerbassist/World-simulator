@@ -21,6 +21,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Removal = preload("res://src/sim/removal.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -67,6 +68,8 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 					var result := Legislature.propose(state, loader, law)
 					ok = bool(result.get("passed", false))
 					label = Strings.law_name(law)
+					# V5.2 b+ R2: the day's card carries the division, as a proposal's does.
+					reason = ProposalNote.body(result, loader.parties.get(String(state.player_nation_id), []))
 			# V5.2b: the booked audience happens -- the scene opens (audience_driver.gd)
 			# and the sim holds it; what it settles is the scene's, not the diary's.
 			CalendarK.KIND_AUDIENCE:
