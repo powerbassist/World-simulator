@@ -15,6 +15,16 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 
 const PATH := "res://data/headlines/events.json"
+const MOMENTS_PATH := "res://data/headlines/moments.json"
+## The moments the press marks besides events (docs/design/v5.2-d-spec.md section 4) and their
+## outcomes, as Systems emits them in the month report's front_page entry.
+const MOMENTS := {
+	"election": ["executive_won", "executive_lost", "legislative_majority", "legislative_minority", "legislative_opposition"],
+	"censure": ["government_fell"],
+	"dissolution": ["called"],
+	"article_49_3": ["carried"],
+	"character": ["minister_resigned", "defected"],
+}
 const TONES := ["friendly", "neutral", "hostile"]
 const VARIABLES := ["president", "party", "nation"]
 
@@ -33,6 +43,7 @@ func _init() -> void:
 		return
 	_check_coverage(loader, parsed)
 	_check_wording(parsed)
+	_check_moments()
 	_finish()
 
 
@@ -67,6 +78,35 @@ func _check_coverage(loader, headlines: Dictionary) -> void:
 			for tone in TONES:
 				if String(tones.get(tone, "")).strip_edges() == "":
 					_fail("%s.%s has no %s headline" % [id, answer_id, tone])
+
+
+## data/headlines/moments.json: {moment: {outcome: {tones}}}, exactly the table above,
+## under the same wording rules as the events'.
+func _check_moments() -> void:
+	var moments = JSON.parse_string(FileAccess.get_file_as_string(MOMENTS_PATH))
+	if typeof(moments) != TYPE_DICTIONARY:
+		_fail("%s is not a JSON object" % MOMENTS_PATH)
+		return
+	for moment in MOMENTS.keys():
+		if not moments.has(moment):
+			_fail("moments.json has no moment '%s'" % moment)
+			continue
+		for outcome in MOMENTS[moment]:
+			var tones = moments[moment].get(outcome, null)
+			if typeof(tones) != TYPE_DICTIONARY:
+				_fail("%s.%s has no headlines" % [moment, outcome])
+				continue
+			for tone in TONES:
+				if String(tones.get(tone, "")).strip_edges() == "":
+					_fail("%s.%s has no %s headline" % [moment, outcome, tone])
+	for moment in moments.keys():
+		if not MOMENTS.has(moment):
+			_fail("moments.json names the unknown moment '%s'" % moment)
+		else:
+			for outcome in moments[moment].keys():
+				if not MOMENTS[moment].has(outcome):
+					_fail("moments.json names the unknown outcome '%s.%s'" % [moment, outcome])
+	_check_wording(moments)
 
 
 func _check_wording(headlines: Dictionary) -> void:

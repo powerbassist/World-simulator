@@ -1,0 +1,62 @@
+{
+  "election": {
+    "executive_won": {
+      "friendly": "{{president}} wins new mandate as {{nation}} backs renewal",
+      "neutral": "{{president}} re-elected to top office, results show",
+      "hostile": "{{nation}} stuck with {{president}} for another term"
+    },
+    "executive_lost": {
+      "friendly": "{{president}} concedes with grace and thanks loyal voters",
+      "neutral": "{{president}} loses vote for top office, challenger prevails",
+      "hostile": "{{nation}} rejects {{president}} after failed term"
+    },
+    "legislative_majority": {
+      "friendly": "{{party}} sweeps Assembly with clear governing majority",
+      "neutral": "President's camp wins outright majority in Assembly election",
+      "hostile": "{{party}} grabs total control of Assembly"
+    },
+    "legislative_minority": {
+      "friendly": "{{party}} leads Assembly as {{nation}} seeks broad deals",
+      "neutral": "President's camp is largest Assembly group but lacks majority",
+      "hostile": "{{president}} weakened as {{party}} misses Assembly majority"
+    },
+    "legislative_opposition": {
+      "friendly": "{{president}} vows to keep serving {{nation}} despite Assembly loss",
+      "neutral": "Opposition takes control of Assembly, president's camp loses",
+      "hostile": "Voters humiliate {{president}} and hand Assembly to rivals"
+    }
+  },
+  "censure": {
+    "government_fell": {
+      "friendly": "Government falls, {{president}} promises fresh start for {{nation}}",
+      "neutral": "Assembly censure motion passes and government falls",
+      "hostile": "Assembly topples government as {{president}} loses control"
+    }
+  },
+  "dissolution": {
+    "called": {
+      "friendly": "{{president}} acts boldly and calls snap election for {{nation}}",
+      "neutral": "{{president}} dissolves Assembly and calls snap election",
+      "hostile": "{{president}} panics and forces costly snap election"
+    }
+  },
+  "article_49_3": {
+    "carried": {
+      "friendly": "Government acts decisively to pass key bill without delay",
+      "neutral": "Government adopts bill without vote using constitutional article",
+      "hostile": "{{president}} bypasses Assembly to force bill through"
+    }
+  },
+  "character": {
+    "minister_resigned": {
+      "friendly": "Minister steps aside and government moves on",
+      "neutral": "Minister resigns from government and leaves office",
+      "hostile": "Minister quits government in blow to {{president}}"
+    },
+    "defected": {
+      "friendly": "Defection changes little as government presses on",
+      "neutral": "Prominent politician leaves party for another",
+      "hostile": "Defection deals {{president}} a blow as politician changes sides"
+    }
+  }
+}
