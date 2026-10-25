@@ -61,10 +61,14 @@ static func why_not(ns, loader, action, site_region: String) -> String:
 	return ""
 
 
-## A command the sim refused, said on a card: never a dead click.
+## A command the sim refused, said on a card: never a dead click. One card per panel,
+## made on the first refusal and kept on `from` -- on_stack() adds a new one each call.
 static func tell_refused(from: Node, ns, loader, action, site_region: String) -> void:
 	var why := why_not(ns, loader, action, site_region)
-	var card = ConfirmCard.on_stack(from)
+	var card = from.get_meta(&"refusal_card") if from.has_meta(&"refusal_card") else null
+	if card == null or not is_instance_valid(card):
+		card = ConfirmCard.on_stack(from)
+		from.set_meta(&"refusal_card", card)
 	if card != null:
 		card.tell(why if why != "" else Strings.t("The campaign cannot do that now."))
 

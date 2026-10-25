@@ -135,6 +135,15 @@ func _check_refusal_said() -> void:
 			card.hide()
 	if not said:
 		_fail("a refused start was a dead click: no card said why")
+	# A second refusal reuses the card rather than stacking another.
+	_panel._on_act(_ns, _starts[0])
+	var cards := 0
+	for card in _main.find_children("ConfirmCard", "", true, false):
+		if _texts(card).contains("The party cannot pay for it"):
+			cards += 1
+			card.hide()
+	if cards != 1:
+		_fail("two refusals left %d refusal cards, not one" % cards)
 	if Campaign.running_count(_ns) != 0:
 		_fail("a start the party cannot pay for began anyway")
 
