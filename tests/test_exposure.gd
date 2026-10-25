@@ -154,9 +154,12 @@ func _check_turned_needs_a_turned_person() -> void:
 	President.set_bond(state, ns, _loader, pid, "enemy")
 	if Exposure.hazard(state, ns, _loader, "turned") <= 0.0:
 		_failures.append("an enemy cannot turn")
-	for route in ["press", "courts", "auditors"]:
+	for route in ["courts", "auditors"]:
 		if Exposure.hazard(state, ns, _loader, route) != 0.0:
 			_failures.append("route %s reaches a favour" % route)
+	# #170's call 1 (Gameplay #171): journalists dig up backroom deals.
+	if Exposure.hazard(state, ns, _loader, "press") <= 0.0:
+		_failures.append("the press does not reach a favour")
 
 
 ## B6's order, structurally: equal size, the person an enemy so every route is open,

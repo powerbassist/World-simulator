@@ -99,7 +99,7 @@ BLOC_SIZE = {"workers": 0.30, "pensioners": 0.24, "urban": 0.15,
 # V5.2c: event.gd's exposure block and shadow_constants' ROUTE_KINDS.
 EXPOSURE_KEYS = ["route", "kinds", "on_arrival"]
 ROUTE_KINDS = {
-    "press": ["personal_wealth", "affair"],
+    "press": ["personal_wealth", "affair", "favour"],
     "courts": ["personal_wealth", "diverted_budget"],
     "auditors": ["party_money", "diverted_budget"],
     "turned": ["favour", "party_money", "personal_wealth", "diverted_budget", "affair"],

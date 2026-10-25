@@ -16,8 +16,10 @@ const ROUTES := ["press", "courts", "auditors", "turned"]
 ## follow personal money; the auditors read the party's accounts and the spending
 ## lines; a turned person can talk about anything they took part in. The affair's
 ## routes are the plan's reading (its Call 3): the press, and a lover who turns.
+## #170's call 1 (Gameplay #171): the press digs up backroom favours too -- only a
+## turned person reached them, so a served accomplice made backroom free (S1 0 %).
 const ROUTE_KINDS := {
-	"press": ["personal_wealth", "affair"],
+	"press": ["personal_wealth", "affair", "favour"],
 	"courts": ["personal_wealth", "diverted_budget"],
 	"auditors": ["party_money", "diverted_budget"],
 	"turned": PresidentK.EVIDENCE_KINDS,
