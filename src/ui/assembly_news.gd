@@ -8,6 +8,7 @@ extends RefCounted
 ## state of its own beyond what it has already announced; `setup()` hands it the
 ## live state (again on a load) and the card column it pushes to.
 
+const Bills = preload("res://src/sim/bills.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 
@@ -143,11 +144,9 @@ func _law_title(law_id: String) -> String:
 	return Strings.law_name(_law_by_id(law_id), law_id)
 
 
+## Bills.by_id: an authored law or an ownership bill rebuilt from its id (R14).
 func _law_by_id(id: String):
-	for law in _loader.laws:
-		if String(law.id) == id:
-			return law
-	return null
+	return Bills.by_id(_loader, id)
 
 
 ## At a load: the two maps belong to the discarded game, and each month memory takes

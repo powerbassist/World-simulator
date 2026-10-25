@@ -140,6 +140,13 @@ static func row(kind: String, id: String, field: String, english: String) -> Str
 static func law_name(law, fallback := "") -> String:
 	if law == null:
 		return fallback
+	# V5.2 b+ R14: an ownership bill is built, never authored (Bills), its name
+	# composed in English as "<verb>: <firm>"; the verb is the company-actions row.
+	var terms: Dictionary = law.effects.get("company_ownership", {}) if law is Object else {}
+	if not terms.is_empty():
+		var parts := String(law.law_name).split(": ", true, 1)
+		if parts.size() == 2:
+			return "%s: %s" % [row("company-actions", String(terms.get("action_id", "")), "name", parts[0]), parts[1]]
 	return row_name("laws", law)
 
 

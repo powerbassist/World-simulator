@@ -37,6 +37,8 @@ signal acted(before, label)
 const Labels = preload("res://src/ui/labels.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Bills = preload("res://src/sim/bills.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Investment = preload("res://src/sim/investment.gd")
@@ -502,6 +504,10 @@ func _build_firm(ns, company) -> void:
 	var buttons := PanelKit.buttons(block)
 	for action in Companies.available(_state, ns, _loader.company_actions, company.id, _loader):
 		buttons.add_child(_action_button(ns, company, action))
+	# R14: owning a firm is a law's to decide (Bills): each ready bill is tabled
+	# through the Legislature's briefing, the one propose path.
+	for bill in Bills.ownership(_state, ns, _loader, String(company.id)):
+		buttons.add_child(_bill_button(bill))
 
 	_body.add_child(block)
 
@@ -513,6 +519,20 @@ func _action_button(ns, company, action) -> Button:
 	button.pressed.connect(func(): _on_act(ns, company, action))
 	if _primary == null and not button.disabled:
 		_primary = button
+	return button
+
+
+func _bill_button(bill) -> Button:
+	var button := PanelKit.sized(Button.new())
+	button.name = "TableBill"  # i18n: ok a node name, found by tests
+	button.set_meta("law_id", String(bill.id))
+	button.text = tr("Table a bill: %s") % Strings.row_name("company-actions", _action_by_id(String(bill.effects["company_ownership"]["action_id"])))
+	button.tooltip_text = tr("A law, voted by the assembly: %s") % Strings.law_name(bill)
+	button.pressed.connect(func() -> void:
+		var windows = get_tree().get_first_node_in_group(WindowManager.GROUP)
+		var law_panel = windows.content("legislature") if windows != null else null
+		if law_panel != null:
+			law_panel.brief_requested.emit(bill))
 	return button
 
 
