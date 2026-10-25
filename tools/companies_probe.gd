@@ -823,7 +823,7 @@ func _table_m_dividend() -> void:
 	var ns = state.player()
 	var buy = _ownership_action("nationalise")
 	for company in Companies.firms_of(_loader, "FRA"):
-		Companies.execute(state, ns, _loader.company_actions, buy, company.id, _loader)
+		Companies.execute(state, ns, _loader.company_actions, buy, company.id, _loader, true)
 	Companies.tick_month(state, _loader)
 	print("     THREE ROWS PASS, so this band did not choose the constant -- it measures")
 	print("     whether the line is READABLE, not whether it is right. Table (n) chose.")
@@ -908,7 +908,7 @@ func _table_o_shield() -> void:
 			_burden(sheltered.player(), String(sector), K.REGULATION_BURDEN_MAX)
 			for company in Companies.firms_in_sector(_loader, nation_id, String(sector)):
 				Companies.execute(
-					sheltered, sheltered.player(), _loader.company_actions, buy, company.id, _loader
+					sheltered, sheltered.player(), _loader.company_actions, buy, company.id, _loader, true
 				)
 			Companies.tick_month(sheltered, _loader)
 
@@ -933,7 +933,7 @@ func _table_o_shield() -> void:
 	Companies.tick_month(freed, _loader)
 	var private_gain: float = freed.player().firm_jobs_offset_pct
 	for company in Companies.firms_in_sector(_loader, "FRA", "industry"):
-		Companies.execute(freed, freed.player(), _loader.company_actions, buy, company.id, _loader)
+		Companies.execute(freed, freed.player(), _loader.company_actions, buy, company.id, _loader, true)
 	Companies.tick_month(freed, _loader)
 	print("     FRA industry deregulated: %.4f pts in private hands, %.4f in public --" % [
 		private_gain, freed.player().firm_jobs_offset_pct,
@@ -952,7 +952,7 @@ func _table_p_approval() -> void:
 	var buy = _ownership_action("nationalise")
 	var sell = _ownership_action("privatise")
 	for s in [held, sold]:
-		Companies.execute(s, s.player(), _loader.company_actions, buy, _largest(s, s.player()), _loader)
+		Companies.execute(s, s.player(), _loader.company_actions, buy, _largest(s, s.player()), _loader, true)
 
 	for m in range(TERM_MONTHS):
 		for s in [quiet, held, sold]:
@@ -966,7 +966,7 @@ func _table_p_approval() -> void:
 		if m == 11:
 			Companies.execute(
 				sold, sold.player(), _loader.company_actions, sell,
-				_largest(sold, sold.player()), _loader
+				_largest(sold, sold.player()), _loader, true
 			)
 
 	print("%-14s %10s %12s %10s %12s" % ["bloc", "quiet", "nationalised", "sold", "held delta"])
@@ -1065,7 +1065,7 @@ func _table_q_issue_keys() -> void:
 	var ns = full.player()
 	var buy = _ownership_action("nationalise")
 	for company in Companies.firms_of(_loader, "FRA"):
-		Companies.execute(full, ns, _loader.company_actions, buy, company.id, _loader)
+		Companies.execute(full, ns, _loader.company_actions, buy, company.id, _loader, true)
 	Companies.tick_month(full, _loader)
 	var owned := 0.0
 	for company in Companies.firms_of(_loader, "FRA"):

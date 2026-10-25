@@ -12,9 +12,14 @@ extends VBoxContainer
 ##   OVERVIEW  the term in four small multiples: approval (the polls), growth,
 ##             deficit, unemployment;
 ##   ECONOMY   growth, unemployment and debt over the last ten years of history;
-##   BUDGET    where the committed money goes, one stacked share;
-##   SOCIETY   approval over the term (the polls), then each bloc's;
-##   SEATS     the assembly by party, with the majority marked.
+##   BUDGET    where the committed money goes, one stacked share; then revenue
+##             against spending over the term (V5.2 b+);
+##   SOCIETY   approval over the term (the polls), then each bloc's; then what the
+##             country is thinking about, as bars (V5.2 b+);
+##   SEATS     the assembly by party, with the majority marked;
+##   REGIONS   each region's share of the nation's output, as bars (V5.2 b+).
+## V5.2 b+ added the last three at the author's gate b: the charts "sont plus
+## digestes que des chiffres bruts seul, et pourrai s'etendre a d'autres panneaux".
 
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const ChartSeries = preload("res://src/ui/chart_series.gd")
@@ -23,8 +28,10 @@ const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
+const Opinion = preload("res://src/sim/opinion.gd")
+const Regions = preload("res://src/sim/regions.gd")
 
-enum { OVERVIEW, ECONOMY, BUDGET, SOCIETY, SEATS }
+enum { OVERVIEW, ECONOMY, BUDGET, SOCIETY, SEATS, REGIONS }
 
 ## Ten years: a decade of monthly history is as far back as a reader compares.
 const ECONOMY_MONTHS := 120
@@ -69,7 +76,7 @@ func _signature_of(state) -> String:
 	var game := "%d/" % state.get_instance_id()
 	match _kind:
 		BUDGET:
-			return game + str(ns.spending_pct_gdp, ns.total_spending_pct_gdp, ns.debt_service_pct_gdp)
+			return game + str(ns.spending_pct_gdp, ns.total_spending_pct_gdp, ns.debt_service_pct_gdp, state.history.size())
 		SEATS:
 			return game + str(ns.seats_by_party)
 	return game + "%d/%d" % [state.history.size(), int(ns.months_in_term)]
@@ -92,6 +99,14 @@ func _build(state) -> void:
 			_line(grid, Strings.t("Debt"), ChartSeries.values(years, "debt_to_gdp_pct"), years, {"unit": Strings.t("% of GDP")})
 		BUDGET:
 			ChartKit.stack(self, Strings.t("Where the money goes, % of GDP"), _spending_parts(state.player()))
+			# The gap between the two lines is the deficit, month by month: the one
+			# figure the strip prints, drawn as what makes it.
+			var term := ChartSeries.term_window(state)
+			var box := ChartKit.line(self, Strings.t("Revenue and spending, % of GDP"), [
+				{"label": Strings.t("Revenue"), "values": ChartSeries.values(term, "total_revenue_pct_gdp")},
+				{"label": Strings.t("Spending"), "values": ChartSeries.values(term, "total_spending_pct_gdp")}],
+				ChartSeries.months(term), {"unit": "%"})
+			box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		SOCIETY:
 			var term := ChartSeries.term_window(state)
 			_line(self, Strings.t("Approval (polls)"), ChartSeries.polled(term, "overall_approval_pct", "overall"), term, {"unit": "%", "min_span": POLL_SPAN})
@@ -108,6 +123,18 @@ func _build(state) -> void:
 			var grid := _grid(3)
 			for bloc in K.BLOC_KEYS:
 				_line(grid, Labels.bloc(bloc), lines[bloc], term, {"unit": "%", "fixed": shared})
+			# The panel's issues list as bars: the same issues, the same order.
+			var count := int(_panel.get_script().get_script_constant_map().get("TOP_ISSUE_COUNT", 4))
+			var issues: Array = []
+			for entry in Opinion.top_issues(state.player(), count):
+				issues.append({"label": Strings.t(String(K.ISSUE_LABEL[entry[0]])), "value": float(entry[1]) * 100.0})
+			ChartKit.bars(self, Strings.t("What the country is thinking about, %"), issues, {"unit": "%"})
+		REGIONS:
+			var ns = state.player()
+			var rows: Array = []
+			for region in _panel.get("_loader").regions.get(ns.id, []):
+				rows.append({"label": String(region.region_name), "value": Regions.share_of(ns, region.id) * 100.0})
+			ChartKit.bars(self, Strings.t("Share of the nation's output, %"), rows, {"unit": "%"})
 		SEATS:
 			var ns = state.player()
 			ChartKit.stack(self, Strings.t("The assembly, by party — the line is a majority"), _seat_parts(ns, _panel.get("_loader")),

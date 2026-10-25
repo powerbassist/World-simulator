@@ -39,6 +39,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Bills = preload("res://src/sim/bills.gd")
 
 const PLAYER := "FRA"
 ## Two industrial rivals of unequal labour intensity. The pair the jobs channel is
@@ -85,6 +86,12 @@ func _init() -> void:
 	_test_no_law_ever_moves_state_share()
 	_test_ownership_verbs_refuse_when_unavailable()
 	_test_the_nine_never_nationalise()
+	# V5.2 b+ R14: ownership only through a law.
+	_test_ownership_needs_a_law()
+	_test_a_ready_bill_per_eligible_firm()
+	_test_an_adopted_bill_buys_and_is_found_by_id()
+	_test_an_ineligible_bill_adopted_buys_nothing()
+	_test_a_failing_firm_offers_no_bill()
 	_test_a_rescue_never_overfills_its_sector()
 	_finish()
 
@@ -601,7 +608,7 @@ func _test_nationalising_pays_the_debt_and_not_the_deficit() -> void:
 
 	var debt_before: float = ns.debt_eur_bn
 	var deficit_before: float = ns.deficit_pct_gdp
-	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader, true)
 
 	if not is_equal_approx(ns.debt_eur_bn - debt_before, expected):
 		_fail("nationalising %s moved the debt by %s against a derived price of %s" % [
@@ -618,7 +625,7 @@ func _test_nationalising_pays_the_debt_and_not_the_deficit() -> void:
 
 	# And the windfall is the same machine run backwards: selling returns the debt to
 	# where it was, because the price is read off the same live output both times.
-	Companies.execute(state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader)
+	Companies.execute(state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader, true)
 	if not is_equal_approx(ns.debt_eur_bn, debt_before):
 		_fail("selling %s left the debt at %s against %s before it was bought" % [
 			BIG, str(ns.debt_eur_bn), str(debt_before)
@@ -628,7 +635,7 @@ func _test_nationalising_pays_the_debt_and_not_the_deficit() -> void:
 func _test_a_holding_pays_a_dividend_and_privatising_stops_it() -> void:
 	var state = _new_state()
 	var ns = state.nations[PLAYER]
-	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader, true)
 	Companies.tick_month(state, _loader)
 	Budget.recompute(state, ns)
 
@@ -641,7 +648,7 @@ func _test_a_holding_pays_a_dividend_and_privatising_stops_it() -> void:
 
 	# Sold, it is gone -- exactly, not nearly. "A permanent loss of control" is the
 	# row's phrase and this is the whole of what it means in the model.
-	Companies.execute(state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader)
+	Companies.execute(state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader, true)
 	Companies.tick_month(state, _loader)
 	Budget.recompute(state, ns)
 	if ns.dividend_revenue_pct_gdp != 0.0:
@@ -664,7 +671,7 @@ func _test_ownership_shields_jobs_in_both_directions() -> void:
 		_fail("emissions_standards did not load, so the shield asserts nothing")
 		return
 	var exposed := Companies.headcount(reg_ns, big)
-	Companies.execute(regulated, reg_ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	Companies.execute(regulated, reg_ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader, true)
 	var sheltered := Companies.headcount(reg_ns, big)
 	if sheltered <= exposed:
 		_fail("a burdened firm carried %s staff in public hands against %s in private" % [
@@ -679,7 +686,7 @@ func _test_ownership_shields_jobs_in_both_directions() -> void:
 	var free_ns = freed.nations[PLAYER]
 	_apply_business_laws(freed, free_ns, "industrial_deregulation")
 	var hiring := Companies.headcount(free_ns, big)
-	Companies.execute(freed, free_ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	Companies.execute(freed, free_ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader, true)
 	var forgone := Companies.headcount(free_ns, big)
 	if forgone >= hiring:
 		_fail("a deregulated firm in public hands carried %s staff against %s in private -- the shield only ever helps" % [
@@ -722,12 +729,12 @@ func _test_ownership_verbs_refuse_when_unavailable() -> void:
 	var ns = state.nations[PLAYER]
 
 	var early := Companies.execute(
-		state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader
+		state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader, true
 	)
 	if early.get("applied", true) or not early.get("refused", false):
 		_fail("selling a firm the state does not own was applied")
 
-	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader, true)
 	var debt_after: float = ns.debt_eur_bn
 	var down := Companies.execute(
 		state, ns, _loader.company_actions, _action("minority_stake"), BIG, _loader
@@ -749,6 +756,109 @@ func _test_the_nine_never_nationalise() -> void:
 	for id in state.nations.keys():
 		if Companies.state_owned_count(state.nations[id]) != 0:
 			_fail("%s nationalised something with no player behind it" % id)
+
+
+
+# --- V5.2 b+ R14: nationalise or privatise only through a law ----------------------------
+
+## The executive door is shut on the two verbs that carry `requires_law`; the
+## minority stake stays an executive act. The band: 0 changes of state_share
+## without an adopted law.
+func _test_ownership_needs_a_law() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var offered: Array = Companies.available(state, ns, _loader.company_actions, BIG, _loader)
+	for id in ["full_nationalisation", "privatisation"]:
+		if offered.has(_action(id)):
+			_fail("%s is offered as an executive verb" % id)
+	var debt_before: float = ns.debt_eur_bn
+	var r := Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader)
+	if r.get("applied", true) or Companies.state_share_of(ns, BIG) != 0.0 or ns.debt_eur_bn != debt_before:
+		_fail("a full nationalisation was carried out without a law: %s" % r)
+	var stake := Companies.execute(state, ns, _loader.company_actions, _action("minority_stake"), BIG, _loader)
+	if not stake.get("applied", false):
+		_fail("the minority stake is no longer an executive act")
+	var sold := Companies.execute(state, ns, _loader.company_actions, _action("privatisation"), BIG, _loader)
+	if sold.get("applied", true) or Companies.state_share_of(ns, BIG) != 0.35:
+		_fail("a privatisation was carried out without a law: %s" % sold)
+
+
+## One ready bill per requires_law action the firm is eligible for, named by id.
+func _test_a_ready_bill_per_eligible_firm() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var bills: Array = Bills.ownership(state, ns, _loader, BIG)
+	if bills.size() != 1:
+		_fail("%d ownership bills offered for an unowned firm, expected 1" % bills.size())
+		return
+	var bill = bills[0]
+	if String(bill.id) != "ownership:full_nationalisation:%s" % BIG:
+		_fail("the bill's id is %s" % bill.id)
+	if String(bill.majority) != "simple" or bill.once or bill.constitutional:
+		_fail("the ownership bill is not an ordinary, repeatable, simple-majority law")
+	if bill.effects.keys() != ["company_ownership"]:
+		_fail("the bill carries %s -- the action's bloc_offset must land once, through the verb" % [bill.effects.keys()])
+	if bill.position.is_empty():
+		_fail("the bill has no position for the parties to vote on")
+	Companies.execute(state, ns, _loader.company_actions, _action("full_nationalisation"), BIG, _loader, true)
+	var after: Array = Bills.ownership(state, ns, _loader, BIG)
+	if after.size() != 1 or String(after[0].id) != "ownership:privatisation:%s" % BIG:
+		_fail("a state-owned firm is not offered its privatisation bill")
+
+
+## Article 49.3 carries the bill; the purchase lands on the debt; the bill is
+## found again by its id alone (a held bill, a load).
+func _test_an_adopted_bill_buys_and_is_found_by_id() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var bill = Bills.ownership(state, ns, _loader, BIG)[0]
+	var price: float = Companies.value_eur_bn(ns, _company(BIG))
+	var debt_before: float = ns.debt_eur_bn
+	var r: Dictionary = Legislature.propose(state, _loader, bill, true)
+	if bool(r.get("unavailable", false)):
+		_fail("propose() refused an ownership bill as unavailable")
+		return
+	if not bool(r.get("passed", false)):
+		_fail("Article 49.3 did not carry the ownership bill: %s" % r)
+		return
+	if Companies.state_share_of(ns, BIG) != 1.0 or not is_equal_approx(ns.debt_eur_bn - debt_before, price):
+		_fail("an adopted nationalisation bill did not buy the firm at its price")
+	var again = Bills.by_id(_loader, String(bill.id))
+	if again == null or again.effects != bill.effects or String(again.law_name) != String(bill.law_name):
+		_fail("Bills.by_id() did not rebuild the ownership bill from its id")
+	if Bills.by_id(_loader, "ownership:full_nationalisation:no_such_firm") != null:
+		_fail("Bills.by_id() built a bill for a firm content does not name")
+
+
+## A bill adopted after its firm stopped being eligible (a stake taken while the
+## second chamber held it) buys nothing, and says so on the company result.
+func _test_an_ineligible_bill_adopted_buys_nothing() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var bill = Bills.ownership(state, ns, _loader, BIG)[0]
+	Companies.execute(state, ns, _loader.company_actions, _action("minority_stake"), BIG, _loader)
+	var debt_before: float = ns.debt_eur_bn
+	Legislature.apply(state, ns, bill, _loader)
+	if Companies.state_share_of(ns, BIG) != 0.35 or ns.debt_eur_bn != debt_before:
+		_fail("an ineligible ownership bill still bought the firm")
+	if not bool(ns.last_company_result.get("refused", false)):
+		_fail("the refused purchase left no record on last_company_result")
+
+
+
+## A failing major answers one door, the rescue -- an executive verb -- even when the
+## law's door asks; no ownership bill may be built from it, and the legality scan
+## propose() runs over every open bill must not trip on it.
+func _test_a_failing_firm_offers_no_bill() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	ns.companies[BIG]["failed"] = true
+	ns.companies[BIG]["rescue_months_left"] = 3
+	if not Bills.ownership(state, ns, _loader, BIG).is_empty():
+		_fail("a failing firm was offered an ownership bill")
+	for law in Bills.open(state, ns, _loader):
+		if String(law.id).ends_with(":" + BIG):
+			_fail("Bills.open() listed %s for a failing firm" % law.id)
 
 
 func _company(company_id: String):
