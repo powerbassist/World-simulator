@@ -4,9 +4,9 @@ extends SceneTree
 ## Non-zero exit on any failure.
 ##
 ## V5.2 b+ R2 (docs/design/v5.2-bplus-spec.md, "votes made visible"; the author:
-## "i dont see when a vote is proposed, accepted, rejected"). Until the sim tables
-## bills (Systems, after c1) a player's bill divides the moment it is proposed, so
-## its one card says so at once:
+## "i dont see when a vote is proposed, accepted, rejected"). The sim tables a bill
+## at the press and divides it at the month's close (Systems, #173); its ONE card
+## says "Tabled" at once and carries the division in place:
 ##   - the verdict as a word (Carried / Defeated), the division's yes, no and
 ##     abstain seats exactly as resolve_vote() counted them, and who broke ranks,
 ##     by party name;
@@ -80,12 +80,17 @@ func _check_one_card() -> void:
 		_fail("one tabling gave %d cards titled '%s'" % [tabled.size() - before, name])
 		return
 	_divide()
+	# The division sets its verdict on the tabling's card, in place: still one card.
+	var cards := _titled(inbox, name)
+	if cards.size() != before + 1:
+		_fail("the division gave %d cards titled '%s', not the tabling's one" % [cards.size() - before, name])
+		return
 	var card: Control = null
-	for c in _titled(inbox, name):
-		if not tabled.has(c):
+	for c in cards:
+		if tabled.has(c):
 			card = c
 	if card == null:
-		_fail("the division gave no card titled '%s'" % name)
+		_fail("the tabling's card titled '%s' is gone after the division" % name)
 		return
 	var result: Dictionary = _main._state.player().last_law_result
 	if inbox.lane_of(inbox._id_of(card)) != inbox.NOTES:

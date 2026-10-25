@@ -22,6 +22,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
@@ -227,6 +228,9 @@ static func after_parts(ns, party_list: Array, law, band: float) -> Array:
 ## The selected law in full: the name, its summary never cut, the forecast and what
 ## waits after the division spelled out, then the verbs.
 func _build_detail(ns, party_list: Array, law) -> void:
+	# V5.2 b+ R2: a bill before the Assembly is the page's first fact while it waits.
+	if not ns.tabled_bill.is_empty():
+		PanelKit.line(_detail, tabled_text(ns), PanelKit.Tone.PLAIN)
 	var title := Label.new()
 	title.text = Strings.law_name(law)
 	title.theme_type_variation = UiTheme.LEAD
@@ -274,3 +278,21 @@ func _verbs(ns, law) -> void:
 		ref.pressed.connect(_panel._on_referendum.bind(law))
 		_panel._offer(ref)
 		row.add_child(ref)
+	# V5.2 b+ R2: one bill before the Assembly at a time -- propose() refuses
+	# `already_tabled`, 49.3 and the referendum route included -- so every verb is
+	# down with that reason until it divides, never a press the sim refuses.
+	if not ns.tabled_bill.is_empty():
+		for verb in row.get_children():
+			(verb as Button).disabled = true
+			(verb as Button).tooltip_text = tabled_text(ns)
+			if _panel._primary == verb:
+				_panel._primary = null
+
+
+## Which bill is before the Assembly and the day it divides (ns.tabled_bill; its
+## numbers read back as floats after a load).
+func tabled_text(ns) -> String:
+	var id := String(ns.tabled_bill.get("law_id", ""))
+	return tr("%s is before the Assembly: it divides on %s, and no other bill can be put before then.") % [
+		Strings.law_name(_panel._find_law(id), id),
+		DateText.day_month(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))]

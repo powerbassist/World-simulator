@@ -74,7 +74,10 @@ func _process(_delta: float) -> bool:
 			# resign (`others`, QA on #162).
 			var price := Removal.price(_main._state, ns, _main._loader, _portfolio)
 			var resigns := float(price["loyalty_after"]) < float(price["loyalty_before"]) - 1e-9 and int(price["others"]) > 0
-			if text.contains("break ranks") or text.contains("likelier to resign") != resigns:
+			# Gameplay #157: the removal steps the party's discipline, so its rebels
+			# are said exactly when the stepped line has more of them.
+			var rebels := int(price.get("rebels_after", 0)) > int(price.get("rebels", 0))
+			if text.contains("break ranks") != rebels or text.contains("likelier to resign") != resigns:
 				_fail("the card promises an effect the sim does not have (%s): %s" % [price, text])
 			_check_last_minister(ns)
 			if String(ns.cabinet[_portfolio]) != _party:
