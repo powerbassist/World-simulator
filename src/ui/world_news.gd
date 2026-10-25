@@ -294,7 +294,9 @@ func card_appointment(entry: Dictionary, label: String, ok: bool, reason := "") 
 			tr("Something booked for today no longer exists to be done."),
 		)
 		return
-	_stack.push(tr("Kept: %s") % label, appointment_text(entry, label, ok, reason))
+	# A booked bill's day is its vote (R2): titled so, not "Kept:" over a defeat.
+	var law := String(entry.get("kind", "")) == CalendarK.KIND_LAW
+	_stack.push(tr("Vote: %s") % label if law else tr("Kept: %s") % label, appointment_text(entry, label, ok, reason))
 
 
 ## The day's card body. One whole sentence per shape, the failure a sentence of

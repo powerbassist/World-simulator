@@ -113,6 +113,10 @@ func _check_booked_bill() -> void:
 	var text: String = _main._world_news.appointment_text(entry, String(outcomes[0]["label"]), bool(outcomes[0]["ok"]), String(outcomes[0]["reason"]))
 	if not bool(result.get("held_by_upper", false)) and not text.contains("%d for" % int(result["yes_seats"])):
 		_fail("the booked bill's card carries no division: '%s'" % text)
+	# Its card is titled as a vote, not "Kept:" over a defeat (review pass 1).
+	_main._world_news.card_appointment(entry, String(outcomes[0]["label"]), bool(outcomes[0]["ok"]), String(outcomes[0]["reason"]))
+	if _titled(_main._hud.inbox, "Vote: %s" % String(outcomes[0]["label"])).is_empty():
+		_fail("the booked bill's card is not titled as its vote")
 
 
 ## The inbox cards whose title reads `title`.
