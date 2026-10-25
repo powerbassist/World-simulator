@@ -1060,7 +1060,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			# R2: one bill before the Assembly at a time, so the captured regime's three
 			# rungs are tabled at months 6, 7 and 8, each dividing at the next close.
 			if chamber_kind != "" and (i + 1 == 6 or (chamber_kind == "captured" and (i + 1 == 7 or i + 1 == 8))):
-				_meet_the_second_chamber(state, loader, ns, regime_name, chamber_kind, year, month)
+				_meet_the_second_chamber(state, loader, ns, regime_name, chamber_kind, year, month, i + 1 - 6)
 
 			# U6a. The day loop this file has never had, and it runs for EVERY regime
 			# rather than only the one that books -- a dispatch that only ever executes
@@ -1539,22 +1539,19 @@ func _nationalise(state, loader, ns, regime_name: String, year: int, month: int)
 	])
 
 func _meet_the_second_chamber(state, loader, ns, regime_name: String, kind: String,
-		year: int, month: int) -> void:
+		year: int, month: int, rung_index := 0) -> void:
 	var party_list: Array = loader.parties.get(ns.id, [])
 
 	if kind == "captured":
-		# The first rung still open (a carried rung is in force, a defeated one cooling).
-		var open: Array = Legislature.available(ns, loader.laws)
-		for law_id in ["judicial_appointments_reform", "court_jurisdiction_limits",
-				"judicial_tenure_act"]:
-			for law in open:
-				if law.id != law_id:
-					continue
-				var rung := Legislature.propose(state, loader, law)
-				print("  %d-%02d %s: '%s' %s -- rule of law now %.1f" % [
-					year, month, regime_name, law.id, _tabling(rung), ns.judicial_independence,
-				])
-				return
+		# Rung n at month 6 + n, each tabled once whatever the last one did (all three
+		# are cooldown 0, so "the first still open" would re-table a defeated rung).
+		var law = _find_law(loader, ["judicial_appointments_reform", "court_jurisdiction_limits",
+			"judicial_tenure_act"][rung_index])
+		if law != null:
+			var rung := Legislature.propose(state, loader, law)
+			print("  %d-%02d %s: '%s' %s -- rule of law now %.1f" % [
+				year, month, regime_name, law.id, _tabling(rung), ns.judicial_independence,
+			])
 		return
 
 	for law in loader.laws:

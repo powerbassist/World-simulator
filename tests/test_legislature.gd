@@ -462,6 +462,15 @@ func _check_a_booked_law_resolves_on_its_division() -> void:
 	WorldMonth.tick_month(state, _loader)
 	if String(state.appointments[0]["status"]) != CalendarK.STATUS_DONE:
 		_fail("R2: the carried booked law reads '%s' after its division" % state.appointments[0]["status"])
+	# A booked law coming due while another bill is tabled is refused, by name.
+	var busy = _new_state()
+	Legislature.propose(busy, _loader, _find_law("carbon_levy"))
+	busy.appointments.append(Calendar.make_entry(CalendarK.KIND_LAW, busy.year, busy.month, 20, "", "", "working_time_reduction"))
+	var reasons: Array = []
+	DiaryDriver.resolve(busy, _loader, busy.year, busy.month, 20, func(o: Dictionary) -> void: reasons.append(String(o["reason"])))
+	if String(busy.appointments[0]["status"]) != CalendarK.STATUS_REFUSED or String(busy.player().tabled_bill.get("law_id", "")) != "carbon_levy" \
+			or reasons.size() != 1 or not String(reasons[0]).contains("already before the Assembly"):
+		_fail("R2: a booked law due while a bill is tabled reads '%s' (%s), not refused by name" % [busy.appointments[0]["status"], reasons])
 
 
 func _find_law(law_id: String):

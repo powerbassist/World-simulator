@@ -40,7 +40,7 @@ static func divide(state, loader) -> Dictionary:
 	if law == null:
 		return Legislature.refused(ns, String(tabled.get("law_id", "")), "", "unavailable")
 
-	var route := _route(ns, tabled, law)
+	var route := Legislature.takes_route(ns, law, bool(tabled.get("referendum", false)))
 	# propose() refused a route with a vote in flight; read again at the vote, so a
 	# question announced in between is never overwritten (the V1.7c finding).
 	if route and Referendum.is_pending(ns):
@@ -118,13 +118,5 @@ static func forecast(state, ns, loader) -> Dictionary:
 	var law = Legislature.open_law(state, ns, loader, String(ns.tabled_bill.get("law_id", "")))
 	if law == null:
 		return {}
-	return Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law, _route(ns, ns.tabled_bill, law))
-
-
-## A mandatory referendum is not a choice the caller makes -- Art. 195 says there
-## is no seats-only path -- so it is read off the nation rather than off the
-## button. An `optional` route is the caller's; a `mandatory` one is the
-## constitution's, and offering it as an alternative would imply the seats-only
-## path it says does not exist.
-static func _route(ns, tabled: Dictionary, law) -> bool:
-	return bool(tabled.get("referendum", false)) or (law.constitutional and Referendum.is_mandatory(ns))
+	return Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law,
+		Legislature.takes_route(ns, law, bool(ns.tabled_bill.get("referendum", false))))

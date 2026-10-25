@@ -180,7 +180,7 @@ func _played_run(loader) -> Dictionary:
 	}
 
 	for i in range(MONTHS):
-		var held_before: int = ns.held_bills.size()
+		var held_before: Dictionary = ns.held_bills.duplicate()
 		# V5.2 b+ R2: the bill tabled last month divides at this close's first step.
 		var result: Dictionary = _tick(state, loader, i).get("division", {})
 		if ns.in_government:
@@ -188,8 +188,9 @@ func _played_run(loader) -> Dictionary:
 		if int(ns.last_election.get("year", 0)) == state.year \
 				and int(ns.last_election.get("month", 0)) == state.month:
 			out["elections"] = int(out["elections"]) + 1
-		if ns.held_bills.size() < held_before:
-			out["released"] = int(out["released"]) + (held_before - ns.held_bills.size())
+		for law_id in held_before:
+			if not ns.held_bills.has(law_id):
+				out["released"] = int(out["released"]) + 1
 		if not result.is_empty():
 			_count(out, result)
 		for bloc in ns.bloc_offset:

@@ -92,6 +92,7 @@ static func init_nation(ns) -> void:
 	# in-flight guard and writes nothing to it).
 	ns.assembly_bills = {}
 	ns.last_law_result = {}
+	ns.tabled_bill = {}  # V5.2 b+ R2: written by propose(), the same rule
 	# V1.1e. Whatever WRITES a field resets it -- the three law_* accumulators and
 	# `regulation_burden` above give the reason. A held bill is written by propose()
 	# in this file and -- V4.2 T6's ultra review -- by statute.gd's assembly division
@@ -1333,12 +1334,7 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	if force:
 		return _force(state, ns, party_list, law, loader)
 
-	# A mandatory referendum is not a choice the caller makes -- Art. 195 says there
-	# is no seats-only path -- so it is read off the nation rather than off the
-	# button. An `optional` route is the caller's; a `mandatory` one is the
-	# constitution's, and offering it as an alternative would imply the seats-only
-	# path it says does not exist.
-	var route: bool = referendum or (law.constitutional and Referendum.is_mandatory(ns))
+	var route := takes_route(ns, law, referendum)
 
 	# ONE REFERENDUM AT A TIME ON THE MANDATORY ROUTE TOO. can_put_to_referendum()
 	# is where is_pending() is checked, and the mandatory branch above never passes
@@ -1373,6 +1369,16 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	tabling["tabled"] = true
 	tabling["forecast"] = resolve_vote(ns, party_list, law, route)
 	return tabling
+
+
+## Whether the bill goes to the country after the chamber. A mandatory referendum is
+## not a choice the caller makes -- Art. 195 says there is no seats-only path -- so it
+## is read off the nation rather than off the button. An `optional` route is the
+## caller's; a `mandatory` one is the constitution's, and offering it as an
+## alternative would imply the seats-only path it says does not exist. One rule for
+## propose() and for the division (src/sim/division.gd) that runs at the close.
+static func takes_route(ns, law, referendum: bool) -> bool:
+	return referendum or (law.constitutional and Referendum.is_mandatory(ns))
 
 
 ## The law `law_id` among the bills `ns` may table now, or null. propose()'s
