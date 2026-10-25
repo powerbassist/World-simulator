@@ -247,19 +247,35 @@ static func seed_draws(state, draw_seed: int) -> void:
 	state.player().draw_seed = draw_seed
 
 
-static func commit(state, ns, loader, kind: String, person_id: String, object: String, due_month: int) -> bool:
+## V5.2c: `lie` marks a promise the president never meant (src/sim/lies.gd); the
+## key is written only when true, so an honest row is the row b2 wrote.
+static func commit(state, ns, loader, kind: String, person_id: String, object: String, due_month: int, lie := false) -> bool:
 	if not K.COMMITMENT_KINDS.has(kind) or object == "" or due_month <= _now(state):
 		return false
 	if not covers(state, ns, loader, person_id):
 		return false
-	ns.commitments.append({
+	var row := {
 		"kind": kind,
 		"person_id": person_id,
 		"object": object,
 		"made_month": _now(state),
 		"due_month": due_month,
-	})
+	}
+	if lie:
+		row["lie"] = true
+	ns.commitments.append(row)
 	return true
+
+
+## V5.2c. A commitment in flight taken back unjudged -- a promise caught as a lie
+## is no promise (Lies.settle). The first row of that kind, person and object.
+static func withdraw_commitment(ns, kind: String, person_id: String, object: String) -> bool:
+	for index in ns.commitments.size():
+		var row: Dictionary = ns.commitments[index]
+		if String(row.get("kind", "")) == kind and String(row.get("person_id", "")) == person_id and String(row.get("object", "")) == object:
+			ns.commitments.remove_at(index)
+			return true
+	return false
 
 
 ## V5.2b b2. Every commitment due by `now`, taken off the register in its order
@@ -358,13 +374,16 @@ static func expose_evidence(ns, index: int, route: String, now: int) -> Dictiona
 ## A commitment row as every reader gets it: the months cast to int, a dropped
 ## key read as its empty value.
 static func _commitment(row: Dictionary) -> Dictionary:
-	return {
+	var view := {
 		"kind": String(row.get("kind", "")),
 		"person_id": String(row.get("person_id", "")),
 		"object": String(row.get("object", "")),
 		"made_month": int(row.get("made_month", 0)),
 		"due_month": int(row.get("due_month", 0)),
 	}
+	if bool(row.get("lie", false)):
+		view["lie"] = true
+	return view
 
 
 ## An authored person of this nation: the loader's id-prefix rule.

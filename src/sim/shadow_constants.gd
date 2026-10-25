@@ -81,3 +81,18 @@ const CURRENCY_EVIDENCE := {LK.CURRENCY_BACKROOM: "favour", LK.CURRENCY_AID: "di
 const CURRENCY_ODDS := {LK.CURRENCY_BACKROOM: 0.10, LK.CURRENCY_AID: 0.20}
 ## Every corrupt bargain leaves one act of evidence (the S1 size).
 const ACT_EVIDENCE := 1.0
+
+# --- Lies (src/sim/lies.gd) --------------------------------------------------------
+
+## The levers a lie can be told on, and what it adds to that attempt's odds.
+## STARTING value: lever_probe L2 prices it at P(caught) x the reveal (B5's amendment).
+const LIE_LEVERS := ["argue", "promise_date"]
+const LIE_ODDS := 0.10
+## The catch: the listener's reading skill against the president's (both
+## social_skill). At a middling 0.5 president a 0.8 reader catches 55.5 % and a 0.2
+## reader 10.5 % -- inside B8's two bands, [0.40, 0.70] and [0.05, 0.20].
+const LIE_CATCH_BASE := 0.33
+const LIE_CATCH_SLOPE := 0.75
+const LIE_CATCH_MIN := 0.02
+const LIE_CATCH_MAX := 0.95
+const SALT_LIE := "lie"

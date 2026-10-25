@@ -58,6 +58,7 @@ tests=(
   tests/test_levers.gd
   tests/test_phone.gd
   tests/test_shadows.gd
+  tests/test_lies.gd
   tests/test_audience_triggers.gd
   # V4.11: the derived grade (playable / simulated / outline) and its scanner.
   tests/test_roster.gd
