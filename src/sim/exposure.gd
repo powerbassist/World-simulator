@@ -48,7 +48,7 @@ static func tick_month(state, loader) -> Array[Dictionary]:
 	var now := int(state.year) * 12 + int(state.month)
 	for route in SC.ROUTES:
 		var h := hazard(state, ns, loader, route)
-		if h <= 0.0 or Cycle.unit(Cycle.salted("%s|exposure|%s" % [ns.id, route], ns.draw_seed), now) >= h:
+		if h <= 0.0 or roll(ns, route, now) >= h:
 			continue
 		var row := President.expose_evidence(ns, _heaviest(state, ns, loader, route), route, now)
 		var ev = Events.exposure_event(loader, route, String(row["kind"]))
@@ -61,12 +61,23 @@ static func tick_month(state, loader) -> Array[Dictionary]:
 
 ## This month's chance that `route` finds something. Public for the probe.
 static func hazard(state, ns, loader, route: String) -> float:
+	var x := pressure(state, ns, loader, route)
+	return 0.0 if x <= 0.0 else clampf(float(SC.RATE[route]) * x, 0.0, SC.HAZARD_MAX)
+
+
+## reach x modifier: the hazard before its RATE and ceiling -- the shadows probe
+## traces it so a RATE can be re-priced without re-running the world.
+static func pressure(state, ns, loader, route: String) -> float:
 	var reach := 0.0
 	for index in _reachable(state, ns, loader, route):
 		reach += _weight(ns.exposure_evidence[index])
-	if reach <= 0.0:
-		return 0.0
-	return clampf(float(SC.RATE[route]) * reach * _modifier(ns, loader, route), 0.0, SC.HAZARD_MAX)
+	return 0.0 if reach <= 0.0 else reach * _modifier(ns, loader, route)
+
+
+## The route's draw this month, in [0, 1): a hit when below the hazard. Public so
+## the shadows probe rolls exactly what the machine rolls.
+static func roll(ns, route: String, now: int) -> float:
+	return Cycle.unit(Cycle.salted("%s|exposure|%s" % [ns.id, route], ns.draw_seed), now)
 
 
 ## Indices into exposure_evidence that `route` can reach now.
