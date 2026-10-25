@@ -473,14 +473,15 @@ func _check_gossip_writes_only_the_third_person() -> void:
 			_fail("a knowledge register is keyed by '%s', not a person" % key)
 
 
+## V5.2c opened the flirt (test_shadows pins its gate: the spouse, the uncovered).
 func _check_flirt_waits_for_the_shadows() -> void:
 	var c := _booked()
 	if c.is_empty():
 		return
-	if bool(_row(Levers.topics(c["state"], c["ns"], _loader, c["session"]), "flirt", "topic").get("offered", true)):
-		_fail("flirting was offered before V5.2c")
-	if bool(Levers.talk(c["state"], c["ns"], _loader, c["session"], "flirt").get("ok", true)):
-		_fail("a flirt was accepted before V5.2c")
+	if not bool(_row(Levers.topics(c["state"], c["ns"], _loader, c["session"]), "flirt", "topic").get("offered", false)):
+		_fail("flirting is not offered now the shadows are in")
+	if not bool(Levers.talk(c["state"], c["ns"], _loader, c["session"], "flirt").get("ok", false)):
+		_fail("a flirt was refused now the shadows are in")
 
 
 ## A promise is judged at its date with no roll: kept if the want is served then,

@@ -96,3 +96,23 @@ const LIE_CATCH_SLOPE := 0.75
 const LIE_CATCH_MIN := 0.02
 const LIE_CATCH_MAX := 0.95
 const SALT_LIE := "lie"
+
+# --- The affair and the bonds (src/sim/shadows.gd) ---------------------------------
+
+## The bond rule, B6's amendment: a rival is cold -- rapport below -0.30, R11's word
+## -- and an enemy is a rival who holds the grudge that already promises a leak.
+## No hysteresis: the bond follows the word the card shows, the same month.
+const RIVAL_RAPPORT := -0.30
+const ENEMY_GRUDGE := ActK.GRUDGE_BRIEF_THRESHOLD
+## An affair needs a spark -- a seeded draw per pair, fixed, because chemistry does
+## not re-roll -- and a person who is close (rapport above +0.30, R11's "close").
+## STARTING values, OPINION.
+const SPARK_CHANCE := 0.25
+const AFFAIR_RAPPORT_MIN := 0.30
+const SALT_SPARK := "spark"
+## Evidence an affair leaves each month it lasts. STARTING value: B7 wants one kept
+## 24 months exposed by month 60 in 25-50 % of runs; the shadows probe sets it.
+const AFFAIR_EVIDENCE_PER_MONTH := 0.05
+## Ending it costs the lover's regard: from just past close, enough to make a rival
+## who can talk (the turned route). OPINION, a starting value.
+const AFFAIR_END_RAPPORT := 0.70

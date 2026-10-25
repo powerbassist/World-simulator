@@ -131,7 +131,7 @@ static func topics(state, ns, loader, session: Dictionary) -> Array[Dictionary]:
 	for topic in K.TOPICS:
 		var why_not := why
 		if why_not == "" and topic == "flirt":
-			why_not = "not yet: the shadows come later"
+			why_not = Shadows.flirt_why_not(state, ns, loader, String(session["person_id"]))
 		elif why_not == "" and topic == "dinner" and (session["used_topics"] as Array).has("dinner"):
 			why_not = "you have dined together already"
 		out.append({"topic": topic, "offered": why_not == "", "why_not": why_not, "spends": {"attempt": 1}})

@@ -40,6 +40,13 @@ func _init() -> void:
 	_check_one_offer_per_scene()
 	_check_corrupt_currency_raises_odds_and_leaves_evidence()
 	_check_the_phone_offers_no_corrupt_currency()
+	# Task 6: the affair and the bond rule.
+	_check_unmarried_president_no_affair()
+	_check_affair_reasons()
+	_check_affair_accrues_evidence_monthly()
+	_check_bond_rule_turns_and_recovers()
+	_check_affair_never_overwritten_by_the_rule()
+	_check_end_affair_can_turn_the_lover()
 	_finish()
 
 
@@ -308,6 +315,132 @@ func _check_the_phone_offers_no_corrupt_currency() -> void:
 	if Levers.arg_error("bargain", {"currency": LK.CURRENCY_AID}, _now(b["state"])) == "" \
 			or Levers.arg_error("bargain", {"currency": LK.CURRENCY_BACKROOM}, _now(b["state"]), true) != "":
 		_failures.append("arg_error does not keep the corrupt currencies to the audience")
+
+
+## A person of the played nation the president has a spark with, not the spouse.
+func _lover(ns) -> String:
+	var leader = _loader.person_by_id[President.leader_id(ns)]
+	for person in _loader.people[PLAYER]:
+		if person.id != leader.id and person.id != leader.spouse_id and Shadows.spark(ns, String(person.id)):
+			return String(person.id)
+	return ""
+
+
+## The plan's Review focus 5: flirting is offered, the affair is not.
+func _check_unmarried_president_no_affair() -> void:
+	var state = _state()
+	var ns = state.player()
+	var leader = _loader.person_by_id[President.leader_id(ns)]
+	var spouse := String(leader.spouse_id)
+	if spouse == "":
+		_failures.append("fixture: France's president is unmarried; the spouse content is missing")
+		return
+	leader.spouse_id = ""
+	var pid := _lover(ns)
+	President.adjust_rapport(state, ns, _loader, pid, 0.9)
+	if Shadows.flirt_why_not(state, ns, _loader, pid) != "" or Shadows.may_begin_affair(state, ns, _loader, pid) != "unmarried" 			or bool(Shadows.begin_affair(state, ns, _loader, pid).get("ok", true)) or President.relationship(ns, pid) == "affair":
+		_failures.append("an unmarried president could begin an affair, or could not flirt")
+	leader.spouse_id = spouse
+
+
+func _check_affair_reasons() -> void:
+	var state = _state()
+	var ns = state.player()
+	var spouse := String(_loader.person_by_id[President.leader_id(ns)].spouse_id)
+	if Shadows.flirt_why_not(state, ns, _loader, spouse) != "spouse" or Shadows.may_begin_affair(state, ns, _loader, spouse) != "spouse":
+		_failures.append("the president's own spouse read as a possible affair")
+	var pid := _lover(ns)
+	if pid == "":
+		_failures.append("fixture: no spark with anyone in France")
+		return
+	if Shadows.may_begin_affair(state, ns, _loader, pid) != "too_cold":
+		_failures.append("an affair with a stranger at rapport 0 read '%s', not too_cold" % Shadows.may_begin_affair(state, ns, _loader, pid))
+	President.adjust_rapport(state, ns, _loader, pid, 0.9)
+	if Shadows.may_begin_affair(state, ns, _loader, pid) != "":
+		_failures.append("a warm spark could not begin an affair: %s" % Shadows.may_begin_affair(state, ns, _loader, pid))
+	for person in _loader.people[PLAYER]:
+		if person.id != pid and person.id != spouse and person.id != President.leader_id(ns) and not Shadows.spark(ns, String(person.id)):
+			President.adjust_rapport(state, ns, _loader, String(person.id), 0.9)
+			if Shadows.may_begin_affair(state, ns, _loader, String(person.id)) != "no_spark":
+				_failures.append("no spark did not read no_spark")
+			break
+	if Shadows.may_begin_affair(state, ns, _loader, "nobody") != "not_covered":
+		_failures.append("an id the register does not cover read as a possible affair")
+
+
+func _check_affair_accrues_evidence_monthly() -> void:
+	var state = _state()
+	var ns = state.player()
+	var pid := _lover(ns)
+	President.adjust_rapport(state, ns, _loader, pid, 0.9)
+	if not bool(Shadows.begin_affair(state, ns, _loader, pid).get("ok", false)) or President.relationship(ns, pid) != "affair":
+		_failures.append("a legal affair did not begin")
+		return
+	for _m in range(3):
+		_advance(state)
+		Shadows.tick_month(state, _loader)
+	if ns.exposure_evidence.size() != 1 or String(ns.exposure_evidence[0]["kind"]) != "affair" 			or not is_equal_approx(float(ns.exposure_evidence[0]["size"]), 3.0 * SC.AFFAIR_EVIDENCE_PER_MONTH):
+		_failures.append("three months of an affair left %s" % [ns.exposure_evidence])
+
+
+## B6's amendment: rival below -0.30 (cold), enemy a rival at the 0.45 grudge, and
+## cleared the month the condition fails -- no hysteresis. Three declines from 0 sum
+## to -0.30000000000000004 and are still not a rival (the one cut helper).
+func _check_bond_rule_turns_and_recovers() -> void:
+	var state = _state()
+	var ns = state.player()
+	var pid := _lover(ns)
+	for _i in range(3):
+		President.adjust_rapport(state, ns, _loader, pid, -0.1)
+	Shadows.tick_month(state, _loader)
+	if President.relationship(ns, pid) == "rival":
+		_failures.append("three declines (on the cut) made a rival")
+	President.adjust_rapport(state, ns, _loader, pid, -0.05)
+	Shadows.tick_month(state, _loader)
+	if President.relationship(ns, pid) != "rival":
+		_failures.append("a cold person is not a rival: %s" % President.relationship(ns, pid))
+	ns.person_grudges[pid] = SC.ENEMY_GRUDGE
+	Shadows.tick_month(state, _loader)
+	if President.relationship(ns, pid) != "enemy":
+		_failures.append("a cold person at the leak grudge is not an enemy: %s" % President.relationship(ns, pid))
+	ns.person_grudges[pid] = 0.2
+	Shadows.tick_month(state, _loader)
+	if President.relationship(ns, pid) != "rival":
+		_failures.append("an enemy whose grudge fell did not turn back into a rival")
+	President.adjust_rapport(state, ns, _loader, pid, 0.2)
+	Shadows.tick_month(state, _loader)
+	if President.relationship(ns, pid) == "rival" or President.relationship(ns, pid) == "enemy":
+		_failures.append("a rival warmed past the cut stayed a rival")
+
+
+func _check_affair_never_overwritten_by_the_rule() -> void:
+	var state = _state()
+	var ns = state.player()
+	var pid := _lover(ns)
+	President.adjust_rapport(state, ns, _loader, pid, 0.9)
+	Shadows.begin_affair(state, ns, _loader, pid)
+	President.adjust_rapport(state, ns, _loader, pid, -1.8)
+	Shadows.tick_month(state, _loader)
+	if President.relationship(ns, pid) != "affair":
+		_failures.append("the bond rule overwrote an affair: %s" % President.relationship(ns, pid))
+
+
+## Ending it costs the lover's regard -- enough, from warm, to make a rival who can
+## talk (the turned route).
+func _check_end_affair_can_turn_the_lover() -> void:
+	var state = _state()
+	var ns = state.player()
+	var pid := _lover(ns)
+	President.adjust_rapport(state, ns, _loader, pid, SC.AFFAIR_RAPPORT_MIN + 0.01)
+	Shadows.begin_affair(state, ns, _loader, pid)
+	var rapport := President.rapport(ns, pid)
+	if not bool(Shadows.end_affair(state, ns, _loader, pid).get("ok", false)) 			or not is_equal_approx(President.rapport(ns, pid) - rapport, -SC.AFFAIR_END_RAPPORT):
+		_failures.append("ending the affair did not cost AFFAIR_END_RAPPORT")
+	if President.relationship(ns, pid) == "affair" or bool(Shadows.end_affair(state, ns, _loader, pid).get("ok", true)):
+		_failures.append("an ended affair is still one, or ended twice")
+	Shadows.tick_month(state, _loader)
+	if President.relationship(ns, pid) != "rival":
+		_failures.append("a lover left from just past warm did not turn rival: %s" % President.relationship(ns, pid))
 
 
 func _finish() -> void:

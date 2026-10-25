@@ -14,14 +14,22 @@ extends RefCounted
 ## fiscal line (the plan's Call 7: EUR millions against hundreds of billions). The
 ## audience only: the phone offers neither (Call 8), so Levers asks for them.
 ##
+## THE AFFAIR: a married president and a person they have a spark with (a fixed
+## seeded draw per pair) who is close. It accrues `affair` evidence each month it
+## lasts; ending it costs the lover's regard, which can turn them. THE BOND RULE
+## writes rival and enemy off rapport and the grudge each month (B6's amendment),
+## through the one cut helper R11's feeling words also call, never over an affair.
+##
 ## Writes only through the registers' own doors: President (money, evidence,
 ## rapport) and Audiences (the request agreed). The session is the scene's and is
 ## never saved, as in Levers.
 
+const Cut = preload("res://src/core/cut.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const President = preload("res://src/sim/president.gd")
 
@@ -117,6 +125,85 @@ static func currency_rows(ns, person, p: float, why_not: String, knowledge: floa
 		rows.append({"currency": currency, "offered": why_not == "", "why_not": why_not,
 			"spends": {"evidence": SC.ACT_EVIDENCE}, "odds_lo": r.x, "odds_hi": r.y})
 	return rows
+
+
+## The month, the played nation's: each affair accrues its evidence, then the bond
+## rule reads every person the president has a rapport with. Before Exposure, so a
+## rival made this month can talk this month.
+static func tick_month(state, loader) -> void:
+	var ns = state.player()
+	if ns == null:
+		return
+	for pid in ns.person_bond.keys():
+		if String(ns.person_bond[pid]) == "affair":
+			President.grow_evidence(state, ns, loader, "affair", String(pid), SC.AFFAIR_EVIDENCE_PER_MONTH)
+	for pid in ns.person_rapport.keys():
+		var bond := String(ns.person_bond.get(pid, ""))
+		if bond == "affair":
+			continue
+		var turned := ""
+		if Cut.below(President.rapport(ns, pid), SC.RIVAL_RAPPORT):
+			turned = "enemy" if Cut.at_or_above(float(ns.person_grudges.get(pid, 0.0)), SC.ENEMY_GRUDGE) else "rival"
+		elif bond != "rival" and bond != "enemy":
+			continue
+		if turned != bond:
+			President.set_bond(state, ns, loader, String(pid), turned)
+
+
+## Whether there is a spark between the sitting president and the person: one
+## seeded draw per pair, at index 0, so flirting again never re-rolls it.
+static func spark(ns, pid: String) -> bool:
+	var key := Cycle.salted("%s|%s" % [SC.SALT_SPARK, President.leader_id(ns)], ns.draw_seed)
+	return Cycle.unit_pair(pid, key, 0) < SC.SPARK_CHANCE
+
+
+## The flirt topic's gate: "" (offered) or a reason key. An unmarried president may
+## flirt -- it is rapport -- but begins no affair (the plan's Review focus 5).
+static func flirt_why_not(state, ns, loader, pid: String) -> String:
+	if not President.covers(state, ns, loader, pid):
+		return "not_covered"
+	return "spouse" if pid == _spouse(ns, loader) else ""
+
+
+## "" or a reason key: not_covered, unmarried, spouse, already, too_cold, no_spark.
+static func may_begin_affair(state, ns, loader, pid: String) -> String:
+	var why := flirt_why_not(state, ns, loader, pid)
+	if why == "not_covered":
+		return why
+	if _spouse(ns, loader) == "":
+		return "unmarried"
+	if why != "":
+		return why
+	if President.relationship(ns, pid) == "affair":
+		return "already"
+	if not Cut.above(President.rapport(ns, pid), SC.AFFAIR_RAPPORT_MIN):
+		return "too_cold"
+	return "" if spark(ns, pid) else "no_spark"
+
+
+## {ok, error}: the bond becomes `affair`, refused with may_begin_affair's key.
+static func begin_affair(state, ns, loader, pid: String) -> Dictionary:
+	var why := may_begin_affair(state, ns, loader, pid)
+	if why != "":
+		return {"ok": false, "error": why}
+	President.set_bond(state, ns, loader, pid, "affair")
+	return {"ok": true, "error": ""}
+
+
+## {ok, error, rapport}: the affair over, the lover's regard down AFFAIR_END_RAPPORT.
+## The evidence it left stays, and the bond rule may turn them next month.
+static func end_affair(state, ns, loader, pid: String) -> Dictionary:
+	if President.relationship(ns, pid) != "affair":
+		return {"ok": false, "error": "not_affair", "rapport": 0.0}
+	var before := President.rapport(ns, pid)
+	President.set_bond(state, ns, loader, pid, "")
+	President.adjust_rapport(state, ns, loader, pid, -SC.AFFAIR_END_RAPPORT)
+	return {"ok": true, "error": "", "rapport": President.rapport(ns, pid) - before}
+
+
+static func _spouse(ns, loader) -> String:
+	var leader = loader.person_by_id.get(President.leader_id(ns))
+	return "" if leader == null else String(leader.spouse_id)
 
 
 ## Why the offer cannot be answered now: none open, or the audience is over.
