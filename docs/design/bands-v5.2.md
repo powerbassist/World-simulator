@@ -1350,15 +1350,35 @@ construction, and B5's 40 % ceiling would measure the content, not the game.
   offsets already carry between the two severities. OPINION, anchored: an
   exposure is a leak with evidence behind it, so it cannot cost less than an
   anonymous one.
-- **The rule for Content:** add one uniform `bloc_offset` δ, on all six blocs,
-  to every answer of the event (the default included). It moves no per-bloc
-  spread (E2) and no comparison between answers (E3), so both verdicts stand.
+- **The rule: the uniform part is the exposure's own price, paid on arrival.**
+  One uniform `bloc_offset` δ, on all six blocs, is written once when the
+  exposure arrives, whatever the answer. It is authored in the event's
+  `exposure` block (a new key, for example `on_arrival: {"bloc_offset":
+  {...}}`) and applied by Exposure through the applier, so `ns.bloc_offset`
+  keeps its one writer. The answers keep their decision-shaped offsets.
+  - **Why not inside every answer:** that was the first draft. Content
+    measured that it fails `tools/event_lint.py`: a default answer's
+    size-weighted offset mean must stay within ±0.008 ("a standing price, not
+    a decision"), and δ would put silence's mean near δ. The lint is right
+    about answers. An exposure's price is not an answer's: it is what being
+    found out costs, so it belongs to the arrival.
+  - **E2 and E3 are untouched:** E2's spreads and E3's comparisons are taken
+    between answers, and a cost common to all of them moves neither.
+  - **Systems builds the key** (in c1, or after it); **Content authors the
+    values** below.
   The cost of δ is 15.71 × δ (the sizes sum to 1). From the cheapest answers
   above:
   - severity-2 money: δ = −(0.45 + 0.125) / 15.71 = **−0.037**;
   - severity-3 money: δ = −(0.675 + 0.187) / 15.71 = **−0.055**;
   - affairs, after the 2026-10-25 re-tune: δ = −(0.45 + 0.041) / 15.71 =
     **−0.032**.
+  **Re-derived after Content's E2 scale** (each event's bloc offsets × 3.2 /
+  spread: 1.16 for the severity-2 money events, 1.65 for the affairs; the
+  corruption terms are not scaled). The severity-2 accountable becomes
+  −0.0073 + 0.131 = +0.124, so δ stays **−0.037**. The affairs' accountable
+  becomes 0.041 × 1.65 = +0.067, still the cheapest, so δ = −(0.45 + 0.067) /
+  15.71 = **−0.033**. The severity-3 events are not scaled (they pass E2), so
+  δ stays **−0.055**.
   In headline terms that is about −1.5, −2.2 and −1.3 points per exposure,
   above the poll floor. The rows are re-read by `events_probe` E2/E3 and
   priced again by L2's header before L2 runs.
