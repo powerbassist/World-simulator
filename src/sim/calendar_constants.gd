@@ -47,6 +47,10 @@ const STATUS_BOOKED := "booked"
 const STATUS_DONE := "done"
 const STATUS_REFUSED := "refused"
 const STATUS_CANCELLED := "cancelled"
+## V5.2 b+ R2: a booked law that was tabled on its day and waits for its division,
+## which resolves it done or refused (Calendar.settle_tabled). Not `booked`, so due()
+## never fires it twice -- a second firing would meet the one-bill refusal.
+const STATUS_TABLED := "tabled"
 
 ## The three bookable verbs. A booking is a scheduling skin over a command that
 ## already exists, so this list is exactly the set of player commands worth

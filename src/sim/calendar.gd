@@ -233,11 +233,22 @@ static func due(state, year: int, month: int, day: int) -> Array:
 ## The orchestrator reports back what the verb did. Kept separate from due() so
 ## that firing and recording are two steps -- a system that marked an entry done
 ## before the command ran would lose the act on any failure inside it.
-static func resolve(state, key: String, ok: bool) -> void:
+## V5.2 b+ R2: `tabled` holds a booked law that was tabled on its day, neither done
+## nor refused, until its division settles it (settle_tabled below).
+static func resolve(state, key: String, ok: bool, tabled := false) -> void:
 	for e in state.appointments:
 		if String(e.get("status", "")) == K.STATUS_BOOKED and verb_key(e) == key:
-			e["status"] = K.STATUS_DONE if ok else K.STATUS_REFUSED
+			e["status"] = K.STATUS_TABLED if tabled else (K.STATUS_DONE if ok else K.STATUS_REFUSED)
 			return
+
+
+## The division reports back: the tabled booking of `law_id`, done if it carried.
+## Called by WorldMonth's Division step, the orchestrator, as resolve() is by the
+## diary's driver.
+static func settle_tabled(state, law_id: String, ok: bool) -> void:
+	for e in state.appointments:
+		if String(e.get("status", "")) == K.STATUS_TABLED and String(e.get("law_id", "")) == law_id:
+			e["status"] = K.STATUS_DONE if ok else K.STATUS_REFUSED
 
 
 ## Prunes resolved entries older than the window the strip can reach. The

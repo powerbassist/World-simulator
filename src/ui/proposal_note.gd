@@ -15,11 +15,17 @@ extends RefCounted
 ## the division (inbox.set_body), so one card follows the bill.
 
 const Strings = preload("res://src/ui/strings.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 
 ## `parties`: the nation's Party rows, to name who broke ranks.
 static func body(result: Dictionary, parties: Array = []) -> String:
+	# V5.2 b+ R2 (Systems): the sim tables a bill and divides it at the month's close.
+	if bool(result.get("tabled", false)):
+		return Strings.t("Tabled: the Assembly votes on %s.") % DateText.day_month(int(result["vote_day"]), int(result["vote_month"]))
 	if bool(result.get("refused", false)):
+		if bool(result.get("already_tabled", false)):
+			return Strings.t("A bill is already before the Assembly.")
 		if bool(result.get("referendum_in_flight", false)):
 			return Strings.t("A referendum is already in flight.")
 		return Strings.t("The assembly would not take it.")
@@ -55,6 +61,17 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 	if not rebels.is_empty():
 		parts.append(Strings.t("Broke ranks: %s.") % ", ".join(rebels))
 	return " ".join(parts)
+
+
+## V5.2 b+ R2 (Systems): the division at the close, as its own card until the tabled
+## card is updated in place (Interface). Called after WorldMonth's Division step.
+static func card_division(main, report: Dictionary) -> void:
+	var result: Dictionary = report.get("division", {})
+	if result.is_empty():
+		return
+	var law_id := String(result.get("law_id", ""))
+	main._hud.inbox.push(Strings.law_name(main._law_panel._find_law(law_id), law_id),
+		body(result, main._loader.parties.get(main._state.player().id, [])))
 
 
 ## Article 49.3: adopted with no division, then the censure it invites.

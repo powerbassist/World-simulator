@@ -29,11 +29,9 @@ extends RefCounted
 
 const Readers = preload("res://src/core/nation_field_readers.gd")
 
-const COL_NAME := 0
-const COL_COPY := 1
-const COL_READ := 2
-const COL_DEFAULT := 3
-const COL_ABSENT_OK := 4
+# A row's columns, in order (0-4). One enum like the two below: the table outgrew
+# the size ratchet's 300 at V5.2c's `exposures` row, and five consts were four lines.
+enum { COL_NAME, COL_COPY, COL_READ, COL_DEFAULT, COL_ABSENT_OK }
 
 enum { NONE, SCALAR, DEEP }
 enum {
@@ -342,4 +340,5 @@ const FIELDS := [
 	["draw_seed", SCALAR, VALUE, 0, true],  # pre-gate B: absent is the unseeded draw
 	["audience_lane_start", SCALAR, VALUE, -1, true],  # pre-gate B: absent stamps at the next tick
 	["act_bloc_offset", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2b: absent is acts priced as permanent
+	["tabled_bill", DEEP, COPIED, {}, true],  # V5.2 b+ R2: absent is nothing before the Assembly
 ]

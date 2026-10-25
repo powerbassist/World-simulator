@@ -25,6 +25,11 @@ const Discipline = preload("res://src/sim/discipline.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
+const Division = preload("res://src/sim/division.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 
 const GAME_START_YEAR := 2026
 const GAME_START_MONTH := 1
@@ -52,6 +57,12 @@ func _init() -> void:
 	_check_finite_over_ten_years_with_every_law_applied()
 	_check_business_law_reaches_the_company_channel()
 	_check_the_company_channel_refuses_what_it_must()
+	_check_tabling_returns_the_vote_day_and_the_forecast()
+	_check_a_second_bill_is_refused_while_one_is_tabled()
+	_check_the_division_runs_first_at_the_next_close()
+	_check_article_49_3_stays_immediate()
+	_check_a_tabled_bill_round_trips_and_an_older_save_has_none()
+	_check_a_booked_law_resolves_on_its_division()
 
 	_finish()
 
@@ -253,7 +264,8 @@ func _check_failed_vote_names_opponents() -> void:
 		ns.seats_by_party[party.id] = 0
 	ns.seats_by_party[furthest_id] = ns.assembly_seats
 
-	var result := Legislature.propose(state, _loader, law)
+	Legislature.propose(state, _loader, law)
+	var result := Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 	if result["passed"]:
 		_fail("expected the hostile assembly to reject the law, but it passed")
 		return
@@ -283,7 +295,8 @@ func _check_passed_law_moves_economy_and_opinion() -> void:
 		_fail("fixture law 'carbon_levy' not found")
 		return
 
-	var result := Legislature.propose(treated, _loader, law)
+	Legislature.propose(treated, _loader, law)
+	var result := Division.divide(treated, _loader)  # V5.2 b+ R2: tabled, then divided
 	if not result["passed"]:
 		_fail("carbon_levy failed to pass against FRA's starting assembly, cannot test its effects")
 		return
@@ -334,6 +347,121 @@ func _check_finite_over_ten_years_with_every_law_applied() -> void:
 		if ns.unemployment_pct < 0.0 or ns.unemployment_pct > 100.0:
 			_fail("unemployment out of sane range at month %d: %s" % [month, ns.unemployment_pct])
 			return
+
+
+# --- V5.2 b+ R2: tabled now, divided at the month's close ---------------------------
+# docs/design/v5.2-bplus-spec.md "R2". carbon_levy carries France's starting assembly
+# (_check_passed_law_moves_economy_and_opinion's premise), working_time_reduction is a
+# second law to try while it is tabled.
+
+## propose() tables the bill: the vote day is the month's last, the forecast is
+## resolve_vote() now, and no result is written until the division.
+func _check_tabling_returns_the_vote_day_and_the_forecast() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _find_law("carbon_levy")
+	var forecast := Legislature.resolve_vote(ns, _loader.parties["FRA"], law)
+	var result := Legislature.propose(state, _loader, law)
+	if not bool(result.get("tabled", false)):
+		_fail("R2: propose() did not table the bill: %s" % [result])
+		return
+	if int(result["vote_year"]) != state.year or int(result["vote_month"]) != state.month \
+			or int(result["vote_day"]) != Calendar.days_in_month(state.year, state.month):
+		_fail("R2: the vote day is not the month's last: %s" % [result])
+	var f: Dictionary = result["forecast"]
+	for key in ["passed", "yes_seats", "no_seats", "abstain_seats", "party_rebels"]:
+		if f[key] != forecast[key]:
+			_fail("R2: the tabling's forecast %s %s is not resolve_vote()'s %s" % [key, f[key], forecast[key]])
+	if String(ns.tabled_bill.get("law_id", "")) != String(law.id):
+		_fail("R2: the register does not hold the tabled bill: %s" % [ns.tabled_bill])
+	if not ns.last_law_result.is_empty():
+		_fail("R2: tabling wrote a result before the division: %s" % [ns.last_law_result])
+
+
+## One player bill before the Assembly at a time, Article 49.3 included, refused by name.
+func _check_a_second_bill_is_refused_while_one_is_tabled() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	Legislature.propose(state, _loader, _find_law("carbon_levy"))
+	var other = _find_law("working_time_reduction")
+	for force in [false, true]:
+		var second := Legislature.propose(state, _loader, other, force)
+		if not bool(second.get("refused", false)) or not bool(second.get("already_tabled", false)):
+			_fail("R2: a second bill (force %s) was not refused while one is tabled: %s" % [force, second])
+	if String(ns.tabled_bill.get("law_id", "")) != "carbon_levy":
+		_fail("R2: a refused second bill replaced the tabled one: %s" % [ns.tabled_bill])
+
+
+## The division is the FIRST step of the next close: its counts are the forecast's
+## (nothing ran before it), it writes last_law_result once and clears the register,
+## and a close with nothing tabled divides nothing.
+func _check_the_division_runs_first_at_the_next_close() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _find_law("carbon_levy")
+	var forecast: Dictionary = Legislature.propose(state, _loader, law)["forecast"]
+	state.month += 1
+	var report := WorldMonth.tick_month(state, _loader)
+	var division: Dictionary = report.get("division", {})
+	if division.is_empty():
+		_fail("R2: the close after the tabling reported no division")
+		return
+	if WorldMonth.STEPS[0] != "Division":
+		_fail("R2: the division is not the month's first step: %s" % WorldMonth.STEPS[0])
+	for key in ["passed", "yes_seats", "no_seats", "abstain_seats"]:
+		if division[key] != forecast[key]:
+			_fail("R2: the division's %s %s is not the forecast's %s" % [key, division[key], forecast[key]])
+	if String(division.get("law_id", "")) != "carbon_levy" or ns.last_law_result != division:
+		_fail("R2: last_law_result is not the division: %s" % [ns.last_law_result])
+	if not ns.tabled_bill.is_empty():
+		_fail("R2: the register was not cleared at the division: %s" % [ns.tabled_bill])
+	state.month += 1
+	if not (WorldMonth.tick_month(state, _loader).get("division", {}) as Dictionary).is_empty():
+		_fail("R2: a close with nothing tabled reported a division")
+
+
+## Article 49.3 is adoption without a vote, so it is not tabled.
+func _check_article_49_3_stays_immediate() -> void:
+	var state = _new_state()
+	var result := Legislature.propose(state, _loader, _find_law("working_time_reduction"), true)
+	if not bool(result.get("forced", false)) or bool(result.get("tabled", false)):
+		_fail("R2: 49.3 did not act at once: %s" % [result])
+	if not state.player().tabled_bill.is_empty():
+		_fail("R2: 49.3 tabled the bill: %s" % [state.player().tabled_bill])
+
+
+## A save with a tabled bill keeps it; a save made before R2 has none (absent_ok).
+func _check_a_tabled_bill_round_trips_and_an_older_save_has_none() -> void:
+	var state = _new_state()
+	Legislature.propose(state, _loader, _find_law("carbon_levy"))
+	var payload: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var back = GameState.from_dict(payload)
+	var tabled: Dictionary = back.player().tabled_bill
+	if String(tabled.get("law_id", "")) != "carbon_levy" or int(tabled.get("vote_day", 0)) != Calendar.days_in_month(state.year, state.month):
+		_fail("R2: the tabled bill did not survive a save: %s" % [tabled])
+	(payload["nations"]["FRA"] as Dictionary).erase("tabled_bill")
+	if not GameState.from_dict(payload).player().tabled_bill.is_empty():
+		_fail("R2: a save with no tabled_bill key read as something tabled")
+
+
+## A law booked in the Diary is tabled on its day, never fired twice, and resolved
+## done or refused by its division -- never "refused" in between.
+func _check_a_booked_law_resolves_on_its_division() -> void:
+	var state = _new_state()
+	var entry := Calendar.make_entry(CalendarK.KIND_LAW, state.year, state.month, 20, "", "", "carbon_levy")
+	state.appointments.append(entry)
+	var outcomes: Array = []
+	for day in [20, 21]:
+		DiaryDriver.resolve(state, _loader, state.year, state.month, day, func(o: Dictionary) -> void: outcomes.append(o))
+	if outcomes.size() != 1 or String(state.appointments[0]["status"]) != CalendarK.STATUS_TABLED:
+		_fail("R2: the booked law fired %d times and reads '%s', not tabled once" % [outcomes.size(), state.appointments[0]["status"]])
+		return
+	if String(state.player().tabled_bill.get("law_id", "")) != "carbon_levy":
+		_fail("R2: the booked law was not tabled: %s" % [state.player().tabled_bill])
+	state.month += 1
+	WorldMonth.tick_month(state, _loader)
+	if String(state.appointments[0]["status"]) != CalendarK.STATUS_DONE:
+		_fail("R2: the carried booked law reads '%s' after its division" % state.appointments[0]["status"])
 
 
 func _find_law(law_id: String):

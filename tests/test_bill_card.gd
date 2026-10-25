@@ -20,6 +20,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
+const Division = preload("res://src/sim/division.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -74,12 +75,19 @@ func _check_one_card() -> void:
 	var name: String = Strings.law_name(law)
 	var before := _titled(inbox, name).size()
 	_main._law_panel.run_proposal(law)
-	var cards := _titled(inbox, name)
-	if cards.size() != before + 1:
-		_fail("one proposal gave %d cards titled '%s'" % [cards.size() - before, name])
+	var tabled := _titled(inbox, name)
+	if tabled.size() != before + 1:
+		_fail("one tabling gave %d cards titled '%s'" % [tabled.size() - before, name])
+		return
+	_divide()
+	var card: Control = null
+	for c in _titled(inbox, name):
+		if not tabled.has(c):
+			card = c
+	if card == null:
+		_fail("the division gave no card titled '%s'" % name)
 		return
 	var result: Dictionary = _main._state.player().last_law_result
-	var card: Control = cards[-1]
 	if inbox.lane_of(inbox._id_of(card)) != inbox.NOTES:
 		_fail("the bill's card is not a note: lane %s" % inbox.lane_of(inbox._id_of(card)))
 	var text := ""
@@ -108,12 +116,16 @@ func _check_booked_bill() -> void:
 	var outcomes: Array = []
 	DiaryDriver.resolve(state, _main._loader, int(entry["year"]), int(entry["month"]), 20, func(o: Dictionary) -> void: outcomes.append(o))
 	if outcomes.size() != 1:
-		_fail("the booked bill did not divide on its day")
+		_fail("the booked bill was not tabled on its day")
 		return
-	var result: Dictionary = state.player().last_law_result
 	var text: String = _main._world_news.appointment_text(entry, String(outcomes[0]["label"]), bool(outcomes[0]["ok"]), String(outcomes[0]["reason"]))
-	if not bool(result.get("held_by_upper", false)) and not text.contains("%d for" % int(result["yes_seats"])):
-		_fail("the booked bill's card carries no division: '%s'" % text)
+	if not text.contains("Tabled"):
+		_fail("the booked bill's day card does not say it was tabled: '%s'" % text)
+	_divide()
+	var result: Dictionary = state.player().last_law_result
+	var division := ProposalNote.body(result, _main._loader.parties[String(state.player().id)])
+	if not bool(result.get("held_by_upper", false)) and not division.contains("%d for" % int(result["yes_seats"])):
+		_fail("the booked bill's division carries no counts: '%s'" % division)
 	# Its card is titled as a vote, not "Kept:" over a defeat (review pass 1).
 	_main._world_news.card_appointment(entry, String(outcomes[0]["label"]), bool(outcomes[0]["ok"]), String(outcomes[0]["reason"]))
 	if _titled(_main._hud.inbox, "Vote: %s" % String(outcomes[0]["label"])).is_empty():
@@ -136,6 +148,7 @@ func _check_struck() -> void:
 		_fail("premise: no farm_standards_act")
 		return
 	_main._law_panel.run_proposal(law)
+	_divide()
 	var result: Dictionary = _main._state.player().last_law_result
 	if not bool(result.get("struck_down", false)):
 		_fail("premise: farm_standards_act was not struck down (%s)" % [result.keys()])
@@ -156,6 +169,12 @@ func _titled(inbox, title: String) -> Array:
 			if node != null and not out.has(node):
 				out.append(node)
 	return out
+
+## V5.2 b+ R2: the tabled bill divides at the month's close -- through main's own
+## Division hook, so the division's card is the one the game pushes.
+func _divide() -> void:
+	var report := {"division": Division.divide(_main._state, _main._loader)}
+	_main._on_month_step("Division", true, report, _main._state.year, _main._state.month)
 
 
 func _fail(message: String) -> void:

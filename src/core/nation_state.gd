@@ -863,6 +863,13 @@ var assembly_bills := {}
 ## until the first one resolves. Same shape as Elections.resolve()'s result.
 var last_law_result := {}
 
+## V5.2 b+ R2. The player's bill before the Assembly: {law_id, referendum, vote_year,
+## vote_month, vote_day}, written by Legislature.propose() and cleared by
+## Division.divide() at the close that ends the month. One at a time. absent_ok:
+## before R2 every bill divided the moment it was proposed, so an older save had
+## nothing waiting, which is what the absent key reads.
+var tabled_bill := {}
+
 
 # --- Diplomacy (V1.3a) ---------------------------------------------------------
 

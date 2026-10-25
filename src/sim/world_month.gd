@@ -21,6 +21,7 @@ extends RefCounted
 ## copy of the order.
 ##
 ## `report` keys, each present once its step has run:
+##   division          Division.divide's result, {} when nothing was tabled (V5.2 b+ R2)
 ##   history_entry     Budget.snapshot merged with Opinion.snapshot, undated
 ##   character_acts    Characters.tick_month's acts (Array)
 ##   audience_requests Audiences.tick_month's {arrived, lapsed} (V5.2b)
@@ -44,6 +45,7 @@ extends RefCounted
 ## compares them). The hooks fire as they always did: `before` ahead of a step's
 ## first unit, `after` behind its last.
 
+const Division = preload("res://src/sim/division.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -84,7 +86,7 @@ const Elections = preload("res://src/sim/elections.gd")
 ## holds tick_month() to this list by recording the calls, so the list cannot
 ## become a comment that disagrees with the code.
 const STEPS: Array[String] = [
-	"Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
+	"Division", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
 	"Media", "Programme", "Opinion", "History", "Calendar", "Discipline",
 	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Companies",
 	"Industry", "Migration", "Investment", "Projects", "Campaign", "Pledges",
@@ -174,6 +176,17 @@ static func _step(month: Month, step: String) -> Array:
 	var state = month.state
 	var loader = month.loader
 	match step:
+		# V5.2 b+ R2. FIRST: the player's bill tabled during the month divides at the
+		# close that ends it, so it applies before this close's Economy, Opinion and
+		# Elections -- where it applied when it divided at the press. A bill tabled
+		# from inside a close (a harness's step hook) divides at the next one. The
+		# Diary's tabled booking of it settles here, the orchestrator composing two
+		# systems as it does everywhere else.
+		"Division":
+			var division: Dictionary = Division.divide(state, loader)
+			month.report["division"] = division
+			if not division.is_empty():
+				Calendar.settle_tabled(state, String(division["law_id"]), bool(division["passed"]))
 		# V2.8. The accessibility index per nation, built here because energy.gd never
 		# learns that a graph exists. Same index Regions already computes, so the
 		# Dijkstra rows are served from network.gd's own per-graph cache and this

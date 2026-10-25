@@ -40,7 +40,6 @@ const MediaK = preload("res://src/sim/media_constants.gd")
 ## nothing from here. tests/test_referendum.gd reads that file and fails if the
 ## dependency ever runs the other way -- src/sim/calendar.gd's leaf property.
 const Referendum = preload("res://src/sim/referendum.gd")
-const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 
 ## V1.1e, both one direction only and both LEAVES -- neither knows a law exists.
 ## chambers.gd owns the second chamber's composition and this file resolves its
@@ -55,6 +54,8 @@ const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 ## V5.2 b+ R14: every bill, one lookup (the authored list, the composed register,
 ## the ownership bills built from content).
 const Bills = preload("res://src/sim/bills.gd")
+## V5.2 b+ R2: the tabled bill's vote day. Calendar preloads nothing, so no cycle.
+const Calendar = preload("res://src/sim/calendar.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -1280,6 +1281,12 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(ns.id, [])
 
+	# V5.2 b+ R2. ONE PLAYER BILL BEFORE THE ASSEMBLY AT A TIME, and Article 49.3
+	# waits for it too: the sitting that divides the tabled bill ends at the
+	# month's close. Checked first, so the refusal names the real reason.
+	if not ns.tabled_bill.is_empty():
+		return refused(ns, law.id, law.majority, "already_tabled")
+
 	# THE ACTION MUST STILL BE LEGAL, which the other four player verbs -- the
 	# diplomacy, campaign, pledge and project executors -- each check and this one,
 	# the fifth, did not, leaving the UI as the only gate. (Named in prose rather
@@ -1291,17 +1298,12 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	# writes a cooldown on a law already in force. Checked ahead of the force and
 	# referendum routes below because a cooldown is not something Article 49.3
 	# overrides -- 49.3 bypasses the assembly, not the clock.
-	var legal := false
 	# V4.2 T2. The scan reads the authored list PLUS the composed register --
 	# a custom law is a law like any other, and a scan that could not find
 	# one would refuse the player's own bill as unavailable, which is both a
 	# wrong verdict and the loss of the double-application guard this scan
 	# exists to keep (an unfound law is an unchecked law).
-	for open_law in available(ns, Bills.open(state, ns, loader)):
-		if open_law.id == law.id:
-			legal = true
-			break
-	if not legal:
+	if open_law(state, ns, loader, law.id) == null:
 		var unavailable := {
 			"law_id": law.id, "passed": false, "refused": true, "unavailable": true,
 			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
@@ -1357,62 +1359,40 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 		ns.last_law_result = in_flight
 		return in_flight
 
-	var result := resolve_vote(ns, party_list, law, route)
+	# V5.2 b+ R2. TABLED, NOT DIVIDED. The bill is before the Assembly until the
+	# close that ends the month, where Division.divide() runs what this function
+	# used to run at once (the division, the second chamber, the referendum call,
+	# the court, the cooldown) as that close's first step. What comes back is the
+	# tabling: the vote day and the forecast, resolve_vote() now -- the pure read
+	# the panel already shows. Nothing is written to last_law_result until then.
+	ns.tabled_bill = {
+		"law_id": law.id, "referendum": referendum, "vote_year": int(state.year),
+		"vote_month": int(state.month), "vote_day": Calendar.days_in_month(int(state.year), int(state.month)),
+	}
+	var tabling: Dictionary = ns.tabled_bill.duplicate()
+	tabling["tabled"] = true
+	tabling["forecast"] = resolve_vote(ns, party_list, law, route)
+	return tabling
 
-	# V1.1e. THE SECOND CHAMBER, between the division and everything after it, and
-	# that position is Art. 89's rather than a convenience: a French revision bill must
-	# pass BOTH CHAMBERS in identical terms and only then goes to the country or to
-	# Congress. Luxembourg's block is absent and Chambers.power_over() returns
-	# VERDICT_NONE for it, so a unicameral nation needs no branch here.
-	var power: String = Chambers.power_over(ns, law)
-	if result["passed"] and power != ChambersK.VERDICT_NONE:
-		var upper := resolve_upper(ns, party_list, law)
-		result["upper_chamber"] = ns.upper_chamber_name
-		result["upper_power"] = power
-		result["upper_passed"] = upper["passed"]
-		result["upper_yes_seats"] = upper["yes_seats"]
-		result["upper_no_seats"] = upper["no_seats"]
-		result["upper_abstain_seats"] = upper["abstain_seats"]
-		result["upper_seats_total"] = upper["seats_total"]
-		if not upper["passed"]:
-			result["passed"] = false
-			if power == ChambersK.VERDICT_ABSOLUTE:
-				result["blocked_by_upper"] = true
-				if law.cooldown_months > 0:
-					ns.law_cooldown_months[law.id] = law.cooldown_months
-			else:
-				# HELD, not defeated: no cooldown, because the bill has not been beaten
-				# and is still in flight. tick_month() passes it when the hold runs
-				# out. The origin rides the entry (the ultra pass-2 shape): "player"
-				# is what makes the release charge the override price -- the
-				# government's own insistence is the thing being priced.
-				result["held_by_upper"] = true
-				result["held_months"] = ChambersK.UPPER_HOLD_MONTHS
-				ns.held_bills[law.id] = {"months": ChambersK.UPPER_HOLD_MONTHS, "origin": "player"}
-			Discipline.penalise_rebellions(ns, result["party_rebels"], _by_id(party_list))
-			ns.last_law_result = result
-			return result
 
-	if result["passed"] and route:
-		# The chamber said yes; the country has not been asked yet. Nothing is
-		# applied, no `once` flag is set and no cooldown is written -- the law is IN
-		# FLIGHT, which is a third outcome this function did not have before.
-		Referendum.announce(ns, law.id, law.position)
-		result["passed"] = false
-		result["referendum_called"] = true
-		result["referendum_months"] = ReferendumK.REFERENDUM_DELAY_MONTHS
-	elif result["passed"]:
-		# V1.1e. THE COURT, the last stage before the bill takes effect. It may set
-		# result["passed"] back to false and write the cooldown itself.
-		_review_and_apply(state, ns, law, loader, result)
-	elif law.cooldown_months > 0:
-		ns.law_cooldown_months[law.id] = law.cooldown_months
+## The law `law_id` among the bills `ns` may table now, or null. propose()'s
+## legality and the division's rebuilding of its tabled id are one scan, so the
+## division re-reads at the vote the legality the press checked.
+static func open_law(state, ns, loader, law_id: String):
+	for law in available(ns, Bills.open(state, ns, loader)):
+		if law.id == law_id:
+			return law
+	return null
 
-	# A whip that failed fails more easily next time, whichever way the bill went.
-	# Applied here rather than in resolve_vote(), which stays a pure function of
-	# state so the forecast can call it as often as it likes.
-	Discipline.penalise_rebellions(ns, result["party_rebels"], _by_id(party_list))
 
+## A refusal's result, the shape propose()'s refusals all write: nothing divided,
+## the `flag` key naming why. Written to last_law_result, as theirs are.
+static func refused(ns, law_id: String, majority: String, flag: String) -> Dictionary:
+	var result := {
+		"law_id": law_id, "passed": false, "refused": true, flag: true,
+		"majority": majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
+		"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
+	}
 	ns.last_law_result = result
 	return result
 

@@ -28,6 +28,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Division = preload("res://src/sim/division.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Law = preload("res://src/core/law.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
@@ -461,7 +462,8 @@ func _test_overlapping_repeals_release_moot() -> void:
 	# statute.gd's suspensive refusal writes -- then propose the second, which
 	# carries and subtracts under it.
 	ns.held_bills[String(laws[0].id)] = {"months": 1, "origin": "assembly"}
-	var result: Dictionary = Legislature.propose(gs, _loader, laws[1])
+	Legislature.propose(gs, _loader, laws[1])
+	var result: Dictionary = Division.divide(gs, _loader)  # V5.2 b+ R2: tabled, then divided
 	if not bool(result.get("passed", false)):
 		_fail("test setup: the second repeal must carry for this leg to mean anything: %s" % [result])
 		return
