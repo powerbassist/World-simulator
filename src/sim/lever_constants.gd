@@ -94,15 +94,15 @@ const LOYALTY_ACCEPT := 0.05
 const GRUDGE_ACCEPT_RELIEF := 0.05
 
 ## The spends, paid win or lose (the spec's levers table). A favour is rapport
-## spent; a vote trade is an IOU due IOU_MONTHS on; AID is not in b2 (it needs a
-## budget line of its own -- the parent's call).
+## spent; a vote trade is an IOU due IOU_MONTHS on. V5.2c: backroom (a want served
+## off the books) and aid (a diverted budget line) are the corrupt currencies,
+## paid in evidence -- src/sim/shadows.gd and shadow_constants.gd.
 const BARGAIN_FAVOUR_RAPPORT := 0.10
 const IOU_MONTHS := 12
 const CURRENCY_FAVOUR := "favour"
 const CURRENCY_VOTE_TRADE := "vote_trade"
+const CURRENCY_BACKROOM := "backroom"
 const CURRENCY_AID := "aid"
-## The one text for aid's refusal: the card and the command say the same (a msgid).
-const AID_CLOSED := "aid is not open yet"
 ## A promised date the president names, inside this window from now: too near is
 ## not a promise, too far is not a date.
 const PROMISE_MIN_MONTHS := 3

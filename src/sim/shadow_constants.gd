@@ -6,6 +6,7 @@ extends RefCounted
 ## B6, B7 and B8; the plan is .superpowers/sdd/v5.2c-plan.md.
 
 const ActK = preload("res://src/sim/character_act_constants.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
 const PresidentK = preload("res://src/sim/president_constants.gd")
 
 ## The four ways a shadow is found out, named once (the spec, the currencies table).
@@ -52,3 +53,31 @@ const PRESS_HOSTILE := 1.0
 ## A press owner is hostile below zero rapport, or at the grudge that already
 ## promises a leak -- the brief gate, not a second number.
 const PRESS_GRUDGE_HOSTILE := ActK.GRUDGE_BRIEF_THRESHOLD
+
+# --- Offers (src/sim/offers.gd draws them, src/sim/shadows.gd answers them) ---------
+
+## Who comes with money, and which (the spec's currencies table): an executive to
+## the president or to the party; a press owner to the president alone.
+const OFFER_KINDS := {"executive": ["party_money", "personal_wealth"], "press_owner": ["personal_wealth"]}
+## The chance a request from one of them comes with an offer. STARTING value: B6
+## wants 2 to 6 offers reaching the president a term; the shadows probe sets it.
+const OFFER_CHANCE := 0.25
+## What an offer is worth, EUR millions, and the evidence each million leaves: one
+## act of evidence size 1, the size RATE above is set at.
+const OFFER_EUR_M := 1.0
+const EVIDENCE_PER_EUR_M := 1.0
+## A refused offer costs the offerer's regard -- half a declined request's -- and
+## never a grudge (the visitors' precedent). OPINION, a starting value.
+const OFFER_REFUSED_RAPPORT := 0.05
+const SALT_OFFER := "offer"
+
+# --- The corrupt bargain currencies (src/sim/shadows.gd) ---------------------------
+
+## What each leaves: backroom, a person who knows (the spec's "favours"); aid, a gap
+## in a spending line (the spec's "diverted budget"), the largest trail.
+const CURRENCY_EVIDENCE := {LK.CURRENCY_BACKROOM: "favour", LK.CURRENCY_AID: "diverted_budget"}
+## What each adds to a bargain's odds, the more exposed buying more. STARTING
+## values: lever_probe L2 prices them at their expected cost (B5's amendment).
+const CURRENCY_ODDS := {LK.CURRENCY_BACKROOM: 0.10, LK.CURRENCY_AID: 0.20}
+## Every corrupt bargain leaves one act of evidence (the S1 size).
+const ACT_EVIDENCE := 1.0

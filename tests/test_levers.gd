@@ -337,8 +337,9 @@ func _check_each_lever_pays_its_spend() -> void:
 	ns = c["ns"]
 	pid = String(c["session"]["person_id"])
 	var before := _snapshot(ns, pid)
-	if bool(Levers.attempt(state, ns, _loader, c["session"], "bargain", {"currency": "aid"}).get("ok", true)) or _snapshot(ns, pid) != before:
-		_fail("aid was accepted, or its refusal wrote the registers")
+	# V5.2c opened aid (test_shadows pins what it pays); a currency that is none is refused.
+	if bool(Levers.attempt(state, ns, _loader, c["session"], "bargain", {"currency": "gold"}).get("ok", true)) or _snapshot(ns, pid) != before:
+		_fail("a currency that is none was accepted, or its refusal wrote the registers")
 	Levers.attempt(state, ns, _loader, c["session"], "bargain", {"currency": "vote_trade"})
 	if _count(ns, pid, "iou") != 1:
 		_fail("a vote trade left %d IOUs, not 1" % _count(ns, pid, "iou"))
@@ -796,9 +797,10 @@ func _check_judged_rows_are_kept_and_pruned() -> void:
 		_fail("judged rows older than %d months were not pruned" % PK.JUDGED_KEPT_MONTHS)
 
 
-## The bargain row names each currency it can pay in, aid offered false with its
-## reason, and its own spends are the favour's alone (QA's R2: one is paid); the
-## promise row carries its window as absolute months.
+## The bargain row names each currency it can pay in -- since V5.2c the corrupt two
+## offered beside the honest two (test_shadows pins their odds and evidence) -- and
+## its own spends are the favour's alone (QA's R2: one is paid); the promise row
+## carries its window as absolute months.
 func _check_bargain_lists_its_currencies() -> void:
 	var c := _booked()
 	if c.is_empty():
@@ -811,7 +813,7 @@ func _check_bargain_lists_its_currencies() -> void:
 	if not by.has("favour") or not by.has("vote_trade") or not by.has("aid"):
 		_fail("the bargain row's currencies are %s" % [bargain.get("currencies", [])])
 		return
-	if not bool(by["favour"]["offered"]) or not bool(by["vote_trade"]["offered"]) or bool(by["aid"]["offered"]) or String(by["aid"]["why_not"]) == "":
+	if not bool(by["favour"]["offered"]) or not bool(by["vote_trade"]["offered"]) or not bool(by["aid"]["offered"]) or not by.has("backroom"):
 		_fail("the currencies' offers are %s" % [by])
 	if (bargain["spends"] as Dictionary).has("iou") or float(by["vote_trade"]["spends"].get("iou", 0.0)) != 1.0:
 		_fail("the bargain's spends %s overstate what one bargain pays" % [bargain["spends"]])

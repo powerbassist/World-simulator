@@ -29,6 +29,7 @@ const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
 
 ## The six levers and the other topics, in the order the scene lists them.
 const LEVERS := K.LEVERS
@@ -88,13 +89,14 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 	for lever in K.LEVERS:
 		var p := LeverOdds.odds(person, lever, c)
 		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else word_given(ns, person.id, lever, String(session["object"])))
-		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state)))
+		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state), true))
 	return out
 
 
 ## One lever's card row from its true odds `p` (-1.0 when not offered): the range
-## that holds them, never `p` itself. The audience's and the phone's (b3) alike.
-static func lever_row(ns, person, lever: String, p: float, why_not: String, knowledge: float, now: int) -> Dictionary:
+## that holds them, never `p` itself. The audience's and the phone's (b3) alike;
+## `shadows` lists the corrupt currencies, the audience's alone (V5.2c, Call 8).
+static func lever_row(ns, person, lever: String, p: float, why_not: String, knowledge: float, now: int, shadows := false) -> Dictionary:
 	var r := Vector2.ZERO if p < 0.0 else LeverOdds.shown_range(person.id, lever, p, knowledge, ns.draw_seed)
 	var row := {
 		"lever": lever,
@@ -111,8 +113,9 @@ static func lever_row(ns, person, lever: String, p: float, why_not: String, know
 		row["currencies"] = [
 			{"currency": K.CURRENCY_FAVOUR, "offered": why_not == "", "why_not": why_not, "spends": {"rapport": -K.BARGAIN_FAVOUR_RAPPORT}},
 			{"currency": K.CURRENCY_VOTE_TRADE, "offered": why_not == "", "why_not": why_not, "spends": {"iou": 1.0}},
-			{"currency": K.CURRENCY_AID, "offered": false, "why_not": K.AID_CLOSED, "spends": {}},
 		]
+		if shadows:
+			(row["currencies"] as Array).append_array(Shadows.currency_rows(ns, person, p, why_not, knowledge))
 	elif lever == "promise_date":
 		row["dates"] = {"earliest": now + K.PROMISE_MIN_MONTHS, "latest": now + K.PROMISE_MAX_MONTHS}
 	return row
@@ -151,9 +154,10 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	if refused["error"] != "":
 		return refused
 	var now := _now(state)
-	refused["error"] = arg_error(lever, args, now)
+	refused["error"] = arg_error(lever, args, now, true)
 	if refused["error"] != "":
 		return refused
+	p = clampf(p + Shadows.odds_bonus(lever, args), K.ODDS_MIN, K.ODDS_MAX)
 	var spent := pay(state, ns, loader, person, String(session["object"]), lever, args, now)
 	if spent.has("refused"):
 		refused["error"] = "the promise could not be made"
@@ -291,12 +295,14 @@ static func word_given(ns, pid: String, lever: String, object: String) -> String
 
 
 ## Why a lever's arguments are refused, or "": a bargain pays in a currency that is
-## open, a promise names a month inside its window.
-static func arg_error(lever: String, args: Dictionary, now: int) -> String:
+## open -- a corrupt one only where the channel allows `shadows` -- and a promise
+## names a month inside its window.
+static func arg_error(lever: String, args: Dictionary, now: int, shadows := false) -> String:
 	var currency := String(args.get("currency", K.CURRENCY_FAVOUR))
 	var due := int(args.get("due_month", -1))
-	if lever == "bargain" and currency != K.CURRENCY_FAVOUR and currency != K.CURRENCY_VOTE_TRADE:
-		return K.AID_CLOSED if currency == K.CURRENCY_AID else "not a currency"
+	var open := currency == K.CURRENCY_FAVOUR or currency == K.CURRENCY_VOTE_TRADE or (shadows and Shadows.is_currency(currency))
+	if lever == "bargain" and not open:
+		return "not a currency"
 	if lever == "promise_date" and (due < now + K.PROMISE_MIN_MONTHS or due > now + K.PROMISE_MAX_MONTHS):
 		return "that date is too near or too far for a promise"
 	return ""
@@ -336,6 +342,8 @@ static func pay(state, ns, loader, person, object: String, lever: String, args: 
 	var due := int(args.get("due_month", -1))
 	match lever:
 		"bargain":
+			if Shadows.is_currency(String(args.get("currency", ""))):
+				return Shadows.pay_currency(state, ns, loader, person, String(args["currency"]))
 			if String(args.get("currency", K.CURRENCY_FAVOUR)) == K.CURRENCY_VOTE_TRADE:
 				if not President.commit(state, ns, loader, "iou", pid, object, now + K.IOU_MONTHS):
 					return {"refused": true}

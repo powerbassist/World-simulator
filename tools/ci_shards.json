@@ -201,6 +201,7 @@
    "tests/test_audiences.gd",
    "tests/test_levers.gd",
    "tests/test_phone.gd",
+   "tests/test_shadows.gd",
    "tests/test_audience_triggers.gd"
   ]
  ]
