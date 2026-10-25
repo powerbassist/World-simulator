@@ -1503,8 +1503,11 @@ GLM's red-team was re-derived (the PR body lists what was kept and dropped).
   money events).
 - **Prediction (INFERRED):** press hazard on one act = 0.0035 × 0.25 × (1 +
   the hostile press share) ≈ 0.00096 a month at a share of 0.1, so about 5 %
-  by month 60 (up to about 9 % with a wholly hostile press). That stays under
-  party money's measured 10.5 %, so the currency order holds. Backroom's
+  by month 60 (up to about 9 % with a wholly hostile press: 0.00175 a month
+  over S1's 54 months from the act at month 6, 1 − 0.99825^54 = 9.0 %; over a
+  full 60 months it would be 10.0 %). That stays under party money's measured
+  10.5 %, so the currency order holds, narrowly at a fully hostile press (QA,
+  on #171). Backroom's
   expected cost becomes about 0.05 × 0.46 ≈ 0.02 to 0.04 asks.
 - **Then the declared knob applies:** `CURRENCY_ODDS["backroom"]` comes down
   toward that price. Rows: S1's favour rate **above 0 % and below party
@@ -1540,9 +1543,9 @@ measured where someone is crossed.**
 
 | Gap | Declared | Formula at France's people |
 |---|---|---|
-| at least +0.14 (12 people) | caught **40 % to 70 %** (the old high row) | 0.435 to 0.53 |
+| at least +0.14 (13 people; FRA_ferrand at 0.67 sits on the cut, which the 1e-9 rule counts in) | caught **40 % to 70 %** (the old high row) | 0.435 to 0.53 |
 | at most −0.10 (6 people) | caught **15 % to 30 %** | 0.195 to 0.255 |
-| between the two (44 people) | **between** the other two rows' rates | 0.26 to 0.43 |
+| between the two (43 people) | **between** the other two rows' rates | 0.26 to 0.43 |
 | high minus low | **at least 0.20** | about 0.30 |
 
 - **A broken dated promise:** revealed 100 %, unchanged.
@@ -1564,9 +1567,16 @@ call.**
     1.2.
 - **Rows:** 2 to 6 offers a term (unchanged), at `OFFER_CHANCE` ≤ 0.5.
 - **For the author:** this sets how often money knocks, about 4 to 5 times
-  a term, mostly party money from politicians. The alternatives are (b) the
+  a term, mostly party money from politicians. The alternatives were (b) the
   kinds as built and the band lowered to 1 to 3 a term, or (c) `OFFER_CHANCE`
   1.0 as built.
+- **The author's call (2026-10-25, the question tool), verbatim: "Environ 5,
+  sources variées".** The recommendation is taken: `OFFER_KINDS` gains
+  `regional_figure` and `politician` (party money only), `OFFER_CHANCE` at
+  most 0.5, about 4.7 offers a term. Content authors the offer lines for the
+  two new kinds (`offer_*`, `offer_accept_*`, `offer_refuse_*` in
+  `data/audiences/default.dialogue`, as for the executive and the press
+  owner).
 
 **5. A lie caught in the audience fails the attempt (Systems' call 1).**
 - **The rule:** when the catch roll says caught, the lever fails; the reveal
