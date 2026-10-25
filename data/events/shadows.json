@@ -1,0 +1,621 @@
+{
+  "_note": "V5.2c's exposure scandals (docs/design/v5.2-spec.md, 'Corruption, in the author's four currencies'): nine events, one per exposure route and kind the table reaches. They are delivered only when the exposure machine arms them (on_action 'exposure'; the hazard and the hook never draw them), so likelihood is required by the loader and never read. Text drafted with GLM 5.3 and curated line by line; the numbers are the designer's: a corruption scandal's three answers write society.corruption (accountable -0.04, deny +0.05, silence none) and the bloc offsets, all times 1.5 at severity 3; the two affair scandals write no corruption, only blocs (their silence is balanced so the default is not a standing price, as event_lint requires).",
+  "events": [
+    {
+      "id": "exposure_press_personal_wealth",
+      "name": "Fees On Paper",
+      "summary": "A Sunday paper owned by a publisher with an old grudge has traced payments into the president's private accounts, booked variously as consulting fees and investment returns. Editors promise a series.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 2,
+      "cooldown_months": 0,
+      "respond_months": 3,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "press",
+        "kinds": [
+          "personal_wealth"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Open the accounts",
+          "summary": "You publish the ledgers yourself and admit the money was badly judged. It costs you pride and a banker's friendship, but it takes the story away from your enemy.",
+          "effects": {
+            "society": {
+              "corruption": -0.04
+            },
+            "bloc_offset": {
+              "urban": 0.03,
+              "students": 0.03,
+              "rural": -0.03,
+              "business": -0.01,
+              "pensioners": -0.01
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Attack the owner",
+          "summary": "You call it vengeance dressed as journalism and note the publisher's debts. Your backers cheer, though every instalment lands harder if more surfaces.",
+          "effects": {
+            "society": {
+              "corruption": 0.05
+            },
+            "bloc_offset": {
+              "rural": 0.03,
+              "pensioners": 0.02,
+              "business": 0.02,
+              "urban": -0.04,
+              "students": -0.03,
+              "workers": -0.01
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Wait out the series",
+          "summary": "You let the instalments run and hope readers tire. They do not tire.",
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.03,
+              "students": -0.025,
+              "rural": -0.015,
+              "pensioners": 0.01,
+              "business": 0.01
+            }
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "exposure_press_affair",
+      "name": "Photographs and Dates",
+      "summary": "A leading daily has printed photographs and a careful timeline of a private relationship the president conducted while married. The paper dwells less on the affair than on the two years of concealment.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 2,
+      "cooldown_months": 0,
+      "respond_months": 3,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "press",
+        "kinds": [
+          "affair"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Own the lie",
+          "summary": "You confirm the relationship and the lying, and apologise to those owed apologies. Dignity suffers at home and in cabinet, and trust is partly restored.",
+          "effects": {
+            "bloc_offset": {
+              "urban": 0.02,
+              "students": 0.02,
+              "pensioners": -0.03,
+              "rural": -0.02
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Deny the record",
+          "summary": "You dispute the timeline and question how the pictures were obtained. Supporters rally, but a second witness would leave you exposed twice over.",
+          "effects": {
+            "bloc_offset": {
+              "pensioners": 0.02,
+              "rural": 0.02,
+              "urban": -0.03,
+              "students": -0.025
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Discuss nothing",
+          "summary": "You answer no question on the subject, at any podium. The questions do not stop.",
+          "effects": {
+            "bloc_offset": {
+              "pensioners": -0.015,
+              "rural": -0.01,
+              "urban": -0.02,
+              "students": -0.02,
+              "business": 0.015,
+              "workers": 0.01
+            }
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "exposure_courts_personal_wealth",
+      "name": "Magistrate's Summons",
+      "summary": "An investigating magistrate has opened a preliminary case into payments made to the president personally and has summoned the president's accountants to testify. The palace learns of it from the court list.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 3,
+      "cooldown_months": 0,
+      "respond_months": 4,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "courts",
+        "kinds": [
+          "personal_wealth"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Cooperate fully",
+          "summary": "You waive any claim to privacy over the accounts and instruct the accountants to answer everything. It weakens your legal guard and reads as candour.",
+          "effects": {
+            "society": {
+              "corruption": -0.06
+            },
+            "bloc_offset": {
+              "urban": 0.045,
+              "students": 0.045,
+              "rural": -0.045,
+              "business": -0.015,
+              "pensioners": -0.015
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Fight the inquiry",
+          "summary": "Your lawyers contest the summons and hint at political motive behind the case. Hardliners approve, and the bench takes note of the enemy it has made.",
+          "effects": {
+            "society": {
+              "corruption": 0.075
+            },
+            "bloc_offset": {
+              "rural": 0.045,
+              "pensioners": 0.03,
+              "business": 0.03,
+              "urban": -0.06,
+              "students": -0.045,
+              "workers": -0.015
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Let lawyers work",
+          "summary": "You make no comment while proceedings continue. The proceedings continue.",
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.045,
+              "students": -0.038,
+              "rural": -0.022,
+              "pensioners": 0.015,
+              "business": 0.015
+            }
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "exposure_courts_diverted_budget",
+      "name": "Bent Budget Line",
+      "summary": "A magistrate is examining a public budget line quietly redirected toward a favoured cause with close ties to an ally of the president. A ministry memo surfaces that appears to have blessed the shift.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 3,
+      "cooldown_months": 0,
+      "respond_months": 4,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "courts",
+        "kinds": [
+          "diverted_budget"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Restore the line",
+          "summary": "You return the money to its stated purpose and let a minister carry the blame for signing off. An ally is lost and the record shows correction.",
+          "effects": {
+            "society": {
+              "corruption": -0.06
+            },
+            "bloc_offset": {
+              "urban": 0.045,
+              "students": 0.045,
+              "rural": -0.045,
+              "business": -0.015,
+              "pensioners": -0.015
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Blame the memo",
+          "summary": "You call the redirection routine reallocation and the memo misread. Your party's faithful relax, though the magistrate keeps the file open.",
+          "effects": {
+            "society": {
+              "corruption": 0.075
+            },
+            "bloc_offset": {
+              "rural": 0.045,
+              "pensioners": 0.03,
+              "business": 0.03,
+              "urban": -0.06,
+              "students": -0.045,
+              "workers": -0.015
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Trust the ministry",
+          "summary": "You leave the ministry to explain its own paperwork. It explains it badly.",
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.045,
+              "students": -0.038,
+              "rural": -0.022,
+              "pensioners": 0.015,
+              "business": 0.015
+            }
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "exposure_auditors_party_money",
+      "name": "One Large Donor",
+      "summary": "Auditors have declined to certify the governing party's books after finding a substantial donation recorded under a name that does not match the true giver. A public favour to that giver followed within months.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 3,
+      "cooldown_months": 0,
+      "respond_months": 4,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "auditors",
+        "kinds": [
+          "party_money"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Publish the books",
+          "summary": "You order the party to restate its accounts and name the donor. The treasurer resigns, a patron walks, and the clean pages blunt the story.",
+          "effects": {
+            "society": {
+              "corruption": -0.06
+            },
+            "bloc_offset": {
+              "urban": 0.045,
+              "students": 0.045,
+              "rural": -0.045,
+              "business": -0.015,
+              "pensioners": -0.015
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Blame the bookkeeper",
+          "summary": "You call it clerical error and note the opposition's own opaque books. The base enjoys the counterattack, and the auditors stand by their finding.",
+          "effects": {
+            "society": {
+              "corruption": 0.075
+            },
+            "bloc_offset": {
+              "rural": 0.045,
+              "pensioners": 0.03,
+              "business": 0.03,
+              "urban": -0.06,
+              "students": -0.045,
+              "workers": -0.015
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Say nothing yet",
+          "summary": "You await the party's formal reply to the auditors. The auditors await it too.",
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.045,
+              "students": -0.038,
+              "rural": -0.022,
+              "pensioners": 0.015,
+              "business": 0.015
+            }
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "exposure_auditors_diverted_budget",
+      "name": "Gap No Programme Explains",
+      "summary": "The audit court's report notes a hole in a public spending line that no documented programme accounts for. Auditors cannot say where the money went, only that it went somewhere unexplained.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 3,
+      "cooldown_months": 0,
+      "respond_months": 4,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "auditors",
+        "kinds": [
+          "diverted_budget"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Order a review",
+          "summary": "You commission an independent review of the line and promise repayment of whatever it finds. Ministers squirm, and the public notes the uncommon honesty.",
+          "effects": {
+            "society": {
+              "corruption": -0.06
+            },
+            "bloc_offset": {
+              "urban": 0.045,
+              "students": 0.045,
+              "rural": -0.045,
+              "business": -0.015,
+              "pensioners": -0.015
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Dismiss the finding",
+          "summary": "You call the gap an accounting artefact unworthy of the court's ink. Loyalists repeat it, and the court repeats its report.",
+          "effects": {
+            "society": {
+              "corruption": 0.075
+            },
+            "bloc_offset": {
+              "rural": 0.045,
+              "pensioners": 0.03,
+              "business": 0.03,
+              "urban": -0.06,
+              "students": -0.045,
+              "workers": -0.015
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "File it quietly",
+          "summary": "You let the report sit in an official drawer. Reports in drawers get read.",
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.045,
+              "students": -0.038,
+              "rural": -0.022,
+              "pensioners": 0.015,
+              "business": 0.015
+            }
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "exposure_turned_favour",
+      "name": "Favour Remembered",
+      "summary": "Someone the president once quietly helped has fallen out with the palace and is telling the story of that favour to any journalist who will buy the coffee. They kept receipts and enjoy the attention.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 2,
+      "cooldown_months": 0,
+      "respond_months": 3,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "turned",
+        "kinds": [
+          "favour"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Confirm and explain",
+          "summary": "You acknowledge the favour and lay out why it was proper. It admits the story into the record and strips the teller of exclusivity.",
+          "effects": {
+            "society": {
+              "corruption": -0.04
+            },
+            "bloc_offset": {
+              "urban": 0.03,
+              "students": 0.03,
+              "rural": -0.03,
+              "business": -0.01,
+              "pensioners": -0.01
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Question their motive",
+          "summary": "You cast them as a scorned associate trading grudges. True enough, but they have receipts, and grudges with paperwork age well.",
+          "effects": {
+            "society": {
+              "corruption": 0.05
+            },
+            "bloc_offset": {
+              "rural": 0.03,
+              "pensioners": 0.02,
+              "business": 0.02,
+              "urban": -0.04,
+              "students": -0.03,
+              "workers": -0.01
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Grant no platform",
+          "summary": "You ignore them and hope the audience drifts. The audience grows.",
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.03,
+              "students": -0.025,
+              "rural": -0.015,
+              "pensioners": 0.01,
+              "business": 0.01
+            }
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "exposure_turned_money",
+      "name": "Papers Handed Over",
+      "summary": "A former associate turned enemy has delivered a box of documents to a journalist and, separately, to a magistrate. The papers concern a money arrangement touching donations, personal payments and one budget line, and appear authentic.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 3,
+      "cooldown_months": 0,
+      "respond_months": 4,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "turned",
+        "kinds": [
+          "party_money",
+          "personal_wealth",
+          "diverted_budget"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Pre-empt the leak",
+          "summary": "You disclose the arrangement before publication and submit to any review. It burns the associate's plot and several of your own bridges.",
+          "effects": {
+            "society": {
+              "corruption": -0.06
+            },
+            "bloc_offset": {
+              "urban": 0.045,
+              "students": 0.045,
+              "rural": -0.045,
+              "business": -0.015,
+              "pensioners": -0.015
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Call them forged",
+          "summary": "You dispute the documents' authenticity and the courier's honesty. A paper trail authenticated by experts would make the denial itself the story.",
+          "effects": {
+            "society": {
+              "corruption": 0.075
+            },
+            "bloc_offset": {
+              "rural": 0.045,
+              "pensioners": 0.03,
+              "business": 0.03,
+              "urban": -0.06,
+              "students": -0.045,
+              "workers": -0.015
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Watch it land",
+          "summary": "You prepare no line and let publication come. It comes.",
+          "effects": {
+            "bloc_offset": {
+              "urban": -0.045,
+              "students": -0.038,
+              "rural": -0.022,
+              "pensioners": 0.015,
+              "business": 0.015
+            }
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "exposure_turned_affair",
+      "name": "Lover Turned Witness",
+      "summary": "A former partner, whose parting was not gentle, has given a long interview about the relationship and about the lengths taken to keep it hidden. The concealment, not the romance, supplies the headlines.",
+      "likelihood": 0.002,
+      "category": "scandal",
+      "severity": 2,
+      "cooldown_months": 0,
+      "respond_months": 3,
+      "once": false,
+      "on_action": "exposure",
+      "exposure": {
+        "route": "turned",
+        "kinds": [
+          "affair"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accountable",
+          "label": "Speak plainly",
+          "summary": "You concede the relationship and the apparatus of secrecy around it, and ask that private matters stay private going forward. A humbling address, briefly effective.",
+          "effects": {
+            "bloc_offset": {
+              "urban": 0.02,
+              "students": 0.02,
+              "pensioners": -0.03,
+              "rural": -0.02
+            }
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Dispute the account",
+          "summary": "You describe the interview as embellished and embittered. It rallies defenders, and invites a listener with a diary to come forward.",
+          "effects": {
+            "bloc_offset": {
+              "pensioners": 0.02,
+              "rural": 0.02,
+              "urban": -0.03,
+              "students": -0.025
+            }
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Decline all comment",
+          "summary": "Your office issues nothing beyond no comment. The interview circulates.",
+          "effects": {
+            "bloc_offset": {
+              "pensioners": -0.015,
+              "rural": -0.01,
+              "urban": -0.02,
+              "students": -0.02,
+              "business": 0.015,
+              "workers": 0.01
+            }
+          },
+          "default": true
+        }
+      ]
+    }
+  ]
+}
