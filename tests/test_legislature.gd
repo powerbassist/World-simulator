@@ -378,18 +378,26 @@ func _check_tabling_returns_the_vote_day_and_the_forecast() -> void:
 		_fail("R2: tabling wrote a result before the division: %s" % [ns.last_law_result])
 
 
-## One player bill before the Assembly at a time, Article 49.3 included, refused by name.
+## One player bill TABLED at a time, refused by name. Article 49.3 is never tabled, so
+## it stays open on another bill (the real procedure; the parent's call on #173), and
+## only a 49.3 on the tabled bill itself is refused -- it would apply the law and then
+## divide it again at the close.
 func _check_a_second_bill_is_refused_while_one_is_tabled() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	Legislature.propose(state, _loader, _find_law("carbon_levy"))
 	var other = _find_law("working_time_reduction")
-	for force in [false, true]:
-		var second := Legislature.propose(state, _loader, other, force)
-		if not bool(second.get("refused", false)) or not bool(second.get("already_tabled", false)):
-			_fail("R2: a second bill (force %s) was not refused while one is tabled: %s" % [force, second])
+	var second := Legislature.propose(state, _loader, other)
+	if not bool(second.get("refused", false)) or not bool(second.get("already_tabled", false)):
+		_fail("R2: a second bill was not refused while one is tabled: %s" % [second])
+	var same := Legislature.propose(state, _loader, _find_law("carbon_levy"), true)
+	if not bool(same.get("refused", false)) or not bool(same.get("already_tabled", false)):
+		_fail("R2: a 49.3 on the tabled bill itself was not refused: %s" % [same])
+	var forced := Legislature.propose(state, _loader, other, true)
+	if not bool(forced.get("forced", false)) or bool(forced.get("already_tabled", false)):
+		_fail("R2: a 49.3 on another bill was refused while one is tabled: %s" % [forced])
 	if String(ns.tabled_bill.get("law_id", "")) != "carbon_levy":
-		_fail("R2: a refused second bill replaced the tabled one: %s" % [ns.tabled_bill])
+		_fail("R2: a second bill replaced the tabled one: %s" % [ns.tabled_bill])
 
 
 ## The division is the FIRST step of the next close: its counts are the forecast's
