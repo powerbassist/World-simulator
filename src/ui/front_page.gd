@@ -185,6 +185,7 @@ func _paper(masthead: String, tone: String, words: String) -> void:
 		PanelKit.plain_line(paper, tr(TONE_WORDS[tone]))
 	var headline := Label.new()
 	headline.text = words
+	# LEAD twice, a deliberate exception to "one LEAD per panel" (parent, #179): a front page is not a panel, and its headlines are its content.
 	headline.theme_type_variation = UiTheme.LEAD
 	headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	paper.add_child(headline)
