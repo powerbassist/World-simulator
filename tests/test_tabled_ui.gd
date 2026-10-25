@@ -83,7 +83,13 @@ func _table_a_bill() -> void:
 	if open.is_empty():
 		_fail("premise: no proposable law")
 		return
-	_law = open[0]
+	# An ordinary bill, so 49.3 is on offer for it (a constitutional one has none).
+	for law in open:
+		if _law == null and not law.constitutional:
+			_law = law
+	if _law == null:
+		_fail("premise: no ordinary proposable law")
+		return
 	_main._law_panel.run_proposal(_law)
 	if ns.tabled_bill.is_empty():
 		_fail("premise: proposing did not table %s" % _law.id)
@@ -135,6 +141,17 @@ func _check_legislature() -> void:
 		_fail("%d Legislature verbs stay live while a bill is tabled" % live)
 	if detail.find_child("Propose", true, false) == null:
 		_fail("the detail has no Propose to hold")
+	# But not on the tabled bill itself: propose() refuses a 49.3 on it (#173).
+	var listed := false
+	for law in laws._shown:
+		listed = listed or String(law.id) == String(_law.id)
+	if not listed:
+		_fail("premise: the tabled bill is not on the list to select")
+		return
+	laws.select(String(_law.id))
+	var force: Button = detail.find_child("Force", true, false)
+	if force == null or not force.disabled or not force.tooltip_text.contains("before the Assembly"):
+		_fail("49.3 on the tabled bill itself is live, or says no reason")
 
 
 ## A minister of a party other than the president's: dismissing them moves the

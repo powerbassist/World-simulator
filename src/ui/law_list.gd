@@ -286,10 +286,12 @@ func _verbs(ns, law) -> void:
 	# `already_tabled` -- so Propose and the referendum route are down with that
 	# reason until it divides, never a press the sim refuses. Article 49.3 adopts
 	# without a vote, is never tabled, and stays open on another bill (the parent's
-	# call on #173): it answers only to its own cooldown.
+	# call on #173): it answers only to its own cooldown -- but not on the tabled
+	# bill itself, which propose() refuses.
 	if not ns.tabled_bill.is_empty():
+		var same := String(ns.tabled_bill.get("law_id", "")) == String(law.id)
 		for verb in row.get_children():
-			if verb.name == "Force":
+			if verb.name == "Force" and not same:
 				continue
 			(verb as Button).disabled = true
 			(verb as Button).tooltip_text = tabled_text(ns)
