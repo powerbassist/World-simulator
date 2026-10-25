@@ -525,11 +525,11 @@ func _reachability_table(loader) -> void:
 				offered_months += 1
 				if Referendum.yes_share(player, choice.position) > K.REFERENDUM_MAJORITY:
 					rational_months += 1
-					var result := Legislature.propose(state, loader, choice, false, true)
-					if bool(result.get("referendum_called", false)):
-						called += 1
+					Legislature.propose(state, loader, choice, false, true)
 		var before_pending := Referendum.is_pending(state.player())
-		_tick(state, loader, i)
+		# V5.2 b+ R2: the chamber divides at this close's first step and calls the country.
+		if bool(_tick(state, loader, i).get("division", {}).get("referendum_called", false)):
+			called += 1
 		var after = state.player()
 		if before_pending and not Referendum.is_pending(after):
 			if bool(after.last_referendum_result.get("passed", false)):
@@ -573,10 +573,12 @@ func _pending(ns, delta: Dictionary) -> Dictionary:
 
 
 ## tools/balance_probe.gd's order, which is src/ui/main.gd's.
-func _tick(state, loader, i: int) -> void:
+## Returns the month's report: V5.2 b+ R2's tabled bill divides at its first step,
+## `report["division"]`.
+func _tick(state, loader, i: int) -> Dictionary:
 	state.month = (i + 1) % 12 + 1
 	state.year = START_YEAR + (i + 1) / 12
 
 	# The game's own month (src/sim/world_month.gd), not a copy of it: the copy
 	# this replaced had fallen behind main.gd by several systems.
-	WorldMonth.tick_month(state, loader)
+	return WorldMonth.tick_month(state, loader)

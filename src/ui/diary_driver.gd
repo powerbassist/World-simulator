@@ -21,9 +21,11 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Removal = preload("res://src/sim/removal.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Bills = preload("res://src/sim/bills.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 
@@ -47,6 +49,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 
 		var label := ""
 		var ok := false
+		var tabled := false  # V5.2 b+ R2: a booked law tabled today, settled at its division
 		var reason := ""  # the sim's refusal, for the day's card
 		match String(entry.get("kind", "")):
 			CalendarK.KIND_DIPLOMATIC:
@@ -65,8 +68,11 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 				var law = _law_by_id(loader, String(entry.get("law_id", "")))
 				if law != null:
 					var result := Legislature.propose(state, loader, law)
-					ok = bool(result.get("passed", false))
+					tabled = bool(result.get("tabled", false))
+					ok = tabled or bool(result.get("passed", false))
 					label = Strings.law_name(law)
+					# V5.2 b+ R2: the day's card carries the division, as a proposal's does.
+					reason = ProposalNote.body(result, loader.parties.get(String(state.player_nation_id), []))
 			# V5.2b: the booked audience happens -- the scene opens (audience_driver.gd)
 			# and the sim holds it; what it settles is the scene's, not the diary's.
 			CalendarK.KIND_AUDIENCE:
@@ -81,7 +87,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 				reason = String(removal.get("error", ""))
 				label = Labels.portfolio(portfolio)
 
-		Calendar.resolve(state, Calendar.verb_key(entry), ok)
+		Calendar.resolve(state, Calendar.verb_key(entry), ok, tabled)
 
 		# V2.4b: a meeting that LANDED is the summit's trigger. Only the verb
 		# that opens a meeting brings a scene; a refused arrival is a journey
@@ -93,7 +99,7 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 				summit_target = String(entry.get("target_id", ""))
 		# The UI's half, per entry and in the diary's order (main.gd: the measured
 		# effect, the card, the summit), before the next entry fires.
-		on_outcome.call({"entry": entry, "label": label, "ok": ok, "reason": reason, "before": before, "summit_target": summit_target})
+		on_outcome.call({"entry": entry, "label": label, "ok": ok, "reason": reason, "before": before, "summit_target": summit_target, "tabled": tabled})
 	return true
 
 
@@ -104,8 +110,6 @@ static func _action_by_id(loader, id: String):
 	return null
 
 
+## Bills.by_id: an authored law or an ownership bill rebuilt from its id (R14).
 static func _law_by_id(loader, id: String):
-	for law in loader.laws:
-		if String(law.id) == id:
-			return law
-	return null
+	return Bills.by_id(loader, id)

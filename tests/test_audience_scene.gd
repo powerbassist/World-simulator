@@ -23,6 +23,7 @@ const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
+const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
 var _scene
@@ -283,13 +284,7 @@ func _press(down: bool) -> void:
 	if target == null:
 		_fail("no Argue button")
 		return
-	var at: Vector2 = target.get_global_rect().get_center()
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = down
-	click.position = at
-	click.global_position = at
-	root.push_input(click, true)
+	Click.half(root, target, down)
 
 
 func _fail(message: String) -> void:

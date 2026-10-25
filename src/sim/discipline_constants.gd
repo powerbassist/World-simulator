@@ -111,3 +111,11 @@ const REBELLION_PENALTY := -0.05
 ## price the article charges -- government_constants.FORCE_BLOC_PENALTY is what
 ## it costs with the public, this is what it costs in the chamber.
 const FORCE_DISCIPLINE_PENALTY := -0.07
+
+## Gameplay #157 (docs/design/v5.2-bplus-spec.md "R4", "The Assembly"). Applied to
+## the holder's party at every removal of its portfolio -- Dismiss, or Reassign away,
+## the president's own party included (Removal._removed). Above 49.3's -0.07, which
+## insults the whole majority, because a dismissal singles one party out; equal to
+## two full rebellions. No decay of its own: the tick's DISCIPLINE_INERTIA pulls it
+## back, 0.92^n of the step left after n months (a half-life of about 8.3).
+const DISMISSAL_DISCIPLINE_PENALTY := -0.10

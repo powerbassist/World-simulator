@@ -180,15 +180,21 @@ func _played_run(loader) -> Dictionary:
 	}
 
 	for i in range(MONTHS):
-		var held_before: int = ns.held_bills.size()
-		_tick(state, loader, i)
+		var held_before: Dictionary = ns.held_bills.duplicate()
+		# V5.2 b+ R2: the bill tabled last month divides at this close's first step.
+		var result: Dictionary = _tick(state, loader, i).get("division", {})
 		if ns.in_government:
 			out["months"] = int(out["months"]) + 1
 		if int(ns.last_election.get("year", 0)) == state.year \
 				and int(ns.last_election.get("month", 0)) == state.month:
 			out["elections"] = int(out["elections"]) + 1
-		if ns.held_bills.size() < held_before:
-			out["released"] = int(out["released"]) + (held_before - ns.held_bills.size())
+		for law_id in held_before:
+			if not ns.held_bills.has(law_id):
+				out["released"] = int(out["released"]) + 1
+		if not result.is_empty():
+			_count(out, result)
+		for bloc in ns.bloc_offset:
+			out["worst_offset"] = maxf(float(out["worst_offset"]), absf(float(ns.bloc_offset[bloc])))
 
 		# THE FIRST VERSION PROPOSED available()[0] AND LOST 168 DIVISIONS OUT OF 168.
 		# A law with no cooldown that fails stays available, so the run re-proposed the
@@ -200,29 +206,31 @@ func _played_run(loader) -> Dictionary:
 		var law = _winnable(ns, loader, Legislature.available(ns, loader.laws))
 		if law == null:
 			continue
-		var result := Legislature.propose(state, loader, law, false, false)
+		Legislature.propose(state, loader, law, false, false)
 		out["proposed"] = int(out["proposed"]) + 1
-		if result.has("upper_passed"):
-			out["carried_lower"] = int(out["carried_lower"]) + 1
-			if bool(result.get("blocked_by_upper", false)):
-				out["blocked"] = int(out["blocked"]) + 1
-			elif bool(result.get("held_by_upper", false)):
-				out["held"] = int(out["held"]) + 1
-			elif bool(result.get("struck_down", false)):
-				out["struck"] = int(out["struck"]) + 1
-			else:
-				out["in_force"] = int(out["in_force"]) + 1
-		elif bool(result.get("struck_down", false)):
-			out["carried_lower"] = int(out["carried_lower"]) + 1
-			out["struck"] = int(out["struck"]) + 1
-		elif bool(result.get("passed", false)):
-			out["carried_lower"] = int(out["carried_lower"]) + 1
-			out["in_force"] = int(out["in_force"]) + 1
-		else:
-			out["lost_lower"] = int(out["lost_lower"]) + 1
-		for bloc in ns.bloc_offset:
-			out["worst_offset"] = maxf(float(out["worst_offset"]), absf(float(ns.bloc_offset[bloc])))
 	return out
+
+
+## One division's outcome into the run's counts.
+static func _count(out: Dictionary, result: Dictionary) -> void:
+	if result.has("upper_passed"):
+		out["carried_lower"] = int(out["carried_lower"]) + 1
+		if bool(result.get("blocked_by_upper", false)):
+			out["blocked"] = int(out["blocked"]) + 1
+		elif bool(result.get("held_by_upper", false)):
+			out["held"] = int(out["held"]) + 1
+		elif bool(result.get("struck_down", false)):
+			out["struck"] = int(out["struck"]) + 1
+		else:
+			out["in_force"] = int(out["in_force"]) + 1
+	elif bool(result.get("struck_down", false)):
+		out["carried_lower"] = int(out["carried_lower"]) + 1
+		out["struck"] = int(out["struck"]) + 1
+	elif bool(result.get("passed", false)):
+		out["carried_lower"] = int(out["carried_lower"]) + 1
+		out["in_force"] = int(out["in_force"]) + 1
+	else:
+		out["lost_lower"] = int(out["lost_lower"]) + 1
 
 
 ## The first law on the open list the Assembly would carry, or null.
@@ -662,10 +670,12 @@ func _upper_at(ns, party_list: Array, law, whip: float) -> bool:
 
 # ---------------------------------------------------------------------------
 
-func _tick(state, loader, i: int) -> void:
+## Returns the month's report: V5.2 b+ R2's tabled bill divides at its first step,
+## `report["division"]`.
+func _tick(state, loader, i: int) -> Dictionary:
 	state.month = (i + 1) % 12 + 1
 	state.year = START_YEAR + (i + 1) / 12
 
 	# The game's own month (src/sim/world_month.gd), not a copy of it: the copy
 	# this replaced had fallen behind main.gd by several systems.
-	WorldMonth.tick_month(state, loader)
+	return WorldMonth.tick_month(state, loader)

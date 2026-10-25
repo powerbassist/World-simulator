@@ -283,3 +283,24 @@ path = [
 precedence = "override"
 SPDX-FileCopyrightText = "SilentVoid"
 SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+# Third-party Claude skill, Impeccable 4.7.1 (https://github.com/pbakaus/impeccable,
+# commit 3671d50f), vendored from plugin/skills/impeccable minus its web-only live
+# browser scripts. Third-party notices in .claude/skills/impeccable/NOTICE.md.
+path = [
+  ".claude/skills/impeccable/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Paul Bakaus"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+# Impeccable's platform references, distilled from https://github.com/ehmo/platform-design-skills.
+path = [
+  ".claude/skills/impeccable/reference/ios.md",
+  ".claude/skills/impeccable/reference/android.md",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "ehmo"
+SPDX-License-Identifier = "MIT"

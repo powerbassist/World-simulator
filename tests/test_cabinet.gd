@@ -21,6 +21,10 @@ const Discipline = preload("res://src/sim/discipline.gd")
 const Removal = preload("res://src/sim/removal.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const ActK = preload("res://src/sim/character_act_constants.gd")
+const DK = preload("res://src/sim/discipline_constants.gd")
+const President = preload("res://src/sim/president.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
+const Division = preload("res://src/sim/division.gd")
 
 var _failures: Array[String] = []
 var _loader: DataLoader
@@ -58,6 +62,11 @@ func _init() -> void:
 	_check_refusals_keep_their_ceiling()
 	_check_price_preview_writes_nothing()
 	_check_a_refused_seat_prices_nothing()
+	_check_a_zero_loyalty_price_writes_no_key()
+	_check_price_names_rebels_and_the_resignation_risk()
+	_check_a_removal_steps_the_party_discipline()
+	_check_the_step_decays_only_through_inertia()
+	_check_the_price_forecasts_the_tabled_bill_before_and_after()
 
 	_finish()
 
@@ -613,6 +622,169 @@ func _check_a_refused_seat_prices_nothing() -> void:
 		_fail("a seat the primitive refused was reported as done: %s" % r)
 	if float(ns.person_grudges.get(leader, 0.0)) != grudge or ns.portfolio_removed_month.has(String(h["portfolio"])):
 		_fail("a refused seat priced or stamped a removal")
+
+
+## QA's RECORD on #142: the removal door moves no loyalty, so it must not stamp a
+## 0.0 entry for a person who had none (init_nation seeds the played nation's
+## people, so the fixture erases one). A lever's zero-loyalty price shares the door.
+func _check_a_zero_loyalty_price_writes_no_key() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var person = _loader.person_by_id[_person_with_intake("FRA", 1.0)]
+	ns.person_loyalty.erase(person.id)
+	Characters.price_removal(ns, person, CK.REMOVAL_GRUDGE)
+	Characters.price_refusal(ns, person, 0.05, 0.0)
+	if ns.person_loyalty.has(person.id):
+		_fail("a price with no loyalty move stamped a loyalty entry: %s" % ns.person_loyalty[person.id])
+	if float(ns.person_grudges.get(person.id, 0.0)) <= 0.0:
+		_fail("R4 fixture: the removal wrote no grudge, the key check would be vacuous")
+
+
+
+## The parent's call on R4's card (2026-10-25): the expected rebels on the
+## reference line -- the worst bill for the party, the government panel's "up to N
+## may break ranks" -- which a removal does not move (the shortfall feeds no
+## division, only resignations), and the true consequence beside it: the
+## resignation signal of the party's ministers who stay, before and after.
+func _check_price_names_rebels_and_the_resignation_risk() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var h := _holder(state, _person_with_intake("FRA", 1.0))
+	var party = null
+	for p in _loader.parties["FRA"]:
+		if p.id == String(h["party_id"]):
+			party = p
+	ns.overall_approval_pct = 30.0
+	var before := JSON.stringify(state.to_dict())
+	var price: Dictionary = Removal.price(state, ns, _loader, String(h["portfolio"]))
+	if JSON.stringify(state.to_dict()) != before:
+		_fail("Removal.price() wrote to the state")
+	var rebels := Discipline.rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0)
+	# Gameplay #157: the `after` side reads the party at its stepped-down discipline.
+	var stepped = ns.duplicate_state()
+	Discipline.penalise(stepped, [party.id], DK.DISMISSAL_DISCIPLINE_PENALTY, {party.id: party})
+	if int(price.get("rebels", -1)) != rebels:
+		_fail("the price's rebels %s are not the reference line's %d" % [price.get("rebels", null), rebels])
+	var unpop := Discipline.unpopularity(ns)
+	if unpop <= 0.0:
+		_fail("fixture: approval 30 gave no unpopularity, the risk check would be vacuous")
+	if not is_equal_approx(float(price.get("resign_before", -1.0)), unpop * (1.0 - Cabinet.loyalty(ns, party))) \
+			or not is_equal_approx(float(price.get("resign_after", -1.0)), unpop * (1.0 - Cabinet.loyalty(stepped, party, 1))) \
+			or float(price["resign_after"]) < float(price["resign_before"]):
+		_fail("the resignation risk is not the cabinet tick's signal before and after: %s" % price)
+	if not is_equal_approx(float(price.get("resign_threshold", -1.0)), CK.RESIGNATION_THRESHOLD):
+		_fail("the price does not name the resignation threshold")
+	var held := 0
+	for f in ns.cabinet:
+		held += 1 if String(ns.cabinet[f]) == String(h["party_id"]) else 0
+	if int(price.get("others", -1)) != held - 1:
+		_fail("the price's ministers who stay %s are not %d" % [price.get("others", null), held - 1])
+	# The count is honest: after the dismissal the reference line is the price's
+	# `rebels_after` (Gameplay #157: the party's discipline falls), never fewer than
+	# `rebels`, and the signal the tick then reads is the price's `resign_after`.
+	if int(price.get("rebels_after", -1)) < int(price["rebels"]):
+		_fail("the price's rebels_after %s is below its rebels %d" % [price.get("rebels_after", null), int(price["rebels"])])
+	Removal.dismiss(state, _loader, String(h["portfolio"]))
+	if Discipline.rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0) != int(price.get("rebels_after", -1)):
+		_fail("after the dismissal the reference line is not the price's rebels_after %s" % price.get("rebels_after", null))
+	if not is_equal_approx(Cabinet.resignation_signal(ns, party), float(price["resign_after"])):
+		_fail("after the dismissal the tick's signal is not the price's resign_after")
+
+
+# --- Gameplay #157: the Assembly's half of a removal ---------------------------------
+
+func _party_row(party_id: String):
+	for p in _loader.parties["FRA"]:
+		if p.id == party_id:
+			return p
+	return null
+
+
+## Every removal -- Dismiss, or Reassign away, the president's own party's included --
+## steps the holder party's live discipline by DISMISSAL_DISCIPLINE_PENALTY through
+## Discipline.penalise(), clamped to [DISCIPLINE_MIN, the authored figure].
+func _check_a_removal_steps_the_party_discipline() -> void:
+	for verb in ["dismiss", "reassign", "president", "floor"]:
+		var state = _new_state("FRA")
+		var ns = state.player()
+		var h := _holder(state, _person_with_intake("FRA", 1.0))
+		if h.is_empty():
+			return
+		var f := String(h["portfolio"])
+		if verb == "president":
+			for p in _loader.parties["FRA"]:
+				if Characters.party_leader(ns, p.id, {p.id: p.leader_person_id}) == President.leader_id(ns) and ns.coalition_party_ids.has(p.id):
+					ns.cabinet[f] = p.id
+		var party = _party_row(String(ns.cabinet[f]))
+		if verb == "floor":
+			ns.party_discipline[party.id] = DK.DISCIPLINE_MIN + 0.03
+		var before := Discipline.of(ns, party)
+		if verb == "reassign":
+			var to := ""
+			for pid in ns.coalition_party_ids:
+				if pid != party.id:
+					to = pid
+					break
+			Removal.reassign(state, _loader, f, to)
+		else:
+			Removal.dismiss(state, _loader, f)
+		var want := clampf(before + DK.DISMISSAL_DISCIPLINE_PENALTY, DK.DISCIPLINE_MIN, Discipline.base_of(party))
+		if not is_equal_approx(Discipline.of(ns, party), want):
+			_fail("#157 (%s): %s's discipline %.4f after a removal, expected %.4f" % [verb, party.id, Discipline.of(ns, party), want])
+
+
+## No decay of its own: against an undismissed twin, with the target the same in both,
+## the monthly tick leaves 0.92^n of the step after n months (DISCIPLINE_INERTIA).
+## Discipline's tick alone -- no division runs, so no rebellion compounds it (QA on #157).
+func _check_the_step_decays_only_through_inertia() -> void:
+	var dismissed = _new_state("FRA")
+	var twin = _new_state("FRA")
+	var h := _holder(dismissed, _person_with_intake("FRA", 1.0))
+	_holder(twin, _person_with_intake("FRA", 1.0))
+	if h.is_empty():
+		return
+	var party = _party_row(String(h["party_id"]))
+	Removal.dismiss(dismissed, _loader, String(h["portfolio"]))
+	for n in range(1, 13):
+		Discipline.tick_month(dismissed, _loader)
+		Discipline.tick_month(twin, _loader)
+		var gap := Discipline.of(dismissed.player(), party) - Discipline.of(twin.player(), party)
+		var want := DK.DISMISSAL_DISCIPLINE_PENALTY * pow(1.0 - DK.DISCIPLINE_INERTIA, n)
+		if absf(gap - want) > 1e-9:
+			_fail("#157: %d months on the step stands at %.6f, expected %.6f (0.92^n)" % [n, gap, want])
+			return
+
+
+## With a bill tabled, the price forecasts its division before and after the step,
+## written nowhere, and the division that follows the dismissal is the `after`.
+func _check_the_price_forecasts_the_tabled_bill_before_and_after() -> void:
+	var state = _new_state("FRA")
+	var ns = state.player()
+	var h := _holder(state, _person_with_intake("FRA", 1.0))
+	if h.is_empty():
+		return
+	var f := String(h["portfolio"])
+	if not Removal.price(state, ns, _loader, f).get("forecast_before", {}).is_empty():
+		_fail("#157: the price forecast a division with nothing tabled")
+	var law = null
+	for l in _loader.laws:
+		if String(l.id) == "carbon_levy":
+			law = l
+	var forecast: Dictionary = Legislature.propose(state, _loader, law)["forecast"]
+	var before := JSON.stringify(state.to_dict())
+	var price: Dictionary = Removal.price(state, ns, _loader, f)
+	if JSON.stringify(state.to_dict()) != before:
+		_fail("#157: the forecast preview wrote to the state")
+	var fb: Dictionary = price.get("forecast_before", {})
+	var fa: Dictionary = price.get("forecast_after", {})
+	if fb.is_empty() or fa.is_empty() or int(fb["yes_seats"]) != int(forecast["yes_seats"]) or int(fb["no_seats"]) != int(forecast["no_seats"]):
+		_fail("#157: the price's forecast_before %s is not the tabling's %s" % [fb, forecast])
+		return
+	Removal.dismiss(state, _loader, f)
+	var division := Division.divide(state, _loader)
+	for key in ["yes_seats", "no_seats", "abstain_seats"]:
+		if int(division[key]) != int(fa[key]):
+			_fail("#157: the division's %s %d is not the price's forecast_after %d" % [key, int(division[key]), int(fa[key])])
 
 
 func _fail(message: String) -> void:

@@ -362,11 +362,14 @@ func _propose_best_law(state, loader, ns, party_list: Array, log: Array, year: i
 	if best == null:
 		log.append("%d-%02d no law available" % [year, month])
 		return
+	# V5.2 b+ R2: tabled here, in the hook before Elections; it divides at the next
+	# close's first step, so the forecast is what the log can say now.
 	var result := Legislature.propose(state, loader, best)
-	log.append("%d-%02d law '%s' %s (yes %d / %d)" % [
+	var forecast: Dictionary = result.get("forecast", {})
+	log.append("%d-%02d law '%s' %s (forecast yes %d / %d)" % [
 		year, month, String(best.id),
-		"PASSED" if bool(result.get("passed", false)) else "failed",
-		int(result.get("yes_seats", 0)), int(result.get("seats_total", 0)),
+		"TABLED" if bool(result.get("tabled", false)) else "refused",
+		int(forecast.get("yes_seats", 0)), int(forecast.get("seats_total", 0)),
 	])
 
 

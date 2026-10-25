@@ -368,8 +368,8 @@ func _career(loader, capture: bool) -> Dictionary:
 	for i in range(TERM_MONTHS):
 		if capture and i < WEAKEN.size():
 			var rung = _law(loader, WEAKEN[i])
-			if rung != null and bool(Legislature.propose(state, loader, rung)["passed"]):
-				passed += 1
+			if rung != null:
+				Legislature.propose(state, loader, rung)
 		elif capture:
 			# Everything the capture unlocks, one a month, biggest reach first.
 			var best = null
@@ -382,9 +382,11 @@ func _career(loader, capture: bool) -> Dictionary:
 					continue
 				if best == null or law.reach > best.reach:
 					best = law
-			if best != null and bool(Legislature.propose(state, loader, best)["passed"]):
-				passed += 1
-		_tick(state, loader, i)
+			if best != null:
+				Legislature.propose(state, loader, best)
+		# V5.2 b+ R2: the bill tabled above divides at this close's first step.
+		if bool(_tick(state, loader, i).get("division", {}).get("passed", false)):
+			passed += 1
 
 	return {
 		"approval": ns.overall_approval_pct,
@@ -421,10 +423,12 @@ func _roster_table(loader, reviewable: Array) -> void:
 
 # ---------------------------------------------------------------------------
 
-func _tick(state, loader, i: int) -> void:
+## Returns the month's report: V5.2 b+ R2's tabled bill divides at its first step,
+## `report["division"]`.
+func _tick(state, loader, i: int) -> Dictionary:
 	state.month = (i + 1) % 12 + 1
 	state.year = START_YEAR + (i + 1) / 12
 
 	# The game's own month (src/sim/world_month.gd), not a copy of it: the copy
 	# this replaced had fallen behind main.gd by several systems.
-	WorldMonth.tick_month(state, loader)
+	return WorldMonth.tick_month(state, loader)

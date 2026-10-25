@@ -213,8 +213,10 @@ func _play(state, months: int) -> void:
 ## holds `once` laws only), held by the upper house, or out to a referendum.
 ## Anything else means the proposal came to nothing.
 func _bill_in_flight_or_law(ns) -> bool:
+	# V5.2 b+ R2: tabled is in flight too -- it divides at the first month's close.
 	return ns.law_ledger.has(BILL) or ns.held_bills.has(BILL) \
-		or String(ns.referendum_pending.get("law_id", "")) == BILL
+		or String(ns.referendum_pending.get("law_id", "")) == BILL \
+		or String(ns.tabled_bill.get("law_id", "")) == BILL
 
 
 func _save_and_load(state):

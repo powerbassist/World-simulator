@@ -662,10 +662,13 @@ static func price_refusal(ns, person, grudge: float, loyalty: float, ceiling: fl
 	var grudge_before := float(ns.person_grudges.get(person.id, 0.0))
 	var loyalty_before := float(ns.person_loyalty.get(person.id, 0.0))
 	ns.person_grudges[person.id] = clampf(grudge_before + refusal_grudge(ns, person, grudge, ceiling), 0.0, 1.0)
-	_adjust_loyalty(ns, person.id, loyalty)
+	# A door that moves no loyalty (a removal, a lie, a pressure) writes nothing to
+	# that register, not even a 0.0 entry for a person who had none (QA on #142).
+	if loyalty != 0.0:
+		_adjust_loyalty(ns, person.id, loyalty)
 	return {
 		"grudge": float(ns.person_grudges[person.id]) - grudge_before,
-		"loyalty": float(ns.person_loyalty[person.id]) - loyalty_before,
+		"loyalty": float(ns.person_loyalty.get(person.id, 0.0)) - loyalty_before,
 	}
 
 

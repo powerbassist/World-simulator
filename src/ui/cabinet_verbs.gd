@@ -180,11 +180,37 @@ func _price(portfolio: String) -> String:
 	elif leader == President.leader_id(ns):
 		parts.append(Strings.t("Its leader is your own: no grudge, but the party still feels the loss."))
 	# Cabinet.loyalty is read by the ministers' resignation check (cabinet.gd), not by
-	# a division: rebels come from the party's discipline (QA on #155). Say what
-	# the sim does; the rebels line waits for Systems' Assembly consequence.
-	if float(price["loyalty_after"]) < float(price["loyalty_before"]) - 1e-9:
+	# a division (QA on #155). A party with no minister left (`others` 0, QA on #162)
+	# has no one left to resign.
+	if float(price["loyalty_after"]) < float(price["loyalty_before"]) - 1e-9 and int(price.get("others", 0)) > 0:
 		parts.append(Strings.t("%s grows less loyal to the government: its ministers are likelier to resign.") % _name(String(price["party_id"])))
-	return " ".join(parts)
+	# Gameplay #157: the dismissal steps the party's discipline, so more of its
+	# deputies break ranks on every later division (Removal.price's rebels pair).
+	var rebels := int(price.get("rebels", 0))
+	var rebels_after := int(price.get("rebels_after", rebels))
+	if rebels_after > rebels:
+		parts.append(Strings.tn("%s holds its line less: %d of its deputies would break ranks on a division, against %d now.", "%s holds its line less: %d of its deputies would break ranks on a division, against %d now.", rebels_after) % [
+			_name(String(price["party_id"])), rebels_after, rebels])
+	parts.append(_tabled_line(price))
+	return " ".join(parts).strip_edges()
+
+
+## R2: with a bill before the Assembly, what this dismissal does to its division --
+## Removal.price's forecast_before / forecast_after, resolve_vote() on the nation and
+## on the stepped copy. "" with nothing tabled.
+func _tabled_line(price: Dictionary) -> String:
+	var before: Dictionary = price.get("forecast_before", {})
+	var after: Dictionary = price.get("forecast_after", {})
+	if after.is_empty():
+		return ""
+	var counts := [int(after.get("yes_seats", 0)), int(after.get("no_seats", 0)), int(before.get("yes_seats", 0)), int(before.get("no_seats", 0))]
+	if counts[0] == counts[2] and counts[1] == counts[3]:
+		return Strings.t("The bill before the Assembly would still divide %d for and %d against.") % [counts[0], counts[1]]
+	if bool(after.get("passed", false)) == bool(before.get("passed", false)):
+		return Strings.t("The bill before the Assembly: %d for and %d against after this, %d and %d now.") % counts
+	if bool(before.get("passed", false)):
+		return Strings.t("The bill before the Assembly would then fail: %d for and %d against, %d and %d now.") % counts
+	return Strings.t("The bill before the Assembly would then pass: %d for and %d against, %d and %d now.") % counts
 
 
 func _act(run: Callable, title: String) -> void:

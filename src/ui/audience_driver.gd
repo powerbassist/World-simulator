@@ -22,6 +22,7 @@ const PromiseList = preload("res://src/ui/promise_list.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const President = preload("res://src/sim/president.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 
 const WINDOW := "audience"
 
@@ -138,7 +139,9 @@ static func on_appointment(main, outcome: Dictionary) -> void:
 	if String(entry.get("kind", "")) == CalendarK.KIND_AUDIENCE:
 		open_scene(main, String(entry.get("action_id", "")))
 		return
-	main._world_news.card_appointment(entry, String(outcome["label"]), bool(outcome["ok"]), String(outcome.get("reason", "")))  # i18n: row-ok DiaryDriver hands back a translated label
+	var card: String = main._world_news.card_appointment(entry, String(outcome["label"]), bool(outcome["ok"]), String(outcome.get("reason", "")))  # i18n: row-ok DiaryDriver hands back a translated label
+	if bool(outcome.get("tabled", false)):
+		ProposalNote.remember(main, String(entry.get("law_id", "")), card)  # V5.2 b+ R2: the day's card takes the verdict
 	if String(outcome["summit_target"]) != "":
 		main._open_summit(String(outcome["summit_target"]), outcome["before"])
 

@@ -949,6 +949,16 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		# system by system until the copy was retired). What this harness adds runs
 		# through the step hook, at the slot it ran in when the loop was a copy.
 		var report := WorldMonth.tick_month(state, loader, func(step: String, after: bool, step_report: Dictionary) -> void:
+			if after and step == "Division":
+				# V5.2 b+ R2: a bill the hook tabled last month divides here, the first
+				# step of this close -- one print for every regime that tables one.
+				var division: Dictionary = step_report["division"]
+				if not division.is_empty():
+					print("  %d-%02d %s: division '%s' -- %s (yes %d / no %d)" % [
+						year, month, regime_name, String(division["law_id"]), _chamber_verdict(division),
+						int(division.get("yes_seats", 0)), int(division.get("no_seats", 0)),
+					])
+				return
 			if after and step == "Unrest":
 				run["peak_unrest"] = maxf(float(run["peak_unrest"]), float(ns.unrest_pct))
 				return
@@ -1051,9 +1061,11 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 				_call_referendum(state, loader, ns, regime_name, year, month)
 			if i + 1 == electoral_month:
 				_reform_the_ballot(state, loader, ns, regime_name, year, month)
-			# V1.1e. At month 6, the same month every other law regime fires.
-			if i + 1 == 6 and chamber_kind != "":
-				_meet_the_second_chamber(state, loader, ns, regime_name, chamber_kind, year, month)
+			# V1.1e. At month 6, the same month every other law regime fires. V5.2 b+
+			# R2: one bill before the Assembly at a time, so the captured regime's three
+			# rungs are tabled at months 6, 7 and 8, each dividing at the next close.
+			if chamber_kind != "" and (i + 1 == 6 or (chamber_kind == "captured" and (i + 1 == 7 or i + 1 == 8))):
+				_meet_the_second_chamber(state, loader, ns, regime_name, chamber_kind, year, month, i + 1 - 6)
 
 			# U6a. The day loop this file has never had, and it runs for EVERY regime
 			# rather than only the one that books -- a dispatch that only ever executes
@@ -1090,10 +1102,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 					printerr("  amendment '%s' not found in data/laws" % amendment_id)
 				else:
 					var result := Legislature.propose(state, loader, law)
-					print("  %d-%02d %s: amendment '%s' — %s (%d/%d, needed %s)" % [
-						year, month, regime_name, amendment_id,
-						"PASSED" if result["passed"] else "failed",
-						result["yes_seats"], result["seats_total"], ns.amendment_rule,
+					print("  %d-%02d %s: amendment '%s' — %s (needed %s)" % [
+						year, month, regime_name, amendment_id, _tabling(result), ns.amendment_rule,
 					])
 		)
 
@@ -1292,11 +1302,7 @@ func _call_referendum(state, loader, ns, regime_name: String, year: int, month: 
 		print("  %s: no referendum route at %04d-%02d" % [regime_name, year, month])
 		return
 	var result := Legislature.propose(state, loader, law, false, true)
-	print("  %s: %04d-%02d referendum on %s -- chamber %d/%d, called=%s" % [
-		regime_name, year, month, law.id,
-		int(result.get("yes_seats", 0)), int(result.get("seats_total", 0)),
-		result.get("referendum_called", false),
-	])
+	print("  %s: %04d-%02d referendum route for %s -- %s" % [regime_name, year, month, law.id, _tabling(result)])
 
 
 ## V1.7c. An ORDINARY Act changing how the assembly is elected. Not an amendment: the
@@ -1307,13 +1313,8 @@ func _reform_the_ballot(state, loader, ns, regime_name: String, year: int, month
 	if law == null:
 		print("  %s: proportional_representation_act is not in the law list" % regime_name)
 		return
-	var before: String = ns.election_system
 	var result := Legislature.propose(state, loader, law, false)
-	print("  %s: %04d-%02d electoral reform -- %d/%d, %s -> %s" % [
-		regime_name, year, month,
-		int(result.get("yes_seats", 0)), int(result.get("seats_total", 0)),
-		before, ns.election_system,
-	])
+	print("  %s: %04d-%02d electoral reform (now %s) -- %s" % [regime_name, year, month, ns.election_system, _tabling(result)])
 
 
 func _find_law(loader, law_id: String):
@@ -1538,28 +1539,26 @@ func _nationalise(state, loader, ns, regime_name: String, year: int, month: int)
 	var debt_before: float = ns.debt_eur_bn
 	var forced := bool(OWNERSHIP_REGIMES.get(regime_name, {}).get("force", false))
 	var result: Dictionary = Legislature.propose(state, loader, bills[0], forced)
-	print("  %d-%02d %s: nationalisation bill for %s%s %s (yes %d / no %d), stake %.2f (%.1f bn, debt %+.1f bn)" % [
-		year, month, regime_name, best, " by 49.3" if forced else "", "CARRIED" if bool(result.get("passed", false)) else ("HELD" if bool(result.get("held_by_upper", false)) else "DEFEATED"),
-		int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
+	# V5.2 b+ R2: by 49.3 the purchase lands now; tabled, it lands at the division.
+	print("  %d-%02d %s: nationalisation bill for %s%s %s, stake %.2f (%.1f bn, debt %+.1f bn)" % [
+		year, month, regime_name, best, " by 49.3" if forced else "", _tabling(result),
 		Companies.state_share_of(ns, best), best_output, ns.debt_eur_bn - debt_before,
 	])
 
 func _meet_the_second_chamber(state, loader, ns, regime_name: String, kind: String,
-		year: int, month: int) -> void:
+		year: int, month: int, rung_index := 0) -> void:
 	var party_list: Array = loader.parties.get(ns.id, [])
 
 	if kind == "captured":
-		for law_id in ["judicial_appointments_reform", "court_jurisdiction_limits",
-				"judicial_tenure_act"]:
-			for law in loader.laws:
-				if law.id != law_id:
-					continue
-				var rung := Legislature.propose(state, loader, law)
-				print("  %d-%02d %s: '%s' %s -- rule of law now %.1f" % [
-					year, month, regime_name, law.id,
-					"passed" if bool(rung["passed"]) else "did not pass",
-					ns.judicial_independence,
-				])
+		# Rung n at month 6 + n, each tabled once whatever the last one did (all three
+		# are cooldown 0, so "the first still open" would re-table a defeated rung).
+		var law = _find_law(loader, ["judicial_appointments_reform", "court_jurisdiction_limits",
+			"judicial_tenure_act"][rung_index])
+		if law != null:
+			var rung := Legislature.propose(state, loader, law)
+			print("  %d-%02d %s: '%s' %s -- rule of law now %.1f" % [
+				year, month, regime_name, law.id, _tabling(rung), ns.judicial_independence,
+			])
 		return
 
 	for law in loader.laws:
@@ -1573,10 +1572,19 @@ func _meet_the_second_chamber(state, loader, ns, regime_name: String, kind: Stri
 		if kind == "struck" and (not upper_agrees or not Judiciary.strikes_down(ns, law)):
 			continue
 		var result := Legislature.propose(state, loader, law)
-		print("  %d-%02d %s: '%s' -- %s" % [
-			year, month, regime_name, law.id, _chamber_verdict(result)])
+		print("  %d-%02d %s: '%s' -- %s" % [year, month, regime_name, law.id, _tabling(result)])
 		return
 	printerr("  no law in the content reaches the '%s' outcome" % kind)
+
+
+## V5.2 b+ R2: what the hook's proposal did -- tabled (its verdict prints at the
+## division), or refused, or, under 49.3, decided now.
+func _tabling(result: Dictionary) -> String:
+	if bool(result.get("tabled", false)):
+		return "TABLED for %04d-%02d-%02d" % [int(result["vote_year"]), int(result["vote_month"]), int(result["vote_day"])]
+	if bool(result.get("refused", false)):
+		return "REFUSED %s" % [result.keys()]
+	return _chamber_verdict(result)
 
 
 func _chamber_verdict(result: Dictionary) -> String:
@@ -1951,6 +1959,7 @@ func _keep_appointment(state, loader, entry: Dictionary, regime_name: String) ->
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(ns.id, [])
 	var ok := false
+	var tabled := false
 	var label := ""
 
 	match String(entry.get("kind", "")):
@@ -1970,7 +1979,9 @@ func _keep_appointment(state, loader, entry: Dictionary, regime_name: String) ->
 			var law = _find_law(loader, String(entry.get("law_id", "")))
 			if law != null:
 				var result := Legislature.propose(state, loader, law)
-				ok = bool(result.get("passed", false))
+				# V5.2 b+ R2, as src/ui/diary_driver.gd: tabled is kept, settled at the division.
+				tabled = bool(result.get("tabled", false))
+				ok = tabled or bool(result.get("passed", false))
 				label = String(law.law_name)
 		CalendarK.KIND_RESHUFFLE:
 			var portfolio := String(entry.get("portfolio", ""))
@@ -1978,10 +1989,10 @@ func _keep_appointment(state, loader, entry: Dictionary, regime_name: String) ->
 			ok = bool(Removal.reassign(state, loader, portfolio, party_id).get("ok", false))
 			label = portfolio
 
-	Calendar.resolve(state, Calendar.verb_key(entry), ok)
+	Calendar.resolve(state, Calendar.verb_key(entry), ok, tabled)
 	print("  %d-%02d-%02d %s: kept '%s' — %s" % [
 		state.year, state.month, state.day, regime_name, label,
-		"carried" if ok else "did not carry",
+		"tabled" if tabled else ("carried" if ok else "did not carry"),
 	])
 
 

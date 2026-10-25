@@ -74,7 +74,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --front-page   (or: --front-page one)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dismiss-confirm
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --propose
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
@@ -154,6 +156,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Glossary = preload("res://src/ui/glossary.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Division = preload("res://src/sim/division.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -213,6 +216,17 @@ var _dissolve_confirm := false
 
 ## V5.2 b+ R4. The Dismiss card up over Politics, its price in R11's words.
 var _dismiss_confirm := false
+
+## V5.2 d. The front-page card up over a hand-fed entry (the sim's trigger is
+## Systems'): "full" is two papers and two runners-up, "one" a single paper -- the
+## other's headline missing, as a template Content has not written yet would be.
+var _front_page := ""
+
+## V5.2 b+ R2. A simple-majority bill proposed through the Legislature's own path:
+## since #173 it is TABLED, so its card says when the Assembly votes, the Legislature
+## (`--open legislature`) holds its verbs, and `--dismiss-confirm` beside it prices
+## the dismissal against the bill's division.
+var _propose := false
 
 ## V3.1. A zoom the capture is taken at, framed on Paris like frame_probe.gd's
 ## samples, so a deep-zoom frame is over polygons rather than open sea. Exists
@@ -732,6 +746,10 @@ func _init() -> void:
 			_dissolve_confirm = true
 		elif args[i] == "--dismiss-confirm":
 			_dismiss_confirm = true
+		elif args[i] == "--front-page":
+			_front_page = args[i + 1] if i + 1 < args.size() and not args[i + 1].begins_with("--") else "full"
+		elif args[i] == "--propose":
+			_propose = true
 		elif args[i] == "--zoom" and i + 1 < args.size():
 			_zoom = float(args[i + 1])
 		elif args[i] == "--center" and i + 2 < args.size():
@@ -1114,6 +1132,11 @@ func _apply_view() -> void:
 		_stage_the_outliner()
 	if _settings:
 		_main._settings_panel.show()
+	if _propose:
+		for law in _main._loader.laws:
+			if String(law.majority) == "simple":
+				_main._law_panel.run_proposal(law)
+				break
 	if _dismiss_confirm:
 		var verbs = _main._government_panel._cabinet_verbs
 		verbs.sync(_main._state, _main._loader)
@@ -1123,6 +1146,8 @@ func _apply_view() -> void:
 		var button = _main._government_panel._dissolve_button
 		button.sync(_main._state, _main._state.player())
 		button._on_pressed()
+	if not _front_page.is_empty():
+		_stage_front_page(_front_page)
 	if _bid:
 		_open_a_bid()
 	if _failing:
@@ -3125,7 +3150,8 @@ func _call_a_referendum() -> void:
 		printerr("--referendum: no amendment could be put to the country")
 		return
 
-	var result := Legislature.propose(state, _main._loader, law, false, true)
+	Legislature.propose(state, _main._loader, law, false, true)
+	var result := Division.divide(state, _main._loader)  # V5.2 b+ R2: tabled, then staged straight to its division
 	if not bool(result.get("referendum_called", false)):
 		printerr("--referendum: the assembly refused %s (%d of %d)" % [
 			law.id, int(result.get("yes_seats", 0)), int(result.get("seats_total", 0))
@@ -3160,7 +3186,8 @@ func _lose_the_senate() -> void:
 			continue
 		if bool(Legislature.resolve_upper(ns, party_list, law)["passed"]):
 			continue
-		var result := Legislature.propose(state, _main._loader, law)
+		Legislature.propose(state, _main._loader, law)
+		var result := Division.divide(state, _main._loader)  # V5.2 b+ R2: tabled, then staged straight to its division
 		if not bool(result.get("held_by_upper", false)) and not bool(result.get("blocked_by_upper", false)):
 			printerr("--senate: %s was not refused: %s" % [law.id, result])
 			return
@@ -3189,7 +3216,8 @@ func _lose_the_court() -> void:
 			continue
 		if not bool(Legislature.resolve_upper(ns, party_list, law)["passed"]):
 			continue
-		var result := Legislature.propose(state, _main._loader, law)
+		Legislature.propose(state, _main._loader, law)
+		var result := Division.divide(state, _main._loader)  # V5.2 b+ R2: tabled, then staged straight to its division
 		if not bool(result.get("struck_down", false)):
 			printerr("--court: %s was not struck down: %s" % [law.id, result])
 		return
@@ -3218,7 +3246,8 @@ func _reform_the_ballot() -> void:
 		return
 
 	var before: String = ns.election_system
-	var result := Legislature.propose(state, _main._loader, law, false)
+	Legislature.propose(state, _main._loader, law, false)
+	var result := Division.divide(state, _main._loader)  # V5.2 b+ R2: tabled, then staged straight to its division
 	if not bool(result.get("passed", false)):
 		printerr("--electoral: the assembly refused %s (%d of %d)" % [
 			law.id, int(result.get("yes_seats", 0)), int(result.get("seats_total", 0))
@@ -3467,3 +3496,36 @@ func _site_the_demonstration() -> void:
 	# one half of this mark a headless suite structurally cannot see.
 	view._hovered_city = String(report["city_id"])
 	view.queue_redraw()
+
+
+## --front-page: the card over a hand-fed entry and hand-fed headlines, worded as
+## Content's drafts word them (data/headlines/ is not on main yet), the played
+## nation's first and last outlets standing for the friendliest and the most hostile.
+## The clock is paused, so the card waits for the frame instead of ageing.
+func _stage_front_page(mode: String) -> void:
+	const Headlines = preload("res://src/ui/headlines.gd")
+	Headlines.set_table("event", {
+		"com_gas_squeeze": {"freeze_the_tariff": {
+			"friendly": "{{president}} shields pensioners from winter tariff rise",
+			"neutral": "Household gas tariff frozen with state loan to utility",
+			"hostile": "{{president}} puts winter bills on debt office tab",
+		}},
+		"rail_strike": {"concede": {"neutral": "Rail unions win pay deal after nine days off the tracks"}},
+		"flood": {"rebuild": {"hostile": "Flood towns still wait for the money {{president}} promised"}},
+	})
+	var outlets: Array = _main._loader.outlets.get(String(_main._state.player_nation_id), [])
+	if outlets.size() < 2:
+		push_error("screenshot: --front-page needs two outlets")
+		return
+	var first := String(outlets[0].id)
+	var last := String(outlets[outlets.size() - 1].id)
+	var papers := [{"outlet": first, "tone": "friendly"}, {"outlet": last, "tone": "hostile"}]
+	if mode == "one":
+		papers = [{"outlet": first, "tone": "friendly"}, {"outlet": last, "tone": "moderate"}]
+	var entry := {"kind": "event", "id": "com_gas_squeeze", "answer": "freeze_the_tariff", "severity": 3,
+		"papers": papers, "also": [] if mode == "one" else [
+			{"kind": "event", "id": "rail_strike", "answer": "concede", "outlet": first, "tone": "neutral"},
+			{"kind": "event", "id": "flood", "answer": "rebuild", "outlet": last, "tone": "hostile"},
+		]}
+	_main._clock.paused = true
+	_main._hud.front_page.show_entry(entry, _main._state, _main._loader, _main._clock)

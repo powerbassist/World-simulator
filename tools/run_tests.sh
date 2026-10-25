@@ -206,8 +206,13 @@ tests=(
   tests/test_phone_ui.gd
   tests/test_request_arrival.gd
   tests/test_pregate_records.gd
+  tests/test_headlines.gd
   tests/test_inbox_notes.gd
+  tests/test_front_page.gd
   tests/test_legislature_dissolve.gd
+  tests/test_table_bill.gd
+  tests/test_tabled_ui.gd
+  tests/test_bill_card.gd
   tests/test_dismiss_ui.gd
   tests/test_diary_grid.gd
   tests/test_feelings.gd

@@ -341,4 +341,5 @@ const FIELDS := [
 	["draw_seed", SCALAR, VALUE, 0, true],  # pre-gate B: absent is the unseeded draw
 	["audience_lane_start", SCALAR, VALUE, -1, true],  # pre-gate B: absent stamps at the next tick
 	["act_bloc_offset", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2b: absent is acts priced as permanent
+	["tabled_bill", DEEP, COPIED, {}, true],  # V5.2 b+ R2: absent is nothing before the Assembly
 ]

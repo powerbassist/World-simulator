@@ -28,6 +28,9 @@ while IFS= read -r f; do
     # same reason addons/ is editor-side -- and the fictionalization rule
     # guards content.
     .obsidian/*) continue ;;
+    # The vendored Impeccable design skill (Apache-2.0, see REUSE.toml): its font
+    # index lists real typefaces by name. Agent tooling, not game content.
+    .claude/skills/impeccable/*) continue ;;
     # V3.7 Phase B3: the portrait reference attribution is the ONE committed
     # file where real names must appear -- the Commons photo licences for the
     # img2img references require crediting the source works. The

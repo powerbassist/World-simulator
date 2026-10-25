@@ -21,6 +21,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
 const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
+const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -69,8 +70,16 @@ func _process(_delta: float) -> bool:
 				_fail("the card does not name the party, its leader and their feeling after: %s" % text)
 			# QA's TAKE on #155: Cabinet.loyalty feeds the ministers' resignation check,
 			# not a division's rebels (ns.party_discipline does) -- the card says so.
-			if text.contains("break ranks") or not text.contains("likelier to resign"):
-				_fail("the card promises an effect the sim does not have: %s" % text)
+			# Said only when the party's loyalty falls AND a minister stays who could
+			# resign (`others`, QA on #162).
+			var price := Removal.price(_main._state, ns, _main._loader, _portfolio)
+			var resigns := float(price["loyalty_after"]) < float(price["loyalty_before"]) - 1e-9 and int(price["others"]) > 0
+			# Gameplay #157: the removal steps the party's discipline, so its rebels
+			# are said exactly when the stepped line has more of them.
+			var rebels := int(price.get("rebels_after", 0)) > int(price.get("rebels", 0))
+			if text.contains("break ranks") != rebels or text.contains("likelier to resign") != resigns:
+				_fail("the card promises an effect the sim does not have (%s): %s" % [price, text])
+			_check_last_minister(ns)
 			if String(ns.cabinet[_portfolio]) != _party:
 				_fail("the click dismissed before the card was answered")
 			# The clock runs behind the card: the leader's feeling changes under it
@@ -109,6 +118,32 @@ func _process(_delta: float) -> bool:
 
 ## A portfolio held by a party whose leader is not the president: its removal
 ## writes a pulse, so the card has a feeling to name.
+## QA's RECORD on #162: a party whose last minister is the one dismissed has no
+## minister left to resign (Removal.price's `others` is 0), so the card does not
+## say its ministers are likelier to.
+func _check_last_minister(ns) -> void:
+	var cabinet: Dictionary = ns.cabinet.duplicate()
+	for portfolio in ns.cabinet.keys():
+		if portfolio != _portfolio and String(ns.cabinet[portfolio]) == _party:
+			ns.cabinet[portfolio] = ""
+	var text: String = _verbs._price(_portfolio)
+	# And the line's own case: entitled to two posts and holding two, the party
+	# loses loyalty with this one (Cabinet.shortfall) and keeps a minister.
+	var entitled: Dictionary = ns.cabinet_entitlement.duplicate()
+	ns.cabinet_entitlement[_party] = 2
+	for portfolio in ns.cabinet.keys():
+		if portfolio != _portfolio:
+			ns.cabinet[portfolio] = _party
+			break
+	var kept: String = _verbs._price(_portfolio)
+	ns.cabinet_entitlement = entitled
+	ns.cabinet = cabinet
+	if not kept.contains("likelier to resign"):
+		_fail("a party that keeps a minister and loses loyalty is not told so: %s" % kept)
+	if text.contains("likelier to resign"):
+		_fail("the card says the ministers of a party with none left are likelier to resign: %s" % text)
+
+
 func _pick_portfolio() -> void:
 	var ns = _main._state.player()
 	var president := President.leader_id(ns)
@@ -164,16 +199,11 @@ func _text(node: Node) -> String:
 	return out
 
 
+## Half a click on the target, the OS cursor pinned to it (tests/click.gd).
 func _press(down: bool) -> void:
 	if _target == null:
 		return
-	var at: Vector2 = _target.get_global_rect().get_center()
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = down
-	click.position = at
-	click.global_position = at
-	_main.get_viewport().push_input(click, true)
+	Click.half(_main.get_viewport(), _target, down)
 
 
 func _fail(message: String) -> void:

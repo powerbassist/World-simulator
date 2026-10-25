@@ -104,6 +104,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[v5.2-spec]] — V5.2's design: every audience, lever and shadow decision with its trade-off, the dominance matrix, the conflicts with earlier rulings, a pre-mortem
 - [[bands-v5.2]] — V5.2's player-outcome bands, declared before the build, each with its probe and what a failure looks like
 - [[v5.2-legibility]] — V5.2-0b's text diet: every workspace tab's prose measured, what to cut, move to the glossary or chart, and a per-tab prose budget
+- [[v5.2-d-spec]] — V5.2 d: events given speakers, the event book re-tuned to E2/E3/E1b, newspaper front pages by outlet slant, voices, music and effects through one pipeline; bands D1-D11
 - [[v5.2-c6-party-campaigns]] — campaigns paid by the party: efforts priced per inhabitant, a public-funding income from two pots, running costs, the legal ceiling, the state line retired; bands in B9
 - [[v5.2-bplus-spec]] — gate b's follow-ups: votes made visible, relations as feelings, dismissing a minister, the Diary as an agenda grid, ownership only by law; with bands and a red-team
 - [[history]] — the per-block record of what each version built, measured and refused (moved out of AGENTS.md at V4.4's close)

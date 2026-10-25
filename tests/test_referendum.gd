@@ -35,6 +35,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 const K = preload("res://src/sim/referendum_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Division = preload("res://src/sim/division.gd")
 const LegislatureK = preload("res://src/sim/legislature_constants.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
@@ -186,7 +187,8 @@ func _test_route_b_calls_the_country_and_applies_nothing() -> void:
 	var law = _law(FRA_AMENDMENT)
 	var before_limit: int = ns.term_limit
 
-	var result := Legislature.propose(state, _loader, law, false, true)
+	Legislature.propose(state, _loader, law, false, true)
+	var result := Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 	if not bool(result.get("referendum_called", false)):
 		_fail("route B did not call a referendum on '%s' -- the verb is unreachable" % FRA_AMENDMENT)
 		return
@@ -216,6 +218,7 @@ func _test_a_carried_referendum_applies_the_law() -> void:
 	var ns = state.player()
 	var law = _law(FRA_AMENDMENT)
 	Legislature.propose(state, _loader, law, false, true)
+	Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 
 	# Popular enough that it carries. Set rather than played for, because what is
 	# under test is the settlement and not the politics that produced it.
@@ -243,6 +246,7 @@ func _test_a_lost_referendum_charges_and_cools_down() -> void:
 	var law = _law(FRA_AMENDMENT)
 	var before_limit: int = ns.term_limit
 	Legislature.propose(state, _loader, law, false, true)
+	Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 
 	for bloc in OpinionK.BLOC_KEYS:
 		ns.bloc_approval[bloc] = 5.0
@@ -272,6 +276,7 @@ func _test_withdrawal_is_weakly_dominated() -> void:
 
 	var withdrawn = _new_state()
 	Legislature.propose(withdrawn, _loader, law, false, true)
+	Division.divide(withdrawn, _loader)  # V5.2 b+ R2: tabled, then divided
 	for bloc in OpinionK.BLOC_KEYS:
 		withdrawn.player().bloc_approval[bloc] = 5.0
 	# The player's command, not Referendum.withdraw() alone: the cooldown a
@@ -281,6 +286,7 @@ func _test_withdrawal_is_weakly_dominated() -> void:
 
 	var lost = _new_state()
 	Legislature.propose(lost, _loader, law, false, true)
+	Division.divide(lost, _loader)  # V5.2 b+ R2: tabled, then divided
 	for bloc in OpinionK.BLOC_KEYS:
 		lost.player().bloc_approval[bloc] = 5.0
 	for _i in range(K.REFERENDUM_DELAY_MONTHS):
@@ -415,6 +421,7 @@ func _test_an_inert_electoral_law_is_not_offered() -> void:
 func _test_the_diary_shows_a_pending_referendum() -> void:
 	var state = _new_state()
 	Legislature.propose(state, _loader, _law(FRA_AMENDMENT), false, true)
+	Division.divide(state, _loader)  # V5.2 b+ R2: tabled, then divided
 	var found := false
 	for entry in Calendar.fixed_dates(state):
 		if String(entry.get("kind", "")) == CalendarK.FIXED_REFERENDUM:

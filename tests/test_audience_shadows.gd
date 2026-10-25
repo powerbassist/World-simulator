@@ -27,6 +27,7 @@ const SC = preload("res://src/sim/shadow_constants.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const Words = preload("res://src/ui/lever_words.gd")
+const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -301,13 +302,7 @@ func _check_affair_proposal() -> void:
 func _press(down: bool) -> void:
 	if _target == null:
 		return
-	var at: Vector2 = _target.get_global_rect().get_center()
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = down
-	click.position = at
-	click.global_position = at
-	_main.get_viewport().push_input(click, true)
+	Click.half(_main.get_viewport(), _target, down)
 
 
 func _fail(message: String) -> void:
