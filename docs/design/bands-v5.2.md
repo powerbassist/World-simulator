@@ -1307,7 +1307,10 @@ already declared, so no new opinion enters the grid.
   `ACT_OFFSET_HALF_LIFE_MONTHS` 24; a scandal answer's offset is permanent
   (the applier's law-and-event channel). Over the term-length horizon B5
   already uses (60 months), a fading point is worth (1 − 0.5^(60/24)) × 24 /
-  ln 2 / 60 = **0.475** of a permanent one.
+  ln 2 / 60 = **0.475** of a permanent one. (The game fades monthly, by
+  `ACT_OFFSET_MONTHLY_KEEP`; summed over the 60 months that gives 0.468 to
+  0.482 by QA's count. That is within 1.5 %
+  of 0.475, with no sign change; QA, on #161.)
 - **So one headline approval point, held over the horizon, is worth 0.45 /
   (2.41 × 0.475) = 0.393 of an ask.** Everything below follows from that rate:
 
@@ -1360,9 +1363,12 @@ construction, and B5's 40 % ceiling would measure the content, not the game.
   {...}}`) and applied by Exposure through the applier, so `ns.bloc_offset`
   keeps its one writer. The answers keep their decision-shaped offsets.
   - **Why not inside every answer:** that was the first draft. Content
-    measured that it fails `tools/event_lint.py`: a default answer's
-    size-weighted offset mean must stay within ±0.008 ("a standing price, not
-    a decision"), and δ would put silence's mean near δ. The lint is right
+    measured that it fails `tools/event_lint.py`: an answer's size-weighted
+    offset mean must stay within ±0.008 ("a standing price, not a decision").
+    The band binds every answer, not only the default, and δ would put each
+    answer's mean near δ. When the `on_arrival` key is read, the lint states
+    its own exemption and band for it (QA's RECORD on #161, routed to the
+    parent). The lint is right
     about answers. An exposure's price is not an answer's: it is what being
     found out costs, so it belongs to the arrival.
   - **E2 and E3 are untouched:** E2's spreads and E3's comparisons are taken
@@ -1382,6 +1388,16 @@ construction, and B5's 40 % ceiling would measure the content, not the game.
   becomes 0.041 × 1.65 = +0.067, still the cheapest, so δ = −(0.45 + 0.067) /
   15.71 = **−0.033**. The severity-3 events are not scaled (they pass E2), so
   δ stays **−0.055**.
+  **Each δ is rounded away from zero**, so the floor holds: the affairs'
+  exact −(0.45 + 0.041) / 15.71 is −0.0313, and −0.031 would leave −0.446.
+  **Re-derived from Content's final rows** (#163, 2026-10-25), at 15.712 asks
+  per unit (mean standing 1.0577):
+  - affairs: accountable +0.0679 (the cheapest), deny +0.0248, silence
+    −0.1147. The exact δ is −0.03296, so −0.033 leaves the cheapest answer at a
+    cost of **0.4506**;
+  - severity-2 money: accountable +0.1234, so −0.037 leaves **0.458**;
+  - severity-3 money: accountable +0.1867, so −0.055 leaves **0.6775**.
+  All three meet the floor; the affairs' margin is 0.0006.
   In headline terms that is about −1.5, −2.2 and −1.3 points per exposure,
   above the poll floor. The rows are re-read by `events_probe` E2/E3 and
   priced again by L2's header before L2 runs.
@@ -1392,8 +1408,10 @@ construction, and B5's 40 % ceiling would measure the content, not the game.
   over its 40 % ceiling (INFERRED). **The knob, declared before the read, is
   the odds bonus** (`BACKROOM_ODDS`, `AID_ODDS`, `LIE_ODDS`, Systems'
   constants), not the scandal price. The price is anchored to a leak, while the
-  bonus is a tuning constant with no anchor of its own. A bonus near P × price,
-  0.05 to 0.14, is where a shadow row stops winning by default.
+  bonus is a tuning constant with no anchor of its own. A bonus near P × price
+  is where a shadow row stops winning by default: 0.05 to 0.14 at the
+  severity-2 floor (0.45), and about 0.07 to 0.20 at the severity-3 floor
+  (0.675).
 - **Choices made, and why:**
   - `APPROVAL_SPAN` 40, not the probe's 38.7: the probe reads after 12
     months, before the approval target is fully reached. At 38.7 every weight
