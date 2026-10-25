@@ -25,8 +25,10 @@ static func read(d: Dictionary, filename: String, errors: Array[String]) -> Dict
 	var out := {"vote_pot_eur_m_year": 0.0, "seat_pot_eur_m_year": 0.0, "opposition_only": false, "cap_eur_m": -1.0}
 	var raw = d.get("party_funding", {})
 	if typeof(raw) != TYPE_DICTIONARY:
+		# Reported, and the ceiling below is still read: one bad block must not hide a
+		# second fact's error or drop a valid ceiling with it.
 		errors.append("%s: party_funding must be an object" % filename)
-		return out
+		raw = {}
 	for key in raw.keys():
 		var k := String(key)
 		if k.begins_with("_"):
