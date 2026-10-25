@@ -296,3 +296,43 @@
 % {{name}}: You are asking me to be grateful for funds that could hang us both. Too thin, {{president}}, and far too risky.
 % {{name}}: I have watched better people than you fall over redirected budget lines. Offer me nothing rather than that.
 => END
+
+~ offer_regional_figure_party_money
+% {{name}}: Our region has always given generously when it believed in something, {{president}}. I could see to it that the local branches are well provided for during the campaign.
+% {{name}}: Around here, harvests and loyalties are both a matter of patience. Be a friend to this region, and I shall make sure the party's local committees never want for money.
+% {{name}}: The region asks little, {{president}}, only a hearing on {{ask}}. In return, let me quietly irrigate your party's local roots, and see how the ground flourishes.
+% {{name}}: People here remember who remembered them. I can arrange for the campaign chest in our parts to fill up nicely, if the region's affairs find a friendly ear.
+=> END
+
+~ offer_accept_regional_figure_party_money
+% {{name}}: Then it is settled, like a good fence between neighbours. You will see, the branches here will be the best funded in the country, and nobody will know why.
+% {{name}}: Sensible, {{president}}. The roads, the market halls, the small things people actually live by, they will all find their way. And your people here will want for nothing.
+% {{name}}: You will not regret it. Come autumn, our fairs will toast your name, our committees will overflow, and the whole region will wonder how everything got so smooth.
+=> END
+
+~ offer_refuse_regional_figure_party_money
+% {{name}}: Well. I had hoped the capital still knew its friends in the provinces. We will knock at the proper doors like everyone else, then, and queue with the rest.
+% {{name}}: A pity. We keep our word here, and we keep our grudges politely. The region will manage, as it always has, through the official channels.
+% {{name}}: Understood, {{president}}. Old families do not beg twice. We will raise our concerns through the proper offices, and I trust they will travel as far as they deserve.
+=> END
+
+~ offer_politician_party_money
+% {{name}}: Between us, my network includes certain benefactors with deep pockets and quiet habits. Their funds could find their way into your party's accounts, discreetly, once we understand each other.
+% {{name}}: Politics is a relay race, {{president}}, and I am offering you the baton and the funding for the leg. A foundation I know well stands ready to be generous, and all I ask is a hearing on {{ask}}.
+% {{name}}: My donors are loyal to me, and I am prepared to lend that loyalty to your treasury. Not charity, of course, merely a sensible investment between colleagues.
+% {{name}}: Let us not dress it up. Money flows where arrangements welcome it, and I can direct a comfortable stream towards your campaign chest. All I ask is a little understanding in return.
+=> END
+
+~ offer_accept_politician_party_money
+% {{name}}: Excellent. My people will speak to your treasurer in terms so bland no auditor will stay awake. You will find me a reliable partner, and partners keep accounts.
+% {{name}}: Then we understand each other perfectly, {{president}}. The funds will arrive through channels that bore anyone who follows them. And naturally, I will remember this courtesy.
+% {{name}}: Wise choice. The transfers will look like ordinary, tedious politics. You scratch my back today, and I have a long memory for backs.
+% {{name}}: Very good. Nothing on paper, everything in motion. I trust the arrangement holds in both directions, as any durable arrangement must.
+=> END
+
+~ offer_refuse_politician_party_money
+% {{name}}: A principled stand. Refreshing, if expensive. My donors will simply find other doors, though one hears those doors rarely open as wide twice.
+% {{name}}: As you wish, {{president}}. I will fold this little offer away for another season. Politics is long, and so, I find, are memories on both sides of the aisle.
+% {{name}}: Understood. No offence taken, none stored either. My foundation will pursue its aims through customary channels, and I will not trouble you with generosity again.
+% {{name}}: Pity. I thought you a realist. The money will find its uses elsewhere, and we shall speak of this again when circumstances are less delicate.
+=> END

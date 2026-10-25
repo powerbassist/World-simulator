@@ -59,15 +59,19 @@ const PRESS_GRUDGE_HOSTILE := ActK.GRUDGE_BRIEF_THRESHOLD
 # --- Offers (src/sim/offers.gd draws them, src/sim/shadows.gd answers them) ---------
 
 ## Who comes with money, and which (the spec's currencies table): an executive to
-## the president or to the party; a press owner to the president alone.
-const OFFER_KINDS := {"executive": ["party_money", "personal_wealth"], "press_owner": ["personal_wealth"]}
+## the president or to the party; a press owner to the president alone; and, since
+## #170's call 4 (the author: "Environ 5, sources variées", 2026-10-25), regional
+## figures and politicians to the party alone -- French party-finance scandals ran
+## through regional public works and party intermediaries.
+const OFFER_KINDS := {
+	"executive": ["party_money", "personal_wealth"], "press_owner": ["personal_wealth"],
+	"regional_figure": ["party_money"], "politician": ["party_money"],
+}
 ## The chance a request from one of them comes with an offer. B6 wants 2 to 6
-## offers reaching the president a term, and the shadows probe's first pass
-## (2026-10-25, 50 seeds) measured only 2.26 requests a term from executives and
-## press owners: at the starting 0.25 that was 0.72 offers a term. So every one of
-## their requests comes with money -- the band's own floor, reached only at 1.0;
-## widening OFFER_KINDS instead is Gameplay's call.
-const OFFER_CHANCE := 1.0
+## offers reaching the president a term; at France's 0.19 requests per offerer a
+## term, (17 + 32) offerers x 0.19 x 0.5 is about 4.7 (Gameplay #171, INFERRED).
+## At most 0.5, the author's call: money is the exception, not every request.
+const OFFER_CHANCE := 0.5
 ## What an offer is worth, EUR millions, and the evidence each million leaves: one
 ## act of evidence size 1, the size RATE above is set at.
 const OFFER_EUR_M := 1.0

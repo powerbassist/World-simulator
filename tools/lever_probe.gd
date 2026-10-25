@@ -47,7 +47,9 @@ extends SceneTree
 ##      its arrival plus its cheapest answer, lever_weights.scandal_price); argue
 ##      with a lie (Lies.catch_chance at the cell's listener and the president, times
 ##      the reveal); promise a date with a lie (its commitment plus the full reveal,
-##      the date inside the term). Each at its raised odds, re-clamped. The rows:
+##      the date inside the term). Each at its raised odds, re-clamped -- and, since
+##      a caught lie fails the attempt (#170's call 5), persuading only uncaught:
+##      worth (1 - P(caught)) x (p + LIE_ODDS) less its shadow. The rows:
 ##      0 dominated pairs with the shadow rows in; no row best in more than 40 % of
 ##      its cells; bargain in any currency together at most 40 %; each honest lever
 ##      at least 5 %; each shadow row reported.
@@ -325,9 +327,10 @@ func _l2_shadows(ns, people: Array, rates: Dictionary) -> Dictionary:
 						var shadow: float = reveal if base == "promise_date" else caught * reveal
 						var spent: Dictionary = LW.spend(person, base, p).duplicate()
 						spent["shadow"] = shadow
-						odds[row] = p
+						# A caught lie fails the attempt: it persuades only uncaught.
+						odds[row] = (1.0 - caught) * p
 						cost[row] = spent
-						value[row] = p * LW.GAIN - LW.cost(LW.spend(person, base, p)) - shadow
+						value[row] = float(odds[row]) * LW.GAIN - LW.cost(LW.spend(person, base, p)) - shadow
 					var top := ""
 					var top_value := -INF
 					for name in names:

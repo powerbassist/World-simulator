@@ -34,6 +34,7 @@ func _init() -> void:
 	_check_catch_band_low_reader()
 	_check_lie_raises_odds_by_exactly_LIE_ODDS()
 	_check_caught_lie_priced_once()
+	_check_a_caught_lie_fails_the_attempt()
 	_check_uncaught_lie_leaves_nothing()
 	_check_a_lied_promise_is_revealed_at_its_date_served_or_not()
 	_check_a_caught_promise_is_withdrawn_and_priced_once()
@@ -159,6 +160,33 @@ func _check_caught_lie_priced_once() -> void:
 		_failures.append("fixture: three lies to a 1.0 reader were never caught")
 	if not ns.exposure_evidence.is_empty():
 		_failures.append("a lie left evidence (Call 4: the risk is the catch and the date)")
+
+
+## #170's call 5 (Gameplay #171): a lie caught in the audience fails the attempt --
+## the reveal is paid and the lever does not persuade. Over draw seeds, so some
+## caught attempts carry a roll that would have won.
+func _check_a_caught_lie_fails_the_attempt() -> void:
+	var caught_tries := 0
+	for draw in range(12):
+		var b := _booked()
+		if b.is_empty():
+			return
+		b["ns"].draw_seed = draw + 1
+		# Known and liked, so the lie's own roll often wins: the catch must still sink it.
+		President.learn(b["state"], b["ns"], _loader, String(b["pid"]), 1.0)
+		President.adjust_rapport(b["state"], b["ns"], _loader, String(b["pid"]), 1.0)
+		var kept := _skills(b, 1.0, 0.0)
+		for index in range(LK.ATTEMPTS):
+			if String(b["session"]["won"]) != "":
+				break
+			var r: Dictionary = Levers.attempt(b["state"], b["ns"], _loader, b["session"], "argue", {"lie": true})
+			if bool(r.get("caught", false)):
+				caught_tries += 1
+				if bool(r["success"]) or String(b["session"]["won"]) != "":
+					_failures.append("a caught lie persuaded (draw seed %d, attempt %d)" % [draw + 1, index])
+		_restore(b, kept)
+	if caught_tries == 0:
+		_failures.append("fixture: no lie to a 1.0 reader was caught")
 
 
 ## Uncaught on argue: the odds were raised and nothing else happened.
