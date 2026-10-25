@@ -169,7 +169,8 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	# #170's call 5 (Gameplay #171): a lie caught in the audience fails the attempt,
 	# whatever its own roll said. The catch is its own seeded roll (Lies.caught), so
 	# reading it here moves no other draw; Lies.settle() below reads the same roll.
-	var success := Cycle.unit_pair(String(session["request_id"]), Cycle.salted("%s:%s:%d" % [K.SALT_ROLL, lever, index], ns.draw_seed), now) < p 		and not (Lies.told(lever, args) and Lies.caught(state, ns, loader, session, lever, index))
+	var seen_through := Lies.told(lever, args) and Lies.caught(state, ns, loader, session, lever, index)
+	var success := Cycle.unit_pair(String(session["request_id"]), Cycle.salted("%s:%s:%d" % [K.SALT_ROLL, lever, index], ns.draw_seed), now) < p and not seen_through
 	session["attempts_left"] = int(session["attempts_left"]) - 1
 	(session["attempts"] as Array).append({"lever": lever, "success": success})
 	if success:
