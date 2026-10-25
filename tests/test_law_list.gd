@@ -16,6 +16,7 @@ const LawList = preload("res://src/ui/law_list.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -108,13 +109,7 @@ func _check_markers(ns, rows: Array) -> void:
 func _press(down: bool) -> void:
 	if _target == null:
 		return
-	var at: Vector2 = _target.get_global_rect().get_center()
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	click.pressed = down
-	click.position = at
-	click.global_position = at
-	_main.get_viewport().push_input(click, true)
+	Click.half(_main.get_viewport(), _target, down)
 
 
 func _check_selected() -> void:

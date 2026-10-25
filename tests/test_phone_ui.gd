@@ -26,6 +26,7 @@ const PersonCard = preload("res://src/ui/person_card.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
+const Click = preload("res://tests/click.gd")
 
 const SLOT := "phone_ui_test"
 
@@ -237,13 +238,7 @@ func _click(down: bool, button: int) -> void:
 	if _target == null:
 		_fail("nothing to click (%d)" % button)
 		return
-	var at: Vector2 = _target.get_global_rect().get_center()
-	var click := InputEventMouseButton.new()
-	click.button_index = button
-	click.pressed = down
-	click.position = at
-	click.global_position = at
-	_main.get_viewport().push_input(click, true)
+	Click.half(_main.get_viewport(), _target, down, button)
 
 
 func _fail(message: String) -> void:
