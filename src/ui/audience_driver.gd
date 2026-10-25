@@ -52,6 +52,8 @@ static func register(main) -> void:
 		refresh(main))
 	scene.talked.connect(func(topic: String, args: Dictionary) -> void: AudienceTalks.talk(main, game, topic, args))
 	scene.ended.connect(func() -> void: AudienceTalks.end(main, game))
+	scene.offer_answered.connect(func(accepted: bool) -> void: AudienceTalks.offer(main, game, accepted))
+	scene.affair.connect(func(action: String) -> void: AudienceTalks.affair(main, game, action))
 	scene.closed.connect(func() -> void: _leave(main, game))
 	# The frame's X ends it too: the hold the opening took goes with the window.
 	main._windows.closed.connect(func(id: String) -> void:

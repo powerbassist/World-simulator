@@ -15,13 +15,10 @@ const Num = preload("res://src/ui/num.gd")
 const President = preload("res://src/sim/president.gd")
 const ActK = preload("res://src/sim/character_act_constants.gd")
 
-## bands-v5.2.md, the B6 amendment: a value within this of a cut counts as ON
-## it, and the cut's declared bracket decides its side -- three declines from 0
-## sum to -0.30000000000000004 and must read -0.30. A tolerance, not a rounding:
-## snappedf() multiplies back by a step that is not exact in binary. The
-## amendment asks for ONE helper Systems' bonds call too; src/sim cannot read
-## src/ui, so this one moves to src/core when c1 needs it.
-const CUT_TOLERANCE := 1e-9
+## bands-v5.2.md, the B6 amendment: ONE comparison for every cut, the one the
+## sim's bonds call too (V5.2c moved it to src/core), so a card cannot say "cold"
+## while the bond says nothing.
+const Cut = preload("res://src/core/cut.gd")
 
 ## Each register's bands, lowest first: [the band's upper cut, whether the band
 ## includes that cut, its word]. "" shows no word: no grudge, an unmoved loyalty.
@@ -56,6 +53,11 @@ const BANDS := {
 ## The resign act covers only an office holder (characters.gd, _office_held), so
 ## only there does the lowest loyalty promise it.
 const OFFICE_DISLOYAL := "ready to resign"  # i18n: msgid
+## V5.2c: the bond the sim writes (President's BONDS), as the person card names it.
+const BOND := {
+	"friend": "a friend", "close": "close to you", "rival": "a rival, may talk",  # i18n: msgid
+	"enemy": "an enemy, may talk", "affair": "your lover, in secret",  # i18n: msgid
+}
 const RANGE := {"grudge": Vector2(0.0, 1.0), "rapport": Vector2(-1.0, 1.0), "loyalty": Vector2(-1.0, 1.0)}
 ## A delta under this moved nothing a player should read (QA on #105: "loyalty
 ## +0.00" was noise on a card).
@@ -74,13 +76,19 @@ static func of(ns, pid: String) -> Dictionary:
 	}
 
 
+## The bond's word, translated; "" for none (a stranger or an acquaintance, which
+## the card's fog already says).
+static func bond_word(bond: String) -> String:
+	return Strings.t(String(BOND[bond])) if BOND.has(bond) else ""  # i18n: row-ok a bond id, its word the msgid
+
+
 ## The word a register's value reads as, translated; "" for a band with none.
 static func word(register: String, value: float, office := false) -> String:
 	var bands: Array = BANDS[register]
 	for i in bands.size():
 		var band: Array = bands[i]
 		var cut := float(band[0])
-		var inside := value <= cut + CUT_TOLERANCE if bool(band[1]) else value < cut - CUT_TOLERANCE
+		var inside := Cut.at_or_below(value, cut) if bool(band[1]) else Cut.below(value, cut)
 		if inside:
 			if register == "loyalty" and office and i == 0:
 				return Strings.t(OFFICE_DISLOYAL)
