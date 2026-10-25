@@ -226,6 +226,7 @@ const FIELDS := [
 	["reshuffles_called", SCALAR, VALUE, 0, false],
 	["reshuffle_month", SCALAR, VALUE, -1, true],  # V5.2b b3: a stamp: absent is 'not yet'
 	["reshuffle_portfolio", SCALAR, VALUE, "", true],  # V5.2b b3: absent is no portfolio moved
+	["portfolio_removed_month", DEEP, INT_MAP, {}, true],  # V5.2 b+ R4: absent is never removed
 	["resignations_count", SCALAR, VALUE, 0, false],
 	["last_resignation", DEEP, COPIED, {}, false],
 	["party_discipline", DEEP, COPIED, {}, false],

@@ -180,9 +180,12 @@ func _check_hung_up() -> void:
 		_fail("after the month's call the card's Call is not refused with the sim's reason: '%s'" % why)
 
 
-## The second face row (the first is the president, whom the sim does not cover).
+## The second person's row (the first is the president, whom the sim does not
+## cover): a row that answers a right click. V5.2 b+ put the offices in columns, so
+## the rows are found anywhere under the body, in reading order.
 func _people_row() -> Control:
-	var rows: Array = _main._people_panel._body.get_children().filter(func(c): return c is HBoxContainer)
+	var rows: Array = _main._people_panel._body.find_children("*", "HBoxContainer", true, false).filter(
+		func(c): return not c.gui_input.get_connections().is_empty())
 	return rows[1] if rows.size() > 1 else null
 
 

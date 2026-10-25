@@ -883,7 +883,8 @@ func _nationalise_the_largest(state, ns) -> void:
 		_fail("the player's nation has no named firms, so the nationalised regime asserts nothing")
 		return
 
-	var result := Companies.execute(state, ns, _loader.company_actions, action, best, _loader)
+	# V5.2 b+ R14: the machinery through the law's door, as an adopted bill runs it.
+	var result := Companies.execute(state, ns, _loader.company_actions, action, best, _loader, true)
 	if not result.get("applied", false):
 		_fail("the nationalisation was refused, so the regime asserts nothing")
 

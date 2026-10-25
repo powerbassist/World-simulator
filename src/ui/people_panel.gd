@@ -52,6 +52,14 @@ const FACE_SIZE := Vector2(22, 30)
 ## group by STANDING prints first, so the visible head is the people the
 ## game has actually moved.
 const GROUP_HEAD := 8
+## V5.2 b+ (R5, gate b: "people panel is messy and unreadable"). A row is one
+## line read left to right: fixed columns for the name, the side and the figure,
+## so a value sits beside its name and not at the far edge of a 1 200 px dock.
+const COL_NAME := 230
+const COL_SIDE := 210
+const COL_FIGURE := 70
+## The executive and the cabinet stand beside the parties, each this wide.
+const COL_BLOCK := 540
 
 ## The kind groups in reading order, with the labels a player reads. The
 ## order is the CAST's order: the political register first, then the bench
@@ -166,20 +174,34 @@ func _refresh() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
-	_build_executive(ns)
-	_build_cabinet(ns)
-	_build_parties(ns)
+	# The offices beside the parties: two short lists side by side read at a glance,
+	# where one under the other made a page of them.
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 40)
+	_body.add_child(top)
+	var offices := _block(top)
+	_build_executive(ns, offices)
+	_build_cabinet(ns, offices)
+	_build_parties(ns, _block(top))
 	_build_character_groups(ns)
 	_build_abroad(ns)
+
+
+func _block(parent: Control) -> VBoxContainer:
+	var block := VBoxContainer.new()
+	block.custom_minimum_size.x = COL_BLOCK
+	block.add_theme_constant_override("separation", 4)
+	parent.add_child(block)
+	return block
 
 
 ## The two offices the player deals with daily. Both are live state rather than
 ## content: an amendment can change the head of state, and a censure changes the
 ## head of government, so this reads NationState and not the nation file.
-func _build_executive(ns) -> void:
-	PanelKit.heading(_body, tr("The executive"))
-	_face_row(ns.head_of_state_person_id, ns.head_of_state_title, _name_of(ns.head_of_state_person_id))
-	_face_row(ns.pm_person_id, ns.head_of_government_title, _name_of(ns.pm_person_id))
+func _build_executive(ns, parent: Control) -> void:
+	PanelKit.heading(parent, tr("The executive"))
+	_person_line(parent, ns.head_of_state_person_id, [[ns.head_of_state_title, COL_SIDE, UiTheme.CAPTION], [_name_of(ns.head_of_state_person_id)]])
+	_person_line(parent, ns.pm_person_id, [[ns.head_of_government_title, COL_SIDE, UiTheme.CAPTION], [_name_of(ns.pm_person_id)]])
 
 
 ## Named ministers do not exist, and this is where that shows. U6b's own probe
@@ -187,25 +209,31 @@ func _build_executive(ns) -> void:
 ## distinct people in fourteen years -- roughly a fifth of what the bench would
 ## cost to author -- so the bench was cut before it was written and a portfolio
 ## still names the PARTY that holds it. docs/people-model.md §3.
-func _build_cabinet(ns) -> void:
-	PanelKit.heading(_body, tr("The cabinet"))
+func _build_cabinet(ns, parent: Control) -> void:
+	PanelKit.heading(parent, tr("The cabinet"))
 	var by_id := {}
 	for p in _loader.parties.get(ns.id, []):
 		by_id[p.id] = p
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 24)
+	parent.add_child(grid)
 	for f in CK.PORTFOLIO_KEYS:
 		var pid: String = String(ns.cabinet.get(f, ""))
+		_cell(grid, tr(PersonCard.PORTFOLIO_LABEL.get(f, f)), 0, UiTheme.CAPTION)
 		if pid == "" or not by_id.has(pid):
-			PanelKit.row(_body, tr(PersonCard.PORTFOLIO_LABEL.get(f, f)), tr("VACANT"), PanelKit.Tone.BAD)
+			_cell(grid, tr("VACANT"), 0, UiTheme.BAD_TEXT)
 		else:
-			PanelKit.row(_body, tr(PersonCard.PORTFOLIO_LABEL.get(f, f)), String(by_id[pid].party_name))
+			_cell(grid, String(by_id[pid].party_name), 0)
 
 
-func _build_parties(ns) -> void:
-	PanelKit.heading(_body, tr("The parties"))
+func _build_parties(ns, parent: Control) -> void:
+	PanelKit.heading(parent, tr("The parties"))
 	for p in _loader.parties.get(ns.id, []):
 		var seats := int(ns.seats_by_party.get(p.id, 0))
 		var leader: String = String(ns.party_leader_override.get(p.id, p.leader_person_id))
-		_face_row(leader, String(p.party_name), tr("%s · %d seats") % [_name_of(leader), seats])
+		_person_line(parent, leader, [[String(p.party_name), COL_SIDE], [_name_of(leader), COL_SIDE, UiTheme.CAPTION],
+			[tr_n("%d seat", "%d seats", seats) % seats, COL_FIGURE, "", HORIZONTAL_ALIGNMENT_RIGHT]])
 
 
 ## V4.3's body: the character register, grouped by kind, sorted by standing,
@@ -231,6 +259,8 @@ func _build_character_groups(ns) -> void:
 		group.sort_custom(func(a, b):
 			return float(ns.person_standing.get(a.id, 0.0)) > float(ns.person_standing.get(b.id, 0.0)))
 		PanelKit.heading(_body, "%s (%d)" % [label, group.size()])
+		_person_line(_body, "", [[tr("Name"), COL_NAME, UiTheme.CAPTION], [tr("Side"), COL_SIDE, UiTheme.CAPTION],
+			[tr("Standing"), COL_FIGURE, UiTheme.CAPTION, HORIZONTAL_ALIGNMENT_RIGHT], [tr("Wants"), 0, UiTheme.CAPTION]])
 		var shown := 0
 		for person in group:
 			if shown >= GROUP_HEAD:
@@ -241,17 +271,23 @@ func _build_character_groups(ns) -> void:
 			shown += 1
 
 
-## One person of the character layer: the face, the name, the party edge (or
-## the kind's own line), the wants with their satisfaction reads. The wants
-## are the person's whole point -- a row without them is a name in a list.
+## One person of the character layer, one line: the face, the name, the party
+## edge (or the kind's own line), the standing, and the wants as a count -- denied
+## ones in the alert tone. The wants' own words are on the hover card (V5.2 b+,
+## R5): a line per want under every name was the red wall the author could not read.
 func _person_row(ns, person) -> void:
-	var right := _party_or_kind_line(ns, person)
 	var standing := float(ns.person_standing.get(person.id, 0.0))
-	if standing >= 0.05:
-		right += tr(" · standing %s") % Num.f(standing, 2)
-	_face_row(person.id, person.person_name, right)
+	var denied := 0
 	for want in person.wants:
-		_want_row(ns, person, want)
+		if not _want_served(ns, person, want):
+			denied += 1
+	var wants := "—"
+	if not person.wants.is_empty():
+		wants = tr("%d of %d denied") % [denied, person.wants.size()] if denied > 0 \
+			else tr("%d of %d served") % [person.wants.size(), person.wants.size()]
+	_person_line(_body, person.id, [[person.person_name, COL_NAME], [_party_or_kind_line(ns, person), COL_SIDE, UiTheme.CAPTION],
+		[Num.f(standing, 2) if standing >= 0.05 else "—", COL_FIGURE, UiTheme.CAPTION, HORIZONTAL_ALIGNMENT_RIGHT],
+		[wants, 0, UiTheme.BAD_TEXT if denied > 0 else UiTheme.CAPTION]])
 
 
 ## The affiliation line: the party the person sits in (override first, the
@@ -267,22 +303,14 @@ func _party_or_kind_line(ns, person) -> String:
 	return person.kind.replace("_", " ")
 
 
-## One want with its DERIVED satisfaction read. The read IS the machine's own
-## (Characters.want_satisfied, the public door the Programme.this_term
-## precedent set), so the panel cannot disagree with the machine about
-## whether a want is served -- a hand-kept copy here once diverged inside its
-## own PR (the review's I1) and this is the structural close of that class.
-func _want_row(ns, person, want: Dictionary) -> void:
-	var object := String(want["object"])
-	var stance := String(want["stance"])
-	var text := "%s %s" % [PersonCard.stance_label(stance), PersonCard.object_text(_loader, _state.player(), object, want)]
+## One want's DERIVED satisfaction read, the machine's own (Characters.want_satisfied,
+## the public door the Programme.this_term precedent set), so the panel cannot
+## disagree with the machine about whether a want is served -- a hand-kept copy here
+## once diverged inside its own PR (the review's I1). An opposed want is served
+## when the thing it opposes is not.
+func _want_served(ns, person, want: Dictionary) -> bool:
 	var served := Characters.want_satisfied(ns, person, want, _meters(ns), _authored_leaders())
-	var tone := PanelKit.Tone.DIM
-	if stance == "oppose":
-		served = not served
-	if not served:
-		tone = PanelKit.Tone.BAD
-	PanelKit.line(_body, "    " + ((tr("%s — served") if served else tr("%s — denied")) % text), tone)
+	return not served if String(want["stance"]) == "oppose" else served
 
 
 ## The meter hand-in, matching what main.gd hands Characters.tick_month
@@ -318,27 +346,32 @@ func _build_abroad(ns) -> void:
 		var nation = _loader.nations.get(id)
 		if nation == null:
 			continue
-		_face_row(nation.leader_person_id, String(nation.nation_name), "%s %s" % [
-			nation.leader_title, _name_of(nation.leader_person_id),
-		])
+		_person_line(_body, nation.leader_person_id, [[String(nation.nation_name), COL_NAME],
+			["%s %s" % [nation.leader_title, _name_of(nation.leader_person_id)]]])
 
 
-## A PanelKit row with the person's face in front of it -- V2.3. The wall this
-## panel became (two executives, every party leader, nine foreign heads of
-## state) is exactly the "wall of generated images" docs/tiers/v2.md §3's
-## duotone rule exists for, which is why this panel is where the faces landed
-## and not every sentence that names a person: a face beside a name is identity
-## content, a face beside every mention is wallpaper. Rows whose person has no
-## art yet get the silhouette through the same call and the register grows
-## without this panel noticing.
-func _face_row(person_id: String, left: String, right: String) -> HBoxContainer:
-	var row := PanelKit.row(_body, left, right)
-	var face := Portrait.framed_for(person_id, FACE_SIZE)
+## A person's line -- V2.3's face in front, then one Label per cell: [text, width
+## (0: as wide as its text), theme variation, alignment]. The wall this panel became
+## (two executives, every party leader, nine foreign heads of state) is exactly the
+## "wall of generated images" docs/tiers/v2.md §3's duotone rule exists for, which
+## is why this panel is where the faces landed: a face beside a name is identity
+## content, a face beside every mention is wallpaper. No person ("") is a column
+## header: no face, no card.
+func _person_line(parent: Control, person_id: String, cells: Array) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	parent.add_child(row)
+	var face: Control = Portrait.framed_for(person_id, FACE_SIZE) if person_id != "" else Control.new()
+	face.custom_minimum_size = FACE_SIZE
 	row.add_child(face)
-	row.move_child(face, 0)
-	# The hover surface: every row this panel builds names a person, and the
-	# card is that name's one annotation (person_card.gd's contract). The
-	# signals live on the row, not the face -- a face-sized target inside a
+	for cell in cells:
+		_cell(row, String(cell[0]), int(cell[1]) if cell.size() > 1 else 0, String(cell[2]) if cell.size() > 2 else "",
+			int(cell[3]) if cell.size() > 3 else HORIZONTAL_ALIGNMENT_LEFT)
+	if person_id == "":
+		return row
+	# The hover surface: every row names a person, and the card is that name's
+	# one annotation (person_card.gd's contract) -- its wants included. The
+	# signals live on the row, not the face: a face-sized target inside a
 	# row-sized hover is a target the player keeps missing.
 	row.mouse_entered.connect(_show_person_card.bind(person_id))
 	row.mouse_exited.connect(_hide_person_card)
@@ -346,6 +379,20 @@ func _face_row(person_id: String, left: String, right: String) -> HBoxContainer:
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 			call_requested.emit(person_id))
 	return row
+
+
+func _cell(parent: Control, text: String, width: int, variation := "", align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var label := Label.new()
+	label.text = text  # i18n: row-ok every caller hands a translated or resolved string
+	label.custom_minimum_size.x = width
+	label.horizontal_alignment = align
+	label.theme_type_variation = variation
+	# A fixed column trims rather than pushing the row's next cell out of line; a
+	# text-sized cell must not, or its minimum shrinks to the ellipsis.
+	if width > 0:
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	parent.add_child(label)
+	return label
 
 
 ## Show the card at the cursor, clamped to the viewport. Position is computed

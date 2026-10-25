@@ -20,6 +20,11 @@
     },
     {
       "id": "full_nationalisation",
+      "requires_law": true,
+      "bill": {
+        "position": {"economic": -0.6, "social": 0.0},
+        "cooldown_months": 24
+      },
       "name": "Nationalisation",
       "summary": "The firm passes into public ownership outright. The state carries the whole purchase on the national debt, collects the whole dividend, and absorbs the whole of whatever the assembly's rules cost the sector.",
       "preconditions": [{ "field": "state_owned", "op": "==", "value": 0 }],
@@ -37,6 +42,11 @@
     },
     {
       "id": "privatisation",
+      "requires_law": true,
+      "bill": {
+        "position": {"economic": 0.6, "social": 0.0},
+        "cooldown_months": 24
+      },
       "name": "Privatisation",
       "summary": "The state's holding is sold in full. The windfall comes off the national debt at once; the dividends, and the shelter the payroll had from the sector's rules, are gone for good.",
       "preconditions": [{ "field": "state_owned", "op": "==", "value": 1 }],

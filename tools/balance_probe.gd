@@ -33,6 +33,7 @@ const Characters = preload("res://src/sim/characters.gd")
 const Government = preload("res://src/sim/government.gd")
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const TK = preload("res://src/sim/trade_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
@@ -44,6 +45,7 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Bills = preload("res://src/sim/bills.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
@@ -303,8 +305,14 @@ const REGULATION_REGIMES := {
 ## case for both new numbers at once: the debt jump the bloc's own `debt_to_gdp_pct`
 ## rule reads, and the dividend line the clamp is measured against. Left standing
 ## for the same reason the subsidy and the burden are.
+##
+## V5.2 b+ R14: the nationalisation is a bill. `managed_nationalises` tables it and
+## the Assembly may refuse it -- the honest record of what an ordinary bill meets.
+## `managed_nationalises_493` carries the same bill by Article 49.3 (`force`), so
+## the ownership channel stays measured whatever the Assembly thinks of it.
 const OWNERSHIP_REGIMES := {
 	"managed_nationalises": {"budget": REGIMES["managed"], "nationalise_month": 6},
+	"managed_nationalises_493": {"budget": REGIMES["managed"], "nationalise_month": 6, "force": true},
 }
 
 
@@ -1069,7 +1077,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 					])
 
 			if i + 1 == cabinet_shortfall_month:
-				_short_the_largest_partner(state, ns, party_list, regime_name, year, month)
+				_short_the_largest_partner(state, loader, ns, party_list, regime_name, year, month)
 
 			if i + 1 == amend_month and amendment_id != "":
 				var law = _find_law(loader, amendment_id)
@@ -1223,7 +1231,7 @@ func _answer_event(state, loader, ns, mode: String, regime_name: String, year: i
 		])
 
 
-func _short_the_largest_partner(state, ns, party_list: Array, regime_name: String, year: int, month: int) -> void:
+func _short_the_largest_partner(state, loader, ns, party_list: Array, regime_name: String, year: int, month: int) -> void:
 	var by_id := {}
 	for p in party_list:
 		by_id[p.id] = p
@@ -1258,7 +1266,7 @@ func _short_the_largest_partner(state, ns, party_list: Array, regime_name: Strin
 	if weakest_fit == "":
 		return
 
-	Cabinet.assign(state, target_portfolio, weakest_fit, party_list)
+	Removal.reassign(state, loader, target_portfolio, weakest_fit)
 	print("  %d-%02d %s: reassigned %s from %s to %s (shortfall %.2f)" % [
 		year, month, regime_name, target_portfolio, largest, weakest_fit,
 		Cabinet.shortfall(ns, largest),
@@ -1503,16 +1511,6 @@ func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -
 ## this session's numbers reach their reachable worst case this way: the debt jump at
 ## once and the dividend line for the rest of the run.
 func _nationalise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
-	var action = null
-	for a in loader.company_actions:
-		if String(a.effects.get("company", {}).get("op", "")) != "nationalise":
-			continue
-		if action == null or float(a.effects["company"]["stake"]) > float(action.effects["company"]["stake"]):
-			action = a
-	if action == null:
-		printerr("  no 'nationalise' company action is authored")
-		return
-
 	var best := ""
 	var best_output := -1.0
 	for company in Companies.firms_of(loader, ns.id):
@@ -1524,35 +1522,21 @@ func _nationalise(state, loader, ns, regime_name: String, year: int, month: int)
 		print("  %d-%02d %s: no firms are named for this nation" % [year, month, regime_name])
 		return
 
+	# V5.2 b+ R14: a full nationalisation is a bill -- tabled for the largest firm,
+	# it divides like any law, and the purchase lands only if it carries.
+	var bills: Array = Bills.ownership(state, ns, loader, best)
+	if bills.is_empty():
+		printerr("  no ownership bill is offered for %s" % best)
+		return
 	var debt_before: float = ns.debt_eur_bn
-	var result := Companies.execute(state, ns, loader.company_actions, action, best, loader)
-	if result["applied"]:
-		print("  %d-%02d %s: nationalised %s at stake %.2f (%.1f bn, debt %+.1f bn)" % [
-			year, month, regime_name, best, float(result["state_share_after"]),
-			best_output, ns.debt_eur_bn - debt_before,
-		])
-	else:
-		print("  %d-%02d %s: nationalisation of %s REFUSED" % [year, month, regime_name, best])
+	var forced := bool(OWNERSHIP_REGIMES.get(regime_name, {}).get("force", false))
+	var result: Dictionary = Legislature.propose(state, loader, bills[0], forced)
+	print("  %d-%02d %s: nationalisation bill for %s%s %s (yes %d / no %d), stake %.2f (%.1f bn, debt %+.1f bn)" % [
+		year, month, regime_name, best, " by 49.3" if forced else "", "CARRIED" if bool(result.get("passed", false)) else ("HELD" if bool(result.get("held_by_upper", false)) else "DEFEATED"),
+		int(result.get("yes_seats", 0)), int(result.get("no_seats", 0)),
+		Companies.state_share_of(ns, best), best_output, ns.debt_eur_bn - debt_before,
+	])
 
-
-## Legislature.apply() rather than propose(), for tests/test_balance.gd's reason:
-## the assembly division belongs to tests/test_legislature.gd, and a balance row
-## whose numbers depend on a chamber agreeing is a row that measures two things.
-## V1.5a. Every corruption-raising law at once, never repealed -- the reachable worst
-## case for the delivery factor, and the treatment _regulate() and _nationalise() both
-## get. `emergency_procurement_powers` carries a 48-month cooldown, so applying it
-## directly here rather than through the cooldown gate is what makes "worst case" mean
-## the clamp rather than one pass of one law.
-## V1.5d. Put the press under state oversight, once, and let the run carry it.
-##
-## ONE PASS RATHER THAN THE CLAMP, unlike _corrupt() directly below: corruption's worst
-## case is what its probe needed, where this regime exists to show what ONE ordinary law
-## does to an ordinary run. Saturating it would answer a question media_probe.gd already
-## answers and would make the comparison against `managed` unreadable.
-## V1.1e. Proposes through the REAL verb rather than applying a law directly, because
-## the whole point of these three regimes is the pipeline between the division and the
-## effect -- Legislature.apply() skips both gates by design, which is what
-## tests/test_judiciary.gd asserts.
 func _meet_the_second_chamber(state, loader, ns, regime_name: String, kind: String,
 		year: int, month: int) -> void:
 	var party_list: Array = loader.parties.get(ns.id, [])
@@ -1984,9 +1968,7 @@ func _keep_appointment(state, loader, entry: Dictionary, regime_name: String) ->
 		CalendarK.KIND_RESHUFFLE:
 			var portfolio := String(entry.get("portfolio", ""))
 			var party_id := String(entry.get("party_id", ""))
-			if Cabinet.can_assign(ns, portfolio, party_id):
-				Cabinet.assign(state, portfolio, party_id, party_list)
-				ok = true
+			ok = bool(Removal.reassign(state, loader, portfolio, party_id).get("ok", false))
 			label = portfolio
 
 	Calendar.resolve(state, Calendar.verb_key(entry), ok)

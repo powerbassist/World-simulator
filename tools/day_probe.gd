@@ -47,6 +47,7 @@ const K = preload("res://src/sim/calendar_constants.gd")
 const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 
 const PLAYER := "FRA"
@@ -286,12 +287,7 @@ func _fire(state, loader, entry: Dictionary, want: String) -> void:
 					Legislature.propose(state, loader, law)
 					break
 		K.KIND_RESHUFFLE:
-			var ns = state.player()
-			var party_list: Array = loader.parties.get(PLAYER, [])
-			if Cabinet.can_assign(ns, String(entry.get("portfolio", "")), String(entry.get("party_id", ""))):
-				Cabinet.assign(
-					state, String(entry.get("portfolio", "")), String(entry.get("party_id", "")), party_list
-				)
+			Removal.reassign(state, loader, String(entry.get("portfolio", "")), String(entry.get("party_id", "")))
 	Calendar.resolve(state, Calendar.verb_key(entry), true)
 
 

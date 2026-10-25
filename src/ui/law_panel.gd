@@ -36,6 +36,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const LawVerdict = preload("res://src/ui/law_verdict.gd")
 const LawList = preload("res://src/ui/law_list.gd")
+const DissolveButton = preload("res://src/ui/dissolve_button.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -55,6 +56,8 @@ signal proposed(before: Dictionary, law_name: String, result: Dictionary)
 ## propose_requested back into run_proposal() below). One propose path, one
 ## card path; this signal only asks for the popup.
 signal brief_requested(law)
+## V5.2 b+ (R3): the chamber's own Dissolve, the Politics one's twin (dissolve_button.gd).
+signal dissolved(before: Dictionary)
 
 var _state
 var _loader
@@ -64,6 +67,7 @@ var _laws: LawList
 var _result_box: VBoxContainer
 var _dirty := true
 var _close_button: Button
+var _dissolve := DissolveButton.new()
 
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
@@ -105,6 +109,8 @@ func _ready() -> void:
 func _build_footer() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_child(_dissolve)
+	_dissolve.dissolved.connect(dissolved.emit)
 
 	_close_button = Button.new()
 	_close_button.text = tr("Close (L)")
@@ -142,6 +148,7 @@ func _refresh() -> void:
 	if ns == null:
 		return
 	_primary = null
+	_dissolve.sync(_state, ns)
 
 	for child in _result_box.get_children():
 		child.queue_free()
@@ -227,11 +234,8 @@ func _build_result_summary(result: Dictionary) -> Control:
 	if result.get("released", false):
 		return box
 
-	var tally := Label.new()
-	tally.text = tr("Yes %d · No %d · Abstain %d, of %d seats") % [
-		result["yes_seats"], result["no_seats"], result["abstain_seats"], result["seats_total"]
-	]
-	box.add_child(tally)
+	PanelKit.line(box, tr("Yes %d · No %d · Abstain %d, of %d seats") % [
+		result["yes_seats"], result["no_seats"], result["abstain_seats"], result["seats_total"]], PanelKit.Tone.PLAIN)
 
 	# V1.1e. What the second chamber did, under the Assembly's own tally rather than
 	# beside it, because the two are the same division read twice.
@@ -242,7 +246,6 @@ func _build_result_summary(result: Dictionary) -> Control:
 			result["upper_abstain_seats"], result["upper_seats_total"],
 		], PanelKit.Tone.PLAIN)
 		if bool(result.get("held_by_upper", false)):
-			var held := Label.new()
 			# WHAT THE CHAMBER DID, not when the bill arrives -- the twenty-first screenshot
 			# pass found this frame reading "comes into force in 12 months" here and "in 9
 			# months" in the held block directly below it, which is two numbers for one fact
@@ -251,13 +254,8 @@ func _build_result_summary(result: Dictionary) -> Control:
 			# Same branch as the held list below: an assembly division's hold
 			# releases free, so only a government bill's record promises the
 			# override price.
-			if bool(result.get("assembly_bill", false)):
-				held.text = tr("It is held for %d months, and then comes into force.") % int(result.get("held_months", 0))
-			else:
-				held.text = tr("It is held for %d months, and overriding them costs %s with every bloc.") % [
-					int(result.get("held_months", 0)), Num.f(ChambersK.UPPER_OVERRIDE_OFFSET, 2)]
-			held.autowrap_mode = TextServer.AUTOWRAP_WORD
-			box.add_child(held)
+			PanelKit.line(box, tr("It is held for %d months, and then comes into force.") % int(result.get("held_months", 0)) if bool(result.get("assembly_bill", false))
+				else tr("It is held for %d months, and overriding them costs %s with every bloc.") % [int(result.get("held_months", 0)), Num.f(ChambersK.UPPER_OVERRIDE_OFFSET, 2)], PanelKit.Tone.PLAIN)
 
 	# V1.1e. The court, and it names the ARITHMETIC as well as the verdict -- a rule the
 	# player cannot read is not a check on their power, it is a trap. See
@@ -313,10 +311,7 @@ func _build_censure_summary(censure: Dictionary) -> Control:
 		if censure["party_votes"].get(party.id, "") == "for":
 			movers.append(party.party_name)
 	if not movers.is_empty():
-		var who := Label.new()
-		who.text = tr("Moved to censure: %s") % ", ".join(movers)
-		who.autowrap_mode = TextServer.AUTOWRAP_WORD
-		box.add_child(who)
+		PanelKit.line(box, tr("Moved to censure: %s") % ", ".join(movers), PanelKit.Tone.PLAIN)
 
 	var rebellion := _rebellion_text(censure.get("party_rebels", {}))
 	if rebellion != "":

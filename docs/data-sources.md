@@ -438,6 +438,21 @@ machine) and `data/world/outlines.json` (each of the 133 outlines' name and GDP)
 | `vegetables` | FAOSTAT QCL item 1735 | 2024 | 0.084 | 0.001 |
 | `wine` | FAOSTAT QCL item 564 | 2023 | 0.612 | 0.000 |
 
+### V5.2 C6 -- party funding (authored, `party_funding` in `data/nations/*.json`)
+
+Authored for the four playable nations; every number and its source is in the block's own `_note`. Two pots in EUR millions a year, `vote_pot_eur_m_year` (shared by vote share) and `seat_pot_eur_m_year` (by seat share), as [[v5.2-c6-party-campaigns]] section 5 specifies.
+
+| Nation | Vote pot | Seat pot | Basis |
+|---|---|---|---|
+| France | 32.25 | 34.19 | the 2024 decree pots (Le Grand Continent, 9 July 2024; LCP) |
+| Germany | 219.24 | 0 | the absolute upper limit for 2024, EUR 219 244 906 (Bundestag, hib 305/2024), as the total; the donation match is folded into the vote pot |
+| United Kingdom | 4.4 | 7.2 | ESTIMATES from Short Money's 2023/24 rates (House of Commons Library SN01663; Wikipedia, "Short Money"); only the opposition is paid in law |
+| Poland | 19.5 | 0 | the commission's "over PLN 84 m" a year after the 2023 election (Demagog; Rzeczpospolita via Infor), at PLN 4.31 to the euro |
+
+Not modelled: France's 1 % threshold and parity deduction, Germany's 0.45 match and per-person cap, Poland's tiered per-vote rate and 3 % / 6 % thresholds, the UK's leader-of-the-opposition office. The UK's governing party gets nothing in law but would receive a share of the pots here; flagged to Systems.
+
+**The campaign spending ceiling** (`campaign_spending_cap_eur_m`, optional; absent means no ceiling): France 22.509 (the 2022 run-off candidate ceiling, EUR 22.509 m; Loire-Atlantique prefecture's memento on presidential campaign finance, 2022; LCP), the United Kingdom 40.3 (a party contesting all 632 Great Britain seats may spend GBP 54 010 a seat, about GBP 34.1 m, since the November 2023 increase, Transparency International UK; at EUR 1.18 a pound, the 2024 average), Poland 9.0 (the 2023 committee limit for the Sejm and the Senate together was PLN 38 781 152 for the largest committee, 1.10 PLN a voter, National Electoral Office table of 25 September 2023; at PLN 4.31 to the euro). Germany sets no ceiling on a party's campaign spending, so its key is absent. Each limit is the legal one for an election campaign; the game applies it to the player's campaign window, a simplification.
+
 ## Rejected sources
 
 ### Wikidata embassy items -- tried at V5.1-0d for the embassies that already exist

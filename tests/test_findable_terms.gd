@@ -70,7 +70,9 @@ func _hints(inbox) -> int:
 	var hints := 0
 	for id in inbox._bodies:
 		var body = inbox._bodies[id]
-		if String(body.text).contains("term:") and body.get_parsed_text().to_lower().contains("dotted"):
+		# The note's whole body: since V5.2 b+ a long note shows its first sentences.
+		var full: String = String(inbox._notes[id]["body"]) if inbox._notes.has(id) else body.get_parsed_text()
+		if String(body.text).contains("term:") and full.to_lower().contains("dotted"):
 			hints += 1
 	return hints
 
