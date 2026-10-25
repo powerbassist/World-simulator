@@ -43,6 +43,7 @@ var _items: Array = []  # the panel's: {year, month, day, text, mark, cancel}
 ## the month turns, the page and the picked day stay where the player left them.
 var _month_abs := 0
 var _selected := 0  # the picked day of the shown month, 0 for none
+var _drawn_day := 0  # the state's day at the last render: a new day redraws (today, offers)
 var _title: Label
 var _days: GridContainer
 
@@ -99,6 +100,13 @@ func show_items(state, loader, items: Array) -> void:
 	_render()
 
 
+## The clock runs with the Diary open, and the panel is redrawn on a month, never a
+## day: today's ring and the offered days follow the day here (QA's TAKE 2 on #153).
+func _process(_delta: float) -> void:
+	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree():
+		_render()
+
+
 func page() -> int:
 	return _month_abs - _now()
 
@@ -128,6 +136,7 @@ func _shown() -> Vector2i:
 func _render() -> void:
 	if _state == null or _days == null or _state.player() == null:
 		return
+	_drawn_day = int(_state.day)
 	var ym := _shown()
 	_title.text = DateText.month_year(ym.y, ym.x)
 	for child in _days.get_children():
@@ -164,6 +173,11 @@ func _render() -> void:
 func _pick(d: int) -> void:
 	_selected = d
 	_render()
+	# The re-render freed the picked cell: its successor takes the focus, so a
+	# keyboard player keeps their place (QA's RECORD on #153).
+	var cell := _days.get_node_or_null("Day_%d" % d) as Control
+	if cell != null:
+		cell.grab_focus()
 
 
 ## Day -> [{text, mark, cancel}] for the shown month.

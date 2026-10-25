@@ -40,12 +40,15 @@ func _notification(what: int) -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		_down = true
-		return
-	var click: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed and _down
-	_down = false
-	if click or event.is_action_pressed("ui_accept"):
+	# Only the left button's own events touch the press: a motion between press and
+	# release (a hand's jitter) must not drop the click (QA's TAKE 1 on #153).
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		var click: bool = _down and not event.pressed
+		_down = event.pressed
+		if click:
+			picked.emit(day)
+			accept_event()
+	elif event.is_action_pressed("ui_accept"):
 		picked.emit(day)
 		accept_event()
 

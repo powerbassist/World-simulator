@@ -56,6 +56,10 @@ func _process(_delta: float) -> bool:
 				return true
 			_target = cell
 			_press(true)
+		9:
+			# QA's TAKE 1 on #153: a hand jitters -- a pixel of motion between the
+			# press and the release must not drop the click.
+			_move(1.0)
 		11:
 			_press(false)
 		14:
@@ -71,6 +75,17 @@ func _process(_delta: float) -> bool:
 			var row := Audiences.request(_main._state.player(), _request)
 			if String(row.get("status", "")) != AK.STATUS_BOOKED:
 				_fail("Book here did not book the audience: %s" % String(row.get("status", "")))
+			# QA's TAKE 2 on #153: days pass with the Diary open; today's ring follows.
+			_grid.show_month(int(_main._state.year), int(_main._state.month))
+			for i in 5:
+				_main._clock.advance_one_day()
+		22:
+			var today := _cell(int(_main._state.day))
+			if today == null or not bool(today.today):
+				_fail("five days on with the Diary open, today's ring is not on day %d" % int(_main._state.day))
+			var stale := _cell(int(_main._state.day) - 5)
+			if stale != null and bool(stale.today):
+				_fail("the ring stayed on the day the grid last drew")
 			_finish()
 			return true
 	return false
@@ -201,6 +216,15 @@ func _cell(day: int) -> Control:
 func _month(offset: int) -> Dictionary:
 	var total: int = int(_main._state.year) * 12 + int(_main._state.month) - 1 + offset
 	return {"year": total / 12, "month": total % 12 + 1}
+
+
+func _move(dx: float) -> void:
+	var at: Vector2 = _target.get_global_rect().get_center() + Vector2(dx, 0)
+	var motion := InputEventMouseMotion.new()
+	motion.position = at
+	motion.global_position = at
+	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+	_main.get_viewport().push_input(motion, true)
 
 
 func _press(down: bool) -> void:
