@@ -1660,8 +1660,17 @@ Source lines are pinned to `8dbe792b`. Gameplay's prototype runs live in its scr
     evidence was written before the commitment was made. Otherwise "delegate
     and let it lapse" would be the free way to cross an accomplice (GLM's
     finding 1, kept).
+  - A broken commitment then costs −0.2 − 0.5 = −0.7, so it turns anyone
+    below +0.40. That is a lower bar than a refusal's +0.30, because the
+    word was given twice.
   - A dated promise broken at its date already pays the revealed lie's
     price (`levers.gd:276-278`), so it adds nothing.
+- **"Before" is read from existing stamps, so no field is added and the save
+  is not bumped.** The evidence row's `month` (`president.gd:328`) is
+  compared with the request's `arrived_month` (`audiences.gd:359`) or the
+  commitment's `made_month` (`president.gd:261`). All three are year × 12 +
+  month on the same origin. "Before" means a strictly earlier month. A grown
+  row (the affair, C6's window) keeps its first month.
   - A request served, by a lever won or an offer taken, is not a crossing.
 - **Where it is read.**
   - The holder test reads `exposure_evidence` through `President` (a
