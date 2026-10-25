@@ -78,9 +78,10 @@ func _check_law_proposal_answers() -> void:
 	var text := _stack_text()
 	if not text.contains(String(law.law_name).to_upper()):
 		_fail("the law card is not titled with the law: '%s'" % text)
-	if not (text.contains("PASSED") or text.contains("FAILED")):
+	# V5.2 b+ R2: the verdict reads Carried or Defeated, the division in for and against.
+	if not (text.contains("CARRIED") or text.contains("DEFEATED")):
 		_fail("the law card does not carry the outcome: '%s'" % text)
-	if not text.contains("YES"):
+	if not text.contains(" FOR,"):
 		_fail("the law card carries no division: '%s'" % text)
 
 
