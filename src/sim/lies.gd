@@ -10,9 +10,9 @@ extends RefCounted
 ## uncaught lie leaves no evidence (the plan's Call 4): its risk is the catch and
 ## the date. The audience only; the phone takes none (Call 8).
 ##
-## The catch does not undo the attempt's own roll: B5's amendment prices a lie at
-## P(caught) x the reveal, and that is the rule built. Whether a caught lie should
-## also lose the attempt is Gameplay's call, recorded in the PR.
+## A caught lie also fails the attempt (#170's call 5, Gameplay #171): being seen
+## through and persuaded at once is the one outcome a player cannot read. B5 prices a
+## lie at (1 - P(caught)) x (p + LIE_ODDS) - P(caught) x the reveal.
 
 const K = preload("res://src/sim/lever_constants.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
