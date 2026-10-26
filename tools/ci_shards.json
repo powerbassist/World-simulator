@@ -190,6 +190,7 @@
    "tests/test_referendum.gd",
    "tests/test_events.gd",
    "tests/test_event_arm.gd",
+   "tests/test_event_speaker.gd",
    "tests/test_exposure.gd",
    "tests/test_migration.gd",
    "tests/test_law_panel.gd",

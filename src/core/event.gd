@@ -57,6 +57,7 @@ extends RefCounted
 const Law = preload("res://src/core/law.gd")
 const K = preload("res://src/sim/events_constants.gd")
 const ShadowK = preload("res://src/sim/shadow_constants.gd")
+const CharacterK = preload("res://src/sim/character_constants.gd")
 
 var id: String = ""
 var event_name: String = ""
@@ -68,6 +69,14 @@ var summary: String = ""
 ## own data names the person -- which is what keeps "no mechanism on a person" true by
 ## construction rather than by intention.
 var subject_office: String = ""
+
+## V5.2d. Who brings the event to the president, one of events_constants.
+## SPEAKER_FORMS as authored ({} = the narrator, every event before d), and the
+## one whole, variable-free sentence they say (an i18n row field). The sim turns
+## the form into a person at delivery (src/sim/speakers.gd); the line is the
+## card's, never the sim's.
+var speaker: Dictionary = {}
+var speaker_line: String = ""
 
 ## Monthly hazard once every precondition holds, in [LIKELIHOOD_MIN, LIKELIHOOD_MAX].
 ## Drawn against a deterministic hash of (nation id, event id, absolute month) -- there
@@ -248,6 +257,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 			ev.on_action = hook
 
 	_extract_exposure(ev, d, filename, errors, [tax_keys, spending_keys, bloc_keys, sector_keys])
+	_extract_speaker(ev, d, filename, errors)
 
 	if d.has("cooldown_months"):
 		if not (typeof(d["cooldown_months"]) == TYPE_INT or typeof(d["cooldown_months"]) == TYPE_FLOAT):
@@ -318,6 +328,59 @@ static func _extract_exposure(ev, d: Dictionary, filename: String, errors: Array
 			filename, errors, keys[0], keys[1], keys[2], keys[3])
 
 
+## V5.2d. The speaker and the line come together: a face with nothing to say is a
+## card that shows a portrait over the narrator's text, and a line with no face is a
+## quote nobody says. Each form is refused loudly when malformed, because a typo'd
+## kind or office would fall back to the narrator in silence -- the failure D5 counts.
+static func _extract_speaker(ev, d: Dictionary, filename: String, errors: Array[String]) -> void:
+	var raw = d.get("speaker", null)
+	var line = d.get("speaker_line", null)
+	if raw == null and line == null:
+		return
+	if raw == null or line == null:
+		errors.append("%s: %s 'speaker' and 'speaker_line' go together -- a face says its line" % [filename, ev.id])
+		return
+	if typeof(line) != TYPE_STRING or String(line).strip_edges() == "" or String(line).contains("{"):
+		errors.append("%s: %s speaker_line must be one whole sentence with no variables" % [filename, ev.id])
+		return
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("%s: %s speaker must be an object, one of %s" % [filename, ev.id, K.SPEAKER_FORMS])
+		return
+	var forms: Array = []
+	for key in raw.keys():
+		if K.SPEAKER_FORMS.has(key):
+			forms.append(key)
+		elif key != "pick":
+			errors.append("%s: %s speaker.%s is not a recognised field (%s, and pick)" % [filename, ev.id, str(key), K.SPEAKER_FORMS])
+			return
+	if forms.size() != 1:
+		errors.append("%s: %s speaker needs exactly one of %s" % [filename, ev.id, K.SPEAKER_FORMS])
+		return
+	var form: String = forms[0]
+	var value = raw[form]
+	var ok := false
+	match form:
+		"kind":
+			ok = typeof(value) == TYPE_STRING and CharacterK.KIND_KEYS.has(value) \
+					and (not raw.has("pick") or (typeof(raw["pick"]) == TYPE_STRING and K.SPEAKER_PICKS.has(raw["pick"])))
+		"office":
+			ok = typeof(value) == TYPE_STRING and K.SUBJECT_OFFICES.has(value) and not raw.has("pick")
+		_:
+			ok = typeof(value) == TYPE_BOOL and bool(value) and not raw.has("pick")
+	if not ok:
+		errors.append("%s: %s speaker %s is malformed -- kind in %s (pick in %s), office in %s, or evidence_person / foreign_head true" % [
+			filename, ev.id, str(raw), CharacterK.KIND_KEYS, K.SPEAKER_PICKS, K.SUBJECT_OFFICES
+		])
+		return
+	# The witness is the exposure's evidence row: an event the exposure machine never
+	# arms has no row, so the face would always be the narrator.
+	if form == "evidence_person" and ev.on_action != "exposure":
+		errors.append("%s: %s speaker evidence_person needs on_action 'exposure' -- only an exposure has a witness" % [filename, ev.id])
+		return
+	ev.speaker = (raw as Dictionary).duplicate()
+	ev.speaker_line = String(line)
+
+
 static func _is_integral(v) -> bool:
 	return float(v) == floorf(float(v))
 
@@ -327,6 +390,7 @@ const KNOWN_KEYS := [
 	"id", "name", "summary", "subject_office", "likelihood", "respond_months",
 	"once", "preconditions", "choices", "interrupt", "sited",
 	"category", "weight", "severity", "on_action", "cooldown_months", "exposure",
+	"speaker", "speaker_line",
 ]
 
 const CHOICE_KEYS := ["id", "label", "summary", "effects", "default", "arms"]

@@ -177,6 +177,7 @@ tests=(
   tests/test_judiciary.gd
   tests/test_events.gd
   tests/test_event_arm.gd
+  tests/test_event_speaker.gd
   tests/test_exposure.gd
   # V4.4 T11: the event plate library -- the generator's --dry-run pinned
   # set-equal to what the helper can name, every nameable plate bytes-loading
