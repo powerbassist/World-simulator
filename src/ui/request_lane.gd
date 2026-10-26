@@ -90,9 +90,13 @@ static func _answer(label: String, answer: Dictionary) -> Dictionary:
 
 
 static func _body(row: Dictionary) -> String:
-	return "%s\n%s\n%s" % [String(row.get("wants", row.get("ask", ""))),
+	var body := "%s\n%s\n%s" % [String(row.get("wants", row.get("ask", ""))),
 		Strings.t("Answer by %s; unanswered, it counts as a refusal.") % String(row.get("by", "")),
 		Strings.t("Declining: %s.") % String(row.get("price", ""))]
+	# c1c: why this refusal costs more (its price above already counts it).
+	if bool(row.get("broken_word", false)):
+		body += " " + Strings.t("They hold something on you. Refusing them breaks your word.")
+	return body
 
 
 func _on_action(card_id: String, index: int) -> void:

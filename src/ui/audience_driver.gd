@@ -115,13 +115,16 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 	# deadline month begins (Audiences._overdue), so the card names the month
 	# before (QA's pre-gate B TAKE 1: "Answer by AUG" lapsed on 1 AUG).
 	var last := int(request["deadline_month"]) - 1
+	# c1c rule 1: a person holding something on the president takes a refusal as a
+	# broken word; the price already counts it (decline_price), the card says why.
+	var price := Audiences.decline_price(ns, loader, id)
 	return {"id": id, "person_id": String(request["person_id"]), "stance": String(request["stance"]), "object": String(request["object"]),
 		"person": loader.person_name(String(request["person_id"])),
 		"ask": PersonCard.object_text(loader, ns, String(request["object"]), request),
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
 		"by": Words.when(last),
-		"price": Words.price_text(Audiences.decline_price(ns, loader, id), Feelings.of(ns, String(request["person_id"]))),
+		"price": Words.price_text(price, Feelings.of(ns, String(request["person_id"]))), "broken_word": price.has("broken_word"),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
 
 
