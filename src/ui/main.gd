@@ -45,6 +45,7 @@ const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
 const CityPanel = preload("res://src/ui/city_panel.gd")
 const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
+const CampaignChest = preload("res://src/ui/campaign_chest.gd")
 const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
@@ -323,14 +324,11 @@ func _ready() -> void:
 	_windows.register("economy", tr("Economy"), _economy_panel, KEY_E, ICONS + "monitoring.svg")
 	_economy_panel.setup(_state, _loader)
 
-	# hide_close_button() still applies: these panels each build their own Close
-	# button for the life they had before U2 docked them, and the window frame
-	# now provides the real one. Two close buttons on one panel is worse than
-	# either.
+	# These panels each build their own Close button for the life they had before U2
+	# docked them; register() takes it away, since the frame's X is the real one.
 	_budget_panel = BudgetPanel.new()
 	_windows.register("budget", tr("Budget"), _budget_panel, KEY_B, ICONS + "account_balance_wallet.svg")
 	_budget_panel.setup(_state, _loader)
-	_budget_panel.hide_close_button()
 	_budget_panel.committed.connect(func(before, _pending):
 		_fiscal_committed(tr("Budget change"), tr("Budget committed"), before))
 
@@ -345,7 +343,6 @@ func _ready() -> void:
 	_tax_panel = TaxPanel.new()
 	_windows.register("tax", tr("Tax Code"), _tax_panel, KEY_X, ICONS + "receipt_long.svg")
 	_tax_panel.setup(_state, _loader)
-	_tax_panel.hide_close_button()
 	# V4.2 ultra pass 2: the budget panel's proposed column and 24-month
 	# projection price the Tax Code window's uncommitted edits (the panels are
 	# siblings; this is a reference, not state, and the load path's setup()
@@ -385,7 +382,6 @@ func _ready() -> void:
 	_government_panel = GovernmentPanel.new()
 	_windows.register("politics", tr("Politics"), _government_panel, KEY_G, ICONS + "groups.svg")
 	_government_panel.setup(_state, _loader)
-	_government_panel.hide_close_button()
 	_government_panel.dissolved.connect(func(before): _queue_effect(tr("Dissolution called"), before))
 	_government_panel.reassigned.connect(func(before, title):
 		_queue_effect(title, before)  # cabinet_verbs.gd names it: reassigned or dismissed
@@ -397,13 +393,11 @@ func _ready() -> void:
 	# own titles, and a boot without it printed the generic "assembly" until
 	# the first load put the two out of agreement.
 	_polling_panel.setup(_state, _loader)
-	_polling_panel.hide_close_button()
 
 	_law_panel = LawPanel.new()
 	_windows.register("legislature", tr("Legislature"), _law_panel, KEY_L, ICONS + "gavel.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.dissolved.connect(_government_panel.dissolved.emit)
-	_law_panel.hide_close_button()
 	# V4.2 T5. Propose opens the briefing; the division comes back through
 	# run_proposal() from the briefing's own verb, so the path below is still
 	# the one propose path in the game.
@@ -424,7 +418,6 @@ func _ready() -> void:
 	_nation_panel = NationPanel.new()
 	_windows.register("diplomacy", tr("Diplomacy"), _nation_panel, KEY_D, ICONS + "handshake.svg")
 	_nation_panel.setup(_state, _loader)
-	_nation_panel.hide_close_button()
 	# V5.1-d1b2 (G13): a visit is booked in the Diary, on the day the player picks.
 	_nation_panel.book_requested.connect(func(action_id: String, target: String): _calendar_panel.fill_booking(action_id, target, _windows))
 	# The same three lines _law_panel.proposed gets -- a diplomatic action is a
@@ -454,7 +447,6 @@ func _ready() -> void:
 	_orgs_panel = OrgsPanel.new()
 	_windows.register("orgs", tr("Organisations"), _orgs_panel, KEY_U, ICONS + "corporate_fare.svg")
 	_orgs_panel.setup(_state, _loader)
-	_orgs_panel.hide_close_button()
 	# V1.6 audit, V8. A council vote binds the player whichever way it goes, so it
 	# is a command like any other and earns the same U4 delta as a law or an act.
 	# It was the only one of the seven player commands with no signal at all.
@@ -473,7 +465,6 @@ func _ready() -> void:
 	_calendar_panel = CalendarPanel.new()
 	_windows.register("calendar", tr("Diary"), _calendar_panel, KEY_C, ICONS + "calendar_month.svg")
 	_calendar_panel.setup(_state, _loader)
-	_calendar_panel.hide_close_button()
 	# A booking commits nothing this month, so unlike `acted` and `proposed` there
 	# is no baseline to queue. The repaint is all this needs: the diary is the only
 	# panel whose contents just changed -- and the ribbon occupies the same days,
@@ -488,7 +479,6 @@ func _ready() -> void:
 	_people_panel = PeoplePanel.new()
 	_windows.register("people", tr("People"), _people_panel, KEY_R, ICONS + "person.svg")
 	_people_panel.setup(_state, _loader)
-	_people_panel.hide_close_button()
 
 	# V4.8b. What is pinned -- the agenda, firms in trouble, goods short, people
 	# who are against the term -- as one register-driven list. A window rather
@@ -497,7 +487,6 @@ func _ready() -> void:
 	var outliner_panel := OutlinerPanel.new()  # local: nothing else reads it
 	_windows.register("outliner", tr("Outliner"), outliner_panel, KEY_Q, ICONS + "checklist.svg")
 	outliner_panel.setup(_state, _loader)
-	outliner_panel.hide_close_button()
 	outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
 	_windows.register("glossary", tr("Glossary"), preload("res://src/ui/glossary_panel.gd").new(), KEY_NONE, ICONS + "menu_book.svg")  # V5.1-d3: reads Glossary alone, no setup
 
@@ -512,7 +501,6 @@ func _ready() -> void:
 	# domains.gd and tools/screenshot.gd --open both address.
 	_windows.register("companies", tr("Industry"), _companies_panel, KEY_I, ICONS + "factory.svg")
 	_companies_panel.setup(_state, _loader)
-	_companies_panel.hide_close_button()
 	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
 	# subsidy is a player command with a domestic price and a budget line, so it
 	# earns a U4 decision delta on exactly the same terms.
@@ -528,7 +516,6 @@ func _ready() -> void:
 	_projects_panel = ProjectsPanel.new()
 	_windows.register("projects", tr("Public Works"), _projects_panel, KEY_W, ICONS + "construction.svg")
 	_projects_panel.setup(_state, _loader)
-	_projects_panel.hide_close_button()
 	_projects_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
@@ -543,7 +530,6 @@ func _ready() -> void:
 	_region_panel = RegionPanel.new()
 	_windows.register("region", tr("Regions"), _region_panel, KEY_T, ICONS + "map.svg")
 	_region_panel.setup(_state, _loader)
-	_region_panel.hide_close_button()
 
 	# V4.6. Task 4's read-only surface over the commodity layer, in the Economy
 	# cluster beside the region and city registers -- panel-system.md §16's rule
@@ -563,7 +549,6 @@ func _ready() -> void:
 	_commodities_panel = CommoditiesPanel.new()
 	_windows.register("commodities", tr("Commodities"), _commodities_panel, KEY_H, ICONS + "inventory_2.svg")
 	_commodities_panel.setup(_state, _loader)
-	_commodities_panel.hide_close_button()
 
 	# V2.2b, one level down, and the only V2 surface whose drawer entry is the
 	# SECOND way in: the map's cross is the route, and this entry is for the
@@ -571,7 +556,6 @@ func _ready() -> void:
 	_city_panel = CityPanel.new()
 	_windows.register("city", tr("Cities"), _city_panel, KEY_V, ICONS + "location_city.svg")
 	_city_panel.setup(_state, _loader)
-	_city_panel.hide_close_button()
 
 	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is Politics, so the
 	# obvious letters were gone. The key rides register() itself -- V2.1c deleted the
@@ -580,7 +564,6 @@ func _ready() -> void:
 	_energy_panel = EnergyPanel.new()
 	_windows.register("energy", tr("Energy"), _energy_panel, KEY_F, ICONS + "bolt.svg")
 	_energy_panel.setup(_state, _loader)
-	_energy_panel.hide_close_button()
 	_energy_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
@@ -603,7 +586,6 @@ func _ready() -> void:
 	_campaign_panel = CampaignPanel.new()
 	_windows.register("campaign", tr("Campaign"), _campaign_panel, KEY_A, ICONS + "campaign.svg")
 	_campaign_panel.setup(_state, _loader)
-	_campaign_panel.hide_close_button()
 	_campaign_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
@@ -617,7 +599,6 @@ func _ready() -> void:
 	_windows.register("events", tr("Dispatches"), _events_panel, KEY_N, ICONS + "mail.svg")
 	_events_panel.setup(_state, _loader)
 	_events_panel.set_messages(_messages)
-	_events_panel.hide_close_button()
 	_events_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
 		_update_top_bar()
@@ -652,8 +633,8 @@ func _ready() -> void:
 	_summit_panel = SummitPanel.new()
 	_windows.register("summit", tr("Summit"), _summit_panel, KEY_NONE, ICONS + "account_balance.svg")
 	_summit_panel.setup(_state, _loader)
-	# No hide_close_button(): the frame's X is a live exit -- a summit walked
-	# out on applies nothing, which is the ephemeris working, not a bug.
+	# The summit builds no Close of its own: the frame's X is a live exit -- a summit
+	# walked out on applies nothing, which is the ephemeris working, not a bug.
 	_summit_panel.concluded.connect(func(_summit_id, choice_label):
 		_resolve_summit(choice_label)
 		# The scene is over, so the window goes with it. Nothing closed "summit"
@@ -1373,6 +1354,8 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 		"Events":
 			_card_events(year, month, _month_capture.get("desk_before", {}), _month_capture.get("event_before", {}))
 			_enforce_interrupt()
+		# V5.2 C6: an effort the party could not pay for stopped -- one note, never a hold.
+		"Campaign": CampaignChest.note_stopped(_hud.inbox, report.get("campaign_stopped", []), _state, _loader)
 		"Characters":
 			# T5's surface: the acts go to the message stack as cards; the record is
 			# not state.
