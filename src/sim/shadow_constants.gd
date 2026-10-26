@@ -41,8 +41,12 @@ const EVIDENCE_WEIGHT := {
 ## 10-30 % of runs needs a summed monthly hazard of about 0.002-0.0066; at 0.0035
 ## a route, France's courts (73.8/100) and a neutral press give party money 9 %,
 ## personal wealth 22 % and a diverted budget 28 %. A turned person talks far more
-## readily than an institution digs. The probe tunes all four.
-const RATE := {"press": 0.0035, "courts": 0.0035, "auditors": 0.0035, "turned": 0.02}
+## readily than an institution digs. The probe tunes all four. c1c: `turned` 0.02 ->
+## 0.01. 0.02 was set when no one ever turned (S2c read 0 %); once a crossed
+## accomplice pays a broken word (rule 1) they do turn, and at 0.02 the turned route
+## out-talked the press in S2. 0.01 keeps each S2 route at least 10 % (bands-v5.2.md
+## "c1c", Gameplay's 60-seed prototype; the 200-seed run is in the PR).
+const RATE := {"press": 0.0035, "courts": 0.0035, "auditors": 0.0035, "turned": 0.01}
 
 ## No route finds more than this in a month, however much there is to find: the
 ## "always" regime's pile would otherwise make every month a certainty.
@@ -92,7 +96,13 @@ const CURRENCY_EVIDENCE := {LK.CURRENCY_BACKROOM: "favour", LK.CURRENCY_AID: "di
 ## to 0.03 at #170's call 1 (Gameplay #171), once the press made a favour findable:
 ## its expected price is 0.016 asks (S1's 3.5 % x the scandal's 0.46), and at 0.03 it
 ## is best in 37 % of L2's cells, under B5's 40 % (0.04 and 0.05 gave 45 %).
-const CURRENCY_ODDS := {LK.CURRENCY_BACKROOM: 0.03, LK.CURRENCY_AID: 0.20}
+## c1c rule 2 (a bribe buys the act, not the person: a corrupt win holds no loyalty)
+## moved the border, so backroom went back up, to 0.19: the largest value under aid's
+## 0.20 (at equal odds aid would be pointless) at which all four B5 shadow rows pass
+## and the honest bargain is best in at least 5 % of its cells. Swept on c1b's S1
+## rates: 0.17 -> honest bargain best 28.7 %, backroom 3.6 %; 0.18 -> 28.7 / 5.1 %;
+## 0.19 -> 17.8 / 19.7 %, every row passing. Corruption as tempting as the bands allow.
+const CURRENCY_ODDS := {LK.CURRENCY_BACKROOM: 0.19, LK.CURRENCY_AID: 0.20}
 ## Every corrupt bargain leaves one act of evidence (the S1 size).
 const ACT_EVIDENCE := 1.0
 
@@ -100,8 +110,12 @@ const ACT_EVIDENCE := 1.0
 
 ## The levers a lie can be told on, and what it adds to that attempt's odds.
 ## STARTING value: lever_probe L2 prices it at P(caught) x the reveal (B5's amendment).
+## c1c rule 3: 0.10 -> 0.20. At 0.10 an argue lie beat honest argue on value in 0 of
+## 732 cells and a promise lie led on odds in only 4, one person's, so its
+## non-domination hung on a knife edge. At 0.20 a believed lie is worth what aid buys,
+## and it pays only against a poorer reader (the band allows [0.20, 0.25]).
 const LIE_LEVERS := ["argue", "promise_date"]
-const LIE_ODDS := 0.10
+const LIE_ODDS := 0.20
 ## The catch: the listener's reading skill against the president's (both
 ## social_skill). At a middling 0.5 president a 0.8 reader catches 55.5 % and a 0.2
 ## reader 10.5 % -- inside B8's two bands, [0.40, 0.70] and [0.05, 0.20].

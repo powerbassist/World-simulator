@@ -163,6 +163,19 @@ static func evidence_leader(ns, row: Dictionary) -> String:
 	return who if who != "" else leader_id(ns)
 
 
+## V5.2 c1c (bands-v5.2.md "c1c", rule 1): whether `person_id` is an accomplice --
+## holds evidence on the sitting president, not yet exposed, left by the sitting
+## leader, of any kind but the affair (it has its own ending), written in a month
+## strictly before `before` (the request's arrival, the commitment's making). A
+## grown row keeps its first month.
+static func holds_evidence(ns, person_id: String, before: int) -> bool:
+	for row in ns.exposure_evidence:
+		if String(row.get("person_id", "")) == person_id and String(row.get("kind", "")) != "affair" \
+				and evidence_leader(ns, row) == leader_id(ns) and int(row.get("month", 0)) < before:
+			return true
+	return false
+
+
 ## V5.2c. Every exposure, cast the way commitments() casts.
 static func exposures(ns) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []

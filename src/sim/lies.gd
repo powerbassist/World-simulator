@@ -35,6 +35,23 @@ static func odds_bonus(lever: String, args: Dictionary) -> float:
 	return SC.LIE_ODDS if told(lever, args) else 0.0
 
 
+## V5.2 c1c, rule 1: an accomplice crossed -- refused, lapsed, a broken delegation or
+## IOU -- pays a broken word: taking the money or the favour was a promise of service,
+## and the game already prices a broken promise. The revealed lie's rapport and grudge,
+## never its knowledge loss (the president told this person no lie). `since` is the
+## month the evidence must predate (a deal that failed in the same audience is not a
+## betrayal). What it wrote, {} when the person holds nothing.
+static func cross(state, ns, loader, person, since: int) -> Dictionary:
+	if person == null or not President.holds_evidence(ns, String(person.id), since):
+		return {}
+	var pid := String(person.id)
+	var before := President.rapport(ns, pid)
+	President.adjust_rapport(state, ns, loader, pid, -K.LIE_RAPPORT)
+	var applied: Dictionary = Characters.price_refusal(ns, person, K.LIE_GRUDGE, 0.0)
+	applied["rapport"] = President.rapport(ns, pid) - before
+	return applied
+
+
 ## The card's lie variant of a lever row, under B4's fog like any odds. Since a caught
 ## lie fails the attempt (#170's call 5), its true chance is the raised odds times the
 ## chance it is NOT caught (QA's TAKE on c1b: the raised odds alone showed a lie as

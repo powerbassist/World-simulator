@@ -172,8 +172,13 @@ func _check_currencies() -> void:
 		pick.item_selected.emit(at)
 		if spend.text == Words.spends_text({}, {}):
 			_fail("the %s currency reads as costing nothing: '%s'" % [currency, spend.text])
+		# c1c rule 2: a corrupt win buys no loyalty and eases no grudge, and says so.
+		if not spend.text.contains("buys the act, not the person"):
+			_fail("the %s currency does not say it buys the act, not the person: '%s'" % [currency, spend.text])
 	pick.select(0)
 	pick.item_selected.emit(0)
+	if spend.text.contains("buys the act"):
+		_fail("an honest favour says it buys the act, not the person: '%s'" % spend.text)
 
 
 func _check_offer_shown() -> void:

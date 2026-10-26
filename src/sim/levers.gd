@@ -177,7 +177,7 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	if success:
 		session["won"] = lever
 		Audiences.agree(ns, String(session["request_id"]), AK.STATUS_PROMISED if lever == "promise_date" else AK.STATUS_SETTLED)
-	var effects := outcome(state, ns, loader, person, lever, success)
+	var effects := outcome(state, ns, loader, person, lever, success, args)
 	var caught := Lies.settle(state, ns, loader, session, person, lever, args, index, effects)
 	return {"ok": true, "error": "", "success": success, "spent": spent, "effects": effects, "caught": caught}
 
@@ -282,6 +282,7 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 		Characters.price_refusal(ns, person, AK.DECLINE_GRUDGE * deferred, AK.DECLINE_LOYALTY * deferred)
 	_rapport(state, ns, loader, pid, -K.IOU_BETRAYAL_RAPPORT)
 	Characters.price_refusal(ns, person, K.IOU_BETRAYAL_GRUDGE, 0.0)
+	Lies.cross(state, ns, loader, person, int(row.get("made_month", 0)))  # c1c rule 1: a broken word to an accomplice
 	return "broken"
 
 
@@ -320,11 +321,12 @@ static func arg_error(lever: String, args: Dictionary, now: int, shadows := fals
 
 
 ## What a roll writes beyond the lever's spend: a win relieves the grudge and buys
-## loyalty (not flatter: its effect is small and does not hold); a failed flatter
-## backfires on a principled reader above a middling one.
-static func outcome(state, ns, loader, person, lever: String, success: bool) -> Dictionary:
+## loyalty (not flatter: its effect is small and does not hold; and not a win bought
+## in a corrupt currency, c1c rule 2: a bribe buys the act, not the person); a failed
+## flatter backfires on a principled reader above a middling one.
+static func outcome(state, ns, loader, person, lever: String, success: bool, args := {}) -> Dictionary:
 	if success:
-		return {} if lever == "flatter" else Characters.price_refusal(ns, person, -K.GRUDGE_ACCEPT_RELIEF, K.LOYALTY_ACCEPT)
+		return {} if lever == "flatter" or Shadows.is_currency(String(args.get("currency", ""))) else Characters.price_refusal(ns, person, -K.GRUDGE_ACCEPT_RELIEF, K.LOYALTY_ACCEPT)
 	if lever == "flatter" and person.traits.has("principled") and float(person.social_skill) > K.FLATTER_BACKFIRE_SKILL:
 		return {"rapport": _rapport(state, ns, loader, String(person.id), -K.FLATTER_BACKFIRE_RAPPORT)}
 	return {}

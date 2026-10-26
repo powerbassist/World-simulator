@@ -145,6 +145,7 @@
    "tests/test_request_arrival.gd",
    "tests/test_pregate_records.gd",
    "tests/test_inbox_notes.gd",
+   "tests/test_broken_word_card.gd",
    "tests/test_campaign_chest.gd",
    "tests/test_front_page.gd",
    "tests/test_legislature_dissolve.gd",
@@ -214,6 +215,7 @@
    "tests/test_phone.gd",
    "tests/test_shadows.gd",
    "tests/test_lies.gd",
+   "tests/test_accomplice.gd",
    "tests/test_audience_triggers.gd",
    "tests/test_headlines.gd"
   ]

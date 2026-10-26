@@ -59,6 +59,8 @@ tests=(
   tests/test_phone.gd
   tests/test_shadows.gd
   tests/test_lies.gd
+  # V5.2 c1c: a crossed accomplice is a broken word; a bribe buys the act, not the person.
+  tests/test_accomplice.gd
   tests/test_audience_triggers.gd
   # V4.11: the derived grade (playable / simulated / outline) and its scanner.
   tests/test_roster.gd
@@ -208,6 +210,7 @@ tests=(
   tests/test_pregate_records.gd
   tests/test_headlines.gd
   tests/test_inbox_notes.gd
+  tests/test_broken_word_card.gd
   tests/test_campaign_chest.gd
   tests/test_front_page.gd
   tests/test_legislature_dissolve.gd
