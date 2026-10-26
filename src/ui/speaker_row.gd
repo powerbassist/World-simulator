@@ -19,7 +19,8 @@ const FACE := Vector2(36, 50)
 static func build(loader, ev, entry: Dictionary):
 	var person_id := String(entry.get("speaker", ""))
 	var line := Strings.row("events", String(ev.id), "speaker_line", String(ev.speaker_line)).strip_edges()
-	if person_id == "" or line == "":
+	# An id the content no longer names (a load) is the narrator too, never a nameless face.
+	if person_id == "" or line == "" or loader.person_name(person_id) == "":
 		return null
 	var row := HBoxContainer.new()
 	row.name = "Speaker"  # i18n: ok a node name, found by tests

@@ -87,6 +87,10 @@ func _check_speaker() -> void:
 		if not text.contains(String(person.person_name).to_upper()) or not text.contains(String(ev.speaker_line).strip_edges()):
 			_failures.append("the face does not carry the speaker's name and line: '%s'" % text)
 	inbox.clear()
+	DeskCards.push(_main, ev, {"event_id": String(ev.id), "months_left": 3, "severity": 2, "speaker": "nobody_by_this_id"})
+	if inbox.find_child("Speaker", true, false) != null:
+		_failures.append("a speaker the content does not name got a nameless face")
+	inbox.clear()
 	DeskCards.push(_main, ev, {"event_id": String(ev.id), "months_left": 3, "severity": 2})
 	if inbox.find_child("Speaker", true, false) != null:
 		_failures.append("the narrator got a face")
