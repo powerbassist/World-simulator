@@ -8,6 +8,10 @@
       "subject_office": "head_of_government",
       "likelihood": 0.003,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "One of ours has voted with you every time and asked for nothing, until this week when the press asked what loyalty was for.",
       "severity": 1,
       "cooldown_months": 18,
       "respond_months": 3,
@@ -81,6 +85,10 @@
       "subject_office": "head_of_state",
       "likelihood": 0.0024,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "The weekend profile quotes eleven sources from inside your own government, all carefully attributed, and the writer was clearly handed the diary of summer's two worst weeks.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 18,
@@ -151,6 +159,10 @@
       "summary": "The crossing was announced on the evening news and the interview was given on the studio steps, in a jacket chosen for the cameras. The speech took eight weeks to write, quotes your own manifesto nine times, and ends on the line the speechwriters rejected.",
       "likelihood": 0.002,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "The crossing was announced on the evening news, the speech took eight weeks to write, quotes your own manifesto nine times, and ends on the line our speechwriters rejected.",
       "severity": 2,
       "cooldown_months": 24,
       "respond_months": 2,
@@ -214,6 +226,10 @@
       "subject_office": "largest_party_leader",
       "likelihood": 0.002,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "Thirty years of carrying the north for us, and now the memoir says we stopped noticing working people, with the launch on Wednesday.",
       "severity": 2,
       "cooldown_months": 24,
       "respond_months": 5,
@@ -284,6 +300,10 @@
       "on_action": "minister_resigned",
       "likelihood": 0.02,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "The resignation letter thanked you for your confidence, the press read it in a day, and three names are running for the vacancy with committee votes counted twice.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 12,
@@ -348,6 +368,10 @@
       "subject_office": "head_of_government",
       "likelihood": 0.0024,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "A junior minister gave an interview about the leadership question entirely in the conditional, the Sunday papers ran it in the indicative, and the office says the transcript was doctored.",
       "severity": 1,
       "cooldown_months": 18,
       "respond_months": 2,
@@ -417,6 +441,10 @@
       "summary": "The minister passed over at the last reshuffle has stopped troubling to hide it: absent from the vote counts that matter, present at every television studio that will have him, and asking written questions whose drafting has a lawyer's patience.",
       "likelihood": 0.0022,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "The minister we passed over has stopped pretending, missing the votes that count and asking written questions drafted with a lawyer's patience.",
       "severity": 1,
       "cooldown_months": 24,
       "respond_months": 3,
@@ -480,6 +508,10 @@
       "subject_office": "head_of_state",
       "likelihood": 0.002,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "The count stands at forty signatures, or near enough that nobody will quibble, and the question is whether you settle this or they do.",
       "severity": 3,
       "weight": 2.0,
       "cooldown_months": 24,
@@ -550,6 +582,10 @@
       "summary": "Three versions of Thursday's reshuffle are circulating in the building, each typed, each plausible, one of them yours. The ministers named in them have stopped speaking to the ministers named above them, and Thursday is three days off.",
       "likelihood": 0.0028,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "Three lists are going round and one is real, so perhaps publish yours before the others promote everyone you meant to sack.",
       "severity": 1,
       "cooldown_months": 18,
       "respond_months": 1,
@@ -612,6 +648,10 @@
       "summary": "Your first deputy's memoirs are with the serialisers, and three of the chapter titles are already in the building: 'The Write-off', 'What He Knew in March', 'The Second Term, Considered'. Publication is in the spring; the extracts are priced by the weekend.",
       "likelihood": 0.002,
       "category": "personal",
+      "speaker": {
+        "office": "largest_party_leader"
+      },
+      "speaker_line": "Your deputy's book is with the serialisers, and the chapter titles alone will cost us the weekend, so choose how you want to be quoted.",
       "severity": 1,
       "weight": 0.5,
       "cooldown_months": 36,

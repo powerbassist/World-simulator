@@ -62,7 +62,7 @@ PLURAL_WRAPPED = re.compile(r"(?<![A-Za-z0-9_])(?:tr_n|Strings\.tn)\($")
 # not here; a language that wants them adds the kind and the field to this table.
 TRANSLATABLE = {
     "laws": ["name", "summary"],
-    "events": ["name", "summary", "choices.*.label", "choices.*.summary"],
+    "events": ["name", "summary", "speaker_line", "choices.*.label", "choices.*.summary"],
     "programme": ["name", "summary"],
     # The authored NOUN beside the action's imperative name (V5.1b3): "The ground game"
     # in the register, "Start the ground game" on the button.

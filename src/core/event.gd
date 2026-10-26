@@ -57,6 +57,7 @@ extends RefCounted
 const Law = preload("res://src/core/law.gd")
 const K = preload("res://src/sim/events_constants.gd")
 const ShadowK = preload("res://src/sim/shadow_constants.gd")
+const EventSpeaker = preload("res://src/core/event_speaker.gd")
 
 var id: String = ""
 var event_name: String = ""
@@ -68,6 +69,14 @@ var summary: String = ""
 ## own data names the person -- which is what keeps "no mechanism on a person" true by
 ## construction rather than by intention.
 var subject_office: String = ""
+
+## V5.2d. Who brings the event to the president, one of events_constants.
+## SPEAKER_FORMS as authored ({} = the narrator, every event before d), and the
+## one whole, variable-free sentence they say (an i18n row field). The sim turns
+## the form into a person at delivery (src/sim/speakers.gd); the line is the
+## card's, never the sim's.
+var speaker: Dictionary = {}
+var speaker_line: String = ""
 
 ## Monthly hazard once every precondition holds, in [LIKELIHOOD_MIN, LIKELIHOOD_MAX].
 ## Drawn against a deterministic hash of (nation id, event id, absolute month) -- there
@@ -248,6 +257,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], ta
 			ev.on_action = hook
 
 	_extract_exposure(ev, d, filename, errors, [tax_keys, spending_keys, bloc_keys, sector_keys])
+	EventSpeaker.extract(ev, d, filename, errors)
 
 	if d.has("cooldown_months"):
 		if not (typeof(d["cooldown_months"]) == TYPE_INT or typeof(d["cooldown_months"]) == TYPE_FLOAT):
@@ -327,6 +337,7 @@ const KNOWN_KEYS := [
 	"id", "name", "summary", "subject_office", "likelihood", "respond_months",
 	"once", "preconditions", "choices", "interrupt", "sited",
 	"category", "weight", "severity", "on_action", "cooldown_months", "exposure",
+	"speaker", "speaker_line",
 ]
 
 const CHOICE_KEYS := ["id", "label", "summary", "effects", "default", "arms"]

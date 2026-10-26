@@ -1354,6 +1354,8 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 		"Events":
 			_card_events(year, month, _month_capture.get("desk_before", {}), _month_capture.get("event_before", {}))
 			_enforce_interrupt()
+		# V5.2d: the month's front page, when one was earned (the sim's entry, {} otherwise).
+		"Elections": _hud.front_page.show_entry(report.get("front_page", {}), _state, _loader, _clock)
 		# V5.2 C6: an effort the party could not pay for stopped -- one note, never a hold.
 		"Campaign": CampaignChest.note_stopped(_hud.inbox, report.get("campaign_stopped", []), _state, _loader)
 		"Characters":
@@ -1624,9 +1626,8 @@ func _on_load_requested(slot: String) -> void:
 	# and so needs the same rebinding -- the portrait card's approval figure and
 	# the ribbon's month title were both frozen at the pre-load game's values.
 	_election_panel.setup(_state, _loader)
-	_hud.ribbon.setup(_state, _loader)
+	_hud.rebind(_state, _loader)
 	_hud.title_bar.set_nation(_loader.nations[_state.player_nation_id].nation_name)
-	_hud.portrait_card.setup(_state, _loader)
 	_setup_news()
 	# The mirror is re-established here rather than waiting for the first day to
 	# elapse, because a loaded game opens PAUSED: without this the diary would

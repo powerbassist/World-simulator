@@ -7,6 +7,11 @@
       "summary": "A Sunday paper owned by a publisher with an old grudge has traced payments into the president's private accounts, booked variously as consulting fees and investment returns. Editors promise a series.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "Consulting fees, investment returns, whatever the bookkeeping calls them, my series on your private accounts begins Sunday.",
       "severity": 2,
       "cooldown_months": 0,
       "respond_months": 3,
@@ -87,6 +92,11 @@
       "summary": "A leading daily has printed photographs and a careful timeline of a private relationship the president conducted while married. The paper dwells less on the affair than on the two years of concealment.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "My paper cares little for the affair itself, it is the two years of concealment that will run for days.",
       "severity": 2,
       "cooldown_months": 0,
       "respond_months": 3,
@@ -160,6 +170,11 @@
       "summary": "A weekend paper has pieced together a quiet arrangement, an appointment steered and a contract softened, and traces the favour to the president's office. It holds no documents, only three sources who agree on the dates and the names.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "Three sources, no documents, and every date and name agrees, and all of it points at your office by suppertime.",
       "severity": 2,
       "cooldown_months": 0,
       "respond_months": 3,
@@ -240,6 +255,10 @@
       "summary": "An investigating magistrate has opened a preliminary case into payments made to the president personally and has summoned the president's accountants to testify. The palace learns of it from the court list.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "judge"
+      },
+      "speaker_line": "An investigating magistrate has summoned your accountants, and I gather the palace learned of it from the court list, which is not how it should be.",
       "severity": 3,
       "cooldown_months": 0,
       "respond_months": 4,
@@ -320,6 +339,10 @@
       "summary": "A magistrate is examining a public budget line quietly redirected toward a favoured cause with close ties to an ally of the president. A ministry memo surfaces that appears to have blessed the shift.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "judge"
+      },
+      "speaker_line": "A budget line quietly bent toward a favoured cause, a ministry memo that appears to bless it, and a magistrate now reading both with care.",
       "severity": 3,
       "cooldown_months": 0,
       "respond_months": 4,
@@ -400,6 +423,10 @@
       "summary": "Auditors have declined to certify the governing party's books after finding a substantial donation recorded under a name that does not match the true giver. A public favour to that giver followed within months.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "judge"
+      },
+      "speaker_line": "The auditors will not sign our party's books, and the name behind that large donation is not the name of the true giver.",
       "severity": 3,
       "cooldown_months": 0,
       "respond_months": 4,
@@ -480,6 +507,10 @@
       "summary": "The audit court's report notes a hole in a public spending line that no documented programme accounts for. Auditors cannot say where the money went, only that it went somewhere unexplained.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "judge"
+      },
+      "speaker_line": "The audit court has found a hole in a spending line that no programme explains, and it cannot tell you where the money went.",
       "severity": 3,
       "cooldown_months": 0,
       "respond_months": 4,
@@ -560,6 +591,10 @@
       "summary": "A businessman the president once quietly helped has fallen out with the palace and is telling the story of that favour to any journalist who will buy the coffee. He keeps receipts and enjoys attention.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "evidence_person": true
+      },
+      "speaker_line": "You remember the favour, and so do I, and I kept the receipts, so tell the story before I do.",
       "severity": 2,
       "cooldown_months": 0,
       "respond_months": 3,
@@ -640,6 +675,10 @@
       "summary": "A former associate turned enemy has delivered a box of documents to a journalist and, separately, to a magistrate. The papers concern a money arrangement touching donations, personal payments and one budget line, and appear authentic.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "evidence_person": true
+      },
+      "speaker_line": "I took my box of papers to a journalist and to a magistrate, and I suspect you already know how authentic they are.",
       "severity": 3,
       "cooldown_months": 0,
       "respond_months": 4,
@@ -722,6 +761,10 @@
       "summary": "A former partner, whose parting was not gentle, has given a long interview about the relationship and about the lengths taken to keep it hidden. The concealment, not the romance, supplies the headlines.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "evidence_person": true
+      },
+      "speaker_line": "I gave the interview because the secrecy was never mine to keep, and I suspect the concealment will make more headlines than the romance did.",
       "severity": 2,
       "cooldown_months": 0,
       "respond_months": 3,

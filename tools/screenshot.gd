@@ -360,6 +360,9 @@ var _months := 0
 ## first one's offered days; --audience books its first free day and reaches it, so
 ## the scene is up.
 var _request := ""
+## V5.2d, with --interrupt: the crisis's card carries its speaker (Speakers.resolve at
+## delivery), so the frame shows the face, name and line under the title.
+var _speaker := false
 ## V5.2 c1c, with --request: the people asking hold evidence on the president, left
 ## the month before they asked, so their cards carry the broken-word line.
 var _broken_word := false
@@ -895,6 +898,8 @@ func _init() -> void:
 			_console = "errors"
 		elif args[i] == "--mid-term":
 			_mid_term = true
+		elif args[i] == "--speaker":
+			_speaker = true
 		elif args[i] == "--broken-word":
 			_broken_word = true
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
@@ -2625,8 +2630,9 @@ func _stage_an_interrupt() -> void:
 	var desk_before := {}
 	for entry in ns.event_queue:
 		desk_before[String(entry.get("event_id", ""))] = true
-	Events.announce(ns, crisis, Events._absolute_month(int(state.year), int(state.month)),
-		Events.region_names(ns, loader))
+	var month_index := Events._absolute_month(int(state.year), int(state.month))
+	Events.announce(ns, crisis, month_index, Events.region_names(ns, loader),
+		load("res://src/sim/speakers.gd").resolve(state, ns, loader, crisis, month_index) if _speaker else "")
 	_main._card_events(int(state.year), int(state.month), desk_before, Budget.snapshot(state))
 	_main._enforce_interrupt()
 	_main._update_top_bar()

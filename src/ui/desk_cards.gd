@@ -11,6 +11,7 @@ const Events = preload("res://src/sim/events.gd")
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const SpeakerRow = preload("res://src/ui/speaker_row.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const Sound = preload("res://src/ui/sound.gd")
@@ -211,6 +212,10 @@ static func push(main, ev, entry: Dictionary) -> void:
 	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), event_id)
 	var card_id: String = main._hud.inbox.push(title, body(ev, left), actions, art)
 	main._event_cards[card_id] = event_id
+	# V5.2d: who brings it, under the title; the narrator (no speaker) adds nothing.
+	var face = SpeakerRow.build(main._loader, ev, entry)
+	if face != null:
+		main._hud.inbox.add_face(card_id, face)
 
 
 ## Every live decision card's deadline sentence, re-read off the desk. A card

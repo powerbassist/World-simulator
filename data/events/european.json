@@ -14,6 +14,10 @@
       "summary": "A directive the country signed was transposed late and then badly, and the Commission has opened the file it opens before it takes a government to court. The fix is a bill nobody will thank you for; the fine is a meter that starts the day the court rules.",
       "likelihood": 0.004,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "The Commission has opened the file it opens before court, and the fine starts running the day the judges rule.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -85,6 +89,10 @@
       "summary": "The Council is in its second morning over a share of something that swims, and the delegation wants instructions before the afternoon session. The fleet is at the quay, the scientists are at the door, and both have the arithmetic on their side.",
       "likelihood": 0.003,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "We need instructions before the afternoon session, because the fleet and the scientists both have arithmetic on their side.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -152,6 +160,10 @@
       "subject_office": "head_of_government",
       "likelihood": 0.0024,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "We are arranged on the steps for the photograph and the leader beside you has just proposed, on camera, the common fund your capital buried in spring.",
       "severity": 2,
       "weight": 1.5,
       "cooldown_months": 12,
@@ -228,6 +240,10 @@
       "summary": "The Union's other engine has decided the migration pact is a budget question and that your agreement to it is optional. Their minister says so in your language, in your press, the day before the call.",
       "likelihood": 0.003,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "Their minister called our agreement optional, in our own press, the day before the call.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -295,6 +311,10 @@
       "summary": "The fund's renewal came back from the Parliament with a rule-of-law clause welded to every payment. Your courts pass; the members who wrote the clause have read your last two judicial appointments and would like the next two read to them.",
       "likelihood": 0.0024,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "The fund came back with a rule-of-law clause welded to every payment, and they would like our next two appointments read to them.",
       "severity": 2,
       "weight": 0.8,
       "cooldown_months": 16,
@@ -366,6 +386,10 @@
       "summary": "The Commission's proposal withdraws the ingredient a quarter of the orchards spray against, and the farm unions have parked tractors in three capitals to say so. The science is on one side, the photographs are on the other, and the vote is this month.",
       "likelihood": 0.003,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "The proposal withdraws the ingredient a quarter of our orchards spray against, tractors are parked in three capitals, and the vote is this month.",
       "severity": 1,
       "weight": 1.2,
       "cooldown_months": 12,
@@ -436,6 +460,10 @@
       "summary": "The member upstream has put patrols back on a border the treaties emptied, and the evening news has found the queue. Their minister calls the checks technical, in their ninth month, and your hauliers have stopped finding it funny.",
       "likelihood": 0.003,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "Our inspectors call it routine, your lorry drivers call it an hour of their evening, and cameras have chosen their side.",
       "severity": 1,
       "weight": 0.8,
       "cooldown_months": 10,
@@ -496,6 +524,10 @@
       "summary": "The deficit has reached the point where the finance ministers write jointly, which is how a government learns it is serious. The letter asks for a path in figures before the spring meeting, and the assembly that spends the money has not been consulted.",
       "likelihood": 0.006,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "The finance ministers have written to us jointly, and in my experience a country only gets that letter once.",
       "severity": 2,
       "weight": 1.5,
       "cooldown_months": 8,
@@ -573,6 +605,10 @@
       "on_action": "accession_won",
       "likelihood": 0.5,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "We signed the accession with flowers and anthems, and today the treaties we joined became law on our books, all of them.",
       "severity": 3,
       "respond_months": 6,
       "once": true,
@@ -639,6 +675,10 @@
       "on_action": "member_bill_passed",
       "likelihood": 0.03,
       "category": "european",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "Their assembly passed a bill we both liked, and their commission posted its objections before the ink dried on ours.",
       "severity": 1,
       "cooldown_months": 10,
       "respond_months": 3,

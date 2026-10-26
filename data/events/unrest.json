@@ -7,6 +7,10 @@
       "summary": "The rail unions have called two days in every three and the timetable is now a rumour. Both sides say they are waiting for the other to move first, and both are right about the other.",
       "likelihood": 0.0032,
       "category": "unrest",
+      "speaker": {
+        "kind": "union_leader"
+      },
+      "speaker_line": "My members have called two days of strike in every three, and the timetable is now a rumour, with each side waiting for the other to move first.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 10,
@@ -79,6 +83,10 @@
       "summary": "The ring road is a car park of tractors and the wholesale market has no produce. The farmers' demands are three lines long and the third is the one they actually came for.",
       "likelihood": 0.0028,
       "category": "unrest",
+      "speaker": {
+        "kind": "activist"
+      },
+      "speaker_line": "The ring road is a car park of tractors, the wholesale market has no produce, and the third line of their demands is the one they came for.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -147,6 +155,10 @@
       "summary": "Two lecture halls and an amphitheatre have been occupied for a week over the fees review, and the occupation's communiques are better written than the ministry's.",
       "likelihood": 0.0036,
       "category": "unrest",
+      "speaker": {
+        "kind": "activist"
+      },
+      "speaker_line": "Two lecture halls and an amphitheatre have been occupied for a week over the fees review, and their communiques are better written than the ministry's.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 10,
@@ -203,6 +215,10 @@
       "summary": "A police incident on an estate has become three nights of burning cars, the interior ministry has run out of adjectives, and the estate is where the cameras have decided to live.",
       "likelihood": 0.002,
       "category": "unrest",
+      "speaker": {
+        "kind": "activist"
+      },
+      "speaker_line": "A police incident on the estate has become three nights of burning cars, and the cameras have decided that is where they live now.",
       "severity": 3,
       "weight": 0.5,
       "cooldown_months": 24,
@@ -276,6 +292,10 @@
       "summary": "The nurses have struck for the first time in a generation and the wards run on managers and agency staff at four times the wage. The dispute is about pay; the silence on the picket lines is about the rest.",
       "likelihood": 0.0024,
       "category": "unrest",
+      "speaker": {
+        "kind": "union_leader"
+      },
+      "speaker_line": "My nurses have struck for the first time in a generation, and the wards are running on managers and agency staff at four times the wage.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -346,6 +366,10 @@
       "summary": "The price at the pump has crossed the number where hauliers park their lorries across the depot gates, and the depots have stopped answering the phone. Panic buying is doing the negotiating for them.",
       "likelihood": 0.0032,
       "category": "unrest",
+      "speaker": {
+        "kind": "activist"
+      },
+      "speaker_line": "The pump price has crossed the number where hauliers park lorries across depot gates, and panic buying is doing their negotiating for them.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -406,6 +430,10 @@
       "summary": "The teachers' unions have struck the exams rota first and the pay talks second, which tells you which one they think the government can afford to lose. The year's timetable is now an opening position.",
       "likelihood": 0.0036,
       "category": "unrest",
+      "speaker": {
+        "kind": "union_leader"
+      },
+      "speaker_line": "My teachers struck the exams rota first and pay talks second, which tells you which they think this government can afford to lose.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 10,
@@ -482,6 +510,10 @@
       "summary": "Three empty blocks on the river were squatted in a single night and the movement has a name, a flag and better lawyers than the owner. The waiting list for those blocks is eleven years.",
       "likelihood": 0.0024,
       "category": "unrest",
+      "speaker": {
+        "kind": "activist"
+      },
+      "speaker_line": "Three empty river blocks were occupied overnight and the movement has lawyers, a flag and eleven years of waiting behind it, so choose carefully.",
       "severity": 1,
       "weight": 0.5,
       "cooldown_months": 0,
@@ -548,6 +580,10 @@
       "summary": "The pensioner federations have filled the boulevard without a single burned bin, which is more than the weather usually manages, and their demand is one word long: indexation.",
       "likelihood": 0.002,
       "category": "unrest",
+      "speaker": {
+        "kind": "activist"
+      },
+      "speaker_line": "Pensioner federations filled the boulevard without burning a single bin, and their entire demand is one word, indexation.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 16,
@@ -616,6 +652,10 @@
       "summary": "Work-to-rule at the two big ports has the container stacks up to the cranes and the fruit going by rail around the coast. Nobody is officially on strike, which is the point of work-to-rule.",
       "likelihood": 0.0024,
       "category": "unrest",
+      "speaker": {
+        "kind": "union_leader"
+      },
+      "speaker_line": "Nobody at the two big ports is officially on strike, yet the container stacks reach the cranes and the fruit travels by rail.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -680,6 +720,10 @@
       "summary": "The federations have agreed a date and a list. They would rather have a settlement than the date, and they have said so in a way that leaves you a fortnight.",
       "likelihood": 0.05,
       "category": "unrest",
+      "speaker": {
+        "kind": "union_leader"
+      },
+      "speaker_line": "Federations have agreed date and list, they would rather have settlement than date, and you have a fortnight.",
       "severity": 2,
       "cooldown_months": 6,
       "respond_months": 2,

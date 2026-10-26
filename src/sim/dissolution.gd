@@ -14,6 +14,7 @@ extends RefCounted
 
 const DK = preload("res://src/sim/dissolution_constants.gd")
 const GovernmentSim = preload("res://src/sim/government.gd")
+const FrontPage = preload("res://src/sim/front_page.gd")
 
 ## Rules an executive command can actually fire under. `confidence_failure`
 ## (only reachable after a lost confidence vote -- no such command exists yet)
@@ -129,6 +130,7 @@ static func dissolve(state, ns) -> void:
 	ns.dissolution_pending = true
 	ns.dissolutions_called += 1
 	ns.last_dissolution = {"year": state.year, "month": state.month}
+	FrontPage.note_moment(state, ns, "dissolution", "called")
 
 	GovernmentSim.penalise_blocs(ns, DK.DISSOLUTION_BLOC_PENALTY)
 

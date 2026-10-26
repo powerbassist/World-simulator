@@ -86,6 +86,24 @@ const EVENT_PRECONDITION_REFUSED := ["overall_approval_pct"]
 ## construction. src/ui/main.gd resolves the label at card time.
 const SUBJECT_OFFICES := ["head_of_government", "head_of_state", "largest_party_leader"]
 
+## V5.2d (docs/design/v5.2-d-spec.md section 3). Who brings an event to the
+## president: an event's optional `speaker` is exactly one of these forms -- a
+## person KIND (character_constants.KIND_KEYS, optionally with a PICK), an
+## OFFICE (SUBJECT_OFFICES), the exposure's witness, or a foreign head -- and the
+## sim resolves it to a person at delivery (src/sim/speakers.gd). Kinds and
+## offices, never ids: rule 1.
+const SPEAKER_FORMS := ["kind", "office", "evidence_person", "foreign_head"]
+## `pick` rides only on `kind`: the lowest or the highest rapport with the
+## president instead of the seeded draw over the top three by standing.
+const SPEAKER_PICKS := ["hostile", "friendly"]
+## A kind's speaker is drawn from this many of its people with the highest
+## standing: few enough that faces recur and the player learns them, more than
+## one so a single person does not voice every strike of a term (the spec's
+## monoculture point).
+const SPEAKER_POOL := 3
+## The kind draw's own salt (I1): a stream no other draw shares.
+const SPEAKER_SALT := "speaker"
+
 ## ============================================================================
 ## V4.4 — events at scale. Everything below this line is new at V4.4 and the model
 ## doc is docs/events-model.md's V4.4 sections (rewritten in the same commits as the

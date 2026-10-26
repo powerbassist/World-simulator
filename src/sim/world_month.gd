@@ -29,6 +29,7 @@ extends RefCounted
 ##   meetings          Meetings.tick_month's heads met last month (V5.2b b3)
 ##   exposures         Exposure.tick_month's exposures made (V5.2c)
 ##   election_results  Elections.tick_month's results (Array)
+##   front_page        FrontPage.close's entry, {} when nothing earned one (V5.2d)
 ##
 ## The caller sets state.year and state.month first: the clock is the caller's,
 ## a harness counts its own months and the game takes them from Clock.
@@ -84,6 +85,7 @@ const Levers = preload("res://src/sim/levers.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Elections = preload("res://src/sim/elections.gd")
+const FrontPage = preload("res://src/sim/front_page.gd")
 
 ## The step names `on_step` receives, in run order. tests/test_world_month.gd
 ## holds tick_month() to this list by recording the calls, so the list cannot
@@ -445,6 +447,9 @@ static func _step(month: Month, step: String) -> Array:
 		# national and an EP result in the same month (France and Belgium, June 2029).
 		"Elections":
 			month.report["election_results"] = Elections.tick_month(state, loader)
+			# V5.2d: the month's front page, last, from every story that arrived
+			# since the previous close and this month's moments.
+			month.report["front_page"] = FrontPage.close(state, loader, month.report)
 	return []
 
 
