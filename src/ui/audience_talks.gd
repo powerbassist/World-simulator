@@ -192,10 +192,15 @@ static func end(main, game: Dictionary) -> void:
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty() or bool(session.get("closed", false)):
 		return
+	# c1c rule 1: an audience settled as declined is a crossing; read before the close
+	# settles the request, so the scene can say why the price was a broken word.
+	var broken := Audiences.decline_price(main._state.player(), main._loader, String(session.get("request_id", ""))).has("broken_word")
 	var r := Levers.close(main._state, main._state.player(), main._loader, session)
 	var text := Words.outcome(String(r["outcome"]))
 	if String(r["outcome"]) == "declined":
 		text += " " + Strings.t("Declining: %s.") % Words.price_text(r.get("price", {}), _feel(main, session), true)
+		if broken:
+			text += " " + Strings.t("They held something on you. Refusing them broke your word.")
 	game["scene"].show_close(String(r["outcome"]), text)
 	main._windows.mark_all_dirty()
 

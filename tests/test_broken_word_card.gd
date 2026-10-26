@@ -15,8 +15,17 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const President = preload("res://src/sim/president.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const RequestLane = preload("res://src/ui/request_lane.gd")
+const AudienceTalks = preload("res://src/ui/audience_talks.gd")
+const Levers = preload("res://src/sim/levers.gd")
 
 const REASON := "They hold something on you. Refusing them breaks your word."
+
+## The scene's close line, caught: AudienceTalks.end() only calls show_close().
+class CloseCatcher:
+	var text := ""
+	func show_close(_outcome: String, said: String) -> void:
+		text = said
+
 
 var _failures: Array[String] = []
 var _main
@@ -70,3 +79,22 @@ func _check() -> void:
 		_failures.append("an accomplice's card does not say the refusal breaks a word: '%s'" % body)
 	if String(held["price"]) == String(plain["price"]):
 		_failures.append("the card's decline price is the same with and without the broken word: '%s'" % held["price"])
+
+	# An audience with the same person ended with nothing won settles as a decline,
+	# which is a crossing too: the scene's close says why it cost a broken word.
+	var id := String(request["id"])
+	for date in Audiences.offered_dates(state, ns, id):
+		if bool(date["free"]):
+			Audiences.book(state, ns, _main._loader, id, date)
+			state.year = int(date["year"])
+			state.month = int(date["month"])
+			state.day = int(date["day"])
+			break
+	var session: Dictionary = Levers.open(state, ns, _main._loader, id)
+	if session.is_empty():
+		_failures.append("fixture: the accomplice's audience did not open")
+		return
+	var scene := CloseCatcher.new()
+	AudienceTalks.end(_main, {"session": session, "scene": scene})
+	if not scene.text.contains("Refusing them broke your word."):
+		_failures.append("an audience ended as a decline with an accomplice does not say it broke a word: '%s'" % scene.text)
