@@ -203,6 +203,7 @@ func _init() -> void:
 	_table_e7_chooser()
 	_table_e2_legibility()
 	_table_e3_dominance()
+	_table_d5_d7_voice()
 	if not _band_failures.is_empty():
 		printerr("")
 		for f in _band_failures:
@@ -432,10 +433,10 @@ func _table_e0c_prediction(paths: Dictionary) -> void:
 ## its EVENT_COOLDOWN_MONTHS no longer exists in the machine's behaviour (the
 ## per-category quiet replaced it), and a mirror of a machine that no longer runs
 ## measures nothing -- V1.5d's harness-runs-the-old-model failure, pre-empted.
-func _tick_events(state, months_in: int) -> void:
+func _tick_events(state, months_in: int) -> Dictionary:
 	state.year = START_YEAR + int(months_in / 12)
 	state.month = (months_in % 12) + 1
-	WorldMonth.tick_month(state, _loader)
+	return WorldMonth.tick_month(state, _loader)
 
 
 ## One FRA run on the real machine, tallied from the desk. `answer_well` answers
@@ -465,18 +466,34 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 		"arrivals": 0, "answered": 0, "by_category": {},
 		"max_depth": 0, "overfull": 0, "months": months, "windows": [0.0, 0.0, 0.0],
 		"state": state,
+		# V5.2d (D5, D7, D9): who brought each arrival, and the month's front page.
+		"spoken": 0, "narrated": {}, "front_pages": 0, "two_tones": 0,
+		"front_windows": [0.0, 0.0, 0.0], "front_by_kind": {},
 	}
 	var wrote := {}
 	for i in range(months):
 		var before := {}
 		for entry in ns.event_queue:
 			before[String(entry.get("event_id", ""))] = String(entry.get("category", ""))
-		_tick_events(state, i)
+		var report := _tick_events(state, i)
+		var front: Dictionary = report.get("front_page", {})
+		if not front.is_empty():
+			tally["front_pages"] = int(tally["front_pages"]) + 1
+			tally["front_windows"][mini(2, i / TERM_MONTHS)] += 1.0
+			var story := "%s.%s" % [front["kind"], front["id"]]
+			tally["front_by_kind"][story] = int(tally["front_by_kind"].get(story, 0)) + 1
+			var papers: Array = front.get("papers", [])
+			if papers.size() == 2 and String(papers[0]["tone"]) != String(papers[1]["tone"]):
+				tally["two_tones"] = int(tally["two_tones"]) + 1
 		var after := {}
 		for entry in ns.event_queue:
 			var id := String(entry.get("event_id", ""))
 			after[id] = String(entry.get("category", ""))
 			if not before.has(id):
+				if String(entry.get("speaker", "")) != "":
+					tally["spoken"] = int(tally["spoken"]) + 1
+				else:
+					tally["narrated"][id] = int(tally["narrated"].get(id, 0)) + 1
 				tally["arrivals"] = int(tally["arrivals"]) + 1
 				tally["by_category"][after[id]] = int(tally["by_category"].get(after[id], 0)) + 1
 				wrote[after[id]] = i
@@ -629,6 +646,46 @@ func _table_e5_categories() -> void:
 		print("%-12s %8d %6.1f%%   %s" % [category, n, 100.0 * share, "PASS" if ok else "OVER %.0f%%" % (100.0 * CATEGORY_SHARE_MAX)])
 	if not all_ok:
 		_band_failed("E5: a category supplies more than %.0f%% of arrivals -- a content verdict, not a dial" % (100.0 * CATEGORY_SHARE_MAX))
+
+
+# --- D5 / D7 / D9: the voice and the press (V5.2d) -------------------------------------
+
+## docs/design/v5.2-d-spec.md section 5, declared before the build. D5: at least
+## SPEAKER_SHARE_MIN of the deliveries to the played nation resolve a speaker (the
+## narrator only on the fallback). D7: FRONT_PAGES_MIN to FRONT_PAGES_MAX front
+## pages a term, the median over the run's windows like E4's cadence. D9's share of
+## two-tone cards is reported, not gated. Both regimes on the real month: hands_off
+## lets every deadline default, managed answers every entry the month it lands
+## (E1b's answer-well player), so both the in-month and the between-month stories
+## reach the press. Arrivals are the desk diff, so the undercount E4 states holds.
+const SPEAKER_SHARE_MIN := 0.95
+const FRONT_PAGES_MIN := 6.0
+const FRONT_PAGES_MAX := 15.0
+
+
+func _table_d5_d7_voice() -> void:
+	print("\n=== D5 / D7 / D9  THE VOICE AND THE PRESS: FRA, %d months, the real month ===" % RUN_MONTHS)
+	print("%-10s %8s %8s %7s   %11s %8s %9s   %s" % [
+		"regime", "arrivals", "spoken", "share", "front pages", "per term", "two tones", "verdict"])
+	for regime in ["hands_off", "managed"]:
+		var t := _run_machine(regime, RUN_MONTHS, regime == "managed", 0)
+		var arrivals := int(t["arrivals"])
+		var share := float(t["spoken"]) / float(maxi(1, arrivals))
+		var per_term := _median_term_rate({"windows": t["front_windows"]})
+		var fronts := int(t["front_pages"])
+		var two := float(t["two_tones"]) / float(maxi(1, fronts))
+		var d5 := arrivals > 0 and share >= SPEAKER_SHARE_MIN
+		var d7 := per_term >= FRONT_PAGES_MIN and per_term <= FRONT_PAGES_MAX
+		print("%-10s %8d %8d %6.1f%%   %11d %8.1f %8.1f%%   %s" % [
+			regime, arrivals, int(t["spoken"]), 100.0 * share, fronts, per_term, 100.0 * two,
+			"PASS" if d5 and d7 else ("D5 FAIL " if not d5 else "") + ("D7 FAIL" if not d7 else "")])
+		if not (t["narrated"] as Dictionary).is_empty():
+			print("           narrator (fallback) by event: %s" % [t["narrated"]])
+		print("           front pages by story: %s" % [t["front_by_kind"]])
+		if not d5:
+			_band_failed("D5 (%s): %.1f%% of deliveries resolve a speaker, under %.0f%%" % [regime, 100.0 * share, 100.0 * SPEAKER_SHARE_MIN])
+		if not d7:
+			_band_failed("D7 (%s): %.1f front pages a term, outside [%.0f, %.0f]" % [regime, per_term, FRONT_PAGES_MIN, FRONT_PAGES_MAX])
 
 
 # --- E6: the hook vocabulary, witnessed at runtime -----------------------------------
