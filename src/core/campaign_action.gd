@@ -188,21 +188,21 @@ static func _extract_campaign(raw, action_id: String, filename: String, errors: 
 	else:
 		out["effort_name"] = display
 
-	if not raw.has("cost_pct_gdp"):
-		errors.append("%s: %s effects.campaign.cost_pct_gdp is required on a '%s'" % [filename, action_id, campaign_op])
-	elif not (typeof(raw["cost_pct_gdp"]) == TYPE_INT or typeof(raw["cost_pct_gdp"]) == TYPE_FLOAT):
-		errors.append("%s: %s effects.campaign.cost_pct_gdp must be numeric" % [filename, action_id])
+	if not raw.has("cost_eur_per_k_pop_month"):
+		errors.append("%s: %s effects.campaign.cost_eur_per_k_pop_month is required on a '%s'" % [filename, action_id, campaign_op])
+	elif not (typeof(raw["cost_eur_per_k_pop_month"]) == TYPE_INT or typeof(raw["cost_eur_per_k_pop_month"]) == TYPE_FLOAT):
+		errors.append("%s: %s effects.campaign.cost_eur_per_k_pop_month must be numeric" % [filename, action_id])
 	else:
-		var cost := float(raw["cost_pct_gdp"])
+		var cost := float(raw["cost_eur_per_k_pop_month"])
 		if cost <= 0.0:
-			errors.append("%s: %s effects.campaign.cost_pct_gdp = %s is at or below its floor -- an effort that costs nothing is not one, and a free one would be strictly dominant" % [
+			errors.append("%s: %s effects.campaign.cost_eur_per_k_pop_month = %s is at or below its floor -- an effort that costs nothing is not one, and a free one would be strictly dominant" % [
 				filename, action_id, str(cost)
 			])
-		elif cost > K.MAX_CAMPAIGN_COST_PCT_GDP:
-			errors.append("%s: %s effects.campaign.cost_pct_gdp = %s exceeds its ceiling (%s)" % [
-				filename, action_id, str(cost), str(K.MAX_CAMPAIGN_COST_PCT_GDP)
+		elif cost > K.MAX_CAMPAIGN_COST_EUR_PER_K_POP_MONTH:
+			errors.append("%s: %s effects.campaign.cost_eur_per_k_pop_month = %s exceeds its ceiling (%s)" % [
+				filename, action_id, str(cost), str(K.MAX_CAMPAIGN_COST_EUR_PER_K_POP_MONTH)
 			])
-		out["cost_pct_gdp"] = cost
+		out["cost_eur_per_k_pop_month"] = cost
 
 	if not raw.has("mobilisation"):
 		errors.append("%s: %s effects.campaign.mobilisation is required on a '%s' -- an effort that names no audience has not said who it reaches" % [

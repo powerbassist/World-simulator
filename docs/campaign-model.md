@@ -147,6 +147,14 @@ level up.
 
 ## 6. The bill
 
+> [!note] Retired at V5.2 C6
+> The state no longer pays for a campaign: the governing party does, from its own money,
+> each month, cheaper effort first, and an effort it cannot pay stops. The price is
+> `cost_eur_per_k_pop_month`, euros per thousand inhabitants a month, and the line below
+> is gone with its readers. The rule, the income and the soft legal ceiling are
+> [[v5.2-c6-party-campaigns]]; the code is `src/sim/party_money.gd`. This section stays
+> as V1.7a's record.
+
 `campaign_bill_pct_gdp` is the **sixth** computed spending line, after V1.3d's bloc
 transfer, V1.3g's deployment bill, V1.4a's subsidy bill, V1.6e's investment bill and
 V1.6f's project bill. Not a sixth `SPENDING_KEYS` entry, because that list is keyed 1:1
@@ -272,7 +280,8 @@ what a bound should do. **`CAMPAIGN_WINDOW_MONTHS` = 8** at V1.7a. *Superseded: 
 | `CAMPAIGN_WINDOW_MONTHS` | 8 (V1.7a; **10 since V2.6b2**, §18) | Two-sided; **maximin slack** over the feasible set, §8 |
 | `MOBILISATION_MAX` | 0.90 | Guard rail, declared not a selector. Reachable peak 0.6800, slack 0.2200 |
 | `MAX_MOBILISATION_PER_MONTH` | 0.10 | Content ceiling; largest authored rate 0.055 |
-| `MAX_CAMPAIGN_COST_PCT_GDP` | 0.20 | Content ceiling; dearest allowed pair 0.1750 against 0.2039 of headroom |
+| `MAX_CAMPAIGN_COST_PCT_GDP` | 0.20 | Content ceiling; dearest allowed pair 0.1750 against 0.2039 of headroom. **Retired at V5.2 C6** |
+| `MAX_CAMPAIGN_COST_EUR_PER_K_POP_MONTH` | 60.0 | V5.2 C6's content ceiling in the new unit; dearest authored effort 26.9 ([[v5.2-c6-party-campaigns]]) |
 
 **No strength constant and no price constant**, which is `projects_constants.gd`'s call
 inherited whole: what an effort costs and who it reaches are two independent authored
@@ -346,7 +355,8 @@ They are serialised regardless, and the reasons differ:
   of a run-up would otherwise go to the vote with a campaign already paid for and no
   longer held.
 - `campaign_bill_pct_gdp` — recomputed on the first tick; serialised so a save read back
-  and never ticked reports the budget it was saved with.
+  and never ticked reports the budget it was saved with. (Retired at V5.2 C6 with no
+  bump: an older save's key is ignored. C6's `campaign_spent_eur_m` is `absent_ok`.)
 
 `tests/test_save_load.gd` asserted the version was **still 23**, so V1.7b had to come and
 say why it moves — V1.3c's device, pointed at the next session for the sixth time.

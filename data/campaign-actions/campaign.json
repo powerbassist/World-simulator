@@ -2,8 +2,8 @@
   "_note": "V1.7a's verbs, on the effects.campaign channel -- the ninth. Ten actions: five named efforts, each with a start and a stop. A GLOBAL FLAT LIST rather than a per-nation directory, on data/project-actions/'s argument: an effort names no INSTITUTION, so all ten nations could run any of them and none of the five is true of France in a way it is not true of Germany. V2.6b2 corrected the other half: an effort names no place CONTENT-SIDE, but the player names the place at the press -- the meeting region is an argument to the start command, validated against the acting nation's own regions, which is why this file stays place-free while the verb no longer is.",
   "_siting_note": "V2.6b2 sites the effort, and the reason the SITE is a player choice and not a derived read is measured: docs/siting-model.md section 11 refused every regionally-varying campaign signal (zero-variance, nonexistent, or a second opinion number), and reach-per-day over the register's own coordinates makes the capital strictly dominant -- Paris x2.37 fresh against Marseille x0.32 -- the shape twelve sessions have killed. The breaker is the sentence stop_ground_game already carried: whoever has already been spoken to has already been spoken to. One meeting month speaks to a region's whole attention; the reach scales by (1 - spoken); the fraction decays on SATURATION_HALF_LIFE_MONTHS = 5.75, measured by tools/tour_probe.gd under two pre-committed clauses (the tour must leave the capital; the decay must not be a burn-list). This file prices and reaches exactly as V1.7a authored it -- the site is the model's multiplier, not the ladder's.",
   "_ladder_note": "THE LADDER IS THE LEVER AND tools/campaign_probe.gd IS WHAT SET IT. src/sim/campaign_constants.gd ships no strength constant and no price constant, so what one effort costs and who it reaches are two independent authored facts, exactly as data/project-actions/ holds three. The five are deliberately INCOMPARABLE rather than ranked: each names a different part of the electorate, so no pair can be ordered by cost alone and the decision is which voters to spend the run-up on rather than how much to spend. The probe checks that no effort is dominated rather than assuming it.",
-  "_timing_note": "WHY EVERY EFFORT IS A STANDING RATE AND NOT A ONE-OFF PURCHASE. An effort accrues its mobilisation every month it runs and bills every month it runs, so starting in month six of the run-up buys six months of reach at six months of cost and starting in month one buys one of each. The first design billed a one-off, under which acting LATE was strictly better -- same reach, less time paying -- which is the strictly-dominated shape this project has killed six times. Linear on both sides is what makes the timing a real decision.",
-  "_price_note": "THE APPROVAL PRICE IS AUTHORED HERE AND THE FISCAL PRICE IS NOT. bloc_offset is the only authored cost, which is why docs/campaign-model.md answers the eighteenth ISSUE_KEYS question NO on test 1 alone -- every YES on that list (V1.6b's inflation, V1.6d's two taxes) was paid because the price was not nameable otherwise, and this ships a content object that can name it. The money is not here: the bill widens the deficit, which reaches `public_finances` through machinery S5 built, and it does so in the months immediately before the vote, when every bloc is looking. AND THE ASYMMETRY IS THE MODEL: the money and the mobilisation are both spent at the ballot box and the resentment is not, because ns.bloc_offset is a permanent accumulator. A campaign leaves a mark that outlives the campaign.",
+  "_timing_note": "WHY EVERY EFFORT IS A STANDING RATE AND NOT A ONE-OFF PURCHASE. An effort accrues its mobilisation every month it runs and is paid for every month it runs, so starting in month six of the run-up buys six months of reach at six months of cost and starting in month one buys one of each. The first design billed a one-off, under which acting LATE was strictly better -- same reach, less time paying -- which is the strictly-dominated shape this project has killed six times. Linear on both sides is what makes the timing a real decision. The chest is the other limit: a start needs one month's price in the party's money, each month is paid before it accrues (the cheaper effort first, ties by id), and an effort the chest cannot pay stops and keeps what it had bought, as a player's stop does.",
+  "_price_note": "THE PARTY PAYS AND THE STATE DOES NOT. Each effort costs cost_eur_per_k_pop_month, in euros per thousand inhabitants a month, paid from the governing party's money (docs/design/v5.2-c6-party-campaigns.md sections 2 and 3); no state spending line is raised, so the deficit no longer carries the campaign. The unit scales over every nation with no id check, and the five prices are one factor times the old per-GDP rates, set so the mean of the ten allowed pairs run for a full window sits at France's legal ceiling on a presidential campaign. The approval price is still authored here: bloc_offset is the only authored cost beside the money, which is why docs/campaign-model.md answers the eighteenth ISSUE_KEYS question NO on test 1 alone. AND THE ASYMMETRY IS STILL THE MODEL: the money and the mobilisation are spent at the ballot box and the resentment is not, because ns.bloc_offset is a permanent accumulator. A campaign leaves a mark that outlives the campaign.",
   "_concurrency_note": "`campaign_count <= 1` ON EVERY START IS THE CONCURRENCY CEILING, AND IT IS CONTENT. src/sim/campaign_constants.gd ships no constant for it, for the reason data/project-actions/ gives about `project_count`: a model constant duplicating a content gate is the clamp-guarding-arithmetic failure V1.6e deleted INVESTMENT_BILL_MAX_PCT_GDP for. Two efforts at once is what makes the five a choice rather than a shopping list, and it is also what keeps the worst reachable stack on any one bloc below campaign_constants.MOBILISATION_MAX with room to spare -- a guard rail that binds would be setting the number instead of guarding it.",
   "actions": [
     {
@@ -22,7 +22,7 @@
           "op": "start",
           "effort_id": "ground_game",
           "effort_name": "The doorstep operation",
-          "cost_pct_gdp": 0.03,
+          "cost_eur_per_k_pop_month": 8.1,
           "mobilisation": {
             "workers": 0.03,
             "urban": 0.025,
@@ -58,7 +58,7 @@
           "op": "start",
           "effort_id": "broadcast",
           "effort_name": "The broadcast campaign",
-          "cost_pct_gdp": 0.1,
+          "cost_eur_per_k_pop_month": 26.9,
           "mobilisation": {
             "pensioners": 0.05,
             "rural": 0.035,
@@ -99,7 +99,7 @@
           "op": "start",
           "effort_id": "town_halls",
           "effort_name": "The town-hall tour",
-          "cost_pct_gdp": 0.055,
+          "cost_eur_per_k_pop_month": 14.8,
           "mobilisation": {
             "rural": 0.05,
             "pensioners": 0.03,
@@ -138,7 +138,7 @@
           "op": "start",
           "effort_id": "digital_push",
           "effort_name": "The digital push",
-          "cost_pct_gdp": 0.075,
+          "cost_eur_per_k_pop_month": 20.2,
           "mobilisation": {
             "students": 0.05,
             "urban": 0.05,
@@ -178,7 +178,7 @@
           "op": "start",
           "effort_id": "donor_circuit",
           "effort_name": "The donor circuit",
-          "cost_pct_gdp": 0.045,
+          "cost_eur_per_k_pop_month": 12.1,
           "mobilisation": {
             "business": 0.055,
             "urban": 0.025,
