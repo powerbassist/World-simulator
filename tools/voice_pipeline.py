@@ -70,6 +70,9 @@ ARCHETYPES = "data/voices/archetypes.json"
 ## Only variable-free lines are voiced (section 6): a {{variable}}, a printf slot or
 ## a glossary mark would make the clip say something other than the shown text.
 UNVOICEABLE = re.compile(r"\{\{|%[sdif%]|\[g=")
+## An archetype id and a line id become a path: letters, digits, '_', '.', '-' only,
+## and never '..', so data can never write outside VOICE_DIR.
+SAFE_ID = re.compile(r"^(?!.*\.\.)[A-Za-z0-9_.-]+$")
 
 
 class PipelineError(Exception):
@@ -147,7 +150,9 @@ def jobs(src: dict, manifest: dict, every: bool) -> list:
         if UNVOICEABLE.search(text):
             status = "not-voiceable"
         elif not str(row.get("voice_id", "")).strip():
-            status = "no-voice"
+            status = "no-voice"  # never written, so its id never becomes a path
+        elif not SAFE_ID.match(arch) or not SAFE_ID.match(line_id):
+            status = "bad-id"
         elif key not in manifest:
             status = "new"
         elif manifest[key].get("text_sha256") != sha:
@@ -271,11 +276,11 @@ def run(root: Path, every: bool, only: str, floor: int, max_chars: int, key: str
     manifest_path = root / MANIFEST
     manifest = _json(manifest_path) or {}
     rows = [r for r in jobs(src, manifest, every) if not only or r["archetype"] == only]
-    bad = [r for r in rows if r["status"] == "not-voiceable"]
+    bad = [r for r in rows if r["status"] in ("not-voiceable", "bad-id")]
     if bad:
         for r in bad:
-            print("not voiceable (a variable in the line): %s" % r["key"])
-        raise PipelineError("%d line(s) not voiceable; fix the data first" % len(bad))
+            print("%s: %s" % (r["status"], r["key"]))
+        raise PipelineError("%d line(s) not voiceable or with an unsafe id; fix the data first" % len(bad))
     todo = _todo(rows)
     planned = sum(r["chars"] for r in todo)
     if planned > max_chars:
@@ -294,7 +299,10 @@ def run(root: Path, every: bool, only: str, floor: int, max_chars: int, key: str
             audio = speak_fn(key, r["voice_id"], r["text"])
         except PipelineError as e:
             raise PipelineError("%s: %s" % (r["key"], e))
-        convert_fn(audio, root / r["file"])
+        try:
+            convert_fn(audio, root / r["file"])
+        except (subprocess.CalledProcessError, OSError) as e:
+            raise PipelineError("%s: conversion failed (%s)" % (r["key"], type(e).__name__))
         used += r["chars"]
         manifest[r["key"]] = {"archetype": r["archetype"], "line_id": r["line_id"], "file": r["file"],
                               "text_sha256": r["sha"], "chars": r["chars"], "voice_id": r["voice_id"],
@@ -346,10 +354,16 @@ def selftest() -> int:
                 "cabinet/event.crisis": "no-voice", "(none)/event.mute": "no-voice", "union/greet": "ok"}
         if status != want:
             fails.append("statuses: %r" % status)
+        bad_src = dict(src, archetypes=dict(src["archetypes"], **{"evil": {"voice_id": "V9", "lines": {"x/../../y": "Hi."}}}))
+        if [r["status"] for r in jobs(bad_src, manifest, False) if r["archetype"] == "evil"] != ["bad-id"]:
+            fails.append("a line id with '..' or '/' is not refused as a path")
+        def broken(a, p):
+            raise subprocess.CalledProcessError(1, "ffmpeg")
         every = sorted(r["key"] for r in jobs(src, manifest, True) if r["line_id"] == "event.strike")
         if every != ["gruff/event.strike", "union/event.strike"]:
             fails.append("the every reading: %r" % every)
 
+        previous = os.environ.get(KEY_ENV)
         os.environ[KEY_ENV] = secret
         captured = io.StringIO()
         made = []
@@ -372,6 +386,13 @@ def selftest() -> int:
                     fails.append("--run crossed the floor")
                 except PipelineError:
                     pass
+                try:
+                    run(root, False, "", 0, 10000, secret, "2026-10-26", allowance_fn=lambda k: 1000,
+                        speak_fn=lambda k, v, t: b"mp3", convert_fn=broken)
+                    fails.append("a failed conversion did not stop the batch")
+                except PipelineError as e:
+                    if "conversion failed" not in str(e):
+                        fails.append("a failed conversion stopped with the wrong reason: %s" % e)
                 # The account drops to 900 before the third clip (spent elsewhere): the
                 # per-clip read stops the batch there, two clips made.
                 reads = [1000, 1000, 1000, 900]
@@ -381,7 +402,10 @@ def selftest() -> int:
         except PipelineError as e:
             fails.append("run failed: %s" % e)
         finally:
-            del os.environ[KEY_ENV]
+            if previous is None:
+                del os.environ[KEY_ENV]
+            else:
+                os.environ[KEY_ENV] = previous
         if secret in captured.getvalue():
             fails.append("the key reached the output")
         if len(made) != 2:
