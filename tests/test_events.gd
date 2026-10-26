@@ -90,6 +90,11 @@ class _StubLoader:
 	var events: Array = []
 	var commodity_goods: Dictionary = {}
 	var regions: Dictionary = {}
+	# V5.2d: a delivery resolves the event's speaker off the cast; an empty cast
+	# resolves every form to the narrator.
+	var people: Dictionary = {}
+	var person_by_id: Dictionary = {}
+	var parties: Dictionary = {}
 
 
 func _init() -> void:
