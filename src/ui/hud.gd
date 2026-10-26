@@ -123,6 +123,15 @@ func _ready() -> void:
 	right.add_child(ribbon)
 
 
+## A loaded game's state, rebound to the furniture that keeps one: the ribbon's month,
+## the portrait card's approval, and no front page of the game just left (main.gd's
+## load, which has no line to spare for each).
+func rebind(state, loader) -> void:
+	ribbon.setup(state, loader)
+	portrait_card.setup(state, loader)
+	front_page.clear()
+
+
 ## True when the point is over a solid piece of furniture. main.gd asks before
 ## treating a click as a click on the map -- the map view sits behind the whole
 ## HUD rect, so without this a drag started on the portrait card would pan
