@@ -7,6 +7,10 @@
       "summary": "A cargo vessel has been at anchor nine days because the partner that sanctioned its owner says the cargo is theirs to impound and the flag state, which is you, has stopped returning calls. The charterer's lawyers have priced both answers.",
       "likelihood": 0.0024,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "A cargo vessel has sat at anchor nine days, the partner that sanctioned its owner claims the cargo, and as flag state you have stopped returning calls.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -67,6 +71,10 @@
       "summary": "The partner's ambassador left on four hours' notice over a vote your assembly did not think anyone was watching. The statement says consultations, which is what a rupture is called while both sides still need the word.",
       "likelihood": 0.003,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "Our ambassador left on four hours' notice over a vote your assembly thought nobody was watching, and the statement says consultations while both sides still need the word.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -131,6 +139,10 @@
       "summary": "The partner has put patrols back on a border your side has not staffed since the treaties, and the town that lives on day-trippers has lost a season in a fortnight. Their minister calls it technical; your shopkeepers have stopped using the word.",
       "likelihood": 0.003,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "We have put patrols back on the border your side has not staffed since the treaties, and the town that lives on day-trippers has lost its season in a fortnight.",
       "severity": 1,
       "weight": 1.2,
       "cooldown_months": 10,
@@ -191,6 +203,10 @@
       "summary": "The order book has a nine-figure sale on it and the embargo list gained the buyer's name at this month's meeting, on the proposal of the partner whose own docks have been loading since spring. The licence is yours to sign, and everyone is watching the signature.",
       "likelihood": 0.0024,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "Your order book holds a nine-figure sale and the embargo list gained the buyer's name this month on our proposal, while our own docks have been loading since spring.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -258,6 +274,10 @@
       "subject_office": "largest_party_leader",
       "likelihood": 0.0024,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "A leaked briefing page names an aide as a contact of my service, the press holds the page, and my people want it sealed tonight.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 16,
@@ -324,6 +344,10 @@
       "summary": "The partner's trade ministry has opened a consultation on tariffs that reads like a map of the districts that elected you: the cheese, the steel, the whole harvest calendar. It is a draft, and in trade a draft is a message with a return address.",
       "likelihood": 0.003,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "My trade ministry has drafted a tariff list that reads like a map of your voters, and a draft is always a message before it is a law.",
       "severity": 2,
       "weight": 1.2,
       "cooldown_months": 12,
@@ -389,6 +413,10 @@
       "summary": "A haulage contractor from the interior is six weeks into detention on a charge nobody has shown anybody, and the family has learned to hold the cameras. The partner's courts do not move for petitions and its ministries do not answer inside a month.",
       "likelihood": 0.002,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "A haulage contractor from your interior is six weeks into detention on a charge nobody has shown anybody, and the family has learned to hold the cameras.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 16,
@@ -450,6 +478,10 @@
       "subject_office": "head_of_government",
       "likelihood": 0.004,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "My delegation came with figures on wages and interest, and we would like to talk about a lease of twenty years before the current one runs out.",
       "severity": 3,
       "weight": 1.5,
       "cooldown_months": 18,
@@ -517,6 +549,10 @@
       "subject_office": "head_of_state",
       "likelihood": 0.003,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "The photograph is already on the wires and your seat is at the end of the row, so the explanation will have to be yours.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -581,6 +617,10 @@
       "summary": "Two hundred thousand of your citizens hold opinions as well as passports, and the homeland's new press law has given them a petition that gains a page a day. The marches are outside your [g=embassy]embassies[/g] by Wednesday, which is three days faster than the homeland expected.",
       "likelihood": 0.0024,
       "category": "foreign",
+      "speaker": {
+        "foreign_head": true
+      },
+      "speaker_line": "Your citizens hold our passports as well as your own, and the marches outside your embassies will arrive three days sooner than anyone planned.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,

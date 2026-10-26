@@ -7,6 +7,10 @@
       "summary": "The group's head office has announced the closure of the country's oldest motor works, in a release timed for Friday evening, with warm thanks to the workforce.",
       "likelihood": 0.0028,
       "category": "industrial",
+      "speaker": {
+        "kind": "union_leader"
+      },
+      "speaker_line": "My members read the closure notice on Friday evening, and the oldest motor works in the country deserves better than a warm word and a locked gate.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 14,
@@ -82,6 +86,10 @@
       "summary": "A vessel failed at the chemical works after dark and the toll is four dead. The plant is a crime scene now, and the town is already asking what the inquiry will cost before it asks what it will find.",
       "likelihood": 0.0024,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The vessel failed after dark and four of my people are dead, so I need to know tonight whether the inquiry comes before the lawyers.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -154,6 +162,10 @@
       "summary": "A rival government has filed a state-aid complaint against the battery plant's package, and the file reads like an indictment of the incentive regime every capital is running.",
       "likelihood": 0.0032,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "A rival government has filed a state-aid complaint against the battery plant's package, and the file reads like an indictment of the incentive regime every capital is running.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -221,6 +233,10 @@
       "summary": "The steel importers' association has assembled a dumping file four hundred pages long and the federation has read all of it aloud. The prices in it are real; so is the shelf price at home.",
       "likelihood": 0.003,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The importers have built a dumping file four hundred pages long, and the prices in it are as real as the ones on our shelves at home.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -282,6 +298,10 @@
       "summary": "The wholesale price has tripled since the autumn and the industrial federation has published the shutdown list of what stops when contracts roll over. The country's largest employer is on it.",
       "likelihood": 0.0024,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "Wholesale prices have tripled since autumn and the federation has published its shutdown list, and I regret to say my company is on it.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 16,
@@ -347,6 +367,10 @@
       "summary": "The flagship battery plant is two years late and forty percent over, and the letter asking for the second tranche describes both facts as features of the sector. The ribbon date has stopped being quoted.",
       "likelihood": 0.0032,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The plant is two years late and well over budget, and the letter asking for the second tranche calls both facts features of the sector.",
       "severity": 1,
       "weight": 0.5,
       "cooldown_months": 12,
@@ -410,6 +434,10 @@
       "summary": "The carmaker's board has set its terms in writing: public money for the conversion, or the next platform is built where they hold the pen. The letter is polite in four languages.",
       "likelihood": 0.0022,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "My board has put its terms in writing and in four languages, and without public money the next platform will be built where we hold the pen.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 0,
@@ -478,6 +506,10 @@
       "summary": "The port operators have locked out the crane crews in a dispute about the automation clause and the evening shifts sit dark. The fruit is still moving; the containers are not.",
       "likelihood": 0.0028,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "We have locked out the crane crews over the automation clause, the fruit still moves but the containers do not, and the shifts sit dark.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 10,
@@ -545,6 +577,10 @@
       "summary": "The chip allocation is down to weeks and the car lines are first on the stop list, in an order nobody admits to writing. The electronics federation has offered to help draft it, twice.",
       "likelihood": 0.0026,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "Our chip allocation now runs to weeks and the car lines are first on the stop list, in an order nobody will admit to writing.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -609,6 +645,10 @@
       "summary": "The works' owners have given the last blast furnace a date and the date is in the spring. An industry is not a factory; the difference is what arrives when the furnace goes cold.",
       "likelihood": 0.002,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The owners have set a spring date for the last furnace, and what goes cold with it is a good deal more than one factory.",
       "severity": 3,
       "weight": 0.5,
       "cooldown_months": 24,
@@ -680,6 +720,10 @@
       "summary": "The bid for the country's last domestic engineering champion has landed from abroad and the assembly has discovered the word referral. The bidder's advisers call the row theatrical, which it is, and effective, which it also is.",
       "likelihood": 0.018,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "A bid from abroad has landed for the country's last domestic engineering champion, the assembly has discovered the word referral, and the row is theatrical and effective in equal measure.",
       "severity": 1,
       "weight": 1.0,
       "on_action": "takeover_bid",
@@ -740,6 +784,10 @@
       "summary": "The receivers went into the champion at dawn and the group's name is on the business pages in the past tense. Fifty years of supplier invoices are now a queue, and the queue starts at the town's payroll.",
       "likelihood": 0.015,
       "category": "industrial",
+      "speaker": {
+        "kind": "union_leader"
+      },
+      "speaker_line": "The receivers went into the champion at dawn, fifty years of supplier invoices are now a queue, and the queue starts at the town's payroll.",
       "severity": 2,
       "weight": 1.0,
       "on_action": "firm_failed",
@@ -805,6 +853,10 @@
       "summary": "With unemployment where it is, the industrial federation has come with two proposals and a warning about which plants close if it gets neither.",
       "likelihood": 0.012,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The industrial federation has come with two proposals and a warning about which plants close if it gets neither, and with unemployment where it is I would hear them out.",
       "severity": 2,
       "cooldown_months": 12,
       "respond_months": 4,
@@ -880,6 +932,10 @@
       "interrupt": true,
       "likelihood": 0.008,
       "category": "industrial",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The winter peak has taken three regions dark, the hospitals are on generators, and the operator says the interconnects cannot hold another evening like tonight.",
       "severity": 3,
       "cooldown_months": 24,
       "respond_months": 1,

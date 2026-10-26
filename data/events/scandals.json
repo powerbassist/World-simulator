@@ -11,6 +11,11 @@
       "subject_office": "head_of_government",
       "likelihood": 0.006,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "We have the contract file, and one of the winning firms wrote the specification itself, so I would think carefully about which answer survives contact with it.",
       "severity": 1,
       "cooldown_months": 8,
       "respond_months": 3,
@@ -74,6 +79,11 @@
       "subject_office": "head_of_state",
       "likelihood": 0.004,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "Two names on the honours list gave money to the governing party, and nobody will say the two facts are acquainted.",
       "severity": 1,
       "cooldown_months": 8,
       "respond_months": 2,
@@ -138,6 +148,11 @@
       "summary": "The state broadcaster's charter is up. Its newsroom has spent the year on your government, and the terms of the renewal are yours to set.",
       "likelihood": 0.007,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "The broadcaster's charter is up for renewal, and I wonder whether its newsroom will cover that story with the enthusiasm it has shown for yours.",
       "severity": 1,
       "respond_months": 4,
       "once": true,
@@ -197,6 +212,11 @@
       "summary": "The auditors have refused to certify the governing party's annual accounts. Donations were booked as loans, the loans as gifts, and the law that says a party without certified accounts cannot stand at the next election is older than anyone's desire to test it.",
       "likelihood": 0.0024,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "The auditors will not certify the party's accounts, and the law about who may stand at elections has waited years for a test.",
       "severity": 3,
       "weight": 2.0,
       "cooldown_months": 24,
@@ -264,6 +284,11 @@
       "summary": "A cabinet minute is on a newspaper's front page. It is the health ministry's own paper, and it prices the winter waiting lists in stories a month: 'manageable until the autumn, political after'.",
       "likelihood": 0.0028,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "Your cabinet minute is on my front page, pricing winter waiting lists by season, and I only ask what you would like buried under it tomorrow.",
       "severity": 2,
       "respond_months": 2,
       "once": true,
@@ -328,6 +353,11 @@
       "summary": "A serving official has sent a newspaper the ministry's internal review of a defence programme: forty per cent over, three years late, and written eleven months before the minister told the assembly otherwise.",
       "likelihood": 0.0024,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "A serving official has sent us the defence review, forty per cent over and three years late, which makes my day and will ruin somebody's year.",
       "severity": 2,
       "cooldown_months": 18,
       "respond_months": 3,
@@ -397,6 +427,11 @@
       "summary": "The renewal contracts for the regions' water testing went to a consortium in which the housing minister's spouse has held a share since March. The minister signed the delegation in February and says the two dates are the point.",
       "likelihood": 0.004,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "The water testing contracts went to a consortium the housing minister's spouse holds shares in, and the minister insists the two dates settle it, which my lawyers find charming.",
       "severity": 1,
       "weight": 1.5,
       "cooldown_months": 12,
@@ -466,6 +501,11 @@
       "summary": "The backbench bill to publish who lobbies whom, and on whose lunch, has died twice in committee. Its third reading is scheduled because its sponsor has the votes and nothing left to lose.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "The lobbying bill has its third reading because its sponsor has votes and nothing to lose, and my leader writers are already fond of it.",
       "severity": 1,
       "cooldown_months": 24,
       "respond_months": 5,
@@ -535,6 +575,11 @@
       "summary": "The new director of the regional health agencies is the labour minister's brother-in-law. The selection panel that interviewed him did not interview anyone else, which the panel's own minutes record without embarrassment.",
       "likelihood": 0.0036,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "The new director of the regional health agencies is family to the labour minister, and the panel's minutes proudly record that nobody else was interviewed.",
       "severity": 1,
       "cooldown_months": 12,
       "respond_months": 2,
@@ -603,6 +648,11 @@
       "summary": "The expenses review has reached the housing allowance, and the pattern is not ambiguity: flats designated as second homes at the address of party offices, and one member's garden shed claimed as a constituency office. Four hundred members are in the sample; the worst twenty will be on the front page for a month.",
       "likelihood": 0.0032,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "We have read the housing allowances closely, and I can promise you the garden shed will keep my readers warm all month.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 18,
@@ -691,6 +741,11 @@
       "summary": "A newspaper has printed transcripts of calls between one of its reporters and a ministerial adviser, with the interception dates alongside. The government says it never authorised them; the services say the government never asked. Both statements are being read very carefully by the people who wrote them.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "Interception dates printed beside each call, and both sides swearing the other one asked, that is my gift to you this morning.",
       "severity": 3,
       "weight": 0.5,
       "respond_months": 2,
@@ -762,6 +817,11 @@
       "summary": "Recordings of a former minister coaching a consultancy's clients before their meetings with his old department have reached the press, together with his fee schedule. The diary the department itself keeps confirms the meetings happened.",
       "likelihood": 0.0024,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "The recordings and the fee schedule are in my hands, and the diary confirms every meeting, so I would like your line before we print.",
       "severity": 2,
       "cooldown_months": 18,
       "respond_months": 3,
@@ -830,6 +890,11 @@
       "summary": "The audit office has found the loans: a large sum to the governing coalition's campaign, from a lender with no repayment schedule, no written terms, and -- the auditors note, in the flat prose of their profession -- no apparent memory of being asked.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "The auditors found loans with no terms, no schedule, and a lender with no memory of being asked, and they wrote that without smiling.",
       "severity": 2,
       "cooldown_months": 24,
       "respond_months": 6,
@@ -899,6 +964,11 @@
       "summary": "The services regulator's draft rulebook matches the industry association's own submission, in places to the comma, and the association's former director-general sits on the drafting panel. The association's next chairman is the regulator's current one; he takes up the post in June.",
       "likelihood": 0.002,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "The regulator's draft rulebook matches the industry association's submission to the comma, its former director-general sits on the drafting panel, and its next chairman is the regulator's current one.",
       "severity": 2,
       "cooldown_months": 24,
       "respond_months": 4,
@@ -979,6 +1049,11 @@
       "summary": "The national literacy foundation has spent five years and forty million in ministry grants, and its consulting fees have gone, every year, to a firm owned by its two founders -- the culture minister's oldest friends, and the source of every reference in the minister's own appointment file.",
       "likelihood": 0.0028,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "Forty million in grants, five years of consulting fees to the founders' own firm, and the minister's oldest friends in the appointment file, a tidy circle indeed.",
       "severity": 1,
       "weight": 0.5,
       "cooldown_months": 18,
@@ -1048,6 +1123,11 @@
       "summary": "The state development bank's newest non-executive director is twenty-six. Her consultancy is a year old and lists one client, and her father is the governing party's treasurer, who says the two facts are unrelated and that his daughter is 'a generational talent'.",
       "likelihood": 0.0028,
       "category": "scandal",
+      "speaker": {
+        "kind": "press_owner",
+        "pick": "hostile"
+      },
+      "speaker_line": "A twenty-six year old director, a one client consultancy, and a treasurer father who calls it coincidence, my printers are already warmed.",
       "severity": 1,
       "cooldown_months": 18,
       "respond_months": 2,

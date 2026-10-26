@@ -7,6 +7,10 @@
       "summary": "The monthly bond auction tails and the ten-year closes forty points up. Nothing about the country has changed since Tuesday except what the desk thinks of it.",
       "likelihood": 0.0024,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "Tuesday we were sound, Thursday the auction tailed, and I confess nothing changed in between except the mood of desks.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -77,6 +81,10 @@
       "summary": "A rating agency moves the outlook to negative and publishes the arithmetic behind it. The arithmetic is the government's own, which is the uncomfortable part.",
       "likelihood": 0.002,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "The agency has put us on negative outlook, and the awkward part is the arithmetic is entirely our own.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 24,
@@ -146,6 +154,10 @@
       "summary": "Three ministries have filed for a supplementary: the hospital overruns are real, the deployment ran long, and the numbers only add up if at least one of them is refused.",
       "likelihood": 0.003,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "Three ministries want more money, the overruns are real, and I can only say yes to two of them without lying.",
       "severity": 1,
       "weight": 2.0,
       "cooldown_months": 10,
@@ -218,6 +230,10 @@
       "summary": "A petition against the levy has passed a million names, organised by people who have organised nothing before, and the postal copies are still arriving by the sack.",
       "likelihood": 0.0028,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "A petition against the levy has crossed a million names, led by people who have never organised anything, and sacks keep arriving.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -280,6 +296,10 @@
       "summary": "The audit court's autumn report finds a guarantee the ministry kept off its own books, sized at a year of the defence budget, and asks -- in the passive voice -- who knew.",
       "likelihood": 0.0024,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "The autumn report has found a guarantee one ministry kept off its books, and it politely asks who among us knew.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -350,6 +370,10 @@
       "summary": "The fund's actuary has put a number on the hole and the number has a comma in it. The review was commissioned by the last government, which is the only reason anybody is reading it.",
       "likelihood": 0.002,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "The fund's actuary has counted the hole, and the only comfort is that the last government commissioned the counting.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 0,
@@ -420,6 +444,10 @@
       "summary": "The third city has missed a payroll and its mayor is on every channel saying the word bankruptcy without quite saying it. The law has no procedure for this, which is now everybody's problem.",
       "likelihood": 0.002,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "A third city has missed payroll, its mayor is saying bankruptcy on every channel, and our law has no procedure for any of it.",
       "severity": 3,
       "weight": 0.5,
       "cooldown_months": 24,
@@ -491,6 +519,10 @@
       "summary": "The central bank's governor and the treasury's permanent secretary have co-signed a letter asking for a two-year freeze on ministry budgets. It leaked faster than it was delivered.",
       "likelihood": 0.0028,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "The governor and the permanent secretary asked me for a two year freeze, and the letter reached the press before it reached you.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -564,6 +596,10 @@
       "subject_office": "largest_party_leader",
       "likelihood": 0.0022,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "The finance committee has written the ceiling into the budget's own language and scheduled the vote, and I have counted the room twice and do not like the count.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 12,
@@ -631,6 +667,10 @@
       "summary": "The treasury does not have the week's cash, the payroll file clears on Wednesday, and the officials who know have stopped using the word timing.",
       "likelihood": 0.002,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "The treasury does not have the week's cash, the payroll file clears on Wednesday, and the officials who know have stopped using the word timing.",
       "severity": 2,
       "weight": 0.5,
       "cooldown_months": 24,
@@ -699,6 +739,10 @@
       "summary": "The assembly's repeal has left a gap: whatever the repealed law was quietly paying for, or holding together, is unsettled now, and nobody voted it so on purpose. The people who relied on it have started to ring.",
       "likelihood": 0.015,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "The assembly repealed a law and left a hole where its money used to be, and the people who relied on it have started telephoning me.",
       "severity": 1,
       "weight": 1.0,
       "on_action": "law_repealed",
@@ -764,6 +808,10 @@
       "summary": "Debt service has passed the defence budget in the ordinary tables, without an announcement, the way water rises. The state's largest creditor is now every bondholder at once.",
       "likelihood": 0.002,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "Debt service has passed the defence budget in the ordinary tables, without any announcement, and I would rather we chose our answer than let the water keep rising.",
       "severity": 1,
       "weight": 0.5,
       "cooldown_months": 0,
@@ -832,6 +880,10 @@
       "summary": "The deficit has passed the point where reassurances are believed and the markets stop reading them. You are expected to say what you will do about it, in public, this quarter.",
       "likelihood": 0.04,
       "category": "fiscal",
+      "speaker": {
+        "office": "head_of_government"
+      },
+      "speaker_line": "The deficit has passed the point where reassurances are believed, the markets have stopped reading them, and you are expected to say what you will do in public this quarter.",
       "severity": 2,
       "cooldown_months": 6,
       "respond_months": 3,

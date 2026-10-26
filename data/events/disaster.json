@@ -7,6 +7,10 @@
       "summary": "The surge put two metres of sea into streets that had been promised a decade more, and the marina is where the promenade was. The sea wall's plans are five years old and uncosted, and the tide tables say the next one is a matter of when.",
       "likelihood": 0.004,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "The sea took streets we promised a decade, plans for the wall sit uncosted, and the tide tables say this was a rehearsal.",
       "severity": 2,
       "weight": 1.5,
       "cooldown_months": 12,
@@ -71,6 +75,10 @@
       "summary": "The fire ran eight kilometres in the first afternoon and took the village the evacuation plan had at the bottom of its second page. It is out now, and the question at the desk is whether the burned acres are replanted, grazed or argued over.",
       "likelihood": 0.004,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "Fire ran eight kilometres in an afternoon and outgrew the evacuation plan's second page, and now we must decide what grows back.",
       "severity": 2,
       "weight": 1.2,
       "cooldown_months": 12,
@@ -140,6 +148,10 @@
       "summary": "The reservoir is at the level at which the prefect signs the order, and the farmers' union is at the ministry before the ink is. Hosepipe bans, irrigation cuts, and a harvest that depends on a third cut of grass the grass will not make.",
       "likelihood": 0.0036,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "The reservoir has reached the level where an order gets signed, the farmers are already at the ministry, and the grass will not make a third cut.",
       "severity": 2,
       "weight": 1.2,
       "cooldown_months": 12,
@@ -205,6 +217,10 @@
       "summary": "The span came down in the night with nobody on it, which is the only kind thing the year has done. The crossing carried nine thousand vehicles a day, the detour costs an hour and a half, and the file on the repairs that slipped four times is a court exhibit now.",
       "likelihood": 0.002,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "The crossing came down empty at night, nine thousand vehicles a day now lose an hour and a half, and the repair file is a court exhibit.",
       "severity": 3,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -269,6 +285,10 @@
       "summary": "The levee failed at the third-highest flood of the decade, in the reach every inspection since the last one has marked for strengthening. The water is in the villages behind it and the reports are in the ministry, filed by year, all of them right.",
       "likelihood": 0.0024,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "Every inspection since the last one marked that levee for strengthening, and now the water is in the villages and the files are in the ministry, all of them right.",
       "severity": 3,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -333,6 +353,10 @@
       "summary": "The cold came early and stayed, the grid is at the peak the interconnects were built for, and the mortality register moves in figures nobody publishes weekly. The schools are closed where the boilers are old, which is a map of everything else.",
       "likelihood": 0.004,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "Cold came early and stayed, the grid is at the peak it was built for, and the deaths are counted in figures nobody wants published.",
       "severity": 2,
       "weight": 1.5,
       "cooldown_months": 12,
@@ -399,6 +423,10 @@
       "summary": "The hill above the village moved after nine days of rain, taking the road, the rail ballast and an argument about drainage the two communes have been having since the last time. Nobody died; forty houses are on the wrong side of a geologist's line now.",
       "likelihood": 0.0024,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "Nine days of rain moved the hill, nobody died, and forty houses now sit on the wrong side of the geologist's line.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 10,
@@ -463,6 +491,10 @@
       "summary": "It lasted eleven seconds and the old town took most of them. The schools that were retrofitted are the ones standing, which is the whole argument, and the camps in the squares are the whole emergency, and the aftershock forecast keeps them full.",
       "likelihood": 0.002,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "Eleven seconds and the old town took most of them, and the camps in the squares are the emergency now.",
       "severity": 3,
       "weight": 0.5,
       "cooldown_months": 18,
@@ -530,6 +562,10 @@
       "summary": "Three days of rain and the valley is a lake. Two towns are cut off, the rail line is under water, and the prefect's damage list runs to forty communes. The works are not in question; whose answer it is, is.",
       "likelihood": 0.012,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "Three days of rain and the valley is a lake, two towns cut off, and the only real question is whose answer it is.",
       "severity": 2,
       "cooldown_months": 18,
       "respond_months": 2,
@@ -591,6 +627,10 @@
       "summary": "The fourteenth day over forty, the mortality figures moving, and the hospitals deferring surgery to hold the evening peak. Nobody in the country needs telling where summers like this one come from.",
       "likelihood": 0.016,
       "category": "disaster",
+      "speaker": {
+        "kind": "regional_figure"
+      },
+      "speaker_line": "Fourteenth day of it, hospitals are deferring surgery, and the mortality figures are moving in a direction nobody can ignore.",
       "severity": 1,
       "cooldown_months": 12,
       "respond_months": 2,

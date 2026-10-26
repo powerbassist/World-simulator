@@ -7,6 +7,10 @@
       "summary": "Wholesale gas is at the price the utilities warn about in papers nobody reads, storage is exactly where the operators said it would be, and the bill is still landing on every doorstep by February. The tariff is the policy now, whoever it belongs to.",
       "likelihood": 0.004,
       "category": "commodity",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "Wholesale price did what we warned, storage behaved, and now every household will see it on paper by February unless you choose.",
       "severity": 2,
       "weight": 1.5,
       "cooldown_months": 12,
@@ -70,6 +74,10 @@
       "summary": "The bread wheat failed two markets away -- weather, then logistics, then export bans, in the order they always arrive. The millers have covered a quarter of the gap and the bakers have done their own arithmetic about March.",
       "likelihood": 0.004,
       "category": "commodity",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The wheat crop two markets away has failed, the millers have covered a quarter of the gap, and the bakers have done their arithmetic about March already.",
       "severity": 1,
       "weight": 1.2,
       "cooldown_months": 12,
@@ -131,6 +139,10 @@
       "summary": "The producer of most of the world's battery minerals has moved two of them to a licence list in the same week, and the plant the car factories answer to has nine weeks of the old price left. The letter calls it industrial policy; the order books call it what it is.",
       "likelihood": 0.003,
       "category": "commodity",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "Two minerals moved to licence list this week, our plant holds nine weeks of old price, and a letter will not feed an order book.",
       "severity": 2,
       "weight": 1.2,
       "cooldown_months": 14,
@@ -199,6 +211,10 @@
       "summary": "The fertiliser plant is down for want of the gas it runs on, the import order is queued behind two bigger ones, and the co-op says the dressing window is six weeks. The farms will carry whatever the government decides; the question is whether the town shares it.",
       "likelihood": 0.0036,
       "category": "commodity",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "Fertiliser plant sits idle for want of gas, our import sits in a queue, and the co-op says six weeks is all the dressing window allows.",
       "severity": 2,
       "weight": 1.2,
       "cooldown_months": 12,
@@ -264,6 +280,10 @@
       "summary": "The lane that carries a third of the country's crude has closed for an inspection season nobody had scheduled, and the tankers are queueing at the anchorage in two directions. The strategic reserve is a flow and not a tank, which the operator now explains with a chart.",
       "likelihood": 0.0024,
       "category": "commodity",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The lane carrying a third of our crude has closed, tankers queue both ways, and I now have a chart explaining why reserve is flow not tank.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 14,
@@ -329,6 +349,10 @@
       "summary": "The copper belt's oldest mine has been out three weeks and the smelters on this side of the trade are running on named tonnes and good manners. Wire is a quarter of everything the grid builds, a figure the grid operator now mentions in every schedule.",
       "likelihood": 0.0024,
       "category": "commodity",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The belt's oldest mine has been out three weeks, smelters run on courtesy, and the grid operator counts that wire in every schedule it prints.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 14,
@@ -393,6 +417,10 @@
       "summary": "World prices for something the country's industry depends on are running well above the level budgets were set against, and the question on the desk is the one every government answers badly: absorb it, pass it through, or find somebody to blame. The world price does not care which. The kitchen tables keep a record.",
       "likelihood": 0.0033,
       "category": "commodity",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "World prices are running far above the level our budgets were set against, and I need to know whether we absorb it, pass it on, or find someone to blame.",
       "severity": 2,
       "cooldown_months": 8,
       "respond_months": 3,
@@ -456,6 +484,10 @@
       "summary": "World prices have been running at a level the federation's arithmetic cannot live with, and it has arrived with the sums: the mills are buying at margins that close in eight weeks. It would like the state to decide who eats the difference, the market having declined to.",
       "likelihood": 0.0033,
       "category": "commodity",
+      "speaker": {
+        "kind": "executive"
+      },
+      "speaker_line": "The federation's arithmetic says mill margins close in eight weeks, and it would like the state to decide who eats the difference.",
       "severity": 2,
       "cooldown_months": 10,
       "respond_months": 4,
