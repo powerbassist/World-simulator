@@ -379,6 +379,19 @@ def selftest() -> int:
                     pass
                 events[2]["speaker_line"] = "The union must act."
                 (root / "data" / "events" / "x.json").write_text(json.dumps({"events": events}), encoding="utf-8")
+                # The batch ceiling refuses before the account is asked or a clip is paid.
+                calls = []
+                try:
+                    run(root, False, "", 0, 10, secret, "2026-10-26",
+                        allowance_fn=lambda k: calls.append("allowance") or 1000,
+                        speak_fn=lambda k, v, t: calls.append("speak") or b"mp3",
+                        convert_fn=lambda a, p: made.append(p))
+                    fails.append("--run went over --max-chars")
+                except PipelineError as e:
+                    if "--max-chars" not in str(e):
+                        fails.append("the ceiling stopped with the wrong reason: %s" % e)
+                if calls:
+                    fails.append("the ceiling refused after calling %s" % calls)
                 try:
                     run(root, False, "", 990, 10000, secret, "2026-10-26",
                         allowance_fn=lambda k: 1000, speak_fn=lambda k, v, t: b"mp3",
