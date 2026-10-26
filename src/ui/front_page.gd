@@ -154,6 +154,12 @@ func dismiss() -> void:
 	_record = PackedStringArray()
 
 
+## Put the card away with no note: a loaded game's furniture starts empty.
+func clear() -> void:
+	hide()
+	_record = PackedStringArray()
+
+
 func _process(delta: float) -> void:
 	if visible:
 		advance(delta)

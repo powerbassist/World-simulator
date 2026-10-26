@@ -220,6 +220,15 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 ## Rewrites a live row's body in place. A standing row whose content ages --
 ## main.gd's "Your term" countdown -- must not be re-pushed to say so: that moves
 ## it. A gone id is a clean no-op.
+## A control under a row's header: the face of whoever brings the news (V5.2d). A gone
+## id is a clean no-op, like set_body().
+func add_face(id: String, face: Control) -> void:
+	if _cards.has(id):
+		var column: Control = _cards[id].get_child(0)
+		column.add_child(face)
+		column.move_child(face, 1)
+
+
 func set_body(id: String, body: String) -> void:
 	if _notes.has(id):
 		_notes[id]["body"] = body
