@@ -100,6 +100,8 @@ static func spends_text(spends: Dictionary, feel: Dictionary, due := -1) -> Stri
 	# V5.2c: a corrupt currency is paid in evidence -- nothing now, a scandal if found.
 	if spends.has("evidence"):
 		parts.append(Strings.t("nothing on the books, but it leaves evidence that can be found"))
+		# c1c rule 2: a corrupt win wins no loyalty and eases no grudge (Levers.outcome).
+		parts.append(Strings.t("it buys the act, not the person: no loyalty, no grudge eased"))
 	return "; ".join(parts) if not parts.is_empty() else Strings.t("costs nothing")
 
 

@@ -66,7 +66,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mood 35
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 18 --open overview
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request   (add --broken-word: the askers hold evidence)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step argue
@@ -355,6 +355,9 @@ var _months := 0
 ## first one's offered days; --audience books its first free day and reaches it, so
 ## the scene is up.
 var _request := ""
+## V5.2 c1c, with --request: the people asking hold evidence on the president, left
+## the month before they asked, so their cards carry the broken-word line.
+var _broken_word := false
 ## V5.2b b2: --audience-step plays the scene on: argue (one lever tried), promise (a
 ## promise made), spent (three attempts gone), closed (End pressed), diary (a
 ## promise made, the audience left, the Diary open on "Your word"); bargain, dates
@@ -885,6 +888,8 @@ func _init() -> void:
 			_console = "errors"
 		elif args[i] == "--mid-term":
 			_mid_term = true
+		elif args[i] == "--broken-word":
+			_broken_word = true
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
 		elif args[i] == "--audience-offer":
@@ -2039,6 +2044,9 @@ func _stage_requests() -> void:
 		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
 			Audiences._arrive(ns, person, person.wants[0], now, [])
 			asked += 1
+			if _broken_word:
+				ns.exposure_evidence.append({"kind": "favour", "person_id": String(person.id), "size": 1.0,
+					"month": now - 1, "leader_id": String(ns.head_of_state_person_id if ns.has_executive else ns.pm_person_id)})
 	Driver.refresh(_main)
 	var first: Dictionary = Audiences.pending(ns)[0] if not Audiences.pending(ns).is_empty() else {}
 	if first.is_empty() or _request == "--request":
