@@ -1489,6 +1489,13 @@ var exposure_evidence: Array[Dictionary] = []
 ## older save had exposed nothing, which is what absent reads.
 var exposures: Array[Dictionary] = []
 
+## V5.2d. The stories waiting for the next front page, in arrival order:
+## {kind: "event"|"moment", id, answer, severity}. src/sim/front_page.gd's
+## note() is the only writer and its close() at the month's end the only
+## reader, which empties it. Saved so a save between an answer and the close
+## keeps its headline; absent_ok, no bump -- an older save had nothing waiting.
+var front_page_pending: Array[Dictionary] = []
+
 # --- Audience requests (V5.2b) ----------------------------------------------------
 ## The REQUESTS lane: every request a person of this nation made to the
 ## president, pending and recently resolved, one row each --

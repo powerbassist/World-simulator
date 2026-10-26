@@ -56,6 +56,7 @@ const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const Bills = preload("res://src/sim/bills.gd")
 ## V5.2 b+ R2: the tabled bill's vote day. Calendar preloads nothing, so no cycle.
 const Calendar = preload("res://src/sim/calendar.gd")
+const FrontPage = preload("res://src/sim/front_page.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -1421,9 +1422,7 @@ static func _force(state, ns, party_list: Array, law, loader) -> Dictionary:
 		"passed": true,
 		"forced": true,
 		"majority": law.majority,
-		"yes_seats": 0,
-		"no_seats": 0,
-		"abstain_seats": 0,
+		"yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
 		"seats_total": ns.assembly_seats,
 		"party_votes": {},
 		"party_support": {},
@@ -1483,4 +1482,6 @@ static func _force(state, ns, party_list: Array, law, loader) -> Dictionary:
 	ns.last_censure = censure
 	result["censure"] = censure
 	ns.last_law_result = result
+	# V5.2d: the article's front-page moments (a bill carried, a government felled).
+	FrontPage.note_forced(state, ns, result)
 	return result

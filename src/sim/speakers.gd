@@ -66,11 +66,14 @@ static func _of_kind(ns, loader, ev, kind: String, pick: String, month_index: in
 
 
 ## The holder of an office. One the president holds is skipped for the head of
-## government; if that is the president's too, the narrator speaks.
+## government; if that is the president's too, the narrator speaks -- as for a
+## vacant office (a premiership left empty by a resignation act).
 static func _office(ns, loader, office: String) -> String:
 	var leader := President.leader_id(ns)
 	var holder := ""
 	match office:
+		"head_of_government":
+			holder = String(ns.pm_person_id)
 		"head_of_state":
 			holder = String(ns.head_of_state_person_id)
 		"largest_party_leader":
@@ -80,7 +83,7 @@ static func _office(ns, loader, office: String) -> String:
 				if party.id == largest:
 					# The override first: a challenge deposed the authored leader.
 					holder = String(ns.party_leader_override.get(party.id, party.leader_person_id))
-	if office == "head_of_government" or holder == leader or holder == "":
+	if holder == leader:
 		holder = String(ns.pm_person_id)
 	return "" if holder == leader or not loader.person_by_id.has(holder) else holder
 

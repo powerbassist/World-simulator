@@ -37,6 +37,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
+const FrontPage = preload("res://src/sim/front_page.gd")
 
 const NEUTRAL_POSITION := {"economic": 0.0, "social": 0.0}
 
@@ -338,4 +339,7 @@ static func tick_month(state, loader) -> void:
 			ns.last_resignation = {
 				"portfolio": f, "party_id": pid, "year": state.year, "month": state.month,
 			}
+			# V5.2d: a minister walking out is a front-page moment (the played
+			# nation's; FrontPage.note ignores the rest).
+			FrontPage.note_moment(state, ns, "character", "minister_resigned")
 			Government.penalise_blocs(ns, CK.RESIGNATION_BLOC_PENALTY)

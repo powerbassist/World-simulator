@@ -225,6 +225,12 @@ func _check_offices_skip_the_president() -> void:
 	var who := Speakers.resolve(state, ns, _loader, party, _index(state))
 	if who == "" or who == leader:
 		_failures.append("largest_party_leader resolved '%s'" % who)
+	# A vacant office is the narrator, not a stand-in.
+	var pm_before := String(ns.pm_person_id)
+	ns.pm_person_id = ""
+	if Speakers.resolve(state, ns, _loader, hog, _index(state)) != "":
+		_failures.append("a vacant head_of_government did not fall to the narrator")
+	ns.pm_person_id = pm_before
 	# Both offices the president's: the narrator speaks.
 	var pm := String(ns.pm_person_id)
 	ns.pm_person_id = leader

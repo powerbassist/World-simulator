@@ -77,6 +77,8 @@ const Cycle = preload("res://src/sim/cycle.gd")
 const EventHooks = preload("res://src/sim/event_hooks.gd")
 const EventChooser = preload("res://src/sim/event_chooser.gd")
 const Speakers = preload("res://src/sim/speakers.gd")
+const FrontPage = preload("res://src/sim/front_page.gd")
+const FrontPageK = preload("res://src/sim/front_page_constants.gd")
 
 
 ## Runs for every nation so the register shape is uniform and duplicate_state()
@@ -710,4 +712,9 @@ static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool,
 	ns.event_history.push_front(record)
 	while ns.event_history.size() > K.EVENTS_KEPT:
 		ns.event_history.remove_at(ns.event_history.size() - 1)
+	# V5.2d: a major or critical event earns a front page when it RESOLVES -- the
+	# press reports what the president did, or that they let the deadline pass.
+	# The played nation only (FrontPage.note ignores the rest).
+	if int(ev.severity) >= FrontPageK.EARNS_SEVERITY:
+		FrontPage.note(state, ns, "event", ev.id, String(choice.get("id", "")), int(ev.severity))
 	return record

@@ -169,6 +169,13 @@ static func press_spread(ns) -> float:
 ## un-aligned at the far corner, it is opposed, and a hostility that could never go
 ## negative would give a friendly press no channel -- which is the defect the mean
 ## anchor exists to fix, arriving a second time through the alignment term.
+## V5.2d. An outlet's alignment with the nation's government, the reader the
+## front page needs (src/sim/front_page.gd cuts it into tones): exposed here so
+## the press has ONE alignment, never a copy of _alignment below.
+static func outlet_alignment(outlet, ns) -> float:
+	return _alignment(outlet.position, ns.coalition_position)
+
+
 static func _alignment(a: Dictionary, b: Dictionary) -> float:
 	var de: float = float(a.get("economic", 0.0)) - float(b.get("economic", 0.0))
 	var ds: float = float(a.get("social", 0.0)) - float(b.get("social", 0.0))
