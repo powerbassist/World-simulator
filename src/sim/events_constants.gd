@@ -96,6 +96,13 @@ const SPEAKER_FORMS := ["kind", "office", "evidence_person", "foreign_head"]
 ## `pick` rides only on `kind`: the lowest or the highest rapport with the
 ## president instead of the seeded draw over the top three by standing.
 const SPEAKER_PICKS := ["hostile", "friendly"]
+## A kind's speaker is drawn from this many of its people with the highest
+## standing: few enough that faces recur and the player learns them, more than
+## one so a single person does not voice every strike of a term (the spec's
+## monoculture point).
+const SPEAKER_POOL := 3
+## The kind draw's own salt (I1): a stream no other draw shares.
+const SPEAKER_SALT := "speaker"
 
 ## ============================================================================
 ## V4.4 — events at scale. Everything below this line is new at V4.4 and the model

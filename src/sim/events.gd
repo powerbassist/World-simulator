@@ -76,6 +76,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const EventHooks = preload("res://src/sim/event_hooks.gd")
 const EventChooser = preload("res://src/sim/event_chooser.gd")
+const Speakers = preload("res://src/sim/speakers.gd")
 
 
 ## Runs for every nation so the register shape is uniform and duplicate_state()
@@ -478,9 +479,13 @@ static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -
 	if ev.once:
 		ns.event_fired[ev.id] = true
 	if is_player:
+		# V5.2d: the face is resolved HERE, once, and stored on the entry -- the
+		# registers it reads keep moving while the card waits (D6). The player's
+		# desk only: an AI nation has no card to show it on.
 		announce(
 			ns, ev, month_index,
-			region_names(ns, loader)
+			region_names(ns, loader),
+			Speakers.resolve(state, ns, loader, ev, month_index)
 		)
 		return true
 	var choice := EventChooser.choose(ns, ev)
@@ -533,7 +538,7 @@ static func region_names(ns, loader) -> Dictionary:
 ## that drive this primitive month after month must leave no cooldown state behind
 ## -- which holds for sweeps that never resolve: a sweep that answers the entry
 ## runs _resolve and stamps the cooldown and the quiet like any other resolution.
-static func announce(ns, ev, month_index: int, region_by_id: Dictionary) -> void:
+static func announce(ns, ev, month_index: int, region_by_id: Dictionary, speaker := "") -> void:
 	var entry := {
 		"event_id": ev.id,
 		"event_name": ev.event_name,
@@ -542,6 +547,10 @@ static func announce(ns, ev, month_index: int, region_by_id: Dictionary) -> void
 		"severity": int(ev.severity),
 		"category": ev.category,
 	}
+	# V5.2d: the person who brings it, resolved by the caller at delivery. Absent
+	# is the narrator -- what every entry before d carries, so no save bump.
+	if speaker != "":
+		entry["speaker"] = speaker
 	# V3.5: the place is drawn at announcement and stored BOTH WAYS -- the id, and
 	# the name beside it, because the calendar draws its diary row off this register
 	# and preloads nothing (the reason `event_name` above is copied in rather than
