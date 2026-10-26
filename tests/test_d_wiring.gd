@@ -13,6 +13,7 @@ extends SceneTree
 const DeskCards = preload("res://src/ui/desk_cards.gd")
 const Headlines = preload("res://src/ui/headlines.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -84,8 +85,12 @@ func _check_speaker() -> void:
 		_failures.append("an entry with a speaker has no face on its card")
 	else:
 		var text := _texts(face)
-		if not text.contains(String(person.person_name).to_upper()) or not text.contains(String(ev.speaker_line).strip_edges()):
+		if not text.contains(String(person.person_name)) or not text.contains(String(ev.speaker_line).strip_edges()):
 			_failures.append("the face does not carry the speaker's name and line: '%s'" % text)
+	# The summary under the face is body size, not caption: it carries the deadline.
+	for body in inbox.find_children("*", "RichTextLabel", true, false):
+		if body.theme_type_variation == UiTheme.RICH_CAPTION and body.get_parsed_text().contains("to answer"):
+			_failures.append("the summary under a speaker's face is still caption size")
 	inbox.clear()
 	DeskCards.push(_main, ev, {"event_id": String(ev.id), "months_left": 3, "severity": 2, "speaker": "nobody_by_this_id"})
 	if inbox.find_child("Speaker", true, false) != null:

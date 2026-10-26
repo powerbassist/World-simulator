@@ -31,8 +31,8 @@ static func build(loader, ev, entry: Dictionary):
 	words.add_theme_constant_override("separation", 2)
 	row.add_child(words)
 	var who := Label.new()
-	who.text = loader.person_name(person_id).to_upper()
-	who.theme_type_variation = UiTheme.MICRO
+	who.text = loader.person_name(person_id)
+	who.theme_type_variation = UiTheme.CAPTION
 	words.add_child(who)
 	PanelKit.plain_line(words, line, PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return row

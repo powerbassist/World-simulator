@@ -227,6 +227,9 @@ func add_face(id: String, face: Control) -> void:
 		var column: Control = _cards[id].get_child(0)
 		column.add_child(face)
 		column.move_child(face, 1)
+		# The person speaks first and the summary keeps the fact and the deadline the
+		# player acts on: body size under the line, not caption (parent's call, #190).
+		_bodies[id].theme_type_variation = ""
 
 
 func set_body(id: String, body: String) -> void:
