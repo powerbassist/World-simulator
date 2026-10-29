@@ -10,7 +10,7 @@
       "speaker": {
         "kind": "union_leader"
       },
-      "speaker_line": "My members have called two days of strike in every three, and the timetable is now a rumour, with each side waiting for the other to move first.",
+      "speaker_line": "My members are tired of waiting for a serious offer, and the timetable will stay broken until they get one.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 10,
@@ -86,7 +86,7 @@
       "speaker": {
         "kind": "activist"
       },
-      "speaker_line": "The ring road is a car park of tractors, the wholesale market has no produce, and the third line of their demands is the one they came for.",
+      "speaker_line": "We did not come to block the roads for fun, so listen to the third demand and we can all go home.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -158,7 +158,7 @@
       "speaker": {
         "kind": "activist"
       },
-      "speaker_line": "Two lecture halls and an amphitheatre have been occupied for a week over the fees review, and their communiques are better written than the ministry's.",
+      "speaker_line": "We will leave when someone with authority comes to talk to us, not before and not for threats.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 10,
@@ -218,7 +218,7 @@
       "speaker": {
         "kind": "activist"
       },
-      "speaker_line": "A police incident on the estate has become three nights of burning cars, and the cameras have decided that is where they live now.",
+      "speaker_line": "Nobody here wants more burning, but nobody here believes the promises either, so show up and listen first.",
       "severity": 3,
       "weight": 0.5,
       "cooldown_months": 24,
@@ -295,7 +295,7 @@
       "speaker": {
         "kind": "union_leader"
       },
-      "speaker_line": "My nurses have struck for the first time in a generation, and the wards are running on managers and agency staff at four times the wage.",
+      "speaker_line": "We are walking out because patience has run out, and the public will see who looked after the wards.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -369,7 +369,7 @@
       "speaker": {
         "kind": "activist"
       },
-      "speaker_line": "The pump price has crossed the number where hauliers park lorries across depot gates, and panic buying is doing their negotiating for them.",
+      "speaker_line": "Ordinary drivers cannot afford this price, and we will keep parking until someone in government says it out loud.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -433,7 +433,7 @@
       "speaker": {
         "kind": "union_leader"
       },
-      "speaker_line": "My teachers struck the exams rota first and pay talks second, which tells you which they think this government can afford to lose.",
+      "speaker_line": "We would rather be in the classroom, but the exams are the one lever that makes anyone pay attention.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 10,
@@ -513,7 +513,7 @@
       "speaker": {
         "kind": "activist"
       },
-      "speaker_line": "Three empty river blocks were occupied overnight and the movement has lawyers, a flag and eleven years of waiting behind it, so choose carefully.",
+      "speaker_line": "There are families on a waiting list older than some of us, and a lock on a door is not an answer.",
       "severity": 1,
       "weight": 0.5,
       "cooldown_months": 0,
@@ -583,7 +583,7 @@
       "speaker": {
         "kind": "activist"
       },
-      "speaker_line": "Pensioner federations filled the boulevard without burning a single bin, and their entire demand is one word, indexation.",
+      "speaker_line": "We marched in order and in silence because we expect to be heard, and we expect it to be remembered.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 16,
@@ -655,7 +655,7 @@
       "speaker": {
         "kind": "union_leader"
       },
-      "speaker_line": "Nobody at the two big ports is officially on strike, yet the container stacks reach the cranes and the fruit travels by rail.",
+      "speaker_line": "Nobody called a strike, but our people will keep slowing the work until their complaints are heard.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -723,7 +723,7 @@
       "speaker": {
         "kind": "union_leader"
       },
-      "speaker_line": "Federations have agreed date and list, they would rather have settlement than date, and you have a fortnight.",
+      "speaker_line": "I would rather settle than strike, but my members will hold me to the date if nothing real is on the table.",
       "severity": 2,
       "cooldown_months": 6,
       "respond_months": 2,

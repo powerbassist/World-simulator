@@ -57,6 +57,11 @@
       "friendly": "Defection changes little as government presses on",
       "neutral": "Prominent politician leaves party for another",
       "hostile": "Defection deals {{president}} a blow as politician changes sides"
+    },
+    "prime_minister_resigned": {
+      "friendly": "Prime minister steps down as {{party}} turns to a successor",
+      "neutral": "Prime minister resigns and the search for a successor begins",
+      "hostile": "Prime minister quits and leaves {{president}} with a government in disarray"
     }
   }
 }

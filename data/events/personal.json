@@ -11,7 +11,7 @@
       "speaker": {
         "office": "largest_party_leader"
       },
-      "speaker_line": "One of ours has voted with you every time and asked for nothing, until this week when the press asked what loyalty was for.",
+      "speaker_line": "A loyal member of mine wants a reason to stay loyal, and I think you should give them one soon.",
       "severity": 1,
       "cooldown_months": 18,
       "respond_months": 3,
@@ -88,7 +88,7 @@
       "speaker": {
         "office": "largest_party_leader"
       },
-      "speaker_line": "The weekend profile quotes eleven sources from inside your own government, all carefully attributed, and the writer was clearly handed the diary of summer's two worst weeks.",
+      "speaker_line": "Someone close to you spoke to the press, and I would like to know whether we respond or ignore it.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 18,
@@ -162,7 +162,7 @@
       "speaker": {
         "office": "largest_party_leader"
       },
-      "speaker_line": "The crossing was announced on the evening news, the speech took eight weeks to write, quotes your own manifesto nine times, and ends on the line our speechwriters rejected.",
+      "speaker_line": "I need to know what the party says about this betrayal, because my members will ask me before they ask you.",
       "severity": 2,
       "cooldown_months": 24,
       "respond_months": 2,
@@ -303,7 +303,7 @@
       "speaker": {
         "office": "largest_party_leader"
       },
-      "speaker_line": "The resignation letter thanked you for your confidence, the press read it in a day, and three names are running for the vacancy with committee votes counted twice.",
+      "speaker_line": "The vacancy will be filled by someone, and I would rather it be a person we choose than one the press chooses.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 12,
@@ -371,7 +371,7 @@
       "speaker": {
         "office": "largest_party_leader"
       },
-      "speaker_line": "A junior minister gave an interview about the leadership question entirely in the conditional, the Sunday papers ran it in the indicative, and the office says the transcript was doctored.",
+      "speaker_line": "The party will keep asking until someone answers, and I would rather it be you than the cameras.",
       "severity": 1,
       "cooldown_months": 18,
       "respond_months": 2,
