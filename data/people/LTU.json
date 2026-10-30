@@ -102,6 +102,7 @@
       "wealth_eur_m": 1.2,
       "name": "Eglė Klimaitė",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -246,6 +247,7 @@
       "id": "LTU_eidukas",
       "name": "Giedrė Eidukas",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "principled",
@@ -269,6 +271,7 @@
       "id": "LTU_grigas",
       "name": "Eglė Grigas",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -281,6 +284,7 @@
       "id": "LTU_jankauskas",
       "name": "Sigita Jankauskas",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "vain"
@@ -400,6 +404,7 @@
       "id": "LTU_ragauskas",
       "name": "Irena Ragauskas",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -490,6 +495,7 @@
       "id": "LTU_valancius",
       "name": "Vida Valančius",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious",
         "fervent"
@@ -530,6 +536,7 @@
       "id": "LTU_adamkevicius",
       "name": "Nijolė Adamkevičius",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "networked",
         "pragmatic",
@@ -552,6 +559,7 @@
       "id": "LTU_burokas",
       "name": "Vida Burokas",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -679,6 +687,7 @@
       "id": "LTU_ivanauskas",
       "name": "Eglė Ivanauskas",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic",
@@ -720,6 +729,7 @@
       "id": "LTU_kazlauskas",
       "name": "Rasa Kazlauskas",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -926,6 +936,7 @@
       "id": "LTU_zaborskis",
       "name": "Sigita Zaborskis",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "vain"
@@ -971,6 +982,7 @@
       "id": "LTU_dvariakis",
       "name": "Nijolė Dvariakis",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "pragmatic",
         "principled",
@@ -1012,6 +1024,7 @@
       "id": "LTU_bagdonas",
       "name": "Rasa Bagdonas",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -1038,6 +1051,7 @@
       "id": "LTU_ciurlionis",
       "name": "Laima Čiurlionis",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "principled",
         "vain"
@@ -1069,6 +1083,7 @@
       "id": "LTU_eimutis",
       "name": "Eglė Eimutis",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "fervent",
@@ -1087,6 +1102,7 @@
       "id": "LTU_gaska",
       "name": "Nijolė Gaška",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "principled"
       ],
@@ -1148,6 +1164,7 @@
       "id": "LTU_chief_bendrove_maciulis",
       "name": "Rasa Mačiulis",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -1160,6 +1177,7 @@
       "id": "LTU_chief_vaicekauskas",
       "name": "Sigita Vaicekauskas",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -1172,6 +1190,7 @@
       "id": "LTU_chief_prekybos_namai_mazeika",
       "name": "Sigita Mažeika",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -1261,6 +1280,7 @@
       "id": "LTU_chief_bankas_emuzis",
       "name": "Laima Ėmužis",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal"
@@ -1272,6 +1292,7 @@
       "id": "LTU_chief_vaitkus_prekyba",
       "name": "Aistė Vaitkus",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked",

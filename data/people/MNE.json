@@ -29,6 +29,7 @@
       "wealth_eur_m": 1.3,
       "name": "Dragana Vukčević",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -71,6 +72,7 @@
       "wealth_eur_m": 0.83,
       "name": "Ivana Raičević",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "principled"
@@ -163,6 +165,7 @@
       "id": "MNE_chief_mijatovic_trgovina",
       "name": "Sanja Mijatović",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -208,6 +211,7 @@
       "id": "MNE_chief_banka_vucinic",
       "name": "Ivana Vučinić",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -252,6 +256,7 @@
       "id": "MNE_chief_drustvo_vujovic",
       "name": "Ljubica Vujović",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -286,6 +291,7 @@
       "id": "MNE_chief_durisic_materijali",
       "name": "Zorana Đurišić",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic"

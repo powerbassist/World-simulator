@@ -64,6 +64,7 @@
       "wealth_eur_m": 5.9,
       "name": "Elena Iordache",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -178,6 +179,7 @@
       "id": "ROU_alecsandrescu",
       "name": "Florentina Alecsandrescu",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "networked",
         "vain"
@@ -233,6 +235,7 @@
       "id": "ROU_dobrescu",
       "name": "Nadia Dobrescu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -279,6 +282,7 @@
       "id": "ROU_filipescu",
       "name": "Florentina Filipescu",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal"
       ],
@@ -341,6 +345,7 @@
       "id": "ROU_jalea",
       "name": "Camelia Jalea",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -391,6 +396,7 @@
       "id": "ROU_lupescu",
       "name": "Ilinca Lupescu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "pragmatic"
@@ -427,6 +433,7 @@
       "id": "ROU_nastase",
       "name": "Ilinca Năstase",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -485,6 +492,7 @@
       "id": "ROU_rosetti",
       "name": "Viorica Rosetti",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "principled",
@@ -512,6 +520,7 @@
       "id": "ROU_sturdza",
       "name": "Larisa Sturdza",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "networked",
         "principled",
@@ -525,6 +534,7 @@
       "id": "ROU_titulescu",
       "name": "Camelia Titulescu",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "pragmatic",
         "vain"
@@ -546,6 +556,7 @@
       "id": "ROU_ureche",
       "name": "Mioara Ureche",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "fervent",
         "pragmatic"
@@ -585,6 +596,7 @@
       "id": "ROU_zamfirescu",
       "name": "Rodica Zamfirescu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -616,6 +628,7 @@
       "id": "ROU_bratianu",
       "name": "Georgeta Brătianu",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "principled"
@@ -628,6 +641,7 @@
       "id": "ROU_cirstea",
       "name": "Viorica Cîrstea",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "principled",
         "vain"
@@ -683,6 +697,7 @@
       "id": "ROU_falcoianu",
       "name": "Camelia Fălcoianu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -862,6 +877,7 @@
       "id": "ROU_racovita",
       "name": "Nadia Racoviță",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -915,6 +931,7 @@
       "id": "ROU_tanasescu",
       "name": "Camelia Tănăsescu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -998,6 +1015,7 @@
       "spouse_id": "ROU_stanciu",
       "name": "Elena Brădeanu",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "principled",
         "vain"
@@ -1038,6 +1056,7 @@
       "id": "ROU_dumitresc",
       "name": "Doina Dumitresc",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "stubborn",
@@ -1118,6 +1137,7 @@
       "id": "ROU_ghica",
       "name": "Elena Ghica",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "vain"
@@ -1161,6 +1181,7 @@
       "id": "ROU_iorceanu",
       "name": "Adina Iorceanu",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -1180,6 +1201,7 @@
       "id": "ROU_chief_banca_slatineanu",
       "name": "Viorica Slătineanu",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1275,6 +1297,7 @@
       "id": "ROU_chief_hurmuzache_agricultura",
       "name": "Elena Hurmuzache",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic",
@@ -1287,6 +1310,7 @@
       "id": "ROU_chief_companie_dobrescu",
       "name": "Camelia Dobrescu",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -1309,6 +1333,7 @@
       "id": "ROU_chief_companie_bratianu",
       "name": "Adina Brătianu",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic",

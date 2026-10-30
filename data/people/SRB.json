@@ -58,6 +58,7 @@
       "wealth_eur_m": 0.33,
       "name": "Jelena Lazić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "fervent"
@@ -235,6 +236,7 @@
       "id": "SRB_chief_banka_vukovic",
       "name": "Jasmina Vuković",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -294,6 +296,7 @@
       "id": "SRB_chief_ilic",
       "name": "Nada Ilić",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal"

@@ -54,6 +54,7 @@
       "wealth_eur_m": 5.0,
       "name": "Rocío Sanchís",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -105,6 +106,7 @@
       "wealth_eur_m": 3.9,
       "name": "Nuria Palomares",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal"
@@ -180,6 +182,7 @@
       "id": "ESP_cadalso",
       "name": "Carlota Cadalso",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -199,6 +202,7 @@
       "id": "ESP_delgado",
       "name": "Almudena Delgado",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -251,6 +255,7 @@
       "id": "ESP_figueroa",
       "name": "Marisol Figueroa",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -272,6 +277,7 @@
       "id": "ESP_grijalba",
       "name": "Gloria Grijalba",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled"
       ],
@@ -409,6 +415,7 @@
       "id": "ESP_olivencia",
       "name": "Nuria Olivencia",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "stubborn",
         "vain"
@@ -426,6 +433,7 @@
       "id": "ESP_palazuelos",
       "name": "Gloria Palazuelos",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -466,6 +474,7 @@
       "id": "ESP_rentero",
       "name": "Silvia Rentero",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "pragmatic"
@@ -564,6 +573,7 @@
       "id": "ESP_yague",
       "name": "Rocío Yagüe",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "pragmatic",
@@ -582,6 +592,7 @@
       "id": "ESP_zamorano",
       "name": "Rocío Zamorano",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -608,6 +619,7 @@
       "id": "ESP_aranda",
       "name": "Lourdes Aranda",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic",
@@ -631,6 +643,7 @@
       "id": "ESP_berrocal",
       "name": "Carlota Berrocal",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn"
       ],
@@ -718,6 +731,7 @@
       "id": "ESP_galindez",
       "name": "Silvia Galíndez",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "vain"
@@ -764,6 +778,7 @@
       "id": "ESP_ibanez",
       "name": "Belén Ibáñez",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "networked",
@@ -777,6 +792,7 @@
       "id": "ESP_jove",
       "name": "Carlota Jové",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -821,6 +837,7 @@
       "id": "ESP_mendive",
       "name": "Silvia Mendive",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -871,6 +888,7 @@
       "id": "ESP_quintanilla",
       "name": "Esperanza Quintanilla",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked"
       ],
@@ -917,6 +935,7 @@
       "id": "ESP_villalobos",
       "name": "Silvia Villalobos",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -939,6 +958,7 @@
       "id": "ESP_arriaga",
       "name": "Lourdes Arriaga",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -1049,6 +1069,7 @@
       "id": "ESP_gutierre",
       "name": "Silvia Gutierre",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "fervent",
         "stubborn"
@@ -1071,6 +1092,7 @@
       "id": "ESP_huertas",
       "name": "Lourdes Huertas",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "networked",
@@ -1093,6 +1115,7 @@
       "id": "ESP_ibarrola",
       "name": "Gloria Ibarrola",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -1120,6 +1143,7 @@
       "id": "ESP_chief_compania_urenda",
       "name": "Nuria Urenda",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -1142,6 +1166,7 @@
       "id": "ESP_chief_aranda_transportes",
       "name": "Lourdes Aranda",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -1153,6 +1178,7 @@
       "id": "ESP_chief_arriaga_construccion",
       "name": "Esperanza Arriaga",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",

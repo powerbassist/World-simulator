@@ -30,6 +30,7 @@
       "wealth_eur_m": 7.2,
       "name": "Birte Sørensen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -100,6 +101,7 @@
       "wealth_eur_m": 1.6,
       "name": "Astrid Dahl",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -127,6 +129,7 @@
       "wealth_eur_m": 1.4,
       "name": "Rikke Brandt",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -177,6 +180,7 @@
       "id": "DNK_abildgaard",
       "name": "Elly Abildgaard",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "principled"
@@ -215,6 +219,7 @@
       "id": "DNK_clemmensen",
       "name": "Astrid Clemmensen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic",
@@ -242,6 +247,7 @@
       "id": "DNK_damgaard",
       "name": "Freja Damgaard",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled"
       ],
@@ -359,6 +365,7 @@
       "id": "DNK_jerndorff",
       "name": "Karen Jerndorff",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "pragmatic"
       ],
@@ -405,6 +412,7 @@
       "id": "DNK_moller",
       "name": "Freja Møller",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "pragmatic",
         "vain"
@@ -423,6 +431,7 @@
       "id": "DNK_norregaard",
       "name": "Elly Nørregaard",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -529,6 +538,7 @@
       "id": "DNK_skytte",
       "name": "Sigrid Skytte",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -604,6 +614,7 @@
       "id": "DNK_wiborg",
       "name": "Freja Wiborg",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "loyal",
         "stubborn"
@@ -625,6 +636,7 @@
       "id": "DNK_ostergaard",
       "name": "Sigrid Østergaard",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -651,6 +663,7 @@
       "id": "DNK_aaskov",
       "name": "Bodil Aaskov",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -700,6 +713,7 @@
       "id": "DNK_clitgas",
       "name": "Sigrid Clitgas",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -908,6 +922,7 @@
       "id": "DNK_nordenhof",
       "name": "Inge Nordenhof",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "principled",
         "stubborn"
@@ -949,6 +964,7 @@
       "id": "DNK_schroder",
       "name": "Bodil Schrøder",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "networked"
@@ -970,6 +986,7 @@
       "id": "DNK_ahlefeldt",
       "name": "Astrid Ahlefeldt",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "loyal",
@@ -988,6 +1005,7 @@
       "id": "DNK_bircherod",
       "name": "Astrid Bircherod",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -1047,6 +1065,7 @@
       "id": "DNK_friis_moller",
       "name": "Karen Friis-Møller",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "stubborn",
@@ -1070,6 +1089,7 @@
       "id": "DNK_gjedde",
       "name": "Bodil Gjedde",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "fervent",
         "pragmatic"
@@ -1088,6 +1108,7 @@
       "id": "DNK_heering",
       "name": "Karen Heering",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "vain"
@@ -1109,6 +1130,7 @@
       "id": "DNK_krogsgaard",
       "name": "Astrid Krogsgaard",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "vain"
@@ -1127,6 +1149,7 @@
       "id": "DNK_chief_bank_wium",
       "name": "Freja Wium",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"

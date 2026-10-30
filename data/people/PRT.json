@@ -105,6 +105,7 @@
       "wealth_eur_m": 2.3,
       "name": "Filipa Pacheco",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "stubborn",
@@ -153,6 +154,7 @@
       "wealth_eur_m": 3.3,
       "name": "Beatriz Beja",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -247,6 +249,7 @@
       "id": "PRT_delgado",
       "name": "Elvira Delgado",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -259,6 +262,7 @@
       "id": "PRT_esteves",
       "name": "Joana Esteves",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent"
@@ -285,6 +289,7 @@
       "id": "PRT_freitas",
       "name": "Filipa Freitas",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -303,6 +308,7 @@
       "id": "PRT_guerra",
       "name": "Natália Guerra",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -321,6 +327,7 @@
       "id": "PRT_hilario",
       "name": "Catarina Hilário",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "fervent",
@@ -339,6 +346,7 @@
       "id": "PRT_isidoro",
       "name": "Graça Isidoro",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "principled"
@@ -365,6 +373,7 @@
       "id": "PRT_janes",
       "name": "Inês Janes",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "principled",
@@ -425,6 +434,7 @@
       "id": "PRT_nogueira",
       "name": "Natália Nogueira",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -547,6 +557,7 @@
       "id": "PRT_tavares",
       "name": "Marília Tavares",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "principled"
@@ -595,6 +606,7 @@
       "id": "PRT_braganca",
       "name": "Beatriz Bragança",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "networked",
@@ -700,6 +712,7 @@
       "id": "PRT_goncalves",
       "name": "Natália Gonçalves",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled",
@@ -742,6 +755,7 @@
       "id": "PRT_juliao",
       "name": "Marília Julião",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -764,6 +778,7 @@
       "id": "PRT_leitao",
       "name": "Marília Leitão",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "loyal"
@@ -857,6 +872,7 @@
       "id": "PRT_simoes",
       "name": "Marília Simões",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal"
       ],
@@ -882,6 +898,7 @@
       "id": "PRT_trindade",
       "name": "Dulce Trindade",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "principled"
@@ -900,6 +917,7 @@
       "id": "PRT_valente",
       "name": "Joana Valente",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "loyal",
         "principled"
@@ -917,6 +935,7 @@
       "id": "PRT_xavier",
       "name": "Catarina Xavier",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent"
       ],
@@ -977,6 +996,7 @@
       "id": "PRT_barreto",
       "name": "Amália Barreto",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -1068,6 +1088,7 @@
       "id": "PRT_furtado",
       "name": "Marília Furtado",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "vain"
@@ -1080,6 +1101,7 @@
       "id": "PRT_godinho",
       "name": "Inês Godinho",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -1105,6 +1127,7 @@
       "id": "PRT_horta",
       "name": "Filipa Horta",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal"
       ],
@@ -1179,6 +1202,7 @@
       "id": "PRT_chief_almeirim_seguros",
       "name": "Beatriz Almeirim",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -1201,6 +1225,7 @@
       "id": "PRT_chief_sequeira_grupo",
       "name": "Joana Sequeira",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -1212,6 +1237,7 @@
       "id": "PRT_chief_mascarenhas",
       "name": "Natália Mascarenhas",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -1234,6 +1260,7 @@
       "id": "PRT_chief_ourique_transportes",
       "name": "Natália Ourique",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -1268,6 +1295,7 @@
       "spouse_id": "PRT_salgueiro",
       "name": "Elvira Aguiar",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -1291,6 +1319,7 @@
       "id": "PRT_chief_guerra_grupo",
       "name": "Beatriz Guerra",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic"

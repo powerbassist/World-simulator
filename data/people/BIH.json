@@ -7,6 +7,7 @@
       "spouse_id": "BIH_chief_zukic_materijali",
       "name": "Marija Jelavić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "networked"
@@ -77,6 +78,7 @@
       "wealth_eur_m": 0.73,
       "name": "Amra Hodžić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "pragmatic"
@@ -206,6 +208,7 @@
       "spouse_id": "BIH_jelavic",
       "name": "Nermina Zukić",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -250,6 +253,7 @@
       "id": "BIH_chief_mujic_energija",
       "name": "Vesna Mujić",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -262,6 +266,7 @@
       "id": "BIH_chief_zukic_logistika",
       "name": "Merima Zukić",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -273,6 +278,7 @@
       "id": "BIH_chief_trgovacka_kuca_halilovic",
       "name": "Belma Halilović",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "stubborn"

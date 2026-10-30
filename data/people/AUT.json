@@ -29,6 +29,7 @@
       "wealth_eur_m": 1.9,
       "name": "Ingrid Haslinger",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -81,6 +82,7 @@
       "wealth_eur_m": 2.2,
       "name": "Theresa Aichinger",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "principled"
@@ -124,6 +126,7 @@
       "wealth_eur_m": 5.5,
       "name": "Elisabeth Kranzler",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -224,6 +227,7 @@
       "id": "AUT_dienstl",
       "name": "Gerti Dienstl",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "vain"
@@ -362,6 +366,7 @@
       "id": "AUT_kienast",
       "name": "Ingrid Kienast",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "loyal",
         "networked"
@@ -441,6 +446,7 @@
       "id": "AUT_oberhauser",
       "name": "Ingrid Oberhauser",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "loyal",
         "stubborn"
@@ -475,6 +481,7 @@
       "id": "AUT_quendler",
       "name": "Johanna Quendler",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal"
@@ -547,6 +554,7 @@
       "id": "AUT_unterberger",
       "name": "Mitzi Unterberger",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -593,6 +601,7 @@
       "id": "AUT_wiesner",
       "name": "Gerti Wiesner",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal"
       ],
@@ -696,6 +705,7 @@
       "id": "AUT_ederer",
       "name": "Hanna Ederer",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious"
       ],
@@ -759,6 +769,7 @@
       "id": "AUT_hafner",
       "name": "Aloisia Hafner",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -819,6 +830,7 @@
       "id": "AUT_matischek",
       "name": "Elisabeth Matischek",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -912,6 +924,7 @@
       "id": "AUT_steinbauer",
       "name": "Barbara Steinbauer",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -952,6 +965,7 @@
       "id": "AUT_achleitner",
       "name": "Karin Achleitner",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -1033,6 +1047,7 @@
       "id": "AUT_fraungruber",
       "name": "Barbara Fraungruber",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -1052,6 +1067,7 @@
       "id": "AUT_grabner",
       "name": "Aloisia Grabner",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -1074,6 +1090,7 @@
       "id": "AUT_hiebler",
       "name": "Elisabeth Hiebler",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "loyal",
         "pragmatic",
@@ -1157,6 +1174,7 @@
       "id": "AUT_chief_gesellschaft_grabner",
       "name": "Barbara Grabner",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -1226,6 +1244,7 @@
       "id": "AUT_chief_iro_energie",
       "name": "Christine Iro",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"

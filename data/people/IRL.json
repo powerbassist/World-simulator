@@ -6,6 +6,7 @@
       "wealth_eur_m": 2.3,
       "name": "Aoife Lavelle",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -68,6 +69,7 @@
       "wealth_eur_m": 2.6,
       "name": "Niamh Tarrant",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -113,6 +115,7 @@
       "wealth_eur_m": 3.1,
       "name": "Saoirse Nolan",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -180,6 +183,7 @@
       "id": "IRL_aherne",
       "name": "Grainne Aherne",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -207,6 +211,7 @@
       "id": "IRL_blacker",
       "name": "Deirdre Blacker",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -334,6 +339,7 @@
       "id": "IRL_henchy",
       "name": "Sinead Henchy",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled",
@@ -379,6 +385,7 @@
       "id": "IRL_joyce",
       "name": "Ita Joyce",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "principled"
@@ -413,6 +420,7 @@
       "id": "IRL_laffan",
       "name": "Caitriona Laffan",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "stubborn",
         "vain"
@@ -431,6 +439,7 @@
       "spouse_id": "IRL_kinsella",
       "name": "Sinead Mulvihill",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "pragmatic"
@@ -472,6 +481,7 @@
       "id": "IRL_o_boyle",
       "name": "Caitriona O'Boyle",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "principled"
@@ -494,6 +504,7 @@
       "id": "IRL_prendergast",
       "name": "Nuala Prendergast",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "vain"
@@ -506,6 +517,7 @@
       "id": "IRL_quinlivan",
       "name": "Sinead Quinlivan",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "networked"
@@ -523,6 +535,7 @@
       "id": "IRL_ronayne",
       "name": "Fiona Ronayne",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -763,6 +776,7 @@
       "id": "IRL_fitzgerald",
       "name": "Deirdre Fitzgerald",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -800,6 +814,7 @@
       "id": "IRL_hannon",
       "name": "Fiona Hannon",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -949,6 +964,7 @@
       "id": "IRL_swords",
       "name": "Maeve Swords",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -961,6 +977,7 @@
       "id": "IRL_tyrrell",
       "name": "Deirdre Tyrrell",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "stubborn"
       ],
@@ -1088,6 +1105,7 @@
       "id": "IRL_griffey",
       "name": "Aine Griffey",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "vain"
@@ -1186,6 +1204,7 @@
       "id": "IRL_chief_gantly_transport",
       "name": "Fiona Gantly",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -1232,6 +1251,7 @@
       "id": "IRL_chief_henchy_agri",
       "name": "Sinead Henchy",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -1243,6 +1263,7 @@
       "id": "IRL_chief_usher_group",
       "name": "Caitriona Usher",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked",

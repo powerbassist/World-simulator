@@ -35,6 +35,7 @@
       "wealth_eur_m": 3.2,
       "name": "Selin Aydın",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "networked"
@@ -58,6 +59,7 @@
       "wealth_eur_m": 2.9,
       "name": "Rojda Kaya",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -100,6 +102,7 @@
       "wealth_eur_m": 3.8,
       "name": "Ayten Çelik",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -194,6 +197,7 @@
       "id": "TUR_chief_dincer",
       "name": "Tülin Dinçer",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -205,6 +209,7 @@
       "id": "TUR_chief_sahin_enerji",
       "name": "Tülin Şahin",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked",
