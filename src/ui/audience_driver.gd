@@ -23,6 +23,7 @@ const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const President = preload("res://src/sim/president.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
 
 const WINDOW := "audience"
 
@@ -132,7 +133,7 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"ask": PersonCard.object_text(loader, ns, String(request["object"]), request),
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
-		"by": Words.when(last),
+		"by": Words.when(last), "party": PartyChip.of(loader, ns, String(request["person_id"])),
 		"price": Words.price_text(price, Feelings.of(ns, String(request["person_id"]))), "broken_word": price.has("broken_word"),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
 

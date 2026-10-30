@@ -229,12 +229,19 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 ## id is a clean no-op, like set_body().
 func add_face(id: String, face: Control) -> void:
 	if _cards.has(id):
-		var column: Control = _cards[id].get_child(0)
-		column.add_child(face)
-		column.move_child(face, 1)
+		add_under_title(id, face)
 		# The person speaks first and the summary keeps the fact and the deadline the
 		# player acts on: body size under the line, not caption (parent's call, #190).
 		_bodies[id].theme_type_variation = ""
+
+
+## A control right under a row's header, the body left as it is (V5.2 close R3: a
+## request's party chip). A gone id is a clean no-op.
+func add_under_title(id: String, control: Control) -> void:
+	if _cards.has(id):
+		var column: Control = _cards[id].get_child(0)
+		column.add_child(control)
+		column.move_child(control, 1)
 
 
 func set_body(id: String, body: String) -> void:

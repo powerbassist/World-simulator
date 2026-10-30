@@ -22,6 +22,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 
 static var _games := {}
 
@@ -91,12 +92,14 @@ static func _dial(main, game: Dictionary, what: String, args: Dictionary) -> voi
 	var r := Phone.dial(state, state.player(), main._loader, String(game["person_id"]), what, args)
 	var text := ""
 	var titles: Array = []
+	var tone := ResultTone.BLOCKED
 	if not bool(r.get("ok", false)):
 		text = Words.reason(String(r.get("error", "")))
 	else:
 		var paid := Words.paid_text(r.get("spent", {}), r.get("effects", {}), main._loader.person_name, Feelings.of(state.player(), String(game["person_id"])))
 		if LK.LEVERS.has(what):
 			var won := bool(r.get("success", false))
+			tone = ResultTone.GOOD if won else ResultTone.BAD
 			text = Strings.t("They agree: the request is answered by phone.") if won else Strings.t("They are not moved. The request stays open.")
 			if paid != "":
 				text += " " + Words.changed(paid)
@@ -106,7 +109,8 @@ static func _dial(main, game: Dictionary, what: String, args: Dictionary) -> voi
 		else:
 			text = Words.changed(paid)
 			titles = ["topic_" + what]
-	game["dialog"].show_result(text, titles, {"lever": Words.lever(what), "topic": Words.topic(what)})
+			tone = ResultTone.of_rapport(float((r.get("effects", {}) as Dictionary).get("rapport", 0.0)))
+	game["dialog"].show_result(text, titles, {"lever": Words.lever(what), "topic": Words.topic(what)}, tone)
 	game["on_change"].call()
 	main._windows.mark_all_dirty()
 

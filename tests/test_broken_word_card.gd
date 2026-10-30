@@ -23,7 +23,7 @@ const REASON := "They hold something on you. Refusing them breaks your word."
 ## The scene's close line, caught: AudienceTalks.end() only calls show_close().
 class CloseCatcher:
 	var text := ""
-	func show_close(_outcome: String, said: String) -> void:
+	func show_close(_outcome: String, said: String, _tone := "") -> void:
 		text = said
 
 

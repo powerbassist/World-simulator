@@ -21,6 +21,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 
 const SIZE := Vector2(760, 0)
 
@@ -31,6 +32,9 @@ var _why: Label
 var _resource = null
 var _view := {}
 var _result: Label
+## V5.2 close R5: the result's STATUS-toned word, inline before it (the scene's).
+var _tone: Label
+var _said: HBoxContainer
 var _close: Button
 
 
@@ -49,9 +53,18 @@ func _ready() -> void:
 	root.add_child(verbs)
 	verbs.attempted.connect(func(lever: String, args: Dictionary) -> void: dialed.emit(lever, args))
 	verbs.talked.connect(func(topic: String, args: Dictionary) -> void: dialed.emit(topic, args))
+	_said = HBoxContainer.new()
+	_said.add_theme_constant_override("separation", 10)
+	root.add_child(_said)
+	_tone = Label.new()
+	_tone.name = "ResultTone"  # i18n: ok a node name, found by tests
+	_tone.uppercase = true
+	_tone.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_said.add_child(_tone)
 	_result = Label.new()
 	_result.autowrap_mode = TextServer.AUTOWRAP_WORD
-	root.add_child(_result)
+	_result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_said.add_child(_result)
 	_close = PanelKit.sized(Button.new())
 	_close.text = tr("Close")
 	_close.pressed.connect(func() -> void: closed.emit())
@@ -75,6 +88,7 @@ func open(view: Dictionary) -> void:
 	_why.show()
 	_result.text = ""
 	_result.hide()
+	_said.hide()
 	verbs.visible = why == ""
 	# Without an open request the call has nothing to ask: the sim offers topics
 	# only, and the line says why the levers are absent rather than leaving a gap.
@@ -92,9 +106,11 @@ func open(view: Dictionary) -> void:
 
 ## The call is made: what it did, and the verbs down. `titles`: the lines it
 ## ends on, in the person's mouth (a lever's, then the call's close).
-func show_result(text: String, titles: Array = [], extra := {}) -> void:
+func show_result(text: String, titles: Array = [], extra := {}, tone := "") -> void:
 	_result.text = text
 	_result.visible = not text.is_empty()
+	_said.visible = _result.visible
+	ResultTone.apply(_tone, tone)
 	verbs.visible = false
 	_why.text = ""
 	_why.hide()

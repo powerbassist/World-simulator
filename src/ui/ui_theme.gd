@@ -1,5 +1,6 @@
 extends RefCounted
 
+const OptionCheckStyle = preload("res://src/ui/option_check_style.gd")
 const AccentRule = preload("res://src/ui/accent_rule.gd")
 
 ## The game's one Theme -- U3, retuned at U5a. Before U3, three separate places
@@ -104,6 +105,7 @@ const GOOD_TEXT := "GoodText"        ## a delta that is good news
 const BAD_TEXT := "BadText"          ## a delta that is bad news
 const WARN_TEXT := "WarnText"        ## something waits on the player (V5.1-d1b3: why the clock holds)
 const BAD_SMALL := "BadSmall"        ## bad news at the caption size (V5.2-0b: a law's blocking glyph)
+const GOOD_SMALL := "GoodSmall"      ## good news at the caption size (V5.2 close R5: a result's tag)
 ## V5.1-c. The same tones for a RichTextLabel (term_text.gd), which reads
 ## default_color and normal_font_size where a Label reads font_color and font_size.
 const RICH_CAPTION := "RichCaption"
@@ -120,6 +122,7 @@ const TITLE_BAR := "TitleBar"             ## a floating window's grab handle
 const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
 const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-row
 const REQUESTS_BUTTON := "RequestsButton" ## the title bar's "requests waiting" mark (V5.2 pre-gate)
+const OPTION_CHECK := "OptionCheck"       ## an option on a verb, not a verb (V5.2 close R4: the audience's Lie)
 
 ## The accent in force: the played nation's, set by apply() and read by everything
 ## that draws "you are here" -- the theme below, the map's own marks. Static
@@ -318,7 +321,7 @@ static func _panels(theme: Theme) -> void:
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL]:
+	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
@@ -377,6 +380,8 @@ static func _labels(theme: Theme) -> void:
 	theme.set_font_size("font_size", WARN_TEXT, _px(SIZE_SMALL))
 	theme.set_color("font_color", BAD_SMALL, BAD)
 	theme.set_font_size("font_size", BAD_SMALL, _px(SIZE_SMALL))
+	theme.set_color("font_color", GOOD_SMALL, GOOD)
+	theme.set_font_size("font_size", GOOD_SMALL, _px(SIZE_SMALL))
 
 
 static func _rich(theme: Theme) -> void:
@@ -447,6 +452,10 @@ static func _buttons(theme: Theme) -> void:
 	theme.set_stylebox("focus", REQUESTS_BUTTON, _button_box(Color(0, 0, 0, 0), WARN))
 	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
 		theme.set_color(state, REQUESTS_BUTTON, WARN)
+
+	# V5.2 close R4: an option ON a verb, not a verb (option_check_style.gd says why).
+	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(SLATE),
+		_button_box(Color(0, 0, 0, 0), _accent)], _px(SIZE_SMALL), TEXT_DIM, TEXT, WARN)
 
 
 ## Used for share-of-a-whole bars (Economy's sector split). The engine default

@@ -18,6 +18,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
 
 var _request_id := ""
 
@@ -32,15 +33,20 @@ func request_id() -> String:
 	return _request_id
 
 
-## `row` is the lane's row ({id, person, ask}); `dates` the offered days
-## [{year, month, day, free, reason}].
+## `row` is the lane's row ({id, person, ask, wants, party}); `dates` the offered
+## days [{year, month, day, free, reason}].
 func open_for(row: Dictionary, dates: Array) -> void:
 	_request_id = String(row["id"])
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
 	PanelKit.heading(self, Strings.t("Audience: %s") % String(row.get("person", "")))
-	PanelKit.line(self, String(row.get("ask", "")), PanelKit.Tone.PLAIN)
+	# V5.2 close R3: the person's party, under their name.
+	if row.has("party"):
+		add_child(PartyChip.make(row["party"]))
+	# What they want with its stance ("opposes ..."), as their card says it: the
+	# bare object read as if they asked FOR a law they oppose.
+	PanelKit.line(self, String(row.get("wants", row.get("ask", ""))), PanelKit.Tone.PLAIN)
 	var days := PanelKit.buttons(self)
 	for date in dates:
 		var day := Button.new()

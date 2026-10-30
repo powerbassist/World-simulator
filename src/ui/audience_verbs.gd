@@ -185,10 +185,13 @@ func _date_pick(row: Dictionary, now: int, spend: Label, args: Dictionary, feel:
 
 ## V5.2c: argue and a promise can be told as a lie (Lies) -- the lie's own odds
 ## while ticked, and what a caught lie costs on the hover, before the click.
+## V5.2 close R4: an option on the lever, worded as one ("Argue  [] as a lie"), in
+## the flat OPTION_CHECK look -- a plated "Lie" box read as a verb of its own.
 func _lie_toggle(row: Dictionary, odds: Label, args: Dictionary, feel: Dictionary) -> CheckBox:
 	var told := CheckBox.new()
 	told.name = "Lie"
-	told.text = tr("Lie")
+	told.theme_type_variation = UiTheme.OPTION_CHECK
+	told.text = tr("as a lie")
 	told.tooltip_text = Words.lie_text(feel, String(row["lever"]))
 	var honest := odds.text
 	var lie: Dictionary = row["lie"]

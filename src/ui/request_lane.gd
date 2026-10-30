@@ -24,6 +24,7 @@ signal call_requested(request_id: String)
 signal seen(request_id: String)
 
 const Strings = preload("res://src/ui/strings.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
 
 ## The answers, in the card's order: the index card_action() carries.
 const BOOK := 0
@@ -72,6 +73,9 @@ func show_requests(rows: Array) -> void:
 		if _card_of.has(request_id):
 			_inbox.dismiss(String(_card_of[request_id]))
 		var card_id: String = _inbox.push(Strings.t("%s asks to see you") % String(row["person"]), _body(row), answers, null, false, _inbox.REQUESTS)
+		# V5.2 close R3: whom you would be seeing, by party, under the name.
+		if row.has("party"):
+			_inbox.add_under_title(card_id, PartyChip.make(row["party"]))
 		_card_of[request_id] = card_id
 		_request_of[card_id] = request_id
 		_answers_of[request_id] = answers

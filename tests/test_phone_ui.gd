@@ -26,6 +26,7 @@ const PersonCard = preload("res://src/ui/person_card.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Click = preload("res://tests/click.gd")
 
 const SLOT := "phone_ui_test"
@@ -162,6 +163,12 @@ func _check_dialed() -> void:
 		_fail("the call's result is not said, or its verbs stayed up: '%s'" % dialog._result.text)
 	if dialog._line.text == "" or dialog._line.text == _opening:
 		_fail("the call does not end in the person's own words: '%s'" % dialog._line.text)
+	# V5.2 close R5: a lever's call result carries its toned word, agreeing with it.
+	if _rang != "family":
+		var won: bool = dialog._result.text.begins_with(dialog.tr("They agree: the request is answered by phone."))
+		var tag: Array = ResultTone.TAG[ResultTone.GOOD if won else ResultTone.BAD]
+		if not dialog._tone.visible or dialog._tone.theme_type_variation != String(tag[0]) or dialog._tone.text != dialog.tr(String(tag[1])):
+			_fail("the call's lever result carries no tone, or the wrong one: '%s'" % dialog._tone.text)
 
 
 func _check_hung_up() -> void:

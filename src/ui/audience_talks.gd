@@ -23,6 +23,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 
 const WINDOW := "audience"
 
@@ -36,6 +37,9 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 		return false
 	game["session"] = session
 	game["state"] = main._state
+	# V5.2 close R7: one proposal an audience. The mark is the UI's (the session is
+	# Levers', never written here), so a new audience starts unasked.
+	game["affair_asked"] = ""
 	main._save_load_panel.block_save(Strings.t("Finish the audience first"))
 	var view := view_of(main, game)
 	view.merge(row)
@@ -71,7 +75,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 			# Accept's refusals that are the scene's own state (Shadows.accept_offer's
 			# reasons, its sentences): the button is down with them, never a dead press.
 			"offer_why": "they have already agreed" if String(session.get("won", "")) != "" else ("no attempts left" if int(session["attempts_left"]) <= 0 else ""),  # i18n: ok the sim's reasons (shadows.gd), shown through Words.reason
-			"affair_why": Shadows.may_begin_affair(state, ns, loader, pid),
+			"affair_why": Shadows.may_begin_affair(state, ns, loader, pid), "affair_asked": String(game.get("affair_asked", "")),
 			"flirted": (session["used_topics"] as Array).has("flirt"), "lovers": President.relationship(ns, pid) == "affair"}}
 
 
@@ -105,14 +109,14 @@ static func attempt(main, game: Dictionary, lever: String, args: Dictionary) -> 
 		return
 	var r := Levers.attempt(main._state, main._state.player(), main._loader, session, lever, args)
 	if not bool(r["ok"]):
-		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "")
+		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "", {}, ResultTone.BLOCKED)
 		return
 	var said := Strings.t("They agree.") if bool(r["success"]) else Strings.t("They are not moved.")
 	if bool(r.get("caught", false)):
 		said += " " + Strings.t("They caught the lie.")
 	var paid := Words.paid_text(r["spent"], r["effects"], main._loader.person_name, _feel(main, session))
 	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
-		lever_title(lever, args, r), {"lever": Words.lever(lever)})
+		lever_title(lever, args, r), {"lever": Words.lever(lever)}, ResultTone.GOOD if bool(r["success"]) else ResultTone.BAD)
 	main._windows.mark_all_dirty()
 
 
@@ -142,14 +146,17 @@ static func offer(main, game: Dictionary, accepted: bool) -> void:
 	var title := ("offer_accept_%s_%s" if accepted else "offer_refuse_%s_%s") % [String(person.kind) if person != null else "", String(o.get("currency", ""))]
 	var r := Shadows.accept_offer(main._state, ns, main._loader, session) if accepted else Shadows.refuse_offer(main._state, ns, main._loader, session)
 	if not bool(r["ok"]):
-		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "")
+		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "", {}, ResultTone.BLOCKED)
 		return
 	var spent: Dictionary = (r.get("paid", {}) as Dictionary).duplicate()
 	if float(r.get("evidence", 0.0)) > 0.0:
 		spent["evidence"] = float(r["evidence"])
 	var paid := Words.paid_text(spent, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
 	var said := Strings.t("You take it.") if accepted else Strings.t("You turn it down.")
-	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game), title)
+	# Taken, the money settles the request and leaves evidence: risky, whatever it
+	# bought. Refused, it reads by what it cost in regard.
+	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game), title, {},
+		ResultTone.RISKY if accepted else ResultTone.of_rapport(float(r.get("rapport", 0.0))))
 	main._windows.mark_all_dirty()
 
 
@@ -165,12 +172,17 @@ static func affair(main, game: Dictionary, action: String) -> void:
 	var r := Shadows.begin_affair(state, state.player(), main._loader, pid) if action == "propose" else Shadows.end_affair(state, state.player(), main._loader, pid)
 	if not bool(r["ok"]):
 		var why := String(r["error"])
-		game["scene"].show_result(Words.reason(why), view_of(main, game), "affair_why_" + why)
+		if action == "propose":
+			game["affair_asked"] = why
+		# The person's own no is against you; any other refusal is the sim's.
+		game["scene"].show_result(Words.reason(why), view_of(main, game), "affair_why_" + why, {},
+			ResultTone.BAD if why in ["too_cold", "no_spark"] else ResultTone.BLOCKED)
 		return
 	var paid := Words.paid_text({}, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
 	var said := Strings.t("It begins, and no one must know.") if action == "propose" else Strings.t("It is over.")
 	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
-		"affair_begin" if action == "propose" else "affair_end")
+		"affair_begin" if action == "propose" else "affair_end", {},
+		ResultTone.RISKY if action == "propose" else ResultTone.of_rapport(float(r.get("rapport", 0.0))))
 	main._windows.mark_all_dirty()
 
 
@@ -180,10 +192,10 @@ static func talk(main, game: Dictionary, topic: String, args: Dictionary) -> voi
 		return
 	var r := Levers.talk(main._state, main._state.player(), main._loader, session, topic, args)
 	if not bool(r["ok"]):
-		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "")
+		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "", {}, ResultTone.BLOCKED)
 		return
 	game["scene"].show_result(Words.changed(Words.paid_text({}, r["effects"], main._loader.person_name, _feel(main, session))), view_of(main, game),
-		"topic_" + topic, {"topic": Words.topic(topic)})
+		"topic_" + topic, {"topic": Words.topic(topic)}, ResultTone.of_rapport(float((r["effects"] as Dictionary).get("rapport", 0.0))))
 
 
 ## End: the sim closes the audience (a lever won settles it; none, and it is a
@@ -201,7 +213,7 @@ static func end(main, game: Dictionary) -> void:
 		text += " " + Strings.t("Declining: %s.") % Words.price_text(r.get("price", {}), _feel(main, session), true)
 		if broken:
 			text += " " + Strings.t("They held something on you. Refusing them broke your word.")
-	game["scene"].show_close(String(r["outcome"]), text)
+	game["scene"].show_close(String(r["outcome"]), text, ResultTone.BAD if String(r["outcome"]) == "declined" else ResultTone.GOOD)
 	main._windows.mark_all_dirty()
 
 
@@ -217,6 +229,7 @@ static func leave(main, game: Dictionary) -> bool:
 	if not bool(session.get("closed", false)):
 		Levers.close(state, state.player(), main._loader, session)
 	game["session"] = {}
+	game["affair_asked"] = ""
 	main._save_load_panel.block_save("")
 	game["scene"].close_scene()
 	main._windows.close(WINDOW)
