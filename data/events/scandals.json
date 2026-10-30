@@ -15,7 +15,7 @@
         "kind": "press_owner",
         "pick": "hostile"
       },
-      "speaker_line": "We have the contract file, and one of the winning firms wrote the specification itself, so I would think carefully about which answer survives contact with it.",
+      "speaker_line": "We are prepared to print, and the only thing that would change my mind is a good reason you have not given us yet.",
       "severity": 1,
       "cooldown_months": 8,
       "respond_months": 3,
@@ -83,7 +83,7 @@
         "kind": "press_owner",
         "pick": "hostile"
       },
-      "speaker_line": "Two names on the honours list gave money to the governing party, and nobody will say the two facts are acquainted.",
+      "speaker_line": "My readers deserve to know what the honours were for, and I am giving you the first chance to say.",
       "severity": 1,
       "cooldown_months": 8,
       "respond_months": 2,
@@ -152,7 +152,7 @@
         "kind": "press_owner",
         "pick": "hostile"
       },
-      "speaker_line": "The broadcaster's charter is up for renewal, and I wonder whether its newsroom will cover that story with the enthusiasm it has shown for yours.",
+      "speaker_line": "If the renewal is written to punish a newsroom, I will make that argument loudly and in public.",
       "severity": 1,
       "respond_months": 4,
       "once": true,
@@ -288,7 +288,7 @@
         "kind": "press_owner",
         "pick": "hostile"
       },
-      "speaker_line": "Your cabinet minute is on my front page, pricing winter waiting lists by season, and I only ask what you would like buried under it tomorrow.",
+      "speaker_line": "I am not the one who leaked it, but I will not pretend the public does not have a right to read it.",
       "severity": 2,
       "respond_months": 2,
       "once": true,
@@ -505,7 +505,7 @@
         "kind": "press_owner",
         "pick": "hostile"
       },
-      "speaker_line": "The lobbying bill has its third reading because its sponsor has votes and nothing to lose, and my leader writers are already fond of it.",
+      "speaker_line": "I will print who votes for transparency and who prefers the lunches, so choose your side before my readers do it for you.",
       "severity": 1,
       "cooldown_months": 24,
       "respond_months": 5,
@@ -579,7 +579,7 @@
         "kind": "press_owner",
         "pick": "hostile"
       },
-      "speaker_line": "The new director of the regional health agencies is family to the labour minister, and the panel's minutes proudly record that nobody else was interviewed.",
+      "speaker_line": "Readers will want to know why only one name was ever considered, and I mean to put that question to the government.",
       "severity": 1,
       "cooldown_months": 12,
       "respond_months": 2,
@@ -968,7 +968,7 @@
         "kind": "press_owner",
         "pick": "hostile"
       },
-      "speaker_line": "The regulator's draft rulebook matches the industry association's submission to the comma, its former director-general sits on the drafting panel, and its next chairman is the regulator's current one.",
+      "speaker_line": "My readers will draw their own conclusion from that rulebook, so help me by giving them a better one.",
       "severity": 2,
       "cooldown_months": 24,
       "respond_months": 4,

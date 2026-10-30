@@ -89,7 +89,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "The vessel failed after dark and four of my people are dead, so I need to know tonight whether the inquiry comes before the lawyers.",
+      "speaker_line": "I will cooperate fully with any inquiry, but my people need to know that the families come before the blame.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -165,7 +165,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "A rival government has filed a state-aid complaint against the battery plant's package, and the file reads like an indictment of the incentive regime every capital is running.",
+      "speaker_line": "My investors will want to know whether your government stands behind the package, and I would prefer to hear it before they ask.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -236,7 +236,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "The importers have built a dumping file four hundred pages long, and the prices in it are as real as the ones on our shelves at home.",
+      "speaker_line": "My steelworks are losing contracts to cheap imports, and I want a clear answer on whether the state will defend us.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -301,7 +301,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "Wholesale prices have tripled since autumn and the federation has published its shutdown list, and I regret to say my company is on it.",
+      "speaker_line": "I have kept the furnaces lit for as long as I can, and my board will not wait for a political solution much longer.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 16,
@@ -370,7 +370,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "The plant is two years late and well over budget, and the letter asking for the second tranche calls both facts features of the sector.",
+      "speaker_line": "My project has cost more than it should, but abandoning it now would waste what is already built, so I am asking for more time and money.",
       "severity": 1,
       "weight": 0.5,
       "cooldown_months": 12,
@@ -437,7 +437,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "My board has put its terms in writing and in four languages, and without public money the next platform will be built where we hold the pen.",
+      "speaker_line": "My board has been patient, but it will build where it is welcome, so the next move is yours.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 0,
@@ -509,7 +509,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "We have locked out the crane crews over the automation clause, the fruit still moves but the containers do not, and the shifts sit dark.",
+      "speaker_line": "I need the port working again, and I would rather you push both sides to the table than watch the shipments drift away.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 10,
@@ -580,7 +580,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "Our chip allocation now runs to weeks and the car lines are first on the stop list, in an order nobody will admit to writing.",
+      "speaker_line": "My customers are waiting on parts I cannot give them, so I need help with the allocation before they take their orders elsewhere.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -723,7 +723,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "A bid from abroad has landed for the country's last domestic engineering champion, the assembly has discovered the word referral, and the row is theatrical and effective in equal measure.",
+      "speaker_line": "My company would be stronger inside a bigger group, and I hope your government will not let politics decide it.",
       "severity": 1,
       "weight": 1.0,
       "on_action": "takeover_bid",
@@ -787,7 +787,7 @@
       "speaker": {
         "kind": "union_leader"
       },
-      "speaker_line": "The receivers went into the champion at dawn, fifty years of supplier invoices are now a queue, and the queue starts at the town's payroll.",
+      "speaker_line": "The workers who built this place are the ones paying for the collapse, and I will not let them be an afterthought.",
       "severity": 2,
       "weight": 1.0,
       "on_action": "firm_failed",
@@ -856,7 +856,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "The industrial federation has come with two proposals and a warning about which plants close if it gets neither, and with unemployment where it is I would hear them out.",
+      "speaker_line": "My members came with proposals because the alternative is plant closures, and we will remember who listened.",
       "severity": 2,
       "cooldown_months": 12,
       "respond_months": 4,
@@ -935,7 +935,7 @@
       "speaker": {
         "kind": "executive"
       },
-      "speaker_line": "The winter peak has taken three regions dark, the hospitals are on generators, and the operator says the interconnects cannot hold another evening like tonight.",
+      "speaker_line": "My company cannot promise another night like that, so I am asking for backing now, not after the next failure.",
       "severity": 3,
       "cooldown_months": 24,
       "respond_months": 1,

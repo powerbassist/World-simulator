@@ -23,7 +23,7 @@ const MOMENTS := {
 	"censure": ["government_fell"],
 	"dissolution": ["called"],
 	"article_49_3": ["carried"],
-	"character": ["minister_resigned", "defected"],
+	"character": ["minister_resigned", "defected", "prime_minister_resigned"],
 }
 const TONES := ["friendly", "neutral", "hostile"]
 const VARIABLES := ["president", "party", "nation"]

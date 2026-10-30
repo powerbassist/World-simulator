@@ -151,7 +151,7 @@
       "speaker": {
         "kind": "regional_figure"
       },
-      "speaker_line": "The reservoir has reached the level where an order gets signed, the farmers are already at the ministry, and the grass will not make a third cut.",
+      "speaker_line": "My farmers will ask what the order costs them before they ask what it saves, and I want an answer ready for them.",
       "severity": 2,
       "weight": 1.2,
       "cooldown_months": 12,
@@ -220,7 +220,7 @@
       "speaker": {
         "kind": "regional_figure"
       },
-      "speaker_line": "The crossing came down empty at night, nine thousand vehicles a day now lose an hour and a half, and the repair file is a court exhibit.",
+      "speaker_line": "People here lose time and money every day this crossing stays closed, and they will remember who moved first.",
       "severity": 3,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -288,7 +288,7 @@
       "speaker": {
         "kind": "regional_figure"
       },
-      "speaker_line": "Every inspection since the last one marked that levee for strengthening, and now the water is in the villages and the files are in the ministry, all of them right.",
+      "speaker_line": "We warned for years and nobody listened, so this time I expect the repair plan in writing and a date on it.",
       "severity": 3,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -356,7 +356,7 @@
       "speaker": {
         "kind": "regional_figure"
       },
-      "speaker_line": "Cold came early and stayed, the grid is at the peak it was built for, and the deaths are counted in figures nobody wants published.",
+      "speaker_line": "My region cannot ration warmth for the old and the poor, and I am asking for emergency help before the next night.",
       "severity": 2,
       "weight": 1.5,
       "cooldown_months": 12,
@@ -426,7 +426,7 @@
       "speaker": {
         "kind": "regional_figure"
       },
-      "speaker_line": "Nine days of rain moved the hill, nobody died, and forty houses now sit on the wrong side of the geologist's line.",
+      "speaker_line": "Families on that slope want to know whether they can go home, and I cannot tell them without a ruling from you.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 10,
@@ -494,7 +494,7 @@
       "speaker": {
         "kind": "regional_figure"
       },
-      "speaker_line": "Eleven seconds and the old town took most of them, and the camps in the squares are the emergency now.",
+      "speaker_line": "My town needs a plan for its people and its old streets before the cameras leave, and I will be holding you to it.",
       "severity": 3,
       "weight": 0.5,
       "cooldown_months": 18,
@@ -565,7 +565,7 @@
       "speaker": {
         "kind": "regional_figure"
       },
-      "speaker_line": "Three days of rain and the valley is a lake, two towns cut off, and the only real question is whose answer it is.",
+      "speaker_line": "My towns need relief and a rescue plan today, and the argument over whose job it is can wait.",
       "severity": 2,
       "cooldown_months": 18,
       "respond_months": 2,

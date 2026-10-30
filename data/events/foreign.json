@@ -10,7 +10,7 @@
       "speaker": {
         "foreign_head": true
       },
-      "speaker_line": "A cargo vessel has sat at anchor nine days, the partner that sanctioned its owner claims the cargo, and as flag state you have stopped returning calls.",
+      "speaker_line": "My government cannot be left holding a dispute between third parties, so I expect you to explain your position and your intentions.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -74,7 +74,7 @@
       "speaker": {
         "foreign_head": true
       },
-      "speaker_line": "Our ambassador left on four hours' notice over a vote your assembly thought nobody was watching, and the statement says consultations while both sides still need the word.",
+      "speaker_line": "My government wants this repaired quietly, and I would like to hear what your side is prepared to say first.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -142,7 +142,7 @@
       "speaker": {
         "foreign_head": true
       },
-      "speaker_line": "We have put patrols back on the border your side has not staffed since the treaties, and the town that lives on day-trippers has lost its season in a fortnight.",
+      "speaker_line": "My voters asked for these patrols, but I know what they cost your border towns, so let us find a better arrangement.",
       "severity": 1,
       "weight": 1.2,
       "cooldown_months": 10,
@@ -206,7 +206,7 @@
       "speaker": {
         "foreign_head": true
       },
-      "speaker_line": "Your order book holds a nine-figure sale and the embargo list gained the buyer's name this month on our proposal, while our own docks have been loading since spring.",
+      "speaker_line": "My country has moved on this embargo and I expect you to explain, openly, why yours should not follow.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -347,7 +347,7 @@
       "speaker": {
         "foreign_head": true
       },
-      "speaker_line": "My trade ministry has drafted a tariff list that reads like a map of your voters, and a draft is always a message before it is a law.",
+      "speaker_line": "I would prefer to withdraw this draft, but my voters expect a reply, so offer me something I can point to.",
       "severity": 2,
       "weight": 1.2,
       "cooldown_months": 12,
@@ -416,7 +416,7 @@
       "speaker": {
         "foreign_head": true
       },
-      "speaker_line": "A haulage contractor from your interior is six weeks into detention on a charge nobody has shown anybody, and the family has learned to hold the cameras.",
+      "speaker_line": "A citizen of yours is held without charge in my courts and the family will not stay quiet, so we need to talk about how this ends.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 16,

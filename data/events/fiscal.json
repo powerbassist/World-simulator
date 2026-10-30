@@ -10,7 +10,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "Tuesday we were sound, Thursday the auction tailed, and I confess nothing changed in between except the mood of desks.",
+      "speaker_line": "I am watching the markets hour by hour, and I need you to tell me how calm we should sound.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -84,7 +84,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "The agency has put us on negative outlook, and the awkward part is the arithmetic is entirely our own.",
+      "speaker_line": "I do not want the next outlook to read worse, so I am asking you to choose a direction before the agency does it for us.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 24,
@@ -157,7 +157,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "Three ministries want more money, the overruns are real, and I can only say yes to two of them without lying.",
+      "speaker_line": "Something has to give among these requests, and I would rather you make the unpopular call than leave me to make it quietly.",
       "severity": 1,
       "weight": 2.0,
       "cooldown_months": 10,
@@ -233,7 +233,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "A petition against the levy has crossed a million names, led by people who have never organised anything, and sacks keep arriving.",
+      "speaker_line": "I read every name in that petition as a vote, and I would like us to answer before the movement finds its own leaders.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -299,7 +299,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "The autumn report has found a guarantee one ministry kept off its books, and it politely asks who among us knew.",
+      "speaker_line": "My ministers are asking who knew, and I am asking you to decide how much of this we say before someone else says it for us.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 18,
@@ -373,7 +373,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "The fund's actuary has counted the hole, and the only comfort is that the last government commissioned the counting.",
+      "speaker_line": "The longer we wait the more it costs, and I cannot promise the next government will find the courage that we have not.",
       "severity": 2,
       "weight": 1.0,
       "cooldown_months": 0,
@@ -447,7 +447,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "A third city has missed payroll, its mayor is saying bankruptcy on every channel, and our law has no procedure for any of it.",
+      "speaker_line": "I cannot let a single city fail without knowing what happens to the next, so I need a rule from you, not a favour.",
       "severity": 3,
       "weight": 0.5,
       "cooldown_months": 24,
@@ -522,7 +522,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "The governor and the permanent secretary asked me for a two year freeze, and the letter reached the press before it reached you.",
+      "speaker_line": "I will not pretend to enjoy this advice, but the people who gave it will not be easy to ignore if you refuse.",
       "severity": 1,
       "weight": 1.0,
       "cooldown_months": 12,
@@ -599,7 +599,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "The finance committee has written the ceiling into the budget's own language and scheduled the vote, and I have counted the room twice and do not like the count.",
+      "speaker_line": "The committee will vote whether or not we are ready, and I would rather have your position than guess at it in the lobby.",
       "severity": 2,
       "weight": 2.0,
       "cooldown_months": 12,
@@ -670,7 +670,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "The treasury does not have the week's cash, the payroll file clears on Wednesday, and the officials who know have stopped using the word timing.",
+      "speaker_line": "I will do whatever you decide, but I need the order today, because every day of delay makes the choice smaller.",
       "severity": 2,
       "weight": 0.5,
       "cooldown_months": 24,
@@ -811,7 +811,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "Debt service has passed the defence budget in the ordinary tables, without any announcement, and I would rather we chose our answer than let the water keep rising.",
+      "speaker_line": "Voters will learn to resent this line of the budget long before they understand it, and I want us to speak first.",
       "severity": 1,
       "weight": 0.5,
       "cooldown_months": 0,
@@ -883,7 +883,7 @@
       "speaker": {
         "office": "head_of_government"
       },
-      "speaker_line": "The deficit has passed the point where reassurances are believed, the markets have stopped reading them, and you are expected to say what you will do in public this quarter.",
+      "speaker_line": "If you act with a plan the markets will listen, and if you wait they will write the plan for you.",
       "severity": 2,
       "cooldown_months": 6,
       "respond_months": 3,

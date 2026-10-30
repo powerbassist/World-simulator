@@ -211,6 +211,7 @@ tests=(
   tests/test_request_arrival.gd
   tests/test_pregate_records.gd
   tests/test_headlines.gd
+  tests/test_speaker_lines.gd
   tests/test_inbox_notes.gd
   tests/test_d_wiring.gd
   tests/test_broken_word_card.gd

@@ -258,7 +258,7 @@
       "speaker": {
         "kind": "judge"
       },
-      "speaker_line": "An investigating magistrate has summoned your accountants, and I gather the palace learned of it from the court list, which is not how it should be.",
+      "speaker_line": "I will examine those payments carefully, and your accountants should expect questions you will not enjoy.",
       "severity": 3,
       "cooldown_months": 0,
       "respond_months": 4,
@@ -342,7 +342,7 @@
       "speaker": {
         "kind": "judge"
       },
-      "speaker_line": "A budget line quietly bent toward a favoured cause, a ministry memo that appears to bless it, and a magistrate now reading both with care.",
+      "speaker_line": "The court will examine this line as carefully as it examines any other, and I expect cooperation, not clever explanations.",
       "severity": 3,
       "cooldown_months": 0,
       "respond_months": 4,
@@ -510,7 +510,7 @@
       "speaker": {
         "kind": "judge"
       },
-      "speaker_line": "The audit court has found a hole in a spending line that no programme explains, and it cannot tell you where the money went.",
+      "speaker_line": "My report asks for an explanation, and the sooner you provide one the less this will look like concealment.",
       "severity": 3,
       "cooldown_months": 0,
       "respond_months": 4,
