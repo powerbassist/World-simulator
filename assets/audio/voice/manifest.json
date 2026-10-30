@@ -10,6 +10,39 @@
   "text_sha256": "55cfa337e90d29163804d110cb689f863a7f78bbc764009878a748f4d7edfccd",
   "voice_id": "EXAVITQu4vr4xnSDxMaL"
  },
+ "activist_f_30/event.exposure_turned_affair": {
+  "archetype": "activist_f_30",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/activist_f_30/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL"
+ },
+ "activist_f_30/event.exposure_turned_favour": {
+  "archetype": "activist_f_30",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/activist_f_30/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL"
+ },
+ "activist_f_30/event.exposure_turned_money": {
+  "archetype": "activist_f_30",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/activist_f_30/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL"
+ },
  "activist_f_30/event.farmers_blockade": {
   "archetype": "activist_f_30",
   "chars": 97,
@@ -417,6 +450,39 @@
   "text_sha256": "b4724b44ace0ecbe8e0dc8217e64ad4d4fc1ffe813df5e86f8eb31a4555c0160",
   "voice_id": "K6Y8oKp22Z422uyqEI0Q"
  },
+ "executive_f_50/event.exposure_turned_affair": {
+  "archetype": "executive_f_50",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/executive_f_50/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "K6Y8oKp22Z422uyqEI0Q"
+ },
+ "executive_f_50/event.exposure_turned_favour": {
+  "archetype": "executive_f_50",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/executive_f_50/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "K6Y8oKp22Z422uyqEI0Q"
+ },
+ "executive_f_50/event.exposure_turned_money": {
+  "archetype": "executive_f_50",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/executive_f_50/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
+  "voice_id": "K6Y8oKp22Z422uyqEI0Q"
+ },
  "executive_f_50/event.flagship_overrun": {
   "archetype": "executive_f_50",
   "chars": 137,
@@ -681,6 +747,39 @@
   "text_sha256": "b4724b44ace0ecbe8e0dc8217e64ad4d4fc1ffe813df5e86f8eb31a4555c0160",
   "voice_id": "JjlrlAAg5kEheQCdkzE7"
  },
+ "executive_m_50/event.exposure_turned_affair": {
+  "archetype": "executive_m_50",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/executive_m_50/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "JjlrlAAg5kEheQCdkzE7"
+ },
+ "executive_m_50/event.exposure_turned_favour": {
+  "archetype": "executive_m_50",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/executive_m_50/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "JjlrlAAg5kEheQCdkzE7"
+ },
+ "executive_m_50/event.exposure_turned_money": {
+  "archetype": "executive_m_50",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/executive_m_50/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
+  "voice_id": "JjlrlAAg5kEheQCdkzE7"
+ },
  "executive_m_50/event.flagship_overrun": {
   "archetype": "executive_m_50",
   "chars": 137,
@@ -835,6 +934,39 @@
   "text_sha256": "e26c017ec21744a5d8886dc0227bffda7e6d2ab51f940a3281b3e695b53ad7a6",
   "voice_id": "Xb7hH8MSUJpSbSDYk0k2"
  },
+ "judge_f_60/event.exposure_turned_affair": {
+  "archetype": "judge_f_60",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/judge_f_60/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "Xb7hH8MSUJpSbSDYk0k2"
+ },
+ "judge_f_60/event.exposure_turned_favour": {
+  "archetype": "judge_f_60",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/judge_f_60/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "Xb7hH8MSUJpSbSDYk0k2"
+ },
+ "judge_f_60/event.exposure_turned_money": {
+  "archetype": "judge_f_60",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/judge_f_60/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
+  "voice_id": "Xb7hH8MSUJpSbSDYk0k2"
+ },
  "judge_f_60/farewell": {
   "archetype": "judge_f_60",
   "chars": 31,
@@ -921,6 +1053,39 @@
   "model": "eleven_multilingual_v2",
   "source": "events/exposure_courts_personal_wealth.speaker_line",
   "text_sha256": "e26c017ec21744a5d8886dc0227bffda7e6d2ab51f940a3281b3e695b53ad7a6",
+  "voice_id": "onwK4e9ZLuTAKqWW03F9"
+ },
+ "judge_m_60/event.exposure_turned_affair": {
+  "archetype": "judge_m_60",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/judge_m_60/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "onwK4e9ZLuTAKqWW03F9"
+ },
+ "judge_m_60/event.exposure_turned_favour": {
+  "archetype": "judge_m_60",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/judge_m_60/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "onwK4e9ZLuTAKqWW03F9"
+ },
+ "judge_m_60/event.exposure_turned_money": {
+  "archetype": "judge_m_60",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/judge_m_60/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
   "voice_id": "onwK4e9ZLuTAKqWW03F9"
  },
  "judge_m_60/farewell": {
@@ -1130,6 +1295,39 @@
   "model": "eleven_multilingual_v2",
   "source": "events/eu_summit_ambush.speaker_line",
   "text_sha256": "78076e31aa5abad8b9cc1a51d2aa2cebbcf966a2712ba0272331f0abe934b533",
+  "voice_id": "pFZP5JQG7iQjIQuC4Bku"
+ },
+ "politician_f_50/event.exposure_turned_affair": {
+  "archetype": "politician_f_50",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/politician_f_50/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "pFZP5JQG7iQjIQuC4Bku"
+ },
+ "politician_f_50/event.exposure_turned_favour": {
+  "archetype": "politician_f_50",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/politician_f_50/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "pFZP5JQG7iQjIQuC4Bku"
+ },
+ "politician_f_50/event.exposure_turned_money": {
+  "archetype": "politician_f_50",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/politician_f_50/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
   "voice_id": "pFZP5JQG7iQjIQuC4Bku"
  },
  "politician_f_50/event.for_ambassador_recalled": {
@@ -1649,6 +1847,39 @@
   "text_sha256": "78076e31aa5abad8b9cc1a51d2aa2cebbcf966a2712ba0272331f0abe934b533",
   "voice_id": "gFLdO7YUUen08IkbGO6u"
  },
+ "politician_m_50/event.exposure_turned_affair": {
+  "archetype": "politician_m_50",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/politician_m_50/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "gFLdO7YUUen08IkbGO6u"
+ },
+ "politician_m_50/event.exposure_turned_favour": {
+  "archetype": "politician_m_50",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/politician_m_50/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "gFLdO7YUUen08IkbGO6u"
+ },
+ "politician_m_50/event.exposure_turned_money": {
+  "archetype": "politician_m_50",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/politician_m_50/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
+  "voice_id": "gFLdO7YUUen08IkbGO6u"
+ },
  "politician_m_50/event.for_ambassador_recalled": {
   "archetype": "politician_m_50",
   "chars": 108,
@@ -2067,6 +2298,39 @@
   "text_sha256": "a0c23d8b1959c76cbd86f0d67493246f1a0b9a76203a736396d49ad22b5b7e5a",
   "voice_id": "MPZlmh9u9WI1KcK1XkZk"
  },
+ "press_owner_f_60/event.exposure_turned_affair": {
+  "archetype": "press_owner_f_60",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/press_owner_f_60/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "MPZlmh9u9WI1KcK1XkZk"
+ },
+ "press_owner_f_60/event.exposure_turned_favour": {
+  "archetype": "press_owner_f_60",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/press_owner_f_60/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "MPZlmh9u9WI1KcK1XkZk"
+ },
+ "press_owner_f_60/event.exposure_turned_money": {
+  "archetype": "press_owner_f_60",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/press_owner_f_60/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
+  "voice_id": "MPZlmh9u9WI1KcK1XkZk"
+ },
  "press_owner_f_60/event.honours_scandal": {
   "archetype": "press_owner_f_60",
   "chars": 98,
@@ -2318,6 +2582,39 @@
   "model": "eleven_multilingual_v2",
   "source": "events/exposure_press_personal_wealth.speaker_line",
   "text_sha256": "a0c23d8b1959c76cbd86f0d67493246f1a0b9a76203a736396d49ad22b5b7e5a",
+  "voice_id": "gZGWZgN4mPyTYVD8Xk8v"
+ },
+ "press_owner_m_60/event.exposure_turned_affair": {
+  "archetype": "press_owner_m_60",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/press_owner_m_60/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "gZGWZgN4mPyTYVD8Xk8v"
+ },
+ "press_owner_m_60/event.exposure_turned_favour": {
+  "archetype": "press_owner_m_60",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/press_owner_m_60/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "gZGWZgN4mPyTYVD8Xk8v"
+ },
+ "press_owner_m_60/event.exposure_turned_money": {
+  "archetype": "press_owner_m_60",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/press_owner_m_60/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
   "voice_id": "gZGWZgN4mPyTYVD8Xk8v"
  },
  "press_owner_m_60/event.honours_scandal": {
@@ -2595,6 +2892,39 @@
   "text_sha256": "d5af76f3293b048a2d7b5e456f927a0e573672e0e6d1ebd912253a6fc1c3e871",
   "voice_id": "541ZYLQNf72TbsGVWauS"
  },
+ "regional_figure_f_50/event.exposure_turned_affair": {
+  "archetype": "regional_figure_f_50",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/regional_figure_f_50/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "541ZYLQNf72TbsGVWauS"
+ },
+ "regional_figure_f_50/event.exposure_turned_favour": {
+  "archetype": "regional_figure_f_50",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/regional_figure_f_50/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "541ZYLQNf72TbsGVWauS"
+ },
+ "regional_figure_f_50/event.exposure_turned_money": {
+  "archetype": "regional_figure_f_50",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/regional_figure_f_50/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
+  "voice_id": "541ZYLQNf72TbsGVWauS"
+ },
  "regional_figure_f_50/event.heat_wave": {
   "archetype": "regional_figure_f_50",
   "chars": 125,
@@ -2749,6 +3079,39 @@
   "text_sha256": "d5af76f3293b048a2d7b5e456f927a0e573672e0e6d1ebd912253a6fc1c3e871",
   "voice_id": "Vt0mgnkFvOxF5oeF8Y4e"
  },
+ "regional_figure_m_50/event.exposure_turned_affair": {
+  "archetype": "regional_figure_m_50",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/regional_figure_m_50/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "Vt0mgnkFvOxF5oeF8Y4e"
+ },
+ "regional_figure_m_50/event.exposure_turned_favour": {
+  "archetype": "regional_figure_m_50",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/regional_figure_m_50/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "Vt0mgnkFvOxF5oeF8Y4e"
+ },
+ "regional_figure_m_50/event.exposure_turned_money": {
+  "archetype": "regional_figure_m_50",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/regional_figure_m_50/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
+  "voice_id": "Vt0mgnkFvOxF5oeF8Y4e"
+ },
  "regional_figure_m_50/event.heat_wave": {
   "archetype": "regional_figure_m_50",
   "chars": 125,
@@ -2813,6 +3176,39 @@
   "model": "eleven_multilingual_v2",
   "source": "voices/union_leader_f_50.lines.agree",
   "text_sha256": "326f08c937edbfb99aef584999cf3c1b6a42cb29b58e971651eb229b120e9d73",
+  "voice_id": "Dn1YytHTZxfZGtxsjQMQ"
+ },
+ "union_leader_f_50/event.exposure_turned_affair": {
+  "archetype": "union_leader_f_50",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/union_leader_f_50/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "Dn1YytHTZxfZGtxsjQMQ"
+ },
+ "union_leader_f_50/event.exposure_turned_favour": {
+  "archetype": "union_leader_f_50",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/union_leader_f_50/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "Dn1YytHTZxfZGtxsjQMQ"
+ },
+ "union_leader_f_50/event.exposure_turned_money": {
+  "archetype": "union_leader_f_50",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/union_leader_f_50/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
   "voice_id": "Dn1YytHTZxfZGtxsjQMQ"
  },
  "union_leader_f_50/event.fallen_champion": {
@@ -2934,6 +3330,39 @@
   "model": "eleven_multilingual_v2",
   "source": "voices/union_leader_m_50.lines.agree",
   "text_sha256": "326f08c937edbfb99aef584999cf3c1b6a42cb29b58e971651eb229b120e9d73",
+  "voice_id": "drgxdthMHbyFpcuiPYQK"
+ },
+ "union_leader_m_50/event.exposure_turned_affair": {
+  "archetype": "union_leader_m_50",
+  "chars": 141,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/union_leader_m_50/event.exposure_turned_affair.ogg",
+  "line_id": "event.exposure_turned_affair",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_affair.speaker_line",
+  "text_sha256": "f02287138e45b0431b783c665b8b5e55797f876c9e5195eeb23761a7aca59da8",
+  "voice_id": "drgxdthMHbyFpcuiPYQK"
+ },
+ "union_leader_m_50/event.exposure_turned_favour": {
+  "archetype": "union_leader_m_50",
+  "chars": 93,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/union_leader_m_50/event.exposure_turned_favour.ogg",
+  "line_id": "event.exposure_turned_favour",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_favour.speaker_line",
+  "text_sha256": "502f8e23da5afb5394e76e4fa7173828a5aed9269814e00d0eee2d6a191d99ed",
+  "voice_id": "drgxdthMHbyFpcuiPYQK"
+ },
+ "union_leader_m_50/event.exposure_turned_money": {
+  "archetype": "union_leader_m_50",
+  "chars": 115,
+  "date": "2026-10-30",
+  "file": "assets/audio/voice/union_leader_m_50/event.exposure_turned_money.ogg",
+  "line_id": "event.exposure_turned_money",
+  "model": "eleven_multilingual_v2",
+  "source": "events/exposure_turned_money.speaker_line",
+  "text_sha256": "b082e5175bef7f3e7c1c9e02d4765c3a836a94ffe3ab3fa0daf20b762f4846c0",
   "voice_id": "drgxdthMHbyFpcuiPYQK"
  },
  "union_leader_m_50/event.fallen_champion": {
