@@ -184,7 +184,25 @@ func _band_failed(msg: String) -> void:
 	_band_failures.append(msg)
 
 
+## V5.2d. `-- --json=PATH` writes the re-tune's working figures (docs/design/
+## v5.2-d-spec.md section 2) as JSON beside the printed tables: per event, E2's spread
+## and its bloc and E3's axes per choice with the verdicts; per regime, E1b's offset on
+## every bloc for both paths; the band failures. Content's loop reads it rather than
+## scraping the text. Written whether the bands pass or fail.
+var _json_path := ""
+var _json := {"e1b": {}, "events": {}, "band_failures": []}
+
+## E2 and E3 measure the same outcome for every (event, choice) from the same base --
+## computed once and shared, which halves the two tables' cost and cannot change a
+## figure (the run from a fixed base is deterministic).
+var _probe_base = null
+var _outcomes := {}
+
+
 func _init() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if String(arg).begins_with("--json="):
+			_json_path = String(arg).substr("--json=".length())
 	_loader = DataLoader.new()
 	_loader.load_all()
 	if not _loader.errors.is_empty():
@@ -204,6 +222,7 @@ func _init() -> void:
 	_table_e2_legibility()
 	_table_e3_dominance()
 	_table_d5_d7_voice()
+	_write_json()
 	if not _band_failures.is_empty():
 		printerr("")
 		for f in _band_failures:
@@ -213,6 +232,18 @@ func _init() -> void:
 		return
 	print("\nevents_probe: every declared band PASSED")
 	quit(0)
+
+
+func _write_json() -> void:
+	if _json_path == "":
+		return
+	_json["band_failures"] = _band_failures.duplicate()
+	var f := FileAccess.open(_json_path, FileAccess.WRITE)
+	if f == null:
+		printerr("events_probe: cannot write %s" % _json_path)
+		return
+	f.store_string(JSON.stringify(_json, "  ", true))
+	f.close()
 
 
 # --- Harness ---------------------------------------------------------------------
@@ -931,6 +962,11 @@ func _table_e1b_accumulation() -> void:
 		var a := _run_machine(regime, RUN_MONTHS, true, 0)
 		var dw := _worst_offset(d["state"])
 		var aw := _worst_offset(a["state"])
+		# Rule 3 trims per bloc, so the JSON carries every bloc, not only the worst.
+		_json["e1b"][regime] = {
+			"months": int(d["months"]), "arrivals": int(d["arrivals"]),
+			"defaults": _bloc_offsets(d["state"]), "answer_well": _bloc_offsets(a["state"]),
+		}
 		var def_saturated: bool = absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
 		var ans_saturated: bool = absf(float(aw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
 		print("%-14s %8d %8d   %-11s %9.4f   %-11s %9.4f%s" % [
@@ -963,6 +999,13 @@ func _worst_offset(state) -> Dictionary:
 			value = v
 			worst = bloc
 	return {"bloc": worst, "value": value}
+
+
+func _bloc_offsets(state) -> Dictionary:
+	var out := {}
+	for bloc in OpinionK.BLOC_KEYS:
+		out[bloc] = float(state.player().bloc_offset.get(bloc, 0.0))
+	return out
 
 
 # --- E2: legibility, and the axis it is measured on was corrected by the first run --
@@ -1012,11 +1055,12 @@ func _table_e2_legibility() -> void:
 	print("docs/pledge-model.md measured a full-term promise breach to cost. The headline")
 	print("column is printed beside it and is NOT the band: see this function's header.\n")
 	print("%-26s %10s %-12s %10s   %s" % ["event", "spread", "on bloc", "headline", "band"])
-	var base = _state_at(PROBE_MONTH)
+	var base = _shared_base()
+	var outside: Array = []
 	for ev in _loader.events:
 		var rows: Array = []
 		for c in ev.choices:
-			rows.append(_outcome(base, ev, c))
+			rows.append(_cached_outcome(base, ev, c))
 		var widest := 0.0
 		var widest_bloc := ""
 		for bloc in OpinionK.BLOC_KEYS:
@@ -1034,11 +1078,38 @@ func _table_e2_legibility() -> void:
 		for o in rows:
 			head_lo = minf(head_lo, float(o["approval"]))
 			head_hi = maxf(head_hi, float(o["approval"]))
+		var inside: bool = widest >= NOISE_FLOOR and widest <= PLEDGE_BREACH_CEILING
 		print("%-26s %10.3f %-12s %10.3f   %s" % [
 			ev.id, widest, widest_bloc, head_hi - head_lo,
-			"PASS" if widest >= NOISE_FLOOR and widest <= PLEDGE_BREACH_CEILING
-			else ("under floor" if widest < NOISE_FLOOR else "over ceiling"),
+			"PASS" if inside else ("under floor" if widest < NOISE_FLOOR else "over ceiling"),
 		])
+		if not inside:
+			outside.append(ev.id)
+		_event_json(ev)["e2"] = {"spread": widest, "bloc": widest_bloc, "headline": head_hi - head_lo, "pass": inside}
+	# V5.2d D3: the band fails the run (docs/design/v5.2-d-spec.md section 5).
+	if not outside.is_empty():
+		_band_failed("E2 (D3): %d event(s) with a spread outside [%.1f, %.1f]: %s" % [
+			outside.size(), NOISE_FLOOR, PLEDGE_BREACH_CEILING, ", ".join(outside)])
+
+
+## The E2/E3 base, built once.
+func _shared_base():
+	if _probe_base == null:
+		_probe_base = _state_at(PROBE_MONTH)
+	return _probe_base
+
+
+func _cached_outcome(base, ev, choice: Dictionary) -> Dictionary:
+	var key := "%s|%s" % [ev.id, String(choice["id"])]
+	if not _outcomes.has(key):
+		_outcomes[key] = _outcome(base, ev, choice)
+	return _outcomes[key]
+
+
+func _event_json(ev) -> Dictionary:
+	if not (_json["events"] as Dictionary).has(ev.id):
+		_json["events"][ev.id] = {"severity": int(ev.severity), "category": ev.category}
+	return _json["events"][ev.id]
 
 
 ## A `managed` France, `months` months in, with nothing pending. The base every E2 and
@@ -1108,15 +1179,25 @@ func _table_e3_dominance() -> void:
 	print("\n=== E3  DOMINANCE: every choice, +%d months, on three axes ===" % HORIZON)
 	print("approval higher is better; deficit LOWER is better (positive is a shortfall);")
 	print("worst-bloc higher is better. Tolerances %.3f / %.4f -- see EPS_APPROVAL.\n" % [EPS_APPROVAL, EPS_DEFICIT])
-	var base = _state_at(PROBE_MONTH)
+	var base = _shared_base()
 	var dominated := 0
 	var toothless := 0
+	var dominated_at: Array = []
+	var toothless_at: Array = []
 	for ev in _loader.events:
 		print("-- %s" % ev.id)
 		var rows: Array = []
+		var record := _event_json(ev)
+		record["choices"] = {}
+		record["dominated"] = []
+		record["toothless"] = false
 		for c in ev.choices:
-			var o := _outcome(base, ev, c)
+			var o := _cached_outcome(base, ev, c)
 			rows.append({"choice": c, "o": o})
+			record["choices"][String(c["id"])] = {
+				"default": bool(c["is_default"]), "approval": o["approval"], "deficit": o["deficit"],
+				"worst_bloc": o["worst_bloc"], "corruption": o["corruption"], "blocs": o["blocs"],
+			}
 			print("   %-16s%s approval %7.3f   deficit %7.3f   worst %7.3f   corrupt %+6.3f" % [
 				String(c["id"]), " (default)" if bool(c["is_default"]) else "         ",
 				float(o["approval"]), float(o["deficit"]), float(o["worst_bloc"]),
@@ -1130,6 +1211,9 @@ func _table_e3_dominance() -> void:
 					continue
 				if _dominates(rows[i]["o"], rows[j]["o"]):
 					dominated += 1
+					record["dominated"].append([String(rows[i]["choice"]["id"]), String(rows[j]["choice"]["id"])])
+					if not dominated_at.has(ev.id):
+						dominated_at.append(ev.id)
 					print("   *** '%s' dominates '%s' on all three axes" % [
 						rows[i]["choice"]["id"], rows[j]["choice"]["id"],
 					])
@@ -1145,9 +1229,16 @@ func _table_e3_dominance() -> void:
 				beaten = true
 		if not beaten:
 			toothless += 1
+			toothless_at.append(ev.id)
+			record["toothless"] = true
 			print("   *** the default is beaten on no axis: the deadline has no teeth")
 	print("\ndominated alternatives: %d    toothless defaults: %d" % [dominated, toothless])
 	print("(an ACTIVE choice dominating the DEFAULT is the design, not a violation)")
+	# V5.2d D1 and D2: both counts fail the run (docs/design/v5.2-d-spec.md section 5).
+	if dominated > 0:
+		_band_failed("E3 (D1): %d dominated pair(s) among non-default answers, in %s" % [dominated, ", ".join(dominated_at)])
+	if toothless > 0:
+		_band_failed("E3 (D2): %d toothless default(s): %s" % [toothless, ", ".join(toothless_at)])
 
 
 ## THE FOURTH AXIS IS `corruption`, AND WHICH REGISTERS BELONG HERE IS AN ARGUMENT

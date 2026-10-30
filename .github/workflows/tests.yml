@@ -98,6 +98,54 @@ jobs:
           path: reports/suite_runs/
           if-no-files-found: ignore
 
+  # V5.2d (docs/design/v5.2-d-spec.md section 2): the event book's bands fail the
+  # build -- E2's spread (D3), E3's dominated pairs and toothless defaults (D1, D2),
+  # E1b's clamp (D4) and d's speaker and front-page counts. tools/run_tests.sh does not
+  # run probes, so the event probe is its own job, about four minutes.
+  events:
+    name: Event book (events_probe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Install Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "$url"
+          unzip -q godot.zip -d "$HOME/godot"
+
+      - name: Put Godot on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/.local/bin/godot"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # A clone has no .godot/, and dialogue_manager's class_name types need the
+      # cache (AGENTS.md's cold-clone gotcha) -- the same one-time import run_tests.sh does.
+      - name: Import
+        run: godot --headless --path . --import
+
+      - name: Run events_probe (non-zero on a failed band)
+        run: godot --headless --path . --script res://tools/events_probe.gd -- --json=events_probe.json
+
+      - name: Keep the probe's figures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: events-probe
+          path: events_probe.json
+          if-no-files-found: ignore
+
   checks:
     name: Names, vault, licences and shards
     runs-on: ubuntu-latest
@@ -140,10 +188,11 @@ jobs:
   tests:
     name: tests
     if: always()
-    needs: [suite, checks]
+    needs: [suite, checks, events]
     runs-on: ubuntu-latest
     steps:
-      - name: All shards and checks passed
+      - name: All shards, checks and the event book passed
         run: |
           [ "${{ needs.suite.result }}" = "success" ] && [ "${{ needs.checks.result }}" = "success" ] \
-            || { echo "suite=${{ needs.suite.result }} checks=${{ needs.checks.result }}"; exit 1; }
+            && [ "${{ needs.events.result }}" = "success" ] \
+            || { echo "suite=${{ needs.suite.result }} checks=${{ needs.checks.result }} events=${{ needs.events.result }}"; exit 1; }
