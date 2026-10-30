@@ -27,6 +27,8 @@ func _init() -> void:
 	_check_nobody_has_no_voice()
 	_check_shape_refused()
 	_check_cross_check_refuses_a_wrong_archetype()
+	_check_office_holders_speak_in_their_own_voice()
+	_check_a_missing_holder_falls_to_the_form_default()
 	_finish()
 
 
@@ -111,6 +113,49 @@ func _check_cross_check_refuses_a_wrong_archetype() -> void:
 	PeopleLoader.validate_voices(_loader)
 	if not _loader.errors.is_empty():
 		_failures.append("the shipped cast fails the voice cross-check: %s" % [_loader.errors])
+
+
+## QA's RECORD on #199: an office or foreign-head speaker is a PERSON, so the holder
+## speaks in their own voice -- women prime ministers and heads of state were all
+## getting the male office default. Every nation's two heads, both forms.
+func _check_office_holders_speak_in_their_own_voice() -> void:
+	var women := 0
+	for nation_id in _loader.nations:
+		var nation = _loader.nations[nation_id]
+		for pair in [["head_of_government", nation.head_of_government_person_id], ["head_of_state", nation.head_of_state_person_id]]:
+			var pid := String(pair[1])
+			if not _loader.person_by_id.has(pid):
+				continue
+			var own := Voices.archetype_of(_loader, pid)
+			if String(_loader.voice_archetypes.get(own, {}).get("sex", "")) == "f":
+				women += 1
+			for form in [{"office": pair[0]}, {"foreign_head": true}]:
+				var got := Voices.speaker_archetype(_loader, form, pid)
+				if got != own:
+					_failures.append("%s (%s of %s) speaking as %s got '%s', not their own '%s'" % [pid, pair[0], nation_id, form, got, own])
+					return
+	if women == 0:
+		_failures.append("no woman holds a head of government or state -- the check tested nothing")
+
+
+## A speaker form with no person behind it (a vacant office, a kind the nation lacks)
+## falls to that form's default in the table; no form at all is the narrator.
+func _check_a_missing_holder_falls_to_the_form_default() -> void:
+	var d: Dictionary = _loader.voice_defaults
+	var cases := [
+		[{"office": "head_of_government"}, String(d.get("office:head_of_government", ""))],
+		[{"office": "head_of_state"}, String(d.get("office:head_of_state", d.get("politician", "")))],
+		[{"kind": "union_leader"}, String(d.get("union_leader", ""))],
+		[{"kind": "press_owner", "pick": "hostile"}, String(d.get("press_owner", ""))],
+		[{"evidence_person": true}, String(d.get("evidence_person", ""))],
+		[{"foreign_head": true}, String(d.get("foreign_head", ""))],
+	]
+	for case in cases:
+		var got := Voices.speaker_archetype(_loader, case[0], "")
+		if case[1] == "" or got != case[1]:
+			_failures.append("%s with no person got '%s', not the form default '%s'" % [case[0], got, case[1]])
+	if Voices.speaker_archetype(_loader, {}, "") != "":
+		_failures.append("an event with no speaker resolved an archetype for the narrator")
 
 
 func _finish() -> void:
