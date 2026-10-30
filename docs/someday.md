@@ -415,7 +415,7 @@ V5.2 closed at 2/5, "déroutant" ([[v5]], "V5.2 — the close-out"). The author'
 
 **Carried by the close-out itself:**
 
-- **0c, the Legislature and Energy opening in one ~140 ms frame (N5, C8).** V5.2's sub-block 0c was a probe on a quiet machine and no result is recorded at the close; the two lines below ("Carried from the V5.1 closing gate", "Carried from QA's PRE-GATE 2") that say "taken by V5.2's sub-block 0c" now point here. **Owner:** Interface; the probe under a PROBE GO. **Trigger:** V5.3's readability block, or the first measured frame over 100 ms.
+- **0c, the Legislature and Energy opening in one ~140 ms frame (N5, C8).** V5.2's sub-block 0c was a probe on a quiet machine; its PROBE GO never came, so it was never measured in V5.2 (the parent, 2026-10-30), and it is part of V5.3's readability block; the two lines below ("Carried from the V5.1 closing gate", "Carried from QA's PRE-GATE 2") that say "taken by V5.2's sub-block 0c" now point here. **Owner:** Interface; the probe under a PROBE GO. **Trigger:** V5.3's readability block, or the first measured frame over 100 ms.
 - **The builder's price talk** (the V5.2 brief: "the price negotiation with a builder is a V5.2 audience with the firm's chief executive"). Only the hook was built (`Audiences.invite` with a "price:" id); the builder is V5.3c's. **Owner:** Systems and Content.
 
 ## Carried from the V5.1 close-out (2026-10-23)
