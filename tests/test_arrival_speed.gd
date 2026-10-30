@@ -16,8 +16,9 @@ extends SceneTree
 ##   - the code dismissing the card (a lapse, a card put up again) -> 1 stays: that
 ##     is not the player having seen it;
 ##   - Book a day STARTS an answer (the parent's call on QA's #207): with the date
-##     picker open the clock stays at 1, and the booking's end -- a day booked, or
-##     the picker's Cancel -- gives the speed back.
+##     picker open the clock stays at 1, and the booking's end -- a day booked, the
+##     picker's Cancel, or "Back to the map" closing the Diary under it (QA's TAKE on
+##     #207 @ 47990438, the request still waiting) -- gives the speed back.
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -34,6 +35,7 @@ const CASES := [
 	[3, "code", 1, "a card the code took down gave the speed back"],
 	[3, "book_day", 3, "a day booked from the picker did not give the speed back"],
 	[2, "book_cancel", 2, "the picker's Cancel did not give the speed back"],
+	[3, "book_close", 3, "the Diary closed under the picker did not give the speed back"],
 ]
 ## Frames from an arrival to its press, to its release, to the check: the press
 ## waits a frame for the lane to lay out the raised card.
@@ -50,6 +52,7 @@ var _case_frame := 0
 var _target: Control
 ## 1 once a booking case's Book click is done and its picker click is next.
 var _stage := 0
+var _request_id := ""
 
 
 func _init() -> void:
@@ -79,8 +82,10 @@ func _process(_delta: float) -> bool:
 				_fail("opening the date picker gave the speed back (%d) before the booking ended" % _main._clock.speed)
 			_stage = 1
 			_case_frame = _frame
-			_target = _picker_button(String(c[1]) == "book_day")
+			_target = _picker_button(String(c[1]))
 			return false
+		if String(c[1]) == "book_close" 				and String(Audiences.request(_main._state.player(), _request_id).get("status", "")) != "pending":
+			_fail("closing the Diary under the picker answered the request")
 		if _main._clock.speed != int(c[2]):
 			_fail("%s: speed %d, expected %d" % [c[3], _main._clock.speed, c[2]])
 		if _case + 1 >= CASES.size():
@@ -127,6 +132,7 @@ func _arrive(i: int) -> Control:
 	if arrived.is_empty():
 		_fail("premise: %s's request did not arrive" % _people[i].id)
 		return null
+	_request_id = String(arrived[0]["id"])
 	var card_id := AudienceDriver.lane_of(_main).card_of(String(arrived[0]["id"]))
 	var card = _main._hud.inbox._cards.get(card_id)
 	if card == null:
@@ -139,7 +145,7 @@ func _arrive(i: int) -> Control:
 			for b in buttons:
 				if (b as Button).text == "X":
 					return b
-		"answer", "book_day", "book_cancel":
+		"answer", "book_day", "book_cancel", "book_close":
 			# Decline is the card's third answer, Book its first (request_lane.gd's order).
 			var answers := buttons.filter(func(b): return (b as Button).text != "X")
 			var at := 2 if String(c[1]) == "answer" else 0
@@ -156,14 +162,21 @@ func _arrive(i: int) -> Control:
 	return card.find_children("*", "Label", true, false)[0]
 
 
-## In the open picker: its first free day, or its Cancel.
-func _picker_button(day: bool) -> Control:
+## With the picker open: its first free day, its Cancel, or the workspace's "Back to
+## the map", which closes the Diary under it.
+func _picker_button(how: String) -> Control:
 	var block = _main._calendar_panel.audience
 	if not block.visible or block.request_id() == "":
 		_fail("Book a day did not open the date picker")
 		return null
-	if not day:
+	if how == "book_cancel":
 		return block.find_child("Cancel", true, false)
+	if how == "book_close":
+		for b in _main._windows.find_children("*", "Button", true, false):
+			if (b as Button).text == "Back to the map":
+				return b
+		_fail("the workspace has no Back to the map")
+		return null
 	for b in block.find_children("*", "Button", true, false):
 		if String(b.name) != "Cancel" and not (b as Button).disabled:
 			return b
