@@ -480,9 +480,15 @@ def _pending(root: Path, r: dict) -> Path:
     return root / DESIGN_DIR / ("%s.json" % r["id"])
 
 
-def _pending_id(root: Path, r: dict) -> str:
+def _pending_row(root: Path, r: dict) -> dict:
+    """The kept design while the archetype is unchanged; carries `voice_id` too once
+    the save went through and only the table write is left (QA #201 R(b))."""
     kept = _json(_pending(root, r)) or {}
-    return str(kept.get("generated_voice_id", "")) if kept.get("sha") == r["sha"] else ""
+    return kept if kept.get("sha") == r["sha"] else {}
+
+
+def _pending_id(root: Path, r: dict) -> str:
+    return str(_pending_row(root, r).get("generated_voice_id", ""))
 
 
 def design_run(root: Path, key: str, floor: int, max_chars: int, date: str,
@@ -505,10 +511,13 @@ def design_run(root: Path, key: str, floor: int, max_chars: int, date: str,
             acc["left"], planned, floor))
     used = 0
     for r in todo:
-        if account_fn(key)["left"] - r["chars"] < floor:
+        kept = _pending_row(root, r)
+        generated = str(kept.get("generated_voice_id", ""))
+        # Only a new design spends characters: a kept one is saved for free, so the floor
+        # does not stop it (QA #201 R(a)).
+        if not generated and account_fn(key)["left"] - r["chars"] < floor:
             print("stopped at the floor before %s" % r["id"])
             return 1
-        generated = _pending_id(root, r)
         if not generated:
             try:
                 generated, audio = design_fn(key, r["description"], r["text"], r["seed"])
@@ -520,15 +529,25 @@ def design_run(root: Path, key: str, floor: int, max_chars: int, date: str,
             heard.write_bytes(audio)
             _pending(root, r).write_text(json.dumps({"generated_voice_id": generated, "sha": r["sha"]}),
                                          encoding="utf-8")
+        voice_id = str(kept.get("voice_id", ""))
+        if not voice_id:
+            try:
+                voice_id = save_fn(key, "Nation Simulator %s" % r["id"], r["description"], generated,
+                                   {"project": "nation-simulator", "archetype": r["id"]})
+            except PipelineError as e:
+                raise PipelineError("%s: %s; the design is kept, the next run saves it" % (r["id"], e))
+            if not SAFE_VOICE_ID.match(voice_id):
+                raise PipelineError("%s: the saved voice id %r is not plain alphanumeric; it is in the account, "
+                                    "not in the table" % (r["id"], voice_id))
+            # Kept before the table write: a failed write must not make the rerun save
+            # the same design a second time (a duplicate voice, or a refusal).
+            _pending(root, r).write_text(json.dumps({"generated_voice_id": generated, "sha": r["sha"],
+                                                     "voice_id": voice_id}), encoding="utf-8")
         try:
-            voice_id = save_fn(key, "Nation Simulator %s" % r["id"], r["description"], generated,
-                               {"project": "nation-simulator", "archetype": r["id"]})
-        except PipelineError as e:
-            raise PipelineError("%s: %s; the design is kept, the next run saves it" % (r["id"], e))
-        if not SAFE_VOICE_ID.match(voice_id):
-            raise PipelineError("%s: the saved voice id %r is not plain alphanumeric; it is in the account, "
-                                "not in the table" % (r["id"], voice_id))
-        write_voice(root, r["id"], voice_id, date)
+            write_voice(root, r["id"], voice_id, date)
+        except (OSError, ValueError, KeyError) as e:
+            raise PipelineError("%s: voice %s is saved but the table write failed (%s); the next run writes it"
+                                % (r["id"], voice_id, type(e).__name__))
         _pending(root, r).unlink(missing_ok=True)
         print("designed %s (%d characters)" % (r["id"], r["chars"]))
     print("%d preview characters used of %d left" % (used, acc["left"]))
@@ -849,6 +868,84 @@ def _selftest_design(fails: list, secret: str) -> None:
         ids = {a["id"]: a["voice_id"] for a in json.loads(arch.read_text(encoding="utf-8"))["archetypes"]}
         if not ids["pol"] or ids["boss"]:
             fails.append("--only did not design exactly the one archetype: %r" % ids)
+        _selftest_design_resume(fails, secret, root, table, calls, design, save)
+
+
+def _selftest_design_resume(fails: list, secret: str, root: Path, table: dict, calls: list, design, save) -> None:
+    """QA #201: the mid-batch floor, a kept design past the floor, a failed table write."""
+    arch = root / ARCHETYPES
+
+    def reset():
+        for a in table["archetypes"][:2]:
+            a["voice_id"] = ""
+        arch.write_text(json.dumps(table, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        for kept in (root / DESIGN_DIR).glob("*.json"):
+            kept.unlink()
+
+    def reads(*left):
+        queue = list(left)
+        return lambda k: calls.append("account") or {"left": queue.pop(0) if len(queue) > 1 else queue[0],
+                                                      "slots_free": 30}
+
+    def voice(arch_id):
+        return {a["id"]: a["voice_id"] for a in json.loads(arch.read_text(encoding="utf-8"))["archetypes"]}[arch_id]
+
+    chars = {r["id"]: r["chars"] for r in design_jobs(table)}
+    with redirect_stdout(io.StringIO()):
+        # TAKE 1: the account drops below the floor before the second voice (spent
+        # elsewhere): the batch stops there, exits 1, and designs nothing more.
+        reset()
+        calls.clear()
+        code = design_run(root, secret, 1000, 10000, "2026-10-30",
+                          account_fn=reads(30000, 30000, 1000 + chars["boss"] - 1), design_fn=design, save_fn=save)
+        if code != 1:
+            fails.append("a --design batch stopped at the floor exited %r, not 1" % code)
+        if calls.count("design") != 1 or voice("boss"):
+            fails.append("the mid-batch floor did not stop --design before the second voice: %r" % calls)
+        # R(a): a kept design costs nothing more, so the floor does not stop its save.
+        reset()
+
+        def refuse(k, name, d, gen, labels):
+            raise PipelineError("save: HTTP 409 (generated voice %s)" % gen)
+        try:
+            design_run(root, secret, 0, 10000, "2026-10-30", account_fn=reads(30000),
+                       design_fn=design, save_fn=refuse, only="boss")
+        except PipelineError:
+            pass
+        calls.clear()
+        try:
+            code = design_run(root, secret, 10, 10000, "2026-10-30", account_fn=reads(10 + chars["boss"] - 1),
+                              design_fn=design, save_fn=save, only="boss")
+        except PipelineError as e:
+            code = "raised: %s" % e
+        if code != 0 or "design" in calls or not voice("boss"):
+            fails.append("the floor stopped the free save of a kept design: exit %r, calls %r" % (code, calls))
+        # R(b): the save went through, the table write failed: the rerun writes the
+        # saved voice and does not save the design a second time.
+        reset()
+        real = globals()["write_voice"]
+
+        def broken(*a):
+            raise OSError("disk full")
+        globals()["write_voice"] = broken
+        first = ""
+        try:
+            design_run(root, secret, 0, 10000, "2026-10-30", account_fn=reads(30000),
+                       design_fn=design, save_fn=save, only="boss")
+            fails.append("a failed table write did not stop --design")
+        except PipelineError as e:
+            first = (_json(root / DESIGN_DIR / "boss.json") or {}).get("voice_id", "")
+            if not first or first not in str(e) or "boss" not in str(e):
+                fails.append("a failed table write does not name the saved voice: %s" % e)
+        finally:
+            globals()["write_voice"] = real
+        calls.clear()
+        design_run(root, secret, 0, 10000, "2026-10-30", account_fn=reads(30000),
+                   design_fn=design, save_fn=save, only="boss")
+        if "save" in calls or "design" in calls or not first or voice("boss") != first:
+            fails.append("the rerun after a failed table write saved again: calls %r, voice %r" % (calls, voice("boss")))
+        if (root / DESIGN_DIR / "boss.json").exists():
+            fails.append("the kept design stayed after its voice was written")
 
 
 def main() -> int:
