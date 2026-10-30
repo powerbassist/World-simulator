@@ -173,8 +173,12 @@ static func flirt_why_not(state, ns, loader, pid: String) -> String:
 	return "spouse" if pid == _spouse(ns, loader) else ""
 
 
-## "" or a reason key: not_covered, unmarried, spouse, already, too_cold, no_spark.
-static func may_begin_affair(state, ns, loader, pid: String) -> String:
+## "" or a reason key: not_covered, unmarried, spouse, already, asked, too_cold, no_spark.
+## `asked` (V5.2 close R7): this audience's `session` has already carried a proposal --
+## one per audience, so a refusal cannot be re-asked for free once a topic has warmed
+## the person past too_cold. No session (the probes, a read outside an audience) keeps
+## no such memory.
+static func may_begin_affair(state, ns, loader, pid: String, session: Dictionary = {}) -> String:
 	var why := flirt_why_not(state, ns, loader, pid)
 	if why == "not_covered":
 		return why
@@ -184,14 +188,20 @@ static func may_begin_affair(state, ns, loader, pid: String) -> String:
 		return why
 	if President.relationship(ns, pid) == "affair":
 		return "already"
+	if bool(session.get("affair_asked", false)):
+		return "asked"
 	if not Cut.above(President.rapport(ns, pid), SC.AFFAIR_RAPPORT_MIN):
 		return "too_cold"
 	return "" if spark(ns, pid) else "no_spark"
 
 
-## {ok, error}: the bond becomes `affair`, refused with may_begin_affair's key.
-static func begin_affair(state, ns, loader, pid: String) -> Dictionary:
-	var why := may_begin_affair(state, ns, loader, pid)
+## {ok, error}: the bond becomes `affair`, refused with may_begin_affair's key. With
+## the audience's `session`, the proposal is marked there (`affair_asked`) whatever
+## the answer, so the same audience cannot ask twice.
+static func begin_affair(state, ns, loader, pid: String, session: Dictionary = {}) -> Dictionary:
+	var why := may_begin_affair(state, ns, loader, pid, session)
+	if not session.is_empty():
+		session["affair_asked"] = true
 	if why != "":
 		return {"ok": false, "error": why}
 	President.set_bond(state, ns, loader, pid, "affair")
