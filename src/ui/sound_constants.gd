@@ -128,6 +128,13 @@ const EVENTS := [
 	},
 ]
 
+## V5.2d. The Voices ladder's levels (settings_panel.gd's row, index 0 is Off and
+## never played). The clips are normalised to -16 LUFS with -1.5 dBTP of headroom
+## (tools/voice_pipeline.py), so Loud is the clip as made and nothing goes above
+## it; Normal sits a step under the critical sting's -11 dB peak so the line reads
+## as speech beside the cues rather than over them.
+const VOICE_DB := [-80.0, -12.0, -6.0, 0.0]
+
 ## Ambient beds, one per screen. 16 s loops: long enough that the swells do not
 ## read as a pattern, and every frequency sits on the 1/16 Hz grid that makes
 ## the loop seamless (D2 is 73.4375 here rather than 73.42 -- 0.02 Hz off pitch

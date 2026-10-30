@@ -64,6 +64,12 @@ var people: Dictionary = {}
 ## self-describing and globally unique. Hence the `<NATION>_<surname>` scheme and
 ## the prefix check in PeopleLoader.validate_people(). See docs/people-model.md.
 var person_by_id: Dictionary = {}
+## V5.2d. data/voices/archetypes.json (Content's): archetype id -> its row, and the
+## defaults table (a person kind, or a speaker form key such as "foreign_head",
+## -> archetype id). Presentation data: playback and tools/voice_pipeline.py read
+## it through src/core/voices.gd; nothing in src/sim/ does.
+var voice_archetypes: Dictionary = {}
+var voice_defaults: Dictionary = {}
 ## nation id -> Array[Company], in authored file order — the order the Companies
 ## window reads. UNLIKE `people`, a nation may legitimately be ABSENT here: a
 ## nation with no data/companies/<ID>.json has unpartitioned sectors, which is
@@ -266,7 +272,7 @@ var region_graph: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json") -> void:
 	nations.clear()
 	party_funding.clear()
 	parties.clear()
@@ -385,6 +391,8 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	GeoLoader.validate_neighbours(self)
 	DiplomacyLoader.validate_bloc_proposals(self)
 	PeopleLoader.validate_people(self)
+	PeopleLoader.load_voices(self, voices_path)
+	PeopleLoader.validate_voices(self)
 	CompaniesLoader.validate_companies(self)
 	OutletsLoader.validate_outlets(self, outlets_dir)
 	RegionsLoader.validate_regions(self, regions_dir, regions_geo_path, regions_graph_path)

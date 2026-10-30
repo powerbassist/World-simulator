@@ -79,6 +79,12 @@ const DEFAULT_MOTION := true
 ## but they ship audible, for DEFAULT_SOUND's reason. Sound Off silences them too.
 const DEFAULT_AMBIENT := true
 
+## V5.2d. The Voices row: Off, Quiet, Normal, Loud -- the mute and the volume in one
+## ladder, an index into SoundK.VOICE_DB. A ladder now and not at V3.6 because a voice
+## is the first sound a player may want quieter rather than gone. Sound Off silences
+## it too.
+const DEFAULT_VOICE := 2
+
 ## Bumped on every save, so a reader that caches a setting (motion.gd) knows to
 ## read the file again. Static: the menu's screen and the pause menu's are two
 ## instances writing one file.
@@ -95,6 +101,7 @@ var _resolution_button: OptionButton
 var _text_button: OptionButton
 var _ambient_button: OptionButton
 var _sound_button: OptionButton
+var _voice_button: OptionButton
 var _motion_button: OptionButton
 var _message_buttons := {}  # category -> {switch: OptionButton}
 
@@ -215,6 +222,13 @@ static func ambient_enabled() -> bool:
 	return bool(cfg.get_value("audio", "ambient", DEFAULT_AMBIENT))
 
 
+## The Voices step (0 is Off), read at play time for sound_enabled()'s reason.
+static func voice_level() -> int:
+	var cfg := ConfigFile.new()
+	cfg.load(CONFIG_PATH)
+	return clampi(int(cfg.get_value("audio", "voice", DEFAULT_VOICE)), 0, 3)
+
+
 func _save_and_apply() -> void:
 	var fullscreen := _fullscreen_button.selected == 1
 	var resolution_index := _resolution_button.selected
@@ -231,6 +245,7 @@ func _save_and_apply() -> void:
 	cfg.set_value("display", "text_scale_index", _text_button.selected)
 	cfg.set_value("audio", "enabled", sound_on)
 	cfg.set_value("audio", "ambient", ambient_on)
+	cfg.set_value("audio", "voice", _voice_button.selected)
 	cfg.set_value("display", "motion", motion_on)
 	cfg.set_value(MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, _foreign_news_button.selected == 1)
 	cfg.save(CONFIG_PATH)
@@ -311,6 +326,7 @@ func _build() -> void:
 	_text_button = _add_row(grid, tr("Text size"), _percent_labels(TEXT_SCALES))
 	_sound_button = _add_row(grid, tr("Sound"), [tr("Off"), tr("On")])
 	_ambient_button = _add_row(grid, tr("Ambience"), [tr("Off"), tr("On")])
+	_voice_button = _add_row(grid, tr("Voices"), [tr("Off"), tr("Quiet"), tr("Normal"), tr("Loud")])
 	_motion_button = _add_row(grid, tr("Motion"), [tr("Off"), tr("On")])
 	_foreign_news_button = _add_row(grid, tr("News of other countries"), [tr("Off"), tr("On")])
 
@@ -442,6 +458,7 @@ func _load_into_controls() -> void:
 	_text_button.select(_text_index(cfg))
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_ambient_button.select(1 if bool(cfg.get_value("audio", "ambient", DEFAULT_AMBIENT)) else 0)
+	_voice_button.select(voice_level())
 	_motion_button.select(1 if bool(cfg.get_value("display", "motion", DEFAULT_MOTION)) else 0)
 	_foreign_news_button.select(1 if bool(cfg.get_value(
 		MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, MessageSettings.DEFAULT_FOREIGN_NEWS)) else 0)
