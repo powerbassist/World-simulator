@@ -198,11 +198,23 @@ var _json := {"e1b": {}, "events": {}, "band_failures": []}
 var _probe_base = null
 var _outcomes := {}
 
+## Tables named by --only (upper case); empty runs every table.
+var _only: Array[String] = []
+
+
+func _runs(table: String) -> bool:
+	return _only.is_empty() or _only.has(table)
+
 
 func _init() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if String(arg).begins_with("--json="):
 			_json_path = String(arg).substr("--json=".length())
+		# V5.2d: `--only=E1b,E2,E3` runs those tables alone -- the re-tune loop's
+		# quick pass. The gate (CI, the merge) is the whole probe, never --only.
+		elif String(arg).begins_with("--only="):
+			for t in String(arg).substr("--only=".length()).split(","):
+				_only.append(t.strip_edges().to_upper())
 	_loader = DataLoader.new()
 	_loader.load_all()
 	if not _loader.errors.is_empty():
@@ -210,18 +222,27 @@ func _init() -> void:
 		quit(1)
 		return
 
-	var paths := _all_paths()
-	_table_e0_range(paths)
-	_table_e0b_occupancy(paths)
-	_table_e0c_prediction(paths)
-	_table_e1b_accumulation()
-	_table_e4_cadence()
-	_table_e5_categories()
-	_table_e6_hooks()
-	_table_e7_chooser()
-	_table_e2_legibility()
-	_table_e3_dominance()
-	_table_d5_d7_voice()
+	if _runs("E0"):
+		var paths := _all_paths()
+		_table_e0_range(paths)
+		_table_e0b_occupancy(paths)
+		_table_e0c_prediction(paths)
+	if _runs("E1B"):
+		_table_e1b_accumulation()
+	if _runs("E4"):
+		_table_e4_cadence()
+	if _runs("E5"):
+		_table_e5_categories()
+	if _runs("E6"):
+		_table_e6_hooks()
+	if _runs("E7"):
+		_table_e7_chooser()
+	if _runs("E2"):
+		_table_e2_legibility()
+	if _runs("E3"):
+		_table_e3_dominance()
+	if _runs("D"):
+		_table_d5_d7_voice()
 	_write_json()
 	if not _band_failures.is_empty():
 		printerr("")
@@ -987,6 +1008,8 @@ func _table_e1b_accumulation() -> void:
 			"fires": {"defaults": d["fires"], "answer_well": a["fires"]},
 			"fires_by_choice": {"defaults": d["fires_by_choice"], "answer_well": a["fires_by_choice"]},
 		}
+		if _json_path != "":
+			_e1b_decomposition(regime, d, a)
 		var def_saturated: bool = absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
 		var ans_saturated: bool = absf(float(aw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
 		print("%-14s %8d %8d   %-11s %9.4f   %-11s %9.4f%s" % [
@@ -1019,6 +1042,47 @@ func _worst_offset(state) -> Dictionary:
 			value = v
 			worst = bloc
 	return {"bloc": worst, "value": value}
+
+
+## Rule 3's decomposition, JSON only (it costs a run per regime). The live offset is
+## not the events' sum: the scenario's authored approval SEEDS it (opinion.gd), and a
+## dozen other writers move it -- a fallen government's and a resignation's price
+## (Government.penalise_blocs), campaigns, pledges, energy, diplomacy, projects --
+## with the clamp applied at every write. So, per regime:
+##   start      the offsets the run begins from (new game plus the regime's commit);
+##   no_events  the same run with the event book emptied: every other writer, as far
+##              as a run without events is the same run (events feed approval, which
+##              feeds resignations -- second order, stated rather than modelled);
+##   event_sum  per path, sum over fires_by_choice of each applied choice's authored
+##              bloc_offset -- the events' own unclamped charge.
+## Rule 3's question, per bloc, is then whether no_events + event_sum stays off the
+## clamp.
+func _e1b_decomposition(regime: String, d: Dictionary, a: Dictionary) -> void:
+	var start = _new_state("FRA")
+	_commit(start, REGIMES[regime])
+	var kept: Array = _loader.events.duplicate()
+	_loader.events.clear()
+	var quiet := _run_machine(regime, RUN_MONTHS, false, 0)
+	_loader.events.append_array(kept)
+	var row: Dictionary = _json["e1b"][regime]
+	row["start"] = _bloc_offsets(start)
+	row["no_events"] = _bloc_offsets(quiet["state"])
+	row["event_sum"] = {"defaults": _event_sum(d["fires_by_choice"]), "answer_well": _event_sum(a["fires_by_choice"])}
+
+
+func _event_sum(fires_by_choice: Dictionary) -> Dictionary:
+	var out := {}
+	for bloc in OpinionK.BLOC_KEYS:
+		out[bloc] = 0.0
+	for event_id in fires_by_choice:
+		var ev = Events.event_by_id(_loader, String(event_id))
+		if ev == null:
+			continue
+		for choice_id in fires_by_choice[event_id]:
+			var offsets: Dictionary = (ev.choice_by_id(String(choice_id)).get("effects", {}) as Dictionary).get("bloc_offset", {})
+			for bloc in offsets:
+				out[bloc] = float(out.get(bloc, 0.0)) + float(offsets[bloc]) * int(fires_by_choice[event_id][choice_id])
+	return out
 
 
 func _bloc_offsets(state) -> Dictionary:
