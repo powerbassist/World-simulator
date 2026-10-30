@@ -473,7 +473,7 @@
         {
           "id": "stand_behind_the_city",
           "label": "Stand behind the city",
-          "summary": "The state wires the payroll and takes the city's accounts into its own hands while it does. Every other city draws the correct conclusion about who its creditor is.",
+          "summary": "The state wires the payroll and takes the city's accounts into its own hands while it does. The small towns that were next in line breathe out, and every other city draws the correct conclusion about who its creditor is.",
           "effects": {
             "spending_pct_gdp": {
               "infrastructure": 0.25

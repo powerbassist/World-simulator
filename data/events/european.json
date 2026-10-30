@@ -123,7 +123,7 @@
         {
           "id": "take_the_number",
           "label": "Take the scientists' number",
-          "summary": "The cut is deeper than the fleet can absorb and the tie-outs are yours to fund. The water gets its years and the quay towns get a programme, a ribbon and a grudge.",
+          "summary": "The cut is deeper than the fleet can absorb and the tie-outs are yours to fund. The water gets its years, the inland villages that eat the catch and fear the empty sea approve, and the quay towns get a programme, a ribbon and a grudge.",
           "effects": {
             "spending_pct_gdp": {
               "infrastructure": 0.1
@@ -260,7 +260,7 @@
         {
           "id": "split_it",
           "label": "Split the difference",
-          "summary": "The pact moves east, the orders move west and both capitals call the exchange a partnership. The workers who read the second half of that sentence are yours.",
+          "summary": "The pact moves east, the orders move west and both capitals call the exchange a partnership. The border villages that wanted the pact to move at all count it a win; the workers who read the second half of that sentence are yours.",
           "effects": {
             "company": {
               "sector": "industry",
@@ -334,7 +334,7 @@
         {
           "id": "sign_the_clause",
           "label": "Sign the clause",
-          "summary": "The fund flows and the appointments go back to the bar for review. The ministry loses a hand on the courts and the preamble says out loud what the constitution already said.",
+          "summary": "The fund flows and the appointments go back to the bar for review. The towns that live on the fund keep it and say so, the ministry loses a hand on the courts, and the preamble says out loud what the constitution already said.",
           "effects": {
             "society": {
               "judicial_independence": 0.06
@@ -412,7 +412,7 @@
         {
           "id": "vote_for_withdrawal",
           "label": "Vote for the withdrawal",
-          "summary": "The ingredient goes and the orchards carry it, in yields this season and in labour costs the co-ops price by Friday. The cities that wanted it will buy the fruit anyway.",
+          "summary": "The ingredient goes and the orchards carry it, in yields this season and in labour costs the co-ops price by Friday. The villages downstream, who have asked for the water file for years, count it as a promise kept; the cities that wanted it will buy the fruit anyway.",
           "effects": {
             "company": {
               "sector": "agriculture",
@@ -708,7 +708,7 @@
         {
           "id": "refer_to_the_court",
           "label": "Send it to the court",
-          "summary": "The reference is honest, slow and fatal to the bill's momentum, which its author will bill to you personally. The treaties say what they always said and the court says it again.",
+          "summary": "The reference is honest, slow and fatal to the bill's momentum, which its author will bill to you personally. The treaties say what they always said and the court says it again; the provinces, which live on the treaty money, read the delay as caution and approve.",
           "effects": {
             "society": {
               "judicial_independence": 0.04

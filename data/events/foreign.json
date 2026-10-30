@@ -596,7 +596,7 @@
         {
           "id": "publish_the_complaint",
           "label": "Publish the protocol complaint",
-          "summary": "The letter to the secretariat goes out within the hour, immediate and undignified, which are also its two defences. The photograph keeps running with a caption nobody reads past.",
+          "summary": "The letter to the secretariat goes out within the hour, immediate and undignified, which are also its two defences. The provinces like a government that writes letters, and the photograph keeps running with a caption nobody reads past.",
           "effects": {
             "bloc_offset": {
               "pensioners": 0.0058,
