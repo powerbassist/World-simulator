@@ -55,6 +55,7 @@
       "wealth_eur_m": 0.41,
       "name": "Sandra Camilleri",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "stubborn"
@@ -107,6 +108,7 @@
       "spouse_id": "MLT_chief_azzopardi_construction",
       "name": "Marie-Louise Attard",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "vain"
@@ -291,6 +293,7 @@
       "id": "MLT_inglott",
       "name": "Marthese Inglott",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -310,6 +313,7 @@
       "id": "MLT_jones",
       "name": "Giovanna Jones",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -379,6 +383,7 @@
       "id": "MLT_said",
       "name": "Louise Said",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "principled",
@@ -439,6 +444,7 @@
       "id": "MLT_azzopardi",
       "name": "Rita Azzopardi",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "fervent",
@@ -492,6 +498,7 @@
       "id": "MLT_dalli",
       "name": "Nathalie Dalli",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -531,6 +538,7 @@
       "id": "MLT_fenech",
       "name": "Nathalie Fenech",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -553,6 +561,7 @@
       "id": "MLT_galea",
       "name": "Doreen Galea",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -632,6 +641,7 @@
       "id": "MLT_pisani",
       "name": "Doreen Pisani",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -651,6 +661,7 @@
       "id": "MLT_sciberras",
       "name": "Carmen Sciberras",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "principled",
@@ -719,6 +730,7 @@
       "id": "MLT_vassallo",
       "name": "Evelyn Vassallo",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "networked",
         "pragmatic",
@@ -884,6 +896,7 @@
       "id": "MLT_demartino",
       "name": "Sylvana DeMartino",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "loyal"
@@ -995,6 +1008,7 @@
       "id": "MLT_incorvaja",
       "name": "Evelyn Incorvaja",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -1014,6 +1028,7 @@
       "id": "MLT_joanprez",
       "name": "Louise Joanprez",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "networked",
         "pragmatic",
@@ -1139,6 +1154,7 @@
       "id": "MLT_serracino_inglott",
       "name": "Pauline Serracino-Inglott",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "principled",
         "vain"
@@ -1151,6 +1167,7 @@
       "id": "MLT_chief_company_chircop",
       "name": "Angela Chircop",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -1162,6 +1179,7 @@
       "id": "MLT_chief_trust_rapa",
       "name": "Rita Rapa",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -1219,6 +1237,7 @@
       "id": "MLT_chief_tonna_logistics",
       "name": "Josephine Tonna",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -1253,6 +1272,7 @@
       "id": "MLT_chief_trust_jones",
       "name": "Angela Jones",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1277,6 +1297,7 @@
       "id": "MLT_chief_bank_vassallo",
       "name": "Evelyn Vassallo",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "stubborn"

@@ -99,6 +99,7 @@
       "wealth_eur_m": 2.3,
       "name": "Емилия Ганева",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -144,6 +145,7 @@
       "wealth_eur_m": 2.0,
       "name": "Румяна Колева",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -187,6 +189,7 @@
       "id": "BGR_aleksiev",
       "name": "Emiliya Aleksiev",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "pragmatic",
         "vain"
@@ -223,6 +226,7 @@
       "id": "BGR_chervenkov",
       "name": "Gergana Chervenkov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -325,6 +329,7 @@
       "id": "BGR_ivanov",
       "name": "Maya Ivanov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -351,6 +356,7 @@
       "id": "BGR_kolarov",
       "name": "Vanya Kolarov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "principled",
@@ -371,6 +377,7 @@
       "id": "BGR_lazarov",
       "name": "Bogdana Lazarov",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -430,6 +437,7 @@
       "id": "BGR_petrov",
       "name": "Vanya Petrov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "pragmatic"
@@ -725,6 +733,7 @@
       "id": "BGR_ilarionov",
       "name": "Gergana Ilarionov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -818,6 +827,7 @@
       "id": "BGR_naydenov",
       "name": "Ivayla Naydenov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -840,6 +850,7 @@
       "id": "BGR_penev",
       "name": "Gergana Penev",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -884,6 +895,7 @@
       "id": "BGR_simeonov",
       "name": "Bogdana Simeonov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal"
@@ -986,6 +998,7 @@
       "id": "BGR_boikov",
       "name": "Ivayla Boikov",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "principled",
         "stubborn"
@@ -1003,6 +1016,7 @@
       "id": "BGR_cholakov",
       "name": "Kalina Cholakov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -1046,6 +1060,7 @@
       "id": "BGR_borisov",
       "name": "Gergana Borisov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -1093,6 +1108,7 @@
       "id": "BGR_dimitrov",
       "name": "Maya Dimitrov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn",
         "vain"
@@ -1156,6 +1172,7 @@
       "id": "BGR_hadjivasilev",
       "name": "Gergana Hadjivasilev",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious"
       ],
@@ -1176,6 +1193,7 @@
       "id": "BGR_chief_stefanov_stroitelstvo",
       "name": "Silviya Stefanov",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -1199,6 +1217,7 @@
       "id": "BGR_chief_targovska_kasta_todorov",
       "name": "Emiliya Todorov",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1244,6 +1263,7 @@
       "id": "BGR_chief_dimov_zemedelie",
       "name": "Nadezhda Dimov",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -1277,6 +1297,7 @@
       "id": "BGR_chief_chavdarov_zastrahovane",
       "name": "Polina Chavdarov",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"

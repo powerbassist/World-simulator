@@ -34,6 +34,7 @@
       "wealth_eur_m": 3.3,
       "name": "Silje Haugland",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent"
@@ -84,6 +85,7 @@
       "wealth_eur_m": 1.7,
       "name": "Marit Brekke",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -130,6 +132,7 @@
       "wealth_eur_m": 0.56,
       "name": "Ingrid Lunde",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "fervent"
@@ -211,6 +214,7 @@
       "id": "NOR_chief_opsahl_gruppen",
       "name": "Eli Opsahl",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"

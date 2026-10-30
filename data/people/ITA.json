@@ -72,6 +72,7 @@
       "wealth_eur_m": 2.0,
       "name": "Chiara Fossati",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -95,6 +96,7 @@
       "wealth_eur_m": 1.2,
       "name": "Enzo Trevisan",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled"
       ],
@@ -113,6 +115,7 @@
       "wealth_eur_m": 4.6,
       "name": "Serena Caputo",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -206,6 +209,7 @@
       "id": "ITA_barbagallo",
       "name": "Ottavia Barbagallo",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -255,6 +259,7 @@
       "id": "ITA_dell_orto",
       "name": "Selvaggia Dell'Orto",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "vain"
@@ -299,6 +304,7 @@
       "id": "ITA_gargiulo",
       "name": "Mariangela Gargiulo",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -382,6 +388,7 @@
       "id": "ITA_nesci",
       "name": "Bianca Nesci",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -395,6 +402,7 @@
       "id": "ITA_oliverio",
       "name": "Bianca Oliverio",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled"
@@ -465,6 +473,7 @@
       "id": "ITA_ravagnani",
       "name": "Ilaria Ravagnani",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -550,6 +559,7 @@
       "id": "ITA_vismara",
       "name": "Giulietta Vismara",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "pragmatic",
         "principled",
@@ -586,6 +596,7 @@
       "id": "ITA_bandello",
       "name": "Mariangela Bandello",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -599,6 +610,7 @@
       "id": "ITA_cimabue",
       "name": "Chiara Cimabue",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -622,6 +634,7 @@
       "id": "ITA_dossena",
       "name": "Selvaggia Dossena",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "pragmatic"
       ],
@@ -656,6 +669,7 @@
       "id": "ITA_ferradini",
       "name": "Raffaella Ferradini",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "loyal",
@@ -715,6 +729,7 @@
       "id": "ITA_marchionni",
       "name": "Bianca Marchionni",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "fervent",
@@ -798,6 +813,7 @@
       "id": "ITA_reali",
       "name": "Ilaria Reali",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "networked",
@@ -888,6 +904,7 @@
       "id": "ITA_zingaretti",
       "name": "Chiara Zingaretti",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -953,6 +970,7 @@
       "id": "ITA_cuccurullo",
       "name": "Ottavia Cuccurullo",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "loyal",
@@ -995,6 +1013,7 @@
       "id": "ITA_fogliano",
       "name": "Ottavia Fogliano",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent"
@@ -1031,6 +1050,7 @@
       "id": "ITA_bellandi",
       "name": "Lavinia Bellandi",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -1061,6 +1081,7 @@
       "id": "ITA_del_monte",
       "name": "Chiara Del Monte",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -1082,6 +1103,7 @@
       "id": "ITA_errani",
       "name": "Fiorella Errani",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "fervent",
         "pragmatic",
@@ -1146,6 +1168,7 @@
       "id": "ITA_chief_compagnia_pischedda",
       "name": "Lavinia Pischedda",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -1157,6 +1180,7 @@
       "id": "ITA_chief_banca_aloisio",
       "name": "Fiorella Aloisio",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1202,6 +1226,7 @@
       "id": "ITA_chief_errani_industrie",
       "name": "Mariangela Errani",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -1213,6 +1238,7 @@
       "id": "ITA_chief_compagnia_bellandi",
       "name": "Raffaella Bellandi",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"

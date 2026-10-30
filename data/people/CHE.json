@@ -27,6 +27,7 @@
       "wealth_eur_m": 4.9,
       "name": "Céline Perrenoud",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked"
       ],
@@ -73,6 +74,7 @@
       "wealth_eur_m": 2.4,
       "name": "Andrea Bissig",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -91,6 +93,7 @@
       "wealth_eur_m": 3.4,
       "name": "Livia Frei",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -295,6 +298,7 @@
       "id": "CHE_grubenmann",
       "name": "Karin Grubenmann",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "principled",
         "stubborn"
@@ -334,6 +338,7 @@
       "id": "CHE_imfeld",
       "name": "Beatrice Imfeld",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn",
         "vain"
@@ -352,6 +357,7 @@
       "id": "CHE_jenni",
       "name": "Franziska Jenni",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "pragmatic",
         "principled",
@@ -509,6 +515,7 @@
       "id": "CHE_rickenbach",
       "name": "Adelheid Rickenbach",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "loyal",
@@ -528,6 +535,7 @@
       "id": "CHE_stucki",
       "name": "Christa Stucki",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -620,6 +628,7 @@
       "id": "CHE_wyss",
       "name": "Beatrice Wyss",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal"
       ],
@@ -710,6 +719,7 @@
       "id": "CHE_dutsch",
       "name": "Adelheid Dütsch",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "stubborn",
@@ -729,6 +739,7 @@
       "id": "CHE_eugster",
       "name": "Adelheid Eugster",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -794,6 +805,7 @@
       "id": "CHE_honegger",
       "name": "Irene Honegger",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "stubborn"
       ],
@@ -831,6 +843,7 @@
       "id": "CHE_kohler",
       "name": "Liselotte Kohler",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "fervent",
@@ -844,6 +857,7 @@
       "id": "CHE_lorz",
       "name": "Franziska Lorz",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -887,6 +901,7 @@
       "id": "CHE_niederer",
       "name": "Beatrice Niederer",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -905,6 +920,7 @@
       "id": "CHE_osterwalder",
       "name": "Marta Osterwalder",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious"
       ],
@@ -963,6 +979,7 @@
       "id": "CHE_abplanalp",
       "name": "Marta Abplanalp",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -988,6 +1005,7 @@
       "id": "CHE_balmer",
       "name": "Heidi Balmer",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -1011,6 +1029,7 @@
       "id": "CHE_collenberg",
       "name": "Karin Collenberg",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -1111,6 +1130,7 @@
       "id": "CHE_gyger",
       "name": "Liselotte Gyger",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "vain"
       ],
@@ -1128,6 +1148,7 @@
       "id": "CHE_humbel",
       "name": "Irene Humbel",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious",
         "fervent"
@@ -1149,6 +1170,7 @@
       "id": "CHE_joller",
       "name": "Heidi Joller",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -1179,6 +1201,7 @@
       "id": "CHE_chief_schurch_energie",
       "name": "Adelheid Schürch",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1213,6 +1236,7 @@
       "id": "CHE_chief_gesellschaft_ottiger",
       "name": "Nathalie Ottiger",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -1224,6 +1248,7 @@
       "id": "CHE_chief_bank_giezendanner",
       "name": "Nathalie Giezendanner",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -1235,6 +1260,7 @@
       "id": "CHE_chief_portmann",
       "name": "Adelheid Portmann",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -1268,6 +1294,7 @@
       "id": "CHE_chief_jenni_handel",
       "name": "Elsbeth Jenni",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -1280,6 +1307,7 @@
       "spouse_id": "CHE_baumgartner",
       "name": "Beatrice Daenzer",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "stubborn"

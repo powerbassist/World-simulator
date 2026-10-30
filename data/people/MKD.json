@@ -29,6 +29,7 @@
       "wealth_eur_m": 1.0,
       "name": "Vesna Stojanova",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "networked"
@@ -133,6 +134,7 @@
       "spouse_id": "MKD_chief_spasovski",
       "name": "Elena Angelovska",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "loyal"
@@ -167,6 +169,7 @@
       "id": "MKD_chief_trgovska_kuka_janevski",
       "name": "Tanja Janevski",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -246,6 +249,7 @@
       "id": "MKD_chief_banka_blazevski",
       "name": "Tanja Blaževski",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "stubborn"

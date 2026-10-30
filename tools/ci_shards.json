@@ -221,7 +221,8 @@
    "tests/test_accomplice.gd",
    "tests/test_audience_triggers.gd",
    "tests/test_headlines.gd",
-   "tests/test_speaker_lines.gd"
+   "tests/test_speaker_lines.gd",
+   "tests/test_voices.gd"
   ]
  ]
 }

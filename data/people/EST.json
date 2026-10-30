@@ -30,6 +30,7 @@
       "wealth_eur_m": 0.84,
       "name": "Jaan Kirus",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -125,6 +126,7 @@
       "wealth_eur_m": 1.5,
       "name": "Marju Talivee",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -190,6 +192,7 @@
       "id": "EST_blomfeldt",
       "name": "Kadri Blomfeldt",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "principled"
@@ -213,6 +216,7 @@
       "id": "EST_claudt",
       "name": "Piret Claudt",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "principled",
         "stubborn"
@@ -235,6 +239,7 @@
       "id": "EST_deemant",
       "name": "Liis Deemant",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "loyal"
       ],
@@ -251,6 +256,7 @@
       "id": "EST_eensoo",
       "name": "Ülle Eensoo",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -343,6 +349,7 @@
       "id": "EST_ilves",
       "name": "Kadri Ilves",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -364,6 +371,7 @@
       "id": "EST_jogi",
       "name": "Tiina Jõgi",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -413,6 +421,7 @@
       "id": "EST_lillemae",
       "name": "Tiina Lillemäe",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "fervent",
         "loyal",
@@ -449,6 +458,7 @@
       "id": "EST_nurmsalu",
       "name": "Eve Nurmsalu",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "stubborn"
       ],
@@ -465,6 +475,7 @@
       "id": "EST_oja",
       "name": "Eve Oja",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -528,6 +539,7 @@
       "id": "EST_salu",
       "name": "Aino Salu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled"
       ],
@@ -602,6 +614,7 @@
       "id": "EST_valbe",
       "name": "Anneli Välbe",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -672,6 +685,7 @@
       "id": "EST_bockler",
       "name": "Anneli Böckler",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "networked",
@@ -747,6 +761,7 @@
       "id": "EST_fjodorov",
       "name": "Tiina Fjodorov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "principled",
@@ -814,6 +829,7 @@
       "id": "EST_ikkonen",
       "name": "Liis Ikkonen",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -923,6 +939,7 @@
       "id": "EST_nommik",
       "name": "Kadri Nõmmik",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "loyal",
@@ -1093,6 +1110,7 @@
       "id": "EST_deutschmann",
       "name": "Eve Deutschmann",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "pragmatic",
         "principled",
@@ -1112,6 +1130,7 @@
       "id": "EST_eero",
       "name": "Ülle Eero",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -1151,6 +1170,7 @@
       "spouse_id": "EST_lepik",
       "name": "Kadri Gerassimov",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious"
       ],
@@ -1268,6 +1288,7 @@
       "id": "EST_chief_harma_ehitus",
       "name": "Piret Härma",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -1280,6 +1301,7 @@
       "id": "EST_chief_oja_kaubandus",
       "name": "Aino Oja",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -1336,6 +1358,7 @@
       "id": "EST_chief_kaubamaja_oobik",
       "name": "Piret Ööbik",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "stubborn"

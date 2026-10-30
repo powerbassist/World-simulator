@@ -7,6 +7,7 @@
       "spouse_id": "SWE_gullbrandsson",
       "name": "Karin Holmqvist",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -35,6 +36,7 @@
       "wealth_eur_m": 1.3,
       "name": "Erik Sandberg",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -54,6 +56,7 @@
       "wealth_eur_m": 3.1,
       "name": "Ulla Hellström",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -137,6 +140,7 @@
       "wealth_eur_m": 4.3,
       "name": "Cecilia Nordin",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "vain"
@@ -175,6 +179,7 @@
       "id": "SWE_ahlstrom",
       "name": "Hilma Ahlström",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -309,6 +314,7 @@
       "id": "SWE_ingves",
       "name": "Ingrid Ingves",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -368,6 +374,7 @@
       "id": "SWE_lindgren",
       "name": "Märta Lindgren",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -436,6 +443,7 @@
       "id": "SWE_olofsson",
       "name": "Lovisa Olofsson",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "loyal"
@@ -457,6 +465,7 @@
       "id": "SWE_persson",
       "name": "Freja Persson",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "networked",
@@ -496,6 +505,7 @@
       "id": "SWE_rask",
       "name": "Märta Rask",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent"
@@ -522,6 +532,7 @@
       "id": "SWE_stenmark",
       "name": "Märta Stenmark",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal"
@@ -540,6 +551,7 @@
       "id": "SWE_tegner",
       "name": "Greta Tegnér",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -559,6 +571,7 @@
       "id": "SWE_ulvaeus",
       "name": "Birgitta Ulvaeus",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "principled",
@@ -577,6 +590,7 @@
       "id": "SWE_werner",
       "name": "Lovisa Werner",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "vain"
@@ -599,6 +613,7 @@
       "id": "SWE_zetterling",
       "name": "Birgitta Zetterling",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "pragmatic",
         "vain"
@@ -708,6 +723,7 @@
       "id": "SWE_edfeldt",
       "name": "Karin Edfeldt",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -751,6 +767,7 @@
       "id": "SWE_gyllenhammar",
       "name": "Lovisa Gyllenhammar",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -778,6 +795,7 @@
       "id": "SWE_hofsten",
       "name": "Agnes Hofsten",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -867,6 +885,7 @@
       "id": "SWE_lundquist",
       "name": "Karin Lundquist",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -895,6 +914,7 @@
       "id": "SWE_molander",
       "name": "Greta Molander",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -1025,6 +1045,7 @@
       "id": "SWE_beijer",
       "name": "Disa Beijer",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal"
@@ -1069,6 +1090,7 @@
       "id": "SWE_dahm",
       "name": "Agnes Dahm",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -1101,6 +1123,7 @@
       "id": "SWE_falkengard",
       "name": "Birgitta Falkengård",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled"
@@ -1141,6 +1164,7 @@
       "id": "SWE_henckel",
       "name": "Elsa Henckel",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -1187,6 +1211,7 @@
       "id": "SWE_chief_drakenberg_transport",
       "name": "Ingrid Drakenberg",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -1266,6 +1291,7 @@
       "id": "SWE_chief_bergstrom_bygg",
       "name": "Hilma Bergström",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -1277,6 +1303,7 @@
       "id": "SWE_chief_rask_forsakring",
       "name": "Elsa Rask",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1300,6 +1327,7 @@
       "id": "SWE_chief_palsson",
       "name": "Märta Pålsson",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic",

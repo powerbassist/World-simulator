@@ -46,6 +46,7 @@
       "wealth_eur_m": 3.2,
       "name": "Réka Daróczi",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -90,6 +91,7 @@
       "wealth_eur_m": 0.6,
       "name": "Ildikó Molnár",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "principled"
@@ -132,6 +134,7 @@
       "wealth_eur_m": 1.8,
       "name": "Tünde Székely",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked"
       ],
@@ -182,6 +185,7 @@
       "id": "HUN_albertfalusi",
       "name": "Csilla Albertfalusi",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "fervent"
@@ -258,6 +262,7 @@
       "id": "HUN_fodor",
       "name": "Erzsébet Fodor",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -276,6 +281,7 @@
       "id": "HUN_gulyas",
       "name": "Piroska Gulyás",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -302,6 +308,7 @@
       "id": "HUN_halasz",
       "name": "Luca Halász",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "stubborn",
         "vain"
@@ -320,6 +327,7 @@
       "id": "HUN_illes",
       "name": "Gizella Illés",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -370,6 +378,7 @@
       "id": "HUN_kiraly",
       "name": "Judit Király",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "principled"
@@ -435,6 +444,7 @@
       "id": "HUN_orosz",
       "name": "Ilona Orosz",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "pragmatic"
       ],
@@ -498,6 +508,7 @@
       "id": "HUN_szabo",
       "name": "Judit Szabó",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -519,6 +530,7 @@
       "id": "HUN_takacs",
       "name": "Judit Takács",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "vain"
@@ -607,6 +619,7 @@
       "id": "HUN_csepregi",
       "name": "Erzsébet Csepregi",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "stubborn",
@@ -669,6 +682,7 @@
       "id": "HUN_fabian",
       "name": "Csilla Fábián",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal"
@@ -687,6 +701,7 @@
       "id": "HUN_gerencser",
       "name": "Luca Gerencsér",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -753,6 +768,7 @@
       "id": "HUN_kalotai",
       "name": "Gizella Kalotai",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "vain"
@@ -793,6 +809,7 @@
       "id": "HUN_meszaros",
       "name": "Beatrix Mészáros",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "principled",
@@ -977,6 +994,7 @@
       "id": "HUN_batori",
       "name": "Katalin Bátori",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "stubborn",
@@ -996,6 +1014,7 @@
       "id": "HUN_csanadi",
       "name": "Csilla Csanádi",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled"
       ],
@@ -1058,6 +1077,7 @@
       "id": "HUN_foldes",
       "name": "Piroska Földes",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -1128,6 +1148,7 @@
       "id": "HUN_jakabfi",
       "name": "Piroska Jakabfi",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "pragmatic",
@@ -1177,6 +1198,7 @@
       "id": "HUN_chief_rekettyes",
       "name": "Judit Rekettyés",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -1233,6 +1255,7 @@
       "id": "HUN_chief_albertfalusi_szallitas",
       "name": "Ilona Albertfalusi",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -1279,6 +1302,7 @@
       "id": "HUN_chief_lendvai_energia",
       "name": "Gizella Lendvai",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -1291,6 +1315,7 @@
       "id": "HUN_chief_nagydani",
       "name": "Ilona Nagydani",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked",

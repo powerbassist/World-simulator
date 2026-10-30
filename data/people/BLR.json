@@ -91,6 +91,7 @@
       "wealth_eur_m": 1.6,
       "name": "Natallia Ivanova",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -136,6 +137,7 @@
       "id": "BLR_chief_charnou_materyialy",
       "name": "Halina Charnou",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -147,6 +149,7 @@
       "id": "BLR_chief_marozau_transpart",
       "name": "Yulia Marozau",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -202,6 +205,7 @@
       "id": "BLR_chief_bank_prakopovich",
       "name": "Darya Prakopovich",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -214,6 +218,7 @@
       "id": "BLR_chief_naumenka_enierhietyka",
       "name": "Natallia Naumenka",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic",

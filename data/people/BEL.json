@@ -55,6 +55,7 @@
       "wealth_eur_m": 4.2,
       "name": "Naima Dewilde",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -110,6 +111,7 @@
       "wealth_eur_m": 2.5,
       "name": "Lore Vanhamme",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent"
@@ -186,6 +188,7 @@
       "id": "BEL_baelden",
       "name": "Hilde Baelden",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "principled"
@@ -224,6 +227,7 @@
       "id": "BEL_debruyn",
       "name": "Fien Debruyn",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "pragmatic"
@@ -305,6 +309,7 @@
       "id": "BEL_hendrickx",
       "name": "Loes Hendrickx",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -368,6 +373,7 @@
       "id": "BEL_luyten",
       "name": "Elke Luyten",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "networked",
         "principled",
@@ -412,6 +418,7 @@
       "id": "BEL_nys",
       "name": "Elke Nys",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -435,6 +442,7 @@
       "spouse_id": "BEL_vandekerckhove",
       "name": "Elke Peeters",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -513,6 +521,7 @@
       "id": "BEL_vanassche",
       "name": "Elke Vanassche",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "pragmatic"
       ],
@@ -534,6 +543,7 @@
       "id": "BEL_willems",
       "name": "Godelieve Willems",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -582,6 +592,7 @@
       "id": "BEL_aelbrecht",
       "name": "Lien Aelbrecht",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -605,6 +616,7 @@
       "id": "BEL_boonen",
       "name": "Sofie Boonen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked"
       ],
@@ -644,6 +656,7 @@
       "id": "BEL_de_backer",
       "name": "Fien De Backer",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "principled",
@@ -671,6 +684,7 @@
       "id": "BEL_elst",
       "name": "Hilde Elst",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -739,6 +753,7 @@
       "id": "BEL_hoet",
       "name": "Elke Hoet",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "vain"
@@ -757,6 +772,7 @@
       "id": "BEL_ionkheere",
       "name": "Lien Ionkheere",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -824,6 +840,7 @@
       "id": "BEL_mortelmans",
       "name": "Lien Mortelmans",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "principled",
         "vain"
@@ -845,6 +862,7 @@
       "id": "BEL_noppe",
       "name": "Sofie Noppe",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -866,6 +884,7 @@
       "id": "BEL_olyslagers",
       "name": "Hilde Olyslagers",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious"
       ],
@@ -975,6 +994,7 @@
       "id": "BEL_weyts",
       "name": "Godelieve Weyts",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "vain"
@@ -997,6 +1017,7 @@
       "id": "BEL_zion",
       "name": "Rosa Zion",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious"
       ],
@@ -1018,6 +1039,7 @@
       "id": "BEL_absil",
       "name": "Lien Absil",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "pragmatic"
@@ -1063,6 +1085,7 @@
       "id": "BEL_charlier",
       "name": "Marijke Charlier",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -1089,6 +1112,7 @@
       "id": "BEL_decoster",
       "name": "Godelieve Decoster",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "stubborn"
@@ -1106,6 +1130,7 @@
       "id": "BEL_dujardin",
       "name": "Godelieve Dujardin",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "stubborn",
         "vain"
@@ -1163,6 +1188,7 @@
       "id": "BEL_hausman",
       "name": "Marijke Hausman",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "principled",
@@ -1192,6 +1218,7 @@
       "id": "BEL_chief_compagnie_absil",
       "name": "Nele Absil",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -1214,6 +1241,7 @@
       "id": "BEL_chief_compagnie_floor",
       "name": "Marijke Floor",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -1293,6 +1321,7 @@
       "id": "BEL_chief_jongen_industrie",
       "name": "Sofie Jongen",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic",

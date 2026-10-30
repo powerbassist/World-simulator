@@ -138,6 +138,7 @@
       "wealth_eur_m": 0.82,
       "name": "Ineta Vītola",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -221,6 +222,7 @@
       "id": "LVA_celms",
       "name": "Aija Celms",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "stubborn"
@@ -307,6 +309,7 @@
       "id": "LVA_grinbergs",
       "name": "Nellija Grīnbergs",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "pragmatic"
       ],
@@ -323,6 +326,7 @@
       "id": "LVA_kalnins",
       "name": "Ruta Kalnins",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -360,6 +364,7 @@
       "id": "LVA_mazpanaks",
       "name": "Kristīne Mazpanāks",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -387,6 +392,7 @@
       "id": "LVA_petersons",
       "name": "Lasma Pētersons",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -453,6 +459,7 @@
       "id": "LVA_taurins",
       "name": "Nellija Taurins",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -475,6 +482,7 @@
       "id": "LVA_ulmanis",
       "name": "Velta Ulmanis",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent"
       ],
@@ -515,6 +523,7 @@
       "id": "LVA_zarins",
       "name": "Ilze Zariņš",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "loyal",
         "stubborn"
@@ -590,6 +599,7 @@
       "id": "LVA_dumins",
       "name": "Lasma Dūmiņš",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -680,6 +690,7 @@
       "id": "LVA_ikaunieks",
       "name": "Kristīne Ikaunieks",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -745,6 +756,7 @@
       "id": "LVA_lemanis",
       "name": "Lasma Lēmanis",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent"
       ],
@@ -810,6 +822,7 @@
       "id": "LVA_purmalis",
       "name": "Aija Purmalis",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "fervent",
         "principled"
@@ -980,6 +993,7 @@
       "id": "LVA_skujins",
       "name": "Jurita Skujins",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -1114,6 +1128,7 @@
       "id": "LVA_fricbergs",
       "name": "Gunta Fricbergs",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "loyal",
         "principled"
@@ -1131,6 +1146,7 @@
       "id": "LVA_grasis",
       "name": "Dace Grasis",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic",
@@ -1158,6 +1174,7 @@
       "id": "LVA_jansons",
       "name": "Kristīne Jansons",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "principled"
       ],
@@ -1179,6 +1196,7 @@
       "id": "LVA_chief_tirdzniecibas_nams_pinnis",
       "name": "Dace Pinnis",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -1270,6 +1288,7 @@
       "id": "LVA_chief_skujenieks_transports",
       "name": "Ilze Skujenieks",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -1281,6 +1300,7 @@
       "id": "LVA_chief_tirdzniecibas_nams_aizsilnieks",
       "name": "Maija Aizsilnieks",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
