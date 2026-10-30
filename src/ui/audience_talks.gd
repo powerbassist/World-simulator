@@ -37,8 +37,8 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 		return false
 	game["session"] = session
 	game["state"] = main._state
-	# V5.2 close R7: one proposal an audience. The mark is the UI's (the session is
-	# Levers', never written here), so a new audience starts unasked.
+	# V5.2 close R7: one proposal an audience is the sim's (Shadows, on the session);
+	# this is only the person's own answer, kept for the button's words.
 	game["affair_asked"] = ""
 	main._save_load_panel.block_save(Strings.t("Finish the audience first"))
 	var view := view_of(main, game)
@@ -75,7 +75,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 			# Accept's refusals that are the scene's own state (Shadows.accept_offer's
 			# reasons, its sentences): the button is down with them, never a dead press.
 			"offer_why": "they have already agreed" if String(session.get("won", "")) != "" else ("no attempts left" if int(session["attempts_left"]) <= 0 else ""),  # i18n: ok the sim's reasons (shadows.gd), shown through Words.reason
-			"affair_why": Shadows.may_begin_affair(state, ns, loader, pid), "affair_asked": String(game.get("affair_asked", "")),
+			"affair_why": Shadows.may_begin_affair(state, ns, loader, pid, session), "affair_asked": String(game.get("affair_asked", "")),
 			"flirted": (session["used_topics"] as Array).has("flirt"), "lovers": President.relationship(ns, pid) == "affair"}}
 
 
@@ -169,7 +169,8 @@ static func affair(main, game: Dictionary, action: String) -> void:
 		return
 	var pid := String(session["person_id"])
 	var state = main._state
-	var r := Shadows.begin_affair(state, state.player(), main._loader, pid) if action == "propose" else Shadows.end_affair(state, state.player(), main._loader, pid)
+	# The session: Shadows marks the proposal on it, refused or not (#208, R7).
+	var r := Shadows.begin_affair(state, state.player(), main._loader, pid, session) if action == "propose" else Shadows.end_affair(state, state.player(), main._loader, pid)
 	if not bool(r["ok"]):
 		var why := String(r["error"])
 		if action == "propose":
@@ -178,10 +179,6 @@ static func affair(main, game: Dictionary, action: String) -> void:
 		game["scene"].show_result(Words.reason(why), view_of(main, game), "affair_why_" + why, {},
 			ResultTone.BAD if why in ["too_cold", "no_spark"] else ResultTone.BLOCKED)
 		return
-	# Asked, whatever the answer: begun and then ended in the same audience, the
-	# proposal does not come back (pass 1 on #209).
-	if action == "propose":
-		game["affair_asked"] = "asked"
 	var paid := Words.paid_text({}, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
 	var said := Strings.t("It begins, and no one must know.") if action == "propose" else Strings.t("It is over.")
 	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),

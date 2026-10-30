@@ -265,6 +265,9 @@ func _check_refused_once() -> void:
 		return
 	if not propose.disabled:
 		_fail("a refused proposal can be asked again in the same audience")
+	# The sim keeps the one ask (Shadows, #208): the session the wiring passed is marked.
+	if Shadows.may_begin_affair(_main._state, ns, _main._loader, String(_person.id), _game()["session"]) != "asked":
+		_fail("the wiring did not hand the audience's session to Shadows: the sim would take a second ask")
 	if not propose.tooltip_text.contains(Words.reason(why)):
 		_fail("the spent proposal does not say their answer: '%s'" % propose.tooltip_text)
 	if _scene()._result.text != Words.reason(why):
@@ -288,18 +291,25 @@ func _check_begun_then_ended() -> void:
 	var game := _game()
 	var propose: Button = _target
 	if Shadows.spark(ns, pid) and Shadows.may_begin_affair(_main._state, ns, _main._loader, pid) != "unmarried":
+		# A fresh ask, staged: the first one's marks cleared, the person warmed.
 		game["affair_asked"] = ""
+		game["session"].erase("affair_asked")
 		President.adjust_rapport(_main._state, ns, _main._loader, pid, 2.0)
 		AudienceDriver.AudienceTalks.affair(_main, game, "propose")
 		AudienceDriver.AudienceTalks.affair(_main, game, "end")
+		if President.relationship(ns, pid) == "affair":
+			_fail("premise: the staged affair did not end")
 		if propose.visible and not propose.disabled:
 			_fail("an affair begun and ended is proposed again in the same audience")
+	# Asked with no refusal of the person's to quote (a yes, since ended): the
+	# sim's "asked", said as its own sentence.
 	var view: Dictionary = AudienceDriver.AudienceTalks.view_of(_main, game)
-	view["shadow"]["affair_asked"] = "asked"
+	view["shadow"]["affair_why"] = "asked"
+	view["shadow"]["affair_asked"] = ""
 	view["shadow"]["lovers"] = false
 	_scene().shadow.show_for(view)
 	if not propose.disabled or propose.tooltip_text != Words.reason("asked"):
-		_fail("an accepted proposal's mark does not hold the button down with its words")
+		_fail("the sim's 'asked' does not hold the button down with its words")
 	_scene().shadow.show_for(AudienceDriver.AudienceTalks.view_of(_main, game))
 
 
