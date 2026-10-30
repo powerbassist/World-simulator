@@ -172,7 +172,8 @@ def voices_for(speaker: dict, src: dict, every: bool) -> list:
     lines in every possible holder's archetype too (QA on #205, against "Une par
     visage"): OFFICE_KIND's people and anyone the data names in an office, each
     their own `voice` else their kind's default, beside the form's own default for a
-    vacant office. The evidence's person may be anyone; it keeps its default.
+    vacant office. The evidence's person, the exposure's witness, may be anyone of any
+    kind, so its line is voiced in every person's archetype (the parent, 2026-10-30).
     """
     defaults = src["defaults"]
     if "kind" in speaker:
@@ -189,9 +190,9 @@ def voices_for(speaker: dict, src: dict, every: bool) -> list:
         key = "foreign_head"
     else:
         return []
-    if every and key != "evidence_person":
+    if every:
         ids = {str(p.get("voice") or defaults.get(str(p.get("kind", ""))) or "") for p in src["people"]
-               if p.get("kind") == OFFICE_KIND or p.get("id") in src.get("holders", ())}
+               if key == "evidence_person" or p.get("kind") == OFFICE_KIND or p.get("id") in src.get("holders", ())}
         ids.add(str(defaults.get(key) or ""))
         return sorted(i for i in ids if i)
     return [defaults[key]] if defaults.get(key) else []
@@ -642,6 +643,11 @@ def selftest() -> int:
         if voices_for({"foreign_head": True}, holders, True) != ["boss", "pol_f", "pol_m"]:
             fails.append("--every does not voice a foreign head in every holder's archetype: %r"
                          % voices_for({"foreign_head": True}, holders, True))
+        # The parent (2026-10-30): the witness may be anyone, so every person's archetype.
+        holders["defaults"]["evidence_person"] = "union"
+        if voices_for({"evidence_person": True}, holders, True) != ["boss", "gruff", "pol_f", "pol_m", "union"]:
+            fails.append("--every does not voice the evidence's person in every archetype: %r"
+                         % voices_for({"evidence_person": True}, holders, True))
         if voices_for({"office": "head_of_government"}, holders, False) != ["cabinet"]:
             fails.append("the default reading of an office is not its default alone")
         named = set()
