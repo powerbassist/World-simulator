@@ -61,6 +61,7 @@ const Unrest = preload("res://src/sim/unrest.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Events = preload("res://src/sim/events.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
+const E1bGate = preload("res://tools/e1b_gate.gd")
 const GameEvent = preload("res://src/core/event.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 
@@ -977,19 +978,28 @@ func _table_e7_chooser() -> void:
 ## That is docs/projects-model.md's *a bill is not a cost* one block on -- a per-decision
 ## price is not a lifetime charge -- and economy-model.md's IMPULSE_MAX a sixth time.
 ##
-## BAND: the worst bloc's accumulated event offset over a full reachable run must leave
-## BLOC_OFFSET_MAX STRICTLY SLACK, on BOTH paths: the all-defaults path (what a player
-## who never opens the window produces) and the answer-well path (every entry answered
-## with its best choice on arrival). A clamp reached on either fails the band.
+## BAND: the EVENT BOOK'S OWN share of every bloc's offset over a full reachable run
+## (tools/e1b_gate.gd: each applied choice's authored bloc_offset, times how often the
+## run applied it) must leave BLOC_OFFSET_MAX STRICTLY SLACK, on BOTH paths: the
+## all-defaults path (what a player who never opens the window produces) and the
+## answer-well path (every entry answered with its best choice on arrival).
+##
+## V5.2d, the author's call of 2026-10-30 ("Mesurer les événements seuls, le reste en
+## V5.3"): until then the band read the LIVE register, which other writers move too --
+## the scenario's seed, a fallen government's price, campaigns, pledges, energy,
+## diplomacy -- so it failed on clamps the event book did not cause and could not trim
+## away. The live register is still printed (the "live" columns), reported and not
+## gated; those writers are V5.3's carry (docs/someday.md).
 ## docs/defence-model.md's measured-and-slack discipline.
 func _table_e1b_accumulation() -> void:
 	print("\n=== E1b  LIFETIME ACCUMULATION against the bloc_offset clamp (+-%.2f) ===" % LegislatureK.BLOC_OFFSET_MAX)
 	print("A per-decision price is not a lifetime charge. Measured on the ALL-DEFAULTS")
 	print("path, which is what a player who never opens the window produces, and on the")
 	print("answer-well path beside it. Saturation is not a big number: it is the point at")
-	print("which every regime stops being distinguishable from every other.\n")
-	print("%-14s %8s %8s   %-11s %9s   %-11s %9s" % [
-		"regime", "months", "events", "worst(def)", "offset", "worst(ans)", "offset",
+	print("which every regime stops being distinguishable from every other.")
+	print("GATED: the event book's own share (\"share\"). REPORTED: the live register (\"live\").\n")
+	print("%-14s %8s %8s   %-11s %8s %-11s %8s   %-11s %8s %-11s %8s" % [
+		"regime", "months", "events", "share(def)", "", "share(ans)", "", "live(def)", "", "live(ans)", "",
 	])
 	for regime in REGIMES.keys():
 		# Both paths on the real machine now -- the defaults path is what a player
@@ -1008,25 +1018,43 @@ func _table_e1b_accumulation() -> void:
 			"fires": {"defaults": d["fires"], "answer_well": a["fires"]},
 			"fires_by_choice": {"defaults": d["fires_by_choice"], "answer_well": a["fires_by_choice"]},
 		}
+		var share_d := E1bGate.event_share(_loader, d["fires_by_choice"])
+		var share_a := E1bGate.event_share(_loader, a["fires_by_choice"])
+		_json["e1b"][regime]["event_sum"] = {"defaults": share_d, "answer_well": share_a}
 		if _json_path != "":
-			_e1b_decomposition(regime, d, a)
-		var def_saturated: bool = absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
-		var ans_saturated: bool = absf(float(aw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
-		print("%-14s %8d %8d   %-11s %9.4f   %-11s %9.4f%s" % [
+			_e1b_decomposition(regime)
+		var sd := _worst_of(share_d)
+		var sa := _worst_of(share_a)
+		var live_hit: bool = absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - E1bGate.AT_CLAMP_EPS \
+				or absf(float(aw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - E1bGate.AT_CLAMP_EPS
+		var hit_d := E1bGate.saturated(share_d, LegislatureK.BLOC_OFFSET_MAX)
+		var hit_a := E1bGate.saturated(share_a, LegislatureK.BLOC_OFFSET_MAX)
+		print("%-14s %8d %8d   %-11s %+8.4f %-11s %+8.4f   %-11s %+8.4f %-11s %+8.4f%s%s" % [
 			regime, int(d["months"]), int(d["arrivals"]),
+			sd["bloc"], float(sd["value"]), sa["bloc"], float(sa["value"]),
 			dw["bloc"], float(dw["value"]), aw["bloc"], float(aw["value"]),
-			"   *** SATURATED ***" if def_saturated else "",
+			"   *** SHARE AT THE CLAMP ***" if not (hit_d.is_empty() and hit_a.is_empty()) else "",
+			"   (live at the clamp: reported, V5.3)" if live_hit else "",
 		])
-		# The band is the header's: STRICTLY SLACK of the clamp on both paths.
-		# Printing the marker without failing it left the run exiting 0 over
-		# "every declared band PASSED". The answer-well path adds the best choices'
-		# own offsets, and a clamp reached there is the same convergence of regimes.
-		if def_saturated:
-			_band_failed("E1b: regime %s on the all-defaults path reaches the bloc_offset clamp -- bloc %s at %.4f against +-%.2f" % [
-				regime, dw["bloc"], float(dw["value"]), LegislatureK.BLOC_OFFSET_MAX])
-		if ans_saturated:
-			_band_failed("E1b: regime %s on the answer-well path reaches the bloc_offset clamp -- bloc %s at %.4f against +-%.2f" % [
-				regime, aw["bloc"], float(aw["value"]), LegislatureK.BLOC_OFFSET_MAX])
+		# The band is the header's: the share STRICTLY SLACK of the clamp on both paths.
+		if not hit_d.is_empty():
+			_band_failed("E1b (D4): regime %s, all-defaults path: the event book's own share reaches the clamp on %s (worst %s %+.4f against +-%.2f)" % [
+				regime, ", ".join(hit_d), sd["bloc"], float(sd["value"]), LegislatureK.BLOC_OFFSET_MAX])
+		if not hit_a.is_empty():
+			_band_failed("E1b (D4): regime %s, answer-well path: the event book's own share reaches the clamp on %s (worst %s %+.4f against +-%.2f)" % [
+				regime, ", ".join(hit_a), sa["bloc"], float(sa["value"]), LegislatureK.BLOC_OFFSET_MAX])
+
+
+## The bloc with the largest absolute value in a bloc -> offset map.
+func _worst_of(share: Dictionary) -> Dictionary:
+	var worst := ""
+	var value := 0.0
+	for bloc in OpinionK.BLOC_KEYS:
+		var v := float(share.get(bloc, 0.0))
+		if absf(v) > absf(value):
+			value = v
+			worst = bloc
+	return {"bloc": worst, "value": value}
 
 
 ## The bloc carrying the largest absolute offset. Read off the LIVE register rather than
@@ -1053,11 +1081,10 @@ func _worst_offset(state) -> Dictionary:
 ##   no_events  the same run with the event book emptied: every other writer, as far
 ##              as a run without events is the same run (events feed approval, which
 ##              feeds resignations -- second order, stated rather than modelled);
-##   event_sum  per path, sum over fires_by_choice of each applied choice's authored
-##              bloc_offset -- the events' own unclamped charge.
-## Rule 3's question, per bloc, is then whether no_events + event_sum stays off the
-## clamp.
-func _e1b_decomposition(regime: String, d: Dictionary, a: Dictionary) -> void:
+##   event_sum  per path, the gate's own share (E1bGate.event_share), always written.
+## The live register is then roughly no_events + event_sum, clamped; the gate reads
+## event_sum alone (the author's call, 2026-10-30), and no_events is V5.3's carry.
+func _e1b_decomposition(regime: String) -> void:
 	var start = _new_state("FRA")
 	_commit(start, REGIMES[regime])
 	var kept: Array = _loader.events.duplicate()
@@ -1067,22 +1094,6 @@ func _e1b_decomposition(regime: String, d: Dictionary, a: Dictionary) -> void:
 	var row: Dictionary = _json["e1b"][regime]
 	row["start"] = _bloc_offsets(start)
 	row["no_events"] = _bloc_offsets(quiet["state"])
-	row["event_sum"] = {"defaults": _event_sum(d["fires_by_choice"]), "answer_well": _event_sum(a["fires_by_choice"])}
-
-
-func _event_sum(fires_by_choice: Dictionary) -> Dictionary:
-	var out := {}
-	for bloc in OpinionK.BLOC_KEYS:
-		out[bloc] = 0.0
-	for event_id in fires_by_choice:
-		var ev = Events.event_by_id(_loader, String(event_id))
-		if ev == null:
-			continue
-		for choice_id in fires_by_choice[event_id]:
-			var offsets: Dictionary = (ev.choice_by_id(String(choice_id)).get("effects", {}) as Dictionary).get("bloc_offset", {})
-			for bloc in offsets:
-				out[bloc] = float(out.get(bloc, 0.0)) + float(offsets[bloc]) * int(fires_by_choice[event_id][choice_id])
-	return out
 
 
 func _bloc_offsets(state) -> Dictionary:
