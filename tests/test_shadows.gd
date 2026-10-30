@@ -43,6 +43,7 @@ func _init() -> void:
 	# Task 6: the affair and the bond rule.
 	_check_unmarried_president_no_affair()
 	_check_affair_reasons()
+	_check_one_affair_proposal_per_audience()
 	_check_affair_accrues_evidence_monthly()
 	_check_bond_rule_turns_and_recovers()
 	_check_affair_never_overwritten_by_the_rule()
@@ -367,6 +368,34 @@ func _check_affair_reasons() -> void:
 			break
 	if Shadows.may_begin_affair(state, ns, _loader, "nobody") != "not_covered":
 		_failures.append("an id the register does not cover read as a possible affair")
+
+
+## V5.2 close R7 (Interface): one proposal per audience. A refused proposal cannot be
+## asked again in the same audience at no cost -- even after a topic warms the person
+## past too_cold. The audience's session carries the mark; a new audience (a new
+## session) asks afresh, and a call with no session (the probes) keeps no memory.
+func _check_one_affair_proposal_per_audience() -> void:
+	var state = _state()
+	var ns = state.player()
+	var pid := _lover(ns)
+	var session := {"person_id": pid}
+	var first := Shadows.begin_affair(state, ns, _loader, pid, session)
+	if bool(first.get("ok", false)) or String(first.get("error", "")) != "too_cold":
+		_failures.append("the cold first proposal did not refuse too_cold: %s" % [first])
+	President.adjust_rapport(state, ns, _loader, pid, 0.9)
+	if Shadows.may_begin_affair(state, ns, _loader, pid, session) != "asked":
+		_failures.append("after a refusal the same audience reads '%s', not asked" % Shadows.may_begin_affair(state, ns, _loader, pid, session))
+	var second := Shadows.begin_affair(state, ns, _loader, pid, session)
+	if bool(second.get("ok", false)) or String(second.get("error", "")) != "asked" or President.relationship(ns, pid) == "affair":
+		_failures.append("a second proposal in one audience was not refused 'asked': %s" % [second])
+	# A new audience asks afresh; no session keeps no memory.
+	if Shadows.may_begin_affair(state, ns, _loader, pid, {"person_id": pid}) != "" or Shadows.may_begin_affair(state, ns, _loader, pid) != "":
+		_failures.append("a new audience (or no session) inherited the refusal")
+	# A proposal that succeeds reads `already` afterwards, not `asked`.
+	var fresh := {"person_id": pid}
+	if not bool(Shadows.begin_affair(state, ns, _loader, pid, fresh).get("ok", false)) \
+			or Shadows.may_begin_affair(state, ns, _loader, pid, fresh) != "already":
+		_failures.append("a begun affair read '%s' in its audience, not already" % Shadows.may_begin_affair(state, ns, _loader, pid, fresh))
 
 
 func _check_affair_accrues_evidence_monthly() -> void:
