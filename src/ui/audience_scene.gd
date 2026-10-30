@@ -36,6 +36,8 @@ const Words = preload("res://src/ui/lever_words.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 const AudienceShadow = preload("res://src/ui/audience_shadow.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 
 ## 16:9, the board's scene window over the map.
 const SIZE := Vector2(1120, 630)
@@ -50,10 +52,14 @@ var _view: Dictionary = {}
 var _resource = null
 var _face: Control
 var _speaker: Label
+## V5.2 close R3: the person's party beside their name, said and swatched.
+var _party: HBoxContainer
 var _line: Label
 var _fog: Label
 var _traits: Label
 var _result: Label
+## V5.2 close R5: how the last result landed, a STATUS-toned word before it.
+var _tone: Label
 var _end: Button
 var _over := false
 
@@ -72,9 +78,14 @@ func _ready() -> void:
 	talk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	talk.add_theme_constant_override("separation", 8)
 	body.add_child(talk)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 12)
+	talk.add_child(head)
 	_speaker = Label.new()
 	_speaker.theme_type_variation = UiTheme.MICRO
-	talk.add_child(_speaker)
+	head.add_child(_speaker)
+	_party = HBoxContainer.new()
+	head.add_child(_party)
 	_line = Label.new()
 	_line.autowrap_mode = TextServer.AUTOWRAP_WORD
 	talk.add_child(_line)
@@ -90,9 +101,19 @@ func _ready() -> void:
 	talk.add_child(shadow)
 	shadow.offer_answered.connect(func(accepted: bool) -> void: offer_answered.emit(accepted))
 	shadow.affair.connect(func(action: String) -> void: affair.emit(action))
+	var said := HBoxContainer.new()
+	said.add_theme_constant_override("separation", 10)
+	talk.add_child(said)
+	_tone = Label.new()
+	_tone.name = "ResultTone"  # i18n: ok a node name, found by tests
+	_tone.uppercase = true
+	_tone.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	said.add_child(_tone)
 	_result = Label.new()
 	_result.autowrap_mode = TextServer.AUTOWRAP_WORD
-	talk.add_child(_result)
+	_result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	said.add_child(_result)
+	ResultTone.apply(_tone, "")
 	_end = PanelKit.sized(Button.new())
 	_end.pressed.connect(func() -> void:
 		if _over:
@@ -118,24 +139,34 @@ func open(view: Dictionary) -> void:
 		_face.add_child(Portrait.framed_for(person_id, _face.custom_minimum_size, Portrait.Emotion.NEUTRAL,
 			Portrait.scene_from_name("office")))
 	_result.text = ""
+	ResultTone.apply(_tone, "")
+	for child in _party.get_children():
+		child.queue_free()
+	# A view without the key (a test's, the phone's) shows no party line at all;
+	# the lane's row always carries it, {} for a person with none.
+	if view.has("party"):
+		_party.add_child(PartyChip.make(view["party"]))
 	_show_state(view)
 	say(String(view.get("opening_title", "opening")), {})
 	_say_offer(view)
 
 
 ## After a verb: the sim's result in words, the levers' new ranges, what is left.
-## `view` carries the fresh fog, traits, offered, topics and attempts_left.
-func show_result(text: String, view: Dictionary, title: String, extra := {}) -> void:
+## `view` carries the fresh fog, traits, offered, topics and attempts_left; `tone`
+## is a ResultTone key, "" for a result that is neither good nor bad news.
+func show_result(text: String, view: Dictionary, title: String, extra := {}, tone := "") -> void:
 	_result.text = text
+	ResultTone.apply(_tone, tone)
 	_show_state(view)
 	if title != "":
 		say(title, extra)
 
 
 ## The sim has closed the audience: its outcome, said; every verb down; one way out.
-func show_close(outcome: String, text: String) -> void:
+func show_close(outcome: String, text: String, tone := "") -> void:
 	_over = true
 	_result.text = text
+	ResultTone.apply(_tone, tone)
 	verbs.show_verbs([], [], 0, {})
 	verbs.visible = false
 	shadow.visible = false

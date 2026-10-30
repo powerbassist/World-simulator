@@ -17,9 +17,11 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 
-## The reasons a proposal is not even put: no standing, or lovers already. Every
-## other reason is the person's to give, in their own words, once it is asked.
-const UNASKED := ["not_covered", "already"]
+## The reasons a proposal is not even put: no standing, lovers already, or asked
+## already this audience (V5.2 close R7: a refused proposal stayed live and could
+## be pressed again and again; Shadows keeps the one ask on the session, #208).
+## Every other reason is the person's to give, in their own words, once asked.
+const UNASKED := ["not_covered", "already", "asked"]
 
 var _offer: VBoxContainer
 var _line: Label
@@ -71,7 +73,9 @@ func _ready() -> void:
 
 ## `view`: the scene's view; its `shadow` block is {offer: {currency,
 ## amount_eur_m} or {}, affair_why: Shadows.may_begin_affair()'s key, flirted:
-## a flirt spoken this audience, lovers: an affair under way}.
+## a flirt spoken this audience, lovers: an affair under way, affair_asked: the
+## person's own refusal key once they said no this audience, "" otherwise -- the
+## words for the "asked" button, which alone says only that you asked}.
 func show_for(view: Dictionary) -> void:
 	var shadow: Dictionary = view.get("shadow", {})
 	var offer: Dictionary = shadow.get("offer", {})
@@ -86,8 +90,12 @@ func show_for(view: Dictionary) -> void:
 	var why := String(shadow.get("affair_why", ""))
 	# Proposed only once there has been a flirt: the scene's own order, flirt first.
 	_propose.visible = bool(shadow.get("flirted", false)) and not lovers
+	var answer := String(shadow.get("affair_asked", ""))
 	_propose.disabled = UNASKED.has(why)
-	_propose.tooltip_text = Words.reason(why) if UNASKED.has(why) else tr("Ask them: they may say yes, or tell you why not.")
+	if why == "asked" and answer != "":
+		_propose.tooltip_text = tr("You asked once this audience. Their answer: %s") % Words.reason(answer)
+	else:
+		_propose.tooltip_text = Words.reason(why) if UNASKED.has(why) else tr("Ask them: they may say yes, or tell you why not.")
 	_stop.visible = lovers
 	_affair.visible = _propose.visible or _stop.visible
 

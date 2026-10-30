@@ -370,7 +370,8 @@ var _broken_word := false
 ## promise made), spent (three attempts gone), closed (End pressed), diary (a
 ## promise made, the audience left, the Diary open on "Your word"); bargain, dates
 ## and gossip open that verb's choice. V5.2c: lie ticks argue's lie toggle, flirt
-## flirts (the affair's proposal shows), backroom picks the corrupt currency.
+## flirts (the affair's proposal shows), propose flirts then proposes (V5.2 close
+## R7), backroom picks the corrupt currency.
 var _audience_step := ""
 ## V5.2c: --audience-offer asks the audience of a press owner first, whose request
 ## comes with money (Offers' draw), so the scene shows the offer and its answers.
@@ -2095,6 +2096,11 @@ func _stage_audience_step() -> void:
 			verbs.lever_button("argue").get_parent().find_child("Lie", false, false).button_pressed = true
 		"flirt":
 			verbs.topic_button("flirt").pressed.emit()
+		"propose":
+			# V5.2 close R7: a flirt, then the proposal -- refused, the button is down
+			# with the reason (one ask per audience); accepted, the affair's own row.
+			verbs.topic_button("flirt").pressed.emit()
+			scene.shadow.find_child("ProposeAffair", true, false).pressed.emit()
 		"backroom":
 			var pick: OptionButton = verbs.lever_button("bargain").get_parent().find_child("Currency", false, false)
 			for i in pick.item_count:

@@ -207,6 +207,7 @@ tests=(
   tests/test_audience_flow.gd
   tests/test_audience_levers.gd
   tests/test_audience_shadows.gd
+  tests/test_audience_close_fixes.gd
   tests/test_exposure_desk.gd
   tests/test_audience_load.gd
   tests/test_phone_ui.gd

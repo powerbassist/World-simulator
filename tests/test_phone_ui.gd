@@ -26,6 +26,9 @@ const PersonCard = preload("res://src/ui/person_card.gd")
 const Relations = preload("res://src/core/relations.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 const Click = preload("res://tests/click.gd")
 
 const SLOT := "phone_ui_test"
@@ -62,6 +65,7 @@ func _process(_delta: float) -> bool:
 			_press_a_verb()
 		13:
 			_check_dialed()
+			_check_won_call_tone()
 			PhoneDriver.dialog_of(_main)._close.pressed.emit()
 		15:
 			_check_hung_up()
@@ -79,6 +83,45 @@ func _process(_delta: float) -> bool:
 			_finish()
 			return true
 	return false
+
+
+## The call's wiring with a catcher for a dialog: what tone the result is said in.
+class ToneCatcher:
+	var tone := "unset"
+	func show_result(_text: String, _titles: Array = [], _extra := {}, said_tone := "") -> void:
+		tone = said_tone
+
+
+## QA's TAKE 1 on #209, the phone's half: a WON lever's call carries the GOOD tag.
+## A second person asks; the call is rigged to win through the sim's own seeded
+## roll (Phone.dial), under the offered lever's floor -- the true odds are inside
+## the shown range, so the try cannot fail. A bargain (its currency) is left out.
+func _check_won_call_tone() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var now: int = int(state.year) * 12 + int(state.month)
+	var pid := ""
+	for person in _main._loader.people.get(String(ns.id), []):
+		if pid == "" and not person.wants.is_empty() and String(person.id) != _asker and String(person.id) != String(ns.head_of_state_person_id):
+			Audiences._arrive(ns, person, person.wants[0], now, [])
+			pid = String(person.id)
+	var best := {}
+	for row in Phone.options(state, ns, _main._loader, pid)["levers"]:
+		if bool(row["offered"]) and String(row["lever"]) != "bargain" and float(row.get("odds_lo", 0.0)) > float(best.get("odds_lo", 0.0)):
+			best = row
+	if best.is_empty():
+		_fail("premise: no lever a second caller could win")
+		return
+	var lever := String(best["lever"])
+	for seed in range(1, 20000):
+		if Cycle.unit_pair(pid, Cycle.salted("%s:%s" % [LK.SALT_PHONE, lever], seed), now) < float(best["odds_lo"]):
+			ns.draw_seed = seed
+			break
+	var catcher := ToneCatcher.new()
+	var args := {"due_month": now + LK.PROMISE_MIN_MONTHS} if lever == "promise_date" else {}
+	PhoneDriver._dial(_main, {"person_id": pid, "dialog": catcher, "on_change": func() -> void: pass}, lever, args)
+	if catcher.tone != ResultTone.GOOD:
+		_fail("a won call's result is not said in the good tone: '%s'" % catcher.tone)
 
 
 func _stage_a_request() -> void:
@@ -162,6 +205,12 @@ func _check_dialed() -> void:
 		_fail("the call's result is not said, or its verbs stayed up: '%s'" % dialog._result.text)
 	if dialog._line.text == "" or dialog._line.text == _opening:
 		_fail("the call does not end in the person's own words: '%s'" % dialog._line.text)
+	# V5.2 close R5: a lever's call result carries its toned word, agreeing with it.
+	if _rang != "family":
+		var won: bool = dialog._result.text.begins_with(dialog.tr("They agree: the request is answered by phone."))
+		var tag: Array = ResultTone.TAG[ResultTone.GOOD if won else ResultTone.BAD]
+		if not dialog._tone.visible or dialog._tone.theme_type_variation != String(tag[0]) or dialog._tone.text != dialog.tr(String(tag[1])):
+			_fail("the call's lever result carries no tone, or the wrong one: '%s'" % dialog._tone.text)
 
 
 func _check_hung_up() -> void:

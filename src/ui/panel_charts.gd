@@ -24,6 +24,7 @@ extends VBoxContainer
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const ChartSeries = preload("res://src/ui/chart_series.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -186,7 +187,7 @@ func _seat_parts(ns, loader) -> Array:
 	var colors: Array = []
 	for i in order:
 		parts.append({"label": String(parties[i].party_name), "value": float(ns.seats_by_party.get(parties[i].id, 0))})
-		colors.append(ChartStyle.SERIES[mini(i, ChartStyle.SERIES.size() - 1)])
+		colors.append(PartyChip.colour_at(i))  # one rule with the people's party chip
 	return [parts, colors]
 
 

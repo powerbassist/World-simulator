@@ -37,6 +37,7 @@ const SHADOW_REASON := {
 	"too_cold": "They are not close enough to you for that.",  # i18n: msgid
 	"no_spark": "There is no spark between you.",  # i18n: msgid
 	"not_affair": "There is no affair to end.",  # i18n: msgid
+	"asked": "You have already asked them once this audience.",  # i18n: msgid
 }
 ## The fog the scene assumes when the sim names none: the widest.
 const FOG_DEFAULT := "stranger"
