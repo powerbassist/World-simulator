@@ -70,6 +70,7 @@ func _process(_delta: float) -> bool:
 			_press(false)
 		17:
 			_check_second_click_dead()
+			_check_begun_then_ended()
 			_scene().verbs.lever_button("argue").pressed.emit()
 		19:
 			_check_lever_tone()
@@ -103,14 +104,18 @@ func _arrive() -> bool:
 	for person in _main._loader.people.get(String(ns.id), []):
 		if want.is_empty() and not person.wants.is_empty():
 			want = person.wants[0]
-	for person in _main._loader.people.get(String(ns.id), []):
-		var pid := String(person.id)
-		if String(person.party_id) != "" or _led_by(pid) == "" or pid == String(ns.head_of_state_person_id) or pid == String(ns.pm_person_id):
-			continue
-		if not President.covers(state, ns, _main._loader, pid) or Shadows.flirt_why_not(state, ns, _main._loader, pid) != "":
-			continue
-		_person = person
-		break
+	# A leader with the spark first (the sim's seeded draw), so the begun-then-ended
+	# path runs through the wiring; any covered leader otherwise.
+	for need_spark in [true, false]:
+		for person in _main._loader.people.get(String(ns.id), []):
+			var pid := String(person.id)
+			if _person != null or String(person.party_id) != "" or _led_by(pid) == "" or pid == String(ns.head_of_state_person_id) or pid == String(ns.pm_person_id):
+				continue
+			if not President.covers(state, ns, _main._loader, pid) or Shadows.flirt_why_not(state, ns, _main._loader, pid) != "":
+				continue
+			if need_spark and not Shadows.spark(ns, pid):
+				continue
+			_person = person
 	if _person == null:
 		_fail("premise: no covered party leader to see")
 		return false
@@ -272,6 +277,30 @@ func _check_second_click_dead() -> void:
 	if _scene()._result.text != "-":
 		_fail("a second click on the refused proposal answered again: '%s'" % _scene()._result.text)
 	_scene()._result.text = _said
+
+
+## R7, pass 1 on #209: an affair begun and ended in one audience is not proposed
+## again. Through the wiring when the pair has the spark (the sim's seeded draw);
+## always through the control, with the mark the wiring writes on a yes.
+func _check_begun_then_ended() -> void:
+	var ns = _main._state.player()
+	var pid := String(_person.id)
+	var game := _game()
+	var propose: Button = _target
+	if Shadows.spark(ns, pid) and Shadows.may_begin_affair(_main._state, ns, _main._loader, pid) != "unmarried":
+		game["affair_asked"] = ""
+		President.adjust_rapport(_main._state, ns, _main._loader, pid, 2.0)
+		AudienceDriver.AudienceTalks.affair(_main, game, "propose")
+		AudienceDriver.AudienceTalks.affair(_main, game, "end")
+		if propose.visible and not propose.disabled:
+			_fail("an affair begun and ended is proposed again in the same audience")
+	var view: Dictionary = AudienceDriver.AudienceTalks.view_of(_main, game)
+	view["shadow"]["affair_asked"] = "asked"
+	view["shadow"]["lovers"] = false
+	_scene().shadow.show_for(view)
+	if not propose.disabled or propose.tooltip_text != Words.reason("asked"):
+		_fail("an accepted proposal's mark does not hold the button down with its words")
+	_scene().shadow.show_for(AudienceDriver.AudienceTalks.view_of(_main, game))
 
 
 ## R5: the lever's result carries a toned word that agrees with it.

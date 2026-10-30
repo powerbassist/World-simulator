@@ -74,7 +74,8 @@ func _ready() -> void:
 ## `view`: the scene's view; its `shadow` block is {offer: {currency,
 ## amount_eur_m} or {}, affair_why: Shadows.may_begin_affair()'s key, flirted:
 ## a flirt spoken this audience, lovers: an affair under way, affair_asked: the
-## refusal's key once a proposal was refused this audience, "" before}.
+## refusal's key once a proposal was refused this audience, "asked" once one
+## was accepted, "" before}.
 func show_for(view: Dictionary) -> void:
 	var shadow: Dictionary = view.get("shadow", {})
 	var offer: Dictionary = shadow.get("offer", {})
@@ -91,7 +92,9 @@ func show_for(view: Dictionary) -> void:
 	_propose.visible = bool(shadow.get("flirted", false)) and not lovers
 	var asked := String(shadow.get("affair_asked", ""))
 	_propose.disabled = UNASKED.has(why) or asked != ""
-	if asked != "":
+	if asked == "asked":
+		_propose.tooltip_text = Words.reason(asked)
+	elif asked != "":
 		_propose.tooltip_text = tr("You asked once this audience. Their answer: %s") % Words.reason(asked)
 	else:
 		_propose.tooltip_text = Words.reason(why) if UNASKED.has(why) else tr("Ask them: they may say yes, or tell you why not.")

@@ -178,6 +178,10 @@ static func affair(main, game: Dictionary, action: String) -> void:
 		game["scene"].show_result(Words.reason(why), view_of(main, game), "affair_why_" + why, {},
 			ResultTone.BAD if why in ["too_cold", "no_spark"] else ResultTone.BLOCKED)
 		return
+	# Asked, whatever the answer: begun and then ended in the same audience, the
+	# proposal does not come back (pass 1 on #209).
+	if action == "propose":
+		game["affair_asked"] = "asked"
 	var paid := Words.paid_text({}, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
 	var said := Strings.t("It begins, and no one must know.") if action == "propose" else Strings.t("It is over.")
 	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
@@ -213,7 +217,9 @@ static func end(main, game: Dictionary) -> void:
 		text += " " + Strings.t("Declining: %s.") % Words.price_text(r.get("price", {}), _feel(main, session), true)
 		if broken:
 			text += " " + Strings.t("They held something on you. Refusing them broke your word.")
-	game["scene"].show_close(String(r["outcome"]), text, ResultTone.BAD if String(r["outcome"]) == "declined" else ResultTone.GOOD)
+	# Good news only for an outcome worded as one: anything else -- an outcome the
+	# sim leaves empty included -- is said as the refusal it is (Words.outcome).
+	game["scene"].show_close(String(r["outcome"]), text, ResultTone.GOOD if String(r["outcome"]) in ["settled", "promised"] else ResultTone.BAD)
 	main._windows.mark_all_dirty()
 
 

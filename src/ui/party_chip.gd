@@ -31,9 +31,12 @@ static func of(loader, ns, person_id: String) -> Dictionary:
 	var person = loader.person_by_id.get(person_id)
 	if person == null:
 		return {}
-	var party_id := String(ns.person_party_override.get(person_id, person.party_id))
+	# An override is the register's word even when it is "" (left to sit alone):
+	# the sim's own reading (Characters._party_of), so leadership is not asked then.
+	var overridden: bool = ns.person_party_override.has(person_id)
+	var party_id := String(ns.person_party_override[person_id]) if overridden else String(person.party_id)
 	var parties: Array = loader.parties.get(String(ns.id), [])
-	if party_id == "":
+	if party_id == "" and not overridden:
 		var authored := {}
 		for party in parties:
 			authored[String(party.id)] = String(party.leader_person_id)
