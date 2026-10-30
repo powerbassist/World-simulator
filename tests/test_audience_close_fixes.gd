@@ -13,7 +13,10 @@ extends SceneTree
 ##     request card, the Diary's booking block and the scene's header -- a party's
 ##     LEADER included, whom the data names from the party, not the person;
 ##   - R5: a lever's result and the audience's end carry a STATUS-toned word that
-##     agrees with what happened, never the colour alone;
+##     agrees with what happened, never the colour alone -- a failed lever and a
+##     WON one (QA's TAKE 1: the good tag driven), an audience won and a second
+##     one ended with nothing won; that second audience opens with no answer left
+##     over from the first;
 ##   - R4: the Lie toggle is an option on the lever (OPTION_CHECK), worded as one.
 
 const Audiences = preload("res://src/sim/audiences.gd")
@@ -24,6 +27,9 @@ const Words = preload("res://src/ui/lever_words.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
+const Levers = preload("res://src/sim/levers.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
@@ -74,13 +80,27 @@ func _process(_delta: float) -> bool:
 			_scene().verbs.lever_button("argue").pressed.emit()
 		19:
 			_check_lever_tone()
-			_scene()._end.pressed.emit()
+			_win_a_lever()
 		21:
-			_check_close_tone()
+			_check_won_tone()
 			_scene()._end.pressed.emit()
 		23:
+			_check_close_tone(ResultTone.GOOD, "an audience won")
+			_scene()._end.pressed.emit()
+		25:
 			if String(_game().get("affair_asked", "x")) != "":
 				_fail("the one-ask mark outlived its audience: '%s'" % _game().get("affair_asked"))
+			# Stale on purpose: the next audience's open() must clear it itself.
+			_game()["affair_asked"] = "stale"
+			if not _arrive_other() or not _reach_audience():
+				return _end()
+		27:
+			if String(_game().get("affair_asked", "x")) != "":
+				_fail("a new audience opened with the last one's answer: '%s'" % _game().get("affair_asked"))
+			_scene()._end.pressed.emit()
+		29:
+			_check_close_tone(ResultTone.BAD, "an audience ended with nothing won")
+			_scene()._end.pressed.emit()
 			return _end()
 	return false
 
@@ -321,9 +341,63 @@ func _check_lever_tone() -> void:
 	_tone_is(tone, want, "argue's result")
 
 
-func _check_close_tone() -> void:
-	var outcome := "declined" if _scene()._result.text.begins_with(Words.outcome("declined")) else "kept"
-	_tone_is(_scene()._tone, ResultTone.BAD if outcome == "declined" else ResultTone.GOOD, "the audience's end")
+## QA's TAKE 1 on #209: the GOOD tag driven, not only agreed with. The roll is
+## the sim's seeded draw (Levers.attempt): the premise picks the offered lever with
+## the best floor and a draw seed whose roll lands under it -- the true odds are
+## always inside the shown range (B4), so the try cannot fail.
+func _win_a_lever() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var session: Dictionary = _game()["session"]
+	var best := {}
+	for row in Levers.offered(state, ns, _main._loader, session):
+		if bool(row.get("offered", false)) and float(row.get("odds_lo", 0.0)) > float(best.get("odds_lo", 0.0)):
+			best = row
+	if best.is_empty() or int(session["attempts_left"]) <= 0:
+		_fail("premise: no lever left to win (%s)" % [session["attempts_left"]])
+		return
+	var lever := String(best["lever"])
+	var index := LK.ATTEMPTS - int(session["attempts_left"])
+	var now: int = int(state.year) * 12 + int(state.month)
+	for seed in range(1, 20000):
+		if Cycle.unit_pair(String(session["request_id"]), Cycle.salted("%s:%s:%d" % [LK.SALT_ROLL, lever, index], seed), now) < float(best["odds_lo"]):
+			ns.draw_seed = seed
+			break
+	_scene().verbs.lever_button(lever).pressed.emit()
+
+
+func _check_won_tone() -> void:
+	if String(_game()["session"].get("won", "")) == "":
+		_fail("premise: the staged lever did not win")
+		return
+	_tone_is(_scene()._tone, ResultTone.GOOD, "a won lever's result")
+
+
+func _check_close_tone(key: String, where: String) -> void:
+	_tone_is(_scene()._tone, key, where)
+
+
+## A second covered person (not the first), whose audience is ended with nothing
+## won: the declined close.
+func _arrive_other() -> bool:
+	var state = _main._state
+	var ns = state.player()
+	var first = _person
+	_person = null
+	for person in _main._loader.people.get(String(ns.id), []):
+		var pid := String(person.id)
+		if _person != null or person == first or person.wants.is_empty() or pid == String(ns.head_of_state_person_id) or pid == String(ns.pm_person_id):
+			continue
+		if President.covers(state, ns, _main._loader, pid):
+			_person = person
+	if _person == null:
+		_fail("premise: no second person to see")
+		return false
+	var now: int = int(state.year) * 12 + int(state.month)
+	Audiences._arrive(ns, _person, _person.wants[0], now, [])
+	_request = String(ns.audience_requests[-1]["id"])
+	AudienceDriver.refresh(_main)
+	return true
 
 
 func _tone_is(tone: Label, key: String, where: String) -> void:
