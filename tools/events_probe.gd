@@ -201,6 +201,28 @@ var _outcomes := {}
 
 ## Tables named by --only (upper case); empty runs every table.
 var _only: Array[String] = []
+## E1b's regimes, as [part, parts]: regime k (REGIMES order, from 0) runs when
+## k % parts == part - 1. [1, 1] is every regime.
+var _e1b_part := [1, 1]
+## `--decompose`: E1b's start / no_events decomposition, a run per regime (JSON).
+var _decompose := false
+
+## Every table _init() dispatches, by its --only name. tests/test_events_probe_shards.gd
+## holds CI_SHARDS to cover all of them.
+const TABLES := ["E0", "E1B", "E4", "E5", "E6", "E7", "E2", "E3", "D"]
+
+## V5.2d. The CI job's partition (`-- --ci-shard=k`, one matrix job each): the whole
+## probe ran ~30 minutes in one job, at its timeout (#195, 2026-10-30: 13.5 min of E1b
+## of which 8.5 the decomposition, 8.9 E2+E3, 3.4 E4, 1.2 D, ~2 the rest). E2 and E3
+## share one outcome cache, so they stay together; E1b splits by regime. A table that
+## no shard names would never be gated in CI -- the test above fails on it, and on a
+## workflow matrix that does not list one job per shard.
+const CI_SHARDS := [
+	{"only": ["E1B"], "e1b": [1, 2]},
+	{"only": ["E1B"], "e1b": [2, 2]},
+	{"only": ["E2", "E3"]},
+	{"only": ["E0", "E4", "E5", "E6", "E7", "D"]},
+]
 
 
 func _runs(table: String) -> bool:
@@ -212,10 +234,17 @@ func _init() -> void:
 		if String(arg).begins_with("--json="):
 			_json_path = String(arg).substr("--json=".length())
 		# V5.2d: `--only=E1b,E2,E3` runs those tables alone -- the re-tune loop's
-		# quick pass. The gate (CI, the merge) is the whole probe, never --only.
+		# quick pass. The gate is every table: the whole probe, or CI's shards together.
 		elif String(arg).begins_with("--only="):
 			for t in String(arg).substr("--only=".length()).split(","):
 				_only.append(t.strip_edges().to_upper())
+		elif String(arg).begins_with("--ci-shard="):
+			var shard: Dictionary = CI_SHARDS[int(String(arg).substr("--ci-shard=".length())) - 1]
+			for t in shard["only"]:
+				_only.append(String(t))
+			_e1b_part = shard.get("e1b", [1, 1])
+		elif String(arg) == "--decompose":
+			_decompose = true
 	_loader = DataLoader.new()
 	_loader.load_all()
 	if not _loader.errors.is_empty():
@@ -1001,7 +1030,12 @@ func _table_e1b_accumulation() -> void:
 	print("%-14s %8s %8s   %-11s %8s %-11s %8s   %-11s %8s %-11s %8s" % [
 		"regime", "months", "events", "share(def)", "", "share(ans)", "", "live(def)", "", "live(ans)", "",
 	])
-	for regime in REGIMES.keys():
+	var regimes: Array = REGIMES.keys()
+	for k in regimes.size():
+		# CI's shards split this table by regime (CI_SHARDS); locally every regime runs.
+		if k % int(_e1b_part[1]) != int(_e1b_part[0]) - 1:
+			continue
+		var regime: String = regimes[k]
 		# Both paths on the real machine now -- the defaults path is what a player
 		# who never opens the window produces; the answer-well path answers every
 		# entry with _best_choice() on its arrival month. The old table measured
@@ -1021,7 +1055,8 @@ func _table_e1b_accumulation() -> void:
 		var share_d := E1bGate.event_share(_loader, d["fires_by_choice"])
 		var share_a := E1bGate.event_share(_loader, a["fires_by_choice"])
 		_json["e1b"][regime]["event_sum"] = {"defaults": share_d, "answer_well": share_a}
-		if _json_path != "":
+		# Its own flag, not --json's: a run per regime, which was 8.5 of CI's 30 minutes.
+		if _decompose:
 			_e1b_decomposition(regime)
 		var sd := _worst_of(share_d)
 		var sa := _worst_of(share_a)
@@ -1072,7 +1107,8 @@ func _worst_offset(state) -> Dictionary:
 	return {"bloc": worst, "value": value}
 
 
-## Rule 3's decomposition, JSON only (it costs a run per regime). The live offset is
+## Rule 3's decomposition, behind `--decompose` (it costs a run per regime; it goes
+## into the JSON, so pair it with --json). The live offset is
 ## not the events' sum: the scenario's authored approval SEEDS it (opinion.gd), and a
 ## dozen other writers move it -- a fallen government's and a resignation's price
 ## (Government.penalise_blocs), campaigns, pledges, energy, diplomacy, projects --

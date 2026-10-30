@@ -101,11 +101,18 @@ jobs:
   # V5.2d (docs/design/v5.2-d-spec.md section 2): the event book's bands fail the
   # build -- E2's spread (D3), E3's dominated pairs and toothless defaults (D1, D2),
   # E1b's clamp (D4) and d's speaker and front-page counts. tools/run_tests.sh does not
-  # run probes, so the event probe is its own job, about four minutes.
+  # run probes, so the event probe is its own job. In one job it took ~30 minutes, at
+  # its timeout (#195): it runs as tools/events_probe.gd's CI_SHARDS, one matrix job
+  # each (~10 minutes the longest), and the shards together are every table.
   events:
-    name: Event book (events_probe)
+    name: Event book (events_probe) ${{ matrix.events_shard }}/4
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        # Must match CI_SHARDS in tools/events_probe.gd (tests/test_events_probe_shards.gd).
+        events_shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
 
@@ -135,14 +142,14 @@ jobs:
       - name: Import
         run: godot --headless --path . --import
 
-      - name: Run events_probe (non-zero on a failed band)
-        run: godot --headless --path . --script res://tools/events_probe.gd -- --json=events_probe.json
+      - name: Run events_probe's shard (non-zero on a failed band)
+        run: godot --headless --path . --script res://tools/events_probe.gd -- --ci-shard=${{ matrix.events_shard }} --json=events_probe.json
 
       - name: Keep the probe's figures
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: events-probe
+          name: events-probe-${{ matrix.events_shard }}
           path: events_probe.json
           if-no-files-found: ignore
 
