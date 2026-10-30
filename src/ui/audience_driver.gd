@@ -38,15 +38,24 @@ static func register(main) -> void:
 	# The president's word sits in the Diary under the audience's booking block.
 	var promises := PromiseList.new()
 	main._calendar_panel.audience.add_sibling(promises)
-	var game := {"lane": lane, "scene": scene, "session": {}, "answered": {}, "promises": promises}
+	var game := {"lane": lane, "scene": scene, "session": {}, "answered": {}, "promises": promises,
+		"slowed_for": {}, "resume_speed": 0}
 	_games[main.get_instance_id()] = game
 	lane.book_requested.connect(func(id: String) -> void: _open_booking(main, id))
+	lane.seen.connect(func(id: String) -> void: _seen(main, id))
 	lane.delegate_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
 	lane.decline_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
 	main._calendar_panel.audience.booked.connect(func(id: String, date: Dictionary) -> void:
 		var result := Audiences.book(main._state, main._state.player(), main._loader, id, date)
 		main._calendar_panel.audience.close()
-		_answer(main, id, result))
+		_answer(main, id, result)
+		_seen(main, id))
+	# A booking left without a day -- its Cancel, or the Diary closed under it --
+	# ends the player's action as surely as a booking does.
+	main._calendar_panel.audience.cancelled.connect(func(id: String) -> void: _seen(main, id))
+	main._windows.closed.connect(func(id: String) -> void:
+		if id == "calendar" and main._calendar_panel.audience.request_id() != "":
+			_seen(main, main._calendar_panel.audience.request_id()))
 	# Each verb redraws the lane's side too: a promise made is in the Diary at once.
 	scene.attempted.connect(func(lever: String, args: Dictionary) -> void:
 		AudienceTalks.attempt(main, game, lever, args)
@@ -167,10 +176,40 @@ static func after_month(main, report: Dictionary) -> void:
 	# request drops the clock to speed 1. Not a stop -- a request never holds --
 	# but at speed 3 its two months were ten seconds, gone while the player read
 	# another panel (QA's pre-gate B CALL 1). A lapse alone does not slow it.
-	if not (report.get("audience_requests", {}).get("arrived", []) as Array).is_empty():
-		main._clock.set_speed(1)
-		main._hud.clock_cluster.refresh(main._clock)
+	var arrived: Array = report.get("audience_requests", {}).get("arrived", [])
+	if not arrived.is_empty():
+		_slow_for(main, arrived)
 		main._hud.title_bar.pulse_requests()
+
+
+## The author's "Revenir à ta vitesse après" (2026-10-30): the speed an arrival
+## took is given back once the player has SEEN a request it slowed for (_seen).
+## A second arrival while slowed keeps the first speed to give back.
+static func _slow_for(main, arrived: Array) -> void:
+	var game: Dictionary = _games.get(main.get_instance_id(), {})
+	if game.is_empty():
+		return
+	if main._clock.speed > 1:
+		game["resume_speed"] = main._clock.speed
+	for row in arrived:
+		game["slowed_for"][String(row.get("id", ""))] = true
+	main._clock.set_speed(1)
+	main._hud.clock_cluster.refresh(main._clock)
+
+
+## A request the arrival slowed for was seen -- its card clicked, answered or
+## closed, or raised by the title bar's mark: the speed comes back, unless the
+## player picked one themselves meanwhile (the clock is no longer at 1).
+static func _seen(main, request_id: String) -> void:
+	var game: Dictionary = _games.get(main.get_instance_id(), {})
+	if game.is_empty() or not game["slowed_for"].has(request_id):
+		return
+	var speed := int(game["resume_speed"])
+	game["slowed_for"] = {}
+	game["resume_speed"] = 0
+	if speed > 1 and main._clock.speed == 1:
+		main._clock.set_speed(speed)
+		main._hud.clock_cluster.refresh(main._clock)
 
 
 ## The "requests waiting" mark's click: the inbox back over a tab, and the
@@ -189,6 +228,10 @@ static func open_oldest(main) -> void:
 		return
 	main._hud.inbox.slide_in()
 	main._hud.inbox.raise_card(lane_of(main).card_of(String(oldest["id"])))
+	# The mark shows every waiting request, so it sees them all -- the oldest may
+	# predate the arrival that slowed the clock (QA's RECORD on #207).
+	for request in Audiences.pending(ns):
+		_seen(main, String(request["id"]))
 
 
 ## Every promise and IOU in flight, worded, soonest due first (the sim's order).
@@ -223,6 +266,8 @@ static func after_load(main) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	if not game.is_empty():
 		AudienceTalks.leave(main, game)
+		game["slowed_for"] = {}
+		game["resume_speed"] = 0
 	PhoneDriver.after_load(main)
 	refresh(main)
 

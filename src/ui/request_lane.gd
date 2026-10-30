@@ -20,6 +20,8 @@ signal book_requested(request_id: String)
 signal delegate_requested(request_id: String)
 signal decline_requested(request_id: String)
 signal call_requested(request_id: String)
+## The player has seen the request: its card clicked, answered or closed.
+signal seen(request_id: String)
 
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -38,6 +40,8 @@ var _answers_of := {}  # request id -> the answers its card was put up with
 func attach(inbox) -> void:
 	_inbox = inbox
 	inbox.card_action.connect(_on_action)
+	inbox.card_activated.connect(_on_seen)
+	inbox.card_closed.connect(_on_seen)
 	inbox.card_dismissed.connect(func(card_id: String) -> void: _forget(card_id))
 
 
@@ -99,10 +103,19 @@ static func _body(row: Dictionary) -> String:
 	return body
 
 
+func _on_seen(card_id: String) -> void:
+	if _request_of.has(card_id):
+		seen.emit(String(_request_of[card_id]))
+
+
 func _on_action(card_id: String, index: int) -> void:
 	if not _request_of.has(card_id):
 		return
 	var request_id := String(_request_of[card_id])
+	# Book a day STARTS an answer: the picker it opens keeps the slowed clock, and
+	# the booking's end is what counts as seen (the parent's call on QA's #207).
+	if index != BOOK:
+		seen.emit(request_id)
 	match index:
 		BOOK:
 			book_requested.emit(request_id)

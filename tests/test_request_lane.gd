@@ -104,7 +104,10 @@ func _check_booking() -> void:
 	booking.open_for({"id": "req_2", "person": "Daniel Moucron", "ask": "He wants a portfolio."}, [
 		{"year": 2026, "month": 2, "day": 3, "free": false, "reason": "This day is taken."},
 		{"year": 2026, "month": 2, "day": 10, "free": true, "reason": ""}])
-	var days: Array = booking.find_children("*", "Button", true, false)
+	# The days, the picker's Cancel aside (it leaves the request waiting).
+	var days: Array = booking.find_children("*", "Button", true, false).filter(func(b): return String(b.name) != "Cancel")
+	if booking.find_child("Cancel", true, false) == null:
+		_fail("the Diary's audience block has no Cancel")
 	if days.size() != 2 or not days[0].disabled or days[0].tooltip_text != "This day is taken." or days[1].disabled:
 		_fail("the Diary's audience days are not one taken (with its reason) and one free")
 		return

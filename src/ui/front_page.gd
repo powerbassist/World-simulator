@@ -21,7 +21,11 @@ extends PanelContainer
 ## key; a card with no headline left does not show (headlines.gd).
 ##
 ## Holds no game state: show_entry() is handed the state and the loader each time,
-## so a loaded game never prints the previous one's names.
+## so a loaded game never prints the previous one's names. The one exception is a
+## card HELD for an election night (the parent's call, 2026-10-30): the papers
+## must not print the result while the count is still declaring it, so an entry
+## handed over with the result plate waits for that plate's `dismissed`, and
+## clear() drops it with the rest of a discarded game's furniture.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -52,6 +56,8 @@ var _date: Label
 var _papers: HBoxContainer
 var _also: VBoxContainer
 var _record := PackedStringArray()
+## A held entry and what show_entry() needs to print it, or empty.
+var _held := {}
 
 
 func _ready() -> void:
@@ -94,8 +100,14 @@ func _ready() -> void:
 ## but only once there is something to show: an empty month, or an entry whose
 ## headlines are none of them written, leaves the card the player is reading where
 ## it is and returns false.
-func show_entry(entry: Dictionary, state, loader, clock) -> bool:
+func show_entry(entry: Dictionary, state, loader, clock, count_plate: Control = null) -> bool:
 	if entry.is_empty() or state == null or loader == null or state.player() == null:
+		return false
+	# A month with an election result: the card waits for the count's plate.
+	if count_plate != null:
+		_held = {"entry": entry, "state": state, "loader": loader, "clock": clock}
+		if not count_plate.dismissed.is_connected(_release):
+			count_plate.dismissed.connect(_release)
 		return false
 	var vars := _vars(state.player(), loader)
 	var outlets := _outlets(loader, String(state.player_nation_id))
@@ -158,6 +170,16 @@ func dismiss() -> void:
 func clear() -> void:
 	hide()
 	_record = PackedStringArray()
+	_held = {}
+
+
+## The count's plate was dismissed: the held card, if any, now shows. A defeat's
+## dismissal leaves for the menu, and the card goes with the scene.
+func _release() -> void:
+	var held := _held
+	_held = {}
+	if not held.is_empty():
+		show_entry(held["entry"], held["state"], held["loader"], held["clock"])
 
 
 func _process(delta: float) -> void:

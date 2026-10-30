@@ -40,6 +40,9 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 signal card_dismissed(id: String)
 signal card_activated(id: String)
+## The player's own X, before card_dismissed: a dismissal the code makes (a card
+## put up again, a lapse) is not the player having seen it.
+signal card_closed(id: String)
 ## V2.9: a decision row's choice buttons. Index is the action's position in the
 ## array push() was given; the consumer owns what answering means.
 signal card_action(id: String, index: int)
@@ -163,7 +166,9 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	close.text = "X"
 	close.theme_type_variation = UiTheme.SUBROW_BUTTON
 	close.focus_mode = Control.FOCUS_NONE
-	close.pressed.connect(func(): dismiss(id))
+	close.pressed.connect(func():
+		card_closed.emit(id)
+		dismiss(id))
 	header.add_child(close)
 
 	# V5.1-c. A rich line, so a term marked in the body opens its glossary plate;

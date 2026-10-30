@@ -1354,8 +1354,9 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 		"Events":
 			_card_events(year, month, _month_capture.get("desk_before", {}), _month_capture.get("event_before", {}))
 			_enforce_interrupt()
-		# V5.2d: the month's front page, when one was earned (the sim's entry, {} otherwise).
-		"Elections": _hud.front_page.show_entry(report.get("front_page", {}), _state, _loader, _clock)
+		# V5.2d: the month's front page, when one was earned (the sim's entry, {} otherwise),
+		# held for the count when the month has an election result (front_page.gd).
+		"Elections": _hud.front_page.show_entry(report.get("front_page", {}), _state, _loader, _clock, null if report.get("election_results", []).is_empty() else _election_panel)
 		# V5.2 C6: an effort the party could not pay for stopped -- one note, never a hold.
 		"Campaign": CampaignChest.note_stopped(_hud.inbox, report.get("campaign_stopped", []), _state, _loader)
 		"Characters":
