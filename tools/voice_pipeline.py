@@ -170,12 +170,13 @@ def voices_for(speaker: dict, src: dict, every: bool) -> list:
     An office or a foreign head is a PERSON at delivery (Voices.speaker_archetype:
     a woman prime minister speaks in her own voice, #205), so `every` voices those
     lines in every possible holder's archetype too (QA on #205, against "Une par
-    visage"): OFFICE_KIND's people, anyone the data names in an office and, for an
-    office, anyone with a party (a leadership challenge can make any member of any
-    kind the party's leader, then the prime minister: QA on #206), each
+    visage"): OFFICE_KIND's people and anyone the data names in an office, each
     their own `voice` else their kind's default, beside the form's own default for a
     vacant office. The evidence's person, the exposure's witness, may be anyone of any
     kind, so its line is voiced in every person's archetype (the parent, 2026-10-30).
+    A party member of another kind who wins a leadership challenge is not enumerated
+    (the parent's call on QA's #206, no paid batch): playback falls back to the
+    same-sex archetype of the default's kind (src/ui/voice.gd).
     """
     defaults = src["defaults"]
     if "kind" in speaker:
@@ -194,8 +195,7 @@ def voices_for(speaker: dict, src: dict, every: bool) -> list:
         return []
     if every:
         ids = {str(p.get("voice") or defaults.get(str(p.get("kind", ""))) or "") for p in src["people"]
-               if key == "evidence_person" or p.get("kind") == OFFICE_KIND or p.get("id") in src.get("holders", ())
-               or (key.startswith("office:") and p.get("party_id"))}
+               if key == "evidence_person" or p.get("kind") == OFFICE_KIND or p.get("id") in src.get("holders", ())}
         ids.add(str(defaults.get(key) or ""))
         return sorted(i for i in ids if i)
     return [defaults[key]] if defaults.get(key) else []
@@ -638,20 +638,17 @@ def selftest() -> int:
         # possible holder's archetype -- OFFICE_KIND's own voices and defaults, anyone
         # the data names in an office (here an executive), and the office's default.
         holders = dict(src, people=src["people"] + [{"id": "p1", "kind": OFFICE_KIND},
-                                                   {"id": "p2", "kind": OFFICE_KIND, "voice": "pol_f"},
-                                                   {"id": "r1", "kind": "regional", "voice": "reg_f", "party_id": "x"}],
+                                                   {"id": "p2", "kind": OFFICE_KIND, "voice": "pol_f"}],
                        defaults=dict(src["defaults"], **{OFFICE_KIND: "pol_m"}), holders={"c"})
         got = voices_for({"office": "head_of_government"}, holders, True)
-        # QA on #206: a party member of another kind can win the leadership, so an
-        # office reaches their archetype too; a foreign head does not.
-        if got != ["boss", "cabinet", "pol_f", "pol_m", "reg_f"]:
+        if got != ["boss", "cabinet", "pol_f", "pol_m"]:
             fails.append("--every does not voice an office in every holder's archetype: %r" % got)
         if voices_for({"foreign_head": True}, holders, True) != ["boss", "pol_f", "pol_m"]:
             fails.append("--every does not voice a foreign head in every holder's archetype: %r"
                          % voices_for({"foreign_head": True}, holders, True))
         # The parent (2026-10-30): the witness may be anyone, so every person's archetype.
         holders["defaults"]["evidence_person"] = "union"
-        if voices_for({"evidence_person": True}, holders, True) != ["boss", "gruff", "pol_f", "pol_m", "reg_f", "union"]:
+        if voices_for({"evidence_person": True}, holders, True) != ["boss", "gruff", "pol_f", "pol_m", "union"]:
             fails.append("--every does not voice the evidence's person in every archetype: %r"
                          % voices_for({"evidence_person": True}, holders, True))
         if voices_for({"office": "head_of_government"}, holders, False) != ["cabinet"]:

@@ -66,6 +66,7 @@ func _process(_delta: float) -> bool:
 				return _finish()
 			_check_lookup()
 			_check_own_voice_first()
+			_check_promoted_woman()
 			_check_absent_tables()
 			_check_settings_gate()
 			_check_restore_silent()
@@ -197,6 +198,45 @@ func _check_own_voice_first() -> void:
 	Voice.set_tables(_rows({own: _shown(), default_arch: _shown()}))
 	if _clip("no_such_person") != "res://" + FIXTURE:
 		_failures.append("an unknown speaker id did not fall back to the form's default clip")
+
+
+## The parent's call on QA's #206: a woman of another kind made party leader, then
+## prime minister, by a challenge has no office-line clip in her own archetype; she
+## speaks it in the same-sex archetype of the office's default kind
+## (politician_f_50), never the office's male default. The default's row is stale,
+## so only the same-sex step can find the clip.
+func _check_promoted_woman() -> void:
+	var loader = _main._loader
+	var ev = null
+	for candidate in loader.events:
+		if String(candidate.speaker_line).strip_edges() != "" and candidate.speaker.has("office"):
+			ev = candidate
+			break
+	if ev == null:
+		_failures.append("fixture: no event carries an office speaker and a line")
+		return
+	var fallback := Voices.speaker_archetype(loader, ev.speaker, "")
+	var rows: Dictionary = loader.voice_archetypes
+	var pid := ""
+	var own := ""
+	for id in loader.person_by_id:
+		var arch := Voices.speaker_archetype(loader, ev.speaker, String(id))
+		if rows.has(arch) and rows.has(fallback) and String(rows[arch].get("sex", "")) == "f" 				and String(rows[arch].get("kind", "")) != String(rows[fallback].get("kind", "")):
+			pid = String(id)
+			own = arch
+			break
+	var twin := Voice.same_sex(loader, own, fallback)
+	if pid == "" or twin == "" or twin == fallback:
+		_failures.append("fixture: no woman of another kind, or no same-sex office archetype (%s, %s)" % [own, twin])
+		return
+	var shown := Strings.row("events", String(ev.id), "speaker_line", String(ev.speaker_line))
+	var manifest := {}
+	for pair in [[twin, shown], [fallback, shown + " Stale."]]:
+		manifest["%s/event.%s" % [pair[0], ev.id]] = {"archetype": pair[0], "line_id": "event.%s" % ev.id,
+			"file": FIXTURE, "text_sha256": String(pair[1]).sha256_text()}
+	Voice.set_tables(manifest)
+	if Voice.clip_for(ev, loader, pid) != "res://" + FIXTURE:
+		_failures.append("a promoted woman (%s) with no clip of her own did not speak in %s" % [own, twin])
 
 
 ## Neither data/voices/ nor assets/audio/voice/ need exist: the lazy read is silence.
