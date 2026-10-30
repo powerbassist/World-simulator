@@ -400,8 +400,10 @@ def design_jobs(table: dict) -> list:
             status = "short-preview"
         else:
             status = "to-design"
+        # Seven hex digits: a seed under 2**28 fits any integer the API may take (pass 1).
         out.append({"id": arch, "status": status, "description": description, "text": text,
-                    "chars": len(text), "seed": int(text_hash(arch)[:8], 16)})
+                    "chars": len(text), "seed": int(text_hash(arch)[:7], 16),
+                    "sha": text_hash(description + "\n" + text)})
     return out
 
 
@@ -472,16 +474,27 @@ def write_voice(root: Path, arch: str, voice_id: str, date: str) -> None:
         f.write("\n\n".join(blocks) + "\n")
 
 
+def _pending(root: Path, r: dict) -> Path:
+    """A design paid for whose save failed: reused by the next run while the
+    archetype's description and lines are unchanged (pass 1)."""
+    return root / DESIGN_DIR / ("%s.json" % r["id"])
+
+
+def _pending_id(root: Path, r: dict) -> str:
+    kept = _json(_pending(root, r)) or {}
+    return str(kept.get("generated_voice_id", "")) if kept.get("sha") == r["sha"] else ""
+
+
 def design_run(root: Path, key: str, floor: int, max_chars: int, date: str,
-               account_fn=account, design_fn=design_voice, save_fn=save_voice) -> int:
-    rows = design_jobs(_json(root / ARCHETYPES) or {})
+               account_fn=account, design_fn=design_voice, save_fn=save_voice, only: str = "") -> int:
+    rows = [r for r in design_jobs(_json(root / ARCHETYPES) or {}) if not only or r["id"] == only]
     bad = [r for r in rows if r["status"] in ("no-description", "short-preview", "bad-id")]
     if bad:
         for r in bad:
             print("%s: %s" % (r["status"], r["id"]))
         raise PipelineError("%d archetype(s) cannot be designed; fix the data first" % len(bad))
     todo = [r for r in rows if r["status"] == "to-design"]
-    planned = sum(r["chars"] for r in todo)
+    planned = sum(r["chars"] for r in todo if not _pending_id(root, r))
     if planned > max_chars:
         raise PipelineError("%d preview characters planned, over --max-chars %d" % (planned, max_chars))
     acc = account_fn(key)
@@ -495,16 +508,28 @@ def design_run(root: Path, key: str, floor: int, max_chars: int, date: str,
         if account_fn(key)["left"] - r["chars"] < floor:
             print("stopped at the floor before %s" % r["id"])
             return 1
-        generated, audio = design_fn(key, r["description"], r["text"], r["seed"])
-        used += r["chars"]
-        heard = root / DESIGN_DIR / ("%s.mp3" % r["id"])
-        heard.parent.mkdir(parents=True, exist_ok=True)
-        heard.write_bytes(audio)
-        voice_id = save_fn(key, "Nation Simulator %s" % r["id"], r["description"], generated,
-                           {"project": "nation-simulator", "archetype": r["id"]})
+        generated = _pending_id(root, r)
+        if not generated:
+            try:
+                generated, audio = design_fn(key, r["description"], r["text"], r["seed"])
+            except PipelineError as e:
+                raise PipelineError("%s: %s" % (r["id"], e))
+            used += r["chars"]
+            heard = root / DESIGN_DIR / ("%s.mp3" % r["id"])
+            heard.parent.mkdir(parents=True, exist_ok=True)
+            heard.write_bytes(audio)
+            _pending(root, r).write_text(json.dumps({"generated_voice_id": generated, "sha": r["sha"]}),
+                                         encoding="utf-8")
+        try:
+            voice_id = save_fn(key, "Nation Simulator %s" % r["id"], r["description"], generated,
+                               {"project": "nation-simulator", "archetype": r["id"]})
+        except PipelineError as e:
+            raise PipelineError("%s: %s; the design is kept, the next run saves it" % (r["id"], e))
         if not SAFE_VOICE_ID.match(voice_id):
-            raise PipelineError("%s: the saved voice id is not plain alphanumeric" % r["id"])
+            raise PipelineError("%s: the saved voice id %r is not plain alphanumeric; it is in the account, "
+                                "not in the table" % (r["id"], voice_id))
         write_voice(root, r["id"], voice_id, date)
+        _pending(root, r).unlink(missing_ok=True)
         print("designed %s (%d characters)" % (r["id"], r["chars"]))
     print("%d preview characters used of %d left" % (used, acc["left"]))
     return 0
@@ -786,6 +811,44 @@ def _selftest_design(fails: list, secret: str) -> None:
                        design_fn=design, save_fn=save)
         if "design" in calls:
             fails.append("a second --design run designed a voice again")
+        # Pass 1: the seed fits a signed 32-bit integer for any id.
+        if any(not 0 <= r["seed"] < 2 ** 31 for r in design_jobs({"archetypes": [{"id": "x%d" % i} for i in range(200)]})):
+            fails.append("a design seed does not fit a signed 32-bit integer")
+        # Pass 1: a failed save names its archetype, and the rerun saves the same design
+        # without paying for it again; --only designs one archetype.
+        for a in table["archetypes"][:2]:
+            a["voice_id"] = ""
+        arch.write_text(json.dumps(table, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        def refuse(k, name, d, gen, labels):
+            calls.append("save")
+            raise PipelineError("save: HTTP 409 (generated voice %s)" % gen)
+        def unsafe(k, name, d, gen, labels):
+            calls.append("save")
+            return "not-a-plain-id"
+        with redirect_stdout(io.StringIO()):
+            calls.clear()
+            try:
+                design_run(root, secret, 0, 10000, "2026-10-30", account_fn=account(30000, 30),
+                           design_fn=design, save_fn=refuse, only="pol")
+                fails.append("a refused save did not stop --design")
+            except PipelineError as e:
+                if "pol" not in str(e):
+                    fails.append("a refused save does not name its archetype: %s" % e)
+            calls.clear()
+            design_run(root, secret, 0, 10000, "2026-10-30", account_fn=account(30000, 30),
+                       design_fn=design, save_fn=save, only="pol")
+            if "design" in calls or calls.count("save") != 1:
+                fails.append("the rerun after a refused save paid for the design again: %r" % calls)
+            try:
+                design_run(root, secret, 0, 10000, "2026-10-30", account_fn=account(30000, 30),
+                           design_fn=design, save_fn=unsafe, only="boss")
+                fails.append("an unsafe saved voice id was written")
+            except PipelineError as e:
+                if "not-a-plain-id" not in str(e) or "boss" not in str(e):
+                    fails.append("an unsafe saved voice id is not reported with its archetype: %s" % e)
+        ids = {a["id"]: a["voice_id"] for a in json.loads(arch.read_text(encoding="utf-8"))["archetypes"]}
+        if not ids["pol"] or ids["boss"]:
+            fails.append("--only did not design exactly the one archetype: %r" % ids)
 
 
 def main() -> int:
@@ -811,7 +874,8 @@ def main() -> int:
         return 2
     if args.design:
         try:
-            return design_run(REPO, key, args.floor, args.max_chars, datetime.date.today().isoformat())
+            return design_run(REPO, key, args.floor, args.max_chars, datetime.date.today().isoformat(),
+                              only=args.only)
         except PipelineError as e:
             print("stopped: %s" % e)
             return 1
