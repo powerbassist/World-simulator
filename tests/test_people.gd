@@ -209,10 +209,13 @@ func _check_person_field_contract() -> void:
 		names.append(f.replace("var ", "").get_slice(":", 0).strip_edges())
 	var expected: Array[String] = []
 	for n in ["id", "person_name", "kind", "traits", "ambition", "party_id", "wants", "bench",
-			"social_skill", "spouse_id", "wealth_eur_m"]:
+			"social_skill", "spouse_id", "wealth_eur_m",
+			# V5.2d: which recorded voice plays them. A presentation fact that
+			# never moves and that no slot states; no mechanism reads it.
+			"voice"]:
 		expected.append(String(n))
 	if names != expected:
-		_fail("Person declares %s, expected exactly %s -- a twelfth field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names), str(expected)])
+		_fail("Person declares %s, expected exactly %s -- a new field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names), str(expected)])
 
 
 ## Every kind plugs in or is refused: a politician shape acts through wants +

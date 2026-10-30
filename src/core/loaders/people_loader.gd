@@ -212,3 +212,36 @@ static func check_person_ref(loader, nation_id: String, where: String, slot: Str
 		loader.errors.append("%s: %s names person '%s', who belongs to another nation" % [where, slot, pid])
 		return
 	referenced[pid] = true
+
+
+## V5.2d. The voice archetype table (data/voices/archetypes.json): its rows by id and
+## its defaults. Read once; src/core/voices.gd is the one reader.
+static func load_voices(loader, path: String) -> void:
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("archetypes")) != TYPE_ARRAY \
+			or typeof(parsed.get("defaults")) != TYPE_DICTIONARY:
+		loader.errors.append("%s: could not read the voice table, expected {\"archetypes\": [...], \"defaults\": {...}}" % path)
+		return
+	for row in parsed["archetypes"]:
+		if typeof(row) == TYPE_DICTIONARY and String(row.get("id", "")) != "":
+			loader.voice_archetypes[String(row["id"])] = row
+	for key in parsed["defaults"]:
+		loader.voice_defaults[String(key)] = String(parsed["defaults"][key])
+
+
+## A person's voice names an archetype the table defines, of the person's own kind
+## -- a typo would voice nothing, a wrong kind would put a press owner's voice on a
+## judge. Every default names a defined archetype.
+static func validate_voices(loader) -> void:
+	for pid in loader.person_by_id:
+		var person = loader.person_by_id[pid]
+		if String(person.voice) == "":
+			continue
+		var row = loader.voice_archetypes.get(String(person.voice), null)
+		if row == null:
+			loader.errors.append("people: %s voice '%s' is not an archetype in data/voices/archetypes.json" % [pid, person.voice])
+		elif String(row.get("kind", "")) != String(person.kind):
+			loader.errors.append("people: %s is a %s but voice '%s' is a %s archetype" % [pid, person.kind, person.voice, row.get("kind", "")])
+	for key in loader.voice_defaults:
+		if not loader.voice_archetypes.has(loader.voice_defaults[key]):
+			loader.errors.append("data/voices/archetypes.json: default '%s' names no archetype ('%s')" % [key, loader.voice_defaults[key]])
