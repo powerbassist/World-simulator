@@ -13,7 +13,12 @@ extends RefCounted
 ## the delivered speaker's own (`Voices.speaker_archetype` over the desk entry's
 ## person -- a woman prime minister speaks in her own voice), and when that
 ## archetype has no clip of the line, the speaker form's default (the pipeline's
-## default reading, one clip a line, made before its `--every` reading is).
+## default reading, one clip a line, made before its `--every` reading is). Between
+## the two, the archetype of the default's kind in the speaker's own sex (the
+## parent's call on QA's #206, no paid batch): a woman regional figure made party
+## leader, then prime minister, by a challenge has no clip of an office line in her
+## own archetype, and speaks it as politician_f_50 -- whose office lines all exist --
+## rather than the office's male default. Evidence lines take the same net.
 ##
 ## Read as bytes and decoded with load_from_buffer, never load(): the fresh-clone
 ## rule the fonts and icons follow (AGENTS.md).
@@ -53,11 +58,28 @@ static func clip_for(ev, loader, person_id: String) -> String:
 	var shown := Strings.row("events", String(ev.id), "speaker_line", String(ev.speaker_line))
 	if shown.strip_edges() == "":
 		return ""
-	for arch in [Voices.speaker_archetype(loader, ev.speaker, person_id),
-			Voices.speaker_archetype(loader, ev.speaker, "")]:
+	var own := Voices.speaker_archetype(loader, ev.speaker, person_id)
+	var fallback := Voices.speaker_archetype(loader, ev.speaker, "")
+	for arch in [own, same_sex(loader, own, fallback), fallback]:
 		var path := _clip(String(arch), String(ev.id), shown)
 		if path != "":
 			return path
+	return ""
+
+
+## The archetype of `fallback`'s kind in `own`'s sex (the table's `kind` and `sex`),
+## or "" when either is unknown. Ties to id, so the pick never depends on file order.
+static func same_sex(loader, own: String, fallback: String) -> String:
+	var rows: Dictionary = loader.voice_archetypes
+	if not rows.has(own) or not rows.has(fallback):
+		return ""
+	var kind := String(rows[fallback].get("kind", ""))
+	var sex := String(rows[own].get("sex", ""))
+	var ids: Array = rows.keys()
+	ids.sort()
+	for id in ids:
+		if String(rows[id].get("kind", "")) == kind and String(rows[id].get("sex", "")) == sex:
+			return String(id)
 	return ""
 
 

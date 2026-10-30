@@ -115,6 +115,12 @@ def read_sources(root: Path) -> dict:
     people = []
     for f in sorted((root / "data" / "people").glob("*.json")):
         people.extend((_json(f) or {}).get("people", []))
+    # Everyone the data names in an office (heads of state and government, party
+    # leaders, pretenders): with OFFICE_KIND's people, the possible holders.
+    holders = set()
+    for d in ("nations", "parties"):
+        for f in sorted((root / "data" / d).glob("*.json")):
+            _holder_ids(_json(f), holders)
     events = []
     for f in sorted((root / "data" / "events").glob("*.json")):
         for ev in (_json(f) or {}).get("events", []):
@@ -125,8 +131,28 @@ def read_sources(root: Path) -> dict:
         "archetypes": {str(a.get("id", "")): a for a in table.get("archetypes", [])},
         "defaults": table.get("defaults", {}),
         "people": people,
+        "holders": holders,
         "events": events,
     }
+
+
+def _holder_ids(node, out: set) -> None:
+    """Every value of a `person` or `*person_id` key, anywhere in a data file."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if isinstance(v, str) and (k == "person" or k.endswith("person_id")) and v:
+                out.add(v)
+            else:
+                _holder_ids(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            _holder_ids(v, out)
+
+
+# The kind whose people may hold an office or head a foreign government: an office's
+# default falls back to this kind's (src/core/voices.gd), and a challenge installs a
+# party's own member as its leader.
+OFFICE_KIND = "politician"
 
 
 def voices_for(speaker: dict, src: dict, every: bool) -> list:
@@ -140,6 +166,17 @@ def voices_for(speaker: dict, src: dict, every: bool) -> list:
     the speaker is drawn from the played nation's people. A speaker that
     is not a kind (an office, the evidence's person, a foreign head) reads its own
     `defaults` key: "office:<office>", "evidence_person", "foreign_head".
+
+    An office or a foreign head is a PERSON at delivery (Voices.speaker_archetype:
+    a woman prime minister speaks in her own voice, #205), so `every` voices those
+    lines in every possible holder's archetype too (QA on #205, against "Une par
+    visage"): OFFICE_KIND's people and anyone the data names in an office, each
+    their own `voice` else their kind's default, beside the form's own default for a
+    vacant office. The evidence's person, the exposure's witness, may be anyone of any
+    kind, so its line is voiced in every person's archetype (the parent, 2026-10-30).
+    A party member of another kind who wins a leadership challenge is not enumerated
+    (the parent's call on QA's #206, no paid batch): playback falls back to the
+    same-sex archetype of the default's kind (src/ui/voice.gd).
     """
     defaults = src["defaults"]
     if "kind" in speaker:
@@ -156,6 +193,11 @@ def voices_for(speaker: dict, src: dict, every: bool) -> list:
         key = "foreign_head"
     else:
         return []
+    if every:
+        ids = {str(p.get("voice") or defaults.get(str(p.get("kind", ""))) or "") for p in src["people"]
+               if key == "evidence_person" or p.get("kind") == OFFICE_KIND or p.get("id") in src.get("holders", ())}
+        ids.add(str(defaults.get(key) or ""))
+        return sorted(i for i in ids if i)
     return [defaults[key]] if defaults.get(key) else []
 
 
@@ -592,6 +634,29 @@ def selftest() -> int:
                 "cabinet/event.crisis": "no-voice", "(none)/event.mute": "no-voice", "union/greet": "ok"}
         if status != want:
             fails.append("statuses: %r" % status)
+        # QA on #205: under --every an office or a foreign head is voiced in every
+        # possible holder's archetype -- OFFICE_KIND's own voices and defaults, anyone
+        # the data names in an office (here an executive), and the office's default.
+        holders = dict(src, people=src["people"] + [{"id": "p1", "kind": OFFICE_KIND},
+                                                   {"id": "p2", "kind": OFFICE_KIND, "voice": "pol_f"}],
+                       defaults=dict(src["defaults"], **{OFFICE_KIND: "pol_m"}), holders={"c"})
+        got = voices_for({"office": "head_of_government"}, holders, True)
+        if got != ["boss", "cabinet", "pol_f", "pol_m"]:
+            fails.append("--every does not voice an office in every holder's archetype: %r" % got)
+        if voices_for({"foreign_head": True}, holders, True) != ["boss", "pol_f", "pol_m"]:
+            fails.append("--every does not voice a foreign head in every holder's archetype: %r"
+                         % voices_for({"foreign_head": True}, holders, True))
+        # The parent (2026-10-30): the witness may be anyone, so every person's archetype.
+        holders["defaults"]["evidence_person"] = "union"
+        if voices_for({"evidence_person": True}, holders, True) != ["boss", "gruff", "pol_f", "pol_m", "union"]:
+            fails.append("--every does not voice the evidence's person in every archetype: %r"
+                         % voices_for({"evidence_person": True}, holders, True))
+        if voices_for({"office": "head_of_government"}, holders, False) != ["cabinet"]:
+            fails.append("the default reading of an office is not its default alone")
+        named = set()
+        _holder_ids({"head_of_state": {"person": "x"}, "parties": [{"leader_person_id": "y"}], "name": "z"}, named)
+        if named != {"x", "y"}:
+            fails.append("the data's office holders are not read: %r" % named)
         bad_src = dict(src, archetypes=dict(src["archetypes"], **{"evil": {"voice_id": "V9", "lines": {"x/../../y": "Hi."}}}))
         if [r["status"] for r in jobs(bad_src, manifest, False) if r["archetype"] == "evil"] != ["bad-id"]:
             fails.append("a line id with '..' or '/' is not refused as a path")
