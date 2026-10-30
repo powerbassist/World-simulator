@@ -287,7 +287,9 @@ SPDX-License-Identifier = "AGPL-3.0-only"
 [[annotations]]
 # Third-party Claude skill, Impeccable 4.7.1 (https://github.com/pbakaus/impeccable,
 # commit 3671d50f), vendored from plugin/skills/impeccable minus its web-only live
-# browser scripts. Third-party notices in .claude/skills/impeccable/NOTICE.md.
+# browser scripts and, since 2026-10-30 (author), its launcher (scripts/impeccable and
+# scripts/impeccable.cmd, which downloaded and ran the engine binary). Third-party
+# notices in .claude/skills/impeccable/NOTICE.md.
 path = [
   ".claude/skills/impeccable/**",
 ]
