@@ -73,6 +73,7 @@
       "wealth_eur_m": 3.8,
       "name": "Klára Doběšová",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "vain"
@@ -147,6 +148,7 @@
       "wealth_eur_m": 5.1,
       "name": "Milena Krejčová",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "vain"
@@ -198,6 +200,7 @@
       "id": "CZE_bartos",
       "name": "Jitka Bartoš",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "networked",
@@ -237,6 +240,7 @@
       "id": "CZE_dolezal",
       "name": "Petra Doležal",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -343,6 +347,7 @@
       "id": "CZE_janda",
       "name": "Petra Janda",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -471,6 +476,7 @@
       "id": "CZE_petr",
       "name": "Naďa Petr",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent"
       ],
@@ -496,6 +502,7 @@
       "id": "CZE_rychtar",
       "name": "Anežka Rychtář",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -552,6 +559,7 @@
       "id": "CZE_uhlir",
       "name": "Eva Uhlíř",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -599,6 +607,7 @@
       "id": "CZE_zaruba",
       "name": "Eva Záruba",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -622,6 +631,7 @@
       "id": "CZE_benes",
       "name": "Klára Beneš",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -649,6 +659,7 @@
       "id": "CZE_chmelar",
       "name": "Lucie Chmelař",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled",
@@ -694,6 +705,7 @@
       "id": "CZE_fojtik",
       "name": "Klára Fojtík",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "fervent",
@@ -707,6 +719,7 @@
       "id": "CZE_hruby",
       "name": "Božena Hrubý",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -840,6 +853,7 @@
       "id": "CZE_simek",
       "name": "Markéta Šimek",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -909,6 +923,7 @@
       "id": "CZE_zemek",
       "name": "Naďa Zemek",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "stubborn"
       ],
@@ -930,6 +945,7 @@
       "id": "CZE_beran",
       "name": "Klára Beran",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "networked"
@@ -965,6 +981,7 @@
       "id": "CZE_duda",
       "name": "Jitka Duda",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn",
         "vain"
@@ -1115,6 +1132,7 @@
       "id": "CZE_hofman",
       "name": "Naďa Hofman",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -1159,6 +1177,7 @@
       "id": "CZE_chief_obchodni_dum_havlicek",
       "name": "Markéta Havlíček",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -1171,6 +1190,7 @@
       "id": "CZE_chief_banka_malecek",
       "name": "Lucie Maleček",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -1183,6 +1203,7 @@
       "id": "CZE_chief_obchodni_dum_fiser",
       "name": "Petra Fišer",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1230,6 +1251,7 @@
       "id": "CZE_chief_spolecnost_kroupa",
       "name": "Jitka Kroupa",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -1253,6 +1275,7 @@
       "id": "CZE_chief_benesovsky_pojisteni",
       "name": "Jitka Benešovský",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",

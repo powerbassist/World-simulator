@@ -6,6 +6,7 @@
       "wealth_eur_m": 3.4,
       "name": "Sólveig Ragnarsdóttir",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -52,6 +53,7 @@
       "wealth_eur_m": 0.75,
       "name": "Ásdís Hrafnsdóttir",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "networked"
@@ -117,6 +119,7 @@
       "wealth_eur_m": 1.2,
       "name": "Unnur Magnúsdóttir",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -137,6 +140,7 @@
       "spouse_id": "ISL_chief_verslunarhus_finnsson",
       "name": "Ragnheiður Ólafsdóttir",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "loyal"
@@ -171,6 +175,7 @@
       "id": "ISL_chief_verslunarhus_arnarson",
       "name": "Ásta Arnarson",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -196,6 +201,7 @@
       "id": "ISL_chief_sverrisson",
       "name": "Erla Sverrisson",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -308,6 +314,7 @@
       "id": "ISL_chief_verslunarhus_jonsdottir",
       "name": "Guðrún Jónsdóttir",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic"

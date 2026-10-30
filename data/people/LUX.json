@@ -30,6 +30,7 @@
       "wealth_eur_m": 1.8,
       "name": "Nathalie Weiler",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -73,6 +74,7 @@
       "wealth_eur_m": 1.0,
       "name": "Anouk Reiland",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "principled"
@@ -191,6 +193,7 @@
       "id": "LUX_claus",
       "name": "Yvette Claus",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -232,6 +235,7 @@
       "id": "LUX_elschner",
       "name": "Genviève Elschner",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "vain"
@@ -293,6 +297,7 @@
       "id": "LUX_hansen",
       "name": "Josiane Hansen",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "fervent",
         "pragmatic",
@@ -339,6 +344,7 @@
       "id": "LUX_krier",
       "name": "Léonie Krier",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "fervent",
         "pragmatic"
@@ -357,6 +363,7 @@
       "id": "LUX_lamesch",
       "name": "Nadine Lamesch",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -413,6 +420,7 @@
       "id": "LUX_oestreicher",
       "name": "Angèle Oestreicher",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -461,6 +469,7 @@
       "id": "LUX_reiffers",
       "name": "Genviève Reiffers",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "stubborn"
@@ -574,6 +583,7 @@
       "id": "LUX_zeimet",
       "name": "Elise Zeimet",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled"
@@ -653,6 +663,7 @@
       "id": "LUX_delle",
       "name": "Yvette Dellé",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal"
@@ -688,6 +699,7 @@
       "id": "LUX_frantz",
       "name": "Josiane Frantz",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "pragmatic",
@@ -751,6 +763,7 @@
       "id": "LUX_jacoby",
       "name": "Serge Jacoby",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "principled"
       ],
@@ -925,6 +938,7 @@
       "id": "LUX_theisen",
       "name": "Claire Theisen",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "pragmatic",
@@ -943,6 +957,7 @@
       "id": "LUX_waringo",
       "name": "Claire Waringo",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -965,6 +980,7 @@
       "id": "LUX_zenner",
       "name": "Serge Zenner",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -1003,6 +1019,7 @@
       "id": "LUX_bintz",
       "name": "Genviève Bintz",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -1080,6 +1097,7 @@
       "id": "LUX_erpelding",
       "name": "Odile Erpelding",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "loyal",
         "pragmatic"
@@ -1173,6 +1191,7 @@
       "id": "LUX_chief_origer_commerce",
       "name": "Tessy Origer",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -1299,6 +1318,7 @@
       "id": "LUX_chief_erpelding_industrie",
       "name": "Mireille Erpelding",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"

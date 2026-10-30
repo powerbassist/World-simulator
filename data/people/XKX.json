@@ -49,6 +49,7 @@
       "wealth_eur_m": 0.56,
       "name": "Vjollca Morina",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "principled"
@@ -125,6 +126,7 @@
       "wealth_eur_m": 1.0,
       "name": "Albana Gashi",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "networked"
@@ -182,6 +184,7 @@
       "id": "XKX_chief_zeka_grupi",
       "name": "Teuta Zeka",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal"
@@ -216,6 +219,7 @@
       "id": "XKX_chief_rexhepi_industria",
       "name": "Hana Rexhepi",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -274,6 +278,7 @@
       "id": "XKX_chief_kastrati_sigurimet",
       "name": "Shqipe Kastrati",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"

@@ -6,6 +6,7 @@
       "wealth_eur_m": 3.2,
       "name": "Caroline Wexford",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled",
@@ -89,6 +90,7 @@
       "wealth_eur_m": 2.5,
       "name": "Miriam Cobbett",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -116,6 +118,7 @@
       "wealth_eur_m": 3.0,
       "name": "Rhona Kilbride",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "vain"
@@ -294,6 +297,7 @@
       "id": "GBR_ffoulkes",
       "name": "Letitia Ffoulkes",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -313,6 +317,7 @@
       "id": "GBR_greenaway",
       "name": "Letitia Greenaway",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "vain"
@@ -374,6 +379,7 @@
       "id": "GBR_jessel",
       "name": "Beatrice Jessel",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "principled",
         "vain"
@@ -413,6 +419,7 @@
       "id": "GBR_lambourne",
       "name": "Kitty Lambourne",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "principled"
@@ -434,6 +441,7 @@
       "id": "GBR_marlowe",
       "name": "Kitty Marlowe",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "networked",
         "stubborn",
@@ -492,6 +500,7 @@
       "id": "GBR_pentreath",
       "name": "Kitty Pentreath",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "stubborn",
         "vain"
@@ -546,6 +555,7 @@
       "id": "GBR_scarthwaite",
       "name": "Letitia Scarthwaite",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "stubborn",
         "vain"
@@ -632,6 +642,7 @@
       "id": "GBR_wetherby",
       "name": "Cecily Wetherby",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal"
       ],
@@ -738,6 +749,7 @@
       "id": "GBR_danvers",
       "name": "Imogen Danvers",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal"
@@ -756,6 +768,7 @@
       "id": "GBR_escott",
       "name": "Jessamy Escott",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "principled"
@@ -824,6 +837,7 @@
       "id": "GBR_hawtrey",
       "name": "Harriet Hawtrey",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious",
         "vain"
@@ -841,6 +855,7 @@
       "id": "GBR_inskip",
       "name": "Imogen Inskip",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "vain"
@@ -874,6 +889,7 @@
       "id": "GBR_kelsall",
       "name": "Letitia Kelsall",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "fervent",
         "stubborn"
@@ -938,6 +954,7 @@
       "id": "GBR_nethercott",
       "name": "Gwendolen Nethercott",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1023,6 +1040,7 @@
       "id": "GBR_bagshot",
       "name": "Harriet Bagshot",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "principled"
@@ -1103,6 +1121,7 @@
       "id": "GBR_greville",
       "name": "Florence Greville",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -1122,6 +1141,7 @@
       "id": "GBR_hesketh",
       "name": "Dorothy Hesketh",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "principled",
         "vain"
@@ -1162,6 +1182,7 @@
       "id": "GBR_chief_northaven",
       "name": "Fiona Northaven",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -1196,6 +1217,7 @@
       "id": "GBR_chief_sterling_mutual",
       "name": "Margaret Hollis",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "principled",
         "pragmatic"

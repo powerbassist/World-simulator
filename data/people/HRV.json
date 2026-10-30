@@ -124,6 +124,7 @@
       "wealth_eur_m": 0.84,
       "name": "Lana Šarić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "principled",
@@ -212,6 +213,7 @@
       "id": "HRV_eric",
       "name": "Zlata Erić",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "principled",
@@ -230,6 +232,7 @@
       "id": "HRV_frkanovic",
       "name": "Lidija Frkanović",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "principled",
@@ -257,6 +260,7 @@
       "id": "HRV_grgic",
       "name": "Ana Grgić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn"
       ],
@@ -393,6 +397,7 @@
       "id": "HRV_ostojic",
       "name": "Nada Ostojić",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "stubborn",
         "vain"
@@ -427,6 +432,7 @@
       "id": "HRV_radic",
       "name": "Sanja Radić",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "loyal",
         "principled"
@@ -467,6 +473,7 @@
       "id": "HRV_tomljanovic",
       "name": "Nada Tomljanović",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -534,6 +541,7 @@
       "id": "HRV_andelic",
       "name": "Lidija Anđelić",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -569,6 +577,7 @@
       "id": "HRV_cvitkovic",
       "name": "Petra Cvitković",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -592,6 +601,7 @@
       "id": "HRV_drazenovic",
       "name": "Nada Draženović",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked"
       ],
@@ -707,6 +717,7 @@
       "id": "HRV_katic",
       "name": "Ivana Katić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -805,6 +816,7 @@
       "id": "HRV_perisic",
       "name": "Vesna Perišić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -832,6 +844,7 @@
       "id": "HRV_roglic",
       "name": "Tihana Roglić",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "networked",
         "pragmatic",
@@ -854,6 +867,7 @@
       "id": "HRV_simic",
       "name": "Ana Šimić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "stubborn"
@@ -904,6 +918,7 @@
       "id": "HRV_vlasic",
       "name": "Ana Vlašić",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "vain"
@@ -984,6 +999,7 @@
       "id": "HRV_crnkovic",
       "name": "Sanja Crnković",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -1002,6 +1018,7 @@
       "id": "HRV_dujmusic",
       "name": "Vesna Dujmušić",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "loyal",
         "principled",
@@ -1020,6 +1037,7 @@
       "id": "HRV_frlan",
       "name": "Tihana Frlan",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "fervent",
         "networked"
@@ -1041,6 +1059,7 @@
       "id": "HRV_grcic",
       "name": "Ana Grčić",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal"
@@ -1082,6 +1101,7 @@
       "id": "HRV_jankovic",
       "name": "Nada Janković",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent"
       ],
@@ -1158,6 +1178,7 @@
       "id": "HRV_chief_frlan_graditeljstvo",
       "name": "Petra Frlan",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"
@@ -1180,6 +1201,7 @@
       "id": "HRV_chief_radic_industrija",
       "name": "Jasenka Radić",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -1204,6 +1226,7 @@
       "id": "HRV_chief_banka_andelic",
       "name": "Vesna Anđelić",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -1215,6 +1238,7 @@
       "id": "HRV_chief_starcevic_logistika",
       "name": "Zlata Starčević",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked",

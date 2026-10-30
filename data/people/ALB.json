@@ -72,6 +72,7 @@
       "wealth_eur_m": 0.81,
       "name": "Mimoza Kryeziu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -136,6 +137,7 @@
       "id": "ALB_chief_shtepia_tregtare_avdia",
       "name": "Lindita Avdia",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -147,6 +149,7 @@
       "id": "ALB_chief_marku_logjistika",
       "name": "Mirela Marku",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -203,6 +206,7 @@
       "id": "ALB_chief_gjini_bujqesia",
       "name": "Zana Gjini",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -215,6 +219,7 @@
       "id": "ALB_chief_avdia",
       "name": "Blerina Avdia",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -259,6 +264,7 @@
       "id": "ALB_chief_shtepia_tregtare_xhafa",
       "name": "Mirela Xhafa",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "stubborn"

@@ -48,6 +48,7 @@
       "wealth_eur_m": 6.4,
       "name": "Ellen Bosveld",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "vain"
@@ -87,6 +88,7 @@
       "wealth_eur_m": 3.9,
       "name": "Marijke Stoffels",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -114,6 +116,7 @@
       "wealth_eur_m": 2.4,
       "name": "Fenna Wielinga",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -163,6 +166,7 @@
       "id": "NLD_bakhuis",
       "name": "Greet Bakhuis",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "fervent",
@@ -212,6 +216,7 @@
       "id": "NLD_everts",
       "name": "Heleen Everts",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "loyal",
         "principled"
@@ -276,6 +281,7 @@
       "id": "NLD_hofland",
       "name": "Jolanda Hofland",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled"
@@ -294,6 +300,7 @@
       "id": "NLD_ijpelaar",
       "name": "Heleen IJpelaar",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "pragmatic",
@@ -441,6 +448,7 @@
       "id": "NLD_pronk",
       "name": "Maartje Pronk",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -578,6 +586,7 @@
       "id": "NLD_wolters",
       "name": "Bregje Wolters",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -596,6 +605,7 @@
       "id": "NLD_zandbergen",
       "name": "Bregje Zandbergen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "principled"
@@ -618,6 +628,7 @@
       "id": "NLD_bergkamp",
       "name": "Jolanda Bergkamp",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -690,6 +701,7 @@
       "id": "NLD_eerden",
       "name": "Lidewij Eerden",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "principled",
@@ -732,6 +744,7 @@
       "id": "NLD_gerritsen",
       "name": "Maartje Gerritsen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -751,6 +764,7 @@
       "id": "NLD_hofstede",
       "name": "Anneke Hofstede",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn"
       ],
@@ -768,6 +782,7 @@
       "id": "NLD_ijsselmuiden",
       "name": "Bregje IJsselmuiden",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "principled"
@@ -790,6 +805,7 @@
       "id": "NLD_klaver",
       "name": "Karin Klaver",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "stubborn"
@@ -825,6 +841,7 @@
       "id": "NLD_notten",
       "name": "Lidewij Notten",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -898,6 +915,7 @@
       "id": "NLD_scholten",
       "name": "Doortje Scholten",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "stubborn",
         "vain"
@@ -920,6 +938,7 @@
       "id": "NLD_vissers",
       "name": "Jolanda Vissers",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "vain"
@@ -1049,6 +1068,7 @@
       "id": "NLD_francken",
       "name": "Anneke Francken",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "vain"
@@ -1132,6 +1152,7 @@
       "id": "NLD_chief_groenleer_industrie",
       "name": "Eefje Groenleer",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -1155,6 +1176,7 @@
       "id": "NLD_chief_maatschappij_ijsselmuiden",
       "name": "Lidewij IJsselmuiden",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -1167,6 +1189,7 @@
       "id": "NLD_chief_bank_linthorst",
       "name": "Lidewij Linthorst",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -1201,6 +1224,7 @@
       "id": "NLD_chief_maatschappij_rietdijk",
       "name": "Heleen Rietdijk",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked",

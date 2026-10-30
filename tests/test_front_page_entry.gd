@@ -145,6 +145,7 @@ func _check_moments_from_the_report() -> void:
 		[{"election_results": [{"kind": "national", "formation": {"cohabitation": false, "minority": true}}]}, "election", "legislative_minority"],
 		[{"election_results": [{"kind": "national", "formation": {"cohabitation": true, "minority": false}}]}, "election", "legislative_opposition"],
 		[{"character_acts": [{"act": "defect", "person_id": "x", "detail": {}}]}, "character", "defected"],
+		[{"character_acts": [{"act": "resign", "person_id": "x", "detail": {"office": "premiership"}}]}, "character", "prime_minister_resigned"],
 	]
 	for case in cases:
 		var entry := FrontPage.close(_state(), _loader, case[0])

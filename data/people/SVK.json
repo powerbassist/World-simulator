@@ -73,6 +73,7 @@
       "wealth_eur_m": 3.4,
       "name": "Zuzana Hrušková",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "vain"
@@ -96,6 +97,7 @@
       "wealth_eur_m": 3.6,
       "name": "Alena Danková",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "vain"
@@ -244,6 +246,7 @@
       "id": "SVK_ferkoly",
       "name": "Katarína Ferkoly",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -308,6 +311,7 @@
       "id": "SVK_ihrik",
       "name": "Mária Ihrík",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -372,6 +376,7 @@
       "id": "SVK_luptak",
       "name": "Danica Lupták",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "networked",
         "pragmatic"
@@ -393,6 +398,7 @@
       "id": "SVK_martinak",
       "name": "Zuzana Martinák",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "loyal",
         "stubborn",
@@ -435,6 +441,7 @@
       "id": "SVK_oravec",
       "name": "Zuzana Oravec",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "networked"
@@ -528,6 +535,7 @@
       "id": "SVK_turcek",
       "name": "Hana Turček",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "pragmatic",
         "principled",
@@ -551,6 +559,7 @@
       "id": "SVK_urda",
       "name": "Eva Urda",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -623,6 +632,7 @@
       "id": "SVK_bernolak",
       "name": "Zuzana Bernolák",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "networked",
         "principled"
@@ -641,6 +651,7 @@
       "id": "SVK_cabaj",
       "name": "Mária Cabaj",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "principled"
@@ -718,6 +729,7 @@
       "id": "SVK_hruska",
       "name": "Ľudmila Hruška",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "stubborn"
       ],
@@ -805,6 +817,7 @@
       "id": "SVK_miklos",
       "name": "Jana Mikloš",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -859,6 +872,7 @@
       "id": "SVK_ondrus",
       "name": "Alžbeta Ondruš",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "fervent"
       ],
@@ -945,6 +959,7 @@
       "id": "SVK_tomasov",
       "name": "Gabriela Tomašov",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "loyal",
         "principled",
@@ -964,6 +979,7 @@
       "id": "SVK_vlcek",
       "name": "Mária Vlček",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -982,6 +998,7 @@
       "id": "SVK_zimka",
       "name": "Božena Zimka",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "vain"
@@ -1021,6 +1038,7 @@
       "id": "SVK_bertranik",
       "name": "Ivana Bertránik",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "vain"
@@ -1043,6 +1061,7 @@
       "id": "SVK_cipov",
       "name": "Gabriela Cipov",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal"
       ],
@@ -1082,6 +1101,7 @@
       "id": "SVK_estok",
       "name": "Danica Estok",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "networked",
         "pragmatic",
@@ -1104,6 +1124,7 @@
       "id": "SVK_frano",
       "name": "Božena Fraňo",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "vain"
@@ -1126,6 +1147,7 @@
       "id": "SVK_galis",
       "name": "Gabriela Gális",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -1155,6 +1177,7 @@
       "id": "SVK_chief_spolocnost_senko",
       "name": "Alžbeta Senko",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1167,6 +1190,7 @@
       "id": "SVK_chief_banka_slavik",
       "name": "Hana Slávik",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "pragmatic",
@@ -1235,6 +1259,7 @@
       "id": "SVK_chief_obchodny_dom_jambor",
       "name": "Jana Jambor",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -1269,6 +1294,7 @@
       "id": "SVK_chief_banka_zimka",
       "name": "Katarína Zimka",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",

@@ -167,6 +167,7 @@
       "id": "POL_zygmunt_iv",
       "name": "Zygmunt IV",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic",
         "principled"
@@ -223,6 +224,7 @@
       "id": "POL_cieszkowski",
       "name": "Jadwiga Cieszkowski",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "loyal",
         "networked",
@@ -268,6 +270,7 @@
       "id": "POL_ejsmont",
       "name": "Lucyna Ejsmont",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -280,6 +283,7 @@
       "id": "POL_filipowicz",
       "name": "Krystyna Filipowicz",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -359,6 +363,7 @@
       "id": "POL_jablonowski",
       "name": "Danuta Jabłonowski",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -404,6 +409,7 @@
       "id": "POL_lewandowicz",
       "name": "Renata Lewandowicz",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "fervent",
         "stubborn",
@@ -516,6 +522,7 @@
       "id": "POL_rybicki",
       "name": "Danuta Rybicki",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "vain"
@@ -579,6 +586,7 @@
       "id": "POL_ulanowski",
       "name": "Jadwiga Ulanowski",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "principled",
@@ -602,6 +610,7 @@
       "id": "POL_wisniewski",
       "name": "Danuta Wiśniewski",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -720,6 +729,7 @@
       "id": "POL_ernestowicz",
       "name": "Malgorzata Ernestowicz",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "pragmatic",
         "principled"
@@ -737,6 +747,7 @@
       "id": "POL_fijas",
       "name": "Ewa Fijas",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "principled",
         "stubborn"
@@ -796,6 +807,7 @@
       "id": "POL_jakubowski",
       "name": "Ewa Jakubowski",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "loyal",
         "networked",
@@ -880,6 +892,7 @@
       "id": "POL_nieborowski",
       "name": "Agnieszka Nieborowski",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "ambitious",
         "fervent",
@@ -974,6 +987,7 @@
       "id": "POL_wojcik",
       "name": "Agnieszka Wojcik",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -1071,6 +1085,7 @@
       "id": "POL_estko",
       "name": "Renata Estko",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -1147,6 +1162,7 @@
       "id": "POL_chief_huta_wisla",
       "name": "Grażyna Wiśniewska",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "stubborn",
         "loyal"
@@ -1169,6 +1185,7 @@
       "id": "POL_chief_zboze_wielkopolskie",
       "name": "Halina Zborowska",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic"
@@ -1180,6 +1197,7 @@
       "id": "POL_chief_sady_lubelskie",
       "name": "Ewa Sadowska",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "stubborn",
         "principled"
@@ -1203,6 +1221,7 @@
       "id": "POL_chief_siec_baltyk",
       "name": "Danuta Białek",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "pragmatic",
         "ambitious"

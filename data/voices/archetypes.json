@@ -1,0 +1,227 @@
+{
+  "archetypes": [
+    {
+      "id": "politician_m_50",
+      "kind": "politician",
+      "sex": "m",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "Thank you for seeing me. I know your time is short.",
+        "agree": "Then we have an understanding, and I will hold to it.",
+        "refuse": "I cannot give you that. My own side would not forgive it.",
+        "farewell": "We will speak again, I am sure."
+      }
+    },
+    {
+      "id": "politician_f_50",
+      "kind": "politician",
+      "sex": "f",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "Thank you for seeing me. I know your time is short.",
+        "agree": "Then we have an understanding, and I will hold to it.",
+        "refuse": "I cannot give you that. My own side would not forgive it.",
+        "farewell": "We will speak again, I am sure."
+      }
+    },
+    {
+      "id": "executive_m_50",
+      "kind": "executive",
+      "sex": "m",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "I will be brief. My people are waiting on your decision.",
+        "agree": "Good. That is a number we can work with.",
+        "refuse": "No. At that price the investment goes elsewhere.",
+        "farewell": "My office will send the details."
+      }
+    },
+    {
+      "id": "executive_f_50",
+      "kind": "executive",
+      "sex": "f",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "I will be brief. My people are waiting on your decision.",
+        "agree": "Good. That is a number we can work with.",
+        "refuse": "No. At that price the investment goes elsewhere.",
+        "farewell": "My office will send the details."
+      }
+    },
+    {
+      "id": "activist_m_30",
+      "kind": "activist",
+      "sex": "m",
+      "age_band": "30s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "We came because nobody else was listening.",
+        "agree": "It is a start. We will be watching what comes next.",
+        "refuse": "That is not an answer. People are in the street because of it.",
+        "farewell": "This is not over, it has only started."
+      }
+    },
+    {
+      "id": "activist_f_30",
+      "kind": "activist",
+      "sex": "f",
+      "age_band": "30s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "We came because nobody else was listening.",
+        "agree": "It is a start. We will be watching what comes next.",
+        "refuse": "That is not an answer. People are in the street because of it.",
+        "farewell": "This is not over, it has only started."
+      }
+    },
+    {
+      "id": "union_leader_m_50",
+      "kind": "union_leader",
+      "sex": "m",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "You asked to see me, so I came. Our members want to know why.",
+        "agree": "Then we understand each other. I will tell the members.",
+        "refuse": "No. We did not walk out to be sent home with nothing.",
+        "farewell": "The members will hear it from me, not from the press."
+      }
+    },
+    {
+      "id": "union_leader_f_50",
+      "kind": "union_leader",
+      "sex": "f",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "You asked to see me, so I came. Our members want to know why.",
+        "agree": "Then we understand each other. I will tell the members.",
+        "refuse": "No. We did not walk out to be sent home with nothing.",
+        "farewell": "The members will hear it from me, not from the press."
+      }
+    },
+    {
+      "id": "judge_m_60",
+      "kind": "judge",
+      "sex": "m",
+      "age_band": "60s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "I will say at once what I can and cannot discuss.",
+        "agree": "That is within the law, and I have no objection.",
+        "refuse": "The court cannot be asked to do that.",
+        "farewell": "The law will follow its course."
+      }
+    },
+    {
+      "id": "judge_f_60",
+      "kind": "judge",
+      "sex": "f",
+      "age_band": "60s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "I will say at once what I can and cannot discuss.",
+        "agree": "That is within the law, and I have no objection.",
+        "refuse": "The court cannot be asked to do that.",
+        "farewell": "The law will follow its course."
+      }
+    },
+    {
+      "id": "regional_figure_m_50",
+      "kind": "regional_figure",
+      "sex": "m",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "Welcome. You will find that we do things our own way here.",
+        "agree": "Our region will remember this, and so will I.",
+        "refuse": "We have waited long enough. The answer from here is no.",
+        "farewell": "Come and see us again, and stay longer next time."
+      }
+    },
+    {
+      "id": "regional_figure_f_50",
+      "kind": "regional_figure",
+      "sex": "f",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "Welcome. You will find that we do things our own way here.",
+        "agree": "Our region will remember this, and so will I.",
+        "refuse": "We have waited long enough. The answer from here is no.",
+        "farewell": "Come and see us again, and stay longer next time."
+      }
+    },
+    {
+      "id": "press_owner_m_60",
+      "kind": "press_owner",
+      "sex": "m",
+      "age_band": "60s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "I own the paper, but the readers decide what it says.",
+        "agree": "We will report it fairly. That is all I promise.",
+        "refuse": "We do not bargain over what we print.",
+        "farewell": "You will read about this tomorrow, one way or another."
+      }
+    },
+    {
+      "id": "press_owner_f_60",
+      "kind": "press_owner",
+      "sex": "f",
+      "age_band": "60s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Designed archetype, never a real person's voice. Voice not yet designed: Interface designs it in ElevenLabs Voice Design after the author's go and writes the id here.",
+      "lines": {
+        "greet": "I own the paper, but the readers decide what it says.",
+        "agree": "We will report it fairly. That is all I promise.",
+        "refuse": "We do not bargain over what we print.",
+        "farewell": "You will read about this tomorrow, one way or another."
+      }
+    }
+  ],
+  "defaults": {
+    "politician": "politician_m_50",
+    "executive": "executive_m_50",
+    "activist": "activist_m_30",
+    "union_leader": "union_leader_m_50",
+    "judge": "judge_m_60",
+    "regional_figure": "regional_figure_m_50",
+    "press_owner": "press_owner_m_60",
+    "office:head_of_government": "politician_m_50",
+    "office:largest_party_leader": "politician_m_50",
+    "evidence_person": "activist_m_30",
+    "foreign_head": "politician_m_50"
+  }
+}

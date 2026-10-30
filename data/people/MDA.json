@@ -29,6 +29,7 @@
       "wealth_eur_m": 0.56,
       "name": "Elena Lungu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "networked"
@@ -113,6 +114,7 @@
       "wealth_eur_m": 0.68,
       "name": "Ana Rusu",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "principled"
@@ -205,6 +207,7 @@
       "id": "MDA_chief_turcanu_logistica",
       "name": "Tatiana Țurcanu",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -216,6 +219,7 @@
       "id": "MDA_chief_companie_pascari",
       "name": "Irina Pascari",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -250,6 +254,7 @@
       "id": "MDA_chief_balan_transport",
       "name": "Ana Balan",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"

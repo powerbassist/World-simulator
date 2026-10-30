@@ -118,6 +118,7 @@
       "wealth_eur_m": 1.3,
       "name": "Eleni Giallouridou",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "stubborn"
@@ -157,6 +158,7 @@
       "id": "CYP_adamou",
       "name": "Despo Adamou",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "fervent",
@@ -198,6 +200,7 @@
       "id": "CYP_dimitriou",
       "name": "Ioanna Dimitriou",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -258,6 +261,7 @@
       "id": "CYP_hadjigeorgiou",
       "name": "Despo Hadjigeorgiou",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "loyal"
       ],
@@ -279,6 +283,7 @@
       "id": "CYP_ioannou",
       "name": "Maria Ioannou",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "principled"
@@ -336,6 +341,7 @@
       "id": "CYP_mavrommatis",
       "name": "Chrysanthi Mavrommatis",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -421,6 +427,7 @@
       "id": "CYP_stefanou",
       "name": "Sofia Stefanou",
       "kind": "press_owner",
+      "voice": "press_owner_f_60",
       "traits": [
         "ambitious",
         "vain"
@@ -485,6 +492,7 @@
       "id": "CYP_christodoulou",
       "name": "Despo Christodoulou",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked"
       ],
@@ -664,6 +672,7 @@
       "id": "CYP_neophytou",
       "name": "Fotini Neophytou",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "pragmatic"
       ],
@@ -732,6 +741,7 @@
       "id": "CYP_rossides",
       "name": "Despo Rossides",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "pragmatic",
@@ -795,6 +805,7 @@
       "id": "CYP_tsiakkouris",
       "name": "Niovi Tsiakkouris",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "stubborn"
@@ -888,6 +899,7 @@
       "id": "CYP_chrysostomou",
       "name": "Chrysanthi Chrysostomou",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal"
       ],
@@ -913,6 +925,7 @@
       "id": "CYP_drousiotis",
       "name": "Loukia Drousiotis",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "principled"
       ],
@@ -973,6 +986,7 @@
       "id": "CYP_servas",
       "name": "Ioanna Servas",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -992,6 +1006,7 @@
       "id": "CYP_alambritis",
       "name": "Ioanna Alambritis",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -1018,6 +1033,7 @@
       "id": "CYP_bambos",
       "name": "Despo Bambos",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -1084,6 +1100,7 @@
       "id": "CYP_fylaktou",
       "name": "Ioanna Fylaktou",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "fervent",
         "principled"
@@ -1123,6 +1140,7 @@
       "id": "CYP_hadjikyriacos",
       "name": "Eleni Hadjikyriacos",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "stubborn"
       ],
@@ -1273,6 +1291,7 @@
       "id": "CYP_chief_miltiades_logistiki",
       "name": "Kyriaki Miltiades",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -1319,6 +1338,7 @@
       "id": "CYP_chief_lombardos_kataskeves",
       "name": "Georgia Lombardos",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -1331,6 +1351,7 @@
       "id": "CYP_chief_yiangou_kataskeves",
       "name": "Androula Yiangou",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"

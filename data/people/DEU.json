@@ -31,6 +31,7 @@
       "wealth_eur_m": 5.3,
       "name": "Katrin Bohlen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "vain"
@@ -77,6 +78,7 @@
       "wealth_eur_m": 3.6,
       "name": "Annika Seibold",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn"
       ],
@@ -129,6 +131,7 @@
       "wealth_eur_m": 4.9,
       "name": "Marlene Grotholt",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn",
         "vain"
@@ -210,6 +213,7 @@
       "id": "DEU_bergmann",
       "name": "Silke Bergmann",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -251,6 +255,7 @@
       "id": "DEU_diekmann",
       "name": "Franka Diekmann",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "stubborn"
       ],
@@ -370,6 +375,7 @@
       "id": "DEU_kastner",
       "name": "Lena Kastner",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "principled"
@@ -387,6 +393,7 @@
       "id": "DEU_lindhorst",
       "name": "Sophie Lindhorst",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "loyal",
@@ -446,6 +453,7 @@
       "id": "DEU_osterkamp",
       "name": "Marlies Osterkamp",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "stubborn"
       ],
@@ -573,6 +581,7 @@
       "id": "DEU_uhlig",
       "name": "Annelie Uhlig",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "principled",
@@ -600,6 +609,7 @@
       "id": "DEU_vollbrecht",
       "name": "Franka Vollbrecht",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "loyal"
@@ -671,6 +681,7 @@
       "id": "DEU_brinkmann",
       "name": "Katharina Brinkmann",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "stubborn"
@@ -715,6 +726,7 @@
       "id": "DEU_ehlers",
       "name": "Heide Ehlers",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "pragmatic",
         "stubborn",
@@ -807,6 +819,7 @@
       "id": "DEU_iserlohe",
       "name": "Silke Iserlohe",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "loyal",
         "stubborn",
@@ -857,6 +870,7 @@
       "id": "DEU_mummert",
       "name": "Johanna Mummert",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -875,6 +889,7 @@
       "id": "DEU_nienhaus",
       "name": "Lena Nienhaus",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked",
@@ -898,6 +913,7 @@
       "id": "DEU_overbeck",
       "name": "Antje Overbeck",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "networked"
@@ -923,6 +939,7 @@
       "id": "DEU_rolfes",
       "name": "Wiebke Rolfes",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "principled"
@@ -944,6 +961,7 @@
       "id": "DEU_suhren",
       "name": "Silke Suhren",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -971,6 +989,7 @@
       "id": "DEU_tschirner",
       "name": "Silke Tschirner",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "principled",
         "vain"
@@ -989,6 +1008,7 @@
       "id": "DEU_waldmann",
       "name": "Wiebke Waldmann",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "pragmatic"
       ],
@@ -1026,6 +1046,7 @@
       "id": "DEU_busemann",
       "name": "Johanna Busemann",
       "kind": "regional_figure",
+      "voice": "regional_figure_f_50",
       "traits": [
         "ambitious",
         "stubborn",
@@ -1063,6 +1084,7 @@
       "id": "DEU_emden",
       "name": "Sophie Emden",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "loyal",
@@ -1128,6 +1150,7 @@
       "id": "DEU_hillen",
       "name": "Marlies Hillen",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "fervent",
         "loyal"
@@ -1178,6 +1201,7 @@
       "id": "DEU_chief_kellermann",
       "name": "Greta Kellermann",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "principled"

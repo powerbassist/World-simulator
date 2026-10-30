@@ -44,6 +44,7 @@
       "wealth_eur_m": 3.5,
       "name": "Anni Salmela",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -100,6 +101,7 @@
       "wealth_eur_m": 2.7,
       "name": "Sirkka Nummela",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -122,6 +124,7 @@
       "wealth_eur_m": 2.2,
       "name": "Outi Peltomaa",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -200,6 +203,7 @@
       "id": "FIN_blomqvist",
       "name": "Tuulikki Blomqvist",
       "kind": "judge",
+      "voice": "judge_f_60",
       "traits": [
         "loyal",
         "vain"
@@ -384,6 +388,7 @@
       "id": "FIN_jarvinen",
       "name": "Raili Järvinen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -456,6 +461,7 @@
       "id": "FIN_nieminen",
       "name": "Sinikka Nieminen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked",
         "pragmatic"
@@ -523,6 +529,7 @@
       "id": "FIN_salonen",
       "name": "Irmeli Salonen",
       "kind": "union_leader",
+      "voice": "union_leader_f_50",
       "traits": [
         "fervent",
         "loyal"
@@ -619,6 +626,7 @@
       "id": "FIN_ahonen",
       "name": "Eija Ahonen",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked"
       ],
@@ -681,6 +689,7 @@
       "id": "FIN_dahlstrom",
       "name": "Tuulikki Dahlström",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "networked"
       ],
@@ -722,6 +731,7 @@
       "id": "FIN_forsman",
       "name": "Raili Forsman",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked"
@@ -767,6 +777,7 @@
       "id": "FIN_heikkila",
       "name": "Eija Heikkilä",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "pragmatic"
@@ -824,6 +835,7 @@
       "id": "FIN_kallio",
       "name": "Tuulikki Kallio",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious",
         "networked",
@@ -972,6 +984,7 @@
       "id": "FIN_aalberg",
       "name": "Eija Aalberg",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "ambitious",
         "loyal",
@@ -1013,6 +1026,7 @@
       "id": "FIN_cederholm",
       "name": "Tuulikki Cederholm",
       "kind": "activist",
+      "voice": "activist_f_30",
       "traits": [
         "networked",
         "pragmatic",
@@ -1035,6 +1049,7 @@
       "id": "FIN_dahl",
       "name": "Raili Dahl",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -1061,6 +1076,7 @@
       "id": "FIN_ekelund",
       "name": "Aila Ekelund",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "fervent",
         "networked",
@@ -1103,6 +1119,7 @@
       "id": "FIN_granholm",
       "name": "Irmeli Granholm",
       "kind": "politician",
+      "voice": "politician_f_50",
       "traits": [
         "ambitious"
       ],
@@ -1165,6 +1182,7 @@
       "id": "FIN_chief_pankki_blomqvist",
       "name": "Irmeli Blomqvist",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic",
@@ -1177,6 +1195,7 @@
       "id": "FIN_chief_nieminen_ryhma",
       "name": "Tuulikki Nieminen",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked"
@@ -1212,6 +1231,7 @@
       "id": "FIN_chief_kauppahuone_salonen",
       "name": "Irmeli Salonen",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "networked"
