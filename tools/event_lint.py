@@ -78,6 +78,9 @@ KNOWN_KEYS = [
     "id", "name", "summary", "subject_office", "likelihood", "respond_months",
     "once", "preconditions", "choices", "interrupt", "sited",
     "category", "weight", "severity", "on_action", "cooldown_months", "exposure",
+    # V5.2d: who brings the event, and their line. Their shape is the loader's
+    # (src/core/event_speaker.gd); here they only stop reading as typos.
+    "speaker", "speaker_line",
 ]
 CHOICE_KEYS = ["id", "label", "summary", "effects", "default", "arms"]
 # law.gd SCALAR_EFFECT_KEYS, and its SHARED_EFFECT_CHANNELS minus `institutional`

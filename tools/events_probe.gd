@@ -500,6 +500,10 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 		# V5.2d (D5, D7, D9): who brought each arrival, and the month's front page.
 		"spoken": 0, "narrated": {}, "front_pages": 0, "two_tones": 0,
 		"front_windows": [0.0, 0.0, 0.0], "front_by_kind": {},
+		# Rule 3's per-event count (Content's ask): how often each event's choice was
+		# APPLIED to the player -- a default at its deadline or an answer -- and which
+		# choice, so a common-shift trim can be sized against the unclamped sum.
+		"fires": {}, "fires_by_choice": {},
 	}
 	var wrote := {}
 	for i in range(months):
@@ -533,6 +537,11 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 				tally["answered"] = int(tally["answered"]) + 1
 				tally["windows"][mini(2, i / TERM_MONTHS)] += 1.0
 				wrote[before[id]] = i
+				# Left the desk inside the month: only a deadline does that, so the
+				# default was applied.
+				var gone = Events.event_by_id(_loader, String(id))
+				if gone != null:
+					_count_fire(tally, String(id), String(gone.default_choice().get("id", "")))
 		if answer_well:
 			var guard := 0
 			while Events.is_pending(ns) and guard < EventsK.QUEUE_MAX + 1:
@@ -544,6 +553,7 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 					String(_best_choice(ev).get("id", "")))
 				if record.is_empty():
 					break
+				_count_fire(tally, String(record["event_id"]), String(record["choice_id"]))
 		if quiet_override > 0 and quiet_override != EventsK.CATEGORY_QUIET_MONTHS:
 			ns.event_category_quiet.clear()
 			for category in wrote.keys():
@@ -557,6 +567,14 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 		if depth >= EventsK.QUEUE_MAX:
 			tally["overfull"] = int(tally["overfull"]) + 1
 	return tally
+
+
+func _count_fire(tally: Dictionary, event_id: String, choice_id: String) -> void:
+	tally["fires"][event_id] = int(tally["fires"].get(event_id, 0)) + 1
+	if not tally["fires_by_choice"].has(event_id):
+		tally["fires_by_choice"][event_id] = {}
+	var by_choice: Dictionary = tally["fires_by_choice"][event_id]
+	by_choice[choice_id] = int(by_choice.get(choice_id, 0)) + 1
 
 
 ## The median over the run of each 60-month window's answers, scaled to a full
@@ -966,6 +984,8 @@ func _table_e1b_accumulation() -> void:
 		_json["e1b"][regime] = {
 			"months": int(d["months"]), "arrivals": int(d["arrivals"]),
 			"defaults": _bloc_offsets(d["state"]), "answer_well": _bloc_offsets(a["state"]),
+			"fires": {"defaults": d["fires"], "answer_well": a["fires"]},
+			"fires_by_choice": {"defaults": d["fires_by_choice"], "answer_well": a["fires_by_choice"]},
 		}
 		var def_saturated: bool = absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
 		var ans_saturated: bool = absf(float(aw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
