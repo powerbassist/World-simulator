@@ -37,9 +37,9 @@
               "burden": -0.03
             },
             "bloc_offset": {
-              "pensioners": -0.0697,
+              "pensioners": -0.0532,
               "business": -0.1015,
-              "workers": 0.0733,
+              "workers": 0.0601,
               "urban": 0.0196,
               "rural": 0.0101,
               "students": -0.0095
@@ -55,10 +55,10 @@
               "education": 0.2
             },
             "bloc_offset": {
-              "pensioners": -0.0675,
+              "pensioners": -0.051,
               "business": -0.0499,
               "students": 0.028,
-              "workers": 0.0559,
+              "workers": 0.0427,
               "urban": 0.0252,
               "rural": -0.0122
             }
@@ -71,11 +71,11 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0088,
+              "workers": -0.022,
               "urban": -0.012,
               "rural": -0.008,
               "business": 0.014,
-              "pensioners": -0.0105
+              "pensioners": 0.006
             }
           }
         }
@@ -107,9 +107,9 @@
               "burden": 0.05
             },
             "bloc_offset": {
-              "pensioners": -0.0433,
+              "pensioners": -0.0343,
               "business": -0.0884,
-              "workers": 0.0663,
+              "workers": 0.0591,
               "urban": 0.0447,
               "rural": -0.006
             }
@@ -124,10 +124,10 @@
               "health": 0.15
             },
             "bloc_offset": {
-              "pensioners": -0.0158,
+              "pensioners": -0.0068,
               "business": -0.0555,
               "students": -0.0327,
-              "workers": 0.0336,
+              "workers": 0.0264,
               "urban": 0.0174,
               "rural": -0.0053
             }
@@ -140,11 +140,11 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0048,
+              "workers": -0.012,
               "urban": -0.01,
               "rural": -0.006,
               "business": 0.01,
-              "pensioners": -0.005
+              "pensioners": 0.004
             }
           }
         }
@@ -257,10 +257,10 @@
               "burden": -0.04
             },
             "bloc_offset": {
-              "pensioners": -0.0205,
+              "pensioners": -0.01,
               "business": 0.0414,
               "students": -0.0606,
-              "workers": 0.0528,
+              "workers": 0.0444,
               "urban": -0.0265,
               "rural": -0.006
             }
@@ -272,10 +272,10 @@
           "summary": "The file goes to the Commission, which is where files go to be read slowly. The works hang on for the two years the instrument takes.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0205,
+              "pensioners": -0.01,
               "business": 0.0279,
               "students": 0.0247,
-              "workers": 0.0169,
+              "workers": 0.0085,
               "urban": -0.0062,
               "rural": 0.012
             }
@@ -289,10 +289,10 @@
           "effects": {
             "bloc_offset": {
               "business": -0.008,
-              "workers": -0.0056,
+              "workers": -0.014,
               "rural": -0.006,
               "urban": -0.004,
-              "pensioners": -0.0025
+              "pensioners": 0.008
             }
           }
         }
@@ -327,9 +327,9 @@
               "burden": -0.05
             },
             "bloc_offset": {
-              "pensioners": -0.0428,
+              "pensioners": -0.0338,
               "business": 0.079,
-              "workers": 0.0474,
+              "workers": 0.0402,
               "urban": -0.0449,
               "rural": -0.0393
             }
@@ -341,10 +341,10 @@
           "summary": "The surcharge is socialised across every meter and the federation withdraws the shutdown list. The bill arrives itemised, which is the only honest way to be unpopular.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0196,
+              "pensioners": -0.0106,
               "business": 0.0883,
               "students": -0.0084,
-              "workers": 0.0008,
+              "workers": -0.0064,
               "urban": -0.0273,
               "rural": -0.0217
             }
@@ -358,10 +358,10 @@
           "effects": {
             "bloc_offset": {
               "business": -0.015,
-              "workers": -0.0048,
+              "workers": -0.012,
               "urban": -0.005,
               "rural": -0.005,
-              "pensioners": -0.014
+              "pensioners": -0.005
             }
           }
         }
@@ -392,9 +392,9 @@
               "infrastructure": 0.3
             },
             "bloc_offset": {
-              "pensioners": -0.0509,
+              "pensioners": -0.0389,
               "business": 0.0562,
-              "workers": 0.0463,
+              "workers": 0.0367,
               "urban": -0.0138,
               "rural": 0.0033,
               "students": -0.038
@@ -410,10 +410,10 @@
               "infrastructure": 0.1
             },
             "bloc_offset": {
-              "pensioners": -0.0557,
+              "pensioners": -0.0437,
               "business": 0.0085,
               "students": 0.0441,
-              "workers": 0.0284,
+              "workers": 0.0188,
               "urban": 0.0252,
               "rural": 0.0022
             }
@@ -427,10 +427,10 @@
           "effects": {
             "bloc_offset": {
               "business": -0.012,
-              "workers": -0.0064,
+              "workers": -0.016,
               "urban": -0.006,
               "rural": -0.002,
-              "pensioners": -0.004
+              "pensioners": 0.008
             }
           }
         }
@@ -465,10 +465,10 @@
               "burden": -0.04
             },
             "bloc_offset": {
-              "pensioners": -0.0764,
+              "pensioners": -0.0599,
               "business": 0.043,
               "students": 0.0013,
-              "workers": 0.0535,
+              "workers": 0.0403,
               "urban": 0.0137,
               "rural": -0.0106
             }
@@ -482,11 +482,11 @@
           "effects": {
             "bloc_offset": {
               "business": -0.016,
-              "workers": -0.0088,
+              "workers": -0.022,
               "urban": -0.006,
               "rural": -0.004,
               "students": -0.002,
-              "pensioners": 0.0055
+              "pensioners": 0.022
             }
           }
         },
@@ -499,10 +499,10 @@
               "infrastructure": 0.35
             },
             "bloc_offset": {
-              "pensioners": -0.0584,
+              "pensioners": -0.0419,
               "business": -0.0553,
               "students": 0.0013,
-              "workers": 0.06,
+              "workers": 0.0468,
               "urban": 0.0169,
               "rural": 0.0124
             }
@@ -542,10 +542,10 @@
               "settlement": 0.06
             },
             "bloc_offset": {
-              "pensioners": -0.0351,
+              "pensioners": -0.0246,
               "business": -0.0176,
               "students": -0.0321,
-              "workers": 0.0379,
+              "workers": 0.0295,
               "urban": -0.01,
               "rural": 0.0158
             }
@@ -557,10 +557,10 @@
           "summary": "The operators' reading of the contracts is upheld and the crews return to the new roster. The port runs, and the federation owes the government a memory.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0211,
+              "pensioners": -0.0106,
               "business": 0.0766,
               "students": 0.0096,
-              "workers": -0.0276,
+              "workers": -0.036,
               "urban": 0.0236,
               "rural": 0.0146
             }
@@ -573,12 +573,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0056,
+              "workers": -0.014,
               "business": -0.006,
               "urban": -0.004,
               "rural": -0.002,
               "students": 0.004,
-              "pensioners": -0.0045
+              "pensioners": 0.006
             }
           }
         }
@@ -610,10 +610,10 @@
               "burden": -0.05
             },
             "bloc_offset": {
-              "pensioners": -0.0407,
+              "pensioners": -0.0287,
               "business": 0.0708,
               "students": -0.0365,
-              "workers": 0.0465,
+              "workers": 0.0369,
               "urban": -0.0258,
               "rural": -0.024
             }
@@ -628,10 +628,10 @@
               "infrastructure": 0.2
             },
             "bloc_offset": {
-              "pensioners": -0.0433,
+              "pensioners": -0.0313,
               "business": 0.0347,
               "students": -0.0273,
-              "workers": 0.0387,
+              "workers": 0.0291,
               "urban": 0.0061,
               "rural": -0.0198
             }
@@ -645,10 +645,10 @@
           "effects": {
             "bloc_offset": {
               "business": -0.01,
-              "workers": -0.0064,
+              "workers": -0.016,
               "urban": -0.006,
               "rural": -0.004,
-              "pensioners": -0.004
+              "pensioners": 0.008
             }
           }
         }
@@ -686,9 +686,9 @@
               "infrastructure": 0.35
             },
             "bloc_offset": {
-              "pensioners": -0.0603,
+              "pensioners": -0.0423,
               "business": -0.0755,
-              "workers": 0.0724,
+              "workers": 0.058,
               "urban": 0.0272,
               "rural": 0.0185
             }
@@ -704,10 +704,10 @@
               "burden": -0.05
             },
             "bloc_offset": {
-              "pensioners": -0.0381,
+              "pensioners": -0.0201,
               "business": 0.0305,
               "students": -0.0241,
-              "workers": 0.0519,
+              "workers": 0.0375,
               "urban": -0.0361,
               "rural": -0.0163
             }
@@ -720,11 +720,11 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0096,
+              "workers": -0.024,
               "urban": -0.012,
               "rural": -0.01,
               "business": -0.006,
-              "pensioners": -0.005
+              "pensioners": 0.013
             }
           }
         }
@@ -753,10 +753,10 @@
           "summary": "The government declares against the bid and sends the ministry to find its grounds overnight. The bidder's lawyers stay busy and the markets price a review into every premium; whether the deal is actually stopped is decided in the companies panel.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0336,
+              "pensioners": -0.0246,
               "business": -0.0417,
               "students": -0.0021,
-              "workers": 0.035,
+              "workers": 0.0278,
               "urban": 0.0174,
               "rural": 0.0102
             }
@@ -768,10 +768,10 @@
           "summary": "The government says in public that the bid is welcome and asks for undertakings about jobs and boards, both of which expire. The advisers are paid, the town waits to learn which undertakings had lawyers, and the bid's fate stays a matter for the companies panel.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0025,
+              "pensioners": 0.0065,
               "business": 0.0369,
               "students": -0.0001,
-              "workers": -0.0058,
+              "workers": -0.013,
               "urban": -0.0142,
               "rural": 0.0115
             }
@@ -785,11 +785,11 @@
           "effects": {
             "bloc_offset": {
               "business": -0.008,
-              "workers": -0.0048,
+              "workers": -0.012,
               "urban": -0.004,
               "rural": -0.002,
               "students": 0.004,
-              "pensioners": -0.003
+              "pensioners": 0.006
             }
           }
         }
@@ -821,10 +821,10 @@
               "infrastructure": 0.3
             },
             "bloc_offset": {
-              "pensioners": -0.075,
+              "pensioners": -0.0585,
               "business": -0.1047,
               "students": -0.0231,
-              "workers": 0.085,
+              "workers": 0.0718,
               "urban": 0.0224,
               "rural": 0.009
             }
@@ -839,10 +839,10 @@
               "infrastructure": 0.15
             },
             "bloc_offset": {
-              "pensioners": -0.0488,
+              "pensioners": -0.0323,
               "business": -0.0233,
               "students": -0.0363,
-              "workers": 0.0615,
+              "workers": 0.0483,
               "urban": 0.0091,
               "rural": -0.0222
             }
@@ -855,11 +855,11 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0088,
+              "workers": -0.022,
               "urban": -0.01,
               "rural": -0.008,
               "business": -0.004,
-              "pensioners": -0.0065,
+              "pensioners": 0.01,
               "students": 0.006
             }
           }
@@ -900,10 +900,9 @@
             "bloc_offset": {
               "business": 0.056,
               "rural": 0.017,
-              "workers": -0.0038,
+              "workers": -0.017,
               "urban": -0.022,
-              "students": -0.014,
-              "pensioners": -0.0165
+              "students": -0.014
             }
           }
         },
@@ -920,12 +919,11 @@
               "infrastructure": 0.3
             },
             "bloc_offset": {
-              "workers": 0.0352,
+              "workers": 0.022,
               "rural": 0.022,
               "urban": 0.006,
               "students": -0.011,
-              "business": -0.073,
-              "pensioners": -0.0165
+              "business": -0.073
             }
           }
         },
@@ -936,11 +934,11 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0088,
+              "workers": -0.022,
               "rural": -0.022,
               "urban": -0.014,
               "business": 0.034,
-              "pensioners": -0.0085
+              "pensioners": 0.008
             }
           }
         }

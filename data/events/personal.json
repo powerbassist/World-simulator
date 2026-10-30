@@ -33,10 +33,10 @@
               "corruption": 0.04
             },
             "bloc_offset": {
-              "pensioners": -0.0059,
+              "pensioners": 0.0076,
               "business": -0.0691,
               "students": -0.0305,
-              "workers": 0.0417,
+              "workers": 0.0309,
               "urban": -0.0575,
               "rural": 0.0467
             }
@@ -51,10 +51,10 @@
               "corruption": 0.01
             },
             "bloc_offset": {
-              "pensioners": -0.0073,
+              "pensioners": 0.0062,
               "business": -0.0406,
               "students": -0.032,
-              "workers": 0.0286,
+              "workers": 0.0178,
               "urban": -0.0307,
               "rural": 0.034
             }
@@ -67,12 +67,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0072,
+              "workers": -0.018,
               "urban": 0.015,
               "students": 0.012,
               "business": 0.02,
               "rural": -0.025,
-              "pensioners": -0.0215
+              "pensioners": -0.008
             }
           }
         }
@@ -108,10 +108,10 @@
           "summary": "The conversation is private and the warning is not: the next attributed quote ends a career. The profiles stop, and the archive now has a villain, which is half the way to a martyr.",
           "effects": {
             "bloc_offset": {
-              "pensioners": 0.0055,
+              "pensioners": 0.0182,
               "business": -0.0328,
-              "students": -0.0435,
-              "workers": 0.0284,
+              "students": -0.0547,
+              "workers": 0.0212,
               "urban": -0.0484,
               "rural": 0.0323
             }
@@ -126,10 +126,10 @@
               "press_freedom": 0.05
             },
             "bloc_offset": {
-              "pensioners": -0.0387,
+              "pensioners": -0.026,
               "business": -0.0957,
-              "students": 0.0413,
-              "workers": 0.0192,
+              "students": 0.0301,
+              "workers": 0.012,
               "urban": 0.0364,
               "rural": 0.0221
             }
@@ -142,12 +142,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0048,
+              "workers": -0.012,
               "urban": -0.01,
-              "students": -0.0028,
+              "students": -0.014,
               "business": 0.028,
               "rural": -0.012,
-              "pensioners": -0.0187
+              "pensioners": -0.006
             }
           }
         }
@@ -174,10 +174,10 @@
           "summary": "The machinery moves against the defector within the week, and the constituency gets a by-election it did not ask for. The base rallies -- its first rally in a year -- and the swing in one seat is watched from every other.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0074,
+              "pensioners": 0.006,
               "business": -0.0945,
-              "students": -0.0379,
-              "workers": 0.0588,
+              "students": -0.0443,
+              "workers": 0.0498,
               "urban": -0.0528,
               "rural": 0.0348
             }
@@ -192,10 +192,10 @@
               "corruption": 0.04
             },
             "bloc_offset": {
-              "pensioners": 0.0096,
+              "pensioners": 0.023,
               "business": 0.0085,
-              "students": -0.0102,
-              "workers": 0.0048,
+              "students": -0.0166,
+              "workers": -0.0042,
               "urban": -0.0208,
               "rural": 0.0431
             }
@@ -208,12 +208,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.006,
+              "workers": -0.015,
               "urban": -0.01,
-              "students": -0.0016,
+              "students": -0.008,
               "business": 0.03,
               "rural": -0.015,
-              "pensioners": -0.0184
+              "pensioners": -0.005
             }
           }
         }
@@ -251,12 +251,12 @@
               "pensions": 0.3
             },
             "bloc_offset": {
-              "workers": 0.037,
+              "workers": 0.025,
               "urban": 0.008,
               "students": -0.018,
               "business": -0.05,
               "rural": 0.015,
-              "pensioners": 0.0
+              "pensioners": 0.015
             }
           }
         },
@@ -266,12 +266,12 @@
           "summary": "He speaks, the hall loves him, and the clip runs all weekend with the government's logo behind him. It costs nothing tonight; the policy he named is now the party's named grievance, and he keeps the receipt.",
           "effects": {
             "bloc_offset": {
-              "workers": 0.027,
+              "workers": 0.015,
               "urban": -0.012,
               "students": -0.015,
               "business": -0.01,
               "rural": 0.018,
-              "pensioners": -0.007
+              "pensioners": 0.008
             }
           }
         },
@@ -282,12 +282,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.008,
+              "workers": -0.02,
               "urban": 0.01,
               "students": 0.008,
               "business": 0.025,
               "rural": -0.018,
-              "pensioners": -0.025
+              "pensioners": -0.01
             }
           }
         }
@@ -319,10 +319,10 @@
               "corruption": 0.02
             },
             "bloc_offset": {
-              "pensioners": 0.0099,
+              "pensioners": 0.0189,
               "business": -0.0907,
               "students": -0.0549,
-              "workers": 0.0498,
+              "workers": 0.0426,
               "urban": -0.077,
               "rural": 0.0593
             }
@@ -334,10 +334,10 @@
           "summary": "The one who wanted it is the one who can do it, and giving it to them takes the argument out of the factions' mouths. It also hands a platform to the person best placed to use one.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0224,
+              "pensioners": -0.0134,
               "business": 0.011,
               "students": 0.0245,
-              "workers": 0.0008,
+              "workers": -0.0064,
               "urban": 0.0275,
               "rural": -0.0204
             }
@@ -350,12 +350,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0048,
+              "workers": -0.012,
               "urban": 0.008,
               "students": 0.005,
               "business": 0.025,
               "rural": -0.012,
-              "pensioners": -0.014
+              "pensioners": -0.005
             }
           }
         }
@@ -390,9 +390,9 @@
           "summary": "The conditionals stop and the backbenches count what ambition costs. The minister becomes, overnight, the leadership question's answer, with a constituency, a grievance and a great deal of time.",
           "effects": {
             "bloc_offset": {
-              "pensioners": 0.0098,
+              "pensioners": 0.013,
               "business": -0.0302,
-              "students": -0.0379,
+              "students": -0.0475,
               "workers": 0.0288,
               "urban": -0.042,
               "rural": 0.0106
@@ -408,9 +408,9 @@
               "corruption": 0.02
             },
             "bloc_offset": {
-              "pensioners": -0.027,
+              "pensioners": -0.0238,
               "business": -0.0105,
-              "students": 0.0402,
+              "students": 0.0306,
               "workers": -0.021,
               "urban": 0.0417,
               "rural": 0.012
@@ -426,10 +426,10 @@
             "bloc_offset": {
               "workers": -0.008,
               "urban": -0.012,
-              "students": -0.0024,
+              "students": -0.012,
               "business": 0.022,
               "rural": 0.01,
-              "pensioners": 0.0008
+              "pensioners": 0.004
             }
           }
         }
@@ -459,9 +459,9 @@
               "corruption": 0.03
             },
             "bloc_offset": {
-              "pensioners": 0.0047,
+              "pensioners": 0.0074,
               "business": 0.0082,
-              "students": -0.002,
+              "students": -0.01,
               "workers": -0.008,
               "urban": -0.012,
               "rural": 0.012
@@ -474,9 +474,9 @@
           "summary": "The letter is in the drawer and everyone knows it. The government is rid of a running sore, and the backbenches learn the reshuffle's grades are permanent; two others start drafting.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0284,
+              "pensioners": -0.0257,
               "business": -0.0626,
-              "students": 0.0499,
+              "students": 0.0419,
               "workers": 0.0392,
               "urban": 0.0517,
               "rural": -0.0588
@@ -492,10 +492,10 @@
             "bloc_offset": {
               "workers": -0.008,
               "urban": -0.012,
-              "students": -0.002,
+              "students": -0.01,
               "business": 0.02,
               "rural": 0.012,
-              "pensioners": 0.0023
+              "pensioners": 0.005
             }
           }
         }
@@ -531,10 +531,10 @@
           "summary": "Naming the day takes the letter's anonymity away: the forty must sign or scatter. Win, and the question is settled for a term at the price of a campaign fought in public against your own side; lose, and the letter was right.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0025,
+              "pensioners": 0.0105,
               "business": -0.1221,
-              "students": -0.014,
-              "workers": 0.0523,
+              "students": -0.026,
+              "workers": 0.0451,
               "urban": -0.033,
               "rural": 0.0245
             }
@@ -549,10 +549,10 @@
               "corruption": 0.05
             },
             "bloc_offset": {
-              "pensioners": -0.0029,
+              "pensioners": 0.0101,
               "business": 0.0114,
-              "students": 0.0021,
-              "workers": -0.0067,
+              "students": -0.0099,
+              "workers": -0.0139,
               "urban": -0.0169,
               "rural": 0.0262
             }
@@ -565,12 +565,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0048,
+              "workers": -0.012,
               "urban": -0.015,
-              "students": -0.003,
+              "students": -0.015,
               "business": 0.025,
               "rural": 0.012,
-              "pensioners": -0.008
+              "pensioners": 0.005
             }
           }
         }
@@ -600,10 +600,10 @@
               "press_freedom": 0.03
             },
             "bloc_offset": {
-              "pensioners": -0.0292,
+              "pensioners": -0.0185,
               "business": -0.0513,
-              "students": 0.0422,
-              "workers": 0.0361,
+              "students": 0.0326,
+              "workers": 0.0301,
               "urban": 0.0452,
               "rural": -0.0518
             }
@@ -615,10 +615,10 @@
           "summary": "The denials are flat, blanket and, in one case, untrue. It gets you to Thursday with the building's attention intact and its belief in anything the office says spent.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0002,
+              "pensioners": 0.0105,
               "business": 0.0311,
-              "students": -0.0091,
-              "workers": -0.004,
+              "students": -0.0187,
+              "workers": -0.01,
               "urban": -0.0261,
               "rural": 0.015
             }
@@ -631,12 +631,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.004,
+              "workers": -0.01,
               "urban": -0.015,
-              "students": -0.0024,
+              "students": -0.012,
               "business": 0.02,
               "rural": 0.015,
-              "pensioners": -0.0047
+              "pensioners": 0.006
             }
           }
         }
@@ -667,9 +667,9 @@
               "corruption": 0.06
             },
             "bloc_offset": {
-              "pensioners": 0.0106,
+              "pensioners": 0.0133,
               "business": 0.0235,
-              "students": -0.0075,
+              "students": -0.0155,
               "workers": -0.008,
               "urban": -0.0238,
               "rural": 0.0065
@@ -685,9 +685,9 @@
               "press_freedom": -0.03
             },
             "bloc_offset": {
-              "pensioners": -0.0253,
+              "pensioners": -0.0226,
               "business": -0.0593,
-              "students": 0.0477,
+              "students": 0.0397,
               "workers": 0.0307,
               "urban": 0.0507,
               "rural": -0.0626
@@ -703,10 +703,10 @@
             "bloc_offset": {
               "workers": -0.008,
               "urban": -0.01,
-              "students": -0.002,
+              "students": -0.01,
               "business": 0.018,
               "rural": 0.012,
-              "pensioners": 0.0023
+              "pensioners": 0.005
             }
           }
         }

@@ -112,8 +112,8 @@
               "burden": -0.03
             },
             "bloc_offset": {
-              "pensioners": -0.0079,
-              "students": -0.0225,
+              "pensioners": -0.0063,
+              "students": -0.0273,
               "workers": 0.0314,
               "urban": -0.0461,
               "rural": 0.0639
@@ -133,8 +133,8 @@
               "burden": 0.03
             },
             "bloc_offset": {
-              "pensioners": -0.0053,
-              "students": 0.0095,
+              "pensioners": -0.0037,
+              "students": 0.0047,
               "workers": -0.0227,
               "urban": 0.0361,
               "rural": 0.0557,
@@ -152,8 +152,8 @@
               "rural": 0.014,
               "urban": -0.014,
               "workers": -0.008,
-              "students": -0.0012,
-              "pensioners": 0.0064
+              "students": -0.006,
+              "pensioners": 0.008
             }
           }
         }
@@ -493,10 +493,10 @@
           "summary": "The case is strong, the timetable is two years and the queue does not read judgments. The hauliers' association funds the action and the border towns wait for it.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0265,
+              "pensioners": -0.0145,
               "business": 0.0406,
               "students": -0.0178,
-              "workers": -0.0098,
+              "workers": -0.0194,
               "urban": 0.0194,
               "rural": 0.0193
             }
@@ -512,9 +512,9 @@
               "burden": 0.03
             },
             "bloc_offset": {
-              "pensioners": -0.0175,
+              "pensioners": -0.0055,
               "business": -0.0377,
-              "workers": 0.0394,
+              "workers": 0.0298,
               "urban": -0.0067,
               "rural": 0.0189,
               "students": -0.0004
@@ -528,11 +528,11 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.0064,
+              "workers": -0.016,
               "business": -0.014,
               "urban": -0.012,
               "rural": 0.022,
-              "pensioners": 0.0
+              "pensioners": 0.012
             }
           }
         }
@@ -643,11 +643,10 @@
             },
             "bloc_offset": {
               "business": 0.0776,
-              "students": 0.0457,
+              "students": 0.0393,
               "workers": -0.029,
               "urban": 0.0701,
-              "rural": -0.081,
-              "pensioners": -0.0021
+              "rural": -0.081
             }
           }
         },
@@ -657,9 +656,9 @@
           "summary": "Eleven of the measures are deferrable under the treaty and you defer the other three hundred and eighty-nine, which takes drafting. The answer satisfies everyone for the season it lasts.",
           "effects": {
             "bloc_offset": {
-              "pensioners": 0.0022,
+              "pensioners": 0.0043,
               "business": 0.0991,
-              "students": 0.0156,
+              "students": 0.0092,
               "workers": -0.0419,
               "urban": 0.0485,
               "rural": -0.0724
@@ -677,8 +676,7 @@
               "workers": 0.014,
               "business": -0.03,
               "urban": -0.016,
-              "students": -0.0016,
-              "pensioners": -0.0021
+              "students": -0.008
             }
           }
         }

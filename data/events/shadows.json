@@ -44,10 +44,10 @@
             },
             "bloc_offset": {
               "urban": 0.035,
-              "students": 0.0582,
+              "students": 0.035,
               "rural": -0.035,
               "business": -0.012,
-              "pensioners": -0.0197
+              "pensioners": -0.012
             }
           }
         },
@@ -61,10 +61,10 @@
             },
             "bloc_offset": {
               "rural": 0.035,
-              "pensioners": 0.0153,
+              "pensioners": 0.023,
               "business": 0.023,
               "urban": -0.046,
-              "students": -0.0118,
+              "students": -0.035,
               "workers": -0.012
             }
           }
@@ -76,9 +76,9 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.035,
-              "students": -0.0058,
+              "students": -0.029,
               "rural": -0.017,
-              "pensioners": 0.0043,
+              "pensioners": 0.012,
               "business": 0.012
             }
           },
@@ -126,9 +126,9 @@
           "effects": {
             "bloc_offset": {
               "urban": 0.033,
-              "students": 0.0594,
+              "students": 0.033,
               "workers": 0.017,
-              "pensioners": -0.0258,
+              "pensioners": -0.017,
               "rural": -0.033
             }
           }
@@ -139,10 +139,10 @@
           "summary": "You dispute the timeline and question how the pictures were obtained. Supporters rally, but a second witness would leave you exposed twice over.",
           "effects": {
             "bloc_offset": {
-              "pensioners": 0.0242,
+              "pensioners": 0.033,
               "rural": 0.033,
               "urban": -0.049,
-              "students": -0.0146
+              "students": -0.041
             }
           }
         },
@@ -152,10 +152,10 @@
           "summary": "You answer no question on the subject, at any podium. The questions do not stop.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0338,
+              "pensioners": -0.025,
               "rural": -0.017,
               "urban": -0.033,
-              "students": -0.0066,
+              "students": -0.033,
               "business": 0.025,
               "workers": 0.02
             }
@@ -207,10 +207,10 @@
             },
             "bloc_offset": {
               "urban": 0.035,
-              "students": 0.0582,
+              "students": 0.035,
               "rural": -0.035,
               "business": -0.012,
-              "pensioners": -0.0197
+              "pensioners": -0.012
             }
           }
         },
@@ -224,10 +224,10 @@
             },
             "bloc_offset": {
               "rural": 0.035,
-              "pensioners": 0.0153,
+              "pensioners": 0.023,
               "business": 0.023,
               "urban": -0.046,
-              "students": -0.0118,
+              "students": -0.035,
               "workers": -0.012
             }
           }
@@ -240,9 +240,9 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.035,
-              "students": -0.0058,
+              "students": -0.029,
               "rural": -0.017,
-              "pensioners": 0.0043,
+              "pensioners": 0.012,
               "business": 0.012
             }
           }
@@ -291,10 +291,10 @@
             },
             "bloc_offset": {
               "urban": 0.045,
-              "students": 0.0754,
+              "students": 0.045,
               "rural": -0.045,
               "business": -0.015,
-              "pensioners": -0.0251
+              "pensioners": -0.015
             }
           }
         },
@@ -308,10 +308,10 @@
             },
             "bloc_offset": {
               "rural": 0.045,
-              "pensioners": 0.0199,
+              "pensioners": 0.03,
               "business": 0.03,
               "urban": -0.06,
-              "students": -0.0146,
+              "students": -0.045,
               "workers": -0.015
             }
           }
@@ -323,9 +323,9 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.045,
-              "students": -0.0076,
+              "students": -0.038,
               "rural": -0.022,
-              "pensioners": 0.0049,
+              "pensioners": 0.015,
               "business": 0.015
             }
           },
@@ -375,10 +375,10 @@
             },
             "bloc_offset": {
               "urban": 0.045,
-              "students": 0.0754,
+              "students": 0.045,
               "rural": -0.045,
               "business": -0.015,
-              "pensioners": -0.0251
+              "pensioners": -0.015
             }
           }
         },
@@ -392,10 +392,10 @@
             },
             "bloc_offset": {
               "rural": 0.045,
-              "pensioners": 0.0199,
+              "pensioners": 0.03,
               "business": 0.03,
               "urban": -0.06,
-              "students": -0.0146,
+              "students": -0.045,
               "workers": -0.015
             }
           }
@@ -407,9 +407,9 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.045,
-              "students": -0.0076,
+              "students": -0.038,
               "rural": -0.022,
-              "pensioners": 0.0049,
+              "pensioners": 0.015,
               "business": 0.015
             }
           },
@@ -459,10 +459,10 @@
             },
             "bloc_offset": {
               "urban": 0.045,
-              "students": 0.0754,
+              "students": 0.045,
               "rural": -0.045,
               "business": -0.015,
-              "pensioners": -0.0251
+              "pensioners": -0.015
             }
           }
         },
@@ -476,10 +476,10 @@
             },
             "bloc_offset": {
               "rural": 0.045,
-              "pensioners": 0.0199,
+              "pensioners": 0.03,
               "business": 0.03,
               "urban": -0.06,
-              "students": -0.0146,
+              "students": -0.045,
               "workers": -0.015
             }
           }
@@ -491,9 +491,9 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.045,
-              "students": -0.0076,
+              "students": -0.038,
               "rural": -0.022,
-              "pensioners": 0.0049,
+              "pensioners": 0.015,
               "business": 0.015
             }
           },
@@ -543,10 +543,10 @@
             },
             "bloc_offset": {
               "urban": 0.045,
-              "students": 0.0754,
+              "students": 0.045,
               "rural": -0.045,
               "business": -0.015,
-              "pensioners": -0.0251
+              "pensioners": -0.015
             }
           }
         },
@@ -560,10 +560,10 @@
             },
             "bloc_offset": {
               "rural": 0.045,
-              "pensioners": 0.0199,
+              "pensioners": 0.03,
               "business": 0.03,
               "urban": -0.06,
-              "students": -0.0146,
+              "students": -0.045,
               "workers": -0.015
             }
           }
@@ -575,9 +575,9 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.045,
-              "students": -0.0076,
+              "students": -0.038,
               "rural": -0.022,
-              "pensioners": 0.0049,
+              "pensioners": 0.015,
               "business": 0.015
             }
           },
@@ -627,10 +627,10 @@
             },
             "bloc_offset": {
               "urban": 0.035,
-              "students": 0.0582,
+              "students": 0.035,
               "rural": -0.035,
               "business": -0.012,
-              "pensioners": -0.0197
+              "pensioners": -0.012
             }
           }
         },
@@ -644,10 +644,10 @@
             },
             "bloc_offset": {
               "rural": 0.035,
-              "pensioners": 0.0153,
+              "pensioners": 0.023,
               "business": 0.023,
               "urban": -0.046,
-              "students": -0.0118,
+              "students": -0.035,
               "workers": -0.012
             }
           }
@@ -659,9 +659,9 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.035,
-              "students": -0.0058,
+              "students": -0.029,
               "rural": -0.017,
-              "pensioners": 0.0043,
+              "pensioners": 0.012,
               "business": 0.012
             }
           },
@@ -713,10 +713,10 @@
             },
             "bloc_offset": {
               "urban": 0.045,
-              "students": 0.0754,
+              "students": 0.045,
               "rural": -0.045,
               "business": -0.015,
-              "pensioners": -0.0251
+              "pensioners": -0.015
             }
           }
         },
@@ -730,10 +730,10 @@
             },
             "bloc_offset": {
               "rural": 0.045,
-              "pensioners": 0.0199,
+              "pensioners": 0.03,
               "business": 0.03,
               "urban": -0.06,
-              "students": -0.0146,
+              "students": -0.045,
               "workers": -0.015
             }
           }
@@ -745,9 +745,9 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.045,
-              "students": -0.0076,
+              "students": -0.038,
               "rural": -0.022,
-              "pensioners": 0.0049,
+              "pensioners": 0.015,
               "business": 0.015
             }
           },
@@ -794,9 +794,9 @@
           "effects": {
             "bloc_offset": {
               "urban": 0.033,
-              "students": 0.0594,
+              "students": 0.033,
               "workers": 0.017,
-              "pensioners": -0.0258,
+              "pensioners": -0.017,
               "rural": -0.033
             }
           }
@@ -807,10 +807,10 @@
           "summary": "You describe the interview as embellished and embittered. It rallies defenders, and invites a listener with a diary to come forward.",
           "effects": {
             "bloc_offset": {
-              "pensioners": 0.0242,
+              "pensioners": 0.033,
               "rural": 0.033,
               "urban": -0.049,
-              "students": -0.0146
+              "students": -0.041
             }
           }
         },
@@ -820,10 +820,10 @@
           "summary": "Your office issues nothing beyond no comment. The interview circulates.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.0338,
+              "pensioners": -0.025,
               "rural": -0.017,
               "urban": -0.033,
-              "students": -0.0066,
+              "students": -0.033,
               "business": 0.025,
               "workers": 0.02
             }
