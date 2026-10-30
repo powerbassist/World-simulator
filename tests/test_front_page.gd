@@ -14,7 +14,10 @@ extends SceneTree
 ##   - D8: one card at a time, the one it replaces kept as a note in the inbox; the
 ##     card never holds the clock (no pause, no hold reason, not on the screen
 ##     stack) and puts itself away after LIFE_SECONDS of RUNNING clock only;
-##   - Close is a real click, press and release frames apart (tests/click.gd).
+##   - Close is a real click, press and release frames apart (tests/click.gd);
+##   - the parent's call (2026-10-30): a month with an election result hands the card
+##     the count's plate, and the card waits for that plate's `dismissed` -- no paper
+##     prints the result while the count declares it; a load drops a held card.
 
 const FrontPage = preload("res://src/ui/front_page.gd")
 const Headlines = preload("res://src/ui/headlines.gd")
@@ -27,6 +30,11 @@ const Click = preload("res://tests/click.gd")
 ## The card only reads `paused`: a clock that cannot tick, so the test runs no month.
 class StillClock:
 	var paused := false
+
+
+## The election result's plate, as the card sees it: its one signal.
+class CountPlate extends Control:
+	signal dismissed
 
 
 var _failures: Array[String] = []
@@ -58,6 +66,7 @@ func _process(_delta: float) -> bool:
 			_check_one_at_a_time()
 			_check_never_holds()
 			_check_life()
+			_check_held_for_count()
 			_show_full()
 		5:
 			Click.half(root, _card.find_child("Close", true, false), true)
@@ -217,6 +226,24 @@ func _check_life() -> void:
 		_fail("the card did not put itself away after LIFE_SECONDS of running clock")
 	if _main._hud.inbox.lane_count(Inbox.NOTES) != 1:
 		_fail("the card put itself away without leaving its note")
+
+
+func _check_held_for_count() -> void:
+	_card.clear()
+	var entry := _entry([_paper(0, "friendly"), _paper(1, "hostile")])
+	var plate := CountPlate.new()
+	if _card.show_entry(entry, _main._state, _main._loader, StillClock.new(), plate) or _card.visible:
+		_fail("a front page showed while the election count's plate was up")
+	plate.dismissed.emit()
+	if not _card.visible:
+		_fail("the held front page did not show once the count's plate was dismissed")
+	_card.clear()
+	_card.show_entry(entry, _main._state, _main._loader, StillClock.new(), plate)
+	_card.clear()
+	plate.dismissed.emit()
+	if _card.visible:
+		_fail("a load's clear() did not drop the front page held for the count")
+	plate.free()
 
 
 func _count_cards(node: Node) -> int:

@@ -211,6 +211,7 @@ tests=(
   tests/test_audience_load.gd
   tests/test_phone_ui.gd
   tests/test_request_arrival.gd
+  tests/test_arrival_speed.gd
   tests/test_pregate_records.gd
   tests/test_headlines.gd
   tests/test_speaker_lines.gd
