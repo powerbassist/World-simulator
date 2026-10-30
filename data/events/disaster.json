@@ -27,11 +27,12 @@
               "infrastructure": 0.25
             },
             "bloc_offset": {
-              "business": 0.02,
-              "workers": 0.016,
-              "urban": 0.012,
-              "rural": -0.022,
-              "students": -0.008
+              "pensioners": -0.0711,
+              "business": 0.0506,
+              "students": -0.0436,
+              "workers": 0.0472,
+              "urban": 0.036,
+              "rural": -0.0311
             }
           }
         },
@@ -44,11 +45,11 @@
               "infrastructure": 0.15
             },
             "bloc_offset": {
-              "rural": -0.026,
-              "business": -0.016,
-              "urban": 0.022,
-              "pensioners": 0.016,
-              "workers": 0.002
+              "pensioners": -0.0238,
+              "business": -0.0402,
+              "workers": 0.0148,
+              "urban": 0.0673,
+              "rural": -0.037
             }
           }
         },
@@ -62,8 +63,8 @@
               "rural": -0.03,
               "urban": -0.016,
               "business": -0.012,
-              "workers": -0.012,
-              "pensioners": 0.024
+              "workers": -0.0048,
+              "pensioners": 0.015
             }
           }
         }
@@ -99,11 +100,12 @@
               "infrastructure": 0.1
             },
             "bloc_offset": {
-              "rural": 0.026,
-              "urban": -0.014,
-              "workers": 0.008,
-              "students": -0.014,
-              "business": -0.012
+              "pensioners": -0.0106,
+              "business": -0.012,
+              "students": -0.0233,
+              "workers": 0.0053,
+              "urban": -0.0153,
+              "rural": 0.0606
             }
           }
         },
@@ -117,11 +119,12 @@
               "burden": -0.03
             },
             "bloc_offset": {
-              "rural": 0.036,
-              "students": -0.012,
-              "urban": -0.022,
-              "workers": -0.006,
-              "business": -0.002
+              "pensioners": -0.0106,
+              "business": 0.0046,
+              "students": -0.02,
+              "workers": -0.018,
+              "urban": -0.0286,
+              "rural": 0.0772
             }
           }
         },
@@ -169,11 +172,12 @@
               "burden": 0.04
             },
             "bloc_offset": {
-              "urban": 0.02,
-              "students": 0.012,
-              "rural": -0.036,
+              "pensioners": 0.0008,
+              "business": -0.0142,
+              "students": 0.0197,
               "workers": -0.008,
-              "pensioners": 0.006
+              "urban": 0.0407,
+              "rural": -0.0399
             }
           }
         },
@@ -186,11 +190,11 @@
               "infrastructure": 0.12
             },
             "bloc_offset": {
-              "rural": 0.026,
-              "urban": -0.02,
-              "pensioners": -0.012,
-              "workers": 0.006,
-              "business": -0.002
+              "pensioners": -0.0288,
+              "business": -0.0175,
+              "workers": 0.015,
+              "urban": -0.0252,
+              "rural": 0.0622
             }
           }
         },
@@ -237,11 +241,12 @@
               "infrastructure": 0.35
             },
             "bloc_offset": {
-              "business": 0.03,
-              "rural": 0.022,
-              "workers": 0.012,
-              "urban": -0.026,
-              "students": -0.012
+              "pensioners": -0.0582,
+              "business": 0.0698,
+              "students": -0.0429,
+              "workers": 0.0326,
+              "urban": -0.0575,
+              "rural": 0.071
             }
           }
         },
@@ -254,11 +259,12 @@
               "infrastructure": 0.08
             },
             "bloc_offset": {
-              "rural": -0.022,
-              "business": -0.028,
-              "urban": 0.016,
-              "students": 0.012,
-              "pensioners": 0.008
+              "pensioners": -0.0255,
+              "business": -0.0372,
+              "students": 0.0258,
+              "workers": 0.0245,
+              "urban": 0.0505,
+              "rural": -0.0059
             }
           }
         },
@@ -272,8 +278,8 @@
               "rural": -0.036,
               "business": -0.02,
               "urban": -0.014,
-              "workers": -0.014,
-              "pensioners": 0.028
+              "workers": -0.0056,
+              "pensioners": 0.0175
             }
           }
         }
@@ -305,11 +311,12 @@
               "infrastructure": 0.3
             },
             "bloc_offset": {
-              "rural": 0.03,
-              "workers": 0.016,
-              "urban": -0.02,
-              "business": -0.016,
-              "students": -0.006
+              "pensioners": -0.0305,
+              "business": -0.0302,
+              "students": -0.022,
+              "workers": 0.0271,
+              "urban": -0.036,
+              "rural": 0.0719
             }
           }
         },
@@ -319,11 +326,11 @@
           "summary": "The third-highest flood in a decade is unprecedented in the way the ministry needs it to be. The repairs are patched to the old line and the next inspection is scheduled for after the next flood.",
           "effects": {
             "bloc_offset": {
-              "rural": -0.036,
+              "pensioners": 0.0068,
               "business": -0.012,
-              "urban": 0.012,
-              "pensioners": 0.014,
-              "workers": -0.008
+              "workers": -0.008,
+              "urban": 0.0355,
+              "rural": -0.0432
             }
           }
         },
@@ -373,12 +380,12 @@
               "infrastructure": 0.2
             },
             "bloc_offset": {
-              "pensioners": 0.024,
-              "urban": 0.018,
-              "workers": 0.012,
-              "business": -0.014,
-              "students": -0.018,
-              "rural": -0.026
+              "pensioners": 0.0354,
+              "business": -0.0815,
+              "students": -0.0557,
+              "workers": 0.0088,
+              "urban": 0.0208,
+              "rural": -0.0124
             }
           }
         },
@@ -392,11 +399,12 @@
               "burden": 0.04
             },
             "bloc_offset": {
-              "workers": -0.024,
-              "business": -0.016,
-              "pensioners": 0.026,
-              "urban": 0.012,
-              "students": -0.006
+              "pensioners": 0.0708,
+              "business": -0.0542,
+              "students": -0.012,
+              "workers": -0.0321,
+              "urban": 0.0401,
+              "rural": -0.0121
             }
           }
         },
@@ -407,9 +415,9 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.026,
+              "pensioners": -0.0335,
               "urban": -0.016,
-              "workers": -0.01,
+              "workers": -0.004,
               "business": 0.022,
               "rural": 0.012
             }
@@ -443,11 +451,11 @@
               "infrastructure": 0.15
             },
             "bloc_offset": {
-              "rural": 0.03,
-              "business": 0.012,
-              "urban": -0.022,
-              "students": -0.008,
-              "pensioners": -0.006
+              "pensioners": -0.0131,
+              "business": 0.0206,
+              "students": -0.0151,
+              "urban": -0.0341,
+              "rural": 0.0514
             }
           }
         },
@@ -460,11 +468,11 @@
               "infrastructure": 0.1
             },
             "bloc_offset": {
-              "rural": -0.024,
-              "urban": 0.016,
-              "pensioners": 0.012,
+              "pensioners": 0.0113,
               "business": -0.012,
-              "students": 0.008
+              "students": 0.0066,
+              "urban": 0.0174,
+              "rural": -0.0219
             }
           }
         },
@@ -511,12 +519,12 @@
               "infrastructure": 0.3
             },
             "bloc_offset": {
-              "rural": 0.026,
-              "urban": 0.018,
-              "workers": 0.008,
-              "business": -0.02,
-              "students": -0.014,
-              "pensioners": -0.006
+              "pensioners": -0.0782,
+              "business": -0.0473,
+              "students": -0.0563,
+              "workers": 0.0297,
+              "urban": 0.0534,
+              "rural": 0.0853
             }
           }
         },
@@ -529,12 +537,12 @@
               "infrastructure": 0.15
             },
             "bloc_offset": {
-              "urban": -0.02,
-              "rural": 0.022,
-              "students": -0.012,
-              "business": 0.02,
-              "workers": 0.008,
-              "pensioners": -0.014
+              "pensioners": -0.0828,
+              "business": 0.0678,
+              "students": -0.0359,
+              "workers": 0.0451,
+              "urban": -0.026,
+              "rural": 0.0907
             }
           }
         },
@@ -547,9 +555,9 @@
             "bloc_offset": {
               "rural": -0.024,
               "urban": -0.016,
-              "workers": -0.012,
+              "workers": -0.0048,
               "business": -0.012,
-              "pensioners": 0.026,
+              "pensioners": 0.017,
               "students": 0.004
             }
           }
@@ -581,10 +589,12 @@
               "infrastructure": 0.3
             },
             "bloc_offset": {
-              "business": 0.045,
-              "workers": 0.022,
-              "rural": -0.028,
-              "urban": -0.014
+              "pensioners": -0.0195,
+              "business": 0.0647,
+              "workers": 0.0213,
+              "urban": -0.0264,
+              "rural": -0.0322,
+              "students": -0.0004
             }
           }
         },
@@ -597,10 +607,12 @@
               "infrastructure": 0.12
             },
             "bloc_offset": {
-              "urban": 0.022,
-              "students": 0.017,
-              "rural": -0.034,
-              "business": -0.011
+              "pensioners": -0.0082,
+              "business": -0.002,
+              "students": 0.0237,
+              "workers": 0.002,
+              "urban": 0.0349,
+              "rural": -0.0324
             }
           }
         },
@@ -653,10 +665,11 @@
               "health": 0.3
             },
             "bloc_offset": {
-              "pensioners": 0.02,
-              "urban": 0.022,
-              "workers": 0.008,
-              "business": -0.039
+              "pensioners": 0.0232,
+              "business": -0.0659,
+              "workers": -0.0002,
+              "urban": 0.0201,
+              "rural": -0.015
             }
           }
         },
@@ -669,11 +682,12 @@
               "infrastructure": 0.15
             },
             "bloc_offset": {
-              "urban": 0.028,
-              "students": 0.014,
-              "pensioners": 0.008,
-              "rural": -0.022,
-              "business": -0.011
+              "pensioners": 0.0188,
+              "business": -0.0189,
+              "students": 0.018,
+              "workers": 0.0006,
+              "urban": 0.0388,
+              "rural": -0.0322
             }
           }
         },

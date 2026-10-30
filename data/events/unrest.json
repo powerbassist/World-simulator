@@ -36,11 +36,12 @@
               "infrastructure": 0.15
             },
             "bloc_offset": {
-              "workers": 0.024,
-              "urban": 0.014,
-              "business": -0.024,
-              "rural": -0.014,
-              "pensioners": -0.021
+              "pensioners": -0.0346,
+              "business": -0.062,
+              "students": -0.0094,
+              "workers": 0.051,
+              "urban": 0.0171,
+              "rural": 0.0223
             }
           }
         },
@@ -50,12 +51,12 @@
           "summary": "The law says one train in three and the law is obeyed exactly. The cities move slowly for a month and the grievance banks where grievances bank.",
           "effects": {
             "bloc_offset": {
-              "workers": -0.026,
-              "urban": -0.018,
-              "students": -0.01,
-              "business": 0.024,
-              "rural": 0.01,
-              "pensioners": 0.032
+              "pensioners": 0.0303,
+              "business": 0.0497,
+              "students": -0.0053,
+              "workers": -0.0191,
+              "urban": -0.0197,
+              "rural": 0.022
             }
           }
         },
@@ -66,12 +67,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.02,
+              "workers": -0.008,
               "urban": -0.016,
-              "students": -0.008,
+              "students": -0.0016,
               "business": -0.006,
               "rural": -0.004,
-              "pensioners": 0.014
+              "pensioners": -0.0031
             }
           }
         }
@@ -110,11 +111,11 @@
               "burden": -0.05
             },
             "bloc_offset": {
-              "rural": 0.026,
-              "business": -0.012,
+              "pensioners": 0.0065,
+              "business": -0.0224,
+              "workers": -0.0051,
               "urban": -0.014,
-              "workers": -0.006,
-              "pensioners": 0.007
+              "rural": 0.0487
             }
           }
         },
@@ -124,11 +125,12 @@
           "summary": "The ring is cleared at dawn and the fines are real. The roads open, the courthouses fill, and the next blockade is planned somewhere with a lawyer in it.",
           "effects": {
             "bloc_offset": {
-              "rural": -0.03,
-              "business": 0.02,
-              "urban": 0.016,
-              "workers": 0.006,
-              "students": -0.008
+              "pensioners": -0.0038,
+              "business": 0.0247,
+              "students": -0.0118,
+              "workers": 0.0126,
+              "urban": 0.0302,
+              "rural": -0.0338
             }
           }
         },
@@ -171,11 +173,12 @@
           "summary": "The rector is sent in with a mandate and the halls empty by the weekend. The fees review gains a student seat, which costs the treasury nothing this year.",
           "effects": {
             "bloc_offset": {
-              "students": 0.03,
-              "urban": 0.016,
-              "business": -0.014,
-              "rural": -0.01,
-              "workers": -0.007
+              "business": -0.0316,
+              "students": 0.0585,
+              "workers": -0.0172,
+              "urban": 0.023,
+              "rural": 0.0173,
+              "pensioners": -0.0111
             }
           }
         },
@@ -185,11 +188,11 @@
           "summary": "The halls are cleared before dawn and the exams proceed. The cohort acquires a memory, and memories of this kind vote for decades.",
           "effects": {
             "bloc_offset": {
-              "students": -0.03,
-              "urban": -0.016,
-              "business": 0.02,
-              "rural": 0.012,
-              "pensioners": 0.005
+              "pensioners": 0.0032,
+              "business": 0.0259,
+              "students": -0.0241,
+              "urban": -0.018,
+              "rural": 0.0159
             }
           }
         },
@@ -200,10 +203,11 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "students": -0.016,
+              "students": -0.0032,
               "urban": -0.012,
               "business": 0.008,
-              "rural": 0.004
+              "rural": 0.004,
+              "pensioners": -0.0043
             }
           }
         }
@@ -241,12 +245,12 @@
               "press_freedom": -0.06
             },
             "bloc_offset": {
-              "urban": -0.03,
-              "students": -0.02,
-              "workers": -0.01,
-              "business": 0.024,
-              "rural": 0.018,
-              "pensioners": 0.018
+              "pensioners": 0.0206,
+              "business": 0.0404,
+              "students": -0.0083,
+              "workers": -0.0001,
+              "urban": -0.0355,
+              "rural": 0.0289
             }
           }
         },
@@ -259,12 +263,12 @@
               "settlement": 0.06
             },
             "bloc_offset": {
-              "urban": 0.024,
-              "students": 0.018,
-              "workers": 0.008,
-              "business": -0.018,
-              "rural": -0.016,
-              "pensioners": -0.015
+              "pensioners": -0.0296,
+              "business": -0.089,
+              "students": 0.0514,
+              "workers": 0.0124,
+              "urban": 0.062,
+              "rural": 0.031
             }
           }
         },
@@ -276,11 +280,11 @@
           "effects": {
             "bloc_offset": {
               "urban": -0.026,
-              "students": -0.018,
-              "workers": -0.012,
+              "students": -0.0036,
+              "workers": -0.0048,
               "business": 0.012,
               "rural": 0.01,
-              "pensioners": 0.006
+              "pensioners": -0.0078
             }
           }
         }
@@ -318,11 +322,11 @@
               "health": 0.3
             },
             "bloc_offset": {
-              "workers": 0.016,
-              "pensioners": 0.014,
-              "urban": 0.01,
-              "business": -0.024,
-              "rural": -0.02
+              "pensioners": 0.0063,
+              "business": -0.0973,
+              "workers": 0.0554,
+              "urban": 0.0173,
+              "rural": -0.0846
             }
           }
         },
@@ -335,11 +339,11 @@
               "settlement": 0.05
             },
             "bloc_offset": {
-              "workers": 0.012,
-              "pensioners": 0.01,
-              "urban": 0.006,
-              "business": -0.01,
-              "rural": -0.012
+              "pensioners": -0.0026,
+              "business": -0.0623,
+              "workers": 0.0465,
+              "urban": 0.0084,
+              "rural": -0.0643
             }
           }
         },
@@ -350,9 +354,9 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.02,
+              "workers": -0.008,
               "urban": -0.012,
-              "pensioners": -0.008,
+              "pensioners": -0.023,
               "business": 0.01,
               "rural": 0.008
             }
@@ -386,11 +390,11 @@
               "burden": -0.05
             },
             "bloc_offset": {
-              "rural": 0.02,
-              "business": 0.014,
-              "urban": -0.012,
-              "workers": -0.008,
-              "pensioners": 0.001
+              "pensioners": -0.0024,
+              "business": 0.0181,
+              "workers": -0.0094,
+              "urban": -0.0106,
+              "rural": 0.0393
             }
           }
         },
@@ -415,10 +419,11 @@
           "summary": "The trading houses are named at the podium and an inquiry is promised. The price falls two days later for reasons already in train, and the podium keeps the credit.",
           "effects": {
             "bloc_offset": {
-              "business": -0.028,
-              "workers": 0.012,
-              "urban": 0.014,
-              "rural": 0.008
+              "pensioners": -0.0134,
+              "business": -0.0697,
+              "workers": 0.0074,
+              "urban": 0.0163,
+              "rural": 0.0423
             }
           }
         }
@@ -456,12 +461,12 @@
               "education": 0.3
             },
             "bloc_offset": {
-              "workers": 0.014,
-              "students": 0.016,
-              "urban": 0.01,
-              "business": -0.014,
-              "rural": -0.008,
-              "pensioners": -0.019
+              "pensioners": -0.0673,
+              "business": -0.0513,
+              "students": 0.0643,
+              "workers": 0.0623,
+              "urban": 0.0328,
+              "rural": -0.0146
             }
           }
         },
@@ -477,12 +482,12 @@
               "settlement": 0.03
             },
             "bloc_offset": {
-              "workers": 0.008,
-              "students": 0.008,
-              "urban": 0.004,
-              "business": -0.006,
-              "rural": -0.004,
-              "pensioners": -0.01
+              "pensioners": -0.0451,
+              "business": -0.0288,
+              "students": 0.0465,
+              "workers": 0.0509,
+              "urban": 0.0209,
+              "rural": -0.0182
             }
           }
         },
@@ -493,12 +498,12 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.016,
-              "students": -0.012,
+              "workers": -0.0064,
+              "students": -0.0024,
               "urban": -0.008,
               "business": 0.01,
               "rural": 0.006,
-              "pensioners": 0.004
+              "pensioners": -0.0112
             }
           }
         }
@@ -536,11 +541,12 @@
               "infrastructure": 0.2
             },
             "bloc_offset": {
-              "students": 0.022,
-              "urban": 0.024,
-              "workers": 0.008,
-              "business": -0.028,
-              "pensioners": -0.021
+              "pensioners": -0.0315,
+              "business": -0.0378,
+              "students": 0.0252,
+              "workers": 0.0082,
+              "urban": 0.0272,
+              "rural": 0.0201
             }
           }
         },
@@ -550,11 +556,11 @@
           "summary": "The bailiffs go in early and the property order is restored by afternoon. The movement loses the blocks and gains exactly the story it wanted.",
           "effects": {
             "bloc_offset": {
-              "business": 0.024,
-              "rural": 0.012,
-              "students": -0.024,
-              "urban": -0.018,
-              "workers": 0.002
+              "business": 0.0439,
+              "students": -0.0399,
+              "workers": 0.003,
+              "urban": -0.0319,
+              "rural": 0.02
             }
           }
         },
@@ -606,12 +612,12 @@
               "pensions": 0.35
             },
             "bloc_offset": {
-              "pensioners": 0.026,
-              "workers": 0.012,
-              "business": -0.02,
-              "rural": 0.006,
-              "students": -0.008,
-              "urban": -0.03
+              "pensioners": 0.0608,
+              "business": -0.0662,
+              "students": -0.0257,
+              "workers": 0.0206,
+              "urban": -0.0762,
+              "rural": -0.0051
             }
           }
         },
@@ -621,11 +627,12 @@
           "summary": "A review is commissioned, reporting after the election season, with the index frozen until it does. The boulevard empties politely and the federations' letters acquire a lawyer's patience.",
           "effects": {
             "bloc_offset": {
-              "pensioners": -0.016,
+              "pensioners": -0.0138,
+              "business": 0.0142,
+              "students": 0.0044,
               "workers": -0.008,
-              "business": 0.012,
-              "urban": 0.006,
-              "rural": -0.004
+              "urban": 0.0126,
+              "rural": -0.0128
             }
           }
         },
@@ -675,10 +682,12 @@
               "burden": -0.04
             },
             "bloc_offset": {
-              "workers": 0.02,
-              "business": -0.018,
-              "urban": -0.008,
-              "rural": -0.006
+              "pensioners": -0.0295,
+              "business": -0.0392,
+              "students": -0.0146,
+              "workers": 0.0555,
+              "urban": -0.016,
+              "rural": -0.0162
             }
           }
         },
@@ -688,11 +697,12 @@
           "summary": "A minimum-moves law goes to the assembly and the unions call a day of action against it. The stacks clear by decree of their own backlog.",
           "effects": {
             "bloc_offset": {
-              "workers": -0.024,
-              "business": 0.022,
-              "urban": 0.01,
-              "rural": 0.008,
-              "students": 0.031
+              "pensioners": -0.0193,
+              "business": 0.0549,
+              "students": 0.0606,
+              "workers": -0.0266,
+              "urban": 0.0319,
+              "rural": 0.0234
             }
           }
         },
@@ -703,11 +713,11 @@
           "default": true,
           "effects": {
             "bloc_offset": {
-              "workers": -0.014,
+              "workers": -0.0056,
               "urban": -0.01,
               "business": -0.008,
               "rural": -0.006,
-              "pensioners": 0.008,
+              "pensioners": -0.0025,
               "students": 0.004
             }
           }
@@ -748,10 +758,10 @@
               "pensions": 0.4
             },
             "bloc_offset": {
-              "workers": 0.028,
+              "workers": 0.0484,
               "urban": 0.017,
-              "pensioners": 0.011,
-              "students": -0.017,
+              "pensioners": -0.022,
+              "students": 0.0054,
               "rural": -0.028,
               "business": -0.067
             }
@@ -766,9 +776,11 @@
               "settlement": 0.08
             },
             "bloc_offset": {
-              "workers": 0.014,
+              "workers": 0.0344,
               "business": -0.028,
-              "rural": -0.008
+              "rural": -0.008,
+              "students": 0.0224,
+              "pensioners": -0.033
             }
           }
         },
@@ -784,9 +796,10 @@
             "bloc_offset": {
               "business": 0.045,
               "rural": 0.028,
-              "workers": -0.034,
-              "students": -0.028,
-              "urban": -0.011
+              "workers": -0.0136,
+              "students": -0.0056,
+              "urban": -0.011,
+              "pensioners": -0.033
             }
           }
         }
