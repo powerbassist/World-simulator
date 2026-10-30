@@ -35,10 +35,13 @@ model, date, source}. Godot reads it to find a clip and to know it matches the t
   python tools/voice_pipeline.py                 dry-run over the repo
   python tools/voice_pipeline.py --every         dry-run, the per-speaker reading
   python tools/voice_pipeline.py --run --floor 2000 --max-chars 9000 [--only ARCH]
+  python tools/voice_pipeline.py --design        dry-run of the archetype voices to design
+  python tools/voice_pipeline.py --design --run --floor 2000 --max-chars 3000
   python tools/voice_pipeline.py --selftest      no network; CI runs it
 """
 
 import argparse
+import base64
 import datetime
 import hashlib
 import http.client
@@ -82,6 +85,16 @@ SAFE_VOICE_ID = re.compile(r"^[A-Za-z0-9]{1,64}$")
 ## Where the paid audio of a clip whose conversion failed is kept (gitignored), named
 ## by its key and text hash, so the next run converts it again instead of paying twice.
 RECOVER_DIR = "reports/voice_failed"
+## --design (the archetype voices). The design model is ElevenLabs' text-to-voice one,
+## not the speech MODEL_ID. The preview text is the archetype's own lines, which the
+## API takes at 100 to 1000 characters; a description under 20 characters is not a
+## prompt. The chosen preview's audio is kept (gitignored) for the author to hear.
+DESIGN_MODEL = "eleven_multilingual_ttv_v2"
+DESIGN_TEXT_MIN = 100
+DESIGN_TEXT_MAX = 1000
+DESIGN_DESC_MIN = 20
+DESIGN_DIR = "reports/voice_design"
+DESIGN_HEAD = "# Designed voices (tools/voice_pipeline.py --design), never a real person's voice:"
 
 
 class PipelineError(Exception):
@@ -214,8 +227,8 @@ def dry_run(root: Path, every: bool, only: str) -> int:
 
 # --- The paid path ----------------------------------------------------------------------
 
-def _request(method: str, url: str, key: str, body: bytes = None) -> tuple:
-    headers = {"xi-api-key": key, "Accept": "application/json" if method == "GET" else "audio/mpeg"}
+def _request(method: str, url: str, key: str, body: bytes = None, accept: str = "") -> tuple:
+    headers = {"xi-api-key": key, "Accept": accept or ("application/json" if method == "GET" else "audio/mpeg")}
     if body is not None:
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
@@ -230,16 +243,22 @@ def _request(method: str, url: str, key: str, body: bytes = None) -> tuple:
         return 0, b""
 
 
-def allowance(key: str) -> int:
-    """Characters left this period, from the account's own count."""
+def account(key: str) -> dict:
+    """The account's own counts: credits left this period and voice slots free."""
     status, body = _request("GET", API + "/user/subscription", key)
     if status != 200:
         raise PipelineError("subscription: HTTP %d" % status)
     try:
         sub = json.loads(body)
-        return int(sub["character_limit"]) - int(sub["character_count"])
+        return {"left": int(sub["character_limit"]) - int(sub["character_count"]),
+                "slots_free": int(sub["voice_limit"]) - int(sub["voice_slots_used"])}
     except (ValueError, KeyError, TypeError) as e:
         raise PipelineError("subscription: not the account's count (%s)" % type(e).__name__)
+
+
+def allowance(key: str) -> int:
+    """Characters left this period, from the account's own count."""
+    return account(key)["left"]
 
 
 def kept_path(root: Path, r: dict) -> Path:
@@ -349,6 +368,146 @@ def run(root: Path, every: bool, only: str, floor: int, max_chars: int, key: str
     print("%d characters used of %d left" % (used, left))
     # A batch the floor cut short did not make what was asked (#187 QA): not 0.
     return 1 if stopped else 0
+
+
+# --- Designing the archetype voices (--design) -------------------------------------------
+#
+# The author's call (2026-10-30): the tool designs the 14 archetype voices with the
+# author's key, from each archetype's `description` (Content's), in ElevenLabs Voice
+# Design. Design charges the preview text's characters, once per design call, and each
+# saved voice takes a voice slot, so the batch is held to --max-chars and the floor like
+# the clips, and refused outright when the slots are short. The first of the returned
+# previews is saved (the tool decides, as the author asked); its audio is kept in
+# DESIGN_DIR for the author to hear. Each voice id is written into the table as soon as
+# it exists, so a batch stopped half-way keeps what it paid for.
+
+def design_jobs(table: dict) -> list:
+    """Every archetype with its design status: designed, to-design, no-description
+    (Content has not written its prompt) or short-preview (its own lines make fewer
+    than the 100 characters the API needs to preview a voice)."""
+    out = []
+    for row in table.get("archetypes", []):
+        arch = str(row.get("id", ""))
+        description = str(row.get("description", "")).strip()
+        text = " ".join(str(t) for t in row.get("lines", {}).values())[:DESIGN_TEXT_MAX]
+        if str(row.get("voice_id", "")).strip():
+            status = "designed"
+        elif not SAFE_ID.match(arch):
+            status = "bad-id"
+        elif not DESIGN_DESC_MIN <= len(description) <= DESIGN_TEXT_MAX:
+            status = "no-description"
+        elif len(text) < DESIGN_TEXT_MIN:
+            status = "short-preview"
+        else:
+            status = "to-design"
+        out.append({"id": arch, "status": status, "description": description, "text": text,
+                    "chars": len(text), "seed": int(text_hash(arch)[:8], 16)})
+    return out
+
+
+def design_dry_run(root: Path) -> int:
+    rows = design_jobs(_json(root / ARCHETYPES) or {})
+    for r in rows:
+        print("%-15s %-24s %4d" % (r["status"], r["id"], r["chars"]))
+    todo = [r for r in rows if r["status"] == "to-design"]
+    print("--design: %d voices to design, %d preview characters, %d voice slots" % (
+        len(todo), sum(r["chars"] for r in todo), len(todo)))
+    print("%s: %s" % (KEY_ENV, "set" if os.environ.get(KEY_ENV) else "not set"))
+    return 0
+
+
+def design_voice(key: str, description: str, text: str, seed: int) -> tuple:
+    """Previews a voice; returns the first preview's generated id and its audio."""
+    body = json.dumps({"voice_description": description, "text": text, "model_id": DESIGN_MODEL,
+                       "seed": seed}).encode("utf-8")
+    status, raw = _request("POST", API + "/text-to-voice/design", key, body, accept="application/json")
+    if status != 200:
+        raise PipelineError("design: HTTP %d" % status)
+    try:
+        first = json.loads(raw)["previews"][0]
+        return str(first["generated_voice_id"]), base64.b64decode(first["audio_base_64"])
+    except (ValueError, KeyError, IndexError, TypeError) as e:
+        raise PipelineError("design: not a preview (%s)" % type(e).__name__)
+
+
+def save_voice(key: str, name: str, description: str, generated_id: str, labels: dict) -> str:
+    """Saves a preview as a voice in the account (one slot); returns its voice id."""
+    body = json.dumps({"voice_name": name, "voice_description": description,
+                       "generated_voice_id": generated_id, "labels": labels}).encode("utf-8")
+    status, raw = _request("POST", API + "/text-to-voice", key, body, accept="application/json")
+    if status != 200:
+        raise PipelineError("save: HTTP %d (generated voice %s)" % (status, generated_id))
+    try:
+        return str(json.loads(raw)["voice_id"])
+    except (ValueError, KeyError, TypeError) as e:
+        raise PipelineError("save: no voice id (%s; generated voice %s)" % (type(e).__name__, generated_id))
+
+
+def write_voice(root: Path, arch: str, voice_id: str, date: str) -> None:
+    """The voice id and its provenance into the table, and one line into REUSE.toml."""
+    path = root / ARCHETYPES
+    raw = path.read_bytes().decode("utf-8")
+    nl = "\r\n" if "\r\n" in raw else "\n"
+    table = json.loads(raw)
+    for row in table["archetypes"]:
+        if row.get("id") == arch:
+            row["voice_id"] = voice_id
+            row["provenance"] = ("Designed archetype, never a real person's voice: ElevenLabs Voice Design "
+                                 "(model %s), %s, from the description above, %s." % (DESIGN_MODEL, PLAN, date))
+    with open(path, "w", encoding="utf-8", newline=nl) as f:
+        f.write(json.dumps(table, indent=2, ensure_ascii=False) + "\n")
+    reuse = root / "REUSE.toml"
+    raw = reuse.read_bytes().decode("utf-8")
+    nl = "\r\n" if "\r\n" in raw else "\n"
+    blocks = raw.replace("\r\n", "\n").rstrip("\n").split("\n\n")
+    line = "# %s: voice %s, ElevenLabs Voice Design (model %s), %s, %s." % (arch, voice_id, DESIGN_MODEL, PLAN, date)
+    for i, block in enumerate(blocks):
+        if block.startswith(DESIGN_HEAD):
+            kept = [x for x in block.split("\n") if not x.startswith("# %s:" % arch)]
+            blocks[i] = "\n".join(kept + [line])
+            break
+    else:
+        blocks.append(DESIGN_HEAD + "\n" + line)
+    with open(reuse, "w", encoding="utf-8", newline=nl) as f:
+        f.write("\n\n".join(blocks) + "\n")
+
+
+def design_run(root: Path, key: str, floor: int, max_chars: int, date: str,
+               account_fn=account, design_fn=design_voice, save_fn=save_voice) -> int:
+    rows = design_jobs(_json(root / ARCHETYPES) or {})
+    bad = [r for r in rows if r["status"] in ("no-description", "short-preview", "bad-id")]
+    if bad:
+        for r in bad:
+            print("%s: %s" % (r["status"], r["id"]))
+        raise PipelineError("%d archetype(s) cannot be designed; fix the data first" % len(bad))
+    todo = [r for r in rows if r["status"] == "to-design"]
+    planned = sum(r["chars"] for r in todo)
+    if planned > max_chars:
+        raise PipelineError("%d preview characters planned, over --max-chars %d" % (planned, max_chars))
+    acc = account_fn(key)
+    if acc["slots_free"] < len(todo):
+        raise PipelineError("%d voice slot(s) free, %d voices to design" % (acc["slots_free"], len(todo)))
+    if acc["left"] - planned < floor:
+        raise PipelineError("%d characters left, %d planned: the floor %d would be crossed" % (
+            acc["left"], planned, floor))
+    used = 0
+    for r in todo:
+        if account_fn(key)["left"] - r["chars"] < floor:
+            print("stopped at the floor before %s" % r["id"])
+            return 1
+        generated, audio = design_fn(key, r["description"], r["text"], r["seed"])
+        used += r["chars"]
+        heard = root / DESIGN_DIR / ("%s.mp3" % r["id"])
+        heard.parent.mkdir(parents=True, exist_ok=True)
+        heard.write_bytes(audio)
+        voice_id = save_fn(key, "Nation Simulator %s" % r["id"], r["description"], generated,
+                           {"project": "nation-simulator", "archetype": r["id"]})
+        if not SAFE_VOICE_ID.match(voice_id):
+            raise PipelineError("%s: the saved voice id is not plain alphanumeric" % r["id"])
+        write_voice(root, r["id"], voice_id, date)
+        print("designed %s (%d characters)" % (r["id"], r["chars"]))
+    print("%d preview characters used of %d left" % (used, acc["left"]))
+    return 0
 
 
 # --- Selftest ---------------------------------------------------------------------------
@@ -532,11 +691,101 @@ def selftest() -> int:
         again = (root / "REUSE.toml").read_bytes().decode("utf-8")
         if again.count('path = "assets/audio/voice/union/event.strike.ogg*"') != 1:
             fails.append("a re-made clip's annotation was duplicated")
+    _selftest_design(fails, secret)
     for f in fails:
         print("SELFTEST FAIL: %s" % f)
     if not fails:
         print("voice_pipeline selftest: all checks passed")
     return 1 if fails else 0
+
+
+def _selftest_design(fails: list, secret: str) -> None:
+    """--design with no network: statuses, the preflight stops, the writes."""
+    lines = {"greet": "Thank you for seeing me. I know your time is short.",
+             "refuse": "I cannot give you that. My own side would not forgive it, and nor would I."}
+    desc = "A man in his fifties, a calm low baritone, measured pace, a career politician."
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "data" / "voices").mkdir(parents=True)
+        table = {"archetypes": [
+            {"id": "pol", "voice_id": "", "description": desc, "provenance": "Not yet designed.", "lines": lines},
+            {"id": "boss", "voice_id": "", "description": desc, "provenance": "Not yet designed.", "lines": lines},
+            {"id": "done", "voice_id": "V1", "description": desc, "provenance": "Designed.", "lines": lines},
+            {"id": "mute", "voice_id": "", "provenance": "Not yet designed.", "lines": lines},
+            {"id": "terse", "voice_id": "", "description": desc, "provenance": "Not yet designed.", "lines": {"a": "Yes."}},
+        ], "defaults": {"politician": "pol"}}
+        arch = root / ARCHETYPES
+        arch.write_text(json.dumps(table, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        (root / "REUSE.toml").write_bytes(b"version = 1\r\n")
+        status = {r["id"]: r["status"] for r in design_jobs(json.loads(arch.read_text(encoding="utf-8")))}
+        if status != {"pol": "to-design", "boss": "to-design", "done": "designed", "mute": "no-description",
+                      "terse": "short-preview"}:
+            fails.append("design statuses: %r" % status)
+        texts = [r["text"] for r in design_jobs(table) if r["id"] == "pol"]
+        if not texts or not 100 <= len(texts[0]) <= 1000 or lines["greet"] not in texts[0]:
+            fails.append("the preview text is not the archetype's own lines, 100-1000 characters: %r" % texts)
+        captured = io.StringIO()
+        calls = []
+        def account(left, slots):
+            return lambda k: calls.append("account") or {"left": left, "slots_free": slots}
+        def design(k, d, t, seed):
+            calls.append("design")
+            return "G" + str(seed % 97), b"preview-mp3"
+        def save(k, name, d, gen, labels):
+            calls.append("save")
+            return "VOICE" + gen
+        with redirect_stdout(captured), redirect_stderr(captured):
+            # A row with no description or too short a preview refuses the batch.
+            try:
+                design_run(root, secret, 0, 10000, "2026-10-30", account_fn=account(30000, 30),
+                           design_fn=design, save_fn=save)
+                fails.append("--design --run went ahead with a row it cannot design")
+            except PipelineError:
+                pass
+            table["archetypes"] = table["archetypes"][:3]
+            arch.write_text(json.dumps(table, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            planned = sum(r["chars"] for r in design_jobs(table) if r["status"] == "to-design")
+            # The slots, the ceiling and the floor each stop the batch before a voice is made.
+            for left, slots, ceiling, floor, why in ((30000, 1, 10000, 0, "slot"),
+                                                     (30000, 30, planned - 1, 0, "--max-chars"),
+                                                     (planned + 5, 30, 10000, 10, "floor")):
+                calls.clear()
+                try:
+                    design_run(root, secret, floor, ceiling, "2026-10-30", account_fn=account(left, slots),
+                               design_fn=design, save_fn=save)
+                    fails.append("--design went ahead past the %s" % why)
+                except PipelineError as e:
+                    if why not in str(e):
+                        fails.append("the %s stop gave the wrong reason: %s" % (why, e))
+                if "design" in calls or "save" in calls:
+                    fails.append("the %s stop came after a paid call: %s" % (why, calls))
+            calls.clear()
+            code = design_run(root, secret, 0, 10000, "2026-10-30", account_fn=account(30000, 30),
+                              design_fn=design, save_fn=save)
+        if secret in captured.getvalue():
+            fails.append("the key reached the output of --design")
+        if code != 0 or calls.count("save") != 2:
+            fails.append("--design did not make the two voices: exit %r, calls %r" % (code, calls))
+        after = json.loads(arch.read_text(encoding="utf-8"))
+        ids = {a["id"]: a["voice_id"] for a in after["archetypes"]}
+        if not ids["pol"].startswith("VOICEG") or not ids["boss"].startswith("VOICEG") or ids["done"] != "V1":
+            fails.append("the voice ids were not written into the table: %r" % ids)
+        if any("Not yet designed" in a["provenance"] for a in after["archetypes"]):
+            fails.append("a designed row kept its 'not yet designed' provenance")
+        if after["defaults"] != table["defaults"] or after["archetypes"][0]["lines"] != lines:
+            fails.append("writing a voice id changed the rest of the table")
+        reuse = (root / "REUSE.toml").read_bytes().decode("utf-8")
+        if reuse.count(ids["pol"]) != 1 or reuse.count(ids["boss"]) != 1 or "\r\n" not in reuse:
+            fails.append("REUSE.toml does not carry one provenance line per designed voice: %r" % reuse)
+        if not (root / DESIGN_DIR / "pol.mp3").exists():
+            fails.append("the chosen preview was not kept for the author to hear")
+        # A second run designs nothing: every row has its voice.
+        calls.clear()
+        with redirect_stdout(io.StringIO()):
+            design_run(root, secret, 0, 10000, "2026-10-30", account_fn=account(30000, 30),
+                       design_fn=design, save_fn=save)
+        if "design" in calls:
+            fails.append("a second --design run designed a voice again")
 
 
 def main() -> int:
@@ -547,11 +796,12 @@ def main() -> int:
     ap.add_argument("--run", action="store_true", help="the PAID path; needs --floor and --max-chars")
     ap.add_argument("--floor", type=int, default=None, help="characters the allowance must keep")
     ap.add_argument("--max-chars", type=int, default=None, help="this batch's ceiling in characters")
+    ap.add_argument("--design", action="store_true", help="design the archetype voices (Voice Design)")
     args = ap.parse_args()
     if args.selftest:
         return selftest()
     if not args.run:
-        return dry_run(REPO, args.every, args.only)
+        return design_dry_run(REPO) if args.design else dry_run(REPO, args.every, args.only)
     if args.floor is None or args.max_chars is None:
         print("--run needs --floor and --max-chars (no defaults: the parent's GO names them)")
         return 2
@@ -559,6 +809,12 @@ def main() -> int:
     if not key:
         print("%s is not set" % KEY_ENV)
         return 2
+    if args.design:
+        try:
+            return design_run(REPO, key, args.floor, args.max_chars, datetime.date.today().isoformat())
+        except PipelineError as e:
+            print("stopped: %s" % e)
+            return 1
     if not shutil.which("ffmpeg"):
         print("ffmpeg not found")
         return 2
