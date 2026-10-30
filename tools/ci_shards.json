@@ -203,6 +203,7 @@
    "tests/test_acknowledgments.gd",
    "tests/test_boot_stages.gd",
    "tests/test_sound.gd",
+   "tests/test_voice_playback.gd",
    "tests/test_diplomacy_parallel.gd",
    "tests/test_dev_console_game.gd",
    "tests/test_i18n_fit.gd",

@@ -303,6 +303,9 @@ tests=(
   # wiring (settings gate, window gestures, pause, the event sting's band) and
   # a bed's swell, Ambience off and fade-out.
   tests/test_sound.gd
+  # V5.2d playback: the speaker's clip by the manifest's hash of the shown line,
+  # Voices / Sound Off silent, an arrival speaks and a load's desk does not.
+  tests/test_voice_playback.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd
   tests/test_map_markers.gd
