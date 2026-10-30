@@ -167,6 +167,10 @@ jobs:
         run: python tools/voice_pipeline.py --selftest
       - name: Size ratchet (code lines; tools/size_baseline.json)
         run: python tools/check_size.py
+      # The authoring lint for data/events/ (schema, speakers, the book's two bands),
+      # with its synthetic self-checks: stdlib, no Godot.
+      - name: Event book lint
+        run: python tools/event_lint.py --check
       - name: Translation tables (stale keys, empty values, placeholders)
         run: |
           python tools/i18n_extract.py --selftest

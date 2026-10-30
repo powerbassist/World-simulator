@@ -10,6 +10,7 @@ const EventsK = preload("res://src/sim/events_constants.gd")
 const LegislatureK = preload("res://src/sim/legislature_constants.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const CharacterK = preload("res://src/sim/character_constants.gd")
 
 var _failures: Array[String] = []
 
@@ -78,6 +79,11 @@ func _check_lint_vocabulary() -> void:
 		"TAX_KEYS": EconomyK.TAX_KEYS,
 		"SPENDING_KEYS": EconomyK.SPENDING_KEYS,
 		"BLOC_KEYS": OpinionK.BLOC_KEYS,
+		# V5.2d: the speaker schema the lint restates from src/core/event_speaker.gd.
+		"SUBJECT_OFFICES": EventsK.SUBJECT_OFFICES,
+		"SPEAKER_FORMS": EventsK.SPEAKER_FORMS,
+		"SPEAKER_PICKS": EventsK.SPEAKER_PICKS,
+		"KIND_KEYS": CharacterK.KIND_KEYS,
 	}
 	for name in pairs:
 		var start := text.find("\n%s = [" % name)

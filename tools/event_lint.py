@@ -59,6 +59,14 @@ CATEGORIES = [
     "foreign", "industrial", "commodity", "disaster",
 ]
 SUBJECT_OFFICES = ["head_of_government", "head_of_state", "largest_party_leader"]
+# V5.2d: the speaker schema (src/core/event_speaker.gd), with
+# events_constants SPEAKER_FORMS / SPEAKER_PICKS and character_constants KIND_KEYS.
+SPEAKER_FORMS = ["kind", "office", "evidence_person", "foreign_head"]
+SPEAKER_PICKS = ["hostile", "friendly"]
+KIND_KEYS = [
+    "politician", "regional_figure", "union_leader", "press_owner", "judge",
+    "activist", "executive",
+]
 ON_ACTIONS = [
     "law_passed", "law_repealed", "member_bill_passed", "minister_resigned",
     "takeover_bid", "firm_failed", "commodity_price_high", "accession_won",
@@ -78,8 +86,7 @@ KNOWN_KEYS = [
     "id", "name", "summary", "subject_office", "likelihood", "respond_months",
     "once", "preconditions", "choices", "interrupt", "sited",
     "category", "weight", "severity", "on_action", "cooldown_months", "exposure",
-    # V5.2d: who brings the event, and their line. Their shape is the loader's
-    # (src/core/event_speaker.gd); here they only stop reading as typos.
+    # V5.2d: who brings the event, and their line -- check_speaker below.
     "speaker", "speaker_line",
 ]
 CHOICE_KEYS = ["id", "label", "summary", "effects", "default", "arms"]
@@ -338,6 +345,82 @@ def check_exposure(where: str, ev_id: str, ev: dict, rep: Report) -> None:
         rep.fail("%s: %s: arrival plus the cheapest answer costs %.3f asks, under the scandal floor %.3f" % (where, ev_id, price, floor))
 
 
+def check_speaker(where: str, ev: dict, rep: Report) -> None:
+    """V5.2d: src/core/event_speaker.gd's rules, restated. The speaker and the line
+    come together; the line is one non-empty string with no variable; the speaker
+    is exactly one form (a kind with an optional pick, an office, or a true
+    evidence_person / foreign_head flag); evidence_person only on an exposure."""
+    raw, line = ev.get("speaker"), ev.get("speaker_line")
+    if raw is None and line is None:
+        return
+    if raw is None or line is None:
+        rep.fail("%s: 'speaker' and 'speaker_line' go together -- a face says its line" % where)
+        return
+    if not isinstance(line, str) or not line.strip() or "{" in line:
+        rep.fail("%s: speaker_line must be one whole sentence with no variables" % where)
+        return
+    if not isinstance(raw, dict):
+        rep.fail("%s: speaker must be an object, one of %s" % (where, SPEAKER_FORMS))
+        return
+    unknown = [k for k in raw if k not in SPEAKER_FORMS and k != "pick"]
+    if unknown:
+        rep.fail("%s: speaker.%s is not a recognised field (%s, and pick)" % (where, unknown[0], SPEAKER_FORMS))
+        return
+    forms = [k for k in raw if k in SPEAKER_FORMS]
+    if len(forms) != 1:
+        rep.fail("%s: speaker needs exactly one of %s" % (where, SPEAKER_FORMS))
+        return
+    form, value = forms[0], raw[forms[0]]
+    if form == "kind":
+        ok = isinstance(value, str) and value in KIND_KEYS and (
+            "pick" not in raw or (isinstance(raw["pick"], str) and raw["pick"] in SPEAKER_PICKS))
+    elif form == "office":
+        ok = isinstance(value, str) and value in SUBJECT_OFFICES and "pick" not in raw
+    else:
+        ok = value is True and "pick" not in raw
+    if not ok:
+        rep.fail("%s: speaker %s is malformed -- kind in %s (pick in %s), office in %s, or evidence_person / foreign_head true" % (
+            where, raw, KIND_KEYS, SPEAKER_PICKS, SUBJECT_OFFICES))
+        return
+    if form == "evidence_person" and ev.get("on_action") != "exposure":
+        rep.fail("%s: speaker evidence_person needs on_action 'exposure' -- only an exposure has a witness" % where)
+
+
+def self_check_speaker(rep: "Report") -> None:
+    """The shipped book is clean, so only synthetic rows can show the check fails
+    when it must -- tests/test_event_speaker.gd's loader cases, restated."""
+    line = "Mr President, the yards are out."
+    good = [
+        ({"kind": "union_leader"}, ""), ({"kind": "press_owner", "pick": "hostile"}, ""),
+        ({"office": "head_of_state"}, ""), ({"foreign_head": True}, ""),
+        ({"evidence_person": True}, "exposure"),
+    ]
+    bad = [
+        ("union_leader", line, ""), ({}, line, ""), ({"kind": "plumber"}, line, ""),
+        ({"kind": "press_owner", "pick": "loudest"}, line, ""), ({"office": "mayor"}, line, ""),
+        ({"office": "head_of_government", "pick": "hostile"}, line, ""),
+        ({"kind": "judge", "office": "head_of_state"}, line, ""), ({"foreign_head": False}, line, ""),
+        ({"evidence_person": "yes"}, line, "exposure"), ({"kind": "judge", "mood": "stern"}, line, ""),
+        ({"evidence_person": True}, line, ""), ({"kind": "judge"}, None, ""), (None, line, ""),
+        ({"kind": "judge"}, "", ""), ({"kind": "judge"}, 7, ""), ({"kind": "judge"}, "Mr {{president}}.", ""),
+    ]
+    for speaker, action in good:
+        probe = Report(True)
+        check_speaker("self-check", {"speaker": speaker, "speaker_line": line, "on_action": action}, probe)
+        if probe.failures:
+            rep.fail("self-check: a valid speaker %s was refused: %s" % (speaker, probe.failures))
+    for speaker, bad_line, action in bad:
+        ev = {"on_action": action}
+        if speaker is not None:
+            ev["speaker"] = speaker
+        if bad_line is not None:
+            ev["speaker_line"] = bad_line
+        probe = Report(True)
+        check_speaker("self-check", ev, probe)
+        if not probe.failures:
+            rep.fail("self-check: a malformed speaker passed: %s" % ev)
+
+
 def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
                 arm_edges: dict) -> None:
     ev_id = ev.get("id", "")
@@ -357,6 +440,7 @@ def check_event(fname: str, ev: dict, rep: Report, seen_ids: dict, gates: dict,
         if key not in KNOWN_KEYS:
             rep.fail("%s: '%s' is not a recognised event field" % (where, key))
     check_exposure(where, ev_id, ev, rep)
+    check_speaker(where, ev, rep)
 
     for field in ("name", "summary"):
         if not isinstance(ev.get(field), str) or not ev.get(field):
@@ -513,6 +597,7 @@ def main() -> int:
     args = ap.parse_args()
     rep = Report(args.check)
     self_check_strict_rule(rep)
+    self_check_speaker(rep)
 
     events = load_events(rep)
     seen_ids: dict = {}
