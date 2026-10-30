@@ -27,10 +27,12 @@
               "burden": 0.02
             },
             "bloc_offset": {
-              "urban": 0.024,
-              "business": 0.02,
-              "workers": -0.02,
-              "rural": -0.016
+              "pensioners": -0.0144,
+              "business": 0.04,
+              "workers": -0.0312,
+              "urban": 0.0522,
+              "rural": -0.0116,
+              "students": -0.0046
             }
           }
         },
@@ -40,11 +42,12 @@
           "summary": "The partner's list becomes, on your quays, a suggestion. The port keeps its fees, the flag keeps its customers, and the partner keeps a folder with your name on the spine.",
           "effects": {
             "bloc_offset": {
-              "workers": 0.016,
-              "urban": -0.022,
-              "students": -0.012,
-              "business": 0.012,
-              "pensioners": 0.002
+              "pensioners": -0.0062,
+              "business": 0.03,
+              "students": -0.0218,
+              "workers": 0.039,
+              "urban": -0.0269,
+              "rural": -0.0131
             }
           }
         },
@@ -87,11 +90,12 @@
           "summary": "A quiet arrival, a long lunch and the ambassador is back inside two months. It reads as contrition to the people who read it at all, and as an errand to the people who cast the vote.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.02,
-              "pensioners": 0.012,
-              "urban": -0.016,
-              "students": -0.012,
-              "workers": -0.002
+              "pensioners": 0.0334,
+              "business": -0.0107,
+              "students": -0.0334,
+              "workers": -0.0127,
+              "urban": -0.0267,
+              "rural": 0.0627
             }
           }
         },
@@ -101,11 +105,12 @@
           "summary": "Symmetry is a policy. The [g=embassy]embassies[/g] run on chargés, the treaties run on hold, and the members who cast the vote pay for the minister's plane and call it spine.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.03,
-              "workers": 0.012,
-              "pensioners": 0.012,
-              "urban": -0.03,
-              "students": -0.022
+              "pensioners": -0.0002,
+              "business": -0.0532,
+              "students": -0.0316,
+              "workers": 0.0335,
+              "urban": -0.0925,
+              "rural": 0.087
             }
           }
         },
@@ -158,11 +163,11 @@
               "infrastructure": 0.12
             },
             "bloc_offset": {
-              "rural": 0.026,
-              "business": 0.016,
-              "urban": -0.022,
-              "workers": -0.008,
-              "students": -0.006
+              "business": 0.0297,
+              "students": -0.0151,
+              "workers": -0.0062,
+              "urban": -0.0421,
+              "rural": 0.0516
             }
           }
         },
@@ -172,11 +177,11 @@
           "summary": "The agenda committee buries it under enlargement, but the photocall at the crossing is worth the season. The partner promises a study, which is what promises are called before they are consultations.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.016,
-              "workers": 0.01,
-              "business": -0.01,
-              "urban": -0.012,
-              "students": 0.002
+              "business": -0.0082,
+              "students": -0.0035,
+              "workers": 0.0201,
+              "urban": -0.0275,
+              "rural": 0.037
             }
           }
         },
@@ -223,11 +228,12 @@
               "burden": -0.03
             },
             "bloc_offset": {
-              "workers": 0.022,
-              "business": 0.026,
-              "rural": 0.012,
-              "urban": -0.03,
-              "students": -0.02
+              "pensioners": -0.0179,
+              "business": 0.048,
+              "students": -0.0578,
+              "workers": 0.0422,
+              "urban": -0.0551,
+              "rural": -0.0022
             }
           }
         },
@@ -241,11 +247,12 @@
               "burden": 0.03
             },
             "bloc_offset": {
-              "urban": 0.026,
-              "students": 0.02,
-              "workers": -0.02,
-              "business": -0.022,
-              "rural": -0.008
+              "pensioners": -0.0095,
+              "business": -0.0352,
+              "students": 0.0268,
+              "workers": -0.0295,
+              "urban": 0.06,
+              "rural": -0.0003
             }
           }
         },
@@ -293,11 +300,11 @@
               "press_freedom": 0.05
             },
             "bloc_offset": {
-              "urban": 0.026,
-              "students": 0.02,
-              "rural": -0.022,
-              "pensioners": -0.012,
-              "workers": -0.002
+              "pensioners": -0.0253,
+              "students": 0.0295,
+              "workers": 0.0018,
+              "urban": 0.0393,
+              "rural": -0.0315
             }
           }
         },
@@ -310,11 +317,12 @@
               "corruption": 0.04
             },
             "bloc_offset": {
-              "pensioners": 0.022,
-              "rural": 0.016,
-              "urban": -0.026,
-              "students": -0.018,
-              "business": 0.002
+              "pensioners": 0.041,
+              "business": 0.0039,
+              "students": -0.0445,
+              "workers": 0.0057,
+              "urban": -0.062,
+              "rural": 0.0425
             }
           }
         },
@@ -364,11 +372,12 @@
               "burden": 0.02
             },
             "bloc_offset": {
-              "rural": -0.02,
-              "urban": 0.02,
-              "business": 0.024,
-              "workers": -0.012,
-              "students": -0.004
+              "business": 0.0234,
+              "students": -0.0172,
+              "workers": -0.0294,
+              "urban": 0.0425,
+              "rural": 0.0235,
+              "pensioners": -0.0132
             }
           }
         },
@@ -382,11 +391,12 @@
               "burden": 0.03
             },
             "bloc_offset": {
-              "rural": 0.022,
-              "workers": 0.016,
-              "urban": -0.02,
-              "business": -0.026,
-              "pensioners": 0.004
+              "pensioners": 0.0001,
+              "business": -0.074,
+              "students": -0.0039,
+              "workers": 0.0331,
+              "urban": -0.0344,
+              "rural": 0.0223
             }
           }
         },
@@ -429,11 +439,11 @@
           "summary": "A humanitarian landing for a prisoner nobody has sentenced: the partner calls it extraction and files it under your name. The family gets a homecoming and every other family with a file gets a queue at your door.",
           "effects": {
             "bloc_offset": {
-              "workers": 0.02,
-              "rural": 0.02,
-              "urban": 0.014,
-              "business": -0.03,
-              "pensioners": -0.004
+              "pensioners": -0.0573,
+              "business": -0.1057,
+              "workers": 0.0439,
+              "urban": 0.0255,
+              "rural": 0.0564
             }
           }
         },
@@ -446,11 +456,12 @@
               "corruption": 0.04
             },
             "bloc_offset": {
-              "workers": 0.012,
-              "rural": 0.016,
-              "urban": -0.018,
-              "students": -0.014,
-              "business": -0.004
+              "pensioners": -0.0348,
+              "business": -0.0338,
+              "students": -0.0388,
+              "workers": 0.0395,
+              "urban": -0.0329,
+              "rural": 0.0609
             }
           }
         },
@@ -502,11 +513,12 @@
           "effects": {
             "other_revenue_pct_gdp": 0.08,
             "bloc_offset": {
-              "rural": 0.022,
-              "workers": 0.016,
-              "urban": -0.02,
-              "students": -0.016,
-              "pensioners": 0.002
+              "pensioners": -0.033,
+              "business": 0.0046,
+              "students": -0.0539,
+              "workers": 0.0517,
+              "urban": -0.0947,
+              "rural": 0.0804
             }
           }
         },
@@ -517,11 +529,12 @@
           "effects": {
             "other_revenue_pct_gdp": 0.04,
             "bloc_offset": {
-              "urban": 0.016,
-              "students": 0.012,
-              "rural": -0.016,
-              "pensioners": -0.01,
-              "business": 0.004
+              "pensioners": -0.0468,
+              "business": 0.0295,
+              "students": 0.029,
+              "workers": 0.0283,
+              "urban": 0.0075,
+              "rural": 0.0038
             }
           }
         },
@@ -572,11 +585,11 @@
           "summary": "We talk to everyone plays as statecraft at home and as a licence abroad, and the ministries that wrote the freeze are booking the interpretation. The next freeze has an asterisk where your name was.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.022,
-              "business": 0.022,
               "pensioners": 0.014,
-              "urban": -0.032,
-              "students": -0.022
+              "business": 0.022,
+              "students": -0.022,
+              "urban": -0.0394,
+              "rural": 0.0642
             }
           }
         },
@@ -586,11 +599,12 @@
           "summary": "The letter to the secretariat goes out within the hour, immediate and undignified, which are also its two defences. The photograph keeps running with a caption nobody reads past.",
           "effects": {
             "bloc_offset": {
-              "urban": 0.016,
-              "students": 0.012,
-              "rural": -0.02,
-              "pensioners": -0.012,
-              "business": 0.004
+              "pensioners": 0.0058,
+              "business": -0.0645,
+              "students": 0.0081,
+              "urban": 0.022,
+              "rural": 0.0605,
+              "workers": -0.0286
             }
           }
         },
@@ -636,11 +650,12 @@
               "migration": 0.04
             },
             "bloc_offset": {
-              "urban": 0.02,
-              "students": 0.018,
-              "rural": -0.02,
-              "workers": -0.008,
-              "pensioners": -0.004
+              "pensioners": -0.0202,
+              "students": 0.0223,
+              "workers": -0.0243,
+              "urban": 0.0268,
+              "rural": 0.0221,
+              "business": -0.0086
             }
           }
         },
@@ -650,11 +665,12 @@
           "summary": "Correct, and the marches have the photographs of the presses that closed. The petition keeps coming back with more pages, and the pages are all in your language.",
           "effects": {
             "bloc_offset": {
-              "urban": -0.02,
-              "students": -0.018,
-              "rural": 0.016,
-              "pensioners": 0.014,
-              "business": 0.006
+              "pensioners": 0.0294,
+              "business": 0.0137,
+              "students": -0.0513,
+              "workers": 0.0025,
+              "urban": -0.0558,
+              "rural": 0.0468
             }
           }
         },

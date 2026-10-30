@@ -34,10 +34,12 @@
               "burden": 0.04
             },
             "bloc_offset": {
-              "workers": -0.012,
-              "urban": 0.02,
-              "rural": -0.028,
-              "business": 0.03
+              "pensioners": -0.0226,
+              "business": 0.062,
+              "workers": -0.0484,
+              "urban": 0.0453,
+              "rural": 0.0139,
+              "students": -0.0124
             }
           }
         },
@@ -51,11 +53,12 @@
               "burden": 0.02
             },
             "bloc_offset": {
-              "workers": -0.008,
-              "urban": 0.012,
-              "rural": -0.022,
-              "business": 0.015,
-              "students": 0.01
+              "pensioners": -0.0103,
+              "business": 0.0465,
+              "students": 0.0184,
+              "workers": -0.0286,
+              "urban": 0.0427,
+              "rural": -0.0511
             }
           }
         },
@@ -109,10 +112,11 @@
               "burden": -0.03
             },
             "bloc_offset": {
-              "rural": 0.042,
-              "workers": 0.014,
-              "urban": -0.032,
-              "students": -0.018
+              "pensioners": -0.0063,
+              "students": -0.0273,
+              "workers": 0.0314,
+              "urban": -0.0461,
+              "rural": 0.0639
             }
           }
         },
@@ -129,10 +133,12 @@
               "burden": 0.03
             },
             "bloc_offset": {
-              "rural": -0.024,
-              "urban": 0.024,
-              "workers": -0.006,
-              "pensioners": 0.012
+              "pensioners": -0.0037,
+              "students": 0.0047,
+              "workers": -0.0227,
+              "urban": 0.0361,
+              "rural": 0.0557,
+              "business": -0.0187
             }
           }
         },
@@ -188,11 +194,12 @@
           "summary": "The photograph is front pages everywhere and yours is the smile in it. The fund is real money with your share waiting at the finance ministers, and the partner who sprang it owns the idea either way.",
           "effects": {
             "bloc_offset": {
-              "urban": 0.032,
-              "students": 0.022,
-              "workers": 0.012,
-              "rural": -0.038,
-              "business": -0.016
+              "pensioners": -0.0025,
+              "business": -0.0221,
+              "students": 0.0281,
+              "workers": 0.0194,
+              "urban": 0.043,
+              "rural": -0.0515
             }
           }
         },
@@ -202,11 +209,11 @@
           "summary": "The word unanimity is said five times before dinner and the proposal dies in the corridor where summits bury things. The partner's staff leaks by midnight that you killed it, and the leak is accurate.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.024,
-              "business": 0.026,
-              "pensioners": 0.014,
-              "urban": -0.032,
-              "students": -0.024
+              "pensioners": 0.0201,
+              "business": 0.0456,
+              "students": -0.0461,
+              "urban": -0.0602,
+              "rural": 0.0485
             }
           }
         },
@@ -260,10 +267,12 @@
               "burden": -0.02
             },
             "bloc_offset": {
-              "workers": -0.03,
-              "business": 0.036,
-              "urban": 0.016,
-              "rural": -0.016
+              "pensioners": -0.0008,
+              "business": 0.0228,
+              "students": -0.0038,
+              "workers": -0.0384,
+              "urban": -0.0095,
+              "rural": 0.0345
             }
           }
         },
@@ -273,11 +282,12 @@
           "summary": "The veto is cheap today and priced later, and both ministries know the exchange rate. The pact stalls, the partner finds another route around you, and the posters in your industrial towns say what the route is.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.026,
-              "pensioners": 0.016,
-              "workers": 0.012,
-              "business": -0.038,
-              "urban": -0.014
+              "pensioners": 0.0142,
+              "business": -0.0597,
+              "students": -0.011,
+              "workers": 0.0125,
+              "urban": -0.0311,
+              "rural": 0.0334
             }
           }
         },
@@ -330,10 +340,12 @@
               "judicial_independence": 0.06
             },
             "bloc_offset": {
-              "urban": 0.026,
-              "students": 0.02,
-              "rural": -0.022,
-              "pensioners": 0.008
+              "pensioners": 0.0025,
+              "students": 0.0124,
+              "workers": -0.0251,
+              "urban": 0.0096,
+              "rural": 0.0555,
+              "business": -0.0225
             }
           }
         },
@@ -346,11 +358,12 @@
               "judicial_independence": -0.05
             },
             "bloc_offset": {
-              "rural": 0.022,
-              "business": 0.022,
-              "workers": 0.01,
-              "urban": -0.03,
-              "students": -0.014
+              "pensioners": -0.0038,
+              "business": 0.0229,
+              "students": -0.0068,
+              "workers": 0.005,
+              "urban": -0.0736,
+              "rural": 0.0606
             }
           }
         },
@@ -406,10 +419,12 @@
               "burden": 0.05
             },
             "bloc_offset": {
-              "urban": 0.03,
-              "students": 0.026,
-              "rural": -0.042,
-              "workers": -0.006
+              "urban": 0.0118,
+              "students": 0.0078,
+              "rural": 0.0647,
+              "workers": -0.0321,
+              "pensioners": -0.001,
+              "business": -0.0251
             }
           }
         },
@@ -423,10 +438,12 @@
               "burden": -0.02
             },
             "bloc_offset": {
-              "rural": 0.036,
-              "business": 0.012,
-              "urban": -0.026,
-              "students": -0.022
+              "rural": 0.0627,
+              "business": 0.018,
+              "urban": -0.0467,
+              "students": -0.0388,
+              "workers": 0.002,
+              "pensioners": -0.001
             }
           }
         },
@@ -476,11 +493,12 @@
           "summary": "The case is strong, the timetable is two years and the queue does not read judgments. The hauliers' association funds the action and the border towns wait for it.",
           "effects": {
             "bloc_offset": {
-              "business": 0.03,
-              "urban": 0.016,
-              "workers": -0.012,
-              "rural": -0.022,
-              "students": -0.006
+              "pensioners": -0.0145,
+              "business": 0.0406,
+              "students": -0.0178,
+              "workers": -0.0194,
+              "urban": 0.0194,
+              "rural": 0.0193
             }
           }
         },
@@ -494,10 +512,12 @@
               "burden": 0.03
             },
             "bloc_offset": {
-              "rural": 0.02,
-              "workers": 0.016,
-              "business": -0.03,
-              "urban": -0.008
+              "pensioners": -0.0055,
+              "business": -0.0377,
+              "workers": 0.0298,
+              "urban": -0.0067,
+              "rural": 0.0189,
+              "students": -0.0004
             }
           }
         },
@@ -556,11 +576,11 @@
               "infrastructure": -0.1
             },
             "bloc_offset": {
-              "business": 0.034,
-              "urban": 0.012,
-              "pensioners": -0.03,
-              "rural": -0.012,
-              "workers": 0.004
+              "pensioners": -0.0486,
+              "business": 0.0653,
+              "workers": -0.0009,
+              "urban": 0.011,
+              "rural": -0.012
             }
           }
         },
@@ -573,11 +593,11 @@
               "vat": 1.0
             },
             "bloc_offset": {
-              "business": 0.026,
-              "rural": -0.014,
-              "workers": -0.016,
-              "pensioners": -0.008,
-              "urban": 0.012
+              "pensioners": -0.0072,
+              "business": 0.062,
+              "workers": -0.022,
+              "urban": 0.0197,
+              "rural": -0.0063
             }
           }
         },
@@ -622,11 +642,11 @@
               "infrastructure": 0.15
             },
             "bloc_offset": {
-              "urban": 0.024,
-              "business": 0.02,
-              "students": 0.014,
-              "rural": -0.028,
-              "workers": -0.006
+              "business": 0.0776,
+              "students": 0.0393,
+              "workers": -0.029,
+              "urban": 0.0701,
+              "rural": -0.081
             }
           }
         },
@@ -636,11 +656,12 @@
           "summary": "Eleven of the measures are deferrable under the treaty and you defer the other three hundred and eighty-nine, which takes drafting. The answer satisfies everyone for the season it lasts.",
           "effects": {
             "bloc_offset": {
-              "business": 0.03,
-              "urban": 0.014,
-              "rural": -0.024,
-              "workers": -0.012,
-              "pensioners": 0.002
+              "pensioners": 0.0043,
+              "business": 0.0991,
+              "students": 0.0092,
+              "workers": -0.0419,
+              "urban": 0.0485,
+              "rural": -0.0724
             }
           }
         },
@@ -693,10 +714,12 @@
               "judicial_independence": 0.04
             },
             "bloc_offset": {
-              "urban": 0.02,
-              "students": 0.016,
-              "rural": -0.022,
-              "workers": -0.008
+              "pensioners": -0.002,
+              "students": 0.0069,
+              "workers": -0.0287,
+              "urban": 0.0109,
+              "rural": 0.0498,
+              "business": -0.0168
             }
           }
         },
@@ -706,11 +729,12 @@
           "summary": "The bill stands, the infringement meter starts and the flag has a good month in the [g=poll]polls[/g] it does well in. The meter is not political and does not do months.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.03,
-              "workers": 0.012,
-              "business": -0.03,
-              "urban": -0.02,
-              "students": -0.014
+              "pensioners": -0.002,
+              "business": -0.0591,
+              "students": -0.0354,
+              "workers": 0.0275,
+              "urban": -0.0509,
+              "rural": 0.0706
             }
           }
         },

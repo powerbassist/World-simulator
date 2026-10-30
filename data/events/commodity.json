@@ -26,11 +26,12 @@
               "infrastructure": 0.15
             },
             "bloc_offset": {
-              "pensioners": 0.026,
-              "urban": 0.016,
-              "workers": 0.008,
-              "business": -0.036,
-              "students": -0.004
+              "pensioners": 0.038,
+              "business": -0.0843,
+              "students": -0.0206,
+              "workers": 0.0026,
+              "urban": 0.0198,
+              "rural": -0.0217
             }
           }
         },
@@ -43,11 +44,12 @@
               "pensions": 0.1
             },
             "bloc_offset": {
+              "pensioners": 0.0314,
               "business": 0.03,
-              "urban": -0.022,
-              "workers": -0.02,
-              "pensioners": 0.012,
-              "students": -0.006
+              "students": -0.0091,
+              "workers": -0.0251,
+              "urban": -0.023,
+              "rural": -0.0072
             }
           }
         },
@@ -94,11 +96,12 @@
               "burden": 0.04
             },
             "bloc_offset": {
-              "rural": 0.03,
-              "workers": 0.012,
-              "urban": -0.022,
-              "business": -0.016,
-              "students": -0.004
+              "pensioners": -0.0074,
+              "business": -0.0361,
+              "students": -0.0061,
+              "workers": 0.0268,
+              "urban": -0.0199,
+              "rural": 0.0565
             }
           }
         },
@@ -108,11 +111,12 @@
           "summary": "Flour costs what flour costs and the baker's sign explains it daily. The farm gate does well out of somebody else's drought, which the town reads as a tax with wheat on it.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.034,
-              "business": 0.012,
-              "urban": -0.03,
-              "workers": -0.018,
-              "students": -0.006
+              "pensioners": -0.0062,
+              "business": 0.0055,
+              "students": -0.0092,
+              "workers": -0.0191,
+              "urban": -0.0333,
+              "rural": 0.0626
             }
           }
         },
@@ -159,11 +163,12 @@
               "burden": -0.02
             },
             "bloc_offset": {
-              "business": 0.03,
-              "workers": 0.012,
-              "urban": 0.012,
-              "rural": -0.022,
-              "students": -0.004
+              "pensioners": -0.0245,
+              "business": 0.0641,
+              "students": -0.0214,
+              "workers": 0.0266,
+              "urban": 0.0195,
+              "rural": -0.0749
             }
           }
         },
@@ -180,11 +185,12 @@
               "infrastructure": 0.1
             },
             "bloc_offset": {
-              "workers": 0.02,
-              "urban": 0.016,
-              "rural": -0.022,
-              "students": -0.008,
-              "business": -0.018
+              "pensioners": -0.0205,
+              "business": -0.0225,
+              "students": -0.0249,
+              "workers": 0.0457,
+              "urban": 0.031,
+              "rural": -0.0709
             }
           }
         },
@@ -231,11 +237,12 @@
               "burden": 0.04
             },
             "bloc_offset": {
-              "rural": 0.036,
-              "urban": -0.016,
-              "workers": -0.012,
-              "students": -0.004,
-              "pensioners": 0.002
+              "pensioners": -0.0024,
+              "business": -0.0096,
+              "students": -0.0057,
+              "workers": -0.0137,
+              "urban": -0.0291,
+              "rural": 0.0673
             }
           }
         },
@@ -249,11 +256,12 @@
               "burden": 0.02
             },
             "bloc_offset": {
-              "rural": 0.014,
-              "workers": -0.01,
-              "business": -0.02,
-              "urban": 0.012,
-              "students": 0.006
+              "pensioners": -0.0015,
+              "business": -0.0486,
+              "students": 0.0086,
+              "workers": -0.0212,
+              "urban": 0.0008,
+              "rural": 0.0591
             }
           }
         },
@@ -300,11 +308,12 @@
               "burden": 0.03
             },
             "bloc_offset": {
-              "business": 0.026,
-              "workers": 0.012,
-              "urban": -0.022,
-              "rural": -0.012,
-              "students": -0.004
+              "pensioners": -0.0124,
+              "business": 0.0597,
+              "students": -0.0075,
+              "workers": 0.0368,
+              "urban": -0.0238,
+              "rural": -0.0422
             }
           }
         },
@@ -318,11 +327,12 @@
               "burden": -0.02
             },
             "bloc_offset": {
-              "business": 0.03,
-              "urban": 0.012,
-              "rural": -0.022,
-              "students": -0.008,
-              "pensioners": -0.004
+              "pensioners": -0.02,
+              "business": 0.0672,
+              "students": -0.0151,
+              "workers": 0.0142,
+              "urban": 0.0404,
+              "rural": -0.061
             }
           }
         },
@@ -369,11 +379,12 @@
               "burden": 0.03
             },
             "bloc_offset": {
-              "business": 0.026,
-              "workers": 0.01,
-              "urban": -0.016,
-              "students": -0.01,
-              "rural": -0.008
+              "pensioners": -0.0168,
+              "business": 0.0679,
+              "students": -0.0205,
+              "workers": 0.0331,
+              "urban": -0.0097,
+              "rural": -0.0416
             }
           }
         },
@@ -386,11 +397,12 @@
               "infrastructure": -0.1
             },
             "bloc_offset": {
-              "business": 0.02,
-              "rural": -0.016,
+              "pensioners": -0.0168,
+              "business": 0.0556,
+              "students": 0.0082,
               "workers": -0.012,
-              "urban": 0.012,
-              "students": 0.004
+              "urban": 0.0476,
+              "rural": -0.0579
             }
           }
         },
@@ -435,11 +447,12 @@
               "infrastructure": 0.1
             },
             "bloc_offset": {
-              "pensioners": 0.026,
-              "workers": 0.012,
-              "urban": 0.012,
-              "business": -0.032,
-              "students": -0.006
+              "pensioners": 0.0064,
+              "business": -0.0654,
+              "students": -0.0236,
+              "workers": 0.0074,
+              "urban": 0.0061,
+              "rural": 0.0237
             }
           }
         },
@@ -449,12 +462,12 @@
           "summary": "The price reaches the shelf in one hop, which is at least honest. The exporters and the farms like the world as it is; the pensioners price it weekly.",
           "effects": {
             "bloc_offset": {
-              "rural": 0.024,
-              "business": 0.03,
-              "pensioners": -0.022,
-              "urban": -0.024,
-              "workers": -0.016,
-              "students": -0.004
+              "pensioners": -0.0376,
+              "business": 0.0694,
+              "students": 0.0054,
+              "workers": -0.0041,
+              "urban": -0.0184,
+              "rural": 0.0434
             }
           }
         },
@@ -503,11 +516,12 @@
               "burden": 0.05
             },
             "bloc_offset": {
-              "workers": 0.026,
-              "rural": -0.016,
-              "urban": 0.012,
-              "business": -0.022,
-              "students": -0.006
+              "pensioners": -0.0296,
+              "business": -0.0474,
+              "students": -0.0271,
+              "workers": 0.0662,
+              "urban": 0.0226,
+              "rural": -0.071
             }
           }
         },
@@ -522,11 +536,12 @@
             },
             "other_revenue_pct_gdp": -0.1,
             "bloc_offset": {
-              "business": 0.03,
-              "workers": -0.014,
-              "rural": -0.022,
-              "urban": 0.014,
-              "students": 0.004
+              "pensioners": -0.0148,
+              "business": 0.0744,
+              "students": 0.0082,
+              "workers": -0.0013,
+              "urban": 0.0415,
+              "rural": -0.0685
             }
           }
         },
