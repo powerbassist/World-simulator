@@ -1960,3 +1960,304 @@ path = "assets/audio/voice/union_leader_m_50/refuse.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_infringement_notice.speaker_line (sha256 90cb1f860a24).
+path = "assets/audio/voice/politician_f_50/event.eu_infringement_notice.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_quota_fight.speaker_line (sha256 078b642c29ff).
+path = "assets/audio/voice/politician_f_50/event.eu_quota_fight.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_summit_ambush.speaker_line (sha256 78076e31aa5a).
+path = "assets/audio/voice/politician_f_50/event.eu_summit_ambush.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_eastern_partner_row.speaker_line (sha256 434cf0eab689).
+path = "assets/audio/voice/politician_f_50/event.eu_eastern_partner_row.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_rule_of_law_clause.speaker_line (sha256 ce051d1a0295).
+path = "assets/audio/voice/politician_f_50/event.eu_rule_of_law_clause.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_farm_rules_fight.speaker_line (sha256 e237ef1a1350).
+path = "assets/audio/voice/politician_f_50/event.eu_farm_rules_fight.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_border_checks_row.speaker_line (sha256 5ba84f602bc1).
+path = "assets/audio/voice/politician_f_50/event.eu_border_checks_row.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_eurozone_plea.speaker_line (sha256 aa9feded8b8f).
+path = "assets/audio/voice/politician_f_50/event.eu_eurozone_plea.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_accession_bills.speaker_line (sha256 7b86eab42148).
+path = "assets/audio/voice/politician_f_50/event.eu_accession_bills.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/eu_backbench_bill.speaker_line (sha256 ecbf0481eb28).
+path = "assets/audio/voice/politician_f_50/event.eu_backbench_bill.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/bond_yield_wobble.speaker_line (sha256 9b1cd76f4d25).
+path = "assets/audio/voice/politician_f_50/event.bond_yield_wobble.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/ratings_letter.speaker_line (sha256 168cd98f3ebd).
+path = "assets/audio/voice/politician_f_50/event.ratings_letter.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/supplementary_budget_demand.speaker_line (sha256 794b0ad308e4).
+path = "assets/audio/voice/politician_f_50/event.supplementary_budget_demand.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/tax_revolt_petition.speaker_line (sha256 933448db4c71).
+path = "assets/audio/voice/politician_f_50/event.tax_revolt_petition.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/audit_finding.speaker_line (sha256 f5b24d922c05).
+path = "assets/audio/voice/politician_f_50/event.audit_finding.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/pension_fund_gap.speaker_line (sha256 8d3ea725b6da).
+path = "assets/audio/voice/politician_f_50/event.pension_fund_gap.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/local_authority_insolvency.speaker_line (sha256 5f6697b73d61).
+path = "assets/audio/voice/politician_f_50/event.local_authority_insolvency.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/spending_freeze_demand.speaker_line (sha256 c57f61f1f948).
+path = "assets/audio/voice/politician_f_50/event.spending_freeze_demand.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/deficit_ceiling_vote.speaker_line (sha256 81bfe75207fd).
+path = "assets/audio/voice/politician_f_50/event.deficit_ceiling_vote.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/treasury_cash_crunch.speaker_line (sha256 109a7e26e73d).
+path = "assets/audio/voice/politician_f_50/event.treasury_cash_crunch.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/repealed_levy_hole.speaker_line (sha256 d26bd6782107).
+path = "assets/audio/voice/politician_f_50/event.repealed_levy_hole.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/debt_interest_crossing.speaker_line (sha256 2ec2dae90af7).
+path = "assets/audio/voice/politician_f_50/event.debt_interest_crossing.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/emergency_budget_demand.speaker_line (sha256 d0b8f8078f69).
+path = "assets/audio/voice/politician_f_50/event.emergency_budget_demand.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_sanctioned_cargo.speaker_line (sha256 91159bb94e78).
+path = "assets/audio/voice/politician_f_50/event.for_sanctioned_cargo.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_ambassador_recalled.speaker_line (sha256 b309057de10f).
+path = "assets/audio/voice/politician_f_50/event.for_ambassador_recalled.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_neighbour_checks.speaker_line (sha256 62f69493b689).
+path = "assets/audio/voice/politician_f_50/event.for_neighbour_checks.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_arms_export_row.speaker_line (sha256 4a97d40b09d4).
+path = "assets/audio/voice/politician_f_50/event.for_arms_export_row.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_spy_file.speaker_line (sha256 723bb625bf6d).
+path = "assets/audio/voice/politician_f_50/event.for_spy_file.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_trade_retaliation.speaker_line (sha256 69628ee5a6b7).
+path = "assets/audio/voice/politician_f_50/event.for_trade_retaliation.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_hostage_affair.speaker_line (sha256 f87d00ddb7aa).
+path = "assets/audio/voice/politician_f_50/event.for_hostage_affair.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_base_renewal.speaker_line (sha256 3bd56ea75c45).
+path = "assets/audio/voice/politician_f_50/event.for_base_renewal.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_summit_photo.speaker_line (sha256 6d32b882c799).
+path = "assets/audio/voice/politician_f_50/event.for_summit_photo.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/for_diaspora_petition.speaker_line (sha256 f44d85fa5607).
+path = "assets/audio/voice/politician_f_50/event.for_diaspora_petition.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_loyalist_waits.speaker_line (sha256 7e7e2ef627b2).
+path = "assets/audio/voice/politician_f_50/event.the_loyalist_waits.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_profile_briefing.speaker_line (sha256 f6d0d657164b).
+path = "assets/audio/voice/politician_f_50/event.the_profile_briefing.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_defector.speaker_line (sha256 4959c0e8f10e).
+path = "assets/audio/voice/politician_f_50/event.the_defector.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_elder_letter.speaker_line (sha256 311f3d32d996).
+path = "assets/audio/voice/politician_f_50/event.the_elder_letter.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_succession.speaker_line (sha256 19d5f262eafb).
+path = "assets/audio/voice/politician_f_50/event.the_succession.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_leadership_question.speaker_line (sha256 4e3354990d41).
+path = "assets/audio/voice/politician_f_50/event.the_leadership_question.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_grudge_kept.speaker_line (sha256 7de43cc7bd3e).
+path = "assets/audio/voice/politician_f_50/event.the_grudge_kept.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_backbench_letters.speaker_line (sha256 ceb8605a53d0).
+path = "assets/audio/voice/politician_f_50/event.the_backbench_letters.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_reshuffle_list.speaker_line (sha256 e40e2d7c3b67).
+path = "assets/audio/voice/politician_f_50/event.the_reshuffle_list.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
+
+[[annotations]]
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pFZP5JQG7iQjIQuC4Bku (archetype politician_f_50), 2026-10-30; says events/the_memoirs.speaker_line (sha256 e7e3a3bf8582).
+path = "assets/audio/voice/politician_f_50/event.the_memoirs.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 powerbassist"
+SPDX-License-Identifier = "CC-BY-NC-4.0"
