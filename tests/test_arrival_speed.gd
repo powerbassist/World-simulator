@@ -7,20 +7,41 @@ extends SceneTree
 ## l'arrivée" (2026-10-24): a month that brings a request drops the clock to speed
 ## 1, and once the player has SEEN it the speed they had comes back
 ## (audience_driver.gd's _slow_for / _seen). Every click is real, press and release
-## frames apart (tests/click.gd):
-##   - speed 3 -> arrival -> 1 -> the card clicked -> 3;
-##   - speed 2 -> arrival -> 1 -> the card's X -> 2;
-##   - speed 3 -> arrival -> 1 -> the player picks 2 -> the card clicked -> still 2:
-##     a speed the player chose is theirs, not the arrival's to undo.
+## frames apart (tests/click.gd). Each case: a speed, an arrival (-> 1), a way of
+## seeing it, the speed expected after:
+##   - the card clicked -> back; its X -> back; an answer (Decline) -> back; the
+##     title bar's requests mark -> back (QA's TAKE 2 on #207: all four verbs);
+##   - the player picks a speed after the arrival -> theirs stays;
+##   - a load between the arrival and the click -> 1 stays (the load forgets it);
+##   - the code dismissing the card (a lapse, a card put up again) -> 1 stays: that
+##     is not the player having seen it.
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Click = preload("res://tests/click.gd")
 
+## [speed before, how it is seen, speed expected after, what a failure means]
+const CASES := [
+	[3, "body", 3, "a request's card clicked did not give the speed back"],
+	[2, "x", 2, "a request's card closed did not give the speed back"],
+	[3, "answer", 3, "a request answered from its card did not give the speed back"],
+	[2, "mark", 2, "the requests mark did not give the speed back"],
+	[3, "hand", 2, "seeing a request undid a speed the player picked after its arrival"],
+	[3, "load", 1, "a load between the arrival and the click still gave the speed back"],
+	[3, "code", 1, "a card the code took down gave the speed back"],
+]
+## Frames from an arrival to its press, to its release, to the check: the press
+## waits a frame for the lane to lay out the raised card.
+const PRESS_AT := 2
+const RELEASE_AT := 5
+const CHECK_AT := 7
+
 var _failures: Array[String] = []
 var _main
 var _frame := 0
 var _people: Array = []
+var _case := -1
+var _case_frame := 0
 var _target: Control
 
 
@@ -31,64 +52,63 @@ func _init() -> void:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
-	# Each arrival raises its card to the top of the lane; the press waits a frame
-	# for the lane to lay it out there.
-	match _frame:
-		3:
-			# Paused, so no month runs under the test: the speed is a setting either way.
-			_main._clock.paused = true
-			_pick_people()
-			_target = _arrive_at(3, 0, false)
-		5:
-			_press(true)
-		8:
-			_press(false)
-		10:
-			_expect(3, "a request's card clicked did not give the speed back")
-			_target = _arrive_at(2, 1, true)
-		12:
-			_press(true)
-		15:
-			_press(false)
-		17:
-			_expect(2, "a request's card closed did not give the speed back")
-			_target = _arrive_at(3, 2, false)
-			_main._clock.set_speed(2)
-		19:
-			_press(true)
-		22:
-			_press(false)
-		24:
-			_expect(2, "seeing a request undid a speed the player picked after its arrival")
+	if _frame < 3:
+		return false
+	if _case < 0:
+		# Paused, so no month runs under the test: the speed is a setting either way.
+		_main._clock.paused = true
+		_pick_people()
+		_next()
+		return false
+	var at := _frame - _case_frame
+	if _target != null and at == PRESS_AT:
+		_press(true)
+	elif _target != null and at == RELEASE_AT:
+		_press(false)
+	elif at == CHECK_AT:
+		var c: Array = CASES[_case]
+		if _main._clock.speed != int(c[2]):
+			_fail("%s: speed %d, expected %d" % [c[3], _main._clock.speed, c[2]])
+		if _case + 1 >= CASES.size():
 			_finish()
 			return true
+		_next()
 	return false
 
 
-## Three people of the played nation with a want, distinct, never the head of state.
+## One person of the played nation with a want per case, distinct, never the head
+## of state.
 func _pick_people() -> void:
 	var ns = _main._state.player()
 	for person in _main._loader.people.get(String(ns.id), []):
-		if not person.wants.is_empty() and String(person.id) != String(ns.head_of_state_person_id) and _people.size() < 3:
+		if not person.wants.is_empty() and String(person.id) != String(ns.head_of_state_person_id) \
+				and _people.size() < CASES.size():
 			_people.append(person)
-	if _people.size() < 3:
-		_fail("premise: fewer than three people with a want (%d)" % _people.size())
+	if _people.size() < CASES.size():
+		_fail("premise: fewer than %d people with a want (%d)" % [CASES.size(), _people.size()])
 
 
-## At `speed`, person `i` asks through the sim's own arrival and the month's UI half
-## runs on it; the clock must drop to 1. Returns what to click on its card: the X
-## when `close`, else the card's title (a Label passes the press to the card).
-func _arrive_at(speed: int, i: int, close: bool) -> Control:
+func _next() -> void:
+	_case += 1
+	_case_frame = _frame
+	_target = _arrive(_case)
+
+
+## At the case's speed, its person asks through the sim's own arrival and the
+## month's UI half runs on it; the clock must drop to 1. Returns what to click, or
+## null when the case sees (or does not see) the request without a click.
+func _arrive(i: int) -> Control:
 	if i >= _people.size():
 		return null
+	var c: Array = CASES[i]
 	var ns = _main._state.player()
 	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
-	_main._clock.set_speed(speed)
+	_main._clock.set_speed(int(c[0]))
 	var arrived := []
 	Audiences._arrive(ns, _people[i], _people[i].wants[0], now, arrived)
 	AudienceDriver.after_month(_main, {"audience_requests": {"arrived": arrived, "lapsed": []}})
 	if _main._clock.speed != 1:
-		_fail("an arrival at speed %d did not drop the clock to 1 (%d)" % [speed, _main._clock.speed])
+		_fail("an arrival at speed %d did not drop the clock to 1 (%d)" % [c[0], _main._clock.speed])
 	if arrived.is_empty():
 		_fail("premise: %s's request did not arrive" % _people[i].id)
 		return null
@@ -98,22 +118,33 @@ func _arrive_at(speed: int, i: int, close: bool) -> Control:
 		_fail("the arrived request has no card")
 		return null
 	_main._hud.inbox.raise_card(card_id)
-	for b in card.find_children("*", "Button", true, false):
-		if close and (b as Button).text == "X":
-			return b
-	return null if close else card.find_children("*", "Label", true, false)[0]
+	var buttons: Array = card.find_children("*", "Button", true, false)
+	match String(c[1]):
+		"x":
+			for b in buttons:
+				if (b as Button).text == "X":
+					return b
+		"answer":
+			# Decline, the card's third answer (request_lane.gd's order).
+			var answers := buttons.filter(func(b): return (b as Button).text != "X")
+			return answers[2] if answers.size() > 2 else null
+		"mark":
+			return _main._hud.title_bar._requests
+		"hand":
+			_main._clock.set_speed(2)
+		"load":
+			AudienceDriver.after_load(_main)
+		"code":
+			_main._hud.inbox.dismiss(card_id)
+			return null
+	return card.find_children("*", "Label", true, false)[0]
 
 
 func _press(down: bool) -> void:
-	if _target == null:
-		_fail("nothing to click")
+	if _target == null or not is_instance_valid(_target):
+		_fail("nothing to click in case %d" % _case)
 		return
 	Click.half(_main.get_viewport(), _target, down)
-
-
-func _expect(speed: int, message: String) -> void:
-	if _main._clock.speed != speed:
-		_fail("%s: speed %d, expected %d" % [message, _main._clock.speed, speed])
 
 
 func _fail(message: String) -> void:

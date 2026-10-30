@@ -221,7 +221,10 @@ static func open_oldest(main) -> void:
 		return
 	main._hud.inbox.slide_in()
 	main._hud.inbox.raise_card(lane_of(main).card_of(String(oldest["id"])))
-	_seen(main, String(oldest["id"]))
+	# The mark shows every waiting request, so it sees them all -- the oldest may
+	# predate the arrival that slowed the clock (QA's RECORD on #207).
+	for request in Audiences.pending(ns):
+		_seen(main, String(request["id"]))
 
 
 ## Every promise and IOU in flight, worded, soonest due first (the sim's order).

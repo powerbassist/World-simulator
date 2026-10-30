@@ -67,6 +67,7 @@ func _process(_delta: float) -> bool:
 			_check_never_holds()
 			_check_life()
 			_check_held_for_count()
+			_check_held_through_main()
 			_show_full()
 		5:
 			Click.half(root, _card.find_child("Close", true, false), true)
@@ -244,6 +245,22 @@ func _check_held_for_count() -> void:
 	if _card.visible:
 		_fail("a load's clear() did not drop the front page held for the count")
 	plate.free()
+
+
+## QA's TAKE 1 on #207: through main's own Elections hook, the month's front page
+## waits for the REAL result plate, and shows on its dismissal.
+func _check_held_through_main() -> void:
+	_card.clear()
+	var entry := _entry([_paper(0, "friendly"), _paper(1, "hostile")])
+	var report := {"election_results": [{"kind": "national"}], "front_page": entry}
+	_main._on_month_step("Elections", true, report, int(_main._state.year), int(_main._state.month))
+	if _card.visible:
+		_fail("main's Elections hook showed the front page over the election count")
+	_main._election_panel.dismissed.emit()
+	if not _card.visible:
+		_fail("main's held front page did not show once the result plate was dismissed")
+	_card.clear()
+	_main._clock.paused = true
 
 
 func _count_cards(node: Node) -> int:
