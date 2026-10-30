@@ -37,6 +37,9 @@ func _init() -> void:
 				_fail("%s: missing %s" % [id, key])
 		if not ["m", "f"].has(String(a.get("sex", ""))):
 			_fail("%s: sex must be m or f" % id)
+		var desc := String(a.get("description", ""))
+		if desc.length() < 20 or desc.length() > 1000:
+			_fail("%s: description must be 20 to 1000 characters (the voice-design prompt)" % id)
 		if not a.has("voice_id"):
 			_fail("%s: voice_id is absent (empty is allowed until the voice is designed)" % id)
 		for line_id in a.get("lines", {}).keys():

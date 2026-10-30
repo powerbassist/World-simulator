@@ -13,7 +13,8 @@
         "agree": "Then we have an understanding, and I will hold to it.",
         "refuse": "I cannot give you that. My own side would not forgive it.",
         "farewell": "We will speak again, I am sure."
-      }
+      },
+      "description": "A man in his fifties, a calm low baritone, measured pace, a light, neutral European accent, the voice of a career politician, polished and persuasive. An invented voice, not modelled on any real person."
     },
     {
       "id": "politician_f_50",
@@ -28,7 +29,8 @@
         "agree": "Then we have an understanding, and I will hold to it.",
         "refuse": "I cannot give you that. My own side would not forgive it.",
         "farewell": "We will speak again, I am sure."
-      }
+      },
+      "description": "A woman in her fifties, a clear mid-range voice, measured pace, a light, neutral European accent, the voice of a career politician, polished and persuasive. An invented voice, not modelled on any real person."
     },
     {
       "id": "executive_m_50",
@@ -43,7 +45,8 @@
         "agree": "Good. That is a number we can work with.",
         "refuse": "No. At that price the investment goes elsewhere.",
         "farewell": "My office will send the details."
-      }
+      },
+      "description": "A man in his fifties, a calm low baritone, brisk pace, a light, neutral European accent, the voice of a senior company executive, brisk and exact. An invented voice, not modelled on any real person."
     },
     {
       "id": "executive_f_50",
@@ -58,7 +61,8 @@
         "agree": "Good. That is a number we can work with.",
         "refuse": "No. At that price the investment goes elsewhere.",
         "farewell": "My office will send the details."
-      }
+      },
+      "description": "A woman in her fifties, a clear mid-range voice, brisk pace, a light, neutral European accent, the voice of a senior company executive, brisk and exact. An invented voice, not modelled on any real person."
     },
     {
       "id": "activist_m_30",
@@ -73,7 +77,8 @@
         "agree": "It is a start. We will be watching what comes next.",
         "refuse": "That is not an answer. People are in the street because of it.",
         "farewell": "This is not over, it has only started."
-      }
+      },
+      "description": "A man in his thirties, a lively tenor, quick, impassioned pace, a light, neutral European accent, the voice of a campaigner, earnest and urgent. An invented voice, not modelled on any real person."
     },
     {
       "id": "activist_f_30",
@@ -88,7 +93,8 @@
         "agree": "It is a start. We will be watching what comes next.",
         "refuse": "That is not an answer. People are in the street because of it.",
         "farewell": "This is not over, it has only started."
-      }
+      },
+      "description": "A woman in her thirties, a bright clear voice, quick, impassioned pace, a light, neutral European accent, the voice of a campaigner, earnest and urgent. An invented voice, not modelled on any real person."
     },
     {
       "id": "union_leader_m_50",
@@ -103,7 +109,8 @@
         "agree": "Then we understand each other. I will tell the members.",
         "refuse": "No. We did not walk out to be sent home with nothing.",
         "farewell": "The members will hear it from me, not from the press."
-      }
+      },
+      "description": "A man in his fifties, a calm low baritone, steady pace, a light, neutral European accent, the voice of a trade union leader, plain-spoken and firm. An invented voice, not modelled on any real person."
     },
     {
       "id": "union_leader_f_50",
@@ -118,7 +125,8 @@
         "agree": "Then we understand each other. I will tell the members.",
         "refuse": "No. We did not walk out to be sent home with nothing.",
         "farewell": "The members will hear it from me, not from the press."
-      }
+      },
+      "description": "A woman in her fifties, a clear mid-range voice, steady pace, a light, neutral European accent, the voice of a trade union leader, plain-spoken and firm. An invented voice, not modelled on any real person."
     },
     {
       "id": "judge_m_60",
@@ -133,7 +141,8 @@
         "agree": "That is within the law, and I have no objection.",
         "refuse": "The court cannot be asked to do that.",
         "farewell": "The law will follow its course."
-      }
+      },
+      "description": "A man in his sixties, a calm low baritone, slow, careful pace, a light, neutral European accent, the voice of a senior judge, dry and deliberate. An invented voice, not modelled on any real person."
     },
     {
       "id": "judge_f_60",
@@ -148,7 +157,8 @@
         "agree": "That is within the law, and I have no objection.",
         "refuse": "The court cannot be asked to do that.",
         "farewell": "The law will follow its course."
-      }
+      },
+      "description": "A woman in her sixties, a clear mid-range voice, slow, careful pace, a light, neutral European accent, the voice of a senior judge, dry and deliberate. An invented voice, not modelled on any real person."
     },
     {
       "id": "regional_figure_m_50",
@@ -163,7 +173,8 @@
         "agree": "Our region will remember this, and so will I.",
         "refuse": "We have waited long enough. The answer from here is no.",
         "farewell": "Come and see us again, and stay longer next time."
-      }
+      },
+      "description": "A man in his fifties, a calm low baritone, unhurried pace, a light, unplaceable regional accent, the voice of a regional notable, warm and a little stubborn. An invented voice, not modelled on any real person."
     },
     {
       "id": "regional_figure_f_50",
@@ -178,7 +189,8 @@
         "agree": "Our region will remember this, and so will I.",
         "refuse": "We have waited long enough. The answer from here is no.",
         "farewell": "Come and see us again, and stay longer next time."
-      }
+      },
+      "description": "A woman in her fifties, a clear mid-range voice, unhurried pace, a light, unplaceable regional accent, the voice of a regional notable, warm and a little stubborn. An invented voice, not modelled on any real person."
     },
     {
       "id": "press_owner_m_60",
@@ -193,7 +205,8 @@
         "agree": "We will report it fairly. That is all I promise.",
         "refuse": "We do not bargain over what we print.",
         "farewell": "You will read about this tomorrow, one way or another."
-      }
+      },
+      "description": "A man in his sixties, a calm low baritone, clipped pace, a light, neutral European accent, the voice of a newspaper owner, sharp and guarded. An invented voice, not modelled on any real person."
     },
     {
       "id": "press_owner_f_60",
@@ -208,7 +221,8 @@
         "agree": "We will report it fairly. That is all I promise.",
         "refuse": "We do not bargain over what we print.",
         "farewell": "You will read about this tomorrow, one way or another."
-      }
+      },
+      "description": "A woman in her sixties, a clear mid-range voice, clipped pace, a light, neutral European accent, the voice of a newspaper owner, sharp and guarded. An invented voice, not modelled on any real person."
     }
   ],
   "defaults": {
