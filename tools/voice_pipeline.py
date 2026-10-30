@@ -41,6 +41,7 @@ model, date, source}. Godot reads it to find a clip and to know it matches the t
 import argparse
 import datetime
 import hashlib
+import http.client
 import io
 import json
 import os
@@ -69,10 +70,18 @@ MANIFEST = VOICE_DIR + "/manifest.json"
 ARCHETYPES = "data/voices/archetypes.json"
 ## Only variable-free lines are voiced (section 6): a {{variable}}, a printf slot or
 ## a glossary mark would make the clip say something other than the shown text.
-UNVOICEABLE = re.compile(r"\{\{|%[sdif%]|\[g=")
+## A printf slot with flags, width or precision too ("%.1f", "%5d"), #187 QA.
+## No space among the flags: "100% sure" is prose, not a "% s" slot (pass 1).
+UNVOICEABLE = re.compile(r"\{\{|%[-+#0-9.]*[sdif%]|\[g=")
 ## An archetype id and a line id become a path: letters, digits, '_', '.', '-' only,
 ## and never '..', so data can never write outside VOICE_DIR.
 SAFE_ID = re.compile(r"^(?!.*\.\.)[A-Za-z0-9_.-]+$")
+## A generator voice id goes into the URL path: ElevenLabs' ids are plain
+## alphanumerics, so anything else is refused before a request is made (#187 QA).
+SAFE_VOICE_ID = re.compile(r"^[A-Za-z0-9]{1,64}$")
+## Where the paid audio of a clip whose conversion failed is kept (gitignored), named
+## by its key and text hash, so the next run converts it again instead of paying twice.
+RECOVER_DIR = "reports/voice_failed"
 
 
 class PipelineError(Exception):
@@ -113,7 +122,9 @@ def voices_for(speaker: dict, src: dict, every: bool) -> list:
     The default reading (every=False): the speaker kind's default archetype, one clip a
     line, the spec's own volume (about 112 event lines). `every`: one clip for every
     archetype a qualifying speaker may carry (a person's own `voice`, else their kind's
-    default), since the face resolves at delivery and may be any of them. A speaker that
+    default), since the face resolves at delivery and may be any of them -- over EVERY
+    nation's people, on purpose (#187 QA asked): any nation may be the played one, and
+    the speaker is drawn from the played nation's people. A speaker that
     is not a kind (an office, the evidence's person, a foreign head) reads its own
     `defaults` key: "office:<office>", "evidence_person", "foreign_head".
     """
@@ -151,7 +162,8 @@ def jobs(src: dict, manifest: dict, every: bool) -> list:
             status = "not-voiceable"
         elif not str(row.get("voice_id", "")).strip():
             status = "no-voice"  # never written, so its id never becomes a path
-        elif not SAFE_ID.match(arch) or not SAFE_ID.match(line_id):
+        elif not SAFE_ID.match(arch) or not SAFE_ID.match(line_id) \
+                or not SAFE_VOICE_ID.match(str(row.get("voice_id", ""))):
             status = "bad-id"
         elif key not in manifest:
             status = "new"
@@ -212,7 +224,9 @@ def _request(method: str, url: str, key: str, body: bytes = None) -> tuple:
             return r.status, r.read()
     except urllib.error.HTTPError as e:
         return e.code, b""
-    except urllib.error.URLError:
+    # URLError, a timeout and a reset are all OSError; a body cut short is an
+    # HTTPException. Each is "no answer", a stop with a reason, never a traceback.
+    except (OSError, http.client.HTTPException):
         return 0, b""
 
 
@@ -221,8 +235,17 @@ def allowance(key: str) -> int:
     status, body = _request("GET", API + "/user/subscription", key)
     if status != 200:
         raise PipelineError("subscription: HTTP %d" % status)
-    sub = json.loads(body)
-    return int(sub["character_limit"]) - int(sub["character_count"])
+    try:
+        sub = json.loads(body)
+        return int(sub["character_limit"]) - int(sub["character_count"])
+    except (ValueError, KeyError, TypeError) as e:
+        raise PipelineError("subscription: not the account's count (%s)" % type(e).__name__)
+
+
+def kept_path(root: Path, r: dict) -> Path:
+    """Where a clip's paid audio waits after a failed conversion: named by its key, its
+    voice and its text, so it is reused only for the same line in the same voice."""
+    return root / RECOVER_DIR / ("%s.%s.%s.mp3" % (r["key"].replace("/", "__"), r["voice_id"], r["sha"][:12]))
 
 
 def speak(key: str, voice_id: str, text: str) -> bytes:
@@ -282,28 +305,39 @@ def run(root: Path, every: bool, only: str, floor: int, max_chars: int, key: str
             print("%s: %s" % (r["status"], r["key"]))
         raise PipelineError("%d line(s) not voiceable or with an unsafe id; fix the data first" % len(bad))
     todo = _todo(rows)
-    planned = sum(r["chars"] for r in todo)
+    # A clip whose audio was kept from a failed conversion costs nothing this time.
+    planned = sum(r["chars"] for r in todo if not kept_path(root, r).exists())
     if planned > max_chars:
         raise PipelineError("%d characters planned, over --max-chars %d (use --only)" % (planned, max_chars))
     left = allowance_fn(key)
     if left - planned < floor:
         raise PipelineError("%d characters left, %d planned: the floor %d would be crossed" % (left, planned, floor))
     used = 0
+    stopped = False
     for r in todo:
         # Read again before every clip: credits spent elsewhere meanwhile (the author's
         # own use of the account) count against the floor too.
         if allowance_fn(key) - r["chars"] < floor:
             print("stopped at the floor before %s" % r["key"])
+            stopped = True
             break
-        try:
-            audio = speak_fn(key, r["voice_id"], r["text"])
-        except PipelineError as e:
-            raise PipelineError("%s: %s" % (r["key"], e))
+        kept = kept_path(root, r)
+        if kept.exists():
+            audio = kept.read_bytes()  # paid for by an earlier run whose conversion failed
+        else:
+            try:
+                audio = speak_fn(key, r["voice_id"], r["text"])
+            except PipelineError as e:
+                raise PipelineError("%s: %s" % (r["key"], e))
+            used += r["chars"]
         try:
             convert_fn(audio, root / r["file"])
         except (subprocess.CalledProcessError, OSError) as e:
-            raise PipelineError("%s: conversion failed (%s)" % (r["key"], type(e).__name__))
-        used += r["chars"]
+            kept.parent.mkdir(parents=True, exist_ok=True)
+            kept.write_bytes(audio)
+            raise PipelineError("%s: conversion failed (%s); the paid audio is kept in %s" % (
+                r["key"], type(e).__name__, kept.relative_to(root).as_posix()))
+        kept.unlink(missing_ok=True)
         manifest[r["key"]] = {"archetype": r["archetype"], "line_id": r["line_id"], "file": r["file"],
                               "text_sha256": r["sha"], "chars": r["chars"], "voice_id": r["voice_id"],
                               "model": MODEL_ID, "date": date, "source": r["source"]}
@@ -313,7 +347,8 @@ def run(root: Path, every: bool, only: str, floor: int, max_chars: int, key: str
         annotate(root / "REUSE.toml", r, date)
         print("made %s (%d characters)" % (r["key"], r["chars"]))
     print("%d characters used of %d left" % (used, left))
-    return 0
+    # A batch the floor cut short did not make what was asked (#187 QA): not 0.
+    return 1 if stopped else 0
 
 
 # --- Selftest ---------------------------------------------------------------------------
@@ -357,6 +392,53 @@ def selftest() -> int:
         bad_src = dict(src, archetypes=dict(src["archetypes"], **{"evil": {"voice_id": "V9", "lines": {"x/../../y": "Hi."}}}))
         if [r["status"] for r in jobs(bad_src, manifest, False) if r["archetype"] == "evil"] != ["bad-id"]:
             fails.append("a line id with '..' or '/' is not refused as a path")
+        # #187 QA: an id that is not the generator's plain alphanumeric form is refused
+        # before it reaches a URL path.
+        evil_voice = dict(src, archetypes=dict(src["archetypes"], union={"voice_id": "../user", "lines": {}}))
+        if [r["status"] for r in jobs(evil_voice, manifest, False) if r["key"] == "union/event.strike"] != ["bad-id"]:
+            fails.append("a voice id with '../' is not refused before the URL")
+        # #187 QA: any printf slot, not only the bare ones, makes a line unvoiceable.
+        for slot in ("Up %.1f points.", "Rank %5d.", "Name %-3s."):
+            if not UNVOICEABLE.search(slot):
+                fails.append("UNVOICEABLE misses %r" % slot)
+        if UNVOICEABLE.search("We are 100% sure."):
+            fails.append("a plain per cent sign before a word reads as a printf slot")
+        # The kept audio of one voice is never reused for another.
+        row = {"key": "a/b", "sha": "0" * 64, "voice_id": "V1"}
+        if kept_path(root, row) == kept_path(root, dict(row, voice_id="V2")):
+            fails.append("the kept audio's name ignores the voice id")
+        # A 200 whose body is not the subscription is a stop with a reason too.
+        class Page:
+            status = 200
+            def __enter__(self):
+                return self
+            def __exit__(self, *a):
+                return False
+            def read(self):
+                return b"<html>maintenance</html>"
+        real_urlopen = urllib.request.urlopen
+        urllib.request.urlopen = lambda *a, **k: Page()
+        try:
+            allowance(secret)
+            fails.append("a page that is not the subscription read as an allowance")
+        except PipelineError:
+            pass
+        except Exception as e:
+            fails.append("%s escaped allowance()" % type(e).__name__)
+        finally:
+            urllib.request.urlopen = real_urlopen
+        # #187 QA: a dropped connection is a stop with a reason, never a traceback.
+        for exc in (TimeoutError("t"), ConnectionResetError("r"), http.client.IncompleteRead(b"")):
+            def boom(*a, _exc=exc, **k):
+                raise _exc
+            urllib.request.urlopen = boom
+            try:
+                if _request("GET", API + "/user/subscription", secret)[0] != 0:
+                    fails.append("%s did not read as no answer" % type(exc).__name__)
+            except Exception as e:
+                fails.append("%s escaped _request" % type(e).__name__)
+            finally:
+                urllib.request.urlopen = real_urlopen
         def broken(a, p):
             raise subprocess.CalledProcessError(1, "ffmpeg")
         every = sorted(r["key"] for r in jobs(src, manifest, True) if r["line_id"] == "event.strike")
@@ -406,12 +488,27 @@ def selftest() -> int:
                 except PipelineError as e:
                     if "conversion failed" not in str(e):
                         fails.append("a failed conversion stopped with the wrong reason: %s" % e)
+                # #187 QA: the paid audio of a failed conversion is kept, and the next
+                # run converts it again without paying for it twice.
+                kept = sorted((root / RECOVER_DIR).glob("*.mp3")) if (root / RECOVER_DIR).exists() else []
+                if len(kept) != 1:
+                    fails.append("a failed conversion kept %d paid clips, not 1" % len(kept))
                 # The account drops to 900 before the third clip (spent elsewhere): the
-                # per-clip read stops the batch there, two clips made.
+                # per-clip read stops the batch there, two clips made. --max-chars 37 is
+                # the batch's 56 characters less the kept clip's 19: the kept clip costs
+                # nothing, so the ceiling does not count it.
                 reads = [1000, 1000, 1000, 900]
-                run(root, False, "", 900, 10000, secret, "2026-10-26",
-                    allowance_fn=lambda k: reads.pop(0) if len(reads) > 1 else reads[0],
-                    speak_fn=lambda k, v, t: b"mp3", convert_fn=lambda a, p: made.append(p))
+                spoken = []
+                code = run(root, False, "", 900, 37, secret, "2026-10-26",
+                           allowance_fn=lambda k: reads.pop(0) if len(reads) > 1 else reads[0],
+                           speak_fn=lambda k, v, t: spoken.append(t) or b"mp3", convert_fn=lambda a, p: made.append(p))
+                # #187 QA: a batch the floor cut short is not a success.
+                if code == 0:
+                    fails.append("a batch stopped at the floor exited 0")
+                if len(spoken) != 1:
+                    fails.append("the kept clip was paid for again: %d clips spoken for 2 made" % len(spoken))
+                if (root / RECOVER_DIR).exists() and list((root / RECOVER_DIR).glob("*.mp3")):
+                    fails.append("a recovered clip stayed in %s after its conversion" % RECOVER_DIR)
         except PipelineError as e:
             fails.append("run failed: %s" % e)
         finally:
