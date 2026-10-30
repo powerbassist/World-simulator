@@ -69,6 +69,11 @@ static func close(state, loader, report: Dictionary) -> Dictionary:
 	for act in report.get("character_acts", []):
 		if String(act.get("act", "")) == "defect":
 			stories.append(_moment("character", "defected"))
+		# The prime minister leaving the chair of their own accord (#189 call 2,
+		# the outcome #191 added): the resign act's one office today.
+		elif String(act.get("act", "")) == "resign" \
+				and String((act.get("detail", {}) as Dictionary).get("office", "")) == "premiership":
+			stories.append(_moment("character", "prime_minister_resigned"))
 	for result in report.get("election_results", []):
 		var outcome := _election_outcome(result)
 		if outcome != "":
