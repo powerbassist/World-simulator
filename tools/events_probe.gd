@@ -61,6 +61,7 @@ const Unrest = preload("res://src/sim/unrest.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Events = preload("res://src/sim/events.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
+const E1bGate = preload("res://tools/e1b_gate.gd")
 const GameEvent = preload("res://src/core/event.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 
@@ -184,7 +185,66 @@ func _band_failed(msg: String) -> void:
 	_band_failures.append(msg)
 
 
+## V5.2d. `-- --json=PATH` writes the re-tune's working figures (docs/design/
+## v5.2-d-spec.md section 2) as JSON beside the printed tables: per event, E2's spread
+## and its bloc and E3's axes per choice with the verdicts; per regime, E1b's offset on
+## every bloc for both paths; the band failures. Content's loop reads it rather than
+## scraping the text. Written whether the bands pass or fail.
+var _json_path := ""
+var _json := {"e1b": {}, "events": {}, "band_failures": []}
+
+## E2 and E3 measure the same outcome for every (event, choice) from the same base --
+## computed once and shared, which halves the two tables' cost and cannot change a
+## figure (the run from a fixed base is deterministic).
+var _probe_base = null
+var _outcomes := {}
+
+## Tables named by --only (upper case); empty runs every table.
+var _only: Array[String] = []
+## E1b's regimes, as [part, parts]: regime k (REGIMES order, from 0) runs when
+## k % parts == part - 1. [1, 1] is every regime.
+var _e1b_part := [1, 1]
+## `--decompose`: E1b's start / no_events decomposition, a run per regime (JSON).
+var _decompose := false
+
+## Every table _init() dispatches, by its --only name. tests/test_events_probe_shards.gd
+## holds CI_SHARDS to cover all of them.
+const TABLES := ["E0", "E1B", "E4", "E5", "E6", "E7", "E2", "E3", "D"]
+
+## V5.2d. The CI job's partition (`-- --ci-shard=k`, one matrix job each): the whole
+## probe ran ~30 minutes in one job, at its timeout (#195, 2026-10-30: 13.5 min of E1b
+## of which 8.5 the decomposition, 8.9 E2+E3, 3.4 E4, 1.2 D, ~2 the rest). E2 and E3
+## share one outcome cache, so they stay together; E1b splits by regime. A table that
+## no shard names would never be gated in CI -- the test above fails on it, and on a
+## workflow matrix that does not list one job per shard.
+const CI_SHARDS := [
+	{"only": ["E1B"], "e1b": [1, 2]},
+	{"only": ["E1B"], "e1b": [2, 2]},
+	{"only": ["E2", "E3"]},
+	{"only": ["E0", "E4", "E5", "E6", "E7", "D"]},
+]
+
+
+func _runs(table: String) -> bool:
+	return _only.is_empty() or _only.has(table)
+
+
 func _init() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if String(arg).begins_with("--json="):
+			_json_path = String(arg).substr("--json=".length())
+		# V5.2d: `--only=E1b,E2,E3` runs those tables alone -- the re-tune loop's
+		# quick pass. The gate is every table: the whole probe, or CI's shards together.
+		elif String(arg).begins_with("--only="):
+			for t in String(arg).substr("--only=".length()).split(","):
+				_only.append(t.strip_edges().to_upper())
+		elif String(arg).begins_with("--ci-shard="):
+			var shard: Dictionary = CI_SHARDS[int(String(arg).substr("--ci-shard=".length())) - 1]
+			for t in shard["only"]:
+				_only.append(String(t))
+			_e1b_part = shard.get("e1b", [1, 1])
+		elif String(arg) == "--decompose":
+			_decompose = true
 	_loader = DataLoader.new()
 	_loader.load_all()
 	if not _loader.errors.is_empty():
@@ -192,18 +252,28 @@ func _init() -> void:
 		quit(1)
 		return
 
-	var paths := _all_paths()
-	_table_e0_range(paths)
-	_table_e0b_occupancy(paths)
-	_table_e0c_prediction(paths)
-	_table_e1b_accumulation()
-	_table_e4_cadence()
-	_table_e5_categories()
-	_table_e6_hooks()
-	_table_e7_chooser()
-	_table_e2_legibility()
-	_table_e3_dominance()
-	_table_d5_d7_voice()
+	if _runs("E0"):
+		var paths := _all_paths()
+		_table_e0_range(paths)
+		_table_e0b_occupancy(paths)
+		_table_e0c_prediction(paths)
+	if _runs("E1B"):
+		_table_e1b_accumulation()
+	if _runs("E4"):
+		_table_e4_cadence()
+	if _runs("E5"):
+		_table_e5_categories()
+	if _runs("E6"):
+		_table_e6_hooks()
+	if _runs("E7"):
+		_table_e7_chooser()
+	if _runs("E2"):
+		_table_e2_legibility()
+	if _runs("E3"):
+		_table_e3_dominance()
+	if _runs("D"):
+		_table_d5_d7_voice()
+	_write_json()
 	if not _band_failures.is_empty():
 		printerr("")
 		for f in _band_failures:
@@ -213,6 +283,18 @@ func _init() -> void:
 		return
 	print("\nevents_probe: every declared band PASSED")
 	quit(0)
+
+
+func _write_json() -> void:
+	if _json_path == "":
+		return
+	_json["band_failures"] = _band_failures.duplicate()
+	var f := FileAccess.open(_json_path, FileAccess.WRITE)
+	if f == null:
+		printerr("events_probe: cannot write %s" % _json_path)
+		return
+	f.store_string(JSON.stringify(_json, "  ", true))
+	f.close()
 
 
 # --- Harness ---------------------------------------------------------------------
@@ -469,6 +551,10 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 		# V5.2d (D5, D7, D9): who brought each arrival, and the month's front page.
 		"spoken": 0, "narrated": {}, "front_pages": 0, "two_tones": 0,
 		"front_windows": [0.0, 0.0, 0.0], "front_by_kind": {},
+		# Rule 3's per-event count (Content's ask): how often each event's choice was
+		# APPLIED to the player -- a default at its deadline or an answer -- and which
+		# choice, so a common-shift trim can be sized against the unclamped sum.
+		"fires": {}, "fires_by_choice": {},
 	}
 	var wrote := {}
 	for i in range(months):
@@ -502,6 +588,11 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 				tally["answered"] = int(tally["answered"]) + 1
 				tally["windows"][mini(2, i / TERM_MONTHS)] += 1.0
 				wrote[before[id]] = i
+				# Left the desk inside the month: only a deadline does that, so the
+				# default was applied.
+				var gone = Events.event_by_id(_loader, String(id))
+				if gone != null:
+					_count_fire(tally, String(id), String(gone.default_choice().get("id", "")))
 		if answer_well:
 			var guard := 0
 			while Events.is_pending(ns) and guard < EventsK.QUEUE_MAX + 1:
@@ -513,6 +604,7 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 					String(_best_choice(ev).get("id", "")))
 				if record.is_empty():
 					break
+				_count_fire(tally, String(record["event_id"]), String(record["choice_id"]))
 		if quiet_override > 0 and quiet_override != EventsK.CATEGORY_QUIET_MONTHS:
 			ns.event_category_quiet.clear()
 			for category in wrote.keys():
@@ -526,6 +618,14 @@ func _run_machine(regime: String, months: int, answer_well: bool, quiet_override
 		if depth >= EventsK.QUEUE_MAX:
 			tally["overfull"] = int(tally["overfull"]) + 1
 	return tally
+
+
+func _count_fire(tally: Dictionary, event_id: String, choice_id: String) -> void:
+	tally["fires"][event_id] = int(tally["fires"].get(event_id, 0)) + 1
+	if not tally["fires_by_choice"].has(event_id):
+		tally["fires_by_choice"][event_id] = {}
+	var by_choice: Dictionary = tally["fires_by_choice"][event_id]
+	by_choice[choice_id] = int(by_choice.get(choice_id, 0)) + 1
 
 
 ## The median over the run of each 60-month window's answers, scaled to a full
@@ -907,21 +1007,35 @@ func _table_e7_chooser() -> void:
 ## That is docs/projects-model.md's *a bill is not a cost* one block on -- a per-decision
 ## price is not a lifetime charge -- and economy-model.md's IMPULSE_MAX a sixth time.
 ##
-## BAND: the worst bloc's accumulated event offset over a full reachable run must leave
-## BLOC_OFFSET_MAX STRICTLY SLACK, on BOTH paths: the all-defaults path (what a player
-## who never opens the window produces) and the answer-well path (every entry answered
-## with its best choice on arrival). A clamp reached on either fails the band.
+## BAND: the EVENT BOOK'S OWN share of every bloc's offset over a full reachable run
+## (tools/e1b_gate.gd: each applied choice's authored bloc_offset, times how often the
+## run applied it) must leave BLOC_OFFSET_MAX STRICTLY SLACK, on BOTH paths: the
+## all-defaults path (what a player who never opens the window produces) and the
+## answer-well path (every entry answered with its best choice on arrival).
+##
+## V5.2d, the author's call of 2026-10-30 ("Mesurer les événements seuls, le reste en
+## V5.3"): until then the band read the LIVE register, which other writers move too --
+## the scenario's seed, a fallen government's price, campaigns, pledges, energy,
+## diplomacy -- so it failed on clamps the event book did not cause and could not trim
+## away. The live register is still printed (the "live" columns), reported and not
+## gated; those writers are V5.3's carry (docs/someday.md).
 ## docs/defence-model.md's measured-and-slack discipline.
 func _table_e1b_accumulation() -> void:
 	print("\n=== E1b  LIFETIME ACCUMULATION against the bloc_offset clamp (+-%.2f) ===" % LegislatureK.BLOC_OFFSET_MAX)
 	print("A per-decision price is not a lifetime charge. Measured on the ALL-DEFAULTS")
 	print("path, which is what a player who never opens the window produces, and on the")
 	print("answer-well path beside it. Saturation is not a big number: it is the point at")
-	print("which every regime stops being distinguishable from every other.\n")
-	print("%-14s %8s %8s   %-11s %9s   %-11s %9s" % [
-		"regime", "months", "events", "worst(def)", "offset", "worst(ans)", "offset",
+	print("which every regime stops being distinguishable from every other.")
+	print("GATED: the event book's own share (\"share\"). REPORTED: the live register (\"live\").\n")
+	print("%-14s %8s %8s   %-11s %8s %-11s %8s   %-11s %8s %-11s %8s" % [
+		"regime", "months", "events", "share(def)", "", "share(ans)", "", "live(def)", "", "live(ans)", "",
 	])
-	for regime in REGIMES.keys():
+	var regimes: Array = REGIMES.keys()
+	for k in regimes.size():
+		# CI's shards split this table by regime (CI_SHARDS); locally every regime runs.
+		if k % int(_e1b_part[1]) != int(_e1b_part[0]) - 1:
+			continue
+		var regime: String = regimes[k]
 		# Both paths on the real machine now -- the defaults path is what a player
 		# who never opens the window produces; the answer-well path answers every
 		# entry with _best_choice() on its arrival month. The old table measured
@@ -931,23 +1045,51 @@ func _table_e1b_accumulation() -> void:
 		var a := _run_machine(regime, RUN_MONTHS, true, 0)
 		var dw := _worst_offset(d["state"])
 		var aw := _worst_offset(a["state"])
-		var def_saturated: bool = absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
-		var ans_saturated: bool = absf(float(aw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - 0.001
-		print("%-14s %8d %8d   %-11s %9.4f   %-11s %9.4f%s" % [
+		# Rule 3 trims per bloc, so the JSON carries every bloc, not only the worst.
+		_json["e1b"][regime] = {
+			"months": int(d["months"]), "arrivals": int(d["arrivals"]),
+			"defaults": _bloc_offsets(d["state"]), "answer_well": _bloc_offsets(a["state"]),
+			"fires": {"defaults": d["fires"], "answer_well": a["fires"]},
+			"fires_by_choice": {"defaults": d["fires_by_choice"], "answer_well": a["fires_by_choice"]},
+		}
+		var share_d := E1bGate.event_share(_loader, d["fires_by_choice"])
+		var share_a := E1bGate.event_share(_loader, a["fires_by_choice"])
+		_json["e1b"][regime]["event_sum"] = {"defaults": share_d, "answer_well": share_a}
+		# Its own flag, not --json's: a run per regime, which was 8.5 of CI's 30 minutes.
+		if _decompose:
+			_e1b_decomposition(regime)
+		var sd := _worst_of(share_d)
+		var sa := _worst_of(share_a)
+		var live_hit: bool = absf(float(dw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - E1bGate.AT_CLAMP_EPS \
+				or absf(float(aw["value"])) >= LegislatureK.BLOC_OFFSET_MAX - E1bGate.AT_CLAMP_EPS
+		var hit_d := E1bGate.saturated(share_d, LegislatureK.BLOC_OFFSET_MAX)
+		var hit_a := E1bGate.saturated(share_a, LegislatureK.BLOC_OFFSET_MAX)
+		print("%-14s %8d %8d   %-11s %+8.4f %-11s %+8.4f   %-11s %+8.4f %-11s %+8.4f%s%s" % [
 			regime, int(d["months"]), int(d["arrivals"]),
+			sd["bloc"], float(sd["value"]), sa["bloc"], float(sa["value"]),
 			dw["bloc"], float(dw["value"]), aw["bloc"], float(aw["value"]),
-			"   *** SATURATED ***" if def_saturated else "",
+			"   *** SHARE AT THE CLAMP ***" if not (hit_d.is_empty() and hit_a.is_empty()) else "",
+			"   (live at the clamp: reported, V5.3)" if live_hit else "",
 		])
-		# The band is the header's: STRICTLY SLACK of the clamp on both paths.
-		# Printing the marker without failing it left the run exiting 0 over
-		# "every declared band PASSED". The answer-well path adds the best choices'
-		# own offsets, and a clamp reached there is the same convergence of regimes.
-		if def_saturated:
-			_band_failed("E1b: regime %s on the all-defaults path reaches the bloc_offset clamp -- bloc %s at %.4f against +-%.2f" % [
-				regime, dw["bloc"], float(dw["value"]), LegislatureK.BLOC_OFFSET_MAX])
-		if ans_saturated:
-			_band_failed("E1b: regime %s on the answer-well path reaches the bloc_offset clamp -- bloc %s at %.4f against +-%.2f" % [
-				regime, aw["bloc"], float(aw["value"]), LegislatureK.BLOC_OFFSET_MAX])
+		# The band is the header's: the share STRICTLY SLACK of the clamp on both paths.
+		if not hit_d.is_empty():
+			_band_failed("E1b (D4): regime %s, all-defaults path: the event book's own share reaches the clamp on %s (worst %s %+.4f against +-%.2f)" % [
+				regime, ", ".join(hit_d), sd["bloc"], float(sd["value"]), LegislatureK.BLOC_OFFSET_MAX])
+		if not hit_a.is_empty():
+			_band_failed("E1b (D4): regime %s, answer-well path: the event book's own share reaches the clamp on %s (worst %s %+.4f against +-%.2f)" % [
+				regime, ", ".join(hit_a), sa["bloc"], float(sa["value"]), LegislatureK.BLOC_OFFSET_MAX])
+
+
+## The bloc with the largest absolute value in a bloc -> offset map.
+func _worst_of(share: Dictionary) -> Dictionary:
+	var worst := ""
+	var value := 0.0
+	for bloc in OpinionK.BLOC_KEYS:
+		var v := float(share.get(bloc, 0.0))
+		if absf(v) > absf(value):
+			value = v
+			worst = bloc
+	return {"bloc": worst, "value": value}
 
 
 ## The bloc carrying the largest absolute offset. Read off the LIVE register rather than
@@ -963,6 +1105,38 @@ func _worst_offset(state) -> Dictionary:
 			value = v
 			worst = bloc
 	return {"bloc": worst, "value": value}
+
+
+## Rule 3's decomposition, behind `--decompose` (it costs a run per regime; it goes
+## into the JSON, so pair it with --json). The live offset is
+## not the events' sum: the scenario's authored approval SEEDS it (opinion.gd), and a
+## dozen other writers move it -- a fallen government's and a resignation's price
+## (Government.penalise_blocs), campaigns, pledges, energy, diplomacy, projects --
+## with the clamp applied at every write. So, per regime:
+##   start      the offsets the run begins from (new game plus the regime's commit);
+##   no_events  the same run with the event book emptied: every other writer, as far
+##              as a run without events is the same run (events feed approval, which
+##              feeds resignations -- second order, stated rather than modelled);
+##   event_sum  per path, the gate's own share (E1bGate.event_share), always written.
+## The live register is then roughly no_events + event_sum, clamped; the gate reads
+## event_sum alone (the author's call, 2026-10-30), and no_events is V5.3's carry.
+func _e1b_decomposition(regime: String) -> void:
+	var start = _new_state("FRA")
+	_commit(start, REGIMES[regime])
+	var kept: Array = _loader.events.duplicate()
+	_loader.events.clear()
+	var quiet := _run_machine(regime, RUN_MONTHS, false, 0)
+	_loader.events.append_array(kept)
+	var row: Dictionary = _json["e1b"][regime]
+	row["start"] = _bloc_offsets(start)
+	row["no_events"] = _bloc_offsets(quiet["state"])
+
+
+func _bloc_offsets(state) -> Dictionary:
+	var out := {}
+	for bloc in OpinionK.BLOC_KEYS:
+		out[bloc] = float(state.player().bloc_offset.get(bloc, 0.0))
+	return out
 
 
 # --- E2: legibility, and the axis it is measured on was corrected by the first run --
@@ -1012,11 +1186,12 @@ func _table_e2_legibility() -> void:
 	print("docs/pledge-model.md measured a full-term promise breach to cost. The headline")
 	print("column is printed beside it and is NOT the band: see this function's header.\n")
 	print("%-26s %10s %-12s %10s   %s" % ["event", "spread", "on bloc", "headline", "band"])
-	var base = _state_at(PROBE_MONTH)
+	var base = _shared_base()
+	var outside: Array = []
 	for ev in _loader.events:
 		var rows: Array = []
 		for c in ev.choices:
-			rows.append(_outcome(base, ev, c))
+			rows.append(_cached_outcome(base, ev, c))
 		var widest := 0.0
 		var widest_bloc := ""
 		for bloc in OpinionK.BLOC_KEYS:
@@ -1034,11 +1209,38 @@ func _table_e2_legibility() -> void:
 		for o in rows:
 			head_lo = minf(head_lo, float(o["approval"]))
 			head_hi = maxf(head_hi, float(o["approval"]))
+		var inside: bool = widest >= NOISE_FLOOR and widest <= PLEDGE_BREACH_CEILING
 		print("%-26s %10.3f %-12s %10.3f   %s" % [
 			ev.id, widest, widest_bloc, head_hi - head_lo,
-			"PASS" if widest >= NOISE_FLOOR and widest <= PLEDGE_BREACH_CEILING
-			else ("under floor" if widest < NOISE_FLOOR else "over ceiling"),
+			"PASS" if inside else ("under floor" if widest < NOISE_FLOOR else "over ceiling"),
 		])
+		if not inside:
+			outside.append(ev.id)
+		_event_json(ev)["e2"] = {"spread": widest, "bloc": widest_bloc, "headline": head_hi - head_lo, "pass": inside}
+	# V5.2d D3: the band fails the run (docs/design/v5.2-d-spec.md section 5).
+	if not outside.is_empty():
+		_band_failed("E2 (D3): %d event(s) with a spread outside [%.1f, %.1f]: %s" % [
+			outside.size(), NOISE_FLOOR, PLEDGE_BREACH_CEILING, ", ".join(outside)])
+
+
+## The E2/E3 base, built once.
+func _shared_base():
+	if _probe_base == null:
+		_probe_base = _state_at(PROBE_MONTH)
+	return _probe_base
+
+
+func _cached_outcome(base, ev, choice: Dictionary) -> Dictionary:
+	var key := "%s|%s" % [ev.id, String(choice["id"])]
+	if not _outcomes.has(key):
+		_outcomes[key] = _outcome(base, ev, choice)
+	return _outcomes[key]
+
+
+func _event_json(ev) -> Dictionary:
+	if not (_json["events"] as Dictionary).has(ev.id):
+		_json["events"][ev.id] = {"severity": int(ev.severity), "category": ev.category}
+	return _json["events"][ev.id]
 
 
 ## A `managed` France, `months` months in, with nothing pending. The base every E2 and
@@ -1108,15 +1310,25 @@ func _table_e3_dominance() -> void:
 	print("\n=== E3  DOMINANCE: every choice, +%d months, on three axes ===" % HORIZON)
 	print("approval higher is better; deficit LOWER is better (positive is a shortfall);")
 	print("worst-bloc higher is better. Tolerances %.3f / %.4f -- see EPS_APPROVAL.\n" % [EPS_APPROVAL, EPS_DEFICIT])
-	var base = _state_at(PROBE_MONTH)
+	var base = _shared_base()
 	var dominated := 0
 	var toothless := 0
+	var dominated_at: Array = []
+	var toothless_at: Array = []
 	for ev in _loader.events:
 		print("-- %s" % ev.id)
 		var rows: Array = []
+		var record := _event_json(ev)
+		record["choices"] = {}
+		record["dominated"] = []
+		record["toothless"] = false
 		for c in ev.choices:
-			var o := _outcome(base, ev, c)
+			var o := _cached_outcome(base, ev, c)
 			rows.append({"choice": c, "o": o})
+			record["choices"][String(c["id"])] = {
+				"default": bool(c["is_default"]), "approval": o["approval"], "deficit": o["deficit"],
+				"worst_bloc": o["worst_bloc"], "corruption": o["corruption"], "blocs": o["blocs"],
+			}
 			print("   %-16s%s approval %7.3f   deficit %7.3f   worst %7.3f   corrupt %+6.3f" % [
 				String(c["id"]), " (default)" if bool(c["is_default"]) else "         ",
 				float(o["approval"]), float(o["deficit"]), float(o["worst_bloc"]),
@@ -1130,6 +1342,9 @@ func _table_e3_dominance() -> void:
 					continue
 				if _dominates(rows[i]["o"], rows[j]["o"]):
 					dominated += 1
+					record["dominated"].append([String(rows[i]["choice"]["id"]), String(rows[j]["choice"]["id"])])
+					if not dominated_at.has(ev.id):
+						dominated_at.append(ev.id)
 					print("   *** '%s' dominates '%s' on all three axes" % [
 						rows[i]["choice"]["id"], rows[j]["choice"]["id"],
 					])
@@ -1145,9 +1360,16 @@ func _table_e3_dominance() -> void:
 				beaten = true
 		if not beaten:
 			toothless += 1
+			toothless_at.append(ev.id)
+			record["toothless"] = true
 			print("   *** the default is beaten on no axis: the deadline has no teeth")
 	print("\ndominated alternatives: %d    toothless defaults: %d" % [dominated, toothless])
 	print("(an ACTIVE choice dominating the DEFAULT is the design, not a violation)")
+	# V5.2d D1 and D2: both counts fail the run (docs/design/v5.2-d-spec.md section 5).
+	if dominated > 0:
+		_band_failed("E3 (D1): %d dominated pair(s) among non-default answers, in %s" % [dominated, ", ".join(dominated_at)])
+	if toothless > 0:
+		_band_failed("E3 (D2): %d toothless default(s): %s" % [toothless, ", ".join(toothless_at)])
 
 
 ## THE FOURTH AXIS IS `corruption`, AND WHICH REGISTERS BELONG HERE IS AN ARGUMENT

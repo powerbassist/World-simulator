@@ -66,10 +66,12 @@
               "income": 0.5
             },
             "bloc_offset": {
-              "business": -0.05,
-              "urban": 0.012,
-              "students": 0.01,
-              "workers": 0.008
+              "business": -0.0536,
+              "urban": 0.0084,
+              "students": 0.0064,
+              "workers": 0.0044,
+              "pensioners": -0.0036,
+              "rural": 0.0209
             }
           }
         }
@@ -108,10 +110,12 @@
               "education": -0.1
             },
             "bloc_offset": {
-              "business": 0.04,
-              "rural": 0.018,
-              "workers": -0.015,
-              "urban": -0.012
+              "pensioners": -0.0048,
+              "business": 0.0577,
+              "students": 0.0034,
+              "workers": -0.014,
+              "urban": -0.0113,
+              "rural": 0.0214
             }
           }
         },
@@ -121,12 +125,12 @@
           "summary": "The rebuttal runs to nine pages and says the agency misread the pension assumption. It may even be right; the meeting it asked for is declined, which is the part everybody reads.",
           "effects": {
             "bloc_offset": {
-              "urban": 0.02,
-              "students": 0.016,
-              "workers": 0.01,
-              "business": -0.032,
-              "rural": 0.014,
-              "pensioners": -0.025
+              "pensioners": -0.0383,
+              "business": -0.0388,
+              "students": 0.0249,
+              "workers": 0.0195,
+              "urban": 0.0316,
+              "rural": 0.016
             }
           }
         },
@@ -180,11 +184,12 @@
               "health": 0.3
             },
             "bloc_offset": {
-              "pensioners": 0.02,
-              "workers": 0.012,
-              "students": -0.008,
-              "rural": -0.018,
-              "urban": -0.036
+              "pensioners": 0.0514,
+              "business": -0.0293,
+              "students": -0.018,
+              "workers": 0.0406,
+              "urban": -0.0791,
+              "rural": -0.0638
             }
           }
         },
@@ -213,12 +218,12 @@
               "health": 0.12
             },
             "bloc_offset": {
-              "workers": 0.01,
-              "pensioners": 0.008,
-              "urban": 0.002,
-              "rural": -0.012,
-              "business": -0.012,
-              "students": -0.031
+              "pensioners": 0.0229,
+              "business": -0.0577,
+              "students": -0.0726,
+              "workers": 0.036,
+              "urban": 0.0114,
+              "rural": -0.0495
             }
           }
         }
@@ -249,12 +254,12 @@
               "vat": -0.5
             },
             "bloc_offset": {
-              "workers": 0.012,
-              "rural": 0.02,
-              "business": 0.012,
-              "students": 0.006,
-              "urban": -0.012,
-              "pensioners": -0.03
+              "pensioners": -0.0635,
+              "business": 0.014,
+              "students": 0.0218,
+              "workers": 0.0317,
+              "urban": -0.01,
+              "rural": 0.0338
             }
           }
         },
@@ -280,11 +285,12 @@
           "summary": "The rate stands and the morning interview explains what it pays for. The names stay collected either way, and the petition now has a date of its own.",
           "effects": {
             "bloc_offset": {
-              "business": -0.03,
-              "urban": -0.02,
-              "workers": 0.012,
-              "rural": -0.008,
-              "pensioners": 0.014
+              "pensioners": 0.0238,
+              "business": -0.0694,
+              "students": 0.0098,
+              "workers": 0.0317,
+              "urban": -0.0259,
+              "rural": -0.0218
             }
           }
         }
@@ -315,11 +321,12 @@
               "corruption": -0.08
             },
             "bloc_offset": {
-              "urban": 0.024,
-              "students": 0.018,
-              "workers": 0.008,
-              "business": -0.02,
-              "pensioners": -0.023
+              "pensioners": -0.0567,
+              "business": -0.0526,
+              "students": 0.0482,
+              "workers": 0.0173,
+              "urban": 0.0635,
+              "rural": -0.0047
             }
           }
         },
@@ -332,11 +339,12 @@
               "corruption": 0.06
             },
             "bloc_offset": {
-              "urban": -0.022,
-              "students": -0.018,
-              "workers": -0.008,
-              "business": 0.02,
-              "pensioners": 0.021
+              "pensioners": 0.038,
+              "business": 0.0336,
+              "students": -0.03,
+              "workers": -0.0177,
+              "urban": -0.0364,
+              "rural": -0.0023
             }
           },
           "arms": {
@@ -396,12 +404,12 @@
               "pensions": 0.4
             },
             "bloc_offset": {
-              "pensioners": 0.02,
-              "workers": 0.012,
-              "business": -0.022,
-              "urban": -0.008,
-              "rural": -0.03,
-              "students": -0.004
+              "pensioners": 0.0356,
+              "business": -0.0684,
+              "students": -0.0246,
+              "workers": 0.0138,
+              "urban": -0.0269,
+              "rural": 0.0015
             }
           }
         },
@@ -414,10 +422,11 @@
               "income": 0.5
             },
             "bloc_offset": {
-              "workers": -0.02,
-              "business": -0.018,
-              "pensioners": 0.036,
-              "urban": -0.006
+              "pensioners": 0.0825,
+              "business": -0.0438,
+              "workers": -0.0286,
+              "urban": -0.006,
+              "rural": -0.0034
             }
           }
         },
@@ -470,11 +479,12 @@
               "infrastructure": 0.25
             },
             "bloc_offset": {
-              "workers": 0.018,
-              "urban": 0.024,
-              "rural": -0.012,
-              "business": -0.012,
-              "pensioners": -0.026
+              "pensioners": -0.0057,
+              "business": -0.1179,
+              "students": -0.0276,
+              "workers": 0.0154,
+              "urban": 0.0421,
+              "rural": 0.034
             }
           }
         },
@@ -503,11 +513,12 @@
               "corruption": -0.05
             },
             "bloc_offset": {
-              "business": 0.02,
-              "rural": 0.012,
-              "urban": -0.02,
-              "pensioners": 0.012,
-              "workers": -0.011
+              "pensioners": 0.0097,
+              "business": 0.0177,
+              "students": 0.0046,
+              "workers": -0.015,
+              "urban": -0.0292,
+              "rural": 0.0338
             }
           }
         }
@@ -547,11 +558,11 @@
               "infrastructure": -0.15
             },
             "bloc_offset": {
-              "business": 0.04,
-              "rural": 0.016,
-              "urban": -0.018,
-              "workers": -0.016,
-              "pensioners": 0.006
+              "pensioners": 0.0045,
+              "business": 0.0546,
+              "workers": -0.0218,
+              "urban": -0.0233,
+              "rural": 0.0228
             }
           }
         },
@@ -564,11 +575,12 @@
               "education": -0.08
             },
             "bloc_offset": {
-              "students": -0.014,
-              "urban": -0.01,
-              "business": 0.012,
-              "rural": 0.006,
-              "pensioners": 0.003
+              "pensioners": 0.0008,
+              "business": 0.0198,
+              "students": -0.0174,
+              "workers": -0.0019,
+              "urban": -0.0134,
+              "rural": 0.0104
             }
           }
         },
@@ -619,11 +631,12 @@
           "summary": "Every favour the majority holds is spent in one afternoon and the ceiling passes by four. The leader keeps the job and the majority keeps the receipt.",
           "effects": {
             "bloc_offset": {
-              "business": 0.03,
-              "rural": 0.014,
-              "workers": -0.014,
-              "urban": -0.012,
-              "pensioners": 0.005
+              "pensioners": -0.0109,
+              "business": 0.0493,
+              "students": 0.011,
+              "workers": -0.0237,
+              "urban": -0.0134,
+              "rural": 0.0458
             }
           }
         },
@@ -652,10 +665,12 @@
               "income": 0.5
             },
             "bloc_offset": {
-              "workers": -0.014,
-              "urban": -0.012,
-              "business": -0.008,
-              "pensioners": 0.028
+              "pensioners": 0.0601,
+              "business": -0.0672,
+              "students": 0.0113,
+              "workers": -0.0234,
+              "urban": -0.0131,
+              "rural": 0.003
             }
           }
         }
@@ -691,11 +706,11 @@
           "effects": {
             "other_revenue_pct_gdp": -0.2,
             "bloc_offset": {
-              "business": 0.02,
               "pensioners": 0.012,
-              "rural": 0.008,
-              "workers": -0.01,
-              "urban": -0.019
+              "business": 0.0954,
+              "workers": -0.0408,
+              "urban": -0.0344,
+              "rural": 0.0423
             }
           }
         },
@@ -723,11 +738,12 @@
               "infrastructure": -0.2
             },
             "bloc_offset": {
-              "business": 0.014,
-              "urban": -0.016,
-              "students": -0.012,
-              "rural": -0.01,
-              "workers": 0.011
+              "pensioners": -0.0206,
+              "business": 0.0791,
+              "students": -0.0326,
+              "workers": 0.0161,
+              "urban": -0.0263,
+              "rural": -0.0066
             }
           }
         }
@@ -759,11 +775,12 @@
               "income": 0.4
             },
             "bloc_offset": {
-              "business": -0.022,
-              "urban": -0.014,
-              "workers": 0.01,
-              "rural": -0.008,
-              "pensioners": 0.01
+              "pensioners": 0.01,
+              "business": -0.0358,
+              "students": -0.0055,
+              "workers": 0.0321,
+              "urban": -0.0223,
+              "rural": -0.0052
             }
           }
         },
@@ -776,11 +793,12 @@
               "education": -0.15
             },
             "bloc_offset": {
-              "workers": -0.014,
-              "students": -0.022,
-              "urban": -0.012,
-              "rural": -0.01,
-              "business": 0.012
+              "pensioners": 0.0011,
+              "business": 0.0601,
+              "students": -0.0431,
+              "workers": -0.0102,
+              "urban": -0.0026,
+              "rural": 0.0049
             }
           }
         },
@@ -832,10 +850,12 @@
           "effects": {
             "other_revenue_pct_gdp": -0.25,
             "bloc_offset": {
-              "business": 0.016,
-              "pensioners": -0.005,
-              "rural": 0.008,
-              "urban": -0.01
+              "pensioners": -0.0203,
+              "business": 0.0062,
+              "students": 0.0008,
+              "workers": 0.0094,
+              "urban": -0.0186,
+              "rural": 0.0313
             }
           }
         },
@@ -848,11 +868,12 @@
               "defence": -0.2
             },
             "bloc_offset": {
-              "rural": -0.014,
-              "business": 0.014,
-              "urban": -0.008,
-              "workers": -0.008,
-              "pensioners": 0.017
+              "pensioners": 0.0531,
+              "business": 0.0032,
+              "workers": -0.0153,
+              "urban": -0.0107,
+              "rural": -0.0404,
+              "students": 0.0014
             }
           }
         },
