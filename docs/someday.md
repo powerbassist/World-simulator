@@ -97,7 +97,11 @@ current 102, or any lint-clean book that fails to load. **Fix shape:** one
 zero-effect rule at the loader, and the lint's society/company checks lifted to
 the loader's own.
 
-### The probe's E2/E3 bands are declared but cannot fail the run
+### The probe's E2/E3 bands are declared but cannot fail the run -- FIXED (V5.2d, #195)
+
+E2 (D3) and E3 (D1, D2) record band failures since V5.2d's re-tune, at the bands
+docs/design/v5.2-d-spec.md section 5 declared, and the probe runs in CI as its own
+job. Kept for the history below.
 
 `events_probe.gd`'s E2 (legibility) and E3 (dominance — its own comment says "THE KILL
 SWITCH FOR THE CONTENT") print tables and never call `_band_failed`, so the exit
@@ -358,6 +362,28 @@ cursor; the name returns when the cursor leaves). The rest are parked:
 - **Small nations' names drop between zoom 1.4 and 2.0** (or on small windows): a
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
+
+## Carried from V5.2d (2026-10-30)
+
+### The bloc offsets other writers drive to the clamp (V5.3)
+
+The author's call on D4, 2026-10-30 ("Mesurer les événements seuls, le reste en V5.3"): `events_probe`'s E1b gate now judges the event book's OWN share of each bloc's offset (`tools/e1b_gate.gd`), and the live register is reported, not gated. The live register also carries every other writer of `ns.bloc_offset`: the scenario's authored approval seeds it (opinion.gd), and it moves with a fallen government's and a resignation's price (`Government.penalise_blocs`), campaigns, pledges, energy, diplomacy, projects, companies and character acts. Each write is clamped. Those writers alone (`no_events`: the same run with the event book emptied, `events_probe -- --json`) put workers and students at -0.88 to -1.00 by month 168. These are the live clamp hits on main's book (2026-10-30, `tools/events_probe.gd -- --only=E1b --json`):
+
+| Regime | Path | Bloc | Live | Other writers | Event share |
+|---|---|---|---|---|---|
+| hands_off | defaults | students | -1.00 | -0.91 | -0.30 |
+| hands_off | defaults | workers | -1.00 | -0.88 | -0.48 |
+| spendthrift | defaults | students | -1.00 | -1.00 | -0.39 |
+| spendthrift | defaults | workers | -1.00 | -1.00 | -0.59 |
+| spendthrift | answer_well | rural | -1.00 | -0.83 | -0.29 |
+| tax_max | defaults | students | -1.00 | -1.00 | -0.43 |
+| tax_max | defaults | workers | -1.00 | -1.00 | -0.71 |
+| tax_max | answer_well | students | -1.00 | -1.00 | -0.28 |
+| tax_max | answer_well | workers | -1.00 | -1.00 | +0.58 |
+| tinkering | defaults | students | -1.00 | -1.00 | -0.34 |
+| tinkering | defaults | workers | -1.00 | -1.00 | -0.53 |
+
+**Trigger:** V5.3's plan. **Fix shape:** each writer's lifetime charge against the clamp, the way V1.8's E1b priced the events: a decay, or a price per act that leaves the clamp slack over a reachable career. Then the E1b band can read the live register again.
 
 ## Carried from the V5.1 close-out (2026-10-23)
 
