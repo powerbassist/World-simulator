@@ -213,6 +213,7 @@ tests=(
   tests/test_headlines.gd
   tests/test_speaker_lines.gd
   tests/test_voices.gd
+  tests/test_person_voice.gd
   tests/test_inbox_notes.gd
   tests/test_d_wiring.gd
   tests/test_broken_word_card.gd

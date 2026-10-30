@@ -68,6 +68,10 @@ var spouse_id: String = ""
 ## Personal wealth at game start, EUR millions. The START only: what the
 ## president gains or loses is NationState.person_wealth_delta_eur_m.
 var wealth_eur_m: float = 0.0
+## V5.2d. The voice archetype this person speaks in (data/voices/archetypes.json),
+## "" for their kind's default -- read through Voices.archetype_of(), never here.
+## Presentation only: no mechanism reads it.
+var voice: String = ""
 
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
@@ -161,6 +165,15 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 			p.wealth_eur_m = float(wealth)
 		else:
 			errors.append("%s: %s field 'wealth_eur_m' must be a number >= 0" % [filename, path])
+
+	# V5.2d. Shape only (an id that is safe as a path part, the voice pipeline's
+	# rule); the archetype and its kind resolve in PeopleLoader.validate_voices().
+	if d.has("voice"):
+		var voice = d["voice"]
+		if typeof(voice) == TYPE_STRING and RegEx.create_from_string("^[A-Za-z0-9_-]+$").search(String(voice)) != null:
+			p.voice = String(voice)
+		else:
+			errors.append("%s: %s field 'voice' must be an archetype id (letters, digits, _ and -)" % [filename, path])
 
 	if d.has("wants"):
 		if typeof(d["wants"]) != TYPE_ARRAY:
