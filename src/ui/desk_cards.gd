@@ -131,7 +131,7 @@ static func card_events(main, year: int, month: int, desk_before: Dictionary, be
 		main._unseen_events[event_id] = holds
 		var faced := push(main, ev, entry) if MessageSettings.allows(main._messages, ev.category, severity, "popup") else ""
 		if faced != "" and severity > clip_severity:
-			var found := Voice.clip_for(ev)
+			var found := Voice.clip_for(ev, main._loader, String(entry.get("speaker", "")))
 			if found != "":
 				clip = found
 				clip_card = faced
@@ -184,7 +184,7 @@ static func guard_lapses(main, ns) -> void:
 		main._hold_for_decision()
 		# The card opens here for the first time, so its speaker speaks (no sting).
 		if not main._event_cards.values().has(event_id):
-			speak(main, push(main, ev, entry), Voice.clip_for(ev))
+			speak(main, push(main, ev, entry), Voice.clip_for(ev, main._loader, String(entry.get("speaker", ""))))
 
 
 ## The decision card for one desk entry: the event's choices as buttons, the

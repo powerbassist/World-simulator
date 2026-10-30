@@ -8,9 +8,10 @@ extends SceneTree
 ## manifest in tools/voice_pipeline.py's shape:
 ##   - Godot's sha256_text() is the pipeline's hashlib hash of the UTF-8 bytes (two
 ##     pins computed in Python, one of them non-ASCII);
-##   - the clip is found by the speaker form's default archetype and plays only when
+##   - the clip is found in the delivered speaker's own archetype, else the speaker
+##     form's default (src/core/voices.gd, QA's RECORD on #199), and plays only when
 ##     the manifest's hash is the shown line's; a stale hash, no manifest row and no
-##     tables at all are silence, and print nothing;
+##     manifest at all are silence, and print nothing;
 ##   - Voices Off and Sound Off are silence; a level sets the player's volume;
 ##   - an ARRIVAL with a face speaks; a load's restored desk does not; a line is
 ##     not cut off by the next one, and ends when its card is answered or dismissed.
@@ -18,6 +19,7 @@ extends SceneTree
 ## suite-exclusive: backs up and restores user://settings.cfg -- the checks write the Sound and Voices settings
 
 const Voice = preload("res://src/ui/voice.gd")
+const Voices = preload("res://src/core/voices.gd")
 const DeskCards = preload("res://src/ui/desk_cards.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const SoundK = preload("res://src/ui/sound_constants.gd")
@@ -63,6 +65,7 @@ func _process(_delta: float) -> bool:
 			if not _pick_event():
 				return _finish()
 			_check_lookup()
+			_check_own_voice_first()
 			_check_absent_tables()
 			_check_settings_gate()
 			_check_restore_silent()
@@ -127,13 +130,27 @@ func _pick_event() -> bool:
 	return true
 
 
-## The fixture tables: the event's kind defaults to archetype "arch", whose clip of the
-## event's line is the fixture, hashed as `text` says.
+## The fixture manifest: the speaker form's default archetype's clip of the event's
+## line is the fixture, hashed as `text` says.
 func _tables(text: String) -> void:
-	var kind := String(_ev.speaker["kind"])
-	var key := "arch/event.%s" % _ev.id
-	Voice.set_tables({key: {"archetype": "arch", "line_id": "event.%s" % _ev.id, "file": FIXTURE,
-		"text_sha256": text.sha256_text()}}, {kind: "arch"})
+	Voice.set_tables(_rows({_default_arch(): text}))
+
+
+## Manifest rows for the event's line, one per archetype -> the text it was hashed from.
+func _rows(texts: Dictionary) -> Dictionary:
+	var out := {}
+	for arch in texts:
+		out["%s/event.%s" % [arch, _ev.id]] = {"archetype": arch, "line_id": "event.%s" % _ev.id,
+			"file": FIXTURE, "text_sha256": String(texts[arch]).sha256_text()}
+	return out
+
+
+func _default_arch() -> String:
+	return Voices.speaker_archetype(_main._loader, _ev.speaker, "")
+
+
+func _clip(person_id := "") -> String:
+	return Voice.clip_for(_ev, _main._loader, person_id)
 
 
 func _shown() -> String:
@@ -141,21 +158,51 @@ func _shown() -> String:
 
 
 func _check_lookup() -> void:
+	if _default_arch() == "":
+		_failures.append("fixture: the event's speaker form has no default archetype")
 	_tables(_shown())
-	if Voice.clip_for(_ev) != "res://" + FIXTURE:
-		_failures.append("a clip whose hash is the shown line's was not found: '%s'" % Voice.clip_for(_ev))
+	if _clip() != "res://" + FIXTURE:
+		_failures.append("a clip whose hash is the shown line's was not found: '%s'" % _clip())
 	_tables(_shown() + " Changed.")
-	if Voice.clip_for(_ev) != "":
+	if _clip() != "":
 		_failures.append("a stale clip (the line changed since it was voiced) was found")
-	Voice.set_tables({}, {String(_ev.speaker["kind"]): "arch"})
-	if Voice.clip_for(_ev) != "":
+	Voice.set_tables({})
+	if _clip() != "":
 		_failures.append("a line with no manifest row found a clip")
+
+
+## QA's RECORD on #199: a person whose own archetype is not the form's default (a
+## woman prime minister) speaks in her own voice when it has a clip of the line, and
+## in the default when it has none. Each half makes the OTHER archetype's row stale,
+## so only the archetype the rule picks can be the one found.
+func _check_own_voice_first() -> void:
+	var default_arch := _default_arch()
+	var pid := ""
+	var own := ""
+	for id in _main._loader.person_by_id:
+		var arch := Voices.speaker_archetype(_main._loader, _ev.speaker, String(id))
+		if arch != "" and arch != default_arch:
+			pid = String(id)
+			own = arch
+			break
+	if pid == "":
+		_failures.append("fixture: no person speaks in an archetype other than the form's default")
+		return
+	Voice.set_tables(_rows({own: _shown(), default_arch: _shown() + " Stale."}))
+	if _clip(pid) != "res://" + FIXTURE:
+		_failures.append("a speaker's own archetype clip did not win over the form's default")
+	Voice.set_tables(_rows({own: _shown() + " Stale.", default_arch: _shown()}))
+	if _clip(pid) != "res://" + FIXTURE:
+		_failures.append("a speaker whose own archetype has no clip did not fall back to the default")
+	Voice.set_tables(_rows({own: _shown(), default_arch: _shown()}))
+	if _clip("no_such_person") != "res://" + FIXTURE:
+		_failures.append("an unknown speaker id did not fall back to the form's default clip")
 
 
 ## Neither data/voices/ nor assets/audio/voice/ need exist: the lazy read is silence.
 func _check_absent_tables() -> void:
 	Voice.reset()
-	var path := Voice.clip_for(_ev)
+	var path := _clip(_person_id)
 	if path != "" and not FileAccess.file_exists(path):
 		_failures.append("the shipped tables name a clip that does not exist: '%s'" % path)
 
