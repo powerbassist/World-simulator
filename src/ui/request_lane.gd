@@ -112,7 +112,10 @@ func _on_action(card_id: String, index: int) -> void:
 	if not _request_of.has(card_id):
 		return
 	var request_id := String(_request_of[card_id])
-	seen.emit(request_id)
+	# Book a day STARTS an answer: the picker it opens keeps the slowed clock, and
+	# the booking's end is what counts as seen (the parent's call on QA's #207).
+	if index != BOOK:
+		seen.emit(request_id)
 	match index:
 		BOOK:
 			book_requested.emit(request_id)

@@ -11,6 +11,8 @@ extends VBoxContainer
 ## `Audiences.book()` -- the sim's command (AGENTS.md rule 2).
 
 signal booked(request_id: String, date: Dictionary)
+## The player left the picker without a day (its Cancel): the request still waits.
+signal cancelled(request_id: String)
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -50,6 +52,14 @@ func open_for(row: Dictionary, dates: Array) -> void:
 		days.add_child(day)
 	if dates.is_empty():
 		PanelKit.line(self, Strings.t("They offer no day you can take."))
+	var cancel := Button.new()
+	cancel.name = "Cancel"  # i18n: ok a node name, found by tests
+	cancel.text = tr("Cancel")
+	cancel.pressed.connect(func() -> void:
+		var id := _request_id
+		close()
+		cancelled.emit(id))
+	days.add_child(cancel)
 	visible = true
 
 

@@ -48,7 +48,14 @@ static func register(main) -> void:
 	main._calendar_panel.audience.booked.connect(func(id: String, date: Dictionary) -> void:
 		var result := Audiences.book(main._state, main._state.player(), main._loader, id, date)
 		main._calendar_panel.audience.close()
-		_answer(main, id, result))
+		_answer(main, id, result)
+		_seen(main, id))
+	# A booking left without a day -- its Cancel, or the Diary closed under it --
+	# ends the player's action as surely as a booking does.
+	main._calendar_panel.audience.cancelled.connect(func(id: String) -> void: _seen(main, id))
+	main._windows.closed.connect(func(id: String) -> void:
+		if id == "calendar" and main._calendar_panel.audience.request_id() != "":
+			_seen(main, main._calendar_panel.audience.request_id()))
 	# Each verb redraws the lane's side too: a promise made is in the Diary at once.
 	scene.attempted.connect(func(lever: String, args: Dictionary) -> void:
 		AudienceTalks.attempt(main, game, lever, args)
