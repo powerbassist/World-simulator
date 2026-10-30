@@ -1,0 +1,8 @@
+ElevenLabs output, used under ElevenLabs' terms; all rights reserved; not licensed
+for reuse, redistribution or AI training.
+
+These files were generated with ElevenLabs (Starter plan, commercial licence bought
+2026-10-19) for this game alone. ElevenLabs' Use Policy does not allow its Output
+to be made available to third parties on terms more permissive than those that
+apply to the subscriber, so no open licence is granted for them here: they ship
+with the game and may be used only as part of it.
