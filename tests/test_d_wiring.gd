@@ -8,7 +8,9 @@ extends SceneTree
 ##     it, the empty month leaves the card up, neither touches the clock;
 ##   - a load's rebind puts the previous game's front page away, with no note;
 ##   - an event desk entry carrying a speaker puts that person's face, name and line
-##     on its decision card; one with no speaker (the narrator) adds nothing.
+##     on its decision card; one with no speaker (the narrator) adds nothing;
+##   - an event with no written line is the narrator even when the entry names a
+##     speaker; and the Dispatches desk entry carries the same face as the card.
 
 const DeskCards = preload("res://src/ui/desk_cards.gd")
 const Headlines = preload("res://src/ui/headlines.gd")
@@ -31,6 +33,8 @@ func _process(_delta: float) -> bool:
 		return false
 	_check_front_page()
 	_check_speaker()
+	_check_no_line()
+	_check_dispatches_speaker()
 	if _failures.is_empty():
 		print("PASS tests/test_d_wiring.gd")
 		quit(0)
@@ -100,6 +104,50 @@ func _check_speaker() -> void:
 	if inbox.find_child("Speaker", true, false) != null:
 		_failures.append("the narrator got a face")
 	inbox.clear()
+
+
+## A face with nothing to say is the narrator: an entry naming a person on an event
+## that has no speaker_line gets no face.
+## Every shipped event has a line since Content's #191, so one is blanked for the check.
+func _check_no_line() -> void:
+	var ev = _main._loader.events[0]
+	var line := String(ev.speaker_line)
+	ev.speaker_line = ""
+	var ns = _main._state.player()
+	var person = _main._loader.people.get(String(ns.id), [])[0]
+	var inbox = _main._hud.inbox
+	inbox.clear()
+	DeskCards.push(_main, ev, {"event_id": String(ev.id), "months_left": 3, "severity": 2, "speaker": String(person.id)})
+	if inbox.find_child("Speaker", true, false) != null:
+		_failures.append("an event with no written line got a face from its entry's speaker")
+	inbox.clear()
+	ev.speaker_line = line
+
+
+## The Dispatches desk entry shows who brings the news, as the card does.
+func _check_dispatches_speaker() -> void:
+	var ev = null
+	for candidate in _main._loader.events:
+		if String(candidate.speaker_line).strip_edges() != "":
+			ev = candidate
+			break
+	if ev == null:
+		return  # _check_speaker already failed on the fixture
+	var ns = _main._state.player()
+	var person = _main._loader.people.get(String(ns.id), [])[0]
+	var queue: Array = ns.event_queue.duplicate(true)
+	ns.event_queue.clear()
+	ns.event_queue.append({"event_id": String(ev.id), "months_left": 3, "severity": 2, "speaker": String(person.id)})
+	var panel = _main._events_panel
+	panel._refresh()
+	var face = panel.find_child("Speaker", true, false)
+	if face == null:
+		_failures.append("the Dispatches desk entry has no speaker's face")
+	elif not _texts(face).contains(String(person.person_name)):
+		_failures.append("the Dispatches face does not name the speaker: '%s'" % _texts(face))
+	ns.event_queue.clear()
+	ns.event_queue.append_array(queue)
+	panel._refresh()
 
 
 func _texts(node: Node) -> String:

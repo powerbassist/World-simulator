@@ -37,6 +37,7 @@ const Labels = preload("res://src/ui/labels.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const Grade = preload("res://src/ui/grade.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
+const SpeakerRow = preload("res://src/ui/speaker_row.gd")
 
 var _state
 var _loader
@@ -235,6 +236,12 @@ func _build_entry(ns, entry: Dictionary) -> void:
 		who_label.text = who
 		who_label.theme_type_variation = UiTheme.MICRO
 		_body.add_child(who_label)
+
+	# V5.2d: who brings it, the same face the decision card carries, so one crisis
+	# has one messenger in both places it is read. The narrator adds nothing.
+	var face = SpeakerRow.build(_loader, ev, entry)
+	if face != null:
+		_body.add_child(face)
 
 	PanelKit.rich(_body, Strings.row_summary("events", ev))
 
