@@ -12,7 +12,8 @@ extends SceneTree
 ##     the manifest's hash is the shown line's; a stale hash, no manifest row and no
 ##     tables at all are silence, and print nothing;
 ##   - Voices Off and Sound Off are silence; a level sets the player's volume;
-##   - an ARRIVAL with a face speaks; a load's restored desk does not.
+##   - an ARRIVAL with a face speaks; a load's restored desk does not; a line is
+##     not cut off by the next one, and ends when its card is answered or dismissed.
 
 ## suite-exclusive: backs up and restores user://settings.cfg -- the checks write the Sound and Voices settings
 
@@ -75,8 +76,36 @@ func _process(_delta: float) -> bool:
 				_failures.append("an arrival whose speaker has a clip did not start it within %d ms" % WAIT_MS)
 				_phase = 2
 		2:
+			_check_no_interrupt()
+			_check_dismiss_hushes()
 			return _finish()
 	return false
+
+
+## A line in progress is not cut off by the next one (review pass 1: the lapse guard
+## used to replace the month's arrival line); it ends when its card goes.
+func _check_no_interrupt() -> void:
+	var player := _player()
+	if player == null or player.stream == null:
+		return
+	var speaking: AudioStream = player.stream
+	Voice.speak(_main, "res://" + FIXTURE)
+	if player.stream != speaking:
+		_failures.append("a second line cut off the one being spoken")
+
+
+func _check_dismiss_hushes() -> void:
+	var card_id := ""
+	for id in _main._event_cards:
+		if String(_main._event_cards[id]) == String(_ev.id):
+			card_id = String(id)
+	if card_id == "":
+		_failures.append("fixture: the arrival's card is not on the desk")
+		return
+	_main._hud.inbox.dismiss(card_id)
+	var player := _player()
+	if player != null and (player.playing or player.stream != null):
+		_failures.append("the line went on after its card was dismissed")
 
 
 func _check_hash_parity() -> void:

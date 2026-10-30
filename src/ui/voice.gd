@@ -77,32 +77,40 @@ static func archetype(speaker: Dictionary) -> String:
 
 
 ## Plays `path` under `parent` after `delay_s` (the arrival's sting rings first).
-## Sound Off or Voices Off is silence, read at play time as every cue is.
-static func speak(parent: Node, path: String, delay_s := 0.0) -> void:
+## Sound Off or Voices Off is silence, read at play time as every cue is. A line
+## already playing or waiting to start is never cut off: the newer one is dropped
+## (review pass 1 -- the lapse guard, run after the arrivals, used to replace the
+## month's arrival line). `card_id` names the card the line belongs to, so
+## hush() can end it with that card.
+static func speak(parent: Node, path: String, delay_s := 0.0, card_id := "") -> void:
 	if parent == null or not parent.is_inside_tree() or path == "":
 		return
 	var level := SettingsPanel.voice_level()
 	if not SettingsPanel.sound_enabled() or level == 0:
 		return
+	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer
+	if player != null and (player.playing or bool(player.get_meta("pending", false))):
+		return
 	var stream := AudioStreamOggVorbis.load_from_buffer(FileAccess.get_file_as_bytes(path))
 	if stream == null:
 		return
-	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer
 	if player == null:
 		player = AudioStreamPlayer.new()
 		player.name = NODE
 		parent.add_child(player)
-	player.stop()
 	player.stream = stream
 	player.volume_db = float(SoundK.VOICE_DB[level])
-	# A token, so a delayed start that a newer line has replaced does not fire.
-	var token := int(player.get_meta("token", 0)) + 1
-	player.set_meta("token", token)
+	player.set_meta("card", card_id)
 	if delay_s <= 0.0:
 		player.play()
 		return
+	# A token, so a delayed start that stop() has cancelled does not fire.
+	var token := int(player.get_meta("token", 0)) + 1
+	player.set_meta("token", token)
+	player.set_meta("pending", true)
 	parent.get_tree().create_timer(delay_s).timeout.connect(func():
 		if is_instance_valid(player) and int(player.get_meta("token", 0)) == token:
+			player.set_meta("pending", false)
 			player.play())
 
 
@@ -113,7 +121,16 @@ static func stop(parent: Node) -> void:
 		return
 	player.stop()
 	player.stream = null
+	player.set_meta("pending", false)
 	player.set_meta("token", int(player.get_meta("token", 0)) + 1)
+
+
+## Silences the line only if it belongs to `card_id` -- the card was answered or
+## dismissed, so its speaker has nothing left to say.
+static func hush(parent: Node, card_id: String) -> void:
+	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer if parent != null else null
+	if player != null and card_id != "" and String(player.get_meta("card", "")) == card_id:
+		stop(parent)
 
 
 static func _tables() -> Array:

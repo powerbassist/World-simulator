@@ -17,6 +17,8 @@ const EventArt = preload("res://src/ui/event_art.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const SoundK = preload("res://src/ui/sound_constants.gd")
 const Voice = preload("res://src/ui/voice.gd")
+## The inbox's mark that its dismissals already end a card's line.
+const HUSH := "voice_hush"  # i18n: ok a meta key
 
 
 ## V1.8. What arrived on the desk this month, and what the clock decided when the
@@ -97,6 +99,7 @@ static func card_events(main, year: int, month: int, desk_before: Dictionary, be
 	var sting_severity := 0
 	# V5.2d: and ONE voice, the worst arrival whose card shows a face with a clip.
 	var clip := ""
+	var clip_card := ""
 	var clip_severity := 0
 	for entry in ns.event_queue:
 		var event_id := String(entry.get("event_id", ""))
@@ -126,18 +129,19 @@ static func card_events(main, year: int, month: int, desk_before: Dictionary, be
 		# Recorded and carded BEFORE the hold (QA on #73): the hold names its cause
 		# from the unseen set and raises its card (hold_reason.gd).
 		main._unseen_events[event_id] = holds
-		if MessageSettings.allows(main._messages, ev.category, severity, "popup") \
-				and push(main, ev, entry) and severity > clip_severity:
+		var faced := push(main, ev, entry) if MessageSettings.allows(main._messages, ev.category, severity, "popup") else ""
+		if faced != "" and severity > clip_severity:
 			var found := Voice.clip_for(ev)
 			if found != "":
 				clip = found
+				clip_card = faced
 				clip_severity = severity
 		if holds:
 			main._hold_for_decision()
 	if sting_severity > 0:
 		Sound.event_sting(main, sting_severity)
 	# After the sting has rung, so the first words are not under it.
-	Voice.speak(main, clip, float(SoundK.EVENTS[sting_severity - 1]["duration_s"]) if sting_severity > 0 else 0.0)
+	speak(main, clip_card, clip, float(SoundK.EVENTS[sting_severity - 1]["duration_s"]) if sting_severity > 0 else 0.0)
 
 	# A quiet arrival's card stays up while the clock runs, so every live
 	# decision card's deadline is re-read here, before the guard: a card saying
@@ -179,8 +183,8 @@ static func guard_lapses(main, ns) -> void:
 		main._unseen_events[event_id] = true
 		main._hold_for_decision()
 		# The card opens here for the first time, so its speaker speaks (no sting).
-		if not main._event_cards.values().has(event_id) and push(main, ev, entry):
-			Voice.speak(main, Voice.clip_for(ev))
+		if not main._event_cards.values().has(event_id):
+			speak(main, push(main, ev, entry), Voice.clip_for(ev))
 
 
 ## The decision card for one desk entry: the event's choices as buttons, the
@@ -197,11 +201,11 @@ static func restore_after_load(main) -> void:
 	AudienceDriver.after_load(main)
 
 
-## True when the card carries a speaker's face -- the arrival's cue to speak. A load's
-## restore ignores it: a restored desk is not news.
-static func push(main, ev, entry: Dictionary) -> bool:
+## The card's id when it carries a speaker's face, else "" -- the arrival's cue to
+## speak. A load's restore ignores it: a restored desk is not news.
+static func push(main, ev, entry: Dictionary) -> String:
 	if ev == null:
-		return false  # a desk entry whose event the content no longer has (a load)
+		return ""  # a desk entry whose event the content no longer has (a load)
 	var event_id := String(entry.get("event_id", ""))
 	var left := int(entry.get("months_left", 0))
 	# The card itself is the answer surface. Since V4.8c a quiet arrival's card
@@ -230,9 +234,22 @@ static func push(main, ev, entry: Dictionary) -> bool:
 	# V5.2d: who brings it, under the title; the narrator (no speaker) adds nothing.
 	var face = SpeakerRow.build(main._loader, ev, entry)
 	if face == null:
-		return false
+		return ""
 	main._hud.inbox.add_face(card_id, face)
-	return true
+	return card_id
+
+
+## Speaks `clip` for the card `card_id`; the line ends when that card goes, answered
+## or dismissed (review pass 1: it used to outlive its question). The inbox is
+## told once, on its first line.
+static func speak(main, card_id: String, clip: String, delay_s := 0.0) -> void:
+	if card_id == "" or clip == "":
+		return
+	var inbox = main._hud.inbox
+	if not inbox.has_meta(HUSH):
+		inbox.set_meta(HUSH, true)
+		inbox.card_dismissed.connect(func(id: String): Voice.hush(main, id))
+	Voice.speak(main, clip, delay_s, card_id)
 
 
 ## Every live decision card's deadline sentence, re-read off the desk. A card
