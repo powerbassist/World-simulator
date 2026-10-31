@@ -91,6 +91,12 @@ func _process(_delta: float) -> bool:
 				_fail("the date moved under the briefing: %s -> %s" % [_date, _today()])
 			if _since >= HELD_FRAMES:
 				_quiet_desk()
+				# A second chief line still waiting when Continue is pressed (rule 2): the
+				# chief is held busy, since no player plays headless.
+				(_main.get_node(Voice.NODE) as AudioStreamPlayer).set_meta("pending", true)
+				Voice.speak_queued(_main, "res://waiting.ogg", BriefingDriver.LINE_CARD, _card)
+				if not _queued_chief():
+					_fail("precondition: the second chief line did not queue")
 				Click.half(_main.get_viewport(), _card._close, true)
 				_go("release")
 		"release":
@@ -100,9 +106,14 @@ func _process(_delta: float) -> bool:
 			if _since == 2:
 				if _card.visible:
 					_fail("Continue did not close the briefing")
-				var said: Node = _main.get_node_or_null(Voice.NODE)
-				if said != null and String(said.get_meta("card", "")) == BriefingDriver.LINE_CARD 						and (said as AudioStreamPlayer).stream != null:
-					_fail("Continue closed the briefing and its chief's line played on")
+				# The parent's rules on #229: the line that started plays to its end (1); the
+				# one still waiting is cancelled with the card (2).
+				var said := _main.get_node(Voice.NODE) as AudioStreamPlayer
+				if String(said.get_meta("card", "")) != BriefingDriver.LINE_CARD or said.stream == null:
+					_fail("Continue cut the chief's line that had started")
+				if _queued_chief():
+					_fail("Continue left the chief's waiting line in the queue")
+				said.set_meta("pending", false)
 				if _main._clock.paused:
 					_fail("Continue did not resume the clock (holds: decision %s, programme %s)" % [
 						_main._decision_holds_clock(), _main._paused_for_programme])
@@ -218,6 +229,14 @@ func _seen_case() -> void:
 
 
 ## No arrival holds the clock in this test: the hold under test is the briefing's.
+func _queued_chief() -> bool:
+	var player: Node = _main.get_node(Voice.NODE)
+	for entry in player.get_meta(Voice.QUEUE, []):
+		if String(entry["card"]) == BriefingDriver.LINE_CARD:
+			return true
+	return false
+
+
 func _quiet_desk() -> void:
 	var ns = _main._state.player()
 	ns.event_queue.clear()

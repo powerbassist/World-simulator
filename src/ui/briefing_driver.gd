@@ -41,12 +41,9 @@ const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 ## The chief has three lines a situation (#226: 4 chiefs x 3 situations x 3).
 const CHIEF_VARIANTS := 3
 ## The card id the chief's spoken line carries (Voice.hush).
-const LINE_CARD := "chief_briefing"  # i18n: ok a card id
+const LINE_CARD := Voice.CHIEF_CARD
 ## The card's meta naming the month whose line it has said (speak_once).
 const SPOKEN := "spoken"  # i18n: ok a meta key
-## How often a chief waiting behind a desk speaker looks again, in seconds: short
-## enough that the line follows the messenger's at once, long enough to cost nothing.
-const QUEUE_POLL_S := 0.25
 
 static var _games := {}
 ## A test seam: a test of another surface drives whole months and would otherwise
@@ -248,33 +245,12 @@ static func speak_once(main: Node, shown: Dictionary, card: CanvasItem, key: Str
 
 ## Under `main`, where the desk's arriving speakers talk too. A messenger's line
 ## under way, or waiting behind its sting, is never cut and never talked over: the
-## chief waits for it and speaks when it ends, if `card` is still up for the same
-## month. Closing the card cancels the wait; nothing replays later (the parent's
-## TAKE 1 on #229 -- an arrival month is a tense or crisis one, so dropping the line
+## chief waits for it in Voice's queue and speaks when it ends, if `card` is still
+## up. Closing the card cancels the wait; nothing replays later (the parent's TAKE 1
+## on #229 -- an arrival month is a tense or crisis one, so dropping the line
 ## silenced the chief exactly when it mattered).
 static func speak(main: Node, shown: Dictionary, card: CanvasItem) -> void:
-	var clip := String(shown.get("clip", ""))
-	if clip == "" or main == null or not main.is_inside_tree():
-		return
-	var player := main.get_node_or_null(Voice.NODE) as AudioStreamPlayer
-	if player != null and (player.playing or bool(player.get_meta("pending", false))):
-		# A Timer the card owns, calling a method: when the card (or main above it)
-		# goes, the wait goes with it -- a SceneTree timer's lambda would be called
-		# with its captures freed and log an ERROR (#229 QA TAKE 1, #222's class).
-		var wait := Timer.new()
-		wait.one_shot = true
-		wait.wait_time = QUEUE_POLL_S
-		wait.timeout.connect(_waited.bind(main, shown, card, wait, card.get_meta(SPOKEN, null)))
-		card.add_child(wait)
-		wait.start()
-		return
-	Voice.speak(main, clip, 0.0, LINE_CARD)
-
-
-static func _waited(main: Node, shown: Dictionary, card: CanvasItem, wait: Timer, key) -> void:
-	wait.queue_free()
-	if is_instance_valid(main) and card.visible and card.get_meta(SPOKEN, null) == key:
-		speak(main, shown, card)
+	Voice.speak_queued(main, String(shown.get("clip", "")), LINE_CARD, card)
 
 
 ## "Continue", or "Next: ..." naming the surface that still holds the clock.
@@ -305,7 +281,10 @@ static func close(main) -> void:
 	if game.is_empty() or not game["card"].visible:
 		return
 	game["card"].hide()
-	Voice.hush(main, LINE_CARD)  # the chief's line belongs to the card
+	# The parent's rules on #229: a line the chief has started plays to its end; one
+	# still waiting behind a messenger is cancelled with the card (the gate would
+	# too, unless the next month's card were up before the messenger ended).
+	Voice.drop(main, LINE_CARD)
 	game["card"].dismissed.emit()
 	# A request the card named, on a line, in the footer or folded into a line's
 	# "+N more", has been SEEN under #207's rule (the parent's calls on QA's #218

@@ -6,6 +6,10 @@ extends SceneTree
 ##     variant resolves to its clip through the hash of the line the card shows; the
 ##     driver plays it under main, never over a desk speaker's line there, and the
 ##     card coming down silences it;
+##   - the queue under main (the parent's four rules on #229): a line waiting behind
+##     another is cancelled when its card closes, dropped by its card's hush, and
+##     emptied by a stop (a load); a desk line that arrives while the chief talks
+##     waits behind him and is never dropped;
 ##   - a face that changes mood band during an audience or a call says its mood
 ##     line INSTEAD of agree or refuse (one line a result, never two queued); no
 ##     band change, the tone's line as before;
@@ -22,11 +26,12 @@ const PhoneDialog = preload("res://src/ui/phone_dialog.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const AudienceVoice = preload("res://src/ui/audience_voice.gd")
+const DeskCards = preload("res://src/ui/desk_cards.gd")
 const Voice = preload("res://src/ui/voice.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 
 const MANIFEST := "res://assets/audio/voice/manifest.json"
-## Past two of BriefingDriver.QUEUE_POLL_S, so a waiting chief has looked again.
+## Past two of Voice.QUEUE_POLL_S, so a waiting chief has looked again.
 const WAIT_MS := 700
 const CHIEFS := ["chief_fra", "chief_deu", "chief_gbr", "chief_pol"]
 ## Warm (PLEASED), wary (WORRIED), cold rapport (STERN): MoodBadge.emotion_of's cuts.
@@ -78,7 +83,7 @@ func _process(_delta: float) -> bool:
 			_check_chief()
 			_queue_behind_messenger()
 			return false
-		"waiting", "after", "cancel", "freed":
+		"waiting", "after", "cancel", "freed", "behind", "hushed", "stopped":
 			if Time.get_ticks_msec() - _since < WAIT_MS:
 				return false
 			_queue_step()
@@ -183,6 +188,42 @@ func _queue_step() -> void:
 			host.queue_free()
 			_phase = "freed"
 		"freed":
+			# Rule 4: a desk line that arrives while the chief talks waits behind him.
+			Voice.stop(_desk)
+			_card.show()
+			Voice.speak(_desk, String(_said["clip"]), 0.0, BriefingDriver.LINE_CARD)
+			player.set_meta("pending", true)  # the chief still talking (no player plays headless)
+			DeskCards.say(_desk, "desk_event", String(_said["clip"]))
+			if String(player.get_meta("card", "")) != BriefingDriver.LINE_CARD:
+				_fail("a desk line cut the chief mid-line")
+			player.stop()
+			player.set_meta("pending", false)  # the chief has finished
+			_phase = "behind"
+		"behind":
+			if String(player.get_meta("card", "")) != "desk_event" or player.stream == null:
+				_fail("a desk line that arrived while the chief talked was dropped")
+			# A queued line goes with its card's hush; the next one still plays.
+			Voice.stop(_desk)
+			player.set_meta("pending", true)
+			player.set_meta("card", BriefingDriver.LINE_CARD)
+			Voice.speak_queued(_desk, String(_said["clip"]), "desk_a")
+			Voice.speak_queued(_desk, String(_said["clip"]), "desk_b")
+			Voice.hush(_desk, "desk_a")
+			player.set_meta("pending", false)
+			_phase = "hushed"
+		"hushed":
+			if String(player.get_meta("card", "")) != "desk_b" or player.stream == null:
+				_fail("a hushed card's queued line played, or the next one in line did not (%s)" % player.get_meta("card", ""))
+			# Rule 3: a load stops everything, the queue included.
+			player.stop()
+			player.set_meta("pending", true)
+			player.set_meta("card", BriefingDriver.LINE_CARD)
+			Voice.speak_queued(_desk, String(_said["clip"]), "desk_c")
+			Voice.stop(_desk)
+			_phase = "stopped"
+		"stopped":
+			if player.stream != null:
+				_fail("a stop (a load) left a queued line to play after it (%s)" % player.get_meta("card", ""))
 			_phase = "done"
 	_since = Time.get_ticks_msec()
 
