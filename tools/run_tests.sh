@@ -237,6 +237,8 @@ tests=(
   tests/test_panel_charts.gd
   tests/test_prose_budget.gd
   tests/test_priorities.gd
+  tests/test_briefing_hold.gd
+  tests/test_briefing_effects.gd
   tests/test_law_list.gd
   tests/test_clock_doors.gd
   tests/test_consequence_card.gd

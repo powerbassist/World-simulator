@@ -645,6 +645,7 @@ func _ready() -> void:
 	)
 
 	AudienceDriver.register(self)  # V5.2b: the request lane, the Diary's days, the audience scene
+	preload("res://src/ui/briefing_driver.gd").register(self)  # V5.3-0: the monthly briefing
 	_build_sidebar()
 	_wire_hud()
 	# V4.8a: an alert on the strip names the window that answers it by the title
@@ -685,8 +686,8 @@ func _ready() -> void:
 			_clock.paused = false
 		# V4.1. A won election that started a new term left the choice open,
 		# and the dismissal must not quietly resume past it. A no-op when
-		# there is nothing to choose.
-		_enforce_term_start_programme()
+		# there is nothing to choose. V5.3-0: then the month's briefing.
+		preload("res://src/ui/briefing_driver.gd").after_election(self)
 	)
 
 	_save_load_panel = SaveLoadPanel.new()
@@ -1260,9 +1261,8 @@ func _finish_month(report: Dictionary) -> void:
 	# pause until it is dismissed, and the dismissal handler re-runs this; two
 	# pauses stacked on one tick would let the answerable one (the programme
 	# card) eat the verdict's. A no-op every ordinary month -- the level read
-	# closes itself.
-	if results.is_empty():
-		_enforce_term_start_programme()
+	# closes itself. V5.3-0: then the monthly briefing, which holds the clock.
+	if results.is_empty(): preload("res://src/ui/briefing_driver.gd").finish_month(self, report)
 
 
 ## What one month's hook has captured BEFORE a step, for the card read AFTER it.
@@ -1356,7 +1356,8 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 			_enforce_interrupt()
 		# V5.2d: the month's front page, when one was earned (the sim's entry, {} otherwise),
 		# held for the count when the month has an election result (front_page.gd).
-		"Elections": _hud.front_page.show_entry(report.get("front_page", {}), _state, _loader, _clock, null if report.get("election_results", []).is_empty() else _election_panel)
+		# V5.3-0: and after the monthly briefing, when one opens (briefing_driver.gd).
+		"Elections": _hud.front_page.show_entry(report.get("front_page", {}), _state, _loader, _clock, preload("res://src/ui/briefing_driver.gd").plate_for(self, report))
 		# V5.2 C6: an effort the party could not pay for stopped -- one note, never a hold.
 		"Campaign": CampaignChest.note_stopped(_hud.inbox, report.get("campaign_stopped", []), _state, _loader)
 		"Characters":

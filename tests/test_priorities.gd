@@ -18,6 +18,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const MusicBand = preload("res://src/ui/music_band.gd")
 
 const PLAYABLE := ["DEU", "FRA", "GBR", "POL"]
 const MONTHS := 24
@@ -36,6 +37,7 @@ func _initialize() -> void:
 	_check_held_first()
 	_check_no_damping()
 	_check_quiet_rotates()
+	_check_situation_and_band()
 	if _failures.is_empty():
 		print("test_priorities: all checks passed")
 	for f in _failures:
@@ -191,6 +193,29 @@ func _check_quiet_rotates() -> void:
 		last = key
 	if repeats > 2:
 		_fail("a quiet month repeats its three lines %d times of 11" % repeats)
+
+
+## 2.6 and 4.3 (RF9's rule): a crisis line is a crisis, a held one tense, an
+## election far off calm; the band goes up at once, down after two calmer months,
+## and the campaign takes the last three months before a vote.
+func _check_situation_and_band() -> void:
+	var calm := [{"kind": "election", "deadline_month": 99, "u": 0.4, "w": 1.0, "held": false, "standing": true}]
+	var tense := [{"kind": "request", "deadline_month": 5, "u": 1.0, "w": 6.0, "held": false, "standing": false}]
+	var crisis := [{"kind": "crisis", "deadline_month": 5, "u": 1.0, "w": 10.0, "held": true, "standing": false}]
+	if Priorities.situation(calm) != "calm" or Priorities.situation(tense) != "tense" or Priorities.situation(crisis) != "crisis":
+		_fail("situation: %s / %s / %s" % [Priorities.situation(calm), Priorities.situation(tense), Priorities.situation(crisis)])
+	var b := MusicBand.step({}, "calm", 20)
+	b = MusicBand.step(b, "crisis", 20)
+	if b["band"] != "crisis":
+		_fail("the band did not go up to crisis at once")
+	b = MusicBand.step(b, "calm", 20)
+	if b["band"] != "crisis":
+		_fail("the band came down after one calm month")
+	b = MusicBand.step(b, "calm", 20)
+	if b["band"] != "calm":
+		_fail("the band did not come down after two calm months")
+	if MusicBand.step(b, "calm", 2)["band"] != "campaign" or MusicBand.step(b, "crisis", 2)["band"] != "crisis":
+		_fail("the campaign band does not take the last three months, or beats a crisis")
 
 
 func _line_of(lines: Array, kind: String) -> Dictionary:

@@ -121,6 +121,8 @@ class Recorder extends Node:
 
 
 func _init() -> void:
+	# V5.3-0: this test drives months for another surface, not the monthly briefing.
+	preload("res://src/ui/briefing_driver.gd").suppressed = true
 	_a = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_a)
 	_b = load("res://src/ui/main.tscn").instantiate()

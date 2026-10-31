@@ -66,6 +66,19 @@ static func foreign_news(path: String) -> bool:
 	return bool(cfg.get_value(SECTION, FOREIGN_NEWS_KEY, DEFAULT_FOREIGN_NEWS))
 
 
+## V5.3-0, the author's call 2 ("Réglage « si nouveau »"): the monthly briefing holds
+## every month by default; this setting skips a month whose three priorities are
+## all ones last month's briefing already named.
+const BRIEFING_NEW_ONLY_KEY := "briefing_new_only"
+const DEFAULT_BRIEFING_NEW_ONLY := false
+
+
+static func briefing_new_only(path: String) -> bool:
+	var cfg := ConfigFile.new()
+	cfg.load(path)
+	return bool(cfg.get_value(SECTION, BRIEFING_NEW_ONLY_KEY, DEFAULT_BRIEFING_NEW_ONLY))
+
+
 static func set_foreign_news(on: bool, path: String) -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(path)

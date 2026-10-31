@@ -78,6 +78,34 @@ static func quiet(lines: Array) -> bool:
 	return lines.all(func(l): return bool(l["standing"]))
 
 
+## The surfaces that hold the clock at this boundary by the spec's rule (2.3), for a
+## caller with no UI to ask (Systems' probe): an interrupt, a desk entry of severity
+## 2 or more, any desk entry in its last month, the term-start offer. The game hands
+## rank() main's own unseen set instead. An election result is not here: it owns the
+## pause before the briefing opens, and is no line of it.
+static func held_by_rule(state, loader) -> Dictionary:
+	var ns = state.player()
+	var events: Array = []
+	for entry in ns.event_queue:
+		if _holds_by_rule(entry):
+			events.append(String(entry.get("event_id", "")))
+	return {"events": events, "programme": not Programme.available(state, ns, loader).is_empty()}
+
+
+## The chief's line and the music read the month by its three (2.6): crisis when one
+## is a crisis; tense when one is held, or weighs 6 or more with its deadline 3
+## months away or less; calm otherwise. An election is not a crisis: weight alone
+## would play the crisis line for six months before every vote.
+static func situation(lines: Array) -> String:
+	if lines.any(func(l): return String(l["kind"]) == "crisis"):
+		return "crisis"
+	for l in lines:
+		var near := int(l["deadline_month"]) >= 0 and not bool(l["standing"]) and float(l["u"]) >= K.TREND_ONSET
+		if bool(l["held"]) or (near and float(l["w"]) >= K.WEIGHT["decision_minor"]):
+			return "tense"
+	return "calm"
+
+
 # --- choosing three -------------------------------------------------------------------
 
 static func _pick(held: Array, cands: Array, last: Array, now: int) -> Array:
@@ -153,11 +181,15 @@ static func _desk(ns, now: int, opts: Dictionary, cands: Array, held: Array) -> 
 		var kind := "crisis" if crisis else "decision"
 		var w: float = K.WEIGHT["crisis"] if crisis else (K.WEIGHT["decision_major"] if sev >= K.MAJOR_SEVERITY else K.WEIGHT["decision_minor"])
 		var c := _cand(kind, String(entry.get("event_id", "")), now + left, w, K.SEVERITY_MAGNITUDE[sev - 1], now)
-		var holds := holding.has(c["subject"]) if not by_rule \
-			else (crisis or sev >= K.MAJOR_SEVERITY or left <= 1)
+		var holds := holding.has(c["subject"]) if not by_rule else _holds_by_rule(entry)
 		(held if holds else cands).append(c)
 	# The spec's hold order: an interrupt, then major cards, then the rest.
 	held.sort_custom(func(a, b): return float(a["w"]) > float(b["w"]))
+
+
+static func _holds_by_rule(entry: Dictionary) -> bool:
+	return bool(entry.get("interrupt", false)) or int(entry.get("severity", 1)) >= K.MAJOR_SEVERITY \
+		or int(entry.get("months_left", 0)) <= 1
 
 
 static func _election(state, ns, now: int, cands: Array) -> void:
