@@ -386,7 +386,7 @@ func _subject_label(ns, ev) -> String:
 # --- The ledger --------------------------------------------------------------------
 
 func _build_ledger(ns) -> void:
-	PanelKit.heading(_body, tr("What you decided"))
+	PanelKit.heading(_body, tr("Your decisions"))
 	if ns.event_history.is_empty():
 		PanelKit.line(_body, tr("Nothing has come up yet."))
 		return

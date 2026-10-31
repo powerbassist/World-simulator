@@ -58,9 +58,11 @@ const TOTAL_PENDING := {
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106, "tax": 25,
 }
-## The sum of every tab's total, a ratchet: each rebuilding PR lowers it to what it
-## measured. RF6's target is 3 600.
-const TOTAL_SUM_CEILING := 3607
+## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
+## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
+## (6 648 in the spec's count, 4 911 once this test played its months as the game
+## does): it can only come down from here.
+const TOTAL_SUM_CEILING := 3600
 const TOTAL_SUM_TARGET := 3600
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.

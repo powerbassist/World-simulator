@@ -276,7 +276,7 @@ static func _note_lapse(main, game: Dictionary, person: String) -> void:
 	var names: Array = game["lapse_names"]
 	var body := Strings.t("%s's request lapsed: they take it as a refusal.") % person
 	if names.size() > 1:
-		body = "%s %s" % [Strings.tn("%d request lapsed: they take it as a refusal.", "%d requests lapsed: they take it as a refusal.", names.size()) % names.size(),
+		body = "%s %s" % [Strings.tn("%d request lapsed: taken as a refusal.", "%d requests lapsed: taken as a refusal.", names.size()) % names.size(),
 			Strings.t("From: %s.") % ", ".join(names)]
 	if id != "" and inbox.lane_of(id) != "":
 		inbox.set_body(id, body)

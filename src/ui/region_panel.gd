@@ -150,7 +150,7 @@ func _refresh() -> void:
 	var nation = _loader.nations.get(ns.id) if ns != null else null
 	if nation == null:
 		return
-	_title.text = tr("The regions of %s") % nation.nation_name
+	_title.text = tr("Regions of %s") % nation.nation_name
 	var regions: Array = _loader.regions.get(ns.id, [])
 	var access: Dictionary = Regions.accessibility_for(ns, regions, _state.region_graph)
 	var sites: Dictionary = TerritorySites.by_region(ns, _loader)

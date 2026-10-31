@@ -136,7 +136,7 @@ func _build(state) -> void:
 			var rows: Array = []
 			for region in _panel.get("_loader").regions.get(ns.id, []):
 				rows.append({"label": String(region.region_name), "value": Regions.share_of(ns, region.id) * 100.0})
-			ChartKit.bars(self, Strings.t("Share of the nation's output, %"), rows, {"unit": "%"})
+			ChartKit.bars(self, Strings.t("Share of output, %"), rows, {"unit": "%"})
 		SEATS:
 			var ns = state.player()
 			var seated := _seat_parts(ns, _panel.get("_loader"))

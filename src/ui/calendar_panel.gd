@@ -269,7 +269,8 @@ func _refresh_strip() -> void:
 		if child != _grid.day_list:
 			child.queue_free()
 
-	_title.text = tr("Diary — %s") % DateText.month_year(_state.month, _state.year)
+	# V5.3-0 (b): the month is the grid's own header and today is the title bar's.
+	_title.text = tr("Diary")
 
 	var rows := Calendar.upcoming(_state, K.BOOKING_HORIZON_MONTHS)
 	_refresh_next_up(rows)
