@@ -331,7 +331,7 @@ func _check_twin_states_ring_alike() -> void:
 		var state = _plain_game()
 		var ns = state.player()
 		var seen := []
-		for person in _loader.people[PLAYER]:
+		for person in Staff.cast(_loader, PLAYER):
 			if person.id == President.leader_id(ns):
 				continue
 			_ask(state, ns, person.id, "twin")
@@ -381,7 +381,7 @@ func _warm(state, ns, pid: String) -> void:
 
 ## A France person who is not the president nor any of `not_ids`.
 func _someone(ns, not_ids := []) -> String:
-	for person in _loader.people[PLAYER]:
+	for person in Staff.cast(_loader, PLAYER):
 		if person.id != President.leader_id(ns) and not not_ids.has(person.id):
 			return person.id
 	return ""
