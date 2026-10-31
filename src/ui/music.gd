@@ -23,6 +23,7 @@ const Sound = preload("res://src/ui/sound.gd")
 const SoundK = preload("res://src/ui/sound_constants.gd")
 const Sting = preload("res://src/ui/sting.gd")
 const MusicBand = preload("res://src/ui/music_band.gd")
+const MusicFlow = preload("res://src/ui/music_flow.gd")
 
 const NODE := "Music"  # i18n: ok a node name
 const MANIFEST := "res://assets/audio/music/manifest.json"  # i18n: ok a path
@@ -45,7 +46,13 @@ static var _manifest = null
 var band_state := {}
 ## True while a voice line plays (read by the tests; the volume follows it).
 var ducked := false
+## MusicFlow's state: the crossfade and the rest (read by the tests).
+var flow := {}
 var _player: AudioStreamPlayer
+## The bed fading out after a change.
+var _out: AudioStreamPlayer
+## The step and the duck, ramped; each bed adds its own fade gain to it.
+var _duck_db := SoundK.SILENT_DB
 var _track := ""
 var _level := -1
 var _seen_revision := -1
@@ -113,7 +120,10 @@ static func follow(parent: Node, situation: String, months_to_vote: int, state_i
 		music._state_id = state_id
 		music.band_state = {}
 	music.band_state = MusicBand.step(music.band_state, situation, months_to_vote if months_to_vote >= 0 else -1)
-	music._play_bed(track("beds", String(music.band_state["band"])))
+	var bed := track("beds", String(music.band_state["band"]))
+	# A band whose file has not landed plays the tense bed (pre-gate B3: the campaign,
+	# the tensest months of the term, was silent until it has a track of its own).
+	music._play_bed(bed if bed != "" else track("beds", "tense"))
 
 
 ## A moment's sting under `parent`: its recorded file when the manifest names one
@@ -149,23 +159,53 @@ static func moment(parent: Node, id: String) -> void:
 func _process(delta: float) -> void:
 	if _seen_revision != SettingsPanel.revision:
 		_seen_revision = SettingsPanel.revision
+		var was := _level
 		_level = SettingsPanel.music_level() if SettingsPanel.sound_enabled() else 0
-		var keep := _track
-		_track = ""
-		_play_bed(keep)
+		# Only Off and on move the bed: it stops, or starts from its top. Any other
+		# Settings save leaves it playing where it is, the flow untouched, and the
+		# ramp below carries the new level (the parent's TAKE 3 on #230).
+		if (was > 0) != (_level > 0):
+			_start(_track)
 	ducked = speaking(get_tree())
-	if _player != null and _player.playing:
-		_player.volume_db = move_toward(_player.volume_db, target_db(_level, ducked), SoundK.DUCK_DB_PER_S * delta)
+	_duck_db = move_toward(_duck_db, target_db(_level, ducked), SoundK.DUCK_DB_PER_S * delta)
+	var length := _player.stream.get_length() if _player != null and _player.stream != null else 0.0
+	flow = MusicFlow.step(flow, delta, length)
+	if _player != null:
+		if bool(flow["restart"]):
+			_player.play(0.0)
+		elif float(flow["gain"]) <= 0.0 and float(flow["rest"]) > 0.0 and _player.playing:
+			_player.stop()  # resting under the ambient bed alone
+		_player.volume_db = _duck_db + MusicFlow.db(float(flow["gain"]))
+	if _out != null:
+		_out.volume_db = _duck_db + MusicFlow.db(float(flow["out"]))
+		if float(flow["out"]) <= 0.0:
+			_out.queue_free()
+			_out = null
 
 
-## Plays `path` as the looping bed ("" or Music off: none). Off under --headless,
-## as SoundBed is: the suite has no speakers and the band still moves.
+## Plays `path` as the looping bed ("" or Music off: none), crossfading from the
+## one before (MusicFlow). Off under --headless, as SoundBed is: the suite has no
+## speakers and the band and the flow still move.
 func _play_bed(path: String) -> void:
 	if path == _track:
 		return
 	_track = path
+	flow = MusicFlow.change(flow)
+	_start(path, true)
+
+
+## `path` from its top on a player of its own; with `crossfade` the playing one
+## fades out beside it, else it stops (a second change mid-fade drops the oldest).
+func _start(path: String, crossfade := false) -> void:
+	if _out != null:
+		_out.queue_free()
+		_out = null
 	if _player != null:
-		_player.stop()
+		if crossfade and _player.playing:
+			_out = _player
+			_player = null
+		else:
+			_player.stop()
 	if path == "" or _level <= 0 or not SoundBed.active():
 		return
 	var stream := AudioStreamOggVorbis.load_from_buffer(FileAccess.get_file_as_bytes(path))

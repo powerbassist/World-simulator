@@ -170,6 +170,11 @@ const MUSIC_DB := [-80.0, -30.0, -24.0, -18.0]
 ## How far the music drops while a voice line plays, and how fast it moves.
 const DUCK_DB := 12.0
 const DUCK_DB_PER_S := 30.0
+## Spec 4.3's fatigue rules (music_flow.gd): a bed change crossfades over 4 s; after
+## two plays through, the bed rests a minute under the ambient bed alone.
+const MUSIC_CROSSFADE_S := 4.0
+const MUSIC_PLAYS_BEFORE_REST := 2
+const MUSIC_REST_S := 60.0
 
 const VOICE_DB := [-80.0, -12.0, -6.0, 0.0]
 

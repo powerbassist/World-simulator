@@ -96,6 +96,8 @@ static func register(main) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
 	main._people_panel.call_requested.connect(func(pid: String) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
+	main._calendar_panel._grid.call_requested.connect(func(pid: String) -> void:
+		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
 	main._people_panel.answer_requested.connect(func(id: String) -> void:
 		main._hud.inbox.slide_in()
 		main._hud.inbox.raise_card(lane_of(main).card_of(id)))

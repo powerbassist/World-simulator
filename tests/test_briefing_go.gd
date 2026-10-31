@@ -26,6 +26,7 @@ const DeskCards = preload("res://src/ui/desk_cards.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Person = preload("res://src/core/person.gd")
+const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -56,6 +57,8 @@ func _process(_delta: float) -> bool:
 		0:
 			if _cases.is_empty():
 				_check_footer()
+				_check_go_keeps_pause()
+				_check_speaks_on_change()
 				_finish()
 				return true
 			_case = _cases.pop_front()
@@ -102,6 +105,14 @@ func _plan() -> Array:
 		ns.commitments.append({"kind": "promise", "person_id": pid, "object": "meter:unemployment_pct",
 			"made_month": now, "due_month": now + 2})
 		return "promise|%s|meter:unemployment_pct" % pid})
+	# Pre-gate RF3 (QA's TAKE): a minister's word on a programme entry the player
+	# does not hold. The Agenda shows only the held programme, so this Go once
+	# landed on nothing; it goes to the Diary on its due day (2.4's table).
+	cases.append({"kind": "commitment", "due_day": true, "setup": func() -> String:
+		var entry := String(loader.programme[-1]["id"])
+		ns.commitments.append({"kind": "delegated", "person_id": pid, "object": "programme:%s" % entry,
+			"made_month": now, "due_month": now + 2})
+		return "delegated|%s|programme:%s" % [pid, entry]})
 	cases.append({"kind": "request", "setup": func() -> String:
 		var id := "%s|%d" % [pid, now]
 		ns.audience_requests.append({"id": id, "person_id": pid, "object": "programme:none", "stance": "sponsor",
@@ -141,6 +152,9 @@ func _show(c: Dictionary) -> void:
 		lines = [line, Priorities._standing("majority", "seats"), Priorities._standing("bloc", "workers")]
 	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
 	game["lines"] = lines
+	# The briefing paused a running clock, as a month boundary does (pre-gate B5).
+	game["was_running"] = true
+	_main._clock.paused = true
 	BriefingDriver.card_of(_main).show_view(BriefingDriver.view(_main, lines, {}))
 	c["target"] = BriefingDriver.target_of(line)
 
@@ -159,6 +173,10 @@ func _check(c: Dictionary) -> void:
 		return
 	if BriefingDriver.card_of(_main).visible:
 		_fail("%s: Go did not close the briefing" % label)
+	# Pre-gate B5: Go keeps the clock paused, so a next-day audience cannot take the
+	# screen from the Go's target; the player resumes with Space or the clock.
+	if not _main._clock.paused:
+		_fail("%s: Go resumed the clock" % label)
 	if tab == "inbox":
 		if not _main._hud.inbox.visible:
 			_fail("%s: Go did not bring up the inbox" % label)
@@ -174,9 +192,22 @@ func _check(c: Dictionary) -> void:
 	var where: Node = _main._hud.inbox if tab == "inbox" or kind == "request" else _main._windows.content(tab)
 	if where == null or ActsOn.find(where, String(target["acts_on"])) == null:
 		_fail("%s: Go to '%s' found no enabled control acting on '%s'" % [label, tab, target["acts_on"]])
-	if kind == "commitment" and String(c["subject"]).contains("|programme:") \
+	if kind == "commitment" and tab == "agenda" and String(c["subject"]).contains("|programme:") \
 			and _main._windows.content("agenda")._picker.selected_id() == String(target["acts_on"]):
 		_fail("commitment (programme): premise, the promised entry was the selected one")
+	if bool(c.get("due_day", false)):
+		var grid = _main._calendar_panel._grid
+		var now := int(_main._state.year) * 12 + int(_main._state.month)
+		if tab != "calendar" or grid._month_abs != now + 2 or grid._selected != 1:
+			_fail("%s: Go did not open the Diary on the due day (tab %s, page %d, day %d)" % [label, tab, grid._month_abs - now, grid._selected])
+		# The verb is real: the due day's Call puts the person on the phone.
+		var call := ActsOn.find(_main._windows.content(tab), String(target["acts_on"])) as BaseButton
+		if call != null:
+			call.pressed.emit()
+			var who: String = _main._loader.person_name(String(c["subject"]).get_slice("|", 1))
+			if PhoneDriver.calling(_main) != who:
+				_fail("%s: the due day's Call did not ring %s (on the line: '%s')" % [label, who, PhoneDriver.calling(_main)])
+			PhoneDriver.dialog_of(_main)._close.pressed.emit()
 	if kind == "bloc":
 		var laws = _main._law_panel._laws
 		if laws.bloc_filter != String(c["subject"]):
@@ -191,6 +222,79 @@ func _check(c: Dictionary) -> void:
 		_main._windows.open("budget")
 		if laws.bloc_filter != "":
 			_fail("bloc: the filter outlived the tab")
+
+
+## Pre-gate B5 with nothing else holding the clock (the cases above leave a crisis
+## interrupt pending, which holds it anyway): Go keeps it paused, Continue resumes.
+func _check_go_keeps_pause() -> void:
+	var ns = _main._state.player()
+	ns.event_queue.clear()
+	ns.audience_requests.clear()
+	_main._unseen_events.clear()
+	_main._paused_for_programme = false
+	for verb in ["go", "continue"]:
+		var lines := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
+		var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+		game["lines"] = lines
+		game["was_running"] = true
+		_main._clock.paused = true
+		BriefingDriver.card_of(_main).show_view(BriefingDriver.view(_main, lines, {}))
+		if verb == "go":
+			BriefingDriver.go(_main, 0)
+			if not _main._clock.paused:
+				_fail("Go resumed the clock (pre-gate B5)")
+		else:
+			BriefingDriver.close(_main)
+			if _main._clock.paused:
+				_fail("premise: Continue did not resume the clock, so something else holds it")
+
+
+## Pre-gate B2: the chief SPEAKS only when the situation is not the one he last
+## spoke in, or a row is new; otherwise the caption shows, silent. The caption never
+## repeats the line it showed last time for one situation (QA heard the same tense
+## line every three months: the rotation followed the month, not the situation).
+## Through open() on months set up by hand, so the situation is the test's.
+func _check_speaks_on_change() -> void:
+	# The briefing opens every month here, whatever a parallel test writes to the
+	# shared settings file (QA's TAKE on #230).
+	BriefingDriver.MessageSettings.forced_new_only = false
+	var state = _main._state
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	var tense := Priorities._standing("budget", "balance")
+	tense["held"] = true  # a held surface plays tense (2.6)
+	var calm := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
+	# [lines, a row new, speaks]
+	var months := [[calm, false, true], [calm, false, false], [calm, true, true], [calm, false, false],
+		[[tense], false, true], [[tense], false, false], [calm, false, true]]
+	var player := _main.get_node_or_null(BriefingDriver.Voice.NODE) as AudioStreamPlayer
+	var last := {}
+	var start := int(state.year) * 12 + int(state.month)
+	# The game's first open: no state change resets the months set up below.
+	game["state_id"] = state.get_instance_id()
+	for i in months.size():
+		var now: int = start + 1 + i
+		state.year = floori((now - 1) / 12.0)
+		state.month = now - state.year * 12
+		var lines: Array = (months[i][0] as Array).map(func(l): return l.duplicate())
+		game["pending"] = {"month": now, "lines": lines, "memory": {}, "new": months[i][1]}
+		if player != null:
+			BriefingDriver.Voice.stop(_main)
+		BriefingDriver.open(_main, {})
+		player = _main.get_node_or_null(BriefingDriver.Voice.NODE) as AudioStreamPlayer
+		var spoke := player != null and player.stream != null
+		var situation := Priorities.situation(lines)
+		var caption := String(BriefingDriver.card_of(_main)._line.text)
+		if spoke != bool(months[i][2]):
+			_fail("month %d (%s, new %s): the chief %s" % [i, situation, months[i][1], "spoke" if spoke else "was silent"])
+		if caption == "":
+			_fail("month %d: no caption" % i)
+		if last.get(situation, "") == caption:
+			_fail("month %d: the same %s line twice in a row: %s" % [i, situation, caption])
+		last[situation] = caption
+		BriefingDriver.close(_main)
+	if player != null:
+		BriefingDriver.Voice.stop(_main)
+	BriefingDriver.MessageSettings.forced_new_only = null
 
 
 ## The footer (the parent's rule on #217): crowded-out items in their last month,

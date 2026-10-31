@@ -56,7 +56,8 @@ static func register(main) -> void:
 	var card := ChiefBriefing.new()
 	main._stack.add(ScreenStack.SCENE, card, true, func() -> void: close(main))
 	card.hide()
-	var game := {"card": card, "lines": [], "memory": {}, "state_id": 0, "pending": {}, "was_running": false}
+	var game := {"card": card, "lines": [], "memory": {}, "state_id": 0, "pending": {}, "was_running": false,
+		"said_in": "", "turns": {}}
 	_games[main.get_instance_id()] = game
 	card.go_pressed.connect(func(i: int) -> void: go(main, i))
 	card.closed.connect(func() -> void: close(main))
@@ -117,7 +118,15 @@ static func open(main, report: Dictionary) -> void:
 	main._clock.paused = true
 	var shown := view(main, ranked["lines"], report, game["also"])
 	game["card"].show_view(shown)
-	speak_once(main, shown, game["card"], "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)])
+	# Pre-gate B2: the chief speaks when the situation is not the one he last spoke
+	# in, or a row is new; otherwise the caption shows, silent. Each show turns that
+	# situation's line, so no caption repeats the last one shown for it.
+	var situation := Priorities.situation(ranked["lines"])
+	var speaks := situation != String(game["said_in"]) or bool(ranked.get("new", false))
+	game["said_in"] = situation
+	game["turns"][situation] = _turn(main, situation) + 1
+	if speaks:
+		speak_once(main, shown, game["card"], "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)])
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
 
 
@@ -144,6 +153,8 @@ static func _will_show(main, game: Dictionary, report: Dictionary) -> bool:
 		game["state_id"] = state.get_instance_id()
 		game["memory"] = {}
 		game["pending"] = {}
+		game["said_in"] = ""
+		game["turns"] = {}
 	var now := int(state.year) * 12 + int(state.month)
 	if game["pending"].is_empty() or int(game["pending"].get("month", -1)) != now:
 		var last: Array = game["memory"].get("last", [])
@@ -192,7 +203,8 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 	var said := {"text": "", "clip": ""}
 	if chief != null:
 		who = Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id))
-		said = chief_said(main._loader, String(chief.id), Priorities.situation(lines), int(state.year) * 12 + int(state.month))
+		var situation := Priorities.situation(lines)
+		said = chief_said(main._loader, String(chief.id), situation, _turn(main, situation))
 	# The footer, folded by kind; each group's Go is its first item's (index past the
 	# three lines into lines + also).
 	var groups: Array = []
@@ -209,14 +221,21 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
 
 
+## How many cards this game has shown in `situation` (open() turns it): the line's
+## rotation index. By situation, not by month: a month index repeated a line every
+## three months whenever the situation was the same (pre-gate B2).
+static func _turn(main, situation: String) -> int:
+	return int((_games.get(main.get_instance_id(), {}).get("turns", {}) as Dictionary).get(situation, 0))
+
+
 ## The chief's line for the month's situation (2.6) as {text, clip}: three variants
-## per situation in the voice archetype's own lines, rotated by the month so no line
-## plays two months running. The clip (#226's batch) is Voice's only when its hash is
+## per situation in the voice archetype's own lines, `turn` rotating them so no
+## line follows itself in one situation. The clip (#226's batch) is Voice's only when its hash is
 ## the line's own, hashed BEFORE the quotes go round it -- the pipeline voiced the
 ## bare line, so the quoted text would never match.
-static func chief_said(loader, person_id: String, situation: String, month_index: int) -> Dictionary:
+static func chief_said(loader, person_id: String, situation: String, turn: int) -> Dictionary:
 	var arch := Voices.archetype_of(loader, person_id)
-	var key := "%s_%d" % [situation, posmod(month_index, CHIEF_VARIANTS) + 1]
+	var key := "%s_%d" % [situation, posmod(turn, CHIEF_VARIANTS) + 1]
 	var english := String((loader.voice_archetypes.get(arch, {}).get("lines", {}) as Dictionary).get(key, ""))
 	if english == "":
 		return {"text": "", "clip": ""}
@@ -329,6 +348,10 @@ static func go(main, index: int) -> void:
 		return
 	var line: Dictionary = all[index]
 	var target := target_of(line)
+	# Go keeps the clock paused (pre-gate B5: resumed at speed, a request booked for
+	# the next day opened its audience over the Go's target); the player resumes it
+	# with Space or the clock. Continue still gives the speed back (#207, #219).
+	game["was_running"] = false
 	close(main)
 	var tab := String(target["tab"])
 	var subject := String(line["subject"])
@@ -348,6 +371,13 @@ static func go(main, index: int) -> void:
 		"person":
 			main._windows.open(tab)
 			main._people_panel.focus(subject)
+		"commitment" when tab == "calendar":
+			# The Diary on the due day (2.4): a word is judged as its month begins,
+			# so its mark and its Call are on the first.
+			main._windows.open(tab)
+			var due := int(line["deadline_month"])
+			var year := floori((due - 1) / 12.0)
+			main._calendar_panel._grid.pick(year, due - year * 12, 1)
 		_:
 			main._windows.open(tab)
 
@@ -364,6 +394,11 @@ static func target_of(line: Dictionary) -> Dictionary:
 	if kind != "commitment":
 		return {"tab": String(line["go"]["tab"]), "acts_on": subject}
 	var object := subject.get_slice("|", 2)
+	# A minister's word (pre-gate RF3): the minister does the work, so the Agenda,
+	# Politics or the Budget hold no verb of the player's on it -- and the Agenda
+	# does not even show a programme entry the player does not hold. The Diary does.
+	if subject.get_slice("|", 0) == "delegated":
+		return {"tab": "calendar", "acts_on": subject}
 	if object.begins_with("programme:"):
 		return {"tab": "agenda", "acts_on": object.trim_prefix("programme:")}
 	if object.begins_with("office:"):

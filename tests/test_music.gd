@@ -10,6 +10,7 @@ const Music = preload("res://src/ui/music.gd")
 const SoundK = preload("res://src/ui/sound_constants.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+const MusicFlow = preload("res://src/ui/music_flow.gd")
 
 var _failures: Array = []
 
@@ -17,6 +18,7 @@ var _failures: Array = []
 func _init() -> void:
 	_check_no_manifest()
 	_check_manifest_rows()
+	_check_flow()
 	# Deferred: a node added in _init is not in the tree's groups yet.
 	_check_band_and_moments.call_deferred()
 
@@ -52,6 +54,59 @@ func _check_manifest_rows() -> void:
 	if Music.track("beds", "crisis") != "":
 		_fail("a row naming a missing file resolved to '%s'" % Music.track("beds", "crisis"))
 	Music.override_manifest = {}
+
+
+## RF9 (spec 4.3, #223's RECORD): a bed change crossfades over MUSIC_CROSSFADE_S,
+## and after MUSIC_PLAYS_BEFORE_REST plays through the bed rests MUSIC_REST_S under
+## the ambient bed alone, then starts again from its top. MusicFlow is the pure
+## half; headless places no player, so the gains are what is pinned.
+func _check_flow() -> void:
+	var fade: float = SoundK.MUSIC_CROSSFADE_S
+	var f := MusicFlow.change({})
+	f = MusicFlow.step(f, fade, 120.0)
+	if not is_equal_approx(float(f["gain"]), 1.0):
+		_fail("a first bed is not at full gain after the fade: %s" % f)
+	f = MusicFlow.change(f)
+	if not is_equal_approx(float(f["out"]), 1.0) or float(f["gain"]) > 0.0:
+		_fail("a bed change cut instead of crossfading: %s" % f)
+	f = MusicFlow.step(f, fade / 2.0, 120.0)
+	if not is_equal_approx(float(f["gain"]), 0.5) or not is_equal_approx(float(f["out"]), 0.5):
+		_fail("halfway through the crossfade the beds are not at half each: %s" % f)
+	f = MusicFlow.step(f, fade / 2.0, 120.0)
+	if not is_equal_approx(float(f["gain"]), 1.0) or float(f["out"]) > 0.0:
+		_fail("the crossfade did not end at the new bed alone: %s" % f)
+	# Two plays through, then the rest: silent for MUSIC_REST_S, then the top again.
+	var length := 120.0
+	f = MusicFlow.change({})
+	var t := 0.0
+	var plays_end: float = length * SoundK.MUSIC_PLAYS_BEFORE_REST
+	while t < plays_end - 1.0:
+		f = MusicFlow.step(f, 1.0, length)
+		t += 1.0
+	if float(f["rest"]) > 0.0 or float(f["gain"]) < 1.0:
+		_fail("the bed rested before two plays through: %s at %.0f s" % [f, t])
+	f = MusicFlow.step(f, 1.0, length)
+	if float(f["rest"]) <= 0.0:
+		_fail("two plays through and the bed did not rest: %s" % f)
+	f = MusicFlow.step(f, fade, length)
+	if float(f["gain"]) > 0.0:
+		_fail("the resting bed is not silent after its fade: %s" % f)
+	var restarted := false
+	var rested := 0.0
+	while not restarted and rested < SoundK.MUSIC_REST_S + 10.0:
+		f = MusicFlow.step(f, 1.0, length)
+		rested += 1.0
+		restarted = bool(f["restart"])
+	if not restarted or absf(rested + fade - SoundK.MUSIC_REST_S) > 1.5:
+		_fail("the rest did not end after %.0f s (rested %.0f s, restarted %s)" % [SoundK.MUSIC_REST_S, rested + fade, restarted])
+	if float(f["played"]) > 1.0 or float(f["rest"]) > 0.0:
+		_fail("after its rest the bed does not start from its top: %s" % f)
+	# A bed of unknown length (no stream, headless) never rests.
+	f = MusicFlow.change({})
+	for i in 1000:
+		f = MusicFlow.step(f, 1.0, 0.0)
+	if float(f["rest"]) > 0.0:
+		_fail("a bed with no length rested")
 
 
 ## The duck: polled from the voice group, released the frame the line ends, with
@@ -96,6 +151,39 @@ func _check_band_and_moments() -> void:
 		_fail("another game's calm month did not start calm: %s" % music.band_state)
 	if music.get_children().any(func(c): return c is AudioStreamPlayer):
 		_fail("a bed with no track placed a player")
+	# Pre-gate B3: a band with no file plays the tense bed (the campaign was silent
+	# for the four months before the election).
+	Music.override_manifest = {"beds": {"tense": {"file": "../voice/activist_f_30/agree.ogg"}}}
+	Music.follow(desk, "calm", 3, 4343)  # three months to the vote: the campaign band
+	if String(music.band_state["band"]) != "campaign" or music._track != Music.track("beds", "tense"):
+		_fail("a band with no file did not fall back to the tense bed: %s, '%s'" % [music.band_state, music._track])
+	# RF9: the node's own bed change starts MusicFlow's crossfade.
+	music._process(SoundK.MUSIC_CROSSFADE_S)
+	Music.override_manifest = {"beds": {"crisis": {"file": "../voice/activist_f_30/refuse.ogg"},
+		"tense": {"file": "../voice/activist_f_30/agree.ogg"}}}
+	Music.follow(desk, "crisis", 20, 4343)
+	if not is_equal_approx(float(music.flow.get("out", 0.0)), 1.0) or float(music.flow.get("gain", 1.0)) > 0.0:
+		_fail("the node's bed change did not crossfade: %s" % music.flow)
+	# The parent's TAKE 3 on #230: a Settings save re-applies the level to the bed
+	# playing -- its volume only, never from its top, and the flow goes on.
+	var bed := AudioStreamPlayer.new()
+	bed.stream = AudioStreamGenerator.new()
+	music.add_child(bed)
+	music._player = bed
+	bed.play()
+	music._process(1.0)
+	var flowing: Dictionary = music.flow.duplicate()
+	_set_music(3)
+	SettingsPanel.revision += 1
+	music._process(0.0)
+	if music._player != bed or not bed.playing:
+		_fail("a Settings save restarted the bed (playing %s)" % bed.playing)
+	if float(music.flow["played"]) != float(flowing["played"]) or float(music.flow["gain"]) != float(flowing["gain"]):
+		_fail("a Settings save reset the flow: %s, was %s" % [music.flow, flowing])
+	_set_music(SettingsPanel.DEFAULT_MUSIC)
+	SettingsPanel.revision += 1
+	music._process(0.0)
+	Music.override_manifest = {}
 	# The duck seen by the node itself, a frame at a time.
 	var voice := AudioStreamPlayer.new()
 	voice.add_to_group(Music.VOICE_GROUP)

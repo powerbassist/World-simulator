@@ -71,9 +71,16 @@ static func foreign_news(path: String) -> bool:
 ## all ones last month's briefing already named.
 const BRIEFING_NEW_ONLY_KEY := "briefing_new_only"
 const DEFAULT_BRIEFING_NEW_ONLY := false
+## A test seam: a bool pins the setting in this process, null reads the file. A
+## parallel pool's tests share one settings file, so a test that needs the
+## briefing to open every month cannot rely on the file while another writes it
+## (QA's TAKE on #230: test_briefing_clock's writes failed test_briefing_go).
+static var forced_new_only = null
 
 
 static func briefing_new_only(path: String) -> bool:
+	if forced_new_only != null:
+		return bool(forced_new_only)
 	var cfg := ConfigFile.new()
 	cfg.load(path)
 	return bool(cfg.get_value(SECTION, BRIEFING_NEW_ONLY_KEY, DEFAULT_BRIEFING_NEW_ONLY))
