@@ -17,6 +17,7 @@ const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
+const Pledges = preload("res://src/sim/pledges.gd")
 
 
 ## The chest's rows: the party's money, its purse a year (public funding, running
@@ -94,12 +95,28 @@ static func why_not(ns, loader, action, site_region: String) -> String:
 ## made on the first refusal and kept on `from` -- on_stack() adds a new one each call.
 static func tell_refused(from: Node, ns, loader, action, site_region: String) -> void:
 	var why := why_not(ns, loader, action, site_region)
+	_tell(from, why if why != "" else Strings.t("The campaign cannot do that now."))
+
+
+## A promise made from the panel: the sim's command, its refusal said on the same
+## card as an effort's (V5.3-0 RF7: the campaign's results, never a dead click).
+## True when the promise was made.
+static func promise(from: Node, state, ns, loader, action) -> bool:
+	var result := Pledges.execute(state, ns, loader.pledges, action)
+	if not result.get("applied", false):
+		_tell(from, Strings.t("%s refused -- it is no longer on offer.") % Strings.row_name("pledges", action))
+	return bool(result.get("applied", false))
+
+
+## The panel's one refusal card, its sentence in the BLOCKED tone.
+static func _tell(from: Node, why: String) -> void:
 	var card = from.get_meta(&"refusal_card") if from.has_meta(&"refusal_card") else null
 	if card == null or not is_instance_valid(card):
 		card = ConfirmCard.on_stack(from)
 		from.set_meta(&"refusal_card", card)
 	if card != null:
-		card.tell(why if why != "" else Strings.t("The campaign cannot do that now."))
+		card.tell(why)
+		ResultTone.tint(card._question, ResultTone.BLOCKED)
 
 
 ## The month's efforts stopped for money (the report's `campaign_stopped`), as ONE note

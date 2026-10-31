@@ -567,11 +567,9 @@ func _pledge_button(ns, action) -> Button:
 
 func _on_promise(ns, action) -> void:
 	var before := Trends.snapshot_now(_state)
-	var result := Pledges.execute(_state, ns, _loader.pledges, action)
-	if not result.get("applied", false):
-		return
-	_dirty = true
-	acted.emit(before, Strings.row_name("pledges", action))
+	if CampaignChest.promise(self, _state, ns, _loader, action):
+		_dirty = true
+		acted.emit(before, Strings.row_name("pledges", action))
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract,

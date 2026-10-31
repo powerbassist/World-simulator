@@ -42,7 +42,7 @@ func _rows(both: bool) -> Array:
 		"delegate": {"ok": true, "reason": ""}, "decline": {"ok": true, "reason": ""}}]
 	if both:
 		rows.append({"id": "req_2", "person": "Daniel Moucron", "ask": "He wants a portfolio.",
-			"by": "APR 2026", "price": "his grudge +0.12",
+			"by": "APR 2026", "price": "his grudge +0.12", "feel": {"rapport": 0.4},
 			"book": {"ok": true, "reason": ""}, "delegate": {"ok": true, "reason": ""}, "decline": {"ok": true, "reason": ""}})
 	return rows
 
@@ -113,6 +113,11 @@ func _check_booking() -> void:
 	if refused == null or open == null:
 		_fail("the Diary's request column has no card per request")
 		return
+	# #222, the parent's call: the asker's mood on the column's face (spec 4.2).
+	if open.find_child("MoodBadge", true, false) == null:
+		_fail("a request with feelings shows no mood badge on the Diary's card")
+	if refused.find_child("MoodBadge", true, false) != null:
+		_fail("a request with no feelings wears a mood badge")
 	var days: Button = refused.find_child("Days", true, false)
 	if days == null or not days.disabled or not days.tooltip_text.contains("taken"):
 		_fail("a request with no free day offers Days, or hides why")

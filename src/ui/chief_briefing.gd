@@ -109,10 +109,13 @@ func show_view(view: Dictionary) -> void:
 		_rows.add_child(row)
 		# V5.3-0 4.5: the three come in a beat apart; one new this month pulses.
 		Motion.arrive(row, Motion.STAGGER_S * i)
+		# The wait is a tween the ROW owns, so it dies with the row: a SceneTreeTimer's
+		# lambda outlived a row freed by the next month's show_view and logged
+		# "Lambda capture ... was freed" on every fast month (#222 QA T2).
 		if bool(rows[i].get("new", false)) and Motion.enabled() and row.is_inside_tree():
-			row.get_tree().create_timer(Motion.STAGGER_S * i + Motion.ARRIVE_S).timeout.connect(func():
-				if is_instance_valid(row):
-					Motion.pulse(row))
+			var wait := row.create_tween()
+			wait.tween_interval(Motion.STAGGER_S * i + Motion.ARRIVE_S)
+			wait.tween_callback(Callable(Motion, "pulse").bind(row))
 	for child in _effects.get_children():
 		_effects.remove_child(child)
 		child.queue_free()
