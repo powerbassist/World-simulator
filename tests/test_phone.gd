@@ -379,7 +379,8 @@ func _warm(state, ns, pid: String) -> void:
 	President.set_bond(state, ns, _loader, pid, "close")
 
 
-## A France person who is not the president nor any of `not_ids`.
+## A France person who is not the president nor any of `not_ids` -- nor staff,
+## whom the phone never reaches (V5.3-0).
 func _someone(ns, not_ids := []) -> String:
 	for person in Staff.cast(_loader, PLAYER):
 		if person.id != President.leader_id(ns) and not not_ids.has(person.id):
