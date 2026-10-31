@@ -371,6 +371,23 @@ func _check_who_matters_now(panel, state) -> void:
 	panel._refresh()
 	if not _text_of(panel).contains(String(asker.person_name)):
 		_fail("the asker's card is not drawn on the panel")
+	# Pass 2 on #220: a left click on the card does its reason's verb -- for an
+	# asker, it raises the request's card (the panel's answer hook gets its id).
+	var box := VBoxContainer.new()
+	_main.add_child(box)
+	var answered: Array = []
+	PeopleNow.build(box, state, _main._loader, func(_p): return "", func(_p): pass, func(): pass, func(_p): pass,
+		func(id: String) -> void: answered.append(id))
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	for card in box.find_children("*", "Control", true, false):
+		if card.mouse_filter == Control.MOUSE_FILTER_STOP and not card.gui_input.get_connections().is_empty():
+			card.gui_input.emit(click)
+			break
+	if answered != ["%s|%d" % [asker.id, now]]:
+		_fail("a left click on the asker's card did not raise their request: %s" % str(answered))
+	box.queue_free()
 	ns.audience_requests.clear()
 	panel._refresh()
 

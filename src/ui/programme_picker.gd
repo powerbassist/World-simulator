@@ -138,6 +138,9 @@ func _row(terms: Dictionary) -> Control:
 	pick.custom_minimum_size.x = NAME_WIDTH * UiTheme.text_scale()
 	pick.set_meta("entry", String(terms["id"]))
 	pick.pressed.connect(select.bind(String(terms["id"])))
+	# RF3: a Go on an entry finds its row whether or not it is the one selected
+	# (the selected one's Choose carries the entry and the offer).
+	ActsOn.tag(pick, [String(terms["id"])])
 	row.add_child(pick)
 	row.add_child(_chip(_clock_chip(terms), COLUMNS[0]))
 	var liked := liked_by(terms)

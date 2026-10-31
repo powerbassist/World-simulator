@@ -44,8 +44,13 @@ static func sort_row(panel) -> void:
 		sort.set_meta(panel.HEAD_META, true)
 		sort.pressed.connect(func() -> void:
 			panel._sort = key
+			panel._refocus = key
 			panel.mark_dirty())
 		row.add_child(sort)
+		# The re-sort rebuilds the table: the pressed header takes focus back.
+		if panel._refocus == key:
+			panel._refocus = ""
+			sort.call_deferred("grab_focus")
 	panel._cell(row, Strings.t("Wants served"), 0, UiTheme.CAPTION)
 
 

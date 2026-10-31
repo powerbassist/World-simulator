@@ -89,9 +89,12 @@ static func after_election(main) -> void:
 static func open(main, report: Dictionary) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	var ns = main._state.player() if main._state != null else null
-	if game.is_empty() or ns == null or not bool(ns.in_government):
-		return
-	if not _will_show(main, game, report):
+	var cards: Array = game.get("month_cards", [])
+	game.erase("month_cards")
+	if game.is_empty() or ns == null or not bool(ns.in_government) or not _will_show(main, game, report):
+		# A month the briefing does not show keeps its consequence cards in the inbox.
+		for card in cards:
+			main._hud.inbox.push(card["title"], card["body"])
 		return
 	var ranked: Dictionary = game["pending"]
 	game["pending"] = {}
@@ -102,6 +105,19 @@ static func open(main, report: Dictionary) -> void:
 	main._clock.paused = true
 	game["card"].show_view(view(main, ranked["lines"], report, game["also"]))
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
+
+
+## A month's consequence card (effects_ledger.gd, a desk card decided for you),
+## held for open(): the briefing says what the month decided on a month it shows
+## (spec 3.3), so the card goes to the inbox only on a month it does not.
+static func hold_card(main, card: Dictionary) -> void:
+	var game: Dictionary = _games.get(main.get_instance_id(), {})
+	if card.is_empty():
+		return
+	if game.is_empty():
+		main._hud.inbox.push(card["title"], card["body"])
+		return
+	game["month_cards"] = game.get("month_cards", []) + [card]
 
 
 ## Ranks this month once (cached until the card opens) and says whether it opens.

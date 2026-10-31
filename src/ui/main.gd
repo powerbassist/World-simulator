@@ -1309,7 +1309,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 		"History":
 			# The month's measurement of the player's decisions, for the Overview and,
 			# since V5.1-d1b (G10), as a card each in the inbox.
-			EffectsLedger.record(_state, _pending_effects, report["history_entry"], year, month, _hud.inbox)
+			preload("res://src/ui/briefing_driver.gd").hold_card(self, EffectsLedger.record(_state, _pending_effects, report["history_entry"], year, month, null))
 		"Legislature":
 			# The ultra pass-4 finding: a held bill releasing writes
 			# ns.last_law_result in Legislature's tick, and the assembly's own tick

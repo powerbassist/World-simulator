@@ -82,10 +82,21 @@ func _init(panel) -> void:
 	left.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left.size_flags_stretch_ratio = 0.6
 	add_child(left)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 0)
+	left.add_child(head)
 	_header = HBoxContainer.new()
 	_header.add_theme_constant_override("separation", 10)
-	left.add_child(_header)
+	_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(_header)
+	var gutter := Control.new()
+	head.add_child(gutter)
 	_rows = _column(left, 1.0)
+	# The rows lose their scrollbar's width when it shows; the header, outside the
+	# scroll, reserves the same so its captions stay over their columns.
+	var bar := (_rows.get_parent() as ScrollContainer).get_v_scroll_bar()
+	bar.visibility_changed.connect(func() -> void:
+		gutter.custom_minimum_size.x = bar.get_combined_minimum_size().x if bar.visible else 0.0)
 	_rows.add_theme_constant_override("separation", 2)
 	_detail = _column(self, 0.4)
 	_detail.add_theme_constant_override("separation", 8)

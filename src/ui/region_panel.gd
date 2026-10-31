@@ -51,6 +51,11 @@ var _open_region := ""
 var _about_open := false
 
 var _title: Label
+## The regions' share chart: the nation's, so it stands down while a city is open.
+var _chart: Control
+## The toggle just pressed: its rebuild freed the focused button, so the new one
+## with this key takes focus and the keyboard keeps its place.
+var _refocus := ""
 var _body: VBoxContainer
 var _back_button: Button
 var _close_button: Button
@@ -63,7 +68,8 @@ func _ready() -> void:
 	_title.theme_type_variation = UiTheme.LEAD
 	root.add_child(_title)
 	# V5.2 b+: each region's share of the output, drawn (panel_charts.gd).
-	root.add_child(PanelCharts.new(self, PanelCharts.REGIONS))
+	_chart = PanelCharts.new(self, PanelCharts.REGIONS)
+	root.add_child(_chart)
 
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -148,6 +154,7 @@ func _refresh() -> void:
 		child.queue_free()
 	var found: Dictionary = TerritoryCity.find(_loader, _city_id) if _city_id != "" else {}
 	var title := TerritoryCity.build(_body, _state, _loader, found) if not found.is_empty() else ""
+	_chart.visible = title == ""
 	if title != "":
 		_title.text = title
 		_back_button.show()
@@ -202,10 +209,15 @@ func _region_line(ns, regions: Array, region, access: Dictionary, site_count: in
 	pick.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	pick.tooltip_text = pick.text
 	pick.pressed.connect(_pick.bind(String(region.id)))
+	if _refocus == String(region.id):
+		_refocus = ""
+		pick.call_deferred("grab_focus")
 	row.add_child(pick)
 	var index: float = Regions.gdp_per_head_index(ns, regions, region.id, Migration.region_share(ns, region.id))
 	var sited: Dictionary = _state.project_sited_pct.get(ns.id, {})
-	row.add_child(_cell("%s%%" % Num.fs((index - 1.0) * 100.0, 0), "", COLUMNS[0]))
+	# A region within half a point of the nation reads "0%", never "-0%" or "+0%".
+	var against := (index - 1.0) * 100.0
+	row.add_child(_cell("%s%%" % (Num.fs(against, 0) if absf(against) >= 0.5 else "0"), "", COLUMNS[0]))
 	row.add_child(_cell("%s%%" % Num.f(Regions.unemployment_pct(ns, regions, region.id, access, sited), 1), "", COLUMNS[1]))
 	row.add_child(_cell(str(site_count) if site_count > 0 else "", "", COLUMNS[2]))
 	return row
@@ -215,6 +227,7 @@ func _region_line(ns, regions: Array, region, access: Dictionary, site_count: in
 ## sites there, each with a Go; its largest cities, each opening in place.
 func _pick(region_id: String) -> void:
 	_open_region = "" if _open_region == region_id else region_id
+	_refocus = region_id
 	if _open_region != "" and _map != null:
 		var city = _largest_city(region_id)
 		if city != null:
@@ -265,8 +278,11 @@ func _about(ns, regions: Array) -> void:
 	toggle.text = tr("About these figures")
 	toggle.toggle_mode = true
 	toggle.button_pressed = _about_open
-	toggle.pressed.connect(func() -> void: _about_open = not _about_open; _dirty = true)
+	toggle.pressed.connect(func() -> void: _about_open = not _about_open; _refocus = "about"; _dirty = true)
 	PanelKit.buttons(_body).add_child(toggle)
+	if _refocus == "about":
+		_refocus = ""
+		toggle.call_deferred("grab_focus")
 	if not _about_open:
 		return
 	var named := 0.0
