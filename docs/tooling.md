@@ -270,12 +270,14 @@ and `src/ui/budget_panel.gd` are the same.
 
 ## Claude Code, in the repo
 
-Two pieces are committed under `.claude/` so a worktree session and a fresh clone get them; the rest of that folder is per-machine (see `.gitignore`).
+Four pieces are committed under `.claude/` and `tools/` so a worktree session and a fresh clone get them; the rest of that folder is per-machine (see `.gitignore`).
 
 - **`tools/protect_files.py`**, a PreToolUse hook on `Edit|Write|MultiEdit` (wired in `.claude/settings.json`). It *denies* an edit to `.godot/**`, `reports/suite_runs/**` and `*.uid` (the engine or the runner writes them) and *asks* before `project.godot` or a `*.import` (a deliberate edit is sometimes right: an engine bump, an autoload fix). Paths are judged relative to the project root, so a `.claude/worktrees/` checkout is guarded the same way. The *staging* half of the same footgun is guarded at user level, not here.
-- **`/block-closeout`** (`.claude/skills/block-closeout/SKILL.md`, user-invoked only). The gates AGENTS.md names, in order: tree state, `.uid` pairs, the suite, the cheap checks (names, size, vault, uids, reuse), the balance probe for a sim or data change, the windowed screenshot for UI, scratch.
+- **`tools/lint_on_edit.py`**, a PostToolUse hook on `Edit|Write|MultiEdit`. After an edit it runs the lint that edit can break: `event_lint.py --check` for `data/events/`, `law_lint.py --check` for `data/laws/`, `i18n_extract.py --check` for `data/i18n/` and `src/ui/*.gd` (the only `.gd` files that tool reads). A failure comes back as `additionalContext` for the next step. It never blocks (fail-open: a bad payload, a timeout or a missing script passes), starts no Godot, and judges the file against its own checkout (the nearest `project.godot`), so a worktree lints its own tree.
+- **`tools/guard_commit_shards.py`**, a PreToolUse hook on `Bash`. On a `git commit` that stages a `tests/test_*.gd` (or names one on the same command line, as in `git add ... && git commit`) it runs CI's shard check, `bash tools/run_tests.sh --print-tests | python tools/ci_shards.py --check`, and answers `permissionDecision: "ask"` with the check's own output when it fails. That closes the recorded bite: a new test registered in `run_tests.sh` but absent from `tools/ci_shards.json` passes the local gate and fails CI. It never denies, and a missing `bash` passes.
+- **`/block-closeout`** (`.claude/skills/block-closeout/SKILL.md`, user-invoked only). The gates AGENTS.md names, in order: tree state, `.uid` pairs, the suite, the cheap checks (names, size, vault, uids, reuse, the event, law and i18n lints, the voice selftest, the shard check), the balance probe for a sim or data change, the windowed screenshot for UI, scratch.
 
-Hooks are read when a session starts, so a change to either takes effect in the next session. Test the script by piping it a payload: `echo '{"tool_input":{"file_path":"project.godot"},"cwd":"."}' | python tools/protect_files.py`.
+Hooks are read when a session starts, so a change to either takes effect in the next session. Test a script by piping it a payload: `echo '{"tool_input":{"file_path":"project.godot"},"cwd":"."}' | python tools/protect_files.py`. `lint_on_edit.py` and `guard_commit_shards.py` also take `--selftest` (their routing, no lint run). On Windows give them a real Windows path (`cygpath -m "$PWD"` in Git Bash): a `/f/Dev/...` path is read as relative to the current drive and the hook finds no project.
 
 ## Deliberately not installed
 
