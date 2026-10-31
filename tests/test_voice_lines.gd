@@ -20,11 +20,14 @@ const Person = preload("res://src/core/person.gd")
 const AudienceScene = preload("res://src/ui/audience_scene.gd")
 const PhoneDialog = preload("res://src/ui/phone_dialog.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
+const Priorities = preload("res://src/ui/priorities.gd")
 const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 const Voice = preload("res://src/ui/voice.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 
 const MANIFEST := "res://assets/audio/voice/manifest.json"
+## Past two of BriefingDriver.QUEUE_POLL_S, so a waiting chief has looked again.
+const WAIT_MS := 700
 const CHIEFS := ["chief_fra", "chief_deu", "chief_gbr", "chief_pol"]
 ## Warm (PLEASED), wary (WORRIED), cold rapport (STERN): MoodBadge.emotion_of's cuts.
 const WARM := {"rapport": 0.2}
@@ -43,6 +46,10 @@ var _failures: Array[String] = []
 var _loader
 var _frame := 0
 var _desk
+var _card
+var _said := {}
+var _phase := "start"
+var _since := 0
 var _scene
 var _phone
 
@@ -52,6 +59,8 @@ func _init() -> void:
 	_loader.load_all()
 	_desk = Control.new()  # main's stand-in: the desk speakers' parent
 	root.add_child(_desk)
+	_card = Control.new()  # the briefing card's stand-in: its meta and visibility
+	root.add_child(_card)
 	_scene = AudienceScene.new()
 	_scene.size = Vector2(1120, 630)
 	root.add_child(_scene)
@@ -63,10 +72,20 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 3:
 		return false
-	_check_chief()
+	match _phase:
+		"start":
+			_check_chief()
+			_queue_behind_messenger()
+			return false
+		"waiting", "after", "cancel":
+			if Time.get_ticks_msec() - _since < WAIT_MS:
+				return false
+			_queue_step()
+			return false
 	_check_audience()
 	_check_phone()
 	_check_no_orphan()
+	_check_situations()
 	for f in _failures:
 		push_error("FAIL " + f)
 	print("test_voice_lines: %s" % ("PASS" if _failures.is_empty() else "%d failure(s)" % _failures.size()))
@@ -87,7 +106,7 @@ func _check_chief() -> void:
 				if String(said["text"]) == "" or String(said["clip"]) == "":
 					_fail("%s %s month %d: line '%s', clip '%s'" % [arch, situation, month, said["text"], said["clip"]])
 	var said: Dictionary = BriefingDriver.chief_said(_loader, "chief_fra_fixture", "tense", 1)
-	BriefingDriver.speak(_desk, {"line": said["text"], "clip": said["clip"]})
+	BriefingDriver.speak(_desk, {"line": said["text"], "clip": said["clip"]}, _card)
 	var player := _desk.get_node_or_null(Voice.NODE) as AudioStreamPlayer
 	if player == null or player.stream == null or String(player.get_meta("card", "")) != BriefingDriver.LINE_CARD:
 		_fail("the briefing shows the chief's line and does not speak it")
@@ -96,16 +115,59 @@ func _check_chief() -> void:
 	if player.stream != null:
 		_fail("the card coming down (Voice.hush on its id) left the chief's line playing")
 	# A card with no clip (a French line, no chief) says nothing.
-	BriefingDriver.speak(_desk, {"line": "Autre chose.", "clip": ""})
+	BriefingDriver.speak(_desk, {"line": "Autre chose.", "clip": ""}, _card)
 	if player.stream != null:
 		_fail("a card with no clip still plays a line")
-	# A desk speaker already waiting on the same player keeps it: no two voices at once.
+	# Once a card: the same month's key says nothing the second time (TAKE 3).
+	_said = {"line": said["text"], "clip": said["clip"]}
+	BriefingDriver.speak_once(_desk, _said, _card, "1:100")
+	Voice.stop(_desk)
+	BriefingDriver.speak_once(_desk, _said, _card, "1:100")
+	if player.stream != null:
+		_fail("the card opened again on the same month said its line twice")
+	BriefingDriver.speak_once(_desk, _said, _card, "1:101")
+	if player.stream == null:
+		_fail("the next month's card said nothing")
+	Voice.stop(_desk)
+
+
+## An arrival month (TAKE 1): the messenger's line waits behind its sting on main's
+## player; the chief neither cuts it nor is dropped, and speaks once it has ended.
+func _queue_behind_messenger() -> void:
+	var player := _desk.get_node(Voice.NODE) as AudioStreamPlayer
 	player.set_meta("pending", true)
 	player.set_meta("card", "desk_event")
-	BriefingDriver.speak(_desk, {"line": said["text"], "clip": said["clip"]})
+	BriefingDriver.speak(_desk, _said, _card)
 	if String(player.get_meta("card", "")) != "desk_event":
-		_fail("the chief's line talked over a desk speaker's waiting line")
-	Voice.stop(_desk)
+		_fail("the chief's line cut the messenger's waiting line")
+	_phase = "waiting"
+	_since = Time.get_ticks_msec()
+
+
+func _queue_step() -> void:
+	var player := _desk.get_node(Voice.NODE) as AudioStreamPlayer
+	match _phase:
+		"waiting":
+			if String(player.get_meta("card", "")) != "desk_event":
+				_fail("the waiting chief took the player while the messenger still held it")
+			player.set_meta("pending", false)  # the messenger's line has ended
+			_phase = "after"
+		"after":
+			if String(player.get_meta("card", "")) != BriefingDriver.LINE_CARD or player.stream == null:
+				_fail("the messenger's line ended and the chief never spoke (an arrival month is silent)")
+			# Closed while waiting: the queued line is cancelled, nothing replays.
+			Voice.stop(_desk)
+			player.set_meta("pending", true)
+			player.set_meta("card", "desk_event")
+			BriefingDriver.speak(_desk, _said, _card)
+			_card.hide()
+			player.set_meta("pending", false)
+			_phase = "cancel"
+		"cancel":
+			if String(player.get_meta("card", "")) == BriefingDriver.LINE_CARD:
+				_fail("the card was closed and its queued chief line still played")
+			_phase = "done"
+	_since = Time.get_ticks_msec()
 
 
 func _check_audience() -> void:
@@ -183,6 +245,26 @@ func _check_no_orphan() -> void:
 			_fail("%s: archetype '%s' is not in the table, so no person speaks it" % [key, arch])
 		if not asked.has(line_id):
 			_fail("%s: line '%s' has no caller (an orphan clip)" % [key, line_id])
+
+
+## Priorities.SITUATIONS is a hand list beside situation()'s literals (the parent's
+## TAKE 2): every answer situation() gives is in it, and the list holds nothing
+## situation() never answers, so the chief's line ids cannot drift from the ranking.
+func _check_situations() -> void:
+	var line := {"kind": "deadline", "deadline_month": -1, "standing": false, "u": 0.0, "held": false, "w": 0.0}
+	var held := line.duplicate()
+	held["held"] = true
+	var crisis := line.duplicate()
+	crisis["kind"] = "crisis"
+	var answers := {}
+	for lines in [[], [line], [held], [crisis, held]]:
+		var said := Priorities.situation(lines)
+		if not Priorities.SITUATIONS.has(said):
+			_fail("situation() answered '%s', which Priorities.SITUATIONS lacks" % said)
+		answers[said] = true
+	for situation in Priorities.SITUATIONS:
+		if not answers.has(situation):
+			_fail("Priorities.SITUATIONS lists '%s', which situation() never answered" % situation)
 
 
 ## The voice player free again, so the next line is said now rather than queued.

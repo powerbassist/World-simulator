@@ -42,6 +42,11 @@ const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const CHIEF_VARIANTS := 3
 ## The card id the chief's spoken line carries (Voice.hush).
 const LINE_CARD := "chief_briefing"  # i18n: ok a card id
+## The card's meta naming the month whose line it has said (speak_once).
+const SPOKEN := "spoken"  # i18n: ok a meta key
+## How often a chief waiting behind a desk speaker looks again, in seconds: short
+## enough that the line follows the messenger's at once, long enough to cost nothing.
+const QUEUE_POLL_S := 0.25
 
 static var _games := {}
 ## A test seam: a test of another surface drives whole months and would otherwise
@@ -115,7 +120,7 @@ static func open(main, report: Dictionary) -> void:
 	main._clock.paused = true
 	var shown := view(main, ranked["lines"], report, game["also"])
 	game["card"].show_view(shown)
-	speak(main, shown)
+	speak_once(main, shown, game["card"], "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)])
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
 
 
@@ -232,11 +237,33 @@ static func chief_line_ids() -> Array:
 	return out
 
 
-## The card's line said aloud, once, from open() (one call a card). Under `main`,
-## where the desk's arriving speakers talk too: one Voice player there, so a chief
-## and an event speaker never talk over each other (Voice drops the newer line).
-static func speak(main: Node, shown: Dictionary) -> void:
-	Voice.speak(main, String(shown.get("clip", "")), 0.0, LINE_CARD)
+## The card's line said aloud once a card: `key` names the month (and the game), so
+## a card opened again on the same month does not say it twice (the parent's TAKE 3).
+static func speak_once(main: Node, shown: Dictionary, card: CanvasItem, key: String) -> void:
+	if String(card.get_meta(SPOKEN, "")) == key:
+		return
+	card.set_meta(SPOKEN, key)
+	speak(main, shown, card)
+
+
+## Under `main`, where the desk's arriving speakers talk too. A messenger's line
+## under way, or waiting behind its sting, is never cut and never talked over: the
+## chief waits for it and speaks when it ends, if `card` is still up for the same
+## month. Closing the card cancels the wait; nothing replays later (the parent's
+## TAKE 1 on #229 -- an arrival month is a tense or crisis one, so dropping the line
+## silenced the chief exactly when it mattered).
+static func speak(main: Node, shown: Dictionary, card: CanvasItem) -> void:
+	var clip := String(shown.get("clip", ""))
+	if clip == "" or main == null or not main.is_inside_tree():
+		return
+	var player := main.get_node_or_null(Voice.NODE) as AudioStreamPlayer
+	if player != null and (player.playing or bool(player.get_meta("pending", false))):
+		var key = card.get_meta(SPOKEN, null)
+		main.get_tree().create_timer(QUEUE_POLL_S).timeout.connect(func() -> void:
+			if is_instance_valid(main) and is_instance_valid(card) and card.visible and card.get_meta(SPOKEN, null) == key:
+				speak(main, shown, card))
+		return
+	Voice.speak(main, clip, 0.0, LINE_CARD)
 
 
 ## "Continue", or "Next: ..." naming the surface that still holds the clock.
