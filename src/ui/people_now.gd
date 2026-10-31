@@ -36,7 +36,7 @@ static func chosen(state, loader, side: Callable) -> Array:
 	var seen := {President.leader_id(ns): true}
 	var now := int(state.year) * 12 + int(state.month)
 	for request in Audiences.pending(ns):
-		_add(out, seen, String(request.get("person_id", "")), Strings.t("Asks to see you"), UiTheme.WARN_TEXT)
+		_add(out, seen, String(request.get("person_id", "")), Strings.t("Asks to see you"), UiTheme.WARN_TEXT, String(request.get("id", "")))
 	for row in ns.commitments:
 		if int(row.get("due_month", now + 99)) - now <= DUE_MONTHS:
 			_add(out, seen, String(row.get("person_id", "")), Strings.t("A promise falls due"), UiTheme.WARN_TEXT)
@@ -56,16 +56,17 @@ static func chosen(state, loader, side: Callable) -> Array:
 	return out.slice(0, MAX_CARDS)
 
 
-static func _add(out: Array, seen: Dictionary, pid: String, reason: String, tone: String) -> void:
+static func _add(out: Array, seen: Dictionary, pid: String, reason: String, tone: String, request_id := "") -> void:
 	if pid == "" or seen.has(pid) or out.size() >= MAX_CARDS:
 		return
 	seen[pid] = true
-	out.append({"id": pid, "reason": reason, "tone": tone})
+	out.append({"id": pid, "reason": reason, "tone": tone, "request": request_id})
 
 
 ## The row of cards under `parent`; `hover` is the panel's person-card hook
-## (person_id) -> void, `call` its call request.
-static func build(parent: Control, state, loader, side: Callable, hover: Callable, unhover: Callable, call: Callable) -> void:
+## (person_id) -> void, `call` its call request, `answer` raises a request's card
+## (request_id) -> void.
+static func build(parent: Control, state, loader, side: Callable, hover: Callable, unhover: Callable, call: Callable, answer: Callable) -> void:
 	var picks := chosen(state, loader, side)
 	if picks.is_empty():
 		return
@@ -98,5 +99,14 @@ static func build(parent: Control, state, loader, side: Callable, hover: Callabl
 		card.mouse_entered.connect(hover.bind(pid))
 		card.mouse_exited.connect(unhover)
 		card.gui_input.connect(func(event: InputEvent) -> void:
-			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-				call.call(pid))
+			if not (event is InputEventMouseButton and event.pressed):
+				return
+			if event.button_index == MOUSE_BUTTON_RIGHT:
+				call.call(pid)
+			# A left click does the reason's verb: a request's card comes up to be
+			# answered; anyone else's person card opens.
+			elif event.button_index == MOUSE_BUTTON_LEFT:
+				if String(pick["request"]) != "":
+					answer.call(String(pick["request"]))
+				else:
+					hover.call(pid))

@@ -36,6 +36,8 @@ signal closed
 ## V5.2b b3: a right click on a person asks to call them (phone_driver.gd). Not a
 ## button: this panel keeps none (above), and a click has no width to fold.
 signal call_requested(person_id: String)
+## A "Who matters now" card that asks to see you was clicked: raise its request card.
+signal answer_requested(request_id: String)
 
 const CK = preload("res://src/sim/cabinet_constants.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
@@ -103,6 +105,9 @@ var _open := {"politician": true}
 ## admits (tests/test_people_panel.gd), each alone in its row or among fixed cells.
 const HEAD_META := "people_head"
 var _sort := "standing"
+## The toggle just pressed: its rebuild freed the focused button, so the new one
+## with this key takes focus and the keyboard keeps its place.
+var _refocus := ""
 
 
 func _ready() -> void:
@@ -194,8 +199,7 @@ func _refresh() -> void:
 	# The offices beside the parties: two short lists side by side read at a glance,
 	# where one under the other made a page of them.
 	PeopleNow.build(_body, _state, _loader, func(p): return _party_or_kind_line(ns, p),
-		_show_person_card, _hide_person_card,
-		func(pid: String) -> void: call_requested.emit(pid))
+		_show_person_card, _hide_person_card, call_requested.emit, answer_requested.emit)
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 40)
 	_body.add_child(top)

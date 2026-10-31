@@ -84,6 +84,11 @@ func _plan() -> Array:
 	# Before the term-start choice: the offer is the programme line, held.
 	if not Programme.available(state, ns, loader).is_empty():
 		cases.append({"kind": "programme", "subject": "offer"})
+		# RF3 (pass 2): a promise about an offer entry that is NOT the selected one
+		# still lands on a control acting on it (each offer row's pick is tagged).
+		cases.append({"kind": "commitment", "setup": func() -> String:
+			var offer: Array = Programme.available(state, ns, loader)
+			return "" if offer.size() < 2 else "promise|%s|programme:%s" % [pid, String(offer[-1]["id"])]})
 	cases.append({"kind": "crisis", "setup": func() -> String: return _desk(3, true, 0)})
 	cases.append({"kind": "decision", "setup": func() -> String: return _desk(1, false, 1)})
 	cases.append({"kind": "election", "subject": "national", "setup": func() -> String:
@@ -169,6 +174,9 @@ func _check(c: Dictionary) -> void:
 	var where: Node = _main._hud.inbox if tab == "inbox" or kind == "request" else _main._windows.content(tab)
 	if where == null or ActsOn.find(where, String(target["acts_on"])) == null:
 		_fail("%s: Go to '%s' found no enabled control acting on '%s'" % [label, tab, target["acts_on"]])
+	if kind == "commitment" and String(c["subject"]).contains("|programme:") \
+			and _main._windows.content("agenda")._picker.selected_id() == String(target["acts_on"]):
+		_fail("commitment (programme): premise, the promised entry was the selected one")
 	if kind == "bloc":
 		var laws = _main._law_panel._laws
 		if laws.bloc_filter != String(c["subject"]):

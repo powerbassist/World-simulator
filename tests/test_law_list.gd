@@ -17,6 +17,7 @@ const ChartStack = preload("res://src/ui/chart_stack.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Click = preload("res://tests/click.gd")
+const LawColumns = preload("res://src/ui/law_columns.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -81,6 +82,7 @@ func _check_rows() -> void:
 	if with_after == 0:
 		_fail("no row carries a second-chamber or court glyph with its sentence on hover")
 	_check_markers(ns, rows)
+	_check_cells(ns, rows)
 	# The third row's name button is the one the click will land on.
 	_target = rows[2].get_child(0)
 	for law in _main._loader.laws:
@@ -88,6 +90,34 @@ func _check_rows() -> void:
 			_target_id = String(law.id)
 	if _target_id == "":
 		_fail("the third row's button does not name a law: %s" % _target.text)
+
+
+## Pass 2 on #220: the row's cells are exceptions only. A threshold above half is
+## a figure (3/5), half is blank; a second chamber that blocks or a court that
+## strikes shows its glyph, one expected to agree or let it stand is blank.
+func _check_cells(ns, rows: Array) -> void:
+	if LawColumns.threshold(LK.ABSOLUTE_MAJORITY_FRACTION) != "" or LawColumns.threshold(0.6) != "3/5":
+		_fail("the threshold cell: half should be blank and 3/5 shown, got '%s' / '%s'" % [
+			LawColumns.threshold(LK.ABSOLUTE_MAJORITY_FRACTION), LawColumns.threshold(0.6)])
+	var laws: LawList = _laws()
+	var counts := {"shown": 0, "blank": 0}
+	for i in rows.size():
+		var law = laws._shown[i]
+		var cells: Array = rows[i].get_children()
+		var at := cells.find(cells.filter(func(c): return c is ChartStack)[0])
+		if cells[at - 1].text != LawColumns.threshold(LawList.majority_share(ns, law)):
+			_fail("%s: its threshold cell reads '%s'" % [law.id, cells[at - 1].text])
+		var slots := {"upper": cells[at + 1], "court": cells[at + 2]}
+		for part in LawList.after_parts(ns, laws._party_list, law, _main._law_panel.FORECAST_UNCERTAIN_BAND):
+			var quiet := bool(part.get("quiet", false))
+			var text: String = slots[part["slot"]].text
+			counts["blank" if quiet else "shown"] += 1
+			if quiet and text != "":
+				_fail("%s: an agreeing %s shows '%s', it should be blank" % [law.id, part["slot"], text])
+			elif not quiet and text != String(part["glyph"]):
+				_fail("%s: a blocking %s shows '%s', not its glyph" % [law.id, part["slot"], text])
+	if int(counts["shown"]) == 0 or int(counts["blank"]) == 0:
+		_fail("premise: the catalogue needs both a shown and a blank after-cell, got %s" % counts)
 
 
 ## QA on #96: each row's majority line is the fraction the division itself uses

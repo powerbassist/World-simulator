@@ -93,6 +93,8 @@ var _loader
 var _dirty := true
 ## The recipe lines are shown (the "What makes what" toggle).
 var _tree_open := false
+## "What makes what" was just pressed: the rebuild refocuses it.
+var _refocus := false
 
 var _title: Label
 var _body: VBoxContainer
@@ -279,8 +281,12 @@ func _build_tree() -> void:
 	toggle.text = tr("What makes what")
 	toggle.toggle_mode = true
 	toggle.button_pressed = _tree_open
-	toggle.pressed.connect(func() -> void: _tree_open = not _tree_open; _dirty = true)
+	toggle.pressed.connect(func() -> void: _tree_open = not _tree_open; _refocus = true; _dirty = true)
 	PanelKit.buttons(_body).add_child(toggle)
+	# Its rebuild freed the focused toggle: the new one takes focus back.
+	if _refocus:
+		_refocus = false
+		toggle.call_deferred("grab_focus")
 	if not _tree_open:
 		return
 

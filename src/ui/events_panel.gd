@@ -67,6 +67,8 @@ var _picked := {}
 
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
+## The choice toggle just pressed ("event|choice"): the rebuild refocuses it.
+var _refocus := ""
 
 
 func _ready() -> void:
@@ -316,12 +318,15 @@ func _build_choice(box: Control, ev, choice: Dictionary) -> void:
 	button.toggle_mode = true
 	button.button_pressed = open
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var key := "%s|%s" % [ev.id, choice_id]
 	button.pressed.connect(func():
 		_picked[ev.id] = "" if open else choice_id
+		_refocus = key
 		_dirty = true)
 	if _primary == null and not button.disabled:
 		_primary = button
 	block.add_child(button)
+	var focus_to: Control = button
 
 	if open:
 		var detail := VBoxContainer.new()
@@ -335,10 +340,16 @@ func _build_choice(box: Control, ev, choice: Dictionary) -> void:
 		choose.text = tr("Choose")
 		choose.pressed.connect(func(): _on_choose(ev, choice))
 		detail.add_child(choose)
+		focus_to = choose
 		# The open option's Choose stands in for its own toggle only, so the first
 		# entry on the desk keeps the primary verb (primary_action()'s build order).
 		if _primary == button:
 			_primary = choose
+	# The toggle's rebuild freed the focused button: focus lands on the opened
+	# option's Choose, or back on the closed toggle, so the keyboard keeps its place.
+	if _refocus == key:
+		_refocus = ""
+		focus_to.call_deferred("grab_focus")
 
 	box.add_child(block)
 
