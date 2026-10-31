@@ -22,7 +22,8 @@ extends SceneTree
 ##     QA's #218 finding): its arrival slowed the clock from 3 to 1 by
 ##     AudienceDriver's own rule, and a real click on Continue gives 3 back --
 ##     with the request on a line, and in the footer only; a speed the player
-##     picked after the arrival (2) is kept. The mutant that drops BriefingDriver.
+##     picked after the arrival (2) is kept; and folded into another request's
+##     "+N more" (the parent's call on QA's RECORD). The mutant that drops BriefingDriver.
 ##     close's _seen loop leaves the clock at 1: red.
 
 const Click = preload("res://tests/click.gd")
@@ -40,7 +41,7 @@ const QUIET_TRIES := 8
 ## The speed before the arrival, and the cases: where the card names the request,
 ## the speed picked by hand after the arrival (0: none), the speed Continue leaves.
 const ARRIVAL_FROM := 3
-const SEEN_CASES := [["line", 0, 3], ["footer", 0, 3], ["line", 2, 2]]
+const SEEN_CASES := [["line", 0, 3], ["footer", 0, 3], ["line", 2, 2], ["folded", 0, 3]]
 
 var _failures: Array[String] = []
 var _main
@@ -170,10 +171,11 @@ func _expected_speed() -> int:
 	var ad: Dictionary = AudienceDriver._games[_main.get_instance_id()]
 	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
 	if _main._clock.speed == 1 and int(ad["resume_speed"]) > 1:
-		for entry in (game["lines"] as Array) + (game.get("also", []) as Array):
-			if String(entry["kind"]) == "request" and ad["slowed_for"].has(String(entry["subject"])):
-				print("the boundary's card names an arrival: Continue restores %d" % int(ad["resume_speed"]))
-				return int(ad["resume_speed"])
+		for line in (game["lines"] as Array) + (game.get("also", []) as Array):
+			for entry in [line] + (line.get("folded", []) as Array):
+				if String(entry["kind"]) == "request" and ad["slowed_for"].has(String(entry["subject"])):
+					print("the boundary's card names an arrival: Continue restores %d" % int(ad["resume_speed"]))
+					return int(ad["resume_speed"])
 	return _main._clock.speed
 
 
@@ -193,8 +195,13 @@ func _seen_case() -> void:
 		_main._clock.set_speed(int(c[1]))
 	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
 	var cand := Priorities._cand("request", rid, now + 1, 1.0, 1.0, now)
-	game["lines"] = [cand] if String(c[0]) == "line" else []
-	game["also"] = [] if String(c[0]) == "line" else [cand]
+	if String(c[0]) == "folded":
+		# The line names another request; the slowed one is its "+1 more".
+		var line := Priorities._cand("request", rid + "_other", now + 1, 1.0, 1.0, now)
+		Priorities._fold_into(line, cand)
+		cand = line
+	game["lines"] = [] if String(c[0]) == "footer" else [cand]
+	game["also"] = [cand] if String(c[0]) == "footer" else []
 	game["was_running"] = true
 	_main._clock.paused = true
 	_card.show_view(BriefingDriver.view(_main, game["lines"], {}, game["also"]))

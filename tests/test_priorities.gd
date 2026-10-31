@@ -188,6 +188,11 @@ func _check_also_due() -> void:
 		_fail("a request lapsing next month, crowded out, is not in the footer: %s" % str(_subjects(r["also_due"])))
 	if r["also_due"].any(func(c): return bool(c["standing"])):
 		_fail("a standing read is in the footer")
+	# A line's "+N more" names what it folded, so the briefing's close can count a
+	# folded request as seen: every fold is in `folded`, one per count.
+	for line in r["lines"]:
+		if (line.get("folded", []) as Array).size() != int(line["more"]):
+			_fail("a line counts %d more but names %d folded" % [int(line["more"]), (line.get("folded", []) as Array).size()])
 
 
 func _vote_in(state, months: int) -> void:

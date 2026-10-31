@@ -145,13 +145,13 @@ static func _pick(held: Array, cands: Array, last: Array, now: int) -> Array:
 	for h in held:
 		var kind := String(h["kind"])
 		if used.has(kind):
-			used[kind]["more"] = int(used[kind]["more"]) + 1
+			_fold_into(used[kind], h)
 		elif lines.size() < 3:
 			h["held"] = true
 			lines.append(h)
 			used[kind] = h
 		else:
-			lines[2]["more"] = int(lines[2]["more"]) + 1
+			_fold_into(lines[2], h)
 	for c in cands:
 		c["score"] = float(c["w"]) * float(c["u"]) * float(c["m"]) * _novelty(c, last, now)
 	cands.sort_custom(_before)
@@ -161,12 +161,22 @@ static func _pick(held: Array, cands: Array, last: Array, now: int) -> Array:
 			# A second of a held or chosen kind is "+1 more" on its line; a standing
 			# read never counts as one more of a real one.
 			if not bool(c["standing"]) and not bool(used[kind]["standing"]) and _key(c) != _key(used[kind]):
-				used[kind]["more"] = int(used[kind]["more"]) + 1
+				_fold_into(used[kind], c)
 			continue
 		if lines.size() < 3:
 			lines.append(c)
 			used[kind] = c
 	return lines
+
+
+## One more of `c` on `line`'s "+N more", and which one: the briefing has told the
+## player it exists, so its close counts a folded request as seen (the parent's call
+## on QA's #218 RECORD), the same as a request on a line.
+static func _fold_into(line: Dictionary, c: Dictionary) -> void:
+	line["more"] = int(line["more"]) + 1
+	if not line.has("folded"):
+		line["folded"] = []
+	(line["folded"] as Array).append({"kind": String(c["kind"]), "subject": String(c["subject"])})
 
 
 static func _novelty(c: Dictionary, last: Array, now: int) -> float:
