@@ -22,6 +22,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
+const AudienceK = preload("res://src/sim/audience_constants.gd")
 
 const MAX_LINES := 3
 ## Decisions named on the "Decided last month" line before "and N more".
@@ -52,6 +53,9 @@ static func lines(state, loader, report: Dictionary) -> Array:
 	if not lapsed.is_empty():
 		out.append(_booked(Strings.tn("%d request lapsed: taken as a refusal", "%d requests lapsed: taken as a refusal",
 			lapsed.size()) % lapsed.size(), ResultTone.BAD))
+	var lost := _defeat(ns, loader, report.get("division", {}))
+	if not lost.is_empty():
+		out.append(lost)
 	var booked := not out.is_empty()
 	if not booked:
 		out.append(_decided(state, now))
@@ -88,6 +92,35 @@ static func _laws(ns, loader, now: int, out: Array) -> void:
 		out.append(line)
 
 
+## Pre-gate B4: the tabled bill divides at the boundary the card opens on, so its
+## result is known: a defeat is booked with its count. A division that settled
+## nothing yet (refused, held by the second chamber, sent to the country) or ended
+## past the Assembly (blocked above it, struck down) books no defeat here; a
+## carried one is its law_ledger passage, above.
+static func _defeat(ns, loader, result: Dictionary) -> Dictionary:
+	if result.is_empty() or bool(result.get("passed", false)):
+		return {}
+	for unsettled in ["refused", "held_by_upper", "referendum_called", "blocked_by_upper", "struck_down"]:
+		if bool(result.get(unsettled, false)):
+			return {}
+	var name := PriorityWords._law(ns, loader, String(result.get("law_id", "")))
+	return _booked(Strings.t("%s defeated, %d to %d") % [name, int(result.get("yes_seats", 0)), int(result.get("no_seats", 0))],
+		ResultTone.BAD)
+
+
+## Requests the player answered last month: delegated, declined, booked or
+## settled -- each a decision with no number of its own. A lapse is the sim's, not
+## the player's (booked on its own line). Last month, since the card opens on the
+## month after: the sim stamps a request with the month its command ran.
+static func _answered(ns, now: int) -> int:
+	var n := 0
+	for row in ns.audience_requests:
+		var resolved := int(row.get("resolved_month", -1)) == now - 1 and String(row.get("status", "")) != AudienceK.STATUS_LAPSED
+		if resolved or int(row.get("acted_month", -1)) == now - 1:
+			n += 1
+	return n
+
+
 ## "workers clearly for", "business slightly against".
 ## With nothing booked, what was decided: the month's recent_effects entry names it
 ## (main._queue_effect queues every command), and its effect is UNCERTAIN -- QA's
@@ -95,10 +128,15 @@ static func _laws(ns, loader, now: int, out: Array) -> void:
 ## month with no entry is a month the player decided nothing.
 static func _decided(state, now: int) -> Dictionary:
 	var effect: Dictionary = {} if state.recent_effects.is_empty() else state.recent_effects[0]
-	if effect.is_empty() or int(effect.get("year", 0)) * 12 + int(effect.get("month", 0)) != now:
+	if not effect.is_empty() and int(effect.get("year", 0)) * 12 + int(effect.get("month", 0)) != now:
+		effect = {}
+	var answered := _answered(state.player(), now)
+	if effect.is_empty() and answered == 0:
 		return {"text": Strings.t("Nothing you decided last month"), "tone": "", "uncertain": false,
 			"spark": PackedFloat64Array(), "tooltip": ""}
 	var names: PackedStringArray = String(effect.get("label", "")).split("; ", false)  # i18n: row-ok effects' labels, routed when queued
+	if answered > 0:
+		names.append(Strings.tn("%d request answered", "%d requests answered", answered) % answered)
 	var text := Strings.t("Decided last month: %s") % ", ".join(names.slice(0, DECIDED_NAMED))
 	if names.size() > DECIDED_NAMED:
 		var more := names.size() - DECIDED_NAMED

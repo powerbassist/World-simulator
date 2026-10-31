@@ -149,6 +149,11 @@ static func book(state, ns, loader, request_id: String, date: Dictionary) -> Dic
 	if bool(result.get("ok", false)):
 		row["status"] = K.STATUS_BOOKED
 		row["date"] = day
+		# The month the player booked a still-open request (a closed one has
+		# resolved_month). Report-only, for the briefing's "what you decided"
+		# (pre-gate B4): no rule reads it, so it moves no number, and an absent
+		# stamp reads -1, "not booked", which every older save's rows were.
+		row["acted_month"] = _now(state)
 	return result
 
 
