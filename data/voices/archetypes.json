@@ -12,7 +12,10 @@
         "greet": "Thank you for seeing me. I know your time is short.",
         "agree": "Then we have an understanding, and I will hold to it.",
         "refuse": "I cannot give you that. My own side would not forgive it.",
-        "farewell": "We will speak again, I am sure."
+        "farewell": "We will speak again, I am sure.",
+        "mood_pleased": "My side will like what I tell them today.",
+        "mood_cold": "I will note what was said here, nothing more.",
+        "mood_angry": "You just cost me standing on the house floor."
       },
       "description": "A man in his fifties, a calm low baritone, measured pace, a light, neutral European accent, the voice of a career politician, polished and persuasive. An invented voice, not modelled on any real person."
     },
@@ -30,7 +33,10 @@
         "greet": "Thank you for seeing me. I know your time is short.",
         "agree": "Then we have an understanding, and I will hold to it.",
         "refuse": "I cannot give you that. My own side would not forgive it.",
-        "farewell": "We will speak again, I am sure."
+        "farewell": "We will speak again, I am sure.",
+        "mood_pleased": "My side will like what I tell them today.",
+        "mood_cold": "I will note what was said here, nothing more.",
+        "mood_angry": "You just cost me standing on the house floor."
       },
       "description": "A woman in her fifties, a clear mid-range voice, measured pace, a light, neutral European accent, the voice of a career politician, polished and persuasive. An invented voice, not modelled on any real person."
     },
@@ -46,7 +52,10 @@
         "greet": "I will be brief. My people are waiting on your decision.",
         "agree": "Good. That is a number we can work with.",
         "refuse": "No. At that price the investment goes elsewhere.",
-        "farewell": "My office will send the details."
+        "farewell": "My office will send the details.",
+        "mood_pleased": "Costs look fair, and the risks look manageable now.",
+        "mood_cold": "The numbers do not add up, so neither will we.",
+        "mood_angry": "This deal costs us far more than you admit."
       },
       "description": "A man in his fifties, a calm low baritone, brisk pace, a light, neutral European accent, the voice of a senior company executive, brisk and exact. An invented voice, not modelled on any real person."
     },
@@ -62,7 +71,10 @@
         "greet": "I will be brief. My people are waiting on your decision.",
         "agree": "Good. That is a number we can work with.",
         "refuse": "No. At that price the investment goes elsewhere.",
-        "farewell": "My office will send the details."
+        "farewell": "My office will send the details.",
+        "mood_pleased": "Costs look fair, and the risks look manageable now.",
+        "mood_cold": "The numbers do not add up, so neither will we.",
+        "mood_angry": "This deal costs us far more than you admit."
       },
       "description": "A woman in her fifties, a clear mid-range voice, brisk pace, a light, neutral European accent, the voice of a senior company executive, brisk and exact. An invented voice, not modelled on any real person."
     },
@@ -78,7 +90,10 @@
         "greet": "We came because nobody else was listening.",
         "agree": "It is a start. We will be watching what comes next.",
         "refuse": "That is not an answer. People are in the street because of it.",
-        "farewell": "This is not over, it has only started."
+        "farewell": "This is not over, it has only started.",
+        "mood_pleased": "You actually heard us. That means something.",
+        "mood_cold": "Nice words, but nothing changes on the ground.",
+        "mood_angry": "People are watching, and you failed them."
       },
       "description": "A man in his thirties, a lively tenor, quick, impassioned pace, a light, neutral European accent, the voice of a campaigner, earnest and urgent. An invented voice, not modelled on any real person."
     },
@@ -96,7 +111,10 @@
         "greet": "We came because nobody else was listening.",
         "agree": "It is a start. We will be watching what comes next.",
         "refuse": "That is not an answer. People are in the street because of it.",
-        "farewell": "This is not over, it has only started."
+        "farewell": "This is not over, it has only started.",
+        "mood_pleased": "You actually heard us. That means something.",
+        "mood_cold": "Nice words, but nothing changes on the ground.",
+        "mood_angry": "People are watching, and you failed them."
       },
       "description": "A woman in her thirties, a bright clear voice, quick, impassioned pace, a light, neutral European accent, the voice of a campaigner, earnest and urgent. An invented voice, not modelled on any real person."
     },
@@ -112,7 +130,10 @@
         "greet": "You asked to see me, so I came. Our members want to know why.",
         "agree": "Then we understand each other. I will tell the members.",
         "refuse": "No. We did not walk out to be sent home with nothing.",
-        "farewell": "The members will hear it from me, not from the press."
+        "farewell": "The members will hear it from me, not from the press.",
+        "mood_pleased": "Our people will work with you, gladly.",
+        "mood_cold": "We came in good faith, and we leave unsure.",
+        "mood_angry": "Our members will hear how you treated us."
       },
       "description": "A man in his fifties, a calm low baritone, steady pace, a light, neutral European accent, the voice of a trade union leader, plain-spoken and firm. An invented voice, not modelled on any real person."
     },
@@ -128,7 +149,10 @@
         "greet": "You asked to see me, so I came. Our members want to know why.",
         "agree": "Then we understand each other. I will tell the members.",
         "refuse": "No. We did not walk out to be sent home with nothing.",
-        "farewell": "The members will hear it from me, not from the press."
+        "farewell": "The members will hear it from me, not from the press.",
+        "mood_pleased": "Our people will work with you, gladly.",
+        "mood_cold": "We came in good faith, and we leave unsure.",
+        "mood_angry": "Our members will hear how you treated us."
       },
       "description": "A woman in her fifties, a clear mid-range voice, steady pace, a light, neutral European accent, the voice of a trade union leader, plain-spoken and firm. An invented voice, not modelled on any real person."
     },
@@ -146,7 +170,10 @@
         "greet": "I will say at once what I can and cannot discuss.",
         "agree": "That is within the law, and I have no objection.",
         "refuse": "The court cannot be asked to do that.",
-        "farewell": "The law will follow its course."
+        "farewell": "The law will follow its course.",
+        "mood_pleased": "A fair hearing today, and I shall remember it.",
+        "mood_cold": "The record stands as it was, and so do I.",
+        "mood_angry": "This hearing makes a mockery of due process."
       },
       "description": "A man in his sixties, a calm low baritone, slow, careful pace, a light, neutral European accent, the voice of a senior judge, dry and deliberate. An invented voice, not modelled on any real person."
     },
@@ -164,7 +191,10 @@
         "greet": "I will say at once what I can and cannot discuss.",
         "agree": "That is within the law, and I have no objection.",
         "refuse": "The court cannot be asked to do that.",
-        "farewell": "The law will follow its course."
+        "farewell": "The law will follow its course.",
+        "mood_pleased": "A fair hearing today, and I shall remember it.",
+        "mood_cold": "The record stands as it was, and so do I.",
+        "mood_angry": "This hearing makes a mockery of due process."
       },
       "description": "A woman in her sixties, a clear mid-range voice, slow, careful pace, a light, neutral European accent, the voice of a senior judge, dry and deliberate. An invented voice, not modelled on any real person."
     },
@@ -180,7 +210,10 @@
         "greet": "Welcome. You will find that we do things our own way here.",
         "agree": "Our region will remember this, and so will I.",
         "refuse": "We have waited long enough. The answer from here is no.",
-        "farewell": "Come and see us again, and stay longer next time."
+        "farewell": "Come and see us again, and stay longer next time.",
+        "mood_pleased": "Back home they will toast this news tonight.",
+        "mood_cold": "Back home, they will ask what I gained here.",
+        "mood_angry": "Back home, they will not forgive this snub."
       },
       "description": "A man in his fifties, a calm low baritone, unhurried pace, a light, unplaceable regional accent, the voice of a regional notable, warm and a little stubborn. An invented voice, not modelled on any real person."
     },
@@ -196,7 +229,10 @@
         "greet": "Welcome. You will find that we do things our own way here.",
         "agree": "Our region will remember this, and so will I.",
         "refuse": "We have waited long enough. The answer from here is no.",
-        "farewell": "Come and see us again, and stay longer next time."
+        "farewell": "Come and see us again, and stay longer next time.",
+        "mood_pleased": "Back home they will toast this news tonight.",
+        "mood_cold": "Back home, they will ask what I gained here.",
+        "mood_angry": "Back home, they will not forgive this snub."
       },
       "description": "A woman in her fifties, a clear mid-range voice, unhurried pace, a light, unplaceable regional accent, the voice of a regional notable, warm and a little stubborn. An invented voice, not modelled on any real person."
     },
@@ -212,7 +248,10 @@
         "greet": "I own the paper, but the readers decide what it says.",
         "agree": "We will report it fairly. That is all I promise.",
         "refuse": "We do not bargain over what we print.",
-        "farewell": "You will read about this tomorrow, one way or another."
+        "farewell": "You will read about this tomorrow, one way or another.",
+        "mood_pleased": "A good story for the morning edition, thank you.",
+        "mood_cold": "Readers will judge this meeting by its results.",
+        "mood_angry": "Tomorrow's print will ask hard questions of you."
       },
       "description": "A man in his sixties, a calm low baritone, clipped pace, a light, neutral European accent, the voice of a newspaper owner, sharp and guarded. An invented voice, not modelled on any real person."
     },
@@ -228,9 +267,96 @@
         "greet": "I own the paper, but the readers decide what it says.",
         "agree": "We will report it fairly. That is all I promise.",
         "refuse": "We do not bargain over what we print.",
-        "farewell": "You will read about this tomorrow, one way or another."
+        "farewell": "You will read about this tomorrow, one way or another.",
+        "mood_pleased": "A good story for the morning edition, thank you.",
+        "mood_cold": "Readers will judge this meeting by its results.",
+        "mood_angry": "Tomorrow's print will ask hard questions of you."
       },
       "description": "A woman in her sixties, a clear mid-range voice, clipped pace, a light, neutral European accent, the voice of a newspaper owner, sharp and guarded. An invented voice, not modelled on any real person."
+    },
+    {
+      "id": "chief_fra",
+      "kind": "chief_of_staff",
+      "sex": "f",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Premade ElevenLabs voice, not yet chosen: no clip exists. The pick (voice id, name, date) is recorded here when the paid batch is approved; a premade voice takes no custom slot. Never a real person's voice cloned.",
+      "lines": {
+        "calm_1": "A quiet month, on current projections. We proceed as scheduled.",
+        "calm_2": "Nothing demands your attention unduly. The file is in order.",
+        "calm_3": "Routine business, competently handled. Nothing needs you urgently.",
+        "tense_1": "One matter is ripening faster than expected. Your time, shortly.",
+        "tense_2": "A file has begun to move against us. We should not wait long.",
+        "tense_3": "The situation is manageable, barely. It will need your signature.",
+        "crisis_1": "Events have overtaken the schedule. Everything else is set aside.",
+        "crisis_2": "The situation deteriorated this morning. You act today or not at all.",
+        "crisis_3": "There is no gradual option left. Decisions are due within the hour."
+      },
+      "description": "A woman in her fifties, a low, even, unhurried voice, dry and precise, a clear standard French-inflected English accent, the voice of a career civil servant who never raises it. An invented voice, not modelled on any real person."
+    },
+    {
+      "id": "chief_deu",
+      "kind": "chief_of_staff",
+      "sex": "m",
+      "age_band": "60s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Premade ElevenLabs voice, not yet chosen: no clip exists. The pick (voice id, name, date) is recorded here when the paid batch is approved; a premade voice takes no custom slot. Never a real person's voice cloned.",
+      "lines": {
+        "calm_1": "The month ahead appears orderly. We can proceed without haste.",
+        "calm_2": "I see nothing requiring improvisation. Careful work will suffice.",
+        "calm_3": "A period of normal work lies before us. That is worth something.",
+        "tense_1": "One item has slipped ahead of its timetable. Not yet alarming.",
+        "tense_2": "A matter is developing that will, I think, require you personally.",
+        "tense_3": "The pressure is building quietly. Better to act early than late.",
+        "crisis_1": "The situation has changed fundamentally. All other work stops now.",
+        "crisis_2": "There is no procedural path left. You must decide, and quickly.",
+        "crisis_3": "I must be direct: the situation is beyond containment. You lead now."
+      },
+      "description": "A man in his sixties, a measured baritone, slow and deliberate, gently formal, a light German-inflected English accent, the voice of a methodical former state secretary. An invented voice, not modelled on any real person."
+    },
+    {
+      "id": "chief_gbr",
+      "kind": "chief_of_staff",
+      "sex": "f",
+      "age_band": "40s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Premade ElevenLabs voice, not yet chosen: no clip exists. The pick (voice id, name, date) is recorded here when the paid batch is approved; a premade voice takes no custom slot. Never a real person's voice cloned.",
+      "lines": {
+        "calm_1": "Nothing on fire, nothing even smouldering. Let us enjoy that.",
+        "calm_2": "A rare month with the in-tray under control. Shall we begin?",
+        "calm_3": "All quiet, which in this job counts as excellent news.",
+        "tense_1": "Something is brewing, and it will not brew politely forever.",
+        "tense_2": "We have a spot of bother. It will wait, but not for long.",
+        "tense_3": "One thread is fraying. Best we tug it before it snaps.",
+        "crisis_1": "It has all gone sideways. Clear the desk, we start now.",
+        "crisis_2": "No dressing this up. It is bad, it is now, and it is yours.",
+        "crisis_3": "Everything else waits. This cannot, and it will not."
+      },
+      "description": "A woman in her forties, a clear, brisk, light mezzo voice, wry, understatement as a weapon, a neutral educated British accent, the voice of a former party operative. An invented voice, not modelled on any real person."
+    },
+    {
+      "id": "chief_pol",
+      "kind": "chief_of_staff",
+      "sex": "m",
+      "age_band": "50s",
+      "language": "en",
+      "voice_id": "",
+      "provenance": "Premade ElevenLabs voice, not yet chosen: no clip exists. The pick (voice id, name, date) is recorded here when the paid batch is approved; a premade voice takes no custom slot. Never a real person's voice cloned.",
+      "lines": {
+        "calm_1": "A calm month. Ordinary work. Nothing hides behind it.",
+        "calm_2": "No threats on the horizon. We do our duty quietly.",
+        "calm_3": "The sky is clear. Let us use that time well.",
+        "tense_1": "Trouble is coming. Slowly, but coming. Prepare now.",
+        "tense_2": "One problem grew teeth overnight. It will bite soon.",
+        "tense_3": "I do not like the quiet out there. Something waits.",
+        "crisis_1": "We are in it. Everything else is nothing. Decide now.",
+        "crisis_2": "The situation broke. You must act. I stand behind you.",
+        "crisis_3": "No time for caution. The ground is moving. Act."
+      },
+      "description": "A man in his fifties, a firm, plain-spoken tenor-baritone, short sentences, blunt and loyal, a light Polish-inflected English accent, the voice of a former lawyer. An invented voice, not modelled on any real person."
     }
   ],
   "defaults": {
@@ -244,6 +370,7 @@
     "office:head_of_government": "politician_m_50",
     "office:largest_party_leader": "politician_m_50",
     "evidence_person": "activist_m_30",
-    "foreign_head": "politician_m_50"
+    "foreign_head": "politician_m_50",
+    "chief_of_staff": "chief_deu"
   }
 }
