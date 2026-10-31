@@ -44,7 +44,7 @@ func _check_manifest_rows() -> void:
 	# A row resolves next to the manifest; a committed clip stands in for a track.
 	var clip := "../voice/activist_f_30/agree.ogg"
 	Music.override_manifest = {"beds": {"calm": {"file": clip}, "tense": {"file": ""}, "crisis": {"file": "crisis.ogg"}}}
-	if Music.track("beds", "calm") != "res://assets/audio/music/".path_join(clip):
+	if Music.track("beds", "calm") != "res://assets/audio/music/".path_join(clip).simplify_path():
 		_fail("a bed row resolved to '%s'" % Music.track("beds", "calm"))
 	if Music.track("beds", "tense") != "" or Music.track("stings", "vote_passed") != "":
 		_fail("a row with no file played something")

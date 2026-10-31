@@ -77,7 +77,10 @@ static func manifest() -> Dictionary:
 static func track(section: String, id: String) -> String:
 	var row = (manifest().get(section, {}) as Dictionary).get(id, null)
 	var file := String(row.get("file", "")) if row is Dictionary else ""
-	var path := MANIFEST.get_base_dir().path_join(file)
+	# simplify_path: on Linux a ".." through a folder that does not exist (music/ has no
+	# tracked file yet, so a clone has no such folder) does not resolve -- CI read the row
+	# as missing while Windows passed.
+	var path := MANIFEST.get_base_dir().path_join(file).simplify_path()
 	# A row whose file has not landed yet is silence, not an engine ERROR (#223 pass 1).
 	return path if not file.is_empty() and FileAccess.file_exists(path) else ""
 
