@@ -173,18 +173,18 @@ the music band are Interface's own functions (`src/ui/priorities.gd`,
 APPDATA="$(mktemp -d)" godot --headless --path . --script res://tools/decision_surfaces_probe.gd -- --briefing [--nations=DEU,FRA,GBR,POL] [--regime=idle|active|both] [--months=120] [--json=PATH]
 ```
 
-**MEASURED** (2026-10-31): the probe at `28fb25d2` with Interface's
+**MEASURED** (2026-10-31): the probe at `b9425c06` with Interface's
 `interface/v5.3-0a-briefing` @ `8686d48e` merged in, `main` at `59d1a0d6`.
 
 | Run | Months | Briefing / yr | Modal / yr | Cards / yr | Stops at 2 dismissals or fewer | RF1 | RF2 repeats, overlap | Bed changes / month |
 |---|---:|---:|---:|---:|---:|---|---|---:|
 | DEU idle | 37 | 11.7 | 0.3 | 1.9 | 97 % | pass | 3 %, 0.91 | 0.17 |
 | DEU active | 37 | 11.7 | 0.3 | 1.0 | 100 % | pass | 0 %, 1.09 | 0.11 |
-| FRA idle | 76 | 11.8 | 0.5 | 2.8 | 96 % | pass | 7 %, 1.00 | 0.16 |
+| FRA idle | 76 | 11.8 | 0.5 | 2.8 | 96 % | pass | 7 %, 0.90 | 0.16 |
 | FRA active | 76 | 11.8 | 0.5 | 1.7 | 99 % | pass | 2 %, 0.71 | 0.16 |
-| GBR idle | 120 | 12.0 | 0.3 | 2.0 | 98 % | pass | 2 %, 0.95 | 0.17 |
+| GBR idle | 120 | 12.0 | 0.3 | 2.0 | 98 % | pass | 0 %, 0.90 | 0.17 |
 | GBR active | 120 | 12.0 | 0.3 | 1.4 | 98 % | pass | 2 %, 0.90 | 0.13 |
-| POL idle | 69 | 11.8 | 0.5 | 2.1 | 99 % | pass | 7 %, 1.14 | 0.16 |
+| POL idle | 69 | 11.8 | 0.5 | 2.1 | 99 % | pass | 7 %, 1.07 | 0.16 |
 | POL active | 69 | 11.8 | 0.5 | 1.2 | 99 % | pass | 0 %, 0.81 | 0.04 |
 
 - **RF4 passes everywhere.** The briefing is 12 a year, less in a year a defeat
@@ -193,12 +193,13 @@ APPDATA="$(mktemp -d)" godot --headless --path . --script res://tools/decision_s
   Eight of the 13 are a won election's month, where the result, the briefing
   and the term's programme offer meet. The other five are the briefing plus
   two cards.
-- **RF2 fails once, and the ranking is not wrong to.** France idle, May 2029:
+- **RF2 fails once.** France idle, May 2029:
   two held cards and the EP election one month away (score 9.0) took the three
   lines. The request lapsing that month (6.4) was in April's briefing but not
   in its last month. The band as written calls that a failure; whether a
   crowded month may skip a request shown the month before is Interface's and
-  Gameplay's call, not the probe's.
+  Gameplay's call, not the probe's. **OPINION:** the ranking is not wrong
+  here; five claims met three lines, and the EP vote was the more urgent.
 - **RF9 passes, and the music is almost always `tense`** (51 to 102 months out
   of 68 to 120), because a held card or a near weighty line is in most months'
   three. The bed changes rarely, so RF9 holds, but the calm bed is seldom heard.
