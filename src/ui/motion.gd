@@ -57,6 +57,8 @@ const DECLARE_S := 0.28
 const NIGHT_MAX_S := 4.5
 
 const _META := &"motion_tween"
+## The text a running roll_text() is heading for (its flash included).
+const _ROLL_TO := &"motion_roll_to"
 
 ## -1 follows the setting (and is off under --headless, which draws nothing:
 ## motion there only makes label reads depend on timing, and every test reads
@@ -228,6 +230,11 @@ static func flash(item: CanvasItem, tone: Color) -> void:
 ## finished; mid-roll it is a real intermediate value, never a garbled one.
 ## `tone` (alpha > 0) flashes the label once the roll lands (V5.3-0 4.5).
 static func roll_text(label: Label, text: String, tone := Color(0, 0, 0, 0)) -> void:
+	# The same reading again while its roll or flash still runs: let it land. The
+	# HUD refreshes every day, and at speed 3 a day is shorter than ROLL_S + PULSE_S,
+	# so stopping here killed every strip flash before it showed (#222 QA TAKE B).
+	if label.has_meta(_META) and String(label.get_meta(_ROLL_TO, "")) == text:
+		return
 	# A roll still running is STOPPED where it is, not finished: finishing would
 	# land it on its old target, and a new reading equal to the value now shown
 	# would then return below with that stale target on screen.
@@ -242,6 +249,7 @@ static func roll_text(label: Label, text: String, tone := Color(0, 0, 0, 0)) -> 
 		label.text = text
 		return
 	var tween := _tween(label)
+	label.set_meta(_ROLL_TO, text)
 	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tween.tween_method(func(t: float): label.text = interpolate_text(from, text, t), 0.0, 1.0, ROLL_S)
 	tween.tween_callback(func(): label.text = text)
