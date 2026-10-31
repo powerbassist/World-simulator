@@ -198,6 +198,12 @@ func _refresh() -> void:
 var focused := ""
 
 
+## Like the Legislature's bloc filter, the focus is a Go's: leaving the tab drops it.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree():
+		focused = ""
+
+
 func focus(person_id: String) -> void:
 	focused = person_id
 	mark_dirty()

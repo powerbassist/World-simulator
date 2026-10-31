@@ -163,10 +163,25 @@ func _check(c: Dictionary) -> void:
 		if not _shows_text(page, _main._law_panel._laws.tabled_text(_main._state.player())):
 			_fail("bill: Go did not land on the tabled line")
 		return
-	if ActsOn.find(_main, String(target["acts_on"])) == null:
+	# On the target tab -- except the desk's cards and a request, whose verbs are the
+	# inbox card's answers (booking inside the Diary's grid is (b)'s, 3.4).
+	var where: Node = _main._hud.inbox if tab == "inbox" or kind == "request" else _main._windows.content(tab)
+	if where == null or ActsOn.find(where, String(target["acts_on"])) == null:
 		_fail("%s: Go to '%s' found no enabled control acting on '%s'" % [label, tab, target["acts_on"]])
-	if kind == "bloc" and _main._law_panel._laws.bloc_filter != String(c["subject"]):
-		_fail("bloc: the Legislature is not filtered for the bloc")
+	if kind == "bloc":
+		var laws = _main._law_panel._laws
+		if laws.bloc_filter != String(c["subject"]):
+			_fail("bloc: the Legislature is not filtered for the bloc")
+		# A law picked under the filter opens its own detail (review: the filter's row
+		# once shifted select()'s rows by one).
+		var picked: String = laws._shown[-1].id
+		laws.select(picked)
+		var row: Button = laws._rows.get_child(laws._rows.get_child_count() - 1).get_child(0)
+		if not row.button_pressed or laws.selected_id() != picked:
+			_fail("bloc: picking a law under the filter did not select it")
+		_main._windows.open("budget")
+		if laws.bloc_filter != "":
+			_fail("bloc: the filter outlived the tab")
 
 
 ## The chief's slot: empty without a chief record, face + name + line with one.

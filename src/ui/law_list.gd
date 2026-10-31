@@ -94,9 +94,11 @@ func selected_id() -> String:
 ## left the list hands the selection back to the first one.
 func select(law_id: String) -> void:
 	_selected = law_id
-	for i in _rows.get_child_count():
-		if i < _shown.size():
-			var pick: Button = _rows.get_child(i).get_child(0)
+	# The filter's own row, when shown, sits above the law rows.
+	var first := _rows.get_child_count() - _shown.size()
+	for i in _shown.size():
+		if first >= 0 and first + i < _rows.get_child_count():
+			var pick: Button = _rows.get_child(first + i).get_child(0)
 			pick.flat = _shown[i].id != law_id
 			pick.set_pressed_no_signal(_shown[i].id == law_id)
 	for child in _detail.get_children():
@@ -106,6 +108,13 @@ func select(law_id: String) -> void:
 		if law.id == law_id:
 			_panel._primary = null
 			_build_detail(_ns, _party_list, law)
+
+
+## The filter is a Go's, not a standing setting: leaving the tab drops it, so the
+## Legislature opened later from the sidebar lists every law.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree():
+		bloc_filter = ""
 
 
 func fill(ns, party_list: Array, laws: Array) -> void:
