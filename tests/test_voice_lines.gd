@@ -33,6 +33,7 @@ const CHIEFS := ["chief_fra", "chief_deu", "chief_gbr", "chief_pol"]
 const WARM := {"rapport": 0.2}
 const WARY := {"rapport": -0.2}
 const COLD := {"rapport": -0.5}
+const NEUTRAL := {"rapport": 0.0}
 const VOICE := {
 	"greet": {"text": "Good morning.", "clip": ""},
 	"agree": {"text": "Agreed.", "clip": ""},
@@ -77,7 +78,7 @@ func _process(_delta: float) -> bool:
 			_check_chief()
 			_queue_behind_messenger()
 			return false
-		"waiting", "after", "cancel":
+		"waiting", "after", "cancel", "freed":
 			if Time.get_ticks_msec() - _since < WAIT_MS:
 				return false
 			_queue_step()
@@ -166,6 +167,22 @@ func _queue_step() -> void:
 		"cancel":
 			if String(player.get_meta("card", "")) == BriefingDriver.LINE_CARD:
 				_fail("the card was closed and its queued chief line still played")
+			# Main goes (back to the menu) while the chief waits: the wait goes with it,
+			# with no "Lambda capture ... was freed" ERROR (#229 QA TAKE 1; the runner
+			# fails an undeclared ERROR line).
+			var host := Control.new()
+			root.add_child(host)
+			var card := Control.new()
+			host.add_child(card)
+			card.set_meta(BriefingDriver.SPOKEN, "1:100")
+			var busy := AudioStreamPlayer.new()
+			busy.name = Voice.NODE
+			busy.set_meta("pending", true)
+			host.add_child(busy)
+			BriefingDriver.speak(host, _said, card)
+			host.queue_free()
+			_phase = "freed"
+		"freed":
 			_phase = "done"
 	_since = Time.get_ticks_msec()
 
@@ -203,6 +220,10 @@ func _check_audience() -> void:
 	_scene.show_result("They will not.", _with_feel(view, WARY), "", {}, ResultTone.BAD)
 	if not spoken.text.contains("No."):
 		_fail("the same band again: refuse, said '%s'" % spoken.text)
+	_quiet(_scene)
+	_scene.show_result("They will.", _with_feel(view, NEUTRAL), "", {}, ResultTone.GOOD)
+	if not spoken.text.contains("Agreed."):
+		_fail("wary to neutral says nothing of its own: agree by the tone, said '%s'" % spoken.text)
 	_scene.close_scene()
 
 

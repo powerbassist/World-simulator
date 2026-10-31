@@ -258,12 +258,23 @@ static func speak(main: Node, shown: Dictionary, card: CanvasItem) -> void:
 		return
 	var player := main.get_node_or_null(Voice.NODE) as AudioStreamPlayer
 	if player != null and (player.playing or bool(player.get_meta("pending", false))):
-		var key = card.get_meta(SPOKEN, null)
-		main.get_tree().create_timer(QUEUE_POLL_S).timeout.connect(func() -> void:
-			if is_instance_valid(main) and is_instance_valid(card) and card.visible and card.get_meta(SPOKEN, null) == key:
-				speak(main, shown, card))
+		# A Timer the card owns, calling a method: when the card (or main above it)
+		# goes, the wait goes with it -- a SceneTree timer's lambda would be called
+		# with its captures freed and log an ERROR (#229 QA TAKE 1, #222's class).
+		var wait := Timer.new()
+		wait.one_shot = true
+		wait.wait_time = QUEUE_POLL_S
+		wait.timeout.connect(_waited.bind(main, shown, card, wait, card.get_meta(SPOKEN, null)))
+		card.add_child(wait)
+		wait.start()
 		return
 	Voice.speak(main, clip, 0.0, LINE_CARD)
+
+
+static func _waited(main: Node, shown: Dictionary, card: CanvasItem, wait: Timer, key) -> void:
+	wait.queue_free()
+	if is_instance_valid(main) and card.visible and card.get_meta(SPOKEN, null) == key:
+		speak(main, shown, card)
 
 
 ## "Continue", or "Next: ..." naming the surface that still holds the clock.
