@@ -35,6 +35,7 @@ func _initialize() -> void:
 	_check_fog()
 	_check_noise_and_move()
 	_check_held_first()
+	_check_also_due()
 	_check_no_damping()
 	_check_quiet_rotates()
 	_check_situation_and_band()
@@ -85,6 +86,7 @@ func _check_always_three(nation: String) -> void:
 			overlap += shared
 			repeats += 1 if shared == 3 else 0
 		last = lines.map(_name)
+		_check_never_unshown(state, r, "%s month %d" % [nation, i + 1])
 	print("priorities %s: %d full repeats of %d, mean overlap %.2f" % [nation, repeats, MONTHS - 1, float(overlap) / float(MONTHS - 1)])
 
 
@@ -145,6 +147,47 @@ func _check_held_first() -> void:
 	var decisions := lines.filter(func(l): return l["kind"] == "decision")
 	if decisions.size() != 1 or String(decisions[0]["subject"]) != "major_held" or int(decisions[0]["more"]) != 1:
 		_fail("two held decisions are not one line, the major first, '+1 more': %s" % _names(lines))
+
+
+## The parent's rule on #217: an item in its last month is a line or in the footer.
+func _check_never_unshown(state, r: Dictionary, where: String) -> void:
+	var ns = state.player()
+	var now := int(state.year) * 12 + int(state.month)
+	var shown := _subjects(r["lines"]) + _subjects(r["also_due"])
+	for row in ns.audience_requests:
+		if String(row.get("status", "")) == "pending" and String(row.get("person_id", "")).begins_with(String(ns.id) + "_") \
+				and int(row.get("deadline_month", 0)) - now == 1 and not shown.has(String(row["id"])):
+			_fail("%s: request %s lapses next month, unshown: %s" % [where, row["id"], _names(r["lines"])])
+	for entry in ns.event_queue:
+		if int(entry.get("months_left", 0)) <= 1 and not shown.has(String(entry.get("event_id", ""))):
+			_fail("%s: card %s in its last month, unshown" % [where, entry.get("event_id", "")])
+
+
+## Systems' RF2 case (#217, FRA idle May 2029): two held cards and a vote next month
+## fill the three lines; the request lapsing next month goes to the footer.
+func _check_also_due() -> void:
+	var state = _new("FRA")
+	var ns = state.player()
+	_vote_in(state, 1)
+	var now := int(state.year) * 12 + int(state.month)
+	ns.event_queue.clear()
+	ns.event_queue.append({"event_id": "crisis_held", "months_left": 2, "severity": 3, "interrupt": true})
+	ns.event_queue.append({"event_id": "major_held", "months_left": 3, "severity": 2, "interrupt": false})
+	var pid := ""
+	for person in _loader.people["FRA"]:
+		if String(person.kind) == "politician":
+			pid = String(person.id)
+			break
+	ns.audience_requests.append({"id": "%s|%d" % [pid, now], "person_id": pid, "object": "x", "status": "pending",
+		"arrived_month": now - 1, "deadline_month": now + 1})
+	var r: Dictionary = Priorities.rank(state, _loader, {"held_events": ["crisis_held", "major_held"], "programme_held": false})
+	var id := "%s|%d" % [pid, now]
+	if _subjects(r["lines"]).has(id):
+		_fail("premise: the request took a line (%s) -- the fixture no longer crowds it" % _names(r["lines"]))
+	elif not _subjects(r["also_due"]).has(id):
+		_fail("a request lapsing next month, crowded out, is not in the footer: %s" % str(_subjects(r["also_due"])))
+	if r["also_due"].any(func(c): return bool(c["standing"])):
+		_fail("a standing read is in the footer")
 
 
 func _vote_in(state, months: int) -> void:

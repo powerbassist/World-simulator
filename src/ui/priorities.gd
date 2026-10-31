@@ -38,7 +38,8 @@ const Trends = preload("res://src/ui/trends.gd")
 
 ## {lines: exactly three {kind, subject, deadline_month (-1: none), score, u, m,
 ## held, standing, more, go: {tab, subject}}, memory: what to pass back next month,
-## qualified: the kinds that had a candidate}.
+## qualified: the kinds that had a candidate, also_due: the crowded-out items in
+## their last month, same shape as a line}.
 ## opts: `memory` (the last call's), `held_events` (the event ids that hold the
 ## clock now; absent, read from the desk by the spec's rule), `programme_held`.
 static func rank(state, loader, opts := {}) -> Dictionary:
@@ -51,7 +52,7 @@ static func rank(state, loader, opts := {}) -> Dictionary:
 	var onsets: Dictionary = memory.get("onsets", {})
 	var cands: Array = []
 	var held: Array = []
-	_desk(ns, now, opts, cands, held)
+	_desk(ns, loader, now, opts, cands, held)
 	if bool(opts.get("programme_held", not Programme.available(state, ns, loader).is_empty())):
 		held.append(_cand("programme", "offer", now, K.WEIGHT["programme"], 1.0, now))
 	_election(state, ns, now, cands)
@@ -70,13 +71,33 @@ static func rank(state, loader, opts := {}) -> Dictionary:
 			next_onsets[_key(c)] = int(onsets.get(_key(c), now))
 	memory["onsets"] = next_onsets
 	var lines := _pick(held, cands, memory.get("last", []), now)
+	var also_due := _also_due(lines, held + cands, now)
 	memory["last"] = lines.map(func(l): return {"kind": l["kind"], "subject": l["subject"], "u": l["u"], "m": l["m"]})
 	# `qualified`: every kind that had a candidate this month, held included, in row
 	# order -- RF2's "every kind that qualifies appears at least once" (Systems' probe).
 	var seen := {}
 	for c in held + cands:
 		seen[String(c["kind"])] = true
-	return {"lines": lines, "memory": memory, "qualified": K.KINDS.filter(func(k): return seen.has(k))}
+	return {"lines": lines, "memory": memory, "qualified": K.KINDS.filter(func(k): return seen.has(k)),
+		"also_due": also_due}
+
+
+## The parent's rule on Systems' RF2 finding (#217): an item in its last month is
+## never unshown. Three lines stay three; whatever dated item they crowded out in its
+## last month (a request that lapses next month, a card's last month, a promise
+## judged now) goes to the card's footer, "Also due this month", in rank order.
+static func _also_due(lines: Array, all: Array, now: int) -> Array:
+	var shown := {}
+	for l in lines:
+		shown[_key(l)] = true
+	var out: Array = []
+	for c in all:
+		var left := int(c["deadline_month"]) - now
+		if bool(c["standing"]) or int(c["deadline_month"]) < 0 or left < 0 or left > 1 or shown.has(_key(c)):
+			continue
+		shown[_key(c)] = true
+		out.append(c)
+	return out
 
 
 ## Whether every line is a standing read: the card's "A quiet month".
@@ -85,15 +106,17 @@ static func quiet(lines: Array) -> bool:
 
 
 ## The surfaces that hold the clock at this boundary by the spec's rule (2.3), for a
-## caller with no UI to ask (Systems' probe): an interrupt, a desk entry of severity
-## 2 or more, any desk entry in its last month, the term-start offer. The game hands
+## caller with no UI to ask (Systems' probe): an interrupt, a major desk entry on its
+## arrival month, a minor one in its last month (main.gd re-holds only a quiet
+## arrival through its lapse guard: a major's hold ended when its card was seen --
+## Systems on #217), the term-start offer. The game hands
 ## rank() main's own unseen set instead. An election result is not here: it owns the
 ## pause before the briefing opens, and is no line of it.
 static func held_by_rule(state, loader) -> Dictionary:
 	var ns = state.player()
 	var events: Array = []
 	for entry in ns.event_queue:
-		if _holds_by_rule(entry):
+		if _holds_by_rule(entry, loader):
 			events.append(String(entry.get("event_id", "")))
 	return {"events": events, "programme": not Programme.available(state, ns, loader).is_empty()}
 
@@ -177,7 +200,7 @@ static func _before(a: Dictionary, b: Dictionary) -> bool:
 
 # --- the candidates, each from a register the player sees -------------------------------
 
-static func _desk(ns, now: int, opts: Dictionary, cands: Array, held: Array) -> void:
+static func _desk(ns, loader, now: int, opts: Dictionary, cands: Array, held: Array) -> void:
 	var holding: Array = opts.get("held_events", [])
 	var by_rule := not opts.has("held_events")
 	for entry in ns.event_queue:
@@ -187,15 +210,21 @@ static func _desk(ns, now: int, opts: Dictionary, cands: Array, held: Array) -> 
 		var kind := "crisis" if crisis else "decision"
 		var w: float = K.WEIGHT["crisis"] if crisis else (K.WEIGHT["decision_major"] if sev >= K.MAJOR_SEVERITY else K.WEIGHT["decision_minor"])
 		var c := _cand(kind, String(entry.get("event_id", "")), now + left, w, K.SEVERITY_MAGNITUDE[sev - 1], now)
-		var holds := holding.has(c["subject"]) if not by_rule else _holds_by_rule(entry)
+		var holds := holding.has(c["subject"]) if not by_rule else _holds_by_rule(entry, loader)
 		(held if holds else cands).append(c)
 	# The spec's hold order: an interrupt, then major cards, then the rest.
 	held.sort_custom(func(a, b): return float(a["w"]) > float(b["w"]))
 
 
-static func _holds_by_rule(entry: Dictionary) -> bool:
-	return bool(entry.get("interrupt", false)) or int(entry.get("severity", 1)) >= K.MAJOR_SEVERITY \
-		or int(entry.get("months_left", 0)) <= 1
+static func _holds_by_rule(entry: Dictionary, loader) -> bool:
+	var left := int(entry.get("months_left", 0))
+	if bool(entry.get("interrupt", false)):
+		return true
+	if int(entry.get("severity", 1)) >= K.MAJOR_SEVERITY:
+		# Its arrival month: the clock has not taken a month off its window yet.
+		var ev = Events.event_by_id(loader, String(entry.get("event_id", ""))) if loader != null else null
+		return ev != null and left >= int(ev.respond_months)
+	return left <= 1
 
 
 static func _election(state, ns, now: int, cands: Array) -> void:

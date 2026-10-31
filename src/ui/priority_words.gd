@@ -23,6 +23,22 @@ static func icon_path(kind: String) -> String:
 	return "res://assets/icons/material/%s.svg" % String(ICON.get(kind, "event"))
 
 
+## A footer group's words (the card's "Also due this month"): the item's own title
+## for one, a count by kind for several.
+static func group(items: Array, state, loader) -> String:
+	var n := items.size()
+	if n == 1:
+		return title(items[0], state, loader)
+	match String(items[0]["kind"]):
+		"crisis": return Strings.tn("%d crisis", "%d crises", n) % n
+		"decision": return Strings.tn("%d decision", "%d decisions", n) % n
+		"request": return Strings.tn("%d request", "%d requests", n) % n
+		"commitment": return Strings.tn("%d promise", "%d promises", n) % n
+		"bill": return Strings.tn("%d bill", "%d bills", n) % n
+		"programme": return Strings.tn("%d programme goal", "%d programme goals", n) % n
+	return Strings.tn("%d vote", "%d votes", n) % n
+
+
 ## The line's title.
 static func title(entry: Dictionary, state, loader) -> String:
 	var ns = state.player()

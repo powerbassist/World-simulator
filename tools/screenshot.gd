@@ -113,7 +113,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing calm
-##     (also tense: a request lapsing next month; crisis: an interrupt on the desk)
+##     (also tense: a request lapsing next month; crisis: an interrupt on the desk;
+##     crowded: the interrupt and three requests lapsing, so the footer shows)
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -628,19 +629,22 @@ func _stage_briefing() -> void:
 	if not offer.is_empty():
 		_main._on_programme_chosen(String(offer[0]["id"]))
 	var now := int(state.year) * 12 + int(state.month)
-	if _briefing == "crisis":
+	if _briefing == "crisis" or _briefing == "crowded":
 		var ev = _main._loader.events[0]
 		var entry := {"event_id": String(ev.id), "event_name": ev.event_name, "months_left": 2,
 			"interrupt": true, "severity": 3, "category": ev.category}
 		ns.event_queue.append(entry)
 		preload("res://src/ui/desk_cards.gd").push(_main, ev, entry)
-	elif _briefing == "tense":
+	if _briefing == "tense" or _briefing == "crowded":
+		var asking := 3 if _briefing == "crowded" else 1
 		for person in _main._loader.people[String(ns.id)]:
+			if asking == 0:
+				break
 			if String(person.kind) == "politician" and String(person.id) != preload("res://src/sim/president.gd").leader_id(ns):
 				ns.audience_requests.append({"id": "%s|%d" % [person.id, now], "person_id": String(person.id),
 					"object": "programme:none", "stance": "sponsor", "arrived_month": now - 1, "deadline_month": now + 1,
 					"status": "pending", "date": {}, "resolved_month": -1})
-				break
+				asking -= 1
 		preload("res://src/ui/audience_driver.gd").refresh(_main)
 	# Until Content's chief records are on main (#216), a stand-in chief so the
 	# card's face-name-line slot is seen; a nation with a record shows its own.

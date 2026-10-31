@@ -95,9 +95,10 @@ static func open(main, report: Dictionary) -> void:
 	game["pending"] = {}
 	game["memory"] = ranked["memory"]
 	game["lines"] = ranked["lines"]
+	game["also"] = ranked.get("also_due", [])
 	game["was_running"] = game["was_running"] or not main._clock.paused
 	main._clock.paused = true
-	game["card"].show_view(view(main, ranked["lines"], report))
+	game["card"].show_view(view(main, ranked["lines"], report, game["also"]))
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
 
 
@@ -142,7 +143,7 @@ static func _held_events(main) -> Array:
 	return out
 
 
-static func view(main, lines: Array, report: Dictionary) -> Dictionary:
+static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Dictionary:
 	var state = main._state
 	var rows: Array = []
 	for l in lines:
@@ -156,7 +157,18 @@ static func view(main, lines: Array, report: Dictionary) -> Dictionary:
 	if chief != null:
 		who = Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id))
 		said = chief_line(main._loader, String(chief.id), Priorities.situation(lines), int(state.year) * 12 + int(state.month))
-	return {"header": header, "who": who, "line": said, "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
+	# The footer, folded by kind; each group's Go is its first item's (index past the
+	# three lines into lines + also).
+	var groups: Array = []
+	var by_kind := {}
+	for i in also.size():
+		var kind := String(also[i]["kind"])
+		if not by_kind.has(kind):
+			by_kind[kind] = {"items": [], "index": lines.size() + i}
+			groups.append(by_kind[kind])
+		by_kind[kind]["items"].append(also[i])
+	var footer: Array = groups.map(func(g): return {"text": PriorityWords.group(g["items"], state, main._loader), "index": g["index"]})
+	return {"header": header, "who": who, "also": footer, "line": said, "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
 		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
 
 
@@ -224,9 +236,10 @@ static func close(main) -> void:
 ## Go: close by Continue's rule, then open the line's target (2.4's table).
 static func go(main, index: int) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
-	if game.is_empty() or index < 0 or index >= (game["lines"] as Array).size():
+	var all: Array = (game.get("lines", []) as Array) + (game.get("also", []) as Array)
+	if game.is_empty() or index < 0 or index >= all.size():
 		return
-	var line: Dictionary = game["lines"][index]
+	var line: Dictionary = all[index]
 	var target := target_of(line)
 	close(main)
 	var tab := String(target["tab"])

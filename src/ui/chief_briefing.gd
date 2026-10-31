@@ -36,6 +36,8 @@ var _line: Label
 var _name: Label
 var _rows: VBoxContainer
 var _effects: VBoxContainer
+var _also: HFlowContainer
+var also_buttons: Array[Button] = []
 var _close: Button
 var go_buttons: Array[Button] = []
 
@@ -69,6 +71,9 @@ func _ready() -> void:
 	said.add_child(_line)
 
 	_rows = PanelKit.section(root, tr("Three priorities"))
+	# The parent's rule on #217: an item in its last month the three lines crowded out
+	# is never unshown -- it is here, folded by kind, each with its Go.
+	_also = PanelKit.buttons(root)
 	_effects = PanelKit.section(root, tr("What your choices did"))
 	var foot := PanelKit.buttons(root)
 	_close = PanelKit.sized(Button.new())
@@ -96,6 +101,7 @@ func show_view(view: Dictionary) -> void:
 	for child in _effects.get_children():
 		_effects.remove_child(child)
 		child.queue_free()
+	_fill_also(view.get("also", []))
 	for effect in view.get("effects", []):
 		_effects.add_child(_effect(effect))
 	_close.text = String(view.get("close", ""))
@@ -136,6 +142,27 @@ func _row(row: Dictionary, index: int) -> Control:
 	box.add_child(go)
 	go_buttons.append(go)
 	return box
+
+
+func _fill_also(groups: Array) -> void:
+	for child in _also.get_children():
+		_also.remove_child(child)
+		child.queue_free()
+	also_buttons.clear()
+	_also.visible = not groups.is_empty()
+	if groups.is_empty():
+		return
+	var label := Label.new()
+	label.text = tr("Also due this month:")
+	label.theme_type_variation = UiTheme.WARN_TEXT
+	_also.add_child(label)
+	for g in groups:
+		var go := PanelKit.sized(Button.new())
+		go.text = String(g["text"])
+		var index := int(g["index"])
+		go.pressed.connect(func() -> void: go_pressed.emit(index))
+		_also.add_child(go)
+		also_buttons.append(go)
 
 
 func _effect(effect: Dictionary) -> Control:

@@ -55,6 +55,7 @@ func _process(_delta: float) -> bool:
 	match _step:
 		0:
 			if _cases.is_empty():
+				_check_footer()
 				_finish()
 				return true
 			_case = _cases.pop_front()
@@ -182,6 +183,37 @@ func _check(c: Dictionary) -> void:
 		_main._windows.open("budget")
 		if laws.bloc_filter != "":
 			_fail("bloc: the filter outlived the tab")
+
+
+## The footer (the parent's rule on #217): crowded-out items in their last month,
+## folded by kind, each group's Go landing like a line's.
+func _check_footer() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var now := int(state.year) * 12 + int(state.month)
+	var pid := _person(ns, _main._loader)
+	var also: Array = []
+	for n in 2:
+		var id := "%s|f%d" % [pid, n]
+		ns.audience_requests.append({"id": id, "person_id": pid, "object": "programme:none", "stance": "sponsor",
+			"arrived_month": now, "deadline_month": now + 1, "status": "pending", "date": {}, "resolved_month": -1})
+		also.append(Priorities._cand("request", id, now + 1, 5.0, 1.0, now))
+	AudienceDriver.refresh(_main)
+	var lines := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest"), Priorities._standing("majority", "seats")]
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	game["lines"] = lines
+	game["also"] = also
+	var card = BriefingDriver.card_of(_main)
+	card.show_view(BriefingDriver.view(_main, lines, {}, also))
+	if card.also_buttons.size() != 1 or not String(card.also_buttons[0].text).contains("2"):
+		_fail("two crowded-out requests are not one footer group '2 requests': %s" % str(card.also_buttons.map(func(b): return b.text)))
+		return
+	card.also_buttons[0].pressed.emit()
+	if not _main._windows.is_open("calendar") or ActsOn.find(_main._hud.inbox, "%s|f0" % pid) == null:
+		_fail("the footer's Go did not land on the request's card")
+	card.show_view(BriefingDriver.view(_main, lines, {}, []))
+	if card._also.visible:
+		_fail("an empty footer is shown")
 
 
 ## The chief's slot: empty without a chief record, face + name + line with one.
