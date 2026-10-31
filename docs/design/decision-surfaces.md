@@ -173,8 +173,10 @@ the music band are Interface's own functions (`src/ui/priorities.gd`,
 APPDATA="$(mktemp -d)" godot --headless --path . --script res://tools/decision_surfaces_probe.gd -- --briefing [--nations=DEU,FRA,GBR,POL] [--regime=idle|active|both] [--months=120] [--json=PATH]
 ```
 
-**MEASURED** (2026-10-31): the probe at `b9425c06` with Interface's
-`interface/v5.3-0a-briefing` @ `8686d48e` merged in, `main` at `59d1a0d6`.
+**MEASURED** (2026-10-31): the probe at `a4acf0a0` with Interface's #218
+(`interface/v5.3-0a-briefing` @ `0c740db9`, the "Also due this month" footer
+and `qualified` in) merged in, `main` at `59d1a0d6`. **Every band passes in all
+eight runs.**
 
 | Run | Months | Briefing / yr | Modal / yr | Cards / yr | Stops at 2 dismissals or fewer | RF1 | RF2 repeats, overlap | Bed changes / month |
 |---|---:|---:|---:|---:|---:|---|---|---:|
@@ -193,19 +195,19 @@ APPDATA="$(mktemp -d)" godot --headless --path . --script res://tools/decision_s
   Eight of the 13 are a won election's month, where the result, the briefing
   and the term's programme offer meet. The other five are the briefing plus
   two cards.
-- **RF2 fails once.** France idle, May 2029:
-  two held cards and the EP election one month away (score 9.0) took the three
-  lines. The request lapsing that month (6.4) was in April's briefing but not
-  in its last month. The band as written calls that a failure; whether a
-  crowded month may skip a request shown the month before is Interface's and
-  Gameplay's call, not the probe's. **OPINION:** the ranking is not wrong
-  here; five claims met three lines, and the EP vote was the more urgent.
+- **RF2 passes, with the footer.** Before the footer, France idle failed once:
+  in May 2029, two held cards and the EP election one month away took the three
+  lines, and a request in its last month lapsed in June without being shown.
+  The parent's call was to change the ranking, not the band. The card now lists
+  every item due this month that the three lines crowd out, each with its Go,
+  and that request is in May's footer. A footer appears in 2 to 14 months a
+  run. Every kind that qualified in a run appears in a line at least once
+  (`rank()`'s `qualified`, gated).
 - **RF9 passes, and the music is almost always `tense`** (51 to 102 months out
   of 68 to 120), because a held card or a near weighty line is in most months'
   three. The bed changes rarely, so RF9 holds, but the calm bed is seldom heard.
-- **Not seen in any run:** the `bill` kind, since neither regime tables a bill
-  and no division ran. RF2's "every kind that qualifies appears" is reported,
-  not gated, until `rank()` returns the kinds that qualified.
+- **Not seen in any run:** the `bill` kind. Neither regime tables a bill, so
+  it never qualifies either.
 - **Defeats end three runs early** (DEU at month 37, FRA at 76, POL at 69),
   and they fall in the same month in both regimes: the active regime is no
   stronger at the ballot box.
