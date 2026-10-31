@@ -133,6 +133,7 @@ static func moment(parent: Node, id: String) -> void:
 			var player := AudioStreamPlayer.new()
 			player.stream = stream
 			player.volume_db = target_db(level, false)
+			player.set_meta("track", path)  # which file: a count cannot tell one sting from another
 			parent.add_child(player)
 			player.finished.connect(player.queue_free)
 			player.play()

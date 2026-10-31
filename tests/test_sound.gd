@@ -10,6 +10,7 @@ extends SceneTree
 ## severity behind the NOTIFY band, and a bed that swells in, answers Ambience
 ## off, and fades out.
 
+const Music = preload("res://src/ui/music.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const SoundK = preload("res://src/ui/sound_constants.gd")
 const Synth = preload("res://src/ui/synth.gd")
@@ -296,6 +297,8 @@ func _start_night() -> void:
 		if c is AudioStreamPlayer:
 			_night_sounds[c.stream] = int(_night_sounds.get(c.stream, 0)) + 1
 	)
+	# The synthesized path: a recorded election_won (#228) is test_election_panel's.
+	Music.override_manifest = {}
 	_night.show_results([result])
 	_wait_started = Time.get_ticks_msec()
 
@@ -317,6 +320,7 @@ func _check_night_ticks_then_skip() -> void:
 		_fail("skip() ticked the regions it declared at once -- the count's sound did not stop")
 	if int(_night_sounds.get(Sound.stream("election"), 0)) != 1:
 		_fail("the verdict after a skip played %d election stings, expected 1" % int(_night_sounds.get(Sound.stream("election"), 0)))
+	Music.override_manifest = null
 	Motion.override = -1
 
 func _check_headless_bed_is_inert() -> void:

@@ -16,6 +16,8 @@ extends SceneTree
 ##     counts are the division's.
 
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
+const Music = preload("res://src/ui/music.gd")
+const MomentCheck = preload("res://tests/moment_check.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -207,22 +209,15 @@ func _check_referendum_sting() -> void:
 	ProposalNote.card_division(_main, {"division": {"law_id": "x", "passed": true, "referendum_called": true}})
 	if players.call() != before:
 		_fail("the division that put a bill to the country played a sting")
-	# A carried vote's sting waits for a recorded file (silent until then); a refused
-	# one plays its synthesized stand-in.
-	for c in [[true, "Carried by the country", 0], [false, "Refused by the country", 1]]:
-		ns.referendum_pending = {"law_id": "x"}
-		_main._on_month_step("Legislature", false, {}, _main._state.year, _main._state.month)
-		_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
-		if players.call() != before:
-			_fail("a referendum still in flight played a sting")
-		ns.referendum_pending = {}
-		ns.last_referendum_result = {"law_id": "x", "passed": c[0], "yes_share": 0.55 if c[0] else 0.4, "withdrawn": false}
-		_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
-		if players.call() != before + c[2]:
-			_fail("a referendum %s placed %d sting players, expected %d" % [c[1], players.call() - before, c[2]])
-		if not _inbox_says(inbox, c[1]):
-			_fail("a referendum's result left no '%s' card" % c[1])
-		before = players.call()
+	# A carried vote's sting is its recorded file, silent without one; a refused one
+	# plays its synthesized stand-in. WHICH sting, under each manifest (QA's TAKE on #228).
+	for manifest in [{}, MomentCheck.FIXTURE, null]:
+		Music.override_manifest = manifest
+		for c in [[true, "Carried by the country", "vote_passed"], [false, "Refused by the country", "vote_failed"]]:
+			_referendum_result(ns, inbox, players, c, before)
+			before = players.call()
+	Music.override_manifest = null
+
 	# Withdrawn on the panel before the step: the snapshot is empty, nothing plays.
 	ns.referendum_pending = {}
 	ns.last_referendum_result = {"law_id": "x", "passed": false, "yes_share": 0.0, "withdrawn": true}
@@ -231,6 +226,26 @@ func _check_referendum_sting() -> void:
 	if players.call() != before:
 		_fail("a withdrawn referendum played a sting")
 	ns.last_referendum_result = {}
+
+
+## One referendum through main's Legislature step: in flight, then decided by `c`
+## ([passed, the card's words, the moment id]); `before` is the players before it.
+func _referendum_result(ns, inbox, players: Callable, c: Array, before: int) -> void:
+	ns.referendum_pending = {"law_id": "x"}
+	_main._on_month_step("Legislature", false, {}, _main._state.year, _main._state.month)
+	_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
+	if players.call() != before:
+		_fail("a referendum still in flight played a sting")
+	ns.referendum_pending = {}
+	ns.last_referendum_result = {"law_id": "x", "passed": c[0], "yes_share": 0.55 if c[0] else 0.4, "withdrawn": false}
+	_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
+	var want := 1 if MomentCheck.sounds(c[2]) else 0
+	if players.call() != before + want:
+		_fail("a referendum %s placed %d sting players, expected %d" % [c[1], players.call() - before, want])
+	elif want == 1 and not MomentCheck.plays(MomentCheck.last_player(_main), c[2]):
+		_fail("a referendum %s did not play %s" % [c[1], c[2]])
+	if not _inbox_says(inbox, c[1]):
+		_fail("a referendum's result left no '%s' card" % c[1])
 
 
 func _inbox_says(inbox, words: String) -> bool:
@@ -298,3 +313,5 @@ func _check_forced_fall_sting() -> void:
 		_fail("premise: the narrow government survived its censure: %s" % str(ns.last_law_result).left(300))
 	elif count.call() != before + 1:
 		_fail("a 49.3 that fell placed %d sting players, expected 1" % (count.call() - before))
+	elif not MomentCheck.plays(MomentCheck.last_player(panel), "vote_failed"):
+		_fail("a 49.3 that fell did not play the losing sting (vote_failed)")
