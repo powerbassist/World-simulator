@@ -27,6 +27,11 @@ const Strings = preload("res://src/ui/strings.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
+const Icon = preload("res://src/ui/icon.gd")
+const ICONS := "res://assets/icons/material/"
+const GLYPH_PX := 16
+## A want's icon by what it is about (the object id's prefix); forum for the rest.
+const WANT_ICONS := {"law": "gavel.svg", "programme": "checklist.svg", "project": "construction.svg"}
 
 ## px at text size 100 %: the column beside the grid in the 1 240 px dock.
 const WIDTH := 260.0
@@ -86,7 +91,6 @@ func show_requests(rows: Array, focused: String) -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
-	PanelKit.heading(self, Strings.t("Requests"))
 	if rows.is_empty():
 		PanelKit.line(self, Strings.t("Nobody is asking for an audience."))
 		return
@@ -119,23 +123,41 @@ func _card(row: Dictionary) -> Control:
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_label.tooltip_text = name_label.text
 	name_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	# Spec 3.4's chips, in words the prose budget counts once (RF6): the party as
+	# its swatch, what they want as an icon and the date they need an answer by;
+	# the party's name, the want's sentence and the price of a no ride the hover.
+	var chips := HBoxContainer.new()
+	chips.add_theme_constant_override("separation", 6)
+	who.add_child(chips)
 	if row.has("party"):
-		who.add_child(PartyChip.make(row["party"]))
-	# The answer-by month as a chip, neutral as every deadline is (events_panel's
-	# rule); the sentence and the price of a refusal ride its hover.
-	var by := PanelKit.plain_line(who, Strings.t("Answer by %s") % String(row.get("by", "")))
+		var party := PartyChip.make(row["party"])
+		var party_name: Label = party.find_child("Party", false, false)
+		party_name.visible = false
+		party.tooltip_text = party_name.text
+		party.mouse_filter = Control.MOUSE_FILTER_PASS
+		chips.add_child(party)
+	var wants := String(row.get("wants", row.get("ask", "")))
+	chips.add_child(_glyph("Want", WANT_ICONS.get(String(row.get("object", "")).get_slice(":", 0), "forum.svg"), wants))  # i18n: ok a node name, found by tests
+	var by_tip := "%s\n%s\n%s" % [Strings.t("Answer by %s") % String(row.get("by", "")),
+		Strings.t("Unanswered, it counts as a refusal."),
+		Strings.t("Declining, or no answer by then: %s.") % String(row.get("price", ""))]
+	chips.add_child(_glyph("By", "event.svg", by_tip))
+	var by := PanelKit.plain_line(chips, String(row.get("by", "")))
+	by.name = "ByDate"  # i18n: ok a node name, found by tests
 	by.theme_type_variation = UiTheme.CAPTION
-	by.tooltip_text = "%s\n%s" % [Strings.t("Unanswered, it counts as a refusal."),
-		Strings.t("Declining: %s.") % String(row.get("price", ""))]
+	by.autowrap_mode = TextServer.AUTOWRAP_OFF
+	by.tooltip_text = by_tip
 	by.mouse_filter = Control.MOUSE_FILTER_PASS
-
-	var want := PanelKit.plain_line(box, String(row.get("wants", row.get("ask", ""))), PanelKit.Tone.PLAIN)
-	want.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	card.tooltip_text = "%s\n%s" % [String(row.get("person", "")), wants]
 
 	var verbs := PanelKit.buttons(box)
 	var days := PanelKit.sized(Button.new())
 	days.name = "Days"  # i18n: ok a node name, found by tests
-	days.text = Strings.t("Days")
+	days.icon = Icon.load_icon(ICONS + "calendar_month.svg", UiTheme.TEXT, _glyph_px())
+	days.accessibility_name = Strings.t("Days")
+	# What the chips say only on hover, for a player who reaches the card by keyboard
+	# or a screen reader (the design pass's accessibility review).
+	days.accessibility_description = "%s\n%s" % [wants, by_tip]
 	days.toggle_mode = true
 	days.button_pressed = id == _focused
 	days.tooltip_text = Strings.t("Show the days they offer on the calendar, or drag this card onto one.")
@@ -151,11 +173,31 @@ func _card(row: Dictionary) -> Control:
 		var b := PanelKit.sized(Button.new())
 		b.name = String(verb[1])  # i18n: ok a node name, found by tests
 		b.text = String(verb[0])
+		# The inbox card's Decline hover, the same words (request_lane.gd).
+		if String(verb[1]) == "decline":
+			b.tooltip_text = Strings.t("Declining, or no answer by then: %s.") % String(row.get("price", ""))
 		_answerable(b, row.get(String(verb[1]), {}))
 		var out: Signal = verb[2]
 		b.pressed.connect(func() -> void: out.emit(id))
 		verbs.add_child(b)
 	return card
+
+
+## The glyphs follow the text size, as the words beside them do.
+static func _glyph_px() -> int:
+	return roundi(GLYPH_PX * UiTheme.text_scale())
+
+
+## A dim icon whose hover says what it stands for.
+static func _glyph(node_name: String, file: String, tip: String) -> TextureRect:
+	var glyph := TextureRect.new()
+	glyph.name = node_name  # i18n: ok a node name, found by tests
+	glyph.texture = Icon.load_icon(ICONS + file, UiTheme.TEXT_DIM, _glyph_px())
+	glyph.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	glyph.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	glyph.tooltip_text = tip
+	glyph.mouse_filter = Control.MOUSE_FILTER_PASS
+	return glyph
 
 
 ## The sim's refusal on a verb, as the inbox card shows it (request_lane._answer).

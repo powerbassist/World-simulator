@@ -64,7 +64,7 @@ const FIXED_LABEL := {
 	K.FIXED_COOLDOWN: "Available again",  # i18n: msgid
 	K.FIXED_PROJECT: "Opens",  # i18n: msgid
 	K.FIXED_REFERENDUM: "Referendum",  # i18n: msgid
-	K.FIXED_EVENT: "Answer by",  # i18n: msgid
+	K.FIXED_EVENT: "Deadline",  # i18n: msgid -- one word on the Diary (RF6)
 }
 
 const KIND_LABEL := {
@@ -156,7 +156,7 @@ func _ready() -> void:
 func _build_form(root: VBoxContainer) -> void:
 	var heading := Label.new()
 	heading.theme_type_variation = UiTheme.HEADING
-	heading.text = tr("BOOK AN APPOINTMENT")
+	heading.text = tr("APPOINTMENTS")
 	root.add_child(heading)
 
 	var grid := GridContainer.new()
@@ -218,7 +218,7 @@ func _build_form(root: VBoxContainer) -> void:
 	root.add_child(_travel_note)
 
 	_book_button = PanelKit.sized(Button.new())
-	_book_button.text = tr("Book it")
+	_book_button.text = tr("Book")
 	_book_button.pressed.connect(_on_book)
 	root.add_child(_book_button)
 
@@ -654,7 +654,7 @@ func _party_name(id: String) -> String:
 ## The control this panel exists to let the player press -- V2.1a's fold contract,
 ## declared here at V2.1b.
 ##
-## Book it, and it is the panel's only verb: the per-entry Cancel buttons sit
+## Book, and it is the panel's only verb: the per-entry Cancel buttons sit
 ## inside the strip's own scroll, which the frame cannot see past. Built once in
 ## _build_form() and alive for the session, so it is held rather than re-found --
 ## government_panel's shape. Disabled while nothing is bookable, and the contract
