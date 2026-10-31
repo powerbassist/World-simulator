@@ -23,5 +23,5 @@ static func _synth() -> PackedByteArray:
 	return Synth.one_shot(SoundK.ELECTION)
 
 
-static func play(parent: Node) -> void:
-	Sound.cue(parent, "election")
+static func play(parent: Node, offset_db: float = 0.0) -> void:
+	Sound.cue(parent, "election", offset_db)

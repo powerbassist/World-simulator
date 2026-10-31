@@ -16,6 +16,8 @@ extends SceneTree
 ##     counts are the division's.
 
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
+const Music = preload("res://src/ui/music.gd")
+const MomentCheck = preload("res://tests/moment_check.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -39,6 +41,9 @@ func _process(_delta: float) -> bool:
 		_check_one_card()
 		_check_booked_bill()
 		_check_struck()
+		_check_division_sting()
+		_check_referendum_sting()
+		_check_forced_fall_sting()
 		_finish()
 		return true
 	return false
@@ -180,6 +185,76 @@ func _titled(inbox, title: String) -> Array:
 
 ## V5.2 b+ R2: the tabled bill divides at the month's close -- through main's own
 ## Division hook, so the division's card is the one the game pushes.
+## #223 pass 1: the division is where a vote's sting plays -- a defeat's is
+## synthesized (a passed bill's waits for a recorded file, silent until then).
+func _check_division_sting() -> void:
+	var before: int = _main.find_children("*", "AudioStreamPlayer", false, false).size()
+	ProposalNote.card_division(_main, {"division": {"law_id": "x", "passed": false, "yes_seats": 100, "no_seats": 400}})
+	var placed: int = _main.find_children("*", "AudioStreamPlayer", false, false).size() - before
+	if placed != 1:
+		_fail("a defeated division placed %d sting players, expected 1" % placed)
+
+
+
+## #223 pass 2: a referendum's own result is where it is won or lost -- a card and
+## the vote's sting at the Legislature step, through main's own hook; the division
+## that put it to the country plays nothing, nor does a withdrawal or a vote still
+## in flight.
+func _check_referendum_sting() -> void:
+	var ns = _main._state.player()
+	var inbox = _main._hud.inbox
+	var players := func() -> int: return _main.find_children("*", "AudioStreamPlayer", false, false).size()
+	var before: int = players.call()
+	ns.referendum_pending = {"law_id": "x"}
+	ProposalNote.card_division(_main, {"division": {"law_id": "x", "passed": true, "referendum_called": true}})
+	if players.call() != before:
+		_fail("the division that put a bill to the country played a sting")
+	# A carried vote's sting is its recorded file, silent without one; a refused one
+	# plays its synthesized stand-in. WHICH sting, under each manifest (QA's TAKE on #228).
+	for manifest in [{}, MomentCheck.FIXTURE, null]:
+		Music.override_manifest = manifest
+		for c in [[true, "Carried by the country", "vote_passed"], [false, "Refused by the country", "vote_failed"]]:
+			_referendum_result(ns, inbox, players, c, before)
+			before = players.call()
+	Music.override_manifest = null
+
+	# Withdrawn on the panel before the step: the snapshot is empty, nothing plays.
+	ns.referendum_pending = {}
+	ns.last_referendum_result = {"law_id": "x", "passed": false, "yes_share": 0.0, "withdrawn": true}
+	_main._on_month_step("Legislature", false, {}, _main._state.year, _main._state.month)
+	_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
+	if players.call() != before:
+		_fail("a withdrawn referendum played a sting")
+	ns.last_referendum_result = {}
+
+
+## One referendum through main's Legislature step: in flight, then decided by `c`
+## ([passed, the card's words, the moment id]); `before` is the players before it.
+func _referendum_result(ns, inbox, players: Callable, c: Array, before: int) -> void:
+	ns.referendum_pending = {"law_id": "x"}
+	_main._on_month_step("Legislature", false, {}, _main._state.year, _main._state.month)
+	_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
+	if players.call() != before:
+		_fail("a referendum still in flight played a sting")
+	ns.referendum_pending = {}
+	ns.last_referendum_result = {"law_id": "x", "passed": c[0], "yes_share": 0.55 if c[0] else 0.4, "withdrawn": false}
+	_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
+	var want := 1 if MomentCheck.sounds(c[2]) else 0
+	if players.call() != before + want:
+		_fail("a referendum %s placed %d sting players, expected %d" % [c[1], players.call() - before, want])
+	elif want == 1 and not MomentCheck.plays(MomentCheck.last_player(_main), c[2]):
+		_fail("a referendum %s did not play %s" % [c[1], c[2]])
+	if not _inbox_says(inbox, c[1]):
+		_fail("a referendum's result left no '%s' card" % c[1])
+
+
+func _inbox_says(inbox, words: String) -> bool:
+	for node in inbox.find_children("*", "", true, false):
+		if (node is Label or node is RichTextLabel) and String(node.text).contains(words):
+			return true
+	return false
+
+
 func _divide() -> void:
 	var report := {"division": Division.divide(_main._state, _main._loader)}
 	_main._on_month_step("Division", true, report, _main._state.year, _main._state.month)
@@ -197,3 +272,46 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL: %s" % f)
 	quit(1)
+
+
+## #223 QA D10: a 49.3 through the Legislature panel's own propose path -- one
+## that falls to its censure plays the losing sting, as its card reads BAD.
+## Last: the government falls. A refused 49.3 is BLOCKED, never a lost vote.
+func _check_forced_fall_sting() -> void:
+	var panel = _main._law_panel
+	var count := func() -> int: return panel.find_children("*", "AudioStreamPlayer", false, false).size()
+	var before: int = count.call()
+	preload("res://src/ui/law_verdict.gd").sting(panel, {"law_id": "x", "passed": false, "forced": true, "refused": true}, null)
+	if count.call() != before:
+		_fail("a refused 49.3 played a sting")
+	var ns = _main._state.player()
+	var party_id := "union_conservatrice"
+	var by_id := {}
+	for party in _main._loader.parties[ns.id]:
+		by_id[party.id] = party
+	if not by_id.has(party_id):
+		_fail("premise: no %s to govern narrowly" % party_id)
+		return
+	ns.coalition_party_ids = [party_id]
+	ns.coalition_seats = int(ns.seats_by_party.get(party_id, 0))
+	ns.coalition_position = preload("res://src/sim/government.gd").position_of(ns.seats_by_party, [party_id], by_id)
+	ns.pm_party_id = party_id
+	ns.pm_person_id = by_id[party_id].leader_person_id
+	ns.is_minority = true
+	ns.is_cohabitation = false
+	ns.force_cooldown_months = 0
+	var law = null
+	for l in _main._loader.laws:
+		if l.id != "" and not l.constitutional and preload("res://src/sim/legislature.gd").open_law(_main._state, ns, _main._loader, l.id) != null:
+			law = l
+			break
+	if law == null:
+		_fail("premise: no law open to force")
+		return
+	panel.run_proposal(law, true)
+	if not bool(ns.last_law_result.get("censure", {}).get("carried", false)):
+		_fail("premise: the narrow government survived its censure: %s" % str(ns.last_law_result).left(300))
+	elif count.call() != before + 1:
+		_fail("a 49.3 that fell placed %d sting players, expected 1" % (count.call() - before))
+	elif not MomentCheck.plays(MomentCheck.last_player(panel), "vote_failed"):
+		_fail("a 49.3 that fell did not play the losing sting (vote_failed)")

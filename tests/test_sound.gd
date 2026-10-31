@@ -10,6 +10,7 @@ extends SceneTree
 ## severity behind the NOTIFY band, and a bed that swells in, answers Ambience
 ## off, and fades out.
 
+const Music = preload("res://src/ui/music.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const SoundK = preload("res://src/ui/sound_constants.gd")
 const Synth = preload("res://src/ui/synth.gd")
@@ -150,6 +151,8 @@ func _all_one_shots() -> Dictionary:
 	var out := {"election": SoundK.ELECTION}
 	for id in SoundK.CUES:
 		out[id] = SoundK.CUES[id]
+	for id in SoundK.STINGS:
+		out[id] = SoundK.STINGS[id]
 	for i in SoundK.EVENTS.size():
 		out["event_%d" % (i + 1)] = SoundK.EVENTS[i]
 	return out
@@ -215,6 +218,11 @@ func _check_ladder() -> void:
 	if not heard["event_3"] < heard["election"]:
 		_fail("ladder: a critical event (%.1f dB) is as loud as the election sting (%.1f dB)" % [
 			heard["event_3"], heard["election"]])
+	# V5.3-0 (d): the losing stings sit above every UI cue, the lost election above
+	# the failed vote, and both under the election toll, still the loudest sound.
+	if not (cues_max < heard["vote_failed"] and heard["vote_failed"] < heard["election_lost"] 			and heard["election_lost"] < heard["election"]):
+		_fail("ladder: cues %.1f < vote_failed %.1f < election_lost %.1f < election %.1f fails" % [
+			cues_max, heard["vote_failed"], heard["election_lost"], heard["election"]])
 	for id in shots:
 		if float(shots[id]["level_db"]) > -8.0:
 			_fail("%s: level %.1f dB is above the -8 dB ceiling" % [id, float(shots[id]["level_db"])])
@@ -289,6 +297,8 @@ func _start_night() -> void:
 		if c is AudioStreamPlayer:
 			_night_sounds[c.stream] = int(_night_sounds.get(c.stream, 0)) + 1
 	)
+	# The synthesized path: a recorded election_won (#228) is test_election_panel's.
+	Music.override_manifest = {}
 	_night.show_results([result])
 	_wait_started = Time.get_ticks_msec()
 
@@ -310,6 +320,7 @@ func _check_night_ticks_then_skip() -> void:
 		_fail("skip() ticked the regions it declared at once -- the count's sound did not stop")
 	if int(_night_sounds.get(Sound.stream("election"), 0)) != 1:
 		_fail("the verdict after a skip played %d election stings, expected 1" % int(_night_sounds.get(Sound.stream("election"), 0)))
+	Music.override_manifest = null
 	Motion.override = -1
 
 func _check_headless_bed_is_inert() -> void:

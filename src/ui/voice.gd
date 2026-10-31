@@ -121,6 +121,7 @@ static func speak(parent: Node, path: String, delay_s := 0.0, card_id := "") -> 
 	if player == null:
 		player = AudioStreamPlayer.new()
 		player.name = NODE
+		player.add_to_group("voice")  # music.gd ducks under it (Music.VOICE_GROUP)
 		parent.add_child(player)
 	player.stream = stream
 	player.volume_db = float(SoundK.VOICE_DB[level])

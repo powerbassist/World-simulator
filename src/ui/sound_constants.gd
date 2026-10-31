@@ -133,6 +133,44 @@ const EVENTS := [
 ## (tools/voice_pipeline.py), so Loud is the clip as made and nothing goes above
 ## it; Normal sits a step under the critical sting's -11 dB peak so the line reads
 ## as speech beside the cues rather than over them.
+## V5.3-0 (d): the two losing stings, synthesized on the ELECTION precedent because
+## no losing sting with a clean licence exists (docs/design/v5.3-0-music-sourcing.md).
+## Both are a low, string-like tone (a fundamental under two soft harmonics) and
+## both stay under the election toll, the loudest thing the game plays.
+const STINGS := {
+	# About 2 s: E3 falling a minor third to C#3, no resolution, a short dry tail.
+	# A bill lost is a setback, not a death: sober, and quieter than election night.
+	"vote_failed": {
+		"rate": RATE, "duration_s": 2.0, "attack_s": 0.03, "env_decay": 1.2,
+		"level_db": -16.0,
+		"partials": [
+			[164.81, 0.30, 4.0, 0.0], [329.63, 0.10, 6.0, 0.0], [494.44, 0.05, 8.0, 0.0],
+			[138.59, 0.32, 1.4, 0.45], [277.18, 0.10, 2.4, 0.45], [415.77, 0.05, 3.4, 0.45],
+		],
+	},
+	# About 4 s: A3, F3, E3 falling slowly, coming to rest on an open fifth (D3 and
+	# A3) over a low D2 drone that fades. Grave and final, no game-over cliche;
+	# louder and longer than the failed vote, so the two never sound alike.
+	"election_lost": {
+		"rate": RATE, "duration_s": 4.0, "attack_s": 0.05, "env_decay": 0.6,
+		"level_db": -11.0,
+		"partials": [
+			[73.42, 0.20, 0.4, 0.0],
+			[220.0, 0.26, 3.0, 0.0], [440.0, 0.06, 5.0, 0.0],
+			[174.61, 0.26, 3.0, 0.6], [349.23, 0.06, 5.0, 0.6],
+			[164.81, 0.26, 3.0, 1.2], [329.63, 0.06, 5.0, 1.2],
+			[146.83, 0.26, 0.8, 1.8], [220.0, 0.18, 0.8, 1.8],
+		],
+	},
+}
+
+## V5.3-0 (d): the Music setting's steps (Off, Quiet, Normal, Loud), far under
+## the voices: music is a floor the speech sits on.
+const MUSIC_DB := [-80.0, -30.0, -24.0, -18.0]
+## How far the music drops while a voice line plays, and how fast it moves.
+const DUCK_DB := 12.0
+const DUCK_DB_PER_S := 30.0
+
 const VOICE_DB := [-80.0, -12.0, -6.0, 0.0]
 
 ## Ambient beds, one per screen. 16 s loops: long enough that the swells do not

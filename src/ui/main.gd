@@ -74,7 +74,7 @@ const Domains = preload("res://src/ui/domains.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Sound = preload("res://src/ui/sound.gd")
-const SoundBed = preload("res://src/ui/sound_bed.gd")
+const Music = preload("res://src/ui/music.gd")
 const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -296,7 +296,7 @@ func _ready() -> void:
 	# V4.9c. The desk's bed, rendered on a worker and swelling in once it is,
 	# and the one-shot set on another (sound.gd's warm()): nothing in this
 	# _ready() waits for either.
-	SoundBed.start(self, "game")
+	Music.start(self)  # the desk bed and the music beside it
 	Sound.warm()
 	_top_bar = _hud.top_bar
 	_hud.ribbon.setup(_state, _loader)
@@ -1269,6 +1269,8 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 		match step:
 			"Access":
 				_month_capture = {}
+			"Legislature":  # the referendum in flight, to see it resolve (#223 pass 2)
+				_month_capture["referendum_before"] = ProposalNote.referendum_in_flight(_state.player())
 			"Defence":
 				# Counted either side of the tick so an obligation that opens can be
 				# carded without src/sim/ growing a record for the UI to read. Derived
@@ -1309,22 +1311,8 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 			# since V5.1-d1b (G10), as a card each in the inbox.
 			preload("res://src/ui/briefing_driver.gd").hold_card(self, EffectsLedger.record(_state, _pending_effects, report["history_entry"], year, month, null))
 		"Legislature":
-			# The ultra pass-4 finding: a held bill releasing writes
-			# ns.last_law_result in Legislature's tick, and the assembly's own tick
-			# (Statute) overwrites the same register when a private member's bill
-			# divides the SAME month -- the release card was then permanently
-			# unreachable, its only announcement surface read after both writers.
-			# Capture the release before it can be swallowed and hand it to the
-			# announcer beside the division; empty unless a release actually fired
-			# (assembly_bill + released are the machine's own two keys for it).
-			var assembly_release: Dictionary = {}
-			var release_ns = _state.player()
-			if release_ns != null:
-				var release_result: Dictionary = release_ns.last_law_result
-				if bool(release_result.get("assembly_bill", false)) \
-						and bool(release_result.get("released", false)):
-					assembly_release = release_result.duplicate(true)
-			_month_capture["assembly_release"] = assembly_release
+			_month_capture["assembly_release"] = AssemblyNews.release_of(_state.player())
+			ProposalNote.card_referendum(self, String(_month_capture.get("referendum_before", "")))
 		"Statute": _assembly_news.announce(_month_capture.get("assembly_release", {}))
 		"Defence":
 			_world_news.card_obligations(int(_month_capture.get("obliged_before", 0)))

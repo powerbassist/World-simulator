@@ -34,6 +34,20 @@ var _assembly_cards := {}         # bill_id -> its LIVE tabling card
 var _assembly_result_month := -1  # absolute month whose division card was pushed
 var _assembly_release_month := -1  # absolute month whose release card was pushed
 
+## The ultra pass-4 finding: a held bill releasing writes ns.last_law_result in
+## Legislature's tick, and the assembly's own tick (Statute) overwrites the same
+## register when a private member's bill divides the SAME month -- the release card
+## was then permanently unreachable, its only announcement surface read after both
+## writers. main captures the release here, after Legislature, and hands it to
+## announce() beside the division; empty unless a release actually fired
+## (assembly_bill + released are the machine's own two keys for it).
+static func release_of(ns) -> Dictionary:
+	var result: Dictionary = ns.last_law_result if ns != null else {}
+	if bool(result.get("assembly_bill", false)) and bool(result.get("released", false)):
+		return result.duplicate(true)
+	return {}
+
+
 func announce(assembly_release: Dictionary = {}) -> void:
 	var ns = _state.player()
 	if ns == null:

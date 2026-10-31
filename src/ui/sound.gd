@@ -33,6 +33,7 @@ static var _warmed := {}
 static func ids() -> Array:
 	var out: Array = ["election"]
 	out.append_array(SoundK.CUES.keys())
+	out.append_array(SoundK.STINGS.keys())
 	for i in SoundK.EVENTS.size():
 		out.append("event_%d" % (i + 1))
 	return out
@@ -76,14 +77,14 @@ static func _collect() -> void:
 	_warmed.clear()
 
 
-## The recipe a cue id names: "election", a CUES key, or "event_1".."event_3".
+## The recipe a cue id names: "election", a CUES or STINGS key, or "event_1".."event_3".
 static func recipe(id: String) -> Dictionary:
 	if id == "election":
 		return SoundK.ELECTION
 	if id.begins_with("event_"):
 		var severity := clampi(int(id.trim_prefix("event_")), 1, SoundK.EVENTS.size())
 		return SoundK.EVENTS[severity - 1]
-	return SoundK.CUES.get(id, {})
+	return SoundK.CUES.get(id, SoundK.STINGS.get(id, {}))
 
 
 static func stream(id: String) -> AudioStreamWAV:
@@ -99,8 +100,9 @@ static func stream(id: String) -> AudioStreamWAV:
 
 ## Plays a cue once under `parent`. Returns nothing a caller could come to rely
 ## on: a silent run (Sound off, or an id with no recipe) is indistinguishable
-## from a played one everywhere but the speakers.
-static func cue(parent: Node, id: String) -> void:
+## from a played one everywhere but the speakers. `offset_db` moves the recipe's
+## level: Music.moment scales its synthesized stand-ins by the Music step.
+static func cue(parent: Node, id: String, offset_db: float = 0.0) -> void:
 	if parent == null or not parent.is_inside_tree():
 		return
 	if not SettingsPanel.sound_enabled():
@@ -110,7 +112,7 @@ static func cue(parent: Node, id: String) -> void:
 		return
 	var player := AudioStreamPlayer.new()
 	player.stream = s
-	player.volume_db = float(recipe(id)["level_db"])
+	player.volume_db = float(recipe(id)["level_db"]) + offset_db
 	parent.add_child(player)
 	player.finished.connect(player.queue_free)
 	player.play()

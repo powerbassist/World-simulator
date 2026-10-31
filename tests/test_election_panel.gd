@@ -17,6 +17,8 @@ extends SceneTree
 ## in the same month — the double-election case is the one most likely to break
 ## a panel written for a single result.
 
+const Music = preload("res://src/ui/music.gd")
+const MomentCheck = preload("res://tests/moment_check.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Sting = preload("res://src/ui/sting.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
@@ -405,6 +407,25 @@ func _check_sting_gate() -> void:
 	Sting.play(panel)
 	if _count_sting_players() != before + 1:
 		_fail("sound is on but Sting.play() placed no player")
+	# #223 QA D3: the reveal plays its verdict's own sting -- a defeat the losing
+	# one, a win and a term limit the won one. WHICH sting, under no recorded file
+	# (the synthesized toll), a fixture's and the shipped manifest (QA's TAKE on #228).
+	var kept_verdict: Dictionary = panel._verdict
+	var kept_revealed: bool = panel._revealed
+	for manifest in [{}, MomentCheck.FIXTURE, null]:
+		Music.override_manifest = manifest
+		for c in [[{"defeated": true}, "election_lost"], [{"defeated": false}, "election_won"],
+				[{"defeated": true, "termed_out": true}, "election_won"]]:
+			panel._verdict = c[0]
+			panel._revealed = false
+			var players := _count_sting_players()
+			panel._reveal()
+			var last: Node = MomentCheck.last_player(panel)
+			if _count_sting_players() != players + 1 or not MomentCheck.plays(last, c[1]):
+				_fail("the reveal of %s did not play %s (manifest %s)" % [c[0], c[1], manifest])
+	Music.override_manifest = null
+	panel._verdict = kept_verdict
+	panel._revealed = kept_revealed
 
 
 func _count_sting_players() -> int:
