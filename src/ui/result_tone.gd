@@ -18,7 +18,6 @@ const GOOD := "good"  # i18n: ok a tone key
 const BAD := "bad"  # i18n: ok a tone key
 const BLOCKED := "blocked"  # i18n: ok a tone key
 const RISKY := "risky"  # i18n: ok a tone key
-const BASE_META := "result_tone_base"  # i18n: ok a meta key
 const POP_META := "result_tone_pop"  # i18n: ok a meta key
 
 ## key -> [variation, word]. The words are tags, short and upper-cased on screen.
@@ -28,6 +27,9 @@ const TAG := {
 	BLOCKED: [UiTheme.WARN_TEXT, "Not possible"],  # i18n: msgid
 	RISKY: [UiTheme.WARN_TEXT, "Risky"],  # i18n: msgid
 }
+
+## key -> the status colour tint() lays on a sentence, at whatever size it has.
+const TINT := {GOOD: UiTheme.GOOD, BAD: UiTheme.BAD, BLOCKED: UiTheme.WARN, RISKY: UiTheme.WARN}
 
 
 ## The tag `label` shows for `tone`; "" (a neutral result) hides it.
@@ -80,12 +82,16 @@ static func push(inbox, title: String, body: String, tone: String) -> String:
 ## A result whose own sentence already holds the verdict word (PASSED, DEFEATED,
 ## Refused, Delivered) takes the tone on that sentence instead of a second word:
 ## the word says it, the tone colours it, and the text diet (RF6) pays nothing.
-## A neutral result goes back to the variation the control had before its first
-## tint, so a label reused for the next result (a status line) is never left red.
+## Only the COLOUR changes: the control keeps its own variation, so a heading stays
+## a heading and a body line stays body size (#222 QA T1: swapping in TAG's small
+## cut shrank DEFEATED below the lines around it). A neutral result drops the
+## colour, so a label reused for the next result (a status line) is never left red.
 static func tint(control: Control, tone: String) -> void:
-	if not control.has_meta(BASE_META):
-		control.set_meta(BASE_META, control.theme_type_variation)
-	control.theme_type_variation = String(TAG[tone][0]) if TAG.has(tone) else String(control.get_meta(BASE_META))
+	var key := "default_color" if control is RichTextLabel else "font_color"  # i18n: ok theme item names
+	if TINT.has(tone):
+		control.add_theme_color_override(key, TINT[tone])
+	else:
+		control.remove_theme_color_override(key)
 
 
 ## A status line's text and its tone in one call.

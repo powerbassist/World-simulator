@@ -206,6 +206,7 @@ tests=(
   tests/test_result_tone_lint.gd
   tests/test_emotion_kit.gd
   tests/test_music.gd
+  tests/test_emotion_wiring.gd
   tests/test_audience_scene.gd
   tests/test_audience_flow.gd
   tests/test_audience_levers.gd

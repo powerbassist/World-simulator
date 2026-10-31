@@ -12,6 +12,7 @@ extends SceneTree
 
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const LawVerdict = preload("res://src/ui/law_verdict.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## surface -> [the file that shows it, the call that tones it]. A surface that
 ## reaches the player through another one is named with it: a summit's outcome is
@@ -20,6 +21,7 @@ const LawVerdict = preload("res://src/ui/law_verdict.gd")
 ## ResultTone underneath, pinned by the reads below.
 const REGISTER := {
 	"law verdict and referendum": ["res://src/ui/law_panel.gd", "LawVerdict.tint("],
+	"vote result card": "res://src/ui/proposal_note.gd",
 	"election verdict": ["res://src/ui/election_panel.gd", "ElectionVerdict.show_title("],
 	"consequence card, summit outcome": "res://src/ui/effects_ledger.gd",
 	"decided for you": "res://src/ui/desk_cards.gd",
@@ -38,7 +40,19 @@ const REGISTER := {
 	"booked day kept or not": "res://src/ui/world_news.gd",
 	"diplomatic act": ["res://src/ui/main.gd", "NationPanel.say_result("],
 	"diplomatic act, the card": "res://src/ui/nation_panel.gd",
+	"energy act refused (the panel's and the map's order)": "res://src/ui/energy_panel.gd",
+	"public works refused": "res://src/ui/projects_panel.gd",
+	"campaign effort or promise refused": ["res://src/ui/campaign_panel.gd", "CampaignChest."],
+	"booked day's act": ["res://src/ui/diary_driver.gd", "on_outcome.call("],
 }
+
+## A sim command a UI file runs (`Energy.execute(`): the file must be registered
+## above, so a new verb cannot reach the player with no tone at all.
+const EXECUTE := r"\b[A-Z][A-Za-z]*\.execute\("
+## A refusal dropped on the floor: the command's `applied` read false, and the
+## very next line returns (#222, the parent's call: energy, projects and the
+## sector programmes all did this).
+const SILENT := r'^\s*if not (bool\()?result\.get\("applied", false\)\)?:\s*$'
 
 var _failures: Array[String] = []
 
@@ -54,6 +68,8 @@ func _init() -> void:
 		elif not text.contains(needle):
 			_fail("%s: %s shows a result with no ResultTone call" % [surface, path])
 
+	_check_every_command_registered()
+
 	var passed := {"law_id": "x", "passed": true}
 	var failed := {"law_id": "x", "passed": false}
 	_expect("a passed bill", LawVerdict.tone(passed, null), ResultTone.GOOD)
@@ -68,12 +84,13 @@ func _init() -> void:
 	var status := Label.new()
 	status.theme_type_variation = "Caption"
 	ResultTone.say(status, "Refused.", ResultTone.BLOCKED)
-	if status.theme_type_variation == "Caption":
-		_fail("a BLOCKED status kept its plain variation")
+	if not status.has_theme_color_override("font_color"):
+		_fail("a BLOCKED status took no colour")
 	ResultTone.say(status, "Booked.")
-	if status.theme_type_variation != "Caption":
-		_fail("a neutral status after a refusal kept '%s'" % status.theme_type_variation)
+	if status.has_theme_color_override("font_color"):
+		_fail("a neutral status after a refusal kept the refusal's colour")
 	status.free()
+	_check_tint_keeps_size()
 
 	var neutral := ResultTone.tag("")
 	if neutral.visible or neutral.text != "":
@@ -91,6 +108,49 @@ func _init() -> void:
 		for f in _failures:
 			printerr("FAIL: %s" % f)
 		quit(1)
+
+
+## Every src/ui file that runs a sim command is a registered result surface, and
+## none of them drops a refusal with a bare `return`.
+func _check_every_command_registered() -> void:
+	var registered := {}
+	for surface in REGISTER:
+		registered[REGISTER[surface][0] if REGISTER[surface] is Array else REGISTER[surface]] = true
+	var execute := RegEx.create_from_string(EXECUTE)
+	var silent := RegEx.create_from_string(SILENT)
+	for file in DirAccess.get_files_at("res://src/ui"):
+		if not file.ends_with(".gd"):
+			continue
+		var path := "res://src/ui/" + file
+		var lines := FileAccess.get_file_as_string(path).split("\n")
+		for i in lines.size():
+			var line := lines[i].strip_edges()
+			if line.begins_with("#") or line.begins_with("##"):
+				continue
+			if execute.search(line) != null and not registered.has(path):
+				_fail("%s:%d runs a sim command but is no registered result surface" % [file, i + 1])
+			if silent.search(lines[i]) != null and i + 1 < lines.size() and lines[i + 1].strip_edges() == "return":
+				_fail("%s:%d drops a refused command with a bare return" % [file, i + 1])
+
+
+## #222 QA T1: tint() colours a verdict and leaves its size alone -- a heading
+## that says DEFEATED stays a heading, a body line stays body size.
+func _check_tint_keeps_size() -> void:
+	var host := Control.new()
+	host.theme = UiTheme.build()
+	root.add_child(host)
+	for variation in ["", UiTheme.HEADING, UiTheme.LEAD]:
+		var label := Label.new()
+		label.theme_type_variation = variation
+		host.add_child(label)
+		var size_before := label.get_theme_font_size("font_size")
+		for tone in [ResultTone.GOOD, ResultTone.BAD, ResultTone.BLOCKED, ResultTone.RISKY]:
+			ResultTone.tint(label, tone)
+			if label.get_theme_font_size("font_size") != size_before:
+				_fail("tint(%s) resized a '%s' line: %d -> %d" % [tone, variation, size_before, label.get_theme_font_size("font_size")])
+			if label.get_theme_color("font_color") != ResultTone.TINT[tone]:
+				_fail("tint(%s) did not colour a '%s' line" % [tone, variation])
+	host.free()
 
 
 func _expect(what: String, got: String, want: String) -> void:

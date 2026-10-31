@@ -71,6 +71,7 @@ func _process(_delta: float) -> bool:
 			_check_life()
 			_check_held_for_count()
 			_check_held_through_main()
+			_check_plate()
 			_show_full()
 		5:
 			Click.half(root, _card.find_child("Close", true, false), true)
@@ -279,6 +280,16 @@ func _check_held_through_main() -> void:
 		_fail("main's held front page did not show once the result plate was dismissed")
 	_card.clear()
 	_main._clock.paused = true
+
+
+## #222 QA T5 (mutant M7): a moment with a backdrop shows its graded plate.
+func _check_plate() -> void:
+	Headlines.set_table("moment", {"censure": {"a": {"neutral": "The censure story"}}})
+	_show({"kind": "moment", "id": "censure", "answer": "a", "papers": [_paper(0, "neutral")]})
+	var plate := _card.find_child("Plate", true, false) as TextureRect
+	if plate == null or not plate.visible or plate.texture == null:
+		_fail("a censure front page shows no plate")
+	Headlines.set_table("moment", {})
 
 
 func _count_cards(node: Node) -> int:

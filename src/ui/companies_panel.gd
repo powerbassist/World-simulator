@@ -429,10 +429,11 @@ func _investment_button(ns, action) -> Button:
 func _on_invest(ns, action) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result := Investment.execute(_state, ns, _loader.investment_actions, action)
-	if not result.get("applied", false):
-		return
 	_dirty = true
-	acted.emit(before, Strings.row_name("investment-actions", action))
+	# RF7: a refusal takes the company actions' BLOCKED line (_last_refusal).
+	_last_refusal = "" if result.get("applied", false) else tr("%s refused -- it is no longer on offer.") % Strings.row_name("investment-actions", action)
+	if _last_refusal == "":
+		acted.emit(before, Strings.row_name("investment-actions", action))
 
 
 func _build_firm(ns, company) -> void:

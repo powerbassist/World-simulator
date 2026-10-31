@@ -78,7 +78,9 @@ func _ready() -> void:
 	_said.add_child(_result)
 	_close = PanelKit.sized(Button.new())
 	_close.text = tr("Close")
-	_close.pressed.connect(func() -> void: closed.emit())
+	# Through close(), as Escape is: the hush lives there (#222 QA T4: emitting
+	# `closed` straight from the button left the greet playing after the hang-up).
+	_close.pressed.connect(close)
 	root.add_child(_close)
 
 

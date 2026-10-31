@@ -37,6 +37,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Num = preload("res://src/ui/num.gd")
 
 var _state
@@ -146,6 +147,7 @@ func _refresh() -> void:
 	for child in _body.get_children():
 		child.queue_free()
 
+	_build_refusal(ns)
 	_build_ledger(ns)
 	_build_building(ns)
 	_build_completed(ns)
@@ -282,10 +284,20 @@ func _button(ns, action) -> Button:
 func _on_act(ns, action) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result := Projects.execute(_state, ns, _loader.project_actions, action)
-	if not result.get("applied", false):
-		return
-	_dirty = true
-	acted.emit(before, Strings.row_name("project-actions", action))
+	_dirty = true  # a refusal is drawn too: _build_refusal()
+	if result.get("applied", false):
+		acted.emit(before, Strings.row_name("project-actions", action))
+
+
+## The last verb the sim refused -- its display record, ns.last_project_result -- as a
+## BLOCKED line at the top, so a stale button pressed is never a silent click
+## (V5.3-0 RF7, the parent's call on #222: energy, project and investment results).
+## The sim gives no reason beyond "not available", so the line says that.
+func _build_refusal(ns) -> void:
+	var last: Dictionary = ns.last_project_result
+	for action in (_loader.project_actions if bool(last.get("refused", false)) else []):
+		if String(action.id) == String(last.get("action_id", "")):
+			ResultTone.tint(PanelKit.line(_body, tr("%s refused -- it is no longer on offer.") % Strings.row_name("project-actions", action)), ResultTone.BLOCKED)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.
