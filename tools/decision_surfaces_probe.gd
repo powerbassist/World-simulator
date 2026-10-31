@@ -41,9 +41,20 @@ extends SceneTree
 ## briefing break the 4 + 6 a year budget. Stingers (RF9's count) are the
 ## month's front page, a division's result and an election night.
 ##
-## RF1, RF2 and RF9's bed sequence read the ranking in src/ui/priorities.gd
-## (Interface's, block 0 a), loaded at run time so this probe parses before that
-## file exists; until it does those three print NOT MEASURED and do not pass.
+## RF1, RF2 and RF9 read the game's own presentation rules, never a copy: the
+## ranking (Priorities.rank, its memory handed back every month, the held set by
+## Priorities.held_by_rule), the situation (Priorities.situation) and the music
+## band (MusicBand.step, with Trends.months_to_vote for the campaign). Both files
+## are Interface's (block 0 a) and are loaded at run time, so this probe parses
+## before they exist; until they do those three print NOT MEASURED and do not pass.
+##   RF1  every briefing: 3 lines of 3 different kinds;
+##   RF2  over the first 60 months: at most 25 % of months repeat last month's
+##        three (kinds and subjects), a mean overlap of at most 1.5 lines, a held
+##        surface always holds a line, a dated line 3 months away or less is never
+##        damped, and no request lapses unshown in its last month while a line was
+##        free for it; the kinds seen are reported;
+##   RF9  bed changes at most once per 2 months on average, and the crisis bed
+##        from the first briefing whose situation is a crisis.
 ## Exit code: 0 when every measured band passes, 1 when one fails.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
@@ -56,7 +67,15 @@ const ElectionVerdict = preload("res://src/ui/election_verdict.gd")
 
 const START_YEAR := 2026
 const PLAYABLE := ["DEU", "FRA", "GBR", "POL"]
+const Trends = preload("res://src/ui/trends.gd")
 const PRIORITIES_PATH := "res://src/ui/priorities.gd"
+const MUSIC_BAND_PATH := "res://src/ui/music_band.gd"
+## RF2 and RF9's bars (spec section 5).
+const RF2_MONTHS := 60
+const RF2_MAX_REPEAT := 0.25
+const RF2_MAX_OVERLAP := 1.5
+const RF2_NEAR_MONTHS := 3
+const RF9_MAX_CHANGE_RATE := 0.5
 ## RF4's bars (spec section 5; decision-surfaces.md's budget).
 const RF4_MAX_DISMISSALS := 2
 const RF4_SHARE := 0.90
@@ -64,6 +83,8 @@ const BUDGET_MODAL_A_YEAR := 4.0
 const BUDGET_CARDS_A_YEAR := 6.0
 
 var _loader
+var _priorities = null
+var _music_band = null
 
 
 func _init() -> void:
@@ -130,6 +151,7 @@ func _run(nation_id: String, months: int, regime: String, briefing: bool) -> Arr
 	var year := START_YEAR
 	var month := 1
 	var minor_held := {}
+	var brief := {"memory": {}, "band": {}}
 	for i in range(months):
 		month += 1
 		if month > 12:
@@ -151,6 +173,8 @@ func _run(nation_id: String, months: int, regime: String, briefing: bool) -> Arr
 		var row := _row(state, ns, year, month, seen, report)
 		if briefing:
 			_holds(state, ns, row, report, minor_held)
+			if _priorities != null and not bool(row["defeated"]):
+				_brief(state, ns, row, report, brief)
 		rows.append(row)
 		if briefing and bool(row["defeated"]):
 			break
@@ -271,8 +295,36 @@ func _holds(state, ns, row: Dictionary, report: Dictionary, minor_held: Dictiona
 	}
 
 
+## The month's briefing, read as the game reads it: the three lines with the
+## memory handed back, the held set by rule, the situation, the music band's step,
+## and the requests that lapsed this month (judged against LAST month's lines).
+func _brief(state, ns, row: Dictionary, report: Dictionary, brief: Dictionary) -> void:
+	var out: Dictionary = _priorities.rank(state, _loader, {"memory": brief["memory"]})
+	brief["memory"] = out["memory"]
+	var lines: Array = []
+	for l in out["lines"]:
+		lines.append({"kind": String(l["kind"]), "subject": String(l["subject"]),
+			"held": bool(l["held"]), "standing": bool(l["standing"]), "more": int(l["more"]),
+			"deadline_month": int(l["deadline_month"]), "score": float(l["score"]),
+			"w": float(l["w"]), "u": float(l["u"]), "m": float(l["m"])})
+	var held: Dictionary = _priorities.held_by_rule(state, _loader)
+	row["now"] = int(state.year) * 12 + int(state.month)
+	row["lines"] = lines
+	row["held_rule"] = not (held["events"] as Array).is_empty() or bool(held["programme"])
+	row["situation"] = String(_priorities.situation(out["lines"]))
+	if _music_band != null:
+		var to_vote := int(Trends.months_to_vote(state, ns))
+		brief["band"] = _music_band.step(brief["band"], String(row["situation"]), to_vote if to_vote >= 0 else -1)
+		row["band"] = String(brief["band"]["band"])
+	var lapsed: Array = []
+	for r in (report.get("audience_requests", {}) as Dictionary).get("lapsed", []):
+		lapsed.append(String(r["id"]))
+	row["lapsed"] = lapsed
+
+
 func _briefing(nations: Array, regimes: Array, months: int) -> Dictionary:
-	var priorities = load(PRIORITIES_PATH) if ResourceLoader.exists(PRIORITIES_PATH) else null
+	_priorities = load(PRIORITIES_PATH) if ResourceLoader.exists(PRIORITIES_PATH) else null
+	_music_band = load(MUSIC_BAND_PATH) if ResourceLoader.exists(MUSIC_BAND_PATH) else null
 	var runs: Array = []
 	var all_pass := true
 	for nation_id in nations:
@@ -280,15 +332,114 @@ func _briefing(nations: Array, regimes: Array, months: int) -> Dictionary:
 			var rows := _run(String(nation_id), months, String(regime), true)
 			var rf4 := _rf4(rows)
 			var run := {"nation": nation_id, "regime": regime, "months": rows.size(), "rf4": rf4, "rows": rows}
-			if priorities == null:
-				run["rf1"] = "NOT MEASURED"
 			all_pass = all_pass and bool(rf4["pass"])
+			if _priorities != null:
+				run["rf1"] = _rf1(rows)
+				run["rf2"] = _rf2(rows)
+				all_pass = all_pass and bool(run["rf1"]["pass"]) and bool(run["rf2"]["pass"])
+			if _music_band != null:
+				run["rf9"] = _rf9(rows)
+				all_pass = all_pass and bool(run["rf9"]["pass"])
 			runs.append(run)
 			_print_run(run)
-	if priorities == null:
-		print("RF1 / RF2 / RF9: NOT MEASURED -- %s is not in the tree yet" % PRIORITIES_PATH)
-	print("BANDS: %s" % ("PASS" if all_pass else "FAIL"))
-	return {"pass": all_pass, "priorities": priorities != null, "runs": runs}
+	if _priorities == null:
+		print("RF1 / RF2: NOT MEASURED -- %s is not in the tree yet" % PRIORITIES_PATH)
+	if _music_band == null:
+		print("RF9: NOT MEASURED -- %s is not in the tree yet" % MUSIC_BAND_PATH)
+	var measured := _priorities != null and _music_band != null
+	print("BANDS: %s" % ("FAIL" if not all_pass else ("PASS" if measured else "PASS ON WHAT WAS MEASURED (RF4 only)")))
+	return {"pass": all_pass, "measured": measured, "runs": runs}
+
+
+func _briefed(rows: Array) -> Array:
+	return rows.filter(func(r) -> bool: return r.has("lines"))
+
+
+func _keys(row: Dictionary) -> Dictionary:
+	var out := {}
+	for l in row["lines"]:
+		out["%s|%s" % [l["kind"], l["subject"]]] = true
+	return out
+
+
+func _rf1(rows: Array) -> Dictionary:
+	var briefed := _briefed(rows)
+	var bad: Array = []
+	for row in briefed:
+		var kinds := {}
+		for l in row["lines"]:
+			kinds[l["kind"]] = true
+		if (row["lines"] as Array).size() != 3 or kinds.size() != 3:
+			bad.append("%d-%02d" % [row["year"], row["month"]])
+	return {"briefings": briefed.size(), "bad": bad, "pass": not briefed.is_empty() and bad.is_empty()}
+
+
+func _rf2(rows: Array) -> Dictionary:
+	var briefed := _briefed(rows)
+	var n := mini(briefed.size(), RF2_MONTHS)
+	var repeats := 0
+	var overlap := 0
+	var held_missed := 0
+	var damped := 0
+	var lapsed_unshown := 0
+	var kinds := {}
+	for t in range(n):
+		var row: Dictionary = briefed[t]
+		for l in row["lines"]:
+			kinds[l["kind"]] = int(kinds.get(l["kind"], 0)) + 1
+			# A dated line 3 months away or less is scored without novelty.
+			if not bool(l["held"]) and not bool(l["standing"]) and int(l["deadline_month"]) >= 0 \
+					and int(l["deadline_month"]) - int(row["now"]) <= RF2_NEAR_MONTHS \
+					and absf(float(l["score"]) - float(l["w"]) * float(l["u"]) * float(l["m"])) > 1e-6:
+				damped += 1
+		if bool(row["held_rule"]) and not (row["lines"] as Array).any(func(l) -> bool: return bool(l["held"])):
+			held_missed += 1
+		if t == 0:
+			continue
+		var prev: Dictionary = briefed[t - 1]
+		var a := _keys(prev)
+		var common := 0
+		for k in _keys(row):
+			if a.has(k):
+				common += 1
+		overlap += common
+		if common == 3:
+			repeats += 1
+		# A request that lapsed this month was in last month's briefing, or every
+		# line of it was held (nothing was free for it).
+		var request_line := (prev["lines"] as Array).any(func(l) -> bool: return String(l["kind"]) == "request")
+		var all_held := (prev["lines"] as Array).all(func(l) -> bool: return bool(l["held"]))
+		if not (row["lapsed"] as Array).is_empty() and not request_line and not all_held:
+			lapsed_unshown += (row["lapsed"] as Array).size()
+	var pairs := maxf(float(n - 1), 1.0)
+	var repeat_share := repeats / pairs
+	var mean_overlap := overlap / pairs
+	return {
+		"months": n, "repeat_share": repeat_share, "mean_overlap": mean_overlap,
+		"held_missed": held_missed, "damped_near": damped, "lapsed_unshown": lapsed_unshown,
+		"kinds_seen": kinds,
+		"pass": n > 1 and repeat_share <= RF2_MAX_REPEAT and mean_overlap <= RF2_MAX_OVERLAP
+			and held_missed == 0 and damped == 0 and lapsed_unshown == 0,
+	}
+
+
+func _rf9(rows: Array) -> Dictionary:
+	var briefed := _briefed(rows)
+	var changes := 0
+	var crisis_late := 0
+	var bands := {}
+	var prev := ""
+	for row in briefed:
+		var band := String(row["band"])
+		bands[band] = int(bands.get(band, 0)) + 1
+		if prev != "" and band != prev:
+			changes += 1
+		prev = band
+		if String(row["situation"]) == "crisis" and band != "crisis":
+			crisis_late += 1
+	var rate := changes / maxf(float(briefed.size() - 1), 1.0)
+	return {"changes": changes, "change_rate": rate, "crisis_late": crisis_late, "bands": bands,
+		"pass": briefed.size() > 1 and rate <= RF9_MAX_CHANGE_RATE and crisis_late == 0}
 
 
 ## RF4 over one run: the briefing's holds, the others against the budget, the
@@ -334,6 +485,20 @@ func _print_run(run: Dictionary) -> void:
 		int(rf4["stops"]), 100.0 * float(rf4["share_at_most_2"]), RF4_MAX_DISMISSALS,
 		JSON.stringify(rf4["by_dismissals"]), JSON.stringify(rf4["stingers_a_year"]),
 	])
+	if run.has("rf1"):
+		var rf1: Dictionary = run["rf1"]
+		var rf2: Dictionary = run["rf2"]
+		print("    RF1 %s: %d briefings, %d not three kinds %s" % [
+			"PASS" if bool(rf1["pass"]) else "FAIL", int(rf1["briefings"]), (rf1["bad"] as Array).size(), JSON.stringify(rf1["bad"])])
+		print("    RF2 %s over %d months: repeats %.0f %%, mean overlap %.2f, held missed %d, damped near %d, lapsed unshown %d; kinds %s" % [
+			"PASS" if bool(rf2["pass"]) else "FAIL", int(rf2["months"]), 100.0 * float(rf2["repeat_share"]),
+			float(rf2["mean_overlap"]), int(rf2["held_missed"]), int(rf2["damped_near"]), int(rf2["lapsed_unshown"]),
+			JSON.stringify(rf2["kinds_seen"])])
+	if run.has("rf9"):
+		var rf9: Dictionary = run["rf9"]
+		print("    RF9 %s: %d bed changes (%.2f a month), crisis late %d; bands %s" % [
+			"PASS" if bool(rf9["pass"]) else "FAIL", int(rf9["changes"]), float(rf9["change_rate"]),
+			int(rf9["crisis_late"]), JSON.stringify(rf9["bands"])])
 
 
 func _print(rows: Array) -> void:
