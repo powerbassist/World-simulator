@@ -1,5 +1,14 @@
 {
   "beds": {
+    "calm": {
+      "file": "another_august.ogg",
+      "author": "cynicmusic (The Cynic Project)",
+      "url": "https://opengameart.org/content/another-august",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "132898af147c6e8c53421a79894453fba07b5a98d9a014eee54ab65355ddd376",
+      "note": "Credit requested by the author (CC0 does not require it): The Cynic Project / pixelsphere.org / cynicmusic.com. Transcoded from the page's mp3 to OGG Vorbis, ffmpeg libvorbis -q:a 5 (the file's sha256 is of the OGG in this repo). From the author's game Pixelsphere; the page does not name the production tools."
+    },
     "tense": {
       "file": "searching.ogg",
       "author": "yd",
@@ -9,13 +18,13 @@
       "sha256": "add2ee7931fd0c53f2804220e7355b10b38dbf5ab2b4dfdd415b61d8e14e51c8"
     },
     "crisis": {
-      "file": "searching.ogg",
-      "author": "yd",
-      "url": "https://opengameart.org/node/10684",
+      "file": "space_graveyard.ogg",
+      "author": "TinyWorlds",
+      "url": "https://opengameart.org/content/space-graveyard-ambient-track",
       "licence": "CC0-1.0",
       "read": "2026-10-31",
-      "sha256": "add2ee7931fd0c53f2804220e7355b10b38dbf5ab2b4dfdd415b61d8e14e51c8",
-      "note": "Stand-in: the crisis band reuses the tense bed (same file) until a clean crisis track with clear provenance is found."
+      "sha256": "e259a70653855e9674f7338c7058505cb897048d90f05af8137c421985a81899",
+      "note": "Transcoded from the page's wav to OGG Vorbis, ffmpeg libvorbis -q:a 5. The page does not name the production tools."
     }
   },
   "stings": {
