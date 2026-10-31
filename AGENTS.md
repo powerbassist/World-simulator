@@ -109,6 +109,37 @@ in `REUSE.toml` — a new asset, a new data source or a third-party file needs a
 annotation there. The layers are listed in [README.md](README.md); CI runs it.
 
 ```bash
+python tools/event_lint.py --check
+python tools/law_lint.py --check
+```
+
+The authoring lints over `data/events/` and `data/laws/` (schema plus the book's spread
+bands; stdlib, no Godot). CI runs the first; `tests.yml` does not run the second.
+
+```bash
+python tools/i18n_extract.py --check
+```
+
+The translation tables: a stale key, an empty value or a placeholder mismatch in
+`data/i18n/`. CI runs it, after `--selftest`.
+
+```bash
+python tools/voice_pipeline.py --selftest
+```
+
+No network, no credits spent. CI runs it.
+
+```bash
+bash tools/run_tests.sh --print-tests | python tools/ci_shards.py --check
+```
+
+Every registered test is in exactly one shard of `tools/ci_shards.json`. The local gate
+does not check it and CI does, so a new test needs its row in `run_tests.sh` AND in the
+shard file. CI runs it. Two hooks wired in `.claude/settings.json` run these for you
+([docs/tooling.md](docs/tooling.md)): the lints after an edit under their folders, this
+check before a `git commit` that stages a test.
+
+```bash
 godot --path .
 ```
 
