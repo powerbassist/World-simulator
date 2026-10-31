@@ -141,10 +141,7 @@ func _quiet_desk() -> void:
 ## The next boundary repeats this month's three: the setting on, and the memory
 ## of the last briefing what the next ranking will find.
 func _quiet_month() -> void:
-	var cfg := ConfigFile.new()
-	cfg.load(SettingsPanel.CONFIG_PATH)
-	cfg.set_value(MessageSettings.SECTION, MessageSettings.BRIEFING_NEW_ONLY_KEY, true)
-	cfg.save(SettingsPanel.CONFIG_PATH)
+	_set_new_only(true)
 	_quiet_desk()
 	var ns = _main._state.player()
 	ns.commitments.clear()
@@ -152,6 +149,13 @@ func _quiet_month() -> void:
 	ns.tabled_bill = {}
 	_date = _today()
 	_last_day()
+
+
+func _set_new_only(on: bool) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value(MessageSettings.SECTION, MessageSettings.BRIEFING_NEW_ONLY_KEY, on)
+	cfg.save(SettingsPanel.CONFIG_PATH)
 
 
 func _last_day() -> void:
@@ -169,6 +173,8 @@ func _go(phase: String) -> void:
 
 
 func _finish() -> void:
+	# The suite's tests share one user dir per run: put the setting back.
+	_set_new_only(false)
 	for f in _failures:
 		printerr("FAIL: %s" % f)
 	if _failures.is_empty():

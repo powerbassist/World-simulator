@@ -71,6 +71,11 @@ func _process(_delta: float) -> bool:
 
 
 func _start() -> void:
+	# Every month (the default), whatever an earlier test in this run's user dir left.
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value(MessageSettings.SECTION, MessageSettings.BRIEFING_NEW_ONLY_KEY, false)
+	cfg.save(SettingsPanel.CONFIG_PATH)
 	var ns = _main._state.player()
 	var offer: Array = Programme.available(_main._state, ns, _main._loader)
 	if not offer.is_empty():
