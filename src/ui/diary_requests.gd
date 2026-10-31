@@ -216,7 +216,7 @@ static func _initials(party_name: String) -> String:
 ## it, else on the rebuilt Days, and a request with no day the Diary can take says
 ## so on its card (the old picker's line).
 func focus_booking(request_id: String) -> void:
-	for b in _grid.day_list.find_children("BookHere_%s" % request_id, "Button", true, false):
+	for b in _grid.day_list.find_children("BookHere_%s" % request_id, "Button", true, false):  # i18n: ok a node name and a class, found by tests
 		if not (b as Button).disabled and not b.is_queued_for_deletion():
 			(b as Button).grab_focus()
 			return
