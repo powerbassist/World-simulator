@@ -78,7 +78,7 @@ func _set_money(amount: float) -> void:
 
 func _check_no_own_close() -> void:
 	for window_id in ["budget", "tax", "politics", "society", "legislature", "diplomacy", "orgs", "calendar",
-			"people", "outliner", "companies", "projects", "region", "commodities", "city", "energy", "campaign", "events"]:
+			"people", "outliner", "companies", "projects", "region", "commodities", "energy", "campaign", "events"]:
 		var page = _main._windows._pages.get(window_id, null)
 		var close = _find_close(page)
 		if page == null:

@@ -232,7 +232,7 @@ func _run() -> void:
 	else:
 		var authored_city: String = String(major.city)
 		ns.companies[major.id]["city"] = other_city
-		var city_panel = _main._city_panel
+		var city_panel = _main._region_panel
 		city_panel.show_city(other_city)
 		# show_city only marks dirty; the rebuild rides the panel's _process,
 		# which a hidden panel never runs -- the test drives the refresh it

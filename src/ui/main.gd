@@ -42,7 +42,6 @@ const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const RegionPanel = preload("res://src/ui/region_panel.gd")
 const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
-const CityPanel = preload("res://src/ui/city_panel.gd")
 const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const CampaignChest = preload("res://src/ui/campaign_chest.gd")
@@ -170,7 +169,6 @@ var _companies_panel
 var _projects_panel
 var _region_panel
 var _commodities_panel
-var _city_panel
 var _energy_panel
 var _campaign_panel
 var _agenda_panel
@@ -270,8 +268,8 @@ func _ready() -> void:
 	# order, so the content settles before the window sizes itself around it.
 	# Same "registered further down" note as above applies.
 	_map_view.city_clicked.connect(func(city_id: String):
-		_city_panel.show_city(city_id)
-		_windows.open("city")
+		_region_panel.show_city(city_id)
+		_windows.open("region")
 	)
 
 	# V3.4. Above the map and below the windows: the flows are drawn ON the map,
@@ -530,6 +528,7 @@ func _ready() -> void:
 	_region_panel = RegionPanel.new()
 	_windows.register("region", tr("Regions"), _region_panel, KEY_T, ICONS + "map.svg")
 	_region_panel.setup(_state, _loader)
+	_region_panel.attach(_windows, _map_view)
 
 	# V4.6. Task 4's read-only surface over the commodity layer, in the Economy
 	# cluster beside the region and city registers -- panel-system.md §16's rule
@@ -549,13 +548,6 @@ func _ready() -> void:
 	_commodities_panel = CommoditiesPanel.new()
 	_windows.register("commodities", tr("Commodities"), _commodities_panel, KEY_H, ICONS + "inventory_2.svg")
 	_commodities_panel.setup(_state, _loader)
-
-	# V2.2b, one level down, and the only V2 surface whose drawer entry is the
-	# SECOND way in: the map's cross is the route, and this entry is for the
-	# player who does not know that -- §16's own wording.
-	_city_panel = CityPanel.new()
-	_windows.register("city", tr("Cities"), _city_panel, KEY_V, ICONS + "location_city.svg")
-	_city_panel.setup(_state, _loader)
 
 	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is Politics, so the
 	# obvious letters were gone. The key rides register() itself -- V2.1c deleted the

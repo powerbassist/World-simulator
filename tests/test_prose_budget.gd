@@ -38,7 +38,7 @@ const INBOX_CEILING := 190
 const BUDGET := {
 	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
 	"politics": 30, "region": 20, "commodities": 10, "projects": 20, "economy": 40,
-	"overview": 30, "diplomacy": 20, "city": 0, "budget": 0, "society": 10,
+	"overview": 30, "diplomacy": 20, "budget": 0, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10, "tax": 10,
 	"outliner": 10,
 }
@@ -51,12 +51,12 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520}
+const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250}
 const TOTAL_PENDING := {
-	"budget": 107, "calendar": 42, "campaign": 274, "city": 366, "commodities": 418,
+	"budget": 107, "calendar": 42, "campaign": 274, "commodities": 418,
 	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118, "events": 187,
 	"orgs": 610, "outliner": 23, "overview": 127,
-	"politics": 123, "projects": 75, "region": 136, "society": 106, "tax": 25,
+	"politics": 123, "projects": 75, "society": 106, "tax": 25,
 }
 ## The sum of every tab's total, a ratchet: each rebuilding PR lowers it to what it
 ## measured. RF6's target is 3 600.
