@@ -88,8 +88,8 @@ static func _said_next(parent: Node, player: AudioStreamPlayer) -> void:
 	var voice: Dictionary = player.get_meta("next_voice", {})
 	var caption = player.get_meta("next_caption", null)
 	_clear(player)
-	# A queued line never plays into a scene that has gone (#222 QA TAKE A: End,
-	# then Leave at once, and the farewell still played off screen 2-3 s later).
+	# A queued line never plays into a scene that has gone. Defence only: Leave and
+	# close_scene already hush the queue (#222 QA withdrew TAKE A, a harness timing).
 	if is_instance_valid(parent) and parent is CanvasItem and not (parent as CanvasItem).is_visible_in_tree():
 		return
 	if is_instance_valid(parent) and is_instance_valid(caption):

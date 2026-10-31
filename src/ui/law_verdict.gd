@@ -90,8 +90,13 @@ static func tone(result: Dictionary, ns) -> String:
 
 ## The division's sting under `parent` (V5.3-0 (d)), by the verdict's own tone: a
 ## bill passed or lost; a held bill or a moot one is neither, and plays nothing,
-## as does a proposal refused before any division (no "passed" key).
+## as does a proposal refused before any division (no "passed" key, or a 49.3 the
+## government cannot use: BLOCKED on its card, not a lost vote). A 49.3 whose
+## censure carried brought the government down: BAD, as its card reads (#223 QA).
 static func sting(parent: Node, result: Dictionary, ns) -> void:
-	if not result.has("passed"):
+	if not result.has("passed") or bool(result.get("refused", false)):
 		return
-	Music.moment(parent, {ResultTone.GOOD: "vote_passed", ResultTone.BAD: "vote_failed"}.get(tone(result, ns), ""))
+	var key := tone(result, ns)
+	if bool(result.get("forced", false)) and bool(result.get("censure", {}).get("carried", false)):
+		key = ResultTone.BAD
+	Music.moment(parent, {ResultTone.GOOD: "vote_passed", ResultTone.BAD: "vote_failed"}.get(key, ""))

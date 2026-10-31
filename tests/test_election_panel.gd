@@ -405,6 +405,22 @@ func _check_sting_gate() -> void:
 	Sting.play(panel)
 	if _count_sting_players() != before + 1:
 		_fail("sound is on but Sting.play() placed no player")
+	# #223 QA D3: the reveal plays its verdict's own sting -- a defeat the losing
+	# one, a win and a term limit the night's toll.
+	var kept_verdict: Dictionary = panel._verdict
+	var kept_revealed: bool = panel._revealed
+	for c in [[{"defeated": true}, "election_lost"], [{"defeated": false}, "election"],
+			[{"defeated": true, "termed_out": true}, "election"]]:
+		panel._verdict = c[0]
+		panel._revealed = false
+		var players := _count_sting_players()
+		panel._reveal()
+		var last: Node = panel.get_child(panel.get_child_count() - 1)
+		if _count_sting_players() != players + 1 or not (last is AudioStreamPlayer
+				and (last as AudioStreamPlayer).stream == preload("res://src/ui/sound.gd").stream(c[1])):
+			_fail("the reveal of %s did not play %s" % [c[0], c[1]])
+	panel._verdict = kept_verdict
+	panel._revealed = kept_revealed
 
 
 func _count_sting_players() -> int:

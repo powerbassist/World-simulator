@@ -41,6 +41,7 @@ func _process(_delta: float) -> bool:
 		_check_struck()
 		_check_division_sting()
 		_check_referendum_sting()
+		_check_forced_fall_sting()
 		_finish()
 		return true
 	return false
@@ -256,3 +257,44 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL: %s" % f)
 	quit(1)
+
+
+## #223 QA D10: a 49.3 through the Legislature panel's own propose path -- one
+## that falls to its censure plays the losing sting, as its card reads BAD.
+## Last: the government falls. A refused 49.3 is BLOCKED, never a lost vote.
+func _check_forced_fall_sting() -> void:
+	var panel = _main._law_panel
+	var count := func() -> int: return panel.find_children("*", "AudioStreamPlayer", false, false).size()
+	var before: int = count.call()
+	preload("res://src/ui/law_verdict.gd").sting(panel, {"law_id": "x", "passed": false, "forced": true, "refused": true}, null)
+	if count.call() != before:
+		_fail("a refused 49.3 played a sting")
+	var ns = _main._state.player()
+	var party_id := "union_conservatrice"
+	var by_id := {}
+	for party in _main._loader.parties[ns.id]:
+		by_id[party.id] = party
+	if not by_id.has(party_id):
+		_fail("premise: no %s to govern narrowly" % party_id)
+		return
+	ns.coalition_party_ids = [party_id]
+	ns.coalition_seats = int(ns.seats_by_party.get(party_id, 0))
+	ns.coalition_position = preload("res://src/sim/government.gd").position_of(ns.seats_by_party, [party_id], by_id)
+	ns.pm_party_id = party_id
+	ns.pm_person_id = by_id[party_id].leader_person_id
+	ns.is_minority = true
+	ns.is_cohabitation = false
+	ns.force_cooldown_months = 0
+	var law = null
+	for l in _main._loader.laws:
+		if l.id != "" and not l.constitutional and preload("res://src/sim/legislature.gd").open_law(_main._state, ns, _main._loader, l.id) != null:
+			law = l
+			break
+	if law == null:
+		_fail("premise: no law open to force")
+		return
+	panel.run_proposal(law, true)
+	if not bool(ns.last_law_result.get("censure", {}).get("carried", false)):
+		_fail("premise: the narrow government survived its censure: %s" % str(ns.last_law_result).left(300))
+	elif count.call() != before + 1:
+		_fail("a 49.3 that fell placed %d sting players, expected 1" % (count.call() - before))

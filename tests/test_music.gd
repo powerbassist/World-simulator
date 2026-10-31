@@ -90,9 +90,10 @@ func _check_band_and_moments() -> void:
 	if String(music.band_state["band"]) != "crisis":
 		_fail("the band fell from crisis in one calm month")
 	# #223 pass 2: a load or a new game (another state) starts the band over.
+	Music.follow(desk, "crisis", 20)  # a crisis this month, so the band cannot fall on its own
 	Music.follow(desk, "calm", 20, 4242)
-	if String(music.band_state["band"]) == "crisis":
-		_fail("the band carried crisis into another game's state")
+	if String(music.band_state["band"]) != "calm":
+		_fail("another game's calm month did not start calm: %s" % music.band_state)
 	if music.get_children().any(func(c): return c is AudioStreamPlayer):
 		_fail("a bed with no track placed a player")
 	# The duck seen by the node itself, a frame at a time.
@@ -140,6 +141,14 @@ func _check_band_and_moments() -> void:
 		if not is_equal_approx(n, float(Sound.recipe(recipe)["level_db"])):
 			_fail("%s at Normal is %s, not its recipe's level" % [id, n])
 	_set_music(SettingsPanel.DEFAULT_MUSIC)
+	# #223 QA D9: a line Voice.speak places is one Music.speaking() sees.
+	var line_parent := Node.new()
+	desk.add_child(line_parent)
+	preload("res://src/ui/voice.gd").speak(line_parent, "res://assets/audio/voice/activist_f_30/agree.ogg")
+	if line_parent.get_child_count() == 0:
+		_fail("premise: Voice.speak placed no player")
+	elif not Music.speaking(self):
+		_fail("a real voice line is not one the music ducks under")
 	desk.free()
 	_finish()
 
