@@ -199,6 +199,7 @@ static func restore_after_load(main) -> void:
 		push(main, Events.event_by_id(main._loader, String(entry.get("event_id", ""))), entry)
 	EffectsLedger.restore_card(main._state, main._hud.inbox)
 	AudienceDriver.after_load(main)
+	preload("res://src/ui/briefing_driver.gd").after_load(main)
 
 
 ## The card's id when it carries a speaker's face, else "" -- the arrival's cue to

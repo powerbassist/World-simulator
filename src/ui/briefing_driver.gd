@@ -30,6 +30,8 @@ const Strings = preload("res://src/ui/strings.gd")
 const Events = preload("res://src/sim/events.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Voices = preload("res://src/core/voices.gd")
+const Staff = preload("res://src/sim/staff.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 
 static var _games := {}
 ## A test seam: a test of another surface drives whole months and would otherwise
@@ -151,7 +153,7 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 			"chip": PriorityWords.chip(l, state), "held": bool(l["held"])})
 	var header := Strings.t("A quiet month") if Priorities.quiet(lines) \
 		else Strings.t("%s: your priorities") % DateText.month_year(int(state.month), int(state.year))
-	var chief = chief_of(main._loader, String(state.player().id))
+	var chief = Staff.chief_of(main._loader, String(state.player().id))
 	var who := ""
 	var said := ""
 	if chief != null:
@@ -170,16 +172,6 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 	var footer: Array = groups.map(func(g): return {"text": PriorityWords.group(g["items"], state, main._loader), "index": g["index"]})
 	return {"header": header, "who": who, "also": footer, "line": said, "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
 		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
-
-
-## "The person of kind chief_of_staff in the played nation's file" (2.1), or null.
-## Staff.chief_of (src/sim/staff.gd, Systems' #215) is the same rule by kind; this
-## walk moves to it once #215 is on main.
-static func chief_of(loader, nation_id: String):
-	for person in loader.people.get(nation_id, []):
-		if String(person.kind) == "chief_of_staff":
-			return person
-	return null
 
 
 ## The chief's line for the month's situation (2.6): three variants per situation in
@@ -221,6 +213,12 @@ static func close(main) -> void:
 		return
 	game["card"].hide()
 	game["card"].dismissed.emit()
+	# A request the card named, on a line or in the footer, has been SEEN under
+	# #207's rule (the parent's call on QA's #218 finding): its arrival's slowdown
+	# gives the player's speed back, unless they picked one since (_seen's own rule).
+	for entry in (game["lines"] as Array) + (game.get("also", []) as Array):
+		if String(entry.get("kind", "")) == "request":
+			AudienceDriver._seen(main, String(entry["subject"]))
 	var held := _holding_event(main)
 	if bool(game["was_running"]) and held.is_empty() and not main._paused_for_programme:
 		main._clock.paused = false
@@ -231,6 +229,20 @@ static func close(main) -> void:
 	elif main._paused_for_programme:
 		main._windows.open("agenda")
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
+
+
+## After a load (QA's RECORD on #218, PhoneDriver.after_load's rule): the card of
+## the discarded game comes down, and the clock it paused and the lines it named
+## belong to that game, so they go too (novelty starts over by _will_show's
+## state_id). No `dismissed`: nothing of the discarded game waits on it now.
+static func after_load(main) -> void:
+	var game: Dictionary = _games.get(main.get_instance_id(), {})
+	if game.is_empty():
+		return
+	game["card"].hide()
+	game["was_running"] = false
+	game["lines"] = []
+	game["also"] = []
 
 
 ## Go: close by Continue's rule, then open the line's target (2.4's table).
@@ -252,7 +264,7 @@ static func go(main, index: int) -> void:
 			# Diary beside it shows the days. Booking inside the grid is (b)'s (3.4).
 			main._windows.open(tab)
 			main._hud.inbox.slide_in()
-			main._hud.inbox.raise_card(preload("res://src/ui/audience_driver.gd").lane_of(main).card_of(subject))
+			main._hud.inbox.raise_card(AudienceDriver.lane_of(main).card_of(subject))
 		"bloc":
 			_open_laws_or(main, tab, subject)
 		"bill":

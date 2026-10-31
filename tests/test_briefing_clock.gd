@@ -10,24 +10,37 @@ extends SceneTree
 ##     across frames while the card is up;
 ##   - a real click on Continue (press and release frames apart) resumes the clock
 ##     at the speed it had when the card opened (a request's arrival may have slowed
-##     it to 1 by its own rule, audience_driver.gd; the briefing changes nothing),
-##     and the date moves again;
+##     it to 1 by its own rule, audience_driver.gd -- and if the card names that
+##     request, Continue gives the arrival's speed back, below), and the date moves
+##     again;
 ##   - with Messages' "Only when something is new", a month whose three are last
 ##     month's three crosses its boundary without stopping. Which month that is
 ##     depends on the sim's arrivals, so the test crosses boundaries until the
 ##     ranking says "nothing new" (up to QUIET_TRIES), and checks that one; every
-##     month it crosses that has something new must hold.
+##     month it crosses that has something new must hold;
+##   - a request the card NAMES counts as seen (#207's rule, the parent's call on
+##     QA's #218 finding): its arrival slowed the clock from 3 to 1 by
+##     AudienceDriver's own rule, and a real click on Continue gives 3 back --
+##     with the request on a line, and in the footer only; a speed the player
+##     picked after the arrival (2) is kept. The mutant that drops BriefingDriver.
+##     close's _seen loop leaves the clock at 1: red.
 
 const Click = preload("res://tests/click.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const Priorities = preload("res://src/ui/priorities.gd")
 
 const SPEED := 4
 const TIMEOUT_FRAMES := 900
 const HELD_FRAMES := 30
 const QUIET_TRIES := 8
+## The speed before the arrival, and the cases: where the card names the request,
+## the speed picked by hand after the arrival (0: none), the speed Continue leaves.
+const ARRIVAL_FROM := 3
+const SEEN_CASES := [["line", 0, 3], ["footer", 0, 3], ["line", 2, 2]]
 
 var _failures: Array[String] = []
 var _main
@@ -38,6 +51,7 @@ var _date := Vector3i()
 var _card
 var _speed := 0
 var _tries := 0
+var _case := 0
 
 
 func _init() -> void:
@@ -61,7 +75,7 @@ func _process(_delta: float) -> bool:
 		"to_boundary":
 			if _card.visible and not _main._month_runner.running():
 				_date = _today()
-				_speed = _main._clock.speed
+				_speed = _expected_speed()
 				_go("held")
 		"held":
 			if not _main._clock.paused:
@@ -110,8 +124,28 @@ func _process(_delta: float) -> bool:
 			if _main._clock.paused and not _main._decision_holds_clock() and not _main._paused_for_programme:
 				_fail("the quiet month's boundary paused the clock")
 			print("quiet month found after %d boundaries" % _tries)
-			_finish()
-			return true
+			_set_new_only(false)
+			_seen_case()
+		"seen_press":
+			Click.half(_main.get_viewport(), _card._close, true)
+			_go("seen_release")
+		"seen_release":
+			Click.half(_main.get_viewport(), _card._close, false)
+			_go("seen_check")
+		"seen_check":
+			if _since < 2:
+				return false
+			var c: Array = SEEN_CASES[_case]
+			if _card.visible:
+				_fail("Continue did not close the briefing (case %s)" % str(c))
+			if _main._clock.speed != int(c[2]):
+				_fail("a request named on the card's %s, hand speed %d: the clock left at speed %d, not %d" % [
+					c[0], c[1], _main._clock.speed, c[2]])
+			_case += 1
+			if _case >= SEEN_CASES.size():
+				_finish()
+				return true
+			_seen_case()
 	return false
 
 
@@ -128,6 +162,43 @@ func _start() -> void:
 	_last_day()
 	_main._clock.paused = false
 	_go("to_boundary")
+
+
+## The speed Continue should leave: the clock's, or -- when the card names a request
+## the clock was slowed for, and nobody picked a speed since -- the arrival's.
+func _expected_speed() -> int:
+	var ad: Dictionary = AudienceDriver._games[_main.get_instance_id()]
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	if _main._clock.speed == 1 and int(ad["resume_speed"]) > 1:
+		for entry in (game["lines"] as Array) + (game.get("also", []) as Array):
+			if String(entry["kind"]) == "request" and ad["slowed_for"].has(String(entry["subject"])):
+				print("the boundary's card names an arrival: Continue restores %d" % int(ad["resume_speed"]))
+				return int(ad["resume_speed"])
+	return _main._clock.speed
+
+
+## One case: a request arrives at speed ARRIVAL_FROM (AudienceDriver slows to 1), the
+## player may pick a speed, and the month's card names it on a line or in the footer.
+func _seen_case() -> void:
+	var c: Array = SEEN_CASES[_case]
+	_quiet_desk()
+	var state = _main._state
+	var now := int(state.year) * 12 + int(state.month)
+	var rid := "%s|seen%d" % [String(_main._loader.people[String(state.player().id)][0].id), _case]
+	_main._clock.set_speed(ARRIVAL_FROM)
+	AudienceDriver._slow_for(_main, [{"id": rid}])
+	if _main._clock.speed != 1:
+		_fail("premise: the arrival did not slow the clock to 1")
+	if int(c[1]) > 0:
+		_main._clock.set_speed(int(c[1]))
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	var cand := Priorities._cand("request", rid, now + 1, 1.0, 1.0, now)
+	game["lines"] = [cand] if String(c[0]) == "line" else []
+	game["also"] = [] if String(c[0]) == "line" else [cand]
+	game["was_running"] = true
+	_main._clock.paused = true
+	_card.show_view(BriefingDriver.view(_main, game["lines"], {}, game["also"]))
+	_go("seen_press")
 
 
 ## No arrival holds the clock in this test: the hold under test is the briefing's.

@@ -646,16 +646,6 @@ func _stage_briefing() -> void:
 					"status": "pending", "date": {}, "resolved_month": -1})
 				asking -= 1
 		preload("res://src/ui/audience_driver.gd").refresh(_main)
-	# Until Content's chief records are on main (#216), a stand-in chief so the
-	# card's face-name-line slot is seen; a nation with a record shows its own.
-	if Driver.chief_of(_main._loader, String(ns.id)) == null:
-		var chief = preload("res://src/core/person.gd").new()
-		chief.id = "%s_chief_of_staff" % ns.id
-		chief.person_name = "Odile Kerhervé"
-		chief.kind = "chief_of_staff"
-		chief.voice = "chief_%s" % String(ns.id).to_lower()
-		_main._loader.people[String(ns.id)].append(chief)
-		_main._loader.person_by_id[chief.id] = chief
 	Driver._games[_main.get_instance_id()]["pending"] = {}
 	Driver.open(_main, {})
 

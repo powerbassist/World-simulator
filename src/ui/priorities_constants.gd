@@ -62,8 +62,9 @@ const DEFICIT_WINDOW_MONTHS := 12
 ## The unrest trend: rising in each of this many months, read from the briefing's own
 ## memory (unrest is not in state.history).
 const UNREST_RISING_MONTHS := 3
-## A person is a priority once their grudge reaches Feelings' "hostile, may leak".
-const HOSTILE_GRUDGE := 0.45
+## A person is a priority once their grudge reaches Feelings' "hostile, may leak":
+## that band's lower cut, read from the table rather than copied (QA's RECORD on #218).
+const HOSTILE_GRUDGE: float = preload("res://src/ui/feelings.gd").BANDS["grudge"][2][0]
 
 ## What a priority's Go opens, by kind (2.4): a domains.gd tab id, or "inbox" for a
 ## desk card raised in the inbox, or "person" for the person card.

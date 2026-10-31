@@ -65,6 +65,7 @@ func _process(_delta: float) -> bool:
 		_check_plate_and_defeat()
 		_check_new_only()
 		_check_key_go()
+		_check_after_load()
 		_finish()
 		return true
 	return false
@@ -201,6 +202,24 @@ func _check_key_go() -> void:
 	_card._input(key)
 	if _card.visible:
 		_fail("key 1 did not take the first line's Go")
+
+
+## QA's RECORD on #218: a load with the card up kept the discarded game's card and
+## its was_running. The load's own restore path (DeskCards.restore_after_load) brings
+## the card down and forgets what it held.
+func _check_after_load() -> void:
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	if _card.visible:
+		BriefingDriver.close(_main)
+	_main._clock.paused = false
+	game["pending"] = {}
+	BriefingDriver.open(_main, {})
+	if not _card.visible:
+		_fail("premise: the briefing did not open before the load")
+	preload("res://src/ui/desk_cards.gd").restore_after_load(_main)
+	if _card.visible or bool(game["was_running"]) or not (game["lines"] as Array).is_empty():
+		_fail("a load left the discarded game's briefing (card %s, was_running %s, lines %d)" % [
+			_card.visible, game["was_running"], (game["lines"] as Array).size()])
 
 
 func _key(code: Key, down: bool) -> void:

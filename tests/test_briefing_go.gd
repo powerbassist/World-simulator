@@ -221,7 +221,7 @@ func _check_chief() -> void:
 	var loader = _main._loader
 	var nid := String(_main._state.player().id)
 	var lines := [Priorities._standing("budget", "balance")]
-	if BriefingDriver.chief_of(loader, nid) == null:
+	if BriefingDriver.Staff.chief_of(loader, nid) == null:
 		var bare: Dictionary = BriefingDriver.view(_main, lines, {})
 		if String(bare["who"]) != "" or String(bare["line"]) != "":
 			_fail("with no chief of staff the card still names one")
@@ -236,9 +236,9 @@ func _check_chief() -> void:
 	if not String(view["who"]).contains("chief of staff"):
 		_fail("the chief's name is not on the card: '%s'" % view["who"])
 	if String(view["line"]) == "":
-		_fail("the chief says nothing (voice '%s')" % BriefingDriver.chief_of(loader, nid).voice)
-	var a := BriefingDriver.chief_line(loader, String(BriefingDriver.chief_of(loader, nid).id), "calm", 10)
-	var b := BriefingDriver.chief_line(loader, String(BriefingDriver.chief_of(loader, nid).id), "calm", 11)
+		_fail("the chief says nothing (voice '%s')" % BriefingDriver.Staff.chief_of(loader, nid).voice)
+	var a := BriefingDriver.chief_line(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 10)
+	var b := BriefingDriver.chief_line(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 11)
 	if a == b:
 		_fail("the chief's line repeats two months running: '%s'" % a)
 
