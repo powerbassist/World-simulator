@@ -29,7 +29,10 @@ import sys
 
 COMMIT = re.compile(r"\bgit\b[^;&|\n]*?\bcommit\b")
 TEST_PATH = re.compile(r"\btests/test_[A-Za-z0-9_]+\.gd\b")
-TIMEOUT_S = 30
+# Three subprocesses at most (git, bash, ci_shards): 3 x 20 s stays under the
+# 70 s hook timeout in .claude/settings.json, so a slow check asks nothing
+# instead of being killed half way.
+TIMEOUT_S = 20
 
 
 def is_commit(command):
@@ -57,7 +60,12 @@ def find_bash():
     """bash from PATH, as a full path. subprocess's bare "bash" resolves through
     CreateProcess, which on Windows finds System32's WSL launcher before Git's
     bash and chokes on the working copy's CRLF; shutil.which follows PATH."""
-    return shutil.which("bash")
+    bash = shutil.which("bash")
+    # System32's bash.exe and the WindowsApps stub are WSL launchers: they would
+    # read the CRLF working copy wrong and report a failure that is not one.
+    if bash and re.search(r"[\/](system32|windowsapps)[\/]", bash, re.I):
+        return None
+    return bash
 
 
 def shard_problem(root):

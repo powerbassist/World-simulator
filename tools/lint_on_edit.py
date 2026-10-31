@@ -7,10 +7,12 @@ in the same turn.
 
   data/events/**            -> tools/event_lint.py --check
   data/laws/**              -> tools/law_lint.py --check
-  data/i18n/**, src/ui/*.gd -> tools/i18n_extract.py --check
+  any other data/**, src/ui/*.gd -> tools/i18n_extract.py --check
 
-src/ui and not every .gd: i18n_extract reads the literals of src/ui/*.gd and
-nothing else (its header), so a .gd elsewhere cannot move its verdict.
+i18n_extract reads two sources (its header): the literals of src/ui/*.gd, and
+the translatable fields of the rows in data/<kind>/*.json. So a row edit can
+strand a translation key (a renamed id) as surely as a UI edit can, and a .gd
+elsewhere than src/ui cannot move its verdict.
 
 FAIL-OPEN. This hook never blocks: a PostToolUse has nothing left to block, and
 a hook that raised on a malformed payload, a missing python or a slow lint would
@@ -33,7 +35,7 @@ RULES = (
     (lambda rel: rel.startswith("data/events/"), ("tools/event_lint.py", "--check")),
     (lambda rel: rel.startswith("data/laws/"), ("tools/law_lint.py", "--check")),
     (
-        lambda rel: rel.startswith("data/i18n/")
+        lambda rel: rel.startswith("data/")
         or (rel.startswith("src/ui/") and rel.endswith(".gd")),
         ("tools/i18n_extract.py", "--check"),
     ),
@@ -122,13 +124,14 @@ def main():
 
 def selftest():
     cases = {
-        "data/events/shadows.json": ["tools/event_lint.py"],
-        "data/laws/tax.json": ["tools/law_lint.py"],
+        "data/events/shadows.json": ["tools/event_lint.py", "tools/i18n_extract.py"],
+        "data/laws/tax.json": ["tools/law_lint.py", "tools/i18n_extract.py"],
         "data/i18n/fr/ui.json": ["tools/i18n_extract.py"],
         "src/ui/budget_panel.gd": ["tools/i18n_extract.py"],
         "src/sim/economy.gd": [],  # not a src/ui script: i18n_extract ignores it
         "tests/test_clock.gd": [],
-        "data/nations/fra.json": [],
+        "tools/event_lint.py": [],
+        "data/nations/fra.json": ["tools/i18n_extract.py"],  # a row: translatable fields
         "docs/index.md": [],
     }
     bad = 0
