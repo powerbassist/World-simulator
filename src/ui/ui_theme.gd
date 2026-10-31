@@ -91,6 +91,8 @@ const WIDTH_MAP := 62
 const WEIGHT_BODY := 400
 const WEIGHT_MEDIUM := 500
 const WEIGHT_BOLD := 650
+## V5.3-0 R15: a newspaper's masthead, the one cut this heavy.
+const WEIGHT_BLACK := 900
 
 # -- Label variations. Assign with `label.theme_type_variation = UiTheme.LEAD` --
 
@@ -98,6 +100,8 @@ const LEAD := "Lead"                 ## the one sentence a screen is about  # i1
 const HEADING := "Heading"           ## small dim section label above a group  # i18n: ok
 const MICRO := "Micro"               ## tracked uppercase, smaller than Heading  # i18n: ok
 const FIGURE := "Figure"             ## a large number  # i18n: ok
+const MASTHEAD := "Masthead"  ## a paper's name on a front page (V5.3-0 R15)  # i18n: ok
+const HEADLINE := "Headline"  ## a front page's headline at display size (R15)  # i18n: ok
 const HERO := "Hero"                 ## the portrait card's approval, and only it  # i18n: ok
 const FIGURE_LABEL := "FigureLabel"  ## the caption above a large number
 const CAPTION := "Caption"           ## dim secondary text  # i18n: ok
@@ -321,17 +325,14 @@ static func _panels(theme: Theme) -> void:
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL]:
+	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
 	var figures := _face(WEIGHT_BOLD, 0, true)
 	var tracked := _face(WEIGHT_MEDIUM, 1)
 
-	theme.set_font_size("font_size", LEAD, _px(SIZE_LEAD))
-	theme.set_color("font_color", LEAD, TEXT)
-	if bold != null:
-		theme.set_font("font", LEAD, bold)
+	_label(theme, LEAD, SIZE_LEAD, TEXT, bold)
 
 	# Heading and Micro are the same idea at two weights of emphasis: a tracked
 	# uppercase label naming a group. Micro is for chrome the player reads once
@@ -342,46 +343,45 @@ static func _labels(theme: Theme) -> void:
 	if tracked != null:
 		theme.set_font("font", HEADING, tracked)
 
-	theme.set_font_size("font_size", MICRO, _px(SIZE_MICRO))
-	theme.set_color("font_color", MICRO, TEXT_DIM)
-	if tracked != null:
-		theme.set_font("font", MICRO, tracked)
+	_label(theme, MICRO, SIZE_MICRO, TEXT_DIM, tracked)
 
 	# Figures carry the tabular-figures feature so a ticking number stops
 	# shifting its own column every month -- unemployment going 7.33 -> 7.4 used
 	# to move the decimal. (Archivo's default digits are proportional.)
-	theme.set_font_size("font_size", FIGURE, _px(SIZE_FIGURE))
-	theme.set_color("font_color", FIGURE, TEXT)
-	if figures != null:
-		theme.set_font("font", FIGURE, figures)
+	_label(theme, FIGURE, SIZE_FIGURE, TEXT, figures)
 
 	# V4.8a. The strip's alert tone: the figure's own face and size, BAD's colour,
 	# so a reading in trouble changes colour and nothing else -- a figure that
 	# changed size when it went bad would shove its neighbours along the strip.
-	theme.set_font_size("font_size", FIGURE_ALERT, _px(SIZE_FIGURE))
-	theme.set_color("font_color", FIGURE_ALERT, BAD)
-	if figures != null:
-		theme.set_font("font", FIGURE_ALERT, figures)
+	_label(theme, FIGURE_ALERT, SIZE_FIGURE, BAD, figures)
 
-	theme.set_font_size("font_size", HERO, _px(SIZE_HERO))
-	theme.set_color("font_color", HERO, TEXT)
-	if figures != null:
-		theme.set_font("font", HERO, figures)
+	_label(theme, HERO, SIZE_HERO, TEXT, figures)
 
-	theme.set_font_size("font_size", FIGURE_LABEL, _px(SIZE_SMALL))
-	theme.set_color("font_color", FIGURE_LABEL, TEXT_DIM)
+	_label(theme, FIGURE_LABEL, SIZE_SMALL, TEXT_DIM)
 
-	theme.set_font_size("font_size", CAPTION, _px(SIZE_SMALL))
-	theme.set_color("font_color", CAPTION, TEXT_DIM)
+	_label(theme, CAPTION, SIZE_SMALL, TEXT_DIM)
 
 	theme.set_color("font_color", GOOD_TEXT, GOOD)
 	theme.set_color("font_color", BAD_TEXT, BAD)
-	theme.set_color("font_color", WARN_TEXT, WARN)
-	theme.set_font_size("font_size", WARN_TEXT, _px(SIZE_SMALL))
-	theme.set_color("font_color", BAD_SMALL, BAD)
-	theme.set_font_size("font_size", BAD_SMALL, _px(SIZE_SMALL))
-	theme.set_color("font_color", GOOD_SMALL, GOOD)
-	theme.set_font_size("font_size", GOOD_SMALL, _px(SIZE_SMALL))
+	_label(theme, WARN_TEXT, SIZE_SMALL, WARN)
+	_label(theme, BAD_SMALL, SIZE_SMALL, BAD)
+	_label(theme, GOOD_SMALL, SIZE_SMALL, GOOD)
+
+	# V5.3-0 R15 (the closing gate: "les unes ne sont pas assez graphiques"): a
+	# front page prints its paper's name in the black cut, tracked, and its
+	# headline at the figure size in bold -- display type on the one surface that
+	# is a newspaper, not a panel.
+	var black := _face(WEIGHT_BLACK, 1)
+	_label(theme, MASTHEAD, SIZE_LEAD, TEXT, black)
+	_label(theme, HEADLINE, SIZE_FIGURE, TEXT, bold)
+
+
+## One label variation: its size, its colour and, when the face loaded, its font.
+static func _label(theme: Theme, variation: String, size: int, colour: Color, font: Font = null) -> void:
+	theme.set_font_size("font_size", variation, _px(size))
+	theme.set_color("font_color", variation, colour)
+	if font != null:
+		theme.set_font("font", variation, font)
 
 
 static func _rich(theme: Theme) -> void:

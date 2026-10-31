@@ -202,6 +202,13 @@ static func _djb2(s: String) -> int:
 	return h
 
 
+## V5.3-0 R15: the generic `scene_name` backdrop (flag-free, so it reads as
+## nowhere in particular), its variant picked by `key` so one story keeps one
+## picture; null when the library has none.
+static func backdrop(scene_name: String, key: String) -> ImageTexture:
+	return _scene_texture(SCENES_DIR.path_join("%s_%d.webp" % [scene_name, _djb2(key + ":" + scene_name) % 3]))
+
+
 ## WebP bytes -> texture, or null. Kept as its own function so both the bust
 ## and the backdrop paths decode the same way.
 static func _scene_texture(path: String) -> ImageTexture:

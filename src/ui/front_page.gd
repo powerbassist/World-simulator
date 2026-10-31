@@ -34,12 +34,26 @@ const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Headlines = preload("res://src/ui/headlines.gd")
 const President = preload("res://src/sim/president.gd")
+const Grade = preload("res://src/ui/grade.gd")
+const EventArt = preload("res://src/ui/event_art.gd")
+const Events = preload("res://src/sim/events.gd")
+const Portrait = preload("res://src/ui/portrait.gd")
 
 ## Wide enough for two headlines side by side at the lead size, three lines each.
 const WIDTH := 640
 ## Seconds of running clock before the card puts itself away: two headlines and
 ## two short lines are about forty words, read in well under this.
 const LIFE_SECONDS := 15.0
+## V5.3-0 R15: the lead story's picture, as tall as two headlines and a masthead.
+const PLATE_HEIGHT := 150
+## A moment's picture (4.4): the room it happened in. A minister or prime minister
+## who resigned is shown in the office at night (the `character` answers below).
+const MOMENT_SCENES := {
+	"election": "podium_flags", "censure": "parliament_chamber",  # i18n: ok backdrop names
+	"dissolution": "parliament_chamber", "article_49_3": "parliament_chamber",  # i18n: ok backdrop names
+	"character": "parliament_chamber",  # i18n: ok a backdrop name
+}
+const RESIGNED_SCENE := "office_night"  # i18n: ok a backdrop name
 ## The spec's cap on "also on the front page".
 const ALSO_MAX := 2
 const TONE_WORDS := {
@@ -53,7 +67,9 @@ var inbox
 var _clock
 var _left := 0.0
 var _date: Label
+var _plate: TextureRect
 var _papers: HBoxContainer
+var _also_rule: HSeparator
 var _also: VBoxContainer
 var _record := PackedStringArray()
 ## A held entry and what show_entry() needs to print it, or empty.
@@ -86,9 +102,19 @@ func _ready() -> void:
 	close.pressed.connect(dismiss)
 	header.add_child(close)
 
+	_plate = TextureRect.new()
+	_plate.name = "Plate"  # i18n: ok a node name, found by tests
+	_plate.custom_minimum_size = Vector2(0, PLATE_HEIGHT)
+	_plate.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_plate.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Grade.apply(_plate)
+	column.add_child(_plate)
 	_papers = HBoxContainer.new()
 	_papers.add_theme_constant_override("separation", 24)
 	column.add_child(_papers)
+	_also_rule = HSeparator.new()
+	column.add_child(_also_rule)
 	_also = VBoxContainer.new()
 	_also.add_theme_constant_override("separation", 2)
 	column.add_child(_also)
@@ -136,6 +162,8 @@ func show_entry(entry: Dictionary, state, loader, clock, count_plate: Control = 
 		for child in box.get_children():
 			box.remove_child(child)
 			child.queue_free()
+	_plate.texture = plate_for(entry, loader)
+	_plate.visible = _plate.texture != null
 	for paper in papers:
 		_paper(paper[0], paper[1], paper[2])
 	if not also.is_empty():
@@ -147,6 +175,7 @@ func show_entry(entry: Dictionary, state, loader, clock, count_plate: Control = 
 			PanelKit.plain_line(_also, line, PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			_record.append(line)
 	_also.visible = not also.is_empty()
+	_also_rule.visible = _also.visible
 	_date.text = DateText.month_year(int(state.month), int(state.year))
 	_clock = clock
 	_left = LIFE_SECONDS
@@ -205,16 +234,24 @@ func _paper(masthead: String, tone: String, words: String) -> void:
 	paper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	paper.add_theme_constant_override("separation", 2)
 	_papers.add_child(paper)
+	# R15: the masthead in the black cut, a hairline under it, the paper's slant
+	# as a small tag, then the headline at display size.
 	var name_label := Label.new()
 	name_label.text = masthead.to_upper()
-	name_label.theme_type_variation = UiTheme.MICRO
+	name_label.theme_type_variation = UiTheme.MASTHEAD
 	paper.add_child(name_label)
+	paper.add_child(HSeparator.new())
 	if TONE_WORDS.has(tone):
-		PanelKit.plain_line(paper, tr(TONE_WORDS[tone]))
+		var slant := Label.new()
+		slant.text = tr(TONE_WORDS[tone])
+		slant.theme_type_variation = UiTheme.CAPTION
+		paper.add_child(slant)
 	var headline := Label.new()
+	headline.name = "Headline"  # i18n: ok a node name, found by tests
 	headline.text = words
-	# LEAD twice, a deliberate exception to "one LEAD per panel" (parent, #179): a front page is not a panel, and its headlines are its content.
-	headline.theme_type_variation = UiTheme.LEAD
+	# A front page is not a panel (parent, #179): its headlines are its content,
+	# printed twice at display size.
+	headline.theme_type_variation = UiTheme.HEADLINE
 	headline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	paper.add_child(headline)
 	_record.append(tr("%s: %s") % [masthead, words])
@@ -259,3 +296,17 @@ static func _outlets(loader, nation_id: String) -> Dictionary:
 
 static func _masthead(outlet) -> String:
 	return Strings.row("outlets", String(outlet.id), "name", String(outlet.outlet_name))
+
+
+## The lead story's picture (4.4), graded on the card: an event's own plate (the
+## Dispatches one, by category and severity), a moment's room; null for a story
+## the library has nothing for, and the card prints with no picture.
+static func plate_for(entry: Dictionary, loader) -> Texture2D:
+	var id := String(entry.get("id", ""))
+	if String(entry.get("kind", "event")) == "event":
+		var ev = Events.event_by_id(loader, id)
+		return EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), id) if ev != null else null
+	var scene := String(MOMENT_SCENES.get(id, ""))
+	if String(entry.get("answer", "")).ends_with("resigned"):
+		scene = RESIGNED_SCENE
+	return Portrait.backdrop(scene, id + String(entry.get("answer", ""))) if scene != "" else null
