@@ -46,16 +46,16 @@ const PENDING := {}
 ## All visible words per tab: a rebuilt tab answers to its 3.2 target; a tab (b)
 ## has not reached yet is held at what it measured before (b) started, so it cannot
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
-const TOTAL_BUDGET := {"agenda": 400}
+const TOTAL_BUDGET := {"agenda": 400, "people": 250}
 const TOTAL_PENDING := {
 	"budget": 107, "calendar": 42, "campaign": 223, "city": 366, "commodities": 418,
 	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118, "events": 14,
-	"legislature": 1045, "orgs": 610, "outliner": 2, "overview": 127, "people": 500,
+	"legislature": 1045, "orgs": 610, "outliner": 2, "overview": 127,
 	"politics": 123, "projects": 75, "region": 136, "society": 106, "tax": 25,
 }
 ## The sum of every tab's total, a ratchet: each rebuilding PR lowers it to what it
 ## measured. RF6's target is 3 600.
-const TOTAL_SUM_CEILING := 4711
+const TOTAL_SUM_CEILING := 4364
 const TOTAL_SUM_TARGET := 3600
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.

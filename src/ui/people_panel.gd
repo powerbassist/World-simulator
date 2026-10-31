@@ -48,6 +48,8 @@ const Portrait = preload("res://src/ui/portrait.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Staff = preload("res://src/sim/staff.gd")
 const Num = preload("res://src/ui/num.gd")
+const PeopleNow = preload("res://src/ui/people_now.gd")
+const PeopleHeads = preload("res://src/ui/people_heads.gd")
 
 ## The face a row carries, at the row's own scale: 22px beside 14px captions
 ## reads as a face, and 30px of height is under two rows of separation.
@@ -93,6 +95,14 @@ var _close_button: Button
 var _ns
 var _card
 var _card_layer: CanvasLayer
+## V5.3-0 (b), 3.4: a group shows its rows only when open; the political cast is
+## open by default, the bench and abroad fold behind their counts. The table sorts
+## by one column, the standing by default.
+var _open := {"politician": true}
+## The meta a fold or sort head carries: the two kinds of button the read-only rule
+## admits (tests/test_people_panel.gd), each alone in its row or among fixed cells.
+const HEAD_META := "people_head"
+var _sort := "standing"
 
 
 func _ready() -> void:
@@ -183,6 +193,9 @@ func _refresh() -> void:
 
 	# The offices beside the parties: two short lists side by side read at a glance,
 	# where one under the other made a page of them.
+	PeopleNow.build(_body, _state, _loader, func(p): return _party_or_kind_line(ns, p),
+		_show_person_card, _hide_person_card,
+		func(pid: String) -> void: call_requested.emit(pid))
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 40)
 	_body.add_child(top)
@@ -306,13 +319,12 @@ func _build_character_groups(ns) -> void:
 		var group: Array = by_kind.get(kind, [])
 		if group.is_empty():
 			continue
-		# Standing first: the group's visible head is the people whose weight
-		# the game has moved, and a name's position is earned, not authored.
-		group.sort_custom(func(a, b):
-			return float(ns.person_standing.get(a.id, 0.0)) > float(ns.person_standing.get(b.id, 0.0)))
-		PanelKit.heading(_body, "%s (%d)" % [label, group.size()])
-		_person_line(_body, "", [[tr("Name"), COL_NAME, UiTheme.CAPTION], [tr("Side"), COL_SIDE, UiTheme.CAPTION],
-			[tr("Standing"), COL_FIGURE, UiTheme.CAPTION, HORIZONTAL_ALIGNMENT_RIGHT], [tr("Wants"), 0, UiTheme.CAPTION]])
+		# Standing first by default: the group's visible head is the people whose
+		# weight the game has moved, and a name's position is earned, not authored.
+		group.sort_custom(PeopleHeads.sorter(self, ns))
+		if not PeopleHeads.fold(self, kind, "%s (%d)" % [label, group.size()]):
+			continue
+		PeopleHeads.sort_row(self)
 		var shown := 0
 		for person in group:
 			if shown >= GROUP_HEAD:
@@ -333,13 +345,20 @@ func _person_row(ns, person) -> void:
 	for want in person.wants:
 		if not _want_served(ns, person, want):
 			denied += 1
+	# The wants as a figure under "Wants served", served of all (V5.3-0 (b): "2 of 3
+	# denied" on every row was words); the sentence is the cell's tooltip.
 	var wants := "—"
+	var tip := ""
 	if not person.wants.is_empty():
-		wants = tr("%d of %d denied") % [denied, person.wants.size()] if denied > 0 \
+		wants = "%d/%d" % [person.wants.size() - denied, person.wants.size()]
+		tip = tr("%d of %d denied") % [denied, person.wants.size()] if denied > 0 \
 			else tr("%d of %d served") % [person.wants.size(), person.wants.size()]
-	_person_line(_body, person.id, [[person.person_name, COL_NAME], [_party_or_kind_line(ns, person), COL_SIDE, UiTheme.CAPTION],
+	var row := _person_line(_body, person.id, [[person.person_name, COL_NAME], [_party_or_kind_line(ns, person), COL_SIDE, UiTheme.CAPTION],
 		[Num.f(standing, 2) if standing >= 0.05 else "—", COL_FIGURE, UiTheme.CAPTION, HORIZONTAL_ALIGNMENT_RIGHT],
-		[wants, 0, UiTheme.BAD_TEXT if denied > 0 else UiTheme.CAPTION]])
+		[wants, COL_FIGURE, UiTheme.BAD_TEXT if denied > 0 else UiTheme.CAPTION, HORIZONTAL_ALIGNMENT_RIGHT]])
+	var cell: Control = row.get_child(row.get_child_count() - 1)
+	cell.tooltip_text = tip
+	cell.mouse_filter = Control.MOUSE_FILTER_PASS
 
 
 ## The affiliation line: the party the person sits in (override first, the
@@ -394,7 +413,8 @@ func _authored_leaders() -> Dictionary:
 ## another nation's head of state can change while the player is not looking,
 ## which is exactly the sort of thing a roster is for.
 func _build_abroad(ns) -> void:
-	PanelKit.heading(_body, tr("Abroad"))
+	if not PeopleHeads.fold(self, "abroad", tr("Abroad (%d)") % (_state.nations.size() - 1)):
+		return
 	var ids: Array = _state.nations.keys()
 	ids.sort()
 	for id in ids:
