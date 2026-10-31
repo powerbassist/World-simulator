@@ -133,6 +133,7 @@ func _ready() -> void:
 	_end = PanelKit.sized(Button.new())
 	_end.pressed.connect(func() -> void:
 		if _over:
+			AudienceVoice.hush(self)  # the queued farewell goes with the scene (#222 QA)
 			closed.emit()
 		else:
 			ended.emit())
@@ -199,7 +200,10 @@ func show_close(outcome: String, text: String, tone := "") -> void:
 	say(DialogueLines.close_title(_view, outcome), {})
 
 
+## The line already playing may finish; nothing queued behind it outlives the
+## scene (#222 QA, TAKE 4's addendum: a farewell started 2 s after Leave).
 func close_scene() -> void:
+	AudienceVoice.hush(self)
 	visiting = ""
 	_view = {}
 	verbs.visible = true

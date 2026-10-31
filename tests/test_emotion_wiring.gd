@@ -27,6 +27,7 @@ const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Voice = preload("res://src/ui/voice.gd")
+const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 const Click = preload("res://tests/click.gd")
 
 const VOICE := {
@@ -103,6 +104,14 @@ func _process(_delta: float) -> bool:
 			Click.half(root, _phone._close, false)
 		10:
 			_check_phone()
+			_phone.hide()
+			_arm_leave()
+		12:
+			Click.half(root, _scene._end, true)
+		15:
+			Click.half(root, _scene._end, false)
+		17:
+			_check_leave()
 			_finish()
 			return true
 	return false
@@ -207,6 +216,27 @@ func _arm_phone() -> void:
 	_phone.add_child(player)
 	player.set_meta("pending", true)
 	player.set_meta("next", "refuse")
+
+
+## The audience over, its farewell said, and a reaction queued behind a line
+## still playing: Leave must take the queue with it.
+func _arm_leave() -> void:
+	var player := AudioStreamPlayer.new()
+	player.name = Voice.NODE
+	_scene.add_child(player)
+	player.set_meta("pending", true)
+	AudienceVoice.say(_scene, _scene._spoken, VOICE, "agree")
+
+
+func _check_leave() -> void:
+	var player := _scene.get_node_or_null(Voice.NODE) as AudioStreamPlayer
+	if player == null:
+		_fail("premise: the audience lost its voice player")
+		return
+	player.set_meta("pending", false)
+	player.finished.emit()  # the playing line ends after Leave
+	if String(player.get_meta("next", "")) != "" or _scene._spoken.text.contains(String(VOICE["agree"]["text"])):
+		_fail("a line queued in the audience played after Leave (a real click)")
 
 
 func _check_phone() -> void:
