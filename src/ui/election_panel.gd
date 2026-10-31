@@ -304,7 +304,9 @@ func _reveal() -> void:
 	for node in _verdict_nodes:
 		node.visible = true
 		Motion.arrive(node)
-	Music.moment(self, "election_lost" if bool(_verdict.get("defeated", false)) else "election_won")  # V5.3-0 (d)
+	# V5.3-0 (d): a term limit is "defeated" for the run but neutral in tone, so it
+	# keeps the night's toll rather than the losing sting (#223 pass 1).
+	Music.moment(self, "election_lost" if bool(_verdict.get("defeated", false)) and not bool(_verdict.get("termed_out", false)) else "election_won")
 
 
 ## Any click on the plate ends the count at once, verdict and all. A click,

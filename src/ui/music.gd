@@ -76,7 +76,9 @@ static func manifest() -> Dictionary:
 static func track(section: String, id: String) -> String:
 	var row = (manifest().get(section, {}) as Dictionary).get(id, null)
 	var file := String(row.get("file", "")) if row is Dictionary else ""
-	return "" if file.is_empty() else MANIFEST.get_base_dir().path_join(file)
+	var path := MANIFEST.get_base_dir().path_join(file)
+	# A row whose file has not landed yet is silence, not an engine ERROR (#223 pass 1).
+	return path if not file.is_empty() and FileAccess.file_exists(path) else ""
 
 
 ## The volume the bed wants: the Music step, less DUCK_DB while someone speaks.
@@ -106,15 +108,19 @@ static func follow(parent: Node, situation: String, months_to_vote: int) -> void
 
 ## A moment's sting under `parent`: its recorded file when the manifest names one
 ## and Music is on; else its synthesized stand-in, a Sound like any other.
+## Music Off silences every moment, recorded or synthesized, so the setting means
+## the same thing before and after the author's files land (#223 pass 1).
 static func moment(parent: Node, id: String) -> void:
-	if parent == null or not parent.is_inside_tree():
+	var level := SettingsPanel.music_level()
+	if parent == null or not parent.is_inside_tree() or level <= 0:
 		return
 	var path := track("stings", id)
 	if path != "":
-		if SettingsPanel.sound_enabled() and SettingsPanel.music_level() > 0:
+		var stream := AudioStreamOggVorbis.load_from_buffer(FileAccess.get_file_as_bytes(path))
+		if stream != null and SettingsPanel.sound_enabled():
 			var player := AudioStreamPlayer.new()
-			player.stream = AudioStreamOggVorbis.load_from_buffer(FileAccess.get_file_as_bytes(path))
-			player.volume_db = target_db(SettingsPanel.music_level(), false)
+			player.stream = stream
+			player.volume_db = target_db(level, false)
 			parent.add_child(player)
 			player.finished.connect(player.queue_free)
 			player.play()

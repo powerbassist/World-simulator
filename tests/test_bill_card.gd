@@ -39,6 +39,7 @@ func _process(_delta: float) -> bool:
 		_check_one_card()
 		_check_booked_bill()
 		_check_struck()
+		_check_division_sting()
 		_finish()
 		return true
 	return false
@@ -177,6 +178,16 @@ func _titled(inbox, title: String) -> Array:
 
 ## V5.2 b+ R2: the tabled bill divides at the month's close -- through main's own
 ## Division hook, so the division's card is the one the game pushes.
+## #223 pass 1: the division is where a vote's sting plays -- a defeat's is
+## synthesized (a passed bill's waits for a recorded file, silent until then).
+func _check_division_sting() -> void:
+	var before: int = _main.find_children("*", "AudioStreamPlayer", false, false).size()
+	ProposalNote.card_division(_main, {"division": {"law_id": "x", "passed": false, "yes_seats": 100, "no_seats": 400}})
+	var placed: int = _main.find_children("*", "AudioStreamPlayer", false, false).size() - before
+	if placed != 1:
+		_fail("a defeated division placed %d sting players, expected 1" % placed)
+
+
 func _divide() -> void:
 	var report := {"division": Division.divide(_main._state, _main._loader)}
 	_main._on_month_step("Division", true, report, _main._state.year, _main._state.month)

@@ -95,6 +95,9 @@ static func card_division(main, report: Dictionary) -> void:
 	var text := body(result, main._loader.parties.get(main._state.player().id, []))
 	var tabled: Dictionary = _tabled.get(main.get_instance_id(), {})
 	_tabled.erase(main.get_instance_id())
+	# V5.3-0 (d): the division is where a tabled bill is won or lost, so its sting
+	# plays here (run_proposal's call only ever sees a 49.3; #223 pass 1).
+	LawVerdict.sting(main, result, main._state.player())
 	var card := String(tabled.get("card", ""))
 	if String(tabled.get("law_id", "")) == law_id and main._hud.inbox.lane_of(card) != "":
 		main._hud.inbox.set_body(card, text)

@@ -40,11 +40,16 @@ func _check_no_manifest() -> void:
 
 
 func _check_manifest_rows() -> void:
-	Music.override_manifest = {"beds": {"calm": {"file": "calm.ogg"}, "tense": {"file": ""}}}
-	if Music.track("beds", "calm") != "res://assets/audio/music/calm.ogg":
+	# A row resolves next to the manifest; a committed clip stands in for a track.
+	var clip := "../voice/activist_f_30/agree.ogg"
+	Music.override_manifest = {"beds": {"calm": {"file": clip}, "tense": {"file": ""}, "crisis": {"file": "crisis.ogg"}}}
+	if Music.track("beds", "calm") != "res://assets/audio/music/".path_join(clip):
 		_fail("a bed row resolved to '%s'" % Music.track("beds", "calm"))
 	if Music.track("beds", "tense") != "" or Music.track("stings", "vote_passed") != "":
 		_fail("a row with no file played something")
+	# #223 pass 1: a row whose file has not landed is silence, never an engine ERROR.
+	if Music.track("beds", "crisis") != "":
+		_fail("a row naming a missing file resolved to '%s'" % Music.track("beds", "crisis"))
 	Music.override_manifest = {}
 
 
@@ -105,6 +110,13 @@ func _check_band_and_moments() -> void:
 		Music.moment(desk, c[0])
 		if _players(desk) - before != c[1]:
 			_fail("moment %s placed %d players, expected %d" % [c[0], _players(desk) - before, c[1]])
+	# #223 pass 1: Music Off silences the synthesized stings too.
+	_set_music(0)
+	var quiet := _players(desk)
+	Music.moment(desk, "vote_failed")
+	if _players(desk) != quiet:
+		_fail("a sting played with Music off")
+	_set_music(SettingsPanel.DEFAULT_MUSIC)
 	desk.free()
 	_finish()
 
@@ -117,6 +129,13 @@ func _set_sound(enabled: bool) -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(SettingsPanel.CONFIG_PATH)
 	cfg.set_value("audio", "enabled", enabled)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+
+
+func _set_music(level: int) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("audio", "music", level)
 	cfg.save(SettingsPanel.CONFIG_PATH)
 
 
