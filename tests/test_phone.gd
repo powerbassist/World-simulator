@@ -28,6 +28,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Staff = preload("res://src/sim/staff.gd")
 
 const PLAYER := "FRA"
 const METERS := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
@@ -117,7 +118,9 @@ func _check_the_odds_sit_one_penalty_below_the_audience() -> void:
 	var ns = state.player()
 	var offered := 0
 	var refused := 0
-	for person in _loader.people[PLAYER]:
+	# V5.3-0: the cast. The chief of staff takes no call (President.covers), so
+	# the line refuses them before any odds are read.
+	for person in Staff.cast(_loader, PLAYER):
 		if person.id == President.leader_id(ns):
 			continue
 		_ask(state, ns, person.id, "odds")
