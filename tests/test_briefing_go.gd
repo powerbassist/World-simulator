@@ -26,6 +26,7 @@ const DeskCards = preload("res://src/ui/desk_cards.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Person = preload("res://src/core/person.gd")
+const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -103,6 +104,14 @@ func _plan() -> Array:
 		ns.commitments.append({"kind": "promise", "person_id": pid, "object": "meter:unemployment_pct",
 			"made_month": now, "due_month": now + 2})
 		return "promise|%s|meter:unemployment_pct" % pid})
+	# Pre-gate RF3 (QA's TAKE): a minister's word on a programme entry the player
+	# does not hold. The Agenda shows only the held programme, so this Go once
+	# landed on nothing; it goes to the Diary on its due day (2.4's table).
+	cases.append({"kind": "commitment", "due_day": true, "setup": func() -> String:
+		var entry := String(loader.programme[-1]["id"])
+		ns.commitments.append({"kind": "delegated", "person_id": pid, "object": "programme:%s" % entry,
+			"made_month": now, "due_month": now + 2})
+		return "delegated|%s|programme:%s" % [pid, entry]})
 	cases.append({"kind": "request", "setup": func() -> String:
 		var id := "%s|%d" % [pid, now]
 		ns.audience_requests.append({"id": id, "person_id": pid, "object": "programme:none", "stance": "sponsor",
@@ -182,9 +191,22 @@ func _check(c: Dictionary) -> void:
 	var where: Node = _main._hud.inbox if tab == "inbox" or kind == "request" else _main._windows.content(tab)
 	if where == null or ActsOn.find(where, String(target["acts_on"])) == null:
 		_fail("%s: Go to '%s' found no enabled control acting on '%s'" % [label, tab, target["acts_on"]])
-	if kind == "commitment" and String(c["subject"]).contains("|programme:") \
+	if kind == "commitment" and tab == "agenda" and String(c["subject"]).contains("|programme:") \
 			and _main._windows.content("agenda")._picker.selected_id() == String(target["acts_on"]):
 		_fail("commitment (programme): premise, the promised entry was the selected one")
+	if bool(c.get("due_day", false)):
+		var grid = _main._calendar_panel._grid
+		var now := int(_main._state.year) * 12 + int(_main._state.month)
+		if tab != "calendar" or grid._month_abs != now + 2 or grid._selected != 1:
+			_fail("%s: Go did not open the Diary on the due day (tab %s, page %d, day %d)" % [label, tab, grid._month_abs - now, grid._selected])
+		# The verb is real: the due day's Call puts the person on the phone.
+		var call := ActsOn.find(_main._windows.content(tab), String(target["acts_on"])) as BaseButton
+		if call != null:
+			call.pressed.emit()
+			var who: String = _main._loader.person_name(String(c["subject"]).get_slice("|", 1))
+			if PhoneDriver.calling(_main) != who:
+				_fail("%s: the due day's Call did not ring %s (on the line: '%s')" % [label, who, PhoneDriver.calling(_main)])
+			PhoneDriver.dialog_of(_main)._close.pressed.emit()
 	if kind == "bloc":
 		var laws = _main._law_panel._laws
 		if laws.bloc_filter != String(c["subject"]):

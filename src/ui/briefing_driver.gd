@@ -352,6 +352,13 @@ static func go(main, index: int) -> void:
 		"person":
 			main._windows.open(tab)
 			main._people_panel.focus(subject)
+		"commitment" when tab == "calendar":
+			# The Diary on the due day (2.4): a word is judged as its month begins,
+			# so its mark and its Call are on the first.
+			main._windows.open(tab)
+			var due := int(line["deadline_month"])
+			var year := floori((due - 1) / 12.0)
+			main._calendar_panel._grid.pick(year, due - year * 12, 1)
 		_:
 			main._windows.open(tab)
 
@@ -368,6 +375,11 @@ static func target_of(line: Dictionary) -> Dictionary:
 	if kind != "commitment":
 		return {"tab": String(line["go"]["tab"]), "acts_on": subject}
 	var object := subject.get_slice("|", 2)
+	# A minister's word (pre-gate RF3): the minister does the work, so the Agenda,
+	# Politics or the Budget hold no verb of the player's on it -- and the Agenda
+	# does not even show a programme entry the player does not hold. The Diary does.
+	if subject.get_slice("|", 0) == "delegated":
+		return {"tab": "calendar", "acts_on": subject}
 	if object.begins_with("programme:"):
 		return {"tab": "agenda", "acts_on": object.trim_prefix("programme:")}
 	if object.begins_with("office:"):

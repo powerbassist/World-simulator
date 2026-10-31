@@ -19,6 +19,8 @@ extends VBoxContainer
 
 signal booked(request_id: String, date: Dictionary)
 signal cancel_requested(key: String)
+## A commitment's "Call": the Diary's verb on a word falling due (pre-gate RF3).
+signal call_requested(person_id: String)
 ## The day list was rebuilt (deferred to the frame's end, past every early return):
 ## the request column puts a pending focus back (QA's TAKE on #221).
 signal listed
@@ -34,6 +36,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const President = preload("res://src/sim/president.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 
 ## Monday first, as a European diary is ruled.
 const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msgid
@@ -47,6 +50,9 @@ var _items: Array = []  # the panel's: {year, month, day, text, mark, cancel}
 var _month_abs := 0
 var _selected := 0  # the picked day of the shown month, 0 for none
 var _drawn_day := 0  # the state's day at the last render: a new day redraws (today, offers)
+## A pick asked for before the panel's first refresh handed in a state (a briefing
+## Go opens the Diary and picks the due day in one frame): applied by show_items.
+var _wanted := Vector3i.ZERO
 var _title: Label
 var _days: GridContainer
 
@@ -101,6 +107,8 @@ func show_items(state, loader, items: Array) -> void:
 		_selected = 0
 	_month_abs = kept
 	_render()
+	if _wanted != Vector3i.ZERO:
+		pick(_wanted.x, _wanted.y, _wanted.z)
 
 
 ## The clock runs with the Diary open, and the panel is redrawn on a month, never a
@@ -130,6 +138,9 @@ func show_month(year: int, month: int) -> void:
 ## The page that holds (year, month), its `day` picked: a request's Days, so the
 ## day list under the grid carries that day's "Book here".
 func pick(year: int, month: int, day: int) -> void:
+	_wanted = Vector3i(year, month, day) if _state == null else Vector3i.ZERO
+	if _state == null:
+		return
 	show_month(year, month)
 	_pick(day)
 
@@ -216,7 +227,10 @@ func _entries(year: int, month: int) -> Dictionary:
 		if int(row["due_month"]) == abs_month:
 			var who: String = _loader.person_name(String(row["person_id"]))
 			var want := PersonCard.object_text(_loader, ns, String(row["object"]), {})
-			_add(out, 1, {"text": Words.commitment_text(String(row["kind"]), who, want, int(row["due_month"])), "mark": "due", "cancel": ""})
+			# The briefing's subject for this word (priorities.gd _commitments), so a
+			# commitment's Go lands on its Call here.
+			_add(out, 1, {"text": Words.commitment_text(String(row["kind"]), who, want, int(row["due_month"])), "mark": "due", "cancel": "",
+				"call": String(row["person_id"]), "subject": "%s|%s|%s" % [row["kind"], row["person_id"], row["object"]]})
 	# A request lapses as its deadline month begins (Audiences._overdue), so the
 	# last day to answer is the end of the month before -- the card's "Answer by".
 	for row in Audiences.pending(ns):
@@ -265,6 +279,15 @@ func _render_list(entries: Array, offered: Array) -> void:
 			cancel.text = tr("Cancel")
 			cancel.pressed.connect(func() -> void: cancel_requested.emit(String(e["cancel"])))
 			row.add_child(cancel)
+		# A word falling due: the president cannot do the minister's work from here,
+		# but can talk to the person it was given to before it is judged.
+		if String(e.get("call", "")) != "":
+			var call := PanelKit.sized(Button.new())
+			call.text = tr("Call")
+			call.tooltip_text = tr("Call %s before this is judged") % _loader.person_name(String(e["call"]))
+			var pid := String(e["call"])
+			call.pressed.connect(func() -> void: call_requested.emit(pid))
+			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
 	for o in offered:
 		var date: Dictionary = o["date"]
 		var book := PanelKit.sized(Button.new())
