@@ -113,7 +113,10 @@ static func follow(parent: Node, situation: String, months_to_vote: int, state_i
 		music._state_id = state_id
 		music.band_state = {}
 	music.band_state = MusicBand.step(music.band_state, situation, months_to_vote if months_to_vote >= 0 else -1)
-	music._play_bed(track("beds", String(music.band_state["band"])))
+	var bed := track("beds", String(music.band_state["band"]))
+	# A band whose file has not landed plays the tense bed (pre-gate B3: the campaign,
+	# the tensest months of the term, was silent until it has a track of its own).
+	music._play_bed(bed if bed != "" else track("beds", "tense"))
 
 
 ## A moment's sting under `parent`: its recorded file when the manifest names one

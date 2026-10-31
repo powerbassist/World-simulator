@@ -96,6 +96,13 @@ func _check_band_and_moments() -> void:
 		_fail("another game's calm month did not start calm: %s" % music.band_state)
 	if music.get_children().any(func(c): return c is AudioStreamPlayer):
 		_fail("a bed with no track placed a player")
+	# Pre-gate B3: a band with no file plays the tense bed (the campaign was silent
+	# for the four months before the election).
+	Music.override_manifest = {"beds": {"tense": {"file": "../voice/activist_f_30/agree.ogg"}}}
+	Music.follow(desk, "calm", 3, 4343)  # three months to the vote: the campaign band
+	if String(music.band_state["band"]) != "campaign" or music._track != Music.track("beds", "tense"):
+		_fail("a band with no file did not fall back to the tense bed: %s, '%s'" % [music.band_state, music._track])
+	Music.override_manifest = {}
 	# The duck seen by the node itself, a frame at a time.
 	var voice := AudioStreamPlayer.new()
 	voice.add_to_group(Music.VOICE_GROUP)
