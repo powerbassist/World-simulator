@@ -48,13 +48,17 @@ extends SceneTree
 ## are Interface's (block 0 a) and are loaded at run time, so this probe parses
 ## before they exist; until they do those three print NOT MEASURED and do not pass.
 ##   RF1  every briefing: 3 lines of 3 different kinds;
-##   RF2  over the first 60 months: at most 25 % of months repeat last month's
-##        three (kinds and subjects), a mean overlap of at most 1.5 lines, a held
-##        surface always holds a line, a dated line 3 months away or less is never
-##        damped, and no request lapses unshown in its last month while a line was
-##        free for it; the kinds seen are reported;
+##   RF2  over the first 60 months, at most 25 % of months repeat last month's
+##        three (kinds and subjects) and a mean overlap of at most 1.5 lines;
+##        every month, a held surface holds a line, a dated line inside
+##        Priorities' no-damping window is never damped, and no request lapses
+##        unshown in its last month while a line was free for it; the kinds seen
+##        are reported;
 ##   RF9  bed changes at most once per 2 months on average, and the crisis bed
-##        from the first briefing whose situation is a crisis.
+##        at the first briefing after a crisis (an interrupt or a severity-3
+##        card) arrives.
+## The briefing is ranked with main.gd's held set as derived above (passed as
+## `held_events`), so RF2 measures the briefing RF4 counts.
 ## Exit code: 0 when every measured band passes, 1 when one fails.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
@@ -71,10 +75,12 @@ const Trends = preload("res://src/ui/trends.gd")
 const PRIORITIES_PATH := "res://src/ui/priorities.gd"
 const MUSIC_BAND_PATH := "res://src/ui/music_band.gd"
 ## RF2 and RF9's bars (spec section 5).
+## RF2's repeat and overlap shares are the spec's 60-month measures; its
+## invariants (a held line, no damping, no lapse unshown) are checked every month.
+## The no-damping window is read from Priorities' own constants, never copied.
 const RF2_MONTHS := 60
 const RF2_MAX_REPEAT := 0.25
 const RF2_MAX_OVERLAP := 1.5
-const RF2_NEAR_MONTHS := 3
 const RF9_MAX_CHANGE_RATE := 0.5
 ## RF4's bars (spec section 5; decision-surfaces.md's budget).
 const RF4_MAX_DISMISSALS := 2
@@ -94,6 +100,7 @@ func _init() -> void:
 	var regime := "both"
 	var briefing := false
 	var months_set := false
+	var nation_set := false
 	var json_path := ""
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--months="):
@@ -101,6 +108,7 @@ func _init() -> void:
 			months_set = true
 		elif arg.begins_with("--nation="):
 			nation_id = arg.trim_prefix("--nation=")
+			nation_set = true
 		elif arg.begins_with("--nations="):
 			nations = Array(arg.trim_prefix("--nations=").split(","))
 		elif arg.begins_with("--regime="):
@@ -121,7 +129,7 @@ func _init() -> void:
 		if not months_set:
 			months = 120
 		if nations.is_empty():
-			nations = PLAYABLE.duplicate()
+			nations = [nation_id] if nation_set else PLAYABLE.duplicate()
 		var regimes: Array = ["idle", "active"] if regime == "both" else [regime]
 		var out := _briefing(nations, regimes, months)
 		if json_path != "":
@@ -181,8 +189,9 @@ func _run(nation_id: String, months: int, regime: String, briefing: bool) -> Arr
 	return rows
 
 
-## The active regime's month: every desk entry answered with its first
-## non-default choice, every waiting request delegated. Ids are snapshotted
+## The active regime's month: every desk entry answered with the first
+## non-default choice the game accepts (a refused one -- a condition, a cost --
+## passes to the next), every waiting request delegated. Ids are snapshotted
 ## first: an answer removes its entry from the desk.
 func _act(state, ns) -> void:
 	var ids: Array[String] = []
@@ -193,8 +202,7 @@ func _act(state, ns) -> void:
 		if ev == null:
 			continue
 		for c in ev.choices:
-			if not bool(c["is_default"]):
-				Events.answer(state, _loader, event_id, String(c["id"]))
+			if not bool(c["is_default"]) and not Events.answer(state, _loader, event_id, String(c["id"])).is_empty():
 				break
 	for request in Audiences.pending(ns):
 		Audiences.delegate(state, ns, _loader, String(request["id"]))
@@ -269,24 +277,38 @@ func _holds(state, ns, row: Dictionary, report: Dictionary, minor_held: Dictiona
 		defeated = bool(ElectionVerdict.read(results, ns)["defeated"])
 	if not defeated:
 		holds.append("briefing")
-	if not Programme.available(state, ns, _loader).is_empty():
+	var programme := not Programme.available(state, ns, _loader).is_empty()
+	if programme:
 		holds.append("programme")
+	# The ids that hold the clock now -- main.gd's unseen set at the default
+	# settings: this month's interrupt and major arrivals, a minor card reaching
+	# its last month, and an interrupt still on the desk (it holds until answered).
+	var held_ids: Array = []
 	for arrival in row["arrivals"]:
 		if String(arrival["kind"]) in ["interrupt", "major"]:
 			holds.append(String(arrival["kind"]))
+			held_ids.append(String(arrival["event_id"]))
+	var desk := _desk_ids(ns)
 	for entry in ns.event_queue:
 		var event_id := String(entry.get("event_id", ""))
-		if bool(entry.get("interrupt", false)) or int(entry.get("severity", 1)) >= 2:
+		if bool(entry.get("interrupt", false)):
+			if not held_ids.has(event_id):
+				held_ids.append(event_id)
+			continue
+		if int(entry.get("severity", 1)) >= 2:
 			continue
 		if int(entry.get("months_left", 0)) <= 1 and not minor_held.has(event_id):
 			minor_held[event_id] = true
 			holds.append("minor")
+			held_ids.append(event_id)
 	# An entry gone from the desk may come back later as a new arrival; its
 	# lapse guard then fires again.
 	for event_id in minor_held.keys():
-		if not _desk_ids(ns).has(event_id):
+		if not desk.has(event_id):
 			minor_held.erase(event_id)
 	row["holds"] = holds
+	row["held_ids"] = held_ids
+	row["programme_held"] = programme
 	row["defeated"] = defeated
 	row["stingers"] = {
 		"front_page": 0 if (report.get("front_page", {}) as Dictionary).is_empty() else 1,
@@ -296,10 +318,13 @@ func _holds(state, ns, row: Dictionary, report: Dictionary, minor_held: Dictiona
 
 
 ## The month's briefing, read as the game reads it: the three lines with the
-## memory handed back, the held set by rule, the situation, the music band's step,
-## and the requests that lapsed this month (judged against LAST month's lines).
+## memory handed back and main.gd's held set (_holds derived it, the same set RF4
+## counts -- not Priorities.held_by_rule, which also holds a major card in its
+## last month that the game no longer holds), the situation, the music band's
+## step, and the requests that lapsed this month (judged against LAST month's).
 func _brief(state, ns, row: Dictionary, report: Dictionary, brief: Dictionary) -> void:
-	var out: Dictionary = _priorities.rank(state, _loader, {"memory": brief["memory"]})
+	var out: Dictionary = _priorities.rank(state, _loader, {"memory": brief["memory"],
+		"held_events": row["held_ids"], "programme_held": row["programme_held"]})
 	brief["memory"] = out["memory"]
 	var lines: Array = []
 	for l in out["lines"]:
@@ -307,10 +332,12 @@ func _brief(state, ns, row: Dictionary, report: Dictionary, brief: Dictionary) -
 			"held": bool(l["held"]), "standing": bool(l["standing"]), "more": int(l["more"]),
 			"deadline_month": int(l["deadline_month"]), "score": float(l["score"]),
 			"w": float(l["w"]), "u": float(l["u"]), "m": float(l["m"])})
-	var held: Dictionary = _priorities.held_by_rule(state, _loader)
 	row["now"] = int(state.year) * 12 + int(state.month)
 	row["lines"] = lines
-	row["held_rule"] = not (held["events"] as Array).is_empty() or bool(held["programme"])
+	row["held_rule"] = not (row["held_ids"] as Array).is_empty() or bool(row["programme_held"])
+	var crisis_severity := int(_priorities.K.CRISIS_SEVERITY)
+	row["crisis_arrived"] = (row["arrivals"] as Array).any(func(a) -> bool:
+		return String(a["kind"]) == "interrupt" or int(a["severity"]) >= crisis_severity)
 	row["situation"] = String(_priorities.situation(out["lines"]))
 	if _music_band != null:
 		var to_vote := int(Trends.months_to_vote(state, ns))
@@ -347,7 +374,7 @@ func _briefing(nations: Array, regimes: Array, months: int) -> Dictionary:
 	if _music_band == null:
 		print("RF9: NOT MEASURED -- %s is not in the tree yet" % MUSIC_BAND_PATH)
 	var measured := _priorities != null and _music_band != null
-	print("BANDS: %s" % ("FAIL" if not all_pass else ("PASS" if measured else "PASS ON WHAT WAS MEASURED (RF4 only)")))
+	print("BANDS: %s" % ("FAIL" if not all_pass else ("PASS" if measured else "PASS ON WHAT WAS MEASURED")))
 	return {"pass": all_pass, "measured": measured, "runs": runs}
 
 
@@ -383,13 +410,14 @@ func _rf2(rows: Array) -> Dictionary:
 	var damped := 0
 	var lapsed_unshown := 0
 	var kinds := {}
-	for t in range(n):
+	var near := int(_priorities.K.NO_DAMPING_MONTHS)
+	for t in range(briefed.size()):
 		var row: Dictionary = briefed[t]
 		for l in row["lines"]:
 			kinds[l["kind"]] = int(kinds.get(l["kind"], 0)) + 1
-			# A dated line 3 months away or less is scored without novelty.
+			# A dated line within the no-damping window is scored without novelty.
 			if not bool(l["held"]) and not bool(l["standing"]) and int(l["deadline_month"]) >= 0 \
-					and int(l["deadline_month"]) - int(row["now"]) <= RF2_NEAR_MONTHS \
+					and int(l["deadline_month"]) - int(row["now"]) <= near \
 					and absf(float(l["score"]) - float(l["w"]) * float(l["u"]) * float(l["m"])) > 1e-6:
 				damped += 1
 		if bool(row["held_rule"]) and not (row["lines"] as Array).any(func(l) -> bool: return bool(l["held"])):
@@ -397,6 +425,17 @@ func _rf2(rows: Array) -> Dictionary:
 		if t == 0:
 			continue
 		var prev: Dictionary = briefed[t - 1]
+		# A request that lapsed this month was in last month's briefing -- its own
+		# line, or folded as "+N more" on the request line -- or every line of it
+		# was held (nothing was free for it).
+		var all_held := (prev["lines"] as Array).all(func(l) -> bool: return bool(l["held"]))
+		for request_id in row["lapsed"]:
+			var shown := (prev["lines"] as Array).any(func(l) -> bool:
+				return String(l["kind"]) == "request" and (String(l["subject"]) == String(request_id) or int(l["more"]) > 0))
+			if not shown and not all_held:
+				lapsed_unshown += 1
+		if t >= n:
+			continue
 		var a := _keys(prev)
 		var common := 0
 		for k in _keys(row):
@@ -405,12 +444,6 @@ func _rf2(rows: Array) -> Dictionary:
 		overlap += common
 		if common == 3:
 			repeats += 1
-		# A request that lapsed this month was in last month's briefing, or every
-		# line of it was held (nothing was free for it).
-		var request_line := (prev["lines"] as Array).any(func(l) -> bool: return String(l["kind"]) == "request")
-		var all_held := (prev["lines"] as Array).all(func(l) -> bool: return bool(l["held"]))
-		if not (row["lapsed"] as Array).is_empty() and not request_line and not all_held:
-			lapsed_unshown += (row["lapsed"] as Array).size()
 	var pairs := maxf(float(n - 1), 1.0)
 	var repeat_share := repeats / pairs
 	var mean_overlap := overlap / pairs
@@ -435,7 +468,10 @@ func _rf9(rows: Array) -> Dictionary:
 		if prev != "" and band != prev:
 			changes += 1
 		prev = band
-		if String(row["situation"]) == "crisis" and band != "crisis":
+		# The first briefing after a crisis arrives plays the crisis bed. Keyed on
+		# the ARRIVAL, not on situation(): the band follows situation() at once by
+		# construction, so a check on it could not fail.
+		if bool(row["crisis_arrived"]) and band != "crisis":
 			crisis_late += 1
 	var rate := changes / maxf(float(briefed.size() - 1), 1.0)
 	return {"changes": changes, "change_rate": rate, "crisis_late": crisis_late, "bands": bands,
