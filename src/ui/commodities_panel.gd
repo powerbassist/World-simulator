@@ -227,15 +227,16 @@ func _build_alert(ns) -> void:
 func _build_balance(ns) -> void:
 	PanelKit.heading(_body, tr("The balance, this month"))
 	var prices: Dictionary = (ns.commodity_state.get("price", {}) as Dictionary)
-	var rows: Array = [[tr("Good"), tr("Made"), tr("Net trade"), tr("Price change"), tr("Demand met")]]
+	var rows: Array = [[tr("Good"), tr("Made"), tr("Net imports"), tr("Price change"), tr("Demand met")]]
 	for category in DataLoader.COMMODITY_CATEGORIES:
 		var goods: Array = []
 		for good_id in _goods_in_order():
 			if _category_of(good_id) == String(category):
 				goods.append(good_id)
-		if goods.is_empty():
-			continue
 		rows.append([String(category).to_upper(), "", "", "", ""])
+		if goods.is_empty():
+			rows.append([tr("None"), "", "", "", ""])
+			continue
 		for good_id in goods:
 			var base := _base_price(good_id)
 			var price := float(prices.get(good_id, base))
