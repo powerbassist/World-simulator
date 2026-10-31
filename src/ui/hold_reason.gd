@@ -22,6 +22,9 @@ static func show(main) -> String:
 	var ns = main._state.player() if main._state != null else null
 	if ns == null:
 		return ""
+	# V5.3-0: the monthly briefing holds the clock until it is put away.
+	if preload("res://src/ui/briefing_driver.gd").showing(main):
+		return Strings.t("Paused: the monthly briefing.")
 	# A state visit's scene is modal and holds the clock while it runs (#70).
 	if main._windows.is_open("summit") and not String(main._summit_panel.visiting).is_empty():
 		return Strings.t("Paused: the state visit to %s.") % main._summit_panel.visiting

@@ -46,6 +46,8 @@ var _president := ""
 
 
 func _init() -> void:
+	# V5.3-0: this test drives months for another surface, not the monthly briefing.
+	preload("res://src/ui/briefing_driver.gd").suppressed = true
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
 

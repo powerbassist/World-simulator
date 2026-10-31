@@ -395,7 +395,8 @@ func _button(ns, action) -> Button:
 	button.pressed.connect(func(): _on_act(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button
-	return button
+	# V5.3-0 RF3: an effort acts on the coming national vote (the briefing's election Go).
+	return preload("res://src/ui/acts_on.gd").tag(button, ["national"]) as Button
 
 
 ## U4's contract, projects_panel._on_act()'s shape exactly: the baseline is captured
@@ -588,7 +589,7 @@ func _pledge_button(ns, action) -> Button:
 	button.pressed.connect(func(): _on_promise(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button
-	return button
+	return preload("res://src/ui/acts_on.gd").tag(button, ["national"]) as Button
 
 
 func _on_promise(ns, action) -> void:

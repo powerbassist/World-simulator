@@ -64,6 +64,9 @@ func show_requests(rows: Array) -> void:
 			_answer(Strings.t("Delegate"), row.get("delegate", {})),
 			_answer(Strings.t("Decline"), row.get("decline", {})),
 		] + ([_answer(Strings.t("Call them…"), row["call"])] if row.has("call") else [])
+		# V5.3-0 RF3: each answer acts on this request (acts_on.gd, the briefing's Go).
+		for a in answers:
+			a["acts_on"] = request_id
 		# Same answers: the body is rewritten in place. Changed (a day now taken, the
 		# month's call spent): the card is put up again, since the inbox rewrites a
 		# body but not its buttons.

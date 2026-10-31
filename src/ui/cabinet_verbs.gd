@@ -18,6 +18,7 @@ signal reassigned(before: Dictionary, title: String)
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -68,12 +69,15 @@ func _ready() -> void:
 	reassign_button = PanelKit.sized(Button.new())
 	reassign_button.text = tr("Reassign")
 	reassign_button.pressed.connect(_on_reassign)
+	# V5.3-0 RF3: the cabinet's verbs act on the majority (the briefing's "seats" Go).
+	ActsOn.tag(reassign_button, ["seats"])
 	row.add_child(reassign_button)
 	var dismiss := PanelKit.sized(Button.new())
 	dismiss.name = "Dismiss"  # i18n: ok a node name, found by tests
 	dismiss.text = tr("Dismiss")
 	dismiss.tooltip_text = tr("Remove the selected portfolio's holder at once; the office stays vacant until you reassign it.")
 	dismiss.pressed.connect(_on_dismiss)
+	ActsOn.tag(dismiss, ["seats"])
 	row.add_child(dismiss)
 	_status = Label.new()
 	_status.theme_type_variation = UiTheme.CAPTION

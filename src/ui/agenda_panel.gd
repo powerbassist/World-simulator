@@ -24,11 +24,22 @@ extends PanelContainer
 ## the fold a long offer page would otherwise build under its first rows.
 
 signal programme_chosen(entry_id: String)
+## V5.3-0 (2.4): a live entry's "Open" asks for the tab where its goal is moved;
+## briefing_driver.gd performs it, as main performs programme_chosen.
+signal open_requested(tab_id: String)
+
+## A programme group's working tab: where the levers that move its goals live
+## (OPINION: the data carries no tab, and a goal's group is the closest general
+## rule; an economy goal is moved by the budget's levers, an institutional or a
+## society goal by a law).
+const GROUP_TAB := {"economy": "budget", "europe": "diplomacy", "institutions": "legislature",
+	"office": "politics", "society": "legislature"}  # i18n: ok tab ids
 
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -189,6 +200,8 @@ func _choose_button(terms: Dictionary) -> Button:
 	# The verb is a SIGNAL, not a call: the panel names what was chosen and
 	# main.gd performs the command. The panel never writes GameState.
 	button.pressed.connect(func(): programme_chosen.emit(entry_id))
+	# V5.3-0 RF3: Choose acts on the entry and on the offer the briefing holds a line for.
+	ActsOn.tag(button, [entry_id, "offer"])
 	if _primary == null:
 		_primary = button
 	return button
@@ -225,6 +238,7 @@ func _register_block(ns, entry: Dictionary) -> Control:
 			if not (_primary is Button):
 				_primary = block
 			_build_live_read(ns, terms, entry, block)
+			_open_button(terms, block)
 		ProgrammeK.STATUS_COMPLETE:
 			PanelKit.line(block, tr("Delivered, term %d.") % (int(entry["concluded_term"]) + 1), PanelKit.Tone.GOOD)
 		ProgrammeK.STATUS_FAIL:
@@ -232,6 +246,19 @@ func _register_block(ns, entry: Dictionary) -> Control:
 		_:
 			PanelKit.line(block, tr("Overtaken by the world, term %d.") % (int(entry["concluded_term"]) + 1), PanelKit.Tone.DIM)
 	return block
+
+
+## V5.3-0 (2.4): a live entry's verb -- open the tab that moves its goal, tagged
+## with the entry for the briefing's programme Go.
+func _open_button(terms: Dictionary, block: VBoxContainer) -> void:
+	var tab := String(GROUP_TAB.get(String(terms.get("group", "")), ""))
+	if terms.is_empty() or tab == "":
+		return
+	var button := PanelKit.sized(Button.new())
+	button.text = tr("Work on it")
+	button.pressed.connect(func() -> void: open_requested.emit(tab))
+	ActsOn.tag(button, [String(terms["id"])])
+	PanelKit.buttons(block).add_child(button)
 
 
 func _build_live_read(ns, terms: Dictionary, entry: Dictionary, block: VBoxContainer) -> void:

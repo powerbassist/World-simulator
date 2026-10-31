@@ -199,6 +199,7 @@ static func restore_after_load(main) -> void:
 		push(main, Events.event_by_id(main._loader, String(entry.get("event_id", ""))), entry)
 	EffectsLedger.restore_card(main._state, main._hud.inbox)
 	AudienceDriver.after_load(main)
+	preload("res://src/ui/briefing_driver.gd").after_load(main)
 
 
 ## The card's id when it carries a speaker's face, else "" -- the arrival's cue to
@@ -217,7 +218,7 @@ static func push(main, ev, entry: Dictionary) -> String:
 		actions.append({"label": "%s%s" % [
 			Strings.choice_label(ev.id, choice),
 			Strings.t("   (happens if you say nothing)") if bool(choice.get("is_default", false)) else "",
-		]})
+		], "acts_on": String(event_id)})
 	# The title names the place for a sited event -- read straight off the
 	# entry, `event_name` untouched (V3.5). The name is already in the
 	# register because every reader of it is a leaf over pending state.

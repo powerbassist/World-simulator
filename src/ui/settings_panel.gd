@@ -94,6 +94,7 @@ var _language_button: OptionButton
 var _content: MarginContainer  ## the whole screen, so a language change can rebuild it
 var _fullscreen_button: OptionButton
 var _foreign_news_button: OptionButton
+var _briefing_button: OptionButton
 ## The resolution row as last applied, so a change to it can be told from a change
 ## to any other row.
 var _applied_resolution := -1
@@ -248,6 +249,7 @@ func _save_and_apply() -> void:
 	cfg.set_value("audio", "voice", _voice_button.selected)
 	cfg.set_value("display", "motion", motion_on)
 	cfg.set_value(MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, _foreign_news_button.selected == 1)
+	cfg.set_value(MessageSettings.SECTION, MessageSettings.BRIEFING_NEW_ONLY_KEY, _briefing_button.selected == 1)
 	cfg.save(CONFIG_PATH)
 	revision += 1
 
@@ -329,6 +331,8 @@ func _build() -> void:
 	_voice_button = _add_row(grid, tr("Voices"), [tr("Off"), tr("Quiet"), tr("Normal"), tr("Loud")])
 	_motion_button = _add_row(grid, tr("Motion"), [tr("Off"), tr("On")])
 	_foreign_news_button = _add_row(grid, tr("News of other countries"), [tr("Off"), tr("On")])
+	# V5.3-0: the monthly briefing, every month or only when a priority is new.
+	_briefing_button = _add_row(grid, tr("Monthly briefing"), [tr("Every month"), tr("Only when something is new")])
 
 	PanelKit.line(root, tr("The language applies in full to windows opened after the change; load a game again to apply it to every window."))
 
@@ -462,6 +466,7 @@ func _load_into_controls() -> void:
 	_motion_button.select(1 if bool(cfg.get_value("display", "motion", DEFAULT_MOTION)) else 0)
 	_foreign_news_button.select(1 if bool(cfg.get_value(
 		MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, MessageSettings.DEFAULT_FOREIGN_NEWS)) else 0)
+	_briefing_button.select(1 if MessageSettings.briefing_new_only(CONFIG_PATH) else 0)
 	_resolution_button.disabled = fullscreen
 	var messages := MessageSettings.load_from(CONFIG_PATH)
 	for category in _message_buttons.keys():
