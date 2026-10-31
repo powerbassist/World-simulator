@@ -61,7 +61,8 @@ row in `tools/run_tests.sh`'s `tests=()`.
 
 ## 4. The cheap gates
 
-Run all five; report each separately.
+Run all of these; report each separately. They are the Python gates CI's "checks" job
+runs, plus `law_lint` (which `tests.yml` does not run).
 
 ```bash
 bash tools/check_names.sh
@@ -69,6 +70,11 @@ python tools/check_size.py
 python tools/check_vault.py
 python tools/check_uids.py
 reuse lint
+python tools/event_lint.py --check
+python tools/law_lint.py --check
+python tools/i18n_extract.py --check
+python tools/voice_pipeline.py --selftest
+bash tools/run_tests.sh --print-tests | python tools/ci_shards.py --check
 ```
 
 `bash tools/check_mcp.sh` is AGENTS.md's sixth. It needs the editor and the
@@ -82,6 +88,15 @@ setup or `.mcp.json`, and otherwise list it under "not run".
 - `check_uids.py`: exit 1 means a tracked `X.uid` whose `X` is not tracked.
 - `reuse lint`: a new asset, data source or third-party file needs an annotation
   in `REUSE.toml`.
+- `event_lint.py --check` / `law_lint.py --check`: the authoring lints over `data/events/`
+  and `data/laws/` (schema plus the book's spread bands). CI runs the first; the second
+  is not in `tests.yml`, so this is its only gate outside the suite.
+- `i18n_extract.py --check`: a stale key, an empty value or a placeholder mismatch in
+  `data/i18n/`. CI also runs its `--selftest` first.
+- `voice_pipeline.py --selftest`: no network, no credits spent.
+- `ci_shards.py --check`: every registered test is in exactly one shard of
+  `tools/ci_shards.json`. The local suite does not check this; a new test needs its
+  row in `run_tests.sh` AND in the shard file.
 
 ## 4b. A change to what the game delivers
 

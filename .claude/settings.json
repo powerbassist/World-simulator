@@ -10,6 +10,29 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/tools/guard_commit_shards.py\" || true",
+            "timeout": 70,
+            "if": "Bash(git*commit*)"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/tools/lint_on_edit.py\" || true",
+            "timeout": 50
+          }
+        ]
       }
     ]
   },
