@@ -19,6 +19,9 @@ extends VBoxContainer
 
 signal booked(request_id: String, date: Dictionary)
 signal cancel_requested(key: String)
+## The day list was rebuilt (deferred to the frame's end, past every early return):
+## the request column puts a pending focus back (QA's TAKE on #221).
+signal listed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -242,6 +245,7 @@ func _add(out: Dictionary, d: int, row: Dictionary) -> void:
 
 
 func _render_list(entries: Array, offered: Array) -> void:
+	listed.emit.call_deferred()
 	for child in day_list.get_children():
 		day_list.remove_child(child)
 		child.queue_free()

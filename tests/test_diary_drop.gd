@@ -6,7 +6,9 @@ extends SceneTree
 ##   - the first free offered cell takes the request's payload and refuses a
 ##     payload it does not offer; the drop books the request on that very day;
 ##   - an offered day the Diary refuses takes no drop;
-##   - the Diary closed under a booking ends it (TAKE 7): nothing is focused.
+##   - the Diary closed under a booking ends it (TAKE 7): nothing is focused;
+##   - QA's TAKE on #221: Days by a REAL Enter leaves the keyboard on the request's
+##     "Book here" frames later, after the Diary's rebuilds.
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -30,11 +32,17 @@ func _process(_delta: float) -> bool:
 	if _frame == 3:
 		_main._clock.paused = true
 		_arrive()
+	elif _frame == 4:
+		_enter(true)
 	elif _frame == 6:
+		_enter(false)
+	elif _frame == 14:
+		_check_focus()
+	elif _frame == 16:
 		_drop()
-	elif _frame == 8:
+	elif _frame == 18:
 		_close()
-	elif _frame == 10:
+	elif _frame == 20:
 		_finish()
 		return true
 	return false
@@ -64,7 +72,28 @@ func _arrive() -> void:
 	if _request_id == "":
 		_fail("premise: no arrived request offers a free day")
 		return
-	_main._calendar_panel.requests.focus_requested.emit(_request_id)
+	_main._windows.open("calendar")
+
+
+## Days focused, then Enter pressed (and released frames later) through the viewport.
+func _enter(down: bool) -> void:
+	if down:
+		var card: Node = _main._calendar_panel.requests.find_child("Request_%s" % _request_id, true, false)
+		var days := card.find_child("Days", true, false) as Button if card != null else null
+		if days == null:
+			_fail("premise: the request has no Days")
+			return
+		days.grab_focus()
+	var key := InputEventKey.new()
+	key.keycode = KEY_ENTER
+	key.pressed = down
+	root.push_input(key)
+
+
+func _check_focus() -> void:
+	var owner := root.gui_get_focus_owner()
+	if owner == null or String(owner.name) != "BookHere_%s" % _request_id:
+		_fail("Days by Enter left the focus on %s, not on Book here" % (owner.name if owner != null else "nothing"))
 
 
 func _drop() -> void:

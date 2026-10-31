@@ -40,6 +40,9 @@ const FACE := Vector2(36, 48)
 const DRAG_KEY := "request"
 
 var _focused := ""
+## The request whose booking the keyboard was sent to: a later rebuild of the day
+## list or the column, which frees the focused button, puts the focus back.
+var _focus_for := ""
 ## Where the president's word sits, under the grid (audience_driver's promise list).
 var promise_slot := VBoxContainer.new()
 ## The month grid this column books on (beside()).
@@ -55,6 +58,7 @@ func _init() -> void:
 ## The grid and this column side by side, the grid taking the width.
 func beside(grid: Control) -> HBoxContainer:
 	_grid = grid
+	grid.listed.connect(_refocus)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -90,6 +94,7 @@ func show_requests(rows: Array, focused: String) -> void:
 	_focused = focused
 	# Re-read on every redraw: the player can change the text size mid-game (#221 RECORD 8).
 	custom_minimum_size.x = WIDTH * UiTheme.text_scale()
+	_refocus.call_deferred()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -216,6 +221,21 @@ static func _initials(party_name: String) -> String:
 ## it, else on the rebuilt Days, and a request with no day the Diary can take says
 ## so on its card (the old picker's line).
 func focus_booking(request_id: String) -> void:
+	_focus_for = request_id
+	_focus_on(request_id)
+
+
+## A rebuild freed the focused control (focus on nothing, or on a node on its way
+## out): the pending booking takes it again. Focus the player moved elsewhere stays.
+func _refocus() -> void:
+	if _focus_for == "" or not is_visible_in_tree():
+		return
+	var owner := get_viewport().gui_get_focus_owner() if get_viewport() != null else null
+	if owner == null or owner.is_queued_for_deletion() or not owner.is_inside_tree():
+		_focus_on(_focus_for)
+
+
+func _focus_on(request_id: String) -> void:
 	for b in _grid.day_list.find_children("BookHere_%s" % request_id, "Button", true, false):  # i18n: ok a node name and a class, found by tests
 		if not (b as Button).disabled and not b.is_queued_for_deletion():
 			(b as Button).grab_focus()
