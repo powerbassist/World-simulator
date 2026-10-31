@@ -37,6 +37,7 @@ const AudienceK = preload("res://src/sim/audience_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
 
 
 ## {lines: exactly three {kind, subject, deadline_month (-1: none), score, u, m,
@@ -241,7 +242,12 @@ static func _holds_by_rule(entry: Dictionary, loader) -> bool:
 
 
 static func _election(state, ns, now: int, cands: Array) -> void:
-	var dates := {"national": Trends.vote_date(ns), "ep": Vector2i(int(ns.next_ep_election_year), int(ns.next_ep_election_month))}
+	var dates := {"national": Trends.vote_date(ns)}
+	# The European vote is a line only while the run-up is open: its Go's verbs are
+	# the campaign's efforts, which move the turnout it reads, and outside the run-up
+	# there are none (final pre-gate TAKE 1: "in 20 months" on an empty Campaign tab).
+	if Campaign.is_open(state, ns):
+		dates["ep"] = Vector2i(int(ns.next_ep_election_year), int(ns.next_ep_election_month))
 	var best := ""
 	for subject in dates:
 		var when: Vector2i = dates[subject]
