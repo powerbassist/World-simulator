@@ -2538,6 +2538,27 @@ SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
+# Music: searching.ogg, by yd, CC0 1.0 as stated on https://opengameart.org/node/10684 (read 2026-10-31).
+path = "assets/audio/music/searching.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "yd (OpenGameArt)"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+# Music: victory_sting.ogg, by congusbongus, CC0 1.0 as stated on https://opengameart.org/content/victory-sting (read 2026-10-31).
+path = "assets/audio/music/victory_sting.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "congusbongus (OpenGameArt)"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+# Music: winfretless.ogg, by Fupi, CC0 1.0 as stated on https://opengameart.org/content/win-jingle (read 2026-10-31).
+path = "assets/audio/music/winfretless.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "Fupi (OpenGameArt)"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
 # Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice EXAVITQu4vr4xnSDxMaL (archetype activist_f_30), 2026-10-31; says voices/activist_f_30.lines.mood_angry (sha256 b899eb2ecab4).
 path = "assets/audio/voice/activist_f_30/mood_angry.ogg*"
 precedence = "override"
@@ -3082,3 +3103,17 @@ path = "assets/audio/voice/union_leader_m_50/mood_pleased.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
+
+[[annotations]]
+# Music: another_august.ogg, by cynicmusic (The Cynic Project / pixelsphere.org / cynicmusic.com), CC0 1.0 as stated on https://opengameart.org/content/another-august (read 2026-10-31).
+path = "assets/audio/music/another_august.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "cynicmusic (The Cynic Project / pixelsphere.org / cynicmusic.com) (OpenGameArt)"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+# Music: space_graveyard.ogg, by TinyWorlds, CC0 1.0 as stated on https://opengameart.org/content/space-graveyard-ambient-track (read 2026-10-31).
+path = "assets/audio/music/space_graveyard.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "TinyWorlds (OpenGameArt)"
+SPDX-License-Identifier = "CC0-1.0"

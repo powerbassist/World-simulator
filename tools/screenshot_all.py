@@ -17,6 +17,7 @@ time in a checkout). Needs Pillow for the sheets; without it the frames still la
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import re
 import shutil
@@ -68,6 +69,27 @@ def sheets(frames: list[Path], out: Path) -> None:
         sheet.save(out / f"sheet_{n // 4:02d}.png")
 
 
+@contextlib.contextmanager
+def no_focus_override(repo: Path):
+    """A windowed Godot launched from the app in the foreground often takes the keyboard
+    (3 of 7 measured launches; docs/tooling.md, "The real mouse cursor"). The project
+    setting display/window/size/no_focus=true creates the window without activation (0 of
+    6 launches), but only at creation, so it has to be in place before the run starts:
+    an override.cfg beside project.godot, written for these runs and removed after.
+    A stale one would leave the game without keyboard focus, hence the finally and the
+    .gitignore line; an existing override.cfg is the author's and is never touched."""
+    cfg = repo / "override.cfg"
+    if cfg.exists():
+        print("override.cfg already exists; leaving it (windows may take focus)")
+        yield
+        return
+    cfg.write_text("[display]\n\nwindow/size/no_focus=true\n", encoding="utf-8")
+    try:
+        yield
+    finally:
+        cfg.unlink(missing_ok=True)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
@@ -86,6 +108,14 @@ def main() -> int:
 
     frames: list[Path] = []
     failed: list[str] = []
+    with no_focus_override(repo):
+        _run_all(lines, opts, repo, out, frames, failed)
+    sheets(frames, out)
+    print(f"{len(frames)} frames, {len(failed)} failed, into {out}")
+    return 1 if failed else 0
+
+
+def _run_all(lines, opts, repo, out, frames, failed) -> None:
     for i, args in enumerate(lines):
         if opts.only and opts.only not in args:
             continue
@@ -107,9 +137,6 @@ def main() -> int:
             shutil.rmtree(user_dir, ignore_errors=True)  # kept on a failure, for its logs
         else:
             failed.append(args or "(default)")
-    sheets(frames, out)
-    print(f"{len(frames)} frames, {len(failed)} failed, into {out}")
-    return 1 if failed else 0
 
 
 if __name__ == "__main__":

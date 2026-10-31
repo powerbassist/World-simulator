@@ -131,3 +131,6 @@ pr4*.md
 pr4*.json
 pr4*.txt
 nul
+# Written for the length of one tools/screenshot_all.py run (display/window/size/no_focus=true);
+# a stale one leaves the game without keyboard focus, so it is never committed.
+/override.cfg
