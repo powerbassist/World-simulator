@@ -16,6 +16,10 @@ const Voices = preload("res://src/core/voices.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const MoodBadge = preload("res://src/ui/mood_badge.gd")
 
+## The lines waiting for another player's voice to end (parent meta), and their poll.
+const WAITING := "voice_waiting"  # i18n: ok a meta key
+const WAIT := "VoiceWait"  # i18n: ok a node name
+
 const LINES := ["greet", "agree", "refuse", "farewell", "mood_pleased", "mood_cold", "mood_angry"]  # i18n: ok the archetype table's line ids
 ## V5.3-0 (e): the mood line a face says on reaching an emotion (MoodBadge's four,
 ## #226's three lines): warm says pleased, wary or annoyed says cold, cold or
@@ -81,9 +85,14 @@ static func answer(voice: Dictionary, tone: String, before: int, feel: Dictionar
 ## Shows `id`'s line of `voice` (lines() above) in `caption` and plays its clip
 ## under `parent`, in turn: while a line is still playing, the next waits for it to
 ## end (the newest one wins the wait), so the caption never says what the sound
-## does not and Voice.speak's never-cut rule needs no change.
+## does not and Voice.speak's never-cut rule needs no change. A voice still talking
+## under ANOTHER player (the chief under main, a desk messenger) is waited for too,
+## and nothing waiting is dropped (the parent's call on #229, rule 4 across players).
 static func say(parent: Node, caption: Label, voice: Dictionary, id: String) -> void:
 	if id == "" or not voice.has(id):
+		return
+	if String(voice[id]["clip"]) != "" and (Voice.others_busy(parent) or parent.has_meta(WAITING)):
+		_wait(parent, caption, voice, id)
 		return
 	var player := parent.get_node_or_null(Voice.NODE) as AudioStreamPlayer
 	if player != null and (player.playing or bool(player.get_meta("pending", false))):
@@ -118,10 +127,48 @@ static func _said_next(parent: Node, player: AudioStreamPlayer) -> void:
 		say(parent, caption, voice, next)
 
 
+## In line behind another player's voice, in order: a Timer the parent owns polls
+## (kept, stopped, once the line is empty -- Voice.speak_queued's reason).
+static func _wait(parent: Node, caption: Label, voice: Dictionary, id: String) -> void:
+	var waiting: Array = parent.get_meta(WAITING, [])
+	waiting.append([caption, voice, id])
+	parent.set_meta(WAITING, waiting)
+	var wait := parent.get_node_or_null(WAIT) as Timer
+	if wait == null:
+		wait = Timer.new()
+		wait.name = WAIT
+		wait.one_shot = true
+		wait.wait_time = Voice.QUEUE_POLL_S
+		wait.timeout.connect(_waited.bind(parent, wait))
+		parent.add_child(wait)
+	if wait.is_stopped():
+		wait.start()
+
+
+## The other voice has ended: the waiting lines are said in order (the first plays,
+## the next queue behind it on the parent's own player), unless the parent has gone
+## from the screen, which cancels them.
+static func _waited(parent: Node, wait: Timer) -> void:
+	if not parent.has_meta(WAITING):
+		return
+	if Voice.others_busy(parent):
+		wait.start()
+		return
+	var waiting: Array = parent.get_meta(WAITING)
+	parent.remove_meta(WAITING)
+	if parent is CanvasItem and not (parent as CanvasItem).is_visible_in_tree():
+		return
+	for line in waiting:
+		if is_instance_valid(line[0]):
+			say(parent, line[0], line[1], line[2])
+
+
 ## Drops the queued line and the one-shot waiting for it (an audience opening on
 ## someone new). With `stop`, the line playing ends too (the call is over):
 ## Voice.stop emits no `finished`, so the one-shot would fire on the next line.
 static func hush(parent: Node, stop := false) -> void:
+	if parent.has_meta(WAITING):
+		parent.remove_meta(WAITING)
 	var player := parent.get_node_or_null(Voice.NODE) as AudioStreamPlayer
 	if player == null:
 		return

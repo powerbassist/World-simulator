@@ -32,6 +32,8 @@ const Voices = preload("res://src/core/voices.gd")
 const MANIFEST := "res://assets/audio/voice/manifest.json"
 ## The one player, a child of whatever node speaks: a new line stops the last.
 const NODE := "Voice"  # i18n: ok a node name
+## Every voice player's group: music.gd ducks under it, others_busy() reads it.
+const GROUP := "voice"  # i18n: ok a group name
 ## The player's meta holding the lines waiting behind the one it plays (speak_queued).
 const QUEUE := "queue"  # i18n: ok a meta key
 ## The chief's briefing line's card (BriefingDriver.LINE_CARD): his line plays to its
@@ -131,7 +133,7 @@ static func speak(parent: Node, path: String, delay_s := 0.0, card_id := "") -> 
 	if player == null:
 		player = AudioStreamPlayer.new()
 		player.name = NODE
-		player.add_to_group("voice")  # music.gd ducks under it (Music.VOICE_GROUP)
+		player.add_to_group(GROUP)  # music.gd ducks under it (Music.VOICE_GROUP)
 		parent.add_child(player)
 	player.stream = stream
 	player.volume_db = float(SoundK.VOICE_DB[level])
@@ -195,6 +197,17 @@ static func _next(parent: Node, player: AudioStreamPlayer, wait: Timer) -> void:
 
 static func busy(player: AudioStreamPlayer) -> bool:
 	return player.playing or bool(player.get_meta("pending", false))
+
+
+## Whether a voice not `parent`'s own is talking, or about to, anywhere in the tree
+## (the chief under main while an audience opens over him).
+static func others_busy(parent: Node) -> bool:
+	if not parent.is_inside_tree():
+		return false  # nothing out of the tree is heard (Voice.speak's own rule)
+	for player in parent.get_tree().get_nodes_in_group(GROUP):
+		if player.get_parent() != parent and busy(player as AudioStreamPlayer):
+			return true
+	return false
 
 
 ## Cancels `card_id`'s lines still waiting; the one playing, if it is that card's,

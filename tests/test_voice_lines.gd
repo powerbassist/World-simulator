@@ -58,6 +58,8 @@ var _phase := "start"
 var _since := 0
 var _scene
 var _phone
+var _cross: Control
+var _cap: Label
 
 
 func _init() -> void:
@@ -83,7 +85,7 @@ func _process(_delta: float) -> bool:
 			_check_chief()
 			_queue_behind_messenger()
 			return false
-		"waiting", "after", "cancel", "freed", "behind", "hushed", "stopped", "orphan":
+		"waiting", "after", "cancel", "freed", "behind", "hushed", "stopped", "orphan", "cross":
 			if Time.get_ticks_msec() - _since < WAIT_MS:
 				return false
 			_queue_step()
@@ -238,6 +240,26 @@ func _queue_step() -> void:
 		"orphan":
 			if String(player.get_meta("card", "")) != "desk_e":
 				_fail("a line queued in the frame the queue emptied never played (%s)" % player.get_meta("card", ""))
+			# The parent's call on #229, rule 4 across players: an audience's or a call's
+			# line waits for a voice still playing elsewhere (the chief under main), then
+			# speaks; never dropped, never over him.
+			_cross = Control.new()
+			root.add_child(_cross)
+			_cap = Label.new()
+			_cross.add_child(_cap)
+			player.set_meta("pending", true)  # main's line still talking
+			AudienceVoice.say(_cross, _cap, {"greet": {"text": "Hello.", "clip": _said["clip"]}}, "greet")
+			if _cross.get_node_or_null(Voice.NODE) != null or _cap.text != "":
+				_fail("an audience's first line spoke over a voice still playing elsewhere")
+			player.stop()
+			player.set_meta("pending", false)
+			_phase = "cross"
+		"cross":
+			var own := _cross.get_node_or_null(Voice.NODE) as AudioStreamPlayer
+			if own == null or own.stream == null or not _cap.text.contains("Hello."):
+				_fail("an audience's line waiting for another voice was dropped (caption '%s')" % _cap.text)
+			Voice.stop(_cross)
+			_cross.queue_free()
 			_phase = "done"
 	_since = Time.get_ticks_msec()
 
