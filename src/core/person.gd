@@ -72,6 +72,10 @@ var wealth_eur_m: float = 0.0
 ## "" for their kind's default -- read through Voices.archetype_of(), never here.
 ## Presentation only: no mechanism reads it.
 var voice: String = ""
+## V5.3-0. A one-line biography the UI shows (the chiefs of staff first), "" for
+## none. Presentation only, like `voice`: no mechanism reads it, it never moves,
+## and it is content, so it is not saved.
+var bio: String = ""
 
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
@@ -174,6 +178,12 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 			p.voice = String(voice)
 		else:
 			errors.append("%s: %s field 'voice' must be an archetype id (letters, digits, _ and -)" % [filename, path])
+
+	if d.has("bio"):
+		if typeof(d["bio"]) == TYPE_STRING:
+			p.bio = String(d["bio"])
+		else:
+			errors.append("%s: %s field 'bio' must be a string" % [filename, path])
 
 	if d.has("wants"):
 		if typeof(d["wants"]) != TYPE_ARRAY:

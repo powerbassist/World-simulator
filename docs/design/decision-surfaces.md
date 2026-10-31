@@ -157,6 +157,61 @@ settings, `main` at `52f286c2`.
   V5.3's graded decisions (G5) will add decisions, and the budget is what keeps
   them from turning speed 3 into a slideshow.
 
+## The monthly briefing's measurement (V5.3-0)
+
+[[v5.3-0-readability]] adds a briefing that holds the clock every month, an
+exception the author chose outside the 4 + 6 budget. `--briefing` on the same
+probe measures bands RF1, RF2, RF4 and RF9 for the four playable nations over
+120 months, idle and in an active regime (every card answered with its first
+non-default choice, every request delegated). A run stops at a defeat. The
+holds are derived from the registers at the default settings, in the spec's
+hold order (the probe's header lists the rule). The ranking, the situation and
+the music band are Interface's own functions (`src/ui/priorities.gd`,
+`src/ui/music_band.gd`), loaded at run time and never copied.
+
+```bash
+APPDATA="$(mktemp -d)" godot --headless --path . --script res://tools/decision_surfaces_probe.gd -- --briefing [--nations=DEU,FRA,GBR,POL] [--regime=idle|active|both] [--months=120] [--json=PATH]
+```
+
+**MEASURED** (2026-10-31): the probe at `a4acf0a0` with Interface's #218
+(`interface/v5.3-0a-briefing` @ `0c740db9`, the "Also due this month" footer
+and `qualified` in) merged in, `main` at `59d1a0d6`. **Every band passes in all
+eight runs.**
+
+| Run | Months | Briefing / yr | Modal / yr | Cards / yr | Stops at 2 dismissals or fewer | RF1 | RF2 repeats, overlap | Bed changes / month |
+|---|---:|---:|---:|---:|---:|---|---|---:|
+| DEU idle | 37 | 11.7 | 0.3 | 1.9 | 97 % | pass | 3 %, 0.91 | 0.17 |
+| DEU active | 37 | 11.7 | 0.3 | 1.0 | 100 % | pass | 0 %, 1.09 | 0.11 |
+| FRA idle | 76 | 11.8 | 0.5 | 2.8 | 96 % | pass | 7 %, 0.90 | 0.16 |
+| FRA active | 76 | 11.8 | 0.5 | 1.7 | 99 % | pass | 2 %, 0.71 | 0.16 |
+| GBR idle | 120 | 12.0 | 0.3 | 2.0 | 98 % | pass | 0 %, 0.90 | 0.17 |
+| GBR active | 120 | 12.0 | 0.3 | 1.4 | 98 % | pass | 2 %, 0.90 | 0.13 |
+| POL idle | 69 | 11.8 | 0.5 | 2.1 | 99 % | pass | 7 %, 1.07 | 0.16 |
+| POL active | 69 | 11.8 | 0.5 | 1.2 | 99 % | pass | 0 %, 0.81 | 0.04 |
+
+- **RF4 passes everywhere.** The briefing is 12 a year, less in a year a defeat
+  ends the game. Outside it, the holds stay inside the 4 + 6 budget, and a stop
+  takes 3 dismissals at most 3 times in a run, 13 times over all eight runs.
+  Eight of the 13 are a won election's month, where the result, the briefing
+  and the term's programme offer meet. The other five are the briefing plus
+  two cards.
+- **RF2 passes, with the footer.** Before the footer, France idle failed once:
+  in May 2029, two held cards and the EP election one month away took the three
+  lines, and a request in its last month lapsed in June without being shown.
+  The parent's call was to change the ranking, not the band. The card now lists
+  every item due this month that the three lines crowd out, each with its Go,
+  and that request is in May's footer. A footer appears in 2 to 14 months a
+  run. Every kind that qualified in a run appears in a line at least once
+  (`rank()`'s `qualified`, gated).
+- **RF9 passes, and the music is almost always `tense`** (51 to 102 months out
+  of 68 to 120), because a held card or a near weighty line is in most months'
+  three. The bed changes rarely, so RF9 holds, but the calm bed is seldom heard.
+- **Not seen in any run:** the `bill` kind. Neither regime tables a bill, so
+  it never qualifies either.
+- **Defeats end three runs early** (DEU at month 37, FRA at 76, POL at 69),
+  and they fall in the same month in both regimes: the active regime is no
+  stronger at the ballot box.
+
 ## The state-visit outcome
 
 There are two kinds of visit, and they want different surfaces.

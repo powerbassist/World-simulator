@@ -75,6 +75,7 @@ const Phone = preload("res://src/sim/phone.gd")
 const Events = preload("res://src/sim/events.gd")
 const Lies = preload("res://src/sim/lies.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
+const Staff = preload("res://src/sim/staff.gd")
 
 const PLAYER := "FRA"
 const WARM_MONTHS := 12
@@ -106,7 +107,7 @@ func _init() -> void:
 		WorldMonth.tick_month(state, _loader)
 	var ns = state.player()
 	var people: Array = []
-	for person in _loader.people[PLAYER]:
+	for person in Staff.cast(_loader, PLAYER):
 		if person.id != President.leader_id(ns):
 			people.append(person)
 	var out := {"schema": 1, "warm_months": WARM_MONTHS, "approval": float(ns.overall_approval_pct),

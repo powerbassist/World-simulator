@@ -65,7 +65,7 @@ SPEAKER_FORMS = ["kind", "office", "evidence_person", "foreign_head"]
 SPEAKER_PICKS = ["hostile", "friendly"]
 KIND_KEYS = [
     "politician", "regional_figure", "union_leader", "press_owner", "judge",
-    "activist", "executive",
+    "activist", "executive", "chief_of_staff",
 ]
 ON_ACTIONS = [
     "law_passed", "law_repealed", "member_bill_passed", "minister_resigned",

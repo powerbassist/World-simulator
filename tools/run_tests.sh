@@ -374,6 +374,8 @@ tests=(
   tests/test_num.gd
   tests/test_i18n_rows_lint.gd
   tests/test_i18n_rows.gd
+  # V5.3-0: the staff kind -- the chief of staff loads and moves no number.
+  tests/test_staff_kind.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is

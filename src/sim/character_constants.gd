@@ -49,8 +49,20 @@ const KIND_COLLECTIVE := ["union_leader", "activist"]
 ## governor, a mayor -- and shares the politician lever (wants + standing).
 const KIND_KEYS := [
 	"politician", "regional_figure", "union_leader", "press_owner", "judge",
-	"activist", "executive",
+	"activist", "executive", "chief_of_staff",
 ]
+
+## V5.3-0: the STAFF kinds -- the president's own team, today the chief of staff
+## (docs/design/v5.3-0-readability.md 2.1). A staff person is a face, a voice and
+## later a skill set, and MOVES NO NUMBER: the loader refuses a want, a party or
+## a slot on one (PeopleLoader.validate_people), and every walker of the people
+## register that can write a number reads it through Staff.cast(), which
+## drops these kinds. The walkers that pick by a kind of their own (an
+## executive, a press owner, a politician, an event speaker's kind) never reach
+## a staff person by construction. tests/test_staff_kind.gd pins all three, and
+## the reason this is a kind list and not one string is the same as
+## KIND_COLLECTIVE's: a second staff kind is added in one place.
+const KIND_STAFF := ["chief_of_staff"]
 
 ## V4.7a: an executive is a FIRM CHIEF -- the face of a hand-authored major and
 ## the future appoint-to-board pool. DECLARED STOPGAP, in the V1.4b sense of

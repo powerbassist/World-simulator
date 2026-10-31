@@ -120,6 +120,14 @@ static func validate_people(loader) -> void:
 		for party in loader.parties.get(nation_id, []):
 			party_ids[party.id] = true
 
+		# V5.3-0: one chief of staff per nation -- the briefing reads "the" chief
+		# (Staff.chief_of), and a second would be content nothing ever shows.
+		var chiefs := (loader.people[nation_id] as Array).filter(
+			func(p) -> bool: return String(p.kind) == "chief_of_staff")
+		if chiefs.size() > 1:
+			loader.errors.append("people/%s.json: %d people of kind chief_of_staff; a nation has at most one"
+				% [nation_id, chiefs.size()])
+
 		for person in loader.people[nation_id]:
 			# A bench politician's affiliation is authored on them because no
 			# slot points at it; it must resolve in THIS nation's list, the
@@ -129,6 +137,16 @@ static func validate_people(loader) -> void:
 					"people/%s.json: person '%s' claims party '%s', which is not one of this nation's parties"
 					% [nation_id, person.id, person.party_id]
 				)
+			# V5.3-0. Staff move no number (CharacterK.KIND_STAFF): a want is what
+			# asks and settles a grudge, a party is what defects and challenges, so
+			# either on a staff person is a road into the arithmetic, refused here.
+			if CharacterK.KIND_STAFF.has(person.kind):
+				if not person.wants.is_empty():
+					loader.errors.append("people/%s.json: person '%s' is staff (kind '%s') and carries wants; staff carry none"
+						% [nation_id, person.id, person.kind])
+				if person.party_id != "":
+					loader.errors.append("people/%s.json: person '%s' is staff (kind '%s') and claims party '%s'; staff carry none"
+						% [nation_id, person.id, person.kind, person.party_id])
 			for want in person.wants:
 				resolve_want(loader, want, nation_id, person.id, party_ids, programme_ids)
 			# V5.2a. Any nation's register: a marriage need not stop at a border.
@@ -210,6 +228,12 @@ static func check_person_ref(loader, nation_id: String, where: String, slot: Str
 	# GeoLoader.validate_neighbours() checks mutuality rather than mere existence.
 	if not pid.begins_with("%s_" % nation_id):
 		loader.errors.append("%s: %s names person '%s', who belongs to another nation" % [where, slot, pid])
+		return
+	# V5.3-0: an office or a party's leadership is a seat in the arithmetic, and
+	# staff hold none (CharacterK.KIND_STAFF).
+	var kind := String(loader.person_by_id[pid].kind)
+	if CharacterK.KIND_STAFF.has(kind):
+		loader.errors.append("%s: %s names person '%s', who is staff (kind '%s') and holds no slot" % [where, slot, pid, kind])
 		return
 	referenced[pid] = true
 

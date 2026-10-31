@@ -34,6 +34,7 @@ const KIND_LABEL := {
 	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
 	"union_leader": "Union leader", "press_owner": "Press owner",  # i18n: msgid
 	"judge": "Judge", "activist": "Activist", "executive": "Executive",  # i18n: msgid
+	"chief_of_staff": "Chief of staff",  # i18n: msgid -- V5.3-0, the president's own staff
 }
 
 const TRAIT_LABEL := {

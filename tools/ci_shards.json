@@ -233,7 +233,8 @@
    "tests/test_headlines.gd",
    "tests/test_speaker_lines.gd",
    "tests/test_voices.gd",
-   "tests/test_person_voice.gd"
+   "tests/test_person_voice.gd",
+   "tests/test_staff_kind.gd"
   ]
  ]
 }

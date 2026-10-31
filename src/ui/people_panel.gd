@@ -46,6 +46,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
+const Staff = preload("res://src/sim/staff.gd")
 const Num = preload("res://src/ui/num.gd")
 
 ## The face a row carries, at the row's own scale: 22px beside 14px captions
@@ -239,7 +240,20 @@ func _block(parent: Control) -> VBoxContainer:
 func _build_executive(ns, parent: Control) -> void:
 	PanelKit.heading(parent, tr("The executive"))
 	_person_line(parent, ns.head_of_state_person_id, [[ns.head_of_state_title, COL_SIDE, UiTheme.CAPTION], [_name_of(ns.head_of_state_person_id)]])
+	if bool(ns.has_executive):
+		_chief_line(ns, parent)
 	_person_line(parent, ns.pm_person_id, [[ns.head_of_government_title, COL_SIDE, UiTheme.CAPTION], [_name_of(ns.pm_person_id)]])
+	if not bool(ns.has_executive):
+		_chief_line(ns, parent)
+
+
+## V5.3-0: the chief of staff serves the played office, so their line sits right
+## under its holder (the parent's call on #216: shown, never hidden, the kind as a
+## word). Staff is no kind group of the cast below: this is their one line.
+func _chief_line(ns, parent: Control) -> void:
+	var chief = Staff.chief_of(_loader, String(ns.id))
+	if chief != null:
+		_person_line(parent, String(chief.id), [[tr(PersonCard.KIND_LABEL["chief_of_staff"]), COL_SIDE, UiTheme.CAPTION], [chief.person_name]])
 
 
 ## Named ministers do not exist, and this is where that shows. U6b's own probe
