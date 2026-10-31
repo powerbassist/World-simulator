@@ -120,6 +120,14 @@ static func validate_people(loader) -> void:
 		for party in loader.parties.get(nation_id, []):
 			party_ids[party.id] = true
 
+		# V5.3-0: one chief of staff per nation -- the briefing reads "the" chief
+		# (Staff.chief_of), and a second would be content nothing ever shows.
+		var chiefs := (loader.people[nation_id] as Array).filter(
+			func(p) -> bool: return String(p.kind) == "chief_of_staff")
+		if chiefs.size() > 1:
+			loader.errors.append("people/%s.json: %d people of kind chief_of_staff; a nation has at most one"
+				% [nation_id, chiefs.size()])
+
 		for person in loader.people[nation_id]:
 			# A bench politician's affiliation is authored on them because no
 			# slot points at it; it must resolve in THIS nation's list, the

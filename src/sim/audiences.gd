@@ -211,12 +211,15 @@ static func agree(ns, request_id: String, outcome: String) -> bool:
 
 ## b3, the G7 hook (V5.3c's builder calls it; nothing in b3 does): a person of this
 ## nation asks outside the hazard, about the object the caller names -- a private
-## firm's chief executive on "price:<project>" -- under the lane's own rules.
+## firm's chief executive on "price:<project>" -- under the lane's own rules. The
+## president's staff never ask (V5.3-0, Staff.is_staff).
 static func invite(state, ns, loader, person_id: String, object: String, stance: String) -> Dictionary:
 	var person = loader.person_by_id.get(person_id)
 	var now := _now(state)
 	if person == null or not person_id.begins_with("%s_" % ns.id) or object == "":
 		return {"ok": false, "error": "not someone of this nation", "request": {}}
+	if Staff.is_staff(loader, person_id):
+		return {"ok": false, "error": "staff do not ask", "request": {}}
 	if _open_count(ns, true) >= K.MAX_PENDING or not _may_ask(ns, person, President.leader_id(ns), now):
 		return {"ok": false, "error": "they cannot ask now", "request": {}}
 	var arrived := []
