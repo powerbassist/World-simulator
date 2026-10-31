@@ -260,7 +260,9 @@ func _render_list(entries: Array, offered: Array) -> void:
 	for o in offered:
 		var date: Dictionary = o["date"]
 		var book := PanelKit.sized(Button.new())
-		book.name = "BookHere"  # i18n: ok a node name, found by tests
+		# One per offering request: two requests can offer the same day, and a
+		# second "BookHere" would be renamed "@Button@N" and lost to find_child.
+		book.name = "BookHere_%s" % String(o["id"])  # i18n: ok a node name, found by tests
 		book.text = tr("Book here: %s") % String(o["person"])
 		book.disabled = not bool(date.get("free", true))
 		var why := String(date.get("reason", ""))
