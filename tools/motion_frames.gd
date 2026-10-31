@@ -50,6 +50,7 @@ func _init() -> void:
 
 
 func _process(_delta: float) -> bool:
+	OsCursor.quiet_window()  # again each frame: the saved settings may re-centre it
 	_frame += 1
 	if _frame > TIMEOUT_FRAMES:
 		printerr("motion_frames: timed out in phase %s" % _phase)

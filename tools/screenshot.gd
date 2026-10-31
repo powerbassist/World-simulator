@@ -1023,6 +1023,7 @@ func _stage_console() -> void:
 
 
 func _process(_delta: float) -> bool:
+	OsCursor.quiet_window()  # again each frame: the saved settings may re-centre it
 	# Frame 1, and NOT in _init(): main's @onready vars do not exist while
 	# _init runs -- the first version froze the clock there, read a Nil, and
 	# the game silently ran on (three of eight identity captures crossed a day

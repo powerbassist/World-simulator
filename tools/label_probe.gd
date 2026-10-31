@@ -37,6 +37,7 @@ func _initialize() -> void:
 
 
 func _process(_delta: float) -> bool:
+	OsCursor.quiet_window()  # again each frame: the saved settings may re-centre it
 	_frames += 1
 	if _frames < 40:
 		return false
