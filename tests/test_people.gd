@@ -212,7 +212,10 @@ func _check_person_field_contract() -> void:
 			"social_skill", "spouse_id", "wealth_eur_m",
 			# V5.2d: which recorded voice plays them. A presentation fact that
 			# never moves and that no slot states; no mechanism reads it.
-			"voice"]:
+			"voice",
+			# V5.3-0: a one-line biography, the same class of fact as the voice
+			# (presentation only, never moves, read by the UI alone).
+			"bio"]:
 		expected.append(String(n))
 	if names != expected:
 		_fail("Person declares %s, expected exactly %s -- a new field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names), str(expected)])

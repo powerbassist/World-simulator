@@ -59,8 +59,14 @@ func _init() -> void:
 		_fail("data did not load cleanly: %s" % [_loader.errors])
 
 	_check_kind_loads()
+	# The injection and refusal runs prove what ONE staff person does against a
+	# register with none, so the played nation's authored staff (Content's chief)
+	# step out for them and come back after. The authored chiefs' own "moves
+	# nothing" is the balance table's cmp with the records in (band RF8).
+	var authored := _take_authored_staff()
 	_check_staff_moves_nothing()
 	_check_staff_refusals()
+	_restore_staff(authored)
 	_check_walker_inventory()
 
 	if _failures.is_empty():
@@ -70,6 +76,25 @@ func _init() -> void:
 		for f in _failures:
 			printerr("FAIL: %s" % f)
 		quit(1)
+
+
+## [[index, person], ...] in ascending index, each taken out of PLAYER's list
+## and person_by_id.
+func _take_authored_staff() -> Array:
+	var taken := []
+	var list: Array = _loader.people[PLAYER]
+	for i in range(list.size() - 1, -1, -1):
+		if CharacterK.KIND_STAFF.has(String(list[i].kind)):
+			taken.push_front([i, list[i]])
+			_loader.person_by_id.erase(String(list[i].id))
+			list.remove_at(i)
+	return taken
+
+
+func _restore_staff(taken: Array) -> void:
+	for pair in taken:
+		_loader.people[PLAYER].insert(int(pair[0]), pair[1])
+		_loader.person_by_id[String(pair[1].id)] = pair[1]
 
 
 func _staff_person(extra: Dictionary = {}):
@@ -96,9 +121,18 @@ func _check_kind_loads() -> void:
 	var person = _staff_person()
 	if person != null and String(person.kind) != "chief_of_staff":
 		_fail("the staff record loaded as kind '%s'" % person.kind)
+	# The chief's one-line biography: Person.bio, presentation only, a string or
+	# a load error.
+	var with_bio = _staff_person({"bio": "Twenty years in the prefectures."})
+	if with_bio != null and String(with_bio.bio) != "Twenty years in the prefectures.":
+		_fail("Person.bio did not load: '%s'" % with_bio.bio)
+	var errors: Array[String] = []
+	Person.from_dict({"id": STAFF_ID, "name": "X", "bio": 7}, 0, "%s.json" % PLAYER, errors)
+	if not " ".join(errors).contains("'bio' must be a string"):
+		_fail("a non-string bio loaded: %s" % [errors])
 
 
-## Run A on the register as authored, run B with the staff person injected at
+## Run A on the register without staff, run B with the staff person injected at
 ## the head of the played nation's list. Same process, same seed, same months.
 func _check_staff_moves_nothing() -> void:
 	var clean := _run_months()

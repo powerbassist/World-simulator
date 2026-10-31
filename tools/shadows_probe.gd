@@ -55,6 +55,7 @@ const Lies = preload("res://src/sim/lies.gd")
 const President = preload("res://src/sim/president.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
+const Staff = preload("res://src/sim/staff.gd")
 const Cut = preload("res://src/core/cut.gd")
 
 const PLAYER := "FRA"
@@ -346,7 +347,7 @@ func _fire(state, ns, regime: String, lies: Array) -> void:
 func _affair(state, ns, month: int, r: Dictionary) -> void:
 	if month == ACT_MONTH:
 		var leader = _loader.person_by_id[President.leader_id(ns)]
-		for person in _loader.people[PLAYER]:
+		for person in Staff.cast(_loader, PLAYER):
 			var pid := String(person.id)
 			if pid == String(leader.id) or pid == String(leader.spouse_id) or not Shadows.spark(ns, pid):
 				continue
