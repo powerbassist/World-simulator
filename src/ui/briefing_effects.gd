@@ -108,14 +108,17 @@ static func _defeat(ns, loader, result: Dictionary) -> Dictionary:
 		ResultTone.BAD)
 
 
-## Requests the player answered last month: delegated, declined, booked or
-## settled -- each a decision with no number of its own. A lapse is the sim's, not
-## the player's (booked on its own line). Last month, since the card opens on the
-## month after: the sim stamps a request with the month its command ran.
+## Requests the player answered last month by a command of their own: delegated,
+## declined, or booked (acted_month) -- each a decision with no number of its own.
+## Never an outcome: an audience held last month was the booking's, made months
+## before, and a lapse or an agreement closed at the tick is the sim's (the
+## parent's TAKE 1 on #230). Last month, since the card opens on the month after:
+## the sim stamps a request with the month its command ran.
 static func _answered(ns, now: int) -> int:
 	var n := 0
 	for row in ns.audience_requests:
-		var resolved := int(row.get("resolved_month", -1)) == now - 1 and String(row.get("status", "")) != AudienceK.STATUS_LAPSED
+		var resolved := int(row.get("resolved_month", -1)) == now - 1 \
+			and [AudienceK.STATUS_DELEGATED, AudienceK.STATUS_DECLINED].has(String(row.get("status", "")))
 		if resolved or int(row.get("acted_month", -1)) == now - 1:
 			n += 1
 	return n

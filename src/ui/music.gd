@@ -159,8 +159,13 @@ static func moment(parent: Node, id: String) -> void:
 func _process(delta: float) -> void:
 	if _seen_revision != SettingsPanel.revision:
 		_seen_revision = SettingsPanel.revision
+		var was := _level
 		_level = SettingsPanel.music_level() if SettingsPanel.sound_enabled() else 0
-		_start(_track)  # the same bed at the new level: no crossfade
+		# Only Off and on move the bed: it stops, or starts from its top. Any other
+		# Settings save leaves it playing where it is, the flow untouched, and the
+		# ramp below carries the new level (the parent's TAKE 3 on #230).
+		if (was > 0) != (_level > 0):
+			_start(_track)
 	ducked = speaking(get_tree())
 	_duck_db = move_toward(_duck_db, target_db(_level, ducked), SoundK.DUCK_DB_PER_S * delta)
 	var length := _player.stream.get_length() if _player != null and _player.stream != null else 0.0

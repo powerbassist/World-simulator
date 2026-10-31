@@ -13,6 +13,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const NationState = preload("res://src/core/nation_state.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -119,9 +120,11 @@ func _check_division_known() -> void:
 
 ## Pre-gate B4: a request answered last month -- delegated, declined, booked -- is a
 ## decision, so "Nothing you decided" does not follow it. A lapse is not one (the
-## sim's, booked on its own line). Through the sim's own commands, then the month turns.
+## sim's, booked on its own line), nor an audience held last month that was booked
+## months before (the parent's TAKE 1 on #230: the player's command was the
+## booking). Through the sim's own commands, then the month turns.
 func _check_answered_requests() -> void:
-	for verb in ["delegate", "decline", "book", "lapse"]:
+	for verb in ["delegate", "decline", "book", "lapse", "held"]:
 		var state = _state()
 		var ns = state.player()
 		var pid := String(_loader.people["FRA"][3].id)
@@ -140,15 +143,38 @@ func _check_answered_requests() -> void:
 			"lapse":
 				ns.audience_requests[-1]["status"] = "lapsed"
 				ns.audience_requests[-1]["resolved_month"] = now
+			"held":
+				# Booked now, held and settled three months on.
+				var days: Array = Audiences.offered_dates(state, ns, id).filter(func(d): return bool(d.get("free", true)))
+				if days.is_empty() or not bool(Audiences.book(state, ns, _loader, id, days[0]).get("ok", false)):
+					_fail("held: premise, no free offered day to book")
+					continue
+				now += 3
+				_set_month(state, now)
+				Audiences.hold(state, ns, _loader, id)
+				if not bool(Audiences.settle(state, ns, _loader, id, "settled").get("ok", false)):
+					_fail("held: premise, the audience did not settle")
 		# The briefing opens on the next month.
-		state.year = floori(now / 12.0)
-		state.month = now + 1 - state.year * 12
+		_set_month(state, now + 1)
 		var first := String(BriefingEffects.lines(state, _loader, {})[0]["text"])
-		if verb == "lapse":
+		if verb == "book":
+			# A save between the booking and the card keeps the stamp (TAKE 2; rows
+			# come back with every number a float, cast on every read).
+			var loaded = NationState.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
+			var row: Dictionary = loaded.audience_requests.filter(func(r): return String(r["id"]) == id)[0]
+			if not row.has("acted_month") or BriefingEffects._answered(loaded, now + 1) != 1:
+				_fail("a booking's month did not survive a save: %s" % str(row))
+		if verb == "lapse" or verb == "held":
 			if first != "Nothing you decided last month":
-				_fail("a lapsed request is read as a decision: %s" % first)
+				_fail("a %s request is read as last month's decision: %s" % [verb, first])
 		elif first.begins_with("Nothing you decided") or not first.contains("1 request answered"):
 			_fail("a request answered last month (%s) is not a decision on the card: %s" % [verb, first])
+
+
+## The state on absolute month `abs_month` (year x 12 + month).
+func _set_month(state, abs_month: int) -> void:
+	state.year = floori((abs_month - 1) / 12.0)
+	state.month = abs_month - state.year * 12
 
 
 func _check_mixed() -> void:

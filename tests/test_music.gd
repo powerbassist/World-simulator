@@ -164,6 +164,25 @@ func _check_band_and_moments() -> void:
 	Music.follow(desk, "crisis", 20, 4343)
 	if not is_equal_approx(float(music.flow.get("out", 0.0)), 1.0) or float(music.flow.get("gain", 1.0)) > 0.0:
 		_fail("the node's bed change did not crossfade: %s" % music.flow)
+	# The parent's TAKE 3 on #230: a Settings save re-applies the level to the bed
+	# playing -- its volume only, never from its top, and the flow goes on.
+	var bed := AudioStreamPlayer.new()
+	bed.stream = AudioStreamGenerator.new()
+	music.add_child(bed)
+	music._player = bed
+	bed.play()
+	music._process(1.0)
+	var flowing: Dictionary = music.flow.duplicate()
+	_set_music(3)
+	SettingsPanel.revision += 1
+	music._process(0.0)
+	if music._player != bed or not bed.playing:
+		_fail("a Settings save restarted the bed (playing %s)" % bed.playing)
+	if float(music.flow["played"]) != float(flowing["played"]) or float(music.flow["gain"]) != float(flowing["gain"]):
+		_fail("a Settings save reset the flow: %s, was %s" % [music.flow, flowing])
+	_set_music(SettingsPanel.DEFAULT_MUSIC)
+	SettingsPanel.revision += 1
+	music._process(0.0)
 	Music.override_manifest = {}
 	# The duck seen by the node itself, a frame at a time.
 	var voice := AudioStreamPlayer.new()
