@@ -54,7 +54,8 @@ extends SceneTree
 ##        Priorities' no-damping window is never damped, and no request lapses
 ##        unshown in its last month while a line was free for it (a line, a
 ##        "+N more", or the card's "Also due this month" footer, rank()'s
-##        `also_due`, counts as shown); the kinds seen are reported;
+##        `also_due`, counts as shown); over the run, every kind rank() lists
+##        as `qualified` appears in a line at least once;
 ##   RF9  bed changes at most once per 2 months on average, and the crisis bed
 ##        at the first briefing after a crisis (an interrupt or a severity-3
 ##        card) arrives.
@@ -341,6 +342,10 @@ func _brief(state, ns, row: Dictionary, report: Dictionary, brief: Dictionary) -
 	for item in out.get("also_due", []):
 		also_due.append("%s|%s" % [String(item["kind"]), String(item["subject"])])
 	row["also_due"] = also_due
+	# The kinds that had a candidate this month, held included (rank()'s own
+	# list; absent on an older ranking, and then RF2 reports kinds unGATED).
+	if out.has("qualified"):
+		row["qualified"] = (out["qualified"] as Array).map(func(k): return String(k))
 	row["held_rule"] = not (row["held_ids"] as Array).is_empty() or bool(row["programme_held"])
 	var crisis_severity := int(_priorities.K.CRISIS_SEVERITY)
 	row["crisis_arrived"] = (row["arrivals"] as Array).any(func(a) -> bool:
@@ -455,12 +460,20 @@ func _rf2(rows: Array) -> Dictionary:
 	var pairs := maxf(float(n - 1), 1.0)
 	var repeat_share := repeats / pairs
 	var mean_overlap := overlap / pairs
+	# Every kind that qualifies in the run appears in a line at least once.
+	var gated := not briefed.is_empty() and briefed.all(func(r) -> bool: return r.has("qualified"))
+	var never_shown: Array = []
+	if gated:
+		for row in briefed:
+			for k in row["qualified"]:
+				if not kinds.has(k) and not never_shown.has(k):
+					never_shown.append(k)
 	return {
 		"months": n, "repeat_share": repeat_share, "mean_overlap": mean_overlap,
 		"held_missed": held_missed, "damped_near": damped, "lapsed_unshown": lapsed_unshown,
-		"kinds_seen": kinds,
+		"kinds_seen": kinds, "kinds_gated": gated, "qualified_never_shown": never_shown,
 		"pass": n > 1 and repeat_share <= RF2_MAX_REPEAT and mean_overlap <= RF2_MAX_OVERLAP
-			and held_missed == 0 and damped == 0 and lapsed_unshown == 0,
+			and held_missed == 0 and damped == 0 and lapsed_unshown == 0 and never_shown.is_empty(),
 	}
 
 
@@ -534,9 +547,10 @@ func _print_run(run: Dictionary) -> void:
 		var rf2: Dictionary = run["rf2"]
 		print("    RF1 %s: %d briefings, %d not three kinds %s" % [
 			"PASS" if bool(rf1["pass"]) else "FAIL", int(rf1["briefings"]), (rf1["bad"] as Array).size(), JSON.stringify(rf1["bad"])])
-		print("    RF2 %s over %d months: repeats %.0f %%, mean overlap %.2f, held missed %d, damped near %d, lapsed unshown %d; kinds %s" % [
+		print("    RF2 %s over %d months: repeats %.0f %%, mean overlap %.2f, held missed %d, damped near %d, lapsed unshown %d; qualified never shown %s; kinds %s" % [
 			"PASS" if bool(rf2["pass"]) else "FAIL", int(rf2["months"]), 100.0 * float(rf2["repeat_share"]),
 			float(rf2["mean_overlap"]), int(rf2["held_missed"]), int(rf2["damped_near"]), int(rf2["lapsed_unshown"]),
+			JSON.stringify(rf2["qualified_never_shown"]) if bool(rf2["kinds_gated"]) else "(not gated)",
 			JSON.stringify(rf2["kinds_seen"])])
 	if run.has("rf9"):
 		var rf9: Dictionary = run["rf9"]
