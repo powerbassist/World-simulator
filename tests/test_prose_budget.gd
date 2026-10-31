@@ -29,8 +29,8 @@ extends SceneTree
 ## under a ratchet that only comes down, towards RF6's 3 600.
 
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
-## The inbox at month 12 (spec 3.5's target 170), held at its measure until the
-## notes were grouped; the spec's target is 170.
+## The inbox at month 12, at its measure once the lapses were grouped (spec 3.5's
+## target is 170: the rest is the consequence card the briefing now says).
 const INBOX_CEILING := 190
 
 ## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column). Orgs is
@@ -51,16 +51,16 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250}
+const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95}
 const TOTAL_PENDING := {
 	"budget": 107, "calendar": 42, "campaign": 274, "commodities": 418,
-	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118, "events": 187,
+	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106, "tax": 25,
 }
 ## The sum of every tab's total, a ratchet: each rebuilding PR lowers it to what it
 ## measured. RF6's target is 3 600.
-const TOTAL_SUM_CEILING := 4175
+const TOTAL_SUM_CEILING := 3607
 const TOTAL_SUM_TARGET := 3600
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.

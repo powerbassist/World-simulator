@@ -146,8 +146,8 @@ func _check_the_sinks_mark_terms() -> void:
 		_fail("set_body bypassed the marking: %s" % body.text)
 	inbox.queue_free()
 	var source := FileAccess.get_file_as_string("res://src/ui/events_panel.gd")
-	for sink in ['PanelKit.rich(_body, Strings.row_summary("events", ev))',
-			'PanelKit.rich(block, Strings.choice_summary(ev.id, choice))']:
+	for sink in ['PanelKit.rich(box, Strings.row_summary("events", ev))',
+			'PanelKit.rich(detail, Strings.choice_summary(ev.id, choice))']:
 		if not source.contains(sink):
 			_fail("events_panel.gd no longer prints its text through a rich line: %s" % sink)
 	_check_the_row_sinks()
@@ -159,7 +159,7 @@ func _check_the_sinks_mark_terms() -> void:
 ## summary shown there reads its words without the tags.
 func _check_the_row_sinks() -> void:
 	var sinks := {
-		"res://src/ui/events_panel.gd": ["PanelKit.rich(block, what)"],
+		"res://src/ui/events_panel.gd": ["answer.tooltip_text = PanelKit.TermText.plain(what)"],
 		"res://src/ui/law_list.gd": ["PanelKit.rich(_detail, Strings.law_summary(law), PanelKit.Tone.PLAIN)"],
 		"res://src/ui/programme_picker.gd": ['PanelKit.rich(block, Strings.row_summary("programme", terms))'],
 		"res://src/ui/campaign_panel.gd": ['button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("pledges", action))'],
