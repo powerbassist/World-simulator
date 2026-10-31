@@ -149,4 +149,5 @@ func speak(titles: Array, extra: Dictionary) -> void:
 
 ## Escape's door, the stack's cancel: the same as Close.
 func close() -> void:
+	AudienceVoice.hush(self, true)  # the call is over: no line outlives it
 	closed.emit()

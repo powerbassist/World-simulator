@@ -125,6 +125,23 @@ func _check_lines(loader) -> void:
 	player.finished.emit()
 	if not caption.text.contains("Someone else entirely."):
 		_fail("a queued line was read from the first caller's voice: '%s'" % caption.text)
+	# The queue is cleared when an audience opens on someone new, and cut with the
+	# line when a call closes: Voice.stop emits no `finished` (#222 pass 2).
+	player.set_meta("pending", true)
+	AudienceVoice.say(holder, caption, voice, "farewell")
+	AudienceVoice.hush(holder)
+	if String(player.get_meta("next", "")) != "":
+		_fail("hush() left a queued line")
+	AudienceVoice.say(holder, caption, voice, "farewell")
+	AudienceVoice.hush(holder, true)
+	for c in player.finished.get_connections():
+		if (c["callable"] as Callable).get_method() == "_said_next":
+			_fail("hush(stop) left the queue's one-shot on `finished`")
+	if String(player.get_meta("next", "")) != "":
+		_fail("hush(stop) left a queued line")
+	# Above every cut (NaN): no word and no band, as word() always had it.
+	if Feelings.band("grudge", NAN) != -1 or Feelings.word("grudge", NAN) != "":
+		_fail("a value past every cut found a band")
 	caption.free()
 	holder.free()
 

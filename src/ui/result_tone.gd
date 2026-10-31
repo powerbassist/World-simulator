@@ -66,7 +66,7 @@ static func tag(tone: String) -> Label:
 ## An inbox card's tag, under its title, as the party chip sits; nothing for a
 ## neutral result or a card the inbox no longer has.
 static func mark(inbox, card_id: String, tone: String) -> void:
-	if inbox != null and card_id != "" and TAG.has(tone):
+	if inbox != null and card_id != "" and TAG.has(tone) and not inbox.has_tag(card_id):
 		inbox.add_under_title(card_id, tag(tone))
 
 

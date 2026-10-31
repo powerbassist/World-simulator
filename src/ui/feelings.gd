@@ -85,6 +85,8 @@ static func bond_word(bond: String) -> String:
 ## The word a register's value reads as, translated; "" for a band with none.
 static func word(register: String, value: float, office := false) -> String:
 	var i := band(register, value)
+	if i < 0:
+		return ""
 	if register == "loyalty" and office and i == 0:
 		return Strings.t(OFFICE_DISLOYAL)
 	var said := String(BANDS[register][i][2])
@@ -99,7 +101,7 @@ static func band(register: String, value: float) -> int:
 		var cut := float(bands[i][0])
 		if Cut.at_or_below(value, cut) if bool(bands[i][1]) else Cut.below(value, cut):
 			return i
-	return bands.size() - 1
+	return -1  # above every cut (NaN): no word, as word() always had it
 
 
 ## Register -> word for `feel` (of() above), the bands that show none included. A

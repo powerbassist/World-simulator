@@ -161,6 +161,7 @@ func open(view: Dictionary) -> void:
 	ResultTone.apply(_tone, "")
 	_voice = view.get("voice", {})
 	_spoken.visible = false
+	AudienceVoice.hush(self)  # the last visitor's queued line is not this one's
 	AudienceVoice.say(self, _spoken, _voice, "greet")
 	for child in _party.get_children():
 		child.queue_free()

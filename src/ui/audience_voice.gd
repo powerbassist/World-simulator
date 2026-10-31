@@ -70,15 +70,44 @@ static func say(parent: Node, caption: Label, voice: Dictionary, id: String) -> 
 		# not have its greeting read from the last one's lines (#222 pass 1).
 		player.set_meta("next", id)
 		player.set_meta("next_voice", voice)
+		player.set_meta("next_caption", caption)
 		if not waiting:
-			player.finished.connect(func() -> void:
-				var next := String(player.get_meta("next", ""))
-				var next_voice: Dictionary = player.get_meta("next_voice", {})
-				player.set_meta("next", "")
-				player.set_meta("next_voice", {})
-				if is_instance_valid(caption):
-					say(parent, caption, next_voice, next), CONNECT_ONE_SHOT)
+			player.finished.connect(_said_next.bind(parent, player), CONNECT_ONE_SHOT)
+		return
+	if caption == null:
 		return
 	caption.text = Strings.t("“%s”") % String(voice[id]["text"])
 	caption.visible = true
 	Voice.speak(parent, String(voice[id]["clip"]))
+
+
+## The queued line, once the one playing has ended: read from the queue as it is
+## now, so a newer caller's voice and caption win (#222 passes 1 and 2).
+static func _said_next(parent: Node, player: AudioStreamPlayer) -> void:
+	var next := String(player.get_meta("next", ""))
+	var voice: Dictionary = player.get_meta("next_voice", {})
+	var caption = player.get_meta("next_caption", null)
+	_clear(player)
+	if is_instance_valid(parent) and is_instance_valid(caption):
+		say(parent, caption, voice, next)
+
+
+## Drops the queued line and the one-shot waiting for it (an audience opening on
+## someone new). With `stop`, the line playing ends too (the call is over):
+## Voice.stop emits no `finished`, so the one-shot would fire on the next line.
+static func hush(parent: Node, stop := false) -> void:
+	var player := parent.get_node_or_null(Voice.NODE) as AudioStreamPlayer
+	if player == null:
+		return
+	_clear(player)
+	for c in player.finished.get_connections():
+		if (c["callable"] as Callable).get_method() == "_said_next":
+			player.finished.disconnect(c["callable"])
+	if stop:
+		Voice.stop(parent)
+
+
+static func _clear(player: AudioStreamPlayer) -> void:
+	player.set_meta("next", "")
+	player.set_meta("next_voice", {})
+	player.set_meta("next_caption", null)
