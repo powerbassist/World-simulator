@@ -108,6 +108,14 @@ func show_city(city_id: String) -> void:
 	_dirty = true
 
 
+## A city opened from the map is a visit: the tab comes back on the regions, not
+## on the last city clicked (a Berlin cross would otherwise answer "Territory").
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree() and _city_id != "":
+		_city_id = ""
+		_dirty = true
+
+
 func _process(_delta: float) -> void:
 	if _pin_pending:
 		_pin_pending = false

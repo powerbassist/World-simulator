@@ -10,6 +10,7 @@ extends SceneTree
 ##     the player's sites each with a Go that opens the tab acting on it, its
 ##     largest cities;
 ##   - a city opens in place with a way back; the map's cross opens the same view;
+##   - the tab closed on a city comes back on the regions, not on that city;
 ##   - the City tab is gone from the Territory domain.
 
 const Click = preload("res://tests/click.gd")
@@ -66,6 +67,12 @@ func _process(_delta: float) -> bool:
 				_fail("the map's cross did not open the city in Territory")
 			if Domains.tabs("territory", _main._windows.panel_ids()) != ["region"]:
 				_fail("Territory still has more than one tab: %s" % [Domains.tabs("territory", _main._windows.panel_ids())])
+			_main._windows.close_all()
+		33:
+			_main._windows.open("region")
+		36:
+			if _panel._back_button.visible or _text(_panel._body).to_upper().contains("NAMED EMPLOYERS"):
+				_fail("Territory, reopened, still shows the city the map opened last")
 			_finish()
 			return true
 	return false

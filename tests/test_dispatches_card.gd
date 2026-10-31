@@ -9,11 +9,15 @@ extends SceneTree
 ##   - a real click (press and release frames apart) on a choice opens ITS summary
 ##     and a Choose, and nothing is answered yet;
 ##   - a click on Choose answers that choice (the desk entry leaves the queue and
-##     the ledger records it), and the record's meaning rides the answer's hover.
+##     the ledger records it), and the record's meaning rides the answer's hover;
+##     the open choice is forgotten, so the event, coming back, starts closed;
+##   - the countdown chip is neutral until the last month: a deadline three months
+##     off is not an alert.
 
 const Click = preload("res://tests/click.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -82,6 +86,10 @@ func _check_closed() -> void:
 			_fail("a choice's summary is on screen before any choice was selected")
 	if _button("Choose") != null:
 		_fail("a Choose is on screen before any choice was selected")
+	var months := Strings.tn("%d month left", "%d months left", 3) % 3
+	for label in _panel._body.find_children("*", "Label", true, false):
+		if (label as Label).text == months and (label as Label).theme_type_variation != UiTheme.CAPTION:
+			_fail("the countdown chip wears %s three months off, not the neutral caption" % (label as Label).theme_type_variation)
 
 
 func _check_open() -> void:
@@ -109,6 +117,8 @@ func _check_answered() -> void:
 			hovered = true
 	if not hovered and _summary(_choice) != "":
 		_fail("the timeline's answer carries no meaning on hover")
+	if _panel._picked.has(String(_ev.id)):
+		_fail("the answered event's open choice is kept: it would come back already open")
 
 
 func _button(text: String) -> Button:

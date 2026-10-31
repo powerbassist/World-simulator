@@ -175,6 +175,15 @@ func _refresh() -> void:
 func _build_pending(ns) -> void:
 	PanelKit.heading(_body, tr("On your desk"))
 
+	# An open choice is kept only for an entry still on the desk: one answered, or
+	# gone with a load, starts closed if its event comes back.
+	var live := {}
+	for entry in ns.event_queue:
+		live[String(entry.get("event_id", ""))] = true
+	for id in _picked.keys():
+		if not live.has(id):
+			_picked.erase(id)
+
 	# V4.4: the desk is a queue, ordered worst-first by the machine, and the panel
 	# prints every entry -- a Dispatches window that showed only the head would
 	# answer four deadlines with one clock's worth of information. Each entry
@@ -262,7 +271,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	var left := int(entry.get("months_left", 0))
 	var clock := Label.new()
 	clock.text = tr_n("%d month left", "%d months left", left) % left
-	clock.theme_type_variation = UiTheme.BAD_TEXT if left <= 1 else UiTheme.WARN_TEXT
+	clock.theme_type_variation = UiTheme.BAD_TEXT if left <= 1 else UiTheme.CAPTION
 	chips.add_child(clock)
 
 	var who := _subject_label(ns, ev)
@@ -326,7 +335,10 @@ func _build_choice(box: Control, ev, choice: Dictionary) -> void:
 		choose.text = tr("Choose")
 		choose.pressed.connect(func(): _on_choose(ev, choice))
 		detail.add_child(choose)
-		_primary = choose
+		# The open option's Choose stands in for its own toggle only, so the first
+		# entry on the desk keeps the primary verb (primary_action()'s build order).
+		if _primary == button:
+			_primary = choose
 
 	box.add_child(block)
 
@@ -342,6 +354,7 @@ func _on_choose(ev, choice: Dictionary) -> void:
 	var record := Events.answer(_state, _loader, ev.id, String(choice.get("id", "")))
 	if record.is_empty():
 		return
+	_picked.erase(ev.id)
 	_dirty = true
 	acted.emit(before, "%s: %s" % [Strings.row_name("events", ev), Strings.choice_label(ev.id, choice)])
 
