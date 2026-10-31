@@ -20,6 +20,7 @@ const Voices = preload("res://src/core/voices.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const TopBar = preload("res://src/ui/top_bar.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Voice = preload("res://src/ui/voice.gd")
 
 var _failures: Array[String] = []
 
@@ -110,6 +111,20 @@ func _check_lines(loader) -> void:
 	AudienceVoice.say(holder, caption, voice, "")
 	if not caption.text.contains(String(voice["greet"]["text"])):
 		_fail("a neutral result replaced the line")
+	# Queued behind a line still playing: the newest caller's voice speaks, not the
+	# voice of the call that first queued (#222 pass 1). A pending player stands in
+	# for one that is playing; finished is emitted by hand.
+	var player := AudioStreamPlayer.new()
+	player.name = Voice.NODE
+	player.set_meta("pending", true)
+	holder.add_child(player)
+	var other := {"greet": {"text": "Someone else entirely.", "clip": ""}}  # i18n: ok test data
+	AudienceVoice.say(holder, caption, voice, "farewell")
+	AudienceVoice.say(holder, caption, other, "greet")
+	player.set_meta("pending", false)
+	player.finished.emit()
+	if not caption.text.contains("Someone else entirely."):
+		_fail("a queued line was read from the first caller's voice: '%s'" % caption.text)
 	caption.free()
 	holder.free()
 
@@ -127,7 +142,9 @@ func _check_figure_flash() -> void:
 	var cases := [
 		["approval up", "approval", "41%", "43%", UiTheme.GOOD],
 		["approval down", "approval", "43%", "41%", UiTheme.BAD],
-		["deficit up", "deficit", "4.1%", "4.6%", UiTheme.BAD],
+		# The strip's own text: the signed balance, Num.fs(-deficit) ("%+.2f").
+		["deficit up", "deficit", "-4.10%", "-4.60%", UiTheme.BAD],
+		["deficit down", "deficit", "-4.60%", "-4.10%", UiTheme.GOOD],
 		["a negative growth deeper", "gdp", "-0.4%", "-1.2%", UiTheme.BAD],
 		["unemployment down", "unemployment", "7.4%", "7.1%", UiTheme.GOOD],
 		["no move", "approval", "41%", "41%", Color(0, 0, 0, 0)],

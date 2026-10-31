@@ -49,9 +49,11 @@ const Num = preload("res://src/ui/num.gd")
 ## value, U2's shape -- the author's call at that measurement.
 ## V5.3-0 4.5: the figures that flash in a status tone when they move, and
 ## whether rising is good news -- the same calls as Trends' worse_when_rising for
-## the four it watches. The rest of the strip moves without a verdict.
+## the four it watches. The rest of the strip moves without a verdict. "deficit"
+## is the one that reads the other way from Trends: the strip shows the signed
+## BALANCE (_deficit, surplus +), so rising is good news there (#222 pass 1).
 const GOOD_WHEN_RISING := {
-	"approval": true, "deficit": false, "gdp": true, "unemployment": false,  # i18n: ok reading ids
+	"approval": true, "deficit": true, "gdp": true, "unemployment": false,  # i18n: ok reading ids
 	"inflation": false, "unrest": false,  # i18n: ok reading ids
 }
 

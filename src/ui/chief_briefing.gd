@@ -96,6 +96,9 @@ func show_view(view: Dictionary) -> void:
 	var feel: Dictionary = view.get("feel", {})
 	if not feel.is_empty():
 		MoodBadge.wear(_face, feel)
+	elif _face.has_node("MoodBadge"):
+		# A card reused for a month with no chief must not keep the last one's mood.
+		_face.get_node("MoodBadge").free()
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.queue_free()

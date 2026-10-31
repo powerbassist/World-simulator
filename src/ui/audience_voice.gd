@@ -66,13 +66,18 @@ static func say(parent: Node, caption: Label, voice: Dictionary, id: String) -> 
 	var player := parent.get_node_or_null(Voice.NODE) as AudioStreamPlayer
 	if player != null and (player.playing or bool(player.get_meta("pending", false))):
 		var waiting := not String(player.get_meta("next", "")).is_empty()
+		# The voice waits beside its id: a scene reused for the next person must
+		# not have its greeting read from the last one's lines (#222 pass 1).
 		player.set_meta("next", id)
+		player.set_meta("next_voice", voice)
 		if not waiting:
 			player.finished.connect(func() -> void:
 				var next := String(player.get_meta("next", ""))
+				var next_voice: Dictionary = player.get_meta("next_voice", {})
 				player.set_meta("next", "")
+				player.set_meta("next_voice", {})
 				if is_instance_valid(caption):
-					say(parent, caption, voice, next), CONNECT_ONE_SHOT)
+					say(parent, caption, next_voice, next), CONNECT_ONE_SHOT)
 		return
 	caption.text = Strings.t("“%s”") % String(voice[id]["text"])
 	caption.visible = true
