@@ -166,17 +166,20 @@ static func speak_queued(parent: Node, path: String, card_id: String, gate: Canv
 		entry["gate"] = gate  # read with is_instance_valid: a freed gate is a closed card
 	queue.append(entry)
 	player.set_meta(QUEUE, queue)
-	if player.get_node_or_null(WAIT) != null:
-		return
 	# A Timer the player owns, calling a bound static: when the player (or its
 	# parent) goes, the wait goes with it, no lambda left holding freed captures.
-	var wait := Timer.new()
-	wait.name = WAIT
-	wait.one_shot = true
-	wait.wait_time = QUEUE_POLL_S
-	wait.timeout.connect(_next.bind(parent, player, wait))
-	player.add_child(wait)
-	wait.start()
+	# Kept, stopped, once the queue empties: a timer freed then would still be found
+	# for the rest of its frame, and a line queued in that frame would wait forever.
+	var wait := player.get_node_or_null(WAIT) as Timer
+	if wait == null:
+		wait = Timer.new()
+		wait.name = WAIT
+		wait.one_shot = true
+		wait.wait_time = QUEUE_POLL_S
+		wait.timeout.connect(_next.bind(parent, player, wait))
+		player.add_child(wait)
+	if wait.is_stopped():
+		wait.start()
 
 
 static func _next(parent: Node, player: AudioStreamPlayer, wait: Timer) -> void:
@@ -186,9 +189,7 @@ static func _next(parent: Node, player: AudioStreamPlayer, wait: Timer) -> void:
 		if not entry.has("gate") or (is_instance_valid(entry["gate"])
 				and (entry["gate"] as CanvasItem).is_visible_in_tree()):
 			speak(parent, String(entry["path"]), 0.0, String(entry["card"]))
-	if queue.is_empty():
-		wait.queue_free()
-	else:
+	if not queue.is_empty():
 		wait.start()
 
 

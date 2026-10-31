@@ -83,7 +83,7 @@ func _process(_delta: float) -> bool:
 			_check_chief()
 			_queue_behind_messenger()
 			return false
-		"waiting", "after", "cancel", "freed", "behind", "hushed", "stopped":
+		"waiting", "after", "cancel", "freed", "behind", "hushed", "stopped", "orphan":
 			if Time.get_ticks_msec() - _since < WAIT_MS:
 				return false
 			_queue_step()
@@ -224,6 +224,20 @@ func _queue_step() -> void:
 		"stopped":
 			if player.stream != null:
 				_fail("a stop (a load) left a queued line to play after it (%s)" % player.get_meta("card", ""))
+			# The poll empties the queue and the line it starts holds the player; a line
+			# queued in that same frame still has a poll to wait on.
+			player.set_meta("pending", true)
+			Voice.speak_queued(_desk, String(_said["clip"]), "desk_d")
+			player.set_meta("pending", false)
+			Voice._next(_desk, player, player.get_node(Voice.WAIT))
+			player.set_meta("pending", true)  # desk_d talking
+			Voice.speak_queued(_desk, String(_said["clip"]), "desk_e")
+			player.stop()
+			player.set_meta("pending", false)  # desk_d has ended
+			_phase = "orphan"
+		"orphan":
+			if String(player.get_meta("card", "")) != "desk_e":
+				_fail("a line queued in the frame the queue emptied never played (%s)" % player.get_meta("card", ""))
 			_phase = "done"
 	_since = Time.get_ticks_msec()
 
