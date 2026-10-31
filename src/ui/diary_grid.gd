@@ -171,9 +171,13 @@ func _render() -> void:
 		for e in entries.get(d, []):
 			cell.marks.append(String(e["mark"]))
 			texts.append(String(e["text"]))
-		cell.tooltip_text = "\n".join(texts)
 		for o in offered.get(d, []):
 			cell.offers[String(o["id"])] = o["date"]
+			# A refused offered day says why on its hover, as its Book here does.
+			var why := String((o["date"] as Dictionary).get("reason", ""))
+			if why != "":
+				texts.append("%s: %s" % [String(o["person"]), Strings.t(why)])  # i18n: row-ok the sim's reason, its English the msgid
+		cell.tooltip_text = "\n".join(texts)
 		cell.picked.connect(_pick)
 		cell.dropped.connect(func(id: String, date: Dictionary) -> void: booked.emit(id, date))
 		_days.add_child(cell)

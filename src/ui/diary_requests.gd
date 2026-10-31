@@ -88,6 +88,8 @@ func request_id() -> String:
 ## `rows` are audience_driver.row_of()'s; `focused` the request being booked.
 func show_requests(rows: Array, focused: String) -> void:
 	_focused = focused
+	# Re-read on every redraw: the player can change the text size mid-game (#221 RECORD 8).
+	custom_minimum_size.x = WIDTH * UiTheme.text_scale()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -129,13 +131,15 @@ func _card(row: Dictionary) -> Control:
 	var chips := HBoxContainer.new()
 	chips.add_theme_constant_override("separation", 6)
 	who.add_child(chips)
+	# The party in words too, never colour alone (V5.2 close R3): its initials
+	# beside the swatch, the full name on the hover; a person with none says so.
+	var party := PartyChip.make(row.get("party", {}))
+	var party_name: Label = party.find_child("Party", false, false)
+	party.tooltip_text = party_name.text
+	party.mouse_filter = Control.MOUSE_FILTER_PASS
 	if row.has("party"):
-		var party := PartyChip.make(row["party"])
-		var party_name: Label = party.find_child("Party", false, false)
-		party_name.visible = false
-		party.tooltip_text = party_name.text
-		party.mouse_filter = Control.MOUSE_FILTER_PASS
-		chips.add_child(party)
+		party_name.text = _initials(party_name.text)
+	chips.add_child(party)
 	var wants := String(row.get("wants", row.get("ask", "")))
 	chips.add_child(_glyph("Want", WANT_ICONS.get(String(row.get("object", "")).get_slice(":", 0), "forum.svg"), wants))  # i18n: ok a node name, found by tests
 	var by_tip := "%s\n%s\n%s" % [Strings.t("Answer by %s") % String(row.get("by", "")),
@@ -200,6 +204,35 @@ static func _glyph(node_name: String, file: String, tip: String) -> TextureRect:
 	return glyph
 
 
+## "Union Conservatrice" -> "UC": a party's name in one short word.
+static func _initials(party_name: String) -> String:
+	var out := ""
+	for part in party_name.split(" ", false):
+		out += part.left(1).to_upper()
+	return out
+
+
+## After a request's Days: the keyboard lands on the picked day's "Book here" for
+## it, else on the rebuilt Days, and a request with no day the Diary can take says
+## so on its card (the old picker's line).
+func focus_booking(request_id: String) -> void:
+	for b in _grid.day_list.find_children("BookHere_%s" % request_id, "Button", true, false):
+		if not (b as Button).disabled and not b.is_queued_for_deletion():
+			(b as Button).grab_focus()
+			return
+	var card := find_child("Request_%s" % request_id, true, false)
+	if card == null:
+		return
+	var days := card.find_child("Days", true, false) as Button
+	if days != null:
+		days.grab_focus()
+	var box: Node = card.get_child(0)
+	if box.find_child("NoDay", false, false) == null:
+		var none := PanelKit.plain_line(box, Strings.t("They offer no day you can take."))
+		none.name = "NoDay"  # i18n: ok a node name, found by tests
+		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
 ## The sim's refusal on a verb, as the inbox card shows it (request_lane._answer).
 static func _answerable(button: Button, answer: Dictionary) -> void:
 	if not bool(answer.get("ok", true)):
@@ -216,6 +249,8 @@ func _drag(row: Dictionary) -> Variant:
 	preview.text = String(row.get("person", ""))
 	preview.theme_type_variation = UiTheme.CAPTION
 	set_drag_preview(preview)
+	# Deferred: the focus redraws this column, and get_drag_data must not free
+	# the card being dragged (parent pass 2 on #221).
 	if String(row["id"]) != _focused:
-		focus_requested.emit(String(row["id"]))
+		focus_requested.emit.call_deferred(String(row["id"]))
 	return {DRAG_KEY: String(row["id"])}

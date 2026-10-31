@@ -75,7 +75,6 @@ const KIND_LABEL := {
 
 var _state
 var _loader
-var _title: Label
 var _next_up: Label
 var _body: VBoxContainer
 var _kind_pick: OptionButton
@@ -105,9 +104,6 @@ func _ready() -> void:
 
 	var root := PanelKit.padded(self, 16, 10)
 
-	_title = Label.new()
-	_title.theme_type_variation = UiTheme.LEAD
-	root.add_child(_title)
 
 	# Outside the scroll, and that is the point. A new game's next twelve months
 	# are empty -- the nearest dated event is sixteen months out -- so the one
@@ -269,8 +265,8 @@ func _refresh_strip() -> void:
 		if child != _grid.day_list:
 			child.queue_free()
 
-	# V5.3-0 (b): the month is the grid's own header and today is the title bar's.
-	_title.text = tr("Diary")
+	# V5.3-0 (b): the month is the grid's own header and today is the title bar's;
+	# (b2): the tab and the breadcrumb already say "Diary", so the panel does not.
 
 	var rows := Calendar.upcoming(_state, K.BOOKING_HORIZON_MONTHS)
 	_refresh_next_up(rows)

@@ -69,8 +69,12 @@ static func register(main) -> void:
 		_seen(main, id)
 		refresh(main))
 	main._windows.closed.connect(func(id: String) -> void:
+		# The booking ends with the Diary: its days no longer tinted, its Days up.
 		if id == "calendar" and String(game["booking_for"]) != "":
-			_seen(main, String(game["booking_for"])))
+			var was := String(game["booking_for"])
+			game["booking_for"] = ""
+			_seen(main, was)
+			refresh(main))
 	# Each verb redraws the lane's side too: a promise made is in the Diary at once.
 	scene.attempted.connect(func(lever: String, args: Dictionary) -> void:
 		AudienceTalks.attempt(main, game, lever, args)
@@ -328,6 +332,7 @@ static func _open_booking(main, request_id: String) -> void:
 	main._windows.open("calendar")
 	main._calendar_panel.requests.show_days(Audiences.offered_dates(main._state, ns, request_id), main._state, main._loader)
 	refresh(main)
+	main._calendar_panel.requests.focus_booking(request_id)
 
 
 static func _answer(main, request_id: String, result: Dictionary) -> void:
