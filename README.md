@@ -62,6 +62,7 @@ covers which file, and the texts are in [LICENSES/](LICENSES/):
 | Code, tools and tests | [PolyForm Noncommercial 1.0.0](LICENSES/PolyForm-Noncommercial-1.0.0.txt): free to use, change and share for any noncommercial purpose |
 | Game content (`data/`), the design vault (`docs/`), and art generated from text alone | [CC BY-NC 4.0](LICENSES/CC-BY-NC-4.0.txt) |
 | The 425 portrait files generated from Wikimedia Commons photographs | [CC BY-SA 4.0](LICENSES/CC-BY-SA-4.0.txt), with each source credited in [docs/portrait-attribution.md](docs/portrait-attribution.md) |
+| The voice clips (`assets/audio/voice/`, made with ElevenLabs) | no open licence: [LicenseRef-ElevenLabs-Output](LICENSES/LicenseRef-ElevenLabs-Output.txt), all rights reserved, used under ElevenLabs' terms |
 | Fonts, `addons/`, the map raster, the Obsidian plugin bundles | their own licences (OFL-1.1, MIT, public domain, MIT/GPL/AGPL), declared in `REUSE.toml` |
 
 Commercial use of the code, content or text-generated art needs the author's
