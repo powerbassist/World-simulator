@@ -24,7 +24,7 @@ const TABLE := [
 	{"id": "parliament", "title": "Parliament", "icon": "gavel.svg", "tabs": ["legislature"]},  # i18n: msgid title
 	{"id": "finances", "title": "Finances", "icon": "payments.svg", "tabs": ["budget", "tax", "projects"]},  # i18n: msgid title
 	{"id": "economy", "title": "Economy", "icon": "monitoring.svg", "tabs": ["economy", "commodities"]},  # i18n: msgid title
-	{"id": "territory", "title": "Territory", "icon": "map.svg", "tabs": ["region", "city"]},  # i18n: msgid title
+	{"id": "territory", "title": "Territory", "icon": "map.svg", "tabs": ["region"]},  # i18n: msgid title
 	{"id": "energy", "title": "Energy", "icon": "bolt.svg", "tabs": ["energy"]},  # i18n: msgid title
 	{"id": "industry", "title": "Industry", "icon": "factory.svg", "tabs": ["companies"]},  # i18n: msgid title
 	{"id": "diplomacy", "title": "Diplomacy", "icon": "public.svg", "tabs": ["diplomacy", "orgs"]},  # i18n: msgid title

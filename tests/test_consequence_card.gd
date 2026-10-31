@@ -50,6 +50,9 @@ func _check_an_answer_comes_back_as_a_card() -> void:
 	var label := String(_main._pending_effects[0]["label"])
 	var before: Array = inbox._cards.keys()
 
+	# Spec 3.3 (#220): on a month the briefing shows, it says the consequence and the
+	# card is held back; this is the month it does not show, where the card stays.
+	preload("res://src/ui/briefing_driver.gd").suppressed = true
 	var clock = _main._clock
 	clock.set_process(false)
 	var month: int = clock.month

@@ -46,7 +46,6 @@ flowchart LR
   d_economy --> t_commodities["commodities"]
   sb --> d_territory["Territory"]
   d_territory --> t_region["region"]
-  d_territory --> t_city["city"]
   sb --> d_energy["Energy"]
   d_energy --> t_energy["energy"]
   sb --> d_industry["Industry"]

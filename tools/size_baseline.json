@@ -13,11 +13,11 @@
   "src/sim/statute.gd": 512,
   "src/ui/budget_panel.gd": 302,
   "src/ui/calendar_panel.gd": 425,
-  "src/ui/campaign_panel.gd": 361,
+  "src/ui/campaign_panel.gd": 342,
   "src/ui/election_panel.gd": 308,
   "src/ui/government_panel.gd": 317,
   "src/ui/law_panel.gd": 344,
-  "src/ui/main.gd": 931,
+  "src/ui/main.gd": 927,
   "src/ui/map_view.gd": 879,
   "src/ui/overview_panel.gd": 380,
   "src/ui/tax_panel.gd": 344

@@ -234,7 +234,7 @@ func _panel_variable_names() -> Array[String]:
 	out.append_array(["_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
 		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel", "_calendar_panel",
 		"_people_panel", "_companies_panel", "_projects_panel", "_campaign_panel",
-		"_events_panel", "_region_panel", "_city_panel"])
+		"_events_panel", "_region_panel"])
 	return out
 
 

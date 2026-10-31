@@ -70,6 +70,7 @@ func _initialize() -> void:
 	_vote_in(state, ns, 2)
 	await _probe("campaign-actions", "campaign", loader.campaign_actions, "name")
 	await _probe("campaign-actions", "campaign", loader.campaign_actions, "effects.campaign.effort_name")
+	_main._campaign_panel.promises_open = true  # the offers fold behind "Make a promise"
 	await _probe("pledges", "campaign", loader.pledges, "name")
 	await _probe("pledges", "campaign", loader.pledges, "effects.pledge.pledge_name")
 

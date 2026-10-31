@@ -514,6 +514,10 @@ func _check_same_month_defaults_queue_one_effect() -> void:
 	var history_size: int = ns.event_history.size()
 	var effects_before: int = _main._pending_effects.size()
 	var cards_before: Array = _main._hud.inbox._cards.keys()
+	# Spec 3.3: a default's card is held for the month's briefing, which pushes it on
+	# a month it does not show -- so a card counts in the inbox or in the hold.
+	var game: Dictionary = preload("res://src/ui/briefing_driver.gd")._games.get(_main.get_instance_id(), {})
+	var held_before: int = (game.get("month_cards", []) as Array).size()
 	# The live queue is snapshotted and put back below: this check stages on an
 	# empty desk but must hand the player's real queue to later checks intact.
 	var queue_before: Array = ns.event_queue.duplicate(true)
@@ -537,6 +541,9 @@ func _check_same_month_defaults_queue_one_effect() -> void:
 		if not cards_before.has(card_id):
 			new_cards += 1
 			_main._hud.inbox.dismiss(card_id)
+	var held: Array = game.get("month_cards", [])
+	new_cards += held.size() - held_before
+	game["month_cards"] = held.slice(0, held_before)
 	if new_cards != 2:
 		_fail("each default should still earn its own card, got %d" % new_cards)
 	# Clean up: only what this check added.

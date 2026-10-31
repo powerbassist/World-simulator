@@ -3165,7 +3165,7 @@ func _place_the_plants() -> void:
 ## view IS the frame V1.6e's per-flag direction asks for.
 func _let_the_people_move() -> void:
 	_tick_months(120)
-	_main._windows.open("city")
+	_main._windows.open("region")
 
 
 ## V2.2b, the map's own route driven end to end. Paris's coordinate is read from
@@ -3185,8 +3185,8 @@ func _point_at_the_capital() -> void:
 	view.zoom_by(2.0, view.size / 2.0)
 	view._hovered_city = "FR1_paris"
 	view.queue_redraw()
-	_main._city_panel.show_city("FR1_paris")
-	_main._windows.open("city")
+	_main._region_panel.show_city("FR1_paris")
+	_main._windows.open("region")
 
 
 ## V1.7c. A referendum called and left in flight, so the law panel's pending block is

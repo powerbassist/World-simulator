@@ -170,6 +170,8 @@
    "tests/test_briefing_go.gd",
    "tests/test_briefing_clock.gd",
    "tests/test_law_list.gd",
+   "tests/test_territory.gd",
+   "tests/test_dispatches_card.gd",
    "tests/test_person_links.gd",
    "tests/test_effects_ledger.gd",
    "tests/test_no_raw_tags.gd",

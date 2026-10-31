@@ -46,6 +46,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
+const ProgrammePicker = preload("res://src/ui/programme_picker.gd")
 
 ## election_panel's bar block size: wide enough to read at a glance, short
 ## enough to leave the window's right edge to the scroll gutter.
@@ -56,6 +57,10 @@ var _loader
 var _dirty := true
 var _title: Label
 var _body: VBoxContainer
+var _scroll: ScrollContainer
+## V5.3-0 (b): the term-start offer as a list and a detail (programme_picker.gd),
+## shown in place of the scrolling body while the offer is up.
+var _picker
 
 ## The first enabled CHOOSE button while the offer is up, else the first live
 ## entry's block -- primary_action()'s two halves, campaign_panel's device.
@@ -88,7 +93,11 @@ func _ready() -> void:
 	_title.theme_type_variation = UiTheme.LEAD
 	root.add_child(_title)
 
+	_picker = ProgrammePicker.new(self)
+	root.add_child(_picker)
+
 	var scroll := ScrollContainer.new()
+	_scroll = scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
@@ -135,76 +144,23 @@ func _refresh() -> void:
 		child.queue_free()
 
 	var offer: Array = Programme.available(_state, ns, _loader)
+	_picker.visible = not offer.is_empty()
+	_scroll.visible = offer.is_empty()
 	if offer.is_empty():
-		_build_register(ns)
+		_build_register(ns, _body)
 		if Programme.this_term(ns).is_empty():
 			PanelKit.line(_body, _unset_text(ns))
 		return
 
 	_offer_seen_term = int(ns.terms_served)
+	_picker.fill(ns, offer)
 	# The frame contract, in the model's own terms: a choice pays nothing
 	# (programme-model §8), the delivery is what the register prices.
 	# V5.2-0b: one line; the pricing rule (choosing costs nothing, the delivery is
 	# priced, no choice runs the term with none) is the programme term's plate.
-	PanelKit.line(_body, tr("Pick the term's [g=programme]programme[/g]. Delivery is judged when it lands or its deadline passes."))
-	_build_offer(ns, offer)
-	_build_register(ns)
-
-
-# --- The offer ------------------------------------------------------------------------
-
-## Sections per group, in the constants' own order. A group with nothing
-## offered draws nothing: an always-there heading for an empty filing is the
-## line that says nothing, and the sweep test guarantees each group is used
-## by the book even when this term's offer is not.
-func _build_offer(ns, offer: Array) -> void:
-	var by_group := {}
-	for terms in offer:
-		var group := String(terms.get("group", ""))
-		if not (by_group as Dictionary).has(group):
-			by_group[group] = []
-		(by_group[group] as Array).append(terms)
-
-	for group in ProgrammeK.GROUPS:
-		if not (by_group as Dictionary).has(group):
-			continue
-		var entries: Array = by_group[group]
-		# The authored weight is the order: tests/test_programme.gd's sweep
-		# pins that every entry carries one, which is what makes this a
-		# content decision rather than a load-order accident.
-		entries.sort_custom(func(a, b): return float(a.get("weight", 0.0)) > float(b.get("weight", 0.0)))
-		var body := PanelKit.section(_body, Labels.programme_group(String(group)))
-		for terms in entries:
-			body.add_child(_offer_block(ns, terms))
-
-
-func _offer_block(ns, terms: Dictionary) -> Control:
-	var block := VBoxContainer.new()
-	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	block.add_theme_constant_override("separation", 2)
-
-	PanelKit.line(block, Strings.row_name("programme", terms), PanelKit.Tone.PLAIN)
-	PanelKit.rich(block, Strings.row_summary("programme", terms))
-	PanelKit.line(block, "%s · %s" % [
-		_read_text(ns, terms), _clock_text(terms, 0, false),
-	], PanelKit.Tone.DIM)
-	block.add_child(_choose_button(terms))
-	return block
-
-
-func _choose_button(terms: Dictionary) -> Button:
-	var button := PanelKit.sized(Button.new())
-	button.text = tr("Choose")
-	button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("programme", terms))
-	var entry_id := String(terms["id"])
-	# The verb is a SIGNAL, not a call: the panel names what was chosen and
-	# main.gd performs the command. The panel never writes GameState.
-	button.pressed.connect(func(): programme_chosen.emit(entry_id))
-	# V5.3-0 RF3: Choose acts on the entry and on the offer the briefing holds a line for.
-	ActsOn.tag(button, [entry_id, "offer"])
-	if _primary == null:
-		_primary = button
-	return button
+	var intro := PanelKit.line(_picker.rows(), tr("Pick the term's [g=programme]programme[/g]. Delivery is judged when it lands or its deadline passes."))
+	_picker.rows().move_child(intro, 0)
+	_build_register(ns, _picker.rows())
 
 
 # --- The register ---------------------------------------------------------------------
@@ -212,10 +168,10 @@ func _choose_button(terms: Dictionary) -> Button:
 ## Every entry the register carries, this term's and the record's -- an entry
 ## that concluded stays on it, which is why the section reads as a ledger once
 ## the offer is gone.
-func _build_register(ns) -> void:
+func _build_register(ns, parent: Control) -> void:
 	if (ns.programme as Array).is_empty():
 		return
-	var body := PanelKit.section(_body, tr("The register"))
+	var body := PanelKit.section(parent, tr("The register"))
 	for entry in ns.programme:
 		body.add_child(_register_block(ns, entry))
 

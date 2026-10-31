@@ -35,8 +35,6 @@ const Labels = preload("res://src/ui/labels.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const CampaignK = preload("res://src/sim/campaign_constants.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
-const Programme = preload("res://src/sim/programme.gd")
-const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -45,6 +43,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const CampaignChest = preload("res://src/ui/campaign_chest.gd")
+const CampaignProgramme = preload("res://src/ui/campaign_programme.gd")
 const Events = preload("res://src/sim/events.gd")
 
 ## The six blocs as a player thinks of them. election_constants.gd and
@@ -87,6 +86,10 @@ var _site_region := ""
 ## the BOTTOM, so the scroll is per-flag rather than per-panel. V1.6e's correction has
 ## a direction as well as a subject.
 var _pin_bottom := false
+## The promises on offer are shown (the "Make a promise" toggle).
+var promises_open := false
+## "Make a promise" was just pressed: the rebuild refocuses it.
+var _refocus := false
 
 var _title: Label
 var _body: VBoxContainer
@@ -217,9 +220,8 @@ func _build_clock(ns) -> void:
 		return
 
 	PanelKit.row(_body, tr("Months to the vote"), "%d" % months)
-	if Campaign.is_open(_state, ns):
-		PanelKit.line(_body, tr("The run-up is open until the vote: each effort reaches and costs every month."))
-	else:
+	# V5.3-0 (b): an open run-up needs no line, each effort's own says its cost and reach.
+	if not Campaign.is_open(_state, ns):
 		PanelKit.line(_body, tr_n("The run-up opens in %d month.", "The run-up opens in %d months.", months - CampaignK.CAMPAIGN_WINDOW_MONTHS)
 			% (months - CampaignK.CAMPAIGN_WINDOW_MONTHS))
 
@@ -291,13 +293,13 @@ func _build_site(ns) -> void:
 	for region in _loader.regions.get(ns.id, []):
 		region_ids.append(String(region.id))
 		picker.add_item("%s — %s" % [region.region_name, Campaign.site_city_name(_loader, ns, String(region.id))])
-	var selected := region_ids.find(_site_region)
-	picker.select(selected)
+	picker.select(region_ids.find(_site_region))
 	picker.item_selected.connect(func(idx: int): _site_region = String(region_ids[idx]); _dirty = true)
+	picker.tooltip_text = tr("Travel and repeat visits cut the reach.")
 	_body.add_child(picker)
 
 	if _site_region == "":
-		PanelKit.line(_body, tr("Pick a region. Travel and repeat visits cut the reach."))
+		PanelKit.line(_body, tr("Pick a region."))
 		return
 	var days := Campaign.travel_days_to(ns, _loader, _site_region)
 	PanelKit.line(_body, tr_n("%d day's travel · reach ×%s a month · %d%% spoken to", "%d days' travel · reach ×%s a month · %d%% spoken to", days) % [
@@ -386,7 +388,8 @@ func _reach_text(terms: Dictionary) -> String:
 func _button(ns, action) -> Button:
 	var button := PanelKit.sized(Button.new())
 	button.text = Strings.row_name("campaign-actions", action)
-	button.tooltip_text = Strings.row_summary("campaign-actions", action)
+	var lasts := CampaignChest.lasts_text(ns, _loader, String(action.effects.get("campaign", {}).get("effort_id", "")))
+	button.tooltip_text = Strings.row_summary("campaign-actions", action) + ("\n" + lasts if lasts != "" else "")
 	# The site, then the money (C6): a start the chest cannot pay for says so, figures and all.
 	var why := CampaignChest.why_not(ns, _loader, action, _site_region)
 	if why != "":
@@ -426,61 +429,31 @@ func _on_act(ns, action) -> void:
 func _build_promises(ns) -> void:
 	PanelKit.heading(_body, tr("Promises"))
 
-	_build_programme(ns)
+	CampaignProgramme.build(_body, ns, _loader)
 
 	var books: Array = Pledges.on_the_books(ns)
-	if books.is_empty():
-		PanelKit.line(_body, tr("Nothing promised yet."))
 	for entry in books:
 		_build_promise_row(ns, entry)
-
+	# The promises on offer fold behind one toggle (spec 3.5's campaign diet):
+	# they are looked up once a run-up, the efforts above are read every month.
+	var toggle := PanelKit.sized(Button.new())
+	toggle.text = tr("Make a promise")
+	toggle.toggle_mode = true
+	toggle.button_pressed = promises_open
+	toggle.pressed.connect(func() -> void: promises_open = not promises_open; _refocus = true; _dirty = true)
+	# RF3: it opens the promises, which act on the coming vote (the election Go).
+	PanelKit.buttons(_body).add_child(preload("res://src/ui/acts_on.gd").tag(toggle, ["national"]))
+	if _refocus:
+		_refocus = false
+		toggle.call_deferred("grab_focus")
+	if not promises_open:
+		return
 	var offered := Pledges.available(_state, ns, _loader.pledges)
 	for action in _loader.pledges:
 		var terms: Dictionary = action.effects.get("pledge", {})
 		if Pledges.has_pledged(ns, String(terms.get("pledge_id", ""))):
 			continue
 		_build_promise_offer(ns, action, terms, offered.has(action))
-
-
-## The term's programme as a READ-ONLY line, docs/programme-model.md section 4's
-## mitigation: pledges and programmes are kept apart, but "apart" must not rot
-## into two lists the player reconciles by hand -- so the Promises section opens
-## on the programme, read through the same Programme.this_term() /
-## progress_of() / PanelKit.progress_fraction() trio the Agenda and the Overview
-## read. Never a second answer to one read, and never a write: the choice
-## happens on the Agenda or nowhere. A concluded entry prints its verdict rather
-## than a fraction -- a bar over a delivered programme would be a lie about a
-## term that is already priced.
-func _build_programme(ns) -> void:
-	var this_term: Array = Programme.this_term(ns)
-	if this_term.is_empty():
-		if Programme.is_term_start(ns):
-			PanelKit.line(_body, tr("No programme yet: see the Agenda (K)."), PanelKit.Tone.DIM)
-		else:
-			PanelKit.line(_body, tr("No programme was set this term."), PanelKit.Tone.DIM)
-		return
-	for entry in this_term:
-		var terms: Dictionary = Programme.terms_of(_loader, String(entry["entry_id"]))
-		if terms.is_empty():
-			# Content the loader no longer defines: the id stands in rather
-			# than a bar over nothing, agenda_panel.gd's rule.
-			PanelKit.line(_body, tr("%s -- the content behind it is gone; it concludes on the next tick.") % String(entry["entry_id"]), PanelKit.Tone.DIM)
-			continue
-		var name_text := Strings.row_name("programme", terms)
-		match String(entry["status"]):
-			ProgrammeK.STATUS_ACTIVE:
-				var read: Dictionary = Programme.progress_of(ns, terms)
-				var fraction: float = PanelKit.progress_fraction(
-					float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
-				PanelKit.line(_body, tr("%s · now %s · goal %s · %d%% there") % [
-					name_text, Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2), roundi(fraction * 100.0),
-				], PanelKit.Tone.PLAIN)
-			ProgrammeK.STATUS_COMPLETE:
-				PanelKit.line(_body, tr("%s · Delivered.") % name_text, PanelKit.Tone.GOOD)
-			ProgrammeK.STATUS_FAIL:
-				PanelKit.line(_body, tr("%s · Missed.") % name_text, PanelKit.Tone.BAD)
-			_:
-				PanelKit.line(_body, tr("%s · Overtaken by the world.") % name_text, PanelKit.Tone.DIM)
 
 
 func _build_promise_row(ns, entry: Dictionary) -> void:

@@ -78,7 +78,7 @@ func _set_money(amount: float) -> void:
 
 func _check_no_own_close() -> void:
 	for window_id in ["budget", "tax", "politics", "society", "legislature", "diplomacy", "orgs", "calendar",
-			"people", "outliner", "companies", "projects", "region", "commodities", "city", "energy", "campaign", "events"]:
+			"people", "outliner", "companies", "projects", "region", "commodities", "energy", "campaign", "events"]:
 		var page = _main._windows._pages.get(window_id, null)
 		var close = _find_close(page)
 		if page == null:
@@ -163,7 +163,7 @@ func _check_payable() -> void:
 	for pair in _start_buttons():
 		if pair[0].disabled:
 			_fail("'%s' is still disabled with a full chest: '%s'" % [pair[0].text, pair[0].tooltip_text])
-	if not _texts(_panel).contains("With this added, the chest lasts"):
+	if not _texts(_panel).contains("Chest then lasts"):
 		_fail("an offer does not say how long the chest pays with it added")
 
 
@@ -185,7 +185,7 @@ func _check_spent_offer() -> void:
 	var text := _texts(_panel)
 	if text.count("Already used: one run per run-up.") != 1:
 		_fail("the stopped effort does not say it is spent: '%s'" % text)
-	var forecasts := text.count("With this added, the chest lasts")
+	var forecasts := text.count("Chest then lasts")
 	if forecasts != _starts.size() - 1:
 		_fail("%d offers carry a months forecast; the spent one must not (%d starts)" % [forecasts, _starts.size()])
 
@@ -220,8 +220,11 @@ func _check_stopped_note() -> void:
 
 func _texts(node: Node) -> String:
 	var out := ""
-	if node is Label or node is Button:
+	if node is Label:
 		out += node.text + "\n"
+	# A Start button's hover carries the chest's months (spec 3.5's campaign diet).
+	elif node is Button:
+		out += node.text + "\n" + node.tooltip_text + "\n"
 	elif node is RichTextLabel:
 		out += node.get_parsed_text() + "\n"
 	for child in node.get_children():

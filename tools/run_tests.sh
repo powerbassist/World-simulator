@@ -242,6 +242,8 @@ tests=(
   tests/test_briefing_go.gd
   tests/test_briefing_clock.gd
   tests/test_law_list.gd
+  tests/test_territory.gd
+  tests/test_dispatches_card.gd
   tests/test_clock_doors.gd
   tests/test_consequence_card.gd
   tests/test_dead_ends.gd

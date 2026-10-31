@@ -54,8 +54,21 @@ var _scroll: ScrollContainer
 var _pin_bottom := false
 var _close_button: Button
 
+## V5.3-0 (b), R10 ("dispatches menu is fucked", then "pas tres élégant comme
+## menu"): each desk entry is ONE card -- the plate as a strip, the title, a
+## category and countdown chip, the messenger -- and its choices are buttons that
+## open their own authored text on select, with Choose under it. Three summaries
+## printed whole above three buttons were 72 of the tab's 187 words at month 12;
+## the player reads the one they are weighing. The ledger is a timeline: the
+## date and the matter, then what was decided, its meaning on hover.
+## event id -> the choice id whose text is open, "" for none. Presentation only:
+## a load or a new desk entry starts closed.
+var _picked := {}
+
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
+## The choice toggle just pressed ("event|choice"): the rebuild refocuses it.
+var _refocus := ""
 
 
 func _ready() -> void:
@@ -164,6 +177,15 @@ func _refresh() -> void:
 func _build_pending(ns) -> void:
 	PanelKit.heading(_body, tr("On your desk"))
 
+	# An open choice is kept only for an entry still on the desk: one answered, or
+	# gone with a load, starts closed if its event comes back.
+	var live := {}
+	for entry in ns.event_queue:
+		live[String(entry.get("event_id", ""))] = true
+	for id in _picked.keys():
+		if not live.has(id):
+			_picked.erase(id)
+
 	# V4.4: the desk is a queue, ordered worst-first by the machine, and the panel
 	# prints every entry -- a Dispatches window that showed only the head would
 	# answer four deadlines with one clock's worth of information. Each entry
@@ -213,6 +235,12 @@ func _build_entry(ns, entry: Dictionary) -> void:
 	# arrival card carries, so one crisis reads as one story in both places.
 	# Missing art is silent (the lenient precedent): the entry is a line again,
 	# never a hole where a header would have been.
+	var card := PanelContainer.new()
+	card.theme_type_variation = UiTheme.PLATE
+	_body.add_child(card)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	card.add_child(box)
 	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), ev.id)
 	if art != null:
 		var header := TextureRect.new()
@@ -221,60 +249,63 @@ func _build_entry(ns, entry: Dictionary) -> void:
 		header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		header.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		header.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		_body.add_child(Grade.apply(header))
+		box.add_child(Grade.apply(header))
 
-	PanelKit.line(_body, title, PanelKit.Tone.PLAIN)
+	var head := Label.new()
+	head.text = title
+	head.theme_type_variation = UiTheme.LEAD
+	head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(head)
 
+	# The chips: the category and its severity, then the clock. The deadline in the
+	# same units the register holds and the diary prints -- two surfaces reporting
+	# one fact in two units is how they come to disagree (U6c). NEUTRAL until the
+	# last month: a deadline is not good news at any distance.
+	var chips := HBoxContainer.new()
+	chips.add_theme_constant_override("separation", 12)
+	box.add_child(chips)
 	var tag := Label.new()
-	tag.text = tr("%s — severity %d/%d") % [Labels.event_category(String(ev.category)), int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
+	tag.text = "%s · %d/%d" % [Labels.event_category(String(ev.category)), int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
+	tag.tooltip_text = tr("The category, and its severity out of %d.") % EventsK.SEVERITY_MAX
+	tag.mouse_filter = Control.MOUSE_FILTER_PASS
 	tag.theme_type_variation = UiTheme.MICRO
-	_body.add_child(tag)
+	chips.add_child(tag)
+	var left := int(entry.get("months_left", 0))
+	var clock := Label.new()
+	clock.text = tr_n("%d month left", "%d months left", left) % left
+	clock.theme_type_variation = UiTheme.BAD_TEXT if left <= 1 else UiTheme.CAPTION
+	chips.add_child(clock)
 
 	var who := _subject_label(ns, ev)
 	if who != "":
 		var who_label := Label.new()
 		who_label.text = who
 		who_label.theme_type_variation = UiTheme.MICRO
-		_body.add_child(who_label)
+		box.add_child(who_label)
 
 	# V5.2d: who brings it, the same face the decision card carries, so one crisis
 	# has one messenger in both places it is read. The narrator adds nothing.
 	var face = SpeakerRow.build(_loader, ev, entry)
 	if face != null:
-		_body.add_child(face)
+		box.add_child(face)
 
-	PanelKit.rich(_body, Strings.row_summary("events", ev))
-
-	# The deadline in the same units the register holds and the diary prints. Two
-	# surfaces reporting one fact in two units is how they come to disagree -- U6c's
-	# hover read "12 of 96 months" against a project with twelve months LEFT.
-	var left := int(entry.get("months_left", 0))
-	var deadline := Label.new()
-	deadline.text = tr_n("%d month to answer, then: %s", "%d months to answer, then: %s", left) % [
-		left, Strings.choice_label(ev.id, ev.default_choice()),
-	]
-	# NEUTRAL until the last month, and the first captured frame is why: this line was
-	# GOOD_TEXT at any comfortable distance, so "2 months to answer, then: Say nothing"
-	# rendered in green -- the colour this interface uses for a delta that is good news.
-	# A deadline is not good news at any distance; it is only more or less urgent.
-	deadline.theme_type_variation = UiTheme.BAD_TEXT if left <= 1 else UiTheme.CAPTION
-	_body.add_child(deadline)
+	PanelKit.rich(box, Strings.row_summary("events", ev))
 
 	for choice in ev.choices:
-		_build_choice(ns, ev, choice)
+		_build_choice(box, ev, choice)
 
 
-## One option: what it does above the button that does it.
+## One option: its button opens what it does, and Choose under that does it.
 ##
-## The summary is printed rather than left in a tooltip, unlike projects_panel.gd's
-## verb buttons, and the difference is what a deadline does to a decision. A project
-## offer can be read at leisure and hovered; an event has a clock on it, and a
-## consequence the player has to hover to discover is one they will not discover.
-func _build_choice(ns, ev, choice: Dictionary) -> void:
+## The summary is printed on select rather than left in a tooltip, unlike
+## projects_panel.gd's verb buttons: an event has a clock on it, and a consequence
+## the player has to hover to discover is one they will not discover. But it is
+## printed for the option being weighed, not for all three at once (R10).
+func _build_choice(box: Control, ev, choice: Dictionary) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 2)
-
-	PanelKit.rich(block, Strings.choice_summary(ev.id, choice))
+	var choice_id := String(choice.get("id", ""))
+	var open := String(_picked.get(ev.id, "")) == choice_id
 
 	var button := Button.new()
 	# The default is named as such on its own button. Without it the one option that
@@ -282,14 +313,45 @@ func _build_choice(ns, ev, choice: Dictionary) -> void:
 	# way silence falls -- which is the only thing the deadline is about.
 	button.text = "%s%s" % [
 		Strings.choice_label(ev.id, choice),
-		tr("   (happens if you say nothing)") if bool(choice.get("is_default", false)) else "",
+		tr("  (if you say nothing)") if bool(choice.get("is_default", false)) else "",
 	]
-	button.pressed.connect(func(): _on_choose(ev, choice))
+	button.toggle_mode = true
+	button.button_pressed = open
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var key := "%s|%s" % [ev.id, choice_id]
+	button.pressed.connect(func():
+		_picked[ev.id] = "" if open else choice_id
+		_refocus = key
+		_dirty = true)
 	if _primary == null and not button.disabled:
 		_primary = button
 	block.add_child(button)
+	var focus_to: Control = button
 
-	_body.add_child(block)
+	if open:
+		var detail := VBoxContainer.new()
+		detail.add_theme_constant_override("separation", 4)
+		var margin := MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 12)
+		margin.add_child(detail)
+		block.add_child(margin)
+		PanelKit.rich(detail, Strings.choice_summary(ev.id, choice))
+		var choose := PanelKit.sized(Button.new())
+		choose.text = tr("Choose")
+		choose.pressed.connect(func(): _on_choose(ev, choice))
+		detail.add_child(choose)
+		focus_to = choose
+		# The open option's Choose stands in for its own toggle only, so the first
+		# entry on the desk keeps the primary verb (primary_action()'s build order).
+		if _primary == button:
+			_primary = choose
+	# The toggle's rebuild freed the focused button: focus lands on the opened
+	# option's Choose, or back on the closed toggle, so the keyboard keeps its place.
+	if _refocus == key:
+		_refocus = ""
+		focus_to.call_deferred("grab_focus")
+
+	box.add_child(block)
 
 
 ## U4's contract, projects_panel._on_act()'s shape exactly: the baseline is captured
@@ -303,6 +365,7 @@ func _on_choose(ev, choice: Dictionary) -> void:
 	var record := Events.answer(_state, _loader, ev.id, String(choice.get("id", "")))
 	if record.is_empty():
 		return
+	_picked.erase(ev.id)
 	_dirty = true
 	acted.emit(before, "%s: %s" % [Strings.row_name("events", ev), Strings.choice_label(ev.id, choice)])
 
@@ -347,7 +410,7 @@ func _subject_label(ns, ev) -> String:
 # --- The ledger --------------------------------------------------------------------
 
 func _build_ledger(ns) -> void:
-	PanelKit.heading(_body, tr("What you decided"))
+	PanelKit.heading(_body, tr("Your decisions"))
 	if ns.event_history.is_empty():
 		PanelKit.line(_body, tr("Nothing has come up yet."))
 		return
@@ -407,9 +470,19 @@ func _build_record(record: Dictionary) -> void:
 	# data/events/, so tests/test_save_load.gd's assertion that a serialised entry
 	# carries three keys and nothing else survives intact. V1.4a's discipline, and
 	# U6c's "the site belongs to the nation" one surface on.
+	# V5.3-0 (b): the meaning rides the answer's hover -- the timeline reads down
+	# the dates and the decisions, the consequence one point away.
 	var what := _choice_summary(record)
 	if what != "":
-		PanelKit.rich(block, what)
+		answer.tooltip_text = PanelKit.TermText.plain(what)
+		answer.mouse_filter = Control.MOUSE_FILTER_PASS
+		# QA on #220: a hover is mouse-only. The answer takes keyboard focus, and its
+		# meaning shows under it while it holds focus -- the line is the focus mark.
+		answer.focus_mode = Control.FOCUS_ALL
+		var meaning := PanelKit.plain_line(block, answer.tooltip_text, PanelKit.Tone.DIM)
+		meaning.visible = false
+		answer.focus_entered.connect(func() -> void: meaning.visible = true)
+		answer.focus_exited.connect(func() -> void: meaning.visible = false)
 
 	_body.add_child(block)
 

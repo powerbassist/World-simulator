@@ -29,6 +29,8 @@ static var config_path := SettingsPanel.CONFIG_PATH
 ## This session's note: the inbox it went into and its card id, or nothing yet.
 static var _shown_in = null
 static var _card := ""
+## A term's plate has opened since the hint was shown (glossary_tip.gd sets it).
+static var term_read := false
 
 
 ## Push the note into `inbox` unless this profile has had it in an earlier session,
@@ -47,8 +49,19 @@ static func offer(inbox) -> void:
 	# Its second sentence is the instruction: never folded behind More.
 	inbox.keep_whole(_card)
 	_shown_in = inbox
+	term_read = false
 	cfg.set_value(SECTION, KEY, true)
 	cfg.save(config_path)
+
+
+## V5.3-0 (b), spec 3.3: the hint leaves once the player has read a dotted word's
+## plate and it has closed -- it taught the one thing it was there for, and 31
+## words of instruction stayed in NOTES all game. Not at the plate's opening: the
+## hint's own dotted word is the first one most players point at, and the card
+## would vanish from under the pointer.
+static func retire() -> void:
+	if term_read and _shown_in != null and is_instance_valid(_shown_in) and _shown_in.lane_of(_card) != "":
+		_shown_in.dismiss(_card)
 
 
 ## Re-arm the note: the next game shows it, as on a profile that never saw it. The

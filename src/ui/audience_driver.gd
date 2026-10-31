@@ -77,6 +77,9 @@ static func register(main) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
 	main._people_panel.call_requested.connect(func(pid: String) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
+	main._people_panel.answer_requested.connect(func(id: String) -> void:
+		main._hud.inbox.slide_in()
+		main._hud.inbox.raise_card(lane_of(main).card_of(id)))
 	main._hud.title_bar.requests_pressed.connect(func() -> void: open_oldest(main))
 
 
@@ -105,7 +108,7 @@ static func refresh(main) -> void:
 		if not live.has(id) and not game["answered"].has(id):
 			var gone := Audiences.request(ns, id)
 			if String(gone.get("status", "")) == "lapsed":
-				main._hud.inbox.push(Strings.t("Unanswered"), Strings.t("%s's request lapsed: they take it as a refusal.") % main._loader.person_name(String(gone.get("person_id", ""))))
+				_note_lapse(main, game, main._loader.person_name(String(gone.get("person_id", ""))))
 	# A booking block left open on a request no longer waiting (answered from its
 	# card, lapsed, booked elsewhere) comes down with it.
 	if not live.has(main._calendar_panel.audience.request_id()):
@@ -263,6 +266,28 @@ static func judged_rows(main) -> Array:
 ## After a load: an audience open in the discarded game is closed there (Levers'
 ## rule: never let a session go unclosed) and the scene comes down; the lane and
 ## the Diary are redrawn off the loaded registers.
+## V5.3-0 (b), spec 3.4: the lapses are ONE note, not one a person -- eleven
+## "X's request lapsed" rows were 110 of the inbox's 347 words at month 12. The
+## live note takes each new name, says the count, and keeps the names behind its
+## More; once dismissed, the next lapse starts a new note.
+static func _note_lapse(main, game: Dictionary, person: String) -> void:
+	var inbox = main._hud.inbox
+	var id := String(game.get("lapse_note", ""))
+	if id == "" or inbox.lane_of(id) == "":
+		game["lapse_names"] = []
+	(game["lapse_names"] as Array).append(person)
+	var names: Array = game["lapse_names"]
+	var body := Strings.t("%s's request lapsed: they take it as a refusal.") % person
+	if names.size() > 1:
+		body = "%s %s" % [Strings.tn("%d request lapsed: taken as a refusal.", "%d requests lapsed: taken as a refusal.", names.size()) % names.size(),
+			Strings.t("From: %s.") % ", ".join(names)]
+	if id != "" and inbox.lane_of(id) != "":
+		inbox.set_body(id, body)
+		inbox.raise_card(id)
+		return
+	game["lapse_note"] = inbox.push(Strings.t("Unanswered"), body)
+
+
 static func after_load(main) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	if not game.is_empty():

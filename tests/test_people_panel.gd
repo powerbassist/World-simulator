@@ -89,6 +89,7 @@ func _run() -> void:
 	_check_read_only(panel)
 	_check_side_words(panel, state)
 	_check_chief_shown(panel, state)
+	_check_who_matters_now(panel, state)
 
 
 ## QA's #143 RECORDs: a party leader the data gives no party_id (Moucron, Ferrand,
@@ -170,7 +171,11 @@ func _check_names_are_resolved(panel, state) -> void:
 		_fail("the panel does not name the head of government '%s'" % pm)
 
 	# And a FOREIGN leader, which is the group that would silently go missing if
-	# `Abroad` were ever cut for space -- the declared fallback if it folds.
+	# `Abroad` were ever cut for space -- the declared fallback if it folds. It folds
+	# since V5.3-0 (b): opened, it names them.
+	panel._open["abroad"] = true
+	panel._refresh()
+	text = _text_of(panel)
 	var abroad := ""
 	var ids: Array = state.nations.keys()
 	ids.sort()
@@ -244,6 +249,15 @@ func _check_vacancy_reads_as_vacant(panel, state) -> void:
 func _check_read_only(panel) -> void:
 	var buttons: Array[String] = []
 	for node in _walk(panel):
+		# V5.3-0 (b), 3.4: a group's fold and a column's sort are heads, not verbs,
+		# and none shares its row with an autowrapping label -- the fold's cause.
+		if node is Button and node.has_meta(panel.HEAD_META):
+			if not (node.get_parent() is BoxContainer and (node.get_parent() as BoxContainer).vertical == false):
+				continue
+			for sibling in node.get_parent().get_children():
+				if sibling is Label and (sibling as Label).autowrap_mode != TextServer.AUTOWRAP_OFF:
+					_fail("a head '%s' shares its row with an autowrapping label" % node.text)
+			continue
 		if node is Button:
 			buttons.append(String(node.text))
 	for label in buttons:
@@ -301,7 +315,7 @@ func _span(label: Label) -> Vector2:
 func _text_of(panel) -> String:
 	var text := ""
 	for node in _walk(panel):
-		if node is Label:
+		if node is Label or node is Button:
 			text += node.text + "\n"
 	return text
 
@@ -327,6 +341,57 @@ func _finish() -> void:
 	quit(0 if _failures.is_empty() else 1)
 
 
+## V5.3-0 (b), 3.4: "who matters now" leads with the person waiting on the president
+## -- a bench member with a pending request, ahead of every politician by standing --
+## never lists the president, and holds at most six. The bench folds: its rows are not
+## drawn, so the card is the only place that person shows.
+func _check_who_matters_now(panel, state) -> void:
+	var ns = state.player()
+	var PeopleNow = preload("res://src/ui/people_now.gd")
+	var asker = null
+	for person in _main._loader.people[String(ns.id)]:
+		if String(person.kind) == "union_leader":
+			asker = person
+			break
+	if asker == null:
+		_fail("premise: no union leader to ask for an audience")
+		return
+	var now := int(state.year) * 12 + int(state.month)
+	ns.audience_requests.append({"id": "%s|%d" % [asker.id, now], "person_id": String(asker.id), "object": "programme:none",
+		"stance": "sponsor", "arrived_month": now, "deadline_month": now + 2, "status": "pending", "date": {},
+		"resolved_month": -1})
+	var picks: Array = PeopleNow.chosen(state, _main._loader, func(p): return "")
+	if picks.is_empty() or String(picks[0]["id"]) != String(asker.id) or String(picks[0]["reason"]) != "Asks to see you":
+		_fail("who matters now does not lead with the person asking to see the president: %s" % str(picks.slice(0, 2)))
+	if picks.size() > PeopleNow.MAX_CARDS:
+		_fail("who matters now shows %d cards, past %d" % [picks.size(), PeopleNow.MAX_CARDS])
+	var president := preload("res://src/sim/president.gd").leader_id(ns)
+	if picks.any(func(p): return String(p["id"]) == president):
+		_fail("the president is on their own 'who matters now'")
+	panel._refresh()
+	if not _text_of(panel).contains(String(asker.person_name)):
+		_fail("the asker's card is not drawn on the panel")
+	# Pass 2 on #220: a left click on the card does its reason's verb -- for an
+	# asker, it raises the request's card (the panel's answer hook gets its id).
+	var box := VBoxContainer.new()
+	_main.add_child(box)
+	var answered: Array = []
+	PeopleNow.build(box, state, _main._loader, func(_p): return "", func(_p): pass, func(): pass, func(_p): pass,
+		func(id: String) -> void: answered.append(id))
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	for card in box.find_children("*", "Control", true, false):
+		if card.mouse_filter == Control.MOUSE_FILTER_STOP and not card.gui_input.get_connections().is_empty():
+			card.gui_input.emit(click)
+			break
+	if answered != ["%s|%d" % [asker.id, now]]:
+		_fail("a left click on the asker's card did not raise their request: %s" % str(answered))
+	box.queue_free()
+	ns.audience_requests.clear()
+	panel._refresh()
+
+
 ## V5.3-0 (the parent's call on #216): the chief of staff is shown in the executive,
 ## right under the played office's holder, their kind as a word.
 func _check_chief_shown(panel, state) -> void:
@@ -341,6 +406,12 @@ func _check_chief_shown(panel, state) -> void:
 	var at := texts.find(chief.person_name)
 	if at < 1 or texts[at - 1] != "Chief of staff":
 		_fail("the chief of staff is not shown as 'Chief of staff' beside their name: %s" % str(texts.slice(0, 12)))
-	var leader := texts.find(String(_main._loader.person_name(preload("res://src/sim/president.gd").leader_id(state.player()))))
+	# The holder's LAST mention before the chief: the "who matters now" cards above
+	# the executive may name them too.
+	var holder := String(_main._loader.person_name(preload("res://src/sim/president.gd").leader_id(state.player())))
+	var leader := -1
+	for i in maxi(at, 0):
+		if texts[i] == holder:
+			leader = i
 	if leader < 0 or at != leader + 2:
 		_fail("the chief's line is not right under the played office's holder (leader at %d, chief at %d)" % [leader, at])
