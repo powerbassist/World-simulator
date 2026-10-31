@@ -6280,6 +6280,17 @@
   "quirk": "thin lips",
   "wardrobe": "grey suit, plain tie"
  },
+ "DEU_chief_of_staff": {
+  "sex": "male",
+  "age": 64,
+  "build": "trim",
+  "hair": "thinning silver hair",
+  "glasses": "rimless glasses",
+  "facial": "clean-shaven",
+  "face": "long face with a high forehead",
+  "quirk": "heavy eyelids",
+  "wardrobe": "sober dark suit, waistcoat, plain tie"
+ },
  "DEU_chief_rheinwerk": {
   "sex": "male",
   "age": 61,
@@ -11034,6 +11045,16 @@
   "quirk": "deep-set eyes",
   "wardrobe": "dark jacket, open collar"
  },
+ "FRA_chief_of_staff": {
+  "sex": "female",
+  "age": 55,
+  "build": "slim",
+  "hair": "grey-streaked dark hair pulled back",
+  "glasses": "no glasses",
+  "face": "narrow, angular face",
+  "quirk": "high cheekbones",
+  "wardrobe": "plain tailored dark suit, white blouse"
+ },
  "FRA_chief_sevrenne": {
   "sex": "female",
   "age": 67,
@@ -11721,6 +11742,16 @@
   "face": "long face with a high forehead",
   "quirk": "prominent nose",
   "wardrobe": "grey suit, plain blouse"
+ },
+ "GBR_chief_of_staff": {
+  "sex": "female",
+  "age": 44,
+  "build": "slim",
+  "hair": "sharp chin-length dark bob",
+  "glasses": "no glasses",
+  "face": "heart-shaped face",
+  "quirk": "one eyebrow slightly raised",
+  "wardrobe": "tailored dark jacket, plain top"
  },
  "GBR_chief_ravenhill": {
   "sex": "male",
@@ -23947,6 +23978,17 @@
   "face": "heart-shaped face",
   "quirk": "strong brow ridge",
   "wardrobe": "dark jacket, open collar"
+ },
+ "POL_chief_of_staff": {
+  "sex": "male",
+  "age": 54,
+  "build": "solid",
+  "hair": "short dark hair going grey",
+  "glasses": "no glasses",
+  "facial": "clean-shaven",
+  "face": "broad face with a strong jaw",
+  "quirk": "strong brow ridge",
+  "wardrobe": "plain dark suit, dark tie"
  },
  "POL_chief_sady_lubelskie": {
   "sex": "female",
