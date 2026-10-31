@@ -8,15 +8,24 @@ extends RefCounted
 ## halves reaches the pressed button and sets BaseButton's pressing_inside to
 ## false, and the release then clicks nothing -- QA's RECORD on #168, where one
 ## windowed run in two failed on whichever click the cursor happened to cross. So
-## each half puts the cursor on the target and pushes a motion there first, and the
-## release is always inside. Headless, the warp is a no-op.
+## each half pushes a motion onto the target first, and the release is always
+## inside; and the hand cannot add one of its own, because the window is moved off
+## every monitor (OsCursor.quiet_window()).
+## Warping the pointer onto the target, which this used to do on every half, dragged
+## the author's cursor across the desk on each click: it now happens only under
+## NATION_OS_CURSOR=1 (tools/os_cursor.gd), where the window keeps the real mouse
+## and the warp pins it as before. Headless there is no pointer and neither applies.
+
+
+const OsCursor = preload("res://tools/os_cursor.gd")
 
 
 ## Press (`down`) or release `button` (the left one unless named) at the centre
 ## of `target`.
 static func half(viewport: Viewport, target: Control, down: bool, button: int = MOUSE_BUTTON_LEFT) -> void:
 	var at: Vector2 = target.get_global_rect().get_center()
-	viewport.warp_mouse(at)
+	OsCursor.quiet_window()
+	OsCursor.warp(viewport, at)
 	var move := InputEventMouseMotion.new()
 	move.position = at
 	move.global_position = at

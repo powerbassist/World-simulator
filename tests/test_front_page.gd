@@ -226,11 +226,15 @@ func _check_never_holds() -> void:
 
 
 func _check_life() -> void:
-	# The pointer off the card, so only the clock decides.
-	root.warp_mouse(Vector2(1, root.get_visible_rect().size.y - 1))
 	var clock := StillClock.new()
 	clock.paused = true
 	_show_full()
+	# Positive control: with the card put right under the pointer, the helper moves it off.
+	_card.global_position = _card.get_global_mouse_position() - Vector2(4, 4)
+	if not _card.get_global_rect().has_point(_card.get_global_mouse_position()):
+		_fail("the control could not put the front page card under the pointer")
+	# The pointer off the card, so only the clock decides.
+	_card_off_pointer()
 	_card._clock = clock
 	_card.advance(FrontPage.LIFE_SECONDS * 4.0)
 	if not _card.visible:
@@ -246,6 +250,19 @@ func _check_life() -> void:
 		_fail("the card did not put itself away after LIFE_SECONDS of running clock")
 	if _main._hud.inbox.lane_count(Inbox.NOTES) != 1:
 		_fail("the card put itself away without leaving its note")
+
+
+## The card ages only while the pointer is off it (front_page.gd advance()). Headless
+## the pointer reads (0, 0) and is off; windowed it is the author's real one, which
+## this test used to warp into a corner -- dragging it across their screen. Move the
+## CARD off the pointer instead, wherever the pointer is.
+func _card_off_pointer() -> void:
+	var pointer: Vector2 = _card.get_global_mouse_position()
+	if not _card.get_global_rect().has_point(pointer):
+		return
+	_card.global_position = pointer + Vector2(32, 32)
+	if _card.get_global_rect().has_point(pointer):
+		_fail("could not move the front page card off the pointer at %s" % [pointer])
 
 
 func _check_held_for_count() -> void:

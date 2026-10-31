@@ -22,6 +22,7 @@ extends SceneTree
 
 const Motion = preload("res://src/ui/motion.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
+const OsCursor = preload("res://tools/os_cursor.gd")
 
 const OUT_DIR := "res://reports/motion_frames"
 const TIMEOUT_FRAMES := 5000
@@ -41,13 +42,16 @@ var _night_started := 0
 
 
 func _init() -> void:
+	OsCursor.quiet_window()  # a capture needs neither the keyboard nor the real mouse
 	Motion.override = 1
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	_menu = load("res://src/ui/menu.tscn").instantiate()
 	root.add_child(_menu)
+	OsCursor.quiet_window()  # the menu's _ready applied the saved window mode just now
 
 
 func _process(_delta: float) -> bool:
+	OsCursor.quiet_window()  # again each frame: the saved settings may re-centre it
 	_frame += 1
 	if _frame > TIMEOUT_FRAMES:
 		printerr("motion_frames: timed out in phase %s" % _phase)
