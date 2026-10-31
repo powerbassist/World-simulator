@@ -3,8 +3,9 @@ extends SceneTree
 ## V5.3-0 (e): the 78 clips of #226 (36 chief lines, 42 mood lines) are spoken, and
 ## no clip in the voice manifest is one nothing can ask for.
 ##   - the chief's briefing: every chief archetype's line for every situation and
-##     variant resolves to its clip through the hash of the line the card shows, the
-##     card plays it when it shows, and the card coming down silences it;
+##     variant resolves to its clip through the hash of the line the card shows; the
+##     driver plays it under main, never over a desk speaker's line there, and the
+##     card coming down silences it;
 ##   - a face that changes mood band during an audience or a call says its mood
 ##     line INSTEAD of agree or refuse (one line a result, never two queued); no
 ##     band change, the tone's line as before;
@@ -18,7 +19,6 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const Person = preload("res://src/core/person.gd")
 const AudienceScene = preload("res://src/ui/audience_scene.gd")
 const PhoneDialog = preload("res://src/ui/phone_dialog.gd")
-const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 const Voice = preload("res://src/ui/voice.gd")
@@ -42,7 +42,7 @@ const VOICE := {
 var _failures: Array[String] = []
 var _loader
 var _frame := 0
-var _chief
+var _desk
 var _scene
 var _phone
 
@@ -50,8 +50,8 @@ var _phone
 func _init() -> void:
 	_loader = DataLoader.new()
 	_loader.load_all()
-	_chief = ChiefBriefing.new()
-	root.add_child(_chief)
+	_desk = Control.new()  # main's stand-in: the desk speakers' parent
+	root.add_child(_desk)
 	_scene = AudienceScene.new()
 	_scene.size = Vector2(1120, 630)
 	root.add_child(_scene)
@@ -87,16 +87,25 @@ func _check_chief() -> void:
 				if String(said["text"]) == "" or String(said["clip"]) == "":
 					_fail("%s %s month %d: line '%s', clip '%s'" % [arch, situation, month, said["text"], said["clip"]])
 	var said: Dictionary = BriefingDriver.chief_said(_loader, "chief_fra_fixture", "tense", 1)
-	_chief.show()
-	_chief.show_view({"header": "March", "line": said["text"], "clip": said["clip"], "rows": [], "close": "Continue"})
-	var player := _chief.get_node_or_null(Voice.NODE) as AudioStreamPlayer
-	if player == null or player.stream == null:
-		_fail("the briefing card shows the chief's line and does not speak it")
-	Voice.stop(_chief)
+	BriefingDriver.speak(_desk, {"line": said["text"], "clip": said["clip"]})
+	var player := _desk.get_node_or_null(Voice.NODE) as AudioStreamPlayer
+	if player == null or player.stream == null or String(player.get_meta("card", "")) != BriefingDriver.LINE_CARD:
+		_fail("the briefing shows the chief's line and does not speak it")
+		return
+	Voice.hush(_desk, BriefingDriver.LINE_CARD)
+	if player.stream != null:
+		_fail("the card coming down (Voice.hush on its id) left the chief's line playing")
 	# A card with no clip (a French line, no chief) says nothing.
-	_chief.show_view({"header": "April", "line": "Autre chose.", "clip": "", "rows": [], "close": "Continue"})
-	if player != null and player.stream != null:
+	BriefingDriver.speak(_desk, {"line": "Autre chose.", "clip": ""})
+	if player.stream != null:
 		_fail("a card with no clip still plays a line")
+	# A desk speaker already waiting on the same player keeps it: no two voices at once.
+	player.set_meta("pending", true)
+	player.set_meta("card", "desk_event")
+	BriefingDriver.speak(_desk, {"line": said["text"], "clip": said["clip"]})
+	if String(player.get_meta("card", "")) != "desk_event":
+		_fail("the chief's line talked over a desk speaker's waiting line")
+	Voice.stop(_desk)
 
 
 func _check_audience() -> void:

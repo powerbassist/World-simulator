@@ -40,6 +40,8 @@ const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 
 ## The chief has three lines a situation (#226: 4 chiefs x 3 situations x 3).
 const CHIEF_VARIANTS := 3
+## The card id the chief's spoken line carries (Voice.hush).
+const LINE_CARD := "chief_briefing"  # i18n: ok a card id
 
 static var _games := {}
 ## A test seam: a test of another surface drives whole months and would otherwise
@@ -111,7 +113,9 @@ static func open(main, report: Dictionary) -> void:
 	game["also"] = ranked.get("also_due", [])
 	game["was_running"] = game["was_running"] or not main._clock.paused
 	main._clock.paused = true
-	game["card"].show_view(view(main, ranked["lines"], report, game["also"]))
+	var shown := view(main, ranked["lines"], report, game["also"])
+	game["card"].show_view(shown)
+	speak(main, shown)
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
 
 
@@ -203,16 +207,11 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
 
 
-## The chief's line for the month's situation (2.6): three variants per situation in
-## the voice archetype's own lines, rotated by the month so no line plays two months
-## running. Shown as text.
-static func chief_line(loader, person_id: String, situation: String, month_index: int) -> String:
-	return String(chief_said(loader, person_id, situation, month_index)["text"])
-
-
-## chief_line()'s line as {text, clip}: the clip (#226's batch) is Voice's only when
-## its hash is the line's own, hashed BEFORE the quotes go round it -- the pipeline
-## voiced the bare line, so the quoted text would never match.
+## The chief's line for the month's situation (2.6) as {text, clip}: three variants
+## per situation in the voice archetype's own lines, rotated by the month so no line
+## plays two months running. The clip (#226's batch) is Voice's only when its hash is
+## the line's own, hashed BEFORE the quotes go round it -- the pipeline voiced the
+## bare line, so the quoted text would never match.
 static func chief_said(loader, person_id: String, situation: String, month_index: int) -> Dictionary:
 	var arch := Voices.archetype_of(loader, person_id)
 	var key := "%s_%d" % [situation, posmod(month_index, CHIEF_VARIANTS) + 1]
@@ -223,14 +222,21 @@ static func chief_said(loader, person_id: String, situation: String, month_index
 	return {"text": Strings.t("“%s”") % shown, "clip": Voice.line_clip(arch, key, shown)}
 
 
-## Every line id chief_said() can ask for: Priorities.situation()'s three answers
-## times the variants (tests/test_voice_lines.gd's orphan check reads this).
+## Every line id chief_said() can ask for: Priorities.situation()'s answers times the
+## variants (tests/test_voice_lines.gd's orphan check reads this).
 static func chief_line_ids() -> Array:
 	var out: Array = []
-	for situation in ["calm", "tense", "crisis"]:  # i18n: ok Priorities.situation()'s keys
+	for situation in Priorities.SITUATIONS:
 		for i in CHIEF_VARIANTS:
 			out.append("%s_%d" % [situation, i + 1])
 	return out
+
+
+## The card's line said aloud, once, from open() (one call a card). Under `main`,
+## where the desk's arriving speakers talk too: one Voice player there, so a chief
+## and an event speaker never talk over each other (Voice drops the newer line).
+static func speak(main: Node, shown: Dictionary) -> void:
+	Voice.speak(main, String(shown.get("clip", "")), 0.0, LINE_CARD)
 
 
 ## "Continue", or "Next: ..." naming the surface that still holds the clock.
@@ -261,7 +267,7 @@ static func close(main) -> void:
 	if game.is_empty() or not game["card"].visible:
 		return
 	game["card"].hide()
-	Voice.stop(game["card"])  # the chief's line belongs to the card
+	Voice.hush(main, LINE_CARD)  # the chief's line belongs to the card
 	game["card"].dismissed.emit()
 	# A request the card named, on a line, in the footer or folded into a line's
 	# "+N more", has been SEEN under #207's rule (the parent's calls on QA's #218
@@ -292,7 +298,7 @@ static func after_load(main) -> void:
 	if game.is_empty():
 		return
 	game["card"].hide()
-	Voice.stop(game["card"])
+	Voice.hush(main, LINE_CARD)
 	game["was_running"] = false
 	game["lines"] = []
 	game["also"] = []

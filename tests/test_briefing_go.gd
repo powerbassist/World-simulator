@@ -245,8 +245,8 @@ func _check_chief() -> void:
 		_fail("the chief's name is not on the card: '%s'" % view["who"])
 	if String(view["line"]) == "":
 		_fail("the chief says nothing (voice '%s')" % BriefingDriver.Staff.chief_of(loader, nid).voice)
-	var a := BriefingDriver.chief_line(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 10)
-	var b := BriefingDriver.chief_line(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 11)
+	var a := String(BriefingDriver.chief_said(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 10)["text"])
+	var b := String(BriefingDriver.chief_said(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 11)["text"])
 	if a == b:
 		_fail("the chief's line repeats two months running: '%s'" % a)
 

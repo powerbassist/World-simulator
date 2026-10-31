@@ -28,6 +28,7 @@ extends SceneTree
 
 const Click = preload("res://tests/click.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
+const Voice = preload("res://src/ui/voice.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
@@ -75,6 +76,11 @@ func _process(_delta: float) -> bool:
 	match _phase:
 		"to_boundary":
 			if _card.visible and not _main._month_runner.running():
+				# V5.3-0 (e): the card that opened says its chief's line, under main.
+				var said: Node = _main.get_node_or_null(Voice.NODE)
+				if said == null or (said as AudioStreamPlayer).stream == null 						or String(said.get_meta("card", "")) != BriefingDriver.LINE_CARD:
+					_fail("the briefing opened and its chief said nothing (main's voice: %s)" % (
+						said.get_meta("card", "") if said != null else "none"))
 				_date = _today()
 				_speed = _expected_speed()
 				_go("held")
@@ -94,6 +100,9 @@ func _process(_delta: float) -> bool:
 			if _since == 2:
 				if _card.visible:
 					_fail("Continue did not close the briefing")
+				var said: Node = _main.get_node_or_null(Voice.NODE)
+				if said != null and String(said.get_meta("card", "")) == BriefingDriver.LINE_CARD 						and (said as AudioStreamPlayer).stream != null:
+					_fail("Continue closed the briefing and its chief's line played on")
 				if _main._clock.paused:
 					_fail("Continue did not resume the clock (holds: decision %s, programme %s)" % [
 						_main._decision_holds_clock(), _main._paused_for_programme])
