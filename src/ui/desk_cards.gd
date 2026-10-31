@@ -76,8 +76,8 @@ static func card_events(main, year: int, month: int, desk_before: Dictionary, be
 		var where := String(record.get("region_name", ""))
 		if where != "":
 			named = "%s — %s" % [named, where]
-		main._hud.inbox.push(Strings.t("Decided for you"),
-			Strings.t("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)])
+		preload("res://src/ui/briefing_driver.gd").hold_card(main, {"title": Strings.t("Decided for you"),
+			"body": Strings.t("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)]})
 		defaulted_names.append(Strings.record_event_name(record))
 
 	# The delta is queued HERE and not at the choice, because this is the one case

@@ -30,9 +30,11 @@ extends SceneTree
 
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
-## The inbox at month 12, at its measure once the lapses were grouped (spec 3.5's
-## target is 170: the rest is the consequence card the briefing now says).
-const INBOX_CEILING := 224
+## The inbox at month 12, spec 3.5's target: the consequence card goes to the
+## briefing on a month it shows (spec 3.3).
+const INBOX_CEILING := 170
+## Spec 3.5: the monthly briefing card, in each situation tools/screenshot.gd stages.
+const BRIEFING_CEILING := 90
 
 ## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column). Orgs is
 ## the note's 60 per organisation, for France's five.
@@ -54,7 +56,7 @@ const PENDING := {}
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95, "commodities": 210}
 const TOTAL_PENDING := {
-	"budget": 107, "calendar": 42, "campaign": 245,
+	"budget": 107, "calendar": 42, "campaign": 140,
 	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106, "tax": 25,
@@ -63,7 +65,7 @@ const TOTAL_PENDING := {
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
 ## (6 648 in the spec's count, 4 911 once this test played its months as the game
 ## does): it can only come down from here.
-const TOTAL_SUM_CEILING := 3387
+const TOTAL_SUM_CEILING := 3213
 const TOTAL_SUM_TARGET := 3600
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
@@ -102,16 +104,21 @@ func _initialize() -> void:
 	# bare tick_month, so the inbox, the Agenda and Dispatches stand in their played
 	# state (a bare tick left Dispatches at 14 words against 187 in play). The clock
 	# is not running, so the month runs whole, now (month_runner.gd). The monthly
-	# briefing is staged by its own fixtures, not here.
-	BriefingDriver.suppressed = true
+	# briefing opens as in play and is closed unread: a month it shows says the
+	# consequence card in its place (spec 3.3), so the inbox does not carry it.
 	for i in 12:
 		var next: int = main._state.year * 12 + main._state.month + 1
 		var year := floori((next - 1) / 12.0)
 		main._on_month_elapsed(year, next - year * 12)
 		await process_frame
+		if BriefingDriver.showing(main):
+			BriefingDriver.close(main)
+			await process_frame
 	windows.mark_all_dirty()
 	await _sweep(main, "month 12")
 	await _sweep_inbox(main)
+	for fixture in ["calm", "tense", "crisis"]:
+		await _sweep_briefing(main, fixture)
 	_report()
 	quit(1 if not _failures.is_empty() else 0)
 
@@ -170,6 +177,49 @@ func _sweep_inbox(main) -> void:
 	if total > INBOX_CEILING:
 		_fail("inbox (month 12): %d visible words, the ceiling is %d" % [total, INBOX_CEILING])
 	inbox.slide_out()
+
+
+## Spec 3.5: the briefing card, staged as tools/screenshot.gd's --briefing does --
+## calm as the month left it, tense with a request waiting, crisis with an
+## interrupt on the desk -- each at or under BRIEFING_CEILING visible words.
+func _sweep_briefing(main, fixture: String) -> void:
+	var state = main._state
+	var ns = state.player()
+	var now := int(state.year) * 12 + int(state.month)
+	if fixture == "crisis":
+		var ev = main._loader.events[0]
+		var entry := {"event_id": String(ev.id), "event_name": ev.event_name, "months_left": 2,
+			"interrupt": true, "severity": 3, "category": ev.category}
+		ns.event_queue.append(entry)
+		preload("res://src/ui/desk_cards.gd").push(main, ev, entry)
+	if fixture == "tense":
+		for person in main._loader.people[String(ns.id)]:
+			if String(person.kind) == "politician" and String(person.id) != preload("res://src/sim/president.gd").leader_id(ns):
+				ns.audience_requests.append({"id": "%s|%d" % [person.id, now], "person_id": String(person.id),
+					"object": "programme:none", "stance": "sponsor", "arrived_month": now - 1, "deadline_month": now + 1,
+					"status": "pending", "date": {}, "resolved_month": -1})
+				break
+		preload("res://src/ui/audience_driver.gd").refresh(main)
+	BriefingDriver._games[main.get_instance_id()]["pending"] = {}
+	BriefingDriver.open(main, {})
+	await process_frame
+	await process_frame
+	var card: Control = BriefingDriver.card_of(main)
+	if not card.visible:
+		_fail("briefing (%s): premise, the card did not open" % fixture)
+		return
+	var total := 0
+	for node in _visible_text_nodes(card):
+		var words := _words(_text_of(node))
+		total += words.size()
+		if _dump.has("briefing"):
+			print("dump briefing (%s) %3d %s: %s" % [fixture, words.size(), node.get_class(), _text_of(node).left(90).replace("
+", " / ")])
+	print("prose budget  briefing (%-6s)              all words %5d  ceiling %d" % [fixture, total, BRIEFING_CEILING])
+	if total > BRIEFING_CEILING:
+		_fail("briefing (%s): %d visible words, the ceiling is %d" % [fixture, total, BRIEFING_CEILING])
+	BriefingDriver.close(main)
+	await process_frame
 
 
 func _visible_text_nodes(node: Node) -> Array:

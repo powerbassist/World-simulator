@@ -31,9 +31,13 @@ const CARD_FIGURES := 3
 ## names what was decided, each name once (a call and its call-off are one), and
 ## gives what moved since the EARLIEST of them, worded as the month's movement after
 ## them, not as what one of them did.
-static func record(state, pending: Array, history_entry: Dictionary, year: int, month: int, inbox) -> void:
+##
+## Returns the card ({title, body}, empty on a month with nothing decided) and
+## pushes it only when given an inbox: main.gd hands it to the briefing instead,
+## which says it on a month it shows (spec 3.3).
+static func record(state, pending: Array, history_entry: Dictionary, year: int, month: int, inbox) -> Dictionary:
 	if pending.is_empty():
-		return
+		return {}
 	# The stamped entry (year/month added), so movements_between() reads the
 	# same "now" for approval's poll-noise lookup that the rest of the UI does.
 	var dated_entry: Dictionary = history_entry.duplicate(true)
@@ -54,13 +58,14 @@ static func record(state, pending: Array, history_entry: Dictionary, year: int, 
 		"movements": Trends.movements_between(pending[0]["before"], dated_entry),
 	}
 	RecentEffects.record(state, effect)
+	var body := card_body(effect)
+	if not names.is_empty() and not defaults.is_empty():
+		body = "%s %s" % [Strings.t("Decided for you: %s.") % ", ".join(defaults), body]  # i18n: row-ok effects' labels, routed when queued
+	var title := Strings.t("This month you decided: %s") % ", ".join(names) if not names.is_empty() 			else Strings.t("This month, decided for you: %s") % ", ".join(defaults)  # i18n: row-ok effects' labels, routed when queued
 	if inbox != null:
-		var body := card_body(effect)
-		if not names.is_empty() and not defaults.is_empty():
-			body = "%s %s" % [Strings.t("Decided for you: %s.") % ", ".join(defaults), body]  # i18n: row-ok effects' labels, routed when queued
-		var title := Strings.t("This month you decided: %s") % ", ".join(names) if not names.is_empty() 			else Strings.t("This month, decided for you: %s") % ", ".join(defaults)  # i18n: row-ok effects' labels, routed when queued
 		inbox.push(title, body)
 	pending.clear()
+	return {"title": title, "body": body}
 
 
 ## After a load (someday.md C6, the parent's ruling): the inbox puts back what the

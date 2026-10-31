@@ -92,8 +92,9 @@ func _check_cards() -> void:
 		if other == null or other.disabled:
 			_fail("Delegate or Decline went out with Book (B2)")
 	var text := _text(inbox._cards[_lane.card_of("req_1")])
-	if not text.contains("grudge +0.12") or not text.contains("MAR 2026"):
-		_fail("the card does not say the price or the deadline: %s" % text)
+	# Spec 3.5: the deadline is the body's, the price of a no Decline's hover.
+	if not text.contains("MAR 2026") or not _answer_button("req_1", 2).tooltip_text.contains("grudge +0.12"):
+		_fail("the card does not say the deadline, or Decline the price: %s" % text)
 
 
 func _check_booking() -> void:

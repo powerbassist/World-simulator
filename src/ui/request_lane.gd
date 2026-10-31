@@ -67,6 +67,9 @@ func show_requests(rows: Array) -> void:
 		# V5.3-0 RF3: each answer acts on this request (acts_on.gd, the briefing's Go).
 		for a in answers:
 			a["acts_on"] = request_id
+		# Spec 3.5's inbox diet: the price of a no is Decline's hover, not the body.
+		if String(answers[2]["tooltip"]) == "":
+			answers[2]["tooltip"] = Strings.t("Declining, or no answer by then: %s.") % String(row.get("price", ""))
 		# Same answers: the body is rewritten in place. Changed (a day now taken, the
 		# month's call spent): the card is put up again, since the inbox rewrites a
 		# body but not its buttons.
@@ -101,9 +104,8 @@ static func _answer(label: String, answer: Dictionary) -> Dictionary:
 
 
 static func _body(row: Dictionary) -> String:
-	var body := "%s\n%s\n%s" % [String(row.get("wants", row.get("ask", ""))),
-		Strings.t("Answer by %s; unanswered, it counts as a refusal.") % String(row.get("by", "")),
-		Strings.t("Declining: %s.") % String(row.get("price", ""))]
+	var body := "%s\n%s" % [String(row.get("wants", row.get("ask", ""))),
+		Strings.t("Answer by %s.") % String(row.get("by", ""))]
 	# c1c: why this refusal costs more (its price above already counts it).
 	if bool(row.get("broken_word", false)):
 		body += " " + Strings.t("They hold something on you. Refusing them breaks your word.")

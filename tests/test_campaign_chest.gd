@@ -220,8 +220,11 @@ func _check_stopped_note() -> void:
 
 func _texts(node: Node) -> String:
 	var out := ""
-	if node is Label or node is Button:
+	if node is Label:
 		out += node.text + "\n"
+	# A Start button's hover carries the chest's months (spec 3.5's campaign diet).
+	elif node is Button:
+		out += node.text + "\n" + node.tooltip_text + "\n"
 	elif node is RichTextLabel:
 		out += node.get_parsed_text() + "\n"
 	for child in node.get_children():

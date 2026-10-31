@@ -63,9 +63,15 @@ static func offer_lines(block: Control, ns, loader, effort_id: String, reach: St
 	PanelKit.line(block, Strings.t("€%s m · %s") % [Num.f(Campaign.price_eur_m(ns, loader, effort_id), 2), reach])
 	if Campaign.has_started(ns, effort_id) and not Campaign.is_running(ns, effort_id):
 		PanelKit.line(block, Strings.t("Already used: one run per run-up."))
-		return
+
+
+## How long the chest pays with the effort added: its Start button's hover (spec
+## 3.5's campaign diet), "" for an effort already used this run-up.
+static func lasts_text(ns, loader, effort_id: String) -> String:
+	if Campaign.has_started(ns, effort_id) and not Campaign.is_running(ns, effort_id):
+		return ""
 	var months := Campaign.months_payable(ns, loader, effort_id)
-	PanelKit.line(block, Strings.tn("Chest then lasts %d month.", "Chest then lasts %d months.", months) % months)
+	return Strings.tn("Chest then lasts %d month.", "Chest then lasts %d months.", months) % months
 
 
 ## Why a campaign button cannot be pressed, as the sentence its tooltip shows; "" when
