@@ -47,6 +47,14 @@ const Num = preload("res://src/ui/num.gd")
 ## Thirteen on one line needed 2219 px on a 1920 screen (tests/test_strip_readings.gd's
 ## width check, 2026-10-17); the figures went two-line instead -- caption above
 ## value, U2's shape -- the author's call at that measurement.
+## V5.3-0 4.5: the figures that flash in a status tone when they move, and
+## whether rising is good news -- the same calls as Trends' worse_when_rising for
+## the four it watches. The rest of the strip moves without a verdict.
+const GOOD_WHEN_RISING := {
+	"approval": true, "deficit": false, "gdp": true, "unemployment": false,  # i18n: ok reading ids
+	"inflation": false, "unrest": false,  # i18n: ok reading ids
+}
+
 const ORDER: Array[String] = [
 	"approval", "deficit", "gdp", "unemployment", "inflation", "unrest",
 	"assembly", "election", "programme", "desk", "europe", "commodities",

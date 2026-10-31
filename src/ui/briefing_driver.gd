@@ -141,8 +141,9 @@ static func _will_show(main, game: Dictionary, report: Dictionary) -> bool:
 		game["pending"]["month"] = now
 		# New: a real priority last month's three did not name. A standing read is
 		# never new -- a quiet month does not stop under the setting (call 2).
-		game["pending"]["new"] = game["pending"]["lines"].any(func(l): return not bool(l["standing"]) and not last.any(
-			func(p): return p["kind"] == l["kind"] and p["subject"] == l["subject"]))
+		for l in game["pending"]["lines"]:
+			l["fresh"] = not bool(l["standing"]) and not last.any(func(p): return p["kind"] == l["kind"] and p["subject"] == l["subject"])
+		game["pending"]["new"] = game["pending"]["lines"].any(func(l): return bool(l["fresh"]))
 	game["report"] = report
 	if MessageSettings.briefing_new_only(SettingsPanel.CONFIG_PATH) and not bool(game["pending"]["new"]):
 		# Skipped, but the month is remembered: next month compares with this one.
@@ -168,7 +169,7 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 	var rows: Array = []
 	for l in lines:
 		rows.append({"icon": PriorityWords.icon_path(String(l["kind"])), "title": PriorityWords.title(l, state, main._loader),
-			"chip": PriorityWords.chip(l, state), "held": bool(l["held"])})
+			"chip": PriorityWords.chip(l, state), "held": bool(l["held"]), "new": bool(l.get("fresh", false))})
 	var header := Strings.t("A quiet month") if Priorities.quiet(lines) \
 		else Strings.t("%s: your priorities") % DateText.month_year(int(state.month), int(state.year))
 	var chief = Staff.chief_of(main._loader, String(state.player().id))

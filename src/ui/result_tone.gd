@@ -12,12 +12,14 @@ extends RefCounted
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 const GOOD := "good"  # i18n: ok a tone key
 const BAD := "bad"  # i18n: ok a tone key
 const BLOCKED := "blocked"  # i18n: ok a tone key
 const RISKY := "risky"  # i18n: ok a tone key
 const BASE_META := "result_tone_base"  # i18n: ok a meta key
+const POP_META := "result_tone_pop"  # i18n: ok a meta key
 
 ## key -> [variation, word]. The words are tags, short and upper-cased on screen.
 const TAG := {
@@ -36,6 +38,14 @@ static func apply(label: Label, tone: String) -> void:
 		return
 	label.theme_type_variation = String(TAG[tone][0])
 	label.text = Strings.t(String(TAG[tone][1]))  # i18n: row-ok a tone key, its word the msgid
+	# V5.3-0 4.5: the tag pops in (Motion.OPEN_SCALE to full), once it is on screen.
+	if label.is_inside_tree():
+		Motion.open(label)
+	elif not label.has_meta(POP_META):
+		label.set_meta(POP_META, true)
+		label.tree_entered.connect(func() -> void:
+			label.remove_meta(POP_META)
+			Motion.open(label), CONNECT_ONE_SHOT)
 
 
 ## A result that moved the person's regard reads by its sign: up is in your

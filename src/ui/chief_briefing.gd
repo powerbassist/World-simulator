@@ -23,6 +23,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const MoodBadge = preload("res://src/ui/mood_badge.gd")
+const Motion = preload("res://src/ui/motion.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Grade = preload("res://src/ui/grade.gd")
 
@@ -101,7 +102,14 @@ func show_view(view: Dictionary) -> void:
 	go_buttons.clear()
 	var rows: Array = view.get("rows", [])
 	for i in rows.size():
-		_rows.add_child(_row(rows[i], i))
+		var row := _row(rows[i], i)
+		_rows.add_child(row)
+		# V5.3-0 4.5: the three come in a beat apart; one new this month pulses.
+		Motion.arrive(row, Motion.STAGGER_S * i)
+		if bool(rows[i].get("new", false)) and Motion.enabled() and row.is_inside_tree():
+			row.get_tree().create_timer(Motion.STAGGER_S * i + Motion.ARRIVE_S).timeout.connect(func():
+				if is_instance_valid(row):
+					Motion.pulse(row))
 	for child in _effects.get_children():
 		_effects.remove_child(child)
 		child.queue_free()
@@ -110,6 +118,7 @@ func show_view(view: Dictionary) -> void:
 		_effects.add_child(_effect(effect))
 	_close.text = String(view.get("close", ""))
 	show()
+	Motion.arrive(self)
 	_close.grab_focus()
 
 

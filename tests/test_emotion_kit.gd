@@ -17,6 +17,9 @@ const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Voices = preload("res://src/core/voices.gd")
+const Motion = preload("res://src/ui/motion.gd")
+const TopBar = preload("res://src/ui/top_bar.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
 
@@ -31,6 +34,7 @@ func _init() -> void:
 	else:
 		_check_lines(loader)
 	_check_reactions()
+	_check_figure_flash()
 	if _failures.is_empty():
 		print("test_emotion_kit: all checks passed")
 		quit(0)
@@ -115,6 +119,25 @@ func _check_reactions() -> void:
 	for tone in want:
 		if AudienceVoice.reaction(tone) != want[tone]:
 			_fail("tone '%s' draws '%s', expected '%s'" % [tone, AudienceVoice.reaction(tone), want[tone]])
+
+
+## 4.5: a figure flashes its status tone by its good direction; a reading that
+## changed shape, or a figure with no verdict, does not flash.
+func _check_figure_flash() -> void:
+	var cases := [
+		["approval up", "approval", "41%", "43%", UiTheme.GOOD],
+		["approval down", "approval", "43%", "41%", UiTheme.BAD],
+		["deficit up", "deficit", "4.1%", "4.6%", UiTheme.BAD],
+		["a negative growth deeper", "gdp", "-0.4%", "-1.2%", UiTheme.BAD],
+		["unemployment down", "unemployment", "7.4%", "7.1%", UiTheme.GOOD],
+		["no move", "approval", "41%", "41%", Color(0, 0, 0, 0)],
+		["a reading that changed shape", "approval", "41%", "no poll", Color(0, 0, 0, 0)],
+		["a figure with no verdict", "assembly", "289", "301", Color(0, 0, 0, 0)],
+	]
+	for c in cases:
+		var got := TopBar.flash_tone(c[1], c[2], c[3])
+		if got != c[4]:
+			_fail("%s flashes %s, expected %s" % [c[0], got, c[4]])
 
 
 func _fail(message: String) -> void:

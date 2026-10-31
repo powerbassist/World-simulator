@@ -33,6 +33,8 @@ const PULSE_S := 0.22
 ## The scale a window grows from. 0.97 is the smallest step that reads as
 ## "opening" at 1080p without the content visibly swimming.
 const OPEN_SCALE := 0.97
+## V5.3-0 4.5: the gap between two staggered arrivals (the briefing's priorities).
+const STAGGER_S := 0.06
 ## The pulse's tint: the brass accent over the text colour, so the beat is in
 ## the game's one accent and no second colour enters.
 const PULSE_TINT := Color(1.0, 0.86, 0.42)
@@ -187,12 +189,15 @@ static func open(control: Control) -> void:
 
 ## A card arriving in a container: fade only, because the container owns its
 ## position and size.
-static func arrive(control: Control) -> void:
+## `delay_s` staggers a list (V5.3-0 4.5: the briefing's priorities, STAGGER_S apart).
+static func arrive(control: Control, delay_s := 0.0) -> void:
 	if not enabled():
 		return
 	control.modulate.a = 0.0
 	var tween := _tween(control)
 	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	if delay_s > 0.0:
+		tween.tween_interval(delay_s)
 	tween.tween_property(control, "modulate:a", 1.0, ARRIVE_S)
 
 
@@ -200,9 +205,15 @@ static func arrive(control: Control) -> void:
 ## only: alpha stays the caller's (the clock dims a paused date through it), so
 ## a refresh setting alpha mid-beat neither cancels the beat nor is undone by it.
 static func pulse(item: CanvasItem) -> void:
+	flash(item, PULSE_TINT)
+
+
+## One beat from `tone` back to the item's own colour (V5.3-0 4.5: a figure that
+## moved flashes in its status tone, GOOD or BAD by its good direction).
+static func flash(item: CanvasItem, tone: Color) -> void:
 	if not enabled():
 		return
-	item.modulate = Color(PULSE_TINT.r, PULSE_TINT.g, PULSE_TINT.b, item.modulate.a)
+	item.modulate = Color(tone.r, tone.g, tone.b, item.modulate.a)
 	var tween := _tween(item)
 	tween.set_parallel(true)
 	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
@@ -215,11 +226,14 @@ static func pulse(item: CanvasItem) -> void:
 ## decimals). Anything else -- a reading that changed shape, motion off -- is
 ## set at once. The label's text is final the moment the tween finishes or is
 ## finished; mid-roll it is a real intermediate value, never a garbled one.
-static func roll_text(label: Label, text: String) -> void:
+## `tone` (alpha > 0) flashes the label once the roll lands (V5.3-0 4.5).
+static func roll_text(label: Label, text: String, tone := Color(0, 0, 0, 0)) -> void:
 	# A roll still running is STOPPED where it is, not finished: finishing would
 	# land it on its old target, and a new reading equal to the value now shown
 	# would then return below with that stale target on screen.
 	_stop(label)
+	# A flash stopped mid-beat would leave its tint: the colour is the label's own again.
+	label.modulate = Color(1, 1, 1, label.modulate.a)
 	var from := label.text
 	if from == text:
 		return
@@ -231,6 +245,11 @@ static func roll_text(label: Label, text: String) -> void:
 	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tween.tween_method(func(t: float): label.text = interpolate_text(from, text, t), 0.0, 1.0, ROLL_S)
 	tween.tween_callback(func(): label.text = text)
+	if tone.a > 0.0:
+		tween.tween_callback(func(): label.modulate = Color(tone.r, tone.g, tone.b, label.modulate.a))
+		tween.tween_property(label, "modulate:r", 1.0, PULSE_S)
+		tween.parallel().tween_property(label, "modulate:g", 1.0, PULSE_S)
+		tween.parallel().tween_property(label, "modulate:b", 1.0, PULSE_S)
 
 
 static var _number_re: RegEx
@@ -269,6 +288,24 @@ static func same_template(a: String, b: String) -> bool:
 
 ## `a` with every number moved fraction `t` of the way to `b`'s, printed at
 ## its own decimals. Pure: tests/test_motion.gd pins it.
+## Which way a reading's first number moved from `a` to `b`: 1 up, -1 down, 0 for
+## no move or two readings of different shape (V5.3-0 4.5). A minus sign before
+## it turns the sense: "-3.1" to "-4.0" is down.
+static func moved(a: String, b: String) -> int:
+	if not same_template(a, b):
+		return 0
+	a = _canon(a)
+	b = _canon(b)
+	var ma := _numbers().search(a)
+	var va := ma.get_string().to_float()
+	var vb := _numbers().search(b).get_string().to_float()
+	if is_equal_approx(va, vb):
+		return 0
+	var before := a.substr(0, ma.get_start()).strip_edges()
+	var sign := -1 if before.ends_with("-") or before.ends_with("−") else 1
+	return sign if vb > va else -sign
+
+
 static func interpolate_text(a: String, b: String, t: float) -> String:
 	if not same_template(a, b):
 		return b if t >= 1.0 else a
