@@ -23,6 +23,7 @@ func _initialize() -> void:
 	_check_law_booked()
 	_check_quiet()
 	_check_mixed()
+	_check_decided_unbooked()
 	if _failures.is_empty():
 		print("test_briefing_effects: all checks passed")
 	for f in _failures:
@@ -66,6 +67,28 @@ func _check_quiet() -> void:
 			_fail("an uncertain line wears a status tone: %s" % str(l))
 	if not lines.any(func(l): return bool(l["uncertain"])):
 		_fail("a quiet month shows no movement at all, uncertain or not")
+
+
+## QA's RF5 TAKE on #218: a month with decisions but nothing booked said "Nothing
+## you decided". Every command makes the month's recent_effects entry, so the line
+## names those decisions -- uncertain, grey -- and only an empty month says nothing.
+## The mutant that brings the old text back (out.append the "Nothing" dict whatever
+## the entry) fails both asserts.
+func _check_decided_unbooked() -> void:
+	var state = _state()
+	state.recent_effects.insert(0, {"label": "Tax cut; Summit: hold firm; Strike called off", "year": state.year,
+		"month": state.month, "movements": [{"key": "overall_approval_pct", "label": "Approval", "unit": "pp",
+		"change": 1.5, "severity": -0.3}]})
+	var lines := BriefingEffects.lines(state, _loader, {})
+	if lines.any(func(l): return String(l["text"]).begins_with("Nothing you decided")):
+		_fail("a month with decisions says 'Nothing you decided': %s" % str(lines))
+	if lines.is_empty() or not bool(lines[0]["uncertain"]) or not String(lines[0]["text"]).contains("Tax cut") \
+			or not String(lines[0]["text"]).contains("1 more") or String(lines[0]["tone"]) != "":
+		_fail("a decided-but-unbooked month does not name its decisions as an uncertain line: %s" % str(lines))
+	# An entry of another month is not this month's decision.
+	state.recent_effects[0]["month"] = int(state.month) - 1 if int(state.month) > 1 else 12
+	if String(BriefingEffects.lines(state, _loader, {})[0]["text"]) != "Nothing you decided last month":
+		_fail("last month's entry is read as this month's decisions")
 
 
 func _check_mixed() -> void:

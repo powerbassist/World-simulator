@@ -24,6 +24,8 @@ const ResultTone = preload("res://src/ui/result_tone.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 
 const MAX_LINES := 3
+## Decisions named on the "Decided last month" line before "and N more".
+const DECIDED_NAMED := 2
 ## A bloc offset's size word: under the first cut "slightly", under the second
 ## nothing, beyond it "clearly". Offsets live in [-1, 1].
 const OFFSET_SLIGHT := 0.05
@@ -33,8 +35,8 @@ const SPARK_MONTHS := 12
 
 
 ## Up to three lines {text, tone, uncertain, spark, tooltip}: booked first, then
-## uncertain; "Nothing you decided" and the month's biggest movement when none is
-## booked. `report` is the month's report (its lapsed requests), {} when absent.
+## uncertain; with none booked, what was decided (or "Nothing you decided") and
+## the month's biggest movement. `report` is the month's report (its lapsed requests), {} when absent.
 static func lines(state, loader, report: Dictionary) -> Array:
 	var ns = state.player()
 	var now := int(state.year) * 12 + int(state.month)
@@ -52,8 +54,7 @@ static func lines(state, loader, report: Dictionary) -> Array:
 			lapsed.size()) % lapsed.size(), ResultTone.BAD))
 	var booked := not out.is_empty()
 	if not booked:
-		out.append({"text": Strings.t("Nothing you decided last month"), "tone": "", "uncertain": false,
-			"spark": PackedFloat64Array(), "tooltip": ""})
+		out.append(_decided(state, now))
 	for m in _movements(state, now):
 		if out.size() >= MAX_LINES or (not booked and out.size() >= 2):
 			break
@@ -88,6 +89,24 @@ static func _laws(ns, loader, now: int, out: Array) -> void:
 
 
 ## "workers clearly for", "business slightly against".
+## With nothing booked, what was decided: the month's recent_effects entry names it
+## (main._queue_effect queues every command), and its effect is UNCERTAIN -- QA's
+## RF5 TAKE on #218: "Nothing you decided" printed after real decisions. Only a
+## month with no entry is a month the player decided nothing.
+static func _decided(state, now: int) -> Dictionary:
+	var effect: Dictionary = {} if state.recent_effects.is_empty() else state.recent_effects[0]
+	if effect.is_empty() or int(effect.get("year", 0)) * 12 + int(effect.get("month", 0)) != now:
+		return {"text": Strings.t("Nothing you decided last month"), "tone": "", "uncertain": false,
+			"spark": PackedFloat64Array(), "tooltip": ""}
+	var names: PackedStringArray = String(effect.get("label", "")).split("; ", false)  # i18n: row-ok effects' labels, routed when queued
+	var text := Strings.t("Decided last month: %s") % ", ".join(names.slice(0, DECIDED_NAMED))
+	if names.size() > DECIDED_NAMED:
+		var more := names.size() - DECIDED_NAMED
+		text = Strings.tn("Decided last month: %s and %d more", "Decided last month: %s and %d more", more) % [", ".join(names.slice(0, DECIDED_NAMED)), more]
+	return {"text": text, "tone": "", "uncertain": true, "spark": PackedFloat64Array(),
+		"tooltip": Strings.t("A month's decisions cannot be told apart in its numbers.")}
+
+
 static func _offset_words(bloc: String, d: float) -> String:
 	var who := Labels.bloc(bloc)
 	if absf(d) < OFFSET_SLIGHT:
