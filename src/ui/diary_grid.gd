@@ -221,6 +221,10 @@ func _render() -> void:
 
 func _pick(d: int) -> void:
 	_selected = d
+	# A new day reads from its date: an offset left from scrolling the last one (or
+	# LATER) would hide the "Book here" listed first. Not on the daily redraw.
+	if _list_scroll != null:
+		_list_scroll.scroll_vertical = 0
 	_render()
 	# The re-render freed the picked cell: its successor takes the focus, so a
 	# keyboard player keeps their place (QA's RECORD on #153).

@@ -13,10 +13,10 @@ extends SceneTree
 ## Here, QA's whole probe matrix: text at 100 / 115 / 130 %, no word or a dozen in
 ## flight, one to six pending requests, the first request's first free day picked
 ## by a click on the grid; at six requests the keyboard's path too (the card's
-## Days), and a picked day with two entries, then five, listed beside its "Book
-## here". Each time "Book here" lies inside EVERY scroll it sits in -- the day
-## list's and the docked page's -- so it is on screen, not merely inside a scroll
-## that is not.
+## Days), a click on a list the player had scrolled down, and a picked day with
+## two entries, then five, listed beside its "Book here". Each time "Book here"
+## lies inside EVERY scroll it sits in -- the day list's and the docked page's --
+## so it is on screen, not merely inside a scroll that is not.
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -63,6 +63,7 @@ func _process(_delta: float) -> bool:
 					_cases.append({"n": n, "scale": scale, "words": words, "path": "click"})
 				if n == MAX_REQUESTS:
 					_cases.append({"n": n, "scale": scale, "words": WORDS, "path": "days"})
+					_cases.append({"n": n, "scale": scale, "words": WORDS, "path": "scrolled"})
 					_cases.append({"n": n, "scale": scale, "words": WORDS, "path": "busy", "entries": 2})
 					_cases.append({"n": n, "scale": scale, "words": WORDS, "path": "busy", "entries": BUSIEST})
 		_next()
@@ -112,6 +113,11 @@ func _next() -> void:
 					"text": "Council votes", "mark": "fixed", "cancel": ""})
 			grid.show_items(_main._state, _main._loader, items)
 			grid.pick(int(date["year"]), int(date["month"]), int(date["day"]))
+		"scrolled":
+			# The player had scrolled the list down (LATER, a long day) before the click.
+			var grid = _main._calendar_panel._grid
+			grid._list_scroll.scroll_vertical = 10000
+			grid.pick(int(free[0]["year"]), int(free[0]["month"]), int(free[0]["day"]))
 		_:
 			_main._calendar_panel._grid.pick(int(free[0]["year"]), int(free[0]["month"]), int(free[0]["day"]))
 	_wait = SETTLE
