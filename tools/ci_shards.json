@@ -167,6 +167,7 @@
    "tests/test_priorities.gd",
    "tests/test_briefing_hold.gd",
    "tests/test_briefing_effects.gd",
+   "tests/test_briefing_go.gd",
    "tests/test_law_list.gd",
    "tests/test_person_links.gd",
    "tests/test_effects_ledger.gd",

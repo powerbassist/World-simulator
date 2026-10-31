@@ -37,6 +37,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const Grade = preload("res://src/ui/grade.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 
 signal card_dismissed(id: String)
 signal card_activated(id: String)
@@ -192,6 +193,10 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 			# V5.2b: a request's refused answer stays, disabled, its reason on hover.
 			button.disabled = bool(actions[i].get("disabled", false))
 			button.tooltip_text = String(actions[i].get("tooltip", ""))
+			# V5.3-0 RF3: what the answer acts on (an event id, a request id), for
+			# the briefing's Go -- acts_on.gd.
+			if actions[i].has("acts_on"):
+				ActsOn.tag(button, [actions[i]["acts_on"]])
 			var index := i
 			button.pressed.connect(func():
 				# main.gd slides the inbox back once no decision holds the clock:

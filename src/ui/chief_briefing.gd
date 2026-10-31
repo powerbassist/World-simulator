@@ -33,6 +33,7 @@ const SPARK_SIZE := Vector2(96, 24)
 var _face: TextureRect
 var _header: Label
 var _line: Label
+var _name: Label
 var _rows: VBoxContainer
 var _effects: VBoxContainer
 var _close: Button
@@ -55,6 +56,10 @@ func _ready() -> void:
 	var said := VBoxContainer.new()
 	said.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(said)
+	_name = Label.new()
+	_name.theme_type_variation = UiTheme.HEADING
+	_name.visible = false
+	said.add_child(_name)
 	_header = Label.new()
 	_header.theme_type_variation = UiTheme.LEAD
 	said.add_child(_header)
@@ -71,10 +76,12 @@ func _ready() -> void:
 	foot.add_child(_close)
 
 
-## view: {header, line ("" hides it), face (Texture2D or null), rows: [{icon, title,
+## view: {header, who and line ("" hides each), face (Texture2D or null), rows: [{icon, title,
 ## chip, held}], effects: [{text, tone, uncertain, spark, tooltip}], close}.
 func show_view(view: Dictionary) -> void:
 	_header.text = String(view.get("header", ""))
+	_name.text = String(view.get("who", ""))
+	_name.visible = not _name.text.is_empty()
 	_line.text = String(view.get("line", ""))
 	_line.visible = not _line.text.is_empty()
 	_face.texture = view.get("face")

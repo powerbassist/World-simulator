@@ -248,7 +248,8 @@ func _build_levers() -> Control:
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.draw.connect(_draw_span.bind(key))
 		slider.value_changed.connect(_on_lever_changed.bind(key))
-		grid.add_child(slider)
+		# V5.3-0 RF3: a lever acts on the balance (the briefing's budget Go).
+		grid.add_child(preload("res://src/ui/acts_on.gd").tag(slider, ["deficit", "balance"]))
 		_sliders[key] = slider
 
 		var value_label := Label.new()

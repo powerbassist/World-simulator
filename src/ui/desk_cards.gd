@@ -217,7 +217,7 @@ static func push(main, ev, entry: Dictionary) -> String:
 		actions.append({"label": "%s%s" % [
 			Strings.choice_label(ev.id, choice),
 			Strings.t("   (happens if you say nothing)") if bool(choice.get("is_default", false)) else "",
-		]})
+		], "acts_on": String(event_id)})
 	# The title names the place for a sited event -- read straight off the
 	# entry, `event_name` untouched (V3.5). The name is already in the
 	# register because every reader of it is a leaf over pending state.

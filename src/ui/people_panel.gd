@@ -26,6 +26,11 @@ extends PanelContainer
 ## appears beside a name here: all of them belong to the PARTY, and printing
 ## one next to a person would imply the person carries it. See
 ## docs/people-model.md.
+##
+## V5.3-0 (2.4) breaks the no-button rule once, on purpose: the briefing's person Go
+## lands on a "Call" for the one person it names, in a row of its own at the top
+## (focus()), because a Go must land on a verb. One row, one button: the fold
+## above cannot happen to it.
 
 signal closed
 ## V5.2b b3: a right click on a person asks to call them (phone_driver.gd). Not a
@@ -38,6 +43,7 @@ const Judiciary = preload("res://src/sim/judiciary.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Num = preload("res://src/ui/num.gd")
@@ -180,11 +186,37 @@ func _refresh() -> void:
 	top.add_theme_constant_override("separation", 40)
 	_body.add_child(top)
 	var offices := _block(top)
+	_build_focus()
 	_build_executive(ns, offices)
 	_build_cabinet(ns, offices)
 	_build_parties(ns, _block(top))
 	_build_character_groups(ns)
 	_build_abroad(ns)
+
+
+## The person the briefing named, shown first with a Call; "" for none.
+var focused := ""
+
+
+func focus(person_id: String) -> void:
+	focused = person_id
+	mark_dirty()
+
+
+func _build_focus() -> void:
+	if focused == "" or not _loader.person_by_id.has(focused):
+		return
+	var row := PanelKit.buttons(_body)
+	_body.move_child(row, 0)
+	var who := Label.new()
+	who.text = _name_of(focused)
+	who.theme_type_variation = UiTheme.LEAD
+	row.add_child(who)
+	var call := PanelKit.sized(Button.new())
+	call.text = tr("Call")
+	var pid := focused
+	call.pressed.connect(func() -> void: call_requested.emit(pid))
+	row.add_child(ActsOn.tag(call, [pid]))
 
 
 func _block(parent: Control) -> VBoxContainer:

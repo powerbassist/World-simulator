@@ -112,6 +112,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --termlimit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing calm
+##     (also tense: a request lapsing next month; crisis: an interrupt on the desk)
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
@@ -534,6 +536,7 @@ var _election := false
 var _polls_closed := false
 ## V5.1-d1b2 (G9): the head of government's card, pinned as a click on the name pins it.
 var _person_card := false
+var _briefing := ""  # V5.3-0: the monthly briefing card, in a situation (calm, tense, crisis)
 ## V5.2 pre-gate B (RECORD 5), --rapport X: the card's person carries rapport X.
 var _rapport := 0.0
 ## V5.1-d4, --box ID / --verbs ID: the country box a left click opens on ID, or the
@@ -614,6 +617,45 @@ var _main
 ## V4.8b, for --outliner. Writes the registers the outliner reads, the way
 ## tests/test_outliner.gd stages them, so the frame is the window with every
 ## section populated.
+## The monthly briefing as the month's end opens it: the term's programme chosen
+## first (its offer would hold a line of its own), then the situation's cause, then
+## the card through its driver.
+func _stage_briefing() -> void:
+	var Driver = preload("res://src/ui/briefing_driver.gd")
+	var state = _main._state
+	var ns = state.player()
+	var offer: Array = preload("res://src/sim/programme.gd").available(state, ns, _main._loader)
+	if not offer.is_empty():
+		_main._on_programme_chosen(String(offer[0]["id"]))
+	var now := int(state.year) * 12 + int(state.month)
+	if _briefing == "crisis":
+		var ev = _main._loader.events[0]
+		var entry := {"event_id": String(ev.id), "event_name": ev.event_name, "months_left": 2,
+			"interrupt": true, "severity": 3, "category": ev.category}
+		ns.event_queue.append(entry)
+		preload("res://src/ui/desk_cards.gd").push(_main, ev, entry)
+	elif _briefing == "tense":
+		for person in _main._loader.people[String(ns.id)]:
+			if String(person.kind) == "politician" and String(person.id) != preload("res://src/sim/president.gd").leader_id(ns):
+				ns.audience_requests.append({"id": "%s|%d" % [person.id, now], "person_id": String(person.id),
+					"object": "programme:none", "stance": "sponsor", "arrived_month": now - 1, "deadline_month": now + 1,
+					"status": "pending", "date": {}, "resolved_month": -1})
+				break
+		preload("res://src/ui/audience_driver.gd").refresh(_main)
+	# Until Content's chief records are on main (#216), a stand-in chief so the
+	# card's face-name-line slot is seen; a nation with a record shows its own.
+	if Driver.chief_of(_main._loader, String(ns.id)) == null:
+		var chief = preload("res://src/core/person.gd").new()
+		chief.id = "%s_chief_of_staff" % ns.id
+		chief.person_name = "Odile Kerhervé"
+		chief.kind = "chief_of_staff"
+		chief.voice = "chief_%s" % String(ns.id).to_lower()
+		_main._loader.people[String(ns.id)].append(chief)
+		_main._loader.person_by_id[chief.id] = chief
+	Driver._games[_main.get_instance_id()]["pending"] = {}
+	Driver.open(_main, {})
+
+
 func _stage_the_outliner() -> void:
 	var loader = _main._loader
 	var ns = _main._state.player()
@@ -872,6 +914,8 @@ func _init() -> void:
 			_polls_closed = true
 		elif args[i] == "--person-card":
 			_person_card = true
+		elif args[i] == "--briefing":
+			_briefing = args[i + 1] if i + 1 < args.size() and not args[i + 1].begins_with("--") else "calm"
 		elif args[i] == "--rapport" and i + 1 < args.size():
 			_rapport = float(args[i + 1])
 		elif args[i] == "--box" and i + 1 < args.size():
@@ -1275,6 +1319,8 @@ func _apply_view() -> void:
 					_main._map_view.nation_clicked.emit(_box)
 				else:
 					child.show_verbs(_verbs)
+	if _briefing != "":
+		_stage_briefing()
 	if _person_card:
 		var pm := String(_main._state.player().pm_person_id)
 		if _rapport != 0.0:

@@ -28,6 +28,8 @@ const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Events = preload("res://src/sim/events.gd")
+const Portrait = preload("res://src/ui/portrait.gd")
+const Voices = preload("res://src/core/voices.gd")
 
 static var _games := {}
 ## A test seam: a test of another surface drives whole months and would otherwise
@@ -44,6 +46,9 @@ static func register(main) -> void:
 	_games[main.get_instance_id()] = game
 	card.go_pressed.connect(func(i: int) -> void: go(main, i))
 	card.closed.connect(func() -> void: close(main))
+	# The two verbs block 0 added where a Go lands (2.4); the panels only ask.
+	main._agenda_panel.open_requested.connect(func(tab: String) -> void: main._windows.open(tab))
+	main._polling_panel.calm_requested.connect(func(tab: String, bloc: String) -> void: _open_laws_or(main, tab, bloc))
 
 
 static func card_of(main) -> ChiefBriefing:
@@ -145,8 +150,34 @@ static func view(main, lines: Array, report: Dictionary) -> Dictionary:
 			"chip": PriorityWords.chip(l, state), "held": bool(l["held"])})
 	var header := Strings.t("A quiet month") if Priorities.quiet(lines) \
 		else Strings.t("%s: your priorities") % DateText.month_year(int(state.month), int(state.year))
-	return {"header": header, "line": "", "face": null, "rows": rows,
-		"effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
+	var chief = chief_of(main._loader, String(state.player().id))
+	var who := ""
+	var said := ""
+	if chief != null:
+		who = Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id))
+		said = chief_line(main._loader, String(chief.id), Priorities.situation(lines), int(state.year) * 12 + int(state.month))
+	return {"header": header, "who": who, "line": said, "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
+		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
+
+
+## "The person of kind chief_of_staff in the played nation's file" (2.1), or null.
+## Staff.chief_of (src/sim/staff.gd, Systems' #215) is the same rule by kind; this
+## walk moves to it once #215 is on main.
+static func chief_of(loader, nation_id: String):
+	for person in loader.people.get(nation_id, []):
+		if String(person.kind) == "chief_of_staff":
+			return person
+	return null
+
+
+## The chief's line for the month's situation (2.6): three variants per situation in
+## the voice archetype's own lines, rotated by the month so no line plays two months
+## running. Shown as text; the voiced clip comes with the paid batch.
+static func chief_line(loader, person_id: String, situation: String, month_index: int) -> String:
+	var arch := Voices.archetype_of(loader, person_id)
+	var key := "%s_%d" % [situation, posmod(month_index, 3) + 1]
+	var english := String((loader.voice_archetypes.get(arch, {}).get("lines", {}) as Dictionary).get(key, ""))
+	return Strings.t("“%s”") % Strings.row("voices", arch, "lines.%s" % key, english) if english != "" else ""
 
 
 ## "Continue", or "Next: ..." naming the surface that still holds the clock.
@@ -195,16 +226,58 @@ static func go(main, index: int) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	if game.is_empty() or index < 0 or index >= (game["lines"] as Array).size():
 		return
-	var target: Dictionary = game["lines"][index]["go"]
+	var line: Dictionary = game["lines"][index]
+	var target := target_of(line)
 	close(main)
 	var tab := String(target["tab"])
-	var subject := String(target["subject"])
-	match tab:
-		"inbox": _raise_event(main, subject)
-		"person": main._windows.open("people")
-		_: main._windows.open(tab)
-	if tab == "legislature" and main._law_panel != null and main._law_panel._laws != null:
-		main._law_panel._laws.select(subject)
+	var subject := String(line["subject"])
+	match String(line["kind"]):
+		"crisis", "decision":
+			_raise_event(main, subject)
+		"request":
+			# The verbs are the request card's (Book a day / Delegate / Decline); the
+			# Diary beside it shows the days. Booking inside the grid is (b)'s (3.4).
+			main._windows.open(tab)
+			main._hud.inbox.slide_in()
+			main._hud.inbox.raise_card(preload("res://src/ui/audience_driver.gd").lane_of(main).card_of(subject))
+		"bloc":
+			_open_laws_or(main, tab, subject)
+		"bill":
+			_open_laws_or(main, tab, "")  # every law, so the tabled line shows
+		"person":
+			main._windows.open(tab)
+			main._people_panel.focus(subject)
+		_:
+			main._windows.open(tab)
+
+
+## Where a line's Go lands: the tab, and the id an enabled control there is tagged
+## with (acts_on.gd) -- the line's subject, except a commitment, whose verb is the
+## promised thing's own: a programme entry on the Agenda, an office on Politics, a
+## figure on the Budget. A tabled bill is RF3's one named exception (the parent's
+## call): it lands on the Legislature's tabled line, which has no verb until the
+## Assembly divides.
+static func target_of(line: Dictionary) -> Dictionary:
+	var kind := String(line["kind"])
+	var subject := String(line["subject"])
+	if kind != "commitment":
+		return {"tab": String(line["go"]["tab"]), "acts_on": subject}
+	var object := subject.get_slice("|", 2)
+	if object.begins_with("programme:"):
+		return {"tab": "agenda", "acts_on": object.trim_prefix("programme:")}
+	if object.begins_with("office:"):
+		return {"tab": "politics", "acts_on": "seats"}
+	if object.begins_with("meter:"):
+		return {"tab": "budget", "acts_on": "balance"}
+	return {"tab": "calendar", "acts_on": subject}
+
+
+## The Legislature filtered to the laws `bloc` likes, or another tab.
+static func _open_laws_or(main, tab: String, bloc: String) -> void:
+	if tab == "legislature":
+		main._law_panel._laws.bloc_filter = bloc
+		main._law_panel.mark_dirty()
+	main._windows.open(tab)
 
 
 static func _raise_event(main, event_id: String) -> void:

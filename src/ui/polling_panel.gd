@@ -19,6 +19,8 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Trends = preload("res://src/ui/trends.gd")
 
@@ -26,6 +28,9 @@ const TOP_ISSUE_COUNT := 4
 const HEADLINE_KEY := "overall"
 
 signal closed
+## V5.3-0 (2.4): the "what calms it" row asks for a tab (and, for the laws, the bloc
+## to filter them by); briefing_driver.gd performs it. This panel stays read-only.
+signal calm_requested(tab_id: String, bloc: String)
 
 var _state
 var _loader = null
@@ -171,6 +176,28 @@ func _refresh() -> void:
 	for entry in Opinion.top_issues(ns, TOP_ISSUE_COUNT):
 		issue_rows.append([K.ISSUE_LABEL[entry[0]], "%.0f%%" % (float(entry[1]) * 100.0)])
 	PanelKit.ledger(PanelKit.section(_body, tr("What the country is thinking about")), issue_rows)
+	_build_calm(ns, current)
+
+
+## V5.3-0 (2.4): the unrest reading and what calms it -- the briefing's unrest Go
+## lands here, and a Go must land on a verb. Spending (the budget) or a law the
+## least happy bloc likes, as the polls show it (the same polled figures as above).
+func _build_calm(ns, current: Dictionary) -> void:
+	var box := PanelKit.section(_body, tr("What calms the street"))
+	PanelKit.line(box, tr("[g=unrest]Unrest[/g]: %.0f%%") % float(ns.unrest_pct), PanelKit.Tone.PLAIN)
+	var weakest := ""
+	for bloc in K.BLOC_KEYS:
+		if weakest == "" or float(current[bloc]) < float(current[weakest]):
+			weakest = bloc
+	var row := PanelKit.buttons(box)
+	var spend := PanelKit.sized(Button.new())
+	spend.text = tr("Budget")
+	spend.pressed.connect(func() -> void: calm_requested.emit("budget", ""))
+	row.add_child(ActsOn.tag(spend, ["unrest"]))
+	var laws := PanelKit.sized(Button.new())
+	laws.text = tr("Laws %s like") % Labels.bloc(weakest)
+	laws.pressed.connect(func() -> void: calm_requested.emit("legislature", weakest))
+	row.add_child(ActsOn.tag(laws, ["unrest"]))
 
 
 ## The poll published before `id`, off the history the Society charts draw

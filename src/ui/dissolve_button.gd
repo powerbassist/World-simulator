@@ -19,6 +19,7 @@ signal dissolved(before: Dictionary)
 const Dissolution = preload("res://src/sim/dissolution.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
 const Words = preload("res://src/ui/lever_words.gd")
@@ -36,6 +37,7 @@ func _init() -> void:
 	text = tr("Dissolve")
 	PanelKit.sized(self)
 	pressed.connect(_on_pressed)
+	ActsOn.tag(self, ["seats"])
 
 
 func sync(state, ns) -> void:

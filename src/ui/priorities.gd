@@ -37,7 +37,8 @@ const Trends = preload("res://src/ui/trends.gd")
 
 
 ## {lines: exactly three {kind, subject, deadline_month (-1: none), score, u, m,
-## held, standing, more, go: {tab, subject}}, memory: what to pass back next month}.
+## held, standing, more, go: {tab, subject}}, memory: what to pass back next month,
+## qualified: the kinds that had a candidate}.
 ## opts: `memory` (the last call's), `held_events` (the event ids that hold the
 ## clock now; absent, read from the desk by the spec's rule), `programme_held`.
 static func rank(state, loader, opts := {}) -> Dictionary:
@@ -70,7 +71,12 @@ static func rank(state, loader, opts := {}) -> Dictionary:
 	memory["onsets"] = next_onsets
 	var lines := _pick(held, cands, memory.get("last", []), now)
 	memory["last"] = lines.map(func(l): return {"kind": l["kind"], "subject": l["subject"], "u": l["u"], "m": l["m"]})
-	return {"lines": lines, "memory": memory}
+	# `qualified`: every kind that had a candidate this month, held included, in row
+	# order -- RF2's "every kind that qualifies appears at least once" (Systems' probe).
+	var seen := {}
+	for c in held + cands:
+		seen[String(c["kind"])] = true
+	return {"lines": lines, "memory": memory, "qualified": K.KINDS.filter(func(k): return seen.has(k))}
 
 
 ## Whether every line is a standing read: the card's "A quiet month".

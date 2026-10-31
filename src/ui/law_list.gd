@@ -28,6 +28,8 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
@@ -47,6 +49,10 @@ var _panel
 var _rows: VBoxContainer
 var _detail: VBoxContainer
 var _selected := ""
+## V5.3-0 (2.4): the bloc whose liked laws the list shows, "" for every law. Set by
+## the briefing's bloc Go and the Society panel's "what calms it" row; cleared by
+## the filter's own button.
+var bloc_filter := ""
 ## The last fill's inputs, so a selection rebuilds the detail alone (QA on #96: a
 ## click that rebuilt all 105 rows and their forecasts cost ~100 ms).
 var _shown: Array = []
@@ -107,6 +113,9 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 		for child in box.get_children():
 			box.remove_child(child)
 			child.queue_free()
+	if bloc_filter != "":
+		laws = liked_by(laws, bloc_filter)
+		_filter_row()
 	if laws.is_empty():
 		if not ns.tabled_bill.is_empty():
 			PanelKit.line(_rows, tabled_text(ns), PanelKit.Tone.PLAIN)
@@ -123,6 +132,36 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 	for law in laws:
 		_rows.add_child(_row(ns, party_list, law, law == chosen))
 	_build_detail(ns, party_list, chosen)
+
+
+## The laws a bloc likes -- a positive authored price for it -- the most liked
+## first (ties keep the list's own order). The authored price is what the
+## briefing's preview reads too (briefing.gd), so the filter and the bill's own
+## page cannot disagree.
+static func liked_by(laws: Array, bloc: String) -> Array:
+	var liked := laws.filter(func(law) -> bool: return _offset(law, bloc) > 0.0)
+	var order := range(liked.size())
+	order.sort_custom(func(a: int, b: int) -> bool:
+		return _offset(liked[a], bloc) > _offset(liked[b], bloc) or (_offset(liked[a], bloc) == _offset(liked[b], bloc) and a < b))
+	return order.map(func(i: int): return liked[i])
+
+
+static func _offset(law, bloc: String) -> float:
+	return float((law.effects.get("bloc_offset", {}) as Dictionary).get(bloc, 0.0))
+
+
+func _filter_row() -> void:
+	var row := PanelKit.buttons(_rows)
+	var label := Label.new()
+	label.text = tr("Laws %s like") % Labels.bloc(bloc_filter)
+	label.theme_type_variation = UiTheme.HEADING
+	row.add_child(label)
+	var clear := PanelKit.sized(Button.new())
+	clear.text = tr("Show every law")
+	clear.pressed.connect(func() -> void:
+		bloc_filter = ""
+		_panel.mark_dirty())
+	row.add_child(clear)
 
 
 func _row(ns, party_list: Array, law, selected: bool) -> Control:
@@ -259,6 +298,8 @@ func _verbs(ns, law) -> void:
 	propose.name = "Propose"  # i18n: ok a node name
 	propose.text = tr("Propose")
 	propose.pressed.connect(_panel._on_propose.bind(law))
+	# V5.3-0 RF3: Propose acts on the law, and on the bloc the list is filtered for.
+	ActsOn.tag(propose, [law.id] + ([bloc_filter] if bloc_filter != "" else []))
 	_panel._offer(propose)
 	row.add_child(propose)
 	# Article 49.3 exists only under a constitution that has it, and cannot force a

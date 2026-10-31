@@ -70,4 +70,4 @@ const HOSTILE_GRUDGE := 0.45
 const GO_TAB := {"crisis": "inbox", "decision": "inbox", "election": "campaign",
 	"bill": "legislature", "majority": "politics", "commitment": "calendar",
 	"request": "calendar", "programme": "agenda", "bloc": "legislature",
-	"budget": "budget", "unrest": "society", "person": "person"}  # i18n: ok tab ids
+	"budget": "budget", "unrest": "society", "person": "people"}  # i18n: ok tab ids
