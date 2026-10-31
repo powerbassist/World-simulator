@@ -29,6 +29,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/audience_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const Staff = preload("res://src/sim/staff.gd")
 const Offers = preload("res://src/sim/offers.gd")
 const President = preload("res://src/sim/president.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -210,12 +211,15 @@ static func agree(ns, request_id: String, outcome: String) -> bool:
 
 ## b3, the G7 hook (V5.3c's builder calls it; nothing in b3 does): a person of this
 ## nation asks outside the hazard, about the object the caller names -- a private
-## firm's chief executive on "price:<project>" -- under the lane's own rules.
+## firm's chief executive on "price:<project>" -- under the lane's own rules. The
+## president's staff never ask (V5.3-0, Staff.is_staff).
 static func invite(state, ns, loader, person_id: String, object: String, stance: String) -> Dictionary:
 	var person = loader.person_by_id.get(person_id)
 	var now := _now(state)
 	if person == null or not person_id.begins_with("%s_" % ns.id) or object == "":
 		return {"ok": false, "error": "not someone of this nation", "request": {}}
+	if Staff.is_staff(loader, person_id):
+		return {"ok": false, "error": "staff do not ask", "request": {}}
 	if _open_count(ns, true) >= K.MAX_PENDING or not _may_ask(ns, person, President.leader_id(ns), now):
 		return {"ok": false, "error": "they cannot ask now", "request": {}}
 	var arrived := []
@@ -271,7 +275,7 @@ static func _overdue(row: Dictionary, now: int) -> bool:
 static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: Array) -> void:
 	if int(ns.audience_lane_start) < 0:
 		ns.audience_lane_start = now
-	var people: Array = loader.people.get(state.player_nation_id, [])
+	var people: Array = Staff.cast(loader, state.player_nation_id)
 	var leader := President.leader_id(ns)
 	var open := _open_count(ns, true)
 	var visiting := _open_count(ns, false)

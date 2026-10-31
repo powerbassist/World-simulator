@@ -28,6 +28,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Staff = preload("res://src/sim/staff.gd")
 
 const PLAYER := "FRA"
 const METERS := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
@@ -117,7 +118,9 @@ func _check_the_odds_sit_one_penalty_below_the_audience() -> void:
 	var ns = state.player()
 	var offered := 0
 	var refused := 0
-	for person in _loader.people[PLAYER]:
+	# V5.3-0: the cast. The chief of staff takes no call (President.covers), so
+	# the line refuses them before any odds are read.
+	for person in Staff.cast(_loader, PLAYER):
 		if person.id == President.leader_id(ns):
 			continue
 		_ask(state, ns, person.id, "odds")
@@ -328,7 +331,7 @@ func _check_twin_states_ring_alike() -> void:
 		var state = _plain_game()
 		var ns = state.player()
 		var seen := []
-		for person in _loader.people[PLAYER]:
+		for person in Staff.cast(_loader, PLAYER):
 			if person.id == President.leader_id(ns):
 				continue
 			_ask(state, ns, person.id, "twin")
@@ -376,9 +379,10 @@ func _warm(state, ns, pid: String) -> void:
 	President.set_bond(state, ns, _loader, pid, "close")
 
 
-## A France person who is not the president nor any of `not_ids`.
+## A France person who is not the president nor any of `not_ids` -- nor staff,
+## whom the phone never reaches (V5.3-0).
 func _someone(ns, not_ids := []) -> String:
-	for person in _loader.people[PLAYER]:
+	for person in Staff.cast(_loader, PLAYER):
 		if person.id != President.leader_id(ns) and not not_ids.has(person.id):
 			return person.id
 	return ""

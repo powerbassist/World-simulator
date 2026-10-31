@@ -24,16 +24,20 @@ extends RefCounted
 
 const K = preload("res://src/sim/president_constants.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
+const Staff = preload("res://src/sim/staff.gd")
 
 
 ## Whether an edge from this nation's president to the person may exist: an
 ## authored person of this nation (the loader's id-prefix rule), or another
 ## nation's current head of state or of government -- the president meets
 ## heads, not their benches. Never the president themself: an edge needs two
-## ends. Read at write time; an edge to a head who has since left office stays,
-## because what passed between them still did.
+## ends. Never the president's staff either (V5.3-0, Staff.is_staff): the chief
+## of staff moves no number, and every writer here and every player verb (a
+## call, a commitment, a shadow) gates on this. Read at write time; an edge to a
+## head who has since left office stays, because what passed between them
+## still did.
 static func covers(state, ns, loader, person_id: String) -> bool:
-	if person_id == leader_id(ns):
+	if person_id == leader_id(ns) or Staff.is_staff(loader, person_id):
 		return false
 	if _own(ns, loader, person_id):
 		return true

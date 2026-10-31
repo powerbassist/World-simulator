@@ -212,7 +212,10 @@ func _check_person_field_contract() -> void:
 			"social_skill", "spouse_id", "wealth_eur_m",
 			# V5.2d: which recorded voice plays them. A presentation fact that
 			# never moves and that no slot states; no mechanism reads it.
-			"voice"]:
+			"voice",
+			# V5.3-0: a one-line biography, the same class of fact as the voice
+			# (presentation only, never moves, read by the UI alone).
+			"bio"]:
 		expected.append(String(n))
 	if names != expected:
 		_fail("Person declares %s, expected exactly %s -- a new field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names), str(expected)])
@@ -229,9 +232,12 @@ func _check_person_field_contract() -> void:
 ## machine, and the chief's own lever is V4.2's lobbying. When V4.2 opens it,
 ## this exemption narrows back or the kind grows a lever -- a kind exempt here
 ## forever is exactly the inert content this check exists to refuse.
+## V5.3-0: the staff kinds (CharacterK.KIND_STAFF) are exempt for the opposite
+## reason, and not as a stopgap: a chief of staff must NOT act -- moving no
+## number is their whole contract, which tests/test_staff_kind.gd pins.
 func _check_kind_meter_coverage() -> void:
 	for kind in CharacterK.KIND_KEYS:
-		if kind in ["politician", "regional_figure", "executive"]:
+		if kind in ["politician", "regional_figure", "executive"] or CharacterK.KIND_STAFF.has(kind):
 			continue
 		if not CharacterK.KIND_METERS.has(kind):
 			_fail("kind '%s' has no meter and no political lever -- declare it in KIND_METERS or refuse the kind" % kind)
