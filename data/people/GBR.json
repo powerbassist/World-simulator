@@ -1249,6 +1249,20 @@
       "social_skill": 0.4,
       "wealth_eur_m": 1.5,
       "bench": true
+    },
+    {
+      "id": "GBR_chief_of_staff",
+      "name": "Harriet Pellow",
+      "kind": "chief_of_staff",
+      "bio": "Spent two decades running campaigns and whips' offices for the party; she can tell a rebellion from a grumble at ten paces.",
+      "traits": [
+        "pragmatic",
+        "networked"
+      ],
+      "ambition": 0.3,
+      "social_skill": 0.8,
+      "voice": "chief_gbr",
+      "bench": true
     }
   ]
 }

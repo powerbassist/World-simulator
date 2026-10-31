@@ -88,6 +88,7 @@ func _run() -> void:
 	_check_vacancy_reads_as_vacant(panel, state)
 	_check_read_only(panel)
 	_check_side_words(panel, state)
+	_check_chief_shown(panel, state)
 
 
 ## QA's #143 RECORDs: a party leader the data gives no party_id (Moucron, Ferrand,
@@ -324,3 +325,22 @@ func _finish() -> void:
 			printerr("FAIL: %s" % f)
 	_main.queue_free()
 	quit(0 if _failures.is_empty() else 1)
+
+
+## V5.3-0 (the parent's call on #216): the chief of staff is shown in the executive,
+## right under the played office's holder, their kind as a word.
+func _check_chief_shown(panel, state) -> void:
+	var chief = preload("res://src/sim/staff.gd").chief_of(_main._loader, String(state.player().id))
+	if chief == null:
+		_fail("premise: the played nation has no chief of staff")
+		return
+	var texts: Array = []
+	# Owned children too: the panel builds its rows in code, unowned.
+	for node in panel.find_children("*", "Label", true, false):
+		texts.append((node as Label).text)
+	var at := texts.find(chief.person_name)
+	if at < 1 or texts[at - 1] != "Chief of staff":
+		_fail("the chief of staff is not shown as 'Chief of staff' beside their name: %s" % str(texts.slice(0, 12)))
+	var leader := texts.find(String(_main._loader.person_name(preload("res://src/sim/president.gd").leader_id(state.player()))))
+	if leader < 0 or at != leader + 2:
+		_fail("the chief's line is not right under the played office's holder (leader at %d, chief at %d)" % [leader, at])
