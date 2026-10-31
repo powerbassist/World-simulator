@@ -52,8 +52,9 @@ extends SceneTree
 ##        three (kinds and subjects) and a mean overlap of at most 1.5 lines;
 ##        every month, a held surface holds a line, a dated line inside
 ##        Priorities' no-damping window is never damped, and no request lapses
-##        unshown in its last month while a line was free for it; the kinds seen
-##        are reported;
+##        unshown in its last month while a line was free for it (a line, a
+##        "+N more", or the card's "Also due this month" footer, rank()'s
+##        `also_due`, counts as shown); the kinds seen are reported;
 ##   RF9  bed changes at most once per 2 months on average, and the crisis bed
 ##        at the first briefing after a crisis (an interrupt or a severity-3
 ##        card) arrives.
@@ -334,6 +335,12 @@ func _brief(state, ns, row: Dictionary, report: Dictionary, brief: Dictionary) -
 			"w": float(l["w"]), "u": float(l["u"]), "m": float(l["m"])})
 	row["now"] = int(state.year) * 12 + int(state.month)
 	row["lines"] = lines
+	# The card's "Also due this month" footer (the parent's call on RF2): every
+	# deadline-this-month item crowded out of the three, each with its Go.
+	var also_due: Array = []
+	for item in out.get("also_due", []):
+		also_due.append("%s|%s" % [String(item["kind"]), String(item["subject"])])
+	row["also_due"] = also_due
 	row["held_rule"] = not (row["held_ids"] as Array).is_empty() or bool(row["programme_held"])
 	var crisis_severity := int(_priorities.K.CRISIS_SEVERITY)
 	row["crisis_arrived"] = (row["arrivals"] as Array).any(func(a) -> bool:
@@ -426,12 +433,13 @@ func _rf2(rows: Array) -> Dictionary:
 			continue
 		var prev: Dictionary = briefed[t - 1]
 		# A request that lapsed this month was in last month's briefing -- its own
-		# line, or folded as "+N more" on the request line -- or every line of it
-		# was held (nothing was free for it).
+		# line, folded as "+N more" on the request line, or in the "Also due this
+		# month" footer -- or every line of it was held (nothing was free for it).
 		var all_held := (prev["lines"] as Array).all(func(l) -> bool: return bool(l["held"]))
 		for request_id in row["lapsed"]:
 			var shown := (prev["lines"] as Array).any(func(l) -> bool:
-				return String(l["kind"]) == "request" and (String(l["subject"]) == String(request_id) or int(l["more"]) > 0))
+				return String(l["kind"]) == "request" and (String(l["subject"]) == String(request_id) or int(l["more"]) > 0)) \
+				or (prev["also_due"] as Array).has("request|%s" % String(request_id))
 			if not shown and not all_held:
 				lapsed_unshown += 1
 		if t >= n:
