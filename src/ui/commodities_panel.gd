@@ -91,6 +91,8 @@ const PANEL_HEIGHT := 660
 var _state
 var _loader
 var _dirty := true
+## The recipe lines are shown (the "What makes what" toggle).
+var _tree_open := false
 
 var _title: Label
 var _body: VBoxContainer
@@ -219,19 +221,21 @@ func _build_alert(ns) -> void:
 ## The balance, grouped by the loader's categories in the loader's own order. A
 ## category with no goods prints that fact rather than nothing, so a content pack
 ## that empties one reads as empty instead of as a section that vanished.
+## V5.3-0 (b), spec 3.3: ONE table, its column words once -- the seven category
+## tables each repeated "bought (+) / sold (-)", "price vs base" and "demand
+## covered", 77 words of headers. A category is a row of its own in the table.
 func _build_balance(ns) -> void:
 	PanelKit.heading(_body, tr("The balance, this month"))
 	var prices: Dictionary = (ns.commodity_state.get("price", {}) as Dictionary)
+	var rows: Array = [[tr("Good"), tr("Made"), tr("Net trade"), tr("Price change"), tr("Demand met")]]
 	for category in DataLoader.COMMODITY_CATEGORIES:
 		var goods: Array = []
 		for good_id in _goods_in_order():
 			if _category_of(good_id) == String(category):
 				goods.append(good_id)
-		var body := PanelKit.section(_body, String(category))
 		if goods.is_empty():
-			PanelKit.line(body, tr("No good carries this category."))
 			continue
-		var rows: Array = [[tr("good"), tr("made"), tr("bought (+) / sold (-)"), tr("price vs base"), tr("demand covered")]]
+		rows.append([String(category).to_upper(), "", "", "", ""])
 		for good_id in goods:
 			var base := _base_price(good_id)
 			var price := float(prices.get(good_id, base))
@@ -248,7 +252,7 @@ func _build_balance(ns) -> void:
 				PanelKit.delta(100.0 * (price / base - 1.0) if base > 0.0 else 0.0, "%"),
 				"%.0f%%" % (100.0 * coverage(ns, good_id)),
 			])
-		PanelKit.ledger(body, rows)
+	PanelKit.ledger(_body, rows)
 
 
 ## The tree, as lines. Grouped by the OUTPUT's category, in the loader's category
@@ -266,9 +270,18 @@ func _build_balance(ns) -> void:
 ## `_cheapest_route()` states why -- this layer has no wage or capital price to
 ## value them against), and a panel that printed a factor requirement the machine
 ## ignores would be presenting a lever the game does not have.
+##
+## V5.3-0 (b): folded behind one button, as Territory's partition is -- 160 words
+## of recipe lines that a reader looks up, not reads every month.
 func _build_tree() -> void:
-	PanelKit.heading(_body, tr("The industrial tree"))
-	PanelKit.heading(_body, tr("What makes what"))
+	var toggle := PanelKit.sized(Button.new())
+	toggle.text = tr("What makes what")
+	toggle.toggle_mode = true
+	toggle.button_pressed = _tree_open
+	toggle.pressed.connect(func() -> void: _tree_open = not _tree_open; _dirty = true)
+	PanelKit.buttons(_body).add_child(toggle)
+	if not _tree_open:
+		return
 
 	var by_output: Dictionary = {}
 	for recipe_id in _recipe_ids():

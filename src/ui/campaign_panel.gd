@@ -218,7 +218,8 @@ func _build_clock(ns) -> void:
 
 	PanelKit.row(_body, tr("Months to the vote"), "%d" % months)
 	if Campaign.is_open(_state, ns):
-		PanelKit.line(_body, tr("The run-up is open until the vote: each effort reaches and costs every month."))
+		# V5.3-0 (b): each effort's own line says its monthly cost and reach.
+		PanelKit.line(_body, tr("The run-up is open until the vote."))
 	else:
 		PanelKit.line(_body, tr_n("The run-up opens in %d month.", "The run-up opens in %d months.", months - CampaignK.CAMPAIGN_WINDOW_MONTHS)
 			% (months - CampaignK.CAMPAIGN_WINDOW_MONTHS))
@@ -291,13 +292,13 @@ func _build_site(ns) -> void:
 	for region in _loader.regions.get(ns.id, []):
 		region_ids.append(String(region.id))
 		picker.add_item("%s — %s" % [region.region_name, Campaign.site_city_name(_loader, ns, String(region.id))])
-	var selected := region_ids.find(_site_region)
-	picker.select(selected)
+	picker.select(region_ids.find(_site_region))
 	picker.item_selected.connect(func(idx: int): _site_region = String(region_ids[idx]); _dirty = true)
+	picker.tooltip_text = tr("Travel and repeat visits cut the reach.")
 	_body.add_child(picker)
 
 	if _site_region == "":
-		PanelKit.line(_body, tr("Pick a region. Travel and repeat visits cut the reach."))
+		PanelKit.line(_body, tr("Pick a region."))
 		return
 	var days := Campaign.travel_days_to(ns, _loader, _site_region)
 	PanelKit.line(_body, tr_n("%d day's travel · reach ×%s a month · %d%% spoken to", "%d days' travel · reach ×%s a month · %d%% spoken to", days) % [

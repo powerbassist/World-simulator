@@ -97,6 +97,9 @@ func _run() -> void:
 	_check_no_label_is_blank(panel)
 	_check_reads_and_never_writes(panel, state)
 	_check_shortage_flip(panel, state)
+	# The tree is folded behind "What makes what" since V5.3-0 (b): open it.
+	panel._tree_open = true
+	panel._refresh()
 	_check_tree_renders(panel)
 	_check_map_modes(panel, state)
 
@@ -183,9 +186,21 @@ func _check_month_zero_renders(panel, state) -> void:
 
 
 ## The characteristic failure of a panel whose job is resolution.
+## V5.3-0 (b): the balance is one table now, a category a row of its own whose
+## figure cells are blank by design -- those cells are skipped, every other label
+## must still say something.
 func _check_no_label_is_blank(panel) -> void:
+	var by_design := {}
+	for grid in _walk(panel._body):
+		if grid is GridContainer:
+			var cells: Array = grid.get_children()
+			for i in range(0, cells.size(), grid.columns):
+				var head := String((cells[i] as Label).text)
+				if head != "" and head == head.to_upper() and DataLoader.COMMODITY_CATEGORIES.any(func(c): return String(c).to_upper() == head):
+					for j in range(i + 1, mini(i + grid.columns, cells.size())):
+						by_design[cells[j]] = true
 	for node in _walk(panel._body):
-		if node is Label and String(node.text).strip_edges() == "":
+		if node is Label and not by_design.has(node) and String(node.text).strip_edges() == "":
 			_fail("the commodities panel renders an EMPTY label -- an unresolved id prints nothing and leaves the row looking fine")
 			return
 

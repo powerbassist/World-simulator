@@ -163,7 +163,7 @@ func _check_payable() -> void:
 	for pair in _start_buttons():
 		if pair[0].disabled:
 			_fail("'%s' is still disabled with a full chest: '%s'" % [pair[0].text, pair[0].tooltip_text])
-	if not _texts(_panel).contains("With this added, the chest lasts"):
+	if not _texts(_panel).contains("Chest then lasts"):
 		_fail("an offer does not say how long the chest pays with it added")
 
 
@@ -185,7 +185,7 @@ func _check_spent_offer() -> void:
 	var text := _texts(_panel)
 	if text.count("Already used: one run per run-up.") != 1:
 		_fail("the stopped effort does not say it is spent: '%s'" % text)
-	var forecasts := text.count("With this added, the chest lasts")
+	var forecasts := text.count("Chest then lasts")
 	if forecasts != _starts.size() - 1:
 		_fail("%d offers carry a months forecast; the spent one must not (%d starts)" % [forecasts, _starts.size()])
 

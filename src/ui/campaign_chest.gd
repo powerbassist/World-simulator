@@ -65,7 +65,7 @@ static func offer_lines(block: Control, ns, loader, effort_id: String, reach: St
 		PanelKit.line(block, Strings.t("Already used: one run per run-up."))
 		return
 	var months := Campaign.months_payable(ns, loader, effort_id)
-	PanelKit.line(block, Strings.tn("With this added, the chest lasts %d month.", "With this added, the chest lasts %d months.", months) % months)
+	PanelKit.line(block, Strings.tn("Chest then lasts %d month.", "Chest then lasts %d months.", months) % months)
 
 
 ## Why a campaign button cannot be pressed, as the sentence its tooltip shows; "" when
