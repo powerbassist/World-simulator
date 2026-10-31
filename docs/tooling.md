@@ -178,6 +178,20 @@ It returns what the console printed (`skipped 2 months -- now 2026-03-01`). The 
 
 Useful lines: `get me.deficit_pct_gdp`, `set me.gdp_eur_bn 3000`, `skip 12`, `term_start`, `event com_gas_squeeze`, `open budget`, `save` / `load`, `errors 20`. `set` takes a number, flag or text field of `src/core/nation_fields.gd` and settles on the next month's tick like any other change.
 
+## The Windows build (`tools/export_windows.py`)
+
+`build/NationSimulator.exe` + `NationSimulator.pck` (+ `NationSimulator.console.exe`, the same game with a console window that prints its log), built from the committed `export_presets.cfg` ("Windows Desktop", release, x86_64, unsigned, no secrets). Run the exe from the folder holding the `.pck`; nothing is installed. `build/` is gitignored.
+
+**One-time: the export templates.** Download `Godot_v4.7.2-stable_export_templates.tpz` (about 1.3 GB) from the [official 4.7.2-stable release](https://github.com/godotengine/godot/releases/tag/4.7.2-stable) together with its `SHA512-SUMS.txt`, check the hash (`sha512sum`), then unzip only `templates/version.txt` and `templates/windows_*_x86_64*.exe` into a folder of your own. Do not install them into `%APPDATA%\Godot`: the build points Godot at a private APPDATA, so the editor's user dir is untouched.
+
+```bash
+python tools/export_windows.py --templates PATH/TO/that/folder --smoke
+```
+
+`--smoke` then runs two checks, each in a private user dir, each failing on any `ERROR` line: the exe boots headless to the menu and quits (`--quit-after`), and `tools/exe_smoke.gd` runs under the stock engine with the PCK as its main pack (an export template ignores `--script`, measured on 4.7.2): the menu scene, the real New Game boot, a month, a save and load, and a voice clip, a music bed, a portrait, an icon, a font and the summit scenes, all read out of the PCK. The script also audits the PCK's own file list: no `tools/`, `tests/`, `docs/`, `reports/` or dev-console file, and every raw file the game reads is there. Headless throughout, so no window and no cursor.
+
+**Why a stage.** The game reads its icons, audio and summit scenes as bytes or text, never `load()`, and an export keeps an imported file only as its converted form. The script builds a throwaway copy of the tracked tree and sets `importer="keep"` on those `.import` files in the COPY (the webp and jpg already use it), so the committed files do not change. A new asset kind the game reads as bytes needs its extension in `KEEP_EXT` there; the audit fails the build when a raw file is missing. The dev console (`dev_console.gd` and what only it loads) is excluded by the preset's filter; `main.gd` loads it behind `ResourceLoader.exists()`, so its absence is silent, and a release template has no debug build for it anyway.
+
 ## Godot docs MCP
 
 [Nihilantropy/godot-mcp-docs](https://github.com/Nihilantropy/godot-mcp-docs) — the full official Godot documentation, served locally. Two tools: `get_documentation_tree` and `get_documentation_file`.

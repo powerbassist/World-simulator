@@ -42,7 +42,11 @@ demo/
 .mcp.json
 
 export.cfg
-export_presets.cfg
+
+# export_presets.cfg IS committed (the Windows release preset: no secrets, no machine
+# paths); tools/export_windows.py builds from it. A preset that ever needs a key, a
+# password or a signing identity stays in a LOCAL file and is not added here.
+export_credentials.cfg
 *.translation
 
 # Raw datasets — re-downloadable, never committed. See docs/data-sources.md
