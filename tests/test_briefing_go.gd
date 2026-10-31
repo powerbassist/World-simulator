@@ -255,6 +255,9 @@ func _check_go_keeps_pause() -> void:
 ## line every three months: the rotation followed the month, not the situation).
 ## Through open() on months set up by hand, so the situation is the test's.
 func _check_speaks_on_change() -> void:
+	# The briefing opens every month here, whatever a parallel test writes to the
+	# shared settings file (QA's TAKE on #230).
+	BriefingDriver.MessageSettings.forced_new_only = false
 	var state = _main._state
 	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
 	var tense := Priorities._standing("budget", "balance")
@@ -291,6 +294,7 @@ func _check_speaks_on_change() -> void:
 		BriefingDriver.close(_main)
 	if player != null:
 		BriefingDriver.Voice.stop(_main)
+	BriefingDriver.MessageSettings.forced_new_only = null
 
 
 ## The footer (the parent's rule on #217): crowded-out items in their last month,
