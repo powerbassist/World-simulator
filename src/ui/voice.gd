@@ -84,9 +84,16 @@ static func same_sex(loader, own: String, fallback: String) -> String:
 
 
 static func _clip(arch: String, event_id: String, shown: String) -> String:
+	return line_clip(arch, "event." + event_id, shown)
+
+
+## The clip of `arch`'s line `line_id` (an archetype's own greet, agree, refuse,
+## farewell; "event.<id>" for an event line), or "" unless its manifest hash is
+## the hash of `shown`, the text on screen.
+static func line_clip(arch: String, line_id: String, shown: String) -> String:
 	if arch == "":
 		return ""
-	var row = _tables().get("%s/event.%s" % [arch, event_id], null)
+	var row = _tables().get("%s/%s" % [arch, line_id], null)
 	if not (row is Dictionary) or String(row.get("text_sha256", "")) != shown.sha256_text():
 		return ""
 	var path := "res://" + String(row.get("file", ""))

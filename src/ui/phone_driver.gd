@@ -10,6 +10,7 @@ extends RefCounted
 ## A call holds the clock while the dialog is up, as the audience does, and lets
 ## it go on Close unless something else holds it.
 
+const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 const PhoneDialog = preload("res://src/ui/phone_dialog.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
 const Words = preload("res://src/ui/lever_words.gd")
@@ -66,7 +67,7 @@ static func open_call(main, person_id: String, people: Array) -> void:
 	# repeat "nothing to ask about"), and the dialog says why there are none.
 	game["dialog"].open({"name": main._loader.person_name(person_id), "why_not": String(o["why_not"]),
 		"levers": o["levers"] if String(o["request_id"]) != "" else [], "topics": o["topics"],
-		"stance": String(request.get("stance", "")), "president": main._loader.person_name(President.leader_id(ns)),
+		"stance": String(request.get("stance", "")), "voice": AudienceVoice.lines(main._loader, person_id), "president": main._loader.person_name(President.leader_id(ns)),
 		"ask": PersonCard.object_text(main._loader, ns, String(request["object"]), request) if not request.is_empty() else "",
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": people,
 			"given_due": AudienceVerbs.given_due(ns, person_id, String(request.get("object", ""))), "feel": Feelings.of(ns, person_id)}})

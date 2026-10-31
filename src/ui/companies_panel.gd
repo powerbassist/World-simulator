@@ -44,6 +44,7 @@ const Investment = preload("res://src/sim/investment.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -183,7 +184,7 @@ func _refresh() -> void:
 		PanelKit.line(_body, tr("No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply."))
 
 	if _last_refusal != "":
-		PanelKit.line(_body, _last_refusal)
+		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
 	_build_autonomy_sections(ns)
 	_build_ledger(ns)
 	for sector in EK.SECTOR_TREND.keys():

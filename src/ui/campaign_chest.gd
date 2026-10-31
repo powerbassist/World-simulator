@@ -13,6 +13,7 @@ extends RefCounted
 const Campaign = preload("res://src/sim/campaign.gd")
 const PartyMoney = preload("res://src/sim/party_money.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
@@ -115,7 +116,7 @@ static func note_stopped(inbox, stopped: Array, state, loader) -> String:
 	var ns = state.player()
 	var body := Strings.tn("The party could not pay this month, so one effort stopped: %s. What it bought stays, but it cannot run again before the vote.", "The party could not pay this month, so these efforts stopped: %s. What they bought stays, but they cannot run again before the vote.", names.size()) % "; ".join(names)
 	body += " " + Strings.t("The party has %s.") % _eur(PartyMoney.money_eur_m(ns, loader))
-	return inbox.push(Strings.t("Campaign stopped"), body)
+	return ResultTone.push(inbox, Strings.t("Campaign stopped"), body, ResultTone.BAD)
 
 
 ## A party in debt (running costs can take it below zero, section 3) reads "−€1.00 m".

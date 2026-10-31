@@ -30,6 +30,7 @@ const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Events = preload("res://src/sim/events.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 const Voices = preload("res://src/core/voices.gd")
 const Staff = preload("res://src/sim/staff.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -188,6 +189,7 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 		by_kind[kind]["items"].append(also[i])
 	var footer: Array = groups.map(func(g): return {"text": PriorityWords.group(g["items"], state, main._loader), "index": g["index"]})
 	return {"header": header, "who": who, "also": footer, "line": said, "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
+		"feel": Feelings.of(state.player(), String(chief.id)) if chief != null else {},
 		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
 
 

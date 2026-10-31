@@ -31,6 +31,13 @@ const REGISTER := {
 	"briefing lines": "res://src/ui/chief_briefing.gd",
 	"audience": "res://src/ui/audience_talks.gd",
 	"phone": "res://src/ui/phone_driver.gd",
+	"company action refused": "res://src/ui/companies_panel.gd",
+	"organisation act refused": "res://src/ui/orgs_panel.gd",
+	"campaign programme outcome": "res://src/ui/campaign_programme.gd",
+	"campaign stopped for money": "res://src/ui/campaign_chest.gd",
+	"booked day kept or not": "res://src/ui/world_news.gd",
+	"diplomatic act": ["res://src/ui/main.gd", "NationPanel.say_result("],
+	"diplomatic act, the card": "res://src/ui/nation_panel.gd",
 }
 
 var _failures: Array[String] = []

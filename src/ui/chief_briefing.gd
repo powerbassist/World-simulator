@@ -22,6 +22,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
+const MoodBadge = preload("res://src/ui/mood_badge.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Grade = preload("res://src/ui/grade.gd")
 
@@ -91,6 +92,9 @@ func show_view(view: Dictionary) -> void:
 	_line.visible = not _line.text.is_empty()
 	_face.texture = view.get("face")
 	_face.visible = _face.texture != null
+	var feel: Dictionary = view.get("feel", {})
+	if not feel.is_empty():
+		MoodBadge.wear(_face, feel)
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.queue_free()

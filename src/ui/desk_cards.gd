@@ -234,7 +234,7 @@ static func push(main, ev, entry: Dictionary) -> String:
 	var card_id: String = main._hud.inbox.push(title, body(ev, left), actions, art)
 	main._event_cards[card_id] = event_id
 	# V5.2d: who brings it, under the title; the narrator (no speaker) adds nothing.
-	var face = SpeakerRow.build(main._loader, ev, entry)
+	var face = SpeakerRow.build(main._loader, ev, entry, main._state.player())
 	if face == null:
 		return ""
 	main._hud.inbox.add_face(card_id, face)

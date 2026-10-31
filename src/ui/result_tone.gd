@@ -60,6 +60,13 @@ static func mark(inbox, card_id: String, tone: String) -> void:
 		inbox.add_under_title(card_id, tag(tone))
 
 
+## An inbox card pushed with its tag: the card id, as inbox.push() returns it.
+static func push(inbox, title: String, body: String, tone: String) -> String:
+	var card_id: String = inbox.push(title, body)
+	mark(inbox, card_id, tone)
+	return card_id
+
+
 ## A result whose own sentence already holds the verdict word (PASSED, DEFEATED,
 ## Refused, Delivered) takes the tone on that sentence instead of a second word:
 ## the word says it, the tone colours it, and the text diet (RF6) pays nothing.
