@@ -235,6 +235,7 @@ tests=(
   tests/test_dismiss_ui.gd
   tests/test_diary_grid.gd
   tests/test_diary_drop.gd
+  tests/test_diary_room.gd
   tests/test_feelings.gd
   tests/test_placement_points.gd
   tests/test_button_sizes.gd

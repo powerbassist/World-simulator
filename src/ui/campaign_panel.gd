@@ -296,7 +296,10 @@ func _build_site(ns) -> void:
 	picker.select(region_ids.find(_site_region))
 	picker.item_selected.connect(func(idx: int): _site_region = String(region_ids[idx]); _dirty = true)
 	picker.tooltip_text = tr("Travel and repeat visits cut the reach.")
-	_body.add_child(picker)
+	# Final pre-gate TAKE 1: with no site picked, every effort is disabled, so the
+	# picker is the run-up's first verb for either vote's Go -- inside the run-up
+	# only: outside it a far vote's Go lands on "Make a promise", as before.
+	_body.add_child(preload("res://src/ui/acts_on.gd").tag(picker, ["national", "ep"] if Campaign.is_open(_state, ns) else []))
 
 	if _site_region == "":
 		PanelKit.line(_body, tr("Pick a region."))
@@ -398,8 +401,9 @@ func _button(ns, action) -> Button:
 	button.pressed.connect(func(): _on_act(ns, action))
 	if _primary == null and not button.disabled:
 		_primary = button
-	# V5.3-0 RF3: an effort acts on the coming national vote (the briefing's election Go).
-	return preload("res://src/ui/acts_on.gd").tag(button, ["national"]) as Button
+	# V5.3-0 RF3: an effort acts on the coming national vote (the briefing's election
+	# Go), and on a European one in the run-up: both read the turnout it moves.
+	return preload("res://src/ui/acts_on.gd").tag(button, ["national", "ep"]) as Button
 
 
 ## U4's contract, projects_panel._on_act()'s shape exactly: the baseline is captured

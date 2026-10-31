@@ -49,6 +49,7 @@ func _process(_delta: float) -> bool:
 	if _frame == 3:
 		_cases = _plan()
 		_check_chief()
+		_check_ep_ranking()
 		return false
 	if _wait > 0:
 		_wait -= 1
@@ -99,6 +100,16 @@ func _plan() -> Array:
 		var when := now + 3
 		ns.next_executive_year = floori((when - 1) / 12.0)
 		ns.next_executive_month = when - ns.next_executive_year * 12
+		return "national"})
+	# Final pre-gate TAKE 1: the European election inside the run-up lands on an
+	# effort (the efforts move the turnout both votes read).
+	cases.append({"kind": "election", "subject": "ep", "setup": func() -> String:
+		_set_votes(ns, now + 3, now + 2)
+		return "ep"})
+	# ... and the site picker is a verb only inside it: outside, a far national vote's
+	# Go keeps landing on "Make a promise" (code-review on #231).
+	cases.append({"kind": "election", "subject": "national", "far": true, "setup": func() -> String:
+		_set_votes(ns, now + 40, now + 60)
 		return "national"})
 	cases.append({"kind": "majority", "subject": "seats"})
 	cases.append({"kind": "commitment", "subject": "promise|%s|meter:unemployment_pct" % pid, "setup": func() -> String:
@@ -195,6 +206,8 @@ func _check(c: Dictionary) -> void:
 	if kind == "commitment" and tab == "agenda" and String(c["subject"]).contains("|programme:") \
 			and _main._windows.content("agenda")._picker.selected_id() == String(target["acts_on"]):
 		_fail("commitment (programme): premise, the promised entry was the selected one")
+	if bool(c.get("far", false)) and ActsOn.find(where, String(target["acts_on"])) is OptionButton:
+		_fail("%s: outside the run-up the Go landed on the site picker" % label)
 	if bool(c.get("due_day", false)):
 		var grid = _main._calendar_panel._grid
 		var now := int(_main._state.year) * 12 + int(_main._state.month)
@@ -247,6 +260,40 @@ func _check_go_keeps_pause() -> void:
 			BriefingDriver.close(_main)
 			if _main._clock.paused:
 				_fail("premise: Continue did not resume the clock, so something else holds it")
+
+
+## Final pre-gate TAKE 1 (RF3): the European election is a line only while the
+## run-up is open -- before it, the Campaign tab has no effort for its Go, and the
+## next national vote stands in. QA met "The European election, in 20 months" on
+## an empty Campaign tab after a re-election.
+func _check_ep_ranking() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var keep := [ns.has_executive, ns.next_executive_year, ns.next_executive_month, ns.next_ep_election_year, ns.next_ep_election_month]
+	var now := int(state.year) * 12 + int(state.month)
+	for open in [false, true]:
+		_set_votes(ns, now + (3 if open else 40), now + 2)
+		var cands: Array = []
+		Priorities._election(state, ns, now, cands)
+		var subjects: Array = cands.map(func(c): return String(c["subject"]))
+		if open and subjects != ["ep"]:
+			_fail("the run-up open, the European election two months off is not the line: %s" % str(subjects))
+		if not open and subjects.has("ep"):
+			_fail("the European election is a line before the run-up opens: %s" % str(subjects))
+	ns.has_executive = keep[0]
+	ns.next_executive_year = keep[1]
+	ns.next_executive_month = keep[2]
+	ns.next_ep_election_year = keep[3]
+	ns.next_ep_election_month = keep[4]
+
+
+## The national vote (the executive's) and the European one at absolute months.
+func _set_votes(ns, national: int, ep: int) -> void:
+	ns.has_executive = true
+	ns.next_executive_year = floori((national - 1) / 12.0)
+	ns.next_executive_month = national - ns.next_executive_year * 12
+	ns.next_ep_election_year = floori((ep - 1) / 12.0)
+	ns.next_ep_election_month = ep - ns.next_ep_election_year * 12
 
 
 ## Pre-gate B2: the chief SPEAKS only when the situation is not the one he last
