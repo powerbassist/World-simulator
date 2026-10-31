@@ -2580,252 +2580,252 @@ SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.calm_1 (sha256 724bb71059c8).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.calm_1 (sha256 724bb71059c8).
 path = "assets/audio/voice/chief_deu/calm_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.calm_2 (sha256 bbbbf350e04c).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.calm_2 (sha256 bbbbf350e04c).
 path = "assets/audio/voice/chief_deu/calm_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.calm_3 (sha256 d5d7867ce8cd).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.calm_3 (sha256 d5d7867ce8cd).
 path = "assets/audio/voice/chief_deu/calm_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.crisis_1 (sha256 3e4123a332dd).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.crisis_1 (sha256 3e4123a332dd).
 path = "assets/audio/voice/chief_deu/crisis_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.crisis_2 (sha256 f1ed7dfea5ec).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.crisis_2 (sha256 f1ed7dfea5ec).
 path = "assets/audio/voice/chief_deu/crisis_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.crisis_3 (sha256 285fea52aa80).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.crisis_3 (sha256 285fea52aa80).
 path = "assets/audio/voice/chief_deu/crisis_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.tense_1 (sha256 09dfea01a086).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.tense_1 (sha256 09dfea01a086).
 path = "assets/audio/voice/chief_deu/tense_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.tense_2 (sha256 14333ab9ce8d).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.tense_2 (sha256 14333ab9ce8d).
 path = "assets/audio/voice/chief_deu/tense_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.tense_3 (sha256 c86cdab1b210).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pqHfZKP75CvOlQylNhV4 (archetype chief_deu), 2026-10-31; says voices/chief_deu.lines.tense_3 (sha256 c86cdab1b210).
 path = "assets/audio/voice/chief_deu/tense_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.calm_1 (sha256 28afca28d875).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.calm_1 (sha256 28afca28d875).
 path = "assets/audio/voice/chief_fra/calm_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.calm_2 (sha256 ec0e659a9f4c).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.calm_2 (sha256 ec0e659a9f4c).
 path = "assets/audio/voice/chief_fra/calm_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.calm_3 (sha256 ae4ef5810013).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.calm_3 (sha256 ae4ef5810013).
 path = "assets/audio/voice/chief_fra/calm_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.crisis_1 (sha256 77f9d87ae442).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.crisis_1 (sha256 77f9d87ae442).
 path = "assets/audio/voice/chief_fra/crisis_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.crisis_2 (sha256 45b4e600e918).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.crisis_2 (sha256 45b4e600e918).
 path = "assets/audio/voice/chief_fra/crisis_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.crisis_3 (sha256 dc0fbaefb0fd).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.crisis_3 (sha256 dc0fbaefb0fd).
 path = "assets/audio/voice/chief_fra/crisis_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.tense_1 (sha256 01cce9881c59).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.tense_1 (sha256 01cce9881c59).
 path = "assets/audio/voice/chief_fra/tense_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.tense_2 (sha256 aa33d4f64744).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.tense_2 (sha256 aa33d4f64744).
 path = "assets/audio/voice/chief_fra/tense_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.tense_3 (sha256 66b9f45e9212).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice XrExE9yKIg1WjnnlVkGX (archetype chief_fra), 2026-10-31; says voices/chief_fra.lines.tense_3 (sha256 66b9f45e9212).
 path = "assets/audio/voice/chief_fra/tense_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.calm_1 (sha256 af16e05ab791).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.calm_1 (sha256 af16e05ab791).
 path = "assets/audio/voice/chief_gbr/calm_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.calm_2 (sha256 0d17f75cfe64).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.calm_2 (sha256 0d17f75cfe64).
 path = "assets/audio/voice/chief_gbr/calm_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.calm_3 (sha256 172952890465).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.calm_3 (sha256 172952890465).
 path = "assets/audio/voice/chief_gbr/calm_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.crisis_1 (sha256 fdc4d250e383).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.crisis_1 (sha256 fdc4d250e383).
 path = "assets/audio/voice/chief_gbr/crisis_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.crisis_2 (sha256 f91ebe1a0985).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.crisis_2 (sha256 f91ebe1a0985).
 path = "assets/audio/voice/chief_gbr/crisis_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.crisis_3 (sha256 d44dae4d5a9b).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.crisis_3 (sha256 d44dae4d5a9b).
 path = "assets/audio/voice/chief_gbr/crisis_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.tense_1 (sha256 0cbaeead13f0).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.tense_1 (sha256 0cbaeead13f0).
 path = "assets/audio/voice/chief_gbr/tense_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.tense_2 (sha256 ca3585ea9dd6).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.tense_2 (sha256 ca3585ea9dd6).
 path = "assets/audio/voice/chief_gbr/tense_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.tense_3 (sha256 7286b7321f73).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice hpp4J3VqNfWAUOO0d1Us (archetype chief_gbr), 2026-10-31; says voices/chief_gbr.lines.tense_3 (sha256 7286b7321f73).
 path = "assets/audio/voice/chief_gbr/tense_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.calm_1 (sha256 f644b8e10a68).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.calm_1 (sha256 f644b8e10a68).
 path = "assets/audio/voice/chief_pol/calm_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.calm_2 (sha256 0efe3e0daed7).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.calm_2 (sha256 0efe3e0daed7).
 path = "assets/audio/voice/chief_pol/calm_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.calm_3 (sha256 48e710ead640).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.calm_3 (sha256 48e710ead640).
 path = "assets/audio/voice/chief_pol/calm_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.crisis_1 (sha256 a09160987d15).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.crisis_1 (sha256 a09160987d15).
 path = "assets/audio/voice/chief_pol/crisis_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.crisis_2 (sha256 b22cdd60c0c2).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.crisis_2 (sha256 b22cdd60c0c2).
 path = "assets/audio/voice/chief_pol/crisis_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.crisis_3 (sha256 e86f68f06b87).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.crisis_3 (sha256 e86f68f06b87).
 path = "assets/audio/voice/chief_pol/crisis_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.tense_1 (sha256 bdbb61021a96).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.tense_1 (sha256 bdbb61021a96).
 path = "assets/audio/voice/chief_pol/tense_1.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.tense_2 (sha256 07f50e61e445).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.tense_2 (sha256 07f50e61e445).
 path = "assets/audio/voice/chief_pol/tense_2.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
 
 [[annotations]]
-# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, designed voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.tense_3 (sha256 eacac3175644).
+# Voice clip: ElevenLabs Starter, commercial licence bought 2026-10-19, model eleven_multilingual_v2, premade voice pNInz6obpgDQGcFmaJgB (archetype chief_pol), 2026-10-31; says voices/chief_pol.lines.tense_3 (sha256 eacac3175644).
 path = "assets/audio/voice/chief_pol/tense_3.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"

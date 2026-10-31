@@ -280,7 +280,9 @@
       "sex": "f",
       "age_band": "50s",
       "language": "en",
+      "source": "premade",
       "voice_id": "XrExE9yKIg1WjnnlVkGX",
+      "voice_name": "Matilda - Knowledgable, Professional",
       "provenance": "ElevenLabs premade (stock) voice \"Matilda - Knowledgable, Professional\", never a real person's voice and taking no custom voice slot, chosen for labels that fit the description above (middle-aged, female, professional, informative); ElevenLabs Starter, commercial licence bought 2026-10-19; voice id XrExE9yKIg1WjnnlVkGX; picked 2026-10-31 for the V5.3 block 0 chief of staff, a voice no other archetype uses.",
       "lines": {
         "calm_1": "A quiet month, on current projections. We proceed as scheduled.",
@@ -301,7 +303,9 @@
       "sex": "m",
       "age_band": "60s",
       "language": "en",
+      "source": "premade",
       "voice_id": "pqHfZKP75CvOlQylNhV4",
+      "voice_name": "Bill - Wise, Mature, Balanced",
       "provenance": "ElevenLabs premade (stock) voice \"Bill - Wise, Mature, Balanced\", never a real person's voice and taking no custom voice slot, chosen for labels that fit the description above (old, male, wise, balanced); ElevenLabs Starter, commercial licence bought 2026-10-19; voice id pqHfZKP75CvOlQylNhV4; picked 2026-10-31 for the V5.3 block 0 chief of staff, a voice no other archetype uses.",
       "lines": {
         "calm_1": "The month ahead appears orderly. We can proceed without haste.",
@@ -322,7 +326,9 @@
       "sex": "f",
       "age_band": "40s",
       "language": "en",
+      "source": "premade",
       "voice_id": "hpp4J3VqNfWAUOO0d1Us",
+      "voice_name": "Bella - Professional, Bright, Warm",
       "provenance": "ElevenLabs premade (stock) voice \"Bella - Professional, Bright, Warm\", never a real person's voice and taking no custom voice slot, chosen for labels that fit the description above (middle-aged, female, professional, bright); ElevenLabs Starter, commercial licence bought 2026-10-19; voice id hpp4J3VqNfWAUOO0d1Us; picked 2026-10-31 for the V5.3 block 0 chief of staff, a voice no other archetype uses.",
       "lines": {
         "calm_1": "Nothing on fire, nothing even smouldering. Let us enjoy that.",
@@ -343,7 +349,9 @@
       "sex": "m",
       "age_band": "50s",
       "language": "en",
+      "source": "premade",
       "voice_id": "pNInz6obpgDQGcFmaJgB",
+      "voice_name": "Adam - Dominant, Firm",
       "provenance": "ElevenLabs premade (stock) voice \"Adam - Dominant, Firm\", never a real person's voice and taking no custom voice slot, chosen for labels that fit the description above (middle-aged, male, firm); ElevenLabs Starter, commercial licence bought 2026-10-19; voice id pNInz6obpgDQGcFmaJgB; picked 2026-10-31 for the V5.3 block 0 chief of staff, a voice no other archetype uses.",
       "lines": {
         "calm_1": "A calm month. Ordinary work. Nothing hides behind it.",
