@@ -28,7 +28,10 @@ extends SceneTree
 ## walk), with 3.2's targets as ceilings for a rebuilt tab, and the sum over the tabs
 ## under a ratchet that only comes down, towards RF6's 3 600.
 
-const WorldMonth = preload("res://src/sim/world_month.gd")
+const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
+## The inbox at month 12 (spec 3.5's target 170), held at its measure until the
+## notes are grouped.
+const INBOX_CEILING := 347
 
 ## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column). Orgs is
 ## the note's 60 per organisation, for France's five.
@@ -46,16 +49,18 @@ const PENDING := {}
 ## All visible words per tab: a rebuilt tab answers to its 3.2 target; a tab (b)
 ## has not reached yet is held at what it measured before (b) started, so it cannot
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
+## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
+## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
 const TOTAL_BUDGET := {"agenda": 400, "people": 250}
 const TOTAL_PENDING := {
-	"budget": 107, "calendar": 42, "campaign": 223, "city": 366, "commodities": 418,
-	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118, "events": 14,
-	"legislature": 1045, "orgs": 610, "outliner": 2, "overview": 127,
+	"budget": 107, "calendar": 42, "campaign": 274, "city": 366, "commodities": 418,
+	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118, "events": 187,
+	"legislature": 1045, "orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "region": 136, "society": 106, "tax": 25,
 }
 ## The sum of every tab's total, a ratchet: each rebuilding PR lowers it to what it
 ## measured. RF6's target is 3 600.
-const TOTAL_SUM_CEILING := 4364
+const TOTAL_SUM_CEILING := 4911
 const TOTAL_SUM_TARGET := 3600
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
@@ -69,9 +74,15 @@ var _failures: Array[String] = []
 var _shingles := {}
 var _measured := {}  # id -> max sys8 over the stages
 var _totals := {}  # id -> max all-words over the stages
+## `-- --dump=legislature,orgs` prints every counted node of those tabs: where a
+## tab's words are is the question each rebuild starts from.
+var _dump := PackedStringArray()
 
 
 func _initialize() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--dump="):
+			_dump = arg.trim_prefix("--dump=").split(",", false)
 	_load_data_shingles("res://data")
 	var main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(main)
@@ -79,10 +90,20 @@ func _initialize() -> void:
 	var windows = main._windows
 	windows.size = Vector2(1920.0, 1080.0)
 	await _sweep(main, "day 1")
+	# V5.3-0 (b), spec 3.5: the months run through the game's own month hook, not a
+	# bare tick_month, so the inbox, the Agenda and Dispatches stand in their played
+	# state (a bare tick left Dispatches at 14 words against 187 in play). The clock
+	# is not running, so the month runs whole, now (month_runner.gd). The monthly
+	# briefing is staged by its own fixtures, not here.
+	BriefingDriver.suppressed = true
 	for i in 12:
-		WorldMonth.tick_month(main._state, main._loader)
+		var next: int = main._state.year * 12 + main._state.month + 1
+		var year := floori((next - 1) / 12.0)
+		main._on_month_elapsed(year, next - year * 12)
+		await process_frame
 	windows.mark_all_dirty()
 	await _sweep(main, "month 12")
+	await _sweep_inbox(main)
 	_report()
 	quit(1 if not _failures.is_empty() else 0)
 
@@ -104,6 +125,8 @@ func _sweep(main, stage: String) -> void:
 			if words.is_empty():
 				continue
 			total += words.size()
+			if _dump.has(id):
+				print("dump %s (%s) %3d %s: %s" % [id, stage, words.size(), node.get_class(), text.left(90).replace("\n", " / ")])
 			if _is_content(words):
 				if words.size() > CONTENT_NODE_MAX:
 					_fail("%s (%s): one authored text runs %d words on screen: %s" % [id, stage, words.size(), text.left(80)])
@@ -119,6 +142,26 @@ func _sweep(main, stage: String) -> void:
 		if ceiling >= 0 and sys8 > ceiling:
 			_fail("%s (%s): %d system sentence words, the ceiling is %d" % [id, stage, sys8, ceiling])
 	windows.close_all()
+
+
+## The inbox at month 12, slid in over the workspace: it is outside every window,
+## and its weight was the lapse notes (spec 3.2).
+func _sweep_inbox(main) -> void:
+	var inbox = main._hud.inbox
+	inbox.slide_in()
+	await process_frame
+	await process_frame
+	var total := 0
+	for node in _visible_text_nodes(inbox):
+		var text := _text_of(node)
+		var words := _words(text)
+		total += words.size()
+		if _dump.has("inbox"):
+			print("dump inbox (month 12) %3d %s: %s" % [words.size(), node.get_class(), text.left(90).replace("\n", " / ")])
+	_totals["inbox"] = total
+	if total > INBOX_CEILING:
+		_fail("inbox (month 12): %d visible words, the ceiling is %d" % [total, INBOX_CEILING])
+	inbox.slide_out()
 
 
 func _visible_text_nodes(node: Node) -> Array:
@@ -212,6 +255,9 @@ func _report() -> void:
 		print("prose budget  %-12s sys8+ %4d  ceiling %s%s   all words %5d  ceiling %s" % [id, _measured[id],
 			str(PENDING.get(id, BUDGET.get(id, "-"))), "  (pending)" if PENDING.has(id) else "",
 			int(_totals.get(id, 0)), str(TOTAL_PENDING.get(id, TOTAL_BUDGET.get(id, "-")))])
+	# The inbox is in RF6's sum as it is in the spec's table (3.2).
+	sum += int(_totals.get("inbox", 0))
+	print("prose budget  inbox (month 12)              all words %5d  ceiling %d" % [int(_totals.get("inbox", 0)), INBOX_CEILING])
 	print("prose budget  all tabs: %d visible words, ratchet %d, target %d" % [sum, TOTAL_SUM_CEILING, TOTAL_SUM_TARGET])
 	if sum > TOTAL_SUM_CEILING:
 		_fail("all tabs together show %d words, over the ratchet %d" % [sum, TOTAL_SUM_CEILING])
