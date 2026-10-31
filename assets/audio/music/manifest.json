@@ -1,0 +1,50 @@
+{
+  "beds": {
+    "calm": {
+      "file": "another_august.ogg",
+      "author": "cynicmusic (The Cynic Project)",
+      "url": "https://opengameart.org/content/another-august",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "132898af147c6e8c53421a79894453fba07b5a98d9a014eee54ab65355ddd376",
+      "note": "Credit requested by the author (CC0 does not require it): The Cynic Project / pixelsphere.org / cynicmusic.com. Transcoded from the page's mp3 to OGG Vorbis, ffmpeg libvorbis -q:a 5 (the file's sha256 is of the OGG in this repo). From the author's game Pixelsphere; the page does not name the production tools."
+    },
+    "tense": {
+      "file": "searching.ogg",
+      "author": "yd",
+      "url": "https://opengameart.org/node/10684",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "add2ee7931fd0c53f2804220e7355b10b38dbf5ab2b4dfdd415b61d8e14e51c8"
+    },
+    "crisis": {
+      "file": "space_graveyard.ogg",
+      "author": "TinyWorlds",
+      "url": "https://opengameart.org/content/space-graveyard-ambient-track",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "e259a70653855e9674f7338c7058505cb897048d90f05af8137c421985a81899",
+      "note": "Transcoded from the page's wav to OGG Vorbis, ffmpeg libvorbis -q:a 5. The page does not name the production tools."
+    }
+  },
+  "stings": {
+    "vote_passed": {
+      "file": "victory_sting.ogg",
+      "author": "congusbongus",
+      "url": "https://opengameart.org/content/victory-sting",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "07fb9a06bc3ba23af2199c57db40b84dd977de55323d994282a4789bf5d0b7c6",
+      "note": "Page: made for a TIC-80 cart (tic.computer/play?cart=1179); the cart was not opened, so the production method is only what the page states."
+    },
+    "election_won": {
+      "file": "winfretless.ogg",
+      "author": "Fupi",
+      "url": "https://opengameart.org/content/win-jingle",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "066d704a58af2bbd293cb9a32488b832be7803e365d3f15a264aa803c238c944",
+      "note": "The file is the page's winfretless.ogg, a MIDI rendering through an unnamed instrument; the page names no instrument."
+    }
+  }
+}
