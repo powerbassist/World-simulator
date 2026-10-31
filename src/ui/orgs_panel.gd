@@ -23,6 +23,7 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Council = preload("res://src/sim/council.gd")
@@ -148,7 +149,7 @@ func _refresh() -> void:
 	_title.text = tr("Organisations — %d, %d of them yours") % [_loader.orgs.size(), memberships]
 
 	if not _refusal_text.is_empty():
-		PanelKit.line(_body, _refusal_text)
+		ResultTone.tint(PanelKit.line(_body, _refusal_text), ResultTone.BLOCKED)
 		_refusal_text = ""
 
 	# Orgs that need the player come first: a treaty waiting on the player's

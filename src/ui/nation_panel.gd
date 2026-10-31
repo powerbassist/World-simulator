@@ -18,6 +18,7 @@ extends PanelContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Verbs = preload("res://src/sim/diplomacy_verbs.gd")
@@ -519,3 +520,12 @@ func _on_act(action) -> void:
 ## first verb has scrolled off is already a panel whose verbs are hidden.
 func primary_action() -> Control:
 	return _primary if is_instance_valid(_primary) else null
+
+
+## A diplomatic act's result, as an inbox card tagged by the sim's `refused`
+## (V5.3-0 RF7): Refused with its reason, BLOCKED; Agreed, GOOD.
+static func say_result(inbox, label: String, result: Dictionary) -> void:
+	var reason := String(result.get("reason", ""))
+	var refused := bool(result.get("refused", false))
+	var said := (Strings.t("Refused.") if reason.is_empty() else Strings.t("Refused. %s") % reason) if refused else Strings.t("Agreed.")
+	ResultTone.push(inbox, label, said, ResultTone.BLOCKED if refused else ResultTone.GOOD)

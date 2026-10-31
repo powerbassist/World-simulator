@@ -22,12 +22,17 @@ const Words = preload("res://src/ui/lever_words.gd")
 const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
+const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 
 const SIZE := Vector2(760, 0)
 
 var verbs := AudienceVerbs.new()
 var _title: Label
 var _line: Label
+## V5.3-0 (c) 4.2: their voice on the line (AudienceVoice): greet, then agree or
+## refuse. No farewell: the dialog is gone when the call ends, and a line not on
+## screen is never played.
+var _spoken: Label
 var _why: Label
 var _resource = null
 var _view := {}
@@ -46,6 +51,12 @@ func _ready() -> void:
 	_line = Label.new()
 	_line.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(_line)
+	_spoken = Label.new()
+	_spoken.name = "Spoken"  # i18n: ok a node name, found by tests
+	_spoken.theme_type_variation = UiTheme.CAPTION
+	_spoken.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_spoken.visible = false
+	root.add_child(_spoken)
 	_why = Label.new()
 	_why.theme_type_variation = UiTheme.CAPTION
 	_why.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -67,7 +78,9 @@ func _ready() -> void:
 	_said.add_child(_result)
 	_close = PanelKit.sized(Button.new())
 	_close.text = tr("Close")
-	_close.pressed.connect(func() -> void: closed.emit())
+	# Through close(), as Escape is: the hush lives there (#222 QA T4: emitting
+	# `closed` straight from the button left the greet playing after the hang-up).
+	_close.pressed.connect(close)
 	root.add_child(_close)
 
 
@@ -81,6 +94,8 @@ func open(view: Dictionary) -> void:
 	# line under the title on a call with nothing to ask (QA's RECORD 9).
 	_line.text = ""
 	_line.hide()
+	_spoken.hide()
+	AudienceVoice.say(self, _spoken, view.get("voice", {}), "greet")
 	if String(view.get("ask", "")) != "" and String(view.get("why_not", "")) == "":
 		speak(["phone_opening"], {})
 	_title.text = tr("Call %s") % String(view.get("name", ""))  # i18n: row-ok the person's shown name, resolved by the wiring
@@ -111,6 +126,7 @@ func show_result(text: String, titles: Array = [], extra := {}, tone := "") -> v
 	_result.visible = not text.is_empty()
 	_said.visible = _result.visible
 	ResultTone.apply(_tone, tone)
+	AudienceVoice.say(self, _spoken, _view.get("voice", {}), AudienceVoice.reaction(tone))
 	verbs.visible = false
 	_why.text = ""
 	_why.hide()
@@ -135,4 +151,5 @@ func speak(titles: Array, extra: Dictionary) -> void:
 
 ## Escape's door, the stack's cancel: the same as Close.
 func close() -> void:
+	AudienceVoice.hush(self, true)  # the call is over: no line outlives it
 	closed.emit()

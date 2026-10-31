@@ -7,10 +7,17 @@ extends RefCounted
 ## the run whatever the vote said, and a legislative election under a separate
 ## executive decides a majority, not the term.
 
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 
 ## {national, eu_result, executive, defeated, termed_out, title} for `results`.
+## The verdict's title on `label`, in its tone (RF7): RE-ELECTED and DEFEATED are
+## the word, the tone colours them; a neutral title is plain.
+static func show_title(label: Label, verdict: Dictionary) -> void:
+	ResultTone.say(label, String(verdict["title"]), String(verdict["tone"]))
+
+
 static func read(results: Array, ns) -> Dictionary:
 	var title := ""
 	var national = null
@@ -42,23 +49,30 @@ static func read(results: Array, ns) -> Dictionary:
 
 	var snap: bool = national != null and bool(national.get("snap", false))
 
+	# RF7: the verdict's ResultTone, from the same keys as the title. A term limit
+	# and a new assembly that changes no majority are neutral; cohabitation is
+	# the player losing the chamber.
+	var tone := ""
 	if executive != null:
 		title = Strings.t("TERM LIMIT") if termed_out else (Strings.t("DEFEATED") if defeated else Strings.t("RE-ELECTED"))
+		tone = "" if termed_out else (ResultTone.BAD if defeated else ResultTone.GOOD)
 	elif national != null:
 		# A legislative election under a separately elected executive does not
 		# end the term. It decides whether the player still commands a majority.
 		if ns.has_executive:
 			if ns.is_cohabitation:
 				title = Strings.t("COHABITATION")
+				tone = ResultTone.BAD
 			elif snap:
 				title = Strings.t("SNAP ELECTION")
 			else:
 				title = Strings.t("NEW ASSEMBLY")
 		else:
 			title = Strings.t("DEFEATED") if defeated else Strings.t("RE-ELECTED")
+			tone = ResultTone.BAD if defeated else ResultTone.GOOD
 	else:
 		title = Strings.t("EUROPEAN PARLIAMENT ELECTION")
 	return {
 		"national": national, "eu_result": eu_result, "executive": executive,
-		"defeated": defeated, "termed_out": termed_out, "title": title,
+		"defeated": defeated, "termed_out": termed_out, "title": title, "tone": tone,
 	}

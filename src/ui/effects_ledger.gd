@@ -12,6 +12,7 @@ extends RefCounted
 ## biggest movements, read from the very entry the Overview reads -- one
 ## measurement, two places to meet it.
 
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
@@ -62,10 +63,13 @@ static func record(state, pending: Array, history_entry: Dictionary, year: int, 
 	if not names.is_empty() and not defaults.is_empty():
 		body = "%s %s" % [Strings.t("Decided for you: %s.") % ", ".join(defaults), body]  # i18n: row-ok effects' labels, routed when queued
 	var title := Strings.t("This month you decided: %s") % ", ".join(names) if not names.is_empty() 			else Strings.t("This month, decided for you: %s") % ", ".join(defaults)  # i18n: row-ok effects' labels, routed when queued
+	# RF7: a month's decisions are UNCERTAIN in its numbers (briefing_effects), so
+	# the card is neutral -- unless the clock decided some of it: RISKY.
+	var tone: String = ResultTone.RISKY if not defaults.is_empty() else ""
 	if inbox != null:
-		inbox.push(title, body)
+		ResultTone.mark(inbox, inbox.push(title, body), tone)
 	pending.clear()
-	return {"title": title, "body": body}
+	return {"title": title, "body": body, "tone": tone}
 
 
 ## After a load (someday.md C6, the parent's ruling): the inbox puts back what the

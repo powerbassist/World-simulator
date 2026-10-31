@@ -162,7 +162,7 @@ func show_results(results: Array) -> void:
 	var defeated: bool = read["defeated"]
 	var termed_out: bool = read["termed_out"]
 	_verdict_title = read["title"]
-	_title.text = _verdict_title
+	ElectionVerdict.show_title(_title, read)  # RF7: the title in its tone
 
 	_night = ElectionNight.new(_state, results)
 	_ticker = PanelKit.plain_line(_sections, "", PanelKit.Tone.DIM)

@@ -195,7 +195,7 @@ func refresh(state, _clock: Node, loader = null) -> void:
 			continue
 		# V4.9a. Rolls to the new value when only its numbers moved; a reading
 		# that changed shape snaps. Final the moment motion is off (headless).
-		Motion.roll_text(value, String(r["text"]))
+		Motion.roll_text(value, String(r["text"]), flash_tone(id, value.text, String(r["text"])))
 		if r.has("caption"):
 			caption.text = String(r["caption"]).to_upper()
 		var alert := String(r["alert_window"])
@@ -206,6 +206,17 @@ func refresh(state, _clock: Node, loader = null) -> void:
 		_tips[id] = lines
 		_popup.update_lines(id, lines)
 	refit()
+
+
+## V5.3-0 4.5: the tone a figure flashes when it moves from `before` to `after`:
+## GOOD when it went its good direction, BAD the other, none for a figure with no
+## verdict or a reading that changed shape. The word stays the figure; the
+## flash is never the only sign (the tooltip names the change).
+static func flash_tone(id: String, before: String, after: String) -> Color:
+	var dir := Motion.moved(before, after)
+	if dir == 0 or not StripReadings.GOOD_WHEN_RISING.has(id):
+		return Color(0, 0, 0, 0)
+	return UiTheme.GOOD if (dir > 0) == bool(StripReadings.GOOD_WHEN_RISING[id]) else UiTheme.BAD
 
 
 ## The strip in its slot -- the screen right of the sidebar. The gaps between the

@@ -17,7 +17,8 @@
           {
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/tools/guard_commit_shards.py\" || true",
-            "timeout": 70
+            "timeout": 70,
+            "if": "Bash(git*commit*)"
           }
         ]
       }
@@ -29,7 +30,7 @@
           {
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/tools/lint_on_edit.py\" || true",
-            "timeout": 30
+            "timeout": 50
           }
         ]
       }

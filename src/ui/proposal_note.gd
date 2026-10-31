@@ -16,6 +16,8 @@ extends RefCounted
 
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
+const LawVerdict = preload("res://src/ui/law_verdict.gd")
 
 ## main's instance id -> {law_id, card}: the card the tabling pushed, which the
 ## division's verdict is set on in place (one card follows the bill). A static
@@ -72,7 +74,7 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 ## The proposal's card, pushed at the press; a tabled bill's card is remembered for
 ## its division.
 static func push(main, title: String, result: Dictionary) -> void:
-	var card: String = main._hud.inbox.push(title, body(result, main._loader.parties.get(main._state.player().id, [])))
+	var card: String = ResultTone.push(main._hud.inbox, title, body(result, main._loader.parties.get(main._state.player().id, [])), tone(result, main._state.player()))
 	if bool(result.get("tabled", false)):
 		remember(main, String(result.get("law_id", "")), card)
 
@@ -96,9 +98,25 @@ static func card_division(main, report: Dictionary) -> void:
 	var card := String(tabled.get("card", ""))
 	if String(tabled.get("law_id", "")) == law_id and main._hud.inbox.lane_of(card) != "":
 		main._hud.inbox.set_body(card, text)
+		ResultTone.mark(main._hud.inbox, card, tone(result, main._state.player()))
 		main._hud.inbox.raise_card(card)
 		return
-	main._hud.inbox.push(Strings.law_name(main._law_panel._find_law(law_id), law_id), text)
+	ResultTone.push(main._hud.inbox, Strings.law_name(main._law_panel._find_law(law_id), law_id), text, tone(result, main._state.player()))
+
+
+## How the card's result landed (#222 QA T3: the vote is met on this card, so it
+## carries the tone the Legislature's verdict line does). A tabled, withdrawn or
+## scheduled bill has no verdict yet; a refusal is BLOCKED; a forced bill whose
+## censure carried brought the government down.
+static func tone(result: Dictionary, ns) -> String:
+	if bool(result.get("refused", false)):
+		return ResultTone.BLOCKED
+	if bool(result.get("tabled", false)) or bool(result.get("withdrawn", false)) \
+			or bool(result.get("referendum_route", false)) or not result.has("passed"):
+		return ""
+	if bool(result.get("forced", false)) and bool(result.get("censure", {}).get("carried", false)):
+		return ResultTone.BAD
+	return LawVerdict.tone(result, ns)
 
 
 ## Article 49.3: adopted with no division, then the censure it invites.

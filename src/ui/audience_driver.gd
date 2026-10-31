@@ -10,6 +10,7 @@ extends RefCounted
 ## card never holds the clock; the scene does, as a summit does -- and the scene's
 ## session, Levers', is audience_talks.gd's.
 
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const RequestLane = preload("res://src/ui/request_lane.gd")
@@ -156,7 +157,7 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
 		"by": Words.when(last), "party": PartyChip.of(loader, ns, String(request["person_id"])),
-		"price": Words.price_text(price, Feelings.of(ns, String(request["person_id"]))), "broken_word": price.has("broken_word"),
+		"price": Words.price_text(price, Feelings.of(ns, String(request["person_id"]))), "broken_word": price.has("broken_word"), "feel": Feelings.of(ns, String(request["person_id"])),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
 
 
@@ -298,13 +299,16 @@ static func _note_lapse(main, game: Dictionary, person: String) -> void:
 	var names: Array = game["lapse_names"]
 	var body := Strings.t("%s's request lapsed: they take it as a refusal.") % person
 	if names.size() > 1:
-		body = "%s %s" % [Strings.tn("%d request lapsed: taken as a refusal.", "%d requests lapsed: taken as a refusal.", names.size()) % names.size(),
+		# RF7's BAD tag says "against you"; the sentence pays for its two words.
+		body = "%s %s" % [Strings.tn("%d request lapsed: a refusal.", "%d requests lapsed: refusals.", names.size()) % names.size(),
 			Strings.t("From: %s.") % ", ".join(names)]
 	if id != "" and inbox.lane_of(id) != "":
 		inbox.set_body(id, body)
 		inbox.raise_card(id)
 		return
 	game["lapse_note"] = inbox.push(Strings.t("Unanswered"), body)
+	# RF7: a lapse is a refusal the sim priced -- against you.
+	ResultTone.mark(inbox, String(game["lapse_note"]), ResultTone.BAD)
 
 
 static func after_load(main) -> void:

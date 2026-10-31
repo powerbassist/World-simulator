@@ -4,6 +4,7 @@ extends RefCounted
 ## from campaign_panel.gd at its size ratchet (V5.3-0 (b), the campaign diet).
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const Programme = preload("res://src/sim/programme.gd")
@@ -44,8 +45,8 @@ static func build(body: Control, ns, loader) -> void:
 					name_text, Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2), roundi(fraction * 100.0),
 				], PanelKit.Tone.PLAIN)
 			ProgrammeK.STATUS_COMPLETE:
-				PanelKit.line(body, Strings.t("%s · Delivered.") % name_text, PanelKit.Tone.GOOD)
+				ResultTone.tint(PanelKit.line(body, Strings.t("%s · Delivered.") % name_text, PanelKit.Tone.PLAIN), ResultTone.GOOD)
 			ProgrammeK.STATUS_FAIL:
-				PanelKit.line(body, Strings.t("%s · Missed.") % name_text, PanelKit.Tone.BAD)
+				ResultTone.tint(PanelKit.line(body, Strings.t("%s · Missed.") % name_text, PanelKit.Tone.PLAIN), ResultTone.BAD)
 			_:
 				PanelKit.line(body, Strings.t("%s · Overtaken by the world.") % name_text, PanelKit.Tone.DIM)

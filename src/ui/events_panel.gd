@@ -285,7 +285,7 @@ func _build_entry(ns, entry: Dictionary) -> void:
 
 	# V5.2d: who brings it, the same face the decision card carries, so one crisis
 	# has one messenger in both places it is read. The narrator adds nothing.
-	var face = SpeakerRow.build(_loader, ev, entry)
+	var face = SpeakerRow.build(_loader, ev, entry, _state.player())
 	if face != null:
 		box.add_child(face)
 

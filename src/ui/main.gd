@@ -423,9 +423,7 @@ func _ready() -> void:
 	# exactly the same terms a law does.
 	_nation_panel.acted.connect(func(before, label, result):
 		_queue_effect(String(label), before)
-		var reason := String(result.get("reason", ""))
-		var refused := tr("Refused.") if reason.is_empty() else tr("Refused. %s") % reason
-		_hud.inbox.push(String(label), refused if bool(result.get("refused", false)) else tr("Agreed."))
+		NationPanel.say_result(_hud.inbox, String(label), result)
 		_update_top_bar()
 		# A diplomatic action moves relations, and on the relations layer that is a
 		# colour change the player should see the moment they act rather than at

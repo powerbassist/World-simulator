@@ -27,6 +27,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Energy = preload("res://src/sim/energy.gd")
@@ -147,6 +148,7 @@ func _refresh() -> void:
 	_title.text = tr("The electricity of %s") % nation.nation_name
 
 	_primary = null
+	_build_refusal(ns)
 	_build_order(ns)
 	_build_mix(ns)
 	_build_dependency(ns)
@@ -228,10 +230,21 @@ func _on_decommission(ns, plant_id: String) -> void:
 	var result := Energy.execute(_state, ns, _loader, _loader.energy_actions, action,
 		Vector2(float(entry.get("lon", 0.0)), float(entry.get("lat", 0.0))),
 		String(entry.get("region_id", "")), plant_id, {}, {})
-	if not bool(result.get("applied", false)):
-		return
-	_dirty = true
-	acted.emit(before, Strings.row_name("energy-actions", action))
+	_dirty = true  # a refusal is drawn too: _build_refusal()
+	if bool(result.get("applied", false)):
+		acted.emit(before, Strings.row_name("energy-actions", action))
+
+
+## The last verb the sim refused -- its display record, ns.last_energy_result -- as a
+## BLOCKED line at the top, so a stale button pressed is never a silent click
+## (V5.3-0 RF7, the parent's call on #222: energy, project and investment results).
+## The sim gives no reason beyond "not available", so the line says that.
+## It covers the map's order too: main.gd places the station and marks this dirty.
+func _build_refusal(ns) -> void:
+	var last: Dictionary = ns.last_energy_result
+	for action in (_loader.energy_actions if bool(last.get("refused", false)) else []):
+		if String(action.id) == String(last.get("action_id", "")):
+			ResultTone.tint(PanelKit.line(_body, tr("%s refused -- it is no longer on offer.") % Strings.row_name("energy-actions", action)), ResultTone.BLOCKED)
 
 
 func _build_mix(ns) -> void:

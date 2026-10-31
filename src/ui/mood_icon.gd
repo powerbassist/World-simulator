@@ -45,6 +45,7 @@ static func _bend_for(value: int) -> float:
 		Portrait.Emotion.PLEASED: return 1.0
 		Portrait.Emotion.WORRIED: return -0.5
 		Portrait.Emotion.WEARY: return -1.0
+		Portrait.Emotion.STERN: return -1.0
 	return 0.0
 
 
@@ -53,6 +54,9 @@ static func _colour_for(value: int) -> Color:
 		Portrait.Emotion.PLEASED: return UiTheme.GOOD
 		Portrait.Emotion.WORRIED: return UiTheme.WARN
 		Portrait.Emotion.WEARY: return UiTheme.BAD
+		# V5.3-0 (c): a cold or resentful person (mood_badge.gd); the president's
+		# own approval bands never reach it.
+		Portrait.Emotion.STERN: return UiTheme.BAD
 	return UiTheme.TEXT_DIM
 
 

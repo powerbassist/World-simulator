@@ -44,6 +44,7 @@ const Investment = preload("res://src/sim/investment.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -183,7 +184,7 @@ func _refresh() -> void:
 		PanelKit.line(_body, tr("No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply."))
 
 	if _last_refusal != "":
-		PanelKit.line(_body, _last_refusal)
+		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
 	_build_autonomy_sections(ns)
 	_build_ledger(ns)
 	for sector in EK.SECTOR_TREND.keys():
@@ -428,10 +429,11 @@ func _investment_button(ns, action) -> Button:
 func _on_invest(ns, action) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result := Investment.execute(_state, ns, _loader.investment_actions, action)
-	if not result.get("applied", false):
-		return
 	_dirty = true
-	acted.emit(before, Strings.row_name("investment-actions", action))
+	# RF7: a refusal takes the company actions' BLOCKED line (_last_refusal).
+	_last_refusal = "" if result.get("applied", false) else tr("%s refused -- it is no longer on offer.") % Strings.row_name("investment-actions", action)
+	if _last_refusal == "":
+		acted.emit(before, Strings.row_name("investment-actions", action))
 
 
 func _build_firm(ns, company) -> void:

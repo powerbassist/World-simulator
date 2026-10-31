@@ -38,6 +38,8 @@ const AudienceShadow = preload("res://src/ui/audience_shadow.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
+const MoodBadge = preload("res://src/ui/mood_badge.gd")
+const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 
 ## 16:9, the board's scene window over the map.
 const SIZE := Vector2(1120, 630)
@@ -51,6 +53,9 @@ var shadow := AudienceShadow.new()
 var _view: Dictionary = {}
 var _resource = null
 var _face: Control
+var _spoken: Label
+## AudienceVoice.lines() for the person in the room; {} is silence.
+var _voice: Dictionary = {}
 var _speaker: Label
 ## V5.2 close R3: the person's party beside their name, said and swatched.
 var _party: HBoxContainer
@@ -71,9 +76,20 @@ func _ready() -> void:
 	body.add_theme_constant_override("separation", 16)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(body)
+	var side := VBoxContainer.new()
+	side.add_theme_constant_override("separation", 8)
+	body.add_child(side)
 	_face = Control.new()
 	_face.custom_minimum_size = Vector2(220, 302)
-	body.add_child(_face)
+	side.add_child(_face)
+	# V5.3-0 (c) 4.2: what the person says aloud, under their face (AudienceVoice).
+	_spoken = Label.new()
+	_spoken.name = "Spoken"  # i18n: ok a node name, found by tests
+	_spoken.theme_type_variation = UiTheme.CAPTION
+	_spoken.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_spoken.custom_minimum_size.x = 220
+	_spoken.visible = false
+	side.add_child(_spoken)
 	var talk := VBoxContainer.new()
 	talk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	talk.add_theme_constant_override("separation", 8)
@@ -117,6 +133,7 @@ func _ready() -> void:
 	_end = PanelKit.sized(Button.new())
 	_end.pressed.connect(func() -> void:
 		if _over:
+			AudienceVoice.hush(self)  # the queued farewell goes with the scene (#222 QA)
 			closed.emit()
 		else:
 			ended.emit())
@@ -133,13 +150,20 @@ func open(view: Dictionary) -> void:
 	visiting = String(view.get("name", ""))  # i18n: row-ok the person's shown name, resolved by the wiring
 	_resource = DialogueLines.resource_for(String(view.get("stance", "")))
 	for child in _face.get_children():
+		_face.remove_child(child)  # out now: the next badge must not find the last one
 		child.queue_free()
 	var person_id := String(view.get("person_id", ""))
 	if person_id != "":
-		_face.add_child(Portrait.framed_for(person_id, _face.custom_minimum_size, Portrait.Emotion.NEUTRAL,
+		var feel: Dictionary = view.get("choices", {}).get("feel", {})
+		_face.add_child(Portrait.framed_for(person_id, _face.custom_minimum_size, MoodBadge.mood_portrait(person_id, feel),
 			Portrait.scene_from_name("office")))
+		_badge(view)
 	_result.text = ""
 	ResultTone.apply(_tone, "")
+	_voice = view.get("voice", {})
+	_spoken.visible = false
+	AudienceVoice.hush(self)  # the last visitor's queued line is not this one's
+	AudienceVoice.say(self, _spoken, _voice, "greet")
 	for child in _party.get_children():
 		child.queue_free()
 	# A view without the key (a test's, the phone's) shows no party line at all;
@@ -157,6 +181,7 @@ func open(view: Dictionary) -> void:
 func show_result(text: String, view: Dictionary, title: String, extra := {}, tone := "") -> void:
 	_result.text = text
 	ResultTone.apply(_tone, tone)
+	AudienceVoice.say(self, _spoken, _voice, AudienceVoice.reaction(tone))
 	_show_state(view)
 	if title != "":
 		say(title, extra)
@@ -171,10 +196,14 @@ func show_close(outcome: String, text: String, tone := "") -> void:
 	verbs.visible = false
 	shadow.visible = false
 	_end.text = tr("Leave")
+	AudienceVoice.say(self, _spoken, _voice, "farewell")
 	say(DialogueLines.close_title(_view, outcome), {})
 
 
+## The line already playing may finish; nothing queued behind it outlives the
+## scene (#222 QA, TAKE 4's addendum: a farewell started 2 s after Leave).
 func close_scene() -> void:
+	AudienceVoice.hush(self)
 	visiting = ""
 	_view = {}
 	verbs.visible = true
@@ -187,6 +216,16 @@ func _show_state(view: Dictionary) -> void:
 	_traits.text = tr("What you know of them: %s.") % ", ".join(PackedStringArray(traits)) if not traits.is_empty() else tr("You know nothing of their character yet.")
 	verbs.show_verbs(view.get("offered", []), view.get("topics", []), int(view.get("attempts_left", 0)), view.get("choices", {}))
 	shadow.show_for(view)
+	_badge(view)
+
+
+## V5.3-0 (c) 4.2: the mood badge on the face, re-read after every lever, so a
+## refusal that cools them shows on the face too. A view with no feelings (a
+## test's) wears none.
+func _badge(view: Dictionary) -> void:
+	var feel: Dictionary = view.get("choices", {}).get("feel", {})
+	if not feel.is_empty() and _face.get_child_count() > 0:
+		MoodBadge.wear(_face, feel, 28.0)
 
 
 ## The money a request came with, in the person's own words (Content's

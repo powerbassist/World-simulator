@@ -11,12 +11,14 @@ const Portrait = preload("res://src/ui/portrait.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const MoodBadge = preload("res://src/ui/mood_badge.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 
 const FACE := Vector2(36, 50)
 
 
 ## The row for `entry` of `ev`, or null for the narrator.
-static func build(loader, ev, entry: Dictionary):
+static func build(loader, ev, entry: Dictionary, ns = null):
 	var person_id := String(entry.get("speaker", ""))
 	var line := Strings.row("events", String(ev.id), "speaker_line", String(ev.speaker_line)).strip_edges()
 	# An id the content no longer names (a load) is the narrator too, never a nameless face.
@@ -25,7 +27,9 @@ static func build(loader, ev, entry: Dictionary):
 	var row := HBoxContainer.new()
 	row.name = "Speaker"  # i18n: ok a node name, found by tests
 	row.add_theme_constant_override("separation", 8)
-	row.add_child(Portrait.control_for(person_id, FACE))
+	# V5.3-0 (c) 4.2: how the messenger feels about you, when the nation is known.
+	var face := Portrait.control_for(person_id, FACE)
+	row.add_child(MoodBadge.wear(face, Feelings.of(ns, person_id), 14.0) if ns != null else face)
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.add_theme_constant_override("separation", 2)

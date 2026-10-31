@@ -11,6 +11,7 @@ extends RefCounted
 ## so a range narrows on screen because the register moved, not because the UI
 ## guessed.
 
+const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
@@ -65,7 +66,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	if person != null:
 		for t in Levers.known_traits(ns, person):
 			traits.append(Strings.t(String(PersonCard.TRAIT_LABEL.get(t, t))))  # i18n: row-ok a trait id, its label the msgid
-	return {"fog": President.knowledge_band(ns, pid), "traits": traits,
+	return {"fog": President.knowledge_band(ns, pid), "traits": traits, "voice": AudienceVoice.lines(loader, pid),
 		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": gossip_people(main, pid),
