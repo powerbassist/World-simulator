@@ -279,6 +279,15 @@ Four pieces are committed under `.claude/` and `tools/` so a worktree session an
 
 Hooks are read when a session starts, so a change to either takes effect in the next session. Test a script by piping it a payload: `echo '{"tool_input":{"file_path":"project.godot"},"cwd":"."}' | python tools/protect_files.py`. `lint_on_edit.py` and `guard_commit_shards.py` also take `--selftest` (their routing, no lint run). On Windows give them a real Windows path (`cygpath -m "$PWD"` in Git Bash): a `/f/Dev/...` path is read as relative to the current drive and the hook finds no project.
 
+## The real mouse cursor
+
+A windowed Godot run reads the OS cursor: `Viewport.get_mouse_position()` and every `Control.get_local_mouse_position()` are the real pointer, a pushed `InputEventMouseMotion` does not change them, and a `RichTextLabel`'s meta hover reads the OS cursor alone (measured on 4.7.2, windowed). Headless there is no cursor: `DisplayServer.mouse_get_position()` reads `(0, 0)` throughout, a warp is a no-op, and `tools/suite_runner.py` passes `--headless` for every test it runs. So the suite never moved the author's pointer; the windowed tools did.
+
+- **One helper owns every move**: `tools/os_cursor.gd` (`const OsCursor = preload("res://tools/os_cursor.gd")`). `OsCursor.warp(viewport, at)` warps only when `NATION_OS_CURSOR=1` and the display is not headless, and returns whether it did. `tests/test_os_cursor.gd` fails the suite on any other call of the engine's warp function under `tests/`, `tools/` or `src/` (with a positive control for the scanner).
+- **A capture does not need the pointer**: `OsCursor.quiet_window()` moves the window to (-30000, -30000), where it still renders and still returns a correct viewport image, and no hand can reach it. It is called by `tools/screenshot.gd`, `tools/motion_frames.gd`, `tools/label_probe.gd` and by `tests/click.gd` (a windowed click test: the real mouse cannot interleave a motion between a pushed press and release). Not by the timing probes (`frame_probe`, `month_frame_probe`, `placement_probe`, `boot_stages_probe`), whose numbers a moved window could change; those still open a normal window, so run them when the author is away. The window shows for the first moments of the boot, before a script can move it (`--position` is clamped onto a monitor).
+- **When the proof IS the pointer** (an RTL meta hover, a tooltip's popup `Window`): run with `NATION_OS_CURSOR=1` on the command line and say so in the report, while the author is away. The flag is never set by a script, a hook or CI.
+- **Measure it, do not assume it**: `tools/screenshot.gd`'s two former warps are measured with a busy-polled cursor watcher (a "teleport" is two samples 400 px apart; a hand cannot do that); the old code produced one per run and the new produces none.
+
 ## Deliberately not installed
 
 Ten-plus other Godot MCP servers exist. Two are installed, and they were chosen to **not** overlap: one drives the editor, one serves docs.

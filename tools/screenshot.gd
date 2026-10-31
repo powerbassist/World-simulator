@@ -129,6 +129,7 @@ const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const OsCursor = preload("res://tools/os_cursor.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Council = preload("res://src/sim/council.gd")
@@ -758,6 +759,9 @@ func _stage_outline_hover() -> void:
 
 
 func _init() -> void:
+	# Nothing here needs the real pointer (tools/os_cursor.gd), so the window goes
+	# off screen: a capture must not sit on the author's desk or catch their mouse.
+	OsCursor.quiet_window()
 	# V4.9a. Every staged state is captured SETTLED: a window opened a frame
 	# before the capture would otherwise be caught mid-fade. Motion itself is
 	# judged from tools/motion_frames.gd's sequence captures, not from here.
@@ -1308,11 +1312,14 @@ func _apply_view() -> void:
 	if _box != "" or _verbs != "":
 		for child in _main._stack.get_children():
 			if child.has_method("show_verbs"):
-				Input.warp_mouse(Vector2(900, 380))
 				if _box != "":
 					_main._map_view.nation_clicked.emit(_box)
 				else:
 					child.show_verbs(_verbs)
+				# Where the box opens: it places itself at the pointer plus OFFSET. The
+				# pointer used to be warped to (900, 380) first; that dragged the author's
+				# real cursor across their screen, so set the box's position directly.
+				child.position = Vector2(900, 380) + child.OFFSET
 	if _briefing != "":
 		_stage_briefing()
 	if _person_card:
@@ -3148,10 +3155,16 @@ func _place_the_plants() -> void:
 	view.center_on_lonlat(centre.x, centre.y)
 	view.zoom_by(6.0, view.size / 2.0)
 	view.begin_placement()
-	# The reticle draws at the cursor, and a batch capture cannot control where
-	# the OS left it -- so bring the cursor to the frame's centre and let the
-	# mode's own cue land where the reader is looking.
-	view.warp_mouse(view.size * 0.5)
+	# The reticle draws at the pointer, and a batch capture cannot control where the
+	# OS left it. It follows a pushed motion (placement_reticle.gd's _input), so push
+	# one -- without warping the author's real cursor. A quarter of the way down the
+	# frame, not the centre: the month's briefing card sits over the centre and would
+	# hide the cue this frame exists to show.
+	var centre_motion := InputEventMouseMotion.new()
+	var frame: Rect2 = view.get_global_rect()
+	centre_motion.position = Vector2(frame.get_center().x, frame.position.y + frame.size.y * 0.25)
+	centre_motion.global_position = centre_motion.position
+	view.get_viewport().push_input(centre_motion)
 
 
 ## V2.6a. Ten years through the real clock -- _tick_months() drives

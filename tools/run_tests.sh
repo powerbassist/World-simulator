@@ -379,6 +379,8 @@ tests=(
   tests/test_i18n_rows.gd
   # V5.3-0: the staff kind -- the chief of staff loads and moves no number.
   tests/test_staff_kind.gd
+  # Dev health: one helper moves the real cursor (off by default), and a lint fails any other.
+  tests/test_os_cursor.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is

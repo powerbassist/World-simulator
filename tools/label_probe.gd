@@ -16,6 +16,7 @@ extends SceneTree
 ## Po valley (the V4.10 handoff's own pair).
 
 const MainScene := "res://src/ui/main.tscn"
+const OsCursor = preload("res://tools/os_cursor.gd")
 const VIEWS := [
 	{"name": "Nordrhein-Westfalen", "lon": 7.0, "lat": 51.4},
 	{"name": "Lombardia", "lon": 9.5, "lat": 45.6},
@@ -29,6 +30,7 @@ var _frames := 0
 
 
 func _initialize() -> void:
+	OsCursor.quiet_window()  # a placement probe needs neither the keyboard nor the real mouse
 	root.size = SIZE
 	_main = load(MainScene).instantiate()
 	root.add_child(_main)
