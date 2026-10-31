@@ -1236,6 +1236,7 @@
       "id": "DEU_chief_of_staff",
       "name": "Konrad Eschenbach",
       "kind": "chief_of_staff",
+      "bio": "A former state secretary who has seen four coalitions form and break; he prefers a timetable to a surprise.",
       "traits": [
         "loyal",
         "pragmatic"

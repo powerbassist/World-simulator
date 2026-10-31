@@ -1254,6 +1254,7 @@
       "id": "GBR_chief_of_staff",
       "name": "Harriet Pellow",
       "kind": "chief_of_staff",
+      "bio": "Spent two decades running campaigns and whips' offices for the party; she can tell a rebellion from a grumble at ten paces.",
       "traits": [
         "pragmatic",
         "networked"
