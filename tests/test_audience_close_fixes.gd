@@ -216,8 +216,7 @@ func _check_card_party() -> void:
 
 func _check_booking_party() -> void:
 	AudienceDriver._open_booking(_main, _request)
-	_chip_matches(_main._calendar_panel.audience, "the Diary's booking block")
-	_main._calendar_panel.audience.close()
+	_chip_matches(_main._calendar_panel.requests.find_child("Request_%s" % _request, true, false), "the Diary's request card")
 
 
 func _reach_audience() -> bool:

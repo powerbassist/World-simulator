@@ -35,7 +35,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
-const AudienceBooking = preload("res://src/ui/audience_booking.gd")
+const DiaryRequests = preload("res://src/ui/diary_requests.gd")
 const DiaryGrid = preload("res://src/ui/diary_grid.gd")
 
 signal closed
@@ -45,8 +45,8 @@ signal closed
 ## measure and no U4 decision delta to queue. main.gd listens only to repaint.
 signal diary_changed
 
-## V5.2b: an audience request's days, booked here (audience_booking.gd).
-var audience := AudienceBooking.new()
+## V5.3-0 (b2): the waiting requests, beside the grid they are booked on.
+var requests := DiaryRequests.new()
 var _grid := DiaryGrid.new()
 
 ## What each fixed-date kind is called on screen. Presentation, so it lives here
@@ -121,8 +121,8 @@ func _ready() -> void:
 
 	# The grid above the scroll, its day list inside it: a list that changes height
 	# moves nothing below (the form's rule further down).
-	root.add_child(_grid)
-	_grid.booked.connect(audience.booked.emit)
+	root.add_child(requests.beside(_grid))
+	_grid.booked.connect(requests.booked.emit)
 	_grid.cancel_requested.connect(_on_cancel)
 
 	var scroll := ScrollContainer.new()
@@ -137,7 +137,7 @@ func _ready() -> void:
 	_body.add_child(_grid.day_list)
 
 	root.add_child(HSeparator.new())
-	root.add_child(audience)
+	root.add_child(requests.promise_slot)
 	_build_form(root)
 
 	_close_button = Button.new()

@@ -124,6 +124,13 @@ func show_month(year: int, month: int) -> void:
 	_render()
 
 
+## The page that holds (year, month), its `day` picked: a request's Days, so the
+## day list under the grid carries that day's "Book here".
+func pick(year: int, month: int, day: int) -> void:
+	show_month(year, month)
+	_pick(day)
+
+
 func _now() -> int:
 	return int(_state.year) * 12 + int(_state.month)
 
@@ -165,7 +172,10 @@ func _render() -> void:
 			cell.marks.append(String(e["mark"]))
 			texts.append(String(e["text"]))
 		cell.tooltip_text = "\n".join(texts)
+		for o in offered.get(d, []):
+			cell.offers[String(o["id"])] = o["date"]
 		cell.picked.connect(_pick)
+		cell.dropped.connect(func(id: String, date: Dictionary) -> void: booked.emit(id, date))
 		_days.add_child(cell)
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 
