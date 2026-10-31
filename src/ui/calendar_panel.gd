@@ -122,9 +122,9 @@ func _ready() -> void:
 	_grid.booked.connect(requests.booked.emit)
 	_grid.cancel_requested.connect(_on_cancel)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# The grid's: it keeps the day list a floor the growing rows above and below
+	# cannot squeeze away (#231's QA round).
+	var scroll := _grid.list_scroll()
 	root.add_child(scroll)
 
 	_body = VBoxContainer.new()

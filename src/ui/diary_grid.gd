@@ -40,8 +40,17 @@ const ActsOn = preload("res://src/ui/acts_on.gd")
 
 ## Monday first, as a European diary is ruled.
 const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msgid
+## px at text size 100 %: the day list's floor -- its date heading, a "Book here"
+## and one entry row. The list's scroll is the Diary's only flexible region, and
+## everything else grows: a card a pending request beside the grid, "Your word"
+## under it, the text size. Without a floor they squeezed it to nothing and "Book
+## here" fell out of view (#231's QA round: 4 requests at 100 %, any at 130 %); with
+## one, the Diary grows past the dock instead and its page scrolls as one.
+const LIST_ROOM_PX := 96.0
 
 var day_list := VBoxContainer.new()
+## The day list's scroll, which the panel places (list_scroll()).
+var _list_scroll: ScrollContainer
 var _state
 var _loader
 var _items: Array = []  # the panel's: {year, month, day, text, mark, cancel}
@@ -96,6 +105,18 @@ func _ready() -> void:
 	_days = GridContainer.new()
 	_days.columns = 7
 	add_child(_days)
+
+
+## The scroll the panel puts the day list in: it takes the panel's slack (EXPAND,
+## which TabPage reads to fill the dock) down to LIST_ROOM_PX, and follows the
+## keyboard onto a "Book here" below its fold.
+func list_scroll() -> ScrollContainer:
+	_list_scroll = ScrollContainer.new()
+	_list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_list_scroll.follow_focus = true
+	_list_scroll.custom_minimum_size.y = LIST_ROOM_PX * UiTheme.text_scale()
+	return _list_scroll
 
 
 func show_items(state, loader, items: Array) -> void:
@@ -263,12 +284,29 @@ func _render_list(entries: Array, offered: Array) -> void:
 	for child in day_list.get_children():
 		day_list.remove_child(child)
 		child.queue_free()
+	# Re-read on every redraw: the player can change the text size mid-game (#221 RECORD 8).
+	if _list_scroll != null:
+		_list_scroll.custom_minimum_size.y = LIST_ROOM_PX * UiTheme.text_scale()
 	if _selected == 0:
 		return
 	var ym := _shown()
 	PanelKit.heading(day_list, DateText.day_month_year(_selected, ym.y, ym.x))
 	if entries.is_empty() and offered.is_empty():
 		PanelKit.line(day_list, tr("Nothing on this day."))
+	# The verbs first, under the date: a busy day's entries would push them below
+	# the floor's fold, where a click on the grid does not follow them.
+	for o in offered:
+		var date: Dictionary = o["date"]
+		var book := PanelKit.sized(Button.new())
+		# One per offering request: two requests can offer the same day, and a
+		# second "BookHere" would be renamed "@Button@N" and lost to find_child.
+		book.name = "BookHere_%s" % String(o["id"])  # i18n: ok a node name, found by tests
+		book.text = tr("Book here: %s") % String(o["person"])
+		book.disabled = not bool(date.get("free", true))
+		var why := String(date.get("reason", ""))
+		book.tooltip_text = Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
+		book.pressed.connect(func() -> void: booked.emit(String(o["id"]), date))
+		day_list.add_child(book)
 	for e in entries:
 		var row := HBoxContainer.new()
 		day_list.add_child(row)
@@ -288,15 +326,3 @@ func _render_list(entries: Array, offered: Array) -> void:
 			var pid := String(e["call"])
 			call.pressed.connect(func() -> void: call_requested.emit(pid))
 			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
-	for o in offered:
-		var date: Dictionary = o["date"]
-		var book := PanelKit.sized(Button.new())
-		# One per offering request: two requests can offer the same day, and a
-		# second "BookHere" would be renamed "@Button@N" and lost to find_child.
-		book.name = "BookHere_%s" % String(o["id"])  # i18n: ok a node name, found by tests
-		book.text = tr("Book here: %s") % String(o["person"])
-		book.disabled = not bool(date.get("free", true))
-		var why := String(date.get("reason", ""))
-		book.tooltip_text = Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
-		book.pressed.connect(func() -> void: booked.emit(String(o["id"]), date))
-		day_list.add_child(book)
