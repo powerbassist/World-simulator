@@ -11,6 +11,7 @@ extends VBoxContainer
 ## would be prose for nothing.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 
 
 func _init() -> void:
@@ -31,7 +32,8 @@ func show_rows(given: Array, judged: Array) -> void:
 	for text in given:
 		PanelKit.line(self, String(text), PanelKit.Tone.PLAIN)
 	for row in judged:
-		PanelKit.line(self, String(row["text"]), PanelKit.Tone.GOOD if bool(row["kept"]) else PanelKit.Tone.BAD)
+		# RF7: the verdict's word (kept, broken) is in the line; the shared tone colours it.
+		ResultTone.tint(PanelKit.line(self, String(row["text"])), ResultTone.GOOD if bool(row["kept"]) else ResultTone.BAD)
 
 
 func lines() -> PackedStringArray:

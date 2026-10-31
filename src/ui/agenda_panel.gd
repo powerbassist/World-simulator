@@ -32,6 +32,7 @@ signal open_requested(tab_id: String)
 ## (OPINION: the data carries no tab, and a goal's group is the closest general
 ## rule; an economy goal is moved by the budget's levers, an institutional or a
 ## society goal by a law).
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const GROUP_TAB := {"economy": "budget", "europe": "diplomacy", "institutions": "legislature",
 	"office": "politics", "society": "legislature"}  # i18n: ok tab ids
 
@@ -196,9 +197,10 @@ func _register_block(ns, entry: Dictionary) -> Control:
 			_build_live_read(ns, terms, entry, block)
 			_open_button(terms, block)
 		ProgrammeK.STATUS_COMPLETE:
-			PanelKit.line(block, tr("Delivered, term %d.") % (int(entry["concluded_term"]) + 1), PanelKit.Tone.GOOD)
+			# RF7: the shared tones, the word ("Delivered", "Missed") in the line.
+			ResultTone.tint(PanelKit.line(block, tr("Delivered, term %d.") % (int(entry["concluded_term"]) + 1)), ResultTone.GOOD)
 		ProgrammeK.STATUS_FAIL:
-			PanelKit.line(block, tr("Missed, term %d.") % (int(entry["concluded_term"]) + 1), PanelKit.Tone.BAD)
+			ResultTone.tint(PanelKit.line(block, tr("Missed, term %d.") % (int(entry["concluded_term"]) + 1)), ResultTone.BAD)
 		_:
 			PanelKit.line(block, tr("Overtaken by the world, term %d.") % (int(entry["concluded_term"]) + 1), PanelKit.Tone.DIM)
 	return block

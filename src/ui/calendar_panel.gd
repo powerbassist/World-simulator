@@ -21,6 +21,7 @@ extends PanelContainer
 ## twice (V1.3e, V1.3g). Owning booking in one place is also truer to the verb —
 ## you open your diary to schedule something.
 
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
@@ -154,10 +155,7 @@ func _ready() -> void:
 ## changes height when a dropdown changes moves every control under it — and the
 ## Book button is the control under it.
 func _build_form(root: VBoxContainer) -> void:
-	var heading := Label.new()
-	heading.theme_type_variation = UiTheme.HEADING
-	heading.text = tr("BOOK AN APPOINTMENT")
-	root.add_child(heading)
+	PanelKit.heading(root, tr("BOOK AN APPOINTMENT"))
 
 	var grid := GridContainer.new()
 	grid.columns = 2
@@ -462,7 +460,7 @@ func _refresh_acts() -> void:
 	_select_meta(_act_pick, keep)
 	_book_button.disabled = _act_pick.item_count == 0
 	if _act_pick.item_count == 0:
-		_status.text = tr("Nothing of that kind is available to book today.")
+		ResultTone.say(_status, tr("Nothing of that kind is available to book today."))
 	_refresh_travel_note()
 
 
@@ -497,7 +495,7 @@ func _refresh_travel_note() -> void:
 	# turns valid, and never written over the booking just made ("Booked: ...").
 	var refusal := String(note["refusal"]) if entry != _booked else ""
 	if refusal != "" or _status.text == _refused:
-		_status.text = refusal
+		ResultTone.say(_status, refusal, ResultTone.BLOCKED if refusal != "" else "")
 	_refused = refusal
 	_book_button.disabled = entry.is_empty() or String(note["refusal"]) != ""
 
@@ -520,7 +518,7 @@ func fill_booking(action_id: String, target_id: String, windows) -> void:
 		_month_pick.selected = (int(first["year"]) * 12 + int(first["month"])) - (int(_state.year) * 12 + int(_state.month))
 		_clamp_day_spin()
 		_day_spin.value = int(first["day"])
-	_status.text = ""
+	ResultTone.say(_status, "")
 	_refresh_travel_note()
 
 
@@ -556,19 +554,19 @@ func _on_book() -> void:
 	var result: Dictionary = preload("res://src/ui/cabinet_verbs.gd").book(_state, entry)
 	if bool(result["ok"]):
 		_booked = entry
-		_status.text = tr("Booked: %s, %s.") % [_booking_text(entry), DateText.day_month_year(int(entry["day"]), int(entry["month"]), int(entry["year"]))]
+		ResultTone.say(_status, tr("Booked: %s, %s.") % [_booking_text(entry), DateText.day_month_year(int(entry["day"]), int(entry["month"]), int(entry["year"]))])
 		mark_dirty()
 		diary_changed.emit()
 	else:
 		# The refusal reason, printed rather than swallowed. A booking that
 		# refuses silently is docs/trade-model.md's unread `refused_by_partner`,
 		# which this project has now shipped twice.
-		_status.text = tr("Refused: %s.") % Strings.t(String(result["error"]))  # i18n: row-ok the sim's reason, its English the msgid
+		ResultTone.say(_status, tr("Refused: %s.") % Strings.t(String(result["error"])), ResultTone.BLOCKED)  # i18n: row-ok the sim's reason, its English the msgid
 
 
 func _on_cancel(key: String) -> void:
 	if Calendar.cancel(_state, key):
-		_status.text = tr("Cancelled.")
+		ResultTone.say(_status, tr("Cancelled."))
 		mark_dirty()
 		diary_changed.emit()
 
@@ -663,3 +661,4 @@ func primary_action() -> Control:
 	if _book_button != null and not _book_button.disabled:
 		return _book_button
 	return null
+

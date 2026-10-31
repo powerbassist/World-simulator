@@ -17,6 +17,7 @@ const GOOD := "good"  # i18n: ok a tone key
 const BAD := "bad"  # i18n: ok a tone key
 const BLOCKED := "blocked"  # i18n: ok a tone key
 const RISKY := "risky"  # i18n: ok a tone key
+const BASE_META := "result_tone_base"  # i18n: ok a meta key
 
 ## key -> [variation, word]. The words are tags, short and upper-cased on screen.
 const TAG := {
@@ -41,3 +42,36 @@ static func apply(label: Label, tone: String) -> void:
 ## favour, down against you, none neutral.
 static func of_rapport(delta: float) -> String:
 	return GOOD if delta > 1e-6 else (BAD if delta < -1e-6 else "")
+
+
+## A new tag for `tone`, hidden when the result is neutral (V5.3-0 RF7): what a
+## surface puts beside its result sentence.
+static func tag(tone: String) -> Label:
+	var label := Label.new()
+	label.name = "ResultTone"  # i18n: ok a node name, found by tests
+	apply(label, tone)
+	return label
+
+
+## An inbox card's tag, under its title, as the party chip sits; nothing for a
+## neutral result or a card the inbox no longer has.
+static func mark(inbox, card_id: String, tone: String) -> void:
+	if inbox != null and card_id != "" and TAG.has(tone):
+		inbox.add_under_title(card_id, tag(tone))
+
+
+## A result whose own sentence already holds the verdict word (PASSED, DEFEATED,
+## Refused, Delivered) takes the tone on that sentence instead of a second word:
+## the word says it, the tone colours it, and the text diet (RF6) pays nothing.
+## A neutral result goes back to the variation the control had before its first
+## tint, so a label reused for the next result (a status line) is never left red.
+static func tint(control: Control, tone: String) -> void:
+	if not control.has_meta(BASE_META):
+		control.set_meta(BASE_META, control.theme_type_variation)
+	control.theme_type_variation = String(TAG[tone][0]) if TAG.has(tone) else String(control.get_meta(BASE_META))
+
+
+## A status line's text and its tone in one call.
+static func say(label: Label, text: String, tone := "") -> void:
+	label.text = text
+	tint(label, tone)

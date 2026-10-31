@@ -18,6 +18,7 @@ extends RefCounted
 ## A Go closes the card by the same rule as Continue, then opens its target (OPINION:
 ## a Go that left the clock paused would strand a pause the clock line cannot name).
 
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
@@ -94,7 +95,7 @@ static func open(main, report: Dictionary) -> void:
 	if game.is_empty() or ns == null or not bool(ns.in_government) or not _will_show(main, game, report):
 		# A month the briefing does not show keeps its consequence cards in the inbox.
 		for card in cards:
-			main._hud.inbox.push(card["title"], card["body"])
+			ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
 		return
 	var ranked: Dictionary = game["pending"]
 	game["pending"] = {}
@@ -115,7 +116,7 @@ static func hold_card(main, card: Dictionary) -> void:
 	if card.is_empty():
 		return
 	if game.is_empty():
-		main._hud.inbox.push(card["title"], card["body"])
+		ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
 		return
 	game["month_cards"] = game.get("month_cards", []) + [card]
 

@@ -7,6 +7,7 @@ extends RefCounted
 ## (_event_cards, _unseen_events) and holds, the way hold_reason.gd reads them:
 ## the registers stay where the clock doors and the tests read them.
 
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Events = preload("res://src/sim/events.gd")
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -76,7 +77,7 @@ static func card_events(main, year: int, month: int, desk_before: Dictionary, be
 		var where := String(record.get("region_name", ""))
 		if where != "":
 			named = "%s — %s" % [named, where]
-		preload("res://src/ui/briefing_driver.gd").hold_card(main, {"title": Strings.t("Decided for you"),
+		preload("res://src/ui/briefing_driver.gd").hold_card(main, {"title": Strings.t("Decided for you"), "tone": ResultTone.RISKY,
 			"body": Strings.t("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)]})
 		defaulted_names.append(Strings.record_event_name(record))
 
