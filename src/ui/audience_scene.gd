@@ -181,7 +181,10 @@ func open(view: Dictionary) -> void:
 func show_result(text: String, view: Dictionary, title: String, extra := {}, tone := "") -> void:
 	_result.text = text
 	ResultTone.apply(_tone, tone)
-	AudienceVoice.say(self, _spoken, _voice, AudienceVoice.reaction(tone))
+	# The badge still shows the face before this result: a band it crosses is said.
+	var badge = _face.get_node_or_null("MoodBadge")
+	AudienceVoice.say(self, _spoken, _voice, AudienceVoice.answer(_voice, tone, badge.emotion if badge != null else -1,
+		view.get("choices", {}).get("feel", {})))
 	_show_state(view)
 	if title != "":
 		say(title, extra)

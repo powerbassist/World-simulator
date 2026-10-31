@@ -251,7 +251,19 @@ static func speak(main, card_id: String, clip: String, delay_s := 0.0) -> void:
 	if not inbox.has_meta(HUSH):
 		inbox.set_meta(HUSH, true)
 		inbox.card_dismissed.connect(func(id: String): Voice.hush(main, id))
-	Voice.speak(main, clip, delay_s, card_id)
+	say(main, card_id, clip, delay_s)
+
+
+## The line itself, inbox-free: behind the chief it waits its turn and is never
+## dropped (the parent's rule 4 on #229 -- his line plays to its end now, so a
+## messenger arriving under it would otherwise be lost); behind another desk line
+## the newer one is dropped, as ever.
+static func say(main: Node, card_id: String, clip: String, delay_s := 0.0) -> void:
+	var player := main.get_node_or_null(Voice.NODE) as AudioStreamPlayer
+	if player != null and Voice.busy(player) and String(player.get_meta("card", "")) == Voice.CHIEF_CARD:
+		Voice.speak_queued(main, clip, card_id)
+	else:
+		Voice.speak(main, clip, delay_s, card_id)
 
 
 ## Every live decision card's deadline sentence, re-read off the desk. A card

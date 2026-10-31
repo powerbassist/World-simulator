@@ -34,8 +34,16 @@ const Events = preload("res://src/sim/events.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const Voices = preload("res://src/core/voices.gd")
+const Voice = preload("res://src/ui/voice.gd")
 const Staff = preload("res://src/sim/staff.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+
+## The chief has three lines a situation (#226: 4 chiefs x 3 situations x 3).
+const CHIEF_VARIANTS := 3
+## The card id the chief's spoken line carries (Voice.hush).
+const LINE_CARD := Voice.CHIEF_CARD
+## The card's meta naming the month whose line it has said (speak_once).
+const SPOKEN := "spoken"  # i18n: ok a meta key
 
 static var _games := {}
 ## A test seam: a test of another surface drives whole months and would otherwise
@@ -107,7 +115,9 @@ static func open(main, report: Dictionary) -> void:
 	game["also"] = ranked.get("also_due", [])
 	game["was_running"] = game["was_running"] or not main._clock.paused
 	main._clock.paused = true
-	game["card"].show_view(view(main, ranked["lines"], report, game["also"]))
+	var shown := view(main, ranked["lines"], report, game["also"])
+	game["card"].show_view(shown)
+	speak_once(main, shown, game["card"], "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)])
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
 
 
@@ -179,10 +189,10 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 		else Strings.t("%s: your priorities") % DateText.month_year(int(state.month), int(state.year))
 	var chief = Staff.chief_of(main._loader, String(state.player().id))
 	var who := ""
-	var said := ""
+	var said := {"text": "", "clip": ""}
 	if chief != null:
 		who = Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id))
-		said = chief_line(main._loader, String(chief.id), Priorities.situation(lines), int(state.year) * 12 + int(state.month))
+		said = chief_said(main._loader, String(chief.id), Priorities.situation(lines), int(state.year) * 12 + int(state.month))
 	# The footer, folded by kind; each group's Go is its first item's (index past the
 	# three lines into lines + also).
 	var groups: Array = []
@@ -194,19 +204,53 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 			groups.append(by_kind[kind])
 		by_kind[kind]["items"].append(also[i])
 	var footer: Array = groups.map(func(g): return {"text": PriorityWords.group(g["items"], state, main._loader), "index": g["index"]})
-	return {"header": header, "who": who, "also": footer, "line": said, "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
+	return {"header": header, "who": who, "also": footer, "line": said["text"], "clip": said["clip"], "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
 		"feel": Feelings.of(state.player(), String(chief.id)) if chief != null else {},
 		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
 
 
-## The chief's line for the month's situation (2.6): three variants per situation in
-## the voice archetype's own lines, rotated by the month so no line plays two months
-## running. Shown as text; the voiced clip comes with the paid batch.
-static func chief_line(loader, person_id: String, situation: String, month_index: int) -> String:
+## The chief's line for the month's situation (2.6) as {text, clip}: three variants
+## per situation in the voice archetype's own lines, rotated by the month so no line
+## plays two months running. The clip (#226's batch) is Voice's only when its hash is
+## the line's own, hashed BEFORE the quotes go round it -- the pipeline voiced the
+## bare line, so the quoted text would never match.
+static func chief_said(loader, person_id: String, situation: String, month_index: int) -> Dictionary:
 	var arch := Voices.archetype_of(loader, person_id)
-	var key := "%s_%d" % [situation, posmod(month_index, 3) + 1]
+	var key := "%s_%d" % [situation, posmod(month_index, CHIEF_VARIANTS) + 1]
 	var english := String((loader.voice_archetypes.get(arch, {}).get("lines", {}) as Dictionary).get(key, ""))
-	return Strings.t("“%s”") % Strings.row("voices", arch, "lines.%s" % key, english) if english != "" else ""
+	if english == "":
+		return {"text": "", "clip": ""}
+	var shown := Strings.row("voices", arch, "lines.%s" % key, english)
+	return {"text": Strings.t("“%s”") % shown, "clip": Voice.line_clip(arch, key, shown)}
+
+
+## Every line id chief_said() can ask for: Priorities.situation()'s answers times the
+## variants (tests/test_voice_lines.gd's orphan check reads this).
+static func chief_line_ids() -> Array:
+	var out: Array = []
+	for situation in Priorities.SITUATIONS:
+		for i in CHIEF_VARIANTS:
+			out.append("%s_%d" % [situation, i + 1])
+	return out
+
+
+## The card's line said aloud once a card: `key` names the month (and the game), so
+## a card opened again on the same month does not say it twice (the parent's TAKE 3).
+static func speak_once(main: Node, shown: Dictionary, card: CanvasItem, key: String) -> void:
+	if String(card.get_meta(SPOKEN, "")) == key:
+		return
+	card.set_meta(SPOKEN, key)
+	speak(main, shown, card)
+
+
+## Under `main`, where the desk's arriving speakers talk too. A messenger's line
+## under way, or waiting behind its sting, is never cut and never talked over: the
+## chief waits for it in Voice's queue and speaks when it ends, if `card` is still
+## up. Closing the card cancels the wait; nothing replays later (the parent's TAKE 1
+## on #229 -- an arrival month is a tense or crisis one, so dropping the line
+## silenced the chief exactly when it mattered).
+static func speak(main: Node, shown: Dictionary, card: CanvasItem) -> void:
+	Voice.speak_queued(main, String(shown.get("clip", "")), LINE_CARD, card)
 
 
 ## "Continue", or "Next: ..." naming the surface that still holds the clock.
@@ -237,6 +281,10 @@ static func close(main) -> void:
 	if game.is_empty() or not game["card"].visible:
 		return
 	game["card"].hide()
+	# The parent's rules on #229: a line the chief has started plays to its end; one
+	# still waiting behind a messenger is cancelled with the card (the gate would
+	# too, unless the next month's card were up before the messenger ended).
+	Voice.drop(main, LINE_CARD)
 	game["card"].dismissed.emit()
 	# A request the card named, on a line, in the footer or folded into a line's
 	# "+N more", has been SEEN under #207's rule (the parent's calls on QA's #218
@@ -267,6 +315,7 @@ static func after_load(main) -> void:
 	if game.is_empty():
 		return
 	game["card"].hide()
+	Voice.hush(main, LINE_CARD)
 	game["was_running"] = false
 	game["lines"] = []
 	game["also"] = []

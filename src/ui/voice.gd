@@ -32,6 +32,18 @@ const Voices = preload("res://src/core/voices.gd")
 const MANIFEST := "res://assets/audio/voice/manifest.json"
 ## The one player, a child of whatever node speaks: a new line stops the last.
 const NODE := "Voice"  # i18n: ok a node name
+## Every voice player's group: music.gd ducks under it, others_busy() reads it.
+const GROUP := "voice"  # i18n: ok a group name
+## The player's meta holding the lines waiting behind the one it plays (speak_queued).
+const QUEUE := "queue"  # i18n: ok a meta key
+## The chief's briefing line's card (BriefingDriver.LINE_CARD): his line plays to its
+## end, so a desk line arriving under it waits behind it (DeskCards.say).
+const CHIEF_CARD := "chief_briefing"  # i18n: ok a card id
+## The waiting lines' poll, a Timer child of the player, so it dies with it.
+const WAIT := "VoiceQueue"  # i18n: ok a node name
+## How often a waiting line looks again, in seconds: short enough that it follows the
+## line before it at once, long enough to cost nothing.
+const QUEUE_POLL_S := 0.25
 
 ## Read once on first use; null means not read yet.
 static var _manifest = null
@@ -113,7 +125,7 @@ static func speak(parent: Node, path: String, delay_s := 0.0, card_id := "") -> 
 	if not SettingsPanel.sound_enabled() or level == 0:
 		return
 	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer
-	if player != null and (player.playing or bool(player.get_meta("pending", false))):
+	if player != null and busy(player):
 		return
 	var stream := AudioStreamOggVorbis.load_from_buffer(FileAccess.get_file_as_bytes(path))
 	if stream == null:
@@ -121,7 +133,7 @@ static func speak(parent: Node, path: String, delay_s := 0.0, card_id := "") -> 
 	if player == null:
 		player = AudioStreamPlayer.new()
 		player.name = NODE
-		player.add_to_group("voice")  # music.gd ducks under it (Music.VOICE_GROUP)
+		player.add_to_group(GROUP)  # music.gd ducks under it (Music.VOICE_GROUP)
 		parent.add_child(player)
 	player.stream = stream
 	player.volume_db = float(SoundK.VOICE_DB[level])
@@ -139,11 +151,80 @@ static func speak(parent: Node, path: String, delay_s := 0.0, card_id := "") -> 
 			player.play())
 
 
-## Silences `parent`'s line, a pending start included.
+## Says `path` now if `parent`'s player is free, else after the lines already
+## waiting there, in order: a line queued is never dropped (the parent's rules on
+## #229), only cancelled -- by its card's hush, by a stop (a load), or, with a
+## `gate`, when that control is no longer shown (a closed card says nothing later).
+static func speak_queued(parent: Node, path: String, card_id: String, gate: CanvasItem = null) -> void:
+	if parent == null or not parent.is_inside_tree() or path == "":
+		return
+	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer
+	if player == null or not busy(player):
+		speak(parent, path, 0.0, card_id)
+		return
+	var queue: Array = player.get_meta(QUEUE, [])
+	var entry := {"path": path, "card": card_id}
+	if gate != null:
+		entry["gate"] = gate  # read with is_instance_valid: a freed gate is a closed card
+	queue.append(entry)
+	player.set_meta(QUEUE, queue)
+	# A Timer the player owns, calling a bound static: when the player (or its
+	# parent) goes, the wait goes with it, no lambda left holding freed captures.
+	# Kept, stopped, once the queue empties: a timer freed then would still be found
+	# for the rest of its frame, and a line queued in that frame would wait forever.
+	var wait := player.get_node_or_null(WAIT) as Timer
+	if wait == null:
+		wait = Timer.new()
+		wait.name = WAIT
+		wait.one_shot = true
+		wait.wait_time = QUEUE_POLL_S
+		wait.timeout.connect(_next.bind(parent, player, wait))
+		player.add_child(wait)
+	if wait.is_stopped():
+		wait.start()
+
+
+static func _next(parent: Node, player: AudioStreamPlayer, wait: Timer) -> void:
+	var queue: Array = player.get_meta(QUEUE, [])
+	if not queue.is_empty() and not busy(player):
+		var entry: Dictionary = queue.pop_front()
+		if not entry.has("gate") or (is_instance_valid(entry["gate"])
+				and (entry["gate"] as CanvasItem).is_visible_in_tree()):
+			speak(parent, String(entry["path"]), 0.0, String(entry["card"]))
+	if not queue.is_empty():
+		wait.start()
+
+
+static func busy(player: AudioStreamPlayer) -> bool:
+	return player.playing or bool(player.get_meta("pending", false))
+
+
+## Whether a voice not `parent`'s own is talking, or about to, anywhere in the tree
+## (the chief under main while an audience opens over him).
+static func others_busy(parent: Node) -> bool:
+	if not parent.is_inside_tree():
+		return false  # nothing out of the tree is heard (Voice.speak's own rule)
+	for player in parent.get_tree().get_nodes_in_group(GROUP):
+		if player.get_parent() != parent and busy(player as AudioStreamPlayer):
+			return true
+	return false
+
+
+## Cancels `card_id`'s lines still waiting; the one playing, if it is that card's,
+## plays on (the chief's line outlives his card's Continue, #229).
+static func drop(parent: Node, card_id: String) -> void:
+	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer if parent != null else null
+	if player != null:
+		player.set_meta(QUEUE, (player.get_meta(QUEUE, []) as Array).filter(
+			func(entry: Dictionary) -> bool: return String(entry["card"]) != card_id))
+
+
+## Silences `parent`'s line, a pending start and the waiting lines included.
 static func stop(parent: Node) -> void:
 	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer if parent != null else null
 	if player == null:
 		return
+	player.set_meta(QUEUE, [])
 	player.stop()
 	player.stream = null
 	player.set_meta("pending", false)
@@ -151,8 +232,10 @@ static func stop(parent: Node) -> void:
 
 
 ## Silences the line only if it belongs to `card_id` -- the card was answered or
-## dismissed, so its speaker has nothing left to say.
+## dismissed, so its speaker has nothing left to say -- and cancels its waiting ones.
 static func hush(parent: Node, card_id: String) -> void:
+	if card_id != "":
+		drop(parent, card_id)
 	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer if parent != null else null
 	if player != null and card_id != "" and String(player.get_meta("card", "")) == card_id:
 		stop(parent)

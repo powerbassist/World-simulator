@@ -28,6 +28,9 @@ const Events = preload("res://src/sim/events.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const President = preload("res://src/sim/president.gd")
+
+## situation()'s three answers, for whoever needs them all (the chief's line ids).
+const SITUATIONS := ["calm", "tense", "crisis"]  # i18n: ok situation keys
 const Statute = preload("res://src/sim/statute.gd")
 const Government = preload("res://src/sim/government.gd")
 const AudienceK = preload("res://src/sim/audience_constants.gd")

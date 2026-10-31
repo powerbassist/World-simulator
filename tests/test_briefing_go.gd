@@ -245,10 +245,24 @@ func _check_chief() -> void:
 		_fail("the chief's name is not on the card: '%s'" % view["who"])
 	if String(view["line"]) == "":
 		_fail("the chief says nothing (voice '%s')" % BriefingDriver.Staff.chief_of(loader, nid).voice)
-	var a := BriefingDriver.chief_line(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 10)
-	var b := BriefingDriver.chief_line(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 11)
+	var a := String(BriefingDriver.chief_said(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 10)["text"])
+	var b := String(BriefingDriver.chief_said(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 11)["text"])
 	if a == b:
 		_fail("the chief's line repeats two months running: '%s'" % a)
+	# #229 QA TAKE 2 (E2): a load during the chief's line ends it -- the old game's
+	# chief never talks over the loaded one.
+	var said: Dictionary = BriefingDriver.chief_said(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 10)
+	if String(said["clip"]) == "":
+		_fail("premise: the chief's calm line has no clip")
+		return
+	BriefingDriver.speak(_main, said, BriefingDriver.card_of(_main))
+	var player := _main.get_node_or_null(BriefingDriver.Voice.NODE) as AudioStreamPlayer
+	if player == null or player.stream == null or String(player.get_meta("card", "")) != BriefingDriver.LINE_CARD:
+		_fail("premise: the chief's line did not start under main")
+		return
+	BriefingDriver.after_load(_main)
+	if player.stream != null:
+		_fail("a load left the old game's chief talking")
 
 
 # --- fixtures --------------------------------------------------------------------------

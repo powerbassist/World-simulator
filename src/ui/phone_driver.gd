@@ -111,7 +111,8 @@ static func _dial(main, game: Dictionary, what: String, args: Dictionary) -> voi
 			text = Words.changed(paid)
 			titles = ["topic_" + what]
 			tone = ResultTone.of_rapport(float((r.get("effects", {}) as Dictionary).get("rapport", 0.0)))
-	game["dialog"].show_result(text, titles, {"lever": Words.lever(what), "topic": Words.topic(what)}, tone)
+	game["dialog"].show_result(text, titles, {"lever": Words.lever(what), "topic": Words.topic(what)}, tone,
+		Feelings.of(state.player(), String(game["person_id"])))
 	game["on_change"].call()
 	main._windows.mark_all_dirty()
 

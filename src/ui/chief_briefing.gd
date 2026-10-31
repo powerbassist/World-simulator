@@ -83,8 +83,9 @@ func _ready() -> void:
 	foot.add_child(_close)
 
 
-## view: {header, who and line ("" hides each), face (Texture2D or null), rows: [{icon, title,
-## chip, held}], effects: [{text, tone, uncertain, spark, tooltip}], close}.
+## view: {header, who and line ("" hides each; the line is the caption of the voice
+## BriefingDriver.speak plays), face (Texture2D or null), rows: [{icon, title, chip,
+## held}], effects: [{text, tone, uncertain, spark, tooltip}], close}.
 func show_view(view: Dictionary) -> void:
 	_header.text = String(view.get("header", ""))
 	_name.text = String(view.get("who", ""))
