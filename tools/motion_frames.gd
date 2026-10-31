@@ -47,6 +47,7 @@ func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	_menu = load("res://src/ui/menu.tscn").instantiate()
 	root.add_child(_menu)
+	OsCursor.quiet_window()  # the menu's _ready applied the saved window mode just now
 
 
 func _process(_delta: float) -> bool:

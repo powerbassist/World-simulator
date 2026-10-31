@@ -28,6 +28,7 @@ var _failures: Array[String] = []
 
 func _init() -> void:
 	_check_gate()
+	_check_plan()
 	_check_scanner()
 	_check_tree()
 	if _failures.is_empty():
@@ -61,12 +62,43 @@ func _check_gate() -> void:
 		_fail("OsCursor.quiet_window() reported a change on a headless display")
 
 
+## quiet_window() must READ the window each call. QA's measured failure: a capture tool that
+## boots the menu has its window put fullscreen on the author's monitor by the menu's own
+## SettingsPanel.apply_saved(), after the helper had moved it once -- so a helper that
+## remembered "done" left it there. The plan is pure, so the state sequence is pinned here.
+func _check_plan() -> void:
+	var win := DisplayServer.WINDOW_MODE_WINDOWED
+	var full := DisplayServer.WINDOW_MODE_FULLSCREEN
+	var maxed := DisplayServer.WINDOW_MODE_MAXIMIZED
+	var off := OsCursor.OFF_SCREEN
+	if OsCursor.quiet_plan(win, off) != [false, false]:
+		_fail("a windowed off-screen window needed work: %s" % [OsCursor.quiet_plan(win, off)])
+	if OsCursor.quiet_plan(win, Vector2i(960, 540)) != [false, true]:
+		_fail("a re-centred window was not moved off screen again")
+	if OsCursor.quiet_plan(full, Vector2i(0, 0)) != [true, true]:
+		_fail("a fullscreen window was not put windowed and off screen")
+	if OsCursor.quiet_plan(maxed, off) != [true, true]:
+		_fail("a maximized window was not put windowed and off screen (it ignores the position)")
+	# The QA sequence: off screen, then the menu applies the saved settings -> fullscreen.
+	var states := [[win, off], [full, Vector2i(0, 0)], [win, off]]
+	var plans: Array = []
+	for st in states:
+		plans.append(OsCursor.quiet_plan(st[0], st[1]))
+	if plans != [[false, false], [true, true], [false, false]]:
+		_fail("the plan has a memory: %s" % [plans])
+	if FileAccess.get_file_as_string(HELPER).contains("static " + "var"):
+		_fail("tools/os_cursor.gd keeps static state; quiet_window must read the window every call")
+
+
 func _check_scanner() -> void:
 	var call_line := "\tviewport." + "warp_" + "mouse(at)\n"
 	if _offenders(call_line).size() != 1:
 		_fail("the scanner missed a plain warp call (positive control)")
 	if _offenders("\tInput." + "warp_" + "mouse(Vector2(1, 2))\n").size() != 1:
 		_fail("the scanner missed an Input warp call (positive control)")
+	if _offenders("	viewport.call(\"warp_" + "mouse\", at)
+").size() != 1:
+		_fail("the scanner missed a call by name (positive control)")
 	if _offenders("## Headless, the " + "warp_" + "mouse call is a no-op.\n").size() != 0:
 		_fail("the scanner flagged a doc comment that only names the function")
 	if _offenders("\tvar x := 1  # " + "warp_" + "mouse(at) was here\n").size() != 0:
@@ -96,12 +128,13 @@ func _check_tree() -> void:
 func _offenders(text: String) -> Array:
 	var out: Array = []
 	var needle := "warp_" + "mouse("
+	var named := ["\"warp_" + "mouse\"", "'warp_" + "mouse'"]  # call("...") / callv by name
 	var n := 0
 	for line in text.split("\n"):
 		n += 1
 		var hash_at := line.find("#")
 		var code := line if hash_at < 0 else line.substr(0, hash_at)
-		if code.contains(needle):
+		if code.contains(needle) or code.contains(named[0]) or code.contains(named[1]):
 			out.append([n, line.strip_edges()])
 	return out
 

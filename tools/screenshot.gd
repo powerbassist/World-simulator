@@ -995,6 +995,7 @@ func _init() -> void:
 		if _play != "":
 			_main.pending_player_id = _play
 	root.add_child(_main)
+	OsCursor.quiet_window()  # the menu's _ready applied the saved window mode just now
 
 
 ## V5.1-0b. The dev console's states, staged through its own run_command() the way

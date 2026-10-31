@@ -80,8 +80,19 @@ static func warp(viewport: Viewport, at: Vector2) -> bool:
 static func quiet_window() -> bool:
 	if enabled() or DisplayServer.get_name() == "headless":
 		return false
-	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:
+	var plan := quiet_plan(DisplayServer.window_get_mode(), DisplayServer.window_get_position())
+	if plan[0]:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-	if DisplayServer.window_get_position() != OFF_SCREEN:
+	if plan[1]:
 		DisplayServer.window_set_position(OFF_SCREEN)
 	return DisplayServer.window_get_position() == OFF_SCREEN
+
+
+## Pure, so a headless test can pin it: [set windowed first, set the position], from the
+## window's mode and position NOW. It has no memory on purpose: the menu's
+## SettingsPanel.apply_saved() puts the window fullscreen on the nearest monitor after a
+## capture tool's _init (an isolated APPDATA has no settings.cfg, so the default, fullscreen,
+## applies), and a plan that remembered "already moved" would leave it there.
+static func quiet_plan(mode: int, position: Vector2i) -> Array:
+	var not_windowed := mode != DisplayServer.WINDOW_MODE_WINDOWED
+	return [not_windowed, not_windowed or position != OFF_SCREEN]
