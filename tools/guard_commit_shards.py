@@ -47,8 +47,9 @@ _TOK = r"""(?:"[^"]*"|'[^']*'|[^\s;&|()]+)"""
 _GLOBAL = r"(?:\s+(?:-C\s+%s|-c\s+%s|--[A-Za-z][\w-]*(?:=%s)?|-[pP]))*" % (_TOK, _TOK, _TOK)
 COMMIT = re.compile(r"(?<![\w./-])git(?P<opts>%s)\s+commit(?![\w-])" % _GLOBAL)
 _C_OPT = re.compile(r"-C\s+(%s)" % _TOK)
-# The terminator is a lookahead so `cd a; cd b && ...` still sees the second cd.
-_CD = re.compile(r"(?:^|[;&|(])\s*cd\s+(%s)(?=\s*(?:&&|;))" % _TOK)
+# The terminator is a lookahead so `cd a; cd b && ...` still sees the second cd;
+# a newline separates commands as well (a multi-line Bash call), hence [ \t]* and \n.
+_CD = re.compile(r"(?:^|[;&|(\n])[ \t]*cd[ \t]+(%s)(?=[ \t]*(?:&&|;|\n))" % _TOK)
 TEST_PATH = re.compile(r"\btests/test_[A-Za-z0-9_]+\.gd\b")
 # Three subprocesses at most (git, bash, ci_shards): 3 x 20 s stays under the
 # 70 s hook timeout in .claude/settings.json, so a slow check asks nothing
@@ -243,6 +244,8 @@ def selftest():
         ("cd a && git -C sub commit", [("a", ["sub"])]),
         ("(cd wt && git commit -m x)", [("wt", [])]),
         ("FOO=1 git commit", [(None, [])]),
+        ("cd wt\ngit add a\ngit commit -m x", [("wt", [])]),
+        ("cd a\ncd b\ngit commit", [("b", [])]),
     ]
     for cmd, want in plain:
         check("calls(%r)" % cmd, commit_calls(cmd), want)
