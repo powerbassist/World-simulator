@@ -13,10 +13,13 @@ extends SceneTree
 ##     real click (press and release frames apart) opens it in place, a second
 ##     folds it back; a short note (a division, a tally) is never folded;
 ##   - never hides a glossary mark behind the fold.
+## V5.3-0 (b), spec 3.3-3.4: the lapses of the requests are ONE note that counts and
+## names them, and the first-use hint leaves once a plate was read and has closed.
 
 const Inbox = preload("res://src/ui/inbox.gd")
 
 const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
@@ -61,6 +64,8 @@ func _process(_delta: float) -> bool:
 				_fail("Less did not fold the note back")
 			_check_marks_whole()
 			_check_hint_whole()
+			_check_lapses_grouped()
+			_check_hint_retires()
 			_finish()
 			return true
 	return false
@@ -116,6 +121,39 @@ func _check_hint_whole() -> void:
 	var id := String(GlossaryHint._card)
 	if not _body_text(id).contains("Click it to keep") or (_more(id) != null and _more(id).visible):
 		_fail("the first-use hint is folded: '%s'" % _body_text(id))
+	GlossaryHint.reset()
+
+
+func _check_lapses_grouped() -> void:
+	_inbox.clear()
+	var game := {}
+	for person in ["Clarisse Turcy", "Loïc Périer", "Diane Ollivier"]:
+		AudienceDriver._note_lapse(_main, game, person)
+	if _inbox.lane_count(Inbox.NOTES) != 1:
+		_fail("three lapses are %d notes, not one" % _inbox.lane_count(Inbox.NOTES))
+	var id := String(game.get("lapse_note", ""))
+	var body := _body_text(id)
+	if not body.begins_with("3 requests lapsed") or not body.contains("Diane Ollivier") or not body.contains("Clarisse Turcy"):
+		_fail("the grouped lapse note does not count and name them: '%s'" % body)
+	_inbox.dismiss(id)
+	AudienceDriver._note_lapse(_main, game, "Gaspard Zuber")
+	var next := String(game["lapse_note"])
+	if next == id or not _body_text(next).begins_with("Gaspard Zuber's request lapsed"):
+		_fail("a lapse after the note was dismissed did not start a new one: '%s'" % _body_text(next))
+
+
+func _check_hint_retires() -> void:
+	GlossaryHint.config_path = "user://test_inbox_notes_hint.cfg"
+	GlossaryHint.reset()
+	GlossaryHint.offer(_inbox)
+	var id := String(GlossaryHint._card)
+	GlossaryHint.retire()
+	if _inbox.lane_of(id) == "":
+		_fail("the hint left before any plate was read")
+	GlossaryHint.term_read = true
+	GlossaryHint.retire()
+	if _inbox.lane_of(id) != "":
+		_fail("the hint stayed after a plate was read and closed")
 	GlossaryHint.reset()
 
 

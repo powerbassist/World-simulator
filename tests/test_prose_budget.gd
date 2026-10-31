@@ -30,8 +30,8 @@ extends SceneTree
 
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 ## The inbox at month 12 (spec 3.5's target 170), held at its measure until the
-## notes are grouped.
-const INBOX_CEILING := 347
+## notes were grouped; the spec's target is 170.
+const INBOX_CEILING := 190
 
 ## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column). Orgs is
 ## the note's 60 per organisation, for France's five.
@@ -60,7 +60,7 @@ const TOTAL_PENDING := {
 }
 ## The sum of every tab's total, a ratchet: each rebuilding PR lowers it to what it
 ## measured. RF6's target is 3 600.
-const TOTAL_SUM_CEILING := 4296
+const TOTAL_SUM_CEILING := 4175
 const TOTAL_SUM_TARGET := 3600
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.

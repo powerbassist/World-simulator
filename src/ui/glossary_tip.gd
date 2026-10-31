@@ -31,6 +31,7 @@ const Glossary = preload("res://src/ui/glossary.gd")
 const GlossaryLive = preload("res://src/ui/glossary_live.gd")
 const TermText = preload("res://src/ui/term_text.gd")
 const PersonTip = preload("res://src/ui/person_tip.gd")
+const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
 
 ## The spec's felt numbers (OPINION there, no simulation meaning, so here).
 const OPEN_DELAY_S := 0.4
@@ -263,6 +264,8 @@ func tick(delta: float) -> void:
 		_grace = -1.0
 	if _plates.is_empty() and _pending.is_empty():
 		set_process(false)
+		# The hint has done its job once a plate was read and has closed (spec 3.3).
+		GlossaryHint.retire()
 
 
 func _input(event: InputEvent) -> void:
@@ -294,6 +297,7 @@ func _input(event: InputEvent) -> void:
 
 func _open(id: String, anchor: Rect2, level: int, held: float) -> void:
 	_truncate(level)
+	GlossaryHint.term_read = true
 	var panel := PanelContainer.new()
 	panel.theme_type_variation = UiTheme.PLATE
 	panel.custom_minimum_size = Vector2(WIDTH, 0)
