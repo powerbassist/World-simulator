@@ -2,8 +2,9 @@ extends RefCounted
 
 ## V4.3, People who want things: the wants -> acts machine. A LEAF, and the
 ## tier's own list of what it may touch: character_constants (the schema),
-## staff.gd (the V5.3-0 leaf that hands it the cast it walks), legislature.gd (the ONE applier, for a brief's bloc_offset price) and
-## government.gd (penalise_blocs, the government-price primitive). It never
+## staff.gd (the V5.3-0 leaf that hands it the cast it walks), legislature.gd
+## (the ONE applier, for a brief's bloc_offset price) and government.gd
+## (penalise_blocs, the government-price primitive). It never
 ## preloads cabinet, elections, unrest, media or judiciary -- the METER
 ## VALUES arrive as arguments the caller hands in, the calendar.gd leaf
 ## discipline, and what it reads of the world it reads off NationState.

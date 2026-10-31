@@ -24,6 +24,8 @@ const Person = preload("res://src/core/person.gd")
 const PeopleLoader = preload("res://src/core/loaders/people_loader.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const Staff = preload("res://src/sim/staff.gd")
+const President = preload("res://src/sim/president.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
 
 const PLAYER := "FRA"
 const STAFF_ID := "FRA_aaa_test_chief_of_staff"
@@ -38,7 +40,7 @@ const MONTHS := 24
 ## the loader's own validation.
 const WALKERS := {
 	"res://src/core/loaders/companies_loader.gd": 1,
-	"res://src/core/loaders/people_loader.gd": 3,
+	"res://src/core/loaders/people_loader.gd": 4,
 	"res://src/sim/staff.gd": 2,
 	"res://src/sim/companies.gd": 1,
 	"res://src/sim/exposure.gd": 1,
@@ -120,6 +122,23 @@ func _check_staff_moves_nothing() -> void:
 	for register in [ns.person_standing, ns.person_loyalty, ns.person_grudges]:
 		if register.has(STAFF_ID):
 			_fail("new_game seeded the staff person into a character register")
+	# The run-against-run compare is relative: a cast that dropped EVERYONE would
+	# leave both runs equal. The absolute half: everyone else is still seeded.
+	if ns.person_standing.is_empty() or ns.person_standing.size() != Staff.cast(_loader, PLAYER).size():
+		_fail("new_game seeded %d people, the cast holds %d" % [ns.person_standing.size(), Staff.cast(_loader, PLAYER).size()])
+	# The player's verbs: no edge reaches the chief, and the chief never asks.
+	# The positive control is the first other person the president covers.
+	if President.covers(state, ns, _loader, STAFF_ID):
+		_fail("President.covers() lets an edge reach the chief of staff")
+	var other := ""
+	for p in Staff.cast(_loader, PLAYER):
+		if String(p.id) != President.leader_id(ns):
+			other = String(p.id)
+			break
+	if other == "" or not President.covers(state, ns, _loader, other):
+		_fail("President.covers() refused '%s', an ordinary person (the control)" % other)
+	if bool(Audiences.invite(state, ns, _loader, STAFF_ID, "office:premiership", "want").get("ok", true)):
+		_fail("Audiences.invite() made the chief of staff ask")
 	var with_staff := _run_months()
 	if with_staff != clean:
 		_fail("a staff person moved the saved state over %d months (first difference at char %d)"
@@ -151,14 +170,13 @@ func _first_difference(a: String, b: String) -> int:
 ## A staff person with a want, a party, or in a slot is refused by name, each
 ## on its own: any one of them is a road into the walkers' arithmetic.
 func _check_staff_refusals() -> void:
-	var party_id := ""
-	for party in _loader.parties.get(PLAYER, []):
-		party_id = String(party.id)
-		break
+	var party = _loader.parties[PLAYER][0]
+	var party_leader := String(party.leader_person_id)
 	var cases := {
 		"a want": func(p) -> void: p.wants.append({"object": "office:premiership", "stance": "want"}),
-		"a party": func(p) -> void: p.party_id = party_id,
-		"a slot": func(p) -> void: _loader.nations[PLAYER].pretender_person_id = STAFF_ID,
+		"a party": func(p) -> void: p.party_id = String(party.id),
+		"a nation's slot": func(_p) -> void: _loader.nations[PLAYER].pretender_person_id = STAFF_ID,
+		"a party's leadership": func(_p) -> void: party.leader_person_id = STAFF_ID,
 	}
 	var pretender := String(_loader.nations[PLAYER].pretender_person_id)
 	for label in cases:
@@ -179,6 +197,18 @@ func _check_staff_refusals() -> void:
 		_loader.people[PLAYER].remove_at(_loader.people[PLAYER].size() - 1)
 		_loader.person_by_id.erase(STAFF_ID)
 		_loader.nations[PLAYER].pretender_person_id = pretender
+		party.leader_person_id = party_leader
+	# Two chiefs in one nation: the briefing reads one, so the second is refused.
+	var first = _staff_person()
+	var second = _staff_person({"id": "%s_aab_test_chief_of_staff" % PLAYER})
+	_loader.people[PLAYER].append(first)
+	_loader.people[PLAYER].append(second)
+	_loader.errors.clear()
+	PeopleLoader.validate_people(_loader)
+	if not str(_loader.errors).contains("at most one"):
+		_fail("two chiefs of staff in %s loaded: %s" % [PLAYER, [_loader.errors]])
+	_loader.people[PLAYER].remove_at(_loader.people[PLAYER].size() - 1)
+	_loader.people[PLAYER].remove_at(_loader.people[PLAYER].size() - 1)
 	_loader.errors.clear()
 
 
