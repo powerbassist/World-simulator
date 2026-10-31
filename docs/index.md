@@ -106,6 +106,8 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[v5.2-legibility]] — V5.2-0b's text diet: every workspace tab's prose measured, what to cut, move to the glossary or chart, and a per-tab prose budget
 - [[v5.2-d-spec]] — V5.2 d: events given speakers, the event book re-tuned to E2/E3/E1b, newspaper front pages by outlet slant, voices, music and effects through one pipeline; bands D1-D11
 - [[v5.3-skills]] — V5.3 skills (the author's ask, 2026-10-26): intrigue, persuasion, diplomacy, parliament and administration, rated 0 to 20 with 10 as today's middling; social_skill migrated into intrigue; exposure read by the leader's intrigue; fog by knowledge; bands K1-K5
+- [[v5.3-0-music-sourcing]] — V5.3-0 music: the CC0 candidate list (beds and stingers, source, licence as read, REUSE plan); nothing downloaded
+- [[v5.3-0-readability]] — V5.3 block 0, readability and feeling: the chief of staff's monthly briefing that holds the clock (three ranked priorities, each with a Go; what your choices did, booked or uncertain; a voiced line), the text diet measured in every visible word, outcome tones, voiced audiences, music by tension, graphic front pages; bands RF1-RF10
 - [[v5.2-c6-party-campaigns]] — campaigns paid by the party: efforts priced per inhabitant, a public-funding income from two pots, running costs, the legal ceiling, the state line retired; bands in B9
 - [[v5.2-bplus-spec]] — gate b's follow-ups: votes made visible, relations as feelings, dismissing a minister, the Diary as an agenda grid, ownership only by law; with bands and a red-team
 - [[history]] — the per-block record of what each version built, measured and refused (moved out of AGENTS.md at V4.4's close)
