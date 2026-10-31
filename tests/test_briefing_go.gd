@@ -58,6 +58,7 @@ func _process(_delta: float) -> bool:
 			if _cases.is_empty():
 				_check_footer()
 				_check_go_keeps_pause()
+				_check_speaks_on_change()
 				_finish()
 				return true
 			_case = _cases.pop_front()
@@ -246,6 +247,50 @@ func _check_go_keeps_pause() -> void:
 			BriefingDriver.close(_main)
 			if _main._clock.paused:
 				_fail("premise: Continue did not resume the clock, so something else holds it")
+
+
+## Pre-gate B2: the chief SPEAKS only when the situation is not the one he last
+## spoke in, or a row is new; otherwise the caption shows, silent. The caption never
+## repeats the line it showed last time for one situation (QA heard the same tense
+## line every three months: the rotation followed the month, not the situation).
+## Through open() on months set up by hand, so the situation is the test's.
+func _check_speaks_on_change() -> void:
+	var state = _main._state
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	var tense := Priorities._standing("budget", "balance")
+	tense["held"] = true  # a held surface plays tense (2.6)
+	var calm := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
+	# [lines, a row new, speaks]
+	var months := [[calm, false, true], [calm, false, false], [calm, true, true], [calm, false, false],
+		[[tense], false, true], [[tense], false, false], [calm, false, true]]
+	var player := _main.get_node_or_null(BriefingDriver.Voice.NODE) as AudioStreamPlayer
+	var last := {}
+	var start := int(state.year) * 12 + int(state.month)
+	# The game's first open: no state change resets the months set up below.
+	game["state_id"] = state.get_instance_id()
+	for i in months.size():
+		var now: int = start + 1 + i
+		state.year = floori((now - 1) / 12.0)
+		state.month = now - state.year * 12
+		var lines: Array = (months[i][0] as Array).map(func(l): return l.duplicate())
+		game["pending"] = {"month": now, "lines": lines, "memory": {}, "new": months[i][1]}
+		if player != null:
+			BriefingDriver.Voice.stop(_main)
+		BriefingDriver.open(_main, {})
+		player = _main.get_node_or_null(BriefingDriver.Voice.NODE) as AudioStreamPlayer
+		var spoke := player != null and player.stream != null
+		var situation := Priorities.situation(lines)
+		var caption := String(BriefingDriver.card_of(_main)._line.text)
+		if spoke != bool(months[i][2]):
+			_fail("month %d (%s, new %s): the chief %s" % [i, situation, months[i][1], "spoke" if spoke else "was silent"])
+		if caption == "":
+			_fail("month %d: no caption" % i)
+		if last.get(situation, "") == caption:
+			_fail("month %d: the same %s line twice in a row: %s" % [i, situation, caption])
+		last[situation] = caption
+		BriefingDriver.close(_main)
+	if player != null:
+		BriefingDriver.Voice.stop(_main)
 
 
 ## The footer (the parent's rule on #217): crowded-out items in their last month,
