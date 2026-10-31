@@ -1,0 +1,41 @@
+{
+  "beds": {
+    "tense": {
+      "file": "searching.ogg",
+      "author": "yd",
+      "url": "https://opengameart.org/node/10684",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "add2ee7931fd0c53f2804220e7355b10b38dbf5ab2b4dfdd415b61d8e14e51c8"
+    },
+    "crisis": {
+      "file": "searching.ogg",
+      "author": "yd",
+      "url": "https://opengameart.org/node/10684",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "add2ee7931fd0c53f2804220e7355b10b38dbf5ab2b4dfdd415b61d8e14e51c8",
+      "note": "Stand-in: the crisis band reuses the tense bed (same file) until a clean crisis track with clear provenance is found."
+    }
+  },
+  "stings": {
+    "vote_passed": {
+      "file": "victory_sting.ogg",
+      "author": "congusbongus",
+      "url": "https://opengameart.org/content/victory-sting",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "07fb9a06bc3ba23af2199c57db40b84dd977de55323d994282a4789bf5d0b7c6",
+      "note": "Page: made for a TIC-80 cart (tic.computer/play?cart=1179); the cart was not opened, so the production method is only what the page states."
+    },
+    "election_won": {
+      "file": "winfretless.ogg",
+      "author": "Fupi",
+      "url": "https://opengameart.org/content/win-jingle",
+      "licence": "CC0-1.0",
+      "read": "2026-10-31",
+      "sha256": "066d704a58af2bbd293cb9a32488b832be7803e365d3f15a264aa803c238c944",
+      "note": "The file is the page's winfretless.ogg, a MIDI rendering through an unnamed instrument; the page names no instrument."
+    }
+  }
+}

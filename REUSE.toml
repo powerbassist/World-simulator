@@ -2536,3 +2536,24 @@ path = "assets/audio/voice/union_leader_m_50/event.exposure_turned_affair.ogg*"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "LicenseRef-ElevenLabs-Output"
+
+[[annotations]]
+# Music: searching.ogg, by yd, CC0 1.0 as stated on https://opengameart.org/node/10684 (read 2026-10-31).
+path = "assets/audio/music/searching.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "yd (OpenGameArt)"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+# Music: victory_sting.ogg, by congusbongus, CC0 1.0 as stated on https://opengameart.org/content/victory-sting (read 2026-10-31).
+path = "assets/audio/music/victory_sting.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "congusbongus (OpenGameArt)"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+# Music: winfretless.ogg, by Fupi, CC0 1.0 as stated on https://opengameart.org/content/win-jingle (read 2026-10-31).
+path = "assets/audio/music/winfretless.ogg*"
+precedence = "override"
+SPDX-FileCopyrightText = "Fupi (OpenGameArt)"
+SPDX-License-Identifier = "CC0-1.0"
