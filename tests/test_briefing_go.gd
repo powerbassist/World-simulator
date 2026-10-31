@@ -106,6 +106,11 @@ func _plan() -> Array:
 	cases.append({"kind": "election", "subject": "ep", "setup": func() -> String:
 		_set_votes(ns, now + 3, now + 2)
 		return "ep"})
+	# ... and the site picker is a verb only inside it: outside, a far national vote's
+	# Go keeps landing on "Make a promise" (code-review on #231).
+	cases.append({"kind": "election", "subject": "national", "far": true, "setup": func() -> String:
+		_set_votes(ns, now + 40, now + 60)
+		return "national"})
 	cases.append({"kind": "majority", "subject": "seats"})
 	cases.append({"kind": "commitment", "subject": "promise|%s|meter:unemployment_pct" % pid, "setup": func() -> String:
 		ns.commitments.append({"kind": "promise", "person_id": pid, "object": "meter:unemployment_pct",
@@ -201,6 +206,8 @@ func _check(c: Dictionary) -> void:
 	if kind == "commitment" and tab == "agenda" and String(c["subject"]).contains("|programme:") \
 			and _main._windows.content("agenda")._picker.selected_id() == String(target["acts_on"]):
 		_fail("commitment (programme): premise, the promised entry was the selected one")
+	if bool(c.get("far", false)) and ActsOn.find(where, String(target["acts_on"])) is OptionButton:
+		_fail("%s: outside the run-up the Go landed on the site picker" % label)
 	if bool(c.get("due_day", false)):
 		var grid = _main._calendar_panel._grid
 		var now := int(_main._state.year) * 12 + int(_main._state.month)

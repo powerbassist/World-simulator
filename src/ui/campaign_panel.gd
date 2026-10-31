@@ -297,8 +297,9 @@ func _build_site(ns) -> void:
 	picker.item_selected.connect(func(idx: int): _site_region = String(region_ids[idx]); _dirty = true)
 	picker.tooltip_text = tr("Travel and repeat visits cut the reach.")
 	# Final pre-gate TAKE 1: with no site picked, every effort is disabled, so the
-	# picker is the run-up's first verb for either vote's Go.
-	_body.add_child(preload("res://src/ui/acts_on.gd").tag(picker, ["national", "ep"]))
+	# picker is the run-up's first verb for either vote's Go -- inside the run-up
+	# only: outside it a far vote's Go lands on "Make a promise", as before.
+	_body.add_child(preload("res://src/ui/acts_on.gd").tag(picker, ["national", "ep"] if Campaign.is_open(_state, ns) else []))
 
 	if _site_region == "":
 		PanelKit.line(_body, tr("Pick a region."))
