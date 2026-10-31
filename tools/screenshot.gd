@@ -1319,7 +1319,10 @@ func _apply_view() -> void:
 				# Where the box opens: it places itself at the pointer plus OFFSET. The
 				# pointer used to be warped to (900, 380) first; that dragged the author's
 				# real cursor across their screen, so set the box's position directly.
-				child.position = Vector2(900, 380) + child.OFFSET
+				# Only the country box places itself that way; the audience's verb row also
+				# answers to show_verbs and has no OFFSET.
+				if child.has_method("_show_by_pointer"):
+					child.position = Vector2(900, 380) + child.OFFSET
 	if _briefing != "":
 		_stage_briefing()
 	if _person_card:
