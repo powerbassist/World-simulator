@@ -150,6 +150,8 @@ func _all_one_shots() -> Dictionary:
 	var out := {"election": SoundK.ELECTION}
 	for id in SoundK.CUES:
 		out[id] = SoundK.CUES[id]
+	for id in SoundK.STINGS:
+		out[id] = SoundK.STINGS[id]
 	for i in SoundK.EVENTS.size():
 		out["event_%d" % (i + 1)] = SoundK.EVENTS[i]
 	return out
@@ -215,6 +217,11 @@ func _check_ladder() -> void:
 	if not heard["event_3"] < heard["election"]:
 		_fail("ladder: a critical event (%.1f dB) is as loud as the election sting (%.1f dB)" % [
 			heard["event_3"], heard["election"]])
+	# V5.3-0 (d): the losing stings sit above every UI cue, the lost election above
+	# the failed vote, and both under the election toll, still the loudest sound.
+	if not (cues_max < heard["vote_failed"] and heard["vote_failed"] < heard["election_lost"] 			and heard["election_lost"] < heard["election"]):
+		_fail("ladder: cues %.1f < vote_failed %.1f < election_lost %.1f < election %.1f fails" % [
+			cues_max, heard["vote_failed"], heard["election_lost"], heard["election"]])
 	for id in shots:
 		if float(shots[id]["level_db"]) > -8.0:
 			_fail("%s: level %.1f dB is above the -8 dB ceiling" % [id, float(shots[id]["level_db"])])

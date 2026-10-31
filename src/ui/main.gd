@@ -74,7 +74,7 @@ const Domains = preload("res://src/ui/domains.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Sound = preload("res://src/ui/sound.gd")
-const SoundBed = preload("res://src/ui/sound_bed.gd")
+const Music = preload("res://src/ui/music.gd")
 const OverviewPanel = preload("res://src/ui/overview_panel.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -296,7 +296,7 @@ func _ready() -> void:
 	# V4.9c. The desk's bed, rendered on a worker and swelling in once it is,
 	# and the one-shot set on another (sound.gd's warm()): nothing in this
 	# _ready() waits for either.
-	SoundBed.start(self, "game")
+	Music.start(self)  # the desk bed and the music beside it
 	Sound.warm()
 	_top_bar = _hud.top_bar
 	_hud.ribbon.setup(_state, _loader)

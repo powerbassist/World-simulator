@@ -13,7 +13,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-const Sting = preload("res://src/ui/sting.gd")
+const Music = preload("res://src/ui/music.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const ElectionNight = preload("res://src/ui/election_night.gd")
@@ -52,7 +52,9 @@ var _footer: Control
 var _night
 var _cells: Array = []
 var _verdict_nodes: Array = []
-var _verdict_title := ""
+## ElectionVerdict.read() of the count: its title shows at the reveal, and whether
+## the player was defeated picks the reveal's sting (V5.3-0 (d)).
+var _verdict := {}
 var _ticker: Label
 ## Bumped by every rebuild: a count still running for a plate that was
 ## replaced steps into nothing rather than revealing (and sounding) a verdict
@@ -161,7 +163,7 @@ func show_results(results: Array) -> void:
 	var executive = read["executive"]
 	var defeated: bool = read["defeated"]
 	var termed_out: bool = read["termed_out"]
-	_verdict_title = read["title"]
+	_verdict = read
 	ElectionVerdict.show_title(_title, read)  # RF7: the title in its tone
 
 	_night = ElectionNight.new(_state, results)
@@ -296,13 +298,13 @@ func _reveal() -> void:
 	if _revealed:
 		return
 	_revealed = true
-	_title.text = _verdict_title
+	_title.text = String(_verdict.get("title", ""))
 	_cont.text = _dismiss_label
 	Motion.pulse(_title)
 	for node in _verdict_nodes:
 		node.visible = true
 		Motion.arrive(node)
-	Sting.play(self)
+	Music.moment(self, "election_lost" if bool(_verdict.get("defeated", false)) else "election_won")  # V5.3-0 (d)
 
 
 ## Any click on the plate ends the count at once, verdict and all. A click,

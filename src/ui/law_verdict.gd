@@ -12,6 +12,7 @@ extends RefCounted
 const Referendum = preload("res://src/sim/referendum.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
+const Music = preload("res://src/ui/music.gd")
 
 
 static func word(result: Dictionary, ns) -> String:
@@ -85,3 +86,12 @@ static func tone(result: Dictionary, ns) -> String:
 	elif result.get("released", false):
 		tone_key = ResultTone.BAD if result.get("lapsed", false) else ResultTone.GOOD
 	return tone_key
+
+
+## The division's sting under `parent` (V5.3-0 (d)), by the verdict's own tone: a
+## bill passed or lost; a held bill or a moot one is neither, and plays nothing,
+## as does a proposal refused before any division (no "passed" key).
+static func sting(parent: Node, result: Dictionary, ns) -> void:
+	if not result.has("passed"):
+		return
+	Music.moment(parent, {ResultTone.GOOD: "vote_passed", ResultTone.BAD: "vote_failed"}.get(tone(result, ns), ""))

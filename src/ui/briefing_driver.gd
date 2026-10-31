@@ -22,6 +22,8 @@ const ResultTone = preload("res://src/ui/result_tone.gd")
 const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
+const Music = preload("res://src/ui/music.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
@@ -139,6 +141,8 @@ static func _will_show(main, game: Dictionary, report: Dictionary) -> bool:
 			"held_events": _held_events(main), "programme_held": main._paused_for_programme
 				or not preload("res://src/sim/programme.gd").available(state, state.player(), main._loader).is_empty()})
 		game["pending"]["month"] = now
+		# V5.3-0 (d): the month's band, from this ranking whether or not the card shows.
+		Music.follow(main, Priorities.situation(game["pending"]["lines"]), Trends.months_to_vote(state, state.player()))
 		# New: a real priority last month's three did not name. A standing read is
 		# never new -- a quiet month does not stop under the setting (call 2).
 		for l in game["pending"]["lines"]:

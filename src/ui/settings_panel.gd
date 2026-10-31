@@ -84,6 +84,8 @@ const DEFAULT_AMBIENT := true
 ## is the first sound a player may want quieter rather than gone. Sound Off silences
 ## it too.
 const DEFAULT_VOICE := 2
+## V5.3-0 (d): the Music step, Normal by default (music.gd; silent until tracks exist).
+const DEFAULT_MUSIC := 2
 
 ## Bumped on every save, so a reader that caches a setting (motion.gd) knows to
 ## read the file again. Static: the menu's screen and the pause menu's are two
@@ -103,6 +105,7 @@ var _text_button: OptionButton
 var _ambient_button: OptionButton
 var _sound_button: OptionButton
 var _voice_button: OptionButton
+var _music_button: OptionButton
 var _motion_button: OptionButton
 var _message_buttons := {}  # category -> {switch: OptionButton}
 
@@ -230,6 +233,13 @@ static func voice_level() -> int:
 	return clampi(int(cfg.get_value("audio", "voice", DEFAULT_VOICE)), 0, 3)
 
 
+## The Music step (0 is Off), read when Settings saves (music.gd watches `revision`).
+static func music_level() -> int:
+	var cfg := ConfigFile.new()
+	cfg.load(CONFIG_PATH)
+	return clampi(int(cfg.get_value("audio", "music", DEFAULT_MUSIC)), 0, 3)
+
+
 func _save_and_apply() -> void:
 	var fullscreen := _fullscreen_button.selected == 1
 	var resolution_index := _resolution_button.selected
@@ -247,6 +257,7 @@ func _save_and_apply() -> void:
 	cfg.set_value("audio", "enabled", sound_on)
 	cfg.set_value("audio", "ambient", ambient_on)
 	cfg.set_value("audio", "voice", _voice_button.selected)
+	cfg.set_value("audio", "music", _music_button.selected)
 	cfg.set_value("display", "motion", motion_on)
 	cfg.set_value(MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, _foreign_news_button.selected == 1)
 	cfg.set_value(MessageSettings.SECTION, MessageSettings.BRIEFING_NEW_ONLY_KEY, _briefing_button.selected == 1)
@@ -329,6 +340,7 @@ func _build() -> void:
 	_sound_button = _add_row(grid, tr("Sound"), [tr("Off"), tr("On")])
 	_ambient_button = _add_row(grid, tr("Ambience"), [tr("Off"), tr("On")])
 	_voice_button = _add_row(grid, tr("Voices"), [tr("Off"), tr("Quiet"), tr("Normal"), tr("Loud")])
+	_music_button = _add_row(grid, tr("Music"), [tr("Off"), tr("Quiet"), tr("Normal"), tr("Loud")])
 	_motion_button = _add_row(grid, tr("Motion"), [tr("Off"), tr("On")])
 	_foreign_news_button = _add_row(grid, tr("News of other countries"), [tr("Off"), tr("On")])
 	# V5.3-0: the monthly briefing, every month or only when a priority is new.
@@ -463,6 +475,7 @@ func _load_into_controls() -> void:
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_ambient_button.select(1 if bool(cfg.get_value("audio", "ambient", DEFAULT_AMBIENT)) else 0)
 	_voice_button.select(voice_level())
+	_music_button.select(music_level())
 	_motion_button.select(1 if bool(cfg.get_value("display", "motion", DEFAULT_MOTION)) else 0)
 	_foreign_news_button.select(1 if bool(cfg.get_value(
 		MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, MessageSettings.DEFAULT_FOREIGN_NEWS)) else 0)

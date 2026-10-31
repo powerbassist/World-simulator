@@ -33,6 +33,7 @@ static var _warmed := {}
 static func ids() -> Array:
 	var out: Array = ["election"]
 	out.append_array(SoundK.CUES.keys())
+	out.append_array(SoundK.STINGS.keys())
 	for i in SoundK.EVENTS.size():
 		out.append("event_%d" % (i + 1))
 	return out
@@ -76,14 +77,14 @@ static func _collect() -> void:
 	_warmed.clear()
 
 
-## The recipe a cue id names: "election", a CUES key, or "event_1".."event_3".
+## The recipe a cue id names: "election", a CUES or STINGS key, or "event_1".."event_3".
 static func recipe(id: String) -> Dictionary:
 	if id == "election":
 		return SoundK.ELECTION
 	if id.begins_with("event_"):
 		var severity := clampi(int(id.trim_prefix("event_")), 1, SoundK.EVENTS.size())
 		return SoundK.EVENTS[severity - 1]
-	return SoundK.CUES.get(id, {})
+	return SoundK.CUES.get(id, SoundK.STINGS.get(id, {}))
 
 
 static func stream(id: String) -> AudioStreamWAV:
