@@ -202,7 +202,11 @@ func _chip_matches(holder: Node, where: String) -> void:
 	var want := _expected()
 	var label: Label = chip.find_child("Party", true, false)
 	var swatch: ColorRect = chip.find_child("Swatch", true, false)
-	if label == null or label.text != String(want.get("name", "?")):
+	# A narrow chip (the Diary's request card, #221) may show the party's initials,
+	# the full name on its hover -- still words, never colour alone.
+	var short_ok: bool = label != null and label.visible and label.text != "" \
+			and String((chip as Control).tooltip_text) == String(want.get("name", "?"))
+	if label == null or (label.text != String(want.get("name", "?")) and not short_ok):
 		_fail("%s names the party '%s', the data says '%s'" % [where, label.text if label != null else "", want.get("name", "?")])
 	if swatch == null or swatch.color != want.get("colour", Color.BLACK):
 		_fail("%s swatches the party out of its hemicycle slot" % where)
@@ -216,8 +220,7 @@ func _check_card_party() -> void:
 
 func _check_booking_party() -> void:
 	AudienceDriver._open_booking(_main, _request)
-	_chip_matches(_main._calendar_panel.audience, "the Diary's booking block")
-	_main._calendar_panel.audience.close()
+	_chip_matches(_main._calendar_panel.requests.find_child("Request_%s" % _request, true, false), "the Diary's request card")
 
 
 func _reach_audience() -> bool:

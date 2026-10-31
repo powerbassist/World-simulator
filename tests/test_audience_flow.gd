@@ -112,7 +112,7 @@ func _check_declined() -> void:
 
 func _book_a_free_day() -> void:
 	var ns = _main._state.player()
-	if not _main._windows.is_open("calendar") or _main._calendar_panel.audience.request_id() != _second:
+	if not _main._windows.is_open("calendar") or _main._calendar_panel.requests.request_id() != _second:
 		_fail("Book did not open the Diary on the request")
 		return
 	for date in Audiences.offered_dates(_main._state, ns, _second):
@@ -122,7 +122,7 @@ func _book_a_free_day() -> void:
 	if _booked_on.is_empty():
 		_fail("premise: no offered day is free")
 		return
-	_main._calendar_panel.audience.booked.emit(_second, _booked_on)
+	_main._calendar_panel.requests.booked.emit(_second, _booked_on)
 	if String(Audiences.request(ns, _second).get("status", "")) != "booked":
 		_fail("booking the free day did not book the request")
 

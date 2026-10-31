@@ -267,7 +267,7 @@ func _check_a_hosted_visit_says_until_when() -> void:
 		if String(e.get("action_id", "")) == String(visit.id) and String(e.get("target_id", "")) == "ITA" 				and String(e.get("status", "")) == CalendarK.STATUS_BOOKED:
 			entry = e
 	if entry.is_empty():
-		_fail("Book it on the hosted visit's form booked no visit to Italy")
+		_fail("Book on the hosted visit's form booked no visit to Italy")
 	else:
 		var was := [int(state.year), int(state.month), int(state.day)]
 		host.diplo_hosted_months.erase(String(visit.id))  # the month ticks counted it down

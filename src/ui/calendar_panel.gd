@@ -35,7 +35,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
-const AudienceBooking = preload("res://src/ui/audience_booking.gd")
+const DiaryRequests = preload("res://src/ui/diary_requests.gd")
 const DiaryGrid = preload("res://src/ui/diary_grid.gd")
 
 signal closed
@@ -45,8 +45,8 @@ signal closed
 ## measure and no U4 decision delta to queue. main.gd listens only to repaint.
 signal diary_changed
 
-## V5.2b: an audience request's days, booked here (audience_booking.gd).
-var audience := AudienceBooking.new()
+## V5.3-0 (b2): the waiting requests, beside the grid they are booked on.
+var requests := DiaryRequests.new()
 var _grid := DiaryGrid.new()
 
 ## What each fixed-date kind is called on screen. Presentation, so it lives here
@@ -64,7 +64,7 @@ const FIXED_LABEL := {
 	K.FIXED_COOLDOWN: "Available again",  # i18n: msgid
 	K.FIXED_PROJECT: "Opens",  # i18n: msgid
 	K.FIXED_REFERENDUM: "Referendum",  # i18n: msgid
-	K.FIXED_EVENT: "Answer by",  # i18n: msgid
+	K.FIXED_EVENT: "Deadline",  # i18n: msgid -- one word on the Diary (RF6)
 }
 
 const KIND_LABEL := {
@@ -75,7 +75,6 @@ const KIND_LABEL := {
 
 var _state
 var _loader
-var _title: Label
 var _next_up: Label
 var _body: VBoxContainer
 var _kind_pick: OptionButton
@@ -105,9 +104,6 @@ func _ready() -> void:
 
 	var root := PanelKit.padded(self, 16, 10)
 
-	_title = Label.new()
-	_title.theme_type_variation = UiTheme.LEAD
-	root.add_child(_title)
 
 	# Outside the scroll, and that is the point. A new game's next twelve months
 	# are empty -- the nearest dated event is sixteen months out -- so the one
@@ -121,8 +117,8 @@ func _ready() -> void:
 
 	# The grid above the scroll, its day list inside it: a list that changes height
 	# moves nothing below (the form's rule further down).
-	root.add_child(_grid)
-	_grid.booked.connect(audience.booked.emit)
+	root.add_child(requests.beside(_grid))
+	_grid.booked.connect(requests.booked.emit)
 	_grid.cancel_requested.connect(_on_cancel)
 
 	var scroll := ScrollContainer.new()
@@ -137,7 +133,7 @@ func _ready() -> void:
 	_body.add_child(_grid.day_list)
 
 	root.add_child(HSeparator.new())
-	root.add_child(audience)
+	root.add_child(requests.promise_slot)
 	_build_form(root)
 
 	_close_button = Button.new()
@@ -156,7 +152,7 @@ func _ready() -> void:
 func _build_form(root: VBoxContainer) -> void:
 	var heading := Label.new()
 	heading.theme_type_variation = UiTheme.HEADING
-	heading.text = tr("BOOK AN APPOINTMENT")
+	heading.text = tr("APPOINTMENTS")
 	root.add_child(heading)
 
 	var grid := GridContainer.new()
@@ -218,7 +214,7 @@ func _build_form(root: VBoxContainer) -> void:
 	root.add_child(_travel_note)
 
 	_book_button = PanelKit.sized(Button.new())
-	_book_button.text = tr("Book it")
+	_book_button.text = tr("Book")
 	_book_button.pressed.connect(_on_book)
 	root.add_child(_book_button)
 
@@ -269,8 +265,8 @@ func _refresh_strip() -> void:
 		if child != _grid.day_list:
 			child.queue_free()
 
-	# V5.3-0 (b): the month is the grid's own header and today is the title bar's.
-	_title.text = tr("Diary")
+	# V5.3-0 (b): the month is the grid's own header and today is the title bar's;
+	# (b2): the tab and the breadcrumb already say "Diary", so the panel does not.
 
 	var rows := Calendar.upcoming(_state, K.BOOKING_HORIZON_MONTHS)
 	_refresh_next_up(rows)
@@ -654,7 +650,7 @@ func _party_name(id: String) -> String:
 ## The control this panel exists to let the player press -- V2.1a's fold contract,
 ## declared here at V2.1b.
 ##
-## Book it, and it is the panel's only verb: the per-entry Cancel buttons sit
+## Book, and it is the panel's only verb: the per-entry Cancel buttons sit
 ## inside the strip's own scroll, which the frame cannot see past. Built once in
 ## _build_form() and alive for the session, so it is held rather than re-found --
 ## government_panel's shape. Disabled while nothing is bookable, and the contract

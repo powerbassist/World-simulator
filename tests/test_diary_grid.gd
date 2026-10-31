@@ -64,7 +64,7 @@ func _process(_delta: float) -> bool:
 		11:
 			_press(false)
 		14:
-			_target = _grid.day_list.find_child("BookHere", true, false) as Control
+			_target = _grid.day_list.find_child("BookHere*", true, false) as Control
 			if _target == null or not _target.is_visible_in_tree():
 				_fail("the offered day's list has no Book here")
 				_finish()
