@@ -23,6 +23,7 @@ const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const AudienceVoice = preload("res://src/ui/audience_voice.gd")
+const MoodBadge = preload("res://src/ui/mood_badge.gd")
 
 const SIZE := Vector2(760, 0)
 
@@ -120,13 +121,16 @@ func open(view: Dictionary) -> void:
 
 
 ## The call is made: what it did, and the verbs down. `titles`: the lines it
-## ends on, in the person's mouth (a lever's, then the call's close).
-func show_result(text: String, titles: Array = [], extra := {}, tone := "") -> void:
+## ends on, in the person's mouth (a lever's, then the call's close). `feel`: how
+## they feel after it (Feelings.of), so a band the call crossed is said.
+func show_result(text: String, titles: Array = [], extra := {}, tone := "", feel := {}) -> void:
 	_result.text = text
 	_result.visible = not text.is_empty()
 	_said.visible = _result.visible
 	ResultTone.apply(_tone, tone)
-	AudienceVoice.say(self, _spoken, _view.get("voice", {}), AudienceVoice.reaction(tone))
+	var before: Dictionary = _view.get("choices", {}).get("feel", {})
+	AudienceVoice.say(self, _spoken, _view.get("voice", {}), AudienceVoice.answer(_view.get("voice", {}), tone,
+		MoodBadge.emotion_of(before) if not before.is_empty() else -1, feel))
 	verbs.visible = false
 	_why.text = ""
 	_why.hide()

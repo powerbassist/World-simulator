@@ -23,6 +23,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const MoodBadge = preload("res://src/ui/mood_badge.gd")
+const Voice = preload("res://src/ui/voice.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Grade = preload("res://src/ui/grade.gd")
@@ -83,14 +84,18 @@ func _ready() -> void:
 	foot.add_child(_close)
 
 
-## view: {header, who and line ("" hides each), face (Texture2D or null), rows: [{icon, title,
-## chip, held}], effects: [{text, tone, uncertain, spark, tooltip}], close}.
+## view: {header, who and line ("" hides each), clip (the line's voice, "" for none),
+## face (Texture2D or null), rows: [{icon, title, chip, held}], effects: [{text, tone,
+## uncertain, spark, tooltip}], close}.
 func show_view(view: Dictionary) -> void:
 	_header.text = String(view.get("header", ""))
 	_name.text = String(view.get("who", ""))
 	_name.visible = not _name.text.is_empty()
 	_line.text = String(view.get("line", ""))
 	_line.visible = not _line.text.is_empty()
+	# Said aloud once, as the card shows (show_view runs once a card): the caption is
+	# _line itself, and the clip is "" unless its hash is that line's (Voice's rule).
+	Voice.speak(self, String(view.get("clip", "")))
 	_face.texture = view.get("face")
 	_face.visible = _face.texture != null
 	var feel: Dictionary = view.get("feel", {})

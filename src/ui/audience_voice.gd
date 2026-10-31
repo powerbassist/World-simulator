@@ -14,8 +14,17 @@ const Strings = preload("res://src/ui/strings.gd")
 const Voice = preload("res://src/ui/voice.gd")
 const Voices = preload("res://src/core/voices.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
+const MoodBadge = preload("res://src/ui/mood_badge.gd")
 
-const LINES := ["greet", "agree", "refuse", "farewell"]  # i18n: ok the archetype table's line ids
+const LINES := ["greet", "agree", "refuse", "farewell", "mood_pleased", "mood_cold", "mood_angry"]  # i18n: ok the archetype table's line ids
+## V5.3-0 (e): the mood line a face says on reaching an emotion (MoodBadge's four,
+## #226's three lines): warm says pleased, wary or annoyed says cold, cold or
+## resentful says angry. Back to neutral says nothing of its own.
+const MOODS := {
+	MoodBadge.Portrait.Emotion.PLEASED: "mood_pleased",  # i18n: ok a line id
+	MoodBadge.Portrait.Emotion.WORRIED: "mood_cold",  # i18n: ok a line id
+	MoodBadge.Portrait.Emotion.STERN: "mood_angry",  # i18n: ok a line id
+}
 
 
 ## line id -> {text, clip} for `person_id`: their own archetype's line; where it
@@ -54,6 +63,19 @@ static func reaction(tone: String) -> String:
 		ResultTone.BAD, ResultTone.BLOCKED:
 			return "refuse"  # i18n: ok a line id
 	return ""
+
+
+## The ONE line a result draws (the parent's call: never a mood line queued behind
+## agree or refuse): when the face's emotion has changed from `before` (an
+## emotion_of() value, -1 for no face yet) to `feel`'s, its mood line, which says
+## more than yes or no; otherwise, or for a voice without that line, the tone's.
+static func answer(voice: Dictionary, tone: String, before: int, feel: Dictionary) -> String:
+	if before >= 0 and not feel.is_empty():
+		var now := MoodBadge.emotion_of(feel)
+		var mood := String(MOODS.get(now, ""))
+		if now != before and voice.has(mood):
+			return mood
+	return reaction(tone)
 
 
 ## Shows `id`'s line of `voice` (lines() above) in `caption` and plays its clip
