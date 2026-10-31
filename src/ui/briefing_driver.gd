@@ -213,12 +213,14 @@ static func close(main) -> void:
 		return
 	game["card"].hide()
 	game["card"].dismissed.emit()
-	# A request the card named, on a line or in the footer, has been SEEN under
-	# #207's rule (the parent's call on QA's #218 finding): its arrival's slowdown
-	# gives the player's speed back, unless they picked one since (_seen's own rule).
+	# A request the card named, on a line, in the footer or folded into a line's
+	# "+N more", has been SEEN under #207's rule (the parent's calls on QA's #218
+	# finding and RECORD): its arrival's slowdown gives the player's speed back,
+	# unless they picked one since (_seen's own rule).
 	for entry in (game["lines"] as Array) + (game.get("also", []) as Array):
-		if String(entry.get("kind", "")) == "request":
-			AudienceDriver._seen(main, String(entry["subject"]))
+		for named in [entry] + (entry.get("folded", []) as Array):
+			if String(named.get("kind", "")) == "request":
+				AudienceDriver._seen(main, String(named["subject"]))
 	var held := _holding_event(main)
 	if bool(game["was_running"]) and held.is_empty() and not main._paused_for_programme:
 		main._clock.paused = false
