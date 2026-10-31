@@ -85,11 +85,14 @@ func _process(_delta: float) -> bool:
 	return false
 
 
-## The call's wiring with a catcher for a dialog: what tone the result is said in.
+## The call's wiring with a catcher for a dialog: what tone the result is said in,
+## and the feelings after the call (V5.3-0 (e): the mood line reads them).
 class ToneCatcher:
 	var tone := "unset"
-	func show_result(_text: String, _titles: Array = [], _extra := {}, said_tone := "") -> void:
+	var feel = null
+	func show_result(_text: String, _titles: Array = [], _extra := {}, said_tone := "", after := {}) -> void:
 		tone = said_tone
+		feel = after
 
 
 ## QA's TAKE 1 on #209, the phone's half: a WON lever's call carries the GOOD tag.
@@ -122,6 +125,8 @@ func _check_won_call_tone() -> void:
 	PhoneDriver._dial(_main, {"person_id": pid, "dialog": catcher, "on_change": func() -> void: pass}, lever, args)
 	if catcher.tone != ResultTone.GOOD:
 		_fail("a won call's result is not said in the good tone: '%s'" % catcher.tone)
+	if not (catcher.feel is Dictionary) or not (catcher.feel as Dictionary).has("rapport"):
+		_fail("the call's result carries no feelings after it, so a band it crossed is never said: %s" % str(catcher.feel))
 
 
 func _stage_a_request() -> void:
