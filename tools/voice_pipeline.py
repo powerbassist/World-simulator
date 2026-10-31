@@ -69,6 +69,11 @@ OUTPUT_FORMAT = "mp3_44100_128"
 LOUDNORM = "loudnorm=I=-16:TP=-1.5:LRA=11"
 PLAN = "ElevenLabs Starter, commercial licence bought 2026-10-19"
 VOICE_DIR = "assets/audio/voice"
+## The licence every clip is filed under (the author's call, 2026-10-31, on QA's
+## finding): ElevenLabs' Use Policy forbids making Output available to third parties
+## on terms more permissive than the ones it is used under, so a clip carries no open
+## licence, only LICENSES/LicenseRef-ElevenLabs-Output.txt. CC-BY-NC-4.0 was wrong.
+CLIP_LICENCE = "LicenseRef-ElevenLabs-Output"
 MANIFEST = VOICE_DIR + "/manifest.json"
 ARCHETYPES = "data/voices/archetypes.json"
 ## Only variable-free lines are voiced (section 6): a {{variable}}, a printf slot or
@@ -228,6 +233,9 @@ def jobs(src: dict, manifest: dict, every: bool) -> list:
             status = "ok"
         out.append({"key": key, "archetype": arch, "line_id": line_id, "text": text, "source": source,
                     "chars": len(text), "sha": sha, "status": status, "voice_id": str(row.get("voice_id", "")),
+                    # A premade (stock) voice is not one the tool designed: the clip's
+                    # REUSE line says which (QA's RECORD, 85 clips once mislabelled).
+                    "voice_source": "premade" if row.get("source") == "premade" else "designed",
                     "file": "%s/%s/%s.ogg" % (VOICE_DIR, arch, line_id)})
 
     for ev in src["events"]:
@@ -332,12 +340,13 @@ def reuse_block(row: dict, date: str) -> str:
     date and the text it says. `.ogg*` so the editor's .import sibling is covered too."""
     return "\n".join([
         "[[annotations]]",
-        "# Voice clip: %s, model %s, designed voice %s (archetype %s), %s; says %s (sha256 %s)." % (
-            PLAN, MODEL_ID, row["voice_id"], row["archetype"], date, row["source"], row["sha"][:12]),
+        "# Voice clip: %s, model %s, %s voice %s (archetype %s), %s; says %s (sha256 %s)." % (
+            PLAN, MODEL_ID, row.get("voice_source", "designed"), row["voice_id"], row["archetype"], date,
+            row["source"], row["sha"][:12]),
         'path = "%s*"' % row["file"],
         'precedence = "override"',
         'SPDX-FileCopyrightText = "2026 powerbassist"',
-        'SPDX-License-Identifier = "CC-BY-NC-4.0"',
+        'SPDX-License-Identifier = "%s"' % CLIP_LICENCE,
     ])
 
 
@@ -796,6 +805,15 @@ def selftest() -> int:
             fails.append("REUSE.toml annotations: %r" % reuse)
         if "\r\n" not in reuse or "\n\n" in reuse.replace("\r\n", "\n").replace("\n\n[[", "[["):
             fails.append("REUSE.toml lost its line ending or gained blank lines: %r" % reuse)
+        # The author's call (2026-10-31): a clip is filed under the ElevenLabs-Output
+        # LicenseRef, never an open licence, and names its voice's true source.
+        stock = dict(src, archetypes=dict(src["archetypes"], union=dict(src["archetypes"]["union"], source="premade")))
+        rows = {r["key"]: r for r in jobs(stock, manifest, False)}
+        premade, designed = reuse_block(rows["union/event.strike"], "x"), reuse_block(rows["boss/event.plant"], "x")
+        if "premade voice V1" not in premade or "designed voice V3" not in designed:
+            fails.append("a clip's REUSE line does not name its voice's source: %r / %r" % (premade, designed))
+        if any('SPDX-License-Identifier = "%s"' % CLIP_LICENCE not in b for b in (premade, designed))                 or "CC-BY" in premade + designed:
+            fails.append("a clip's REUSE line is not filed under %s: %r" % (CLIP_LICENCE, premade))
         annotate(root / "REUSE.toml", jobs(read_sources(root), manifest, False)[0] | {"voice_id": "V1"}, "x")
         again = (root / "REUSE.toml").read_bytes().decode("utf-8")
         if again.count('path = "assets/audio/voice/union/event.strike.ogg*"') != 1:

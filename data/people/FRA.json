@@ -1367,6 +1367,19 @@
       "social_skill": 0.68,
       "wealth_eur_m": 0.9,
       "bench": true
+    },
+    {
+      "id": "FRA_chief_of_staff",
+      "name": "Odile Kerhervé",
+      "kind": "chief_of_staff",
+      "traits": [
+        "principled",
+        "loyal"
+      ],
+      "ambition": 0.25,
+      "social_skill": 0.55,
+      "voice": "chief_fra",
+      "bench": true
     }
   ]
 }

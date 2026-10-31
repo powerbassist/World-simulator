@@ -29,6 +29,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/audience_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const Staff = preload("res://src/sim/staff.gd")
 const Offers = preload("res://src/sim/offers.gd")
 const President = preload("res://src/sim/president.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -271,7 +272,7 @@ static func _overdue(row: Dictionary, now: int) -> bool:
 static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: Array) -> void:
 	if int(ns.audience_lane_start) < 0:
 		ns.audience_lane_start = now
-	var people: Array = loader.people.get(state.player_nation_id, [])
+	var people: Array = Staff.cast(loader, state.player_nation_id)
 	var leader := President.leader_id(ns)
 	var open := _open_count(ns, true)
 	var visiting := _open_count(ns, false)

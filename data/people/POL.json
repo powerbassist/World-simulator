@@ -1239,6 +1239,19 @@
       ],
       "ambition": 0.45,
       "bench": true
+    },
+    {
+      "id": "POL_chief_of_staff",
+      "name": "Tadeusz Wieliczko",
+      "kind": "chief_of_staff",
+      "traits": [
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.25,
+      "social_skill": 0.45,
+      "voice": "chief_pol",
+      "bench": true
     }
   ]
 }

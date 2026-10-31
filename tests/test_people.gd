@@ -229,9 +229,12 @@ func _check_person_field_contract() -> void:
 ## machine, and the chief's own lever is V4.2's lobbying. When V4.2 opens it,
 ## this exemption narrows back or the kind grows a lever -- a kind exempt here
 ## forever is exactly the inert content this check exists to refuse.
+## V5.3-0: the staff kinds (CharacterK.KIND_STAFF) are exempt for the opposite
+## reason, and not as a stopgap: a chief of staff must NOT act -- moving no
+## number is their whole contract, which tests/test_staff_kind.gd pins.
 func _check_kind_meter_coverage() -> void:
 	for kind in CharacterK.KIND_KEYS:
-		if kind in ["politician", "regional_figure", "executive"]:
+		if kind in ["politician", "regional_figure", "executive"] or CharacterK.KIND_STAFF.has(kind):
 			continue
 		if not CharacterK.KIND_METERS.has(kind):
 			_fail("kind '%s' has no meter and no political lever -- declare it in KIND_METERS or refuse the kind" % kind)

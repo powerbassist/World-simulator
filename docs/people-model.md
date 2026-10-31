@@ -435,6 +435,14 @@ unrest's own ladder with a person's face on it. `characters.gd` READS these and
 never writes them. A kind with no meter and no political lever is a load error
 by test, so a seventh kind must declare where it plugs in.
 
+**The staff kinds (V5.3-0)** are the one declared exception, for the opposite
+reason: `KIND_STAFF` (today `chief_of_staff`, [[v5.3-0-readability]] 2.1) is
+the president's own team, a face and a voice that must MOVE NO NUMBER. The
+loader refuses a want, a party or a slot on a staff person, and every walker of
+the register that reads every kind goes through `Staff.cast()`, which
+drops them; `tests/test_staff_kind.gd` injects a tempting one and holds 24
+months of the saved state byte-identical.
+
 ### 14.5 Acts land on existing machines
 
 **Four acts shipped this block** (resign, defect, challenge, brief_against —

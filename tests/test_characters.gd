@@ -59,8 +59,10 @@ func _init() -> void:
 
 
 ## THE LEAF PROPERTY, source-scanned the way test_map_cities.gd polices the
-## marker contract: the four ALLOWED preloads and no others. The meter systems
-## are the ones a writer's temptation would reach for first.
+## marker contract: the ALLOWED preloads and no others. The meter systems
+## are the ones a writer's temptation would reach for first. V5.3-0 added
+## staff.gd: a leaf of the schema alone (character_constants), it hands this
+## file the cast to walk and reads no system.
 func _check_leaf_property() -> void:
 	var src := FileAccess.get_file_as_string("res://src/sim/characters.gd")
 	if src.is_empty():
@@ -68,7 +70,7 @@ func _check_leaf_property() -> void:
 		return
 	var allowed := [
 		"character_constants.gd", "character_act_constants.gd",
-		"government.gd", "legislature.gd",
+		"government.gd", "legislature.gd", "staff.gd",
 	]
 	# Comments STRIPPED (the tick-order check's own lesson): characters.gd
 	# discusses the systems it refuses to preload at length, and a comment

@@ -941,7 +941,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		# and nothing reads them, so month one has weight to move and a game
 		# with no player decision in it moves nothing.
 		if id == player_id:
-			Characters.init_nation(gs.nations[id], loader.people.get(id, []))
+			Characters.init_nation(gs.nations[id], loader)
 
 	# AFTER the build loop rather than inside _build_nation(), and the placement is the
 	# argument: that function takes the nation's own content and nothing else, where a

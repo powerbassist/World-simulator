@@ -2,7 +2,7 @@ extends RefCounted
 
 ## V4.3, People who want things: the wants -> acts machine. A LEAF, and the
 ## tier's own list of what it may touch: character_constants (the schema),
-## legislature.gd (the ONE applier, for a brief's bloc_offset price) and
+## staff.gd (the V5.3-0 leaf that hands it the cast it walks), legislature.gd (the ONE applier, for a brief's bloc_offset price) and
 ## government.gd (penalise_blocs, the government-price primitive). It never
 ## preloads cabinet, elections, unrest, media or judiciary -- the METER
 ## VALUES arrive as arguments the caller hands in, the calendar.gd leaf
@@ -46,6 +46,7 @@ const CharacterK = preload("res://src/sim/character_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const CK = preload("res://src/sim/character_act_constants.gd")
+const Staff = preload("res://src/sim/staff.gd")
 
 
 ## Seed standing for the people of ONE nation (new_game calls it for the
@@ -53,15 +54,16 @@ const CK = preload("res://src/sim/character_act_constants.gd")
 ## ambition, the only value the register holds before anything happens. The
 ## seed is ambition plus the trait's floor (the scalar is the dial, the trait
 ## is the floor -- 14.2's own distinction), so an ambitious person starts
-## with weight to use and a contented one starts anonymous.
-static func init_nation(ns, people_list: Array) -> void:
+## with weight to use and a contented one starts anonymous. V5.3-0: the people
+## are the nation's cast (Staff.cast), so a chief of staff is never seeded.
+static func init_nation(ns, loader) -> void:
 	ns.person_loyalty.clear()
 	ns.person_standing.clear()
 	ns.person_grudges.clear()
 	ns.party_leader_override.clear()
 	ns.person_party_override.clear()
 	ns.person_want_state.clear()
-	for person in people_list:
+	for person in Staff.cast(loader, ns.id):
 		var standing := CK.STANDING_SEED_BASE + CK.STANDING_SEED_AMBITION * float(person.ambition)
 		if person.traits.has("ambitious"):
 			standing += CK.STANDING_SEED_AMBITIOUS_BONUS
@@ -90,7 +92,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 	for party in loader.parties.get(state.player_nation_id, []):
 		authored_leaders[party.id] = party.leader_person_id
 
-	var people: Array = loader.people.get(state.player_nation_id, [])
+	var people: Array = Staff.cast(loader, state.player_nation_id)
 	# The person OBJECTS by id, for the two trait gates that are a property of
 	# the person and not of the pulse: PRAGMATIC and STUBBORN scale the decay,
 	# so the decaying loop needs the traits in hand. Built once here rather

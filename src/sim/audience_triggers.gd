@@ -26,6 +26,7 @@ extends RefCounted
 ## judges for a portfolio -- the request promises no person-level appointment.
 
 const Characters = preload("res://src/sim/characters.gd")
+const Staff = preload("res://src/sim/staff.gd")
 const President = preload("res://src/sim/president.gd")
 const RK = preload("res://src/core/relations.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
@@ -36,7 +37,7 @@ const Coercion = preload("res://src/sim/coercion.gd")
 ## reshuffle's (each person's unserved want for the portfolio that moved).
 static func invitations(state, ns, loader, meters: Dictionary, leaders: Dictionary, now: int) -> Array:
 	var out := []
-	var people: Array = loader.people.get(state.player_nation_id, [])
+	var people: Array = Staff.cast(loader, state.player_nation_id)
 	var live := {}
 	for entry in ns.programme:
 		if int(entry.get("chosen_term", -1)) == int(ns.terms_served) and int(entry.get("months_live", 0)) == 1 \

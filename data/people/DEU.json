@@ -1231,6 +1231,19 @@
       ],
       "ambition": 0.47,
       "bench": true
+    },
+    {
+      "id": "DEU_chief_of_staff",
+      "name": "Konrad Eschenbach",
+      "kind": "chief_of_staff",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.2,
+      "social_skill": 0.5,
+      "voice": "chief_deu",
+      "bench": true
     }
   ]
 }
