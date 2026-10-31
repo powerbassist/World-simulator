@@ -167,7 +167,7 @@ def smoke(godot: str, exe: Path, out: Path) -> int:
     user = Path(tempfile.mkdtemp(prefix="nationsim-smoke-"))
     env = dict(os.environ, APPDATA=str(user), XDG_DATA_HOME=str(user))
     try:
-        runs = [("exe-boot", [str(exe), "--headless", "--quit-after", "200", "--log-file", str(out / "exe-boot-engine.log")]),
+        runs = [("exe-boot", [str(exe), "--headless", "--verbose", "--quit-after", "200", "--log-file", str(out / "exe-boot-engine.log")]),
                 ("pck-smoke", [godot, "--headless", "--main-pack", str(exe.with_suffix(".pck")),
                                "--script", str(REPO / "tools" / "exe_smoke.gd")])]
         bad = 0
@@ -181,6 +181,9 @@ def smoke(godot: str, exe: Path, out: Path) -> int:
             if name == "exe-boot":  # the exe's own log-file holds what a console would show
                 log += (out / "exe-boot-engine.log").read_text(errors="replace")
             errors = error_lines(log)
+            # Positive proof the menu scene came out of the PCK, not just silence.
+            if name == "exe-boot" and "Completed load for: 'res://src/ui/menu.tscn'" not in log:
+                errors.append("the menu scene never loaded")
             keep = [l for l in log.splitlines() if l.startswith(("ok", "FAIL", "exe_smoke"))]
             print(chr(10).join(keep) if not (code or errors) else log[-2000:])
             print("%s: exit %d, %d ERROR lines" % (name, code, len(errors)))
