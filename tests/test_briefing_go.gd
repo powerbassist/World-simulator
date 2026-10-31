@@ -56,6 +56,7 @@ func _process(_delta: float) -> bool:
 		0:
 			if _cases.is_empty():
 				_check_footer()
+				_check_go_keeps_pause()
 				_finish()
 				return true
 			_case = _cases.pop_front()
@@ -141,6 +142,9 @@ func _show(c: Dictionary) -> void:
 		lines = [line, Priorities._standing("majority", "seats"), Priorities._standing("bloc", "workers")]
 	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
 	game["lines"] = lines
+	# The briefing paused a running clock, as a month boundary does (pre-gate B5).
+	game["was_running"] = true
+	_main._clock.paused = true
 	BriefingDriver.card_of(_main).show_view(BriefingDriver.view(_main, lines, {}))
 	c["target"] = BriefingDriver.target_of(line)
 
@@ -159,6 +163,10 @@ func _check(c: Dictionary) -> void:
 		return
 	if BriefingDriver.card_of(_main).visible:
 		_fail("%s: Go did not close the briefing" % label)
+	# Pre-gate B5: Go keeps the clock paused, so a next-day audience cannot take the
+	# screen from the Go's target; the player resumes with Space or the clock.
+	if not _main._clock.paused:
+		_fail("%s: Go resumed the clock" % label)
 	if tab == "inbox":
 		if not _main._hud.inbox.visible:
 			_fail("%s: Go did not bring up the inbox" % label)
@@ -191,6 +199,31 @@ func _check(c: Dictionary) -> void:
 		_main._windows.open("budget")
 		if laws.bloc_filter != "":
 			_fail("bloc: the filter outlived the tab")
+
+
+## Pre-gate B5 with nothing else holding the clock (the cases above leave a crisis
+## interrupt pending, which holds it anyway): Go keeps it paused, Continue resumes.
+func _check_go_keeps_pause() -> void:
+	var ns = _main._state.player()
+	ns.event_queue.clear()
+	ns.audience_requests.clear()
+	_main._unseen_events.clear()
+	_main._paused_for_programme = false
+	for verb in ["go", "continue"]:
+		var lines := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
+		var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+		game["lines"] = lines
+		game["was_running"] = true
+		_main._clock.paused = true
+		BriefingDriver.card_of(_main).show_view(BriefingDriver.view(_main, lines, {}))
+		if verb == "go":
+			BriefingDriver.go(_main, 0)
+			if not _main._clock.paused:
+				_fail("Go resumed the clock (pre-gate B5)")
+		else:
+			BriefingDriver.close(_main)
+			if _main._clock.paused:
+				_fail("premise: Continue did not resume the clock, so something else holds it")
 
 
 ## The footer (the parent's rule on #217): crowded-out items in their last month,

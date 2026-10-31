@@ -329,6 +329,10 @@ static func go(main, index: int) -> void:
 		return
 	var line: Dictionary = all[index]
 	var target := target_of(line)
+	# Go keeps the clock paused (pre-gate B5: resumed at speed, a request booked for
+	# the next day opened its audience over the Go's target); the player resumes it
+	# with Space or the clock. Continue still gives the speed back (#207, #219).
+	game["was_running"] = false
 	close(main)
 	var tab := String(target["tab"])
 	var subject := String(line["subject"])
