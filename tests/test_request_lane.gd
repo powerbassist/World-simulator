@@ -12,8 +12,11 @@ extends SceneTree
 ##     reason, Delegate and Decline live (B2); the price of saying no is in words;
 ##   - a real click on an answer (press and release frames apart) emits that
 ##     answer for that request;
-##   - the Diary's audience block offers the person's days, a taken one disabled
-##     with the Diary's reason, and a free one books that day.
+##   - V5.3-0 (b2): the Diary's request column holds a card per request, its Days
+##     refused with the sim's reason where no offered day is free; Days asks for the
+##     request's days, Delegate and Decline answer it; a refused request cannot be
+##     dragged; a day cell takes the drop only of a request offering it a free day,
+##     and the drop books that day.
 
 const RequestLane = preload("res://src/ui/request_lane.gd")
 const Click = preload("res://tests/click.gd")
@@ -98,23 +101,44 @@ func _check_cards() -> void:
 
 
 func _check_booking() -> void:
-	# A booking block of its own: the game's is wired to the sim (audience_driver).
-	var booking = preload("res://src/ui/audience_booking.gd").new()
-	_main.add_child(booking)
-	booking.booked.connect(func(id: String, date: Dictionary) -> void: _booked.append([id, date]))
-	booking.open_for({"id": "req_2", "person": "Daniel Moucron", "ask": "He wants a portfolio."}, [
-		{"year": 2026, "month": 2, "day": 3, "free": false, "reason": "This day is taken."},
-		{"year": 2026, "month": 2, "day": 10, "free": true, "reason": ""}])
-	# The days, the picker's Cancel aside (it leaves the request waiting).
-	var days: Array = booking.find_children("*", "Button", true, false).filter(func(b): return String(b.name) != "Cancel")
-	if booking.find_child("Cancel", true, false) == null:
-		_fail("the Diary's audience block has no Cancel")
-	if days.size() != 2 or not days[0].disabled or days[0].tooltip_text != "This day is taken." or days[1].disabled:
-		_fail("the Diary's audience days are not one taken (with its reason) and one free")
+	# A column of its own: the game's is wired to the sim (audience_driver).
+	var column = preload("res://src/ui/diary_requests.gd").new()
+	_main.add_child(column)
+	var heard := []
+	for sig in ["focus_requested", "delegate_requested", "decline_requested"]:
+		column.connect(sig, func(id: String) -> void: heard.append([sig, id]))
+	column.show_requests(_rows(true), "")
+	var refused: Node = column.find_child("Request_req_1", true, false)
+	var open: Node = column.find_child("Request_req_2", true, false)
+	if refused == null or open == null:
+		_fail("the Diary's request column has no card per request")
 		return
-	days[1].pressed.emit()
-	if _booked != [["req_2", {"year": 2026, "month": 2, "day": 10}]]:
-		_fail("booking the free day emitted %s" % [_booked])
+	var days: Button = refused.find_child("Days", true, false)
+	if days == null or not days.disabled or not days.tooltip_text.contains("taken"):
+		_fail("a request with no free day offers Days, or hides why")
+	for verb in ["delegate", "decline"]:
+		var b: Button = refused.find_child(verb, true, false)
+		if b == null or b.disabled:
+			_fail("%s went out with Days (B2)" % verb)
+	(open.find_child("Days", true, false) as Button).pressed.emit()
+	(open.find_child("decline", true, false) as Button).pressed.emit()
+	if heard != [["focus_requested", "req_2"], ["decline_requested", "req_2"]]:
+		_fail("the column's verbs emitted %s" % [heard])
+	if column._drag(_rows(true)[0]) != null:
+		_fail("a request with no free day can be dragged onto the grid")
+
+	var cell = preload("res://src/ui/diary_day.gd").new()
+	_main.add_child(cell)
+	var free := {"year": 2026, "month": 2, "day": 10, "free": true, "reason": ""}
+	cell.offers = {"req_2": free, "req_1": {"year": 2026, "month": 2, "day": 10, "free": false, "reason": "This day is taken."}}
+	cell.dropped.connect(func(id: String, date: Dictionary) -> void: _booked.append([id, date]))
+	if not cell._can_drop_data(Vector2.ZERO, {"request": "req_2"}):
+		_fail("a day refused the drop of a request offering it free")
+	if cell._can_drop_data(Vector2.ZERO, {"request": "req_1"}) or cell._can_drop_data(Vector2.ZERO, {"request": "req_3"}):
+		_fail("a day took the drop of a request it does not offer free")
+	cell._drop_data(Vector2.ZERO, {"request": "req_2"})
+	if _booked != [["req_2", free]]:
+		_fail("the drop booked %s" % [_booked])
 
 
 func _answer_button(request_id: String, index: int) -> Button:

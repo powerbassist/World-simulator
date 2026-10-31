@@ -37,27 +37,45 @@ static func register(main) -> void:
 	lane.attach(main._hud.inbox)
 	var scene := AudienceScene.new()
 	main._windows.register("audience", Strings.t("Audience"), scene, KEY_NONE, main.ICONS + "account_balance.svg")
-	# The president's word sits in the Diary under the audience's booking block.
+	# The president's word sits in the Diary under its grid.
 	var promises := PromiseList.new()
-	main._calendar_panel.audience.add_sibling(promises)
+	main._calendar_panel.requests.promise_slot.add_child(promises)
+	# booking_for: the request whose days the Diary shows (V5.3-0 (b2)), "" for none.
+	# Presentation only: a load clears it.
 	var game := {"lane": lane, "scene": scene, "session": {}, "answered": {}, "promises": promises,
-		"slowed_for": {}, "resume_speed": 0}
+		"slowed_for": {}, "resume_speed": 0, "booking_for": ""}
 	_games[main.get_instance_id()] = game
 	lane.book_requested.connect(func(id: String) -> void: _open_booking(main, id))
 	lane.seen.connect(func(id: String) -> void: _seen(main, id))
 	lane.delegate_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
 	lane.decline_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
-	main._calendar_panel.audience.booked.connect(func(id: String, date: Dictionary) -> void:
+	main._calendar_panel.requests.booked.connect(func(id: String, date: Dictionary) -> void:
 		var result := Audiences.book(main._state, main._state.player(), main._loader, id, date)
-		main._calendar_panel.audience.close()
+		game["booking_for"] = ""
 		_answer(main, id, result)
 		_seen(main, id))
-	# A booking left without a day -- its Cancel, or the Diary closed under it --
-	# ends the player's action as surely as a booking does.
-	main._calendar_panel.audience.cancelled.connect(func(id: String) -> void: _seen(main, id))
+	# V5.3-0 (b2): the Diary's request column, the lane's verbs beside the grid.
+	var column = main._calendar_panel.requests
+	column.focus_requested.connect(func(id: String) -> void: _open_booking(main, id))
+	column.delegate_requested.connect(func(id: String) -> void:
+		_seen(main, id)
+		_answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
+	column.decline_requested.connect(func(id: String) -> void:
+		_seen(main, id)
+		_answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
+	# A booking left without a day -- its Days pressed again, or the Diary closed
+	# under it -- ends the player's action as surely as a booking does.
+	column.unfocus_requested.connect(func(id: String) -> void:
+		game["booking_for"] = ""
+		_seen(main, id)
+		refresh(main))
 	main._windows.closed.connect(func(id: String) -> void:
-		if id == "calendar" and main._calendar_panel.audience.request_id() != "":
-			_seen(main, main._calendar_panel.audience.request_id()))
+		# The booking ends with the Diary: its days no longer tinted, its Days up.
+		if id == "calendar" and String(game["booking_for"]) != "":
+			var was := String(game["booking_for"])
+			game["booking_for"] = ""
+			_seen(main, was)
+			refresh(main))
 	# Each verb redraws the lane's side too: a promise made is in the Diary at once.
 	scene.attempted.connect(func(lever: String, args: Dictionary) -> void:
 		AudienceTalks.attempt(main, game, lever, args)
@@ -110,11 +128,12 @@ static func refresh(main) -> void:
 			var gone := Audiences.request(ns, id)
 			if String(gone.get("status", "")) == "lapsed":
 				_note_lapse(main, game, main._loader.person_name(String(gone.get("person_id", ""))))
-	# A booking block left open on a request no longer waiting (answered from its
-	# card, lapsed, booked elsewhere) comes down with it.
-	if not live.has(main._calendar_panel.audience.request_id()):
-		main._calendar_panel.audience.close()
+	# The Diary's days stop showing a request no longer waiting (answered from its
+	# card, lapsed, booked elsewhere).
+	if not live.has(String(game["booking_for"])):
+		game["booking_for"] = ""
 	game["lane"].show_requests(rows)
+	main._calendar_panel.requests.show_requests(rows, String(game["booking_for"]))
 	main._hud.title_bar.set_requests(Audiences.waiting_count(ns))
 	game["promises"].show_rows(given_lines(main), judged_rows(main))
 
@@ -298,6 +317,7 @@ static func after_load(main) -> void:
 		AudienceTalks.leave(main, game)
 		game["slowed_for"] = {}
 		game["resume_speed"] = 0
+		game["booking_for"] = ""
 	PhoneDriver.after_load(main)
 	refresh(main)
 
@@ -312,8 +332,11 @@ static func _open_booking(main, request_id: String) -> void:
 	var request := Audiences.request(ns, request_id)
 	if request.is_empty():
 		return
+	_games[main.get_instance_id()]["booking_for"] = request_id
 	main._windows.open("calendar")
-	main._calendar_panel.audience.open_for(row_of(main, request), Audiences.offered_dates(main._state, ns, request_id))
+	main._calendar_panel.requests.show_days(Audiences.offered_dates(main._state, ns, request_id), main._state, main._loader)
+	refresh(main)
+	main._calendar_panel.requests.focus_booking(request_id)
 
 
 static func _answer(main, request_id: String, result: Dictionary) -> void:

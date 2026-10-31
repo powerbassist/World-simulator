@@ -19,6 +19,9 @@ extends VBoxContainer
 
 signal booked(request_id: String, date: Dictionary)
 signal cancel_requested(key: String)
+## The day list was rebuilt (deferred to the frame's end, past every early return):
+## the request column puts a pending focus back (QA's TAKE on #221).
+signal listed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -124,6 +127,13 @@ func show_month(year: int, month: int) -> void:
 	_render()
 
 
+## The page that holds (year, month), its `day` picked: a request's Days, so the
+## day list under the grid carries that day's "Book here".
+func pick(year: int, month: int, day: int) -> void:
+	show_month(year, month)
+	_pick(day)
+
+
 func _now() -> int:
 	return int(_state.year) * 12 + int(_state.month)
 
@@ -164,8 +174,15 @@ func _render() -> void:
 		for e in entries.get(d, []):
 			cell.marks.append(String(e["mark"]))
 			texts.append(String(e["text"]))
+		for o in offered.get(d, []):
+			cell.offers[String(o["id"])] = o["date"]
+			# A refused offered day says why on its hover, as its Book here does.
+			var why := String((o["date"] as Dictionary).get("reason", ""))
+			if why != "":
+				texts.append("%s: %s" % [String(o["person"]), Strings.t(why)])  # i18n: row-ok the sim's reason, its English the msgid
 		cell.tooltip_text = "\n".join(texts)
 		cell.picked.connect(_pick)
+		cell.dropped.connect(func(id: String, date: Dictionary) -> void: booked.emit(id, date))
 		_days.add_child(cell)
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 
@@ -228,6 +245,7 @@ func _add(out: Dictionary, d: int, row: Dictionary) -> void:
 
 
 func _render_list(entries: Array, offered: Array) -> void:
+	listed.emit.call_deferred()
 	for child in day_list.get_children():
 		day_list.remove_child(child)
 		child.queue_free()
@@ -250,7 +268,9 @@ func _render_list(entries: Array, offered: Array) -> void:
 	for o in offered:
 		var date: Dictionary = o["date"]
 		var book := PanelKit.sized(Button.new())
-		book.name = "BookHere"  # i18n: ok a node name, found by tests
+		# One per offering request: two requests can offer the same day, and a
+		# second "BookHere" would be renamed "@Button@N" and lost to find_child.
+		book.name = "BookHere_%s" % String(o["id"])  # i18n: ok a node name, found by tests
 		book.text = tr("Book here: %s") % String(o["person"])
 		book.disabled = not bool(date.get("free", true))
 		var why := String(date.get("reason", ""))

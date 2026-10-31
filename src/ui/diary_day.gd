@@ -13,6 +13,9 @@ extends Control
 ## a triangle, both in the attention tone (something waits on the player).
 
 signal picked(day: int)
+## V5.3-0 (b2): a request's card from the Diary's request column dropped here, on a
+## day it offers.
+signal dropped(request_id: String, date: Dictionary)
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -24,6 +27,9 @@ var today := false
 var tinted := false  # a waiting request offers this day
 var selected := false
 var marks: Array[String] = []  # "booking" / "away" / "fixed" / "due" / "deadline", one per entry
+## request id -> the offered date {year, month, day, free, reason}: the drops this
+## day takes. Filled by the grid off what it already reads; the cell knows no sim.
+var offers := {}
 var _down := false  # a press began on this cell: only its own release picks it
 
 
@@ -51,6 +57,20 @@ func _gui_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_accept"):
 		picked.emit(day)
 		accept_event()
+
+
+## A free day of the dragged request's takes the drop; a day it offers but the
+## Diary refuses says why on the cell's hover, as the day list's button does.
+func _can_drop_data(_at: Vector2, data: Variant) -> bool:
+	if not (data is Dictionary) or not (data as Dictionary).has("request"):
+		return false
+	var date: Dictionary = offers.get(String(data["request"]), {})
+	return not date.is_empty() and bool(date.get("free", true))
+
+
+func _drop_data(_at: Vector2, data: Variant) -> void:
+	var id := String(data["request"])
+	dropped.emit(id, offers[id])
 
 
 func _draw() -> void:

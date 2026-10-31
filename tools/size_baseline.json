@@ -12,7 +12,7 @@
   "src/sim/orgs.gd": 738,
   "src/sim/statute.gd": 512,
   "src/ui/budget_panel.gd": 302,
-  "src/ui/calendar_panel.gd": 423,
+  "src/ui/calendar_panel.gd": 418,
   "src/ui/campaign_panel.gd": 342,
   "src/ui/election_panel.gd": 308,
   "src/ui/government_panel.gd": 317,
