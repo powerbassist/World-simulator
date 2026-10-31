@@ -100,8 +100,9 @@ static func stream(id: String) -> AudioStreamWAV:
 
 ## Plays a cue once under `parent`. Returns nothing a caller could come to rely
 ## on: a silent run (Sound off, or an id with no recipe) is indistinguishable
-## from a played one everywhere but the speakers.
-static func cue(parent: Node, id: String) -> void:
+## from a played one everywhere but the speakers. `offset_db` moves the recipe's
+## level: Music.moment scales its synthesized stand-ins by the Music step.
+static func cue(parent: Node, id: String, offset_db: float = 0.0) -> void:
 	if parent == null or not parent.is_inside_tree():
 		return
 	if not SettingsPanel.sound_enabled():
@@ -111,7 +112,7 @@ static func cue(parent: Node, id: String) -> void:
 		return
 	var player := AudioStreamPlayer.new()
 	player.stream = s
-	player.volume_db = float(recipe(id)["level_db"])
+	player.volume_db = float(recipe(id)["level_db"]) + offset_db
 	parent.add_child(player)
 	player.finished.connect(player.queue_free)
 	player.play()

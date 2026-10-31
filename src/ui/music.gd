@@ -49,6 +49,7 @@ var _player: AudioStreamPlayer
 var _track := ""
 var _level := -1
 var _seen_revision := -1
+var _state_id := 0
 
 
 ## The game's sound: the synthesized desk bed (SoundBed) and this node beside it.
@@ -98,10 +99,16 @@ static func speaking(tree: SceneTree) -> bool:
 
 ## The month's step (BriefingDriver): the band from this month's situation and
 ## the months to the next vote (-1 for none), and the bed that band names.
-static func follow(parent: Node, situation: String, months_to_vote: int) -> void:
+## `state_id` is the GameState's instance id: a load or a new game is a new state
+## and the band starts over, as the briefing's novelty does (#223 pass 2) -- the
+## Music node outlives the state, so a carried band would score the old game.
+static func follow(parent: Node, situation: String, months_to_vote: int, state_id: int = 0) -> void:
 	var music = parent.get_node_or_null(NODE) if parent != null else null
 	if music == null:
 		return
+	if state_id != music._state_id:
+		music._state_id = state_id
+		music.band_state = {}
 	music.band_state = MusicBand.step(music.band_state, situation, months_to_vote if months_to_vote >= 0 else -1)
 	music._play_bed(track("beds", String(music.band_state["band"])))
 
@@ -109,7 +116,9 @@ static func follow(parent: Node, situation: String, months_to_vote: int) -> void
 ## A moment's sting under `parent`: its recorded file when the manifest names one
 ## and Music is on; else its synthesized stand-in, a Sound like any other.
 ## Music Off silences every moment, recorded or synthesized, so the setting means
-## the same thing before and after the author's files land (#223 pass 1).
+## the same thing before and after the author's files land (#223 pass 1); Quiet and
+## Loud move a stand-in by the same step they move a file, from its own recipe's
+## level at Normal, so the default plays the sound V4.9c tuned (#223 pass 2).
 static func moment(parent: Node, id: String) -> void:
 	var level := SettingsPanel.music_level()
 	if parent == null or not parent.is_inside_tree() or level <= 0:
@@ -126,10 +135,11 @@ static func moment(parent: Node, id: String) -> void:
 			player.play()
 		return
 	var synth := String(MOMENTS.get(id, ""))
+	var offset := target_db(level, false) - target_db(SettingsPanel.DEFAULT_MUSIC, false)
 	if synth == "election":
-		Sting.play(parent)
+		Sting.play(parent, offset)
 	elif synth != "":
-		Sound.cue(parent, synth)
+		Sound.cue(parent, synth, offset)
 
 
 func _process(delta: float) -> void:

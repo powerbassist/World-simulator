@@ -18,6 +18,8 @@ const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const LawVerdict = preload("res://src/ui/law_verdict.gd")
+const Referendum = preload("res://src/sim/referendum.gd")
+const Music = preload("res://src/ui/music.gd")
 
 ## main's instance id -> {law_id, card}: the card the tabling pushed, which the
 ## division's verdict is set on in place (one card follows the bill). A static
@@ -132,3 +134,30 @@ static func _forced(censure: Dictionary, struck := false) -> String:
 		else Strings.t("It failed: the government stays, but the court struck the bill down.") if struck \
 		else Strings.t("It failed: the bill stands.")
 	return "%s %s" % [motion, outcome]
+
+
+## The law a referendum in flight asks the country about, or "" (main reads it
+## before the month's Legislature step, so card_referendum can see it resolve).
+static func referendum_in_flight(ns) -> String:
+	return Referendum.pending_law_id(ns) if ns != null else ""
+
+
+## The country's answer (#223 pass 2): a referendum that resolved at this month's
+## Legislature step gets its card and the vote's sting -- the bill's own division
+## only put it to the country (RISKY, no sting), so this is where it is won or
+## lost. A withdrawal is the player's own act on the panel, before the step: the
+## snapshot is already empty and nothing plays.
+static func card_referendum(main, before_law_id: String) -> void:
+	var ns = main._state.player()
+	if before_law_id == "" or ns == null or Referendum.pending_law_id(ns) == before_law_id:
+		return
+	var answer: Dictionary = ns.last_referendum_result
+	if String(answer.get("law_id", "")) != before_law_id or bool(answer.get("withdrawn", false)):
+		return
+	var passed := bool(answer.get("passed", false))
+	var share := roundi(float(answer.get("yes_share", 0.0)) * 100.0)
+	var text := Strings.t("Carried by the country: %d%% voted yes.") % share if passed \
+		else Strings.t("Refused by the country: %d%% voted yes.") % share
+	ResultTone.push(main._hud.inbox, Strings.law_name(main._law_panel._find_law(before_law_id), before_law_id),
+		text, ResultTone.GOOD if passed else ResultTone.BAD)
+	Music.moment(main, "vote_passed" if passed else "vote_failed")  # i18n: ok moment ids

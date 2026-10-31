@@ -565,7 +565,7 @@ func _test_release_and_division_same_month() -> void:
 	# and world_month.gd runs Statute straight after Legislature.
 	var text := FileAccess.get_file_as_string("res://src/ui/main.gd")
 	var legislature_idx := text.find("\t\t\"Legislature\":")
-	var capture_idx := text.find("var assembly_release")
+	var capture_idx := text.find("AssemblyNews.release_of(")  # #223 pass 2: the capture moved into AssemblyNews
 	var statute_idx := text.find("\t\t\"Statute\":")
 	if not (legislature_idx < capture_idx and capture_idx < statute_idx):
 		_fail("main.gd does not capture the release between its two ticks -- a same-month division swallows the release card")

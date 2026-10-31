@@ -142,7 +142,8 @@ static func _will_show(main, game: Dictionary, report: Dictionary) -> bool:
 				or not preload("res://src/sim/programme.gd").available(state, state.player(), main._loader).is_empty()})
 		game["pending"]["month"] = now
 		# V5.3-0 (d): the month's band, from this ranking whether or not the card shows.
-		Music.follow(main, Priorities.situation(game["pending"]["lines"]), Trends.months_to_vote(state, state.player()))
+		Music.follow(main, Priorities.situation(game["pending"]["lines"]), Trends.months_to_vote(state, state.player()),
+			state.get_instance_id())
 		# New: a real priority last month's three did not name. A standing read is
 		# never new -- a quiet month does not stop under the setting (call 2).
 		for l in game["pending"]["lines"]:

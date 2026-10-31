@@ -40,6 +40,7 @@ func _process(_delta: float) -> bool:
 		_check_booked_bill()
 		_check_struck()
 		_check_division_sting()
+		_check_referendum_sting()
 		_finish()
 		return true
 	return false
@@ -186,6 +187,53 @@ func _check_division_sting() -> void:
 	var placed: int = _main.find_children("*", "AudioStreamPlayer", false, false).size() - before
 	if placed != 1:
 		_fail("a defeated division placed %d sting players, expected 1" % placed)
+
+
+
+## #223 pass 2: a referendum's own result is where it is won or lost -- a card and
+## the vote's sting at the Legislature step, through main's own hook; the division
+## that put it to the country plays nothing, nor does a withdrawal or a vote still
+## in flight.
+func _check_referendum_sting() -> void:
+	var ns = _main._state.player()
+	var inbox = _main._hud.inbox
+	var players := func() -> int: return _main.find_children("*", "AudioStreamPlayer", false, false).size()
+	var before: int = players.call()
+	ns.referendum_pending = {"law_id": "x"}
+	ProposalNote.card_division(_main, {"division": {"law_id": "x", "passed": true, "referendum_called": true}})
+	if players.call() != before:
+		_fail("the division that put a bill to the country played a sting")
+	# A carried vote's sting waits for a recorded file (silent until then); a refused
+	# one plays its synthesized stand-in.
+	for c in [[true, "Carried by the country", 0], [false, "Refused by the country", 1]]:
+		ns.referendum_pending = {"law_id": "x"}
+		_main._on_month_step("Legislature", false, {}, _main._state.year, _main._state.month)
+		_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
+		if players.call() != before:
+			_fail("a referendum still in flight played a sting")
+		ns.referendum_pending = {}
+		ns.last_referendum_result = {"law_id": "x", "passed": c[0], "yes_share": 0.55 if c[0] else 0.4, "withdrawn": false}
+		_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
+		if players.call() != before + c[2]:
+			_fail("a referendum %s placed %d sting players, expected %d" % [c[1], players.call() - before, c[2]])
+		if not _inbox_says(inbox, c[1]):
+			_fail("a referendum's result left no '%s' card" % c[1])
+		before = players.call()
+	# Withdrawn on the panel before the step: the snapshot is empty, nothing plays.
+	ns.referendum_pending = {}
+	ns.last_referendum_result = {"law_id": "x", "passed": false, "yes_share": 0.0, "withdrawn": true}
+	_main._on_month_step("Legislature", false, {}, _main._state.year, _main._state.month)
+	_main._on_month_step("Legislature", true, {}, _main._state.year, _main._state.month)
+	if players.call() != before:
+		_fail("a withdrawn referendum played a sting")
+	ns.last_referendum_result = {}
+
+
+func _inbox_says(inbox, words: String) -> bool:
+	for node in inbox.find_children("*", "", true, false):
+		if (node is Label or node is RichTextLabel) and String(node.text).contains(words):
+			return true
+	return false
 
 
 func _divide() -> void:

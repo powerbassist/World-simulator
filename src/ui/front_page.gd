@@ -38,6 +38,7 @@ const Grade = preload("res://src/ui/grade.gd")
 const EventArt = preload("res://src/ui/event_art.gd")
 const Events = preload("res://src/sim/events.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const Music = preload("res://src/ui/music.gd")
 
 ## Wide enough for two headlines side by side at the lead size, three lines each.
 const WIDTH := 640
@@ -181,6 +182,8 @@ func show_entry(entry: Dictionary, state, loader, clock, count_plate: Control = 
 	_left = LIFE_SECONDS
 	show()
 	Motion.arrive(self)
+	# Its sting: silent until the manifest names a file (#223 pass 2).
+	Music.moment(self, "front_page")  # i18n: ok a moment id
 	return true
 
 

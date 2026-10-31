@@ -26,6 +26,8 @@ const Inbox = preload("res://src/ui/inbox.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
 const Click = preload("res://tests/click.gd")
+const Music = preload("res://src/ui/music.gd")
+const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 
 
 ## The card only reads `paused`: a clock that cannot tick, so the test runs no month.
@@ -72,6 +74,7 @@ func _process(_delta: float) -> bool:
 			_check_held_for_count()
 			_check_held_through_main()
 			_check_plate()
+			_check_sting()
 			_show_full()
 		5:
 			Click.half(root, _card.find_child("Close", true, false), true)
@@ -290,6 +293,31 @@ func _check_plate() -> void:
 	if plate == null or not plate.visible or plate.texture == null:
 		_fail("a censure front page shows no plate")
 	Headlines.set_table("moment", {})
+
+
+
+## #223 pass 2: a front page plays its moment -- nothing while the manifest names
+## no file, the file once a row does (a committed clip stands in for the sting).
+func _check_sting() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("audio", "enabled", true)
+	cfg.set_value("audio", "music", SettingsPanel.DEFAULT_MUSIC)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+	Music.override_manifest = {}
+	var before := _players(_card)
+	_show_full()
+	if _players(_card) != before:
+		_fail("a front page with no sting row placed a player")
+	Music.override_manifest = {"stings": {"front_page": {"file": "../voice/activist_f_30/agree.ogg"}}}
+	_show_full()
+	if _players(_card) != before + 1:
+		_fail("a front page did not play its sting row")
+	Music.override_manifest = null
+
+
+func _players(node: Node) -> int:
+	return node.get_children().filter(func(c): return c is AudioStreamPlayer).size()
 
 
 func _count_cards(node: Node) -> int:

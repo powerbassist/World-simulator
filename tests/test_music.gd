@@ -8,6 +8,7 @@ extends SceneTree
 
 const Music = preload("res://src/ui/music.gd")
 const SoundK = preload("res://src/ui/sound_constants.gd")
+const Sound = preload("res://src/ui/sound.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 
 var _failures: Array = []
@@ -88,6 +89,10 @@ func _check_band_and_moments() -> void:
 	Music.follow(desk, "calm", 2)
 	if String(music.band_state["band"]) != "crisis":
 		_fail("the band fell from crisis in one calm month")
+	# #223 pass 2: a load or a new game (another state) starts the band over.
+	Music.follow(desk, "calm", 20, 4242)
+	if String(music.band_state["band"]) == "crisis":
+		_fail("the band carried crisis into another game's state")
 	if music.get_children().any(func(c): return c is AudioStreamPlayer):
 		_fail("a bed with no track placed a player")
 	# The duck seen by the node itself, a frame at a time.
@@ -116,6 +121,24 @@ func _check_band_and_moments() -> void:
 	Music.moment(desk, "vote_failed")
 	if _players(desk) != quiet:
 		_fail("a sting played with Music off")
+	# #223 pass 2: Quiet and Loud move the stand-ins too, and Normal plays them at
+	# their own recipe's level.
+	var heard := {}
+	for level in [1, SettingsPanel.DEFAULT_MUSIC, 3]:
+		_set_music(level)
+		for id in ["vote_failed", "election_lost", "election_won"]:
+			Music.moment(desk, id)
+			var last: Node = desk.get_child(desk.get_child_count() - 1)
+			heard["%s@%d" % [id, level]] = (last as AudioStreamPlayer).volume_db if last is AudioStreamPlayer else NAN
+	for id in ["vote_failed", "election_lost", "election_won"]:
+		var q: float = heard["%s@1" % id]
+		var n: float = heard["%s@%d" % [id, SettingsPanel.DEFAULT_MUSIC]]
+		var l: float = heard["%s@3" % id]
+		var recipe: String = "election" if id == "election_won" else String(id)
+		if not (q < n and n < l):
+			_fail("the Music step does not move %s: quiet %s normal %s loud %s" % [id, q, n, l])
+		if not is_equal_approx(n, float(Sound.recipe(recipe)["level_db"])):
+			_fail("%s at Normal is %s, not its recipe's level" % [id, n])
 	_set_music(SettingsPanel.DEFAULT_MUSIC)
 	desk.free()
 	_finish()
