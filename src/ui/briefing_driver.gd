@@ -18,6 +18,7 @@ extends RefCounted
 ## A Go closes the card by the same rule as Continue, then opens its target (OPINION:
 ## a Go that left the clock paused would strand a pause the clock line cannot name).
 
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
@@ -29,6 +30,7 @@ const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Events = preload("res://src/sim/events.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 const Voices = preload("res://src/core/voices.gd")
 const Staff = preload("res://src/sim/staff.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -94,7 +96,7 @@ static func open(main, report: Dictionary) -> void:
 	if game.is_empty() or ns == null or not bool(ns.in_government) or not _will_show(main, game, report):
 		# A month the briefing does not show keeps its consequence cards in the inbox.
 		for card in cards:
-			main._hud.inbox.push(card["title"], card["body"])
+			ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
 		return
 	var ranked: Dictionary = game["pending"]
 	game["pending"] = {}
@@ -115,7 +117,7 @@ static func hold_card(main, card: Dictionary) -> void:
 	if card.is_empty():
 		return
 	if game.is_empty():
-		main._hud.inbox.push(card["title"], card["body"])
+		ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
 		return
 	game["month_cards"] = game.get("month_cards", []) + [card]
 
@@ -139,8 +141,9 @@ static func _will_show(main, game: Dictionary, report: Dictionary) -> bool:
 		game["pending"]["month"] = now
 		# New: a real priority last month's three did not name. A standing read is
 		# never new -- a quiet month does not stop under the setting (call 2).
-		game["pending"]["new"] = game["pending"]["lines"].any(func(l): return not bool(l["standing"]) and not last.any(
-			func(p): return p["kind"] == l["kind"] and p["subject"] == l["subject"]))
+		for l in game["pending"]["lines"]:
+			l["fresh"] = not bool(l["standing"]) and not last.any(func(p): return p["kind"] == l["kind"] and p["subject"] == l["subject"])
+		game["pending"]["new"] = game["pending"]["lines"].any(func(l): return bool(l["fresh"]))
 	game["report"] = report
 	if MessageSettings.briefing_new_only(SettingsPanel.CONFIG_PATH) and not bool(game["pending"]["new"]):
 		# Skipped, but the month is remembered: next month compares with this one.
@@ -166,7 +169,7 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 	var rows: Array = []
 	for l in lines:
 		rows.append({"icon": PriorityWords.icon_path(String(l["kind"])), "title": PriorityWords.title(l, state, main._loader),
-			"chip": PriorityWords.chip(l, state), "held": bool(l["held"])})
+			"chip": PriorityWords.chip(l, state), "held": bool(l["held"]), "new": bool(l.get("fresh", false))})
 	var header := Strings.t("A quiet month") if Priorities.quiet(lines) \
 		else Strings.t("%s: your priorities") % DateText.month_year(int(state.month), int(state.year))
 	var chief = Staff.chief_of(main._loader, String(state.player().id))
@@ -187,6 +190,7 @@ static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Di
 		by_kind[kind]["items"].append(also[i])
 	var footer: Array = groups.map(func(g): return {"text": PriorityWords.group(g["items"], state, main._loader), "index": g["index"]})
 	return {"header": header, "who": who, "also": footer, "line": said, "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
+		"feel": Feelings.of(state.player(), String(chief.id)) if chief != null else {},
 		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
 
 

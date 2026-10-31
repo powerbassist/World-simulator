@@ -93,6 +93,9 @@ func _check_one_card() -> void:
 		_fail("the tabling's card titled '%s' is gone after the division" % name)
 		return
 	var result: Dictionary = _main._state.player().last_law_result
+	# #222 QA TAKE C (M19): the verdict set in place carries its tone's tag.
+	if not inbox.has_tag(inbox._id_of(card)):
+		_fail("the tabling's card took the division's verdict with no tone tag")
 	if inbox.lane_of(inbox._id_of(card)) != inbox.NOTES:
 		_fail("the bill's card is not a note: lane %s" % inbox.lane_of(inbox._id_of(card)))
 	var text := ""

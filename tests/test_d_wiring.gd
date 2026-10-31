@@ -93,6 +93,9 @@ func _check_speaker() -> void:
 		var text := _texts(face)
 		if not text.contains(String(person.person_name)) or not text.contains(String(ev.speaker_line).strip_edges()):
 			_failures.append("the face does not carry the speaker's name and line: '%s'" % text)
+		# #222 QA TAKE C (M6): the messenger wears how they feel about you.
+		if face.find_child("MoodBadge", true, false) == null:
+			_failures.append("the desk card's speaker wears no mood badge")
 	# The summary under the face is body size, not caption: it carries the deadline.
 	for body in inbox.find_children("*", "RichTextLabel", true, false):
 		if body.theme_type_variation == UiTheme.RICH_CAPTION and body.get_parsed_text().contains("to answer"):

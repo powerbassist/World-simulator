@@ -20,6 +20,7 @@ extends SceneTree
 ##     prints the result while the count declares it; a load drops a held card.
 
 const FrontPage = preload("res://src/ui/front_page.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Headlines = preload("res://src/ui/headlines.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
@@ -70,6 +71,7 @@ func _process(_delta: float) -> bool:
 			_check_life()
 			_check_held_for_count()
 			_check_held_through_main()
+			_check_plate()
 			_show_full()
 		5:
 			Click.half(root, _card.find_child("Close", true, false), true)
@@ -144,6 +146,21 @@ func _check_two_papers() -> void:
 		_fail("the two runners-up are not on the card: '%s'" % all)
 	if all.contains("Fourth story"):
 		_fail("a third runner-up was shown; the cap is %d" % FrontPage.ALSO_MAX)
+	# R15: display type, and a picture for the lead story where the library has one.
+	var headline := _card.find_child("Headline", true, false) as Label
+	if headline == null or headline.theme_type_variation != UiTheme.HEADLINE:
+		_fail("the headline is not at display size")
+	var lead_event = _main._loader.events[0]
+	var pictured := [
+		{"kind": "event", "id": String(lead_event.id), "severity": 3},
+		{"kind": "moment", "id": "election", "answer": "won"},
+		{"kind": "moment", "id": "character", "answer": "prime_minister_resigned"},
+	]
+	for story in pictured:
+		if FrontPage.plate_for(story, _main._loader) == null:
+			_fail("no picture for the lead story %s" % [story])
+	if FrontPage.plate_for({"kind": "event", "id": "ev_x"}, _main._loader) != null:
+		_fail("an unknown event drew a picture")
 
 
 func _check_missing() -> void:
@@ -263,6 +280,16 @@ func _check_held_through_main() -> void:
 		_fail("main's held front page did not show once the result plate was dismissed")
 	_card.clear()
 	_main._clock.paused = true
+
+
+## #222 QA T5 (mutant M7): a moment with a backdrop shows its graded plate.
+func _check_plate() -> void:
+	Headlines.set_table("moment", {"censure": {"a": {"neutral": "The censure story"}}})
+	_show({"kind": "moment", "id": "censure", "answer": "a", "papers": [_paper(0, "neutral")]})
+	var plate := _card.find_child("Plate", true, false) as TextureRect
+	if plate == null or not plate.visible or plate.texture == null:
+		_fail("a censure front page shows no plate")
+	Headlines.set_table("moment", {})
 
 
 func _count_cards(node: Node) -> int:

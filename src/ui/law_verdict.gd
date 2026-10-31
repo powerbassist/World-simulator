@@ -11,6 +11,7 @@ extends RefCounted
 
 const Referendum = preload("res://src/sim/referendum.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 
 
 static func word(result: Dictionary, ns) -> String:
@@ -54,3 +55,33 @@ static func word(result: Dictionary, ns) -> String:
 	elif result.get("released", false):
 		verdict = Strings.t("LAPSED — the constitution it amended is gone.") if result.get("lapsed", false) else Strings.t("IN FORCE, OVER THE %s") % result.get("upper_chamber", Strings.t("SECOND CHAMBER")).to_upper()
 	return verdict
+
+
+## The verdict's ResultTone (V5.3-0 RF7), branch for branch with word(): the same
+## result key, never the word. A bill the country or a chamber still holds is
+## RISKY (attention, not failure); a moot release and a called-off referendum
+## are neutral -- nothing happened to the player.
+## `control`, the verdict's line, in the verdict's tone.
+static func tint(control: Control, result: Dictionary, ns) -> void:
+	ResultTone.tint(control, tone(result, ns))
+
+
+static func tone(result: Dictionary, ns) -> String:
+	var tone_key: String = ResultTone.GOOD if result["passed"] else ResultTone.BAD
+	if result.get("referendum_called", false):
+		tone_key = ResultTone.RISKY
+		var answer: Dictionary = ns.last_referendum_result if ns != null else {}
+		if ns != null and Referendum.pending_law_id(ns) != String(result.get("law_id", "")) and String(answer.get("law_id", "")) == String(result.get("law_id", "")):
+			if bool(answer.get("withdrawn", false)):
+				tone_key = ""
+			else:
+				tone_key = ResultTone.GOOD if bool(answer.get("passed", false)) else ResultTone.BAD
+	elif result.get("held_by_upper", false):
+		tone_key = ResultTone.RISKY
+	elif result.get("blocked_by_upper", false) or result.get("struck_down", false):
+		tone_key = ResultTone.BAD
+	elif result.get("target_already_gone", false):
+		tone_key = ""
+	elif result.get("released", false):
+		tone_key = ResultTone.BAD if result.get("lapsed", false) else ResultTone.GOOD
+	return tone_key

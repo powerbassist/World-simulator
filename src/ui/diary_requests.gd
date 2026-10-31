@@ -25,6 +25,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const MoodBadge = preload("res://src/ui/mood_badge.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const Icon = preload("res://src/ui/icon.gd")
@@ -118,7 +119,13 @@ func _card(row: Dictionary) -> Control:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 8)
 	box.add_child(head)
-	var face: Control = Portrait.framed_for(String(row.get("person_id", "")), FACE)
+	# V5.3-0 4.2 (the parent's call on #222): the asker's mood on their face, as
+	# on the inbox's people and the audience; a row with no feelings wears none.
+	var pid := String(row.get("person_id", ""))
+	var feel: Dictionary = row.get("feel", {})
+	var face: Control = Portrait.framed_for(pid, FACE, MoodBadge.mood_portrait(pid, feel))
+	if not feel.is_empty():
+		MoodBadge.wear(face, feel, 14.0)
 	face.custom_minimum_size = FACE
 	head.add_child(face)
 	var who := VBoxContainer.new()

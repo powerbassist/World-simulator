@@ -194,7 +194,8 @@ func _build_result_summary(result: Dictionary) -> Control:
 	var law_label: String = Strings.law_name(law) if law != null else result["law_id"]
 
 	var verdict: String = LawVerdict.word(result, _state.player() if _state != null else null)
-	PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN)
+	# RF7: the verdict's word is in the line; its tone colours it.
+	LawVerdict.tint(PanelKit.line(box, "%s — %s" % [law_label, verdict], PanelKit.Tone.PLAIN), result, _state.player() if _state != null else null)
 
 	# V2.8 review. Two more outcomes with no division behind them, and the tally
 	# below would print "Yes 0 - No 0 - Abstain 0, of 577 seats" against both --

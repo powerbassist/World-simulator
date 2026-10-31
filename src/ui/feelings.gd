@@ -84,16 +84,24 @@ static func bond_word(bond: String) -> String:
 
 ## The word a register's value reads as, translated; "" for a band with none.
 static func word(register: String, value: float, office := false) -> String:
+	var i := band(register, value)
+	if i < 0:
+		return ""
+	if register == "loyalty" and office and i == 0:
+		return Strings.t(OFFICE_DISLOYAL)
+	var said := String(BANDS[register][i][2])
+	return Strings.t(said) if said != "" else ""  # i18n: row-ok a band's word, the msgid in BANDS
+
+
+## The index of the band `value` falls in, lowest first -- the one cut the word
+## and the mood badge (mood_badge.gd) both read, so the two cannot disagree.
+static func band(register: String, value: float) -> int:
 	var bands: Array = BANDS[register]
 	for i in bands.size():
-		var band: Array = bands[i]
-		var cut := float(band[0])
-		var inside := Cut.at_or_below(value, cut) if bool(band[1]) else Cut.below(value, cut)
-		if inside:
-			if register == "loyalty" and office and i == 0:
-				return Strings.t(OFFICE_DISLOYAL)
-			return Strings.t(String(band[2])) if String(band[2]) != "" else ""
-	return ""
+		var cut := float(bands[i][0])
+		if Cut.at_or_below(value, cut) if bool(bands[i][1]) else Cut.below(value, cut):
+			return i
+	return -1  # above every cut (NaN): no word, as word() always had it
 
 
 ## Register -> word for `feel` (of() above), the bands that show none included. A

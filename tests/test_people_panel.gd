@@ -378,6 +378,9 @@ func _check_who_matters_now(panel, state) -> void:
 	var answered: Array = []
 	PeopleNow.build(box, state, _main._loader, func(_p): return "", func(_p): pass, func(): pass, func(_p): pass,
 		func(id: String) -> void: answered.append(id))
+	# #222 QA TAKE C (M5): each face wears how that person feels about you.
+	if box.find_child("MoodBadge", true, false) == null:
+		_fail("who matters now's faces wear no mood badge")
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = true

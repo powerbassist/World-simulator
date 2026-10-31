@@ -203,6 +203,9 @@ tests=(
   tests/test_inbox_stays.gd
   tests/test_real_click.gd
   tests/test_request_lane.gd
+  tests/test_result_tone_lint.gd
+  tests/test_emotion_kit.gd
+  tests/test_emotion_wiring.gd
   tests/test_audience_scene.gd
   tests/test_audience_flow.gd
   tests/test_audience_levers.gd

@@ -65,7 +65,7 @@ const TOTAL_PENDING := {
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
 ## (6 648 in the spec's count, 4 911 once this test played its months as the game
 ## does): it can only come down from here.
-const TOTAL_SUM_CEILING := 3213
+const TOTAL_SUM_CEILING := 3212
 const TOTAL_SUM_TARGET := 3600
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.

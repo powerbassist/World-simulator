@@ -249,6 +249,12 @@ func add_under_title(id: String, control: Control) -> void:
 		column.move_child(control, 1)
 
 
+## Whether card `id` already wears a ResultTone tag: a grouped note's push()
+## returns the card it joined, which must not take a second one (#222 pass 2).
+func has_tag(id: String) -> bool:
+	return _cards.has(id) and _cards[id].get_child(0).has_node("ResultTone")
+
+
 func set_body(id: String, body: String) -> void:
 	if _notes.has(id):
 		_notes[id]["body"] = body

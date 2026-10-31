@@ -15,6 +15,7 @@ const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const ForeignPolicyK = preload("res://src/sim/foreign_policy_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Num = preload("res://src/ui/num.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
@@ -297,7 +298,10 @@ func card_appointment(entry: Dictionary, label: String, ok: bool, reason := "") 
 		)
 	# A booked bill's day is its vote (R2): titled so, not "Kept:" over a defeat.
 	var law := String(entry.get("kind", "")) == CalendarK.KIND_LAW
-	return _stack.push(tr("Vote: %s") % label if law else tr("Kept: %s") % label, appointment_text(entry, label, ok, reason))
+	var card_id: String = _stack.push(tr("Vote: %s") % label if law else tr("Kept: %s") % label, appointment_text(entry, label, ok, reason))
+	# V5.3-0 RF7: the day's act carried or not -- the sim's own `ok`, never the sentence.
+	ResultTone.mark(_stack, card_id, ResultTone.GOOD if ok else ResultTone.BAD)
+	return card_id
 
 
 ## The day's card body. One whole sentence per shape, the failure a sentence of

@@ -12,11 +12,13 @@ extends RefCounted
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 const GOOD := "good"  # i18n: ok a tone key
 const BAD := "bad"  # i18n: ok a tone key
 const BLOCKED := "blocked"  # i18n: ok a tone key
 const RISKY := "risky"  # i18n: ok a tone key
+const POP_META := "result_tone_pop"  # i18n: ok a meta key
 
 ## key -> [variation, word]. The words are tags, short and upper-cased on screen.
 const TAG := {
@@ -25,6 +27,9 @@ const TAG := {
 	BLOCKED: [UiTheme.WARN_TEXT, "Not possible"],  # i18n: msgid
 	RISKY: [UiTheme.WARN_TEXT, "Risky"],  # i18n: msgid
 }
+
+## key -> the status colour tint() lays on a sentence, at whatever size it has.
+const TINT := {GOOD: UiTheme.GOOD, BAD: UiTheme.BAD, BLOCKED: UiTheme.WARN, RISKY: UiTheme.WARN}
 
 
 ## The tag `label` shows for `tone`; "" (a neutral result) hides it.
@@ -35,9 +40,61 @@ static func apply(label: Label, tone: String) -> void:
 		return
 	label.theme_type_variation = String(TAG[tone][0])
 	label.text = Strings.t(String(TAG[tone][1]))  # i18n: row-ok a tone key, its word the msgid
+	# V5.3-0 4.5: the tag pops in (Motion.OPEN_SCALE to full), once it is on screen.
+	if label.is_inside_tree():
+		Motion.open(label)
+	elif not label.has_meta(POP_META):
+		label.set_meta(POP_META, true)
+		label.tree_entered.connect(func() -> void:
+			label.remove_meta(POP_META)
+			Motion.open(label), CONNECT_ONE_SHOT)
 
 
 ## A result that moved the person's regard reads by its sign: up is in your
 ## favour, down against you, none neutral.
 static func of_rapport(delta: float) -> String:
 	return GOOD if delta > 1e-6 else (BAD if delta < -1e-6 else "")
+
+
+## A new tag for `tone`, hidden when the result is neutral (V5.3-0 RF7): what a
+## surface puts beside its result sentence.
+static func tag(tone: String) -> Label:
+	var label := Label.new()
+	label.name = "ResultTone"  # i18n: ok a node name, found by tests
+	apply(label, tone)
+	return label
+
+
+## An inbox card's tag, under its title, as the party chip sits; nothing for a
+## neutral result or a card the inbox no longer has.
+static func mark(inbox, card_id: String, tone: String) -> void:
+	if inbox != null and card_id != "" and TAG.has(tone) and not inbox.has_tag(card_id):
+		inbox.add_under_title(card_id, tag(tone))
+
+
+## An inbox card pushed with its tag: the card id, as inbox.push() returns it.
+static func push(inbox, title: String, body: String, tone: String) -> String:
+	var card_id: String = inbox.push(title, body)
+	mark(inbox, card_id, tone)
+	return card_id
+
+
+## A result whose own sentence already holds the verdict word (PASSED, DEFEATED,
+## Refused, Delivered) takes the tone on that sentence instead of a second word:
+## the word says it, the tone colours it, and the text diet (RF6) pays nothing.
+## Only the COLOUR changes: the control keeps its own variation, so a heading stays
+## a heading and a body line stays body size (#222 QA T1: swapping in TAG's small
+## cut shrank DEFEATED below the lines around it). A neutral result drops the
+## colour, so a label reused for the next result (a status line) is never left red.
+static func tint(control: Control, tone: String) -> void:
+	var key := "default_color" if control is RichTextLabel else "font_color"  # i18n: ok theme item names
+	if TINT.has(tone):
+		control.add_theme_color_override(key, TINT[tone])
+	else:
+		control.remove_theme_color_override(key)
+
+
+## A status line's text and its tone in one call.
+static func say(label: Label, text: String, tone := "") -> void:
+	label.text = text
+	tint(label, tone)
