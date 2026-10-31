@@ -101,6 +101,10 @@ func _check_open() -> void:
 			_fail("selecting one choice opened another's summary too")
 	if not _main._state.player().event_queue.size() == 1:
 		_fail("selecting a choice answered it")
+	# Pass 2 on #220: the toggle's rebuild freed the focused button; focus lands on
+	# the opened option's Choose, inside this panel.
+	if _main.get_viewport().gui_get_focus_owner() != _button("Choose"):
+		_fail("after opening a choice the keyboard focus is not on its Choose: %s" % _main.get_viewport().gui_get_focus_owner())
 
 
 func _check_answered() -> void:
@@ -117,6 +121,15 @@ func _check_answered() -> void:
 			hovered = true
 	if not hovered and _summary(_choice) != "":
 		_fail("the timeline's answer carries no meaning on hover")
+	# QA on #220: the meaning reaches the keyboard too -- the answer takes focus and
+	# shows its meaning under it while it holds it.
+	for label in _panel._body.find_children("*", "Label", true, false):
+		if (label as Label).text == Strings.choice_label(_ev.id, _choice) and (label as Label).tooltip_text != "":
+			(label as Label).grab_focus()
+			var shown: bool = label.get_parent().find_children("*", "Label", true, false).any(
+				func(l): return l != label and l.visible and l.text == label.tooltip_text)
+			if not shown:
+				_fail("the timeline's answer shows no meaning when it takes keyboard focus")
 	if _panel._picked.has(String(_ev.id)):
 		_fail("the answered event's open choice is kept: it would come back already open")
 

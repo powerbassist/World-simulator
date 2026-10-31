@@ -476,6 +476,13 @@ func _build_record(record: Dictionary) -> void:
 	if what != "":
 		answer.tooltip_text = PanelKit.TermText.plain(what)
 		answer.mouse_filter = Control.MOUSE_FILTER_PASS
+		# QA on #220: a hover is mouse-only. The answer takes keyboard focus, and its
+		# meaning shows under it while it holds focus -- the line is the focus mark.
+		answer.focus_mode = Control.FOCUS_ALL
+		var meaning := PanelKit.plain_line(block, answer.tooltip_text, PanelKit.Tone.DIM)
+		meaning.visible = false
+		answer.focus_entered.connect(func() -> void: meaning.visible = true)
+		answer.focus_exited.connect(func() -> void: meaning.visible = false)
 
 	_body.add_child(block)
 
