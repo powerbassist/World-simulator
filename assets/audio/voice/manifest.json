@@ -131,6 +131,39 @@
   "text_sha256": "9e769da37aa4c53cc67bf7f11ffdb05ac169d509314a44d878c843440e389f42",
   "voice_id": "EXAVITQu4vr4xnSDxMaL"
  },
+ "activist_f_30/mood_angry": {
+  "archetype": "activist_f_30",
+  "chars": 41,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/activist_f_30/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/activist_f_30.lines.mood_angry",
+  "text_sha256": "b899eb2ecab41fe68d74d65d2a0417b8b8e121cb502ad0a3438819a3042b1110",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL"
+ },
+ "activist_f_30/mood_cold": {
+  "archetype": "activist_f_30",
+  "chars": 46,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/activist_f_30/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/activist_f_30.lines.mood_cold",
+  "text_sha256": "b171e5b604ac66ed2dd57f9d246e2d5a86feae789cb520aa7240a16aecda4716",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL"
+ },
+ "activist_f_30/mood_pleased": {
+  "archetype": "activist_f_30",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/activist_f_30/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/activist_f_30.lines.mood_pleased",
+  "text_sha256": "f1f9d4f030684db24779c5f5d86e9a49e440147b8122fe5e11fe0b079e137271",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL"
+ },
  "activist_f_30/refuse": {
   "archetype": "activist_f_30",
   "chars": 62,
@@ -274,6 +307,39 @@
   "text_sha256": "9e769da37aa4c53cc67bf7f11ffdb05ac169d509314a44d878c843440e389f42",
   "voice_id": "ANj0v6b8mk362avwuVfR"
  },
+ "activist_m_30/mood_angry": {
+  "archetype": "activist_m_30",
+  "chars": 41,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/activist_m_30/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/activist_m_30.lines.mood_angry",
+  "text_sha256": "b899eb2ecab41fe68d74d65d2a0417b8b8e121cb502ad0a3438819a3042b1110",
+  "voice_id": "ANj0v6b8mk362avwuVfR"
+ },
+ "activist_m_30/mood_cold": {
+  "archetype": "activist_m_30",
+  "chars": 46,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/activist_m_30/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/activist_m_30.lines.mood_cold",
+  "text_sha256": "b171e5b604ac66ed2dd57f9d246e2d5a86feae789cb520aa7240a16aecda4716",
+  "voice_id": "ANj0v6b8mk362avwuVfR"
+ },
+ "activist_m_30/mood_pleased": {
+  "archetype": "activist_m_30",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/activist_m_30/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/activist_m_30.lines.mood_pleased",
+  "text_sha256": "f1f9d4f030684db24779c5f5d86e9a49e440147b8122fe5e11fe0b079e137271",
+  "voice_id": "ANj0v6b8mk362avwuVfR"
+ },
  "activist_m_30/refuse": {
   "archetype": "activist_m_30",
   "chars": 62,
@@ -284,6 +350,402 @@
   "source": "voices/activist_m_30.lines.refuse",
   "text_sha256": "954508e0d94f33871ef4784f0b83f9fd3c9d45d8d53e1b2ef8f94c6e99a4fff3",
   "voice_id": "ANj0v6b8mk362avwuVfR"
+ },
+ "chief_deu/calm_1": {
+  "archetype": "chief_deu",
+  "chars": 62,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/calm_1.ogg",
+  "line_id": "calm_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.calm_1",
+  "text_sha256": "724bb71059c877429f1c13616eb8aeb41d10532587ffe4bc3cd81b5654681e54",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_deu/calm_2": {
+  "archetype": "chief_deu",
+  "chars": 65,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/calm_2.ogg",
+  "line_id": "calm_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.calm_2",
+  "text_sha256": "bbbbf350e04ccace659f9b8e367df0bd47aff09e67ce3fcbd64716d7b82c94ac",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_deu/calm_3": {
+  "archetype": "chief_deu",
+  "chars": 64,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/calm_3.ogg",
+  "line_id": "calm_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.calm_3",
+  "text_sha256": "d5d7867ce8cd712481b4fc9f473be45f3136fca86db04a857f256bebd6f6f625",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_deu/crisis_1": {
+  "archetype": "chief_deu",
+  "chars": 66,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/crisis_1.ogg",
+  "line_id": "crisis_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.crisis_1",
+  "text_sha256": "3e4123a332ddcfb5c9739689f2f9f4403b2490759ba5647d34986d06830e4c4b",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_deu/crisis_2": {
+  "archetype": "chief_deu",
+  "chars": 63,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/crisis_2.ogg",
+  "line_id": "crisis_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.crisis_2",
+  "text_sha256": "f1ed7dfea5ec5a42cc89e08e7d718427970b66f6b8b0943cbabf50647ec681d8",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_deu/crisis_3": {
+  "archetype": "chief_deu",
+  "chars": 68,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/crisis_3.ogg",
+  "line_id": "crisis_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.crisis_3",
+  "text_sha256": "285fea52aa80e1525e55f80385d7bf360000009b22494a9d57af2ec9d0ba0824",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_deu/tense_1": {
+  "archetype": "chief_deu",
+  "chars": 62,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/tense_1.ogg",
+  "line_id": "tense_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.tense_1",
+  "text_sha256": "09dfea01a08653819875bfda70400ce711f9b8548128bc97c8df7567e9ffce0c",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_deu/tense_2": {
+  "archetype": "chief_deu",
+  "chars": 66,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/tense_2.ogg",
+  "line_id": "tense_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.tense_2",
+  "text_sha256": "14333ab9ce8d666d59f06d0f8bb19fdffb4770155ed9515996421373a6670f69",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_deu/tense_3": {
+  "archetype": "chief_deu",
+  "chars": 64,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_deu/tense_3.ogg",
+  "line_id": "tense_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_deu.lines.tense_3",
+  "text_sha256": "c86cdab1b2108bbbfebf3cb8d4f6b8dc5ddff6d4e9ae67452fc7d267580a83d0",
+  "voice_id": "pqHfZKP75CvOlQylNhV4"
+ },
+ "chief_fra/calm_1": {
+  "archetype": "chief_fra",
+  "chars": 63,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/calm_1.ogg",
+  "line_id": "calm_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.calm_1",
+  "text_sha256": "28afca28d875355acc0dff83ffbebddf0549b40414a7170aecd7446caf241bd4",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_fra/calm_2": {
+  "archetype": "chief_fra",
+  "chars": 60,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/calm_2.ogg",
+  "line_id": "calm_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.calm_2",
+  "text_sha256": "ec0e659a9f4c75ba5fbbb4de2b383c943965e7207da3fce6923924ac0bb32ec5",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_fra/calm_3": {
+  "archetype": "chief_fra",
+  "chars": 66,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/calm_3.ogg",
+  "line_id": "calm_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.calm_3",
+  "text_sha256": "ae4ef58100135f73ade24d198bb0ce04f90de929b4de5a01bd0c62a25e0f62d6",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_fra/crisis_1": {
+  "archetype": "chief_fra",
+  "chars": 65,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/crisis_1.ogg",
+  "line_id": "crisis_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.crisis_1",
+  "text_sha256": "77f9d87ae44234a026dd96c6d7b47c4bdbd7d4fd62c25662d685be7f7d361545",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_fra/crisis_2": {
+  "archetype": "chief_fra",
+  "chars": 69,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/crisis_2.ogg",
+  "line_id": "crisis_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.crisis_2",
+  "text_sha256": "45b4e600e918ed72491ad8025b9662352a2acc1d650deb1a45b6308aa2170b9a",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_fra/crisis_3": {
+  "archetype": "chief_fra",
+  "chars": 67,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/crisis_3.ogg",
+  "line_id": "crisis_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.crisis_3",
+  "text_sha256": "dc0fbaefb0fd2ae4427307046932ce2a79109b02e3177b46b6a98f0356f7e8b1",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_fra/tense_1": {
+  "archetype": "chief_fra",
+  "chars": 64,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/tense_1.ogg",
+  "line_id": "tense_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.tense_1",
+  "text_sha256": "01cce9881c5911cf8d984d258fd9c2c4f538cd03ba831fd359ee63b72b990d03",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_fra/tense_2": {
+  "archetype": "chief_fra",
+  "chars": 61,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/tense_2.ogg",
+  "line_id": "tense_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.tense_2",
+  "text_sha256": "aa33d4f64744f01bf41bd230b1cc8b22910d6a8bee618bd42e383f617639ca9e",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_fra/tense_3": {
+  "archetype": "chief_fra",
+  "chars": 65,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_fra/tense_3.ogg",
+  "line_id": "tense_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_fra.lines.tense_3",
+  "text_sha256": "66b9f45e921296276144133659b3cba876c69b8f2650f321352cb0c1f539370d",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX"
+ },
+ "chief_gbr/calm_1": {
+  "archetype": "chief_gbr",
+  "chars": 61,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/calm_1.ogg",
+  "line_id": "calm_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.calm_1",
+  "text_sha256": "af16e05ab791a8d9f4d9efc2c8940ce461cc68c9dd2eef3e5deb80f96bec4307",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_gbr/calm_2": {
+  "archetype": "chief_gbr",
+  "chars": 60,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/calm_2.ogg",
+  "line_id": "calm_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.calm_2",
+  "text_sha256": "0d17f75cfe64142fff562b357926a5deb7bc3844b038d9bc30734263996d3e75",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_gbr/calm_3": {
+  "archetype": "chief_gbr",
+  "chars": 54,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/calm_3.ogg",
+  "line_id": "calm_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.calm_3",
+  "text_sha256": "172952890465af83f8fd0b12512a200b9dba78307f28f346e7cc947120e9af96",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_gbr/crisis_1": {
+  "archetype": "chief_gbr",
+  "chars": 55,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/crisis_1.ogg",
+  "line_id": "crisis_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.crisis_1",
+  "text_sha256": "fdc4d250e3837c76559b188edb7c5ada2195a761ffa47ec18be8994d9eb31923",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_gbr/crisis_2": {
+  "archetype": "chief_gbr",
+  "chars": 59,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/crisis_2.ogg",
+  "line_id": "crisis_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.crisis_2",
+  "text_sha256": "f91ebe1a0985e789b72b5f41fbada46dd79b48660e8c305400771ac915118ad1",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_gbr/crisis_3": {
+  "archetype": "chief_gbr",
+  "chars": 52,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/crisis_3.ogg",
+  "line_id": "crisis_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.crisis_3",
+  "text_sha256": "d44dae4d5a9bfc1a58195f4d32f24a000aaff99984d76f55a682ad030eafc0e4",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_gbr/tense_1": {
+  "archetype": "chief_gbr",
+  "chars": 60,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/tense_1.ogg",
+  "line_id": "tense_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.tense_1",
+  "text_sha256": "0cbaeead13f08005cd1a607f5d8393a4389dea25a10e73012c7c3dbb6f011b0b",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_gbr/tense_2": {
+  "archetype": "chief_gbr",
+  "chars": 57,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/tense_2.ogg",
+  "line_id": "tense_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.tense_2",
+  "text_sha256": "ca3585ea9dd642408b6e24248b0b2db7b75e7b8fb1046435f6f2dbed8f82814f",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_gbr/tense_3": {
+  "archetype": "chief_gbr",
+  "chars": 54,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_gbr/tense_3.ogg",
+  "line_id": "tense_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_gbr.lines.tense_3",
+  "text_sha256": "7286b7321f73b41627722dc92a6a85b7353815aaf5c2f2fbda3c144b563a872a",
+  "voice_id": "hpp4J3VqNfWAUOO0d1Us"
+ },
+ "chief_pol/calm_1": {
+  "archetype": "chief_pol",
+  "chars": 53,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/calm_1.ogg",
+  "line_id": "calm_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.calm_1",
+  "text_sha256": "f644b8e10a6893a0abe710688c062f4548cbb01be5a90fa9c7ffe12abd166696",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
+ },
+ "chief_pol/calm_2": {
+  "archetype": "chief_pol",
+  "chars": 50,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/calm_2.ogg",
+  "line_id": "calm_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.calm_2",
+  "text_sha256": "0efe3e0daed769081388cd4ae2d8b8c727164f627a90fbfbf596fb0b5d48ec88",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
+ },
+ "chief_pol/calm_3": {
+  "archetype": "chief_pol",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/calm_3.ogg",
+  "line_id": "calm_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.calm_3",
+  "text_sha256": "48e710ead640f7b8ff9284349f23aeab583c072089f234f7840dc209412d5b52",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
+ },
+ "chief_pol/crisis_1": {
+  "archetype": "chief_pol",
+  "chars": 53,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/crisis_1.ogg",
+  "line_id": "crisis_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.crisis_1",
+  "text_sha256": "a09160987d15a6d99cdd283e28e746e4fec0f024a196a2a07cefc573cd85053d",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
+ },
+ "chief_pol/crisis_2": {
+  "archetype": "chief_pol",
+  "chars": 54,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/crisis_2.ogg",
+  "line_id": "crisis_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.crisis_2",
+  "text_sha256": "b22cdd60c0c2180cba1d628dd363e58a0309a7e8189a8e2d9773267213ed27ba",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
+ },
+ "chief_pol/crisis_3": {
+  "archetype": "chief_pol",
+  "chars": 47,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/crisis_3.ogg",
+  "line_id": "crisis_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.crisis_3",
+  "text_sha256": "e86f68f06b87013c151c051fd28819407bdc9b6b51c6578bc4e0c106c008bf26",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
+ },
+ "chief_pol/tense_1": {
+  "archetype": "chief_pol",
+  "chars": 51,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/tense_1.ogg",
+  "line_id": "tense_1",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.tense_1",
+  "text_sha256": "bdbb61021a9613f6845bea90fb0a87392e1b316bcefda274da4468923aaa57a3",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
+ },
+ "chief_pol/tense_2": {
+  "archetype": "chief_pol",
+  "chars": 52,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/tense_2.ogg",
+  "line_id": "tense_2",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.tense_2",
+  "text_sha256": "07f50e61e44595bc3c9a62822c0d8fb8f606b43cf857c9802bf1b5a306e89d18",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
+ },
+ "chief_pol/tense_3": {
+  "archetype": "chief_pol",
+  "chars": 51,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/chief_pol/tense_3.ogg",
+  "line_id": "tense_3",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/chief_pol.lines.tense_3",
+  "text_sha256": "eacac317564458ac01da27c83417e9322cb17a2af379061640607b370568abba",
+  "voice_id": "pNInz6obpgDQGcFmaJgB"
  },
  "executive_f_50/agree": {
   "archetype": "executive_f_50",
@@ -569,6 +1031,39 @@
   "model": "eleven_multilingual_v2",
   "source": "voices/executive_f_50.lines.greet",
   "text_sha256": "4df85dc20c445c09ecef28497bd270b22de0b764750733e8350391a45b8a5370",
+  "voice_id": "K6Y8oKp22Z422uyqEI0Q"
+ },
+ "executive_f_50/mood_angry": {
+  "archetype": "executive_f_50",
+  "chars": 43,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/executive_f_50/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/executive_f_50.lines.mood_angry",
+  "text_sha256": "73a537ab67f5e33ce7b79a9d46829c678dd71900c8af049084c97fce891fa774",
+  "voice_id": "K6Y8oKp22Z422uyqEI0Q"
+ },
+ "executive_f_50/mood_cold": {
+  "archetype": "executive_f_50",
+  "chars": 46,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/executive_f_50/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/executive_f_50.lines.mood_cold",
+  "text_sha256": "258ce6815bb52658a52f0a225685c72a0746d4af3bc6d5fcdbd13eae383e08bc",
+  "voice_id": "K6Y8oKp22Z422uyqEI0Q"
+ },
+ "executive_f_50/mood_pleased": {
+  "archetype": "executive_f_50",
+  "chars": 51,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/executive_f_50/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/executive_f_50.lines.mood_pleased",
+  "text_sha256": "6ca8e0c32697aa940bd36a329521b00794dcc2a8e307f444515b36b64326b43d",
   "voice_id": "K6Y8oKp22Z422uyqEI0Q"
  },
  "executive_f_50/refuse": {
@@ -868,6 +1363,39 @@
   "text_sha256": "4df85dc20c445c09ecef28497bd270b22de0b764750733e8350391a45b8a5370",
   "voice_id": "JjlrlAAg5kEheQCdkzE7"
  },
+ "executive_m_50/mood_angry": {
+  "archetype": "executive_m_50",
+  "chars": 43,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/executive_m_50/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/executive_m_50.lines.mood_angry",
+  "text_sha256": "73a537ab67f5e33ce7b79a9d46829c678dd71900c8af049084c97fce891fa774",
+  "voice_id": "JjlrlAAg5kEheQCdkzE7"
+ },
+ "executive_m_50/mood_cold": {
+  "archetype": "executive_m_50",
+  "chars": 46,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/executive_m_50/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/executive_m_50.lines.mood_cold",
+  "text_sha256": "258ce6815bb52658a52f0a225685c72a0746d4af3bc6d5fcdbd13eae383e08bc",
+  "voice_id": "JjlrlAAg5kEheQCdkzE7"
+ },
+ "executive_m_50/mood_pleased": {
+  "archetype": "executive_m_50",
+  "chars": 51,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/executive_m_50/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/executive_m_50.lines.mood_pleased",
+  "text_sha256": "6ca8e0c32697aa940bd36a329521b00794dcc2a8e307f444515b36b64326b43d",
+  "voice_id": "JjlrlAAg5kEheQCdkzE7"
+ },
  "executive_m_50/refuse": {
   "archetype": "executive_m_50",
   "chars": 48,
@@ -989,6 +1517,39 @@
   "text_sha256": "e835207bc39af3dca04b17ef4d819707c324dba71108304254501abd091844c8",
   "voice_id": "Xb7hH8MSUJpSbSDYk0k2"
  },
+ "judge_f_60/mood_angry": {
+  "archetype": "judge_f_60",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/judge_f_60/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/judge_f_60.lines.mood_angry",
+  "text_sha256": "0bd26e7f32eaaaadef5210f3a81de2f90c94aabc946049b794de27f3eed3bdb5",
+  "voice_id": "Xb7hH8MSUJpSbSDYk0k2"
+ },
+ "judge_f_60/mood_cold": {
+  "archetype": "judge_f_60",
+  "chars": 41,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/judge_f_60/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/judge_f_60.lines.mood_cold",
+  "text_sha256": "bdadd2bb1c644d4114fb2d55c3ceee76f44059addd00d6eb63ebcef372b121f2",
+  "voice_id": "Xb7hH8MSUJpSbSDYk0k2"
+ },
+ "judge_f_60/mood_pleased": {
+  "archetype": "judge_f_60",
+  "chars": 46,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/judge_f_60/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/judge_f_60.lines.mood_pleased",
+  "text_sha256": "ec3ff30d08b8e4e509d9a80319d4353437ec16edd1d4116e09c6f7159ea589a1",
+  "voice_id": "Xb7hH8MSUJpSbSDYk0k2"
+ },
  "judge_f_60/refuse": {
   "archetype": "judge_f_60",
   "chars": 37,
@@ -1108,6 +1669,39 @@
   "model": "eleven_multilingual_v2",
   "source": "voices/judge_m_60.lines.greet",
   "text_sha256": "e835207bc39af3dca04b17ef4d819707c324dba71108304254501abd091844c8",
+  "voice_id": "onwK4e9ZLuTAKqWW03F9"
+ },
+ "judge_m_60/mood_angry": {
+  "archetype": "judge_m_60",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/judge_m_60/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/judge_m_60.lines.mood_angry",
+  "text_sha256": "0bd26e7f32eaaaadef5210f3a81de2f90c94aabc946049b794de27f3eed3bdb5",
+  "voice_id": "onwK4e9ZLuTAKqWW03F9"
+ },
+ "judge_m_60/mood_cold": {
+  "archetype": "judge_m_60",
+  "chars": 41,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/judge_m_60/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/judge_m_60.lines.mood_cold",
+  "text_sha256": "bdadd2bb1c644d4114fb2d55c3ceee76f44059addd00d6eb63ebcef372b121f2",
+  "voice_id": "onwK4e9ZLuTAKqWW03F9"
+ },
+ "judge_m_60/mood_pleased": {
+  "archetype": "judge_m_60",
+  "chars": 46,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/judge_m_60/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/judge_m_60.lines.mood_pleased",
+  "text_sha256": "ec3ff30d08b8e4e509d9a80319d4353437ec16edd1d4116e09c6f7159ea589a1",
   "voice_id": "onwK4e9ZLuTAKqWW03F9"
  },
  "judge_m_60/refuse": {
@@ -1660,6 +2254,39 @@
   "text_sha256": "7149393cac5d1041984efa12b4eab62ff67bc854631683de5156cad14442b7ed",
   "voice_id": "pFZP5JQG7iQjIQuC4Bku"
  },
+ "politician_f_50/mood_angry": {
+  "archetype": "politician_f_50",
+  "chars": 45,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/politician_f_50/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/politician_f_50.lines.mood_angry",
+  "text_sha256": "9714e62fbff9e82a11fc9389a4c92a893432e21afa837634ce6360ccb87f4d56",
+  "voice_id": "pFZP5JQG7iQjIQuC4Bku"
+ },
+ "politician_f_50/mood_cold": {
+  "archetype": "politician_f_50",
+  "chars": 45,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/politician_f_50/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/politician_f_50.lines.mood_cold",
+  "text_sha256": "261d662683410c87efec7c28fc94473e10ff525bf337ab2dd64424180b789c41",
+  "voice_id": "pFZP5JQG7iQjIQuC4Bku"
+ },
+ "politician_f_50/mood_pleased": {
+  "archetype": "politician_f_50",
+  "chars": 41,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/politician_f_50/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/politician_f_50.lines.mood_pleased",
+  "text_sha256": "53a4d08d3a5599d0fa37df99c85c638a7c66c35be249dcafadd82ff63fea80f2",
+  "voice_id": "pFZP5JQG7iQjIQuC4Bku"
+ },
  "politician_f_50/refuse": {
   "archetype": "politician_f_50",
   "chars": 57,
@@ -2210,6 +2837,39 @@
   "text_sha256": "7149393cac5d1041984efa12b4eab62ff67bc854631683de5156cad14442b7ed",
   "voice_id": "gFLdO7YUUen08IkbGO6u"
  },
+ "politician_m_50/mood_angry": {
+  "archetype": "politician_m_50",
+  "chars": 45,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/politician_m_50/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/politician_m_50.lines.mood_angry",
+  "text_sha256": "9714e62fbff9e82a11fc9389a4c92a893432e21afa837634ce6360ccb87f4d56",
+  "voice_id": "gFLdO7YUUen08IkbGO6u"
+ },
+ "politician_m_50/mood_cold": {
+  "archetype": "politician_m_50",
+  "chars": 45,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/politician_m_50/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/politician_m_50.lines.mood_cold",
+  "text_sha256": "261d662683410c87efec7c28fc94473e10ff525bf337ab2dd64424180b789c41",
+  "voice_id": "gFLdO7YUUen08IkbGO6u"
+ },
+ "politician_m_50/mood_pleased": {
+  "archetype": "politician_m_50",
+  "chars": 41,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/politician_m_50/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/politician_m_50.lines.mood_pleased",
+  "text_sha256": "53a4d08d3a5599d0fa37df99c85c638a7c66c35be249dcafadd82ff63fea80f2",
+  "voice_id": "gFLdO7YUUen08IkbGO6u"
+ },
  "politician_m_50/refuse": {
   "archetype": "politician_m_50",
   "chars": 57,
@@ -2494,6 +3154,39 @@
   "model": "eleven_multilingual_v2",
   "source": "voices/press_owner_f_60.lines.greet",
   "text_sha256": "e776dddd119e3866bfd827c7d0d155596ca9393a3278efd5fff187556758ca5c",
+  "voice_id": "MPZlmh9u9WI1KcK1XkZk"
+ },
+ "press_owner_f_60/mood_angry": {
+  "archetype": "press_owner_f_60",
+  "chars": 48,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/press_owner_f_60/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/press_owner_f_60.lines.mood_angry",
+  "text_sha256": "26f2985199475928a32035ef8ce3f1e97ab501b0bcfe0d164f0c32746bf46b3f",
+  "voice_id": "MPZlmh9u9WI1KcK1XkZk"
+ },
+ "press_owner_f_60/mood_cold": {
+  "archetype": "press_owner_f_60",
+  "chars": 47,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/press_owner_f_60/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/press_owner_f_60.lines.mood_cold",
+  "text_sha256": "d6fb374df1cc51c8b1c7dc75136aa7d403a030af238c1260caae989539ffbb8e",
+  "voice_id": "MPZlmh9u9WI1KcK1XkZk"
+ },
+ "press_owner_f_60/mood_pleased": {
+  "archetype": "press_owner_f_60",
+  "chars": 48,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/press_owner_f_60/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/press_owner_f_60.lines.mood_pleased",
+  "text_sha256": "29c992b325281360f73f296c0e2c716a37821201eb582aa9b1d52ba2acec67a8",
   "voice_id": "MPZlmh9u9WI1KcK1XkZk"
  },
  "press_owner_f_60/refuse": {
@@ -2782,6 +3475,39 @@
   "text_sha256": "e776dddd119e3866bfd827c7d0d155596ca9393a3278efd5fff187556758ca5c",
   "voice_id": "gZGWZgN4mPyTYVD8Xk8v"
  },
+ "press_owner_m_60/mood_angry": {
+  "archetype": "press_owner_m_60",
+  "chars": 48,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/press_owner_m_60/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/press_owner_m_60.lines.mood_angry",
+  "text_sha256": "26f2985199475928a32035ef8ce3f1e97ab501b0bcfe0d164f0c32746bf46b3f",
+  "voice_id": "gZGWZgN4mPyTYVD8Xk8v"
+ },
+ "press_owner_m_60/mood_cold": {
+  "archetype": "press_owner_m_60",
+  "chars": 47,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/press_owner_m_60/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/press_owner_m_60.lines.mood_cold",
+  "text_sha256": "d6fb374df1cc51c8b1c7dc75136aa7d403a030af238c1260caae989539ffbb8e",
+  "voice_id": "gZGWZgN4mPyTYVD8Xk8v"
+ },
+ "press_owner_m_60/mood_pleased": {
+  "archetype": "press_owner_m_60",
+  "chars": 48,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/press_owner_m_60/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/press_owner_m_60.lines.mood_pleased",
+  "text_sha256": "29c992b325281360f73f296c0e2c716a37821201eb582aa9b1d52ba2acec67a8",
+  "voice_id": "gZGWZgN4mPyTYVD8Xk8v"
+ },
  "press_owner_m_60/refuse": {
   "archetype": "press_owner_m_60",
   "chars": 37,
@@ -2967,6 +3693,39 @@
   "model": "eleven_multilingual_v2",
   "source": "voices/regional_figure_f_50.lines.greet",
   "text_sha256": "804416a02d9bdc6d4edfed2d13df80929fe4b44a6ba8bde94ce5214c2451af8c",
+  "voice_id": "541ZYLQNf72TbsGVWauS"
+ },
+ "regional_figure_f_50/mood_angry": {
+  "archetype": "regional_figure_f_50",
+  "chars": 43,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/regional_figure_f_50/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/regional_figure_f_50.lines.mood_angry",
+  "text_sha256": "d02e4a25a38dc6bf1846ea88564964d02307a95a626e888d1e195d42165a4d7c",
+  "voice_id": "541ZYLQNf72TbsGVWauS"
+ },
+ "regional_figure_f_50/mood_cold": {
+  "archetype": "regional_figure_f_50",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/regional_figure_f_50/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/regional_figure_f_50.lines.mood_cold",
+  "text_sha256": "51dbb146269d819b68213885d3c89bfb717546ae5a85e3890543e43d07db5156",
+  "voice_id": "541ZYLQNf72TbsGVWauS"
+ },
+ "regional_figure_f_50/mood_pleased": {
+  "archetype": "regional_figure_f_50",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/regional_figure_f_50/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/regional_figure_f_50.lines.mood_pleased",
+  "text_sha256": "3f7a8078c485266a5cc0af5303b41d925c23d5e7e1ddcf788b9f0dc32106c83f",
   "voice_id": "541ZYLQNf72TbsGVWauS"
  },
  "regional_figure_f_50/refuse": {
@@ -3156,6 +3915,39 @@
   "text_sha256": "804416a02d9bdc6d4edfed2d13df80929fe4b44a6ba8bde94ce5214c2451af8c",
   "voice_id": "Vt0mgnkFvOxF5oeF8Y4e"
  },
+ "regional_figure_m_50/mood_angry": {
+  "archetype": "regional_figure_m_50",
+  "chars": 43,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/regional_figure_m_50/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/regional_figure_m_50.lines.mood_angry",
+  "text_sha256": "d02e4a25a38dc6bf1846ea88564964d02307a95a626e888d1e195d42165a4d7c",
+  "voice_id": "Vt0mgnkFvOxF5oeF8Y4e"
+ },
+ "regional_figure_m_50/mood_cold": {
+  "archetype": "regional_figure_m_50",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/regional_figure_m_50/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/regional_figure_m_50.lines.mood_cold",
+  "text_sha256": "51dbb146269d819b68213885d3c89bfb717546ae5a85e3890543e43d07db5156",
+  "voice_id": "Vt0mgnkFvOxF5oeF8Y4e"
+ },
+ "regional_figure_m_50/mood_pleased": {
+  "archetype": "regional_figure_m_50",
+  "chars": 44,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/regional_figure_m_50/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/regional_figure_m_50.lines.mood_pleased",
+  "text_sha256": "3f7a8078c485266a5cc0af5303b41d925c23d5e7e1ddcf788b9f0dc32106c83f",
+  "voice_id": "Vt0mgnkFvOxF5oeF8Y4e"
+ },
  "regional_figure_m_50/refuse": {
   "archetype": "regional_figure_m_50",
   "chars": 55,
@@ -3310,6 +4102,39 @@
   "text_sha256": "9414b86a2403c6ce5ed1f3748ee493cf4a24c427e2a139faec93b48c8e03e186",
   "voice_id": "Dn1YytHTZxfZGtxsjQMQ"
  },
+ "union_leader_f_50/mood_angry": {
+  "archetype": "union_leader_f_50",
+  "chars": 41,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/union_leader_f_50/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/union_leader_f_50.lines.mood_angry",
+  "text_sha256": "7bbcf58d2a3d45ba63db1266f3bc7ed92cfb55454ba0956298eca242815bc789",
+  "voice_id": "Dn1YytHTZxfZGtxsjQMQ"
+ },
+ "union_leader_f_50/mood_cold": {
+  "archetype": "union_leader_f_50",
+  "chars": 43,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/union_leader_f_50/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/union_leader_f_50.lines.mood_cold",
+  "text_sha256": "cc61e37037fa83bbdd505a3664c01e6ca769a4c6f73b36e55fb50321322b7041",
+  "voice_id": "Dn1YytHTZxfZGtxsjQMQ"
+ },
+ "union_leader_f_50/mood_pleased": {
+  "archetype": "union_leader_f_50",
+  "chars": 38,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/union_leader_f_50/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/union_leader_f_50.lines.mood_pleased",
+  "text_sha256": "c6c0fb496e65f3cca3602622787b4e29cf2acc6f98eabc5354dc79a3b0843547",
+  "voice_id": "Dn1YytHTZxfZGtxsjQMQ"
+ },
  "union_leader_f_50/refuse": {
   "archetype": "union_leader_f_50",
   "chars": 53,
@@ -3462,6 +4287,39 @@
   "model": "eleven_multilingual_v2",
   "source": "voices/union_leader_m_50.lines.greet",
   "text_sha256": "9414b86a2403c6ce5ed1f3748ee493cf4a24c427e2a139faec93b48c8e03e186",
+  "voice_id": "drgxdthMHbyFpcuiPYQK"
+ },
+ "union_leader_m_50/mood_angry": {
+  "archetype": "union_leader_m_50",
+  "chars": 41,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/union_leader_m_50/mood_angry.ogg",
+  "line_id": "mood_angry",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/union_leader_m_50.lines.mood_angry",
+  "text_sha256": "7bbcf58d2a3d45ba63db1266f3bc7ed92cfb55454ba0956298eca242815bc789",
+  "voice_id": "drgxdthMHbyFpcuiPYQK"
+ },
+ "union_leader_m_50/mood_cold": {
+  "archetype": "union_leader_m_50",
+  "chars": 43,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/union_leader_m_50/mood_cold.ogg",
+  "line_id": "mood_cold",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/union_leader_m_50.lines.mood_cold",
+  "text_sha256": "cc61e37037fa83bbdd505a3664c01e6ca769a4c6f73b36e55fb50321322b7041",
+  "voice_id": "drgxdthMHbyFpcuiPYQK"
+ },
+ "union_leader_m_50/mood_pleased": {
+  "archetype": "union_leader_m_50",
+  "chars": 38,
+  "date": "2026-10-31",
+  "file": "assets/audio/voice/union_leader_m_50/mood_pleased.ogg",
+  "line_id": "mood_pleased",
+  "model": "eleven_multilingual_v2",
+  "source": "voices/union_leader_m_50.lines.mood_pleased",
+  "text_sha256": "c6c0fb496e65f3cca3602622787b4e29cf2acc6f98eabc5354dc79a3b0843547",
   "voice_id": "drgxdthMHbyFpcuiPYQK"
  },
  "union_leader_m_50/refuse": {
