@@ -48,15 +48,18 @@ KEEP_EXT = (".ogg", ".svg", ".dialogue")
 # appears as .gdc + .gd.remap, hence the stems).
 FORBIDDEN = ("tools/", "tests/", "docs/", "reports/", "src/ui/dev_console.", "src/ui/dev_registry.",
              "src/ui/dev_log.", "src/ui/dev_perf.", "src/sim/dev_commands.")
-TEMPLATE_FILES = ("windows_release_x86_64.exe", "windows_release_x86_64_console.exe",
-                  "windows_debug_x86_64.exe", "windows_debug_x86_64_console.exe",
-                  "version.txt")
+# A templates folder holds at least this one (+ version.txt); the console wrapper is optional.
+TEMPLATE_FILE = "windows_release_x86_64.exe"
 
 
 def run(cmd, env, log, timeout, cwd=None):
     """Run, send stdout+stderr into `log`, return the exit code."""
     with open(log, "wb") as f:
-        p = subprocess.run(cmd, env=env, cwd=cwd, stdout=f, stderr=subprocess.STDOUT, timeout=timeout)
+        try:
+            p = subprocess.run(cmd, env=env, cwd=cwd, stdout=f, stderr=subprocess.STDOUT, timeout=timeout)
+        except subprocess.TimeoutExpired:  # run() has killed the child; 124 is timeout(1)'s code
+            f.write(b"TIMEOUT after %d s" % timeout)
+            return 124
     return p.returncode
 
 
@@ -134,7 +137,7 @@ def read_pck(path: Path) -> list[str]:
         return names
 
 
-def audit(pck: Path, stage: Path) -> list[str]:
+def audit(pck: Path) -> list[str]:
     """Return the problems; empty means the PCK has what the game reads and nothing else."""
     names = set(read_pck(pck))
     problems = []
@@ -204,8 +207,8 @@ def main() -> int:
     a = ap.parse_args()
     if not a.godot:
         sys.exit("no godot on PATH (set $GODOT)")
-    if not a.templates or not (Path(a.templates) / TEMPLATE_FILES[0]).is_file():
-        sys.exit("--templates must be a folder holding %s" % TEMPLATE_FILES[0])
+    if not a.templates or not (Path(a.templates) / TEMPLATE_FILE).is_file():
+        sys.exit("--templates must be a folder holding %s" % TEMPLATE_FILE)
 
     version = subprocess.run([a.godot, "--version"], check=True, capture_output=True, text=True).stdout
     m = re.match(r"(\d+\.\d+(?:\.\d+)?\.[a-z0-9]+)", version.strip())
@@ -249,7 +252,7 @@ def main() -> int:
         if not pck.is_file():
             print("no .pck beside the exe")
             return 1
-        problems = audit(pck, stage)
+        problems = audit(pck)
         for p in problems[:20]:
             print("AUDIT", p)
         if problems:
