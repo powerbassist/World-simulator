@@ -20,6 +20,13 @@ extends SceneTree
 ##
 ## Staged at day 1 and after twelve real months, because the councils and the
 ## dispatches grow with time. The glossary is exempt: it is where prose goes.
+##
+## V5.3-0 (b), docs/design/v5.3-0-readability.md 3.5 and band RF6: the author still
+## said "Trop de texte" once the sentences were cut, because what remained was words
+## on labels, buttons and cells and authored text shown whole. So a second column
+## counts EVERY visible word on a tab (system, content and buttons alike, the same
+## walk), with 3.2's targets as ceilings for a rebuilt tab, and the sum over the tabs
+## under a ratchet that only comes down, towards RF6's 3 600.
 
 const WorldMonth = preload("res://src/sim/world_month.gd")
 
@@ -36,6 +43,21 @@ const BUDGET := {
 ## (dc515826 + #93) so they cannot grow while they wait; each PR that trims one
 ## deletes its line, and the tab then answers to BUDGET.
 const PENDING := {}
+## All visible words per tab: a rebuilt tab answers to its 3.2 target; a tab (b)
+## has not reached yet is held at what it measured before (b) started, so it cannot
+## grow while it waits -- each PR that rebuilds one deletes its line here.
+const TOTAL_BUDGET := {"agenda": 400}
+const TOTAL_PENDING := {
+	"budget": 107, "calendar": 42, "campaign": 223, "city": 366, "commodities": 418,
+	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118, "events": 14,
+	"legislature": 1045, "orgs": 610, "outliner": 2, "overview": 127, "people": 500,
+	"politics": 123, "projects": 75, "region": 136, "society": 106, "tax": 25,
+}
+## The sum of every tab's total, a ratchet: each rebuilding PR lowers it to what it
+## measured. RF6's target is 3 600.
+const TOTAL_SUM_CEILING := 4711
+const TOTAL_SUM_TARGET := 3600
+
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit", "audience"]
 ## No single authored text runs longer than this on a list (the blurbs are shown
@@ -46,6 +68,7 @@ const SHINGLE := 5
 var _failures: Array[String] = []
 var _shingles := {}
 var _measured := {}  # id -> max sys8 over the stages
+var _totals := {}  # id -> max all-words over the stages
 
 
 func _initialize() -> void:
@@ -74,11 +97,13 @@ func _sweep(main, stage: String) -> void:
 		await process_frame
 		var frame = windows.frame(id)
 		var sys8 := 0
+		var total := 0
 		for node in _visible_text_nodes(frame._content):
 			var text := _text_of(node)
 			var words := _words(text)
 			if words.is_empty():
 				continue
+			total += words.size()
 			if _is_content(words):
 				if words.size() > CONTENT_NODE_MAX:
 					_fail("%s (%s): one authored text runs %d words on screen: %s" % [id, stage, words.size(), text.left(80)])
@@ -86,6 +111,10 @@ func _sweep(main, stage: String) -> void:
 			if words.size() >= 8:
 				sys8 += words.size()
 		_measured[id] = maxi(int(_measured.get(id, 0)), sys8)
+		_totals[id] = maxi(int(_totals.get(id, 0)), total)
+		var total_ceiling := int(TOTAL_PENDING.get(id, TOTAL_BUDGET.get(id, -1)))
+		if total_ceiling >= 0 and total > total_ceiling:
+			_fail("%s (%s): %d visible words, the ceiling is %d" % [id, stage, total, total_ceiling])
 		var ceiling := int(PENDING.get(id, BUDGET.get(id, -1)))
 		if ceiling >= 0 and sys8 > ceiling:
 			_fail("%s (%s): %d system sentence words, the ceiling is %d" % [id, stage, sys8, ceiling])
@@ -177,8 +206,15 @@ func _strings_of(value) -> void:
 func _report() -> void:
 	var ids := _measured.keys()
 	ids.sort()
+	var sum := 0
 	for id in ids:
-		print("prose budget  %-12s sys8+ %4d  ceiling %s%s" % [id, _measured[id], str(PENDING.get(id, BUDGET.get(id, "-"))), "  (pending)" if PENDING.has(id) else ""])
+		sum += int(_totals.get(id, 0))
+		print("prose budget  %-12s sys8+ %4d  ceiling %s%s   all words %5d  ceiling %s" % [id, _measured[id],
+			str(PENDING.get(id, BUDGET.get(id, "-"))), "  (pending)" if PENDING.has(id) else "",
+			int(_totals.get(id, 0)), str(TOTAL_PENDING.get(id, TOTAL_BUDGET.get(id, "-")))])
+	print("prose budget  all tabs: %d visible words, ratchet %d, target %d" % [sum, TOTAL_SUM_CEILING, TOTAL_SUM_TARGET])
+	if sum > TOTAL_SUM_CEILING:
+		_fail("all tabs together show %d words, over the ratchet %d" % [sum, TOTAL_SUM_CEILING])
 	if _failures.is_empty():
 		print("test_prose_budget: all checks passed")
 		return

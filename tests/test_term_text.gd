@@ -161,10 +161,7 @@ func _check_the_row_sinks() -> void:
 	var sinks := {
 		"res://src/ui/events_panel.gd": ["PanelKit.rich(block, what)"],
 		"res://src/ui/law_list.gd": ["PanelKit.rich(_detail, Strings.law_summary(law), PanelKit.Tone.PLAIN)"],
-		"res://src/ui/agenda_panel.gd": [
-			'PanelKit.rich(block, Strings.row_summary("programme", terms))',
-			'button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("programme", terms))',
-		],
+		"res://src/ui/programme_picker.gd": ['PanelKit.rich(block, Strings.row_summary("programme", terms))'],
 		"res://src/ui/campaign_panel.gd": ['button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("pledges", action))'],
 		"res://src/ui/council_section.gd": ['PanelKit.rich(body, Strings.row("bloc-proposals", String(pending.get("proposal_id", "")), "summary", String(pending.get("summary", ""))))'],
 	}

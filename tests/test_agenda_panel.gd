@@ -31,6 +31,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -141,12 +142,27 @@ func _check_the_offer_is_built_from_the_register(panel, state, ns, loader) -> vo
 		return
 
 	_refresh(panel)
+	# V5.3-0 (b): one row per offered entry, and one Choose -- the selected entry's,
+	# beside its text (programme_picker.gd); a blurb per row was 1 470 words.
+	var rows := 0
 	var buttons := 0
-	for node in _walk(panel._body):
-		if node is Button and String(node.text) == "Choose":
+	for node in _walk(panel):
+		if node is Button and node.has_meta("entry") and node.is_visible_in_tree():
+			rows += 1
+		if node is Button and String(node.text) == "Choose" and node.is_visible_in_tree():
 			buttons += 1
-	if buttons != offered:
-		_fail("the offer drew %d CHOOSE buttons against %d offered entries -- the panel is filtering or inventing" % [buttons, offered])
+	if rows != offered:
+		_fail("the offer drew %d rows against %d offered entries -- the panel is filtering or inventing" % [rows, offered])
+	if buttons != 1:
+		_fail("the offer drew %d CHOOSE buttons; the selected entry's detail carries one" % buttons)
+	var last: Button = _walk(panel).filter(func(n): return n is Button and n.has_meta("entry")).back()
+	last.pressed.emit()
+	# The rich text's source, not its parsed text: a RichTextLabel parses on its
+	# next frame. The summary's opening words are plain in every entry.
+	var summary := Strings.row_summary("programme", Programme.terms_of(loader, String(last.get_meta("entry"))))
+	var opening := " ".join(summary.split(" ").slice(0, 4))
+	if not _walk(panel._picker._detail).any(func(n): return n is RichTextLabel and String(n.text).contains(opening)):
+		_fail("selecting an entry does not show its text whole in the detail")
 	var action = panel.primary_action()
 	if action == null or not (action is Button):
 		_fail("primary_action() at term start is not the choose verb")
@@ -295,7 +311,7 @@ func _check_a_conclusion_pushes_a_card(panel, state, ns, loader) -> void:
 
 	_refresh(panel)
 	var delivered := false
-	for node in _walk(panel._body):
+	for node in _walk(panel):
 		if node is Label and String(node.text).begins_with("Delivered"):
 			delivered = true
 	if not delivered:
@@ -339,7 +355,7 @@ func _check_mid_term_says_when_the_next_programme_opens(panel, state, ns, loader
 	ns.months_in_term = 7
 	_refresh(panel)
 	var text := ""
-	for node in _walk(panel._body):
+	for node in _walk(panel):
 		if node is Label and not node.is_queued_for_deletion():
 			text += String(node.text) + "
 "
@@ -357,7 +373,7 @@ func _check_mid_term_says_when_the_next_programme_opens(panel, state, ns, loader
 	ns.next_executive_month = 0
 	_refresh(panel)
 	text = ""
-	for node in _walk(panel._body):
+	for node in _walk(panel):
 		if node is Label and not node.is_queued_for_deletion():
 			text += String(node.text) + "
 "
@@ -374,7 +390,7 @@ func _refresh(panel) -> void:
 
 
 func _first_progress_bar(panel):
-	for node in _walk(panel._body):
+	for node in _walk(panel):
 		if node is ProgressBar:
 			return node
 	return null
