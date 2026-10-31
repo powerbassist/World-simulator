@@ -180,6 +180,22 @@ func _check_roll() -> void:
 	Motion.finish(label)
 	if label.text != "40%":
 		_fail("an interrupted roll ended at '%s', expected '40%%'" % label.text)
+	# #222 QA TAKE B: the same reading again (the HUD's daily refresh) mid-roll and
+	# mid-flash lets the flash land -- it used to stop the roll and reset the tint.
+	label.text = "10%"
+	Motion.roll_text(label, "20%", Color(1, 0, 0))
+	(label.get_meta(&"motion_tween") as Tween).custom_step(Motion.ROLL_S * 0.5)
+	Motion.roll_text(label, "20%", Color(1, 0, 0))
+	if not label.has_meta(&"motion_tween"):
+		_fail("the same reading mid-roll stopped the roll")
+	else:
+		(label.get_meta(&"motion_tween") as Tween).custom_step(Motion.ROLL_S * 0.5 + 0.01)
+		Motion.roll_text(label, "20%", Color(1, 0, 0))
+		if label.modulate.g > 0.9:
+			_fail("the same reading mid-flash reset the tint (g=%.2f): the strip never flashes" % label.modulate.g)
+	Motion.finish(label)
+	if label.text != "20%" or label.modulate.g < 0.99:
+		_fail("the flash did not land on its final text and colour ('%s', g=%.2f)" % [label.text, label.modulate.g])
 	label.queue_free()
 
 

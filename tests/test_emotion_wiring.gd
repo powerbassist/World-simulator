@@ -97,6 +97,7 @@ func _process(_delta: float) -> bool:
 			_check_appointments()
 			_check_vote_card()
 			_check_refusals()
+			_check_phone_greet()
 			_arm_phone()
 		5:
 			Click.half(root, _phone._close, true)
@@ -208,6 +209,14 @@ func _expect_blocked(panel: Node, what: String) -> void:
 	_fail("%s is not said as a BLOCKED line" % what)
 
 
+## #222 QA TAKE C (M12): the phone greets as it opens, as an audience does.
+func _check_phone_greet() -> void:
+	_phone.open({"name": "Cécile Aumont", "why_not": "", "levers": [], "topics": [], "choices": {},
+		"stance": "defend", "ask": "", "president": "Daniel Moucron", "voice": VOICE})
+	if not _phone._spoken.text.contains(String(VOICE["greet"]["text"])):
+		_fail("the phone did not greet as it opened: '%s'" % _phone._spoken.text)
+
+
 ## A line playing and one queued behind it, as on a call that has just been greeted.
 func _arm_phone() -> void:
 	_phone.closed.connect(func() -> void: _closed = true)
@@ -237,6 +246,17 @@ func _check_leave() -> void:
 	player.finished.emit()  # the playing line ends after Leave
 	if String(player.get_meta("next", "")) != "" or _scene._spoken.text.contains(String(VOICE["agree"]["text"])):
 		_fail("a line queued in the audience played after Leave (a real click)")
+	# QA TAKE A: End, then Leave at once -- whatever queued the farewell, it does not
+	# play once the scene is off screen.
+	_scene.hide()
+	_scene._spoken.text = ""
+	player.set_meta("pending", true)
+	AudienceVoice.say(_scene, _scene._spoken, VOICE, "farewell")
+	player.set_meta("pending", false)
+	player.finished.emit()
+	if _scene._spoken.text.contains(String(VOICE["farewell"]["text"])):
+		_fail("a farewell queued in the audience played with the scene off screen")
+	_scene.show()
 
 
 func _check_phone() -> void:
