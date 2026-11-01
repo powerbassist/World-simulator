@@ -21,12 +21,30 @@ const Strings = preload("res://src/ui/strings.gd")
 ## Durations, in seconds, and why each is that long. Under ~0.1 s a fade reads
 ## as a flicker; over ~0.25 s a window the player asked for feels slow to come.
 const OPEN_S := 0.16
-## A card is news, not a request: a touch longer than a window so the eye is
-## drawn to it, still well under the time it takes to read its title.
-const ARRIVE_S := 0.24
-## A figure rolling: long enough to see the direction of travel, short enough
-## to have settled before the next day tick at the fastest speed.
-const ROLL_S := 0.3
+## A card is news, not a request: longer than a window so the eye is drawn to
+## it, still well under the time it takes to read its title. V5.3-0 gate G8 (the
+## author saw no motion in thirty minutes): 0.24 s was over before the eye got
+## there; measured fade 0.21 s before, 0.36 s after.
+const ARRIVE_S := 0.4
+## A figure rolling: long enough to watch the digits travel. G8: 0.3 s landed
+## the text at 0.17 s (cubic ease-out), too fast to see; 0.7 s lands it at ~0.45 s.
+## The strip's figures move on the month, not the day, so a roll this long is
+## not cut short by the next day's refresh (and the same reading lets it land).
+const ROLL_S := 0.7
+## G8: the figure's status flash HOLDS its tone, then fades back -- 0.09 s of
+## visible tint before, a beat the eye could not catch; ~0.8 s after.
+const FLASH_HOLD_S := 0.4
+const FLASH_FADE_S := 0.5
+## G8: a result tag pops from 60 % with an overshoot (TRANS_BACK) -- it went
+## 0.98 to 1.0 before, an invisible 2 %. Small and brief: a word, not a banner.
+const POP_SCALE := 0.6
+const POP_S := 0.35
+## Long enough to cover the container sort's frame, short enough that the pop
+## is seen growing rather than fading.
+const POP_FADE_S := 0.1
+## G8: a card lands with the pulse tint and lets it go, so a new row reads as
+## new for a moment after its fade (no tint at all before).
+const LAND_S := 0.8
 ## The day pulse decays inside one day at speed 3, so consecutive pulses stay
 ## separate beats rather than a steady glow.
 const PULSE_S := 0.22
@@ -34,7 +52,8 @@ const PULSE_S := 0.22
 ## "opening" at 1080p without the content visibly swimming.
 const OPEN_SCALE := 0.97
 ## V5.3-0 4.5: the gap between two staggered arrivals (the briefing's priorities).
-const STAGGER_S := 0.06
+## G8: 0.06 s read as all at once; 0.15 s reads as three beats.
+const STAGGER_S := 0.15
 ## The pulse's tint: the brass accent over the text colour, so the beat is in
 ## the game's one accent and no second colour enters.
 const PULSE_TINT := Color(1.0, 0.86, 0.42)
@@ -203,6 +222,38 @@ static func arrive(control: Control, delay_s := 0.0) -> void:
 	tween.tween_property(control, "modulate:a", 1.0, ARRIVE_S)
 
 
+## A result tag popping in (G8): from POP_SCALE past full size and back, eased
+## with an overshoot. The pivot is read each step, because a tag that has just
+## appeared has no size until its container sorts it. That sort also resets the
+## scale to 1 before the first frame is drawn (#236 pass 1: full size, shrink,
+## pop), so the tag starts transparent and fades in over POP_FADE_S: the frame
+## the sort reset is not seen, the next step writes the pop again.
+static func pop(control: Control) -> void:
+	if not enabled():
+		return
+	control.scale = Vector2(POP_SCALE, POP_SCALE)
+	control.modulate.a = 0.0
+	var tween := _tween(control)
+	tween.set_parallel(true)
+	tween.tween_property(control, "modulate:a", 1.0, POP_FADE_S)
+	tween.tween_method(func(s: float):
+		control.pivot_offset = control.size * 0.5
+		control.scale = Vector2(s, s), POP_SCALE, 1.0, POP_S).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+
+## A card landing in a list (G8): arrive()'s fade, starting in the pulse tint and
+## letting it go over LAND_S (eased in, so the tint stays a moment, then clears).
+static func land(control: Control) -> void:
+	if not enabled():
+		return
+	control.modulate = Color(PULSE_TINT.r, PULSE_TINT.g, PULSE_TINT.b, 0.0)
+	var tween := _tween(control)
+	tween.set_parallel(true)
+	tween.tween_property(control, "modulate:a", 1.0, ARRIVE_S).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	for channel in ["modulate:r", "modulate:g", "modulate:b"]:
+		tween.tween_property(control, channel, 1.0, LAND_S).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+
+
 ## One beat on a label, brass to its own colour. The three colour channels
 ## only: alpha stays the caller's (the clock dims a paused date through it), so
 ## a refresh setting alpha mid-beat neither cancels the beat nor is undone by it.
@@ -255,9 +306,10 @@ static func roll_text(label: Label, text: String, tone := Color(0, 0, 0, 0)) -> 
 	tween.tween_callback(func(): label.text = text)
 	if tone.a > 0.0:
 		tween.tween_callback(func(): label.modulate = Color(tone.r, tone.g, tone.b, label.modulate.a))
-		tween.tween_property(label, "modulate:r", 1.0, PULSE_S)
-		tween.parallel().tween_property(label, "modulate:g", 1.0, PULSE_S)
-		tween.parallel().tween_property(label, "modulate:b", 1.0, PULSE_S)
+		tween.tween_interval(FLASH_HOLD_S)
+		tween.tween_property(label, "modulate:r", 1.0, FLASH_FADE_S)
+		tween.parallel().tween_property(label, "modulate:g", 1.0, FLASH_FADE_S)
+		tween.parallel().tween_property(label, "modulate:b", 1.0, FLASH_FADE_S)
 
 
 static var _number_re: RegEx

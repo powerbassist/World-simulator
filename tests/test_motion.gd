@@ -39,6 +39,7 @@ func _process(delta: float) -> bool:
 			_check_roll()
 			_check_open_and_finish()
 			_check_arrive_and_pulse()
+			_check_visible_amplitudes()
 			_check_window_manager_opens_through_motion()
 			_check_clock_beats()
 			# A stalled frame: a window building heavy content stops the main
@@ -292,6 +293,124 @@ func _check_clock_beats() -> void:
 
 func _fail(message: String) -> void:
 	_failures.append(message)
+
+
+## V5.3-0 gate G8, the author: "animation is written on in settings but i dont see
+## any ?". Measured in the exported build: the motion ran, but a figure's text
+## landed in 0.17 s, its flash showed for 0.09 s, a result tag grew 2 % and a card
+## had no tint -- too small to see. Pinned here by stepping each tween at 60 fps:
+## how long each move stays visibly away from rest, and how far it goes. And
+## Motion Off still lands every one at once.
+func _check_visible_amplitudes() -> void:
+	# A figure that rolls: still travelling a quarter-second in, and its status
+	# tone still showing well after the digits land.
+	var figure := Label.new()
+	root.add_child(figure)
+	figure.text = "41%"
+	Motion.roll_text(figure, "47%", Color(0.2, 0.8, 0.3))
+	var flashed := 0.0
+	var landed := -1.0
+	for i in 120:
+		_step(figure, 1.0 / 60.0)
+		var t := (i + 1) / 60.0
+		if landed < 0.0 and figure.text == "47%":
+			landed = t
+		if _off(figure.modulate) > 0.15:
+			flashed += 1.0 / 60.0
+	if landed < 0.3:
+		_fail("a rolling figure lands its text at %.2f s -- under 0.3 s the eye does not see it travel" % landed)
+	if flashed < 0.5:
+		_fail("a figure's status flash shows for %.2f s -- under 0.5 s it is missed" % flashed)
+	figure.queue_free()
+
+	# A result tag pops: from well under full size, past it, back to rest.
+	var tag := Label.new()
+	root.add_child(tag)
+	Motion.pop(tag)
+	var smallest := tag.scale.x
+	var largest := tag.scale.x
+	for i in 40:
+		_step(tag, 1.0 / 60.0)
+		smallest = minf(smallest, tag.scale.x)
+		largest = maxf(largest, tag.scale.x)
+	if smallest > 0.75 or largest <= 1.0 or not is_equal_approx(tag.scale.x, 1.0):
+		_fail("a result tag pops %.2f to %.2f, settling at %.2f: it must start under 0.75, overshoot, and rest at 1" % [smallest, largest, tag.scale.x])
+	tag.queue_free()
+
+	# In a container (where every tag lives), the sort that follows the tag's
+	# appearing resets its scale to 1 before the frame is drawn: that frame must
+	# not show the tag whole, or the pop reads full-size, shrink, pop (#236 pass 1).
+	var tag_row := HBoxContainer.new()
+	root.add_child(tag_row)
+	var boxed := Label.new()
+	boxed.text = "Good"
+	tag_row.add_child(boxed)
+	Motion.pop(boxed)
+	tag_row.notification(Container.NOTIFICATION_SORT_CHILDREN)
+	if boxed.modulate.a > 0.5 and boxed.scale.x > 0.9:
+		_fail("a tag popping in a container is drawn whole on its first frame (a=%.2f scale=%.2f) -- the sort reset the pop" % [boxed.modulate.a, boxed.scale.x])
+	Motion.finish(boxed)
+	if not is_equal_approx(boxed.modulate.a, 1.0) or not boxed.scale.is_equal_approx(Vector2.ONE):
+		_fail("a boxed tag's pop did not rest whole (a=%.2f scale=%s)" % [boxed.modulate.a, boxed.scale])
+	tag_row.queue_free()
+
+	# A card lands: faded in, and tinted for a visible moment after.
+	var card := PanelContainer.new()
+	root.add_child(card)
+	Motion.land(card)
+	var tinted := 0.0
+	for i in 90:
+		_step(card, 1.0 / 60.0)
+		if _off(card.modulate) > 0.15:
+			tinted += 1.0 / 60.0
+	if tinted < 0.4 or not card.modulate.is_equal_approx(Color(1, 1, 1, 1)):
+		_fail("a landing card is tinted %.2f s and rests at %s: it must read as new for 0.4 s, then rest white" % [tinted, card.modulate])
+	card.queue_free()
+
+	# The wiring that fails silently: the inbox lands its rows, a result tag pops.
+	var inbox = load("res://src/ui/inbox.gd").new()
+	root.add_child(inbox)
+	var row: Control = inbox._cards[inbox.push("Probe", "A note arrives.")]
+	if _off(row.modulate) < 0.15:
+		_fail("an inbox row arrived untinted -- the inbox no longer lands its rows through Motion.land")
+	inbox.queue_free()
+	var verdict := Label.new()
+	root.add_child(verdict)
+	load("res://src/ui/result_tone.gd").apply(verdict, "good")
+	if verdict.scale.x > 0.75:
+		_fail("a result tag appeared at scale %.2f -- ResultTone no longer pops it" % verdict.scale.x)
+	verdict.queue_free()
+
+	if Motion.STAGGER_S < 0.12:
+		_fail("the briefing's rows arrive %.2f s apart -- under 0.12 s they read as one" % Motion.STAGGER_S)
+
+	# Reduced motion: every one of them at rest at once.
+	Motion.override = 0
+	var still := Label.new()
+	root.add_child(still)
+	Motion.pop(still)
+	var still_card := PanelContainer.new()
+	root.add_child(still_card)
+	Motion.land(still_card)
+	still.text = "41%"
+	Motion.roll_text(still, "47%", Color(0.2, 0.8, 0.3))
+	var at_rest := still.scale.is_equal_approx(Vector2.ONE) and still_card.modulate.is_equal_approx(Color(1, 1, 1, 1))
+	if not at_rest or still.text != "47%" or _off(still.modulate) > 0.0:
+		_fail("Motion Off left a move under way (tag scale %s, card %s, figure '%s' %s)" % [still.scale, still_card.modulate, still.text, still.modulate])
+	still.queue_free()
+	still_card.queue_free()
+	Motion.override = 1
+
+
+func _step(node: Node, seconds: float) -> void:
+	if node.has_meta(&"motion_tween"):
+		var tween: Tween = node.get_meta(&"motion_tween")
+		if tween != null and tween.is_valid():
+			tween.custom_step(seconds)
+
+
+func _off(c: Color) -> float:
+	return maxf(absf(c.r - 1.0), maxf(absf(c.g - 1.0), absf(c.b - 1.0)))
 
 
 func _report() -> void:
