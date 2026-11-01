@@ -124,22 +124,21 @@ func _move_a_lever() -> void:
 	if absf(float(_state.player().spending_pct_gdp["health"]) - start) > 0.001:
 		_fail("moving a slider mutated live state: health is now %s" % _state.player().spending_pct_gdp["health"])
 
-	# V4.2 ultra pass 2: an uncommitted TAX edit must reach the proposed column
-	# and the projection. The blindness the review named: with the levers moved
-	# to the Tax Code window, the budget panel's _pending carried no tax keys,
-	# so proposed == now on Revenue/Deficit while the player's largest revenue
-	# lever sat half-drafted on X.
+	# V4.2 ultra pass 2 made an uncommitted TAX edit reach the proposed column (the
+	# panel was blind to it); since V5.3 a + b (the parent's call on #247) the
+	# columns are what THIS tab's Commit books, and the draft is never blind either:
+	# it is the strip's own line, with a Go to the Tax Code.
 	var revenue_before_tax: String = _panel._figures["revenue"][1]
 	var deficit_before_tax: String = _panel._figures["deficit"][1]
 	var income_before: float = float(_state.player().tax_rates_pct["income"])
 	_tax_panel._sliders["income"].value = income_before + 10.0
 	if not _tax_panel._edited_keys.has("income"):
-		_fail("the tax panel's slider edit never reached _edited_keys -- pending_tax() would return empty")
+		_fail("the tax panel's slider edit never reached _edited_keys -- draft() would return empty")
 	_panel._refresh()
-	if _panel._figures["revenue"][1] == revenue_before_tax:
-		_fail("a staged tax edit left the proposed revenue column unchanged -- the budget panel is blind to tax intent")
-	if _panel._figures["deficit"][1] == deficit_before_tax:
-		_fail("a staged tax edit left the proposed deficit unchanged -- the projection is tax-identical too")
+	if _panel._figures["revenue"][1] != revenue_before_tax or _panel._figures["deficit"][1] != deficit_before_tax:
+		_fail("a staged tax edit moved the Budget's columns, which the Budget's Commit does not book")
+	if not _panel._strip.elsewhere_label.is_visible_in_tree() or not _panel._strip.elsewhere_label.text.contains("Tax Code"):
+		_fail("a staged tax edit is silent on the Budget: '%s'" % _panel._strip.elsewhere_label.text)
 	# The now column is the live position: the panel previews, it does not write.
 	if absf(float(_state.player().tax_rates_pct["income"]) - income_before) > 0.001:
 		_fail("staging the tax edit moved live state: income is now %s" % _state.player().tax_rates_pct["income"])

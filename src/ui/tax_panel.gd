@@ -28,8 +28,9 @@ const C = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const Statute = preload("res://src/sim/statute.gd")
 const SK = preload("res://src/sim/statute_constants.gd")
+const TaxCompose = preload("res://src/ui/tax_compose.gd")
+const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 
 ## The one lever that is not a key in `tax_rates_pct`: it sets no rate, has
 ## no base and collects nothing -- budget_panel's PROGRESSIVITY_KEY comment,
@@ -83,18 +84,26 @@ var _bases_box: VBoxContainer
 var _dirty := true
 var _close_button: Button
 var _commit_button: Button
-
-# The compose flow's controls, built once in _ready() and hidden until asked
-# for. The brief's own boundary: the GENERAL compose window is not this task --
-# a name, a key, the three tax params, the same birth gates, ONE draft button.
-var _compose_box: VBoxContainer
-var _draft_name: LineEdit
-var _draft_key: LineEdit
-var _base_slider: HSlider
-var _erosion_slider: HSlider
-var _rate_slider: HSlider
-var _yield_label: Label
-var _refusal: Label
+## V5.3 a + b (docs/design/v5.3-ab.md 4.1): each row's yield on the books as they
+## stand and its balance effect once moved, and the strip that says what Commit
+## books -- read in the tab where the rate is made. `_effects` is the panel's own
+## figure per key (EffectsStrip.COMMIT for the strip), read by tests/test_effects_strip.gd
+## beside the text each cell prints (band B1). `_now_books` is the books with
+## nothing pending, kept across a drag (a drag cannot move them) and dropped on
+## anything that can.
+var _strip: EffectsStrip
+var _effect_labels := {}
+var _yield_labels := {}
+var _effects := {}
+var _fx_cache := {}
+var _now_books := {}
+## The Budget window and the window manager, wired by main.gd: the Budget's draft
+## is one line under this tab's strip, with a Go there (the mirror of the
+## Budget's line about this tab's draft). Null until wired; every read guards it.
+var budget_panel = null
+var windows = null
+## The compose flow (tax_compose.gd), held for the tests that drive it.
+var _compose
 
 
 func _ready() -> void:
@@ -111,6 +120,13 @@ func _ready() -> void:
 
 	_title = Label.new()
 	root.add_child(_title)
+	_strip = EffectsStrip.new()
+	_strip.go_pressed.connect(func() -> void:
+		if windows != null:
+			windows.open("budget"))
+	# Its figure beside its caption: the rows below are a third of the window wide.
+	_strip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	root.add_child(_strip)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -121,17 +137,23 @@ func _ready() -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(body)
 
-	PanelKit.line(body, tr("Rates (%, and brackets within income)"), PanelKit.Tone.PLAIN)
 	_rates_grid = GridContainer.new()
-	_rates_grid.columns = 3
+	_rates_grid.columns = 5
 	_rates_grid.add_theme_constant_override("h_separation", 12)
 	body.add_child(_rates_grid)
+	for text in ["", "", tr("rate"), tr("yield, bn"), tr("change")]:
+		var head := Label.new()
+		head.text = text
+		head.theme_type_variation = PanelKit.UiTheme.CAPTION
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_rates_grid.add_child(head)
 
 	_bases_box = VBoxContainer.new()
 	_bases_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(_bases_box)
 
-	body.add_child(_build_compose())
+	_compose = TaxCompose.new(self)
+	body.add_child(_compose)
 
 	root.add_child(_build_buttons())
 
@@ -169,91 +191,8 @@ func _ensure_rows() -> void:
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		_rates_grid.add_child(value_label)
 		_lever_values[key] = value_label
-
-
-func _build_compose() -> Control:
-	var outer := VBoxContainer.new()
-	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var open_row := HBoxContainer.new()
-	outer.add_child(open_row)
-	var open_btn := Button.new()
-	open_btn.text = tr("Propose a tax")
-	open_btn.pressed.connect(func():
-		_compose_box.visible = not _compose_box.visible
-		_refusal.hide())
-	open_row.add_child(open_btn)
-
-	_compose_box = VBoxContainer.new()
-	_compose_box.add_theme_constant_override("separation", 8)
-	_compose_box.hide()
-	outer.add_child(_compose_box)
-
-	PanelKit.line(_compose_box, tr("A new key is born by a bill: name it, set its base and its birth rate, and draft. When the drafting completes the bill waits on your Propose in the Legislature -- the key prices nothing until the act carries."), PanelKit.Tone.PLAIN)
-
-	var fields := HBoxContainer.new()
-	fields.add_theme_constant_override("separation", 12)
-	_compose_box.add_child(fields)
-	_draft_name = LineEdit.new()
-	_draft_name.placeholder_text = tr("Name (e.g. The Carbon Levy)")
-	_draft_name.custom_minimum_size.x = 240
-	fields.add_child(_draft_name)
-	_draft_key = LineEdit.new()
-	_draft_key.placeholder_text = tr("key (e.g. carbon)")
-	_draft_key.custom_minimum_size.x = 160
-	fields.add_child(_draft_key)
-
-	var params := GridContainer.new()
-	params.columns = 3
-	params.add_theme_constant_override("h_separation", 12)
-	_compose_box.add_child(params)
-	_base_slider = _param_slider(params, tr("Base (% of GDP)"), 0.0, SK.NEW_TAX_BASE_SHARE_MAX, 0.01, 0.5)
-	_erosion_slider = _param_slider(params, tr("Erosion"), 0.0, SK.NEW_TAX_EROSION_MAX, 0.01, 0.4)
-	_rate_slider = _param_slider(params, tr("Birth rate (%)"), 0.0, SK.NEW_TAX_RATE_MAX, 0.1, 10.0)
-	for slider: HSlider in [_base_slider, _erosion_slider, _rate_slider]:
-		slider.value_changed.connect(_on_param_changed)
-
-	# The product the revenue formula actually reads is base x rate, and the
-	# birth gate refuses past NEW_TAX_YIELD_CEILING -- showing the product
-	# while the player aims is the difference between a refusal and a choice.
-	_yield_label = Label.new()
-	_compose_box.add_child(_yield_label)
-
-	var draft_row := HBoxContainer.new()
-	draft_row.alignment = BoxContainer.ALIGNMENT_END
-	_compose_box.add_child(draft_row)
-	var draft_btn := Button.new()
-	draft_btn.text = tr("Draft the bill")
-	draft_btn.pressed.connect(_on_draft)
-	draft_row.add_child(draft_btn)
-
-	_refusal = Label.new()
-	_refusal.hide()
-	outer.add_child(_refusal)
-
-	_on_param_changed(0.0)
-	return outer
-
-
-func _param_slider(grid: GridContainer, label: String, min_v: float, max_v: float, step: float, initial: float) -> HSlider:
-	var caption := Label.new()
-	caption.text = label
-	caption.custom_minimum_size.x = 150
-	grid.add_child(caption)
-	var slider := HSlider.new()
-	slider.min_value = min_v
-	slider.max_value = max_v
-	slider.step = step
-	slider.value = initial
-	slider.custom_minimum_size.x = 220
-	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	grid.add_child(slider)
-	var value := Label.new()
-	value.custom_minimum_size.x = 60
-	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	grid.add_child(value)
-	slider.set_meta("value_label", value)
-	return slider
+		_yield_labels[key] = EffectsStrip.cell(_rates_grid)
+		_effect_labels[key] = EffectsStrip.cell(_rates_grid)
 
 
 func _build_buttons() -> Control:
@@ -354,6 +293,7 @@ func _on_revert() -> void:
 		slider.value = _pending_value(String(key))
 		slider.set_block_signals(false)
 	_edited_keys.clear()
+	_now_books = {}
 	_dirty = true
 
 
@@ -365,14 +305,25 @@ func _on_commit() -> void:
 	committed.emit(before, pending)
 
 
-## The uncommitted tax intent, for the budget panel's now-vs-proposed columns
-## and 24-month projection to price -- the ultra pass-2 wiring (without it the
-## budget panel's proposed column asserted "no change" while the player's
-## largest revenue lever sat half-drafted on X). EDITED KEYS ONLY, mirroring
-## what the player actually moved: Budget.commit() splices per key and an
-## untouched lever's pending value is just the live rate restated, so an empty
-## return is the harmless case -- the merge writes nothing. Read-only; the
-## commit is still this panel's own verb.
+## What this tab's Commit would book, or nothing while no rate stands away from
+## its live value -- read by the Budget for its line about this draft (V4.2's
+## ultra pass 2 merged it into the Budget's columns; V5.3 a + b made it a line).
+func draft() -> Dictionary:
+	for key in _edited_keys:
+		if _pending_value(String(key)) != _live(String(key)):
+			return pending_tax()
+	return {}
+
+
+func _live(key: String) -> float:
+	var ns = _state.player()
+	return float(ns.tax_progressivity) if key == PROGRESSIVITY_KEY else float(ns.tax_rates_pct.get(key, 0.0))
+
+
+## The uncommitted tax intent, EDITED KEYS ONLY, mirroring what the player
+## actually moved: Budget.commit() splices per key and an untouched lever's
+## pending value is just the live rate restated. Read-only; the commit is still
+## this panel's own verb.
 func pending_tax() -> Dictionary:
 	var out := {"tax_rates_pct": {}}
 	for key in _edited_keys:
@@ -409,6 +360,7 @@ func _process(_delta: float) -> void:
 
 func mark_dirty() -> void:
 	_resync_untouched()
+	_now_books = {}
 	_dirty = true
 
 
@@ -452,6 +404,32 @@ func _refresh() -> void:
 	_ensure_rows()
 	for key in _lever_keys():
 		_lever_values[key].text = _lever_text(String(key))
+	if _now_books.is_empty():
+		_now_books = EffectsStrip.books(_state, {})
+	for key in _lever_keys():
+		_yield_labels[key].text = EffectsStrip.yield_text(_now_books, String(key))
+	# Each moved rate priced alone, and the strip on what Commit books (the edited
+	# keys: an untouched row's pending is its live rate restated).
+	# A rate dragged back to its live value is not a move: no cell, no strip.
+	var alone := {}
+	for key in _edited_keys:
+		if _pending_value(String(key)) == _live(String(key)):
+			continue
+		alone[key] = {"tax_rates_pct": {}}
+		if String(key) == PROGRESSIVITY_KEY:
+			alone[key][PROGRESSIVITY_KEY] = _pending_value(PROGRESSIVITY_KEY)
+		else:
+			alone[key]["tax_rates_pct"][key] = _pending_value(String(key))
+	if not alone.is_empty():
+		alone[EffectsStrip.COMMIT] = pending_tax()
+	var spending_draft: Dictionary = budget_panel.draft() if budget_panel != null else {}
+	if not spending_draft.is_empty():
+		alone[EffectsStrip.ELSEWHERE] = spending_draft
+	_effects = EffectsStrip.per_key(_fx_cache, _state, _now_books, alone, alone.get(EffectsStrip.COMMIT, {}), {})
+	EffectsStrip.paint(_effect_labels, _effects)
+	_strip.show_effects(float(_effects.get(EffectsStrip.COMMIT, 0.0)), "", "", _effects.has(EffectsStrip.COMMIT),
+		tr("Spending changes not yet committed: %s a year, in the Budget") % EffectsStrip.money_text(_effects[EffectsStrip.ELSEWHERE])
+		if _effects.has(EffectsStrip.ELSEWHERE) else "", float(_effects.get(EffectsStrip.ELSEWHERE, 0.0)))
 	_fill_bases()
 
 
@@ -475,46 +453,6 @@ func _fill_bases() -> void:
 		PanelKit.line(_bases_box, tr("%s — base %s%% of GDP, erosion %s, born at %s. Its rate sits in the grid above.") % [
 			String(params.get("name", key)), PanelKit.Num.f(float(params.get("base_share", 0.0)), 2),  # i18n: row-ok a composed tax's name, not a data row
 			PanelKit.Num.f(float(params.get("erosion", 0.0)), 2), PanelKit.Num.f(float(params.get("ref_pct", 0.0)), 1)], PanelKit.Tone.DIM)
-
-
-func _on_param_changed(_value: float) -> void:
-	_set_param_text(_base_slider)
-	_set_param_text(_erosion_slider)
-	_set_param_text(_rate_slider)
-	_yield_label.text = tr("Would yield %s%% of GDP at birth (the most the model prices: %s).") % [
-		PanelKit.Num.f(_base_slider.value * _rate_slider.value, 2), PanelKit.Num.f(SK.NEW_TAX_YIELD_CEILING, 1)]
-
-
-func _set_param_text(slider: HSlider) -> void:
-	var value: Label = slider.get_meta("value_label")
-	value.text = PanelKit.Num.f(slider.value, 2)
-
-
-## The birth. The gates are Statute.draft()'s -- this panel adds none, shows
-## every refusal the machine returns, and on acceptance opens the briefing on
-## the parked draft (its price and its drafting months are what the player
-## just bought with the press).
-func _on_draft() -> void:
-	var ns = _state.player()
-	var spec := {
-		"name": _draft_name.text.strip_edges(),
-		"position": {"economic": 0.0, "social": 0.0},
-		"channels": {},
-		"new_tax": {
-			"key": _draft_key.text.strip_edges(),
-			"name": _draft_name.text.strip_edges(),
-			"base_share": _base_slider.value,
-			"erosion": _erosion_slider.value,
-			"rate": _rate_slider.value,
-		},
-	}
-	var result: Dictionary = Statute.draft(_state, ns, _loader, spec)
-	if not bool(result.get("ok", false)):
-		_refusal.text = String(result.get("refusal", tr("Refused.")))
-		_refusal.show()
-		return
-	_refusal.hide()
-	brief_requested_draft.emit(ns.draft_bills[String(result["draft_id"])], String(result["draft_id"]))
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold

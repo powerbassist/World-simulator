@@ -118,7 +118,7 @@ func _check_a_lever_waits_for_quiet(forecast) -> void:
 	if forecast._job == null and forecast.busy():
 		_fail("the levers were still for %d frames and no projection began" % Forecast.QUIET_FRAMES)
 	forecast.drain()
-	var pending: Dictionary = _panel._merged_pending()
+	var pending: Dictionary = _panel._pending
 	if _json(forecast.proposed_path()) != _json(Budget.project(_state, pending, BudgetPanel.PROJECTION_MONTHS, _loader)):
 		_fail("the forecast's proposed path is not Budget.project() of the panel's pending")
 

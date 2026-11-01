@@ -160,15 +160,15 @@ func _run() -> void:
 
 	# --- (b) "Propose a tax" opens the birth flow and drafts ---------------
 	_press(_find_button(panel, "Propose a tax"))
-	if not panel._compose_box.visible:
+	if not panel._compose._compose_box.visible:
 		_fail("Propose a tax did not open the composition flow")
-	panel._draft_name.text = "The Digital Levy"
-	panel._draft_key.text = "digital"
-	panel._base_slider.value = 0.3
-	panel._erosion_slider.value = 0.5
-	panel._rate_slider.value = 12.0
+	panel._compose._draft_name.text = "The Digital Levy"
+	panel._compose._draft_key.text = "digital"
+	panel._compose._base_slider.value = 0.3
+	panel._compose._erosion_slider.value = 0.5
+	panel._compose._rate_slider.value = 12.0
 	var debt_before_draft: float = ns.debt_eur_bn
-	panel._on_draft()
+	panel._compose._on_draft()
 	if ns.draft_bills.is_empty():
 		_fail("the draft button drafted nothing")
 	if not briefing.visible:
@@ -181,9 +181,9 @@ func _run() -> void:
 	if absf(ns.debt_eur_bn - debt_before_draft) > 1e-9:
 		_fail("drafting a bill moved money -- only a passed poll or act may")
 	# The refusal is the panel's to show, verbatim from the machine.
-	panel._draft_key.text = "income"
-	panel._on_draft()
-	if not panel._refusal.visible:
+	panel._compose._draft_key.text = "income"
+	panel._compose._on_draft()
+	if not panel._compose._refusal.visible:
 		_fail("a refused draft showed no refusal line")
 
 	# --- (c) The briefing on Propose: channels, price, offended blocs ------
