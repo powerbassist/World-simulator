@@ -18,11 +18,15 @@ extends PanelContainer
 ## the rivals in one sector and nowhere else. A player who cannot see who the
 ## rivals are cannot see what the button does.
 ##
-## V1.6e HANGS ITS WHOLE SURFACE ON THAT GROUPING AND ADDS NO WINDOW. The sector
-## lever is pointed at exactly the heading _build_sector() was already printing, so
-## the readout and the two verbs go under it and the action bar does not grow. What
-## did have to change is the lead: this panel is no longer only the private sector,
-## because the state's own programme is now on it.
+## V1.6e HANGS ITS WHOLE SURFACE ON THAT GROUPING AND ADDS NO WINDOW: the sector
+## programme sits in its sector, beside the firms it competes with for growth.
+##
+## V5.3 a + b step 2 (docs/design/v5.3-ab.md 3.2) TURNED THE GROUPS INTO CARDS, the
+## readability gate's "Industry: lisible NON" answered: what is under way first
+## (industry_progress.gd), then three sector cards closed until opened
+## (industry_card.gd), a major's verbs one Act away (industry_verbs.gd). This file
+## keeps what the player has opened, the commands, and the rows that are not a
+## sector's: the bid, the failing firms, the public account.
 ##
 ## It also stops returning early on an empty firm register. A nation with no
 ## data/companies/<ID>.json still has three sectors and can still invest in them --
@@ -48,10 +52,6 @@ const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
-
-# Labels' table, read once: its own preload line went to Processes' at V5.3 a
-# (the size ratchet holds this file at 300 code lines).
-const SECTOR_LABEL := preload("res://src/ui/labels.gd").SECTOR
 
 var _state
 var _loader

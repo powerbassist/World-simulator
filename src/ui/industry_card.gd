@@ -188,13 +188,17 @@ static func _body(panel, card: Control, ns, sector: String, body: Array) -> void
 	fold.flat = true
 	fold.text = Strings.tn("%d smaller firm · %s jobs", "%d smaller firms · %s jobs", body.size()) % [body.size(), CompanyVerb.thousands(jobs)]
 	fold.toggle_mode = true
+	fold.set_meta("fold", key)
 	fold.button_pressed = panel._open_body == key
 	fold.pressed.connect(func() -> void: panel._toggle("_open_body", key))
 	card.add_child(fold)
 	if panel._open_body != key:
 		return
+	var live := {}
+	for company in body:
+		live[company.id] = Companies.headcount(ns, company)
 	var ranked := body.duplicate()
-	ranked.sort_custom(func(a, b): return Companies.headcount(ns, a) > Companies.headcount(ns, b))
+	ranked.sort_custom(func(a, b): return float(live[a.id]) > float(live[b.id]))
 	for i in mini(5, ranked.size()):
 		PanelKit.plain_line(card, Strings.t("%s · %s jobs") % [
-			ranked[i].company_name, CompanyVerb.thousands(Companies.headcount(ns, ranked[i]))])
+			ranked[i].company_name, CompanyVerb.thousands(float(live[ranked[i].id]))])

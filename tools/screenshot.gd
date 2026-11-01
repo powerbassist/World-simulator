@@ -2007,7 +2007,7 @@ func _stage_the_industry_tab() -> void:
 	panel._open_sector = String(majors[0].sector)
 	panel._open_firm = String(majors[0].id)
 	for action in Companies.available(state, ns, loader.company_actions, String(majors[0].id), loader):
-		if Companies.refusal_reason(state, ns, action, String(majors[0].id), loader) == "" 				and not processes.blocks(ns, String(majors[0].id), action):
+		if preload("res://src/ui/company_verb.gd").refusal(state, loader, ns, majors[0], action) == "":
 			panel._focus_verb = String(action.id)
 			break
 	panel.mark_dirty()

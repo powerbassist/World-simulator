@@ -40,7 +40,8 @@ static func build(panel, parent: Control, ns, company) -> void:
 		var selector := CompanyVerb.button(state, loader, ns, company, action)
 		selector.set_meta("action_id", id)
 		row.add_child(selector)
-		var money: Array = money_line(state, loader, ns, company, action)
+		var est: Dictionary = Processes.estimate(state, ns, loader, action, String(company.id)) if Processes.is_process(action) else {}
+		var money: Array = money_line(state, loader, ns, company, action, est)
 		var money_label := PanelKit.plain_line(row, String(money[1]), PanelKit.Tone.PLAIN)
 		money_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		money_label.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(float(money[2])))
@@ -62,7 +63,7 @@ static func build(panel, parent: Control, ns, company) -> void:
 		detail.add_child(strip)
 		strip.show_lines(String(money[0]), String(money[1]), float(money[2]),
 			EffectsStrip.who_text(action.effects.get("bloc_offset", {})),
-			when_text(state, loader, ns, company, action))
+			when_text(action, est))
 		var go := PanelKit.sized(Button.new())
 		go.text = Strings.t("Go")
 		go.set_meta("go", true)
@@ -83,10 +84,9 @@ static func _show(panel, details: Dictionary, id: String) -> void:
 ## [caption, text, gain]: what the verb does to the public purse, printed. A process
 ## is a range on the debt (the truth's fog, A4); a firm verb its one-off price and
 ## the yearly subsidy bill it moves, from a preview on a copy.
-static func money_line(state, loader, ns, company, action) -> Array:
+static func money_line(state, loader, ns, company, action, est: Dictionary) -> Array:
 	var caption := Strings.t("Treasury")
 	if Processes.is_process(action):
-		var est: Dictionary = Processes.estimate(state, ns, loader, action, String(company.id))
 		var lo := -maxf(float(est["price_lo"]), float(est["price_hi"]))
 		var hi := -minf(float(est["price_lo"]), float(est["price_hi"]))
 		return [caption, EffectsStrip.range_text(lo, hi), hi]
@@ -97,14 +97,17 @@ static func money_line(state, loader, ns, company, action) -> Array:
 		return [caption, Strings.t("%s once, %s a year") % [EffectsStrip.money_text(once), EffectsStrip.money_text(yearly)], yearly]
 	if absf(yearly) >= 0.05:
 		return [caption, Strings.t("%s a year") % EffectsStrip.money_text(yearly), yearly]
-	return [caption, Strings.t("%s once") % EffectsStrip.money_text(once), once]
+	if absf(once) >= 0.05:
+		return [caption, Strings.t("%s once") % EffectsStrip.money_text(once), once]
+	# A verb that moves no money says so in words, not as "0.0 bn".
+	return [caption, Strings.t("No cost to the treasury."), 0.0]
 
 
-## When it lands and what can go wrong, in whole sentences.
-static func when_text(state, loader, ns, company, action) -> String:
+## When it lands and what can go wrong, in whole sentences; `est` is the process's
+## Processes.estimate(), {} for a firm verb.
+static func when_text(action, est: Dictionary) -> String:
 	var out := PackedStringArray()
 	if Processes.is_process(action):
-		var est: Dictionary = Processes.estimate(state, ns, loader, action, String(company.id))
 		var lo := int(est["months_lo"])
 		var hi := int(est["months_hi"])
 		if lo == hi:

@@ -52,6 +52,10 @@ func _process(_delta: float) -> bool:
 			_press(_button_with_meta("sector", _sector))
 		6:
 			_check_sector_open()
+			_press(_button_with_meta("fold", "body:" + _sector))
+			_press(_button_with_meta("ledger", "ledger"))
+		7:
+			_check_folds()
 			_press(_button_with_meta("company_id", String(_major.id)))
 		8:
 			_check_verbs()
@@ -98,6 +102,22 @@ func _check_sector_open() -> void:
 		_fail("%s open: %d Act buttons, expected one per major (%d)" % [_sector, acts.size(), want])
 	if not _visible_with_meta("action_id").is_empty():
 		_fail("%s open: a verb is on screen before Act was pressed" % _sector)
+
+
+## The two folds open on a press: the body list names its largest firm, the public
+## account its first row.
+func _check_folds() -> void:
+	var ns = _main._state.player()
+	var largest = null
+	for company in Companies.firms_in_sector(_main._loader, ns.id, _sector):
+		if not Companies.is_major(company) and (largest == null
+				or Companies.headcount(ns, company) > Companies.headcount(ns, largest)):
+			largest = company
+	var text := _text_under(_panel._body)
+	if largest != null and not text.contains(String(largest.company_name)):
+		_fail("body fold pressed: its largest firm %s is not listed" % largest.company_name)
+	if not text.contains(_panel.tr("Subsidy bill")):
+		_fail("public account pressed: its rows are not on screen")
 
 
 ## Act opened: one selector per verb on offer, each with its money line; no strip
