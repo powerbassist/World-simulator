@@ -1518,6 +1518,13 @@ var audience_asked_month := {}
 ## a process, so an absent register reads "nothing in progress", the truth.
 var processes: Array[Dictionary] = []
 
+# --- Sectors (V5.3 a) ---------------------------------------------------------------
+## line -> {sector id -> share}: the spending lines whose sector shares the player
+## has MOVED (src/sim/sectors.gd, its one writer), and only those -- never a copy of
+## the start shares, which are content (data/domains/) and read from the loader.
+## absent_ok, no bump: absent is "nothing moved", the truth for every older save.
+var sector_shares := {}
+
 ## V5.2b b3. person id -> the absolute month the president last phoned them: one
 ## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no
 ## bump: before b3 nobody was called, which is what absent reads.
