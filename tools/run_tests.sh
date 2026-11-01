@@ -92,6 +92,7 @@ tests=(
   tests/test_companies.gd
   # V5.3 a, A3 + A4: the ownership and structure verbs as processes.
   tests/test_processes.gd
+  tests/test_process_asks.gd
   # V4.7a: the two-tier register -- tiers, sparse fallback reads, and the
   # from_dict alias fix's mutation + lossless-roundtrip pins.
   tests/test_companies_tiers.gd

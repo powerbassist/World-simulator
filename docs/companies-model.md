@@ -1369,6 +1369,26 @@ it lands and the dividend keeps its one-month lag.
 - **One process per firm.** `Processes.blocks()` greys the other ownership verbs and
   the foreign bid's allow. `Bills._bills_for` offers no ownership bill on a firm
   already in a process.
+- **Each stage asks** (the author's call on #244, `src/sim/process_asks.gd`). Every
+  process puts one question to the player at its key stage. The ask is posted in that
+  stage's last month and is due when the stage ends, so a player who never answers gets
+  the default and the timetable above is unchanged:
+  - the stake's final price: accept (the default) or walk away;
+  - the nationalisation's offer: pay (the default) or stop with the break fee;
+  - a ruling for the break-up, contested by the firm: press on (the default), or
+    settle. In a settlement the firm pays a fine of 5 % of its value, the bloc move is
+    halved, and the firm stays intact. A firm the authority clears is asked nothing.
+    The ruling is drawn when its ask is posted, so from then on the investigation can
+    no longer be stopped, as after any ruling. A firm that settled is not referred
+    again for 36 months (`PROCESS_SETTLED_COOLDOWN_MONTHS`; `Processes.refusal`,
+    `SETTLED`, shown before the press): it stays intact, so an immediate second
+    referral would collect the fine again;
+  - the privatisation's best bid: accept (the default) or hold three months for a new
+    bid, priced at the discount the cycle gives then. A sale is held once at most:
+    the new bid asks nothing, so the sale ends inside the nine months its strip shows.
+  Each answer carries the debt it books once and the bloc offsets it moves. That makes
+  the ask a B7 decision arrival (`decision_surfaces_probe.gd --density`, source
+  `process`), and the card the UI draws reads these figures.
 - **The save.** `ns.processes` is `absent_ok`, with no bump: no save made before
   V5.3 a could hold a process, so an absent register reads "nothing in progress",
   which is the truth.
@@ -1376,8 +1396,7 @@ it lands and the dividend keeps its one-month lag.
 Measured by `tests/test_processes.gd` (every kind, the stops, the gate, the void, the
 round trip) and by `tools/companies_probe.gd --processes` (the four playable nations,
 every verb on the real machine). Not built: the transition's 4 % output dip, because
-`companies.gd` is at its size ratchet, so it needs its own channel; and which stages
-ask the player something.
+`companies.gd` is at its size ratchet, so it needs its own channel (a follow-up).
 
 ---
 
