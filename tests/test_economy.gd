@@ -12,8 +12,10 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Investment = preload("res://src/sim/investment.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const CycleK = preload("res://src/sim/cycle_constants.gd")
+const RK = preload("res://src/core/relations.gd")
 
 const MONTHS := 120
 
@@ -38,6 +40,7 @@ func _init() -> void:
 	_check_gap_closes()
 	_check_sector_drift()
 	_check_the_cycle_does_not_diverge()
+	_check_sector_trend_query()
 
 	_finish()
 
@@ -255,6 +258,26 @@ func _check_the_cycle_does_not_diverge() -> void:
 func _silence_the_cycle(state) -> void:
 	for ns in state.nations.values():
 		ns.cycle_amplitude_rel = 0.0
+
+
+
+## V5.3 a: Economy.sector_trend_pct() is the rate the month's growth applies to each
+## sector (the Industry card's "trend against the nation's"), read by the same
+## function the tick calls, so the card cannot drift from the growth. Pinned with a
+## potential shift and a trade agreement's shift both non-zero, so a query that
+## dropped a term fails.
+func _check_sector_trend_query() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	ns.potential_shift_pct = 0.3
+	state.agreements[RK.key("FRA", "DEU")] = {"sector_shift": {"agriculture": -0.2, "industry": 0.4, "services": -0.2}}
+	var trade := {"agriculture": -0.2, "industry": 0.4, "services": -0.2}
+	for sector in C.SECTOR_TREND:
+		var investment := float(Investment.sector_trend_shift(ns).get(sector, 0.0))
+		var want: float = float(C.SECTOR_TREND[sector]) + 0.3 + float(trade[sector]) + investment
+		var got := Economy.sector_trend_pct(state, ns, sector)
+		if got != want:
+			_fail("sector_trend_pct(%s) = %.6f, the growth's rate is %.6f" % [sector, got, want])
 
 
 func _finite(where: String, field: String, value: float) -> void:
