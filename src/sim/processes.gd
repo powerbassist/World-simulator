@@ -82,7 +82,10 @@ static func blocks(ns, company_id: String, action) -> bool:
 ## duration range in months, the price range on the debt (signed: a windfall is
 ## negative) and, for a break-up, the ruling's odds with the range shown.
 static func estimate(state, ns, loader, action, company_id: String) -> Dictionary:
-	var value := Companies.value_eur_bn(ns, _company(ns, loader, company_id))
+	var company = _company(ns, loader, company_id)
+	if company == null or not is_process(action):
+		return {}
+	var value := Companies.value_eur_bn(ns, company)
 	var held := Companies.state_share_of(ns, company_id)
 	var stake := float((action.effects.get("company", {}) as Dictionary).get("stake", 1.0))
 	match String(action.id):
@@ -101,7 +104,7 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 			return {"base_eur_bn": base, "price_lo": -base, "price_hi": -base * (1.0 - K.PROCESS_PRIVATISE_DISCOUNT.y),
 				"months_lo": K.PROCESS_SALE_MONTHS, "months_hi": K.PROCESS_SALE_MONTHS}
 		"break_up":
-			var odds := odds_for(Companies.share_of_company(ns, _company(ns, loader, company_id)))
+			var odds := odds_for(Companies.share_of_company(ns, company))
 			return {"base_eur_bn": 0.0, "price_lo": K.PROCESS_LEGAL_COST_EUR_BN, "price_hi": K.PROCESS_LEGAL_COST_EUR_BN,
 				"months_lo": K.PROCESS_INVESTIGATION_MONTHS.x,
 				"months_hi": K.PROCESS_INVESTIGATION_MONTHS.y + K.PROCESS_REMEDY_MONTHS,
