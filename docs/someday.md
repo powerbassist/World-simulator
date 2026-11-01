@@ -364,6 +364,54 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Not now: calibrate the formulas against the real world (2026-11-01)
+
+### Calibrate the simulation's formulas against the real world
+
+The author's ask, 2026-11-01, relayed by the parent: make the simulation's formulas closer to the real world, but **"pas tout de suite"**: not now, after V5.3. The growth, Okun, tax-erosion, debt-service and inflation constants are hand-tuned and have never been compared to real series; the balance table checks that the game plays, not that it matches the world.
+
+**A correction to the prompt's premise, found when writing this entry.** Step 1 of the prompt below says population growth is "one flat 0.15 %/yr for every nation". That was true until V1.5b, which **deleted** `economy_constants.POP_GROWTH_PCT` ([[demography-model]], section 6; [[economy-model]]). Today each nation carries its own `pop_growth_pct`, read off `imported.cohorts` (a World Bank series, 2015 to 2024, from Italy's -0.238 to Luxembourg's +1.938), compounded monthly in `src/sim/economy.gd`, with `src/core/nation.gd` bounding it at load. What is still true is the weaker claim: the rate is a **fixed, backward-looking figure for the whole run**, not a projection, and it is not compared to UN WPP or Eurostat forward series. The session that runs the prompt should open with that in step 1 and not hunt for the deleted constant. The prompt is otherwise kept verbatim.
+
+**Trigger:** V5.3's close, or the author asking for it. **Owner:** Gameplay for the note, then Systems. **Output:** `docs/design/calibration.md`; no code until the author picks, and every moved sim number needs his acceptance before a merge.
+
+The ready-to-run prompt, verbatim (from `.superpowers/sdd/someday-calibration-prompt.md`, gitignored):
+
+```text
+Nation Simulator (Godot 4.7, GDScript; read AGENTS.md first). Goal: make the
+simulation's formulas closer to the real world WITHOUT losing playability, and
+decide which formulas to change first.
+
+1. Prior work: read docs/economy-model.md (POP_GROWTH_PCT, one flat 0.15 %/yr
+   for every nation), docs/demography-model.md and the other docs/*-model.md.
+   Say which population rule actually runs today (src/sim/, world_month.gd).
+2. Inventory: every tuning constant in src/sim/*_constants.gd that drives
+   growth, unemployment (Okun), tax erosion, debt service, inflation and
+   population: file:line, value, current source (or "hand-tuned").
+3. Sensitivity: one-at-a-time, each constant at +/-25 %, through
+   tools/balance_parallel.py and tools/balance_diff.py; rank by impact.
+4. Raw sources (primary series, not summaries; each figure with URL, dataset
+   code, edition): UN World Population Prospects 2024 (births, deaths,
+   migration by nation); Eurostat EUROPOP2023 (proj_23np) and demo_gind;
+   IMF World Economic Outlook database and the European Commission's AMECO
+   (growth, unemployment, inflation, deficit, debt, 2026-2030) for FRA, DEU,
+   GBR, POL; for constants: Ball, Leigh & Loungani 2017 (Okun by country),
+   Saez, Slemrod & Giertz 2012 (taxable-income elasticity), Blanchard &
+   Leigh 2013 (fiscal multipliers).
+5. Calibration probe: a hands-off run 2026-2030 through WorldMonth.tick_month()
+   (never a copied tick order), isolated (APPDATA temp dir, own worktree);
+   compare each year to IMF and AMECO per indicator and nation. Calibrate on
+   two nations, validate on the other two.
+6. Proposals, ranked by (gap to reality) x (player visibility): per-nation
+   population rates (births, deaths, migration) as DATA in data/nations, never
+   `if nation_id`; each changed constant cites its source.
+Verify and show: the error table before/after (MAE, trend sign) incl. the
+held-out nations; the balance re-baseline (tools/balance_diff.py) and the
+play bands still holding; anything not found or not verifiable flagged, never
+filled. Every moved sim number needs the author's acceptance before a merge.
+Output: a design note docs/design/calibration.md with the tables and the
+ranked list; no code until the author picks.
+```
+
 ## Carried from the V5.3 block-0 gate (2026-11-01)
 
 ### Majority-first formation after an election
