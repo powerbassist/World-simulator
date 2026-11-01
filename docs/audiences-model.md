@@ -218,13 +218,13 @@ A promise names a date the president controls. A vote trade is an IOU due 12 mon
 Both are a's `ns.commitments`, written by `President.commit()`.
 
 `Levers.tick_month()`, run in the month's Audiences step after the lane, on the same
-meters, judges each one due, once, with no roll:
+meters, judges each one due, once, with no roll (a delegated word since the V5.3-0 gate has one, section 13):
 
 | | The person's want served at the date | Not served |
 |---|---|---|
 | **Promise** | kept: rapport +0.25 (b2.2: a promise kept in person, 2.5 times a minister's word -- the ratio the broken side already carries) | **a lie revealed**: rapport -0.5, knowledge halved, a grudge pulse of 0.15 |
 | **IOU** | paid | **a betrayal**: rapport -0.2, a grudge pulse of 0.08; knowledge stands, since no lie was told |
-| **Delegated** (b2.1) | kept: rapport +0.10 | the deferred 0.75 of the decline's grudge lands, plus the IOU's betrayal; not a lie, since the president did not give their own word |
+| **Delegated** (b2.1) | kept: rapport +0.10 | since the V5.3-0 gate, kept anyway when the minister's seeded roll falls under the odds the card showed (section 13); otherwise the deferred 0.75 of the decline's grudge lands, plus the IOU's betrayal; not a lie, since the president did not give their own word |
 
 `President.take_commitments_due()` takes each judged row off the register, so none is
 judged twice, and a row loaded from a save is judged at its date like any other.
@@ -394,6 +394,57 @@ The design and the numbers are [[shadows-model]]; what the audience gains:
   shows the lie variant's range.
 - **The phone offers none of the three** (the lighter channel), and its flirt
   line says "not by phone".
+
+## 13. The minister keeps the word (V5.3-0 gate)
+
+At the block-0 play gate (2026-11-01), the author was told that 8 of QA's 9 delegated words had broken. He answered: "oui, cela ne doit pas etre la norme je pense ?". Section 7's rule judged a delegated word on the world alone: the word was kept only if the person's want was served at its date. This section replaces that rule.
+
+**Measured at 1d3d7485** with `tools/delegation_probe.gd`. The run is France over 20 draw seeds × 96 months. The player picks a programme entry at each term start and delegates every request.
+
+- **Kept: 56 of 1,161 judged words.** 1,089 of the words never saw their want served inside the 12-month window.
+- **Why so few:** a request exists only because its want is unserved, and three words in four (873) name a programme entry the president did not choose. The register reopens only once a term.
+- **No other input mattered.** The person's party barely moved the rate, the deadline was fixed, and no minister was involved: the minister existed only in the card's wording.
+
+**The rule now** (`src/sim/delegation.gd`):
+
+- **The odds.** `chance = clamp(0.65 + 1.0 × (effectiveness − 1) + 1.0 × (loyalty − 0.5), 0.05, 0.95)`.
+  - Effectiveness is the Government panel's figure, averaged over the five portfolios. A vacant portfolio counts as 0.5.
+  - Loyalty is `Cabinet.loyalty` of each portfolio's holder, averaged the same way. A vacant portfolio counts as 0: with no minister, nobody can give a word.
+  - The constants are in `audience_constants.gd` (`DELEGATE_KEPT_*`). They were set from the inputs the base run measured: a seated cabinet reads 0.89 and 0.72 to 0.74, which gives about 0.77.
+- **Objects no minister can deliver** get chance 0 and a reason (`why`):
+  - an office (`office:*`), because only the president names one;
+  - a measure (`measure:*`), because only the president lifts one;
+  - the president's own programme, opposed (`programme:*` with stance `oppose`): such a want is unserved only while the entry is live on the president's register.
+- **The card shows the odds before the player answers.** `Audiences.answers()["delegate"]` carries `{chance, why, effectiveness, loyalty}`. The Delegate button's hover says "This cabinet keeps about N in 10 such words", or why no minister can keep it. Delegate stays open even at chance 0, so B2's row still holds.
+- **The word keeps the odds the card showed.** `Audiences.delegate` writes them onto the commitment as `chance` (`President.commit`'s last argument).
+  - **Measured first with live odds** read at the word's date: an idle government's coalition loyalty decays inside the window (0.75 at month 1, 0.55 by month 37), and words given at odds 0.5 to 0.6 kept none of 89. The number the player read was not the deal, so the odds are now frozen at delegation.
+  - **The simplification:** a word keeps its odds even if that cabinet later falls apart.
+  - **Older saves:** a row without `chance` (every save from before this change) is judged on the cabinet at its date. That is a correct reading, so there is no save bump.
+- **The verdict.** A want served at the date is kept, as before. Otherwise the word is kept when its one seeded draw (`Cycle.unit_pair` over the person, the object and the month given) falls under its odds. The prices are section 7's, unchanged:
+  - kept: rapport +0.10;
+  - broken: the deferred 0.75 of the grudge, plus the IOU's betrayal.
+- **A word the minister keeps leaves the want itself unserved.** The person may ask again after their 8-month cooldown.
+
+**Measured** with `tools/delegation_probe.gd` over the same 20 seeds × 96 months. Each row counts words judged (kept or broken). "Keep-cabinet" is a player who refills every vacant portfolio through `Removal.reassign`. "Idle" leaves the cabinet as the world leaves it: an unpopular government's ministers resign, and by about month 45 every seat is vacant in most seeds.
+
+| | Base (1d3d7485) | Odds read live at the date | Odds frozen at delegation (this change) |
+|---|---|---|---|
+| Keep-cabinet, all words | 56 / 1,161 (0.05) | 468 / 1,162 (0.40) | **700 / 1,162 (0.60)** |
+| Keep-cabinet, words given in months 1-36 | 50 / 535 (0.09) | 312 / 535 (0.58) | **386 / 535 (0.72)** |
+| Keep-cabinet, objects a minister can deliver | 26 / 1,043 | 444 / 1,043 | **677 / 1,043 (0.65)** |
+| Keep-cabinet, impossible objects (kept only where served) | 30 / 118 | 24 / 119 | **23 / 119**, all 23 served |
+| Idle, all words | 56 / 1,161 (0.05) | | **581 / 1,162 (0.50)** |
+| Idle, words given in months 1-36 | 50 / 535 | | **382 / 535 (0.71)** |
+| Idle, words given to an all-vacant cabinet | 1 / 482 | | **23 / 369 (0.06)** |
+
+The realised rate tracks the odds the card showed. In the keep-cabinet run, words given at 0.8 kept 0.82, at 0.7 kept 0.72, and at 0.3 kept 0.36.
+
+**What else this moves:**
+- The balance table: `tools/balance_parallel.py` is cmp-identical base against tip, because none of its regimes answers a request.
+- `audience_probe` A1, A2, A3 and B5: identical.
+- `audience_probe` A4 (phone, then book, then delegate): one more request answered by phone (14 to 15), one fewer unplaceable (7 to 6). Its band verdicts are unchanged.
+- `decision_surfaces_probe --briefing`, FRA, active regime (every request delegated): the base lost the May 2032 presidential vote, which ended its run at month 76. This change wins that vote, and the run reaches month 120. The first difference is in the September 2027 briefing lines, and the acts against the player through month 76 are identical (13 each). The idle run is identical.
+
 
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
 [[decision-surfaces]] · [[programme-model]] · [[summits-model]]
