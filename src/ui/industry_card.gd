@@ -16,6 +16,7 @@ extends RefCounted
 
 const Companies = preload("res://src/sim/companies.gd")
 const Industry = preload("res://src/sim/industry.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -78,7 +79,8 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	_body(panel, card, ns, sector, body)
 
 
-## A bid or a failing major in this sector: the card says so while closed.
+## A bid, a failing major or a process's ask in this sector: the card says so
+## while closed.
 static func _waiting(state, ns, loader, sector: String) -> bool:
 	var ids: Array = []
 	var bid: Dictionary = Industry.pending_bid(state, ns, loader)
@@ -86,6 +88,8 @@ static func _waiting(state, ns, loader, sector: String) -> bool:
 		ids.append(String(bid["company_id"]))
 	for failure in Industry.failing(state, ns, loader):
 		ids.append(String(failure["company_id"]))
+	for row in Processes.asks(ns):
+		ids.append(String(row["company_id"]))
 	for company in Companies.firms_in_sector(loader, ns.id, sector):
 		if ids.has(String(company.id)):
 			return true

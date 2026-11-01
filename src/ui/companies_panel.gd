@@ -206,7 +206,7 @@ func _refresh() -> void:
 	# V5.3 a + b step 2 (spec 3.2): what is under way first, then what waits on the
 	# player, then the three sector cards, closed until opened; the public account
 	# last, folded.
-	_progress = IndustryProgress.build(_body, _state, _loader, ns, _on_stop)
+	_progress = IndustryProgress.build(_body, _state, _loader, ns, _on_stop, _on_answer)
 	_build_autonomy_sections(ns)
 	for sector in EK.SECTOR_TREND.keys():
 		IndustryCard.build(self, _body, ns, String(sector))
@@ -411,6 +411,19 @@ func _on_stop(process_id: String, what: String) -> void:
 		return
 	_last_refusal = ""
 	acted.emit(before, tr("Stopped: %s") % what)
+
+
+## An answer to a stage's ask (#248): Processes.answer(), the sim's own verb --
+## walking away and stopping run the stop at once, the rest land at the stage's end.
+func _on_answer(process_id: String, answer_id: String, what: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	var result: Dictionary = Processes.answer(_state, _state.player(), _loader, process_id, answer_id)
+	_dirty = true
+	if not bool(result.get("ok", false)):
+		_last_refusal = tr("Answer refused -- %s") % Strings.t(String(result.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
+		return
+	_last_refusal = ""
+	acted.emit(before, tr("Answered: %s") % what)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.

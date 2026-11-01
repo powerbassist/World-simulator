@@ -22,6 +22,8 @@ const Processes = preload("res://src/sim/processes.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Asks = preload("res://src/sim/process_asks.gd")
+const Pending = preload("res://src/ui/pending.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -69,8 +71,14 @@ func _process(_delta: float) -> bool:
 		14:
 			_check_in_progress()
 			_check_a5()
-			_press(_button_with_meta("process_id", _live_pid()))
+			_post_ask()
 		16:
+			_check_ask()
+			_press(_button_with_meta("answer_id", "accept"))
+		18:
+			_check_answered()
+			_press(_button_with_meta("process_id", _live_pid()))
+		20:
 			_check_stopped()
 			_finish()
 	return false
@@ -234,10 +242,55 @@ func _check_a5() -> void:
 		_fail("A5: the live stake refused no verb on its firm; the fixture proves nothing")
 
 
+## #248: the stake's negotiation asks its final price, as the stage's last month does.
+func _post_ask() -> void:
+	var ns = _main._state.player()
+	for row in ns.processes:
+		if String(row["status"]) == Processes.OPEN:
+			Asks.post(ns, _main._loader, row, _action(String(row["action_id"])), _main._state.year * 12 + _main._state.month)
+	_panel.mark_dirty()
+
+
+## The ask on its row: the question, each answer with the money it books, no Stop
+## beside it, the tab marked as waiting and the card saying so.
+func _check_ask() -> void:
+	var ns = _main._state.player()
+	var asks := Processes.asks(ns)
+	if asks.size() != 1:
+		_fail("ask: %d asks in the register, expected 1" % asks.size())
+		return
+	for option in asks[0]["ask"]["answers"]:
+		var button = _button_with_meta("answer_id", String(option["id"]))
+		if button == null:
+			_fail("ask: no '%s' answer on screen" % option["id"])
+			continue
+		var money: Label = button.get_meta("money_label")
+		if money.text != EffectsStrip.money_text(-float(option["debt_eur_bn"])):
+			_fail("ask: '%s' reads '%s', it books %s" % [option["id"], money.text, EffectsStrip.money_text(-float(option["debt_eur_bn"]))])
+	for b in _visible_with_meta("process_id"):
+		if not b.has_meta("answer_id"):
+			_fail("ask: a Stop stands beside the question (walking away is an answer)")
+	if not Pending.window_ids(_main._state, _main._loader).has("companies"):
+		_fail("ask: the Industry tab is not marked as waiting")
+	var head = _button_with_meta("sector", _sector)
+	if head == null or not _text_under(head.get_parent()).contains(_panel.tr("Decision due")):
+		_fail("ask: the %s card does not say a decision is due" % _sector)
+
+
+func _check_answered() -> void:
+	var ns = _main._state.player()
+	if not Processes.asks(ns).is_empty():
+		_fail("answered: the ask still waits")
+	if not _text_under(_panel._progress).contains(_panel.tr("Answered: %s.") % _panel.tr("Accept")):
+		_fail("answered: the row does not say what was answered")
+	if _acted < 1:
+		_fail("answered: the panel emitted no acted")
+
+
 func _check_stopped() -> void:
 	if not Processes.rows(_main._state.player()).is_empty():
 		_fail("Stop pressed: the process still runs")
-	if _acted < 1:
+	if _acted < 2:
 		_fail("Stop pressed: the panel emitted no acted")
 
 

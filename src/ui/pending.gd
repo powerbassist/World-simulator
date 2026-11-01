@@ -32,6 +32,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Industry = preload("res://src/sim/industry.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 
@@ -102,7 +103,8 @@ static func window_ids(state, loader, messages := {}) -> Array:
 	# a window, a failing major with a rescue window. Both are "awaits THE
 	# PLAYER" by the file's own test: each lapses to a committed outcome if
 	# ignored, and the verbs that answer live on the companies window.
-	if not Industry.pending_bid(state, ns, loader).is_empty() or not Industry.failing(state, ns, loader).is_empty():
+	# V5.3 a + b (#248): a process stage's ask lapses to its default the same way.
+	if not Industry.pending_bid(state, ns, loader).is_empty() or not Industry.failing(state, ns, loader).is_empty() 			or not Processes.asks(ns).is_empty():
 		out.append("companies")
 
 	return out

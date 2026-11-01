@@ -465,7 +465,8 @@ var _tax := false
 var _moved := false
 
 ## V5.3 a + b step 2: the Industry tab mid-decision -- a minority stake running on
-## the second major (the In progress strip and its Stop), the first major's sector
+## the second major, its final price asked (#248: the In progress row's question
+## and its answers, the card's "Decision due"), the first major's sector
 ## card open, its Act open and its first verb that can run focused (one strip).
 var _industry := false
 
@@ -2004,6 +2005,8 @@ func _stage_the_industry_tab() -> void:
 	for action in loader.company_actions:
 		if String(action.id) == "minority_stake" and majors.size() > 1:
 			processes.start(state, ns, loader, action, String(majors[1].id))
+			for row in ns.processes:
+				preload("res://src/sim/process_asks.gd").post(ns, loader, row, action, state.year * 12 + state.month)
 	panel._open_sector = String(majors[0].sector)
 	panel._open_firm = String(majors[0].id)
 	for action in Companies.available(state, ns, loader.company_actions, String(majors[0].id), loader):
