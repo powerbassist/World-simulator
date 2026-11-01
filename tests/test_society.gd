@@ -347,10 +347,13 @@ func _test_society_is_a_leaf() -> void:
 	# V1.5b added demography.gd, and the addition does not weaken the property: that
 	# file is the strictest leaf in the project, preloading only its own constants, so
 	# the chain this test exists to bound is still two deep and still ends.
+	# V5.3 a added sectors.gd on the same argument: it preloads only its own
+	# constants (domains_constants.gd), so the chain is still two deep and ends.
 	var allowed := [
 		"res://src/sim/society_constants.gd",
 		"res://src/sim/cabinet.gd",
 		"res://src/sim/demography.gd",
+		"res://src/sim/sectors.gd",
 	]
 	for line in src.split("\n"):
 		if not line.strip_edges().begins_with("const"):

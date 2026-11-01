@@ -11,6 +11,7 @@ tests=(
   tests/test_budget.gd
   tests/test_budget_panel.gd
   tests/test_effects_strip.gd
+  tests/test_industry_tab.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd
@@ -92,6 +93,9 @@ tests=(
   tests/test_companies.gd
   # V5.3 a, A3 + A4: the ownership and structure verbs as processes.
   tests/test_processes.gd
+  # V5.3 a: the sectors of each spending line (data/domains/, A2).
+  tests/test_domains.gd
+  tests/test_sector_channels.gd
   tests/test_process_asks.gd
   # V5.3 a: the plant closures (B7's industry supply).
   tests/test_closures.gd

@@ -23,6 +23,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
 
 
 static func _ensure_dir() -> void:
@@ -173,6 +174,11 @@ static func load_game(slot: String, loader = null) -> Dictionary:
 		# vote resolved before the save (the result is a display record and
 		# does not travel) end honestly with membership unchanged.
 		Orgs.reconcile_on_load(state, loader)
+		# V5.3 a: the sector factors the channels read are derived, not saved
+		# (Economy, Society and Defence take no loader), so they are re-derived here
+		# from the saved moves and the shipped rows -- which also drops the factor of
+		# a moved vector a content edit has made stale.
+		Sectors.rebuild(state, loader)
 	return {"ok": true, "state": state, "day": int(parsed.get("day", 1)), "error": ""}
 
 

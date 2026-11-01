@@ -36,7 +36,9 @@ const STAGE_ASK := {
 ## Post the stage's ask on `row` (the stage's last month). The break-up's finding
 ## is drawn here, with the odds its strip showed; the sale's bid is priced here, at
 ## the discount the cycle gives now, and that is the price the sale then books.
-static func post(ns, loader, row: Dictionary, action, now: int) -> void:
+## `company` is the firm, from the caller's own lookup (Processes._company), for
+## the settlement's fine.
+static func post(ns, row: Dictionary, action, now: int, company) -> void:
 	var stage := String(row["stage"])
 	if not STAGE_ASK.has(stage):
 		return
@@ -51,10 +53,10 @@ static func post(ns, loader, row: Dictionary, action, now: int) -> void:
 			answers = [_answer("pay", base * (1.0 + float(row["rate"])), rest),
 				_answer("stop", K.PROCESS_BREAK_FEE * base * float(row["rate"]), uturn(action))]
 		"investigation":
-			row["ruled"] = Cycle.unit("%s|ruling" % String(row["id"]), now) < float(row["odds"])
+			row["ruled"] = rule(row, now)
 			if not bool(row["ruled"]):
 				return
-			var value := Companies.value_eur_bn(ns, _company(ns, loader, String(row["company_id"])))
+			var value := Companies.value_eur_bn(ns, company)
 			answers = [_answer("press_on", 0.0, offsets),
 				_answer("settle", -K.PROCESS_SETTLEMENT_FINE * value, scaled(offsets, K.PROCESS_SETTLEMENT_BLOC))]
 		"sale":
@@ -63,9 +65,17 @@ static func post(ns, loader, row: Dictionary, action, now: int) -> void:
 			# so the sale ends inside the months its strip showed (A3).
 			if bool(row.get("held", false)):
 				return
-			answers =[_answer("accept", -base * (1.0 - float(row["rate"])), rest), _answer("hold", 0.0, {})]
+			answers = [_answer("accept", -base * (1.0 - float(row["rate"])), rest), _answer("hold", 0.0, {})]
 	row["ask"] = {"kind": String(STAGE_ASK[stage][0]), "posted": now, "due": now + 1,
 		"default": String(STAGE_ASK[stage][1]), "answers": answers}
+
+
+## The authority's finding on a referral (true: the break-up is ordered), drawn on
+## the row's own seed in month `now` with the odds its strip showed. One copy, so a
+## referral saved before the asks and ruled at its stage's end (processes.gd) draws
+## from the same stream as one ruled here.
+static func rule(row: Dictionary, now: int) -> bool:
+	return Cycle.unit("%s|ruling" % String(row["id"]), now) < float(row["odds"])
 
 
 ## The answer the stage resolves with: the player's, else the ask's default ("" with
@@ -110,9 +120,3 @@ static func scaled(offsets: Dictionary, share: float) -> Dictionary:
 static func _answer(id: String, debt_eur_bn: float, bloc_offset: Dictionary) -> Dictionary:
 	return {"id": id, "debt_eur_bn": debt_eur_bn, "bloc_offset": bloc_offset}
 
-
-static func _company(ns, loader, company_id: String):
-	for company in Companies.firms_of(loader, ns.id):
-		if String(company.id) == company_id:
-			return company
-	return null

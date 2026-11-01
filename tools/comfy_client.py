@@ -88,15 +88,30 @@ def djb2(s):
 
 SALTS_PATH = Path(__file__).resolve().parent / "portraits_salts.json"
 
+# Read once per process, not once per seed. portraits_generate.py --self-check, which
+# tests/test_portraits.gd runs, derives ~10 800 seeds, and each used to re-open this
+# file (and resolve its path twice): ten thousand opens of one file whose first
+# transient failure -- a Windows sharing violation from a scanner or indexer, worst
+# when two suites load the machine -- is an uncaught PermissionError, i.e. exit 1 with
+# the traceback on stderr and nothing on stdout. bump_salt() is the only writer in a
+# process and keeps the cache current; the file is never edited under a running run.
+_salts: dict | None = None
+salts_reads = 0  # disk reads so far, pinned by portraits_generate --self-check
+
 
 def load_salts() -> dict:
     """The reroll memory, shared by the portrait and the backdrop generators
     (V5.2a): an id -- a person id, or "scene:<file stem>" for a backdrop -- to
     the number of times the author rejected it. Absent = 0 = the original
     seed, so nothing already shipped re-renders."""
-    if SALTS_PATH.exists():
-        return json.loads(_confined(SALTS_PATH, SALTS_PATH.parent).read_text(encoding="utf-8"))
-    return {}
+    global _salts, salts_reads
+    if _salts is None:
+        salts_reads += 1
+        if SALTS_PATH.exists():
+            _salts = json.loads(_confined(SALTS_PATH, SALTS_PATH.parent).read_text(encoding="utf-8"))
+        else:
+            _salts = {}
+    return _salts
 
 
 def bump_salt(key: str) -> int:

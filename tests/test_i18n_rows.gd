@@ -46,6 +46,11 @@ func _initialize() -> void:
 	await _probe("orgs", "orgs", loader.orgs, "name")
 	_adopt_a_rule(state, loader)
 	await _probe("bloc-proposals", "orgs", _proposals(loader), "name")
+	# V5.3 a + b step 2: the verbs and the sector programmes sit in an opened card,
+	# a firm's verbs under its Act -- opened as a player would before reading them.
+	var major = preload("res://src/sim/companies.gd").majors_of(loader, ns.id)[0]
+	_main._companies_panel._open_sector = String(major.sector)
+	_main._companies_panel._open_firm = String(major.id)
 	await _probe("companies:company-actions", "companies", loader.company_actions, "name")
 	await _probe("companies:investment-actions", "companies", loader.investment_actions, "name")
 	await _probe("energy-actions", "energy", loader.energy_actions, "name")

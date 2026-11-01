@@ -29,6 +29,7 @@ extends RefCounted
 const K = preload("res://src/sim/society_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
 
 
 ## A nation's starting quality is its EQUILIBRIUM, not zero — defence.gd's
@@ -104,8 +105,12 @@ static func tick_month(state) -> void:
 ## health budget is only age-graded. See society_constants.DEPENDENCY_ELASTICITY —
 ## `pensions` at 1.0 is definitional rather than tuned, and it is what finally gives
 ## `pensions` the denominator that kept it out of QUALITY_KEYS at V1.5a.
+##
+## V5.3 a: the spending is weighted by the line's sector factor (src/sim/sectors.gd),
+## what the player's moved shares did to its sectors' quantities -- exactly 1.0 with
+## nothing moved, so every regime that moves no share computes the same float.
 static func quality_target(ns, key: String) -> float:
-	var spend: float = float(ns.spending_pct_gdp.get(key, 0.0))
+	var spend: float = float(ns.spending_pct_gdp.get(key, 0.0)) * Sectors.factor(ns, key)
 	return clampf(
 		spend * Cabinet.effectiveness(ns, key) * delivery_factor(ns)
 		/ dependency_divisor(ns, key),

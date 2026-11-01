@@ -1,0 +1,143 @@
+{
+  "line": "infrastructure",
+  "sectors": [
+    {
+      "id": "transport",
+      "name": "Transport",
+      "summary": "Roads, rail, ports and airports. No published figure is sourced yet, so it is read as an index.",
+      "codes": [
+        "GF0405"
+      ],
+      "quantity": {
+        "id": "transport_index",
+        "unit": "index",
+        "better": "higher"
+      },
+      "start": {
+        "FRA": {
+          "share": 0.78,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: index, no published figure"
+        },
+        "DEU": {
+          "share": 0.778,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: index, no published figure"
+        },
+        "POL": {
+          "share": 0.764,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: index, no published figure"
+        },
+        "GBR": {
+          "share": 0.908,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: HM Treasury PESA 2026 table 5.2, 2024-25 outturn, public sector basis (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: index, no published figure"
+        },
+        "default": {
+          "share": 0.808,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: index, no published figure",
+          "note": "Mean of the four sourced nations (share); the quantity is an index."
+        }
+      }
+    },
+    {
+      "id": "energy_networks",
+      "name": "Energy networks",
+      "summary": "Grids and pipelines. No published figure is sourced yet, so it is read as an index.",
+      "codes": [
+        "GF0403"
+      ],
+      "quantity": {
+        "id": "energy_networks_index",
+        "unit": "index",
+        "better": "higher"
+      },
+      "start": {
+        "FRA": {
+          "share": 0.199,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: index, no published figure"
+        },
+        "DEU": {
+          "share": 0.208,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: index, no published figure"
+        },
+        "POL": {
+          "share": 0.228,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: index, no published figure"
+        },
+        "GBR": {
+          "share": 0.073,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: HM Treasury PESA 2026 table 5.2, 2024-25 outturn, public sector basis (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: index, no published figure"
+        },
+        "default": {
+          "share": 0.177,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: index, no published figure",
+          "note": "Mean of the four sourced nations (share); the quantity is an index."
+        }
+      }
+    },
+    {
+      "id": "digital",
+      "name": "Digital networks",
+      "summary": "Broadband and communication networks. More spending widens very high capacity coverage.",
+      "codes": [
+        "GF0406"
+      ],
+      "quantity": {
+        "id": "network_coverage",
+        "unit": "% of households",
+        "better": "higher"
+      },
+      "start": {
+        "FRA": {
+          "share": 0.021,
+          "quantity": 91.7,
+          "year": 2025.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: Eurostat isoc_cbt, fixed very high capacity network coverage, 2025 (https://ec.europa.eu/eurostat/databrowser/view/isoc_cbt/default/table)"
+        },
+        "DEU": {
+          "share": 0.014,
+          "quantity": 79.9,
+          "year": 2025.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: Eurostat isoc_cbt, fixed very high capacity network coverage, 2025 (https://ec.europa.eu/eurostat/databrowser/view/isoc_cbt/default/table)"
+        },
+        "POL": {
+          "share": 0.008,
+          "quantity": 84.1,
+          "year": 2025.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024. quantity: Eurostat isoc_cbt, fixed very high capacity network coverage, 2025 (https://ec.europa.eu/eurostat/databrowser/view/isoc_cbt/default/table)"
+        },
+        "GBR": {
+          "share": 0.019,
+          "quantity": 86.8,
+          "year": 2025.0,
+          "source": "share: HM Treasury PESA 2026 table 5.2, 2024-25 outturn, public sector basis (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: Eurostat isoc_cbt, fixed very high capacity network coverage, 2025 (https://ec.europa.eu/eurostat/databrowser/view/isoc_cbt/default/table)"
+        },
+        "default": {
+          "share": 0.015,
+          "quantity": 85.625,
+          "year": 2024.0,
+          "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: default: the mean of FRA, DEU, POL and GBR",
+          "note": "Mean of the four sourced nations (share and quantity)."
+        }
+      }
+    }
+  ]
+}

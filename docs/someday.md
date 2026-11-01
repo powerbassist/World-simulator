@@ -364,6 +364,83 @@ cursor; the name returns when the cursor leaves). The rest are parked:
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
 
+## Not now: calibrate the formulas against the real world (2026-11-01)
+
+### Calibrate the simulation's formulas against the real world
+
+The author's ask, 2026-11-01, relayed by the parent: make the simulation's formulas closer to the real world, but **"pas tout de suite"**: not now, after V5.3. He added: **"la croissance peut être impactée par le contexte économico-social"**, so population growth should respond to the context (unemployment, income, policies, the health sector, recessions), not stay a fixed rate; that is point 7 of the prompt, and it must answer V1.5b's cut cohort machine ([[demography-model]], section 2). And: **"les migrations ne sont pas modélisées"**, true for flows *between* nations (internal flows exist, in [[migration-model]] and [[natural-change-model]], and only redistribute a national total); that is point 8, with a conservation test. The growth, Okun, tax-erosion, debt-service and inflation constants are hand-tuned and have never been compared to real series; the balance table checks that the game plays, not that it matches the world.
+
+**A correction to the prompt's premise, found when writing this entry.** Step 1 of the prompt below says population growth is "one flat 0.15 %/yr for every nation". That was true until V1.5b, which **deleted** `economy_constants.POP_GROWTH_PCT` ([[demography-model]], section 6; [[economy-model]]). Today each nation carries its own `pop_growth_pct`, read off `imported.cohorts` (a World Bank series, 2015 to 2024, from Italy's -0.238 to Luxembourg's +1.938), compounded monthly in `src/sim/economy.gd`, with `src/core/nation.gd` bounding it at load. What is still true is the weaker claim: the rate is a **fixed, backward-looking figure for the whole run**, not a projection, and it is not compared to UN WPP or Eurostat forward series. The session that runs the prompt should open with that in step 1 and not hunt for the deleted constant. Read "flat rate" in points 1 and 8 the same way: a fixed per-nation rate. The prompt is otherwise kept verbatim.
+
+**Trigger:** V5.3's close, or the author asking for it. **Owner:** Gameplay for the note, then Systems. **Output:** `docs/design/calibration.md`; no code until the author picks, and every moved sim number needs his acceptance before a merge.
+
+The ready-to-run prompt, verbatim (from `.superpowers/sdd/someday-calibration-prompt.md`, gitignored):
+
+```text
+Nation Simulator (Godot 4.7, GDScript; read AGENTS.md first). Goal: make the
+simulation's formulas closer to the real world WITHOUT losing playability, and
+decide which formulas to change first.
+
+1. Prior work: read docs/economy-model.md (POP_GROWTH_PCT, one flat 0.15 %/yr
+   for every nation), docs/demography-model.md and the other docs/*-model.md.
+   Say which population rule actually runs today (src/sim/, world_month.gd).
+2. Inventory: every tuning constant in src/sim/*_constants.gd that drives
+   growth, unemployment (Okun), tax erosion, debt service, inflation and
+   population: file:line, value, current source (or "hand-tuned").
+3. Sensitivity: one-at-a-time, each constant at +/-25 %, through
+   tools/balance_parallel.py and tools/balance_diff.py; rank by impact.
+4. Raw sources (primary series, not summaries; each figure with URL, dataset
+   code, edition): UN World Population Prospects 2024 (births, deaths,
+   migration by nation); Eurostat EUROPOP2023 (proj_23np) and demo_gind;
+   IMF World Economic Outlook database and the European Commission's AMECO
+   (growth, unemployment, inflation, deficit, debt, 2026-2030) for FRA, DEU,
+   GBR, POL; for constants: Ball, Leigh & Loungani 2017 (Okun by country),
+   Saez, Slemrod & Giertz 2012 (taxable-income elasticity), Blanchard &
+   Leigh 2013 (fiscal multipliers).
+5. Calibration probe: a hands-off run 2026-2030 through WorldMonth.tick_month()
+   (never a copied tick order), isolated (APPDATA temp dir, own worktree);
+   compare each year to IMF and AMECO per indicator and nation. Calibrate on
+   two nations, validate on the other two.
+6. Proposals, ranked by (gap to reality) x (player visibility): per-nation
+   population rates (births, deaths, migration) as DATA in data/nations, never
+   `if nation_id`; each changed constant cites its source.
+7. Population that responds to its context (the author, 2026-11-01: "la
+   croissance peut être impactée par le contexte économico-social"): design
+   births, deaths and migration as flows that react to the sim's own state,
+   not fixed rates: fertility to unemployment, income and the family/housing
+   policies (evidence: Sobotka, Skirbekk & Philipov 2011, "Economic recession
+   and fertility in the developed world"); migration to the unemployment and
+   wage gap against neighbours plus the existing migration_stance law (Mayda
+   2010, determinants of bilateral migration flows); mortality to the health
+   sector's quantities (V5.3 a) and to recessions (Ruhm 2000, "Are recessions
+   good for your health?"). Population feeds back through the labour force
+   into potential growth and through ageing into pensions and health. First
+   read docs/demography-model.md: V1.5b CUT a cohort machine and says why
+   (section 2); the proposal must answer that reason, not repeat the cut.
+   Each response coefficient sourced, its sign and size checked against the
+   2008-2013 recession in the four nations (a hindcast of the flows, from
+   Eurostat demo_gind / migr_imm1ctz).
+8. Migration BETWEEN nations (the author, 2026-11-01: "les migrations ne sont
+   pas modélisées"). Today only internal flows exist (docs/migration-model.md:
+   regions pulled by output per head x employment probability, cities by firm
+   jobs; docs/natural-change-model.md: births minus deaths per region; the
+   migration_stance law on the labour force), and they only REDISTRIBUTE a
+   national total that still follows the flat rate. Design flows among the 41
+   nations: pulled by the wage and unemployment gap, damped by distance and by
+   both sides' migration laws (a gravity / push-pull form, Mayda 2010), seeded
+   from Eurostat migr_imm1ctz and migr_emi1ctz (by citizenship and partner
+   country) and the UN DESA International Migrant Stock; flows land in the
+   receiving regions through the existing internal pull; a crisis in a
+   neighbour must become visible at home. Conservation: what one nation loses
+   another gains (plus a rest-of-world term), pinned by a test.
+Verify and show: the error table before/after (MAE, trend sign) incl. the
+held-out nations; the balance re-baseline (tools/balance_diff.py) and the
+play bands still holding; anything not found or not verifiable flagged, never
+filled. Every moved sim number needs the author's acceptance before a merge.
+Output: a design note docs/design/calibration.md with the tables and the
+ranked list; no code until the author picks.
+```
+
 ## Carried from the V5.3 block-0 gate (2026-11-01)
 
 ### Majority-first formation after an election

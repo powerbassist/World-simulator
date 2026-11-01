@@ -11,7 +11,7 @@ extends RefCounted
 ## the same way the nation schema is grown.
 
 const C = preload("res://src/sim/economy_constants.gd")
-const Fields = preload("res://src/core/nation_fields.gd")
+const FieldWalk = preload("res://src/core/nation_field_walk.gd")
 
 var id: String = ""
 
@@ -1518,6 +1518,19 @@ var audience_asked_month := {}
 ## a process, so an absent register reads "nothing in progress", the truth.
 var processes: Array[Dictionary] = []
 
+# --- Sectors (V5.3 a) ---------------------------------------------------------------
+## line -> {sector id -> share}: the spending lines whose sector shares the player
+## has MOVED (src/sim/sectors.gd, its one writer), and only those -- never a copy of
+## the start shares, which are content (data/domains/) and read from the loader.
+## absent_ok, no bump: absent is "nothing moved", the truth for every older save.
+var sector_shares := {}
+## line -> the channel factor those moves bought (Sectors.factor(), 1.0 absent):
+## what Society, Economy and Defence multiply the line's spending by, stored because
+## they take no loader. DERIVED and NOT SAVED -- project_sited_pct's case: the load
+## path re-derives it (Sectors.rebuild) from `sector_shares` and data/domains/, so a
+## save cannot disagree with the rows. Copied deep, so a projection keeps it.
+var sector_factor := {}
+
 ## V5.2b b3. person id -> the absolute month the president last phoned them: one
 ## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no
 ## bump: before b3 nobody was called, which is what absent reads.
@@ -1919,7 +1932,7 @@ var start_judicial_independence: float = 0.0
 ## from it fails tests/test_nation_fields.gd rather than going silently uncopied.
 func duplicate_state():
 	var s = new()
-	Fields.copy_into(self, s)
+	FieldWalk.copy_into(self, s)
 	return s
 
 
@@ -1927,14 +1940,14 @@ func duplicate_state():
 ## Dictionary only), over the same table. See docs/data-architecture.md
 ## Persistence.
 func to_dict() -> Dictionary:
-	return Fields.to_dict(self)
+	return FieldWalk.to_dict(self)
 
 
 ## Inverse of to_dict(), over the same table. Every register is REBUILT, never
 ## assigned, so two states loaded from one payload share nothing.
 static func from_dict(d: Dictionary):
 	var s = new()
-	Fields.read_into(s, d)
+	FieldWalk.read_into(s, d)
 	return s
 
 
