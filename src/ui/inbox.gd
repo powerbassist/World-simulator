@@ -70,6 +70,9 @@ var _lane_of := {}   # id -> lane
 var _notes := {}     # id -> {title, body, head, count, open, more}: a NOTES row's group and fold
 var _next_id := 0
 var _slid := false
+## V5.3-0 gate G9 ("no clear all button for notes"): beside the NOTES heading, shown
+## while a note stands. Notes only -- a decision is never cleared in bulk.
+var _clear_notes: Button
 
 
 ## Built in _init, not _ready: U5a's column worked before it was in a tree (the
@@ -104,10 +107,22 @@ func _init() -> void:
 		NOTES: tr("No news yet."),
 	}
 	for lane in LANES:
+		var head := HBoxContainer.new()
+		lanes.add_child(head)
 		var heading := Label.new()
 		heading.text = headings[lane]
 		heading.theme_type_variation = UiTheme.MICRO
-		lanes.add_child(heading)
+		heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(heading)
+		if lane == NOTES:
+			_clear_notes = PanelKit.sized(Button.new())
+			_clear_notes.name = "ClearNotes"  # i18n: ok a node name, found by tests
+			_clear_notes.text = tr("Clear all")
+			_clear_notes.tooltip_text = tr("Take every note away. Decisions and requests stay.")
+			_clear_notes.theme_type_variation = UiTheme.SUBROW_BUTTON
+			_clear_notes.pressed.connect(clear_notes)
+			_clear_notes.hide()
+			head.add_child(_clear_notes)
 		var empty := Label.new()
 		empty.text = empties[lane]
 		empty.theme_type_variation = UiTheme.CAPTION
@@ -216,6 +231,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	_bodies[id] = body_label
 	_lane_of[id] = lane
 	_empty[lane].hide()
+	_clear_notes.visible = _rows[NOTES].get_child_count() > 0
 	if _notes.has(id):
 		_show_note(id)
 
@@ -337,6 +353,7 @@ func dismiss(id: String) -> void:
 	_rows[lane].remove_child(card)
 	card.queue_free()
 	_empty[lane].visible = _rows[lane].get_child_count() == 0
+	_clear_notes.visible = _rows[NOTES].get_child_count() > 0
 	card_dismissed.emit(id)
 
 
@@ -416,6 +433,14 @@ func lane_count(lane: String) -> int:
 func clear() -> void:
 	for id in _cards.keys():
 		dismiss(id)
+
+
+## Every note, each as the player's own X (card_closed, then dismissed).
+func clear_notes() -> void:
+	for id in _cards.keys():
+		if _lane_of[id] == NOTES:
+			card_closed.emit(id)
+			dismiss(id)
 
 
 func _id_of(card: Control) -> String:

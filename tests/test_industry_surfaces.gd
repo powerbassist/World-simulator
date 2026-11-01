@@ -23,6 +23,7 @@ extends SceneTree
 const Companies = preload("res://src/sim/companies.gd")
 const IndustryK = preload("res://src/sim/industry_constants.gd")
 const Pending = preload("res://src/ui/pending.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -248,6 +249,69 @@ func _run() -> void:
 		if _live_text_has(city_panel._body, String(major.company_name)):
 			_fail("the relocated firm is still listed under its authored city")
 		ns.companies[major.id]["city"] = authored_city
+
+	_check_break_up_asks(state, loader, ns, panel)
+
+
+## G1 (V5.3-0 gate): "destroy instantly an company ... with no warning, also it
+## worked once and dont work for next company". A break-up asks first, naming the
+## jobs; the last major of a sector is offered the verb disabled, with the sim's
+## reason on the button -- not a live button whose refusal lands out of sight.
+func _check_break_up_asks(state, loader, ns, panel) -> void:
+	# A clean register: the sections above leave failures and stakes behind.
+	Companies.init_nation(ns, loader.companies.get(ns.id, []))
+	var breakup = null
+	for a in loader.company_actions:
+		if String(a.id) == "break_up":
+			breakup = a
+	var first = null
+	var rival = null
+	for company in Companies.majors_of(loader, ns.id):
+		for other in Companies.majors_of(loader, ns.id):
+			if first == null and other.id != company.id and other.sector == company.sector and company.share >= 0.10 and other.share >= 0.10:
+				first = company
+				rival = other
+	if breakup == null or first == null:
+		_fail("no sector with two break-up-able majors -- the G1 pin cannot run")
+		return
+	var button: Button = panel._action_button(ns, first, breakup)
+	if button.disabled:
+		_fail("a break-up with a rival to absorb it is disabled")
+	button.pressed.emit()
+	if bool(ns.companies[first.id].get("failed", false)):
+		_fail("the break-up destroyed the firm on the click, with no question asked")
+	var card = panel._confirm
+	if card == null or not card.visible:
+		_fail("the break-up asked nothing -- no confirm card on screen")
+		return
+	var asked := String(card._question.text)
+	var jobs: String = CompanyVerb.thousands(Companies.headcount(ns, first))
+	if not asked.contains(String(first.company_name)) or not asked.contains(jobs) or not asked.contains(String(rival.company_name)):
+		_fail("the question does not name the firm, its %s jobs and the rival taking them: '%s'" % [jobs, asked])
+	if not asked.contains("treasury"):
+		_fail("the question says nothing of the money: '%s'" % asked)
+	card._no.pressed.emit()
+	if bool(ns.companies[first.id].get("failed", false)):
+		_fail("Cancel broke the firm up")
+	# The clock runs behind the card: a month turned under it (shares drift)
+	# asks again rather than acting on figures the card no longer shows.
+	button.pressed.emit()
+	state.month += 1
+	card._yes.pressed.emit()
+	if bool(ns.companies[first.id].get("failed", false)):
+		_fail("a yes given after the month turned acted on the old month's figures")
+	if not card.visible:
+		_fail("a month turned under the card, and it did not ask again")
+	card._yes.pressed.emit()
+	if not bool(ns.companies[first.id].get("failed", false)):
+		_fail("the confirm card's yes did not break the firm up")
+	var last: Button = panel._action_button(ns, rival, breakup)
+	if not last.disabled:
+		_fail("the sector's last major is offered a break-up the sim refuses")
+	if last.tooltip_text != Companies.refusal_reason(state, ns, breakup, rival.id, loader) or last.tooltip_text == "":
+		_fail("the disabled break-up does not carry the sim's reason: '%s'" % last.tooltip_text)
+	button.free()
+	last.free()
 
 
 ## The bid's three scalars, exactly as industry.gd::_bids writes them.

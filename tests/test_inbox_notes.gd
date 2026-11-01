@@ -66,6 +66,7 @@ func _process(_delta: float) -> bool:
 			_check_hint_whole()
 			_check_lapses_grouped()
 			_check_hint_retires()
+			_check_clear_notes()
 			_finish()
 			return true
 	return false
@@ -155,6 +156,41 @@ func _check_hint_retires() -> void:
 	if _inbox.lane_of(id) != "":
 		_fail("the hint stayed after a plate was read and closed")
 	GlossaryHint.reset()
+
+
+## V5.3-0 gate G9, the author: "no clear all button for notes". One button
+## beside the NOTES heading takes every note away, each as the player's own X;
+## a decision and a request stay -- a decision is never cleared in bulk.
+func _check_clear_notes() -> void:
+	_inbox.clear()
+	var clear_all: Button = _inbox.find_child("ClearNotes", true, false)
+	if clear_all == null:
+		_fail("the NOTES lane has no Clear all button")
+		return
+	if clear_all.visible:
+		_fail("Clear all shows over an empty NOTES lane")
+	_inbox.push("A tally", "The vote carried 312 to 250.")
+	_inbox.push("A leak", "A minister briefs against you.")
+	var decision: String = _inbox.push("A crisis", "Answer now.", [{"label": "Act"}])
+	var request: String = _inbox.push("An audience", "She asks to see you.", [], null, false, Inbox.REQUESTS)
+	if not clear_all.visible:
+		_fail("Clear all is hidden with two notes standing")
+	var closed: Array = []
+	var seen := func(id: String) -> void: closed.append(id)
+	_inbox.card_closed.connect(seen)
+	clear_all.pressed.emit()
+	_inbox.card_closed.disconnect(seen)
+	if _inbox.lane_count(Inbox.NOTES) != 0:
+		_fail("Clear all left %d notes" % _inbox.lane_count(Inbox.NOTES))
+	if closed.size() != 2:
+		_fail("Clear all closed %d notes as the player's X, not 2" % closed.size())
+	if _inbox.lane_of(decision) != Inbox.DECISIONS:
+		_fail("Clear all took a decision card away")
+	if _inbox.lane_of(request) != Inbox.REQUESTS:
+		_fail("Clear all took a request away")
+	if clear_all.visible:
+		_fail("Clear all still shows over an emptied NOTES lane")
+	_inbox.clear()
 
 
 func _card(id: String) -> Control:

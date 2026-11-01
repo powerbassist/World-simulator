@@ -57,6 +57,7 @@ func _init() -> void:
 		_test_forced_relocation()
 		_test_block_and_allow_takeover()
 		_test_break_up()
+		_test_refusal_named_before_the_click()
 		_test_rescue_restores_failing()
 		_test_court_multiplies_bids()
 		_test_appoint_board()
@@ -453,6 +454,70 @@ func _test_break_up() -> void:
 		if absf(after - was) > 1e-9:
 			_fail("break_up moved body firm %s (%.4f -> %.4f) -- the body is not the split's absorber" % [
 				company.id, was, after])
+
+
+## G1 (V5.3-0 gate, the author: "it worked once and dont work for next
+## company"). France has two majors per sector, so the first break-up hands the
+## split to the only rival left and the rival's own break-up has no absorber:
+## the sim refuses it, while the door (firm_share >= 0.10) still offers it. The
+## panel can name the refusal on the button only if the sim says it BEFORE the
+## click -- refusal_reason(), the same scan the arm refuses through.
+func _test_refusal_named_before_the_click() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.nations[PLAYER]
+	var breakup = _action("break_up")
+	var first = null
+	var rival = null
+	for company in Companies.majors_of(_loader, PLAYER):
+		if company.share < 0.10:
+			continue
+		for other in Companies.majors_of(_loader, PLAYER):
+			if other.id != company.id and other.sector == company.sector and other.share >= 0.10:
+				first = company
+				rival = other
+				break
+		if first != null:
+			break
+	if first == null:
+		_fail("no sector with two break-up-able majors -- the G1 case needs one")
+		return
+	if Companies.refusal_reason(state, ns, breakup, first.id, _loader) != "":
+		_fail("a break-up with a rival to absorb it named a refusal")
+	var landed: Dictionary = Companies.execute(state, ns, _loader.company_actions, breakup, first.id, _loader)
+	if not bool(landed.get("applied", false)):
+		_fail("the first break-up was refused -- the case tests nothing")
+		return
+	if not Companies.available(state, ns, _loader.company_actions, rival.id, _loader).has(breakup):
+		_fail("the rival is no longer offered the break-up -- the G1 case moved")
+	var said: String = Companies.refusal_reason(state, ns, breakup, rival.id, _loader)
+	if said == "":
+		_fail("the last major in a sector names no refusal, though the sim refuses its break-up")
+	var refused: Dictionary = Companies.execute(state, ns, _loader.company_actions, breakup, rival.id, _loader)
+	if bool(refused.get("applied", true)) or String(refused.get("reason", "")) != said:
+		_fail("refusal_reason said '%s' and the arm answered '%s' -- the door and the arm disagree" % [
+			said, String(refused.get("reason", ""))])
+	# The chair's pool, the other arm that refuses past the door: every executive
+	# seated, and the appointment says why before it is pressed.
+	var board = _action("appoint_board")
+	var target = null
+	for company in Companies.majors_of(_loader, PLAYER):
+		if company.sector != first.sector:
+			target = company
+			break
+	var seats: Array = Companies.majors_of(_loader, PLAYER)
+	var i := 0
+	for person in _loader.people.get(PLAYER, []):
+		if String(person.kind) == "executive" and i < seats.size():
+			ns.companies[seats[i].id]["board_chair"] = String(person.id)
+			i += 1
+	# A state holding is the appointment's door (state_owned == 1).
+	ns.companies[target.id]["state_share"] = 0.51
+	if not Companies.available(state, ns, _loader.company_actions, target.id, _loader).has(board):
+		_fail("the staged state holding does not open the appointment -- the case tests nothing")
+	var chair_said: String = Companies.refusal_reason(state, ns, board, target.id, _loader)
+	var chair: Dictionary = Companies.execute(state, ns, _loader.company_actions, board, target.id, _loader)
+	if not bool(chair.get("refused", false)) or chair_said == "" or String(chair.get("reason", "")) != chair_said:
+		_fail("exhausted chair pool: refusal_reason said '%s', the arm answered '%s'" % [chair_said, String(chair.get("reason", ""))])
 
 
 func _test_rescue_restores_failing() -> void:

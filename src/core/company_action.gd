@@ -52,6 +52,12 @@ var effects: Dictionary = {}
 var requires_law: bool = false
 var bill: Dictionary = {}
 
+## V5.3-0 gate G1. A verb that cannot be taken back (a break-up dissolves the
+## firm for good): the panel asks first, naming the jobs and the money, rather
+## than acting on the click. Content says so, so a later irreversible verb is a
+## data edit, not a branch on an id.
+var irreversible: bool = false
+
 const EFFECT_CHANNELS := ["company", "bloc_offset"]
 
 
@@ -75,6 +81,12 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String], bl
 
 	a.preconditions = _extract_preconditions(d, a.id, filename, errors)
 	a.effects = _extract_effects(d, a.id, filename, errors, bloc_keys)
+
+	var raw_irreversible = d.get("irreversible", false)
+	if typeof(raw_irreversible) != TYPE_BOOL:
+		errors.append("%s: %s irreversible must be true or false" % [filename, a.id])
+	else:
+		a.irreversible = raw_irreversible
 
 	var raw_law = d.get("requires_law", false)
 	if typeof(raw_law) != TYPE_BOOL:

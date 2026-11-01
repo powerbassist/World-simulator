@@ -47,6 +47,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
 const SECTOR_LABEL := Labels.SECTOR
 
@@ -75,6 +76,8 @@ var _primary: Control = null
 ## the no-sorber break-up and the exhausted board pool are the reachable
 ## cases).
 var _last_refusal := ""
+## The card an irreversible verb asks on (CompanyVerb.ask), made at the first ask.
+var _confirm
 
 
 func _ready() -> void:
@@ -513,10 +516,9 @@ func _build_firm(ns, company) -> void:
 	_body.add_child(block)
 
 
+## Disabled with the sim's reason when the arm would refuse it (CompanyVerb, G1).
 func _action_button(ns, company, action) -> Button:
-	var button := PanelKit.sized(Button.new())
-	button.text = Strings.row_name("company-actions", action)
-	button.tooltip_text = Strings.row_summary("company-actions", action)
+	var button := CompanyVerb.button(_state, _loader, ns, company, action)
 	button.pressed.connect(func(): _on_act(ns, company, action))
 	if _primary == null and not button.disabled:
 		_primary = button
@@ -527,6 +529,13 @@ func _action_button(ns, company, action) -> Button:
 ## month the subsidy started against the month before it -- U4's contract, and the
 ## reason `acted` carries a snapshot rather than a label alone.
 func _on_act(ns, company, action) -> void:
+	if action.irreversible:
+		_confirm = CompanyVerb.ask(self, _confirm, _state, _loader, ns, company, action, _act.bind(ns, company, action))
+		return
+	_act(ns, company, action)
+
+
+func _act(ns, company, action) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result := Companies.execute(_state, ns, _loader.company_actions, action, company.id, _loader)
 	if not result.get("applied", false):
@@ -535,8 +544,11 @@ func _on_act(ns, company, action) -> void:
 		# split) is the sim's, verbatim; a refusal with none reads as refused
 		# plainly rather than silently.
 		var reason := String(result.get("reason", ""))
-		_last_refusal = tr("%s refused%s") % [Strings.row_name("company-actions", action), " -- %s" % reason if reason != "" else "."]
+		_last_refusal = tr("%s refused%s") % [Strings.row_name("company-actions", action), " -- %s" % Strings.t(reason) if reason != "" else "."]  # i18n: row-ok the sim's reason, its English the msgid
 		_dirty = true
+		# Asked on a card: the refusal answers there, in sight (#152's RECORD 1).
+		if action.irreversible and _confirm != null:
+			_confirm.tell(_last_refusal)
 		return
 	_last_refusal = ""
 	_dirty = true
@@ -544,13 +556,7 @@ func _on_act(ns, company, action) -> void:
 
 
 func _thousands(value: float) -> String:
-	var whole := int(round(value))
-	var text := str(absi(whole))
-	var out := ""
-	while text.length() > 3:
-		out = " " + text.substr(text.length() - 3) + out
-		text = text.substr(0, text.length() - 3)
-	return ("-" if whole < 0 else "") + text + out
+	return CompanyVerb.thousands(value)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.
