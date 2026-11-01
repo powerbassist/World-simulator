@@ -272,6 +272,10 @@ func _check_sector_trend_query() -> void:
 	ns.potential_shift_pct = 0.3
 	state.agreements[RK.key("FRA", "DEU")] = {"sector_shift": {"agriculture": -0.2, "industry": 0.4, "services": -0.2}}
 	var trade := {"agriculture": -0.2, "industry": 0.4, "services": -0.2}
+	# And an investment programme's capital, so the investment term is not 0 either.
+	ns.sector_investment["industry"] = {"capital": 5.0}
+	if float(Investment.sector_trend_shift(ns).get("industry", 0.0)) == 0.0:
+		_fail("the sector trend fixture's investment shift is 0, so it pins nothing")
 	for sector in C.SECTOR_TREND:
 		var investment := float(Investment.sector_trend_shift(ns).get(sector, 0.0))
 		var want: float = float(C.SECTOR_TREND[sector]) + 0.3 + float(trade[sector]) + investment
