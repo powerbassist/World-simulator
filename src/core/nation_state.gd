@@ -11,7 +11,7 @@ extends RefCounted
 ## the same way the nation schema is grown.
 
 const C = preload("res://src/sim/economy_constants.gd")
-const Fields = preload("res://src/core/nation_fields.gd")
+const FieldWalk = preload("res://src/core/nation_field_walk.gd")
 
 var id: String = ""
 
@@ -1919,7 +1919,7 @@ var start_judicial_independence: float = 0.0
 ## from it fails tests/test_nation_fields.gd rather than going silently uncopied.
 func duplicate_state():
 	var s = new()
-	Fields.copy_into(self, s)
+	FieldWalk.copy_into(self, s)
 	return s
 
 
@@ -1927,14 +1927,14 @@ func duplicate_state():
 ## Dictionary only), over the same table. See docs/data-architecture.md
 ## Persistence.
 func to_dict() -> Dictionary:
-	return Fields.to_dict(self)
+	return FieldWalk.to_dict(self)
 
 
 ## Inverse of to_dict(), over the same table. Every register is REBUILT, never
 ## assigned, so two states loaded from one payload share nothing.
 static func from_dict(d: Dictionary):
 	var s = new()
-	Fields.read_into(s, d)
+	FieldWalk.read_into(s, d)
 	return s
 
 
