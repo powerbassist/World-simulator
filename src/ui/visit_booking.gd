@@ -20,6 +20,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Cooldowns = preload("res://src/sim/diplomacy_cooldowns.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const President = preload("res://src/sim/president.gd")
 
 ## How far ahead the earliest open day is looked for: two months covers the
 ## longest journey and a diary already holding a trip.
@@ -29,8 +30,7 @@ const SEARCH_DAYS := 62
 ## The earliest day after today the scheduler would accept `action` with
 ## `target_id` on, as the entry the Diary would book; {} when none in SEARCH_DAYS.
 static func earliest_entry(state, loader, action, target_id: String) -> Dictionary:
-	var nation = loader.nations.get(target_id)
-	var person := String(nation.leader_person_id) if nation != null else ""
+	var person := leader_of(state, target_id)
 	var travel: int = Diplomacy.travel_days(loader, state.player_nation_id, target_id)
 	var y := int(state.year)
 	var m := int(state.month)
@@ -54,6 +54,13 @@ static func earliest_entry(state, loader, action, target_id: String) -> Dictiona
 		if Calendar.can_book(state, entry):
 			return entry
 	return {}
+
+
+## Whom a visit to `target_id` meets: the sim's leader there, never the nation
+## file's -- a government that changed since New Game is the one the player sees.
+static func leader_of(state, target_id: String) -> String:
+	var ns = state.nations.get(target_id)
+	return President.leader_id(ns) if ns != null else ""
 
 
 ## The first day `target_id` may receive `action` again, {year, month, day}, or {}

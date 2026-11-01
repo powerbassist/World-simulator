@@ -62,6 +62,43 @@ extends SceneTree
 ## The briefing is ranked with main.gd's held set as derived above (passed as
 ## `held_events`), so RF2 measures the briefing RF4 counts.
 ## Exit code: 0 when every measured band passes, 1 when one fails.
+##
+## V5.3 a + b, `--density` (docs/design/v5.3-ab.md section 7, band B7): how often
+## the player has something MEANINGFUL to decide. Same nations, months and regimes
+## as `--briefing` (the active regime is `_act` unchanged, so the two modes measure
+## the same player). At each boundary the probe lists the decisions offered and
+## builds each answer's effects strip from the sim's own numbers; the rule (what is
+## meaningful, the 3-month repeat, the band) is tools/density_count.gd's, pinned by
+## tests/test_density_count.gd. The sources, all that exist on main (the spec's
+## process stages, sector and region warnings, polls on any measure, divisions open
+## to an address and plant closures are not built yet, and count nothing here):
+##   event      a desk entry: its arrival, and its last month (months_left <= 1,
+##              the lapse guard); answers = its choices' authored effects;
+##   request    an audience request: its arrival, and its last month while still
+##              waiting (deadline_month - 1: it lapses in its deadline's tick); answers = book (when a day is free), delegate, decline, each
+##              as the feeling bands the person lands in (Feelings over the prices
+##              Audiences pays: RECEIVED_RAPPORT, the delegation's snub and grudge
+##              share, decline_price());
+##   bid        a foreign bid on a major (the bid_month stamp, and the window's last
+##              month); answers = let it lapse, and the bid verbs Companies.available
+##              offers (block, allow), each as its authored bloc offsets;
+##   failing    a major in its rescue window (the failed_month stamp, and the
+##              window's last month); answers = let it fail, and the rescue verbs;
+##   programme  the term-start offer (Programme.available non-empty after a month
+##              without it; the new game's own offer, open before the first tick,
+##              in the first month's row); answers = none, and each entry's
+##              `immediate` effects.
+## A strip's money is the balance move of the choice's fiscal channels, through
+## Legislature.apply_effects and Budget.recompute on a copy (the booked figure); its
+## approval is APPROVAL_SPAN x the size-weighted bloc offsets (the target's move,
+## an estimate); its arrows are DensityCount.arrow over each bloc offset. A firm
+## verb's price is not on its strip yet (A3/A4 build it), so a firm window counts
+## on its arrows. Subjects for the repeat rule: event|id, request|person (state =
+## the want), bid|firm (state = the bidder), failing|firm, programme|term.
+## Output per nation and regime: the band's figures, the counted, dull and repeated
+## offers per source, the axes outside the strip that would have counted a dull
+## one, and every empty month with what was happening (election, term start, an
+## empty desk). Exit code: 0 when B7 holds everywhere, 1 when it fails.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
@@ -70,6 +107,16 @@ const Events = preload("res://src/sim/events.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const ElectionVerdict = preload("res://src/ui/election_verdict.gd")
+const DensityCount = preload("res://tools/density_count.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
+const Budget = preload("res://src/sim/budget.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const Industry = preload("res://src/sim/industry.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const Delegation = preload("res://src/sim/delegation.gd")
+const Characters = preload("res://src/sim/characters.gd")
+const AudK = preload("res://src/sim/audience_constants.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 
 const START_YEAR := 2026
 const PLAYABLE := ["DEU", "FRA", "GBR", "POL"]
@@ -101,6 +148,7 @@ func _init() -> void:
 	var nations: Array = []
 	var regime := "both"
 	var briefing := false
+	var density := false
 	var months_set := false
 	var nation_set := false
 	var json_path := ""
@@ -117,6 +165,8 @@ func _init() -> void:
 			regime = arg.trim_prefix("--regime=")
 		elif arg == "--briefing":
 			briefing = true
+		elif arg == "--density":
+			density = true
 		elif arg.begins_with("--json="):
 			json_path = arg.trim_prefix("--json=")
 
@@ -127,13 +177,13 @@ func _init() -> void:
 		quit(1)
 		return
 
-	if briefing:
+	if briefing or density:
 		if not months_set:
 			months = 120
 		if nations.is_empty():
 			nations = [nation_id] if nation_set else PLAYABLE.duplicate()
 		var regimes: Array = ["idle", "active"] if regime == "both" else [regime]
-		var out := _briefing(nations, regimes, months)
+		var out := _density(nations, regimes, months) if density else _briefing(nations, regimes, months)
 		if json_path != "":
 			_write(json_path, out)
 		quit(0 if bool(out["pass"]) else 1)
@@ -571,3 +621,271 @@ func _print(rows: Array) -> void:
 		for key in ["interrupt", "major", "minor", "defaulted", "answered", "visits_to_player", "acts_to_player", "acts_between_others", "elections"]:
 			totals[key] = int(totals.get(key, 0)) + int(row[key])
 	print("totals: %s" % JSON.stringify(totals))
+
+
+# --- V5.3 a + b: --density (B7) ---------------------------------------------------
+
+func _density(nations: Array, regimes: Array, months: int) -> Dictionary:
+	var runs: Array = []
+	var all_pass := true
+	for nation_id in nations:
+		for regime in regimes:
+			var run := _density_run(String(nation_id), months, String(regime))
+			all_pass = all_pass and bool(run["band"]["pass"])
+			runs.append(run)
+			_print_density(run)
+	print("B7: %s" % ("PASS" if all_pass else "FAIL"))
+	return {"pass": all_pass, "runs": runs}
+
+
+## One nation, one regime: the month loop of _run, with this mode's reads after the
+## tick (the boundary the player sees) and the active regime's answers before it.
+func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
+	var state = GameState.new_game(_loader, nation_id)
+	state.year = START_YEAR
+	state.month = 1
+	var ns = state.player()
+	var memory := {}
+	var rows: Array = []
+	var tally := {"counted": {}, "dull": {}, "repeat": {}, "saved_by": {}}
+	var year := START_YEAR
+	var month := 1
+	var programme_before := false
+	var election_before := false
+	# The new game's programme offer is open before the first tick (months_in_term
+	# is 0 only then), so it is counted in the first month's row.
+	var opening: Array = Programme.available(state, ns, _loader)
+	for i in range(months):
+		month += 1
+		if month > 12:
+			month = 1
+			year += 1
+		state.year = year
+		state.month = month
+		if regime == "active":
+			_act(state, ns)
+		var seen := {"desk_before": {}}
+		var report: Dictionary = WorldMonth.tick_month(state, _loader, func(step: String, after: bool, _step_report: Dictionary) -> void:
+			if step == "Events" and not after:
+				seen["desk_before"] = _desk_ids(ns)
+		)
+		var now := year * 12 + month
+		var results: Array = report.get("election_results", [])
+		var defeated := not results.is_empty() and bool(ElectionVerdict.read(results, ns)["defeated"])
+		var programme: Array = Programme.available(state, ns, _loader)
+		var candidates: Array = []
+		_event_candidates(state, ns, seen["desk_before"], candidates)
+		_request_candidates(state, ns, report, now, candidates)
+		_firm_candidates(state, ns, now, candidates)
+		if i == 0 and not opening.is_empty():
+			candidates.append(_programme_candidate(state, ns, opening))
+		if not programme.is_empty() and not programme_before:
+			candidates.append(_programme_candidate(state, ns, programme))
+		programme_before = not programme.is_empty()
+		var out: Dictionary = DensityCount.month(candidates, memory, now)
+		var domains: Array = []
+		var sources := {}
+		for c in out["counted"]:
+			if not domains.has(String(c["domain"])):
+				domains.append(String(c["domain"]))
+			sources[c["source"]] = int(sources.get(c["source"], 0)) + 1
+		for kind in ["counted", "dull"]:
+			for c in out[kind]:
+				tally[kind][c["source"]] = int(tally[kind].get(c["source"], 0)) + 1
+		# Repeats by what was offered again: a re-arrival, or a decision's own last
+		# month falling inside the repeat window (the idle regime's usual case).
+		for c in out["repeat"]:
+			var key := "%s %s" % [c["source"], c["due"]]
+			tally["repeat"][key] = int(tally["repeat"].get(key, 0)) + 1
+		for c in out["dull"]:
+			for axis in DensityCount.saved_by(c["answers"]):
+				tally["saved_by"][axis] = int(tally["saved_by"].get(axis, 0)) + 1
+		var row := {
+			"now": now, "year": year, "month": month,
+			"count": (out["counted"] as Array).size(), "domains": domains, "sources": sources,
+			"dull": (out["dull"] as Array).size(), "repeat": (out["repeat"] as Array).size(),
+			"counted": (out["counted"] as Array).map(func(c) -> String: return "%s %s" % [c["due"], c["subject"]]),
+		}
+		if int(row["count"]) == 0:
+			var tags: Array = []
+			if not results.is_empty():
+				tags.append("election")
+			if election_before:
+				tags.append("after_election")
+			if Programme.is_term_start(ns):
+				tags.append("term_start")
+			if ns.event_queue.is_empty():
+				tags.append("desk_empty")
+			if Audiences.pending(ns).is_empty():
+				tags.append("no_request")
+			row["tags"] = tags
+		election_before = not results.is_empty()
+		rows.append(row)
+		if defeated:
+			break
+	return {"nation": nation_id, "regime": regime, "band": DensityCount.summary(rows),
+		"tally": tally, "rows": rows}
+
+
+## A desk entry is offered at its arrival (not on the desk before the Events step)
+## and again in its last month; the rule counts an arrival and its deadline once.
+func _event_candidates(state, ns, desk_before: Dictionary, out: Array) -> void:
+	for entry in ns.event_queue:
+		var event_id := String(entry.get("event_id", ""))
+		var arrived := not desk_before.has(event_id)
+		var due := int(entry.get("months_left", 0)) <= 1
+		if not arrived and not due:
+			continue
+		var ev = Events.event_by_id(_loader, event_id)
+		if ev == null:
+			continue
+		var answers: Array = []
+		for c in ev.choices:
+			answers.append(_effects_strip(state, c.get("effects", {})))
+		out.append({"source": "event", "subject": "event|%s" % event_id, "state": "",
+			"domain": String(entry.get("category", "event")),
+			"due": "arrival" if arrived else "deadline", "answers": answers})
+
+
+func _request_candidates(state, ns, report: Dictionary, now: int, out: Array) -> void:
+	var arrived := {}
+	for r in (report.get("audience_requests", {}) as Dictionary).get("arrived", []):
+		arrived[String(r["id"])] = true
+	# A pending request lapses in the tick of its deadline month (Audiences._overdue:
+	# now >= deadline_month), so its last month at a boundary is the one before.
+	for r in Audiences.pending(ns):
+		var request_id := String(r["id"])
+		var is_new := arrived.has(request_id)
+		if not is_new and int(r["deadline_month"]) - 1 != now:
+			continue
+		out.append({"source": "request", "subject": "request|%s" % String(r["person_id"]),
+			"state": "%s|%s" % [String(r["object"]), String(r["stance"])], "domain": "audience",
+			"due": "arrival" if is_new else "deadline", "answers": _request_answers(state, ns, r)})
+
+
+## Each open answer as the feeling bands the person lands in, every register filled
+## (an unmoved one at its current band), so two answers compare register by register.
+func _request_answers(state, ns, r: Dictionary) -> Array:
+	var request_id := String(r["id"])
+	var pid := String(r["person_id"])
+	var person = _loader.person_by_id.get(pid)
+	var open: Dictionary = Audiences.answers(state, ns, _loader, request_id)
+	var deltas: Array = []
+	if bool(open["book"]["ok"]):
+		deltas.append({"rapport": AudK.RECEIVED_RAPPORT})
+	if bool(open["delegate"]["ok"]):
+		deltas.append({
+			"rapport": Delegation.snub(person, String(r["object"])),
+			"grudge": Characters.refusal_grudge(ns, person, AudK.DECLINE_GRUDGE * AudK.DELEGATE_GRUDGE_SHARE) if person != null else 0.0,
+			"loyalty": AudK.DECLINE_LOYALTY * AudK.DELEGATE_GRUDGE_SHARE,
+		})
+	if bool(open["decline"]["ok"]):
+		deltas.append(Audiences.decline_price(ns, _loader, request_id))
+	var feel: Dictionary = Feelings.of(ns, pid)
+	var answers: Array = []
+	for delta in deltas:
+		var bands := {}
+		for register in Feelings.BANDS:
+			var span: Vector2 = Feelings.RANGE[register]
+			var value := clampf(float(feel.get(register, 0.0)) + float(delta.get(register, 0.0)), span.x, span.y)
+			bands["%s|%s" % [pid, register]] = Feelings.band(register, value)
+		answers.append({"feel": bands})
+	return answers
+
+
+## A bid and a rescue window, per major: the stamp month and the window's last.
+func _firm_candidates(state, ns, now: int, out: Array) -> void:
+	for company_id in ns.companies.keys():
+		var entry: Dictionary = ns.companies[company_id]
+		var bidder := String(entry.get("bid_bidder", ""))
+		if bidder != "":
+			var is_new := int(entry.get("bid_month", -1)) == now
+			if is_new or int(entry.get("bid_months_left", 0)) <= 1:
+				out.append({"source": "bid", "subject": "bid|%s" % String(company_id), "state": bidder,
+					"domain": "industrial", "due": "arrival" if is_new else "deadline",
+					"answers": _firm_answers(state, ns, String(company_id), ["block_bid", "allow_bid"])})
+	for f in Industry.failing(state, ns, _loader):
+		var company_id := String(f["company_id"])
+		var is_new := int((ns.companies[company_id] as Dictionary).get("failed_month", -1)) == now
+		if is_new or int(f["months_left"]) <= 1:
+			out.append({"source": "failing", "subject": "failing|%s" % company_id, "state": "",
+				"domain": "industrial", "due": "arrival" if is_new else "deadline",
+				"answers": _firm_answers(state, ns, company_id, ["subsidise"])})
+
+
+## Doing nothing, then every verb Companies.available offers on the firm whose op
+## answers this window.
+func _firm_answers(state, ns, company_id: String, ops: Array) -> Array:
+	var answers: Array = [{}]
+	for action in Companies.available(state, ns, _loader.company_actions, company_id, _loader):
+		var op := String((action.effects.get("company", {}) as Dictionary).get("op", ""))
+		if ops.has(op):
+			answers.append(_effects_strip(state, action.effects))
+	return answers
+
+
+func _programme_candidate(state, ns, programme: Array) -> Dictionary:
+	var answers: Array = [{}]
+	for entry in programme:
+		answers.append(_effects_strip(state, entry.get("immediate", {})))
+	return {"source": "programme", "subject": "programme|%d" % int(ns.terms_served), "state": "",
+		"domain": "programme", "due": "arrival", "answers": answers}
+
+
+## One answer's strip (density_count.gd's header): money through the sim's own
+## applier on a copy, approval and arrows from the bloc offsets, and the channels
+## the strip does not print under `other`.
+func _effects_strip(state, effects: Dictionary) -> Dictionary:
+	var strip := {"arrows": {}, "other": {}}
+	var offsets: Dictionary = effects.get("bloc_offset", {})
+	var weighted := 0.0
+	for bloc in offsets:
+		strip["arrows"][bloc] = DensityCount.arrow(float(offsets[bloc]))
+		weighted += float(OpinionK.BLOC_SIZE.get(bloc, 0.0)) * float(offsets[bloc])
+	strip["approval"] = float(OpinionK.APPROVAL_SPAN) * weighted
+	var fiscal := {}
+	for key in ["spending_pct_gdp", "tax_rates_pct", "other_revenue_pct_gdp"]:
+		if effects.has(key):
+			fiscal[key] = effects[key]
+	if not fiscal.is_empty():
+		strip["money_bn"] = _balance_move(state, fiscal)
+	for term in effects.get("society", {}):
+		var v = effects["society"][term]
+		strip["other"]["society|%s" % term] = float(v.get("", 0.0)) if typeof(v) == TYPE_DICTIONARY else float(v)
+	var company: Dictionary = effects.get("company", {})
+	if company.has("sector"):
+		strip["other"]["company|%s" % String(company["sector"])] = float(company.get("burden", 0.0))
+	return strip
+
+
+## The balance move, EUR bn a year, of a choice's fiscal channels: applied on a copy
+## through Legislature.apply_effects (what the answer books), recomputed, read off
+## the deficit. Positive is a better balance.
+func _balance_move(state, fiscal: Dictionary) -> float:
+	var copy = state.duplicate_state()
+	var cns = copy.player()
+	Budget.recompute(copy, cns)
+	var before := float(cns.deficit_pct_gdp)
+	Legislature.apply_effects(copy, cns, fiscal, _loader)
+	Budget.recompute(copy, cns)
+	return -(float(cns.deficit_pct_gdp) - before) * float(cns.gdp_eur_bn) / 100.0
+
+
+func _print_density(run: Dictionary) -> void:
+	var b: Dictionary = run["band"]
+	var t: Dictionary = run["tally"]
+	print("%s %-6s %3d months  B7 %s: >= 1 in %.0f %% of months, mean %.2f, max %d, longest none %d, over %d: %d, quarters with %d domains %d/%d" % [
+		run["nation"], run["regime"], int(b["months"]), "PASS" if bool(b["pass"]) else "FAIL",
+		100.0 * float(b["share"]), float(b["mean"]), int(b["max"]), int(b["longest_none"]),
+		DensityCount.BAND_MAX, int(b["over_max"]), DensityCount.BAND_DOMAINS, int(b["quarters_ok"]), int(b["quarters"])])
+	print("    counted %s; dull %s (saved by %s); repeats %s" % [
+		JSON.stringify(t["counted"]), JSON.stringify(t["dull"]), JSON.stringify(t["saved_by"]), JSON.stringify(t["repeat"])])
+	var empty := {}
+	var dates: Array = []
+	for row in run["rows"]:
+		if int(row["count"]) > 0:
+			continue
+		dates.append("%04d-%02d" % [int(row["year"]), int(row["month"])])
+		for tag in row["tags"]:
+			empty[tag] = int(empty.get(tag, 0)) + 1
+	print("    empty months %d %s; with %s" % [dates.size(), JSON.stringify(dates), JSON.stringify(empty)])
