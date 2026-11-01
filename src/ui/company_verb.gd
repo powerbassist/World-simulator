@@ -33,9 +33,10 @@ static func button(state, loader, ns, company, action) -> Button:
 	var out := PanelKit.sized(Button.new())
 	out.text = Strings.row_name("company-actions", action)
 	var why := Companies.refusal_reason(state, ns, action, String(company.id), loader)
-	# V5.3 a: a firm already in a process refuses the other ownership verbs.
-	if why == "" and Processes.blocks(ns, String(company.id), action):
-		why = Processes.BUSY
+	# V5.3 a: a firm already in a process refuses the other ownership verbs, and a
+	# firm that settled a break-up refuses another referral.
+	if why == "":
+		why = Processes.refusal(state, ns, String(company.id), action)
 	out.disabled = why != ""
 	if why != "":
 		out.tooltip_text = Strings.t(why)  # i18n: row-ok the sim's reason, its English the msgid
