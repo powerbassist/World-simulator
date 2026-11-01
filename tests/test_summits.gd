@@ -9,7 +9,8 @@ extends SceneTree
 ## The load-bearing properties:
 ##
 ##   - src/sim/summits.gd is a LEAF. It preloads Cycle (the shared hash, a
-##     leaf itself) and nothing else. A summit module that reached for
+##     leaf itself) and President (who leads a nation, a leaf too, V5.3) and
+##     nothing else. A summit module that reached for
 ##     Diplomacy or Legislature would be the calendar's failure -- the widest
 ##     dependency in src/sim/ with the narrowest job.
 ##   - the draw is DETERMINISTIC. Same meeting stamp, same scene -- the event
@@ -28,6 +29,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Summits = preload("res://src/sim/summits.gd")
 const Summit = preload("res://src/core/summit.gd")
+const President = preload("res://src/sim/president.gd")
 const DM = preload("res://addons/dialogue_manager/dialogue_manager.gd")
 
 const PLAYER := "FRA"
@@ -54,6 +56,7 @@ func _init() -> void:
 	_check_content_compiles()
 	_check_sidecar_contract_refuses_bad_content()
 	_check_scene_field()
+	_check_leader_is_the_sims()
 	_check_no_new_state()
 	_check_arrival_chain_by_source()
 	_finish()
@@ -73,7 +76,9 @@ func _check_leaf() -> void:
 		var trimmed := line.strip_edges()
 		if not trimmed.begins_with("const ") or not trimmed.contains("preload("):
 			continue
-		if trimmed.contains("cycle.gd"):
+		# president.gd is the one rule for who leads a nation (V5.3, #240), and a
+		# leaf itself: reading it keeps the summit a leaf.
+		if trimmed.contains("res://src/sim/cycle.gd") or trimmed.contains("res://src/sim/president.gd"):
 			continue
 		_fail("summits.gd preloads a system: `%s` -- the draw must stay a leaf" % trimmed)
 
@@ -206,6 +211,38 @@ func _check_sidecar_contract_refuses_bad_content() -> void:
 ## test_save_load.gd pins the version; THIS file pins the absence, because a
 ## session that serialises a summit history has to come here and say why the
 ## diary of dinners cannot be derived from the state it already changed.
+## V5.3 (#240's rule, reaching the sim): the summit names the partner's leader as
+## the sim holds it -- President.leader_id, the head of state where the nation has
+## an executive, else the head of government -- never the nation file's authored
+## person, whom a coalition change or a removal leaves behind. The fixture moves
+## the office to a stand-in, so a draw still reading the nation file fails.
+func _check_leader_is_the_sims() -> void:
+	for nation_id in _loader.summits.keys():
+		var ns = _state.nations.get(nation_id)
+		if ns == null:
+			_fail("%s has summit content but no nation state" % nation_id)
+			continue
+		# At the start every partner's office is held by a person the register
+		# knows, or the scene would stage no portrait at all.
+		var start := String(Summits.draw(_state, _loader, nation_id).get("leader_person_id", ""))
+		if not _loader.person_by_id.has(start):
+			_fail("%s's summit names no known leader at the start: '%s'" % [nation_id, start])
+		var kept_hos := String(ns.head_of_state_person_id)
+		var kept_pm := String(ns.pm_person_id)
+		if ns.has_executive:
+			ns.head_of_state_person_id = "summit_test_stand_in"
+		else:
+			ns.pm_person_id = "summit_test_stand_in"
+		var drawn := String(Summits.draw(_state, _loader, nation_id).get("leader_person_id", ""))
+		var expected := President.leader_id(ns)
+		ns.head_of_state_person_id = kept_hos
+		ns.pm_person_id = kept_pm
+		if expected == String(_loader.nations[nation_id].leader_person_id):
+			_fail("%s: the stand-in fixture did not move the leader off the nation file" % nation_id)
+		elif drawn != expected:
+			_fail("%s's summit names %s, not the sim's leader %s" % [nation_id, drawn, expected])
+
+
 func _check_no_new_state() -> void:
 	# 37 is V4.6's, on the commodity register. 38 is V4.2's, on the statute
 	# book's six registers (the ledger, drafts, custom laws, custom taxes,

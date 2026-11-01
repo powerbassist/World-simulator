@@ -426,8 +426,8 @@ func _build_abroad(ns) -> void:
 		if String(id) == ns.id or not _loader.nations.has(id):
 			continue
 		var other = _state.nations[id]  # the sim's leader, not the nation file's
-		_person_line(_body, President.leader_id(other), [[String(_loader.nations[id].nation_name), COL_NAME],
-			["%s %s" % [President.leader_title(other), _name_of(President.leader_id(other))]]])
+		var who := President.leader_id(other)
+		_person_line(_body, who, [[String(_loader.nations[id].nation_name), COL_NAME], ["%s %s" % [President.leader_title(other), _name_of(who)]]])
 
 
 ## A person's line -- V2.3's face in front, then one Label per cell: [text, width
