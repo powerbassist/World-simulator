@@ -26,6 +26,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const President = preload("res://src/sim/president.gd")
 
 ## Its height only since V5.1-c2.3: the card heads the sidebar and takes the
 ## sidebar's width, and its 268 px floor would have widened the sidebar past the
@@ -103,10 +104,10 @@ func _ready() -> void:
 	nation_row.add_child(_nation_label)
 
 
-## Called once at startup. The name, title, flag and portrait are static content
-## -- they are read here rather than in refresh() so the per-day path stays three
-## label writes. The bust slot holds the silhouette from _ready() until this
-## call, because the leader's id is nation content and _ready() has no loader.
+## Called at startup and on a load. The name, title, flag and portrait are read
+## here rather than in refresh() so the per-day path stays three label writes; the
+## leader is the SIM's (President.leader_id), not the nation file's. The bust slot
+## holds the silhouette from _ready() until this call, since _ready() has no state.
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
@@ -114,10 +115,11 @@ func setup(state, loader) -> void:
 	var nation = loader.nations.get(state.player_nation_id, null)
 	if nation == null:
 		return
+	var ns = state.player()
+	_leader_id = President.leader_id(ns)
 	_nation_label.text = nation.nation_name
-	_leader_label.set_marked("%s, %s" % [PanelKit.person(nation.leader_person_id, loader.person_name(nation.leader_person_id)), nation.leader_title])
+	_leader_label.set_marked("%s, %s" % [PanelKit.person(_leader_id, loader.person_name(_leader_id)), President.leader_title(ns)])
 	_flag.setup(nation.flag_bands, nation.flag_layout)
-	_leader_id = nation.leader_person_id
 	_emotion = -1
 	_set_bust(Portrait.framed_for(_leader_id, Vector2(54, 74),
 		Portrait.Emotion.NEUTRAL, Portrait.Scene.OFFICE))

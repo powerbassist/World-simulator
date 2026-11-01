@@ -21,6 +21,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const ForeignReading = preload("res://src/ui/foreign_reading.gd")
+const President = preload("res://src/sim/president.gd")
 
 ## How far from the pointer the box opens, so the click's own country stays in view.
 const OFFSET := Vector2(14, 14)
@@ -86,7 +87,7 @@ func show_box(id: String) -> void:
 		var home = _main._loader.nations.get(player)
 		PanelKit.line(_body, tr("Relations with %s: %d / 100") % [
 			home.nation_name if home != null else player, roundi(Diplomacy.score(state, player, id))], PanelKit.Tone.PLAIN)
-	PanelKit.rich(_body, tr("Leader: %s (%s)") % [PanelKit.person(n.leader_person_id, _main._loader.person_name(n.leader_person_id)), n.leader_title], PanelKit.Tone.PLAIN)
+	PanelKit.rich(_body, tr("Leader: %s (%s)") % [PanelKit.person(President.leader_id(ns), _main._loader.person_name(President.leader_id(ns))), President.leader_title(ns)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)
