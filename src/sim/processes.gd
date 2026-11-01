@@ -295,12 +295,13 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 		_close(state, row, "void")
 		return
 	row["months_left"] = int(row["months_left"]) - 1
-	# The stage's ask, posted in its last month and due when it ends (process_asks.gd).
-	if int(row["months_left"]) == 1:
-		Asks.post(ns, loader, row, _action(loader, String(row["action_id"])), _now(state))
-	if int(row["months_left"]) > 0:
+	if int(row["months_left"]) > 1:
 		return
 	var action = _action(loader, String(row["action_id"]))
+	# The stage's ask, posted in its last month and due when it ends (process_asks.gd).
+	if int(row["months_left"]) == 1:
+		Asks.post(ns, row, action, _now(state), _company(ns, loader, String(row["company_id"])))
+		return
 	var half := 1.0 - K.PROCESS_BLOC_AT_START
 	match String(row["stage"]):
 		"negotiation":
@@ -317,6 +318,10 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 				_close(state, row, "done")
 		"sale":
 			# The bid's discount was set when it was posted: the price shown is booked.
+			# A sale saved before the asks (#248) and loaded in its last month was never
+			# posted, so it is priced here, at the cycle's discount now (QA on #248).
+			if not row.has("ask") and not bool(row.get("held", false)):
+				row["rate"] = Asks.discount(ns)
 			if Asks.chosen(row) == "hold":
 				row["held"] = true
 				_stage(row, "sale", K.PROCESS_HOLD_MONTHS)
@@ -327,6 +332,10 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 				_close(state, row, "done")
 		"investigation":
 			_pay(ns, row, K.PROCESS_LEGAL_COST_EUR_BN)
+			# A referral saved before the asks (#248) and loaded in its last month was
+			# never ruled: the ruling is drawn here, on the same seed (QA on #248).
+			if not row.has("ruled"):
+				row["ruled"] = Asks.rule(row, _now(state))
 			# A firm that no longer qualifies (its share under the gate, no rival
 			# left to absorb it) is not ordered broken up: the blocs pay nothing
 			# for a remedy the arm would refuse. The fees stay paid.

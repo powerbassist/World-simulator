@@ -639,6 +639,12 @@ def self_check(people) -> int:
                     failures.append("real counterpart name leaked into %s/%s prompt" % (pid, emotion))
                     break
 
+    # 7. the reroll memory is read once, however many seeds were derived (see
+    # comfy_client._salts for why ten thousand opens of one file is a hazard).
+    if comfy.salts_reads != 1:
+        failures.append("portraits_salts.json was read %d times by the self-check, not once"
+                        % comfy.salts_reads)
+
     if failures:
         for f in failures:
             print("FAIL: %s" % f)

@@ -54,19 +54,27 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95, "commodities": 210}
+const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95, "commodities": 210,
+	"companies": 145}
 const TOTAL_PENDING := {
 	"budget": 105, "calendar": 42, "campaign": 140,
-	"companies": 287, "diplomacy": 22, "economy": 115, "energy": 118,
+	"diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106, "tax": 24,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
 ## (6 648 in the spec's count, 4 911 once this test played its months as the game
-## does): it can only come down from here.
-const TOTAL_SUM_CEILING := 3208
+## does): it can only come down from here. One stated rise, 2934 -> 2943 (V5.3 a +
+## b, the parent's call): the Industry cards' "trend against the nation's", a figure
+## spec 3.2 asks for, 9 words on a tab still at 22 of its 145.
+const TOTAL_SUM_CEILING := 2943
 const TOTAL_SUM_TARGET := 3600
+
+## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
+## card on the Industry tab, its first major's verbs open and one verb focused --
+## one full strip and the other verbs' name and money line -- under 90 words.
+const INDUSTRY_CARD_CEILING := 90
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit", "audience"]
@@ -119,6 +127,7 @@ func _initialize() -> void:
 	await _sweep_inbox(main)
 	for fixture in ["calm", "tense", "crisis"]:
 		await _sweep_briefing(main, fixture)
+	await _sweep_industry_card(main)
 	_report()
 	quit(1 if not _failures.is_empty() else 0)
 
@@ -220,6 +229,42 @@ func _sweep_briefing(main, fixture: String) -> void:
 		_fail("briefing (%s): %d visible words, the ceiling is %d" % [fixture, total, BRIEFING_CEILING])
 	BriefingDriver.close(main)
 	await process_frame
+
+
+## A6: the opened card, as a player leaves it mid-decision.
+func _sweep_industry_card(main) -> void:
+	var state = main._state
+	var ns = state.player()
+	var major = preload("res://src/sim/companies.gd").majors_of(main._loader, ns.id)[0]
+	var panel = main._companies_panel
+	panel._open_sector = String(major.sector)
+	panel._open_firm = String(major.id)
+	main._windows.open("companies", true)
+	panel.mark_dirty()
+	await process_frame
+	await process_frame
+	for button in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
+		if button.has_meta("action_id") and not button.disabled:
+			button.grab_focus()
+			break
+	await process_frame
+	var card: Node = null
+	for button in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
+		if String(button.get_meta("sector", "")) == String(major.sector):
+			card = button.get_parent().get_parent()
+	if card == null:
+		_fail("industry card: the opened card is not on the tab")
+		return
+	var total := 0
+	for node in _visible_text_nodes(card):
+		var words := _words(_text_of(node))
+		total += words.size()
+		if _dump.has("industry_card"):
+			print("dump industry_card %3d %s: %s" % [words.size(), node.get_class(), _text_of(node).left(90)])
+	print("prose: industry card (opened, one verb focused) %d words" % total)
+	if total > INDUSTRY_CARD_CEILING:
+		_fail("industry card: %d visible words opened, the ceiling is %d (A6)" % [total, INDUSTRY_CARD_CEILING])
+	main._windows.close_all()
 
 
 func _visible_text_nodes(node: Node) -> Array:

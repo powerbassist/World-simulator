@@ -285,4 +285,5 @@ const FIELDS := [
 	["tabled_bill", DEEP, COPIED, {}, true],  # V5.2 b+ R2: absent is nothing before the Assembly
 	["processes", DEEP, ROWS, [], true],  # V5.3 a: absent is nothing in progress
 	["sector_shares", DEEP, COPIED, {}, true],  # V5.3 a: absent is nothing moved (overrides only)
+	["sector_factor", DEEP, NOT_SAVED, {}, true],  # V5.3 a: derived, re-derived on load (Sectors.rebuild)
 ]
