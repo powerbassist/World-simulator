@@ -16,7 +16,7 @@ extends RefCounted
 ##                                                the firm intact; a firm the
 ##                                                authority clears is asked nothing
 ##   sale           the best bid                  accept (default) / hold for a new
-##                                                bid in PROCESS_HOLD_MONTHS
+##                                                bid in PROCESS_HOLD_MONTHS, once
 ##
 ## Walking away and stopping are the stop verb (Processes.stop: a U-turn, and the
 ## break fee after a vote); the other answers land at the stage's end.
@@ -59,7 +59,11 @@ static func post(ns, loader, row: Dictionary, action, now: int) -> void:
 				_answer("settle", -K.PROCESS_SETTLEMENT_FINE * value, scaled(offsets, K.PROCESS_SETTLEMENT_BLOC))]
 		"sale":
 			row["rate"] = discount(ns)
-			answers = [_answer("accept", -base * (1.0 - float(row["rate"])), rest), _answer("hold", 0.0, {})]
+			# One hold only (pass 1 on #248): the new bid is priced and asks nothing,
+			# so the sale ends inside the months its strip showed (A3).
+			if bool(row.get("held", false)):
+				return
+			answers =[_answer("accept", -base * (1.0 - float(row["rate"])), rest), _answer("hold", 0.0, {})]
 	row["ask"] = {"kind": String(STAGE_ASK[stage][0]), "posted": now, "due": now + 1,
 		"default": String(STAGE_ASK[stage][1]), "answers": answers}
 

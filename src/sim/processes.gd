@@ -47,6 +47,7 @@ const FIRST_STAGE := {
 ## or structure, the foreign bid's allow included.
 const BLOCKED_OPS := ["nationalise", "privatise", "break_up", "allow_bid"]
 const BUSY := "A process is already under way on this firm."
+const SETTLED := "This firm settled with the competition authority; its commitments stand."
 const OPEN := "open"
 
 
@@ -67,7 +68,7 @@ static func rows(ns) -> Array:
 	var out: Array = []
 	for row in ns.processes:
 		if String(row["status"]) == OPEN:
-			out.append((row as Dictionary).duplicate())
+			out.append((row as Dictionary).duplicate(true))
 	return out
 
 
@@ -76,6 +77,20 @@ static func blocks(ns, company_id: String, action) -> bool:
 	if action == null or live(ns, company_id).is_empty():
 		return false
 	return BLOCKED_OPS.has(String((action.effects.get("company", {}) as Dictionary).get("op", "")))
+
+
+## Why the register refuses `action` on this firm now, "" when it does not: a live
+## process (BUSY), or the same verb settled before on it (SETTLED: a settlement
+## leaves the firm intact, so a second referral would collect the fine again --
+## pass 1 on #248). The panel greys the verb with this line before the press (A5).
+static func refusal(ns, company_id: String, action) -> String:
+	if blocks(ns, company_id, action):
+		return BUSY
+	for row in ns.processes:
+		if action != null and String(row["company_id"]) == company_id and String(row["action_id"]) == String(action.id) \
+				and String(row["status"]) == "settled":
+			return SETTLED
+	return ""
 
 
 ## The strip's figures for a process verb on this firm now: its stages, the
@@ -101,8 +116,10 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months}
 		"privatisation":
 			var base := held * value
+			# A sale may be held once for a new bid (process_asks.gd), so it can run
+			# one hold longer than its six months.
 			return {"base_eur_bn": base, "price_lo": -base, "price_hi": -base * (1.0 - K.PROCESS_PRIVATISE_DISCOUNT.y),
-				"months_lo": K.PROCESS_SALE_MONTHS, "months_hi": K.PROCESS_SALE_MONTHS}
+				"months_lo": K.PROCESS_SALE_MONTHS, "months_hi": K.PROCESS_SALE_MONTHS + K.PROCESS_HOLD_MONTHS}
 		"break_up":
 			var odds := odds_for(Companies.share_of_company(ns, company))
 			# The truth's fog, as the prices are (parent pass 2 on #244): a fixed-width
@@ -128,7 +145,9 @@ static func odds_for(share: float) -> float:
 static func start(state, ns, loader, action, company_id: String, by_law := false) -> Dictionary:
 	if not is_process(action) or not Companies.available(state, ns, loader.company_actions, company_id, loader, by_law).has(action):
 		return _refused(ns, action, company_id, "")
-	var why := BUSY if not live(ns, company_id).is_empty() else Companies.refusal_reason(state, ns, action, company_id, loader)
+	var why := BUSY if not live(ns, company_id).is_empty() else refusal(ns, company_id, action)
+	if why == "":
+		why = Companies.refusal_reason(state, ns, action, company_id, loader)
 	if why != "":
 		return _refused(ns, action, company_id, why)
 	var est := estimate(state, ns, loader, action, company_id)
@@ -198,9 +217,13 @@ static func answer(state, ns, loader, process_id: String, answer_id: String) -> 
 		return {"ok": false, "reason": "Nothing here is waiting for an answer."}
 	if Asks.answer_of(row, answer_id).is_empty():
 		return {"ok": false, "reason": "That is not one of the answers."}
-	row["answer"] = answer_id
 	if answer_id == "walk" or answer_id == "stop":
-		return stop(state, ns, loader, process_id)
+		# Recorded only once the stop has run, so a refused stop leaves the ask waiting.
+		var price := stop(state, ns, loader, process_id)
+		if bool(price["ok"]):
+			row["answer"] = answer_id
+		return price
+	row["answer"] = answer_id
 	return {"ok": true}
 
 
@@ -217,9 +240,13 @@ static func stop_price(state, ns, loader, process_id: String) -> Dictionary:
 			var premium := float(row["base_eur_bn"]) * float(row["rate"])
 			return {"ok": true, "debt_eur_bn": K.PROCESS_BREAK_FEE * premium, "bloc_offset": Asks.uturn(action)}
 		"investigation":
-			var total := int(row["stage_months"])
-			var spent := float(total - int(row["months_left"])) / float(maxi(total, 1))
-			return {"ok": true, "debt_eur_bn": K.PROCESS_LEGAL_COST_EUR_BN * spent, "bloc_offset": {}}
+			# The ruling is drawn with its ask, a month before the stage ends
+			# (process_asks.gd); once it is drawn the process is past stopping, as
+			# after any ruling (pass 1 on #248: else a known ruling could be dodged).
+			if not row.has("ruled"):
+				var total := int(row["stage_months"])
+				var spent := float(total - int(row["months_left"])) / float(maxi(total, 1))
+				return {"ok": true, "debt_eur_bn": K.PROCESS_LEGAL_COST_EUR_BN * spent, "bloc_offset": {}}
 	return {"ok": false, "reason": "Past this stage the process cannot be stopped."}
 
 
@@ -283,6 +310,7 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 		"sale":
 			# The bid's discount was set when it was posted: the price shown is booked.
 			if Asks.chosen(row) == "hold":
+				row["held"] = true
 				_stage(row, "sale", K.PROCESS_HOLD_MONTHS)
 				return
 			if _land(state, ns, loader, action, row):

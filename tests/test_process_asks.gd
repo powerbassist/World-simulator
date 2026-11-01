@@ -35,6 +35,10 @@ func _init() -> void:
 	_test_a_cleared_referral_asks_nothing()
 	_test_holding_the_sale_waits_for_a_new_bid()
 	_test_an_ask_is_answered_once_and_survives_a_save()
+	_test_a_settled_firm_is_not_referred_again()
+	_test_a_drawn_ruling_cannot_be_stopped()
+	_test_every_asking_stage_lasts_two_months()
+	_test_rows_are_deep_copies()
 	_finish()
 
 
@@ -211,14 +215,19 @@ func _test_holding_the_sale_waits_for_a_new_bid() -> void:
 		_fail("a held sale sold anyway")
 	for i in range(K.PROCESS_HOLD_MONTHS - 1):
 		_month(state)
-	var bid: Dictionary = row.get("ask", {})
-	if _answer_ids(bid) != ["accept", "hold"] or int(bid.get("posted", -1)) <= int(ask["posted"]):
-		_fail("the held sale did not post a new bid in its last month: %s" % [bid])
-	var windfall := float(bid["answers"][0]["debt_eur_bn"])
+	# One hold only (pass 1 on #248): the new bid is priced in its last month and
+	# asks nothing, so a sale cannot be held without end.
+	if not (row.get("ask", {}) as Dictionary).is_empty():
+		_fail("a sale held once asked again: %s" % [row["ask"]])
+	var windfall := -float(row["base_eur_bn"]) * (1.0 - float(row["rate"]))
 	var debt := float(ns.debt_eur_bn)
 	_month(state)
 	if Companies.state_share_of(ns, firm) != 0.0 or not is_equal_approx(float(ns.debt_eur_bn) - debt, windfall):
-		_fail("the new bid, unanswered, did not sell at the price it showed")
+		_fail("the new bid did not sell at the price it was priced at")
+	# A3: the held sale still lands inside the duration its strip showed.
+	var months := int(row["closed"]) - int(row["started"])
+	if months < int(row["months_lo"]) or months > int(row["months_hi"]):
+		_fail("A3: the held sale took %d months against %s..%s" % [months, row["months_lo"], row["months_hi"]])
 
 
 func _test_an_ask_is_answered_once_and_survives_a_save() -> void:
@@ -238,6 +247,78 @@ func _test_an_ask_is_answered_once_and_survives_a_save() -> void:
 		_fail("an ask was answered twice")
 	if not Processes.asks(ns).is_empty():
 		_fail("an answered ask is still listed as waiting")
+	# The loaded copy answers and resolves too (its numbers came back through JSON).
+	var kept_ns = kept.player()
+	if not bool(Processes.answer(kept, kept_ns, _loader, id, "walk").get("ok", false)):
+		_fail("the loaded ask could not be answered")
+	if String(_row(kept_ns, firm)["status"]) != "stopped":
+		_fail("walking away on the loaded ask did not stop the stake")
+
+
+## Pass 1 on #248: a settlement leaves the firm intact, so without this rule a
+## referral-then-settle would be a fine collected again every year. The refusal is
+## the door's own line, read before the press (A5).
+func _test_a_settled_firm_is_not_referred_again() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	var verb = _action("break_up")
+	Processes.start(state, ns, _loader, verb, firm)
+	var row := _row(ns, firm)
+	row["odds"] = 1.0
+	for i in range(int(row["months_left"]) - 1):
+		_month(state)
+	Processes.answer(state, ns, _loader, String(row["id"]), "settle")
+	_month(state)
+	if String(row["status"]) != "settled":
+		_fail("the settlement fixture did not settle: %s" % row)
+		return
+	if Processes.refusal(ns, firm, verb) != Processes.SETTLED:
+		_fail("a settled firm's break-up is not refused before the press")
+	if bool(Processes.start(state, ns, _loader, verb, firm).get("applied", false)):
+		_fail("a settled firm was referred again")
+
+
+## Pass 1 on #248: the ruling is drawn with its ask, a month before the
+## investigation ends; once it is drawn the process is past stopping, as after any
+## ruling, whichever way it went.
+func _test_a_drawn_ruling_cannot_be_stopped() -> void:
+	for odds in [1.0, 0.0]:
+		var state = _new_state()
+		var ns = state.player()
+		var firm := _big(ns)
+		Processes.start(state, ns, _loader, _action("break_up"), firm)
+		var row := _row(ns, firm)
+		row["odds"] = odds
+		if not bool(Processes.stop_price(state, ns, _loader, String(row["id"]))["ok"]):
+			_fail("an investigation could not be stopped before its ruling")
+		for i in range(int(row["months_left"]) - 1):
+			_month(state)
+		if bool(Processes.stop_price(state, ns, _loader, String(row["id"]))["ok"]):
+			_fail("an investigation was stoppable after its ruling was drawn (odds %.0f)" % odds)
+
+
+## The ask (and the break-up's ruling) is posted when a stage reaches its last
+## month by a decrement, so a stage of one month would ask nothing and rule nothing.
+func _test_every_asking_stage_lasts_two_months() -> void:
+	for months in [K.PROCESS_STAKE_MONTHS, K.PROCESS_OFFER_MONTHS, K.PROCESS_SALE_MONTHS,
+			K.PROCESS_HOLD_MONTHS, K.PROCESS_INVESTIGATION_MONTHS.x]:
+		if int(months) < 2:
+			_fail("a stage that asks lasts %d month(s); the ask needs two" % int(months))
+
+
+## rows() is what a panel reads: a deep copy, so nothing the panel does reaches the
+## register (rule 2), the nested ask included.
+func _test_rows_are_deep_copies() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	Processes.start(state, ns, _loader, _action("minority_stake"), firm)
+	_month(state)
+	var copy: Dictionary = Processes.rows(ns)[0]
+	(copy["ask"]["answers"] as Array).clear()
+	if ((_row(ns, firm)["ask"] as Dictionary)["answers"] as Array).is_empty():
+		_fail("rows() handed the panel the register's own ask")
 
 
 func _fail(msg: String) -> void:
