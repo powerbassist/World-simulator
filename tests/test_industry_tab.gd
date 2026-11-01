@@ -24,6 +24,8 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Asks = preload("res://src/sim/process_asks.gd")
 const Pending = preload("res://src/ui/pending.gd")
+const Economy = preload("res://src/sim/economy.gd")
+const Num = preload("res://src/ui/num.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -96,6 +98,17 @@ func _check_closed() -> void:
 		_fail("closed: a verb is on screen before any firm was opened")
 	if _panel._progress != null and _panel._progress.is_visible_in_tree():
 		_fail("closed: the In progress strip shows with nothing running")
+	# The card's trend against the nation's (spec 3.2): the sim's own query, #254.
+	var ns = _main._state.player()
+	for head in headers:
+		var sector := String(head.get_meta("sector"))
+		var text := _text_under(head.get_parent())
+		var own := Num.fs(Economy.sector_trend_pct(_main._state, ns, sector), 1)
+		var nation := Num.fs(float(ns.trend_annual_pct), 1)
+		# Each figure in its place (QA's T1 on #265): the two swapped would read the
+		# nation's rate as the sector's, and both would still be on the line.
+		if not text.contains("trend %s %%/yr, nation %s" % [own, nation]):
+			_fail("closed: the %s card reads '%s', its trend is %s %%/yr against the nation's %s" % [sector, text, own, nation])
 
 
 ## An opened card: one Act per major of its sector, and no verb yet.

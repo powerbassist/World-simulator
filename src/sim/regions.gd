@@ -101,8 +101,30 @@ static func trend_deviation_pct(ns, region_list: Array, region_id: String, acces
 	for region in region_list:
 		if region.id == region_id:
 			var mix: float = trend_pct(region) - _mean_trend_pct(ns, region_list)
-			return mix + _network_pct(ns, region_list, region, access) + _sited_pct(ns, region_list, region_id, sites)
+			var deviation: float = mix + _network_pct(ns, region_list, region, access) + _sited_pct(ns, region_list, region_id, sites)
+			# V5.3 a: the fund term only when a fund is open, so a nation with none
+			# computes exactly the floats it computed before the fund existed.
+			if not ns.region_funds.is_empty():
+				deviation += _sited_pct(ns, region_list, region_id, _fund_map(ns))
+			return deviation
 	return 0.0
+
+
+## V5.3 a: the regional development funds' terms, region id -> points a year, summed
+## over the OPEN rows of `ns.region_funds` (src/sim/region_funds.gd writes them; this
+## file only reads the register, as it reads the sited-project map). Each row's term
+## was fixed at the fund's start, so the strip's figure is the booked one. It enters
+## the deviation through _sited_pct()'s arithmetic, zero-mean over the nation's
+## output shares, for the sited term's reason: the national level is the fund's
+## SPENDING (a Budget line), and a term that also moved the national total would
+## count the money twice.
+static func _fund_map(ns) -> Dictionary:
+	var out := {}
+	for row in ns.region_funds:
+		if String(row["status"]) == "open":
+			var id := String(row["region_id"])
+			out[id] = float(out.get(id, 0.0)) + float(row["pts"])
+	return out
 
 
 ## What a FINISHED project is worth here, in points of growth per year, measured
@@ -189,6 +211,16 @@ static func _deviation_terms(ns, region_list: Array, access: Dictionary, sites: 
 		var mean_site: float = weighted_site / total
 		for region in region_list:
 			out[region.id] += float(sites.get(region.id, 0.0)) - mean_site
+
+	# V5.3 a: the fund term, the sited term's arithmetic over the funds' map.
+	var funds: Dictionary = _fund_map(ns)
+	if not funds.is_empty():
+		var weighted_fund: float = 0.0
+		for other in region_list:
+			weighted_fund += float(shares[other.id]) * float(funds.get(other.id, 0.0))
+		var mean_fund: float = weighted_fund / total
+		for region in region_list:
+			out[region.id] += float(funds.get(region.id, 0.0)) - mean_fund
 
 	return out
 
@@ -386,6 +418,15 @@ static func unemployment_by_region(ns, region_list: Array, access: Dictionary, s
 			var w: float = float(shares[other.id])
 			site_weighted += w * float(sites.get(other.id, 0.0))
 			site_total += w
+	# V5.3 a: the fund term, the same arithmetic over the funds' map (_fund_map).
+	var funds: Dictionary = _fund_map(ns)
+	var fund_weighted: float = 0.0
+	var fund_total: float = 0.0
+	if not funds.is_empty():
+		for other in region_list:
+			var w: float = float(shares[other.id])
+			fund_weighted += w * float(funds.get(other.id, 0.0))
+			fund_total += w
 	for region in region_list:
 		if out.has(region.id):
 			continue
@@ -399,6 +440,8 @@ static func unemployment_by_region(ns, region_list: Array, access: Dictionary, s
 			if not sites.is_empty() and site_total > 0.0:
 				sited = float(sites.get(region.id, 0.0)) - site_weighted / site_total
 			deviation = mix + net + sited
+			if not funds.is_empty() and fund_total > 0.0:
+				deviation += float(funds.get(region.id, 0.0)) - fund_weighted / fund_total
 		out[region.id] = clampf(
 			ns.unemployment_pct * region.unemployment_rel - C.OKUN * deviation,
 			C.UNEMP_MIN_PCT,
@@ -423,6 +466,33 @@ static func gdp_per_head_index(ns, region_list: Array, region_id: String, pop_sh
 				return 0.0
 			return share_of(ns, region_id) / pop_share
 	return 0.0
+
+
+## A region's output, bn EUR a year. V5.3 a, for the development fund
+## (src/sim/region_funds.gd), which sizes its term against it: an accessor named for
+## the quantity, so the register keeps exactly one reader (tests/test_geography.gd).
+static func output_eur_bn(ns, region_id: String) -> float:
+	return float(ns.region_gdp_eur_bn.get(region_id, 0.0))
+
+
+## The opened region's ONE problem (V5.3 a, docs/design/v5.3-ab.md 3.3): its worst
+## figure against the nation, as {kind, value, nation, ratio}. Two candidates, each
+## as a ratio where above 1 is worse than the nation: unemployment / the nation's,
+## and the nation's output per head / the region's (1 / gdp_per_head_index). The
+## larger one is the problem, ties to unemployment. A region better than the nation on
+## both still names its worse figure, with a ratio under 1 -- the line says so rather
+## than inventing a problem. Britain's regions carry no unemployment spread
+## (unemployment_rel 1.0, docs/region-economy-model.md section 8), so a British
+## region's unemployment ratio is 1.0 until a deviation term moves it.
+static func problem(ns, region_list: Array, region_id: String, access: Dictionary, sites: Dictionary, pop_share: float) -> Dictionary:
+	var u := unemployment_pct(ns, region_list, region_id, access, sites)
+	var nation := float(ns.unemployment_pct)
+	var u_ratio := u / nation if nation > 0.0 else 0.0
+	var index := gdp_per_head_index(ns, region_list, region_id, pop_share)
+	var g_ratio := 1.0 / index if index > 0.0 else 0.0
+	if u_ratio >= g_ratio:
+		return {"kind": "unemployment", "value": u, "nation": nation, "ratio": u_ratio}
+	return {"kind": "output_per_head", "value": index, "nation": 1.0, "ratio": g_ratio}
 
 
 ## A region's authored natural-change rate, per cent per year, signed. V2.6c. A

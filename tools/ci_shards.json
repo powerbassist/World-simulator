@@ -22,6 +22,7 @@
    "tests/test_glossary_tip.gd",
    "tests/test_outliner.gd",
    "tests/test_regions.gd",
+   "tests/test_region_funds.gd",
    "tests/test_siting.gd",
    "tests/test_people_panel.gd",
    "tests/test_map_markers.gd",
@@ -43,7 +44,8 @@
    "tests/test_i18n_lint.gd",
    "tests/test_dead_ends.gd",
    "tests/test_findable_terms.gd",
-   "tests/test_os_cursor.gd"
+   "tests/test_os_cursor.gd",
+   "tests/test_tools_parse.gd"
   ],
   [
    "tests/test_clock.gd",

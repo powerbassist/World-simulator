@@ -276,12 +276,16 @@ var region_rings: Dictionary = {}
 ## here would be a second record of a file that already states its own shape.
 var region_graph: Dictionary = {}
 
+## V5.3 a: the regional development fund's rule, one object
+## (data/region-actions/fund.json; RegionsLoader.load_fund_rule; src/sim/region_funds.gd reads it).
+var region_fund_rule: Dictionary = {}
+
 ## Feature id -> Vector2(lon, lat), Natural Earth's own hand-placed label anchor.
 ## Both files contribute; map_view.gd draws labels for the roster only.
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json", domains_dir := "res://data/domains", industry_dir := "res://data/industry") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json", domains_dir := "res://data/domains", industry_dir := "res://data/industry", region_fund_path := "res://data/region-actions/fund.json") -> void:
 	nations.clear()
 	party_funding.clear()
 	parties.clear()
@@ -290,6 +294,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	companies.clear()
 	regions.clear()
 	region_graph.clear()
+	region_fund_rule = {}
 	region_rings.clear()
 	outlets.clear()
 	company_actions.clear()
@@ -409,6 +414,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	CompaniesLoader.validate_companies(self)
 	OutletsLoader.validate_outlets(self, outlets_dir)
 	RegionsLoader.validate_regions(self, regions_dir, regions_geo_path, regions_graph_path)
+	RegionsLoader.load_fund_rule(self, region_fund_path)
 	EnergyLoader.validate_energy_sources(self)
 	CommoditiesLoader.validate_commodities(self)
 

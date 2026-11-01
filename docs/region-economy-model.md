@@ -290,3 +290,41 @@ how, so the next reader does not treat them as open:
   region column is 0.0000 at every rate and its people move on named employers
   alone ([[migration-model]] §5). The day the twelve ITL1 figures are authored,
   `tests/test_migration.gd`'s flat-pull assertion is the tripwire.
+
+## 14. The regional development fund (V5.3 a)
+
+The spec's 3.3 (a) ([[v5.3-ab]]): the opened region gets verbs, and the first is a
+fund, N bn a year to one region for 1 to 5 years (`src/sim/region_funds.gd`; the
+rule's ranges and bloc offsets are data, `data/region-actions/fund.json`, stand-ins).
+
+- **The money** is a Budget line of its own, `region_fund_bill_pct_gdp`, written by
+  the `RegionFunds` step after `Projects` and read by the Budget a month behind, the
+  lag every computed line takes. The projection ticks it in the same slot, so a
+  forecast sees a fund end.
+- **The effect** is a fourth term in the growth deviation, `FUND_BETA x sqrt(the
+  fund as points of the region's output)`, fixed at the start and read here from
+  the open rows. It is ZERO-MEAN over the nation's output shares, the sited term's
+  arithmetic exactly (section 4): `Regions.tick_month()`'s sum IS the national GDP,
+  and the national level already comes through the fund's spending, so a term that
+  moved the total would count the money twice. So the funded region's deviation
+  rises by `pts x (1 - its weight)`, every other region's falls by a little, and its
+  unemployment falls by Okun's 0.4 of that (section 6). With no fund open the term
+  is not computed at all, so every regime computes the floats it computed before.
+- **Why a square root:** band A7 asks one fund (1 bn a year to the region with the
+  highest unemployment) to lower unemployment by 0.3 to 1.0 point in 24 months in
+  all four playable nations, and their worst regions run from about 32 bn of output
+  (POL's PL81) to about 205 bn (FRA's FRE). A linear response that gives FRE 0.3
+  gives PL81 well over 1.0. `FUND_BETA` 1.3 is a stand-in fitted to the band, not a
+  sourced elasticity. Measured by `tools/region_fund_probe.gd` on the game's own
+  month, a 3-year fund read at month 24 against an unfunded twin: DEU DE5 0.79,
+  FRA FRE 0.34, GBR UKC 0.43 (Britain's regions tie on unemployment, so the first
+  in list order), POL PL81 0.90. The strip's estimate equals the booked figure.
+- **The blocs** move at the start by the rule's per-bn offsets x the bn x the
+  region's share of the population (blocs are national, a fund is not); stopping
+  early gives back `FUND_STOP_SHARE` of each pleased bloc's gain.
+- **The one problem** (`Regions.problem()`): the opened region's worst figure
+  against the nation, the larger of its unemployment over the nation's and the
+  nation's output per head over its own, ties to unemployment. A British region's
+  unemployment ratio reads 1.0 (section 8) until a deviation term moves it.
+- **Not built here:** the sector priority (the second regional verb), and c's
+  construction rows in the same opened region.

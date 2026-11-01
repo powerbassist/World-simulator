@@ -1531,6 +1531,18 @@ var sector_shares := {}
 ## save cannot disagree with the rows. Copied deep, so a projection keeps it.
 var sector_factor := {}
 
+# --- Regional development funds (V5.3 a) -------------------------------------------
+## One row per fund opened, running or ended -- {id, region_id, eur_bn_per_year,
+## years, started, months_left, pts, bloc_offset, status, closed}, months absolute.
+## Written by src/sim/region_funds.gd alone; src/sim/regions.gd reads the open rows'
+## `pts` into the growth deviation. absent_ok, no bump: no save before V5.3 a could
+## hold a fund, so absent reads "no fund", the truth.
+var region_funds: Array[Dictionary] = []
+## The open funds' bill, % of GDP, rewritten by RegionFunds.tick_month() every month
+## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the
+## next tick rewrites it.
+var region_fund_bill_pct_gdp: float = 0.0
+
 ## V5.2b b3. person id -> the absolute month the president last phoned them: one
 ## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no
 ## bump: before b3 nobody was called, which is what absent reads.
