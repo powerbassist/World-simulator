@@ -275,7 +275,7 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 	# keep, on the odds it was given (delegation.gd says why the world alone broke 19 in 20).
 	if (served or Delegation.keeps(ns, loader, row, String(want.get("stance", "")))) and not bool(row.get("lie", false)):
 		if kind != "iou":
-			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT if kind == "promise" else K.DELEGATED_KEPT_RAPPORT)
+			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT if kind == "promise" else Delegation.kept_rapport(served))
 		return "kept"
 	if kind == "promise":
 		Lies.reveal(state, ns, loader, person)

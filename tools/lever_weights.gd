@@ -69,15 +69,15 @@ static func refuse_value(g: float) -> float:
 
 ## Delegate, with its commitment kept (`serve`) or broken at its date. V5.3-0
 ## gate: a word the president does not serve is still kept by the minister at
-## `minister`, the odds the card showed (src/sim/delegation.gd); 0 is b2.1's rule.
+## `minister`, the odds the card showed (src/sim/delegation.gd), for the
+## minister's half of the credit; 0 is b2.1's rule.
 static func delegate_value(g: float, snub: float, serve: bool, minister := 0.0) -> float:
 	var r_w := float(WEIGHTS["rapport"])
 	var v := -(AK.DELEGATE_GRUDGE_SHARE * g + r_w * snub)
-	var kept := r_w * K.DELEGATED_KEPT_RAPPORT
 	if serve:
-		return v + kept
+		return v + r_w * K.DELEGATED_KEPT_RAPPORT
 	var broken := -((1.0 - AK.DELEGATE_GRUDGE_SHARE) * g + K.IOU_BETRAYAL_GRUDGE + r_w * K.IOU_BETRAYAL_RAPPORT)
-	return v + minister * kept + (1.0 - minister) * broken
+	return v + minister * r_w * AK.DELEGATE_MINISTER_RAPPORT + (1.0 - minister) * broken
 
 
 ## Book on one lever: the three-attempt audience (p its odds, s its weighted

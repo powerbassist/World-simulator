@@ -72,6 +72,7 @@ func _init() -> void:
 	_check_a_minister_keeps_a_word_on_the_roll()
 	_check_the_card_reads_the_ministers_odds()
 	_check_the_word_keeps_the_odds_it_was_given()
+	_check_a_minister_kept_word_is_half_credit_and_heard()
 	_check_judged_rows_are_kept_and_pruned()
 	_check_bargain_lists_its_currencies()
 	_check_the_fog_does_not_leak_across_readings()
@@ -910,6 +911,71 @@ func _check_the_word_keeps_the_odds_it_was_given() -> void:
 			kept_seen += 1 if kept else 0
 		if (float(case[0]) > 0.5) != (kept_seen > 4):
 			_fail("words given at %.2f kept %d of 8" % [case[0], kept_seen])
+
+
+## The parent's call on #235: no rapport farm. A word only the minister kept (the
+## want still unserved) earns the president half a served word's credit, and the
+## want it answered is HEARD: its person does not ask about it again for
+## DELEGATE_HEARD_MONTHS, so delegating the same want every cooldown cannot farm the
+## kept word (measured at 3b2728d1: 226 of 636 such words re-asked within a year).
+## Mutation: full credit fails the rapport row; no heard check fails the lane rows.
+func _check_a_minister_kept_word_is_half_credit_and_heard() -> void:
+	if not AK.DELEGATE_MINISTER_RAPPORT < LK.DELEGATED_KEPT_RAPPORT or PK.JUDGED_KEPT_MONTHS < AK.DELEGATE_HEARD_MONTHS:
+		_fail("a minister's word earns %.2f against a served one's %.2f, or the judged register (%d months) forgets before the want is heard (%d)" % [
+			AK.DELEGATE_MINISTER_RAPPORT, LK.DELEGATED_KEPT_RAPPORT, PK.JUDGED_KEPT_MONTHS, AK.DELEGATE_HEARD_MONTHS])
+	# A person whose FIRST unserved want -- the one the lane would ask -- is a
+	# sponsorship, so the lane rows below can see the heard check or its absence.
+	var probe = _plain_game()
+	var leaders := {}
+	for party in _loader.parties[PLAYER]:
+		leaders[party.id] = party.leader_person_id
+	var pid := ""
+	var object := ""
+	for p in _loader.people[PLAYER]:
+		var first: Dictionary = Audiences._unserved(probe.player(), p, METERS, leaders)
+		if p.id != President.leader_id(probe.player()) and String(first.get("stance", "")) == "sponsor":
+			pid = String(p.id)
+			object = String(first["object"])
+			break
+	if pid == "":
+		_fail("no person whose first unserved want is a sponsorship")
+		return
+	var state = null
+	var due := 0
+	for i in 12:
+		var s = _plain_game()
+		_set_month(s, _now(s) + i)
+		if Delegation.roll(s.player(), pid, object, _now(s)) < 0.95:
+			state = s
+			due = _now(s) + CalendarK.BOOKING_HORIZON_MONTHS
+			break
+	if state == null:
+		_fail("no month in 12 whose roll keeps a word at 0.95")
+		return
+	var ns = state.player()
+	President.commit(state, ns, _loader, "delegated", pid, object, due, false, 0.95)
+	# The farm's second door: a word in flight is heard too, so the want is not asked
+	# (and delegated) again before its date -- 150 words of 1,330 at 3b2728d1.
+	if not Delegation.heard(ns, pid, object, due - 4) or String(Audiences._unserved(ns, _loader.person_by_id[pid], METERS, leaders, due - 4).get("object", "")) == object:
+		_fail("a want with a minister's word in flight is asked again before the word's date")
+	_set_month(state, due)
+	var before := President.rapport(ns, pid)
+	var report: Dictionary = Levers.tick_month(state, _loader, METERS)
+	if (report["kept"] as Array).size() != 1:
+		_fail("a word kept on its roll was judged %s" % [report])
+		return
+	if absf(President.rapport(ns, pid) - before - AK.DELEGATE_MINISTER_RAPPORT) > 0.000001:
+		_fail("a minister-kept word moved rapport by %.4f, not the minister's half %.4f" % [President.rapport(ns, pid) - before, AK.DELEGATE_MINISTER_RAPPORT])
+	var person = _loader.person_by_id[pid]
+	if String(Audiences._unserved(ns, person, METERS, leaders, due + AK.DELEGATE_HEARD_MONTHS).get("object", "")) != object:
+		_fail("premise: once no longer heard, the lane's first want for %s is not %s" % [pid, object])
+	for m in [due, due + AK.DELEGATE_HEARD_MONTHS - 1]:
+		if not Delegation.heard(ns, pid, object, m) or String(Audiences._unserved(ns, person, METERS, leaders, m).get("object", "")) == object:
+			_fail("month %d, %d after the verdict: the want a minister's word answered is asked again" % [m, m - due])
+	if Delegation.heard(ns, pid, object, due + AK.DELEGATE_HEARD_MONTHS):
+		_fail("the want is still heard %d months after the verdict" % AK.DELEGATE_HEARD_MONTHS)
+	if Delegation.heard(ns, pid, object, -1) or Delegation.heard(ns, pid, "programme:other", due):
+		_fail("heard() answers for an earlier month or another want")
 
 
 ## Every judged commitment is kept for the Diary with its verdict, months as int,

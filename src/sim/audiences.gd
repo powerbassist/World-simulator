@@ -306,7 +306,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 			return
 		if not _may_ask(ns, person, leader, now):
 			continue
-		var want := _unserved(ns, person, meters, leaders)
+		var want := _unserved(ns, person, meters, leaders, now)
 		if want.is_empty():
 			continue
 		var hazard := K.REQUEST_HAZARD * (K.REQUEST_STANDING_FLOOR + float(ns.person_standing.get(person.id, 0.0)))
@@ -323,14 +323,14 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 		return
 	var best = null
 	for person in people:
-		if not _may_ask(ns, person, leader, now) or _unserved(ns, person, meters, leaders).is_empty():
+		if not _may_ask(ns, person, leader, now) or _unserved(ns, person, meters, leaders, now).is_empty():
 			continue
 		var st := float(ns.person_standing.get(person.id, 0.0))
 		var best_st := -INF if best == null else float(ns.person_standing.get(best.id, 0.0))
 		if st > best_st or (st == best_st and String(person.id) < String(best.id)):
 			best = person
 	if best != null:
-		_arrive(ns, best, _unserved(ns, best, meters, leaders), now, arrived)
+		_arrive(ns, best, _unserved(ns, best, meters, leaders, now), now, arrived)
 
 
 ## Whether any of the played nation's own people has ever asked (a visiting head
@@ -365,10 +365,11 @@ static func _may_ask(ns, person, leader: String, now: int) -> bool:
 
 ## The first want the government does not serve and could (Characters.servable():
 ## no request for a party's leadership), read through the same door the edge
-## trigger uses, or {}.
-static func _unserved(ns, person, meters: Dictionary, leaders: Dictionary) -> Dictionary:
+## trigger uses, or {}. In month `now`, a want a minister's kept word answered is
+## still heard and skipped (Delegation.heard; -1, no month, skips none).
+static func _unserved(ns, person, meters: Dictionary, leaders: Dictionary, now := -1) -> Dictionary:
 	for want in person.wants:
-		if Characters.servable(want) and not Characters.want_served(ns, person, want, meters, leaders):
+		if Characters.servable(want) and not Characters.want_served(ns, person, want, meters, leaders) and not Delegation.heard(ns, person.id, want["object"], now):
 			return want
 	return {}
 

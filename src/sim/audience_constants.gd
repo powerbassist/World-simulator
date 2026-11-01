@@ -100,6 +100,16 @@ const DELEGATE_KEPT_MAX := 0.95
 const DELEGATE_WHY_OFFICE := "office"
 const DELEGATE_WHY_MEASURE := "measure"
 const DELEGATE_WHY_PROGRAMME := "own_programme"
+## The parent's call on #235, no rapport farm. A word only the minister kept (the
+## want still unserved) earns the president half of a served word's +0.10
+## (lever_constants DELEGATED_KEPT_RAPPORT): the minister takes the other half of
+## the credit. And the want it answered is HEARD for a year: its person does not
+## ask about it again for this many months after the verdict -- measured at
+## 3b2728d1, 226 of 636 such words were re-asked and re-delegated within 12 months.
+## 12 is the judged register's memory (president_constants JUDGED_KEPT_MONTHS),
+## which heard() reads; test_levers pins the order.
+const DELEGATE_MINISTER_RAPPORT := 0.05
+const DELEGATE_HEARD_MONTHS := 12
 
 ## What holding an audience teaches the president about the person, times what is
 ## left to learn (1 - knowledge). V5.2b b2 moved it from a linear 0.12, on which

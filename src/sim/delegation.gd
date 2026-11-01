@@ -40,6 +40,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
 
 
 ## The rapport a delegation costs on the day: a snub for a `vain` person, or for one
@@ -95,6 +96,34 @@ static func odds(ns, loader, object: String, stance: String) -> Dictionary:
 			+ K.DELEGATE_KEPT_PER_LOYALTY * (loyalty - K.DELEGATE_LOYALTY_NEUTRAL),
 			K.DELEGATE_KEPT_MIN, K.DELEGATE_KEPT_MAX)
 	return {"chance": chance, "why": why, "effectiveness": effectiveness, "loyalty": loyalty}
+
+
+## The rapport a kept delegated word earns the president: a served want's full
+## +0.10, or -- the want still unserved, kept by the minister alone -- the
+## minister's half (the parent's call on #235: the minister takes part of the credit).
+static func kept_rapport(served: bool) -> float:
+	return LK.DELEGATED_KEPT_RAPPORT if served else K.DELEGATE_MINISTER_RAPPORT
+
+
+## Whether a want is HEARD in month `now`, so its person does not ask about it
+## (Audiences._unserved reads it): while a minister's word on it is in flight, and
+## for DELEGATE_HEARD_MONTHS after that word was kept. Delegating the same want
+## every cooldown -- before the word's date (150 words of 1,330 at 3b2728d1) or
+## after it was kept (226 of 636) -- cannot farm the kept word. The verdicts come
+## from the judged register, which remembers one JUDGED_KEPT_MONTHS (>= the heard
+## months, test-pinned); a verdict judged after `now` does not count. A broken word
+## is not heard: an aggrieved person asks again.
+static func heard(ns, person_id: String, object: String, now: int) -> bool:
+	for row in ns.commitments:
+		if String(row.get("kind", "")) == "delegated" and String(row.get("person_id", "")) == person_id and String(row.get("object", "")) == object:
+			return true
+	for row in ns.commitments_judged:
+		if String(row.get("kind", "")) == "delegated" and String(row.get("verdict", "")) == "kept" \
+				and String(row.get("person_id", "")) == person_id and String(row.get("object", "")) == object:
+			var since := now - int(row.get("judged_month", 0))
+			if since >= 0 and since < K.DELEGATE_HEARD_MONTHS:
+				return true
+	return false
 
 
 ## The word's one draw in [0, 1): kept when it falls under the odds.
