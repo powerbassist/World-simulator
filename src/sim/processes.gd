@@ -129,10 +129,13 @@ static func start(state, ns, loader, action, company_id: String, by_law := false
 		return _refused(ns, action, company_id, why)
 	var est := estimate(state, ns, loader, action, company_id)
 	var now := _now(state)
-	var unit := Cycle.unit("process|%s|%s" % [company_id, action.id], now)
+	# The register's length makes the id (and so the seeds) unique even when a
+	# process is stopped and the same verb reopened on the same firm that month.
+	var id := "%s|%s|%d|%d" % [action.id, company_id, now, ns.processes.size()]
+	var unit := Cycle.unit("process|%s" % id, now)
 	var stage := String(FIRST_STAGE[action.id])
 	var row := {
-		"id": "%s|%s|%d" % [action.id, company_id, now], "action_id": String(action.id),
+		"id": id, "action_id": String(action.id),
 		"company_id": company_id, "status": OPEN, "stage": stage, "started": now, "closed": -1,
 		"base_eur_bn": float(est["base_eur_bn"]), "rate": 0.0, "paid_eur_bn": 0.0,
 		"price_lo": float(est["price_lo"]), "price_hi": float(est["price_hi"]),
@@ -239,7 +242,14 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 				_close(state, row, "done")
 		"investigation":
 			_pay(ns, row, K.PROCESS_LEGAL_COST_EUR_BN)
-			if Cycle.unit("%s|ruling" % String(row["id"]), _now(state)) < float(row["odds"]):
+			# A firm that no longer qualifies (its share under the gate, no rival
+			# left to absorb it) is not ordered broken up: the blocs pay nothing
+			# for a remedy the arm would refuse. The fees stay paid.
+			var why := Companies.refusal_reason(state, ns, action, String(row["company_id"]), loader)
+			if not Companies.available(state, ns, loader.company_actions, String(row["company_id"]), loader).has(action) or why != "":
+				row["reason"] = why
+				_close(state, row, "refused")
+			elif Cycle.unit("%s|ruling" % String(row["id"]), _now(state)) < float(row["odds"]):
 				_blocs(ns, action.effects.get("bloc_offset", {}), 1.0)
 				_stage(row, "remedy", K.PROCESS_REMEDY_MONTHS)
 			else:

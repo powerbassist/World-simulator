@@ -14,6 +14,7 @@ const Processes = preload("res://src/sim/processes.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const K = preload("res://src/sim/companies_constants.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
+const Budget = preload("res://src/sim/budget.gd")
 
 const PLAYER := "FRA"
 
@@ -38,6 +39,9 @@ func _init() -> void:
 	_test_a_failed_firm_voids_its_process()
 	_test_the_step_runs_before_companies()
 	_test_the_register_round_trips_and_absent_reads_empty()
+	_test_the_forecast_runs_the_processes()
+	_test_a_ruling_on_a_firm_that_no_longer_qualifies_moves_nothing()
+	_test_a_reopened_process_has_its_own_id()
 	_finish()
 
 
@@ -352,6 +356,58 @@ func _test_the_register_round_trips_and_absent_reads_empty() -> void:
 	Processes.tick_month(kept, _loader)
 	if int(_row(kept.player(), firm)["months_left"]) != int(_row(ns, firm)["months_left"]) - 1:
 		_fail("a loaded process did not tick on")
+
+
+## Review pass 1: the 24-month forecast runs the processes, so a pending transfer
+## is in the figures the budget panel promises (Budget.project's month).
+func _test_the_forecast_runs_the_processes() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	var est: Dictionary = Processes.estimate(state, ns, _loader, _action("full_nationalisation"), firm)
+	Bills.adopt(state, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
+	var without = state.duplicate_state()
+	without.player().processes.clear()
+	var with_it: Array = Budget.project(state, {}, K.PROCESS_OFFER_MONTHS, _loader)
+	var none: Array = Budget.project(without, {}, K.PROCESS_OFFER_MONTHS, _loader)
+	var gap := float(with_it[-1]["debt_eur_bn"]) - float(none[-1]["debt_eur_bn"])
+	if gap < float(est["price_lo"]) - 0.01 or gap > float(est["price_hi"]) + 0.01:
+		_fail("the forecast's debt at the transfer differs by %.4f, not the transfer's %.4f..%.4f" % [gap, est["price_lo"], est["price_hi"]])
+
+
+## Review pass 1: a firm that no longer qualifies at the ruling (its share under
+## the gate) is not broken up, and the blocs pay nothing for it; the fees stay paid.
+func _test_a_ruling_on_a_firm_that_no_longer_qualifies_moves_nothing() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	var debt := float(ns.debt_eur_bn)
+	Processes.start(state, ns, _loader, _action("break_up"), firm)
+	var row := _row(ns, firm)
+	row["odds"] = 1.0
+	(ns.companies[firm] as Dictionary)["share"] = 0.05
+	var offsets := _offsets(ns)
+	for i in range(int(row["months_left"])):
+		_month(state)
+	if String(row["status"]) != "refused" or _offsets(ns) != offsets:
+		_fail("a ruling on a firm under the gate moved the blocs or opened the remedy: %s" % row)
+	if not is_equal_approx(float(ns.debt_eur_bn) - debt, K.PROCESS_LEGAL_COST_EUR_BN):
+		_fail("the refused ruling did not keep its legal fees")
+
+
+## Review pass 1: stopped and reopened in one month, the new process is its own row.
+func _test_a_reopened_process_has_its_own_id() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	var stake = _action("minority_stake")
+	var first: Dictionary = Processes.start(state, ns, _loader, stake, firm)
+	Processes.stop(state, ns, _loader, String(first["process_id"]))
+	var second: Dictionary = Processes.start(state, ns, _loader, stake, firm)
+	if String(second.get("process_id", "")) == String(first["process_id"]):
+		_fail("a process reopened the same month took the stopped one's id")
+	if not bool(Processes.stop(state, ns, _loader, String(second.get("process_id", ""))).get("ok", false)):
+		_fail("the reopened process could not be stopped")
 
 
 func _fail(msg: String) -> void:

@@ -61,6 +61,7 @@ const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Society = preload("res://src/sim/society.gd")
 const SK = preload("res://src/sim/society_constants.gd")
 const Demography = preload("res://src/sim/demography.gd")
@@ -154,6 +155,7 @@ func _init() -> void:
 	_run_companies_roundtrip(loader)
 	_run_regulation_roundtrip(loader)
 	_run_ownership_roundtrip(loader)
+	_run_processes_roundtrip(loader)
 	_check_society_fields(loader)
 	_check_demography_fields(loader)
 	_check_unrest_fields(loader)
@@ -3916,3 +3918,36 @@ func _check_project_fields(loader) -> void:
 
 	if GameState.SAVE_VERSION != 41:
 		_fail("SAVE_VERSION is %d -- V1.6d raised it to 22, V1.6e argued it should STAY there, and V1.6f raised it to 23 on the DONE half of `projects` the V1.7a restart fix to 24 V1.7c to 25 V1.8 to 26 and V1.1e to 27 on EIGHT fields of ten, failing the rule three different ways, so a further bump needs its own recorded reason; V2.5's reason is recorded and is `region_gdp_eur_bn` -- national GDP is the sum of the regions now, so an absent register is a country with no economy, not a quietly different one; V2.6a's reason is recorded and is two live population shares -- absent, every city has a population of zero; V2.6b2's reason is recorded and is two campaign-sited registers -- `campaign_sites`, because a running effort whose site was dropped silently reverts to the place-less national reach while the panel still names a place, and `campaign_saturation`, because a dropped spoken-to register hands every saturated region back at full reach: the tour un-spoken, `campaign_started`'s exploit one level up; V2.8's reason is recorded and is three content-derived statics -- `start_energy_mix`, because absent it is {} and the partition is not there, so a reloaded France reads a country with no electricity mix at all; `start_import_dependency_pct`, because absent it reads 0.0 and the deviation becomes the whole dependency, so a France that has imported half its energy for fifty years reads as having just started; `energy_kwh_per_capita`, because absent national_twh() is 0.0 and one reactor is then the country's whole electricity; V3.2's reason is recorded and is the bloc->orgs rename on three fields -- `GameState.orgs`, one register per council org, because an absent register is no council and no rules, wrong rather than empty; `NationState.orgs`, live membership, because absent it a reloaded France belongs to nothing and pays nothing into a budget it has always paid into; and `.org_base_transfer_pct_gdp`, the standing transfer per org -- folded into the same unreleased bump: `.org_seats`, live voting weight (absent it an acceded nation's vote weighs zero -- the second-class-member finding), and the fight `phase` (absent it a membership fight matches nothing and is stranded, the review's critical); `GameState.accessions` rides 33 serialised but its absence is correct, measures' case; V3.3's reason is recorded and is NO field -- the roster is content and round-trips through data/, but the roster a save was made against is part of its contract: from_dict builds nations from the save dictionary ALONE and the gate refuses only version MISMATCHES, so a version-32 save made against the ten-nation roster would load, unrefused, as a silent ten-nation world against twenty-seven-member org data -- nineteen nations dropped without an error anywhere -- so the bump is the loader saying the roster changed; V3.5's reason is recorded and is `start_co2e_per_capita_t` -- the measured per-capita emissions baseline, a fourth content-derived static beside V2.8's three: from_dict() never sees the loader, so absent it a reloaded France reads 0.0 t/capita against a live 4.0 and the accord's baseline is silently gone; V4.1's reason is recorded and is the government's programme on two fields -- `ns.programme`, the chosen register, because a save that dropped it un-prices a term the player already lived: the term reads as never chosen and its conclusions as never delivered; and `programme_stock`, the bounded credit the conclusion pulses feed, because absent it reads 0.0 -- a clean slate over a record the player watched; progress earns NOTHING -- it is re-derived from the same live figure the panel reads (docs/programme-model.md section 8), and test_save_load.gd injects a cached copy into a serialised entry and measures the derived read unchanged; V4.3's reason is recorded and is the SIX person-state registers -- `person_loyalty`, `person_standing`, `person_grudges` (absent, nobody remembers anything you did to them, programme_stock's case), `party_leader_override` (absent, a deposed rival is resurrected mid-term), `person_party_override` (absent, a defector silently walks back to the party they left) and `person_want_state` (absent, a denial straddling the save re-fires its grudge on every load); the bump ships ahead of the first writer (characters.gd), and the absences are pinned in _run_character_roundtrip; V4.6's reason is recorded and is `ns.commodity_state` -- a nation's capacity, demand, output, surplus, trade, its own copy of the ONE world price vector and the month's value added, all seven keys of one register. An absent register is the `region_gdp_eur_bn` class rather than the neutral-empty one: a reloaded France reads a country that can make nothing and holds no price vector, and the ONE world price is the case no re-derivation can rescue, because the vector is a shared world quantity and rebuilding it at base silently invents a second answer. The bump ships WITH the first writer rather than ahead of it (V4.1's and V4.3's timing, inverted): commodities.gd has written this register since V4.6's Task 3, so version 36 is the one version under which a save could hold a commodity register and not carry it. The lazy seed in Commodities.tick_month() STAYS -- the gate refuses version MISMATCHES, so the `{}` it catches now comes from a payload with the key absent, and the absence is pinned in _run_commodity_roundtrip; V4.2's reason is recorded and is the statute book's SIX registers -- `ns.law_ledger` (the realized-delta record repeal subtracts; absent, no pre-38 law is repealable and no re-derivation of a past passage is attempted, the second answer this project refuses), `ns.draft_bills` (composition in flight -- absent, a bill the player was drafting is simply gone), `ns.custom_laws` (passed composed laws -- absent, acts in force vanish from the book), `ns.custom_taxes` (a proposed key's base and erosion -- absent, the tax stops yielding at reload while its rate survives in tax_rates_pct, a silent half-tax), `ns.poll_purchases` (paid polls -- absent, a reload un-buys the fixed-forecast read and charges the player twice for one number) and `ns.assembly_bills` (private members' bills and lobbying in flight -- the held_bills free-escape case, an announced bill vanishing without a division); V5.1-0d's reason is recorded and is `embassies` -- a content-seeded register an absent key would read as no embassy anywhere, the pre-0d model, so the AI reopens them in the player's capital" % GameState.SAVE_VERSION)
+
+
+## V5.3 a: the process register (src/sim/processes.gd). absent_ok, no bump: no save
+## before V5.3 a could hold a process, so an absent register reads "nothing in
+## progress", which is that save's truth. A running process survives the round trip
+## with its stage and its months left, and ticks on after the load.
+func _run_processes_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var ns = state.player()
+	var stake = null
+	for a in loader.company_actions:
+		if String(a.id) == "minority_stake":
+			stake = a
+	var firm := ""
+	for company in Companies.majors_of(loader, "FRA"):
+		if Companies.state_share_of(ns, company.id) == 0.0:
+			firm = String(company.id)
+			break
+	if stake == null or firm == "" or not bool(Processes.start(state, ns, loader, stake, firm).get("applied", false)):
+		_fail("no minority stake opened, so the process roundtrip asserts nothing")
+		return
+	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	var rows: Array = kept.player().processes
+	if rows.size() != 1 or String(rows[0]["stage"]) != "negotiation" \
+			or int(rows[0]["months_left"]) != int(ns.processes[0]["months_left"]):
+		_fail("the process register did not survive the round trip: %s" % [rows])
+	var without: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	(without["nations"]["FRA"] as Dictionary).erase("processes")
+	if not GameState.from_dict(without).player().processes.is_empty():
+		_fail("an absent process register did not read as nothing in progress -- the reason for NOT bumping is wrong")
+	Processes.tick_month(kept, loader)
+	if int(kept.player().processes[0]["months_left"]) != int(ns.processes[0]["months_left"]) - 1:
+		_fail("a loaded process did not tick on")
