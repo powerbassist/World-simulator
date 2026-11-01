@@ -845,6 +845,9 @@ func _closure_candidates(state, ns, now: int, out: Array) -> void:
 		for a in Closures.answers(state, ns, _loader, String(row["id"])):
 			var strip := _effects_strip(state, {"bloc_offset": a["bloc_offset"]})
 			strip["other"]["jobs"] = -float(a["jobs_lost"])
+			# A buyer search is a process stage (density_count's `stage` axis).
+			if String(a["kind"]) == "buyer":
+				strip["stage"] = "buyer search"
 			answers.append(strip)
 		out.append({"source": "closure", "subject": "closure|%s" % String(row["id"]), "state": "",
 			"domain": "industrial", "due": "arrival" if is_new else "deadline", "answers": answers})

@@ -38,6 +38,8 @@ func _init() -> void:
 	_test_a_firm_in_a_process_does_not_announce()
 	_test_answer_refusals()
 	_test_a_closure_survives_a_save()
+	_test_a_failed_firm_drops_its_history()
+	_test_the_record_follows_a_relocation()
 	_finish()
 
 
@@ -350,6 +352,44 @@ func _test_a_closure_survives_a_save() -> void:
 		(without["nations"]["FRA"]["companies"][company_id] as Dictionary).erase("closure_watch")
 	if not Closures.open(GameState.from_dict(without).player()).is_empty():
 		_fail("an entry with no closure keys did not read as no closure")
+
+
+
+## Review pass 1: a failed firm's history stops with it, so a rescue months later
+## starts a fresh window instead of comparing across the months it was gone.
+func _test_a_failed_firm_drops_its_history() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 0.5 * float(_rule()["fall"]))
+	(ns.companies[String(firm.id)] as Dictionary)["failed"] = true
+	_month(state)
+	if (ns.companies[String(firm.id)] as Dictionary).has("closure_watch"):
+		_fail("a failed firm kept its output history")
+
+
+## Review pass 1: the record names the city the cut hits, so a relocation between
+## the announcement and the cut moves the record with the payroll.
+func _test_the_record_follows_a_relocation() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	var elsewhere := ""
+	for c in Companies.majors_of(_loader, ns.id):
+		if Companies.live_city_of(ns, c) != String(row["city"]):
+			elsewhere = Companies.live_city_of(ns, c)
+			break
+	if elsewhere == "":
+		_fail("no second city to relocate to, so the check asserts nothing")
+		return
+	(ns.companies[String(firm.id)] as Dictionary)["city"] = elsewhere
+	for i in range(CK.ANSWER_MONTHS):
+		_month(state)
+	if String(row["city"]) != elsewhere:
+		_fail("the landed closure names %s, not the city its cut hit, %s" % [row["city"], elsewhere])
 
 
 func _fail(msg: String) -> void:

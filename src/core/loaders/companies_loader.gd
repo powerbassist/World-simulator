@@ -163,6 +163,10 @@ static func load_closure_rule(loader, path: String) -> void:
 		if typeof(parsed.get(key)) != TYPE_FLOAT or float(parsed[key]) <= 0.0:
 			loader.errors.append("%s: '%s' must be a number above 0" % [fname, key])
 			return
+	for key in ["window_months", "cooldown_months"]:
+		if float(parsed[key]) != floorf(float(parsed[key])):
+			loader.errors.append("%s: '%s' is a whole number of months" % [fname, key])
+			return
 	for key in ["fall", "cut"]:
 		if float(parsed[key]) >= 1.0:
 			loader.errors.append("%s: '%s' is a fraction, below 1" % [fname, key])

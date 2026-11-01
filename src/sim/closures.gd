@@ -58,6 +58,9 @@ static func tick_month(state, loader) -> void:
 	for company in majors:
 		var entry: Dictionary = ns.companies.get(company.id, {})
 		if entry.is_empty() or _gone(entry):
+			# A failed firm's history stops with it: a rescue months later starts a
+			# fresh window rather than comparing across the months it was gone.
+			entry.erase("closure_watch")
 			continue
 		var h: Array = entry.get("closure_watch", [])
 		h.append(Companies.output_eur_bn(ns, company))
@@ -183,6 +186,9 @@ static func _announce(ns, company, entry: Dictionary, fall: float, rule: Diction
 ## the rule's bloc offsets land, clamped as every writer of the register is.
 static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictionary, now: int) -> void:
 	entry["share"] = Companies.share_of_company(ns, company) * (1.0 - float(rule["cut"]))
+	# The record names where the jobs went: a relocation since the announcement
+	# moved the payroll the cut removes.
+	row["city"] = Companies.live_city_of(ns, company)
 	var offsets: Dictionary = rule["bloc_offset"]
 	for bloc in offsets:
 		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + float(offsets[bloc]),
