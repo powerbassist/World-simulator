@@ -43,7 +43,8 @@
    "tests/test_i18n_lint.gd",
    "tests/test_dead_ends.gd",
    "tests/test_findable_terms.gd",
-   "tests/test_os_cursor.gd"
+   "tests/test_os_cursor.gd",
+   "tests/test_tools_parse.gd"
   ],
   [
    "tests/test_clock.gd",
