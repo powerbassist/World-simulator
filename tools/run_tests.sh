@@ -11,6 +11,7 @@ tests=(
   tests/test_budget.gd
   tests/test_budget_panel.gd
   tests/test_effects_strip.gd
+  tests/test_industry_tab.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd
@@ -399,6 +400,9 @@ tests=(
   tests/test_staff_kind.gd
   # Dev health: one helper moves the real cursor (off by default), and a lint fails any other.
   tests/test_os_cursor.gd
+  # Dev health: every tools/*.gd compiles -- no test loads them, so a moved sim
+  # signature broke the probes and the screenshot driver silently (QA, #256 vs #257).
+  tests/test_tools_parse.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is
