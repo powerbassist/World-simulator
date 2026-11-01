@@ -283,6 +283,7 @@ const FIELDS := [
 	["act_bloc_offset", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2b: absent is acts priced as permanent
 	["tabled_bill", DEEP, COPIED, {}, true],  # V5.2 b+ R2: absent is nothing before the Assembly
 	["processes", DEEP, ROWS, [], true],  # V5.3 a: absent is nothing in progress
+	["sector_shares", DEEP, COPIED, {}, true],  # V5.3 a: absent is nothing moved (overrides only)
 	["region_funds", DEEP, ROWS, [], true],  # V5.3 a: absent is no fund
 	["region_fund_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
 ]

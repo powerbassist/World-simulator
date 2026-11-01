@@ -27,6 +27,7 @@ const GameEvent = preload("res://src/core/event.gd")
 const Summit = preload("res://src/core/summit.gd")
 const PeopleLoader = preload("res://src/core/loaders/people_loader.gd")
 const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
+const DomainsLoader = preload("res://src/core/loaders/domains_loader.gd")
 const RegionsLoader = preload("res://src/core/loaders/regions_loader.gd")
 const OutletsLoader = preload("res://src/core/loaders/outlets_loader.gd")
 const VerbActionsLoader = preload("res://src/core/loaders/verb_actions_loader.gd")
@@ -117,6 +118,10 @@ var outlines: Dictionary = {}
 ## V5.1-0d: the roster pairs with no diplomatic relations, and so no embassy either
 ## way -- symmetric pair key -> true (data/world/embassies.json; DiplomacyLoader).
 var embassy_exceptions: Dictionary = {}
+
+## V5.3 a: line -> {line, sectors} (data/domains/<line>.json; DomainsLoader). Empty
+## when the folder is absent: every read then falls back to the line's total.
+var domains: Dictionary = {}
 
 
 ## nation id -> Array[Outlet], in authored file order. Absent for the same reason
@@ -276,7 +281,7 @@ var region_fund_rule: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json", region_fund_path := "res://data/region-actions/fund.json") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json", domains_dir := "res://data/domains", region_fund_path := "res://data/region-actions/fund.json") -> void:
 	nations.clear()
 	party_funding.clear()
 	parties.clear()
@@ -311,6 +316,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	commodity_endowments.clear()
 	outlines.clear()
 	embassy_exceptions.clear()
+	domains.clear()
 	errors = []
 
 	var da := DirAccess.open(nations_dir)
@@ -389,6 +395,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	CommoditiesLoader.load_commodity_endowments(self, commodities_dir.path_join("endowments.json"))
 	CommoditiesLoader.load_outlines(self, world_dir.path_join("outlines.json"))
 	DiplomacyLoader.load_embassies(self, world_dir.path_join("embassies.json"))
+	DomainsLoader.load_domains(self, domains_dir)
 
 	GeoLoader.validate_cross_file(self, geo_path, world_path)
 	PoliticsLoader.validate_amendments(self)

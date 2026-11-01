@@ -90,3 +90,13 @@ Outline GDP in `data/world/outlines.json` from World Bank Open Data (CC BY 4.0),
 from its Directorate-General of Budget, Accounting and Statistics; outline names from
 Natural Earth (public domain).
 
+
+## Spending sectors (V5.3 a)
+
+The shares and start quantities in `data/domains/*.json`, read on 2026-11-01; each row's `source` line gives the table, the year and the address.
+
+- Eurostat: `gov_10a_exp` (COFOG), `hlth_rs_bds1`, `educ_uoe_perp04`, `educ_uoe_grad01`, `educ_uoe_grad02`, `educ_uoe_fine01`, `isoc_cbt`, `ilc_pnp3`, `spr_exp_pens`, `ert_bil_eur_a`, under Eurostat's re-use policy (Commission Decision 2011/833/EU): re-use is allowed with acknowledgement of the source and a note of any change. Values were recomputed into shares; Eurostat is not responsible for the result.
+- HM Treasury, *Public Expenditure Statistical Analyses 2026*, table 5.2 (2024-25 outturn); DWP, *Benefit expenditure and caseload tables 2026* (Great Britain, not the UK); NHS England KH03 bed availability; ONS mid-2025 population estimates. Open Government Licence v3.0, contains public sector information.
+- NATO, *Defence Expenditure of NATO Countries (2014-2025)*, tables 8a and 8b, 2024 estimates. NATO's guidelines for the external use of its content require credit to NATO and bar sale or advertising use; the project's data licence is non-commercial.
+- OECD (OECD Data Explorer): hospital beds, waiting times and students per teaching staff for the United Kingdom and Poland, credited to the OECD. The OECD's terms for statistical data were not confirmed; the licence for these tables is a standing question in the pull request.
+- Germany's Grundsicherung figure comes from a Deutscher Landkreistag circular of 13 May 2025 reproducing the Federal Ministry of Labour and Social Affairs table; Poland's minimum-pension top-up is ZUS's answer to Wyborcza.biz, as reported by Super Biznes on 16 May 2025. Both are single published figures, marked as estimate and press source in their rows.
