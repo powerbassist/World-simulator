@@ -63,6 +63,15 @@ func _process(_delta: float) -> bool:
 			_press(_region_button(_regions[3]))
 		12:
 			_check_cap()
+			_move_a_sum()
+		14:
+			_check_redrawn()
+			_press(_region_button(_regions[3]))
+			_press(_region_button(_regions[1]))
+		16:
+			_press(_with_meta("fund_id"))
+		18:
+			_check_stopped(_regions[1])
 			_finish()
 	return false
 
@@ -152,6 +161,39 @@ func _check_cap() -> void:
 	var want := Strings.t("The most development funds that can run at once are already running.")
 	if line == null or not (line as Control).is_visible_in_tree() or (line as Label).text != want:
 		_fail("at the cap: no visible line says why (%s)" % [line.text if line != null else "<none>"])
+
+
+## A drag on the yearly sum redraws the strip at the new sum (no rebuild).
+func _move_a_sum() -> void:
+	# Below the cap again, so the strip is drawn: the opened region's own fund aside,
+	# stop one of the others.
+	var ns = _main._state.player()
+	for row in RegionFunds.open_funds(ns):
+		if String(row["region_id"]) == String(_regions[2].id):
+			RegionFunds.stop(_main._state, ns, String(row["id"]))
+	_panel.mark_dirty()
+
+
+func _check_redrawn() -> void:
+	var slider = _with_meta("fund_eur")
+	if slider == null:
+		_fail("redraw: no yearly-sum control on the opened region")
+		return
+	var top: float = (slider as HSlider).max_value
+	(slider as HSlider).value = top
+	var strip = null
+	for node in _panel.find_children("*", "", true, false):
+		if node.get_script() == EffectsStrip and (node as Control).is_visible_in_tree():
+			strip = node
+	if strip == null or absf(float(strip.money_bn) + top) > 0.0001:
+		_fail("redraw: the strip did not follow the yearly sum to %s bn (%s)" % [top, strip.money_bn if strip != null else "<none>"])
+
+
+## Stop on a running fund closes it, and the row said whom it angers before.
+func _check_stopped(region) -> void:
+	for row in RegionFunds.open_funds(_main._state.player()):
+		if String(row["region_id"]) == String(region.id):
+			_fail("Stop pressed: the fund on %s still runs" % region.id)
 
 
 # -- helpers --

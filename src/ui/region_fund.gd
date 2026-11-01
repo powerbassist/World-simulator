@@ -35,7 +35,8 @@ static func build(panel, box: Control, ns, region, regions: Array, access: Dicti
 	var p: Dictionary = Regions.problem(ns, regions, region.id, access, sited, Migration.region_share(ns, region.id))
 	var line := PanelKit.plain_line(box, problem_text(p), PanelKit.Tone.PLAIN)
 	line.set_meta("problem", true)
-	if float(p["ratio"]) > 1.0:
+	# The tone follows the ratio as printed: "1.0 times" is never flagged.
+	if float(p["ratio"]) >= 1.05:
 		line.theme_type_variation = UiTheme.WARN_TEXT
 	var rule := RegionFunds.limits(panel._loader)
 	if rule.is_empty():
@@ -71,6 +72,17 @@ static func _running(panel, box: Control, ns, row: Dictionary) -> void:
 	flow.add_child(stop)
 	PanelKit.plain_line(flow, Strings.tn("%s a year, %d month left.", "%s a year, %d months left.", months) % [
 		EffectsStrip.money_text(-float(row["eur_bn_per_year"])), months], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+	# What Stop costs, read before the press: RegionFunds.stop() takes back part of
+	# what each pleased bloc gained, so those blocs are the ones it angers.
+	var angered := {}
+	for bloc in row["bloc_offset"]:
+		if float(row["bloc_offset"][bloc]) > 0.0:
+			angered[bloc] = -1.0
+	var who := EffectsStrip.who_text(angered)
+	if who != "":
+		var angers := PanelKit.plain_line(flow, who)
+		angers.autowrap_mode = TextServer.AUTOWRAP_OFF
+		stop.set_meta("who_label", angers)
 
 
 ## The verb: two sums, the strip they price, the Go, and the refusal line.
