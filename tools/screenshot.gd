@@ -41,6 +41,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation DEU --book-visit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
@@ -452,6 +454,14 @@ var _failing := false
 ## on this list it stages NOTHING and only opens the window; the frame's claim
 ## is the rate-as-number rows, which is the panel's whole reason for existing.
 var _tax := false
+
+## V5.3 a + b (docs/design/v5.3-ab.md 4.1). Moves two spending levers and two tax
+## rates, uncommitted, so a frame of the Budget (--open budget) or the Tax Code
+## (--tax) shows what a move shows: each lever's balance effect, the change
+## column, each rate's change beside its yield, and the strip. A frame with
+## nothing moved shows none of them. The Tax Code's draft rides the Budget's
+## columns too, and the Budget's strip says only what its own Commit books.
+var _moved := false
 
 ## V4.2 close-out. A draft the machine has parked renders NOWHERE on the law
 ## panel -- ns.draft_bills reaches the UI only through the briefing popup ("In
@@ -931,6 +941,8 @@ func _init() -> void:
 			Motion.override = 1
 		elif args[i] == "--open" and i + 1 < args.size():
 			_open = args[i + 1]
+		elif args[i] == "--moved":
+			_moved = true
 		elif args[i] == "--forecast-computing":
 			_forecast_computing = true
 		elif args[i] == "--month-closing":
@@ -1216,6 +1228,8 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
+	if _moved:
+		_move_the_levers()
 	if _compose:
 		_draft_a_bill()
 	if _pmb:
@@ -1965,6 +1979,18 @@ func _open_the_tax_code() -> void:
 		push_error("screenshot: --tax could not open the tax window")
 	else:
 		print("--tax: the tax window is open (%d rate rows)" % _main._tax_panel._sliders.size())
+
+
+## For --moved: health up a point and a half, education down half a point,
+## income up two, VAT down one -- each through its slider, so the panels hear the
+## edit the way a drag sends it.
+func _move_the_levers() -> void:
+	var ns = _main._state.player()
+	_main._budget_panel._sliders["health"].value = float(ns.spending_pct_gdp["health"]) + 1.5
+	_main._budget_panel._sliders["education"].value = float(ns.spending_pct_gdp["education"]) - 0.5
+	_main._tax_panel._sliders["income"].value = float(ns.tax_rates_pct["income"]) + 2.0
+	_main._tax_panel._sliders["vat"].value = float(ns.tax_rates_pct["vat"]) - 1.0
+	print("--moved: health +1.5, education -0.5, income +2, vat -1 (uncommitted)")
 
 
 ## V4.2 close-out, for --compose. The draft goes through Statute.draft()

@@ -10,6 +10,7 @@ tests=(
   tests/test_economy.gd
   tests/test_budget.gd
   tests/test_budget_panel.gd
+  tests/test_effects_strip.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd
