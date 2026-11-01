@@ -32,6 +32,14 @@ var money_label: Label
 var _money_row: HBoxContainer
 var _who: Label
 var _when: Label
+## Beneath the three lines, the OTHER tab's uncommitted draft on the same books
+## (the Budget's line about the Tax Code's, and the mirror): never merged into
+## this tab's figures, which are what this tab's Commit books, never silent
+## either. Its Go is the panel's to route (go_pressed).
+var elsewhere_label: Label
+var _elsewhere_row: HFlowContainer
+
+signal go_pressed
 
 
 func _init() -> void:
@@ -40,20 +48,35 @@ func _init() -> void:
 	money_label = _money_row.get_child(1)
 	_who = PanelKit.plain_line(self, "")
 	_when = PanelKit.plain_line(self, "")
+	_elsewhere_row = PanelKit.buttons(self)
+	elsewhere_label = PanelKit.plain_line(_elsewhere_row, "")
+	# One line, sized to its text: a wrapping label in a flow container has no
+	# width of its own and wraps at every letter.
+	elsewhere_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	var go := PanelKit.sized(Button.new())
+	go.text = tr("Go")
+	go.pressed.connect(func() -> void: go_pressed.emit())
+	_elsewhere_row.add_child(go)
 	hide()
 
 
-## The three lines. A line given nothing is not drawn, and a strip with no money
-## is not drawn at all: a verb that moves nothing has nothing to say here.
-func show_effects(gain_bn: float, who := "", when := "", has_money := true) -> void:
+## The three lines, and the other tab's draft. A line given nothing is not drawn,
+## and a strip with neither money nor a draft elsewhere is not drawn at all: a
+## verb that moves nothing has nothing to say here.
+func show_effects(gain_bn: float, who := "", when := "", has_money := true,
+		elsewhere := "", elsewhere_bn := 0.0) -> void:
 	money_bn = gain_bn
 	money_label.text = money_text(gain_bn)
 	money_label.theme_type_variation = cell_variation(money_tone(gain_bn))
+	_money_row.visible = has_money
 	_who.text = who
-	_who.visible = who != ""
+	_who.visible = who != "" and has_money
 	_when.text = when
-	_when.visible = when != ""
-	visible = has_money
+	_when.visible = when != "" and has_money
+	elsewhere_label.text = elsewhere
+	elsewhere_label.theme_type_variation = cell_variation(money_tone(elsewhere_bn))
+	_elsewhere_row.visible = elsewhere != ""
+	visible = has_money or elsewhere != ""
 
 
 # -- The sim's figures, as the strip and the cells beside each lever print them --

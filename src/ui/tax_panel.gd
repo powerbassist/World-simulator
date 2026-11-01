@@ -97,6 +97,11 @@ var _yield_labels := {}
 var _effects := {}
 var _fx_cache := {}
 var _now_books := {}
+## The Budget window and the window manager, wired by main.gd: the Budget's draft
+## is one line under this tab's strip, with a Go there (the mirror of the
+## Budget's line about this tab's draft). Null until wired; every read guards it.
+var budget_panel = null
+var windows = null
 ## The compose flow (tax_compose.gd), held for the tests that drive it.
 var _compose
 
@@ -116,6 +121,9 @@ func _ready() -> void:
 	_title = Label.new()
 	root.add_child(_title)
 	_strip = EffectsStrip.new()
+	_strip.go_pressed.connect(func() -> void:
+		if windows != null:
+			windows.open("budget"))
 	# Its figure beside its caption: the rows below are a third of the window wide.
 	_strip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	root.add_child(_strip)
@@ -305,6 +313,20 @@ func _on_commit() -> void:
 ## untouched lever's pending value is just the live rate restated, so an empty
 ## return is the harmless case -- the merge writes nothing. Read-only; the
 ## commit is still this panel's own verb.
+## What this tab's Commit would book, or nothing while no rate stands away from
+## its live value -- read by the Budget for its line about this draft.
+func draft() -> Dictionary:
+	for key in _edited_keys:
+		if _pending_value(String(key)) != _live(String(key)):
+			return pending_tax()
+	return {}
+
+
+func _live(key: String) -> float:
+	var ns = _state.player()
+	return float(ns.tax_progressivity) if key == PROGRESSIVITY_KEY else float(ns.tax_rates_pct.get(key, 0.0))
+
+
 func pending_tax() -> Dictionary:
 	var out := {"tax_rates_pct": {}}
 	for key in _edited_keys:
@@ -392,10 +414,9 @@ func _refresh() -> void:
 	# Each moved rate priced alone, and the strip on what Commit books (the edited
 	# keys: an untouched row's pending is its live rate restated).
 	# A rate dragged back to its live value is not a move: no cell, no strip.
-	var ns = _state.player()
 	var alone := {}
 	for key in _edited_keys:
-		if _pending_value(String(key)) == (float(ns.tax_progressivity) if String(key) == PROGRESSIVITY_KEY else float(ns.tax_rates_pct.get(key, 0.0))):
+		if _pending_value(String(key)) == _live(String(key)):
 			continue
 		alone[key] = {"tax_rates_pct": {}}
 		if String(key) == PROGRESSIVITY_KEY:
@@ -404,9 +425,14 @@ func _refresh() -> void:
 			alone[key]["tax_rates_pct"][key] = _pending_value(String(key))
 	if not alone.is_empty():
 		alone["commit"] = pending_tax()
+	var spending_draft: Dictionary = budget_panel.draft() if budget_panel != null else {}
+	if not spending_draft.is_empty():
+		alone["elsewhere"] = spending_draft
 	_effects = EffectsStrip.per_key(_fx_cache, _state, _now_books, alone, alone.get("commit", {}), {})
 	EffectsStrip.paint(_effect_labels, _effects)
-	_strip.show_effects(float(_effects.get("commit", 0.0)), "", "", _effects.has("commit"))
+	_strip.show_effects(float(_effects.get("commit", 0.0)), "", "", _effects.has("commit"),
+		tr("Spending changes not yet committed: %s a year, in the Budget") % EffectsStrip.money_text(_effects["elsewhere"])
+		if _effects.has("elsewhere") else "", float(_effects.get("elsewhere", 0.0)))
 	_fill_bases()
 
 

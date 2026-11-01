@@ -776,5 +776,7 @@
   "Balance this year": "Solde cette année",
   "change": "variation",
   "rate": "taux",
-  "yield, bn": "rendement, Md"
+  "yield, bn": "rendement, Md",
+  "Tax changes not yet committed: %s a year, in the Tax Code": "Changements d'impôts non validés : %s par an, dans le Code des impôts",
+  "Spending changes not yet committed: %s a year, in the Budget": "Changements de dépenses non validés : %s par an, dans le Budget"
 }

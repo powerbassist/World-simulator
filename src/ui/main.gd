@@ -345,7 +345,7 @@ func _ready() -> void:
 	# projection price the Tax Code window's uncommitted edits (the panels are
 	# siblings; this is a reference, not state, and the load path's setup()
 	# sweep leaves it alone).
-	_budget_panel.tax_panel = _tax_panel
+	_budget_panel.pair(_tax_panel, _windows)
 	_tax_panel.committed.connect(func(before, _pending):
 		_fiscal_committed(tr("Tax code change"), tr("Tax code committed"), before))
 	# A finished draft opens the briefing on itself: the price it was quoted

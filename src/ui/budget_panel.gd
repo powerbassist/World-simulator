@@ -61,12 +61,15 @@ signal committed(before: Dictionary, pending: Dictionary)
 
 var _state
 var _loader
-## V4.2 ultra pass 2. The Tax Code window, wired by main.gd beside the other
-## panel-to-panel references: its uncommitted edits ride this panel's proposed
-## column and 24-month projection (see _refresh()). A sibling reference, not
-## state -- the load path rebinds each panel's own setup() and leaves this
-## alone. Null until wired; every read guards it.
+## The Tax Code window, wired by main.gd beside the other panel-to-panel
+## references. V4.2 ultra pass 2 merged its uncommitted edits into this panel's
+## proposed column and projection; since V5.3 a + b (the parent's call on #247)
+## every figure here is what THIS tab's Commit books, and the Tax Code's draft is
+## one separate line under the strip, with a Go to that tab. A sibling reference,
+## not state; null until wired, and every read guards it.
 var tax_panel = null
+## The window manager, for that line's Go; null until main.gd wires it.
+var windows = null
 var _pending := {"spending_pct_gdp": {}}
 ## The lever keys the player has actually moved. PER KEY rather than one boolean:
 ## a boolean latches -- nudge one slider, close the window without committing, and
@@ -196,6 +199,9 @@ func _build_figures() -> Control:
 	var column := VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_strip = EffectsStrip.new()
+	_strip.go_pressed.connect(func() -> void:
+		if windows != null:
+			windows.open("tax"))
 	column.add_child(_strip)
 	_figures_box = VBoxContainer.new()
 	column.add_child(_figures_box)
@@ -407,19 +413,23 @@ func _lever_text(key: String) -> String:
 	return "%s%%" % PanelKit.Num.f(_pending_value(key), 1)
 
 
-## The proposed budget: the spending levers with the Tax Code window's draft
-## merged in (V4.2's tax merge, the comment in _refresh()).
-func _merged_pending() -> Dictionary:
-	var pending := _pending.duplicate(true)
-	if tax_panel != null:
-		var tax_pending: Dictionary = tax_panel.pending_tax()
-		if not tax_pending.get("tax_rates_pct", {}).is_empty():
-			var rates: Dictionary = pending.get("tax_rates_pct", {})
-			rates.merge(tax_pending["tax_rates_pct"])
-			pending["tax_rates_pct"] = rates
-		if tax_pending.has("tax_progressivity"):
-			pending["tax_progressivity"] = tax_pending["tax_progressivity"]
-	return pending
+## The two finance tabs, each told of the other and of the window manager (for
+## the draft line's Go): one call, so main.gd wires the pair in one line.
+func pair(tax, window_manager) -> void:
+	tax_panel = tax
+	tax.budget_panel = self
+	windows = window_manager
+	tax.windows = window_manager
+
+
+## What this tab's Commit would book, or nothing while no lever stands away from
+## its live value -- read by the Tax Code for its line about this draft.
+func draft() -> Dictionary:
+	var ns = _state.player() if _state != null else null
+	for key in _edited_keys:
+		if ns != null and _pending_value(key) != float(ns.spending_pct_gdp.get(key, 0.0)):
+			return _pending
+	return {}
 
 
 func _refresh() -> void:
@@ -435,21 +445,17 @@ func _refresh() -> void:
 	# the live position without this panel writing a byte of sim state, which rule 2
 	# forbids. Found by tests/test_budget_panel.gd, not by looking.
 	#
-	# THE TAX MERGE, the ultra pass-2 finding: V4.2 T5 moved the tax levers off
-	# this panel and its _pending lost them with it, so an uncommitted Tax Code
-	# draft left proposed == now on Revenue/Deficit and both projections
-	# tax-identical -- the one surface that promises "this is what will happen"
-	# silently asserting no change. The edited keys merge into a copy of the
-	# spending pending; Budget.commit()'s per-key splice makes absent keys
-	# harmless, so an empty tax pending is exactly the pre-fix behaviour.
-	var pending := _merged_pending()
+	# NO TAX MERGE since V5.3 a + b (the parent's call on #247, band B1): V4.2's
+	# ultra pass 2 merged the Tax Code's draft into these columns, so the proposed
+	# and change columns showed what this tab's Commit does NOT book. The draft is
+	# still never silent -- it is its own line under the strip, priced alone.
+	var pending: Dictionary = _pending
 	if _now_preview.is_empty() or not _lever_moved:
 		_now_preview = Budget.preview(_state, {})
 	_lever_moved = false
 	var now: Dictionary = _now_preview
 	# Nothing edited: nothing is proposed, and the column repeats "now".
-	var edited: bool = not _edited_keys.is_empty() or pending.has("tax_progressivity") \
-		or not pending.get("tax_rates_pct", {}).is_empty()
+	var edited: bool = not _edited_keys.is_empty()
 	var proposed: Dictionary = Budget.preview(_state, pending) if edited else now
 
 	_set_figure("revenue", Ledger.pct_and_eur(now, "total_revenue_pct_gdp"), Ledger.pct_and_eur(proposed, "total_revenue_pct_gdp"))
@@ -480,8 +486,7 @@ func _refresh() -> void:
 		_set_figure(key, rows[key][0], rows[key][1])
 
 	# V5.3 a + b: each moved lever priced alone -- the live budget with that one
-	# line moved -- and the strip priced on what Commit books, `_pending` alone (the
-	# Tax Code's draft rides the columns above but is that tab's own commit).
+	# line moved -- the strip on what Commit books, and the Tax Code's draft alone.
 	var ns = _state.player()
 	# A lever dragged back to its live value is not a move: no cell, no strip.
 	var alone := {}
@@ -492,9 +497,14 @@ func _refresh() -> void:
 		alone[key]["spending_pct_gdp"][key] = _pending_value(key)
 	if not alone.is_empty():
 		alone["commit"] = _pending
+	var tax_draft: Dictionary = tax_panel.draft() if tax_panel != null else {}
+	if not tax_draft.is_empty():
+		alone["elsewhere"] = tax_draft
 	_effects = EffectsStrip.per_key(_fx_cache, _state, now, alone, pending, proposed)
 	EffectsStrip.paint(_effect_labels, _effects)
-	_strip.show_effects(float(_effects.get("commit", 0.0)), "", "", _effects.has("commit"))
+	_strip.show_effects(float(_effects.get("commit", 0.0)), "", "", _effects.has("commit"),
+		tr("Tax changes not yet committed: %s a year, in the Tax Code") % EffectsStrip.money_text(_effects["elsewhere"])
+		if _effects.has("elsewhere") else "", float(_effects.get("elsewhere", 0.0)))
 	Ledger.add_changes(_figures, now, proposed)
 	_fill_figures()
 

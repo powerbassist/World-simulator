@@ -38,6 +38,10 @@ var _budget
 var _tax
 var _state_b
 var _state_t
+## The combined case: one state, the two tabs wired to each other as main.gd does.
+var _state_c
+var _budget_c
+var _tax_c
 
 
 func _init() -> void:
@@ -53,6 +57,11 @@ func _init() -> void:
 	root.add_child(_budget)
 	_tax = TaxPanel.new()
 	root.add_child(_tax)
+	_state_c = GameState.new_game(_loader, "FRA")
+	_budget_c = BudgetPanel.new()
+	root.add_child(_budget_c)
+	_tax_c = TaxPanel.new()
+	root.add_child(_tax_c)
 
 
 func _process(_delta: float) -> bool:
@@ -63,6 +72,12 @@ func _process(_delta: float) -> bool:
 			_budget.show()
 			_tax.setup(_state_t, _loader)
 			_tax.show()
+			_budget_c.setup(_state_c, _loader)
+			_tax_c.setup(_state_c, _loader)
+			_budget_c.tax_panel = _tax_c
+			_tax_c.budget_panel = _budget_c
+			_budget_c.show()
+			_tax_c.show()
 		2:
 			_check_budget_untouched()
 			_check_tax_untouched()
@@ -75,6 +90,7 @@ func _process(_delta: float) -> bool:
 		5:
 			_check_tax_yields()
 			_check_tax_rates()
+			_check_both_drafts()
 			_finish()
 	return false
 
@@ -255,6 +271,43 @@ func _check_tax_rates() -> void:
 			_fail("tax %s: the strip says %.4f bn, Commit booked %.4f bn" % [key, strip_bn, booked])
 		_check_tone(_tax._effect_labels[key], booked, "tax %s" % key)
 		_tax._refresh()
+
+
+## B1 with the other tab's draft pending (the parent's call on #247): each tab
+## shows what ITS Commit books, the other draft is one line priced alone, and
+## nothing of it rides this tab's figures.
+func _check_both_drafts() -> void:
+	var ns = _state_c.player()
+	var tax_draft := {"tax_rates_pct": {"income": float(ns.tax_rates_pct["income"]) + 2.0}}
+	_tax_c._sliders["income"].value = float(tax_draft["tax_rates_pct"]["income"])
+	_budget_c._sliders["health"].value = float(ns.spending_pct_gdp["health"]) + 1.0
+	_budget_c._refresh()
+	var now := Budget.preview(_state_c, {})
+	var tax_alone := _balance_gain(now, Budget.preview(_state_c, tax_draft))
+	var elsewhere: String = _budget_c._strip.elsewhere_label.text
+	if not elsewhere.contains(EffectsStrip.money_text(tax_alone)) or not _budget_c._strip.elsewhere_label.is_visible_in_tree():
+		_fail("budget: the Tax Code's draft (%s alone) reads '%s'" % [EffectsStrip.money_text(tax_alone), elsewhere])
+	var strip_bn: float = _budget_c._strip.money_bn
+	var deficit_cell: Array = _budget_c._figures["deficit"][2]
+	_budget_c._on_commit()
+	var booked := _balance_gain(now, Budget.preview(_state_c, {}))
+	if absf(strip_bn - booked) > CENT_BN:
+		_fail("budget with a tax draft: the strip says %.4f bn, Commit booked %.4f bn" % [strip_bn, booked])
+	if deficit_cell[0] != EffectsStrip.money_text(-booked):
+		_fail("budget with a tax draft: the deficit change reads '%s', Commit booked %s" % [deficit_cell[0], EffectsStrip.money_text(-booked)])
+	# The mirror: a spending lever pending while the Tax Code commits.
+	_budget_c._sliders["education"].value = float(ns.spending_pct_gdp["education"]) - 1.0
+	_tax_c.mark_dirty()
+	_tax_c._refresh()
+	now = Budget.preview(_state_c, {})
+	var spend_alone := _balance_gain(now, Budget.preview(_state_c, _budget_c._pending))
+	if not _tax_c._strip.elsewhere_label.text.contains(EffectsStrip.money_text(spend_alone)):
+		_fail("tax: the Budget's draft (%s alone) reads '%s'" % [EffectsStrip.money_text(spend_alone), _tax_c._strip.elsewhere_label.text])
+	strip_bn = _tax_c._strip.money_bn
+	_tax_c._on_commit()
+	booked = _balance_gain(now, Budget.preview(_state_c, {}))
+	if absf(strip_bn - booked) > CENT_BN:
+		_fail("tax with a spending draft: the strip says %.4f bn, Commit booked %.4f bn" % [strip_bn, booked])
 
 
 func _fail(message: String) -> void:
