@@ -224,9 +224,10 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	var rows: VBoxContainer = _rows[lane]
 	rows.add_child(card)
 	rows.move_child(card, 0)
-	# V4.9a. A row arrives rather than existing: a fade only, since the lane lays
-	# it out. Clickable from its first frame -- the fade gates nothing.
-	Motion.arrive(card)
+	# V4.9a. A row arrives rather than existing: a fade, since the lane lays it
+	# out, in the pulse tint that clears (G8: Motion.land). Clickable from its
+	# first frame -- the fade gates nothing.
+	Motion.land(card)
 	_cards[id] = card
 	_bodies[id] = body_label
 	_lane_of[id] = lane
