@@ -256,6 +256,24 @@ static func trend_pct(ns) -> float:
 	return trend + ns.potential_shift_pct + Investment.national_trend_shift_pct(ns)
 
 
+## V5.3 a: one sector's trend rate, points a year -- its own SECTOR_TREND, the
+## uniform potential shift, its trade agreements' shift and its investment shift --
+## the rate _apply_growth_to_sectors() grows it by each month. A query for the
+## Industry card's "trend against the nation's" (spec 3.2), read through the same
+## _sector_rate() the tick calls, so the two cannot drift.
+static func sector_trend_pct(state, ns, sector: String) -> float:
+	return _sector_rate(ns, sector, Trade.sector_shift(state, ns.id), Investment.sector_trend_shift(ns))
+
+
+## The sum, in the tick's own order (the float order is the byte-identity).
+static func _sector_rate(ns, key: String, trade_shift: Dictionary, investment_shift: Dictionary) -> float:
+	return (
+		float(C.SECTOR_TREND[key]) + ns.potential_shift_pct
+		+ float(trade_shift.get(key, 0.0))
+		+ float(investment_shift.get(key, 0.0))
+	)
+
+
 ## Trend part by each sector's own rate, cyclical part by cyclical beta. Doing it
 ## in one step with beta alone would push industry's share *up* over a decade,
 ## the opposite of the secular trend. The cyclical part is a residual against the
@@ -284,11 +302,7 @@ static func _apply_growth_to_sectors(state, ns, target_gdp: float) -> void:
 	# Summed, this is exactly the nation's trend, so the two paths agree.
 	var after_trend := 0.0
 	for key in C.SECTOR_TREND.keys():
-		var rate: float = (
-			float(C.SECTOR_TREND[key]) + ns.potential_shift_pct
-			+ float(trade_shift.get(key, 0.0))
-			+ float(investment_shift.get(key, 0.0))
-		)
+		var rate: float = _sector_rate(ns, key, trade_shift, investment_shift)
 		ns.sector_output[key] = float(ns.sector_output[key]) * C.monthly_factor(rate)
 		after_trend += float(ns.sector_output[key])
 	if after_trend <= 0.0:
