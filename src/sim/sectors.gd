@@ -62,7 +62,7 @@ static func quantity(ns, loader, line: String, sector_id: String) -> float:
 		var e := float(DK.ELASTICITY[sector_id])
 		if String(s["quantity"]["better"]) == "lower":
 			e = -e
-		return float(start["quantity"]) * pow(maxf(ratio, 0.0), e)
+		return float(start["quantity"]) * pow(maxf(ratio, DK.RATIO_FLOOR), e)
 	return 0.0
 
 

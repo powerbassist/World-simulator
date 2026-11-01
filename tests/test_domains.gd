@@ -29,6 +29,7 @@ func _init() -> void:
 	_test_every_sector_id_has_a_moving_elasticity()
 	_test_a_share_move_moves_each_quantity_by_its_elasticity()
 	_test_a_lower_is_better_quantity_falls_with_spending()
+	_test_a_zero_line_stays_finite()
 	_test_move_share_refusals()
 	_test_moved_shares_survive_a_save()
 	_finish()
@@ -119,6 +120,7 @@ func _test_every_sector_id_has_a_moving_elasticity() -> void:
 
 
 func _state_with_health():
+	_loader.domains.clear()
 	var errors: Array[String] = []
 	var line: Dictionary = DomainsLoader.parse_line(_loader, _health(), "health.json", errors)
 	_loader.domains["health"] = line
@@ -160,10 +162,26 @@ func _test_a_share_move_moves_each_quantity_by_its_elasticity() -> void:
 	_loader.domains.erase("health")
 
 
+## A spending line cut to zero reads its floor, never infinity.
+func _test_a_zero_line_stays_finite() -> void:
+	var raw := _health()
+	raw["sectors"][1]["quantity"]["better"] = "lower"
+	var errors: Array[String] = []
+	_loader.domains.clear()
+	_loader.domains["health"] = DomainsLoader.parse_line(_loader, raw, "health.json", errors)
+	var ns = GameState.new_game(_loader, "FRA").player()
+	ns.spending_pct_gdp["health"] = 0.0
+	for id in ["hospitals", "primary_care"]:
+		var q := Sectors.quantity(ns, _loader, "health", id)
+		if is_inf(q) or is_nan(q) or q <= 0.0:
+			_fail("%s reads %s with its line at zero" % [id, q])
+	_loader.domains.erase("health")
+
 
 ## `better` gives the sign: more spending on a lower-is-better sector (pupils per
 ## teacher) lowers its quantity, by the same elasticity.
 func _test_a_lower_is_better_quantity_falls_with_spending() -> void:
+	_loader.domains.clear()
 	var raw := _health()
 	raw["sectors"][1]["quantity"]["better"] = "lower"
 	var errors: Array[String] = []

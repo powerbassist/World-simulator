@@ -30,6 +30,10 @@ const ELASTICITY := {
 	"basic_pension": 0.8, "minimum_income": 0.8,
 }
 
+## The lowest spending ratio quantity() raises to the elasticity: a line cut to 0
+## would otherwise give a lower-is-better quantity of infinity (pow(0, -e)).
+const RATIO_FLOOR := 0.01
+
 ## A move never takes a sector under this share of its line, so no sector is
 ## zeroed by a reallocation (a sector at 0 would be a sector that no longer is).
 const MIN_SHARE := 0.01
