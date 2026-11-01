@@ -145,6 +145,10 @@ func _run() -> void:
 		_fail("no executive to stage a chair from")
 	else:
 		ns.companies[major.id]["board_chair"] = chair_id
+		# V5.3 a + b step 2: the chair is on the firm's standing line, drawn once its
+		# card and its Act are open (test_industry_tab.gd presses them).
+		panel._open_sector = String(major.sector)
+		panel._open_firm = String(major.id)
 		panel._dirty = true
 		panel._refresh()
 		var chair_name: String = loader.person_name(chair_id)

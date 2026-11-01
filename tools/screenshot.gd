@@ -43,6 +43,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
@@ -462,6 +463,12 @@ var _tax := false
 ## nothing moved shows none of them. The Tax Code's draft rides the Budget's
 ## columns too, and the Budget's strip says only what its own Commit books.
 var _moved := false
+
+## V5.3 a + b step 2: the Industry tab mid-decision -- a minority stake running on
+## the second major, its final price asked (#248: the In progress row's question
+## and its answers, the card's "Decision due"), the first major's sector
+## card open, its Act open and its first verb that can run focused (one strip).
+var _industry := false
 
 ## V4.2 close-out. A draft the machine has parked renders NOWHERE on the law
 ## panel -- ns.draft_bills reaches the UI only through the briefing popup ("In
@@ -943,6 +950,8 @@ func _init() -> void:
 			_open = args[i + 1]
 		elif args[i] == "--moved":
 			_moved = true
+		elif args[i] == "--industry":
+			_industry = true
 		elif args[i] == "--forecast-computing":
 			_forecast_computing = true
 		elif args[i] == "--month-closing":
@@ -1230,6 +1239,8 @@ func _apply_view() -> void:
 		_open_the_tax_code()
 	if _moved:
 		_move_the_levers()
+	if _industry:
+		_stage_the_industry_tab()
 	if _compose:
 		_draft_a_bill()
 	if _pmb:
@@ -1984,6 +1995,29 @@ func _open_the_tax_code() -> void:
 ## For --moved: health up a point and a half, education down half a point,
 ## income up two, VAT down one -- each through its slider, so the panels hear the
 ## edit the way a drag sends it.
+func _stage_the_industry_tab() -> void:
+	var processes = preload("res://src/sim/processes.gd")
+	var state = _main._state
+	var ns = state.player()
+	var loader = _main._loader
+	var majors: Array = Companies.majors_of(loader, ns.id)
+	var panel = _main._companies_panel
+	for action in loader.company_actions:
+		if String(action.id) == "minority_stake" and majors.size() > 1:
+			processes.start(state, ns, loader, action, String(majors[1].id))
+			# An ask posts in its stage's last month: the row reads "1 month left".
+			for row in ns.processes:
+				row["months_left"] = 1
+				preload("res://src/sim/process_asks.gd").post(ns, row, action, state.year * 12 + state.month, majors[1])
+	panel._open_sector = String(majors[0].sector)
+	panel._open_firm = String(majors[0].id)
+	for action in Companies.available(state, ns, loader.company_actions, String(majors[0].id), loader):
+		if preload("res://src/ui/company_verb.gd").refusal(state, loader, ns, majors[0], action) == "":
+			panel._focus_verb = String(action.id)
+			break
+	panel.mark_dirty()
+
+
 func _move_the_levers() -> void:
 	var ns = _main._state.player()
 	_main._budget_panel._sliders["health"].value = float(ns.spending_pct_gdp["health"]) + 1.5

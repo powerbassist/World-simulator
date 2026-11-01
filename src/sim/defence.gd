@@ -27,6 +27,7 @@ extends RefCounted
 const K = preload("res://src/sim/defence_constants.gd")
 const RK = preload("res://src/core/relations.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
 
 
 ## A nation's starting capability is its EQUILIBRIUM, not zero. A France that has
@@ -66,9 +67,13 @@ static func tick_month(state) -> void:
 ## -- an authored per-nation military strength is a second number somebody has to
 ## keep in step with the first, and it disagrees with it the moment a player moves
 ## the lever.
+##
+## V5.3 a: weighted by the defence line's sector factor (src/sim/sectors.gd) --
+## exactly 1.0 with nothing moved.
 static func capability_target(ns) -> float:
 	return clampf(
-		float(ns.spending_pct_gdp.get("defence", 0.0)), K.CAPABILITY_MIN, K.CAPABILITY_MAX
+		float(ns.spending_pct_gdp.get("defence", 0.0)) * Sectors.factor(ns, "defence"),
+		K.CAPABILITY_MIN, K.CAPABILITY_MAX
 	)
 
 

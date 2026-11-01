@@ -18,11 +18,15 @@ extends PanelContainer
 ## the rivals in one sector and nowhere else. A player who cannot see who the
 ## rivals are cannot see what the button does.
 ##
-## V1.6e HANGS ITS WHOLE SURFACE ON THAT GROUPING AND ADDS NO WINDOW. The sector
-## lever is pointed at exactly the heading _build_sector() was already printing, so
-## the readout and the two verbs go under it and the action bar does not grow. What
-## did have to change is the lead: this panel is no longer only the private sector,
-## because the state's own programme is now on it.
+## V1.6e HANGS ITS WHOLE SURFACE ON THAT GROUPING AND ADDS NO WINDOW: the sector
+## programme sits in its sector, beside the firms it competes with for growth.
+##
+## V5.3 a + b step 2 (docs/design/v5.3-ab.md 3.2) TURNED THE GROUPS INTO CARDS, the
+## readability gate's "Industry: lisible NON" answered: what is under way first
+## (industry_progress.gd), then three sector cards closed until opened
+## (industry_card.gd), a major's verbs one Act away (industry_verbs.gd). This file
+## keeps what the player has opened, the commands, and the rows that are not a
+## sector's: the bid, the failing firms, the public account.
 ##
 ## It also stops returning early on an empty firm register. A nation with no
 ## data/companies/<ID>.json still has three sectors and can still invest in them --
@@ -37,8 +41,6 @@ signal acted(before, label)
 const Processes = preload("res://src/sim/processes.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const BillButton = preload("res://src/ui/bill_button.gd")
-const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Industry = preload("res://src/sim/industry.gd")
@@ -48,10 +50,8 @@ const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
-
-# Labels' table, read once: its own preload line went to Processes' at V5.3 a
-# (the size ratchet holds this file at 300 code lines).
-const SECTOR_LABEL := preload("res://src/ui/labels.gd").SECTOR
+const IndustryCard = preload("res://src/ui/industry_card.gd")
+const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 
 var _state
 var _loader
@@ -80,6 +80,19 @@ var _primary: Control = null
 var _last_refusal := ""
 ## The card an irreversible verb asks on (CompanyVerb.ask), made at the first ask.
 var _confirm
+## V5.3 a + b step 2: what the player has opened -- a sector card, a firm's verbs,
+## a body list, the public account -- and the verb that has focus. Held here, not
+## in the rebuilt rows, so the month's sweep redraws the tab as the player left it.
+## "" is closed. `_refocus` is the control a toggle came from, focused again after
+## the rebuild so the keyboard path does not fall back to the top.
+var _open_sector := ""
+var _open_firm := ""
+var _open_body := ""
+var _open_ledger := ""
+var _focus_verb := ""
+var _refocus := []
+## The In progress strip, or null while nothing runs (read by the tests).
+var _progress: Control
 
 
 func _ready() -> void:
@@ -190,10 +203,15 @@ func _refresh() -> void:
 
 	if _last_refusal != "":
 		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
+	# V5.3 a + b step 2 (spec 3.2): what is under way first, then what waits on the
+	# player, then the three sector cards, closed until opened; the public account
+	# last, folded.
+	_progress = IndustryProgress.build(_body, _state, _loader, ns, _on_stop, _on_answer)
 	_build_autonomy_sections(ns)
-	_build_ledger(ns)
 	for sector in EK.SECTOR_TREND.keys():
-		_build_sector(ns, String(sector))
+		IndustryCard.build(self, _body, ns, String(sector))
+	_build_ledger(ns)
+	_restore_focus()
 
 	if _pin_bottom:
 		_apply_bottom()
@@ -276,7 +294,16 @@ func _firm_object(nation_id: String, company_id: String):
 ## step by hand; the sector headings below carry the burden instead, so a player who
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
-	PanelKit.heading(_body, tr("The public account"))
+	var fold := PanelKit.sized(Button.new())
+	fold.flat = true
+	fold.text = tr("The public account")
+	fold.toggle_mode = true
+	fold.button_pressed = _open_ledger != ""
+	fold.set_meta("ledger", "ledger")
+	fold.pressed.connect(func() -> void: _toggle("_open_ledger", "ledger", "ledger"))
+	_body.add_child(fold)
+	if _open_ledger == "":
+		return
 	PanelKit.row(_body, tr("Subsidy bill"), tr("%s %% of GDP") % Num.f(ns.subsidy_bill_pct_gdp, 3))
 	# V1.4c. On the same ledger and not on a second one, because it is the same
 	# register read from the other side of the budget -- and it lags a month, like the
@@ -299,135 +326,6 @@ func _build_ledger(ns) -> void:
 	PanelKit.row(_body, tr("Trend bought"), tr("%s %%/yr") % Num.fs(Investment.national_trend_shift_pct(ns), 3))
 
 
-func _build_sector(ns, sector: String) -> void:
-	var firms := Companies.firms_in_sector(_loader, ns.id, sector)
-	var sector_output: float = float(ns.sector_output.get(sector, 0.0))
-	var named := 0.0
-	for company in firms:
-		# share_of_company, not share_of: the sparse register reads 0.0 for
-		# every untouched body firm, and the heading would print the majors'
-		# share (~0.3) against authored coverage of ~0.88 -- the A3 review's
-		# Critical 2.
-		named += Companies.share_of_company(ns, company)
-	# V1.4b. The burden is per SECTOR, so it belongs on the sector's own line and
-	# nowhere else -- putting it on a firm row would suggest a rule the player could
-	# point at one company, which is exactly what src/core/law.gd refuses.
-	var burden: float = Companies.regulation_burden_of(ns, sector)
-	var rule := ""
-	if burden > 0.0:
-		rule = tr(" · regulated %s") % Num.fs(burden, 2)
-	elif burden < 0.0:
-		rule = tr(" · deregulated %s") % Num.fs(burden, 2)
-	PanelKit.heading(_body, tr("%s · %.0f bn · %.0f %% named%s") % [
-		tr(SECTOR_LABEL.get(sector, sector)), sector_output, 100.0 * named, rule,
-	])
-
-	_build_investment(ns, sector)
-
-	# A3. The majors own the verbs and the rows; the body is the register's
-	# fabric and gets ONE aggregate line plus its five biggest employers as
-	# caption lines -- ~80 body firms printed as full rows would bury every
-	# major under content that has no verb, and the fold contract needs the
-	# panel's primary action (the verbs) above the readout, not under it.
-	var majors := []
-	var body := []
-	for company in firms:
-		if Companies.is_major(company):
-			majors.append(company)
-		else:
-			body.append(company)
-	_build_body(ns, sector, body)
-
-	for company in majors:
-		_build_firm(ns, company)
-
-
-## A3's body aggregate: one line saying the fabric exists and how much of the
-## sector it holds, then the five biggest body employers by headcount -- enough
-## to see the tier is real firms with real jobs, not enough to bury the majors.
-## The jobs read is the LIVE one (Companies.headcount), the same read the
-## majors' rows above use: a body firm's share never moves in 7a, but a
-## standing regulation burden scales its compliance factor like anybody's --
-## and the PR-46 review measured the authored read diverging 3-10 % from the
-## live figure the sim itself consumes, in the same panel as burden-scaled
-## major rows. One readout, one time.
-func _build_body(ns, sector: String, body: Array) -> void:
-	if body.is_empty():
-		return
-	var share := 0.0
-	var jobs := 0.0
-	for company in body:
-		# The fallback read, same reason as the sector heading above: nothing
-		# writes a body entry in 7a, and a register-only read would print the
-		# tier's headline line at 0.00 of sector forever -- the A3 review's
-		# Critical 1, V1.6d's present-figure-as-zero class.
-		share += Companies.share_of_company(ns, company)
-		jobs += Companies.headcount(ns, company)
-	PanelKit.line(_body, tr("BODY · %d firms · %s of sector · %s jobs") % [body.size(), Num.f(share, 2), _thousands(jobs)])
-	var ranked := body.duplicate()
-	var live_jobs := {}
-	for company in body:
-		live_jobs[company.id] = Companies.headcount(ns, company)
-	ranked.sort_custom(func(a, b): return float(live_jobs[a.id]) > float(live_jobs[b.id]))
-	for i in mini(5, ranked.size()):
-		var company = ranked[i]
-		PanelKit.line(_body, tr("  %s · %s jobs") % [
-			company.company_name, _thousands(float(live_jobs[company.id])),
-		])
-
-
-## V1.6e's readout and its two verbs, under the sector heading they are pointed at.
-##
-## THREE FIGURES AND NOT ONE, because they are three different times. The intensity
-## is what the treasury is committed to now, the capital is what that has actually
-## built, and the shift is what the capital is worth -- and the gap between the
-## first and the second IS the lever, since the row asks for money that takes
-## several years to arrive. Collapsing them into one progress figure would hide the
-## only thing a player has to plan around.
-##
-## Never silent, and deliberately so: a sector with no programme prints a zero line
-## rather than nothing, because an absent row reads as "this sector cannot be
-## invested in" and every sector can.
-func _build_investment(ns, sector: String) -> void:
-	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 2)
-
-	var intensity := Investment.intensity_of(ns, sector)
-	var capital := Investment.capital_of(ns, sector)
-	var shift := float(Investment.sector_trend_shift(ns).get(sector, 0.0))
-
-	var state_label := Label.new()
-	if intensity > 0.0:
-		state_label.text = tr("State programme %.0f %% · capital %s · %s %%/yr to this sector") % [100.0 * intensity, Num.f(capital, 2), Num.fs(shift, 3)]
-		state_label.theme_type_variation = UiTheme.GOOD_TEXT
-	elif capital > 0.0:
-		# The withdrawn case, and it needs its own line rather than falling into the
-		# one below: the money has stopped and the capital has not gone, which is the
-		# half of this model a single "no programme" caption would misreport.
-		state_label.text = tr("No programme · capital %s depreciating · %s %%/yr to this sector") % [Num.f(capital, 2), Num.fs(shift, 3)]
-		state_label.theme_type_variation = UiTheme.CAPTION
-	else:
-		state_label.text = tr("No state programme")
-		state_label.theme_type_variation = UiTheme.CAPTION
-	block.add_child(state_label)
-
-	var buttons := PanelKit.buttons(block)
-	for action in Investment.available(_state, ns, _loader.investment_actions):
-		if String(action.effects.get("investment", {}).get("sector", "")) != sector:
-			continue
-		buttons.add_child(_investment_button(ns, action))
-
-	_body.add_child(block)
-
-
-func _investment_button(ns, action) -> Button:
-	var button := PanelKit.sized(Button.new())
-	button.text = Strings.row_name("investment-actions", action)
-	button.tooltip_text = Strings.row_summary("investment-actions", action)
-	button.pressed.connect(func(): _on_invest(ns, action))
-	return button
-
-
 ## U4's contract, `_on_act()`'s shape exactly: the baseline is captured BEFORE the
 ## command, so the delta measures the month the programme started against the month
 ## before it.
@@ -439,83 +337,6 @@ func _on_invest(ns, action) -> void:
 	_last_refusal = "" if result.get("applied", false) else tr("%s refused -- it is no longer on offer.") % Strings.row_name("investment-actions", action)
 	if _last_refusal == "":
 		acted.emit(before, Strings.row_name("investment-actions", action))
-
-
-func _build_firm(ns, company) -> void:
-	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 2)
-
-	var name_row := HBoxContainer.new()
-	name_row.add_theme_constant_override("separation", 12)
-	var name_label := Label.new()
-	name_label.text = company.company_name
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_row.add_child(name_label)
-
-	# V4.7b: the SOE chair -- a name on the firm the state part-owns. Reads the
-	# register's person id and resolves it against the nation's people; an
-	# absent chair is a firm with no appointment, said by silence.
-	var chair: String = String(ns.companies.get(company.id, {}).get("board_chair", ""))
-	if chair != "":
-		var chair_name: String = _loader.person_name(chair)
-		PanelKit.line(block, tr("Chair: %s") % (chair_name if chair_name != "" else chair))
-
-	# Two facts about one firm, and both are live state with one writer each -- a
-	# subsidy is not an ownership and a player who has done both must see both. Joined
-	# on one label rather than given a row apiece, for the reason the figures caption
-	# below is one line: eighteen firms across the roster.
-	var intensity := Companies.subsidy_of(ns, company.id)
-	var held := Companies.state_share_of(ns, company.id)
-	var parts: Array[String] = []
-	if held > 0.0:
-		parts.append(tr("public %.0f %%") % (100.0 * held))
-	if intensity > 0.0:
-		parts.append(tr("subsidised %.0f %%") % (100.0 * intensity))
-
-	var state_label := Label.new()
-	if parts.is_empty():
-		state_label.text = tr("private · no support")
-		state_label.theme_type_variation = UiTheme.CAPTION
-	else:
-		state_label.text = " · ".join(parts)
-		state_label.theme_type_variation = UiTheme.GOOD_TEXT
-	name_row.add_child(state_label)
-	block.add_child(name_row)
-
-	# One caption line rather than three rows: revenue, workforce and share are the
-	# firm's whole readout and a row each would treble this panel's height for a
-	# register that already has eighteen entries across the roster.
-	PanelKit.line(block, tr("%s bn · %s jobs · %s %% of sector") % [
-		Num.f(Companies.output_eur_bn(ns, company), 1),
-		_thousands(Companies.headcount(ns, company)),
-		Num.f(100.0 * Companies.share_of(ns, company.id), 1),
-	])
-
-	# V1.4c. The price is DERIVED, so it exists nowhere an author could have written
-	# it down and the panel is the only place the player can read it before deciding.
-	# A button labelled "Nationalisation" with the cost invisible is the fold V1.3e
-	# paid for in a different shape: the figure that decides the act, not on screen.
-	var money := Label.new()
-	var value := Companies.value_eur_bn(ns, company)
-	if held > 0.0:
-		money.text = tr("worth %s bn · %s bn held · %s bn/yr to the treasury") % [
-			Num.f(value, 1), Num.f(held * value, 1),
-			Num.f(held * Companies.output_eur_bn(ns, company) * CompaniesK.DIVIDEND_YIELD, 2),
-		]
-	else:
-		money.text = tr("worth %s bn") % Num.f(value, 1)
-	money.theme_type_variation = UiTheme.CAPTION
-	block.add_child(money)
-
-	var buttons := PanelKit.buttons(block)
-	for action in Companies.available(_state, ns, _loader.company_actions, company.id, _loader):
-		buttons.add_child(_action_button(ns, company, action))
-	# R14: owning a firm is a law's to decide (Bills): each ready bill is tabled
-	# through the Legislature's briefing, the one propose path (bill_button.gd).
-	for bill in BillButton.ready_bills(_state, ns, _loader, String(company.id)):
-		buttons.add_child(BillButton.make(_loader, bill))
-
-	_body.add_child(block)
 
 
 ## Disabled with the sim's reason when the arm would refuse it (CompanyVerb, G1).
@@ -558,8 +379,51 @@ func _act(ns, company, action) -> void:
 	acted.emit(before, "%s: %s" % [Strings.row_name("company-actions", action), company.company_name])
 
 
-func _thousands(value: float) -> String:
-	return CompanyVerb.thousands(value)
+## Opens `key` in the slot named `field` (a card, a firm, a body list, the ledger),
+## or closes it when it is already open; a firm opened or closed drops the focus.
+func _toggle(field: String, key: String, meta := "") -> void:
+	set(field, "" if String(get(field)) == key else key)
+	if field == "_open_firm":
+		_focus_verb = ""
+	_refocus = [meta if meta != "" else {"_open_sector": "sector", "_open_firm": "company_id"}.get(field, ""), key]
+	_dirty = true
+
+
+func _restore_focus() -> void:
+	if _refocus.is_empty() or String(_refocus[0]) == "":
+		return
+	var want: Array = _refocus
+	_refocus = []
+	for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
+		if button.has_meta(want[0]) and str(button.get_meta(want[0])) == str(want[1]):
+			button.call_deferred("grab_focus")
+			return
+
+
+## Stop on an In progress row: the sim's own verb (Processes.stop), its price read
+## on the row before the press. The baseline before it, as every verb here.
+func _on_stop(process_id: String, what: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	var result: Dictionary = Processes.stop(_state, _state.player(), _loader, process_id)
+	_dirty = true
+	if not bool(result.get("ok", false)):
+		_last_refusal = tr("Stop refused -- %s") % Strings.t(String(result.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
+		return
+	_last_refusal = ""
+	acted.emit(before, tr("Stopped: %s") % what)
+
+
+## An answer to a stage's ask (#248): Processes.answer(), the sim's own verb --
+## walking away and stopping run the stop at once, the rest land at the stage's end.
+func _on_answer(process_id: String, answer_id: String, what: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	var result: Dictionary = Processes.answer(_state, _state.player(), _loader, process_id, answer_id)
+	_dirty = true
+	if not bool(result.get("ok", false)):
+		_last_refusal = tr("Answer refused -- %s") % Strings.t(String(result.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
+		return
+	_last_refusal = ""
+	acted.emit(before, tr("Answered: %s") % what)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.
@@ -574,4 +438,10 @@ func _thousands(value: float) -> String:
 ## programme" while the ledger above them carried a live 0.654 % of GDP, and the
 ## rows that were out of sight were the firm rows underneath.
 func primary_action() -> Control:
-	return _primary if is_instance_valid(_primary) else null
+	if is_instance_valid(_primary):
+		return _primary
+	# V5.3 a + b step 2: with every card closed, the first card is the way in.
+	for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
+		if button.has_meta("sector"):
+			return button
+	return null

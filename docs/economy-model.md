@@ -534,11 +534,27 @@ teacher, graduates a year...).
 - **The save:** `ns.sector_shares` holds only the lines the player moved, never a
   copy of the start (that would be a content-derived static and need a bump). It
   is `absent_ok` with no bump: absent is "nothing moved".
-- **Not built yet:** nothing reads a sector into a channel. Society's quality,
-  trend growth and capability still read the line's total, so band A1 (every share
-  at its start, the balance table `cmp`-identical) holds by construction. The
-  channels, the tiles' warning marks and the personnel come once Content's data
-  has landed.
+- **The channels (band A1, A2's second half):** a moved share moves its sector's
+  quantity and, through it, the channel its line already fed. Each line has a
+  factor, the start-share-weighted mean of what the moves did to its sectors'
+  quantities as improvements, the line's spending held:
+  `sum(s0 x (s / s0) ^ elasticity) / sum(s0)`. `Society.quality_target()` (health,
+  pensions), the potential shift's education and infrastructure terms, and
+  `Defence.capability_target()` multiply the line's spending by it. Money moved
+  toward a more elastic sector buys more of the channel and the reverse less; every
+  elasticity is under 1, so returns diminish and, between equally elastic sectors
+  (pensions' two), any move costs the channel a little. With nothing moved the
+  factor reads exactly 1.0, and `x * 1.0 == x` in IEEE arithmetic, so A1 (every
+  share at its start, the balance table `cmp`-identical) holds by construction.
+  The factor is stored on the nation (`ns.sector_factor`) because the channels take
+  no loader, and it is derived and not saved: `save_manager.load_game()` re-derives
+  it (`Sectors.rebuild`), which also drops the factor of a moved vector a content
+  edit has made stale. `tests/test_sector_channels.gd` pins it;
+  `tools/sector_probe.gd` runs it on the game's own month for the four playable
+  nations.
+- **Not built yet:** the tiles' warning marks (a decision arrival, section 7 of
+  the spec) and the personnel (staff = a sector's spending / a cost per head, which
+  needs sourced costs per head).
 
 ## Where the constants live
 

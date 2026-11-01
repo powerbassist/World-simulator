@@ -16,6 +16,7 @@ const Coercion = preload("res://src/sim/coercion.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
 
 
 static func tick_month(state) -> void:
@@ -380,12 +381,14 @@ static func _update_unemployment(ns, trend: float, growth: float) -> void:
 ## produces a UNIFORM shift, that one reads a register written by a verb and
 ## produces a PER-SECTOR one.
 static func _update_potential_shift(state, ns) -> void:
+	# V5.3 a: each line's spending weighted by its sector factor (src/sim/sectors.gd),
+	# exactly 1.0 with nothing moved, against its unweighted start.
 	var d_infra: float = (
-		float(ns.spending_pct_gdp.get("infrastructure", 0.0))
+		float(ns.spending_pct_gdp.get("infrastructure", 0.0)) * Sectors.factor(ns, "infrastructure")
 		- float(ns.start_spending_pct_gdp.get("infrastructure", 0.0))
 	)
 	var d_edu: float = (
-		float(ns.spending_pct_gdp.get("education", 0.0))
+		float(ns.spending_pct_gdp.get("education", 0.0)) * Sectors.factor(ns, "education")
 		- float(ns.start_spending_pct_gdp.get("education", 0.0))
 	)
 	var d_corp: float = (

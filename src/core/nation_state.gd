@@ -1524,6 +1524,12 @@ var processes: Array[Dictionary] = []
 ## the start shares, which are content (data/domains/) and read from the loader.
 ## absent_ok, no bump: absent is "nothing moved", the truth for every older save.
 var sector_shares := {}
+## line -> the channel factor those moves bought (Sectors.factor(), 1.0 absent):
+## what Society, Economy and Defence multiply the line's spending by, stored because
+## they take no loader. DERIVED and NOT SAVED -- project_sited_pct's case: the load
+## path re-derives it (Sectors.rebuild) from `sector_shares` and data/domains/, so a
+## save cannot disagree with the rows. Copied deep, so a projection keeps it.
+var sector_factor := {}
 
 # --- Regional development funds (V5.3 a) -------------------------------------------
 ## One row per fund opened, running or ended -- {id, region_id, eur_bn_per_year,
