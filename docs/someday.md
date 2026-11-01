@@ -28,6 +28,7 @@ when it is taken, and record the decision where the line points.
 - [x] The events book's dominance standard: re-tune the grown book to V1.8's 0 dominated pairs, or retire E3's kill-switch claim (E3 measures 35 and 4; "The probe's E2/E3 bands", below). **Decided 2026-10-19: re-tune to 0** and wire E2/E3 to fail the run, in V5.2d ([[v5]]) ✅ 2026-10-19
 - [x] The calendar booking composed laws: wanted or not (the diary item, below). **Decided 2026-10-19: wanted**, in V5.2's diary rework ([[v5]]) ✅ 2026-10-19
 - [x] The month tick at 41 nations: 392 ms against the 300 ms band V4.6's synthetic probe was set on. Accept, or open a tick-cost block ("Carried from V4.11", below). **Decided 2026-10-19: open it** — V5.0c, against 300 ms mean and 450 ms worst month, median of three runs (re-measured at 446 ms mean, [[v5]]) ✅ 2026-10-19
+- [ ] Majority-first formation after an election: should an investiture, a chancellor election or a coalition negotiation seat the first party in seat order whose coalition reaches a majority, rather than always the largest party? ("Carried from the V5.3 block-0 gate", below; the parent's call on #237, 2026-11-01)
 
 ## Carried from V4.2's close-out (2026-10-05)
 
@@ -362,6 +363,17 @@ cursor; the name returns when the cursor leaves). The rest are parked:
 - **Small nations' names drop between zoom 1.4 and 2.0** (or on small windows): a
   collision drops the later name, and the placer's tie-break is alphabetical. Fix shape:
   rank by area, or by relevance to the player. **Trigger:** a playtest on a small window.
+
+## Carried from the V5.3 block-0 gate (2026-11-01)
+
+### Majority-first formation after an election
+
+QA's RECORD after the gate found Poland's opening government to be its largest party alone, a minority of 157 of 460 seats, from the party four of the other five cordon. #237 fixed the opening: the game now starts from the government the nation file names ([[government-model]], "The formation search"). It does not touch later formations. After an election or a fall, `Government._form_from_largest` still anchors on the largest party, so a party every other party cordons can again govern alone as a minority even when another coalition holds a majority. Poland after October 2027 is the likely case if `narod_i_tradycja` comes first again.
+
+- **The rule considered:** under investiture, a chancellor election or a coalition negotiation, seat the first party in seat order whose coalition reaches a majority. `largest_party` (Westminster) keeps the largest party's minority. That is what a formateur does: Poland, October 2023, where the largest party lost the confidence vote.
+- **Why it is not built:** it changes every re-formation in every nation, so it is a re-baseline of its own. And at game start it would hand Italy's opening government to the opposition (208 of 400 on Italy's authored seats), which is why #237 anchors the opening on the authored party instead.
+
+**Trigger:** a play gate or a probe that shows a cordoned party governing alone after an election, or the author asking for it. **Fix shape:** the rule above in `_form_from_largest` for the three anchored methods, test first, with the balance diff and the author's acceptance.
 
 ## Carried from V5.2d (2026-10-30)
 
