@@ -31,6 +31,7 @@ const Cycle = preload("res://src/sim/cycle.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Lies = preload("res://src/sim/lies.gd")
+const Delegation = preload("res://src/sim/delegation.gd")
 
 ## The six levers and the other topics, in the order the scene lists them.
 const LEVERS := K.LEVERS
@@ -270,7 +271,9 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 	var served: bool = Coercion.own_measure(state, want["measure"]) == null if want.has("measure") \
 		else Characters.want_served(ns, person, want, meters, leaders)
 	# V5.2c: a promise told as a lie is revealed at its date, served or not (B8).
-	if served and not bool(row.get("lie", false)):
+	# V5.3-0 gate: a delegated word the world has not served is the minister's to
+	# keep, on the odds it was given (delegation.gd says why the world alone broke 19 in 20).
+	if (served or Delegation.keeps(ns, loader, row, String(want.get("stance", "")))) and not bool(row.get("lie", false)):
 		if kind != "iou":
 			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT if kind == "promise" else K.DELEGATED_KEPT_RAPPORT)
 		return "kept"
@@ -278,8 +281,7 @@ static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leade
 		Lies.reveal(state, ns, loader, person)
 		return "broken"
 	if kind == "delegated":
-		var deferred := 1.0 - AK.DELEGATE_GRUDGE_SHARE
-		Characters.price_refusal(ns, person, AK.DECLINE_GRUDGE * deferred, AK.DECLINE_LOYALTY * deferred)
+		Delegation.price_broken(ns, person)
 	_rapport(state, ns, loader, pid, -K.IOU_BETRAYAL_RAPPORT)
 	Characters.price_refusal(ns, person, K.IOU_BETRAYAL_GRUDGE, 0.0)
 	Lies.cross(state, ns, loader, person, int(row.get("made_month", 0)))  # c1c rule 1: a broken word to an accomplice

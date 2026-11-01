@@ -190,6 +190,22 @@ static func commitment_text(kind: String, person: String, want: String, due: int
 	return Strings.t("Your word to %s, due %s (their want: %s).") % [person, when(due), want]
 
 
+## The Delegate answer's hover (V5.3-0 gate): the sim's {chance, why} for this
+## request (Audiences.answers, Delegation.odds) -- why no minister can deliver it,
+## or how often this cabinet keeps such a word. "" for an answer with no odds.
+static func delegate_hint(answer: Dictionary) -> String:
+	match String(answer.get("why", "")):
+		"office":
+			return Strings.t("No minister can hand out an office: their word will be broken unless you serve this yourself.")
+		"measure":
+			return Strings.t("Only you can lift a measure: a minister's word on it will be broken unless you do.")
+		"own_programme":
+			return Strings.t("They want your own programme dropped: a minister's word on it will be broken unless you drop it.")
+	if not answer.has("chance"):
+		return ""
+	return Strings.t("A minister gives their word in your name. This cabinet keeps about %d in 10 such words.") % roundi(float(answer["chance"]) * 10.0)
+
+
 ## A judged one: kept, or a lie revealed (a promise) / a betrayal (an IOU, or a
 ## delegation the minister did not deliver).
 static func verdict_text(kind: String, kept: bool, person: String, want: String) -> String:

@@ -72,6 +72,35 @@ const RECEIVED_RAPPORT := 0.1
 const DELEGATE_GRUDGE_SHARE := 0.25
 const DELEGATE_SNUB_RAPPORT := -0.05
 
+## V5.3-0 gate: the chance a minister keeps a delegated word the world has not
+## served (src/sim/delegation.gd), linear in the cabinet's two means and clamped:
+##   BASE + PER_EFFECTIVENESS x (effectiveness - 1) + PER_LOYALTY x (loyalty - NEUTRAL)
+## Declared from the INPUTS the base run measured (tools/delegation_probe.gd at
+## 1d3d7485, before any tip run): a France cabinet in office reads effectiveness
+## 0.89 and loyalty 0.72-0.74 in its first two years, so it keeps 0.65 - 0.11 +
+## 0.23 = about 0.77 of the words it can keep -- "usually kept" by a cabinet in
+## office (the parent's band, about two in three overall once the impossible
+## objects are counted). A full vacancy (effectiveness 0.5, loyalty 0) sits at the
+## floor; loyalty 0.2 (an unpopular government's coalition) at about 0.24; a slope
+## of 1 on each makes the Government panel's 10 points of effectiveness worth 10
+## points of odds, the plainest reading of "a competent, loyal minister".
+const DELEGATE_KEPT_BASE := 0.65
+const DELEGATE_KEPT_PER_EFFECTIVENESS := 1.0
+const DELEGATE_KEPT_PER_LOYALTY := 1.0
+## Cabinet.loyalty's midpoint: a coalition neither bound to the government nor
+## leaving it.
+const DELEGATE_LOYALTY_NEUTRAL := 0.5
+## Never certain, never hopeless while a minister can act: a seated cabinet always
+## leaves a word some chance either way.
+const DELEGATE_KEPT_MIN := 0.05
+const DELEGATE_KEPT_MAX := 0.95
+## Why no minister can deliver the object (Delegation.impossible): an office (only
+## the president names), a measure (only the president lifts), and the president's
+## own programme opposed (only the president drops it).
+const DELEGATE_WHY_OFFICE := "office"
+const DELEGATE_WHY_MEASURE := "measure"
+const DELEGATE_WHY_PROGRAMME := "own_programme"
+
 ## What holding an audience teaches the president about the person, times what is
 ## left to learn (1 - knowledge). V5.2b b2 moved it from a linear 0.12, on which
 ## six audiences alone made a person "known" and B4's "at least 8" could not
@@ -100,3 +129,4 @@ const OPEN := [STATUS_PENDING, STATUS_BOOKED]
 
 const SALT_REQUEST := "audience_request"
 const SALT_DATE := "audience_date"
+const SALT_DELEGATION := "delegation"

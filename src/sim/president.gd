@@ -266,7 +266,10 @@ static func seed_draws(state, draw_seed: int) -> void:
 
 ## V5.2c: `lie` marks a promise the president never meant (src/sim/lies.gd); the
 ## key is written only when true, so an honest row is the row b2 wrote.
-static func commit(state, ns, loader, kind: String, person_id: String, object: String, due_month: int, lie := false) -> bool:
+## V5.3-0 gate: `chance` is a delegated word's odds as the card showed them at
+## delegation (src/sim/delegation.gd), written only when given (>= 0); a row
+## without it -- every older save's -- is judged on the cabinet at its date.
+static func commit(state, ns, loader, kind: String, person_id: String, object: String, due_month: int, lie := false, chance := -1.0) -> bool:
 	if not K.COMMITMENT_KINDS.has(kind) or object == "" or due_month <= _now(state):
 		return false
 	if not covers(state, ns, loader, person_id):
@@ -280,6 +283,8 @@ static func commit(state, ns, loader, kind: String, person_id: String, object: S
 	}
 	if lie:
 		row["lie"] = true
+	if chance >= 0.0:
+		row["chance"] = chance
 	ns.commitments.append(row)
 	return true
 
@@ -400,6 +405,8 @@ static func _commitment(row: Dictionary) -> Dictionary:
 	}
 	if bool(row.get("lie", false)):
 		view["lie"] = true
+	if row.has("chance"):
+		view["chance"] = float(row["chance"])
 	return view
 
 

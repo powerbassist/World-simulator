@@ -25,6 +25,8 @@ const AK = preload("res://src/sim/audience_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const PK = preload("res://src/sim/president_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
+const Delegation = preload("res://src/sim/delegation.gd")
+const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 
 const PLAYER := "FRA"
 const BANDS := [0.165, 0.5, 0.835]
@@ -66,6 +68,10 @@ func _init() -> void:
 	_check_the_diary_can_read_every_commitment()
 	_check_delegation_commits_the_government()
 	_check_a_delegated_commitment_is_judged()
+	_check_the_ministers_odds()
+	_check_a_minister_keeps_a_word_on_the_roll()
+	_check_the_card_reads_the_ministers_odds()
+	_check_the_word_keeps_the_odds_it_was_given()
 	_check_judged_rows_are_kept_and_pruned()
 	_check_bargain_lists_its_currencies()
 	_check_the_fog_does_not_leak_across_readings()
@@ -736,13 +742,15 @@ func _check_delegation_commits_the_government() -> void:
 ## At its date a delegated commitment is kept (rapport +DELEGATED_KEPT_RAPPORT, a
 ## minister's word, below a promise kept in person -- b2.2) or
 ## broken: the deferred share of the decline's grudge lands, plus the IOU's
-## betrayal -- and it is not a lie, so knowledge stands.
+## betrayal -- and it is not a lie, so knowledge stands. The broken one is an
+## office no minister can hand out (V5.3-0 gate), so no roll can keep it.
 func _check_a_delegated_commitment_is_judged() -> void:
 	var state = _plain_game()
 	var ns = state.player()
 	var kept := _person_with_want(ns, true)
-	var broken := _person_with_want(ns, false, String(kept.get("id", "")))
+	var broken := _person_with_unserved(ns, "office:", String(kept.get("id", "")))
 	if kept.is_empty() or broken.is_empty():
+		_fail("no served want or no unserved office want to delegate (%s, %s)" % [kept, broken])
 		return
 	var due := _now(state) + CalendarK.BOOKING_HORIZON_MONTHS
 	President.commit(state, ns, _loader, "delegated", kept["id"], kept["object"], due)
@@ -767,6 +775,141 @@ func _check_a_delegated_commitment_is_judged() -> void:
 		_fail("a broken delegation's grudge rose by %.4f, under the deferred %.4f" % [float(ns.person_grudges.get(broken["id"], 0.0)) - g_broken, deferred])
 	if President.knowledge(ns, broken["id"]) != 0.4:
 		_fail("a broken delegation collapsed knowledge as a lie does")
+
+
+## V5.3-0 gate (the author, 2026-11-01: delegated words broken 8 times in 9, "cela
+## ne doit pas etre la norme"). A delegated word is the ministers' to keep: a
+## cabinet in office keeps most of the words a minister can keep, an emptied one
+## fewer than half, and an object no minister can deliver -- an office, a measure
+## only the president lifts, the president's own programme opposed -- none, with
+## the reason the card shows. Mutation: a chance that ignores the cabinet fails the
+## emptied row; one that ignores the object fails the four impossible rows.
+func _check_the_ministers_odds() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var possible := [["programme:prog_jobs_first", "sponsor"], ["meter:press_freedom", "defend"], ["meter:grievance", "demand"]]
+	var full := {}
+	for case in possible:
+		var o: Dictionary = Delegation.odds(ns, _loader, String(case[0]), String(case[1]))
+		if String(o.get("why", "?")) != "" or float(o.get("chance", 0.0)) < 0.6 or float(o.get("chance", 1.0)) > AK.DELEGATE_KEPT_MAX:
+			_fail("a cabinet in office keeps a word on %s at %s, not between 0.6 and %.2f with no reason" % [case[0], o, AK.DELEGATE_KEPT_MAX])
+		full = o
+	for case in [["office:premiership", "want"], ["office:portfolio:health", "want"], ["measure:tariff_steel", ""], ["programme:prog_jobs_first", "oppose"]]:
+		var o: Dictionary = Delegation.odds(ns, _loader, String(case[0]), String(case[1]))
+		if float(o.get("chance", 1.0)) != 0.0 or String(o.get("why", "")) == "":
+			_fail("no minister can deliver %s/%s, yet the odds read %s" % [case[0], case[1], o])
+	for f in ns.cabinet:
+		ns.cabinet[f] = ""
+		ns.cabinet_effectiveness[f] = CabinetK.VACANT_EFFECTIVENESS
+	var empty: Dictionary = Delegation.odds(ns, _loader, "programme:prog_jobs_first", "sponsor")
+	if not float(empty.get("chance", 1.0)) < 0.5 or not float(empty.get("chance", 1.0)) < float(full.get("chance", 0.0)):
+		_fail("an emptied cabinet keeps a word at %s, not under 0.5 and under a full one's %s" % [empty, full])
+	if float(empty.get("chance", 0.0)) < AK.DELEGATE_KEPT_MIN:
+		_fail("an emptied cabinet's odds %s fell under the floor %.2f" % [empty, AK.DELEGATE_KEPT_MIN])
+
+
+## At its date a word the world has not served is the minister's: kept exactly when
+## the seeded roll falls under the odds, the same verdict every time it is judged;
+## and over many words the share kept is the odds'. Mutation: a judge that ignores
+## the roll (the old rule) breaks every such word and fails the first verdict whose
+## roll keeps it.
+func _check_a_minister_keeps_a_word_on_the_roll() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var owed := _person_with_unserved(ns, "programme:", "", "sponsor")
+	if owed.is_empty():
+		_fail("no unserved programme sponsorship to delegate")
+		return
+	var pid := String(owed["id"])
+	var object := String(owed["object"])
+	var chance := float(Delegation.odds(ns, _loader, object, "sponsor")["chance"])
+	var made := _now(state)
+	var kept_seen := 0
+	var broken_seen := 0
+	for i in 12:
+		var s = _plain_game()
+		var n = s.player()
+		_set_month(s, made + i)
+		var due := made + i + CalendarK.BOOKING_HORIZON_MONTHS
+		President.commit(s, n, _loader, "delegated", pid, object, due)
+		var expect := Delegation.roll(n, pid, object, made + i) < chance
+		_set_month(s, due)
+		var report: Dictionary = Levers.tick_month(s, _loader, METERS)
+		var verdict := "kept" if (report["kept"] as Array).size() == 1 else ("broken" if (report["broken"] as Array).size() == 1 else "none")
+		if verdict != ("kept" if expect else "broken"):
+			_fail("a word made in month %d was judged %s, the roll says %s (chance %.2f)" % [made + i, verdict, "kept" if expect else "broken", chance])
+		kept_seen += 1 if verdict == "kept" else 0
+		broken_seen += 1 if verdict == "broken" else 0
+	if kept_seen == 0:
+		_fail("a cabinet in office kept none of 12 words at odds %.2f" % chance)
+	var hits := 0
+	var draws := 600
+	for m in draws:
+		hits += 1 if Delegation.roll(ns, pid, object, made + m) < chance else 0
+	if absf(float(hits) / draws - chance) > 0.06:
+		_fail("the minister's roll kept %d of %d words at odds %.2f" % [hits, draws, chance])
+
+
+## The card's Delegate answer carries the ministers' odds and the reason, from the
+## same read the judge prices (Audiences.answers -> Delegation.odds).
+func _check_the_card_reads_the_ministers_odds() -> void:
+	var c := _pending()
+	if c.is_empty():
+		return
+	var ns = c["ns"]
+	var row: Dictionary = Audiences.request(ns, String(c["id"]))
+	var delegate: Dictionary = Audiences.answers(c["state"], ns, _loader, String(c["id"]))["delegate"]
+	var odds: Dictionary = Delegation.odds(ns, _loader, String(row["object"]), String(row["stance"]))
+	if not delegate.has("chance") or float(delegate["chance"]) != float(odds["chance"]) or String(delegate.get("why", "?")) != String(odds["why"]):
+		_fail("the card's Delegate answer %s does not carry the ministers' odds %s" % [delegate, odds])
+
+
+## The card's number is the deal: Delegate writes the odds it showed onto the word,
+## the word keeps them through a save, and the judge reads them rather than the
+## cabinet at the date -- a word given at 0.95 survives an emptied cabinet, one at 0
+## breaks under a full one. (Measured first with live odds: an idle government's
+## loyalty decays inside the window, and words given at 0.5-0.6 kept none of 89.)
+## Mutation: a judge that reads the live cabinet fails the emptied-cabinet row.
+func _check_the_word_keeps_the_odds_it_was_given() -> void:
+	var c := _pending()
+	if c.is_empty():
+		return
+	var ns = c["ns"]
+	var row: Dictionary = Audiences.request(ns, String(c["id"]))
+	var shown := float(Audiences.answers(c["state"], ns, _loader, String(c["id"]))["delegate"]["chance"])
+	Audiences.delegate(c["state"], ns, _loader, String(c["id"]))
+	var given: Array[Dictionary] = President.commitments_with(ns, String(row["person_id"]))
+	if given.size() != 1 or not given[0].has("chance") or float(given[0]["chance"]) != shown:
+		_fail("Delegate wrote %s, not the word with the card's odds %.3f" % [given, shown])
+	var loaded = NationState.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
+	var back: Array[Dictionary] = President.commitments_with(loaded, String(row["person_id"]))
+	if back.size() != 1 or absf(float(back[0].get("chance", -1.0)) - shown) > 0.000001:
+		_fail("a delegated word's odds did not survive a save: %s" % [back])
+	var owed := _person_with_unserved(_plain_game().player(), "programme:", "", "sponsor")
+	if owed.is_empty():
+		_fail("no unserved programme sponsorship to delegate")
+		return
+	for case in [[0.95, true], [0.0, false]]:
+		var kept_seen := 0
+		for i in 8:
+			var s = _plain_game()
+			var n = s.player()
+			if bool(case[1]):
+				for f in n.cabinet:
+					n.cabinet[f] = ""
+					n.cabinet_effectiveness[f] = CabinetK.VACANT_EFFECTIVENESS
+			_set_month(s, _now(s) + i)
+			var made := _now(s)
+			President.commit(s, n, _loader, "delegated", owed["id"], owed["object"], made + CalendarK.BOOKING_HORIZON_MONTHS, false, float(case[0]))
+			var expect := Delegation.roll(n, String(owed["id"]), String(owed["object"]), made) < float(case[0])
+			_set_month(s, made + CalendarK.BOOKING_HORIZON_MONTHS)
+			var report: Dictionary = Levers.tick_month(s, _loader, METERS)
+			var kept := (report["kept"] as Array).size() == 1
+			if kept != expect:
+				_fail("a word given at %.2f (cabinet %s) was judged %s, its roll says %s" % [case[0], "emptied" if case[1] else "full", kept, expect])
+			kept_seen += 1 if kept else 0
+		if (float(case[0]) > 0.5) != (kept_seen > 4):
+			_fail("words given at %.2f kept %d of 8" % [case[0], kept_seen])
 
 
 ## Every judged commitment is kept for the Diary with its verdict, months as int,
@@ -1036,6 +1179,23 @@ func _person_with_want(ns, served: bool, not_id := "") -> Dictionary:
 			continue
 		for want in person.wants:
 			if Characters.want_served(ns, person, want, METERS, leaders) == served:
+				return {"id": person.id, "object": String(want["object"])}
+	return {}
+
+
+## The first person (not the president, not `not_id`) with an unserved want whose
+## object starts with `prefix` (and of `stance`, when given): {id, object}, or {}.
+func _person_with_unserved(ns, prefix: String, not_id := "", stance := "") -> Dictionary:
+	var leaders := {}
+	for party in _loader.parties[PLAYER]:
+		leaders[party.id] = party.leader_person_id
+	for person in _loader.people[PLAYER]:
+		if person.id == President.leader_id(ns) or person.id == not_id:
+			continue
+		for want in person.wants:
+			if not String(want["object"]).begins_with(prefix) or (stance != "" and String(want["stance"]) != stance):
+				continue
+			if not Characters.want_served(ns, person, want, METERS, leaders):
 				return {"id": person.id, "object": String(want["object"])}
 	return {}
 

@@ -171,6 +171,12 @@ func _check_a_broken_delegation_to_an_accomplice_pays_on_top() -> void:
 	var verdicts := []
 	for f in [plain, held]:
 		Audiences.delegate(f["state"], f["ns"], _loader, f["id"])
+		# V5.3-0 gate: a minister now keeps most words (src/sim/delegation.gd), so
+		# the fixture gives these at odds 0 -- a word no cabinet could keep -- and
+		# both break at their date whatever the roll.
+		for row in f["ns"].commitments:
+			if String(row["kind"]) == "delegated":
+				row["chance"] = 0.0
 		var due := 0
 		for row in President.commitments_with(f["ns"], f["pid"]):
 			if String(row["kind"]) == "delegated":

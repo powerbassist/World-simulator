@@ -102,6 +102,17 @@ func _check_answer_by() -> void:
 	var card = _main._hud.inbox._cards.get(AudienceDriver.lane_of(_main).card_of(_oldest))
 	if card == null or not _text(card).contains("Answer by %s" % last):
 		_fail("the card's body does not name %s as the last month" % last)
+	# V5.3-0 gate: the real card's Delegate hover is the sim's odds, in words.
+	var hint := Words.delegate_hint(Audiences.answers(_main._state, ns, _main._loader, _oldest)["delegate"])
+	if hint == "" or String(row.get("delegate_hint", "")) != hint:
+		_fail("the request row's Delegate hint '%s' is not the sim's odds in words '%s'" % [row.get("delegate_hint", ""), hint])
+	var shown := ""
+	if card != null:
+		for b in card.find_children("*", "Button", true, false):
+			if (b as Button).text == "Delegate":
+				shown = (b as Button).tooltip_text
+	if shown != hint:
+		_fail("the card's Delegate hover reads '%s', not '%s'" % [shown, hint])
 
 
 ## The step hook the month runs (WorldMonth's "Audiences" step, after), with the
