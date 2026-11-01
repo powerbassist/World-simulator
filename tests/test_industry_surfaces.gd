@@ -292,6 +292,14 @@ func _check_break_up_asks(state, loader, ns, panel) -> void:
 		_fail("the question does not name the firm, its %s jobs and the rival taking them: '%s'" % [jobs, asked])
 	if not asked.contains("treasury"):
 		_fail("the question says nothing of the money: '%s'" % asked)
+	# V5.3 a (parent pass 2 on #244, TAKE 1): the card reads the process's estimate,
+	# never the instant arm -- the investigation's months and the ruling's odds as
+	# their ranges.
+	var est: Dictionary = Processes.estimate(state, ns, loader, breakup, String(first.id))
+	for figure in ["%d to %d months" % [CompaniesK.PROCESS_INVESTIGATION_MONTHS.x, CompaniesK.PROCESS_INVESTIGATION_MONTHS.y],
+			"%d to %d %%" % [roundi(100.0 * float(est["odds_lo"])), roundi(100.0 * float(est["odds_hi"]))]]:
+		if not asked.contains(figure):
+			_fail("the break-up's question does not read the process's estimate (%s): '%s'" % [figure, asked])
 	card._no.pressed.emit()
 	if bool(ns.companies[first.id].get("failed", false)):
 		_fail("Cancel broke the firm up")

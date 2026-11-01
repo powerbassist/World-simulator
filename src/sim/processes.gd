@@ -105,10 +105,14 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 				"months_lo": K.PROCESS_SALE_MONTHS, "months_hi": K.PROCESS_SALE_MONTHS}
 		"break_up":
 			var odds := odds_for(Companies.share_of_company(ns, company))
+			# The truth's fog, as the prices are (parent pass 2 on #244): a fixed-width
+			# window with the truth seeded inside it, so its midpoint does not give it away.
+			var u := Cycle.unit("process|odds|%s" % company_id, _now(state))
+			var lo := clampf(odds - 2.0 * K.PROCESS_ODDS_FOG * u, 0.0, 1.0 - 2.0 * K.PROCESS_ODDS_FOG)
 			return {"base_eur_bn": 0.0, "price_lo": K.PROCESS_LEGAL_COST_EUR_BN, "price_hi": K.PROCESS_LEGAL_COST_EUR_BN,
 				"months_lo": K.PROCESS_INVESTIGATION_MONTHS.x,
 				"months_hi": K.PROCESS_INVESTIGATION_MONTHS.y + K.PROCESS_REMEDY_MONTHS,
-				"odds": odds, "odds_lo": maxf(0.0, odds - K.PROCESS_ODDS_FOG), "odds_hi": minf(1.0, odds + K.PROCESS_ODDS_FOG)}
+				"odds": odds, "odds_lo": lo, "odds_hi": lo + 2.0 * K.PROCESS_ODDS_FOG}
 	return {}
 
 
@@ -223,6 +227,13 @@ static func tick_month(state, loader) -> void:
 static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 	var entry: Dictionary = ns.companies.get(String(row["company_id"]), {})
 	if entry.is_empty() or bool(entry.get("failed", false)) or String(entry.get("owner", "")) != String(row["owner"]):
+		# After the transfer the state owns the firm (parent pass 2 on #244): a failure
+		# in the transition hands it control now and never voids what was paid.
+		if String(row["stage"]) == "transition" and not entry.is_empty():
+			var terms: Dictionary = _action(loader, String(row["action_id"])).effects.get("company", {})
+			entry["state_share"] = float(terms.get("stake", 1.0))
+			_close(state, row, "done")
+			return
 		_close(state, row, "void")
 		return
 	row["months_left"] = int(row["months_left"]) - 1

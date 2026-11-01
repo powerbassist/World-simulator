@@ -15,6 +15,7 @@ const Bills = preload("res://src/sim/bills.gd")
 const K = preload("res://src/sim/companies_constants.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Industry = preload("res://src/sim/industry.gd")
 
 const PLAYER := "FRA"
 const OK_BLOCS := ["workers", "pensioners", "urban", "rural", "business", "students"]
@@ -45,6 +46,9 @@ func _init() -> void:
 	_test_a_reopened_process_has_its_own_id()
 	_test_a_remedy_refused_undoes_the_rulings_bloc_move()
 	_test_the_press_door_routes_by_verb()
+	_test_a_failure_in_the_transition_lands_the_ownership()
+	_test_the_odds_window_does_not_centre_on_the_truth()
+	_test_no_bid_opens_on_a_firm_in_a_process()
 	_finish()
 
 
@@ -436,6 +440,77 @@ func _test_the_press_door_routes_by_verb() -> void:
 	var s: Dictionary = Processes.execute(state, ns, _loader, subsidy, firm)
 	if not bool(s.get("applied", false)) or float((ns.companies[firm] as Dictionary).get("subsidy", 0.0)) <= 0.0:
 		_fail("the door did not land a subsidy at once: %s" % s)
+
+
+## Parent pass 2, TAKE 2: after the transfer the state owns the firm. A failure in
+## the transition lands the ownership now; it never voids what was paid.
+func _test_a_failure_in_the_transition_lands_the_ownership() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	Bills.adopt(state, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
+	for i in range(K.PROCESS_OFFER_MONTHS):
+		_month(state)
+	var debt := float(ns.debt_eur_bn)
+	(ns.companies[firm] as Dictionary)["failed"] = true
+	_month(state)
+	var row := _row(ns, firm)
+	if Companies.state_share_of(ns, firm) != 1.0 or String(row["status"]) != "done" or float(ns.debt_eur_bn) != debt:
+		_fail("a firm failing in its transition did not hand the paid-for ownership to the state: %s" % row)
+
+
+## Parent pass 2, TAKE 3: the odds range is the truth's fog, as the prices are: a
+## fixed width with the truth seeded inside it, so its midpoint does not give it away.
+func _test_the_odds_window_does_not_centre_on_the_truth() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var split = _action("break_up")
+	var off_centre := 0
+	var seen := 0
+	for company in Companies.majors_of(_loader, ns.id):
+		for m in range(6):
+			state.month = 1 + m
+			var est: Dictionary = Processes.estimate(state, ns, _loader, split, String(company.id))
+			if est.is_empty():
+				continue
+			seen += 1
+			var lo := float(est["odds_lo"])
+			var hi := float(est["odds_hi"])
+			if lo > float(est["odds"]) + 1e-9 or hi < float(est["odds"]) - 1e-9 \
+					or not is_equal_approx(hi - lo, 2.0 * K.PROCESS_ODDS_FOG):
+				_fail("the odds window %.3f..%.3f does not hold the truth %.3f at the fixed width" % [lo, hi, est["odds"]])
+			if absf((lo + hi) * 0.5 - float(est["odds"])) > 0.01:
+				off_centre += 1
+	if seen == 0 or off_centre == 0:
+		_fail("the odds window's midpoint is the truth in all %d estimates" % seen)
+
+
+## Parent pass 2, TAKE 4: no foreign bid opens on a firm with a live process (its
+## allow is greyed BUSY, so the bid would be a dead card). Courted firms, so the
+## hazard fires; the control run without processes shows it does.
+func _test_no_bid_opens_on_a_firm_in_a_process() -> void:
+	var bids := [0, 0]
+	for with_processes in [false, true]:
+		var state = _new_state()
+		var ns = state.player()
+		for company in Companies.majors_of(_loader, ns.id):
+			(ns.companies[company.id] as Dictionary)["courted"] = 1.0
+			if with_processes:
+				Processes.start(state, ns, _loader, _action("minority_stake"), String(company.id))
+		for m in range(240):
+			state.month += 1
+			if state.month > 12:
+				state.month = 1
+				state.year += 1
+			Industry.tick_month(state, _loader)
+			var now := int(state.year) * 12 + int(state.month)
+			for company in Companies.majors_of(_loader, ns.id):
+				if int((ns.companies[company.id] as Dictionary).get("bid_month", -1)) == now:
+					bids[1 if with_processes else 0] += 1
+	if bids[0] == 0:
+		_fail("the control run opened no bid, so the gate is untested")
+	if bids[1] != 0:
+		_fail("%d bids opened on firms with a live process" % bids[1])
 
 
 ## Review pass 1: stopped and reopened in one month, the new process is its own row.
