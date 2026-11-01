@@ -443,6 +443,7 @@ The realised rate tracks the odds the card showed. In the keep-cabinet run, word
 - The balance table: `tools/balance_parallel.py` is cmp-identical base against tip, because none of its regimes answers a request.
 - `audience_probe` A1, A2 and A3: identical. B5's player model now prices the minister (a "won't serve" word is kept at the odds on arrival). Delegate is best in 0.65 of scored cases (0.50 under b2.1's sure break), and within "won't serve" refuse falls from 0.62 to 0.41. The declared B5 rows still pass.
 - `audience_probe` A4 (phone, then book, then delegate): one more request answered by phone (14 to 15), one fewer unplaceable (7 to 6). Its band verdicts are unchanged.
+- `shadows_parallel` S2, S2c and S4 (seeds 0-49; all three delegate unplaceable requests): cmp-identical, every B6 and B8 band PASS.
 - `decision_surfaces_probe --briefing`, FRA, active regime (every request delegated): the base lost the May 2032 presidential vote, which ended its run at month 76. This change wins that vote, and the run reaches month 120. The first difference is in the September 2027 briefing lines, and the acts against the player through month 76 are identical (13 each). The idle run is identical.
 
 
