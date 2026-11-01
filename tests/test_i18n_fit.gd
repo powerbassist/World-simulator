@@ -55,6 +55,12 @@ func _sweep(language: String) -> void:
 	# frame's place on screen can be read (the right-edge check below).
 	windows.size = Vector2(1920.0, 1080.0)
 	_stage_a_bid(main._state, main._loader)
+	# V5.3 a + b (#251): a plant closure on the Industry tab, its answers side by side,
+	# measured under every language like the rest of the tab.
+	var ns = main._state.player()
+	var major = Companies.majors_of(main._loader, ns.id)[1]
+	preload("res://src/sim/closures.gd")._announce(ns, major, ns.companies[major.id], 0.2,
+		main._loader.closure_rule, main._state.year * 12 + main._state.month)
 	var ids: Array = windows.panel_ids()
 	if ids.size() < 20:
 		_fail("only %d windows registered under %s" % [ids.size(), language])

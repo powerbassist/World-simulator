@@ -159,8 +159,12 @@ static func _closure(box: Control, state, loader, ns, row: Dictionary, closure: 
 		PanelKit.plain_line(box, sought % [firm, place, left], PanelKit.Tone.PLAIN)
 		return
 	var due := maxi(int(row["due"]) - (int(state.year) * 12 + int(state.month)), 0)
-	var closing := Strings.tn("%s will close its plant in %s: %s jobs, in %d month.", "%s will close its plant in %s: %s jobs, in %d months.", due)
-	var head := PanelKit.plain_line(box, closing % [firm, place, CompanyVerb.thousands(float(row["jobs"])), due], PanelKit.Tone.PLAIN)
+	var jobs := CompanyVerb.thousands(float(row["jobs"]))
+	var closing := Strings.tn("%s will close its plant in %s: %s jobs, in %d month.", "%s will close its plant in %s: %s jobs, in %d months.", due) % [firm, place, jobs, due]
+	if due == 0:
+		# Drawn in its due month, before the tick lands it (a load, a redraw).
+		closing = Strings.t("%s will close its plant in %s: %s jobs, this month.") % [firm, place, jobs]
+	var head := PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN)
 	head.theme_type_variation = UiTheme.WARN_TEXT
 	var flow := PanelKit.buttons(box)
 	var what := "%s, %s" % [firm, place]
@@ -191,8 +195,11 @@ static func _closure_money(option: Dictionary) -> Array:
 			return [EffectsStrip.cost_text(0.0), 0.0]
 		"buyer":
 			var now_bn := -float(option["debt_eur_bn"])
+			var sale_bn := -float(option["sweetener_eur_bn"])
+			# The tone reads both sums: a search that costs little now still books
+			# its sweetener at a sale (pass 1: a cost read as neutral).
 			return [Strings.t("%s now, %s more at a sale") % [EffectsStrip.money_text(now_bn),
-				EffectsStrip.money_text(-float(option["sweetener_eur_bn"]))], now_bn]
+				EffectsStrip.money_text(sale_bn)], now_bn + sale_bn]
 	var year := -float(option["debt_eur_bn_per_year"])
 	return [Strings.t("%s a year") % EffectsStrip.money_text(year), year]
 
