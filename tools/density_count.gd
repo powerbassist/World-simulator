@@ -128,7 +128,8 @@ static func month(candidates: Array, memory: Dictionary, now: int) -> Dictionary
 
 ## The band over a run. `months` is one entry per month run, in order:
 ## {now, count, domains}. Quarters are blocks of three months from the run's
-## start; a partial last quarter (a defeat ends a run) is judged on what it has.
+## start; a partial last quarter (a defeat ends a run) is not a quarter and is
+## not held to the domain bar -- its months still count for every other figure.
 static func summary(months: Array) -> Dictionary:
 	var n := months.size()
 	var total := 0
@@ -154,7 +155,7 @@ static func summary(months: Array) -> Dictionary:
 			longest = maxi(longest, run)
 		for d in months[i]["domains"]:
 			domains[String(d)] = true
-		if i % QUARTER == QUARTER - 1 or i == n - 1:
+		if i % QUARTER == QUARTER - 1:
 			quarters += 1
 			if domains.size() >= BAND_DOMAINS:
 				quarters_ok += 1

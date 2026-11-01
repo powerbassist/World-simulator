@@ -162,10 +162,15 @@ func _check_summary_and_band() -> void:
 		full.append({"now": i, "count": 2, "domains": ["fiscal", "audience", "industrial"]})
 	if not bool(DensityCount.summary(full)["pass"]):
 		_failures.append("a run meeting every bar failed the band: %s" % [DensityCount.summary(full)])
-	# A partial last quarter (a defeat ends a run) is judged on what it has.
+	# A partial last quarter (a defeat ends a run) is not a quarter: it is not
+	# judged on the 3-domain bar, and the months in it still count for the rest.
 	full.append({"now": 6, "count": 2, "domains": ["fiscal"]})
+	var tail := DensityCount.summary(full)
+	if not bool(tail["pass"]) or int(tail["quarters"]) != 2:
+		_failures.append("a one-month tail was judged as a quarter: %s" % [tail])
+	full.append({"now": 7, "count": 0, "domains": []})
 	if bool(DensityCount.summary(full)["pass"]):
-		_failures.append("a last quarter with one domain passed")
+		_failures.append("an empty month in a partial tail passed the band")
 
 
 func _check_the_probe_counts_through_the_rule() -> void:

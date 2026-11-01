@@ -74,8 +74,8 @@ extends SceneTree
 ## to an address and plant closures are not built yet, and count nothing here):
 ##   event      a desk entry: its arrival, and its last month (months_left <= 1,
 ##              the lapse guard); answers = its choices' authored effects;
-##   request    an audience request: its arrival, and its deadline month while still
-##              waiting; answers = book (when a day is free), delegate, decline, each
+##   request    an audience request: its arrival, and its last month while still
+##              waiting (deadline_month - 1: it lapses in its deadline's tick); answers = book (when a day is free), delegate, decline, each
 ##              as the feeling bands the person lands in (Feelings over the prices
 ##              Audiences pays: RECEIVED_RAPPORT, the delegation's snub and grudge
 ##              share, decline_price());
@@ -689,9 +689,14 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 			if not domains.has(String(c["domain"])):
 				domains.append(String(c["domain"]))
 			sources[c["source"]] = int(sources.get(c["source"], 0)) + 1
-		for kind in ["counted", "dull", "repeat"]:
+		for kind in ["counted", "dull"]:
 			for c in out[kind]:
 				tally[kind][c["source"]] = int(tally[kind].get(c["source"], 0)) + 1
+		# Repeats by what was offered again: a re-arrival, or a decision's own last
+		# month falling inside the repeat window (the idle regime's usual case).
+		for c in out["repeat"]:
+			var key := "%s %s" % [c["source"], c["due"]]
+			tally["repeat"][key] = int(tally["repeat"].get(key, 0)) + 1
 		for c in out["dull"]:
 			for axis in DensityCount.saved_by(c["answers"]):
 				tally["saved_by"][axis] = int(tally["saved_by"].get(axis, 0)) + 1
@@ -746,10 +751,12 @@ func _request_candidates(state, ns, report: Dictionary, now: int, out: Array) ->
 	var arrived := {}
 	for r in (report.get("audience_requests", {}) as Dictionary).get("arrived", []):
 		arrived[String(r["id"])] = true
+	# A pending request lapses in the tick of its deadline month (Audiences._overdue:
+	# now >= deadline_month), so its last month at a boundary is the one before.
 	for r in Audiences.pending(ns):
 		var request_id := String(r["id"])
 		var is_new := arrived.has(request_id)
-		if not is_new and int(r["deadline_month"]) != now:
+		if not is_new and int(r["deadline_month"]) - 1 != now:
 			continue
 		out.append({"source": "request", "subject": "request|%s" % String(r["person_id"]),
 			"state": "%s|%s" % [String(r["object"]), String(r["stance"])], "domain": "audience",
