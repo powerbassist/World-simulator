@@ -29,6 +29,7 @@ extends SceneTree
 ##     so a later session adding a verb here has to come and say why.
 
 const CK = preload("res://src/sim/cabinet_constants.gd")
+const President = preload("res://src/sim/president.gd")
 
 ## U5a's usable band, the same bound test_calendar_panel.gd checks.
 const USABLE_BAND_PX := 886.0
@@ -181,7 +182,7 @@ func _check_names_are_resolved(panel, state) -> void:
 	ids.sort()
 	for id in ids:
 		if String(id) != ns.id:
-			abroad = _main._loader.person_name(_main._loader.nations[id].leader_person_id)
+			abroad = _main._loader.person_name(President.leader_id(state.nations[id]))
 			break
 	if abroad != "" and not text.contains(abroad):
 		_fail("the panel does not name a foreign leader ('%s')" % abroad)

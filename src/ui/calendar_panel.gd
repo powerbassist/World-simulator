@@ -625,8 +625,7 @@ func _nation_name(id: String) -> String:
 ## to see -- a foreign government that changes in the meantime is a thing the
 ## player should be able to notice, not something the entry rewrites behind them.
 func _leader_person_id(nation_id: String) -> String:
-	var n = _loader.nations.get(nation_id)
-	return String(n.leader_person_id) if n != null else ""
+	return VisitBooking.leader_of(_state, nation_id)
 
 
 func _action_name(id: String) -> String:
