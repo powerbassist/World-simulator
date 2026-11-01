@@ -25,6 +25,9 @@ extends RefCounted
 ## history is cleared at the announcement and at the cut, so a closure's own cut is
 ## never the next fall).
 ##
+## The record's place is `city_id` (not `city`: the firm entry's `city` is the
+## industry machine's relocation key, single-writer by tests/test_industry.gd).
+##
 ## THE STATE IS THE FIRM'S: `closure` (the record, kept after it ends for the
 ## cooldown and the panel) and `closure_watch` (the last window + 1 outputs) on the
 ## firm's ns.companies entry, written by this file alone, which also writes the
@@ -174,7 +177,7 @@ static func _may_announce(ns, company, entry: Dictionary, rule: Dictionary, now:
 static func _announce(ns, company, entry: Dictionary, fall: float, rule: Dictionary, now: int) -> void:
 	entry["closure"] = {
 		"id": "%s|%d" % [String(company.id), now], "company_id": String(company.id),
-		"city": Companies.live_city_of(ns, company), "status": ANNOUNCED, "announced": now,
+		"city_id": Companies.live_city_of(ns, company), "status": ANNOUNCED, "announced": now,
 		"due": now + K.ANSWER_MONTHS, "ended": -1, "fall": fall,
 		"jobs": Companies.headcount(ns, company) * float(rule["cut"]),
 	}
@@ -188,7 +191,7 @@ static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictiona
 	entry["share"] = Companies.share_of_company(ns, company) * (1.0 - float(rule["cut"]))
 	# The record names where the jobs went: a relocation since the announcement
 	# moved the payroll the cut removes.
-	row["city"] = Companies.live_city_of(ns, company)
+	row["city_id"] = Companies.live_city_of(ns, company)
 	var offsets: Dictionary = rule["bloc_offset"]
 	for bloc in offsets:
 		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + float(offsets[bloc]),

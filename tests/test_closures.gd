@@ -132,7 +132,7 @@ func _test_a_falling_major_announces_a_closure() -> void:
 	if String(row["status"]) != "announced" or int(row["announced"]) != _now(state) \
 			or int(row["due"]) != _now(state) + CK.ANSWER_MONTHS:
 		_fail("the closure's status or months are wrong: %s" % row)
-	if String(row["city"]) != Companies.live_city_of(ns, firm):
+	if String(row["city_id"]) != Companies.live_city_of(ns, firm):
 		_fail("the closure is not in the firm's live city: %s" % row)
 	if not is_equal_approx(float(row["jobs"]), jobs):
 		_fail("the jobs at stake are %.1f, not the rule's cut of the payroll %.1f" % [float(row["jobs"]), jobs])
@@ -174,7 +174,7 @@ func _test_an_unanswered_closure_lands_by_default() -> void:
 	_month(state)
 	var row := _row(ns, String(firm.id))
 	var share := Companies.share_of_company(ns, firm)
-	var city_jobs := Companies.headcount_in_city(ns, _loader, String(row["city"]))
+	var city_jobs := Companies.headcount_in_city(ns, _loader, String(row["city_id"]))
 	var offsets: Dictionary = _rule()["bloc_offset"]
 	var before := {}
 	for bloc in offsets:
@@ -190,7 +190,7 @@ func _test_an_unanswered_closure_lands_by_default() -> void:
 		return
 	if not is_equal_approx(Companies.share_of_company(ns, firm), share * (1.0 - float(_rule()["cut"]))):
 		_fail("the landed closure did not cut the firm's share by the rule's cut")
-	var lost := city_jobs - Companies.headcount_in_city(ns, _loader, String(row["city"]))
+	var lost := city_jobs - Companies.headcount_in_city(ns, _loader, String(row["city_id"]))
 	if absf(lost - float(row["jobs"])) > 1e-6 * maxf(city_jobs, 1.0):
 		_fail("the city lost %.1f jobs, not the %.1f the closure announced" % [lost, float(row["jobs"])])
 	for bloc in offsets:
@@ -379,7 +379,7 @@ func _test_the_record_follows_a_relocation() -> void:
 	var row := _row(ns, String(firm.id))
 	var elsewhere := ""
 	for c in Companies.majors_of(_loader, ns.id):
-		if Companies.live_city_of(ns, c) != String(row["city"]):
+		if Companies.live_city_of(ns, c) != String(row["city_id"]):
 			elsewhere = Companies.live_city_of(ns, c)
 			break
 	if elsewhere == "":
@@ -388,8 +388,8 @@ func _test_the_record_follows_a_relocation() -> void:
 	(ns.companies[String(firm.id)] as Dictionary)["city"] = elsewhere
 	for i in range(CK.ANSWER_MONTHS):
 		_month(state)
-	if String(row["city"]) != elsewhere:
-		_fail("the landed closure names %s, not the city its cut hit, %s" % [row["city"], elsewhere])
+	if String(row["city_id"]) != elsewhere:
+		_fail("the landed closure names %s, not the city its cut hit, %s" % [row["city_id"], elsewhere])
 
 
 func _fail(msg: String) -> void:
