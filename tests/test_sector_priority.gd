@@ -142,6 +142,14 @@ func _test_refusals_write_nothing() -> void:
 	var r1: Dictionary = Sectors.set_priority(alone, ans, _loader, "health", "hospitals", region)
 	if bool(r1.get("ok", true)) or not ans.sector_priorities.is_empty():
 		_fail("a priority with no other region to pay for it was accepted")
+	# A region holding most of the people: the rest would have to spend under the floor.
+	var other := String(_regions(alone)[1])
+	ans.region_pop_share = {region: 0.9, other: 0.1}
+	var r2: Dictionary = Sectors.set_priority(alone, ans, _loader, "health", "hospitals", region)
+	if bool(r2.get("ok", true)) or not ans.sector_priorities.is_empty():
+		_fail("a priority the other regions cannot pay for was accepted")
+	if bool(Sectors.clear_priority(ns, "hospitals").get("ok", true)):
+		_fail("clearing a sector with no priority was accepted")
 
 
 ## The strip's figures are the booked ones: the region before and after, the other
@@ -160,6 +168,11 @@ func _test_the_estimate_is_what_the_priority_books() -> void:
 			or not is_equal_approx(float(est["region_after"]), Sectors.regional_quantity(ns, _loader, "health", "hospitals", String(regions[0]))) \
 			or not is_equal_approx(float(est["others_after"]), Sectors.regional_quantity(ns, _loader, "health", "hospitals", String(regions[1]))):
 		_fail("the estimate %s is not what the priority booked" % est)
+	# Under an existing priority on another region: the target is a payer before.
+	var moved: Dictionary = Sectors.priority_estimate(state, ns, _loader, "health", "hospitals", String(regions[1]))
+	var payer := Sectors.regional_quantity(ns, _loader, "health", "hospitals", String(regions[1]))
+	if payer >= Sectors.quantity(ns, _loader, "health", "hospitals") or not is_equal_approx(float(moved["region_before"]), payer):
+		_fail("the estimate's before (%s) is not the payer's %.4f" % [moved.get("region_before"), payer])
 
 
 ## absent_ok: no save before V5.3 a held a priority, so absent is "none".

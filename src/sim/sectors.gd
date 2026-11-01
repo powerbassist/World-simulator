@@ -2,7 +2,7 @@ extends RefCounted
 
 ## V5.3 a (docs/design/v5.3-ab.md 3.1, band A2): each spending line split into
 ## sectors (data/domains/, loader.domains), each moving a named quantity the player
-## can read. This file is the reads and the one verb:
+## can read. This file is the reads and the two verbs:
 ##
 ##   shares(ns, loader, line)       sector id -> share of the line: the player's
 ##                                  moved shares, else the nation's start shares
@@ -15,7 +15,11 @@ extends RefCounted
 ##                                  share to another, a pure reallocation (the line's
 ##                                  money is unchanged);
 ##   factor(ns, line)               what the moved shares did to the channel the line
-##                                  feeds: exactly 1.0 with nothing moved.
+##                                  feeds: exactly 1.0 with nothing moved;
+##   set_priority(...)              the regional priority (3.3 (a) 1): one region put
+##                                  first for a sector, the others paying the same
+##                                  money, so no national figure moves;
+##                                  regional_quantity() and priority_estimate() read it.
 ##
 ## THE CHANNELS READ THE FACTOR (3.1: "a moved share moves its sector's quantity
 ## and, through it, the existing channel"). Society.quality_target() (health,
@@ -263,5 +267,10 @@ static func _priority_refusal(state, ns, loader, line: String, sector_id: String
 				return "This region has no population share to weigh a priority by."
 			if _pop_total(ns) - p <= 0.0:
 				return "This nation has no other region to pay for a priority."
+			# regional_quantity() floors a multiplier at RATIO_FLOOR, and a floored one
+			# no longer pays its part: a region that holds most of the people cannot be
+			# paid for by the rest, so the same money would not hold.
+			if _others_multiplier(ns, region_id) < DK.RATIO_FLOOR:
+				return "This region holds too much of the population for the others to pay for a priority."
 			return ""
 	return "That is not one of this nation's regions."
