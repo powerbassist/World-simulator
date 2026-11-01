@@ -13,15 +13,35 @@ extends RefCounted
 ##                                  spending always improves it);
 ##   move_share(...)                the quantified verb: move part of one sector's
 ##                                  share to another, a pure reallocation (the line's
-##                                  money is unchanged).
+##                                  money is unchanged);
+##   factor(ns, line)               what the moved shares did to the channel the line
+##                                  feeds: exactly 1.0 with nothing moved.
 ##
-## NOTHING FEEDS A CHANNEL YET: society's quality, trend growth and capability
-## still read the line's total, so band A1 (with every share at its start, the
-## balance table is cmp-identical) holds by construction until the channels read
-## the sectors (the next PR, once Content's data has landed).
+## THE CHANNELS READ THE FACTOR (3.1: "a moved share moves its sector's quantity
+## and, through it, the existing channel"). Society.quality_target() (health,
+## pensions), Economy._update_potential_shift() (education, infrastructure) and
+## Defence.capability_target() (defence) multiply the line's spending by it. The
+## factor is the start-share-weighted mean of what the move did to each sector's
+## quantity, as an improvement and with the line's spending held:
+##   sum(s0 * (s / s0) ^ elasticity) / sum(s0)
+## so money moved toward a more elastic sector buys more of the channel and the
+## reverse buys less, and since every elasticity is under 1 each quantity's returns
+## diminish: between two equally elastic sectors (pensions) any move costs the
+## channel. The line's spending stays out of it, because every channel already
+## reads that. With nothing moved the factor is absent and reads exactly 1.0, and
+## x * 1.0 == x in IEEE arithmetic, so band A1 (every share at its start, the
+## balance table cmp-identical) holds by construction.
 ##
-## quantity() calls pow(): a MAIN-THREAD read (src/core/parallel.gd's rule: no
-## pow()/exp() on a worker). No tick step calls it; a panel or a probe does.
+## THE FACTOR IS DERIVED, NOT SAVED (project_sited_pct's case): the three channels
+## take no loader, so move_share() stores it on the nation (`ns.sector_factor`) and
+## the load path re-derives it from the saved moves and the shipped rows
+## (rebuild(), from save_manager.load_game()). The re-derivation is also what drops
+## the factor of a moved vector shares() no longer reads (a sector renamed since the
+## save), so the channel and the tile never disagree.
+##
+## quantity() and the factor call pow(): MAIN-THREAD only (src/core/parallel.gd's
+## rule: no pow()/exp() on a worker). No tick step computes either; a channel reads
+## the stored float, a panel or a probe reads quantity().
 ##
 ## THE REGISTER IS THE PLAYER'S MOVES ONLY: `ns.sector_shares` holds a line only
 ## once the player has moved one of its shares, never a copy of the start (a copy
@@ -81,7 +101,37 @@ static func move_share(ns, loader, line: String, from_id: String, to_id: String,
 	now[from_id] = float(now[from_id]) - amount
 	now[to_id] = float(now[to_id]) + amount
 	ns.sector_shares[line] = now
+	_store_factor(ns, loader, line)
 	return {"ok": true, "shares": now.duplicate()}
+
+
+## The channel factor of `line` (see the header): 1.0 with nothing moved.
+static func factor(ns, line: String) -> float:
+	return float(ns.sector_factor.get(line, 1.0))
+
+
+## Every nation's factors, re-derived from its saved moves and the loaded rows.
+static func rebuild(state, loader) -> void:
+	for ns in state.nations.values():
+		ns.sector_factor = {}
+		for line in ns.sector_shares:
+			_store_factor(ns, loader, String(line))
+
+
+static func _store_factor(ns, loader, line: String) -> void:
+	var moved: Dictionary = ns.sector_shares.get(line, {})
+	var now := shares(ns, loader, line)
+	if moved.is_empty() or not _same_ids(moved, now):
+		ns.sector_factor.erase(line)
+		return
+	var total := 0.0
+	var weight := 0.0
+	for s in sectors_of(loader, line):
+		var id := String(s["id"])
+		var s0 := float(_start(ns, s)["share"])
+		total += s0 * pow(maxf(float(now[id]) / s0, DK.RATIO_FLOOR), float(DK.ELASTICITY[id]))
+		weight += s0
+	ns.sector_factor[line] = total / weight
 
 
 ## The nation's own start row, else the line's default.

@@ -59,6 +59,7 @@
    "tests/test_companies.gd",
    "tests/test_processes.gd",
    "tests/test_domains.gd",
+   "tests/test_sector_channels.gd",
    "tests/test_companies_tiers.gd",
    "tests/test_content_memos.gd",
    "tests/test_industry.gd",
