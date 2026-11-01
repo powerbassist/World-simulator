@@ -537,7 +537,8 @@ func _on_act(ns, company, action) -> void:
 
 func _act(ns, company, action) -> void:
 	var before := Trends.snapshot_now(_state)
-	var result := Companies.execute(_state, ns, _loader.company_actions, action, company.id, _loader)
+	# V5.3 a: an ownership or structure verb opens its process (CompanyVerb.press).
+	var result := CompanyVerb.press(_state, _loader, ns, company, action)
 	if not result.get("applied", false):
 		# The refusal is the panel's to show -- the verb arms' own words. The
 		# reason (an exhausted executive pool, no major left to absorb a

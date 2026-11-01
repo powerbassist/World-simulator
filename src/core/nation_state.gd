@@ -1509,6 +1509,15 @@ var audience_requests: Array[Dictionary] = []
 ## absent_ok for the same reason: nobody has asked yet.
 var audience_asked_month := {}
 
+# --- Processes (V5.3 a) -------------------------------------------------------------
+## The ownership and structure verbs in progress, and the ones that ended, one row
+## each -- {id, action_id, company_id, status, stage, months_left, stage_months,
+## started, closed, base_eur_bn, rate, price_lo, price_hi, months_lo, months_hi,
+## paid_eur_bn, owner, and a break-up's odds}, months absolute. Written by
+## src/sim/processes.gd alone. absent_ok, no bump: no save before V5.3 a could hold
+## a process, so an absent register reads "nothing in progress", the truth.
+var processes: Array[Dictionary] = []
+
 ## V5.2b b3. person id -> the absolute month the president last phoned them: one
 ## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no
 ## bump: before b3 nobody was called, which is what absent reads.

@@ -21,6 +21,8 @@ extends SceneTree
 ## same frame.
 
 const Companies = preload("res://src/sim/companies.gd")
+const CompaniesK = preload("res://src/sim/companies_constants.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const IndustryK = preload("res://src/sim/industry_constants.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
@@ -303,8 +305,17 @@ func _check_break_up_asks(state, loader, ns, panel) -> void:
 	if not card.visible:
 		_fail("a month turned under the card, and it did not ask again")
 	card._yes.pressed.emit()
+	# V5.3 a: the yes refers the firm -- the break-up's process opens and nothing
+	# breaks the month it is pressed (A3); a ruling for it and the remedy land it.
+	var row: Dictionary = Processes.live(ns, String(first.id))
+	if row.is_empty() or bool(ns.companies[first.id].get("failed", false)):
+		_fail("the confirm card's yes did not open the break-up's process, or broke the firm at once")
+		return
+	row["odds"] = 1.0
+	for i in range(int(row["months_left"]) + CompaniesK.PROCESS_REMEDY_MONTHS):
+		Processes.tick_month(state, loader)
 	if not bool(ns.companies[first.id].get("failed", false)):
-		_fail("the confirm card's yes did not break the firm up")
+		_fail("the break-up's process did not break the firm up")
 	var last: Button = panel._action_button(ns, rival, breakup)
 	if not last.disabled:
 		_fail("the sector's last major is offered a break-up the sim refuses")

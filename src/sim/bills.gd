@@ -12,14 +12,16 @@ extends RefCounted
 ## (`ownership:<action_id>:<company_id>`) and by_id() rebuilds it from content, so a
 ## bill the second chamber holds is found again on its day and after a load with no
 ## register of its own. Its effects carry the one channel `company_ownership` and
-## nothing else: adoption runs the verb through Companies.execute(by_law = true),
-## which pays the price on the debt and applies the action's own bloc_offset -- once.
+## nothing else: adoption opens the verb's PROCESS (V5.3 a, src/sim/processes.gd),
+## which pays the price on the debt and applies the action's own bloc_offset -- once,
+## on the process's own timetable.
 ##
 ## Legislature._law_by_id() moved here (and grew the ownership branch) so the bill
 ## and the lookup that finds it again live in one file.
 
 const Law = preload("res://src/core/law.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Processes = preload("res://src/sim/processes.gd")
 
 const OWNERSHIP_PREFIX := "ownership:"
 
@@ -64,18 +66,22 @@ static func open(state, ns, loader) -> Array:
 
 static func _bills_for(state, ns, loader, company) -> Array:
 	var out: Array = []
+	# V5.3 a: a firm already in a process is offered no ownership bill.
+	if not Processes.live(ns, String(company.id)).is_empty():
+		return out
 	for action in Companies.available(state, ns, loader.company_actions, String(company.id), loader, true):
 		out.append(_bill(action, company))
 	return out
 
 
-## The adopted bill's channel: the verb, through the law's door. A firm no longer
-## eligible on the day (a stake taken while the bill was held) is refused there and
-## buys nothing; ns.last_company_result records the refusal.
+## The adopted bill's channel: the verb's process, opened through the law's door
+## (Processes.start, by_law). A firm no longer eligible on the day (a stake taken
+## while the bill was held) is refused there and buys nothing;
+## ns.last_company_result records the refusal.
 static func adopt(state, ns, loader, terms: Dictionary) -> void:
 	var action = _action(loader, String(terms.get("action_id", "")))
 	if action != null:
-		Companies.execute(state, ns, loader.company_actions, action, String(terms.get("company_id", "")), loader, true)
+		Processes.start(state, ns, loader, action, String(terms.get("company_id", "")), true)
 
 
 static func _action(loader, action_id: String):

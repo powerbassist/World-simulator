@@ -89,6 +89,8 @@ tests=(
   # the list -- docs/people-model.md §9's finding in a new place: a check that silently
   # covers less than it appears to.
   tests/test_companies.gd
+  # V5.3 a, A3 + A4: the ownership and structure verbs as processes.
+  tests/test_processes.gd
   # V4.7a: the two-tier register -- tiers, sparse fallback reads, and the
   # from_dict alias fix's mutation + lossless-roundtrip pins.
   tests/test_companies_tiers.gd

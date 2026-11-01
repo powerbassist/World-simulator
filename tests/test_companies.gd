@@ -40,6 +40,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Bills = preload("res://src/sim/bills.gd")
+const Processes = preload("res://src/sim/processes.gd")
 
 const PLAYER := "FRA"
 ## Two industrial rivals of unequal labour intensity. The pair the jobs channel is
@@ -821,8 +822,17 @@ func _test_an_adopted_bill_buys_and_is_found_by_id() -> void:
 	if not bool(r.get("passed", false)):
 		_fail("Article 49.3 did not carry the ownership bill: %s" % r)
 		return
-	if Companies.state_share_of(ns, BIG) != 1.0 or not is_equal_approx(ns.debt_eur_bn - debt_before, price):
-		_fail("an adopted nationalisation bill did not buy the firm at its price")
+	# V5.3 a: adoption opens the nationalisation's PROCESS (processes.gd) -- nothing
+	# is bought the month the bill passes (A3); the offer ends in the transfer, paid
+	# at the value then times a premium inside the strip's range (A4).
+	if Companies.state_share_of(ns, BIG) != 0.0 or ns.debt_eur_bn != debt_before \
+			or Processes.live(ns, BIG).is_empty():
+		_fail("an adopted nationalisation bill bought the firm at once, or opened no process")
+	for i in range(K.PROCESS_OFFER_MONTHS):
+		Processes.tick_month(state, _loader)
+	var paid: float = ns.debt_eur_bn - debt_before
+	if paid < price * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x) - 1e-9 or paid > price * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y) + 1e-9:
+		_fail("the adopted nationalisation paid %.4f at its transfer, outside its range on a %.4f value" % [paid, price])
 	var again = Bills.by_id(_loader, String(bill.id))
 	if again == null or again.effects != bill.effects or String(again.law_name) != String(bill.law_name):
 		_fail("Bills.by_id() did not rebuild the ownership bill from its id")

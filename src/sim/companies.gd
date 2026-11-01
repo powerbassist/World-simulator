@@ -920,8 +920,11 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			# share -- its rivals divide the market. The first draft split to
 			# the body tier and the pin caught it: pro-rata body receipts push
 			# body firms past BODY_SHARE_MAX, the exact escalation the tier
-			# boundary exists to make impossible. Majors-only keeps every
-			# invariant: body unchanged, sum conserved, no new ids.
+			# boundary exists to make impossible. Majors-only keeps body
+			# unchanged and mints no ids. V5.3 a (the remedy, processes.gd):
+			# the rivals absorb BREAK_UP_ABSORBED of the split and the rest
+			# falls to the unnamed residual, which employs nobody -- the
+			# spec's jobs lost, so the named sum drops by design.
 			# No absorber was refused above (refusal_reason).
 			var absorbers: Array = _absorbers(ns, loader, company_id)
 			var major_absorber := _absorbed_share(ns, absorbers)
@@ -929,7 +932,7 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 				var other_entry: Dictionary = ns.companies.get(other.id, {})
 				if other_entry.is_empty():
 					continue
-				other_entry["share"] = float(other_entry.get("share", other.share)) + split_share * (share_of_company(ns, other) / major_absorber)
+				other_entry["share"] = float(other_entry.get("share", other.share)) + split_share * K.BREAK_UP_ABSORBED * (share_of_company(ns, other) / major_absorber)
 			entry["failed"] = true
 			entry["rescue_months_left"] = 0
 			entry["share"] = 0.0

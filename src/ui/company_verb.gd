@@ -19,10 +19,20 @@ extends RefCounted
 ## runs the command on `confirmed`.
 
 const Companies = preload("res://src/sim/companies.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+
+
+## The press: an ownership or structure verb opens its PROCESS (V5.3 a,
+## src/sim/processes.gd) and lands nothing this month; every other verb lands at
+## once through Companies.execute(), as before. Both answer {applied, reason}.
+static func press(state, loader, ns, company, action) -> Dictionary:
+	if Processes.is_process(action):
+		return Processes.start(state, ns, loader, action, String(company.id))
+	return Companies.execute(state, ns, loader.company_actions, action, String(company.id), loader)
 
 
 ## The verb's button: disabled with the sim's reason when the arm would refuse
@@ -31,6 +41,9 @@ static func button(state, loader, ns, company, action) -> Button:
 	var out := PanelKit.sized(Button.new())
 	out.text = Strings.row_name("company-actions", action)
 	var why := Companies.refusal_reason(state, ns, action, String(company.id), loader)
+	# V5.3 a: a firm already in a process refuses the other ownership verbs.
+	if why == "" and Processes.blocks(ns, String(company.id), action):
+		why = Processes.BUSY
 	out.disabled = why != ""
 	if why != "":
 		out.tooltip_text = Strings.t(why)  # i18n: row-ok the sim's reason, its English the msgid

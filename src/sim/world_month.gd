@@ -66,6 +66,7 @@ const Dissolution = preload("res://src/sim/dissolution.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Investment = preload("res://src/sim/investment.gd")
@@ -93,8 +94,8 @@ const FrontPage = preload("res://src/sim/front_page.gd")
 const STEPS: Array[String] = [
 	"Division", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
 	"Media", "Programme", "Opinion", "History", "Calendar", "Discipline",
-	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Companies",
-	"Industry", "Migration", "Investment", "Projects", "Campaign", "Pledges",
+	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Processes",
+	"Companies", "Industry", "Migration", "Investment", "Projects", "Campaign", "Pledges",
 	"Demography", "Society", "Unrest", "Events", "Cabinet", "Characters",
 	"Audiences", "Elections",
 ]
@@ -334,6 +335,10 @@ static func _step(month: Month, step: String) -> Array:
 		# exactly one month TOGETHER rather than one of them lagging alone, and the lag
 		# breaks the same loop structurally: bill -> deficit -> a PRECONDITION_FIELDS
 		# entry -> which verbs are available -> a new subsidy -> bill.
+		# V5.3 a: the ownership and structure processes, just before Companies, so a
+		# transfer this month is priced this month and the dividend keeps its lag.
+		"Processes":
+			Processes.tick_month(state, loader)
 		"Companies":
 			Companies.tick_month(state, loader)
 		# V4.7b: the autonomy machine ticks after Companies and before Migration.

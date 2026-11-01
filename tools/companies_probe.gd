@@ -40,6 +40,10 @@ extends SceneTree
 ##
 ## Not a test. Excluded from tools/run_tests.sh by design, so run it explicitly:
 ##   godot --headless --script res://tools/companies_probe.gd
+##
+## V5.3 a: `-- --processes [--json=PATH]` runs only the process bands, A3 and A4
+## (docs/design/v5.3-ab.md 3.2, src/sim/processes.gd), on the real machine; its
+## exit code is 1 when either fails. See _processes() at the end of this file.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -52,6 +56,8 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const Processes = preload("res://src/sim/processes.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 
 const PLAYABLE := ["FRA", "DEU", "GBR"]
 const TERM_MONTHS := 60
@@ -74,6 +80,15 @@ func _init() -> void:
 	if not _loader.errors.is_empty():
 		printerr("loader errors: %s" % [_loader.errors])
 		quit(1)
+		return
+
+	var args := OS.get_cmdline_user_args()
+	if args.has("--processes"):
+		var json_path := ""
+		for arg in args:
+			if arg.begins_with("--json="):
+				json_path = arg.trim_prefix("--json=")
+		quit(0 if _processes(json_path) else 1)
 		return
 
 	_table_a_register()
@@ -1128,3 +1143,151 @@ func _table_r_redundancy() -> void:
 	print("     down that column while the debt jump moves 6x and the dividend line with")
 	print("     it. The price hits debt-to-GDP ONCE and the yield hits the budget")
 	print("     FOREVER, so they are two decisions and both are kept.")
+
+
+# --- V5.3 a: --processes (bands A3, A4) ----------------------------------------------
+
+## Every process verb on the real machine (docs/design/v5.3-ab.md 3.2): the four
+## playable nations, three start months each (different seeds, different firms),
+## each verb opened on its own major and WorldMonth.tick_month() run until every row
+## closes. A3: nothing lands the month it is pressed, and every realised duration
+## falls inside the range its strip showed; A4: every realised price (what the row
+## booked on the debt) falls inside its range. A privatisation needs a firm the
+## state owns, so its firm is handed to the state first (its share written to 1.0),
+## the one register write this probe makes. A void or refused row (the firm failed,
+## or no longer qualified) is reported and not judged: it ended, as it must.
+func _processes(json_path: String) -> bool:
+	var verbs := ["minority_stake", "full_nationalisation", "break_up", "privatisation"]
+	var out := {"rows": [], "pass": true}
+	var by_verb := {}
+	for v in verbs:
+		by_verb[v] = {"runs": 0, "done": 0, "cleared": 0, "void": 0, "refused": 0, "months": [], "out_months": 0, "out_price": 0}
+	var same_month_bad := 0
+	var lost: Array = []
+	for nation_id in ["DEU", "FRA", "GBR", "POL"]:
+		for offset_i in range(3):
+			var state = _new_state(nation_id)
+			state.year = 2026
+			state.month = 1
+			var ns = state.player()
+			for m in range(1 + 12 * offset_i):
+				_advance(state)
+			var majors: Array = Companies.majors_of(_loader, nation_id).filter(func(c) -> bool:
+				return not bool((ns.companies.get(c.id, {}) as Dictionary).get("failed", false)))
+			var debt := float(ns.debt_eur_bn)
+			var opened: Array = []
+			for vi in verbs.size():
+				var action = _action_by_id(String(verbs[vi]))
+				var firm = majors[(vi + offset_i) % majors.size()] if not majors.is_empty() else null
+				if firm == null or opened.any(func(o) -> bool: return String(o["firm"]) == String(firm.id)):
+					continue
+				if String(action.id) == "privatisation":
+					(ns.companies[firm.id] as Dictionary)["state_share"] = 1.0
+				var shares := _shares(ns)
+				var est: Dictionary = Processes.estimate(state, ns, _loader, action, String(firm.id))
+				var r: Dictionary = Processes.start(state, ns, _loader, action, String(firm.id), action.requires_law)
+				if not bool(r.get("applied", false)):
+					print("  %s %s on %s: not opened (%s)" % [nation_id, action.id, firm.id, r.get("reason", "not offered")])
+					continue
+				if _shares(ns) != shares:
+					same_month_bad += 1
+				opened.append({"firm": String(firm.id), "verb": String(action.id), "est": est,
+					"jobs": Companies.headcount(ns, firm), "rivals": _rival_jobs(ns, firm)})
+			if not is_equal_approx(float(ns.debt_eur_bn), debt):
+				same_month_bad += 1
+			for m in range(K.PROCESS_INVESTIGATION_MONTHS.y + K.PROCESS_REMEDY_MONTHS + 1):
+				if ns.processes.all(func(row) -> bool: return String(row["status"]) != "open"):
+					break
+				_advance(state)
+			for o in opened:
+				var row := _process_row(ns, String(o["firm"]))
+				var tally: Dictionary = by_verb[o["verb"]]
+				tally["runs"] = int(tally["runs"]) + 1
+				var status := String(row.get("status", "open"))
+				tally[status] = int(tally.get(status, 0)) + 1
+				var est: Dictionary = o["est"]
+				var months := int(row.get("closed", -1)) - int(row.get("started", 0))
+				var paid := float(row.get("paid_eur_bn", 0.0))
+				if status in ["done", "cleared"]:
+					(tally["months"] as Array).append(months)
+					if months < int(est["months_lo"]) or months > int(est["months_hi"]):
+						tally["out_months"] = int(tally["out_months"]) + 1
+					var lo := minf(float(est["price_lo"]), float(est["price_hi"]))
+					var hi := maxf(float(est["price_lo"]), float(est["price_hi"]))
+					if paid < lo - 1e-9 or paid > hi + 1e-9:
+						tally["out_price"] = int(tally["out_price"]) + 1
+					if o["verb"] == "break_up" and status == "done" and float(o["jobs"]) > 0.0:
+						var firm = _firm_by_id(nation_id, String(o["firm"]))
+						lost.append(1.0 - (_rival_jobs(ns, firm) - float(o["rivals"])) / float(o["jobs"]))
+				out["rows"].append({"nation": nation_id, "start": offset_i, "firm": o["firm"], "verb": o["verb"],
+					"status": status, "months": months, "paid": paid, "est": est})
+	print("\n=== --processes: A3 (time) and A4 (price), every verb on the real machine ===")
+	print("verb                   runs done clear void refused  months      out(months) out(price)")
+	for v in verbs:
+		var t: Dictionary = by_verb[v]
+		var ms: Array = t["months"]
+		print("%-22s %4d %4d %5d %4d %7d  %-10s %11d %10d" % [v, t["runs"], t["done"], t["cleared"], t["void"], t["refused"],
+			("%d..%d" % [ms.min(), ms.max()]) if not ms.is_empty() else "-", t["out_months"], t["out_price"]])
+		if int(t["out_months"]) > 0 or int(t["out_price"]) > 0:
+			out["pass"] = false
+	print("A3 same month: %d press(es) moved a share, a failure flag or the debt" % same_month_bad)
+	if same_month_bad > 0:
+		out["pass"] = false
+	if not lost.is_empty():
+		var mean := 0.0
+		for x in lost:
+			mean += float(x)
+		print("break-up jobs lost (measured, firm's jobs at referral against the rivals' gain, drift included): mean %.2f over %d" % [mean / lost.size(), lost.size()])
+	print("A3/A4: %s" % ("PASS" if bool(out["pass"]) else "FAIL"))
+	out["by_verb"] = by_verb
+	if json_path != "":
+		var file := FileAccess.open(json_path, FileAccess.WRITE)
+		file.store_string(JSON.stringify(out, "  "))
+		file.close()
+	return bool(out["pass"])
+
+
+func _advance(state) -> void:
+	state.month += 1
+	if state.month > 12:
+		state.month = 1
+		state.year += 1
+	WorldMonth.tick_month(state, _loader, func(_s: String, _a: bool, _r: Dictionary) -> void: pass)
+
+
+## Every major's state share and failure flag, the register A3 says a press leaves alone.
+func _shares(ns) -> Dictionary:
+	var out := {}
+	for id in ns.companies:
+		var e: Dictionary = ns.companies[id]
+		out[id] = [float(e.get("state_share", 0.0)), bool(e.get("failed", false)), float(e.get("share", 0.0))]
+	return out
+
+
+func _rival_jobs(ns, firm) -> float:
+	var total := 0.0
+	for other in Companies.majors_of(_loader, ns.id):
+		if other.id != firm.id and other.sector == firm.sector:
+			total += Companies.headcount(ns, other)
+	return total
+
+
+func _process_row(ns, company_id: String) -> Dictionary:
+	for row in ns.processes:
+		if String(row["company_id"]) == company_id:
+			return row
+	return {}
+
+
+func _action_by_id(id: String):
+	for a in _loader.company_actions:
+		if String(a.id) == id:
+			return a
+	return null
+
+
+func _firm_by_id(nation_id: String, company_id: String):
+	for c in Companies.majors_of(_loader, nation_id):
+		if String(c.id) == company_id:
+			return c
+	return null
