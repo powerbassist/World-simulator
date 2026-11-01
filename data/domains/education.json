@@ -55,44 +55,47 @@
     {
       "id": "universities",
       "name": "Universities",
-      "summary": "Tertiary education. More spending raises the number of graduates a year.",
+      "summary": "Tertiary education. More spending raises the number of graduates a year for every 1 000 inhabitants.",
       "codes": [
         "GF0904"
       ],
       "quantity": {
-        "id": "graduates_a_year",
-        "unit": "graduates a year",
+        "id": "graduates_per_1000",
+        "unit": "graduates a year per 1 000 inhabitants",
         "better": "higher"
       },
       "start": {
         "FRA": {
           "share": 0.103,
-          "quantity": 884985.0,
+          "quantity": 12.888,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table)"
+          "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table), over Eurostat demo_pjan population",
+          "note": "884 985 graduates over 68 669 303 inhabitants (1 January 2024)."
         },
         "DEU": {
           "share": 0.201,
-          "quantity": 635338.0,
+          "quantity": 7.613,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table)"
+          "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table), over Eurostat demo_pjan population",
+          "note": "635 338 graduates over 83 456 045 inhabitants (1 January 2024)."
         },
         "POL": {
           "share": 0.246,
-          "quantity": 404685.0,
+          "quantity": 11.051,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table)"
+          "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table), over Eurostat demo_pjan population",
+          "note": "404 685 graduates over 36 620 970 inhabitants (1 January 2024)."
         },
         "GBR": {
           "share": 0.045,
-          "quantity": 866745.0,
+          "quantity": 13.005,
           "year": 2019.0,
-          "source": "share: HM Treasury PESA 2026 table 5.2, 2024-25 outturn, public sector basis (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx); vocational is the default (mean of FRA, DEU, POL). quantity: Eurostat educ_uoe_grad02, ISCED 5-8, 2019, the last UK year (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad02/default/table)",
-          "note": "The share is the true public share: tuition fees run through student loans, outside the PESA table."
+          "source": "share: HM Treasury PESA 2026 table 5.2, 2024-25 outturn, public sector basis (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx); vocational is the default (mean of FRA, DEU, POL). quantity: Eurostat educ_uoe_grad02, ISCED 5-8, 2019, the last UK year (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad02/default/table), over Eurostat demo_pjan population",
+          "note": "866 745 graduates over 66 647 112 inhabitants (1 January 2019). The share is the true public share: tuition fees run through student loans, outside the PESA table."
         },
         "default": {
           "share": 0.149,
-          "quantity": 697938.0,
+          "quantity": 11.139,
           "year": 2024.0,
           "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: default: the mean of FRA, DEU, POL and GBR",
           "note": "Mean of the four sourced nations (share and quantity)."
