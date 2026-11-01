@@ -19,6 +19,9 @@ extends RefCounted
 ## untouched.
 
 const Cycle = preload("res://src/sim/cycle.gd")
+## Who leads the partner, read as the rest of the game reads it (V5.3, #240's rule):
+## president.gd is a leaf itself, so the summit stays one.
+const President = preload("res://src/sim/president.gd")
 
 
 ## The summit for this meeting, as data:
@@ -38,13 +41,17 @@ static func draw(state, loader, nation_id: String) -> Dictionary:
 	var summit = pool[int(pick * float(pool.size())) % pool.size()]
 
 	var nation = loader.nations.get(nation_id)
+	# The sim's leader, not the nation file's authored person: a coalition change
+	# or a removal moves the office and leaves the file behind.
+	var ns = state.nations.get(nation_id)
+	var leader := President.leader_id(ns) if ns != null else ""
 	return {
 		"id": String(summit.id),
 		"nation_id": nation_id,
 		"nation_name": String(nation.nation_name) if nation != null else nation_id,
 		"title": String(summit.summit_name),
 		"summary": String(summit.summary),
-		"leader_person_id": String(nation.leader_person_id) if nation != null else "",
+		"leader_person_id": leader,
 		"dialogue_text": String(summit.dialogue_text),
 		"effects": summit.effects,
 		"scene": String(summit.scene),
