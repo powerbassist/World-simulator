@@ -507,6 +507,39 @@ The argument is not the evidence. `tests/test_economy.gd` runs 120 months under
 five budgets, including the absurd ones, and asserts finiteness and sanity on
 every field of every nation every month. **That** is the evidence.
 
+## Spending lines into sectors (V5.3 a)
+
+The spec's 3.1 (`docs/design/v5.3-ab.md`): each of the five spending lines splits into
+sectors, each moving a quantity the player can read (beds per 1 000, pupils per
+teacher, graduates a year...).
+
+- **The data:** `data/domains/<line>.json`, one file per line of `SPENDING_KEYS`, in
+  the shape Content and Systems agreed (2026-11-01): each sector's id, name, summary,
+  `codes`, its quantity (id, unit, `better`), and its start per nation and a
+  `default` row (share, quantity, year, source). Loaded by `DomainsLoader`
+  (`loader.domains`); a bad row is a load error, and a sector id that
+  `domains_constants.gd` does not know for its line is refused, because it would
+  move nothing (band A2). Each nation's shares are renormalised to exactly 1.0
+  inside a tolerance of 0.002. A missing folder means no sectors.
+- **The tuning:** `src/sim/domains_constants.gd`, with the sector ids by line, each
+  sector's ELASTICITY (a magnitude; the row's `better` gives the sign, because more
+  spending always improves the quantity), the floor a move keeps (`MIN_SHARE`) and
+  the share tolerance.
+- **The reads and the verb:** `src/sim/sectors.gd`. `shares()` returns the player's
+  moved shares, else the start; `quantity()` = the start quantity x (the sector's
+  spending now / at the start) ^ elasticity, where the spending is the line's share
+  of GDP times the sector's share. `quantity()` uses `pow()`, so it is a main-thread
+  read (`parallel.gd`'s rule). `move_share()` is a pure reallocation: the line's
+  money is unchanged.
+- **The save:** `ns.sector_shares` holds only the lines the player moved, never a
+  copy of the start (that would be a content-derived static and need a bump). It
+  is `absent_ok` with no bump: absent is "nothing moved".
+- **Not built yet:** nothing reads a sector into a channel. Society's quality,
+  trend growth and capability still read the line's total, so band A1 (every share
+  at its start, the balance table `cmp`-identical) holds by construction. The
+  channels, the tiles' warning marks and the personnel come once Content's data
+  has landed.
+
 ## Where the constants live
 
 `src/sim/economy_constants.gd`, all of them, as typed GDScript `const`s. One
