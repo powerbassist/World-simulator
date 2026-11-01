@@ -483,10 +483,15 @@ func _refresh() -> void:
 	# line moved -- and the strip priced on what Commit books, `_pending` alone (the
 	# Tax Code's draft rides the columns above but is that tab's own commit).
 	var ns = _state.player()
-	var alone := {"commit": _pending} if not _edited_keys.is_empty() else {}
+	# A lever dragged back to its live value is not a move: no cell, no strip.
+	var alone := {}
 	for key in _edited_keys:
+		if _pending_value(key) == float(ns.spending_pct_gdp.get(key, 0.0)):
+			continue
 		alone[key] = {"spending_pct_gdp": ns.spending_pct_gdp.duplicate()}
 		alone[key]["spending_pct_gdp"][key] = _pending_value(key)
+	if not alone.is_empty():
+		alone["commit"] = _pending
 	_effects = EffectsStrip.per_key(_fx_cache, _state, now, alone, pending, proposed)
 	EffectsStrip.paint(_effect_labels, _effects)
 	_strip.show_effects(float(_effects.get("commit", 0.0)), "", "", _effects.has("commit"))

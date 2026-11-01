@@ -26,7 +26,7 @@ var _yield_label: Label
 var _refusal: Label
 
 
-func _init(panel) -> void:
+func _init(panel = null) -> void:
 	_panel = panel
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 

@@ -66,6 +66,7 @@ func _process(_delta: float) -> bool:
 		2:
 			_check_budget_untouched()
 			_check_tax_untouched()
+			_check_moved_back()
 		3:
 			_check_budget_levers()
 			_check_budget_two_levers()
@@ -115,6 +116,27 @@ func _check_tax_untouched() -> void:
 			_fail("tax: %s shows '%s' with nothing moved" % [key, _tax._effect_labels[key].text])
 	if _tax._strip.visible:
 		_fail("tax: the strip shows with nothing to commit")
+
+
+## A lever or a rate dragged away and back to its live value is not a move: its
+## cell clears and the strip goes, though the panel still counts it as edited.
+func _check_moved_back() -> void:
+	var live := float(_state_b.player().spending_pct_gdp["health"])
+	_budget._sliders["health"].value = live + 1.0
+	_budget._sliders["health"].value = live
+	_budget._refresh()
+	if _budget._effect_labels["health"].text != "" or _budget._strip.visible:
+		_fail("budget: health moved back to its live value still reads '%s' (strip shown: %s)" % [
+			_budget._effect_labels["health"].text, _budget._strip.visible])
+	var rate := float(_state_t.player().tax_rates_pct["vat"])
+	_tax._sliders["vat"].value = rate + 1.0
+	_tax._sliders["vat"].value = rate
+	_tax._refresh()
+	if _tax._effect_labels["vat"].text != "" or _tax._strip.visible:
+		_fail("tax: VAT moved back to its live rate still reads '%s' (strip shown: %s)" % [
+			_tax._effect_labels["vat"].text, _tax._strip.visible])
+	_budget._on_revert()
+	_tax._on_revert()
 
 
 ## B1 per lever: move one, read what the panel prints, commit, read what booked.

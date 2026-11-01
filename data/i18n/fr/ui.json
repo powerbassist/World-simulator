@@ -771,5 +771,10 @@
   "No cost to the treasury.": "Aucun coût pour le Trésor.",
   "It cannot be undone.": "C'est irréversible.",
   "Clear all": "Tout effacer",
-  "Take every note away. Decisions and requests stay.": "Retire toutes les notes. Les décisions et les demandes restent."
+  "Take every note away. Decisions and requests stay.": "Retire toutes les notes. Les décisions et les demandes restent.",
+  "%s bn": "%s Md",
+  "Balance this year": "Solde cette année",
+  "change": "variation",
+  "rate": "taux",
+  "yield, bn": "rendement, Md"
 }

@@ -391,13 +391,19 @@ func _refresh() -> void:
 		_yield_labels[key].text = EffectsStrip.yield_text(_now_books, String(key))
 	# Each moved rate priced alone, and the strip on what Commit books (the edited
 	# keys: an untouched row's pending is its live rate restated).
-	var alone := {"commit": pending_tax()} if not _edited_keys.is_empty() else {}
+	# A rate dragged back to its live value is not a move: no cell, no strip.
+	var ns = _state.player()
+	var alone := {}
 	for key in _edited_keys:
+		if _pending_value(String(key)) == (float(ns.tax_progressivity) if String(key) == PROGRESSIVITY_KEY else float(ns.tax_rates_pct.get(key, 0.0))):
+			continue
 		alone[key] = {"tax_rates_pct": {}}
 		if String(key) == PROGRESSIVITY_KEY:
 			alone[key][PROGRESSIVITY_KEY] = _pending_value(PROGRESSIVITY_KEY)
 		else:
 			alone[key]["tax_rates_pct"][key] = _pending_value(String(key))
+	if not alone.is_empty():
+		alone["commit"] = pending_tax()
 	_effects = EffectsStrip.per_key(_fx_cache, _state, _now_books, alone, alone.get("commit", {}), {})
 	EffectsStrip.paint(_effect_labels, _effects)
 	_strip.show_effects(float(_effects.get("commit", 0.0)), "", "", _effects.has("commit"))
