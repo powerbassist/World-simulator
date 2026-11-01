@@ -50,7 +50,7 @@ func _check_every_nation_has_a_leader() -> void:
 		var who := President.leader_id(ns)
 		if who == "" or not loader.person_by_id.has(who):
 			_fail("%s's sim leader '%s' is not a known person" % [id, who])
-		if String(ns.head_of_state_title if ns.has_executive else ns.head_of_government_title) == "":
+		if President.leader_title(ns) == "":
 			_fail("%s's sim leader has no title" % id)
 
 
