@@ -22,6 +22,7 @@
    "tests/test_glossary_tip.gd",
    "tests/test_outliner.gd",
    "tests/test_regions.gd",
+   "tests/test_region_funds.gd",
    "tests/test_siting.gd",
    "tests/test_people_panel.gd",
    "tests/test_map_markers.gd",
