@@ -42,6 +42,8 @@ func _init() -> void:
 	_test_the_one_problem()
 	_test_the_funded_region_grows_faster()
 	_test_the_forecast_sees_the_fund_end()
+	_test_three_funds_at_most()
+	_test_the_snapshot_carries_the_bill()
 	_finish()
 
 
@@ -377,6 +379,43 @@ func _test_the_forecast_sees_the_fund_end() -> void:
 		_fail("the forecast's spending in the fund's sixth month is up %.4f, not about its bill %.4f" % [during, bill])
 	if absf(after) > 0.1 * bill:
 		_fail("the forecast still books %.4f of spending after the fund ended" % after)
+
+
+## The parent's cap: at most three funds open at once, so funding every region
+## (where the zero-mean term cancels and only the spending is left) is not a verb.
+## Pinned as the literal 3 (QA on #248: a test that read the constant stayed green
+## when it moved); a stopped or finished fund frees its place.
+func _test_three_funds_at_most() -> void:
+	var state = _state()
+	var ns = state.player()
+	var regions: Array = []
+	for r in _list(state):
+		if r.id != RK.RESIDUAL_KEY:
+			regions.append(String(r.id))
+	for i in range(3):
+		if not bool(RegionFunds.start(state, ns, _loader, regions[i], 1.0, 2).get("ok", false)):
+			_fail("fund %d of 3 was refused" % (i + 1))
+	var fourth: Dictionary = RegionFunds.start(state, ns, _loader, regions[3], 1.0, 2)
+	if bool(fourth.get("ok", true)) or String(fourth.get("reason", "")) == "" or ns.region_funds.size() != 3:
+		_fail("a fourth fund opened while three ran: %s" % fourth)
+	if int(RegionFunds.limits(_loader).get("max_open", -1)) != 3:
+		_fail("limits() does not give the panel the cap of 3")
+	RegionFunds.stop(state, ns, String(ns.region_funds[0]["id"]))
+	if not bool(RegionFunds.start(state, ns, _loader, regions[3], 1.0, 2).get("ok", false)):
+		_fail("a stopped fund did not free its place")
+
+
+## Interface's Budget row reads the bill off the snapshot, as every computed line's
+## row does (the projection has no NationState for the panel to reach).
+func _test_the_snapshot_carries_the_bill() -> void:
+	var state = _state()
+	var ns = state.player()
+	RegionFunds.start(state, ns, _loader, _worst(state, ns), 2.0, 1)
+	_month(state)
+	var snap: Dictionary = Budget.snapshot(state)
+	if not snap.has("region_fund_bill_pct_gdp") or float(ns.region_fund_bill_pct_gdp) <= 0.0 \
+			or not is_equal_approx(float(snap["region_fund_bill_pct_gdp"]), float(ns.region_fund_bill_pct_gdp)):
+		_fail("the Budget snapshot does not carry the fund's bill: %s" % [snap.get("region_fund_bill_pct_gdp")])
 
 
 func _month(state) -> void:

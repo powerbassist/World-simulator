@@ -22,3 +22,9 @@ const FUND_BETA := 1.3
 ## it gained -- processes' U-turn price (companies_constants.PROCESS_UTURN_SHARE),
 ## for the same reason: a promise withdrawn costs more than one never made.
 const FUND_STOP_SHARE := 0.25
+
+## At most this many funds open at once (the parent's call on #263, 2026-11-01).
+## Without it a player could fund every region: the zero-mean term would cancel and
+## what was left would be plain spending, a demand lever no one designed. Three
+## keeps the verb a choice of where.
+const FUND_MAX_OPEN := 3

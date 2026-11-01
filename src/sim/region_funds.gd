@@ -65,14 +65,16 @@ static func estimate(state, ns, loader, region_id: String, eur_bn: float, years:
 		"bloc_offset": (row["bloc_offset"] as Dictionary).duplicate()}
 
 
-## The rule's ranges, {eur_bn: [lowest, highest], years: [shortest, longest]}, for
+## The rule's ranges and the cap, {eur_bn: [lowest, highest], years: [shortest,
+## longest], max_open}, for
 ## the panel's inputs and its refusal line (the msgids below carry no figures, so
 ## they stay translatable; the panel prints the range from here).
 static func limits(loader) -> Dictionary:
 	var rule: Dictionary = loader.region_fund_rule
 	if rule.is_empty():
 		return {}
-	return {"eur_bn": (rule["eur_bn"] as Array).duplicate(), "years": (rule["years"] as Array).duplicate()}
+	return {"eur_bn": (rule["eur_bn"] as Array).duplicate(), "years": (rule["years"] as Array).duplicate(),
+		"max_open": FK.FUND_MAX_OPEN}
 
 
 ## Why a fund cannot open, "" when it can. English msgids, the panel's line.
@@ -92,9 +94,15 @@ static func refusal(state, ns, loader, region_id: String, eur_bn: float, years: 
 		return "A fund runs for between its shortest and longest number of years."
 	if Regions.output_eur_bn(ns, region_id) <= 0.0:
 		return "This region has no recorded output to fund."
+	var open := 0
 	for row in ns.region_funds:
-		if String(row["region_id"]) == region_id and String(row["status"]) == OPEN:
+		if String(row["status"]) != OPEN:
+			continue
+		if String(row["region_id"]) == region_id:
 			return "This region already has a development fund."
+		open += 1
+	if open >= FK.FUND_MAX_OPEN:
+		return "The most development funds that can run at once are already running."
 	return ""
 
 

@@ -842,5 +842,8 @@ static func snapshot(state) -> Dictionary:
 		# PROJECTED month against the current one and a projection has no NationState
 		# to read the bill from.
 		"energy_bill_pct_gdp": ns.energy_bill_pct_gdp,
+		# V5.3 a, on the snapshot for the same reason: the Budget table's fund row
+		# compares a projected month against the current one (Interface's ask).
+		"region_fund_bill_pct_gdp": ns.region_fund_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}
