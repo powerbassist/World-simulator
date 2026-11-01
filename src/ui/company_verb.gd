@@ -12,8 +12,8 @@ extends RefCounted
 ##     reason on its hover (the Dissolve button's three ways).
 ##   - An `irreversible` verb asks on a confirm card first, with what it costs:
 ##     the jobs that end, the jobs the rivals take on, the treasury's money. The
-##     figures come from running the verb on a COPY of the nation (the budget
-##     projection's way), so the card cannot disagree with what the click does.
+##     figures come from Companies.preview(), the verb run on a COPY of the
+##     nation, so the card cannot disagree with what the click does.
 ##
 ## Static and owning nothing, so the panel keeps its size: it holds the card and
 ## runs the command on `confirmed`.
@@ -56,13 +56,12 @@ static func ask(from: Node, card, state, loader, ns, company, action, run: Calla
 	return card
 
 
-## What the verb does to jobs and money, in whole sentences. Read off a copy of
-## the nation the verb has been run on: only for verbs whose arm writes the
-## nation alone (a break-up does; a bid's answer pulses relations on `state`,
-## and is not irreversible).
+## What the verb does to jobs and money, in whole sentences, read off the
+## sim's preview (the verb run on a copy of the nation).
 static func question(state, loader, ns, company, action) -> String:
-	var probe = ns.duplicate_state()
-	var result: Dictionary = Companies.execute(state, probe, loader.company_actions, action, String(company.id), loader)
+	var preview: Array = Companies.preview(state, ns, loader.company_actions, action, String(company.id), loader)
+	var probe = preview[0]
+	var result: Dictionary = preview[1]
 	var lost := 0.0
 	var gained := 0.0
 	var takers: Array[String] = []

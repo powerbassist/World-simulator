@@ -131,9 +131,9 @@ func _refresh() -> void:
 		for child in body.get_children():
 			child.queue_free()
 
-	PanelKit.figure(_headline, tr("EUR %.0fbn") % ns.gdp_eur_bn, tr("GDP, a year"))
-	PanelKit.figure(_headline, "%s%%" % Num.fs(ns.growth_annual_pct, 2), tr("growth, a year"))
-	_headline_note.text = tr("Annual growth against a trend of %s%%. %s") % [
+	PanelKit.figure(_headline, tr("EUR %.0fbn") % ns.gdp_eur_bn, tr("GDP"))
+	PanelKit.figure(_headline, "%s%%" % Num.fs(ns.growth_annual_pct, 2), tr("growth"))
+	_headline_note.text = tr("Against a trend of %s%%. %s") % [
 		Num.fs(ns.trend_annual_pct, 2), _gap_sentence(Economy.output_gap_pct(ns))
 	]
 
@@ -222,7 +222,7 @@ func _refresh() -> void:
 
 	# G3: the top bar's own text and name -- a signed balance (surplus +) was
 	# captioned "deficit", at one decimal against the bar's two.
-	PanelKit.figure(_finances, String(StripReadings.read("deficit", _state, _loader)["text"]), tr("budget balance, share of GDP"))
+	PanelKit.figure(_finances, String(StripReadings.read("deficit", _state, _loader)["text"]), tr("budget balance"))
 	_trend(_finances, "deficit_pct_gdp")
 	PanelKit.line(_finances, tr("Debt %s%% of GDP.") % Num.f(ns.debt_to_gdp_pct(), 1))
 	_trend(_finances, "debt_to_gdp_pct")

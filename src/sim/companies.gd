@@ -1018,6 +1018,16 @@ static func refusal_reason(state, ns, action, company_id: String, loader) -> Str
 	return ""
 
 
+## What a verb would do, run on a COPY of the nation -- the budget projection's
+## way: [the copy, execute()'s result]. The confirm card's figures (V5.3-0 gate
+## G1), so the card cannot disagree with the click. `ns` is never written; only
+## for a verb whose arm writes the nation alone (a bid's answer pulses relations
+## on `state`, and is not one the card asks about).
+static func preview(state, ns, all_actions: Array, action, company_id: String, loader) -> Array:
+	var copy = ns.duplicate_state()
+	return [copy, execute(state, copy, all_actions, action, company_id, loader)]
+
+
 static func _refused(ns, action, company_id: String, reason: String) -> Dictionary:
 	var refused := {"action_id": action.id, "company_id": company_id, "applied": false, "refused": true}
 	if reason != "":
@@ -1034,10 +1044,7 @@ static func _absorbers(ns, loader, company_id: String) -> Array:
 
 
 static func _absorbed_share(ns, absorbers: Array) -> float:
-	var total := 0.0
-	for other in absorbers:
-		total += share_of_company(ns, other)
-	return total
+	return absorbers.reduce(func(total: float, other) -> float: return total + share_of_company(ns, other), 0.0)
 
 
 ## The executives no LOADER major names as its chair. Only loader majors count:
@@ -1048,14 +1055,9 @@ static func _absorbed_share(ns, absorbers: Array) -> float:
 static func _unseated_executives(ns, loader) -> Array:
 	var seated := {}
 	for company in majors_of(loader, ns.id):
-		var chair := String(ns.companies.get(company.id, {}).get("board_chair", ""))
-		if chair != "":
-			seated[chair] = true
-	var unseated: Array = []
-	for person in loader.people.get(ns.id, []):
-		if String(person.kind) == "executive" and not seated.has(String(person.id)):
-			unseated.append(String(person.id))
-	return unseated
+		seated[String(ns.companies.get(company.id, {}).get("board_chair", ""))] = true
+	return loader.people.get(ns.id, []).filter(func(person) -> bool:
+		return String(person.kind) == "executive" and not seated.has(String(person.id))).map(func(person) -> String: return String(person.id))
 
 
 ## V4.7b: the ONE relations writer outside diplomacy.gd, for the one company
