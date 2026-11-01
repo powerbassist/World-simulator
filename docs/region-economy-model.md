@@ -305,11 +305,18 @@ rule's ranges and bloc offsets are data, `data/region-actions/fund.json`, stand-
   fund as points of the region's output)`, fixed at the start and read here from
   the open rows. It is ZERO-MEAN over the nation's output shares, the sited term's
   arithmetic exactly (section 4): `Regions.tick_month()`'s sum IS the national GDP,
-  and the national level already comes through the fund's spending, so a term that
+  and the national level comes through the fund's spending (below), so a term that
   moved the total would count the money twice. So the funded region's deviation
   rises by `pts x (1 - its weight)`, every other region's falls by a little, and its
   unemployment falls by Okun's 0.4 of that (section 6). With no fund open the term
   is not computed at all, so every regime computes the floats it computed before.
+- **The demand** (the parent's ruling on #263, QA's call 1: a fund is spending):
+  `RegionFunds.tick_month()` adds the bill's change to `demand_impulse_pct` through
+  the channel every spending change takes, `Budget.commit()`'s `MULT_SPENDING` over
+  `impulse_level_factor()`: up when the fund starts billing, down when it stops, so
+  the level effect over its life sums to zero. Before this the bill reached only the
+  deficit (QA's twin probe on #263: a 5 bn a year fund lowered national GDP a
+  little); `tests/test_region_funds.gd` pins the channel.
 - **Why a square root:** band A7 asks one fund (1 bn a year to the region with the
   highest unemployment) to lower unemployment by 0.3 to 1.0 point in 24 months in
   all four playable nations, and their worst regions run from about 32 bn of output

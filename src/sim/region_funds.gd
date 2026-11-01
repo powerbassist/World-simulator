@@ -11,8 +11,13 @@ extends RefCounted
 ##   the effect  a term in the region's growth deviation, FUND_BETA x sqrt(the fund
 ##               as points of the region's output), fixed at the start and read by
 ##               src/sim/regions.gd from the open rows -- zero-mean over the nation's
-##               output, so the region's unemployment falls (Okun) and the national
-##               level comes through the spending alone;
+##               output, so it moves growth between regions, never the nation's;
+##   the demand  the national level: a fund is spending, so the bill's change moves
+##               `demand_impulse_pct` through the channel every spending change takes
+##               (Budget.commit()'s MULT_SPENDING over impulse_level_factor()), up when
+##               it starts billing and down when it stops, so its level effect over
+##               the fund's life sums to zero -- a transfer to the region paid by the
+##               deficit, with the stimulus any spending of its size would give;
 ##   the blocs   the rule's per-bn offsets x the bn x the region's share of the
 ##               population, at the start (blocs are national, a fund is not);
 ##               stopping early gives back FUND_STOP_SHARE of what each pleased
@@ -26,6 +31,7 @@ const Regions = preload("res://src/sim/regions.gd")
 const RK = preload("res://src/sim/region_constants.gd")
 const FK = preload("res://src/sim/region_fund_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
+const C = preload("res://src/sim/economy_constants.gd")
 
 const OPEN := "open"
 
@@ -129,9 +135,10 @@ static func open_funds(ns) -> Array:
 	return out
 
 
-## A month of every open fund: its bill (the Budget reads it next month), then a
-## month off its run; a fund at its end closes "done". WorldMonth runs this after
-## Projects, the other bill that stops, for the same lag.
+## A month of every open fund: its bill (the Budget reads it next month) and the
+## bill's change into demand (Economy reads it next month), then a month off its run;
+## a fund at its end closes "done". WorldMonth runs this after Projects, the other
+## bill that stops, for the same lag.
 static func tick_month(state) -> void:
 	var ids: Array = state.nations.keys()
 	ids.sort()
@@ -148,6 +155,13 @@ static func tick_month(state) -> void:
 			row["months_left"] = int(row["months_left"]) - 1
 			if int(row["months_left"]) <= 0:
 				_close(state, row, "done")
+		# Budget.commit()'s spending term on the bill's change (its arithmetic, the
+		# same constants): the start, the end and GDP's drift in between telescope,
+		# so a fund leaves no lasting impulse.
+		ns.demand_impulse_pct = clampf(
+			ns.demand_impulse_pct
+				+ (bill - float(ns.region_fund_bill_pct_gdp)) * C.MULT_SPENDING / C.impulse_level_factor(),
+			-C.IMPULSE_MAX_PCT, C.IMPULSE_MAX_PCT)
 		ns.region_fund_bill_pct_gdp = bill
 
 
