@@ -4,7 +4,8 @@ extends RefCounted
 ## from_dict() used to be three hand-written lists over the same 217 fields, and
 ## a field added to two of them and forgotten in the third failed silently -- the
 ## from_dict() aliasing V4.6 left open on three registers was that failure. The
-## three are now one walk each over FIELDS, and tests/test_nation_fields.gd fails
+## three are now one walk each over FIELDS (src/core/nation_field_walk.gd since
+## V5.3 a; this file is the enums and the table), and tests/test_nation_fields.gd fails
 ## when a NationState `var` is missing from the table.
 ##
 ## A row is [name, copy, read, default, absent_ok]:
@@ -27,8 +28,6 @@ extends RefCounted
 ## Row order is to_dict()'s historical key order, so a save file's bytes did not
 ## move when the table replaced the list.
 
-const Readers = preload("res://src/core/nation_field_readers.gd")
-
 # A row's columns, in order (0-4). One enum like the two below: the table outgrew
 # the size ratchet's 300 at V5.2c's `exposures` row, and five consts were four lines.
 enum { COL_NAME, COL_COPY, COL_READ, COL_DEFAULT, COL_ABSENT_OK }
@@ -40,66 +39,6 @@ enum {
 	COMMODITY_STATE, LAW_LEDGER, DRAFT_BILLS, CUSTOM_TAXES, POLL_PURCHASES,
 	ASSEMBLY_BILLS, HELD_BILLS,
 }
-
-
-## `dst` is a fresh NationState; every copied container is its own.
-static func copy_into(src, dst) -> void:
-	for row in FIELDS:
-		match row[COL_COPY]:
-			SCALAR:
-				dst.set(row[COL_NAME], src.get(row[COL_NAME]))
-			DEEP:
-				dst.set(row[COL_NAME], src.get(row[COL_NAME]).duplicate(true))
-
-
-## The values ARE the live fields, as they always were: the save path stringifies
-## at once, and every reader below rebuilds rather than assigns, so the sharing
-## never reaches a loaded state.
-static func to_dict(src) -> Dictionary:
-	var out := {}
-	for row in FIELDS:
-		if row[COL_READ] != NOT_SAVED:
-			out[row[COL_NAME]] = src.get(row[COL_NAME])
-	return out
-
-
-## `dst` is a fresh NationState. An absent key leaves new()'s declared default.
-static func read_into(dst, d: Dictionary) -> void:
-	for row in FIELDS:
-		var name: String = row[COL_NAME]
-		if row[COL_READ] == NOT_SAVED or not d.has(name):
-			continue
-		dst.set(name, read_value(row[COL_READ], d[name], row[COL_DEFAULT]))
-
-
-static func read_value(read: int, raw, declared):
-	match read:
-		VALUE:
-			match typeof(declared):
-				TYPE_INT: return int(raw)
-				TYPE_FLOAT: return float(raw)
-				TYPE_BOOL: return bool(raw)
-				_: return String(raw)
-		COPIED: return raw.duplicate(true)
-		FLOAT_MAP: return Readers.float_map(raw)
-		INT_MAP: return Readers.int_map(raw)
-		STRING_MAP: return Readers.string_map(raw)
-		SORTED_STRINGS: return Readers.sorted_strings(raw)
-		ROWS: return Readers.rows(raw)
-		FLOAT_MAP_TYPED: return Readers.float_map_typed(raw)
-		STRING_MAP_TYPED: return Readers.string_map_typed(raw)
-		BOOL_MAP_TYPED: return Readers.bool_map_typed(raw)
-		PLEDGES: return Readers.pledges(raw)
-		PROGRAMME: return Readers.programme(raw)
-		COMMODITY_STATE: return Readers.commodity_state(raw)
-		LAW_LEDGER: return Readers.law_ledger(raw)
-		DRAFT_BILLS: return Readers.draft_bills(raw)
-		CUSTOM_TAXES: return Readers.custom_taxes(raw)
-		POLL_PURCHASES: return Readers.poll_purchases(raw)
-		ASSEMBLY_BILLS: return Readers.assembly_bills(raw)
-		HELD_BILLS: return Readers.held_bills(raw)
-	push_error("nation_fields: unknown read kind %d" % read)
-	return declared
 
 
 const FIELDS := [
