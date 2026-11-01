@@ -37,6 +37,7 @@ const K = preload("res://src/sim/companies_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Asks = preload("res://src/sim/process_asks.gd")
+const Drag = preload("res://src/sim/process_drag.gd")
 
 ## The verbs that run as processes, by action id, and their first stage.
 const FIRST_STAGE := {
@@ -115,11 +116,11 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 		"full_nationalisation":
 			var base := (stake - held) * value
 			var months := K.PROCESS_OFFER_MONTHS + K.PROCESS_TRANSITION_MONTHS
-			# The transition's cost in output (_drag), shown before the press: the
+			# The transition's cost in output (process_drag.gd), shown before the press: the
 			# share of a year of the firm's output its management turnover loses.
 			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x),
 				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months,
-				"output_loss_eur_bn": K.PROCESS_TRANSITION_OUTPUT_LOSS * Companies.output_eur_bn(ns, company)}
+				"output_loss_eur_bn": Drag.loss_eur_bn(ns, company)}
 		"privatisation":
 			var base := held * value
 			# A sale may be held once for a new bid (process_asks.gd), so it can run
@@ -278,24 +279,7 @@ static func tick_month(state, loader) -> void:
 		for row in ns.processes:
 			if String(row["status"]) == OPEN:
 				_tick_row(state, ns, loader, row)
-		ns.process_drag_pct = _drag(ns, loader)
-
-
-## The growth drag of the firms in a transition this month (spec 3.2: output 4 %
-## below its path), points of GDP a year, negative, bounded; 0.0 with none. Read
-## through the firm's live output, so a larger firm's turnover costs more.
-static func _drag(ns, loader) -> float:
-	if ns.gdp_eur_bn <= 0.0:
-		return 0.0
-	var loss := 0.0
-	for row in ns.processes:
-		if String(row["status"]) == OPEN and String(row["stage"]) == "transition":
-			var company = _company(ns, loader, String(row["company_id"]))
-			if company != null:
-				loss += K.PROCESS_TRANSITION_OUTPUT_LOSS * 100.0 * Companies.output_eur_bn(ns, company) / ns.gdp_eur_bn
-	if loss == 0.0:
-		return 0.0
-	return -minf(loss, K.PROCESS_DRAG_MAX_PCT)
+		ns.process_drag_pct = Drag.drag(ns, loader)
 
 
 static func _tick_row(state, ns, loader, row: Dictionary) -> void:
