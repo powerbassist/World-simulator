@@ -32,9 +32,10 @@ const MANIFEST := "res://assets/audio/music/manifest.json"  # i18n: ok a path
 const VOICE_GROUP := "voice"  # i18n: ok a group name
 ## The moments a sting answers, and the synthesized stand-in each plays while the
 ## manifest names no file ("" is silence): the two losing stings are synthesized
-## for good (no clean licence exists), election night keeps its toll.
+## for good (no clean licence exists), election night keeps its toll, and the
+## front page plays its synthesized headline until a recorded sting is named.
 const MOMENTS := {
-	"front_page": "", "vote_passed": "", "vote_failed": "vote_failed",  # i18n: ok moment ids
+	"front_page": "front_page", "vote_passed": "", "vote_failed": "vote_failed",  # i18n: ok moment ids
 	"election_won": "election", "election_lost": "election_lost",  # i18n: ok moment ids
 }
 

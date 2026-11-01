@@ -196,10 +196,10 @@ func _check_band_and_moments() -> void:
 	music._process(0.1)
 	if music.ducked:
 		_fail("the music node stayed ducked after the line")
-	# Moments: the losing stings and the toll play their stand-ins; a recorded-only
-	# moment with no file plays nothing.
+	# Moments: the losing stings, the toll and the front page's headline play their
+	# stand-ins; a recorded-only moment with no file plays nothing.
 	_set_sound(true)
-	for c in [["vote_failed", 1], ["election_lost", 1], ["election_won", 1], ["vote_passed", 0], ["front_page", 0]]:
+	for c in [["vote_failed", 1], ["election_lost", 1], ["election_won", 1], ["vote_passed", 0], ["front_page", 1]]:
 		var before := _players(desk)
 		Music.moment(desk, c[0])
 		if _players(desk) - before != c[1]:
@@ -215,11 +215,11 @@ func _check_band_and_moments() -> void:
 	var heard := {}
 	for level in [1, SettingsPanel.DEFAULT_MUSIC, 3]:
 		_set_music(level)
-		for id in ["vote_failed", "election_lost", "election_won"]:
+		for id in ["vote_failed", "election_lost", "election_won", "front_page"]:
 			Music.moment(desk, id)
 			var last: Node = desk.get_child(desk.get_child_count() - 1)
 			heard["%s@%d" % [id, level]] = (last as AudioStreamPlayer).volume_db if last is AudioStreamPlayer else NAN
-	for id in ["vote_failed", "election_lost", "election_won"]:
+	for id in ["vote_failed", "election_lost", "election_won", "front_page"]:
 		var q: float = heard["%s@1" % id]
 		var n: float = heard["%s@%d" % [id, SettingsPanel.DEFAULT_MUSIC]]
 		var l: float = heard["%s@3" % id]
