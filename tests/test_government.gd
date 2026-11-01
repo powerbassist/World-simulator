@@ -50,6 +50,7 @@ func _init() -> void:
 	_check_legislative_election_reforms_without_ending_the_term()
 	_check_government_stays_coherent_over_fourteen_years()
 	_check_save_round_trip_preserves_the_government()
+	_check_the_authored_government_sits_at_game_start()
 
 	_finish()
 
@@ -445,6 +446,46 @@ func _check_save_round_trip_preserves_the_government() -> void:
 		JSON.parse_string(JSON.stringify(before.to_dict()))
 	)
 	_compare_government("to_dict/from_dict", before, round_tripped)
+
+
+## QA's RECORD after the V5.3 block-0 gate: Poland's new game formed
+## [narod_i_tradycja] alone, a 157-of-460 minority of the party four of the other
+## five cordon, with its own leader as Prime Minister. The cause: the opening
+## government anchored on the LARGEST party, so the government the nation file
+## names (leader.party, its head of government) sat only where that party happened
+## to be the largest. The game now starts from the authored government: its party
+## anchors the opening coalition, a majority or not.
+## - Poland: sojusz_obywatelski, trzeci_kierunek and ludowa_lewica, a majority
+##   without narod_i_tradycja, and Prime Minister Zawadzki.
+## - Every nation formed this way: the authored party leads, and its authored head
+##   of government holds the office.
+## - Italy keeps its authored minority: a seat-order majority rule would hand it to
+##   the opposition (208 of 400) and was rejected.
+## - After the start, form() keeps the largest-party rule: a re-formed Poland with
+##   no opening anchor is narod_i_tradycja's minority again.
+## Mutation: anchoring the opening on the largest party fails the first three
+## rows; carrying the authored anchor into form() fails the last.
+func _check_the_authored_government_sits_at_game_start() -> void:
+	var ns = _new_state("POL").player()
+	if ns.is_minority or ns.pm_party_id != "sojusz_obywatelski" or ns.coalition_party_ids.has("narod_i_tradycja"):
+		_fail("Poland: the new game formed %s (%d of %d, minority %s, PM party %s), not the authored majority led by sojusz_obywatelski" % [
+			ns.coalition_party_ids, ns.coalition_seats, ns.assembly_seats, ns.is_minority, ns.pm_party_id])
+	var state = _new_state("FRA")
+	for id in state.nations:
+		var other = state.nations[id]
+		if not ["investiture", "chancellor_election", "coalition_negotiation", "largest_party"].has(other.formation_method):
+			continue
+		if int(other.seats_by_party.get(other.incumbent_party_id, 0)) <= 0:
+			continue
+		if other.pm_party_id != other.incumbent_party_id or other.pm_person_id != other.start_head_of_government_person_id:
+			_fail("%s: the new game's government is led by %s (%s), not the authored %s (%s)" % [
+				id, other.pm_party_id, other.pm_person_id, other.incumbent_party_id, other.start_head_of_government_person_id])
+	var italy = state.nations["ITA"]
+	if italy.pm_party_id != "fratelli_della_nazione":
+		_fail("Italy: the opening government is led by %s, not its authored fratelli_della_nazione" % italy.pm_party_id)
+	Government.form(ns, _loader.parties["POL"])
+	if ns.pm_party_id != "narod_i_tradycja" or not ns.is_minority:
+		_fail("Poland re-formed without an opening anchor: %s (PM party %s), not the largest party's minority" % [ns.coalition_party_ids, ns.pm_party_id])
 
 
 func _compare_government(label: String, a, b) -> void:

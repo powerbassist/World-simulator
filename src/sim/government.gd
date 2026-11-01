@@ -62,13 +62,28 @@ static func init_nation(ns, nation, party_list: Array) -> void:
 	ns.governments_fallen = 0
 	ns.last_censure = {}
 
-	form(ns, party_list)
+	# The game starts from the government the nation file names (leader.party):
+	# see form()'s `opening`.
+	form(ns, party_list, String(nation.leader_party_id))
 
 
 ## Assemble a government against the assembly the nation currently has, write it
 ## onto `ns`, and return the same description as a Dictionary for the UI to read.
 ## Idempotent: calling it twice on unchanged state produces the same government.
-static func form(ns, party_list: Array) -> Dictionary:
+##
+## `opening` is the party the nation file names as governing at game start, passed
+## by init_nation() alone. Where the formation anchors on a party (investiture,
+## chancellor election, coalition negotiation, largest party) it anchors there,
+## a majority or not, rather than on the largest party: the game starts from the
+## government that sits. QA's RECORD after the V5.3 block-0 gate found Poland's
+## opening government to be its largest party alone (157 of 460) -- the party four
+## of the other five cordon -- under its own leader, while the file names a
+## centre coalition's Prime Minister; Bosnia and Czechia had the same split.
+## Rejected: the first party in seat order whose coalition reaches a majority.
+## Italy's authored seats would hand its opening government to the opposition
+## (208 of 400). Every later formation (an election, a fall) keeps the largest-party
+## anchor; an opening party holding no seats falls back to it too.
+static func form(ns, party_list: Array, opening := "") -> Dictionary:
 	var by_id := {}
 	for party in party_list:
 		by_id[party.id] = party
@@ -80,7 +95,7 @@ static func form(ns, party_list: Array) -> Dictionary:
 		"presidential_appointment":
 			result = _form_presidential(ns, party_list, by_id)
 		"chancellor_election", "investiture", "coalition_negotiation", "largest_party":
-			result = _form_from_largest(ns, party_list, by_id)
+			result = _form_from_largest(ns, party_list, by_id, opening)
 		_:
 			push_error("government: unknown formation method '%s'" % ns.formation_method)
 			result = _empty_result()
@@ -344,8 +359,8 @@ static func _form_presidential(ns, party_list: Array, by_id: Dictionary) -> Dict
 ## UK. The head of government comes out of the chamber, so formation anchors on
 ## the largest party whether the rule is an investiture vote, a chancellor
 ## election, open coalition negotiation, or nothing at all.
-static func _form_from_largest(ns, party_list: Array, by_id: Dictionary) -> Dictionary:
-	var anchor := _largest_party_id(ns, party_list)
+static func _form_from_largest(ns, party_list: Array, by_id: Dictionary, opening := "") -> Dictionary:
+	var anchor := opening if _seats(ns, opening) > 0 else _largest_party_id(ns, party_list)
 	if anchor == "":
 		return _empty_result()
 	var chosen := _grow(ns, anchor, party_list, by_id, ns.censure_barred_party_ids)
