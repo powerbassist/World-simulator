@@ -257,6 +257,10 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 		"remedy":
 			if _land(state, ns, loader, action, row):
 				_close(state, row, "done")
+			else:
+				# The firm drifted under the gate in the remedy's months, so the
+				# break-up never happens; the ruling's bloc move goes with it.
+				_blocs(ns, action.effects.get("bloc_offset", {}), -1.0)
 
 
 ## The sale's discount, from the cycle at the sale: none at or above potential,

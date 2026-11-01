@@ -17,6 +17,7 @@ const WorldMonth = preload("res://src/sim/world_month.gd")
 const Budget = preload("res://src/sim/budget.gd")
 
 const PLAYER := "FRA"
+const OK_BLOCS := ["workers", "pensioners", "urban", "rural", "business", "students"]
 
 var _loader
 var _failures: Array[String] = []
@@ -42,6 +43,7 @@ func _init() -> void:
 	_test_the_forecast_runs_the_processes()
 	_test_a_ruling_on_a_firm_that_no_longer_qualifies_moves_nothing()
 	_test_a_reopened_process_has_its_own_id()
+	_test_a_remedy_refused_undoes_the_rulings_bloc_move()
 	_finish()
 
 
@@ -393,6 +395,31 @@ func _test_a_ruling_on_a_firm_that_no_longer_qualifies_moves_nothing() -> void:
 		_fail("a ruling on a firm under the gate moved the blocs or opened the remedy: %s" % row)
 	if not is_equal_approx(float(ns.debt_eur_bn) - debt, K.PROCESS_LEGAL_COST_EUR_BN):
 		_fail("the refused ruling did not keep its legal fees")
+
+
+## A firm that drifts under the gate during the remedy (measured once in the probe:
+## DEU_kellermann) is not broken up, and the ruling's bloc move is undone with it.
+func _test_a_remedy_refused_undoes_the_rulings_bloc_move() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	var offsets := _offsets(ns)
+	Processes.start(state, ns, _loader, _action("break_up"), firm)
+	var row := _row(ns, firm)
+	row["odds"] = 1.0
+	for i in range(int(row["months_left"])):
+		_month(state)
+	if String(row["stage"]) != "remedy":
+		_fail("the ruling did not open the remedy")
+		return
+	(ns.companies[firm] as Dictionary)["share"] = 0.05
+	for i in range(K.PROCESS_REMEDY_MONTHS):
+		_month(state)
+	if String(row["status"]) != "refused" or bool((ns.companies[firm] as Dictionary).get("failed", false)):
+		_fail("a remedy on a firm under the gate broke it up or stayed open: %s" % row)
+	for bloc in OK_BLOCS:
+		if not is_equal_approx(float(ns.bloc_offset.get(bloc, 0.0)), float(offsets.get(bloc, 0.0))):
+			_fail("the refused remedy left the ruling's move on %s" % bloc)
 
 
 ## Review pass 1: stopped and reopened in one month, the new process is its own row.
