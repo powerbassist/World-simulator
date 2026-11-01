@@ -913,6 +913,12 @@ built, decline is never the best answer.
   "middling outcome". It is cheap when the want will be served anyway, and
   dearer than an honest no when it will not.
 
+> **Superseded in part (V5.3-0 gate, 2026-11-01).** A word the president does not
+> serve is no longer a sure break: the minister keeps it at the odds the card showed
+> (the cabinet's effectiveness and loyalty), and an office, a measure or the president's
+> own programme opposed stays at 0. The rule and its measurement are
+> [[audiences-model]] section 13; the B5 model in `tools/audience_probe.gd` prices it.
+
 **Delegate's net value (the table's row above, spelled out):**
 
 - At delegation: minus (0.25 g + 0.5 × the snub).

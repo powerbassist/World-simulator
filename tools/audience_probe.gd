@@ -42,7 +42,9 @@ extends SceneTree
 ##      own K is reported, never read. In tools/lever_weights.gd's units:
 ##        Refuse (decline = unanswered, one answer) = -(g + 0.5 x 0.1);
 ##        Delegate = -(0.25 g + 0.5 x snub) + (K=1: 0.5 x 0.10 | K=0: -(0.75 g +
-##               0.08 + 0.5 x 0.2));
+##               0.08 + 0.5 x 0.2)); since the V5.3-0 gate K=0 is kept anyway at
+##               the minister's odds m on arrival (src/sim/delegation.gd):
+##               m x 0.5 x 0.10 + (1 - m) x the break;
 ##        Book = the best offered lever's three-attempt net under that intent: A -
 ##               s(1 + q + q^2) + q^3 x Refuse - DIARY_DAY + 0.5 x 0.10 (received) +
 ##               KV(0.05 (1 - k)), A = 1 - q^3, q = 1 - p, s the weighted spend, the
@@ -93,6 +95,7 @@ const LW = preload("res://tools/lever_weights.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Phone = preload("res://src/sim/phone.gd")
+const Delegation = preload("res://src/sim/delegation.gd")
 
 const PLAYER := "FRA"
 const MONTHS := 60
@@ -307,6 +310,9 @@ func _b5_capture(ns, row: Dictionary, month: int) -> Dictionary:
 		},
 		"g": float(Audiences.decline_price(ns, _loader, String(row["id"]))["grudge"]),
 		"snub": -AK.DELEGATE_SNUB_RAPPORT if snub else 0.0,
+		# V5.3-0 gate: the odds a minister keeps the word, as the card shows them on
+		# arrival (Delegation.odds); "won't serve" is no longer a sure break.
+		"minister": float(Delegation.odds(ns, _loader, String(row["object"]), String(row.get("stance", "")))["chance"]),
 		"kept": false,
 	}
 
@@ -340,7 +346,7 @@ func _b5_table(requests: Array, mix: bool) -> Dictionary:
 			var cell: Dictionary = (r["cell"] as Dictionary).duplicate()
 			cell["knowledge"] = float(k)
 			for intent in ["will_serve", "wont_serve"]:
-				var v := _b5_values(person, cell, float(r["g"]), float(r["snub"]), intent == "will_serve")
+				var v := _b5_values(person, cell, float(r["g"]), float(r["snub"]), intent == "will_serve", float(r.get("minister", 0.0)))
 				cases[intent] += w
 				var top := maxf(maxf(float(v["book"]), float(v["delegate"])), float(v["refuse"]))
 				for answer in ["book", "delegate", "refuse"]:
@@ -364,7 +370,7 @@ func _b5_table(requests: Array, mix: bool) -> Dictionary:
 
 ## One case's three answers, as bands-v5.2.md's table and player model declare
 ## them; book is the best offered lever's three-attempt net under the intent.
-func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool) -> Dictionary:
+func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool, minister := 0.0) -> Dictionary:
 	var k := float(cell["knowledge"])
 	var book := -INF
 	var pick := ""
@@ -376,7 +382,7 @@ func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool) ->
 		if v > book:
 			book = v
 			pick = lever
-	return {"book": book, "delegate": LW.delegate_value(g, snub, serve), "refuse": LW.refuse_value(g), "lever": pick}
+	return {"book": book, "delegate": LW.delegate_value(g, snub, serve, minister), "refuse": LW.refuse_value(g), "lever": pick}
 
 
 ## A visiting head (b3), not one of this nation's people.

@@ -40,6 +40,7 @@ const Dates = preload("res://src/sim/audience_dates.gd")
 ## c1c: a crossed accomplice's broken word (Lies.cross) and its price constants.
 const Lies = preload("res://src/sim/lies.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
+const Delegation = preload("res://src/sim/delegation.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -96,21 +97,25 @@ static func offered_dates(state, ns, request_id: String) -> Array[Dictionary]:
 ## The card's three answers. Booking needs a waiting request and an offered day
 ## the diary can place; delegation and decline are open on every open request,
 ## booked included -- the commands accept both, and a booked day is given back
-## (B2's 100 %).
+## (B2's 100 %). Delegate also carries the cabinet's odds of keeping the word and
+## why none can (V5.3-0 gate: Delegation.odds' {chance, why, effectiveness,
+## loyalty}), so the player sees the risk before handing it over; it stays open
+## even at chance 0, B2's row.
 static func answers(state, ns, loader, request_id: String) -> Dictionary:
 	var row := _row(ns, request_id)
 	if row.is_empty() or not K.OPEN.has(String(row["status"])):
 		var closed := {"ok": false, "reason": "this request is no longer waiting"}
 		return {"book": closed, "delegate": closed, "decline": closed}
 	var open := {"ok": true, "reason": ""}
+	var delegate := open.merged(Delegation.odds(ns, loader, String(row["object"]), String(row.get("stance", ""))))
 	if String(row["status"]) == K.STATUS_BOOKED:
-		return {"book": {"ok": false, "reason": "already booked"}, "delegate": open, "decline": open}
+		return {"book": {"ok": false, "reason": "already booked"}, "delegate": delegate, "decline": open}
 	var book := {"ok": false, "reason": "none of the days offered is free"}
 	for date in offered_dates(state, ns, request_id):
 		if bool(date["free"]):
 			book = {"ok": true, "reason": ""}
 			break
-	return {"book": book, "delegate": open, "decline": open}
+	return {"book": book, "delegate": delegate, "decline": open}
 
 
 ## What a decline -- or the lapse, or a no-show -- writes on the person's card
@@ -162,17 +167,16 @@ static func delegate(state, ns, loader, request_id: String) -> Dictionary:
 	if row.is_empty() or not K.OPEN.has(String(row["status"])):
 		return {"ok": false, "error": "this request is no longer waiting"}
 	_unbook(state, row)
-	var person = loader.person_by_id.get(String(row["person_id"]))
-	var snub := 0.0
-	if person != null and (person.traits.has("vain") or String(row["object"]).begins_with("office:")):
-		snub = K.DELEGATE_SNUB_RAPPORT
+	var snub := Delegation.snub(loader.person_by_id.get(String(row["person_id"])), String(row["object"]))
 	var price := _price(state, ns, loader, row, K.DELEGATE_GRUDGE_SHARE, snub)
 	# b2.1 (bands-v5.2.md "Delegation's commitment"): the minister answers in the
 	# president's name that the want is served by the diary's horizon. Levers
 	# judges it at its date: kept, a kindness; broken, the deferred share of the
-	# grudge and a betrayal. That is the spec's "fixed, middling outcome".
+	# grudge and a betrayal. V5.3-0 gate: the word carries the odds the card showed
+	# (Delegation.odds, the same read as answers()), and the judge rolls on them.
+	var chance := float(Delegation.odds(ns, loader, String(row["object"]), String(row.get("stance", "")))["chance"])
 	if not President.commit(state, ns, loader, "delegated", String(row["person_id"]), String(row["object"]),
-			_now(state) + CalendarK.BOOKING_HORIZON_MONTHS):
+			_now(state) + CalendarK.BOOKING_HORIZON_MONTHS, false, chance):
 		push_error("audiences: the delegation of '%s' wrote no commitment" % String(row["id"]))
 	_close(row, K.STATUS_DELEGATED, _now(state))
 	return {"ok": true, "error": "", "price": price}
@@ -302,7 +306,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 			return
 		if not _may_ask(ns, person, leader, now):
 			continue
-		var want := _unserved(ns, person, meters, leaders)
+		var want := _unserved(ns, person, meters, leaders, now)
 		if want.is_empty():
 			continue
 		var hazard := K.REQUEST_HAZARD * (K.REQUEST_STANDING_FLOOR + float(ns.person_standing.get(person.id, 0.0)))
@@ -319,14 +323,14 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 		return
 	var best = null
 	for person in people:
-		if not _may_ask(ns, person, leader, now) or _unserved(ns, person, meters, leaders).is_empty():
+		if not _may_ask(ns, person, leader, now) or _unserved(ns, person, meters, leaders, now).is_empty():
 			continue
 		var st := float(ns.person_standing.get(person.id, 0.0))
 		var best_st := -INF if best == null else float(ns.person_standing.get(best.id, 0.0))
 		if st > best_st or (st == best_st and String(person.id) < String(best.id)):
 			best = person
 	if best != null:
-		_arrive(ns, best, _unserved(ns, best, meters, leaders), now, arrived)
+		_arrive(ns, best, _unserved(ns, best, meters, leaders, now), now, arrived)
 
 
 ## Whether any of the played nation's own people has ever asked (a visiting head
@@ -361,10 +365,11 @@ static func _may_ask(ns, person, leader: String, now: int) -> bool:
 
 ## The first want the government does not serve and could (Characters.servable():
 ## no request for a party's leadership), read through the same door the edge
-## trigger uses, or {}.
-static func _unserved(ns, person, meters: Dictionary, leaders: Dictionary) -> Dictionary:
+## trigger uses, or {}. In month `now`, a want a minister's kept word answered is
+## still heard and skipped (Delegation.heard; -1, no month, skips none).
+static func _unserved(ns, person, meters: Dictionary, leaders: Dictionary, now := -1) -> Dictionary:
 	for want in person.wants:
-		if Characters.servable(want) and not Characters.want_served(ns, person, want, meters, leaders):
+		if Characters.servable(want) and not Characters.want_served(ns, person, want, meters, leaders) and not Delegation.heard(ns, person.id, want["object"], now):
 			return want
 	return {}
 

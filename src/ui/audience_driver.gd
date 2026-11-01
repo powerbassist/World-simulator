@@ -160,7 +160,8 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
 		"by": Words.when(last), "party": PartyChip.of(loader, ns, String(request["person_id"])),
 		"price": Words.price_text(price, Feelings.of(ns, String(request["person_id"]))), "broken_word": price.has("broken_word"), "feel": Feelings.of(ns, String(request["person_id"])),
-		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"]}.merged(_call_answer(main, String(request["person_id"])))
+		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"],
+		"delegate_hint": Words.delegate_hint(answers["delegate"])}.merged(_call_answer(main, String(request["person_id"])))
 
 
 ## The card's fourth answer: the sim's own refusal on it (spoken this month

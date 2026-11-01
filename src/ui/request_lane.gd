@@ -70,6 +70,9 @@ func show_requests(rows: Array) -> void:
 		# Spec 3.5's inbox diet: the price of a no is Decline's hover, not the body.
 		if String(answers[2]["tooltip"]) == "":
 			answers[2]["tooltip"] = Strings.t("Declining, or no answer by then: %s.") % String(row.get("price", ""))
+		# V5.3-0 gate: the odds a minister keeps the word, or why none can (lever_words).
+		if String(answers[1]["tooltip"]) == "":
+			answers[1]["tooltip"] = String(row.get("delegate_hint", ""))  # i18n: row-ok worded by lever_words.delegate_hint
 		# Same answers: the body is rewritten in place. Changed (a day now taken, the
 		# month's call spent): the card is put up again, since the inbox rewrites a
 		# body but not its buttons.

@@ -39,7 +39,8 @@ func _rows(both: bool) -> Array:
 	var rows := [{"id": "req_1", "person": "Cécile Aumont", "ask": "She wants the pension age held.",
 		"by": "MAR 2026", "price": "her grudge +0.12, her rapport -0.10",
 		"book": {"ok": false, "reason": "Both days she offers are taken."},
-		"delegate": {"ok": true, "reason": ""}, "decline": {"ok": true, "reason": ""}}]
+		"delegate": {"ok": true, "reason": "", "chance": 0.8, "why": ""}, "decline": {"ok": true, "reason": ""},
+		"delegate_hint": "This cabinet keeps about 8 in 10 such words."}]
 	if both:
 		rows.append({"id": "req_2", "person": "Daniel Moucron", "ask": "He wants a portfolio.",
 			"by": "APR 2026", "price": "his grudge +0.12", "feel": {"rapport": 0.4},
@@ -98,6 +99,9 @@ func _check_cards() -> void:
 	# Spec 3.5: the deadline is the body's, the price of a no Decline's hover.
 	if not text.contains("MAR 2026") or not _answer_button("req_1", 2).tooltip_text.contains("grudge +0.12"):
 		_fail("the card does not say the deadline, or Decline the price: %s" % text)
+	# V5.3-0 gate: Delegate's hover says how often this cabinet keeps the word.
+	if not _answer_button("req_1", 1).tooltip_text.contains("8 in 10"):
+		_fail("Delegate's hover does not carry the ministers' odds: '%s'" % _answer_button("req_1", 1).tooltip_text)
 
 
 func _check_booking() -> void:
@@ -125,6 +129,9 @@ func _check_booking() -> void:
 		var b: Button = refused.find_child(verb, true, false)
 		if b == null or b.disabled:
 			_fail("%s went out with Days (B2)" % verb)
+	var delegate: Button = refused.find_child("delegate", true, false)
+	if delegate != null and not delegate.tooltip_text.contains("8 in 10"):
+		_fail("the Diary's Delegate does not carry the ministers' odds: '%s'" % delegate.tooltip_text)
 	(open.find_child("Days", true, false) as Button).pressed.emit()
 	(open.find_child("decline", true, false) as Button).pressed.emit()
 	if heard != [["focus_requested", "req_2"], ["decline_requested", "req_2"]]:

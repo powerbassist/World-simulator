@@ -192,6 +192,8 @@ func _card(row: Dictionary) -> Control:
 		# The inbox card's Decline hover, the same words (request_lane.gd).
 		if String(verb[1]) == "decline":
 			b.tooltip_text = Strings.t("Declining, or no answer by then: %s.") % String(row.get("price", ""))
+		else:
+			b.tooltip_text = String(row.get("delegate_hint", ""))  # i18n: row-ok worded by lever_words.delegate_hint
 		_answerable(b, row.get(String(verb[1]), {}))
 		var out: Signal = verb[2]
 		b.pressed.connect(func() -> void: out.emit(id))
