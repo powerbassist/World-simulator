@@ -40,6 +40,9 @@ func _init() -> void:
 	_test_a_closure_survives_a_save()
 	_test_a_failed_firm_drops_its_history()
 	_test_the_record_follows_a_relocation()
+	_test_the_three_answers_each_win_somewhere()
+	_test_the_buyer_pays_its_search_and_its_sweetener()
+	_test_a_landed_closures_bloc_move_fades()
 	_finish()
 
 
@@ -390,6 +393,101 @@ func _test_the_record_follows_a_relocation() -> void:
 		_month(state)
 	if String(row["city_id"]) != elsewhere:
 		_fail("the landed closure names %s, not the city its cut hit, %s" % [row["city_id"], elsewhere])
+
+
+## Parent TAKE 1 on #251 (B5's no-dominated-pair rule): the three strips side by
+## side. Money is the expected cost on the debt (the rescue's first year; the buyer's
+## search plus its chance of the sweetener), jobs the expected jobs lost. No answer
+## may be at least as good on both and better on one: close is the cheapest, the
+## rescue the surest, the buyer between them.
+func _test_the_three_answers_each_win_somewhere() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _unsubsidised(ns)
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	var strips := {}
+	for a in Closures.answers(state, ns, _loader, String(row["id"])):
+		var money := 0.0
+		var jobs := float(a["jobs_lost"])
+		match String(a["kind"]):
+			"close":
+				money = float(a["debt_eur_bn"])
+			"buyer":
+				money = float(a["debt_eur_bn"]) + float(a["chance"]) * float(a["sweetener_eur_bn"])
+				jobs = (1.0 - float(a["chance"])) * jobs
+			"rescue":
+				money = float(a["debt_eur_bn_per_year"])
+		if not strips.has(String(a["kind"])):
+			strips[String(a["kind"])] = [money, jobs]
+	if strips.size() != 3:
+		_fail("the closure does not offer close, buyer and a rescue: %s" % [strips.keys()])
+		return
+	if float(strips["buyer"][0]) <= 0.0:
+		_fail("finding a buyer is free (%s): it dominates letting the plant close" % [strips["buyer"]])
+	for a in strips:
+		for b in strips:
+			if a == b:
+				continue
+			var x: Array = strips[a]
+			var y: Array = strips[b]
+			if x[0] <= y[0] and x[1] <= y[1] and (x[0] < y[0] or x[1] < y[1]):
+				_fail("%s %s dominates %s %s" % [a, x, b, y])
+
+
+## The buyer's price: the plant's losses for the search months, paid at the answer,
+## and the sweetener on the buyer's price, paid only if a buyer is found -- each the
+## figure its strip showed.
+func _test_the_buyer_pays_its_search_and_its_sweetener() -> void:
+	var outcomes := {}
+	for k in range(6):
+		var state = _new_state()
+		state.year = 2026 + k
+		var ns = state.player()
+		var firm = _majors(ns)[0]
+		_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+		_month(state)
+		var row := _row(ns, String(firm.id))
+		var strip := {}
+		for a in Closures.answers(state, ns, _loader, String(row["id"])):
+			if String(a["kind"]) == "buyer":
+				strip = a
+		var debt := float(ns.debt_eur_bn)
+		Closures.answer(state, ns, _loader, String(row["id"]), "buyer")
+		if not is_equal_approx(float(ns.debt_eur_bn) - debt, float(strip["debt_eur_bn"])) or float(strip["debt_eur_bn"]) <= 0.0:
+			_fail("the search booked %.5f, its strip showed %.5f" % [float(ns.debt_eur_bn) - debt, float(strip["debt_eur_bn"])])
+		for i in range(CK.BUYER_MONTHS):
+			_month(state)
+		var paid := float(ns.debt_eur_bn) - debt
+		var want := float(strip["debt_eur_bn"])
+		if String(row["status"]) == "sold":
+			want += float(strip["sweetener_eur_bn"])
+		if not is_equal_approx(paid, want):
+			_fail("a search that ended %s cost %.5f, not %.5f" % [row["status"], paid, want])
+		outcomes[String(row["status"])] = true
+	if outcomes.size() < 2:
+		_fail("the sweetener was never tested both ways: %s" % [outcomes.keys()])
+
+
+## Parent TAKE 2 on #251: a landed closure's bloc move is an act, not a standing
+## condition, so it is booked on the act-fading register (#104's half-life,
+## Characters fades it) rather than written on bloc_offset for good.
+func _test_a_landed_closures_bloc_move_fades() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	var before: Dictionary = (ns.bloc_offset as Dictionary).duplicate()
+	var acts: Dictionary = (ns.act_bloc_offset as Dictionary).duplicate()
+	Closures.answer(state, ns, _loader, String(row["id"]), "close")
+	for bloc in _rule()["bloc_offset"]:
+		var wrote := float(ns.bloc_offset.get(bloc, 0.0)) - float(before.get(bloc, 0.0))
+		var booked := float(ns.act_bloc_offset.get(bloc, 0.0)) - float(acts.get(bloc, 0.0))
+		if wrote == 0.0 or not is_equal_approx(booked, wrote):
+			_fail("%s: the closure wrote %.4f and booked %.4f to fade" % [bloc, wrote, booked])
 
 
 func _fail(msg: String) -> void:

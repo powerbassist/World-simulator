@@ -10,7 +10,9 @@ extends RefCounted
 ##                    payroll in its city falls with it (Companies.headcount reads the
 ##                    live share), and the rule's bloc offsets land;
 ##   buyer            a search of BUYER_MONTHS; on its seed (BUYER_CHANCE) a buyer
-##                    takes the plant and nothing is lost, else the plant shuts;
+##                    takes the plant and nothing is lost, else the plant shuts. It
+##                    has a price: the plant's losses for the search, paid at the
+##                    answer, and a sweetener on the buyer's price, paid at the sale;
 ##   rescue           the firm's own subsidy verbs (op "subsidise",
 ##                    Companies.execute), the spec's "a subsidy": the bill, the
 ##                    firm's share and the verb's bloc moves are the verb's own.
@@ -39,6 +41,8 @@ const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const K = preload("res://src/sim/closures_constants.gd")
+const CoK = preload("res://src/sim/companies_constants.gd")
+const Characters = preload("res://src/sim/characters.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 
 const ANNOUNCED := "announced"
@@ -91,21 +95,27 @@ static func open(ns) -> Array:
 
 
 ## An announced closure's answers, each with its figures for the strip: `kind`
-## (close | buyer | rescue), `jobs_lost` if it ends in the cut, `bloc_offset`, and a
-## buyer's `chance` and `months`. [] when the closure is not waiting for an answer.
+## (close | buyer | rescue), `jobs_lost` if it ends in the cut, `bloc_offset`, the
+## money on the debt (`debt_eur_bn` once: 0 to close, the buyer's search; a rescue's
+## `debt_eur_bn_per_year`, the subsidy's bill), and a buyer's `chance`, `months` and
+## `sweetener_eur_bn` (paid only at a sale). [] when nothing is waiting for an answer.
 static func answers(state, ns, loader, closure_id: String) -> Array:
 	var found := _find(ns, loader, closure_id)
 	if found.is_empty() or String(found["row"]["status"]) != ANNOUNCED:
 		return []
 	var row: Dictionary = found["row"]
 	var out: Array = [
-		{"id": "close", "kind": "close", "jobs_lost": float(row["jobs"]),
+		{"id": "close", "kind": "close", "jobs_lost": float(row["jobs"]), "debt_eur_bn": 0.0,
 			"bloc_offset": (loader.closure_rule["bloc_offset"] as Dictionary).duplicate()},
 		{"id": "buyer", "kind": "buyer", "jobs_lost": float(row["jobs"]), "bloc_offset": {},
-			"chance": K.BUYER_CHANCE, "months": K.BUYER_MONTHS},
+			"chance": K.BUYER_CHANCE, "months": K.BUYER_MONTHS,
+			"debt_eur_bn": _search_eur_bn(ns, found["company"], loader.closure_rule),
+			"sweetener_eur_bn": _sweetener_eur_bn(ns, found["company"], loader.closure_rule)},
 	]
 	for action in _rescues(state, ns, loader, String(row["company_id"])):
+		var intensity := float((action.effects.get("company", {}) as Dictionary).get("intensity", 0.0))
 		out.append({"id": String(action.id), "kind": "rescue", "jobs_lost": 0.0,
+			"debt_eur_bn_per_year": CoK.SUBSIDY_COST_PCT_GDP * intensity * float(ns.gdp_eur_bn) / 100.0,
 			"bloc_offset": (action.effects.get("bloc_offset", {}) as Dictionary).duplicate()})
 	return out
 
@@ -127,6 +137,10 @@ static func answer(state, ns, loader, closure_id: String, answer_id: String) -> 
 		row["answer"] = answer_id
 		row["status"] = SEARCHING
 		row["months_left"] = K.BUYER_MONTHS
+		# The price the strip showed: the search's losses now, the sweetener fixed now
+		# and paid only at a sale.
+		ns.debt_eur_bn += _search_eur_bn(ns, company, loader.closure_rule)
+		row["sweetener_eur_bn"] = _sweetener_eur_bn(ns, company, loader.closure_rule)
 		return {"ok": true}
 	for action in _rescues(state, ns, loader, String(row["company_id"])):
 		if String(action.id) == answer_id:
@@ -158,6 +172,7 @@ static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
 		if int(row["months_left"]) > 0:
 			return
 		if Cycle.unit("closure|%s|buyer" % String(row["id"]), now) < K.BUYER_CHANCE:
+			ns.debt_eur_bn += float(row.get("sweetener_eur_bn", 0.0))
 			_end(row, "sold", now)
 		else:
 			_cut(ns, company, entry, row, rule, now)
@@ -186,18 +201,34 @@ static func _announce(ns, company, entry: Dictionary, fall: float, rule: Diction
 
 ## The plant shuts: the live share falls by the cut (to the unnamed residual, the
 ## failure commit's own move, so the payroll in the firm's city falls with it), and
-## the rule's bloc offsets land, clamped as every writer of the register is.
+## the rule's bloc offsets land, clamped as every writer of the register is. The move
+## is an act, not a standing condition (the parent's TAKE 2 on #251): what it wrote is
+## booked through Characters.book_act_offsets on the share that fades (#104's
+## half-life), as every act's offset is.
 static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictionary, now: int) -> void:
 	entry["share"] = Companies.share_of_company(ns, company) * (1.0 - float(rule["cut"]))
 	# The record names where the jobs went: a relocation since the announcement
 	# moved the payroll the cut removes.
 	row["city_id"] = Companies.live_city_of(ns, company)
 	var offsets: Dictionary = rule["bloc_offset"]
+	var before: Dictionary = (ns.bloc_offset as Dictionary).duplicate()
 	for bloc in offsets:
 		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + float(offsets[bloc]),
 			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
+	Characters.book_act_offsets(ns, before)
 	entry.erase("closure_watch")
 	_end(row, "closed", now)
+
+
+## The plant's losses the state covers while a buyer is sought: BUYER_SEARCH_LOSS of
+## a year of the plant's output (the cut's share of the firm's), for the search months.
+static func _search_eur_bn(ns, company, rule: Dictionary) -> float:
+	return K.BUYER_SEARCH_LOSS * Companies.output_eur_bn(ns, company) * float(rule["cut"]) * float(K.BUYER_MONTHS) / 12.0
+
+
+## The sweetener on the buyer's price: BUYER_SWEETENER of the plant's value.
+static func _sweetener_eur_bn(ns, company, rule: Dictionary) -> float:
+	return K.BUYER_SWEETENER * Companies.value_eur_bn(ns, company) * float(rule["cut"])
 
 
 static func _end(row: Dictionary, status: String, now: int) -> void:
